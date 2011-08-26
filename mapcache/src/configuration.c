@@ -99,8 +99,7 @@ char* parseSource(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
       return "mandatory attribute \"type\" not found in <source>";
    geocache_source *source = NULL;
    if(!strcmp(type,"wms")) {
-      geocache_wms_source *wms_source = geocache_source_wms_create(pool);
-      source = (geocache_source*)wms_source;
+      source = geocache_source_wms_create(pool);
    } else {
       return apr_psprintf(pool, "unknown source type %s for source \"%s\"", type, name);
    }
@@ -218,8 +217,7 @@ char* parseCache(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
    if(!type || !strlen(type))
       return "mandatory attribute \"type\" not found in <cache>";
    if(!strcmp(type,"disk")) {
-      geocache_cache_disk *disk_cache = geocache_cache_disk_create(pool);
-      cache = (geocache_cache*)disk_cache;
+      cache = geocache_cache_disk_create(pool);
    } else {
       return apr_psprintf(pool, "unknown cache type %s for cache \"%s\"", type, name);
    }

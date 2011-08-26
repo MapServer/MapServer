@@ -4,8 +4,12 @@
 #include <apr_strings.h>
 #include <http_log.h>
 
+/**
+ * \private \memberof geocache_source_wms
+ * \sa geocache_source::render_tile()
+ */
 int _geocache_source_wms_render_tile(geocache_tile *tile, request_rec *r) {
-   geocache_wms_source *wms = (geocache_wms_source*)tile->tileset->source;
+   geocache_source_wms *wms = (geocache_source_wms*)tile->tileset->source;
    int ret;
    apr_table_t *params = apr_table_clone(r->pool,wms->wms_default_params);
    double bbox[4];
@@ -24,8 +28,12 @@ int _geocache_source_wms_render_tile(geocache_tile *tile, request_rec *r) {
    return GEOCACHE_SUCCESS;
 }
 
+/**
+ * \private \memberof geocache_source_wms
+ * \sa geocache_source::render_metatile()
+ */
 int _geocache_source_wms_render_metatile(geocache_metatile *tile, request_rec *r) {
-   geocache_wms_source *wms = (geocache_wms_source*)tile->tile.tileset->source;
+   geocache_source_wms *wms = (geocache_source_wms*)tile->tile.tileset->source;
    int ret;
    apr_table_t *params = apr_table_clone(r->pool,wms->wms_default_params);
    apr_table_setn(params,"BBOX",apr_psprintf(r->pool,"%f,%f,%f,%f",
@@ -54,9 +62,13 @@ int _geocache_source_wms_render_metatile(geocache_metatile *tile, request_rec *r
    return GEOCACHE_SUCCESS;
 }
 
+/**
+ * \private \memberof geocache_source_wms
+ * \sa geocache_source::configuration_parse()
+ */
 char* _geocache_source_wms_configuration_parse(xmlNode *xml, geocache_source *source, apr_pool_t *pool) {
    xmlNode *cur_node;
-   geocache_wms_source *src = (geocache_wms_source*)source;
+   geocache_source_wms *src = (geocache_source_wms*)source;
    for(cur_node = xml->children; cur_node; cur_node = cur_node->next) {
       if(cur_node->type != XML_ELEMENT_NODE) continue;
       if(!xmlStrcmp(cur_node->name, BAD_CAST "url")) {
@@ -76,8 +88,12 @@ char* _geocache_source_wms_configuration_parse(xmlNode *xml, geocache_source *so
    return NULL;
 }
 
+/**
+ * \private \memberof geocache_source_wms
+ * \sa geocache_source::configuration_check()
+ */
 char* _geocache_source_wms_configuration_check(geocache_source *source, apr_pool_t *pool) {
-   geocache_wms_source *src = (geocache_wms_source*)source;
+   geocache_source_wms *src = (geocache_source_wms*)source;
    /* check all required parameters are configured */
    if(!strlen(src->url)) {
       return apr_psprintf(pool,"wms source %s has no url",source->name);
@@ -89,8 +105,8 @@ char* _geocache_source_wms_configuration_check(geocache_source *source, apr_pool
    return NULL;
 }
 
-geocache_wms_source* geocache_source_wms_create(apr_pool_t *pool) {
-   geocache_wms_source *source = apr_pcalloc(pool, sizeof(geocache_wms_source));
+geocache_source* geocache_source_wms_create(apr_pool_t *pool) {
+   geocache_source_wms *source = apr_pcalloc(pool, sizeof(geocache_source_wms));
    geocache_source_init(&(source->source),pool);
    source->source.type = GEOCACHE_SOURCE_WMS;
    source->source.supports_metatiling = 1;
@@ -104,7 +120,7 @@ geocache_wms_source* geocache_source_wms_create(apr_pool_t *pool) {
    apr_table_add(source->wms_default_params,"REQUEST","GetMap");
    apr_table_add(source->wms_default_params,"SERVICE","WMS");
    apr_table_add(source->wms_default_params,"STYLES","");
-   return source;
+   return (geocache_source*)source;
 }
 
 

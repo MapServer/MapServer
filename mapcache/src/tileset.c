@@ -181,9 +181,7 @@ geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, apr_pool_
    return tile;
 }
 
-/*
- * compute a tile's x,y and z value given a BBOX.
- */
+
 int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec *r) {
    if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
       ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "tileset %s: wrong size. found %dx%d instead of %dx%d",
@@ -193,22 +191,22 @@ int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec 
    return _geocache_tileset_tile_get_cell(tile,bbox,r);
 }
 
-/*
- * return the image data for a given tile
+/**
+ * \brief return the image data for a given tile
  * this call uses a global (interprocess+interthread) mutex if the tile was not found
  * in the cache.
  * the processing here is:
  *  - if the tile is found in the cache, return it. done
  *  - if it isn't found:
- *    * aquire mutex
- *    * check if the tile isn't being rendered by another thread/process
+ *    - aquire mutex
+ *    - check if the tile isn't being rendered by another thread/process
  *      - if another thread is rendering, wait for it to finish and return it's data
  *      - otherwise, lock all the tiles corresponding to the request (a metatile has multiple tiles)
- *    * release mutex
- *    * call the source to render the metatile, and save the tiles to disk
- *    * aquire mutex
- *    * unlock the tiles we have rendered
- *    * release mutex
+ *    - release mutex
+ *    - call the source to render the metatile, and save the tiles to disk
+ *    - aquire mutex
+ *    - unlock the tiles we have rendered
+ *    - release mutex
  *  
  */
 int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r) {

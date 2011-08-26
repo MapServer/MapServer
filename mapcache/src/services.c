@@ -9,6 +9,14 @@
 #include <http_log.h>
 #include <apr_strings.h>
 
+/** \addtogroup services */
+/** @{ */
+
+/**
+ * \brief parse a WMS request
+ * \private \memberof geocache_service_wms
+ * \sa geocache_service::parse_request()
+ */
 geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_t *params, geocache_cfg *config) {
    char *str = NULL;
    double *bbox;
@@ -76,6 +84,11 @@ geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_
 
 }
 
+/**
+ * \brief parse a TMS request
+ * \private \memberof geocache_service_tms
+ * \sa geocache_service::parse_request()
+ */
 geocache_request* _geocache_service_tms_parse_request(request_rec *r, apr_table_t *params, geocache_cfg *config) {
    char *pathinfo = apr_pstrdup(r->pool,r->path_info);
    int index = 0;
@@ -143,7 +156,6 @@ geocache_request* _geocache_service_tms_parse_request(request_rec *r, apr_table_
    }
 }
 
-
 geocache_service* geocache_service_wms_create(apr_pool_t *pool) {
    geocache_service_wms* service = (geocache_service_wms*)apr_pcalloc(pool, sizeof(geocache_service_wms));
    service->service.type = GEOCACHE_SERVICE_WMS;
@@ -157,6 +169,8 @@ geocache_service* geocache_service_tms_create(apr_pool_t *pool) {
    service->service.parse_request = _geocache_service_tms_parse_request;
    return (geocache_service*)service;
 }
+
+/** @} */
 
 
 

@@ -11,6 +11,14 @@
 #include <apr_file_io.h>
 #include <http_log.h>
 
+/**
+ * \brief return filename for given tile
+ * 
+ * \param tile the tile to get the key from
+ * \param path pointer to a char* that will contain the filename
+ * \param r 
+ * \private \memberof geocache_cache_disk
+ */
 int _geocache_cache_disk_tile_key(request_rec *r, geocache_tile *tile, char **path) {
    *path = apr_psprintf(r->pool,"%s/%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
@@ -22,10 +30,19 @@ int _geocache_cache_disk_tile_key(request_rec *r, geocache_tile *tile, char **pa
          tile->y / 1000000,
          (tile->y / 1000) % 1000,
          tile->y % 1000,
-         tile->tileset->format?tile->tileset->format->extension:"xxx");
+         tile->tileset->format?tile->tileset->format->extension:"png");
    return GEOCACHE_SUCCESS;
 }
 
+/**
+ * \brief return directory path and filename for given tile
+ * 
+ * \param tile the tile to get the key from
+ * \param path pointer to a char* that will contain the directory path
+ * \param basename pointer to a char* that will contain the basename of the file (i.e. without the leading directory path) 
+ * \param r 
+ * \private \memberof geocache_cache_disk
+ */
 int _geocache_cache_disk_tile_key_split(request_rec *r, geocache_tile *tile, char **path, char **basename) {
    *path = apr_psprintf(r->pool,"%s/%s/%02d/%03d/%03d/%03d/%03d/%03d",
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
@@ -38,10 +55,18 @@ int _geocache_cache_disk_tile_key_split(request_rec *r, geocache_tile *tile, cha
          (tile->y / 1000) % 1000);
    *basename = apr_psprintf(r->pool,"%03d.%s",
          tile->y % 1000,
-         tile->tileset->format?tile->tileset->format->extension:"xxx");
+         tile->tileset->format?tile->tileset->format->extension:"png");
    return GEOCACHE_SUCCESS;
 }
 
+/**
+ * \brief lock the given tile so other processes know it is being processed
+ * 
+ * this function creates a file with a .lck  extension and puts an exclusive lock on it
+ * \sa geocache_cache::tile_lock()
+ * \sa geocache_cache::tile_lock_exists()
+ * \private \memberof geocache_cache_disk
+ */
 int _geocache_cache_disk_tile_lock(geocache_tile *tile, request_rec *r) {
    char *filename;
    char *basename;
@@ -85,6 +110,13 @@ int _geocache_cache_disk_tile_lock(geocache_tile *tile, request_rec *r) {
    return GEOCACHE_SUCCESS;
 }
 
+/**
+ * \brief unlock a previously locked tile
+ * 
+ * \private \memberof geocache_cache_disk
+ * \sa geocache_cache::tile_unlock()
+ * \sa geocache_cache::tile_lock_exists()
+ */
 int _geocache_cache_disk_tile_unlock(geocache_tile *tile, request_rec *r) {
    apr_file_t *f = (apr_file_t*)tile->lock;
    const char *fname;
@@ -120,6 +152,12 @@ int _geocache_cache_disk_tile_unlock(geocache_tile *tile, request_rec *r) {
    return rv;
 }
 
+/**
+ * \brief query tile to check if the corresponding lockfile exists
+ * \private \memberof geocache_cache_disk
+ * \sa geocache_cache::tile_lock()
+ * \sa geocache_cache::tile_unlock()
+ */
 int _geocache_cache_disk_tile_is_locked(geocache_tile *tile, request_rec *r) {
    char *filename;
    char *lockname;
@@ -136,6 +174,13 @@ int _geocache_cache_disk_tile_is_locked(geocache_tile *tile, request_rec *r) {
    }
 }
 
+/**
+ * \brief wait for a lock on given tile
+ * 
+ * this function will not return until the lock on the tile has been removed
+ * \private \memberof geocache_cache_disk
+ * \sa geocache_cache::tile_lock_wait()
+ */
 int _geocache_cache_disk_tile_wait_for_lock(geocache_tile *tile, request_rec *r) {
    char *filename;
    char *lockname;
@@ -157,6 +202,13 @@ int _geocache_cache_disk_tile_wait_for_lock(geocache_tile *tile, request_rec *r)
    return GEOCACHE_SUCCESS;
 }
 
+/**
+ * \brief get file content of given tile
+ * 
+ * fills the geocache_tile::data of the given tile with content stored in the file
+ * \private \memberof geocache_cache_disk
+ * \sa geocache_cache::tile_get()
+ */
 int _geocache_cache_disk_get(geocache_tile *tile, request_rec *r) {
    char *filename;
    apr_file_t *f;
@@ -176,7 +228,7 @@ int _geocache_cache_disk_get(geocache_tile *tile, request_rec *r) {
       /*
        * at this stage, we have a handle to an open file that contains data.
        * idealy, we should aquire a read lock, in case the data contained inside the file
-       * is incomplete.
+       * is incomplete (i.e. if another process is currently writing to the tile).
        * currently such a lock is not set, as we don't want to loose performance on tile accesses.
        * any error that might happen at this stage should only occur if the tile isn't already cached,
        * i.e. normally only once.
@@ -197,6 +249,15 @@ int _geocache_cache_disk_get(geocache_tile *tile, request_rec *r) {
    return GEOCACHE_CACHE_MISS;
 }
 
+/**
+ * \brief write tile data to disk
+ * 
+ * writes the content of geocache_tile::data to disk.
+ * \returns GEOCACHE_FAILURE if there is no data to write, or if the tile isn't locked
+ * \returns GEOCACHE_SUCCESS if the tile has been successfully written to disk
+ * \private \memberof geocache_cache_disk
+ * \sa geocache_cache::tile_set()
+ */
 int _geocache_cache_disk_set(geocache_tile *tile, request_rec *r) {
    apr_size_t bytes;
    apr_file_t *f;
@@ -232,6 +293,9 @@ int _geocache_cache_disk_set(geocache_tile *tile, request_rec *r) {
    return GEOCACHE_SUCCESS;
 }
 
+/**
+ * \private \memberof geocache_cache_disk
+ */
 char* _geocache_cache_disk_configuration_parse(xmlNode *xml, geocache_cache *cache, apr_pool_t *pool) {
    xmlNode *cur_node;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
@@ -245,6 +309,9 @@ char* _geocache_cache_disk_configuration_parse(xmlNode *xml, geocache_cache *cac
    return NULL;
 }
 
+/**
+ * \private \memberof geocache_cache_disk
+ */
 char* _geocache_cache_disk_configuration_check(geocache_cache *cache, apr_pool_t *pool) {
    apr_status_t status;
    apr_dir_t *dir;
@@ -264,7 +331,10 @@ char* _geocache_cache_disk_configuration_check(geocache_cache *cache, apr_pool_t
    return NULL;
 }
 
-geocache_cache_disk* geocache_cache_disk_create(apr_pool_t *pool) {
+/**
+ * \brief creates and initializes a geocache_disk_cache
+ */
+geocache_cache* geocache_cache_disk_create(apr_pool_t *pool) {
    geocache_cache_disk *cache = apr_pcalloc(pool,sizeof(geocache_cache_disk));
    cache->cache.type = GEOCACHE_CACHE_DISK;
    cache->cache.tile_get = _geocache_cache_disk_get;
@@ -275,6 +345,6 @@ geocache_cache_disk* geocache_cache_disk_create(apr_pool_t *pool) {
    cache->cache.tile_unlock = _geocache_cache_disk_tile_unlock;
    cache->cache.tile_lock_exists = _geocache_cache_disk_tile_is_locked;
    cache->cache.tile_lock_wait = _geocache_cache_disk_tile_wait_for_lock;
-   return cache;
+   return (geocache_cache*)cache;
 }
 
