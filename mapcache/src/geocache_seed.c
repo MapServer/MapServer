@@ -18,6 +18,7 @@ struct geocache_context_seeding{
     int (*get_next_tile)(geocache_context_seeding *ctx, geocache_tile *tile, geocache_context *tmpctx);
     apr_thread_mutex_t *mutex;
     geocache_tileset *tileset;
+    apr_table_t *dimensions;
     int minzoom;
     int maxzoom;
     int nextx,nexty,nextz;
@@ -35,6 +36,7 @@ static const apr_getopt_option_t seed_options[] = {
     { "extent", 'e', TRUE, "extent to seed, format: minx,miny,maxx,maxy" },
     { "nthreads", 'n', TRUE, "number of parallel threads to use" },
     { "older", 'o', TRUE, "reseed tiles older than supplied date (format: year/month/day hour:minute, eg: 2011/01/31 20:45" },
+    { "dimension", 'D', TRUE, "set the value of a dimension (format DIMENSIONNAME=VALUE). Can be used multiple times for multiple dimensions" },
 #ifdef USE_OGR
     { "ogr-datasource", 'd', TRUE, "ogr datasource to get features from"},
     { "ogr-layer", 'l', TRUE, "layer inside datasource"},
@@ -113,19 +115,24 @@ int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
 #endif
 
 apr_time_t age_limit = 0;
-int should_seed_tile(geocache_context *ctx, geocache_tileset *tileset,
-                    int x, int y, int z,
-                    geocache_grid_link *grid_link,
-                    geocache_context *tmpctx) {
-    geocache_tile *tile = geocache_tileset_tile_create(tmpctx->pool,tileset,grid_link);
+int should_seed_tile(geocache_context_seeding *sctx, int x, int y, int z,geocache_context *tmpctx) {
+    geocache_context *ctx = (geocache_context*)sctx;
+    geocache_tile *tile = geocache_tileset_tile_create(tmpctx->pool,sctx->tileset,sctx->grid_link);
+    const apr_array_header_t* dimelts = apr_table_elts(sctx->dimensions); 	
+    int i = dimelts->nelts;
+    while(i--) {
+       apr_table_entry_t *entry = &(APR_ARRAY_IDX(dimelts,i,apr_table_entry_t));
+       apr_table_setn(tile->dimensions,entry->key,entry->val);
+    }
+
     tile->x = x;
     tile->y = y;
     tile->z = z;
-    int should_seed = tileset->cache->tile_exists(tmpctx,tile)?0:1;
+    int should_seed = sctx->tileset->cache->tile_exists(tmpctx,tile)?0:1;
     int intersects = -1;
     /* if the tile exists and a time limit was specified, check the tile modification date */
     if(!should_seed && age_limit) {
-       if(tileset->cache->tile_get(tmpctx,tile) == GEOCACHE_SUCCESS) {
+       if(sctx->tileset->cache->tile_get(tmpctx,tile) == GEOCACHE_SUCCESS) {
          if(tile->mtime && tile->mtime<age_limit) {
 #ifdef USE_OGR
             /* check we are in the requested features before deleting the tile */
@@ -197,7 +204,7 @@ int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocac
             }
             ctx->nextx = tile->grid_link->grid_limits[ctx->nextz][0];
         }
-        if(should_seed_tile(gctx, ctx->tileset, ctx->nextx, ctx->nexty, ctx->nextz, ctx->grid_link, tmpcontext)){
+        if(should_seed_tile(ctx, ctx->nextx, ctx->nexty, ctx->nextz, tmpcontext)){
            break;
         }
     }
@@ -209,7 +216,8 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
         geocache_cfg *cfg,
         geocache_tileset *tileset,
         int minzoom, int maxzoom,
-        geocache_grid_link *grid_link) {
+        geocache_grid_link *grid_link,
+        apr_table_t *dimensions) {
     int ret;
     geocache_context *gctx = (geocache_context*)ctx;
     geocache_context_init(gctx);
@@ -218,6 +226,31 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
         gctx->set_error(gctx,500,"failed to create mutex");
         return;
     }
+
+    /* validate the supplied dimensions */
+    if (!apr_is_empty_table(dimensions)) {
+       int i;
+       for(i=0;i<tileset->dimensions->nelts;i++) {
+          geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+          const char *value;
+          if((value = (char*)apr_table_get(dimensions,dimension->name)) != NULL) {
+             char *tmpval = apr_pstrdup(gctx->pool,value);
+             int ok = dimension->validate(gctx,dimension,&tmpval);
+             GC_CHECK_ERROR(gctx);
+             if(ok == GEOCACHE_SUCCESS) {
+                /* validate may have changed the dimension value, so set it back into the dimensions table */
+                apr_table_setn(dimensions,dimension->name,tmpval);
+             }
+             else {
+                gctx->set_error(gctx,500,"dimension \"%s\" value \"%s\" fails to validate",
+                      dimension->name, value);
+                return;
+             }
+          }
+       }
+
+    }
+
     gctx->config = cfg;
     gctx->global_lock_aquire = geocache_context_seeding_lock_aquire;
     gctx->global_lock_release = geocache_context_seeding_lock_release;
@@ -227,6 +260,7 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
     ctx->maxzoom = maxzoom;
     ctx->tileset = tileset;
     ctx->grid_link = grid_link;
+    ctx->dimensions = dimensions;
 }
 
 void dummy_lock_aquire(geocache_context *ctx){
@@ -342,6 +376,9 @@ int main(int argc, const char **argv) {
     curz=-1;
     seededtiles=seededtilestot=0;
     starttime = lastlogtime = time(NULL);
+    apr_table_t *dimensions = apr_table_make(gctx->pool,3);
+    char *dimkey = NULL,*dimvalue = NULL,*key,*last,*optargcpy = NULL;
+    int keyidx;
 
     /* parse the all options based on opt_option[] */
     while ((rv = apr_getopt_long(opt, seed_options, &optch, &optarg)) == APR_SUCCESS) {
@@ -375,6 +412,23 @@ int main(int argc, const char **argv) {
                 break;
             case 'o':
                 old = optarg;
+                break;
+            case 'D':
+                optargcpy = apr_pstrdup(gctx->pool,optarg);
+                keyidx = 0;
+                for (key = apr_strtok(optargcpy, "=", &last); key != NULL;
+                      key = apr_strtok(NULL, "=", &last)) {
+                   if(keyidx == 0) {
+                      dimkey = key;
+                   } else {
+                      dimvalue = key;
+                   }
+                   keyidx++;
+                }
+                if(keyidx!=2 || !dimkey || !dimvalue || !*dimkey || !*dimvalue) {
+                   return usage(argv[0], "failed to parse dimension, expecting DIMNAME=DIMVALUE");
+                }
+                apr_table_set(dimensions,dimkey,dimvalue);
                 break;
 #ifdef USE_OGR
             case 'd':
@@ -536,7 +590,11 @@ int main(int argc, const char **argv) {
       }
     }
 
-    geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],grid_link);
+    geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],grid_link, dimensions);
+    if(gctx->get_error(gctx)) {
+        printf("%s",gctx->get_error_message(gctx));
+        return 1;
+    }
     if(extent) {
        // update the grid limits
        geocache_grid_compute_limits(grid_link->grid,extent,grid_link->grid_limits);
@@ -558,9 +616,7 @@ int main(int argc, const char **argv) {
     ctx.nexty = grid_link->grid_limits[zooms[0]][1];
 
     /* find the first tile to render if the first one already exists */
-    if(!should_seed_tile(gctx, tileset,
-             ctx.nextx, ctx.nexty, ctx.nextz,
-             grid_link, gctx)) {
+    if(!should_seed_tile(&ctx, ctx.nextx, ctx.nexty, ctx.nextz, gctx)) {
        geocache_tile *tile = geocache_tileset_tile_create(gctx->pool, tileset, grid_link);
        geocache_context_seeding_get_next_tile(&ctx,tile,gctx);
        if(ctx.nextz > ctx.maxzoom) {
