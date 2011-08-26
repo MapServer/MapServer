@@ -80,10 +80,10 @@ static char *wms_layer = "<Layer queryable=\"0\" opaque=\"0\" cascaded=\"1\">\n"
               "<BoundingBox srs=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n"
             "</Layer>\n";
 
-geocache_request* _geocache_service_wms_capabilities(geocache_context *ctx, geocache_cfg *cfg) {
+geocache_request* _geocache_service_wms_capabilities(geocache_context *ctx, char *uri, geocache_cfg *cfg) {
    geocache_request *request = (geocache_request*)apr_pcalloc(ctx->pool,sizeof(geocache_request));
    request->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
-   char *host = "http://foo?";
+   char *host = uri;
    char *caps = apr_psprintf(ctx->pool,wms_capabilities_preamble,host,host,host);
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
 
@@ -145,7 +145,7 @@ geocache_request* _geocache_service_wms_capabilities(geocache_context *ctx, geoc
  * \private \memberof geocache_service_wms
  * \sa geocache_service::parse_request()
  */
-geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
+geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, char *uri, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    char *str = NULL, *srs=NULL;
    int width=0, height=0;
    double *bbox;
@@ -166,7 +166,7 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
       return NULL;
    }
    if( ! strcasecmp(str,"getcapabilities") ) {
-      return _geocache_service_wms_capabilities(ctx, config);
+      return _geocache_service_wms_capabilities(ctx, uri, config);
    } else if( strcasecmp(str,"getmap")) {
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms with invalid request %s",str);
       return NULL;
@@ -290,7 +290,7 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
  * \private \memberof geocache_service_tms
  * \sa geocache_service::parse_request()
  */
-geocache_request* _geocache_service_tms_parse_request(geocache_context *ctx, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
+geocache_request* _geocache_service_tms_parse_request(geocache_context *ctx, char *uri, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    int index = 0;
    char *last, *key, *endptr;
    geocache_tileset *tileset = NULL;

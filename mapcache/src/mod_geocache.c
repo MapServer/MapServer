@@ -18,6 +18,7 @@
  * Include the core server components.
  */
 #include <httpd.h>
+#include <http_core.h>
 #include <http_config.h>
 #include <http_protocol.h>
 #include <http_request.h>
@@ -205,7 +206,9 @@ static int mod_geocache_request_handler(request_rec *r) {
    geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
    geocache_context *global_ctx = (geocache_context*)apache_ctx;
    geocache_tile *tile;
+   request_rec *original;
    int i,ret;
+   char *uri;
 
    if (!r->handler || strcmp(r->handler, "geocache")) {
       return DECLINED;
@@ -216,12 +219,16 @@ static int mod_geocache_request_handler(request_rec *r) {
 
    params = geocache_http_parse_param_string(global_ctx, r->args);
    config = ap_get_module_config(r->per_dir_config, &geocache_module);
-
+   if(r->main)
+      original = r->main;
+   else
+      original = r;
+   uri = ap_construct_url(r->pool,original->parsed_uri.path,original);
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
       /* loop through the services that have been configured */
       geocache_service *service = config->services[i];
       if(!service) continue;
-      request = service->parse_request(global_ctx,r->path_info,params,config);
+      request = service->parse_request(global_ctx,uri,original->path_info,params,config);
       /* the service has recognized the request if it returns a non NULL value */
       if(request || GC_HAS_ERROR(global_ctx))
          break;

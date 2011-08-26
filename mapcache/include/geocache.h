@@ -332,7 +332,7 @@ struct geocache_service {
      * \returns a geocache_request corresponding to the parameters received
      * \returns NULL if the request does not correspond the the service
      */
-    geocache_request * (*parse_request)(geocache_context *ctx, char *path_info, apr_table_t *params, geocache_cfg * config);
+    geocache_request * (*parse_request)(geocache_context *ctx, char *uri, char *path_info, apr_table_t *params, geocache_cfg * config);
 };
 
 /**\class geocache_service_wms
