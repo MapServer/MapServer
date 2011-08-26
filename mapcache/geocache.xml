@@ -767,13 +767,13 @@
            It will intercept wms getmap requests that can be treated from configured
            tilesets, and can optionally forward all the rest to (an)other server(s)
            TODO: this needs way more documenting
-      -->
       <forwarding_rule name="foo rule">
             <append_pathinfo>true</append_pathinfo>
             <http>
-               <url>http://server/geocacheproxy</url>
+               <url>http://localhost/geocacheproxy</url>
             </http>
       </forwarding_rule>
+      -->
       <!-- full_wms
            configure response to wms requests that are not aligned to a tileset's grids.
            responding to requests that are not in the SRS of a configured grid is not supported, but

@@ -46,7 +46,8 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
       //if(*(pathinfo+prefixlen)!='/' && *(pathinfo+prefixlen)!='\0') continue; /*we matched the prefix but there are trailing characters*/
       pathinfo += prefixlen; /* advance pathinfo to after the service prefix */
       service->parse_request(ctx,service,request,pathinfo,params,config);
-      (*request)->service = service;
+      if(*request)
+         (*request)->service = service;
       
       /* stop looping on services */
       return;
