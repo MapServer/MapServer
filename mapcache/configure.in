@@ -160,36 +160,43 @@ AC_DEFUN([APR_CHECK],[
 ])
 
 AC_DEFUN([PCRE_CHECK],[
-   AC_MSG_CHECKING([pcre library])
+   PCRE_LIBS=''
+   PCRE_CFLAGS=''
+   AC_MSG_CHECKING([for pcre library inclusion])
+
    AC_ARG_WITH(pcre,
       [  --with-pcre[[=prefix]]    use pcre instead of posix regular expressions],,
       with_pcre="yes")
    if test "x$with_pcre" = "xno" ; then
-      AC_MSG_RESULT([disabled])
+      AC_MSG_RESULT([disabled by request])
    else
-      AC_MSG_RESULT([(testing)])
-      AC_CHECK_LIB(pcre, pcre_study)
-      if test "$ac_cv_lib_pcre_pcre_study" = "yes" ; then
-         PCRE_LIBS="-lpcre"
-         AC_MSG_CHECKING([lib pcre])
-         AC_MSG_RESULT([$PCRE_LIBS])
-         PCRE_ENABLED="-DUSE_PCRE"
+      if test "x$with_pcre" = "xyes" ; then
+         AC_MSG_RESULT([in system locations])
+         AC_CHECK_LIB(pcre, pcre_compile,PCRE_LIBS=[-lpcre],
+                      [AC_MSG_WARN([pcre library not found, will fall back
+                          to posix regular expressions which are less powerfull])])
+         if test -n "$PCRE_LIBS"; then
+            AC_CHECK_HEADER([pcre.h],PCRE_ENABLED=[-DUSE_PCRE],[AC_MSG_WARN([pcre.h not found, will fall back
+                          to posix regular expressions which are less powerfull])])
+         fi
       else
          OLDLDFLAGS="$LDFLAGS" ; LDFLAGS="$LDFLAGS -L$with_pcre/lib"
          OLDCPPFLAGS="$CPPFLAGS" ; CPPFLAGS="$CPPFLAGS -I$with_pcre/include"
-         AC_CHECK_LIB(pcre, pcre_compile)
+         AC_CHECK_LIB(pcre, pcre_compile,PCRE_LIBS="-L$with_pcre/lib -lpcre",
+                      [AC_MSG_WARN([pcre library not found in $with_pcre/lib, will fall back
+                          to posix regular expressions which are less powerfull])])
          CPPFLAGS="$OLDCPPFLAGS"
          LDFLAGS="$OLDLDFLAGS"
-         if test "$ac_cv_lib_pcre_pcre_compile" = "yes" ; then
-            AC_MSG_RESULT(.setting PCRE_LIBS -L$with_pcre/lib -lpcre)
-            PCRE_LIBS="-L$with_pcre/lib -lpcre"
-            test -d "$with_pcre/include" && PCRE_CFLAGS="-I$with_pcre/include"
-            AC_MSG_CHECKING([lib pcre])
-            AC_MSG_RESULT([$PCRE_LIBS])
-            PCRE_ENABLED="-DUSE_PCRE"
-         else
-            AC_MSG_CHECKING([lib pcre])
-            AC_MSG_RESULT([no, (WARNING)])
+         if test -n "$PCRE_LIBS"; then
+            test -f $with_pcre/include/pcre.h && PCRE_CFLAGS="-I$with_pcre/include"
+            test -f $with_pcre/lib/pcre.h && PCRE_CFLAGS="-I$with_pcre/lib"
+            test -f $with_pcre/pcre.h && PCRE_CFLAGS="-I$with_pcre"
+            if test -z $PCRE_CFLAGS; then
+               AC_MSG_WARN([pcre.h not found, will fall back
+                          to posix regular expressions which are less powerfull])
+            else
+               PCRE_ENABLED="-DUSE_PCRE"
+            fi
          fi
       fi
    fi
