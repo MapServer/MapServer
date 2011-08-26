@@ -263,6 +263,9 @@ static int mod_geocache_request_handler(request_rec *r) {
       return geocache_write_capabilities(apache_ctx,req_caps);
    } else if( request->type == GEOCACHE_REQUEST_GET_TILE) {
       geocache_request_get_tile *req_tile = (geocache_request_get_tile*)request;
+      if( !req_tile->ntiles) {
+         return report_error(apache_ctx);
+      }
       geocache_tile *tile = geocache_core_get_tile(global_ctx,req_tile);
       if(GC_HAS_ERROR(global_ctx)) {
          return report_error(apache_ctx);
@@ -270,9 +273,6 @@ static int mod_geocache_request_handler(request_rec *r) {
       ret = geocache_write_tile(apache_ctx,tile);
       return ret;
 
-      if( !req_tile->ntiles) {
-         return report_error(apache_ctx);
-      }
    } else if( request->type == GEOCACHE_REQUEST_GET_MAP) {
       geocache_request_get_map *req_map = (geocache_request_get_map*)request;
       geocache_map *map = geocache_core_get_map(global_ctx,req_map);
