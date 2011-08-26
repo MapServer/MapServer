@@ -243,7 +243,7 @@ int main(int argc, const char **argv) {
                 break;
             case 'z':
                 if ( GEOCACHE_SUCCESS != geocache_util_extract_int_list(gctx, (char*)optarg, ',', &zooms, &n) ||
-                        n != 2 || zooms[0] >= zooms[1]) {
+                        n != 2 || zooms[0] > zooms[1]) {
                     return usage(argv[0], "failed to parse zooms, expecting comma separated 2 ints");
                 }
                 break;
