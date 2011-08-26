@@ -17,74 +17,55 @@
 #include "geocache.h"
 #include <apr_strings.h>
 #include <math.h>
+#include "ezxml.h"
 
 /** \addtogroup services */
 /** @{ */
 
 
-static const char *wmts_0 = 
-      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-      "<Capabilities xmlns=\"http://www.opengis.net/wmts/1.0\"\n"
-      "xmlns:ows=\"http://www.opengis.net/ows/1.1\"\n"
-      "xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
-      "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-      "xmlns:gml=\"http://www.opengis.net/gml\" xsi:schemaLocation=\"http://www.opengis.net/wmts/1.0 http://schemas.opengis.net/wmts/1.0/wmtsGetCapabilities_response.xsd\"\n"
-      "version=\"1.0.0\">\n"
-      "<ows:ServiceIdentification>\n"
-      "  <ows:Title>%s</ows:Title>\n"
-      "  <ows:ServiceType>OGC WMTS</ows:ServiceType>\n"
-      "  <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>\n"
-      "</ows:ServiceIdentification>\n"
-      "<ows:ServiceProvider>\n"
-      "  <ows:ProviderName>%s</ows:ProviderName>\n"
-      "  <ows:ProviderSite xlink:href=\"%s/wmts?\" />\n"
-      "  <ows:ServiceContact>\n"
-      "    <ows:IndividualName>%s</ows:IndividualName>\n"
-      "  </ows:ServiceContact>\n"
-      "</ows:ServiceProvider>\n"
-      "<ows:OperationsMetadata>\n"
-      "  <ows:Operation name=\"GetCapabilities\">\n"
-      "    <ows:DCP>\n"
-      "      <ows:HTTP>\n"
-      "        <ows:Get xlink:href=\"%s/wmts?\">\n"
-      "          <ows:Constraint name=\"GetEncoding\">\n"
-      "            <ows:AllowedValues>\n"
-      "              <ows:Value>KVP</ows:Value>\n"
-      "            </ows:AllowedValues>\n"
-      "          </ows:Constraint>\n"
-      "        </ows:Get>\n"
-      "      </ows:HTTP>\n"
-      "    </ows:DCP>\n"
-      "  </ows:Operation>\n"
-      "  <ows:Operation name=\"GetTile\">\n"
-      "    <ows:DCP>\n"
-      "      <ows:HTTP>\n"
-      "        <ows:Get xlink:href=\"%s/wmts?\">\n"
-      "          <ows:Constraint name=\"GetEncoding\">\n"
-      "            <ows:AllowedValues>\n"
-      "              <ows:Value>KVP</ows:Value>\n"
-      "            </ows:AllowedValues>\n"
-      "          </ows:Constraint>\n"
-      "        </ows:Get>\n"
-      "      </ows:HTTP>\n"
-      "    </ows:DCP>\n"
-      "  </ows:Operation>\n"
-      "  <ows:Operation name=\"GetFeatureInfo\">\n"
-      "    <ows:DCP>\n"
-      "      <ows:HTTP>\n"
-      "        <ows:Get xlink:href=\"%s/wmts?\">\n"
-      "          <ows:Constraint name=\"GetEncoding\">\n"
-      "            <ows:AllowedValues>\n"
-      "              <ows:Value>KVP</ows:Value>\n"
-      "            </ows:AllowedValues>\n"
-      "          </ows:Constraint>\n"
-      "        </ows:Get>\n"
-      "      </ows:HTTP>\n"
-      "    </ows:DCP>\n"
-      "  </ows:Operation>\n"
-      "</ows:OperationsMetadata>\n"
-      "<Contents>\n";
-      
+
+static ezxml_t _wmts_capabilities() {
+   ezxml_t node = ezxml_new("Capabilities");
+   ezxml_set_attr(node,"xmlns","http://www.opengis.net/wmts/1.0");
+   ezxml_set_attr(node,"xmlns:ows","http://www.opengis.net/ows/1.1");
+   ezxml_set_attr(node,"xmlns:xlink","http://www.w3.org/1999/xlink");
+   ezxml_set_attr(node,"xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance");
+   ezxml_set_attr(node,"xmlns:gml","http://www.opengis.net/gml");
+   ezxml_set_attr(node,"xsi:schemaLocation","http://www.opengis.net/wmts/1.0 http://schemas.opengis.net/wmts/1.0/wmtsGetCapabilities_response.xsd");
+   ezxml_set_attr(node,"version","1.0.0");
+   return node;
+}
+
+static ezxml_t _wmts_service_identification(geocache_context *ctx, const char *title) {
+   ezxml_t node = ezxml_new("ows:ServiceIdentification");
+   ezxml_set_txt(ezxml_add_child(node,"ows:Title",0),title);
+   ezxml_set_txt(ezxml_add_child(node,"ows:ServiceType",0),"OGC WMTS");
+   ezxml_set_txt(ezxml_add_child(node,"ows:ServiceTypeVersion",0),"1.0.0");
+   return node;
+}
+
+static ezxml_t _wmts_operations_metadata(geocache_context *ctx, const char *onlineresource, const char *operationstr) {
+   ezxml_t node = ezxml_new("ows:OperationsMetadata");
+   ezxml_t operation = ezxml_add_child(node,"ows:Operation",0);
+   ezxml_set_attr(operation,"name",operationstr);
+   ezxml_t dcp = ezxml_add_child(operation,"ows:DCP",0);
+   ezxml_t http = ezxml_add_child(dcp,"ows:HTTP",0);
+   ezxml_t get = ezxml_add_child(http,"ows:Get",0);
+   ezxml_set_attr(get,"xlink:href",apr_pstrcat(ctx->pool,onlineresource,"/wmts?",NULL));
+   ezxml_t constraint = ezxml_add_child(get,"ows:Constraint",0);
+   ezxml_set_attr(constraint,"name","GetEncoding");
+   ezxml_t allowedvalues = ezxml_add_child(constraint,"ows:AllowedValues",0);
+   ezxml_set_txt(ezxml_add_child(allowedvalues,"ows:Value",0),"KVP");
+   return node;
+
+}
+
+static ezxml_t _wmts_service_provider(geocache_context *ctx, const char *onlineresource, const char *contact) {
+   ezxml_t node = ezxml_new("ows:ServiceProvider");
+   ezxml_set_txt(ezxml_add_child(node,"ProviderName",0),contact);
+   ezxml_set_txt(ezxml_add_child(node,"ProviderSite",0),onlineresource);
+   return node;
+}
 
 static const char *wmts_matrix = 
       "    <TileMatrix>\n"
@@ -99,7 +80,7 @@ static const char *wmts_matrix =
 
 void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
    geocache_request_get_capabilities_wmts *request = (geocache_request_get_capabilities_wmts*)req;
-   char *caps;
+   ezxml_t caps;
 #ifdef DEBUG
    if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
       ctx->set_error(ctx,500,"wrong wmts capabilities request");
@@ -120,10 +101,13 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    
    request->request.mime_type = apr_pstrdup(ctx->pool,"application/xml");
    
-   caps = apr_psprintf(ctx->pool,wmts_0,
-         title, "providername_todo", onlineresource, "individualname_todo",
-         onlineresource,onlineresource,onlineresource,onlineresource);
-   
+   caps = _wmts_capabilities();
+   ezxml_insert(_wmts_service_identification(ctx,title),caps,0);
+   ezxml_insert(_wmts_service_provider(ctx,onlineresource,"contact_todo"),caps,0);
+   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetCapabilities"),caps,0);
+   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetTile"),caps,0);
+   ezxml_insert(_wmts_operations_metadata(ctx,onlineresource,"GetFeatureInfo"),caps,0);
+
    
    apr_hash_index_t *layer_index = apr_hash_first(ctx->pool,cfg->tilesets);
    while(layer_index) {
@@ -132,139 +116,115 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       const void *key; apr_ssize_t keylen;
       apr_hash_this(layer_index,&key,&keylen,(void**)&tileset);
       
+      ezxml_t layer = ezxml_add_child(caps,"Layer",0);
       const char *title = apr_table_get(tileset->metadata,"title");
-      if(!title) {
-         title = "no title set, add some in metadata";
+      if(title) {
+         ezxml_set_txt(ezxml_add_child(layer,"ows:Title",0),title);
       }
       const char *abstract = apr_table_get(tileset->metadata,"abstract");
-      if(!abstract) {
-         abstract = "no abstract set, add some in metadata";
+      if(abstract) {
+         ezxml_set_txt(ezxml_add_child(layer,"ows:Abstract",0),abstract);
       }
 
-      char *dimensions="";
+      ezxml_set_txt(ezxml_add_child(layer,"ows:Identifier",0),tileset->name);
+      
+      ezxml_t style = ezxml_add_child(layer,"Style",0);
+      ezxml_set_attr(style,"isDefault","true");
+      ezxml_set_txt(ezxml_add_child(style,"ows:Identifier",0),"default");
+      
+      ezxml_set_txt(ezxml_add_child(layer,"Format",0),tileset->format->mime_type);
+   
+
       char *dimensionstemplate="";
       if(tileset->dimensions) {
          for(i=0;i<tileset->dimensions->nelts;i++) {
             geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
-            dimensions = apr_psprintf(ctx->pool,"%s"
-                  "    <Dimension>\n"
-                  "      <ows:Identifier>%s</ows:Identifier>\n"
-                  "      <Default>%s</Default>\n",
-                  dimensions,
-                  dimension->name,
-                  dimension->default_value);
+            ezxml_t dim = ezxml_add_child(layer,"Dimension",0);
+            ezxml_set_txt(ezxml_add_child(dim,"ows:Identifier",0),dimension->name);
+            ezxml_set_txt(ezxml_add_child(dim,"Default",0),dimension->default_value);
+
             if(dimension->unit) {
-               dimensions = apr_pstrcat(ctx->pool,dimensions,
-                  "      <UOM>",dimension->unit,"</UOM>\n",NULL);
+               ezxml_set_txt(ezxml_add_child(dim,"UOM",0),dimension->unit);
             }
             const char **values = dimension->print_ogc_formatted_values(ctx,dimension);
             const char **value = values;
             while(*value) {
-               dimensions = apr_pstrcat(ctx->pool,dimensions,"      <Value>",*value,"</Value>\n",NULL);
+               ezxml_set_txt(ezxml_add_child(dim,"Value",0),*value);
                value++;
             }
-            dimensions = apr_pstrcat(ctx->pool,dimensions,"    </Dimension>\n",NULL);
-
             dimensionstemplate = apr_pstrcat(ctx->pool,dimensionstemplate,"{",dimension->name,"}/",NULL);
          }
       }
-      char *tmsets = "";
-      char *bboxes = "";
-      char *infoformats = "";
-
-
-      if(tileset->wgs84bbox[0] != tileset->wgs84bbox[2]) {
-         bboxes = apr_psprintf(ctx->pool,
-               "    <ows:WGS84BoundingBox>\n"
-               "      <ows:LowerCorner>%f %f</ows:LowerCorner>\n"
-               "      <ows:UpperCorner>%f %f</ows:UpperCorner>\n"
-               "    </ows:WGS84BoundingBox>\n",
-               tileset->wgs84bbox[0], tileset->wgs84bbox[1],
-               tileset->wgs84bbox[2], tileset->wgs84bbox[3]);
-      }
-      for(i=0;i<tileset->grid_links->nelts;i++) {
-         char *matrixlimits = "";
-         geocache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
-         if(grid_link->restricted_extent) {
-            int j;
-            matrixlimits = "      <TileMatrixSetLimits>";
-            for(j=0;j<grid_link->grid->nlevels;j++) {
-               matrixlimits = apr_psprintf(ctx->pool,"%s\n"
-                     "        <TileMatrixLimits>\n"
-                     "          <TileMatrix>%s:%d</TileMatrix>\n"
-                     "          <MinTileRow>%d</MinTileRow>\n"
-                     "          <MaxTileRow>%d</MaxTileRow>\n"
-                     "          <MinTileCol>%d</MinTileCol>\n"
-                     "          <MaxTileCol>%d</MaxTileCol>\n"
-                     "        </TileMatrixLimits>",
-                     matrixlimits,
-                     grid_link->grid->name,j,
-                     grid_link->grid_limits[j][0],
-                     grid_link->grid_limits[j][2]-1,
-                     grid_link->grid_limits[j][1],
-                     grid_link->grid_limits[j][3]-1);
-
-            }
-            matrixlimits = apr_pstrcat(ctx->pool,matrixlimits,"\n      </TileMatrixSetLimits>\n",NULL);
-         }
-         tmsets = apr_pstrcat(ctx->pool,tmsets,
-               "    <TileMatrixSetLink>\n"
-               "      <TileMatrixSet>",
-               grid_link->grid->name,
-               "</TileMatrixSet>\n",
-               matrixlimits,
-               "    </TileMatrixSetLink>\n",
-               NULL);
-
-         double *bbox = grid_link->restricted_extent?grid_link->restricted_extent:grid_link->grid->extent;
-         bboxes = apr_psprintf(ctx->pool,"%s"
-               "    <ows:BoundingBox>\n"
-               "      <ows:CRS>%s</ows:CRS>\n"
-               "      <ows:LowerCorner>%f %f</ows:LowerCorner>\n"
-               "      <ows:UpperCorner>%f %f</ows:UpperCorner>\n"
-               "    </ows:BoundingBox>\n",
-               bboxes,
-               geocache_grid_get_crs(ctx,grid_link->grid),
-               bbox[0],bbox[1],
-               bbox[2],bbox[3]);
-      }
-
       if(tileset->source->info_formats) {
          int i;
          for(i=0;i<tileset->source->info_formats->nelts;i++) {
             char *iformat = APR_ARRAY_IDX(tileset->source->info_formats,i,char*);
-            infoformats = apr_psprintf(ctx->pool,"%s"
-                  "    <InfoFormat>%s</InfoFormat>\n"
-                  "    <ResourceURL format=\"%s\" resourceType=\"FeatureInfo\""
-                  " template=\"%s/wmts/1.0.0/%s/default/%s{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}/{J}/{I}.%d\"/>\n",
-                  infoformats,iformat,iformat,onlineresource,tileset->name,dimensionstemplate,i);
+            ezxml_set_txt(ezxml_add_child(layer,"InfoFormat",0),iformat);
+            ezxml_t resourceurl = ezxml_add_child(layer,"ResourceURL",0);
+            ezxml_set_attr(resourceurl,"format",iformat);
+            ezxml_set_attr(resourceurl,"resourcetype","FeatureInfo");
+            ezxml_set_attr(resourceurl,"template",
+                  apr_pstrcat(ctx->pool,onlineresource,"/wmts/1.0.0/",tileset->name,"/default/",
+                     dimensionstemplate,"{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.",apr_psprintf(ctx->pool,"%d",i),NULL));
          }
       }
-      caps = apr_psprintf(ctx->pool,"%s"
-            "  <Layer>\n"
-            "    <ows:Title>%s</ows:Title>\n"
-            "    <ows:Abstract>%s</ows:Abstract>\n"
-            "    <ows:Identifier>%s</ows:Identifier>\n"
-            "    <Style isDefault=\"true\">\n"
-            "      <ows:Identifier>default</ows:Identifier>\n"
-            "    </Style>\n"
-            "%s" /*dimensions*/
-            "    <Format>%s</Format>\n"
-            "%s" /*infoFormats*/
-            "%s" /*TileMatrixsetLinks*/
-            "%s" /*BoundinBoxes*/
-            "    <ResourceURL format=\"%s\" resourceType=\"tile\""
-            " template=\"%s/wmts/1.0.0/%s/default/%s{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.%s\"/>\n"
-            "  </Layer>\n",caps,title,abstract,
-            tileset->name,dimensions,tileset->format->mime_type,infoformats,tmsets,bboxes,
-            tileset->format->mime_type,onlineresource,
-            tileset->name, dimensionstemplate,tileset->format->extension);
+
+      ezxml_t resourceurl = ezxml_add_child(layer,"ResourceURL",0);
+      ezxml_set_attr(resourceurl,"format",tileset->format->mime_type);
+      ezxml_set_attr(resourceurl,"resourceType","tile");
+      ezxml_set_attr(resourceurl,"template",
+            apr_pstrcat(ctx->pool,onlineresource,"/wmts/1.0.0/",tileset->name,"/default/",
+               dimensionstemplate,"{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.",tileset->format->extension,NULL));
+      
+
+      if(tileset->wgs84bbox[0] != tileset->wgs84bbox[2]) {
+         ezxml_t bbox = ezxml_add_child(layer,"ows:WGS84BoundingBox",0);
+         ezxml_set_txt(ezxml_add_child(bbox,"ows:LowerCorner",0),
+               apr_psprintf(ctx->pool,"%f %f",tileset->wgs84bbox[0], tileset->wgs84bbox[1]));
+         ezxml_set_txt(ezxml_add_child(bbox,"ows:UpperCorner",0),
+               apr_psprintf(ctx->pool,"%f %f",tileset->wgs84bbox[2], tileset->wgs84bbox[3]));
+      }
+
+      for(i=0;i<tileset->grid_links->nelts;i++) {
+         geocache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+         ezxml_t tmsetlnk = ezxml_add_child(layer,"TileMatrixSetLink",0);
+         ezxml_set_txt(ezxml_add_child(tmsetlnk,"TileMatrixSet",0),grid_link->grid->name);
+
+         if(grid_link->restricted_extent) {
+            ezxml_t limits = ezxml_add_child(tmsetlnk,"TileMatrixSetLimits",0);
+            int j;
+            for(j=0;j<grid_link->grid->nlevels;j++) {
+               ezxml_t matrixlimits = ezxml_add_child(limits,"TileMatrixLimits",0);
+               ezxml_set_txt(ezxml_add_child(matrixlimits,"TileMatrix",0),
+                        apr_psprintf(ctx->pool,"%s:%d",grid_link->grid->name,j));
+               ezxml_set_txt(ezxml_add_child(matrixlimits,"MinTileRow",0),
+                        apr_psprintf(ctx->pool,"%d",grid_link->grid_limits[j][0]));
+               ezxml_set_txt(ezxml_add_child(matrixlimits,"MaxTileRow",0),
+                        apr_psprintf(ctx->pool,"%d",grid_link->grid_limits[j][2]-1));
+               ezxml_set_txt(ezxml_add_child(matrixlimits,"MinTileCol",0),
+                        apr_psprintf(ctx->pool,"%d",grid_link->grid_limits[j][1]));
+               ezxml_set_txt(ezxml_add_child(matrixlimits,"MaxTileCol",0),
+                        apr_psprintf(ctx->pool,"%d",grid_link->grid_limits[j][3]-1));
+            }
+         }
+
+
+         double *gbbox = grid_link->restricted_extent?grid_link->restricted_extent:grid_link->grid->extent;
+         ezxml_t bbox = ezxml_add_child(layer,"ows:BoundingBox",0);
+         ezxml_set_txt(ezxml_add_child(bbox,"ows:CRS",0),geocache_grid_get_crs(ctx,grid_link->grid));
+         ezxml_set_txt(ezxml_add_child(bbox,"ows:LowerCorner",0),
+               apr_psprintf(ctx->pool,"%f %f",gbbox[0], gbbox[1]));
+         ezxml_set_txt(ezxml_add_child(bbox,"ows:UpperCorner",0),
+               apr_psprintf(ctx->pool,"%f %f",gbbox[2], gbbox[3]));
+      }
       layer_index = apr_hash_next(layer_index);
    }
+
+   
    
    apr_hash_index_t *grid_index = apr_hash_first(ctx->pool,cfg->grids);
-
-   while(grid_index) {
+/*
+   while(0 && grid_index) {
       geocache_grid *grid;
       char *epsgnum;
       const void *key; apr_ssize_t keylen;
@@ -273,7 +233,6 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       const char *WellKnownScaleSet;
       apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
       
-      /*locate the number after epsg: in the grd srs*/
       epsgnum = strchr(grid->srs,':');
       if(!epsgnum) {
          epsgnum = grid->srs;
@@ -308,9 +267,11 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       caps = apr_pstrcat(ctx->pool,caps,"  </TileMatrixSet>\n",NULL);
       grid_index = apr_hash_next(grid_index);
    }
-   
-   caps = apr_pstrcat(ctx->pool,caps,"</Contents>\n</Capabilities>\n",NULL);
-   request->request.capabilities = caps;
+*/
+   char *tmpcaps = ezxml_toxml(caps);
+   ezxml_free(caps);
+   request->request.capabilities = apr_pstrdup(ctx->pool,tmpcaps);
+   free(tmpcaps);
 }
 
 /**
