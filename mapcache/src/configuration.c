@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <apr_strings.h>
 #include <apr_hash.h>
+#include <apr_file_io.h>
 
 geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    geocache_cfg *cfg = (geocache_cfg*)apr_pcalloc(pool, sizeof(geocache_cfg));
@@ -23,6 +24,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
          geocache_imageio_create_jpeg_format(pool,"JPEG",95),
          "JPEG");
    cfg->merge_format = geocache_configuration_get_image_format(cfg,"PNG");
+   cfg->lockdir = "/tmp/geocache_locks";
    return cfg;
 }
 
@@ -47,6 +49,7 @@ void geocache_configuration_add_source(geocache_cfg *config, geocache_source *so
 }
 
 void geocache_configuration_add_tileset(geocache_cfg *config, geocache_tileset *tileset, const char * key) {
+   tileset->config = config;
    apr_hash_set(config->tilesets, key, APR_HASH_KEY_STRING, (void*)tileset);
 }
 
@@ -446,7 +449,8 @@ void parseTileset(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
 
 void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
    xmlDocPtr doc;
-
+   char *testlockfilename;
+   apr_file_t *testlockfile;
    doc = xmlReadFile(filename, NULL, 0);
    if (doc == NULL) {
       ctx->set_error(ctx,GEOCACHE_PARSE_ERROR, "libxml2 failed to parse file %s. Is it valid XML?", filename);
@@ -483,11 +487,13 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
                   if(!value || !*value || xmlStrcmp(value, BAD_CAST "false")) {
                      config->services[GEOCACHE_SERVICE_WMS] = geocache_service_wms_create(ctx);
                   }
-               }else if(!xmlStrcmp(service_node->name, BAD_CAST "tms")) {
+                  xmlFree(value);
+               } else if(!xmlStrcmp(service_node->name, BAD_CAST "tms")) {
                   xmlChar* value = xmlNodeGetContent(service_node);
                   if(!value || !*value || xmlStrcmp(value, BAD_CAST "false")) {
                      config->services[GEOCACHE_SERVICE_TMS] = geocache_service_tms_create(ctx);
                   }
+                  xmlFree(value);
                }
             }
          } else if(!xmlStrcmp(cur_node->name, BAD_CAST "merge_format")) {
@@ -500,11 +506,16 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
                
             }
             config->merge_format = format;
+         } else if(!xmlStrcmp(cur_node->name, BAD_CAST "lock_dir")) {
+            xmlChar *value = xmlNodeGetContent(cur_node);
+            config->lockdir = apr_pstrdup(ctx->pool, (char*)value);
+            xmlFree(value);
          } else {
             ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse geocache config file %s: unknown tag <%s>",
                   filename, cur_node->name);
             return;
          }
+
       }
 
    } else {
@@ -514,6 +525,20 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
             filename,root_element->name);
       return;
    }
+
+   /* check our lock directory is valid and writable */
+   if(APR_SUCCESS != apr_dir_make_recursive(config->lockdir, APR_OS_DEFAULT, ctx->pool)) {
+       ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to create lock directory %s",config->lockdir);
+       return;
+   }
+   testlockfilename = apr_psprintf(ctx->pool,"%s/test.lock",config->lockdir);
+   if(apr_file_open(&testlockfile, testlockfilename, APR_FOPEN_CREATE|APR_FOPEN_WRITE,
+               APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
+       ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create test lockfile %s",testlockfilename);
+       return; /* we could not create the file */
+   }
+   apr_file_close(testlockfile);
+   apr_file_remove(testlockfilename,ctx->pool);
 
    if(!config->services[GEOCACHE_SERVICE_WMS] &&
          !config->services[GEOCACHE_SERVICE_TMS]) {

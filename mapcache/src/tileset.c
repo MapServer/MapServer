@@ -66,13 +66,13 @@ void _geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *m
    int i;
    for(i=0; i<mt->ntiles; i++) {
       geocache_tile *tile = &(mt->tiles[i]);
-      mt->tile.tileset->cache->tile_lock(ctx, tile);
+      geocache_tileset_tile_lock(ctx, tile);
       if(GC_HAS_ERROR(ctx)) {
          /* undo successful locks */
          int j;
          for(j=0;j<i;j++) {
             tile = &(mt->tiles[j]);
-            mt->tile.tileset->cache->tile_unlock(ctx,tile);
+            geocache_tileset_tile_unlock(ctx,tile);
          }
       }
    }
@@ -85,7 +85,7 @@ void _geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile 
    int i;
    for(i=0; i<mt->ntiles; i++) {
       geocache_tile *tile = &(mt->tiles[i]);
-      mt->tile.tileset->cache->tile_unlock(ctx, tile);
+      geocache_tileset_tile_unlock(ctx, tile);
    }
 }
 
@@ -175,6 +175,7 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx) {
    tileset->extent[0]=tileset->extent[1]=tileset->extent[2]=tileset->extent[3]=0;
    tileset->forwarded_params = apr_table_make(ctx->pool,1);
    tileset->format = NULL;
+   tileset->config = NULL;
    return tileset;
 }
 
@@ -244,7 +245,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
       ctx->global_lock_aquire(ctx,0);
       GC_CHECK_ERROR(ctx);
 
-      isLocked = tile->tileset->cache->tile_lock_exists(ctx, tile);
+      isLocked = geocache_tileset_tile_lock_exists(ctx, tile);
       if(isLocked == GEOCACHE_FALSE) {
          /* no other thread is doing the rendering, we aquire and lock a list of tiles to render */
          mt = _geocache_tileset_metatile_get(ctx, tile);
@@ -261,7 +262,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
          ctx->log(ctx, GEOCACHE_DEBUG, "cache wait: tileset %s - tile %d %d %d",
                tile->tileset->name,tile->x, tile->y,tile->z);
 #endif
-         tile->tileset->cache->tile_lock_wait(ctx,tile);
+         geocache_tileset_tile_lock_wait(ctx,tile);
          GC_CHECK_ERROR(ctx);
       } else {
          /* no other thread is doing the rendering, do it ourselves */

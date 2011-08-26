@@ -105,11 +105,18 @@ static geocache_context_fcgi* fcgi_context_create() {
    geocache_context_fcgi *ctx = apr_pcalloc(pool, sizeof(geocache_context_fcgi));
    ctx->ctx.pool = pool;
    init_fcgi_context(ctx);
-   ret = apr_proc_mutex_create(&ctx->mutex,"geocache_mutex",APR_LOCK_DEFAULT,pool);
+   ctx->ctx.log(ctx,GEOCACHE_DEBUG,"before mutex");
+   ret = apr_proc_mutex_child_init(&ctx->mutex,"geocache_mutex",pool);
+   ctx->ctx.log(ctx,GEOCACHE_DEBUG,"after mutex");
+
    if(ret != APR_SUCCESS) {
-      ctx->ctx.set_error(&ctx->ctx,GEOCACHE_MUTEX_ERROR,"failed to created mutex");
-   } else {
-      apr_pool_cleanup_register(pool,ctx->mutex,(void*)apr_proc_mutex_destroy, apr_pool_cleanup_null);
+       ctx->ctx.log(ctx,GEOCACHE_DEBUG,"create mutex");
+          ret = apr_proc_mutex_create(&ctx->mutex,"geocache_mutex",APR_LOCK_DEFAULT,pool);
+       if(ret != APR_SUCCESS) {
+          ctx->ctx.set_error(&ctx->ctx,GEOCACHE_MUTEX_ERROR,"failed to created mutex");
+       } else {
+          apr_pool_cleanup_register(pool,ctx->mutex,(void*)apr_proc_mutex_destroy, apr_pool_cleanup_null);
+       }
    }
    return ctx;
 }
