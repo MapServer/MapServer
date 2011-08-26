@@ -360,7 +360,13 @@
            apache
       -->
       <base>/tmp</base>
-      <hitstats>true</hitstats>
+
+      <!-- hitstats
+           log last access time and total number of hits for each tile in the cache.
+           note that this slows the tile accesses drastically as it requires a write
+           to the database for each tile access
+      -->
+      <hitstats>false</hitstats>
    </cache>
 
    <!-- format

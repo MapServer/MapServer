@@ -1448,6 +1448,9 @@ geocache_dimension* geocache_dimension_regex_create(apr_pool_t *pool);
 geocache_dimension* geocache_dimension_intervals_create(apr_pool_t *pool);
 geocache_dimension* geocache_dimension_time_create(apr_pool_t *pool);
 
+
+int geocache_is_axis_inverted(const char *srs);
+
 #endif /* GEOCACHE_H_ */
 /* vim: ai ts=3 sts=3 et sw=3
 */

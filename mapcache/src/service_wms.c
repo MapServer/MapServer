@@ -295,7 +295,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
    const char *srs=NULL;
    int width=0, height=0;
    double *bbox;
-   int isGetMap=0;
+   int isGetMap=0,iswms130=0;
    int errcode = 200;
    char *errmsg = NULL;
    geocache_service_wms *wms_service = (geocache_service_wms*)this;
@@ -323,6 +323,10 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
 
    if( ! strcasecmp(str,"getmap")) {
       isGetMap = 1;
+      str = apr_table_get(params,"VERSION");
+      if(!strcmp(str,"1.3.0")) {
+         iswms130 = 1;
+      }
    } else {
       if( ! strcasecmp(str,"getcapabilities") ) {
          *request = (geocache_request*)
@@ -384,11 +388,32 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
       }
    }
 
-   srs = apr_table_get(params,"SRS");
-   if(!srs) {
-      errcode = 400;
-      errmsg = "received wms request with no srs";
-      goto proxies;
+   if(iswms130) {
+      srs = apr_table_get(params,"CRS");
+      if(!srs) {
+         errcode = 400;
+         errmsg = "received wms request with no crs";
+         goto proxies;
+      }
+   } else {
+      srs = apr_table_get(params,"SRS");
+      if(!srs) {
+         errcode = 400;
+         errmsg = "received wms request with no srs";
+         goto proxies;
+      }
+   }
+   if(iswms130) {
+      /*check if we should flib the axis order*/
+      if(geocache_is_axis_inverted(srs)) {
+         double swap;
+         swap = bbox[0];
+         bbox[0] = bbox[1];
+         bbox[1] = swap;
+         swap = bbox[2];
+         bbox[2] = bbox[3];
+         bbox[3] = swap;
+      }
    }
 
    if(isGetMap) {
