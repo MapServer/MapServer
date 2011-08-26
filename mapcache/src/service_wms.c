@@ -767,7 +767,7 @@ proxies:
 #endif
 }
 
-void _configuration_parse_wms(geocache_context *ctx, ezxml_t node, geocache_service *gservice) {
+void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_service *gservice) {
    assert(gservice->type == GEOCACHE_SERVICE_WMS);
    geocache_service_wms *wms = (geocache_service_wms*)gservice;
    ezxml_t rule_node;
@@ -789,7 +789,7 @@ void _configuration_parse_wms(geocache_context *ctx, ezxml_t node, geocache_serv
          ctx->set_error(ctx,500,"rule \"%s\" does not contain an <http> block",name);
          return;
       }
-      rule->http = geocache_http_configuration_parse(ctx,http_node);
+      rule->http = geocache_http_configuration_parse_xml(ctx,http_node);
       GC_CHECK_ERROR(ctx);
 
       ezxml_t param_node;
@@ -820,7 +820,7 @@ void _configuration_parse_wms(geocache_context *ctx, ezxml_t node, geocache_serv
 
          dimension->name = apr_pstrdup(ctx->pool,name);
 
-         dimension->parse(ctx,dimension,param_node);
+         dimension->configuration_parse_xml(ctx,dimension,param_node);
          GC_CHECK_ERROR(ctx);
 
          APR_ARRAY_PUSH(rule->match_params,geocache_dimension*) = dimension;
@@ -841,7 +841,7 @@ geocache_service* geocache_service_wms_create(geocache_context *ctx) {
    service->service.type = GEOCACHE_SERVICE_WMS;
    service->service.parse_request = _geocache_service_wms_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wms;
-   service->service.configuration_parse = _configuration_parse_wms;
+   service->service.configuration_parse_xml = _configuration_parse_wms_xml;
    return (geocache_service*)service;
 }
 

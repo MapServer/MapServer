@@ -1,0 +1,20 @@
+{
+ "grids": [
+  {
+   "name":"grid1",
+   "extent":[0,3,4,4]
+  },
+  {
+   "name":"grid2"
+  }
+ ],
+ "formats": [
+  {
+   "name":"png"
+  }
+ ]
+}
+
+/* vim: ai ts=1 sts=1 et sw=1
+*/
+

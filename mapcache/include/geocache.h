@@ -27,7 +27,7 @@
 #include <apr_global_mutex.h>
 #include "util.h"
 #include "ezxml.h"
-#include "ezxml.h"
+#include "cJSON.h"
 #include "errors.h"
 
 #if 0
@@ -270,11 +270,13 @@ struct geocache_source {
 
     void (*query_info)(geocache_context *ctx, geocache_feature_info *fi);
 
-    void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_source * source);
+    void (*configuration_parse_xml)(geocache_context *ctx, ezxml_t xml, geocache_source * source);
+    void (*configuration_parse_json)(geocache_context *ctx, cJSON *node, geocache_source * source);
     void (*configuration_check)(geocache_context *ctx, geocache_source * source);
 };
 
-geocache_http* geocache_http_configuration_parse(geocache_context *ctx,ezxml_t node);
+geocache_http* geocache_http_configuration_parse_xml(geocache_context *ctx,ezxml_t node);
+geocache_http* geocache_http_configuration_parse_json(geocache_context *ctx,cJSON *node);
 geocache_http* geocache_http_clone(geocache_context *ctx, geocache_http *orig);
 
 struct geocache_http {
@@ -357,7 +359,8 @@ struct geocache_cache {
      */
     void (*tile_set)(geocache_context *ctx, geocache_tile * tile);
 
-    void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_cache * cache);
+    void (*configuration_parse_xml)(geocache_context *ctx, ezxml_t xml, geocache_cache * cache);
+    void (*configuration_parse_json)(geocache_context *ctx, cJSON *node, geocache_cache * cache);
     void (*configuration_post_config)(geocache_context *ctx, geocache_cache * cache, geocache_cfg *config);
 };
 
@@ -524,7 +527,7 @@ struct geocache_request_proxy {
    geocache_request request;
    geocache_http *http;
    apr_table_t *params;
-   char *pathinfo;
+   const char *pathinfo;
 };
 
 struct geocache_forwarding_rule {
@@ -584,7 +587,8 @@ struct geocache_service {
     /**
      * parse advanced configuration options for the selected service
      */
-    void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_service * service);
+    void (*configuration_parse_xml)(geocache_context *ctx, ezxml_t xml, geocache_service * service);
+    void (*configuration_parse_json)(geocache_context *ctx, cJSON *node, geocache_service * service);
 };
 
 /**\class geocache_service_wms
@@ -874,6 +878,8 @@ struct geocache_cfg {
  * @return
  */
 void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config);
+void geocache_configuration_parse_json(geocache_context *ctx, const char *filename, geocache_cfg *config);
+void geocache_configuration_parse_xml(geocache_context *ctx, const char *filename, geocache_cfg *config);
 geocache_cfg* geocache_configuration_create(apr_pool_t *pool);
 geocache_source* geocache_configuration_get_source(geocache_cfg *config, const char *key);
 geocache_cache* geocache_configuration_get_cache(geocache_cfg *config, const char *key);
@@ -1420,7 +1426,8 @@ struct geocache_dimension {
    /**
     * \brief parse the value given in the configuration
     */
-   void (*parse)(geocache_context *context, geocache_dimension *dim, ezxml_t node);
+   void (*configuration_parse_xml)(geocache_context *context, geocache_dimension *dim, ezxml_t node);
+   void (*configuration_parse_json)(geocache_context *context, geocache_dimension *dim, cJSON *node);
 };
 
 struct geocache_dimension_values {

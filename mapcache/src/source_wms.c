@@ -91,7 +91,7 @@ void _geocache_source_wms_query(geocache_context *ctx, geocache_feature_info *fi
  * \private \memberof geocache_source_wms
  * \sa geocache_source::configuration_parse()
  */
-void _geocache_source_wms_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_source *source) {
+void _geocache_source_wms_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_source *source) {
    ezxml_t cur_node;
    geocache_source_wms *src = (geocache_source_wms*)source;
 
@@ -134,7 +134,7 @@ void _geocache_source_wms_configuration_parse(geocache_context *ctx, ezxml_t nod
       }
    }
    if ((cur_node = ezxml_child(node,"http")) != NULL) {
-      src->http = geocache_http_configuration_parse(ctx,cur_node);
+      src->http = geocache_http_configuration_parse_xml(ctx,cur_node);
    }
 }
 
@@ -168,7 +168,7 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    source->source.type = GEOCACHE_SOURCE_WMS;
    source->source.render_map = _geocache_source_wms_render_map;
    source->source.configuration_check = _geocache_source_wms_configuration_check;
-   source->source.configuration_parse = _geocache_source_wms_configuration_parse;
+   source->source.configuration_parse_xml = _geocache_source_wms_configuration_parse_xml;
    source->source.query_info = _geocache_source_wms_query;
    source->wms_default_params = apr_table_make(ctx->pool,4);;
    source->getmap_params = apr_table_make(ctx->pool,4);

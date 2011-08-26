@@ -339,7 +339,7 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
 /**
  * \private \memberof geocache_cache_disk
  */
-static void _geocache_cache_disk_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
+static void _geocache_cache_disk_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
 
@@ -400,7 +400,7 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
    cache->cache.tile_exists = _geocache_cache_disk_has_tile;
    cache->cache.tile_set = _geocache_cache_disk_set;
    cache->cache.configuration_post_config = _geocache_cache_disk_configuration_post_config;
-   cache->cache.configuration_parse = _geocache_cache_disk_configuration_parse;
+   cache->cache.configuration_parse_xml = _geocache_cache_disk_configuration_parse_xml;
    return (geocache_cache*)cache;
 }
 

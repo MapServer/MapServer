@@ -16,6 +16,15 @@
 
 #include "geocache.h"
 
+void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
+   int len = strlen(filename);
+   char *ext = &(filename[len-3]);
+   if(strcasecmp(ext,"xml")) {
+      geocache_configuration_parse_json(ctx,filename,config);
+   } else {
+      geocache_configuration_parse_xml(ctx,filename,config);
+   }
+}
 geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_get_tile *req_tile) {
    geocache_tile *rettile = NULL;
    int i;

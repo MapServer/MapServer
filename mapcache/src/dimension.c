@@ -54,7 +54,7 @@ static const char** _geocache_dimension_intervals_print(geocache_context *ctx, g
    return ret;
 }
 
-static void _geocache_dimension_intervals_parse(geocache_context *ctx, geocache_dimension *dim,
+static void _geocache_dimension_intervals_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
    const char *entry = node->txt;
    int count = 1;
@@ -123,7 +123,7 @@ static const char** _geocache_dimension_regex_print(geocache_context *ctx, geoca
    return ret;
 }
 
-static void _geocache_dimension_regex_parse(geocache_context *ctx, geocache_dimension *dim,
+static void _geocache_dimension_regex_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
    const char *entry = node->txt;
    if(!entry || !*entry) {
@@ -180,7 +180,7 @@ static const char** _geocache_dimension_values_print(geocache_context *ctx, geoc
    return ret;
 }
 
-static void _geocache_dimension_values_parse(geocache_context *ctx, geocache_dimension *dim,
+static void _geocache_dimension_values_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
    int count = 1;
    const char *entry = node->txt;
@@ -217,7 +217,7 @@ geocache_dimension* geocache_dimension_values_create(apr_pool_t *pool) {
    dimension->dimension.type = GEOCACHE_DIMENSION_VALUES;
    dimension->nvalues = 0;
    dimension->dimension.validate = _geocache_dimension_values_validate;
-   dimension->dimension.parse = _geocache_dimension_values_parse;
+   dimension->dimension.configuration_parse_xml = _geocache_dimension_values_parse_xml;
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_values_print;
    return (geocache_dimension*)dimension;
 }
@@ -237,7 +237,7 @@ geocache_dimension* geocache_dimension_intervals_create(apr_pool_t *pool) {
    dimension->dimension.type = GEOCACHE_DIMENSION_INTERVALS;
    dimension->nintervals = 0;
    dimension->dimension.validate = _geocache_dimension_intervals_validate;
-   dimension->dimension.parse = _geocache_dimension_intervals_parse;
+   dimension->dimension.configuration_parse_xml = _geocache_dimension_intervals_parse_xml;
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_intervals_print;
    return (geocache_dimension*)dimension;
 }
@@ -248,7 +248,7 @@ geocache_dimension* geocache_dimension_regex_create(apr_pool_t *pool) {
    dimension->regex = (regex_t*)apr_pcalloc(pool, sizeof(regex_t));
 #endif
    dimension->dimension.validate = _geocache_dimension_regex_validate;
-   dimension->dimension.parse = _geocache_dimension_regex_parse;
+   dimension->dimension.configuration_parse_xml = _geocache_dimension_regex_parse_xml;
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_regex_print;
    return (geocache_dimension*)dimension;
 }

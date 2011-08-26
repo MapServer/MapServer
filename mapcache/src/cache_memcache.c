@@ -165,7 +165,7 @@ static void _geocache_cache_memcache_set(geocache_context *ctx, geocache_tile *t
 /**
  * \private \memberof geocache_cache_memcache
  */
-static void _geocache_cache_memcache_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
+static void _geocache_cache_memcache_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
    geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
    int servercount = 0;
@@ -248,7 +248,7 @@ geocache_cache* geocache_cache_memcache_create(geocache_context *ctx) {
    cache->cache.tile_set = _geocache_cache_memcache_set;
    cache->cache.tile_delete = _geocache_cache_memcache_delete;
    cache->cache.configuration_post_config = _geocache_cache_memcache_configuration_post_config;
-   cache->cache.configuration_parse = _geocache_cache_memcache_configuration_parse;
+   cache->cache.configuration_parse_xml = _geocache_cache_memcache_configuration_parse_xml;
    return (geocache_cache*)cache;
 }
 

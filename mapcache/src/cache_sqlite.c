@@ -152,7 +152,7 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
    }
    sqlite3_stmt *stmt;
    char *sql;
-   const char *dim;
+   const char *dim=NULL;
    if(tile->dimensions) {
       sql = "SELECT data,strftime(\"%s\",ctime) from tiles where x=? and y=? and z=? and dim=?";
    } else {
@@ -240,7 +240,7 @@ static void _geocache_cache_sqlite_set(geocache_context *ctx, geocache_tile *til
    sqlite3_close(handle);
 }
 
-static void _geocache_cache_sqlite_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
+static void _geocache_cache_sqlite_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
    geocache_cache_sqlite *dcache = (geocache_cache_sqlite*)cache;
    if ((cur_node = ezxml_child(node,"base")) != NULL) {
@@ -306,7 +306,7 @@ geocache_cache* geocache_cache_sqlite_create(geocache_context *ctx) {
    cache->cache.tile_exists = _geocache_cache_sqlite_has_tile;
    cache->cache.tile_set = _geocache_cache_sqlite_set;
    cache->cache.configuration_post_config = _geocache_cache_sqlite_configuration_post_config;
-   cache->cache.configuration_parse = _geocache_cache_sqlite_configuration_parse;
+   cache->cache.configuration_parse_xml = _geocache_cache_sqlite_configuration_parse_xml;
    return (geocache_cache*)cache;
 }
 

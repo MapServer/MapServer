@@ -278,7 +278,7 @@ apr_table_t *geocache_http_parse_param_string(geocache_context *r, char *args_st
    return params;
 }
 
-geocache_http* geocache_http_configuration_parse(geocache_context *ctx, ezxml_t node) {
+geocache_http* geocache_http_configuration_parse_xml(geocache_context *ctx, ezxml_t node) {
    ezxml_t http_node;
    geocache_http *req = (geocache_http*)apr_pcalloc(ctx->pool,
          sizeof(geocache_http));

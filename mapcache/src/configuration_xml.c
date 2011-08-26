@@ -264,7 +264,7 @@ void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tile
          return;
       }
 
-      dimension->parse(ctx,dimension,dimension_node);
+      dimension->configuration_parse_xml(ctx,dimension,dimension_node);
       GC_CHECK_ERROR(ctx);
 
       APR_ARRAY_PUSH(dimensions,geocache_dimension*) = dimension;
@@ -451,7 +451,7 @@ void parseSource(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       GC_CHECK_ERROR(ctx);
    } 
    
-   source->configuration_parse(ctx,node,source);
+   source->configuration_parse_xml(ctx,node,source);
    GC_CHECK_ERROR(ctx);
    source->configuration_check(ctx,source);
    GC_CHECK_ERROR(ctx);
@@ -602,7 +602,7 @@ void parseCache(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    }
    cache->name = name;
 
-   cache->configuration_parse(ctx,node,cache);
+   cache->configuration_parse_xml(ctx,node,cache);
    GC_CHECK_ERROR(ctx);
    geocache_configuration_add_cache(config,cache,name);
    return;
@@ -942,7 +942,7 @@ static void createEmptyImages(geocache_context *ctx, geocache_cfg *cfg) {
    GC_CHECK_ERROR(ctx);
 }
 
-void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
+void geocache_configuration_parse_xml(geocache_context *ctx, const char *filename, geocache_cfg *config) {
    ezxml_t doc, node;
    doc = ezxml_parse_file(filename);
    if (doc == NULL) {
@@ -999,50 +999,50 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
          if(!strcasecmp(enabled,"true")) {
             if (!strcasecmp(type,"wms")) {
                geocache_service *new_service = geocache_service_wms_create(ctx);
-               if(new_service->configuration_parse) {
-                  new_service->configuration_parse(ctx,service_node,new_service);
+               if(new_service->configuration_parse_xml) {
+                  new_service->configuration_parse_xml(ctx,service_node,new_service);
                }
                config->services[GEOCACHE_SERVICE_WMS] = new_service;
             }
             else if (!strcasecmp(type,"tms")) {
                geocache_service *new_service = geocache_service_tms_create(ctx);
-               if(new_service->configuration_parse) {
-                  new_service->configuration_parse(ctx,service_node,new_service);
+               if(new_service->configuration_parse_xml) {
+                  new_service->configuration_parse_xml(ctx,service_node,new_service);
                }
                config->services[GEOCACHE_SERVICE_TMS] = new_service;
             }
             else if (!strcasecmp(type,"wmts")) {
                geocache_service *new_service = geocache_service_wmts_create(ctx);
-               if(new_service->configuration_parse) {
-                  new_service->configuration_parse(ctx,service_node,new_service);
+               if(new_service->configuration_parse_xml) {
+                  new_service->configuration_parse_xml(ctx,service_node,new_service);
                }
                config->services[GEOCACHE_SERVICE_WMTS] = new_service;
             }
             else if (!strcasecmp(type,"kml")) {
                geocache_service *new_service = geocache_service_kml_create(ctx);
-               if(new_service->configuration_parse) {
-                  new_service->configuration_parse(ctx,service_node,new_service);
+               if(new_service->configuration_parse_xml) {
+                  new_service->configuration_parse_xml(ctx,service_node,new_service);
                }
                config->services[GEOCACHE_SERVICE_KML] = new_service;
             }
             else if (!strcasecmp(type,"gmaps")) {
                geocache_service *new_service = geocache_service_gmaps_create(ctx);
-               if(new_service->configuration_parse) {
-                  new_service->configuration_parse(ctx,service_node,new_service);
+               if(new_service->configuration_parse_xml) {
+                  new_service->configuration_parse_xml(ctx,service_node,new_service);
                }
                config->services[GEOCACHE_SERVICE_GMAPS] = new_service;
             }
             else if (!strcasecmp(type,"ve")) {
                geocache_service *new_service = geocache_service_ve_create(ctx);
-               if(new_service->configuration_parse) {
-                  new_service->configuration_parse(ctx,service_node,new_service);
+               if(new_service->configuration_parse_xml) {
+                  new_service->configuration_parse_xml(ctx,service_node,new_service);
                }
                config->services[GEOCACHE_SERVICE_VE] = new_service;
             }
             else if (!strcasecmp(type,"demo")) {
                geocache_service *new_service = geocache_service_demo_create(ctx);
-               if(new_service->configuration_parse) {
-                  new_service->configuration_parse(ctx,service_node,new_service);
+               if(new_service->configuration_parse_xml) {
+                  new_service->configuration_parse_xml(ctx,service_node,new_service);
                }
                config->services[GEOCACHE_SERVICE_DEMO] = new_service;
             } else {
