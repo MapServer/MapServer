@@ -170,7 +170,7 @@
       <metadata>
          <title>Géoportail - Antilles françaises</title>
       </metadata>
-      <extent>-6791168 1761280 -6553600 2023424</extent>
+      <extent>-6815744 1572864 -6291456 2097152</extent>
       <srs>EPSG:310915814</srs>
       <srsalias>IGNF:GEOPORTALANF</srsalias>
       <srsalias>EPSG:310495002</srsalias>
@@ -379,13 +379,14 @@
         requires building with "with-sqlite"
    -->
    <cache name="sqlite" type="sqlite3">
-      <!-- base
+      <!-- dbname_template
            
-           absolute filesystem path where the sqlite database files will be stored.
-           this directory needs to be readable and writable by the user running
-           apache
+           template string used to construct a filename from a tileset name and
+           a grid name. once the template replacements have occured, the
+           generated filename needs to point to a readable and writable file
+           by the user running apache
       -->
-      <base>/tmp</base>
+      <dbname_template>/tmp/{tileset}#{grid}.db</dbname_template>
 
       <!-- hitstats
            log last access time and total number of hits for each tile in the cache.
@@ -725,6 +726,7 @@
       <format>PNG</format>
       <grid>FXX</grid>
       <grid>MILLER</grid>
+      <grid>ANF</grid>
       <grid>WGS84</grid>
       <grid>g</grid>
       <metatile>5 5</metatile>
