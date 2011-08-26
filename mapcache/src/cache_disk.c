@@ -60,8 +60,6 @@ void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, c
       while(i--) {
          apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
          start = apr_pstrcat(ctx->pool,start,"/",entry->key,"/",entry->val,NULL);
-         ctx->log(ctx,GEOCACHE_DEBUG,"tile dim %s",start);
-
       }
    }
    *path = apr_psprintf(ctx->pool,"%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
@@ -165,7 +163,6 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
    GC_CHECK_ERROR(ctx);
 
    /* find the location of the last '/' in the string */
-   ctx->log(ctx,GEOCACHE_DEBUG,"filename is %s",filename);
    hackptr1 = filename;
    while(*hackptr1) {
       if(*hackptr1 == '/')
