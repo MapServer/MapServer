@@ -138,6 +138,9 @@ static int write_http_response(geocache_context_apache_request *ctx, geocache_ht
       if((rc = ap_meets_conditions(r)) != OK) {
          return rc;
       }
+      char *timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
+      apr_rfc822_date(timestr, response->mtime);
+      apr_table_setn(r->headers_out, "Last-Modified", timestr);
    }
    if(response->headers && !apr_is_empty_table(response->headers)) {
       const apr_array_header_t *elts = apr_table_elts(response->headers);
