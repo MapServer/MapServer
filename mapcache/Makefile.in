@@ -1,12 +1,10 @@
 include ./Makefile.inc
 
-DIRS=src
-
 all: .header force_look
 	cd src; $(MAKE) $(MFLAGS)
 	
-install: .header
-	cd src; make install
+install-module:
+	cd src; $(MAKE) install-module
 
 .header: include/geocache.h include/util.h include/errors.h
 	$(MAKE) clean
@@ -14,14 +12,6 @@ install: .header
 	
 force_look:
 	true
-
-src/.libs/mod_geocache.so: src/mod_geocache.c $(SRCS)
-	$(APXS) -Wc,"$(CFLAGS)" -Iinclude $(JPEG_INC) $(PNG_INC) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(JPEG_LIB) $(PNG_LIB) -c src/mod_geocache.c $(SRCS)
-
-#install: src/.libs/mod_geocache.so
-	#$(APACHECTL) stop
-#	$(APXS) -i -a -n geocache src/mod_geocache.la
-	#$(APACHECTL) start
 
 clean:
 	cd src; $(MAKE) clean

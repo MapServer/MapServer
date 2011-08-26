@@ -198,8 +198,8 @@ static int mod_geocache_request_handler(request_rec *r) {
    apr_table_t *params;
    geocache_cfg *config = NULL;
    geocache_request *request;
-   geocache_context_apache_request *ctx = apache_request_context_create(r); 
-   geocache_context *c = (geocache_context*)ctx;
+   geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
+   geocache_context *global_ctx = (geocache_context*)apache_ctx;
    geocache_tile *tile;
    int i;
 
@@ -210,14 +210,14 @@ static int mod_geocache_request_handler(request_rec *r) {
       return HTTP_METHOD_NOT_ALLOWED;
    }
 
-   params = geocache_http_parse_param_string(c, r->args);
+   params = geocache_http_parse_param_string(global_ctx, r->args);
    config = ap_get_module_config(r->per_dir_config, &geocache_module);
 
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
       /* loop through the services that have been configured */
       geocache_service *service = config->services[i];
       if(!service) continue;
-      request = service->parse_request(c,r->path_info,params,config);
+      request = service->parse_request(global_ctx,r->path_info,params,config);
       /* the service has recognized the request if it returns a non NULL value */
       if(request)
          break;
@@ -229,9 +229,9 @@ static int mod_geocache_request_handler(request_rec *r) {
 
    for(i=0;i<request->ntiles;i++) {
       geocache_tile *tile = request->tiles[i];
-      int rv = geocache_tileset_tile_get(tile, c);
+      int rv = geocache_tileset_tile_get(tile, global_ctx);
       if(rv != GEOCACHE_SUCCESS) {
-         c->log(c,c->get_error(c),c->get_error_message(c));
+         global_ctx->log(global_ctx,GEOCACHE_INFO,global_ctx->get_error_message(global_ctx));
          return HTTP_NOT_FOUND;
       }
    }
@@ -240,14 +240,14 @@ static int mod_geocache_request_handler(request_rec *r) {
    } else {
       /* TODO: individual check on tiles if merging is allowed */
 
-      tile = (geocache_tile*)geocache_image_merge_tiles((geocache_context*)ctx,config->merge_format,request->tiles,request->ntiles);
+      tile = (geocache_tile*)geocache_image_merge_tiles(global_ctx,config->merge_format,request->tiles,request->ntiles);
       if(!tile) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "tile merging failed to return data");
          return HTTP_INTERNAL_SERVER_ERROR;
       }
       tile->tileset = request->tiles[0]->tileset;
    }
-   return geocache_write_tile(ctx,tile);
+   return geocache_write_tile(apache_ctx,tile);
 }
 
 static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {

@@ -1,21 +1,27 @@
 include ../Makefile.inc
 
-all: mod_geocache.so geocache.fcgi
+LIBTOOL=../libtool
 
-install: mod_geocache.so
-	$(APXS) -i -a -n geocache mod_geocache.so
+all: $(TARGETS)
+
+install-module: mod_geocache.o
+	$(APXS) -i -a -n geocache mod_geocache.la
+
+install-fcgi: geocache.fcgi fcgihelp
+
+fcgihelp:
+	echo "fcgi help"
 
 .c.o:
-	$(CC) $(ALL_CFLAGS) -c $<
+	$(LIBTOOL) --mode=compile $(CC) $(GC_CFLAGS) $(APR_CFLAGS) -c $<
 	
+mod_geocache.la: mod_geocache.o
+
 mod_geocache.o:  mod_geocache.c $(OBJS)
-	$(CC) $(ALL_CFLAGS) -c mod_geocache.c
-	
-mod_geocache.so: mod_geocache.o
-	$(CC) -shared -o mod_geocache.so mod_geocache.o $(OBJS) $(ALL_LIBS) -Wl,-soname -Wl,mod_geocache.so
+	$(APXS) $(APXS_WCFLAGS) $(GC_LIBS) -c mod_geocache.c $(LOBJS)
 	
 geocache.fcgi: fastcgi_geocache.c $(OBJS)
-	$(CC) -o geocache.fcgi $(ALL_CFLAGS) $(FCGI_INC) fastcgi_geocache.c $(OBJS) $(ALL_LIBS) $(FCGI_LIB)
+	$(LIBTOOL) --mode=link $(CC) -o geocache.fcgi $(GC_CFLAGS) $(APR_CFLAGS) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(GC_LIBS) $(APR_LIBS) $(FCGI_LIB)
 	
 
 clean:

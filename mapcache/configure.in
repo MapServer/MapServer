@@ -4,9 +4,12 @@ AC_INIT(mod_geocache,0.1,tbonfort@terriscope.fr)
 # don't let AC_PROG_CC force "-g -O2"
 #: ${CFLAGS="-Wall"}
 
+AC_CONFIG_MACRO_DIR([m4])
+AC_PROG_LIBTOOL
 AC_PROG_CC
 
 CFLAGS=$CFLAGS
+TARGETS=
 
 # macro that is used to parse a --with-xml2-config parameter
 AC_DEFUN([XML2_CHECK],[
@@ -420,15 +423,45 @@ AC_DEFUN(JPEG_CHECK,[
 
 DEBUG_CHECK
 
-APXS_CHECK
+AC_ARG_ENABLE(module,
+    AC_HELP_STRING([--enable-module],[Enable apache module building]),
+    ,
+    [enable_module=yes]
+)
+if test "$enable_module" == "yes"; then
+    APXS_CHECK
+    if test -z "$TARGETS"; then
+        TARGETS="mod_geocache.la"
+    else
+        TARGETS="$TARGETS mod_geocache.la"
+    fi
+fi
+
+AC_ARG_ENABLE(fcgi,
+    AC_HELP_STRING([--enable-fcgi],[Enable fastcgi executable building]),
+    ,
+    [enable_fcgi=yes]
+)
+if test "$enable_fcgi" == "yes"; then
+    FASTCGI_CHECK
+    if test -z "$TARGETS"; then
+        TARGETS="geocache.fcgi"
+    else
+        TARGETS="$TARGETS geocache.fcgi"
+    fi
+fi
+
+if test -z "$TARGETS" ; then
+    AC_MSG_ERROR([you must select at least something to build with --enable-module or --enable-fcgi])
+else
+    AC_SUBST(TARGETS,$TARGETS)
+fi
 
 APR_CHECK
 
 PNG_CHECK
 
 JPEG_CHECK
-
-FASTCGI_CHECK
 
 #PKGCONFIG_CHECK
 
