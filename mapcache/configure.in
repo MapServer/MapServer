@@ -162,7 +162,7 @@ AC_DEFUN([CAIRO_CHECK],[
             `$PKGCONFIG --silence-errors -- cairo >> /dev/null`
             if test $? -eq 0 ; then
                 AC_MSG_RESULT(found)
-                CAIRO_CONFIG="cairo cairo-png"
+                CAIRO_CONFIG="cairo"
             else
                 AC_MSG_ERROR([cairo support requested, but not found.Try installing the cairo development headers])
             fi
@@ -546,6 +546,66 @@ AC_DEFUN([PNG_CHECK],[
     AC_SUBST(PNG_LIB,$PNG_LIB)
 ])
 
+AC_DEFUN([SQLITE_CHECK],[
+  AC_ARG_WITH(sqlite,
+              AC_HELP_STRING([--with-sqlite], [path to sqlite-config program]),
+              ,
+              [with_sqlite=yes]
+              )
+    
+    SQLITE_DIR=""
+    if test x"$with_sqlite" != "xyes" -a x"$with_sqlite" != "xno"; then
+      AC_EXPAND_PATH($with_sqlite, SQLITE_DIR)
+    fi
+    SQLITE_LIB=''
+    SQLITE_INC=''  
+    SQLITE_ENABLED=''
+
+    if test -n "$SQLITE_DIR" ; then
+        test -f $SQLITE_DIR/lib/libsqlite3.a -o -f $SQLITE_DIR/lib/libsqlite3.so -o -f $SQLITE_DIR/lib/libsqlite3.sl -o -f $SQLITE_DIR/lib/libsqlite3.dylib && SQLITE_LIBDIR="$SQLITE_DIR/lib"
+        test -f $SQLITE_DIR/lib64/libsqlite.a -o -f $SQLITE_DIR/lib64/libsqlite3.so -o -f $SQLITE_DIR/lib64/libsqlite3.sl -o -f $SQLITE_DIR/libsqlite3.dylib && SQLITE_LIBDIR="$SQLITE_DIR/lib64"
+        test -f $SQLITE_DIR/libsqlite3.a -o -f $SQLITE_DIR/libsqlite3.so -o -f $SQLITE_DIR/libsqlite3.sl -o -f $SQLITE_DIR/libsqlite3.dylib && SQLITE_LIBDIR="$SQLITE_DIR"
+        test -f $SQLITE_DIR/include/sqlite3.h && SQLITE_INCLUDE="$SQLITE_DIR/include"
+        test -f $SQLITE_DIR/include/sqlite/sqlite3.h && SQLITE_INCLUDE="$SQLITE_DIR/include/sqlite"
+        test -f $SQLITE_DIR/lib/sqlite3.h && SQLITE_INCLUDE="$SQLITE_DIR/lib"
+        test -f $SQLITE_DIR/sqlite3.h && SQLITE_INCLUDE="$SQLITE_DIR"
+        
+        if test -n "$SQLITE_LIBDIR" ; then   
+          SQLITE_LIB="-L$SQLITE_LIBDIR -lsqlite3"
+          AC_MSG_RESULT([using libsqlite from $SQLITE_LIB])
+        else
+          AC_MSG_ERROR([cannot find sqlite lib in $SQLITE_DIR])
+        fi
+        
+        if test -n "$SQLITE_INCLUDE" ; then
+          AC_CHECK_HEADER([$SQLITE_INCLUDE/sqlite3.h],SQLITE_INC=-I$SQLITE_INCLUDE,
+            [AC_MSG_ERROR([cannot use sqlite3.h headers from $SQLITE_INCLUDE])])
+        else
+            AC_MSG_ERROR([cannot find sqlite3.h])
+        fi
+        SQLITE_ENABLED="-DUSE_SQLITE"
+     elif test x"$with_sqlite" = "xyes"; then
+    
+      dnl check for sqlite in system locations
+    
+      AC_CHECK_LIB(sqlite3, sqlite3_open, SQLITE_LIB="-lsqlite3",,)
+      AC_CHECK_HEADER([sqlite3.h],,
+            [AC_MSG_ERROR([cannot find sqlite3.h header in system path])])
+      if test -n "$SQLITE_LIB" ; then
+        AC_MSG_RESULT([using libsqlite3 from system libs.])
+        SQLITE_ENABLED="-DUSE_SQLITE"
+      else
+        AC_MSG_ERROR([SQLITE (libsqlite3) library cannot be found. install or reconfigure with --with-sqlite=DIR])
+      fi
+    else
+      AC_MSG_RESULT([sqlite support disabled by request])
+    fi
+    
+    AC_SUBST(SQLITE_INC,$SQLITE_INC)
+    AC_SUBST(SQLITE_LIB,$SQLITE_LIB)
+    AC_SUBST(SQLITE_ENABLED,$SQLITE_ENABLED)
+])
+
 AC_DEFUN([JPEG_CHECK],[
     AC_ARG_WITH(jpeg,
         AC_HELP_STRING([--with-jpeg=DIR],[Specify where JPEG is installed]),
@@ -649,6 +709,7 @@ fi
 
 APR_CHECK
 APU_CHECK
+SQLITE_CHECK
 PKGCONFIG_CHECK
 CAIRO_CHECK
 PNG_CHECK

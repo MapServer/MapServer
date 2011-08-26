@@ -205,7 +205,7 @@ static void _geocache_cache_memcache_configuration_parse(geocache_context *ctx, 
          }
          port = iport;
       }
-      if(APR_SUCCESS != apr_memcache_server_create(ctx->pool,host,port,4,5,50,10,&server)) {
+      if(APR_SUCCESS != apr_memcache_server_create(ctx->pool,host,port,4,5,50,10000,&server)) {
          ctx->set_error(ctx,400,"cache %s: failed to create server %s:%d",cache->name,host,port);
          return;
       }
@@ -223,7 +223,8 @@ static void _geocache_cache_memcache_configuration_parse(geocache_context *ctx, 
 /**
  * \private \memberof geocache_cache_memcache
  */
-static void _geocache_cache_memcache_configuration_check(geocache_context *ctx, geocache_cache *cache) {
+static void _geocache_cache_memcache_configuration_post_config(geocache_context *ctx, geocache_cache *cache,
+      geocache_cfg *cfg) {
    geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
    if(!dcache->memcache || dcache->memcache->ntotal==0) {
       ctx->set_error(ctx,400,"cache %s has no servers configured");
@@ -246,7 +247,7 @@ geocache_cache* geocache_cache_memcache_create(geocache_context *ctx) {
    cache->cache.tile_exists = _geocache_cache_memcache_has_tile;
    cache->cache.tile_set = _geocache_cache_memcache_set;
    cache->cache.tile_delete = _geocache_cache_memcache_delete;
-   cache->cache.configuration_check = _geocache_cache_memcache_configuration_check;
+   cache->cache.configuration_post_config = _geocache_cache_memcache_configuration_post_config;
    cache->cache.configuration_parse = _geocache_cache_memcache_configuration_parse;
    return (geocache_cache*)cache;
 }

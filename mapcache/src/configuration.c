@@ -578,11 +578,18 @@ void parseCache(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    }
    if(!strcmp(type,"disk")) {
       cache = geocache_cache_disk_create(ctx);
+   } else if(!strcmp(type,"sqlite3")) {
+#ifdef USE_SQLITE
+      cache = geocache_cache_sqlite_create(ctx);
+#else
+      ctx->set_error(ctx,400, "failed to add cache \"%s\": sqlite support is not available on this build",name);
+      return;
+#endif
    } else if(!strcmp(type,"memcache")) {
 #ifdef USE_MEMCACHE
       cache = geocache_cache_memcache_create(ctx);
 #else
-      ctx->set_error(ctx,400, "failed to add cache %s: memcache support is not available on this build",name);
+      ctx->set_error(ctx,400, "failed to add cache \"%s\": memcache support is not available on this build",name);
       return;
 #endif
    } else {
@@ -596,8 +603,6 @@ void parseCache(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    cache->name = name;
 
    cache->configuration_parse(ctx,node,cache);
-   GC_CHECK_ERROR(ctx);
-   cache->configuration_check(ctx,cache);
    GC_CHECK_ERROR(ctx);
    geocache_configuration_add_cache(config,cache,name);
    return;
@@ -1154,6 +1159,16 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
          url = apr_pstrcat(ctx->pool,url,"/",NULL);
          apr_table_setn(config->metadata,"url",url);
       }
+   }
+
+   apr_hash_index_t *cachei = apr_hash_first(ctx->pool,config->caches);
+   while(cachei) {
+      geocache_cache *cache;
+      const void *key; apr_ssize_t keylen;
+      apr_hash_this(cachei,&key,&keylen,(void**)&cache);
+      cache->configuration_post_config(ctx,cache,config);
+      if(GC_HAS_ERROR(ctx)) goto cleanup;
+      cachei = apr_hash_next(cachei);
    }
 
 

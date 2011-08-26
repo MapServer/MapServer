@@ -311,6 +311,9 @@ typedef enum {
 #ifdef USE_MEMCACHE
        ,GEOCACHE_CACHE_MEMCACHE
 #endif
+#ifdef USE_SQLITE
+       ,GEOCACHE_CACHE_SQLITE
+#endif
 } geocache_cache_type;
 
 /** \interface geocache_cache
@@ -346,7 +349,7 @@ struct geocache_cache {
     void (*tile_set)(geocache_context *ctx, geocache_tile * tile);
 
     void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_cache * cache);
-    void (*configuration_check)(geocache_context *ctx, geocache_cache * cache);
+    void (*configuration_post_config)(geocache_context *ctx, geocache_cache * cache, geocache_cfg *config);
 };
 
 /**\class geocache_cache_disk
@@ -359,8 +362,24 @@ struct geocache_cache_disk {
     int symlink_blank;
 };
 
-#ifdef USE_MEMCACHE
 
+#ifdef USE_SQLITE
+/**\class geocache_cache_sqlite
+ * \brief a geocache_cache on a filesytem
+ * \implements geocache_cache
+ */
+typedef struct geocache_cache_sqlite geocache_cache_sqlite;
+struct geocache_cache_sqlite {
+   geocache_cache cache;
+   char *dbdir; 
+};
+/**
+ * \memberof geocache_cache_sqlite
+ */
+geocache_cache* geocache_cache_sqlite_create(geocache_context *ctx);
+#endif
+
+#ifdef USE_MEMCACHE
 typedef struct geocache_cache_memcache geocache_cache_memcache;
 /**\class geocache_cache_memcache
  * \brief a geocache_cache on memcached servers
@@ -375,7 +394,6 @@ struct geocache_cache_memcache {
  * \memberof geocache_cache_memcache
  */
 geocache_cache* geocache_cache_memcache_create(geocache_context *ctx);
-
 #endif
 
 /** @} */
@@ -878,6 +896,7 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx);
  * \memberof geocache_cache_disk
  */
 geocache_cache* geocache_cache_disk_create(geocache_context *ctx);
+
 
 /** \defgroup tileset Tilesets*/
 /** @{ */
