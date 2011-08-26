@@ -393,6 +393,7 @@ void _create_demo_front(geocache_context *ctx, geocache_request_get_capabilities
       caps = apr_pstrcat(ctx->pool,caps,"<a href=\"",urlprefix,"/demo/",service->url_prefix,"\">",
             service->url_prefix,"</a><br/>",NULL);
    }
+   caps = apr_pstrcat(ctx->pool,caps,"</body></html>",NULL);
 
    req->capabilities = caps;
 }
@@ -667,6 +668,35 @@ void _create_demo_ve(geocache_context *ctx, geocache_request_get_capabilities *r
    req->capabilities = caps;
 }
 
+void _create_demo_kml(geocache_context *ctx, geocache_request_get_capabilities *req,
+         const char *url_prefix) {
+   req->mime_type = apr_pstrdup(ctx->pool,"text/html");
+   char *caps = apr_pstrdup(ctx->pool,
+         "<html><head><title>geocache kml links</title></head><body>");
+   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
+   while(tileindex_index) {
+      geocache_tileset *tileset;
+      const void *key; apr_ssize_t keylen;
+      apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
+      int i,j;
+      for(j=0;j<tileset->grid_links->nelts;j++) {
+         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
+         if(!strstr(grid->srs, ":4326")) {
+            continue; //skip layers not in wgs84
+         }
+         caps = apr_pstrcat(ctx->pool,caps,
+               "<li><a href=\"",url_prefix,"/kml/",tileset->name,
+               "@",grid->name,"/0/0/0.kml\">",tileset->name,"</a></li>",
+               NULL);
+      }
+      tileindex_index = apr_hash_next(tileindex_index);
+   }
+
+   caps = apr_pstrcat(ctx->pool,caps,"</body></html>",NULL);
+   req->capabilities = caps;
+}
+
+
 void _create_demo_gmaps(geocache_context *ctx, geocache_request_get_capabilities *req,
          const char *url_prefix) {
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
@@ -741,9 +771,7 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
          case GEOCACHE_SERVICE_GMAPS:
             return _create_demo_gmaps(ctx,req,onlineresource);
          case GEOCACHE_SERVICE_KML:
-            req->mime_type = apr_pstrdup(ctx->pool,"text/plain");
-            req->capabilities = apr_pstrdup(ctx->pool,"not implemented");
-            return;
+            return _create_demo_kml(ctx,req,onlineresource);
          case GEOCACHE_SERVICE_DEMO:
             ctx->set_error(ctx,400,"selected service does not provide a demo page");
             return;
