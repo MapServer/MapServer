@@ -397,59 +397,70 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          errmsg = "received wms request with no layers";
          goto proxies;
       } else {
-         char *last, *key, *layers;
+         char *last, *layers;
+         const char *key;
          int count=1;
+         int i,layeridx;
          char *sep=",";
+         int x,y,z;
          geocache_request_get_map *map_req = NULL;
          geocache_request_get_tile *tile_req = NULL;
-         layers = apr_pstrdup(ctx->pool,str);
-         for(key=layers;*key;key++) if(*key == ',') count++;
+         geocache_grid_link *main_grid_link = NULL;
+         geocache_tileset *main_tileset = NULL;
+         
+         /* count the number of layers that are requested */
+         for(key=str;*key;key++) if(*key == ',') count++;
 
-         /* we have to loop twice on the requested layers, once to determine the request type,
-          * and a second time to actually populate the request structure */
-
-         /*first pass around requested layers to see if we have a getTile or a getMap request*/
+         /* 
+          * look to see if we have a getTile or a getMap request. We do this by looking at the first
+          * wms layer that was provided in the request.
+          * Checking to see if all requested layers reference the grid will be done in a second step
+          */
          geocache_request_type type = GEOCACHE_REQUEST_GET_TILE;
-         for (key = apr_strtok(layers, sep, &last); key != NULL;
-               key = apr_strtok(NULL, sep, &last)) {
-            geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
-            if(!tileset) {
-               errcode = 404;
-               errmsg = apr_psprintf(ctx->pool,"received wms request with invalid layer %s", key);
-               goto proxies;
-            }
-            int i;
-            geocache_grid_link *grid_link = NULL;
-            for(i=0;i<tileset->grid_links->nelts;i++){
-               geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
-               /* look for a grid with a matching srs */
-               if(strcasecmp(sgrid->grid->srs,srs)) {
-                  /* look if the grid has some srs aliases */
-                  int s;
-                  for(s=0;s<sgrid->grid->srs_aliases->nelts;s++) {
-                     char *srsalias = APR_ARRAY_IDX(sgrid->grid->srs_aliases,s,char*);
-                     if(!strcasecmp(srsalias,srs)) break;
-                  }
-                  if(s==sgrid->grid->srs_aliases->nelts)
-                     continue; /* no srs alias matches the requested srs */
-               }
-               grid_link = sgrid;
-               break;
-            }
-            if(!grid_link) {
-               errcode = 400;
-               errmsg = apr_psprintf(ctx->pool,
-                     "received unsuitable wms request: no <grid> with suitable srs found for layer %s",tileset->name);
-               goto proxies;
-            }
-
-            /* verify we align on the tileset's grid */ 
-            int tmpx,tmpy,tmpz;
-            if(grid_link->grid->tile_sx != width || grid_link->grid->tile_sy != height ||
-                  geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tmpx,&tmpy,&tmpz) != GEOCACHE_SUCCESS) {
-               type = GEOCACHE_REQUEST_GET_MAP;
-            }
+         
+         if(count ==1) {
+            key = str;
+         } else {
+            layers = apr_pstrdup(ctx->pool,str);
+            key = apr_strtok(layers, sep, &last); /* extract first layer */
          }
+         main_tileset = geocache_configuration_get_tileset(config,key);
+         if(!main_tileset) {
+            errcode = 404;
+            errmsg = apr_psprintf(ctx->pool,"received wms request with invalid layer %s", key);
+            goto proxies;
+         }
+
+         for(i=0;i<main_tileset->grid_links->nelts;i++){
+            geocache_grid_link *sgrid = APR_ARRAY_IDX(main_tileset->grid_links,i,geocache_grid_link*);
+            /* look for a grid with a matching srs */
+            if(strcasecmp(sgrid->grid->srs,srs)) {
+               /* look if the grid has some srs aliases */
+               int s;
+               for(s=0;s<sgrid->grid->srs_aliases->nelts;s++) {
+                  char *srsalias = APR_ARRAY_IDX(sgrid->grid->srs_aliases,s,char*);
+                  if(!strcasecmp(srsalias,srs)) break;
+               }
+               if(s==sgrid->grid->srs_aliases->nelts)
+                  continue; /* no srs alias matches the requested srs */
+            }
+            main_grid_link = sgrid;
+            break;
+         }
+         if(!main_grid_link) {
+            errcode = 400;
+            errmsg = apr_psprintf(ctx->pool,
+                  "received unsuitable wms request: no <grid> with suitable srs found for layer %s",main_tileset->name);
+            goto proxies;
+         }
+
+         /* verify we align on the tileset's grid */ 
+         if(main_grid_link->grid->tile_sx != width || main_grid_link->grid->tile_sy != height ||
+               geocache_grid_get_cell(ctx, main_grid_link->grid, bbox, &x,&y,&z) != GEOCACHE_SUCCESS) {
+            /* we have the correct srs, but the request does not align on the grid */
+            type = GEOCACHE_REQUEST_GET_MAP;
+         }
+         
 
          if(type == GEOCACHE_REQUEST_GET_TILE) {
             tile_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_tile));
@@ -463,40 +474,47 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             *request = (geocache_request*)map_req;
          }
 
+         /*
+          * loop through all the layers to verify that they reference the requested grid,
+          * and to extract any dimensions if configured
+          */
+         if(count>1)
+            layers = apr_pstrdup(ctx->pool,str); /* apr_strtok modifies its input string */
 
-         layers = apr_pstrdup(ctx->pool,str);
-         for (key = apr_strtok(layers, sep, &last); key != NULL;
-               key = apr_strtok(NULL, sep, &last)) {
-            geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
-            int i;
-            geocache_grid_link *grid_link = NULL;
-            for(i=0;i<tileset->grid_links->nelts;i++){
-               grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
-               if(strcasecmp(grid_link->grid->srs,srs)) {
-                  /* look if the grid has some srs aliases */
-                  int s;
-                  for(s=0;s<grid_link->grid->srs_aliases->nelts;s++) {
-                     char *srsalias = APR_ARRAY_IDX(grid_link->grid->srs_aliases,s,char*);
-                     if(!strcasecmp(srsalias,srs)) break;
-                  }
-                  if(s==grid_link->grid->srs_aliases->nelts)
-                     continue; /* no srs alias matches the requested srs */
-               }
-               break;
-            }
+         for (layeridx=0,key = ((count==1)?str:apr_strtok(layers, sep, &last)); key != NULL;
+               key = ((count==1)?NULL:apr_strtok(NULL, sep, &last)),layeridx++) {
+            geocache_tileset *tileset = main_tileset;
+            geocache_grid_link *grid_link = main_grid_link;
             apr_table_t *dimtable = NULL;
-            if(type == GEOCACHE_REQUEST_GET_TILE) {
-               geocache_tile *tile = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
-#ifndef DEBUG
-               geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tile->x, &tile->y, &tile->z);
-#else
-               int ret = geocache_grid_get_cell(ctx, grid_link->grid, bbox, &tile->x, &tile->y, &tile->z);
-               if(ret != GEOCACHE_SUCCESS) {
-                  errcode = 500;
-                  errmsg = "###BUG###: grid_get_cell returned failure";
+            
+            if(layeridx) {
+               /* 
+                * if we have multiple requested layers, check that they reference the requested grid
+                * this step is not done for the first tileset as we have already performed it
+                */
+               tileset = geocache_configuration_get_tileset(config,key);
+               int i;
+               grid_link = NULL;
+               for(i=0;i<tileset->grid_links->nelts;i++){
+                  grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+                  if(grid_link->grid == main_grid_link->grid) {
+                     break;
+                  }
+               }
+               if(i==tileset->grid_links->nelts) {
+                  /* the tileset does not reference the grid of the first tileset */
+                  errcode = 400;
+                  errmsg = apr_psprintf(ctx->pool,
+                        "tileset %s does not reference grid %s (referenced by tileset %s",
+                        tileset->name, grid_link->grid->name,main_tileset->name);
                   goto proxies;
                }
-#endif
+            }
+            if(type == GEOCACHE_REQUEST_GET_TILE) {
+               geocache_tile *tile = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
+               tile->x = x;
+               tile->y = y;
+               tile->z = z;
                geocache_tileset_tile_validate(ctx,tile);
                if(GC_HAS_ERROR(ctx)) {
                   /* don't bail out just yet, in case multiple tiles have been requested */
