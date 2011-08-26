@@ -243,6 +243,13 @@ static void parse_cache_json(geocache_context *ctx, cJSON *node, geocache_cfg *c
       ctx->set_error(ctx,400, "failed to add cache \"%s\": sqlite support is not available on this build",name);
       return;
 #endif
+   } else if(!strcmp(type,"mbtiles")) {
+#ifdef USE_SQLITE
+      cache = geocache_cache_mbtiles_create(ctx);
+#else
+      ctx->set_error(ctx,400, "failed to add cache \"%s\": sqlite support is not available on this build",name);
+      return;
+#endif
    } else if(!strcmp(type,"memcache")) {
 #ifdef USE_MEMCACHE
       cache = geocache_cache_memcache_create(ctx);

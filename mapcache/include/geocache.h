@@ -382,15 +382,29 @@ struct geocache_cache_disk {
  * \implements geocache_cache
  */
 typedef struct geocache_cache_sqlite geocache_cache_sqlite;
+typedef struct geocache_cache_sqlite_stmt geocache_cache_sqlite_stmt;
+
+struct geocache_cache_sqlite_stmt {
+   char *sql;
+};
+
 struct geocache_cache_sqlite {
    geocache_cache cache;
-   char *dbdir;
+   char *dbname_template;
    int hitstats;
+   geocache_cache_sqlite_stmt create_stmt;
+   geocache_cache_sqlite_stmt exists_stmt;
+   geocache_cache_sqlite_stmt get_stmt;
+   geocache_cache_sqlite_stmt hitstat_stmt;
+   geocache_cache_sqlite_stmt set_stmt;
+   geocache_cache_sqlite_stmt delete_stmt;
 };
+
 /**
  * \memberof geocache_cache_sqlite
  */
 geocache_cache* geocache_cache_sqlite_create(geocache_context *ctx);
+geocache_cache* geocache_cache_mbtiles_create(geocache_context *ctx);
 #endif
 
 #ifdef USE_MEMCACHE

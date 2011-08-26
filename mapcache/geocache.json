@@ -47,7 +47,15 @@
       "name":"sqlite",
       "type":"sqlite3",
       "props": {
-        "base_dir":"/tmp",
+        "dbname_template":"/tmp/{tileset}-{grid}.sqlite",
+        "hit_stats":false
+      }
+    },
+    {
+      "name":"mbtiles",
+      "type":"mbtiles",
+      "props": {
+        "dbname_template":"/tmp/{tileset}-{grid}.mbtiles",
         "hit_stats":false
       }
     }
@@ -75,6 +83,22 @@
             "QUERY_LAYERS":"basic"
           },
           "info_formats":["text/html"]
+        }
+      } 
+    },
+    {
+      "name":"osm",
+      "type":"wms",
+      "props": {
+        "http": {
+          "url":"http://localhost/cgi-bin/mapserv"
+        },
+        "getmap": {
+          "params":{
+            "LAYERS":"default",
+            "FORMAT":"image/png",
+            "MAP":"/Users/tbonfort/dev/mapserver-utils/osm-outlined,google.map"
+          }
         }
       } 
     }
@@ -134,6 +158,42 @@
         }
       ]
       //,"watermark":"/home/tbonfort/dev/mod-geocache/static/watermark.png"
+    },
+    {
+      "name": "osm",
+      "source": "osm",
+      "grids": [
+        "g"
+      ],
+      "wgs84_extent":[-180,-90,180,90],
+      "format": "png",
+      "cache": "mbtiles",
+      "metatile": {
+        "size":[5,5],
+        "buffer":10
+      },
+      "expires": {
+        "delay": 3600,
+        "auto": false
+      }
+    },
+    {
+      "name": "ne",
+      "source": "osm",
+      "grids": [
+        "g"
+      ],
+      "wgs84_extent":[-180,-90,180,90],
+      "format": "png",
+      "cache": "mbtiles",
+      "metatile": {
+        "size":[5,5],
+        "buffer":10
+      },
+      "expires": {
+        "delay": 3600,
+        "auto": false
+      }
     }
   ],
   "services": [

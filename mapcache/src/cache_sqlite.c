@@ -21,13 +21,10 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <sqlite3.h>
 
-static char* _get_dbname(geocache_context *ctx, geocache_cache_sqlite *cache,
-      geocache_tileset *tileset, geocache_grid *grid) {
-   return apr_pstrcat(ctx->pool,cache->dbdir,"/",tileset->name,"#",grid->name,".db",NULL);
-}
 
 static const char* _get_tile_dimkey(geocache_context *ctx, geocache_tile *tile) {
    if(tile->dimensions) {
@@ -55,6 +52,13 @@ static const char* _get_tile_dimkey(geocache_context *ctx, geocache_tile *tile) 
    }
 }
 
+static char* _get_dbname(geocache_context *ctx,  geocache_tileset *tileset, geocache_grid *grid) {
+   geocache_cache_sqlite *cache = (geocache_cache_sqlite*) tileset->cache;
+   char *path = cache->dbname_template;
+   path = geocache_util_str_replace(ctx->pool, path, "{tileset}", tileset->name);
+   path = geocache_util_str_replace(ctx->pool, path, "{grid}", grid->name);
+   return path;
+}
 
 static sqlite3* _get_conn(geocache_context *ctx, geocache_tile* tile, int readonly) {
    sqlite3* handle;
@@ -64,7 +68,7 @@ static sqlite3* _get_conn(geocache_context *ctx, geocache_tile* tile, int readon
    } else {
       flags = SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE;
    }
-   char *dbfile = _get_dbname(ctx,(geocache_cache_sqlite*)tile->tileset->cache,tile->tileset,tile->grid_link->grid);
+   char *dbfile = _get_dbname(ctx,tile->tileset, tile->grid_link->grid);
    int ret = sqlite3_open_v2(dbfile,&handle,flags,NULL);
    if(ret != SQLITE_OK) {
       ctx->set_error(ctx,500,"failed to connect to sqlite db %s: %s",dbfile,sqlite3_errmsg(handle));
@@ -74,14 +78,54 @@ static sqlite3* _get_conn(geocache_context *ctx, geocache_tile* tile, int readon
    return handle;
 }
 
+/**
+ * \brief apply appropriate tile properties to the sqlite statement */
+static void _bind_sqlite_params(geocache_context *ctx, sqlite3_stmt *stmt, geocache_tile *tile) {
+   int paramidx;
+   /* tile->x */
+   paramidx = sqlite3_bind_parameter_index(stmt, ":x");
+   if(paramidx) sqlite3_bind_int(stmt, paramidx, tile->x);
+   
+   /* tile->y */
+   paramidx = sqlite3_bind_parameter_index(stmt, ":y");
+   if(paramidx) sqlite3_bind_int(stmt, paramidx, tile->y);
+   
+   /* tile->y */
+   paramidx = sqlite3_bind_parameter_index(stmt, ":z");
+   if(paramidx) sqlite3_bind_int(stmt, paramidx, tile->z);
+  
+   /* eventual dimensions */
+   paramidx = sqlite3_bind_parameter_index(stmt, ":dim");
+   if(paramidx) {
+      if(tile->dimensions) {
+         const char *dim = _get_tile_dimkey(ctx,tile);
+         sqlite3_bind_text(stmt,paramidx,dim,-1,SQLITE_STATIC);
+      } else {
+         sqlite3_bind_text(stmt,paramidx,"",-1,SQLITE_STATIC);
+      }
+   }
+   
+   /* grid */
+   paramidx = sqlite3_bind_parameter_index(stmt, ":grid");
+   if(paramidx) sqlite3_bind_text(stmt,paramidx,tile->grid_link->grid->name,-1,SQLITE_STATIC);
+   
+   /* tileset */
+   paramidx = sqlite3_bind_parameter_index(stmt, ":tileset");
+   if(paramidx) sqlite3_bind_text(stmt,paramidx,tile->tileset->name,-1,SQLITE_STATIC);
+   
+   /* tile blob data */
+   paramidx = sqlite3_bind_parameter_index(stmt, ":data");
+   if(paramidx) {
+      if(tile->data && tile->data->size) {
+         sqlite3_bind_blob(stmt,paramidx,tile->data->buf, tile->data->size,SQLITE_STATIC);
+      } else {
+         sqlite3_bind_text(stmt,paramidx,"",-1,SQLITE_STATIC);
+      }
+   }
+}
 
 static int _geocache_cache_sqlite_has_tile(geocache_context *ctx, geocache_tile *tile) {
-   char *sql;
-   if(tile->dimensions) {
-      sql = "SELECT 1 from tiles where x=? and y=? and z=? and dim=?";
-   } else {
-      sql = "SELECT 1 from tiles where x=? and y=? and z=?";
-   }
+   geocache_cache_sqlite *cache = (geocache_cache_sqlite*)tile->tileset->cache;
    sqlite3* handle = _get_conn(ctx,tile,1);
    if(GC_HAS_ERROR(ctx)) {
       sqlite3_close(handle);
@@ -89,14 +133,8 @@ static int _geocache_cache_sqlite_has_tile(geocache_context *ctx, geocache_tile 
    }
 
    sqlite3_stmt *stmt;
-   sqlite3_prepare(handle,sql,-1,&stmt,NULL);
-   sqlite3_bind_int(stmt,1,tile->x);
-   sqlite3_bind_int(stmt,2,tile->y);
-   sqlite3_bind_int(stmt,3,tile->z);
-   if(tile->dimensions) {
-      const char *dim = _get_tile_dimkey(ctx,tile);
-      sqlite3_bind_text(stmt,4,dim,-1,SQLITE_STATIC);
-   }
+   sqlite3_prepare(handle,cache->exists_stmt.sql,-1,&stmt,NULL);
+   _bind_sqlite_params(ctx,stmt,tile);
    int ret = sqlite3_step(stmt);
    if(ret != SQLITE_DONE && ret != SQLITE_ROW) {
       ctx->set_error(ctx,500,"sqlite backend failed on has_tile: %s",sqlite3_errmsg(handle));
@@ -112,23 +150,12 @@ static int _geocache_cache_sqlite_has_tile(geocache_context *ctx, geocache_tile 
 }
 
 static void _geocache_cache_sqlite_delete(geocache_context *ctx, geocache_tile *tile) {
+   geocache_cache_sqlite *cache = (geocache_cache_sqlite*)tile->tileset->cache;
    sqlite3* handle = _get_conn(ctx,tile,0);
    GC_CHECK_ERROR(ctx);
-   char *sql;
-   if(tile->dimensions) {
-    sql = "DELETE from tiles where x=? and y=? and z=? and dim=?";
-   } else {
-    sql = "DELETE from tiles where x=? and y=? and z=?";
-   }
    sqlite3_stmt *stmt;
-   sqlite3_prepare(handle,sql,-1,&stmt,NULL);
-   sqlite3_bind_int(stmt,1,tile->x);
-   sqlite3_bind_int(stmt,2,tile->y);
-   sqlite3_bind_int(stmt,3,tile->z);
-   if(tile->dimensions) {
-      const char* dim = _get_tile_dimkey(ctx,tile);
-      sqlite3_bind_text(stmt,4,dim,-1,SQLITE_STATIC);
-   }
+   sqlite3_prepare(handle,cache->delete_stmt.sql,-1,&stmt,NULL);
+   _bind_sqlite_params(ctx,stmt,tile);
    int ret = sqlite3_step(stmt);
    if(ret != SQLITE_DONE && ret != SQLITE_ROW) {
       ctx->set_error(ctx,500,"sqlite backend failed on delete: %s",sqlite3_errmsg(handle));
@@ -151,21 +178,8 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
       return GEOCACHE_FAILURE;
    }
    sqlite3_stmt *stmt;
-   char *sql;
-   const char *dim=NULL;
-   if(tile->dimensions) {
-      sql = "SELECT data,strftime(\"%s\",ctime) from tiles where x=? and y=? and z=? and dim=?";
-   } else {
-      sql = "SELECT data,strftime(\"%s\",ctime) from tiles where x=? and y=? and z=?";
-   }
-   sqlite3_prepare(handle,sql,-1,&stmt,NULL);
-   sqlite3_bind_int(stmt,1,tile->x);
-   sqlite3_bind_int(stmt,2,tile->y);
-   sqlite3_bind_int(stmt,3,tile->z);
-   if(tile->dimensions) {
-      dim = _get_tile_dimkey(ctx,tile);
-      sqlite3_bind_text(stmt,4,dim,-1,SQLITE_STATIC);
-   }
+   sqlite3_prepare(handle,cache->get_stmt.sql,-1,&stmt,NULL);
+   _bind_sqlite_params(ctx,stmt,tile);
    int ret = sqlite3_step(stmt);
    if(ret!=SQLITE_DONE && ret != SQLITE_ROW) {
       ctx->set_error(ctx,500,"sqlite backend failed on get: %s",sqlite3_errmsg(handle));
@@ -183,27 +197,17 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
       tile->data = geocache_buffer_create(size,ctx->pool);
       memcpy(tile->data->buf, blob,size);
       tile->data->size = size;
-      time_t mtime = sqlite3_column_int64(stmt, 1);
-      apr_time_ansi_put(&(tile->mtime),mtime);
+      if(sqlite3_column_count(stmt) > 1) {
+         time_t mtime = sqlite3_column_int64(stmt, 1);
+         apr_time_ansi_put(&(tile->mtime),mtime);
+      }
       sqlite3_finalize(stmt);
 
       /* update the hitstats if we're configured for that */
       if(cache->hitstats) {
-
          sqlite3_stmt *hitstmt;
-         char *hitsql;
-         if(tile->dimensions) {
-            hitsql = "update tiles set hitcount=hitcount+1, atime=datetime('now') where x=? and y=? and z=? and dim=?";
-         } else {
-            hitsql = "update tiles set hitcount=hitcount+1, atime=datetime('now') where x=? and y=? and z=?";
-         }
-         sqlite3_prepare(handle,hitsql,-1,&hitstmt,NULL);
-         sqlite3_bind_int(hitstmt,1,tile->x);
-         sqlite3_bind_int(hitstmt,2,tile->y);
-         sqlite3_bind_int(hitstmt,3,tile->z);
-         if(tile->dimensions) {
-            sqlite3_bind_text(hitstmt,4,dim,-1,SQLITE_STATIC);
-         }
+         sqlite3_prepare(handle,cache->hitstat_stmt.sql,-1,&hitstmt,NULL);
+         _bind_sqlite_params(ctx,stmt,tile);
          sqlite3_step(hitstmt); /* we ignore the return value , TODO?*/
          sqlite3_finalize(hitstmt);
       }
@@ -214,24 +218,12 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
 }
 
 static void _geocache_cache_sqlite_set(geocache_context *ctx, geocache_tile *tile) {
+   geocache_cache_sqlite *cache = (geocache_cache_sqlite*)tile->tileset->cache;
    sqlite3* handle = _get_conn(ctx,tile,0);
    GC_CHECK_ERROR(ctx);
    sqlite3_stmt *stmt;
-   char *sql;
-   if(tile->dimensions) {
-      sql = "insert or replace into tiles(x,y,z,data,dim,ctime) values (?,?,?,?,?,datetime('now'))";
-   } else {
-      sql = "insert or replace into tiles(x,y,z,data,ctime) values (?,?,?,?,datetime('now'))";
-   }
-   sqlite3_prepare(handle, sql,-1,&stmt,NULL);
-   sqlite3_bind_int(stmt,1,tile->x);
-   sqlite3_bind_int(stmt,2,tile->y);
-   sqlite3_bind_int(stmt,3,tile->z);
-   sqlite3_bind_blob(stmt,4,tile->data->buf, tile->data->size,SQLITE_STATIC);
-   if(tile->dimensions) {
-      const char* dim = _get_tile_dimkey(ctx,tile);
-      sqlite3_bind_text(stmt,5,dim,-1,SQLITE_STATIC);
-   }
+   sqlite3_prepare(handle,cache->set_stmt.sql,-1,&stmt,NULL);
+   _bind_sqlite_params(ctx,stmt,tile);
    int ret = sqlite3_step(stmt);
    if(ret != SQLITE_DONE && ret != SQLITE_ROW) {
       ctx->set_error(ctx,500,"sqlite backend failed on set: %s",sqlite3_errmsg(handle));
@@ -244,11 +236,11 @@ static void _geocache_cache_sqlite_configuration_parse_json(geocache_context *ct
    cJSON *tmp;
    geocache_cache_sqlite *dcache = (geocache_cache_sqlite*)cache;
 
-   tmp = cJSON_GetObjectItem(node,"base_dir");
+   tmp = cJSON_GetObjectItem(node,"dbname_template");
    if(tmp && tmp->valuestring) {
-      dcache->dbdir = apr_pstrdup(ctx->pool, tmp->valuestring);
+      dcache->dbname_template = apr_pstrdup(ctx->pool, tmp->valuestring);
    } else {
-      ctx->set_error(ctx,400,"cache %s has invalid base_dir",cache->name);
+      ctx->set_error(ctx,400,"cache %s has invalid dbname_template",cache->name);
       return;
    }
    if((tmp = cJSON_GetObjectItem(node,"hit_stats")) != NULL) {
@@ -256,20 +248,44 @@ static void _geocache_cache_sqlite_configuration_parse_json(geocache_context *ct
          dcache->hitstats = 1;
       }
    }
+   tmp = cJSON_GetObjectItem(node,"create_statement");
+   if(tmp && tmp->valuestring) {
+      dcache->create_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
+   tmp = cJSON_GetObjectItem(node,"exists_statement");
+   if(tmp && tmp->valuestring) {
+      dcache->exists_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
+   tmp = cJSON_GetObjectItem(node,"get_statement");
+   if(tmp && tmp->valuestring) {
+      dcache->get_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
+   tmp = cJSON_GetObjectItem(node,"set_statement");
+   if(tmp && tmp->valuestring) {
+      dcache->set_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
+   tmp = cJSON_GetObjectItem(node,"delete_statement");
+   if(tmp && tmp->valuestring) {
+      dcache->delete_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
+   tmp = cJSON_GetObjectItem(node,"hitstats_statement");
+   if(tmp && tmp->valuestring) {
+      dcache->hitstat_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
+   }
 }
 
 static void _geocache_cache_sqlite_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
    geocache_cache_sqlite *dcache = (geocache_cache_sqlite*)cache;
    if ((cur_node = ezxml_child(node,"base")) != NULL) {
-      dcache->dbdir = apr_pstrdup(ctx->pool,cur_node->txt);
+      dcache->dbname_template = apr_pstrcat(ctx->pool,cur_node->txt,"/{tileset}#{grid}.db",NULL);
    }
    if ((cur_node = ezxml_child(node,"hitstats")) != NULL) {
       if(!strcasecmp(cur_node->txt,"true")) {
          dcache->hitstats = 1;
       }
    }
-   if(!dcache->dbdir) {
+   if(!dcache->dbname_template) {
       ctx->set_error(ctx,500,"sqlite cache \"%s\" is missing <base> directory",cache->name);
       return;
    }
@@ -280,6 +296,7 @@ static void _geocache_cache_sqlite_configuration_parse_xml(geocache_context *ctx
  */
 static void _geocache_cache_sqlite_configuration_post_config(geocache_context *ctx,
       geocache_cache *cache, geocache_cfg *cfg) {
+   geocache_cache_sqlite *dcache = (geocache_cache_sqlite*)cache;
    sqlite3 *db;
    char *errmsg;
    int ret;
@@ -295,13 +312,9 @@ static void _geocache_cache_sqlite_configuration_post_config(geocache_context *c
          for(i=0;i<tileset->grid_links->nelts;i++) {
             geocache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
             geocache_grid *grid = gridlink->grid;
-            char *dbname = _get_dbname(ctx,(geocache_cache_sqlite*)cache,tileset,grid);
+            char *dbname = _get_dbname(ctx,tileset,grid);
             sqlite3_open(dbname, &db);
-            if(tileset->dimensions) {
-               ret = sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, dim text, ctime datetime, atime datetime, hitcount integer default 0, primary key(x,y,z,dim))", 0, 0, &errmsg);
-            } else {
-               ret = sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, ctime datetime, atime datetime, hitcount integer default 0, primary key (x,y,z))", 0, 0, &errmsg);
-            }
+            ret = sqlite3_exec(db, dcache->create_stmt.sql, 0, 0, &errmsg);
             if(ret != SQLITE_OK) {
                ctx->set_error(ctx,500,"sqlite backend failed to create tiles table: %s",sqlite3_errmsg(db));
                sqlite3_close(db);
@@ -332,6 +345,41 @@ geocache_cache* geocache_cache_sqlite_create(geocache_context *ctx) {
    cache->cache.configuration_post_config = _geocache_cache_sqlite_configuration_post_config;
    cache->cache.configuration_parse_xml = _geocache_cache_sqlite_configuration_parse_xml;
    cache->cache.configuration_parse_json = _geocache_cache_sqlite_configuration_parse_json;
+   cache->create_stmt.sql = apr_pstrdup(ctx->pool,
+         "create table if not exists tiles(x integer, y integer, z integer, data blob, dim text, ctime datetime, atime datetime, hitcount integer default 0, primary key(x,y,z,dim))");
+   cache->exists_stmt.sql = apr_pstrdup(ctx->pool,
+         "select 1 from tiles where x=?:x and y=:y and z=:z and dim=:dim");
+   cache->get_stmt.sql = apr_pstrdup(ctx->pool,
+         "select data,strftime(\"%s\",ctime) from tiles where x=:x and y=:y and z=:z and dim=:dim");
+   cache->set_stmt.sql = apr_pstrdup(ctx->pool,
+         "insert or replace into tiles(x,y,z,data,dim,ctime) values (:x,:y,:z,:data,:dim,datetime('now'))");
+   cache->delete_stmt.sql = apr_pstrdup(ctx->pool,
+         "delete from tiles where x=:x and y=:y and z=:z and dim=:dim");
+   cache->hitstat_stmt.sql = apr_pstrdup(ctx->pool,
+         "update tiles set hitcount=hitcount+1, atime=datetime('now') where x=:x and y=:y and z=:z and dim=:dim");
+   return (geocache_cache*)cache;
+}
+
+/**
+ * \brief creates and initializes a geocache_sqlite_cache
+ */
+geocache_cache* geocache_cache_mbtiles_create(geocache_context *ctx) {
+   geocache_cache_sqlite *cache = (geocache_cache_sqlite*)geocache_cache_sqlite_create(ctx);
+   if(!cache) {
+      return NULL;
+   }
+   cache->create_stmt.sql = apr_pstrdup(ctx->pool,
+         "CREATE TABLE  IF NOT EXISTS tiles (zoom_level integer, tile_column integer, tile_row integer, tile_data blob, primary key(tile_row, tile_column, zoom_level)); create table if not exists metadata(foo integer);");
+   cache->exists_stmt.sql = apr_pstrdup(ctx->pool,
+         "select 1 from tiles where tile_column=?:x and tile_row=:y and zoom_level=:z");
+   cache->get_stmt.sql = apr_pstrdup(ctx->pool,
+         "select tile_data from tiles where tile_column=:x and tile_row=:y and zoom_level=:z");
+   cache->set_stmt.sql = apr_pstrdup(ctx->pool,
+         "insert or replace into tiles(tile_column,tile_row,zoom_level,tile_data) values (:x,:y,:z,:data)");
+   cache->delete_stmt.sql = apr_pstrdup(ctx->pool,
+         "delete from tiles where tile_column=:x and tile_row=:y and zoom_level=:z");
+   cache->hitstat_stmt.sql = apr_pstrdup(ctx->pool,
+         "update tiles set hitcount=hitcount+1, atime=datetime('now') where x=:x and y=:y and z=:z and dim=:dim");
    return (geocache_cache*)cache;
 }
 
