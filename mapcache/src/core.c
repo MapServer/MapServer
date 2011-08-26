@@ -94,7 +94,7 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
       geocache_map *basemap = req_map->maps[0];
       basemap->tileset->source->render_map(ctx, basemap);
       if(GC_HAS_ERROR(ctx)) return NULL;
-      if(i>1) {
+      if(req_map->nmaps>1) {
          geocache_image *baseim = geocache_imageio_decode(ctx,basemap->data);
          if(GC_HAS_ERROR(ctx)) return NULL;
          for(i=1;i<req_map->nmaps;i++) {
