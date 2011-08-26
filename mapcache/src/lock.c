@@ -41,7 +41,7 @@ void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile) {
    char *lockname = geocache_tileset_tile_lock_key(ctx,tile);
    sem_t *lock;
    if ((lock = sem_open(lockname, O_CREAT|O_EXCL, 0644, 1)) == SEM_FAILED) {
-      ctx->set_error(ctx,GEOCACHE_MUTEX_ERROR, "failed to create pthread semaphore %s",lockname);
+      ctx->set_error(ctx,GEOCACHE_MUTEX_ERROR, "failed to create posix semaphore %s: %s",lockname, strerror(errno));
       return;
    }
    sem_wait(lock);
@@ -67,12 +67,10 @@ void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile) {
   sem_post(lock);
   /*check if the semaphore is held by others*/
   sem_getvalue(lock,&semvalue);
+  sem_close(lock);
   if(semvalue>0) {
      /*no one is using the lock, delete it*/
      sem_unlink(lockname);
-  } else {
-     /*just close it as others are using it*/
-     sem_close(lock);
   }
   tile->lock = NULL;
 }
@@ -134,10 +132,9 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
      sem_wait(lock);
      sem_post(lock);
      sem_getvalue(lock,&semvalue);
+     sem_close(lock);
      if(semvalue>0) {
         sem_unlink(lockname);
-     } else {
-        sem_close(lock);
      }
   }
 }
