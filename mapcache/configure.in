@@ -2,7 +2,7 @@
 AC_INIT(Makefile.in)
 
 # don't let AC_PROG_CC force "-g -O2"
-: ${CFLAGS="-Wall --std=c99"}
+: ${CFLAGS="-Wall"}
 
 AC_PROG_CC
 
