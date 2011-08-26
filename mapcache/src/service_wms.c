@@ -700,7 +700,8 @@ proxies:
          for(j=0;j<rule->match_params->nelts;j++) {
             geocache_dimension *match_param = APR_ARRAY_IDX(rule->match_params,j,geocache_dimension*);
             const char *value = apr_table_get(params,match_param->name);
-            if(match_param->validate(ctx,match_param,(char**)&value) == GEOCACHE_FAILURE) {
+            if(!value || match_param->validate(ctx,match_param,(char**)&value) == GEOCACHE_FAILURE) {
+               /* the parameter was not supplied, or did not validate: we don't apply this rule */
                got_a_match = 0;
                break;
             }
