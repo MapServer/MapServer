@@ -160,10 +160,19 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx) {
 /*
  * allocate and initialize a tile for a given tileset
  */
-geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *tileset) {
+geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *tileset, geocache_grid_link *grid_link) {
    geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
    tile->tileset = tileset;
    tile->expires = tileset->expires;
+   tile->grid_link = grid_link;
+   if(tileset->dimensions) {
+      int i;
+      tile->dimensions = apr_table_make(pool,tileset->dimensions->nelts);
+      for(i=0;i<tileset->dimensions->nelts;i++) {
+         geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+         apr_table_set(tile->dimensions,dimension->name,dimension->default_value);
+      }
+   }
    return tile;
 }
 

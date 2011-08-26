@@ -232,7 +232,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_service
       req->request.type = GEOCACHE_REQUEST_GET_TILE;
       req->ntiles = 1;
       req->tiles = (geocache_tile**)apr_pcalloc(ctx->pool,sizeof(geocache_tile*));
-      req->tiles[0] = geocache_tileset_tile_create(ctx->pool, tileset);
+      req->tiles[0] = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
       req->tiles[0]->x = x;
       if(((geocache_service_tms*)this)->reverse_y) {
          req->tiles[0]->y = grid_link->grid->levels[z]->maxy - y - 1;
@@ -240,7 +240,6 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_service
          req->tiles[0]->y = y;
       }
       req->tiles[0]->z = z;
-      req->tiles[0]->grid_link = grid_link;
       geocache_tileset_tile_validate(ctx,req->tiles[0]);
       GC_CHECK_ERROR(ctx);
       *request = (geocache_request*)req;

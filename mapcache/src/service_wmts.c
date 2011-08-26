@@ -522,7 +522,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
    req->tiles = (geocache_tile**)apr_pcalloc(ctx->pool,sizeof(geocache_tile*));     
 
 
-   req->tiles[0] = geocache_tileset_tile_create(ctx->pool, tileset);
+   req->tiles[0] = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
    if(!req->tiles[0]) {
       ctx->set_error(ctx, 500, "failed to allocate tile");
       return;
@@ -538,7 +538,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
          apr_table_set(req->tiles[0]->dimensions,dimension->name,value);
       }
    }
-   req->tiles[0]->grid_link = grid_link;
    
    req->tiles[0]->x = col;
    req->tiles[0]->y = grid_link->grid->levels[level]->maxy - row - 1;

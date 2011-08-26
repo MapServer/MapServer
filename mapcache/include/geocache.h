@@ -845,7 +845,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile);
  * @param pool
  * @return
  */
-geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *tileset);
+geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *tileset, geocache_grid_link *grid_link);
 
 /**
  * \brief create and initalize a tileset

@@ -84,13 +84,11 @@ int tile_exists(geocache_context *ctx, geocache_tileset *tileset,
                     int x, int y, int z,
                     geocache_grid_link *grid_link,
                     geocache_context *tmpctx) {
-    geocache_tile tile;
-    tile.x = x;
-    tile.y = y;
-    tile.z = z;
-    tile.tileset = tileset;
-    tile.grid_link = grid_link;
-    return tileset->cache->tile_exists(tmpctx,&tile);
+    geocache_tile *tile = geocache_tileset_tile_create(tmpctx->pool,tileset,grid_link);
+    tile->x = x;
+    tile->y = y;
+    tile->z = z;
+    return tileset->cache->tile_exists(tmpctx,tile);
 }
 
 int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocache_tile *tile, geocache_context *tmpcontext) {
@@ -167,8 +165,7 @@ void dummy_log(geocache_context *ctx, geocache_log_level level, char *msg, ...) 
 static void* APR_THREAD_FUNC doseed(apr_thread_t *thread, void *data) {
     geocache_context_seeding *ctx = (geocache_context_seeding*)data;
     geocache_context *gctx = (geocache_context*)ctx;
-    geocache_tile *tile = geocache_tileset_tile_create(gctx->pool, ctx->tileset);
-    tile->grid_link = ctx->grid_link;
+    geocache_tile *tile = geocache_tileset_tile_create(gctx->pool, ctx->tileset, ctx->grid_link);
     geocache_context tile_ctx;
     geocache_context_init(&tile_ctx);
     tile_ctx.global_lock_aquire = dummy_lock_aquire;

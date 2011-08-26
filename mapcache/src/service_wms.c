@@ -324,12 +324,11 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                return;
          }
 
-         tile = geocache_tileset_tile_create(ctx->pool, tileset);
+         tile = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
          if(!tile) {
             ctx->set_error(ctx, 500, "failed to allocate tile");
             return;
          }
-         tile->grid_link = grid_link;
          geocache_tileset_tile_lookup(ctx, tile, bbox);
          GC_CHECK_ERROR(ctx);
          geocache_tileset_tile_validate(ctx,tile);
