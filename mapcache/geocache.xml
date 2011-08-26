@@ -466,6 +466,8 @@
       <!-- OSGEO TMS -->
       <tms>true</tms>
       
+      <ve>true</ve>
+      
       <kml>true</kml>
       
       <!-- OGC WMTS -->
