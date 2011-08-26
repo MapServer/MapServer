@@ -98,16 +98,20 @@ int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
    OGR_G_SetPoint_2D(mtbboxls,3,e[0],e[3]);
    OGR_G_SetPoint_2D(mtbboxls,4,e[0],e[1]);
    OGRGeometryH mtbbox = OGR_G_CreateGeometry(wkbPolygon);
-   OGR_G_AddGeometryDirectly(mtbbox,mtbboxls);
+   OGR_G_AddGeometry(mtbbox,mtbboxls);
    int i;
+   int intersects = 0;
    for(i=0;i<nClippers;i++) {
       OGRGeometryH clipper = clippers[i];
       OGRGeometryH clipresult;
       clipresult = OGR_G_Intersection(mtbbox,clipper);
       if(clipresult && !OGR_G_IsEmpty(clipresult))
-         return 1;
+         intersects = 1;
+      OGR_G_DestroyGeometry(clipresult);
    }
-   return 0;
+   OGR_G_DestroyGeometry(mtbbox);
+   OGR_G_DestroyGeometry(mtbboxls);
+   return intersects;
 
 
 }
