@@ -264,6 +264,7 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
                   APR_OS_DEFAULT,ctx->pool))) {
                   if(!APR_STATUS_IS_EEXIST(ret)) {
                      ctx->set_error(ctx, 500,  "failed to create directory %s for blank tiles",blankdirname, apr_strerror(ret,errmsg,120));
+                     ctx->global_lock_release(ctx);
                      return;
                   }
             }
