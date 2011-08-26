@@ -18,7 +18,7 @@
 
 void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
    int len = strlen(filename);
-   char *ext = &(filename[len-3]);
+   const char *ext = &(filename[len-3]);
    if(strcasecmp(ext,"xml")) {
       geocache_configuration_parse_json(ctx,filename,config);
    } else {
