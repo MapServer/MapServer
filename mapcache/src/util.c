@@ -22,6 +22,9 @@
 #include <math.h>
 #include <unistd.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
 const double geocache_meters_per_unit[GEOCACHE_UNITS_COUNT] = {1.0,6378137.0 * 2.0 * M_PI / 360,0.3048};
 
 int geocache_util_extract_int_list(geocache_context *ctx, const char* cargs, const char sep, int **numbers,
