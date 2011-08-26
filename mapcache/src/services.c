@@ -565,7 +565,6 @@ geocache_service* geocache_service_wmts_create(geocache_context *ctx) {
 
 void geocache_service_dispatch_request(geocache_context *ctx, geocache_request **request, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    int i;
-   geocache_service *service = NULL;
    
    /* skip empty pathinfo */
    if(!pathinfo) {
@@ -583,12 +582,14 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
    }
    
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
-      int prefixlen;
       /* loop through the services that have been configured */
+      int prefixlen;
+      geocache_service *service = NULL;
       service = config->services[i];
       prefixlen = strlen(service->url_prefix);
       if(!service) continue; /* skip an unconfigured service */
       if(strncmp(service->url_prefix,pathinfo, prefixlen)) continue; /*skip a service who's prefix does not correspond */
+      if(*(pathinfo+prefixlen)!='/' && *(pathinfo+prefixlen)!='\0') continue; /*we matched the prefix but there are trailing characters*/
       pathinfo += prefixlen; /* advance pathinfo to after the service prefix */
       service->parse_request(ctx,request,pathinfo,params,config);
       GC_CHECK_ERROR(ctx);
