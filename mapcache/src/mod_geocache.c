@@ -101,7 +101,6 @@ void apache_context_server_log(geocache_context *c, geocache_log_level level, ch
    char *msg = apr_pvsprintf(c->pool,message,args);
    va_end(args);
    ap_log_error(APLOG_MARK, APLOG_INFO, 0, ctx->server,"%s",msg);
-   free(msg);
 }
 
 void apache_context_request_log(geocache_context *c, geocache_log_level level, char *message, ...) {
