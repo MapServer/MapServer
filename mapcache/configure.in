@@ -16,6 +16,8 @@ dnl Add -fPIC to compiler flags
 dnl ---------------------------------------------------------------------
 CFLAGS="$CFLAGS -fPIC"
 
+AC_CHECK_FUNC(symlink,[CFLAGS="$CFLAGS -DHAVE_SYMLINK"])
+
 TARGETS=
 
 # macro that is used to parse a --with-apxs parameter

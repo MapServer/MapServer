@@ -18,6 +18,12 @@
 #include <apr_file_info.h>
 #include <apr_strings.h>
 #include <apr_file_io.h>
+#include <string.h>
+#include <errno.h>
+
+#ifdef HAVE_SYMLINK
+#include <unistd.h>
+#endif
 
 void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path) {
    *path = apr_psprintf(ctx->pool,"%s/%s/%s/blanks/%02X%02X%02X%02X.%s",
@@ -173,7 +179,8 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
        return;
    }
    *hackptr2 = '/';
-   
+  
+#ifdef HAVE_SYMLINK
    if(((geocache_cache_disk*)tile->tileset->cache)->symlink_blank) {
       geocache_image *image = geocache_imageio_decode(ctx, tile->data);
       GC_CHECK_ERROR(ctx);
@@ -217,8 +224,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
 #endif
          }
          ctx->global_lock_release(ctx);
-         int errno;
-         if(errno = apr_file_link(blankname,filename) != GEOCACHE_SUCCESS) {
+         if(symlink(blankname,filename) != 0) {
             ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to link tile %s to %s: %s",filename, blankname, strerror(errno));
             return; /* we could not create the file */
          }
@@ -228,6 +234,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
          return;
       }
    }
+#endif /*HAVE_SYMLINK*/
 
    /* go the normal way: either we haven't configured blank tile detection, or the tile was not blank */
    if(apr_file_open(&f, filename,
@@ -258,8 +265,14 @@ void _geocache_cache_disk_configuration_parse(geocache_context *ctx, ezxml_t nod
    }
    
    if ((cur_node = ezxml_child(node,"symlink_blank")) != NULL) {
-      if(strcasecmp(cur_node->txt,"false"))
+      if(strcasecmp(cur_node->txt,"false")){
+#ifdef HAVE_SYMLINK
          dcache->symlink_blank = 1;
+#else
+         ctx->set_error(ctx,GEOCACHE_DISK_ERROR,"cache %s: host system does not support file symbolic linking",cache->name);
+         return;
+#endif
+      }
    }
 }
    
@@ -281,14 +294,6 @@ void _geocache_cache_disk_configuration_check(geocache_context *ctx, geocache_ca
       ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to create directory %s for cache %s",dcache->base_directory,dcache->cache.name );
       return;
    }
-
-   /*win32 isn't buildable yet, but put this check in now for reminders*/
-#ifdef _WIN32
-   if(dcache->symlink_blank) {
-      ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "linking blank tiles isn't supported on WIN32 due to platform limitations");
-   }
-#endif
-
    return;
 }
 
