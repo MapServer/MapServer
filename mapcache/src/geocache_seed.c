@@ -15,6 +15,7 @@ struct geocache_context_seeding{
     int maxzoom;
     double *extent;
     int nextx,nexty,nextz;
+    geocache_grid_link *grid_link;
 };
 
 typedef struct {
@@ -81,12 +82,14 @@ void geocache_context_seeding_log(geocache_context *ctx, geocache_log_level leve
 
 int tile_exists(geocache_context *ctx, geocache_tileset *tileset,
                     int x, int y, int z,
+                    geocache_grid_link *grid_link,
                     geocache_context *tmpctx) {
     geocache_tile tile;
     tile.x = x;
     tile.y = y;
     tile.z = z;
     tile.tileset = tileset;
+    tile.grid_link = grid_link;
     return tileset->cache->tile_exists(tmpctx,&tile);
 }
 
@@ -117,7 +120,7 @@ int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocac
             }
             ctx->nextx = seed_tiles[ctx->nextz].firstx;
         }
-        if(! tile_exists(gctx, ctx->tileset, ctx->nextx, ctx->nexty, ctx->nextz,tmpcontext))
+        if(! tile_exists(gctx, ctx->tileset, ctx->nextx, ctx->nexty, ctx->nextz, ctx->grid_link, tmpcontext))
             break;
     }
     gctx->global_lock_release(gctx);
@@ -128,7 +131,8 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
         geocache_cfg *cfg,
         geocache_tileset *tileset,
         int minzoom, int maxzoom,
-        double *extent) {
+        double *extent,
+        geocache_grid_link *grid_link) {
     int ret;
     geocache_context *gctx = (geocache_context*)ctx;
     geocache_context_init(gctx);
@@ -145,6 +149,7 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
     ctx->minzoom = minzoom;
     ctx->maxzoom = maxzoom;
     ctx->tileset = tileset;
+    ctx->grid_link = grid_link;
 }
 
 void dummy_lock_aquire(geocache_context *ctx){
@@ -163,6 +168,7 @@ static void* APR_THREAD_FUNC doseed(apr_thread_t *thread, void *data) {
     geocache_context_seeding *ctx = (geocache_context_seeding*)data;
     geocache_context *gctx = (geocache_context*)ctx;
     geocache_tile *tile = geocache_tileset_tile_create(gctx->pool, ctx->tileset);
+    tile->grid_link = ctx->grid_link;
     geocache_context tile_ctx;
     geocache_context_init(&tile_ctx);
     tile_ctx.global_lock_aquire = dummy_lock_aquire;
@@ -264,7 +270,7 @@ int main(int argc, const char **argv) {
             return usage(argv[0],gctx->get_error_message(gctx));
     }
 
-    geocache_grid *grid = NULL;
+    geocache_grid_link *grid_link = NULL;
 
     if( ! tileset_name ) {
         return usage(argv[0],"tileset not specified");
@@ -274,39 +280,41 @@ int main(int argc, const char **argv) {
             return usage(argv[0], "tileset not found in configuration");
         }
         if( ! grid_name ) {
-           grid = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*)->grid;
+           grid_link = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
         } else {
            int i;
            for(i=0;i<tileset->grid_links->nelts;i++) {
-              geocache_grid *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*)->grid;
-              if(!strcmp(sgrid->name,grid_name)) {
-               grid = sgrid;
+              geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+              if(!strcmp(sgrid->grid->name,grid_name)) {
+               grid_link = sgrid;
                break;
               }
            }
-           if(!grid) {
+           if(!grid_link) {
               return usage(argv[0],"grid not configured for tileset");
            }
         }
         if(!zooms) {
             zooms = (int*)apr_pcalloc(gctx->pool,2*sizeof(int));
-            zooms[0] = 1;
-            zooms[1] = grid->nlevels;
+            zooms[0] = 0;
+            zooms[1] = grid_link->grid->nlevels - 1;
         }
+        if(zooms[0]<0) zooms[0] = 0;
+        if(zooms[1]>= grid_link->grid->nlevels) zooms[1] = grid_link->grid->nlevels - 1;
         if(!extent) {
             extent = (double*)apr_pcalloc(gctx->pool,4*sizeof(double));
-            extent[0] = grid->extent[0];
-            extent[1] = grid->extent[1];
-            extent[2] = grid->extent[2];
-            extent[3] = grid->extent[3];
+            extent[0] = grid_link->grid->extent[0];
+            extent[1] = grid_link->grid->extent[1];
+            extent[2] = grid_link->grid->extent[2];
+            extent[3] = grid_link->grid->extent[3];
         }
     }
 
-    geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],extent);
+    geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],extent,grid_link);
     for(n=zooms[0];n<=zooms[1];n++) {
-        geocache_grid_get_xy(gctx,grid,grid->extent[0],grid->extent[1],
+        geocache_grid_get_xy(gctx,grid_link->grid,grid_link->grid->extent[0],grid_link->grid->extent[1],
                 n,&seed_tiles[n].firstx,&seed_tiles[n].firsty);
-        geocache_grid_get_xy(gctx,grid,grid->extent[2],grid->extent[3],
+        geocache_grid_get_xy(gctx,grid_link->grid,grid_link->grid->extent[2],grid_link->grid->extent[3],
                 n,&seed_tiles[n].lastx,&seed_tiles[n].lasty);
     }
     ctx.nextz = zooms[0];
