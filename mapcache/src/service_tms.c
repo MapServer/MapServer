@@ -133,7 +133,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
    char *last, *key, *endptr;
    geocache_tileset *tileset = NULL;
    char *pathinfo;
-   int x,y,z;
+   int x=-1,y=-1,z=-1;
    
    if(cpathinfo) {
       pathinfo = apr_pstrdup(ctx->pool,cpathinfo);
@@ -172,7 +172,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
          case 5:
             y = (int)strtol(key,&endptr,10);
             if(*endptr != '.') {
-               ctx->log(ctx,GEOCACHE_REQUEST_ERROR, "received tms request %s with invalid y %s", pathinfo, key);
+               ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request %s with invalid y %s", pathinfo, key);
                return;
             }
             break;
@@ -191,6 +191,8 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
       req->tiles[0]->x = x;
       req->tiles[0]->y = y;
       req->tiles[0]->z = z;
+      geocache_tileset_tile_validate(ctx,req->tiles[0]);
+      GC_CHECK_ERROR(ctx);
       *request = (geocache_request*)req;
       return;
    } else if(index<3) {

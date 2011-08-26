@@ -785,6 +785,14 @@ struct geocache_tileset {
 void geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox);
 
 /**
+ * \brief verify the created tile respects configured constraints
+ * @param tile
+ * @param r
+ * @return
+ */
+void geocache_tileset_tile_validate(geocache_context *ctx, geocache_tile *tile);
+
+/**
  * compute level for a given resolution
  * 
  * computes the integer level for the given resolution. the input resolution will be set to the exact
@@ -861,7 +869,6 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
 
 
 geocache_grid* geocache_grid_create(apr_pool_t *pool);
-
 
 /* in util.c */
 int geocache_util_extract_int_list(geocache_context *ctx, const char* args, const char sep, int **numbers,

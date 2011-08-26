@@ -362,7 +362,9 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       req->tiles[0]->x = col;
       req->tiles[0]->y = row;
       req->tiles[0]->z = level;
-      
+
+      geocache_tileset_tile_validate(ctx,req->tiles[0]);
+
       *request = (geocache_request*)req;
       return;
    }

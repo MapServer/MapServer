@@ -37,6 +37,14 @@ void geocache_tileset_get_level(geocache_context *ctx, geocache_tileset *tileset
    ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: failed lookup for resolution %f", tileset->name, *resolution);
 }
 
+void geocache_tileset_tile_validate(geocache_context *ctx, geocache_tile *tile) {
+   if(tile->z < 0 || tile->z >= tile->tileset->grid->levels) {
+      ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"invalid tile z level");
+      return;
+   }
+   /* TODO: check restricted extent when implemented */
+}
+
 /*
  * update the tile by setting it's x,y,z value given a bbox.
  * will return GEOCACHE_TILESET_WRONG_RESOLUTION or GEOCACHE_TILESET_WRONG_EXTENT
