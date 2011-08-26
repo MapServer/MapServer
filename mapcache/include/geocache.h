@@ -268,6 +268,7 @@ struct geocache_source {
 };
 
 geocache_http* geocache_http_configuration_parse(geocache_context *ctx,ezxml_t node);
+geocache_http* geocache_http_clone(geocache_context *ctx, geocache_http *orig);
 
 struct geocache_http {
    char *url; /**< the base url to request */

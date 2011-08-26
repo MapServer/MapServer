@@ -122,11 +122,9 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
 
 void geocache_http_do_request_with_params(geocache_context *ctx, geocache_http *req, apr_table_t *params,
       geocache_buffer *data, apr_table_t *headers) {
-   char *fullUrl = geocache_http_build_url(ctx,req->url,params);
-   char *oldurl = req->url;
-   req->url = fullUrl;
-   geocache_http_do_request(ctx,req,data,headers);
-   req->url = oldurl;
+   geocache_http *request = geocache_http_clone(ctx,req);
+   request->url = geocache_http_build_url(ctx,req->url,params);
+   geocache_http_do_request(ctx,request,data,headers);
 }
 
 /* calculate the length of the string formed by key=value&, and add it to cnt */
@@ -302,6 +300,12 @@ geocache_http* geocache_http_configuration_parse(geocache_context *ctx, ezxml_t 
    /* TODO: parse <proxy> and <auth> elements */
 }
 
+geocache_http* geocache_http_clone(geocache_context *ctx, geocache_http *orig) {
+   geocache_http *ret = apr_pcalloc(ctx->pool, sizeof(geocache_http*));
+   ret->headers = apr_table_clone(ctx->pool,orig->headers);
+   ret->url = apr_pstrdup(ctx->pool, orig->url);
+   return ret;
+}
 
 /* vim: ai ts=3 sts=3 et sw=3
 */
