@@ -119,7 +119,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    geocache_configuration_add_grid(cfg,grid,"WGS84");
 
    grid = geocache_grid_create(pool);
-   grid->name = "google";
+   grid->name = "GoogleMapsCompatible";
    grid->srs = "epsg:3857";
    apr_table_add(grid->metadata,"title","GoogleMapsCompatible");
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
@@ -137,8 +137,28 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
       grid->extents[i][3] = google_extent[3];
       grid->resolutions[i] = google_resolutions[i];
    }
-   geocache_configuration_add_grid(cfg,grid,"google");
+   geocache_configuration_add_grid(cfg,grid,"GoogleMapsCompatible");
 
+   grid = geocache_grid_create(pool);
+   grid->name = "google";
+   grid->srs = "epsg:900913";
+   apr_table_add(grid->metadata,"title","GoogleMapsCompatible");
+   apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
+   grid->tile_sx = grid->tile_sy = 256;
+   grid->resolutions = google_resolutions;
+   grid->levels = 19;
+   grid->unit = GEOCACHE_UNIT_METERS;
+   grid->extents = (double**)apr_pcalloc(pool,grid->levels*sizeof(double*));
+   grid->resolutions = (double*)apr_pcalloc(pool,grid->levels*sizeof(double));
+   for(i=0; i<grid->levels; i++) {
+      grid->extents[i] = (double*)apr_pcalloc(pool,4*sizeof(double));
+      grid->extents[i][0] = google_extent[0];
+      grid->extents[i][1] = google_extent[1];
+      grid->extents[i][2] = google_extent[2];
+      grid->extents[i][3] = google_extent[3];
+      grid->resolutions[i] = google_resolutions[i];
+   }
+   geocache_configuration_add_grid(cfg,grid,"google");
 
    return cfg;
 }
