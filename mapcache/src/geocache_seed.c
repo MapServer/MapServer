@@ -579,15 +579,19 @@ int main(int argc, const char **argv) {
     }
 
     if(old) {
-      struct tm oldtime;
-      memset(&oldtime,0,sizeof(oldtime));
-      char *ret = strptime(old,"%Y/%m/%d %H:%M",&oldtime);
-      if(!ret || *ret){
-         return usage(argv[0],"failed to parse time");
-      }
-      if(APR_SUCCESS != apr_time_ansi_put(&age_limit,mktime(&oldtime))) {
-         return usage(argv[0],"failed to convert time");
-      }
+       if(strcasecmp(old,"now")) {
+          struct tm oldtime;
+          memset(&oldtime,0,sizeof(oldtime));
+          char *ret = strptime(old,"%Y/%m/%d %H:%M",&oldtime);
+          if(!ret || *ret){
+             return usage(argv[0],"failed to parse time");
+          }
+          if(APR_SUCCESS != apr_time_ansi_put(&age_limit,mktime(&oldtime))) {
+             return usage(argv[0],"failed to convert time");
+          }
+       } else {
+         age_limit = apr_time_now();
+       }
     }
 
     geocache_context_seeding_init(&ctx,cfg,tileset,zooms[0],zooms[1],grid_link, dimensions);
