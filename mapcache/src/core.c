@@ -37,6 +37,7 @@ geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_ge
    return rettile;
 }
 
+#ifdef USE_CAIRO
 geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
 
    geocache_tile **maptiles;
@@ -55,6 +56,7 @@ geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
          nmaptiles, maptiles);
    return getmapim;
 }
+#endif
 
 geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map) {
 #ifdef DEBUG
