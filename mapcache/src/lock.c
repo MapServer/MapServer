@@ -48,10 +48,30 @@ static char* num_encode(apr_pool_t *pool, int num) {
 }
 
 char *geocache_tileset_tile_lock_key(geocache_context *ctx, geocache_tile *tile) {
-  return apr_psprintf(ctx->pool,
-          "/%s%s-%s-%s",
-          tile->tileset->name,
-          num_encode(ctx->pool,tile->z), num_encode(ctx->pool,tile->y), num_encode(ctx->pool,tile->x));
+   char *lockname = apr_psprintf(ctx->pool,
+         "/%s-%s-%s%s", /*x,y,z,tilesetname*/
+         num_encode(ctx->pool,tile->x), num_encode(ctx->pool,tile->y),
+         num_encode(ctx->pool,tile->z), tile->tileset->name);
+   if(tile->tileset->grid_links->nelts > 1) {
+      lockname = apr_pstrcat(ctx->pool,lockname,tile->grid_link->grid->name,NULL);
+   }
+   if(tile->dimensions && !apr_is_empty_table(tile->dimensions)) {
+      const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
+      int i;
+      for(i=0;i<elts->nelts;i++) {
+         apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
+         lockname = apr_pstrcat(ctx->pool,lockname,entry.val,NULL);
+      }
+
+   }      
+#ifdef SEM_NAME_LEN
+   /* truncate the lockname to the number of allowed characters */
+#warning "current platform only supports short semaphore names. lock name max length: " SEM_NAME_LEN
+   if(strlen(lockname) >= SEM_NAME_LEN) {
+      lockname[SEM_NAME_LEN]='\0';
+   }
+#endif
+   return lockname;
 }
 /**
  * \brief lock the given tile so other processes know it is being processed
