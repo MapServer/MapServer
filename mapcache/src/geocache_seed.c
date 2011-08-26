@@ -130,8 +130,13 @@ void progresslog(int x, int y, int z) {
       float duration = ((now_t.tv_sec-lastlogtime.tv_sec)*1000000+(now_t.tv_usec-lastlogtime.tv_usec))/1000000.0;
       float totalduration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
       if(duration>=5) {
+         int Nx, Ny;
+         Nx = (grid_link->grid_limits[z][2]-grid_link->grid_limits[z][0])/tileset->metasize_x;
+         Ny = (grid_link->grid_limits[z][3]-grid_link->grid_limits[z][1])/tileset->metasize_y;
+         int Ntot = Nx*Ny;
+         int Ncur = (y-grid_link->grid_limits[z][1])/tileset->metasize_y*Nx+(x-grid_link->grid_limits[z][0]+1)/tileset->metasize_x;
          int ntilessincelast = seededtilestot-seededtiles;
-         sprintf(msg,"seeding level %d: %f metatiles/sec (avg since start: %f)",z,ntilessincelast/duration,
+         sprintf(msg,"seeding level %d [%d/%d]: %f metatiles/sec (avg since start: %f)",z,Ncur,Ntot,ntilessincelast/duration,
                seededtilestot/totalduration);
          lastlogtime=now_t;
          seededtiles=seededtilestot;
