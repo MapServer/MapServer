@@ -4,7 +4,7 @@ all: .header
 	cd src; $(MAKE) $(MFLAGS)
 	
 install-module: .header
-	cd src; $(MAKE) install-module
+	cd src; $(MAKE) $(MFLAGS) install-module
 
 # make clean and rerun if essential files have been modified
 .header: configure include/geocache.h include/util.h include/errors.h Makefile Makefile.inc src/Makefile
