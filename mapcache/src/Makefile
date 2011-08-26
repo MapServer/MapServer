@@ -11,7 +11,7 @@ fcgihelp:
 	echo "fcgi help"
 
 .c.o:
-	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(INCLUDES) -c $<
+	$(LIBTOOL) --tag CC --mode=compile $(CC) $(CFLAGS) $(INCLUDES) -c $<
 	
 mod_geocache.la: mod_geocache.o
 
