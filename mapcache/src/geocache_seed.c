@@ -519,6 +519,8 @@ int main(int argc, const char **argv) {
       extent = apr_pcalloc(gctx->pool,4*sizeof(double));
       int f=0;
       while( (hFeature = OGR_L_GetNextFeature(layer)) != NULL ) {
+         OGRGeometryH geom = OGR_F_GetGeometryRef(hFeature);
+         if(!geom ||  !OGR_G_IsValid(geom)) continue;
          clippers[f] = OGR_G_Clone(OGR_F_GetGeometryRef(hFeature));
          OGREnvelope ogr_extent;
          OGR_G_GetEnvelope	(clippers[f], &ogr_extent);	
@@ -537,9 +539,7 @@ int main(int argc, const char **argv) {
          OGR_F_Destroy( hFeature );
          f++;
       }
-      if(f != nClippers) {
-         usage(argv[0],"error");
-      }
+      nClippers = f;
       
 
     }
