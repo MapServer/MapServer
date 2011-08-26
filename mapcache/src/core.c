@@ -261,8 +261,9 @@ geocache_http_response *geocache_core_proxy_request(geocache_context *ctx, geoca
          http->url = apr_pstrcat(ctx->pool,http->url,"/",req_proxy->pathinfo,NULL);
     }
     geocache_http_do_request_with_params(ctx,http,req_proxy->params,response->data,response->headers,&response->code);
-    if(response->code !=200 && GC_HAS_ERROR(ctx)) {
-      ctx->clear_errors(ctx);
+    if(response->code !=0 && GC_HAS_ERROR(ctx)) {
+       /* the http request was successful, but the server returned an error */
+       ctx->clear_errors(ctx);
     }
     return response;
 }
