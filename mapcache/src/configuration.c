@@ -41,6 +41,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
          "JPEG");
    cfg->merge_format = geocache_configuration_get_image_format(cfg,"PNG");
    cfg->lockdir = "/tmp/geocache_locks";
+   cfg->reporting = GEOCACHE_REPORT_MSG;
    return cfg;
 }
 

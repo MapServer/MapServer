@@ -30,11 +30,19 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
    char *str = NULL;
    double *bbox;
    geocache_request *request = NULL;
-
+   
+   str = (char*)apr_table_get(params,"SERVICE");
+   if(!str)
+      str = (char*)apr_table_get(params,"service");
+   if(!str || strcasecmp(str,"wms")) {
+      return NULL;
+   }
+      
    str = (char*)apr_table_get(params,"REQUEST");
    if(!str)
       str = (char*)apr_table_get(params,"request");
    if(!str || strcasecmp(str,"getmap")) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request that wasn't a getmap: %s", str);
       return NULL;
    }
 

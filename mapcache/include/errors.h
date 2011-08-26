@@ -37,4 +37,10 @@ GEOCACHE_WARNING,
 GEOCACHE_ERROR
 } geocache_log_level;
 
+typedef enum {
+   GEOCACHE_REPORT_LOG,
+   GEOCACHE_REPORT_MSG,
+   GEOCACHE_REPORT_IMG
+} geocache_error_reporting;
+
 #endif /* ERRORS_H_ */

@@ -134,6 +134,7 @@ struct geocache_context {
     apr_pool_t *pool;
     char *_errmsg;
     geocache_error_code _errcode;
+    geocache_cfg *config;
 };
 
 void geocache_context_init(geocache_context *ctx);
@@ -463,6 +464,11 @@ struct geocache_cfg {
      * directory where we store file locks
      */
     char *lockdir;
+    
+    /**
+      * how should error messages be reported to the user
+      */
+     geocache_error_reporting reporting;
 };
 
 /**

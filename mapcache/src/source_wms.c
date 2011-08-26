@@ -61,8 +61,9 @@ void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metati
    GC_CHECK_ERROR(ctx);
    
    if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {
-      ctx->set_error(ctx, GEOCACHE_SOURCE_WMS_ERROR, "wms request failed for tileset %s: %d %d %d returned an unsupported format",
-            tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z);
+      char *returned_data = apr_pstrndup(ctx->pool,(char*)tile->tile.data->buf,tile->tile.data->size);
+      ctx->set_error(ctx, GEOCACHE_SOURCE_WMS_ERROR, "wms request for tileset %s: %d %d %d returned an unsupported format:\n%s",
+            tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z, returned_data);
    }
 }
 
