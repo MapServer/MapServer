@@ -1,7 +1,5 @@
 include ../Makefile.inc
 
-LIBTOOL=../libtool
-
 all: $(TARGETS)
 
 install-module: mod_geocache.o
@@ -13,18 +11,18 @@ fcgihelp:
 	echo "fcgi help"
 
 .c.o:
-	$(LIBTOOL) --mode=compile $(CC) $(GC_CFLAGS) $(APR_CFLAGS) -c $<
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(INCLUDES) -c $<
 	
 mod_geocache.la: mod_geocache.o
 
 mod_geocache.o:  mod_geocache.c $(OBJS)
-	$(APXS) $(APXS_WCFLAGS) $(APXS_WLDFLAGS) -c mod_geocache.c $(LOBJS)
+	$(APXS) "-Wc,$(CFLAGS) $(INCLUDES)" "-Wl,$(LIBS)" -c mod_geocache.c $(LOBJS)
 	
 geocache.fcgi: fastcgi_geocache.c $(OBJS)
-	$(LIBTOOL) --mode=link $(CC) -o geocache.fcgi $(GC_CFLAGS) $(APR_CFLAGS) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(GC_LIBS) $(APR_LIBS) $(FCGI_LIB)
+	$(LIBTOOL) --mode=link $(CC) -o geocache.fcgi $(CFLAGS) $(INCLUDES) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(LIBS) $(FCGI_LIB)
 
 geocache_seed: geocache_seed.c $(OBJS)
-	$(LIBTOOL) --mode=link $(CC) -o geocache_seed $(GC_CFLAGS) $(APR_CFLAGS) geocache_seed.c $(LOBJS) $(GC_LIBS) $(APR_LIBS)
+	$(LIBTOOL) --mode=link $(CC) -o geocache_seed $(CFLAGS) $(INCLUDES) geocache_seed.c $(LOBJS) $(LIBS) 
 
 
 clean:
