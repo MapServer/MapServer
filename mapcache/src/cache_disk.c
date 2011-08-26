@@ -198,7 +198,7 @@ int _geocache_cache_disk_tile_wait_for_lock(geocache_tile *tile, geocache_contex
    apr_file_t *f;
 #ifdef DEBUG
    if(tile->lock) {
-      r->errmsg = apr_psprintf(r->pool,  "### BUG ### waiting for a lock we have created ourself");
+      r->set_error(r,GEOCACHE_DISK_ERROR,  "### BUG ### waiting for a lock we have created ourself");
       return GEOCACHE_FAILURE;
    }
 #endif
@@ -276,11 +276,11 @@ int _geocache_cache_disk_set(geocache_tile *tile, geocache_context *r) {
 #ifdef DEBUG
    /* all this should be checked at a higher level */
    if(!tile->data || !tile->data->size) {
-      r->errmsg = apr_psprintf(r->pool,  "attempting to write empty tile to disk");
+      r->set_error(r,GEOCACHE_DISK_ERROR,"attempting to write empty tile to disk");
       return GEOCACHE_FAILURE;
    }
    if(!tile->lock) {
-      r->errmsg = apr_psprintf(r->pool,  "attempting to write to an unlocked tile");
+      r->set_error(r,GEOCACHE_DISK_ERROR,"attempting to write to an unlocked tile");
       return GEOCACHE_FAILURE;
    }
 #endif
@@ -312,7 +312,7 @@ int _geocache_cache_disk_set(geocache_tile *tile, geocache_context *r) {
             }
             apr_file_close(f);
 #ifdef DEBUG
-            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "created blank tile %s",blankname);
+            r->log(r,GEOCACHE_DEBUG,"created blank tile %s",blankname);
 #endif
          }
          if(apr_file_link(blankname,filename) != GEOCACHE_SUCCESS) {
@@ -320,7 +320,7 @@ int _geocache_cache_disk_set(geocache_tile *tile, geocache_context *r) {
             return GEOCACHE_FAILURE; /* we could not create the file */
          }
 #ifdef DEBUG        
-         r->errmsg = apr_psprintf(r->pool,  "linked blank tile %s to %s",filename,blankname);
+         r->log(r, GEOCACHE_DEBUG, "linked blank tile %s to %s",filename,blankname);
 #endif
          return GEOCACHE_SUCCESS;
       }

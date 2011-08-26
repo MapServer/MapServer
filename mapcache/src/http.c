@@ -35,7 +35,7 @@ int geocache_http_request_url(geocache_context *r, char *url, geocache_buffer *d
    /* specify URL to get */
    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
 #ifdef DEBUG
-   r->log(r, GEOCACHE_LOG_DEBUG, "##### START #####\ncurl requesting url %s",url);
+   r->log(r, GEOCACHE_DEBUG, "##### START #####\ncurl requesting url %s",url);
 #endif
    /* send all data to this function  */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _geocache_curl_memory_callback);
@@ -60,7 +60,7 @@ int geocache_http_request_url(geocache_context *r, char *url, geocache_buffer *d
    /* cleanup curl stuff */ 
    curl_easy_cleanup(curl_handle);
 #ifdef DEBUG
-   r->log(r, GEOCACHE_LOG_DEBUG, "##### END #####\nrequested url %s",url);
+   r->log(r, GEOCACHE_DEBUG, "##### END #####\nrequested url %s",url);
 #endif
    return GEOCACHE_SUCCESS;
 }

@@ -245,14 +245,14 @@ int geocache_tileset_tile_get(geocache_tile *tile, geocache_context *r) {
       if(isLocked == GEOCACHE_TRUE) {
          /* another thread is rendering the tile, we should wait for it to finish */
 #ifdef DEBUG
-         r->log(r, GEOCACHE_LOGLEVEL_DEBUG, "cache wait: tileset %s - tile %d %d %d",
+         r->log(r, GEOCACHE_DEBUG, "cache wait: tileset %s - tile %d %d %d",
                tile->tileset->name,tile->x, tile->y,tile->z);
 #endif
          tile->tileset->cache->tile_lock_wait(tile,r);
       } else {
          /* no other thread is doing the rendering, do it ourselves */
 #ifdef DEBUG
-         r->log(r, GEOCACHE_LOGLEVEL_DEBUG, "cache miss: tileset %s - tile %d %d %d",
+         r->log(r, GEOCACHE_DEBUG, "cache miss: tileset %s - tile %d %d %d",
                tile->tileset->name,tile->x, tile->y,tile->z);
 #endif
          /* this will query the source to create the tiles, and save them to the cache */
