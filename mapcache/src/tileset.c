@@ -255,7 +255,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
        * - if the lock exists, we should wait for the other thread to finish
        */
 
-      ctx->global_lock_aquire(ctx,0);
+      ctx->global_lock_aquire(ctx);
       GC_CHECK_ERROR(ctx);
 
       isLocked = geocache_tileset_tile_lock_exists(ctx, tile);
@@ -287,7 +287,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
          _geocache_tileset_render_metatile(ctx, mt);
          
          /* remove the lockfiles */
-         ctx->global_lock_aquire(ctx,0);
+         ctx->global_lock_aquire(ctx);
          _geocache_tileset_metatile_unlock(ctx,mt);
          ctx->global_lock_release(ctx);
          GC_CHECK_ERROR(ctx);

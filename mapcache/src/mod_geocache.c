@@ -87,7 +87,7 @@ void apache_context_request_log(geocache_context *c, geocache_log_level level, c
    va_end(args);
 }
 
-void geocache_util_mutex_aquire(geocache_context *gctx, int nonblocking) {
+void geocache_util_mutex_aquire(geocache_context *gctx) {
    int ret;
    geocache_context_apache_request *ctx = (geocache_context_apache_request*)gctx;
    geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);

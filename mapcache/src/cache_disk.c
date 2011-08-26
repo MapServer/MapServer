@@ -183,7 +183,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
          char *blankname;
          _geocache_cache_disk_blank_tile_key(ctx,tile,image->data,&blankname);
          GC_CHECK_ERROR(ctx);
-         ctx->global_lock_aquire(ctx, 0);
+         ctx->global_lock_aquire(ctx);
          GC_CHECK_ERROR(ctx);
          if(apr_file_open(&f, blankname, APR_FOPEN_READ, APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
             /* create the blank file */

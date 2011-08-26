@@ -54,7 +54,7 @@ void init_fcgi_context(geocache_context_fcgi *ctx) {
    ctx->mutex_fname="/tmp/geocache.fcgi.lock";
 }
 
-void geocache_fcgi_mutex_aquire(geocache_context *gctx, int nonblocking) {
+void geocache_fcgi_mutex_aquire(geocache_context *gctx) {
    geocache_context_fcgi *ctx = (geocache_context_fcgi*)gctx;
    int ret;
 #ifdef DEBUG

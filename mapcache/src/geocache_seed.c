@@ -49,7 +49,7 @@ void handle_sig_int(int signal) {
     }
 }
 
-void geocache_context_seeding_lock_aquire(geocache_context *gctx, int blocking) {
+void geocache_context_seeding_lock_aquire(geocache_context *gctx) {
     int ret;
     geocache_context_seeding *ctx = (geocache_context_seeding*)gctx;
     ret = apr_thread_mutex_lock(ctx->mutex);
@@ -92,7 +92,7 @@ int tile_exists(geocache_context *ctx, geocache_tileset *tileset,
 int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocache_tile *tile, geocache_context *tmpcontext) {
     geocache_context *gctx= (geocache_context*)ctx;
 
-    gctx->global_lock_aquire(gctx,0);
+    gctx->global_lock_aquire(gctx);
     if(ctx->nextz > ctx->maxzoom) {
         gctx->global_lock_release(gctx);
         return GEOCACHE_FAILURE;
@@ -146,7 +146,7 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
     ctx->tileset = tileset;
 }
 
-void dummy_lock_aquire(geocache_context *ctx, int nonblocking){
+void dummy_lock_aquire(geocache_context *ctx){
 
 }
 

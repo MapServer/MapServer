@@ -123,7 +123,7 @@ struct geocache_context {
      * \returns GEOCACHE_LOCKED if \param nonblocking was set to 1 and another instance has already aquired
      *          the lock
      */
-    void (*global_lock_aquire)(geocache_context *ctx, int nonblocking);
+    void (*global_lock_aquire)(geocache_context *ctx);
 
     /**
      * \brief release a previously aquired lock
