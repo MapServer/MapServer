@@ -114,6 +114,8 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       const char *title = apr_table_get(tileset->metadata,"title");
       if(title) {
          ezxml_set_txt(ezxml_add_child(layer,"ows:Title",0),title);
+      } else {
+         ezxml_set_txt(ezxml_add_child(layer,"ows:Title",0),tileset->name);
       }
       const char *abstract = apr_table_get(tileset->metadata,"abstract");
       if(abstract) {
@@ -267,7 +269,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    }
    char *tmpcaps = ezxml_toxml(caps);
    ezxml_free(caps);
-   request->request.capabilities = apr_pstrdup(ctx->pool,tmpcaps);
+   request->request.capabilities = apr_pstrcat(ctx->pool,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",tmpcaps,NULL);
    free(tmpcaps);
 }
 
