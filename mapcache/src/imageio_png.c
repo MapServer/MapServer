@@ -1053,7 +1053,7 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
       png_set_tRNS(png_ptr, info_ptr, a,num_a, NULL);
 
    png_write_info(png_ptr, info_ptr);
-   //png_set_packing(png_ptr);
+   png_set_packing(png_ptr);
 
    for(row=0;row<image->h;row++) {
       unsigned char *rowptr = &(pixels[row*image->w]);
