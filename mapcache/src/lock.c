@@ -60,7 +60,13 @@ char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatil
       int i;
       for(i=0;i<elts->nelts;i++) {
          apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
-         lockname = apr_pstrcat(ctx->pool,lockname,entry.val,NULL);
+         char *dimvalue = apr_pstrdup(ctx->pool,entry.val);
+         char *iter = dimvalue;
+         while(*iter) {
+            if(*iter == '/') *iter='_';
+            iter++;
+         }
+         lockname = apr_pstrcat(ctx->pool,lockname,dimvalue,NULL);
       }
 
    }      

@@ -34,7 +34,12 @@
 #endif
 #include <assert.h>
 #include <apr_time.h>
+
+#ifdef USE_PCRE
+#include <pcre.h>
+#else
 #include <regex.h>
+#endif
 
 #define GEOCACHE_SUCCESS 0
 #define GEOCACHE_FAILURE 1
@@ -88,6 +93,10 @@ typedef struct geocache_grid_level geocache_grid_level;
 typedef struct geocache_grid_link geocache_grid_link;
 typedef struct geocache_context geocache_context;
 typedef struct geocache_dimension geocache_dimension;
+typedef struct geocache_dimension_time geocache_dimension_time;
+typedef struct geocache_dimension_intervals geocache_dimension_intervals;
+typedef struct geocache_dimension_values geocache_dimension_values;
+typedef struct geocache_dimension_regex geocache_dimension_regex;
 
 /** \defgroup utility Utility */
 /** @{ */
@@ -1088,17 +1097,81 @@ geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *
 
 /** @} */
 
+typedef struct {
+   double start;
+   double end;
+   double resolution;
+} geocache_interval;
+
+typedef enum {
+   GEOCACHE_DIMENSION_VALUES,
+   GEOCACHE_DIMENSION_REGEX,
+   GEOCACHE_DIMENSION_INTERVALS,
+   GEOCACHE_DIMENSION_TIME
+} geocache_dimension_type;
+
 struct geocache_dimension {
+   geocache_dimension_type type;
    char *name;
    char *unit;
    apr_table_t *metadata;
    char *default_value;
-   int nvalues;
-   char **values;
-   int (*validate)(geocache_context *context, geocache_dimension *dimension, const char *value);
+   
+   /**
+    * \brief validate the given value
+    * 
+    * \param value is updated in case the given value is correct but has to be represented otherwise,
+    * e.g. to round off a value
+    * \returns GEOCACHE_SUCCESS if the given value is correct for the current dimension
+    * \returns GEOCACHE_FAILURE if not
+    */
+   int (*validate)(geocache_context *context, geocache_dimension *dimension, char **value);
+   
+   /**
+    * \brief returns a list of values that are authorized for this dimension
+    *
+    * \returns a list of character strings that will be included in the capabilities <dimension> element
+    */
+   const char** (*print_ogc_formatted_values)(geocache_context *context, geocache_dimension *dimension);
+   
+   /**
+    * \brief parse the value given in the configuration
+    */
+   void (*parse)(geocache_context *context, geocache_dimension *dim, const char *entry);
 };
 
-geocache_dimension* geocache_dimension_create(apr_pool_t *pool);
+struct geocache_dimension_values {
+   geocache_dimension dimension;
+   int nvalues;
+   char **values;
+};
+
+struct geocache_dimension_regex {
+   geocache_dimension dimension;
+   char *regex_string;
+#ifdef USE_PCRE
+   pcre *pcregex;
+#else
+   regex_t *regex;
+#endif
+};
+
+struct geocache_dimension_intervals {
+   geocache_dimension dimension;
+   int nintervals;
+   geocache_interval *intervals;
+};
+
+struct geocache_dimension_time {
+   geocache_dimension dimension;
+   int nintervals;
+   geocache_interval *intervals;
+};
+
+geocache_dimension* geocache_dimension_values_create(apr_pool_t *pool);
+geocache_dimension* geocache_dimension_regex_create(apr_pool_t *pool);
+geocache_dimension* geocache_dimension_intervals_create(apr_pool_t *pool);
+geocache_dimension* geocache_dimension_time_create(apr_pool_t *pool);
 
 #endif /* GEOCACHE_H_ */
 /* vim: ai ts=3 sts=3 et sw=3

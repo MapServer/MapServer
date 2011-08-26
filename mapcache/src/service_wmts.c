@@ -141,12 +141,14 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
                   dimension->name,
                   dimension->default_value);
             if(dimension->unit) {
-               dimensions = apr_pstrcat(ctx->pool,dimension,
+               dimensions = apr_pstrcat(ctx->pool,dimensions,
                   "      <UOM>",dimension->unit,"</UOM>\n",NULL);
             }
-            int i = dimension->nvalues;
-            while(i--) {
-               dimensions = apr_pstrcat(ctx->pool,dimensions,"      <Value>",dimension->values[i],"</Value>\n",NULL);
+            const char **values = dimension->print_ogc_formatted_values(ctx,dimension);
+            const char **value = values;
+            while(*value) {
+               dimensions = apr_pstrcat(ctx->pool,dimensions,"      <Value>",*value,"</Value>\n",NULL);
+               value++;
             }
             dimensions = apr_pstrcat(ctx->pool,dimensions,"    </Dimension>\n",NULL);
 
@@ -423,17 +425,30 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
    
    /*validate dimensions*/
    if(tileset->dimensions) {
+      if(!dimtable) {
+         ctx->set_error(ctx,404, "received request with no dimensions");
+         return;
+      }
       int i;
       for(i=0;i<tileset->dimensions->nelts;i++) {
          geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
          const char *value = apr_table_get(dimtable,dimension->name);
-         int ok = dimension->validate(ctx,dimension,value);
+         if(!value) {
+            ctx->set_error(ctx,404,"received request with no value for dimension \"%s\"",dimension->name);
+            return;
+         }
+         char *tmpval = apr_pstrdup(ctx->pool,value);
+         int ok = dimension->validate(ctx,dimension,&tmpval);
          GC_CHECK_ERROR(ctx);
          if(ok != GEOCACHE_SUCCESS) {
             ctx->set_error(ctx,404,"dimension \"%s\" value \"%s\" fails to validate",
                   dimension->name, value);
             return;
          }
+         
+         /* re-set the eventually modified value in the dimension table */
+         apr_table_set(dimtable,dimension->name,tmpval);
+         
       }
    }
 

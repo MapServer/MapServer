@@ -164,12 +164,14 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
                      dimension->default_value);
                if(dimension->unit) {
                   dimensions = apr_pstrcat(ctx->pool,dimensions,
-                        " units=\"%s\"",dimension->unit,NULL);
+                        " units=\"",dimension->unit,"\"",NULL);
                }
-               dimensions = apr_pstrcat(ctx->pool,dimensions,">",dimension->values[0],NULL);
-               int j;
-               for(j=1;j<dimension->nvalues;j++) {
-                  dimensions = apr_pstrcat(ctx->pool,dimensions,",",dimension->values[j],NULL);
+               const char **value = dimension->print_ogc_formatted_values(ctx,dimension);
+               dimensions = apr_pstrcat(ctx->pool,dimensions,">",*value,NULL);
+               value++;
+               while(*value) {
+                  dimensions = apr_pstrcat(ctx->pool,dimensions,",",*value,NULL);
+                  value++;
                }
                dimensions = apr_pstrcat(ctx->pool,dimensions,"</Dimension>\n",NULL);
             }
@@ -341,11 +343,12 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             for(i=0;i<tileset->dimensions->nelts;i++) {
                geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
                const char *value;
-               if((value = apr_table_get(params,dimension->name)) != NULL) {
-                  int ok = dimension->validate(ctx,dimension,value);
+               if((value = (char*)apr_table_get(params,dimension->name)) != NULL) {
+                  char *tmpval = apr_pstrdup(ctx->pool,value);
+                  int ok = dimension->validate(ctx,dimension,&tmpval);
                   GC_CHECK_ERROR(ctx);
                   if(ok == GEOCACHE_SUCCESS)
-                     apr_table_setn(tile->dimensions,dimension->name,value);
+                     apr_table_setn(tile->dimensions,dimension->name,tmpval);
                   else {
                      ctx->set_error(ctx,400,"dimension \"%s\" value \"%s\" fails to validate",
                            dimension->name, value);

@@ -388,21 +388,9 @@
                file. i.e. their are as many different caches created as their are values in the
                <values> tag.
          -->
-         <dimension name="TIME">
-            <!-- default
-                 the default value to pass on to the source if the client hasn't specified any dimension
-            -->
-            <default>foobar</default>
-
-            <!-- values
-               comma separated list of values that are allowed for the dimension
-            -->
-            <values>foobar,foobarbaz,foo,bar</values>
-         </dimension>
-         <dimension name="ELEVATION">
-            <default>0</default>
-            <values>0,1000,2000,3000,4000</values>
-         </dimension>
+         <dimension type="regex" name="MAPFILE" default="/path/to/mapfile.map">^[a-zA-Z0-9\./]*\.map$</dimension>
+         <dimension type="values" name="TIME" default="foobar" unit="ISO8601">foobar,foobarbaz,foo,bar</dimension>
+         <dimension name="ELEVATION" type="intervals" default="0">0/5000/1000</dimension>
       </dimensions>
    </tileset>
    <tileset name="test2">
