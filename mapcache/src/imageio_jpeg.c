@@ -257,6 +257,7 @@ geocache_image_format* geocache_imageio_create_jpeg_format(apr_pool_t *pool, cha
    format->format.name = name;
    format->format.extension = apr_pstrdup(pool,"jpg");
    format->format.mime_type = apr_pstrdup(pool,"image/jpeg");
+   format->format.metadata = apr_table_make(pool,3);
 
    format->format.write = _geocache_imageio_jpeg_encode;
    format->quality = quality;

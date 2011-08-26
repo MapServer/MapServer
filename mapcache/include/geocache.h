@@ -208,6 +208,7 @@ struct geocache_source {
     double data_extent[4]; /**< extent in which this source can produce data */
     geocache_source_type type;
     int supports_metatiling;
+    apr_table_t *metadata;
     /**
      * \brief get the data for the metatile
      *
@@ -257,6 +258,8 @@ typedef enum {
 struct geocache_cache {
     char *name; /**< key this cache is referenced by */
     geocache_cache_type type;
+    apr_table_t *metadata;
+    
     /**
      * get tile content from cache
      * \returns GEOCACHE_SUCCESS if the data was correctly loaded from the disk
@@ -588,6 +591,8 @@ struct geocache_cfg {
       * how should error messages be reported to the user
       */
      geocache_error_reporting reporting;
+     
+     apr_table_t *metadata;
 };
 
 /**
@@ -679,6 +684,8 @@ struct geocache_grid {
    int tile_sx, tile_sy; /**<width and height of a tile in pixels */
    double *resolutions;
    double **extents; /**< array of extents (one for each resolution) */
+
+   apr_table_t *metadata;
 };
 
 /**\class geocache_tileset
@@ -747,6 +754,8 @@ struct geocache_tileset {
      * handle to the configuration this tileset belongs to
      */
     geocache_cfg *config;
+    
+    apr_table_t *metadata;
 };
 
 /**
@@ -875,6 +884,7 @@ struct geocache_image_format {
     /**< pointer to a function that returns a geocache_buffer containing the given image encoded
      * in the specified format
      */
+    apr_table_t *metadata;
 };
 
 /**\defgroup imageio_png PNG Image IO

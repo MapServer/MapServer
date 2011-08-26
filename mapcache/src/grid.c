@@ -21,5 +21,6 @@
  */
 geocache_grid* geocache_grid_create(apr_pool_t *pool) {
    geocache_grid* grid = (geocache_grid*)apr_pcalloc(pool, sizeof(geocache_grid));
+   grid->metadata = apr_table_make(pool,3);
    return grid;
 }

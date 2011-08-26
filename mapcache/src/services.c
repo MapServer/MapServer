@@ -33,8 +33,8 @@ static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"ISO-8
         "<WMT_MS_Capabilities version=\"1.1.1\">\n"
           "<Service>\n"
             "<Name>OGC:WMS</Name>\n"
-            "<Title></Title>\n"
-            "<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n"
+            "<Title>%s</Title>\n"
+            "<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s/wms?\"/>\n"
           "</Service>\n"
           "<Capability>\n"
             "<Request>\n"
@@ -42,7 +42,7 @@ static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"ISO-8
                 "<Format>application/vnd.ogc.wms_xml</Format>\n"
                 "<DCPType>\n"
                   "<HTTP>\n"
-                    "<Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n"
+                    "<Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s/wms?\"/></Get>\n"
                   "</HTTP>\n"
                 "</DCPType>\n"
               "</GetCapabilities>\n"
@@ -51,7 +51,7 @@ static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"ISO-8
                 "<Format>image/jpeg</Format>\n"
                 "<DCPType>\n"
                   "<HTTP>\n"
-                    "<Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n"
+                    "<Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s/wms?\"/></Get>\n"
                   "</HTTP>\n"
                 "</DCPType>\n"
               "</GetMap>\n"
@@ -68,7 +68,7 @@ static char *wms_tileset = "<TileSet>\n"
                 "<Resolutions>%s</Resolutions>\n"
                 "<Width>%d</Width>\n"
                 "<Height>%d</Height>\n"
-                "<Format>image/png</Format>\n"
+                "<Format>%s</Format>\n"
                 "<Layers>%s</Layers>\n"
                 "<Styles></Styles>\n"
               "</TileSet>\n";
@@ -76,11 +76,12 @@ static char *wms_tileset = "<TileSet>\n"
 static char *wms_layer = "<Layer queryable=\"0\" opaque=\"0\" cascaded=\"1\">\n"
               "<Name>%s</Name>\n"
               "<Title>%s</Title>\n"
+              "<Abstract>%s</Abstract>\n"
               "<SRS>%s</SRS>\n"
               "<BoundingBox srs=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n"
             "</Layer>\n";
 
-void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
+void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabilities *req, char *guessed_url, char *path_info, geocache_cfg *cfg) {
    geocache_request_get_capabilities_wms *request = (geocache_request_get_capabilities_wms*)req;
 #ifdef DEBUG
    if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
@@ -88,7 +89,17 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
       return;
    }
 #endif
-   char *caps = apr_psprintf(ctx->pool,wms_capabilities_preamble,url,url,url);
+   const char *title;
+   const char *url = apr_table_get(cfg->metadata,"url");
+   if(!url) {
+      url = guessed_url;
+   }
+   
+   title = apr_table_get(cfg->metadata,"title");
+   if(!title) {
+      title = "no title set, add some in metadata";
+   }
+   char *caps = apr_psprintf(ctx->pool,wms_capabilities_preamble,title,url,url,url);
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
 
    while(tileindex_index) {
@@ -110,6 +121,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
             resolutions,
             tileset->grid->tile_sx,
             tileset->grid->tile_sy,
+            tileset->format->mime_type,
             tileset->name);
       caps = apr_psprintf(ctx->pool,"%s%s",caps,tilesetcaps);
       tileindex_index = apr_hash_next(tileindex_index);
@@ -124,9 +136,18 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
          geocache_tileset *tileset;
          const void *key; apr_ssize_t keylen;
          apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
+         const char *title = apr_table_get(tileset->metadata,"title");
+         if(!title) {
+            title = "no title set, add some in metadata";
+         }
+         const char *abstract = apr_table_get(tileset->metadata,"abstract");
+         if(!abstract) {
+            abstract = "no abstract set, add some in metadata";
+         }
          char *layercaps = apr_psprintf(ctx->pool,wms_layer,
                tileset->name,
-               tileset->name,
+               title,
+               abstract,
                tileset->grid->srs,
                tileset->grid->srs,
                tileset->grid->extents[0][0],
@@ -159,7 +180,7 @@ static const char *wmts_0 =
       "</ows:ServiceIdentification>\n"
       "<ows:ServiceProvider>\n"
       "  <ows:ProviderName>%s</ows:ProviderName>\n"
-      "  <ows:ProviderSite xlink:href=\"%s\" />\n"
+      "  <ows:ProviderSite xlink:href=\"%s/wmts?\" />\n"
       "  <ows:ServiceContact>\n"
       "    <ows:IndividualName>%s</ows:IndividualName>\n"
       "  </ows:ServiceContact>\n"
@@ -168,7 +189,7 @@ static const char *wmts_0 =
       "  <ows:Operation name=\"GetCapabilities\">\n"
       "    <ows:DCP>\n"
       "      <ows:HTTP>\n"
-      "        <ows:Get xlink:href=\"%s\">\n"
+      "        <ows:Get xlink:href=\"%s/wmts?\">\n"
       "          <ows:Constraint name=\"GetEncoding\">\n"
       "            <ows:AllowedValues>\n"
       "              <ows:Value>KVP</ows:Value>\n"
@@ -181,7 +202,7 @@ static const char *wmts_0 =
       "  <ows:Operation name=\"GetTile\">\n"
       "    <ows:DCP>\n"
       "      <ows:HTTP>\n"
-      "        <ows:Get xlink:href=\"%s\">\n"
+      "        <ows:Get xlink:href=\"%s/wmts?\">\n"
       "          <ows:Constraint name=\"GetEncoding\">\n"
       "            <ows:AllowedValues>\n"
       "              <ows:Value>KVP</ows:Value>\n"
@@ -209,17 +230,28 @@ static const char *wmts_matrix =
 void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
    geocache_request_get_capabilities_wmts *request = (geocache_request_get_capabilities_wmts*)req;
    char *caps;
-   char *onlineresource = apr_pstrcat(ctx->pool,url,"/",req->request.service->url_prefix,"?",NULL);
 #ifdef DEBUG
    if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
       ctx->set_error(ctx,GEOCACHE_ERROR,"wrong wms capabilities request");
       return;
    }
 #endif
+   
+   const char *title;
+   const char *onlineresource = apr_table_get(cfg->metadata,"url");
+   if(!onlineresource) {
+      onlineresource = url;
+   }
+   
+   title = apr_table_get(cfg->metadata,"title");
+   if(!title) {
+      title = "no title set, add some in metadata";
+   }
+   
    request->request.mime_type = apr_pstrdup(ctx->pool,"application/xml");
    
    caps = apr_psprintf(ctx->pool,wmts_0,
-         "title_todo", "providername_todo", "individualname_todo",
+         title, "providername_todo", onlineresource, "individualname_todo",
          onlineresource,onlineresource,onlineresource);
    
    
@@ -231,6 +263,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       const void *key; apr_ssize_t keylen;
       char *matrix;
       int level;
+      const char *WellKnownScaleSet;
       apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
       
       /*locate the number after epsg: in the grd srs*/
@@ -240,11 +273,21 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       } else {
          epsgnum++;
       }
+      
+      WellKnownScaleSet = apr_table_get(grid->metadata,"WellKnownScaleSet");
+      
       caps = apr_psprintf(ctx->pool,"%s"
             "  <TileMatrixSet>\n"
             "    <ows:Identifier>%s</ows:Identifier>\n"
             "    <ows:SupportedCRS>urn:ogc:def:crs:EPSG::%s</ows:SupportedCRS>\n",
             caps,grid->name,epsgnum);
+      
+      if(WellKnownScaleSet) {
+         caps = apr_psprintf(ctx->pool,"%s"
+            "    <WellKnownScaleSet>%s</WellKnownScaleSet>\n",
+            caps,WellKnownScaleSet);
+      }
+      
       for(level=0;level<grid->levels;level++) {
          int matrixwidth, matrixheight;
          double scaledenom, unitwidth, unitheight;
@@ -271,6 +314,16 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       geocache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(layer_index,&key,&keylen,(void**)&tileset);
+      
+      const char *title = apr_table_get(tileset->metadata,"title");
+      if(!title) {
+         title = "no title set, add some in metadata";
+      }
+      const char *abstract = apr_table_get(tileset->metadata,"abstract");
+      if(!abstract) {
+         abstract = "no abstract set, add some in metadata";
+      }
+      
       caps = apr_psprintf(ctx->pool,"%s"
             "  <Layer>\n"
             "    <ows:Title>%s</ows:Title>\n"
@@ -287,7 +340,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             "    <TileMatrixSetLink>\n"
             "      <TileMatrixSet>%s</TileMatrixSet>\n"
             "    </TileMatrixSetLink>\n"
-            "  </Layer>",caps,tileset->name,"abstract_todo",
+            "  </Layer>",caps,title,abstract,
             tileset->name,tileset->format->mime_type,tileset->grid->name);
       layer_index = apr_hash_next(layer_index);
    }
@@ -297,19 +350,19 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
 
 static const char *tms_0 = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
       "<Services>\n"
-      "<TileMapService version=\"1.0.0\" href=\"%s/1.0.0/\" />\n"
+      "<TileMapService version=\"1.0.0\" href=\"%s/tms/1.0.0/\" />\n"
       "</Services>\n";
 
 static const char *tms_1 = "<TileMap \n"
-      "href=\"%s/%s/%s/\"\n"
+      "href=\"%s/tms/%s/%s/\"\n"
       "srs=\"%s\"\n"
       "title=\"%s\"\n"
       "profile=\"global-geodetic\" />";
 
 static const char *tms_2="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
-      "<TileMap version=\"%s\" tilemapservice=\"%s/%s/\">\n"
+      "<TileMap version=\"%s\" tilemapservice=\"%s/tms/%s/\">\n"
       "<Title>%s</Title>\n"
-      "<Abstract/>\n"
+      "<Abstract>%s</Abstract>\n"
       "<SRS>%s</SRS>\n"
       "<BoundingBox minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>\n"
       "<Origin x=\"%f\" y=\"%f\"/>\n"
@@ -326,9 +379,13 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
    }
 #endif
    char *caps;
+   const char *onlineresource = apr_table_get(cfg->metadata,"url");
+   if(!onlineresource) {
+      onlineresource = url;
+   }
    request->request.mime_type = apr_pstrdup(ctx->pool,"text/xml");
    if(!request->version) {
-      caps = apr_psprintf(ctx->pool,tms_0,url);
+      caps = apr_psprintf(ctx->pool,tms_0,onlineresource);
    } else {
       if(!request->tileset) {
          caps = apr_psprintf(ctx->pool,"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
@@ -342,7 +399,12 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
             char *tilesetcaps;
             const void *key; apr_ssize_t keylen;
             apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-            tilesetcaps = apr_psprintf(ctx->pool,tms_1,url,request->version,tileset->name,tileset->grid->srs,tileset->name);
+            const char *title = apr_table_get(tileset->metadata,"title");
+            if(!title) {
+               title = "no title set, add some in metadata";
+            }
+            tilesetcaps = apr_psprintf(ctx->pool,tms_1,onlineresource,
+                  request->version,tileset->name,tileset->grid->srs,title);
             caps = apr_psprintf(ctx->pool,"%s%s",caps,tilesetcaps);
             tileindex_index = apr_hash_next(tileindex_index);
          }
@@ -352,9 +414,17 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
          geocache_tileset *tileset = request->tileset;
          geocache_grid *grid = tileset->grid;
          int i;
+         const char *title = apr_table_get(tileset->metadata,"title");
+         if(!title) {
+            title = "no title set, add some in metadata";
+         }
+         const char *abstract = apr_table_get(tileset->metadata,"abstract");
+         if(!abstract) {
+            abstract = "no abstract set, add some in metadata";
+         }
          caps = apr_psprintf(ctx->pool,tms_2,
-               request->version, url, request->version,
-               tileset->name, grid->srs,
+               request->version, onlineresource, request->version,
+               title,abstract, grid->srs,
                grid->extents[0][0], grid->extents[0][1],
                grid->extents[0][2], grid->extents[0][3],
                grid->extents[0][0], grid->extents[0][1],
@@ -364,7 +434,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
          );
          for(i=0;i<grid->levels;i++) {
             caps = apr_psprintf(ctx->pool,"%s\n<TileSet href=\"%s/%s/%s/%d\" units-per-pixel=\"%.20f\" order=\"%d\"/>",
-                  caps,url,request->version,tileset->name,i,
+                  caps,onlineresource,request->version,tileset->name,i,
                   grid->resolutions[i],i
             );
          }
@@ -621,6 +691,10 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
       char *url, char *path_info, geocache_cfg *cfg) {
    geocache_request_get_capabilities *request = (geocache_request_get_capabilities*)req;
    request->mime_type = apr_pstrdup(ctx->pool,"text/html");
+   const char *onlineresource = apr_table_get(cfg->metadata,"url");
+   if(!onlineresource) {
+      onlineresource = url;
+   }
    char *caps = apr_pstrdup(ctx->pool,demo_head);
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
    char *layers="";
@@ -638,7 +712,7 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
       char *ol_layer = apr_psprintf(ctx->pool,demo_layer,
             tileset->name,
             tileset->name,
-            apr_pstrcat(ctx->pool,url,"/wms?",NULL),
+            apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
             tileset->name,resolutions,
             tileset->grid->extents[0][0],
             tileset->grid->extents[0][1],

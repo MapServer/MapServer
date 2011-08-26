@@ -184,6 +184,7 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx) {
    tileset->metabuffer = 0;
    tileset->expires = 0;
    tileset->forwarded_params = apr_table_make(ctx->pool,1);
+   tileset->metadata = apr_table_make(ctx->pool,3);
    tileset->format = NULL;
    tileset->grid = NULL;
    tileset->config = NULL;

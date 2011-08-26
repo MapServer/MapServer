@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <geocache>
+   <metadata>
+      <title>my geocache service</title>
+      <abstract>woot! this is a service abstract!</abstract>
+      
+      <!-- uncomment this if you need to provide another base url for
+           getCapabilities requests (for the OnlineResource tags)
+      <url>http://mysuperhost/proxy/to/geocache</url>
+      -->
+   </metadata>
    <grid name="testgrid">
+      <metadata>
+         <title>this is a custom grid I made up for an example</title>
+      </metadata>
       <srs>epsg:4326</srs>
       <size>256 256</size>
       <extent>-180 -90 180 90</extent>
@@ -71,6 +83,10 @@
         <metabuffer>30</metabuffer>
     </tileset>
     <tileset name="osm">
+       <metadata>
+          <title>osm mapserver served map of midi-pyrénées</title>
+          <abstract>see http://mapserver-utils.googlecode.com</abstract>
+       </metadata>
         <source>osm</source>
         <cache>disk</cache>
         <format>PNG</format>

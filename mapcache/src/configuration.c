@@ -74,6 +74,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    cfg->tilesets = apr_hash_make(pool);
    cfg->grids = apr_hash_make(pool);
    cfg->image_formats = apr_hash_make(pool);
+   cfg->metadata = apr_table_make(pool,3);
 
    geocache_configuration_add_image_format(cfg,
          geocache_imageio_create_png_format(pool,"PNG",GEOCACHE_COMPRESSION_FAST),
@@ -90,6 +91,8 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
 
    grid = geocache_grid_create(pool);
    grid->name = "WGS84";
+   apr_table_add(grid->metadata,"title","GoogleCRS84Quad");
+   apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleCRS84Quad");
    grid->srs = "epsg:4326";
    grid->unit = GEOCACHE_UNIT_DEGREES;
    grid->tile_sx = grid->tile_sy = 256;
@@ -110,6 +113,8 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid = geocache_grid_create(pool);
    grid->name = "google";
    grid->srs = "epsg:900913";
+   apr_table_add(grid->metadata,"title","GoogleMapsCompatible");
+   apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
    grid->tile_sx = grid->tile_sy = 256;
    grid->resolutions = google_resolutions;
    grid->levels = 19;
@@ -190,6 +195,20 @@ int extractNameAndTypeAttributes(xmlDoc *doc, xmlAttr *attribute, char **name, c
    }
 }
 
+void parseMetadata(geocache_context *ctx, xmlNode *node, apr_table_t *metadata) {
+   xmlNode *cur_node;
+   char *value;
+   if(xmlStrcmp(node->name, BAD_CAST "metadata")) {
+      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "SEVERE: <%s> is not a metadata tag",node->name);
+      return;
+   }
+   for(cur_node = node->children; cur_node; cur_node = cur_node->next) {
+      if(cur_node->type != XML_ELEMENT_NODE) continue;
+      value = (char*)xmlNodeGetContent(cur_node);
+      apr_table_add(metadata,(char*)cur_node->name, value);
+   }
+}
+
 void parseGrid(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
    char *name = NULL, *type = NULL;
    double extent[4] = {0,0,0,0};
@@ -233,6 +252,9 @@ void parseGrid(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
          extent[2] = values[2];
          extent[3] = values[3];
          xmlFree(value);
+      } else if(!xmlStrcmp(cur_node->name, BAD_CAST "metadata")) {
+         parseMetadata(ctx, cur_node, grid->metadata);
+         GC_CHECK_ERROR(ctx);
       } else if(!xmlStrcmp(cur_node->name, BAD_CAST "srs")) {
          value = (char*)xmlNodeGetContent(cur_node);
          grid->srs = value;
@@ -344,7 +366,10 @@ void parseSource(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
       if(!xmlStrcmp(cur_node->name, BAD_CAST "srs")) {
          char* value = (char*)xmlNodeGetContent(cur_node);
          source->srs = value;
-      }
+      }  else if(!xmlStrcmp(cur_node->name, BAD_CAST "metadata")) {
+         parseMetadata(ctx, cur_node, source->metadata);
+         GC_CHECK_ERROR(ctx);
+      } 
    }
 
    source->configuration_parse(ctx,node,source);
@@ -522,6 +547,9 @@ void parseTileset(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
          }
          tileset->grid = grid;
          xmlFree(BAD_CAST value);
+      } else if(!xmlStrcmp(cur_node->name, BAD_CAST "metadata")) {
+         parseMetadata(ctx, cur_node, tileset->metadata);
+         GC_CHECK_ERROR(ctx);
       } else if(!xmlStrcmp(cur_node->name, BAD_CAST "cache")) {
          value = (char*)xmlNodeGetContent(cur_node);
          geocache_cache *cache = geocache_configuration_get_cache(config, value);
@@ -629,8 +657,10 @@ void parseTileset(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
 
 void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
    xmlDocPtr doc;
+#ifdef notused
    char *testlockfilename;
    apr_file_t *testlockfile;
+#endif
    doc = xmlReadFile(filename, NULL, 0);
    if (doc == NULL) {
       ctx->set_error(ctx,GEOCACHE_PARSE_ERROR, "libxml2 failed to parse file %s. Is it valid XML?", filename);
@@ -646,6 +676,9 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
          if(cur_node->type != XML_ELEMENT_NODE) continue;
          if(!xmlStrcmp(cur_node->name, BAD_CAST "source")) {
             parseSource(ctx, cur_node, config);
+            GC_CHECK_ERROR(ctx);
+         } else if(!xmlStrcmp(cur_node->name, BAD_CAST "metadata")) {
+            parseMetadata(ctx, cur_node, config->metadata);
             GC_CHECK_ERROR(ctx);
          } else if(!xmlStrcmp(cur_node->name, BAD_CAST "cache")) {
             parseCache(ctx, cur_node, config);

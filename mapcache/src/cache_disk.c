@@ -305,6 +305,7 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
       return NULL;
    }
    cache->symlink_blank = 0;
+   cache->cache.metadata = apr_table_make(ctx->pool,3);
    cache->cache.type = GEOCACHE_CACHE_DISK;
    cache->cache.tile_get = _geocache_cache_disk_get;
    cache->cache.tile_exists = _geocache_cache_disk_has_tile;
