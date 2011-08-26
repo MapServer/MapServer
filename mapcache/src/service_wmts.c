@@ -102,7 +102,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    char *caps;
 #ifdef DEBUG
    if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
-      ctx->set_error(ctx,500,"wrong wms capabilities request");
+      ctx->set_error(ctx,500,"wrong wmts capabilities request");
       return;
    }
 #endif
@@ -545,7 +545,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       char *endptr;
       level = (int)strtol(matrix,&endptr,10);
       if(*endptr != 0 || level < 0 || level >= grid_link->grid->nlevels) {
-         ctx->set_error(ctx, 404, "received wms request with invalid TILEMATRIX %s", matrix);
+         ctx->set_error(ctx, 404, "received wmts request with invalid TILEMATRIX %s", matrix);
          return;
       }
    }
@@ -557,7 +557,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       char *endptr;
       row = (int)strtol(tilerow,&endptr,10);
       if(*endptr != 0 || row < 0) {
-         ctx->set_error(ctx, 404, "received wms request with invalid TILEROW %s",tilerow);
+         ctx->set_error(ctx, 404, "received wmts request with invalid TILEROW %s",tilerow);
          return;
       }
    }
@@ -569,7 +569,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       char *endptr;
       col = (int)strtol(tilecol,&endptr,10);
       if(endptr == tilecol || col < 0) {
-         ctx->set_error(ctx, 404, "received wms request with invalid TILECOL %s",tilecol);
+         ctx->set_error(ctx, 404, "received wmts request with invalid TILECOL %s",tilecol);
          return;
       }
    }
