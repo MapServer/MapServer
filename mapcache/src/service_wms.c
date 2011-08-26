@@ -206,6 +206,10 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
                   extent[2],
                   extent[3],
                   gridlink->grid->srs);
+            int j;
+            for(j=0;j<gridlink->grid->srs_aliases->nelts;j++) {
+               bbox = apr_pstrcat(ctx->pool, bbox, "<SRS>",APR_ARRAY_IDX(gridlink->grid->srs_aliases,j,char*),"</SRS>\n",NULL);
+            }
             srss = apr_pstrcat(ctx->pool,srss,bbox,NULL);
          }
          char *layercaps = apr_psprintf(ctx->pool,wms_layer,
