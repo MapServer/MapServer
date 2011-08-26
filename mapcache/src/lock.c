@@ -23,7 +23,7 @@
 
 char *geocache_tileset_tile_lock_key(geocache_context *ctx, geocache_tile *tile) {
   return apr_psprintf(ctx->pool,
-          "%s-%d-%d-%d",
+          "/%s%d-%d-%d",
           tile->tileset->name,
           tile->z, tile->y, tile->x);
 }
@@ -57,22 +57,16 @@ void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile) {
  * \sa geocache_cache::tile_lock_exists()
  */
 void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile) {
-  sem_t *lock = (sem_t*) tile->lock;
-  int semvalue;
-  const char *lockname = geocache_tileset_tile_lock_key(ctx,tile);
-  if (!tile->lock) {
-     ctx->set_error(ctx,GEOCACHE_MUTEX_ERROR,"###### TILE UNLOCK ######### attempting to unlock tile %s not created by this thread", lockname);
-     return;
-  }
-  sem_post(lock);
-  /*check if the semaphore is held by others*/
-  sem_getvalue(lock,&semvalue);
-  sem_close(lock);
-  if(semvalue>0) {
-     /*no one is using the lock, delete it*/
-     sem_unlink(lockname);
-  }
-  tile->lock = NULL;
+   sem_t *lock = (sem_t*) tile->lock;
+   const char *lockname = geocache_tileset_tile_lock_key(ctx,tile);
+   if (!tile->lock) {
+      ctx->set_error(ctx,GEOCACHE_MUTEX_ERROR,"###### TILE UNLOCK ######### attempting to unlock tile %s not created by this thread", lockname);
+      return;
+   }
+   sem_post(lock);
+   sem_close(lock);
+   sem_unlink(lockname);
+   tile->lock = NULL;
 }
 
 /**
@@ -84,10 +78,10 @@ void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile) {
  * \sa geocache_cache::tile_unlock()
  */
 int geocache_tileset_tile_lock_exists(geocache_context *ctx, geocache_tile *tile) {
-  char *lockname;
-  if (tile->lock)
-    return GEOCACHE_TRUE;
-  lockname = geocache_tileset_tile_lock_key(ctx, tile);
+   char *lockname;
+   if (tile->lock)
+      return GEOCACHE_TRUE;
+   lockname = geocache_tileset_tile_lock_key(ctx, tile);
    sem_t *lock = sem_open(lockname, 0, 0644, 1) ;
    if (lock == SEM_FAILED) {
       if(errno == ENOENT) {
@@ -128,14 +122,9 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
         return;
      }
   } else {
-     int semvalue;
      sem_wait(lock);
      sem_post(lock);
-     sem_getvalue(lock,&semvalue);
      sem_close(lock);
-     if(semvalue>0) {
-        sem_unlink(lockname);
-     }
   }
 }
 
