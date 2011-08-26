@@ -17,36 +17,72 @@
 #include "geocache.h"
 #include <apr_strings.h>
 #include <math.h>
+#include "ezxml.h"
+
 /** \addtogroup services */
 /** @{ */
 
-
-static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n"
-        "<!DOCTYPE WMT_MS_Capabilities SYSTEM\n"
-            "\"http://schemas.opengeospatial.net/wms/1.1.1/WMS_MS_Capabilities.dtd\" [\n"
-              "<!ELEMENT VendorSpecificCapabilities (TileSet*) >\n"
-              "<!ELEMENT TileSet (SRS, BoundingBox?, Resolutions, Width, Height, Format, Layers*, Styles*) >\n"
-              "<!ELEMENT Resolutions (#PCDATA) >\n"
-              "<!ELEMENT Width (#PCDATA) >\n"
-              "<!ELEMENT Height (#PCDATA) >\n"
-              "<!ELEMENT Layers (#PCDATA) >\n"
-              "<!ELEMENT Styles (#PCDATA) > ]>\n"
-        "<WMT_MS_Capabilities version=\"1.1.1\">\n"
+void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabilities *req, char *guessed_url, char *path_info, geocache_cfg *cfg) {
+   geocache_request_get_capabilities_wms *request = (geocache_request_get_capabilities_wms*)req;
+#ifdef DEBUG
+   if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
+      ctx->set_error(ctx,400,"wrong wms capabilities request");
+      return;
+   }
+#endif
+   ezxml_t caps, tmpxml;
+   const char *title;
+   const char *url = apr_table_get(cfg->metadata,"url");
+   if(!url) {
+      url = guessed_url;
+   }
+   url = apr_pstrcat(ctx->pool,url,"/wms?",NULL);
+   caps = ezxml_new("WMT_MS_Capabilities");
+   ezxml_set_attr(caps,"version","1.1.0");
+/*
           "<Service>\n"
             "<Name>OGC:WMS</Name>\n"
             "<Title>%s</Title>\n"
             "<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s/wms?\"/>\n"
           "</Service>\n"
-          "<Capability>\n"
-            "<Request>\n"
-              "<GetCapabilities>\n"
-                "<Format>application/vnd.ogc.wms_xml</Format>\n"
-                "<DCPType>\n"
-                  "<HTTP>\n"
-                    "<Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s/wms?\"/></Get>\n"
-                  "</HTTP>\n"
-                "</DCPType>\n"
-              "</GetCapabilities>\n"
+*/
+   tmpxml = ezxml_add_child(caps,"Service",0);
+   ezxml_set_txt(ezxml_add_child(tmpxml,"Name",0),"OGC:WMS");
+   title = apr_table_get(cfg->metadata,"title");
+   if(!title) {
+      title = "no title set, add some in metadata";
+   }
+   ezxml_set_txt(ezxml_add_child(tmpxml,"Title",0),title);
+   tmpxml = ezxml_add_child(tmpxml,"OnlineResource",0);
+   ezxml_set_attr(tmpxml,"xmlns:xlink","http://www.w3.org/1999/xlink");
+   ezxml_set_attr(tmpxml,"xlink:href",url);
+   /*
+
+      "<Capability>\n"
+      "<Request>\n"
+   */
+   ezxml_t capxml = ezxml_add_child(caps,"Capability",0);
+   ezxml_t reqxml = ezxml_add_child(capxml,"Request",0);
+   /*
+      "<GetCapabilities>\n"
+      " <Format>application/vnd.ogc.wms_xml</Format>\n"
+      " <DCPType>\n"
+      "  <HTTP>\n"
+      "   <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s/wms?\"/></Get>\n"
+      "  </HTTP>\n"
+      " </DCPType>\n"
+      "</GetCapabilities>\n"
+      */
+   tmpxml = ezxml_add_child(reqxml,"GetCapabilities",0);
+   ezxml_set_txt(ezxml_add_child(tmpxml,"Format",0),"application/vnd.ogc.wms_xml");
+   tmpxml = ezxml_add_child(tmpxml,"DCPType",0);
+   tmpxml = ezxml_add_child(tmpxml,"HTTP",0);
+   tmpxml = ezxml_add_child(tmpxml,"Get",0);
+   tmpxml = ezxml_add_child(tmpxml,"OnlineResource",0);
+   ezxml_set_attr(tmpxml,"xmlns:xlink","http://www.w3.org/1999/xlink");
+   ezxml_set_attr(tmpxml,"xlink:href",url);
+
+/* 
               "<GetMap>\n"
                 "<Format>image/png</Format>\n"
                 "<Format>image/jpeg</Format>\n"
@@ -56,6 +92,19 @@ static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"UTF-8
                   "</HTTP>\n"
                 "</DCPType>\n"
               "</GetMap>\n"
+*/
+   tmpxml = ezxml_add_child(reqxml,"GetMap",0);
+   ezxml_set_txt(ezxml_add_child(tmpxml,"Format",0),"image/png");
+   ezxml_set_txt(ezxml_add_child(tmpxml,"Format",0),"image/jpeg");
+   tmpxml = ezxml_add_child(tmpxml,"DCPType",0);
+   tmpxml = ezxml_add_child(tmpxml,"HTTP",0);
+   tmpxml = ezxml_add_child(tmpxml,"Get",0);
+   tmpxml = ezxml_add_child(tmpxml,"OnlineResource",0);
+   ezxml_set_attr(tmpxml,"xmlns:xlink","http://www.w3.org/1999/xlink");
+   ezxml_set_attr(tmpxml,"xlink:href",url);
+
+   
+/*
               "<GetFeatureInfo>\n"
                 "<Format>text/plain</Format>\n"
                 "<Format>application/vnd.ogc.gml</Format>\n"
@@ -67,166 +116,148 @@ static char *wms_capabilities_preamble = "<?xml version=\"1.0\" encoding=\"UTF-8
                   "</HTTP>\n"
                 "</DCPType>\n"
               "</GetFeatureInfo>\n"
-            "</Request>\n"
+*/
+   tmpxml = ezxml_add_child(reqxml,"GetFeatureInfo",0);
+   ezxml_set_txt(ezxml_add_child(tmpxml,"Format",0),"text/plain");
+   ezxml_set_txt(ezxml_add_child(tmpxml,"Format",0),"application/vnd.ogc.gml");
+   tmpxml = ezxml_add_child(tmpxml,"DCPType",0);
+   tmpxml = ezxml_add_child(tmpxml,"HTTP",0);
+   tmpxml = ezxml_add_child(tmpxml,"Get",0);
+   tmpxml = ezxml_add_child(tmpxml,"OnlineResource",0);
+   ezxml_set_attr(tmpxml,"xmlns:xlink","http://www.w3.org/1999/xlink");
+   ezxml_set_attr(tmpxml,"xlink:href",url);
+
+/*
             "<Exception>\n"
               "<Format>text/plain</Format>\n"
             "</Exception>\n"
-            "<VendorSpecificCapabilities>\n";
+*/
+      
+   tmpxml = ezxml_add_child(capxml,"Exceptions",0);
+   ezxml_set_txt(ezxml_add_child(tmpxml,"Format",0),"text/plain");
 
-
-static char *wms_tileset = "<TileSet>\n"
-                "<SRS>%s</SRS>\n"
-                "<BoundingBox SRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n"
-                "<Resolutions>%s</Resolutions>\n"
-                "<Width>%d</Width>\n"
-                "<Height>%d</Height>\n"
-                "<Format>%s</Format>\n"
-                "<Layers>%s</Layers>\n"
-                "<Styles></Styles>\n"
-              "</TileSet>\n";
-
-static char *wms_bbox = 
-               "<BoundingBox srs=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\" />\n"
-               "<SRS>%s</SRS>\n";
-static char *wms_layer = "<Layer queryable=\"%d\" cascaded=\"1\">\n"
-              "<Name>%s</Name>\n"
-              "<Title>%s</Title>\n"
-              "<Abstract>%s</Abstract>\n"
-              "%s" /*srs and bboxes*/
-              "%s" /*dimensions*/
-            "</Layer>\n";
-
-void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabilities *req, char *guessed_url, char *path_info, geocache_cfg *cfg) {
-   geocache_request_get_capabilities_wms *request = (geocache_request_get_capabilities_wms*)req;
-#ifdef DEBUG
-   if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
-      ctx->set_error(ctx,400,"wrong wms capabilities request");
-      return;
-   }
-#endif
-   const char *title;
-   const char *url = apr_table_get(cfg->metadata,"url");
-   if(!url) {
-      url = guessed_url;
-   }
+   ezxml_t vendorxml = ezxml_add_child(capxml,"VendorSpecificCapabilities",0);
+   ezxml_t toplayer = ezxml_add_child(capxml,"Layer",0);
    
-   title = apr_table_get(cfg->metadata,"title");
-   if(!title) {
-      title = "no title set, add some in metadata";
-   }
-   char *caps = apr_psprintf(ctx->pool,wms_capabilities_preamble,title,url,url,url,url);
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
 
    while(tileindex_index) {
       geocache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      geocache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
-      geocache_grid *grid = grid_link->grid;
-      char *resolutions="";
       
-      int i;
-      for(i=0;i<grid->nlevels;i++) {
-         resolutions = apr_psprintf(ctx->pool,"%s%.20f ",resolutions,grid->levels[i]->resolution);
+      ezxml_t layerxml = ezxml_add_child(toplayer,"Layer",0);
+      ezxml_set_attr(layerxml, "cascaded", "1");
+      ezxml_set_attr(layerxml, "queryable", tileset->source->info_formats?"1":"0"),
+      ezxml_set_txt(ezxml_add_child(layerxml,"Name",0),tileset->name);
+
+      ezxml_t tsxml = ezxml_add_child(vendorxml, "TileSet",0);
+      
+      /*optional layer title*/
+      const char *title = apr_table_get(tileset->metadata,"title");
+      if(title) {
+         ezxml_set_txt(ezxml_add_child(layerxml,"Title",0),title);
       }
-      char *tilesetcaps = apr_psprintf(ctx->pool,wms_tileset,
-            grid->srs,
-            grid->srs,
-            grid->extent[0],
-            grid->extent[1],
-            grid->extent[2],
-            grid->extent[3],
-            resolutions,
-            grid->tile_sx,
-            grid->tile_sy,
-            tileset->format->mime_type,
-            tileset->name);
-      caps = apr_psprintf(ctx->pool,"%s%s",caps,tilesetcaps);
+
+      /*optional layer abstract*/
+      const char *abstract = apr_table_get(tileset->metadata,"abstract");
+      if(abstract) {
+         ezxml_set_txt(ezxml_add_child(layerxml,"Abstract",0),abstract);
+      }
+
+      if(tileset->wgs84bbox[0] != tileset->wgs84bbox[2]) {
+         ezxml_t wgsxml = ezxml_add_child(layerxml,"LatLonBoundingBox",0);
+         ezxml_set_attr(wgsxml,"minx",apr_psprintf(ctx->pool,"%f",tileset->wgs84bbox[0]));
+         ezxml_set_attr(wgsxml,"miny",apr_psprintf(ctx->pool,"%f",tileset->wgs84bbox[1]));
+         ezxml_set_attr(wgsxml,"maxx",apr_psprintf(ctx->pool,"%f",tileset->wgs84bbox[2]));
+         ezxml_set_attr(wgsxml,"maxy",apr_psprintf(ctx->pool,"%f",tileset->wgs84bbox[3]));
+      }
+
+      if(tileset->dimensions) {
+         int i;
+         for(i=0;i<tileset->dimensions->nelts;i++) {
+            geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+            ezxml_t dimxml = ezxml_add_child(layerxml,"Dimension",0);
+            ezxml_set_attr(dimxml,"name",dimension->name);
+            ezxml_set_attr(dimxml,"default",dimension->default_value);
+
+            if(dimension->unit) {
+               ezxml_set_attr(dimxml,"units",dimension->unit);
+            }
+            const char **value = dimension->print_ogc_formatted_values(ctx,dimension);
+            char *dimval = apr_pstrdup(ctx->pool,*value);
+            value++;
+            while(*value) {
+               dimval = apr_pstrcat(ctx->pool,dimval,",",*value,NULL);
+               value++;
+            }
+            ezxml_set_txt(dimxml,dimval);
+         }
+      }
+
+
+      int i;
+      for(i=0;i<tileset->grid_links->nelts;i++) {
+         geocache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+         geocache_grid *grid = gridlink->grid;
+         double *extent = grid->extent;
+         if(gridlink->restricted_extent)
+            extent = gridlink->restricted_extent;
+         ezxml_t bboxxml = ezxml_add_child(layerxml,"BoundingBox",0);
+         ezxml_set_attr(bboxxml,"SRS", grid->srs);
+         ezxml_set_attr(bboxxml,"minx",apr_psprintf(ctx->pool,"%f",extent[0]));
+         ezxml_set_attr(bboxxml,"miny",apr_psprintf(ctx->pool,"%f",extent[1]));
+         ezxml_set_attr(bboxxml,"maxx",apr_psprintf(ctx->pool,"%f",extent[2]));
+         ezxml_set_attr(bboxxml,"maxy",apr_psprintf(ctx->pool,"%f",extent[3]));
+         ezxml_set_txt(ezxml_add_child(layerxml,"SRS",0),grid->srs);
+         int j;
+         for(j=0;j<gridlink->grid->srs_aliases->nelts;j++) {
+            ezxml_set_txt(ezxml_add_child(layerxml,"SRS",0),APR_ARRAY_IDX(gridlink->grid->srs_aliases,j,char*));
+         }
+
+
+         if(i==0) {
+            /*wms-c only supports one grid per layer, so we use the first of the tileset's grids */
+            ezxml_set_txt(ezxml_add_child(tsxml,"SRS",0),grid->srs);
+            tmpxml = ezxml_add_child(tsxml,"BoundingBox",0);
+            ezxml_set_attr(tmpxml,"SRS",grid->srs);
+            ezxml_set_attr(tmpxml,"minx",apr_psprintf(ctx->pool,"%f",grid->extent[0]));
+            ezxml_set_attr(tmpxml,"miny",apr_psprintf(ctx->pool,"%f",grid->extent[1]));
+            ezxml_set_attr(tmpxml,"maxx",apr_psprintf(ctx->pool,"%f",grid->extent[2]));
+            ezxml_set_attr(tmpxml,"maxy",apr_psprintf(ctx->pool,"%f",grid->extent[3]));
+
+            char *resolutions="";
+
+            int i;
+            for(i=0;i<grid->nlevels;i++) {
+               resolutions = apr_psprintf(ctx->pool,"%s%.20f ",resolutions,grid->levels[i]->resolution);
+            }
+            ezxml_set_txt(ezxml_add_child(tsxml,"Resolutions",0),resolutions);
+            ezxml_set_txt(ezxml_add_child(tsxml,"Width",0),apr_psprintf(ctx->pool,"%d",grid->tile_sx));
+            ezxml_set_txt(ezxml_add_child(tsxml,"Height",0),apr_psprintf(ctx->pool,"%d", grid->tile_sy));
+         }
+      }
+      if(tileset->format && tileset->format->mime_type) {
+         ezxml_set_txt(ezxml_add_child(tsxml,"Format",0),tileset->format->mime_type);
+      } else {
+         ezxml_set_txt(ezxml_add_child(tsxml,"Format",0),"image/unknown");
+      }
+      ezxml_set_txt(ezxml_add_child(tsxml,"Layers",0),tileset->name);
+      ezxml_set_txt(ezxml_add_child(tsxml,"Styles",0),"");
       tileindex_index = apr_hash_next(tileindex_index);
    }
 
-   caps = apr_psprintf(ctx->pool,"%s%s",caps,"</VendorSpecificCapabilities>\n"
-            "<UserDefinedSymbolization SupportSLD=\"0\" UserLayer=\"0\" UserStyle=\"0\" RemoteWFS=\"0\"/>\n"
-            "<Layer>\n");
-
-   tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
-   while(tileindex_index) {
-         int i;
-         geocache_tileset *tileset;
-         const void *key; apr_ssize_t keylen;
-         apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-         char *srss="";
-         const char *title = apr_table_get(tileset->metadata,"title");
-         if(!title) {
-            title = "no title set, add some in metadata";
-         }
-         const char *abstract = apr_table_get(tileset->metadata,"abstract");
-         if(!abstract) {
-            abstract = "no abstract set, add some in metadata";
-         }
-         char *dimensions = "";
-         if(tileset->dimensions) {
-            for(i=0;i<tileset->dimensions->nelts;i++) {
-               geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
-               dimensions = apr_psprintf(ctx->pool,"%s"
-                     "<Dimension name=\"%s\" default=\"%s\"",
-                     dimensions,
-                     dimension->name,
-                     dimension->default_value);
-               if(dimension->unit) {
-                  dimensions = apr_pstrcat(ctx->pool,dimensions,
-                        " units=\"",dimension->unit,"\"",NULL);
-               }
-               const char **value = dimension->print_ogc_formatted_values(ctx,dimension);
-               dimensions = apr_pstrcat(ctx->pool,dimensions,">",*value,NULL);
-               value++;
-               while(*value) {
-                  dimensions = apr_pstrcat(ctx->pool,dimensions,",",*value,NULL);
-                  value++;
-               }
-               dimensions = apr_pstrcat(ctx->pool,dimensions,"</Dimension>\n",NULL);
-            }
-         }
-         if(tileset->wgs84bbox[0] != tileset->wgs84bbox[2]) {
-            char *wgs84bbox = apr_psprintf(ctx->pool,"<LatLonBoundingBox minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>\n",
-                  tileset->wgs84bbox[0], tileset->wgs84bbox[1],
-                  tileset->wgs84bbox[2], tileset->wgs84bbox[3]);
-            srss = apr_pstrcat(ctx->pool,srss,wgs84bbox,NULL);
-         }
-
-         for(i=0;i<tileset->grid_links->nelts;i++) {
-            geocache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
-            double *extent = gridlink->grid->extent;
-            if(gridlink->restricted_extent)
-               extent = gridlink->restricted_extent;
-            char *bbox = apr_psprintf(ctx->pool,wms_bbox,
-                  gridlink->grid->srs,
-                  extent[0],
-                  extent[1],
-                  extent[2],
-                  extent[3],
-                  gridlink->grid->srs);
-            int j;
-            for(j=0;j<gridlink->grid->srs_aliases->nelts;j++) {
-               bbox = apr_pstrcat(ctx->pool, bbox, "<SRS>",APR_ARRAY_IDX(gridlink->grid->srs_aliases,j,char*),"</SRS>\n",NULL);
-            }
-            srss = apr_pstrcat(ctx->pool,srss,bbox,NULL);
-         }
-         char *layercaps = apr_psprintf(ctx->pool,wms_layer,
-               tileset->source->info_formats?1:0,
-               tileset->name,
-               title,
-               abstract,
-               srss,
-               dimensions);
-         caps = apr_psprintf(ctx->pool,"%s%s",caps,layercaps);
-         tileindex_index = apr_hash_next(tileindex_index);
-      }
-
-   caps = apr_psprintf(ctx->pool,"%s%s",caps,"</Layer>\n"
-             "</Capability>\n"
-           "</WMT_MS_Capabilities>\n");
-   request->request.capabilities = caps;
+   
+   char *tmpcaps = ezxml_toxml(caps);
+   ezxml_free(caps);
+   static char *capheader=
+"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\
+<!DOCTYPE WMT_MS_Capabilities SYSTEM \"http://schemas.opengis.net/wms/1.1.0/capabilities_1_1_0.dtd\"\
+[\
+ <!ELEMENT VendorSpecificCapabilities EMPTY>\
+]>\n";
+   request->request.capabilities = apr_pstrcat(ctx->pool,capheader,tmpcaps,NULL);
+   free(tmpcaps);
    request->request.mime_type = apr_pstrdup(ctx->pool,"text/xml");
 }
 
