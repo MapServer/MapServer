@@ -69,6 +69,10 @@ APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p,
    #ifndef APR_FOPEN_WRITE
       #define APR_FOPEN_WRITE APR_WRITE
    #endif
+   
+   #ifndef APR_FOPEN_SHARELOCK
+      #define APR_FOPEN_SHARELOCK APR_SHARELOCK
+   #endif
 #endif
 
 
