@@ -27,7 +27,8 @@
  * \sa geocache_service::parse_request()
  */
 geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
-   char *str = NULL;
+   char *str = NULL, *srs=NULL;
+   int width=0, height=0;
    double *bbox;
    geocache_request *request = NULL;
    
@@ -62,6 +63,44 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
       }
    }
 
+   str = (char*)apr_table_get(params,"WIDTH");
+   if(!str)
+      str = (char*)apr_table_get(params,"width");
+   if(!str) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no width");
+      return NULL;
+   } else {
+      char *endptr;
+      width = (int)strtol(str,&endptr,10);
+      if(*endptr != 0 || width <= 0) {
+         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid width");
+         return NULL;
+      }
+   }
+
+   str = (char*)apr_table_get(params,"HEIGHT");
+   if(!str)
+      str = (char*)apr_table_get(params,"height");
+   if(!str) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no height");
+      return NULL;
+   } else {
+      char *endptr;
+      height = (int)strtol(str,&endptr,10);
+      if(*endptr != 0 || height <= 0) {
+         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid height");
+         return NULL;
+      }
+   }
+
+   srs = (char*)apr_table_get(params,"SRS");
+   if(!srs)
+      srs = (char*)apr_table_get(params,"srs");
+   if(!srs) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no srs");
+      return NULL;
+   }
+
    str = (char*)apr_table_get(params,"LAYERS");
    if(!str)
       str = (char*)apr_table_get(params,"layers");
@@ -85,6 +124,26 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
             ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid layer %s", key);
             return NULL;
          }
+         if(strcasecmp(tileset->grid->srs,srs)) {
+            ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR,
+                  "received wms request with invalid srs (got %s, expected %s)",
+                  srs,tileset->grid->srs);
+            return NULL;
+         }
+         if(tileset->grid->tile_sx != width) {
+            ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR,
+                  "received wms request with invalid width (got %d, expected %d)",
+                  width,tileset->grid->tile_sx);
+            return NULL;
+         }
+         if(tileset->grid->tile_sy != height) {
+            ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR,
+                  "received wms request with invalid height (got %d, expected %d)",
+                  height,tileset->grid->tile_sy);
+            return NULL;
+         }
+
+
          tile = geocache_tileset_tile_create(ctx->pool, tileset);
          if(!tile) {
             ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate tile");
@@ -97,9 +156,6 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
          request->tiles[request->ntiles++] = tile;
       }
    }
-
-   /* TODO: check the size and srs we've received are compatible */
-
    return request;
 }
 
