@@ -77,6 +77,20 @@ static int _geocache_cache_memcache_has_tile(geocache_context *ctx, geocache_til
    return GEOCACHE_TRUE;
 }
 
+static void _geocache_cache_memcache_delete(geocache_context *ctx, geocache_tile *tile) {
+   char *key;
+   int rv;
+   char errmsg[120];
+   geocache_cache_memcache *cache = (geocache_cache_memcache*)tile->tileset->cache;
+   _geocache_cache_memcache_tile_key(ctx, tile, &key);
+   GC_CHECK_ERROR(ctx);
+   rv = apr_memcache_delete(cache->memcache,key,0);
+   if(rv != APR_SUCCESS) {
+      int code = 500;
+      if(rv == APR_NOTFOUND) code=404;
+      ctx->set_error(ctx,code,"memcache: failed to delete key %s: %s", key, apr_strerror(rv,errmsg,120));
+   }
+}
 
 /**
  * \brief get content of given tile
@@ -214,6 +228,7 @@ geocache_cache* geocache_cache_memcache_create(geocache_context *ctx) {
    cache->cache.tile_get = _geocache_cache_memcache_get;
    cache->cache.tile_exists = _geocache_cache_memcache_has_tile;
    cache->cache.tile_set = _geocache_cache_memcache_set;
+   cache->cache.tile_delete = _geocache_cache_memcache_delete;
    cache->cache.configuration_check = _geocache_cache_memcache_configuration_check;
    cache->cache.configuration_parse = _geocache_cache_memcache_configuration_parse;
    return (geocache_cache*)cache;
