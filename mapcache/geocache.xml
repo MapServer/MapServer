@@ -161,6 +161,7 @@
       <extent>-524288 4456448 786432 5767168</extent>
       <srs>EPSG:310024802</srs>
       <srsalias>IGNF:GEOPORTALFXX</srsalias>
+      <srsalias>EPSG:310024001</srsalias>
       <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
       <units>m</units>
       <size>256 256</size>
@@ -172,6 +173,7 @@
       <extent>-6791168 1761280 -6553600 2023424</extent>
       <srs>EPSG:310915814</srs>
       <srsalias>IGNF:GEOPORTALANF</srsalias>
+      <srsalias>EPSG:310495002</srsalias>
       <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
       <units>m</units>
       <size>256 256</size>
@@ -183,6 +185,7 @@
       <extent>-6070272 235047 -5726208 647168</extent>
       <srs>EPSG:310486805</srs>
       <srsalias>IGNF:GEOPORTALGUF</srsalias>
+      <srsalias>EPSG:310486003</srsalias>
       <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
       <units>m</units>
       <size>256 256</size>
@@ -194,6 +197,7 @@
       <extent>4901888 -1447936 4932608 -1405952</extent>
       <srs>EPSG:310702807</srs>
       <srsalias>IGNF:GEOPORTALMYT</srsalias>
+      <srsalias>EPSG:310702005</srsalias>
       <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
       <units>m</units>
       <size>256 256</size>
@@ -205,6 +209,7 @@
       <extent>5734400 -2383872 5808128 -2318336</extent>
       <srs>EPSG:310700806</srs>
       <srsalias>IGNF:GEOPORTALREU</srsalias>
+      <srsalias>EPSG:310700004</srsalias>
       <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
       <units>m</units>
       <size>256 256</size>
@@ -227,6 +232,7 @@
       <extent>-4325376 5177344 -4259840 5308416</extent>
       <srs>EPSG:310706808</srs>
       <srsalias>IGNF:GEOPORTALSPM</srsalias>
+      <srsalias>EPSG:310706006</srsalias>
       <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
       <units>m</units>
       <size>256 256</size>
@@ -271,6 +277,7 @@
       <extent>-16384000 -2097152 -15990784 -1703936</extent>
       <srs>EPSG:310032811</srs>
       <srsalias>IGNF:GEOPORTALPYF</srsalias>
+      <srsalias>EPSG:310032009</srsalias>
       <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
       <units>m</units>
       <size>256 256</size>
@@ -655,7 +662,7 @@
       <grid>MILLER</grid>
       <grid>WGS84</grid>
       <grid>g</grid>
-      <metatile>5 5</metatile>
+      <metatile>10 10</metatile>
       <expires>1</expires>
       <metabuffer>10</metabuffer>
    </tileset>
