@@ -17,6 +17,7 @@ clean:
 configure: configure.in
 	@autoconf
 	@echo "configure has been updated/created and should be (re)run before continuing"
+	@echo $(shell sh ./reconfigure.sh)
 	@exit 1
 
 apache-restart:
