@@ -19,10 +19,10 @@ mod_geocache.o:  mod_geocache.c $(OBJS)
 	$(APXS) "-Wc,$(CFLAGS) $(INCLUDES)" "-Wl,$(LIBS)" -c mod_geocache.c $(LOBJS)
 	
 geocache.fcgi: fastcgi_geocache.c $(OBJS)
-	$(LIBTOOL) --mode=link $(CC) -o geocache.fcgi $(CFLAGS) $(INCLUDES) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(LIBS) $(FCGI_LIB)
+	$(LIBTOOL) --mode=link --tag CC $(CC) -o geocache.fcgi $(CFLAGS) $(INCLUDES) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(LIBS) $(FCGI_LIB)
 
 geocache_seed: geocache_seed.c $(OBJS)
-	$(LIBTOOL) --mode=link $(CC) -o geocache_seed $(CFLAGS) $(INCLUDES) geocache_seed.c $(LOBJS) $(LIBS) 
+	$(LIBTOOL) --mode=link --tag CC $(CC) -o geocache_seed $(CFLAGS) $(INCLUDES) geocache_seed.c $(LOBJS) $(LIBS) 
 
 
 clean:
