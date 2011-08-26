@@ -47,7 +47,7 @@ void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *t
  * \param r 
  * \private \memberof geocache_cache_disk
  */
-void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, char **path) {
+static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, char **path) {
    char *start;
    start = apr_pstrcat(ctx->pool,
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,"/",
@@ -58,7 +58,22 @@ void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, c
       const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
       int i = elts->nelts;
       while(i--) {
+         int lastisdot = 0;
          apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
+         char *iter = entry->val;
+         while(*iter) {
+            if(lastisdot) {
+               if(*iter == '.') {
+                  ctx->set_error(ctx,500,"invalid sequence .. in dimension %s",entry->key);
+                  return;
+               } else {
+                  lastisdot = 0;
+               }
+            } else if(*iter == '.') {
+               lastisdot = 1;
+            }
+            iter++;
+         }
          start = apr_pstrcat(ctx->pool,start,"/",entry->key,"/",entry->val,NULL);
       }
    }
@@ -75,12 +90,16 @@ void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, c
    if(!*path) {
       ctx->set_error(ctx,500, "failed to allocate tile key");
    }
+  
 }
 
 int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *tile) {
    char *filename;
    apr_file_t *f;
    _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   if(GC_HAS_ERROR(ctx)) {
+      return GEOCACHE_FALSE;
+   }
    if(apr_file_open(&f, filename, APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool) == APR_SUCCESS)
        return GEOCACHE_TRUE;
    else
@@ -102,6 +121,9 @@ int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
    apr_status_t rv;
    apr_size_t size;
    _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   if(GC_HAS_ERROR(ctx)) {
+      return GEOCACHE_FAILURE;
+   }
    if((rv=apr_file_open(&f, filename, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
          APR_OS_DEFAULT, ctx->pool)) == APR_SUCCESS) {
       rv = apr_file_info_get(&finfo, APR_FINFO_SIZE|APR_FINFO_MTIME, f);
