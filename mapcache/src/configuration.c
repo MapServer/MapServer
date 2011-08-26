@@ -114,7 +114,11 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid->extents = (double**)apr_pcalloc(pool,grid->levels*sizeof(double*));
    grid->resolutions = (double*)apr_pcalloc(pool,grid->levels*sizeof(double));
    for(i=0; i<grid->levels; i++) {
-      grid->extents[i] = google_extent;
+      grid->extents[i] = (double*)apr_pcalloc(pool,4*sizeof(double));
+      grid->extents[i][0] = google_extent[0];
+      grid->extents[i][1] = google_extent[1];
+      grid->extents[i][2] = google_extent[2];
+      grid->extents[i][3] = google_extent[3];
       grid->resolutions[i] = google_resolutions[i];
    }
    geocache_configuration_add_grid(cfg,grid,"google");

@@ -33,13 +33,11 @@ void geocache_http_request_url(geocache_context *ctx, char *url, geocache_buffer
    curl_handle = curl_easy_init();
    int ret;
    char error_msg[CURL_ERROR_SIZE];
-
-#ifdef DEBUG
-   ctx->log(ctx, GEOCACHE_DEBUG ,"##### START #####curl requesting url %s",url);
-#endif
    /* specify URL to get */
    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-
+#ifdef DEBUG
+   ctx->log(ctx, GEOCACHE_DEBUG, "##### START #####\ncurl requesting url %s",url);
+#endif
    /* send all data to this function  */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _geocache_curl_memory_callback);
 
@@ -69,10 +67,7 @@ void geocache_http_request_url_with_params(geocache_context *ctx, char *url, apr
 
 /* calculate the length of the string formed by key=value&, and add it to cnt */
 static APR_DECLARE_NONSTD(int) _geocache_key_value_strlen_callback(void *cnt, const char *key, const char *value) {
-   int valLength = 2;
-   if((value && *value))
-      valLength += strlen(value);
-   *((int*)cnt) += strlen(key) + valLength;
+   *((int*)cnt) += strlen(key) + 2 + ((value && *value) ? strlen(value) : 0);
    return 1;
 }
 
@@ -166,14 +161,9 @@ char* geocache_http_build_url(geocache_context *r, char *base, apr_table_t *para
       }
 
       /* add final \0 and eventual separator to add ('?' or '&') */
-      stringLength += baseLength;
-      if(charToAppend) {
-         stringLength += 2;
-      } else {
-         stringLength += 1;
-      }
+      stringLength += baseLength + ((charToAppend)?2:1);
 
-      builtUrl = builtUrlPtr = apr_pcalloc(r->pool, stringLength);
+      builtUrl = builtUrlPtr = apr_palloc(r->pool, stringLength);
 
       builtUrlPtr = apr_cpystrn(builtUrlPtr,base,MAX_STRING_LEN);
       if(charToAppend)

@@ -87,12 +87,8 @@ void apache_context_request_log(geocache_context *c, geocache_log_level level, c
    geocache_context_apache_request *ctx = (geocache_context_apache_request*)c;
    va_list args;
    va_start(args,message);
-   char *msg;
-   vasprintf(&msg,message,args);
+   ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request, "%s", apr_pvsprintf(c->pool,message,args));
    va_end(args);
-   ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request,"%s",msg);
-   free(msg);
-
 }
 
 void geocache_util_mutex_aquire(geocache_context *gctx) {
@@ -134,7 +130,7 @@ void init_apache_server_context(geocache_context_apache_server *ctx) {
 
 static geocache_context_apache_request* apache_request_context_create(request_rec *r) {
    geocache_context_apache_request *ctx = apr_pcalloc(r->pool, sizeof(geocache_context_apache_request));
-   apr_pool_create(&ctx->ctx.ctx.pool,r->pool);
+   ctx->ctx.ctx.pool = r->pool;
    ctx->ctx.ctx.config = ap_get_module_config(r->per_dir_config, &geocache_module);
    ctx->request = r;
    init_apache_request_context(ctx);
@@ -143,7 +139,7 @@ static geocache_context_apache_request* apache_request_context_create(request_re
 
 static geocache_context_apache_server* apache_server_context_create(server_rec *s, apr_pool_t *pool) {
    geocache_context_apache_server *ctx = apr_pcalloc(pool, sizeof(geocache_context_apache_server));
-   apr_pool_create(&ctx->ctx.ctx.pool,pool);
+   ctx->ctx.ctx.pool = pool;
    ctx->ctx.ctx.config = NULL;
    ctx->server = s;
    init_apache_server_context(ctx);
@@ -168,7 +164,7 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
       apr_table_mergen(r->headers_out, "Cache-Control",apr_psprintf(r->pool, "max-age=%d", tile->expires));
       char *timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
       apr_rfc822_date(timestr, expires);
-      apr_table_setn(r->headers_out, "Expires", timestr);
+      apr_table_set(r->headers_out, "Expires", timestr);
 
    }
    ap_set_last_modified(r);
@@ -245,7 +241,6 @@ static int mod_geocache_request_handler(request_rec *r) {
       tile->tileset = request->tiles[0]->tileset;
    }
    ret = geocache_write_tile(apache_ctx,tile);
-   apr_pool_clear(global_ctx->pool);
    return ret;
 }
 

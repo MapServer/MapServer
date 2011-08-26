@@ -1,5 +1,11 @@
 <!--comment-->
 <geocache>
+   <grid name="testgrid">
+      <srs>epsg:4326</srs>
+      <size>256 256</size>
+      <extent>-180 -90 180 90</extent>
+      <resolutions>0.1 0.05 0.025 0.0125</resolutions>
+   </grid>
     <cache name="disk" type="disk">
         <base>/tmp</base>
         <symlink_blank/>
@@ -17,7 +23,7 @@
         </wmsparams>
     </source>
     <source name="osm" type="wms">
-        <url>http://localhost/cgi-bin/mapserv</url>
+        <url>http://localhost/cgi-bin/mapserv?</url>
         <srs>epsg:900913</srs>
         <wmsparams>
             <FORMAT>image/png</FORMAT>
