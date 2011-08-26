@@ -231,7 +231,19 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
      
       ezxml_t tmset = ezxml_add_child(contents,"TileMatrixSet",0);
       ezxml_set_txt(ezxml_add_child(tmset,"ows:Identifier",0),grid->name);
+      const char *title = apr_table_get(grid->metadata,"title");
+      if(title) {
+         ezxml_set_txt(ezxml_add_child(tmset,"ows:Title",0),title);
+      }
       ezxml_set_txt(ezxml_add_child(tmset,"ows:SupportedCRS",0),geocache_grid_get_crs(ctx,grid));
+
+      ezxml_t bbox = ezxml_add_child(tmset,"ows:BoundingBox",0);
+
+      ezxml_set_txt(ezxml_add_child(bbox,"LowerCorner",0),apr_psprintf(ctx->pool,"%f %f",
+               grid->extent[0], grid->extent[1]));
+      ezxml_set_txt(ezxml_add_child(bbox,"UpperCorner",0),apr_psprintf(ctx->pool,"%f %f",
+               grid->extent[2], grid->extent[3]));
+
       
       if(WellKnownScaleSet) {
          ezxml_set_txt(ezxml_add_child(tmset,"WellKnownScaleSet",0),WellKnownScaleSet);
