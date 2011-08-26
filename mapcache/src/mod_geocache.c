@@ -35,8 +35,6 @@
 module AP_MODULE_DECLARE_DATA geocache_module;
 
 
-static char* geocache_mutex_name = "geocache_mutex";
-
 typedef struct geocache_context_apache geocache_context_apache;
 typedef struct geocache_context_apache_request geocache_context_apache_request;
 typedef struct geocache_context_apache_server geocache_context_apache_server;
@@ -281,8 +279,6 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
    apr_status_t rc;
    geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
    apr_lockmech_e lock_type = APR_LOCK_DEFAULT;
-   char *mutex_unique_name = apr_psprintf(p,"%s-%d",geocache_mutex_name,getpid());
-   ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "mutex name is %s",mutex_unique_name);
 
    if(!cfg) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "configuration not found in server context");
@@ -292,15 +288,15 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 #if APR_HAS_PROC_PTHREAD_SERIALIZE
    lock_type = APR_LOCK_PROC_PTHREAD;
 #endif
-   rc = apr_global_mutex_create(&cfg->mutex,mutex_unique_name,lock_type,p);
+   rc = apr_global_mutex_create(&cfg->mutex,cfg->mutex_name,lock_type,p);
    if(rc != APR_SUCCESS) {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, rc, s, "Could not create global parent mutex %s", geocache_mutex_name);
+      ap_log_error(APLOG_MARK, APLOG_CRIT, rc, s, "Could not create global parent mutex %s", cfg->mutex_name);
       return rc;
    }
 #ifdef AP_NEED_SET_MUTEX_PERMS
    rc = unixd_set_global_mutex_perms(cfg->mutex);
    if(rc != APR_SUCCESS) {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, rc, s, "Could not set permissions on global parent mutex %s", geocache_mutex_name);
+      ap_log_error(APLOG_MARK, APLOG_CRIT, rc, s, "Could not set permissions on global parent mutex %s", cfg->mutex_name);
       return rc;
    }
 #endif
@@ -311,7 +307,7 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 
 static void mod_geocache_child_init(apr_pool_t *pool, server_rec *s) {
    geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
-   apr_global_mutex_child_init(&(cfg->mutex),geocache_mutex_name, pool);
+   apr_global_mutex_child_init(&(cfg->mutex),cfg->mutex_name, pool);
 }
 
 static void mod_geocache_register_hooks(apr_pool_t *p) {
@@ -328,8 +324,17 @@ static void* mod_geocache_create_dir_conf(apr_pool_t *pool, char *x) {
 
 static void* mod_geocache_create_server_conf(apr_pool_t *pool, server_rec *s) {
    geocache_server_cfg *cfg = apr_pcalloc(pool, sizeof(geocache_server_cfg));
+   char *mutex_unique_name = apr_psprintf(pool,"geocachemutex-%d",getpid());
+   cfg->mutex_name = ap_server_root_relative(pool, mutex_unique_name);
    return cfg;
 }
+
+
+static void *mod_geocache_merge_server_conf(apr_pool_t *p, void *base_, void *vhost_)
+{
+   return base_;
+}
+
 
 
 
@@ -357,7 +362,7 @@ module AP_MODULE_DECLARE_DATA geocache_module =
       mod_geocache_create_dir_conf,
       NULL,
       mod_geocache_create_server_conf,
-      NULL,
+      mod_geocache_merge_server_conf,
       mod_geocache_cmds,
       mod_geocache_register_hooks
 };

@@ -554,6 +554,7 @@ apr_table_t *geocache_http_parse_param_string(geocache_context *ctx, char *args)
 
 struct geocache_server_cfg {
     apr_global_mutex_t *mutex;
+    char *mutex_name;
 };
 
 /**
