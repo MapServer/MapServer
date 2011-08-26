@@ -117,7 +117,7 @@ void _geocache_service_kml_parse_request(geocache_context *ctx, geocache_service
    char *last, *key, *endptr;
    geocache_tileset *tileset = NULL;
    geocache_grid_link *grid_link = NULL;
-   char *pathinfo;
+   char *pathinfo = NULL;
    int x=-1,y=-1,z=-1;
   
    if(cpathinfo) {
