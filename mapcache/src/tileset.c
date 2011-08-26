@@ -122,6 +122,7 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, 
    mt->tile.sy =  mt->tile.tileset->metasize_y * tile->sy + 2 * mt->tile.tileset->metabuffer;
    mt->tile.z = tile->z;
    mt->tile.x = tile->x / mt->tile.tileset->metasize_x;
+   mt->tile.dimensions = tile->dimensions;
    if(tile->x < 0)
       mt->tile.x --;
    mt->tile.y = tile->y / mt->tile.tileset->metasize_y;
@@ -142,6 +143,7 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, 
    for(i=0; i<mt->tile.tileset->metasize_x; i++) {
       for(j=0; j<mt->tile.tileset->metasize_y; j++) {
          geocache_tile *t = &(mt->tiles[i*mt->tile.tileset->metasize_x+j]);
+         t->dimensions = tile->dimensions;
          t->z = tile->z;
          t->x = blx + i;
          t->y = bly + j;

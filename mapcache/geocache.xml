@@ -347,6 +347,38 @@
          after the creation date of the tile
       -->
       <expires>3600</expires>
+      
+      <!-- dimensions
+         optional dimensions that should be cached
+         the order of the <dimension> tags inside the <dimensions> is important as it is used
+         to create the directory structure for the disk cache. i.e. if you change the order of these
+         values, any tiles that have been previously cached are invalidated (but not removed from the 
+         cache, it's just they don't exist anymore for mod-geocache
+      -->
+      <dimensions>
+         <!-- dimension 
+            the example here creates a TIME dimension
+             * WMS and WMTS clients can now add a &TIME=value to their request string. If they don't
+            specify this key/value, the default will be to use TIME=foobar
+             * the allowed values for TIME= are foobar (it is important to add the default value to the
+               allowed values entry), foobarbaz, foo and bar.
+             * the value specified for TIME will be forwarded to the WMS source
+             * the produced tile will be stored in base/gridname/TIME/value/xx/xx/xx/xx/xx/xx.png
+               file. i.e. their are as many different caches created as their are values in the
+               <values> tag.
+         -->
+         <dimension name="TIME">
+            <!-- default
+                 the default value to pass on to the source if the client hasn't specified any dimension
+            -->
+            <default>foobar</default>
+
+            <!-- values
+               comma separated list of values that are allowed for the dimension
+            -->
+            <values>foobar,foobarbaz,foo,bar</values>
+         </dimension>
+      </dimensions>
    </tileset>
    <tileset name="test2">
       <source>nexrad</source>

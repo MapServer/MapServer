@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <apr_strings.h>
 #include <apr_hash.h>
+#include <apr_tables.h>
 #include <apr_file_io.h>
 #include <apr_file_info.h>
 
@@ -202,14 +203,6 @@ void geocache_configuration_add_image_format(geocache_cfg *config, geocache_imag
    apr_hash_set(config->image_formats, key, APR_HASH_KEY_STRING, (void*)format);
 }
 
-void extractNameAndTypeAttributes(apr_pool_t *pool, ezxml_t doc, char **name, char **type) {
-   *name = (char*)ezxml_attr(doc,"name");
-   *type = (char*)ezxml_attr(doc,"type");
-   if(*name) *name = apr_pstrdup(pool, *name);
-   if(*type) *type = apr_pstrdup(pool, *type);
-
-}
-
 void parseMetadata(geocache_context *ctx, ezxml_t node, apr_table_t *metadata) {
    ezxml_t cur_node;
    for(cur_node = node->child; cur_node; cur_node = cur_node->sibling) {
@@ -217,18 +210,72 @@ void parseMetadata(geocache_context *ctx, ezxml_t node, apr_table_t *metadata) {
    }
 }
 
+void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tileset) {
+   ezxml_t dimension_node;
+   apr_array_header_t *dimensions = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
+   for(dimension_node = ezxml_child(node,"dimension"); dimension_node; dimension_node = dimension_node->next) {
+      char *name = (char*)ezxml_attr(dimension_node,"name");
+      char *default_value, *values, *key, *last;
+      int count = 1;
+      ezxml_t dchild_node;
+      if(!name || !strlen(name)) {
+         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <dimension>");
+         return;
+      }
+      name = apr_pstrdup(ctx->pool,name);
+
+      dchild_node = ezxml_child(dimension_node,"default");
+      if(!dchild_node || !dchild_node->txt) {
+         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimension> \"%s\" has no default value",name);
+         return;
+      }
+      default_value = apr_pstrdup(ctx->pool,dchild_node->txt);
+      
+      dchild_node = ezxml_child(dimension_node,"values");
+      if(!dchild_node || !dchild_node->txt) {
+         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimension> \"%s\" has no values",name);
+         return;
+      }
+      values = apr_pstrdup(ctx->pool,dchild_node->txt);
+      geocache_dimension_values *dimension = geocache_dimension_values_create(ctx->pool);
+      dimension->dimension.name = name;
+      dimension->dimension.default_value = default_value;
+      for(key=values;*key;key++) if(*key == ',') count++;
+
+      dimension->values = (char**)apr_pcalloc(ctx->pool,count*sizeof(char*));
+
+      for (key = apr_strtok(values, ",", &last); key != NULL;
+            key = apr_strtok(NULL, ",", &last)) {
+         dimension->values[dimension->nvalues]=key;
+         dimension->nvalues++;
+      }
+      if(!dimension->nvalues) {
+         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimension> \"%s\" has no values",name);
+         return;
+      }
+      APR_ARRAY_PUSH(dimensions,geocache_dimension*) = (geocache_dimension*)dimension;
+   }
+   if(apr_is_empty_array(dimensions)) {
+      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimensions> for tileset \"%s\" has no dimensions defined (expecting <dimension> children)",tileset->name);
+      return;
+   }
+   tileset->dimensions = dimensions;
+}
+
 void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
-   char *name = NULL, *type = NULL;
+   char *name;
    double extent[4] = {0,0,0,0};
    geocache_grid *grid;
    ezxml_t cur_node;
    char *value;
-   extractNameAndTypeAttributes(ctx->pool, node, &name, &type);
+
+   name = (char*)ezxml_attr(node,"name");
    if(!name || !strlen(name)) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <grid>");
       return;
    }
    else {
+      name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a grid defined with this name */
       if(geocache_configuration_get_grid(config, name)) {
          ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "duplicate grid with name \"%s\"",name);
@@ -332,13 +379,15 @@ void parseSource(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    ezxml_t cur_node;
    char *name = NULL, *type = NULL;
 
-   extractNameAndTypeAttributes(ctx->pool, node, &name, &type);
 
+   name = (char*)ezxml_attr(node,"name");
+   type = (char*)ezxml_attr(node,"type");
    if(!name || !strlen(name)) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <source>");
       return;
    }
    else {
+      name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a source defined with this name */
       if(geocache_configuration_get_source(config, name)) {
          ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "duplicate source with name \"%s\"",name);
@@ -384,11 +433,13 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    char *name = NULL,  *type = NULL;
    geocache_image_format *format = NULL;
    ezxml_t cur_node;
-   extractNameAndTypeAttributes(ctx->pool, node, &name, &type);
+   name = (char*)ezxml_attr(node,"name");
+   type = (char*)ezxml_attr(node,"type");
    if(!name || !strlen(name)) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <format>");
       return;
    }
+   name = apr_pstrdup(ctx->pool, name);
    if(!type || !strlen(type)) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"type\" not found in <format>");
       return;
@@ -457,12 +508,14 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
 void parseCache(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    char *name = NULL,  *type = NULL;
    geocache_cache *cache = NULL;
-   extractNameAndTypeAttributes(ctx->pool, node, &name, &type);
+   name = (char*)ezxml_attr(node,"name");
+   type = (char*)ezxml_attr(node,"type");
    if(!name || !strlen(name)) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <cache>");
       return;
    }
    else {
+      name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a cache defined with this name */
       if(geocache_configuration_get_cache(config, name)) {
          ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "duplicate cache with name \"%s\"",name);
@@ -496,16 +549,17 @@ void parseCache(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
 
 
 void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
-   char *name = NULL, *type = NULL;
+   char *name = NULL;
    geocache_tileset *tileset = NULL;
    ezxml_t cur_node;
    char* value;
-   extractNameAndTypeAttributes(ctx->pool, node, &name, &type);
+   name = (char*)ezxml_attr(node,"name");
    if(!name || !strlen(name)) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <tileset>");
       return;
    }
    else {
+      name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a cache defined with this name */
       if(geocache_configuration_get_tileset(config, name)) {
          ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "duplicate tileset with name \"%s\"",name);
@@ -527,6 +581,11 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
 
    if ((cur_node = ezxml_child(node,"metadata")) != NULL) {
       parseMetadata(ctx, cur_node, tileset->metadata);
+      GC_CHECK_ERROR(ctx);
+   }
+   
+   if ((cur_node = ezxml_child(node,"dimensions")) != NULL) {
+      parseDimensions(ctx, cur_node, tileset);
       GC_CHECK_ERROR(ctx);
    }
 

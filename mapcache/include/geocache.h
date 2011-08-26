@@ -1025,7 +1025,7 @@ struct geocache_dimension {
    char *name;
    apr_table_t *metadata;
    char *default_value;
-   int (*validate)(geocache_context *context, char *value);
+   int (*validate)(geocache_context *context, geocache_dimension *dimension, const char *value);
 };
 typedef struct geocache_dimension_values geocache_dimension_values;
 
@@ -1034,6 +1034,8 @@ struct geocache_dimension_values {
    int nvalues;
    char **values;
 };
+
+geocache_dimension_values* geocache_dimension_values_create(apr_pool_t *pool);
 
 typedef struct geocache_dimension_regexp geocache_dimension_regexp;
 

@@ -20,9 +20,10 @@
 #include <apr_file_io.h>
 
 void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path) {
-   *path = apr_psprintf(ctx->pool,"%s/%s/blanks/%02X%02X%02X%02X.%s",
+   *path = apr_psprintf(ctx->pool,"%s/%s/%s/blanks/%02X%02X%02X%02X.%s",
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
          tile->tileset->name,
+         tile->tileset->grid->name,
          color[0],
          color[1],
          color[2],
@@ -53,6 +54,8 @@ void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, c
       while(i--) {
          apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
          start = apr_pstrcat(ctx->pool,start,"/",entry->key,"/",entry->val,NULL);
+         ctx->log(ctx,GEOCACHE_DEBUG,"tile dim %s",start);
+
       }
    }
    *path = apr_psprintf(ctx->pool,"%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
@@ -156,6 +159,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
    GC_CHECK_ERROR(ctx);
 
    /* find the location of the last '/' in the string */
+   ctx->log(ctx,GEOCACHE_DEBUG,"filename is %s",filename);
    hackptr1 = filename;
    while(*hackptr1) {
       if(*hackptr1 == '/')
@@ -182,9 +186,11 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
          if(apr_file_open(&f, blankname, APR_FOPEN_READ, APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
             /* create the blank file */
             if(APR_SUCCESS != apr_dir_make_recursive(
-                  apr_psprintf(ctx->pool, "%s/%s/blanks",
-                        ((geocache_cache_disk*)tile->tileset->cache)->base_directory,tile->tileset->name),
-                        APR_OS_DEFAULT,ctx->pool)) {
+                  apr_psprintf(ctx->pool, "%s/%s/%s/blanks",
+                        ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
+                        tile->tileset->name,
+                        tile->tileset->grid->name),
+                  APR_OS_DEFAULT,ctx->pool)) {
                ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create directory for blank tiles");
                ctx->global_lock_release(ctx);
                return;
@@ -211,8 +217,9 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
 #endif
          }
          ctx->global_lock_release(ctx);
-         if(apr_file_link(blankname,filename) != GEOCACHE_SUCCESS) {
-            ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to link tile %s to %s",filename, blankname);
+         int errno;
+         if(errno = apr_file_link(blankname,filename) != GEOCACHE_SUCCESS) {
+            ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to link tile %s to %s: %s",filename, blankname, strerror(errno));
             return; /* we could not create the file */
          }
 #ifdef DEBUG        

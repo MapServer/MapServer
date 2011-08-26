@@ -322,7 +322,15 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
                geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
                const char *value;
                if((value = apr_table_get(params,dimension->name)) != NULL) {
-                  apr_table_setn(tile->dimensions,dimension->name,value);
+                  int ok = dimension->validate(ctx,dimension,value);
+                  GC_CHECK_ERROR(ctx);
+                  if(ok == GEOCACHE_SUCCESS)
+                     apr_table_setn(tile->dimensions,dimension->name,value);
+                  else {
+                     ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"dimension \"%s\" value \"%s\" fails to validate",
+                           dimension->name, value);
+                     return;
+                  }
                } else {
                   apr_table_setn(tile->dimensions,dimension->name,dimension->default_value);
                }
