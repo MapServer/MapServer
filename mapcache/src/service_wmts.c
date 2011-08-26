@@ -216,7 +216,6 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    while(grid_index) {
       geocache_grid *grid;
       const void *key; apr_ssize_t keylen;
-      char *matrix;
       int level;
       const char *WellKnownScaleSet;
       apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
@@ -232,15 +231,18 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       }
       
       for(level=0;level<grid->nlevels;level++) {
+         geocache_grid_level *glevel = grid->levels[level];
          ezxml_t tm = ezxml_add_child(tmset,"TileMatrix",0);
          ezxml_set_txt(ezxml_add_child(tm,"ows:Identifier",0),apr_psprintf(ctx->pool,"%d",level));
-         double scaledenom = grid->levels[level]->resolution * geocache_meters_per_unit[grid->unit] / 0.00028;
+         double scaledenom = glevel->resolution * geocache_meters_per_unit[grid->unit] / 0.00028;
          ezxml_set_txt(ezxml_add_child(tm,"ScaleDenominator",0),apr_psprintf(ctx->pool,"%.20f",scaledenom));
-         ezxml_set_txt(ezxml_add_child(tm,"TopLeftCorner",0),apr_psprintf(ctx->pool,"%f %f",grid->extent[0],grid->extent[3]));
+         ezxml_set_txt(ezxml_add_child(tm,"TopLeftCorner",0),apr_psprintf(ctx->pool,"%f %f",
+                  grid->extent[0],
+                  grid->extent[1] + glevel->maxy * glevel->resolution * grid->tile_sy));
          ezxml_set_txt(ezxml_add_child(tm,"TileWidth",0),apr_psprintf(ctx->pool,"%d",grid->tile_sx));
          ezxml_set_txt(ezxml_add_child(tm,"TileHeight",0),apr_psprintf(ctx->pool,"%d",grid->tile_sy));
-         ezxml_set_txt(ezxml_add_child(tm,"MatrixWidth",0),apr_psprintf(ctx->pool,"%d",grid->levels[level]->maxx));
-         ezxml_set_txt(ezxml_add_child(tm,"MatrixHeight",0),apr_psprintf(ctx->pool,"%d",grid->levels[level]->maxy));
+         ezxml_set_txt(ezxml_add_child(tm,"MatrixWidth",0),apr_psprintf(ctx->pool,"%d",glevel->maxx));
+         ezxml_set_txt(ezxml_add_child(tm,"MatrixHeight",0),apr_psprintf(ctx->pool,"%d",glevel->maxy));
       }
       grid_index = apr_hash_next(grid_index);
    }
