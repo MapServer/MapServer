@@ -20,4 +20,4 @@ configure: configure.in
 	@exit 1
 
 apache-restart:
-	sudo $(APACHECTL) restart
+	$(APACHECTL) restart
