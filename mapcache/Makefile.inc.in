@@ -35,4 +35,4 @@ GC_LIBS=$(CURL_LIBS) $(XML2_LIBS) $(PNG_LIB) $(JPEG_LIB)
 
 OBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_geocache.c | grep -v fastcgi_geocache.c |sed "s/^\(.*\)\.c$$/\1.o/") 
 LOBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_geocache.c | grep -v fastcgi_geocache.c | sed "s/^\(.*\)\.c$$/\1.lo/")
-APXS_WCFLAGS=$(shell for flag in $(GC_CFLAGS); do echo -n "-Wc,$$flag "; done)
+APXS_WCFLAGS=$(shell for flag in $(GC_CFLAGS); do echo "-Wc,$$flag "; done)
