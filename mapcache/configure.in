@@ -55,7 +55,9 @@ AC_DEFUN([APXS_CHECK],[
     fi
     AC_SUBST(APXS)
     APACHE_SBINDIR=`$APXS -q SBINDIR`
+    APACHE_BINDIR=`$APXS -q BINDIR`
     AC_SUBST(APACHE_SBINDIR)
+    AC_SUBST(APACHE_BINDIR)
     AC_MSG_CHECKING([for apachectl utility])
     APACHECTL=
     if test -x "$APACHE_SBINDIR/apachectl" ; then
@@ -252,8 +254,16 @@ AC_DEFUN([APU_CHECK],[
             APXSDIR=`dirname "$APXSFULL"`
             if test -x "$APXSDIR/apu-config"; then
                 APUCONFIG="$APXSDIR/apu-config"
+            elif test -x "$APACHE_SBINDIR/apu-config"; then
+                APUCONFIG="$APACHE_SBINDIR/apu-config"
+            elif test -x "$APACHE_BINDIR/apu-config"; then
+                APUCONFIG="$APACHE_BINDIR/apu-config"
             elif test -x "$APXSDIR/apu-1-config"; then
                 APUCONFIG="$APXSDIR/apu-1-config"
+            elif test -x "$APACHE_SBINDIR/apu-1-config"; then
+                APUCONFIG="$APACHE_SBINDIR/apu-1-config"
+            elif test -x "$APACHE_BINDIR/apu-1-config"; then
+                APUCONFIG="$APACHE_BINDIR/apu-1-config"
             fi
         fi
         if test -z "$APUCONFIG"; then
@@ -316,8 +326,16 @@ AC_DEFUN([APR_CHECK],[
             APXSDIR=`dirname "$APXSFULL"`
             if test -x "$APXSDIR/apr-config"; then
                 APRCONFIG="$APXSDIR/apr-config"
+            elif test -x "$APACHE_SBINDIR/apr-config"; then
+                APRCONFIG="$APACHE_SBINDIR/apr-config"
+            elif test -x "$APACHE_BINDIR/apr-config"; then
+                APRCONFIG="$APACHE_BINDIR/apr-config"
             elif test -x "$APXSDIR/apr-1-config"; then
                 APRCONFIG="$APXSDIR/apr-1-config"
+            elif test -x "$APACHE_SBINDIR/apr-1-config"; then
+                APRCONFIG="$APACHE_SBINDIR/apr-1-config"
+            elif test -x "$APACHE_BINDIR/apr-1-config"; then
+                APRCONFIG="$APACHE_BINDIR/apr-1-config"
             fi
         fi
         if test -z "$APRCONFIG"; then
