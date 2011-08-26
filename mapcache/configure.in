@@ -229,15 +229,78 @@ AC_DEFUN([MERGE_CHECK],[
     fi
 ])
 
+AC_DEFUN(AC_EXPAND_PATH,[
+  if test -z "$1" || echo "$1" | grep '^/' >/dev/null ; then
+    $2="$1"
+  else
+    $2="`pwd`/$1"
+  fi
+])
+
+
+AC_DEFUN(PNG_CHECK,[
+    AC_ARG_WITH(png,
+        AC_HELP_STRING([--with-png=DIR],[Specify where PNG is installed]),
+        PNG_DIR=$withval,PNG_DIR='')
+    
+    AC_EXPAND_PATH($PNG_DIR, PNG_DIR)
+    AC_CHECKING(where PNG is installed)
+    PNG_LIB=''
+    PNG_INC=''  
+    PNG_FOUND='no'  
+    
+    if test -n "$PNG_DIR" ; then
+        test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl -o -f $PNG_DIR/lib/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib"
+        test -f $PNG_DIR/lib64/libpng.a -o -f $PNG_DIR/lib64/libpng.so -o -f $PNG_DIR/lib64/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib64"
+        test -f $PNG_DIR/libpng.a -o -f $PNG_DIR/libpng.so -o -f $PNG_DIR/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR"
+        test -f $PNG_DIR/include/png.h && PNG_INCLUDE="$PNG_DIR/include"
+        test -f $PNG_DIR/lib/png.h && PNG_INCLUDE="$PNG_DIR/lib"
+        test -f $PNG_DIR/png.h && PNG_INCLUDE="$PNG_DIR"
+        
+        if test -n "$PNG_LIBDIR" ; then   
+          PNG_LIB="-L$PNG_LIBDIR -lpng"
+          AC_MSG_RESULT([        using libpng from $PNG_LIB])
+        else
+          AC_MSG_ERROR([cannot find png lib in $PNG_DIR])
+        fi
+        
+        if test -n "$PNG_INCLUDE" ; then
+          AC_CHECK_HEADER([$PNG_INCLUDE/png.h],PNG_INC=-I$PNG_INCLUDE,
+            [AC_MSG_ERROR([cannot find png headers])])
+        else
+            AC_MSG_ERROR([cannot find png headers in $PNG_DIR])
+        fi
+    else
+    
+      dnl check for png in system locations
+    
+      AC_CHECK_LIB(png, png_init_io, PNG_LIB="-lpng",, $ZLIB_LIB)
+      AC_CHECK_HEADER([png.h],,
+            [AC_MSG_ERROR([cannot find png headers in system path])])
+      if test -n "$PNG_LIB" ; then
+        AC_MSG_RESULT([        using libpng from system libs.])
+      else
+        AC_MSG_ERROR([PNG (libpng) library cannot be found. install or reconfigure with --with-png=DIR])
+      fi
+    fi
+    
+    AC_CHECK_HEADER([setjmp.h],,[AC_MSG_ERROR([setjmp.h is required with libpng])])
+    
+    AC_SUBST(PNG_INC,$PNG_INC)
+    AC_SUBST(PNG_LIB,$PNG_LIB)
+])
+
 DEBUG_CHECK
 
 APXS_CHECK
 
-PKGCONFIG_CHECK
+PNG_CHECK
 
-CAIRO_CHECK
+#PKGCONFIG_CHECK
 
-MERGE_CHECK
+#CAIRO_CHECK
+
+#MERGE_CHECK
 
 XML2_CHECK
 

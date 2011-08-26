@@ -31,27 +31,39 @@ size_t _geocache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void
 int geocache_http_request_url(request_rec *r, char *url, geocache_buffer *data) {
    CURL *curl_handle;
    curl_handle = curl_easy_init();
-
+   int ret;
+   char error_msg[CURL_ERROR_SIZE];
    /* specify URL to get */
-   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"##### START #####\ncurl requesting url %s",url);
    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-
+#ifdef DEBUG
+   ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"##### START #####\ncurl requesting url %s",url);
+#endif
    /* send all data to this function  */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _geocache_curl_memory_callback);
 
    /* we pass our geocache_buffer struct to the callback function */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)data);
+   
+   curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, error_msg);
+   curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
+   curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
 
    /* some servers don't like requests that are made without a user-agent field, so we provide one */ 
    curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "mod_geocache/0.1");
 
    /* get it! */ 
-   curl_easy_perform(curl_handle);
+   ret = curl_easy_perform(curl_handle);
+   if(ret != CURLE_OK) {
+      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,"curl failed to request url %s : %s", url, error_msg);
+      return ret;
+   }
 
    /* cleanup curl stuff */ 
    curl_easy_cleanup(curl_handle);
+#ifdef DEBUG
    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"##### END #####\nrequested url %s",url);
-   return 0;
+#endif
+   return GEOCACHE_SUCCESS;
 }
 
 int geocache_http_request_url_with_params(request_rec *r, char *url, apr_table_t *params, geocache_buffer *data) {

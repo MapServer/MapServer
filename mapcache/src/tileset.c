@@ -158,7 +158,6 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_tile *tile, re
 
 int geocache_tileset_tile_render(geocache_tile *tile, request_rec *r) {
    int ret;
-   int have_file_exists = 1;
    if(tile->tileset->source->supports_metatiling) {
       geocache_metatile *mt = _geocache_tileset_metatile_get(tile, r);
       geocache_server_cfg *cfg = ap_get_module_config(r->server->module_config, &geocache_module);
@@ -199,12 +198,18 @@ int geocache_tileset_tile_render(geocache_tile *tile, request_rec *r) {
       if(i != mt->ntiles) {
          return GEOCACHE_SUCCESS;
       }
-      
-      
+
+
       ret = tile->tileset->source->render_metatile(mt, r);
-      if(ret != GEOCACHE_SUCCESS) return ret; //TODO: unlock and delete tiles
+      if(ret != GEOCACHE_SUCCESS) {
+         for(i=0;i<mt->ntiles;i++) {
+            geocache_tile *tile = &(mt->tiles[i]);
+            tile->tileset->cache->tile_unlock(tile,r);
+         }
+         return ret;
+      }
       geocache_image_metatile_split(mt,r);
-      
+
       for(i=0;i<mt->ntiles;i++) {
          geocache_tile *tile = &(mt->tiles[i]);
          ret = tile->tileset->cache->tile_set(tile, r);

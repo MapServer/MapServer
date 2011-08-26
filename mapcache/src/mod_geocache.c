@@ -94,15 +94,10 @@ static int mod_geocache_request_handler(request_rec *r) {
    if(request->ntiles == 1) {
       tile = request->tiles[0];
    } else {
-#ifdef MERGE_ENABLED
       /* TODO: individual check on tiles if merging is allowed */
 
       tile = (geocache_tile*)geocache_image_merge_tiles(r,request->tiles,request->ntiles);
       tile->tileset = request->tiles[0]->tileset;
-#else
-      ap_rputs("tile merging support not enabled on this server",r);
-      return HTTP_BAD_REQUEST;
-#endif
    }
    return geocache_write_tile(r,tile);
 }

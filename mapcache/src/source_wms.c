@@ -2,10 +2,11 @@
 #include <libxml/tree.h>
 #include <apr_tables.h>
 #include <apr_strings.h>
-
+#include <http_log.h>
 
 int _geocache_source_wms_render_tile(geocache_tile *tile, request_rec *r) {
    geocache_wms_source *wms = (geocache_wms_source*)tile->tileset->source;
+   int ret;
    apr_table_t *params = apr_table_clone(r->pool,wms->wms_default_params);
    double bbox[4];
    geocache_tileset_tile_bbox(tile,bbox);
@@ -18,13 +19,15 @@ int _geocache_source_wms_render_tile(geocache_tile *tile, request_rec *r) {
    apr_table_overlap(params,wms->wms_params,0);
         
    tile->data = geocache_buffer_create(1000,r->pool);
-   geocache_http_request_url_with_params(r,wms->url,params,tile->data);
+   ret = geocache_http_request_url_with_params(r,wms->url,params,tile->data);
       
    return GEOCACHE_SUCCESS;
 }
 
 int _geocache_source_wms_render_metatile(geocache_metatile *tile, request_rec *r) {
    geocache_wms_source *wms = (geocache_wms_source*)tile->tile.tileset->source;
+   int ret;
+   geocache_image_format_type format;
    apr_table_t *params = apr_table_clone(r->pool,wms->wms_default_params);
    apr_table_setn(params,"BBOX",apr_psprintf(r->pool,"%f,%f,%f,%f",
          tile->bbox[0],tile->bbox[1],tile->bbox[2],tile->bbox[3]));
@@ -36,8 +39,20 @@ int _geocache_source_wms_render_metatile(geocache_metatile *tile, request_rec *r
    apr_table_overlap(params,wms->wms_params,0);
         
    tile->tile.data = geocache_buffer_create(30000,r->pool);
-   geocache_http_request_url_with_params(r,wms->url,params,tile->tile.data);
-      
+   ret = geocache_http_request_url_with_params(r,wms->url,params,tile->tile.data);
+   if(ret != GEOCACHE_SUCCESS) {
+      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,"wms request failed for tileset %s: %d %d %d", tile->tile.tileset->name,
+            tile->tile.x, tile->tile.y, tile->tile.z);
+      return GEOCACHE_FAILURE;
+   }
+   
+   format = geocache_imageio_header_sniff(r,tile->tile.data);
+   if(format == GEOCACHE_IMAGE_FORMAT_UNKNOWN) {
+      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+            "wms request failed for tileset %s: %d %d %d returned an unsupported format",
+            tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z);
+      return GEOCACHE_FAILURE;
+   }
    return GEOCACHE_SUCCESS;
 }
 

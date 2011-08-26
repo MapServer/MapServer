@@ -39,14 +39,14 @@
 typedef enum {GEOCACHE_SERVICE_WMS=0, GEOCACHE_SERVICE_TMS} geocache_service_type;
 
 typedef enum {GEOCACHE_SOURCE_WMS} geocache_source_type;
-typedef enum {GEOCACHE_IMAGE_FORMAT_UNSPECIFIED, GEOCACHE_IMAGE_FORMAT_PNG, GEOCACHE_IMAGE_FORMAT_JPEG} geocache_image_format_type;
+typedef enum {GEOCACHE_IMAGE_FORMAT_UNKNOWN, GEOCACHE_IMAGE_FORMAT_PNG, GEOCACHE_IMAGE_FORMAT_JPEG} geocache_image_format_type;
 
 typedef struct geocache_cfg geocache_cfg;
 typedef struct geocache_tileset geocache_tileset;
 typedef struct geocache_cache geocache_cache;
 typedef struct geocache_source geocache_source;
 
-module AP_MODULE_DECLARE_DATA geocache_module;
+extern module AP_MODULE_DECLARE_DATA geocache_module;
 
 typedef struct {
    char* buf ;     /* buffer */
@@ -157,6 +157,11 @@ typedef struct {
    apr_global_mutex_t *mutex;
 } geocache_server_cfg;
 
+typedef struct {
+   unsigned char *data;
+   size_t w,h;
+   size_t stride;
+} geocache_image;
 
 
 
@@ -211,8 +216,18 @@ int geocache_util_extract_int_list(char* args, const char sep, int **numbers,
 int geocache_util_extract_double_list(char* args, const char sep, double **numbers,
       int *numbers_count, apr_pool_t *pool);
 
+typedef struct {
+   geocache_buffer *buffer;
+   char *ptr;
+} _geocache_buffer_closure;
+
 /* in image.c */
 geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_tile **tiles, int ntiles);
 int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r);
 
+/* in imageio.c */
+geocache_buffer* geocache_imageio_png_encode(request_rec *r, geocache_image *img);
+geocache_image* geocache_imageio_png_decode(request_rec *r, geocache_buffer *buffer);
+geocache_image_format_type geocache_imageio_header_sniff(request_rec *r, geocache_buffer *buffer);
+geocache_image* geocache_imageio_decode(request_rec *r, geocache_buffer *buffer);
 #endif /* GEOCACHE_H_ */

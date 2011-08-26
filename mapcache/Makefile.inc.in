@@ -10,11 +10,9 @@ CURL_LIBS=@CURL_LIBS@
 XML2_CFLAGS=@XML2_CFLAGS@
 XML2_LIBS=@XML2_LIBS@
 
-CAIRO_ENABLED=@CAIRO_ENABLED@
-CAIRO_INC=@CAIRO_INC@
-CAIRO_LIB=@CAIRO_LIB@
+PNG_INC=@PNG_INC@
+PNG_LIB=@PNG_LIB@
 
-MERGE_ENABLED=@MERGE_ENABLED@
 
 
 OBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_geocache.c | sed "s/^\(.*\)\.c$$/\1.o/") 

@@ -16,7 +16,7 @@ force_look:
 	true
 
 src/.libs/mod_geocache.so: src/mod_geocache.c $(SRCS) include/geocache.h
-	$(APXS) -Wc,"$(CFLAGS)" -Iinclude $(CAIRO_INC) $(MERGE_ENABLED) $(CAIRO_ENABLED) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(CAIRO_LIB) -c src/mod_geocache.c $(SRCS)
+	$(APXS) -Wc,"$(CFLAGS)" -Iinclude $(PNG_INC) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(PNG_LIB) -c src/mod_geocache.c $(SRCS)
 
 #install: src/.libs/mod_geocache.so
 	#$(APACHECTL) stop
