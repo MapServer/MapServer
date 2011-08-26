@@ -643,6 +643,18 @@ void parseTileset(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" has no source configured."
             " You must add a <source> tag.", tileset->name);
       return;
+   } else {
+      /*check srs are consistent*/
+      if(!tileset->source->srs) {
+         tileset->source->srs = tileset->grid->srs;
+      } else {
+         if(strcasecmp(tileset->source->srs , tileset->grid->srs)) {
+            ctx->log(ctx, GEOCACHE_WARNING, "tileset (%s) srs mismatch: source (%s)=>(%s) , grid (%s)=>(%s)",
+                  tileset->name,
+                  tileset->source->name, tileset->source->srs,
+                  tileset->grid->name, tileset->grid->srs);
+         }
+      }
    }
 
    if(tileset->grid == NULL) {
