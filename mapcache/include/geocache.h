@@ -371,7 +371,8 @@ struct geocache_cache_disk {
 typedef struct geocache_cache_sqlite geocache_cache_sqlite;
 struct geocache_cache_sqlite {
    geocache_cache cache;
-   char *dbdir; 
+   char *dbdir;
+   int hitstats;
 };
 /**
  * \memberof geocache_cache_sqlite

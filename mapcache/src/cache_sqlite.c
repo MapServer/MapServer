@@ -139,13 +139,20 @@ static void _geocache_cache_sqlite_delete(geocache_context *ctx, geocache_tile *
 
 
 static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile) {
-   sqlite3* handle = _get_conn(ctx,tile,1);
+   geocache_cache_sqlite *cache = (geocache_cache_sqlite*)tile->tileset->cache;
+   sqlite3 *handle;
+   if(cache->hitstats) {
+      handle = _get_conn(ctx,tile,0);
+   } else {
+      handle = _get_conn(ctx,tile,1);
+   }
    if(GC_HAS_ERROR(ctx)) {
       sqlite3_close(handle);
       return GEOCACHE_FAILURE;
    }
    sqlite3_stmt *stmt;
    char *sql;
+   const char *dim;
    if(tile->dimensions) {
       sql = "SELECT data,strftime(\"%s\",ctime) from tiles where x=? and y=? and z=? and dim=?";
    } else {
@@ -156,7 +163,7 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
    sqlite3_bind_int(stmt,2,tile->y);
    sqlite3_bind_int(stmt,3,tile->z);
    if(tile->dimensions) {
-      const char* dim = _get_tile_dimkey(ctx,tile);
+      dim = _get_tile_dimkey(ctx,tile);
       sqlite3_bind_text(stmt,4,dim,-1,SQLITE_STATIC);
    }
    int ret = sqlite3_step(stmt);
@@ -179,6 +186,28 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
       time_t mtime = sqlite3_column_int64(stmt, 1);
       apr_time_ansi_put(&(tile->mtime),mtime);
       sqlite3_finalize(stmt);
+
+      /* update the hitstats if we're configured for that */
+      if(cache->hitstats) {
+
+         sqlite3_stmt *hitstmt;
+         char *hitsql;
+         if(tile->dimensions) {
+            hitsql = "update tiles set hitcount=hitcount+1, atime=datetime('now') where x=? and y=? and z=? and dim=?";
+         } else {
+            hitsql = "update tiles set hitcount=hitcount+1, atime=datetime('now') where x=? and y=? and z=?";
+         }
+         sqlite3_prepare(handle,hitsql,-1,&hitstmt,NULL);
+         sqlite3_bind_int(hitstmt,1,tile->x);
+         sqlite3_bind_int(hitstmt,2,tile->y);
+         sqlite3_bind_int(hitstmt,3,tile->z);
+         if(tile->dimensions) {
+            sqlite3_bind_text(hitstmt,4,dim,-1,SQLITE_STATIC);
+         }
+         sqlite3_step(hitstmt); /* we ignore the return value , TODO?*/
+         sqlite3_finalize(hitstmt);
+      }
+
       sqlite3_close(handle);
       return GEOCACHE_SUCCESS;
    }
@@ -216,6 +245,11 @@ static void _geocache_cache_sqlite_configuration_parse(geocache_context *ctx, ez
    geocache_cache_sqlite *dcache = (geocache_cache_sqlite*)cache;
    if ((cur_node = ezxml_child(node,"base")) != NULL) {
       dcache->dbdir = apr_pstrdup(ctx->pool,cur_node->txt);
+   }
+   if ((cur_node = ezxml_child(node,"hitstats")) != NULL) {
+      if(!strcasecmp(cur_node->txt,"true")) {
+         dcache->hitstats = 1;
+      }
    }
    if(!dcache->dbdir) {
       ctx->set_error(ctx,500,"sqlite cache \"%s\" is missing <base> directory",cache->name);
