@@ -283,10 +283,19 @@ struct geocache_cache_disk {
 
 /** @} */
 
+
+typedef enum {
+   GEOCACHE_REQUEST_UNKNOWN,
+   GEOCACHE_REQUEST_GET_TILE,
+   GEOCACHE_REQUEST_GET_CAPABILITIES
+} geocache_request_type;
 /**
  * \brief a request sent by a client
  */
 struct geocache_request {
+   geocache_request_type type;
+
+   char *capabilities;
     /**
      * a list of tiles requested by the client
      */

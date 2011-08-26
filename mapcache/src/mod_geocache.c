@@ -190,6 +190,14 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
    return OK;
 }
 
+static int geocache_write_capabilities(geocache_context_apache_request *ctx, geocache_request *request) {
+   int rc;
+   request_rec *r = ctx->request;
+   ap_rputs(request->capabilities, r);
+
+   return OK;
+}
+
 static int mod_geocache_request_handler(request_rec *r) {
    apr_table_t *params;
    geocache_cfg *config = NULL;
@@ -218,7 +226,13 @@ static int mod_geocache_request_handler(request_rec *r) {
       if(request || GC_HAS_ERROR(global_ctx))
          break;
    }
-   if(!request || !request->ntiles || GC_HAS_ERROR(global_ctx)) {
+   if(!request || GC_HAS_ERROR(global_ctx)) {
+      return report_error(HTTP_BAD_REQUEST, apache_ctx);
+   }
+
+   if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
+      return geocache_write_capabilities(apache_ctx,request);
+   } else if( request->type != GEOCACHE_REQUEST_GET_TILE || !request->ntiles) {
       return report_error(HTTP_BAD_REQUEST, apache_ctx);
    }
 

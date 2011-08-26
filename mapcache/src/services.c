@@ -21,6 +21,14 @@
 /** \addtogroup services */
 /** @{ */
 
+
+geocache_request* _geocache_service_wms_capabilities(geocache_context *ctx, geocache_cfg *cfg) {
+   geocache_request *request = (geocache_request*)apr_pcalloc(ctx->pool,sizeof(geocache_request));
+   request->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
+   request->capabilities = apr_pstrdup(ctx->pool,"<?xml>this is the capabilities document");
+   return request;
+}
+
 /**
  * \brief parse a WMS request
  * \private \memberof geocache_service_wms
@@ -42,8 +50,14 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
    str = (char*)apr_table_get(params,"REQUEST");
    if(!str)
       str = (char*)apr_table_get(params,"request");
-   if(!str || strcasecmp(str,"getmap")) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request that wasn't a getmap: %s", str);
+   if(!str) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms with no request");
+      return NULL;
+   }
+   if( ! strcasecmp(str,"getcapabilities") ) {
+      return _geocache_service_wms_capabilities(ctx, config);
+   } else if( strcasecmp(str,"getmap")) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms with invalid request %s",str);
       return NULL;
    }
 
@@ -112,6 +126,7 @@ geocache_request* _geocache_service_wms_parse_request(geocache_context *ctx, cha
       int count=1;
       char *sep=",";
       request = (geocache_request*)apr_pcalloc(ctx->pool,sizeof(geocache_request));
+      request->type = GEOCACHE_REQUEST_GET_TILE;
       str = apr_pstrdup(ctx->pool,str);
       for(key=str;*key;key++) if(*key == ',') count++;
       request->ntiles = 0;
