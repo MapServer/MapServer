@@ -369,7 +369,7 @@ geocache_cache* geocache_cache_mbtiles_create(geocache_context *ctx) {
       return NULL;
    }
    cache->create_stmt.sql = apr_pstrdup(ctx->pool,
-         "CREATE TABLE  IF NOT EXISTS tiles (zoom_level integer, tile_column integer, tile_row integer, tile_data blob, primary key(tile_row, tile_column, zoom_level)); create table if not exists metadata(foo integer);");
+         "CREATE TABLE  IF NOT EXISTS tiles (zoom_level integer, tile_column integer, tile_row integer, tile_data blob, primary key(tile_row, tile_column, zoom_level)); create table if not exists metadata(name text, value text);");
    cache->exists_stmt.sql = apr_pstrdup(ctx->pool,
          "select 1 from tiles where tile_column=?:x and tile_row=:y and zoom_level=:z");
    cache->get_stmt.sql = apr_pstrdup(ctx->pool,
