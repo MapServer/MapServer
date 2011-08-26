@@ -659,7 +659,7 @@ proxies:
          *request && (
             ((*request)->type == GEOCACHE_REQUEST_GET_TILE) ||
             (((*request)->type == GEOCACHE_REQUEST_GET_MAP) && 
-               ctx->config->getmap_strategy != GEOCACHE_GETMAP_ASSEMBLE)
+               ctx->config->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE)
             )) {
       /* if we're here, then we have succesfully parsed the request and can treat it ourselves, i.e. from cached tiles */
       return;
