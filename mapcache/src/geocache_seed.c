@@ -198,7 +198,7 @@ int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocac
 
     while(1) {
         ctx->nextx += ctx->tileset->metasize_x;
-        if(ctx->nextx > tile->grid_link->grid_limits[ctx->nextz][2]) {
+        if(ctx->nextx >= tile->grid_link->grid_limits[ctx->nextz][2]) {
             ctx->nexty += ctx->tileset->metasize_y;
             if(ctx->nexty >= tile->grid_link->grid_limits[ctx->nextz][3]) {
                 ctx->nextz += 1;
