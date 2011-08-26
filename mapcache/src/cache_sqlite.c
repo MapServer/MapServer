@@ -20,6 +20,7 @@
 #include <apr_strings.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <sqlite3.h>
 
@@ -64,20 +65,29 @@ static sqlite3* _get_conn(geocache_context *ctx, geocache_tile* tile, int readon
       flags = SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE;
    }
    char *dbfile = _get_dbname(ctx,(geocache_cache_sqlite*)tile->tileset->cache,tile->tileset,tile->grid_link->grid);
-   sqlite3_open_v2(dbfile,&handle,flags,NULL);
+   int ret = sqlite3_open_v2(dbfile,&handle,flags,NULL);
+   if(ret != SQLITE_OK) {
+      ctx->set_error(ctx,500,"failed to connect to sqlite db %s: %s",dbfile,sqlite3_errmsg(handle));
+      return NULL;
+   }
+   sqlite3_busy_timeout(handle,3000);
    return handle;
 }
 
 
 static int _geocache_cache_sqlite_has_tile(geocache_context *ctx, geocache_tile *tile) {
-   int ret;
    char *sql;
    if(tile->dimensions) {
       sql = "SELECT 1 from tiles where x=? and y=? and z=? and dim=?";
    } else {
       sql = "SELECT 1 from tiles where x=? and y=? and z=?";
    }
-   sqlite3* handle = _get_conn(ctx,tile,0);
+   sqlite3* handle = _get_conn(ctx,tile,1);
+   if(GC_HAS_ERROR(ctx)) {
+      sqlite3_close(handle);
+      return GEOCACHE_FALSE;
+   }
+
    sqlite3_stmt *stmt;
    sqlite3_prepare(handle,sql,-1,&stmt,NULL);
    sqlite3_bind_int(stmt,1,tile->x);
@@ -87,9 +97,13 @@ static int _geocache_cache_sqlite_has_tile(geocache_context *ctx, geocache_tile 
       const char *dim = _get_tile_dimkey(ctx,tile);
       sqlite3_bind_text(stmt,4,dim,-1,SQLITE_STATIC);
    }
-   if(sqlite3_step(stmt) == SQLITE_DONE) {
+   int ret = sqlite3_step(stmt);
+   if(ret != SQLITE_DONE && ret != SQLITE_ROW) {
+      ctx->set_error(ctx,500,"sqlite backend failed on has_tile: %s",sqlite3_errmsg(handle));
+   }
+   if(ret == SQLITE_DONE) {
       ret = GEOCACHE_FALSE;
-   } else {
+   } else if(ret == SQLITE_ROW){
       ret = GEOCACHE_TRUE;
    }
    sqlite3_finalize(stmt);
@@ -99,6 +113,7 @@ static int _geocache_cache_sqlite_has_tile(geocache_context *ctx, geocache_tile 
 
 static void _geocache_cache_sqlite_delete(geocache_context *ctx, geocache_tile *tile) {
    sqlite3* handle = _get_conn(ctx,tile,0);
+   GC_CHECK_ERROR(ctx);
    char *sql;
    if(tile->dimensions) {
     sql = "DELETE from tiles where x=? and y=? and z=? and dim=?";
@@ -114,14 +129,21 @@ static void _geocache_cache_sqlite_delete(geocache_context *ctx, geocache_tile *
       const char* dim = _get_tile_dimkey(ctx,tile);
       sqlite3_bind_text(stmt,4,dim,-1,SQLITE_STATIC);
    }
-   sqlite3_step(stmt);
+   int ret = sqlite3_step(stmt);
+   if(ret != SQLITE_DONE && ret != SQLITE_ROW) {
+      ctx->set_error(ctx,500,"sqlite backend failed on delete: %s",sqlite3_errmsg(handle));
+   }
    sqlite3_finalize(stmt);
    sqlite3_close(handle);
 }
 
 
 static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile) {
-   sqlite3* handle = _get_conn(ctx,tile,0);
+   sqlite3* handle = _get_conn(ctx,tile,1);
+   if(GC_HAS_ERROR(ctx)) {
+      sqlite3_close(handle);
+      return GEOCACHE_FAILURE;
+   }
    sqlite3_stmt *stmt;
    char *sql;
    if(tile->dimensions) {
@@ -137,7 +159,14 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
       const char* dim = _get_tile_dimkey(ctx,tile);
       sqlite3_bind_text(stmt,4,dim,-1,SQLITE_STATIC);
    }
-   if(sqlite3_step(stmt) == SQLITE_DONE) {
+   int ret = sqlite3_step(stmt);
+   if(ret!=SQLITE_DONE && ret != SQLITE_ROW) {
+      ctx->set_error(ctx,500,"sqlite backend failed on get: %s",sqlite3_errmsg(handle));
+      sqlite3_finalize(stmt);
+      sqlite3_close(handle);
+      return GEOCACHE_FAILURE;
+   }
+   if(ret == SQLITE_DONE) {
       sqlite3_finalize(stmt);
       sqlite3_close(handle);
       return GEOCACHE_CACHE_MISS;
@@ -155,6 +184,7 @@ static int _geocache_cache_sqlite_get(geocache_context *ctx, geocache_tile *tile
 
 static void _geocache_cache_sqlite_set(geocache_context *ctx, geocache_tile *tile) {
    sqlite3* handle = _get_conn(ctx,tile,0);
+   GC_CHECK_ERROR(ctx);
    sqlite3_stmt *stmt;
    char *sql;
    if(tile->dimensions) {
@@ -171,7 +201,10 @@ static void _geocache_cache_sqlite_set(geocache_context *ctx, geocache_tile *til
       const char* dim = _get_tile_dimkey(ctx,tile);
       sqlite3_bind_text(stmt,5,dim,-1,SQLITE_STATIC);
    }
-   sqlite3_step(stmt);
+   int ret = sqlite3_step(stmt);
+   if(ret != SQLITE_DONE && ret != SQLITE_ROW) {
+      ctx->set_error(ctx,500,"sqlite backend failed on set: %s",sqlite3_errmsg(handle));
+   }
    sqlite3_finalize(stmt);
    sqlite3_close(handle);
 }
