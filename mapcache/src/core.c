@@ -24,15 +24,15 @@ geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_ge
       geocache_tileset_tile_get(ctx, tile);
       if(GC_HAS_ERROR(ctx))
          return NULL;
-      if(req_tile->ntiles == 1) {
-         rettile = req_tile->tiles[0];
-      } else {
-         rettile = (geocache_tile*)geocache_image_merge_tiles(ctx,ctx->config->merge_format,
-               req_tile->tiles,req_tile->ntiles);
-         if(GC_HAS_ERROR(ctx))
-            return NULL;
-         rettile->tileset = req_tile->tiles[0]->tileset;
-      }
+   }
+   if(req_tile->ntiles == 1) {
+      rettile = req_tile->tiles[0];
+   } else {
+      rettile = (geocache_tile*)geocache_image_merge_tiles(ctx,ctx->config->merge_format,
+            req_tile->tiles,req_tile->ntiles);
+      if(GC_HAS_ERROR(ctx))
+         return NULL;
+      rettile->tileset = req_tile->tiles[0]->tileset;
    }
    return rettile;
 }
