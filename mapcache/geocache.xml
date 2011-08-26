@@ -3,114 +3,414 @@
    <metadata>
       <title>my geocache service</title>
       <abstract>woot! this is a service abstract!</abstract>
-      
-      <!-- uncomment this if you need to provide another base url for
+
+      <!-- 
+           uncomment and modify this if you need to provide another base url for
            getCapabilities requests (for the OnlineResource tags)
       <url>http://mysuperhost/proxy/to/geocache</url>
       -->
    </metadata>
+
+   <!--
+        a grid represents the layout of tiles: srs, extent, resolutions, and tile size
+   -->
    <grid name="testgrid">
       <metadata>
          <title>this is a custom grid I made up for an example</title>
+         <!--
+              OGC WMTS WellKnownScaleSet, if applicable
+         <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible</WellKnownScaleSet>
+         -->
       </metadata>
+
+      <!-- 
+           the spatial reference this tileset is in. a WMS client will need this for
+           getMap requests.
+           note that when configuring a tileset, its <grid> and <source> srs should match. If
+           they do not match you will be warned, but this is not an error, as there are cases
+           when this is needed (for example epsg:900913 and epsg:3857 are equivalent).
+      -->
       <srs>epsg:4326</srs>
+
+      <!--
+           width and height of tiles. 256x256 is the usual size
+      -->
       <size>256 256</size>
+
+      <!--
+           extent of the grid. the bottom left corner determines the origin of the tiles
+           this should match the maxExtent property if using openlayers.
+      -->
       <extent>-180 -90 180 90</extent>
+
+      <!--
+           array of resolutions for the tileset, in decreasing order
+           this should match the resolutions property if using openlayers
+      -->
       <resolutions>0.1 0.05 0.025 0.0125</resolutions>
    </grid>
-    <cache name="disk" type="disk">
-        <base>/tmp</base>
-        <symlink_blank/>
-    </cache>
-    <format name="PNGQ_FAST" type ="PNG">
-        <compression>fast</compression>
-        <colors>256</colors>
-    </format>
-    <format name="PNG_BEST" type ="PNG">
-        <compression>best</compression>
-    </format>
-    <source name="vmap0" type="wms">
-        <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
-        <srs>epsg:4326</srs>
-        <wmsparams>
-            <FORMAT>image/png</FORMAT>
-            <LAYERS>basic</LAYERS>
-        </wmsparams>
-    </source>
-    <source name="osm" type="wms">
-        <url>http://localhost/cgi-bin/mapserv?</url>
-        <srs>epsg:900913</srs>
-        <wmsparams>
-            <FORMAT>image/png</FORMAT>
-            <LAYERS>default</LAYERS>
-            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
-        </wmsparams>
-    </source>
-    <source name="nexrad" type="wms">
-        <url>http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi</url>
-        <srs>epsg:4326</srs>
-        <wmsparams>
-            <FORMAT>image/png</FORMAT>
-            <LAYERS>nexrad_base_reflect</LAYERS>
-            <TRANSPARENT>true</TRANSPARENT>
-        </wmsparams>
-    </source>
-    <source name="basic" type="wms">
-        <url>http://geoservices.brgm.fr/geologie?</url>
-        <srs>epsg:4326</srs>
-        <wmsparams>
-            <FORMAT>image/png</FORMAT>
-            <LAYERS>GRAVI_BASE</LAYERS>
-            <TRANSPARENT>true</TRANSPARENT>
-        </wmsparams>
-    </source>
-    <tileset name="test">
-        <source>vmap0</source>
-        <cache>disk</cache>
-        <watermark>/Users/tbonfort/Documents/terriscope/logo-watermark.png</watermark>
-        <grid>WGS84</grid>
-        <expires>3600</expires>
-    </tileset>
-    <tileset name="test2">
-        <source>nexrad</source>
-        <cache>disk</cache>
-        <format>PNG</format>
-        <grid>WGS84</grid>
-    </tileset>
-    <tileset name="test3">
-        <source>basic</source>
-        <cache>disk</cache>
-        <format>PNG8</format>
-        <grid>WGS84</grid>
-        <metatile>5 5</metatile>
-        <metabuffer>30</metabuffer>
-    </tileset>
-    <tileset name="osm">
-       <metadata>
-          <title>osm mapserver served map of midi-pyrénées</title>
-          <abstract>see http://mapserver-utils.googlecode.com</abstract>
-       </metadata>
-       <watermark>/Users/tbonfort/Documents/terriscope/logo-watermark.png</watermark>
-        <source>osm</source>
-        <cache>disk</cache>
-        <format>PNG</format>
-        <grid>google</grid>
-        <metatile>5 5</metatile>
-        <metabuffer>10</metabuffer>
-    </tileset>
-    <merge_format>PNGQ_FAST</merge_format>
-    
-    <!-- this is the location where locks will be stored when a tile
-         is not in the cache.
-         this directory MUST exist, and be accessible for reading and
-         writing by the user running apache (usually www-data or nobody)
-    -->
-    <lock_dir>/tmp/mylocks</lock_dir>
-    
-    <services>
-        <wms>true</wms>
-        <tms>true</tms>
-        <wmts>true</wmts>
-        <demo>true</demo>
-    </services>
+
+   <!--
+         there are three preconfigured grids you can use in <tileset>s without having to
+         explicitely define them here:
+         <grid>
+            <name>WGS84</name>
+            <metadata>
+               <title>GoogleCRS84Quad</title>
+               <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleCRS84Quad</WellKnownScaleSet>
+            </metadata>
+            <extent>-180 -90 180 90</extent>
+            <srs>epsg:4326</srs>
+            <size>256 256</size>
+            <resolutions>
+               1.40625000000000
+               0.703125000000000
+               0.351562500000000
+               0.175781250000000
+               8.78906250000000e-2
+               4.39453125000000e-2
+               2.19726562500000e-2
+               1.09863281250000e-2
+               5.49316406250000e-3
+               2.74658203125000e-3
+               1.37329101562500e-3
+               6.86645507812500e-4
+               3.43322753906250e-4
+               1.71661376953125e-4
+               8.58306884765625e-5
+               4.29153442382812e-5
+               2.14576721191406e-5
+               1.07288360595703e-5
+               5.36441802978516e-6
+            </resolutions>
+         </grid>
+
+         <grid>
+            <name>google</name>
+            <metadata>
+               <title>GoogleMapsCompatible</title>
+               <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible</WellKnownScaleSet>
+            </metadata>
+            <extent>-20037508.34,-20037508.34,20037508.34,20037508.34</extent>
+            <srs>epsg:900913</srs>
+            <size>256 256</size>
+            <resolutions>
+               156543.0339280410
+               78271.51696402048
+               39135.75848201023
+               19567.87924100512
+               9783.939620502561
+               4891.969810251280
+               2445.984905125640
+               1222.992452562820
+               611.4962262814100
+               305.7481131407048
+               152.8740565703525
+               76.43702828517624
+               38.21851414258813
+               19.10925707129406
+               9.554628535647032
+               4.777314267823516
+               2.388657133911758
+               1.194328566955879
+               0.5971642834779395
+            </resolutions>
+         </grid>
+
+         <grid>
+            <name>GoogleMapsCompatible</name>
+            <metadata>
+               <title>GoogleMapsCompatible</title>
+               <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible</WellKnownScaleSet>
+            </metadata>
+            <extent>-20037508.34,-20037508.34,20037508.34,20037508.34</extent>
+            <srs>epsg:3857</srs>
+            <size>256 256</size>
+            <resolutions>
+               156543.0339280410
+               78271.51696402048
+               39135.75848201023
+               19567.87924100512
+               9783.939620502561
+               4891.969810251280
+               2445.984905125640
+               1222.992452562820
+               611.4962262814100
+               305.7481131407048
+               152.8740565703525
+               76.43702828517624
+               38.21851414258813
+               19.10925707129406
+               9.554628535647032
+               4.777314267823516
+               2.388657133911758
+               1.194328566955879
+               0.5971642834779395
+            </resolutions>
+         </grid>
+   --> 
+
+
+   <!--
+        a cache is where tiles are stored once they have been rendered
+        the only "type" available right now is "disk"
+   -->
+   <cache name="disk" type="disk">
+
+      <!-- base
+           
+           absolute filesystem path where the tile structure will be stored.
+           this directory needs to be readable and writable by the user running
+           apache
+      -->
+      <base>/tmp</base>
+
+      <!-- symlink_blank
+           
+           EXPERIMENTAL !!!
+           enable blank (i.e. uniform color) tile detection. blank tiles will be
+           detected at creation time and linked to a single blank tile on disk to
+           preserve disk space.
+           
+           note that mod-geocache does not use "soft" links, and filesystems/OSes have
+           a limit on the number of links a file can accept. On linux this limit is around
+           32000, which is probably not sufficient if you are creating a cache of large empty
+           areas.
+
+           this option should probably not be enabled on production platforms until this issue
+           is sorted out (probably by using soft links, but they are not portable)
+      -->
+      <symlink_blank/>
+   </cache>
+
+   <!-- format
+
+        a format is an image algorithm used for compressing images
+        types can be "PNG" or "JPEG"
+   -->
+   <format name="PNGQ_FAST" type ="PNG">
+      
+      <!-- compression
+
+           png compression: best or fast
+           note that "best" compression is cpu intensive for little gain over the default
+           default compression is obtained by leving out this tag.
+      -->
+      <compression>fast</compression>
+
+      <!-- colors
+
+         if supplied, this enables png quantization which reduces the number of colors
+         in an image to atain higher compression. this operation is destructive, and can
+         cause artifacts in the stored image.
+         the number of colors can be between 2 and 256
+     -->
+     <colors>256</colors>
+   </format>
+   <format name="myjpeg" type ="JPEG">
+      <!-- quality
+
+           JPEG compression quality, ranging from 0 to 100
+           95 produces high quality images with few visual artifacts
+           values under around 80 produce small images but with visible artifacts.
+           YMMV
+      -->
+      <quality>95</quality>   
+   </format>
+   <format name="PNG_BEST" type ="PNG">
+      <compression>best</compression>
+   </format>
+
+   <!-- source
+
+      the service to query for obtaining images if they are not in the cache
+      for now, type can only be "wms"
+   -->
+   <source name="vmap0" type="wms">
+      <!-- url
+
+         url of the wms service, without any parameters
+      -->
+      <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
+      
+      <!-- srs
+           srs that must be used for GetMap requests.
+           this should match the <grid> srs of the tileset, although there are some cases
+           where this isn't mandatory
+         -->
+      <srs>epsg:4326</srs>
+
+      <!-- wmsparams
+
+         extra parameters that will be added to the GetMap request. you can specify any
+         parameter here, e.g. VERSION if you want to override the version of the WMS
+         request.
+         the LAYERS parameter is mandatory.
+         usual parameters here are FORMAT , or MAP if using mapserver
+      -->
+      <wmsparams>
+         <FORMAT>image/png</FORMAT>
+         <LAYERS>basic</LAYERS>
+      </wmsparams>
+   </source>
+   <source name="osm" type="wms">
+      <url>http://localhost/cgi-bin/mapserv?</url>
+      <srs>epsg:900913</srs>
+      <wmsparams>
+         <FORMAT>image/png</FORMAT>
+         <LAYERS>default</LAYERS>
+         <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+      </wmsparams>
+   </source>
+   <source name="nexrad" type="wms">
+      <url>http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi</url>
+      <srs>epsg:4326</srs>
+      <wmsparams>
+         <FORMAT>image/png</FORMAT>
+         <LAYERS>nexrad_base_reflect</LAYERS>
+         <TRANSPARENT>true</TRANSPARENT>
+      </wmsparams>
+   </source>
+   <source name="basic" type="wms">
+      <url>http://geoservices.brgm.fr/geologie?</url>
+      <srs>epsg:4326</srs>
+      <wmsparams>
+         <FORMAT>image/png</FORMAT>
+         <LAYERS>GRAVI_BASE</LAYERS>
+         <TRANSPARENT>true</TRANSPARENT>
+      </wmsparams>
+   </source>
+
+   <!-- tileset
+      a tileset regroups a <source>, <grid> and <cache>.
+      the "name" parameter is mandatory, and represents the key by which this tileset
+      will be requested by clients (e.g. in the WMS LAYERS parameter)
+   -->
+   <tileset name="test">
+
+      <!-- source: the "name" attribute of a preconfigured <source> -->
+      <source>vmap0</source>
+
+      <!-- cache: the "name" attribute of a preconfigured <cache> -->
+      <cache>disk</cache>
+
+      <!-- grid: the "name" attribute of a preconfigured <grid> -->
+      <grid>WGS84</grid>
+
+      <!-- metadata
+         optional metadata tags used for responding to GetCapabilities request.
+         you can put anything in here, although only the title and abstract tags
+         are currently used to populate the GetCapabilities document.
+      -->
+      <metadata>
+         <title>osm mapserver served map of midi-pyrénées</title>
+         <abstract>see http://mapserver-utils.googlecode.com</abstract>
+      </metadata>
+
+      <!-- watermark
+
+         optional tag to add a watermark to the tiles *before* storing them to cache
+         the supplied image MUST be exactly the same size as the size of the tiles
+         configured in the <grid>
+         the supplied image is read when the configuration is loaded.
+         if you make changes to the image, they will NOT be reflected on tiles already
+         stored in the cache, nor on newly stored tiles until the server is restarted
+      <watermark>/Users/tbonfort/Documents/terriscope/logo-watermark.png</watermark>
+      -->
+
+      <!-- format
+         (optional) format to use when storing a tile. this should be a format with high
+         compression, eg. png with compression "best", as the compression operation is only
+         done once at creation time.
+         if left out, no recompression is applied to the image, mod-geocache will store the
+         exact image received from the <source>
+         note that the <format> tag is mandatory if metatile, metabuffer or watermark are
+         supplied, as in those cases a recompression has to be done.
+      -->
+      <format>PNG</format>
+
+      <!-- metatile
+         number of columns and rows to use for metatiling, see http://geowebcache.org/docs/current/concepts/metatiles.html
+      -->
+      <metatile>5 5</metatile>
+
+      <!-- metabuffer
+         area around the tile or metatile that will be cut off to prevent some edge artifacts.
+         if using this, the configured source must be instructed not to put any labels inside
+         this area, as otherwise this will result in truncated labels (for mapserver, this is
+         the "labelcache_map_edge_buffer" "-10" metadata entry, along with label PARTIALS FALSE
+      -->
+      <metabuffer>10</metabuffer>
+
+      <!-- expires
+         optional expiration value in seconds for a tile. this is expressed in a number of seconds
+         after the creation date of the tile
+      -->
+      <expires>3600</expires>
+   </tileset>
+   <tileset name="test2">
+      <source>nexrad</source>
+      <cache>disk</cache>
+      <format>PNG</format>
+      <grid>WGS84</grid>
+   </tileset>
+   <tileset name="test3">
+      <source>basic</source>
+      <cache>disk</cache>
+      <format>PNG8</format>
+      <grid>WGS84</grid>
+      <metatile>5 5</metatile>
+      <metabuffer>30</metabuffer>
+   </tileset>
+   <tileset name="osm">
+      <metadata>
+         <title>osm mapserver served map of midi-pyrénées</title>
+         <abstract>see http://mapserver-utils.googlecode.com</abstract>
+      </metadata>
+      <source>osm</source>
+      <cache>disk</cache>
+      <format>PNG</format>
+      <grid>google</grid>
+      <metatile>5 5</metatile>
+      <metabuffer>10</metabuffer>
+   </tileset>
+
+
+   <!-- merge_format
+      format to use when a client asks for an image that is dynamically created from multiple
+      tiles from the cache.
+      note that using a png format with "best" compression is not recommended
+      here as it comes with a very compression overhead in terms of cpu processing. it is
+      recommended to use a png format with "fast"compression here, unless you have plenty
+      of server cpu power and or limited bandwidth
+   -->
+   <merge_format>PNGQ_FAST</merge_format>
+
+   <!-- this is the location where locks will be stored when a tile
+        is not in the cache.
+        this directory MUST exist, and be accessible for reading and
+        writing by the user running apache (usually www-data or nobody)
+   -->
+   <lock_dir>/tmp</lock_dir>
+
+   <!-- services
+      services that will be responded to by mod-geocache
+      each service is accessible at the url http://host/path/to/geocache/{service},
+      eg http://myhost/geocache/wms for OGC WMS.
+   -->
+   <services>
+      <!-- OGC WMS -->
+      <wms>true</wms>
+      
+      <!-- OSGEO TMS -->
+      <tms>true</tms>
+      
+      <!-- OGC WMTS -->
+      <wmts>true</wmts>
+
+      <!-- demo
+         interface with a simple openlayers map serving the configured layers through WMS.
+      -->
+      <demo>true</demo>
+   </services>
 </geocache>
