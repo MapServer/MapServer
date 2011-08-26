@@ -339,6 +339,28 @@
    </cache>
 
    <cache name="tmpl" type="disk">
+      <!-- template
+
+          string template that will be used to map a tile (by tileset, grid name, dimension,
+          format, x, y, and z) to a filename on the filesystem.
+          the following replacements are performed:
+          - {tileset} : the tileset name
+          - {grid} : the grid name
+          - {dim} : a string that concatenates the tile's dimension
+          - {ext} : the filename extension for the tile's image format
+          - {x},{y},{z} : the tile x,y,z values
+          - {inv_x}, {inv_y}, {inv_z} : inverted x,y,z values (inv_x = level->maxx - x - 1). This
+               is mainly used to support grids where one axis is inverted (e.g. the google schema)
+               and you want to create on offline cache.
+
+         * note that this type of cache does not support blank-tile detection and symlinking.
+      
+         * warning: it is up to you to make sure that the template you chose creates a unique
+           filename for your given tilesets. e.g. do not ommit the {grid} parameter if your
+           tilesets reference multiple grids. Failure to do so will result in filename
+           collisions ! 
+
+      -->
       <template>/tmp/template-test/{tileset}#{grid}#{dim}/{z}/{x}/{y}.{ext}</template>
    </cache>
 
