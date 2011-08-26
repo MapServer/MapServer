@@ -214,8 +214,6 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
    double *bbox;
    
    str = apr_table_get(params,"SERVICE");
-   if(!str)
-      str = apr_table_get(params,"service");
    if(!str) {
       ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"received wms request with no service param");
       return;
@@ -226,8 +224,6 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
    }
       
    str = apr_table_get(params,"REQUEST");
-   if(!str)
-      str = apr_table_get(params,"request");
    if(!str) {
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms with no request");
       return;
@@ -244,8 +240,6 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
 
 
    str = apr_table_get(params,"BBOX");
-   if(!str)
-      str = apr_table_get(params,"bbox");
    if(!str) {
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no bbox");
       return;
@@ -259,8 +253,6 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
    }
 
    str = apr_table_get(params,"WIDTH");
-   if(!str)
-      str = apr_table_get(params,"width");
    if(!str) {
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no width");
       return;
@@ -274,8 +266,6 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
    }
 
    str = apr_table_get(params,"HEIGHT");
-   if(!str)
-      str = apr_table_get(params,"height");
    if(!str) {
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no height");
       return;
@@ -289,16 +279,12 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
    }
 
    srs = apr_table_get(params,"SRS");
-   if(!srs)
-      srs = apr_table_get(params,"srs");
    if(!srs) {
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no srs");
       return;
    }
 
    str = apr_table_get(params,"LAYERS");
-   if(!str)
-      str = apr_table_get(params,"layers");
    if(!str) {
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no layers");
       return;

@@ -249,8 +249,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
    geocache_tileset *tileset;
    int row,col,level;
    str = apr_table_get(params,"SERVICE");
-   if(!str)
-      str = apr_table_get(params,"service");
    if(!str) {
       ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"received wmts request with no service param");
       return;
@@ -261,8 +259,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
    }
       
    str = apr_table_get(params,"REQUEST");
-   if(!str)
-      str = apr_table_get(params,"request");
    if(!str) {
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no request");
       return;
@@ -280,8 +276,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       geocache_grid *grid = NULL;
       
       str = apr_table_get(params,"TILEROW");
-      if(!str)
-         str = apr_table_get(params,"tilerow");
       if(!str) {
          ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILEROW");
          return;
@@ -295,8 +289,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       }
       
       str = apr_table_get(params,"TILECOL");
-      if(!str)
-         str = apr_table_get(params,"tilecol");
       if(!str) {
          ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILECOL");
          return;
@@ -312,8 +304,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       
       
       layer = apr_table_get(params,"LAYER");
-      if(!layer)
-         layer = apr_table_get(params,"layer");
       if(!layer) {
          ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no layer");
          return;
@@ -326,8 +316,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       }
       
       matrixset = apr_table_get(params,"TILEMATRIXSET");
-      if(!matrixset)
-         matrixset = apr_table_get(params,"tilematrixset");
       if(!matrixset) {
          ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILEMATRIXSET");
          return;
@@ -346,8 +334,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       }
 
       matrix = apr_table_get(params,"TILEMATRIX");
-      if(!matrix)
-         matrix = apr_table_get(params,"tilematrix");
       if(!matrix) {
          ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILEMATRIX");
          return;
