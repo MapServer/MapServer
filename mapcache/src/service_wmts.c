@@ -67,16 +67,6 @@ static ezxml_t _wmts_service_provider(geocache_context *ctx, const char *onliner
    return node;
 }
 
-static const char *wmts_matrix = 
-      "    <TileMatrix>\n"
-      "      <ows:Identifier>%d</ows:Identifier>\n"
-      "      <ScaleDenominator>%.20f</ScaleDenominator>\n"
-      "      <TopLeftCorner>%f %f</TopLeftCorner>\n"
-      "      <TileWidth>%d</TileWidth>\n"
-      "      <TileHeight>%d</TileHeight>\n"
-      "      <MatrixWidth>%d</MatrixWidth>\n"
-      "      <MatrixHeight>%d</MatrixHeight>\n"
-      "    </TileMatrix>\n";
 
 void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
    geocache_request_get_capabilities_wmts *request = (geocache_request_get_capabilities_wmts*)req;
@@ -223,51 +213,47 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    
    
    apr_hash_index_t *grid_index = apr_hash_first(ctx->pool,cfg->grids);
-/*
-   while(0 && grid_index) {
+   while(grid_index) {
       geocache_grid *grid;
-      char *epsgnum;
       const void *key; apr_ssize_t keylen;
       char *matrix;
       int level;
       const char *WellKnownScaleSet;
       apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
       
-      epsgnum = strchr(grid->srs,':');
-      if(!epsgnum) {
-         epsgnum = grid->srs;
-      } else {
-         epsgnum++;
-      }
-      
       WellKnownScaleSet = apr_table_get(grid->metadata,"WellKnownScaleSet");
-      
-      caps = apr_psprintf(ctx->pool,"%s"
-            "  <TileMatrixSet>\n"
-            "    <ows:Identifier>%s</ows:Identifier>\n"
-            "    <ows:SupportedCRS>%s</ows:SupportedCRS>\n",
-            caps,grid->name,geocache_grid_get_crs(ctx,grid));
+     
+      ezxml_t tmset = ezxml_add_child(caps,"TileMatrixSet",0);
+      ezxml_set_txt(ezxml_add_child(tmset,"ows:Identifier",0),grid->name);
+      ezxml_set_txt(ezxml_add_child(tmset,"ows:SupportedCRS",0),geocache_grid_get_crs(ctx,grid));
       
       if(WellKnownScaleSet) {
-         caps = apr_psprintf(ctx->pool,"%s"
-            "    <WellKnownScaleSet>%s</WellKnownScaleSet>\n",
-            caps,WellKnownScaleSet);
+         ezxml_set_txt(ezxml_add_child(tmset,"WellKnownScaleSet",0),WellKnownScaleSet);
       }
+static const char *wmts_matrix = 
+      "    <TileMatrix>\n"
+      "      <ows:Identifier>%d</ows:Identifier>\n"
+      "      <ScaleDenominator>%.20f</ScaleDenominator>\n"
+      "      <TopLeftCorner>%f %f</TopLeftCorner>\n"
+      "      <TileWidth>%d</TileWidth>\n"
+      "      <TileHeight>%d</TileHeight>\n"
+      "      <MatrixWidth>%d</MatrixWidth>\n"
+      "      <MatrixHeight>%d</MatrixHeight>\n"
+      "    </TileMatrix>\n";
       
       for(level=0;level<grid->nlevels;level++) {
+         ezxml_t tm = ezxml_add_child(tmset,"TileMatrix",0);
+         ezxml_set_txt(ezxml_add_child(tm,"ows:Identifier",0),apr_psprintf(ctx->pool,"%d",level));
          double scaledenom = grid->levels[level]->resolution * geocache_meters_per_unit[grid->unit] / 0.00028;
-         matrix = apr_psprintf(ctx->pool,wmts_matrix,
-               level,
-               scaledenom,
-               grid->extent[0],grid->extent[3],
-               grid->tile_sx, grid->tile_sy,
-               grid->levels[level]->maxx, grid->levels[level]->maxy);
-         caps = apr_psprintf(ctx->pool,"%s%s",caps,matrix);
+         ezxml_set_txt(ezxml_add_child(tm,"ScaleDenominator",0),apr_psprintf(ctx->pool,"%.20f",scaledenom));
+         ezxml_set_txt(ezxml_add_child(tm,"TopLeftCorner",0),apr_psprintf(ctx->pool,"%f %f",grid->extent[0],grid->extent[3]));
+         ezxml_set_txt(ezxml_add_child(tm,"TileWidth",0),apr_psprintf(ctx->pool,"%d",grid->tile_sx));
+         ezxml_set_txt(ezxml_add_child(tm,"TileHeight",0),apr_psprintf(ctx->pool,"%d",grid->tile_sy));
+         ezxml_set_txt(ezxml_add_child(tm,"MatrixWidth",0),apr_psprintf(ctx->pool,"%d",grid->levels[level]->maxx));
+         ezxml_set_txt(ezxml_add_child(tm,"MatrixHeight",0),apr_psprintf(ctx->pool,"%d",grid->levels[level]->maxy));
       }
-      caps = apr_pstrcat(ctx->pool,caps,"  </TileMatrixSet>\n",NULL);
       grid_index = apr_hash_next(grid_index);
    }
-*/
    char *tmpcaps = ezxml_toxml(caps);
    ezxml_free(caps);
    request->request.capabilities = apr_pstrdup(ctx->pool,tmpcaps);
