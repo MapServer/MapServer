@@ -254,7 +254,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
 void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_request **request,
       const char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    const char *str, *service = NULL, *style = NULL, *version = NULL, *layer = NULL, *matrixset = NULL,
-               *matrix = NULL, *tilecol = NULL, *tilerow = NULL;
+               *matrix = NULL, *tilecol = NULL, *tilerow = NULL, *format = NULL, *extension = NULL;
    apr_table_t *dimtable = NULL;
    geocache_tileset *tileset;
    int row,col,level;
@@ -279,7 +279,9 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       } else if( ! strcasecmp(str,"gettile")) {
          /* extract our wnated parameters, they will be validated later on */
          tilerow = apr_table_get(params,"TILEROW");
+         style = apr_table_get(params,"STYLE");
          tilecol = apr_table_get(params,"TILECOL");
+         format = apr_table_get(params,"FORMAT");
          layer = apr_table_get(params,"LAYER");
          if(!layer) { /*we have to validate this now in order to be able to extract dimensions*/
             ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no layer");
@@ -317,7 +319,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
          if(!version) {
             version = key;
             if(strcmp(version,"1.0.0")) {
-               ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "WMTS restful parser: missing VERSION");
+               ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received wmts request with invalid version \"%s\" (expecting \"1.0.0\")", version);
                return;
             }
             continue;
@@ -342,14 +344,6 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
             style = key;
             continue;
          }
-         if(!matrixset) {
-            matrixset = key;
-            continue;
-         }
-         if(!matrix) {
-            matrix=key;
-            continue;
-         }
          if(tileset->dimensions) {
             if(!dimtable)
                dimtable = apr_table_make(ctx->pool,tileset->dimensions->nelts);
@@ -361,42 +355,59 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
                continue;
             }
          }
+         if(!matrixset) {
+            matrixset = key;
+            continue;
+         }
+         if(!matrix) {
+            matrix=key;
+            continue;
+         }
          if(!tilerow) {
             tilerow = key;
             continue;
          }
 
          if(!tilecol) {
+            /*this is the last element of the uri, and it will also contain the file extension*/
+            
+            /*split the string at the first '.'*/
+            char *charptr = key;
+            while(*charptr && *charptr != '.') charptr++;
+
+            /*replace '.' with '\0' and advance*/
+            *charptr++ = '\0';
             tilecol = key;
+            extension = charptr;
             continue;
          }
+
+         ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"received request with trailing data starting with %s",key);
+         return;
       }
       /*Restful Parsing*/
    }
       
    geocache_grid *grid = NULL;
-
-   if(!tilerow) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILEROW");
+   
+   if(!style || strcmp(style,"default")) {
+      ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received request with invalid style \"%s\" (expecting \"default\")",style);
       return;
-   } else {
-      char *endptr;
-      row = (int)strtol(tilerow,&endptr,10);
-      if(*endptr != 0 || row < 0) {
-         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid TILEROW %s",tilerow);
-         return;
-      }
    }
-
-   if(!tilecol) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILECOL");
-      return;
-   } else {
-      char *endptr;
-      col = (int)strtol(tilecol,&endptr,10);
-      if(endptr == tilecol || col < 0) {
-         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid TILECOL");
-         return;
+   
+   /*validate dimensions*/
+   if(tileset->dimensions) {
+      int i;
+      for(i=0;i<tileset->dimensions->nelts;i++) {
+         geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+         const char *value = apr_table_get(dimtable,dimension->name);
+         int ok = dimension->validate(ctx,dimension,value);
+         GC_CHECK_ERROR(ctx);
+         if(ok != GEOCACHE_SUCCESS) {
+            ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"dimension \"%s\" value \"%s\" fails to validate",
+                  dimension->name, value);
+            return;
+         }
       }
    }
 
@@ -435,6 +446,47 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
          }
       }
    }
+   
+   if(!tilerow) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILEROW");
+      return;
+   } else {
+      char *endptr;
+      row = (int)strtol(tilerow,&endptr,10);
+      if(*endptr != 0 || row < 0) {
+         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid TILEROW %s",tilerow);
+         return;
+      }
+   }
+
+   if(!tilecol) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILECOL");
+      return;
+   } else {
+      char *endptr;
+      col = (int)strtol(tilecol,&endptr,10);
+      if(endptr == tilecol || col < 0) {
+         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid TILECOL %s",tilecol);
+         return;
+      }
+   }
+
+   if(!format && !extension) {
+      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no format");
+      return;
+   } else {
+      if(format && strcmp(format,tileset->format->mime_type)) {
+         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with invalid format \"%s\" (expecting %s)",
+               format,tileset->format->mime_type);
+         return;
+      }
+      if(extension && strcmp(extension,tileset->format->extension)) {
+         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with invalid extension \"%s\" (expecting %s)",
+               extension,tileset->format->extension);
+         return;
+      }
+   }
+
 
    geocache_request_get_tile *req = (geocache_request_get_tile*)apr_pcalloc(
          ctx->pool,sizeof(geocache_request_get_tile));
@@ -450,22 +502,14 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       return;
    }
    
-   /*validate dimensions*/
+   /*populate dimensions*/
    if(tileset->dimensions) {
       int i;
       req->tiles[0]->dimensions = apr_table_make(ctx->pool,tileset->dimensions->nelts);
       for(i=0;i<tileset->dimensions->nelts;i++) {
          geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
          const char *value = apr_table_get(dimtable,dimension->name);
-         int ok = dimension->validate(ctx,dimension,value);
-         GC_CHECK_ERROR(ctx);
-         if(ok == GEOCACHE_SUCCESS)
-            apr_table_set(req->tiles[0]->dimensions,dimension->name,value);
-         else {
-            ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"dimension \"%s\" value \"%s\" fails to validate",
-                  dimension->name, value);
-            return;
-         }
+         apr_table_set(req->tiles[0]->dimensions,dimension->name,value);
       }
    }
    req->tiles[0]->grid = grid;
