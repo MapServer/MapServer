@@ -15,7 +15,7 @@
  */
 
 #include "geocache.h"
-
+#include <math.h>
 /*
  * allocate and initialize a new tileset
  */
