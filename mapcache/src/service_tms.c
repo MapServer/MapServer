@@ -180,7 +180,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_service
                   return;
                }
                tileset = geocache_configuration_get_tileset(config,tname);
-               if(!tname) {
+               if(!tileset) {
                   ctx->set_error(ctx,404, "received tms request with invalid layer %s", tname);
                   return;
                }

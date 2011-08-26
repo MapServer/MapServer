@@ -70,6 +70,7 @@ typedef struct geocache_request_get_capabilities geocache_request_get_capabiliti
 typedef struct geocache_request_get_capabilities_wms geocache_request_get_capabilities_wms;
 typedef struct geocache_request_get_capabilities_wmts geocache_request_get_capabilities_wmts;
 typedef struct geocache_request_get_capabilities_tms geocache_request_get_capabilities_tms;
+typedef struct geocache_request_get_capabilities_kml geocache_request_get_capabilities_kml;
 
 typedef struct geocache_request_get_tile geocache_request_get_tile;
 typedef struct geocache_service geocache_service;
@@ -77,6 +78,7 @@ typedef struct geocache_service_wms geocache_service_wms;
 typedef struct geocache_service_wmts geocache_service_wmts;
 typedef struct geocache_service_gmaps geocache_service_gmaps;
 typedef struct geocache_service_tms geocache_service_tms;
+typedef struct geocache_service_kml geocache_service_kml;
 typedef struct geocache_service_demo geocache_service_demo;
 typedef struct geocache_server_cfg geocache_server_cfg;
 typedef struct geocache_image geocache_image;
@@ -352,6 +354,11 @@ struct geocache_request_get_capabilities_tms {
    char *version;
 };
 
+struct geocache_request_get_capabilities_kml {
+   geocache_request_get_capabilities request;
+   geocache_tile *tile;
+};
+
 struct geocache_request_get_capabilities_wms {
    geocache_request_get_capabilities request;
    char *version;
@@ -367,11 +374,11 @@ struct geocache_request_get_capabilities_wmts {
 /** \defgroup services Services*/
 /** @{ */
 
-#define GEOCACHE_SERVICES_COUNT 5
+#define GEOCACHE_SERVICES_COUNT 6
 
 typedef enum {
     GEOCACHE_SERVICE_WMS = 0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMTS,
-    GEOCACHE_SERVICE_DEMO, GEOCACHE_SERVICE_GMAPS
+    GEOCACHE_SERVICE_DEMO, GEOCACHE_SERVICE_GMAPS, GEOCACHE_SERVICE_KML
 } geocache_service_type;
 
 #define GEOCACHE_UNITS_COUNT 3
@@ -415,6 +422,14 @@ struct geocache_service_wms {
     geocache_service service;
 };
 
+/**\class geocache_service_kml
+ * \brief a KML superoverlay service
+ * \implements geocache_service
+ */
+struct geocache_service_kml {
+    geocache_service service;
+};
+
 /**\class geocache_service_tms
  * \brief a TMS service
  * \implements geocache_service
@@ -453,13 +468,19 @@ geocache_service* geocache_service_wms_create(geocache_context *ctx);
 geocache_service* geocache_service_gmaps_create(geocache_context *ctx);
 
 /**
+ * \brief create and initialize a geocache_service_kml
+ * \memberof geocache_service_kml
+ */
+geocache_service* geocache_service_kml_create(geocache_context *ctx);
+
+/**
  * \brief create and initialize a geocache_service_tms
  * \memberof geocache_service_tms
  */
 geocache_service* geocache_service_tms_create(geocache_context *ctx);
 
 /**
- * \brief create and initialize a geocache_service_wtms
+ * \brief create and initialize a geocache_service_wmts
  * \memberof geocache_service_wtms
  */
 geocache_service* geocache_service_wmts_create(geocache_context *ctx);

@@ -314,7 +314,8 @@
       <cache>disk</cache>
 
       <!-- grid: the "name" attribute of a preconfigured <grid> -->
-      <grid restricted_extent="-10 40 10 50">WGS84</grid>
+         <!--<grid restricted_extent="-10 40 10 50">WGS84</grid>-->
+      <grid>WGS84</grid>
       <grid>google</grid>
 
       <!-- metadata
@@ -464,6 +465,8 @@
       
       <!-- OSGEO TMS -->
       <tms>true</tms>
+      
+      <kml>true</kml>
       
       <!-- OGC WMTS -->
       <wmts>true</wmts>
