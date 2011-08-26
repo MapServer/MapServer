@@ -20,16 +20,151 @@
 #include <apr_strings.h>
 
 #ifdef USE_GDAL
+
+#include <gdal.h>
+#include <cpl_conv.h>
+
+#include "gdal_alg.h"
+#include "cpl_string.h"
+#include "ogr_srs_api.h"
 /**
  * \private \memberof geocache_source_gdal
  * \sa geocache_source::render_metatile()
  */
 void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metatile *tile) {
    geocache_source_gdal *gdal = (geocache_source_gdal*)tile->tile.tileset->source;
-        
+   char *srcSRS = "", *dstSRS;        
    tile->tile.data = geocache_buffer_create(30000,ctx->pool);
    GC_CHECK_ERROR(ctx);
-   
+   GDALDatasetH  hDataset;
+
+   GDALAllRegister();
+   OGRSpatialReferenceH hSRS;
+   CPLErrorReset();
+
+   hSRS = OSRNewSpatialReference( NULL );
+   if( OSRSetFromUserInput( hSRS, tile->tile.grid->srs ) == OGRERR_NONE )
+      OSRExportToWkt( hSRS, &dstSRS );
+   else
+   {
+      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"failed to parse gdal srs %s",tile->tile.grid->srs);
+      return;
+   }
+
+   OSRDestroySpatialReference( hSRS );
+
+   hDataset = GDALOpen( gdal->datastr, GA_ReadOnly );
+   if( hDataset == NULL ) {
+      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"GDAL failed to open %s",gdal->datastr);
+      return;
+   }
+
+   /* -------------------------------------------------------------------- */
+   /*      Check that there's at least one raster band                     */
+   /* -------------------------------------------------------------------- */
+   if ( GDALGetRasterCount(hDataset) == 0 )
+   {
+      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"raster %s has no bands",gdal->datastr);
+      return;
+   }
+
+   if( GDALGetProjectionRef( hDataset ) != NULL 
+         && strlen(GDALGetProjectionRef( hDataset )) > 0 )
+      srcSRS = apr_pstrdup(ctx->pool,GDALGetProjectionRef( hDataset ));
+
+   else if( GDALGetGCPProjection( hDataset ) != NULL
+         && strlen(GDALGetGCPProjection(hDataset)) > 0 
+         && GDALGetGCPCount( hDataset ) > 1 )
+      srcSRS = apr_pstrdup(ctx->pool,GDALGetGCPProjection( hDataset ));
+
+   GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+   GDALDatasetH hDstDS;        
+   /* -------------------------------------------------------------------- */
+   /*      Create a transformation object from the source to               */
+   /*      destination coordinate system.                                  */
+   /* -------------------------------------------------------------------- */
+   void *hTransformArg = 
+      GDALCreateGenImgProjTransformer( hDataset, srcSRS, 
+            NULL, dstSRS, 
+            TRUE, 1000.0, 0 );
+
+   if( hTransformArg == NULL ) {
+      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"gdal failed to create SRS transformation object");
+      return;
+   }
+
+   /* -------------------------------------------------------------------- */
+   /*      Get approximate output definition.                              */
+   /* -------------------------------------------------------------------- */
+   int nPixels, nLines;
+   double adfDstGeoTransform[6];
+   if( GDALSuggestedWarpOutput( hDataset, 
+            GDALGenImgProjTransform, hTransformArg, 
+            adfDstGeoTransform, &nPixels, &nLines )
+         != CE_None )
+   {
+      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"gdal failed to create suggested warp output");
+      return;
+   }
+
+   GDALDestroyGenImgProjTransformer( hTransformArg );
+   double dfXRes = (tile->bbox[2] - tile->bbox[0]) / tile->sx;
+   double dfYRes = (tile->bbox[3] - tile->bbox[1]) / tile->sy;
+
+   adfDstGeoTransform[0] = tile->bbox[0];
+   adfDstGeoTransform[3] = tile->bbox[3];
+   adfDstGeoTransform[1] = dfXRes;
+   adfDstGeoTransform[5] = -dfYRes;
+   hDstDS = GDALCreate( hDriver, "tempd_gdal_image", tile->tile.grid->tile_sx, tile->tile.grid->tile_sy, 4, GDT_Byte, NULL );
+
+   /* -------------------------------------------------------------------- */
+   /*      Write out the projection definition.                            */
+   /* -------------------------------------------------------------------- */
+   GDALSetProjection( hDstDS, dstSRS );
+   GDALSetGeoTransform( hDstDS, adfDstGeoTransform );
+   char               **papszWarpOptions = NULL;
+   papszWarpOptions = CSLSetNameValue( papszWarpOptions, "INIT", "0" );
+
+
+
+   /* -------------------------------------------------------------------- */
+   /*      Create a transformation object from the source to               */
+   /*      destination coordinate system.                                  */
+   /* -------------------------------------------------------------------- */
+   GDALTransformerFunc pfnTransformer = NULL;
+   void               *hGenImgProjArg=NULL, *hApproxArg=NULL;
+   hTransformArg = hGenImgProjArg = 
+      GDALCreateGenImgProjTransformer( hDataset, srcSRS, 
+            hDstDS, dstSRS, 
+            TRUE, 1000.0, 0 );
+
+   if( hTransformArg == NULL )
+      exit( 1 );
+
+   pfnTransformer = GDALGenImgProjTransform;
+
+   hTransformArg = hApproxArg = 
+      GDALCreateApproxTransformer( GDALGenImgProjTransform, 
+            hGenImgProjArg, 0.125 );
+   pfnTransformer = GDALApproxTransform;
+
+   /* -------------------------------------------------------------------- */
+   /*      Now actually invoke the warper to do the work.                  */
+   /* -------------------------------------------------------------------- */
+   GDALSimpleImageWarp( hDataset, hDstDS, 0, NULL, 
+         pfnTransformer, hTransformArg,
+         GDALDummyProgress, NULL, papszWarpOptions );
+
+   CSLDestroy( papszWarpOptions );
+
+   if( hApproxArg != NULL )
+      GDALDestroyApproxTransformer( hApproxArg );
+
+   if( hGenImgProjArg != NULL )
+      GDALDestroyGenImgProjTransformer( hGenImgProjArg );
+
+   GDALClose( hDstDS );
+   GDALClose( hDataset);
    if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {
       char *returned_data = apr_pstrndup(ctx->pool,(char*)tile->tile.data->buf,tile->tile.data->size);
       ctx->set_error(ctx, GEOCACHE_SOURCE_GDAL_ERROR, "gdal request for tileset %s: %d %d %d returned an unsupported format:\n%s",
@@ -72,7 +207,7 @@ void _geocache_source_gdal_configuration_check(geocache_context *ctx, geocache_s
       ctx->set_error(ctx, GEOCACHE_SOURCE_GDAL_ERROR, "gdalOpen failed on data %s", src->datastr);
       return;
    }
-   
+
 }
 #endif //USE_GDAL
 
