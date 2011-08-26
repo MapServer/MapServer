@@ -67,7 +67,7 @@ int _geocache_cache_disk_create_and_lock(geocache_tile *tile, request_rec *r) {
          return GEOCACHE_FAILURE; /* we could not create the file */
       } else {
          /* this shouldn't happen if the caller has properly mutex protected the call ? */
-         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "asked to create file %s, but it already exists",filename);
+         ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "asked to create file %s, but it already exists",filename);
          apr_file_close(f);
          return GEOCACHE_FILE_EXISTS; /* we have write access, but the file already exists */
       }
@@ -94,7 +94,7 @@ int _geocache_cache_disk_unlock(geocache_tile *tile, request_rec *r) {
    apr_file_t *f = (apr_file_t*)tile->lock;
    apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
    if(!finfo.size) {
-      ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "unlocking an empty tile, we will remove it");
+      ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "unlocking an empty tile, we will remove it");
       const char *fname;
       apr_file_name_get(&fname,f);
       apr_file_remove(fname,r->pool);
