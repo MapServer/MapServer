@@ -29,7 +29,7 @@ void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *t
    *path = apr_psprintf(ctx->pool,"%s/%s/%s/blanks/%02X%02X%02X%02X.%s",
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
          tile->tileset->name,
-         tile->tileset->grid->name,
+         tile->grid->name,
          color[0],
          color[1],
          color[2],
@@ -52,7 +52,7 @@ void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, c
    start = apr_pstrcat(ctx->pool,
          ((geocache_cache_disk*)tile->tileset->cache)->base_directory,"/",
          tile->tileset->name,"/",
-         tile->tileset->grid->name,
+         tile->grid->name,
          NULL);
    if(tile->dimensions) {
       const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
@@ -196,7 +196,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
                   apr_psprintf(ctx->pool, "%s/%s/%s/blanks",
                         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
                         tile->tileset->name,
-                        tile->tileset->grid->name),
+                        tile->grid->name),
                   APR_OS_DEFAULT,ctx->pool)) {
                ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create directory for blank tiles");
                ctx->global_lock_release(ctx);

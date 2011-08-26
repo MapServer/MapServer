@@ -422,10 +422,6 @@ void parseSource(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       GC_CHECK_ERROR(ctx);
    } 
    
-   if ((cur_node = ezxml_child(node,"srs")) != NULL) {
-      source->srs = apr_pstrdup(ctx->pool,cur_node->txt);
-   }
-   
    source->configuration_parse(ctx,node,source);
    GC_CHECK_ERROR(ctx);
    source->configuration_check(ctx,source);
@@ -574,13 +570,19 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    tileset->name = name;
 
    if ((cur_node = ezxml_child(node,"grid")) != NULL) {
-         geocache_grid *grid = geocache_configuration_get_grid(config, cur_node->txt);
+      tileset->grids = apr_array_make(ctx->pool,1,sizeof(geocache_grid*));
+      char *grids = apr_pstrdup(ctx->pool,cur_node->txt);
+      char *key, *last;
+      for (key = apr_strtok(grids, ",", &last); key != NULL;
+            key = apr_strtok(NULL, ",", &last)) {
+         geocache_grid *grid = geocache_configuration_get_grid(config, key);
          if(!grid) {
             ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" references grid \"%s\","
-                  " but it is not configured", name, cur_node->txt);
+                  " but it is not configured", name, key);
             return;
          }
-         tileset->grid = grid;
+         APR_ARRAY_PUSH(tileset->grids,geocache_grid*) = grid;
+      }
    }
 
    if ((cur_node = ezxml_child(node,"metadata")) != NULL) {
@@ -713,22 +715,10 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" has no source configured."
             " You must add a <source> tag.", tileset->name);
       return;
-   } else {
-      /*check srs are consistent*/
-      if(!tileset->source->srs) {
-         tileset->source->srs = tileset->grid->srs;
-      } else {
-         if(strcasecmp(tileset->source->srs , tileset->grid->srs)) {
-            ctx->log(ctx, GEOCACHE_WARNING, "tileset (%s) srs mismatch: source (%s)=>(%s) , grid (%s)=>(%s)",
-                  tileset->name,
-                  tileset->source->name, tileset->source->srs,
-                  tileset->grid->name, tileset->grid->srs);
-         }
-      }
-   }
+   } 
 
-   if(tileset->grid == NULL) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" has no grid configured."
+   if(apr_is_empty_array(tileset->grids)) {
+      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" has no grids configured."
             " You must add a <grid> tag.", tileset->name);
       return;
    }
@@ -748,17 +738,6 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
           return;
        }
    }
-
-   if(tileset->watermark) {
-       if(tileset->watermark->h != tileset->grid->tile_sy ||
-               tileset->watermark->w != tileset->grid->tile_sx) {
-           ctx->set_error(ctx,GEOCACHE_IMAGE_ERROR,"watermark size (%d,%d) does not match tile size (%d,%d)",
-                tileset->watermark->w, tileset->watermark->h,
-                tileset->grid->tile_sx, tileset->grid->tile_sx);
-           return;
-       }
-   }
-
 
    geocache_configuration_add_tileset(config,tileset,name);
    return;

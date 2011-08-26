@@ -204,7 +204,6 @@ typedef enum {
  */
 struct geocache_source {
     char *name; /**< the key this source can be referenced by */
-    char *srs; /**< data SRS */
     double data_extent[4]; /**< extent in which this source can produce data */
     geocache_source_type type;
     apr_table_t *metadata;
@@ -342,6 +341,7 @@ struct geocache_request_get_capabilities {
 struct geocache_request_get_capabilities_tms {
    geocache_request_get_capabilities request;
    geocache_tileset *tileset;
+   geocache_grid *grid;
    char *version;
 };
 
@@ -656,11 +656,10 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx);
  */
 struct geocache_tile {
     geocache_tileset *tileset; /**< the geocache_tileset that corresponds to the tile*/
+    geocache_grid *grid;
     int x; /**< tile x index */
     int y; /**< tile y index */
     int z; /**< tile z index (zoom level) */
-    int sx; /**< tile width in pixels */
-    int sy; /**< tile height in pixels */
     /**
      * encoded image data for the tile.
      * \sa geocache_cache::tile_get()
@@ -683,6 +682,8 @@ struct geocache_tile {
  */
 struct geocache_metatile {
     geocache_tile tile; /**< the geocache_tile that corresponds to this metatile */
+    int sx; /**< metatile width */
+    int sy; /**< metatile height */
     double bbox[4]; /**< the bounding box covered by this metatile */
     int ntiles; /**< the number of geocache_metatile::tiles contained in this metatile */
     geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
@@ -717,9 +718,9 @@ struct geocache_tileset {
     double restricted_extent[4];
 
     /**
-     * definition of the gridset
+     * list of grids that will be cached
      */
-    geocache_grid *grid;
+    apr_array_header_t *grids;
 
     /**
      * size of the metatile that should be requested to the geocache_tileset::source
@@ -830,17 +831,6 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx);
 void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox);
 
 
-/**
- * \brief compute x y value for given lon/lat (dx/dy) and given zoomlevel
- * @param ctx
- * @param tileset
- * @param dx
- * @param dy
- * @param z
- * @param x
- * @param y
- */
-void geocache_tileset_get_xy(geocache_context *ctx, geocache_tileset *tileset, double dx, double dy, int z, int *x, int *y);
 
 /**
  * lock the tile
@@ -869,6 +859,21 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
 
 
 geocache_grid* geocache_grid_create(apr_pool_t *pool);
+
+/**
+ * \brief compute x y value for given lon/lat (dx/dy) and given zoomlevel
+ * @param ctx
+ * @param tileset
+ * @param dx
+ * @param dy
+ * @param z
+ * @param x
+ * @param y
+ */
+void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx, double dy, int z, int *x, int *y);
+
+double geocache_grid_get_resolution(geocache_grid *grid, double *bbox);
+void geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level);
 
 /* in util.c */
 int geocache_util_extract_int_list(geocache_context *ctx, const char* args, const char sep, int **numbers,

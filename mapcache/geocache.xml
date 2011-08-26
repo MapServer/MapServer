@@ -167,18 +167,9 @@
 
       <!-- symlink_blank
            
-           EXPERIMENTAL !!!
            enable blank (i.e. uniform color) tile detection. blank tiles will be
            detected at creation time and linked to a single blank tile on disk to
            preserve disk space.
-           
-           note that mod-geocache does not use "soft" links, and filesystems/OSes have
-           a limit on the number of links a file can accept. On linux this limit is around
-           32000, which is probably not sufficient if you are creating a cache of large empty
-           areas.
-
-           this option should probably not be enabled on production platforms until this issue
-           is sorted out (probably by using soft links, but they are not portable)
       -->
       <symlink_blank/>
    </cache>
@@ -233,13 +224,6 @@
       -->
       <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
       
-      <!-- srs
-           srs that must be used for GetMap requests.
-           this should match the <grid> srs of the tileset, although there are some cases
-           where this isn't mandatory
-         -->
-      <srs>epsg:4326</srs>
-
       <!-- wmsparams
 
          extra parameters that will be added to the GetMap request. you can specify any
@@ -255,7 +239,6 @@
    </source>
    <source name="osm" type="wms">
       <url>http://localhost/cgi-bin/mapserv?</url>
-      <srs>epsg:900913</srs>
       <wmsparams>
          <FORMAT>image/png</FORMAT>
          <LAYERS>default</LAYERS>
@@ -264,7 +247,6 @@
    </source>
    <source name="nexrad" type="wms">
       <url>http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi</url>
-      <srs>epsg:4326</srs>
       <wmsparams>
          <FORMAT>image/png</FORMAT>
          <LAYERS>nexrad_base_reflect</LAYERS>
@@ -273,7 +255,6 @@
    </source>
    <source name="basic" type="wms">
       <url>http://geoservices.brgm.fr/geologie?</url>
-      <srs>epsg:4326</srs>
       <wmsparams>
          <FORMAT>image/png</FORMAT>
          <LAYERS>GRAVI_BASE</LAYERS>
@@ -295,7 +276,7 @@
       <cache>disk</cache>
 
       <!-- grid: the "name" attribute of a preconfigured <grid> -->
-      <grid>WGS84</grid>
+      <grid>WGS84,google</grid>
 
       <!-- metadata
          optional metadata tags used for responding to GetCapabilities request.

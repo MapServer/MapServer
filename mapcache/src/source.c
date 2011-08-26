@@ -22,7 +22,6 @@ void geocache_source_init(geocache_context *ctx, geocache_source *source) {
 			source->data_extent[1] =
 			source->data_extent[2] =
 			source->data_extent[3] = -1;
-	source->srs = NULL;
 	source->metadata = apr_table_make(ctx->pool,3);
 }
 /* vim: ai ts=3 sts=3 et sw=3

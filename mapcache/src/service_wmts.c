@@ -168,6 +168,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    
    apr_hash_index_t *layer_index = apr_hash_first(ctx->pool,cfg->tilesets);
    while(layer_index) {
+      int i;
       geocache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(layer_index,&key,&keylen,(void**)&tileset);
@@ -183,7 +184,6 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
 
       char *dimensions="";
       if(tileset->dimensions) {
-         int i;
          for(i=0;i<tileset->dimensions->nelts;i++) {
             geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
             dimensions = apr_psprintf(ctx->pool,"%s"
@@ -194,7 +194,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
                   dimension->name,
                   dimension->default_value);
             if(dimension->unit) {
-               dimension = apr_pstrcat(ctx->pool,dimension,
+               dimensions = apr_pstrcat(ctx->pool,dimension,
                   "      <UOM>",dimension->unit,"</UOM>\n",NULL);
             }
             int i = dimension->nvalues;
@@ -204,7 +204,15 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             dimensions = apr_pstrcat(ctx->pool,dimensions,"    </Dimension>\n",NULL);
          }
       }
-      
+      char *tmsets="";
+      for(i=0;i<tileset->grids->nelts;i++) {
+         geocache_grid *grid = APR_ARRAY_IDX(tileset->grids,i,geocache_grid*);
+         tmsets = apr_pstrcat(ctx->pool,tmsets,
+               "      <TileMatrixSet>",
+               grid->name,
+               "</TileMatrixSet>\n",
+               NULL);
+      }
       caps = apr_psprintf(ctx->pool,"%s"
             "  <Layer>\n"
             "    <ows:Title>%s</ows:Title>\n"
@@ -220,10 +228,10 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             "%s" /*dimensions*/
             "    <Format>%s</Format>\n"
             "    <TileMatrixSetLink>\n"
-            "      <TileMatrixSet>%s</TileMatrixSet>\n"
+            "%s"
             "    </TileMatrixSetLink>\n"
             "  </Layer>\n",caps,title,abstract,
-            tileset->name,dimensions,tileset->format->mime_type,tileset->grid->name);
+            tileset->name,dimensions,tileset->format->mime_type,tmsets);
       layer_index = apr_hash_next(layer_index);
    }
    caps = apr_pstrcat(ctx->pool,caps,"</Contents>\n</Capabilities>\n",NULL);
@@ -269,6 +277,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
       ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with invalid request %s",str);
       return;
    } else {
+      geocache_grid *grid = NULL;
       
       str = apr_table_get(params,"TILEROW");
       if(!str)
@@ -323,7 +332,14 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
          ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with no TILEMATRIXSET");
          return;
       } else {
-         if(strcmp(tileset->grid->name,matrixset)) {
+         int i;
+         for(i=0;i<tileset->grids->nelts;i++) {
+            geocache_grid *sgrid = APR_ARRAY_IDX(tileset->grids,i,geocache_grid*);
+            if(strcmp(sgrid->name,matrixset)) continue;
+            grid = sgrid;
+            break;
+         }
+         if(!grid) {
             ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wmts request with invalid TILEMATRIXSET %s",matrixset);
             return;
          }
@@ -344,7 +360,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
          } else {
             char *endptr;
             level = (int)strtol(levelptr,&endptr,10);
-            if(*endptr != 0 || level < 0 || level >= tileset->grid->levels) {
+            if(*endptr != 0 || level < 0 || level >= grid->levels) {
                ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid TILEMATRIX %s", matrix);
                return;
             }
@@ -363,12 +379,13 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_reques
          ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate tile");
          return;
       }
+      req->tiles[0]->grid = grid;
       
-      double unitheight = tileset->grid->tile_sy * tileset->grid->resolutions[level];
-      double unitwidth = tileset->grid->tile_sx * tileset->grid->resolutions[level];
+      double unitheight = grid->tile_sy * grid->resolutions[level];
+      double unitwidth = grid->tile_sx * grid->resolutions[level];
             
-      int matrixheight = ceil((tileset->grid->extents[level][3]-tileset->grid->extents[level][1] - 0.01* unitheight)/unitheight);
-      int matrixwidth = ceil((tileset->grid->extents[level][2]-tileset->grid->extents[level][0] - 0.01* unitwidth)/unitwidth);
+      int matrixheight = ceil((grid->extents[level][3]-grid->extents[level][1] - 0.01* unitheight)/unitheight);
+      int matrixwidth = ceil((grid->extents[level][2]-grid->extents[level][0] - 0.01* unitwidth)/unitwidth);
       
       if(row >= matrixheight) {
          ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "tilerow %d to large for selected tilematrix (max is %d)",row,matrixheight);

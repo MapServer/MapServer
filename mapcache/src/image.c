@@ -89,8 +89,7 @@ geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_
    if(GC_HAS_ERROR(ctx)) {
       return NULL;
    }
-   tile->sx = base->w;
-   tile->sy = base->h;
+   tile->grid = tiles[0]->grid;
    tile->tileset = tiles[0]->tileset;
    return tile;
 }
@@ -102,8 +101,8 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
       geocache_image *metatile;
       int i,j;
       int sx,sy;
-      tileimg.w = mt->tile.tileset->grid->tile_sx;
-      tileimg.h = mt->tile.tileset->grid->tile_sy;
+      tileimg.w = mt->tile.grid->tile_sx;
+      tileimg.h = mt->tile.grid->tile_sy;
       metatile = geocache_imageio_decode(ctx, mt->tile.data);
       if(!metatile) {
          ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to load image data from metatile");
@@ -113,7 +112,7 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
       for(i=0;i<mt->tile.tileset->metasize_x;i++) {
          for(j=0;j<mt->tile.tileset->metasize_y;j++) {
             sx = mt->tile.tileset->metabuffer + i * tileimg.w;
-            sy = mt->tile.sy - (mt->tile.tileset->metabuffer + (j+1) * tileimg.w);
+            sy = mt->sy - (mt->tile.tileset->metabuffer + (j+1) * tileimg.w);
             tileimg.data = &(metatile->data[sy*metatile->stride + 4 * sx]);
             if(mt->tile.tileset->watermark) {
                 geocache_image_merge(ctx,&tileimg,mt->tile.tileset->watermark);

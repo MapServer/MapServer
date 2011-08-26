@@ -38,7 +38,7 @@ static char *demo_head =
       "    map = new OpenLayers.Map( 'map' );\n";
 
 static char *demo_layer =
-      "    var %s_layer = new OpenLayers.Layer.WMS( \"%s\",\n"
+      "    var %s_%s_layer = new OpenLayers.Layer.WMS( \"%s-%s\",\n"
       "        \"%s\",{layers: '%s'},\n"
       "        { gutter:0,ratio:1,isBaseLayer:true,transitionEffect:'resize',\n"
       "          resolutions:[%s],\n"
@@ -74,26 +74,32 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
       geocache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      char *resolutions="";
-      layers = apr_psprintf(ctx->pool,"%s,%s_layer",layers,tileset->name);
-      int i;
-      resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,tileset->grid->resolutions[0]);
-      for(i=1;i<tileset->grid->levels;i++) {
-         resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,tileset->grid->resolutions[i]);
+      int i,j;
+      for(j=0;j<tileset->grids->nelts;j++) {
+         char *resolutions="";
+         geocache_grid *grid = APR_ARRAY_IDX(tileset->grids,j,geocache_grid*);
+         layers = apr_psprintf(ctx->pool,"%s,%s_%s_layer",layers,tileset->name,grid->name);
+         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->resolutions[0]);
+         for(i=1;i<grid->levels;i++) {
+            resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->resolutions[i]);
+         }
+         char *ol_layer = apr_psprintf(ctx->pool,demo_layer,
+               tileset->name,
+               grid->name,
+               tileset->name,
+               grid->name,
+               apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
+               tileset->name,resolutions,
+               grid->extents[0][0],
+               grid->extents[0][1],
+               grid->extents[0][2],
+               grid->extents[0][3],
+               grid->srs);
+         caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
       }
-      char *ol_layer = apr_psprintf(ctx->pool,demo_layer,
-            tileset->name,
-            tileset->name,
-            apr_pstrcat(ctx->pool,onlineresource,"/wms?",NULL),
-            tileset->name,resolutions,
-            tileset->grid->extents[0][0],
-            tileset->grid->extents[0][1],
-            tileset->grid->extents[0][2],
-            tileset->grid->extents[0][3],
-            tileset->grid->srs);
-      caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
       tileindex_index = apr_hash_next(tileindex_index);
    }
+   /*skip leading comma */
    layers++;
    caps = apr_psprintf(ctx->pool,"%s"
          "    map.addLayers([%s]);\n"

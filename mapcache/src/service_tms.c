@@ -28,7 +28,7 @@ static const char *tms_0 = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
       "</Services>\n";
 
 static const char *tms_1 = "<TileMap \n"
-      "href=\"%s/tms/%s/%s/\"\n"
+      "href=\"%s/tms/%s/%s@%s/\"\n"
       "srs=\"%s\"\n"
       "title=\"%s\"\n"
       "profile=\"global-geodetic\" />";
@@ -70,6 +70,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
 
          while(tileindex_index) {
             geocache_tileset *tileset;
+            int j;
             char *tilesetcaps;
             const void *key; apr_ssize_t keylen;
             apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
@@ -77,16 +78,19 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
             if(!title) {
                title = "no title set, add some in metadata";
             }
-            tilesetcaps = apr_psprintf(ctx->pool,tms_1,onlineresource,
-                  request->version,tileset->name,tileset->grid->srs,title);
-            caps = apr_psprintf(ctx->pool,"%s%s",caps,tilesetcaps);
+            for(j=0;j<tileset->grids->nelts;j++) {
+               geocache_grid *grid = APR_ARRAY_IDX(tileset->grids,j,geocache_grid*);
+               tilesetcaps = apr_psprintf(ctx->pool,tms_1,onlineresource,
+                     request->version,tileset->name,grid->name,grid->srs,title);
+               caps = apr_psprintf(ctx->pool,"%s%s",caps,tilesetcaps);
+            }
             tileindex_index = apr_hash_next(tileindex_index);
          }
          caps = apr_psprintf(ctx->pool,"%s</TileMaps>\n</TileMapService>\n",caps);
 
       } else {
          geocache_tileset *tileset = request->tileset;
-         geocache_grid *grid = tileset->grid;
+         geocache_grid *grid = request->grid;
          int i;
          const char *title = apr_table_get(tileset->metadata,"title");
          if(!title) {
@@ -132,6 +136,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
    int index = 0;
    char *last, *key, *endptr;
    geocache_tileset *tileset = NULL;
+   geocache_grid *grid = NULL;
    char *pathinfo;
    int x=-1,y=-1,z=-1;
    
@@ -151,8 +156,40 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
          case 2: /* layer name */
             tileset = geocache_configuration_get_tileset(config,key);
             if(!tileset) {
-               ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid layer %s", key);
-               return;
+               char *tname = apr_pstrdup(ctx->pool,key);
+               char *gname = tname;
+               int i;
+               while(*gname) {
+                  if(*gname == '@') {
+                     *gname = '\0';
+                     gname++;
+                     break;
+                  }
+                  gname++;
+               }
+               if(!gname) {
+                  ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid layer %s", key);
+                  return;
+               }
+               tileset = geocache_configuration_get_tileset(config,tname);
+               if(!tname) {
+                  ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid layer %s", tname);
+                  return;
+               }
+               for(i=0;i<tileset->grids->nelts;i++) {
+                  geocache_grid *sgrid = APR_ARRAY_IDX(tileset->grids,i,geocache_grid*);
+                  if(!strcmp(sgrid->name,gname)) {
+                     grid = sgrid;
+                     break;
+                  }
+               }
+               if(!grid) {
+                  ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid grid %s", gname);
+                  return;
+               }
+
+            } else {
+               grid = APR_ARRAY_IDX(tileset->grids,0,geocache_grid*);
             }
             break;
          case 3:
@@ -191,6 +228,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
       req->tiles[0]->x = x;
       req->tiles[0]->y = y;
       req->tiles[0]->z = z;
+      req->tiles[0]->grid = grid;
       geocache_tileset_tile_validate(ctx,req->tiles[0]);
       GC_CHECK_ERROR(ctx);
       *request = (geocache_request*)req;
@@ -201,6 +239,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
       req->request.request.type = GEOCACHE_REQUEST_GET_CAPABILITIES;
       if(index >= 2) {
          req->tileset = tileset;
+         req->grid = grid;
       }
       if(index >= 1) {
          req->version = apr_pstrdup(ctx->pool,"1.0.0");
