@@ -25,6 +25,7 @@
 #include <apr_time.h>
 #include <http_log.h>
 #include "geocache.h"
+#include <unistd.h>
 
 #ifdef AP_NEED_SET_MUTEX_PERMS
 #include "unixd.h"
@@ -243,6 +244,9 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
    apr_status_t rc;
    geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
    apr_lockmech_e lock_type = APR_LOCK_DEFAULT;
+   char *mutex_unique_name = apr_psprintf(p,"%s-%d",geocache_mutex_name,getpid());
+   ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "mutex name is %s",mutex_unique_name);
+
 #ifdef DEBUG
    if(!cfg) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "configuration not found in server context");
@@ -252,7 +256,7 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 #if APR_HAS_PROC_PTHREAD_SERIALIZE
    lock_type = APR_LOCK_PROC_PTHREAD;
 #endif
-   rc = apr_global_mutex_create(&cfg->mutex,geocache_mutex_name,lock_type,p);
+   rc = apr_global_mutex_create(&cfg->mutex,mutex_unique_name,lock_type,p);
    if(rc != APR_SUCCESS) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, rc, s, "Could not create global parent mutex %s", geocache_mutex_name);
       return rc;
