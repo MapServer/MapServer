@@ -100,6 +100,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid->name = apr_pstrdup(pool,"WGS84");
    apr_table_add(grid->metadata,"title","GoogleCRS84Quad");
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleCRS84Quad");
+   apr_table_add(grid->metadata,"profile","global-geodetic");
    grid->srs = apr_pstrdup(pool,"epsg:4326");
    grid->unit = GEOCACHE_UNIT_DEGREES;
    grid->tile_sx = grid->tile_sy = 256;
@@ -121,6 +122,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid->name = apr_pstrdup(pool,"GoogleMapsCompatible");
    grid->srs = apr_pstrdup(pool,"epsg:3857");
    apr_table_add(grid->metadata,"title","GoogleMapsCompatible");
+   apr_table_add(grid->metadata,"profile","global-mercator");
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
    grid->tile_sx = grid->tile_sy = 256;
    grid->nlevels = 19;
@@ -141,6 +143,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    grid = geocache_grid_create(pool);
    grid->name = apr_pstrdup(pool,"google");
    grid->srs = apr_pstrdup(pool,"epsg:900913");
+   apr_table_add(grid->metadata,"profile","global-mercator");
    apr_table_add(grid->metadata,"title","GoogleMapsCompatible");
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
    grid->tile_sx = grid->tile_sy = 256;

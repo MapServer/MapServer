@@ -31,7 +31,7 @@ static const char *tms_1 = "<TileMap \n"
       "href=\"%s/tms/%s/%s@%s/\"\n"
       "srs=\"%s\"\n"
       "title=\"%s\"\n"
-      "profile=\"global-geodetic\" />";
+      "profile=\"%s\" />";
 
 static const char *tms_2="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
       "<TileMap version=\"%s\" tilemapservice=\"%s/tms/%s/\">\n"
@@ -80,8 +80,10 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
             }
             for(j=0;j<tileset->grid_links->nelts;j++) {
                geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
+               const char *profile = apr_table_get(grid->metadata,"profile");
+               if(!profile) profile = "none";
                tilesetcaps = apr_psprintf(ctx->pool,tms_1,onlineresource,
-                     request->version,tileset->name,grid->name,grid->srs,title);
+                     request->version,tileset->name,grid->name,grid->srs,title,profile);
                caps = apr_psprintf(ctx->pool,"%s%s",caps,tilesetcaps);
             }
             tileindex_index = apr_hash_next(tileindex_index);
