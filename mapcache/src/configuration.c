@@ -177,7 +177,7 @@ void parseFormat(geocache_context *ctx, xmlNode *node, geocache_cfg *config) {
             ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "unknown tag %s for format \"%s\"", cur_node->name, name);
             return;
          }
-         if(colors != -1) {
+         if(colors == -1) {
             format = geocache_imageio_create_png_format(ctx->pool,name,compression);
          } else {
             format = geocache_imageio_create_png_q_format(ctx->pool,name,compression, colors);
