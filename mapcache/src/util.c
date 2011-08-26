@@ -20,7 +20,7 @@
 #include <apr_tables.h>
 #include <curl/curl.h>
 #include <math.h>
-#include <stdlib.h>
+#include <unistd.h>
 
 const double geocache_meters_per_unit[GEOCACHE_UNITS_COUNT] = {1.0,6378137.0 * 2.0 * M_PI / 360,0.3048};
 
