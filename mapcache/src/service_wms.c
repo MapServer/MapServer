@@ -986,7 +986,7 @@ geocache_service* geocache_service_wms_create(geocache_context *ctx) {
    service->service.create_capabilities_response = _create_capabilities_wms;
    service->service.configuration_parse_xml = _configuration_parse_wms_xml;
    service->service.configuration_parse_json = _configuration_parse_wms_json;
-   service->getmap_strategy = GEOCACHE_GETMAP_ERROR;
+   service->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
    service->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
    return (geocache_service*)service;
 }
