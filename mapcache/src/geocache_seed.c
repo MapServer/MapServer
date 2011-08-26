@@ -2,6 +2,7 @@
 #include <apr_thread_proc.h>
 #include <apr_thread_mutex.h>
 #include <apr_getopt.h>
+#include <signal.h>
 
 
 typedef struct geocache_context_seeding geocache_context_seeding;
@@ -25,6 +26,8 @@ typedef struct {
 
 gc_tiles_for_zoom seed_tiles[100]; //TODO: bug here if more than 100 zoomlevels, or if multithreaded usage on multiple tilesets
 
+int sig_int_received = 0;
+
 static const apr_getopt_option_t seed_options[] = {
     /* long-option, short-option, has-arg flag, description */
     { "config", 'c', TRUE, "configuration file"},
@@ -35,6 +38,16 @@ static const apr_getopt_option_t seed_options[] = {
     { "help", 'h', FALSE, "show help" },    
     { NULL, 0, 0, NULL },
 };
+
+void handle_sig_int(int signal) {
+    if(!sig_int_received) {
+        fprintf(stderr,"SIGINT received, waiting for threads to finish\n");
+        fprintf(stderr,"press ctrl-C again to force terminate, you might end up with locked tiles\n");
+        sig_int_received = 1;
+    } else {
+        exit(signal);
+    }
+}
 
 void geocache_context_seeding_lock_aquire(geocache_context *gctx, int blocking) {
     int ret;
@@ -155,7 +168,7 @@ static void* APR_THREAD_FUNC doseed(apr_thread_t *thread, void *data) {
     tile_ctx.global_lock_release = dummy_lock_release;
     tile_ctx.log = geocache_context_seeding_log;
     apr_pool_create(&tile_ctx.pool,NULL);
-    while(GEOCACHE_SUCCESS == ctx->get_next_tile(ctx,tile,&tile_ctx)) {
+    while(GEOCACHE_SUCCESS == ctx->get_next_tile(ctx,tile,&tile_ctx) && !sig_int_received) {
         geocache_tileset_tile_get(&tile_ctx,tile);
         if(tile_ctx.get_error(&tile_ctx)) {
             gctx->set_error(gctx,tile_ctx.get_error(&tile_ctx),tile_ctx.get_error_message(&tile_ctx));
@@ -202,6 +215,7 @@ int main(int argc, const char **argv) {
     int rv,n;
     const char *optarg;
     apr_initialize();
+    (void) signal(SIGINT,handle_sig_int);
     apr_pool_create_core(&gctx->pool);
     geocache_context_init(gctx);
     cfg = geocache_configuration_create(gctx->pool);
