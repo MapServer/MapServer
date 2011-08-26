@@ -381,7 +381,7 @@ AC_DEFUN([GDAL_CHECK],[
               )
   GDALCONFIG=""
   if test "$with_gdal" = "no"; then
-      AC_MSG_WARN("gdal support disabled by request")
+      AC_MSG_WARN("gdal support disabled by request: advanced seeding options will not be available")
   else
       if test "$with_gdal" = "yes"; then
           AC_PATH_PROG(GDALCONFIG, gdal-config)
@@ -408,6 +408,39 @@ AC_DEFUN([GDAL_CHECK],[
   AC_SUBST(GDAL_ENABLED,$GDAL_ENABLED)
   AC_SUBST(GDAL_INC,$GDAL_CFLAGS)
   AC_SUBST(GDAL_LIB,$GDAL_LIBS)
+])
+
+
+AC_DEFUN([GEOS_CHECK],[
+  AC_ARG_WITH(geos,
+              AC_HELP_STRING([--with-geos], [path to geos-config program]),
+              ,
+              [with_geos=yes]
+              )
+  GEOSCONFIG=""
+  if test "$with_geos" = "no"; then
+      AC_MSG_WARN("geos support disabled by request: advanced seeding options will not be available")
+  else
+      if test "$with_geos" = "yes"; then
+          AC_PATH_PROG(GEOSCONFIG, geos-config)
+      else
+          AC_MSG_CHECKING(for geos-config usability in $with_geos)
+          if test -x "$with_geos"; then
+             GEOSCONFIG=$with_geos
+             AC_MSG_RESULT(yes)
+          else
+             AC_MSG_ERROR($with_geos not found or not executable)
+          fi
+      fi
+      if test -n "$GEOSCONFIG"; then
+          GEOS_CFLAGS=`$GEOSCONFIG --cflags`
+          GEOS_LIBS="`$GEOSCONFIG --ldflags` -lgeos_c"
+          GEOS_ENABLED="-DUSE_GEOS"
+      fi
+  fi
+  AC_SUBST(GEOS_ENABLED,$GEOS_ENABLED)
+  AC_SUBST(GEOS_INC,$GEOS_CFLAGS)
+  AC_SUBST(GEOS_LIB,$GEOS_LIBS)
 ])
 
 AC_DEFUN([FASTCGI_CHECK],[
@@ -625,6 +658,7 @@ JPEG_CHECK
 PCRE_CHECK
 
 GDAL_CHECK
+GEOS_CHECK
 
 AC_SUBST(MISC_ENABLED,$MISC_ENABLED)
 

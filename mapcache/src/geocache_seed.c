@@ -8,7 +8,11 @@
 #include <apr_time.h>
 #include <apr_queue.h>
 
-#ifdef USE_OGR
+#if defined(USE_OGR) && defined(USE_GEOS)
+#define USE_CLIPPERS
+#endif
+
+#ifdef USE_CLIPPERS
 #include "ogr_api.h"
 #include "geos_c.h"
 int nClippers = 0;
@@ -55,7 +59,7 @@ static const apr_getopt_option_t seed_options[] = {
     { "nthreads", 'n', TRUE, "number of parallel threads to use" },
     { "older", 'o', TRUE, "reseed tiles older than supplied date (format: year/month/day hour:minute, eg: 2011/01/31 20:45" },
     { "dimension", 'D', TRUE, "set the value of a dimension (format DIMENSIONNAME=VALUE). Can be used multiple times for multiple dimensions" },
-#ifdef USE_OGR
+#ifdef USE_CLIPPERS
     { "ogr-datasource", 'd', TRUE, "ogr datasource to get features from"},
     { "ogr-layer", 'l', TRUE, "layer inside datasource"},
     { "ogr-sql", 's', TRUE, "sql to filter inside layer"},
@@ -88,7 +92,7 @@ void geocache_context_seeding_log(geocache_context *ctx, geocache_log_level leve
     va_end(args);
 }
 
-#ifdef USE_OGR
+#ifdef USE_CLIPPERS
 int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
    geocache_metatile *mt = geocache_tileset_metatile_get(ctx,tile);
    GEOSCoordSequence *mtbboxls = GEOSCoordSeq_create(5,2);
@@ -191,7 +195,7 @@ void cmd_thread() {
          if(age_limit) {
             if(tileset->cache->tile_get(&cmd_ctx,tile) == GEOCACHE_SUCCESS) {
                if(tile->mtime && tile->mtime<age_limit) {
-#ifdef USE_OGR
+#ifdef USE_CLIPPERS
                   /* check we are in the requested features before deleting the tile */
                   if(nClippers > 0) {
                      intersects = ogr_features_intersect_tile(&cmd_ctx,tile);
@@ -210,7 +214,7 @@ void cmd_thread() {
          }
       } else {
          // the tile does not exist
-#ifdef USE_OGR
+#ifdef USE_CLIPPERS
          /* check we are in the requested features before deleting the tile */
          if(nClippers > 0) {
             if(ogr_features_intersect_tile(&cmd_ctx,tile)) {
@@ -346,7 +350,7 @@ int main(int argc, const char **argv) {
     const char *old = NULL;
     const char *optarg;
 
-#ifdef USE_OGR
+#ifdef USE_CLIPPERS
     const char *ogr_where = NULL;
     const char *ogr_layer = NULL;
     const char *ogr_sql = NULL;
@@ -427,7 +431,7 @@ int main(int argc, const char **argv) {
                 }
                 apr_table_set(dimensions,dimkey,dimvalue);
                 break;
-#ifdef USE_OGR
+#ifdef USE_CLIPPERS
             case 'd':
                 ogr_datasource = optarg;
                 break;
@@ -456,7 +460,7 @@ int main(int argc, const char **argv) {
             return usage(argv[0],ctx.get_error_message(&ctx));
     }
 
-#ifdef USE_OGR
+#ifdef USE_CLIPPERS
     if(extent && ogr_datasource) {
        return usage(argv[0], "cannot specify both extent and ogr-datasource");
     }
