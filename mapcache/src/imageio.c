@@ -57,6 +57,19 @@ geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *
    }
 }
 
+void geocache_imageio_decode_to_image(geocache_context *ctx, geocache_buffer *buffer,
+      geocache_image *image) {
+   geocache_image_format_type type = geocache_imageio_header_sniff(ctx,buffer);
+   if(type == GC_PNG) {
+      _geocache_imageio_png_decode_to_image(ctx,buffer,image);
+   } else if(type == GC_JPEG) {
+      _geocache_imageio_jpeg_decode_to_image(ctx,buffer,image);
+   } else {
+      ctx->set_error(ctx, 500, "geocache_imageio_decode: unrecognized image format");
+   }
+   return;
+}
+
 /** @} */
 
 /* vim: ai ts=3 sts=3 et sw=3

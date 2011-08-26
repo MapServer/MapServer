@@ -19,6 +19,7 @@
 geocache_image* geocache_image_create(geocache_context *ctx) {
     geocache_image *img = (geocache_image*)apr_pcalloc(ctx->pool,sizeof(geocache_image));
     img->w= img->h= 0;
+    img->data=NULL;
     return img;
 }
 

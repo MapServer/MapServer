@@ -1249,6 +1249,14 @@ struct geocache_image_format_png_q {
  */
 geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buffer *buffer);
 
+/**
+ * @param r
+ * @param buffer
+ * @return
+ */
+void _geocache_imageio_png_decode_to_image(geocache_context *ctx, geocache_buffer *buffer,
+      geocache_image *image);
+
 
 /**
  * \brief create a format capable of creating RGBA png
@@ -1295,6 +1303,14 @@ geocache_image_format* geocache_imageio_create_jpeg_format(apr_pool_t *pool, cha
  */
 geocache_image* _geocache_imageio_jpeg_decode(geocache_context *ctx, geocache_buffer *buffer);
 
+/**
+ * @param r
+ * @param buffer
+ * @return
+ */
+void _geocache_imageio_jpeg_decode_to_image(geocache_context *ctx, geocache_buffer *buffer,
+      geocache_image *image);
+
 /** @} */
 
 /**
@@ -1312,6 +1328,11 @@ int geocache_imageio_is_valid_format(geocache_context *ctx, geocache_buffer *buf
  * decodes given buffer
  */
 geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *buffer);
+
+/**
+ * decodes given buffer to an allocated image
+ */
+void geocache_imageio_decode_to_image(geocache_context *ctx, geocache_buffer *buffer, geocache_image *image);
 
 
 /** @} */

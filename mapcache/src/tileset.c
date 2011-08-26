@@ -96,7 +96,8 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
    image->w = width;
    image->h = height;
    image->stride = width*4;
-   image->data = apr_pcalloc(ctx->pool,width*height*4*sizeof(unsigned char));
+   image->data = calloc(1,width*height*4*sizeof(unsigned char));
+   apr_pool_cleanup_register(ctx->pool, image->data, (void*)free, apr_pool_cleanup_null) ;
    if(ntiles == 0) {
       return image;
    }
@@ -117,7 +118,8 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
    srcimage->w = (Mx-mx+1)*tiles[0]->grid_link->grid->tile_sx;
    srcimage->h = (My-my+1)*tiles[0]->grid_link->grid->tile_sy;
    srcimage->stride = srcimage->w*4;
-   srcimage->data = apr_pcalloc(ctx->pool,srcimage->w*srcimage->h*4*sizeof(unsigned char));
+   srcimage->data = calloc(1,srcimage->w*srcimage->h*4*sizeof(unsigned char));
+   apr_pool_cleanup_register(ctx->pool, srcimage->data, (void*)free, apr_pool_cleanup_null) ;
    cairo_surface_t* srcsurface= cairo_image_surface_create_for_data(srcimage->data, CAIRO_FORMAT_ARGB32,
          srcimage->w, srcimage->h,srcimage->stride);
 
@@ -130,13 +132,10 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       int ox,oy; /* the offset from the start of the src image to the start of the tile */
       ox = (tile->x - mx) * tile->grid_link->grid->tile_sx;
       oy = (My - tile->y) * tile->grid_link->grid->tile_sy;
-      int row;
-      geocache_image *im = geocache_imageio_decode(ctx,tile->data);
-      for(row=0;row<tile->grid_link->grid->tile_sy;row++) {
-         unsigned char* dstrow = &(srcimage->data[(oy+row)*srcimage->stride+ox*4]);
-         unsigned char* srcrow = &(im->data[row*im->stride]);
-         memcpy(dstrow,srcrow,im->stride);
-      }
+      geocache_image fakeimg;
+      fakeimg.stride = srcimage->stride;
+      fakeimg.data = &(srcimage->data[oy*srcimage->stride+ox*4]);
+      geocache_imageio_decode_to_image(ctx,tile->data,&fakeimg);
    }
 
    assert(toplefttile);

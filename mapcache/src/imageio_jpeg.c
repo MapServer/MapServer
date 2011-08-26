@@ -192,14 +192,15 @@ geocache_buffer* _geocache_imageio_jpeg_encode(geocache_context *ctx, geocache_i
    return buffer;
 }
 
-geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buffer *buffer) {
+void _geocache_imageio_jpeg_decode_to_image(geocache_context *r, geocache_buffer *buffer,
+      geocache_image *img) {
    struct jpeg_decompress_struct cinfo = {NULL};
    struct jpeg_error_mgr jerr;
    jpeg_create_decompress(&cinfo);
    cinfo.err = jpeg_std_error(&jerr);
-   geocache_image *img = geocache_image_create(r);
    if (_geocache_imageio_jpeg_mem_src(&cinfo,buffer->buf, buffer->size) != GEOCACHE_SUCCESS){
-      return NULL;
+      r->set_error(r,500,"failed to allocate jpeg decoding struct");
+      return;
    }
 
    jpeg_read_header(&cinfo, TRUE);
@@ -207,8 +208,11 @@ geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buff
    img->w = cinfo.output_width;
    img->h = cinfo.output_height;
    int s = cinfo.output_components;
-   img->data = apr_pcalloc(r->pool,img->w*img->h*4*sizeof(unsigned char));
-   img->stride = img->w * 4;
+   if(!img->data) {
+      img->data = calloc(1,img->w*img->h*4*sizeof(unsigned char));
+      apr_pool_cleanup_register(r->pool, img->data, (void*)free, apr_pool_cleanup_null) ;
+      img->stride = img->w * 4;
+   }
 
    unsigned char *temp = apr_pcalloc(r->pool,img->w*s);
    while ((int)cinfo.output_scanline < img->h)
@@ -242,11 +246,19 @@ geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buff
       {
          r->set_error(r, 500, "unsupported jpeg format");
          jpeg_destroy_decompress(&cinfo);
-         return NULL;
+         return;
       }
    }
    jpeg_finish_decompress(&cinfo);
    jpeg_destroy_decompress(&cinfo);
+}
+
+geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buffer *buffer) {
+   geocache_image *img = geocache_image_create(r);
+   _geocache_imageio_jpeg_decode_to_image(r, buffer,img);
+   if(GC_HAS_ERROR(r)) {
+      return NULL;
+   }
    return img;
 
 }

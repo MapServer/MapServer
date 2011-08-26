@@ -41,8 +41,8 @@ void _geocache_imageio_png_flush_func(png_structp png_ptr) {
    // do nothing
 }
 
-geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buffer *buffer) {
-   geocache_image *img;
+void _geocache_imageio_png_decode_to_image(geocache_context *ctx, geocache_buffer *buffer,
+      geocache_image *img) {
    int bit_depth,color_type,i;
    unsigned char **row_pointers;
    png_structp png_ptr = NULL;
@@ -77,7 +77,6 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    png_set_read_fn(png_ptr,&b,_geocache_imageio_png_read_func);
 
    png_read_info(png_ptr,info_ptr);
-   img = geocache_image_create(ctx);
    if(!png_get_IHDR(png_ptr, info_ptr, &width, &height,&bit_depth, &color_type,NULL,NULL,NULL)) {
       ctx->set_error(ctx, 500, "failed to read png header");
       return NULL;
@@ -85,8 +84,11 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
 
    img->w = width;
    img->h = height;
-   img->data = apr_pcalloc(ctx->pool,img->w*img->h*4*sizeof(unsigned char));
-   img->stride = img->w * 4;
+   if(!img->data) {
+      img->data = calloc(1,img->w*img->h*4*sizeof(unsigned char));
+      apr_pool_cleanup_register(ctx->pool, img->data, (void*)free, apr_pool_cleanup_null) ;
+      img->stride = img->w * 4;
+   }
    row_pointers = apr_pcalloc(ctx->pool,img->h * sizeof(unsigned char*));
 
    unsigned char *rowptr = img->data;
@@ -114,6 +116,15 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    png_read_end(png_ptr,NULL);
    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 
+   return img;
+}
+
+   
+geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buffer *buffer) {
+   geocache_image *img = geocache_image_create(ctx);
+   _geocache_imageio_png_decode_to_image(ctx,buffer,img);
+   if(GC_HAS_ERROR(ctx))
+      return NULL;
    return img;
 }
 
