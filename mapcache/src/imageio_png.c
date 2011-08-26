@@ -124,7 +124,6 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
    geocache_buffer *buffer = NULL;
    int compression = ((geocache_image_format_png*)format)->compression_level;
    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
-   ctx->log(ctx,GEOCACHE_DEBUG,"png no palette");
    if (!png_ptr) {
       ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to allocate png_struct structure");
       return NULL;
@@ -1046,8 +1045,6 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
    
    _geocache_imageio_remap_palette(pixels, image->w * image->h, palette, numPaletteEntries,rgb,a,&num_a);
    
-   ctx->log(ctx,GEOCACHE_DEBUG,"png palette: %d %d\n",numPaletteEntries,num_a);
-
    png_set_PLTE(png_ptr, info_ptr, (png_colorp)(rgb),numPaletteEntries);
    if(num_a)
       png_set_tRNS(png_ptr, info_ptr, a,num_a, NULL);
