@@ -25,7 +25,7 @@
         <srs>epsg:4326</srs>
         <format>image/png</format>
         <wmsparams>
-            <LAYERS>GRAVI_STATION</LAYERS>
+            <LAYERS>GRAVI_BASE</LAYERS>
             <TRANSPARENT>true</TRANSPARENT>
         </wmsparams>
     </source>
