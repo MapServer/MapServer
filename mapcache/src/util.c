@@ -20,9 +20,10 @@
 #include <apr_tables.h>
 #include <curl/curl.h>
 
-int geocache_util_extract_int_list(geocache_context *ctx, char* args, const char sep, int **numbers,
+int geocache_util_extract_int_list(geocache_context *ctx, const char* cargs, const char sep, int **numbers,
       int *numbers_count) {
    char *last, *key, *endptr;
+   char *args = apr_pstrdup(ctx->pool,cargs);
    int tmpcount=1;
    char delim[2];
    delim[0] = sep;
@@ -43,9 +44,10 @@ int geocache_util_extract_int_list(geocache_context *ctx, char* args, const char
    return GEOCACHE_SUCCESS;
 }
 
-int geocache_util_extract_double_list(geocache_context *ctx, char* args, const char sep, double **numbers,
+int geocache_util_extract_double_list(geocache_context *ctx, const char* cargs, const char sep, double **numbers,
       int *numbers_count) {
    char *last, *key, *endptr;
+   char *args = apr_pstrdup(ctx->pool,cargs);
    int tmpcount=1;
    char delim[2];
    delim[0] = sep;

@@ -302,6 +302,7 @@ typedef enum {
 
 struct geocache_request {
    geocache_request_type type;
+   geocache_service *service;
 };
 
 struct geocache_request_get_tile {
@@ -369,11 +370,18 @@ typedef enum {
  */
 struct geocache_service {
     geocache_service_type type;
+    
     /**
-     * \returns a geocache_request corresponding to the parameters received
-     * \returns NULL if the request does not correspond to the service
+     * the pathinfo prefix of the url that routes to this service
+     * eg, for accessing a wms service on http://host/geocache/mywmsservice? ,
+     * url_prefix would take the value "mywmsservice"
      */
-    geocache_request * (*parse_request)(geocache_context *ctx, char *path_info, apr_table_t *params, geocache_cfg * config);
+    char *url_prefix;
+    
+    /**
+     * \brief allocates and populates a geocache_request corresponding to the parameters received
+     */
+    void (*parse_request)(geocache_context *ctx, geocache_request **request, const char *path_info, apr_table_t *params, geocache_cfg * config);
 
     /**
      * \param request the received request (should be of type GEOCACHE_REQUEST_CAPABILITIES
@@ -423,6 +431,16 @@ geocache_service* geocache_service_tms_create(geocache_context *ctx);
  * \memberof geocache_service_wtms
  */
 geocache_service* geocache_service_wmts_create(geocache_context *ctx);
+
+/**
+ * \brief return the request that corresponds to the given url
+ */
+void geocache_service_dispatch_request(geocache_context *ctx,
+      geocache_request **request,
+      char *pathinfo,
+      apr_table_t *params,
+      geocache_cfg *config);
+
 
 /** @} */
 
@@ -797,9 +815,9 @@ geocache_grid* geocache_grid_create(apr_pool_t *pool);
 
 
 /* in util.c */
-int geocache_util_extract_int_list(geocache_context *ctx, char* args, const char sep, int **numbers,
+int geocache_util_extract_int_list(geocache_context *ctx, const char* args, const char sep, int **numbers,
         int *numbers_count);
-int geocache_util_extract_double_list(geocache_context *ctx, char* args, const char sep, double **numbers,
+int geocache_util_extract_double_list(geocache_context *ctx, const char* args, const char sep, double **numbers,
         int *numbers_count);
 
 /*

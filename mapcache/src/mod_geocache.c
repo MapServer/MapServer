@@ -205,7 +205,6 @@ static int mod_geocache_request_handler(request_rec *r) {
    geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
    geocache_context *global_ctx = (geocache_context*)apache_ctx;
    geocache_tile *tile;
-   geocache_service *service;
    int i,ret;
 
    if (!r->handler || strcmp(r->handler, "geocache")) {
@@ -214,25 +213,15 @@ static int mod_geocache_request_handler(request_rec *r) {
    if (r->method_number != M_GET) {
       return HTTP_METHOD_NOT_ALLOWED;
    }
+   
+   
 
    params = geocache_http_parse_param_string(global_ctx, r->args);
    config = ap_get_module_config(r->per_dir_config, &geocache_module);
 
-   for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
-      /* loop through the services that have been configured */
-      service = config->services[i];
-      if(!service) continue;
-      request = service->parse_request(global_ctx,r->path_info,params,config);
-      /* the service has recognized the request if it returns a non NULL value */
-      if(request || GC_HAS_ERROR(global_ctx))
-         break;
-   }
+   geocache_service_dispatch_request(global_ctx,&request,r->path_info,params,config);
    if(GC_HAS_ERROR(global_ctx)) {
       return report_error(HTTP_BAD_REQUEST, apache_ctx);
-   }
-   if(!request) {
-      global_ctx->set_error(global_ctx,GEOCACHE_REQUEST_ERROR,"failed to recognize request");
-      return report_error(HTTP_NOT_FOUND, apache_ctx);
    }
 
    if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
@@ -255,7 +244,7 @@ static int mod_geocache_request_handler(request_rec *r) {
             *end = '\0';
          }
       }
-      service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
+      request->service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
       return geocache_write_capabilities(apache_ctx,req_caps);
    } else if( request->type != GEOCACHE_REQUEST_GET_TILE) {
       return report_error(HTTP_BAD_REQUEST, apache_ctx);

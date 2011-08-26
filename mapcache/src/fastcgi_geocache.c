@@ -185,25 +185,18 @@ int main(int argc, char **argv) {
       apr_table_t *params;
       geocache_context *ctx = (geocache_context*) fcgi_context_request_create(globalctx,out,err); 
       geocache_tile *tile;
-      geocache_service *service;
       geocache_request *request = NULL;
       char *pathInfo = FCGX_GetParam("PATH_INFO",envp);
       int i;
       
 
       params = geocache_http_parse_param_string((geocache_context*)ctx, FCGX_GetParam("QUERY_STRING",envp));
-      for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
-         service = cfg->services[i];
-         if(!service) continue;
-         request = service->parse_request(ctx,pathInfo,params,cfg);
-         if(request)
-            break;
+      geocache_service_dispatch_request(ctx,&request,pathInfo,params,cfg);
+      if(GC_HAS_ERROR(ctx)) {
+        FCGX_FPrintF(out,"Status: 404 Not Found\r\n\r\n");
+        goto cleanup;
       }
       
-      if(!request || GC_HAS_ERROR(ctx)) {
-         FCGX_FPrintF(out,"Status: 404 Not Found\r\n\r\n");
-         goto cleanup;
-      }
       if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
          geocache_request_get_capabilities *req = (geocache_request_get_capabilities*)request;
          char *host = FCGX_GetParam("SERVER_NAME",envp);
@@ -228,7 +221,7 @@ int main(int argc, char **argv) {
                FCGX_GetParam("SCRIPT_NAME",envp)
                );
          ctx->log(ctx,GEOCACHE_INFO,"toto");
-         service->create_capabilities_response(ctx,req,url,pathInfo,cfg);
+         request->service->create_capabilities_response(ctx,req,url,pathInfo,cfg);
          geocache_write_capabilities((geocache_context_fcgi_request*)ctx,req);
       } else {
          geocache_request_get_tile *req = (geocache_request_get_tile*)request;
