@@ -144,12 +144,12 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
          geocache_imageio_create_png_format(pool,"PNG",GEOCACHE_COMPRESSION_FAST),
          "PNG");
    geocache_configuration_add_image_format(cfg,
-         geocache_imageio_create_png_q_format(pool,"PNG",GEOCACHE_COMPRESSION_FAST,256),
+         geocache_imageio_create_png_q_format(pool,"PNG8",GEOCACHE_COMPRESSION_FAST,256),
          "PNG8");
    geocache_configuration_add_image_format(cfg,
          geocache_imageio_create_jpeg_format(pool,"JPEG",95),
          "JPEG");
-   cfg->merge_format = geocache_configuration_get_image_format(cfg,"PNG");
+   cfg->default_image_format = geocache_configuration_get_image_format(cfg,"PNG8");
    cfg->reporting = GEOCACHE_REPORT_MSG;
 
    grid = geocache_grid_create(pool);

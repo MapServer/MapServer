@@ -163,7 +163,8 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       geocache_grid_link *grid_link,
       double *bbox, int width, int height,
       int ntiles,
-      geocache_tile **tiles) {
+      geocache_tile **tiles,
+      geocache_resample_mode mode) {
    double hresolution = geocache_grid_get_horizontal_resolution(bbox, width);
    double vresolution = geocache_grid_get_vertical_resolution(bbox, height);
    double tilebbox[4];
@@ -227,7 +228,7 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       //use nearest resampling if we are at the resolution of the tiles
       geocache_image_copy_resampled_nearest(ctx,srcimage,image,dstminx,dstminy,hf,vf);
    } else {
-      switch(ctx->config->resample_mode) {
+      switch(mode) {
          case GEOCACHE_RESAMPLE_BILINEAR:
             geocache_image_copy_resampled_bilinear(ctx,srcimage,image,dstminx,dstminy,hf,vf);
             break;

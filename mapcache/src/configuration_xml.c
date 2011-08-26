@@ -738,49 +738,49 @@ void geocache_configuration_parse_xml(geocache_context *ctx, const char *filenam
             if (!strcasecmp(type,"wms")) {
                geocache_service *new_service = geocache_service_wms_create(ctx);
                if(new_service->configuration_parse_xml) {
-                  new_service->configuration_parse_xml(ctx,service_node,new_service);
+                  new_service->configuration_parse_xml(ctx,service_node,new_service,config);
                }
                config->services[GEOCACHE_SERVICE_WMS] = new_service;
             }
             else if (!strcasecmp(type,"tms")) {
                geocache_service *new_service = geocache_service_tms_create(ctx);
                if(new_service->configuration_parse_xml) {
-                  new_service->configuration_parse_xml(ctx,service_node,new_service);
+                  new_service->configuration_parse_xml(ctx,service_node,new_service,config);
                }
                config->services[GEOCACHE_SERVICE_TMS] = new_service;
             }
             else if (!strcasecmp(type,"wmts")) {
                geocache_service *new_service = geocache_service_wmts_create(ctx);
                if(new_service->configuration_parse_xml) {
-                  new_service->configuration_parse_xml(ctx,service_node,new_service);
+                  new_service->configuration_parse_xml(ctx,service_node,new_service,config);
                }
                config->services[GEOCACHE_SERVICE_WMTS] = new_service;
             }
             else if (!strcasecmp(type,"kml")) {
                geocache_service *new_service = geocache_service_kml_create(ctx);
                if(new_service->configuration_parse_xml) {
-                  new_service->configuration_parse_xml(ctx,service_node,new_service);
+                  new_service->configuration_parse_xml(ctx,service_node,new_service,config);
                }
                config->services[GEOCACHE_SERVICE_KML] = new_service;
             }
             else if (!strcasecmp(type,"gmaps")) {
                geocache_service *new_service = geocache_service_gmaps_create(ctx);
                if(new_service->configuration_parse_xml) {
-                  new_service->configuration_parse_xml(ctx,service_node,new_service);
+                  new_service->configuration_parse_xml(ctx,service_node,new_service,config);
                }
                config->services[GEOCACHE_SERVICE_GMAPS] = new_service;
             }
             else if (!strcasecmp(type,"ve")) {
                geocache_service *new_service = geocache_service_ve_create(ctx);
                if(new_service->configuration_parse_xml) {
-                  new_service->configuration_parse_xml(ctx,service_node,new_service);
+                  new_service->configuration_parse_xml(ctx,service_node,new_service,config);
                }
                config->services[GEOCACHE_SERVICE_VE] = new_service;
             }
             else if (!strcasecmp(type,"demo")) {
                geocache_service *new_service = geocache_service_demo_create(ctx);
                if(new_service->configuration_parse_xml) {
-                  new_service->configuration_parse_xml(ctx,service_node,new_service);
+                  new_service->configuration_parse_xml(ctx,service_node,new_service,config);
                }
                config->services[GEOCACHE_SERVICE_DEMO] = new_service;
             } else {
@@ -799,14 +799,17 @@ void geocache_configuration_parse_xml(geocache_context *ctx, const char *filenam
    if(GC_HAS_ERROR(ctx)) goto cleanup;
 
 
-   if ((node = ezxml_child(doc,"merge_format")) != NULL) {
+   node = ezxml_child(doc,"default_format");
+   if(!node)
+      node = ezxml_child(doc,"merge_format");
+   if (node) {
       geocache_image_format *format = geocache_configuration_get_image_format(config,node->txt);
       if(!format) {
-         ctx->set_error(ctx, 400, "merge_format tag references format %s but it is not configured",
+         ctx->set_error(ctx, 400, "default_format tag references format %s but it is not configured",
                node->txt);
          goto cleanup;
       }
-      config->merge_format = format;
+      config->default_image_format = format;
    }
 
    if ((node = ezxml_child(doc,"errors")) != NULL) {
@@ -825,30 +828,6 @@ void geocache_configuration_parse_xml(geocache_context *ctx, const char *filenam
       } else {
          ctx->set_error(ctx,400,"<errors>: unknown value %s (allowed are log, report, empty_img, report_img)",
                node->txt);
-         goto cleanup;
-      }
-   }
-
-   config->getmap_strategy = GEOCACHE_GETMAP_ERROR;
-   if ((node = ezxml_child(doc,"full_wms")) != NULL) {
-      if(!strcmp(node->txt,"assemble")) {
-         config->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
-      } else if(!strcmp(node->txt,"forward")) {
-         config->getmap_strategy = GEOCACHE_GETMAP_FORWARD;
-      } else if(*node->txt && strcmp(node->txt,"error")) {
-         ctx->set_error(ctx,400, "unknown value %s for node <full_wms> (allowed values: assemble, getmap or error", node->txt);
-         goto cleanup;
-      }
-   }
-   
-   config->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
-   if ((node = ezxml_child(doc,"resample_mode")) != NULL) {
-      if(!strcmp(node->txt,"nearest")) {
-         config->resample_mode = GEOCACHE_RESAMPLE_NEAREST;
-      } else if(!strcmp(node->txt,"bilinear")) {
-         config->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
-      } else {
-         ctx->set_error(ctx,400, "unknown value %s for node <resample_mode> (allowed values: nearest, bilinear", node->txt);
          goto cleanup;
       }
    }

@@ -399,6 +399,13 @@ void _create_demo_front(geocache_context *ctx, geocache_request_get_capabilities
 
 void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *req,
          const char *url_prefix) {
+   geocache_service_wms *service = (geocache_service_wms*)ctx->config->services[GEOCACHE_SERVICE_WMS];
+#ifdef DEBUG
+   if(!service) {
+      ctx->set_error(ctx,500,"##BUG## wms service disabled in demo");
+      return;
+   }
+#endif
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
    char *caps = apr_psprintf(ctx->pool,demo_head, "");
    char *ol_layer;
@@ -450,7 +457,7 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
                ol_layer_name);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
 
-         if(ctx->config->getmap_strategy != GEOCACHE_GETMAP_ERROR) {
+         if(service->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE) {
             ol_layer = apr_psprintf(ctx->pool,demo_layer_singletile,
                   ol_layer_name,
                   tileset->name,

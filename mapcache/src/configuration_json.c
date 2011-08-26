@@ -274,55 +274,72 @@ static void parse_cache_json(geocache_context *ctx, cJSON *node, geocache_cfg *c
 }
 
 
-static void parse_dimension_json(geocache_context *ctx, cJSON *node, geocache_tileset *tileset) {
-   char *type = NULL;
-   cJSON *tmp;
-   geocache_dimension *dimension;
+static void parse_dimensions_json(geocache_context *ctx, cJSON *dims, geocache_tileset *tileset) {
+   int i;
+   apr_array_header_t *dimensions = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
+   for(i=0;i<cJSON_GetArraySize(dims);i++) {
+      cJSON *node = cJSON_GetArrayItem(dims,i);
+      char *type = NULL;
+      cJSON *tmp;
+      geocache_dimension *dimension;
 
-   tmp = cJSON_GetObjectItem(node,"type");
-   if(tmp) type = tmp->valuestring;
-   if(!type || !strlen(type)) {
-      ctx->set_error(ctx, 400, "mandatory \"type\" not found in dimension for tileset %s", tileset->name);
-      return;
-   }
-   if(!strcmp(type,"values")) {
-      dimension = geocache_dimension_values_create(ctx->pool);
-   } else if(!strcmp(type,"regex")) {
-      dimension = geocache_dimension_regex_create(ctx->pool);
-   } else if(!strcmp(type,"intervals")) {
-      dimension = geocache_dimension_intervals_create(ctx->pool);
-   } else if(!strcmp(type,"time")) {
-      ctx->set_error(ctx,501,"time dimension type not implemented yet");
-      return;
-      dimension = geocache_dimension_time_create(ctx->pool);
-   } else {
-      ctx->set_error(ctx,400,"unknown dimension type \"%s\"",type);
-      return;
-   }
-   
-   tmp = cJSON_GetObjectItem(node,"unit");
-   if(tmp &&tmp->valuestring) {
-      dimension->unit = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-   tmp = cJSON_GetObjectItem(node,"name");
-   if(tmp && tmp->valuestring) {
-      dimension->name = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-   tmp = cJSON_GetObjectItem(node,"default");
-   if(tmp && tmp->valuestring) {
-      dimension->default_value = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-   
+      tmp = cJSON_GetObjectItem(node,"type");
+      if(tmp) type = tmp->valuestring;
+      if(!type || !strlen(type)) {
+         ctx->set_error(ctx, 400, "mandatory \"type\" not found in dimension for tileset %s", tileset->name);
+         return;
+      }
+      if(!strcmp(type,"values")) {
+         dimension = geocache_dimension_values_create(ctx->pool);
+      } else if(!strcmp(type,"regex")) {
+         dimension = geocache_dimension_regex_create(ctx->pool);
+      } else if(!strcmp(type,"intervals")) {
+         dimension = geocache_dimension_intervals_create(ctx->pool);
+      } else if(!strcmp(type,"time")) {
+         ctx->set_error(ctx,501,"time dimension type not implemented yet");
+         return;
+         dimension = geocache_dimension_time_create(ctx->pool);
+      } else {
+         ctx->set_error(ctx,400,"unknown dimension type \"%s\"",type);
+         return;
+      }
 
-   tmp = cJSON_GetObjectItem(node,"props");
-   if(!tmp || tmp->type != cJSON_Object) {
-      ctx->set_error(ctx, 400, "mandatory \"props\" not found in dimension %s for tileset %s",
-            dimension->name, tileset->name);
-      return;
-   } else {
-      dimension->configuration_parse_json(ctx,dimension,tmp);
-      GC_CHECK_ERROR(ctx);
+      tmp = cJSON_GetObjectItem(node,"unit");
+      if(tmp &&tmp->valuestring) {
+         dimension->unit = apr_pstrdup(ctx->pool,tmp->valuestring);
+      }
+      tmp = cJSON_GetObjectItem(node,"name");
+      if(tmp && tmp->valuestring) {
+         dimension->name = apr_pstrdup(ctx->pool,tmp->valuestring);
+      } else {
+         ctx->set_error(ctx, 400, "mandatory \"name\" not found in dimension for tileset %s", tileset->name);
+         return;
+      }
+      tmp = cJSON_GetObjectItem(node,"default");
+      if(tmp && tmp->valuestring) {
+         dimension->default_value = apr_pstrdup(ctx->pool,tmp->valuestring);
+      } else {
+         ctx->set_error(ctx, 400, "mandatory \"default\" not found in dimension for tileset %s", tileset->name);
+         return;
+      }
+
+
+      tmp = cJSON_GetObjectItem(node,"props");
+      if(!tmp || tmp->type != cJSON_Object) {
+         ctx->set_error(ctx, 400, "mandatory \"props\" not found in dimension %s for tileset %s",
+               dimension->name, tileset->name);
+         return;
+      } else {
+         dimension->configuration_parse_json(ctx,dimension,tmp);
+         GC_CHECK_ERROR(ctx);
+      }
+      APR_ARRAY_PUSH(dimensions,geocache_dimension*) = dimension;
    }
+   if(apr_is_empty_array(dimensions)) {
+      ctx->set_error(ctx, 400, "dimensions for tileset \"%s\" has no dimensions defined",tileset->name);
+      return;
+   }
+   tileset->dimensions = dimensions;
 }
 
 static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
@@ -458,12 +475,8 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
    //dimensions
    tmp = cJSON_GetObjectItem(node,"dimensions");
    if(tmp) {
-      int i;
-      for(i=0;i<cJSON_GetArraySize(tmp);i++) {
-         cJSON *item = cJSON_GetArrayItem(tmp,i);
-         parse_dimension_json(ctx,item,tileset);
-         GC_CHECK_ERROR(ctx);
-      }
+      parse_dimensions_json(ctx,tmp,tileset);
+      GC_CHECK_ERROR(ctx);
    }
 
    //metatile
@@ -668,11 +681,12 @@ static void parse_service_json(geocache_context *ctx, cJSON *node, geocache_cfg 
       config->services[GEOCACHE_SERVICE_DEMO] = new_service;
    } else {
       ctx->set_error(ctx,400,"unknown <service> type %s",type);
+      return;
    }
    
    tmp = cJSON_GetObjectItem(node,"props");
    if(tmp && new_service->configuration_parse_json) {
-      new_service->configuration_parse_json(ctx,tmp,new_service);
+      new_service->configuration_parse_json(ctx,tmp,new_service,config);
    }
 }
 
@@ -785,7 +799,15 @@ void geocache_configuration_parse_json(geocache_context *ctx, const char *filena
          }
       }
 
-      /* lock_dir, error_reporting */
+      /* default image format */
+      tmp = cJSON_GetObjectItem(entry,"default_format");
+      if(tmp && tmp->valuestring) {
+         config->default_image_format = geocache_configuration_get_image_format(config,tmp->valuestring);
+         if(!config->default_image_format) {
+            ctx->set_error(ctx, 400, "default_format \"%s\" does not exist",tmp->valuestring);
+            return;
+         }
+      }
    }
 
    /* final checks */

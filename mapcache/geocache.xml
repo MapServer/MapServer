@@ -718,8 +718,8 @@
       <grid>WGS84</grid>
       <grid>g</grid>
       <metatile>5 5</metatile>
-      <expires>10000</expires>
-      <auto_expire>86400</auto_expire>
+      <expires>1</expires>
+      <!--<auto_expire>86400</auto_expire>-->
       <metabuffer>10</metabuffer>
    </tileset>
 
@@ -734,7 +734,7 @@
    -->
 
 
-   <!-- merge_format
+   <!-- default_format
       format to use when a client asks for an image that is dynamically created from multiple
       tiles from the cache.
       note that using a png format with "best" compression is not recommended
@@ -742,7 +742,7 @@
       recommended to use a png format with "fast"compression here, unless you have plenty
       of server cpu power and or limited bandwidth
    -->
-   <merge_format>JPEG</merge_format>
+   <default_format>JPEG</default_format>
 
    <!-- services
       services that will be responded to by mod-geocache
@@ -762,6 +762,25 @@
             </http>
       </forwarding_rule>
       -->
+      <!-- full_wms
+           configure response to wms requests that are not aligned to a tileset's grids.
+           responding to requests that are not in the SRS of a configured grid is not supported, but
+           this should never happen as only the supported SRSs are publicized in the capabilities
+           document.
+
+           allowed values are:
+             - error: return a 404 error (default)
+             - assemble: build the full image by assembling the tiles from the cache
+             - forward: forward the request to the configured source.
+      -->
+      <full_wms>assemble</full_wms>
+      <!-- resample mode
+      filter applied when resampling tiles for full wms requests.
+      can be either:
+      - nearest : fastest, poor quality
+      - bilinear: slower, higher qulity
+      -->
+      <resample_mode>bilinear</resample_mode>
    </service>
    <service type="wmts" enabled="true"/>
    <service type="tms" enabled="true"/>
@@ -782,18 +801,6 @@
    -->
    <errors>report</errors>
 
-   <!-- full_wms
-        configure response to wms requests that are not aligned to a tileset's grids.
-        responding to requests that are not in the SRS of a configured grid is not supported, but
-        this should never happen as only the supported SRSs are publicized in the capabilities
-        document.
-
-        allowed values are:
-          - error: return a 404 error (default)
-          - assemble: build the full image by assembling the tiles from the cache
-          - forward: forward the request to the configured source.
-   -->
-   <full_wms>assemble</full_wms>
    
    <!--
         location to put lockfiles (to block other clients while a metatile is being rendered.
@@ -806,12 +813,5 @@
    <pathinfo_hack/>
    -->
    
-   <!-- resample mode
-        filter applied when resampling tiles for full wms requests.
-        can be either:
-        - nearest : fastest, poor quality
-        - bilinear: slower, higher qulity
-   -->
-   <resample_mode>bilinear</resample_mode>
 
 </geocache>

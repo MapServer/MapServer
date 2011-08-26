@@ -60,10 +60,12 @@ geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *
 
 void geocache_image_create_empty(geocache_context *ctx, geocache_cfg *cfg) {
    unsigned int color=0;
-   if(!strstr(cfg->merge_format->mime_type,"png")) {
+
+   /* create a transparent image for PNG, and a white one for jpeg */
+   if(!strstr(cfg->default_image_format->mime_type,"png")) {
       color = 0xffffffff;
    }
-   cfg->empty_image = cfg->merge_format->create_empty_image(ctx, cfg->merge_format,
+   cfg->empty_image = cfg->default_image_format->create_empty_image(ctx, cfg->default_image_format,
          256,256, color);
    GC_CHECK_ERROR(ctx);
 }

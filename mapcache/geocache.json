@@ -30,6 +30,7 @@
         "template":"/tmp/templ-test/{tileset}-{grid}-{dim}/{z}/{y}/{x}.{ext}"
       }
     },
+    /*
     {
       "name":"memcache",
       "type":"memcache",
@@ -41,7 +42,7 @@
           }
         ]
       }
-    },
+    },*/
     {
       "name":"sqlite",
       "type":"sqlite3",
@@ -113,7 +114,7 @@
       ],
       "wgs84_extent":[-180,-90,180,90],
       "format": "png",
-      "cache": "sqlite",
+      "cache": "disk",
       "metatile": {
         "size":[5,5],
         "buffer":10
@@ -123,20 +124,63 @@
         "auto": false
       },
       "dimensions": [
+        {
+          "type":"values",
+          "name":"dim1",
+          "default":"val1",
+          "props": {
+            "values": [ "val1","val2","val3" ]
+          }
+        }
       ]
-      ,"watermark":"/home/tbonfort/dev/mod-geocache/static/watermark.png"
+      //,"watermark":"/home/tbonfort/dev/mod-geocache/static/watermark.png"
     }
   ],
   "services": [
-    { "type":"demo" },
-    { "type":"wms" }
+    { "type":"demo",
+      "enabled":true
+    },
+    { "type":"kml",
+      "enabled":false
+    },
+    { "type":"wmts",
+      "enabled":true
+    },
+    {
+      "type":"wms",
+      "enabled":true,
+      "props": {
+        "forwarding_rules": [
+          {
+            "name":"foo rule",
+            "append_pathinfo":true,
+            "http": {
+              "url":"http://localhost/forwarded-by-mod-geocache/"
+            },
+            "params": [
+              {
+                "name":"SERVICE",
+                "type":"values",
+                "props": { "values":["WMS","WFS","SOS"] }
+              }
+            ]
+          }
+        ],
+        "full_getmap": {
+          "strategy":"assemble",
+          "resample_mode":"bilinear",
+          "format":"PNG8"
+        }
+      }
+    }
   ],
   "config": {
     "error_reporting":"message",
-    "lock_dir":"/tmp"
+    "lock_dir":"/tmp",
+    "default_format":"PNG8"
   }
 }
 
-/* vim: ai ts=2 sts=2 et sw=2
+/* vim: ai ts=2 sts=2 et sw=2 syntax=javascript
 */
 

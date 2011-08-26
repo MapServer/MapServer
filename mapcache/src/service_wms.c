@@ -492,11 +492,15 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             tile_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_tile));
             tile_req->request.type = GEOCACHE_REQUEST_GET_TILE;
             tile_req->tiles = apr_pcalloc(ctx->pool, count*sizeof(geocache_tile*));
+            tile_req->format = wms_service->getmap_format;
             *request = (geocache_request*)tile_req;
          } else {
             map_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_map));
             map_req->request.type = GEOCACHE_REQUEST_GET_MAP;
             map_req->maps = apr_pcalloc(ctx->pool, count*sizeof(geocache_map*));
+            map_req->getmap_strategy = wms_service->getmap_strategy;
+            map_req->resample_mode = wms_service->resample_mode;
+            map_req->getmap_format = wms_service->getmap_format;
             *request = (geocache_request*)map_req;
          }
 
@@ -710,9 +714,13 @@ proxies:
     */
    if(errcode == 200 && 
          *request && (
-            ((*request)->type == GEOCACHE_REQUEST_GET_TILE) ||
-            (((*request)->type == GEOCACHE_REQUEST_GET_MAP) && 
-               ctx->config->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE)
+            /* if its a single tile we're ok*/
+            ((*request)->type == GEOCACHE_REQUEST_GET_TILE && ((geocache_request_get_tile*)(*request))->ntiles == 1) ||  
+            
+            /* if we have a getmap or multiple tiles, we must check that assembling is allowed */
+            (((*request)->type == GEOCACHE_REQUEST_GET_MAP || ( 
+               (*request)->type == GEOCACHE_REQUEST_GET_TILE && ((geocache_request_get_tile*)(*request))->ntiles > 1)) && 
+               wms_service->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE)
             )) {
       /* if we're here, then we have succesfully parsed the request and can treat it ourselves, i.e. from cached tiles */
       return;
@@ -767,12 +775,122 @@ proxies:
 #endif
 }
 
-void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_service *gservice) {
+void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_service *gservice, geocache_cfg *cfg) {
    assert(gservice->type == GEOCACHE_SERVICE_WMS);
    geocache_service_wms *wms = (geocache_service_wms*)gservice;
+   cJSON *rules = cJSON_GetObjectItem(node,"forwarding_rules");
+   if(rules) {
+      int i;
+      for(i=0;i<cJSON_GetArraySize(rules);i++) {
+         geocache_forwarding_rule *rule = apr_pcalloc(ctx->pool, sizeof(geocache_forwarding_rule));
+         rule->match_params = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
+         cJSON *jrule = cJSON_GetArrayItem(rules,i);
+         
+         /* extract name */
+         cJSON *tmp  = cJSON_GetObjectItem(jrule,"name");
+         if(tmp && tmp->valuestring) {
+            rule->name = apr_pstrdup(ctx->pool,tmp->valuestring);
+         } else {
+            rule->name = apr_pstrdup(ctx->pool,"(null)");
+         }
+         
+         /* should the remaining pathinfo be appended to the proxied request ? */
+         tmp  = cJSON_GetObjectItem(jrule,"append_pathinfo");
+         if(tmp && tmp->type == cJSON_True) {
+            rule->append_pathinfo = 1;
+         } else {
+            rule->append_pathinfo = 0;
+         }
+
+         tmp = cJSON_GetObjectItem(jrule,"http");
+         if(!tmp || tmp->type != cJSON_Object) {
+            ctx->set_error(ctx,500,"rule \"%s\" does not contain an http object",rule->name);
+            return;
+         }
+         rule->http = geocache_http_configuration_parse_json(ctx,tmp);
+         GC_CHECK_ERROR(ctx);
+         
+         tmp = cJSON_GetObjectItem(jrule,"params");
+         if(tmp && cJSON_GetArraySize(tmp)) {
+            int j;
+            for(j=0;j<cJSON_GetArraySize(tmp);j++) {
+               cJSON *param = cJSON_GetArrayItem(tmp,j);
+               geocache_dimension *dimension = NULL;
+               char *name=NULL,*type=NULL;
+               cJSON *tmp2 = cJSON_GetObjectItem(param,"name");
+               if(tmp2 && tmp2->valuestring) {
+                  name = tmp2->valuestring;
+               }
+               tmp2 = cJSON_GetObjectItem(param,"type");
+               if(tmp2 && tmp2->valuestring) {
+                  type = tmp2->valuestring;
+               }
+               if(!name || !type) {
+                  ctx->set_error(ctx, 400, "mandatory \"name\" or \"type\" not found in forwarding rule params");
+                  return;
+               }
+               if(!strcmp(type,"values")) {
+                  dimension = geocache_dimension_values_create(ctx->pool);
+               } else if(!strcmp(type,"regex")) {
+                  dimension = geocache_dimension_regex_create(ctx->pool);
+               } else {
+                  ctx->set_error(ctx,400,"unknown forwarding_rule param type \"%s\". expecting \"values\" or \"regex\".",type);
+                  return;
+               }
+               dimension->name = apr_pstrdup(ctx->pool,name);
+               tmp2 = cJSON_GetObjectItem(param,"props");
+               if(!tmp2 || tmp2->type != cJSON_Object) {
+                  ctx->set_error(ctx, 400, "forwarding_rule \"%s\" param \"%s\" has no props",rule->name,name);
+               }
+
+               dimension->configuration_parse_json(ctx,dimension,tmp2);
+               GC_CHECK_ERROR(ctx);
+
+               APR_ARRAY_PUSH(rule->match_params,geocache_dimension*) = dimension;
+            }
+            APR_ARRAY_PUSH(wms->forwarding_rules,geocache_forwarding_rule*) = rule;
+         }
+      }
+   }
+   cJSON *full_getmap = cJSON_GetObjectItem(node,"full_getmap");
+   if(full_getmap && full_getmap->type == cJSON_Object) {
+      cJSON *tmp;
+      tmp = cJSON_GetObjectItem(full_getmap,"strategy");
+      if(tmp && tmp->valuestring) {
+         if(!strcasecmp("assemble",tmp->valuestring)) {
+            wms->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
+         } else if(!strcasecmp("forward",tmp->valuestring)) {
+            wms->getmap_strategy = GEOCACHE_GETMAP_FORWARD;
+         } else if(!strcasecmp("error",tmp->valuestring)) {
+            wms->getmap_strategy = GEOCACHE_GETMAP_ERROR;
+         } else {
+            ctx->set_error(ctx,400,"unknown full_getmap strategy \"%s\"",tmp->valuestring);
+            return;
+         }
+      }
+      tmp = cJSON_GetObjectItem(full_getmap,"resample_mode");
+      if(tmp && tmp->valuestring) {
+         if(!strcasecmp("bilinear",tmp->valuestring)) {
+            wms->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
+         } else if(!strcasecmp("nearest",tmp->valuestring)) {
+            wms->resample_mode = GEOCACHE_RESAMPLE_NEAREST;
+         } else {
+            ctx->set_error(ctx,400,"unknown full_getmap resample_mode \"%s\"",tmp->valuestring);
+            return;
+         }
+      }
+      tmp = cJSON_GetObjectItem(full_getmap,"format");
+      if(tmp && tmp->valuestring) {
+         wms->getmap_format = geocache_configuration_get_image_format(cfg,tmp->valuestring);
+         if(!wms->getmap_format) {
+            ctx->set_error(ctx,400,"unknown full_getmap format \"%s\"",tmp->valuestring);
+            return;
+         }
+      }
+   }
 }
 
-void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_service *gservice) {
+void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_service *gservice, geocache_cfg *cfg) {
    assert(gservice->type == GEOCACHE_SERVICE_WMS);
    geocache_service_wms *wms = (geocache_service_wms*)gservice;
    ezxml_t rule_node;
@@ -832,6 +950,27 @@ void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_
       }
       APR_ARRAY_PUSH(wms->forwarding_rules,geocache_forwarding_rule*) = rule;
    }
+   if ((rule_node = ezxml_child(node,"full_wms")) != NULL) {
+      if(!strcmp(rule_node->txt,"assemble")) {
+         wms->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
+      } else if(!strcmp(rule_node->txt,"forward")) {
+         wms->getmap_strategy = GEOCACHE_GETMAP_FORWARD;
+      } else if(*rule_node->txt && strcmp(rule_node->txt,"error")) {
+         ctx->set_error(ctx,400, "unknown value %s for node <full_wms> (allowed values: assemble, getmap or error", rule_node->txt);
+         return;
+      }
+   }
+   
+   if ((rule_node = ezxml_child(node,"resample_mode")) != NULL) {
+      if(!strcmp(rule_node->txt,"nearest")) {
+         wms->resample_mode = GEOCACHE_RESAMPLE_NEAREST;
+      } else if(!strcmp(rule_node->txt,"bilinear")) {
+         wms->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
+      } else {
+         ctx->set_error(ctx,400, "unknown value %s for node <resample_mode> (allowed values: nearest, bilinear", rule_node->txt);
+         return;
+      }
+   }
 }
 
 geocache_service* geocache_service_wms_create(geocache_context *ctx) {
@@ -848,6 +987,8 @@ geocache_service* geocache_service_wms_create(geocache_context *ctx) {
    service->service.create_capabilities_response = _create_capabilities_wms;
    service->service.configuration_parse_xml = _configuration_parse_wms_xml;
    service->service.configuration_parse_json = _configuration_parse_wms_json;
+   service->getmap_strategy = GEOCACHE_GETMAP_ERROR;
+   service->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
    return (geocache_service*)service;
 }
 

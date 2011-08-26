@@ -17,7 +17,23 @@
 #include "geocache.h"
 
 geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_get_tile *req_tile) {
+#ifdef DEBUG
+   if(req_tile->ntiles ==0) {
+      ctx->set_error(ctx,500,"BUG: get_tile called with 0 tiles");
+      return NULL;
+   }
+#endif
    geocache_tile *rettile = NULL;
+   geocache_image_format *format = NULL;
+   if(req_tile->ntiles>1) {
+      format = req_tile->tiles[0]->tileset->format;
+      if(req_tile->format) {
+         format = req_tile->format;
+      }
+      if(!format) {
+         format = ctx->config->default_image_format; /* this one is always defined */
+      }
+   }
    int i;
    for(i=0;i<req_tile->ntiles;i++) {
       geocache_tile *tile = req_tile->tiles[i];
@@ -28,8 +44,7 @@ geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_ge
    if(req_tile->ntiles == 1) {
       rettile = req_tile->tiles[0];
    } else {
-      rettile = (geocache_tile*)geocache_image_merge_tiles(ctx,ctx->config->merge_format,
-            req_tile->tiles,req_tile->ntiles);
+      rettile = (geocache_tile*)geocache_image_merge_tiles(ctx,format,req_tile->tiles,req_tile->ntiles);
       if(GC_HAS_ERROR(ctx))
          return NULL;
       rettile->tileset = req_tile->tiles[0]->tileset;
@@ -37,7 +52,9 @@ geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_ge
    return rettile;
 }
 
-geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
+
+
+geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map, geocache_resample_mode mode) {
 
    geocache_tile **maptiles;
    int i,nmaptiles;
@@ -62,7 +79,8 @@ geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
    }
    geocache_image *getmapim = geocache_tileset_assemble_map_tiles(ctx,map->tileset,map->grid_link,
          map->extent, map->width, map->height,
-         nmaptiles, maptiles);
+         nmaptiles, maptiles,
+         mode);
    return getmapim;
 }
 
@@ -74,17 +92,24 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
    }
 #endif
 
-   if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_ERROR) {
+   if(req_map->getmap_strategy == GEOCACHE_GETMAP_ERROR) {
       ctx->set_error(ctx, 404, "full wms support disabled");
       return NULL;
-   } else if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE) {
+   } else if(req_map->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE) {
       int i;
       geocache_map *basemap = req_map->maps[0];
-      geocache_image *baseim = _core_get_single_map(ctx,basemap);
+      geocache_image_format *format = basemap->tileset->format;
+      if(req_map->getmap_format) {
+         format = req_map->getmap_format;
+      }
+      if(!format) {
+         format = ctx->config->default_image_format; /* this one is always defined */
+      }
+      geocache_image *baseim = _core_get_single_map(ctx,basemap,req_map->resample_mode);
       if(GC_HAS_ERROR(ctx)) return NULL;
       for(i=1;i<req_map->nmaps;i++) {
          geocache_map *overlaymap = req_map->maps[i];
-         geocache_image *overlayim = _core_get_single_map(ctx,overlaymap); 
+         geocache_image *overlayim = _core_get_single_map(ctx,overlaymap,req_map->resample_mode); 
          if(GC_HAS_ERROR(ctx)) return NULL;
          geocache_image_merge(ctx,baseim,overlayim);
          if(GC_HAS_ERROR(ctx)) return NULL;
@@ -92,8 +117,7 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
          if(!basemap->expires || overlaymap->expires<basemap->expires) basemap->expires = overlaymap->expires;
 
       }
-
-      basemap->data = basemap->tileset->format->write(ctx,baseim,basemap->tileset->format);
+      basemap->data = format->write(ctx,baseim,basemap->tileset->format);
       return basemap;
    } else /*if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_FORWARD)*/ {
       int i;
@@ -117,8 +141,6 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
       return basemap;
    }
 }
-
-
 geocache_proxied_response *geocache_core_proxy_request(geocache_context *ctx, geocache_request_proxy *req_proxy) {
    geocache_proxied_response *response = (geocache_proxied_response*) apr_pcalloc(ctx->pool,
          sizeof(geocache_proxied_response));

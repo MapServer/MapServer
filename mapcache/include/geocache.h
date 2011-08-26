@@ -421,6 +421,18 @@ typedef enum {
    GEOCACHE_REQUEST_GET_FEATUREINFO,
    GEOCACHE_REQUEST_PROXY
 } geocache_request_type;
+
+typedef enum {
+   GEOCACHE_GETMAP_ERROR,
+   GEOCACHE_GETMAP_ASSEMBLE,
+   GEOCACHE_GETMAP_FORWARD
+} geocache_getmap_strategy;
+
+typedef enum {
+   GEOCACHE_RESAMPLE_NEAREST,
+   GEOCACHE_RESAMPLE_BILINEAR
+} geocache_resample_mode;
+
 /**
  * \brief a request sent by a client
  */
@@ -445,6 +457,7 @@ struct geocache_request_get_tile {
     * before being returned to the client
     */
    int ntiles;
+   geocache_image_format *format;
    
 };
 
@@ -479,6 +492,9 @@ struct geocache_request_get_map {
    geocache_request request;
    geocache_map **maps;
    int nmaps;
+   geocache_getmap_strategy getmap_strategy;
+   geocache_resample_mode resample_mode;
+   geocache_image_format *getmap_format;
 };
 
 struct geocache_request_get_capabilities {
@@ -588,8 +604,8 @@ struct geocache_service {
     /**
      * parse advanced configuration options for the selected service
      */
-    void (*configuration_parse_xml)(geocache_context *ctx, ezxml_t xml, geocache_service * service);
-    void (*configuration_parse_json)(geocache_context *ctx, cJSON *node, geocache_service * service);
+    void (*configuration_parse_xml)(geocache_context *ctx, ezxml_t xml, geocache_service * service, geocache_cfg *config);
+    void (*configuration_parse_json)(geocache_context *ctx, cJSON *node, geocache_service * service, geocache_cfg *config);
 };
 
 /**\class geocache_service_wms
@@ -599,6 +615,9 @@ struct geocache_service {
 struct geocache_service_wms {
     geocache_service service;
     apr_array_header_t *forwarding_rules;
+    geocache_getmap_strategy getmap_strategy;
+    geocache_resample_mode resample_mode;
+    geocache_image_format *getmap_format;
 };
 
 /**\class geocache_service_kml
@@ -804,17 +823,6 @@ struct geocache_server_cfg {
    apr_hash_t *aliases; /**< list of geocache configurations aliased to a server uri */
 };
 
-typedef enum {
-   GEOCACHE_GETMAP_ERROR,
-   GEOCACHE_GETMAP_ASSEMBLE,
-   GEOCACHE_GETMAP_FORWARD
-} geocache_getmap_strategy;
-
-typedef enum {
-   GEOCACHE_RESAMPLE_NEAREST,
-   GEOCACHE_RESAMPLE_BILINEAR
-} geocache_resample_mode;
-
 /**
  * a configuration that will be served
  */
@@ -852,9 +860,12 @@ struct geocache_cfg {
     apr_hash_t *grids;
 
     /**
-     * the format to use when merging multiple tiles
+     * the format to use for some miscelaneaous operations:
+     *  - creating an empty image
+     *  - creating an error image
+     *  - as a fallback when merging multiple tiles
      */
-    geocache_image_format *merge_format;
+    geocache_image_format *default_image_format;
 
     /**
      * how should error messages be reported to the user
@@ -866,10 +877,6 @@ struct geocache_cfg {
      * to return blank images upon error
      */
     geocache_buffer *empty_image;
-
-    geocache_getmap_strategy getmap_strategy;
-
-    geocache_resample_mode resample_mode;
 
     apr_table_t *metadata;
 
@@ -1087,7 +1094,8 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
       geocache_grid_link *grid_link,
       double *bbox, int width, int height,
       int ntiles,
-      geocache_tile **tiles);
+      geocache_tile **tiles,
+      geocache_resample_mode mode);
 
 /**
  * compute x,y,z value given a bbox.

@@ -225,11 +225,12 @@ static void _geocache_dimension_values_parse_json(geocache_context *ctx, geocach
       int i;
       dimension->values = (char**)apr_pcalloc(ctx->pool,cJSON_GetArraySize(tmp)*sizeof(char*));
       for(i=0;i<cJSON_GetArraySize(tmp);i++) {
-         if(!tmp->valuestring || !*(tmp->valuestring)) {
+         cJSON *val = cJSON_GetArrayItem(tmp,i);
+         if(!val->valuestring || !*(val->valuestring)) {
             ctx->set_error(ctx,400,"invalid value for dimension %s",dim->name);
             return;
          }
-         dimension->values[dimension->nvalues]=apr_pstrdup(ctx->pool,tmp->valuestring);
+         dimension->values[dimension->nvalues]=apr_pstrdup(ctx->pool,val->valuestring);
          dimension->nvalues++;
       }
    }
