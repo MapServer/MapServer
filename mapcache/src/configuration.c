@@ -94,7 +94,6 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
          geocache_imageio_create_jpeg_format(pool,"JPEG",95),
          "JPEG");
    cfg->merge_format = geocache_configuration_get_image_format(cfg,"PNG");
-   cfg->lockdir = NULL;
    cfg->reporting = GEOCACHE_REPORT_MSG;
 
    grid = geocache_grid_create(pool);
@@ -828,9 +827,7 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
             }
             config->merge_format = format;
          } else if(!xmlStrcmp(cur_node->name, BAD_CAST "lock_dir")) {
-            xmlChar *value = xmlNodeGetContent(cur_node);
-            config->lockdir = apr_pstrdup(ctx->pool, (char*)value);
-            xmlFree(value);
+            //do nothing, not used anymore
          } else {
             ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse geocache config file %s: unknown tag <%s>",
                   filename, cur_node->name);
@@ -854,32 +851,6 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
             filename,root_element->name);
       return;
    }
-
-   /* check our lock directory exists */
-   if(!config->lockdir) {
-      ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "no lock directory configured."
-            " You should add one with the <lock_dir> configuration tag");
-      return;
-   } else {
-      apr_dir_t *dir;
-      int ret = apr_dir_open(&dir,config->lockdir, ctx->pool);
-      if(APR_SUCCESS != ret) {
-          ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to open directory %s, does it exist?",config->lockdir);
-          return;
-      }
-      apr_dir_close(dir);
-#ifdef notused
-      testlockfilename = apr_psprintf(ctx->pool,"%s/test.lock",config->lockdir);
-      if(apr_file_open(&testlockfile, testlockfilename, APR_FOPEN_CREATE|APR_FOPEN_WRITE,
-                  APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
-          ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create test lockfile %s",testlockfilename);
-          return; /* we could not create the file */
-      }
-      apr_file_close(testlockfile);
-      apr_file_remove(testlockfilename,ctx->pool);
-#endif
-   }
-   
 
    if(!config->services[GEOCACHE_SERVICE_WMS] &&
          !config->services[GEOCACHE_SERVICE_TMS]) {

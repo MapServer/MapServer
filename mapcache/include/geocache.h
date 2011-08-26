@@ -599,11 +599,6 @@ struct geocache_cfg {
     geocache_image_format *merge_format;
 
     /**
-     * directory where we store file locks
-     */
-    char *lockdir;
-    
-    /**
       * how should error messages be reported to the user
       */
      geocache_error_reporting reporting;
