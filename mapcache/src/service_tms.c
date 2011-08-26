@@ -35,12 +35,13 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
    if(!onlineresource) {
       onlineresource = url;
    }
+
    request->request.mime_type = apr_pstrdup(ctx->pool,"text/xml");
    if(!request->version) {
       caps = ezxml_new("Services");
       ezxml_t TileMapService = ezxml_add_child(caps,"TileMapService",0);
       ezxml_set_attr(TileMapService,"version","1.0");
-      char* serviceurl = apr_pstrcat(ctx->pool,onlineresource,"/tms/1.0.0/",NULL);
+      char* serviceurl = apr_pstrcat(ctx->pool,onlineresource,"tms/1.0.0/",NULL);
       ezxml_set_attr(TileMapService,"href",serviceurl);
    } else {
       if(!request->tileset) {
@@ -66,7 +67,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
                ezxml_set_attr(tilemap,"srs",grid->srs);
                if(profile)
                   ezxml_set_attr(tilemap,"profile",profile);
-               char *href = apr_pstrcat(ctx->pool,onlineresource,"/tms/1.0.0/",tileset->name,"@",grid->name,NULL);
+               char *href = apr_pstrcat(ctx->pool,onlineresource,"tms/1.0.0/",tileset->name,"@",grid->name,NULL);
                ezxml_set_attr(tilemap,"href",href);
             }
             tileindex_index = apr_hash_next(tileindex_index);
@@ -87,7 +88,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
          caps = ezxml_new("TileMap");
          ezxml_set_attr(caps,"version",request->version);
          ezxml_set_attr(caps,"tilemapservice",
-               apr_pstrcat(ctx->pool,onlineresource,"/tms/",request->version,"/",NULL));
+               apr_pstrcat(ctx->pool,onlineresource,"tms/",request->version,"/",NULL));
          
          ezxml_set_txt(ezxml_add_child(caps,"Title",0),title);
          ezxml_set_txt(ezxml_add_child(caps,"Abstract",0),abstract);
@@ -118,7 +119,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
             ezxml_t xmltileset = ezxml_add_child(tilesets,"TileSet",0);
             char *order = apr_psprintf(ctx->pool,"%d",i);
             ezxml_set_attr(xmltileset,"href",
-                  apr_pstrcat(ctx->pool,onlineresource,"/tms/",request->version,"/",
+                  apr_pstrcat(ctx->pool,onlineresource,"tms/",request->version,"/",
                      tileset->name,"@",grid->name,
                      "/",order,NULL));
             ezxml_set_attr(xmltileset,"units-per-pixel",apr_psprintf(ctx->pool,"%.20f",grid->levels[i]->resolution));

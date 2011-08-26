@@ -1136,6 +1136,16 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    }
    apr_dir_close(lockdir);
 
+   /* if we were suppplied with an onlineresource, make sure it ends with a / */
+   char *url;
+   if(NULL != (url = (char*)apr_table_get(config->metadata,"url"))) {
+      char *urlend = url + strlen(url)-1;
+      if(*urlend != '/') {
+         url = apr_pstrcat(ctx->pool,url,"/",NULL);
+         apr_table_setn(config->metadata,"url",url);
+      }
+   }
+
 
 cleanup:
    ezxml_free(doc);

@@ -151,7 +151,10 @@ void init_apache_server_context(geocache_context_apache_server *ctx) {
 static geocache_context_apache_request* apache_request_context_create(request_rec *r) {
    geocache_context_apache_request *ctx = apr_pcalloc(r->pool, sizeof(geocache_context_apache_request));
    ctx->ctx.ctx.pool = r->pool;
-   ctx->ctx.ctx.config = ap_get_module_config(r->per_dir_config, &geocache_module);
+   /* lookup the configuration object given the configuration file name */
+   geocache_server_cfg* cfg = ap_get_module_config(r->server->module_config, &geocache_module);
+   geocache_cfg *config = apr_hash_get(cfg->aliases,(void*)r->filename,APR_HASH_KEY_STRING);
+   ctx->ctx.ctx.config = config;
    ctx->request = r;
    init_apache_request_context(ctx);
    return ctx;
@@ -255,11 +258,8 @@ static int geocache_write_proxied_response(geocache_context_apache_request *ctx,
 
 static int mod_geocache_request_handler(request_rec *r) {
    apr_table_t *params;
-   geocache_cfg *config = NULL;
    geocache_request *request = NULL;
 
-   geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
-   geocache_context *global_ctx = (geocache_context*)apache_ctx;
    int ret;
 
    if (!r->handler || strcmp(r->handler, "geocache")) {
@@ -270,11 +270,12 @@ static int mod_geocache_request_handler(request_rec *r) {
    }
    
    
+   geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
+   geocache_context *global_ctx = (geocache_context*)apache_ctx;
 
    params = geocache_http_parse_param_string(global_ctx, r->args);
-   config = ap_get_module_config(r->per_dir_config, &geocache_module);
 
-   geocache_service_dispatch_request(global_ctx,&request,r->path_info,params,config);
+   geocache_service_dispatch_request(global_ctx,&request,r->path_info,params,global_ctx->config);
    if(GC_HAS_ERROR(global_ctx)) {
       return report_error(apache_ctx);
    }
@@ -293,13 +294,19 @@ static int mod_geocache_request_handler(request_rec *r) {
        * remove the path_info from the end of the url (we want the url of the base of the service)
        * TODO: is there an apache api to access this ?
        */
-      if(*(original->path_info)) {
+      if(*(original->path_info) && strcmp(original->path_info,"/")) {
          char *end = strstr(url,original->path_info);
          if(end) {
+            /* make sure our url ends with a single '/' */
+            if(*end == '/') {
+               char *slash = end;
+               while((*(--slash))=='/') end--;
+               end++;
+            }
             *end = '\0';
          }
       }
-      request->service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
+      request->service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,global_ctx->config);
       if(GC_HAS_ERROR(global_ctx)) {
          return report_error(apache_ctx);
       }
@@ -375,6 +382,11 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 #ifndef DISABLE_VERSION_STRING
    ap_add_version_component(p, GEOCACHE_USERAGENT);
 #endif
+   for (s = s->next; s; s = s->next) {
+      geocache_server_cfg* config = ap_get_module_config(s->module_config, &geocache_module);
+      config->mutex = cfg->mutex;
+   }
+
    return OK;
 }
 
@@ -383,56 +395,150 @@ static void mod_geocache_child_init(apr_pool_t *pool, server_rec *s) {
    apr_global_mutex_child_init(&(cfg->mutex),cfg->mutex_name, pool);
 }
 
+static int geocache_alias_matches(const char *uri, const char *alias_fakename)
+{
+    /* Code for this function from Apache mod_alias module. */
+
+    const char *aliasp = alias_fakename, *urip = uri;
+
+    while (*aliasp) {
+        if (*aliasp == '/') {
+            /* any number of '/' in the alias matches any number in
+             * the supplied URI, but there must be at least one...
+             */
+            if (*urip != '/')
+                return 0;
+
+            do {
+                ++aliasp;
+            } while (*aliasp == '/');
+            do {
+                ++urip;
+            } while (*urip == '/');
+        }
+        else {
+            /* Other characters are compared literally */
+            if (*urip++ != *aliasp++)
+                return 0;
+        }
+    }
+
+    /* Check last alias path component matched all the way */
+
+    if (aliasp[-1] != '/' && *urip != '\0' && *urip != '/')
+        return 0;
+
+    /* Return number of characters from URI which matched (may be
+     * greater than length of alias, since we may have matched
+     * doubled slashes)
+     */
+    return urip - uri;
+}
+
+static int geocache_hook_intercept(request_rec *r)
+{
+   geocache_server_cfg *sconfig = ap_get_module_config(r->server->module_config, &geocache_module);
+
+   if (!sconfig->aliases)
+      return DECLINED;
+
+   if (r->uri[0] != '/' && r->uri[0])
+      return DECLINED;
+
+   apr_hash_index_t *entry = apr_hash_first(r->pool,sconfig->aliases);
+
+   /* loop through the entries to find one where the alias matches */
+   while (entry) {
+      int l = 0;
+      const char *alias;
+      apr_ssize_t aliaslen;
+      geocache_cfg *c;
+      apr_hash_this(entry,(const void**)&alias,&aliaslen,(void**)&c);
+
+      if((l=geocache_alias_matches(r->uri, c->endpoint))>0) {
+         r->handler = "geocache";
+         r->filename = c->configFile;
+         r->path_info = &(r->uri[l]);
+         return OK;
+      }
+
+      entry = apr_hash_next(entry);
+   }
+
+   return DECLINED;
+}
+
+
 static void mod_geocache_register_hooks(apr_pool_t *p) {
    ap_hook_child_init(mod_geocache_child_init, NULL, NULL, APR_HOOK_MIDDLE);
    ap_hook_post_config(mod_geocache_post_config, NULL, NULL, APR_HOOK_MIDDLE);
-   ap_hook_handler(mod_geocache_request_handler, NULL, NULL, APR_HOOK_LAST);
-}
+   ap_hook_handler(mod_geocache_request_handler, NULL, NULL, APR_HOOK_MIDDLE);
+   static const char * const p1[] = { "mod_alias.c", "mod_rewrite.c", NULL };
+   static const char * const n1[]= { "mod_userdir.c",
+                                      "mod_vhost_alias.c", NULL };
+   ap_hook_translate_name(geocache_hook_intercept, p1, n1, APR_HOOK_MIDDLE);
 
-static void* mod_geocache_create_dir_conf(apr_pool_t *pool, char *x) {
-
-   geocache_cfg *cfg = geocache_configuration_create(pool);
-   return cfg;
 }
 
 static void* mod_geocache_create_server_conf(apr_pool_t *pool, server_rec *s) {
    geocache_server_cfg *cfg = apr_pcalloc(pool, sizeof(geocache_server_cfg));
    char *mutex_unique_name = apr_psprintf(pool,"geocachemutex-%d",getpid());
    cfg->mutex_name = ap_server_root_relative(pool, mutex_unique_name);
+   cfg->aliases = NULL;
    return cfg;
 }
 
 
 static void *mod_geocache_merge_server_conf(apr_pool_t *p, void *base_, void *vhost_)
 {
-   return base_;
+   geocache_server_cfg *base = (geocache_server_cfg*)base_;
+   geocache_server_cfg *vhost = (geocache_server_cfg*)vhost_;
+   geocache_server_cfg *cfg = apr_pcalloc(p,sizeof(geocache_server_cfg));
+   cfg->mutex = base->mutex;
+   cfg->mutex_name = base->mutex_name;
+   
+   if (base->aliases && vhost->aliases) {
+      cfg->aliases = apr_hash_overlay(p, vhost->aliases,base->aliases);
+   }
+   else if (vhost->aliases) {
+      cfg->aliases = apr_hash_copy(p,vhost->aliases);
+   }
+   else if (base->aliases) {
+      cfg->aliases = apr_hash_copy(p,base->aliases);
+   }
+   return vhost;
 }
 
-
-
-
-static const char* geocache_set_config_file(cmd_parms *cmd, void *cfg, const char *val) {
-   geocache_cfg *config = (geocache_cfg*)cfg;
+static const char* geocache_add_alias(cmd_parms *cmd, void *cfg, const char *alias, const char* configfile) {
+   geocache_server_cfg *sconfig = ap_get_module_config(cmd->server->module_config, &geocache_module);
+   geocache_cfg *config = geocache_configuration_create(cmd->pool);
    geocache_context *ctx = (geocache_context*)apache_server_context_create(cmd->server,cmd->pool);
    char *msg = NULL;
-   config->configFile = apr_pstrdup(cmd->pool,val);
-   geocache_configuration_parse(ctx,val,config);
+   config->configFile = apr_pstrdup(cmd->pool,configfile);
+   config->endpoint = alias;
+   geocache_configuration_parse(ctx,configfile,config);
    if(GC_HAS_ERROR(ctx)) {
       return ctx->get_error_message(ctx);
    }
-   ap_log_error(APLOG_MARK, APLOG_INFO, 0, cmd->server, "loaded geocache configuration file from %s", config->configFile);
+   ap_log_error(APLOG_MARK, APLOG_INFO, 0, cmd->server, "loaded geocache configuration file from %s on alias %s", config->configFile, alias);
+   if(!sconfig->aliases) {
+      sconfig->aliases = apr_hash_make(cmd->pool);
+   }
+   apr_hash_set(sconfig->aliases,configfile,APR_HASH_KEY_STRING,config);
    return msg;
 }
 
+
+
 static const command_rec mod_geocache_cmds[] = {
-      AP_INIT_TAKE1("GeoCacheConfigFile", geocache_set_config_file,NULL,ACCESS_CONF,"Location of configuration file"),
+      AP_INIT_TAKE2("GeoCacheAlias", geocache_add_alias ,NULL,RSRC_CONF,"Aliased location of configuration file"),
       { NULL }
 } ;
 
 module AP_MODULE_DECLARE_DATA geocache_module =
 {
       STANDARD20_MODULE_STUFF,
-      mod_geocache_create_dir_conf,
+      NULL,
       NULL,
       mod_geocache_create_server_conf,
       mod_geocache_merge_server_conf,

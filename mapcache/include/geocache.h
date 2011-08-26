@@ -756,8 +756,9 @@ apr_table_t *geocache_http_parse_param_string(geocache_context *ctx, char *args)
 /** @{ */
 
 struct geocache_server_cfg {
-    apr_global_mutex_t *mutex;
-    char *mutex_name;
+   apr_global_mutex_t *mutex;
+   char *mutex_name;
+   apr_hash_t *aliases; /**< list of geocache configurations aliased to a server uri */
 };
 
 typedef enum {
@@ -830,6 +831,7 @@ struct geocache_cfg {
     apr_table_t *metadata;
 
     const char *lockdir;
+    const char *endpoint; /**< the uri where the base of the service is mapped */
 };
 
 /**

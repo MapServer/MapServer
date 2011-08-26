@@ -50,7 +50,7 @@ static ezxml_t _wmts_operations_metadata(geocache_context *ctx, const char *onli
    ezxml_t dcp = ezxml_add_child(operation,"ows:DCP",0);
    ezxml_t http = ezxml_add_child(dcp,"ows:HTTP",0);
    ezxml_t get = ezxml_add_child(http,"ows:Get",0);
-   ezxml_set_attr(get,"xlink:href",apr_pstrcat(ctx->pool,onlineresource,"/wmts?",NULL));
+   ezxml_set_attr(get,"xlink:href",apr_pstrcat(ctx->pool,onlineresource,"wmts?",NULL));
    ezxml_t constraint = ezxml_add_child(get,"ows:Constraint",0);
    ezxml_set_attr(constraint,"name","GetEncoding");
    ezxml_t allowedvalues = ezxml_add_child(constraint,"ows:AllowedValues",0);
@@ -161,7 +161,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
             ezxml_set_attr(resourceurl,"format",iformat);
             ezxml_set_attr(resourceurl,"resourcetype","FeatureInfo");
             ezxml_set_attr(resourceurl,"template",
-                  apr_pstrcat(ctx->pool,onlineresource,"/wmts/1.0.0/",tileset->name,"/default/",
+                  apr_pstrcat(ctx->pool,onlineresource,"wmts/1.0.0/",tileset->name,"/default/",
                      dimensionstemplate,"{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.",apr_psprintf(ctx->pool,"%d",i),NULL));
          }
       }
@@ -170,7 +170,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       ezxml_set_attr(resourceurl,"format",tileset->format->mime_type);
       ezxml_set_attr(resourceurl,"resourceType","tile");
       ezxml_set_attr(resourceurl,"template",
-            apr_pstrcat(ctx->pool,onlineresource,"/wmts/1.0.0/",tileset->name,"/default/",
+            apr_pstrcat(ctx->pool,onlineresource,"wmts/1.0.0/",tileset->name,"/default/",
                dimensionstemplate,"{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}.",tileset->format->extension,NULL));
       
 

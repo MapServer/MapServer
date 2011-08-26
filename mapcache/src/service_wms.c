@@ -36,7 +36,8 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
    if(!url) {
       url = guessed_url;
    }
-   url = apr_pstrcat(ctx->pool,url,"/",req->request.service->url_prefix,"?",NULL);
+   
+   url = apr_pstrcat(ctx->pool,url,req->request.service->url_prefix,"?",NULL);
    caps = ezxml_new("WMT_MS_Capabilities");
    ezxml_set_attr(caps,"version","1.1.1");
 /*

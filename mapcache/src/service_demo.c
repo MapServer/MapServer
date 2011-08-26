@@ -361,7 +361,8 @@ void _geocache_service_demo_parse_request(geocache_context *ctx, geocache_servic
       drequest->service = NULL;
       return;
    } else {
-      cpathinfo++; /* skip the leading / */
+      while(*cpathinfo == '/')
+         cpathinfo++; /* skip the leading /'s */
       int i;
       for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
          /* loop through the services that have been configured */
@@ -388,7 +389,7 @@ void _create_demo_front(geocache_context *ctx, geocache_request_get_capabilities
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
       geocache_service *service = ctx->config->services[i];
       if(!service || service->type == GEOCACHE_SERVICE_DEMO) continue; /* skip an unconfigured service, and the demo one */
-      caps = apr_pstrcat(ctx->pool,caps,"<a href=\"",urlprefix,"/demo/",service->name,"\">",
+      caps = apr_pstrcat(ctx->pool,caps,"<a href=\"",urlprefix,"demo/",service->name,"\">",
             service->name,"</a><br/>",NULL);
    }
    caps = apr_pstrcat(ctx->pool,caps,"</body></html>",NULL);
@@ -516,7 +517,7 @@ void _create_demo_tms(geocache_context *ctx, geocache_request_get_capabilities *
             ol_layer_name,
             tileset->name,
             grid->name,
-            apr_pstrcat(ctx->pool,url_prefix,"/tms/",NULL),
+            apr_pstrcat(ctx->pool,url_prefix,"tms/",NULL),
             tileset->name,
             grid->name,
             extension,
@@ -583,7 +584,7 @@ void _create_demo_wmts(geocache_context *ctx, geocache_request_get_capabilities 
             ol_layer_name,
             tileset->name,
             grid->name,
-            apr_pstrcat(ctx->pool,url_prefix,"/wmts/",NULL),
+            apr_pstrcat(ctx->pool,url_prefix,"wmts/",NULL),
             tileset->name,
             grid->name,
             mime_type,
@@ -645,7 +646,7 @@ void _create_demo_ve(geocache_context *ctx, geocache_request_get_capabilities *r
             ol_layer_name,
             tileset->name,
             grid->name,
-            apr_pstrcat(ctx->pool,url_prefix,"/ve",NULL),
+            apr_pstrcat(ctx->pool,url_prefix,"ve",NULL),
             tileset->name,
             grid->name,
             resolutions,
@@ -683,7 +684,7 @@ void _create_demo_kml(geocache_context *ctx, geocache_request_get_capabilities *
             continue; //skip layers not in wgs84
          }
          caps = apr_pstrcat(ctx->pool,caps,
-               "<li><a href=\"",url_prefix,"/kml/",tileset->name,
+               "<li><a href=\"",url_prefix,"kml/",tileset->name,
                "@",grid->name,"/0/0/0.kml\">",tileset->name,"</a></li>",
                NULL);
       }
