@@ -126,8 +126,8 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
          return;
       }
       tileimg.stride = metatile->stride;
-      for(i=0;i<mt->map.tileset->metasize_x;i++) {
-         for(j=0;j<mt->map.tileset->metasize_y;j++) {
+      for(i=0;i<mt->metasize_x;i++) {
+         for(j=0;j<mt->metasize_y;j++) {
             sx = mt->map.tileset->metabuffer + i * tileimg.w;
             sy = mt->map.height - (mt->map.tileset->metabuffer + (j+1) * tileimg.w);
             tileimg.data = &(metatile->data[sy*metatile->stride + 4 * sx]);
@@ -135,7 +135,7 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
                 geocache_image_merge(ctx,&tileimg,mt->map.tileset->watermark);
                 GC_CHECK_ERROR(ctx);
             }
-            mt->tiles[i*mt->map.tileset->metasize_x+j].data =
+            mt->tiles[i*mt->metasize_y+j].data =
                mt->map.tileset->format->write(ctx, &tileimg, mt->map.tileset->format);
             GC_CHECK_ERROR(ctx);
          }

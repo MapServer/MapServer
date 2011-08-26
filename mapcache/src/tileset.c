@@ -138,14 +138,9 @@ geocache_metatile* geocache_tileset_metatile_get(geocache_context *ctx, geocache
    geocache_tileset *tileset = tile->tileset;
    geocache_grid *grid = tile->grid_link->grid;
    double res = grid->levels[tile->z]->resolution;
-   double gbuffer,gwidth,gheight;
+   double gbuffer,gwidth,gheight,fullgwidth,fullgheight;
    mt->map.tileset = tileset;
    mt->map.grid_link = tile->grid_link;
-   mt->ntiles = tileset->metasize_x * tileset->metasize_y;
-   mt->tiles = (geocache_tile*)apr_pcalloc(ctx->pool, mt->ntiles * sizeof(geocache_tile));
-   mt->map.width =  tileset->metasize_x * grid->tile_sx + 2 * tileset->metabuffer;
-   mt->map.height =  tileset->metasize_y * grid->tile_sy + 2 * tileset->metabuffer;
-   mt->map.dimensions = tile->dimensions;
    mt->z = tile->z;
    mt->x = tile->x / tileset->metasize_x;
    if(tile->x < 0)
@@ -153,21 +148,43 @@ geocache_metatile* geocache_tileset_metatile_get(geocache_context *ctx, geocache
    mt->y = tile->y / tileset->metasize_y;
    if(tile->y < 0)
       mt->y --;
+   blx = mt->x * tileset->metasize_x;
+   bly = mt->y * tileset->metasize_y;
+  
+   /* adjust the size of the the metatile so it does not extend past the grid limits.
+    * If we don't do this, we end up with cut labels on the edges of the tile grid
+    */
+   if(blx+tileset->metasize_x-1 >= grid->levels[tile->z]->maxx) {
+      mt->metasize_x = grid->levels[tile->z]->maxx - blx;
+   } else {
+      mt->metasize_x = tileset->metasize_x;
+   }
+   if(bly+tileset->metasize_y-1 >= grid->levels[tile->z]->maxy) {
+      mt->metasize_y = grid->levels[tile->z]->maxy - bly;
+   } else {
+      mt->metasize_y = tileset->metasize_y;
+   }
+
+   mt->ntiles = mt->metasize_x * mt->metasize_y;
+   mt->tiles = (geocache_tile*)apr_pcalloc(ctx->pool, mt->ntiles * sizeof(geocache_tile));
+   mt->map.width =  mt->metasize_x * grid->tile_sx + 2 * tileset->metabuffer;
+   mt->map.height =  mt->metasize_y * grid->tile_sy + 2 * tileset->metabuffer;
+   mt->map.dimensions = tile->dimensions;
 
    //tilesize   = self.actualSize()
    gbuffer = res * tileset->metabuffer;
-   gwidth = res * tileset->metasize_x * grid->tile_sx;
-   gheight = res * tileset->metasize_y * grid->tile_sy;
-   mt->map.extent[0] = grid->extent[0] + mt->x * gwidth - gbuffer;
-   mt->map.extent[1] = grid->extent[1] + mt->y * gheight - gbuffer;
+   gwidth = res * mt->metasize_x * grid->tile_sx;
+   gheight = res * mt->metasize_y * grid->tile_sy;
+   fullgwidth = res * tileset->metasize_x * grid->tile_sx;
+   fullgheight = res * tileset->metasize_y * grid->tile_sy;
+   mt->map.extent[0] = grid->extent[0] + mt->x * fullgwidth - gbuffer;
+   mt->map.extent[1] = grid->extent[1] + mt->y * fullgheight - gbuffer;
    mt->map.extent[2] = mt->map.extent[0] + gwidth + 2 * gbuffer;
    mt->map.extent[3] = mt->map.extent[1] + gheight + 2 * gbuffer;
 
-   blx = mt->x * tileset->metasize_x;
-   bly = mt->y * tileset->metasize_y;
-   for(i=0; i<tileset->metasize_x; i++) {
-      for(j=0; j<tileset->metasize_y; j++) {
-         geocache_tile *t = &(mt->tiles[i*tileset->metasize_x+j]);
+   for(i=0; i<mt->metasize_x; i++) {
+      for(j=0; j<mt->metasize_y; j++) {
+         geocache_tile *t = &(mt->tiles[i*mt->metasize_y+j]);
          t->dimensions = tile->dimensions;
          t->grid_link = tile->grid_link;
          t->z = tile->z;

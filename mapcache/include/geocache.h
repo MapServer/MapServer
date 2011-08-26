@@ -900,6 +900,7 @@ struct geocache_tile {
 struct geocache_metatile {
    geocache_map map;
    int x,y,z;
+   int metasize_x, metasize_y;
    int ntiles; /**< the number of geocache_metatile::tiles contained in this metatile */
    geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
    void *lock; /**< pointer to opaque structure set by the locking mechanism */
