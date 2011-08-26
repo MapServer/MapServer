@@ -8,6 +8,7 @@
 #include "geocache.h"
 #include <http_log.h>
 #include <apr_strings.h>
+#include <math.h>
 
 /** \addtogroup services */
 /** @{ */
@@ -82,6 +83,91 @@ geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_
 
    return request;
 
+}
+
+geocache_request* _geocache_service_wmts_parse_request(request_rec *r, apr_table_t *params, geocache_cfg *config) {
+   char *str = NULL;
+   double scale,res;
+   int tilerow,tilecol;
+   char *endptr;
+   int maxY;
+   double geocache_meters_per_unit[] = {
+         -1, /*GEOCACHE_UNIT_UNSET*/
+         1.0, /*GEOCACHE_UNIT_METERS*/
+         111118.752, /*GEOCACHE_UNIT_DEGREES*/
+         0.3048 /*GEOCACHE_UNIT_FEET*/
+   };
+   geocache_request *request = NULL;
+
+   str = (char*)apr_table_get(params,"SCALE");
+   if(!str)
+      str = (char*)apr_table_get(params,"scale");
+   if(!str) {
+      return NULL;
+   } else {
+      scale = strtod(str,&endptr);
+      if(*endptr != 0) {
+         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with invalid scale %s", str);
+         return NULL;
+      }
+   }
+
+   str = (char*)apr_table_get(params,"TILEROW");
+   if(!str)
+      str = (char*)apr_table_get(params,"tilerow");
+   if(!str) {
+      return NULL;
+   } else {
+      tilerow = strtol(str,&endptr,10);
+      if(*endptr != 0) {
+         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with invalid tilerow %s", str);
+         return NULL;
+      }
+   }
+
+   str = (char*)apr_table_get(params,"TILECOL");
+   if(!str)
+      str = (char*)apr_table_get(params,"tilecol");
+   if(!str) {
+      return NULL;
+   } else {
+      tilecol = strtol(str,&endptr,10);
+      if(*endptr != 0) {
+         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with invalid tilecol %s", str);
+         return NULL;
+      }
+   }
+   str = (char*)apr_table_get(params,"LAYER");
+   if(!str)
+      str = (char*)apr_table_get(params,"layer");
+   if(!str) {
+      ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with no layer");
+      return NULL;
+   } else {
+      geocache_tileset *tileset = geocache_configuration_get_tileset(config,str);
+      if(!tileset) {
+         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts request with invalid layer %s",str);
+         return NULL;
+      }
+      if(tileset->units == GEOCACHE_UNIT_UNSET) {
+         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts on layer %s that has no unit configured",str);
+         return NULL;
+      }
+      request = (geocache_request*)apr_pcalloc(r->pool,sizeof(geocache_request));
+      request->ntiles = 1;
+      request->tiles = (geocache_tile**)apr_pcalloc(r->pool,sizeof(geocache_tile*)); 
+      request->tiles[0] = geocache_tileset_tile_create(tileset,r->pool);
+      res = .00028 * scale / geocache_meters_per_unit[tileset->units];
+      if(GEOCACHE_SUCCESS != geocache_tileset_get_level(tileset, &res, &request->tiles[0]->z, r)) {
+         ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wmts on layer %s with invalid resolution / level", tileset->name);
+         return NULL;
+      }
+      
+      maxY = round((tileset->extent[3] - tileset->extent[1])/(res * tileset->tile_sy)) -1;
+      request->tiles[0]->x = tilecol;
+      request->tiles[0]->y = maxY - tilerow;
+      return request;
+   }
 }
 
 /**
@@ -167,6 +253,13 @@ geocache_service* geocache_service_tms_create(apr_pool_t *pool) {
    geocache_service_tms* service = (geocache_service_tms*)apr_pcalloc(pool, sizeof(geocache_service_tms));
    service->service.type = GEOCACHE_SERVICE_TMS;
    service->service.parse_request = _geocache_service_tms_parse_request;
+   return (geocache_service*)service;
+}
+
+geocache_service* geocache_service_wmts_create(apr_pool_t *pool) {
+   geocache_service_wmts* service = (geocache_service_wmts*)apr_pcalloc(pool, sizeof(geocache_service_wmts));
+   service->service.type = GEOCACHE_SERVICE_WMTS;
+   service->service.parse_request = _geocache_service_wmts_parse_request;
    return (geocache_service*)service;
 }
 

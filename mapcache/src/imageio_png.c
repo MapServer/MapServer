@@ -188,6 +188,8 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_image *img, geocache_imag
    return buffer;
 }
 
+/** \cond DONOTDOCUMENT */
+
 /*
  * derivations from pngquant and ppmquant
  *
@@ -953,6 +955,8 @@ acolorhash_table acht;
       }
    free( (char*) acht );
 }
+
+/** \endcond DONOTDOCUMENT */
 
 int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels, rgbaPixel *palette, int numPaletteEntries, rgbPixel *rgb, unsigned char *a, int *num_a) {
    int bot_idx, top_idx, x;

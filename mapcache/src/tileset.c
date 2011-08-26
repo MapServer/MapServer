@@ -16,7 +16,7 @@ static double _geocache_tileset_get_resolution(geocache_tileset *tileset, double
    return GEOCACHE_MAX(rx,ry);
 }
 
-static int _geocache_tileset_get_level(geocache_tileset *tileset, double *resolution, int *level, request_rec *r) {
+int geocache_tileset_get_level(geocache_tileset *tileset, double *resolution, int *level, request_rec *r) {
    double max_diff = *resolution / (double)GEOCACHE_MAX(tileset->tile_sx, tileset->tile_sy);
    int i;
    for(i=0; i<tileset->levels; i++) {
@@ -38,7 +38,7 @@ static int _geocache_tileset_get_level(geocache_tileset *tileset, double *resolu
 static int _geocache_tileset_tile_get_cell(geocache_tile *tile, double *bbox, request_rec *r) {
    int ret;
    double res = _geocache_tileset_get_resolution(tile->tileset,bbox);
-   ret = _geocache_tileset_get_level(tile->tileset,&res,&(tile->z),r);
+   ret = geocache_tileset_get_level(tile->tileset,&res,&(tile->z),r);
    if(ret != GEOCACHE_SUCCESS) return ret;
    /* TODO: strict mode
            if exact and self.extent_type == "strict" and not self.contains((minx, miny), res):
@@ -161,6 +161,7 @@ geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
    geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(pool, sizeof(geocache_tileset));
    tileset->metasize_x = tileset->metasize_y = 1;
    tileset->metabuffer = 0;
+   tileset->units = GEOCACHE_UNIT_UNSET;
    tileset->expires = 0;
    tileset->tile_sx = tileset->tile_sy = 256;
    tileset->extent[0]=tileset->extent[1]=tileset->extent[2]=tileset->extent[3]=0;

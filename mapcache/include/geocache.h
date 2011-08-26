@@ -62,6 +62,7 @@ typedef struct geocache_cache_disk geocache_cache_disk;
 typedef struct geocache_request geocache_request;
 typedef struct geocache_service  geocache_service;
 typedef struct geocache_service_wms geocache_service_wms;
+typedef struct geocache_service_wmts geocache_service_wmts;
 typedef struct geocache_service_tms geocache_service_tms;
 typedef struct geocache_server_cfg geocache_server_cfg;
 typedef struct geocache_image geocache_image;
@@ -238,9 +239,11 @@ struct geocache_request {
 /** \defgroup services Services*/
 /** @{ */
 
-#define GEOCACHE_SERVICES_COUNT 2
+#define GEOCACHE_SERVICES_COUNT 3
 
-typedef enum {GEOCACHE_SERVICE_WMS=0, GEOCACHE_SERVICE_TMS} geocache_service_type;
+typedef enum {GEOCACHE_SERVICE_WMTS=0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMS} geocache_service_type;
+
+typedef enum {GEOCACHE_UNIT_UNSET = 0, GEOCACHE_UNIT_METERS, GEOCACHE_UNIT_DEGREES, GEOCACHE_UNIT_FEET} geocache_unit;
 
 /** \interface geocache_service
  * \brief a standard service (eg WMS, TMS)
@@ -270,6 +273,14 @@ struct geocache_service_tms {
    geocache_service service;
 };
 
+/**\class geocache_service_wmts
+ * \brief a WMTS service
+ * \implements geocache_service
+ */
+struct geocache_service_wmts {
+   geocache_service service;
+};
+
 /**
  * \brief create and initialize a geocache_service_wms
  * \memberof geocache_service_wms
@@ -281,6 +292,12 @@ geocache_service* geocache_service_wms_create(apr_pool_t *pool);
  * \memberof geocache_service_tms
  */
 geocache_service* geocache_service_tms_create(apr_pool_t *pool);
+
+/**
+ * \brief create and initialize a geocache_service_wmts
+ * \memberof geocache_service_wmms
+ */
+geocache_service* geocache_service_wmts_create(apr_pool_t *pool);
 
 /** @} */
 
@@ -313,14 +330,17 @@ struct geocache_image{
 /**
  \brief merge a set of tiles into a single image
  \param tiles the list of tiles to merge
+ \param ntiles the number of tiles in the list of tiles
  \param format the format to encode the resulting image
+ \param r the context
  \returns a new tile with the merged image
  */
 geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_image_format *format, geocache_tile **tiles, int ntiles);
 
 /**
  * \brief split the given metatile into tiles
- * @param mt the metatile to split
+ * \param mt the metatile to split
+ * \param r the context
  */
 int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r);
 
@@ -473,6 +493,11 @@ struct geocache_tileset {
     * the SRS of the tileset
     */
    char *srs;
+   
+   /**
+    * the unit of measure of the tileset
+    */
+   geocache_unit units;
 
    /**
     * width of a tile in pixels
@@ -545,6 +570,19 @@ struct geocache_tileset {
  */
 int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec *r);
 
+/**
+ * compute level for a given resolution
+ * 
+ * computes the integer level for the given resolution. the input resolution will be set to the exact
+ * value configured for the tileset, to compensate for rounding errors that could creep in if using
+ * the resolution calculated from input parameters
+ * 
+ * \returns GEOCACHE_TILESET_WRONG_RESOLUTION if the given resolution is't configured
+ * \returns GEOCACHE_SUCCESS if the level was found
+ */
+int geocache_tileset_get_level(geocache_tileset *tileset, double *resolution, int *level, request_rec *r);
+
+
 int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r);
 
 /**
@@ -586,6 +624,15 @@ int geocache_util_mutex_release(request_rec *r);
 /** @{ */
 
 /**
+ * compression strategy to apply
+ */
+typedef enum {
+    GEOCACHE_COMPRESSION_BEST, /**< best but slowest compression*/
+    GEOCACHE_COMPRESSION_FAST, /**< fast compression*/
+    GEOCACHE_COMPRESSION_DEFAULT /**< default compression*/
+} geocache_compression_type;
+
+/**\interface geocache_image_format
  * \brief an image format
  * \sa geocache_image_format_jpeg
  * \sa geocache_image_format_png
@@ -603,16 +650,7 @@ struct geocache_image_format {
  * \ingroup imageio */
 /** @{ */
 
-/**
- * compression strategy to apply
- */
-typedef enum {
-    GEOCACHE_COMPRESSION_BEST, /**< best but slowest compression*/
-    GEOCACHE_COMPRESSION_FAST, /**< fast compression*/
-    GEOCACHE_COMPRESSION_DEFAULT /**< default compression*/
-} geocache_compression_type;
-
-/**
+/**\class geocache_image_format_png
  * \brief PNG image format
  * \extends geocache_image_format
  * \sa geocache_image_format_png_q
@@ -622,7 +660,7 @@ struct geocache_image_format_png {
    geocache_compression_type compression_level; /**< PNG compression level to apply */
 };
 
-/**
+/**\class geocache_image_format_png_q
  * \brief Quantized PNG format
  * \extends geocache_image_format_png
  */
@@ -641,7 +679,7 @@ geocache_image* _geocache_imageio_png_decode(request_rec *r, geocache_buffer *bu
 
 /**
  * \brief create a format capable of creating RGBA png
- * \memberof geocache_imageio_png_format
+ * \memberof geocache_image_format_png
  * @param pool
  * @param name
  * @param compression the ZLIB compression to apply
@@ -651,7 +689,7 @@ geocache_image_format* geocache_imageio_create_png_format(apr_pool_t *pool, char
 
 /**
  * \brief create a format capable of creating quantized png
- * \memberof geocache_imageio_png_q_format
+ * \memberof geocache_image_format_png_q
  * @param pool
  * @param name
  * @param compression the ZLIB compression to apply
@@ -666,7 +704,7 @@ geocache_image_format* geocache_imageio_create_png_q_format(apr_pool_t *pool, ch
  * \ingroup imageio */
 /** @{ */
 
-/**
+/**\class geocache_image_format_jpeg
  * \brief JPEG image format
  * \extends geocache_image_format
  */
