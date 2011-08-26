@@ -58,6 +58,8 @@
 #define GEOCACHE_VERSION "0.3-dev"
 #define GEOCACHE_USERAGENT "mod-geocache/"GEOCACHE_VERSION
 
+#define GEOCACHE_LOCKFILE_PREFIX "_gc_lock"
+
 
 
 typedef struct geocache_image_format geocache_image_format;
@@ -762,6 +764,8 @@ struct geocache_cfg {
     geocache_getmap_strategy getmap_strategy;
 
     apr_table_t *metadata;
+
+    const char *lockdir;
 };
 
 /**

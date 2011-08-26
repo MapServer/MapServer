@@ -971,6 +971,38 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
       }
    }
 
+   if((node = ezxml_child(doc,"lock_dir")) != NULL) {
+      config->lockdir = apr_pstrdup(ctx->pool, node->txt);
+   } else {
+      config->lockdir = apr_pstrdup(ctx->pool,"/tmp");
+   }
+   apr_dir_t *lockdir;
+   apr_status_t rv;
+   rv = apr_dir_open(&lockdir,config->lockdir,ctx->pool);
+   char errmsg[120];
+   if(rv != APR_SUCCESS) {
+      ctx->set_error(ctx,500, "failed to open lock directory %s: %s"
+            ,config->lockdir,apr_strerror(rv,errmsg,120));
+      goto cleanup;
+   }
+   apr_finfo_t finfo;
+   while ((apr_dir_read(&finfo, APR_FINFO_DIRENT|APR_FINFO_TYPE|APR_FINFO_NAME, lockdir)) == APR_SUCCESS) {
+      if(finfo.filetype == APR_REG) {
+         if(!strncmp(finfo.name, GEOCACHE_LOCKFILE_PREFIX, strlen(GEOCACHE_LOCKFILE_PREFIX))) {
+            ctx->log(ctx,GEOCACHE_WARNING,"found old lockfile %s/%s, deleting it",config->lockdir,
+                  finfo.name);
+            rv = apr_file_remove(apr_psprintf(ctx->pool,"%s/%s",config->lockdir, finfo.name),ctx->pool);
+            if(rv != APR_SUCCESS) {
+               ctx->set_error(ctx,500, "failed to remove lockfile %s: %s",finfo.name,apr_strerror(rv,errmsg,120));
+               goto cleanup;
+            }
+
+         }
+      
+      }
+   }
+   apr_dir_close(lockdir);
+
 
 cleanup:
    ezxml_free(doc);

@@ -22,6 +22,7 @@
 #include <fcntl.h>
 
 
+#ifdef USE_SEMLOCK
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz"
                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                        "0123456789"
@@ -47,11 +48,20 @@ static char* num_encode(apr_pool_t *pool, int num) {
    return ret;
 }
 
+#endif
+
 char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatile *mt) {
    char *lockname = apr_psprintf(ctx->pool,
+#ifdef USE_SEMLOCK
          "/%s-%s-%s%s", /*x,y,z,tilesetname*/
          num_encode(ctx->pool,mt->x), num_encode(ctx->pool,mt->y),
-         num_encode(ctx->pool,mt->z), mt->map.tileset->name);
+         num_encode(ctx->pool,mt->z), 
+#else
+         "%s/"GEOCACHE_LOCKFILE_PREFIX"-%d-%d-%d-%s",
+         ctx->config->lockdir,
+         mt->z,mt->y,mt->x,
+#endif
+         mt->map.tileset->name);
 
    /* if the tileset has multiple grids, add the name of the current grid to the lock key*/
    if(mt->map.tileset->grid_links->nelts > 1) {
@@ -74,6 +84,7 @@ char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatil
 
    }
 
+#ifdef USE_SEMLOCK
 #ifdef __APPLE__
 #ifndef SEM_NAME_LEN
 #define SEM_NAME_LEN 31
@@ -87,6 +98,8 @@ char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatil
       lockname[SEM_NAME_LEN-1]='\0';
    }
 #endif
+#endif
+
    return lockname;
 }
 /**
@@ -98,6 +111,7 @@ char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatil
  */
 void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt) {
    char *lockname = geocache_tileset_metatile_lock_key(ctx,mt);
+#ifdef USE_SEMLOCK
    sem_t *lock;
    if ((lock = sem_open(lockname, O_CREAT|O_EXCL, 0644, 1)) == SEM_FAILED) {
       ctx->set_error(ctx,500, "failed to create posix semaphore %s: %s",lockname, strerror(errno));
@@ -105,6 +119,26 @@ void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt
    }
    sem_wait(lock);
    mt->lock = lock;
+#else
+   char errmsg[120];
+   apr_file_t *lock;
+   apr_status_t rv;
+   rv = apr_file_open(&lock,lockname,APR_WRITE|APR_CREATE|APR_EXCL|APR_SHARELOCK|APR_XTHREAD,APR_OS_DEFAULT,ctx->pool);
+   if(rv!=APR_SUCCESS) {
+      ctx->set_error(ctx,500, "failed to create lockfile %s: %s",
+            lockname, apr_strerror(rv,errmsg,120));
+      return;
+   }
+
+   /* we aquire an exclusive (i.e. write) lock on the file. For this to work, the file has to be opened with APR_WRITE mode */
+   rv = apr_file_lock(lock,APR_FLOCK_EXCLUSIVE|APR_FLOCK_NONBLOCK);
+   if(rv!=APR_SUCCESS) {
+      ctx->set_error(ctx,500, "failed to aquire an exclusive lock on lockfile %s: %s",
+            lockname, apr_strerror(rv,errmsg,120));
+      return;
+   }
+   mt->lock = lock;
+#endif
 }
 
 /**
@@ -116,8 +150,9 @@ void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt
  * \sa geocache_cache::tile_lock_exists()
  */
 void geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *mt) {
-   sem_t *lock = (sem_t*) mt->lock;
    const char *lockname = geocache_tileset_metatile_lock_key(ctx,mt);
+#ifdef USE_SEMLOCK
+   sem_t *lock = (sem_t*) mt->lock;
    if (!mt->lock) {
       ctx->set_error(ctx,500,"###### TILE UNLOCK ######### attempting to unlock tile %s not created by this thread", lockname);
       return;
@@ -126,6 +161,30 @@ void geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *
    sem_close(lock);
    sem_unlink(lockname);
    mt->lock = NULL;
+#else
+   char errmsg[120];
+   apr_status_t rv;
+   if (!mt->lock) {
+      ctx->set_error(ctx,500,"###### TILE UNLOCK ######### attempting to unlock tile %s not created by this thread", lockname);
+      return;
+   }
+   apr_file_t *lock = (apr_file_t*)mt->lock;
+   rv = apr_file_unlock(lock);
+   if(rv!=APR_SUCCESS) {
+      ctx->set_error(ctx,500, "failed to unlock lockfile %s: %s",
+            lockname, apr_strerror(rv,errmsg,120));
+   }
+   rv = apr_file_close(lock);
+   if(rv!=APR_SUCCESS) {
+      ctx->set_error(ctx,500, "failed to close lockfile %s: %s",
+            lockname, apr_strerror(rv,errmsg,120));
+   }
+   rv = apr_file_remove(lockname,ctx->pool);
+   if(rv!=APR_SUCCESS) {
+      ctx->set_error(ctx,500, "failed to remove lockfile %s: %s",
+            lockname, apr_strerror(rv,errmsg,120));
+   }
+#endif
 }
 
 /**
@@ -141,6 +200,7 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
    if (mt->lock)
       return GEOCACHE_TRUE;
    lockname = geocache_tileset_metatile_lock_key(ctx, mt);
+#ifdef USE_SEMLOCK
    sem_t *lock = sem_open(lockname, 0, 0644, 1) ;
    if (lock == SEM_FAILED) {
       if(errno == ENOENT) {
@@ -153,6 +213,58 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
       sem_close(lock);
       return GEOCACHE_TRUE;
    }
+#else
+   apr_status_t rv;
+   char errmsg[120];
+   apr_file_t *lock;
+   rv = apr_file_open(&lock,lockname,APR_READ|APR_SHARELOCK|APR_XTHREAD,APR_OS_DEFAULT,ctx->pool);
+   if(APR_STATUS_IS_ENOENT(rv)) {
+      /* the lock file does not exist, the metatile is not locked */
+      return GEOCACHE_FALSE;
+   } else {
+      /* the file exists, or there was an error opening it */
+      if(rv != APR_SUCCESS) {
+         /* we failed to open the file, bail out */
+         ctx->set_error(ctx,500,"lock_exists: failed to open lockfile %s: %s",lockname,
+               apr_strerror(rv,errmsg,120));
+         return GEOCACHE_FALSE;
+      } else {
+         /* the file exists, which means there probably is a lock. make sure it isn't locked anyhow */
+         rv = apr_file_lock(lock,APR_FLOCK_SHARED|APR_FLOCK_NONBLOCK);
+         if(rv != APR_SUCCESS) {
+            if(rv == APR_EAGAIN) {
+               /* the file is locked */
+               apr_file_close(lock);
+               return GEOCACHE_TRUE;
+            } else {
+               ctx->set_error(ctx,500, "lock_exists: failed to aquire lock on lockfile %s: %s",
+                        lockname, apr_strerror(rv,errmsg,120));
+               rv = apr_file_close(lock);
+               if(rv!=APR_SUCCESS) {
+                  ctx->set_error(ctx,500, "lock_exists: failed to close lockfile %s: %s",
+                        lockname, apr_strerror(rv,errmsg,120));
+               }
+               return GEOCACHE_FALSE;
+            }
+         } else {
+            /* we managed to aquire a lock on the file, which means it isn't locked, even if it exists */
+            /* unlock the file */
+            rv = apr_file_unlock(lock);
+            if(rv!=APR_SUCCESS) {
+               ctx->set_error(ctx,500, "lock_exists: failed to unlock lockfile %s: %s",
+                     lockname, apr_strerror(rv,errmsg,120));
+            }
+            rv = apr_file_close(lock);
+            if(rv!=APR_SUCCESS) {
+               ctx->set_error(ctx,500, "lock_exists: failed to close lockfile %s: %s",
+                     lockname, apr_strerror(rv,errmsg,120));
+            }
+            return GEOCACHE_FALSE;
+         }
+
+      }
+   }
+#endif
 }
 
 /**
@@ -163,14 +275,17 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
  */
 void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatile *mt) {
   char *lockname;
-  sem_t *lock;
+  lockname = geocache_tileset_metatile_lock_key(ctx, mt);
+
 #ifdef DEBUG
   if (mt->lock) {
-    ctx->set_error(ctx, 500, "### BUG ### waiting for a lock we have created ourself");
+    ctx->set_error(ctx, 500, "### BUG ### lock_wait: waiting for a lock we have created ourself");
     return;
   }
 #endif
-  lockname = geocache_tileset_metatile_lock_key(ctx, mt);
+
+#ifdef USE_SEMLOCK
+  sem_t *lock;
   lock = sem_open(lockname, 0, 0644, 1) ;
   if( lock == SEM_FAILED ) {
      if(errno == ENOENT) {
@@ -185,6 +300,36 @@ void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatil
      sem_post(lock);
      sem_close(lock);
   }
+#else
+   char errmsg[120];
+   apr_file_t *lock;
+   apr_status_t rv;
+   rv = apr_file_open(&lock,lockname,APR_READ|APR_SHARELOCK|APR_XTHREAD,APR_OS_DEFAULT,ctx->pool);
+   if(rv != APR_SUCCESS) {
+      if(APR_STATUS_IS_ENOENT(rv)) {
+         /* the lock file does not exist, it might have been removed since we checked.
+          * anyhow, there's no use waiting anymore
+          */
+         return;
+      } else {
+         ctx->set_error(ctx,500, "lock_wait: failed to open lockfile %s: %s",
+               lockname, apr_strerror(rv,errmsg,120));
+         return;
+      }
+   }
+   
+   rv = apr_file_lock(lock,APR_FLOCK_SHARED);
+   if(rv!=APR_SUCCESS) {
+      ctx->set_error(ctx,500, "lock_wait: failed to aquire a shared lock on lockfile %s: %s",
+            lockname, apr_strerror(rv,errmsg,120));
+   }
+   rv = apr_file_close(lock);
+   if(rv!=APR_SUCCESS) {
+      ctx->set_error(ctx,500, "lock_wait: failed to close lockfile %s: %s",
+            lockname, apr_strerror(rv,errmsg,120));
+   }
+
+#endif
 }
 
 /* vim: ai ts=3 sts=3 et sw=3

@@ -540,6 +540,13 @@
           - assemble: build the full image by assembling the tiles from the cache
           - forward: forward the request to the configured source.
    -->
-   <full_wms>forward</full_wms>
+   <full_wms>assemble</full_wms>
+   
+   <!--
+        location to put lockfiles (to block other clients while a metatile is being rendered.
+        defaults to /tmp
+        this location should be writable by the apache user
+   -->
+   <lock_dir>/tmp</lock_dir>
 
 </geocache>
