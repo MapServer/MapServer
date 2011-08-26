@@ -47,16 +47,16 @@ static char* num_encode(apr_pool_t *pool, int num) {
    return ret;
 }
 
-char *geocache_tileset_tile_lock_key(geocache_context *ctx, geocache_tile *tile) {
+char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatile *mt) {
    char *lockname = apr_psprintf(ctx->pool,
          "/%s-%s-%s%s", /*x,y,z,tilesetname*/
-         num_encode(ctx->pool,tile->x), num_encode(ctx->pool,tile->y),
-         num_encode(ctx->pool,tile->z), tile->tileset->name);
-   if(tile->tileset->grid_links->nelts > 1) {
-      lockname = apr_pstrcat(ctx->pool,lockname,tile->grid_link->grid->name,NULL);
+         num_encode(ctx->pool,mt->tile.x), num_encode(ctx->pool,mt->tile.y),
+         num_encode(ctx->pool,mt->tile.z), mt->tile.tileset->name);
+   if(mt->tile.tileset->grid_links->nelts > 1) {
+      lockname = apr_pstrcat(ctx->pool,lockname,mt->tile.grid_link->grid->name,NULL);
    }
-   if(tile->dimensions && !apr_is_empty_table(tile->dimensions)) {
-      const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
+   if(mt->tile.dimensions && !apr_is_empty_table(mt->tile.dimensions)) {
+      const apr_array_header_t *elts = apr_table_elts(mt->tile.dimensions);
       int i;
       for(i=0;i<elts->nelts;i++) {
          apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
@@ -74,24 +74,21 @@ char *geocache_tileset_tile_lock_key(geocache_context *ctx, geocache_tile *tile)
    return lockname;
 }
 /**
- * \brief lock the given tile so other processes know it is being processed
+ * \brief lock the given metatile so other processes know it is being processed
  *
  * this function call is protected by a mutex
  *
  * this function creates a named semaphore and aquires a lock on it
- * \sa geocache_cache::tile_lock()
- * \sa geocache_cache::tile_lock_exists()
- * \private \memberof geocache_cache_disk
  */
-void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile) {
-   char *lockname = geocache_tileset_tile_lock_key(ctx,tile);
+void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt) {
+   char *lockname = geocache_tileset_metatile_lock_key(ctx,mt);
    sem_t *lock;
    if ((lock = sem_open(lockname, O_CREAT|O_EXCL, 0644, 1)) == SEM_FAILED) {
       ctx->set_error(ctx,500, "failed to create posix semaphore %s: %s",lockname, strerror(errno));
       return;
    }
    sem_wait(lock);
-   tile->lock = lock;
+   mt->lock = lock;
 }
 
 /**
@@ -102,17 +99,17 @@ void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile) {
  * \sa geocache_cache::tile_unlock()
  * \sa geocache_cache::tile_lock_exists()
  */
-void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile) {
-   sem_t *lock = (sem_t*) tile->lock;
-   const char *lockname = geocache_tileset_tile_lock_key(ctx,tile);
-   if (!tile->lock) {
+void geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *mt) {
+   sem_t *lock = (sem_t*) mt->lock;
+   const char *lockname = geocache_tileset_metatile_lock_key(ctx,mt);
+   if (!mt->lock) {
       ctx->set_error(ctx,500,"###### TILE UNLOCK ######### attempting to unlock tile %s not created by this thread", lockname);
       return;
    }
    sem_post(lock);
    sem_close(lock);
    sem_unlink(lockname);
-   tile->lock = NULL;
+   mt->lock = NULL;
 }
 
 /**
@@ -123,11 +120,11 @@ void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile) {
  * \sa geocache_cache::tile_lock()
  * \sa geocache_cache::tile_unlock()
  */
-int geocache_tileset_tile_lock_exists(geocache_context *ctx, geocache_tile *tile) {
+int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metatile *mt) {
    char *lockname;
-   if (tile->lock)
+   if (mt->lock)
       return GEOCACHE_TRUE;
-   lockname = geocache_tileset_tile_lock_key(ctx, tile);
+   lockname = geocache_tileset_metatile_lock_key(ctx, mt);
    sem_t *lock = sem_open(lockname, 0, 0644, 1) ;
    if (lock == SEM_FAILED) {
       if(errno == ENOENT) {
@@ -148,16 +145,16 @@ int geocache_tileset_tile_lock_exists(geocache_context *ctx, geocache_tile *tile
  * this function will not return until the lock on the tile has been removed
  * \sa geocache_cache::tile_lock_wait()
  */
-void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile) {
+void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatile *mt) {
   char *lockname;
   sem_t *lock;
 #ifdef DEBUG
-  if (tile->lock) {
+  if (mt->lock) {
     ctx->set_error(ctx, 500, "### BUG ### waiting for a lock we have created ourself");
     return;
   }
 #endif
-  lockname = geocache_tileset_tile_lock_key(ctx, tile);
+  lockname = geocache_tileset_metatile_lock_key(ctx, mt);
   lock = sem_open(lockname, 0, 0644, 1) ;
   if( lock == SEM_FAILED ) {
      if(errno == ENOENT) {

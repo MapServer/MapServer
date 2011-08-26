@@ -63,37 +63,6 @@ static void _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile
 
 
 /*
- * for each of the metatile's tiles, ask the underlying cache to lock it
- */
-void _geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt) {
-   int i;
-   for(i=0; i<mt->ntiles; i++) {
-      geocache_tile *tile = &(mt->tiles[i]);
-      geocache_tileset_tile_lock(ctx, tile);
-      if(GC_HAS_ERROR(ctx)) {
-         /* undo successful locks */
-         int j;
-         for(j=0;j<i;j++) {
-            tile = &(mt->tiles[j]);
-            geocache_tileset_tile_unlock(ctx,tile);
-         }
-         return;
-      }
-   }
-}
-
-/*
- * for each of the metatile's tiles, ask the underlying cache to unlock it
- */
-void _geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *mt) {
-   int i;
-   for(i=0; i<mt->ntiles; i++) {
-      geocache_tile *tile = &(mt->tiles[i]);
-      geocache_tileset_tile_unlock(ctx, tile);
-   }
-}
-
-/*
  * compute the metatile that should be rendered for the given tile
  */
 static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, geocache_tile *tile) {
@@ -240,12 +209,13 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
 
       ctx->global_lock_aquire(ctx);
       GC_CHECK_ERROR(ctx);
+      
+      mt = _geocache_tileset_metatile_get(ctx, tile);
 
-      isLocked = geocache_tileset_tile_lock_exists(ctx, tile);
+      isLocked = geocache_tileset_metatile_lock_exists(ctx, mt);
       if(isLocked == GEOCACHE_FALSE) {
-         /* no other thread is doing the rendering, we aquire and lock a list of tiles to render */
-         mt = _geocache_tileset_metatile_get(ctx, tile);
-         _geocache_tileset_metatile_lock(ctx, mt);
+         /* no other thread is doing the rendering, we aquire and lock the metatile */
+         geocache_tileset_metatile_lock(ctx, mt);
       }
       ctx->global_lock_release(ctx);
       if(GC_HAS_ERROR(ctx))
@@ -257,7 +227,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
          ctx->log(ctx, GEOCACHE_DEBUG, "cache wait: tileset %s - tile %d %d %d",
                tile->tileset->name,tile->x, tile->y,tile->z);
 #endif
-         geocache_tileset_tile_lock_wait(ctx,tile);
+         geocache_tileset_metatile_lock_wait(ctx,mt);
          GC_CHECK_ERROR(ctx);
       } else {
          /* no other thread is doing the rendering, do it ourselves */
@@ -270,7 +240,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
          
          /* remove the lockfiles */
          ctx->global_lock_aquire(ctx);
-         _geocache_tileset_metatile_unlock(ctx,mt);
+         geocache_tileset_metatile_unlock(ctx,mt);
          ctx->global_lock_release(ctx);
          GC_CHECK_ERROR(ctx);
       }

@@ -674,8 +674,6 @@ struct geocache_tile {
      * \sa geocache_image_format
      */
     geocache_buffer *data;
-    void *lock; /**< pointer to opaque structure set by a geocache_cache to reference a lock on the tile
-                \sa geocache_cache::tile_lock() */
     apr_time_t mtime; /**< last modification time */
     int expires; /**< time in seconds after which the tile should be rechecked for validity */
     
@@ -694,6 +692,7 @@ struct geocache_metatile {
     int ntiles; /**< the number of geocache_metatile::tiles contained in this metatile */
     geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
     geocache_image *imdata;
+    void *lock; /**< pointer to opaque structure set by the locking mechanism */
 };
 
 
@@ -859,24 +858,24 @@ void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox);
 /**
  * lock the tile
  */
-void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile);
+void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *tile);
 
 /**
  * unlock the tile
  */
-void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile);
+void geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *tile);
 
 /**
  * check if there is a lock on the tile (the lock will have been set by another process/thread)
  * \returns GEOCACHE_TRUE if the tile is locked by another process/thread
  * \returns GEOCACHE_FALSE if there is no lock on the tile
  */
-int geocache_tileset_tile_lock_exists(geocache_context *ctx, geocache_tile *tile);
+int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metatile *tile);
 
 /**
  * wait for the lock set on the tile (the lock will have been set by another process/thread)
  */
-void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile);
+void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatile *tile);
 
 
 /** @} */
