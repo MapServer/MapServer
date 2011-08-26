@@ -30,6 +30,11 @@ static int _geocache_tileset_get_level(geocache_tileset *tileset, double *resolu
    return GEOCACHE_TILESET_WRONG_RESOLUTION;
 }
 
+/*
+ * update the tile by setting it's x,y,z value given a bbox.
+ * will return GEOCACHE_TILESET_WRONG_RESOLUTION or GEOCACHE_TILESET_WRONG_EXTENT
+ * if the bbox does not correspond to the tileset's configuration
+ */
 static int _geocache_tileset_tile_get_cell(geocache_tile *tile, double *bbox, request_rec *r) {
    int ret;
    double res = _geocache_tileset_get_resolution(tile->tileset,bbox);
@@ -52,6 +57,9 @@ static int _geocache_tileset_tile_get_cell(geocache_tile *tile, double *bbox, re
    return GEOCACHE_SUCCESS;
 }
 
+/*
+ * for each of the metatile's tiles, ask the underlying cache to lock it
+ */
 void _geocache_tileset_metatile_lock(geocache_metatile *mt, request_rec *r) {
    int i;
    for(i=0; i<mt->ntiles; i++) {
@@ -60,6 +68,9 @@ void _geocache_tileset_metatile_lock(geocache_metatile *mt, request_rec *r) {
    }
 }
 
+/*
+ * for each of the metatile's tiles, ask the underlying cache to unlock it
+ */
 void _geocache_tileset_metatile_unlock(geocache_metatile *mt, request_rec *r) {
    int i;
    for(i=0; i<mt->ntiles; i++) {
@@ -68,7 +79,9 @@ void _geocache_tileset_metatile_unlock(geocache_metatile *mt, request_rec *r) {
    }
 }
 
-//return the list of tiles that should be rendered for a metatile request
+/*
+ * compute the metatile that should be rendered for the given tile
+ */
 static geocache_metatile* _geocache_tileset_metatile_get(geocache_tile *tile, request_rec *r) {
    geocache_metatile *mt = (geocache_metatile*)apr_pcalloc(r->pool, sizeof(geocache_metatile));
    int i,j,blx,bly;
@@ -109,6 +122,12 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_tile *tile, re
    return mt;
 }
 
+/*
+ * do the actual rendering and saving of a metatile:
+ *  - query the datasource for the image data
+ *  - split the resulting image along the metabuffer / metatiles
+ *  - save each tile to cache
+ */
 int _geocache_tileset_render_metatile(geocache_metatile *mt, request_rec *r) {
    int i;
    int ret;
@@ -124,6 +143,9 @@ int _geocache_tileset_render_metatile(geocache_metatile *mt, request_rec *r) {
    return GEOCACHE_SUCCESS;
 }
 
+/*
+ * compute the bounding box of a given tile
+ */
 void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
    double res  = tile->tileset->resolutions[tile->z];
    bbox[0] = tile->tileset->extent[0] + (res * tile->x * tile->sx);
@@ -132,6 +154,9 @@ void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
    bbox[3] = tile->tileset->extent[1] + (res * (tile->y + 1) * tile->sy);
 }
 
+/*
+ * allocate and initialize a new tileset
+ */
 geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
    geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(pool, sizeof(geocache_tileset));
    tileset->metasize_x = tileset->metasize_y = 1;
@@ -142,6 +167,9 @@ geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
    return tileset;
 }
 
+/*
+ * allocate and initialize a tile for a given tileset
+ */
 geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, apr_pool_t *pool) {
    geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
    tile->tileset = tileset;
@@ -150,6 +178,9 @@ geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, apr_pool_
    return tile;
 }
 
+/*
+ * compute a tile's x,y and z value given a BBOX.
+ */
 int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec *r) {
    if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
       ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "tileset %s: wrong size. found %dx%d instead of %dx%d",
@@ -159,6 +190,24 @@ int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec 
    return _geocache_tileset_tile_get_cell(tile,bbox,r);
 }
 
+/*
+ * return the image data for a given tile
+ * this call uses a global (interprocess+interthread) mutex if the tile was not found
+ * in the cache.
+ * the processing here is:
+ *  - if the tile is found in the cache, return it. done
+ *  - if it isn't found:
+ *    * aquire mutex
+ *    * check if the tile isn't being rendered by another thread/process
+ *      - if another thread is rendering, wait for it to finish and return it's data
+ *      - otherwise, lock all the tiles corresponding to the request (a metatile has multiple tiles)
+ *    * release mutex
+ *    * call the source to render the metatile, and save the tiles to disk
+ *    * aquire mutex
+ *    * unlock the tiles we have rendered
+ *    * release mutex
+ *  
+ */
 int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r) {
    int ret;
    int isLocked;
@@ -203,15 +252,18 @@ int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r) {
          ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"cache miss: tileset %s - tile %d %d %d",
                tile->tileset->name,tile->x, tile->y,tile->z);
          
+         /* this will query the source to create the tiles, and save them to the cache */
          ret = _geocache_tileset_render_metatile(mt,r);
          
+         /* remove the lockfiles */
          geocache_util_mutex_aquire(r);
          _geocache_tileset_metatile_unlock(mt,r);
          geocache_util_mutex_release(r);
 
          if(ret != GEOCACHE_SUCCESS) return ret;
       }
-
+      
+      /* the previous step has successfully finished, we can now query the cache to return the tile content */
       ret = tile->tileset->cache->tile_get(tile, r);
       if(ret != GEOCACHE_SUCCESS) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
