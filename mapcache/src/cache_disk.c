@@ -163,10 +163,6 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
       ctx->set_error(ctx,500,"attempting to write empty tile to disk");
       return;
    }
-   if(!tile->lock) {
-      ctx->set_error(ctx,500,"attempting to write to an unlocked tile");
-      return;
-   }
 #endif
    _geocache_cache_disk_tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
