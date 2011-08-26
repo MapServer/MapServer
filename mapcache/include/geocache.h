@@ -109,6 +109,10 @@ typedef struct geocache_dimension_regex geocache_dimension_regex;
 /** \defgroup utility Utility */
 /** @{ */
 
+
+
+geocache_image *geocache_error_image(geocache_context *ctx, int width, int height, char *msg);
+
 /**
  * \interface geocache_context
  * \brief structure passed to most geocache functions to abstract common functions
@@ -309,6 +313,13 @@ struct geocache_cache {
      * \memberof geocache_cache
      */
     int (*tile_get)(geocache_context *ctx, geocache_tile * tile);
+    
+    /**
+     * delete tile from cache
+     * 
+     * \memberof geocache_cache
+     */
+    void (*tile_delete)(geocache_context *ctx, geocache_tile * tile);
 
     int (*tile_exists)(geocache_context *ctx, geocache_tile * tile);
 
