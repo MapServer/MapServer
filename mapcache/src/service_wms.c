@@ -17,7 +17,6 @@
 #include "geocache.h"
 #include <apr_strings.h>
 #include <math.h>
-
 /** \addtogroup services */
 /** @{ */
 
@@ -314,6 +313,21 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
          }
          geocache_tileset_tile_lookup(ctx, tile, bbox);
          GC_CHECK_ERROR(ctx);
+
+         /*look for dimensions*/
+         if(tileset->dimensions) {
+            int i;
+            tile->dimensions = apr_table_make(ctx->pool,tileset->dimensions->nelts);
+            for(i=0;i<tileset->dimensions->nelts;i++) {
+               geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+               const char *value;
+               if((value = apr_table_get(params,dimension->name)) != NULL) {
+                  apr_table_setn(tile->dimensions,dimension->name,value);
+               } else {
+                  apr_table_setn(tile->dimensions,dimension->name,dimension->default_value);
+               }
+            }
+         }
          req->tiles[req->ntiles++] = tile;
       }
       *request = (geocache_request*)req;

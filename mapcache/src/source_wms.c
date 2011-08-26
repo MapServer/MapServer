@@ -15,7 +15,7 @@
  */
 
 #include "geocache.h"
-#include <libxml/tree.h>
+#include "ezxml.h"
 #include <apr_tables.h>
 #include <apr_strings.h>
 
@@ -24,49 +24,51 @@
  * \sa geocache_source::render_metatile()
  */
 void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metatile *tile) {
-   geocache_source_wms *wms = (geocache_source_wms*)tile->tile.tileset->source;
-   apr_table_t *params = apr_table_clone(ctx->pool,wms->wms_default_params);
-   apr_table_setn(params,"BBOX",apr_psprintf(ctx->pool,"%f,%f,%f,%f",
-         tile->bbox[0],tile->bbox[1],tile->bbox[2],tile->bbox[3]));
-   apr_table_setn(params,"WIDTH",apr_psprintf(ctx->pool,"%d",tile->tile.sx));
-   apr_table_setn(params,"HEIGHT",apr_psprintf(ctx->pool,"%d",tile->tile.sy));
-   apr_table_setn(params,"FORMAT","image/png");
-   apr_table_setn(params,"SRS",wms->source.srs);
-   
-   apr_table_overlap(params,wms->wms_params,0);
-        
-   tile->tile.data = geocache_buffer_create(30000,ctx->pool);
-   geocache_http_request_url_with_params(ctx,wms->url,params,tile->tile.data);
-   GC_CHECK_ERROR(ctx);
-   
-   if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {
-      char *returned_data = apr_pstrndup(ctx->pool,(char*)tile->tile.data->buf,tile->tile.data->size);
-      ctx->set_error(ctx, GEOCACHE_SOURCE_WMS_ERROR, "wms request for tileset %s: %d %d %d returned an unsupported format:\n%s",
-            tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z, returned_data);
-   }
+    geocache_source_wms *wms = (geocache_source_wms*)tile->tile.tileset->source;
+    apr_table_t *params = apr_table_clone(ctx->pool,wms->wms_default_params);
+    apr_table_setn(params,"BBOX",apr_psprintf(ctx->pool,"%f,%f,%f,%f",
+             tile->bbox[0],tile->bbox[1],tile->bbox[2],tile->bbox[3]));
+    apr_table_setn(params,"WIDTH",apr_psprintf(ctx->pool,"%d",tile->tile.sx));
+    apr_table_setn(params,"HEIGHT",apr_psprintf(ctx->pool,"%d",tile->tile.sy));
+    apr_table_setn(params,"FORMAT","image/png");
+    apr_table_setn(params,"SRS",wms->source.srs);
+ 
+    apr_table_overlap(params,wms->wms_params,0);
+    if(tile->tile.dimensions && !apr_is_empty_table(tile->tile.dimensions)) {
+       const apr_array_header_t *elts = apr_table_elts(tile->tile.dimensions);
+       int i;
+       for(i=0;i<elts->nelts;i++) {
+          apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
+          apr_table_setn(params,entry.key,entry.val);
+       }
+ 
+    }      
+    tile->tile.data = geocache_buffer_create(30000,ctx->pool);
+    geocache_http_request_url_with_params(ctx,wms->url,params,tile->tile.data);
+    GC_CHECK_ERROR(ctx);
+ 
+    if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {
+       char *returned_data = apr_pstrndup(ctx->pool,(char*)tile->tile.data->buf,tile->tile.data->size);
+       ctx->set_error(ctx, GEOCACHE_SOURCE_WMS_ERROR, "wms request for tileset %s: %d %d %d returned an unsupported format:\n%s",
+             tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z, returned_data);
+    }
 }
 
 /**
  * \private \memberof geocache_source_wms
  * \sa geocache_source::configuration_parse()
  */
-void _geocache_source_wms_configuration_parse(geocache_context *ctx, xmlNode *xml, geocache_source *source) {
-   xmlNode *cur_node;
+void _geocache_source_wms_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_source *source) {
+   ezxml_t cur_node;
    geocache_source_wms *src = (geocache_source_wms*)source;
-   for(cur_node = xml->children; cur_node; cur_node = cur_node->next) {
-      if(cur_node->type != XML_ELEMENT_NODE) continue;
-      if(!xmlStrcmp(cur_node->name, BAD_CAST "url")) {
-         char* value = (char*)xmlNodeGetContent(cur_node);
-         src->url = value;
-      } else if(!xmlStrcmp(cur_node->name, BAD_CAST "wmsparams")) {
-         xmlNode *param_node;
-         for(param_node = cur_node->children; param_node; param_node = param_node->next) {
-            char *key,*value;
-            if(param_node->type != XML_ELEMENT_NODE) continue;
-            value = (char*)xmlNodeGetContent(param_node);
-            key = apr_pstrdup(ctx->pool, (char*)param_node->name);
-            apr_table_setn(src->wms_params, key, value);
-         }
+
+
+   if ((cur_node = ezxml_child(node,"url")) != NULL) {
+      src->url = apr_pstrdup(ctx->pool,cur_node->txt);
+   }
+   if ((cur_node = ezxml_child(node,"wmsparams")) != NULL) {
+      for(cur_node = cur_node->child; cur_node; cur_node = cur_node->sibling) {
+         apr_table_set(src->wms_params, cur_node->name, cur_node->txt);
       }
    }
 }
@@ -94,7 +96,6 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    }
    geocache_source_init(ctx, &(source->source));
    source->source.type = GEOCACHE_SOURCE_WMS;
-   source->source.supports_metatiling = 1;
    source->source.render_metatile = _geocache_source_wms_render_metatile;
    source->source.configuration_check = _geocache_source_wms_configuration_check;
    source->source.configuration_parse = _geocache_source_wms_configuration_parse;

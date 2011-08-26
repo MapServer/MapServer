@@ -15,7 +15,7 @@
  */
 
 #include "geocache.h"
-#include <libxml/tree.h>
+#include "ezxml.h"
 #include <apr_tables.h>
 #include <apr_strings.h>
 
@@ -41,23 +41,17 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
  * \private \memberof geocache_source_gdal
  * \sa geocache_source::configuration_parse()
  */
-void _geocache_source_gdal_configuration_parse(geocache_context *ctx, xmlNode *xml, geocache_source *source) {
-   xmlNode *cur_node;
+void _geocache_source_gdal_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_source *source) {
+   ezxml_t cur_node;
    geocache_source_gdal *src = (geocache_source_gdal*)source;
-   for(cur_node = xml->children; cur_node; cur_node = cur_node->next) {
-      if(cur_node->type != XML_ELEMENT_NODE) continue;
-      if(!xmlStrcmp(cur_node->name, BAD_CAST "data")) {
-         char* value = (char*)xmlNodeGetContent(cur_node);
-         src->datastr = value;
-      } else if(!xmlStrcmp(cur_node->name, BAD_CAST "gdalparams")) {
-         xmlNode *param_node;
-         for(param_node = cur_node->children; param_node; param_node = param_node->next) {
-            char *key,*value;
-            if(param_node->type != XML_ELEMENT_NODE) continue;
-            value = (char*)xmlNodeGetContent(param_node);
-            key = apr_pstrdup(ctx->pool, (char*)param_node->name);
-            apr_table_setn(src->gdal_params, key, value);
-         }
+
+   if ((cur_node = ezxml_child(node,"data")) != NULL) {
+      src->datastr = apr_pstrdup(ctx->pool,cur_node->txt);
+   }
+
+   if ((cur_node = ezxml_child(node,"gdalparams")) != NULL) {
+      for(cur_node = cur_node->child; cur_node; cur_node = cur_node->sibling) {
+         apr_table_set(src->gdal_params, cur_node->name, cur_node->txt);
       }
    }
 }
@@ -92,7 +86,6 @@ geocache_source* geocache_source_gdal_create(geocache_context *ctx) {
    }
    geocache_source_init(ctx, &(source->source));
    source->source.type = GEOCACHE_SOURCE_GDAL;
-   source->source.supports_metatiling = 1;
    source->source.render_metatile = _geocache_source_gdal_render_metatile;
    source->source.configuration_check = _geocache_source_gdal_configuration_check;
    source->source.configuration_parse = _geocache_source_gdal_configuration_parse;

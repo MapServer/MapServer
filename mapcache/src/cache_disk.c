@@ -41,9 +41,22 @@ void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *t
  * \private \memberof geocache_cache_disk
  */
 void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, char **path) {
-   *path = apr_psprintf(ctx->pool,"%s/%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
-         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
-         tile->tileset->name,
+   char *start;
+   start = apr_pstrcat(ctx->pool,
+         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,"/",
+         tile->tileset->name,"/",
+         tile->tileset->grid->name,
+         NULL);
+   if(tile->dimensions) {
+      const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
+      int i = elts->nelts;
+      while(i--) {
+         apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
+         start = apr_pstrcat(ctx->pool,start,"/",entry->key,"/",entry->val,NULL);
+      }
+   }
+   *path = apr_psprintf(ctx->pool,"%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
+         start,
          tile->z,
          tile->x / 1000000,
          (tile->x / 1000) % 1000,
@@ -53,33 +66,6 @@ void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, c
          tile->y % 1000,
          tile->tileset->format?tile->tileset->format->extension:"png");
    if(!*path) {
-      ctx->set_error(ctx,GEOCACHE_ALLOC_ERROR, "failed to allocate tile key");
-   }
-}
-
-/**
- * \brief return directory path and filename for given tile
- * 
- * \param tile the tile to get the key from
- * \param path pointer to a char* that will contain the directory path
- * \param basename pointer to a char* that will contain the basename of the file (i.e. without the leading directory path) 
- * \param r 
- * \private \memberof geocache_cache_disk
- */
-void _geocache_cache_disk_tile_key_split(geocache_context *ctx, geocache_tile *tile, char **path, char **basename) {
-   *path = apr_psprintf(ctx->pool,"%s/%s/%02d/%03d/%03d/%03d/%03d/%03d",
-         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
-         tile->tileset->name,
-         tile->z,
-         tile->x / 1000000,
-         (tile->x / 1000) % 1000,
-         tile->x % 1000,
-         tile->y / 1000000,
-         (tile->y / 1000) % 1000);
-   *basename = apr_psprintf(ctx->pool,"%03d.%s",
-         tile->y % 1000,
-         tile->tileset->format?tile->tileset->format->extension:"png");
-   if(!*basename || !*path) {
       ctx->set_error(ctx,GEOCACHE_ALLOC_ERROR, "failed to allocate tile key");
    }
 }
@@ -154,7 +140,7 @@ int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
 void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
    apr_size_t bytes;
    apr_file_t *f;
-   char *basename, *path, *filename;
+   char *filename, *hackptr1, *hackptr2=NULL;
 #ifdef DEBUG
    /* all this should be checked at a higher level */
    if(!tile->data || !tile->data->size) {
@@ -166,16 +152,24 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
       return;
    }
 #endif
-   _geocache_cache_disk_tile_key_split(ctx, tile, &path, &basename);
+   _geocache_cache_disk_tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
+
+   /* find the location of the last '/' in the string */
+   hackptr1 = filename;
+   while(*hackptr1) {
+      if(*hackptr1 == '/')
+         hackptr2 = hackptr1;
+      hackptr1++;
+   }
+   *hackptr2 = '\0';
    
-   if(APR_SUCCESS != apr_dir_make_recursive(path,APR_OS_DEFAULT,ctx->pool)) {
-       ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to create directory %s",path);
+   if(APR_SUCCESS != apr_dir_make_recursive(filename,APR_OS_DEFAULT,ctx->pool)) {
+       ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to create directory %s",filename);
        return;
    }
+   *hackptr2 = '/';
    
-   filename = apr_psprintf(ctx->pool,"%s/%s",path,basename);
-
    if(((geocache_cache_disk*)tile->tileset->cache)->symlink_blank) {
       geocache_image *image = geocache_imageio_decode(ctx, tile->data);
       GC_CHECK_ERROR(ctx);
@@ -248,24 +242,20 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
 /**
  * \private \memberof geocache_cache_disk
  */
-void _geocache_cache_disk_configuration_parse(geocache_context *ctx, xmlNode *xml, geocache_cache *cache) {
-   xmlNode *cur_node;
+void _geocache_cache_disk_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
+   ezxml_t cur_node;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
-   for(cur_node = xml->children; cur_node; cur_node = cur_node->next) {
-      if(cur_node->type != XML_ELEMENT_NODE) continue;
-      if(!xmlStrcmp(cur_node->name, BAD_CAST "base")) {
-         xmlChar* value = xmlNodeGetContent(cur_node);
-         dcache->base_directory = (char*)value;
-      }
-      if(!xmlStrcmp(cur_node->name, BAD_CAST "symlink_blank")) {
-         xmlChar* value = xmlNodeGetContent(cur_node);
-         if(xmlStrcasecmp(value,BAD_CAST "false")) {
-            dcache->symlink_blank = 1;
-         }
-      }
+
+   if ((cur_node = ezxml_child(node,"base")) != NULL) {
+      dcache->base_directory = apr_pstrdup(ctx->pool,cur_node->txt);
+   }
+   
+   if ((cur_node = ezxml_child(node,"symlink_blank")) != NULL) {
+      if(strcasecmp(cur_node->txt,"false"))
+         dcache->symlink_blank = 1;
    }
 }
-
+   
 /**
  * \private \memberof geocache_cache_disk
  */

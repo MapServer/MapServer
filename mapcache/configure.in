@@ -18,38 +18,6 @@ CFLAGS="$CFLAGS -fPIC"
 
 TARGETS=
 
-# macro that is used to parse a --with-xml2-config parameter
-AC_DEFUN([XML2_CHECK],[
-    AC_SUBST(XML2CONFIG)
-    
-    AC_ARG_WITH(
-        xml2-config,
-        [  --with-xml2-config[=/path/to/xml2-config]     xml2-config tool location],
-        ,
-        [with_xml2_config="yes"]
-    )
-    
-    if test "$with_xml2_config" = "yes"; then
-        AC_PATH_PROG(XML2CONFIG, xml2-config)
-    elif test "$with_xml2_config" = "no"; then
-        AC_MSG_ERROR(xml2-config is required and cannot be disabled)
-    else
-        AC_MSG_CHECKING(for xml2-config usability in $with_xml2_config)
-        if test -x "$with_xml2_config"; then
-            XML2CONFIG=$with_xml2_config
-            AC_MSG_RESULT(yes)
-        else
-            AC_MSG_ERROR($with_xml2_config not found or not executable)
-        fi
-    fi
-    if test -z "$XML2CONFIG"; then
-        AC_MSG_ERROR(xml2-config utility not found. use --with-xml2-config to specify its location.)
-    fi
-    AC_SUBST(XML2CONFIG)
-    AC_SUBST(XML2_CFLAGS,`$XML2CONFIG --cflags`)
-    AC_SUBST(XML2_LIBS,`$XML2CONFIG --libs`)
-])
-
 # macro that is used to parse a --with-apxs parameter
 AC_DEFUN([APXS_CHECK],[
     AC_SUBST(APXS)
@@ -433,8 +401,6 @@ PNG_CHECK
 
 JPEG_CHECK
 GDAL_CHECK
-
-XML2_CHECK
 
 CURL_CHECK
 

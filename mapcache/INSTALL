@@ -28,7 +28,7 @@ LoadModule geocache_module    modules/mod_geocache.so
 Customizing the build, or if something went wrong
 -------------------------------------------------
 
-mod-geocache requires apache, liburl, libxml2 and libpng development headers.
+mod-geocache requires apache, liburl, and libpng development headers.
 The configure script will try to locate them in default system locations, that can be
 overriden or specified with switches (./configure --help should give you a full list):
 
@@ -45,11 +45,6 @@ libcurl
 =======
 
 --with-curl-config=/path/to/curl-config
-
-libxml2
-=======
-
---with-xml2-config=/path/to/xml2-config
 
 libpng
 ======

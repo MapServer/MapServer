@@ -23,6 +23,5 @@ void geocache_source_init(geocache_context *ctx, geocache_source *source) {
 			source->data_extent[2] =
 			source->data_extent[3] = -1;
 	source->srs = NULL;
-	source->supports_metatiling = 0;
 	source->metadata = apr_table_make(ctx->pool,3);
 }

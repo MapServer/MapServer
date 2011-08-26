@@ -25,8 +25,8 @@
 #include <apr_tables.h>
 #include <apr_hash.h>
 #include <apr_global_mutex.h>
-#include <libxml/tree.h>
 #include "util.h"
+#include "ezxml.h"
 #include "errors.h"
 #ifdef USE_GDAL
 #include <gdal.h>
@@ -34,6 +34,7 @@
 #endif
 #include <assert.h>
 #include <apr_time.h>
+#include <regex.h>
 
 #define GEOCACHE_SUCCESS 0
 #define GEOCACHE_FAILURE 1
@@ -78,8 +79,7 @@ typedef struct geocache_server_cfg geocache_server_cfg;
 typedef struct geocache_image geocache_image;
 typedef struct geocache_grid geocache_grid;
 typedef struct geocache_context geocache_context;
-
-
+typedef struct geocache_dimension geocache_dimension;
 
 /** \defgroup utility Utility */
 /** @{ */
@@ -207,7 +207,6 @@ struct geocache_source {
     char *srs; /**< data SRS */
     double data_extent[4]; /**< extent in which this source can produce data */
     geocache_source_type type;
-    int supports_metatiling;
     apr_table_t *metadata;
     /**
      * \brief get the data for the metatile
@@ -215,7 +214,7 @@ struct geocache_source {
      * sets the geocache_metatile::tile::data for the given tile
      */
     void (*render_metatile)(geocache_context *ctx, geocache_metatile * mt);
-    void (*configuration_parse)(geocache_context *ctx, xmlNode *xml, geocache_source * source);
+    void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_source * source);
     void (*configuration_check)(geocache_context *ctx, geocache_source * source);
 };
 
@@ -277,7 +276,7 @@ struct geocache_cache {
      */
     void (*tile_set)(geocache_context *ctx, geocache_tile * tile);
 
-    void (*configuration_parse)(geocache_context *ctx, xmlNode *xml, geocache_cache * cache);
+    void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_cache * cache);
     void (*configuration_check)(geocache_context *ctx, geocache_cache * cache);
 };
 
@@ -674,6 +673,8 @@ struct geocache_tile {
                 \sa geocache_cache::tile_lock() */
     apr_time_t mtime; /**< last modification time */
     int expires; /**< time in seconds after which the tile should be rechecked for validity */
+    
+    apr_table_t *dimensions;
 };
 
 /**
@@ -759,7 +760,7 @@ struct geocache_tileset {
     /**
      * a list of parameters that can be forwarded from the client to the geocache_tileset::source
      */
-    apr_table_t *forwarded_params;
+    apr_array_header_t *dimensions;
     
     /**
      * image to be used as a watermark
@@ -1002,11 +1003,35 @@ int geocache_imageio_image_has_alpha(geocache_image *img);
 geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *buffer);
 
 
-
-
-
-
-
-
 /** @} */
+
+typedef enum {
+   GEOCACHE_DIMENSION_VALUES,
+   GEOCACHE_DIMENSION_INTERVAL,
+   GEOCACHE_DIMENSION_REGEX
+} geocache_dimension_type;
+
+typedef struct geocache_dimension_entry geocache_dimension_entry;
+
+struct geocache_dimension {
+   geocache_dimension_type type;
+   char *name;
+   apr_table_t *metadata;
+   char *default_value;
+   int (*validate)(geocache_context *context, char *value);
+};
+typedef struct geocache_dimension_values geocache_dimension_values;
+
+struct geocache_dimension_values {
+   geocache_dimension dimension;
+   int nvalues;
+   char **values;
+};
+
+typedef struct geocache_dimension_regexp geocache_dimension_regexp;
+
+struct geocache_dimension_regexp {
+   geocache_dimension dimension;
+   regex_t *regex;
+};
 #endif /* GEOCACHE_H_ */
