@@ -65,7 +65,6 @@ void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile) {
       ctx->set_error(ctx,500, "failed to create posix semaphore %s: %s",lockname, strerror(errno));
       return;
    }
-   ctx->log(ctx,GEOCACHE_DEBUG,"lock name is %s",lockname);
    sem_wait(lock);
    tile->lock = lock;
 }
