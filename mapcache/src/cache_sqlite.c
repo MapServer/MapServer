@@ -318,7 +318,12 @@ static void _geocache_cache_sqlite_configuration_post_config(geocache_context *c
             geocache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
             geocache_grid *grid = gridlink->grid;
             char *dbname = _get_dbname(ctx,tileset,grid);
-            sqlite3_open(dbname, &db);
+            ret = sqlite3_open(dbname, &db);
+            if(ret != SQLITE_OK) {
+               ctx->set_error(ctx,500,"sqlite backend failed to open db %s: %s",dbname,sqlite3_errmsg(db));
+               sqlite3_close(db);
+               return;
+            }
             ret = sqlite3_exec(db, dcache->create_stmt.sql, 0, 0, &errmsg);
             if(ret != SQLITE_OK) {
                ctx->set_error(ctx,500,"sqlite backend failed to create tiles table: %s",sqlite3_errmsg(db));
