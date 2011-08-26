@@ -22,11 +22,15 @@
 void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
    int len = strlen(filename);
    const char *ext = &(filename[len-3]);
-   if(strcasecmp(ext,"xml")) {
-      geocache_configuration_parse_json(ctx,filename,config);
-   } else {
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
+   if(!strcasecmp(ext,"xml")) {
+#endif
       geocache_configuration_parse_xml(ctx,filename,config);
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
+   } else {
+      geocache_configuration_parse_json(ctx,filename,config);
    }
+#endif
    GC_CHECK_ERROR(ctx);
 
    if(!config->lockdir || !strlen(config->lockdir)) {

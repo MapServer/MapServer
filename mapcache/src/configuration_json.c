@@ -1,3 +1,5 @@
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
+
 #include "geocache.h"
 #include <errno.h>
 #include <apr_strings.h>
@@ -828,3 +830,5 @@ cleanup:
    fclose(f);
    //free(filedata);
 }
+
+#endif

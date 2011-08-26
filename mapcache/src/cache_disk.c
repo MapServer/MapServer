@@ -415,6 +415,7 @@ static void _geocache_cache_disk_configuration_parse_xml(geocache_context *ctx, 
 /**
  * \private \memberof geocache_cache_disk
  */
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 static void _geocache_cache_disk_configuration_parse_json(geocache_context *ctx, cJSON *node, geocache_cache *cache) {
    cJSON *tmp;
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
@@ -445,6 +446,7 @@ static void _geocache_cache_disk_configuration_parse_json(geocache_context *ctx,
       }
    }
 }
+#endif
    
 /**
  * \private \memberof geocache_cache_disk
@@ -478,7 +480,9 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
    cache->cache.tile_set = _geocache_cache_disk_set;
    cache->cache.configuration_post_config = _geocache_cache_disk_configuration_post_config;
    cache->cache.configuration_parse_xml = _geocache_cache_disk_configuration_parse_xml;
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    cache->cache.configuration_parse_json = _geocache_cache_disk_configuration_parse_json;
+#endif
    return (geocache_cache*)cache;
 }
 

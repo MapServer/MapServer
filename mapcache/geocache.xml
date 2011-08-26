@@ -512,7 +512,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/Users/tbonfort/dev/mapserver-utils/osm.map</MAP>
+            <MAP>/gro1/mapserver-utils/osm.map</MAP>
          </params>
       </getmap>
    </source>
@@ -602,8 +602,8 @@
          the supplied image is read when the configuration is loaded.
          if you make changes to the image, they will NOT be reflected on tiles already
          stored in the cache, nor on newly stored tiles until the server is restarted
-      <watermark>/home/tbonfort/dev/mod-geocache/static/watermark.png</watermark>
       -->
+      <watermark>/home/tbonfort/dev/mod-geocache/static/watermark.png</watermark>
       
       <!-- format
          (optional) format to use when storing a tile. this should be a format with high

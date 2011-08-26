@@ -165,6 +165,7 @@ static void _geocache_cache_memcache_set(geocache_context *ctx, geocache_tile *t
 /**
  * \private \memberof geocache_cache_memcache
  */
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 static void _geocache_cache_memcache_configuration_parse_json(geocache_context *ctx, cJSON *node, geocache_cache *cache) {
    geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
    cJSON *servers = cJSON_GetObjectItem(node,"servers");
@@ -205,10 +206,9 @@ static void _geocache_cache_memcache_configuration_parse_json(geocache_context *
          return;
       }
    }
-
-   
-
 }
+#endif
+
 /**
  * \private \memberof geocache_cache_memcache
  */
@@ -296,7 +296,9 @@ geocache_cache* geocache_cache_memcache_create(geocache_context *ctx) {
    cache->cache.tile_delete = _geocache_cache_memcache_delete;
    cache->cache.configuration_post_config = _geocache_cache_memcache_configuration_post_config;
    cache->cache.configuration_parse_xml = _geocache_cache_memcache_configuration_parse_xml;
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    cache->cache.configuration_parse_json = _geocache_cache_memcache_configuration_parse_json;
+#endif
    return (geocache_cache*)cache;
 }
 

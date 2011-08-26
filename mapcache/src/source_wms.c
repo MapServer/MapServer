@@ -91,6 +91,7 @@ void _geocache_source_wms_query(geocache_context *ctx, geocache_feature_info *fi
  * \private \memberof geocache_source_wms
  * \sa geocache_source::configuration_parse()
  */
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 void _geocache_source_wms_configuration_parse_json(geocache_context *ctx, cJSON *props, geocache_source *source) {
    cJSON *tmp;
    geocache_source_wms *src = (geocache_source_wms*)source;
@@ -130,10 +131,8 @@ void _geocache_source_wms_configuration_parse_json(geocache_context *ctx, cJSON 
       tmp = cJSON_GetObjectItem(tmp,"params");
       parse_keyvalues(ctx,tmp,src->getfeatureinfo_params);
    }
-
-
-
 }
+#endif
 /**
  * \private \memberof geocache_source_wms
  * \sa geocache_source::configuration_parse()
@@ -216,7 +215,9 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    source->source.render_map = _geocache_source_wms_render_map;
    source->source.configuration_check = _geocache_source_wms_configuration_check;
    source->source.configuration_parse_xml = _geocache_source_wms_configuration_parse_xml;
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    source->source.configuration_parse_json = _geocache_source_wms_configuration_parse_json;
+#endif
    source->source.query_info = _geocache_source_wms_query;
    source->wms_default_params = apr_table_make(ctx->pool,4);;
    source->getmap_params = apr_table_make(ctx->pool,4);

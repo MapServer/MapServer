@@ -232,6 +232,7 @@ static void _geocache_cache_sqlite_set(geocache_context *ctx, geocache_tile *til
    sqlite3_close(handle);
 }
 
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 static void _geocache_cache_sqlite_configuration_parse_json(geocache_context *ctx, cJSON *node, geocache_cache *cache) {
    cJSON *tmp;
    geocache_cache_sqlite *dcache = (geocache_cache_sqlite*)cache;
@@ -273,6 +274,7 @@ static void _geocache_cache_sqlite_configuration_parse_json(geocache_context *ct
       dcache->hitstat_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
    }
 }
+#endif
 
 static void _geocache_cache_sqlite_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
    ezxml_t cur_node;
@@ -344,7 +346,9 @@ geocache_cache* geocache_cache_sqlite_create(geocache_context *ctx) {
    cache->cache.tile_set = _geocache_cache_sqlite_set;
    cache->cache.configuration_post_config = _geocache_cache_sqlite_configuration_post_config;
    cache->cache.configuration_parse_xml = _geocache_cache_sqlite_configuration_parse_xml;
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    cache->cache.configuration_parse_json = _geocache_cache_sqlite_configuration_parse_json;
+#endif
    cache->create_stmt.sql = apr_pstrdup(ctx->pool,
          "create table if not exists tiles(x integer, y integer, z integer, data blob, dim text, ctime datetime, atime datetime, hitcount integer default 0, primary key(x,y,z,dim))");
    cache->exists_stmt.sql = apr_pstrdup(ctx->pool,

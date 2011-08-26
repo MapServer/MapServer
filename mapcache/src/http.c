@@ -300,6 +300,7 @@ geocache_http* geocache_http_configuration_parse_xml(geocache_context *ctx, ezxm
    /* TODO: parse <proxy> and <auth> elements */
 }
 
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 geocache_http* geocache_http_configuration_parse_json(geocache_context *ctx, cJSON *node) {
    cJSON *tmp;
    geocache_http *req = (geocache_http*)apr_pcalloc(ctx->pool,sizeof(geocache_http));
@@ -326,6 +327,7 @@ geocache_http* geocache_http_configuration_parse_json(geocache_context *ctx, cJS
    return req;
    /* TODO: parse <proxy> and <auth> elements */
 }
+#endif
 
 
 geocache_http* geocache_http_clone(geocache_context *ctx, geocache_http *orig) {

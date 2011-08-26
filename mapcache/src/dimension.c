@@ -54,9 +54,11 @@ static const char** _geocache_dimension_intervals_print(geocache_context *ctx, g
    return ret;
 }
 
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 static void _geocache_dimension_intervals_parse_json(geocache_context *ctx, geocache_dimension *dim,
       cJSON *node) {
 }
+#endif
 
 static void _geocache_dimension_intervals_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
@@ -127,6 +129,7 @@ static const char** _geocache_dimension_regex_print(geocache_context *ctx, geoca
    return ret;
 }
 
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 static void _geocache_dimension_regex_parse_json(geocache_context *ctx, geocache_dimension *dim,
       cJSON *node) {
    geocache_dimension_regex *dimension = (geocache_dimension_regex*)dim;
@@ -158,6 +161,7 @@ static void _geocache_dimension_regex_parse_json(geocache_context *ctx, geocache
       return;
    }
 }
+#endif
 
 static void _geocache_dimension_regex_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
@@ -216,6 +220,7 @@ static const char** _geocache_dimension_values_print(geocache_context *ctx, geoc
    return ret;
 }
 
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 static void _geocache_dimension_values_parse_json(geocache_context *ctx, geocache_dimension *dim,
       cJSON *node) {
    cJSON *tmp;
@@ -243,6 +248,7 @@ static void _geocache_dimension_values_parse_json(geocache_context *ctx, geocach
       return;
    }
 }
+#endif
 
 static void _geocache_dimension_values_parse_xml(geocache_context *ctx, geocache_dimension *dim,
       ezxml_t node) {
@@ -282,7 +288,9 @@ geocache_dimension* geocache_dimension_values_create(apr_pool_t *pool) {
    dimension->nvalues = 0;
    dimension->dimension.validate = _geocache_dimension_values_validate;
    dimension->dimension.configuration_parse_xml = _geocache_dimension_values_parse_xml;
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    dimension->dimension.configuration_parse_json = _geocache_dimension_values_parse_json;
+#endif
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_values_print;
    return (geocache_dimension*)dimension;
 }
@@ -303,7 +311,9 @@ geocache_dimension* geocache_dimension_intervals_create(apr_pool_t *pool) {
    dimension->nintervals = 0;
    dimension->dimension.validate = _geocache_dimension_intervals_validate;
    dimension->dimension.configuration_parse_xml = _geocache_dimension_intervals_parse_xml;
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    dimension->dimension.configuration_parse_json = _geocache_dimension_intervals_parse_json;
+#endif
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_intervals_print;
    return (geocache_dimension*)dimension;
 }
@@ -315,7 +325,9 @@ geocache_dimension* geocache_dimension_regex_create(apr_pool_t *pool) {
 #endif
    dimension->dimension.validate = _geocache_dimension_regex_validate;
    dimension->dimension.configuration_parse_xml = _geocache_dimension_regex_parse_xml;
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    dimension->dimension.configuration_parse_json = _geocache_dimension_regex_parse_json;
+#endif
    dimension->dimension.print_ogc_formatted_values = _geocache_dimension_regex_print;
    return (geocache_dimension*)dimension;
 }

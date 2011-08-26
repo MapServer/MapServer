@@ -774,6 +774,7 @@ proxies:
 #endif
 }
 
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_service *gservice, geocache_cfg *cfg) {
    assert(gservice->type == GEOCACHE_SERVICE_WMS);
    geocache_service_wms *wms = (geocache_service_wms*)gservice;
@@ -888,6 +889,7 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
       }
    }
 }
+#endif
 
 void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_service *gservice, geocache_cfg *cfg) {
    assert(gservice->type == GEOCACHE_SERVICE_WMS);
@@ -985,7 +987,9 @@ geocache_service* geocache_service_wms_create(geocache_context *ctx) {
    service->service.parse_request = _geocache_service_wms_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wms;
    service->service.configuration_parse_xml = _configuration_parse_wms_xml;
+#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    service->service.configuration_parse_json = _configuration_parse_wms_json;
+#endif
    service->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
    service->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
    return (geocache_service*)service;
