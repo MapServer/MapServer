@@ -293,6 +293,8 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
 #ifdef DEBUG
             ctx->log(ctx,GEOCACHE_DEBUG,"created blank tile %s",blankname);
 #endif
+         } else {
+            apr_file_close(f);
          }
          ctx->global_lock_release(ctx);
          if(symlink(blankname,filename) != 0) {
