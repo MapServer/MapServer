@@ -50,6 +50,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    _geocache_buffer_closure b;
    b.buffer = buffer;
    b.ptr = buffer->buf;
+   png_uint_32 width, height;
 
 
    /* could pass pointers to user-defined error handlers instead of NULLs: */
@@ -77,11 +78,13 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
 
    png_read_info(png_ptr,info_ptr);
    img = geocache_image_create(ctx);
-   if(!png_get_IHDR(png_ptr, info_ptr, &img->w, &img->h,&bit_depth, &color_type,NULL,NULL,NULL)) {
+   if(!png_get_IHDR(png_ptr, info_ptr, &width, &height,&bit_depth, &color_type,NULL,NULL,NULL)) {
       ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to read png header");
       return NULL;
    }
 
+   img->w = width;
+   img->h = height;
    img->data = apr_pcalloc(ctx->pool,img->w*img->h*4*sizeof(unsigned char));
    img->stride = img->w * 4;
    row_pointers = apr_pcalloc(ctx->pool,img->h * sizeof(unsigned char*));
