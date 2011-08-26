@@ -197,6 +197,7 @@ static int geocache_write_image_buffer(geocache_context_apache_request *ctx, geo
 
 static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_tile *tile) {
    int rc;
+   char *timestr;
    request_rec *r = ctx->request;
 
    if(tile->expires) {
@@ -204,15 +205,20 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
       apr_time_t additional = apr_time_from_sec(tile->expires);
       apr_time_t expires = now + additional;
       apr_table_set(r->headers_out, "Cache-Control",apr_psprintf(r->pool, "max-age=%d", tile->expires));
-      char *timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
+      timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
       apr_rfc822_date(timestr, expires);
-      apr_table_set(r->headers_out, "Expires", timestr);
+      apr_table_setn(r->headers_out, "Expires", timestr);
    }
-   ap_set_last_modified(r);
-   ap_update_mtime(r, tile->mtime);
-   if((rc = ap_meets_conditions(r)) != OK) {
-      return rc;
+   if(tile->mtime) {
+      ap_update_mtime(r, tile->mtime);
+      if((rc = ap_meets_conditions(r)) != OK) {
+         return rc;
+      }
+      timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
+      apr_rfc822_date(timestr, tile->mtime);
+      apr_table_setn(r->headers_out, "Last-Modified", timestr);
    }
+
    return geocache_write_image_buffer(ctx, tile->data, tile->tileset->format); 
 }
 

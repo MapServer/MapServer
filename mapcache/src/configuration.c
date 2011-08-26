@@ -788,6 +788,17 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
             return;
          }
    }
+   if ((cur_node = ezxml_child(node,"auto_expire")) != NULL) {
+      char *endptr;
+      tileset->auto_expire = (int)strtol(cur_node->txt,&endptr,10);
+      if(*endptr != 0) {
+         ctx->set_error(ctx, 400, "failed to parse auto_expire %s."
+               "(expecting an  integer, "
+               "eg <auto_expire>3600</auto_expire>",
+               cur_node->txt);  
+         return;
+      }
+   }
 
    if ((cur_node = ezxml_child(node,"metabuffer")) != NULL) {
          char *endptr;

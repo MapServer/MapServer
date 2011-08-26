@@ -85,9 +85,8 @@ static void _geocache_cache_memcache_delete(geocache_context *ctx, geocache_tile
    _geocache_cache_memcache_tile_key(ctx, tile, &key);
    GC_CHECK_ERROR(ctx);
    rv = apr_memcache_delete(cache->memcache,key,0);
-   if(rv != APR_SUCCESS) {
+   if(rv != APR_SUCCESS && rv!= APR_NOTFOUND) {
       int code = 500;
-      if(rv == APR_NOTFOUND) code=404;
       ctx->set_error(ctx,code,"memcache: failed to delete key %s: %s", key, apr_strerror(rv,errmsg,120));
    }
 }
@@ -116,7 +115,14 @@ static int _geocache_cache_memcache_get(geocache_context *ctx, geocache_tile *ti
       ctx->set_error(ctx,500,"memcache cache returned 0-length data for tile %d %d %d\n",tile->x,tile->y,tile->z);
       return GEOCACHE_FAILURE;
    }
+   /* extract the tile modification time from the end of the data returned */
+   memcpy(
+         &tile->mtime,
+         &(tile->data->buf[tile->data->size-sizeof(apr_time_t)]),
+         sizeof(apr_time_t));
+   tile->data->buf[tile->data->size+sizeof(apr_time_t)]='\0';
    tile->data->avail = tile->data->size;
+   tile->data->size -= sizeof(apr_time_t);
    return GEOCACHE_SUCCESS;
 }
 
@@ -132,12 +138,23 @@ static int _geocache_cache_memcache_get(geocache_context *ctx, geocache_tile *ti
 static void _geocache_cache_memcache_set(geocache_context *ctx, geocache_tile *tile) {
    char *key;
    int rv;
-   int expires = tile->tileset->expires?tile->tileset->expires:3600;
+   /* set expiration to one day if not configured */
+   int expires = 86400;
+   if(tile->tileset->auto_expire)
+      expires = tile->tileset->auto_expire;
    geocache_cache_memcache *cache = (geocache_cache_memcache*)tile->tileset->cache;
    _geocache_cache_memcache_tile_key(ctx, tile, &key);
    GC_CHECK_ERROR(ctx);
+
+   /* concatenate the current time to the end of the memcache data so we can extract it out
+    * when we re-get the tile */
+   char *data = calloc(1,tile->data->size+sizeof(apr_time_t));
+   apr_time_t now = apr_time_now();
+   apr_pool_cleanup_register(ctx->pool, data, (void*)free, apr_pool_cleanup_null);
+   memcpy(data,tile->data->buf,tile->data->size);
+   memcpy(&(data[tile->data->size]),&now,sizeof(apr_time_t));
    
-   rv = apr_memcache_set(cache->memcache,key,(char*)tile->data->buf,tile->data->size,expires,0);
+   rv = apr_memcache_set(cache->memcache,key,data,tile->data->size+sizeof(apr_time_t),expires,0);
    if(rv != APR_SUCCESS) {
       ctx->set_error(ctx,500,"failed to store tile %d %d %d to memcache cache %s",
             tile->x,tile->y,tile->z,cache->cache.name);

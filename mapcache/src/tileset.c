@@ -271,6 +271,7 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx) {
    tileset->metasize_x = tileset->metasize_y = 1;
    tileset->metabuffer = 0;
    tileset->expires = 0;
+   tileset->auto_expire = 0;
    tileset->metadata = apr_table_make(ctx->pool,3);
    tileset->dimensions = NULL;
    tileset->format = NULL;
@@ -359,6 +360,18 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
    ret = tile->tileset->cache->tile_get(ctx, tile);
    GC_CHECK_ERROR(ctx);
 
+   if(ret == GEOCACHE_SUCCESS && tile->tileset->auto_expire && tile->mtime) {
+      /* the cache is in auto-expire mode, and can return the tile modification date
+       * so we check to see if it is stale */
+      apr_time_t now = apr_time_now();
+      apr_time_t stale = tile->mtime + apr_time_from_sec(tile->tileset->auto_expire);
+      if(stale<now) {
+         geocache_tileset_tile_delete(ctx,tile);
+         GC_CHECK_ERROR(ctx);
+         ret = GEOCACHE_CACHE_MISS;
+      }
+   }
+
    if(ret == GEOCACHE_CACHE_MISS) {
       /* the tile does not exist, we must take action before re-asking for it */
 
@@ -418,6 +431,13 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
             /* shouldn't really happen, as the error ought to have been caught beforehand */
             ctx->set_error(ctx, 500, "tileset %s: failed to re-get tile %d %d %d from cache after set", tile->tileset->name,tile->x,tile->y,tile->z);
          }
+      }
+      /* update the tile expiration time */
+      if(tile->tileset->auto_expire && tile->mtime) {
+         apr_time_t now = apr_time_now();
+         apr_time_t expire_time = tile->mtime + apr_time_from_sec(tile->tileset->auto_expire);
+         tile->expires = apr_time_sec(expire_time-now);
+
       }
    }
 }

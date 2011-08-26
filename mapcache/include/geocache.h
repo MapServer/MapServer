@@ -978,8 +978,18 @@ struct geocache_tileset {
 
     /**
      * number of seconds that should be returned to the client in an Expires: header
+     *
+     * \sa auto_expire
      */
     int expires;
+    
+    /**
+     * number of seconds after which a tile will be regenerated from the source
+     * 
+     * will take precedence over the #expires parameter.
+     * \sa expires
+     */
+    int auto_expire;
 
     /**
      * the cache in which the tiles should be stored

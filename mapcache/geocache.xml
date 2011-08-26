@@ -342,14 +342,12 @@
    <!-- memcache cache
         entry accepts multiple <server> entries
    -->
-   <!--
    <cache name="memcache" type="memcache">
       <server>
          <host>localhost</host>
          <port>11211</port>
       </server>
    </cache>
-   -->
 
    <!-- format
 
@@ -468,7 +466,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/Users/tbonfort/dev/mapserver-utils/osm.map</MAP>
+            <MAP>/gro1/mapserver-utils/osm.map</MAP>
          </params>
       </getmap>
    </source>
@@ -588,8 +586,19 @@
       <!-- expires
          optional expiration value in seconds for a tile. this is expressed in a number of seconds
          after the creation date of the tile
+         This is the value that will be set in the HTTP Expires and Cache-Control headers, and has
+         no effect on the actual expiration of tiles on the caches. See <auto_expire> for that.
       -->
       <expires>3600</expires>
+
+      <!-- auto_expire
+         automatically re-request tiles and update the cache once they are older than the given number
+         of seconds after their creation.
+         Note that this will only delete tiles form the cache when they are accessed, you cannot
+         use this configuration to limit the size of the created cache.
+         Note that if set, this value overrides the value given by <expires>
+      -->
+      <auto_expire>86400</auto_expire>
       
       <!-- dimensions
          optional dimensions that should be cached
@@ -656,7 +665,7 @@
          <abstract>see http://mapserver-utils.googlecode.com</abstract>
       </metadata>
       <source>osm</source>
-      <cache>disk</cache>
+      <cache>memcache</cache>
       <format>PNG</format>
       <grid>FXX</grid>
       <grid>MILLER</grid>
@@ -664,6 +673,7 @@
       <grid>g</grid>
       <metatile>5 5</metatile>
       <expires>10000</expires>
+      <auto_expire>86400</auto_expire>
       <metabuffer>10</metabuffer>
    </tileset>
 
