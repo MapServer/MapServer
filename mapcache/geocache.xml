@@ -29,9 +29,18 @@
 
       <!-- 
            the spatial reference this tileset is in. a WMS client will need this for
-           getMap requests.
+           getMap requests. This is the srs that will be sent to the WMS source during
+           a request, make sure that this srs is supported by the wms.
       -->
       <srs>epsg:4326</srs>
+
+      <!--
+           equivalent values for the SRS that can be requested by a client.
+           this value is essentially here to be able to support:
+            - epsg:900913 and epsg:3857 for the googleMapsCompatible gridset
+            - epsg:2154 and IGNF:LAMB93
+      -->
+      <srsalias>epsg:foobar</srsalias>
 
       <!--
            width and height of tiles. 256x256 is the usual size
@@ -87,38 +96,6 @@
          </grid>
 
          <grid>
-            <name>google</name>
-            <metadata>
-               <title>GoogleMapsCompatible</title>
-               <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible</WellKnownScaleSet>
-            </metadata>
-            <extent>-20037508.3427892480,-20037508.3427892480,20037508.3427892480,20037508.3427892480</extent>
-            <srs>epsg:900913</srs>
-            <size>256 256</size>
-            <resolutions>
-               156543.0339280410
-               78271.51696402048
-               39135.75848201023
-               19567.87924100512
-               9783.939620502561
-               4891.969810251280
-               2445.984905125640
-               1222.992452562820
-               611.4962262814100
-               305.7481131407048
-               152.8740565703525
-               76.43702828517624
-               38.21851414258813
-               19.10925707129406
-               9.554628535647032
-               4.777314267823516
-               2.388657133911758
-               1.194328566955879
-               0.5971642834779395
-            </resolutions>
-         </grid>
-
-         <grid>
             <name>GoogleMapsCompatible</name>
             <metadata>
                <title>GoogleMapsCompatible</title>
@@ -126,6 +103,7 @@
             </metadata>
             <extent>-20037508.3427892480,-20037508.3427892480,20037508.3427892480,20037508.3427892480</extent>
             <srs>epsg:3857</srs>
+            <srsalias>epsg:900913</srsalias>
             <size>256 256</size>
             <resolutions>
                156543.0339280410
@@ -296,7 +274,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+            <MAP>/home/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
          </params>
       </getmap>
    </source>
@@ -362,7 +340,7 @@
          return images in the grid's srs.
       -->
          <grid restricted_extent="-10 40 10 50">WGS84</grid>
-      <grid>google</grid>
+         <grid>GoogleMapsCompatible</grid>
 
       <!-- metadata
          optional metadata tags used for responding to GetCapabilities request.
@@ -483,7 +461,7 @@
       <cache>disk</cache>
       <format>PNG</format>
       <grid>WGS84</grid>
-      <grid>google</grid>
+      <grid>GoogleMapsCompatible</grid>
       <metatile>5 5</metatile>
       <metabuffer>10</metabuffer>
    </tileset>

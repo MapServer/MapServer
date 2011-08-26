@@ -347,7 +347,17 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             geocache_grid_link *grid_link = NULL;
             for(i=0;i<tileset->grid_links->nelts;i++){
                geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
-               if(strcasecmp(sgrid->grid->srs,srs)) continue;
+               /* look for a grid with a matching srs */
+               if(strcasecmp(sgrid->grid->srs,srs)) {
+                  /* look if the grid has some srs aliases */
+                  int s;
+                  for(s=0;s<sgrid->grid->srs_aliases->nelts;s++) {
+                     char *srsalias = APR_ARRAY_IDX(sgrid->grid->srs_aliases,s,char*);
+                     if(!strcasecmp(srsalias,srs)) break;
+                  }
+                  if(s==sgrid->grid->srs_aliases->nelts)
+                     continue; /* no srs alias matches the requested srs */
+               }
                grid_link = sgrid;
                break;
             }

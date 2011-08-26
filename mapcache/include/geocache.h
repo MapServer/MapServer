@@ -854,6 +854,7 @@ struct geocache_grid {
    char *name;
    int nlevels;
    char *srs;
+   apr_array_header_t *srs_aliases;
    double extent[4];
    geocache_unit unit;
    int tile_sx, tile_sy; /**<width and height of a tile in pixels */
