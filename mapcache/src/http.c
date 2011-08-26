@@ -28,7 +28,7 @@ size_t _geocache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void
    return geocache_buffer_append(buffer, realsize, ptr);
 }
 
-int geocache_http_request_url(geocache_context *r, char *url, geocache_buffer *data) {
+void geocache_http_request_url(geocache_context *ctx, char *url, geocache_buffer *data) {
    CURL *curl_handle;
    curl_handle = curl_easy_init();
    int ret;
@@ -36,7 +36,7 @@ int geocache_http_request_url(geocache_context *r, char *url, geocache_buffer *d
    /* specify URL to get */
    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
 #ifdef DEBUG
-   r->log(r, GEOCACHE_DEBUG, "##### START #####\ncurl requesting url %s",url);
+   ctx->log(ctx, GEOCACHE_DEBUG, "##### START #####\ncurl requesting url %s",url);
 #endif
    /* send all data to this function  */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _geocache_curl_memory_callback);
@@ -54,21 +54,15 @@ int geocache_http_request_url(geocache_context *r, char *url, geocache_buffer *d
    /* get it! */ 
    ret = curl_easy_perform(curl_handle);
    if(ret != CURLE_OK) {
-      r->set_error(r, GEOCACHE_HTTP_ERROR, "curl failed to request url %s : %s", url, error_msg);
-      return r->get_error(r);
+      ctx->set_error(ctx, GEOCACHE_HTTP_ERROR, "curl failed to request url %s : %s", url, error_msg);
    }
-
    /* cleanup curl stuff */ 
    curl_easy_cleanup(curl_handle);
-#ifdef DEBUG
-   r->log(r, GEOCACHE_DEBUG, "##### END #####\nrequested url %s",url);
-#endif
-   return GEOCACHE_SUCCESS;
 }
 
-int geocache_http_request_url_with_params(geocache_context *r, char *url, apr_table_t *params, geocache_buffer *data) {
-   char *fullUrl = geocache_http_build_url(r,url,params);
-   return geocache_http_request_url(r,fullUrl,data);
+void geocache_http_request_url_with_params(geocache_context *ctx, char *url, apr_table_t *params, geocache_buffer *data) {
+   char *fullUrl = geocache_http_build_url(ctx,url,params);
+   geocache_http_request_url(ctx,fullUrl,data);
 }
 
 /* calculate the length of the string formed by key=value&, and add it to cnt */

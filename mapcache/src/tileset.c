@@ -15,18 +15,17 @@ static double _geocache_tileset_get_resolution(geocache_tileset *tileset, double
    return GEOCACHE_MAX(rx,ry);
 }
 
-int geocache_tileset_get_level(geocache_tileset *tileset, double *resolution, int *level, geocache_context *r) {
+void geocache_tileset_get_level(geocache_context *ctx, geocache_tileset *tileset, double *resolution, int *level) {
    double max_diff = *resolution / (double)GEOCACHE_MAX(tileset->tile_sx, tileset->tile_sy);
    int i;
    for(i=0; i<tileset->levels; i++) {
       if(fabs(tileset->resolutions[i] - *resolution) < max_diff) {
          *resolution = tileset->resolutions[i];
          *level = i;
-         return GEOCACHE_SUCCESS;
+         return;
       }
    }
-   r->set_error(r, GEOCACHE_TILESET_ERROR, "tileset %s: failed lookup for resolution %f", tileset->name, *resolution);
-   return GEOCACHE_TILESET_WRONG_RESOLUTION;
+   ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: failed lookup for resolution %f", tileset->name, *resolution);
 }
 
 /*
@@ -34,11 +33,10 @@ int geocache_tileset_get_level(geocache_tileset *tileset, double *resolution, in
  * will return GEOCACHE_TILESET_WRONG_RESOLUTION or GEOCACHE_TILESET_WRONG_EXTENT
  * if the bbox does not correspond to the tileset's configuration
  */
-static int _geocache_tileset_tile_get_cell(geocache_tile *tile, double *bbox, geocache_context *r) {
-   int ret;
+static void _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile *tile, double *bbox) {
    double res = _geocache_tileset_get_resolution(tile->tileset,bbox);
-   ret = geocache_tileset_get_level(tile->tileset,&res,&(tile->z),r);
-   if(ret != GEOCACHE_SUCCESS) return ret;
+   geocache_tileset_get_level(ctx, tile->tileset, &res, &(tile->z));
+   GC_CHECK_ERROR(ctx);
    /* TODO: strict mode
            if exact and self.extent_type == "strict" and not self.contains((minx, miny), res):
                raise TileCacheException("Lower left corner (%f, %f) is outside layer bounds %s. \nTo remove this condition, set extent_type=loose in your configuration."
@@ -50,55 +48,51 @@ static int _geocache_tileset_tile_get_cell(geocache_tile *tile, double *bbox, ge
 
    if((fabs(bbox[0] - (tile->x * res * tile->tileset->tile_sx) - tile->tileset->extent[0] ) / res > 1) ||
          (fabs(bbox[1] - (tile->y * res * tile->tileset->tile_sy) - tile->tileset->extent[1] ) / res > 1)) {
-      r->set_error(r, GEOCACHE_TILESET_ERROR, "tileset %s: supplied bbox not aligned on configured grid",tile->tileset->name);
-      return GEOCACHE_TILESET_WRONG_EXTENT;
+      ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: supplied bbox not aligned on configured grid",tile->tileset->name);
    }
-   return GEOCACHE_SUCCESS;
 }
 
 /*
  * for each of the metatile's tiles, ask the underlying cache to lock it
  */
-int _geocache_tileset_metatile_lock(geocache_metatile *mt, geocache_context *r) {
-   int i,ret;
+void _geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt) {
+   int i;
    for(i=0; i<mt->ntiles; i++) {
       geocache_tile *tile = &(mt->tiles[i]);
-      ret = mt->tile.tileset->cache->tile_lock(tile,r);
-      if(ret != GEOCACHE_SUCCESS) {
+      mt->tile.tileset->cache->tile_lock(ctx, tile);
+      if(GC_HAS_ERROR(ctx)) {
          /* undo successful locks */
          int j;
          for(j=0;j<i;j++) {
             tile = &(mt->tiles[j]);
-            mt->tile.tileset->cache->tile_unlock(tile,r);
+            mt->tile.tileset->cache->tile_unlock(ctx,tile);
          }
-         return ret;
       }
    }
-   return GEOCACHE_SUCCESS;
 }
 
 /*
  * for each of the metatile's tiles, ask the underlying cache to unlock it
  */
-void _geocache_tileset_metatile_unlock(geocache_metatile *mt, geocache_context *r) {
+void _geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *mt) {
    int i;
    for(i=0; i<mt->ntiles; i++) {
       geocache_tile *tile = &(mt->tiles[i]);
-      mt->tile.tileset->cache->tile_unlock(tile,r);
+      mt->tile.tileset->cache->tile_unlock(ctx, tile);
    }
 }
 
 /*
  * compute the metatile that should be rendered for the given tile
  */
-static geocache_metatile* _geocache_tileset_metatile_get(geocache_tile *tile, geocache_context *r) {
-   geocache_metatile *mt = (geocache_metatile*)apr_pcalloc(r->pool, sizeof(geocache_metatile));
+static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, geocache_tile *tile) {
+   geocache_metatile *mt = (geocache_metatile*)apr_pcalloc(ctx->pool, sizeof(geocache_metatile));
    int i,j,blx,bly;
    double res = tile->tileset->resolutions[tile->z];
    double gbuffer,gwidth,gheight;
    mt->tile.tileset = tile->tileset;
    mt->ntiles = mt->tile.tileset->metasize_x * mt->tile.tileset->metasize_y;
-   mt->tiles = (geocache_tile*)apr_pcalloc(r->pool, mt->ntiles * sizeof(geocache_tile));
+   mt->tiles = (geocache_tile*)apr_pcalloc(ctx->pool, mt->ntiles * sizeof(geocache_tile));
    mt->tile.sx =  mt->tile.tileset->metasize_x * tile->sx + 2 * mt->tile.tileset->metabuffer;
    mt->tile.sy =  mt->tile.tileset->metasize_y * tile->sy + 2 * mt->tile.tileset->metabuffer;
    mt->tile.z = tile->z;
@@ -137,19 +131,17 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_tile *tile, ge
  *  - split the resulting image along the metabuffer / metatiles
  *  - save each tile to cache
  */
-int _geocache_tileset_render_metatile(geocache_metatile *mt, geocache_context *r) {
+void _geocache_tileset_render_metatile(geocache_context *ctx, geocache_metatile *mt) {
    int i;
-   int ret;
-   ret = mt->tile.tileset->source->render_metatile(mt, r);
-   if(ret != GEOCACHE_SUCCESS) { return ret; }
-   ret = geocache_image_metatile_split(mt,r);
-   if(ret != GEOCACHE_SUCCESS) { return ret; }
+   mt->tile.tileset->source->render_metatile(ctx, mt);
+   GC_CHECK_ERROR(ctx);
+   geocache_image_metatile_split(ctx, mt);
+   GC_CHECK_ERROR(ctx);
    for(i=0;i<mt->ntiles;i++) {
       geocache_tile *tile = &(mt->tiles[i]);
-      ret = mt->tile.tileset->cache->tile_set(tile, r);
-      if(ret != GEOCACHE_SUCCESS) { return ret; }
+      mt->tile.tileset->cache->tile_set(ctx, tile);
+      GC_CHECK_ERROR(ctx);
    }
-   return GEOCACHE_SUCCESS;
 }
 
 /*
@@ -166,15 +158,15 @@ void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
 /*
  * allocate and initialize a new tileset
  */
-geocache_tileset* geocache_tileset_create(geocache_context *r) {
-   geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(r->pool, sizeof(geocache_tileset));
+geocache_tileset* geocache_tileset_create(geocache_context *ctx) {
+   geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(ctx->pool, sizeof(geocache_tileset));
    tileset->metasize_x = tileset->metasize_y = 1;
    tileset->metabuffer = 0;
    tileset->units = GEOCACHE_UNIT_UNSET;
    tileset->expires = 0;
    tileset->tile_sx = tileset->tile_sy = 256;
    tileset->extent[0]=tileset->extent[1]=tileset->extent[2]=tileset->extent[3]=0;
-   tileset->forwarded_params = apr_table_make(r->pool,1);
+   tileset->forwarded_params = apr_table_make(ctx->pool,1);
    tileset->format = NULL;
    return tileset;
 }
@@ -182,8 +174,8 @@ geocache_tileset* geocache_tileset_create(geocache_context *r) {
 /*
  * allocate and initialize a tile for a given tileset
  */
-geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, geocache_context *r) {
-   geocache_tile *tile = (geocache_tile*)apr_pcalloc(r->pool, sizeof(geocache_tile));
+geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *tileset) {
+   geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
    tile->tileset = tileset;
    tile->expires = tileset->expires;
    tile->sx = tileset->tile_sx;
@@ -192,13 +184,13 @@ geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, geocache_
 }
 
 
-int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, geocache_context *r) {
+void geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox) {
    if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
-      r->set_error(r, GEOCACHE_TILESET_ERROR, "tileset %s: wrong size. found %dx%d instead of %dx%d",
+      ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: wrong size. found %dx%d instead of %dx%d",
             tile->tileset->name,tile->sx,tile->sy,tile->tileset->tile_sx,tile->tileset->tile_sy);
-      return GEOCACHE_TILESET_WRONG_SIZE;
+      return;
    }
-   return _geocache_tileset_tile_get_cell(tile,bbox,r);
+   _geocache_tileset_tile_get_cell(ctx, tile,bbox);
 }
 
 /**
@@ -219,17 +211,17 @@ int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, geocache_con
  *    - release mutex
  *  
  */
-int geocache_tileset_tile_get(geocache_tile *tile, geocache_context *r) {
-   int ret;
-   int isLocked;
+void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
+   int isLocked,ret;
    geocache_metatile *mt;
    if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
-      r->set_error(r, GEOCACHE_TILESET_ERROR, 
+      ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, 
             "tileset %s: asked for a %dx%d tile from a %dx%d tileset",tile->tileset->name,
             tile->sx, tile->sy, tile->tileset->tile_sx, tile->tileset->tile_sy);
-      return GEOCACHE_FAILURE;
+      return;
    }
-   ret = tile->tileset->cache->tile_get(tile, r);
+   ret = tile->tileset->cache->tile_get(ctx, tile);
+   GC_CHECK_ERROR(ctx);
    if(ret == GEOCACHE_CACHE_MISS) {
       /* the tile does not exist, we must take action before re-asking for it */
 
@@ -240,55 +232,49 @@ int geocache_tileset_tile_get(geocache_tile *tile, geocache_context *r) {
        * - if the lock does not exist, then this thread should do the rendering
        * - if the lock exists, we should wait for the other thread to finish
        */
-      ret = r->global_lock_aquire(r,0);
-      if(ret != GEOCACHE_SUCCESS) return ret;
+      ctx->global_lock_aquire(ctx,0);
+      GC_CHECK_ERROR(ctx);
 
-      isLocked = tile->tileset->cache->tile_lock_exists(tile,r);
+      isLocked = tile->tileset->cache->tile_lock_exists(ctx, tile);
       if(isLocked == GEOCACHE_FALSE) {
          /* no other thread is doing the rendering, we aquire and lock a list of tiles to render */
-         mt = _geocache_tileset_metatile_get(tile,r);
-         ret = _geocache_tileset_metatile_lock(mt,r);
-         if(ret != GEOCACHE_SUCCESS) {
-            r->set_error(r,GEOCACHE_TILESET_ERROR,"failed to lock tiles. do you have write permission?");
-            r->global_lock_release(r);
-            return ret;
-         }
+         mt = _geocache_tileset_metatile_get(ctx, tile);
+         _geocache_tileset_metatile_lock(ctx, mt);
       }
 
-      r->global_lock_release(r);
+      ctx->global_lock_release(ctx);
+      if(GC_HAS_ERROR(ctx))
+         return;
 
       if(isLocked == GEOCACHE_TRUE) {
          /* another thread is rendering the tile, we should wait for it to finish */
 #ifdef DEBUG
-         r->log(r, GEOCACHE_DEBUG, "cache wait: tileset %s - tile %d %d %d",
+         ctx->log(ctx, GEOCACHE_DEBUG, "cache wait: tileset %s - tile %d %d %d",
                tile->tileset->name,tile->x, tile->y,tile->z);
 #endif
-         tile->tileset->cache->tile_lock_wait(tile,r);
+         tile->tileset->cache->tile_lock_wait(ctx,tile);
+         GC_CHECK_ERROR(ctx);
       } else {
          /* no other thread is doing the rendering, do it ourselves */
 #ifdef DEBUG
-         r->log(r, GEOCACHE_DEBUG, "cache miss: tileset %s - tile %d %d %d",
+         ctx->log(ctx, GEOCACHE_DEBUG, "cache miss: tileset %s - tile %d %d %d",
                tile->tileset->name,tile->x, tile->y,tile->z);
 #endif
          /* this will query the source to create the tiles, and save them to the cache */
-         ret = _geocache_tileset_render_metatile(mt,r);
+         _geocache_tileset_render_metatile(ctx, mt);
+         GC_CHECK_ERROR(ctx);
          
          /* remove the lockfiles */
-         r->global_lock_aquire(r,0);
-         _geocache_tileset_metatile_unlock(mt,r);
-         r->global_lock_release(r);
-
-         if(ret != GEOCACHE_SUCCESS) return ret;
+         ctx->global_lock_aquire(ctx,0);
+         _geocache_tileset_metatile_unlock(ctx,mt);
+         ctx->global_lock_release(ctx);
+         GC_CHECK_ERROR(ctx);
       }
       
       /* the previous step has successfully finished, we can now query the cache to return the tile content */
-      ret = tile->tileset->cache->tile_get(tile, r);
+      ret = tile->tileset->cache->tile_get(ctx, tile);
       if(ret != GEOCACHE_SUCCESS) {
-         r->set_error(r, GEOCACHE_TILESET_ERROR, "tileset %s: failed to re-get tile from cache after set", tile->tileset->name);
-         return ret;
+         ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: failed to re-get tile from cache after set", tile->tileset->name);
       }
-      return GEOCACHE_SUCCESS;
-   } else {
-      return ret;
    }
 }

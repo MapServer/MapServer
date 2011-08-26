@@ -134,8 +134,6 @@ static geocache_context_fcgi_request* fcgi_context_request_create(geocache_conte
 
 
 static int geocache_write_tile(geocache_context_fcgi_request *ctx, geocache_tile *tile) {
-   int rc;
-
    if(tile->tileset->format) {
       if(!strcmp(tile->tileset->format->extension,"png"))
          FCGX_FPrintF(ctx->out,"Content-type: image/png\r\n\r\n");
@@ -151,7 +149,7 @@ static int geocache_write_tile(geocache_context_fcgi_request *ctx, geocache_tile
          return 500;
       }
    }
-   FCGX_PutStr(tile->data->buf, tile->data->size,ctx->out);
+   FCGX_PutStr((char*)tile->data->buf, tile->data->size,ctx->out);
 
    return 200;
 }
@@ -159,7 +157,6 @@ static int geocache_write_tile(geocache_context_fcgi_request *ctx, geocache_tile
 int main(int argc, char **argv) {
    
    apr_pool_initialize();
-   char *msg;
    geocache_context_fcgi* globalctx = fcgi_context_create();
    geocache_context* c = (geocache_context*)globalctx;
    geocache_cfg *cfg = geocache_configuration_create(c->pool);
@@ -174,9 +171,9 @@ int main(int argc, char **argv) {
       return 1;
    }
    c->log(c,GEOCACHE_DEBUG,"geocache fcgi conf file: %s",conffile);
-   msg = geocache_configuration_parse(conffile,cfg,c);
-   if(msg) {
-      c->log(c,GEOCACHE_ERROR,"failed to parse %s: %s",conffile,msg);
+   geocache_configuration_parse(c,conffile,cfg);
+   if(GC_HAS_ERROR(c)) {
+      c->log(c,GEOCACHE_ERROR,"failed to parse %s: %s",conffile,c->get_error_message(c));
       return 1;
    }
    
@@ -206,9 +203,9 @@ int main(int argc, char **argv) {
       
       for(i=0;i<request->ntiles;i++) {
          geocache_tile *tile = request->tiles[i];
-         int rv = geocache_tileset_tile_get(tile,ctx);
-         if(rv != GEOCACHE_SUCCESS) {
-            ctx->log(c,GEOCACHE_DEBUG,c->get_error_message(ctx));
+         geocache_tileset_tile_get(ctx,tile);
+         if(GC_HAS_ERROR(ctx)) {
+            ctx->log(ctx,GEOCACHE_DEBUG,ctx->get_error_message(ctx));
             FCGX_FPrintF(out,"Status: 500 Internal Server Error\r\n\r\n");
             goto cleanup;
          }
@@ -234,6 +231,6 @@ cleanup:
       apr_pool_destroy(ctx->pool);
    }
    apr_pool_destroy(globalctx->ctx.pool);
-
+   return 0;
 
 }

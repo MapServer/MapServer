@@ -19,8 +19,8 @@
 #include <apr_tables.h>
 #include <curl/curl.h>
 
-int geocache_util_extract_int_list(char* args, const char sep, int **numbers,
-      int *numbers_count, geocache_context *r) {
+int geocache_util_extract_int_list(geocache_context *ctx, char* args, const char sep, int **numbers,
+      int *numbers_count) {
    char *last, *key, *endptr;
    int tmpcount=1;
    char delim[2];
@@ -32,7 +32,7 @@ int geocache_util_extract_int_list(char* args, const char sep, int **numbers,
       if(*key == sep)
          tmpcount++;
    }
-   *numbers = (int*)apr_pcalloc(r->pool,tmpcount*sizeof(int));
+   *numbers = (int*)apr_pcalloc(ctx->pool,tmpcount*sizeof(int));
    for (key = apr_strtok(args, delim, &last); key != NULL;
          key = apr_strtok(NULL, delim, &last)) {
       (*numbers)[(*numbers_count)++] = (int)strtol(key,&endptr,10);
@@ -42,8 +42,8 @@ int geocache_util_extract_int_list(char* args, const char sep, int **numbers,
    return GEOCACHE_SUCCESS;
 }
 
-int geocache_util_extract_double_list(char* args, const char sep, double **numbers,
-      int *numbers_count, geocache_context *r) {
+int geocache_util_extract_double_list(geocache_context *ctx, char* args, const char sep, double **numbers,
+      int *numbers_count) {
    char *last, *key, *endptr;
    int tmpcount=1;
    char delim[2];
@@ -55,7 +55,7 @@ int geocache_util_extract_double_list(char* args, const char sep, double **numbe
       if(*key == sep)
          tmpcount++;
    }
-   *numbers = (double*)apr_pcalloc(r->pool,tmpcount*sizeof(double));
+   *numbers = (double*)apr_pcalloc(ctx->pool,tmpcount*sizeof(double));
    for (key = apr_strtok(args, delim, &last); key != NULL;
          key = apr_strtok(NULL, delim, &last)) {
       (*numbers)[(*numbers_count)++] = strtod(key,&endptr);
@@ -65,37 +65,5 @@ int geocache_util_extract_double_list(char* args, const char sep, double **numbe
    return GEOCACHE_SUCCESS;
 }
 
-void geocache_context_init_parent(geocache_context *ctx) {
-   curl_global_init(CURL_GLOBAL_ALL);
-}
-
-void geocache_context_init(geocache_context *ctx, geocache_context *parent);
-
-/*
-int geocache_util_mutex_aquire(geocache_context *r) {
-   int ret;
-   geocache_server_cfg *cfg = ap_get_module_config(r->server->module_config, &geocache_module);
-   ret = apr_global_mutex_lock(cfg->mutex);
-   if(ret != APR_SUCCESS) {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, 0, r->server, "failed to aquire mutex lock");
-      return HTTP_INTERNAL_SERVER_ERROR;
-   }
-   apr_pool_cleanup_register(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
-   return GEOCACHE_SUCCESS;
-}
-
-int geocache_util_mutex_release(geocache_context *r) {
-   int ret;
-   geocache_server_cfg *cfg = ap_get_module_config(r->server->module_config, &geocache_module);
-   ret = apr_global_mutex_unlock(cfg->mutex);
-   if(ret != APR_SUCCESS) {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, 0, r->server, "failed to release mutex");
-      return HTTP_INTERNAL_SERVER_ERROR;
-   }
-   apr_pool_cleanup_kill(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
-   return GEOCACHE_SUCCESS;
-}
-
-*/
 
 

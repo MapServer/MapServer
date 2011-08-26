@@ -16,12 +16,12 @@
 
 #include "geocache.h"
 
-int _geocache_image_merge(geocache_context *r, geocache_image *base, geocache_image *overlay) {
+void _geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay) {
    int i,j;
    unsigned char *browptr, *orowptr, *bptr, *optr;
    if(base->w != overlay->w || base->h != overlay->h) {
-      r->set_error(r, GEOCACHE_IMAGE_ERROR, "attempting to merge images with different sizes");
-      return GEOCACHE_FAILURE;
+      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "attempting to merge images with different sizes");
+      return;
    }
    browptr = base->data;
    orowptr = overlay->data;
@@ -55,36 +55,41 @@ int _geocache_image_merge(geocache_context *r, geocache_image *base, geocache_im
       browptr += base->stride;
       orowptr += overlay->stride;
    }
-   return GEOCACHE_SUCCESS;
 }
 
-geocache_tile* geocache_image_merge_tiles(geocache_context *r, geocache_image_format *format, geocache_tile **tiles, int ntiles) {
+geocache_tile* geocache_image_merge_tiles(geocache_context *ctx, geocache_image_format *format, geocache_tile **tiles, int ntiles) {
    geocache_image *base,*overlay;
    int i;
-   geocache_tile *tile = apr_pcalloc(r->pool,sizeof(geocache_tile));
+   geocache_tile *tile = apr_pcalloc(ctx->pool,sizeof(geocache_tile));
    tile->mtime = tiles[0]->mtime;
    tile->expires = tiles[0]->expires;
-   base = geocache_imageio_decode(r, tiles[0]->data);
+   base = geocache_imageio_decode(ctx, tiles[0]->data);
    if(!base) return NULL;
    for(i=1; i<ntiles; i++) {
-      overlay = geocache_imageio_decode(r, tiles[i]->data);
+      overlay = geocache_imageio_decode(ctx, tiles[i]->data);
+      if(!overlay) return NULL;
       if(tile->mtime < tiles[i]->mtime)
          tile->mtime = tiles[i]->mtime;
       if(tiles[i]->expires && ((tile->expires < tiles[i]->expires) || !tile->expires)) {
          tile->expires = tiles[i]->expires;
       }
-      if(!overlay) return NULL;
-      _geocache_image_merge(r, base, overlay);
+      _geocache_image_merge(ctx, base, overlay);
+      if(GC_HAS_ERROR(ctx)) {
+         return NULL;
+      }
    }
 
-   tile->data = format->write(base, format, r);
+   tile->data = format->write(ctx, base, format);
+   if(GC_HAS_ERROR(ctx)) {
+      return NULL;
+   }
    tile->sx = base->w;
    tile->sy = base->h;
    tile->tileset = tiles[0]->tileset;
    return tile;
 }
 
-int geocache_image_metatile_split(geocache_metatile *mt, geocache_context *r) {
+void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt) {
    if(mt->tile.tileset->format) {
       /* the tileset has a format defined, we will use it to encode the data */
       geocache_image tileimg;
@@ -93,19 +98,19 @@ int geocache_image_metatile_split(geocache_metatile *mt, geocache_context *r) {
       int sx,sy;
       tileimg.w = mt->tile.tileset->tile_sx;
       tileimg.h = mt->tile.tileset->tile_sy;
-      metatile = geocache_imageio_decode(r, mt->tile.data);
+      metatile = geocache_imageio_decode(ctx, mt->tile.data);
       if(!metatile) {
-         r->set_error(r, GEOCACHE_IMAGE_ERROR, "failed to load image data from metatile");
-         return GEOCACHE_FAILURE;
+         ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to load image data from metatile");
+         return;
       }
       tileimg.stride = metatile->stride;
-      if(!metatile) return GEOCACHE_FAILURE;
       for(i=0;i<mt->tile.tileset->metasize_x;i++) {
          for(j=0;j<mt->tile.tileset->metasize_y;j++) {
             sx = mt->tile.tileset->metabuffer + i * tileimg.w;
             sy = mt->tile.sy - (mt->tile.tileset->metabuffer + (j+1) * tileimg.w);
             tileimg.data = &(metatile->data[sy*metatile->stride + 4 * sx]);
-            mt->tiles[i*mt->tile.tileset->metasize_x+j].data = mt->tile.tileset->format->write(&tileimg, mt->tile.tileset->format, r);
+            mt->tiles[i*mt->tile.tileset->metasize_x+j].data = mt->tile.tileset->format->write(ctx, &tileimg, mt->tile.tileset->format);
+            GC_CHECK_ERROR(ctx);
          }
       }
    } else {
@@ -113,13 +118,12 @@ int geocache_image_metatile_split(geocache_metatile *mt, geocache_context *r) {
       if(mt->tile.tileset->metasize_x != 1 ||
             mt->tile.tileset->metasize_y != 1 ||
             mt->tile.tileset->metabuffer != 0) {
-         r->set_error(r, GEOCACHE_IMAGE_ERROR, "##### BUG ##### using a metatile with no format");
-         return GEOCACHE_FAILURE;
+         ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "##### BUG ##### using a metatile with no format");
+         return;
       }
       mt->tiles[0].data = mt->tile.data;
 #endif
    }
-   return GEOCACHE_SUCCESS;
 }
 
 int geocache_image_blank_color(geocache_image* image) {

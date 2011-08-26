@@ -34,6 +34,7 @@ static void _geocache_buffer_realloc(geocache_buffer *buffer, size_t len) {
 
 geocache_buffer *geocache_buffer_create(size_t initialStorage, apr_pool_t* pool) {
    geocache_buffer *buffer = apr_pcalloc(pool, sizeof(geocache_buffer));
+   if(!buffer) return NULL;
    buffer->pool = pool;
    buffer->avail = (initialStorage > INITIAL_BUFFER_SIZE) ? initialStorage : INITIAL_BUFFER_SIZE;
    buffer->buf = malloc(buffer->avail);

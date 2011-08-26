@@ -92,8 +92,8 @@ int _geocache_imageio_jpeg_mem_src (j_decompress_ptr cinfo, unsigned char * inbu
     */
    if (cinfo->src == NULL) {   /* first time for this JPEG object? */
       cinfo->src = (struct jpeg_source_mgr *)
-                                    (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-                                          sizeof(struct jpeg_source_mgr));
+                                                (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+                                                      sizeof(struct jpeg_source_mgr));
    }
 
    src = cinfo->src;
@@ -136,20 +136,20 @@ int _geocache_imageio_jpeg_buffer_empty_output_buffer (j_compress_ptr cinfo) {
    return TRUE;
 }
 
-geocache_buffer* _geocache_imageio_jpeg_encode(geocache_image *img, geocache_image_format *format, geocache_context *r) {
+geocache_buffer* _geocache_imageio_jpeg_encode(geocache_context *ctx, geocache_image *img, geocache_image_format *format) {
    struct jpeg_compress_struct cinfo;
    struct jpeg_error_mgr jerr;
    int quality = 85;
    geocache_jpeg_destination_mgr *dest;
    JSAMPLE *rowdata;
    unsigned int row;
-   geocache_buffer *buffer = geocache_buffer_create(5000,r->pool);
+   geocache_buffer *buffer = geocache_buffer_create(5000, ctx->pool);
    cinfo.err = jpeg_std_error(&jerr);
    jpeg_create_compress(&cinfo);
 
-   cinfo.dest = (struct jpeg_destination_mgr *)
-                                                                            (*cinfo.mem->alloc_small) ((j_common_ptr) &cinfo, JPOOL_PERMANENT,
-                                                                                  sizeof (geocache_jpeg_destination_mgr));
+   cinfo.dest = (struct jpeg_destination_mgr *)(*cinfo.mem->alloc_small) (
+         (j_common_ptr) &cinfo, JPOOL_PERMANENT,
+         sizeof (geocache_jpeg_destination_mgr));
    ((geocache_jpeg_destination_mgr*)cinfo.dest)->pub.empty_output_buffer = _geocache_imageio_jpeg_buffer_empty_output_buffer;
    ((geocache_jpeg_destination_mgr*)cinfo.dest)->pub.term_destination = _geocache_imageio_jpeg_buffer_term_destination;
    ((geocache_jpeg_destination_mgr*)cinfo.dest)->buffer = buffer;

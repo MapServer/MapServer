@@ -229,8 +229,8 @@ static int mod_geocache_request_handler(request_rec *r) {
 
    for(i=0;i<request->ntiles;i++) {
       geocache_tile *tile = request->tiles[i];
-      int rv = geocache_tileset_tile_get(tile, global_ctx);
-      if(rv != GEOCACHE_SUCCESS) {
+      geocache_tileset_tile_get(global_ctx, tile);
+      if(GC_HAS_ERROR(global_ctx)) {
          global_ctx->log(global_ctx,GEOCACHE_INFO,global_ctx->get_error_message(global_ctx));
          return HTTP_NOT_FOUND;
       }
@@ -302,10 +302,13 @@ static void* mod_geocache_create_server_conf(apr_pool_t *pool, server_rec *s) {
 
 static const char* geocache_set_config_file(cmd_parms *cmd, void *cfg, const char *val) {
    geocache_cfg *config = (geocache_cfg*)cfg;
-   geocache_context_apache_server *ctx = apache_server_context_create(cmd->server,cmd->pool);
+   geocache_context *ctx = (geocache_context*)apache_server_context_create(cmd->server,cmd->pool);
    char *msg = NULL;
    config->configFile = apr_pstrdup(cmd->pool,val);
-   msg = geocache_configuration_parse(val,config,(geocache_context*)ctx);
+   geocache_configuration_parse(ctx,val,config);
+   if(GC_HAS_ERROR(ctx)) {
+      return ctx->get_error_message(ctx);
+   }
    ap_log_error(APLOG_MARK, APLOG_INFO, 0, cmd->server, "loaded geocache configuration file from %s", config->configFile);
    return msg;
 }
