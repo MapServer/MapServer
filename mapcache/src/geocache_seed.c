@@ -371,7 +371,7 @@ int main(int argc, const char **argv) {
     seededtiles=seededtilestot=queuedtilestot=0;
     gettimeofday(&starttime,NULL);
     lastlogtime=starttime;
-    apr_table_t *dimensions = apr_table_make(ctx.pool,3);
+    apr_table_t *argdimensions = apr_table_make(ctx.pool,3);
     char *dimkey = NULL,*dimvalue = NULL,*key,*last,*optargcpy = NULL;
     int keyidx;
 
@@ -429,7 +429,7 @@ int main(int argc, const char **argv) {
                 if(keyidx!=2 || !dimkey || !dimvalue || !*dimkey || !*dimvalue) {
                    return usage(argv[0], "failed to parse dimension, expecting DIMNAME=DIMVALUE");
                 }
-                apr_table_set(dimensions,dimkey,dimvalue);
+                apr_table_set(argdimensions,dimkey,dimvalue);
                 break;
 #ifdef USE_CLIPPERS
             case 'd':
@@ -456,6 +456,9 @@ int main(int argc, const char **argv) {
         return usage(argv[0],"config not specified");
     } else {
         geocache_configuration_parse(&ctx,configfile,cfg);
+        if(ctx.get_error(&ctx))
+            return usage(argv[0],ctx.get_error_message(&ctx));
+        geocache_configuration_post_config(&ctx,cfg);
         if(ctx.get_error(&ctx))
             return usage(argv[0],ctx.get_error_message(&ctx));
     }
@@ -616,26 +619,26 @@ int main(int argc, const char **argv) {
     }
     
     /* validate the supplied dimensions */
-    if (!apr_is_empty_table(dimensions)) {
+    if (!apr_is_empty_array(tileset->dimensions)) {
+
+       dimensions = apr_table_make(ctx.pool,3);
        int i;
        for(i=0;i<tileset->dimensions->nelts;i++) {
           geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
           const char *value;
-          if((value = (char*)apr_table_get(dimensions,dimension->name)) != NULL) {
+          if((value = (char*)apr_table_get(argdimensions,dimension->name)) != NULL) {
              char *tmpval = apr_pstrdup(ctx.pool,value);
              int ok = dimension->validate(&ctx,dimension,&tmpval);
-             if(GC_HAS_ERROR(&ctx)) {
+             if(GC_HAS_ERROR(&ctx) || ok != GEOCACHE_SUCCESS ) {
+                return usage(argv[0],"failed to validate dimension");
                return 1;
-             }
-             if(ok == GEOCACHE_SUCCESS) {
-                /* validate may have changed the dimension value, so set it back into the dimensions table */
+             } else {
+                /* validate may have changed the dimension value, so set that value into the dimensions table */
                 apr_table_setn(dimensions,dimension->name,tmpval);
              }
-             else {
-                ctx.set_error(&ctx,500,"dimension \"%s\" value \"%s\" fails to validate",
-                      dimension->name, value);
-                return 1;
-             }
+          } else {
+             /* a dimension was not specified on the command line, add the default value */
+             apr_table_setn(dimensions, dimension->name, dimension->default_value);
           }
        }
 
