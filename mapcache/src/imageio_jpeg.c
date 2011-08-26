@@ -252,13 +252,45 @@ geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buff
 
 }
 
+static geocache_buffer* _geocache_imageio_jpg_create_empty(geocache_context *ctx, geocache_image_format *format,
+      size_t width, size_t height, unsigned int color) {
+
+   geocache_image_format_jpeg *f = (geocache_image_format_jpeg*)format;
+
+   apr_pool_t *pool = NULL;
+   if(apr_pool_create(&pool,ctx->pool) != APR_SUCCESS) {
+      ctx->set_error(ctx,500,"png create empty: failed to create temp memory pool");
+      return NULL;
+   }
+   geocache_image *empty = geocache_image_create(ctx);
+   if(GC_HAS_ERROR(ctx)) {
+      return NULL;
+   }
+   empty->data = (unsigned char*)apr_pcalloc(pool,width*height*4*sizeof(unsigned char)); 
+   int i;
+   for(i=0;i<width*height;i++) {
+      ((unsigned int*)empty->data)[i] = color;
+   }
+   empty->w = width;
+   empty->h = height;
+   empty->stride = width * 4;
+
+   /*temp switch format compression*/
+   int tmpquality = f->quality;
+   f->quality = 1;
+   geocache_buffer *buf = format->write(ctx,empty,format);
+   apr_pool_destroy(pool);
+   f->quality = tmpquality;
+   return buf;
+}
+
 geocache_image_format* geocache_imageio_create_jpeg_format(apr_pool_t *pool, char *name, int quality ) {
    geocache_image_format_jpeg *format = apr_pcalloc(pool, sizeof(geocache_image_format_jpeg));
    format->format.name = name;
    format->format.extension = apr_pstrdup(pool,"jpg");
    format->format.mime_type = apr_pstrdup(pool,"image/jpeg");
    format->format.metadata = apr_table_make(pool,3);
-
+   format->format.create_empty_image = _geocache_imageio_jpg_create_empty;
    format->format.write = _geocache_imageio_jpeg_encode;
    format->quality = quality;
    return (geocache_image_format*)format;

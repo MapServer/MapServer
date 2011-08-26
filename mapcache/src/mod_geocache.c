@@ -68,7 +68,19 @@ int report_error(geocache_context_apache_request *apache_ctx) {
       ap_set_content_type(apache_ctx->request, "text/plain");
       ap_rprintf(apache_ctx->request,"error: %s",msg);
       return OK;
-   } else {
+   } else if(ctx->config && ctx->config->reporting == GEOCACHE_REPORT_EMPTY_IMG) {
+      if(ctx->config->empty_image) { /*should never fail*/
+         apache_ctx->request->status = code;
+         ap_set_content_length(apache_ctx->request, ctx->config->empty_image->size);
+         apr_table_set(apache_ctx->request->headers_out, "X-Geocache-Error", msg);
+         ap_set_content_type(apache_ctx->request, ctx->config->merge_format->mime_type);
+         ap_rwrite((void*)ctx->config->empty_image->buf, ctx->config->empty_image->size, apache_ctx->request);
+         return OK;
+      } else {
+         return code;
+      }
+   }
+   else {
       return code;
    }
 }

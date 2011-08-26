@@ -1067,6 +1067,38 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
    return buffer;
 }
 
+static geocache_buffer* _geocache_imageio_png_create_empty(geocache_context *ctx, geocache_image_format *format,
+      size_t width, size_t height, unsigned int color) {
+
+   geocache_image_format_png *f = (geocache_image_format_png*)format;
+
+   apr_pool_t *pool = NULL;
+   if(apr_pool_create(&pool,ctx->pool) != APR_SUCCESS) {
+      ctx->set_error(ctx,500,"png create empty: failed to create temp memory pool");
+      return NULL;
+   }
+   geocache_image *empty = geocache_image_create(ctx);
+   if(GC_HAS_ERROR(ctx)) {
+      return NULL;
+   }
+   empty->data = (unsigned char*)apr_pcalloc(pool,width*height*4*sizeof(unsigned char)); 
+   int i;
+   for(i=0;i<width*height;i++) {
+      ((unsigned int*)empty->data)[i] = color;
+   }
+   empty->w = width;
+   empty->h = height;
+   empty->stride = width * 4;
+
+   /*temp switch format compression*/
+   geocache_compression_type tmpcomp = f->compression_level;
+   f->compression_level = GEOCACHE_COMPRESSION_BEST;
+   geocache_buffer *buf = format->write(ctx,empty,format);
+   apr_pool_destroy(pool);
+   f->compression_level = tmpcomp;
+   return buf;
+}
+
 
 geocache_image_format* geocache_imageio_create_png_format(apr_pool_t *pool, char *name, geocache_compression_type compression) {
    geocache_image_format_png *format = apr_pcalloc(pool, sizeof(geocache_image_format_png));
@@ -1076,6 +1108,7 @@ geocache_image_format* geocache_imageio_create_png_format(apr_pool_t *pool, char
    format->compression_level = compression;
    format->format.metadata = apr_table_make(pool,3);
    format->format.write = _geocache_imageio_png_encode;
+   format->format.create_empty_image = _geocache_imageio_png_create_empty;
    return (geocache_image_format*)format;
 }
 
@@ -1086,6 +1119,7 @@ geocache_image_format* geocache_imageio_create_png_q_format(apr_pool_t *pool, ch
    format->format.format.mime_type = apr_pstrdup(pool,"image/png");
    format->format.compression_level = compression;
    format->format.format.write = _geocache_imageio_png_q_encode;
+   format->format.format.create_empty_image = _geocache_imageio_png_create_empty;
    format->format.format.metadata = apr_table_make(pool,3);
    format->ncolors = ncolors;
    return (geocache_image_format*)format;

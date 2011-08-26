@@ -685,6 +685,7 @@ struct geocache_cfg {
       * how should error messages be reported to the user
       */
      geocache_error_reporting reporting;
+     geocache_buffer *empty_image;
      
      apr_table_t *metadata;
 };
@@ -1019,6 +1020,9 @@ struct geocache_image_format {
     /**< pointer to a function that returns a geocache_buffer containing the given image encoded
      * in the specified format
      */
+
+    geocache_buffer* (*create_empty_image)(geocache_context *ctx, geocache_image_format *format,
+          size_t width, size_t height, unsigned int color);
     apr_table_t *metadata;
 };
 

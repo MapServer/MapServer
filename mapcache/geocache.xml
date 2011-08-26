@@ -333,7 +333,7 @@
          NOTE: when adding a <grid> element, you *MUST* make sure that the source you have selected is able to
          return images in the grid's srs.
       -->
-      <grid>WGS84</grid>
+         <grid restricted_extent="-10 40 10 50">WGS84</grid>
       <grid>google</grid>
 
       <!-- metadata
@@ -479,7 +479,7 @@
       recommended to use a png format with "fast"compression here, unless you have plenty
       of server cpu power and or limited bandwidth
    -->
-   <merge_format>PNGQ_FAST</merge_format>
+   <merge_format>JPEG</merge_format>
 
    <!-- services
       services that will be responded to by mod-geocache
@@ -508,4 +508,16 @@
       -->
       <demo>true</demo>
    </services>
+
+   <!-- errors
+        configure how error will be reported back to a client:
+          - log : no error is reported back, except an http error code.
+          - report : return the error message to the client in textual format
+          - empty_img : return an empty image to the client. the actual error code is in the X-Geocache-Error http header
+          - report_img : return an image with the error text included inside. not implemented yet.
+
+        the default setting is to report the error message back to the user. In production, you might want to set this to "log"
+        if you're paranoid, or to "empty_img" if you want to play nice with non-conforming clients.
+   -->
+   <errors>empty_img</errors>
 </geocache>

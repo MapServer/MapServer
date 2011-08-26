@@ -840,6 +840,16 @@ void parseServices(geocache_context *ctx, ezxml_t root, geocache_cfg *config) {
    }
 }
 
+static void createEmptyImages(geocache_context *ctx, geocache_cfg *cfg) {
+   unsigned int color=0;
+   if(!strstr(cfg->merge_format->mime_type,"png")) {
+      color = 0xffffffff;
+   }
+   cfg->empty_image = cfg->merge_format->create_empty_image(ctx, cfg->merge_format,
+         256,256, color);
+   GC_CHECK_ERROR(ctx);
+}
+
 void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config) {
    ezxml_t doc, node;
    doc = ezxml_parse_file(filename);
@@ -904,7 +914,29 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
                node->txt);
          goto cleanup;
       }
+      config->merge_format = format;
    }
+
+   if ((node = ezxml_child(doc,"errors")) != NULL) {
+      if(!strcmp(node->txt,"log")) {
+         config->reporting = GEOCACHE_REPORT_LOG;
+      } else if(!strcmp(node->txt,"report")) {
+         config->reporting = GEOCACHE_REPORT_MSG;
+      } else if(!strcmp(node->txt,"empty_img")) {
+         config->reporting = GEOCACHE_REPORT_EMPTY_IMG;
+         createEmptyImages(ctx, config);
+         if(GC_HAS_ERROR(ctx)) goto cleanup;
+      } else if(!strcmp(node->txt, "report_img")) {
+         config->reporting = GEOCACHE_REPORT_ERROR_IMG;
+         ctx->set_error(ctx,501,"<errors>: report_img not implemented");
+         goto cleanup;
+      } else {
+         ctx->set_error(ctx,400,"<errors>: unknown value %s (allowed are log, report, empty_img, report_img)",
+               node->txt);
+         goto cleanup;
+      }
+   }
+
 
 
 cleanup:
