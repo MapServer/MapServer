@@ -23,18 +23,20 @@ geocache_image* geocache_image_create(geocache_context *ctx) {
 }
 
 void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay) {
-   int i,j;
+   int i,j,starti,startj;
    unsigned char *browptr, *orowptr, *bptr, *optr;
-   if(base->w != overlay->w || base->h != overlay->h) {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "attempting to merge images with different sizes");
+   if(base->w < overlay->w || base->h < overlay->h) {
+      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "attempting to merge an larger image onto another");
       return;
    }
-   browptr = base->data;
+   starti = (base->h - overlay->h)/2;
+   startj = (base->w - overlay->w)/2;
+   browptr = base->data + starti * base->stride + startj*4;
    orowptr = overlay->data;
-   for(i=0;i<base->h;i++) {
+   for(i=0;i<overlay->h;i++) {
       bptr = browptr;
       optr = orowptr;
-      for(j=0;j<base->w;j++) {
+      for(j=0;j<overlay->w;j++) {
          if(optr[3]) { /* if overlay is not completely transparent */
             if(optr[3] == 255) {
                bptr[0]=optr[0];
