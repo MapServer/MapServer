@@ -54,8 +54,10 @@ struct geocache_context_apache_request {
    request_rec *request;
 };
 
-int report_error(int code, geocache_context_apache_request *apache_ctx) {
+int report_error(geocache_context_apache_request *apache_ctx) {
    geocache_context *ctx= (geocache_context*)apache_ctx;
+   int code = ctx->_errcode;
+   if(!code) code = 500;
    char *msg = ctx->get_error_message(ctx);
    if(!msg) {
       msg = "an unspecified error has occured";
@@ -95,7 +97,7 @@ void geocache_util_mutex_aquire(geocache_context *gctx) {
    geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);
    ret = apr_global_mutex_lock(cfg->mutex);
    if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx,GEOCACHE_MUTEX_ERROR,"failed to lock mutex");
+      gctx->set_error(gctx,500,"failed to lock mutex");
       return;
    }
    apr_pool_cleanup_register(gctx->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
@@ -107,7 +109,7 @@ void geocache_util_mutex_release(geocache_context *gctx) {
    geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);
    ret = apr_global_mutex_unlock(cfg->mutex);
    if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx,GEOCACHE_MUTEX_ERROR,"failed to unlock mutex");
+      gctx->set_error(gctx,500,"failed to unlock mutex");
    }
    apr_pool_cleanup_kill(gctx->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
 }
@@ -176,8 +178,8 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
       else if(t == GC_JPEG)
          ap_set_content_type(r, "image/jpeg");
       else {
-         ctx->ctx.ctx.set_error((geocache_context*)ctx, GEOCACHE_IMAGE_ERROR, "unrecognized image format");
-         return report_error(HTTP_INTERNAL_SERVER_ERROR, ctx);
+         ctx->ctx.ctx.set_error((geocache_context*)ctx, 500, "unrecognized image format");
+         return report_error(ctx);
       }
    }
    ap_rwrite((void*)tile->data->buf, tile->data->size, r);
@@ -218,7 +220,7 @@ static int mod_geocache_request_handler(request_rec *r) {
 
    geocache_service_dispatch_request(global_ctx,&request,r->path_info,params,config);
    if(GC_HAS_ERROR(global_ctx)) {
-      return report_error(HTTP_BAD_REQUEST, apache_ctx);
+      return report_error(apache_ctx);
    }
 
    if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
@@ -244,12 +246,12 @@ static int mod_geocache_request_handler(request_rec *r) {
       request->service->create_capabilities_response(global_ctx,req_caps,url,original->path_info,config);
       return geocache_write_capabilities(apache_ctx,req_caps);
    } else if( request->type != GEOCACHE_REQUEST_GET_TILE) {
-      return report_error(HTTP_BAD_REQUEST, apache_ctx);
+      return report_error(apache_ctx);
    }
    req_tile = (geocache_request_get_tile*)request;
 
    if( !req_tile->ntiles) {
-      return report_error(HTTP_BAD_REQUEST, apache_ctx);
+      return report_error(apache_ctx);
    }
 
 
@@ -257,7 +259,7 @@ static int mod_geocache_request_handler(request_rec *r) {
       geocache_tile *tile = req_tile->tiles[i];
       geocache_tileset_tile_get(global_ctx, tile);
       if(GC_HAS_ERROR(global_ctx)) {
-         return report_error(HTTP_INTERNAL_SERVER_ERROR, apache_ctx);
+         return report_error(apache_ctx);
       }
    }
    if(req_tile->ntiles == 1) {
@@ -266,7 +268,7 @@ static int mod_geocache_request_handler(request_rec *r) {
       /* TODO: individual check on tiles if merging is allowed */
       tile = (geocache_tile*)geocache_image_merge_tiles(global_ctx,config->merge_format,req_tile->tiles,req_tile->ntiles);
       if(!tile || GC_HAS_ERROR(global_ctx)) {
-         return report_error(HTTP_INTERNAL_SERVER_ERROR, apache_ctx);
+         return report_error(apache_ctx);
       }
       tile->tileset = req_tile->tiles[0]->tileset;
    }

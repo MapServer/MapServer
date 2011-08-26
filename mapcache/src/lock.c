@@ -41,7 +41,7 @@ void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile) {
    char *lockname = geocache_tileset_tile_lock_key(ctx,tile);
    sem_t *lock;
    if ((lock = sem_open(lockname, O_CREAT|O_EXCL, 0644, 1)) == SEM_FAILED) {
-      ctx->set_error(ctx,GEOCACHE_MUTEX_ERROR, "failed to create posix semaphore %s: %s",lockname, strerror(errno));
+      ctx->set_error(ctx,500, "failed to create posix semaphore %s: %s",lockname, strerror(errno));
       return;
    }
    sem_wait(lock);
@@ -60,7 +60,7 @@ void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile) {
    sem_t *lock = (sem_t*) tile->lock;
    const char *lockname = geocache_tileset_tile_lock_key(ctx,tile);
    if (!tile->lock) {
-      ctx->set_error(ctx,GEOCACHE_MUTEX_ERROR,"###### TILE UNLOCK ######### attempting to unlock tile %s not created by this thread", lockname);
+      ctx->set_error(ctx,500,"###### TILE UNLOCK ######### attempting to unlock tile %s not created by this thread", lockname);
       return;
    }
    sem_post(lock);
@@ -87,7 +87,7 @@ int geocache_tileset_tile_lock_exists(geocache_context *ctx, geocache_tile *tile
       if(errno == ENOENT) {
          return GEOCACHE_FALSE;
       } else {
-         ctx->set_error(ctx,GEOCACHE_MUTEX_ERROR,"lock_exists: failed to open mutex %s",lockname);
+         ctx->set_error(ctx,500,"lock_exists: failed to open mutex %s",lockname);
          return GEOCACHE_FALSE;
       }
    } else {
@@ -107,7 +107,7 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
   sem_t *lock;
 #ifdef DEBUG
   if (tile->lock) {
-    ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "### BUG ### waiting for a lock we have created ourself");
+    ctx->set_error(ctx, 500, "### BUG ### waiting for a lock we have created ourself");
     return;
   }
 #endif
@@ -118,7 +118,7 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
         /* the lock doesn't exist (anymore?) */
         return; 
      } else {
-        ctx->set_error(ctx,GEOCACHE_MUTEX_ERROR, "lock_wait: failed to open semaphore %s",lockname);
+        ctx->set_error(ctx,500, "lock_wait: failed to open semaphore %s",lockname);
         return;
      }
   } else {

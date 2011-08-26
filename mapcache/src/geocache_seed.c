@@ -55,7 +55,7 @@ void geocache_context_seeding_lock_aquire(geocache_context *gctx) {
     geocache_context_seeding *ctx = (geocache_context_seeding*)gctx;
     ret = apr_thread_mutex_lock(ctx->mutex);
     if(ret != APR_SUCCESS) {
-        gctx->set_error(gctx,GEOCACHE_MUTEX_ERROR, "failed to lock mutex");
+        gctx->set_error(gctx,500, "failed to lock mutex");
         return;
     }
     apr_pool_cleanup_register(gctx->pool, ctx->mutex, (void*)apr_thread_mutex_unlock, apr_pool_cleanup_null);
@@ -66,7 +66,7 @@ void geocache_context_seeding_lock_release(geocache_context *gctx) {
     geocache_context_seeding *ctx = (geocache_context_seeding*)gctx;
     ret = apr_thread_mutex_unlock(ctx->mutex);
     if(ret != APR_SUCCESS) {
-        gctx->set_error(gctx,GEOCACHE_MUTEX_ERROR, "failed to unlock mutex");
+        gctx->set_error(gctx,500, "failed to unlock mutex");
         return;
     }
     apr_pool_cleanup_kill(gctx->pool, ctx->mutex, (void*)apr_thread_mutex_unlock);
@@ -134,7 +134,7 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
     geocache_context_init(gctx);
     ret = apr_thread_mutex_create(&ctx->mutex,APR_THREAD_MUTEX_DEFAULT,gctx->pool);
     if(ret != APR_SUCCESS) {
-        gctx->set_error(gctx,GEOCACHE_MUTEX_ERROR,"failed to create mutex");
+        gctx->set_error(gctx,500,"failed to create mutex");
         return;
     }
     gctx->global_lock_aquire = geocache_context_seeding_lock_aquire;

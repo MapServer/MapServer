@@ -241,7 +241,7 @@ geocache_image* _geocache_imageio_jpeg_decode(geocache_context *r, geocache_buff
       }
       else
       {
-         r->set_error(r, GEOCACHE_IMAGE_ERROR, "unsupported jpeg format");
+         r->set_error(r, 500, "unsupported jpeg format");
          jpeg_destroy_decompress(&cinfo);
          return NULL;
       }

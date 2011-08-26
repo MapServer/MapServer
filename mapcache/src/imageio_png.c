@@ -56,7 +56,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    /* could pass pointers to user-defined error handlers instead of NULLs: */
    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
    if (!png_ptr) {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to allocate png_struct structure");
+      ctx->set_error(ctx, 500, "failed to allocate png_struct structure");
       return NULL;
    }
 
@@ -64,13 +64,13 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    if (!info_ptr)
    {
       png_destroy_read_struct(&png_ptr, NULL, NULL);
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to allocate png_info structure");
+      ctx->set_error(ctx, 500, "failed to allocate png_info structure");
       return NULL;
    }
 
    if (setjmp(png_jmpbuf(png_ptr)))
    {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to setjmp(png_jmpbuf(png_ptr))");
+      ctx->set_error(ctx, 500, "failed to setjmp(png_jmpbuf(png_ptr))");
       png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
       return NULL;
    }
@@ -79,7 +79,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    png_read_info(png_ptr,info_ptr);
    img = geocache_image_create(ctx);
    if(!png_get_IHDR(png_ptr, info_ptr, &width, &height,&bit_depth, &color_type,NULL,NULL,NULL)) {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to read png header");
+      ctx->set_error(ctx, 500, "failed to read png header");
       return NULL;
    }
 
@@ -104,7 +104,7 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
    png_read_update_info(png_ptr, info_ptr);
 #ifdef DEBUG
    if(img->stride != png_get_rowbytes(png_ptr, info_ptr)) {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "### BUG ### failed to decompress PNG to RGBA");
+      ctx->set_error(ctx, 500, "### BUG ### failed to decompress PNG to RGBA");
       return NULL;
    }
 #endif
@@ -130,7 +130,7 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
    int compression = ((geocache_image_format_png*)format)->compression_level;
    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
    if (!png_ptr) {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to allocate png_struct structure");
+      ctx->set_error(ctx, 500, "failed to allocate png_struct structure");
       return NULL;
    }
 
@@ -139,13 +139,13 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
    {
       png_destroy_write_struct(&png_ptr,
             (png_infopp)NULL);
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to allocate png_info structure");
+      ctx->set_error(ctx, 500, "failed to allocate png_info structure");
       return NULL;
    }
 
    if (setjmp(png_jmpbuf(png_ptr)))
    {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to setjmp(png_jmpbuf(png_ptr))");
+      ctx->set_error(ctx, 500, "failed to setjmp(png_jmpbuf(png_ptr))");
       png_destroy_write_struct(&png_ptr, &info_ptr);
       return NULL;
    }

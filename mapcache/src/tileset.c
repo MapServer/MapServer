@@ -21,17 +21,17 @@
 
 void geocache_tileset_tile_validate(geocache_context *ctx, geocache_tile *tile) {
    if(tile->z < 0 || tile->z >= tile->grid_link->grid->nlevels) {
-      ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"invalid tile z level");
+      ctx->set_error(ctx,404,"invalid tile z level");
       return;
    }
    int *limits = tile->grid_link->grid_limits[tile->z];
    if(tile->x<limits[0] || tile->x>=limits[2]) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "tile x=%d not in [%d,%d[",
+      ctx->set_error(ctx, 404, "tile x=%d not in [%d,%d[",
             tile->x,limits[0],limits[2]);
       return;
    }
    if(tile->y<limits[1] || tile->y>=limits[3]) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "tile y=%d not in [%d,%d[",
+      ctx->set_error(ctx, 404, "tile y=%d not in [%d,%d[",
             tile->y,limits[1],limits[3]);
       return;
    }
@@ -57,7 +57,7 @@ static void _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile
 
    if((fabs(bbox[0] - (tile->x * res * tile->grid_link->grid->tile_sx) - tile->grid_link->grid->extent[0] ) / res > 1) ||
          (fabs(bbox[1] - (tile->y * res * tile->grid_link->grid->tile_sy) - tile->grid_link->grid->extent[1] ) / res > 1)) {
-      ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "grid %s: supplied bbox not aligned on configured grid",tile->grid_link->grid->name);
+      ctx->set_error(ctx, 404, "grid %s: supplied bbox not aligned on configured grid",tile->grid_link->grid->name);
    }
 }
 
@@ -278,7 +278,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
       /* the previous step has successfully finished, we can now query the cache to return the tile content */
       ret = tile->tileset->cache->tile_get(ctx, tile);
       if(ret != GEOCACHE_SUCCESS) {
-         ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: failed to re-get tile %d %d %d from cache after set", tile->tileset->name,tile->x,tile->y,tile->z);
+         ctx->set_error(ctx, 500, "tileset %s: failed to re-get tile %d %d %d from cache after set", tile->tileset->name,tile->x,tile->y,tile->z);
       }
    }
 }

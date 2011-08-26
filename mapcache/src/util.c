@@ -92,7 +92,7 @@ APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p, const apr_table_t *t)
 
 #endif
 
-geocache_error_code _geocache_context_get_error_default(geocache_context *ctx) {
+int _geocache_context_get_error_default(geocache_context *ctx) {
     return ctx->_errcode;
 }
 
@@ -100,7 +100,7 @@ char* _geocache_context_get_error_msg_default(geocache_context *ctx) {
     return ctx->_errmsg;
 }
 
-void _geocache_context_set_error_default(geocache_context *ctx, geocache_error_code code, char *msg, ...) {
+void _geocache_context_set_error_default(geocache_context *ctx, int code, char *msg, ...) {
     char *fmt;
     va_list args;
     va_start(args,msg);
@@ -117,7 +117,7 @@ void _geocache_context_set_error_default(geocache_context *ctx, geocache_error_c
 
 
 void geocache_context_init(geocache_context *ctx) {
-    ctx->_errcode = GEOCACHE_NO_ERROR;
+    ctx->_errcode = 0;
     ctx->_errmsg = NULL;
     ctx->get_error = _geocache_context_get_error_default;
     ctx->get_error_message = _geocache_context_get_error_msg_default;

@@ -83,14 +83,14 @@ void geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double 
          return;
       }
    }
-   ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "grid %s: failed lookup for resolution %f", grid->name, *resolution);
+   ctx->set_error(ctx, 400, "grid %s: failed lookup for resolution %f", grid->name, *resolution);
 }
 
 void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx, double dy,
         int z, int *x, int *y) {
 #ifdef DEBUG
    if(z>=grid->nlevels) {
-      ctx->set_error(ctx,GEOCACHE_ERROR,"####BUG##### requesting invalid level");
+      ctx->set_error(ctx,500,"####BUG##### requesting invalid level");
       return;
    }
 #endif

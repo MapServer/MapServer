@@ -220,7 +220,7 @@ void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tile
       geocache_dimension *dimension = geocache_dimension_create(ctx->pool);
       ezxml_t dchild_node;
       if(!name || !strlen(name)) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <dimension>");
+         ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in <dimension>");
          return;
       }
       dimension->name = apr_pstrdup(ctx->pool,name);
@@ -233,14 +233,14 @@ void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tile
       
       dchild_node = ezxml_child(dimension_node,"default");
       if(!dchild_node || !dchild_node->txt) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimension> \"%s\" has no default value",name);
+         ctx->set_error(ctx, 400, "<dimension> \"%s\" has no default value",name);
          return;
       }
       dimension->default_value = apr_pstrdup(ctx->pool,dchild_node->txt);
       
       dchild_node = ezxml_child(dimension_node,"values");
       if(!dchild_node || !dchild_node->txt) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimension> \"%s\" has no values",name);
+         ctx->set_error(ctx, 400, "<dimension> \"%s\" has no values",name);
          return;
       }
       values = apr_pstrdup(ctx->pool,dchild_node->txt);
@@ -254,13 +254,13 @@ void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tile
          dimension->nvalues++;
       }
       if(!dimension->nvalues) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimension> \"%s\" has no values",name);
+         ctx->set_error(ctx, 400, "<dimension> \"%s\" has no values",name);
          return;
       }
       APR_ARRAY_PUSH(dimensions,geocache_dimension*) = dimension;
    }
    if(apr_is_empty_array(dimensions)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "<dimensions> for tileset \"%s\" has no dimensions defined (expecting <dimension> children)",tileset->name);
+      ctx->set_error(ctx, 400, "<dimensions> for tileset \"%s\" has no dimensions defined (expecting <dimension> children)",tileset->name);
       return;
    }
    tileset->dimensions = dimensions;
@@ -275,14 +275,14 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
 
    name = (char*)ezxml_attr(node,"name");
    if(!name || !strlen(name)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <grid>");
+      ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in <grid>");
       return;
    }
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a grid defined with this name */
       if(geocache_configuration_get_grid(config, name)) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "duplicate grid with name \"%s\"",name);
+         ctx->set_error(ctx, 400, "duplicate grid with name \"%s\"",name);
          return;
       }
    }
@@ -295,7 +295,7 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       value = apr_pstrdup(ctx->pool,cur_node->txt);
       if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, ' ', &values, &nvalues) ||
             nvalues != 4) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse extent array %s."
+         ctx->set_error(ctx, 400, "failed to parse extent array %s."
                "(expecting 4 space separated numbers, got %d (%f %f %f %f)"
                "eg <extent>-180 -90 180 90</extent>",
                value,nvalues,values[0],values[1],values[2],values[3]);
@@ -321,7 +321,7 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       int *sizes, nsizes;
       if(GEOCACHE_SUCCESS != geocache_util_extract_int_list(ctx, value, ' ', &sizes, &nsizes) ||
             nsizes != 2) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse size array %s in  grid %s"
+         ctx->set_error(ctx, 400, "failed to parse size array %s in  grid %s"
                "(expecting two space separated integers, eg <size>256 256</size>",
                value, grid->name);
          return;
@@ -336,7 +336,7 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       double *values;
       if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, ' ', &values, &nvalues) ||
             !nvalues) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse resolutions array %s."
+         ctx->set_error(ctx, 400, "failed to parse resolutions array %s."
                "(expecting space separated numbers, "
                "eg <resolutions>1 2 4 8 16 32</resolutions>",
                value);
@@ -353,12 +353,12 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    }
 
    if(grid->srs == NULL) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "grid \"%s\" has no srs configured."
+      ctx->set_error(ctx, 400, "grid \"%s\" has no srs configured."
             " You must add a <srs> tag.", grid->name);
       return;
    }
    if(extent[0] >= extent[2] || extent[1] >= extent[3]) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "grid \"%s\" has no (or invalid) extent configured"
+      ctx->set_error(ctx, 400, "grid \"%s\" has no (or invalid) extent configured"
             " You must add/correct a <extent> tag.", grid->name);
       return;
    } else {
@@ -368,12 +368,12 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          grid->extent[3] = extent[3];
    }
    if(grid->tile_sx <= 0 || grid->tile_sy <= 0) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "grid \"%s\" has no (or invalid) tile size configured"
+      ctx->set_error(ctx, 400, "grid \"%s\" has no (or invalid) tile size configured"
             " You must add/correct a <size> tag.", grid->name);
       return;
    }
    if(!grid->nlevels) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "grid \"%s\" has no resolutions configured."
+      ctx->set_error(ctx, 400, "grid \"%s\" has no resolutions configured."
             " You must add a <resolutions> tag.", grid->name);
       return;
    }
@@ -388,19 +388,19 @@ void parseSource(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    name = (char*)ezxml_attr(node,"name");
    type = (char*)ezxml_attr(node,"type");
    if(!name || !strlen(name)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <source>");
+      ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in <source>");
       return;
    }
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a source defined with this name */
       if(geocache_configuration_get_source(config, name)) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "duplicate source with name \"%s\"",name);
+         ctx->set_error(ctx, 400, "duplicate source with name \"%s\"",name);
          return;
       }
    }
    if(!type || !strlen(type)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"type\" not found in <source>");
+      ctx->set_error(ctx, 400, "mandatory attribute \"type\" not found in <source>");
       return;
    }
    geocache_source *source = NULL;
@@ -409,11 +409,11 @@ void parseSource(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    } else if(!strcmp(type,"gdal")) {
       source = geocache_source_gdal_create(ctx);
    } else {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "unknown source type %s for source \"%s\"", type, name);
+      ctx->set_error(ctx, 400, "unknown source type %s for source \"%s\"", type, name);
       return;
    }
    if(source == NULL) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse source \"%s\"", name);
+      ctx->set_error(ctx, 400, "failed to parse source \"%s\"", name);
       return;
    }
    source->name = name;
@@ -437,12 +437,12 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    name = (char*)ezxml_attr(node,"name");
    type = (char*)ezxml_attr(node,"type");
    if(!name || !strlen(name)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <format>");
+      ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in <format>");
       return;
    }
    name = apr_pstrdup(ctx->pool, name);
    if(!type || !strlen(type)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"type\" not found in <format>");
+      ctx->set_error(ctx, 400, "mandatory attribute \"type\" not found in <format>");
       return;
    }
    if(!strcmp(type,"PNG")) {
@@ -454,7 +454,7 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          } else if(!strcmp(cur_node->txt, "best")) {
             compression = GEOCACHE_COMPRESSION_BEST;
          } else {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "unknown compression type %s for format \"%s\"", cur_node->txt, name);
+            ctx->set_error(ctx, 400, "unknown compression type %s for format \"%s\"", cur_node->txt, name);
             return;
          }
       }
@@ -462,7 +462,7 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          char *endptr;
          colors = (int)strtol(cur_node->txt,&endptr,10);
          if(*endptr != 0 || colors < 2 || colors > 256) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse colors \"%s\" for format \"%s\""
+            ctx->set_error(ctx, 400, "failed to parse colors \"%s\" for format \"%s\""
                   "(expecting an  integer between 2 and 256 "
                   "eg <colors>256</colors>",
                   cur_node->txt,name);
@@ -483,7 +483,7 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          char *endptr;
          quality = (int)strtol(cur_node->txt,&endptr,10);
          if(*endptr != 0 || quality < 1 || quality > 100) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse quality \"%s\" for format \"%s\""
+            ctx->set_error(ctx, 400, "failed to parse quality \"%s\" for format \"%s\""
                   "(expecting an  integer between 1 and 100 "
                   "eg <quality>90</quality>",
                   cur_node->txt,name);
@@ -493,11 +493,11 @@ void parseFormat(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       format = geocache_imageio_create_jpeg_format(ctx->pool,
             name,quality);
    } else {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "unknown format type %s for format \"%s\"", type, name);
+      ctx->set_error(ctx, 400, "unknown format type %s for format \"%s\"", type, name);
       return;
    }
    if(format == NULL) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse format \"%s\"", name);
+      ctx->set_error(ctx, 400, "failed to parse format \"%s\"", name);
       return;
    }
 
@@ -512,29 +512,29 @@ void parseCache(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    name = (char*)ezxml_attr(node,"name");
    type = (char*)ezxml_attr(node,"type");
    if(!name || !strlen(name)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <cache>");
+      ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in <cache>");
       return;
    }
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a cache defined with this name */
       if(geocache_configuration_get_cache(config, name)) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "duplicate cache with name \"%s\"",name);
+         ctx->set_error(ctx, 400, "duplicate cache with name \"%s\"",name);
          return;
       }
    }
    if(!type || !strlen(type)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"type\" not found in <cache>");
+      ctx->set_error(ctx, 400, "mandatory attribute \"type\" not found in <cache>");
       return;
    }
    if(!strcmp(type,"disk")) {
       cache = geocache_cache_disk_create(ctx);
    } else {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "unknown cache type %s for cache \"%s\"", type, name);
+      ctx->set_error(ctx, 400, "unknown cache type %s for cache \"%s\"", type, name);
       return;
    }
    if(cache == NULL) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse cache \"%s\"", name);
+      ctx->set_error(ctx, 400, "failed to parse cache \"%s\"", name);
       return;
    }
    cache->name = name;
@@ -556,14 +556,14 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    char* value;
    name = (char*)ezxml_attr(node,"name");
    if(!name || !strlen(name)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "mandatory attribute \"name\" not found in <tileset>");
+      ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in <tileset>");
       return;
    }
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a cache defined with this name */
       if(geocache_configuration_get_tileset(config, name)) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "duplicate tileset with name \"%s\"",name);
+         ctx->set_error(ctx, 400, "duplicate tileset with name \"%s\"",name);
          return;
       }
    }
@@ -578,7 +578,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       }
       geocache_grid *grid = geocache_configuration_get_grid(config, cur_node->txt);
       if(!grid) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" references grid \"%s\","
+         ctx->set_error(ctx, 400, "tileset \"%s\" references grid \"%s\","
                " but it is not configured", name, cur_node->txt);
          return;
       }
@@ -594,7 +594,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          restrictedExtent = apr_pstrdup(ctx->pool,restrictedExtent);
          if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, restrictedExtent, ' ', &gridlink->restricted_extent, &nvalues) ||
                nvalues != 4) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse extent array %s."
+            ctx->set_error(ctx, 400, "failed to parse extent array %s."
                   "(expecting 4 space separated numbers, "
                   "eg <grid restricted_extent=\"-180 -90 180 90\">foo</grid>",
                   restrictedExtent);
@@ -622,7 +622,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    if ((cur_node = ezxml_child(node,"cache")) != NULL) {
          geocache_cache *cache = geocache_configuration_get_cache(config, cur_node->txt);
          if(!cache) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" references cache \"%s\","
+            ctx->set_error(ctx, 400, "tileset \"%s\" references cache \"%s\","
                   " but it is not configured", name, cur_node->txt);
             return;
          }
@@ -632,7 +632,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    if ((cur_node = ezxml_child(node,"source")) != NULL) {
          geocache_source *source = geocache_configuration_get_source(config, cur_node->txt);
          if(!source) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" references source \"%s\","
+            ctx->set_error(ctx, 400, "tileset \"%s\" references source \"%s\","
                   " but it is not configured", name, cur_node->txt);
             return;
          }
@@ -645,7 +645,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          if(GEOCACHE_SUCCESS != geocache_util_extract_int_list(ctx, cur_node->txt,' ', 
                   &values, &nvalues) ||
                nvalues != 2) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse metatile dimension %s."
+            ctx->set_error(ctx, 400, "failed to parse metatile dimension %s."
                   "(expecting 2 space separated integers, "
                   "eg <metatile>5 5</metatile>",
                   cur_node->txt);
@@ -658,7 +658,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
 
    if ((cur_node = ezxml_child(node,"watermark")) != NULL) {
          if(!*cur_node->txt) {
-             ctx->set_error(ctx,GEOCACHE_PARSE_ERROR, "watermark config entry empty");
+             ctx->set_error(ctx,400, "watermark config entry empty");
              return;
          }
          apr_pool_t *tmppool;
@@ -668,12 +668,12 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          int rv;
          if(apr_file_open(&f, cur_node->txt, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
                 APR_OS_DEFAULT, tmppool) != APR_SUCCESS) {
-             ctx->set_error(ctx,GEOCACHE_DISK_ERROR, "failed to open watermark image %s",cur_node->txt);
+             ctx->set_error(ctx,500, "failed to open watermark image %s",cur_node->txt);
              return;
          }
          rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
          if(!finfo.size) {
-            ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "watermark %s has no data",cur_node->txt);
+            ctx->set_error(ctx, 500, "watermark %s has no data",cur_node->txt);
             return;
          }
 
@@ -684,7 +684,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          watermarkdata->size = size;
          apr_file_close(f);
          if(size != finfo.size) {
-            ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to copy watermark image data, got %d of %d bytes",(int)size, (int)finfo.size);
+            ctx->set_error(ctx, 500,  "failed to copy watermark image data, got %d of %d bytes",(int)size, (int)finfo.size);
             return;
          }
          tileset->watermark = geocache_imageio_decode(ctx,watermarkdata);
@@ -697,7 +697,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          char *endptr;
          tileset->expires = (int)strtol(cur_node->txt,&endptr,10);
          if(*endptr != 0) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse expires %s."
+            ctx->set_error(ctx, 400, "failed to parse expires %s."
                   "(expecting an  integer, "
                   "eg <expires>3600</expires>",
                   cur_node->txt);  
@@ -709,7 +709,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          char *endptr;
          tileset->metabuffer = (int)strtol(cur_node->txt,&endptr,10);
          if(*endptr != 0) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "failed to parse metabuffer %s."
+            ctx->set_error(ctx, 400, "failed to parse metabuffer %s."
                   "(expecting an  integer, "
                   "eg <metabuffer>1</metabuffer>",
                   cur_node->txt);
@@ -720,14 +720,14 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    if ((cur_node = ezxml_child(node,"format")) != NULL) {
          geocache_image_format *format = geocache_configuration_get_image_format(config,cur_node->txt);
          if(!format) {
-            ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" references format \"%s\","
+            ctx->set_error(ctx, 400, "tileset \"%s\" references format \"%s\","
                   " but it is not configured",name,cur_node->txt);
             return;
          }
          tileset->format = format;
    }
    if(!tileset->format && tileset->source->type == GEOCACHE_SOURCE_GDAL) {
-      ctx->set_error(ctx,GEOCACHE_PARSE_ERROR, "tileset \"%s\" references a gdal source. <format> tag is missing and mandatory in this case",
+      ctx->set_error(ctx,400, "tileset \"%s\" references a gdal source. <format> tag is missing and mandatory in this case",
             tileset->name);
       return;
    }
@@ -735,18 +735,18 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    /* check we have all we want */
    if(tileset->cache == NULL) {
       /* TODO: we should allow tilesets with no caches */
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" has no cache configured."
+      ctx->set_error(ctx, 400, "tileset \"%s\" has no cache configured."
             " You must add a <cache> tag.", tileset->name);
       return;
    }
    if(tileset->source == NULL) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" has no source configured."
+      ctx->set_error(ctx, 400, "tileset \"%s\" has no source configured."
             " You must add a <source> tag.", tileset->name);
       return;
    } 
 
    if(apr_is_empty_array(tileset->grid_links)) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "tileset \"%s\" has no grids configured."
+      ctx->set_error(ctx, 400, "tileset \"%s\" has no grids configured."
             " You must add a <grid> tag.", tileset->name);
       return;
    }
@@ -757,11 +757,11 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
          tileset->metabuffer != 0 ||
          tileset->watermark)) {
        if(tileset->watermark) {
-          ctx->set_error(ctx,GEOCACHE_PARSE_ERROR,"tileset \"%s\" has no <format> configured, but it is needed for the watermark",
+          ctx->set_error(ctx,400,"tileset \"%s\" has no <format> configured, but it is needed for the watermark",
                    tileset->name);
           return;
        } else {
-          ctx->set_error(ctx,GEOCACHE_PARSE_ERROR,"tileset \"%s\" has no <format> configured, but it is needed for metatiling",
+          ctx->set_error(ctx,400,"tileset \"%s\" has no <format> configured, but it is needed for metatiling",
                    tileset->name);
           return;
        }
@@ -799,7 +799,7 @@ void parseServices(geocache_context *ctx, ezxml_t root, geocache_cfg *config) {
    if(!config->services[GEOCACHE_SERVICE_WMS] &&
          !config->services[GEOCACHE_SERVICE_TMS] &&
          !config->services[GEOCACHE_SERVICE_WMTS]) {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "no services configured."
+      ctx->set_error(ctx, 400, "no services configured."
             " You must add a <services> tag with <wmts/> <wms/> or <tms/> children");
       return;
    }
@@ -809,12 +809,12 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    ezxml_t doc, node;
    doc = ezxml_parse_file(filename);
    if (doc == NULL) {
-      ctx->set_error(ctx,GEOCACHE_PARSE_ERROR, "failed to parse file %s. Is it valid XML?", filename);
+      ctx->set_error(ctx,400, "failed to parse file %s. Is it valid XML?", filename);
       goto cleanup;
    }
 
    if(strcmp(doc->name,"geocache")) {
-      ctx->set_error(ctx,GEOCACHE_PARSE_ERROR, "failed to parse file %s. first node is not <geocache>", filename);
+      ctx->set_error(ctx,400, "failed to parse file %s. first node is not <geocache>", filename);
       goto cleanup;
    }
 
@@ -851,7 +851,7 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    if ((node = ezxml_child(doc,"services")) != NULL) {
       parseServices(ctx, node, config);
    } else {
-      ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "no <services> configured");
+      ctx->set_error(ctx, 400, "no <services> configured");
    }
    if(GC_HAS_ERROR(ctx)) goto cleanup;
 
@@ -859,7 +859,7 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    if ((node = ezxml_child(doc,"merge_format")) != NULL) {
       geocache_image_format *format = geocache_configuration_get_image_format(config,node->txt);
       if(!format) {
-         ctx->set_error(ctx, GEOCACHE_PARSE_ERROR, "merge_format tag references format %s but it is not configured",
+         ctx->set_error(ctx, 400, "merge_format tag references format %s but it is not configured",
                node->txt);
          goto cleanup;
       }

@@ -36,7 +36,7 @@ void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *t
          color[3],
          tile->tileset->format?tile->tileset->format->extension:"png");
    if(!*path) {
-      ctx->set_error(ctx,GEOCACHE_ALLOC_ERROR, "failed to allocate blank tile key");
+      ctx->set_error(ctx,500, "failed to allocate blank tile key");
    }
 }
 /**
@@ -73,7 +73,7 @@ void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, c
          tile->y % 1000,
          tile->tileset->format?tile->tileset->format->extension:"png");
    if(!*path) {
-      ctx->set_error(ctx,GEOCACHE_ALLOC_ERROR, "failed to allocate tile key");
+      ctx->set_error(ctx,500, "failed to allocate tile key");
    }
 }
 
@@ -106,7 +106,7 @@ int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
          APR_OS_DEFAULT, ctx->pool)) == APR_SUCCESS) {
       rv = apr_file_info_get(&finfo, APR_FINFO_SIZE|APR_FINFO_MTIME, f);
       if(!finfo.size) {
-         ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "tile %s has no data",filename);
+         ctx->set_error(ctx, 500, "tile %s has no data",filename);
          return GEOCACHE_FAILURE;
       }
 
@@ -126,7 +126,7 @@ int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
       tile->data->size = size;
       apr_file_close(f);
       if(size != finfo.size) {
-         ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to copy image data, got %d of %d bytes",(int)size, (int)finfo.size);
+         ctx->set_error(ctx, 500,  "failed to copy image data, got %d of %d bytes",(int)size, (int)finfo.size);
          return GEOCACHE_FAILURE;
       }
       return GEOCACHE_SUCCESS;
@@ -136,7 +136,7 @@ int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
          return GEOCACHE_CACHE_MISS;
       } else {
             char *error = strerror(rv);
-            ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to open file %s: %s",filename, error);
+            ctx->set_error(ctx, 500,  "failed to open file %s: %s",filename, error);
             return GEOCACHE_FAILURE;
       }
    }
@@ -160,11 +160,11 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
 #ifdef DEBUG
    /* all this should be checked at a higher level */
    if(!tile->data || !tile->data->size) {
-      ctx->set_error(ctx,GEOCACHE_DISK_ERROR,"attempting to write empty tile to disk");
+      ctx->set_error(ctx,500,"attempting to write empty tile to disk");
       return;
    }
    if(!tile->lock) {
-      ctx->set_error(ctx,GEOCACHE_DISK_ERROR,"attempting to write to an unlocked tile");
+      ctx->set_error(ctx,500,"attempting to write to an unlocked tile");
       return;
    }
 #endif
@@ -181,7 +181,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
    *hackptr2 = '\0';
    
    if(APR_SUCCESS != (ret = apr_dir_make_recursive(filename,APR_OS_DEFAULT,ctx->pool))) {
-       ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to create directory %s: %s",filename, apr_strerror(ret,errmsg,120));
+       ctx->set_error(ctx, 500, "failed to create directory %s: %s",filename, apr_strerror(ret,errmsg,120));
        return;
    }
    *hackptr2 = '/';
@@ -205,14 +205,14 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
             if(APR_SUCCESS != (ret = apr_dir_make_recursive(
                   blankdirname,
                   APR_OS_DEFAULT,ctx->pool))) {
-               ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create directory %s for blank tiles",blankdirname, apr_strerror(ret,errmsg,120));
+               ctx->set_error(ctx, 500,  "failed to create directory %s for blank tiles",blankdirname, apr_strerror(ret,errmsg,120));
                ctx->global_lock_release(ctx);
                return;
             }
             if((ret = apr_file_open(&f, blankname,
                   APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
                   APR_OS_DEFAULT, ctx->pool)) != APR_SUCCESS) {
-               ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create file %s: %s",blankname, apr_strerror(ret,errmsg,120));
+               ctx->set_error(ctx, 500,  "failed to create file %s: %s",blankname, apr_strerror(ret,errmsg,120));
                ctx->global_lock_release(ctx);
                return; /* we could not create the file */
             }
@@ -220,13 +220,13 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
             bytes = (apr_size_t)tile->data->size;
             ret = apr_file_write(f,(void*)tile->data->buf,&bytes);
             if(ret != APR_SUCCESS) {
-               ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to write data to file %s (wrote %d of %d bytes): %s",blankname, (int)bytes, (int)tile->data->size, apr_strerror(ret,errmsg,120));
+               ctx->set_error(ctx, 500,  "failed to write data to file %s (wrote %d of %d bytes): %s",blankname, (int)bytes, (int)tile->data->size, apr_strerror(ret,errmsg,120));
                ctx->global_lock_release(ctx);
                return; /* we could not create the file */
             }
 
             if(bytes != tile->data->size) {
-               ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to write image data to %s, wrote %d of %d bytes", blankname, (int)bytes, (int)tile->data->size);
+               ctx->set_error(ctx, 500,  "failed to write image data to %s, wrote %d of %d bytes", blankname, (int)bytes, (int)tile->data->size);
                ctx->global_lock_release(ctx);
                return;
             }
@@ -238,7 +238,7 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
          ctx->global_lock_release(ctx);
          if(symlink(blankname,filename) != 0) {
             char *error = strerror(errno);
-            ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to link tile %s to %s: %s",filename, blankname, error);
+            ctx->set_error(ctx, 500,  "failed to link tile %s to %s: %s",filename, blankname, error);
             return; /* we could not create the file */
          }
 #ifdef DEBUG        
@@ -253,23 +253,23 @@ void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
    if((ret = apr_file_open(&f, filename,
          APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
          APR_OS_DEFAULT, ctx->pool)) != APR_SUCCESS) {
-      ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to create file %s: %s",filename, apr_strerror(ret,errmsg,120));
+      ctx->set_error(ctx, 500,  "failed to create file %s: %s",filename, apr_strerror(ret,errmsg,120));
       return; /* we could not create the file */
    }
 
    bytes = (apr_size_t)tile->data->size;
    ret = apr_file_write(f,(void*)tile->data->buf,&bytes);
    if(ret != APR_SUCCESS) {
-      ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to write data to file %s (wrote %d of %d bytes): %s",filename, (int)bytes, (int)tile->data->size, apr_strerror(ret,errmsg,120));
+      ctx->set_error(ctx, 500,  "failed to write data to file %s (wrote %d of %d bytes): %s",filename, (int)bytes, (int)tile->data->size, apr_strerror(ret,errmsg,120));
       return; /* we could not create the file */
    }
 
    if(bytes != tile->data->size) {
-      ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to write image data to %s, wrote %d of %d bytes", filename, (int)bytes, (int)tile->data->size);
+      ctx->set_error(ctx, 500, "failed to write image data to %s, wrote %d of %d bytes", filename, (int)bytes, (int)tile->data->size);
    }
    ret = apr_file_close(f);
    if(ret != APR_SUCCESS) {
-      ctx->set_error(ctx, GEOCACHE_DISK_ERROR,  "failed to close file %s:%s",filename, apr_strerror(ret,errmsg,120));
+      ctx->set_error(ctx, 500,  "failed to close file %s:%s",filename, apr_strerror(ret,errmsg,120));
       return; /* we could not create the file */
    }
 
@@ -291,7 +291,7 @@ void _geocache_cache_disk_configuration_parse(geocache_context *ctx, ezxml_t nod
 #ifdef HAVE_SYMLINK
          dcache->symlink_blank = 1;
 #else
-         ctx->set_error(ctx,GEOCACHE_DISK_ERROR,"cache %s: host system does not support file symbolic linking",cache->name);
+         ctx->set_error(ctx,400,"cache %s: host system does not support file symbolic linking",cache->name);
          return;
 #endif
       }
@@ -306,14 +306,14 @@ void _geocache_cache_disk_configuration_check(geocache_context *ctx, geocache_ca
    geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
    /* check all required parameters are configured */
    if(!dcache->base_directory || !strlen(dcache->base_directory)) {
-      ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "disk cache %s has no base directory",dcache->cache.name);
+      ctx->set_error(ctx, 400, "disk cache %s has no base directory",dcache->cache.name);
       return;
    }
 
    /*create our directory for blank images*/
    status = apr_dir_make_recursive(dcache->base_directory,APR_OS_DEFAULT,ctx->pool);
    if(status != APR_SUCCESS) {
-      ctx->set_error(ctx, GEOCACHE_DISK_ERROR, "failed to create directory %s for cache %s",dcache->base_directory,dcache->cache.name );
+      ctx->set_error(ctx, 500, "failed to create directory %s for cache %s",dcache->base_directory,dcache->cache.name );
       return;
    }
    return;
@@ -325,7 +325,7 @@ void _geocache_cache_disk_configuration_check(geocache_context *ctx, geocache_ca
 geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
    geocache_cache_disk *cache = apr_pcalloc(ctx->pool,sizeof(geocache_cache_disk));
    if(!cache) {
-      ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate disk cache");
+      ctx->set_error(ctx, 500, "failed to allocate disk cache");
       return NULL;
    }
    cache->symlink_blank = 0;

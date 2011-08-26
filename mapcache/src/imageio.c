@@ -67,7 +67,7 @@ geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *
    } else if(type == GC_JPEG) {
       return _geocache_imageio_jpeg_decode(ctx,buffer);
    } else {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "geocache_imageio_decode: unrecognized image format");
+      ctx->set_error(ctx, 500, "geocache_imageio_decode: unrecognized image format");
       return NULL;
    }
 }

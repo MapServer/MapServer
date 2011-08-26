@@ -48,7 +48,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
    geocache_request_get_capabilities_tms *request = (geocache_request_get_capabilities_tms*)req;
 #ifdef DEBUG
    if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
-      ctx->set_error(ctx,GEOCACHE_ERROR,"wrong tms capabilities request");
+      ctx->set_error(ctx,500,"wrong tms capabilities request");
       return;
    }
 #endif
@@ -149,7 +149,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
          switch(++index) {
          case 1: /* version */
             if(strcmp("1.0.0",key)) {
-               ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid version %s", key);
+               ctx->set_error(ctx,404, "received tms request with invalid version %s", key);
                return;
             }
             break;
@@ -169,12 +169,12 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
                   gname++;
                }
                if(!gname) {
-                  ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid layer %s", key);
+                  ctx->set_error(ctx,404, "received tms request with invalid layer %s", key);
                   return;
                }
                tileset = geocache_configuration_get_tileset(config,tname);
                if(!tname) {
-                  ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid layer %s", tname);
+                  ctx->set_error(ctx,404, "received tms request with invalid layer %s", tname);
                   return;
                }
                for(i=0;i<tileset->grid_links->nelts;i++) {
@@ -185,7 +185,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
                   }
                }
                if(!grid_link) {
-                  ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request with invalid grid %s", gname);
+                  ctx->set_error(ctx,404, "received tms request with invalid grid %s", gname);
                   return;
                }
 
@@ -196,26 +196,26 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
          case 3:
             z = (int)strtol(key,&endptr,10);
             if(*endptr != 0) {
-               ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request %s with invalid z %s", pathinfo, key);
+               ctx->set_error(ctx,404, "received tms request %s with invalid z %s", pathinfo, key);
                return;
             }
             break;
          case 4:
             x = (int)strtol(key,&endptr,10);
             if(*endptr != 0) {
-               ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request %s with invalid x %s", pathinfo, key);
+               ctx->set_error(ctx,404, "received tms request %s with invalid x %s", pathinfo, key);
                return;
             }
             break;
          case 5:
             y = (int)strtol(key,&endptr,10);
             if(*endptr != '.') {
-               ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request %s with invalid y %s", pathinfo, key);
+               ctx->set_error(ctx,404, "received tms request %s with invalid y %s", pathinfo, key);
                return;
             }
             break;
          default:
-            ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request %s with invalid parameter %s", pathinfo, key);
+            ctx->set_error(ctx,404, "received tms request %s with invalid parameter %s", pathinfo, key);
             return;
          }
       }
@@ -249,7 +249,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
       return;
    }
    else {
-      ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR, "received tms request %s with wrong number of arguments", pathinfo);
+      ctx->set_error(ctx,404, "received tms request %s with wrong number of arguments", pathinfo);
       return;
    }
 }
@@ -257,7 +257,7 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
 geocache_service* geocache_service_tms_create(geocache_context *ctx) {
    geocache_service_tms* service = (geocache_service_tms*)apr_pcalloc(ctx->pool, sizeof(geocache_service_tms));
    if(!service) {
-      ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate tms service");
+      ctx->set_error(ctx, 500, "failed to allocate tms service");
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"tms");

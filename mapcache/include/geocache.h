@@ -98,13 +98,13 @@ struct geocache_context {
      * \param code the error code
      * \param message human readable message of what happened
      */
-    void (*set_error)(geocache_context *ctx, geocache_error_code code, char *message, ...);
+    void (*set_error)(geocache_context *ctx, int code, char *message, ...);
 
     /**
      * \brief query context to know if an error has occured
      * \memberof geocache_context
      */
-    geocache_error_code(*get_error)(geocache_context * ctx);
+    int (*get_error)(geocache_context * ctx);
 
     /**
      * \brief get human readable message for the error
@@ -147,8 +147,9 @@ struct geocache_context {
     const char* (*get_instance_id)(geocache_context * ctx);
 
     apr_pool_t *pool;
+    char *_contenttype;
     char *_errmsg;
-    geocache_error_code _errcode;
+    int _errcode;
     geocache_cfg *config;
 };
 

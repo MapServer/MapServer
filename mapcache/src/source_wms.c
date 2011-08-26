@@ -49,7 +49,7 @@ void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metati
  
     if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {
        char *returned_data = apr_pstrndup(ctx->pool,(char*)tile->tile.data->buf,tile->tile.data->size);
-       ctx->set_error(ctx, GEOCACHE_SOURCE_WMS_ERROR, "wms request for tileset %s: %d %d %d returned an unsupported format:\n%s",
+       ctx->set_error(ctx, 502, "wms request for tileset %s: %d %d %d returned an unsupported format:\n%s",
              tile->tile.tileset->name, tile->tile.x, tile->tile.y, tile->tile.z, returned_data);
     }
 }
@@ -81,17 +81,17 @@ void _geocache_source_wms_configuration_check(geocache_context *ctx, geocache_so
    geocache_source_wms *src = (geocache_source_wms*)source;
    /* check all required parameters are configured */
    if(!strlen(src->url)) {
-      ctx->set_error(ctx, GEOCACHE_SOURCE_WMS_ERROR, "wms source %s has no url",source->name);
+      ctx->set_error(ctx, 400, "wms source %s has no url",source->name);
    }
    if(!apr_table_get(src->wms_params,"LAYERS")) {
-      ctx->set_error(ctx, GEOCACHE_SOURCE_WMS_ERROR, "wms source %s has no LAYERS", source->name);
+      ctx->set_error(ctx, 400, "wms source %s has no LAYERS", source->name);
    }
 }
 
 geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    geocache_source_wms *source = apr_pcalloc(ctx->pool, sizeof(geocache_source_wms));
    if(!source) {
-      ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate wms source");
+      ctx->set_error(ctx, 500, "failed to allocate wms source");
       return NULL;
    }
    geocache_source_init(ctx, &(source->source));

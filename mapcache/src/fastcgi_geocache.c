@@ -24,6 +24,30 @@
 typedef struct geocache_context_fcgi geocache_context_fcgi;
 typedef struct geocache_context_fcgi_request geocache_context_fcgi_request;
 
+static char *err400 = "Bad Request";
+static char *err404 = "Not Found";
+static char *err500 = "Internal Server Error";
+static char *err501 = "Not Implemented";
+static char *err502 = "Bad Gateway";
+static char *errother = "No Description";
+
+static char* err_msg(int code) {
+   switch(code) {
+      case 400:
+         return err400;
+      case 404:
+         return err404;
+      case 500:
+         return err500;
+      case 501:
+         return err501;
+      case 502:
+         return err502;
+      default:
+         return errother;
+   }
+}
+
 struct geocache_context_fcgi {
    geocache_context ctx;
    char *mutex_fname;
@@ -36,16 +60,31 @@ struct geocache_context_fcgi_request {
    FCGX_Stream *err;
 };
 
+void report_error_fcgi(geocache_context_fcgi_request *fctx) {
+   geocache_context *ctx = (geocache_context*) fctx;
+   int code = ctx->_errcode;
+   if(!code) code = 500;
+   char *msg = ctx->get_error_message(ctx);
+   if(!msg) {
+      msg = "an unspecified error has occured";
+   }
+   ctx->log(ctx,GEOCACHE_INFO,msg);
+   FCGX_FPrintF(fctx->out,"Status: %d %s\r\n\r\n%s",ctx->_errcode, err_msg(ctx->_errcode),
+      (ctx->config && ctx->config->reporting == GEOCACHE_REPORT_MSG)?msg:"");
+}
+
 void fcgi_context_log(geocache_context *c, geocache_log_level level, char *message, ...) {
    va_list args;
    va_start(args,message);
    fprintf(stderr,"%s\n",apr_pvsprintf(c->pool,message,args));
+   va_end(args);
 }
 
 void fcgi_request_context_log(geocache_context *c, geocache_log_level level, char *message, ...) {
    va_list args;
    va_start(args,message);
    FCGX_FPrintF(((geocache_context_fcgi_request*)c)->err,"%s\n",apr_pvsprintf(c->pool,message,args));
+   va_end(args);
 }
 
 void init_fcgi_context(geocache_context_fcgi *ctx) {
@@ -59,19 +98,19 @@ void geocache_fcgi_mutex_aquire(geocache_context *gctx) {
    int ret;
 #ifdef DEBUG
    if(ctx->mutex_file != NULL) {
-      gctx->set_error(gctx, GEOCACHE_DISK_ERROR, "SEVERE: fcgi recursive mutex acquire");
+      gctx->set_error(gctx, 500, "SEVERE: fcgi recursive mutex acquire");
       return; /* BUG ! */
    }
 #endif
    if (apr_file_open(&ctx->mutex_file, ctx->mutex_fname,
              APR_FOPEN_CREATE | APR_FOPEN_WRITE | APR_FOPEN_SHARELOCK | APR_FOPEN_BINARY,
              APR_OS_DEFAULT, gctx->pool) != APR_SUCCESS) {
-      gctx->set_error(gctx, GEOCACHE_DISK_ERROR, "failed to create fcgi mutex lockfile %s", ctx->mutex_fname);
+      gctx->set_error(gctx, 500, "failed to create fcgi mutex lockfile %s", ctx->mutex_fname);
       return; /* we could not create the file */
    }
    ret = apr_file_lock(ctx->mutex_file, APR_FLOCK_EXCLUSIVE);
    if (ret != APR_SUCCESS) {
-      gctx->set_error(gctx, GEOCACHE_DISK_ERROR, "failed to lock fcgi mutex file %s", ctx->mutex_fname);
+      gctx->set_error(gctx, 500, "failed to lock fcgi mutex file %s", ctx->mutex_fname);
       return;
    }
 }
@@ -81,17 +120,17 @@ void geocache_fcgi_mutex_release(geocache_context *gctx) {
    geocache_context_fcgi *ctx = (geocache_context_fcgi*)gctx;
 #ifdef DEBUG
    if(ctx->mutex_file == NULL) {
-      gctx->set_error(gctx, GEOCACHE_DISK_ERROR, "SEVERE: fcgi mutex unlock on unlocked file");
+      gctx->set_error(gctx, 500, "SEVERE: fcgi mutex unlock on unlocked file");
       return; /* BUG ! */
    }
 #endif
    ret = apr_file_unlock(ctx->mutex_file);
    if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx, GEOCACHE_DISK_ERROR,  "failed to unlock fcgi mutex file%s",ctx->mutex_fname);
+      gctx->set_error(gctx, 500,  "failed to unlock fcgi mutex file%s",ctx->mutex_fname);
    }
    ret = apr_file_close(ctx->mutex_file);
    if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx, GEOCACHE_DISK_ERROR,  "failed to close fcgi mutex file %s",ctx->mutex_fname);
+      gctx->set_error(gctx, 500,  "failed to close fcgi mutex file %s",ctx->mutex_fname);
    }
    ctx->mutex_file = NULL;
 }
@@ -121,6 +160,7 @@ static geocache_context_fcgi_request* fcgi_context_request_create(geocache_conte
    apr_pool_create(&pool,parent->ctx.pool);
    geocache_context_fcgi_request *ctx = apr_pcalloc(pool, sizeof(geocache_context_fcgi_request));
    ctx->ctx.ctx.pool = pool;
+   ctx->ctx.ctx.config = parent->ctx.config;
    ctx->ctx.mutex_fname = parent->mutex_fname;
    ctx->out = out;
    ctx->err = err;
@@ -164,6 +204,7 @@ int main(int argc, char **argv) {
    geocache_context_fcgi* globalctx = fcgi_context_create();
    geocache_context* c = (geocache_context*)globalctx;
    geocache_cfg *cfg = geocache_configuration_create(c->pool);
+   c->config = cfg;
    FCGX_Stream *in, *out, *err;
    FCGX_ParamArray envp;
    
@@ -177,23 +218,24 @@ int main(int argc, char **argv) {
    c->log(c,GEOCACHE_DEBUG,"geocache fcgi conf file: %s",conffile);
    geocache_configuration_parse(c,conffile,cfg);
    if(GC_HAS_ERROR(c)) {
-      c->log(c,GEOCACHE_ERROR,"failed to parse %s: %s",conffile,c->get_error_message(c));
+      c->log(c,500,"failed to parse %s: %s",conffile,c->get_error_message(c));
       return 1;
    }
    
    while (FCGX_Accept(&in, &out, &err, &envp) >= 0) {
       apr_table_t *params;
-      geocache_context *ctx = (geocache_context*) fcgi_context_request_create(globalctx,out,err); 
+      geocache_context_fcgi_request *rctx = fcgi_context_request_create(globalctx,out,err); 
+      geocache_context *ctx = (geocache_context*)rctx; 
       geocache_tile *tile;
       geocache_request *request = NULL;
       char *pathInfo = FCGX_GetParam("PATH_INFO",envp);
       int i;
       
 
-      params = geocache_http_parse_param_string((geocache_context*)ctx, FCGX_GetParam("QUERY_STRING",envp));
+      params = geocache_http_parse_param_string(ctx, FCGX_GetParam("QUERY_STRING",envp));
       geocache_service_dispatch_request(ctx,&request,pathInfo,params,cfg);
       if(GC_HAS_ERROR(ctx)) {
-        FCGX_FPrintF(out,"Status: 404 Not Found\r\n\r\n");
+         report_error_fcgi(rctx);
         goto cleanup;
       }
       
@@ -220,21 +262,15 @@ int main(int argc, char **argv) {
                fullhost,
                FCGX_GetParam("SCRIPT_NAME",envp)
                );
-         ctx->log(ctx,GEOCACHE_INFO,"toto");
          request->service->create_capabilities_response(ctx,req,url,pathInfo,cfg);
-         geocache_write_capabilities((geocache_context_fcgi_request*)ctx,req);
-      } else {
+         geocache_write_capabilities(rctx,req);
+      } else if(request->type == GEOCACHE_REQUEST_GET_TILE) {
          geocache_request_get_tile *req = (geocache_request_get_tile*)request;
-         if(!req->ntiles) {
-            FCGX_FPrintF(out,"Status: 404 Not Found\r\n\r\n");
-            goto cleanup;
-         }
          for(i=0;i<req->ntiles;i++) {
             geocache_tile *tile = req->tiles[i];
             geocache_tileset_tile_get(ctx,tile);
             if(GC_HAS_ERROR(ctx)) {
-               ctx->log(ctx,GEOCACHE_DEBUG,ctx->get_error_message(ctx));
-               FCGX_FPrintF(out,"Status: 500 Internal Server Error\r\n\r\n");
+               report_error_fcgi(rctx);
                goto cleanup;
             }
          }
@@ -242,14 +278,11 @@ int main(int argc, char **argv) {
             tile = req->tiles[0];
          } else {
             tile = geocache_image_merge_tiles(ctx,cfg->merge_format,req->tiles,req->ntiles);
-            if(!tile) {
-               ctx->log(ctx,GEOCACHE_ERROR, "tile merging failed to return data");
-               if(ctx->get_error(ctx)) {
-                  ctx->log(ctx,GEOCACHE_ERROR,c->get_error_message(ctx));
-                  FCGX_FPrintF(out,"Status: 500 Internal Server Error\r\n\r\n");
-                  goto cleanup;
-               }
-               FCGX_FPrintF(out,"Status: 500 Internal Server Error\r\n\r\n");
+            
+            if(GC_HAS_ERROR(ctx) || !tile) {
+               if(!GC_HAS_ERROR(ctx))
+                  ctx->set_error(ctx, 500, "tile merging failed to return data");
+               report_error_fcgi(rctx);
                goto cleanup;
             }
             tile->tileset = req->tiles[0]->tileset;

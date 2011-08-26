@@ -124,7 +124,7 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
 geocache_service* geocache_service_demo_create(geocache_context *ctx) {
    geocache_service_demo* service = (geocache_service_demo*)apr_pcalloc(ctx->pool, sizeof(geocache_service_demo));
    if(!service) {
-      ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate demo service");
+      ctx->set_error(ctx, 500, "failed to allocate demo service");
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"demo");

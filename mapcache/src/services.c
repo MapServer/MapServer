@@ -27,7 +27,7 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
    
    /* skip empty pathinfo */
    if(!pathinfo) {
-      ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"missing a service");
+      ctx->set_error(ctx,404,"missing a service");
       return;
    }
    
@@ -36,7 +36,7 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
       ++pathinfo;
    
    if(!(*pathinfo)) {
-      ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"missing a service");
+      ctx->set_error(ctx,404,"missing a service");
       return;
    }
    
@@ -55,7 +55,7 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
       (*request)->service = service;
       return;
    }
-   ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"unknown service");
+   ctx->set_error(ctx,404,"unknown service");
 }
 
 /** @} */

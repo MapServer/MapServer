@@ -54,7 +54,7 @@ void geocache_http_request_url(geocache_context *ctx, char *url, geocache_buffer
    /* get it! */ 
    ret = curl_easy_perform(curl_handle);
    if(ret != CURLE_OK) {
-      ctx->set_error(ctx, GEOCACHE_HTTP_ERROR, "curl failed to request url %s : %s", url, error_msg);
+      ctx->set_error(ctx, 502, "curl failed to request url %s : %s", url, error_msg);
    }
    /* cleanup curl stuff */ 
    curl_easy_cleanup(curl_handle);

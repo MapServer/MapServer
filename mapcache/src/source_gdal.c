@@ -260,7 +260,7 @@ geocache_source* geocache_source_gdal_create(geocache_context *ctx) {
    source->gdal_params = apr_table_make(ctx->pool,4);
    return (geocache_source*)source;
 #else
-   ctx->set_error(ctx, GEOCACHE_SOURCE_GDAL_ERROR, "failed to create gdal source, GDAL support is not compiled in this version");
+   ctx->set_error(ctx, 400, "failed to create gdal source, GDAL support is not compiled in this version");
    return NULL;
 #endif
 }

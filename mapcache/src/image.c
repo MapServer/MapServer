@@ -26,7 +26,7 @@ void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_
    int i,j,starti,startj;
    unsigned char *browptr, *orowptr, *bptr, *optr;
    if(base->w < overlay->w || base->h < overlay->h) {
-      ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "attempting to merge an larger image onto another");
+      ctx->set_error(ctx, 500, "attempting to merge an larger image onto another");
       return;
    }
    starti = (base->h - overlay->h)/2;
@@ -111,7 +111,7 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
          metatile = mt->imdata;
       }
       if(!metatile) {
-         ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "failed to load image data from metatile");
+         ctx->set_error(ctx, 500, "failed to load image data from metatile");
          return;
       }
       tileimg.stride = metatile->stride;
@@ -133,7 +133,7 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
       if(mt->tile.tileset->metasize_x != 1 ||
             mt->tile.tileset->metasize_y != 1 ||
             mt->tile.tileset->metabuffer != 0) {
-         ctx->set_error(ctx, GEOCACHE_IMAGE_ERROR, "##### BUG ##### using a metatile with no format");
+         ctx->set_error(ctx, 500, "##### BUG ##### using a metatile with no format");
          return;
       }
 #endif

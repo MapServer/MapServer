@@ -89,7 +89,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
    geocache_request_get_capabilities_wms *request = (geocache_request_get_capabilities_wms*)req;
 #ifdef DEBUG
    if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
-      ctx->set_error(ctx,GEOCACHE_ERROR,"wrong wms capabilities request");
+      ctx->set_error(ctx,400,"wrong wms capabilities request");
       return;
    }
 #endif
@@ -216,17 +216,17 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
    
    str = apr_table_get(params,"SERVICE");
    if(!str) {
-      ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"received wms request with no service param");
+      ctx->set_error(ctx,400,"received wms request with no service param");
       return;
    }
    if( strcasecmp(str,"wms") ) {
-      ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"received wms request with invalid service param %s", str);
+      ctx->set_error(ctx,400,"received wms request with invalid service param %s", str);
       return;
    }
       
    str = apr_table_get(params,"REQUEST");
    if(!str) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms with no request");
+      ctx->set_error(ctx, 400, "received wms with no request");
       return;
    }
    if( ! strcasecmp(str,"getcapabilities") ) {
@@ -235,59 +235,59 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
       (*request)->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
       return; /* OK */
    } else if( strcasecmp(str,"getmap")) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms with invalid request %s",str);
+      ctx->set_error(ctx, 501, "received wms with invalid request %s",str);
       return;
    }
 
 
    str = apr_table_get(params,"BBOX");
    if(!str) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no bbox");
+      ctx->set_error(ctx, 400, "received wms request with no bbox");
       return;
    } else {
       int nextents;
       if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, str,',',&bbox,&nextents) ||
             nextents != 4) {
-         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid bbox");
+         ctx->set_error(ctx, 400, "received wms request with invalid bbox");
          return;
       }
    }
 
    str = apr_table_get(params,"WIDTH");
    if(!str) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no width");
+      ctx->set_error(ctx, 400, "received wms request with no width");
       return;
    } else {
       char *endptr;
       width = (int)strtol(str,&endptr,10);
       if(*endptr != 0 || width <= 0) {
-         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid width");
+         ctx->set_error(ctx, 400, "received wms request with invalid width");
          return;
       }
    }
 
    str = apr_table_get(params,"HEIGHT");
    if(!str) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no height");
+      ctx->set_error(ctx, 400, "received wms request with no height");
       return;
    } else {
       char *endptr;
       height = (int)strtol(str,&endptr,10);
       if(*endptr != 0 || height <= 0) {
-         ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid height");
+         ctx->set_error(ctx, 400, "received wms request with invalid height");
          return;
       }
    }
 
    srs = apr_table_get(params,"SRS");
    if(!srs) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no srs");
+      ctx->set_error(ctx, 400, "received wms request with no srs");
       return;
    }
 
    str = apr_table_get(params,"LAYERS");
    if(!str) {
-      ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with no layers");
+      ctx->set_error(ctx, 400, "received wms request with no layers");
       return;
    } else {
       char *last, *key, *layers;
@@ -305,7 +305,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
          geocache_tile *tile;
          geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
          if(!tileset) {
-            ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR, "received wms request with invalid layer %s", key);
+            ctx->set_error(ctx, 404, "received wms request with invalid layer %s", key);
             return;
          }
          int i;
@@ -319,14 +319,14 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
             break;
          }
          if(!grid_link) {
-               ctx->set_error(ctx, GEOCACHE_REQUEST_ERROR,
+               ctx->set_error(ctx, 400,
                      "received unsuitable wms request: no suitable <grid> found");
                return;
          }
 
          tile = geocache_tileset_tile_create(ctx->pool, tileset);
          if(!tile) {
-            ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate tile");
+            ctx->set_error(ctx, 500, "failed to allocate tile");
             return;
          }
          tile->grid_link = grid_link;
@@ -348,7 +348,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
                   if(ok == GEOCACHE_SUCCESS)
                      apr_table_setn(tile->dimensions,dimension->name,value);
                   else {
-                     ctx->set_error(ctx,GEOCACHE_REQUEST_ERROR,"dimension \"%s\" value \"%s\" fails to validate",
+                     ctx->set_error(ctx,400,"dimension \"%s\" value \"%s\" fails to validate",
                            dimension->name, value);
                      return;
                   }
@@ -366,7 +366,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request
 geocache_service* geocache_service_wms_create(geocache_context *ctx) {
    geocache_service_wms* service = (geocache_service_wms*)apr_pcalloc(ctx->pool, sizeof(geocache_service_wms));
    if(!service) {
-      ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate wms service");
+      ctx->set_error(ctx, 500, "failed to allocate wms service");
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"wms");
