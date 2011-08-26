@@ -134,7 +134,7 @@ void _create_capabilities_tms(geocache_context *ctx, geocache_request_get_capabi
  * \private \memberof geocache_service_tms
  * \sa geocache_service::parse_request()
  */
-void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request **request,
+void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
       const char *cpathinfo, apr_table_t *params, geocache_cfg *config) {
    int index = 0;
    char *last, *key, *endptr;
@@ -142,7 +142,11 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
    geocache_grid_link *grid_link = NULL;
    char *pathinfo;
    int x=-1,y=-1,z=-1;
-   
+  
+   if(this->type == GEOCACHE_SERVICE_GMAPS) {
+      index++;
+      /* skip the version part of the url */
+   }
    if(cpathinfo) {
       pathinfo = apr_pstrdup(ctx->pool,cpathinfo);
       /* parse a path_info like /1.0.0/global_mosaic/0/0/0.jpg */
@@ -230,7 +234,11 @@ void _geocache_service_tms_parse_request(geocache_context *ctx, geocache_request
       req->tiles = (geocache_tile**)apr_pcalloc(ctx->pool,sizeof(geocache_tile*));
       req->tiles[0] = geocache_tileset_tile_create(ctx->pool, tileset);
       req->tiles[0]->x = x;
-      req->tiles[0]->y = y;
+      if(((geocache_service_tms*)this)->reverse_y) {
+         req->tiles[0]->y = grid_link->grid->levels[z]->maxy - y - 1;
+      } else {
+         req->tiles[0]->y = y;
+      }
       req->tiles[0]->z = z;
       req->tiles[0]->grid_link = grid_link;
       geocache_tileset_tile_validate(ctx,req->tiles[0]);
@@ -265,8 +273,27 @@ geocache_service* geocache_service_tms_create(geocache_context *ctx) {
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"tms");
    service->service.type = GEOCACHE_SERVICE_TMS;
+   service->reverse_y = 0;
    service->service.parse_request = _geocache_service_tms_parse_request;
    service->service.create_capabilities_response = _create_capabilities_tms;
+   return (geocache_service*)service;
+}
+
+void _create_capabilities_gmaps(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
+   ctx->set_error(ctx,501,"gmaps service does not support capapbilities");
+}
+
+geocache_service* geocache_service_gmaps_create(geocache_context *ctx) {
+   geocache_service_tms* service = (geocache_service_tms*)apr_pcalloc(ctx->pool, sizeof(geocache_service_tms));
+   if(!service) {
+      ctx->set_error(ctx, 500, "failed to allocate gmaps service");
+      return NULL;
+   }
+   service->service.url_prefix = apr_pstrdup(ctx->pool,"gmaps");
+   service->reverse_y = 1;
+   service->service.type = GEOCACHE_SERVICE_GMAPS;
+   service->service.parse_request = _geocache_service_tms_parse_request;
+   service->service.create_capabilities_response = _create_capabilities_gmaps;
    return (geocache_service*)service;
 }
 

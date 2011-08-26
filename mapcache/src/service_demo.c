@@ -52,7 +52,7 @@ static char *demo_layer =
  * \private \memberof geocache_service_demo
  * \sa geocache_service::parse_request()
  */
-void _geocache_service_demo_parse_request(geocache_context *ctx, geocache_request **request,
+void _geocache_service_demo_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
       const char *cpathinfo, apr_table_t *params, geocache_cfg *config) {
    *request = (geocache_request*)apr_pcalloc(
                ctx->pool,sizeof(geocache_request_get_capabilities));

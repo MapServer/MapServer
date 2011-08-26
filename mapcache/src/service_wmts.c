@@ -278,7 +278,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
  * \private \memberof geocache_service_wmts
  * \sa geocache_service::parse_request()
  */
-void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_request **request,
+void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
       const char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    const char *str, *service = NULL, *style = NULL, *version = NULL, *layer = NULL, *matrixset = NULL,
                *matrix = NULL, *tilecol = NULL, *tilerow = NULL, *format = NULL, *extension = NULL;

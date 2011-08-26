@@ -75,6 +75,7 @@ typedef struct geocache_request_get_tile geocache_request_get_tile;
 typedef struct geocache_service geocache_service;
 typedef struct geocache_service_wms geocache_service_wms;
 typedef struct geocache_service_wmts geocache_service_wmts;
+typedef struct geocache_service_gmaps geocache_service_gmaps;
 typedef struct geocache_service_tms geocache_service_tms;
 typedef struct geocache_service_demo geocache_service_demo;
 typedef struct geocache_server_cfg geocache_server_cfg;
@@ -366,11 +367,11 @@ struct geocache_request_get_capabilities_wmts {
 /** \defgroup services Services*/
 /** @{ */
 
-#define GEOCACHE_SERVICES_COUNT 4
+#define GEOCACHE_SERVICES_COUNT 5
 
 typedef enum {
     GEOCACHE_SERVICE_WMS = 0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMTS,
-    GEOCACHE_SERVICE_DEMO
+    GEOCACHE_SERVICE_DEMO, GEOCACHE_SERVICE_GMAPS
 } geocache_service_type;
 
 #define GEOCACHE_UNITS_COUNT 3
@@ -397,7 +398,7 @@ struct geocache_service {
     /**
      * \brief allocates and populates a geocache_request corresponding to the parameters received
      */
-    void (*parse_request)(geocache_context *ctx, geocache_request **request, const char *path_info, apr_table_t *params, geocache_cfg * config);
+    void (*parse_request)(geocache_context *ctx, geocache_service *service, geocache_request **request, const char *path_info, apr_table_t *params, geocache_cfg * config);
 
     /**
      * \param request the received request (should be of type GEOCACHE_REQUEST_CAPABILITIES
@@ -420,6 +421,7 @@ struct geocache_service_wms {
  */
 struct geocache_service_tms {
     geocache_service service;
+    int reverse_y;
 };
 
 /**\class geocache_service_wmts
@@ -443,6 +445,12 @@ struct geocache_service_demo {
  * \memberof geocache_service_wms
  */
 geocache_service* geocache_service_wms_create(geocache_context *ctx);
+
+/**
+ * \brief create and initialize a geocache_service_gmaps
+ * \memberof geocache_service_gmaps
+ */
+geocache_service* geocache_service_gmaps_create(geocache_context *ctx);
 
 /**
  * \brief create and initialize a geocache_service_tms

@@ -207,7 +207,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
  * \private \memberof geocache_service_wms
  * \sa geocache_service::parse_request()
  */
-void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_request **request,
+void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
       const char *pathinfo, apr_table_t *params, geocache_cfg *config) {
    const char *str = NULL;
    const char *srs=NULL;

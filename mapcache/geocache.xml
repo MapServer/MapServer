@@ -467,6 +467,9 @@
       
       <!-- OGC WMTS -->
       <wmts>true</wmts>
+      
+      <!-- Google Maps -->
+      <gmaps>true</gmaps>
 
       <!-- demo
          interface with a simple openlayers map serving the configured layers through WMS.

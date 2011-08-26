@@ -791,6 +791,11 @@ void parseServices(geocache_context *ctx, ezxml_t root, geocache_cfg *config) {
          config->services[GEOCACHE_SERVICE_TMS] = geocache_service_tms_create(ctx);
       }
    }
+   if ((node = ezxml_child(root,"gmaps")) != NULL) {
+      if(!node->txt || !*node->txt || strcmp(node->txt, "false")) {
+         config->services[GEOCACHE_SERVICE_GMAPS] = geocache_service_gmaps_create(ctx);
+      }
+   }
    if ((node = ezxml_child(root,"demo")) != NULL) {
       if(!node->txt || !*node->txt || strcmp(node->txt, "false")) {
          config->services[GEOCACHE_SERVICE_DEMO] = geocache_service_demo_create(ctx);
