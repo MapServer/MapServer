@@ -1124,6 +1124,11 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    }
    apr_dir_close(lockdir);
 
+   if((node = ezxml_child(doc,"pathinfo_hack")) != NULL) {
+      config->pathinfo_hack = 1;
+   } else {
+      config->pathinfo_hack = 0;
+   }
 
 cleanup:
    ezxml_free(doc);

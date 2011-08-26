@@ -125,6 +125,25 @@
          </grid>
    --> 
 
+   <!-- french grids -->
+   <grid name="FXX">
+      <extent>-357823.2365 6037008.6939 1313632.3628 7230727.3772</extent>
+      <srs>EPSG:2154</srs>
+      <srsalias>EPSG:310024802</srsalias>
+      <srsalias>IGNF:GEOPORTALFXX</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="Miller">
+      <extent>-20037504 -10018752 20037504 10018752</extent>
+      <srs>EPSG:310642901</srs>
+      <srsalias>IGNF:MILLER</srsalias>
+      <resolutions>39135.75 19567.875 9783.9375 4891.96875 2445.984375</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+
    <!--
         a cache is where tiles are stored once they have been rendered
         the only "type" available right now is "disk"
@@ -467,6 +486,8 @@
       <source>osm</source>
       <cache>disk</cache>
       <format>PNG</format>
+      <grid>FXX</grid>
+      <grid>Miller</grid>
       <grid>WGS84</grid>
       <grid>g</grid>
       <metatile>5 5</metatile>
@@ -503,7 +524,7 @@
    <service type="wms" enabled="true">
       <forwarding_rule name="foo rule">
             <http>
-               <url>http://localhost/cgi-bin/mapserv?map=/gro1/mapserver-utils/osm.map</url>
+               <url>http://localhost/</url>
             </http>
       </forwarding_rule>
    </service>
@@ -545,5 +566,6 @@
         this location should be writable by the apache user
    -->
    <lock_dir>/tmp</lock_dir>
+   <pathinfo_hack/>
 
 </geocache>
