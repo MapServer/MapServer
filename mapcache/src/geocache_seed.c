@@ -90,17 +90,19 @@ int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
    geocache_metatile *mt = geocache_tileset_metatile_get(ctx,tile);
    OGRGeometryH mtbboxls = OGR_G_CreateGeometry(wkbLinearRing);
    double *e = mt->map.extent;
-   OGR_G_AddPoint_2D(mtbboxls,e[0],e[1]);
-   OGR_G_AddPoint_2D(mtbboxls,e[2],e[1]);
-   OGR_G_AddPoint_2D(mtbboxls,e[2],e[3]);
-   OGR_G_AddPoint_2D(mtbboxls,e[0],e[3]);
-   OGR_G_AddPoint_2D(mtbboxls,e[0],e[1]);
+   OGR_G_SetPoint_2D(mtbboxls,0,e[0],e[1]);
+   OGR_G_SetPoint_2D(mtbboxls,1,e[2],e[1]);
+   OGR_G_SetPoint_2D(mtbboxls,2,e[2],e[3]);
+   OGR_G_SetPoint_2D(mtbboxls,3,e[0],e[3]);
+   OGR_G_SetPoint_2D(mtbboxls,4,e[0],e[1]);
    OGRGeometryH mtbbox = OGR_G_CreateGeometry(wkbPolygon);
    OGR_G_AddGeometryDirectly(mtbbox,mtbboxls);
    int i;
    for(i=0;i<nClippers;i++) {
       OGRGeometryH clipper = clippers[i];
-      if(OGR_G_Intersection(mtbbox,clipper))
+      OGRGeometryH clipresult;
+      clipresult = OGR_G_Intersection(mtbbox,clipper);
+      if(clipresult && !OGR_G_IsEmpty(clipresult))
          return 1;
    }
    return 0;
@@ -143,6 +145,9 @@ int should_seed_tile(geocache_context *ctx, geocache_tileset *tileset,
          }
        }
     }
+
+    if(!should_seed)
+       return 0;
 
     /* if here, the tile does not exist */
 #ifdef USE_OGR
@@ -188,9 +193,9 @@ int geocache_context_seeding_get_next_tile(geocache_context_seeding *ctx, geocac
 
     while(1) {
         ctx->nextx += ctx->tileset->metasize_x;
-        if(ctx->nextx >= tile->grid_link->grid_limits[ctx->nextz][2]) {
+        if(ctx->nextx > tile->grid_link->grid_limits[ctx->nextz][2]+ctx->tileset->metasize_x) {
             ctx->nexty += ctx->tileset->metasize_y;
-            if(ctx->nexty >= tile->grid_link->grid_limits[ctx->nextz][3]) {
+            if(ctx->nexty >= tile->grid_link->grid_limits[ctx->nextz][3]+ctx->tileset->metasize_y) {
                 ctx->nextz += 1;
                 if(ctx->nextz > ctx->maxzoom) break;
                 ctx->nexty = tile->grid_link->grid_limits[ctx->nextz][1];
@@ -336,6 +341,7 @@ int main(int argc, const char **argv) {
     geocache_context_init(gctx);
     cfg = geocache_configuration_create(gctx->pool);
     gctx->config = cfg;
+    gctx->log= geocache_context_seeding_log;
     apr_getopt_init(&opt, gctx->pool, argc, argv);
     
     curz=-1;
@@ -453,14 +459,6 @@ int main(int argc, const char **argv) {
       if((nClippers=OGR_L_GetFeatureCount(layer, TRUE)) == 0) {
          return usage(argv[0],"no features in provided ogr parameters, cannot continue");
       }
-      OGREnvelope ogr_extent;
-
-      OGR_L_GetExtent(layer,&ogr_extent,TRUE);
-      extent = apr_pcalloc(gctx->pool,4*sizeof(double));
-      extent[0] = ogr_extent.MinX;
-      extent[1] = ogr_extent.MinY;
-      extent[2] = ogr_extent.MaxX;
-      extent[3] = ogr_extent.MaxY;
 
 
       clippers = (OGRGeometryH*)malloc(nClippers*sizeof(OGRGeometryH));
@@ -469,10 +467,29 @@ int main(int argc, const char **argv) {
       OGRFeatureH hFeature;
 
       OGR_L_ResetReading(layer);
+      extent = apr_pcalloc(gctx->pool,4*sizeof(double));
       int f=0;
       while( (hFeature = OGR_L_GetNextFeature(layer)) != NULL ) {
-         clippers[f] = OGR_F_StealGeometry(hFeature);
+         clippers[f] = OGR_G_Clone(OGR_F_GetGeometryRef(hFeature));
+         OGREnvelope ogr_extent;
+         OGR_G_GetEnvelope	(clippers[f], &ogr_extent);	
+         if(f == 0) {
+            extent[0] = ogr_extent.MinX;
+            extent[1] = ogr_extent.MinY;
+            extent[2] = ogr_extent.MaxX;
+            extent[3] = ogr_extent.MaxY;
+         } else {
+            extent[0] = GEOCACHE_MIN(ogr_extent.MinX, extent[0]);
+            extent[1] = GEOCACHE_MIN(ogr_extent.MinY, extent[1]);
+            extent[2] = GEOCACHE_MAX(ogr_extent.MaxX, extent[2]);
+            extent[3] = GEOCACHE_MAX(ogr_extent.MaxY, extent[3]);
+         }
+
          OGR_F_Destroy( hFeature );
+         f++;
+      }
+      if(f != nClippers) {
+         usage(argv[0],"error");
       }
       
 

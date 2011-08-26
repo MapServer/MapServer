@@ -40,7 +40,7 @@ static char *demo_head =
 static char *demo_layer =
       "    var %s_%s_layer = new OpenLayers.Layer.WMS( \"%s-%s\",\n"
       "        \"%s\",{layers: '%s'},\n"
-      "        { gutter:0,ratio:1,isBaseLayer:true,transitionEffect:'resize',\n"
+      "        { gutter:0,buffer:0,isBaseLayer:true,transitionEffect:'resize',\n"
       "          resolutions:[%s],\n"
       "          maxExtent: new OpenLayers.Bounds(%f,%f,%f,%f),\n"
       "          projection: new OpenLayers.Projection(\"%s\")\n"
