@@ -3,7 +3,7 @@
 #include <apr_thread_mutex.h>
 #include <apr_getopt.h>
 #include <signal.h>
-
+#include <time.h>
 
 typedef struct geocache_context_seeding geocache_context_seeding;
 struct geocache_context_seeding{
