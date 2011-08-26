@@ -247,7 +247,7 @@
       <wmsparams>
          <FORMAT>image/png</FORMAT>
          <LAYERS>default</LAYERS>
-         <MAP>/home/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+         <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
       </wmsparams>
    </source>
    <source name="nexrad" type="wms">
