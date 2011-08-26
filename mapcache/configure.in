@@ -228,14 +228,14 @@ AC_DEFUN([APU_CHECK],[
         fi
     fi
     if test -z "$APUCONFIG"; then
-        AC_MSG_ERROR(apu-config utility not found. memcache backend will be disabled)
+        AC_MSG_ERROR(apu-config utility not found)
     else
        OLDLDFLAGS="$LDFLAGS" ; LDFLAGS="$LDFLAGS `$APUCONFIG --ldflags --libs --link-ld`"
        OLDCPPFLAGS="$CPPFLAGS" ; CPPFLAGS="$CPPFLAGS `$APUCONFIG --includes`"
        AC_CHECK_LIB(aprutil-1, apr_memcache_hash,[APU_LIBS=`$APUCONFIG --link-libtool`],)
        if test -z "$APU_LIBS"; then
           AC_CHECK_LIB(aprutil, apr_memcache_hash,[APU_LIBS=`$APUCONFIG --link-libtool`],
-                    [AC_MSG_WARN([unable to link to apr-util, memcache cache backend disabled])])
+                    [AC_MSG_ERROR([unable to link to apr-util])])
        fi
        if test -n "$APU_LIBS"; then
           AC_CHECK_HEADER([apr_memcache.h],[
