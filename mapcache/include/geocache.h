@@ -58,7 +58,7 @@ typedef struct geocache_metatile geocache_metatile;
 typedef struct geocache_source_wms geocache_source_wms;
 typedef struct geocache_cache_disk geocache_cache_disk;
 typedef struct geocache_request geocache_request;
-typedef struct geocache_service  geocache_service;
+typedef struct geocache_service geocache_service;
 typedef struct geocache_service_wms geocache_service_wms;
 typedef struct geocache_service_wmts geocache_service_wmts;
 typedef struct geocache_service_tms geocache_service_tms;
@@ -76,62 +76,64 @@ typedef struct geocache_context geocache_context;
  * \brief structure passed to most geocache functions to abstract common functions
  */
 struct geocache_context {
-   /**
-    * \brief indicate that an error has happened
-    * \memberof geocache_context
-    * \param c
-    * \param code the error code
-    * \param message human readable message of what happened
-    */
-   void (*set_error)(geocache_context *ctx, geocache_error_code code, char *message, ...);
-   
-   /**
-    * \brief query context to know if an error has occured
-    * \memberof geocache_context
-    */
-   geocache_error_code (*get_error)(geocache_context *ctx);
-   
-   /**
-    * \brief get human readable message for the error
-    * \memberof geocache_context
-    */
-   char* (*get_error_message)(geocache_context *ctx);
-   
-   /**
-    * \brief log a message
-    * \memberof geocache_context
-    */
-   void (*log)(geocache_context *ctx, geocache_log_level level, char *message, ...);
-   
-   /**
-    * \brief aquire a lock shared between all instances of geocache.
-    * 
-    * depending on the underlying backend, this lock should be effective between threads and/or processes
-    * \memberof geocache_context
-    * \param c
-    * \param nonblocking should the call block while waiting for the lock. if set to 0, the function will
-    *        return once the lock has been aquired. if set to 1, the function will return immediately, and
-    *        the return value should be checked to verify if the lock was successfully aquired, or if
-    *        another instance of geocache had already quired the lock
-    * \returns GEOCACHE_SUCCESS if the lock was aquired
-    * \returns GEOCACHE_FAILURE if there was an error aquiring the lock
-    * \returns GEOCACHE_LOCKED if \param nonblocking was set to 1 and another instance has already aquired
-    *          the lock
-    */
-   void (*global_lock_aquire)(geocache_context *ctx, int nonblocking);
-   
-   /**
-    * \brief release a previously aquired lock
-    * 
-    * \memberof geocache_context
-    * calling this function after an unsuccessful call to global_lock_aquire() or from a different thread
-    * or process that has called global_lock_aquire() has undefined behavior
-    */
-   void (*global_lock_release)(geocache_context *ctx);
-   
-   apr_pool_t *pool;
-   char *_errmsg;
-   geocache_error_code _errcode;
+    /**
+     * \brief indicate that an error has happened
+     * \memberof geocache_context
+     * \param c
+     * \param code the error code
+     * \param message human readable message of what happened
+     */
+    void (*set_error)(geocache_context *ctx, geocache_error_code code, char *message, ...);
+
+    /**
+     * \brief query context to know if an error has occured
+     * \memberof geocache_context
+     */
+    geocache_error_code(*get_error)(geocache_context * ctx);
+
+    /**
+     * \brief get human readable message for the error
+     * \memberof geocache_context
+     */
+    char* (*get_error_message)(geocache_context * ctx);
+
+    /**
+     * \brief log a message
+     * \memberof geocache_context
+     */
+    void (*log)(geocache_context *ctx, geocache_log_level level, char *message, ...);
+
+    /**
+     * \brief aquire a lock shared between all instances of geocache.
+     *
+     * depending on the underlying backend, this lock should be effective between threads and/or processes
+     * \memberof geocache_context
+     * \param c
+     * \param nonblocking should the call block while waiting for the lock. if set to 0, the function will
+     *        return once the lock has been aquired. if set to 1, the function will return immediately, and
+     *        the return value should be checked to verify if the lock was successfully aquired, or if
+     *        another instance of geocache had already quired the lock
+     * \returns GEOCACHE_SUCCESS if the lock was aquired
+     * \returns GEOCACHE_FAILURE if there was an error aquiring the lock
+     * \returns GEOCACHE_LOCKED if \param nonblocking was set to 1 and another instance has already aquired
+     *          the lock
+     */
+    void (*global_lock_aquire)(geocache_context *ctx, int nonblocking);
+
+    /**
+     * \brief release a previously aquired lock
+     *
+     * \memberof geocache_context
+     * calling this function after an unsuccessful call to global_lock_aquire() or from a different thread
+     * or process that has called global_lock_aquire() has undefined behavior
+     */
+    void (*global_lock_release)(geocache_context * ctx);
+
+    const char* (*get_instance_id)(geocache_context * ctx);
+
+    apr_pool_t *pool;
+    char *_errmsg;
+    geocache_error_code _errcode;
 };
 
 void geocache_context_init(geocache_context *ctx);
@@ -139,6 +141,7 @@ void geocache_context_init(geocache_context *ctx);
 #define GC_CHECK_ERROR_RETURN(ctx) (if(((geocache_context*)ctx)->_errcode) return GEOCACHE_FAILURE;)
 #define GC_CHECK_ERROR(ctx) if(((geocache_context*)ctx)->_errcode) return;
 #define GC_HAS_ERROR(ctx) (((geocache_context*)ctx)->_errcode > 0)
+
 /**
  * \brief autoexpanding buffer that allocates memory from a pool
  * \sa geocache_buffer_create()
@@ -146,10 +149,10 @@ void geocache_context_init(geocache_context *ctx);
  * 
  */
 struct geocache_buffer {
-   unsigned char* buf ;     /**< pointer to the actual data contained in buffer */
-   size_t size ; /**< number of bytes actually used in the buffer */
-   size_t avail ;  /**< number of bytes allocated */
-   apr_pool_t* pool; /**< apache pool to allocate from */
+    unsigned char* buf; /**< pointer to the actual data contained in buffer */
+    size_t size; /**< number of bytes actually used in the buffer */
+    size_t avail; /**< number of bytes allocated */
+    apr_pool_t* pool; /**< apache pool to allocate from */
 };
 
 /* in buffer.c */
@@ -174,106 +177,85 @@ int geocache_buffer_append(geocache_buffer *buffer, size_t len, void *data);
 /** @} */
 
 /** \defgroup source Sources */
+
 /** @{ */
 
-typedef enum {GEOCACHE_SOURCE_WMS} geocache_source_type;
+typedef enum {
+    GEOCACHE_SOURCE_WMS
+} geocache_source_type;
 
 /**\interface geocache_source
  * \brief a source of data that can return image data
  */
 struct geocache_source {
-   char *name; /**< the key this source can be referenced by */
-   char *srs; /**< data SRS */
-   double data_extent[4]; /**< extent in which this source can produce data */
-   geocache_source_type type;
-   int supports_metatiling;
-   /**
-    * \brief get the data for the tile
-    * 
-    * sets the geocache_tile::data for the given tile
-    * \deprecated
-    */
-   void (*render_tile)(geocache_context *ctx, geocache_tile *tile);
-   /**
-    * \brief get the data for the metatile
-    * 
-    * sets the geocache_metatile::tile::data for the given tile
-    */
-   void (*render_metatile)(geocache_context *ctx, geocache_metatile *mt);
-   void (*configuration_parse)(geocache_context *ctx, xmlNode *xml, geocache_source *source);
-   void (*configuration_check)(geocache_context *ctx, geocache_source *source);      
+    char *name; /**< the key this source can be referenced by */
+    char *srs; /**< data SRS */
+    double data_extent[4]; /**< extent in which this source can produce data */
+    geocache_source_type type;
+    int supports_metatiling;
+    /**
+     * \brief get the data for the tile
+     *
+     * sets the geocache_tile::data for the given tile
+     * \deprecated
+     */
+    void (*render_tile)(geocache_context *ctx, geocache_tile * tile);
+    /**
+     * \brief get the data for the metatile
+     *
+     * sets the geocache_metatile::tile::data for the given tile
+     */
+    void (*render_metatile)(geocache_context *ctx, geocache_metatile * mt);
+    void (*configuration_parse)(geocache_context *ctx, xmlNode *xml, geocache_source * source);
+    void (*configuration_check)(geocache_context *ctx, geocache_source * source);
 };
-
 
 /**\class geocache_source_wms
  * \brief WMS geocache_source
  * \implements geocache_source
  */
 struct geocache_source_wms {
-   geocache_source source;
-   char *url; /**< the base WMS url */
-   apr_table_t *wms_default_params; /**< default WMS parameters (SERVICE,REQUEST,STYLES,VERSION) */
-   apr_table_t *wms_params; /**< WMS parameters specified in configuration */
+    geocache_source source;
+    char *url; /**< the base WMS url */
+    apr_table_t *wms_default_params; /**< default WMS parameters (SERVICE,REQUEST,STYLES,VERSION) */
+    apr_table_t *wms_params; /**< WMS parameters specified in configuration */
 };
 
 /** @} */
 
 
 /** \defgroup cache Caches */
+
 /** @{ */
-typedef enum {GEOCACHE_CACHE_DISK} geocache_cache_type;
+typedef enum {
+    GEOCACHE_CACHE_DISK
+} geocache_cache_type;
 
 /** \interface geocache_cache
  * \brief a place to cache a geocache_tile
  */
 struct geocache_cache {
-   char *name; /**< key this cache is referenced by */
-   geocache_cache_type type;
-   /**
-    * get tile content from cache
-    * \returns GEOCACHE_SUCCESS if the data was correctly loaded from the disk
-    * \returns GEOCACHE_FAILURE if the file exists but contains no data
-    * \returns GEOCACHE_CACHE_MISS if the file does not exist on the disk
-    * \memberof geocache_cache
-    */
-   int (*tile_get)(geocache_context *ctx, geocache_tile *tile);
+    char *name; /**< key this cache is referenced by */
+    geocache_cache_type type;
+    /**
+     * get tile content from cache
+     * \returns GEOCACHE_SUCCESS if the data was correctly loaded from the disk
+     * \returns GEOCACHE_FAILURE if the file exists but contains no data
+     * \returns GEOCACHE_CACHE_MISS if the file does not exist on the disk
+     * \memberof geocache_cache
+     */
+    int (*tile_get)(geocache_context *ctx, geocache_tile * tile);
 
-   int (*tile_exists)(geocache_context *ctx, geocache_tile *tile);
-   
-   /**
-    * set tile content to cache
-    * \memberof geocache_cache
-    */
-   void (*tile_set)(geocache_context *ctx, geocache_tile *tile);
-   
-   void (*configuration_parse)(geocache_context *ctx, xmlNode *xml, geocache_cache *cache);
-   void (*configuration_check)(geocache_context *ctx, geocache_cache *cache); 
-   
-   /**
-    * lock the tile
-    * \memberof geocache_cache
-    */
-   void (*tile_lock)(geocache_context *ctx, geocache_tile *tile);
-   
-   /**
-    * unlock the tile
-    * \memberof geocache_cache
-    */
-   void (*tile_unlock)(geocache_context *ctx, geocache_tile *tile);
-   
-   /**
-    * check if there is a lock on the tile (the lock will have been set by another process/thread)
-    * \returns GEOCACHE_TRUE if the tile is locked by another process/thread
-    * \returns GEOCACHE_FALSE if there is no lock on the tile
-    * \memberof geocache_cache
-    */
-   int (*tile_lock_exists)(geocache_context *ctx, geocache_tile *tile);
-   
-   /**
-    * wait for the lock set on the tile (the lock will have been set by another process/thread)
-    * \memberof geocache_cache
-    */
-   void (*tile_lock_wait)(geocache_context *ctx, geocache_tile *tile);
+    int (*tile_exists)(geocache_context *ctx, geocache_tile * tile);
+
+    /**
+     * set tile content to cache
+     * \memberof geocache_cache
+     */
+    void (*tile_set)(geocache_context *ctx, geocache_tile * tile);
+
+    void (*configuration_parse)(geocache_context *ctx, xmlNode *xml, geocache_cache * cache);
+    void (*configuration_check)(geocache_context *ctx, geocache_cache * cache);
 };
 
 /**\class geocache_cache_disk
@@ -281,9 +263,9 @@ struct geocache_cache {
  * \implements geocache_cache
  */
 struct geocache_cache_disk {
-   geocache_cache cache;
-   char *base_directory;
-   int symlink_blank;
+    geocache_cache cache;
+    char *base_directory;
+    int symlink_blank;
 };
 
 /** @} */
@@ -292,18 +274,18 @@ struct geocache_cache_disk {
  * \brief a request sent by a client
  */
 struct geocache_request {
-   /**
-    * a list of tiles requested by the client
-    */
-   geocache_tile **tiles;
+    /**
+     * a list of tiles requested by the client
+     */
+    geocache_tile **tiles;
 
-   /**
-    * the number of tiles requested by the client.
-    * If more than one, and merging is enabled,
-    * the supplied tiles will be merged together 
-    * before being returned to the client
-    */
-   int ntiles;
+    /**
+     * the number of tiles requested by the client.
+     * If more than one, and merging is enabled,
+     * the supplied tiles will be merged together
+     * before being returned to the client
+     */
+    int ntiles;
 };
 
 /** \defgroup services Services*/
@@ -311,20 +293,24 @@ struct geocache_request {
 
 #define GEOCACHE_SERVICES_COUNT 3
 
-typedef enum {GEOCACHE_SERVICE_WMS=0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMTS} geocache_service_type;
+typedef enum {
+    GEOCACHE_SERVICE_WMS = 0, GEOCACHE_SERVICE_TMS, GEOCACHE_SERVICE_WMTS
+} geocache_service_type;
 
-typedef enum {GEOCACHE_UNIT_UNSET = 0, GEOCACHE_UNIT_METERS, GEOCACHE_UNIT_DEGREES, GEOCACHE_UNIT_FEET} geocache_unit;
+typedef enum {
+    GEOCACHE_UNIT_UNSET = 0, GEOCACHE_UNIT_METERS, GEOCACHE_UNIT_DEGREES, GEOCACHE_UNIT_FEET
+} geocache_unit;
 
 /** \interface geocache_service
  * \brief a standard service (eg WMS, TMS)
  */
 struct geocache_service {
-   geocache_service_type type;
-   /**
-    * \returns a geocache_request corresponding to the parameters received
-    * \returns NULL if the request does not correspond the the service
-    */
-   geocache_request* (*parse_request)(geocache_context *ctx, char *path_info,  apr_table_t *params, geocache_cfg *config);
+    geocache_service_type type;
+    /**
+     * \returns a geocache_request corresponding to the parameters received
+     * \returns NULL if the request does not correspond the the service
+     */
+    geocache_request * (*parse_request)(geocache_context *ctx, char *path_info, apr_table_t *params, geocache_cfg * config);
 };
 
 /**\class geocache_service_wms
@@ -332,7 +318,7 @@ struct geocache_service {
  * \implements geocache_service
  */
 struct geocache_service_wms {
-   geocache_service service;
+    geocache_service service;
 };
 
 /**\class geocache_service_tms
@@ -340,7 +326,7 @@ struct geocache_service_wms {
  * \implements geocache_service
  */
 struct geocache_service_tms {
-   geocache_service service;
+    geocache_service service;
 };
 
 /**\class geocache_service_wmts
@@ -348,7 +334,7 @@ struct geocache_service_tms {
  * \implements geocache_service
  */
 struct geocache_service_wmts {
-   geocache_service service;
+    geocache_service service;
 };
 
 /**
@@ -366,20 +352,23 @@ geocache_service* geocache_service_tms_create(geocache_context *ctx);
 /** @} */
 
 /** \defgroup image Image Data Handling */
+
 /** @{ */
 
-typedef enum {GC_UNKNOWN, GC_PNG, GC_JPEG} geocache_image_format_type;
+typedef enum {
+    GC_UNKNOWN, GC_PNG, GC_JPEG
+} geocache_image_format_type;
 
 /**\class geocache_image
  * \brief representation of an RGBA image
  * 
  * to access a pixel at position x,y, you should use the #GET_IMG_PIXEL macro
  */
-struct geocache_image{
-   unsigned char *data; /**< pointer to the beginning of image data, stored in rgba order */
-   size_t w; /**< width of the image */
-   size_t h; /**< height of the image */
-   size_t stride; /**< stride of an image row */
+struct geocache_image {
+    unsigned char *data; /**< pointer to the beginning of image data, stored in rgba order */
+    size_t w; /**< width of the image */
+    size_t h; /**< height of the image */
+    size_t stride; /**< stride of an image row */
 };
 
 /** \def GET_IMG_PIXEL
@@ -427,47 +416,53 @@ apr_table_t *geocache_http_parse_param_string(geocache_context *ctx, char *args)
 /** @} */
 
 /** \defgroup configuration Configuration*/
+
 /** @{ */
 
-struct geocache_server_cfg{
-   apr_global_mutex_t *mutex;
+struct geocache_server_cfg {
+    apr_global_mutex_t *mutex;
 };
 
 /**
  * a configuration that will be served
  */
 struct geocache_cfg {
-   char *configFile; /**< the filename from which this configuration was loaded */
+    char *configFile; /**< the filename from which this configuration was loaded */
 
-   /**
-    * a list of services that will be responded to
-    */
-   geocache_service* services[GEOCACHE_SERVICES_COUNT];
+    /**
+     * a list of services that will be responded to
+     */
+    geocache_service * services[GEOCACHE_SERVICES_COUNT];
 
-   /**
-    * hashtable containing configured geocache_source%s
-    */
-   apr_hash_t *sources;
+    /**
+     * hashtable containing configured geocache_source%s
+     */
+    apr_hash_t *sources;
 
-   /**
-    * hashtable containing configured geocache_cache%s
-    */
-   apr_hash_t *caches;
+    /**
+     * hashtable containing configured geocache_cache%s
+     */
+    apr_hash_t *caches;
 
-   /**
-    * hashtable containing configured geocache_tileset%s
-    */
-   apr_hash_t *tilesets;
+    /**
+     * hashtable containing configured geocache_tileset%s
+     */
+    apr_hash_t *tilesets;
 
-   /**
-    * hashtable containing configured geocache_image_format%s
-    */
-   apr_hash_t *image_formats;
+    /**
+     * hashtable containing configured geocache_image_format%s
+     */
+    apr_hash_t *image_formats;
 
-   /**
-    * the format to use when merging multiple tiles
-    */
-   geocache_image_format *merge_format;
+    /**
+     * the format to use when merging multiple tiles
+     */
+    geocache_image_format *merge_format;
+
+    /**
+     * directory where we store file locks
+     */
+    char *lockdir;
 };
 
 /**
@@ -513,24 +508,24 @@ geocache_cache* geocache_cache_disk_create(geocache_context *ctx);
  * \sa geocache_tileset::metasize_x geocache_tileset::metasize_x geocache_tileset::metabuffer
  */
 struct geocache_tile {
-   geocache_tileset *tileset; /**< the geocache_tileset that corresponds to the tile*/
-   int x; /**< tile x index */
-   int y; /**< tile y index */
-   int z; /**< tile z index (zoom level) */
-   int sx; /**< tile width in pixels */
-   int sy; /**< tile height in pixels */
-   /**
-    * encoded image data for the tile.
-    * \sa geocache_cache::tile_get()
-    * \sa geocache_source::render_tile()
-    * \sa geocache_source::render_metatile()
-    * \sa geocache_image_format
-    */
-   geocache_buffer *data;
-   void *lock; /**< pointer to opaque structure set by a geocache_cache to reference a lock on the tile
+    geocache_tileset *tileset; /**< the geocache_tileset that corresponds to the tile*/
+    int x; /**< tile x index */
+    int y; /**< tile y index */
+    int z; /**< tile z index (zoom level) */
+    int sx; /**< tile width in pixels */
+    int sy; /**< tile height in pixels */
+    /**
+     * encoded image data for the tile.
+     * \sa geocache_cache::tile_get()
+     * \sa geocache_source::render_tile()
+     * \sa geocache_source::render_metatile()
+     * \sa geocache_image_format
+     */
+    geocache_buffer *data;
+    void *lock; /**< pointer to opaque structure set by a geocache_cache to reference a lock on the tile
                 \sa geocache_cache::tile_lock() */
-   apr_time_t mtime; /**< last modification time */
-   int expires; /**< time in seconds after which the tile should be rechecked for validity */
+    apr_time_t mtime; /**< last modification time */
+    int expires; /**< time in seconds after which the tile should be rechecked for validity */
 };
 
 /**
@@ -538,10 +533,10 @@ struct geocache_tile {
  * \extends geocache_tile
  */
 struct geocache_metatile {
-   geocache_tile tile; /**< the geocache_tile that corresponds to this metatile */
-   double bbox[4]; /**< the bounding box covered by this metatile */
-   int ntiles; /**< the number of geocache_metatile::tiles contained in this metatile */
-   geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
+    geocache_tile tile; /**< the geocache_tile that corresponds to this metatile */
+    double bbox[4]; /**< the bounding box covered by this metatile */
+    int ntiles; /**< the number of geocache_metatile::tiles contained in this metatile */
+    geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
 };
 
 /**\class geocache_tileset
@@ -549,87 +544,92 @@ struct geocache_metatile {
  *        stored by a geocache_cache in a geocache_format
  */
 struct geocache_tileset {
-   /**
-    * the name this tileset will be referenced by.
-    * this is the key that is passed by clients e.g. in a WMS LAYERS= parameter
-    */
-   char *name;
+    /**
+     * the name this tileset will be referenced by.
+     * this is the key that is passed by clients e.g. in a WMS LAYERS= parameter
+     */
+    char *name;
 
-   /**
-    * the extent of the tileset.
-    */
-   double extent[4];
+    /**
+     * the extent of the tileset.
+     */
+    double extent[4];
 
-   /**
-    * the SRS of the tileset
-    */
-   char *srs;
-   
-   /**
-    * the unit of measure of the tileset
-    */
-   geocache_unit units;
+    /**
+     * the SRS of the tileset
+     */
+    char *srs;
 
-   /**
-    * width of a tile in pixels
-    */
-   int tile_sx;
+    /**
+     * the unit of measure of the tileset
+     */
+    geocache_unit units;
 
-   /**
-    * height of a tile in pixels
-    */
-   int tile_sy;
+    /**
+     * width of a tile in pixels
+     */
+    int tile_sx;
 
-   /**
-    * number of resolutions
-    */
-   int levels;
+    /**
+     * height of a tile in pixels
+     */
+    int tile_sy;
 
-   /**
-    * resolutions of the tiles
-    */
-   double *resolutions;
+    /**
+     * number of resolutions
+     */
+    int levels;
 
-   /**
-    * size of the metatile that should be requested to the geocache_tileset::source
-    */
-   int metasize_x, metasize_y;
+    /**
+     * resolutions of the tiles
+     */
+    double *resolutions;
 
-   /**
-    * size of the gutter around the metatile that should be requested to the geocache_tileset::source
-    */
-   int metabuffer;
+    /**
+     * size of the metatile that should be requested to the geocache_tileset::source
+     */
+    int metasize_x, metasize_y;
 
-   /**
-    * number of seconds that should be returned to the client in an Expires: header
-    */
-   int expires;
+    /**
+     * size of the gutter around the metatile that should be requested to the geocache_tileset::source
+     */
+    int metabuffer;
 
-   /**
-    * the cache in which the tiles should be stored
-    */
-   geocache_cache *cache;
+    /**
+     * number of seconds that should be returned to the client in an Expires: header
+     */
+    int expires;
 
-   /**
-    * the source from which tiles should be requested
-    */
-   geocache_source *source;
+    /**
+     * the cache in which the tiles should be stored
+     */
+    geocache_cache *cache;
 
-   /**
-    * the format to use when storing tiles coming from a metatile
-    */
-   geocache_image_format *format;
+    /**
+     * the source from which tiles should be requested
+     */
+    geocache_source *source;
 
-   /**
-    * the format to use when storing a tile coming from a source
-    * if NULL, store what the source has produced without processing
-    */
-   geocache_image_format *cache_format;
+    /**
+     * the format to use when storing tiles coming from a metatile
+     */
+    geocache_image_format *format;
 
-   /**
-    * a list of parameters that can be forwarded from the client to the geocache_tileset::source
-    */
-   apr_table_t *forwarded_params;
+    /**
+     * the format to use when storing a tile coming from a source
+     * if NULL, store what the source has produced without processing
+     */
+    geocache_image_format *cache_format;
+
+    /**
+     * a list of parameters that can be forwarded from the client to the geocache_tileset::source
+     */
+    apr_table_t *forwarded_params;
+
+    /**
+     * handle to the configuration this tileset belongs to
+     */
+    geocache_cfg *config;
 };
 
 /**
@@ -689,7 +689,29 @@ void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox);
  * @param x
  * @param y
  */
-void geocache_tileset_get_xy(geocache_context *ctx, geocache_tileset *tileset, double dx, double dy,int z, int *x, int *y);
+void geocache_tileset_get_xy(geocache_context *ctx, geocache_tileset *tileset, double dx, double dy, int z, int *x, int *y);
+
+/**
+ * lock the tile
+ */
+void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile);
+
+/**
+ * unlock the tile
+ */
+void geocache_tileset_tile_unlock(geocache_context *ctx, geocache_tile *tile);
+
+/**
+ * check if there is a lock on the tile (the lock will have been set by another process/thread)
+ * \returns GEOCACHE_TRUE if the tile is locked by another process/thread
+ * \returns GEOCACHE_FALSE if there is no lock on the tile
+ */
+int geocache_tileset_tile_lock_exists(geocache_context *ctx, geocache_tile *tile);
+
+/**
+ * wait for the lock set on the tile (the lock will have been set by another process/thread)
+ */
+void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile);
 
 
 /** @} */
@@ -697,14 +719,14 @@ void geocache_tileset_get_xy(geocache_context *ctx, geocache_tileset *tileset, d
 
 /* in util.c */
 int geocache_util_extract_int_list(geocache_context *ctx, char* args, const char sep, int **numbers,
-      int *numbers_count);
+        int *numbers_count);
 int geocache_util_extract_double_list(geocache_context *ctx, char* args, const char sep, double **numbers,
-      int *numbers_count);
+        int *numbers_count);
 
 /*
 int geocache_util_mutex_aquire(geocache_context *r);
 int geocache_util_mutex_release(geocache_context *r);
-*/
+ */
 
 
 
@@ -726,12 +748,12 @@ typedef enum {
  * \sa geocache_image_format_png
  */
 struct geocache_image_format {
-   char *name; /**< the key by which this format will be referenced */
-   char *extension; /**< the extension to use when saving a file with this format */
-   geocache_buffer* (*write)(geocache_context *ctx, geocache_image *image, geocache_image_format *format);
-   /**< pointer to a function that returns a geocache_buffer containing the given image encoded 
-    * in the specified format
-    */ 
+    char *name; /**< the key by which this format will be referenced */
+    char *extension; /**< the extension to use when saving a file with this format */
+    geocache_buffer * (*write)(geocache_context *ctx, geocache_image *image, geocache_image_format * format);
+    /**< pointer to a function that returns a geocache_buffer containing the given image encoded
+     * in the specified format
+     */
 };
 
 /**\defgroup imageio_png PNG Image IO
@@ -744,8 +766,8 @@ struct geocache_image_format {
  * \sa geocache_image_format_png_q
  */
 struct geocache_image_format_png {
-   geocache_image_format format;
-   geocache_compression_type compression_level; /**< PNG compression level to apply */
+    geocache_image_format format;
+    geocache_compression_type compression_level; /**< PNG compression level to apply */
 };
 
 /**\class geocache_image_format_png_q
@@ -753,8 +775,8 @@ struct geocache_image_format_png {
  * \extends geocache_image_format_png
  */
 struct geocache_image_format_png_q {
-   geocache_image_format_png format;
-   int ncolors; /**< number of colors used in quantization, 2-256 */
+    geocache_image_format_png format;
+    int ncolors; /**< number of colors used in quantization, 2-256 */
 };
 
 /**
@@ -797,8 +819,8 @@ geocache_image_format* geocache_imageio_create_png_q_format(apr_pool_t *pool, ch
  * \extends geocache_image_format
  */
 struct geocache_image_format_jpeg {
-   geocache_image_format format;
-   int quality; /**< JPEG quality, 1-100 */
+    geocache_image_format format;
+    int quality; /**< JPEG quality, 1-100 */
 };
 
 geocache_image_format* geocache_imageio_create_jpeg_format(apr_pool_t *pool, char *name, int quality);
