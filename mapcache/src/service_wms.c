@@ -350,7 +350,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
       goto proxies;
    } else {
       int nextents;
-      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, str,',',&bbox,&nextents) ||
+      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, str,",",&bbox,&nextents) ||
             nextents != 4) {
          errcode = 400;
          errmsg = "received wms request with invalid bbox";
@@ -427,7 +427,6 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          const char *key;
          int count=1;
          int i,layeridx;
-         char *sep=",";
          int x,y,z;
          geocache_request_get_map *map_req = NULL;
          geocache_request_get_tile *tile_req = NULL;
@@ -448,7 +447,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             key = str;
          } else {
             layers = apr_pstrdup(ctx->pool,str);
-            key = apr_strtok(layers, sep, &last); /* extract first layer */
+            key = apr_strtok(layers, ",", &last); /* extract first layer */
          }
          main_tileset = geocache_configuration_get_tileset(config,key);
          if(!main_tileset) {
@@ -511,8 +510,8 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          if(count>1)
             layers = apr_pstrdup(ctx->pool,str); /* apr_strtok modifies its input string */
 
-         for (layeridx=0,key = ((count==1)?str:apr_strtok(layers, sep, &last)); key != NULL;
-               key = ((count==1)?NULL:apr_strtok(NULL, sep, &last)),layeridx++) {
+         for (layeridx=0,key = ((count==1)?str:apr_strtok(layers, ",", &last)); key != NULL;
+               key = ((count==1)?NULL:apr_strtok(NULL, ",", &last)),layeridx++) {
             geocache_tileset *tileset = main_tileset;
             geocache_grid_link *grid_link = main_grid_link;
             apr_table_t *dimtable = NULL;
@@ -535,8 +534,8 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                   /* the tileset does not reference the grid of the first tileset */
                   errcode = 400;
                   errmsg = apr_psprintf(ctx->pool,
-                        "tileset %s does not reference grid %s (referenced by tileset %s",
-                        tileset->name, grid_link->grid->name,main_tileset->name);
+                        "tileset %s does not reference grid %s (referenced by tileset %s)",
+                        tileset->name, main_grid_link->grid->name,main_tileset->name);
                   goto proxies;
                }
             }

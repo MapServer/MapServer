@@ -120,7 +120,7 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       double *values;
       int nvalues;
       value = apr_pstrdup(ctx->pool,cur_node->txt);
-      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, ' ', &values, &nvalues) ||
+      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, NULL, &values, &nvalues) ||
             nvalues != 4) {
          ctx->set_error(ctx, 400, "failed to parse extent array %s."
                "(expecting 4 space separated numbers, got %d (%f %f %f %f)"
@@ -164,7 +164,7 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    if ((cur_node = ezxml_child(node,"size")) != NULL) {
       value = apr_pstrdup(ctx->pool,cur_node->txt);
       int *sizes, nsizes;
-      if(GEOCACHE_SUCCESS != geocache_util_extract_int_list(ctx, value, ' ', &sizes, &nsizes) ||
+      if(GEOCACHE_SUCCESS != geocache_util_extract_int_list(ctx, value, NULL, &sizes, &nsizes) ||
             nsizes != 2) {
          ctx->set_error(ctx, 400, "failed to parse size array %s in  grid %s"
                "(expecting two space separated integers, eg <size>256 256</size>",
@@ -179,7 +179,7 @@ void parseGrid(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       value = apr_pstrdup(ctx->pool,cur_node->txt);
       int nvalues;
       double *values;
-      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, ' ', &values, &nvalues) ||
+      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, NULL, &values, &nvalues) ||
             !nvalues) {
          ctx->set_error(ctx, 400, "failed to parse resolutions array %s."
                "(expecting space separated numbers, "
@@ -459,7 +459,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       double *values;
       int nvalues;
       value = apr_pstrdup(ctx->pool,value);
-      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, ' ', &values, &nvalues) ||
+      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, NULL, &values, &nvalues) ||
             nvalues != 4) {
          ctx->set_error(ctx, 400, "failed to parse extent array %s."
                "(expecting 4 space separated numbers, got %d (%f %f %f %f)"
@@ -497,7 +497,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       if(restrictedExtent) {
          int nvalues;
          restrictedExtent = apr_pstrdup(ctx->pool,restrictedExtent);
-         if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, restrictedExtent, ' ', &gridlink->restricted_extent, &nvalues) ||
+         if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, restrictedExtent, NULL, &gridlink->restricted_extent, &nvalues) ||
                nvalues != 4) {
             ctx->set_error(ctx, 400, "failed to parse extent array %s."
                   "(expecting 4 space separated numbers, "
@@ -550,7 +550,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    if ((cur_node = ezxml_child(node,"metatile")) != NULL) {
       value = apr_pstrdup(ctx->pool,cur_node->txt);
          int *values, nvalues;
-         if(GEOCACHE_SUCCESS != geocache_util_extract_int_list(ctx, cur_node->txt,' ', 
+         if(GEOCACHE_SUCCESS != geocache_util_extract_int_list(ctx, cur_node->txt, NULL,
                   &values, &nvalues) ||
                nvalues != 2) {
             ctx->set_error(ctx, 400, "failed to parse metatile dimension %s."

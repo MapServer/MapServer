@@ -1252,9 +1252,9 @@ int geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *
 void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits);
 
 /* in util.c */
-int geocache_util_extract_int_list(geocache_context *ctx, const char* args, const char sep, int **numbers,
+int geocache_util_extract_int_list(geocache_context *ctx, const char* args, const char *sep, int **numbers,
         int *numbers_count);
-int geocache_util_extract_double_list(geocache_context *ctx, const char* args, const char sep, double **numbers,
+int geocache_util_extract_double_list(geocache_context *ctx, const char* args, const char *sep, double **numbers,
         int *numbers_count);
 char *geocache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr,
       const char *replacement );

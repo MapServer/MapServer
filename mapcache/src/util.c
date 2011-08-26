@@ -27,20 +27,23 @@
 #endif
 const double geocache_meters_per_unit[GEOCACHE_UNITS_COUNT] = {1.0,6378137.0 * 2.0 * M_PI / 360,0.3048};
 
-int geocache_util_extract_int_list(geocache_context *ctx, const char* cargs, const char sep, int **numbers,
-      int *numbers_count) {
+int geocache_util_extract_int_list(geocache_context *ctx, const char* cargs,
+      const char *sdelim, int **numbers, int *numbers_count) {
    char *last, *key, *endptr;
    char *args = apr_pstrdup(ctx->pool,cargs);
    int tmpcount=1;
-   char delim[2];
-   delim[0] = sep;
-   delim[1] = 0;
-
+   const char *delim = (sdelim)?sdelim:" ,\t\r\n";
+   char sep;
    *numbers_count = 0;
-   for(key=args;*key;key++) {
-      if(*key == sep)
-         tmpcount++;
+   int i=strlen(delim);
+   while(i--) {
+      sep = delim[i];
+      for(key=args;*key;key++) {
+         if(*key == sep)
+            tmpcount++;
+      }
    }
+   
    *numbers = (int*)apr_pcalloc(ctx->pool,tmpcount*sizeof(int));
    for (key = apr_strtok(args, delim, &last); key != NULL;
          key = apr_strtok(NULL, delim, &last)) {
@@ -51,19 +54,21 @@ int geocache_util_extract_int_list(geocache_context *ctx, const char* cargs, con
    return GEOCACHE_SUCCESS;
 }
 
-int geocache_util_extract_double_list(geocache_context *ctx, const char* cargs, const char sep, double **numbers,
-      int *numbers_count) {
+int geocache_util_extract_double_list(geocache_context *ctx, const char* cargs, 
+      const char *sdelim, double **numbers, int *numbers_count) {
    char *last, *key, *endptr;
    char *args = apr_pstrdup(ctx->pool,cargs);
    int tmpcount=1;
-   char delim[2];
-   delim[0] = sep;
-   delim[1] = 0;
-
+   const char *delim = (sdelim)?sdelim:" ,\t\r\n";
+   char sep;
    *numbers_count = 0;
-   for(key=args;*key;key++) {
-      if(*key == sep)
-         tmpcount++;
+   int i=strlen(delim);
+   while(i--) {
+      sep = delim[i];
+      for(key=args;*key;key++) {
+         if(*key == sep)
+            tmpcount++;
+      }
    }
    *numbers = (double*)apr_pcalloc(ctx->pool,tmpcount*sizeof(double));
    for (key = apr_strtok(args, delim, &last); key != NULL;

@@ -440,13 +440,13 @@ int main(int argc, const char **argv) {
                 nthreads = (int)strtol(optarg, NULL, 10);
                 break;
             case 'e':
-                if ( GEOCACHE_SUCCESS != geocache_util_extract_double_list(&ctx, (char*)optarg, ',', &extent, &n) ||
+                if ( GEOCACHE_SUCCESS != geocache_util_extract_double_list(&ctx, (char*)optarg, ",", &extent, &n) ||
                         n != 4 || extent[0] >= extent[2] || extent[1] >= extent[3] ) {
                     return usage(argv[0], "failed to parse extent, expecting comma separated 4 doubles");
                 }
                 break;
             case 'z':
-                if ( GEOCACHE_SUCCESS != geocache_util_extract_int_list(&ctx, (char*)optarg, ',', &zooms, &n) ||
+                if ( GEOCACHE_SUCCESS != geocache_util_extract_int_list(&ctx, (char*)optarg, ",", &zooms, &n) ||
                         n != 2 || zooms[0] > zooms[1]) {
                     return usage(argv[0], "failed to parse zooms, expecting comma separated 2 ints");
                 } else {
