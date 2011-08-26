@@ -601,6 +601,8 @@ CURLCONFIG
 XML2_LIBS
 XML2_CFLAGS
 XML2CONFIG
+JPEG_LIB
+JPEG_INC
 PNG_LIB
 PNG_INC
 EGREP
@@ -664,6 +666,7 @@ enable_option_checking
 enable_debug
 with_apxs
 with_png
+with_jpeg
 with_xml2_config
 with_curl_config
 '
@@ -1293,6 +1296,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-apxs=/path/to/apxs     Apache 2 apxs tool location
   --with-png=DIR          Specify where PNG is installed
+  --with-jpeg=DIR         Specify where JPEG is installed
   --with-xml2-config=/path/to/xml2-config     xml2-config tool location
   --with-curl-config      path to curl-config program
 
@@ -2843,6 +2847,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
+
     # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug;
@@ -3594,8 +3600,8 @@ fi
 
 
       if test -n "$PNG_LIB" ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libpng from system libs." >&5
-$as_echo "        using libpng from system libs." >&6; }
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: using libpng from system libs." >&5
+$as_echo "using libpng from system libs." >&6; }
       else
         as_fn_error "PNG (libpng) library cannot be found. install or reconfigure with --with-png=DIR" "$LINENO" 5
       fi
@@ -3613,6 +3619,125 @@ fi
     PNG_INC=$PNG_INC
 
     PNG_LIB=$PNG_LIB
+
+
+
+
+
+# Check whether --with-jpeg was given.
+if test "${with_jpeg+set}" = set; then :
+  withval=$with_jpeg; JPEG_DIR=$withval
+else
+  JPEG_DIR=''
+fi
+
+
+
+  if test -z "$JPEG_DIR" || echo "$JPEG_DIR" | grep '^/' >/dev/null ; then
+    JPEG_DIR="$JPEG_DIR"
+  else
+    JPEG_DIR="`pwd`/$JPEG_DIR"
+  fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking where JPEG is installed..." >&5
+$as_echo "$as_me: checking where JPEG is installed..." >&6;}
+    JPEG_LIB=''
+    JPEG_INC=''
+    JPEG_FOUND='no'
+
+    if test -n "$JPEG_DIR" ; then
+        test -f $JPEG_DIR/lib/libjpeg.a -o -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl -o -f $JPEG_DIR/lib/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR/lib"
+        test -f $JPEG_DIR/lib64/libjpeg.a -o -f $JPEG_DIR/lib64/libjpeg.so -o -f $JPEG_DIR/lib64/libjpeg.sl -o -f $JPEG_DIR/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR/lib64"
+        test -f $JPEG_DIR/libjpeg.a -o -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl -o -f $JPEG_DIR/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR"
+        test -f $JPEG_DIR/include/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include"
+        test -f $JPEG_DIR/include/jpeg/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include/jpeg"
+        test -f $JPEG_DIR/lib/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/lib"
+        test -f $JPEG_DIR/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR"
+
+        if test -n "$JPEG_LIBDIR" ; then
+          JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result: using libjpeg from $JPEG_LIB" >&5
+$as_echo "using libjpeg from $JPEG_LIB" >&6; }
+        else
+          as_fn_error "cannot find jpeg lib in $JPEG_DIR" "$LINENO" 5
+        fi
+
+        if test -n "$JPEG_INCLUDE" ; then
+          as_ac_Header=`$as_echo "ac_cv_header_$JPEG_INCLUDE/jpeglib.h" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$JPEG_INCLUDE/jpeglib.h" "$as_ac_Header" "$ac_includes_default"
+eval as_val=\$$as_ac_Header
+   if test "x$as_val" = x""yes; then :
+  JPEG_INC=-I$JPEG_INCLUDE
+else
+  as_fn_error "cannot find jpeg headers" "$LINENO" 5
+fi
+
+
+        else
+            as_fn_error "cannot find jpeg headers in $JPEG_DIR" "$LINENO" 5
+        fi
+    else
+
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jpeg_read_header in -ljpeg" >&5
+$as_echo_n "checking for jpeg_read_header in -ljpeg... " >&6; }
+if test "${ac_cv_lib_jpeg_jpeg_read_header+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ljpeg  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char jpeg_read_header ();
+int
+main ()
+{
+return jpeg_read_header ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_jpeg_jpeg_read_header=yes
+else
+  ac_cv_lib_jpeg_jpeg_read_header=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jpeg_jpeg_read_header" >&5
+$as_echo "$ac_cv_lib_jpeg_jpeg_read_header" >&6; }
+if test "x$ac_cv_lib_jpeg_jpeg_read_header" = x""yes; then :
+  JPEG_LIB="-ljpeg"
+fi
+
+      ac_fn_c_check_header_mongrel "$LINENO" "jpeglib.h" "ac_cv_header_jpeglib_h" "$ac_includes_default"
+if test "x$ac_cv_header_jpeglib_h" = x""yes; then :
+
+else
+  as_fn_error "cannot find jpeg headers in system path" "$LINENO" 5
+fi
+
+
+      if test -n "$JPEG_LIB" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: using libjpeg from system libs." >&5
+$as_echo "using libjpeg from system libs." >&6; }
+      else
+        as_fn_error "JPEG (libjpeg) library cannot be found. install or reconfigure with --with-jpeg=DIR" "$LINENO" 5
+      fi
+    fi
+
+    JPEG_INC=$JPEG_INC
+
+    JPEG_LIB=$JPEG_LIB
 
 
 

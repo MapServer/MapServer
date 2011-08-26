@@ -264,6 +264,19 @@ char* parseTileset(xmlNode *node, geocache_cfg *config, apr_pool_t *pool) {
 
 
          xmlFree(value);
+      } else if(!xmlStrcmp(cur_node->name, BAD_CAST "format")) {
+         value = (char*)xmlNodeGetContent(cur_node);
+         if(!strcasecmp("PNG", value)) {
+            tileset->format = GEOCACHE_IMAGE_FORMAT_PNG;
+         } else if(!strcasecmp("JPEG", value) || !strcasecmp("JPG", value)) {
+            tileset->format = GEOCACHE_IMAGE_FORMAT_JPEG;
+         } else {
+            return apr_psprintf(pool,"failed to parse format %s."
+                              "(expecting PNG or JPEG, "
+                              "eg <format>PNG</format>",
+                              value);
+         }
+         xmlFree(value);
       }
    }
    /* check we have all we want */

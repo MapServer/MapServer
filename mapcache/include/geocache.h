@@ -51,7 +51,7 @@ typedef struct geocache_source geocache_source;
 extern module AP_MODULE_DECLARE_DATA geocache_module;
 
 typedef struct {
-   char* buf ;     /* buffer */
+   unsigned char* buf ;     /* buffer */
    size_t size ; /* bytes used */
    size_t avail ;  /* bytes allocated */
    apr_pool_t* pool; /*apache pool to allocate from */
@@ -144,6 +144,7 @@ struct geocache_tileset {
    double *resolutions;
    int metasize_x, metasize_y;
    int metabuffer;
+   geocache_image_format_type format;
    geocache_cache *cache;
    geocache_source *source;
    apr_table_t *forwarded_params;
@@ -223,7 +224,7 @@ int geocache_util_mutex_release(request_rec *r);
 
 typedef struct {
    geocache_buffer *buffer;
-   char *ptr;
+   unsigned char *ptr;
 } _geocache_buffer_closure;
 
 /* in image.c */
@@ -231,8 +232,8 @@ geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_tile **tiles,
 int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r);
 
 /* in imageio.c */
-geocache_buffer* geocache_imageio_png_encode(request_rec *r, geocache_image *img);
-geocache_image* geocache_imageio_png_decode(request_rec *r, geocache_buffer *buffer);
+geocache_buffer* geocache_imageio_encode(request_rec *r, geocache_image *img, geocache_image_format_type format);
 geocache_image_format_type geocache_imageio_header_sniff(request_rec *r, geocache_buffer *buffer);
 geocache_image* geocache_imageio_decode(request_rec *r, geocache_buffer *buffer);
+
 #endif /* GEOCACHE_H_ */

@@ -13,6 +13,9 @@ XML2_LIBS=@XML2_LIBS@
 PNG_INC=@PNG_INC@
 PNG_LIB=@PNG_LIB@
 
+JPEG_INC=@JPEG_INC@
+JPEG_LIB=@JPEG_LIB@
+
 
 
 OBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mod_geocache.c | sed "s/^\(.*\)\.c$$/\1.o/") 

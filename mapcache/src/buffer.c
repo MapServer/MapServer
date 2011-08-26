@@ -19,7 +19,7 @@
 #define INITIAL_BUFFER_SIZE 100
 
 static void _geocache_buffer_realloc(geocache_buffer *buffer, size_t len) {
-   char* newbuf ;
+   unsigned char* newbuf ;
    while ( len > buffer->avail ) {
       buffer->avail += buffer->avail;
    }

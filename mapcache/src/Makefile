@@ -9,7 +9,7 @@ install: .libs/mod_geocache.so
 	$(APXS) -Wc,"$(CFLAGS)" -I../include $(PNG_INC) $(CURL_CFLAGS) $(XML2_CFLAGS) -c $<
 	
 mod_geocache.o:  mod_geocache.c $(OBJS)
-	$(APXS) -Wc,"$(CFLAGS)" -I../include $(PNG_INC) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(PNG_LIB) -c mod_geocache.c $(LOBJS)
+	$(APXS) -Wc,"$(CFLAGS)" -I../include $(JPEG_INC) $(PNG_INC) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(JPEG_LIB) $(PNG_LIB) -c mod_geocache.c $(LOBJS)
 	
 .libs/mod_geocache.so: mod_geocache.o $(OBJS)
 

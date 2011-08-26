@@ -164,6 +164,7 @@ geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
    tileset->tile_sx = tileset->tile_sy = 256;
    tileset->extent[0]=tileset->extent[1]=tileset->extent[2]=tileset->extent[3]=0;
    tileset->forwarded_params = apr_table_make(pool,1);
+   tileset->format = GEOCACHE_IMAGE_FORMAT_PNG;
    return tileset;
 }
 

@@ -278,7 +278,7 @@ AC_DEFUN(PNG_CHECK,[
       AC_CHECK_HEADER([png.h],,
             [AC_MSG_ERROR([cannot find png headers in system path])])
       if test -n "$PNG_LIB" ; then
-        AC_MSG_RESULT([        using libpng from system libs.])
+        AC_MSG_RESULT([using libpng from system libs.])
       else
         AC_MSG_ERROR([PNG (libpng) library cannot be found. install or reconfigure with --with-png=DIR])
       fi
@@ -290,11 +290,64 @@ AC_DEFUN(PNG_CHECK,[
     AC_SUBST(PNG_LIB,$PNG_LIB)
 ])
 
+AC_DEFUN(JPEG_CHECK,[
+    AC_ARG_WITH(jpeg,
+        AC_HELP_STRING([--with-jpeg=DIR],[Specify where JPEG is installed]),
+        JPEG_DIR=$withval,JPEG_DIR='')
+    
+    AC_EXPAND_PATH($JPEG_DIR, JPEG_DIR)
+    AC_CHECKING(where JPEG is installed)
+    JPEG_LIB=''
+    JPEG_INC=''  
+    JPEG_FOUND='no'  
+    
+    if test -n "$JPEG_DIR" ; then
+        test -f $JPEG_DIR/lib/libjpeg.a -o -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl -o -f $JPEG_DIR/lib/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR/lib"
+        test -f $JPEG_DIR/lib64/libjpeg.a -o -f $JPEG_DIR/lib64/libjpeg.so -o -f $JPEG_DIR/lib64/libjpeg.sl -o -f $JPEG_DIR/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR/lib64"
+        test -f $JPEG_DIR/libjpeg.a -o -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl -o -f $JPEG_DIR/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR"
+        test -f $JPEG_DIR/include/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include"
+        test -f $JPEG_DIR/include/jpeg/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include/jpeg"
+        test -f $JPEG_DIR/lib/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/lib"
+        test -f $JPEG_DIR/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR"
+        
+        if test -n "$JPEG_LIBDIR" ; then   
+          JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
+          AC_MSG_RESULT([using libjpeg from $JPEG_LIB])
+        else
+          AC_MSG_ERROR([cannot find jpeg lib in $JPEG_DIR])
+        fi
+        
+        if test -n "$JPEG_INCLUDE" ; then
+          AC_CHECK_HEADER([$JPEG_INCLUDE/jpeglib.h],JPEG_INC=-I$JPEG_INCLUDE,
+            [AC_MSG_ERROR([cannot find jpeg headers])])
+        else
+            AC_MSG_ERROR([cannot find jpeg headers in $JPEG_DIR])
+        fi
+    else
+    
+      dnl check for jpeg in system locations
+    
+      AC_CHECK_LIB(jpeg, jpeg_read_header, JPEG_LIB="-ljpeg",,)
+      AC_CHECK_HEADER([jpeglib.h],,
+            [AC_MSG_ERROR([cannot find jpeg headers in system path])])
+      if test -n "$JPEG_LIB" ; then
+        AC_MSG_RESULT([using libjpeg from system libs.])
+      else
+        AC_MSG_ERROR([JPEG (libjpeg) library cannot be found. install or reconfigure with --with-jpeg=DIR])
+      fi
+    fi
+    
+    AC_SUBST(JPEG_INC,$JPEG_INC)
+    AC_SUBST(JPEG_LIB,$JPEG_LIB)
+])
+
 DEBUG_CHECK
 
 APXS_CHECK
 
 PNG_CHECK
+
+JPEG_CHECK
 
 #PKGCONFIG_CHECK
 
