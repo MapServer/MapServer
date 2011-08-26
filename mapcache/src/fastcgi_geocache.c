@@ -104,7 +104,7 @@ void init_fcgi_request_context(geocache_context_fcgi_request *ctx) {
 
 static geocache_context_fcgi* fcgi_context_create() {
    apr_pool_t *pool;
-   if(apr_pool_create_core(&pool) != APR_SUCCESS) {
+   if(apr_pool_create(&pool,NULL) != APR_SUCCESS) {
       return NULL;
    }
    geocache_context_fcgi *ctx = apr_pcalloc(pool, sizeof(geocache_context_fcgi));

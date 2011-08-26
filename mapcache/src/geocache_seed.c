@@ -216,7 +216,7 @@ int main(int argc, const char **argv) {
     const char *optarg;
     apr_initialize();
     (void) signal(SIGINT,handle_sig_int);
-    apr_pool_create_core(&gctx->pool);
+    apr_pool_create(&gctx->pool,NULL);
     geocache_context_init(gctx);
     cfg = geocache_configuration_create(gctx->pool);
     apr_getopt_init(&opt, gctx->pool, argc, argv);
