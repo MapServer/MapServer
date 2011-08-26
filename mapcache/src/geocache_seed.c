@@ -141,9 +141,7 @@ int should_seed_tile(geocache_context_seeding *sctx, int x, int y, int z,geocach
             }
 #endif
             if(intersects != 0) {
-               /* either the tile intersects the ogr features, or we don't care about them:
-                * delete the tile and recreate it */
-               geocache_tileset_tile_delete(tmpctx,tile);
+               /* the tile intersects the ogr features, seed it */
                return 1;
             } else {
                /* the tile does not intersect the ogr features, and already exists, do nothing */
