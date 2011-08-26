@@ -19,17 +19,17 @@
 #include <math.h>
 
 static double _geocache_tileset_get_resolution(geocache_tileset *tileset, double *bbox) {
-   double rx = (bbox[2] - bbox[0]) / (double)tileset->tile_sx;
-   double ry = (bbox[3] - bbox[1]) / (double)tileset->tile_sy;
+   double rx = (bbox[2] - bbox[0]) / (double)tileset->grid->tile_sx;
+   double ry = (bbox[3] - bbox[1]) / (double)tileset->grid->tile_sy;
    return GEOCACHE_MAX(rx,ry);
 }
 
 void geocache_tileset_get_level(geocache_context *ctx, geocache_tileset *tileset, double *resolution, int *level) {
-   double max_diff = *resolution / (double)GEOCACHE_MAX(tileset->tile_sx, tileset->tile_sy);
+   double max_diff = *resolution / (double)GEOCACHE_MAX(tileset->grid->tile_sx, tileset->grid->tile_sy);
    int i;
-   for(i=0; i<tileset->levels; i++) {
-      if(fabs(tileset->resolutions[i] - *resolution) < max_diff) {
-         *resolution = tileset->resolutions[i];
+   for(i=0; i<tileset->grid->levels; i++) {
+      if(fabs(tileset->grid->resolutions[i] - *resolution) < max_diff) {
+         *resolution = tileset->grid->resolutions[i];
          *level = i;
          return;
       }
@@ -52,20 +52,20 @@ static void _geocache_tileset_tile_get_cell(geocache_context *ctx, geocache_tile
                         % (minx, miny, self.bbox))
                return None
     */
-   tile->x = (int)round((bbox[0] - tile->tileset->extent[0]) / (res * tile->tileset->tile_sx));
-   tile->y = (int)round((bbox[1] - tile->tileset->extent[1]) / (res * tile->tileset->tile_sy));
+   tile->x = (int)round((bbox[0] - tile->tileset->grid->extents[tile->z][0]) / (res * tile->tileset->grid->tile_sx));
+   tile->y = (int)round((bbox[1] - tile->tileset->grid->extents[tile->z][1]) / (res * tile->tileset->grid->tile_sy));
 
-   if((fabs(bbox[0] - (tile->x * res * tile->tileset->tile_sx) - tile->tileset->extent[0] ) / res > 1) ||
-         (fabs(bbox[1] - (tile->y * res * tile->tileset->tile_sy) - tile->tileset->extent[1] ) / res > 1)) {
+   if((fabs(bbox[0] - (tile->x * res * tile->tileset->grid->tile_sx) - tile->tileset->grid->extents[tile->z][0] ) / res > 1) ||
+         (fabs(bbox[1] - (tile->y * res * tile->tileset->grid->tile_sy) - tile->tileset->grid->extents[tile->z][1] ) / res > 1)) {
       ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: supplied bbox not aligned on configured grid",tile->tileset->name);
    }
 }
 
 void geocache_tileset_get_xy(geocache_context *ctx, geocache_tileset *tileset, double dx, double dy,
         int z, int *x, int *y) {
-    double res = tileset->resolutions[z];
-    *x = (int)((dx - tileset->extent[0]) / (res * tileset->tile_sx));
-    *y = (int)((dy - tileset->extent[1]) / (res * tileset->tile_sy));
+    double res = tileset->grid->resolutions[z];
+    *x = (int)((dx - tileset->grid->extents[z][0]) / (res * tileset->grid->tile_sx));
+    *y = (int)((dy - tileset->grid->extents[z][1]) / (res * tileset->grid->tile_sy));
 }
 
 /*
@@ -104,7 +104,7 @@ void _geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile 
 static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, geocache_tile *tile) {
    geocache_metatile *mt = (geocache_metatile*)apr_pcalloc(ctx->pool, sizeof(geocache_metatile));
    int i,j,blx,bly;
-   double res = tile->tileset->resolutions[tile->z];
+   double res = tile->tileset->grid->resolutions[tile->z];
    double gbuffer,gwidth,gheight;
    mt->tile.tileset = tile->tileset;
    mt->ntiles = mt->tile.tileset->metasize_x * mt->tile.tileset->metasize_y;
@@ -123,8 +123,8 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, 
    gbuffer = res * mt->tile.tileset->metabuffer;
    gwidth = res * mt->tile.tileset->metasize_x * tile->sx;
    gheight = res * mt->tile.tileset->metasize_y * tile->sy;
-   mt->bbox[0] = mt->tile.tileset->extent[0] + mt->tile.x * gwidth - gbuffer;
-   mt->bbox[1] = mt->tile.tileset->extent[1] + mt->tile.y * gheight - gbuffer;
+   mt->bbox[0] = mt->tile.tileset->grid->extents[tile->z][0] + mt->tile.x * gwidth - gbuffer;
+   mt->bbox[1] = mt->tile.tileset->grid->extents[tile->z][1] + mt->tile.y * gheight - gbuffer;
    mt->bbox[2] = mt->bbox[0] + gwidth + 2 * gbuffer;
    mt->bbox[3] = mt->bbox[1] + gheight + 2 * gbuffer;
 
@@ -168,11 +168,11 @@ void _geocache_tileset_render_metatile(geocache_context *ctx, geocache_metatile 
  * compute the bounding box of a given tile
  */
 void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
-   double res  = tile->tileset->resolutions[tile->z];
-   bbox[0] = tile->tileset->extent[0] + (res * tile->x * tile->sx);
-   bbox[1] = tile->tileset->extent[1] + (res * tile->y * tile->sy);
-   bbox[2] = tile->tileset->extent[0] + (res * (tile->x + 1) * tile->sx);
-   bbox[3] = tile->tileset->extent[1] + (res * (tile->y + 1) * tile->sy);
+   double res  = tile->tileset->grid->resolutions[tile->z];
+   bbox[0] = tile->tileset->grid->extents[tile->z][0] + (res * tile->x * tile->sx);
+   bbox[1] = tile->tileset->grid->extents[tile->z][1] + (res * tile->y * tile->sy);
+   bbox[2] = tile->tileset->grid->extents[tile->z][0] + (res * (tile->x + 1) * tile->sx);
+   bbox[3] = tile->tileset->grid->extents[tile->z][1] + (res * (tile->y + 1) * tile->sy);
 }
 
 /*
@@ -182,12 +182,10 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx) {
    geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(ctx->pool, sizeof(geocache_tileset));
    tileset->metasize_x = tileset->metasize_y = 1;
    tileset->metabuffer = 0;
-   tileset->units = GEOCACHE_UNIT_UNSET;
    tileset->expires = 0;
-   tileset->tile_sx = tileset->tile_sy = 256;
-   tileset->extent[0]=tileset->extent[1]=tileset->extent[2]=tileset->extent[3]=0;
    tileset->forwarded_params = apr_table_make(ctx->pool,1);
    tileset->format = NULL;
+   tileset->grid = NULL;
    tileset->config = NULL;
    return tileset;
 }
@@ -199,16 +197,16 @@ geocache_tile* geocache_tileset_tile_create(apr_pool_t *pool, geocache_tileset *
    geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
    tile->tileset = tileset;
    tile->expires = tileset->expires;
-   tile->sx = tileset->tile_sx;
-   tile->sy = tileset->tile_sy;
+   tile->sx = tileset->grid->tile_sx;
+   tile->sy = tileset->grid->tile_sy;
    return tile;
 }
 
 
 void geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, double *bbox) {
-   if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
+   if(tile->sx != tile->tileset->grid->tile_sx || tile->sy != tile->tileset->grid->tile_sy) {
       ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, "tileset %s: wrong size. found %dx%d instead of %dx%d",
-            tile->tileset->name,tile->sx,tile->sy,tile->tileset->tile_sx,tile->tileset->tile_sy);
+            tile->tileset->name,tile->sx,tile->sy,tile->tileset->grid->tile_sx,tile->tileset->grid->tile_sy);
       return;
    }
    _geocache_tileset_tile_get_cell(ctx, tile,bbox);
@@ -235,10 +233,10 @@ void geocache_tileset_tile_lookup(geocache_context *ctx, geocache_tile *tile, do
 void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
    int isLocked,ret;
    geocache_metatile *mt=NULL;
-   if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
+   if(tile->sx != tile->tileset->grid->tile_sx || tile->sy != tile->tileset->grid->tile_sy) {
       ctx->set_error(ctx, GEOCACHE_TILESET_ERROR, 
             "tileset %s: asked for a %dx%d tile from a %dx%d tileset",tile->tileset->name,
-            tile->sx, tile->sy, tile->tileset->tile_sx, tile->tileset->tile_sy);
+            tile->sx, tile->sy, tile->tileset->grid->tile_sx, tile->tileset->grid->tile_sy);
       return;
    }
    ret = tile->tileset->cache->tile_get(ctx, tile);
@@ -264,7 +262,6 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
          mt = _geocache_tileset_metatile_get(ctx, tile);
          _geocache_tileset_metatile_lock(ctx, mt);
       }
-
       ctx->global_lock_release(ctx);
       if(GC_HAS_ERROR(ctx))
          return;

@@ -16,6 +16,15 @@
         	<LAYERS>basic</LAYERS>
         </wmsparams>
     </source>
+    <source name="osm" type="wms">
+        <url>http://localhost/cgi-bin/mapserv</url>
+        <srs>epsg:900913</srs>
+        <wmsparams>
+            <FORMAT>image/png</FORMAT>
+            <LAYERS>default</LAYERS>
+            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+        </wmsparams>
+    </source>
     <source name="nexrad" type="wms">
         <url>http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi</url>
         <srs>epsg:4326</srs>
@@ -36,33 +45,32 @@
     </source>
     <tileset name="test">
         <source>vmap0</source>
-        <srs>epsg:4326</srs>
         <cache>disk</cache>
-        <size>256 256</size>
         <format>PNG8</format>
-        <resolutions>0.703125 0.3515625 0.17578125 0.087890625 0.0439453125 0.02197265625 0.010986328125 0.0054931640625 0.00274658203125 0.001373291015625 0.0006866455078125 0.00034332275390625 0.000171661376953125 0.0000858306884765625 0.00004291534423828125</resolutions>
-        <extent>-180 -90 180 90</extent>
+        <grid>WGS84</grid>
         <expires>3600</expires>
     </tileset>
     <tileset name="test2">
         <source>nexrad</source>
-        <srs>epsg:4326</srs>
         <cache>disk</cache>
-        <size>256 256</size>
         <format>PNG</format>
-        <resolutions>0.703125 0.3515625 0.17578125 0.087890625 0.0439453125 0.02197265625 0.010986328125 0.0054931640625 0.00274658203125 0.001373291015625 0.0006866455078125 0.00034332275390625 0.000171661376953125 0.0000858306884765625 0.00004291534423828125</resolutions>
-        <extent>-180 -90 180 90</extent>
+        <grid>WGS84</grid>
     </tileset>
     <tileset name="test3">
         <source>basic</source>
-        <srs>epsg:4326</srs>
         <cache>disk</cache>
-        <size>256 256</size>
         <format>PNG8</format>
-        <resolutions>0.703125 0.3515625 0.17578125 0.087890625 0.0439453125 0.02197265625 0.010986328125 0.0054931640625 0.00274658203125 0.001373291015625 0.0006866455078125 0.00034332275390625 0.000171661376953125 0.0000858306884765625 0.00004291534423828125</resolutions>
-        <extent>-180 -90 180 90</extent>
+        <grid>WGS84</grid>
         <metatile>5 5</metatile>
         <metabuffer>30</metabuffer>
+    </tileset>
+    <tileset name="osm">
+        <source>osm</source>
+        <cache>disk</cache>
+        <format>PNG</format>
+        <grid>google</grid>
+        <metatile>5 5</metatile>
+        <metabuffer>10</metabuffer>
     </tileset>
     <merge_format>PNGQ_FAST</merge_format>
     

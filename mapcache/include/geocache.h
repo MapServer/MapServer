@@ -69,6 +69,7 @@ typedef struct geocache_service_wmts geocache_service_wmts;
 typedef struct geocache_service_tms geocache_service_tms;
 typedef struct geocache_server_cfg geocache_server_cfg;
 typedef struct geocache_image geocache_image;
+typedef struct geocache_grid geocache_grid;
 typedef struct geocache_context geocache_context;
 
 
@@ -467,6 +468,11 @@ struct geocache_cfg {
     apr_hash_t *image_formats;
 
     /**
+     * hashtable containing (pre)defined grids
+     */
+    apr_hash_t *grids;
+
+    /**
      * the format to use when merging multiple tiles
      */
     geocache_image_format *merge_format;
@@ -493,10 +499,12 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
 geocache_cfg* geocache_configuration_create(apr_pool_t *pool);
 geocache_source* geocache_configuration_get_source(geocache_cfg *config, const char *key);
 geocache_cache* geocache_configuration_get_cache(geocache_cfg *config, const char *key);
+geocache_grid *geocache_configuration_get_grid(geocache_cfg *config, const char *key);
 geocache_tileset* geocache_configuration_get_tileset(geocache_cfg *config, const char *key);
 geocache_image_format *geocache_configuration_get_image_format(geocache_cfg *config, const char *key);
 void geocache_configuration_add_image_format(geocache_cfg *config, geocache_image_format *format, const char * key);
 void geocache_configuration_add_source(geocache_cfg *config, geocache_source *source, const char * key);
+void geocache_configuration_add_grid(geocache_cfg *config, geocache_grid *grid, const char * key);
 void geocache_configuration_add_tileset(geocache_cfg *config, geocache_tileset *tileset, const char * key);
 void geocache_configuration_add_cache(geocache_cfg *config, geocache_cache *cache, const char * key);
 
@@ -561,6 +569,15 @@ struct geocache_metatile {
     geocache_tile *tiles; /**< the list of geocache_tile s contained in this metatile */
 };
 
+struct geocache_grid {
+   char *name;
+   int levels;
+   char *srs;
+   int tile_sx, tile_sy; /**<width and height of a tile in pixels */
+   double *resolutions;
+   double **extents; /**< array of extents (one for each resolution) */
+};
+
 /**\class geocache_tileset
  * \brief a set of tiles that can be requested by a client, created from a geocache_source
  *        stored by a geocache_cache in a geocache_format
@@ -573,39 +590,14 @@ struct geocache_tileset {
     char *name;
 
     /**
-     * the extent of the tileset.
+     * the extent of the tileset that can be cached
      */
-    double extent[4];
+    double restricted_extent[4];
 
     /**
-     * the SRS of the tileset
+     * definition of the gridset
      */
-    char *srs;
-
-    /**
-     * the unit of measure of the tileset
-     */
-    geocache_unit units;
-
-    /**
-     * width of a tile in pixels
-     */
-    int tile_sx;
-
-    /**
-     * height of a tile in pixels
-     */
-    int tile_sy;
-
-    /**
-     * number of resolutions
-     */
-    int levels;
-
-    /**
-     * resolutions of the tiles
-     */
-    double *resolutions;
+    geocache_grid *grid;
 
     /**
      * size of the metatile that should be requested to the geocache_tileset::source
@@ -737,6 +729,9 @@ void geocache_tileset_tile_lock_wait(geocache_context *ctx, geocache_tile *tile)
 
 
 /** @} */
+
+
+geocache_grid* geocache_grid_create(apr_pool_t *pool);
 
 
 /* in util.c */
