@@ -282,13 +282,16 @@ static void _geocache_cache_sqlite_configuration_parse_xml(geocache_context *ctx
    if ((cur_node = ezxml_child(node,"base")) != NULL) {
       dcache->dbname_template = apr_pstrcat(ctx->pool,cur_node->txt,"/{tileset}#{grid}.db",NULL);
    }
+   if ((cur_node = ezxml_child(node,"dbname_template")) != NULL) {
+      dcache->dbname_template = apr_pstrdup(ctx->pool,cur_node->txt);
+   }
    if ((cur_node = ezxml_child(node,"hitstats")) != NULL) {
       if(!strcasecmp(cur_node->txt,"true")) {
          dcache->hitstats = 1;
       }
    }
    if(!dcache->dbname_template) {
-      ctx->set_error(ctx,500,"sqlite cache \"%s\" is missing <base> directory",cache->name);
+      ctx->set_error(ctx,500,"sqlite cache \"%s\" is missing <dbname_template> entry",cache->name);
       return;
    }
 }

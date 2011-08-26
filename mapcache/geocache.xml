@@ -395,6 +395,10 @@
       <hitstats>false</hitstats>
    </cache>
 
+   <cache name="mbtiles" type="mbtiles">
+      <dbname_template>/home/tbonfort/Documents/MapBox/tiles/natural-earth-1.mbtiles</dbname_template>
+   </cache>
+
    <!-- format
 
         a format is an image algorithm used for compressing images
@@ -704,6 +708,12 @@
       <grid>WGS84</grid>
       <metatile>5 5</metatile>
       <metabuffer>30</metabuffer>
+   </tileset>
+   <tileset name="natural-earth-1">
+      <source>osm</source>
+      <cache>mbtiles</cache>
+      <format>PNG</format>
+      <grid>g</grid>
    </tileset>
    <tileset name="osm">
       <metadata>
