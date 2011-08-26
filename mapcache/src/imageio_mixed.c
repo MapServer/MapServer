@@ -46,7 +46,7 @@ geocache_image_format* geocache_imageio_create_mixed_format(apr_pool_t *pool,
    format->transparent = transparent;
    format->opaque = opaque;
    format->format.extension = apr_pstrdup(pool,"xxx");
-   format->format.mime_type = NULL;
+   format->format.mime_type = apr_pstrdup(pool,"image/png+jpeg");
    format->format.write = _geocache_imageio_mixed_encode;
    format->format.create_empty_image = transparent->create_empty_image;
    format->format.metadata = apr_table_make(pool,3);
