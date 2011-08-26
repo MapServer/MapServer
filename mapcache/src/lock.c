@@ -21,11 +21,32 @@
 #include <errno.h>
 #include <fcntl.h>
 
+
+static const char *alphabet = "abcdefghijklmnopqrstuvwxyz"
+                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                       "0123456789"
+                       "_";
+static int encbase = 63; /* 26 + 26+ 10 + 1 */
+
+static char* num_encode(apr_pool_t *pool, int num) {
+   int n = num,r;
+   int i = 0;
+   char *ret = apr_pcalloc(pool,10); /* allocate 10 chars, should be amply sufficient */
+   while(1) {
+      r = n % encbase;
+      n = n / encbase;
+      ret[i] = alphabet[r];
+      if(n==0) break;
+      i++;
+   }
+   return ret;
+}
+
 char *geocache_tileset_tile_lock_key(geocache_context *ctx, geocache_tile *tile) {
   return apr_psprintf(ctx->pool,
-          "/%s%d-%d-%d",
+          "/%s%s-%s-%s",
           tile->tileset->name,
-          tile->z, tile->y, tile->x);
+          num_encode(ctx->pool,tile->z), num_encode(ctx->pool,tile->y), num_encode(ctx->pool,tile->x));
 }
 /**
  * \brief lock the given tile so other processes know it is being processed
@@ -44,6 +65,7 @@ void geocache_tileset_tile_lock(geocache_context *ctx, geocache_tile *tile) {
       ctx->set_error(ctx,500, "failed to create posix semaphore %s: %s",lockname, strerror(errno));
       return;
    }
+   ctx->log(ctx,GEOCACHE_DEBUG,"lock name is %s",lockname);
    sem_wait(lock);
    tile->lock = lock;
 }
