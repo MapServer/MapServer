@@ -387,7 +387,7 @@
       <source>osm</source>
       <cache>disk</cache>
       <format>PNG</format>
-      <grid>google</grid>
+      <grid>google,WGS84</grid>
       <metatile>5 5</metatile>
       <metabuffer>10</metabuffer>
    </tileset>
