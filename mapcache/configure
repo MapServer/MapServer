@@ -753,7 +753,7 @@ XML2CONFIG
 GDAL_LIB
 GDAL_INC
 GDAL_ENABLED
-GDAL_CONFIG
+GDALCONFIG
 JPEG_LIB
 JPEG_INC
 PNG_LIB
@@ -1509,7 +1509,7 @@ Optional Packages:
   --with-apr-config       path to apr-config program
   --with-png=DIR          Specify where PNG is installed
   --with-jpeg=DIR         Specify where JPEG is installed
-  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)
+  --with-gdal             path to gdal-config program
   --with-xml2-config=/path/to/xml2-config     xml2-config tool location
   --with-curl-config      path to curl-config program
 
@@ -10325,12 +10325,6 @@ TARGETS=
 
 
 
-
-
-
-
-
-
     # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug;
@@ -11050,36 +11044,31 @@ $as_echo "using libjpeg from system libs." >&6; }
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if GDAL support requested" >&5
-$as_echo_n "checking if GDAL support requested... " >&6; }
-
 
 # Check whether --with-gdal was given.
 if test "${with_gdal+set}" = set; then :
   withval=$with_gdal;
+else
+  with_gdal=yes
+
 fi
 
-
-if test "$with_gdal" = "yes" ; then
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-  if test "`basename xx/$with_gdal`" = "gdal-config" ; then
-    GDAL_CONFIG="$with_gdal"
-  fi
-
-  if test -z "$GDAL_CONFIG" ; then
-    # Extract the first word of "gdal-config", so it can be a program name with args.
+  GDALCONFIG=""
+  if test "$with_gdal" = "no"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: \"gdal support disabled by request\"" >&5
+$as_echo "$as_me: WARNING: \"gdal support disabled by request\"" >&2;}
+  else
+      if test "$with_gdal" = "yes"; then
+          # Extract the first word of "gdal-config", so it can be a program name with args.
 set dummy gdal-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_GDAL_CONFIG+set}" = set; then :
+if test "${ac_cv_path_GDALCONFIG+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  case $GDAL_CONFIG in
+  case $GDALCONFIG in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_GDAL_CONFIG="$GDAL_CONFIG" # Let the user override the test with a path.
+  ac_cv_path_GDALCONFIG="$GDALCONFIG" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -11089,7 +11078,7 @@ do
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_GDAL_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_GDALCONFIG="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -11097,71 +11086,43 @@ done
   done
 IFS=$as_save_IFS
 
-  test -z "$ac_cv_path_GDAL_CONFIG" && ac_cv_path_GDAL_CONFIG="no"
   ;;
 esac
 fi
-GDAL_CONFIG=$ac_cv_path_GDAL_CONFIG
-if test -n "$GDAL_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GDAL_CONFIG" >&5
-$as_echo "$GDAL_CONFIG" >&6; }
+GDALCONFIG=$ac_cv_path_GDALCONFIG
+if test -n "$GDALCONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GDALCONFIG" >&5
+$as_echo "$GDALCONFIG" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
 
 
+      else
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdal-config usability in $with_gdal" >&5
+$as_echo_n "checking for gdal-config usability in $with_gdal... " >&6; }
+          if test -x "$with_gdal"; then
+             GDALCONFIG=$with_gdal
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+          else
+             as_fn_error $? "$with_gdal not found or not executable" "$LINENO" 5
+          fi
+      fi
+      if test -n "$GDALCONFIG"; then
+          GDAL_ENABLED="-DUSE_GDAL"
+          GDAL_CFLAGS=`$GDALCONFIG --cflags --includes`
+          GDAL_LIBS=`$GDALCONFIG --libs`
+      fi
   fi
+  GDAL_ENABLED=$GDAL_ENABLED
 
-  if test "$GDAL_CONFIG" = "no" ; then
-    as_fn_error $? "couldn't find gdal-config" "$LINENO" 5
-  fi
+  GDAL_INC=$GDAL_CFLAGS
 
-  GDAL_ENABLED=-DUSE_GDAL
-
-elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
-
-  GDAL_CONFIG=$with_gdal
-
-  if test -f "$GDAL_CONFIG" -a -x "$GDAL_CONFIG" ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, user supplied gdal-config ($GDAL_CONFIG)" >&5
-$as_echo "yes, user supplied gdal-config ($GDAL_CONFIG)" >&6; }
-  else
-    as_fn_error $? "'$GDAL_CONFIG' is not an executable.  Make sure you use --with-gdal=/path/to/gdal-config" "$LINENO" 5
-  fi
-
-  GDAL_ENABLED=-DUSE_GDAL
-
-else
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-fi
+  GDAL_LIB=$GDAL_LIBS
 
 
-if test -n "$GDAL_ENABLED" -o "$OGR_ENABLED"; then
-
-  GDAL_LIB=`$GDAL_CONFIG --libs`' '`$GDAL_CONFIG --dep-libs`
-  GDAL_INC=`$GDAL_CONFIG --cflags`
-
-fi
-
-GDAL_ENABLED=$GDAL_ENABLED
-
-GDAL_INC=$GDAL_INC
-
-GDAL_LIB=$GDAL_LIB
-
-
-
-
-
-#PKGCONFIG_CHECK
-
-#CAIRO_CHECK
-
-#MERGE_CHECK
 
 
 

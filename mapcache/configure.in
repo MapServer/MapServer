@@ -160,77 +160,6 @@ AC_DEFUN([APR_CHECK],[
     AC_SUBST(APR_LIBS,`$APRCONFIG --link-ld`)
 ])
 
-AC_DEFUN([PKGCONFIG_CHECK],[
-    AC_SUBST(PKGCONFIG)
-    AC_ARG_WITH(pkg-config,
-    AC_HELP_STRING([--with-pkg-config[=PATH]],[path to pkg-config)]),
-    ,
-    [with_pkg_config=yes])
-    if test "$with_pkg_config" = "no"; then
-        AC_MSG_CHECKING(for pkg-config usability)
-        AC_MSG_RESULT(disabled by request)
-    else
-        if test "$with_pkg_config" = "yes" ; then
-            AC_PATH_PROG(PKGCONFIG, pkg-config)
-        else
-            AC_MSG_CHECKING(for pkg-config usability in $with_pkg_config)
-            if test -x "$with_pkg_config"; then
-                PKGCONFIG=$with_pkg_config
-                AC_MSG_RESULT(yes)
-            else
-                AC_MSG_ERROR($with_pkg_config not found or not executable)
-            fi
-        fi
-        if test -z "$PKGCONFIG"; then
-            AC_MSG_ERROR(pkg-config utility not found. use --with-pkg-config to specify its location.)
-        fi
-    fi
-    AC_SUBST(PKGCONFIG)
-])
-
-AC_DEFUN([CAIRO_CHECK],[
-    AC_ARG_WITH(cairo,
-        AC_HELP_STRING([--with-cairo[[=ARG]]],[Include Cairo Support (ARG=yes/no/path to cairo.pc)]),
-        ,
-        [with_cairo=yes])
-    
-    if test "$with_cairo" = "no" -o "$with_cairo" = "" ; then
-      AC_MSG_RESULT(no)
-      CAIRO_CONFIG="no"
-    else
-        if test -z "$PKGCONFIG"; then
-            AC_MSG_ERROR([cairo support requested, but pkg-config not found/configured])
-        fi
-        if test "$with_cairo" = "yes" ; then
-            AC_MSG_CHECKING(for cairo pkg-config entry)
-            `$PKGCONFIG --silence-errors -- cairo cairo-png >> /dev/null`
-            if test $? -eq 0 ; then
-                AC_MSG_RESULT(found)
-                CAIRO_CONFIG="cairo cairo-png"
-            else
-                AC_MSG_ERROR([cairo support requested, but not found.Try installing the cairo development headers])
-            fi
-        else
-          CAIRO_CONFIG=$with_cairo_config
-        fi
-    fi
-    
-    if test "$CAIRO_CONFIG" = "no" ; then
-      AC_MSG_WARN([cairo support has been disabled or could not be configured.
-      Metatiling and tile merging cannot be enabled on the resulting build])
-      CAIRO_ENABLED=
-      CAIRO_INC=
-      CAIRO_LIB=
-    else
-      CAIRO_ENABLED="-DUSE_CAIRO"
-      CAIRO_LIB=`$PKGCONFIG --libs $CAIRO_CONFIG`
-      CAIRO_INC=`$PKGCONFIG --cflags $CAIRO_CONFIG`
-    fi
-    AC_SUBST(CAIRO_ENABLED,$CAIRO_ENABLED)
-    AC_SUBST(CAIRO_INC,$CAIRO_INC)
-    AC_SUBST(CAIRO_LIB,$CAIRO_LIB)
-])
-
 AC_DEFUN([DEBUG_CHECK],[
     AC_ARG_ENABLE(debug,
         AC_HELP_STRING([--enable-debug],[Enable debug build]),
@@ -245,20 +174,6 @@ AC_DEFUN([DEBUG_CHECK],[
     AC_SUBST(CFLAGS,$CFLAGS)
 ])
 
-AC_DEFUN([MERGE_CHECK],[
-    AC_SUBST(MERGE_ENABLED)
-    if test -n "$CAIRO_ENABLED"; then
-        AC_ARG_ENABLE(tile-merging,
-            AC_HELP_STRING([--enable-tile-merging],[Enable on-the-fly tile merging - requires cairo]),
-            ,
-            [enable_tile_merging=yes]
-        )
-        if test "$enable_tile_merging" == "yes"; then
-            AC_SUBST(MERGE_ENABLED,"-DMERGE_ENABLED")
-        fi
-    fi
-])
-
 AC_DEFUN(AC_EXPAND_PATH,[
   if test -z "$1" || echo "$1" | grep '^/' >/dev/null ; then
     $2="$1"
@@ -267,6 +182,37 @@ AC_DEFUN(AC_EXPAND_PATH,[
   fi
 ])
 
+AC_DEFUN([GDAL_CHECK],[
+  AC_ARG_WITH(gdal,
+              AC_HELP_STRING([--with-gdal], [path to gdal-config program]),
+              ,
+              [with_gdal=yes]
+              )
+  GDALCONFIG=""
+  if test "$with_gdal" = "no"; then
+      AC_MSG_WARN("gdal support disabled by request")
+  else
+      if test "$with_gdal" = "yes"; then
+          AC_PATH_PROG(GDALCONFIG, gdal-config)
+      else
+          AC_MSG_CHECKING(for gdal-config usability in $with_gdal)
+          if test -x "$with_gdal"; then
+             GDALCONFIG=$with_gdal
+             AC_MSG_RESULT(yes)
+          else
+             AC_MSG_ERROR($with_gdal not found or not executable)
+          fi
+      fi
+      if test -n "$GDALCONFIG"; then
+          GDAL_ENABLED="-DUSE_GDAL"
+          GDAL_CFLAGS=`$GDALCONFIG --cflags --includes`
+          GDAL_LIBS=`$GDALCONFIG --libs`
+      fi
+  fi
+  AC_SUBST(GDAL_ENABLED,$GDAL_ENABLED)
+  AC_SUBST(GDAL_INC,$GDAL_CFLAGS)
+  AC_SUBST(GDAL_LIB,$GDAL_LIBS)
+])
 
 AC_DEFUN(FASTCGI_CHECK,[
     AC_ARG_WITH(fastcgi,
@@ -423,66 +369,6 @@ AC_DEFUN(JPEG_CHECK,[
 ])
 
 
-AC_DEFUN(GDAL_CHECK,[
-AC_MSG_CHECKING(if GDAL support requested)
-
-AC_ARG_WITH(gdal,
-[  --with-gdal[[=PATH]]      Include GDAL support (PATH is path to gdal-config)],,)
-
-if test "$with_gdal" = "yes" ; then
-
-  AC_MSG_RESULT([yes])
-
-  if test "`basename xx/$with_gdal`" = "gdal-config" ; then
-    GDAL_CONFIG="$with_gdal"
-  fi
-
-  if test -z "$GDAL_CONFIG" ; then
-    AC_PATH_PROG(GDAL_CONFIG, gdal-config, no)
-  fi
-
-  if test "$GDAL_CONFIG" = "no" ; then
-    AC_MSG_ERROR([couldn't find gdal-config])
-  fi
-
-  GDAL_ENABLED=-DUSE_GDAL
-
-elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
-
-  GDAL_CONFIG=$with_gdal
-
-  if test -f "$GDAL_CONFIG" -a -x "$GDAL_CONFIG" ; then
-    AC_MSG_RESULT([yes, user supplied gdal-config ($GDAL_CONFIG)])
-  else
-    AC_MSG_ERROR(['$GDAL_CONFIG' is not an executable.  Make sure you use --with-gdal=/path/to/gdal-config])
-  fi
-
-  GDAL_ENABLED=-DUSE_GDAL
-
-else
-
-  AC_MSG_RESULT([no])
-
-fi
-
-dnl
-dnl GDAL_LIB and GDAL_INC are used for both GDAL and OGR
-dnl
-
-if test -n "$GDAL_ENABLED" -o "$OGR_ENABLED"; then
-
-  GDAL_LIB=`$GDAL_CONFIG --libs`' '`$GDAL_CONFIG --dep-libs`
-  GDAL_INC=`$GDAL_CONFIG --cflags`
-
-fi
-
-AC_SUBST(GDAL_ENABLED,$GDAL_ENABLED)
-AC_SUBST(GDAL_INC,    $GDAL_INC)
-AC_SUBST(GDAL_LIB,    $GDAL_LIB)
-
-
-                     
-])
 DEBUG_CHECK
 
 AC_ARG_ENABLE(module,
@@ -525,11 +411,6 @@ PNG_CHECK
 
 JPEG_CHECK
 GDAL_CHECK
-#PKGCONFIG_CHECK
-
-#CAIRO_CHECK
-
-#MERGE_CHECK
 
 XML2_CHECK
 
