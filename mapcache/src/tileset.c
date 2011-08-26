@@ -109,6 +109,21 @@ static geocache_metatile* _geocache_tileset_metatile_get(geocache_tile *tile, re
    return mt;
 }
 
+int _geocache_tileset_render_metatile(geocache_metatile *mt, request_rec *r) {
+   int i;
+   int ret;
+   ret = mt->tile.tileset->source->render_metatile(mt, r);
+   if(ret != GEOCACHE_SUCCESS) { return ret; }
+   ret = geocache_image_metatile_split(mt,r);
+   if(ret != GEOCACHE_SUCCESS) { return ret; }
+   for(i=0;i<mt->ntiles;i++) {
+      geocache_tile *tile = &(mt->tiles[i]);
+      ret = mt->tile.tileset->cache->tile_set(tile, r);
+      if(ret != GEOCACHE_SUCCESS) { return ret; }
+   }
+   return GEOCACHE_SUCCESS;
+}
+
 void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
    double res  = tile->tileset->resolutions[tile->z];
    bbox[0] = tile->tileset->extent[0] + (res * tile->x * tile->sx);
@@ -145,7 +160,7 @@ int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec 
 }
 
 int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r) {
-   int ret,i;
+   int ret;
    int isLocked;
    geocache_metatile *mt;
    if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
@@ -187,33 +202,9 @@ int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r) {
          /* no other thread is doing the rendering, do it ourselves */
          ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,"cache miss: tileset %s - tile %d %d %d",
                tile->tileset->name,tile->x, tile->y,tile->z);
-
-         ret = tile->tileset->source->render_metatile(mt, r);
-         if(ret != GEOCACHE_SUCCESS) {
-            geocache_util_mutex_aquire(r);
-            _geocache_tileset_metatile_unlock(mt,r);
-            geocache_util_mutex_release(r);
-            return ret;
-         }
-         ret = geocache_image_metatile_split(mt,r);
-         if(ret != GEOCACHE_SUCCESS) {
-            geocache_util_mutex_aquire(r);
-            _geocache_tileset_metatile_unlock(mt,r);
-            geocache_util_mutex_release(r);
-            return ret;
-         }
-
-         for(i=0;i<mt->ntiles;i++) {
-            geocache_tile *tile = &(mt->tiles[i]);
-            ret = tile->tileset->cache->tile_set(tile, r);
-            if(ret != GEOCACHE_SUCCESS) {
-               geocache_util_mutex_aquire(r);
-               _geocache_tileset_metatile_unlock(mt,r);
-               geocache_util_mutex_release(r);
-               return ret;
-            }
-         }
-
+         
+         ret = _geocache_tileset_render_metatile(mt,r);
+         
          geocache_util_mutex_aquire(r);
          _geocache_tileset_metatile_unlock(mt,r);
          geocache_util_mutex_release(r);
