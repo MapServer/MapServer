@@ -44,14 +44,30 @@ int geocache_image_has_alpha(geocache_image *img) {
 }
 
 void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay) {
-   int i,j,starti,startj;
-   unsigned char *browptr, *orowptr, *bptr, *optr;
+   int starti,startj;
    if(base->w < overlay->w || base->h < overlay->h) {
       ctx->set_error(ctx, 500, "attempting to merge an larger image onto another");
       return;
    }
    starti = (base->h - overlay->h)/2;
    startj = (base->w - overlay->w)/2;
+#ifdef USE_PIXMAN
+   pixman_image_t *si = pixman_image_create_bits(PIXMAN_a8r8g8b8,overlay->w,overlay->h,
+         (uint32_t*)overlay->data,overlay->stride);
+   pixman_image_t *bi = pixman_image_create_bits(PIXMAN_a8r8g8b8,base->w,base->h,
+         (uint32_t*)base->data,base->stride);
+   pixman_transform_t transform;
+   pixman_transform_init_translate(&transform,
+         pixman_int_to_fixed(-startj),
+         pixman_int_to_fixed(-starti));
+   pixman_image_set_filter(si,PIXMAN_FILTER_NEAREST, NULL, 0);
+   pixman_image_composite32 (PIXMAN_OP_OVER, si, si, bi,
+                            0, 0, 0, 0, 0, 0, base->w,base->h);
+   pixman_image_unref(si);
+   pixman_image_unref(bi);
+#else
+   int i,j;
+   unsigned char *browptr, *orowptr, *bptr, *optr;
 
    browptr = base->data + starti * base->stride + startj*4;
    orowptr = overlay->data;
@@ -85,6 +101,7 @@ void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_
       browptr += base->stride;
       orowptr += overlay->stride;
    }
+#endif
 }
 
 #ifndef USE_PIXMAN
