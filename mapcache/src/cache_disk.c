@@ -165,7 +165,7 @@ int _geocache_cache_disk_get(geocache_tile *tile, request_rec *r) {
    _geocache_cache_disk_tile_key(r, tile, &filename);
    if(apr_file_open(&f, filename, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
          APR_OS_DEFAULT, r->pool) == APR_SUCCESS) {
-      rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
+      rv = apr_file_info_get(&finfo, APR_FINFO_SIZE|APR_FINFO_MTIME, f);
       if(!finfo.size) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, "tile %s has no data",filename);
          return GEOCACHE_FAILURE;
@@ -180,6 +180,7 @@ int _geocache_cache_disk_get(geocache_tile *tile, request_rec *r) {
        * any error that might happen at this stage should only occur if the tile isn't already cached,
        * i.e. normally only once.
        */
+      tile->mtime = finfo.mtime;
       tile->data = geocache_buffer_create(size,r->pool);
       //manually add the data to our buffer
       apr_file_read(f,(void*)tile->data->buf,&size);

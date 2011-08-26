@@ -63,16 +63,18 @@ int _geocache_image_merge(request_rec *r, geocache_image *base, geocache_image *
 geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_tile **tiles, int ntiles) {
    geocache_image *base,*overlay;
    int i;
-   geocache_tile *tile;
-   
+   geocache_tile *tile = apr_pcalloc(r->pool,sizeof(geocache_tile));
+   tile->mtime = tiles[0]->mtime;
    base = geocache_imageio_decode(r, tiles[0]->data);
    if(!base) return NULL;
    for(i=1; i<ntiles; i++) {
       overlay = geocache_imageio_decode(r, tiles[i]->data);
+      if(tile->mtime < tiles[i]->mtime)
+         tile->mtime = tiles[i]->mtime;
       if(!overlay) return NULL;
       _geocache_image_merge(r, base, overlay);
    }
-   tile = apr_pcalloc(r->pool,sizeof(geocache_tile));
+   
    tile->data = geocache_imageio_encode(r,base, GEOCACHE_IMAGE_FORMAT_PNG);
    tile->sx = base->w;
    tile->sy = base->h;

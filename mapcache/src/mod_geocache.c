@@ -22,7 +22,9 @@
 #include <httpd.h>
 #include <http_config.h>
 #include <http_protocol.h>
+#include <http_request.h>
 #include <apr_strings.h>
+#include <apr_time.h>
 #include <http_log.h>
 #include "geocache.h"
 
@@ -34,13 +36,17 @@ static char* geocache_mutex_name = "geocache_mutex";
 
 
 static int geocache_write_tile(request_rec *r, geocache_tile *tile) {
-
+   int rc;
    if(tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG) 
       ap_set_content_type(r, "image/png");
    else
       ap_set_content_type(r, "image/jpeg");
 
-
+   ap_update_mtime(r, tile->mtime);
+   if((rc = ap_meets_conditions(r)) != OK) {
+      return rc;
+   }
+   ap_set_last_modified(r);
    ap_set_content_length(r,tile->data->size);
    ap_rwrite((void*)tile->data->buf, tile->data->size, r);
 
@@ -65,9 +71,11 @@ static int mod_geocache_request_handler(request_rec *r) {
    config = ap_get_module_config(r->per_dir_config, &geocache_module);
 
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
+      /* loop through the services that have been configured */
       geocache_service *service = config->services[i];
       if(!service) continue;
       request = service->parse_request(r,params,config);
+      /* the service has recognized the request if it returns a non NULL value */
       if(request)
          break;
    }
@@ -82,14 +90,6 @@ static int mod_geocache_request_handler(request_rec *r) {
       if(rv != GEOCACHE_SUCCESS) {
          return HTTP_NOT_FOUND;
       }
-#ifdef MERGE_ENABLED
-      if(request->ntiles>1) {
-         if(tile->tileset->source->image_format != GEOCACHE_IMAGE_FORMAT_PNG) {
-            ap_rprintf(r,"tile merging only supports png source (requested source: %s",tile->tileset->source->name);
-            return HTTP_BAD_REQUEST;
-         }
-      }
-#endif      
    }
    if(request->ntiles == 1) {
       tile = request->tiles[0];

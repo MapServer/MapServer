@@ -25,6 +25,7 @@
 #include <libxml/tree.h>
 #include "util.h"
 #include <assert.h>
+#include <apr_time.h>
 
 
 #define GEOCACHE_SUCCESS 0
@@ -63,6 +64,7 @@ typedef struct {
    int sx,sy;
    geocache_buffer *data;
    void *lock;
+   apr_time_t mtime;
 } geocache_tile;
 
 typedef struct {
