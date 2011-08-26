@@ -17,12 +17,14 @@
 #include "geocache.h"
 #include <apr_file_io.h>
 #include <apr_strings.h>
-#include <semaphore.h>
-#include <errno.h>
-#include <fcntl.h>
+
+
 
 
 #ifdef USE_SEMLOCK
+#include <semaphore.h>
+#include <errno.h>
+#include <fcntl.h>
 static const char *alphabet = "abcdefghijklmnopqrstuvwxyz"
                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                        "0123456789"

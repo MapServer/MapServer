@@ -20,6 +20,9 @@ AC_CHECK_FUNC(symlink,[CFLAGS="$CFLAGS -DHAVE_SYMLINK"])
 
 TARGETS=
 
+
+AC_SUBST(MISC_ENABLED)
+
 # macro that is used to parse a --with-apxs parameter
 AC_DEFUN([APXS_CHECK],[
     AC_SUBST(APXS)
@@ -552,12 +555,24 @@ AC_DEFUN([JPEG_CHECK],[
     AC_SUBST(JPEG_LIB,$JPEG_LIB)
 ])
 
+AC_DEFUN([LOCKMECH_CHECK],[
+   AC_ARG_WITH(lock_mechanism,
+                AC_HELP_STRING([--with-lock-mechanism=file|semaphore],[Specify the locking mechanism to use, either file based or posix-semaphore based.]),
+                ,with_lock_mechanism='file')
+   if test "x$with_lock_mechanism" = "xsemaphore"; then
+      AC_CHECK_HEADER([semaphore.h],,[AC_MSG_ERROR([cannot find semaphore.h])])
+      AC_CHECK_HEADER([fcntl.h],,[AC_MSG_ERROR([cannot find fcntl.h])])
+      MISC_ENABLED="-DUSE_SEMLOCK $MISC_ENABLED"
+   else
+      if test "x$with_lock_mechanism" != "xfile"; then
+        AC_MSG_ERROR([lock mechanism can only be one of (file) or (semaphore). got $with_lock_mechanism])
+      fi
+   fi
+])
 
 DEBUG_CHECK
 
-
-AC_CHECK_HEADER([semaphore.h],,[AC_MSG_ERROR([cannot find semaphore.h])])
-AC_CHECK_HEADER([fcntl.h],,[AC_MSG_ERROR([cannot find fcntl.h])])
+LOCKMECH_CHECK
 
 
 AC_ARG_ENABLE(module,
@@ -597,6 +612,8 @@ PCRE_CHECK
 AC_SUBST(GDAL_ENABLED,$GDAL_ENABLED)
 AC_SUBST(GDAL_INC,$GDAL_CFLAGS)
 AC_SUBST(GDAL_LIB,$GDAL_LIBS)
+
+AC_SUBST(MISC_ENABLED,$MISC_ENABLED)
 
 CURL_CHECK
 
