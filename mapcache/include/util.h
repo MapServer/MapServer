@@ -15,11 +15,21 @@
  */
 
 #include <apr_version.h>
+#include <apr_tables.h>
+
 #ifndef UTIL_H_
 #define UTIL_H_
 
 #define GEOCACHE_MAX(a,b) (((a)>(b))?(a):(b))
 #define GEOCACHE_MIN(a,b) (((a)<(b))?(a):(b))
+
+#ifndef APR_ARRAY_IDX
+#define APR_ARRAY_IDX(ary,i,type) (((type *)(ary)->elts)[i])
+#endif
+
+#ifndef APR_ARRAY_PUSH
+#define APR_ARRAY_PUSH(ary,type) (*((type *)apr_array_push(ary)))
+#endif
 
 #if APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3
 
