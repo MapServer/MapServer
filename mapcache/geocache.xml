@@ -125,6 +125,190 @@
          </grid>
    --> 
 
+
+   <!-- Lambert93 -->
+   <grid name="LAMB93">
+      <metadata>
+         <title>Lambert 1993</title>
+      </metadata>
+      <extent>-357823.2365 6037008.6939 1313632.3628 7230727.3772</extent>
+      <srs>EPSG:2154</srs>
+      <srsalias>IGNF:LAMB93</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+
+   <!-- RGF93 -->
+   <grid name="RGF93">
+      <metadata>
+         <title></title>
+      </metadata>
+      <extent>-9.62 41.18 10.3 51.54</extent>
+      <srs>EPSG:4171</srs>
+      <srsalias>IGNF:RGF93</srsalias>
+      <resolutions>0.026726773770953713 0.013363386885476856 0.006681693442738428 0.003340846721369214 0.001670423360684607 0.0008352116803423035 0.00041760584017115176 0.00020880292008557588 0.00010440146004278794 0.00005220073002139397 0.000026100365010696985 0.000013050182505348493 0.000006525091252674246 0.000003262545626337123 0.0000016312728131685616 0.0000008156364065842808</resolutions>
+      <units>dd</units>
+      <size>256 256</size>
+   </grid>
+
+   
+   <!-- french geoportail grids -->
+   <grid name="FXX">
+      <metadata>
+         <title>Géoportail - France métropolitaine</title>
+      </metadata>
+      <extent>-524288 4456448 786432 5767168</extent>
+      <srs>EPSG:310024802</srs>
+      <srsalias>IGNF:GEOPORTALFXX</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="ANF">
+      <metadata>
+         <title>Géoportail - Antilles françaises</title>
+      </metadata>
+      <extent>-6791168 1761280 -6553600 2023424</extent>
+      <srs>EPSG:310915814</srs>
+      <srsalias>IGNF:GEOPORTALANF</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="GUF">
+      <metadata>
+         <title>Géoportail - Guyane</title>
+      </metadata>
+      <extent>-6070272 235047 -5726208 647168</extent>
+      <srs>EPSG:310486805</srs>
+      <srsalias>IGNF:GEOPORTALGUF</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="MYT">
+      <metadata>
+         <title>Géoportail - Mayotte</title>
+      </metadata>
+      <extent>4901888 -1447936 4932608 -1405952</extent>
+      <srs>EPSG:310702807</srs>
+      <srsalias>IGNF:GEOPORTALMYT</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="REU">
+      <metadata>
+         <title>Géoportail - Réunion et dépendances</title>
+      </metadata>
+      <extent>5734400 -2383872 5808128 -2318336</extent>
+      <srs>EPSG:310700806</srs>
+      <srsalias>IGNF:GEOPORTALREU</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="NCL">
+      <metadata>
+         <title>Géoportail - Nouvelle-Calédonie</title>
+      </metadata>
+      <extent>16777216 -2555904 17301504 -2162688</extent>
+      <srs>EPSG:310547809</srs>
+      <srsalias>IGNF:GEOPORTALNCL</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="SPM">
+      <metadata>
+         <title>Géoportail - Saint-Pierre et Miquelon</title>
+      </metadata>
+      <extent>-4325376 5177344 -4259840 5308416</extent>
+      <srs>EPSG:310706808</srs>
+      <srsalias>IGNF:GEOPORTALSPM</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="WLF">
+      <metadata>
+         <title>Géoportail - Wallis et Futuna</title>
+      </metadata>
+      <extent>-19267584 -1638400 -19005440 -1441792</extent>
+      <srs>EPSG:310642810</srs>
+      <srsalias>IGNF:GEOPORTALWLF</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="CRZ">
+      <metadata>
+         <title>Géoportail - Crozet</title>
+      </metadata>
+      <extent>3801088 -5242880 4128768 -5046272</extent>
+      <srs>EPSG:310642801</srs>
+      <srsalias>IGNF:GEOPORTALCRZ</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="KER">
+      <metadata>
+         <title>Géoportail - Kerguelen</title>
+      </metadata>
+      <extent>4915200 -5636096 5177344 -5373952</extent>
+      <srs>EPSG:310642812</srs>
+      <srsalias>IGNF:GEOPORTALKER</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="PYF">
+      <metadata>
+         <title>Géoportail - Polynésie française</title>
+      </metadata>
+      <extent>-16384000 -2097152 -15990784 -1703936</extent>
+      <srs>EPSG:310032811</srs>
+      <srsalias>IGNF:GEOPORTALPYF</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="ASP">
+      <metadata>
+         <title>Géoportail - Amsterdam et Saint-Paul</title>
+      </metadata>
+      <extent>-6791168 1761280 -6553600 2023424</extent>
+      <srs>EPSG:310642813</srs>
+      <srsalias>IGNF:GEOPORTALASP</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="TERA">
+      <metadata>
+         <title>Terre Adélie 1950</title>
+      </metadata>
+      <extent>196098 225276 720386 749564</extent>
+      <srs>EPSG:2986</srs>
+      <srsalias>IGNF:TERA50STEREO</srsalias>
+      <resolutions>2048 1024 512 256 128 64 32 16 8 4 2 1 0.5 0.25 0.125 0.0625</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+   <grid name="MILLER">
+      <metadata>
+         <title>Géoportail - Monde</title>
+      </metadata>
+      <extent>-20037504 -10018752 20037504 10018752</extent>
+      <srs>EPSG:310642901</srs>
+      <srsalias>IGNF:MILLER</srsalias>
+      <resolutions>39135.75 19567.875 9783.9375 4891.96875 2445.984375</resolutions>
+      <units>m</units>
+      <size>256 256</size>
+   </grid>
+
    <!--
         a cache is where tiles are stored once they have been rendered
         the only "type" available right now is "disk"
@@ -467,6 +651,8 @@
       <source>osm</source>
       <cache>disk</cache>
       <format>PNG</format>
+      <grid>FXX</grid>
+      <grid>MILLER</grid>
       <grid>WGS84</grid>
       <grid>g</grid>
       <metatile>5 5</metatile>
@@ -501,11 +687,20 @@
       eg http://myhost/geocache/wms for OGC WMS.
    -->
    <service type="wms" enabled="true">
+      <!-- this service should actually be called "ogc". It is different from the other
+           services as it does not listen on the /wms endpoint, but directly on /.
+           It will intercept wms getmap requests that can be treated from configured
+           tilesets, and can optionally forward all the rest to (an)other server(s)
+           TODO: this needs way more documenting
+      -->
+      <!--
       <forwarding_rule name="foo rule">
+            <append_pathinfo>true</append_pathinfo>
             <http>
-               <url>http://localhost/cgi-bin/mapserv?map=/gro1/mapserver-utils/osm.map</url>
+               <url>http://localhost/</url>
             </http>
       </forwarding_rule>
+      -->
    </service>
    <service type="wmts" enabled="true"/>
    <service type="tms" enabled="true"/>
@@ -545,5 +740,9 @@
         this location should be writable by the apache user
    -->
    <lock_dir>/tmp</lock_dir>
+   
+   <!-- do not enable this yet, dragons ahead !!
+   <pathinfo_hack/>
+   -->
 
 </geocache>
