@@ -48,17 +48,28 @@ typedef struct geocache_cfg geocache_cfg;
 typedef struct geocache_tileset geocache_tileset;
 typedef struct geocache_cache geocache_cache;
 typedef struct geocache_source geocache_source;
+typedef struct geocache_buffer geocache_buffer;
+typedef struct geocache_tile geocache_tile;
+typedef struct geocache_metatile geocache_metatile;
+typedef struct geocache_wms_source geocache_wms_source;
+typedef struct geocache_cache_disk geocache_cache_disk;
+typedef struct geocache_request geocache_request;
+typedef struct geocache_service  geocache_service;
+typedef struct geocache_service_wms geocache_service_wms;
+typedef struct geocache_service_tms geocache_service_tms;
+typedef struct geocache_server_cfg geocache_server_cfg;
+typedef struct geocache_image geocache_image;
 
 extern module AP_MODULE_DECLARE_DATA geocache_module;
 
-typedef struct {
+struct geocache_buffer{
    unsigned char* buf ;     /* buffer */
    size_t size ; /* bytes used */
    size_t avail ;  /* bytes allocated */
    apr_pool_t* pool; /*apache pool to allocate from */
-} geocache_buffer;
+};
 
-typedef struct {
+struct geocache_tile{
    geocache_tileset *tileset;
    int x,y,z;
    int sx,sy;
@@ -66,14 +77,14 @@ typedef struct {
    void *lock;
    apr_time_t mtime;
    int expires;
-} geocache_tile;
+};
 
-typedef struct {
+struct geocache_metatile{
    geocache_tile tile;
    double bbox[4];
    int ntiles;
    geocache_tile *tiles;
-} geocache_metatile;
+};
 
 
 struct geocache_source{
@@ -91,12 +102,12 @@ struct geocache_source{
 
 
 
-typedef struct {
-  geocache_source source;
-  char *url;
-  apr_table_t *wms_default_params;
-  apr_table_t *wms_params;
-} geocache_wms_source;
+struct geocache_wms_source{
+   geocache_source source;
+   char *url;
+   apr_table_t *wms_default_params;
+   apr_table_t *wms_params;
+};
 
 
 typedef enum {GEOCACHE_CACHE_DISK} geocache_cache_type;
@@ -114,28 +125,28 @@ struct geocache_cache{
    int (*tile_lock_wait)(geocache_tile *tile, request_rec *r);
 };
 
-typedef struct {
+struct geocache_cache_disk{
    geocache_cache cache;
    char *base_directory;
-} geocache_cache_disk;
+};
 
-typedef struct {
+struct geocache_request{
    geocache_tile **tiles;
    int ntiles;
-} geocache_request;
+};
 
-typedef struct {
+struct geocache_service{
    geocache_service_type type;
    geocache_request* (*parse_request)(request_rec *r, apr_table_t *params, geocache_cfg *config);
-} geocache_service;
+};
 
-typedef struct {
+struct geocache_service_wms{
    geocache_service service;
-} geocache_service_wms;
+};
 
-typedef struct {
+struct geocache_service_tms {
    geocache_service service;
-} geocache_service_tms;
+};
 
 
 struct geocache_tileset {
@@ -162,15 +173,15 @@ struct geocache_cfg {
    apr_hash_t *tilesets;
 };
 
-typedef struct {
+struct geocache_server_cfg{
    apr_global_mutex_t *mutex;
-} geocache_server_cfg;
+};
 
-typedef struct {
+struct geocache_image{
    unsigned char *data;
    size_t w,h;
    size_t stride;
-} geocache_image;
+};
 
 
 
@@ -225,11 +236,6 @@ int geocache_util_extract_double_list(char* args, const char sep, double **numbe
       int *numbers_count, apr_pool_t *pool);
 int geocache_util_mutex_aquire(request_rec *r);
 int geocache_util_mutex_release(request_rec *r);
-
-typedef struct {
-   geocache_buffer *buffer;
-   unsigned char *ptr;
-} _geocache_buffer_closure;
 
 /* in image.c */
 geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_tile **tiles, int ntiles);

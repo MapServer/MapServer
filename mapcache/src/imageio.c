@@ -19,6 +19,12 @@
 #include <png.h>
 #include <jpeglib.h>
 
+typedef struct _geocache_buffer_closure _geocache_buffer_closure;
+struct _geocache_buffer_closure{
+   geocache_buffer *buffer;
+   unsigned char *ptr;
+};
+
 int _geocache_imageio_image_has_alpha(geocache_image *img) {
    int i,j;
    unsigned char *ptr, *rptr = img->data;
