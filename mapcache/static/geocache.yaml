@@ -1,0 +1,202 @@
+---
+
+grids:
+  - name: grid1
+    extent: [0, 3, 4, 4]
+    resolutions: [0, 2]
+    size: [256, 256]
+    metadata:
+      title: foo grid title
+      fail: sdffd
+    units: m
+    srs: EPSG:4325
+    srsaliases:
+      - EPSG:2345
+      - foo
+    
+caches:
+  - name: disk
+    type: disk
+    base_dir: /tmp
+    symlink_blank: true
+    
+  - name: tmpl
+    type: disk
+    template: /tmp/templ-test/{tileset}-{grid}-{dim}/{z}/{y}/{x}.{ext}
+  
+  - name: memcache
+    type: memcache
+    servers:
+      - host: localhost
+        port: 11211
+      - host: localhost
+        port: 11211
+  
+  - name: sqlite
+    type: sqlite3
+    dbname_template: /tmp/{tileset}-{grid}.sqlite
+    hit_stats: false
+  
+  - name: ne
+    type: mbtiles
+    dbname_template: /Users/tbonfort/Documents/MapBox/tiles/natural-earth-1.mbtiles
+    hit_stats: false
+  
+  - name: wb
+    type: mbtiles
+    dbname_template: /Users/tbonfort/Documents/MapBox/tiles/world-borders-dark.mbtiles
+    hit_stats: false
+
+sources:
+  - name: vmap0
+    type: wms
+    http:
+      url: http://vmap0.tiles.osgeo.org/wms/vmap0
+      headers:
+        - User-Agent: mod-geocache/trunk
+          Referer: http://foosite
+    getmap:
+      params:
+        - LAYERS: basic
+          FORMAT: image/png
+    getfeatureinfo:
+      params:
+        - QUERY_LAYERS: basic
+      
+      info_formats: text/html
+  
+  - name: osm
+    type: wms
+    http:
+      url: http://localhost/cgi-bin/mapserv
+    getmap:
+      params:
+        - LAYERS: default
+          FORMAT: image/png
+          MAP: /Users/tbonfort/dev/mapserver-utils/osm-outlined,google.map
+
+formats: 
+  - name: jpg
+    type: jpg
+    quality: 85
+
+  - name: png
+    type: png
+    colors: 256
+    compression: best
+  
+  - name: mixed
+    type: mixed
+    opaque: jpg
+    transparent: png
+
+tilesets:
+  - name: test
+    source: vmap0
+    grids:
+      - WGS84
+      - ref: g
+        extent: [10, 10, 20, 20]
+    wgs84_extent: [-180, -90, 180, 90]
+    format: png
+    cache: disk
+    metatile:
+      size: [5, 5]
+      buffer: 10
+    expires:
+      delay: 3600
+      auto: false
+    dimensions:
+      - type: values
+        name: dim1
+        default: val1
+        values: [ val1, val2, val3 ]
+    watermark: /home/tbonfort/dev/mod-geocache/static/watermark.png
+  
+  - name: osm
+    source: osm
+    grids:
+      - g
+    wgs84_extent: [-180, -90, 180, 90]
+    format: png
+    cache: sqlite
+    metatile:
+      size: [5, 5]
+      buffer: 10
+    expires:
+      delay: 3600
+      auto: false
+      
+  - name: ne
+    source: osm
+    grids:
+      - g
+    wgs84_extent: [-180, -90, 180, 90]
+    format: png
+    cache: ne
+    metatile:
+      size: [5, 5]
+      buffer: 10
+    expires:
+      delay: 3600
+      auto: false
+      
+  - name: wb
+    source: osm
+    grids:
+      - g
+    wgs84_extent: [-180, -90, 180, 90]
+    format: png
+    cache: wb
+    metatile:
+      size: [5, 5]
+      buffer: 10
+    expires:
+      delay: 3600
+      auto: false
+      
+services:
+  - type: demo
+    enabled: true
+    
+  - type: ve
+    enabled: true
+    
+  - type: tms
+    enabled: true
+    
+  - type: gmaps
+    enabled: true
+    
+  - type: kml
+    enabled: true
+    
+  - type: wmts
+    enabled: true
+    
+  - type: wms
+    enabled: true
+    forwarding_rules:
+      - name: foo rule
+        append_pathinfo: true
+        http:
+          url: http://localhost/forwarded-by-mod-geocache/
+        params:
+          - name: SERVICE
+            type: values
+            values:
+              - WMS
+              - WFS
+              - SOS
+    full_getmap:
+      strategy: assemble
+      resample_mode: bilinear
+      format: JPEG
+
+config:
+  error_reporting: message
+  lock_dir: /tmp
+  default_format: PNG8
+...
+# vim: ai ts=2 sts=2 et sw=2
+
