@@ -673,8 +673,18 @@ AC_DEFUN([SQLITE_CHECK],[
         test -f $SQLITE_DIR/sqlite3.h && SQLITE_INCLUDE="$SQLITE_DIR"
         
         if test -n "$SQLITE_LIBDIR" ; then   
-          SQLITE_LIB="-L$SQLITE_LIBDIR -lsqlite3"
-          AC_MSG_RESULT([using libsqlite from $SQLITE_LIB])
+            OLDLDFLAGS="$LDFLAGS" ; LDFLAGS="$LDFLAGS -L$SQLITE_LIBDIR -lsqlite3"
+            AC_CHECK_LIB(sqlite3, sqlite3_open_v2, SQLITE_LIB="-L$SQLITE_LIBDIR -lsqlite3",,)
+            if test -n "$SQLITE_LIB" ; then
+              AC_MSG_RESULT([using libsqlite3 from system libs.])
+            else
+              AC_CHECK_LIB(sqlite3, sqlite3_open,
+                  AC_MSG_ERROR([SQLITE library found but is too old. Need at least 3.5.0]),
+                  AC_MSG_ERROR([SQLITE (libsqlite3) library cannot be found. install or reconfigure with --with-sqlite=DIR]),
+              )
+            fi
+            LDFLAGS="$OLDLDFLAGS"
+            AC_MSG_RESULT([using libsqlite from $SQLITE_LIB])
         else
           AC_MSG_ERROR([cannot find sqlite lib in $SQLITE_DIR])
         fi
@@ -690,14 +700,17 @@ AC_DEFUN([SQLITE_CHECK],[
     
       dnl check for sqlite in system locations
     
-      AC_CHECK_LIB(sqlite3, sqlite3_open, SQLITE_LIB="-lsqlite3",,)
       AC_CHECK_HEADER([sqlite3.h],,
             [AC_MSG_ERROR([cannot find sqlite3.h header in system path])])
+      AC_CHECK_LIB(sqlite3, sqlite3_open_v2, SQLITE_LIB="-lsqlite3",,)
       if test -n "$SQLITE_LIB" ; then
         AC_MSG_RESULT([using libsqlite3 from system libs.])
         SQLITE_ENABLED="-DUSE_SQLITE"
       else
-        AC_MSG_ERROR([SQLITE (libsqlite3) library cannot be found. install or reconfigure with --with-sqlite=DIR])
+        AC_CHECK_LIB(sqlite3, sqlite3_open,
+            AC_MSG_ERROR([SQLITE library found but is too old. Need at least 3.5.0]),
+            AC_MSG_ERROR([SQLITE (libsqlite3) library cannot be found. install or reconfigure with --with-sqlite=DIR]),
+        )
       fi
     else
       AC_MSG_RESULT([sqlite support disabled by request])
