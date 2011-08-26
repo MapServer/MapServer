@@ -781,7 +781,7 @@ void _configuration_parse_wms(geocache_context *ctx, ezxml_t node, geocache_serv
 
          dimension->name = apr_pstrdup(ctx->pool,name);
 
-         dimension->parse(ctx,dimension,param_node->txt);
+         dimension->parse(ctx,dimension,param_node);
          GC_CHECK_ERROR(ctx);
 
          APR_ARRAY_PUSH(rule->match_params,geocache_dimension*) = dimension;

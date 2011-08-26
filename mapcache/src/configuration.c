@@ -264,7 +264,7 @@ void parseDimensions(geocache_context *ctx, ezxml_t node, geocache_tileset *tile
          return;
       }
 
-      dimension->parse(ctx,dimension,dimension_node->txt);
+      dimension->parse(ctx,dimension,dimension_node);
       GC_CHECK_ERROR(ctx);
 
       APR_ARRAY_PUSH(dimensions,geocache_dimension*) = dimension;

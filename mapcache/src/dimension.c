@@ -54,7 +54,9 @@ static const char** _geocache_dimension_intervals_print(geocache_context *ctx, g
    return ret;
 }
 
-static void _geocache_dimension_intervals_parse(geocache_context *ctx, geocache_dimension *dim, const char *entry) {
+static void _geocache_dimension_intervals_parse(geocache_context *ctx, geocache_dimension *dim,
+      ezxml_t node) {
+   const char *entry = node->txt;
    int count = 1;
    if(!entry || !*entry) {
       ctx->set_error(ctx,400,"failed to parse dimension values: none supplied");
@@ -121,7 +123,9 @@ static const char** _geocache_dimension_regex_print(geocache_context *ctx, geoca
    return ret;
 }
 
-static void _geocache_dimension_regex_parse(geocache_context *ctx, geocache_dimension *dim, const char *entry) {
+static void _geocache_dimension_regex_parse(geocache_context *ctx, geocache_dimension *dim,
+      ezxml_t node) {
+   const char *entry = node->txt;
    if(!entry || !*entry) {
       ctx->set_error(ctx,400,"failed to parse dimension regex: none supplied");
       return;
@@ -154,8 +158,13 @@ static int _geocache_dimension_values_validate(geocache_context *ctx, geocache_d
    int i;
    geocache_dimension_values *dimension = (geocache_dimension_values*)dim;
    for(i=0;i<dimension->nvalues;i++) {
-      if(!strcmp(*value,dimension->values[i]))
-         return GEOCACHE_SUCCESS;
+      if(dimension->case_sensitive) {
+         if(!strcmp(*value,dimension->values[i]))
+            return GEOCACHE_SUCCESS;
+      } else {
+         if(!strcasecmp(*value,dimension->values[i]))
+            return GEOCACHE_SUCCESS;
+      }
    }
    return GEOCACHE_FAILURE;
 }
@@ -171,13 +180,21 @@ static const char** _geocache_dimension_values_print(geocache_context *ctx, geoc
    return ret;
 }
 
-static void _geocache_dimension_values_parse(geocache_context *ctx, geocache_dimension *dim, const char *entry) {
+static void _geocache_dimension_values_parse(geocache_context *ctx, geocache_dimension *dim,
+      ezxml_t node) {
    int count = 1;
+   const char *entry = node->txt;
    if(!entry || !*entry) {
       ctx->set_error(ctx,400,"failed to parse dimension values: none supplied");
       return;
    }
+
    geocache_dimension_values *dimension = (geocache_dimension_values*)dim;
+   const char *case_sensitive = ezxml_attr(node,"case_sensitive");
+   if(case_sensitive && !strcasecmp(case_sensitive,"true")) {
+      dimension->case_sensitive = 1;
+   }
+   
    char *values = apr_pstrdup(ctx->pool,entry);
    char *key,*last;
    for(key=values;*key;key++) if(*key == ',') count++;

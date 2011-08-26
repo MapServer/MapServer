@@ -1347,13 +1347,14 @@ struct geocache_dimension {
    /**
     * \brief parse the value given in the configuration
     */
-   void (*parse)(geocache_context *context, geocache_dimension *dim, const char *entry);
+   void (*parse)(geocache_context *context, geocache_dimension *dim, ezxml_t node);
 };
 
 struct geocache_dimension_values {
    geocache_dimension dimension;
    int nvalues;
    char **values;
+   int case_sensitive;
 };
 
 struct geocache_dimension_regex {
