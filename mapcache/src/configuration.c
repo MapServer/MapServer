@@ -786,18 +786,21 @@ void parseServices(geocache_context *ctx, ezxml_t root, geocache_cfg *config) {
          config->services[GEOCACHE_SERVICE_WMTS] = geocache_service_wmts_create(ctx);
       }
    }
-   /*
-   if ((node = ezxml_child(root,"kml")) != NULL) {
-      if(!node->txt || !*node->txt || strcmp(node->txt, "false")) {
-         config->services[GEOCACHE_SERVICE_KML] = geocache_service_kml_create(ctx);
-      }
-   }
-   */
    if ((node = ezxml_child(root,"tms")) != NULL) {
       if(!node->txt || !*node->txt || strcmp(node->txt, "false")) {
          config->services[GEOCACHE_SERVICE_TMS] = geocache_service_tms_create(ctx);
       }
    }
+   if ((node = ezxml_child(root,"kml")) != NULL) {
+      if(!node->txt || !*node->txt || strcmp(node->txt, "false")) {
+         if(!config->services[GEOCACHE_SERVICE_TMS]) {
+            ctx->set_error(ctx,400,"kml service requires the tms service to be active");
+            return;
+         }
+         config->services[GEOCACHE_SERVICE_KML] = geocache_service_kml_create(ctx);
+      }
+   }
+
    if ((node = ezxml_child(root,"gmaps")) != NULL) {
       if(!node->txt || !*node->txt || strcmp(node->txt, "false")) {
          config->services[GEOCACHE_SERVICE_GMAPS] = geocache_service_gmaps_create(ctx);
@@ -826,6 +829,12 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    if (doc == NULL) {
       ctx->set_error(ctx,400, "failed to parse file %s. Is it valid XML?", filename);
       goto cleanup;
+   } else {
+      const char *err = ezxml_error(doc);
+      if(err && *err) {
+         ctx->set_error(ctx,400, "failed to parse file %s: %s", filename, err);
+         goto cleanup;
+      }
    }
 
    if(strcmp(doc->name,"geocache")) {
