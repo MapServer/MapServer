@@ -140,7 +140,6 @@ int _geocache_imageio_jpeg_buffer_empty_output_buffer (j_compress_ptr cinfo) {
 geocache_buffer* _geocache_imageio_jpeg_encode(geocache_context *ctx, geocache_image *img, geocache_image_format *format) {
    struct jpeg_compress_struct cinfo;
    struct jpeg_error_mgr jerr;
-   int quality = 85;
    geocache_jpeg_destination_mgr *dest;
    JSAMPLE *rowdata;
    unsigned int row;
@@ -163,7 +162,7 @@ geocache_buffer* _geocache_imageio_jpeg_encode(geocache_context *ctx, geocache_i
    cinfo.input_components = 3;
    cinfo.in_color_space = JCS_RGB;
    jpeg_set_defaults(&cinfo);
-   jpeg_set_quality(&cinfo, quality, TRUE);
+   jpeg_set_quality(&cinfo, ((geocache_image_format_jpeg*)format)->quality, TRUE);
    jpeg_start_compress(&cinfo, TRUE);
 
    rowdata = (JSAMPLE*)malloc(img->w*cinfo.input_components*sizeof(JSAMPLE));
