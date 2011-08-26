@@ -247,12 +247,11 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
    char *mutex_unique_name = apr_psprintf(p,"%s-%d",geocache_mutex_name,getpid());
    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "mutex name is %s",mutex_unique_name);
 
-#ifdef DEBUG
    if(!cfg) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "configuration not found in server context");
       return 1;
    }
-#endif
+
 #if APR_HAS_PROC_PTHREAD_SERIALIZE
    lock_type = APR_LOCK_PROC_PTHREAD;
 #endif
