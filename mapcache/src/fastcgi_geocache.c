@@ -174,10 +174,7 @@ static geocache_context_fcgi_request* fcgi_context_request_create(geocache_conte
 static int geocache_fcgi_write_image_buffer(geocache_context_fcgi_request *ctx, geocache_buffer *im,
       geocache_image_format *format) {
    if(format && format->mime_type) {
-      if(!strcmp(format->extension,"png"))
-         FCGX_FPrintF(ctx->out,"Content-type: image/png\r\n\r\n");
-      else
-         FCGX_FPrintF(ctx->out,"Content-type: image/jpeg\r\n\r\n");
+         FCGX_FPrintF(ctx->out,"Content-type: %s\r\n\r\n", format->mime_type);
    } else {
       geocache_image_format_type t = geocache_imageio_header_sniff((geocache_context*)ctx,im);
       if(t == GC_PNG)
