@@ -104,16 +104,17 @@ int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
    GEOSCoordSeq_setX(mtbboxls,4,e[0]);
    GEOSCoordSeq_setY(mtbboxls,4,e[1]);
    GEOSGeometry *mtbbox = GEOSGeom_createLinearRing(mtbboxls);
+   GEOSGeometry *mtbboxg = GEOSGeom_createPolygon(mtbbox,NULL,0);
    int i;
    int intersects = 0;
    for(i=0;i<nClippers;i++) {
       const GEOSPreparedGeometry *clipper = clippers[i];
-      if(GEOSPreparedIntersects(clipper,mtbbox)) {
+      if(GEOSPreparedIntersects(clipper,mtbboxg)) {
          intersects = 1;
          break;
       }
    }
-   GEOSGeom_destroy(mtbbox);
+   GEOSGeom_destroy(mtbboxg);
    return intersects;
 }
 
