@@ -75,7 +75,7 @@ static const char *wmts_0 =
 
 static const char *wmts_matrix = 
       "    <TileMatrix>\n"
-      "      <ows:Identifier>%s:%d</ows:Identifier>\n"
+      "      <ows:Identifier>%d</ows:Identifier>\n"
       "      <ScaleDenominator>%.20f</ScaleDenominator>\n"
       "      <TopLeftCorner>%f %f</TopLeftCorner>\n"
       "      <TileWidth>%d</TileWidth>\n"
@@ -260,7 +260,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       for(level=0;level<grid->nlevels;level++) {
          double scaledenom = grid->levels[level]->resolution * geocache_meters_per_unit[grid->unit] / 0.00028;
          matrix = apr_psprintf(ctx->pool,wmts_matrix,
-               grid->name, level,
+               level,
                scaledenom,
                grid->extent[0],grid->extent[3],
                grid->tile_sx, grid->tile_sy,
@@ -473,18 +473,11 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       ctx->set_error(ctx, 404, "received wmts request with no TILEMATRIX");
       return;
    } else {
-      const char *levelptr=NULL,*key; /*ptr to the last part of tilematrix:level*/
-      for(key=matrix;*key;key++) if(*key == ':') levelptr=key;
-      if(!levelptr || !*(++levelptr)) {
-         ctx->set_error(ctx, 404, "received wmts request with invalid TILEMATRIX %s", matrix);
+      char *endptr;
+      level = (int)strtol(matrix,&endptr,10);
+      if(*endptr != 0 || level < 0 || level >= grid_link->grid->nlevels) {
+         ctx->set_error(ctx, 404, "received wms request with invalid TILEMATRIX %s", matrix);
          return;
-      } else {
-         char *endptr;
-         level = (int)strtol(levelptr,&endptr,10);
-         if(*endptr != 0 || level < 0 || level >= grid_link->grid->nlevels) {
-            ctx->set_error(ctx, 404, "received wms request with invalid TILEMATRIX %s", matrix);
-            return;
-         }
       }
    }
    
