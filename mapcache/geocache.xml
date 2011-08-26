@@ -505,6 +505,9 @@
               * PROXY
               * AUTH
          -->
+
+         <!-- timeout in seconds before bailing out from a request -->
+         <connection_timeout>30</connection_timeout>
       </http>
    </source>
    <source name="osm" type="wms">

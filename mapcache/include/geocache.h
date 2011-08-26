@@ -290,6 +290,7 @@ geocache_http* geocache_http_clone(geocache_context *ctx, geocache_http *orig);
 struct geocache_http {
    char *url; /**< the base url to request */
    apr_table_t *headers; /**< additional headers to add to the http request, eg, Referer */
+   int connection_timeout;
    /* TODO: authentication */
 };
 

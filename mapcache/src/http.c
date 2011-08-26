@@ -84,7 +84,7 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
 
    curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, error_msg);
    curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
-   curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, 10);
+   curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT, req->connection_timeout);
    curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
 
 
@@ -284,6 +284,19 @@ geocache_http* geocache_http_configuration_parse_xml(geocache_context *ctx, ezxm
       ctx->set_error(ctx,400,"got an <http> object with no <url>");
       return NULL;
    }
+   
+   if ((http_node = ezxml_child(node,"connection_timeout")) != NULL) {
+      char *endptr;
+      req->connection_timeout = (int)strtol(http_node->txt,&endptr,10);
+      if(*endptr != 0 || req->connection_timeout<1) {
+         ctx->set_error(ctx,400,"invalid <http> <connection_limit> \"%s\" (positive integer expected)",
+               http_node->txt);
+         return NULL;
+      }
+   } else {
+      req->connection_timeout = 30;
+   }
+   
    req->headers = apr_table_make(ctx->pool,1);
    if((http_node = ezxml_child(node,"headers")) != NULL) {
       ezxml_t header_node;
