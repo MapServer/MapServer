@@ -678,7 +678,7 @@ void _create_demo_kml(geocache_context *ctx, geocache_request_get_capabilities *
       geocache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      int i,j;
+      int j;
       for(j=0;j<tileset->grid_links->nelts;j++) {
          geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
          if(!strstr(grid->srs, ":4326")) {
