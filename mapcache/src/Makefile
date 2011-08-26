@@ -1,17 +1,17 @@
 include ../Makefile.inc
 
-all: .libs/mod_yatc.so
+all: .libs/mod_geocache.so
 
-install: .libs/mod_yatc.so
-	$(APXS) -i -a -n yatc mod_yatc.la
+install: .libs/mod_geocache.so
+	$(APXS) -i -a -n geocache mod_geocache.la
 
 .c.o:
 	$(APXS) -Wc,"$(CFLAGS)" -I../include $(CAIRO_INC) $(MERGE_ENABLED) $(CAIRO_ENABLED) $(CURL_CFLAGS) $(XML2_CFLAGS) -c $<
 	
-mod_yatc.o:  mod_yatc.c $(OBJS)
-	$(APXS) -Wc,"$(CFLAGS)" -I../include $(CAIRO_INC) $(MERGE_ENABLED) $(CAIRO_ENABLED) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(CAIRO_LIB) -c mod_yatc.c $(LOBJS)
+mod_geocache.o:  mod_geocache.c $(OBJS)
+	$(APXS) -Wc,"$(CFLAGS)" -I../include $(CAIRO_INC) $(MERGE_ENABLED) $(CAIRO_ENABLED) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(CAIRO_LIB) -c mod_geocache.c $(LOBJS)
 	
-.libs/mod_yatc.so: mod_yatc.o $(OBJS)
+.libs/mod_geocache.so: mod_geocache.o $(OBJS)
 
 
 clean:

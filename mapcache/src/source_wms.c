@@ -1,14 +1,14 @@
-#include "yatc.h"
+#include "geocache.h"
 #include <libxml/tree.h>
 #include <apr_tables.h>
 #include <apr_strings.h>
 
 
-int _yatc_source_wms_render_tile(yatc_tile *tile, request_rec *r) {
-   yatc_wms_source *wms = (yatc_wms_source*)tile->tileset->source;
+int _geocache_source_wms_render_tile(geocache_tile *tile, request_rec *r) {
+   geocache_wms_source *wms = (geocache_wms_source*)tile->tileset->source;
    apr_table_t *params = apr_table_clone(r->pool,wms->wms_default_params);
    double bbox[4];
-   yatc_tileset_tile_bbox(tile,bbox);
+   geocache_tileset_tile_bbox(tile,bbox);
    apr_table_setn(params,"BBOX",apr_psprintf(r->pool,"%f,%f,%f,%f",bbox[0],bbox[1],bbox[2],bbox[3]));
    apr_table_setn(params,"WIDTH",apr_psprintf(r->pool,"%d",tile->sx));
    apr_table_setn(params,"HEIGHT",apr_psprintf(r->pool,"%d",tile->sy));
@@ -17,14 +17,14 @@ int _yatc_source_wms_render_tile(yatc_tile *tile, request_rec *r) {
    
    apr_table_overlap(params,wms->wms_params,0);
         
-   tile->data = yatc_buffer_create(1000,r->pool);
-   yatc_http_request_url_with_params(r,wms->url,params,tile->data);
+   tile->data = geocache_buffer_create(1000,r->pool);
+   geocache_http_request_url_with_params(r,wms->url,params,tile->data);
       
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 
-int _yatc_source_wms_render_metatile(yatc_metatile *tile, request_rec *r) {
-   yatc_wms_source *wms = (yatc_wms_source*)tile->tile.tileset->source;
+int _geocache_source_wms_render_metatile(geocache_metatile *tile, request_rec *r) {
+   geocache_wms_source *wms = (geocache_wms_source*)tile->tile.tileset->source;
    apr_table_t *params = apr_table_clone(r->pool,wms->wms_default_params);
    apr_table_setn(params,"BBOX",apr_psprintf(r->pool,"%f,%f,%f,%f",
          tile->bbox[0],tile->bbox[1],tile->bbox[2],tile->bbox[3]));
@@ -35,15 +35,15 @@ int _yatc_source_wms_render_metatile(yatc_metatile *tile, request_rec *r) {
    
    apr_table_overlap(params,wms->wms_params,0);
         
-   tile->tile.data = yatc_buffer_create(30000,r->pool);
-   yatc_http_request_url_with_params(r,wms->url,params,tile->tile.data);
+   tile->tile.data = geocache_buffer_create(30000,r->pool);
+   geocache_http_request_url_with_params(r,wms->url,params,tile->tile.data);
       
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 
-char* _yatc_source_wms_configuration_parse(xmlNode *xml, yatc_source *source, apr_pool_t *pool) {
+char* _geocache_source_wms_configuration_parse(xmlNode *xml, geocache_source *source, apr_pool_t *pool) {
    xmlNode *cur_node;
-   yatc_wms_source *src = (yatc_wms_source*)source;
+   geocache_wms_source *src = (geocache_wms_source*)source;
    for(cur_node = xml->children; cur_node; cur_node = cur_node->next) {
       if(cur_node->type != XML_ELEMENT_NODE) continue;
       if(!xmlStrcmp(cur_node->name, BAD_CAST "url")) {
@@ -63,8 +63,8 @@ char* _yatc_source_wms_configuration_parse(xmlNode *xml, yatc_source *source, ap
    return NULL;
 }
 
-char* _yatc_source_wms_configuration_check(yatc_source *source, apr_pool_t *pool) {
-   yatc_wms_source *src = (yatc_wms_source*)source;
+char* _geocache_source_wms_configuration_check(geocache_source *source, apr_pool_t *pool) {
+   geocache_wms_source *src = (geocache_wms_source*)source;
    /* check all required parameters are configured */
    if(!strlen(src->url)) {
       return apr_psprintf(pool,"wms source %s has no url",source->name);
@@ -76,15 +76,15 @@ char* _yatc_source_wms_configuration_check(yatc_source *source, apr_pool_t *pool
    return NULL;
 }
 
-yatc_wms_source* yatc_source_wms_create(apr_pool_t *pool) {
-   yatc_wms_source *source = apr_pcalloc(pool, sizeof(yatc_wms_source));
-   yatc_source_init(&(source->source),pool);
-   source->source.type = YATC_SOURCE_WMS;
+geocache_wms_source* geocache_source_wms_create(apr_pool_t *pool) {
+   geocache_wms_source *source = apr_pcalloc(pool, sizeof(geocache_wms_source));
+   geocache_source_init(&(source->source),pool);
+   source->source.type = GEOCACHE_SOURCE_WMS;
    source->source.supports_metatiling = 1;
-   source->source.render_tile = _yatc_source_wms_render_tile;
-   source->source.render_metatile = _yatc_source_wms_render_metatile;
-   source->source.configuration_check = _yatc_source_wms_configuration_check;
-   source->source.configuration_parse = _yatc_source_wms_configuration_parse;
+   source->source.render_tile = _geocache_source_wms_render_tile;
+   source->source.render_metatile = _geocache_source_wms_render_metatile;
+   source->source.configuration_check = _geocache_source_wms_configuration_check;
+   source->source.configuration_parse = _geocache_source_wms_configuration_parse;
    source->wms_default_params = apr_table_make(pool,4);;
    source->wms_params = apr_table_make(pool,4);
    apr_table_add(source->wms_default_params,"VERSION","1.1.1");

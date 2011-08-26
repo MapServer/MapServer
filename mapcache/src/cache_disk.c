@@ -5,15 +5,15 @@
  *      Author: tom
  */
 
-#include "yatc.h"
+#include "geocache.h"
 #include <apr_file_info.h>
 #include <apr_strings.h>
 #include <apr_file_io.h>
 #include <http_log.h>
 
-int _yatc_cache_disk_tile_key(request_rec *r, yatc_tile *tile, char **path) {
+int _geocache_cache_disk_tile_key(request_rec *r, geocache_tile *tile, char **path) {
    *path = apr_psprintf(r->pool,"%s/%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
-         ((yatc_cache_disk*)tile->tileset->cache)->base_directory,
+         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
          tile->tileset->name,
          tile->z,
          tile->x / 1000000,
@@ -22,13 +22,13 @@ int _yatc_cache_disk_tile_key(request_rec *r, yatc_tile *tile, char **path) {
          tile->y / 1000000,
          (tile->y / 1000) % 1000,
          tile->y % 1000,
-         (tile->tileset->source->image_format == YATC_IMAGE_FORMAT_PNG)?"png":"jpg");
-   return YATC_SUCCESS;
+         (tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG)?"png":"jpg");
+   return GEOCACHE_SUCCESS;
 }
 
-int _yatc_cache_disk_tile_key_split(request_rec *r, yatc_tile *tile, char **path, char **basename) {
+int _geocache_cache_disk_tile_key_split(request_rec *r, geocache_tile *tile, char **path, char **basename) {
    *path = apr_psprintf(r->pool,"%s/%s/%02d/%03d/%03d/%03d/%03d/%03d",
-         ((yatc_cache_disk*)tile->tileset->cache)->base_directory,
+         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
          tile->tileset->name,
          tile->z,
          tile->x / 1000000,
@@ -37,21 +37,21 @@ int _yatc_cache_disk_tile_key_split(request_rec *r, yatc_tile *tile, char **path
          tile->y / 1000000,
          (tile->y / 1000) % 1000);
    *basename = apr_psprintf(r->pool,"%03d.%s",tile->y % 1000,
-         (tile->tileset->source->image_format == YATC_IMAGE_FORMAT_PNG)?"png":"jpg");
-   return YATC_SUCCESS;
+         (tile->tileset->source->image_format == GEOCACHE_IMAGE_FORMAT_PNG)?"png":"jpg");
+   return GEOCACHE_SUCCESS;
 }
 
-int _yatc_cache_disk_create_and_lock(yatc_tile *tile, request_rec *r) {
+int _geocache_cache_disk_create_and_lock(geocache_tile *tile, request_rec *r) {
    char *filename;
    char *basename;
    char *dirname;
    apr_file_t *f;
    apr_status_t rv;
-   _yatc_cache_disk_tile_key_split(r, tile, &dirname, &basename);
+   _geocache_cache_disk_tile_key_split(r, tile, &dirname, &basename);
    rv = apr_dir_make_recursive(dirname,APR_OS_DEFAULT,r->pool);
    if(rv != APR_SUCCESS) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to create directory %s",dirname);
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
    filename = apr_psprintf(r->pool,"%s/%s",dirname,basename);
    /*create file, and fail if it already exists*/
@@ -64,12 +64,12 @@ int _yatc_cache_disk_create_and_lock(yatc_tile *tile, request_rec *r) {
        */
       if(apr_file_open(&f, filename, APR_FOPEN_CREATE|APR_FOPEN_WRITE, APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to create file %s",filename);
-         return YATC_FAILURE; /* we could not create the file */
+         return GEOCACHE_FAILURE; /* we could not create the file */
       } else {
          /* this shouldn't happen if the caller has properly mutex protected the call ? */
          ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "asked to create file %s, but it already exists",filename);
          apr_file_close(f);
-         return YATC_FILE_EXISTS; /* we have write access, but the file already exists */
+         return GEOCACHE_FILE_EXISTS; /* we have write access, but the file already exists */
       }
    }
    rv = apr_file_lock(f, APR_FLOCK_EXCLUSIVE|APR_FLOCK_NONBLOCK);
@@ -79,16 +79,16 @@ int _yatc_cache_disk_create_and_lock(yatc_tile *tile, request_rec *r) {
       } else {
          ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to lock file %s",filename);
       }
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
    tile->lock = f;
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 
-int _yatc_cache_disk_unlock(yatc_tile *tile, request_rec *r) {
+int _geocache_cache_disk_unlock(geocache_tile *tile, request_rec *r) {
    if(!tile->lock) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "attempting to unlock an already unlocked tile");
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
    apr_finfo_t finfo;
    apr_file_t *f = (apr_file_t*)tile->lock;
@@ -102,28 +102,28 @@ int _yatc_cache_disk_unlock(yatc_tile *tile, request_rec *r) {
    int rv = apr_file_unlock(f);
    if(rv != APR_SUCCESS) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to unlock file");
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
    rv = apr_file_close(f);
    if(rv != APR_SUCCESS) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to close file");
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
    tile->lock = NULL;
    return rv;
 }
 
-int _yatc_cache_disk_get(yatc_tile *tile, request_rec *r) {
+int _geocache_cache_disk_get(geocache_tile *tile, request_rec *r) {
    char *filename;
    apr_file_t *f;
    apr_finfo_t finfo;
    apr_status_t rv;
    apr_size_t size;
-   _yatc_cache_disk_tile_key(r, tile, &filename);
+   _geocache_cache_disk_tile_key(r, tile, &filename);
    if(apr_file_open(&f, filename, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
          APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
       /* the file doesn't exist on the disk */
-      return YATC_CACHE_MISS;
+      return GEOCACHE_CACHE_MISS;
    }
    apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
    if(!finfo.size) {
@@ -137,7 +137,7 @@ int _yatc_cache_disk_get(yatc_tile *tile, request_rec *r) {
          const char *filename;
          apr_file_name_get(&filename,f);
          ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, "failed to set read lock on %s",filename);
-         return YATC_FAILURE;
+         return GEOCACHE_FAILURE;
       }
       apr_file_unlock(f);
       /* should we reopen the file now ? */
@@ -146,7 +146,7 @@ int _yatc_cache_disk_get(yatc_tile *tile, request_rec *r) {
          const char *filename;
          apr_file_name_get(&filename,f);
          ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r, "tile %s has no data",filename);
-         return YATC_FAILURE;
+         return GEOCACHE_FAILURE;
       }
    }
    size = finfo.size;
@@ -158,31 +158,31 @@ int _yatc_cache_disk_get(yatc_tile *tile, request_rec *r) {
     * any error that might happen at this stage should only occur if the tile isn't already cached,
     * i.e. normally only once.
     */
-   tile->data = yatc_buffer_create(size,r->pool);
+   tile->data = geocache_buffer_create(size,r->pool);
    //manually add the data to our buffer
    apr_file_read(f,(void*)tile->data->buf,&size);
    tile->data->size = size;
    apr_file_close(f);
    if(size != finfo.size) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to copy image data, got %d of %d bytes",(int)size, (int)finfo.size);
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
 
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 
-int _yatc_cache_disk_set(yatc_tile *tile, request_rec *r) {
+int _geocache_cache_disk_set(geocache_tile *tile, request_rec *r) {
    apr_size_t bytes;
    apr_file_t *f = (apr_file_t*)tile->lock;
 #ifdef DEBUG
    /* all this should be checked at a higher level */
    if(!tile->data || !tile->data->size) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "attempting to write empty tile to disk");
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
    if(!f) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "attempting to write to an unlocked tile");
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
 #endif
    bytes = (apr_size_t)tile->data->size;
@@ -190,14 +190,14 @@ int _yatc_cache_disk_set(yatc_tile *tile, request_rec *r) {
 
    if(bytes != tile->data->size) {
       ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "failed to write image data to disk, wrote %d of %d bytes",(int)bytes, (int)tile->data->size);
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 
-char* _yatc_cache_disk_configuration_parse(xmlNode *xml, yatc_cache *cache, apr_pool_t *pool) {
+char* _geocache_cache_disk_configuration_parse(xmlNode *xml, geocache_cache *cache, apr_pool_t *pool) {
    xmlNode *cur_node;
-   yatc_cache_disk *dcache = (yatc_cache_disk*)cache;
+   geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
    for(cur_node = xml->children; cur_node; cur_node = cur_node->next) {
       if(cur_node->type != XML_ELEMENT_NODE) continue;
       if(!xmlStrcmp(cur_node->name, BAD_CAST "base")) {
@@ -208,10 +208,10 @@ char* _yatc_cache_disk_configuration_parse(xmlNode *xml, yatc_cache *cache, apr_
    return NULL;
 }
 
-char* _yatc_cache_disk_configuration_check(yatc_cache *cache, apr_pool_t *pool) {
+char* _geocache_cache_disk_configuration_check(geocache_cache *cache, apr_pool_t *pool) {
    apr_status_t status;
    apr_dir_t *dir;
-   yatc_cache_disk *dcache = (yatc_cache_disk*)cache;
+   geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
    /* check all required parameters are configured */
    if(!dcache->base_directory || !strlen(dcache->base_directory)) {
       return apr_psprintf(pool,"disk cache %s has no base directory",dcache->cache.name);
@@ -227,15 +227,15 @@ char* _yatc_cache_disk_configuration_check(yatc_cache *cache, apr_pool_t *pool) 
    return NULL;
 }
 
-yatc_cache_disk* yatc_cache_disk_create(apr_pool_t *pool) {
-   yatc_cache_disk *cache = apr_pcalloc(pool,sizeof(yatc_cache_disk));
-   cache->cache.type = YATC_CACHE_DISK;
-   cache->cache.tile_get = _yatc_cache_disk_get;
-   cache->cache.tile_set = _yatc_cache_disk_set;
-   cache->cache.configuration_check = _yatc_cache_disk_configuration_check;
-   cache->cache.configuration_parse = _yatc_cache_disk_configuration_parse;
-   cache->cache.tile_lock = _yatc_cache_disk_create_and_lock;
-   cache->cache.tile_unlock = _yatc_cache_disk_unlock;
+geocache_cache_disk* geocache_cache_disk_create(apr_pool_t *pool) {
+   geocache_cache_disk *cache = apr_pcalloc(pool,sizeof(geocache_cache_disk));
+   cache->cache.type = GEOCACHE_CACHE_DISK;
+   cache->cache.tile_get = _geocache_cache_disk_get;
+   cache->cache.tile_set = _geocache_cache_disk_set;
+   cache->cache.configuration_check = _geocache_cache_disk_configuration_check;
+   cache->cache.configuration_parse = _geocache_cache_disk_configuration_parse;
+   cache->cache.tile_lock = _geocache_cache_disk_create_and_lock;
+   cache->cache.tile_unlock = _geocache_cache_disk_unlock;
    return cache;
 }
 

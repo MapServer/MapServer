@@ -5,36 +5,36 @@
  *      Author: tom
  */
 
-#include "yatc.h"
+#include "geocache.h"
 #include <apr_strings.h>
 #include <http_log.h>
 #include <math.h>
 
-static double _yatc_tileset_get_resolution(yatc_tileset *tileset, double *bbox) {
+static double _geocache_tileset_get_resolution(geocache_tileset *tileset, double *bbox) {
    double rx = (bbox[2] - bbox[0]) / (double)tileset->tile_sx;
    double ry = (bbox[3] - bbox[1]) / (double)tileset->tile_sy;
-   return YATC_MAX(rx,ry);
+   return GEOCACHE_MAX(rx,ry);
 }
 
-static int _yatc_tileset_get_level(yatc_tileset *tileset, double *resolution, int *level, request_rec *r) {
-   double max_diff = *resolution / (double)YATC_MAX(tileset->tile_sx, tileset->tile_sy);
+static int _geocache_tileset_get_level(geocache_tileset *tileset, double *resolution, int *level, request_rec *r) {
+   double max_diff = *resolution / (double)GEOCACHE_MAX(tileset->tile_sx, tileset->tile_sy);
    int i;
    for(i=0; i<tileset->levels; i++) {
       if(fabs(tileset->resolutions[i] - *resolution) < max_diff) {
          *resolution = tileset->resolutions[i];
          *level = i;
-         return YATC_SUCCESS;
+         return GEOCACHE_SUCCESS;
       }
    }
    ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "tileset %s: failed lookup for resolution %f", tileset->name, *resolution);
-   return YATC_TILESET_WRONG_RESOLUTION;
+   return GEOCACHE_TILESET_WRONG_RESOLUTION;
 }
 
-static int _yatc_tileset_tile_get_cell(yatc_tile *tile, double *bbox, request_rec *r) {
+static int _geocache_tileset_tile_get_cell(geocache_tile *tile, double *bbox, request_rec *r) {
    int ret;
-   double res = _yatc_tileset_get_resolution(tile->tileset,bbox);
-   ret = _yatc_tileset_get_level(tile->tileset,&res,&(tile->z),r);
-   if(ret != YATC_SUCCESS) return ret;
+   double res = _geocache_tileset_get_resolution(tile->tileset,bbox);
+   ret = _geocache_tileset_get_level(tile->tileset,&res,&(tile->z),r);
+   if(ret != GEOCACHE_SUCCESS) return ret;
    /* TODO: strict mode
            if exact and self.extent_type == "strict" and not self.contains((minx, miny), res):
                raise TileCacheException("Lower left corner (%f, %f) is outside layer bounds %s. \nTo remove this condition, set extent_type=loose in your configuration."
@@ -47,12 +47,12 @@ static int _yatc_tileset_tile_get_cell(yatc_tile *tile, double *bbox, request_re
    if((fabs(bbox[0] - (tile->x * res * tile->tileset->tile_sx) - tile->tileset->extent[0] ) / res > 1) ||
          (fabs(bbox[1] - (tile->y * res * tile->tileset->tile_sy) - tile->tileset->extent[1] ) / res > 1)) {
       ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "tileset %s: supplied bbox not aligned on configured grid",tile->tileset->name);
-      return YATC_TILESET_WRONG_EXTENT;
+      return GEOCACHE_TILESET_WRONG_EXTENT;
    }
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 
-void yatc_tileset_tile_bbox(yatc_tile *tile, double *bbox) {
+void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
 
    double res  = tile->tileset->resolutions[tile->z];
    bbox[0] = tile->tileset->extent[0] + (res * tile->x * tile->sx);
@@ -62,8 +62,8 @@ void yatc_tileset_tile_bbox(yatc_tile *tile, double *bbox) {
 
 }
 
-yatc_tileset* yatc_tileset_create(apr_pool_t *pool) {
-   yatc_tileset* tileset = (yatc_tileset*)apr_pcalloc(pool, sizeof(yatc_tileset));
+geocache_tileset* geocache_tileset_create(apr_pool_t *pool) {
+   geocache_tileset* tileset = (geocache_tileset*)apr_pcalloc(pool, sizeof(geocache_tileset));
    tileset->metasize_x = tileset->metasize_y = 1;
    tileset->metabuffer = 0;
    tileset->tile_sx = tileset->tile_sy = 256;
@@ -72,58 +72,58 @@ yatc_tileset* yatc_tileset_create(apr_pool_t *pool) {
    return tileset;
 }
 
-yatc_tile* yatc_tileset_tile_create(yatc_tileset *tileset, apr_pool_t *pool) {
-   yatc_tile *tile = (yatc_tile*)apr_pcalloc(pool, sizeof(yatc_tile));
+geocache_tile* geocache_tileset_tile_create(geocache_tileset *tileset, apr_pool_t *pool) {
+   geocache_tile *tile = (geocache_tile*)apr_pcalloc(pool, sizeof(geocache_tile));
    tile->tileset = tileset;
    tile->sx = tileset->tile_sx;
    tile->sy = tileset->tile_sy;
    return tile;
 }
 
-int yatc_tileset_tile_lookup(yatc_tile *tile, double *bbox, request_rec *r) {
+int geocache_tileset_tile_lookup(geocache_tile *tile, double *bbox, request_rec *r) {
    if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
       ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "tileset %s: wrong size. found %dx%d instead of %dx%d",
             tile->tileset->name,tile->sx,tile->sy,tile->tileset->tile_sx,tile->tileset->tile_sy);
-      return YATC_TILESET_WRONG_SIZE;
+      return GEOCACHE_TILESET_WRONG_SIZE;
    }
-   return _yatc_tileset_tile_get_cell(tile,bbox,r);
+   return _geocache_tileset_tile_get_cell(tile,bbox,r);
 }
 
-int yatc_tileset_tile_get(yatc_tile *tile, request_rec *r) {
+int geocache_tileset_tile_get(geocache_tile *tile, request_rec *r) {
    int ret;
    if(tile->sx != tile->tileset->tile_sx || tile->sy != tile->tileset->tile_sy) {
       ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r,
             "tileset %s: asked for a %dx%d tile from a %dx%d tileset",tile->tileset->name,
             tile->sx, tile->sy, tile->tileset->tile_sx, tile->tileset->tile_sy);
-      return YATC_FAILURE;
+      return GEOCACHE_FAILURE;
    }
    ret = tile->tileset->cache->tile_get(tile, r);
-   if(ret == YATC_CACHE_MISS) {
+   if(ret == GEOCACHE_CACHE_MISS) {
       ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
             "cache miss: tileset %s - tile %d %d %d",tile->tileset->name,tile->x, tile->y,tile->z);
-      ret = yatc_tileset_tile_render(tile, r);
-      if(ret != YATC_SUCCESS) return ret;
+      ret = geocache_tileset_tile_render(tile, r);
+      if(ret != GEOCACHE_SUCCESS) return ret;
       //if successful, the cache will now contain the tile
       ret = tile->tileset->cache->tile_get(tile, r);
-      if(ret != YATC_SUCCESS) {
+      if(ret != GEOCACHE_SUCCESS) {
          ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r, "tileset %s: failed to re-get tile from cache after set", tile->tileset->name);
          return ret;
       }
-      return YATC_SUCCESS;
+      return GEOCACHE_SUCCESS;
    } else {
       return ret;
    }
 }
 
 //return the list of tiles that should be rendered for a metatile request
-static yatc_metatile* _yatc_tileset_metatile_get(yatc_tile *tile, request_rec *r) {
-   yatc_metatile *mt = (yatc_metatile*)apr_pcalloc(r->pool, sizeof(yatc_metatile));
+static geocache_metatile* _geocache_tileset_metatile_get(geocache_tile *tile, request_rec *r) {
+   geocache_metatile *mt = (geocache_metatile*)apr_pcalloc(r->pool, sizeof(geocache_metatile));
    int i,j,blx,bly;
    double res = tile->tileset->resolutions[tile->z];
    double gbuffer,gwidth,gheight;
    mt->tile.tileset = tile->tileset;
    mt->ntiles = mt->tile.tileset->metasize_x * mt->tile.tileset->metasize_y;
-   mt->tiles = (yatc_tile*)apr_pcalloc(r->pool, mt->ntiles * sizeof(yatc_tile));
+   mt->tiles = (geocache_tile*)apr_pcalloc(r->pool, mt->ntiles * sizeof(geocache_tile));
    mt->tile.sx =  mt->tile.tileset->metasize_x * tile->sx + 2 * mt->tile.tileset->metabuffer;
    mt->tile.sy =  mt->tile.tileset->metasize_y * tile->sy + 2 * mt->tile.tileset->metabuffer;
    mt->tile.z = tile->z;
@@ -143,7 +143,7 @@ static yatc_metatile* _yatc_tileset_metatile_get(yatc_tile *tile, request_rec *r
    bly = mt->tile.y * mt->tile.tileset->metasize_y;
    for(i=0; i<mt->tile.tileset->metasize_x; i++) {
       for(j=0; j<mt->tile.tileset->metasize_y; j++) {
-         yatc_tile *t = &(mt->tiles[i*mt->tile.tileset->metasize_x+j]);
+         geocache_tile *t = &(mt->tiles[i*mt->tile.tileset->metasize_x+j]);
          t->z = tile->z;
          t->x = blx + i;
          t->y = bly + j;
@@ -156,12 +156,12 @@ static yatc_metatile* _yatc_tileset_metatile_get(yatc_tile *tile, request_rec *r
    return mt;
 }
 
-int yatc_tileset_tile_render(yatc_tile *tile, request_rec *r) {
+int geocache_tileset_tile_render(geocache_tile *tile, request_rec *r) {
    int ret;
    int have_file_exists = 1;
    if(tile->tileset->source->supports_metatiling) {
-      yatc_metatile *mt = _yatc_tileset_metatile_get(tile, r);
-      yatc_server_cfg *cfg = ap_get_module_config(r->server->module_config, &yatc_module);
+      geocache_metatile *mt = _geocache_tileset_metatile_get(tile, r);
+      geocache_server_cfg *cfg = ap_get_module_config(r->server->module_config, &geocache_module);
       int i;
 #ifdef DEBUG
       if(!cfg) {
@@ -177,13 +177,13 @@ int yatc_tileset_tile_render(yatc_tile *tile, request_rec *r) {
       apr_pool_cleanup_register(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
 
       for(i=0;i<mt->ntiles;i++) {
-         yatc_tile *tile = &(mt->tiles[i]);
+         geocache_tile *tile = &(mt->tiles[i]);
          ret = tile->tileset->cache->tile_lock(tile,r);
-         if(ret != YATC_SUCCESS) {
-            if(i != 0 || ret != YATC_FILE_EXISTS) {
+         if(ret != GEOCACHE_SUCCESS) {
+            if(i != 0 || ret != GEOCACHE_FILE_EXISTS) {
                /* we have managed to lock some tiles, but not all, we have a threading mixup issue */
                ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r,"############ THREADING BUG ##############");
-               return YATC_FAILURE;
+               return GEOCACHE_FAILURE;
             } else {
                /* oh well, another thread has already started rendering this tile */
                break;
@@ -197,20 +197,20 @@ int yatc_tileset_tile_render(yatc_tile *tile, request_rec *r) {
       }
       apr_pool_cleanup_kill(r->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
       if(i != mt->ntiles) {
-         return YATC_SUCCESS;
+         return GEOCACHE_SUCCESS;
       }
       
       
       ret = tile->tileset->source->render_metatile(mt, r);
-      if(ret != YATC_SUCCESS) return ret; //TODO: unlock and delete tiles
-      yatc_image_metatile_split(mt,r);
+      if(ret != GEOCACHE_SUCCESS) return ret; //TODO: unlock and delete tiles
+      geocache_image_metatile_split(mt,r);
       
       for(i=0;i<mt->ntiles;i++) {
-         yatc_tile *tile = &(mt->tiles[i]);
+         geocache_tile *tile = &(mt->tiles[i]);
          ret = tile->tileset->cache->tile_set(tile, r);
-         if(ret != YATC_SUCCESS) return ret;
+         if(ret != GEOCACHE_SUCCESS) return ret;
          ret = tile->tileset->cache->tile_unlock(tile,r);
-         if(ret != YATC_SUCCESS) return ret;
+         if(ret != GEOCACHE_SUCCESS) return ret;
          //TODO: unlock and delete tiles if error
       }
       return ret;
@@ -218,7 +218,7 @@ int yatc_tileset_tile_render(yatc_tile *tile, request_rec *r) {
       //lock the file before rendering ?
       tile->tileset->cache->tile_lock(tile,r);
       ret = tile->tileset->source->render_tile(tile, r);
-      if(ret != YATC_SUCCESS) return ret;
+      if(ret != GEOCACHE_SUCCESS) return ret;
       ret = tile->tileset->cache->tile_set(tile, r);
       tile->tileset->cache->tile_unlock(tile,r);
       return ret;

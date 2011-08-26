@@ -14,51 +14,51 @@
  *  limitations under the License.
  */
 
-#include "yatc.h"
+#include "geocache.h"
 #include <cairo.h>
 
 typedef struct {
-   yatc_buffer *buffer;
+   geocache_buffer *buffer;
    char *ptr;
-} yatc_closure;
+} geocache_closure;
 
 
 
-cairo_status_t _yatc_cairo_read_func(void *closure, unsigned char *data, unsigned int length) {
-   yatc_closure *c = (yatc_closure*)closure;
+cairo_status_t _geocache_cairo_read_func(void *closure, unsigned char *data, unsigned int length) {
+   geocache_closure *c = (geocache_closure*)closure;
    memcpy(data,c->ptr,length);
    c->ptr += length;
    return CAIRO_STATUS_SUCCESS;
 }
 
-cairo_status_t _yatc_cairo_write_func(void *closure, const unsigned char *data, unsigned int length) {
-   yatc_buffer *c = (yatc_buffer*)closure;
-   yatc_buffer_append(c,length,(void*)data);
+cairo_status_t _geocache_cairo_write_func(void *closure, const unsigned char *data, unsigned int length) {
+   geocache_buffer *c = (geocache_buffer*)closure;
+   geocache_buffer_append(c,length,(void*)data);
    return CAIRO_STATUS_SUCCESS;
 }
 
-cairo_surface_t *_yatc_tile_create_cairo_surface(yatc_buffer *buffer) {
-   yatc_closure cl;
+cairo_surface_t *_geocache_tile_create_cairo_surface(geocache_buffer *buffer) {
+   geocache_closure cl;
    cairo_surface_t *surface = NULL;
    
    cl.buffer = buffer;
    cl.ptr = buffer->buf;
-   surface = cairo_image_surface_create_from_png_stream(_yatc_cairo_read_func,(void*)&cl);
+   surface = cairo_image_surface_create_from_png_stream(_geocache_cairo_read_func,(void*)&cl);
       
    return surface;
 }
 
-yatc_buffer* _yatc_buffer_create_from_cairo(apr_pool_t *pool, cairo_surface_t *surface) {
-   yatc_buffer *buffer = yatc_buffer_create(5000,pool);
-   cairo_surface_write_to_png_stream(surface,_yatc_cairo_write_func,(void*)buffer);
+geocache_buffer* _geocache_buffer_create_from_cairo(apr_pool_t *pool, cairo_surface_t *surface) {
+   geocache_buffer *buffer = geocache_buffer_create(5000,pool);
+   cairo_surface_write_to_png_stream(surface,_geocache_cairo_write_func,(void*)buffer);
    return buffer;
 }
 
-yatc_tile* _yatc_tile_create_from_cairo(apr_pool_t *pool, cairo_surface_t *surface) {
-   yatc_tile *tile = apr_pcalloc(pool,sizeof(yatc_tile));
+geocache_tile* _geocache_tile_create_from_cairo(apr_pool_t *pool, cairo_surface_t *surface) {
+   geocache_tile *tile = apr_pcalloc(pool,sizeof(geocache_tile));
    tile->sx = cairo_image_surface_get_width(surface);
    tile->sy = cairo_image_surface_get_height(surface);
-   tile->data = _yatc_buffer_create_from_cairo(pool,surface);
+   tile->data = _geocache_buffer_create_from_cairo(pool,surface);
    return tile;
 }
 
@@ -66,27 +66,27 @@ yatc_tile* _yatc_tile_create_from_cairo(apr_pool_t *pool, cairo_surface_t *surfa
 
 
 
-yatc_tile* yatc_image_merge_tiles(request_rec *r, yatc_tile **tiles, int ntiles) {
+geocache_tile* geocache_image_merge_tiles(request_rec *r, geocache_tile **tiles, int ntiles) {
    cairo_surface_t *base,*overlay;
    cairo_t *cr;
    int i;
-   yatc_tile *tile;
+   geocache_tile *tile;
 
-   base = _yatc_tile_create_cairo_surface(tiles[0]->data);
+   base = _geocache_tile_create_cairo_surface(tiles[0]->data);
    cr = cairo_create(base);
    for(i=1;i<ntiles;i++) {
-      overlay = _yatc_tile_create_cairo_surface(tiles[i]->data);
+      overlay = _geocache_tile_create_cairo_surface(tiles[i]->data);
       cairo_set_source_surface (cr,overlay,0,0);
       cairo_paint_with_alpha(cr,1.0);
       cairo_surface_destroy(overlay);
    }
-   tile = _yatc_tile_create_from_cairo(r->pool,base);
+   tile = _geocache_tile_create_from_cairo(r->pool,base);
    cairo_surface_destroy(base);
    cairo_destroy(cr);
    return tile;
 }
 
-int yatc_image_metatile_split(yatc_metatile *mt, request_rec *r) {
+int geocache_image_metatile_split(geocache_metatile *mt, request_rec *r) {
    cairo_surface_t *metatile;
    cairo_surface_t *tile;
    cairo_t *cr;
@@ -94,7 +94,7 @@ int yatc_image_metatile_split(yatc_metatile *mt, request_rec *r) {
    int w,h,sx,sy;
    w = mt->tile.tileset->tile_sx;
    h = mt->tile.tileset->tile_sy;
-   metatile = _yatc_tile_create_cairo_surface(mt->tile.data);
+   metatile = _geocache_tile_create_cairo_surface(mt->tile.data);
    tile = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
    cr = cairo_create(tile);
    for(i=0;i<mt->tile.tileset->metasize_x;i++) {
@@ -110,12 +110,12 @@ int yatc_image_metatile_split(yatc_metatile *mt, request_rec *r) {
          cairo_set_source_surface (cr, metatile, -sx, -sy);
          cairo_rectangle (cr, 0,0, w, h);
          cairo_fill (cr);
-         mt->tiles[i*mt->tile.tileset->metasize_x+j].data = _yatc_buffer_create_from_cairo(r->pool,tile);
+         mt->tiles[i*mt->tile.tileset->metasize_x+j].data = _geocache_buffer_create_from_cairo(r->pool,tile);
       }
    }
    cairo_surface_destroy(tile);
    cairo_destroy(cr);
    cairo_surface_destroy(metatile);
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 

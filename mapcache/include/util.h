@@ -8,8 +8,8 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
-#define YATC_MAX(a,b) (((a)>(b))?(a):(b))
-#define YATC_MIN(a,b) (((a)<(b))?(a):(b))
+#define GEOCACHE_MAX(a,b) (((a)>(b))?(a):(b))
+#define GEOCACHE_MIN(a,b) (((a)<(b))?(a):(b))
 
 
 

@@ -8,19 +8,19 @@ all: .header force_look
 install: .header
 	cd src; make install
 
-.header: include/yatc.h include/util.h
+.header: include/geocache.h include/util.h
 	$(MAKE) clean
 	touch .header
 	
 force_look:
 	true
 
-src/.libs/mod_yatc.so: src/mod_yatc.c $(SRCS) include/yatc.h
-	$(APXS) -Wc,"$(CFLAGS)" -Iinclude $(CAIRO_INC) $(MERGE_ENABLED) $(CAIRO_ENABLED) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(CAIRO_LIB) -c src/mod_yatc.c $(SRCS)
+src/.libs/mod_geocache.so: src/mod_geocache.c $(SRCS) include/geocache.h
+	$(APXS) -Wc,"$(CFLAGS)" -Iinclude $(CAIRO_INC) $(MERGE_ENABLED) $(CAIRO_ENABLED) $(CURL_CFLAGS) $(XML2_CFLAGS) $(XML2_LIBS) $(CURL_LIBS) $(CAIRO_LIB) -c src/mod_geocache.c $(SRCS)
 
-#install: src/.libs/mod_yatc.so
+#install: src/.libs/mod_geocache.so
 	#$(APACHECTL) stop
-#	$(APXS) -i -a -n yatc src/mod_yatc.la
+#	$(APXS) -i -a -n geocache src/mod_geocache.la
 	#$(APACHECTL) start
 
 clean:

@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-#include <yatc.h>
+#include <geocache.h>
 #include <apr_strings.h>
 #include <apr_tables.h>
 
-int yatc_util_extract_int_list(char* args, const char sep, int **numbers,
+int geocache_util_extract_int_list(char* args, const char sep, int **numbers,
       int *numbers_count, apr_pool_t *pool) {
    char *last, *key, *endptr;
    int tmpcount=1;
@@ -36,12 +36,12 @@ int yatc_util_extract_int_list(char* args, const char sep, int **numbers,
          key = apr_strtok(NULL, delim, &last)) {
       (*numbers)[(*numbers_count)++] = (int)strtol(key,&endptr,10);
       if(*endptr != 0)
-         return YATC_FAILURE;
+         return GEOCACHE_FAILURE;
    }
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 
-int yatc_util_extract_double_list(char* args, const char sep, double **numbers,
+int geocache_util_extract_double_list(char* args, const char sep, double **numbers,
       int *numbers_count, apr_pool_t *pool) {
    char *last, *key, *endptr;
    int tmpcount=1;
@@ -59,9 +59,9 @@ int yatc_util_extract_double_list(char* args, const char sep, double **numbers,
          key = apr_strtok(NULL, delim, &last)) {
       (*numbers)[(*numbers_count)++] = strtod(key,&endptr);
       if(*endptr != 0)
-         return YATC_FAILURE;
+         return GEOCACHE_FAILURE;
    }
-   return YATC_SUCCESS;
+   return GEOCACHE_SUCCESS;
 }
 
 

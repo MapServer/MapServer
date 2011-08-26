@@ -1,5 +1,5 @@
 <!--comment-->
-<yatc>
+<geocache>
     <cache name="disk" type="disk">
         <base>/tmp</base>
     </cache>
@@ -60,4 +60,4 @@
     <services>
         <wms>true</wms>
     </services>
-</yatc>
+</geocache>

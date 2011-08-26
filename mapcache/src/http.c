@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "yatc.h"
+#include "geocache.h"
 #include <curl/curl.h>
 #include <apr_hash.h>
 #include <apr_strings.h>
@@ -22,13 +22,13 @@
 #include <stdio.h>
 
 
-size_t _yatc_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void *data) {
-   yatc_buffer *buffer = (yatc_buffer*)data;
+size_t _geocache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void *data) {
+   geocache_buffer *buffer = (geocache_buffer*)data;
    size_t realsize = size * nmemb;
-   return yatc_buffer_append(buffer, realsize, ptr);
+   return geocache_buffer_append(buffer, realsize, ptr);
 }
 
-int yatc_http_request_url(request_rec *r, char *url, yatc_buffer *data) {
+int geocache_http_request_url(request_rec *r, char *url, geocache_buffer *data) {
    CURL *curl_handle;
    curl_handle = curl_easy_init();
 
@@ -37,13 +37,13 @@ int yatc_http_request_url(request_rec *r, char *url, yatc_buffer *data) {
    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
 
    /* send all data to this function  */ 
-   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _yatc_curl_memory_callback);
+   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _geocache_curl_memory_callback);
 
-   /* we pass our yatc_buffer struct to the callback function */ 
+   /* we pass our geocache_buffer struct to the callback function */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)data);
 
    /* some servers don't like requests that are made without a user-agent field, so we provide one */ 
-   curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "mod_yatc/0.1");
+   curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "mod_geocache/0.1");
 
    /* get it! */ 
    curl_easy_perform(curl_handle);
@@ -54,19 +54,19 @@ int yatc_http_request_url(request_rec *r, char *url, yatc_buffer *data) {
    return 0;
 }
 
-int yatc_http_request_url_with_params(request_rec *r, char *url, apr_table_t *params, yatc_buffer *data) {
-   char *fullUrl = yatc_http_build_url(r,url,params);
-   return yatc_http_request_url(r,fullUrl,data);
+int geocache_http_request_url_with_params(request_rec *r, char *url, apr_table_t *params, geocache_buffer *data) {
+   char *fullUrl = geocache_http_build_url(r,url,params);
+   return geocache_http_request_url(r,fullUrl,data);
 }
 
 /* calculate the length of the string formed by key=value&, and add it to cnt */
-static APR_DECLARE_NONSTD(int) _yatc_key_value_strlen_callback(void *cnt, const char *key, const char *value) {
+static APR_DECLARE_NONSTD(int) _geocache_key_value_strlen_callback(void *cnt, const char *key, const char *value) {
    *((int*)cnt) += strlen(key) + ((value && *value) ? strlen(value)+2 : 1);
    return 1;
 }
 
 
-static APR_DECLARE_NONSTD(int) _yatc_key_value_append_callback(void *cnt, const char *key, const char *value) {
+static APR_DECLARE_NONSTD(int) _geocache_key_value_append_callback(void *cnt, const char *key, const char *value) {
 #define _mystr *((char**)cnt)
    _mystr = apr_cpystrn(_mystr,key,MAX_STRING_LEN);
    if(value && *value) {
@@ -78,7 +78,7 @@ static APR_DECLARE_NONSTD(int) _yatc_key_value_append_callback(void *cnt, const 
 #undef _mystr
 }
 
-char* yatc_http_build_url(request_rec *r, char *base, apr_table_t *params) {
+char* geocache_http_build_url(request_rec *r, char *base, apr_table_t *params) {
    if(!apr_is_empty_table(params)) {
       int stringLength = 0, baseLength;
       char *builtUrl,*builtUrlPtr;
@@ -86,7 +86,7 @@ char* yatc_http_build_url(request_rec *r, char *base, apr_table_t *params) {
       baseLength = strlen(base);
 
       /*calculate the length of the param string we are going to build */
-      apr_table_do(_yatc_key_value_strlen_callback, (void*)&stringLength, params, NULL);
+      apr_table_do(_geocache_key_value_strlen_callback, (void*)&stringLength, params, NULL);
 
       if(strchr(base,'?')) {
          /* base already contains a '?' , shall we be adding a '&' to the end */ 
@@ -106,7 +106,7 @@ char* yatc_http_build_url(request_rec *r, char *base, apr_table_t *params) {
       builtUrlPtr = apr_cpystrn(builtUrlPtr,base,MAX_STRING_LEN);
       if(charToAppend)
          *(builtUrlPtr++)=charToAppend;
-      apr_table_do(_yatc_key_value_append_callback, (void*)&builtUrlPtr, params, NULL);
+      apr_table_do(_geocache_key_value_append_callback, (void*)&builtUrlPtr, params, NULL);
       *(builtUrlPtr-1) = '\0'; /*replace final '&' by a \0 */
       return builtUrl;
    } else {
@@ -115,7 +115,7 @@ char* yatc_http_build_url(request_rec *r, char *base, apr_table_t *params) {
 }
 
 /* Parse form data from a string. The input string is preserved. */
-apr_table_t *yatc_http_parse_param_string(request_rec *r, char *args_str) {
+apr_table_t *geocache_http_parse_param_string(request_rec *r, char *args_str) {
    apr_table_t *params;
    char *args = apr_pstrdup(r->pool,args_str);
    char *key;

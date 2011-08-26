@@ -5,14 +5,14 @@
  *      Author: tom
  */
 
-#include "yatc.h"
+#include "geocache.h"
 #include <http_log.h>
 #include <apr_strings.h>
 
-yatc_request* _yatc_service_wms_parse_request(request_rec *r, apr_table_t *params, yatc_cfg *config) {
+geocache_request* _geocache_service_wms_parse_request(request_rec *r, apr_table_t *params, geocache_cfg *config) {
    char *str = NULL;
    double *bbox;
-   yatc_request *request;
+   geocache_request *request;
 
    str = (char*)apr_table_get(params,"REQUEST");
    if(!str)
@@ -20,7 +20,7 @@ yatc_request* _yatc_service_wms_parse_request(request_rec *r, apr_table_t *param
    if(!str || strcasecmp(str,"getmap")) {
       return NULL;
    }
-   request = (yatc_request*)apr_pcalloc(r->pool,sizeof(yatc_request));
+   request = (geocache_request*)apr_pcalloc(r->pool,sizeof(geocache_request));
 
    str = (char*)apr_table_get(params,"BBOX");
    if(!str)
@@ -30,7 +30,7 @@ yatc_request* _yatc_service_wms_parse_request(request_rec *r, apr_table_t *param
       return NULL;
    } else {
       int nextents;
-      if(YATC_SUCCESS != yatc_util_extract_double_list(str,',',&bbox,&nextents,r->pool) ||
+      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(str,',',&bbox,&nextents,r->pool) ||
             nextents != 4) {
          ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r, "received wms request with invalid bbox");
          return NULL;
@@ -50,19 +50,19 @@ yatc_request* _yatc_service_wms_parse_request(request_rec *r, apr_table_t *param
       str = apr_pstrdup(r->pool,str);
       for(key=str;*key;key++) if(*key == ',') count++;
       request->ntiles = 0;
-      request->tiles = (yatc_tile**)apr_pcalloc(r->pool,count * sizeof(yatc_tile*));
+      request->tiles = (geocache_tile**)apr_pcalloc(r->pool,count * sizeof(geocache_tile*));
       for (key = apr_strtok(str, sep, &last); key != NULL;
             key = apr_strtok(NULL, sep, &last)) {
-         yatc_tile *tile;
-         yatc_tileset *tileset = yatc_configuration_get_tileset(config,key);
+         geocache_tile *tile;
+         geocache_tileset *tileset = geocache_configuration_get_tileset(config,key);
          if(!tileset) {
             ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, r,
                   "received wms request with invalid layer %s", key);
             return NULL;
          }
-         tile = yatc_tileset_tile_create(tileset,r->pool);
-         ret = yatc_tileset_tile_lookup(tile,bbox,r);
-         if(ret != YATC_SUCCESS) {
+         tile = geocache_tileset_tile_create(tileset,r->pool);
+         ret = geocache_tileset_tile_lookup(tile,bbox,r);
+         if(ret != GEOCACHE_SUCCESS) {
             return NULL;
          }
          request->tiles[request->ntiles++] = tile;
@@ -75,23 +75,23 @@ yatc_request* _yatc_service_wms_parse_request(request_rec *r, apr_table_t *param
 
 }
 
-yatc_request* _yatc_service_tms_parse_request(request_rec *r, apr_table_t *params, yatc_cfg *config) {
+geocache_request* _geocache_service_tms_parse_request(request_rec *r, apr_table_t *params, geocache_cfg *config) {
    return NULL;
 }
 
 
-yatc_service* yatc_service_wms_create(apr_pool_t *pool) {
-   yatc_service_wms* service = (yatc_service_wms*)apr_pcalloc(pool, sizeof(yatc_service_wms));
-   service->service.type = YATC_SERVICE_WMS;
-   service->service.parse_request = _yatc_service_wms_parse_request;
-   return (yatc_service*)service;
+geocache_service* geocache_service_wms_create(apr_pool_t *pool) {
+   geocache_service_wms* service = (geocache_service_wms*)apr_pcalloc(pool, sizeof(geocache_service_wms));
+   service->service.type = GEOCACHE_SERVICE_WMS;
+   service->service.parse_request = _geocache_service_wms_parse_request;
+   return (geocache_service*)service;
 }
 
-yatc_service* yatc_service_tms_create(apr_pool_t *pool) {
-   yatc_service_tms* service = (yatc_service_tms*)apr_pcalloc(pool, sizeof(yatc_service_tms));
-   service->service.type = YATC_SERVICE_TMS;
-   service->service.parse_request = _yatc_service_tms_parse_request;
-   return (yatc_service*)service;
+geocache_service* geocache_service_tms_create(apr_pool_t *pool) {
+   geocache_service_tms* service = (geocache_service_tms*)apr_pcalloc(pool, sizeof(geocache_service_tms));
+   service->service.type = GEOCACHE_SERVICE_TMS;
+   service->service.parse_request = _geocache_service_tms_parse_request;
+   return (geocache_service*)service;
 }
 
 

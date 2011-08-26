@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-#include "yatc.h"
+#include "geocache.h"
 #include <stdlib.h>
 #define INITIAL_BUFFER_SIZE 100
 
-static void _yatc_buffer_realloc(yatc_buffer *buffer, size_t len) {
+static void _geocache_buffer_realloc(geocache_buffer *buffer, size_t len) {
    char* newbuf ;
    while ( len > buffer->avail ) {
       buffer->avail += buffer->avail;
@@ -32,8 +32,8 @@ static void _yatc_buffer_realloc(yatc_buffer *buffer, size_t len) {
    }
 }
 
-yatc_buffer *yatc_buffer_create(size_t initialStorage, apr_pool_t* pool) {
-   yatc_buffer *buffer = apr_pcalloc(pool, sizeof(yatc_buffer));
+geocache_buffer *geocache_buffer_create(size_t initialStorage, apr_pool_t* pool) {
+   geocache_buffer *buffer = apr_pcalloc(pool, sizeof(geocache_buffer));
    buffer->pool = pool;
    buffer->avail = (initialStorage > INITIAL_BUFFER_SIZE) ? initialStorage : INITIAL_BUFFER_SIZE;
    buffer->buf = malloc(buffer->avail);
@@ -41,10 +41,10 @@ yatc_buffer *yatc_buffer_create(size_t initialStorage, apr_pool_t* pool) {
    return buffer;
 }
 
-int yatc_buffer_append(yatc_buffer *buffer, size_t len, void *data) {
+int geocache_buffer_append(geocache_buffer *buffer, size_t len, void *data) {
    size_t total = buffer->size + len;
    if(total > buffer->avail)
-      _yatc_buffer_realloc(buffer,total);
+      _geocache_buffer_realloc(buffer,total);
    memcpy(&(buffer->buf[buffer->size]), data, len);
    buffer->size += len;
    return len;
