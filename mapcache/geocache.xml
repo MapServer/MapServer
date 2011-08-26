@@ -337,12 +337,9 @@
       -->
       <symlink_blank/>
    </cache>
-   
-<!--
-        a cache is where tiles are stored once they have been rendered
-   -->
-   <cache name="tmpl" type="template">
-      <template>/tmp/tmpl/{{tileset}}/{{grid}}/{{z}}-{{x}}-{{inv_y}}.{{ext}}</template>
+
+   <cache name="tmpl" type="disk">
+      <template>/tmp/template-test/{tileset}#{grid}#{dim}/{z}/{x}/{y}.{ext}</template>
    </cache>
 
    <!-- memcache cache
@@ -674,7 +671,7 @@
    </tileset>
    <tileset name="test2">
       <source>nexrad</source>
-      <cache>tmpl</cache>
+      <cache>disk</cache>
       <format>mixed</format>
       <grid>WGS84</grid>
    </tileset>
@@ -692,7 +689,7 @@
          <abstract>see http://mapserver-utils.googlecode.com</abstract>
       </metadata>
       <source>osm</source>
-      <cache>sqlite</cache>
+      <cache>tmpl</cache>
       <format>PNG</format>
       <grid>FXX</grid>
       <grid>MILLER</grid>

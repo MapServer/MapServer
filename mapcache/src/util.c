@@ -75,6 +75,20 @@ int geocache_util_extract_double_list(geocache_context *ctx, const char* cargs, 
    return GEOCACHE_SUCCESS;
 }
 
+char *geocache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr, const char *replacement ){
+   char *tok = NULL;
+   char *newstr = NULL;
+
+   tok = strstr( string, substr );
+   if( tok == NULL ) return apr_pstrdup( pool, string );
+   newstr = apr_pcalloc(pool, strlen( string ) - strlen( substr ) + strlen( replacement ) + 1 );
+   memcpy( newstr, string, tok - string );
+   memcpy( newstr + (tok - string), replacement, strlen( replacement ) );
+   memcpy( newstr + (tok - string) + strlen( replacement ), tok + strlen( substr ), strlen( string ) - strlen( substr ) - ( tok - string ) );
+   memset( newstr + strlen( string ) - strlen( substr ) + strlen( replacement ), 0, 1 );
+   return newstr;
+}
+
 #if APR_MAJOR_VERSION < 1 || (APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3)
 APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p, const apr_table_t *t)
 {
@@ -128,20 +142,6 @@ void geocache_context_init(geocache_context *ctx) {
     ctx->get_error_message = _geocache_context_get_error_msg_default;
     ctx->set_error = _geocache_context_set_error_default;
     ctx->clear_errors = _geocache_context_clear_error_default;
-}
-
-const char *geocache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr, const char *replacement ){
-   char *tok = NULL;
-   char *newstr = NULL;
-
-   tok = strstr( string, substr );
-   if( tok == NULL ) return apr_pstrdup( pool, string );
-   newstr = apr_pcalloc(pool, strlen( string ) - strlen( substr ) + strlen( replacement ) + 1 );
-   memcpy( newstr, string, tok - string );
-   memcpy( newstr + (tok - string), replacement, strlen( replacement ) );
-   memcpy( newstr + (tok - string) + strlen( replacement ), tok + strlen( substr ), strlen( string ) - strlen( substr ) - ( tok - string ) );
-   memset( newstr + strlen( string ) - strlen( substr ) + strlen( replacement ), 0, 1 );
-   return newstr;
 }
 
 /* vim: ai ts=3 sts=3 et sw=3

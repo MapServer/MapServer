@@ -578,8 +578,6 @@ void parseCache(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    }
    if(!strcmp(type,"disk")) {
       cache = geocache_cache_disk_create(ctx);
-   } else if(!strcmp(type,"template")) {
-      cache = geocache_cache_disk_template_create(ctx);
    } else if(!strcmp(type,"sqlite3")) {
 #ifdef USE_SQLITE
       cache = geocache_cache_sqlite_create(ctx);

@@ -87,9 +87,7 @@ typedef struct geocache_source_wms geocache_source_wms;
 #if 0
 typedef struct geocache_source_gdal geocache_source_gdal;
 #endif
-typedef struct geocache_cache_filesystem geocache_cache_filesystem;
 typedef struct geocache_cache_disk geocache_cache_disk;
-typedef struct geocache_cache_disk_template geocache_cache_disk_template;
 typedef struct geocache_http geocache_http;
 typedef struct geocache_request geocache_request;
 typedef struct geocache_request_proxy geocache_request_proxy;
@@ -320,8 +318,7 @@ struct geocache_source_gdal {
 
 /** @{ */
 typedef enum {
-    GEOCACHE_CACHE_DISK,
-    GEOCACHE_CACHE_DISK_TEMPLATE
+    GEOCACHE_CACHE_DISK
 #ifdef USE_MEMCACHE
        ,GEOCACHE_CACHE_MEMCACHE
 #endif
@@ -367,33 +364,15 @@ struct geocache_cache {
     void (*configuration_post_config)(geocache_context *ctx, geocache_cache * cache, geocache_cfg *config);
 };
 
-/**\class geocache_cache_filesystem
- * \brief a geocache_cache on a filesytem
- * \implements geocache_cache
- */
-struct geocache_cache_filesystem {
-    geocache_cache cache;
-    void (*tile_key)(geocache_context *ctx, geocache_tile *tile, const char **path);
-    void (*blank_key)(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path);
-    int symlink_blank;
-};
-
 /**\class geocache_cache_disk
- * \brief a geocache_cache 
+ * \brief a geocache_cache on a filesytem
  * \implements geocache_cache
  */
 struct geocache_cache_disk {
-    geocache_cache_filesystem cache;
+    geocache_cache cache;
     char *base_directory;
-};
-
-/**\class geocache_cache_disk
- * \brief a geocache_cache on a filesytem
- * \implements geocache_cache
- */
-struct geocache_cache_disk_template {
-    geocache_cache_filesystem cache;
-    char *template;
+    char *filename_template;
+    int symlink_blank;
 };
 
 
@@ -934,7 +913,6 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx);
  * \memberof geocache_cache_disk
  */
 geocache_cache* geocache_cache_disk_create(geocache_context *ctx);
-geocache_cache* geocache_cache_disk_template_create(geocache_context *ctx);
 
 
 /** \defgroup tileset Tilesets*/
@@ -1242,7 +1220,7 @@ int geocache_util_extract_int_list(geocache_context *ctx, const char* args, cons
         int *numbers_count);
 int geocache_util_extract_double_list(geocache_context *ctx, const char* args, const char sep, double **numbers,
         int *numbers_count);
-const char *geocache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr,
+char *geocache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr,
       const char *replacement );
 
 /*
