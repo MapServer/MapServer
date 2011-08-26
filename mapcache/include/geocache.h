@@ -47,7 +47,7 @@
 #define GEOCACHE_FILE_LOCKED 6
 
 #define GEOCACHE_VERSION "0.3-dev"
-#define GEOCACHE_USERAGENT "geocache/"GEOCACHE_VERSION
+#define GEOCACHE_USERAGENT "mod-geocache/"GEOCACHE_VERSION
 
 
 
@@ -231,6 +231,7 @@ struct geocache_source_wms {
     char *url; /**< the base WMS url */
     apr_table_t *wms_default_params; /**< default WMS parameters (SERVICE,REQUEST,STYLES,VERSION) */
     apr_table_t *wms_params; /**< WMS parameters specified in configuration */
+    apr_table_t *http_headers;
 };
 
 #ifdef USE_GDAL

@@ -44,7 +44,7 @@ void _geocache_source_wms_render_metatile(geocache_context *ctx, geocache_metati
  
     }      
     tile->tile.data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_request_url_with_params(ctx,wms->url,params,NULL,tile->tile.data);
+    geocache_http_request_url_with_params(ctx,wms->url,params,wms->http_headers,tile->tile.data);
     GC_CHECK_ERROR(ctx);
  
     if(!geocache_imageio_is_valid_format(ctx,tile->tile.data)) {
@@ -70,6 +70,16 @@ void _geocache_source_wms_configuration_parse(geocache_context *ctx, ezxml_t nod
       for(cur_node = cur_node->child; cur_node; cur_node = cur_node->sibling) {
          apr_table_set(src->wms_params, cur_node->name, cur_node->txt);
       }
+   }
+   if ((cur_node = ezxml_child(node,"http")) != NULL) {
+      ezxml_t http_node;
+      if((http_node = ezxml_child(cur_node,"headers")) != NULL) {
+         ezxml_t header_node;
+         for(header_node = http_node->child; header_node; header_node = header_node->sibling) {
+            apr_table_set(src->http_headers, header_node->name, header_node->txt);
+         }
+      }
+      /* TODO: parse <proxy> and <auth> elements */
    }
 }
 
@@ -101,6 +111,7 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    source->source.configuration_parse = _geocache_source_wms_configuration_parse;
    source->wms_default_params = apr_table_make(ctx->pool,4);;
    source->wms_params = apr_table_make(ctx->pool,4);
+   source->http_headers = apr_table_make(ctx->pool,1);
    apr_table_add(source->wms_default_params,"VERSION","1.1.1");
    apr_table_add(source->wms_default_params,"REQUEST","GetMap");
    apr_table_add(source->wms_default_params,"SERVICE","WMS");

@@ -241,13 +241,46 @@
          <FORMAT>image/png</FORMAT>
          <LAYERS>basic</LAYERS>
       </wmsparams>
+      
+      <!-- http
+
+         custom http parameters that will be used when making WMS requests
+      -->
+      <http>
+         
+         <!-- headers
+
+            http headers added to request. make sure you know what you are 
+            doing when adding a header here, as they take precedence over any
+            default headers curl will be adding to the request.
+            typical headers that can be added here are User-Agent and Referer.
+            
+            when adding a <key>value</key> element here, the request to the
+            wms source will contain the
+
+            key: value\r\n
+
+            HTTP header.
+         -->
+         <!--
+         <headers>
+            <User-Agent>mod-geocache/r175</User-Agent>
+            <Referer>http://www.mysite.com?param=2&amp;par=4</Referer>
+         </headers>
+         -->
+
+         <!-- TODO other http parameters
+              * PROXY
+              * AUTH
+         -->
+      </http>
    </source>
    <source name="osm" type="wms">
       <url>http://localhost/cgi-bin/mapserv?</url>
       <wmsparams>
          <FORMAT>image/png</FORMAT>
          <LAYERS>default</LAYERS>
-         <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+         <MAP>/home/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
       </wmsparams>
    </source>
    <source name="nexrad" type="wms">
