@@ -535,7 +535,7 @@
       <source>vmap0</source>
 
       <!-- cache: the "name" attribute of a preconfigured <cache> -->
-      <cache>disk</cache>
+      <cache>sqlite</cache>
 
       <!-- grid: the "name" attribute of a preconfigured <grid> 
          you can also use the following notation to limit the area that will be cached and served to clients:
@@ -722,13 +722,13 @@
            It will intercept wms getmap requests that can be treated from configured
            tilesets, and can optionally forward all the rest to (an)other server(s)
            TODO: this needs way more documenting
-      -->
       <forwarding_rule name="foo rule">
             <append_pathinfo>true</append_pathinfo>
             <http>
                <url>http://localhost/</url>
             </http>
       </forwarding_rule>
+      -->
    </service>
    <service type="wmts" enabled="true"/>
    <service type="tms" enabled="true"/>

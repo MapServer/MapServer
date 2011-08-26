@@ -188,9 +188,9 @@ static void _geocache_cache_sqlite_set(geocache_context *ctx, geocache_tile *til
    sqlite3_stmt *stmt;
    char *sql;
    if(tile->dimensions) {
-      sql = "insert into tiles(x,y,z,data,dim) values (?,?,?,?,?)";
+      sql = "insert or replace into tiles(x,y,z,data,dim,ctime) values (?,?,?,?,?,datetime('now'))";
    } else {
-      sql = "insert into tiles(x,y,z,data) values (?,?,?,?)";
+      sql = "insert or replace into tiles(x,y,z,data,ctime) values (?,?,?,?,datetime('now'))";
    }
    sqlite3_prepare(handle, sql,-1,&stmt,NULL);
    sqlite3_bind_int(stmt,1,tile->x);
@@ -242,12 +242,10 @@ static void _geocache_cache_sqlite_configuration_post_config(geocache_context *c
             geocache_grid *grid = gridlink->grid;
             char *dbname = _get_dbname(ctx,(geocache_cache_sqlite*)cache,tileset,grid);
             sqlite3_open(dbname, &db);
-            sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, ctime date, mtime date, atime date)", 0, 0, &errmsg);
-            sqlite3_exec(db, "create index if not exists tilesidx on tiles (x,y,z)", 0, 0, &errmsg);
             if(tileset->dimensions) {
-               /* the following would return an error if the column already exists, but we ignore it */
-               sqlite3_exec(db, "alter table tiles add column dim text",0, 0, &errmsg);
-               sqlite3_exec(db, "create index if not exists tilesdimidx on tiles (dim)", 0, 0, &errmsg);
+               sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, dim text, ctime datetime, atime datetime, hitcount integer default 0, primary key(x,y,z,dim))", 0, 0, &errmsg);
+            } else {
+               sqlite3_exec(db, "create table if not exists tiles(x integer, y integer, z integer, data blob, ctime datetime, atime datetime, hitcount integer default 0, primary key (x,y,z))", 0, 0, &errmsg);
             }
             sqlite3_close(db);
          }
