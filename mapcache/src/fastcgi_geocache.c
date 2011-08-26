@@ -19,14 +19,15 @@
 #include <stdlib.h>
 #include <apr_strings.h>
 #include <apr_pools.h>
-#include <apr_proc_mutex.h>
+#include <apr_file_io.h>
 
 typedef struct geocache_context_fcgi geocache_context_fcgi;
 typedef struct geocache_context_fcgi_request geocache_context_fcgi_request;
 
 struct geocache_context_fcgi {
    geocache_context ctx;
-   apr_proc_mutex_t *mutex;
+   char *mutex_fname;
+   apr_file_t *mutex_file;
 };
 
 struct geocache_context_fcgi_request {
@@ -50,28 +51,49 @@ void fcgi_request_context_log(geocache_context *c, geocache_log_level level, cha
 void init_fcgi_context(geocache_context_fcgi *ctx) {
    geocache_context_init((geocache_context*)ctx);
    ctx->ctx.log = fcgi_context_log;
+   ctx->mutex_fname="/tmp/geocache.fcgi.lock";
 }
 
 void geocache_fcgi_mutex_aquire(geocache_context *gctx, int nonblocking) {
+   geocache_context_fcgi *ctx = (geocache_context_fcgi*)gctx;
    int ret;
-   geocache_context_fcgi_request *ctx = (geocache_context_fcgi_request*)gctx;
-   ret = apr_proc_mutex_lock(ctx->ctx.mutex);
-   if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx, GEOCACHE_MUTEX_ERROR, "failed to aquire mutex lock");
+#ifdef DEBUG
+   if(ctx->mutex_file != NULL) {
+      gctx->set_error(gctx, GEOCACHE_DISK_ERROR, "SEVERE: fcgi recursive mutex acquire");
+      return; /* BUG ! */
+   }
+#endif
+   if (apr_file_open(&ctx->mutex_file, ctx->mutex_fname,
+             APR_FOPEN_CREATE | APR_FOPEN_WRITE | APR_FOPEN_SHARELOCK | APR_FOPEN_BINARY,
+             APR_OS_DEFAULT, gctx->pool) != APR_SUCCESS) {
+      gctx->set_error(gctx, GEOCACHE_DISK_ERROR, "failed to create fcgi mutex lockfile %s", ctx->mutex_fname);
+      return; /* we could not create the file */
+   }
+   ret = apr_file_lock(ctx->mutex_file, APR_FLOCK_EXCLUSIVE);
+   if (ret != APR_SUCCESS) {
+      gctx->set_error(gctx, GEOCACHE_DISK_ERROR, "failed to lock fcgi mutex file %s", ctx->mutex_fname);
       return;
    }
-   apr_pool_cleanup_register(gctx->pool, ctx->ctx.mutex, (void*)apr_proc_mutex_unlock, apr_pool_cleanup_null);
 }
 
 void geocache_fcgi_mutex_release(geocache_context *gctx) {
    int ret;
-   geocache_context_fcgi_request *ctx = (geocache_context_fcgi_request*)gctx;
-   ret = apr_proc_mutex_unlock(ctx->ctx.mutex);
-   if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx, GEOCACHE_MUTEX_ERROR,  "failed to release mutex");
-      return;
+   geocache_context_fcgi *ctx = (geocache_context_fcgi*)gctx;
+#ifdef DEBUG
+   if(ctx->mutex_file == NULL) {
+      gctx->set_error(gctx, GEOCACHE_DISK_ERROR, "SEVERE: fcgi mutex unlock on unlocked file");
+      return; /* BUG ! */
    }
-   apr_pool_cleanup_kill(gctx->pool, ctx->ctx.mutex, (void*)apr_proc_mutex_unlock);
+#endif
+   ret = apr_file_unlock(ctx->mutex_file);
+   if(ret != APR_SUCCESS) {
+      gctx->set_error(gctx, GEOCACHE_DISK_ERROR,  "failed to unlock fcgi mutex file%s",ctx->mutex_fname);
+   }
+   ret = apr_file_close(ctx->mutex_file);
+   if(ret != APR_SUCCESS) {
+      gctx->set_error(gctx, GEOCACHE_DISK_ERROR,  "failed to close fcgi mutex file %s",ctx->mutex_fname);
+   }
+   ctx->mutex_file = NULL;
 }
 
 void init_fcgi_request_context(geocache_context_fcgi_request *ctx) {
@@ -81,7 +103,6 @@ void init_fcgi_request_context(geocache_context_fcgi_request *ctx) {
 }
 
 static geocache_context_fcgi* fcgi_context_create() {
-   int ret;
    apr_pool_t *pool;
    if(apr_pool_create_core(&pool) != APR_SUCCESS) {
       return NULL;
@@ -92,19 +113,6 @@ static geocache_context_fcgi* fcgi_context_create() {
    }
    ctx->ctx.pool = pool;
    init_fcgi_context(ctx);
-   ctx->ctx.log(ctx,GEOCACHE_DEBUG,"before mutex");
-   ret = apr_proc_mutex_child_init(&ctx->mutex,"geocache_mutex",pool);
-   ctx->ctx.log(ctx,GEOCACHE_DEBUG,"after mutex");
-
-   if(ret != APR_SUCCESS) {
-       ctx->ctx.log(ctx,GEOCACHE_DEBUG,"create mutex");
-          ret = apr_proc_mutex_create(&ctx->mutex,"geocache_mutex",APR_LOCK_DEFAULT,pool);
-       if(ret != APR_SUCCESS) {
-          ctx->ctx.set_error(&ctx->ctx,GEOCACHE_MUTEX_ERROR,"failed to created mutex");
-       } else {
-          apr_pool_cleanup_register(pool,ctx->mutex,(void*)apr_proc_mutex_destroy, apr_pool_cleanup_null);
-       }
-   }
    return ctx;
 }
 
@@ -113,7 +121,7 @@ static geocache_context_fcgi_request* fcgi_context_request_create(geocache_conte
    apr_pool_create(&pool,parent->ctx.pool);
    geocache_context_fcgi_request *ctx = apr_pcalloc(pool, sizeof(geocache_context_fcgi_request));
    ctx->ctx.ctx.pool = pool;
-   ctx->ctx.mutex = parent->mutex;
+   ctx->ctx.mutex_fname = parent->mutex_fname;
    ctx->out = out;
    ctx->err = err;
    init_fcgi_request_context(ctx);
