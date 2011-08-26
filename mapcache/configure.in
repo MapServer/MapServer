@@ -578,6 +578,14 @@ DEBUG_CHECK
 
 LOCKMECH_CHECK
 
+AC_ARG_ENABLE(version_string,
+    AC_HELP_STRING([--enable-version-string],[add mod-geocache version string to the apache server header]),
+    ,
+    [enable_version_string=yes]
+)
+if test "$enable_version_string" != "yes"; then
+   MISC_ENABLED="-DDISABLE_VERSION_STRING $MISC_ENABLED" 
+fi
 
 AC_ARG_ENABLE(module,
     AC_HELP_STRING([--enable-module],[Enable apache module building]),

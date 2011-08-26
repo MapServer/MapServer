@@ -338,6 +338,9 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 #endif
    apr_pool_cleanup_register(p,cfg->mutex,
          (void*)apr_global_mutex_destroy, apr_pool_cleanup_null);
+#ifndef DISABLE_VERSION_STRING
+   ap_add_version_component(p, GEOCACHE_USERAGENT);
+#endif
    return OK;
 }
 
