@@ -137,7 +137,7 @@ struct geocache_context {
      * \brief get human readable message for the error
      * \memberof geocache_context
      */
-    char* (*clear_errors)(geocache_context * ctx);
+    void (*clear_errors)(geocache_context * ctx);
 
 
     /**

@@ -295,7 +295,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
    const char *str, *service = NULL, *style = NULL, *version = NULL, *layer = NULL, *matrixset = NULL,
                *matrix = NULL, *tilecol = NULL, *tilerow = NULL, *format = NULL, *extension = NULL;
    apr_table_t *dimtable = NULL;
-   geocache_tileset *tileset;
+   geocache_tileset *tileset = NULL;
    int row,col,level;
    service = apr_table_get(params,"SERVICE");
    if(service) {
