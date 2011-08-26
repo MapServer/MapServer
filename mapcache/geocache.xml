@@ -214,11 +214,6 @@
       for now, type can only be "wms"
    -->
    <source name="vmap0" type="wms">
-      <!-- url
-
-         url of the wms service, without any parameters
-      -->
-      <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
       
       <!-- getmap
 
@@ -237,9 +232,15 @@
       
       <!-- http
 
-         custom http parameters that will be used when making WMS requests
+         http url and parameters that will be used when making WMS requests
       -->
       <http>
+         
+         <!-- url
+
+         url of the wms service, without any parameters
+         -->
+         <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
          
          <!-- headers
 
@@ -269,17 +270,21 @@
       </http>
    </source>
    <source name="osm" type="wms">
-      <url>http://localhost/cgi-bin/mapserv?</url>
+      <http>
+         <url>http://localhost/cgi-bin/mapserv?</url>
+      </http>
       <getmap>
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
-            <MAP>/Users/tbonfort/dev/mapserver-utils/osm-mapserver.map</MAP>
+            <MAP>/gro1/mapserver-utils/osm.map</MAP>
          </params>
       </getmap>
    </source>
    <source name="nexrad" type="wms">
-      <url>http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi</url>
+      <http>
+         <url>http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi</url>
+      </http>
       <getmap>
          <params>
             <FORMAT>image/png</FORMAT>
@@ -289,7 +294,9 @@
       </getmap>
    </source>
    <source name="basic" type="wms">
-      <url>http://geoservices.brgm.fr/geologie?</url>
+      <http>
+         <url>http://geoservices.brgm.fr/geologie?</url>
+      </http>
       <getmap>
          <params>
             <FORMAT>image/png</FORMAT>
@@ -463,6 +470,7 @@
       <grid>WGS84</grid>
       <grid>g</grid>
       <metatile>5 5</metatile>
+      <expires>1</expires>
       <metabuffer>10</metabuffer>
    </tileset>
 
@@ -492,6 +500,13 @@
       each service is accessible at the url http://host/path/to/geocache/{service},
       eg http://myhost/geocache/wms for OGC WMS.
    -->
+   <service type="wms" enabled="true"/>
+   <service type="wmts" enabled="true"/>
+   <service type="tms" enabled="true"/>
+   <service type="kml" enabled="true"/>
+   <service type="gmaps" enabled="true"/>
+   <service type="ve" enabled="true"/>
+   <service type="demo" enabled="true"/>
    <services>
       <!-- OGC WMS -->
       <wms>true</wms>

@@ -35,11 +35,6 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
    while((*pathinfo) == '/')
       ++pathinfo;
    
-   if(!(*pathinfo)) {
-      ctx->set_error(ctx,404,"missing a service");
-      return;
-   }
-   
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
       /* loop through the services that have been configured */
       int prefixlen;

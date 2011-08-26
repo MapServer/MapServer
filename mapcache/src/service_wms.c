@@ -36,7 +36,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
    if(!url) {
       url = guessed_url;
    }
-   url = apr_pstrcat(ctx->pool,url,"/wms?",NULL);
+   url = apr_pstrcat(ctx->pool,url,"/",req->request.service->url_prefix,"?",NULL);
    caps = ezxml_new("WMT_MS_Capabilities");
    ezxml_set_attr(caps,"version","1.1.1");
 /*
@@ -625,16 +625,23 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
 #endif
 }
 
+void _configuration_parse_wms(geocache_context *ctx, ezxml_t node, geocache_service *gservice) {
+   assert(gservice->type == GEOCACHE_SERVICE_WMS);
+
+}
+
 geocache_service* geocache_service_wms_create(geocache_context *ctx) {
    geocache_service_wms* service = (geocache_service_wms*)apr_pcalloc(ctx->pool, sizeof(geocache_service_wms));
    if(!service) {
       ctx->set_error(ctx, 500, "failed to allocate wms service");
       return NULL;
    }
-   service->service.url_prefix = apr_pstrdup(ctx->pool,"wms");
+   service->service.url_prefix = apr_pstrdup(ctx->pool,"");
+   service->service.name = apr_pstrdup(ctx->pool,"wms");
    service->service.type = GEOCACHE_SERVICE_WMS;
    service->service.parse_request = _geocache_service_wms_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wms;
+   service->service.configuration_parse = _configuration_parse_wms;
    return (geocache_service*)service;
 }
 

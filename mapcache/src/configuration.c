@@ -976,7 +976,69 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
       if(GC_HAS_ERROR(ctx)) goto cleanup;
    }
 
-   if ((node = ezxml_child(doc,"services")) != NULL) {
+   if ((node = ezxml_child(doc,"service")) != NULL) {
+      ezxml_t service_node;
+      for(service_node = node; service_node; service_node = service_node->next) {
+         char *enabled = (char*)ezxml_attr(service_node,"enabled");
+         char *type = (char*)ezxml_attr(service_node,"type");
+         if(!strcasecmp(enabled,"true")) {
+            if (!strcasecmp(type,"wms")) {
+               geocache_service *new_service = geocache_service_wms_create(ctx);
+               if(new_service->configuration_parse) {
+                  new_service->configuration_parse(ctx,service_node,new_service);
+               }
+               config->services[GEOCACHE_SERVICE_WMS] = new_service;
+            }
+            else if (!strcasecmp(type,"tms")) {
+               geocache_service *new_service = geocache_service_tms_create(ctx);
+               if(new_service->configuration_parse) {
+                  new_service->configuration_parse(ctx,service_node,new_service);
+               }
+               config->services[GEOCACHE_SERVICE_TMS] = new_service;
+            }
+            else if (!strcasecmp(type,"wmts")) {
+               geocache_service *new_service = geocache_service_wmts_create(ctx);
+               if(new_service->configuration_parse) {
+                  new_service->configuration_parse(ctx,service_node,new_service);
+               }
+               config->services[GEOCACHE_SERVICE_WMTS] = new_service;
+            }
+            else if (!strcasecmp(type,"kml")) {
+               geocache_service *new_service = geocache_service_kml_create(ctx);
+               if(new_service->configuration_parse) {
+                  new_service->configuration_parse(ctx,service_node,new_service);
+               }
+               config->services[GEOCACHE_SERVICE_KML] = new_service;
+            }
+            else if (!strcasecmp(type,"gmaps")) {
+               geocache_service *new_service = geocache_service_gmaps_create(ctx);
+               if(new_service->configuration_parse) {
+                  new_service->configuration_parse(ctx,service_node,new_service);
+               }
+               config->services[GEOCACHE_SERVICE_GMAPS] = new_service;
+            }
+            else if (!strcasecmp(type,"ve")) {
+               geocache_service *new_service = geocache_service_ve_create(ctx);
+               if(new_service->configuration_parse) {
+                  new_service->configuration_parse(ctx,service_node,new_service);
+               }
+               config->services[GEOCACHE_SERVICE_VE] = new_service;
+            }
+            else if (!strcasecmp(type,"demo")) {
+               geocache_service *new_service = geocache_service_demo_create(ctx);
+               if(new_service->configuration_parse) {
+                  new_service->configuration_parse(ctx,service_node,new_service);
+               }
+               config->services[GEOCACHE_SERVICE_DEMO] = new_service;
+            } else {
+               ctx->set_error(ctx,400,"unknown <service> type %s",type);
+            }
+            if(GC_HAS_ERROR(ctx)) goto cleanup;
+         }
+      }
+   }
+   else if ((node = ezxml_child(doc,"services")) != NULL) {
+      ctx->log(ctx,GEOCACHE_WARNING,"<services> tag is deprecated, use <service type=\"wms\" enabled=\"true|false\">");
       parseServices(ctx, node, config);
    } else {
       ctx->set_error(ctx, 400, "no <services> configured");

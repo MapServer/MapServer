@@ -369,8 +369,8 @@ void _geocache_service_demo_parse_request(geocache_context *ctx, geocache_servic
          geocache_service *service = NULL;
          service = config->services[i];
          if(!service) continue; /* skip an unconfigured service */
-         prefixlen = strlen(service->url_prefix);
-         if(strncmp(service->url_prefix,cpathinfo, prefixlen)) continue; /*skip a service who's prefix does not correspond */
+         prefixlen = strlen(service->name);
+         if(strncmp(service->name,cpathinfo, prefixlen)) continue; /*skip a service who's prefix does not correspond */
          if(*(cpathinfo+prefixlen)!='/' && *(cpathinfo+prefixlen)!='\0') continue; /*we matched the prefix but there are trailing characters*/
          drequest->service = service;
          return;
@@ -388,8 +388,8 @@ void _create_demo_front(geocache_context *ctx, geocache_request_get_capabilities
    for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
       geocache_service *service = ctx->config->services[i];
       if(!service || service->type == GEOCACHE_SERVICE_DEMO) continue; /* skip an unconfigured service, and the demo one */
-      caps = apr_pstrcat(ctx->pool,caps,"<a href=\"",urlprefix,"/demo/",service->url_prefix,"\">",
-            service->url_prefix,"</a><br/>",NULL);
+      caps = apr_pstrcat(ctx->pool,caps,"<a href=\"",urlprefix,"/demo/",service->name,"\">",
+            service->name,"</a><br/>",NULL);
    }
    caps = apr_pstrcat(ctx->pool,caps,"</body></html>",NULL);
 
@@ -436,7 +436,7 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
                ol_layer_name,
                tileset->name,
                grid->name,
-               apr_pstrcat(ctx->pool,url_prefix,"/wms?",NULL),
+               apr_pstrcat(ctx->pool,url_prefix,"?",NULL),
                tileset->name,
                resolutions,
                unit,
@@ -454,7 +454,7 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
                   ol_layer_name,
                   tileset->name,
                   grid->name,
-                  apr_pstrcat(ctx->pool,url_prefix,"/wms?",NULL),
+                  apr_pstrcat(ctx->pool,url_prefix,"?",NULL),
                   tileset->name,resolutions,unit,
                   grid->extent[0],
                   grid->extent[1],
@@ -787,6 +787,7 @@ geocache_service* geocache_service_demo_create(geocache_context *ctx) {
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"demo");
+   service->service.name = apr_pstrdup(ctx->pool,"demo");
    service->service.type = GEOCACHE_SERVICE_DEMO;
    service->service.parse_request = _geocache_service_demo_parse_request;
    service->service.create_capabilities_response = _create_capabilities_demo;

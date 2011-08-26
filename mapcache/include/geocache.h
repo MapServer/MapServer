@@ -77,10 +77,13 @@ typedef struct geocache_metatile geocache_metatile;
 typedef struct geocache_feature_info geocache_feature_info;
 typedef struct geocache_request_get_feature_info geocache_request_get_feature_info;
 typedef struct geocache_map geocache_map;
+typedef struct geocache_proxied_response geocache_proxied_response;
 typedef struct geocache_source_wms geocache_source_wms;
 typedef struct geocache_source_gdal geocache_source_gdal;
 typedef struct geocache_cache_disk geocache_cache_disk;
+typedef struct geocache_http geocache_http;
 typedef struct geocache_request geocache_request;
+typedef struct geocache_request_proxy geocache_request_proxy;
 typedef struct geocache_request_get_capabilities geocache_request_get_capabilities;
 typedef struct geocache_request_get_capabilities_demo geocache_request_get_capabilities_demo;
 typedef struct geocache_request_get_capabilities_wms geocache_request_get_capabilities_wms;
@@ -263,17 +266,24 @@ struct geocache_source {
     void (*configuration_check)(geocache_context *ctx, geocache_source * source);
 };
 
+geocache_http* geocache_http_configuration_parse(geocache_context *ctx,ezxml_t node);
+
+struct geocache_http {
+   char *url; /**< the base url to request */
+   apr_table_t *headers; /**< additional headers to add to the http request, eg, Referer */
+   /* TODO: authentication */
+};
+
 /**\class geocache_source_wms
  * \brief WMS geocache_source
  * \implements geocache_source
  */
 struct geocache_source_wms {
     geocache_source source;
-    char *url; /**< the base WMS url */
     apr_table_t *wms_default_params; /**< default WMS parameters (SERVICE,REQUEST,STYLES,VERSION) */
     apr_table_t *getmap_params; /**< WMS parameters specified in configuration */
     apr_table_t *getfeatureinfo_params; /**< WMS parameters specified in configuration */
-    apr_table_t *http_headers;
+    geocache_http *http;
 };
 
 #ifdef USE_GDAL
@@ -374,7 +384,8 @@ typedef enum {
    GEOCACHE_REQUEST_GET_TILE,
    GEOCACHE_REQUEST_GET_MAP,
    GEOCACHE_REQUEST_GET_CAPABILITIES,
-   GEOCACHE_REQUEST_GET_FEATUREINFO
+   GEOCACHE_REQUEST_GET_FEATUREINFO,
+   GEOCACHE_REQUEST_PROXY
 } geocache_request_type;
 /**
  * \brief a request sent by a client
@@ -403,6 +414,10 @@ struct geocache_request_get_tile {
    
 };
 
+struct geocache_proxied_response {
+   geocache_buffer *data;
+   apr_table_t *headers;
+};
 
 struct geocache_map {
    geocache_tileset *tileset;
@@ -473,6 +488,12 @@ struct geocache_request_get_capabilities_demo {
    geocache_service *service;
 };
 
+struct geocache_request_proxy {
+   geocache_request request;
+   geocache_http *http;
+   apr_table_t *params;
+};
+
 
 
 /** \defgroup services Services*/
@@ -498,6 +519,7 @@ extern const double geocache_meters_per_unit[GEOCACHE_UNITS_COUNT];
  * \brief a standard service (eg WMS, TMS)
  */
 struct geocache_service {
+    char *name;
     geocache_service_type type;
     
     /**
@@ -517,6 +539,11 @@ struct geocache_service {
      * \param url the full url at which the service is available
      */
     void (*create_capabilities_response)(geocache_context *ctx, geocache_request_get_capabilities *request, char *url, char *path_info, geocache_cfg *config);
+    
+    /**
+     * parse advanced configuration options for the selected service
+     */
+    void (*configuration_parse)(geocache_context *ctx, ezxml_t xml, geocache_service * service);
 };
 
 /**\class geocache_service_wms
@@ -707,8 +734,9 @@ int geocache_image_has_alpha(geocache_image *img);
 
 /** \defgroup http HTTP Request handling*/
 /** @{ */
-void geocache_http_request_url(geocache_context *ctx, char *url, apr_table_t *headers, geocache_buffer *data);
-void geocache_http_request_url_with_params(geocache_context *ctx, char *url, apr_table_t *params, apr_table_t *headers, geocache_buffer *data);
+void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocache_buffer *data, apr_table_t *headers);
+void geocache_http_do_request_with_params(geocache_context *ctx, geocache_http *req, apr_table_t *params,
+      geocache_buffer *data, apr_table_t *headers);
 char* geocache_http_build_url(geocache_context *ctx, char *base, apr_table_t *params);
 apr_table_t *geocache_http_parse_param_string(geocache_context *ctx, char *args);
 /** @} */
@@ -1086,6 +1114,8 @@ geocache_tile *geocache_core_get_tile(geocache_context *ctx, geocache_request_ge
 geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map);
 
 geocache_feature_info *geocache_core_get_featureinfo(geocache_context *ctx, geocache_request_get_feature_info *req_fi);
+
+geocache_proxied_response *geocache_core_proxy_request(geocache_context *ctx, geocache_request_proxy *req_proxy);
 
 
 /* in grid.c */

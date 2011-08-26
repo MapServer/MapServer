@@ -204,7 +204,7 @@ static int geocache_write_tile(geocache_context_apache_request *ctx, geocache_ti
       apr_time_t now = apr_time_now();
       apr_time_t additional = apr_time_from_sec(tile->expires);
       apr_time_t expires = now + additional;
-      apr_table_mergen(r->headers_out, "Cache-Control",apr_psprintf(r->pool, "max-age=%d", tile->expires));
+      apr_table_set(r->headers_out, "Cache-Control",apr_psprintf(r->pool, "max-age=%d", tile->expires));
       char *timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
       apr_rfc822_date(timestr, expires);
       apr_table_set(r->headers_out, "Expires", timestr);
@@ -228,6 +228,25 @@ static int geocache_write_featureinfo(geocache_context_apache_request *ctx, geoc
    ap_rwrite((void*)fi->map.data->buf, fi->map.data->size, r);
 
    return OK;
+}
+
+static int geocache_write_proxied_response(geocache_context_apache_request *ctx, geocache_proxied_response *response) {
+   request_rec *r = ctx->request;
+
+   ap_set_content_length(r,response->data->size);
+   if(response->headers && !apr_is_empty_table(response->headers)) {
+      const apr_array_header_t *elts = apr_table_elts(response->headers);
+      int i;
+      for(i=0;i<elts->nelts;i++) {
+         apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
+         apr_table_set(r->headers_out, entry.key, entry.val);
+      }
+
+   }
+   ap_rwrite((void*)response->data->buf, response->data->size, r);
+
+   return OK;
+
 }
 
 static int mod_geocache_request_handler(request_rec *r) {
@@ -292,6 +311,14 @@ static int mod_geocache_request_handler(request_rec *r) {
       }
       ret = geocache_write_tile(apache_ctx,tile);
       return ret;
+
+   } else if( request->type == GEOCACHE_REQUEST_PROXY ) {
+      geocache_request_proxy *req_proxy = (geocache_request_proxy*)request;
+      geocache_proxied_response *response = geocache_core_proxy_request(global_ctx, req_proxy);
+      if(GC_HAS_ERROR(global_ctx)) {
+         return report_error(apache_ctx);
+      }
+      return geocache_write_proxied_response(apache_ctx, response);
 
    } else if( request->type == GEOCACHE_REQUEST_GET_MAP) {
       geocache_request_get_map *req_map = (geocache_request_get_map*)request;

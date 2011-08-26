@@ -227,6 +227,7 @@ geocache_service* geocache_service_kml_create(geocache_context *ctx) {
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"kml");
+   service->service.name = apr_pstrdup(ctx->pool,"kml");
    service->service.type = GEOCACHE_SERVICE_KML;
    service->service.parse_request = _geocache_service_kml_parse_request;
    service->service.create_capabilities_response = _create_capabilities_kml;

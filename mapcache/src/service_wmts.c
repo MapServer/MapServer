@@ -629,6 +629,7 @@ geocache_service* geocache_service_wmts_create(geocache_context *ctx) {
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"wmts");
+   service->service.name = apr_pstrdup(ctx->pool,"wmts");
    service->service.type = GEOCACHE_SERVICE_WMTS;
    service->service.parse_request = _geocache_service_wmts_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wmts;

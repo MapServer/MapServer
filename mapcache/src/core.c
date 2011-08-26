@@ -113,6 +113,17 @@ geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_
    }
 }
 
+
+geocache_proxied_response *geocache_core_proxy_request(geocache_context *ctx, geocache_request_proxy *req_proxy) {
+   geocache_proxied_response *response = (geocache_proxied_response*) apr_pcalloc(ctx->pool,
+         sizeof(geocache_proxied_response));
+
+    response->data = geocache_buffer_create(30000,ctx->pool);
+    response->headers = apr_table_make(ctx->pool,1);
+    geocache_http_do_request_with_params(ctx,req_proxy->http,req_proxy->params,response->data,response->headers);
+    return response;
+}
+
 geocache_feature_info *geocache_core_get_featureinfo(geocache_context *ctx,
       geocache_request_get_feature_info *req_fi) {
    geocache_feature_info *fi = req_fi->fi;

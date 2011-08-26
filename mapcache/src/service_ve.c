@@ -131,6 +131,7 @@ geocache_service* geocache_service_ve_create(geocache_context *ctx) {
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"ve");
+   service->service.name = apr_pstrdup(ctx->pool,"ve");
    service->service.type = GEOCACHE_SERVICE_VE;
    service->service.parse_request = _geocache_service_ve_parse_request;
    service->service.create_capabilities_response = _create_capabilities_ve;

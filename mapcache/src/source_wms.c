@@ -44,7 +44,7 @@ void _geocache_source_wms_render_map(geocache_context *ctx, geocache_map *map) {
  
     }      
     map->data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_request_url_with_params(ctx,wms->url,params,wms->http_headers,map->data);
+    geocache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL);
     GC_CHECK_ERROR(ctx);
  
     if(!geocache_imageio_is_valid_format(ctx,map->data)) {
@@ -82,7 +82,7 @@ void _geocache_source_wms_query(geocache_context *ctx, geocache_feature_info *fi
     }      
 
     map->data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_request_url_with_params(ctx,wms->url,params,wms->http_headers,map->data);
+    geocache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL);
     GC_CHECK_ERROR(ctx);
    
 }
@@ -96,9 +96,6 @@ void _geocache_source_wms_configuration_parse(geocache_context *ctx, ezxml_t nod
    geocache_source_wms *src = (geocache_source_wms*)source;
 
 
-   if ((cur_node = ezxml_child(node,"url")) != NULL) {
-      src->url = apr_pstrdup(ctx->pool,cur_node->txt);
-   }
    if ((cur_node = ezxml_child(node,"getmap")) != NULL){
       ezxml_t gm_node;
       if ((gm_node = ezxml_child(cur_node,"params")) != NULL) {
@@ -137,14 +134,7 @@ void _geocache_source_wms_configuration_parse(geocache_context *ctx, ezxml_t nod
       }
    }
    if ((cur_node = ezxml_child(node,"http")) != NULL) {
-      ezxml_t http_node;
-      if((http_node = ezxml_child(cur_node,"headers")) != NULL) {
-         ezxml_t header_node;
-         for(header_node = http_node->child; header_node; header_node = header_node->sibling) {
-            apr_table_set(src->http_headers, header_node->name, header_node->txt);
-         }
-      }
-      /* TODO: parse <proxy> and <auth> elements */
+      src->http = geocache_http_configuration_parse(ctx,cur_node);
    }
 }
 
@@ -155,8 +145,8 @@ void _geocache_source_wms_configuration_parse(geocache_context *ctx, ezxml_t nod
 void _geocache_source_wms_configuration_check(geocache_context *ctx, geocache_source *source) {
    geocache_source_wms *src = (geocache_source_wms*)source;
    /* check all required parameters are configured */
-   if(!strlen(src->url)) {
-      ctx->set_error(ctx, 400, "wms source %s has no url",source->name);
+   if(!src->http) {
+      ctx->set_error(ctx, 400, "wms source %s has no <http> request configured",source->name);
    }
    if(!apr_table_get(src->getmap_params,"LAYERS")) {
       ctx->set_error(ctx, 400, "wms source %s has no LAYERS", source->name);
@@ -183,7 +173,6 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    source->wms_default_params = apr_table_make(ctx->pool,4);;
    source->getmap_params = apr_table_make(ctx->pool,4);
    source->getfeatureinfo_params = apr_table_make(ctx->pool,4);
-   source->http_headers = apr_table_make(ctx->pool,1);
    apr_table_add(source->wms_default_params,"VERSION","1.1.1");
    apr_table_add(source->wms_default_params,"REQUEST","GetMap");
    apr_table_add(source->wms_default_params,"SERVICE","WMS");

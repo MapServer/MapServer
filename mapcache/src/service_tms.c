@@ -276,6 +276,7 @@ geocache_service* geocache_service_tms_create(geocache_context *ctx) {
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"tms");
+   service->service.name = apr_pstrdup(ctx->pool,"tms");
    service->service.type = GEOCACHE_SERVICE_TMS;
    service->reverse_y = 0;
    service->service.parse_request = _geocache_service_tms_parse_request;
@@ -294,6 +295,7 @@ geocache_service* geocache_service_gmaps_create(geocache_context *ctx) {
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"gmaps");
+   service->service.name = apr_pstrdup(ctx->pool,"gmaps");
    service->reverse_y = 1;
    service->service.type = GEOCACHE_SERVICE_GMAPS;
    service->service.parse_request = _geocache_service_tms_parse_request;
