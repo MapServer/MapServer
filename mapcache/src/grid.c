@@ -26,6 +26,20 @@ geocache_grid* geocache_grid_create(apr_pool_t *pool) {
    return grid;
 }
 
+
+/**
+ * \brief compute the extent of a given tile in the grid given its x, y, and z.
+ * \returns \extent the tile's extent
+ */
+void geocache_grid_get_extent(geocache_context *ctx, geocache_grid *grid,
+      int x, int y, int z, double *bbox) {
+   double res  = grid->levels[z]->resolution;
+   bbox[0] = grid->extent[0] + (res * x * grid->tile_sx);
+   bbox[1] = grid->extent[1] + (res * y * grid->tile_sy);
+   bbox[2] = grid->extent[0] + (res * (x + 1) * grid->tile_sx);
+   bbox[3] = grid->extent[1] + (res * (y + 1) * grid->tile_sy);
+}
+
 const char* geocache_grid_get_crs(geocache_context *ctx, geocache_grid *grid) {
    char *epsgnum;
 

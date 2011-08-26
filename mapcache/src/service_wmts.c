@@ -157,6 +157,16 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       }
       char *tmsets = "";
       char *bboxes = "";
+      
+      if(tileset->wgs84bbox[0] != tileset->wgs84bbox[2]) {
+         bboxes = apr_psprintf(ctx->pool,
+               "    <ows:WGS84BoundingBox>\n"
+               "      <ows:LowerCorner>%f %f</ows:LowerCorner>\n"
+               "      <ows:UpperCorner>%f %f</ows:UpperCorner>\n"
+               "    </ows:WGS84BoundingBox>\n",
+               tileset->wgs84bbox[0], tileset->wgs84bbox[1],
+               tileset->wgs84bbox[2], tileset->wgs84bbox[3]);
+      }
       for(i=0;i<tileset->grid_links->nelts;i++) {
          char *matrixlimits = "";
          geocache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);

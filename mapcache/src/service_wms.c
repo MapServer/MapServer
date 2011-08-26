@@ -176,23 +176,26 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
                dimensions = apr_pstrcat(ctx->pool,dimensions,"</Dimension>\n",NULL);
             }
          }
-         for(i=0;i<tileset->grid_links->nelts;i++) {
-            geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*)->grid;
-            char *bbox = apr_psprintf(ctx->pool,wms_bbox,
-                  grid->srs,
-                  grid->extent[0],
-                  grid->extent[1],
-                  grid->extent[2],
-                  grid->extent[3],
-                  grid->srs);
-            srss = apr_pstrcat(ctx->pool,srss,bbox,NULL);
-            if(!strcasecmp(grid->srs,"epsg:4326")) {
-               char *wgs84bbox = apr_psprintf(ctx->pool,"<LatLonBoundingBox minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>",
-                     grid->extent[0], grid->extent[1],
-                     grid->extent[2], grid->extent[3]);
-               srss = apr_pstrcat(ctx->pool,srss,wgs84bbox,NULL);
+         if(tileset->wgs84bbox[0] != tileset->wgs84bbox[2]) {
+            char *wgs84bbox = apr_psprintf(ctx->pool,"<LatLonBoundingBox minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>\n",
+                  tileset->wgs84bbox[0], tileset->wgs84bbox[1],
+                  tileset->wgs84bbox[2], tileset->wgs84bbox[3]);
+            srss = apr_pstrcat(ctx->pool,srss,wgs84bbox,NULL);
+         }
 
-            }
+         for(i=0;i<tileset->grid_links->nelts;i++) {
+            geocache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+            double *extent = gridlink->grid->extent;
+            if(gridlink->restricted_extent)
+               extent = gridlink->restricted_extent;
+            char *bbox = apr_psprintf(ctx->pool,wms_bbox,
+                  gridlink->grid->srs,
+                  extent[0],
+                  extent[1],
+                  extent[2],
+                  extent[3],
+                  gridlink->grid->srs);
+            srss = apr_pstrcat(ctx->pool,srss,bbox,NULL);
          }
          char *layercaps = apr_psprintf(ctx->pool,wms_layer,
                tileset->name,

@@ -841,9 +841,9 @@ struct geocache_tileset {
     char *name;
 
     /**
-     * the extent of the tileset that can be cached
+     * the extent of the tileset in lonlat
      */
-    double restricted_extent[4];
+    double wgs84bbox[4];
 
     /**
      * list of grids that will be cached
@@ -879,12 +879,6 @@ struct geocache_tileset {
      * the format to use when storing tiles coming from a metatile
      */
     geocache_image_format *format;
-
-    /**
-     * the format to use when storing a tile coming from a source
-     * if NULL, store what the source has produced without processing
-     */
-    geocache_image_format *cache_format;
 
     /**
      * a list of parameters that can be forwarded from the client to the geocache_tileset::source
@@ -988,14 +982,6 @@ geocache_map* geocache_tileset_map_create(apr_pool_t *pool, geocache_tileset *ti
  */
 geocache_tileset* geocache_tileset_create(geocache_context *ctx);
 
-/**
- * \brief compute the bounding box of a tile
- * @param tile the input tile
- * @param bbox the bounding box to populate
- */
-void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox);
-
-
 
 /**
  * lock the tile
@@ -1035,6 +1021,8 @@ geocache_grid* geocache_grid_create(apr_pool_t *pool);
 const char* geocache_grid_get_crs(geocache_context *ctx, geocache_grid *grid);
 const char* geocache_grid_get_srs(geocache_context *ctx, geocache_grid *grid);
 
+void geocache_grid_get_extent(geocache_context *ctx, geocache_grid *grid,
+      int x, int y, int z, double *bbox);
 /**
  * \brief compute x y value for given lon/lat (dx/dy) and given zoomlevel
  * @param ctx

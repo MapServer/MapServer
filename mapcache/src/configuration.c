@@ -569,6 +569,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    geocache_tileset *tileset = NULL;
    ezxml_t cur_node;
    char* value;
+   int havewgs84bbox=0;
    name = (char*)ezxml_attr(node,"name");
    if(!name || !strlen(name)) {
       ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in <tileset>");
@@ -584,6 +585,31 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
    }
    tileset = geocache_tileset_create(ctx);
    tileset->name = name;
+   
+   if ((cur_node = ezxml_child(node,"metadata")) != NULL) {
+      parseMetadata(ctx, cur_node, tileset->metadata);
+      GC_CHECK_ERROR(ctx);
+   }
+   
+   
+   if ((value = (char*)apr_table_get(tileset->metadata,"wgs84boundingbox")) != NULL) {
+      double *values;
+      int nvalues;
+      value = apr_pstrdup(ctx->pool,value);
+      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, value, ' ', &values, &nvalues) ||
+            nvalues != 4) {
+         ctx->set_error(ctx, 400, "failed to parse extent array %s."
+               "(expecting 4 space separated numbers, got %d (%f %f %f %f)"
+               "eg <wgs84bbox>-180 -90 180 90</wgs84bbox>",
+               value,nvalues,values[0],values[1],values[2],values[3]);
+         return;
+      }
+      tileset->wgs84bbox[0] = values[0];
+      tileset->wgs84bbox[1] = values[1];
+      tileset->wgs84bbox[2] = values[2];
+      tileset->wgs84bbox[3] = values[3];
+      havewgs84bbox = 1;
+   }
 
    for(cur_node = ezxml_child(node,"grid"); cur_node; cur_node = cur_node->next) {
       int i;
@@ -603,6 +629,7 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       for(i=0;i<grid->nlevels;i++) {
          gridlink->grid_limits[i] = apr_pcalloc(ctx->pool,4*sizeof(int));
       }
+      double *extent;
       restrictedExtent = (char*)ezxml_attr(cur_node,"restricted_extent");
       if(restrictedExtent) {
          int nvalues;
@@ -615,19 +642,22 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
                   restrictedExtent);
             return;
          }
-         geocache_grid_compute_limits(grid,gridlink->restricted_extent,gridlink->grid_limits);
-
+         extent = gridlink->restricted_extent;
       } else {
-         geocache_grid_compute_limits(grid,grid->extent,gridlink->grid_limits);
+         extent = grid->extent;
+      }
+      geocache_grid_compute_limits(grid,extent,gridlink->grid_limits);
+      
+      /* compute wgs84 bbox if it wasn't supplied already */
+      if(!havewgs84bbox && !strcasecmp(grid->srs,"epsg:4326")) {
+         tileset->wgs84bbox[0] = extent[0];
+         tileset->wgs84bbox[1] = extent[1];
+         tileset->wgs84bbox[2] = extent[2];
+         tileset->wgs84bbox[3] = extent[3];
       }
       APR_ARRAY_PUSH(tileset->grid_links,geocache_grid_link*) = gridlink;
    }
 
-   if ((cur_node = ezxml_child(node,"metadata")) != NULL) {
-      parseMetadata(ctx, cur_node, tileset->metadata);
-      GC_CHECK_ERROR(ctx);
-   }
-   
    if ((cur_node = ezxml_child(node,"dimensions")) != NULL) {
       parseDimensions(ctx, cur_node, tileset);
       GC_CHECK_ERROR(ctx);
@@ -764,6 +794,14 @@ void parseTileset(geocache_context *ctx, ezxml_t node, geocache_cfg *config) {
       ctx->set_error(ctx, 400, "tileset \"%s\" has no grids configured."
             " You must add a <grid> tag.", tileset->name);
       return;
+   } else if(!havewgs84bbox) {
+#ifdef USE_PROJ
+      geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
+      double *extent = sgrid->grid->extent;
+      if(sgrid->restricted_extent) {
+         extent = sgrid->restricted_extent;
+      }
+#endif
    }
 
    if(!tileset->format && (

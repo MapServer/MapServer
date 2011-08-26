@@ -32,7 +32,8 @@ void _create_capabilities_kml(geocache_context *ctx, geocache_request_get_capabi
    }
    request->request.mime_type = apr_pstrdup(ctx->pool,"application/vnd.google-earth.kml+xml");
 
-   geocache_tileset_tile_bbox(request->tile,bbox);
+   geocache_grid_get_extent(ctx,request->tile->grid_link->grid,
+         request->tile->x, request->tile->y, request->tile->z, bbox);
 
 
    caps = apr_psprintf(ctx->pool,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -73,7 +74,8 @@ void _create_capabilities_kml(geocache_context *ctx, geocache_request_get_capabi
             t->x = (request->tile->x << 1) +i;
             t->y = (request->tile->y << 1) +j;
             t->z = request->tile->z + 1;
-            geocache_tileset_tile_bbox(t,bb);
+            geocache_grid_get_extent(ctx,t->grid_link->grid,
+                  t->x, t->y, t->z, bb);
 
             caps = apr_psprintf(ctx->pool,"%s"
                   "    <NetworkLink>\n"

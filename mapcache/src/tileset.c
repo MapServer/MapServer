@@ -101,7 +101,8 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
    for(i=0;i<ntiles;i++) {
       geocache_tile *tile = tiles[i];
       double tileresolution = tile->grid_link->grid->levels[tile->z]->resolution;
-      geocache_tileset_tile_bbox(tile,tilebbox);
+      geocache_grid_get_extent(ctx,tile->grid_link->grid,
+            tile->x, tile->y, tile->z, tilebbox);
       geocache_image *im = geocache_imageio_decode(ctx,tile->data);
       cairo_surface_t* srcsurface= cairo_image_surface_create_for_data(im->data, CAIRO_FORMAT_ARGB32,
             im->w, im->h,im->stride);
@@ -198,16 +199,6 @@ void _geocache_tileset_render_metatile(geocache_context *ctx, geocache_metatile 
    }
 }
 
-/*
- * compute the bounding box of a given tile
- */
-void geocache_tileset_tile_bbox(geocache_tile *tile, double *bbox) {
-   double res  = tile->grid_link->grid->levels[tile->z]->resolution;
-   bbox[0] = tile->grid_link->grid->extent[0] + (res * tile->x * tile->grid_link->grid->tile_sx);
-   bbox[1] = tile->grid_link->grid->extent[1] + (res * tile->y * tile->grid_link->grid->tile_sy);
-   bbox[2] = tile->grid_link->grid->extent[0] + (res * (tile->x + 1) * tile->grid_link->grid->tile_sx);
-   bbox[3] = tile->grid_link->grid->extent[1] + (res * (tile->y + 1) * tile->grid_link->grid->tile_sy);
-}
 
 /*
  * allocate and initialize a new tileset
