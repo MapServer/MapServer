@@ -38,7 +38,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
    }
    url = apr_pstrcat(ctx->pool,url,"/wms?",NULL);
    caps = ezxml_new("WMT_MS_Capabilities");
-   ezxml_set_attr(caps,"version","1.1.0");
+   ezxml_set_attr(caps,"version","1.1.1");
 /*
           "<Service>\n"
             "<Name>OGC:WMS</Name>\n"
@@ -138,6 +138,28 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
 
    ezxml_t vendorxml = ezxml_add_child(capxml,"VendorSpecificCapabilities",0);
    ezxml_t toplayer = ezxml_add_child(capxml,"Layer",0);
+   tmpxml = ezxml_add_child(toplayer,"Name",0);
+   ezxml_set_txt(tmpxml,"rootlayer");
+   tmpxml = ezxml_add_child(toplayer,"Title",0);
+   ezxml_set_txt(tmpxml,title);
+
+   /* 
+    * announce all layer srs's in the root layer. This part of the wms spec we
+    * cannot respect with a caching solution, as each tileset can only be served
+    * under a specified number of projections.
+    *
+    * TODO: check for duplicates in gris srs
+    */
+   apr_hash_index_t *grid_index = apr_hash_first(ctx->pool,cfg->grids);
+   while(grid_index) {
+      const void *key;
+      apr_ssize_t keylen;
+      geocache_grid *grid = NULL;
+      apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
+      ezxml_set_txt(ezxml_add_child(toplayer,"SRS",0),grid->srs);
+      grid_index = apr_hash_next(grid_index);
+   }
+
    
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
 
