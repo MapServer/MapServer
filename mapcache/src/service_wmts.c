@@ -230,16 +230,6 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       if(WellKnownScaleSet) {
          ezxml_set_txt(ezxml_add_child(tmset,"WellKnownScaleSet",0),WellKnownScaleSet);
       }
-static const char *wmts_matrix = 
-      "    <TileMatrix>\n"
-      "      <ows:Identifier>%d</ows:Identifier>\n"
-      "      <ScaleDenominator>%.20f</ScaleDenominator>\n"
-      "      <TopLeftCorner>%f %f</TopLeftCorner>\n"
-      "      <TileWidth>%d</TileWidth>\n"
-      "      <TileHeight>%d</TileHeight>\n"
-      "      <MatrixWidth>%d</MatrixWidth>\n"
-      "      <MatrixHeight>%d</MatrixHeight>\n"
-      "    </TileMatrix>\n";
       
       for(level=0;level<grid->nlevels;level++) {
          ezxml_t tm = ezxml_add_child(tmset,"TileMatrix",0);
