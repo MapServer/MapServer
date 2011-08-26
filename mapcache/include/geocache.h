@@ -690,6 +690,12 @@ struct geocache_server_cfg {
     char *mutex_name;
 };
 
+typedef enum {
+   GEOCACHE_GETMAP_ERROR,
+   GEOCACHE_GETMAP_ASSEMBLE,
+   GEOCACHE_GETMAP_FORWARD
+} geocache_getmap_strategy;
+
 /**
  * a configuration that will be served
  */
@@ -732,12 +738,19 @@ struct geocache_cfg {
     geocache_image_format *merge_format;
 
     /**
-      * how should error messages be reported to the user
-      */
-     geocache_error_reporting reporting;
-     geocache_buffer *empty_image;
-     
-     apr_table_t *metadata;
+     * how should error messages be reported to the user
+     */
+    geocache_error_reporting reporting;
+
+    /**
+     * encoded empty (tranpsarent) image that will be returned to clients if cofigured
+     * to return blank images upon error
+     */
+    geocache_buffer *empty_image;
+
+    geocache_getmap_strategy getmap_strategy;
+
+    apr_table_t *metadata;
 };
 
 /**

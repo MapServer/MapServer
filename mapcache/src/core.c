@@ -57,32 +57,57 @@ geocache_image* _core_get_single_map(geocache_context *ctx, geocache_map *map) {
 }
 
 geocache_map *geocache_core_get_map(geocache_context *ctx, geocache_request_get_map *req_map) {
-#ifdef USE_CAIRO
 #ifdef DEBUG
    if(req_map->nmaps ==0) {
       ctx->set_error(ctx,500,"BUG: get_map called with 0 maps");
       return NULL;
    }
 #endif
-   int i;
-   geocache_map *basemap = req_map->maps[0];
-   geocache_image *baseim = _core_get_single_map(ctx,basemap);
-   if(GC_HAS_ERROR(ctx)) return NULL;
-   for(i=1;i<req_map->nmaps;i++) {
-      geocache_map *overlaymap = req_map->maps[i];
-      geocache_image *overlayim = _core_get_single_map(ctx,overlaymap); 
-      if(GC_HAS_ERROR(ctx)) return NULL;
-      geocache_image_merge(ctx,baseim,overlayim);
-      if(GC_HAS_ERROR(ctx)) return NULL;
-   }
 
-   geocache_map *getmap = geocache_tileset_map_create(ctx->pool,basemap->tileset, basemap->grid_link);
-   getmap->data = basemap->tileset->format->write(ctx,baseim,basemap->tileset->format);
-   return getmap;
+   if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_ERROR) {
+      ctx->set_error(ctx, 404, "full wms support disabled");
+      return NULL;
+   } else if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE) {
+#ifdef USE_CAIRO
+      int i;
+      geocache_map *basemap = req_map->maps[0];
+      geocache_image *baseim = _core_get_single_map(ctx,basemap);
+      if(GC_HAS_ERROR(ctx)) return NULL;
+      for(i=1;i<req_map->nmaps;i++) {
+         geocache_map *overlaymap = req_map->maps[i];
+         geocache_image *overlayim = _core_get_single_map(ctx,overlaymap); 
+         if(GC_HAS_ERROR(ctx)) return NULL;
+         geocache_image_merge(ctx,baseim,overlayim);
+         if(GC_HAS_ERROR(ctx)) return NULL;
+      }
+
+      basemap->data = basemap->tileset->format->write(ctx,baseim,basemap->tileset->format);
+      return basemap;
 #else
-   ctx->set_error(ctx,501,"wms getmap handling not configured in this build");
-   return NULL;
+      ctx->set_error(ctx,501,"cairo not enabled: wms getmap handling by assembling tiles not configured in this build");
+      return NULL;
 #endif
+   } else /*if(ctx->config->getmap_strategy == GEOCACHE_GETMAP_FORWARD)*/ {
+      int i;
+      geocache_map *basemap = req_map->maps[0];
+      basemap->tileset->source->render_map(ctx, basemap);
+      if(GC_HAS_ERROR(ctx)) return NULL;
+      if(i>1) {
+         geocache_image *baseim = geocache_imageio_decode(ctx,basemap->data);
+         if(GC_HAS_ERROR(ctx)) return NULL;
+         for(i=1;i<req_map->nmaps;i++) {
+            geocache_map *overlaymap = req_map->maps[i];
+            overlaymap->tileset->source->render_map(ctx, overlaymap);
+            if(GC_HAS_ERROR(ctx)) return NULL;
+            geocache_image *overlayim = geocache_imageio_decode(ctx,overlaymap->data); 
+            if(GC_HAS_ERROR(ctx)) return NULL;
+            geocache_image_merge(ctx,baseim,overlayim);
+            if(GC_HAS_ERROR(ctx)) return NULL;
+         }
+         basemap->data = basemap->tileset->format->write(ctx,baseim,basemap->tileset->format);
+      }
+      return basemap;
+   }
 }
 
 geocache_feature_info *geocache_core_get_featureinfo(geocache_context *ctx,

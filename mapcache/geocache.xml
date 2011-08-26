@@ -4,9 +4,13 @@
       <title>my geocache service</title>
       <abstract>woot! this is a service abstract!</abstract>
 
-      <!-- 
+      <!-- url
+
            uncomment and modify this if you need to provide another base url for
-           getCapabilities requests (for the OnlineResource tags)
+           getCapabilities requests (for the OnlineResource tags). You should use 
+           this if there's a proxy between the client and the mod-geocache service
+           and you want the capabilities document to point to the correct endpoints.
+      
       <url>http://mysuperhost/proxy/to/geocache</url>
       -->
    </metadata>
@@ -88,7 +92,7 @@
                <title>GoogleMapsCompatible</title>
                <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible</WellKnownScaleSet>
             </metadata>
-            <extent>-20037508.34,-20037508.34,20037508.34,20037508.34</extent>
+            <extent>-20037508.3427892480,-20037508.3427892480,20037508.3427892480,20037508.3427892480</extent>
             <srs>epsg:900913</srs>
             <size>256 256</size>
             <resolutions>
@@ -120,7 +124,7 @@
                <title>GoogleMapsCompatible</title>
                <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible</WellKnownScaleSet>
             </metadata>
-            <extent>-20037508.34,-20037508.34,20037508.34,20037508.34</extent>
+            <extent>-20037508.3427892480,-20037508.3427892480,20037508.3427892480,20037508.3427892480</extent>
             <srs>epsg:3857</srs>
             <size>256 256</size>
             <resolutions>
@@ -238,7 +242,7 @@
       -->
       <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
       
-      <!-- wmsparams
+      <!-- getmap
 
          extra parameters that will be added to the GetMap request. you can specify any
          parameter here, e.g. VERSION if you want to override the version of the WMS
@@ -315,8 +319,18 @@
             <TRANSPARENT>true</TRANSPARENT>
          </params>
       </getmap>
+
+      <!-- getfeatureinfo
+           additional parameters to use if you want to enable proxying GetFeatureInfo requests
+           to this source
+      -->
       <getfeatureinfo>
+         <!-- info_formats: comma separated list of wms info_formats supported by the source WMS.
+              you can get this list by studying the source WMS capabilities document.
+         -->
          <info_formats>text/plain,application/vnd.ogc.gml</info_formats>
+
+         <!-- KVP params to pass with the request. QUERY_LAYERS is mandatory -->
          <params>
             <QUERY_LAYERS>GRAVI_BASE</QUERY_LAYERS>
          </params>
@@ -507,8 +521,10 @@
       <!-- OSGEO TMS -->
       <tms>true</tms>
       
+      <!-- Virtualearth/Bing quadkey-->
       <ve>true</ve>
-      
+
+      <!-- kml superoverlays -->
       <kml>true</kml>
       
       <!-- OGC WMTS -->
@@ -534,4 +550,18 @@
         if you're paranoid, or to "empty_img" if you want to play nice with non-conforming clients.
    -->
    <errors>report</errors>
+
+   <!-- full_wms
+        configure response to wms requests that are not aligned to a tileset's grids.
+        responding to requests that are not in the SRS of a configured grid is not supported, but
+        this should never happen as only the supported SRSs are publicized in the capabilities
+        document.
+
+        allowed values are:
+          - error: return a 404 error (default)
+          - assemble: build the full image by assembling the tiles from the cache
+          - forward: forward the request to the configured source.
+   -->
+   <full_wms>forward</full_wms>
+
 </geocache>

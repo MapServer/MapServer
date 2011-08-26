@@ -975,6 +975,17 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
       }
    }
 
+   config->getmap_strategy = GEOCACHE_GETMAP_ERROR;
+   if ((node = ezxml_child(doc,"full_wms")) != NULL) {
+      if(!strcmp(node->txt,"assemble")) {
+         config->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
+      } else if(!strcmp(node->txt,"forward")) {
+         config->getmap_strategy = GEOCACHE_GETMAP_FORWARD;
+      } else if(*node->txt && strcmp(node->txt,"error")) {
+         ctx->set_error(ctx,400, "unknown value %s for node <full_wms> (allowed values: assemble, getmap or error", node->txt);
+         goto cleanup;
+      }
+   }
 
 
 cleanup:
