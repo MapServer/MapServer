@@ -132,7 +132,7 @@ geocache_image* geocache_tileset_assemble_map_tiles(geocache_context *ctx, geoca
 /*
  * compute the metatile that should be rendered for the given tile
  */
-static geocache_metatile* _geocache_tileset_metatile_get(geocache_context *ctx, geocache_tile *tile) {
+geocache_metatile* geocache_tileset_metatile_get(geocache_context *ctx, geocache_tile *tile) {
    geocache_metatile *mt = (geocache_metatile*)apr_pcalloc(ctx->pool, sizeof(geocache_metatile));
    int i,j,blx,bly;
    geocache_tileset *tileset = tile->tileset;
@@ -310,7 +310,7 @@ void geocache_tileset_tile_get(geocache_context *ctx, geocache_tile *tile) {
       ctx->global_lock_aquire(ctx);
       GC_CHECK_ERROR(ctx);
       
-      mt = _geocache_tileset_metatile_get(ctx, tile);
+      mt = geocache_tileset_metatile_get(ctx, tile);
 
       isLocked = geocache_tileset_metatile_lock_exists(ctx, mt);
       if(isLocked == GEOCACHE_FALSE) {
@@ -359,7 +359,7 @@ void geocache_tileset_tile_delete(geocache_context *ctx, geocache_tile *tile) {
    tile->tileset->cache->tile_delete(ctx,tile);
    GC_CHECK_ERROR(ctx);
 
-   geocache_metatile *mt = _geocache_tileset_metatile_get(ctx, tile);
+   geocache_metatile *mt = geocache_tileset_metatile_get(ctx, tile);
    for(i=0;i<mt->ntiles;i++) {
       geocache_tile *subtile = &mt->tiles[i];
       /* skip deleting the actual tile */

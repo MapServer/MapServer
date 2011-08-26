@@ -1045,6 +1045,8 @@ geocache_tileset* geocache_tileset_create(geocache_context *ctx);
  */
 void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *tile);
 
+geocache_metatile* geocache_tileset_metatile_get(geocache_context *ctx, geocache_tile *tile);
+
 /**
  * unlock the tile
  */

@@ -6,6 +6,12 @@
 #include <time.h>
 #include <apr_time.h>
 
+#ifdef USE_OGR
+#include "ogr_api.h"
+int nClippers = 0;
+OGRGeometryH *clippers=NULL;
+#endif
+
 typedef struct geocache_context_seeding geocache_context_seeding;
 struct geocache_context_seeding{
     geocache_context ctx;
@@ -22,13 +28,19 @@ int sig_int_received = 0;
 
 static const apr_getopt_option_t seed_options[] = {
     /* long-option, short-option, has-arg flag, description */
-    { "config", 'c', TRUE, "configuration file"},
+    { "config", 'c', TRUE, "configuration file (/path/to/geocacahe.xml)"},
     { "tileset", 't', TRUE, "tileset to seed" },
     { "grid", 'g', TRUE, "grid to seed" },
-    { "zoom", 'z', TRUE, "min and max zoomlevels to seed" },
-    { "extent", 'e', TRUE, "extent" },
+    { "zoom", 'z', TRUE, "min and max zoomlevels to seed, separated by a comma. eg 0,6" },
+    { "extent", 'e', TRUE, "extent to seed, format: minx,miny,maxx,maxy" },
     { "nthreads", 'n', TRUE, "number of parallel threads to use" },
     { "older", 'o', TRUE, "reseed tiles older than supplied date (format: year/month/day hour:minute, eg: 2011/01/31 20:45" },
+#ifdef USE_OGR
+    { "ogr-datasource", 'd', TRUE, "ogr datasource to get features from"},
+    { "ogr-layer", 'l', TRUE, "layer inside datasource"},
+    { "ogr-sql", 's', TRUE, "sql to filter inside layer"},
+    { "ogr-where", 'w', TRUE, "filter to apply on layer features"},
+#endif
     { "help", 'h', FALSE, "show help" },
     { NULL, 0, 0, NULL },
 };
@@ -73,6 +85,31 @@ void geocache_context_seeding_log(geocache_context *ctx, geocache_log_level leve
    /* do nothing */
 }
 
+#ifdef USE_OGR
+int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
+   geocache_metatile *mt = geocache_tileset_metatile_get(ctx,tile);
+   OGRGeometryH mtbboxls = OGR_G_CreateGeometry(wkbLinearRing);
+   double *e = mt->map.extent;
+   OGR_G_AddPoint_2D(mtbboxls,e[0],e[1]);
+   OGR_G_AddPoint_2D(mtbboxls,e[2],e[1]);
+   OGR_G_AddPoint_2D(mtbboxls,e[2],e[3]);
+   OGR_G_AddPoint_2D(mtbboxls,e[0],e[3]);
+   OGR_G_AddPoint_2D(mtbboxls,e[0],e[1]);
+   OGRGeometryH mtbbox = OGR_G_CreateGeometry(wkbPolygon);
+   OGR_G_AddGeometryDirectly(mtbbox,mtbboxls);
+   int i;
+   for(i=0;i<nClippers;i++) {
+      OGRGeometryH clipper = clippers[i];
+      if(OGR_G_Intersection(mtbbox,clipper))
+         return 1;
+   }
+   return 0;
+
+
+}
+
+#endif
+
 apr_time_t age_limit = 0;
 int should_seed_tile(geocache_context *ctx, geocache_tileset *tileset,
                     int x, int y, int z,
@@ -83,16 +120,48 @@ int should_seed_tile(geocache_context *ctx, geocache_tileset *tileset,
     tile->y = y;
     tile->z = z;
     int should_seed = tileset->cache->tile_exists(tmpctx,tile)?0:1;
-    
+    int intersects = -1;
     /* if the tile exists and a time limit was specified, check the tile modification date */
     if(!should_seed && age_limit) {
        if(tileset->cache->tile_get(tmpctx,tile) == GEOCACHE_SUCCESS) {
          if(tile->mtime && tile->mtime<age_limit) {
-            should_seed = 1;
-            geocache_tileset_tile_delete(tmpctx,tile);
+#ifdef USE_OGR
+            /* check we are in the requested features before deleting the tile */
+            if(nClippers > 0) {
+               intersects = ogr_features_intersect_tile(ctx,tile);
+            }
+#endif
+            if(intersects != 0) {
+               /* either the tile intersects the ogr features, or we don't care about them:
+                * delete the tile and recreate it */
+               geocache_tileset_tile_delete(tmpctx,tile);
+               return 1;
+            } else {
+               /* the tile does not intersect the ogr features, and already exists, do nothing */
+               return 0;
+            }
          }
        }
     }
+
+    /* if here, the tile does not exist */
+#ifdef USE_OGR
+    /* check we are in the requested features before deleting the tile */
+    if(nClippers > 0) {
+       intersects = ogr_features_intersect_tile(ctx,tile);
+    if(intersects!= 0) {
+      printf("keeping tile\n");
+    } else {
+      printf("skipping tile\n");
+    }
+    }
+#endif
+    if(intersects!= 0) {
+      should_seed = 1;
+    } else {
+       should_seed = 0;
+    }
+
     return should_seed;
 }
 
@@ -149,6 +218,7 @@ void geocache_context_seeding_init(geocache_context_seeding *ctx,
         gctx->set_error(gctx,500,"failed to create mutex");
         return;
     }
+    gctx->config = cfg;
     gctx->global_lock_aquire = geocache_context_seeding_lock_aquire;
     gctx->global_lock_release = geocache_context_seeding_lock_release;
     gctx->log = geocache_context_seeding_log;
@@ -180,6 +250,7 @@ static void* APR_THREAD_FUNC doseed(apr_thread_t *thread, void *data) {
     tile_ctx.global_lock_aquire = dummy_lock_aquire;
     tile_ctx.global_lock_release = dummy_lock_release;
     tile_ctx.log = geocache_context_seeding_log;
+    tile_ctx.config = gctx->config;
     apr_pool_create(&tile_ctx.pool,NULL);
     while(GEOCACHE_SUCCESS == ctx->get_next_tile(ctx,tile,&tile_ctx) && !sig_int_received) {
         geocache_tileset_tile_get(&tile_ctx,tile);
@@ -251,16 +322,26 @@ int main(int argc, const char **argv) {
     int rv,n;
     const char *old = NULL;
     const char *optarg;
+
+#ifdef USE_OGR
+    const char *ogr_where = NULL;
+    const char *ogr_layer = NULL;
+    const char *ogr_sql = NULL;
+    const char *ogr_datasource = NULL;
+#endif
+
     apr_initialize();
     (void) signal(SIGINT,handle_sig_int);
     apr_pool_create(&gctx->pool,NULL);
     geocache_context_init(gctx);
     cfg = geocache_configuration_create(gctx->pool);
+    gctx->config = cfg;
     apr_getopt_init(&opt, gctx->pool, argc, argv);
     
     curz=-1;
     seededtiles=seededtilestot=0;
     starttime = lastlogtime = time(NULL);
+
     /* parse the all options based on opt_option[] */
     while ((rv = apr_getopt_long(opt, seed_options, &optch, &optarg)) == APR_SUCCESS) {
         switch (optch) {
@@ -294,6 +375,20 @@ int main(int argc, const char **argv) {
             case 'o':
                 old = optarg;
                 break;
+#ifdef USE_OGR
+            case 'd':
+                ogr_datasource = optarg;
+                break;
+            case 's':
+                ogr_sql = optarg;
+                break;
+            case 'l':
+                ogr_layer = optarg;
+                break;
+            case 'w':
+               ogr_where = optarg;
+               break;
+#endif
 
         }
     }
@@ -308,6 +403,81 @@ int main(int argc, const char **argv) {
         if(gctx->get_error(gctx))
             return usage(argv[0],gctx->get_error_message(gctx));
     }
+
+#ifdef USE_OGR
+    if(extent && ogr_datasource) {
+       return usage(argv[0], "cannot specify both extent and ogr-datasource");
+    }
+
+    if( ogr_sql && ( ogr_where || ogr_layer )) {
+      return usage(argv[0], "ogr-where or ogr_layer cannot be used in conjunction with ogr-sql");
+    }
+
+    if(ogr_datasource) {
+       OGRRegisterAll();
+       OGRDataSourceH hDS = NULL;
+       OGRLayerH layer = NULL;
+       hDS = OGROpen( ogr_datasource, FALSE, NULL );
+       if( hDS == NULL )
+       {
+          printf( "OGR Open failed\n" );
+          exit( 1 );
+       }
+
+       if(ogr_sql) {
+         layer = OGR_DS_ExecuteSQL( hDS, ogr_sql, NULL, NULL);
+         if(!layer) {
+            return usage(argv[0],"aborting");
+         }
+       } else {
+         int nLayers = OGR_DS_GetLayerCount(hDS);
+         if(nLayers>1 && !ogr_layer) {
+            return usage(argv[0],"ogr datastore contains more than one layer. please specify which one to use with --ogr-layer");
+         } else {
+            if(ogr_layer) {
+               layer = OGR_DS_GetLayerByName(hDS,ogr_layer);
+            } else {
+               layer = OGR_DS_GetLayer(hDS,0);
+            }
+            if(!layer) {
+               return usage(argv[0],"aborting");
+            }
+            if(ogr_where) {
+               if(OGRERR_NONE != OGR_L_SetAttributeFilter(layer, ogr_where)) {
+                  return usage(argv[0],"aborting");
+               }
+            }
+
+         }
+       }
+      if((nClippers=OGR_L_GetFeatureCount(layer, TRUE)) == 0) {
+         return usage(argv[0],"no features in provided ogr parameters, cannot continue");
+      }
+      OGREnvelope ogr_extent;
+
+      OGR_L_GetExtent(layer,&ogr_extent,TRUE);
+      extent = apr_pcalloc(gctx->pool,4*sizeof(double));
+      extent[0] = ogr_extent.MinX;
+      extent[1] = ogr_extent.MinY;
+      extent[2] = ogr_extent.MaxX;
+      extent[3] = ogr_extent.MaxY;
+
+
+      clippers = (OGRGeometryH*)malloc(nClippers*sizeof(OGRGeometryH));
+
+
+      OGRFeatureH hFeature;
+
+      OGR_L_ResetReading(layer);
+      int f=0;
+      while( (hFeature = OGR_L_GetNextFeature(layer)) != NULL ) {
+         clippers[f] = OGR_F_StealGeometry(hFeature);
+         OGR_F_Destroy( hFeature );
+      }
+      
+
+    }
+#endif
 
     geocache_grid_link *grid_link = NULL;
 
