@@ -880,9 +880,15 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     featuresdrawn++;
 
     cache = MS_FALSE;
-    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || 
-        (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth>0)))
+    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth>0))) {
+      int i;
       cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
+
+      /* we can't handle caching with attribute binding other than for the first style (#3976) */
+      for(i=1;i<layer->class[shape.classindex]->numstyles; i++) {
+        if(layer->class[shape.classindex]->styles[i]->numbindings > 0) cache = MS_FALSE;
+      }
+    }
          
     /* With 'STYLEITEM AUTO', we will have the datasource fill the class' */
     /* style parameters for this shape. */
