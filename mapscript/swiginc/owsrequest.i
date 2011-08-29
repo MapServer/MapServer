@@ -112,6 +112,16 @@ static char *msGetEnvURL( const char *key, void *thread_context )
             self->NumParams++;
         }
     }
+    
+    void addParameter(char *name, char *value)
+    {
+        if (self->NumParams == MS_DEFAULT_CGI_PARAMS) {
+            msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "addParameter()", MS_DEFAULT_CGI_PARAMS);
+        }
+        self->ParamNames[self->NumParams] = strdup(name);
+        self->ParamValues[self->NumParams] = strdup(value);
+        self->NumParams++;
+    }
 
     char *getName(int index) 
     {

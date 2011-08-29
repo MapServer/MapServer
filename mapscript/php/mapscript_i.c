@@ -1460,6 +1460,16 @@ void cgirequestObj_setParameter(cgiRequestObj *self, char *name, char *value)
     }
 }
 
+void cgirequestObj_addParameter(cgiRequestObj *self, char *name, char *value)
+{
+    if (self->NumParams == MS_DEFAULT_CGI_PARAMS) {
+      msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "addParameter()", MS_DEFAULT_CGI_PARAMS);
+    }
+    self->ParamNames[self->NumParams] = strdup(name);
+    self->ParamValues[self->NumParams] = strdup(value);
+    self->NumParams++;
+}
+
 char *cgirequestObj_getName(cgiRequestObj *self, int index)
 {
     if (index < 0 || index >= self->NumParams) {

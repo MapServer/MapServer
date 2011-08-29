@@ -763,6 +763,7 @@ int cgirequestObj_loadParams(cgiRequestObj *self,
                              ms_uint32 raw_post_data_length,
                              void* thread_context);
 void cgirequestObj_setParameter(cgiRequestObj *self, char *name, char *value);
+void cgirequestObj_addParameter(cgiRequestObj *self, char *name, char *value);
 char *cgirequestObj_getName(cgiRequestObj *self, int index);
 char *cgirequestObj_getValue(cgiRequestObj *self, int index);
 char *cgirequestObj_getValueByName(cgiRequestObj *self, const char *name);

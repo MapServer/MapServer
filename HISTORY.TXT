@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Added addParameter() method to MapScript (#3973)
+
 - Changed msDrawVectorLayer() not to cache shapes if attribute binding is present after	the first style	(#3976)
 
 - Fix mapscript to build when TRUE macro is not defined (#3926)

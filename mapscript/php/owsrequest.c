@@ -51,6 +51,11 @@ ZEND_BEGIN_ARG_INFO_EX(owsrequest_setParameter_args, 0, 0, 2)
   ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(owsrequest_addParameter_args, 0, 0, 2)
+  ZEND_ARG_INFO(0, name)
+  ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(owsrequest_getName_args, 0, 0, 1)
   ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
@@ -231,6 +236,33 @@ PHP_METHOD(OWSRequestObj, setParameter)
 }
 /* }}} */
 
+/* {{{ proto int owsrequest.addParameter(string name, string value)
+   Add a request parameter. */
+PHP_METHOD(OWSRequestObj, addParameter)
+{
+    char *name;
+    long name_len;
+    char *value;
+    long value_len;
+    zval *zobj = getThis();
+    php_owsrequest_object *php_owsrequest;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+                              &name, &name_len, &value, &value_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_owsrequest = (php_owsrequest_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    cgirequestObj_addParameter(php_owsrequest->cgirequest, name, value);
+
+    RETURN_LONG(MS_SUCCESS);
+}
+/* }}} */
+
 /* {{{ proto string owsrequest.getName(int index) 
    Return the name of the parameter at index in the request’s array of parameter names. */
 PHP_METHOD(OWSRequestObj, getName)
@@ -319,6 +351,7 @@ zend_function_entry owsrequest_functions[] = {
     PHP_ME(OWSRequestObj, __set, owsrequest___set_args, ZEND_ACC_PUBLIC)
     PHP_ME(OWSRequestObj, loadParams, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(OWSRequestObj, setParameter, owsrequest_setParameter_args, ZEND_ACC_PUBLIC)
+    PHP_ME(OWSRequestObj, addParameter, owsrequest_addParameter_args, ZEND_ACC_PUBLIC)
     PHP_ME(OWSRequestObj, getName, owsrequest_getName_args, ZEND_ACC_PUBLIC)
     PHP_ME(OWSRequestObj, getValue, owsrequest_getValue_args, ZEND_ACC_PUBLIC)
     PHP_ME(OWSRequestObj, getValueByName, owsrequest_getValueByName_args, ZEND_ACC_PUBLIC)
