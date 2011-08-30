@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_strings.h>
 #include <math.h>
 
@@ -22,7 +22,7 @@
 /** @{ */
 
 
-void geocache_service_dispatch_request(geocache_context *ctx, geocache_request **request, char *pathinfo, apr_table_t *params, geocache_cfg *config) {
+void mapcache_service_dispatch_request(mapcache_context *ctx, mapcache_request **request, char *pathinfo, apr_table_t *params, mapcache_cfg *config) {
    int i;
    
    /* skip empty pathinfo */
@@ -35,10 +35,10 @@ void geocache_service_dispatch_request(geocache_context *ctx, geocache_request *
    while((*pathinfo) == '/')
       ++pathinfo;
    
-   for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
+   for(i=0;i<MAPCACHE_SERVICES_COUNT;i++) {
       /* loop through the services that have been configured */
       int prefixlen;
-      geocache_service *service = NULL;
+      mapcache_service *service = NULL;
       service = config->services[i];
       if(!service) continue; /* skip an unconfigured service */
       prefixlen = strlen(service->url_prefix);

@@ -14,21 +14,21 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #ifdef USE_PIXMAN
 #include <pixman.h>
 #else
 #include <math.h>
 #endif
 
-geocache_image* geocache_image_create(geocache_context *ctx) {
-    geocache_image *img = (geocache_image*)apr_pcalloc(ctx->pool,sizeof(geocache_image));
+mapcache_image* mapcache_image_create(mapcache_context *ctx) {
+    mapcache_image *img = (mapcache_image*)apr_pcalloc(ctx->pool,sizeof(mapcache_image));
     img->w= img->h= 0;
     img->data=NULL;
     return img;
 }
 
-int geocache_image_has_alpha(geocache_image *img) {
+int mapcache_image_has_alpha(mapcache_image *img) {
    size_t i,j;
    unsigned char *ptr, *rptr = img->data;
    for(i=0;i<img->h;i++) {     
@@ -43,7 +43,7 @@ int geocache_image_has_alpha(geocache_image *img) {
    return 0;
 }
 
-void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_image *overlay) {
+void mapcache_image_merge(mapcache_context *ctx, mapcache_image *base, mapcache_image *overlay) {
    int starti,startj;
    if(base->w < overlay->w || base->h < overlay->h) {
       ctx->set_error(ctx, 500, "attempting to merge an larger image onto another");
@@ -106,7 +106,7 @@ void geocache_image_merge(geocache_context *ctx, geocache_image *base, geocache_
 }
 
 #ifndef USE_PIXMAN
-static inline void bilinear_pixel(geocache_image *img, double x, double y, unsigned char *dst) {
+static inline void bilinear_pixel(mapcache_image *img, double x, double y, unsigned char *dst) {
    int px,py;
    px = (int)x;
    py = (int)y;
@@ -138,7 +138,7 @@ static inline void bilinear_pixel(geocache_image *img, double x, double y, unsig
 }
 #endif
 
-void geocache_image_copy_resampled_nearest(geocache_context *ctx, geocache_image *src, geocache_image *dst,
+void mapcache_image_copy_resampled_nearest(mapcache_context *ctx, mapcache_image *src, mapcache_image *dst,
       double off_x, double off_y, double scale_x, double scale_y) {
 #ifdef USE_PIXMAN
    pixman_image_t *si = pixman_image_create_bits(PIXMAN_a8r8g8b8,src->w,src->h,
@@ -175,7 +175,7 @@ void geocache_image_copy_resampled_nearest(geocache_context *ctx, geocache_image
 } 
 
 
-void geocache_image_copy_resampled_bilinear(geocache_context *ctx, geocache_image *src, geocache_image *dst,
+void mapcache_image_copy_resampled_bilinear(mapcache_context *ctx, mapcache_image *src, mapcache_image *dst,
       double off_x, double off_y, double scale_x, double scale_y) {
 #ifdef USE_PIXMAN
    pixman_image_t *si = pixman_image_create_bits(PIXMAN_a8r8g8b8,src->w,src->h,
@@ -211,16 +211,16 @@ void geocache_image_copy_resampled_bilinear(geocache_context *ctx, geocache_imag
 #endif
 } 
 
-void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt) {
+void mapcache_image_metatile_split(mapcache_context *ctx, mapcache_metatile *mt) {
    if(mt->map.tileset->format) {
       /* the tileset has a format defined, we will use it to encode the data */
-      geocache_image tileimg;
-      geocache_image *metatile;
+      mapcache_image tileimg;
+      mapcache_image *metatile;
       int i,j;
       int sx,sy;
       tileimg.w = mt->map.grid_link->grid->tile_sx;
       tileimg.h = mt->map.grid_link->grid->tile_sy;
-      metatile = geocache_imageio_decode(ctx, mt->map.data);
+      metatile = mapcache_imageio_decode(ctx, mt->map.data);
       if(!metatile) {
          ctx->set_error(ctx, 500, "failed to load image data from metatile");
          return;
@@ -232,7 +232,7 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
             sy = mt->map.height - (mt->map.tileset->metabuffer + (j+1) * tileimg.w);
             tileimg.data = &(metatile->data[sy*metatile->stride + 4 * sx]);
             if(mt->map.tileset->watermark) {
-                geocache_image_merge(ctx,&tileimg,mt->map.tileset->watermark);
+                mapcache_image_merge(ctx,&tileimg,mt->map.tileset->watermark);
                 GC_CHECK_ERROR(ctx);
             }
             mt->tiles[i*mt->metasize_y+j].data =
@@ -253,18 +253,18 @@ void geocache_image_metatile_split(geocache_context *ctx, geocache_metatile *mt)
    }
 }
 
-int geocache_image_blank_color(geocache_image* image) {
+int mapcache_image_blank_color(mapcache_image* image) {
    int* pixptr;
    int r,c;
    for(r=0;r<image->h;r++) {
       pixptr = (int*)(image->data + r * image->stride);
       for(c=0;c<image->w;c++) {
          if(*(pixptr++) != *((int*)image->data)) {
-            return GEOCACHE_FALSE;
+            return MAPCACHE_FALSE;
          }
       }
    }
-   return GEOCACHE_TRUE;
+   return MAPCACHE_TRUE;
 }
 
 /* vim: ai ts=3 sts=3 et sw=3

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_strings.h>
 #include <math.h>
 
@@ -22,8 +22,8 @@
 /** @{ */
 
 
-void _create_capabilities_kml(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
-   geocache_request_get_capabilities_kml *request = (geocache_request_get_capabilities_kml*)req;
+void _create_capabilities_kml(mapcache_context *ctx, mapcache_request_get_capabilities *req, char *url, char *path_info, mapcache_cfg *cfg) {
+   mapcache_request_get_capabilities_kml *request = (mapcache_request_get_capabilities_kml*)req;
    char *caps;
    const char *onlineresource = apr_table_get(cfg->metadata,"url");
    double bbox[4];  
@@ -32,7 +32,7 @@ void _create_capabilities_kml(geocache_context *ctx, geocache_request_get_capabi
    }
    request->request.mime_type = apr_pstrdup(ctx->pool,"application/vnd.google-earth.kml+xml");
 
-   geocache_grid_get_extent(ctx,request->tile->grid_link->grid,
+   mapcache_grid_get_extent(ctx,request->tile->grid_link->grid,
          request->tile->x, request->tile->y, request->tile->z, bbox);
 
 
@@ -69,12 +69,12 @@ void _create_capabilities_kml(geocache_context *ctx, geocache_request_get_capabi
       int i,j;
       for(i=0;i<=1;i++) {
          for(j=0;j<=1;j++) {
-            geocache_tile *t = geocache_tileset_tile_create(ctx->pool,request->tile->tileset, request->tile->grid_link);
+            mapcache_tile *t = mapcache_tileset_tile_create(ctx->pool,request->tile->tileset, request->tile->grid_link);
             double bb[4];
             t->x = (request->tile->x << 1) +i;
             t->y = (request->tile->y << 1) +j;
             t->z = request->tile->z + 1;
-            geocache_grid_get_extent(ctx,t->grid_link->grid,
+            mapcache_grid_get_extent(ctx,t->grid_link->grid,
                   t->x, t->y, t->z, bb);
 
             caps = apr_psprintf(ctx->pool,"%s"
@@ -110,15 +110,15 @@ void _create_capabilities_kml(geocache_context *ctx, geocache_request_get_capabi
 
 /**
  * \brief parse a KML request
- * \private \memberof geocache_service_kml
- * \sa geocache_service::parse_request()
+ * \private \memberof mapcache_service_kml
+ * \sa mapcache_service::parse_request()
  */
-void _geocache_service_kml_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
-      const char *cpathinfo, apr_table_t *params, geocache_cfg *config) {
+void _mapcache_service_kml_parse_request(mapcache_context *ctx, mapcache_service *this, mapcache_request **request,
+      const char *cpathinfo, apr_table_t *params, mapcache_cfg *config) {
    int index = 0;
    char *last, *key, *endptr;
-   geocache_tileset *tileset = NULL;
-   geocache_grid_link *grid_link = NULL;
+   mapcache_tileset *tileset = NULL;
+   mapcache_grid_link *grid_link = NULL;
    char *pathinfo = NULL;
    int x=-1,y=-1,z=-1;
   
@@ -130,7 +130,7 @@ void _geocache_service_kml_parse_request(geocache_context *ctx, geocache_service
          if(!*key) continue; /* skip an empty string, could happen if the url contains // */
          switch(++index) {
          case 1: /* layer name */
-            tileset = geocache_configuration_get_tileset(config,key);
+            tileset = mapcache_configuration_get_tileset(config,key);
             if(!tileset) {
                /*tileset not found directly, test if it was given as "name@grid" notation*/
                char *tname = apr_pstrdup(ctx->pool,key);
@@ -148,13 +148,13 @@ void _geocache_service_kml_parse_request(geocache_context *ctx, geocache_service
                   ctx->set_error(ctx,404, "received kml request with invalid layer %s", key);
                   return;
                }
-               tileset = geocache_configuration_get_tileset(config,tname);
+               tileset = mapcache_configuration_get_tileset(config,tname);
                if(!tileset) {
                   ctx->set_error(ctx,404, "received kml request with invalid layer %s", tname);
                   return;
                }
                for(i=0;i<tileset->grid_links->nelts;i++) {
-                  geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+                  mapcache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
                   if(!strcmp(sgrid->grid->name,gname)) {
                      grid_link = sgrid;
                      break;
@@ -166,7 +166,7 @@ void _geocache_service_kml_parse_request(geocache_context *ctx, geocache_service
                }
 
             } else {
-               grid_link = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
+               grid_link = APR_ARRAY_IDX(tileset->grid_links,0,mapcache_grid_link*);
             }
             break;
          case 2:
@@ -202,16 +202,16 @@ void _geocache_service_kml_parse_request(geocache_context *ctx, geocache_service
       }
    }
    if(index == 4) {
-      geocache_request_get_capabilities_kml *req = (geocache_request_get_capabilities_kml*)apr_pcalloc(
-            ctx->pool,sizeof(geocache_request_get_capabilities_kml));
-      req->request.request.type = GEOCACHE_REQUEST_GET_CAPABILITIES;
-      req->tile = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
+      mapcache_request_get_capabilities_kml *req = (mapcache_request_get_capabilities_kml*)apr_pcalloc(
+            ctx->pool,sizeof(mapcache_request_get_capabilities_kml));
+      req->request.request.type = MAPCACHE_REQUEST_GET_CAPABILITIES;
+      req->tile = mapcache_tileset_tile_create(ctx->pool, tileset, grid_link);
       req->tile->x = x;
       req->tile->y = y;
       req->tile->z = z;
-      geocache_tileset_tile_validate(ctx,req->tile);
+      mapcache_tileset_tile_validate(ctx,req->tile);
       GC_CHECK_ERROR(ctx);
-      *request = (geocache_request*)req;
+      *request = (mapcache_request*)req;
       return;
    }
    else {
@@ -220,18 +220,18 @@ void _geocache_service_kml_parse_request(geocache_context *ctx, geocache_service
    }
 }
 
-geocache_service* geocache_service_kml_create(geocache_context *ctx) {
-   geocache_service_kml* service = (geocache_service_kml*)apr_pcalloc(ctx->pool, sizeof(geocache_service_kml));
+mapcache_service* mapcache_service_kml_create(mapcache_context *ctx) {
+   mapcache_service_kml* service = (mapcache_service_kml*)apr_pcalloc(ctx->pool, sizeof(mapcache_service_kml));
    if(!service) {
       ctx->set_error(ctx, 500, "failed to allocate kml service");
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"kml");
    service->service.name = apr_pstrdup(ctx->pool,"kml");
-   service->service.type = GEOCACHE_SERVICE_KML;
-   service->service.parse_request = _geocache_service_kml_parse_request;
+   service->service.type = MAPCACHE_SERVICE_KML;
+   service->service.parse_request = _mapcache_service_kml_parse_request;
    service->service.create_capabilities_response = _create_capabilities_kml;
-   return (geocache_service*)service;
+   return (mapcache_service*)service;
 }
 
 /** @} */

@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <stdlib.h>
 #define INITIAL_BUFFER_SIZE 100
 
-static void _geocache_buffer_realloc(geocache_buffer *buffer, size_t len) {
+static void _mapcache_buffer_realloc(mapcache_buffer *buffer, size_t len) {
    unsigned char* newbuf ;
    while ( len > buffer->avail ) {
       buffer->avail += buffer->avail;
@@ -32,8 +32,8 @@ static void _geocache_buffer_realloc(geocache_buffer *buffer, size_t len) {
    }
 }
 
-geocache_buffer *geocache_buffer_create(size_t initialStorage, apr_pool_t* pool) {
-   geocache_buffer *buffer = apr_pcalloc(pool, sizeof(geocache_buffer));
+mapcache_buffer *mapcache_buffer_create(size_t initialStorage, apr_pool_t* pool) {
+   mapcache_buffer *buffer = apr_pcalloc(pool, sizeof(mapcache_buffer));
    if(!buffer) return NULL;
    buffer->pool = pool;
    buffer->avail = (initialStorage > INITIAL_BUFFER_SIZE) ? initialStorage : INITIAL_BUFFER_SIZE;
@@ -42,10 +42,10 @@ geocache_buffer *geocache_buffer_create(size_t initialStorage, apr_pool_t* pool)
    return buffer;
 }
 
-int geocache_buffer_append(geocache_buffer *buffer, size_t len, void *data) {
+int mapcache_buffer_append(mapcache_buffer *buffer, size_t len, void *data) {
    size_t total = buffer->size + len;
    if(total > buffer->avail)
-      _geocache_buffer_realloc(buffer,total);
+      _mapcache_buffer_realloc(buffer,total);
    memcpy(buffer->buf + buffer->size, data, len);
    buffer->size += len;
    return len;

@@ -13,11 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-#include "geocache.h"
+#include "mapcache.h"
 
 
 
-void geocache_source_init(geocache_context *ctx, geocache_source *source) {
+void mapcache_source_init(mapcache_context *ctx, mapcache_source *source) {
 	source->data_extent[0] =
 			source->data_extent[1] =
 			source->data_extent[2] =

@@ -3868,9 +3868,9 @@ char fontData[] = {
 static int fontwidth = 6;
 static int fontheight = 13;
 
-#include "geocache.h"
+#include "mapcache.h"
 
-static void renderGlyph(geocache_context *ctx, int glyph, geocache_image *im, int x, int y) {
+static void renderGlyph(mapcache_context *ctx, int glyph, mapcache_image *im, int x, int y) {
    if(x>=0 && x<im->w-fontwidth && y>=0 && y<im->h-fontheight) {
       int i,j;
       char *bitmap = &fontData[glyph*fontwidth*fontheight];
@@ -3889,7 +3889,7 @@ static void renderGlyph(geocache_context *ctx, int glyph, geocache_image *im, in
    }
 }
 
-static void writeErrorImage(geocache_context *ctx, geocache_image *im, char *txt) {
+static void writeErrorImage(mapcache_context *ctx, mapcache_image *im, char *txt) {
    int margin = 5;
    int txtlen = strlen(txt);
    int maxlines = im->h / fontheight - 1;
@@ -3951,8 +3951,8 @@ static void writeErrorImage(geocache_context *ctx, geocache_image *im, char *txt
    }
 }
 
-geocache_image *geocache_error_image(geocache_context *ctx, int width, int height, char *msg) {
-   geocache_image *im = geocache_image_create(ctx);
+mapcache_image *mapcache_error_image(mapcache_context *ctx, int width, int height, char *msg) {
+   mapcache_image *im = mapcache_image_create(ctx);
    im->w = width;
    im->h = height;
    im->stride = width*4;

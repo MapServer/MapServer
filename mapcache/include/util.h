@@ -20,8 +20,8 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
-#define GEOCACHE_MAX(a,b) (((a)>(b))?(a):(b))
-#define GEOCACHE_MIN(a,b) (((a)<(b))?(a):(b))
+#define MAPCACHE_MAX(a,b) (((a)>(b))?(a):(b))
+#define MAPCACHE_MIN(a,b) (((a)<(b))?(a):(b))
 
 #ifndef APR_ARRAY_IDX
 #define APR_ARRAY_IDX(ary,i,type) (((type *)(ary)->elts)[i])

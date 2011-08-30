@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <math.h>
 #include <apr_strings.h>
 /*
  * allocate and initialize a new tileset
  */
-geocache_grid* geocache_grid_create(apr_pool_t *pool) {
-   geocache_grid* grid = (geocache_grid*)apr_pcalloc(pool, sizeof(geocache_grid));
+mapcache_grid* mapcache_grid_create(apr_pool_t *pool) {
+   mapcache_grid* grid = (mapcache_grid*)apr_pcalloc(pool, sizeof(mapcache_grid));
    grid->metadata = apr_table_make(pool,3);
    grid->srs_aliases = apr_array_make(pool,0,sizeof(char*));
-   grid->unit = GEOCACHE_UNIT_METERS;
+   grid->unit = MAPCACHE_UNIT_METERS;
    return grid;
 }
 
@@ -33,7 +33,7 @@ geocache_grid* geocache_grid_create(apr_pool_t *pool) {
  * \brief compute the extent of a given tile in the grid given its x, y, and z.
  * \returns \extent the tile's extent
  */
-void geocache_grid_get_extent(geocache_context *ctx, geocache_grid *grid,
+void mapcache_grid_get_extent(mapcache_context *ctx, mapcache_grid *grid,
       int x, int y, int z, double *bbox) {
    double res  = grid->levels[z]->resolution;
    bbox[0] = grid->extent[0] + (res * x * grid->tile_sx);
@@ -42,7 +42,7 @@ void geocache_grid_get_extent(geocache_context *ctx, geocache_grid *grid,
    bbox[3] = grid->extent[1] + (res * (y + 1) * grid->tile_sy);
 }
 
-const char* geocache_grid_get_crs(geocache_context *ctx, geocache_grid *grid) {
+const char* mapcache_grid_get_crs(mapcache_context *ctx, mapcache_grid *grid) {
    char *epsgnum;
 
    /*locate the number after epsg: in the grd srs*/
@@ -56,15 +56,15 @@ const char* geocache_grid_get_crs(geocache_context *ctx, geocache_grid *grid) {
    return apr_psprintf(ctx->pool,"urn:ogc:def:crs:EPSG::%s",epsgnum);
 }
 
-const char* geocache_grid_get_srs(geocache_context *ctx, geocache_grid *grid) {
+const char* mapcache_grid_get_srs(mapcache_context *ctx, mapcache_grid *grid) {
    return (const char*)grid->srs;
 }
 
-void geocache_grid_compute_limits(const geocache_grid *grid, const double *extent, int **limits, int tolerance) {
+void mapcache_grid_compute_limits(const mapcache_grid *grid, const double *extent, int **limits, int tolerance) {
    int i;
    double epsilon = 0.0000001;
    for(i=0;i<grid->nlevels;i++) {
-      geocache_grid_level *level = grid->levels[i];
+      mapcache_grid_level *level = grid->levels[i];
       double unitheight = grid->tile_sy * level->resolution;
       double unitwidth = grid->tile_sx * level->resolution;
 
@@ -84,35 +84,35 @@ void geocache_grid_compute_limits(const geocache_grid *grid, const double *exten
    }
 }
 
-double geocache_grid_get_resolution(double *bbox, int sx, int sy) {
-   double rx =  geocache_grid_get_horizontal_resolution(bbox,sx);
-   double ry =  geocache_grid_get_vertical_resolution(bbox,sy);
-   return GEOCACHE_MAX(rx,ry);
+double mapcache_grid_get_resolution(double *bbox, int sx, int sy) {
+   double rx =  mapcache_grid_get_horizontal_resolution(bbox,sx);
+   double ry =  mapcache_grid_get_vertical_resolution(bbox,sy);
+   return MAPCACHE_MAX(rx,ry);
 }
 
 
-double geocache_grid_get_horizontal_resolution(double *bbox, int width) {
+double mapcache_grid_get_horizontal_resolution(double *bbox, int width) {
    return (bbox[2] - bbox[0]) / (double)width;
 }
 
-double geocache_grid_get_vertical_resolution(double *bbox, int height) {
+double mapcache_grid_get_vertical_resolution(double *bbox, int height) {
    return (bbox[3] - bbox[1]) / (double)height;
 }
 
-int geocache_grid_get_level(geocache_context *ctx, geocache_grid *grid, double *resolution, int *level) {
-   double max_diff = *resolution / (double)GEOCACHE_MAX(grid->tile_sx, grid->tile_sy);
+int mapcache_grid_get_level(mapcache_context *ctx, mapcache_grid *grid, double *resolution, int *level) {
+   double max_diff = *resolution / (double)MAPCACHE_MAX(grid->tile_sx, grid->tile_sy);
    int i;
    for(i=0; i<grid->nlevels; i++) {
       if(fabs(grid->levels[i]->resolution - *resolution) < max_diff) {
          *resolution = grid->levels[i]->resolution;
          *level = i;
-         return GEOCACHE_SUCCESS;
+         return MAPCACHE_SUCCESS;
       }
    }
-   return GEOCACHE_FAILURE;
+   return MAPCACHE_FAILURE;
 }
 
-void geocache_grid_get_closest_level(geocache_context *ctx, geocache_grid *grid, double resolution, int *level) {
+void mapcache_grid_get_closest_level(mapcache_context *ctx, mapcache_grid *grid, double resolution, int *level) {
    double dst = fabs(grid->levels[0]->resolution - resolution);
    *level = 0;
    int i;
@@ -127,27 +127,27 @@ void geocache_grid_get_closest_level(geocache_context *ctx, geocache_grid *grid,
 
 /*
  * update the tile by setting it's x,y,z value given a bbox.
- * will return GEOCACHE_TILESET_WRONG_RESOLUTION or GEOCACHE_TILESET_WRONG_EXTENT
+ * will return MAPCACHE_TILESET_WRONG_RESOLUTION or MAPCACHE_TILESET_WRONG_EXTENT
  * if the bbox does not correspond to the tileset's configuration
  */
-int geocache_grid_get_cell(geocache_context *ctx, geocache_grid *grid, double *bbox,
+int mapcache_grid_get_cell(mapcache_context *ctx, mapcache_grid *grid, double *bbox,
       int *x, int *y, int *z) {
-   double res = geocache_grid_get_resolution(bbox,grid->tile_sx,grid->tile_sy);
-   if(GEOCACHE_SUCCESS != geocache_grid_get_level(ctx, grid, &res, z))
-      return GEOCACHE_FAILURE;
+   double res = mapcache_grid_get_resolution(bbox,grid->tile_sx,grid->tile_sy);
+   if(MAPCACHE_SUCCESS != mapcache_grid_get_level(ctx, grid, &res, z))
+      return MAPCACHE_FAILURE;
    
    *x = (int)round((bbox[0] - grid->extent[0]) / (res * grid->tile_sx));
    *y = (int)round((bbox[1] - grid->extent[1]) / (res * grid->tile_sy));
 
    if((fabs(bbox[0] - (*x * res * grid->tile_sx) - grid->extent[0] ) / res > 1) ||
          (fabs(bbox[1] - (*y * res * grid->tile_sy) - grid->extent[1] ) / res > 1)) {
-      return GEOCACHE_FAILURE;
+      return MAPCACHE_FAILURE;
    }
-   return GEOCACHE_SUCCESS;
+   return MAPCACHE_SUCCESS;
 }
 
 
-void geocache_grid_get_xy(geocache_context *ctx, geocache_grid *grid, double dx, double dy,
+void mapcache_grid_get_xy(mapcache_context *ctx, mapcache_grid *grid, double dx, double dy,
         int z, int *x, int *y) {
 #ifdef DEBUG
    if(z>=grid->nlevels) {

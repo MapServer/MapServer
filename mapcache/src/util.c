@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include "util.h"
 #include <apr_strings.h>
 #include <apr_tables.h>
@@ -25,9 +25,9 @@
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
 #endif
-const double geocache_meters_per_unit[GEOCACHE_UNITS_COUNT] = {1.0,6378137.0 * 2.0 * M_PI / 360,0.3048};
+const double mapcache_meters_per_unit[MAPCACHE_UNITS_COUNT] = {1.0,6378137.0 * 2.0 * M_PI / 360,0.3048};
 
-int geocache_util_extract_int_list(geocache_context *ctx, const char* cargs,
+int mapcache_util_extract_int_list(mapcache_context *ctx, const char* cargs,
       const char *sdelim, int **numbers, int *numbers_count) {
    char *last, *key, *endptr;
    char *args = apr_pstrdup(ctx->pool,cargs);
@@ -49,12 +49,12 @@ int geocache_util_extract_int_list(geocache_context *ctx, const char* cargs,
          key = apr_strtok(NULL, delim, &last)) {
       (*numbers)[(*numbers_count)++] = (int)strtol(key,&endptr,10);
       if(*endptr != 0)
-         return GEOCACHE_FAILURE;
+         return MAPCACHE_FAILURE;
    }
-   return GEOCACHE_SUCCESS;
+   return MAPCACHE_SUCCESS;
 }
 
-int geocache_util_extract_double_list(geocache_context *ctx, const char* cargs, 
+int mapcache_util_extract_double_list(mapcache_context *ctx, const char* cargs, 
       const char *sdelim, double **numbers, int *numbers_count) {
    char *last, *key, *endptr;
    char *args = apr_pstrdup(ctx->pool,cargs);
@@ -75,12 +75,12 @@ int geocache_util_extract_double_list(geocache_context *ctx, const char* cargs,
          key = apr_strtok(NULL, delim, &last)) {
       (*numbers)[(*numbers_count)++] = strtod(key,&endptr);
       if(*endptr != 0)
-         return GEOCACHE_FAILURE;
+         return MAPCACHE_FAILURE;
    }
-   return GEOCACHE_SUCCESS;
+   return MAPCACHE_SUCCESS;
 }
 
-char *geocache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr, const char *replacement ){
+char *mapcache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr, const char *replacement ){
    char *tok = NULL;
    char *newstr = NULL;
 
@@ -111,15 +111,15 @@ APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p, const apr_table_t *t)
 
 #endif
 
-int _geocache_context_get_error_default(geocache_context *ctx) {
+int _mapcache_context_get_error_default(mapcache_context *ctx) {
     return ctx->_errcode;
 }
 
-char* _geocache_context_get_error_msg_default(geocache_context *ctx) {
+char* _mapcache_context_get_error_msg_default(mapcache_context *ctx) {
     return ctx->_errmsg;
 }
 
-void _geocache_context_set_error_default(geocache_context *ctx, int code, char *msg, ...) {
+void _mapcache_context_set_error_default(mapcache_context *ctx, int code, char *msg, ...) {
     char *fmt;
     va_list args;
     va_start(args,msg);
@@ -134,19 +134,19 @@ void _geocache_context_set_error_default(geocache_context *ctx, int code, char *
     va_end(args);
 }
 
-void _geocache_context_clear_error_default(geocache_context *ctx) {
+void _mapcache_context_clear_error_default(mapcache_context *ctx) {
    ctx->_errcode = 0;
    ctx->_errmsg = NULL;
 }
 
 
-void geocache_context_init(geocache_context *ctx) {
+void mapcache_context_init(mapcache_context *ctx) {
     ctx->_errcode = 0;
     ctx->_errmsg = NULL;
-    ctx->get_error = _geocache_context_get_error_default;
-    ctx->get_error_message = _geocache_context_get_error_msg_default;
-    ctx->set_error = _geocache_context_set_error_default;
-    ctx->clear_errors = _geocache_context_clear_error_default;
+    ctx->get_error = _mapcache_context_get_error_default;
+    ctx->get_error_message = _mapcache_context_get_error_msg_default;
+    ctx->set_error = _mapcache_context_set_error_default;
+    ctx->clear_errors = _mapcache_context_clear_error_default;
 }
 
 /* vim: ai ts=3 sts=3 et sw=3

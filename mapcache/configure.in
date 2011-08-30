@@ -553,6 +553,7 @@ AC_DEFUN([FASTCGI_CHECK],[
     AC_MSG_CHECKING(whether to enable FASTCGI)
     FASTCGI_LIB=''
     FASTCGI_INC=''
+    FASTCGI_ENABLED=''
     if test x"$with_fastcgi" == "xno"; then
         AC_MSG_RESULT([not requested. use --with-fastcgi[=dir] to enable])
     else
@@ -575,25 +576,23 @@ AC_DEFUN([FASTCGI_CHECK],[
             
             if test -n "$FASTCGI_INCLUDE" ; then
                 FASTCGI_INC=-I$FASTCGI_INCLUDE
+                FASTCGI_ENABLED="-DUSE_FASTCGI"
             else
                 AC_MSG_ERROR([cannot find fastcgi header fcgiapp.h in $FASTCGI_DIR])
             fi
         else
            dnl check for fastcgi in system locations
          
-           AC_CHECK_LIB(fcgi, FCGX_Init, FASTCGI_LIB="-lfcgi",[AC_MSG_ERROR([cannot find fastcgi lib in system path])],)
-           AC_CHECK_HEADER([fcgiapp.h],,
+           AC_CHECK_LIB(fcgi, FCGI_Accept, FASTCGI_LIB="-lfcgi",[AC_MSG_ERROR([cannot find fastcgi lib in system path])],)
+           AC_CHECK_HEADER([fcgi_stdio.h],,
                  [AC_MSG_ERROR([cannot find fastcgi headers in system path])])
-        fi
-        if test -z "$TARGETS"; then
-            TARGETS="geocache.fcgi"
-        else
-            TARGETS="$TARGETS geocache.fcgi"
+           FASTCGI_ENABLED="-DUSE_FASTCGI"
         fi
     fi
         
     AC_SUBST(FASTCGI_INC,$FASTCGI_INC)
     AC_SUBST(FASTCGI_LIB,$FASTCGI_LIB)
+    AC_SUBST(FASTCGI_ENABLED,$FASTCGI_ENABLED)
 ])
 
 AC_DEFUN([PNG_CHECK],[
@@ -791,7 +790,7 @@ JSON_STRICT_CHECK
 LOCKMECH_CHECK
 
 AC_ARG_ENABLE(version_string,
-    AC_HELP_STRING([--enable-version-string],[add mod-geocache version string to the apache server header]),
+    AC_HELP_STRING([--enable-version-string],[add mod-mapcache version string to the apache server header]),
     ,
     [enable_version_string=yes]
 )
@@ -806,20 +805,12 @@ AC_ARG_ENABLE(module,
 )
 if test "$enable_module" == "yes"; then
     APXS_CHECK
-    if test -z "$TARGETS"; then
-        TARGETS="mod_geocache.la"
-    else
-        TARGETS="$TARGETS mod_geocache.la"
-    fi
+    AC_SUBST(MODULE_TARGET,"mod_mapcache.la")
+else
+    AC_SUBST(MODULE_TARGET,"")
 fi
 
 FASTCGI_CHECK
-
-if test -z "$TARGETS" ; then
-    AC_MSG_ERROR([you must select at least something to build with --enable-module or --with-fastcgi])
-else
-    AC_SUBST(TARGETS,$TARGETS)
-fi
 
 APR_CHECK
 APU_CHECK

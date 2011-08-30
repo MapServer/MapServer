@@ -1,4 +1,4 @@
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_thread_proc.h>
 #include <apr_thread_mutex.h>
 #include <apr_getopt.h>
@@ -20,13 +20,13 @@ int nClippers = 0;
 const GEOSPreparedGeometry **clippers=NULL;
 #endif
 
-geocache_tileset *tileset;
-geocache_cfg *cfg;
-geocache_context ctx;
+mapcache_tileset *tileset;
+mapcache_cfg *cfg;
+mapcache_context ctx;
 apr_table_t *dimensions;
 int minzoom=0;
 int maxzoom=0;
-geocache_grid_link *grid_link;
+mapcache_grid_link *grid_link;
 int nthreads=1;
 int quiet = 0;
 int sig_int_received = 0;
@@ -38,10 +38,10 @@ int seededtilestot=0, seededtiles=0, queuedtilestot=0;
 struct timeval lastlogtime,starttime;
 
 typedef enum {
-   GEOCACHE_CMD_SEED,
-   GEOCACHE_CMD_STOP,
-   GEOCACHE_CMD_DELETE,
-   GEOCACHE_CMD_SKIP
+   MAPCACHE_CMD_SEED,
+   MAPCACHE_CMD_STOP,
+   MAPCACHE_CMD_DELETE,
+   MAPCACHE_CMD_SKIP
 } cmd;
 
 struct seed_cmd {
@@ -53,7 +53,7 @@ struct seed_cmd {
 
 int depthfirst = 1;
 
-cmd mode = GEOCACHE_CMD_SEED; /* the mode the utility will be running in: either seed or delete */
+cmd mode = MAPCACHE_CMD_SEED; /* the mode the utility will be running in: either seed or delete */
 
 static const apr_getopt_option_t seed_options[] = {
     /* long-option, short-option, has-arg flag, description */
@@ -87,12 +87,12 @@ void handle_sig_int(int signal) {
     }
 }
 
-void dummy_lock_aquire(geocache_context *ctx){}
-void dummy_lock_release(geocache_context *ctx){}
-void dummy_log(geocache_context *ctx, geocache_log_level level, char *msg, ...){}
+void dummy_lock_aquire(mapcache_context *ctx){}
+void dummy_lock_release(mapcache_context *ctx){}
+void dummy_log(mapcache_context *ctx, mapcache_log_level level, char *msg, ...){}
 
 
-void geocache_context_seeding_log(geocache_context *ctx, geocache_log_level level, char *msg, ...) {
+void mapcache_context_seeding_log(mapcache_context *ctx, mapcache_log_level level, char *msg, ...) {
     va_list args;
     va_start(args,msg);
     vfprintf(stderr,msg,args);
@@ -100,8 +100,8 @@ void geocache_context_seeding_log(geocache_context *ctx, geocache_log_level leve
 }
 
 #ifdef USE_CLIPPERS
-int ogr_features_intersect_tile(geocache_context *ctx, geocache_tile *tile) {
-   geocache_metatile *mt = geocache_tileset_metatile_get(ctx,tile);
+int ogr_features_intersect_tile(mapcache_context *ctx, mapcache_tile *tile) {
+   mapcache_metatile *mt = mapcache_tileset_metatile_get(ctx,tile);
    GEOSCoordSequence *mtbboxls = GEOSCoordSeq_create(5,2);
    double *e = mt->map.extent;
    GEOSCoordSeq_setX(mtbboxls,0,e[0]);
@@ -140,7 +140,7 @@ void progresslog(int x, int y, int z) {
    sprintf(msg,"seeding tile %d %d %d",x,y,z);
    if(lastmsglen) {
       char erasestring[1024];
-      int len = GEOCACHE_MIN(1023,lastmsglen);
+      int len = MAPCACHE_MIN(1023,lastmsglen);
       memset(erasestring,' ',len);
       erasestring[len+1]='\0';
       sprintf(erasestring,"\r%%%ds\r",lastmsglen);
@@ -177,7 +177,7 @@ void progresslog(int x, int y, int z) {
    }
    if(lastmsglen) {
       char erasestring[1024];
-      int len = GEOCACHE_MIN(1023,lastmsglen);
+      int len = MAPCACHE_MIN(1023,lastmsglen);
       memset(erasestring,' ',len);
       erasestring[len+1]='\0';
       sprintf(erasestring,"\r%%%ds\r",lastmsglen);
@@ -189,7 +189,7 @@ void progresslog(int x, int y, int z) {
 }
 
 
-void cmd_recurse(geocache_context *cmd_ctx, geocache_tile *tile) {
+void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
    apr_pool_clear(cmd_ctx->pool);
    if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
       //remove all items from the queue
@@ -198,12 +198,12 @@ void cmd_recurse(geocache_context *cmd_ctx, geocache_tile *tile) {
       return;
    }
    int tile_exists = tileset->cache->tile_exists(cmd_ctx,tile);
-   cmd action = GEOCACHE_CMD_SKIP;
+   cmd action = MAPCACHE_CMD_SKIP;
    int intersects = -1;
    /* if the tile exists and a time limit was specified, check the tile modification date */
    if(tile_exists) {
       if(age_limit) {
-         if(tileset->cache->tile_get(cmd_ctx,tile) == GEOCACHE_SUCCESS) {
+         if(tileset->cache->tile_get(cmd_ctx,tile) == MAPCACHE_SUCCESS) {
             if(tile->mtime && tile->mtime<age_limit) {
                /* the tile modification time is older than the specified limit */
 #ifdef USE_CLIPPERS
@@ -214,54 +214,54 @@ void cmd_recurse(geocache_context *cmd_ctx, geocache_tile *tile) {
 #endif
                if(intersects != 0) {
                   /* the tile intersects the ogr features, or there was no clipping asked for: seed it */
-                  if(mode == GEOCACHE_CMD_SEED) {
-                     geocache_tileset_tile_delete(cmd_ctx,tile,GEOCACHE_TRUE);
-                     action = GEOCACHE_CMD_SEED;
+                  if(mode == MAPCACHE_CMD_SEED) {
+                     mapcache_tileset_tile_delete(cmd_ctx,tile,MAPCACHE_TRUE);
+                     action = MAPCACHE_CMD_SEED;
                   }
-                  else { //if(action == GEOCACHE_CMD_DELETE)
-                     action = GEOCACHE_CMD_DELETE;
+                  else { //if(action == MAPCACHE_CMD_DELETE)
+                     action = MAPCACHE_CMD_DELETE;
                   }
                } else {
                   /* the tile does not intersect the ogr features, and already exists, do nothing */
-                  action = GEOCACHE_CMD_SKIP;
+                  action = MAPCACHE_CMD_SKIP;
                }
             }
          } else {
             //BUG: tile_exists returned true, but tile_get returned a failure. not sure what to do.
-            action = GEOCACHE_CMD_SKIP;
+            action = MAPCACHE_CMD_SKIP;
          }
       } else {
-         if(mode == GEOCACHE_CMD_DELETE) {
+         if(mode == MAPCACHE_CMD_DELETE) {
             //the tile exists and we are in delete mode: delete it
-            action = GEOCACHE_CMD_DELETE;
+            action = MAPCACHE_CMD_DELETE;
          } else {
             // the tile exists and we are in seed mode, skip to next one
-            action = GEOCACHE_CMD_SKIP;
+            action = MAPCACHE_CMD_SKIP;
          }
       }
    } else {
       // the tile does not exist
-      if(mode == GEOCACHE_CMD_SEED) {
+      if(mode == MAPCACHE_CMD_SEED) {
 #ifdef USE_CLIPPERS
          /* check we are in the requested features before deleting the tile */
          if(nClippers > 0) {
             if(ogr_features_intersect_tile(cmd_ctx,tile)) {
-               action = GEOCACHE_CMD_SEED;
+               action = MAPCACHE_CMD_SEED;
             } else {
-               action = GEOCACHE_CMD_SKIP;
+               action = MAPCACHE_CMD_SKIP;
             }
          } else {
-            action = GEOCACHE_CMD_SEED;
+            action = MAPCACHE_CMD_SEED;
          }
 #else
-         action = GEOCACHE_CMD_SEED;
+         action = MAPCACHE_CMD_SEED;
 #endif
       } else {
-         action = GEOCACHE_CMD_SKIP;
+         action = MAPCACHE_CMD_SKIP;
       }
    }
 
-   if(action == GEOCACHE_CMD_SEED || action == GEOCACHE_CMD_DELETE){
+   if(action == MAPCACHE_CMD_SEED || action == MAPCACHE_CMD_DELETE){
       //current x,y,z needs seeding, add it to the queue
       struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
       cmd->x = tile->x;
@@ -303,9 +303,9 @@ void cmd_thread() {
    int z = minzoom;
    int x = grid_link->grid_limits[z][0];
    int y = grid_link->grid_limits[z][1];
-   geocache_context cmd_ctx = ctx;
+   mapcache_context cmd_ctx = ctx;
    apr_pool_create(&cmd_ctx.pool,ctx.pool);
-   geocache_tile *tile = geocache_tileset_tile_create(ctx.pool, tileset, grid_link);
+   mapcache_tile *tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
    tile->dimensions = dimensions;
    tile->x = x;
    tile->y = y;
@@ -315,7 +315,7 @@ void cmd_thread() {
    int n;
    for(n=0;n<nthreads;n++) {
       struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
-      cmd->command = GEOCACHE_CMD_STOP;
+      cmd->command = MAPCACHE_CMD_STOP;
       apr_queue_push(work_queue,cmd);
    }
 
@@ -325,31 +325,31 @@ void cmd_thread() {
 }
 
 static void* APR_THREAD_FUNC seed_thread(apr_thread_t *thread, void *data) {
-   geocache_context seed_ctx = ctx;
+   mapcache_context seed_ctx = ctx;
    seed_ctx.log = dummy_log;
    apr_pool_create(&seed_ctx.pool,ctx.pool);
-   geocache_tile *tile = geocache_tileset_tile_create(ctx.pool, tileset, grid_link);
+   mapcache_tile *tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
    tile->dimensions = dimensions;
    while(1) {
       apr_pool_clear(seed_ctx.pool);
       struct seed_cmd *cmd;
       apr_queue_pop(work_queue, (void**)&cmd);
-      if(cmd->command == GEOCACHE_CMD_STOP) break;
+      if(cmd->command == MAPCACHE_CMD_STOP) break;
       tile->x = cmd->x;
       tile->y = cmd->y;
       tile->z = cmd->z;
-      if(cmd->command == GEOCACHE_CMD_SEED) {
-         geocache_tileset_tile_get(&seed_ctx,tile);
+      if(cmd->command == MAPCACHE_CMD_SEED) {
+         mapcache_tileset_tile_get(&seed_ctx,tile);
       } else { //CMD_DELETE
-         geocache_tileset_tile_delete(&seed_ctx,tile,GEOCACHE_TRUE);
+         mapcache_tileset_tile_delete(&seed_ctx,tile,MAPCACHE_TRUE);
       }
       if(seed_ctx.get_error(&seed_ctx)) {
          error_detected++;
-         ctx.log(&ctx,GEOCACHE_INFO,seed_ctx.get_error_message(&seed_ctx));
+         ctx.log(&ctx,MAPCACHE_INFO,seed_ctx.get_error_message(&seed_ctx));
       }
       free(cmd);
    }
-   apr_thread_exit(thread,GEOCACHE_SUCCESS);
+   apr_thread_exit(thread,MAPCACHE_SUCCESS);
    return NULL;
 }
 
@@ -423,10 +423,10 @@ int main(int argc, const char **argv) {
     apr_initialize();
     (void) signal(SIGINT,handle_sig_int);
     apr_pool_create(&ctx.pool,NULL);
-    geocache_context_init(&ctx);
-    cfg = geocache_configuration_create(ctx.pool);
+    mapcache_context_init(&ctx);
+    cfg = mapcache_configuration_create(ctx.pool);
     ctx.config = cfg;
-    ctx.log= geocache_context_seeding_log;
+    ctx.log= mapcache_context_seeding_log;
     ctx.global_lock_aquire = dummy_lock_aquire;
     ctx.global_lock_release = dummy_lock_release;
     apr_getopt_init(&opt, ctx.pool, argc, argv);
@@ -458,24 +458,24 @@ int main(int argc, const char **argv) {
                 break;
             case 'm':
                 if(!strcmp(optarg,"delete")) {
-                   mode = GEOCACHE_CMD_DELETE;
+                   mode = MAPCACHE_CMD_DELETE;
                 } else if(strcmp(optarg,"seed")){
                    return usage(argv[0],"invalid mode, expecting \"seed\" or \"delete\"");
                 } else {
-                   mode = GEOCACHE_CMD_SEED;
+                   mode = MAPCACHE_CMD_SEED;
                 }
                 break;
             case 'n':
                 nthreads = (int)strtol(optarg, NULL, 10);
                 break;
             case 'e':
-                if ( GEOCACHE_SUCCESS != geocache_util_extract_double_list(&ctx, (char*)optarg, ",", &extent, &n) ||
+                if ( MAPCACHE_SUCCESS != mapcache_util_extract_double_list(&ctx, (char*)optarg, ",", &extent, &n) ||
                         n != 4 || extent[0] >= extent[2] || extent[1] >= extent[3] ) {
                     return usage(argv[0], "failed to parse extent, expecting comma separated 4 doubles");
                 }
                 break;
             case 'z':
-                if ( GEOCACHE_SUCCESS != geocache_util_extract_int_list(&ctx, (char*)optarg, ",", &zooms, &n) ||
+                if ( MAPCACHE_SUCCESS != mapcache_util_extract_int_list(&ctx, (char*)optarg, ",", &zooms, &n) ||
                         n != 2 || zooms[0] > zooms[1]) {
                     return usage(argv[0], "failed to parse zooms, expecting comma separated 2 ints");
                 } else {
@@ -527,10 +527,10 @@ int main(int argc, const char **argv) {
     if( ! configfile ) {
         return usage(argv[0],"config not specified");
     } else {
-        geocache_configuration_parse(&ctx,configfile,cfg,0);
+        mapcache_configuration_parse(&ctx,configfile,cfg,0);
         if(ctx.get_error(&ctx))
             return usage(argv[0],ctx.get_error_message(&ctx));
-        geocache_configuration_post_config(&ctx,cfg);
+        mapcache_configuration_post_config(&ctx,cfg);
         if(ctx.get_error(&ctx))
             return usage(argv[0],ctx.get_error_message(&ctx));
     }
@@ -612,10 +612,10 @@ int main(int argc, const char **argv) {
             extent[2] = ogr_extent.MaxX;
             extent[3] = ogr_extent.MaxY;
          } else {
-            extent[0] = GEOCACHE_MIN(ogr_extent.MinX, extent[0]);
-            extent[1] = GEOCACHE_MIN(ogr_extent.MinY, extent[1]);
-            extent[2] = GEOCACHE_MAX(ogr_extent.MaxX, extent[2]);
-            extent[3] = GEOCACHE_MAX(ogr_extent.MaxY, extent[3]);
+            extent[0] = MAPCACHE_MIN(ogr_extent.MinX, extent[0]);
+            extent[1] = MAPCACHE_MIN(ogr_extent.MinY, extent[1]);
+            extent[2] = MAPCACHE_MAX(ogr_extent.MaxX, extent[2]);
+            extent[3] = MAPCACHE_MAX(ogr_extent.MaxY, extent[3]);
          }
 
          OGR_F_Destroy( hFeature );
@@ -630,16 +630,16 @@ int main(int argc, const char **argv) {
     if( ! tileset_name ) {
         return usage(argv[0],"tileset not specified");
     } else {
-        tileset = geocache_configuration_get_tileset(cfg,tileset_name);
+        tileset = mapcache_configuration_get_tileset(cfg,tileset_name);
         if(!tileset) {
             return usage(argv[0], "tileset not found in configuration");
         }
         if( ! grid_name ) {
-           grid_link = APR_ARRAY_IDX(tileset->grid_links,0,geocache_grid_link*);
+           grid_link = APR_ARRAY_IDX(tileset->grid_links,0,mapcache_grid_link*);
         } else {
            int i;
            for(i=0;i<tileset->grid_links->nelts;i++) {
-              geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+              mapcache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
               if(!strcmp(sgrid->grid->name,grid_name)) {
                grid_link = sgrid;
                break;
@@ -676,7 +676,7 @@ int main(int argc, const char **argv) {
 
     if(extent) {
        // update the grid limits
-       geocache_grid_compute_limits(grid_link->grid,extent,grid_link->grid_limits,0);
+       mapcache_grid_compute_limits(grid_link->grid,extent,grid_link->grid_limits,0);
     }
 
     /* adjust our grid limits so they align on the metatile limits
@@ -696,12 +696,12 @@ int main(int argc, const char **argv) {
        dimensions = apr_table_make(ctx.pool,3);
        int i;
        for(i=0;i<tileset->dimensions->nelts;i++) {
-          geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+          mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
           const char *value;
           if((value = (char*)apr_table_get(argdimensions,dimension->name)) != NULL) {
              char *tmpval = apr_pstrdup(ctx.pool,value);
              int ok = dimension->validate(&ctx,dimension,&tmpval);
-             if(GC_HAS_ERROR(&ctx) || ok != GEOCACHE_SUCCESS ) {
+             if(GC_HAS_ERROR(&ctx) || ok != MAPCACHE_SUCCESS ) {
                 return usage(argv[0],"failed to validate dimension");
                return 1;
              } else {

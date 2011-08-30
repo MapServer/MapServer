@@ -14,40 +14,40 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_strings.h>
 #include <math.h>
 #include <sys/types.h>
 
 
-static int _geocache_dimension_intervals_validate(geocache_context *ctx, geocache_dimension *dim, char **value) {
+static int _mapcache_dimension_intervals_validate(mapcache_context *ctx, mapcache_dimension *dim, char **value) {
    int i;
    char *endptr;
    double val = strtod(*value,&endptr);
    *value = apr_psprintf(ctx->pool,"%g",val);
    if(*endptr != 0) {
-      return GEOCACHE_FAILURE;
+      return MAPCACHE_FAILURE;
    }
-   geocache_dimension_intervals *dimension = (geocache_dimension_intervals*)dim;
+   mapcache_dimension_intervals *dimension = (mapcache_dimension_intervals*)dim;
    for(i=0;i<dimension->nintervals;i++) {
-      geocache_interval *interval = &dimension->intervals[i];
+      mapcache_interval *interval = &dimension->intervals[i];
       if(val<interval->start || val>interval->end)
          continue;
       if(interval->resolution == 0)
-         return GEOCACHE_SUCCESS;
+         return MAPCACHE_SUCCESS;
       double diff = fmod((val - interval->start),interval->resolution);
       if(diff == 0.0)
-         return GEOCACHE_SUCCESS;
+         return MAPCACHE_SUCCESS;
    }
-   return GEOCACHE_FAILURE;
+   return MAPCACHE_FAILURE;
 }
 
-static const char** _geocache_dimension_intervals_print(geocache_context *ctx, geocache_dimension *dim) {
-   geocache_dimension_intervals *dimension = (geocache_dimension_intervals*)dim;
+static const char** _mapcache_dimension_intervals_print(mapcache_context *ctx, mapcache_dimension *dim) {
+   mapcache_dimension_intervals *dimension = (mapcache_dimension_intervals*)dim;
    const char **ret = (const char**)apr_pcalloc(ctx->pool,(dimension->nintervals+1)*sizeof(const char*));
    int i;
    for(i=0;i<dimension->nintervals;i++) {
-      geocache_interval *interval = &dimension->intervals[i];
+      mapcache_interval *interval = &dimension->intervals[i];
       ret[i] = apr_psprintf(ctx->pool,"%g/%g/%g",interval->start,interval->end,interval->resolution);
    }
    ret[i]=NULL;
@@ -55,12 +55,12 @@ static const char** _geocache_dimension_intervals_print(geocache_context *ctx, g
 }
 
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-static void _geocache_dimension_intervals_parse_json(geocache_context *ctx, geocache_dimension *dim,
+static void _mapcache_dimension_intervals_parse_json(mapcache_context *ctx, mapcache_dimension *dim,
       cJSON *node) {
 }
 #endif
 
-static void _geocache_dimension_intervals_parse_xml(geocache_context *ctx, geocache_dimension *dim,
+static void _mapcache_dimension_intervals_parse_xml(mapcache_context *ctx, mapcache_dimension *dim,
       ezxml_t node) {
    const char *entry = node->txt;
    int count = 1;
@@ -68,17 +68,17 @@ static void _geocache_dimension_intervals_parse_xml(geocache_context *ctx, geoca
       ctx->set_error(ctx,400,"failed to parse dimension values: none supplied");
       return;
    }
-   geocache_dimension_intervals *dimension = (geocache_dimension_intervals*)dim;
+   mapcache_dimension_intervals *dimension = (mapcache_dimension_intervals*)dim;
    char *values = apr_pstrdup(ctx->pool,entry);
    char *key,*last;
    for(key=values;*key;key++) if(*key == ',') count++;
 
-   dimension->intervals = (geocache_interval*)apr_pcalloc(ctx->pool,count*sizeof(geocache_interval));
+   dimension->intervals = (mapcache_interval*)apr_pcalloc(ctx->pool,count*sizeof(mapcache_interval));
 
    for (key = apr_strtok(values, ",", &last); key != NULL;
          key = apr_strtok(NULL, ",", &last)) {
       char *endptr;
-      geocache_interval *interval = &dimension->intervals[dimension->nintervals];
+      mapcache_interval *interval = &dimension->intervals[dimension->nintervals];
       interval->start = strtod(key,&endptr);
       if(*endptr != '/') {
          ctx->set_error(ctx,400,"failed to parse min dimension value \"%s\" in \"%s\" for dimension %s",key,entry,dim->name);
@@ -106,23 +106,23 @@ static void _geocache_dimension_intervals_parse_xml(geocache_context *ctx, geoca
    }
 }
 
-static int _geocache_dimension_regex_validate(geocache_context *ctx, geocache_dimension *dim, char **value) {
-   geocache_dimension_regex *dimension = (geocache_dimension_regex*)dim;
+static int _mapcache_dimension_regex_validate(mapcache_context *ctx, mapcache_dimension *dim, char **value) {
+   mapcache_dimension_regex *dimension = (mapcache_dimension_regex*)dim;
 #ifdef USE_PCRE
    int ovector[30];
    int rc = pcre_exec(dimension->pcregex,NULL,*value,strlen(*value),0,0,ovector,30);
    if(rc>0)
-      return GEOCACHE_SUCCESS;
+      return MAPCACHE_SUCCESS;
 #else
    if(!regexec(dimension->regex,*value,0,0,0)) {
-      return GEOCACHE_SUCCESS;
+      return MAPCACHE_SUCCESS;
    }
 #endif
-   return GEOCACHE_FAILURE;
+   return MAPCACHE_FAILURE;
 }
 
-static const char** _geocache_dimension_regex_print(geocache_context *ctx, geocache_dimension *dim) {
-   geocache_dimension_regex *dimension = (geocache_dimension_regex*)dim;
+static const char** _mapcache_dimension_regex_print(mapcache_context *ctx, mapcache_dimension *dim) {
+   mapcache_dimension_regex *dimension = (mapcache_dimension_regex*)dim;
    const char **ret = (const char**)apr_pcalloc(ctx->pool,2*sizeof(const char*));
    ret[0]=dimension->regex_string;
    ret[1]=NULL;
@@ -130,9 +130,9 @@ static const char** _geocache_dimension_regex_print(geocache_context *ctx, geoca
 }
 
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-static void _geocache_dimension_regex_parse_json(geocache_context *ctx, geocache_dimension *dim,
+static void _mapcache_dimension_regex_parse_json(mapcache_context *ctx, mapcache_dimension *dim,
       cJSON *node) {
-   geocache_dimension_regex *dimension = (geocache_dimension_regex*)dim;
+   mapcache_dimension_regex *dimension = (mapcache_dimension_regex*)dim;
    cJSON *tmp = cJSON_GetObjectItem(node,"regex");
    if(tmp && tmp->valuestring && *(tmp->valuestring)) {
       dimension->regex_string = apr_pstrdup(ctx->pool,tmp->valuestring);
@@ -163,14 +163,14 @@ static void _geocache_dimension_regex_parse_json(geocache_context *ctx, geocache
 }
 #endif
 
-static void _geocache_dimension_regex_parse_xml(geocache_context *ctx, geocache_dimension *dim,
+static void _mapcache_dimension_regex_parse_xml(mapcache_context *ctx, mapcache_dimension *dim,
       ezxml_t node) {
    const char *entry = node->txt;
    if(!entry || !*entry) {
       ctx->set_error(ctx,400,"failed to parse dimension regex: none supplied");
       return;
    }
-   geocache_dimension_regex *dimension = (geocache_dimension_regex*)dim;
+   mapcache_dimension_regex *dimension = (mapcache_dimension_regex*)dim;
    dimension->regex_string = apr_pstrdup(ctx->pool,entry);
 #ifdef USE_PCRE
    const char *pcre_err;
@@ -194,23 +194,23 @@ static void _geocache_dimension_regex_parse_xml(geocache_context *ctx, geocache_
 
 }
 
-static int _geocache_dimension_values_validate(geocache_context *ctx, geocache_dimension *dim, char **value) {
+static int _mapcache_dimension_values_validate(mapcache_context *ctx, mapcache_dimension *dim, char **value) {
    int i;
-   geocache_dimension_values *dimension = (geocache_dimension_values*)dim;
+   mapcache_dimension_values *dimension = (mapcache_dimension_values*)dim;
    for(i=0;i<dimension->nvalues;i++) {
       if(dimension->case_sensitive) {
          if(!strcmp(*value,dimension->values[i]))
-            return GEOCACHE_SUCCESS;
+            return MAPCACHE_SUCCESS;
       } else {
          if(!strcasecmp(*value,dimension->values[i]))
-            return GEOCACHE_SUCCESS;
+            return MAPCACHE_SUCCESS;
       }
    }
-   return GEOCACHE_FAILURE;
+   return MAPCACHE_FAILURE;
 }
 
-static const char** _geocache_dimension_values_print(geocache_context *ctx, geocache_dimension *dim) {
-   geocache_dimension_values *dimension = (geocache_dimension_values*)dim;
+static const char** _mapcache_dimension_values_print(mapcache_context *ctx, mapcache_dimension *dim) {
+   mapcache_dimension_values *dimension = (mapcache_dimension_values*)dim;
    const char **ret = (const char**)apr_pcalloc(ctx->pool,(dimension->nvalues+1)*sizeof(const char*));
    int i;
    for(i=0;i<dimension->nvalues;i++) {
@@ -221,10 +221,10 @@ static const char** _geocache_dimension_values_print(geocache_context *ctx, geoc
 }
 
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-static void _geocache_dimension_values_parse_json(geocache_context *ctx, geocache_dimension *dim,
+static void _mapcache_dimension_values_parse_json(mapcache_context *ctx, mapcache_dimension *dim,
       cJSON *node) {
    cJSON *tmp;
-   geocache_dimension_values *dimension = (geocache_dimension_values*)dim;
+   mapcache_dimension_values *dimension = (mapcache_dimension_values*)dim;
    tmp = cJSON_GetObjectItem(node,"values");
    if(tmp) {
       int i;
@@ -250,7 +250,7 @@ static void _geocache_dimension_values_parse_json(geocache_context *ctx, geocach
 }
 #endif
 
-static void _geocache_dimension_values_parse_xml(geocache_context *ctx, geocache_dimension *dim,
+static void _mapcache_dimension_values_parse_xml(mapcache_context *ctx, mapcache_dimension *dim,
       ezxml_t node) {
    int count = 1;
    const char *entry = node->txt;
@@ -259,7 +259,7 @@ static void _geocache_dimension_values_parse_xml(geocache_context *ctx, geocache
       return;
    }
 
-   geocache_dimension_values *dimension = (geocache_dimension_values*)dim;
+   mapcache_dimension_values *dimension = (mapcache_dimension_values*)dim;
    const char *case_sensitive = ezxml_attr(node,"case_sensitive");
    if(case_sensitive && !strcasecmp(case_sensitive,"true")) {
       dimension->case_sensitive = 1;
@@ -282,54 +282,54 @@ static void _geocache_dimension_values_parse_xml(geocache_context *ctx, geocache
    }
 }
 
-geocache_dimension* geocache_dimension_values_create(apr_pool_t *pool) {
-   geocache_dimension_values *dimension = apr_pcalloc(pool, sizeof(geocache_dimension_values));
-   dimension->dimension.type = GEOCACHE_DIMENSION_VALUES;
+mapcache_dimension* mapcache_dimension_values_create(apr_pool_t *pool) {
+   mapcache_dimension_values *dimension = apr_pcalloc(pool, sizeof(mapcache_dimension_values));
+   dimension->dimension.type = MAPCACHE_DIMENSION_VALUES;
    dimension->nvalues = 0;
-   dimension->dimension.validate = _geocache_dimension_values_validate;
-   dimension->dimension.configuration_parse_xml = _geocache_dimension_values_parse_xml;
+   dimension->dimension.validate = _mapcache_dimension_values_validate;
+   dimension->dimension.configuration_parse_xml = _mapcache_dimension_values_parse_xml;
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   dimension->dimension.configuration_parse_json = _geocache_dimension_values_parse_json;
+   dimension->dimension.configuration_parse_json = _mapcache_dimension_values_parse_json;
 #endif
-   dimension->dimension.print_ogc_formatted_values = _geocache_dimension_values_print;
-   return (geocache_dimension*)dimension;
+   dimension->dimension.print_ogc_formatted_values = _mapcache_dimension_values_print;
+   return (mapcache_dimension*)dimension;
 }
 
-geocache_dimension* geocache_dimension_time_create(apr_pool_t *pool) {
-   geocache_dimension_time *dimension = apr_pcalloc(pool, sizeof(geocache_dimension_time));
-   dimension->dimension.type = GEOCACHE_DIMENSION_TIME;
+mapcache_dimension* mapcache_dimension_time_create(apr_pool_t *pool) {
+   mapcache_dimension_time *dimension = apr_pcalloc(pool, sizeof(mapcache_dimension_time));
+   dimension->dimension.type = MAPCACHE_DIMENSION_TIME;
    dimension->nintervals = 0;
-//   dimension->dimension.validate = _geocache_dimension_time_validate;
-//   dimension->dimension.parse = _geocache_dimension_time_parse;
-//   dimension->dimension.print_ogc_formatted_values = _geocache_dimension_time_print;
-   return (geocache_dimension*)dimension;
+//   dimension->dimension.validate = _mapcache_dimension_time_validate;
+//   dimension->dimension.parse = _mapcache_dimension_time_parse;
+//   dimension->dimension.print_ogc_formatted_values = _mapcache_dimension_time_print;
+   return (mapcache_dimension*)dimension;
 }
 
-geocache_dimension* geocache_dimension_intervals_create(apr_pool_t *pool) {
-   geocache_dimension_intervals *dimension = apr_pcalloc(pool, sizeof(geocache_dimension_intervals));
-   dimension->dimension.type = GEOCACHE_DIMENSION_INTERVALS;
+mapcache_dimension* mapcache_dimension_intervals_create(apr_pool_t *pool) {
+   mapcache_dimension_intervals *dimension = apr_pcalloc(pool, sizeof(mapcache_dimension_intervals));
+   dimension->dimension.type = MAPCACHE_DIMENSION_INTERVALS;
    dimension->nintervals = 0;
-   dimension->dimension.validate = _geocache_dimension_intervals_validate;
-   dimension->dimension.configuration_parse_xml = _geocache_dimension_intervals_parse_xml;
+   dimension->dimension.validate = _mapcache_dimension_intervals_validate;
+   dimension->dimension.configuration_parse_xml = _mapcache_dimension_intervals_parse_xml;
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   dimension->dimension.configuration_parse_json = _geocache_dimension_intervals_parse_json;
+   dimension->dimension.configuration_parse_json = _mapcache_dimension_intervals_parse_json;
 #endif
-   dimension->dimension.print_ogc_formatted_values = _geocache_dimension_intervals_print;
-   return (geocache_dimension*)dimension;
+   dimension->dimension.print_ogc_formatted_values = _mapcache_dimension_intervals_print;
+   return (mapcache_dimension*)dimension;
 }
-geocache_dimension* geocache_dimension_regex_create(apr_pool_t *pool) {
-   geocache_dimension_regex *dimension = apr_pcalloc(pool, sizeof(geocache_dimension_regex));
-   dimension->dimension.type = GEOCACHE_DIMENSION_REGEX;
+mapcache_dimension* mapcache_dimension_regex_create(apr_pool_t *pool) {
+   mapcache_dimension_regex *dimension = apr_pcalloc(pool, sizeof(mapcache_dimension_regex));
+   dimension->dimension.type = MAPCACHE_DIMENSION_REGEX;
 #ifndef USE_PCRE
    dimension->regex = (regex_t*)apr_pcalloc(pool, sizeof(regex_t));
 #endif
-   dimension->dimension.validate = _geocache_dimension_regex_validate;
-   dimension->dimension.configuration_parse_xml = _geocache_dimension_regex_parse_xml;
+   dimension->dimension.validate = _mapcache_dimension_regex_validate;
+   dimension->dimension.configuration_parse_xml = _mapcache_dimension_regex_parse_xml;
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   dimension->dimension.configuration_parse_json = _geocache_dimension_regex_parse_json;
+   dimension->dimension.configuration_parse_json = _mapcache_dimension_regex_parse_json;
 #endif
-   dimension->dimension.print_ogc_formatted_values = _geocache_dimension_regex_print;
-   return (geocache_dimension*)dimension;
+   dimension->dimension.print_ogc_formatted_values = _mapcache_dimension_regex_print;
+   return (mapcache_dimension*)dimension;
 }
 /* vim: ai ts=3 sts=3 et sw=3
 */

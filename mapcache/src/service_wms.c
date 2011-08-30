@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_strings.h>
 #include <math.h>
 #include "ezxml.h"
@@ -22,10 +22,10 @@
 /** \addtogroup services */
 /** @{ */
 
-void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabilities *req, char *guessed_url, char *path_info, geocache_cfg *cfg) {
-   geocache_request_get_capabilities_wms *request = (geocache_request_get_capabilities_wms*)req;
+void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabilities *req, char *guessed_url, char *path_info, mapcache_cfg *cfg) {
+   mapcache_request_get_capabilities_wms *request = (mapcache_request_get_capabilities_wms*)req;
 #ifdef DEBUG
-   if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
+   if(request->request.request.type != MAPCACHE_REQUEST_GET_CAPABILITIES) {
       ctx->set_error(ctx,400,"wrong wms capabilities request");
       return;
    }
@@ -155,7 +155,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
    while(grid_index) {
       const void *key;
       apr_ssize_t keylen;
-      geocache_grid *grid = NULL;
+      mapcache_grid *grid = NULL;
       apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
       ezxml_set_txt(ezxml_add_child(toplayer,"SRS",0),grid->srs);
       grid_index = apr_hash_next(grid_index);
@@ -165,7 +165,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
 
    while(tileindex_index) {
-      geocache_tileset *tileset;
+      mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       
@@ -199,7 +199,7 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
       if(tileset->dimensions) {
          int i;
          for(i=0;i<tileset->dimensions->nelts;i++) {
-            geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+            mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
             ezxml_t dimxml = ezxml_add_child(layerxml,"Dimension",0);
             ezxml_set_attr(dimxml,"name",dimension->name);
             ezxml_set_attr(dimxml,"default",dimension->default_value);
@@ -221,8 +221,8 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
 
       int i;
       for(i=0;i<tileset->grid_links->nelts;i++) {
-         geocache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
-         geocache_grid *grid = gridlink->grid;
+         mapcache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
+         mapcache_grid *grid = gridlink->grid;
          double *extent = grid->extent;
          if(gridlink->restricted_extent)
             extent = gridlink->restricted_extent;
@@ -286,11 +286,11 @@ void _create_capabilities_wms(geocache_context *ctx, geocache_request_get_capabi
 
 /**
  * \brief parse a WMS request
- * \private \memberof geocache_service_wms
- * \sa geocache_service::parse_request()
+ * \private \memberof mapcache_service_wms
+ * \sa mapcache_service::parse_request()
  */
-void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
-      const char *pathinfo, apr_table_t *params, geocache_cfg *config) {
+void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service *this, mapcache_request **request,
+      const char *pathinfo, apr_table_t *params, mapcache_cfg *config) {
    const char *str = NULL;
    const char *srs=NULL;
    int width=0, height=0;
@@ -298,7 +298,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
    int isGetMap=0,iswms130=0;
    int errcode = 200;
    char *errmsg = NULL;
-   geocache_service_wms *wms_service = (geocache_service_wms*)this;
+   mapcache_service_wms *wms_service = (mapcache_service_wms*)this;
 
    *request = NULL;
 
@@ -329,9 +329,9 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
       }
    } else {
       if( ! strcasecmp(str,"getcapabilities") ) {
-         *request = (geocache_request*)
-            apr_pcalloc(ctx->pool,sizeof(geocache_request_get_capabilities_wms));
-         (*request)->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
+         *request = (mapcache_request*)
+            apr_pcalloc(ctx->pool,sizeof(mapcache_request_get_capabilities_wms));
+         (*request)->type = MAPCACHE_REQUEST_GET_CAPABILITIES;
          goto proxies; /* OK */
       } else if( ! strcasecmp(str,"getfeatureinfo") ) {
          //nothing
@@ -350,7 +350,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
       goto proxies;
    } else {
       int nextents;
-      if(GEOCACHE_SUCCESS != geocache_util_extract_double_list(ctx, str,",",&bbox,&nextents) ||
+      if(MAPCACHE_SUCCESS != mapcache_util_extract_double_list(ctx, str,",",&bbox,&nextents) ||
             nextents != 4) {
          errcode = 400;
          errmsg = "received wms request with invalid bbox";
@@ -405,7 +405,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
    }
    if(iswms130) {
       /*check if we should flib the axis order*/
-      if(geocache_is_axis_inverted(srs)) {
+      if(mapcache_is_axis_inverted(srs)) {
          double swap;
          swap = bbox[0];
          bbox[0] = bbox[1];
@@ -428,10 +428,10 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          int count=1;
          int i,layeridx;
          int x,y,z;
-         geocache_request_get_map *map_req = NULL;
-         geocache_request_get_tile *tile_req = NULL;
-         geocache_grid_link *main_grid_link = NULL;
-         geocache_tileset *main_tileset = NULL;
+         mapcache_request_get_map *map_req = NULL;
+         mapcache_request_get_tile *tile_req = NULL;
+         mapcache_grid_link *main_grid_link = NULL;
+         mapcache_tileset *main_tileset = NULL;
          
          /* count the number of layers that are requested */
          for(key=str;*key;key++) if(*key == ',') count++;
@@ -441,7 +441,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
           * wms layer that was provided in the request.
           * Checking to see if all requested layers reference the grid will be done in a second step
           */
-         geocache_request_type type = GEOCACHE_REQUEST_GET_TILE;
+         mapcache_request_type type = MAPCACHE_REQUEST_GET_TILE;
          
          if(count ==1) {
             key = str;
@@ -449,7 +449,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             layers = apr_pstrdup(ctx->pool,str);
             key = apr_strtok(layers, ",", &last); /* extract first layer */
          }
-         main_tileset = geocache_configuration_get_tileset(config,key);
+         main_tileset = mapcache_configuration_get_tileset(config,key);
          if(!main_tileset) {
             errcode = 404;
             errmsg = apr_psprintf(ctx->pool,"received wms request with invalid layer %s", key);
@@ -457,7 +457,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          }
 
          for(i=0;i<main_tileset->grid_links->nelts;i++){
-            geocache_grid_link *sgrid = APR_ARRAY_IDX(main_tileset->grid_links,i,geocache_grid_link*);
+            mapcache_grid_link *sgrid = APR_ARRAY_IDX(main_tileset->grid_links,i,mapcache_grid_link*);
             /* look for a grid with a matching srs */
             if(strcasecmp(sgrid->grid->srs,srs)) {
                /* look if the grid has some srs aliases */
@@ -481,26 +481,26 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
 
          /* verify we align on the tileset's grid */ 
          if(main_grid_link->grid->tile_sx != width || main_grid_link->grid->tile_sy != height ||
-               geocache_grid_get_cell(ctx, main_grid_link->grid, bbox, &x,&y,&z) != GEOCACHE_SUCCESS) {
+               mapcache_grid_get_cell(ctx, main_grid_link->grid, bbox, &x,&y,&z) != MAPCACHE_SUCCESS) {
             /* we have the correct srs, but the request does not align on the grid */
-            type = GEOCACHE_REQUEST_GET_MAP;
+            type = MAPCACHE_REQUEST_GET_MAP;
          }
          
 
-         if(type == GEOCACHE_REQUEST_GET_TILE) {
-            tile_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_tile));
-            tile_req->request.type = GEOCACHE_REQUEST_GET_TILE;
-            tile_req->tiles = apr_pcalloc(ctx->pool, count*sizeof(geocache_tile*));
+         if(type == MAPCACHE_REQUEST_GET_TILE) {
+            tile_req = apr_pcalloc(ctx->pool, sizeof(mapcache_request_get_tile));
+            tile_req->request.type = MAPCACHE_REQUEST_GET_TILE;
+            tile_req->tiles = apr_pcalloc(ctx->pool, count*sizeof(mapcache_tile*));
             tile_req->format = wms_service->getmap_format;
-            *request = (geocache_request*)tile_req;
+            *request = (mapcache_request*)tile_req;
          } else {
-            map_req = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_map));
-            map_req->request.type = GEOCACHE_REQUEST_GET_MAP;
-            map_req->maps = apr_pcalloc(ctx->pool, count*sizeof(geocache_map*));
+            map_req = apr_pcalloc(ctx->pool, sizeof(mapcache_request_get_map));
+            map_req->request.type = MAPCACHE_REQUEST_GET_MAP;
+            map_req->maps = apr_pcalloc(ctx->pool, count*sizeof(mapcache_map*));
             map_req->getmap_strategy = wms_service->getmap_strategy;
             map_req->resample_mode = wms_service->resample_mode;
             map_req->getmap_format = wms_service->getmap_format;
-            *request = (geocache_request*)map_req;
+            *request = (mapcache_request*)map_req;
          }
 
          /*
@@ -512,8 +512,8 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
 
          for (layeridx=0,key = ((count==1)?str:apr_strtok(layers, ",", &last)); key != NULL;
                key = ((count==1)?NULL:apr_strtok(NULL, ",", &last)),layeridx++) {
-            geocache_tileset *tileset = main_tileset;
-            geocache_grid_link *grid_link = main_grid_link;
+            mapcache_tileset *tileset = main_tileset;
+            mapcache_grid_link *grid_link = main_grid_link;
             apr_table_t *dimtable = NULL;
             
             if(layeridx) {
@@ -521,11 +521,11 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                 * if we have multiple requested layers, check that they reference the requested grid
                 * this step is not done for the first tileset as we have already performed it
                 */
-               tileset = geocache_configuration_get_tileset(config,key);
+               tileset = mapcache_configuration_get_tileset(config,key);
                int i;
                grid_link = NULL;
                for(i=0;i<tileset->grid_links->nelts;i++){
-                  grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+                  grid_link = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
                   if(grid_link->grid == main_grid_link->grid) {
                      break;
                   }
@@ -539,12 +539,12 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                   goto proxies;
                }
             }
-            if(type == GEOCACHE_REQUEST_GET_TILE) {
-               geocache_tile *tile = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
+            if(type == MAPCACHE_REQUEST_GET_TILE) {
+               mapcache_tile *tile = mapcache_tileset_tile_create(ctx->pool, tileset, grid_link);
                tile->x = x;
                tile->y = y;
                tile->z = z;
-               geocache_tileset_tile_validate(ctx,tile);
+               mapcache_tileset_tile_validate(ctx,tile);
                if(GC_HAS_ERROR(ctx)) {
                   /* don't bail out just yet, in case multiple tiles have been requested */
                   ctx->clear_errors(ctx);
@@ -554,7 +554,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
                dimtable = tile->dimensions;
 
             } else {
-               geocache_map *map = geocache_tileset_map_create(ctx->pool,tileset,grid_link);
+               mapcache_map *map = mapcache_tileset_map_create(ctx->pool,tileset,grid_link);
                map->width = width;
                map->height = height;
                map->extent[0] = bbox[0];
@@ -569,13 +569,13 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             if(dimtable) {
                int i;
                for(i=0;i<tileset->dimensions->nelts;i++) {
-                  geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+                  mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
                   const char *value;
                   if((value = (char*)apr_table_get(params,dimension->name)) != NULL) {
                      char *tmpval = apr_pstrdup(ctx->pool,value);
                      int ok = dimension->validate(ctx,dimension,&tmpval);
                      GC_CHECK_ERROR(ctx);
-                     if(ok == GEOCACHE_SUCCESS)
+                     if(ok == MAPCACHE_SUCCESS)
                         apr_table_setn(dimtable,dimension->name,tmpval);
                      else {
                         errcode = 400;
@@ -605,7 +605,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          errmsg = "wms getfeatureinfo not implemented for multiple layers";
          goto proxies;
       } else {
-         geocache_tileset *tileset = geocache_configuration_get_tileset(config,str);
+         mapcache_tileset *tileset = mapcache_configuration_get_tileset(config,str);
          if(!tileset) {
             errcode = 404;
             errmsg = apr_psprintf(ctx->pool,"received wms getfeatureinfo request with invalid layer %s", str);
@@ -617,9 +617,9 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             goto proxies;
          }
          int i;
-         geocache_grid_link *grid_link = NULL;
+         mapcache_grid_link *grid_link = NULL;
          for(i=0;i<tileset->grid_links->nelts;i++){
-            geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+            mapcache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
             if(strcasecmp(sgrid->grid->srs,srs)) continue;
             grid_link = sgrid;
             break;
@@ -662,7 +662,7 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
             }
          }
          
-         geocache_feature_info *fi = geocache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
+         mapcache_feature_info *fi = mapcache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
          fi->i = x;
          fi->j = y;
          fi->format = apr_pstrdup(ctx->pool,apr_table_get(params,"INFO_FORMAT"));
@@ -675,13 +675,13 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          if(fi->map.dimensions) {
             int i;
             for(i=0;i<tileset->dimensions->nelts;i++) {
-               geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+               mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
                const char *value;
                if((value = (char*)apr_table_get(params,dimension->name)) != NULL) {
                   char *tmpval = apr_pstrdup(ctx->pool,value);
                   int ok = dimension->validate(ctx,dimension,&tmpval);
                   GC_CHECK_ERROR(ctx);
-                  if(ok == GEOCACHE_SUCCESS)
+                  if(ok == MAPCACHE_SUCCESS)
                      apr_table_setn(fi->map.dimensions,dimension->name,tmpval);
                   else {
                      errcode = 400;
@@ -698,10 +698,10 @@ void _geocache_service_wms_parse_request(geocache_context *ctx, geocache_service
          fi->map.extent[1] = bbox[1];
          fi->map.extent[2] = bbox[2];
          fi->map.extent[3] = bbox[3];
-         geocache_request_get_feature_info *req_fi = apr_pcalloc(ctx->pool, sizeof(geocache_request_get_feature_info));
-         req_fi->request.type = GEOCACHE_REQUEST_GET_FEATUREINFO;
+         mapcache_request_get_feature_info *req_fi = apr_pcalloc(ctx->pool, sizeof(mapcache_request_get_feature_info));
+         req_fi->request.type = MAPCACHE_REQUEST_GET_FEATUREINFO;
          req_fi->fi = fi;
-         *request = (geocache_request*)req_fi;
+         *request = (mapcache_request*)req_fi;
 
       }
    }
@@ -714,13 +714,13 @@ proxies:
    if(errcode == 200 && 
          *request && (
             /* if its a single tile we're ok*/
-            ((*request)->type == GEOCACHE_REQUEST_GET_TILE && ((geocache_request_get_tile*)(*request))->ntiles == 1) ||
-            ((*request)->type == GEOCACHE_REQUEST_GET_FEATUREINFO) ||
+            ((*request)->type == MAPCACHE_REQUEST_GET_TILE && ((mapcache_request_get_tile*)(*request))->ntiles == 1) ||
+            ((*request)->type == MAPCACHE_REQUEST_GET_FEATUREINFO) ||
             
             /* if we have a getmap or multiple tiles, we must check that assembling is allowed */
-            (((*request)->type == GEOCACHE_REQUEST_GET_MAP || ( 
-               (*request)->type == GEOCACHE_REQUEST_GET_TILE && ((geocache_request_get_tile*)(*request))->ntiles > 1)) && 
-               wms_service->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE)
+            (((*request)->type == MAPCACHE_REQUEST_GET_MAP || ( 
+               (*request)->type == MAPCACHE_REQUEST_GET_TILE && ((mapcache_request_get_tile*)(*request))->ntiles > 1)) && 
+               wms_service->getmap_strategy == MAPCACHE_GETMAP_ASSEMBLE)
             )) {
       /* if we're here, then we have succesfully parsed the request and can treat it ourselves, i.e. from cached tiles */
       return;
@@ -728,22 +728,22 @@ proxies:
       /* look to see if we can proxy the request somewhere*/
       int i,j;
       for(i=0;i<wms_service->forwarding_rules->nelts;i++) {
-         geocache_forwarding_rule *rule = APR_ARRAY_IDX(wms_service->forwarding_rules,i,geocache_forwarding_rule*);
+         mapcache_forwarding_rule *rule = APR_ARRAY_IDX(wms_service->forwarding_rules,i,mapcache_forwarding_rule*);
          int got_a_match = 1;
          for(j=0;j<rule->match_params->nelts;j++) {
-            geocache_dimension *match_param = APR_ARRAY_IDX(rule->match_params,j,geocache_dimension*);
+            mapcache_dimension *match_param = APR_ARRAY_IDX(rule->match_params,j,mapcache_dimension*);
             const char *value = apr_table_get(params,match_param->name);
-            if(!value || match_param->validate(ctx,match_param,(char**)&value) == GEOCACHE_FAILURE) {
+            if(!value || match_param->validate(ctx,match_param,(char**)&value) == MAPCACHE_FAILURE) {
                /* the parameter was not supplied, or did not validate: we don't apply this rule */
                got_a_match = 0;
                break;
             }
          }
          if( got_a_match == 1 ) {
-            geocache_request_proxy *req_proxy = apr_pcalloc(ctx->pool,sizeof(geocache_request_proxy));
-            *request = (geocache_request*)req_proxy;
+            mapcache_request_proxy *req_proxy = apr_pcalloc(ctx->pool,sizeof(mapcache_request_proxy));
+            *request = (mapcache_request*)req_proxy;
             (*request)->service = this;
-            (*request)->type = GEOCACHE_REQUEST_PROXY;
+            (*request)->type = MAPCACHE_REQUEST_PROXY;
             req_proxy->http = rule->http;
             req_proxy->params = params;
             if(rule->append_pathinfo) {
@@ -765,10 +765,10 @@ proxies:
       return;
    }
 #ifdef DEBUG
-   if((*request)->type != GEOCACHE_REQUEST_GET_TILE &&
-         (*request)->type != GEOCACHE_REQUEST_GET_MAP && 
-         (*request)->type != GEOCACHE_REQUEST_GET_FEATUREINFO && 
-         (*request)->type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
+   if((*request)->type != MAPCACHE_REQUEST_GET_TILE &&
+         (*request)->type != MAPCACHE_REQUEST_GET_MAP && 
+         (*request)->type != MAPCACHE_REQUEST_GET_FEATUREINFO && 
+         (*request)->type != MAPCACHE_REQUEST_GET_CAPABILITIES) {
       ctx->set_error(ctx,500,"BUG: request not gettile or getmap");
       return;
    }
@@ -776,15 +776,15 @@ proxies:
 }
 
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_service *gservice, geocache_cfg *cfg) {
-   assert(gservice->type == GEOCACHE_SERVICE_WMS);
-   geocache_service_wms *wms = (geocache_service_wms*)gservice;
+void _configuration_parse_wms_json(mapcache_context *ctx, cJSON *node, mapcache_service *gservice, mapcache_cfg *cfg) {
+   assert(gservice->type == MAPCACHE_SERVICE_WMS);
+   mapcache_service_wms *wms = (mapcache_service_wms*)gservice;
    cJSON *rules = cJSON_GetObjectItem(node,"forwarding_rules");
    if(rules) {
       int i;
       for(i=0;i<cJSON_GetArraySize(rules);i++) {
-         geocache_forwarding_rule *rule = apr_pcalloc(ctx->pool, sizeof(geocache_forwarding_rule));
-         rule->match_params = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
+         mapcache_forwarding_rule *rule = apr_pcalloc(ctx->pool, sizeof(mapcache_forwarding_rule));
+         rule->match_params = apr_array_make(ctx->pool,1,sizeof(mapcache_dimension*));
          cJSON *jrule = cJSON_GetArrayItem(rules,i);
          
          /* extract name */
@@ -808,7 +808,7 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
             ctx->set_error(ctx,500,"rule \"%s\" does not contain an http object",rule->name);
             return;
          }
-         rule->http = geocache_http_configuration_parse_json(ctx,tmp);
+         rule->http = mapcache_http_configuration_parse_json(ctx,tmp);
          GC_CHECK_ERROR(ctx);
          
          tmp = cJSON_GetObjectItem(jrule,"params");
@@ -816,7 +816,7 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
             int j;
             for(j=0;j<cJSON_GetArraySize(tmp);j++) {
                cJSON *param = cJSON_GetArrayItem(tmp,j);
-               geocache_dimension *dimension = NULL;
+               mapcache_dimension *dimension = NULL;
                char *name=NULL,*type=NULL;
                cJSON *tmp2 = cJSON_GetObjectItem(param,"name");
                if(tmp2 && tmp2->valuestring) {
@@ -831,9 +831,9 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
                   return;
                }
                if(!strcmp(type,"values")) {
-                  dimension = geocache_dimension_values_create(ctx->pool);
+                  dimension = mapcache_dimension_values_create(ctx->pool);
                } else if(!strcmp(type,"regex")) {
-                  dimension = geocache_dimension_regex_create(ctx->pool);
+                  dimension = mapcache_dimension_regex_create(ctx->pool);
                } else {
                   ctx->set_error(ctx,400,"unknown forwarding_rule param type \"%s\". expecting \"values\" or \"regex\".",type);
                   return;
@@ -847,9 +847,9 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
                dimension->configuration_parse_json(ctx,dimension,tmp2);
                GC_CHECK_ERROR(ctx);
 
-               APR_ARRAY_PUSH(rule->match_params,geocache_dimension*) = dimension;
+               APR_ARRAY_PUSH(rule->match_params,mapcache_dimension*) = dimension;
             }
-            APR_ARRAY_PUSH(wms->forwarding_rules,geocache_forwarding_rule*) = rule;
+            APR_ARRAY_PUSH(wms->forwarding_rules,mapcache_forwarding_rule*) = rule;
          }
       }
    }
@@ -859,11 +859,11 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
       tmp = cJSON_GetObjectItem(full_getmap,"strategy");
       if(tmp && tmp->valuestring) {
          if(!strcasecmp("assemble",tmp->valuestring)) {
-            wms->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
+            wms->getmap_strategy = MAPCACHE_GETMAP_ASSEMBLE;
          } else if(!strcasecmp("forward",tmp->valuestring)) {
-            wms->getmap_strategy = GEOCACHE_GETMAP_FORWARD;
+            wms->getmap_strategy = MAPCACHE_GETMAP_FORWARD;
          } else if(!strcasecmp("error",tmp->valuestring)) {
-            wms->getmap_strategy = GEOCACHE_GETMAP_ERROR;
+            wms->getmap_strategy = MAPCACHE_GETMAP_ERROR;
          } else {
             ctx->set_error(ctx,400,"unknown full_getmap strategy \"%s\"",tmp->valuestring);
             return;
@@ -872,9 +872,9 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
       tmp = cJSON_GetObjectItem(full_getmap,"resample_mode");
       if(tmp && tmp->valuestring) {
          if(!strcasecmp("bilinear",tmp->valuestring)) {
-            wms->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
+            wms->resample_mode = MAPCACHE_RESAMPLE_BILINEAR;
          } else if(!strcasecmp("nearest",tmp->valuestring)) {
-            wms->resample_mode = GEOCACHE_RESAMPLE_NEAREST;
+            wms->resample_mode = MAPCACHE_RESAMPLE_NEAREST;
          } else {
             ctx->set_error(ctx,400,"unknown full_getmap resample_mode \"%s\"",tmp->valuestring);
             return;
@@ -882,7 +882,7 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
       }
       tmp = cJSON_GetObjectItem(full_getmap,"format");
       if(tmp && tmp->valuestring) {
-         wms->getmap_format = geocache_configuration_get_image_format(cfg,tmp->valuestring);
+         wms->getmap_format = mapcache_configuration_get_image_format(cfg,tmp->valuestring);
          if(!wms->getmap_format) {
             ctx->set_error(ctx,400,"unknown full_getmap format \"%s\"",tmp->valuestring);
             return;
@@ -892,16 +892,16 @@ void _configuration_parse_wms_json(geocache_context *ctx, cJSON *node, geocache_
 }
 #endif
 
-void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_service *gservice, geocache_cfg *cfg) {
-   assert(gservice->type == GEOCACHE_SERVICE_WMS);
-   geocache_service_wms *wms = (geocache_service_wms*)gservice;
+void _configuration_parse_wms_xml(mapcache_context *ctx, ezxml_t node, mapcache_service *gservice, mapcache_cfg *cfg) {
+   assert(gservice->type == MAPCACHE_SERVICE_WMS);
+   mapcache_service_wms *wms = (mapcache_service_wms*)gservice;
    ezxml_t rule_node;
    for( rule_node = ezxml_child(node,"forwarding_rule"); rule_node; rule_node = rule_node->next) {
       char *name = (char*)ezxml_attr(rule_node,"name");
       if(!name) name = "(null)";
-      geocache_forwarding_rule *rule = apr_pcalloc(ctx->pool, sizeof(geocache_forwarding_rule));
+      mapcache_forwarding_rule *rule = apr_pcalloc(ctx->pool, sizeof(mapcache_forwarding_rule));
       rule->name = apr_pstrdup(ctx->pool,name);
-      rule->match_params = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
+      rule->match_params = apr_array_make(ctx->pool,1,sizeof(mapcache_dimension*));
 
       ezxml_t pathinfo_node = ezxml_child(rule_node,"append_pathinfo");
       if(pathinfo_node && !strcasecmp(pathinfo_node->txt,"true")) {
@@ -914,7 +914,7 @@ void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_
          ctx->set_error(ctx,500,"rule \"%s\" does not contain an <http> block",name);
          return;
       }
-      rule->http = geocache_http_configuration_parse_xml(ctx,http_node);
+      rule->http = mapcache_http_configuration_parse_xml(ctx,http_node);
       GC_CHECK_ERROR(ctx);
 
       ezxml_t param_node;
@@ -922,7 +922,7 @@ void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_
          char *name = (char*)ezxml_attr(param_node,"name");
          char *type = (char*)ezxml_attr(param_node,"type");
 
-         geocache_dimension *dimension = NULL;
+         mapcache_dimension *dimension = NULL;
 
          if(!name || !strlen(name)) {
             ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in forwarding rule <param>");
@@ -931,9 +931,9 @@ void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_
 
          if(type && *type) {
             if(!strcmp(type,"values")) {
-               dimension = geocache_dimension_values_create(ctx->pool);
+               dimension = mapcache_dimension_values_create(ctx->pool);
             } else if(!strcmp(type,"regex")) {
-               dimension = geocache_dimension_regex_create(ctx->pool);
+               dimension = mapcache_dimension_regex_create(ctx->pool);
             } else {
                ctx->set_error(ctx,400,"unknown <param> type \"%s\". expecting \"values\" or \"regex\".",type);
                return;
@@ -948,24 +948,24 @@ void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_
          dimension->configuration_parse_xml(ctx,dimension,param_node);
          GC_CHECK_ERROR(ctx);
 
-         APR_ARRAY_PUSH(rule->match_params,geocache_dimension*) = dimension;
+         APR_ARRAY_PUSH(rule->match_params,mapcache_dimension*) = dimension;
       }
-      APR_ARRAY_PUSH(wms->forwarding_rules,geocache_forwarding_rule*) = rule;
+      APR_ARRAY_PUSH(wms->forwarding_rules,mapcache_forwarding_rule*) = rule;
    }
    if ((rule_node = ezxml_child(node,"full_wms")) != NULL) {
       if(!strcmp(rule_node->txt,"assemble")) {
-         wms->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
+         wms->getmap_strategy = MAPCACHE_GETMAP_ASSEMBLE;
       } else if(!strcmp(rule_node->txt,"forward")) {
-         wms->getmap_strategy = GEOCACHE_GETMAP_FORWARD;
+         wms->getmap_strategy = MAPCACHE_GETMAP_FORWARD;
       } else if(*rule_node->txt && strcmp(rule_node->txt,"error")) {
          ctx->set_error(ctx,400, "unknown value %s for node <full_wms> (allowed values: assemble, getmap or error", rule_node->txt);
          return;
       }
    }
    
-   wms->getmap_format = geocache_configuration_get_image_format(cfg,"JPEG");
+   wms->getmap_format = mapcache_configuration_get_image_format(cfg,"JPEG");
    if ((rule_node = ezxml_child(node,"format")) != NULL) {
-      wms->getmap_format = geocache_configuration_get_image_format(cfg,rule_node->txt);
+      wms->getmap_format = mapcache_configuration_get_image_format(cfg,rule_node->txt);
       if(!wms->getmap_format) {
          ctx->set_error(ctx,400, "unknown <format> %s for wms service", rule_node->txt);
          return;
@@ -974,9 +974,9 @@ void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_
    
    if ((rule_node = ezxml_child(node,"resample_mode")) != NULL) {
       if(!strcmp(rule_node->txt,"nearest")) {
-         wms->resample_mode = GEOCACHE_RESAMPLE_NEAREST;
+         wms->resample_mode = MAPCACHE_RESAMPLE_NEAREST;
       } else if(!strcmp(rule_node->txt,"bilinear")) {
-         wms->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
+         wms->resample_mode = MAPCACHE_RESAMPLE_BILINEAR;
       } else {
          ctx->set_error(ctx,400, "unknown value %s for node <resample_mode> (allowed values: nearest, bilinear", rule_node->txt);
          return;
@@ -984,26 +984,26 @@ void _configuration_parse_wms_xml(geocache_context *ctx, ezxml_t node, geocache_
    }
 }
 
-geocache_service* geocache_service_wms_create(geocache_context *ctx) {
-   geocache_service_wms* service = (geocache_service_wms*)apr_pcalloc(ctx->pool, sizeof(geocache_service_wms));
+mapcache_service* mapcache_service_wms_create(mapcache_context *ctx) {
+   mapcache_service_wms* service = (mapcache_service_wms*)apr_pcalloc(ctx->pool, sizeof(mapcache_service_wms));
    if(!service) {
       ctx->set_error(ctx, 500, "failed to allocate wms service");
       return NULL;
    }
-   service->forwarding_rules = apr_array_make(ctx->pool,0,sizeof(geocache_forwarding_rule*));
+   service->forwarding_rules = apr_array_make(ctx->pool,0,sizeof(mapcache_forwarding_rule*));
    service->service.url_prefix = apr_pstrdup(ctx->pool,"");
    service->service.name = apr_pstrdup(ctx->pool,"wms");
-   service->service.type = GEOCACHE_SERVICE_WMS;
-   service->service.parse_request = _geocache_service_wms_parse_request;
+   service->service.type = MAPCACHE_SERVICE_WMS;
+   service->service.parse_request = _mapcache_service_wms_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wms;
    service->service.configuration_parse_xml = _configuration_parse_wms_xml;
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    service->service.configuration_parse_json = _configuration_parse_wms_json;
 #endif
-   service->getmap_strategy = GEOCACHE_GETMAP_ASSEMBLE;
-   service->resample_mode = GEOCACHE_RESAMPLE_BILINEAR;
+   service->getmap_strategy = MAPCACHE_GETMAP_ASSEMBLE;
+   service->resample_mode = MAPCACHE_RESAMPLE_BILINEAR;
    service->getmap_format = NULL;
-   return (geocache_service*)service;
+   return (mapcache_service*)service;
 }
 
 /** @} */

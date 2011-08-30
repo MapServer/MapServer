@@ -1,4 +1,4 @@
-TARGETS=@TARGETS@ geocache_seed
+TARGETS=mapcache mapcache_seed @MODULE_TARGET@
 APXS=@APXS@
 HTTPD=@HTTPD@
 CC=@CC@
@@ -30,8 +30,9 @@ PNG_LIB=@PNG_LIB@
 JPEG_INC=@JPEG_INC@
 JPEG_LIB=@JPEG_LIB@
 
-FCGI_INC=@FASTCGI_INC@
-FCGI_LIB=@FASTCGI_LIB@
+FASTCGI_INC=@FASTCGI_INC@
+FASTCGI_LIB=@FASTCGI_LIB@
+FASTCGI_ENABLED=@FASTCGI_ENABLED@
 
 LIBTOOL=@LIBTOOL@
 
@@ -52,12 +53,16 @@ PIXMAN_INC=@PIXMAN_INC@
 PIXMAN_LIB=@PIXMAN_LIB@
 PIXMAN_ENABLED=@PIXMAN_ENABLED@
 
-MISC_ENABLED=@MISC_ENABLED@ -DTHREADED_MPM=$(shell $(HTTPD) -V | grep "Server MPM" | grep -q "Prefork"; echo $$?)
-
+ifeq ($(HTTPD),)
+THREADED_MPM=0
+else
+THREADED_MPM=$(shell $(HTTPD) -V | grep "Server MPM" | grep -q "Prefork"; echo $$?)
+endif
+MISC_ENABLED=@MISC_ENABLED@ -DTHREADED_MPM=$(THREADED_MPM)
 INCLUDES=-I../include $(MISC_ENABLED) $(CURL_CFLAGS) $(PNG_INC) $(JPEG_INC) $(GDAL_INC) $(GEOS_INC) $(APR_INC) $(APU_INC) $(MEMCACHE_ENABLED) $(PCRE_CFLAGS) $(PCRE_ENABLED) $(OGR_ENABLED) $(GEOS_ENABLED) $(SQLITE_ENABLED) $(SQLITE_INC) $(PIXMAN_ENABLED) $(PIXMAN_INC)
 LIBS=$(CURL_LIBS) $(PNG_LIB) $(JPEG_LIB) $(APR_LIBS) $(APU_LIBS) $(PCRE_LIBS) $(SQLITE_LIB) $(PIXMAN_LIB)
 SEEDER_EXTRALIBS=$(GDAL_LIB) $(GEOS_LIB)
 
 
-OBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v geocache_seed.c | grep -v mod_geocache.c | grep -v fastcgi_geocache.c |sed "s/^\(.*\)\.c$$/\1.o/") 
-LOBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v geocache_seed.c | grep -v mod_geocache.c | grep -v fastcgi_geocache.c | sed "s/^\(.*\)\.c$$/\1.lo/")
+OBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mapcache_seed.c | grep -v mod_mapcache.c | grep -v fastcgi_mapcache.c |sed "s/^\(.*\)\.c$$/\1.o/") 
+LOBJS=$(shell find . -regex '^.*\.c$$' -print | grep -v mapcache_seed.c | grep -v mod_mapcache.c | grep -v fastcgi_mapcache.c | sed "s/^\(.*\)\.c$$/\1.lo/")

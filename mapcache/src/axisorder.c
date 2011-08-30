@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "geocache.h"
+#include "mapcache.h"
 
 static struct axisOrientationEpsgCodes_s {
 	int	code;
@@ -1738,22 +1738,22 @@ static struct axisOrientationEpsgCodes_s {
  
 #define AXIS_ORIENTATION_TABLE_SIZE 1703
 
-int geocache_is_axis_inverted(const char *srs)
+int mapcache_is_axis_inverted(const char *srs)
 {
     int i,code;
     if(strncasecmp(srs,"epsg:",5) || strlen(srs)<6) {
        /* if we don't have an epsg formated srs */
-      return GEOCACHE_FALSE;
+      return MAPCACHE_FALSE;
     }
     code = atoi(&(srs[5]));
     /*check the static table*/
     for (i=0; i<AXIS_ORIENTATION_TABLE_SIZE; i++)
     {
         if (axisOrientationEpsgCodes[i].code == code)
-          return GEOCACHE_TRUE;
+          return MAPCACHE_TRUE;
     }
 
-    return GEOCACHE_FALSE;
+    return MAPCACHE_FALSE;
     
 }
 

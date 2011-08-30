@@ -7,7 +7,7 @@ install-module: .header
 	cd src; $(MAKE) $(MFLAGS) install-module
 
 # make clean and rerun if essential files have been modified
-.header: configure include/geocache.h include/util.h include/errors.h Makefile Makefile.inc src/Makefile
+.header: configure include/mapcache.h include/util.h include/errors.h Makefile Makefile.inc src/Makefile
 	$(MAKE) clean
 	@touch .header
 	

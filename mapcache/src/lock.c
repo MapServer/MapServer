@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_file_io.h>
 #include <apr_strings.h>
 
@@ -54,14 +54,14 @@ static char* num_encode(apr_pool_t *pool, int num) {
 
 #endif
 
-char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatile *mt) {
+char *mapcache_tileset_metatile_lock_key(mapcache_context *ctx, mapcache_metatile *mt) {
    char *lockname = apr_psprintf(ctx->pool,
 #ifdef USE_SEMLOCK
          "/%s-%s-%s%s", /*x,y,z,tilesetname*/
          num_encode(ctx->pool,mt->x), num_encode(ctx->pool,mt->y),
          num_encode(ctx->pool,mt->z), 
 #else
-         "%s/"GEOCACHE_LOCKFILE_PREFIX"-%d-%d-%d-%s",
+         "%s/"MAPCACHE_LOCKFILE_PREFIX"-%d-%d-%d-%s",
          ctx->config->lockdir,
          mt->z,mt->y,mt->x,
 #endif
@@ -113,8 +113,8 @@ char *geocache_tileset_metatile_lock_key(geocache_context *ctx, geocache_metatil
  *
  * this function creates a named semaphore and aquires a lock on it
  */
-void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt) {
-   char *lockname = geocache_tileset_metatile_lock_key(ctx,mt);
+void mapcache_tileset_metatile_lock(mapcache_context *ctx, mapcache_metatile *mt) {
+   char *lockname = mapcache_tileset_metatile_lock_key(ctx,mt);
 #ifdef USE_SEMLOCK
    sem_t *lock;
    if ((lock = sem_open(lockname, O_CREAT|O_EXCL, 0644, 1)) == SEM_FAILED) {
@@ -152,11 +152,11 @@ void geocache_tileset_metatile_lock(geocache_context *ctx, geocache_metatile *mt
  *
  * this function call is protected by a mutex
  *
- * \sa geocache_cache::tile_unlock()
- * \sa geocache_cache::tile_lock_exists()
+ * \sa mapcache_cache::tile_unlock()
+ * \sa mapcache_cache::tile_lock_exists()
  */
-void geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *mt) {
-   const char *lockname = geocache_tileset_metatile_lock_key(ctx,mt);
+void mapcache_tileset_metatile_unlock(mapcache_context *ctx, mapcache_metatile *mt) {
+   const char *lockname = mapcache_tileset_metatile_lock_key(ctx,mt);
 #ifdef USE_SEMLOCK
    sem_t *lock = (sem_t*) mt->lock;
    if (!mt->lock) {
@@ -202,26 +202,26 @@ void geocache_tileset_metatile_unlock(geocache_context *ctx, geocache_metatile *
  * 
  * this function call is protected by a mutex
  *
- * \sa geocache_cache::tile_lock()
- * \sa geocache_cache::tile_unlock()
+ * \sa mapcache_cache::tile_lock()
+ * \sa mapcache_cache::tile_unlock()
  */
-int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metatile *mt) {
+int mapcache_tileset_metatile_lock_exists(mapcache_context *ctx, mapcache_metatile *mt) {
    char *lockname;
    if (mt->lock)
-      return GEOCACHE_TRUE;
-   lockname = geocache_tileset_metatile_lock_key(ctx, mt);
+      return MAPCACHE_TRUE;
+   lockname = mapcache_tileset_metatile_lock_key(ctx, mt);
 #ifdef USE_SEMLOCK
    sem_t *lock = sem_open(lockname, 0, 0644, 1) ;
    if (lock == SEM_FAILED) {
       if(errno == ENOENT) {
-         return GEOCACHE_FALSE;
+         return MAPCACHE_FALSE;
       } else {
          ctx->set_error(ctx,500,"lock_exists: failed to open mutex %s",lockname);
-         return GEOCACHE_FALSE;
+         return MAPCACHE_FALSE;
       }
    } else {
       sem_close(lock);
-      return GEOCACHE_TRUE;
+      return MAPCACHE_TRUE;
    }
 #else
    apr_status_t rv;
@@ -230,18 +230,18 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
    rv = apr_file_open(&lock,lockname,APR_READ,APR_OS_DEFAULT,ctx->pool);
    if(APR_STATUS_IS_ENOENT(rv)) {
       /* the lock file does not exist, the metatile is not locked */
-      return GEOCACHE_FALSE;
+      return MAPCACHE_FALSE;
    } else {
       /* the file exists, or there was an error opening it */
       if(rv != APR_SUCCESS) {
          /* we failed to open the file, bail out */
          ctx->set_error(ctx,500,"lock_exists: failed to open lockfile %s: %s",lockname,
                apr_strerror(rv,errmsg,120));
-         return GEOCACHE_FALSE;
+         return MAPCACHE_FALSE;
       } else {
 #if THREADED_MPM
          apr_file_close(lock);
-         return GEOCACHE_TRUE;
+         return MAPCACHE_TRUE;
 #else
          /* the file exists, which means there probably is a lock. make sure it isn't locked anyhow */
          rv = apr_file_lock(lock,APR_FLOCK_SHARED|APR_FLOCK_NONBLOCK);
@@ -249,7 +249,7 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
             if(rv == APR_EAGAIN) {
                /* the file is locked */
                apr_file_close(lock);
-               return GEOCACHE_TRUE;
+               return MAPCACHE_TRUE;
             } else {
                ctx->set_error(ctx,500, "lock_exists: failed to aquire lock on lockfile %s: %s",
                         lockname, apr_strerror(rv,errmsg,120));
@@ -258,7 +258,7 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
                   ctx->set_error(ctx,500, "lock_exists: failed to close lockfile %s: %s",
                         lockname, apr_strerror(rv,errmsg,120));
                }
-               return GEOCACHE_FALSE;
+               return MAPCACHE_FALSE;
             }
          } else {
             /* we managed to aquire a lock on the file, which means it isn't locked, even if it exists */
@@ -274,7 +274,7 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
                      lockname, apr_strerror(rv,errmsg,120));
             }
             //TODO: remove the file as we will fail later if not
-            return GEOCACHE_FALSE;
+            return MAPCACHE_FALSE;
          }
 #endif
       }
@@ -286,11 +286,11 @@ int geocache_tileset_metatile_lock_exists(geocache_context *ctx, geocache_metati
  * \brief wait for a lock on given tile
  *
  * this function will not return until the lock on the tile has been removed
- * \sa geocache_cache::tile_lock_wait()
+ * \sa mapcache_cache::tile_lock_wait()
  */
-void geocache_tileset_metatile_lock_wait(geocache_context *ctx, geocache_metatile *mt) {
+void mapcache_tileset_metatile_lock_wait(mapcache_context *ctx, mapcache_metatile *mt) {
   char *lockname;
-  lockname = geocache_tileset_metatile_lock_key(ctx, mt);
+  lockname = mapcache_tileset_metatile_lock_key(ctx, mt);
 
 #ifdef DEBUG
   if (mt->lock) {

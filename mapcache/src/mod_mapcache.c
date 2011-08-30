@@ -25,37 +25,37 @@
 #include <apr_strings.h>
 #include <apr_time.h>
 #include <http_log.h>
-#include "geocache.h"
+#include "mapcache.h"
 #include <unistd.h>
 
 #ifdef AP_NEED_SET_MUTEX_PERMS
 #include "unixd.h"
 #endif 
 
-module AP_MODULE_DECLARE_DATA geocache_module;
+module AP_MODULE_DECLARE_DATA mapcache_module;
 
 
-typedef struct geocache_context_apache geocache_context_apache;
-typedef struct geocache_context_apache_request geocache_context_apache_request;
-typedef struct geocache_context_apache_server geocache_context_apache_server;
+typedef struct mapcache_context_apache mapcache_context_apache;
+typedef struct mapcache_context_apache_request mapcache_context_apache_request;
+typedef struct mapcache_context_apache_server mapcache_context_apache_server;
 
 
-struct geocache_context_apache {
-   geocache_context ctx;
+struct mapcache_context_apache {
+   mapcache_context ctx;
 };
 
-struct geocache_context_apache_server {
-   geocache_context_apache ctx;
+struct mapcache_context_apache_server {
+   mapcache_context_apache ctx;
    server_rec *server;
 };
 
-struct geocache_context_apache_request {
-   geocache_context_apache ctx;
+struct mapcache_context_apache_request {
+   mapcache_context_apache ctx;
    request_rec *request;
 };
 
-void apache_context_server_log(geocache_context *c, geocache_log_level level, char *message, ...) {
-   geocache_context_apache_server *ctx = (geocache_context_apache_server*)c;
+void apache_context_server_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
+   mapcache_context_apache_server *ctx = (mapcache_context_apache_server*)c;
    va_list args;
    va_start(args,message);
    char *msg = apr_pvsprintf(c->pool,message,args);
@@ -63,18 +63,18 @@ void apache_context_server_log(geocache_context *c, geocache_log_level level, ch
    ap_log_error(APLOG_MARK, APLOG_INFO, 0, ctx->server,"%s",msg);
 }
 
-void apache_context_request_log(geocache_context *c, geocache_log_level level, char *message, ...) {
-   geocache_context_apache_request *ctx = (geocache_context_apache_request*)c;
+void apache_context_request_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
+   mapcache_context_apache_request *ctx = (mapcache_context_apache_request*)c;
    va_list args;
    va_start(args,message);
    ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request, "%s", apr_pvsprintf(c->pool,message,args));
    va_end(args);
 }
 
-void geocache_util_mutex_aquire(geocache_context *gctx) {
+void mapcache_util_mutex_aquire(mapcache_context *gctx) {
    int ret;
-   geocache_context_apache_request *ctx = (geocache_context_apache_request*)gctx;
-   geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);
+   mapcache_context_apache_request *ctx = (mapcache_context_apache_request*)gctx;
+   mapcache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &mapcache_module);
    ret = apr_global_mutex_lock(cfg->mutex);
    if(ret != APR_SUCCESS) {
       gctx->set_error(gctx,500,"failed to lock mutex");
@@ -83,10 +83,10 @@ void geocache_util_mutex_aquire(geocache_context *gctx) {
    apr_pool_cleanup_register(gctx->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
 }
 
-void geocache_util_mutex_release(geocache_context *gctx) {
+void mapcache_util_mutex_release(mapcache_context *gctx) {
    int ret;
-   geocache_context_apache_request *ctx = (geocache_context_apache_request*)gctx;
-   geocache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &geocache_module);
+   mapcache_context_apache_request *ctx = (mapcache_context_apache_request*)gctx;
+   mapcache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &mapcache_module);
    ret = apr_global_mutex_unlock(cfg->mutex);
    if(ret != APR_SUCCESS) {
       gctx->set_error(gctx,500,"failed to unlock mutex");
@@ -94,34 +94,34 @@ void geocache_util_mutex_release(geocache_context *gctx) {
    apr_pool_cleanup_kill(gctx->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
 }
 
-void init_apache_request_context(geocache_context_apache_request *ctx) {
-   geocache_context_init((geocache_context*)ctx);
+void init_apache_request_context(mapcache_context_apache_request *ctx) {
+   mapcache_context_init((mapcache_context*)ctx);
    ctx->ctx.ctx.log = apache_context_request_log;
-   ctx->ctx.ctx.global_lock_aquire = geocache_util_mutex_aquire;
-   ctx->ctx.ctx.global_lock_release = geocache_util_mutex_release;
+   ctx->ctx.ctx.global_lock_aquire = mapcache_util_mutex_aquire;
+   ctx->ctx.ctx.global_lock_release = mapcache_util_mutex_release;
 }
 
-void init_apache_server_context(geocache_context_apache_server *ctx) {
-   geocache_context_init((geocache_context*)ctx);
+void init_apache_server_context(mapcache_context_apache_server *ctx) {
+   mapcache_context_init((mapcache_context*)ctx);
    ctx->ctx.ctx.log = apache_context_server_log;
-   ctx->ctx.ctx.global_lock_aquire = geocache_util_mutex_aquire;
-   ctx->ctx.ctx.global_lock_release = geocache_util_mutex_release;
+   ctx->ctx.ctx.global_lock_aquire = mapcache_util_mutex_aquire;
+   ctx->ctx.ctx.global_lock_release = mapcache_util_mutex_release;
 }
 
-static geocache_context_apache_request* apache_request_context_create(request_rec *r) {
-   geocache_context_apache_request *ctx = apr_pcalloc(r->pool, sizeof(geocache_context_apache_request));
+static mapcache_context_apache_request* apache_request_context_create(request_rec *r) {
+   mapcache_context_apache_request *ctx = apr_pcalloc(r->pool, sizeof(mapcache_context_apache_request));
    ctx->ctx.ctx.pool = r->pool;
    /* lookup the configuration object given the configuration file name */
-   geocache_server_cfg* cfg = ap_get_module_config(r->server->module_config, &geocache_module);
-   geocache_cfg *config = apr_hash_get(cfg->aliases,(void*)r->filename,APR_HASH_KEY_STRING);
+   mapcache_server_cfg* cfg = ap_get_module_config(r->server->module_config, &mapcache_module);
+   mapcache_cfg *config = apr_hash_get(cfg->aliases,(void*)r->filename,APR_HASH_KEY_STRING);
    ctx->ctx.ctx.config = config;
    ctx->request = r;
    init_apache_request_context(ctx);
    return ctx;
 }
 
-static geocache_context_apache_server* apache_server_context_create(server_rec *s, apr_pool_t *pool) {
-   geocache_context_apache_server *ctx = apr_pcalloc(pool, sizeof(geocache_context_apache_server));
+static mapcache_context_apache_server* apache_server_context_create(server_rec *s, apr_pool_t *pool) {
+   mapcache_context_apache_server *ctx = apr_pcalloc(pool, sizeof(mapcache_context_apache_server));
    ctx->ctx.ctx.pool = pool;
    ctx->ctx.ctx.config = NULL;
    ctx->server = s;
@@ -129,7 +129,7 @@ static geocache_context_apache_server* apache_server_context_create(server_rec *
    return ctx;
 }
 
-static int write_http_response(geocache_context_apache_request *ctx, geocache_http_response *response) {
+static int write_http_response(mapcache_context_apache_request *ctx, mapcache_http_response *response) {
    request_rec *r = ctx->request;
    int rc;
 
@@ -164,11 +164,11 @@ static int write_http_response(geocache_context_apache_request *ctx, geocache_ht
 
 }
 
-static int mod_geocache_request_handler(request_rec *r) {
+static int mod_mapcache_request_handler(request_rec *r) {
    apr_table_t *params;
-   geocache_request *request = NULL;
+   mapcache_request *request = NULL;
 
-   if (!r->handler || strcmp(r->handler, "geocache")) {
+   if (!r->handler || strcmp(r->handler, "mapcache")) {
       return DECLINED;
    }
    if (r->method_number != M_GET) {
@@ -176,21 +176,21 @@ static int mod_geocache_request_handler(request_rec *r) {
    }
    
    
-   geocache_context_apache_request *apache_ctx = apache_request_context_create(r); 
-   geocache_context *global_ctx = (geocache_context*)apache_ctx;
+   mapcache_context_apache_request *apache_ctx = apache_request_context_create(r); 
+   mapcache_context *global_ctx = (mapcache_context*)apache_ctx;
 
-   params = geocache_http_parse_param_string(global_ctx, r->args);
+   params = mapcache_http_parse_param_string(global_ctx, r->args);
 
-   geocache_service_dispatch_request(global_ctx,&request,r->path_info,params,global_ctx->config);
+   mapcache_service_dispatch_request(global_ctx,&request,r->path_info,params,global_ctx->config);
    if(GC_HAS_ERROR(global_ctx) || !request) {
       return write_http_response(apache_ctx,
-            geocache_core_respond_to_error(global_ctx,(request)?request->service:NULL));
+            mapcache_core_respond_to_error(global_ctx,(request)?request->service:NULL));
    }
 
-   geocache_http_response *http_response = NULL;
+   mapcache_http_response *http_response = NULL;
 
-   if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
-      geocache_request_get_capabilities *req_caps = (geocache_request_get_capabilities*)request;
+   if(request->type == MAPCACHE_REQUEST_GET_CAPABILITIES) {
+      mapcache_request_get_capabilities *req_caps = (mapcache_request_get_capabilities*)request;
       request_rec *original;
       char *url;
       if(r->main)
@@ -215,33 +215,33 @@ static int mod_geocache_request_handler(request_rec *r) {
             *end = '\0';
          }
       }
-      http_response = geocache_core_get_capabilities(global_ctx,request->service,req_caps,
+      http_response = mapcache_core_get_capabilities(global_ctx,request->service,req_caps,
             url,original->path_info,global_ctx->config);
-   } else if( request->type == GEOCACHE_REQUEST_GET_TILE) {
-      geocache_request_get_tile *req_tile = (geocache_request_get_tile*)request;
-      http_response = geocache_core_get_tile(global_ctx,req_tile);
-   } else if( request->type == GEOCACHE_REQUEST_PROXY ) {
-      geocache_request_proxy *req_proxy = (geocache_request_proxy*)request;
-      http_response = geocache_core_proxy_request(global_ctx, req_proxy);
-   } else if( request->type == GEOCACHE_REQUEST_GET_MAP) {
-      geocache_request_get_map *req_map = (geocache_request_get_map*)request;
-      http_response = geocache_core_get_map(global_ctx,req_map);
-   } else if( request->type == GEOCACHE_REQUEST_GET_FEATUREINFO) {
-      geocache_request_get_feature_info *req_fi = (geocache_request_get_feature_info*)request;
-      http_response = geocache_core_get_featureinfo(global_ctx,req_fi);
+   } else if( request->type == MAPCACHE_REQUEST_GET_TILE) {
+      mapcache_request_get_tile *req_tile = (mapcache_request_get_tile*)request;
+      http_response = mapcache_core_get_tile(global_ctx,req_tile);
+   } else if( request->type == MAPCACHE_REQUEST_PROXY ) {
+      mapcache_request_proxy *req_proxy = (mapcache_request_proxy*)request;
+      http_response = mapcache_core_proxy_request(global_ctx, req_proxy);
+   } else if( request->type == MAPCACHE_REQUEST_GET_MAP) {
+      mapcache_request_get_map *req_map = (mapcache_request_get_map*)request;
+      http_response = mapcache_core_get_map(global_ctx,req_map);
+   } else if( request->type == MAPCACHE_REQUEST_GET_FEATUREINFO) {
+      mapcache_request_get_feature_info *req_fi = (mapcache_request_get_feature_info*)request;
+      http_response = mapcache_core_get_featureinfo(global_ctx,req_fi);
    } else {
       global_ctx->set_error(global_ctx,500,"###BUG### unknown request type");
    }
 
    if(GC_HAS_ERROR(global_ctx)) {
       return write_http_response(apache_ctx,
-            geocache_core_respond_to_error(global_ctx,request->service));
+            mapcache_core_respond_to_error(global_ctx,request->service));
    }
    return write_http_response(apache_ctx,http_response);
 }
-static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
+static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
    apr_status_t rc;
-   geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
+   mapcache_server_cfg* cfg = ap_get_module_config(s->module_config, &mapcache_module);
    apr_lockmech_e lock_type = APR_LOCK_DEFAULT;
    server_rec *sconf;
 
@@ -268,10 +268,10 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
    apr_pool_cleanup_register(p,cfg->mutex,
          (void*)apr_global_mutex_destroy, apr_pool_cleanup_null);
 #ifndef DISABLE_VERSION_STRING
-   ap_add_version_component(p, GEOCACHE_USERAGENT);
+   ap_add_version_component(p, MAPCACHE_USERAGENT);
 #endif
    for (sconf = s->next; sconf; sconf = sconf->next) {
-      geocache_server_cfg* config = ap_get_module_config(sconf->module_config, &geocache_module);
+      mapcache_server_cfg* config = ap_get_module_config(sconf->module_config, &mapcache_module);
       config->mutex = cfg->mutex;
    }
 
@@ -283,9 +283,9 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
    if (rv == APR_INCHILD) {
 #define ap_unixd_setup_child unixd_setup_child
       ap_unixd_setup_child();
-      geocache_context *ctx = (geocache_context*)apache_server_context_create(s,p);
+      mapcache_context *ctx = (mapcache_context*)apache_server_context_create(s,p);
       for (sconf = s; sconf; sconf = sconf->next) {
-         geocache_server_cfg* config = ap_get_module_config(sconf->module_config, &geocache_module);
+         mapcache_server_cfg* config = ap_get_module_config(sconf->module_config, &mapcache_module);
          if(config->aliases) {
             apr_hash_index_t *entry = apr_hash_first(ptemp,config->aliases);
 
@@ -293,9 +293,9 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
             while (entry) {
                const char *alias;
                apr_ssize_t aliaslen;
-               geocache_cfg *c;
+               mapcache_cfg *c;
                apr_hash_this(entry,(const void**)&alias,&aliaslen,(void**)&c);
-               geocache_configuration_post_config(ctx, c);
+               mapcache_configuration_post_config(ctx, c);
                if(GC_HAS_ERROR(ctx)) {
                   ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "post config for %s failed: %s", alias,
                         ctx->get_error_message(ctx));
@@ -311,7 +311,7 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       int exitcode;
       apr_proc_wait(&proc,&exitcode,&exitwhy,APR_WAIT);
       if(exitwhy != APR_PROC_EXIT) {
-         ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "geocache post-config child terminated abnormally");
+         ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "mapcache post-config child terminated abnormally");
          return APR_EGENERAL;
       } else {
          if(exitcode != 0) {
@@ -320,13 +320,13 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       }
       return OK;
    } else {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "failed to fork geocache post-config child");
+      ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "failed to fork mapcache post-config child");
       return APR_EGENERAL;
    }
 #else /* APR_HAS_FORK */
-   geocache_context *ctx = (geocache_context*)apache_server_context_create(s,p);
+   mapcache_context *ctx = (mapcache_context*)apache_server_context_create(s,p);
    for (sconf = s; sconf; sconf = sconf->next) {
-      geocache_server_cfg* config = ap_get_module_config(sconf->module_config, &geocache_module);
+      mapcache_server_cfg* config = ap_get_module_config(sconf->module_config, &mapcache_module);
       if(config->aliases) {
          apr_hash_index_t *entry = apr_hash_first(ptemp,config->aliases);
 
@@ -334,9 +334,9 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
          while (entry) {
             const char *alias;
             apr_ssize_t aliaslen;
-            geocache_cfg *c;
+            mapcache_cfg *c;
             apr_hash_this(entry,(const void**)&alias,&aliaslen,(void**)&c);
-            geocache_configuration_post_config(ctx, c);
+            mapcache_configuration_post_config(ctx, c);
             if(GC_HAS_ERROR(ctx)) {
                ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "post config for %s failed: %s", alias,
                      ctx->get_error_message(ctx));
@@ -350,15 +350,15 @@ static int mod_geocache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 #endif
 }
 
-static void mod_geocache_child_init(apr_pool_t *pool, server_rec *s) {
+static void mod_mapcache_child_init(apr_pool_t *pool, server_rec *s) {
    while(s) {
-      geocache_server_cfg* cfg = ap_get_module_config(s->module_config, &geocache_module);
+      mapcache_server_cfg* cfg = ap_get_module_config(s->module_config, &mapcache_module);
       apr_global_mutex_child_init(&(cfg->mutex),cfg->mutex_name, pool);
       s = s->next;
    }
 }
 
-static int geocache_alias_matches(const char *uri, const char *alias_fakename)
+static int mapcache_alias_matches(const char *uri, const char *alias_fakename)
 {
     /* Code for this function from Apache mod_alias module. */
 
@@ -398,9 +398,9 @@ static int geocache_alias_matches(const char *uri, const char *alias_fakename)
     return urip - uri;
 }
 
-static int geocache_hook_intercept(request_rec *r)
+static int mapcache_hook_intercept(request_rec *r)
 {
-   geocache_server_cfg *sconfig = ap_get_module_config(r->server->module_config, &geocache_module);
+   mapcache_server_cfg *sconfig = ap_get_module_config(r->server->module_config, &mapcache_module);
 
    if (!sconfig->aliases)
       return DECLINED;
@@ -415,11 +415,11 @@ static int geocache_hook_intercept(request_rec *r)
       int l = 0;
       const char *alias;
       apr_ssize_t aliaslen;
-      geocache_cfg *c;
+      mapcache_cfg *c;
       apr_hash_this(entry,(const void**)&alias,&aliaslen,(void**)&c);
 
-      if((l=geocache_alias_matches(r->uri, c->endpoint))>0) {
-         r->handler = "geocache";
+      if((l=mapcache_alias_matches(r->uri, c->endpoint))>0) {
+         r->handler = "mapcache";
          r->filename = c->configFile;
          r->path_info = &(r->uri[l]);
          return OK;
@@ -432,31 +432,31 @@ static int geocache_hook_intercept(request_rec *r)
 }
 
 
-static void mod_geocache_register_hooks(apr_pool_t *p) {
-   ap_hook_child_init(mod_geocache_child_init, NULL, NULL, APR_HOOK_MIDDLE);
-   ap_hook_post_config(mod_geocache_post_config, NULL, NULL, APR_HOOK_MIDDLE);
-   ap_hook_handler(mod_geocache_request_handler, NULL, NULL, APR_HOOK_MIDDLE);
+static void mod_mapcache_register_hooks(apr_pool_t *p) {
+   ap_hook_child_init(mod_mapcache_child_init, NULL, NULL, APR_HOOK_MIDDLE);
+   ap_hook_post_config(mod_mapcache_post_config, NULL, NULL, APR_HOOK_MIDDLE);
+   ap_hook_handler(mod_mapcache_request_handler, NULL, NULL, APR_HOOK_MIDDLE);
    static const char * const p1[] = { "mod_alias.c", "mod_rewrite.c", NULL };
    static const char * const n1[]= { "mod_userdir.c",
                                       "mod_vhost_alias.c", NULL };
-   ap_hook_translate_name(geocache_hook_intercept, p1, n1, APR_HOOK_MIDDLE);
+   ap_hook_translate_name(mapcache_hook_intercept, p1, n1, APR_HOOK_MIDDLE);
 
 }
 
-static void* mod_geocache_create_server_conf(apr_pool_t *pool, server_rec *s) {
-   geocache_server_cfg *cfg = apr_pcalloc(pool, sizeof(geocache_server_cfg));
-   char *mutex_unique_name = apr_psprintf(pool,"geocachemutex-%d",getpid());
+static void* mod_mapcache_create_server_conf(apr_pool_t *pool, server_rec *s) {
+   mapcache_server_cfg *cfg = apr_pcalloc(pool, sizeof(mapcache_server_cfg));
+   char *mutex_unique_name = apr_psprintf(pool,"mapcachemutex-%d",getpid());
    cfg->mutex_name = ap_server_root_relative(pool, mutex_unique_name);
    cfg->aliases = NULL;
    return cfg;
 }
 
 
-static void *mod_geocache_merge_server_conf(apr_pool_t *p, void *base_, void *vhost_)
+static void *mod_mapcache_merge_server_conf(apr_pool_t *p, void *base_, void *vhost_)
 {
-   geocache_server_cfg *base = (geocache_server_cfg*)base_;
-   geocache_server_cfg *vhost = (geocache_server_cfg*)vhost_;
-   geocache_server_cfg *cfg = apr_pcalloc(p,sizeof(geocache_server_cfg));
+   mapcache_server_cfg *base = (mapcache_server_cfg*)base_;
+   mapcache_server_cfg *vhost = (mapcache_server_cfg*)vhost_;
+   mapcache_server_cfg *cfg = apr_pcalloc(p,sizeof(mapcache_server_cfg));
    cfg->mutex = base->mutex;
    cfg->mutex_name = base->mutex_name;
    
@@ -472,18 +472,18 @@ static void *mod_geocache_merge_server_conf(apr_pool_t *p, void *base_, void *vh
    return vhost;
 }
 
-static const char* geocache_add_alias(cmd_parms *cmd, void *cfg, const char *alias, const char* configfile) {
-   geocache_server_cfg *sconfig = ap_get_module_config(cmd->server->module_config, &geocache_module);
-   geocache_cfg *config = geocache_configuration_create(cmd->pool);
-   geocache_context *ctx = (geocache_context*)apache_server_context_create(cmd->server,cmd->pool);
+static const char* mapcache_add_alias(cmd_parms *cmd, void *cfg, const char *alias, const char* configfile) {
+   mapcache_server_cfg *sconfig = ap_get_module_config(cmd->server->module_config, &mapcache_module);
+   mapcache_cfg *config = mapcache_configuration_create(cmd->pool);
+   mapcache_context *ctx = (mapcache_context*)apache_server_context_create(cmd->server,cmd->pool);
    char *msg = NULL;
    config->configFile = apr_pstrdup(cmd->pool,configfile);
    config->endpoint = alias;
-   geocache_configuration_parse(ctx,configfile,config,0);
+   mapcache_configuration_parse(ctx,configfile,config,0);
    if(GC_HAS_ERROR(ctx)) {
       return ctx->get_error_message(ctx);
    }
-   ap_log_error(APLOG_MARK, APLOG_INFO, 0, cmd->server, "loaded geocache configuration file from %s on alias %s", config->configFile, alias);
+   ap_log_error(APLOG_MARK, APLOG_INFO, 0, cmd->server, "loaded mapcache configuration file from %s on alias %s", config->configFile, alias);
    if(!sconfig->aliases) {
       sconfig->aliases = apr_hash_make(cmd->pool);
    }
@@ -493,20 +493,20 @@ static const char* geocache_add_alias(cmd_parms *cmd, void *cfg, const char *ali
 
 
 
-static const command_rec mod_geocache_cmds[] = {
-      AP_INIT_TAKE2("GeoCacheAlias", geocache_add_alias ,NULL,RSRC_CONF,"Aliased location of configuration file"),
+static const command_rec mod_mapcache_cmds[] = {
+      AP_INIT_TAKE2("MapCacheAlias", mapcache_add_alias ,NULL,RSRC_CONF,"Aliased location of configuration file"),
       { NULL }
 } ;
 
-module AP_MODULE_DECLARE_DATA geocache_module =
+module AP_MODULE_DECLARE_DATA mapcache_module =
 {
       STANDARD20_MODULE_STUFF,
       NULL,
       NULL,
-      mod_geocache_create_server_conf,
-      mod_geocache_merge_server_conf,
-      mod_geocache_cmds,
-      mod_geocache_register_hooks
+      mod_mapcache_create_server_conf,
+      mod_mapcache_merge_server_conf,
+      mod_mapcache_cmds,
+      mod_mapcache_register_hooks
 };
 /* vim: ai ts=3 sts=3 et sw=3
 */

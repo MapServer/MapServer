@@ -18,29 +18,29 @@ The installation script takes care of putting the built module in the apache mod
 The process for activating a module is usually distro specific, but can be resumed by the 
 following snippet that should be present in the apache configuration file(s):
 
-LoadModule geocache_module    modules/mod_geocache.so
+LoadModule mapcache_module    modules/mod_mapcache.so
 
-Next, a geocache configuration is mapped to the server url with the following snippet
+Next, a mapcache configuration is mapped to the server url with the following snippet
 
-<IfModule geocache_module>
+<IfModule mapcache_module>
     <Directory /path/to/directory>
        Order Allow,Deny
        Allow from all
     </Directory>
-    GeoCacheAlias /geocache "/path/to/directory/geocache.xml"
+    MapCacheAlias /mapcache "/path/to/directory/mapcache.xml"
 </IfModule>
 
 (as root)
 # apachectl restart
 
 If you have not disabled the demo service, you should now have access to it on
-http://myserver/geocache/demo
+http://myserver/mapcache/demo
 
 
 Customizing the build, or if something went wrong
 -------------------------------------------------
 
-mod-geocache requires apache, libcurl, libjpeg and libpng development headers.
+mod-mapcache requires apache, libcurl, libjpeg and libpng development headers.
 The configure script will try to locate them in default system locations, that can be
 overriden or specified with switches (./configure --help should give you a full list):
 
@@ -100,7 +100,7 @@ pixman (from 0.5 onwards) (recommended)
 pixman is a pixel manipulation library used to assemble image tiles when responding
 to non-tiled wms requests. Pixman support is recommended as it is highly optimized
 and will take advantage of recent processor extensions (mms, sse, ...) to speed up
-blending and resampling operations. In case the pixman library is not found, mod-geocache
+blending and resampling operations. In case the pixman library is not found, mod-mapcache
 will fall back to internal pixel operations that are slower.
 
 sqlite (from 0.5 onwards) (optional)
@@ -139,7 +139,7 @@ dimension support with regex validation, or if your validation needs are covered
 fastcgi support (optional)
 ==========================
 
-mod-geocache can run as a fastcgi executable. Note that the overhead of fastcgi is non-negligeable with respect to 
+mod-mapcache can run as a fastcgi executable. Note that the overhead of fastcgi is non-negligeable with respect to 
 the throughput you may obtain with a native apache module. Note that the fastcgi build is less tested, and may lag behind
 compared to the apache module version on some minor details (most notably on error reporting, and cache-control header
 generation).
@@ -157,27 +157,27 @@ debug
 --enable-debug
 
 enables some extra tests inside the code, and prints out many more debugging messages to the server logs. you should
-probably not enable this unless you want to track down a problem happening inside mod-geocache.
+probably not enable this unless you want to track down a problem happening inside mod-mapcache.
 
 file locking
 ============
 
 --with-lock-mechanism=file|semaphore
 
-mod-geocache needs to keep a cross-process and cross-thread lock on tiles so that requests for tiles of a same metatile
+mod-mapcache needs to keep a cross-process and cross-thread lock on tiles so that requests for tiles of a same metatile
 don't end up becoming multiple requests for the same metatile on the wms server. The default mechanism "file" is highly
 recommended unless you know what you are doing.
 
-This can be configured in two different ways in mod-geocache, each with their advantage and inconvenience:
+This can be configured in two different ways in mod-mapcache, each with their advantage and inconvenience:
 
- * file : mod-geocache will use a file to signal other rendering threads that the given metatile is being rendered by the
+ * file : mod-mapcache will use a file to signal other rendering threads that the given metatile is being rendered by the
    wms source. (the location of these files is configurable with the <lock_dir> configuration directive). In the case of 
    threaded mpm, this has the inconvenience that we cannot be signaled by the operating system that this file has been
    deleted, and thus must resort to sleeping every .5 sec and checking if the file still exists until the file is deleted.
    This isn't very efficient, but should not be problematic in practice as this loop only happens if the tile wasn't
    already in the cache, i.e. at most once per tile for the whole lifetime of the cache.
 
- * semaphore : mod-geocache can use posix semaphores for waiting on tile rendering. This method has the inconvenience
+ * semaphore : mod-mapcache can use posix semaphores for waiting on tile rendering. This method has the inconvenience
    that if a rendering thread crashes (or more likely is killed by the system administrator while waiting for the wms
    source to finish rendering), the semaphore lives on in the operating system and will prevent all accesses to the
    tile until the sempahore is manually deleted. As apache threads are locked while waiting for this semaphore that

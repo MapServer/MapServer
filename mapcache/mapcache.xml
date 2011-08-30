@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<geocache>
+<mapcache>
    <metadata>
-      <title>my geocache service</title>
+      <title>my mapcache service</title>
       <abstract>woot! this is a service abstract!</abstract>
 
       <!-- url
 
            uncomment and modify this if you need to provide another base url for
            getCapabilities requests (for the OnlineResource tags). You should use 
-           this if there's a proxy between the client and the mod-geocache service
+           this if there's a proxy between the client and the mod-mapcache service
            and you want the capabilities document to point to the correct endpoints.
       
-      <url>http://mysuperhost/proxy/to/geocache</url>
+      <url>http://mysuperhost/proxy/to/mapcache</url>
       -->
    </metadata>
 
@@ -496,7 +496,7 @@
          -->
          <!--
          <headers>
-            <User-Agent>mod-geocache/r175</User-Agent>
+            <User-Agent>mod-mapcache/r175</User-Agent>
             <Referer>http://www.mysite.com?param=2&amp;par=4</Referer>
          </headers>
          -->
@@ -608,14 +608,14 @@
          the supplied image is read when the configuration is loaded.
          if you make changes to the image, they will NOT be reflected on tiles already
          stored in the cache, nor on newly stored tiles until the server is restarted
-      <watermark>/home/tbonfort/dev/mod-geocache/static/watermark.png</watermark>
+      <watermark>/home/tbonfort/dev/mod-mapcache/static/watermark.png</watermark>
       -->
       
       <!-- format
          (optional) format to use when storing a tile. this should be a format with high
          compression, eg. png with compression "best", as the compression operation is only
          done once at creation time.
-         if left out, no recompression is applied to the image, mod-geocache will store the
+         if left out, no recompression is applied to the image, mod-mapcache will store the
          exact image received from the <source>
          note that the <format> tag is mandatory if metatile, metabuffer or watermark are
          supplied, as in those cases a recompression has to be done.
@@ -657,7 +657,7 @@
          the order of the <dimension> tags inside the <dimensions> is important as it is used
          to create the directory structure for the disk cache. i.e. if you change the order of these
          values, any tiles that have been previously cached are invalidated (but not removed from the 
-         cache, it's just they don't exist anymore for mod-geocache
+         cache, it's just they don't exist anymore for mod-mapcache
       -->
       <dimensions>
          <!-- values dimension 
@@ -674,9 +674,9 @@
          <dimension type="values" name="DIM1" default="foobar">foobar,foobarbaz,foo,bar</dimension>
          
          <!-- regex dimension
-            the following creates a MAPFILE dimension, for using the same mod-geocache tileset with different
-            mapserver mapfiles. the name of the mapfiles need not be known to mod-geocache, and can therefore be 
-            created even after mod-geocache has been started.
+            the following creates a MAPFILE dimension, for using the same mod-mapcache tileset with different
+            mapserver mapfiles. the name of the mapfiles need not be known to mod-mapcache, and can therefore be 
+            created even after mod-mapcache has been started.
             when a user passes a MAPFILE=/path/to/mapfile, the string "/path/to/mapfile" is validated against
             the supplied (PCRE) regular expression. The one in this example allows a name composed of aphanumeric characters
             spearated by slashes (/) and finishing with ".map" ( [a-zA-Z0-9\./]*\.map$ ) , but will faill if there
@@ -757,9 +757,9 @@
    <default_format>JPEG</default_format>
 
    <!-- services
-      services that will be responded to by mod-geocache
-      each service is accessible at the url http://host/path/to/geocache/{service},
-      eg http://myhost/geocache/wms for OGC WMS.
+      services that will be responded to by mod-mapcache
+      each service is accessible at the url http://host/path/to/mapcache/{service},
+      eg http://myhost/mapcache/wms for OGC WMS.
    -->
    <service type="wms" enabled="true">
       <!-- this service should actually be called "ogc". It is different from the other
@@ -770,7 +770,7 @@
       <forwarding_rule name="foo rule">
             <append_pathinfo>true</append_pathinfo>
             <http>
-               <url>http://localhost/geocacheproxy</url>
+               <url>http://localhost/mapcacheproxy</url>
             </http>
       </forwarding_rule>
       -->
@@ -811,7 +811,7 @@
         configure how error will be reported back to a client:
           - log : no error is reported back, except an http error code.
           - report : return the error message to the client in textual format
-          - empty_img : return an empty image to the client. the actual error code is in the X-Geocache-Error http header
+          - empty_img : return an empty image to the client. the actual error code is in the X-Mapcache-Error http header
           - report_img : return an image with the error text included inside. not implemented yet.
 
         the default setting is to report the error message back to the user. In production, you might want to set this to "log"
@@ -827,4 +827,4 @@
    -->
    <lock_dir>/tmp</lock_dir>
 
-</geocache>
+</mapcache>

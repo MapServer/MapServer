@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_strings.h>
 #include <math.h>
 #include "ezxml.h"
@@ -36,7 +36,7 @@ static ezxml_t _wmts_capabilities() {
    return node;
 }
 
-static ezxml_t _wmts_service_identification(geocache_context *ctx, const char *title) {
+static ezxml_t _wmts_service_identification(mapcache_context *ctx, const char *title) {
    ezxml_t node = ezxml_new("ows:ServiceIdentification");
    ezxml_set_txt(ezxml_add_child(node,"ows:Title",0),title);
    ezxml_set_txt(ezxml_add_child(node,"ows:ServiceType",0),"OGC WMTS");
@@ -44,7 +44,7 @@ static ezxml_t _wmts_service_identification(geocache_context *ctx, const char *t
    return node;
 }
 
-static ezxml_t _wmts_operations_metadata(geocache_context *ctx, const char *onlineresource, const char *operationstr) {
+static ezxml_t _wmts_operations_metadata(mapcache_context *ctx, const char *onlineresource, const char *operationstr) {
    ezxml_t operation = ezxml_new("ows:Operation");
    ezxml_set_attr(operation,"name",operationstr);
    ezxml_t dcp = ezxml_add_child(operation,"ows:DCP",0);
@@ -59,7 +59,7 @@ static ezxml_t _wmts_operations_metadata(geocache_context *ctx, const char *onli
 
 }
 
-static ezxml_t _wmts_service_provider(geocache_context *ctx, const char *onlineresource, const char *contact) {
+static ezxml_t _wmts_service_provider(mapcache_context *ctx, const char *onlineresource, const char *contact) {
    ezxml_t node = ezxml_new("ows:ServiceProvider");
    ezxml_set_txt(ezxml_add_child(node,"ows:ProviderName",0),contact);
    ezxml_set_attr(ezxml_add_child(node,"ows:ProviderSite",0),"xlink:href",onlineresource);
@@ -67,13 +67,13 @@ static ezxml_t _wmts_service_provider(geocache_context *ctx, const char *onliner
 }
 
 
-void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
-   geocache_request_get_capabilities_wmts *request = (geocache_request_get_capabilities_wmts*)req;
+void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capabilities *req, char *url, char *path_info, mapcache_cfg *cfg) {
+   mapcache_request_get_capabilities_wmts *request = (mapcache_request_get_capabilities_wmts*)req;
    ezxml_t caps;
    ezxml_t contents;
    ezxml_t operations_metadata;
 #ifdef DEBUG
-   if(request->request.request.type != GEOCACHE_REQUEST_GET_CAPABILITIES) {
+   if(request->request.request.type != MAPCACHE_REQUEST_GET_CAPABILITIES) {
       ctx->set_error(ctx,500,"wrong wmts capabilities request");
       return;
    }
@@ -106,7 +106,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    apr_hash_index_t *layer_index = apr_hash_first(ctx->pool,cfg->tilesets);
    while(layer_index) {
       int i;
-      geocache_tileset *tileset;
+      mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(layer_index,&key,&keylen,(void**)&tileset);
       
@@ -137,7 +137,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       char *dimensionstemplate="";
       if(tileset->dimensions) {
          for(i=0;i<tileset->dimensions->nelts;i++) {
-            geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+            mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
             ezxml_t dim = ezxml_add_child(layer,"Dimension",0);
             ezxml_set_txt(ezxml_add_child(dim,"ows:Identifier",0),dimension->name);
             ezxml_set_txt(ezxml_add_child(dim,"Default",0),dimension->default_value);
@@ -189,7 +189,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       }
 
       for(i=0;i<tileset->grid_links->nelts;i++) {
-         geocache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+         mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
          ezxml_t tmsetlnk = ezxml_add_child(layer,"TileMatrixSetLink",0);
          ezxml_set_txt(ezxml_add_child(tmsetlnk,"TileMatrixSet",0),grid_link->grid->name);
 
@@ -218,7 +218,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
                apr_psprintf(ctx->pool,"%f %f",gbbox[0], gbbox[1]));
          ezxml_set_txt(ezxml_add_child(bbox,"ows:UpperCorner",0),
                apr_psprintf(ctx->pool,"%f %f",gbbox[2], gbbox[3]));
-         ezxml_set_attr(bbox,"crs",geocache_grid_get_crs(ctx,grid_link->grid));
+         ezxml_set_attr(bbox,"crs",mapcache_grid_get_crs(ctx,grid_link->grid));
       }
       layer_index = apr_hash_next(layer_index);
    }
@@ -227,7 +227,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
    
    apr_hash_index_t *grid_index = apr_hash_first(ctx->pool,cfg->grids);
    while(grid_index) {
-      geocache_grid *grid;
+      mapcache_grid *grid;
       const void *key; apr_ssize_t keylen;
       int level;
       const char *WellKnownScaleSet;
@@ -241,7 +241,7 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       if(title) {
          ezxml_set_txt(ezxml_add_child(tmset,"ows:Title",0),title);
       }
-      ezxml_set_txt(ezxml_add_child(tmset,"ows:SupportedCRS",0),geocache_grid_get_crs(ctx,grid));
+      ezxml_set_txt(ezxml_add_child(tmset,"ows:SupportedCRS",0),mapcache_grid_get_crs(ctx,grid));
 
       ezxml_t bbox = ezxml_add_child(tmset,"ows:BoundingBox",0);
 
@@ -256,10 +256,10 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
       }
       
       for(level=0;level<grid->nlevels;level++) {
-         geocache_grid_level *glevel = grid->levels[level];
+         mapcache_grid_level *glevel = grid->levels[level];
          ezxml_t tm = ezxml_add_child(tmset,"TileMatrix",0);
          ezxml_set_txt(ezxml_add_child(tm,"ows:Identifier",0),apr_psprintf(ctx->pool,"%d",level));
-         double scaledenom = glevel->resolution * geocache_meters_per_unit[grid->unit] / 0.00028;
+         double scaledenom = glevel->resolution * mapcache_meters_per_unit[grid->unit] / 0.00028;
          ezxml_set_txt(ezxml_add_child(tm,"ScaleDenominator",0),apr_psprintf(ctx->pool,"%.20f",scaledenom));
          ezxml_set_txt(ezxml_add_child(tm,"TopLeftCorner",0),apr_psprintf(ctx->pool,"%f %f",
                   grid->extent[0],
@@ -279,16 +279,16 @@ void _create_capabilities_wmts(geocache_context *ctx, geocache_request_get_capab
 
 /**
  * \brief parse a WMTS request
- * \private \memberof geocache_service_wmts
- * \sa geocache_service::parse_request()
+ * \private \memberof mapcache_service_wmts
+ * \sa mapcache_service::parse_request()
  */
-void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
-      const char *pathinfo, apr_table_t *params, geocache_cfg *config) {
+void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_service *this, mapcache_request **request,
+      const char *pathinfo, apr_table_t *params, mapcache_cfg *config) {
    const char *str, *service = NULL, *style = NULL, *version = NULL, *layer = NULL, *matrixset = NULL,
                *matrix = NULL, *tilecol = NULL, *tilerow = NULL, *format = NULL, *extension = NULL,
                *infoformat = NULL, *fi_i = NULL, *fi_j = NULL;
    apr_table_t *dimtable = NULL;
-   geocache_tileset *tileset = NULL;
+   mapcache_tileset *tileset = NULL;
    int row,col,level;
    service = apr_table_get(params,"SERVICE");
    if(service) {
@@ -303,10 +303,10 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
          return;
       }
       if( ! strcasecmp(str,"getcapabilities") ) {
-         geocache_request_get_capabilities_wmts *req = (geocache_request_get_capabilities_wmts*)
-            apr_pcalloc(ctx->pool,sizeof(geocache_request_get_capabilities_wmts));
-         req->request.request.type = GEOCACHE_REQUEST_GET_CAPABILITIES;
-         *request = (geocache_request*)req;
+         mapcache_request_get_capabilities_wmts *req = (mapcache_request_get_capabilities_wmts*)
+            apr_pcalloc(ctx->pool,sizeof(mapcache_request_get_capabilities_wmts));
+         req->request.request.type = MAPCACHE_REQUEST_GET_CAPABILITIES;
+         *request = (mapcache_request*)req;
          return;
       } else if( ! strcasecmp(str,"gettile") || ! strcasecmp(str,"getfeatureinfo")) {
          /* extract our wnated parameters, they will be validated later on */
@@ -319,7 +319,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
             ctx->set_error(ctx, 400, "received wmts request with no layer");
             return;
          } else {
-            tileset = geocache_configuration_get_tileset(config,layer);
+            tileset = mapcache_configuration_get_tileset(config,layer);
             if(!tileset) {
                ctx->set_error(ctx, 400, "received wmts request with invalid layer %s",layer);
                return;
@@ -331,7 +331,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
             int i;
             dimtable = apr_table_make(ctx->pool,tileset->dimensions->nelts);
             for(i=0;i<tileset->dimensions->nelts;i++) {
-               geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+               mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
                const char *value;
                if((value = apr_table_get(params,dimension->name)) != NULL) {
                   apr_table_set(dimtable,dimension->name,value);
@@ -367,14 +367,14 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
          }
          if(!layer) {
             if(!strcmp(key,"WMTSCapabilities.xml")) {
-               geocache_request_get_capabilities_wmts *req = (geocache_request_get_capabilities_wmts*)
-                  apr_pcalloc(ctx->pool,sizeof(geocache_request_get_capabilities_wmts));
-               req->request.request.type = GEOCACHE_REQUEST_GET_CAPABILITIES;
-               *request = (geocache_request*)req;
+               mapcache_request_get_capabilities_wmts *req = (mapcache_request_get_capabilities_wmts*)
+                  apr_pcalloc(ctx->pool,sizeof(mapcache_request_get_capabilities_wmts));
+               req->request.request.type = MAPCACHE_REQUEST_GET_CAPABILITIES;
+               *request = (mapcache_request*)req;
                return;
             }
             layer = key;
-            tileset = geocache_configuration_get_tileset(config,layer);
+            tileset = mapcache_configuration_get_tileset(config,layer);
             if(!tileset) {
                ctx->set_error(ctx, 404, "received wmts request with invalid layer %s",layer);
                return;
@@ -391,7 +391,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
             int i = apr_table_elts(dimtable)->nelts;
             if(i != tileset->dimensions->nelts) {
                /*we still have some dimensions to parse*/
-               geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+               mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
                apr_table_set(dimtable,dimension->name,key);
                continue;
             }
@@ -449,7 +449,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       }
    }
       
-   geocache_grid_link *grid_link = NULL;
+   mapcache_grid_link *grid_link = NULL;
    
    if(!style || strcmp(style,"default")) {
       ctx->set_error(ctx,404, "received request with invalid style \"%s\" (expecting \"default\")",style);
@@ -464,7 +464,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       }
       int i;
       for(i=0;i<tileset->dimensions->nelts;i++) {
-         geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+         mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
          const char *value = apr_table_get(dimtable,dimension->name);
          if(!value) {
             ctx->set_error(ctx,404,"received request with no value for dimension \"%s\"",dimension->name);
@@ -473,7 +473,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
          char *tmpval = apr_pstrdup(ctx->pool,value);
          int ok = dimension->validate(ctx,dimension,&tmpval);
          GC_CHECK_ERROR(ctx);
-         if(ok != GEOCACHE_SUCCESS) {
+         if(ok != MAPCACHE_SUCCESS) {
             ctx->set_error(ctx,404,"dimension \"%s\" value \"%s\" fails to validate",
                   dimension->name, value);
             return;
@@ -491,7 +491,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
    } else {
       int i;
       for(i=0;i<tileset->grid_links->nelts;i++) {
-         geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+         mapcache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
          if(strcmp(sgrid->grid->name,matrixset)) continue;
          grid_link = sgrid;
          break;
@@ -561,15 +561,15 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
 #endif
 
 
-      geocache_request_get_tile *req = (geocache_request_get_tile*)apr_pcalloc(
-            ctx->pool,sizeof(geocache_request_get_tile));
+      mapcache_request_get_tile *req = (mapcache_request_get_tile*)apr_pcalloc(
+            ctx->pool,sizeof(mapcache_request_get_tile));
 
-      req->request.type = GEOCACHE_REQUEST_GET_TILE;
+      req->request.type = MAPCACHE_REQUEST_GET_TILE;
       req->ntiles = 1;
-      req->tiles = (geocache_tile**)apr_pcalloc(ctx->pool,sizeof(geocache_tile*));     
+      req->tiles = (mapcache_tile**)apr_pcalloc(ctx->pool,sizeof(mapcache_tile*));     
 
 
-      req->tiles[0] = geocache_tileset_tile_create(ctx->pool, tileset, grid_link);
+      req->tiles[0] = mapcache_tileset_tile_create(ctx->pool, tileset, grid_link);
       if(!req->tiles[0]) {
          ctx->set_error(ctx, 500, "failed to allocate tile");
          return;
@@ -580,7 +580,7 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
          int i;
          req->tiles[0]->dimensions = apr_table_make(ctx->pool,tileset->dimensions->nelts);
          for(i=0;i<tileset->dimensions->nelts;i++) {
-            geocache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,geocache_dimension*);
+            mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
             const char *value = apr_table_get(dimtable,dimension->name);
             apr_table_set(req->tiles[0]->dimensions,dimension->name,value);
          }
@@ -590,10 +590,10 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       req->tiles[0]->y = grid_link->grid->levels[level]->maxy - row - 1;
       req->tiles[0]->z = level;
 
-      geocache_tileset_tile_validate(ctx,req->tiles[0]);
+      mapcache_tileset_tile_validate(ctx,req->tiles[0]);
       GC_CHECK_ERROR(ctx);
 
-      *request = (geocache_request*)req;
+      *request = (mapcache_request*)req;
       return;
    } else { /* we have a featureinfo request */
       if(!fi_i || (!infoformat && !extension)) {
@@ -606,10 +606,10 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
          ctx->set_error(ctx,400,"tileset %s does not support featureinfo requests", tileset->name);
          return;
       }
-      geocache_request_get_feature_info *req_fi = (geocache_request_get_feature_info*)apr_pcalloc(
-            ctx->pool, sizeof(geocache_request_get_feature_info));
-      req_fi->request.type = GEOCACHE_REQUEST_GET_FEATUREINFO;
-      geocache_feature_info *fi = geocache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
+      mapcache_request_get_feature_info *req_fi = (mapcache_request_get_feature_info*)apr_pcalloc(
+            ctx->pool, sizeof(mapcache_request_get_feature_info));
+      req_fi->request.type = MAPCACHE_REQUEST_GET_FEATUREINFO;
+      mapcache_feature_info *fi = mapcache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
       req_fi->fi = fi;
       if(infoformat) {
          fi->format = (char*)infoformat;
@@ -636,27 +636,27 @@ void _geocache_service_wmts_parse_request(geocache_context *ctx, geocache_servic
       }
       fi->map.width = grid_link->grid->tile_sx;
       fi->map.height = grid_link->grid->tile_sy;
-      geocache_grid_get_extent(ctx,grid_link->grid,
+      mapcache_grid_get_extent(ctx,grid_link->grid,
             col,
             grid_link->grid->levels[level]->maxy-row-1,
             level,
             fi->map.extent);
-      *request = (geocache_request*)req_fi;
+      *request = (mapcache_request*)req_fi;
    }
 }
 
-geocache_service* geocache_service_wmts_create(geocache_context *ctx) {
-   geocache_service_wmts* service = (geocache_service_wmts*)apr_pcalloc(ctx->pool, sizeof(geocache_service_wmts));
+mapcache_service* mapcache_service_wmts_create(mapcache_context *ctx) {
+   mapcache_service_wmts* service = (mapcache_service_wmts*)apr_pcalloc(ctx->pool, sizeof(mapcache_service_wmts));
    if(!service) {
       ctx->set_error(ctx, 500, "failed to allocate wtms service");
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"wmts");
    service->service.name = apr_pstrdup(ctx->pool,"wmts");
-   service->service.type = GEOCACHE_SERVICE_WMTS;
-   service->service.parse_request = _geocache_service_wmts_parse_request;
+   service->service.type = MAPCACHE_SERVICE_WMTS;
+   service->service.parse_request = _mapcache_service_wmts_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wmts;
-   return (geocache_service*)service;
+   return (mapcache_service*)service;
 }
 
 /** @} */

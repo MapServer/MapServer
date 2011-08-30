@@ -14,16 +14,18 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
+#ifdef USE_FASTCGI
 #include <fcgi_stdio.h>
+#endif
 #include <stdlib.h>
 #include <apr_strings.h>
 #include <apr_pools.h>
 #include <apr_file_io.h>
 #include <apr_date.h>
 
-typedef struct geocache_context_fcgi geocache_context_fcgi;
-typedef struct geocache_context_fcgi_request geocache_context_fcgi_request;
+typedef struct mapcache_context_fcgi mapcache_context_fcgi;
+typedef struct mapcache_context_fcgi_request mapcache_context_fcgi_request;
 
 static char *err400 = "Bad Request";
 static char *err404 = "Not Found";
@@ -50,13 +52,13 @@ static char* err_msg(int code) {
    }
 }
 
-struct geocache_context_fcgi {
-   geocache_context ctx;
+struct mapcache_context_fcgi {
+   mapcache_context ctx;
    char *mutex_fname;
    apr_file_t *mutex_file;
 };
 
-void fcgi_context_log(geocache_context *c, geocache_log_level level, char *message, ...) {
+void fcgi_context_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
    va_list args;
    va_start(args,message);
    fprintf(stderr,"%s\n",apr_pvsprintf(c->pool,message,args));
@@ -64,8 +66,8 @@ void fcgi_context_log(geocache_context *c, geocache_log_level level, char *messa
 }
 
 
-void geocache_fcgi_mutex_aquire(geocache_context *gctx) {
-   geocache_context_fcgi *ctx = (geocache_context_fcgi*)gctx;
+void mapcache_fcgi_mutex_aquire(mapcache_context *gctx) {
+   mapcache_context_fcgi *ctx = (mapcache_context_fcgi*)gctx;
    int ret;
 #ifdef DEBUG
    if(ctx->mutex_file != NULL) {
@@ -86,9 +88,9 @@ void geocache_fcgi_mutex_aquire(geocache_context *gctx) {
    }
 }
 
-void geocache_fcgi_mutex_release(geocache_context *gctx) {
+void mapcache_fcgi_mutex_release(mapcache_context *gctx) {
    int ret;
-   geocache_context_fcgi *ctx = (geocache_context_fcgi*)gctx;
+   mapcache_context_fcgi *ctx = (mapcache_context_fcgi*)gctx;
 #ifdef DEBUG
    if(ctx->mutex_file == NULL) {
       gctx->set_error(gctx, 500, "SEVERE: fcgi mutex unlock on unlocked file");
@@ -106,21 +108,21 @@ void geocache_fcgi_mutex_release(geocache_context *gctx) {
    ctx->mutex_file = NULL;
 }
 
-static geocache_context_fcgi* fcgi_context_create() {
-   geocache_context_fcgi *ctx = apr_pcalloc(global_pool, sizeof(geocache_context_fcgi));
+static mapcache_context_fcgi* fcgi_context_create() {
+   mapcache_context_fcgi *ctx = apr_pcalloc(global_pool, sizeof(mapcache_context_fcgi));
    if(!ctx) {
       return NULL;
    }
    ctx->ctx.pool = global_pool;
-   geocache_context_init((geocache_context*)ctx);
+   mapcache_context_init((mapcache_context*)ctx);
    ctx->ctx.log = fcgi_context_log;
-   ctx->mutex_fname="/tmp/geocache.fcgi.lock";
-   ctx->ctx.global_lock_aquire = geocache_fcgi_mutex_aquire;
-   ctx->ctx.global_lock_release = geocache_fcgi_mutex_release;
+   ctx->mutex_fname="/tmp/mapcache.fcgi.lock";
+   ctx->ctx.global_lock_aquire = mapcache_fcgi_mutex_aquire;
+   ctx->ctx.global_lock_release = mapcache_fcgi_mutex_release;
    return ctx;
 }
 
-static void fcgi_write_response(geocache_context_fcgi *ctx, geocache_http_response *response) {
+static void fcgi_write_response(mapcache_context_fcgi *ctx, mapcache_http_response *response) {
    if(response->code != 200) {
       printf("Status: %d %s\r\n",response->code, err_msg(response->code));
    }
@@ -162,45 +164,47 @@ int main(int argc, char **argv) {
    if(apr_pool_create(&global_pool,NULL) != APR_SUCCESS) {
       return 1;
    }
-   geocache_context_fcgi* globalctx = fcgi_context_create();
-   geocache_context* ctx = (geocache_context*)globalctx;
-   geocache_cfg *cfg = geocache_configuration_create(ctx->pool);
+   mapcache_context_fcgi* globalctx = fcgi_context_create();
+   mapcache_context* ctx = (mapcache_context*)globalctx;
+   mapcache_cfg *cfg = mapcache_configuration_create(ctx->pool);
    ctx->config = cfg;
 
-   char *conffile  = getenv("GEOCACHE_CONFIG_FILE");
+   char *conffile  = getenv("MAPCACHE_CONFIG_FILE");
    if(!conffile) {
-      ctx->log(ctx,GEOCACHE_ERROR,"no config file found in GEOCACHE_CONFIG_FILE envirronement");
+      ctx->log(ctx,MAPCACHE_ERROR,"no config file found in MAPCACHE_CONFIG_FILE envirronement");
       return 1;
    }
-   ctx->log(ctx,GEOCACHE_DEBUG,"geocache fcgi conf file: %s",conffile);
-   geocache_configuration_parse(ctx,conffile,cfg,1);
+   ctx->log(ctx,MAPCACHE_DEBUG,"mapcache fcgi conf file: %s",conffile);
+   mapcache_configuration_parse(ctx,conffile,cfg,1);
    if(GC_HAS_ERROR(ctx)) {
       ctx->log(ctx,500,"failed to parse %s: %s",conffile,ctx->get_error_message(ctx));
       return 1;
    }
-   geocache_configuration_post_config(ctx, cfg);
+   mapcache_configuration_post_config(ctx, cfg);
    if(GC_HAS_ERROR(ctx)) {
       ctx->log(ctx,500,"post-config failed for %s: %s",conffile,ctx->get_error_message(ctx));
       return 1;
    }
    
+#ifdef USE_FASTCGI
    while (FCGI_Accept() >= 0) {
+#endif
       apr_table_t *params;
       apr_pool_create(&(ctx->pool),global_pool);
-      geocache_request *request = NULL;
+      mapcache_request *request = NULL;
       char *pathInfo = getenv("PATH_INFO");
       
 
-      params = geocache_http_parse_param_string(ctx, getenv("QUERY_STRING"));
-      geocache_service_dispatch_request(ctx,&request,pathInfo,params,cfg);
+      params = mapcache_http_parse_param_string(ctx, getenv("QUERY_STRING"));
+      mapcache_service_dispatch_request(ctx,&request,pathInfo,params,cfg);
       if(GC_HAS_ERROR(ctx) || !request) {
-         fcgi_write_response(globalctx, geocache_core_respond_to_error(ctx,(request)?request->service:NULL));
+         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,(request)?request->service:NULL));
          goto cleanup;
       }
       
-      geocache_http_response *http_response = NULL;
-      if(request->type == GEOCACHE_REQUEST_GET_CAPABILITIES) {
-         geocache_request_get_capabilities *req = (geocache_request_get_capabilities*)request;
+      mapcache_http_response *http_response = NULL;
+      if(request->type == MAPCACHE_REQUEST_GET_CAPABILITIES) {
+         mapcache_request_get_capabilities *req = (mapcache_request_get_capabilities*)request;
          char *host = getenv("SERVER_NAME");
          char *port = getenv("SERVER_PORT");
          char *fullhost;
@@ -222,40 +226,42 @@ int main(int argc, char **argv) {
                fullhost,
                getenv("SCRIPT_NAME")
                );
-         http_response = geocache_core_get_capabilities(ctx,request->service,req,url,pathInfo,cfg);
-      } else if( request->type == GEOCACHE_REQUEST_GET_TILE) {
-         geocache_request_get_tile *req_tile = (geocache_request_get_tile*)request;
-         http_response = geocache_core_get_tile(ctx,req_tile);
-      } else if( request->type == GEOCACHE_REQUEST_PROXY ) {
-         geocache_request_proxy *req_proxy = (geocache_request_proxy*)request;
-         http_response = geocache_core_proxy_request(ctx, req_proxy);
-      } else if( request->type == GEOCACHE_REQUEST_GET_MAP) {
-         geocache_request_get_map *req_map = (geocache_request_get_map*)request;
-         http_response = geocache_core_get_map(ctx,req_map);
-      } else if( request->type == GEOCACHE_REQUEST_GET_FEATUREINFO) {
-         geocache_request_get_feature_info *req_fi = (geocache_request_get_feature_info*)request;
-         http_response = geocache_core_get_featureinfo(ctx,req_fi);
+         http_response = mapcache_core_get_capabilities(ctx,request->service,req,url,pathInfo,cfg);
+      } else if( request->type == MAPCACHE_REQUEST_GET_TILE) {
+         mapcache_request_get_tile *req_tile = (mapcache_request_get_tile*)request;
+         http_response = mapcache_core_get_tile(ctx,req_tile);
+      } else if( request->type == MAPCACHE_REQUEST_PROXY ) {
+         mapcache_request_proxy *req_proxy = (mapcache_request_proxy*)request;
+         http_response = mapcache_core_proxy_request(ctx, req_proxy);
+      } else if( request->type == MAPCACHE_REQUEST_GET_MAP) {
+         mapcache_request_get_map *req_map = (mapcache_request_get_map*)request;
+         http_response = mapcache_core_get_map(ctx,req_map);
+      } else if( request->type == MAPCACHE_REQUEST_GET_FEATUREINFO) {
+         mapcache_request_get_feature_info *req_fi = (mapcache_request_get_feature_info*)request;
+         http_response = mapcache_core_get_featureinfo(ctx,req_fi);
 #ifdef DEBUG
       } else {
          ctx->set_error(ctx,500,"###BUG### unknown request type");
 #endif
       }
       if(GC_HAS_ERROR(ctx)) {
-         fcgi_write_response(globalctx, geocache_core_respond_to_error(ctx,request->service));
+         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,request->service));
          goto cleanup;
       }
 #ifdef DEBUG
       if(!http_response) {
          ctx->set_error(ctx,500,"###BUG### NULL response");
-         fcgi_write_response(globalctx, geocache_core_respond_to_error(ctx,request->service));
+         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,request->service));
          goto cleanup;
       }
 #endif
       fcgi_write_response(globalctx,http_response);
 cleanup:
+#ifdef USE_FASTCGI
       apr_pool_destroy(ctx->pool);
       ctx->clear_errors(ctx);
    }
+#endif
    apr_pool_destroy(global_pool);
    return 0;
 

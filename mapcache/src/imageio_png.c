@@ -14,40 +14,40 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <png.h>
 #include <apr_strings.h>
 
 
 /**\addtogroup imageio_png */
 /** @{ */
-typedef struct _geocache_buffer_closure _geocache_buffer_closure;
-struct _geocache_buffer_closure{
-   geocache_buffer *buffer;
+typedef struct _mapcache_buffer_closure _mapcache_buffer_closure;
+struct _mapcache_buffer_closure{
+   mapcache_buffer *buffer;
    unsigned char *ptr;
 };
 
-void _geocache_imageio_png_write_func(png_structp png_ptr, png_bytep data, png_size_t length) {
-   geocache_buffer_append((geocache_buffer*)png_get_io_ptr(png_ptr),length,data);
+void _mapcache_imageio_png_write_func(png_structp png_ptr, png_bytep data, png_size_t length) {
+   mapcache_buffer_append((mapcache_buffer*)png_get_io_ptr(png_ptr),length,data);
 }
 
-void _geocache_imageio_png_read_func(png_structp png_ptr, png_bytep data, png_size_t length) {
-   _geocache_buffer_closure *b = (_geocache_buffer_closure*)png_get_io_ptr(png_ptr);
+void _mapcache_imageio_png_read_func(png_structp png_ptr, png_bytep data, png_size_t length) {
+   _mapcache_buffer_closure *b = (_mapcache_buffer_closure*)png_get_io_ptr(png_ptr);
    memcpy(data,b->ptr,length);
    b->ptr += length;
 }
 
-void _geocache_imageio_png_flush_func(png_structp png_ptr) {
+void _mapcache_imageio_png_flush_func(png_structp png_ptr) {
    // do nothing
 }
 
-void _geocache_imageio_png_decode_to_image(geocache_context *ctx, geocache_buffer *buffer,
-      geocache_image *img) {
+void _mapcache_imageio_png_decode_to_image(mapcache_context *ctx, mapcache_buffer *buffer,
+      mapcache_image *img) {
    int bit_depth,color_type,i;
    unsigned char **row_pointers;
    png_structp png_ptr = NULL;
    png_infop info_ptr = NULL;
-   _geocache_buffer_closure b;
+   _mapcache_buffer_closure b;
    b.buffer = buffer;
    b.ptr = buffer->buf;
    png_uint_32 width, height;
@@ -74,7 +74,7 @@ void _geocache_imageio_png_decode_to_image(geocache_context *ctx, geocache_buffe
       png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
       return;
    }
-   png_set_read_fn(png_ptr,&b,_geocache_imageio_png_read_func);
+   png_set_read_fn(png_ptr,&b,_mapcache_imageio_png_read_func);
 
    png_read_info(png_ptr,info_ptr);
    if(!png_get_IHDR(png_ptr, info_ptr, &width, &height,&bit_depth, &color_type,NULL,NULL,NULL)) {
@@ -112,9 +112,9 @@ void _geocache_imageio_png_decode_to_image(geocache_context *ctx, geocache_buffe
 }
 
    
-geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buffer *buffer) {
-   geocache_image *img = geocache_image_create(ctx);
-   _geocache_imageio_png_decode_to_image(ctx,buffer,img);
+mapcache_image* _mapcache_imageio_png_decode(mapcache_context *ctx, mapcache_buffer *buffer) {
+   mapcache_image *img = mapcache_image_create(ctx);
+   _mapcache_imageio_png_decode_to_image(ctx,buffer,img);
    if(GC_HAS_ERROR(ctx))
       return NULL;
    return img;
@@ -122,15 +122,15 @@ geocache_image* _geocache_imageio_png_decode(geocache_context *ctx, geocache_buf
 
 /**
  * \brief encode an image to RGB(A) PNG format
- * \private \memberof geocache_image_format_png
- * \sa geocache_image_format::write()
+ * \private \memberof mapcache_image_format_png
+ * \sa mapcache_image_format::write()
  */
-geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_image *img, geocache_image_format *format) {
+mapcache_buffer* _mapcache_imageio_png_encode(mapcache_context *ctx, mapcache_image *img, mapcache_image_format *format) {
    png_infop info_ptr;
    int color_type;
    size_t row;
-   geocache_buffer *buffer = NULL;
-   int compression = ((geocache_image_format_png*)format)->compression_level;
+   mapcache_buffer *buffer = NULL;
+   int compression = ((mapcache_image_format_png*)format)->compression_level;
    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
    if (!png_ptr) {
       ctx->set_error(ctx, 500, "failed to allocate png_struct structure");
@@ -153,11 +153,11 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
       return NULL;
    }
 
-   buffer = geocache_buffer_create(5000,ctx->pool);
+   buffer = mapcache_buffer_create(5000,ctx->pool);
 
-   png_set_write_fn(png_ptr, buffer, _geocache_imageio_png_write_func, _geocache_imageio_png_flush_func);
+   png_set_write_fn(png_ptr, buffer, _mapcache_imageio_png_write_func, _mapcache_imageio_png_flush_func);
 
-   if(geocache_image_has_alpha(img))
+   if(mapcache_image_has_alpha(img))
       color_type = PNG_COLOR_TYPE_RGB_ALPHA;
    else
       color_type = PNG_COLOR_TYPE_RGB;
@@ -165,9 +165,9 @@ geocache_buffer* _geocache_imageio_png_encode(geocache_context *ctx, geocache_im
    png_set_IHDR(png_ptr, info_ptr, img->w, img->h,
          8, color_type, PNG_INTERLACE_NONE,
          PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-   if(compression == GEOCACHE_COMPRESSION_BEST)
+   if(compression == MAPCACHE_COMPRESSION_BEST)
       png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
-   else if(compression == GEOCACHE_COMPRESSION_FAST)
+   else if(compression == MAPCACHE_COMPRESSION_FAST)
       png_set_compression_level (png_ptr, Z_BEST_SPEED);
 
    png_write_info(png_ptr, info_ptr);
@@ -292,7 +292,7 @@ static void pam_freeacolorhash (acolorhash_table acht);
  * - num_forced_palette_entries: number of entries contained in "force_palette". if 0,
  *   "force_palette" can be NULL
  */
-int _geocache_imageio_quantize_image(geocache_image *rb,
+int _mapcache_imageio_quantize_image(mapcache_image *rb,
       unsigned int *reqcolors, rgbaPixel *palette,
       unsigned int *maxval,
       rgbaPixel *forced_palette, int num_forced_palette_entries) {
@@ -315,7 +315,7 @@ int _geocache_imageio_quantize_image(geocache_image *rb,
    *maxval = 255;
 
    apixels=(rgbaPixel**)malloc(rb->h*sizeof(rgbaPixel**));
-   if(!apixels) return GEOCACHE_FAILURE;
+   if(!apixels) return MAPCACHE_FAILURE;
 
    for(row=0;row<rb->h;row++) {
       apixels[row]=(rgbaPixel*)(&(rb->data[row * rb->stride]));
@@ -339,7 +339,7 @@ int _geocache_imageio_quantize_image(geocache_image *rb,
             PAM_DEPTH( *pP, *pP, *maxval, newmaxval );
       *maxval = newmaxval;
    }
-   newcolors = GEOCACHE_MIN(colors, *reqcolors);
+   newcolors = MAPCACHE_MIN(colors, *reqcolors);
    acolormap = mediancut(achv, colors, rb->w*rb->h, *maxval, newcolors);
    pam_freeacolorhist(achv);
 
@@ -356,11 +356,11 @@ int _geocache_imageio_quantize_image(geocache_image *rb,
 
    free(acolormap);
    free(apixels);
-   return GEOCACHE_SUCCESS;
+   return MAPCACHE_SUCCESS;
 }
 
 
-int _geocache_imageio_classify(geocache_image *rb, unsigned char *pixels,
+int _mapcache_imageio_classify(mapcache_image *rb, unsigned char *pixels,
       rgbaPixel *palette, int numPaletteEntries) {
    register int ind;
    unsigned char *outrow,*pQ;
@@ -426,7 +426,7 @@ int _geocache_imageio_classify(geocache_image *rb, unsigned char *pixels,
    }
    pam_freeacolorhash(acht);
 
-   return GEOCACHE_SUCCESS;
+   return MAPCACHE_SUCCESS;
 }
 
 
@@ -946,7 +946,7 @@ acolorhash_table acht;
 
 /** \endcond DONOTDOCUMENT */
 
-int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels,
+int _mapcache_imageio_remap_palette(unsigned char *pixels, int npixels,
       rgbaPixel *palette, int numPaletteEntries, unsigned int maxval,
       rgbPixel *rgb, unsigned char *a, int *num_a) {
    int bot_idx, top_idx, x;
@@ -967,7 +967,7 @@ int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels,
    }
    /* sanity check:  top and bottom indices should have just crossed paths */
    if (bot_idx != top_idx + 1) {
-      return GEOCACHE_FAILURE;
+      return MAPCACHE_FAILURE;
    }
 
    *num_a = bot_idx;
@@ -988,26 +988,26 @@ int _geocache_imageio_remap_palette(unsigned char *pixels, int npixels,
          a[remap[x]] = (palette[x].a * 255 + (maxval >> 1)) / maxval;
       }
    }
-   return GEOCACHE_SUCCESS;
+   return MAPCACHE_SUCCESS;
 }
 
 /**
  * \brief encode an image to quantized PNG format
- * \private \memberof geocache_image_format_png_q
- * \sa geocache_image_format::write()
+ * \private \memberof mapcache_image_format_png_q
+ * \sa mapcache_image_format::write()
  */
-geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache_image *image,
-      geocache_image_format *format) {
+mapcache_buffer* _mapcache_imageio_png_q_encode( mapcache_context *ctx, mapcache_image *image,
+      mapcache_image_format *format) {
    int ret;
-   geocache_buffer *buffer = geocache_buffer_create(3000,ctx->pool);
-   geocache_image_format_png_q *f = (geocache_image_format_png_q*)format;
+   mapcache_buffer *buffer = mapcache_buffer_create(3000,ctx->pool);
+   mapcache_image_format_png_q *f = (mapcache_image_format_png_q*)format;
    int compression = f->format.compression_level;
    unsigned int numPaletteEntries = f->ncolors;
    unsigned char *pixels = (unsigned char*)apr_pcalloc(ctx->pool,image->w*image->h*sizeof(unsigned char));
    rgbaPixel palette[256];
    unsigned int maxval;
-   ret = _geocache_imageio_quantize_image(image,&numPaletteEntries,palette, &maxval, NULL, 0);
-   ret = _geocache_imageio_classify(image,pixels,palette,numPaletteEntries);
+   ret = _mapcache_imageio_quantize_image(image,&numPaletteEntries,palette, &maxval, NULL, 0);
+   ret = _mapcache_imageio_classify(image,pixels,palette,numPaletteEntries);
    png_infop info_ptr;
    rgbPixel rgb[256];
    unsigned char a[256];
@@ -1031,7 +1031,7 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
       return (NULL);
    }
 
-   png_set_write_fn(png_ptr,buffer, _geocache_imageio_png_write_func, _geocache_imageio_png_flush_func);
+   png_set_write_fn(png_ptr,buffer, _mapcache_imageio_png_write_func, _mapcache_imageio_png_flush_func);
 
 
    if (numPaletteEntries <= 2)
@@ -1048,12 +1048,12 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
          0, PNG_COMPRESSION_TYPE_DEFAULT,
          PNG_FILTER_TYPE_DEFAULT);
 
-   if(compression == GEOCACHE_COMPRESSION_BEST)
+   if(compression == MAPCACHE_COMPRESSION_BEST)
       png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
-   else if(compression == GEOCACHE_COMPRESSION_FAST)
+   else if(compression == MAPCACHE_COMPRESSION_FAST)
       png_set_compression_level (png_ptr, Z_BEST_SPEED);
    
-   _geocache_imageio_remap_palette(pixels, image->w * image->h, palette, numPaletteEntries,
+   _mapcache_imageio_remap_palette(pixels, image->w * image->h, palette, numPaletteEntries,
          maxval,rgb,a,&num_a);
    
    png_set_PLTE(png_ptr, info_ptr, (png_colorp)(rgb),numPaletteEntries);
@@ -1073,7 +1073,7 @@ geocache_buffer* _geocache_imageio_png_q_encode( geocache_context *ctx, geocache
    return buffer;
 }
 
-static geocache_buffer* _geocache_imageio_png_create_empty(geocache_context *ctx, geocache_image_format *format,
+static mapcache_buffer* _mapcache_imageio_png_create_empty(mapcache_context *ctx, mapcache_image_format *format,
       size_t width, size_t height, unsigned int color) {
 
    apr_pool_t *pool = NULL;
@@ -1081,7 +1081,7 @@ static geocache_buffer* _geocache_imageio_png_create_empty(geocache_context *ctx
       ctx->set_error(ctx,500,"png create empty: failed to create temp memory pool");
       return NULL;
    }
-   geocache_image *empty = geocache_image_create(ctx);
+   mapcache_image *empty = mapcache_image_create(ctx);
    if(GC_HAS_ERROR(ctx)) {
       return NULL;
    }
@@ -1094,35 +1094,35 @@ static geocache_buffer* _geocache_imageio_png_create_empty(geocache_context *ctx
    empty->h = height;
    empty->stride = width * 4;
 
-   geocache_buffer *buf = format->write(ctx,empty,format);
+   mapcache_buffer *buf = format->write(ctx,empty,format);
    apr_pool_destroy(pool);
    return buf;
 }
 
 
-geocache_image_format* geocache_imageio_create_png_format(apr_pool_t *pool, char *name, geocache_compression_type compression) {
-   geocache_image_format_png *format = apr_pcalloc(pool, sizeof(geocache_image_format_png));
+mapcache_image_format* mapcache_imageio_create_png_format(apr_pool_t *pool, char *name, mapcache_compression_type compression) {
+   mapcache_image_format_png *format = apr_pcalloc(pool, sizeof(mapcache_image_format_png));
    format->format.name = name;
    format->format.extension = apr_pstrdup(pool,"png");
    format->format.mime_type = apr_pstrdup(pool,"image/png");
    format->compression_level = compression;
    format->format.metadata = apr_table_make(pool,3);
-   format->format.write = _geocache_imageio_png_encode;
-   format->format.create_empty_image = _geocache_imageio_png_create_empty;
-   return (geocache_image_format*)format;
+   format->format.write = _mapcache_imageio_png_encode;
+   format->format.create_empty_image = _mapcache_imageio_png_create_empty;
+   return (mapcache_image_format*)format;
 }
 
-geocache_image_format* geocache_imageio_create_png_q_format(apr_pool_t *pool, char *name, geocache_compression_type compression, int ncolors) {
-   geocache_image_format_png_q *format = apr_pcalloc(pool, sizeof(geocache_image_format_png_q));
+mapcache_image_format* mapcache_imageio_create_png_q_format(apr_pool_t *pool, char *name, mapcache_compression_type compression, int ncolors) {
+   mapcache_image_format_png_q *format = apr_pcalloc(pool, sizeof(mapcache_image_format_png_q));
    format->format.format.name = name;
    format->format.format.extension = apr_pstrdup(pool,"png");
    format->format.format.mime_type = apr_pstrdup(pool,"image/png");
    format->format.compression_level = compression;
-   format->format.format.write = _geocache_imageio_png_q_encode;
-   format->format.format.create_empty_image = _geocache_imageio_png_create_empty;
+   format->format.format.write = _mapcache_imageio_png_q_encode;
+   format->format.format.create_empty_image = _mapcache_imageio_png_create_empty;
    format->format.format.metadata = apr_table_make(pool,3);
    format->ncolors = ncolors;
-   return (geocache_image_format*)format;
+   return (mapcache_image_format*)format;
 }
 
 /** @} */

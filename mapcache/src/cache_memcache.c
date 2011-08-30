@@ -16,7 +16,7 @@
 
 #ifdef USE_MEMCACHE
 
-#include "geocache.h"
+#include "mapcache.h"
 
 
 
@@ -26,9 +26,9 @@
  * \param tile the tile to get the key from
  * \param key pointer to a char* that will contain the key
  * \param ctx
- * \private \memberof geocache_cache_memcache
+ * \private \memberof mapcache_cache_memcache
  */
-static void _geocache_cache_memcache_tile_key(geocache_context *ctx, geocache_tile *tile, char **path) {
+static void _mapcache_cache_memcache_tile_key(mapcache_context *ctx, mapcache_tile *tile, char **path) {
    char *start;
    start = apr_pstrcat(ctx->pool,
          tile->tileset->name,"/",
@@ -58,31 +58,31 @@ static void _geocache_cache_memcache_tile_key(geocache_context *ctx, geocache_ti
   
 }
 
-static int _geocache_cache_memcache_has_tile(geocache_context *ctx, geocache_tile *tile) {
+static int _mapcache_cache_memcache_has_tile(mapcache_context *ctx, mapcache_tile *tile) {
    char *key, *tmpdata;
    int rv;
    size_t tmpdatasize;
-   geocache_cache_memcache *cache = (geocache_cache_memcache*)tile->tileset->cache;
-   _geocache_cache_memcache_tile_key(ctx, tile, &key);
+   mapcache_cache_memcache *cache = (mapcache_cache_memcache*)tile->tileset->cache;
+   _mapcache_cache_memcache_tile_key(ctx, tile, &key);
    if(GC_HAS_ERROR(ctx)) {
-      return GEOCACHE_FALSE;
+      return MAPCACHE_FALSE;
    }
    rv = apr_memcache_getp(cache->memcache,ctx->pool,key,&tmpdata,&tmpdatasize,NULL);
    if(rv != APR_SUCCESS) {
-      return GEOCACHE_FALSE;
+      return MAPCACHE_FALSE;
    }
    if(tmpdatasize == 0) {
-      return GEOCACHE_FALSE;
+      return MAPCACHE_FALSE;
    }
-   return GEOCACHE_TRUE;
+   return MAPCACHE_TRUE;
 }
 
-static void _geocache_cache_memcache_delete(geocache_context *ctx, geocache_tile *tile) {
+static void _mapcache_cache_memcache_delete(mapcache_context *ctx, mapcache_tile *tile) {
    char *key;
    int rv;
    char errmsg[120];
-   geocache_cache_memcache *cache = (geocache_cache_memcache*)tile->tileset->cache;
-   _geocache_cache_memcache_tile_key(ctx, tile, &key);
+   mapcache_cache_memcache *cache = (mapcache_cache_memcache*)tile->tileset->cache;
+   _mapcache_cache_memcache_tile_key(ctx, tile, &key);
    GC_CHECK_ERROR(ctx);
    rv = apr_memcache_delete(cache->memcache,key,0);
    if(rv != APR_SUCCESS && rv!= APR_NOTFOUND) {
@@ -94,26 +94,26 @@ static void _geocache_cache_memcache_delete(geocache_context *ctx, geocache_tile
 /**
  * \brief get content of given tile
  * 
- * fills the geocache_tile::data of the given tile with content stored on the memcache server
- * \private \memberof geocache_cache_memcache
- * \sa geocache_cache::tile_get()
+ * fills the mapcache_tile::data of the given tile with content stored on the memcache server
+ * \private \memberof mapcache_cache_memcache
+ * \sa mapcache_cache::tile_get()
  */
-static int _geocache_cache_memcache_get(geocache_context *ctx, geocache_tile *tile) {
+static int _mapcache_cache_memcache_get(mapcache_context *ctx, mapcache_tile *tile) {
    char *key;
    int rv;
-   geocache_cache_memcache *cache = (geocache_cache_memcache*)tile->tileset->cache;
-   _geocache_cache_memcache_tile_key(ctx, tile, &key);
+   mapcache_cache_memcache *cache = (mapcache_cache_memcache*)tile->tileset->cache;
+   _mapcache_cache_memcache_tile_key(ctx, tile, &key);
    if(GC_HAS_ERROR(ctx)) {
-      return GEOCACHE_FAILURE;
+      return MAPCACHE_FAILURE;
    }
-   tile->data = geocache_buffer_create(0,ctx->pool);
+   tile->data = mapcache_buffer_create(0,ctx->pool);
    rv = apr_memcache_getp(cache->memcache,ctx->pool,key,(char**)&tile->data->buf,&tile->data->size,NULL);
    if(rv != APR_SUCCESS) {
-      return GEOCACHE_CACHE_MISS;
+      return MAPCACHE_CACHE_MISS;
    }
    if(tile->data->size == 0) {
       ctx->set_error(ctx,500,"memcache cache returned 0-length data for tile %d %d %d\n",tile->x,tile->y,tile->z);
-      return GEOCACHE_FAILURE;
+      return MAPCACHE_FAILURE;
    }
    /* extract the tile modification time from the end of the data returned */
    memcpy(
@@ -123,27 +123,27 @@ static int _geocache_cache_memcache_get(geocache_context *ctx, geocache_tile *ti
    ((char*)tile->data->buf)[tile->data->size+sizeof(apr_time_t)]='\0';
    tile->data->avail = tile->data->size;
    tile->data->size -= sizeof(apr_time_t);
-   return GEOCACHE_SUCCESS;
+   return MAPCACHE_SUCCESS;
 }
 
 /**
  * \brief push tile data to memcached
  * 
- * writes the content of geocache_tile::data to the configured memcached instance(s)
- * \returns GEOCACHE_FAILURE if there is no data to write, or if the tile isn't locked
- * \returns GEOCACHE_SUCCESS if the tile has been successfully written
- * \private \memberof geocache_cache_memcache
- * \sa geocache_cache::tile_set()
+ * writes the content of mapcache_tile::data to the configured memcached instance(s)
+ * \returns MAPCACHE_FAILURE if there is no data to write, or if the tile isn't locked
+ * \returns MAPCACHE_SUCCESS if the tile has been successfully written
+ * \private \memberof mapcache_cache_memcache
+ * \sa mapcache_cache::tile_set()
  */
-static void _geocache_cache_memcache_set(geocache_context *ctx, geocache_tile *tile) {
+static void _mapcache_cache_memcache_set(mapcache_context *ctx, mapcache_tile *tile) {
    char *key;
    int rv;
    /* set expiration to one day if not configured */
    int expires = 86400;
    if(tile->tileset->auto_expire)
       expires = tile->tileset->auto_expire;
-   geocache_cache_memcache *cache = (geocache_cache_memcache*)tile->tileset->cache;
-   _geocache_cache_memcache_tile_key(ctx, tile, &key);
+   mapcache_cache_memcache *cache = (mapcache_cache_memcache*)tile->tileset->cache;
+   _mapcache_cache_memcache_tile_key(ctx, tile, &key);
    GC_CHECK_ERROR(ctx);
 
    /* concatenate the current time to the end of the memcache data so we can extract it out
@@ -163,11 +163,11 @@ static void _geocache_cache_memcache_set(geocache_context *ctx, geocache_tile *t
 }
 
 /**
- * \private \memberof geocache_cache_memcache
+ * \private \memberof mapcache_cache_memcache
  */
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-static void _geocache_cache_memcache_configuration_parse_json(geocache_context *ctx, cJSON *node, geocache_cache *cache) {
-   geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
+static void _mapcache_cache_memcache_configuration_parse_json(mapcache_context *ctx, cJSON *node, mapcache_cache *cache) {
+   mapcache_cache_memcache *dcache = (mapcache_cache_memcache*)cache;
    cJSON *servers = cJSON_GetObjectItem(node,"servers");
    int n;
    if(!servers || !(n = cJSON_GetArraySize(servers))) {
@@ -201,7 +201,7 @@ static void _geocache_cache_memcache_configuration_parse_json(geocache_context *
          ctx->set_error(ctx,400,"cache %s: failed to add server %s:%d",cache->name,host,port);
          return;
       }
-      if(APR_SUCCESS != apr_memcache_set(dcache->memcache,"geocache_test_key","geocache",8,0,0)) {
+      if(APR_SUCCESS != apr_memcache_set(dcache->memcache,"mapcache_test_key","mapcache",8,0,0)) {
          ctx->set_error(ctx,400,"cache %s: failed to add test key to server %s:%d",cache->name,host,port);
          return;
       }
@@ -210,11 +210,11 @@ static void _geocache_cache_memcache_configuration_parse_json(geocache_context *
 #endif
 
 /**
- * \private \memberof geocache_cache_memcache
+ * \private \memberof mapcache_cache_memcache
  */
-static void _geocache_cache_memcache_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
+static void _mapcache_cache_memcache_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache) {
    ezxml_t cur_node;
-   geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
+   mapcache_cache_memcache *dcache = (mapcache_cache_memcache*)cache;
    int servercount = 0;
    for(cur_node = ezxml_child(node,"server"); cur_node; cur_node = cur_node->next) {
       servercount++;
@@ -260,7 +260,7 @@ static void _geocache_cache_memcache_configuration_parse_xml(geocache_context *c
          ctx->set_error(ctx,400,"cache %s: failed to add server %s:%d",cache->name,host,port);
          return;
       }
-      if(APR_SUCCESS != apr_memcache_set(dcache->memcache,"geocache_test_key","geocache",8,0,0)) {
+      if(APR_SUCCESS != apr_memcache_set(dcache->memcache,"mapcache_test_key","mapcache",8,0,0)) {
          ctx->set_error(ctx,400,"cache %s: failed to add test key to server %s:%d",cache->name,host,port);
          return;
       }
@@ -268,11 +268,11 @@ static void _geocache_cache_memcache_configuration_parse_xml(geocache_context *c
 }
    
 /**
- * \private \memberof geocache_cache_memcache
+ * \private \memberof mapcache_cache_memcache
  */
-static void _geocache_cache_memcache_configuration_post_config(geocache_context *ctx, geocache_cache *cache,
-      geocache_cfg *cfg) {
-   geocache_cache_memcache *dcache = (geocache_cache_memcache*)cache;
+static void _mapcache_cache_memcache_configuration_post_config(mapcache_context *ctx, mapcache_cache *cache,
+      mapcache_cfg *cfg) {
+   mapcache_cache_memcache *dcache = (mapcache_cache_memcache*)cache;
    if(!dcache->memcache || dcache->memcache->ntotal==0) {
       ctx->set_error(ctx,400,"cache %s has no servers configured",cache->name);
    }
@@ -280,26 +280,26 @@ static void _geocache_cache_memcache_configuration_post_config(geocache_context 
 
 
 /**
- * \brief creates and initializes a geocache_memcache_cache
+ * \brief creates and initializes a mapcache_memcache_cache
  */
-geocache_cache* geocache_cache_memcache_create(geocache_context *ctx) {
-   geocache_cache_memcache *cache = apr_pcalloc(ctx->pool,sizeof(geocache_cache_memcache));
+mapcache_cache* mapcache_cache_memcache_create(mapcache_context *ctx) {
+   mapcache_cache_memcache *cache = apr_pcalloc(ctx->pool,sizeof(mapcache_cache_memcache));
    if(!cache) {
       ctx->set_error(ctx, 500, "failed to allocate memcache cache");
       return NULL;
    }
    cache->cache.metadata = apr_table_make(ctx->pool,3);
-   cache->cache.type = GEOCACHE_CACHE_MEMCACHE;
-   cache->cache.tile_get = _geocache_cache_memcache_get;
-   cache->cache.tile_exists = _geocache_cache_memcache_has_tile;
-   cache->cache.tile_set = _geocache_cache_memcache_set;
-   cache->cache.tile_delete = _geocache_cache_memcache_delete;
-   cache->cache.configuration_post_config = _geocache_cache_memcache_configuration_post_config;
-   cache->cache.configuration_parse_xml = _geocache_cache_memcache_configuration_parse_xml;
+   cache->cache.type = MAPCACHE_CACHE_MEMCACHE;
+   cache->cache.tile_get = _mapcache_cache_memcache_get;
+   cache->cache.tile_exists = _mapcache_cache_memcache_has_tile;
+   cache->cache.tile_set = _mapcache_cache_memcache_set;
+   cache->cache.tile_delete = _mapcache_cache_memcache_delete;
+   cache->cache.configuration_post_config = _mapcache_cache_memcache_configuration_post_config;
+   cache->cache.configuration_parse_xml = _mapcache_cache_memcache_configuration_parse_xml;
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   cache->cache.configuration_parse_json = _geocache_cache_memcache_configuration_parse_json;
+   cache->cache.configuration_parse_json = _mapcache_cache_memcache_configuration_parse_json;
 #endif
-   return (geocache_cache*)cache;
+   return (mapcache_cache*)cache;
 }
 
 #endif

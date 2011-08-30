@@ -15,7 +15,7 @@
  */
 
 #include <ctype.h>
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_strings.h>
 #include <math.h>
 
@@ -25,7 +25,7 @@
 static char *demo_head = 
       "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
       "  <head>\n"
-      "    <title>mod-geocache demo service</title>\n"
+      "    <title>mod-mapcache demo service</title>\n"
       "    <style type=\"text/css\">\n"
       "    #map {\n"
       "    width: 100%;\n"
@@ -228,7 +228,7 @@ static char *demo_head_gmaps =
       "<html>\n"
       "<head>\n"
       "<meta name=\"viewport\" content=\"initial-scale=1.0, user-scalable=no\" />\n"
-      "<title>mod_geocache gmaps demo</title>\n"
+      "<title>mod_mapcache gmaps demo</title>\n"
       "<style type=\"text/css\">\n"
       "  html { height: 100% }\n"
       "  body { height: 100%; margin: 0px; padding: 0px }\n"
@@ -369,16 +369,16 @@ static char *demo_footer_gmaps =
 
 /**
  * \brief parse a demo request
- * \private \memberof geocache_service_demo
- * \sa geocache_service::parse_request()
+ * \private \memberof mapcache_service_demo
+ * \sa mapcache_service::parse_request()
  */
-void _geocache_service_demo_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
-      const char *cpathinfo, apr_table_t *params, geocache_cfg *config) {
-   geocache_request_get_capabilities_demo *drequest =
-      (geocache_request_get_capabilities_demo*)apr_pcalloc(
-            ctx->pool,sizeof(geocache_request_get_capabilities_demo));
-   *request = (geocache_request*)drequest;
-   (*request)->type = GEOCACHE_REQUEST_GET_CAPABILITIES;
+void _mapcache_service_demo_parse_request(mapcache_context *ctx, mapcache_service *this, mapcache_request **request,
+      const char *cpathinfo, apr_table_t *params, mapcache_cfg *config) {
+   mapcache_request_get_capabilities_demo *drequest =
+      (mapcache_request_get_capabilities_demo*)apr_pcalloc(
+            ctx->pool,sizeof(mapcache_request_get_capabilities_demo));
+   *request = (mapcache_request*)drequest;
+   (*request)->type = MAPCACHE_REQUEST_GET_CAPABILITIES;
    if(!cpathinfo || *cpathinfo=='\0' || !strcmp(cpathinfo,"/")) {
       /*we have no specified service, create the link page*/
       drequest->service = NULL;
@@ -387,10 +387,10 @@ void _geocache_service_demo_parse_request(geocache_context *ctx, geocache_servic
       while(*cpathinfo == '/')
          cpathinfo++; /* skip the leading /'s */
       int i;
-      for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
+      for(i=0;i<MAPCACHE_SERVICES_COUNT;i++) {
          /* loop through the services that have been configured */
          int prefixlen;
-         geocache_service *service = NULL;
+         mapcache_service *service = NULL;
          service = config->services[i];
          if(!service) continue; /* skip an unconfigured service */
          prefixlen = strlen(service->name);
@@ -403,15 +403,15 @@ void _geocache_service_demo_parse_request(geocache_context *ctx, geocache_servic
    }
 }
 
-void _create_demo_front(geocache_context *ctx, geocache_request_get_capabilities *req,
+void _create_demo_front(mapcache_context *ctx, mapcache_request_get_capabilities *req,
       const char *urlprefix) {
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
    char *caps = apr_pstrdup(ctx->pool,
-         "<html><head><title>geocache demo landing page</title></head><body>");
+         "<html><head><title>mapcache demo landing page</title></head><body>");
    int i;
-   for(i=0;i<GEOCACHE_SERVICES_COUNT;i++) {
-      geocache_service *service = ctx->config->services[i];
-      if(!service || service->type == GEOCACHE_SERVICE_DEMO) continue; /* skip an unconfigured service, and the demo one */
+   for(i=0;i<MAPCACHE_SERVICES_COUNT;i++) {
+      mapcache_service *service = ctx->config->services[i];
+      if(!service || service->type == MAPCACHE_SERVICE_DEMO) continue; /* skip an unconfigured service, and the demo one */
       caps = apr_pstrcat(ctx->pool,caps,"<a href=\"",urlprefix,"demo/",service->name,"\">",
             service->name,"</a><br/>",NULL);
    }
@@ -420,9 +420,9 @@ void _create_demo_front(geocache_context *ctx, geocache_request_get_capabilities
    req->capabilities = caps;
 }
 
-void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *req,
+void _create_demo_wms(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
-   geocache_service_wms *service = (geocache_service_wms*)ctx->config->services[GEOCACHE_SERVICE_WMS];
+   mapcache_service_wms *service = (mapcache_service_wms*)ctx->config->services[MAPCACHE_SERVICE_WMS];
 #ifdef DEBUG
    if(!service) {
       ctx->set_error(ctx,500,"##BUG## wms service disabled in demo");
@@ -434,7 +434,7 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
    char *ol_layer;
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
-      geocache_tileset *tileset;
+      mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       int i,j;
@@ -442,10 +442,10 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
-         if(grid->unit == GEOCACHE_UNIT_METERS) {
+         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
-         } else if(grid->unit == GEOCACHE_UNIT_FEET) {
+         } else if(grid->unit == MAPCACHE_UNIT_FEET) {
             unit="ft";
          }
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
@@ -480,7 +480,7 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
                ol_layer_name);
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
 
-         if(service->getmap_strategy == GEOCACHE_GETMAP_ASSEMBLE) {
+         if(service->getmap_strategy == MAPCACHE_GETMAP_ASSEMBLE) {
             ol_layer = apr_psprintf(ctx->pool,demo_layer_singletile,
                   ol_layer_name,
                   tileset->name,
@@ -513,14 +513,14 @@ void _create_demo_wms(geocache_context *ctx, geocache_request_get_capabilities *
    req->capabilities = caps;
 }
 
-void _create_demo_tms(geocache_context *ctx, geocache_request_get_capabilities *req,
+void _create_demo_tms(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
    char *caps = apr_psprintf(ctx->pool,demo_head, "");
    char *ol_layer;
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
-      geocache_tileset *tileset;
+      mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       int i,j;
@@ -531,10 +531,10 @@ void _create_demo_tms(geocache_context *ctx, geocache_request_get_capabilities *
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
-         if(grid->unit == GEOCACHE_UNIT_METERS) {
+         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
-         } else if(grid->unit == GEOCACHE_UNIT_FEET) {
+         } else if(grid->unit == MAPCACHE_UNIT_FEET) {
             unit="ft";
          }
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
@@ -580,14 +580,14 @@ void _create_demo_tms(geocache_context *ctx, geocache_request_get_capabilities *
    req->capabilities = caps;
 }
 
-void _create_demo_wmts(geocache_context *ctx, geocache_request_get_capabilities *req,
+void _create_demo_wmts(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
    char *caps = apr_psprintf(ctx->pool,demo_head, "");
    char *ol_layer;
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
-      geocache_tileset *tileset;
+      mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       int i,j;
@@ -598,10 +598,10 @@ void _create_demo_wmts(geocache_context *ctx, geocache_request_get_capabilities 
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
-         if(grid->unit == GEOCACHE_UNIT_METERS) {
+         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
-         } else if(grid->unit == GEOCACHE_UNIT_FEET) {
+         } else if(grid->unit == MAPCACHE_UNIT_FEET) {
             unit="ft";
          }
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
@@ -645,14 +645,14 @@ void _create_demo_wmts(geocache_context *ctx, geocache_request_get_capabilities 
    req->capabilities = caps;
 }
 
-void _create_demo_ve(geocache_context *ctx, geocache_request_get_capabilities *req,
+void _create_demo_ve(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
    char *caps = apr_psprintf(ctx->pool,demo_head, demo_ve_extra);
    char *ol_layer;
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
-      geocache_tileset *tileset;
+      mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       int i,j;
@@ -660,10 +660,10 @@ void _create_demo_ve(geocache_context *ctx, geocache_request_get_capabilities *r
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
-         if(grid->unit == GEOCACHE_UNIT_METERS) {
+         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
-         } else if(grid->unit == GEOCACHE_UNIT_FEET) {
+         } else if(grid->unit == MAPCACHE_UNIT_FEET) {
             unit="ft";
          }
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
@@ -706,19 +706,19 @@ void _create_demo_ve(geocache_context *ctx, geocache_request_get_capabilities *r
    req->capabilities = caps;
 }
 
-void _create_demo_kml(geocache_context *ctx, geocache_request_get_capabilities *req,
+void _create_demo_kml(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
    char *caps = apr_pstrdup(ctx->pool,
-         "<html><head><title>geocache kml links</title></head><body>");
+         "<html><head><title>mapcache kml links</title></head><body>");
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
-      geocache_tileset *tileset;
+      mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       int j;
       for(j=0;j<tileset->grid_links->nelts;j++) {
-         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
+         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
          if(!strstr(grid->srs, ":4326")) {
             continue; //skip layers not in wgs84
          }
@@ -735,14 +735,14 @@ void _create_demo_kml(geocache_context *ctx, geocache_request_get_capabilities *
 }
 
 
-void _create_demo_gmaps(geocache_context *ctx, geocache_request_get_capabilities *req,
+void _create_demo_gmaps(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
    char *caps = apr_pstrdup(ctx->pool,demo_head_gmaps);
    char *ol_layer;
    apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
-      geocache_tileset *tileset;
+      mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       int i,j;
@@ -750,10 +750,10 @@ void _create_demo_gmaps(geocache_context *ctx, geocache_request_get_capabilities
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         geocache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,geocache_grid_link*)->grid;
-         if(grid->unit == GEOCACHE_UNIT_METERS) {
+         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
-         } else if(grid->unit == GEOCACHE_UNIT_FEET) {
+         } else if(grid->unit == MAPCACHE_UNIT_FEET) {
             unit="ft";
          }
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
@@ -786,9 +786,9 @@ void _create_demo_gmaps(geocache_context *ctx, geocache_request_get_capabilities
    req->capabilities = caps;
 }
 
-void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capabilities *req,
-      char *url, char *path_info, geocache_cfg *cfg) {
-   geocache_request_get_capabilities_demo *request = (geocache_request_get_capabilities_demo*)req;
+void _create_capabilities_demo(mapcache_context *ctx, mapcache_request_get_capabilities *req,
+      char *url, char *path_info, mapcache_cfg *cfg) {
+   mapcache_request_get_capabilities_demo *request = (mapcache_request_get_capabilities_demo*)req;
    const char *onlineresource = apr_table_get(cfg->metadata,"url");
    if(!onlineresource) {
       onlineresource = url;
@@ -798,19 +798,19 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
       return _create_demo_front(ctx,req,onlineresource);
    } else {
       switch(request->service->type) {
-         case GEOCACHE_SERVICE_WMS:
+         case MAPCACHE_SERVICE_WMS:
             return _create_demo_wms(ctx,req,onlineresource);
-         case GEOCACHE_SERVICE_TMS:
+         case MAPCACHE_SERVICE_TMS:
             return _create_demo_tms(ctx,req,onlineresource);
-         case GEOCACHE_SERVICE_WMTS:
+         case MAPCACHE_SERVICE_WMTS:
             return _create_demo_wmts(ctx,req,onlineresource);
-         case GEOCACHE_SERVICE_VE:
+         case MAPCACHE_SERVICE_VE:
             return _create_demo_ve(ctx,req,onlineresource);
-         case GEOCACHE_SERVICE_GMAPS:
+         case MAPCACHE_SERVICE_GMAPS:
             return _create_demo_gmaps(ctx,req,onlineresource);
-         case GEOCACHE_SERVICE_KML:
+         case MAPCACHE_SERVICE_KML:
             return _create_demo_kml(ctx,req,onlineresource);
-         case GEOCACHE_SERVICE_DEMO:
+         case MAPCACHE_SERVICE_DEMO:
             ctx->set_error(ctx,400,"selected service does not provide a demo page");
             return;
       }
@@ -820,18 +820,18 @@ void _create_capabilities_demo(geocache_context *ctx, geocache_request_get_capab
    
 }
 
-geocache_service* geocache_service_demo_create(geocache_context *ctx) {
-   geocache_service_demo* service = (geocache_service_demo*)apr_pcalloc(ctx->pool, sizeof(geocache_service_demo));
+mapcache_service* mapcache_service_demo_create(mapcache_context *ctx) {
+   mapcache_service_demo* service = (mapcache_service_demo*)apr_pcalloc(ctx->pool, sizeof(mapcache_service_demo));
    if(!service) {
       ctx->set_error(ctx, 500, "failed to allocate demo service");
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"demo");
    service->service.name = apr_pstrdup(ctx->pool,"demo");
-   service->service.type = GEOCACHE_SERVICE_DEMO;
-   service->service.parse_request = _geocache_service_demo_parse_request;
+   service->service.type = MAPCACHE_SERVICE_DEMO;
+   service->service.parse_request = _mapcache_service_demo_parse_request;
    service->service.create_capabilities_response = _create_capabilities_demo;
-   return (geocache_service*)service;
+   return (mapcache_service*)service;
 }
 
 /** @} *//* vim: ai ts=3 sts=3 et sw=3

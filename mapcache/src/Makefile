@@ -2,10 +2,10 @@ include ../Makefile.inc
 
 all: $(TARGETS)
 
-install-module: mod_geocache.o
-	$(APXS) -i -a -n geocache mod_geocache.la
+install-module: mod_mapcache.o
+	$(APXS) -i -a -n mapcache mod_mapcache.la
 
-install-fcgi: geocache.fcgi fcgihelp
+install-fcgi: mapcache.fcgi fcgihelp
 
 fcgihelp:
 	echo "fcgi help"
@@ -13,16 +13,16 @@ fcgihelp:
 .c.o:
 	$(LIBTOOL) --tag CC --mode=compile $(CC) $(CFLAGS) $(INCLUDES) -c $<
 	
-mod_geocache.la: mod_geocache.o
+mod_mapcache.la: mod_mapcache.o
 
-mod_geocache.o:  mod_geocache.c $(OBJS)
-	$(APXS) "-Wc,$(CFLAGS) $(INCLUDES)" "-Wl,$(LIBS)" -c mod_geocache.c $(LOBJS)
+mod_mapcache.o:  mod_mapcache.c $(OBJS)
+	$(APXS) "-Wc,$(CFLAGS) $(INCLUDES)" "-Wl,$(LIBS)" -c mod_mapcache.c $(LOBJS)
 	
-geocache.fcgi: fastcgi_geocache.c $(OBJS)
-	$(LIBTOOL) --mode=link --tag CC $(CC) -o geocache.fcgi $(CFLAGS) $(INCLUDES) $(FCGI_INC) fastcgi_geocache.c $(LOBJS) $(LIBS) $(FCGI_LIB)
+mapcache: fastcgi_mapcache.c $(OBJS)
+	$(LIBTOOL) --mode=link --tag CC $(CC) -o mapcache $(CFLAGS) $(INCLUDES) $(FASTCGI_ENABLED) $(FASTCGI_INC) fastcgi_mapcache.c $(LOBJS) $(LIBS) $(FASTCGI_LIB)
 
-geocache_seed: geocache_seed.c $(OBJS)
-	$(LIBTOOL) --mode=link --tag CC $(CC) -o geocache_seed $(CFLAGS) $(INCLUDES) geocache_seed.c $(LOBJS) $(LIBS) $(SEEDER_EXTRALIBS)
+mapcache_seed: mapcache_seed.c $(OBJS)
+	$(LIBTOOL) --mode=link --tag CC $(CC) -o mapcache_seed $(CFLAGS) $(INCLUDES) mapcache_seed.c $(LOBJS) $(LIBS) $(SEEDER_EXTRALIBS)
 
 
 clean:
@@ -33,5 +33,7 @@ clean:
 	rm -rf .libs
 	rm -f *.la
 	rm -f *.sla
-	rm -f geocache.fcgi
+	rm -rf *.dSYM
+	rm -f mapcache.fcgi
+	rm -f mapcache_seed
 

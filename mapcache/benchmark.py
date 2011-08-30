@@ -28,10 +28,10 @@ title="tile merging"
 filebase=title
 
 urls['tilecache']="%s/%s?%s" % (base,'tilecache',params)
-urls['geocache best compression']="%s/%s?%s" % (base,'geocache-best',params)
-urls['geocache default compression']="%s/%s?%s" % (base,'geocache-default',params)
-urls['geocache fast compression']="%s/%s?%s" % (base,'geocache-fast',params)
-urls['geocache png quantization']="%s/%s?%s" % (base,'geocache-pngq',params)
+urls['mapcache best compression']="%s/%s?%s" % (base,'mapcache-best',params)
+urls['mapcache default compression']="%s/%s?%s" % (base,'mapcache-default',params)
+urls['mapcache fast compression']="%s/%s?%s" % (base,'mapcache-fast',params)
+urls['mapcache png quantization']="%s/%s?%s" % (base,'mapcache-pngq',params)
 #urls['mapproxy']="http://localhost:8080/service?%s" % (params)
 
 plotfile = open("%s.plot"%(filebase),"w")

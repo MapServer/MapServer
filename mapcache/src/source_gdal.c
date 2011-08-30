@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include "ezxml.h"
 #include <apr_tables.h>
 #include <apr_strings.h>
@@ -29,13 +29,13 @@
 #include "ogr_srs_api.h"
 
 /**
- * \private \memberof geocache_source_gdal
- * \sa geocache_source::render_metatile()
+ * \private \memberof mapcache_source_gdal
+ * \sa mapcache_source::render_metatile()
  */
-void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metatile *tile) {
-   geocache_source_gdal *gdal = (geocache_source_gdal*)tile->tile.tileset->source;
+void _mapcache_source_gdal_render_metatile(mapcache_context *ctx, mapcache_metatile *tile) {
+   mapcache_source_gdal *gdal = (mapcache_source_gdal*)tile->tile.tileset->source;
    char *srcSRS = "", *dstSRS;        
-   geocache_buffer *data = geocache_buffer_create(0,ctx->pool);
+   mapcache_buffer *data = mapcache_buffer_create(0,ctx->pool);
    GC_CHECK_ERROR(ctx);
    GDALDatasetH  hDataset;
 
@@ -48,7 +48,7 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
       OSRExportToWkt( hSRS, &dstSRS );
    else
    {
-      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"failed to parse gdal srs %s",tile->tile.grid->srs);
+      ctx->set_error(ctx,MAPCACHE_SOURCE_GDAL_ERROR,"failed to parse gdal srs %s",tile->tile.grid->srs);
       return;
    }
 
@@ -56,7 +56,7 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
 
    hDataset = GDALOpen( gdal->datastr, GA_ReadOnly );
    if( hDataset == NULL ) {
-      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"GDAL failed to open %s",gdal->datastr);
+      ctx->set_error(ctx,MAPCACHE_SOURCE_GDAL_ERROR,"GDAL failed to open %s",gdal->datastr);
       return;
    }
 
@@ -65,7 +65,7 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
    /* -------------------------------------------------------------------- */
    if ( GDALGetRasterCount(hDataset) == 0 )
    {
-      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"raster %s has no bands",gdal->datastr);
+      ctx->set_error(ctx,MAPCACHE_SOURCE_GDAL_ERROR,"raster %s has no bands",gdal->datastr);
       return;
    }
 
@@ -90,7 +90,7 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
             TRUE, 1000.0, 0 );
 
    if( hTransformArg == NULL ) {
-      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"gdal failed to create SRS transformation object");
+      ctx->set_error(ctx,MAPCACHE_SOURCE_GDAL_ERROR,"gdal failed to create SRS transformation object");
       return;
    }
 
@@ -104,7 +104,7 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
             adfDstGeoTransform, &nPixels, &nLines )
          != CE_None )
    {
-      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"gdal failed to create suggested warp output");
+      ctx->set_error(ctx,MAPCACHE_SOURCE_GDAL_ERROR,"gdal failed to create suggested warp output");
       return;
    }
 
@@ -165,7 +165,7 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
       GDALDestroyGenImgProjTransformer( hGenImgProjArg );
 
    if(GDALGetRasterCount(hDstDS) != 4) {
-      ctx->set_error(ctx,GEOCACHE_SOURCE_GDAL_ERROR,"gdal did not create a 4 band image");
+      ctx->set_error(ctx,MAPCACHE_SOURCE_GDAL_ERROR,"gdal did not create a 4 band image");
       return;
    }
 
@@ -194,7 +194,7 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
       }
    }
 
-   tile->imdata = geocache_image_create(ctx);
+   tile->imdata = mapcache_image_create(ctx);
    tile->imdata->w = tile->sx;
    tile->imdata->h = tile->sy;
    tile->imdata->stride = tile->sx * 4;
@@ -206,12 +206,12 @@ void _geocache_source_gdal_render_metatile(geocache_context *ctx, geocache_metat
 }
 
 /**
- * \private \memberof geocache_source_gdal
- * \sa geocache_source::configuration_parse()
+ * \private \memberof mapcache_source_gdal
+ * \sa mapcache_source::configuration_parse()
  */
-void _geocache_source_gdal_configuration_parse(geocache_context *ctx, ezxml_t node, geocache_source *source) {
+void _mapcache_source_gdal_configuration_parse(mapcache_context *ctx, ezxml_t node, mapcache_source *source) {
    ezxml_t cur_node;
-   geocache_source_gdal *src = (geocache_source_gdal*)source;
+   mapcache_source_gdal *src = (mapcache_source_gdal*)source;
 
    if ((cur_node = ezxml_child(node,"data")) != NULL) {
       src->datastr = apr_pstrdup(ctx->pool,cur_node->txt);
@@ -225,40 +225,40 @@ void _geocache_source_gdal_configuration_parse(geocache_context *ctx, ezxml_t no
 }
 
 /**
- * \private \memberof geocache_source_gdal
- * \sa geocache_source::configuration_check()
+ * \private \memberof mapcache_source_gdal
+ * \sa mapcache_source::configuration_check()
  */
-void _geocache_source_gdal_configuration_check(geocache_context *ctx, geocache_source *source) {
-   geocache_source_gdal *src = (geocache_source_gdal*)source;
+void _mapcache_source_gdal_configuration_check(mapcache_context *ctx, mapcache_source *source) {
+   mapcache_source_gdal *src = (mapcache_source_gdal*)source;
    /* check all required parameters are configured */
    if(!strlen(src->datastr)) {
-      ctx->set_error(ctx, GEOCACHE_SOURCE_GDAL_ERROR, "gdal source %s has no data",source->name);
+      ctx->set_error(ctx, MAPCACHE_SOURCE_GDAL_ERROR, "gdal source %s has no data",source->name);
       return;
    }
    src->poDataset = (GDALDatasetH*)GDALOpen(src->datastr,GA_ReadOnly);
    if( src->poDataset == NULL ) {
-      ctx->set_error(ctx, GEOCACHE_SOURCE_GDAL_ERROR, "gdalOpen failed on data %s", src->datastr);
+      ctx->set_error(ctx, MAPCACHE_SOURCE_GDAL_ERROR, "gdalOpen failed on data %s", src->datastr);
       return;
    }
 
 }
 #endif //USE_GDAL
 
-geocache_source* geocache_source_gdal_create(geocache_context *ctx) {
+mapcache_source* mapcache_source_gdal_create(mapcache_context *ctx) {
 #ifdef USE_GDAL
    GDALAllRegister();
-   geocache_source_gdal *source = apr_pcalloc(ctx->pool, sizeof(geocache_source_gdal));
+   mapcache_source_gdal *source = apr_pcalloc(ctx->pool, sizeof(mapcache_source_gdal));
    if(!source) {
-      ctx->set_error(ctx, GEOCACHE_ALLOC_ERROR, "failed to allocate gdal source");
+      ctx->set_error(ctx, MAPCACHE_ALLOC_ERROR, "failed to allocate gdal source");
       return NULL;
    }
-   geocache_source_init(ctx, &(source->source));
-   source->source.type = GEOCACHE_SOURCE_GDAL;
-   source->source.render_metatile = _geocache_source_gdal_render_metatile;
-   source->source.configuration_check = _geocache_source_gdal_configuration_check;
-   source->source.configuration_parse = _geocache_source_gdal_configuration_parse;
+   mapcache_source_init(ctx, &(source->source));
+   source->source.type = MAPCACHE_SOURCE_GDAL;
+   source->source.render_metatile = _mapcache_source_gdal_render_metatile;
+   source->source.configuration_check = _mapcache_source_gdal_configuration_check;
+   source->source.configuration_parse = _mapcache_source_gdal_configuration_parse;
    source->gdal_params = apr_table_make(ctx->pool,4);
-   return (geocache_source*)source;
+   return (mapcache_source*)source;
 #else
    ctx->set_error(ctx, 400, "failed to create gdal source, GDAL support is not compiled in this version");
    return NULL;

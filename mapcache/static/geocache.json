@@ -68,7 +68,7 @@
         "http": {
           "url":"http://vmap0.tiles.osgeo.org/wms/vmap0",
           "headers": {
-            "User-Agent":"mod-geocache/trunk",
+            "User-Agent":"mod-mapcache/trunk",
             "Referer":"http://foosite"
           }
         },
@@ -157,7 +157,7 @@
           }
         }
       ]
-      //,"watermark":"/home/tbonfort/dev/mod-geocache/static/watermark.png"
+      //,"watermark":"/home/tbonfort/dev/mod-mapcache/static/watermark.png"
     },
     {
       "name": "osm",
@@ -215,7 +215,7 @@
             "name":"foo rule",
             "append_pathinfo":true,
             "http": {
-              "url":"http://localhost/forwarded-by-mod-geocache/"
+              "url":"http://localhost/forwarded-by-mod-mapcache/"
             },
             "params": [
               {

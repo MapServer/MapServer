@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include "ezxml.h"
 #include <apr_tables.h>
 #include <apr_strings.h>
 
 /**
- * \private \memberof geocache_source_wms
- * \sa geocache_source::render_map()
+ * \private \memberof mapcache_source_wms
+ * \sa mapcache_source::render_map()
  */
-void _geocache_source_wms_render_map(geocache_context *ctx, geocache_map *map) {
-    geocache_source_wms *wms = (geocache_source_wms*)map->tileset->source;
+void _mapcache_source_wms_render_map(mapcache_context *ctx, mapcache_map *map) {
+    mapcache_source_wms *wms = (mapcache_source_wms*)map->tileset->source;
     apr_table_t *params = apr_table_clone(ctx->pool,wms->wms_default_params);
     apr_table_setn(params,"BBOX",apr_psprintf(ctx->pool,"%f,%f,%f,%f",
              map->extent[0],map->extent[1],map->extent[2],map->extent[3]));
@@ -43,20 +43,20 @@ void _geocache_source_wms_render_map(geocache_context *ctx, geocache_map *map) {
        }
  
     }      
-    map->data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL,NULL);
+    map->data = mapcache_buffer_create(30000,ctx->pool);
+    mapcache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL,NULL);
     GC_CHECK_ERROR(ctx);
  
-    if(!geocache_imageio_is_valid_format(ctx,map->data)) {
+    if(!mapcache_imageio_is_valid_format(ctx,map->data)) {
        char *returned_data = apr_pstrndup(ctx->pool,(char*)map->data->buf,map->data->size);
        ctx->set_error(ctx, 502, "wms request for tileset %s returned an unsupported format:\n%s",
              map->tileset->name, returned_data);
     }
 }
 
-void _geocache_source_wms_query(geocache_context *ctx, geocache_feature_info *fi) {
-    geocache_map *map = (geocache_map*)fi;
-    geocache_source_wms *wms = (geocache_source_wms*)map->tileset->source;
+void _mapcache_source_wms_query(mapcache_context *ctx, mapcache_feature_info *fi) {
+    mapcache_map *map = (mapcache_map*)fi;
+    mapcache_source_wms *wms = (mapcache_source_wms*)map->tileset->source;
     
     apr_table_t *params = apr_table_clone(ctx->pool,wms->wms_default_params);
     apr_table_overlap(params,wms->getmap_params,0);
@@ -81,26 +81,26 @@ void _geocache_source_wms_query(geocache_context *ctx, geocache_feature_info *fi
  
     }      
 
-    map->data = geocache_buffer_create(30000,ctx->pool);
-    geocache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL,NULL);
+    map->data = mapcache_buffer_create(30000,ctx->pool);
+    mapcache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL,NULL);
     GC_CHECK_ERROR(ctx);
    
 }
 
 /**
- * \private \memberof geocache_source_wms
- * \sa geocache_source::configuration_parse()
+ * \private \memberof mapcache_source_wms
+ * \sa mapcache_source::configuration_parse()
  */
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-void _geocache_source_wms_configuration_parse_json(geocache_context *ctx, cJSON *props, geocache_source *source) {
+void _mapcache_source_wms_configuration_parse_json(mapcache_context *ctx, cJSON *props, mapcache_source *source) {
    cJSON *tmp;
-   geocache_source_wms *src = (geocache_source_wms*)source;
+   mapcache_source_wms *src = (mapcache_source_wms*)source;
    tmp = cJSON_GetObjectItem(props,"http");
    if(!tmp) {
       ctx->set_error(ctx,400,"wms source %s has no http object",source->name);
       return;
    }
-   src->http = geocache_http_configuration_parse_json(ctx,tmp);
+   src->http = mapcache_http_configuration_parse_json(ctx,tmp);
    GC_CHECK_ERROR(ctx);
    
    tmp = cJSON_GetObjectItem(props,"getmap");
@@ -134,12 +134,12 @@ void _geocache_source_wms_configuration_parse_json(geocache_context *ctx, cJSON 
 }
 #endif
 /**
- * \private \memberof geocache_source_wms
- * \sa geocache_source::configuration_parse()
+ * \private \memberof mapcache_source_wms
+ * \sa mapcache_source::configuration_parse()
  */
-void _geocache_source_wms_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_source *source) {
+void _mapcache_source_wms_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_source *source) {
    ezxml_t cur_node;
-   geocache_source_wms *src = (geocache_source_wms*)source;
+   mapcache_source_wms *src = (mapcache_source_wms*)source;
 
 
    if ((cur_node = ezxml_child(node,"getmap")) != NULL){
@@ -180,16 +180,16 @@ void _geocache_source_wms_configuration_parse_xml(geocache_context *ctx, ezxml_t
       }
    }
    if ((cur_node = ezxml_child(node,"http")) != NULL) {
-      src->http = geocache_http_configuration_parse_xml(ctx,cur_node);
+      src->http = mapcache_http_configuration_parse_xml(ctx,cur_node);
    }
 }
 
 /**
- * \private \memberof geocache_source_wms
- * \sa geocache_source::configuration_check()
+ * \private \memberof mapcache_source_wms
+ * \sa mapcache_source::configuration_check()
  */
-void _geocache_source_wms_configuration_check(geocache_context *ctx, geocache_source *source) {
-   geocache_source_wms *src = (geocache_source_wms*)source;
+void _mapcache_source_wms_configuration_check(mapcache_context *ctx, mapcache_source *source) {
+   mapcache_source_wms *src = (mapcache_source_wms*)source;
    /* check all required parameters are configured */
    if(!src->http) {
       ctx->set_error(ctx, 400, "wms source %s has no <http> request configured",source->name);
@@ -204,21 +204,21 @@ void _geocache_source_wms_configuration_check(geocache_context *ctx, geocache_so
    }
 }
 
-geocache_source* geocache_source_wms_create(geocache_context *ctx) {
-   geocache_source_wms *source = apr_pcalloc(ctx->pool, sizeof(geocache_source_wms));
+mapcache_source* mapcache_source_wms_create(mapcache_context *ctx) {
+   mapcache_source_wms *source = apr_pcalloc(ctx->pool, sizeof(mapcache_source_wms));
    if(!source) {
       ctx->set_error(ctx, 500, "failed to allocate wms source");
       return NULL;
    }
-   geocache_source_init(ctx, &(source->source));
-   source->source.type = GEOCACHE_SOURCE_WMS;
-   source->source.render_map = _geocache_source_wms_render_map;
-   source->source.configuration_check = _geocache_source_wms_configuration_check;
-   source->source.configuration_parse_xml = _geocache_source_wms_configuration_parse_xml;
+   mapcache_source_init(ctx, &(source->source));
+   source->source.type = MAPCACHE_SOURCE_WMS;
+   source->source.render_map = _mapcache_source_wms_render_map;
+   source->source.configuration_check = _mapcache_source_wms_configuration_check;
+   source->source.configuration_parse_xml = _mapcache_source_wms_configuration_parse_xml;
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   source->source.configuration_parse_json = _geocache_source_wms_configuration_parse_json;
+   source->source.configuration_parse_json = _mapcache_source_wms_configuration_parse_json;
 #endif
-   source->source.query_info = _geocache_source_wms_query;
+   source->source.query_info = _mapcache_source_wms_query;
    source->wms_default_params = apr_table_make(ctx->pool,4);;
    source->getmap_params = apr_table_make(ctx->pool,4);
    source->getfeatureinfo_params = apr_table_make(ctx->pool,4);
@@ -226,7 +226,7 @@ geocache_source* geocache_source_wms_create(geocache_context *ctx) {
    apr_table_add(source->wms_default_params,"REQUEST","GetMap");
    apr_table_add(source->wms_default_params,"SERVICE","WMS");
    apr_table_add(source->wms_default_params,"STYLES","");
-   return (geocache_source*)source;
+   return (mapcache_source*)source;
 }
 
 

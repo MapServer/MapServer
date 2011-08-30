@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_file_info.h>
 #include <apr_strings.h>
 #include <apr_file_io.h>
@@ -25,10 +25,10 @@
 #include <unistd.h>
 #endif
 
-static void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_tile *tile, unsigned char *color, char **path) {
+static void _mapcache_cache_disk_blank_tile_key(mapcache_context *ctx, mapcache_tile *tile, unsigned char *color, char **path) {
    /* not implemented for template caches, as symlink_blank will never be set */
    *path = apr_psprintf(ctx->pool,"%s/%s/%s/blanks/%02X%02X%02X%02X.%s",
-         ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
+         ((mapcache_cache_disk*)tile->tileset->cache)->base_directory,
          tile->tileset->name,
          tile->grid_link->grid->name,
          color[0],
@@ -46,10 +46,10 @@ static void _geocache_cache_disk_blank_tile_key(geocache_context *ctx, geocache_
  * \param tile the tile to get the key from
  * \param path pointer to a char* that will contain the filename
  * \param r 
- * \private \memberof geocache_cache_disk
+ * \private \memberof mapcache_cache_disk
  */
-static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *tile, char **path) {
-   geocache_cache_disk *dcache = (geocache_cache_disk*)tile->tileset->cache;
+static void _mapcache_cache_disk_tile_key(mapcache_context *ctx, mapcache_tile *tile, char **path) {
+   mapcache_cache_disk *dcache = (mapcache_cache_disk*)tile->tileset->cache;
    if(dcache->base_directory) {
       char *start;
       start = apr_pstrcat(ctx->pool,
@@ -86,29 +86,29 @@ static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *
             tile->tileset->format?tile->tileset->format->extension:"png");
    } else {
       *path = dcache->filename_template;
-      *path = geocache_util_str_replace(ctx->pool,*path, "{tileset}", tile->tileset->name);
-      *path = geocache_util_str_replace(ctx->pool,*path, "{grid}", tile->grid_link->grid->name);
-      *path = geocache_util_str_replace(ctx->pool,*path, "{ext}",
+      *path = mapcache_util_str_replace(ctx->pool,*path, "{tileset}", tile->tileset->name);
+      *path = mapcache_util_str_replace(ctx->pool,*path, "{grid}", tile->grid_link->grid->name);
+      *path = mapcache_util_str_replace(ctx->pool,*path, "{ext}",
             tile->tileset->format?tile->tileset->format->extension:"png");
       if(strstr(*path,"{x}"))
-         *path = geocache_util_str_replace(ctx->pool,*path, "{x}",
+         *path = mapcache_util_str_replace(ctx->pool,*path, "{x}",
                apr_psprintf(ctx->pool,"%d",tile->x));
       else
-         *path = geocache_util_str_replace(ctx->pool,*path, "{inv_x}",
+         *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_x}",
                apr_psprintf(ctx->pool,"%d",
                   tile->grid_link->grid->levels[tile->z]->maxx - tile->x - 1));
       if(strstr(*path,"{y}"))
-         *path = geocache_util_str_replace(ctx->pool,*path, "{y}",
+         *path = mapcache_util_str_replace(ctx->pool,*path, "{y}",
                apr_psprintf(ctx->pool,"%d",tile->y));
       else
-         *path = geocache_util_str_replace(ctx->pool,*path, "{inv_y}",
+         *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_y}",
                apr_psprintf(ctx->pool,"%d",
                   tile->grid_link->grid->levels[tile->z]->maxy - tile->y - 1));
       if(strstr(*path,"{z}"))
-         *path = geocache_util_str_replace(ctx->pool,*path, "{z}",
+         *path = mapcache_util_str_replace(ctx->pool,*path, "{z}",
                apr_psprintf(ctx->pool,"%d",tile->z));
       else
-         *path = geocache_util_str_replace(ctx->pool,*path, "{inv_z}",
+         *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_z}",
                apr_psprintf(ctx->pool,"%d",
                   tile->grid_link->grid->nlevels - tile->z - 1));
       if(tile->dimensions) {
@@ -128,7 +128,7 @@ static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *
             }
             dimstring = apr_pstrcat(ctx->pool,dimstring,"#",entry->key,"#",dimval,NULL);
          }
-         *path = geocache_util_str_replace(ctx->pool,*path, "{dim}", dimstring);
+         *path = mapcache_util_str_replace(ctx->pool,*path, "{dim}", dimstring);
       }
    }
    if(!*path) {
@@ -136,27 +136,27 @@ static void _geocache_cache_disk_tile_key(geocache_context *ctx, geocache_tile *
    }
 }
 
-static int _geocache_cache_disk_has_tile(geocache_context *ctx, geocache_tile *tile) {
+static int _mapcache_cache_disk_has_tile(mapcache_context *ctx, mapcache_tile *tile) {
    char *filename;
    apr_file_t *f;
-   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   _mapcache_cache_disk_tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
-      return GEOCACHE_FALSE;
+      return MAPCACHE_FALSE;
    }
    if(apr_file_open(&f, filename, APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool) == APR_SUCCESS) {
       apr_file_close(f);
-      return GEOCACHE_TRUE;
+      return MAPCACHE_TRUE;
    }
    else
-      return GEOCACHE_FALSE;
+      return MAPCACHE_FALSE;
 }
 
-static void _geocache_cache_disk_delete(geocache_context *ctx, geocache_tile *tile) {
+static void _mapcache_cache_disk_delete(mapcache_context *ctx, mapcache_tile *tile) {
    apr_status_t ret;
    char errmsg[120];
    char *filename;
    apr_file_t *f;
-   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   _mapcache_cache_disk_tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
 
    /* delete the tile file if it already exists */
@@ -181,26 +181,26 @@ static void _geocache_cache_disk_delete(geocache_context *ctx, geocache_tile *ti
 /**
  * \brief get file content of given tile
  * 
- * fills the geocache_tile::data of the given tile with content stored in the file
- * \private \memberof geocache_cache_disk
- * \sa geocache_cache::tile_get()
+ * fills the mapcache_tile::data of the given tile with content stored in the file
+ * \private \memberof mapcache_cache_disk
+ * \sa mapcache_cache::tile_get()
  */
-static int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) {
+static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) {
    char *filename;
    apr_file_t *f;
    apr_finfo_t finfo;
    apr_status_t rv;
    apr_size_t size;
-   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   _mapcache_cache_disk_tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
-      return GEOCACHE_FAILURE;
+      return MAPCACHE_FAILURE;
    }
    if((rv=apr_file_open(&f, filename, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
          APR_OS_DEFAULT, ctx->pool)) == APR_SUCCESS) {
       rv = apr_file_info_get(&finfo, APR_FINFO_SIZE|APR_FINFO_MTIME, f);
       if(!finfo.size) {
          ctx->set_error(ctx, 500, "tile %s has no data",filename);
-         return GEOCACHE_FAILURE;
+         return MAPCACHE_FAILURE;
       }
 
       size = finfo.size;
@@ -213,24 +213,24 @@ static int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) 
        * i.e. normally only once.
        */
       tile->mtime = finfo.mtime;
-      tile->data = geocache_buffer_create(size,ctx->pool);
+      tile->data = mapcache_buffer_create(size,ctx->pool);
       //manually add the data to our buffer
       apr_file_read(f,(void*)tile->data->buf,&size);
       tile->data->size = size;
       apr_file_close(f);
       if(size != finfo.size) {
          ctx->set_error(ctx, 500,  "failed to copy image data, got %d of %d bytes",(int)size, (int)finfo.size);
-         return GEOCACHE_FAILURE;
+         return MAPCACHE_FAILURE;
       }
-      return GEOCACHE_SUCCESS;
+      return MAPCACHE_SUCCESS;
    } else {
       if(rv == ENOENT) {
          /* the file doesn't exist on the disk */
-         return GEOCACHE_CACHE_MISS;
+         return MAPCACHE_CACHE_MISS;
       } else {
             char *error = strerror(rv);
             ctx->set_error(ctx, 500,  "failed to open file %s: %s",filename, error);
-            return GEOCACHE_FAILURE;
+            return MAPCACHE_FAILURE;
       }
    }
 }
@@ -238,13 +238,13 @@ static int _geocache_cache_disk_get(geocache_context *ctx, geocache_tile *tile) 
 /**
  * \brief write tile data to disk
  * 
- * writes the content of geocache_tile::data to disk.
- * \returns GEOCACHE_FAILURE if there is no data to write, or if the tile isn't locked
- * \returns GEOCACHE_SUCCESS if the tile has been successfully written to disk
- * \private \memberof geocache_cache_disk
- * \sa geocache_cache::tile_set()
+ * writes the content of mapcache_tile::data to disk.
+ * \returns MAPCACHE_FAILURE if there is no data to write, or if the tile isn't locked
+ * \returns MAPCACHE_SUCCESS if the tile has been successfully written to disk
+ * \private \memberof mapcache_cache_disk
+ * \sa mapcache_cache::tile_set()
  */
-static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile) {
+static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile) {
    apr_size_t bytes;
    apr_file_t *f;
    apr_status_t ret;
@@ -257,7 +257,7 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
       return;
    }
 #endif
-   _geocache_cache_disk_tile_key(ctx, tile, &filename);
+   _mapcache_cache_disk_tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
 
    /* find the location of the last '/' in the string */
@@ -293,19 +293,19 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
 
   
 #ifdef HAVE_SYMLINK
-   if(((geocache_cache_disk*)tile->tileset->cache)->symlink_blank) {
-      geocache_image *image = geocache_imageio_decode(ctx, tile->data);
+   if(((mapcache_cache_disk*)tile->tileset->cache)->symlink_blank) {
+      mapcache_image *image = mapcache_imageio_decode(ctx, tile->data);
       GC_CHECK_ERROR(ctx);
-      if(geocache_image_blank_color(image) != GEOCACHE_FALSE) {
+      if(mapcache_image_blank_color(image) != MAPCACHE_FALSE) {
          char *blankname;
-         _geocache_cache_disk_blank_tile_key(ctx,tile,image->data,&blankname);
+         _mapcache_cache_disk_blank_tile_key(ctx,tile,image->data,&blankname);
          GC_CHECK_ERROR(ctx);
          ctx->global_lock_aquire(ctx);
          GC_CHECK_ERROR(ctx);
          if(apr_file_open(&f, blankname, APR_FOPEN_READ, APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
             /* create the blank file */
             char *blankdirname = apr_psprintf(ctx->pool, "%s/%s/%s/blanks",
-                        ((geocache_cache_disk*)tile->tileset->cache)->base_directory,
+                        ((mapcache_cache_disk*)tile->tileset->cache)->base_directory,
                         tile->tileset->name,
                         tile->grid_link->grid->name);
             if(APR_SUCCESS != (ret = apr_dir_make_recursive(
@@ -340,7 +340,7 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
             }
             apr_file_close(f);
 #ifdef DEBUG
-            ctx->log(ctx,GEOCACHE_DEBUG,"created blank tile %s",blankname);
+            ctx->log(ctx,MAPCACHE_DEBUG,"created blank tile %s",blankname);
 #endif
          } else {
             apr_file_close(f);
@@ -352,7 +352,7 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
             return; /* we could not create the file */
          }
 #ifdef DEBUG        
-         ctx->log(ctx, GEOCACHE_DEBUG, "linked blank tile %s to %s",filename,blankname);
+         ctx->log(ctx, MAPCACHE_DEBUG, "linked blank tile %s to %s",filename,blankname);
 #endif
          return;
       }
@@ -386,11 +386,11 @@ static void _geocache_cache_disk_set(geocache_context *ctx, geocache_tile *tile)
 }
 
 /**
- * \private \memberof geocache_cache_disk
+ * \private \memberof mapcache_cache_disk
  */
-static void _geocache_cache_disk_configuration_parse_xml(geocache_context *ctx, ezxml_t node, geocache_cache *cache) {
+static void _mapcache_cache_disk_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache) {
    ezxml_t cur_node;
-   geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
+   mapcache_cache_disk *dcache = (mapcache_cache_disk*)cache;
 
    if ((cur_node = ezxml_child(node,"base")) != NULL) {
       dcache->base_directory = apr_pstrdup(ctx->pool,cur_node->txt);
@@ -413,12 +413,12 @@ static void _geocache_cache_disk_configuration_parse_xml(geocache_context *ctx, 
 }
 
 /**
- * \private \memberof geocache_cache_disk
+ * \private \memberof mapcache_cache_disk
  */
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-static void _geocache_cache_disk_configuration_parse_json(geocache_context *ctx, cJSON *node, geocache_cache *cache) {
+static void _mapcache_cache_disk_configuration_parse_json(mapcache_context *ctx, cJSON *node, mapcache_cache *cache) {
    cJSON *tmp;
-   geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
+   mapcache_cache_disk *dcache = (mapcache_cache_disk*)cache;
 
    if((tmp = cJSON_GetObjectItem(node,"base_dir")) != NULL) {
       if(tmp->valuestring) {
@@ -449,11 +449,11 @@ static void _geocache_cache_disk_configuration_parse_json(geocache_context *ctx,
 #endif
    
 /**
- * \private \memberof geocache_cache_disk
+ * \private \memberof mapcache_cache_disk
  */
-static void _geocache_cache_disk_configuration_post_config(geocache_context *ctx, geocache_cache *cache,
-      geocache_cfg *cfg) {
-   geocache_cache_disk *dcache = (geocache_cache_disk*)cache;
+static void _mapcache_cache_disk_configuration_post_config(mapcache_context *ctx, mapcache_cache *cache,
+      mapcache_cfg *cfg) {
+   mapcache_cache_disk *dcache = (mapcache_cache_disk*)cache;
    /* check all required parameters are configured */
    if((!dcache->base_directory || !strlen(dcache->base_directory)) &&
          (!dcache->filename_template || !strlen(dcache->filename_template))) {
@@ -463,27 +463,27 @@ static void _geocache_cache_disk_configuration_post_config(geocache_context *ctx
 }
 
 /**
- * \brief creates and initializes a geocache_disk_cache
+ * \brief creates and initializes a mapcache_disk_cache
  */
-geocache_cache* geocache_cache_disk_create(geocache_context *ctx) {
-   geocache_cache_disk *cache = apr_pcalloc(ctx->pool,sizeof(geocache_cache_disk));
+mapcache_cache* mapcache_cache_disk_create(mapcache_context *ctx) {
+   mapcache_cache_disk *cache = apr_pcalloc(ctx->pool,sizeof(mapcache_cache_disk));
    if(!cache) {
       ctx->set_error(ctx, 500, "failed to allocate disk cache");
       return NULL;
    }
    cache->symlink_blank = 0;
    cache->cache.metadata = apr_table_make(ctx->pool,3);
-   cache->cache.type = GEOCACHE_CACHE_DISK;
-   cache->cache.tile_delete = _geocache_cache_disk_delete;
-   cache->cache.tile_get = _geocache_cache_disk_get;
-   cache->cache.tile_exists = _geocache_cache_disk_has_tile;
-   cache->cache.tile_set = _geocache_cache_disk_set;
-   cache->cache.configuration_post_config = _geocache_cache_disk_configuration_post_config;
-   cache->cache.configuration_parse_xml = _geocache_cache_disk_configuration_parse_xml;
+   cache->cache.type = MAPCACHE_CACHE_DISK;
+   cache->cache.tile_delete = _mapcache_cache_disk_delete;
+   cache->cache.tile_get = _mapcache_cache_disk_get;
+   cache->cache.tile_exists = _mapcache_cache_disk_has_tile;
+   cache->cache.tile_set = _mapcache_cache_disk_set;
+   cache->cache.configuration_post_config = _mapcache_cache_disk_configuration_post_config;
+   cache->cache.configuration_parse_xml = _mapcache_cache_disk_configuration_parse_xml;
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   cache->cache.configuration_parse_json = _geocache_cache_disk_configuration_parse_json;
+   cache->cache.configuration_parse_json = _mapcache_cache_disk_configuration_parse_json;
 #endif
-   return (geocache_cache*)cache;
+   return (mapcache_cache*)cache;
 }
 
 /* vim: ai ts=3 sts=3 et sw=3

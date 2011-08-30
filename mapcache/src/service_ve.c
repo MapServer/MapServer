@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_strings.h>
 #include <math.h>
 
@@ -23,20 +23,20 @@
 
 
 
-void _create_capabilities_ve(geocache_context *ctx, geocache_request_get_capabilities *req, char *url, char *path_info, geocache_cfg *cfg) {
+void _create_capabilities_ve(mapcache_context *ctx, mapcache_request_get_capabilities *req, char *url, char *path_info, mapcache_cfg *cfg) {
    ctx->set_error(ctx,501,"ve service does not support capapbilities");
 }
 
 /**
  * \brief parse a VE request
- * \private \memberof geocache_service_ve
- * \sa geocache_service::parse_request()
+ * \private \memberof mapcache_service_ve
+ * \sa mapcache_service::parse_request()
  */
-void _geocache_service_ve_parse_request(geocache_context *ctx, geocache_service *this, geocache_request **request,
-      const char *cpathinfo, apr_table_t *params, geocache_cfg *config) {
+void _mapcache_service_ve_parse_request(mapcache_context *ctx, mapcache_service *this, mapcache_request **request,
+      const char *cpathinfo, apr_table_t *params, mapcache_cfg *config) {
    const char *layer,*quadkey;
-   geocache_tileset *tileset = NULL;
-   geocache_grid_link *grid_link = NULL;
+   mapcache_tileset *tileset = NULL;
+   mapcache_grid_link *grid_link = NULL;
    layer = apr_table_get(params,"layer");
    if(layer) {
       /*tileset not found directly, test if it was given as "name@grid" notation*/
@@ -55,13 +55,13 @@ void _geocache_service_ve_parse_request(geocache_context *ctx, geocache_service 
          ctx->set_error(ctx,404, "received ve request with invalid layer %s", layer);
          return;
       }
-      tileset = geocache_configuration_get_tileset(config,tname);
+      tileset = mapcache_configuration_get_tileset(config,tname);
       if(!tileset) {
          ctx->set_error(ctx,404, "received ve request with invalid layer %s", tname);
          return;
       }
       for(i=0;i<tileset->grid_links->nelts;i++) {
-         geocache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,geocache_grid_link*);
+         mapcache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
          if(!strcmp(sgrid->grid->name,gname)) {
             grid_link = sgrid;
             break;
@@ -77,7 +77,7 @@ void _geocache_service_ve_parse_request(geocache_context *ctx, geocache_service 
    }
 
    quadkey = apr_table_get(params,"tile");
-   geocache_tile *tile = geocache_tileset_tile_create(ctx->pool,tileset,grid_link);
+   mapcache_tile *tile = mapcache_tileset_tile_create(ctx->pool,tileset,grid_link);
    if(quadkey) {
       int i;
       tile->z = strlen(quadkey);
@@ -112,30 +112,30 @@ void _geocache_service_ve_parse_request(geocache_context *ctx, geocache_service 
    }
 
 
-   geocache_request_get_tile *req = (geocache_request_get_tile*)apr_pcalloc(ctx->pool,sizeof(geocache_request_get_tile));
-   req->request.type = GEOCACHE_REQUEST_GET_TILE;
+   mapcache_request_get_tile *req = (mapcache_request_get_tile*)apr_pcalloc(ctx->pool,sizeof(mapcache_request_get_tile));
+   req->request.type = MAPCACHE_REQUEST_GET_TILE;
    req->ntiles = 1;
-   req->tiles = (geocache_tile**)apr_pcalloc(ctx->pool,sizeof(geocache_tile*));
+   req->tiles = (mapcache_tile**)apr_pcalloc(ctx->pool,sizeof(mapcache_tile*));
    req->tiles[0] = tile;
    req->tiles[0]->y = grid_link->grid->levels[tile->z]->maxy - tile->y - 1;
-   geocache_tileset_tile_validate(ctx,req->tiles[0]);
+   mapcache_tileset_tile_validate(ctx,req->tiles[0]);
    GC_CHECK_ERROR(ctx);
-   *request = (geocache_request*)req;
+   *request = (mapcache_request*)req;
    return;
 }
 
-geocache_service* geocache_service_ve_create(geocache_context *ctx) {
-   geocache_service_ve* service = (geocache_service_ve*)apr_pcalloc(ctx->pool, sizeof(geocache_service_ve));
+mapcache_service* mapcache_service_ve_create(mapcache_context *ctx) {
+   mapcache_service_ve* service = (mapcache_service_ve*)apr_pcalloc(ctx->pool, sizeof(mapcache_service_ve));
    if(!service) {
       ctx->set_error(ctx, 500, "failed to allocate ve service");
       return NULL;
    }
    service->service.url_prefix = apr_pstrdup(ctx->pool,"ve");
    service->service.name = apr_pstrdup(ctx->pool,"ve");
-   service->service.type = GEOCACHE_SERVICE_VE;
-   service->service.parse_request = _geocache_service_ve_parse_request;
+   service->service.type = MAPCACHE_SERVICE_VE;
+   service->service.parse_request = _mapcache_service_ve_parse_request;
    service->service.create_capabilities_response = _create_capabilities_ve;
-   return (geocache_service*)service;
+   return (mapcache_service*)service;
 }
 
 /** @} */

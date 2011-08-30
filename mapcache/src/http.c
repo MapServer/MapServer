@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <curl/curl.h>
 #include <apr_hash.h>
 #include <apr_strings.h>
@@ -24,16 +24,16 @@
 
 struct _header_struct {
    apr_table_t *headers;
-   geocache_context *ctx;
+   mapcache_context *ctx;
 };
 
-size_t _geocache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void *data) {
-   geocache_buffer *buffer = (geocache_buffer*)data;
+size_t _mapcache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void *data) {
+   mapcache_buffer *buffer = (mapcache_buffer*)data;
    size_t realsize = size * nmemb;
-   return geocache_buffer_append(buffer, realsize, ptr);
+   return mapcache_buffer_append(buffer, realsize, ptr);
 }
 
-size_t _geocache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  void  *userdata) {
+size_t _mapcache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  void  *userdata) {
    struct _header_struct *h = (struct _header_struct*)userdata;
    char *header = apr_pstrndup(h->ctx->pool,ptr,size*nmemb);
    char *endptr = strstr(header,"\r\n");
@@ -42,7 +42,7 @@ size_t _geocache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  vo
       if(!endptr) {
          /* skip invalid header */
 #ifdef DEBUG
-         h->ctx->log(h->ctx,GEOCACHE_DEBUG,"received header %s with no trailing \\r\\n",header);
+         h->ctx->log(h->ctx,MAPCACHE_DEBUG,"received header %s with no trailing \\r\\n",header);
 #endif
          return size*nmemb;
       }
@@ -57,7 +57,7 @@ size_t _geocache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  vo
    return size*nmemb;
 }
 
-void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocache_buffer *data, apr_table_t *headers, long *http_code) {
+void mapcache_http_do_request(mapcache_context *ctx, mapcache_http *req, mapcache_buffer *data, apr_table_t *headers, long *http_code) {
    CURL *curl_handle;
    curl_handle = curl_easy_init();
    int ret;
@@ -65,12 +65,12 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
    /* specify URL to get */
    curl_easy_setopt(curl_handle, CURLOPT_URL, req->url);
 #ifdef DEBUG
-   ctx->log(ctx, GEOCACHE_DEBUG, "curl requesting url %s",req->url);
+   ctx->log(ctx, MAPCACHE_DEBUG, "curl requesting url %s",req->url);
 #endif
    /* send all data to this function  */ 
-   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _geocache_curl_memory_callback);
+   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, _mapcache_curl_memory_callback);
 
-   /* we pass our geocache_buffer struct to the callback function */ 
+   /* we pass our mapcache_buffer struct to the callback function */ 
    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)data);
 
    if(headers != NULL) {
@@ -78,7 +78,7 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
       struct _header_struct h;
       h.headers = headers;
       h.ctx=ctx;
-      curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, _geocache_curl_header_callback);
+      curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, _mapcache_curl_header_callback);
       curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, (void*)(&h));
    }
 
@@ -98,7 +98,7 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
       }
    }
    if(!req->headers || !apr_table_get(req->headers,"User-Agent")) {
-      curl_headers = curl_slist_append(curl_headers, "User-Agent: "GEOCACHE_USERAGENT);
+      curl_headers = curl_slist_append(curl_headers, "User-Agent: "MAPCACHE_USERAGENT);
    }
    curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, curl_headers);
    /* get it! */ 
@@ -115,21 +115,21 @@ void geocache_http_do_request(geocache_context *ctx, geocache_http *req, geocach
    curl_easy_cleanup(curl_handle);
 }
 
-void geocache_http_do_request_with_params(geocache_context *ctx, geocache_http *req, apr_table_t *params,
-      geocache_buffer *data, apr_table_t *headers, long *http_code) {
-   geocache_http *request = geocache_http_clone(ctx,req);
-   request->url = geocache_http_build_url(ctx,req->url,params);
-   geocache_http_do_request(ctx,request,data,headers, http_code);
+void mapcache_http_do_request_with_params(mapcache_context *ctx, mapcache_http *req, apr_table_t *params,
+      mapcache_buffer *data, apr_table_t *headers, long *http_code) {
+   mapcache_http *request = mapcache_http_clone(ctx,req);
+   request->url = mapcache_http_build_url(ctx,req->url,params);
+   mapcache_http_do_request(ctx,request,data,headers, http_code);
 }
 
 /* calculate the length of the string formed by key=value&, and add it to cnt */
-static APR_DECLARE_NONSTD(int) _geocache_key_value_strlen_callback(void *cnt, const char *key, const char *value) {
+static APR_DECLARE_NONSTD(int) _mapcache_key_value_strlen_callback(void *cnt, const char *key, const char *value) {
    *((int*)cnt) += strlen(key) + 2 + ((value && *value) ? strlen(value) : 0);
    return 1;
 }
 
 
-static APR_DECLARE_NONSTD(int) _geocache_key_value_append_callback(void *cnt, const char *key, const char *value) {
+static APR_DECLARE_NONSTD(int) _mapcache_key_value_append_callback(void *cnt, const char *key, const char *value) {
 #define _mystr *((char**)cnt)
    _mystr = apr_cpystrn(_mystr,key,MAX_STRING_LEN);
    *((_mystr)++) = '=';
@@ -141,7 +141,7 @@ static APR_DECLARE_NONSTD(int) _geocache_key_value_append_callback(void *cnt, co
 #undef _mystr
 }
 
-static char _geocache_x2c(const char *what)
+static char _mapcache_x2c(const char *what)
 {
     register char digit;
     digit = ((what[0] >= 'A') ? ((what[0] & 0xdf) - 'A') + 10
@@ -158,7 +158,7 @@ static char _geocache_x2c(const char *what)
 #define IS_SLASH(s) (s == '/')
 #endif
 
-int _geocache_unescape_url(char *url) {
+int _mapcache_unescape_url(char *url) {
    register int badesc, badpath;
    char *x, *y;
 
@@ -168,7 +168,7 @@ int _geocache_unescape_url(char *url) {
     * seeing a '%' */
    y = strchr(url, '%');
    if (y == NULL) {
-      return GEOCACHE_SUCCESS;
+      return MAPCACHE_SUCCESS;
    }
    for (x = y; *y; ++x, ++y) {
       if (*y != '%')
@@ -179,7 +179,7 @@ int _geocache_unescape_url(char *url) {
             *x = '%';
          }
          else {
-            *x = _geocache_x2c(y + 1);
+            *x = _mapcache_x2c(y + 1);
             y += 2;
             if (IS_SLASH(*x) || *x == '\0')
                badpath = 1;
@@ -188,16 +188,16 @@ int _geocache_unescape_url(char *url) {
    }
    *x = '\0';
    if (badesc)
-      return GEOCACHE_FAILURE;
+      return MAPCACHE_FAILURE;
    else if (badpath)
-      return GEOCACHE_FAILURE;
+      return MAPCACHE_FAILURE;
    else
-      return GEOCACHE_SUCCESS;
+      return MAPCACHE_SUCCESS;
 }
 
 
 
-char* geocache_http_build_url(geocache_context *r, char *base, apr_table_t *params) {
+char* mapcache_http_build_url(mapcache_context *r, char *base, apr_table_t *params) {
    if(!apr_is_empty_table(params)) {
       int stringLength = 0, baseLength;
       char *builtUrl,*builtUrlPtr;
@@ -205,7 +205,7 @@ char* geocache_http_build_url(geocache_context *r, char *base, apr_table_t *para
       baseLength = strlen(base);
 
       /*calculate the length of the param string we are going to build */
-      apr_table_do(_geocache_key_value_strlen_callback, (void*)&stringLength, params, NULL);
+      apr_table_do(_mapcache_key_value_strlen_callback, (void*)&stringLength, params, NULL);
 
       if(strchr(base,'?')) {
          /* base already contains a '?' , shall we be adding a '&' to the end */ 
@@ -225,7 +225,7 @@ char* geocache_http_build_url(geocache_context *r, char *base, apr_table_t *para
       builtUrlPtr = apr_cpystrn(builtUrlPtr,base,MAX_STRING_LEN);
       if(charToAppend)
          *(builtUrlPtr++)=charToAppend;
-      apr_table_do(_geocache_key_value_append_callback, (void*)&builtUrlPtr, params, NULL);
+      apr_table_do(_mapcache_key_value_append_callback, (void*)&builtUrlPtr, params, NULL);
       *(builtUrlPtr-1) = '\0'; /*replace final '&' by a \0 */
       return builtUrl;
    } else {
@@ -234,7 +234,7 @@ char* geocache_http_build_url(geocache_context *r, char *base, apr_table_t *para
 }
 
 /* Parse form data from a string. The input string is preserved. */
-apr_table_t *geocache_http_parse_param_string(geocache_context *r, char *args_str) {
+apr_table_t *mapcache_http_parse_param_string(mapcache_context *r, char *args_str) {
    apr_table_t *params;
    char *args = apr_pstrdup(r->pool,args_str);
    char *key;
@@ -260,12 +260,12 @@ apr_table_t *geocache_http_parse_param_string(geocache_context *r, char *args_st
       value = strchr(key, '=');
       if (value) {
          *value++ = '\0'; /* replace '=' by \0, thus terminating the key string */
-         _geocache_unescape_url(key);
-         _geocache_unescape_url(value);
+         _mapcache_unescape_url(key);
+         _mapcache_unescape_url(value);
       }
       else {
          value = "";
-         _geocache_unescape_url(key);
+         _mapcache_unescape_url(key);
       }
       /* Store key/value pair in our form hash. */
       apr_table_addn(params, key, value);
@@ -273,10 +273,10 @@ apr_table_t *geocache_http_parse_param_string(geocache_context *r, char *args_st
    return params;
 }
 
-geocache_http* geocache_http_configuration_parse_xml(geocache_context *ctx, ezxml_t node) {
+mapcache_http* mapcache_http_configuration_parse_xml(mapcache_context *ctx, ezxml_t node) {
    ezxml_t http_node;
-   geocache_http *req = (geocache_http*)apr_pcalloc(ctx->pool,
-         sizeof(geocache_http));
+   mapcache_http *req = (mapcache_http*)apr_pcalloc(ctx->pool,
+         sizeof(mapcache_http));
    if ((http_node = ezxml_child(node,"url")) != NULL) {
       req->url = apr_pstrdup(ctx->pool,http_node->txt);
    }
@@ -309,9 +309,9 @@ geocache_http* geocache_http_configuration_parse_xml(geocache_context *ctx, ezxm
 }
 
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-geocache_http* geocache_http_configuration_parse_json(geocache_context *ctx, cJSON *node) {
+mapcache_http* mapcache_http_configuration_parse_json(mapcache_context *ctx, cJSON *node) {
    cJSON *tmp;
-   geocache_http *req = (geocache_http*)apr_pcalloc(ctx->pool,sizeof(geocache_http));
+   mapcache_http *req = (mapcache_http*)apr_pcalloc(ctx->pool,sizeof(mapcache_http));
    tmp = cJSON_GetObjectItem(node,"url");
    if (tmp && tmp->valuestring) {
       req->url = apr_pstrdup(ctx->pool,tmp->valuestring);
@@ -338,8 +338,8 @@ geocache_http* geocache_http_configuration_parse_json(geocache_context *ctx, cJS
 #endif
 
 
-geocache_http* geocache_http_clone(geocache_context *ctx, geocache_http *orig) {
-   geocache_http *ret = apr_pcalloc(ctx->pool, sizeof(geocache_http*));
+mapcache_http* mapcache_http_clone(mapcache_context *ctx, mapcache_http *orig) {
+   mapcache_http *ret = apr_pcalloc(ctx->pool, sizeof(mapcache_http*));
    ret->headers = apr_table_clone(ctx->pool,orig->headers);
    ret->url = apr_pstrdup(ctx->pool, orig->url);
    return ret;

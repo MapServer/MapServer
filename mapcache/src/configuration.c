@@ -14,22 +14,22 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <apr_file_info.h>
 #include <apr_strings.h>
 #include <apr_file_io.h>
 
-void geocache_configuration_parse(geocache_context *ctx, const char *filename, geocache_cfg *config, int cgi) {
+void mapcache_configuration_parse(mapcache_context *ctx, const char *filename, mapcache_cfg *config, int cgi) {
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
    int len = strlen(filename);
    const char *ext = &(filename[len-3]);
    if(strcasecmp(ext,"xml")) {
-      geocache_configuration_parse_json(ctx,filename,config);
+      mapcache_configuration_parse_json(ctx,filename,config);
    } else {
-      geocache_configuration_parse_xml(ctx,filename,config);
+      mapcache_configuration_parse_xml(ctx,filename,config);
    }
 #else
-   geocache_configuration_parse_xml(ctx,filename,config);
+   mapcache_configuration_parse_xml(ctx,filename,config);
 #endif
    GC_CHECK_ERROR(ctx);
 
@@ -49,8 +49,8 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
       apr_finfo_t finfo;
       while ((apr_dir_read(&finfo, APR_FINFO_DIRENT|APR_FINFO_TYPE|APR_FINFO_NAME, lockdir)) == APR_SUCCESS) {
          if(finfo.filetype == APR_REG) {
-            if(!strncmp(finfo.name, GEOCACHE_LOCKFILE_PREFIX, strlen(GEOCACHE_LOCKFILE_PREFIX))) {
-               ctx->log(ctx,GEOCACHE_WARNING,"found old lockfile %s/%s, deleting it",config->lockdir,
+            if(!strncmp(finfo.name, MAPCACHE_LOCKFILE_PREFIX, strlen(MAPCACHE_LOCKFILE_PREFIX))) {
+               ctx->log(ctx,MAPCACHE_WARNING,"found old lockfile %s/%s, deleting it",config->lockdir,
                      finfo.name);
                rv = apr_file_remove(apr_psprintf(ctx->pool,"%s/%s",config->lockdir, finfo.name),ctx->pool);
                if(rv != APR_SUCCESS) {
@@ -76,10 +76,10 @@ void geocache_configuration_parse(geocache_context *ctx, const char *filename, g
    }
 }
 
-void geocache_configuration_post_config(geocache_context *ctx, geocache_cfg *config) {
+void mapcache_configuration_post_config(mapcache_context *ctx, mapcache_cfg *config) {
    apr_hash_index_t *cachei = apr_hash_first(ctx->pool,config->caches);
    while(cachei) {
-      geocache_cache *cache;
+      mapcache_cache *cache;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(cachei,&key,&keylen,(void**)&cache);
       cache->configuration_post_config(ctx,cache,config);
@@ -89,8 +89,8 @@ void geocache_configuration_post_config(geocache_context *ctx, geocache_cfg *con
 } 
 
 
-geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
-   geocache_grid *grid;
+mapcache_cfg* mapcache_configuration_create(apr_pool_t *pool) {
+   mapcache_grid *grid;
    int i;
    double wgs84_resolutions[19]={
          1.40625000000000,
@@ -141,7 +141,7 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    double wgs84_extent[4]={-180,-90,180,90};
    double google_extent[4]={-20037508.3427892480,-20037508.3427892480,20037508.3427892480,20037508.3427892480};
 
-   geocache_cfg *cfg = (geocache_cfg*)apr_pcalloc(pool, sizeof(geocache_cfg));
+   mapcache_cfg *cfg = (mapcache_cfg*)apr_pcalloc(pool, sizeof(mapcache_cfg));
    cfg->caches = apr_hash_make(pool);
    cfg->sources = apr_hash_make(pool);
    cfg->tilesets = apr_hash_make(pool);
@@ -149,41 +149,41 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    cfg->image_formats = apr_hash_make(pool);
    cfg->metadata = apr_table_make(pool,3);
 
-   geocache_configuration_add_image_format(cfg,
-         geocache_imageio_create_png_format(pool,"PNG",GEOCACHE_COMPRESSION_FAST),
+   mapcache_configuration_add_image_format(cfg,
+         mapcache_imageio_create_png_format(pool,"PNG",MAPCACHE_COMPRESSION_FAST),
          "PNG");
-   geocache_configuration_add_image_format(cfg,
-         geocache_imageio_create_png_q_format(pool,"PNG8",GEOCACHE_COMPRESSION_FAST,256),
+   mapcache_configuration_add_image_format(cfg,
+         mapcache_imageio_create_png_q_format(pool,"PNG8",MAPCACHE_COMPRESSION_FAST,256),
          "PNG8");
-   geocache_configuration_add_image_format(cfg,
-         geocache_imageio_create_jpeg_format(pool,"JPEG",90),
+   mapcache_configuration_add_image_format(cfg,
+         mapcache_imageio_create_jpeg_format(pool,"JPEG",90),
          "JPEG");
-   cfg->default_image_format = geocache_configuration_get_image_format(cfg,"JPEG");
-   cfg->reporting = GEOCACHE_REPORT_MSG;
+   cfg->default_image_format = mapcache_configuration_get_image_format(cfg,"JPEG");
+   cfg->reporting = MAPCACHE_REPORT_MSG;
 
-   grid = geocache_grid_create(pool);
+   grid = mapcache_grid_create(pool);
    grid->name = apr_pstrdup(pool,"WGS84");
    apr_table_add(grid->metadata,"title","GoogleCRS84Quad");
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleCRS84Quad");
    apr_table_add(grid->metadata,"profile","global-geodetic");
    grid->srs = apr_pstrdup(pool,"EPSG:4326");
-   grid->unit = GEOCACHE_UNIT_DEGREES;
+   grid->unit = MAPCACHE_UNIT_DEGREES;
    grid->tile_sx = grid->tile_sy = 256;
    grid->nlevels = 19;
    grid->extent[0] = wgs84_extent[0];
    grid->extent[1] = wgs84_extent[1];
    grid->extent[2] = wgs84_extent[2];
    grid->extent[3] = wgs84_extent[3];
-   grid->levels = (geocache_grid_level**)apr_pcalloc(pool,
-         grid->nlevels*sizeof(geocache_grid_level*));
+   grid->levels = (mapcache_grid_level**)apr_pcalloc(pool,
+         grid->nlevels*sizeof(mapcache_grid_level*));
    for(i=0; i<grid->nlevels; i++) {
-      geocache_grid_level *level = (geocache_grid_level*)apr_pcalloc(pool,sizeof(geocache_grid_level));
+      mapcache_grid_level *level = (mapcache_grid_level*)apr_pcalloc(pool,sizeof(mapcache_grid_level));
       level->resolution = wgs84_resolutions[i];
       grid->levels[i] = level;
    }
-   geocache_configuration_add_grid(cfg,grid,"WGS84");
+   mapcache_configuration_add_grid(cfg,grid,"WGS84");
 
-   grid = geocache_grid_create(pool);
+   grid = mapcache_grid_create(pool);
    grid->name = apr_pstrdup(pool,"GoogleMapsCompatible");
    grid->srs = apr_pstrdup(pool,"EPSG:3857");
    APR_ARRAY_PUSH(grid->srs_aliases,char*) = apr_pstrdup(pool,"EPSG:900913");
@@ -192,21 +192,21 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
    grid->tile_sx = grid->tile_sy = 256;
    grid->nlevels = 19;
-   grid->unit = GEOCACHE_UNIT_METERS;
+   grid->unit = MAPCACHE_UNIT_METERS;
    grid->extent[0] = google_extent[0];
    grid->extent[1] = google_extent[1];
    grid->extent[2] = google_extent[2];
    grid->extent[3] = google_extent[3];
-   grid->levels = (geocache_grid_level**)apr_pcalloc(pool,
-         grid->nlevels*sizeof(geocache_grid_level*));
+   grid->levels = (mapcache_grid_level**)apr_pcalloc(pool,
+         grid->nlevels*sizeof(mapcache_grid_level*));
    for(i=0; i<grid->nlevels; i++) {
-      geocache_grid_level *level = (geocache_grid_level*)apr_pcalloc(pool,sizeof(geocache_grid_level));
+      mapcache_grid_level *level = (mapcache_grid_level*)apr_pcalloc(pool,sizeof(mapcache_grid_level));
       level->resolution = google_resolutions[i];
       grid->levels[i] = level;
    }
-   geocache_configuration_add_grid(cfg,grid,"GoogleMapsCompatible");
+   mapcache_configuration_add_grid(cfg,grid,"GoogleMapsCompatible");
    
-   grid = geocache_grid_create(pool);
+   grid = mapcache_grid_create(pool);
    grid->name = apr_pstrdup(pool,"g");
    grid->srs = apr_pstrdup(pool,"EPSG:900913");
    APR_ARRAY_PUSH(grid->srs_aliases,char*) = apr_pstrdup(pool,"EPSG:3857");
@@ -215,60 +215,60 @@ geocache_cfg* geocache_configuration_create(apr_pool_t *pool) {
    apr_table_add(grid->metadata,"wellKnownScaleSet","urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible");
    grid->tile_sx = grid->tile_sy = 256;
    grid->nlevels = 19;
-   grid->unit = GEOCACHE_UNIT_METERS;
+   grid->unit = MAPCACHE_UNIT_METERS;
    grid->extent[0] = google_extent[0];
    grid->extent[1] = google_extent[1];
    grid->extent[2] = google_extent[2];
    grid->extent[3] = google_extent[3];
-   grid->levels = (geocache_grid_level**)apr_pcalloc(pool,
-         grid->nlevels*sizeof(geocache_grid_level*));
+   grid->levels = (mapcache_grid_level**)apr_pcalloc(pool,
+         grid->nlevels*sizeof(mapcache_grid_level*));
    for(i=0; i<grid->nlevels; i++) {
-      geocache_grid_level *level = (geocache_grid_level*)apr_pcalloc(pool,sizeof(geocache_grid_level));
+      mapcache_grid_level *level = (mapcache_grid_level*)apr_pcalloc(pool,sizeof(mapcache_grid_level));
       level->resolution = google_resolutions[i];
       grid->levels[i] = level;
    }
-   geocache_configuration_add_grid(cfg,grid,"g");
+   mapcache_configuration_add_grid(cfg,grid,"g");
 
    return cfg;
 }
 
-geocache_source *geocache_configuration_get_source(geocache_cfg *config, const char *key) {
-   return (geocache_source*)apr_hash_get(config->sources, (void*)key, APR_HASH_KEY_STRING);
+mapcache_source *mapcache_configuration_get_source(mapcache_cfg *config, const char *key) {
+   return (mapcache_source*)apr_hash_get(config->sources, (void*)key, APR_HASH_KEY_STRING);
 }
 
-geocache_cache *geocache_configuration_get_cache(geocache_cfg *config, const char *key) {
-   return (geocache_cache*)apr_hash_get(config->caches, (void*)key, APR_HASH_KEY_STRING);
+mapcache_cache *mapcache_configuration_get_cache(mapcache_cfg *config, const char *key) {
+   return (mapcache_cache*)apr_hash_get(config->caches, (void*)key, APR_HASH_KEY_STRING);
 }
 
-geocache_grid *geocache_configuration_get_grid(geocache_cfg *config, const char *key) {
-   return (geocache_grid*)apr_hash_get(config->grids, (void*)key, APR_HASH_KEY_STRING);
+mapcache_grid *mapcache_configuration_get_grid(mapcache_cfg *config, const char *key) {
+   return (mapcache_grid*)apr_hash_get(config->grids, (void*)key, APR_HASH_KEY_STRING);
 }
 
-geocache_tileset *geocache_configuration_get_tileset(geocache_cfg *config, const char *key) {
-   return (geocache_tileset*)apr_hash_get(config->tilesets, (void*)key, APR_HASH_KEY_STRING);
+mapcache_tileset *mapcache_configuration_get_tileset(mapcache_cfg *config, const char *key) {
+   return (mapcache_tileset*)apr_hash_get(config->tilesets, (void*)key, APR_HASH_KEY_STRING);
 }
 
-geocache_image_format *geocache_configuration_get_image_format(geocache_cfg *config, const char *key) {
-   return (geocache_image_format*)apr_hash_get(config->image_formats, (void*)key, APR_HASH_KEY_STRING);
+mapcache_image_format *mapcache_configuration_get_image_format(mapcache_cfg *config, const char *key) {
+   return (mapcache_image_format*)apr_hash_get(config->image_formats, (void*)key, APR_HASH_KEY_STRING);
 }
 
-void geocache_configuration_add_source(geocache_cfg *config, geocache_source *source, const char * key) {
+void mapcache_configuration_add_source(mapcache_cfg *config, mapcache_source *source, const char * key) {
    apr_hash_set(config->sources, key, APR_HASH_KEY_STRING, (void*)source);
 }
 
-void geocache_configuration_add_grid(geocache_cfg *config, geocache_grid *grid, const char * key) {
+void mapcache_configuration_add_grid(mapcache_cfg *config, mapcache_grid *grid, const char * key) {
    apr_hash_set(config->grids, key, APR_HASH_KEY_STRING, (void*)grid);
 }
 
-void geocache_configuration_add_tileset(geocache_cfg *config, geocache_tileset *tileset, const char * key) {
+void mapcache_configuration_add_tileset(mapcache_cfg *config, mapcache_tileset *tileset, const char * key) {
    tileset->config = config;
    apr_hash_set(config->tilesets, key, APR_HASH_KEY_STRING, (void*)tileset);
 }
 
-void geocache_configuration_add_cache(geocache_cfg *config, geocache_cache *cache, const char * key) {
+void mapcache_configuration_add_cache(mapcache_cfg *config, mapcache_cache *cache, const char * key) {
    apr_hash_set(config->caches, key, APR_HASH_KEY_STRING, (void*)cache);
 }
 
-void geocache_configuration_add_image_format(geocache_cfg *config, geocache_image_format *format, const char * key) {
+void mapcache_configuration_add_image_format(mapcache_cfg *config, mapcache_image_format *format, const char * key) {
    apr_hash_set(config->image_formats, key, APR_HASH_KEY_STRING, (void*)format);
 }

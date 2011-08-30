@@ -14,23 +14,23 @@
  *  limitations under the License.
  */
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <png.h>
 #include <jpeglib.h>
 
 /**\addtogroup imageio*/
 /** @{ */
 
-int geocache_imageio_is_valid_format(geocache_context *ctx, geocache_buffer *buffer) {
-   geocache_image_format_type t = geocache_imageio_header_sniff(ctx,buffer);
+int mapcache_imageio_is_valid_format(mapcache_context *ctx, mapcache_buffer *buffer) {
+   mapcache_image_format_type t = mapcache_imageio_header_sniff(ctx,buffer);
    if(t==GC_PNG || t==GC_JPEG) {
-      return GEOCACHE_TRUE;
+      return MAPCACHE_TRUE;
    } else {
-      return GEOCACHE_FALSE;
+      return MAPCACHE_FALSE;
    }
 }
 
-geocache_image_format_type geocache_imageio_header_sniff(geocache_context *ctx, geocache_buffer *buffer) {
+mapcache_image_format_type mapcache_imageio_header_sniff(mapcache_context *ctx, mapcache_buffer *buffer) {
    if(!buffer) {
       return GC_UNKNOWN;
    }
@@ -45,20 +45,20 @@ geocache_image_format_type geocache_imageio_header_sniff(geocache_context *ctx, 
 
 
 
-geocache_image* geocache_imageio_decode(geocache_context *ctx, geocache_buffer *buffer) {
-   geocache_image_format_type type = geocache_imageio_header_sniff(ctx,buffer);
+mapcache_image* mapcache_imageio_decode(mapcache_context *ctx, mapcache_buffer *buffer) {
+   mapcache_image_format_type type = mapcache_imageio_header_sniff(ctx,buffer);
    if(type == GC_PNG) {
-      return _geocache_imageio_png_decode(ctx,buffer);
+      return _mapcache_imageio_png_decode(ctx,buffer);
    } else if(type == GC_JPEG) {
-      return _geocache_imageio_jpeg_decode(ctx,buffer);
+      return _mapcache_imageio_jpeg_decode(ctx,buffer);
    } else {
-      ctx->set_error(ctx, 500, "geocache_imageio_decode: unrecognized image format");
+      ctx->set_error(ctx, 500, "mapcache_imageio_decode: unrecognized image format");
       return NULL;
    }
 }
 
 
-void geocache_image_create_empty(geocache_context *ctx, geocache_cfg *cfg) {
+void mapcache_image_create_empty(mapcache_context *ctx, mapcache_cfg *cfg) {
    unsigned int color=0;
 
    /* create a transparent image for PNG, and a white one for jpeg */
@@ -70,15 +70,15 @@ void geocache_image_create_empty(geocache_context *ctx, geocache_cfg *cfg) {
    GC_CHECK_ERROR(ctx);
 }
 
-void geocache_imageio_decode_to_image(geocache_context *ctx, geocache_buffer *buffer,
-      geocache_image *image) {
-   geocache_image_format_type type = geocache_imageio_header_sniff(ctx,buffer);
+void mapcache_imageio_decode_to_image(mapcache_context *ctx, mapcache_buffer *buffer,
+      mapcache_image *image) {
+   mapcache_image_format_type type = mapcache_imageio_header_sniff(ctx,buffer);
    if(type == GC_PNG) {
-      _geocache_imageio_png_decode_to_image(ctx,buffer,image);
+      _mapcache_imageio_png_decode_to_image(ctx,buffer,image);
    } else if(type == GC_JPEG) {
-      _geocache_imageio_jpeg_decode_to_image(ctx,buffer,image);
+      _mapcache_imageio_jpeg_decode_to_image(ctx,buffer,image);
    } else {
-      ctx->set_error(ctx, 500, "geocache_imageio_decode: unrecognized image format");
+      ctx->set_error(ctx, 500, "mapcache_imageio_decode: unrecognized image format");
    }
    return;
 }

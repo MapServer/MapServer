@@ -14,23 +14,23 @@
  *  limitations under the License.
  */
 
-#ifndef GEOCACHE_ERRORS_H_
-#define GEOCACHE_ERRORS_H_
+#ifndef MAPCACHE_ERRORS_H_
+#define MAPCACHE_ERRORS_H_
 
 typedef enum {
-GEOCACHE_DEBUG,
-GEOCACHE_INFO,
-GEOCACHE_WARNING,
-GEOCACHE_ERROR
-} geocache_log_level;
+MAPCACHE_DEBUG,
+MAPCACHE_INFO,
+MAPCACHE_WARNING,
+MAPCACHE_ERROR
+} mapcache_log_level;
 
 typedef enum {
-   GEOCACHE_REPORT_LOG,
-   GEOCACHE_REPORT_MSG,
-   GEOCACHE_REPORT_ERROR_IMG,
-   GEOCACHE_REPORT_EMPTY_IMG,
-   GEOCACHE_REPORT_CUSTOM_IMG
-} geocache_error_reporting;
+   MAPCACHE_REPORT_LOG,
+   MAPCACHE_REPORT_MSG,
+   MAPCACHE_REPORT_ERROR_IMG,
+   MAPCACHE_REPORT_EMPTY_IMG,
+   MAPCACHE_REPORT_CUSTOM_IMG
+} mapcache_error_reporting;
 
 #endif /* ERRORS_H_ */
 /* vim: ai ts=3 sts=3 et sw=3

@@ -1,10 +1,10 @@
 #ifdef ENABLE_UNMAINTAINED_JSON_PARSER
 
-#include "geocache.h"
+#include "mapcache.h"
 #include <errno.h>
 #include <apr_strings.h>
 
-static void parse_extent_json(geocache_context *ctx, cJSON *node, double *extent) {
+static void parse_extent_json(mapcache_context *ctx, cJSON *node, double *extent) {
    int i = cJSON_GetArraySize(node);
    if(i != 4) {
       ctx->set_error(ctx,400,"invalid extent");
@@ -26,7 +26,7 @@ static void parse_extent_json(geocache_context *ctx, cJSON *node, double *extent
    
 }
 
-void parse_keyvalues(geocache_context *ctx, cJSON *node, apr_table_t *tbl) {
+void parse_keyvalues(mapcache_context *ctx, cJSON *node, apr_table_t *tbl) {
    if(!node->child) return;
    cJSON *child = node->child;
    while(child) {
@@ -39,11 +39,11 @@ void parse_keyvalues(geocache_context *ctx, cJSON *node, apr_table_t *tbl) {
    }
 }
 
-static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
+static void parse_grid_json(mapcache_context *ctx, cJSON *node, mapcache_cfg *cfg) {
    char *name = NULL;
    int i;
    cJSON *tmp;
-   geocache_grid *grid;
+   mapcache_grid *grid;
 
    tmp = cJSON_GetObjectItem(node,"name");
    if(tmp) name = tmp->valuestring;
@@ -54,12 +54,12 @@ static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cf
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a grid defined with this name */
-      if(geocache_configuration_get_grid(cfg, name)) {
+      if(mapcache_configuration_get_grid(cfg, name)) {
          ctx->set_error(ctx, 400, "duplicate grid with name \"%s\"",name);
          return;
       }
    }
-   grid = geocache_grid_create(ctx->pool);
+   grid = mapcache_grid_create(ctx->pool);
    grid->name = name;
    
    tmp = cJSON_GetObjectItem(node,"metadata");
@@ -87,7 +87,7 @@ static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cf
       ctx->set_error(ctx,400,"resolutions for grid %s is not an array",name);
       return;
    }
-   grid->levels = apr_pcalloc(ctx->pool,i*sizeof(geocache_grid_level*));
+   grid->levels = apr_pcalloc(ctx->pool,i*sizeof(mapcache_grid_level*));
    grid->nlevels = i;
    for(i=0;i<grid->nlevels;i++) {
       cJSON *item = cJSON_GetArrayItem(tmp,i);
@@ -95,7 +95,7 @@ static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cf
          ctx->set_error(ctx,400,"failed to parse resolution %s in grid %s (not a number)", item->valuestring,name);
          return;
       }
-      grid->levels[i] = apr_pcalloc(ctx->pool,sizeof(geocache_grid_level));
+      grid->levels[i] = apr_pcalloc(ctx->pool,sizeof(mapcache_grid_level));
       grid->levels[i]->resolution = item->valuedouble;
    }
    
@@ -128,11 +128,11 @@ static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cf
    tmp = cJSON_GetObjectItem(node,"units");
    if(tmp && tmp->valuestring) {
       if(!strcasecmp(tmp->valuestring,"dd"))
-         grid->unit = GEOCACHE_UNIT_DEGREES;
+         grid->unit = MAPCACHE_UNIT_DEGREES;
       else if(!strcasecmp(tmp->valuestring,"m"))
-         grid->unit = GEOCACHE_UNIT_METERS;
+         grid->unit = MAPCACHE_UNIT_METERS;
       else if(!strcasecmp(tmp->valuestring,"ft"))
-         grid->unit = GEOCACHE_UNIT_FEET;
+         grid->unit = MAPCACHE_UNIT_FEET;
       else {
          ctx->set_error(ctx,400,"unknown unit %s for grid %s",tmp->valuestring,name);
          return;
@@ -160,12 +160,12 @@ static void parse_grid_json(geocache_context *ctx, cJSON *node, geocache_cfg *cf
    }
 
 
-   geocache_configuration_add_grid(cfg,grid,name);   
+   mapcache_configuration_add_grid(cfg,grid,name);   
 }
-static void parse_source_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
+static void parse_source_json(mapcache_context *ctx, cJSON *node, mapcache_cfg *cfg) {
    char *name = NULL, *type = NULL;
    cJSON *tmp;
-   geocache_source *source;
+   mapcache_source *source;
 
    tmp = cJSON_GetObjectItem(node,"name");
    if(tmp) name = tmp->valuestring;
@@ -176,7 +176,7 @@ static void parse_source_json(geocache_context *ctx, cJSON *node, geocache_cfg *
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a cache defined with this name */
-      if(geocache_configuration_get_source(cfg, name)) {
+      if(mapcache_configuration_get_source(cfg, name)) {
          ctx->set_error(ctx, 400, "duplicate source with name \"%s\"",name);
          return;
       }
@@ -188,7 +188,7 @@ static void parse_source_json(geocache_context *ctx, cJSON *node, geocache_cfg *
       return;
    }
    if(!strcmp(type,"wms")) {
-      source = geocache_source_wms_create(ctx);
+      source = mapcache_source_wms_create(ctx);
    } else {
       ctx->set_error(ctx,400,"unknown cache type %s",type);
       return;
@@ -207,14 +207,14 @@ static void parse_source_json(geocache_context *ctx, cJSON *node, geocache_cfg *
    GC_CHECK_ERROR(ctx);
    source->configuration_check(ctx,source);
    GC_CHECK_ERROR(ctx);
-   geocache_configuration_add_source(cfg,source,name);
+   mapcache_configuration_add_source(cfg,source,name);
 
 
 }
-static void parse_cache_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
+static void parse_cache_json(mapcache_context *ctx, cJSON *node, mapcache_cfg *cfg) {
    char *name = NULL, *type = NULL;
    cJSON *tmp;
-   geocache_cache *cache;
+   mapcache_cache *cache;
 
    tmp = cJSON_GetObjectItem(node,"name");
    if(tmp) name = tmp->valuestring;
@@ -225,7 +225,7 @@ static void parse_cache_json(geocache_context *ctx, cJSON *node, geocache_cfg *c
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a cache defined with this name */
-      if(geocache_configuration_get_cache(cfg, name)) {
+      if(mapcache_configuration_get_cache(cfg, name)) {
          ctx->set_error(ctx, 400, "duplicate cache with name \"%s\"",name);
          return;
       }
@@ -237,24 +237,24 @@ static void parse_cache_json(geocache_context *ctx, cJSON *node, geocache_cfg *c
       return;
    }
    if(!strcmp(type,"disk")) {
-      cache = geocache_cache_disk_create(ctx);
+      cache = mapcache_cache_disk_create(ctx);
    } else if(!strcmp(type,"sqlite3")) {
 #ifdef USE_SQLITE
-      cache = geocache_cache_sqlite_create(ctx);
+      cache = mapcache_cache_sqlite_create(ctx);
 #else
       ctx->set_error(ctx,400, "failed to add cache \"%s\": sqlite support is not available on this build",name);
       return;
 #endif
    } else if(!strcmp(type,"mbtiles")) {
 #ifdef USE_SQLITE
-      cache = geocache_cache_mbtiles_create(ctx);
+      cache = mapcache_cache_mbtiles_create(ctx);
 #else
       ctx->set_error(ctx,400, "failed to add cache \"%s\": sqlite support is not available on this build",name);
       return;
 #endif
    } else if(!strcmp(type,"memcache")) {
 #ifdef USE_MEMCACHE
-      cache = geocache_cache_memcache_create(ctx);
+      cache = mapcache_cache_memcache_create(ctx);
 #else
       ctx->set_error(ctx,400, "failed to add cache \"%s\": memcache support is not available on this build",name);
       return;
@@ -277,20 +277,20 @@ static void parse_cache_json(geocache_context *ctx, cJSON *node, geocache_cfg *c
       cache->configuration_parse_json(ctx,tmp,cache);
       GC_CHECK_ERROR(ctx);
    }
-   geocache_configuration_add_cache(cfg,cache,name);
+   mapcache_configuration_add_cache(cfg,cache,name);
 
 
 }
 
 
-static void parse_dimensions_json(geocache_context *ctx, cJSON *dims, geocache_tileset *tileset) {
+static void parse_dimensions_json(mapcache_context *ctx, cJSON *dims, mapcache_tileset *tileset) {
    int i;
-   apr_array_header_t *dimensions = apr_array_make(ctx->pool,1,sizeof(geocache_dimension*));
+   apr_array_header_t *dimensions = apr_array_make(ctx->pool,1,sizeof(mapcache_dimension*));
    for(i=0;i<cJSON_GetArraySize(dims);i++) {
       cJSON *node = cJSON_GetArrayItem(dims,i);
       char *type = NULL;
       cJSON *tmp;
-      geocache_dimension *dimension;
+      mapcache_dimension *dimension;
 
       tmp = cJSON_GetObjectItem(node,"type");
       if(tmp) type = tmp->valuestring;
@@ -299,15 +299,15 @@ static void parse_dimensions_json(geocache_context *ctx, cJSON *dims, geocache_t
          return;
       }
       if(!strcmp(type,"values")) {
-         dimension = geocache_dimension_values_create(ctx->pool);
+         dimension = mapcache_dimension_values_create(ctx->pool);
       } else if(!strcmp(type,"regex")) {
-         dimension = geocache_dimension_regex_create(ctx->pool);
+         dimension = mapcache_dimension_regex_create(ctx->pool);
       } else if(!strcmp(type,"intervals")) {
-         dimension = geocache_dimension_intervals_create(ctx->pool);
+         dimension = mapcache_dimension_intervals_create(ctx->pool);
       } else if(!strcmp(type,"time")) {
          ctx->set_error(ctx,501,"time dimension type not implemented yet");
          return;
-         dimension = geocache_dimension_time_create(ctx->pool);
+         dimension = mapcache_dimension_time_create(ctx->pool);
       } else {
          ctx->set_error(ctx,400,"unknown dimension type \"%s\"",type);
          return;
@@ -342,7 +342,7 @@ static void parse_dimensions_json(geocache_context *ctx, cJSON *dims, geocache_t
          dimension->configuration_parse_json(ctx,dimension,tmp);
          GC_CHECK_ERROR(ctx);
       }
-      APR_ARRAY_PUSH(dimensions,geocache_dimension*) = dimension;
+      APR_ARRAY_PUSH(dimensions,mapcache_dimension*) = dimension;
    }
    if(apr_is_empty_array(dimensions)) {
       ctx->set_error(ctx, 400, "dimensions for tileset \"%s\" has no dimensions defined",tileset->name);
@@ -351,10 +351,10 @@ static void parse_dimensions_json(geocache_context *ctx, cJSON *dims, geocache_t
    tileset->dimensions = dimensions;
 }
 
-static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
+static void parse_tileset_json(mapcache_context *ctx, cJSON *node, mapcache_cfg *cfg) {
    char *name = NULL;
    cJSON *tmp;
-   geocache_tileset *tileset = NULL;
+   mapcache_tileset *tileset = NULL;
 
    tmp = cJSON_GetObjectItem(node,"name");
    if(tmp) name = tmp->valuestring;
@@ -365,12 +365,12 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a tileset defined with this name */
-      if(geocache_configuration_get_tileset(cfg, name)) {
+      if(mapcache_configuration_get_tileset(cfg, name)) {
          ctx->set_error(ctx, 400, "duplicate tileset with name \"%s\"",name);
          return;
       }
    }
-   tileset = geocache_tileset_create(ctx);
+   tileset = mapcache_tileset_create(ctx);
    tileset->name = name;
    tmp = cJSON_GetObjectItem(node,"metadata");
    if(tmp) {
@@ -386,13 +386,13 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
    
    tmp = cJSON_GetObjectItem(node,"grids");
    if(tmp && cJSON_GetArraySize(tmp)) {
-      tileset->grid_links = apr_array_make(ctx->pool,1,sizeof(geocache_grid_link*));
+      tileset->grid_links = apr_array_make(ctx->pool,1,sizeof(mapcache_grid_link*));
       int i;
       for(i=0;i<cJSON_GetArraySize(tmp);i++) {
          cJSON *jgrid = cJSON_GetArrayItem(tmp,i);
          cJSON *jchild;
          char *gridname;
-         geocache_grid_link *gridlink = apr_pcalloc(ctx->pool,sizeof(geocache_grid_link));
+         mapcache_grid_link *gridlink = apr_pcalloc(ctx->pool,sizeof(mapcache_grid_link));
          switch(jgrid->type) {
             case cJSON_String:
                gridname = jgrid->valuestring;
@@ -415,7 +415,7 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
                ctx->set_error(ctx, 400, "tileset grid can either be a string or a {\"ref\":\"gridname\",\"extent\":{minx,miny,maxx,maxy} for tileset %s",name);
                return;
          }
-         geocache_grid *grid = geocache_configuration_get_grid(cfg,gridname);
+         mapcache_grid *grid = mapcache_configuration_get_grid(cfg,gridname);
          if(!grid) {
             ctx->set_error(ctx, 400, "tileset %s references unknown grid \"%s\"",name,gridname);
             return;
@@ -434,7 +434,7 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
          } else {
             extent = grid->extent;
          }
-         geocache_grid_compute_limits(grid,extent,gridlink->grid_limits);
+         mapcache_grid_compute_limits(grid,extent,gridlink->grid_limits);
 
          /* compute wgs84 bbox if it wasn't supplied already */
          if(tileset->wgs84bbox[0] >= tileset->wgs84bbox[2] &&
@@ -444,7 +444,7 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
             tileset->wgs84bbox[2] = extent[2];
             tileset->wgs84bbox[3] = extent[3];
          }
-         APR_ARRAY_PUSH(tileset->grid_links,geocache_grid_link*) = gridlink;
+         APR_ARRAY_PUSH(tileset->grid_links,mapcache_grid_link*) = gridlink;
       }
    } else {
       ctx->set_error(ctx, 400, "tileset \"%s\" references no grids",name);
@@ -455,7 +455,7 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
       ctx->set_error(ctx, 400, "tileset \"%s\" references no cache",name);
       return;
    } else {
-      tileset->cache = geocache_configuration_get_cache(cfg,tmp->valuestring);
+      tileset->cache = mapcache_configuration_get_cache(cfg,tmp->valuestring);
       if(!tileset->cache) {
          ctx->set_error(ctx, 400, "tileset \"%s\" references invalid cache \"%s\"",name,tmp->valuestring);
          return;
@@ -466,7 +466,7 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
       ctx->set_error(ctx, 400, "tileset \"%s\" references no source",name);
       return;
    } else {
-      tileset->source = geocache_configuration_get_source(cfg,tmp->valuestring);
+      tileset->source = mapcache_configuration_get_source(cfg,tmp->valuestring);
       if(!tileset->source) {
          ctx->set_error(ctx, 400, "tileset \"%s\" references invalid source \"%s\"",name,tmp->valuestring);
          return;
@@ -474,7 +474,7 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
    }
    tmp = cJSON_GetObjectItem(node,"format");
    if(tmp && tmp->valuestring) {
-      tileset->format = geocache_configuration_get_image_format(cfg,tmp->valuestring);
+      tileset->format = mapcache_configuration_get_image_format(cfg,tmp->valuestring);
       if(!tileset->format) {
          ctx->set_error(ctx, 400, "tileset \"%s\" references invalid format \"%s\"",name,tmp->valuestring);
          return;
@@ -505,7 +505,7 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
    //watermark
    tmp = cJSON_GetObjectItem(node,"watermark");
    if(tmp && tmp->valuestring) {
-      geocache_tileset_add_watermark(ctx,tileset,tmp->valuestring);
+      mapcache_tileset_add_watermark(ctx,tileset,tmp->valuestring);
       GC_CHECK_ERROR(ctx);
    }
 
@@ -522,19 +522,19 @@ static void parse_tileset_json(geocache_context *ctx, cJSON *node, geocache_cfg 
 
       }
    }
-   geocache_tileset_configuration_check(ctx,tileset);
+   mapcache_tileset_configuration_check(ctx,tileset);
    GC_CHECK_ERROR(ctx);
    
-   geocache_configuration_add_tileset(cfg,tileset,name);
+   mapcache_configuration_add_tileset(cfg,tileset,name);
 
 
 
 
 }
-static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *cfg) {
+static void parse_format_json(mapcache_context *ctx, cJSON *node, mapcache_cfg *cfg) {
    char *name = NULL, *type = NULL;
    cJSON *tmp,*props;
-   geocache_image_format *format = NULL;
+   mapcache_image_format *format = NULL;
 
    tmp = cJSON_GetObjectItem(node,"name");
    if(tmp) name = tmp->valuestring;
@@ -545,7 +545,7 @@ static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *
    else {
       name = apr_pstrdup(ctx->pool, name);
       /* check we don't already have a format defined with this name */
-      if(geocache_configuration_get_image_format(cfg, name)) {
+      if(mapcache_configuration_get_image_format(cfg, name)) {
          ctx->set_error(ctx, 400, "duplicate format with name \"%s\"",name);
          return;
       }
@@ -562,16 +562,16 @@ static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *
    
    if(!strcmp(type,"png")) {
       int colors = -1;
-      geocache_compression_type compression = GEOCACHE_COMPRESSION_DEFAULT;
+      mapcache_compression_type compression = MAPCACHE_COMPRESSION_DEFAULT;
       if(props) {
          tmp = cJSON_GetObjectItem(props,"compression");
          if(tmp && tmp->valuestring && strlen(tmp->valuestring)) {
             if(!strcmp(tmp->valuestring, "fast")) {
-               compression = GEOCACHE_COMPRESSION_FAST;
+               compression = MAPCACHE_COMPRESSION_FAST;
             } else if(!strcmp(tmp->valuestring, "best")) {
-               compression = GEOCACHE_COMPRESSION_BEST;
+               compression = MAPCACHE_COMPRESSION_BEST;
             } else if(!strcmp(tmp->valuestring, "default")) {
-               compression = GEOCACHE_COMPRESSION_DEFAULT;
+               compression = MAPCACHE_COMPRESSION_DEFAULT;
             } else {
                ctx->set_error(ctx, 400, "unknown compression type %s for format \"%s\"", tmp->valuestring, name);
                return;
@@ -585,9 +585,9 @@ static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *
       }
 
       if(colors == -1) {
-         format = geocache_imageio_create_png_format(ctx->pool, name, compression);
+         format = mapcache_imageio_create_png_format(ctx->pool, name, compression);
       } else {
-         format = geocache_imageio_create_png_q_format(ctx->pool, name, compression, colors);
+         format = mapcache_imageio_create_png_q_format(ctx->pool, name, compression, colors);
       }
    } else if(!strcmp(type,"jpeg") || !strcmp(type,"jpg")){
       int quality = 95;
@@ -597,16 +597,16 @@ static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *
             quality = tmp->valueint;
          }
       }
-      format = geocache_imageio_create_jpeg_format(ctx->pool,name,quality);
+      format = mapcache_imageio_create_jpeg_format(ctx->pool,name,quality);
    } else if(!strcmp(type,"mixed")){
-      geocache_image_format *transparent=NULL, *opaque=NULL;
+      mapcache_image_format *transparent=NULL, *opaque=NULL;
       if(props) {
          tmp = cJSON_GetObjectItem(props,"opaque");
          if(!tmp || !tmp->valuestring) {
             ctx->set_error(ctx,400,"mixed format %s does not reference an opaque format",name);
             return;
          }
-         opaque = geocache_configuration_get_image_format(cfg,tmp->valuestring);
+         opaque = mapcache_configuration_get_image_format(cfg,tmp->valuestring);
          if(!opaque) {
             ctx->set_error(ctx,400, "mixed format %s references unknown opaque format %s"
                   "(order is important, format %s should appear first)",
@@ -618,7 +618,7 @@ static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *
             ctx->set_error(ctx,400,"mixed format %s does not reference an transparent format",name);
             return;
          }
-         transparent = geocache_configuration_get_image_format(cfg,tmp->valuestring);
+         transparent = mapcache_configuration_get_image_format(cfg,tmp->valuestring);
          if(!transparent) {
             ctx->set_error(ctx,400, "mixed format %s references unknown transparent format %s"
                   "(order is important, format %s should appear first)",
@@ -629,7 +629,7 @@ static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *
          ctx->set_error(ctx,400,"mixed format %s has no props",name);
          return;
       }
-      format = geocache_imageio_create_mixed_format(ctx->pool,name,transparent, opaque);
+      format = mapcache_imageio_create_mixed_format(ctx->pool,name,transparent, opaque);
    } else {
       ctx->set_error(ctx, 400, "unknown format type %s for format \"%s\"", type, name);
       return;
@@ -645,9 +645,9 @@ static void parse_format_json(geocache_context *ctx, cJSON *node, geocache_cfg *
       GC_CHECK_ERROR(ctx);
    }
 
-   geocache_configuration_add_image_format(cfg,format,name);
+   mapcache_configuration_add_image_format(cfg,format,name);
 }
-static void parse_service_json(geocache_context *ctx, cJSON *node, geocache_cfg *config) {
+static void parse_service_json(mapcache_context *ctx, cJSON *node, mapcache_cfg *config) {
    cJSON *tmp = cJSON_GetObjectItem(node,"type");
    char *type = NULL;
    if(tmp) type = tmp->valuestring;
@@ -660,34 +660,34 @@ static void parse_service_json(geocache_context *ctx, cJSON *node, geocache_cfg 
       return;
    }
    
-   geocache_service *new_service;
+   mapcache_service *new_service;
    if (!strcasecmp(type,"wms")) {
-      new_service = geocache_service_wms_create(ctx);
-      config->services[GEOCACHE_SERVICE_WMS] = new_service;
+      new_service = mapcache_service_wms_create(ctx);
+      config->services[MAPCACHE_SERVICE_WMS] = new_service;
    }
    else if (!strcasecmp(type,"tms")) {
-      new_service = geocache_service_tms_create(ctx);
-      config->services[GEOCACHE_SERVICE_TMS] = new_service;
+      new_service = mapcache_service_tms_create(ctx);
+      config->services[MAPCACHE_SERVICE_TMS] = new_service;
    }
    else if (!strcasecmp(type,"wmts")) {
-      new_service = geocache_service_wmts_create(ctx);
-      config->services[GEOCACHE_SERVICE_WMTS] = new_service;
+      new_service = mapcache_service_wmts_create(ctx);
+      config->services[MAPCACHE_SERVICE_WMTS] = new_service;
    }
    else if (!strcasecmp(type,"kml")) {
-      new_service = geocache_service_kml_create(ctx);
-      config->services[GEOCACHE_SERVICE_KML] = new_service;
+      new_service = mapcache_service_kml_create(ctx);
+      config->services[MAPCACHE_SERVICE_KML] = new_service;
    }
    else if (!strcasecmp(type,"gmaps")) {
-      new_service = geocache_service_gmaps_create(ctx);
-      config->services[GEOCACHE_SERVICE_GMAPS] = new_service;
+      new_service = mapcache_service_gmaps_create(ctx);
+      config->services[MAPCACHE_SERVICE_GMAPS] = new_service;
    }
    else if (!strcasecmp(type,"ve")) {
-      new_service = geocache_service_ve_create(ctx);
-      config->services[GEOCACHE_SERVICE_VE] = new_service;
+      new_service = mapcache_service_ve_create(ctx);
+      config->services[MAPCACHE_SERVICE_VE] = new_service;
    }
    else if (!strcasecmp(type,"demo")) {
-      new_service = geocache_service_demo_create(ctx);
-      config->services[GEOCACHE_SERVICE_DEMO] = new_service;
+      new_service = mapcache_service_demo_create(ctx);
+      config->services[MAPCACHE_SERVICE_DEMO] = new_service;
    } else {
       ctx->set_error(ctx,400,"unknown <service> type %s",type);
       return;
@@ -700,7 +700,7 @@ static void parse_service_json(geocache_context *ctx, cJSON *node, geocache_cfg 
 }
 
 
-void geocache_configuration_parse_json(geocache_context *ctx, const char *filename, geocache_cfg *config) {
+void mapcache_configuration_parse_json(mapcache_context *ctx, const char *filename, mapcache_cfg *config) {
    FILE *f=fopen(filename,"rb");
    int i;
    cJSON *root,*entry,*item;
@@ -790,15 +790,15 @@ void geocache_configuration_parse_json(geocache_context *ctx, const char *filena
       tmp = cJSON_GetObjectItem(entry,"errors");
       if(tmp && tmp->valuestring) {
          if(!strcmp(tmp->valuestring,"log")) {
-            config->reporting = GEOCACHE_REPORT_LOG;
+            config->reporting = MAPCACHE_REPORT_LOG;
          } else if(!strcmp(tmp->valuestring,"report")) {
-            config->reporting = GEOCACHE_REPORT_MSG;
+            config->reporting = MAPCACHE_REPORT_MSG;
          } else if(!strcmp(tmp->valuestring,"empty_img")) {
-            config->reporting = GEOCACHE_REPORT_EMPTY_IMG;
-            geocache_image_create_empty(ctx, config);
+            config->reporting = MAPCACHE_REPORT_EMPTY_IMG;
+            mapcache_image_create_empty(ctx, config);
             if(GC_HAS_ERROR(ctx)) goto cleanup;
          } else if(!strcmp(tmp->valuestring, "report_img")) {
-            config->reporting = GEOCACHE_REPORT_ERROR_IMG;
+            config->reporting = MAPCACHE_REPORT_ERROR_IMG;
             ctx->set_error(ctx,501,"<errors>: report_img not implemented");
             goto cleanup;
          } else {
@@ -811,7 +811,7 @@ void geocache_configuration_parse_json(geocache_context *ctx, const char *filena
       /* default image format */
       tmp = cJSON_GetObjectItem(entry,"default_format");
       if(tmp && tmp->valuestring) {
-         config->default_image_format = geocache_configuration_get_image_format(config,tmp->valuestring);
+         config->default_image_format = mapcache_configuration_get_image_format(config,tmp->valuestring);
          if(!config->default_image_format) {
             ctx->set_error(ctx, 400, "default_format \"%s\" does not exist",tmp->valuestring);
             return;
