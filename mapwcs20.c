@@ -1693,7 +1693,7 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
 
             psOrigin = xmlNewChild(psGrid, psGmlNs, BAD_CAST "origin", NULL);
             {
-                snprintf(point, sizeof(point), "%f %f", cm->extent.minx, cm->extent.miny);
+                snprintf(point, sizeof(point), "%f %f", cm->extent.minx, cm->extent.maxy);
                 psOrigin = xmlNewChild(psOrigin, psGmlNs, BAD_CAST "Point", NULL);
                 snprintf(id, sizeof(id), "grid_origin_%s", layer->name);
                 xmlNewNsProp(psOrigin, psGmlNs, BAD_CAST "id", BAD_CAST id);
@@ -1702,7 +1702,7 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
                 psPos = xmlNewChild(psOrigin, psGmlNs, BAD_CAST "pos", BAD_CAST point);
             }
             snprintf(resx, sizeof(resx), "%f 0", cm->xresolution);
-            snprintf(resy, sizeof(resy), "0 %f", cm->yresolution);
+            snprintf(resy, sizeof(resy), "0 %f", -fabs(cm->yresolution));
             psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resx);
             xmlNewProp(psOffsetX, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
             psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resy);
