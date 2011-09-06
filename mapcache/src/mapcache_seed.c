@@ -319,7 +319,7 @@ void cmd_thread() {
       apr_queue_push(work_queue,cmd);
    }
 
-   if(error_detected) {
+   if(error_detected && ctx.get_error_message(&ctx)) {
       printf("%s\n",ctx.get_error_message(&ctx));
    }
 }
@@ -331,10 +331,11 @@ static void* APR_THREAD_FUNC seed_thread(apr_thread_t *thread, void *data) {
    mapcache_tile *tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
    tile->dimensions = dimensions;
    while(1) {
+      apr_status_t ret;
       apr_pool_clear(seed_ctx.pool);
       struct seed_cmd *cmd;
-      apr_queue_pop(work_queue, (void**)&cmd);
-      if(cmd->command == MAPCACHE_CMD_STOP) break;
+      ret = apr_queue_pop(work_queue, (void**)&cmd);
+      if(ret != APR_SUCCESS || cmd->command == MAPCACHE_CMD_STOP) break;
       tile->x = cmd->x;
       tile->y = cmd->y;
       tile->z = cmd->z;

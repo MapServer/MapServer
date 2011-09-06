@@ -74,7 +74,7 @@ static sqlite3* _get_conn(mapcache_context *ctx, mapcache_tile* tile, int readon
       ctx->set_error(ctx,500,"failed to connect to sqlite db %s: %s",dbfile,sqlite3_errmsg(handle));
       return NULL;
    }
-   sqlite3_busy_timeout(handle,3000);
+   sqlite3_busy_timeout(handle,300000);
    return handle;
 }
 
@@ -180,13 +180,16 @@ static int _mapcache_cache_sqlite_get(mapcache_context *ctx, mapcache_tile *tile
    sqlite3_stmt *stmt;
    sqlite3_prepare(handle,cache->get_stmt.sql,-1,&stmt,NULL);
    _bind_sqlite_params(ctx,stmt,tile);
-   int ret = sqlite3_step(stmt);
-   if(ret!=SQLITE_DONE && ret != SQLITE_ROW) {
-      ctx->set_error(ctx,500,"sqlite backend failed on get: %s",sqlite3_errmsg(handle));
-      sqlite3_finalize(stmt);
-      sqlite3_close(handle);
-      return MAPCACHE_FAILURE;
-   }
+   int ret;
+   do {
+      ret = sqlite3_step(stmt);
+      if(ret!=SQLITE_DONE && ret != SQLITE_ROW && ret!=SQLITE_BUSY && ret !=SQLITE_LOCKED) {
+         ctx->set_error(ctx,500,"sqlite backend failed on get: %s",sqlite3_errmsg(handle));
+         sqlite3_finalize(stmt);
+         sqlite3_close(handle);
+         return MAPCACHE_FAILURE;
+      }
+   } while (ret == SQLITE_BUSY || ret == SQLITE_LOCKED);
    if(ret == SQLITE_DONE) {
       sqlite3_finalize(stmt);
       sqlite3_close(handle);
@@ -224,10 +227,17 @@ static void _mapcache_cache_sqlite_set(mapcache_context *ctx, mapcache_tile *til
    sqlite3_stmt *stmt;
    sqlite3_prepare(handle,cache->set_stmt.sql,-1,&stmt,NULL);
    _bind_sqlite_params(ctx,stmt,tile);
-   int ret = sqlite3_step(stmt);
-   if(ret != SQLITE_DONE && ret != SQLITE_ROW) {
-      ctx->set_error(ctx,500,"sqlite backend failed on set: %s",sqlite3_errmsg(handle));
-   }
+   int ret;
+   do {
+      ret = sqlite3_step(stmt);
+      if(ret != SQLITE_DONE && ret != SQLITE_ROW && ret != SQLITE_BUSY && ret != SQLITE_LOCKED) {
+         ctx->set_error(ctx,500,"sqlite backend failed on set: %s (%d)",sqlite3_errmsg(handle),ret);
+         break;
+      }
+      if(ret == SQLITE_BUSY) {
+         sqlite3_reset(stmt);
+      }
+   } while (ret == SQLITE_BUSY || ret == SQLITE_LOCKED);
    sqlite3_finalize(stmt);
    sqlite3_close(handle);
 }
@@ -278,6 +288,8 @@ static void _mapcache_cache_sqlite_configuration_parse_json(mapcache_context *ct
 
 static void _mapcache_cache_sqlite_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache) {
    ezxml_t cur_node;
+   sqlite3_initialize();
+   sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
    mapcache_cache_sqlite *dcache = (mapcache_cache_sqlite*)cache;
    if ((cur_node = ezxml_child(node,"base")) != NULL) {
       dcache->dbname_template = apr_pstrcat(ctx->pool,cur_node->txt,"/{tileset}#{grid}.db",NULL);

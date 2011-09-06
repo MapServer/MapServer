@@ -275,6 +275,7 @@ apr_table_t *mapcache_http_parse_param_string(mapcache_context *r, char *args_st
 
 mapcache_http* mapcache_http_configuration_parse_xml(mapcache_context *ctx, ezxml_t node) {
    ezxml_t http_node;
+   curl_global_init(CURL_GLOBAL_ALL);
    mapcache_http *req = (mapcache_http*)apr_pcalloc(ctx->pool,
          sizeof(mapcache_http));
    if ((http_node = ezxml_child(node,"url")) != NULL) {
