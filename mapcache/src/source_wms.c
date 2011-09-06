@@ -91,52 +91,6 @@ void _mapcache_source_wms_query(mapcache_context *ctx, mapcache_feature_info *fi
  * \private \memberof mapcache_source_wms
  * \sa mapcache_source::configuration_parse()
  */
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-void _mapcache_source_wms_configuration_parse_json(mapcache_context *ctx, cJSON *props, mapcache_source *source) {
-   cJSON *tmp;
-   mapcache_source_wms *src = (mapcache_source_wms*)source;
-   tmp = cJSON_GetObjectItem(props,"http");
-   if(!tmp) {
-      ctx->set_error(ctx,400,"wms source %s has no http object",source->name);
-      return;
-   }
-   src->http = mapcache_http_configuration_parse_json(ctx,tmp);
-   GC_CHECK_ERROR(ctx);
-   
-   tmp = cJSON_GetObjectItem(props,"getmap");
-   if(!tmp) {
-      ctx->set_error(ctx,400,"wms source %s has no getmap object",source->name);
-      return;
-   }
-   tmp = cJSON_GetObjectItem(tmp,"params");
-   parse_keyvalues(ctx,tmp,src->getmap_params);
-   
-   tmp = cJSON_GetObjectItem(props,"getfeatureinfo");
-   if(tmp) {
-      cJSON *info_formats = cJSON_GetObjectItem(tmp,"info_formats");
-      int n;
-      if(!info_formats || ! (n = cJSON_GetArraySize(info_formats))) {
-         ctx->set_error(ctx,400,"wms source %s getfeatureinfo has no info_formats",source->name);
-         return;
-      }
-      source->info_formats = apr_array_make(ctx->pool,n,sizeof(char*));
-      while(n--) {
-         cJSON *ift = cJSON_GetArrayItem(info_formats,n);
-         if(!ift->valuestring) {
-            ctx->set_error(ctx,400,"failed to parse info_format for source %s",source->name);
-            return;
-         }
-         APR_ARRAY_PUSH(source->info_formats,char*) = apr_pstrdup(ctx->pool,ift->valuestring);
-      }
-      tmp = cJSON_GetObjectItem(tmp,"params");
-      parse_keyvalues(ctx,tmp,src->getfeatureinfo_params);
-   }
-}
-#endif
-/**
- * \private \memberof mapcache_source_wms
- * \sa mapcache_source::configuration_parse()
- */
 void _mapcache_source_wms_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_source *source) {
    ezxml_t cur_node;
    mapcache_source_wms *src = (mapcache_source_wms*)source;
@@ -215,9 +169,6 @@ mapcache_source* mapcache_source_wms_create(mapcache_context *ctx) {
    source->source.render_map = _mapcache_source_wms_render_map;
    source->source.configuration_check = _mapcache_source_wms_configuration_check;
    source->source.configuration_parse_xml = _mapcache_source_wms_configuration_parse_xml;
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   source->source.configuration_parse_json = _mapcache_source_wms_configuration_parse_json;
-#endif
    source->source.query_info = _mapcache_source_wms_query;
    source->wms_default_params = apr_table_make(ctx->pool,4);;
    source->getmap_params = apr_table_make(ctx->pool,4);

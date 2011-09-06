@@ -20,17 +20,7 @@
 #include <apr_file_io.h>
 
 void mapcache_configuration_parse(mapcache_context *ctx, const char *filename, mapcache_cfg *config, int cgi) {
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   int len = strlen(filename);
-   const char *ext = &(filename[len-3]);
-   if(strcasecmp(ext,"xml")) {
-      mapcache_configuration_parse_json(ctx,filename,config);
-   } else {
-      mapcache_configuration_parse_xml(ctx,filename,config);
-   }
-#else
    mapcache_configuration_parse_xml(ctx,filename,config);
-#endif
    GC_CHECK_ERROR(ctx);
 
    if(!config->lockdir || !strlen(config->lockdir)) {

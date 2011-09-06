@@ -415,42 +415,6 @@ static void _mapcache_cache_disk_configuration_parse_xml(mapcache_context *ctx, 
 /**
  * \private \memberof mapcache_cache_disk
  */
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-static void _mapcache_cache_disk_configuration_parse_json(mapcache_context *ctx, cJSON *node, mapcache_cache *cache) {
-   cJSON *tmp;
-   mapcache_cache_disk *dcache = (mapcache_cache_disk*)cache;
-
-   if((tmp = cJSON_GetObjectItem(node,"base_dir")) != NULL) {
-      if(tmp->valuestring) {
-         dcache->base_directory = apr_pstrdup(ctx->pool, tmp->valuestring);
-      } else {
-         ctx->set_error(ctx,400,"cache %s has invalid base_dir",cache->name);
-         return;
-      }
-      if((tmp = cJSON_GetObjectItem(node,"symlink_blank")) != NULL) {
-         if(tmp->valueint) {
-#ifdef HAVE_SYMLINK
-            dcache->symlink_blank = 1;
-#else
-            ctx->set_error(ctx,400,"cache %s: host system does not support file symbolic linking",cache->name);
-            return;
-#endif
-         }
-      }
-   } else if((tmp = cJSON_GetObjectItem(node,"template")) != NULL) {
-      if(tmp->valuestring) {
-         dcache->filename_template = apr_pstrdup(ctx->pool, tmp->valuestring);
-      } else {
-         ctx->set_error(ctx,400,"cache %s has invalid template",cache->name);
-         return;
-      }
-   }
-}
-#endif
-   
-/**
- * \private \memberof mapcache_cache_disk
- */
 static void _mapcache_cache_disk_configuration_post_config(mapcache_context *ctx, mapcache_cache *cache,
       mapcache_cfg *cfg) {
    mapcache_cache_disk *dcache = (mapcache_cache_disk*)cache;
@@ -480,9 +444,6 @@ mapcache_cache* mapcache_cache_disk_create(mapcache_context *ctx) {
    cache->cache.tile_set = _mapcache_cache_disk_set;
    cache->cache.configuration_post_config = _mapcache_cache_disk_configuration_post_config;
    cache->cache.configuration_parse_xml = _mapcache_cache_disk_configuration_parse_xml;
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   cache->cache.configuration_parse_json = _mapcache_cache_disk_configuration_parse_json;
-#endif
    return (mapcache_cache*)cache;
 }
 

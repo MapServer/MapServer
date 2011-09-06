@@ -28,10 +28,6 @@
 #include "util.h"
 #include "ezxml.h"
 
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-#include "cJSON.h"
-#endif
-
 #include "errors.h"
 
 #if 0
@@ -275,16 +271,10 @@ struct mapcache_source {
     void (*query_info)(mapcache_context *ctx, mapcache_feature_info *fi);
 
     void (*configuration_parse_xml)(mapcache_context *ctx, ezxml_t xml, mapcache_source * source);
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-    void (*configuration_parse_json)(mapcache_context *ctx, cJSON *node, mapcache_source * source);
-#endif
     void (*configuration_check)(mapcache_context *ctx, mapcache_source * source);
 };
 
 mapcache_http* mapcache_http_configuration_parse_xml(mapcache_context *ctx,ezxml_t node);
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-mapcache_http* mapcache_http_configuration_parse_json(mapcache_context *ctx,cJSON *node);
-#endif
 mapcache_http* mapcache_http_clone(mapcache_context *ctx, mapcache_http *orig);
 
 struct mapcache_http {
@@ -369,9 +359,6 @@ struct mapcache_cache {
     void (*tile_set)(mapcache_context *ctx, mapcache_tile * tile);
 
     void (*configuration_parse_xml)(mapcache_context *ctx, ezxml_t xml, mapcache_cache * cache);
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-    void (*configuration_parse_json)(mapcache_context *ctx, cJSON *node, mapcache_cache * cache);
-#endif
     void (*configuration_post_config)(mapcache_context *ctx, mapcache_cache * cache, mapcache_cfg *config);
 };
 
@@ -632,9 +619,6 @@ struct mapcache_service {
      * parse advanced configuration options for the selected service
      */
     void (*configuration_parse_xml)(mapcache_context *ctx, ezxml_t xml, mapcache_service * service, mapcache_cfg *config);
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-    void (*configuration_parse_json)(mapcache_context *ctx, cJSON *node, mapcache_service * service, mapcache_cfg *config);
-#endif
 };
 
 /**\class mapcache_service_wms
@@ -912,10 +896,6 @@ struct mapcache_cfg {
  */
 void mapcache_configuration_parse(mapcache_context *ctx, const char *filename, mapcache_cfg *config, int cgi);
 void mapcache_configuration_post_config(mapcache_context *ctx, mapcache_cfg *config);
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-void mapcache_configuration_parse_json(mapcache_context *ctx, const char *filename, mapcache_cfg *config);
-void parse_keyvalues(mapcache_context *ctx, cJSON *node, apr_table_t *tbl);
-#endif
 void mapcache_configuration_parse_xml(mapcache_context *ctx, const char *filename, mapcache_cfg *config);
 mapcache_cfg* mapcache_configuration_create(apr_pool_t *pool);
 mapcache_source* mapcache_configuration_get_source(mapcache_cfg *config, const char *key);
@@ -1489,9 +1469,6 @@ struct mapcache_dimension {
     * \brief parse the value given in the configuration
     */
    void (*configuration_parse_xml)(mapcache_context *context, mapcache_dimension *dim, ezxml_t node);
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   void (*configuration_parse_json)(mapcache_context *context, mapcache_dimension *dim, cJSON *node);
-#endif
 };
 
 struct mapcache_dimension_values {

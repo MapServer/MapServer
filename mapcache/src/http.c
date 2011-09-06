@@ -309,35 +309,6 @@ mapcache_http* mapcache_http_configuration_parse_xml(mapcache_context *ctx, ezxm
    /* TODO: parse <proxy> and <auth> elements */
 }
 
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-mapcache_http* mapcache_http_configuration_parse_json(mapcache_context *ctx, cJSON *node) {
-   cJSON *tmp;
-   mapcache_http *req = (mapcache_http*)apr_pcalloc(ctx->pool,sizeof(mapcache_http));
-   tmp = cJSON_GetObjectItem(node,"url");
-   if (tmp && tmp->valuestring) {
-      req->url = apr_pstrdup(ctx->pool,tmp->valuestring);
-   } else {
-      ctx->set_error(ctx,400,"got an http object with no url");
-      return NULL;
-   }
-   req->headers = apr_table_make(ctx->pool,1);
-   tmp = cJSON_GetObjectItem(node,"headers");
-   if(tmp && tmp->child ) {
-      cJSON *child = tmp->child;
-      while(child) {
-         if(child->type != cJSON_String) {
-            ctx->set_error(ctx,400,"http headers can only contain string values");
-            return NULL;
-         }
-         apr_table_set(req->headers,child->string,child->valuestring);
-         child = child->next;
-      }
-   }
-   return req;
-   /* TODO: parse <proxy> and <auth> elements */
-}
-#endif
-
 
 mapcache_http* mapcache_http_clone(mapcache_context *ctx, mapcache_http *orig) {
    mapcache_http *ret = apr_pcalloc(ctx->pool, sizeof(mapcache_http*));

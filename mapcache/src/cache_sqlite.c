@@ -242,49 +242,6 @@ static void _mapcache_cache_sqlite_set(mapcache_context *ctx, mapcache_tile *til
    sqlite3_close(handle);
 }
 
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-static void _mapcache_cache_sqlite_configuration_parse_json(mapcache_context *ctx, cJSON *node, mapcache_cache *cache) {
-   cJSON *tmp;
-   mapcache_cache_sqlite *dcache = (mapcache_cache_sqlite*)cache;
-
-   tmp = cJSON_GetObjectItem(node,"dbname_template");
-   if(tmp && tmp->valuestring) {
-      dcache->dbname_template = apr_pstrdup(ctx->pool, tmp->valuestring);
-   } else {
-      ctx->set_error(ctx,400,"cache %s has invalid dbname_template",cache->name);
-      return;
-   }
-   if((tmp = cJSON_GetObjectItem(node,"hit_stats")) != NULL) {
-      if(tmp->valueint) {
-         dcache->hitstats = 1;
-      }
-   }
-   tmp = cJSON_GetObjectItem(node,"create_statement");
-   if(tmp && tmp->valuestring) {
-      dcache->create_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-   tmp = cJSON_GetObjectItem(node,"exists_statement");
-   if(tmp && tmp->valuestring) {
-      dcache->exists_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-   tmp = cJSON_GetObjectItem(node,"get_statement");
-   if(tmp && tmp->valuestring) {
-      dcache->get_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-   tmp = cJSON_GetObjectItem(node,"set_statement");
-   if(tmp && tmp->valuestring) {
-      dcache->set_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-   tmp = cJSON_GetObjectItem(node,"delete_statement");
-   if(tmp && tmp->valuestring) {
-      dcache->delete_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-   tmp = cJSON_GetObjectItem(node,"hitstats_statement");
-   if(tmp && tmp->valuestring) {
-      dcache->hitstat_stmt.sql = apr_pstrdup(ctx->pool,tmp->valuestring);
-   }
-}
-#endif
 
 static void _mapcache_cache_sqlite_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache) {
    ezxml_t cur_node;
@@ -366,9 +323,6 @@ mapcache_cache* mapcache_cache_sqlite_create(mapcache_context *ctx) {
    cache->cache.tile_set = _mapcache_cache_sqlite_set;
    cache->cache.configuration_post_config = _mapcache_cache_sqlite_configuration_post_config;
    cache->cache.configuration_parse_xml = _mapcache_cache_sqlite_configuration_parse_xml;
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   cache->cache.configuration_parse_json = _mapcache_cache_sqlite_configuration_parse_json;
-#endif
    cache->create_stmt.sql = apr_pstrdup(ctx->pool,
          "create table if not exists tiles(x integer, y integer, z integer, data blob, dim text, ctime datetime, atime datetime, hitcount integer default 0, primary key(x,y,z,dim))");
    cache->exists_stmt.sql = apr_pstrdup(ctx->pool,

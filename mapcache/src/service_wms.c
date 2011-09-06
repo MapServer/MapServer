@@ -775,122 +775,6 @@ proxies:
 #endif
 }
 
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-void _configuration_parse_wms_json(mapcache_context *ctx, cJSON *node, mapcache_service *gservice, mapcache_cfg *cfg) {
-   assert(gservice->type == MAPCACHE_SERVICE_WMS);
-   mapcache_service_wms *wms = (mapcache_service_wms*)gservice;
-   cJSON *rules = cJSON_GetObjectItem(node,"forwarding_rules");
-   if(rules) {
-      int i;
-      for(i=0;i<cJSON_GetArraySize(rules);i++) {
-         mapcache_forwarding_rule *rule = apr_pcalloc(ctx->pool, sizeof(mapcache_forwarding_rule));
-         rule->match_params = apr_array_make(ctx->pool,1,sizeof(mapcache_dimension*));
-         cJSON *jrule = cJSON_GetArrayItem(rules,i);
-         
-         /* extract name */
-         cJSON *tmp  = cJSON_GetObjectItem(jrule,"name");
-         if(tmp && tmp->valuestring) {
-            rule->name = apr_pstrdup(ctx->pool,tmp->valuestring);
-         } else {
-            rule->name = apr_pstrdup(ctx->pool,"(null)");
-         }
-         
-         /* should the remaining pathinfo be appended to the proxied request ? */
-         tmp  = cJSON_GetObjectItem(jrule,"append_pathinfo");
-         if(tmp && tmp->type == cJSON_True) {
-            rule->append_pathinfo = 1;
-         } else {
-            rule->append_pathinfo = 0;
-         }
-
-         tmp = cJSON_GetObjectItem(jrule,"http");
-         if(!tmp || tmp->type != cJSON_Object) {
-            ctx->set_error(ctx,500,"rule \"%s\" does not contain an http object",rule->name);
-            return;
-         }
-         rule->http = mapcache_http_configuration_parse_json(ctx,tmp);
-         GC_CHECK_ERROR(ctx);
-         
-         tmp = cJSON_GetObjectItem(jrule,"params");
-         if(tmp && cJSON_GetArraySize(tmp)) {
-            int j;
-            for(j=0;j<cJSON_GetArraySize(tmp);j++) {
-               cJSON *param = cJSON_GetArrayItem(tmp,j);
-               mapcache_dimension *dimension = NULL;
-               char *name=NULL,*type=NULL;
-               cJSON *tmp2 = cJSON_GetObjectItem(param,"name");
-               if(tmp2 && tmp2->valuestring) {
-                  name = tmp2->valuestring;
-               }
-               tmp2 = cJSON_GetObjectItem(param,"type");
-               if(tmp2 && tmp2->valuestring) {
-                  type = tmp2->valuestring;
-               }
-               if(!name || !type) {
-                  ctx->set_error(ctx, 400, "mandatory \"name\" or \"type\" not found in forwarding rule params");
-                  return;
-               }
-               if(!strcmp(type,"values")) {
-                  dimension = mapcache_dimension_values_create(ctx->pool);
-               } else if(!strcmp(type,"regex")) {
-                  dimension = mapcache_dimension_regex_create(ctx->pool);
-               } else {
-                  ctx->set_error(ctx,400,"unknown forwarding_rule param type \"%s\". expecting \"values\" or \"regex\".",type);
-                  return;
-               }
-               dimension->name = apr_pstrdup(ctx->pool,name);
-               tmp2 = cJSON_GetObjectItem(param,"props");
-               if(!tmp2 || tmp2->type != cJSON_Object) {
-                  ctx->set_error(ctx, 400, "forwarding_rule \"%s\" param \"%s\" has no props",rule->name,name);
-               }
-
-               dimension->configuration_parse_json(ctx,dimension,tmp2);
-               GC_CHECK_ERROR(ctx);
-
-               APR_ARRAY_PUSH(rule->match_params,mapcache_dimension*) = dimension;
-            }
-            APR_ARRAY_PUSH(wms->forwarding_rules,mapcache_forwarding_rule*) = rule;
-         }
-      }
-   }
-   cJSON *full_getmap = cJSON_GetObjectItem(node,"full_getmap");
-   if(full_getmap && full_getmap->type == cJSON_Object) {
-      cJSON *tmp;
-      tmp = cJSON_GetObjectItem(full_getmap,"strategy");
-      if(tmp && tmp->valuestring) {
-         if(!strcasecmp("assemble",tmp->valuestring)) {
-            wms->getmap_strategy = MAPCACHE_GETMAP_ASSEMBLE;
-         } else if(!strcasecmp("forward",tmp->valuestring)) {
-            wms->getmap_strategy = MAPCACHE_GETMAP_FORWARD;
-         } else if(!strcasecmp("error",tmp->valuestring)) {
-            wms->getmap_strategy = MAPCACHE_GETMAP_ERROR;
-         } else {
-            ctx->set_error(ctx,400,"unknown full_getmap strategy \"%s\"",tmp->valuestring);
-            return;
-         }
-      }
-      tmp = cJSON_GetObjectItem(full_getmap,"resample_mode");
-      if(tmp && tmp->valuestring) {
-         if(!strcasecmp("bilinear",tmp->valuestring)) {
-            wms->resample_mode = MAPCACHE_RESAMPLE_BILINEAR;
-         } else if(!strcasecmp("nearest",tmp->valuestring)) {
-            wms->resample_mode = MAPCACHE_RESAMPLE_NEAREST;
-         } else {
-            ctx->set_error(ctx,400,"unknown full_getmap resample_mode \"%s\"",tmp->valuestring);
-            return;
-         }
-      }
-      tmp = cJSON_GetObjectItem(full_getmap,"format");
-      if(tmp && tmp->valuestring) {
-         wms->getmap_format = mapcache_configuration_get_image_format(cfg,tmp->valuestring);
-         if(!wms->getmap_format) {
-            ctx->set_error(ctx,400,"unknown full_getmap format \"%s\"",tmp->valuestring);
-            return;
-         }
-      }
-   }
-}
-#endif
 
 void _configuration_parse_wms_xml(mapcache_context *ctx, ezxml_t node, mapcache_service *gservice, mapcache_cfg *cfg) {
    assert(gservice->type == MAPCACHE_SERVICE_WMS);
@@ -997,9 +881,6 @@ mapcache_service* mapcache_service_wms_create(mapcache_context *ctx) {
    service->service.parse_request = _mapcache_service_wms_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wms;
    service->service.configuration_parse_xml = _configuration_parse_wms_xml;
-#ifdef ENABLE_UNMAINTAINED_JSON_PARSER
-   service->service.configuration_parse_json = _configuration_parse_wms_json;
-#endif
    service->getmap_strategy = MAPCACHE_GETMAP_ASSEMBLE;
    service->resample_mode = MAPCACHE_RESAMPLE_BILINEAR;
    service->getmap_format = NULL;
