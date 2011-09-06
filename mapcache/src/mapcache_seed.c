@@ -683,14 +683,21 @@ int main(int argc, const char **argv) {
     /* adjust our grid limits so they align on the metatile limits
      * we need to do this because the seeder does not check for individual tiles, it
      * goes from one metatile to the next*/
-
     for(n=0;n<grid_link->grid->nlevels;n++) {
-      grid_link->grid_limits[n][0] = (grid_link->grid_limits[n][0]/tileset->metasize_x)*tileset->metasize_x;
-      grid_link->grid_limits[n][1] = (grid_link->grid_limits[n][1]/tileset->metasize_y)*tileset->metasize_y;
-      grid_link->grid_limits[n][2] = (grid_link->grid_limits[n][2]/tileset->metasize_x+1)*tileset->metasize_x;
-      grid_link->grid_limits[n][3] = (grid_link->grid_limits[n][3]/tileset->metasize_y+1)*tileset->metasize_y;
+       if(tileset->metasize_x > 1) {
+          grid_link->grid_limits[n][0] = (grid_link->grid_limits[n][0]/tileset->metasize_x)*tileset->metasize_x;
+          grid_link->grid_limits[n][2] = (grid_link->grid_limits[n][2]/tileset->metasize_x+1)*tileset->metasize_x;
+          if( grid_link->grid_limits[n][2] > grid_link->grid->levels[n]->maxx)
+             grid_link->grid_limits[n][2] = grid_link->grid->levels[n]->maxx;
+       }
+       if(tileset->metasize_y > 1) {
+          grid_link->grid_limits[n][1] = (grid_link->grid_limits[n][1]/tileset->metasize_y)*tileset->metasize_y;
+          grid_link->grid_limits[n][3] = (grid_link->grid_limits[n][3]/tileset->metasize_y+1)*tileset->metasize_y;
+          if( grid_link->grid_limits[n][3] > grid_link->grid->levels[n]->maxy)
+             grid_link->grid_limits[n][3] = grid_link->grid->levels[n]->maxy;
+       }
     }
-    
+
     /* validate the supplied dimensions */
     if (!apr_is_empty_array(tileset->dimensions)) {
 
