@@ -195,14 +195,16 @@ AC_DEFUN([PIXMAN_CHECK],[
         ,
         [with_pixman=yes])
     
+    AC_MSG_CHECKING(for Pixman)
     if test "$with_pixman" = "no" -o "$with_pixman" = "" ; then
-      AC_MSG_RESULT(no)
+      AC_MSG_RESULT(disabled)
       PIXMAN_CONFIG="no"
     else
         if test -z "$PKGCONFIG"; then
             AC_MSG_ERROR([pixman support requested, but pkg-config not found/configured])
         fi
         if test "$with_pixman" = "yes" ; then
+            AC_MSG_RESULT(searching default locations)
             AC_MSG_CHECKING(for pixman pkg-config entry)
             `$PKGCONFIG --silence-errors -- pixman >> /dev/null`
             if test $? -eq 0 ; then
@@ -218,7 +220,13 @@ AC_DEFUN([PIXMAN_CHECK],[
                fi
             fi
         else
-          PIXMAN_CONFIG=$with_pixman
+          `$PKGCONFIG $with_pixman`
+          if test $? -eq 0 ; then
+            AC_MSG_RESULT([using supplied pkg-config definition $with_pixman])
+            PIXMAN_CONFIG=$with_pixman
+          else
+            AC_MSG_ERROR([failed to use $with_pixman])
+          fi
         fi
     fi
     
@@ -229,9 +237,21 @@ AC_DEFUN([PIXMAN_CHECK],[
       PIXMAN_INC=
       PIXMAN_LIB=
     else
-      PIXMAN_ENABLED="-DUSE_PIXMAN"
-      PIXMAN_LIB=`$PKGCONFIG --libs $PIXMAN_CONFIG`
-      PIXMAN_INC=`$PKGCONFIG --cflags $PIXMAN_CONFIG`
+      AC_MSG_CHECKING([if pixman version is >= 0.13.2])
+      PIXMAN_VERSION=`$PKGCONFIG --modversion -- "$PIXMAN_CONFIG"`
+      AC_MSG_RESULT([$PIXMAN_VERSION])
+      `$PKGCONFIG --silence-errors -- "$PIXMAN_CONFIG >= 0.13.2" >> /dev/null`
+      if test $? -eq 0 ; then
+         PIXMAN_ENABLED="-DUSE_PIXMAN"
+         PIXMAN_LIB=`$PKGCONFIG --libs $PIXMAN_CONFIG`
+         PIXMAN_INC=`$PKGCONFIG --cflags $PIXMAN_CONFIG`
+      else
+         AC_MSG_WARN([pixman support has been disabled because your version is too old.
+                      full WMS will use the internal (usually slower) image merging functions])
+         PIXMAN_ENABLED=
+         PIXMAN_INC=
+         PIXMAN_LIB=
+      fi
     fi
     AC_SUBST(PIXMAN_ENABLED,$PIXMAN_ENABLED)
     AC_SUBST(PIXMAN_INC,$PIXMAN_INC)
@@ -491,7 +511,7 @@ AC_DEFUN([GDAL_CHECK],[
           AC_MSG_CHECKING(for gdal-config usability in $with_gdal)
           if test -x "$with_gdal"; then
              GDALCONFIG=$with_gdal
-             AC_MSG_RESULT(yes)
+             AC_MSG_RESULT(ok)
           else
              AC_MSG_ERROR($with_gdal not found or not executable)
           fi

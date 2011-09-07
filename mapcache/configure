@@ -4602,15 +4602,19 @@ else
 fi
 
 
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Pixman" >&5
+$as_echo_n "checking for Pixman... " >&6; }
     if test "$with_pixman" = "no" -o "$with_pixman" = "" ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
       PIXMAN_CONFIG="no"
     else
         if test -z "$PKGCONFIG"; then
             as_fn_error $? "pixman support requested, but pkg-config not found/configured" "$LINENO" 5
         fi
         if test "$with_pixman" = "yes" ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: searching default locations" >&5
+$as_echo "searching default locations" >&6; }
             { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pixman pkg-config entry" >&5
 $as_echo_n "checking for pixman pkg-config entry... " >&6; }
             `$PKGCONFIG --silence-errors -- pixman >> /dev/null`
@@ -4629,7 +4633,14 @@ $as_echo "found" >&6; }
                fi
             fi
         else
-          PIXMAN_CONFIG=$with_pixman
+          `$PKGCONFIG $with_pixman`
+          if test $? -eq 0 ; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: using supplied pkg-config definition $with_pixman" >&5
+$as_echo "using supplied pkg-config definition $with_pixman" >&6; }
+            PIXMAN_CONFIG=$with_pixman
+          else
+            as_fn_error $? "failed to use $with_pixman" "$LINENO" 5
+          fi
         fi
     fi
 
@@ -4642,9 +4653,25 @@ $as_echo "$as_me: WARNING: pixman support has been disabled or could not be conf
       PIXMAN_INC=
       PIXMAN_LIB=
     else
-      PIXMAN_ENABLED="-DUSE_PIXMAN"
-      PIXMAN_LIB=`$PKGCONFIG --libs $PIXMAN_CONFIG`
-      PIXMAN_INC=`$PKGCONFIG --cflags $PIXMAN_CONFIG`
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking if pixman version is >= 0.13.2" >&5
+$as_echo_n "checking if pixman version is >= 0.13.2... " >&6; }
+      PIXMAN_VERSION=`$PKGCONFIG --modversion -- "$PIXMAN_CONFIG"`
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PIXMAN_VERSION" >&5
+$as_echo "$PIXMAN_VERSION" >&6; }
+      `$PKGCONFIG --silence-errors -- "$PIXMAN_CONFIG >= 0.13.2" >> /dev/null`
+      if test $? -eq 0 ; then
+         PIXMAN_ENABLED="-DUSE_PIXMAN"
+         PIXMAN_LIB=`$PKGCONFIG --libs $PIXMAN_CONFIG`
+         PIXMAN_INC=`$PKGCONFIG --cflags $PIXMAN_CONFIG`
+      else
+         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: pixman support has been disabled because your version is too old.
+                      full WMS will use the internal (usually slower) image merging functions" >&5
+$as_echo "$as_me: WARNING: pixman support has been disabled because your version is too old.
+                      full WMS will use the internal (usually slower) image merging functions" >&2;}
+         PIXMAN_ENABLED=
+         PIXMAN_INC=
+         PIXMAN_LIB=
+      fi
     fi
     PIXMAN_ENABLED=$PIXMAN_ENABLED
 
@@ -5107,8 +5134,8 @@ fi
 $as_echo_n "checking for gdal-config usability in $with_gdal... " >&6; }
           if test -x "$with_gdal"; then
              GDALCONFIG=$with_gdal
-             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: ok" >&5
+$as_echo "ok" >&6; }
           else
              as_fn_error $? "$with_gdal not found or not executable" "$LINENO" 5
           fi
