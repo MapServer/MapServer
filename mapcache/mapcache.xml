@@ -518,6 +518,7 @@
          <params>
             <FORMAT>image/png</FORMAT>
             <LAYERS>default</LAYERS>
+            <!--<MAP>/Users/tbonfort/dev/mapserver-utils/empty.map</MAP>-->
             <MAP>/Users/tbonfort/dev/mapserver-utils/osm-google.map</MAP>
          </params>
       </getmap>
@@ -723,7 +724,7 @@
          <abstract>see http://mapserver-utils.googlecode.com</abstract>
       </metadata>
       <source>osm</source>
-      <cache>disk</cache>
+      <cache>sqlite</cache>
       <format>PNG</format>
       <grid>FXX</grid>
       <grid>MILLER</grid>
