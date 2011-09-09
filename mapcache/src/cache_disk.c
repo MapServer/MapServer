@@ -33,6 +33,7 @@
 #include <apr_file_io.h>
 #include <string.h>
 #include <errno.h>
+#include <apr_mmap.h>
 
 #ifdef HAVE_SYMLINK
 #include <unistd.h>
@@ -208,8 +209,13 @@ static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) 
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FAILURE;
    }
-   if((rv=apr_file_open(&f, filename, APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
-         APR_OS_DEFAULT, ctx->pool)) == APR_SUCCESS) {
+   if((rv=apr_file_open(&f, filename, 
+#ifndef NOMMAP
+               APR_FOPEN_READ, APR_UREAD | APR_GREAD,
+#else
+               APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,APR_OS_DEFAULT,
+#endif
+               ctx->pool)) == APR_SUCCESS) {
       rv = apr_file_info_get(&finfo, APR_FINFO_SIZE|APR_FINFO_MTIME, f);
       if(!finfo.size) {
          ctx->set_error(ctx, 500, "tile %s has no data",filename);
@@ -227,11 +233,25 @@ static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) 
        */
       tile->mtime = finfo.mtime;
       tile->data = mapcache_buffer_create(size,ctx->pool);
+
+#ifndef NOMMAP
+      apr_mmap_t *tilemmap;
+      rv = apr_mmap_create(&tilemmap,f,0,finfo.size,APR_MMAP_READ,ctx->pool);
+      if(rv != APR_SUCCESS) {
+         char errmsg[120];
+         ctx->set_error(ctx, 500,  "mmap error: %s",apr_strerror(rv,errmsg,120));
+         return MAPCACHE_FAILURE;
+      }
+      tile->data->buf = tilemmap->mm;
+      tile->data->size = tile->data->avail = finfo.size;
+#else
       //manually add the data to our buffer
       apr_file_read(f,(void*)tile->data->buf,&size);
       tile->data->size = size;
+      tile->data->avail = size;
+#endif
       apr_file_close(f);
-      if(size != finfo.size) {
+      if(tile->data->size != finfo.size) {
          ctx->set_error(ctx, 500,  "failed to copy image data, got %d of %d bytes",(int)size, (int)finfo.size);
          return MAPCACHE_FAILURE;
       }
