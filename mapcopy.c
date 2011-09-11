@@ -941,6 +941,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
     MS_COPYSTELEM(status);
     MS_COPYSTELEM(height);
     MS_COPYSTELEM(width);
+    MS_COPYSTELEM(maxsize);
 
     for (i = 0; i < src->numlayers; i++) {
         if (msGrowMapLayers(dst) == NULL)
