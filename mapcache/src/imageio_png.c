@@ -150,6 +150,11 @@ mapcache_buffer* _mapcache_imageio_png_encode(mapcache_context *ctx, mapcache_im
       ctx->set_error(ctx, 500, "failed to allocate png_struct structure");
       return NULL;
    }
+   if(compression == MAPCACHE_COMPRESSION_BEST)
+      png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
+   else if(compression == MAPCACHE_COMPRESSION_FAST)
+      png_set_compression_level (png_ptr, Z_BEST_SPEED);
+   png_set_filter(png_ptr,0,PNG_FILTER_NONE);
 
    info_ptr = png_create_info_struct(png_ptr);
    if (!info_ptr)
@@ -179,10 +184,6 @@ mapcache_buffer* _mapcache_imageio_png_encode(mapcache_context *ctx, mapcache_im
    png_set_IHDR(png_ptr, info_ptr, img->w, img->h,
          8, color_type, PNG_INTERLACE_NONE,
          PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-   if(compression == MAPCACHE_COMPRESSION_BEST)
-      png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
-   else if(compression == MAPCACHE_COMPRESSION_FAST)
-      png_set_compression_level (png_ptr, Z_BEST_SPEED);
 
    png_write_info(png_ptr, info_ptr);
    if(color_type == PNG_COLOR_TYPE_RGB)
@@ -1032,6 +1033,11 @@ mapcache_buffer* _mapcache_imageio_png_q_encode( mapcache_context *ctx, mapcache
    if (!png_ptr)
       return (NULL);
 
+   if(compression == MAPCACHE_COMPRESSION_BEST)
+      png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
+   else if(compression == MAPCACHE_COMPRESSION_FAST)
+      png_set_compression_level (png_ptr, Z_BEST_SPEED);
+   png_set_filter(png_ptr,0,PNG_FILTER_NONE);
    info_ptr = png_create_info_struct(png_ptr);
    if (!info_ptr)
    {
@@ -1062,11 +1068,6 @@ mapcache_buffer* _mapcache_imageio_png_q_encode( mapcache_context *ctx, mapcache
          0, PNG_COMPRESSION_TYPE_DEFAULT,
          PNG_FILTER_TYPE_DEFAULT);
 
-   if(compression == MAPCACHE_COMPRESSION_BEST)
-      png_set_compression_level (png_ptr, Z_BEST_COMPRESSION);
-   else if(compression == MAPCACHE_COMPRESSION_FAST)
-      png_set_compression_level (png_ptr, Z_BEST_SPEED);
-   
    _mapcache_imageio_remap_palette(pixels, image->w * image->h, palette, numPaletteEntries,
          maxval,rgb,a,&num_a);
    
