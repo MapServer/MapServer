@@ -299,7 +299,7 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
         return;
 
     value = strstr(value,"bands");
-    if( value[5] != '\0' && value[5] != ' ' )
+    if( value == NULL || (value[5] != '\0' && value[5] != ' ') )
         return;
 
     /* Are there any w*s_bands_ metadata already? If so, skip out. */
