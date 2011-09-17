@@ -34,7 +34,7 @@
 
 MS_CVSID("$Id$")
 
-#ifdef USE_WCS_SVR
+#if defined(USE_WCS_SVR)
 
 #include "mapwcs.h"
 
@@ -526,6 +526,8 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
       xmlCleanupParser();
       return MS_SUCCESS;
 #else /* defined(USE_LIBXML2) */
+      msSetError(MS_WCSERR, "To enable POST requests, MapServer has to "
+                 "be compiled with libxml2.", "msWCSParseRequest()");
       return MS_FAILURE;
 #endif /* defined(USE_LIBXML2) */
   }
@@ -955,7 +957,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   if (tmpInt == OWS_VERSION_BADFORMAT)
   {
     return msWCSException(map, "InvalidParameterValue",
-                          "request", "1.0.0 ");
+                          "version", "1.0.0 ");
   }
 
   /* negotiate version */
@@ -2002,133 +2004,286 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
 
 int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request)
 {
-#ifdef USE_WCS_SVR
-  wcsParamsObj *params;  
-  int retVal = MS_DONE;
+#if defined(USE_WCS_SVR)
+    void *params = NULL; /* either wcsParamsObj* or wcs20ParamsObj* */
+    int status, retVal, operation;
+    
+    /* If SERVICE is not set or not WCS exit gracefully. */
+    if (ows_request->service == NULL
+        || !EQUAL(ows_request->service, "WCS"))
+    {
+        return MS_DONE;
+    }
+    
+    /* If no REQUEST is set, exit with an error */
+    if (ows_request->request == NULL)
+    {
+        /* The request has to be set. */
+        msSetError(MS_WCSERR, "Missing REQUEST parameter",
+                   "msWCSDispatch()");
+        return msWCSException(map, "MissingParameterValue", "request",
+                              ows_request->version );
+    }
 
-  /* First try to dispatch WCS 2.0.0.                                   */
-  /* TODO: Need to implement proper version negotiation (OWS Common)    */
-  /* once WCS 2.0.0 is fully specified.                                 */
-  /* Currently WCS 2.0.0 is only available if explicitly requested.     */
-  if ((retVal = msWCSDispatch20(map, request, ows_request)) != MS_DONE )
-  {
-    return retVal;
-  }
+    /* Check the number of enabled layers for the REQUEST */
+    msOWSRequestLayersEnabled(map, "C", ows_request->request, ows_request);
+    if (ows_request->numlayers == 0)
+    {
+        msSetError(MS_WCSERR, "WCS request not enabled. Check "
+                              "wcs/ows_enable_request settings.",
+                              "msWCSDispatch()");
+        return msWCSException(map, "InvalidParameterValue", "request",
+                              ows_request->version );
+    }
+    
+    if (EQUAL(ows_request->request, "GetCapabilities"))
+    {
+        operation = MS_WCS_GET_CAPABILITIES;
+    }
+    else if (EQUAL(ows_request->request, "DescribeCoverage"))
+    {
+        operation = MS_WCS_DESCRIBE_COVERAGE;
+    }
+    else if (EQUAL(ows_request->request, "GetCoverage"))
+    {
+        operation = MS_WCS_GET_COVERAGE;
+    }
+    else
+    {
+        msSetError(MS_WCSERR, "Invalid REQUEST parameter \"%s\"",
+                   "msWCSDispatch()", ows_request->request);
+        return msWCSException(map, "InvalidParameterValue", "request",
+                              ows_request->version);
+    }
+    
+    /* Check the VERSION parameter */
+    if (ows_request->version == NULL)
+    {
+        /* If the VERSION parameter is not set, it is either */
+        /* an error (Describe and GetCoverage), or it has to */
+        /* be determined (GetCapabilities). To determine the */
+        /* version, the request has to be fully parsed to    */
+        /* obtain the ACCEPTVERSIONS parameter. If this is   */
+        /* present also, set version to "2.0.0".             */
+        
+        if (operation == MS_WCS_GET_CAPABILITIES)
+        {
+            /* Parse it as if it was a WCS 2.0 request */
+            wcs20ParamsObjPtr params_tmp = msWCSCreateParamsObj20();
+            status = msWCSParseRequest20(map, request, ows_request, params_tmp);
+            if (status == MS_FAILURE)
+            {
+                msWCSFreeParamsObj20(params);
+                return msWCSException(map, "InvalidParameterValue",
+                                      "request", "2.0.0");
+            }
+            
+            /* VERSION negotiation */
+            if (params_tmp->accept_versions != NULL)
+            {
+                /* choose highest acceptable */
+                int i, highest_version = 0;
+                char version_string[OWS_VERSION_MAXLEN];
+                for(i = 0; params_tmp->accept_versions[i] != NULL; ++i)
+                {
+                    int version = msOWSParseVersionString(params_tmp->accept_versions[i]);
+                    if (version == OWS_VERSION_BADFORMAT)
+                    {
+                        msWCSFreeParamsObj20(params_tmp);
+                        return msWCSException(map, "InvalidParameterValue",
+                                              "version", NULL );
+                    }
+                    if(version > highest_version)
+                    {
+                        highest_version = version;
+                    }
+                }
+                msOWSGetVersionString(highest_version, version_string);
+                params_tmp->version = msStrdup(version_string);
+                ows_request->version = msStrdup(version_string);
+            }
+            else
+            {
+                /* set to highest acceptable */
+                params_tmp->version = msStrdup("2.0.0");
+                ows_request->version = msStrdup("2.0.0");
+            }
+            
+            /* check if we can keep the params object */
+            if (EQUAL(params_tmp->version, "2.0.0"))
+            {
+                params = params_tmp;
+            }
+            else
+            {
+                msWCSFreeParamsObj20(params_tmp);
+            }
+        }
+        else /* operation != GetCapabilities */
+        {
+            /* VERSION is mandatory in other requests */
+            msSetError(MS_WCSERR, "VERSION parameter not set.",
+                       "msWCSDispatch()");
+            return msWCSException(map, "InvalidParameterValue", "version",
+                                  NULL );
+        }
+    }
+    else
+    {
+        /* Parse the VERSION parameter */
+        int requested_version = msOWSParseVersionString(ows_request->version);
+        if (requested_version == OWS_VERSION_BADFORMAT)
+        {
+            /* Return an error if the VERSION is */
+            /* in an unsupported format.         */
+            return msWCSException(map, "InvalidParameterValue",
+                                  "version", NULL );
+        }
+        
+        if (operation == MS_WCS_GET_CAPABILITIES)
+        {
+            /* In case of GetCapabilities, make  */
+            char version_string[OWS_VERSION_MAXLEN];
+            int version, supported_versions[] = 
+                {OWS_2_0_0, OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
+            version = msOWSNegotiateVersion(requested_version,
+                                            supported_versions,
+                                            sizeof(supported_versions)/sizeof(int));
+            msOWSGetVersionString(version, version_string);
+            msFree(ows_request->version);
+            ows_request->version = msStrdup(version_string);
+        }
+    }
+    
+    /* VERSION specific request handler */
+    if (strcmp(ows_request->version, "1.0.0") == 0
+        || strcmp(ows_request->version, "1.1.0") == 0
+        || strcmp(ows_request->version, "1.1.1") == 0
+        || strcmp(ows_request->version, "1.1.2") == 0)
+    {
+        params = msWCSCreateParams();
+        status = msWCSParseRequest(request, params, map);
+        if (status == MS_FAILURE)
+        {
+            msWCSFreeParams(params);
+            free(params);
+            return msWCSException(map, "InvalidParameterValue",
+                                  "request", "2.0.0");
+        }
+        
+        if (operation == MS_WCS_GET_CAPABILITIES)
+        {
+            retVal = msWCSGetCapabilities(map, params, request, ows_request);
+        }
+        else if (operation == MS_WCS_DESCRIBE_COVERAGE)
+        {
+            retVal = msWCSDescribeCoverage(map, params, ows_request);
+        }
+        else if (operation == MS_WCS_GET_COVERAGE)
+        {
+            retVal = msWCSGetCoverage(map, request, params, ows_request);
+        }
+        return retVal;
+    }
+    else if (strcmp(ows_request->version, "2.0.0") == 0)
+    {
+#if defined(USE_LIBXML2)
+        int i;
+        char **invalid_get_parameters;
+        
+        if (params == NULL)
+        {
+            params = msWCSCreateParamsObj20();
+            status = msWCSParseRequest20(map, request, ows_request, params);
+            if (status == MS_FAILURE)
+            {
+                msWCSFreeParamsObj20(params);
+                return msWCSException(map, "InvalidParameterValue",
+                                      "request", "2.0.0");
+            }
+        }
+        
+        /* check if any unknown parameters are present              */
+        /* create an error message, containing all unknown params   */
+        invalid_get_parameters = ((wcs20ParamsObj*)params)->invalid_get_parameters;
+        if (invalid_get_parameters != NULL)
+        {
+            char *concat = NULL;
+            int i, count = CSLCount(invalid_get_parameters);
+            for(i = 0; i < count; ++i)
+            {
+                concat = msStringConcatenate(concat, (char *)"'");
+                concat = msStringConcatenate(concat, invalid_get_parameters[i]);
+                concat = msStringConcatenate(concat, (char *)"'");
+                if(i + 1 != count)
+                {
+                    concat = msStringConcatenate(concat, ", ");
+                }
+            }
+            msSetError(MS_WCSERR, "Unknown parameter%s: %s.",
+                       "msWCSDispatch()",
+                       (count > 1) ? "s" : "", concat);
+            msFree(concat);
+            msWCSFreeParamsObj20(params);
+            return msWCSException(map, "InvalidParameterValue", "request", "2.0.0");
+        }
 
-  /* populate the service parameters */
-  params = msWCSCreateParams();
-  if( msWCSParseRequest(request, params, map) == MS_FAILURE )
-  {
-      msWCSFreeParams(params); /* clean up */
-      free(params);
-      return MS_FAILURE;
-  }
+        /* check if all layer names are valid NCNames */
+        for(i = 0; i < map->numlayers; ++i)
+        {
+            if(!msWCSIsLayerSupported(map->layers[i]))
+                continue;
 
-  /* If SERVICE is specified then it MUST be "WCS" */
-  if(params->service && strcasecmp(params->service, "WCS") != 0)
-  {
-      msWCSFreeParams(params); /* clean up */
-      free(params);
-      msDebug("msWCSDispatch(): SERVICE is not WCS\n");
-      return MS_DONE;
-  }
+            /* Check if each layers name is a valid NCName. */
+            if (msEvalRegex("^[a-zA-z_][a-zA-Z0-9_.-]*$" , map->layers[i]->name) == MS_FALSE)
+            {
+                msSetError(MS_WCSERR, "Layer name '%s' is not a valid NCName.",
+                           "msWCSDispatch()", map->layers[i]->name);
+                msWCSFreeParamsObj20(params);
+                return msWCSException(map, "mapserv", "Internal", "2.0.0");
+            }
+        }
 
-  /* If SERVICE and REQUEST not included then not a WCS request */
-  if(!params->service && !params->request)
-  {
-      msWCSFreeParams(params); /* clean up */
-      free(params);
-      msDebug("msWCSDispatch(): SERVICE and REQUEST not included\n");
-      return MS_DONE;
-  }
+        /* Call operation specific functions */
+        if (operation == MS_WCS_GET_CAPABILITIES)
+        {
+            retVal = msWCSGetCapabilities20(map, request, params, ows_request);
+        }
+        else if (operation == MS_WCS_DESCRIBE_COVERAGE)
+        {
+            retVal = msWCSDescribeCoverage20(map, params, ows_request);
+        }
+        else if (operation == MS_WCS_GET_COVERAGE)
+        {
+            retVal = msWCSGetCoverage20(map, request, params, ows_request);
+        }
+        else
+        {
+            msSetError(MS_WCSERR, "Invalid request '%s'.",
+                       "msWCSDispatch20()", ows_request->request);
+            retVal = msWCSException20(map, "InvalidParameterValue",
+                                      "request", "2.0.0");
+        }
+        /* clean up */
+        msWCSFreeParamsObj20(params);
+        return retVal;
+#else /* def USE_LIBXML2 */
+        msSetError(MS_WCSERR, "WCS 2.0.0 needs mapserver to be compiled with libxml2.",
+                   "msWCSDispatch()");
+        return msWCSException(map, "mapserv", "NoApplicableCode", "1.0.0");
+#endif /* def USE_LIBXML2 */
+    }
+    else /* unsupported version */
+    {
+        msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.",
+                   "msWCSDispatch()", ows_request->version);
+        return msWCSException(map, "InvalidParameterValue",
+                              "version", ows_request->version);
+    }
 
-  msOWSRequestLayersEnabled(map, "C", params->request, ows_request);
-  if (ows_request->numlayers == 0)
-  {
-      msSetError(MS_WCSERR, "WCS request not enabled. Check wcs/ows_enable_request settings.", "msWCSDispatch()");
-      msWCSException(map, "InvalidParameterValue", "request",
-                     params->version );
-      msWCSFreeParams(params); /* clean up */
-      free(params);
-      params = NULL;
-      return MS_FAILURE;
-  }
-
-  /*
-  ** ok, it's a WCS request, check what we can at a global level and then dispatch to the various request handlers
-  */
-
-  /* check for existence of REQUEST parameter */
-  if (!params->request) {
-      msSetError(MS_WCSERR, "Missing REQUEST parameter", "msWCSDispatch()");
-      msWCSException(map, "MissingParameterValue", "request",
-                     params->version );
-    msWCSFreeParams(params); /* clean up */
-    free(params);
-    params = NULL;
-    return MS_FAILURE;
-  }
-
-
-  /* if either DescribeCoverage or GetCoverage, and version not passed
-     then return an exception */
-  if (((strcasecmp(params->request, "DescribeCoverage") == 0) ||
-     (strcasecmp(params->request, "GetCoverage") == 0)) &&
-     (!params->version)) {
-    msSetError(MS_WCSERR, "Missing VERSION parameter", "msWCSDispatch()");
-    msWCSException(map, "MissingParameterValue", "version", params->version);
-    msWCSFreeParams(params); /* clean up */
-    free(params);
-    params = NULL;
-    return MS_FAILURE;
-  }
-
-  /* For GetCapabilities, if version is not set, then set to the highest
-     version supported.  This should be cleaned up once #996 gets implemented */
-  if (!params->version || strcasecmp(params->version, "") == 0 || params->version == NULL) { /* this is a GetCapabilities request, set version */
-    params->version = msStrdup("1.1.2");
-  }
-
-  /* version is optional, but we do set a default value of 1.1.2, make sure request isn't for something different */
-  if((strcmp(params->version, "1.0.0") != 0
-     && strcmp(params->version, "1.1.0") != 0
-     && strcmp(params->version, "1.1.1") != 0
-     && strcmp(params->version, "1.1.2") != 0)
-     && strcasecmp(params->request, "GetCapabilities") != 0) {
-    msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.", "msWCSDispatch()", params->version);
-    msWCSException(map, "InvalidParameterValue", "version", params->version);
-  
-    msWCSFreeParams(params); /* clean up */
-    free(params);
-    params = NULL;
-
-    return MS_FAILURE;
-  }
-
-  /*
-  ** Start dispatching requests
-  */
-  if(strcasecmp(params->request, "GetCapabilities") == 0)    
-    retVal = msWCSGetCapabilities(map, params, request, ows_request);
-  else if(strcasecmp(params->request, "DescribeCoverage") == 0)    
-    retVal = msWCSDescribeCoverage(map, params, ows_request);
-  else if(strcasecmp(params->request, "GetCoverage") == 0)    
-    retVal = msWCSGetCoverage(map, request, params, ows_request);
-  else {
-    msSetError(MS_WCSERR, "Invalid REQUEST parameter \"%s\"", "msWCSDispatch()", params->request);
-    msWCSException(map, "InvalidParameterValue", "request", params->version);
-    msWCSFreeParams(params); /* clean up */
-    free(params);
-    params = NULL;
-    return MS_FAILURE;
-  }  
-
-  msWCSFreeParams(params); /* clean up */
-  free(params);
-  return retVal; /* not a WCS request, let MapServer take it */
 #else
-  msSetError(MS_WCSERR, "WCS server support is not available.", "msWCSDispatch()");
-  return MS_FAILURE;
+    msSetError(MS_WCSERR, "WCS server support is not available.", "msWCSDispatch()");
+    return MS_FAILURE;
 #endif
 }
 

@@ -109,6 +109,10 @@ typedef struct
     int numlayers;
     int *enabled_layers;
     
+    char *service;
+    char *version;
+    char *request;
+    void *document; /* xmlDocPtr or CPLXMLNode* */
 } owsRequestObj;
 
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode);

@@ -46,6 +46,12 @@
 
 #define MS_WCS_GML_COVERAGETYPE_RECTIFIED_GRID_COVERAGE "RectifiedGridCoverage"
 
+enum
+{
+    MS_WCS_GET_CAPABILITIES,
+    MS_WCS_DESCRIBE_COVERAGE,
+    MS_WCS_GET_COVERAGE
+};
 
 /*
 ** Structure to hold metadata taken from the image or image tile index
@@ -239,10 +245,23 @@ typedef wcs20coverageMetadataObj * wcs20coverageMetadataObjPtr;
 #define MS_WCS_20_PROFILE_SCALING   "http://www.opengis.net/spec/WCS_service-model_scaling+interpolation/1.0/conf/scaling+interpolation"
 #define MS_WCS_20_PROFILE_RANGESUBSET "http://www.opengis.net/spec/WCS_service-model_band-subsetting/1.0/conf/band-subsetting"
 
-int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request);
+/* -------------------------------------------------------------------- */
+/*      WCS 2.0 function prototypes.                                    */
+/* -------------------------------------------------------------------- */
 
-int msWCSException20(mapObj *map, const char *locator,
-                     const char *exceptionCode, const char *version);
+wcs20ParamsObjPtr msWCSCreateParamsObj20();
+void msWCSFreeParamsObj20(wcs20ParamsObjPtr params);
+int msWCSParseRequest20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request, wcs20ParamsObjPtr params);
+
+int msWCSException20(mapObj *map, const char *locator, const char *exceptionCode, const char *version);
+
+int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req, wcs20ParamsObjPtr params, owsRequestObj *ows_request);
+int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj *ows_request);
+int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request, wcs20ParamsObjPtr params, owsRequestObj *ows_request);
+
+/* -------------------------------------------------------------------- */
+/*      XML parsing helper macros.                                      */
+/* -------------------------------------------------------------------- */
 
 #define XML_FOREACH_CHILD(parent_node, child_node)              \
     for(child_node = parent_node->children; child_node != NULL; child_node = child_node->next)

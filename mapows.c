@@ -31,11 +31,183 @@
 #include "maptime.h"
 #include "maptemplate.h"
 
+#ifdef USE_LIBXML2
+    #include "maplibxml2.h"
+#else
+    #include "cpl_minixml.h"
+    #include "cpl_error.h"
+#endif
+
 #include <ctype.h> /* isalnum() */
 #include <stdarg.h> 
 #include <assert.h>
 
 MS_CVSID("$Id$")
+
+/*
+** msOWSInitRequestObj() initializes an owsRequestObj; i.e: sets
+** all internal pointers to NULL.
+*/
+static void msOWSInitRequestObj(owsRequestObj *ows_request)
+{
+    ows_request->numlayers = 0;
+    ows_request->enabled_layers = NULL;
+    
+    ows_request->service = NULL;
+    ows_request->version = NULL;
+    ows_request->request = NULL;
+    ows_request->document = NULL;
+}
+
+/*
+** msOWSClearRequestObj() releases all resources associated with an
+** owsRequestObj.
+*/
+static void msOWSClearRequestObj(owsRequestObj *ows_request)
+{
+    msFree(ows_request->enabled_layers);
+    msFree(ows_request->service);
+    msFree(ows_request->version);
+    msFree(ows_request->request);
+    if(ows_request->document)
+    {
+#if defined(USE_LIBXML2)
+        xmlFreeDoc(ows_request->document);
+        xmlCleanupParser();
+#else /* defined(USE_LIBXML2) */
+        CPLDestroyXMLNode(ows_request->document);
+#endif /* defined(USE_LIBXML2) */
+    }
+}
+
+/*
+** msOWSPreParseRequest() parses a cgiRequestObj either with GET/KVP 
+** or with POST/XML. Only SERVICE, VERSION (or WMTVER) and REQUEST are
+** being determined, all WxS (or SOS) specific parameters are parsed
+** within the according handler.
+** The results are saved within an owsRequestObj. If the request was
+** transmitted with POST/XML, either the document (if compiled with
+** libxml2) or the root CPLXMLNode is saved to the ows_request->document
+** field.
+** Returns MS_SUCCESS upon success, MS_FAILURE if severe errors occurred
+** or MS_DONE, if the service could not be determined.
+*/
+static int msOWSPreParseRequest(cgiRequestObj *request,
+                                owsRequestObj *ows_request)
+{
+    /* decide if KVP or XML */
+    if (request->type == MS_GET_REQUEST)
+    {
+        int i;
+        /* parse KVP parameters service, version and request */
+        for (i = 0; i < request->NumParams; ++i)
+        {
+            if (EQUAL(request->ParamNames[i], "SERVICE"))
+            {
+                ows_request->service = msStrdup(request->ParamValues[i]);
+            }
+            else if (EQUAL(request->ParamNames[i], "VERSION")
+                     || EQUAL(request->ParamNames[i], "WMTVER")) /* for WMS */
+            {
+                ows_request->version = msStrdup(request->ParamValues[i]);
+            }
+            else if (EQUAL(request->ParamNames[i], "REQUEST"))
+            {
+                ows_request->request = msStrdup(request->ParamValues[i]);
+            }
+            
+            /* stop if we have all necessary parameters */
+            if(ows_request->service && ows_request->version && ows_request->request)
+            {
+                break;
+            }
+        }
+    }
+    else if (request->type == MS_POST_REQUEST)
+    {
+#if defined(USE_LIBXML2)
+        xmlNodePtr root = NULL;
+#else
+        CPLXMLNode *temp;
+#endif
+        if (!request->postrequest || !strlen(request->postrequest))
+        {
+            msSetError(MS_WCSERR, "POST request is empty.",
+                       "msOWSPreParseRequest()");
+            return MS_FAILURE;
+        }
+#if defined(USE_LIBXML2)        
+        /* parse to DOM-Structure with libxml2 and get the root element */
+        ows_request->document = xmlParseMemory(request->postrequest,
+                                               strlen(request->postrequest));
+        if (ows_request->document == NULL
+            || (root = xmlDocGetRootElement(ows_request->document)) == NULL)
+        {
+            xmlErrorPtr error = xmlGetLastError();
+            msSetError(MS_WCSERR, "XML parsing error: %s",
+                       "msOWSPreParseRequest()", error->message);
+            return MS_FAILURE;
+        }
+        
+        /* Get service, version and request from root */
+        ows_request->service = (char *) xmlGetProp(root, BAD_CAST "service");
+        ows_request->version = (char *) xmlGetProp(root, BAD_CAST "version");
+        ows_request->request = msStrdup((char *) root->name);
+        
+#else /* defined(USE_LIBXML2) */
+        /* parse with CPLXML */
+        ows_request->document = CPLParseXMLString(request->postrequest);
+        if (ows_request->document == NULL)
+        {
+            msSetError(MS_WCSERR, "XML parsing error: %s",
+                       "msOWSPreParseRequest()", CPLGetLastErrorMsg());
+            return MS_FAILURE;
+        }
+        
+        /* remove all namespaces */
+        CPLStripXMLNamespace(ows_request->document, NULL, 1);
+        for (temp = ows_request->document;
+             temp != NULL;
+             temp = temp->psNext)
+        {
+            
+            if (temp->eType == CXT_Element)
+            {
+                const char *service, *version;
+                ows_request->request = msStrdup(temp->pszValue);
+                
+                if ((service = CPLGetXMLValue(temp, "service", NULL)) != NULL)
+                {
+                    ows_request->service = msStrdup(service);
+                }
+                if ((version = CPLGetXMLValue(temp, "version", NULL)) != NULL)
+                {
+                    ows_request->version = msStrdup(version);
+                }
+                continue;
+            }
+        }
+#endif /* defined(USE_LIBXML2) */
+    }
+    
+    /* certain WMS requests do not require the service parameter */
+    /* see: http://trac.osgeo.org/mapserver/ticket/2531          */
+    if (ows_request->service == NULL
+        && ows_request->request != NULL)
+    {
+        if (EQUAL(ows_request->request, "GetMap")
+            || EQUAL(ows_request->request, "GetFeatureInfo"))
+        {
+            ows_request->service = msStrdup("WMS");
+        }
+        else /* service could not be determined */
+        {
+            return MS_DONE;
+        }
+    }
+    
+    return MS_SUCCESS;
+}
 
 /*
 ** msOWSDispatch() is the entry point for any OWS request (WMS, WFS, ...)
@@ -49,115 +221,93 @@ MS_CVSID("$Id$")
 */
 int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 {
-    int i, status = MS_DONE;
-    const char *service=NULL;
-    int force_ows_mode = 0;
+    int status = MS_DONE, force_ows_mode = 0;
     owsRequestObj ows_request;
 
     if (!request)
-      return status;
-
-    if (ows_mode == OWS || ows_mode == WFS)
-      force_ows_mode = 1;
-    
-    ows_request.numlayers = 0;
-    ows_request.enabled_layers = NULL;
-    
-    for( i=0; i<request->NumParams; i++ ) 
     {
-        if(strcasecmp(request->ParamNames[i], "SERVICE") == 0)
-            service = request->ParamValues[i];
-    }
-
-#ifdef USE_WMS_SVR
-    /* Note: SERVICE param did not exist in WMS 1.0.0, it was added only in WMS 1.1.0,
-     * so we need to let msWMSDispatch check for known REQUESTs even if SERVICE is not set.
-     */
-    if ((status = msWMSDispatch(map, request, &ows_request, MS_FALSE)) != MS_DONE )
-    {
-        msFree(ows_request.enabled_layers);
         return status;
     }
+
+    force_ows_mode = (ows_mode == OWS || ows_mode == WFS);
+    
+    msOWSInitRequestObj(&ows_request);
+    switch(msOWSPreParseRequest(request, &ows_request))
+    {
+    case MS_FAILURE: /* a severe error occurred */
+        return MS_FAILURE;
+    case MS_DONE: 
+        /* OWS Service could not be determined              */
+        /* continue for now                                 */
+        status = MS_DONE;
+    }
+    
+    if (ows_request.service == NULL)
+    {
+        /* exit if service is not set */
+        if(force_ows_mode)
+        {
+            msSetError( MS_MISCERR,
+                        "OWS Common exception: exceptionCode=MissingParameterValue, locator=SERVICE, ExceptionText=SERVICE parameter missing.", 
+                        "msOWSDispatch()");
+            status = MS_FAILURE;
+        }
+        else
+        {
+            status = MS_DONE;
+        }
+    }
+    else if (EQUAL(ows_request.service, "WMS"))
+    {
+#ifdef USE_WMS_SVR
+        status = msWMSDispatch(map, request, &ows_request, MS_FALSE);
 #else
-    if( service != NULL && strcasecmp(service,"WMS") == 0 )
         msSetError( MS_WMSERR, 
                     "SERVICE=WMS requested, but WMS support not configured in MapServer.", 
                     "msOWSDispatch()" );
 #endif
-
-#ifdef USE_WFS_SVR
-    /* Note: WFS supports POST requests, so the SERVICE param may only be in the post data
-     * and not be present in the GET URL
-     */
-    if ((status = msWFSDispatch(map, request, &ows_request, (ows_mode == WFS))) != MS_DONE )
-    {
-        msFree(ows_request.enabled_layers);
-        return status;
     }
-
+    else if (EQUAL(ows_request.service, "WFS"))
+    {
+#ifdef USE_WFS_SVR
+        status = msWFSDispatch(map, request, &ows_request, (ows_mode == WFS));
 #else
-    if( service != NULL && strcasecmp(service,"WFS") == 0 )
         msSetError( MS_WFSERR, 
                     "SERVICE=WFS requested, but WFS support not configured in MapServer.", 
                     "msOWSDispatch()" );
 #endif
-
-#ifdef USE_WCS_SVR
-    if ((status = msWCSDispatch(map, request, &ows_request)) != MS_DONE )
-    {
-        msFree(ows_request.enabled_layers);
-        return status;
     }
+    else if (EQUAL(ows_request.service, "WCS"))
+    {
+#ifdef USE_WCS_SVR
+        status = msWCSDispatch(map, request, &ows_request);
 #else
-    if( service != NULL && strcasecmp(service,"WCS") == 0 )
         msSetError( MS_WCSERR, 
                     "SERVICE=WCS requested, but WCS support not configured in MapServer.", 
                     "msOWSDispatch()" );
 #endif
-
-#ifdef USE_SOS_SVR
-    if ((status = msSOSDispatch(map, request, &ows_request)) != MS_DONE )
-    {
-        msFree(ows_request.enabled_layers);
-        return status;
     }
+    else if (EQUAL(ows_request.service, "SOS"))
+    {
+#ifdef USE_SOS_SVR
+        status = msSOSDispatch(map, request, &ows_request);
 #else
-    if( service != NULL && strcasecmp(service,"SOS") == 0 )
         msSetError( MS_SOSERR, 
                     "SERVICE=SOS requested, but SOS support not configured in MapServer.", 
                     "msOWSDispatch()" );
 #endif
-
-    if (force_ows_mode) {
-        if (service == NULL)
-            /* Here we should return real OWS Common exceptions... once 
-             * we have a proper exception handler in mapowscommon.c 
-             */
-            msSetError( MS_MISCERR,
-                        "OWS Common exception: exceptionCode=MissingParameterValue, locator=SERVICE, ExceptionText=SERVICE parameter missing.", 
-                        "msOWSDispatch()");
-        else
-            /* Here we should return real OWS Common exceptions... once 
-             * we have a proper exception handler in mapowscommon.c 
-             */
-            msSetError( MS_MISCERR,
-                        "OWS Common exception: exceptionCode=InvalidParameterValue, locator=SERVICE, ExceptionText=SERVICE parameter value invalid.", 
-                        "msOWSDispatch()");
-        
-        /* Force mapserv to report the error by returning MS_FAILURE. 
-         * The day we have a proper exception handler here then we should 
-         * return MS_SUCCESS since the exception will have been processed 
-         * the OWS way, which is a success as far as mapserv is concerned 
-         */
-        msFree(ows_request.enabled_layers);
-        return MS_FAILURE; 
+    }
+    else if(force_ows_mode)
+    {
+        msSetError( MS_MISCERR,
+                    "OWS Common exception: exceptionCode=InvalidParameterValue, locator=SERVICE, ExceptionText=SERVICE parameter value invalid.", 
+                    "msOWSDispatch()");
+        status = MS_FAILURE;
     }
 
-    msFree(ows_request.enabled_layers);
-    return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it 
-                      * since we're not in force_ows_mode*/
+    msOWSClearRequestObj(&ows_request);
+    return status;
 }
-
 
 /*
 ** msOWSRequestIsEnabled()

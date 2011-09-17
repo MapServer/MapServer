@@ -981,145 +981,89 @@ static int msWCSParseRequest20_XMLGetCoverage(
 /*      before the parameters can be extracted.                         */
 /************************************************************************/
 
-int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
+int msWCSParseRequest20(mapObj *map,
+                        cgiRequestObj *request,
+                        owsRequestObj *ows_request,
+                        wcs20ParamsObjPtr params)
 {
     int i;
-    if (params == NULL || request == NULL)
+    if (params == NULL || request == NULL || ows_request == NULL)
     {
         msSetError(MS_WCSERR, "Internal error.", "msWCSParseRequest20()");
         return MS_FAILURE;
     }
+    
+    /* Copy arbitrary service, version and request. */
+    params->service = msStrdup(ows_request->service);
+    if(ows_request->version != NULL)
+    {
+        params->version = msStrdup(ows_request->version);
+    }
+    params->request = msStrdup(ows_request->request);
 
+    
     /* Parse the POST request */
-    if (request->type == MS_POST_REQUEST && request->postrequest &&
-            strlen(request->postrequest))
+    if (request->type == MS_POST_REQUEST)
     {
 #if defined(USE_LIBXML2)
-        xmlDocPtr doc = NULL;
+        xmlDocPtr doc = ows_request->document;
         xmlNodePtr root = NULL;
+        const char *validate;
         int ret = MS_SUCCESS;
 
-        msDebug("msWCSParseRequest20(): Parsing request %s\n",
-                request->postrequest);
-
-        if (params->version    != NULL
-            || params->request != NULL
-            || params->service != NULL
-            || params->ids     != NULL
-            || params->axes    != NULL)
-        {
-            msSetError(MS_WCSERR, "Params object has already been parsed",
-                    "msWCSParseRequest20()");
-            return MS_FAILURE;
-        }
-
         /* parse to DOM-Structure and get root element */
-        doc = xmlParseMemory(request->postrequest, strlen(request->postrequest));
         if(doc == NULL)
         {
             xmlErrorPtr error = xmlGetLastError();
             msSetError(MS_WCSERR, "XML parsing error: %s",
-                    "msWCSParseRequest20()", error->message);
+                       "msWCSParseRequest20()", error->message);
             return MS_FAILURE;
         }
+        
         root = xmlDocGetRootElement(doc);
-
-        /* Get service, version and request from root */
-        params->request = msStrdup((char *) root->name);
-        params->service = (char *) xmlGetProp(root, BAD_CAST "service");
-        params->version = (char *) xmlGetProp(root, BAD_CAST "version");
-
-        if(params->service != NULL && EQUAL(params->service, "WCS"))
+        
+        validate = msOWSLookupMetadata(&(map->web.metadata), "CO", "validate_xml");
+        if (validate != NULL && EQUAL(validate, "TRUE"))
         {
-            if(EQUAL(params->request, "GetCapabilities"))
+            char *schema_dir = msStrdup(msOWSLookupMetadata(&(map->web.metadata),
+                                                            "CO", "schemas_dir"));
+            if (schema_dir != NULL
+                && (params->version == NULL || 
+                    EQUALN(params->version, "2.0", 3)))
             {
-                ret = msWCSParseRequest20_XMLGetCapabilities(root, params);
-            }
-            else if(params->version != NULL && EQUALN(params->version, "2.0", 3))
-            {
-                if(EQUAL(params->request, "DescribeCoverage"))
+                schema_dir = msStringConcatenate(schema_dir, 
+                                                 "wcs/2.0.0/wcsAll.xsd");
+                if (msOWSSchemaValidation(schema_dir, request->postrequest) != 0)
                 {
-                    ret = msWCSParseRequest20_XMLDescribeCoverage(root, params);
-                }
-                else if(EQUAL(params->request, "GetCoverage"))
-                {
-                    ret = msWCSParseRequest20_XMLGetCoverage(root, params);
+                    msSetError(MS_WCSERR, "Invalid POST request. "
+                               "XML is not valid",
+                               "msWCSParseRequest20()");
+                    return MS_FAILURE;
                 }
             }
+            msFree(schema_dir);
         }
-        else
+        
+        if(EQUAL(params->request, "GetCapabilities"))
         {
-            ret = MS_DONE;
+            ret = msWCSParseRequest20_XMLGetCapabilities(root, params);
         }
-
-        xmlFreeDoc(doc);
-        xmlCleanupParser();
-
+        else if(params->version != NULL && EQUALN(params->version, "2.0", 3))
+        {
+            if(EQUAL(params->request, "DescribeCoverage"))
+            {
+                ret = msWCSParseRequest20_XMLDescribeCoverage(root, params);
+            }
+            else if(EQUAL(params->request, "GetCoverage"))
+            {
+                ret = msWCSParseRequest20_XMLGetCoverage(root, params);
+            }
+        }
         return ret;
 
 #else /* defined(USE_LIBXML2) */
-        /* 'Parse' the xml line by line, only find out Version and Service */
-        char **lines = NULL;
-        int numLines = 0, i;
-        lines = msStringSplit(request->postrequest, '\n', &numLines);
-        for(i = 0; i < numLines; ++i)
-        {
-            char **tokens = NULL;
-            int numTokens = 0, j = 0;
-
-            if(EQUALN(lines[i], "<?xml", 5))
-                continue;
-
-            tokens = msStringSplit(lines[i], ' ', &numTokens);
-            for(j = 0; j < numTokens; ++j)
-            {
-                if(EQUALN(tokens[j], "SERVICE", strlen("SERVICE")))
-                {
-                    int k;
-                    char *value = strchr(tokens[j], '=');
-                    if(value == NULL)
-                        continue;
-                    ++value;
-                    if(value[0] == '"' || value[0] == '\'')
-                        ++value;
-
-                    for(k = strlen(value) - 1; k > 0; --k)
-                    {
-                        if(value[k] == '\'' || value[k] == '"')
-                        {
-                            value[k] = '\0';
-                            break;
-                        }
-                    }
-
-                    params->service = msStrdup(value);
-                }
-                else if(EQUALN(tokens[j], "VERSION", strlen("VERSION")))
-                {
-                    int k;
-                    char *value = strchr(tokens[j], '=');
-                    if(value == NULL)
-                        continue;
-                    ++value;
-                    if(value[0] == '"' || value[0] == '\'')
-                        ++value;
-
-                    for(k = strlen(value) - 1; k > 0; --k)
-                    {
-                        if(value[k] == '\'' || value[k] == '"')
-                        {
-                            value[k] = '\0';
-                            break;
-                        }
-                    }
-
-                    params->version = msStrdup(value);
-                }
-            }
-            msFreeCharArray(tokens, numTokens);
-        }
-        msFreeCharArray(lines, numLines);
-        return MS_SUCCESS;
+        /* TODO: maybe with CPLXML? */
+        return MS_DONE;
 #endif /* defined(USE_LIBXML2) */
     }
 
@@ -1134,33 +1078,15 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
 
         if (EQUAL(key, "VERSION"))
         {
-            if (params->version)
-            {
-                msSetError(MS_WCSERR, "Parameter 'Version' is already set.",
-                        "msWCSParseRequest20()");
-                return MS_FAILURE;
-            }
-            params->version = msStrdup(value);
+            continue;
         }
         else if (EQUAL(key, "REQUEST"))
         {
-            if (params->request)
-            {
-                msSetError(MS_WCSERR, "Parameter 'Request' is already set.",
-                        "msWCSParseRequest20()");
-                return MS_FAILURE;
-            }
-            params->request = msStrdup(value);
+            continue;
         }
         else if (EQUAL(key, "SERVICE"))
         {
-            if (params->service)
-            {
-                msSetError(MS_WCSERR, "Parameter 'Service' is already set.",
-                        "msWCSParseRequest20()");
-                return MS_FAILURE;
-            }
-            params->service = msStrdup(value);
+            continue;
         }
         else if (EQUAL(key, "ACCEPTVERSIONS"))
         {
@@ -1199,27 +1125,15 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
             if (params->ids != NULL)
             {
                 msSetError(MS_WCSERR, "Parameter 'CoverageID' is already set. "
-                        "For multiple IDs use a comma separated list.",
-                        "msWCSParseRequest20()");
+                           "For multiple IDs use a comma separated list.",
+                           "msWCSParseRequest20()");
                 return MS_FAILURE;
             }
             tokens = msStringSplit(value, ',', &num);
-            params->ids = (char **) VSICalloc(num + 1, sizeof(char *));
-            if (params->ids == NULL)
-            {
-                fprintf(stderr, "VSICalloc(): Out of memory allocating %ld bytes.\n",
-                        (long)((num + 1)*sizeof(char *)));
-                exit(1);
-            }
+            params->ids = (char **) msSmallCalloc(num + 1, sizeof(char *));
             for (j = 0; j < num; ++j)
             {
-                params->ids[j] = VSIStrdup(tokens[j]);
-                if (params->ids[j] == NULL)
-                {
-                    fprintf(stderr, "VSIStrdup(): Out of memory allocating %ld bytes.\n",
-                        (long)(strlen(tokens[j])));
-                    exit(1);
-                }
+                params->ids[j] = msStrdup(tokens[j]);
             }
             msFreeCharArray(tokens, num);
         }
@@ -1267,7 +1181,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
             if(axis->size != 0)
             {
                 msSetError(MS_WCSERR, "The size of the axis is already set.",
-                        "msWCSParseRequest20()");
+                           "msWCSParseRequest20()");
                 return MS_FAILURE;
             }
             axis->size = size;
@@ -1358,8 +1272,6 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
                 = CSLAddString(params->invalid_get_parameters, key);
         }
     }
-
-
 
     return MS_SUCCESS;
 }
@@ -3978,189 +3890,5 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 }
 
 #endif /* defined(USE_LIBXML2) */
-
-/************************************************************************/
-/*                   msWCSDispatch20()                                  */
-/*                                                                      */
-/*      Dispatches a mapserver request. First the cgiRequest is         */
-/*      parsed. Afterwards version and service are beeing checked.      */
-/*      If they aren't compliant, MS_DONE is returned. Otherwise        */
-/*      either GetCapabilities, DescribeCoverage or GetCoverage         */
-/*      operations are executed.                                        */
-/************************************************************************/
-
-int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request)
-{
-    wcs20ParamsObjPtr params = NULL;
-    int returnValue = MS_FAILURE, status;
-
-    params = msWCSCreateParamsObj20();
-    status = msWCSParseRequest20(request, params);
-
-#if defined(USE_LIBXML2)
-    if(status == MS_FAILURE)
-    {
-        msDebug("msWCSDispatch20(): Parse error occurred.\n");
-        msWCSException20(map, "InvalidParameterValue", "request", "2.0.0" );
-        msWCSFreeParamsObj20(params);
-        return MS_FAILURE;
-    }
-    else if(status == MS_DONE)
-    {
-        /* could not be parsed, but no error */
-        /* continue for now...               */
-    }
-
-    /* first check if Service is WCS */
-    if (params->service == NULL
-        || !EQUAL(params->service, "WCS"))
-    {
-        /* The service is not WCS, exit with MS_DONE */
-        msDebug("msWCSDispatch20(): wrong service (%s)\n",
-                (params->service != NULL) ? params->service : "none");
-        msWCSFreeParamsObj20(params);
-        msResetErrorList();
-        return MS_DONE;
-    }
-
-    /* check if request is set */
-    if(params->request == NULL)
-    {
-        /* If service is WCS, a request must be set. */
-        /* Therefore, exit with a failure.           */
-        msSetError(MS_WCSERR, "Missing REQUEST parameter",
-                "msWCSDispatch20()");
-        msWCSException20(map, "MissingParameterValue", "request",
-                params->version );
-        msWCSFreeParamsObj20(params); /* clean up */
-        return MS_FAILURE;
-    }
-
-    /* Handle version negotiation for GetCapabilities. */
-    /* Only if accepted versions are given, and not a  */
-    /* predefined version.                             */
-    if (EQUAL(params->request, "GetCapabilities")
-        && params->accept_versions != NULL
-        && params->version         == NULL)
-    {
-        int i, highest_version = 0;
-        char version_string[OWS_VERSION_MAXLEN];
-        for(i = 0; params->accept_versions[i] != NULL; ++i)
-        {
-            int version = msOWSParseVersionString(params->accept_versions[i]);
-            if (version == OWS_VERSION_BADFORMAT)
-            {
-                msWCSException20(map, "InvalidParameterValue",
-                        "request", "2.0.0" );
-                msWCSFreeParamsObj20(params);
-                return MS_FAILURE;
-            }
-            if(version > highest_version)
-            {
-                highest_version = version;
-            }
-        }
-        msOWSGetVersionString(highest_version, version_string);
-        params->version = msStrdup(version_string);
-    }
-
-    /* Now the version has to be set */
-    if(params->version == NULL
-        || !EQUAL(params->version, "2.0.0"))
-    {
-        msDebug("msWCSDispatch20(): version and service are not compliant with WCS 2.0.0\n");
-        msWCSFreeParamsObj20(params);
-        msResetErrorList();
-        return MS_DONE;
-    }
-
-    msOWSRequestLayersEnabled(map, "C", params->request, ows_request);
-    if (ows_request->numlayers == 0)
-    {
-        msSetError(MS_WCSERR, "WCS request not enabled. Check wcs/ows_enable_request settings.", "msWCSDispatch20()");
-        msWCSException20(map, "InvalidParameterValue", "request",
-                         params->version );
-        msWCSFreeParamsObj20(params); /* clean up */
-        return MS_FAILURE;
-    }
-
-    /* check if any unknown parameters are present              */
-    /* create an error message, containing all unknown params   */
-    if (params->invalid_get_parameters != NULL)
-    {
-        char *concat = NULL;
-        int i, count = CSLCount(params->invalid_get_parameters);
-        for(i = 0; i < count; ++i)
-        {
-            concat = msStringConcatenate(concat, (char *)"'");
-            concat = msStringConcatenate(concat, params->invalid_get_parameters[i]);
-            concat = msStringConcatenate(concat, (char *)"'");
-            if(i + 1 != count)
-            {
-                concat = msStringConcatenate(concat, ", ");
-            }
-        }
-        msSetError(MS_WCSERR, "Unknown parameter%s: %s.",
-                "msWCSParseRequest20()", (count > 1) ? "s" : "", concat);
-        msFree(concat);
-        msWCSFreeParamsObj20(params);
-        return msWCSException(map, "InvalidParameterValue", "request", "2.0.0");
-    }
-
-    /* check if all layer names are valid NCNames */
-    {
-        int i;
-        for(i = 0; i < map->numlayers; ++i)
-        {
-            if(!msWCSIsLayerSupported(map->layers[i]))
-                continue;
-
-            if(msStringIsNCName(map->layers[i]->name) == MS_FALSE)
-            {
-                msSetError(MS_WCSERR, "Layer name '%s' is not a valid NCName.",
-                        "msWCSDescribeCoverage20()", map->layers[i]->name);
-                msWCSFreeParamsObj20(params);
-                return msWCSException(map, "mapserv", "Internal", "2.0.0");
-            }
-        }
-    }
-
-    /* Call operation specific functions */
-    if (EQUAL(params->request, "GetCapabilities"))
-    {
-        returnValue = msWCSGetCapabilities20(map, request, params, ows_request);
-    }
-    else if (EQUAL(params->request, "DescribeCoverage"))
-    {
-        returnValue = msWCSDescribeCoverage20(map, params, ows_request);
-    }
-    else if (EQUAL(params->request, "GetCoverage"))
-    {
-        returnValue = msWCSGetCoverage20(map, request, params, ows_request);
-    }
-    else
-    {
-        msSetError(MS_WCSERR, "Invalid request '%s'.",
-                "msWCSDispatch20()", params->request);
-        returnValue = msWCSException20(map, "InvalidParameterValue",
-                "request", params->version);
-    }
-    /* clean up */
-    msWCSFreeParamsObj20(params);
-    return returnValue;
-
-#else /* defined(USE_LIBXML2) */
-    if(params->service && params->version &&
-            EQUAL(params->service, "WCS") && EQUAL(params->version, "2.0.0"))
-    {
-        msSetError(MS_WCSERR, "WCS 2.0.0 needs mapserver to be compiled with libxml2.", "msWCSDispatch20()");
-        return msWCSException(map, "mapserv", "NoApplicableCode", "1.0.0");
-    }
-    else
-    {
-        return MS_DONE;
-    }
-#endif /* defined(USE_LIBXML2) */
-}
 
 #endif /* defined(USE_WCS_SVR) */
