@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-#include "/opt/local/include/png.h"
+#include "png.h"
 #include "setjmp.h"
 #include <assert.h>
 #include "jpeglib.h"
