@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-#include "png.h"
+#include "/opt/local/include/png.h"
 #include "setjmp.h"
 #include <assert.h>
 #include "jpeglib.h"
@@ -262,6 +262,9 @@ int savePalettePNG(rasterBufferObj *rb, streamInfo *info, int compression) {
 
    if (!png_ptr)
       return (MS_FAILURE);
+   
+   png_set_compression_level(png_ptr, compression);
+   png_set_filter (png_ptr,0, PNG_FILTER_NONE); 
 
    info_ptr = png_create_info_struct(png_ptr);
    if (!info_ptr)
@@ -281,7 +284,6 @@ int savePalettePNG(rasterBufferObj *rb, streamInfo *info, int compression) {
    else
       png_set_write_fn(png_ptr,info, png_write_data_to_buffer, png_flush_data);
    
-   png_set_compression_level(png_ptr, compression);
    
    if (rb->data.palette.num_entries <= 2)
     sample_depth = 1;
@@ -450,6 +452,9 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
         if (!png_ptr)
             return (MS_FAILURE);
 	
+        png_set_compression_level(png_ptr, compression);
+        png_set_filter (png_ptr,0, PNG_FILTER_NONE); 
+        
         info_ptr = png_create_info_struct(png_ptr);
         if (!info_ptr)
         {
@@ -473,7 +478,6 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
         else
             color_type = PNG_COLOR_TYPE_RGB;
 	
-        png_set_compression_level(png_ptr, compression);
         png_set_IHDR(png_ptr, info_ptr, rb->width, rb->height,
                      8, color_type, PNG_INTERLACE_NONE,
                      PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
