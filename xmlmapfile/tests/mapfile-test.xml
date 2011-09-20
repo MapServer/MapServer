@@ -23,15 +23,13 @@
 			<align>CENTER</align>
 			<angle>FOLLOW</angle>
 			<antialias>TRUE</antialias>
-			<backgroundColor red="244" green="43" blue="22"/>
-			<backgroundShadowColor red="244" green="43" blue="22"/>
-			<backgroundShadowSize x="2" y="2"/>
 			<buffer>2</buffer>
 			<colorAttribute>[myColor]</colorAttribute>
 			<encoding>ISO 8859-1</encoding>
 			<font>serif</font>
 			<force>TRUE</force>
 			<maxLength>244</maxLength>
+			<maxOverlapAngle>30</maxOverlapAngle>
 			<maxSize>244</maxSize>
 			<minDistance>24</minDistance>
 			<minFeatureSize>AUTO</minFeatureSize>
@@ -107,9 +105,6 @@
 			<align>CENTER</align>
 			<angle>[myAngle]</angle>
 			<antialias>FALSE</antialias>
-			<backgroundColor red="244" green="43" blue="22"/>
-			<backgroundShadowColor red="244" green="43" blue="22"/>
-			<backgroundShadowSize x="2" y="2"/>
 			<buffer>2</buffer>
 			<colorAttribute>[myColor]</colorAttribute>
 			<encoding>ISO 8859-1</encoding>
@@ -129,6 +124,9 @@
 			<shadowColor red="244" green="43" blue="22"/>
 			<shadowSize x="15" y="14"/>
 			<size>SMALL</size>
+                        <Style>
+                          <geomTransform>VERTICES</geomTransform>
+                        </Style>
 			<wrap>\n</wrap>
 		</Label>
 		<outlineColor red="12" green="45" blue="12"/>
@@ -142,33 +140,23 @@
 	<shapePath>../data</shapePath>
 	<size x="600" y="400"/>
 	<symbolSet>/tmp/mySymbolSet.sym</symbolSet>
-	<Symbol name="mySymbol2-test2" type="CARTOLINE">
+	<Symbol name="mySymbol2-test2" type="SIMPLE">
 		<antialias>FALSE</antialias>
 		<character>C</character>
 		<filled>TRUE</filled>
 		<font>serif</font>
-		<gap>13</gap>
 		<image>/tmp/test.gif</image>
-		<lineCap>ROUND</lineCap>
-		<lineJoin>BEVEL</lineJoin>
-		<lineJoinMaxSize>3</lineJoinMaxSize>
-		<pattern>2 3</pattern>
 		<Points>
 			<point x="2" y="-3"/>
 		</Points>
 		<transparent>123</transparent>
 	</Symbol>
-        <Symbol name="mySymbol222-test1" type="CARTOLINE">
+        <Symbol name="mySymbol222-test1" type="SIMPLE">
           <antialias>FALSE</antialias>
           <character>C</character>
           <filled>TRUE</filled>
           <font>serif</font>
-          <gap>13</gap>
           <image>/tmp/test.gif</image>
-          <lineCap>ROUND</lineCap>
-          <lineJoin>BEVEL</lineJoin>
-          <lineJoinMaxSize>3</lineJoinMaxSize>
-          <pattern>2 3</pattern>
           <Points>
             <point x="2" y="-3"/>
           </Points>
