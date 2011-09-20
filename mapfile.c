@@ -2705,6 +2705,17 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   
   writeNumber(stream, indent, "GAP", 0, style->gap);
 
+  if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
+    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 6,
+                 MS_GEOMTRANSFORM_BBOX, "\"bbox\"",
+                 MS_GEOMTRANSFORM_END, "\"end\"",
+                 MS_GEOMTRANSFORM_LABELPOINT, "\"labelpnt\"",
+                 MS_GEOMTRANSFORM_LABELPOLY, "\"labelpoly\"",
+                 MS_GEOMTRANSFORM_START, "\"start\"",
+                 MS_GEOMTRANSFORM_VERTICES, "\"vertices\""
+    );
+  }
+
   if(style->linecap != MS_CJC_DEFAULT_CAPS) {
      writeKeyword(stream,indent,"LINECAP",(int)style->linecap,5,
            MS_CJC_NONE,"NONE",
@@ -2780,11 +2791,6 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
     writeDimension(stream, indent, "DATARANGE", style->minvalue, style->maxvalue, NULL, NULL);
   }
 
-  if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-    /*
-    ** TODO: fprintf(stream, "        GEOMTRANSFORM \"%s\"\n",style->_geomtransformexpression);
-    */
-  }
   writeBlockEnd(stream, indent, "STYLE");
 }
 
