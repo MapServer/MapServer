@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (future 6.0.2, SVN branch-6-0):
 ---------------------------
 
+- PHP MapScript is missing many styleObj properties (#3901)
+
 - Added GEOMTRANSFORM in writeStyle function
 
 - WCS 1.0: Fix crash with some _rangeset_axes values (#4020)
