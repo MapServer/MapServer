@@ -45,13 +45,19 @@
         <antialias>TRUE</antialias>
         <backgroundColor red="244" green="43" blue="22"/>
         <color red="244" green="43" blue="22"/>
+        <gap>13</gap>
         <geomTransform>VERTICES</geomTransform>
+        <lineCap>ROUND</lineCap>
+        <lineJoin>BEVEL</lineJoin>
+        <lineJoinMaxSize>3</lineJoinMaxSize>
         <maxSize>244</maxSize>
+        <maxWidth>28</maxWidth>
         <minSize>6</minSize>
         <minWidth>24</minWidth>
         <offset x="12" y="33"/>
         <opacity>1253</opacity>
         <outlineColorAttribute>[myOulineColorAttribute]</outlineColorAttribute>
+        <pattern>2 3</pattern>
         <size>[mySize]</size>
         <symbol type="NAME">star.gif</symbol>
         <width>[myWidth]</width>
@@ -63,7 +69,6 @@
     <classGroup>group1</classGroup>
     <classItem>population</classItem>
     <Cluster>
-      <buffer>2</buffer>
       <filter type="MSEXPR">(type=’road’ and size &lt; 2)</filter>
       <group type="REGEX">/ddea/i</group>
       <maxdistance>20</maxdistance>
@@ -94,7 +99,7 @@
     <header>http://mapgears.com/templates/myHeader1.html</header>
     <Join name="myJoin1" type="ONE-TO-MANY">
       <connection>user=nobody password=****** dbname=dbname host=localhost port=5432</connection>
-      <connectionType>OGR</connectionType>
+      <connectionType>POSTGRESQL</connectionType>
       <from>ID</from>
       <table>./data/lookup.dbf</table>
       <template>http://mapgears.com/templates/myJoin1.html</template>
