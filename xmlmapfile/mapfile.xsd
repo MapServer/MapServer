@@ -579,6 +579,7 @@
         <!-- CLUSTER Definition -->
 	<xs:complexType name="Cluster">
 		<xs:sequence>
+			<xs:element name="buffer" type="xs:float" minOccurs="0"/>
 			<xs:element name="filter" type="ms:expressionType" minOccurs="0"/>
 			<xs:element name="group" type="ms:expressionType" minOccurs="0"/>
 			<xs:element name="maxdistance" type="xs:positiveInteger" minOccurs="0"/>
