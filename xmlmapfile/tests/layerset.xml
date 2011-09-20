@@ -69,6 +69,7 @@
     <classGroup>group1</classGroup>
     <classItem>population</classItem>
     <Cluster>
+      <buffer>3.3</buffer>
       <filter type="MSEXPR">(type=’road’ and size &lt; 2)</filter>
       <group type="REGEX">/ddea/i</group>
       <maxdistance>20</maxdistance>
