@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (future 6.0.2, SVN branch-6-0):
 ---------------------------
+- fix centroid geomtransform parser (#4029)
 
 - PHP MapScript is missing many styleObj properties (#3901)
 
