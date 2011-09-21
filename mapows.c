@@ -31,9 +31,9 @@
 #include "maptime.h"
 #include "maptemplate.h"
 
-#ifdef USE_LIBXML2
+#if defined(USE_LIBXML2)
     #include "maplibxml2.h"
-#else
+#elif defined(USE_GDAL)
     #include "cpl_minixml.h"
     #include "cpl_error.h"
 #endif
@@ -74,9 +74,9 @@ static void msOWSClearRequestObj(owsRequestObj *ows_request)
 #if defined(USE_LIBXML2)
         xmlFreeDoc(ows_request->document);
         xmlCleanupParser();
-#else /* defined(USE_LIBXML2) */
+#elif defined(USE_GDAL)
         CPLDestroyXMLNode(ows_request->document);
-#endif /* defined(USE_LIBXML2) */
+#endif
     }
 }
 
@@ -127,12 +127,12 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
     {
 #if defined(USE_LIBXML2)
         xmlNodePtr root = NULL;
-#else
+#elif defined(USE_GDAL)
         CPLXMLNode *temp;
 #endif
         if (!request->postrequest || !strlen(request->postrequest))
         {
-            msSetError(MS_WCSERR, "POST request is empty.",
+            msSetError(MS_OWSERR, "POST request is empty.",
                        "msOWSPreParseRequest()");
             return MS_FAILURE;
         }
@@ -144,7 +144,7 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
             || (root = xmlDocGetRootElement(ows_request->document)) == NULL)
         {
             xmlErrorPtr error = xmlGetLastError();
-            msSetError(MS_WCSERR, "XML parsing error: %s",
+            msSetError(MS_OWSERR, "XML parsing error: %s",
                        "msOWSPreParseRequest()", error->message);
             return MS_FAILURE;
         }
@@ -154,12 +154,12 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
         ows_request->version = (char *) xmlGetProp(root, BAD_CAST "version");
         ows_request->request = msStrdup((char *) root->name);
         
-#else /* defined(USE_LIBXML2) */
+#elif defined(USE_GDAL)
         /* parse with CPLXML */
         ows_request->document = CPLParseXMLString(request->postrequest);
         if (ows_request->document == NULL)
         {
-            msSetError(MS_WCSERR, "XML parsing error: %s",
+            msSetError(MS_OWSERR, "XML parsing error: %s",
                        "msOWSPreParseRequest()", CPLGetLastErrorMsg());
             return MS_FAILURE;
         }
@@ -187,6 +187,12 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
                 continue;
             }
         }
+#else
+        /* could not parse XML since no parser was compiled */
+        msSetError(MS_OWSERR, "Could not parse the POST XML since MapServer"
+                              "was not compiled with libxml2 or GDAL.",
+                   "msOWSPreParseRequest()");
+        return MS_FAILURE;
 #endif /* defined(USE_LIBXML2) */
     }
     

@@ -494,7 +494,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
 
 int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params, 
-                           cgiRequestObj *req)
+                           cgiRequestObj *req, owsRequestObj *ows_request)
 
 {
     msSetError( MS_WFSERR,

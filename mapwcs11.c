@@ -1380,8 +1380,8 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 
 /* ==================================================================== */
 
-int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
-
+int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params,
+                            owsRequestObj *ows_request)
 {
     msSetError( MS_WCSERR,
                 "WCS 1.1 request made, but mapserver requires libxml2 for WCS 1.1 services and this is not configured.",
@@ -1392,8 +1392,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params)
 /* ==================================================================== */
 
 int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params, 
-                                  cgiRequestObj *req)
-
+                           cgiRequestObj *req, owsRequestObj *ows_request)
 {
     msSetError( MS_WCSERR,
                 "WCS 1.1 request made, but mapserver requires libxml2 for WCS 1.1 services and this is not configured.",
