@@ -2941,13 +2941,196 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent) {
 
 }
 
+/*
+ * make sure that the timestring is complete and acceptable
+ * to the date_trunc function :
+ * - if the resolution is year (2004) or month (2004-01),
+ * a complete string for time would be 2004-01-01
+ * - if the resolluion is hour or minute (2004-01-01 15), a
+ * complete time is 2004-01-01 15:00:00
+ */
+int postgresTimeStampForTimeString(const char *timestring, char *dest, size_t destsize) {
+   int nlength = strlen(timestring);
+   int timeresolution = msTimeGetResolution(timestring);
+   if (timeresolution < 0)
+      return MS_FALSE;
+   
+   switch(timeresolution) {
+      case TIME_RESOLUTION_YEAR:
+         if (timestring[nlength-1] != '-') {
+            snprintf(dest, destsize,"date '%s-01-01'",timestring);
+         } else {
+            snprintf(dest, destsize,"date '%s01-01'",timestring);
+         }
+         break;
+      case TIME_RESOLUTION_MONTH:
+         if (timestring[nlength-1] != '-') {
+            snprintf(dest, destsize,"date '%s-01'",timestring);
+         } else {
+            snprintf(dest, destsize,"date '%s01'",timestring);
+         }
+         break;
+      case TIME_RESOLUTION_DAY:
+         snprintf(dest, destsize,"date '%s'",timestring);
+         break;
+      case TIME_RESOLUTION_HOUR:
+         if (timestring[nlength-1] != ':') {
+            snprintf(dest, destsize,"timestamp '%s:00:00'", timestring);
+         } else {
+            snprintf(dest, destsize,"timestamp '%s00:00'", timestring);
+         }
+         break;
+      case TIME_RESOLUTION_MINUTE:
+         if (timestring[nlength-1] != ':') {
+            snprintf(dest, destsize,"timestamp '%s:00'", timestring);
+         } else {
+            snprintf(dest, destsize,"timestamp '%s00'", timestring);
+         }
+         break;
+      case TIME_RESOLUTION_SECOND:
+            snprintf(dest, destsize,"timestamp '%s'", timestring);
+         break;
+      default:
+         return MS_FAILURE;
+   }
+   return MS_SUCCESS;
+
+}
+
+
+/*
+ * create a postgresql where clause for the given timestring, taking into account
+ * the resolution (e.g. second, day, month...) of the given timestring
+ * we apply the date_trunc function on the given timestring and not on the time
+ * column in order for postgres to take advantage of an eventual index on the
+ * time column
+ *
+ * the generated sql is
+ * 
+ * (
+ *    timecol >= date_trunc(timestring,resolution)
+ *      and
+ *    timecol < date_trunc(timestring,resolution) + interval '1 resolution'
+ * )
+ */
+int createPostgresTimeCompareSimple(const char *timecol, const char *timestring, char *dest, size_t destsize) {
+   int timeresolution = msTimeGetResolution(timestring);
+   char timeStamp[100];
+   if (timeresolution < 0)
+      return MS_FALSE;
+   char *interval; 
+   postgresTimeStampForTimeString(timestring,timeStamp,100);
+   
+   switch(timeresolution) {
+      case TIME_RESOLUTION_YEAR:
+         interval = "year";
+         break;
+      case TIME_RESOLUTION_MONTH:
+         interval = "month";
+         break;
+      case TIME_RESOLUTION_DAY:
+         interval = "day";
+         break;
+      case TIME_RESOLUTION_HOUR:
+         interval = "hour";
+         break;
+      case TIME_RESOLUTION_MINUTE:
+         interval = "minute";
+         break;
+      case TIME_RESOLUTION_SECOND:
+         interval = "second";
+         break;
+      default:
+         return MS_FAILURE;
+   }
+   snprintf(dest, destsize,"(%s >= date_trunc('%s',%s) and %s < date_trunc('%s',%s) + interval '1 %s')",
+               timecol, interval, timeStamp, timecol, interval, timeStamp, interval);
+   return MS_SUCCESS;
+}
+
+/*
+ * create a postgresql where clause for the range given by the two input timestring,
+ * taking into account the resolution (e.g. second, day, month...) of each of the
+ * given timestrings (both timestrings can have different resolutions, although I don't
+ * know if that's a valid TIME range
+ * we apply the date_trunc function on the given timestrings and not on the time
+ * column in order for postgres to take advantage of an eventual index on the
+ * time column
+ *
+ * the generated sql is
+ * 
+ * (
+ *    timecol >= date_trunc(mintimestring,minresolution)
+ *      and
+ *    timecol < date_trunc(maxtimestring,maxresolution) + interval '1 maxresolution'
+ * )
+ */
+int createPostgresTimeCompareRange(const char *timecol, const char *mintime, const char *maxtime,
+      char *dest, size_t destsize) {
+   int mintimeresolution = msTimeGetResolution(mintime);
+   int maxtimeresolution = msTimeGetResolution(maxtime);
+   char minTimeStamp[100];
+   char maxTimeStamp[100];
+   if (mintimeresolution < 0 || maxtimeresolution < 0)
+      return MS_FALSE;
+   char *minTimeInterval,*maxTimeInterval; 
+   postgresTimeStampForTimeString(mintime,minTimeStamp,100);
+   postgresTimeStampForTimeString(maxtime,maxTimeStamp,100);
+   
+   switch(maxtimeresolution) {
+      case TIME_RESOLUTION_YEAR:
+         maxTimeInterval = "year";
+         break;
+      case TIME_RESOLUTION_MONTH:
+         maxTimeInterval = "month";
+         break;
+      case TIME_RESOLUTION_DAY:
+         maxTimeInterval = "day";
+         break;
+      case TIME_RESOLUTION_HOUR:
+         maxTimeInterval = "hour";
+         break;
+      case TIME_RESOLUTION_MINUTE:
+         maxTimeInterval = "minute";
+         break;
+      case TIME_RESOLUTION_SECOND:
+         maxTimeInterval = "second";
+         break;
+      default:
+         return MS_FAILURE;
+   }
+   switch(mintimeresolution) {
+      case TIME_RESOLUTION_YEAR:
+         minTimeInterval = "year";
+         break;
+      case TIME_RESOLUTION_MONTH:
+         minTimeInterval = "month";
+         break;
+      case TIME_RESOLUTION_DAY:
+         minTimeInterval = "day";
+         break;
+      case TIME_RESOLUTION_HOUR:
+         minTimeInterval = "hour";
+         break;
+      case TIME_RESOLUTION_MINUTE:
+         minTimeInterval = "minute";
+         break;
+      case TIME_RESOLUTION_SECOND:
+         minTimeInterval = "second";
+         break;
+      default:
+         return MS_FAILURE;
+   }
+   snprintf(dest, destsize,"(%s >= date_trunc('%s',%s) and %s < date_trunc('%s',%s) + interval '1 %s')",
+               timecol, minTimeInterval, minTimeStamp,
+               timecol, maxTimeInterval, maxTimeStamp, maxTimeInterval);
+   return MS_SUCCESS;
+}
+
 int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char *timefield)
 {
-    char *tmpstimestring = NULL;
-    char *timeresolution = NULL;
-    int timesresol = -1;
-    char **atimes, **tokens = NULL;
-    int numtimes=0,i=0,ntmp=0,nlength=0;
+    char **atimes, **aranges = NULL;
+    int numtimes=0,i=0,numranges=0;
     size_t buffer_size = 512;
     char buffer[512], bufferTmp[512];
 
@@ -2957,344 +3140,63 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
     if (!lp || !timestring || !timefield)
       return MS_FALSE;
 
+    /* discrete time */
     if (strstr(timestring, ",") == NULL && 
         strstr(timestring, "/") == NULL) /* discrete time */
-      tmpstimestring = msStrdup(timestring);
-    else
     {
-        atimes = msStringSplit (timestring, ',', &numtimes);
-        if (atimes == NULL || numtimes < 1)
+        createPostgresTimeCompareSimple(timefield, timestring, buffer, buffer_size);
+    } else {
+
+       /* multiple times, or ranges */
+       atimes = msStringSplit (timestring, ',', &numtimes);
+       if (atimes == NULL || numtimes < 1)
           return MS_FALSE;
 
-        if (numtimes >= 1)
-        {
-            tokens = msStringSplit(atimes[0],  '/', &ntmp);
-            if (ntmp == 2) /* ranges */
-            {
-                tmpstimestring = msStrdup(tokens[0]);
-                msFreeCharArray(tokens, ntmp);
-            }
-            else if (ntmp == 1) /* multiple times */
-            {
-                tmpstimestring = msStrdup(atimes[0]);
-            }
-        }
-        msFreeCharArray(atimes, numtimes);
+       strlcat(buffer, "(", buffer_size);
+       for(i=0;i<numtimes;i++) {
+          if(i!=0) {
+             strlcat(buffer, " OR ", buffer_size);
+          }
+          strlcat(buffer, "(", buffer_size);
+          aranges = msStringSplit(atimes[i],  '/', &numranges);
+          if(!aranges) return MS_FALSE;
+          if(numranges == 1) {
+             /* we don't have range, just a simple time */
+             createPostgresTimeCompareSimple(timefield, atimes[i], bufferTmp, buffer_size);
+             strlcat(buffer, bufferTmp, buffer_size);
+          } else if(numranges == 2) {
+             /* we have a range */
+             createPostgresTimeCompareRange(timefield, aranges[0], aranges[1], bufferTmp, buffer_size);
+             strlcat(buffer, bufferTmp, buffer_size);
+          } else {
+             return MS_FALSE;
+          }
+          msFreeCharArray(aranges, numranges);
+          strlcat(buffer, ")", buffer_size);
+       }
+       strlcat(buffer, ")", buffer_size);
+       msFreeCharArray(atimes, numtimes);
     }
-    if (!tmpstimestring)
+    if(!*buffer) {
       return MS_FALSE;
-        
-    timesresol = msTimeGetResolution((const char*)tmpstimestring);
-    if (timesresol < 0)
-      return MS_FALSE;
-
-    free(tmpstimestring);
-
-    switch (timesresol)
+    } 
+    if(lp->filteritem) free(lp->filteritem);
+    lp->filteritem = msStrdup(timefield);
+    if (&lp->filter)
     {
-        case (TIME_RESOLUTION_SECOND):
-          timeresolution = msStrdup("second");
-          break;
-
-        case (TIME_RESOLUTION_MINUTE):
-          timeresolution = msStrdup("minute");
-          break;
-
-        case (TIME_RESOLUTION_HOUR):
-          timeresolution = msStrdup("hour");
-          break;
-
-        case (TIME_RESOLUTION_DAY):
-          timeresolution = msStrdup("day");
-          break;
-
-        case (TIME_RESOLUTION_MONTH):
-          timeresolution = msStrdup("month");
-          break;
-
-        case (TIME_RESOLUTION_YEAR):
-          timeresolution = msStrdup("year");
-          break;
-
-        default:
-          break;
+       /* if the filter is set and it's a string type, concatenate it with
+          the time. If not just free it */
+       if (lp->filter.type == MS_EXPRESSION)
+       {
+          snprintf(bufferTmp, buffer_size, "(%s) and %s", lp->filter.string, buffer);
+          loadExpressionString(&lp->filter, bufferTmp);
+       } else {
+          freeExpression(&lp->filter);
+          loadExpressionString(&lp->filter, buffer);
+       }
     }
 
-    if (!timeresolution)
-      return MS_FALSE;
 
-    /* where date_trunc('month', _cwctstamp) = '2004-08-01' */
-    if (strstr(timestring, ",") == NULL && 
-        strstr(timestring, "/") == NULL) /* discrete time */
-    {
-        if(lp->filteritem) free(lp->filteritem);
-        lp->filteritem = msStrdup(timefield);
-        if (&lp->filter)
-        {
-            /* if the filter is set and it's a string type, concatenate it with
-               the time. If not just free it */
-            if (lp->filter.type == MS_EXPRESSION)
-            {
-                snprintf(bufferTmp, buffer_size, "(%s) and ", lp->filter.string);
-                strlcat(buffer, bufferTmp, buffer_size);
-            }
-            else
-              freeExpression(&lp->filter);
-        }
-        
-
-        snprintf(bufferTmp, buffer_size, "(date_trunc('%s', %s) = '%s", 
-                 timeresolution, timefield, timestring);
-        strlcat(buffer, bufferTmp, buffer_size);
-         
-        /* make sure that the timestring is complete and acceptable */
-        /* to the date_trunc function : */
-        /* - if the resolution is year (2004) or month (2004-01),  */
-        /* a complete string for time would be 2004-01-01 */
-        /* - if the resolluion is hour or minute (2004-01-01 15), a  */
-        /* complete time is 2004-01-01 15:00:00 */
-        if (strcasecmp(timeresolution, "year")==0)
-        {
-            nlength = strlen(timestring);
-            if (timestring[nlength-1] != '-')
-              strlcat(buffer,"-01-01", buffer_size);
-            else
-              strlcat(buffer,"01-01", buffer_size);
-        }            
-        else if (strcasecmp(timeresolution, "month")==0)
-        {
-            nlength = strlen(timestring);
-            if (timestring[nlength-1] != '-')
-              strlcat(buffer,"-01", buffer_size);
-            else
-              strlcat(buffer,"01", buffer_size);
-        }            
-        else if (strcasecmp(timeresolution, "hour")==0)
-        {
-            nlength = strlen(timestring);
-            if (timestring[nlength-1] != ':')
-              strlcat(buffer,":00:00", buffer_size);
-            else
-              strlcat(buffer,"00:00", buffer_size);
-        }            
-        else if (strcasecmp(timeresolution, "minute")==0)
-        {
-            nlength = strlen(timestring);
-            if (timestring[nlength-1] != ':')
-              strlcat(buffer,":00", buffer_size);
-            else
-              strlcat(buffer,"00", buffer_size);
-        }            
-        
-
-        strlcat(buffer, "')", buffer_size);
-        
-        /* loadExpressionString(&lp->filter, (char *)timestring); */
-        loadExpressionString(&lp->filter, buffer);
-
-        free(timeresolution);
-        return MS_TRUE;
-    }
-    
-    atimes = msStringSplit (timestring, ',', &numtimes);
-    if (atimes == NULL || numtimes < 1)
-      return MS_FALSE;
-
-    if (numtimes >= 1)
-    {
-        /* check to see if we have ranges by parsing the first entry */
-        tokens = msStringSplit(atimes[0],  '/', &ntmp);
-        if (ntmp == 2) /* ranges */
-        {
-            msFreeCharArray(tokens, ntmp);
-            for (i=0; i<numtimes; i++)
-            {
-                tokens = msStringSplit(atimes[i],  '/', &ntmp);
-                if (ntmp == 2)
-                {
-                    if (strlen(buffer) > 0)
-                      strlcat(buffer, " OR ", buffer_size);
-                    else
-                      strlcat(buffer, "(", buffer_size);
-
-                    snprintf(bufferTmp, buffer_size, "(date_trunc('%s', %s) >= '%s", 
-                             timeresolution, timefield, tokens[0]);
-                    strlcat(buffer, bufferTmp, buffer_size);
-                    
-                    /* - if the resolution is year (2004) or month (2004-01),  */
-                    /* a complete string for time would be 2004-01-01 */
-                    /* - if the resolluion is hour or minute (2004-01-01 15), a  */
-                    /* complete time is 2004-01-01 15:00:00 */
-                    if (strcasecmp(timeresolution, "year")==0)
-                    {
-                        nlength = strlen(tokens[0]);
-                        if (tokens[0][nlength-1] != '-')
-                          strlcat(buffer,"-01-01", buffer_size);
-                        else
-                          strlcat(buffer,"01-01", buffer_size);
-                    }            
-                    else if (strcasecmp(timeresolution, "month")==0)
-                    {
-                        nlength = strlen(tokens[0]);
-                        if (tokens[0][nlength-1] != '-')
-                          strlcat(buffer,"-01", buffer_size);
-                        else
-                          strlcat(buffer,"01", buffer_size);
-                    }            
-                    else if (strcasecmp(timeresolution, "hour")==0)
-                    {
-                        nlength = strlen(tokens[0]);
-                        if (tokens[0][nlength-1] != ':')
-                          strlcat(buffer,":00:00", buffer_size);
-                        else
-                          strlcat(buffer,"00:00", buffer_size);
-                    }            
-                    else if (strcasecmp(timeresolution, "minute")==0)
-                    {
-                        nlength = strlen(tokens[0]);
-                        if (tokens[0][nlength-1] != ':')
-                          strlcat(buffer,":00", buffer_size);
-                        else
-                          strlcat(buffer,"00", buffer_size);
-                    }            
-
-                    snprintf(bufferTmp, buffer_size, "' AND date_trunc('%s', %s) <= '%s", 
-                             timeresolution, timefield, tokens[1]);
-                    strlcat(buffer, bufferTmp, buffer_size);
-
-                    /* - if the resolution is year (2004) or month (2004-01),  */
-                    /* a complete string for time would be 2004-01-01 */
-                    /* - if the resolluion is hour or minute (2004-01-01 15), a  */
-                    /* complete time is 2004-01-01 15:00:00 */
-                    if (strcasecmp(timeresolution, "year")==0)
-                    {
-                        nlength = strlen(tokens[1]);
-                        if (tokens[1][nlength-1] != '-')
-                          strlcat(buffer,"-01-01", buffer_size);
-                        else
-                          strlcat(buffer,"01-01", buffer_size);
-                    }            
-                    else if (strcasecmp(timeresolution, "month")==0)
-                    {
-                        nlength = strlen(tokens[1]);
-                        if (tokens[1][nlength-1] != '-')
-                          strlcat(buffer,"-01", buffer_size);
-                        else
-                          strlcat(buffer,"01", buffer_size);
-                    }            
-                    else if (strcasecmp(timeresolution, "hour")==0)
-                    {
-                        nlength = strlen(tokens[1]);
-                        if (tokens[1][nlength-1] != ':')
-                          strlcat(buffer,":00:00", buffer_size);
-                        else
-                          strlcat(buffer,"00:00", buffer_size);
-                    }            
-                    else if (strcasecmp(timeresolution, "minute")==0)
-                    {
-                        nlength = strlen(tokens[1]);
-                        if (tokens[1][nlength-1] != ':')
-                          strlcat(buffer,":00", buffer_size);
-                        else
-                          strlcat(buffer,"00", buffer_size);
-                    }            
-
-                    strlcat(buffer,  "')", buffer_size);
-                }
-                 
-                msFreeCharArray(tokens, ntmp);
-            }
-            if (strlen(buffer) > 0)
-              strlcat(buffer, ")", buffer_size);
-        }
-        else if (ntmp == 1) /* multiple times */
-        {
-            msFreeCharArray(tokens, ntmp);
-            strlcat(buffer, "(", buffer_size);
-            for (i=0; i<numtimes; i++)
-            {
-                if (i > 0)
-                  strlcat(buffer, " OR ", buffer_size);
-
-                snprintf(bufferTmp, buffer_size, "(date_trunc('%s', %s) = '%s",
-                         timeresolution, timefield, atimes[i]);
-                strlcat(buffer, bufferTmp, buffer_size);
-                
-                /* make sure that the timestring is complete and acceptable */
-                /* to the date_trunc function : */
-                /* - if the resolution is year (2004) or month (2004-01),  */
-                /* a complete string for time would be 2004-01-01 */
-                /* - if the resolluion is hour or minute (2004-01-01 15), a  */
-                /* complete time is 2004-01-01 15:00:00 */
-                if (strcasecmp(timeresolution, "year")==0)
-                {
-                    nlength = strlen(atimes[i]);
-                    if (atimes[i][nlength-1] != '-')
-                      strlcat(buffer,"-01-01", buffer_size);
-                    else
-                      strlcat(buffer,"01-01", buffer_size);
-                }            
-                else if (strcasecmp(timeresolution, "month")==0)
-                {
-                    nlength = strlen(atimes[i]);
-                    if (atimes[i][nlength-1] != '-')
-                      strlcat(buffer,"-01", buffer_size);
-                    else
-                      strlcat(buffer,"01", buffer_size);
-                }            
-                else if (strcasecmp(timeresolution, "hour")==0)
-                {
-                    nlength = strlen(atimes[i]);
-                    if (atimes[i][nlength-1] != ':')
-                      strlcat(buffer,":00:00", buffer_size);
-                    else
-                      strlcat(buffer,"00:00", buffer_size);
-                }            
-                else if (strcasecmp(timeresolution, "minute")==0)
-                {
-                    nlength = strlen(atimes[i]);
-                    if (atimes[i][nlength-1] != ':')
-                      strlcat(buffer,":00", buffer_size);
-                    else
-                      strlcat(buffer,"00", buffer_size);
-                }            
-
-                strlcat(buffer, "')", buffer_size);
-            } 
-            strlcat(buffer, ")", buffer_size);
-        }
-        else
-        {
-            msFreeCharArray(atimes, numtimes);
-            return MS_FALSE;
-        }
-
-        msFreeCharArray(atimes, numtimes);
-
-        /* load the string to the filter */
-        if (strlen(buffer) > 0)
-        {
-            if(lp->filteritem) 
-              free(lp->filteritem);
-            lp->filteritem = msStrdup(timefield);     
-            if (&lp->filter)
-            {
-                if (lp->filter.type == MS_EXPRESSION)
-                {
-                    snprintf(bufferTmp, buffer_size, "(%s) and ", lp->filter.string);
-                    strlcat(buffer, bufferTmp, buffer_size);
-                }
-                else
-                  freeExpression(&lp->filter);
-            }
-            loadExpressionString(&lp->filter, buffer);
-        }
-
-        free(timeresolution);
-        return MS_TRUE;
-                 
-    }
-    
     return MS_FALSE;
 }
 
