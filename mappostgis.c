@@ -3197,7 +3197,7 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
     }
 
 
-    return MS_FALSE;
+    return MS_TRUE;
 }
 
 char *msPostGISEscapeSQLParam(layerObj *layer, const char *pszString)
