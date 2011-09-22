@@ -3016,9 +3016,9 @@ int postgresTimeStampForTimeString(const char *timestring, char *dest, size_t de
 int createPostgresTimeCompareSimple(const char *timecol, const char *timestring, char *dest, size_t destsize) {
    int timeresolution = msTimeGetResolution(timestring);
    char timeStamp[100];
+   char *interval; 
    if (timeresolution < 0)
       return MS_FALSE;
-   char *interval; 
    postgresTimeStampForTimeString(timestring,timeStamp,100);
    
    switch(timeresolution) {
@@ -3071,9 +3071,9 @@ int createPostgresTimeCompareRange(const char *timecol, const char *mintime, con
    int maxtimeresolution = msTimeGetResolution(maxtime);
    char minTimeStamp[100];
    char maxTimeStamp[100];
+   char *minTimeInterval,*maxTimeInterval; 
    if (mintimeresolution < 0 || maxtimeresolution < 0)
       return MS_FALSE;
-   char *minTimeInterval,*maxTimeInterval; 
    postgresTimeStampForTimeString(mintime,minTimeStamp,100);
    postgresTimeStampForTimeString(maxtime,maxTimeStamp,100);
    
