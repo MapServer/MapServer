@@ -123,7 +123,7 @@ allow us to support all features across all rendering drivers (GD,AGG,PDF,SVG, e
 Mapfile Changes - line styling
 ------------------------------
 
-All line styling must now be specified in layer STYLEs.
+All line styling must now be specified in class STYLEs in the layer definition.
 
 The following parameters/keywords have been moved from SYMBOL
 to STYLE:
