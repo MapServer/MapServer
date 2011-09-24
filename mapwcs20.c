@@ -1129,13 +1129,7 @@ int msWCSParseRequest20(mapObj *map,
                            "msWCSParseRequest20()");
                 return MS_FAILURE;
             }
-            tokens = msStringSplit(value, ',', &num);
-            params->ids = (char **) msSmallCalloc(num + 1, sizeof(char *));
-            for (j = 0; j < num; ++j)
-            {
-                params->ids[j] = msStrdup(tokens[j]);
-            }
-            msFreeCharArray(tokens, num);
+            params->ids = CSLTokenizeString2(value, ",",0);
         }
         else if (EQUAL(key, "FORMAT"))
         {
