@@ -105,6 +105,14 @@ static void ms_png_error_handler(png_structp png_ptr, png_const_charp msg)
     longjmp(ms_ptr->jmpbuf, 1);
 }
 
+
+/* newer versions of libpng do not include zlib.h, so we
+ * define the compression value here
+ */
+#ifndef Z_BEST_COMPRESSION
+#define Z_BEST_COMPRESSION       9
+#endif
+
 int ms_png_write_image_init(gdIOCtx *ctx, ms_png_info *ms_ptr)
 {
     png_structp png_ptr;       /* note:  temporary variables! */
