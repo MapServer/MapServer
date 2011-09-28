@@ -3301,7 +3301,8 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
   /* It's a valid Cascading WMS GetFeatureInfo request */
   if (wms_layer)
-      return msWMSLayerFeatureInfo(map, numOWSLayers, point.x, point.y, feature_count, info_format);
+      return msWMSLayerExecuteRequest(map, numOWSLayers, point.x, point.y, 
+                                      feature_count, info_format, WMS_GETFEATUREINFO);
 
   if( use_bbox == MS_FALSE ) {
 
@@ -3675,8 +3676,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
 /*
 ** msWMSGetLegendGraphic()
 */
-int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
-                          char **values, int numentries, char *wms_exception_format, owsRequestObj *ows_request)
+int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
+                       char **values, int numentries, char *wms_exception_format, owsRequestObj *ows_request)
 {
     char *pszLayer = NULL;
     char *pszFormat = NULL;
@@ -3685,10 +3686,11 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     int iLayerIndex = -1;
     outputFormatObj *psFormat = NULL;
     imageObj *img=NULL;
-    int i = 0;
+    int j, i = 0;
     int nWidth = -1, nHeight =-1;
     char *pszStyle = NULL;
     char *sld_version = NULL;
+    int wms_layer =  MS_FALSE;
     const char *sldenabled = NULL;
     const char *format_list = NULL;
     layerObj *lp;
@@ -3768,6 +3770,18 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
                nLayers++;
                lp->status = MS_ON;
                iLayerIndex = i;
+               if (GET_LAYER(map, i)->connectiontype == MS_WMS) {
+                   /* we do not cascade a wms layer if it contains at least
+                    * one class with the property name set */
+                   wms_layer = MS_TRUE;
+                   for (j=0; j<lp->numclasses; j++)
+                   {
+                       if (lp->class[j]->name != NULL && strlen(lp->class[j]->name)>0) {
+                           wms_layer = MS_FALSE;
+                           break;
+                       }
+                   }
+               }
            }
          else
            lp->status = MS_OFF;
@@ -3814,7 +3828,12 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      }
      msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE,
                           MS_NOOVERRIDE, MS_NOOVERRIDE );
-
+     
+     /* It's a valid Cascading WMS GetLegendGraphic request */
+     if (wms_layer)
+         return msWMSLayerExecuteRequest(map, 1, 0, 0, 
+                                         0, NULL, WMS_GETLEGENDGRAPHIC);
+     
      /*if STYLE is set, check if it is a valid style (valid = at least one
        of the classes have a the group value equals to the style */
      /*style is only validated when there is only one layer #3411*/
@@ -4279,7 +4298,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
     return msWMSException(map, nVersion, NULL, wms_exception_format);
 
   if (strcasecmp(request, "GetLegendGraphic") == 0)
-    return msWMSGetLegendGraphic(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams,
+    return msWMSLegendGraphic(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams,
                                  wms_exception_format, ows_request);
 
   if (strcasecmp(request, "GetStyles") == 0)

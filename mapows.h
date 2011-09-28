@@ -382,6 +382,10 @@ MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, int nVersion,
  *   mapwmslayer.c
  *====================================================================*/
 
+#define WMS_GETMAP         1
+#define WMS_GETFEATUREINFO 2
+#define WMS_GETLEGENDGRAPHIC 3
+
 int msInitWmsParamsObj(wmsParamsObj *wmsparams);
 void msFreeWmsParamsObj(wmsParamsObj *wmsparams);
 
@@ -396,8 +400,8 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              int nClickX, int nClickY, int nFeatureCount,
                              const char *pszInfoFormat); 
-int msWMSLayerFeatureInfo(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
-                          int nFeatureCount, const char *pszInfoFormat);
+int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
+                             int nFeatureCount, const char *pszInfoFormat, int type);
 
 /*====================================================================
  *   mapwfs.c

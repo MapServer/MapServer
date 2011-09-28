@@ -454,8 +454,6 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
  * Returns a reference to a newly allocated string that should be freed 
  * by the caller.
  **********************************************************************/
-#define WMS_GETMAP         1
-#define WMS_GETFEATUREINFO 2
 
 static int
 msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
@@ -466,11 +464,12 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 {
 #ifdef USE_WMS_LYR
     char *pszEPSG = NULL;
-    const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam, *pszQueryLayers=NULL;
+    const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam, 
+        *pszLayer=NULL, *pszQueryLayers=NULL;
     rectObj bbox;
     int bbox_width = map->width, bbox_height = map->height;
     int nVersion=OWS_VERSION_NOTSET;
-    
+
     if (lp->connectiontype != MS_WMS)
     {
         msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
@@ -544,6 +543,22 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         if (pszQueryLayers == NULL) {
              msSetError(MS_WMSCONNERR, "wms_name not set or WMS Connection String must contain the QUERY_LAYERS parameter to support GetFeatureInfo requests (with name in uppercase).", "msBuildWMSLayerURL()");
+             return MS_FAILURE;
+        }
+    }
+
+/* ------------------------------------------------------------------
+ * For GetLegendGraphic requests, make sure LAYER is included
+ * ------------------------------------------------------------------ */
+    if  (nRequestType == WMS_GETLEGENDGRAPHIC &&
+         strstr(psWMSParams->onlineresource, "LAYER=") == NULL &&
+         strstr(psWMSParams->onlineresource, "layer=") == NULL &&
+         msLookupHashTable(psWMSParams->params, "LAYER") == NULL)
+    {
+        pszLayer = msOWSLookupMetadata(&(lp->metadata), "MO", "name");
+
+        if (pszLayer == NULL) {
+             msSetError(MS_WMSCONNERR, "wms_name not set or WMS Connection String must contain the LAYER parameter to support GetLegendGraphic requests (with name in uppercase).", "msBuildWMSLayerURL()");
              return MS_FAILURE;
         }
     }
@@ -849,6 +864,28 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         }
 
     }
+    else if (nRequestType == WMS_GETLEGENDGRAPHIC)
+    {
+        pszRequestParam = "GetLegendGraphic";
+
+        pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata), 
+                                                 "MO", "exceptions_format");
+        if (pszExceptionsParam == NULL)
+        {
+            if (nVersion >= OWS_1_1_0)
+                pszExceptionsParam = "application/vnd.ogc.se_inimage";
+            else
+                pszExceptionsParam = "INIMAGE";
+        }
+
+        if (pszLayer) { /* not set in CONNECTION string */
+          msSetWMSParamString(psWMSParams, "LAYER", pszLayer, MS_FALSE);
+        }
+
+        msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
+        msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
+
+    }
     else /* if (nRequestType == WMS_GETMAP) */
     {
         char szBuf[100] = "";
@@ -927,7 +964,6 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
     return pszURL;
 }
 
-
 /**********************************************************************
  *                          msPrepareWMSLayerRequest()
  *
@@ -986,6 +1022,17 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         msFreeWmsParamsObj(&sThisWMSParams);
         return MS_FAILURE;
     }
+    else if (nRequestType == WMS_GETLEGENDGRAPHIC &&
+             msBuildWMSLayerURL(map, lp, WMS_GETLEGENDGRAPHIC,
+                                0, 0, 0, NULL,
+                                NULL, NULL, NULL,
+                                &sThisWMSParams) != MS_SUCCESS )
+    {
+        /* an error was already reported. */
+        msFreeWmsParamsObj(&sThisWMSParams);
+        return MS_FAILURE;
+    }
+
 
 /* ------------------------------------------------------------------
  * Check if the request is empty, perhaps due to reprojection problems
@@ -1336,6 +1383,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * ------------------------------------------------------------------ */
         pasReqInfo[(*numRequests)].nLayerId = nLayerId;
         pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
+
         pszURL = NULL;
         pasReqInfo[(*numRequests)].pszHTTPCookieData = pszHTTPCookieData;
         pszHTTPCookieData = NULL;
@@ -1365,7 +1413,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         (*numRequests)++;
     }
 
-
+    
 /* ------------------------------------------------------------------
  * Replace contents of psLastWMSParams with sThisWMSParams 
  * unless bForceSeparateRequest is set in which case we make it empty
@@ -1642,8 +1690,8 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 }
 
 
-int msWMSLayerFeatureInfo(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
-                          int nFeatureCount, const char *pszInfoFormat)
+int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
+                             int nFeatureCount, const char *pszInfoFormat, int type)
 {
 #ifdef USE_WMS_LYR
 
@@ -1662,7 +1710,9 @@ int msWMSLayerFeatureInfo(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
     {
         if (GET_LAYER(map,map->layerorder[i])->status == MS_ON)
         { 
-            if (msPrepareWMSLayerRequest(map->layerorder[i], map, GET_LAYER(map,map->layerorder[i]), WMS_GETFEATUREINFO,
+            if (type == WMS_GETFEATUREINFO &&
+                msPrepareWMSLayerRequest(map->layerorder[i], map, GET_LAYER(map,map->layerorder[i]), 
+                                         WMS_GETFEATUREINFO,
                                          MS_WMS, &sLastWMSParams,
                                          nClickX, nClickY, nFeatureCount, pszInfoFormat,
                                          pasReqInfo, &numReq) == MS_FAILURE)
@@ -1671,6 +1721,16 @@ int msWMSLayerFeatureInfo(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
                 msFree(pasReqInfo);
                 return MS_FAILURE;
             }
+            else if (msPrepareWMSLayerRequest(map->layerorder[i], map, GET_LAYER(map,map->layerorder[i]),
+                                           WMS_GETLEGENDGRAPHIC,
+                                           MS_WMS, &sLastWMSParams,
+                                           0, 0, 0, NULL,
+                                           pasReqInfo, &numReq) == MS_FAILURE)
+                 {
+                     msFreeWmsParamsObj(&sLastWMSParams);
+                     msFree(pasReqInfo);
+                     return MS_FAILURE;
+                 }
         }
     }
     
@@ -1719,7 +1779,7 @@ int msWMSLayerFeatureInfo(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
         else
         {
             msSetError(MS_IOERR, "'%s'.", 
-                       "msWMSLayerFeatureInfo()", pasReqInfo[0].pszOutputFile);
+                       "msWMSLayerExecuteRequest()", pasReqInfo[0].pszOutputFile);
             return MS_FAILURE;
         }
     }
@@ -1740,7 +1800,7 @@ int msWMSLayerFeatureInfo(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
  * WMS CONNECTION Support not included...
  * ------------------------------------------------------------------ */
   msSetError(MS_WMSCONNERR, "WMS CLIENT CONNECTION support is not available.", 
-             "msWMSLayerFeatureInfo()");
+             "msWMSLayerExecuteRequest()");
   return(MS_FAILURE);
 
 #endif /* USE_WMS_LYR */
