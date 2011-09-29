@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- see the accompanying mapcache.xml.sample for a fully commented configuration file -->
+
+<mapcache>
+   <cache name="disk" type="disk">
+      <base>/tmp</base>
+      <symlink_blank/>
+   </cache>
+
+   <source name="vmap0" type="wms">
+      <getmap>
+         <params>
+            <FORMAT>image/png</FORMAT>
+            <LAYERS>basic</LAYERS>
+         </params>
+      </getmap>
+      
+      <http>
+         <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
+      </http>
+   </source>
+   
+   <tileset name="test">
+      <source>vmap0</source>
+      <cache>disk</cache>
+      <grid>WGS84</grid>
+      <grid>g</grid>
+      <format>PNG</format>
+      <metatile>5 5</metatile>
+      <metabuffer>10</metabuffer>
+      <expires>3600</expires>
+   </tileset>
+
+
+   <default_format>JPEG</default_format>
+
+   <service type="wms" enabled="true">
+      <full_wms>assemble</full_wms>
+      <resample_mode>bilinear</resample_mode>
+      <format>JPEG</format>
+      <maxsize>4096</maxsize>
+   </service>
+   <service type="wmts" enabled="true"/>
+   <service type="tms" enabled="true"/>
+   <service type="kml" enabled="true"/>
+   <service type="gmaps" enabled="true"/>
+   <service type="ve" enabled="true"/>
+   <service type="demo" enabled="true"/>
+
+   <errors>report</errors>
+   <lock_dir>/tmp</lock_dir>
+
+</mapcache>
