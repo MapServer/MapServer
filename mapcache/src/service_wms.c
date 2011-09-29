@@ -401,6 +401,12 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
       }
    }
 
+   if(width > wms_service->maxsize || height > wms_service->maxsize) {
+      errcode=400;
+      errmsg = "received wms request with width or height over configured maxsize limit";
+      goto proxies;
+   }
+
    if(iswms130) {
       srs = apr_table_get(params,"CRS");
       if(!srs) {
@@ -879,6 +885,14 @@ void _configuration_parse_wms_xml(mapcache_context *ctx, ezxml_t node, mapcache_
          return;
       }
    }
+   
+   if ((rule_node = ezxml_child(node,"maxsize")) != NULL) {
+      wms->maxsize = atoi(rule_node->txt);
+      if(wms->maxsize <= 0) {
+         ctx->set_error(ctx,400, "failed to parse wms service maxsize value \"%s\"", rule_node->txt);
+         return;
+      }
+   }
 }
 
 mapcache_service* mapcache_service_wms_create(mapcache_context *ctx) {
@@ -888,6 +902,7 @@ mapcache_service* mapcache_service_wms_create(mapcache_context *ctx) {
       return NULL;
    }
    service->forwarding_rules = apr_array_make(ctx->pool,0,sizeof(mapcache_forwarding_rule*));
+   service->maxsize=2048;
    service->service.url_prefix = apr_pstrdup(ctx->pool,"");
    service->service.name = apr_pstrdup(ctx->pool,"wms");
    service->service.type = MAPCACHE_SERVICE_WMS;

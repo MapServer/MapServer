@@ -393,10 +393,11 @@
       -->
       <hitstats>false</hitstats>
    </cache>
-
+   <!--
    <cache name="mbtiles" type="mbtiles">
       <dbname_template>/Users/tbonfort/Documents/MapBox/tiles/natural-earth-1.mbtiles</dbname_template>
    </cache>
+   -->
 
    <!-- format
 
@@ -712,12 +713,14 @@
       <metatile>5 5</metatile>
       <metabuffer>30</metabuffer>
    </tileset>
+   <!--
    <tileset name="natural-earth-1">
       <source>osm</source>
       <cache>mbtiles</cache>
       <format>PNG</format>
       <grid>g</grid>
    </tileset>
+   -->
    <tileset name="osm">
       <metadata>
          <title>osm mapserver served map of midi-pyrénées</title>
@@ -799,6 +802,7 @@
          image format to use when assembling tiles
       -->
       <format>myjpeg</format>
+      <maxsize>4096</maxsize>
 
    </service>
    <service type="wmts" enabled="true"/>

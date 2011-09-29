@@ -639,6 +639,7 @@ struct mapcache_service {
  */
 struct mapcache_service_wms {
     mapcache_service service;
+    int maxsize;
     apr_array_header_t *forwarding_rules;
     mapcache_getmap_strategy getmap_strategy;
     mapcache_resample_mode resample_mode;
