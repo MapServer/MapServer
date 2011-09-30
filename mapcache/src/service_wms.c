@@ -541,6 +541,11 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
                 * this step is not done for the first tileset as we have already performed it
                 */
                tileset = mapcache_configuration_get_tileset(config,key);
+               if (!tileset) {
+                  errcode = 404;
+                  errmsg = apr_psprintf(ctx->pool,"received wms request with invalid layer %s", key);
+                  goto proxies;
+               }
                int i;
                grid_link = NULL;
                for(i=0;i<tileset->grid_links->nelts;i++){
