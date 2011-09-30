@@ -87,7 +87,8 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
          }
       } else {
          mapcache_tileset *tileset = request->tileset;
-         mapcache_grid *grid = request->grid_link->grid;
+         mapcache_grid_link *grid_link = request->grid_link;
+         mapcache_grid *grid = grid_link->grid;
          int i;
          double *extent = (request->grid_link->restricted_extent)?request->grid_link->restricted_extent:request->grid_link->grid->extent;
          const char *title = apr_table_get(tileset->metadata,"title");
@@ -132,7 +133,7 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
          }
          
          ezxml_t tilesets = ezxml_add_child(caps,"TileSets",0);
-         for(i=0;i<grid->nlevels;i++) {
+         for(i=grid_link->minz;i<grid_link->maxz;i++) {
             ezxml_t xmltileset = ezxml_add_child(tilesets,"TileSet",0);
             char *order = apr_psprintf(ctx->pool,"%d",i);
             ezxml_set_attr(xmltileset,"href",

@@ -142,6 +142,7 @@ static char *demo_layer_tms =
       "          gutter:0,buffer:0,isBaseLayer:true,transitionEffect:'resize',\n"
       "          tileOrigin: new OpenLayers.LonLat(%f,%f),\n"
       "          resolutions:[%s],\n"
+      "          zoomOffset:%d,\n"
       "          units:\"%s\",\n"
       "          maxExtent: new OpenLayers.Bounds(%f,%f,%f,%f),\n"
       "          projection: new OpenLayers.Projection(\"%s\".toUpperCase()),\n"
@@ -160,6 +161,7 @@ static char *demo_layer_wmts =
       "        style: 'default',\n"
       "        gutter:0,buffer:0,isBaseLayer:true,transitionEffect:'resize',\n"
       "        resolutions:[%s],\n"
+      "        zoomOffset:%d,\n"
       "        units:\"%s\",\n"
       "        maxExtent: new OpenLayers.Bounds(%f,%f,%f,%f),\n"
       "        projection: new OpenLayers.Projection(\"%s\".toUpperCase()),\n"
@@ -274,7 +276,7 @@ static char *demo_head_gmaps =
       "    return { x: x, y: y };\n"
       "  }\n"
       "\n"
-      "function makeLayer(name, url, size, extension) {\n"
+      "function makeLayer(name, url, size, extension, minzoom, maxzoom) {\n"
       "  var layer = {\n"
       "    name: name,\n"
       "    TypeOptions: {\n"
@@ -288,8 +290,8 @@ static char *demo_head_gmaps =
       "      },\n"
       "      tileSize: size,\n"
       "      isPng: true,\n"
-      "      maxZoom: 18,\n"
-      "      minZoom: 0,\n"
+      "      maxZoom: maxzoom,\n"
+      "      minZoom: minzoom,\n"
       "      name: name\n"
       "    },\n"
       "    OverlayTypeOptions: {\n"
@@ -303,8 +305,8 @@ static char *demo_head_gmaps =
       "      },\n"
       "      tileSize: size,\n"
       "      isPng: true,\n"
-      "      maxZoom: 18,\n"
-      "      minZoom: 0,\n"
+      "      maxZoom: maxzoom,\n"
+      "      minZoom: minzoom,\n"
       "      opacity: 0.5,  // o=transparenty, 1=opaque\n"
       "      name: name+'_overlay'\n"
       "    }\n"
@@ -339,7 +341,7 @@ static char *demo_head_gmaps =
 /*
  * name, baseurl, name, grid, size, size, extension
 */
-static char *demo_layer_gmaps = "layers.push(makeLayer('%s %s', '%s/tms/1.0.0/%s@%s/', new google.maps.Size(%d,%d), '%s'));\n";
+static char *demo_layer_gmaps = "layers.push(makeLayer('%s %s', '%s/tms/1.0.0/%s@%s/', new google.maps.Size(%d,%d), '%s', %d, %d));\n";
 
 static char *demo_footer_gmaps = 
       "%s\n"
@@ -455,7 +457,8 @@ void _create_demo_wms(mapcache_context *ctx, mapcache_request_get_capabilities *
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
+         mapcache_grid *grid = grid_link->grid;
          if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
          } else if(grid->unit == MAPCACHE_UNIT_FEET) {
@@ -471,8 +474,8 @@ void _create_demo_wms(mapcache_context *ctx, mapcache_request_get_capabilities *
                    || (!isalnum(ol_layer_name[i]) && ol_layer_name[i] != '_'))
                 ol_layer_name[i] = '_';
 
-         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
-         for(i=1;i<grid->nlevels;i++) {
+         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[grid_link->minz]->resolution);         
+         for(i=grid_link->minz+1;i<grid_link->maxz;i++) {
             resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->levels[i]->resolution);
          }
 
@@ -544,7 +547,8 @@ void _create_demo_tms(mapcache_context *ctx, mapcache_request_get_capabilities *
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
+         mapcache_grid *grid = grid_link->grid;
          if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
          } else if(grid->unit == MAPCACHE_UNIT_FEET) {
@@ -560,8 +564,8 @@ void _create_demo_tms(mapcache_context *ctx, mapcache_request_get_capabilities *
                    || (!isalnum(ol_layer_name[i]) && ol_layer_name[i] != '_'))
                 ol_layer_name[i] = '_';
 
-         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
-         for(i=1;i<grid->nlevels;i++) {
+         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[grid_link->minz]->resolution);         
+         for(i=grid_link->minz+1;i<grid_link->maxz;i++) {
             resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->levels[i]->resolution);
          }
 
@@ -576,6 +580,7 @@ void _create_demo_tms(mapcache_context *ctx, mapcache_request_get_capabilities *
             grid->extent[0],
             grid->extent[1],
             resolutions,
+            grid_link->minz,
             unit,
             grid->extent[0],
             grid->extent[1],
@@ -611,7 +616,8 @@ void _create_demo_wmts(mapcache_context *ctx, mapcache_request_get_capabilities 
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
+         mapcache_grid *grid = grid_link->grid;
          if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
          } else if(grid->unit == MAPCACHE_UNIT_FEET) {
@@ -627,8 +633,8 @@ void _create_demo_wmts(mapcache_context *ctx, mapcache_request_get_capabilities 
                    || (!isalnum(ol_layer_name[i]) && ol_layer_name[i] != '_'))
                 ol_layer_name[i] = '_';
 
-         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
-         for(i=1;i<grid->nlevels;i++) {
+         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[grid_link->minz]->resolution);         
+         for(i=grid_link->minz+1;i<grid_link->maxz;i++) {
             resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->levels[i]->resolution);
          }
 
@@ -641,6 +647,7 @@ void _create_demo_wmts(mapcache_context *ctx, mapcache_request_get_capabilities 
             grid->name,
             mime_type,
             resolutions,
+            grid_link->minz,
             unit,
             grid->extent[0],
             grid->extent[1],
@@ -673,7 +680,8 @@ void _create_demo_ve(mapcache_context *ctx, mapcache_request_get_capabilities *r
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
-         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
+         mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
+         mapcache_grid *grid = grid_link->grid;
          if(grid->unit == MAPCACHE_UNIT_METERS) {
             unit="m";
          } else if(grid->unit == MAPCACHE_UNIT_FEET) {
@@ -689,8 +697,8 @@ void _create_demo_ve(mapcache_context *ctx, mapcache_request_get_capabilities *r
                    || (!isalnum(ol_layer_name[i]) && ol_layer_name[i] != '_'))
                 ol_layer_name[i] = '_';
 
-         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
-         for(i=1;i<grid->nlevels;i++) {
+         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[grid_link->minz]->resolution);         
+         for(i=grid_link->minz+1;i<grid_link->maxz;i++) {
             resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->levels[i]->resolution);
          }
 
@@ -758,27 +766,12 @@ void _create_demo_gmaps(mapcache_context *ctx, mapcache_request_get_capabilities
       mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      int i,j;
+      int j;
       for(j=0;j<tileset->grid_links->nelts;j++) {
-         char *resolutions="";
-         char *unit="dd";
-         char *smerc = "false";
-         mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
-         if(grid->unit == MAPCACHE_UNIT_METERS) {
-            unit="m";
-         } else if(grid->unit == MAPCACHE_UNIT_FEET) {
-            unit="ft";
-         }
-         if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
-            smerc = "true";
-         }
-         else
+         mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
+         mapcache_grid *grid = grid_link->grid;
+         if(!strstr(grid->srs, ":900913") && !strstr(grid->srs, ":3857"))
             continue; /* skip layers that are not in google projrction */
-
-         resolutions = apr_psprintf(ctx->pool,"%s%.20f",resolutions,grid->levels[0]->resolution);         
-         for(i=1;i<grid->nlevels;i++) {
-            resolutions = apr_psprintf(ctx->pool,"%s,%.20f",resolutions,grid->levels[i]->resolution);
-         }
 
          ol_layer = apr_psprintf(ctx->pool, demo_layer_gmaps,
             tileset->name,
@@ -788,7 +781,9 @@ void _create_demo_gmaps(mapcache_context *ctx, mapcache_request_get_capabilities
             grid->name,
             grid->tile_sx,
             grid->tile_sy,
-            tileset->format->extension
+            tileset->format->extension,
+            grid_link->minz,
+            grid_link->maxz
          );
          caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
       }

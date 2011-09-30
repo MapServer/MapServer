@@ -265,7 +265,7 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
             char *resolutions="";
 
             int i;
-            for(i=0;i<grid->nlevels;i++) {
+            for(i=gridlink->minz;i<gridlink->maxz;i++) {
                resolutions = apr_psprintf(ctx->pool,"%s%.20f ",resolutions,grid->levels[i]->resolution);
             }
             ezxml_set_txt(ezxml_add_child(tsxml,"Resolutions",0),resolutions);

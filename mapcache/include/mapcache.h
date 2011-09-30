@@ -1012,6 +1012,7 @@ struct mapcache_grid_link {
     */
    double *restricted_extent;
    int **grid_limits;
+   int minz,maxz;
 };
 
 /**\class mapcache_tileset

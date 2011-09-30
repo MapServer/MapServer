@@ -585,11 +585,13 @@
          cached are not invalidated should you want to modify the restricted extent in the future. When using
          the restricted_extent attribute, you should give the corresponding information to the client that will
          be using the service.
+         you can also limit the zoom levels that are cached/accessible by using the minzoom, maxzoom attributes.
+
 
          NOTE: when adding a <grid> element, you *MUST* make sure that the source you have selected is able to
          return images in the grid's srs.
       -->
-         <grid restricted_extent="-10 40 10 50">WGS84</grid>
+         <grid restricted_extent="-10 40 10 50" minzoom="6" maxzoom="8">WGS84</grid>
          <grid>g</grid>
 
       <!-- metadata

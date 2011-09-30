@@ -114,7 +114,7 @@ void mapcache_tileset_add_watermark(mapcache_context *ctx, mapcache_tileset *til
 }
 
 void mapcache_tileset_tile_validate(mapcache_context *ctx, mapcache_tile *tile) {
-   if(tile->z < 0 || tile->z >= tile->grid_link->grid->nlevels) {
+   if(tile->z < tile->grid_link->minz || tile->z >= tile->grid_link->maxz) {
       ctx->set_error(ctx,404,"invalid tile z level");
       return;
    }

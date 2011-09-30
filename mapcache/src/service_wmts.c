@@ -521,7 +521,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
    } else {
       char *endptr;
       level = (int)strtol(matrix,&endptr,10);
-      if(*endptr != 0 || level < 0 || level >= grid_link->grid->nlevels) {
+      if(*endptr != 0 || level < grid_link->minz || level >= grid_link->maxz) {
          ctx->set_error(ctx, 404, "received wmts request with invalid TILEMATRIX %s", matrix);
          return;
       }

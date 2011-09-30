@@ -445,8 +445,6 @@ void parseCache(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    return;
 }
 
-
-
 void parseTileset(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    char *name = NULL;
    mapcache_tileset *tileset = NULL;
@@ -508,6 +506,8 @@ void parseTileset(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
       }
       mapcache_grid_link *gridlink = apr_pcalloc(ctx->pool,sizeof(mapcache_grid_link));
       gridlink->grid = grid;
+      gridlink->minz = 0;
+      gridlink->maxz = grid->nlevels;
       gridlink->grid_limits = apr_pcalloc(ctx->pool,grid->nlevels*sizeof(int*));
       for(i=0;i<grid->nlevels;i++) {
          gridlink->grid_limits[i] = apr_pcalloc(ctx->pool,4*sizeof(int));
@@ -541,8 +541,40 @@ void parseTileset(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
             return;
          }
       }
+      
 
       mapcache_grid_compute_limits(grid,extent,gridlink->grid_limits,tolerance);
+      
+      sTolerance = (char*)ezxml_attr(cur_node,"minzoom");
+      if(sTolerance) {
+         char *endptr;
+         tolerance = (int)strtol(sTolerance,&endptr,10);
+         if(*endptr != 0 || tolerance < 0) {
+            ctx->set_error(ctx, 400, "failed to parse grid minzoom %s (expecting a positive integer)",
+                  sTolerance);  
+            return;
+         }
+         gridlink->minz = tolerance;
+      }
+      
+      sTolerance = (char*)ezxml_attr(cur_node,"maxzoom");
+      if(sTolerance) {
+         char *endptr;
+         tolerance = (int)strtol(sTolerance,&endptr,10);
+         if(*endptr != 0 || tolerance < 0) {
+            ctx->set_error(ctx, 400, "failed to parse grid maxzoom %s (expecting a positive integer)",
+                  sTolerance);  
+            return;
+         }
+         gridlink->maxz = tolerance + 1;
+      }
+
+      if(gridlink->minz<0 || gridlink->maxz>grid->nlevels || gridlink->minz>=gridlink->maxz) {
+            ctx->set_error(ctx, 400, "invalid grid maxzoom/minzoom %d/%d", gridlink->minz,gridlink->maxz);
+            return;
+      }
+
+      
       
       /* compute wgs84 bbox if it wasn't supplied already */
       if(!havewgs84bbox && !strcasecmp(grid->srs,"EPSG:4326")) {

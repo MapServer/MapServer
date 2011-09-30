@@ -680,11 +680,11 @@ int main(int argc, const char **argv) {
            }
         }
         if(minzoom == 0 && maxzoom ==0) {
-            minzoom = 0;
-            maxzoom = grid_link->grid->nlevels - 1;
+            minzoom = grid_link->minz;
+            maxzoom = grid_link->maxz - 1;
         }
-        if(minzoom<0) minzoom = 0;
-        if(maxzoom>= grid_link->grid->nlevels) maxzoom = grid_link->grid->nlevels - 1;
+        if(minzoom<grid_link->minz) minzoom = grid_link->minz;
+        if(maxzoom>= grid_link->maxz) maxzoom = grid_link->maxz - 1;
     }
 
 
