@@ -260,6 +260,7 @@ int mapcache_buffer_append(mapcache_buffer *buffer, size_t len, void *data);
 
 typedef enum {
     MAPCACHE_SOURCE_WMS,
+    MAPCACHE_SOURCE_MAPSERVER,
     MAPCACHE_SOURCE_GDAL
 } mapcache_source_type;
 
@@ -307,6 +308,19 @@ struct mapcache_source_wms {
     apr_table_t *getfeatureinfo_params; /**< WMS parameters specified in configuration */
     mapcache_http *http;
 };
+
+#ifdef USE_MAPSERVER
+/**\class mapcache_source_mapserver
+ * \brief WMS mapcache_source
+ * \implements mapcache_source
+ */
+typedef struct mapcache_source_mapserver mapcache_source_mapserver;
+struct mapcache_source_mapserver {
+    mapcache_source source;
+    char *mapfile;
+    void *mapobj;
+};
+#endif
 
 #if 0
 #ifdef USE_GDAL
@@ -497,6 +511,7 @@ struct mapcache_map {
    mapcache_grid_link *grid_link;
    apr_table_t *dimensions;
    mapcache_buffer *data;
+   mapcache_image *image;
    int width, height;
    double extent[4];
    apr_time_t mtime; /**< last modification time */
@@ -937,6 +952,13 @@ mapcache_source* mapcache_source_gdal_create(mapcache_context *ctx);
  * \memberof mapcache_source_wms
  */
 mapcache_source* mapcache_source_wms_create(mapcache_context *ctx);
+
+#ifdef USE_MAPSERVER
+/**
+ * \memberof mapcache_source_wms
+ */
+mapcache_source* mapcache_source_mapserver_create(mapcache_context *ctx);
+#endif
 
 /**
  * \memberof mapcache_cache_disk

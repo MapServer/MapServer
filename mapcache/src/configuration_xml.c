@@ -264,6 +264,10 @@ void parseSource(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    mapcache_source *source = NULL;
    if(!strcmp(type,"wms")) {
       source = mapcache_source_wms_create(ctx);
+#ifdef USE_MAPSERVER
+   } else if(!strcmp(type,"mapserver")) {
+      source = mapcache_source_mapserver_create(ctx);
+#endif
    } else if(!strcmp(type,"gdal")) {
       source = mapcache_source_gdal_create(ctx);
    } else {

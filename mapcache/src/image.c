@@ -233,7 +233,11 @@ void mapcache_image_metatile_split(mapcache_context *ctx, mapcache_metatile *mt)
       int sx,sy;
       tileimg.w = mt->map.grid_link->grid->tile_sx;
       tileimg.h = mt->map.grid_link->grid->tile_sy;
-      metatile = mapcache_imageio_decode(ctx, mt->map.data);
+      if(mt->map.image) {
+         metatile = mt->map.image;
+      } else {
+         metatile = mapcache_imageio_decode(ctx, mt->map.data);
+      }
       if(!metatile) {
          ctx->set_error(ctx, 500, "failed to load image data from metatile");
          return;
@@ -257,7 +261,8 @@ void mapcache_image_metatile_split(mapcache_context *ctx, mapcache_metatile *mt)
 #ifdef DEBUG
       if(mt->map.tileset->metasize_x != 1 ||
             mt->map.tileset->metasize_y != 1 ||
-            mt->map.tileset->metabuffer != 0) {
+            mt->map.tileset->metabuffer != 0 ||
+            !mt->map.data) {
          ctx->set_error(ctx, 500, "##### BUG ##### using a metatile with no format");
          return;
       }
