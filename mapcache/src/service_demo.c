@@ -513,7 +513,7 @@ void _create_demo_wms(mapcache_context *ctx, mapcache_request_get_capabilities *
             caps = apr_psprintf(ctx->pool,"%s%s",caps,ol_layer);
          }
       }
-      if(tileset->source->info_formats) {
+      if(tileset->source && tileset->source->info_formats) {
          ol_layer = apr_psprintf(ctx->pool, demo_control_featureinfo,
                tileset->name,
                apr_pstrcat(ctx->pool,url_prefix,"?",NULL),
