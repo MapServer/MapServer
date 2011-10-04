@@ -16,6 +16,8 @@ Version 5.6.8 (SVN branch-5-6):
 
 - define Z_BEST_COMPRESSION for newer libpng versions (#4033)
 
+- Fixes to support latest PROJ versions (#4008)
+
 Version 5.6.7 (2011-07-12):
 ---------------------------
 
