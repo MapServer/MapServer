@@ -1712,6 +1712,10 @@ MS_DLL_EXPORT int strcasecmp(const char *s1, const char *s2);
 MS_DLL_EXPORT size_t strlcat(char *dst, const char *src, size_t siz);
 #endif /* NEED_STRLCAT */
 
+#ifdef NEED_STRLCPY
+MS_DLL_EXPORT size_t strlcpy(char *dst, const char *src, size_t siz);
+#endif /* NEED_STRLCPY */
+
 /* in mapsymbol.c */
 /* Use this function *only* with mapfile loading phase */
 MS_DLL_EXPORT int loadSymbolSet(symbolSetObj *symbolset, mapObj *map);

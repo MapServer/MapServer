@@ -136,7 +136,7 @@ DEBUG=/DDEBUG
 # following line to reflect the missing functions on your platform.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
-STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRLCAT -DNEED_STRRSTR -DNEED_STRCASESTR
+STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRLCAT -DNEED_STRRSTR -DNEED_STRCASESTR -DNEED_STRLCPY
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Threading
