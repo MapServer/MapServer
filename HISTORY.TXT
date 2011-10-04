@@ -81,6 +81,8 @@ Other Fixes:
 
 - Fixed build issue with PHP_REGEX_INC in mapscript/php3/Makefile.in (#3078)
 
+- Fixes to support latest PROJ versions (#4008)
+
 Version 5.4.2 (2009-07-23):
 ---------------------------
 
