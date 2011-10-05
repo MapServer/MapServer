@@ -58,6 +58,7 @@ int maxzoom=0;
 mapcache_grid_link *grid_link;
 int nthreads=1;
 int quiet = 0;
+int verbose = 0;
 int sig_int_received = 0;
 int error_detected = 0;
 apr_queue_t *work_queue;
@@ -103,6 +104,7 @@ static const apr_getopt_option_t seed_options[] = {
 #endif
     { "help", 'h', FALSE, "show help" },
     { "quiet", 'q', FALSE, "don't show progress info" },
+    { "verbose", 'v', FALSE, "show debug log messages" },
     { NULL, 0, 0, NULL },
 };
 
@@ -118,7 +120,15 @@ void handle_sig_int(int signal) {
 
 void dummy_lock_aquire(mapcache_context *ctx){}
 void dummy_lock_release(mapcache_context *ctx){}
-void dummy_log(mapcache_context *ctx, mapcache_log_level level, char *msg, ...){}
+void dummy_log(mapcache_context *ctx, mapcache_log_level level, char *msg, ...){
+   if(verbose) {
+      va_list args;
+      va_start(args,msg);
+      vfprintf(stderr,msg,args);
+      va_end(args);
+   }
+   printf("\n");
+}
 
 
 void mapcache_context_seeding_log(mapcache_context *ctx, mapcache_log_level level, char *msg, ...) {
@@ -336,10 +346,23 @@ void cmd_thread() {
    apr_pool_create(&cmd_ctx.pool,ctx.pool);
    mapcache_tile *tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
    tile->dimensions = dimensions;
-   tile->x = x;
-   tile->y = y;
-   tile->z = z;
-   cmd_recurse(&cmd_ctx,tile);
+   do {
+      tile->x = x;
+      tile->y = y;
+      tile->z = z;
+      cmd_recurse(&cmd_ctx,tile);
+      x += tileset->metasize_x;
+      if( x >= grid_link->grid_limits[z][2] ) {
+         y += tileset->metasize_y;
+         if( y < grid_link->grid_limits[z][3]) {
+            x = grid_link->grid_limits[z][0];
+         }
+      }
+   } while (
+         x < grid_link->grid_limits[z][2]
+         &&
+         y < grid_link->grid_limits[z][3]
+   );
    //instruct rendering threads to stop working
    int n;
    for(n=0;n<nthreads;n++) {
@@ -459,6 +482,7 @@ int main(int argc, const char **argv) {
     ctx.log= mapcache_context_seeding_log;
     ctx.global_lock_aquire = dummy_lock_aquire;
     ctx.global_lock_release = dummy_lock_release;
+    //ctx.has_threads = 1;
     apr_getopt_init(&opt, ctx.pool, argc, argv);
     
     seededtiles=seededtilestot=queuedtilestot=0;
@@ -476,6 +500,9 @@ int main(int argc, const char **argv) {
                 break;
             case 'q':
                 quiet = 1;
+                break;
+            case 'v':
+                verbose = 1;
                 break;
             case 'c':
                 configfile = optarg;
