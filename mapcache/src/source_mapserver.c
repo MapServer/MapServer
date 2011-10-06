@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: source_mapserver.c 12529 2011-09-07 12:04:00Z tbonfort $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  MapCache tile caching support file: Mapserver Mapfile datasource

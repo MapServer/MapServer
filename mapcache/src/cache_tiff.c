@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: cache_tiff.c -1   $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  MapCache tile caching: tiled tiff filesytem cache backend.
