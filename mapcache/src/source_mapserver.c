@@ -41,7 +41,17 @@
  */
 void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *map) {
    mapcache_source_mapserver *mapserver = (mapcache_source_mapserver*)map->tileset->source;
-   mapObj *omap = msLoadMap(mapserver->mapfile,NULL);
+   static mapObj *origmap = NULL;
+   if(!origmap) {
+      origmap = msLoadMap(mapserver->mapfile,NULL);
+   }
+   if(!origmap) {
+      msWriteError(stderr);
+      ctx->set_error(ctx,500,"failed to load mapfile %s",mapserver->mapfile);
+      return;
+   }
+   mapObj *omap = msNewMapObj();
+   msCopyMap(omap,origmap);
 
   
   /* copy the original mapfile's projection to any layer that doesn't already 
@@ -78,10 +88,19 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
    }
 
 
-   omap->extent.minx = map->extent[0];
-   omap->extent.miny = map->extent[1];
-   omap->extent.maxx = map->extent[2];
-   omap->extent.maxy = map->extent[3];
+  /*
+  ** WMS extents are edge to edge while MapServer extents are center of
+  ** pixel to center of pixel.  Here we try to adjust the WMS extents
+  ** in by half a pixel.
+  */
+   double	dx, dy;
+   dx = (map->extent[2] - map->extent[0]) / (map->width*2);
+   dy = (map->extent[3] - map->extent[1]) / (map->height*2);
+
+   omap->extent.minx = map->extent[0] + dx;
+   omap->extent.miny = map->extent[1] + dy;
+   omap->extent.maxx = map->extent[2] - dx;
+   omap->extent.maxy = map->extent[3] - dy;
    msMapSetSize(omap, map->width, map->height);
 
    imageObj *image = msDrawMap(omap, MS_FALSE);
@@ -160,13 +179,15 @@ void _mapcache_source_mapserver_configuration_check(mapcache_context *ctx, mapca
       ctx->set_error(ctx,400,"mapserver source \"%s\" has no mapfile configured",src->source.name);
       return;
    }
+
+   msSetup();
    mapObj *map = msLoadMap(src->mapfile, NULL);
    if(!map) {
+      msWriteError(stderr);
       ctx->set_error(ctx,400,"failed to load mapfile \"%s\"",src->mapfile);
       return;
    }
    msFreeMap(map);
-   msCleanup();
 }
 
 mapcache_source* mapcache_source_mapserver_create(mapcache_context *ctx) {
