@@ -78,7 +78,7 @@ double msSymbolGetDefaultSize(symbolObj *s) {
       break;
     case(MS_SYMBOL_PIXMAP):
       assert(s->pixmap_buffer != NULL);
-      if(s->pixmap_buffer == NULL) return 1; //FIXME
+      if(s->pixmap_buffer == NULL) return 1; /* FIXME */
       size = (double)s->pixmap_buffer->height;
       break;
     default: /* vector and ellipses, scalable */
@@ -769,7 +769,7 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
 int msPreloadImageSymbol(rendererVTableObj *renderer, symbolObj *symbol) {
 	if(symbol->pixmap_buffer && symbol->renderer == renderer)
 		return MS_SUCCESS;
-	if(symbol->pixmap_buffer) { //other renderer was used, start again
+	if(symbol->pixmap_buffer) { /* other renderer was used, start again */
 		msFreeRasterBuffer(symbol->pixmap_buffer);
 	} else {
 		symbol->pixmap_buffer = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
@@ -894,7 +894,7 @@ symbolObj *msRotateVectorSymbol(symbolObj *symbol, double angle)
     double TOL=0.00000000001;
     int i;
 
-    //assert(symbol->type == MS_SYMBOL_VECTOR);
+    /* assert(symbol->type == MS_SYMBOL_VECTOR); */
 
     newSymbol = (symbolObj *) malloc(sizeof(symbolObj));
     msCopySymbol(newSymbol, symbol, NULL); /* TODO: do we really want to do this for all symbol types? */

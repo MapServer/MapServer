@@ -271,10 +271,7 @@ int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb) {
  */
 
 static acolorhist_vector
-mediancut( achv, colors, sum, maxval, newcolors )
-acolorhist_vector achv;
-int colors, sum, newcolors;
-unsigned char maxval;
+mediancut( acolorhist_vector achv, int colors, int sum, unsigned char maxval, int newcolors )
 {
     acolorhist_vector acolormap;
     box_vector bv;

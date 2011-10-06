@@ -571,7 +571,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
 /* ==================================================================== */
         if (bBBoxQuery)
           sprintf(szBuffer, "%s", " ([shape] ");
-        //sprintf(szBuffer, "%s", " (NOT ([shape] ");
+        /* sprintf(szBuffer, "%s", " (NOT ([shape] "); */
         else
           sprintf(szBuffer, "%s", " ([shape] ");
 
@@ -585,7 +585,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
         msStringToLower(pszTmp);
         if (bBBoxQuery)
           sprintf(szBuffer, " %s ", "intersects");
-        //sprintf(szBuffer, " %s ", "disjoint");
+        /* sprintf(szBuffer, " %s ", "disjoint"); */
         else
            sprintf(szBuffer, " %s ", pszTmp);
 
@@ -607,7 +607,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     sprintf(szBuffer, "%s", ")");
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
-    if (0)//bBBoxQuery)
+    if (0) /* bBBoxQuery */
      {
           sprintf(szBuffer, "%s", ")");
           pszExpression = msStringConcatenate(pszExpression, szBuffer);

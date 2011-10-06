@@ -740,8 +740,8 @@ int renderPixmapSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, s
    if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return MS_FAILURE;
    assert(symbol->pixmap_buffer && symbol->pixmap_buffer->type == MS_BUFFER_GD);
    pp = symbol->pixmap_buffer->data.gd_img;
-   //gdImageAlphaBlending(ip,1);
-   //gdImageAlphaBlending(pp,1);
+   /* gdImageAlphaBlending(ip,1); */
+   /* gdImageAlphaBlending(pp,1); */
       
    if(symbol->transparent)
       gdImageColorTransparent(pp,symbol->transparentcolor);
@@ -765,7 +765,7 @@ int renderPixmapSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, s
          gdImageDestroy(pp);
       }
     }
-   //gdImageAlphaBlending(ip,0);
+   /* gdImageAlphaBlending(ip,0); */
    return MS_SUCCESS;
 }
 

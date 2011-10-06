@@ -32,7 +32,7 @@
 #include "mapresample.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$");
+MS_CVSID("$Id$")
 
 int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record);
 int msRASTERLayerGetItems(layerObj *layer);

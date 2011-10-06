@@ -680,8 +680,8 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     cliprect.maxx = map->extent.maxx + map->cellsize;
     cliprect.maxy = map->extent.maxy + map->cellsize;
 
-    //clip using the layer projection
-    //msProjectRect(&map->projection , &layer->projection,  &cliprect);
+    /* clip using the layer projection */
+    /* msProjectRect(&map->projection , &layer->projection,  &cliprect); */
 
     while((status = msLayerNextShape(layer, &shapegrid)) == MS_SUCCESS) 
     {
@@ -696,7 +696,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
        
       msInitShape(&tmpshape);
       msCopyShape(&shapegrid, &tmpshape);      
-      //status = msDrawShape(map, layer, &tmpshape, image, -1);
+      /* status = msDrawShape(map, layer, &tmpshape, image, -1); */
       
       if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
         msProjectShape(&layer->projection, &map->projection, &shapegrid);
@@ -716,7 +716,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
       
 
-      if(shapegrid.numlines >= 1 && shapegrid.line[0].numpoints >=2)// && shapegrid.text)
+      if(shapegrid.numlines >= 1 && shapegrid.line[0].numpoints >=2) /* && shapegrid.text) */
       {         
           int iTmpLine = 0;
           int nNumPoints = 0;
@@ -787,8 +787,8 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                   /*validate that the  value is not already in the array*/
                   if ( psValues->nBottom > 0)
                     {
-                      //if (psValues->pasBottom[psValues->nBottom-1].x == oFirstPoint.x)
-                      //continue;
+                      /* if (psValues->pasBottom[psValues->nBottom-1].x == oFirstPoint.x) 
+                           continue; */
 
                       for (i=0; i<psValues->nBottom; i++)
                         {
@@ -841,8 +841,8 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                   /*validate if same value is not already there*/
                   if ( psValues->nTop > 0)
                     {
-                      //if (psValues->pasTop[psValues->nTop-1].x == oLastPoint.x)
-                      //continue;
+                      /* if (psValues->pasTop[psValues->nTop-1].x == oLastPoint.x)
+                           continue; */
 
                       for (i=0; i<psValues->nTop; i++)
                         {
@@ -914,8 +914,8 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                   /*validate that the previous value is not the same*/
                   if ( psValues->nLeft > 0)
                     {
-                      //if (psValues->pasLeft[psValues->nLeft-1].y == oFirstPoint.y)
-                      // continue;
+                      /* if (psValues->pasLeft[psValues->nLeft-1].y == oFirstPoint.y)
+                           continue; */
 
                       for (i=0; i<psValues->nLeft; i++)
                         {
@@ -967,8 +967,8 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                   /*validate that the previous value is not the same*/
                   if ( psValues->nRight > 0)
                     {
-                      //if (psValues->pasRight[psValues->nRight-1].y == oLastPoint.y)
-                      // continue;
+                      /* if (psValues->pasRight[psValues->nRight-1].y == oLastPoint.y)
+                           continue; */
                       for (i=0; i<psValues->nRight; i++)
                         {     
                           if (psValues->pasRight[i].y == oLastPoint.y)
@@ -1083,7 +1083,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   graticuleObj *pInfo = (graticuleObj  *) pLayer->layerinfo;
   rectObj rectLabel;
   pointObj ptPoint;
-  double size = pLayer->class[0]->label.size; //TODO TBT: adjust minsize/maxsize/resolution
+  double size = pLayer->class[0]->label.size; /* TODO TBT: adjust minsize/maxsize/resolution */
 
   if( pInfo == NULL || pShape == NULL ) {
     msSetError(MS_MISCERR, "Assertion failed: Null shape or layerinfo!, ", "_AdjustLabelPosition()");

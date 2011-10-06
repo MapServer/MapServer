@@ -282,7 +282,7 @@ static clusterInfo *clusterInfoCreate(msClusterLayerInfo* layerinfo)
     feature->node = NULL;
     feature->siblings = NULL;
     feature->index = layerinfo->numFeatures;
-    feature->filter = -1; // not yet calculated
+    feature->filter = -1; /* not yet calculated */
     ++layerinfo->numFeatures;
     return feature;
 }
@@ -533,7 +533,7 @@ static void InitShapeAttributes(layerObj* layer, clusterInfo* base)
             if (base->shape.values[i])
                 msFree(base->shape.values[i]);
 
-            base->shape.values[i] = msStrdup("1"); // initial count 
+            base->shape.values[i] = msStrdup("1"); /* initial count */
         }
     }
 }
@@ -612,11 +612,11 @@ static int BuildFeatureAttributes(layerObj* layer, msClusterLayerInfo* layerinfo
     {
         if (itemindexes[i] == MSCLUSTER_FEATURECOUNTINDEX)
         {
-            values[i] = NULL; // not yet assigned
+            values[i] = NULL; /* not yet assigned */
         }
         else if (itemindexes[i] == MSCLUSTER_GROUPINDEX)
         {
-            values[i] = NULL; // not yet assigned
+            values[i] = NULL; /* not yet assigned */
         }
         else if (shape->values[itemindexes[i]])
             values[i] = msStrdup(shape->values[itemindexes[i]]);
@@ -1515,7 +1515,7 @@ int msClusterLayerOpen(layerObj *layer)
         return MS_FAILURE;
 
     if (layer->layerinfo)
-        return MS_SUCCESS;  // already open
+        return MS_SUCCESS;  /* already open */
     
     layerinfo = msClusterInitialize(layer);
 

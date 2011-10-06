@@ -136,7 +136,7 @@ int msUnionLayerOpen(layerObj *layer)
 
     if (layer->layerinfo != NULL)
     {
-      return MS_SUCCESS;  // Nothing to do... layer is already opened
+      return MS_SUCCESS;  /* Nothing to do... layer is already opened */
     }
     
     if (!layer->connection)
@@ -529,7 +529,7 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
                     layerinfo->classIndex = msShapeGetClass(srclayer, layer->map, shape, layerinfo->classgroup, layerinfo->nclasses);
                     if(layerinfo->classIndex < 0 || layerinfo->classIndex >= srclayer->numclasses) 
                     {
-                        // this shape is not visible, skip it
+                        /*  this shape is not visible, skip it */
                         msFreeShape(shape);
                         if (rv == MS_SUCCESS)
                             continue;

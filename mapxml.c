@@ -26,9 +26,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+#include "mapserver.h"
+
 #ifdef USE_XMLMAPFILE
 
-#include "mapserver.h"
 #include <libxslt/xslt.h>
 #include "libexslt/exslt.h"
 #include <libxslt/transform.h>

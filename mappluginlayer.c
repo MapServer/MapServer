@@ -161,7 +161,7 @@ copyVirtualTable(layerVTableObj *dest,
     dest->LayerWhichShapes = src->LayerWhichShapes ? src->LayerWhichShapes : dest->LayerWhichShapes;
     dest->LayerNextShape = src->LayerNextShape ? src->LayerNextShape : dest->LayerNextShape;
     dest->LayerGetShape = src->LayerGetShape ? src->LayerGetShape : dest->LayerGetShape;
-    // dest->LayerResultsGetShape = src->LayerResultsGetShape ? src->LayerResultsGetShape : dest->LayerResultsGetShape;
+    /* dest->LayerResultsGetShape = src->LayerResultsGetShape ? src->LayerResultsGetShape : dest->LayerResultsGetShape; */
     dest->LayerClose = src->LayerClose ? src->LayerClose : dest->LayerClose;
     dest->LayerGetItems = src->LayerGetItems ? src->LayerGetItems : dest->LayerGetItems;
     dest->LayerGetExtent = src->LayerGetExtent ? src->LayerGetExtent : dest->LayerGetExtent;

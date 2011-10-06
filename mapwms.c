@@ -568,9 +568,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       {
         /* SRS=EPSG:xxxx */
         
-        /*don't need to copy init=xxx since the srsbudder is only
-          used with msLoadProjection and that does alreay the job*/
-        //snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5);
+        /* don't need to copy init=xxx since the srsbudder is only
+           used with msLoadProjection and that does alreay the job */
+        /* snprintf(srsbuffer, 100, "init=epsg:%.20s", values[i]+5); */
 
         
         snprintf(srsbuffer, sizeof(srsbuffer), "EPSG:%.20s",values[i]+5);

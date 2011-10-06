@@ -1313,7 +1313,7 @@ msWFSLayerInitializeVirtualTable(layerObj *layer)
     layer->vtable->LayerIsOpen = msWFSLayerIsOpen;
     layer->vtable->LayerWhichShapes = msWFSLayerWhichShapes;
     layer->vtable->LayerNextShape = msWFSLayerNextShape;
-    // layer->vtable->LayerResultsGetShape = msWFSLayerResultGetShape; 
+    /* layer->vtable->LayerResultsGetShape = msWFSLayerResultGetShape; */
     layer->vtable->LayerGetShape = msWFSLayerGetShape;
     layer->vtable->LayerClose = msWFSLayerClose;
     layer->vtable->LayerGetItems = msWFSLayerGetItems;

@@ -782,7 +782,7 @@ int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rect
   if(label->type == MS_TRUETYPE) {
     char *font=msFontsetLookupFont(&(map->fontset), label->font);
     if(!font) {
-    	//error message already set in fontset lookup
+    	/* error message already set in fontset lookup */
     	return MS_FAILURE;
     }
     return msGetTruetypeTextBBox(renderer,font,size,string,rect,advances);

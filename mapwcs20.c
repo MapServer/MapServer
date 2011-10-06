@@ -651,7 +651,7 @@ static int msWCSParseRequest20_XMLGetCapabilities(
             xmlNodePtr versionNode = NULL;
             XML_FOREACH_CHILD(child, versionNode)
             {
-                //for(child = firstChild->children; child != NULL; child = child->next)
+                /* for(child = firstChild->children; child != NULL; child = child->next) */
                 XML_LOOP_IGNORE_COMMENT_OR_TEXT(versionNode);
                 XML_ASSERT_NODE_NAME(versionNode, "Version");
 
@@ -2666,7 +2666,7 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
 
     msIO_printf("%s", buffer);
 
-    //free buffer and the document
+    /* free buffer and the document */
     free(errorString);
     free(errorMessage);
     free(schemasLocation);
@@ -3426,7 +3426,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     if (status != MS_SUCCESS) return MS_FAILURE;
 
     /* fill in bands rangeset info, if required.  */
-    //msWCSSetDefaultBandsRangeSetInfo(NULL, &cm, layer );
+    /* msWCSSetDefaultBandsRangeSetInfo(NULL, &cm, layer ); */
 
     /* set  resolution, size and maximum extent */
     layer->extent = map->extent = cm.extent;
@@ -3665,8 +3665,8 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     msMapComputeGeotransform(map);
 
     /*    fill in bands rangeset info, if required.  */
-    //msWCSSetDefaultBandsRangeSetInfo(params, &cm, layer);
-    //msDebug("Bandcount: %d\n", cm.bandcount);
+    /* msWCSSetDefaultBandsRangeSetInfo(params, &cm, layer); */
+    /* msDebug("Bandcount: %d\n", cm.bandcount); */
 
     msApplyDefaultOutputFormats(map);
 

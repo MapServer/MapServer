@@ -3091,7 +3091,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
         char *pszTmp=NULL;
         char *pszLayerPropertyName=NULL, *pszLayerFilter=NULL;
 
-        //xmlXPathAxisFunc
+        /* xmlXPathAxisFunc */
         /* load document */
         doc = xmlParseDoc((xmlChar *)request->postrequest);
         if (doc == NULL || (rootnode = xmlDocGetRootElement(doc)) == NULL) 
@@ -3308,7 +3308,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
         }              
         
         
-         /* check for request */
+        /* check for request */
         /* only works??? if <wfs:getCapbilites ...>
         psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/wfs:GetCapabilities|/GetCapabilities");
         psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/GetCapabilities");

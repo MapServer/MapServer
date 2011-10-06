@@ -202,7 +202,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
                break;
             case (MS_SYMBOL_PIXMAP):
                if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
-                  return NULL; //failed to load image, renderer should have set the error message
+                  return NULL; /* failed to load image, renderer should have set the error message */
                }
                renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
                break;
@@ -234,7 +234,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
                      break;
                   case (MS_SYMBOL_PIXMAP):
                      if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
-                        return NULL; //failed to load image, renderer should have set the error message
+                        return NULL; /* failed to load image, renderer should have set the error message */
                      }
                      renderer->renderPixmapSymbol(tile3img, p_x, p_y, symbol, s);
                      break;
@@ -282,7 +282,7 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
    for(i=0; i<p->numlines; i++)
    {
       int line_in = 0;
-      double current_length = (spacing+symbol_width)/2.0; // initial padding for each line
+      double current_length = (spacing+symbol_width)/2.0; /* initial padding for each line */
       double line_length=0;
       for(j=1; j<p->line[i].numpoints; j++)
       {
@@ -478,9 +478,9 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                assert(symbol->full_font_path);
             }
 
-            //compute a markerStyle and use it on the line
+            /* compute a markerStyle and use it on the line */
             if(style->gap<0) {
-               //special function that treats any other symbol used as a marker, not a brush
+               /* special function that treats any other symbol used as a marker, not a brush */
                msImagePolylineMarkers(image,offsetLine,symbol,&s,-s.gap,1);
             }
             else if(style->gap>0) {
@@ -533,7 +533,7 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
       return MS_SUCCESS;
 
    if (style->symbol >= symbolset->numsymbols || style->symbol < 0)
-      return MS_SUCCESS; // no such symbol, 0 is OK
+      return MS_SUCCESS; /* no such symbol, 0 is OK */
 
    /*
     * if only an outlinecolor was defined, and not a color,
@@ -650,7 +650,7 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             s.style = style;
 
             if (!s.color && !s.outlinecolor && symbol->type != MS_SYMBOL_PIXMAP) {
-               ret = MS_SUCCESS; // nothing to do (colors are required except for PIXMAP symbols
+               ret = MS_SUCCESS; /* nothing to do (colors are required except for PIXMAP symbols */
                goto cleanup;
             }
 
@@ -736,12 +736,11 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
          computeSymbolStyle(&s,style,symbol,scalefactor);
          s.style = style;
          if (!s.color && !s.outlinecolor && symbol->type != MS_SYMBOL_PIXMAP)
-            return MS_SUCCESS; // nothing to do if no color, except for pixmap symbols
+            return MS_SUCCESS; /* nothing to do if no color, except for pixmap symbols */
 
 
 
-         //TODO: skip the drawing of the symbol if it's smaller than a pixel ?
-         /*
+         /* TODO: skip the drawing of the symbol if it's smaller than a pixel ?
          if (s.size < 1)
          	return; // size too small
           */
@@ -806,7 +805,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
          rendererVTableObj *renderer = image->format->vtable;
          double x, y;
          if (!string || !strlen(string))
-            return (0); // not errors, just don't want to do anything
+            return (0); /* not errors, just don't want to do anything */
 
 
          if(computeLabelStyle(&s,label,fontset,scalefactor) == MS_FAILURE) {
@@ -822,7 +821,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
          if (label->type == MS_TRUETYPE) {
             if(MS_VALID_COLOR(label->shadowcolor)) {
                s.color = &label->shadowcolor;
-               //FIXME labelpoint for rotated label
+               /* FIXME labelpoint for rotated label */
                renderer->renderGlyphs(image,
                                       x + scalefactor * label->shadowsizex,y + scalefactor * label->shadowsizey,
                                       &s,string);
@@ -860,7 +859,7 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
          rendererVTableObj *renderer = image->format->vtable;
          labelStyleObj s;
          if (!string || !strlen(string))
-            return (0); // not errors, just don't want to do anything
+            return (0); /* not errors, just don't want to do anything */
          computeLabelStyle(&s, label, fontset, scalefactor);
          if (label->type == MS_TRUETYPE) {
             const char* string_ptr = string;

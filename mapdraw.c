@@ -142,7 +142,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         colorObj *bg = &map->imagecolor;
         map->imagecolor.alpha=255;
         if(map->transparent == MS_TRUE) {
-           //don't set the image color
+           /* don't set the image color */
            bg = NULL;
         }
         image = renderer->createImage(map->width, map->height, map->outputformat,bg);
@@ -797,7 +797,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (image)
     maxfeatures=msLayerGetMaxFeaturesToDraw(layer, image->format);
   
-  //TODO TBT: draw as raster layer in vector renderers
+  /* TODO TBT: draw as raster layer in vector renderers */
 
   annotate = msEvalContext(map, layer, layer->labelrequires);
   if(map->scaledenom > 0) {

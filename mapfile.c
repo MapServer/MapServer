@@ -3978,7 +3978,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
 
   indent++;
   writeBlockBegin(stream, indent, "LAYER");
-  // bindvals
+  /* bindvals */
   /* class - see below */
   writeString(stream, indent, "CLASSGROUP", NULL, layer->classgroup);
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);

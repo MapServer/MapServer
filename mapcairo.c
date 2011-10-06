@@ -60,7 +60,7 @@ struct facecacheObj {
 };
 
 int freeFaceCache(faceCacheObj *fc) {
-    //printf("***\nface has %d references\n***\n",cairo_font_face_get_reference_count(fc->face));
+    /* printf("***\nface has %d references\n***\n",cairo_font_face_get_reference_count(fc->face)); */
     cairo_font_face_destroy(fc->face);
     free(fc->path);
     return MS_SUCCESS;
@@ -238,7 +238,7 @@ int renderPolygonTiledCairo(imageObj *img, shapeObj *p,  imageObj *tile) {
       for (j = 1; j < l->numpoints; j++) {
         cairo_line_to(r->cr, l->point[j].x, l->point[j].y);
       }
-      //cairo_close_path(r->cr);
+      /* cairo_close_path(r->cr); */
     }
     cairo_fill(r->cr);
     cairo_pattern_destroy(pattern);
@@ -293,7 +293,7 @@ int renderVectorSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol
     cairo_rotate(r->cr,-style->rotation);
     cairo_translate(r->cr,-ox,-oy);
     for (i = 0; i < symbol->numpoints; i++) {
-        if ((symbol->points[i].x == -99) && (symbol->points[i].y == -99)) { // (PENUP)
+        if ((symbol->points[i].x == -99) && (symbol->points[i].y == -99)) { /* (PENUP) */
             is_new = 1;
         } else {
             if (is_new) {
@@ -350,7 +350,7 @@ int renderTruetypeSymbolCairo(imageObj *img, double x, double y, symbolObj *symb
    cairo_matrix_init_rotate(&trans,-s->rotation);
 
    cairo_matrix_transform_point(&trans,&ox,&oy);
-   //cairo_translate(cr,-extents.width/2,-extents.height/2);
+   /* cairo_translate(cr,-extents.width/2,-extents.height/2); */
 
    cairo_translate(r->cr,x-ox,y-oy);
    cairo_rotate(r->cr, -s->rotation);
@@ -601,7 +601,7 @@ int saveImageCairo(imageObj *img, FILE *fp, outputFormatObj *format) {
         cairo_surface_finish (r->surface);
         fwrite(r->outputStream->data,r->outputStream->size,1,fp);
     } else {
-        // not supported
+        /* not supported */
     }
     return MS_SUCCESS;
 }
@@ -612,8 +612,8 @@ void *msCreateTileEllipseCairo(double width, double height, double angle,
     cairo_surface_t *surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
                                                            s,s);
     cairo_t *cr = cairo_create(surface);
-    //cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-    //cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    /* cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND); */
+    /* cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND); */
     if (bc && MS_VALID_COLOR(*bc)) {
         msCairoSetSourceColor(cr, bc);
         cairo_paint(cr);
@@ -736,7 +736,7 @@ int mergeRasterBufferCairo(imageObj *img, rasterBufferObj *rb, double opacity,
                            int width, int height) {
     cairo_surface_t *src;
     cairo_renderer *r;
-    //not implemented for src,dst,width and height;
+    /* not implemented for src,dst,width and height */
     if(!rb->type == MS_BUFFER_BYTE_RGBA) {
         return MS_FAILURE;
     }

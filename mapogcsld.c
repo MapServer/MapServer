@@ -2240,8 +2240,6 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
     char *pszFormat = NULL;
     CPLXMLNode *psURL=NULL, *psFormat=NULL, *psTmp=NULL;
     char *pszURL=NULL;
-    int status;
-
 
     if (!psExternalGraphic || !psStyle || !map)
         return MS_FAILURE;

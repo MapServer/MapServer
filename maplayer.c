@@ -355,7 +355,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
   int token;
 
   /* TODO: make sure the constants can't somehow reference invalid expression types */
-  // if(expression->type != MS_EXPRESSION && expression->type != MS_GEOMTRANSFORM_EXPRESSION) return MS_SUCCESS;
+  /* if(expression->type != MS_EXPRESSION && expression->type != MS_GEOMTRANSFORM_EXPRESSION) return MS_SUCCESS; */
 
   msAcquireLock(TLOCK_PARSER);
   msyystate = MS_TOKENIZE_EXPRESSION;
@@ -1358,7 +1358,7 @@ static int populateVirtualTable(layerVTableObj *vtable)
   vtable->LayerWhichShapes = LayerDefaultWhichShapes;
 
   vtable->LayerNextShape = LayerDefaultNextShape;
-  // vtable->LayerResultsGetShape = LayerDefaultResultsGetShape;
+  /* vtable->LayerResultsGetShape = LayerDefaultResultsGetShape; */
   vtable->LayerGetShape = LayerDefaultGetShape;
   vtable->LayerClose = LayerDefaultClose;
   vtable->LayerGetItems = LayerDefaultGetItems;

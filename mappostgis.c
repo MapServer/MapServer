@@ -702,10 +702,43 @@ arcCircleCenter(const pointObj *p1, const pointObj *p2, const pointObj *p3, poin
     double y1sq = p1->y * p1->y;
     double y2sq = p2->y * p2->y;
     double y3sq = p3->y * p3->y;
-    double matrix_num_x[9] = { x1sq+y1sq, p1->y, 1.0, x2sq+y2sq, p2->y, 1.0, x3sq+y3sq, p3->y, 1.0 };
-    double matrix_num_y[9] = { p1->x, x1sq+y1sq, 1.0, p2->x, x2sq+y2sq, 1.0, p3->x, x3sq+y3sq, 1.0 };
-    double matrix_denom[9] = { p1->x, p1->y, 1.0, p2->x, p2->y, 1.0, p3->x, p3->y, 1.0 };
+    double matrix_num_x[9];
+    double matrix_num_y[9];
+    double matrix_denom[9];
 
+    /* Intialize matrix_num_x */
+    matrix_num_x[0] = x1sq+y1sq;
+    matrix_num_x[1] = p1->y;
+    matrix_num_x[2] = 1.0;
+    matrix_num_x[3] = x2sq+y2sq;
+    matrix_num_x[4] = p2->y;
+    matrix_num_x[5] = 1.0;
+    matrix_num_x[6] = x3sq+y3sq;
+    matrix_num_x[7] = p3->y;
+    matrix_num_x[8] = 1.0;
+    
+    /* Intialize matrix_num_y */
+    matrix_num_y[0] = p1->x;
+    matrix_num_y[1] = x1sq+y1sq;
+    matrix_num_y[2] = 1.0;
+    matrix_num_y[3] = p2->x;
+    matrix_num_y[4] = x2sq+y2sq;
+    matrix_num_y[5] = 1.0;
+    matrix_num_y[6] = p3->x;
+    matrix_num_y[7] = x3sq+y3sq;
+    matrix_num_y[8] = 1.0;
+
+    /* Intialize matrix_denom */
+    matrix_denom[0] = p1->x;
+    matrix_denom[1] = p1->y;
+    matrix_denom[2] = 1.0;
+    matrix_denom[3] = p2->x;
+    matrix_denom[4] = p2->y;
+    matrix_denom[5] = 1.0;
+    matrix_denom[6] = p3->x;
+    matrix_denom[7] = p3->y;
+    matrix_denom[8] = 1.0;
+    
     /* Circle is closed, so p2 must be opposite p1 & p3. */ 
     if ( FP_EQ(p1->x,p3->x) && FP_EQ(p1->y,p3->y) ) {
         c.x = (p1->x + p2->x) / 2.0;
@@ -1219,7 +1252,7 @@ msPostGISRetrievePK(layerObj *layer) {
 ** unique id column, srid, and SQL string.
 */
 int msPostGISParseData(layerObj *layer) {
-    char *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_uid, *data;
+    char *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_uid, *pos_geom, *data;
     int slength;
     msPostGISLayerInfo *layerinfo;
 
@@ -1314,6 +1347,13 @@ int msPostGISParseData(layerObj *layer) {
     /*
     ** Scan for the 'geometry from table' or 'geometry from () as foo' clause. 
     */
+    
+    /* Find the first non-white character to start from */
+    pos_geom = data;
+    while( *pos_geom == ' ' || *pos_geom == '\t' || *pos_geom == '\n' || *pos_geom == '\r' )
+        pos_geom++;
+    
+    /* Find the end of the geom column name */
     pos_scn = strcasestr(data, " from ");
     if (!pos_scn) {
         msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. Must contain 'geometry from table' or 'geometry from (subselect) as foo'. %s", "msPostGISParseData()", data);
@@ -1321,8 +1361,8 @@ int msPostGISParseData(layerObj *layer) {
     }
 
     /* Copy the geometry column name */
-    layerinfo->geomcolumn = (char*) msSmallMalloc((pos_scn - data) + 1);
-    strlcpy(layerinfo->geomcolumn, data, pos_scn - data+1);
+    layerinfo->geomcolumn = (char*) msSmallMalloc((pos_scn - pos_geom) + 1);
+    strlcpy(layerinfo->geomcolumn, pos_geom, pos_scn - pos_geom+1);
     msStringTrim(layerinfo->geomcolumn);
 
     /* Copy the table name or sub-select clause */

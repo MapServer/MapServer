@@ -897,11 +897,12 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
   /* we know the layer has query results or we wouldn't be in this code */
 
-  // status = msLayerOpen(layer); /* open the layer */
-  // if(status != MS_SUCCESS) return status;
-  
-  // status = msLayerGetItems(layer); /* retrieve all the item names */
-  // if(status != MS_SUCCESS) return status;
+#if 0
+  status = msLayerOpen(layer); /* open the layer */
+  if(status != MS_SUCCESS) return status;
+  status = msLayerGetItems(layer); /* retrieve all the item names */
+  if(status != MS_SUCCESS) return status;
+#endif
 
   if(layer->numjoins > 0) { /* initialize necessary JOINs here */
     for(j=0; j<layer->numjoins; j++) {
@@ -960,7 +961,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     mapserv->LRN++;
   }
 
-  // msLayerClose(layer);
+  /* msLayerClose(layer); */
   mapserv->resultlayer = NULL; /* necessary? */
 
   *line = msStringConcatenate(*line, postTag);
@@ -1858,7 +1859,7 @@ static int processDateTag(char **line)
 #define DATE_BUFLEN 1024
   char datestr[DATE_BUFLEN]; 
   char *argValue=NULL;
-  char *format, *tz; // tag parameters 
+  char *format, *tz; /* tag parameters */
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processDateTag()");
@@ -1872,7 +1873,7 @@ static int processDateTag(char **line)
     return MS_SUCCESS;
 
   while (tagStart) {
-    // set tag params to defaults
+    /* set tag params to defaults */
     format = DEFAULT_DATE_FORMAT;
     tz = "";
     
@@ -3912,8 +3913,8 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[rn]", repstr);
     snprintf(repstr, sizeof(repstr), "%d", mapserv->LRN); /* sequential (eg. 1..n) result number within this layer */
     outstr = msReplaceSubstring(outstr, "[lrn]", repstr);
-    outstr = msReplaceSubstring(outstr, "[cl]", mapserv->resultlayer->name); /* current layer name     */
-    /* if(resultlayer->description) outstr = msReplaceSubstring(outstr, "[cd]", resultlayer->description); // current layer description     */
+    outstr = msReplaceSubstring(outstr, "[cl]", mapserv->resultlayer->name); /* current layer name */
+    /* if(resultlayer->description) outstr = msReplaceSubstring(outstr, "[cd]", resultlayer->description); */ /* current layer description */
   }
 
   if(mode != QUERY) {
@@ -4236,11 +4237,13 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
       if(TEMPLATE_TYPE(template) == MS_URL) {
         mapserv->resultlayer = lp;
 
-        // status = msLayerOpen(lp);
-        // if(status != MS_SUCCESS) return status;
+#if 0
+        status = msLayerOpen(lp);
+        if(status != MS_SUCCESS) return status;
         
-        // status = msLayerGetItems(lp); /* retrieve all the item names */
-        // if(status != MS_SUCCESS) return status;
+        status = msLayerGetItems(lp); /* retrieve all the item names */
+        if(status != MS_SUCCESS) return status;
+#endif
 
         status = msLayerGetShape(lp, &(mapserv->resultshape), &(lp->resultcache->results[0]));
         if(status != MS_SUCCESS) return status;
@@ -4260,7 +4263,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
         }
 
         msFreeShape(&(mapserv->resultshape));
-        // msLayerClose(lp);
+        /* msLayerClose(lp); */
         mapserv->resultlayer = NULL;
           
         return MS_SUCCESS;
@@ -4314,11 +4317,13 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
 
     mapserv->NLR = lp->resultcache->numresults; 
 
-    // status = msLayerOpen(lp); /* open this layer */
-    // if(status != MS_SUCCESS) return status;
+#if 0
+    status = msLayerOpen(lp); /* open this layer */
+    if(status != MS_SUCCESS) return status;
 
-    // status = msLayerGetItems(lp); /* retrieve all the item names */
-    // if(status != MS_SUCCESS) return status;
+    status = msLayerGetItems(lp); /* retrieve all the item names */
+    if(status != MS_SUCCESS) return status;
+#endif
     
     if(lp->numjoins > 0) { /* open any necessary JOINs here */
       for(k=0; k<lp->numjoins; k++) {
@@ -4366,7 +4371,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
       if(msReturnPage(mapserv, lp->footer, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
     }
 
-    // msLayerClose(lp);
+    /* msLayerClose(lp); */
     mapserv->resultlayer = NULL;
   }
 

@@ -2455,7 +2455,8 @@ int msTiledSHPLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerIsOpen = msTiledSHPLayerIsOpen;
   layer->vtable->LayerWhichShapes = msTiledSHPWhichShapes;
   layer->vtable->LayerNextShape = msTiledSHPNextShape;
-  // layer->vtable->LayerResultsGetShape = msTiledSHPGetShape; /* no special version, use ...GetShape() */
+  /* no special version, use ...GetShape() */
+  /* layer->vtable->LayerResultsGetShape = msTiledSHPGetShape; */ 
   layer->vtable->LayerGetShape = msTiledSHPGetShape;
   layer->vtable->LayerClose = msTiledSHPCloseVT;
   layer->vtable->LayerGetItems = msTiledSHPLayerGetItems;

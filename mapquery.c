@@ -785,7 +785,7 @@ int msQueryByFilter(mapObj *map)
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByFilter()");
     return(MS_FAILURE);
   }
-  if(!map->query.filter) { // TODO: check filter type too
+  if(!map->query.filter) { /* TODO: check filter type too */
     msSetError(MS_QUERYERR, "Filter is not set.", "msQueryByFilter()");
     return(MS_FAILURE);
   }

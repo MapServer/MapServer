@@ -39,7 +39,7 @@ MS_CVSID("$Id$")
 /*
 ** Match this with with unit enumerations is mapserver.h
 */
-static char *unitText[9]={"in", "ft", "mi", "m", "km", "dd", "??", "??", "NM"}; //MS_PIXEL and MS_PERCENTAGE not used
+static char *unitText[9]={"in", "ft", "mi", "m", "km", "dd", "??", "??", "NM"}; /* MS_PIXEL and MS_PERCENTAGE not used */
 double inchesPerUnit[9]={1, 12, 63360.0, 39.3701, 39370.1, 4374754, 1, 1, 72913.3858 };
 
 static double roundInterval(double d)
@@ -438,7 +438,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
   GET_LAYER(map, l)->class[0]->label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
   GET_LAYER(map, l)->class[0]->label.priority = MS_MAX_LABEL_PRIORITY;
 
-  if(map->scalebar.postlabelcache) /* add it directly to the image //TODO */
+  if(map->scalebar.postlabelcache) /* TODO: add it directly to the image */
   {
       msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   } else {

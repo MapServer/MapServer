@@ -143,7 +143,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
         shapeObj bbox;
         lineObj bbox_line;
         pointObj bbox_points[5];
-        int padding = MS_MAX(style->width,style->size)+3; //so clipped shape does not extent into image
+        int padding = MS_MAX(style->width,style->size)+3; /* so clipped shape does not extent into image */
         
         /*create a shapeObj representing the bounding box (clipped by the image size)*/
         bbox.numlines = 1;

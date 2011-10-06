@@ -56,7 +56,7 @@ void png_write_data_to_buffer(png_structp png_ptr, png_bytep data, png_size_t le
 }
 
 void png_flush_data(png_structp png_ptr) {
- // do nothing
+ /* do nothing */
 }
 
 typedef struct {
@@ -424,9 +424,9 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
                 qrb.data.palette.num_entries = numPaletteGivenEntries;
                 ret = MS_SUCCESS;
             
-                //we have a full palette and don't want an additional quantization step
+                /* we have a full palette and don't want an additional quantization step */
             } else {
-                //quantize the image, and mix our colours in the resulting palette
+                /* quantize the image, and mix our colours in the resulting palette */
                 qrb.data.palette.palette = palette;
                 qrb.data.palette.num_entries = MS_MAX(colorsWanted,numPaletteGivenEntries);
                 ret = msQuantizeRasterBuffer(rb,&(qrb.data.palette.num_entries),qrb.data.palette.palette,
@@ -1103,7 +1103,7 @@ int readGIF(char *path, rasterBufferObj *rb)
             int width = image->Image.Width;
             int height = image->Image.Height;
             
-            //sanity check:
+            /* sanity check: */
             if(col+width>rb->width || row+height>rb->height) {
                msSetError(MS_MISCERR,"corrupted gif image, img size exceeds screen size","readGIF()");
                return MS_FAILURE;

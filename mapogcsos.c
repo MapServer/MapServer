@@ -826,7 +826,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
           msProjectShape(&lp->projection, &lp->projection, &sShape);
 #endif
         psNode = xmlNewChild(psNode, psNsGml, BAD_CAST "featureMember", NULL);
-        //xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
+        /* xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml")); */
 
         /*TODO : add namespaces like wfs " ms and a url to mapserve ? */
         psLayerNode = xmlNewChild(psNode, psNsMs, BAD_CAST lp->name, NULL);
@@ -1915,7 +1915,7 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
           for (j=0; j<n; j++) {
             if(strcasecmp(pszTmp2, tokens[j]) == 0) {
               GET_LAYER(map, i)->status = MS_ON;
-              //opLayerName = msStrdup(GET_LAYER(map, i)->name);
+              /* opLayerName = msStrdup(GET_LAYER(map, i)->name); */
               opLayerName = GET_LAYER(map, i)->name;
               /* Force setting a template to enable query. */
               if (!GET_LAYER(map, i)->template)

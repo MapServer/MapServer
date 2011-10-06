@@ -333,7 +333,7 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     float *values;
     styleObj **styles;
     pointObj center;
-    int numvalues = layer->numclasses; //the number of classes to represent in the graph
+    int numvalues = layer->numclasses; /* the number of classes to represent in the graph */
     if(chartSizeProcessingKey==NULL)
     {
         chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );

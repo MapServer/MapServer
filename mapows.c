@@ -440,7 +440,7 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
 
     if (map->numlayers)
     {
-        int i, layers_size = map->numlayers; //for most of cases, this will be relatively small
+        int i, layers_size = map->numlayers; /* for most of cases, this will be relatively small */
 
         ows_request->enabled_layers = (int*)msSmallMalloc(sizeof(int)*layers_size);
 
@@ -1558,8 +1558,8 @@ void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
   msIO_fprintf(stream, "%s    <northBoundLatitude>%g</northBoundLatitude>\n", tabspace, ext.maxy);
   msIO_fprintf(stream, "%s</%s>\n", tabspace, pszTag);
 
-  //msIO_fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
-  //      tabspace, pszTag, ext.minx, ext.miny, ext.maxx, ext.maxy);
+  /* msIO_fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
+                  tabspace, pszTag, ext.minx, ext.miny, ext.maxx, ext.maxy); */
 }
 
 /*

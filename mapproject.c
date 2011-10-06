@@ -760,7 +760,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 #ifdef USE_PROJ
   shapeObj polygonObj;
   lineObj  ring;
-//  pointObj ringPoints[NUMBER_OF_SAMPLE_POINTS*4+4];
+/*  pointObj ringPoints[NUMBER_OF_SAMPLE_POINTS*4+4]; */
   pointObj *ringPoints;
   int     ix, iy;
 

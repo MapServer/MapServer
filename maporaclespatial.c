@@ -551,7 +551,7 @@ static int msOCIOpenStatement( msOracleSpatialHandler *hand, msOracleSpatialStat
     sthand->items = NULL;
     sthand->items_query = NULL;
 
-    //fprintf(stderr, "Creating statement handle at %p\n", sthand->stmthp);
+    /* fprintf(stderr, "Creating statement handle at %p\n", sthand->stmthp); */
     
     return success;
 }
@@ -561,7 +561,7 @@ static void msOCIFinishStatement( msOracleSpatialStatement *sthand )
 {
     if(sthand != NULL) 
     {
-        //fprintf(stderr, "Freeing statement handle at %p\n", sthand->stmthp);
+        /* fprintf(stderr, "Freeing statement handle at %p\n", sthand->stmthp); */
 
         if (sthand->stmthp != NULL)
             OCIHandleFree( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT );
@@ -741,7 +741,7 @@ static void osNoGeodeticData(int function, int version, char *query_str, size_t 
                      "SDO_FILTER( %s, MDSYS.SDO_GEOMETRY("
                      "2003, :srid, NULL,"
                      "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
-                  //   "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g)"
+                  /*   "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g)" */
                      ":ordinates"
                      " ),'querytype=window') = 'TRUE'",
                      geom_column_name);
@@ -1346,12 +1346,9 @@ static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeo
     int n;
 
     n = (end - start)/2;
-    //n = interpretation;
+    /* n = interpretation; */
     
-    // 
-    
-    //if (n == interpretation)
-   // {
+    /* if (n == interpretation) { */
         points.point = (pointObj *)malloc( sizeof(pointObj)*n );
 
         if (data3d)
@@ -1368,7 +1365,7 @@ static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeo
             msAddLine( shape, &points );
         }
         free( points.point );
-   // }
+   /* } */
 }
 
 static void osPoint(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d)
@@ -1679,7 +1676,7 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
               elem_type = (etype == 1 && interpretation > 1) ? 10 : ((etype%10)*10 + interpretation);
 
 
-              // msDebug("osGetOrdinates shape->index = %ld\telem_type =  %d\n",shape->index, elem_type);
+              /* msDebug("osGetOrdinates shape->index = %ld\telem_type =  %d\n",shape->index, elem_type); */
  
               switch (elem_type)
               {
@@ -2963,10 +2960,10 @@ msOracleSpatialGetFieldDefn( layerObj *layer,
 
       case SQLT_NUM:
       {
-          // NOTE: OCI docs say this should be ub1 type, but we have
-            // determined that oracle is actually returning a short so we
-            // use that type and try to compensate for possible problems by
-            // initializing, and dividing by 256 if it is large. 
+            /* NOTE: OCI docs say this should be ub1 type, but we have
+               determined that oracle is actually returning a short so we
+               use that type and try to compensate for possible problems by
+               initializing, and dividing by 256 if it is large. */
             unsigned short byPrecision = 0;
             sb1 nScale = 0;
 

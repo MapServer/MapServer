@@ -555,7 +555,7 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
            double minfeaturesize = Pix2LayerGeoref(map, layer,
                                                    layer->class[iclass]->minfeaturesize);
            if (msShapeCheckSize(shape, minfeaturesize) == MS_FALSE)
-               continue; //skip this one, next class
+               continue; /* skip this one, next class */
        }
 
        if(layer->class[iclass]->status != MS_DELETE && msEvalExpression(layer, shape, &(layer->class[iclass]->expression), layer->classitemindex) == MS_TRUE)
@@ -828,7 +828,7 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
             msSaveRasterBufferToBuffer(&data,&buffer,format);
             *size_ptr = buffer.size;
             return buffer.data;
-            //don't free the bufferObj as we don't own the bytes anymore
+            /* don't free the bufferObj as we don't own the bytes anymore */
         } else {
             /* check if the renderer supports native buffer output */
             if (renderer->saveImageBuffer)
@@ -1397,8 +1397,8 @@ char *msTmpPath(mapObj *map, const char *mappath, const char *tmppath)
 #ifndef _WIN32        
         tmpBase = "/tmp/";
 #else
-        dwRetVal =  GetTempPath(MAX_PATH,          // length of the buffer
-                                lpTempPathBuffer); // buffer for path 
+        dwRetVal =  GetTempPath(MAX_PATH,          /* length of the buffer */
+                                lpTempPathBuffer); /* buffer for path */
         if (dwRetVal > MAX_PATH || (dwRetVal == 0))
         {
             tmpBase = "C:\\";
@@ -1613,31 +1613,37 @@ void  msTransformPoint(pointObj *point, rectObj *extent, double cellsize,
 
 /* vector difference */
 static pointObj point_diff(const pointObj a, const pointObj b) {
-  pointObj retv = {a.x-b.x,a.y-b.y
+  pointObj retv;
+  retv.x = a.x-b.x;
+  retv.y = a.y-b.y;
 #ifdef USE_POINT_Z_M
-    ,a.z-b.z,a.m-b.m
+  retv.z = a.z-b.z;
+  retv.m = a.m-b.m;
 #endif
-  };
   return retv;
 }
 
 /* vector sum */
 static pointObj point_sum(const pointObj a, const pointObj b) {
-  pointObj retv = {a.x+b.x,a.y+b.y
+  pointObj retv;
+  retv.x = a.x+b.x;
+  retv.y = a.y+b.y;
 #ifdef USE_POINT_Z_M
-    ,a.z+b.z,a.m+b.m
+  retv.z = a.z+b.z;
+  retv.m = a.m+b.m
 #endif
-  };
   return retv;
 }
 
 /* vector multiply */
 static pointObj point_mul(const pointObj a, double b) {
-  pointObj retv= {a.x*b,a.y*b
+  pointObj retv;
+  retv.x = a.x*b;
+  retv.y = a.y*b;
 #ifdef USE_POINT_Z_M
-    ,a.z*b,a.m*b
+  retv.z = a.z*b;
+  retv.m = a.m*b;
 #endif
-  };
   return retv;
 }
 

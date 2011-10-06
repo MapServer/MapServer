@@ -554,7 +554,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     msSetError(MS_MISCERR, "Unable to initialize image.", "msDrawLegend()");
     return NULL;
   }
-  //image = renderer->createImage(size_x,size_y,format,&(map->legend.imagecolor));
+  /* image = renderer->createImage(size_x,size_y,format,&(map->legend.imagecolor)); */
 
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
@@ -655,8 +655,8 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   legendSymbol->sizey = legendSymbol->pixmap_buffer->height;
 
   /* I'm not too sure this test is sufficient ... NFW. */
-  //if(map->legend.transparent == MS_ON)
-  //  gdImageColorTransparent(legendSymbol->img_deprecated, 0);
+  /* if(map->legend.transparent == MS_ON) */
+  /*  gdImageColorTransparent(legendSymbol->img_deprecated, 0); */
 
   switch(map->legend.position) {
   case(MS_LL):

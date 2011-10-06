@@ -1963,7 +1963,7 @@ MS_DLL_EXPORT imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *f
 MS_DLL_EXPORT int msSymbolSetImageGD(symbolObj *symbol, imageObj *image);
 
 MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
-//MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);
+/* MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect); */
 MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
 MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
 
@@ -2611,7 +2611,7 @@ MS_DLL_EXPORT int msPopulateRendererVTableGD( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableKML( rendererVTableObj *renderer );
 MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
 
-//allocate 50k for starters
+/* allocate 50k for starters */
 #define MS_DEFAULT_BUFFER_ALLOC 50000
 
 typedef struct _autobuffer {

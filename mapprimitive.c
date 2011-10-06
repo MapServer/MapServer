@@ -205,7 +205,7 @@ void msComputeBounds(shapeObj *shape)
      }
   }
   if(i == shape->numlines)
-     return; //no lines inside the shape contain any points 
+     return; /* no lines inside the shape contain any points */
     
   for( i=0; i<shape->numlines; i++ ) {
     for( j=0; j<shape->line[i].numpoints; j++ ) {
@@ -860,16 +860,16 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
                 if(dx*dx+dy*dy>1)
                     k++;
             }
-            /*try to keep last point*/
+            /* try to keep last point */
             point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
             point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
-            /*discard last point if equal to the one before it*/
+            /* discard last point if equal to the one before it */
             if(point[k].x!=point[k-1].x || point[k].y!=point[k-1].y) {
                 shape->line[i].numpoints=k+1;
             } else {
                 shape->line[i].numpoints=k;
             }
-            //skip degenerate line once more
+            /* skip degenerate line once more */
             if(shape->line[i].numpoints<2)
                shape->line[i].numpoints=0;
         }
@@ -1328,13 +1328,13 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       return(MS_SUCCESS); /* point is not too close to the edge */
   }
 
-  // printf("label: %s\n", p->text);
-  // printf("    bbox: %g %g %g %g\n",minx, miny, maxx, maxy);
-  // printf("    center: %g %g\n", cp.x, cp.y);
-  // printf("    center of gravity: %g %g\n", lp->x, lp->y);
-  // printf("    dx: %g, dy: %g\n", lp->x-cp.x, lp->y-cp.y);
-  // printf("    distance to parent shape: %g\n", min_dist);
-  // return MS_SUCCESS;
+  /* printf("label: %s\n", p->text);
+     printf("    bbox: %g %g %g %g\n",minx, miny, maxx, maxy);
+     printf("    center: %g %g\n", cp.x, cp.y);
+     printf("    center of gravity: %g %g\n", lp->x, lp->y);
+     printf("    dx: %g, dy: %g\n", lp->x-cp.x, lp->y-cp.y);
+     printf("    distance to parent shape: %g\n", min_dist);
+     return MS_SUCCESS; */
 
   n=0;
   for(j=0; j<p->numlines; j++) /* count total number of points */
@@ -1415,7 +1415,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       if(len > max_len) {
         max_len = len;
         lp->x = (intersect[i] + intersect[i+1])/2;
-        // lp->y = y;
+        /* lp->y = y; */
       }
     }
   } else { /* center vertically, fix x */
@@ -1492,7 +1492,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       if(len > max_len) {        
         max_len = len;
         lp->y = (intersect[i] + intersect[i+1])/2;
-        // lp->x = x;
+        /* lp->x = x; */
       }
     }
   }
@@ -1570,7 +1570,7 @@ pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_
   pointObj** labelpoints;
 
   labelpoints_index = 0;
-  labelpoints_size = p->numlines; // minimal array size
+  labelpoints_size = p->numlines; /* minimal array size */
   *numpoints = 0;
 
   labelpoints = (pointObj **) msSmallMalloc(sizeof(pointObj *) * labelpoints_size);
@@ -1636,9 +1636,9 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
     if (point_repeat > 1) {
       if (point_repeat % 2 == 0)
         point_repeat -= 1;
-      point_distance = (line_length / point_repeat); // buffer allowed per point
+      point_distance = (line_length / point_repeat); /* buffer allowed per point */
 
-      // initial point position
+      /* initial point position */
       left_point_position -= ((point_repeat-1)/2 * point_distance);
       right_point_position += ((point_repeat-1)/2 * point_distance);
 
@@ -1650,7 +1650,7 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
 
   for (l=0; l < point_repeat; ++l)
   {
-    if (l == point_repeat-1) { // last point to place is always the center point 
+    if (l == point_repeat-1) { /* last point to place is always the center point */
       point_position = center_point_position;
       n = 1;
     } 
@@ -1714,7 +1714,7 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
       
       point_position = left_point_position;
       n++;
-    } while (n<2); // we place the right point then the left point.
+    } while (n<2); /* we place the right point then the left point. */
 
     right_point_position -= point_distance;
     left_point_position += point_distance;
@@ -1733,7 +1733,7 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   labelPathObj** labelpaths;
 
   labelpaths_index = 0;
-  labelpaths_size = p->numlines; // minimal array size
+  labelpaths_size = p->numlines; /* minimal array size */
   regular_lines_index = 0;
   regular_lines_size = 1;
   *numpaths = 0;
@@ -1859,19 +1859,19 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
     goto FAILURE;
   }
 
-  // We compute the number of labels we can repeat in the line
+  /* We compute the number of labels we can repeat in the line */
   text_end_length = 0;
   left_label_position = right_label_position = center_label_position = (line_length - text_length) / 2.0;
   label_repeat = (line_length / (text_length + label->repeatdistance));
-  label_buffer = (line_length / label_repeat); // buffer allowed per label 
+  label_buffer = (line_length / label_repeat); /* buffer allowed per label */
   if (label->repeatdistance > 0 && label_repeat > 1) {
     if (label_repeat % 2 == 0) {
         label_repeat -= 1;
         label_buffer = (line_length / label_repeat);  
     }
-//    text_start_length = (label_buffer / 2) - (text_length / 2);
+    /* text_start_length = (label_buffer / 2) - (text_length / 2); */
 
-    // initial point position
+    /* initial point position */
     left_label_position -= ((label_repeat-1)/2 * label_buffer);
     right_label_position += ((label_repeat-1)/2 * label_buffer);
     
@@ -1884,11 +1884,11 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
   }
   
   if(label->maxoverlapangle >=0)
-    maxoverlapangle = label->maxoverlapangle * MS_DEG_TO_RAD; // radian
+    maxoverlapangle = label->maxoverlapangle * MS_DEG_TO_RAD; /* radian */
 
   for (l=0; l < label_repeat; l++)
   {
-    if (l == label_repeat-1) { // last label to place is always the center label
+    if (l == label_repeat-1) { /* last label to place is always the center label */
       text_start_length = center_label_position;
       n = 1;
     } 
@@ -1915,7 +1915,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
         bounds.point = (pointObj *) msSmallMalloc(sizeof(pointObj) * bounds.numpoints);
 
         /* the points start at (line_length - text_length) / 2 in order to be centred */
-        //  text_start_length = (line_length - text_length) / 2.0;
+        /* text_start_length = (line_length - text_length) / 2.0; */
 
         /* the text is longer than the line: extrapolate the first and last segments */
         if(text_start_length < 0.0) {    
@@ -2178,17 +2178,17 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
 
   }
 
-  goto END; // normal exit
+  goto END; /* normal exit */
 #endif
 
-  ANGLEFOLLOW_FAILURE: // Angle follow failure: add the line index in the arrays
+  ANGLEFOLLOW_FAILURE: /* Angle follow failure: add the line index in the arrays */
   if (*regular_lines_index == *regular_lines_size) {
       *regular_lines_size *= 2;
       (*regular_lines) = (int*) msSmallRealloc(*regular_lines,sizeof(int) * (*regular_lines_size));
   }
   (*regular_lines)[(*regular_lines_index)++] = line_index;
 
-  FAILURE: // Global failure   
+  FAILURE: /* Global failure */
 
   END:
     if ( offsets )
