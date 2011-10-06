@@ -1942,6 +1942,44 @@ else
 fi
 
 dnl ---------------------------------------------------------------------
+dnl Exempi support
+dnl ---------------------------------------------------------------------
+
+AC_ARG_WITH(exempi,
+[  --with-exempi=DIR Specify path to exempi.],,)
+
+if test "$with_exempi" != "no" ; then
+
+  if test "$with_exempi" = "yes" ; then
+    AC_CHECK_HEADER([xmp.h],,[AC_MSG_ERROR([cannot find xmp.h])])
+    EXEMPI_INC=""
+    EXEMPI_LIB="-lexempi"
+  else
+    xmp_dir=$with_exempi
+    xmp_include=$xmp_dir/include
+    xmp_lib=$xmp_dir/lib
+    xmp_found=
+    for xmp_subdir in / /exempi /exempi-2.0/exempi; do
+      AC_CHECK_HEADER([$xmp_include$xmp_subdir/xmp.h],xmp_found=$xmp_subdir,,)
+    done
+    if test "x$xmp_found" = "x" ; then
+      AC_MSG_ERROR([cannot find xmp.h in $xmp_include])
+    else
+      EXEMPI_INC="-I$xmp_include$xmp_subdir"
+    fi
+    EXEMPI_LIB="-L$xmp_lib -lexempi"
+  fi
+
+  AC_CHECK_LIB(exempi,xmp_init,EXEMPI_ENABLED=-DUSE_EXEMPI,,$EXEMPI_LIB)
+
+fi
+
+AC_SUBST(EXEMPI_ENABLED,$EXEMPI_ENABLED)
+AC_SUBST(EXEMPI_INC,    $EXEMPI_INC)
+AC_SUBST(EXEMPI_LIB,    $EXEMPI_LIB)
+ALL_ENABLED="$EXEMPI_ENABLED $ALL_ENABLED"
+
+dnl ---------------------------------------------------------------------
 dnl Look for libxml2 if SOS Server requested
 dnl ---------------------------------------------------------------------
 
@@ -2866,6 +2904,7 @@ AC_MSG_RESULT([  Libxml2 support:           ${XML2_ENABLED}])
 AC_MSG_RESULT([  FriBidi support:           ${FRIBIDI_ENABLED}])
 AC_MSG_RESULT([  Curl support:              ${CURL_ENABLED}])
 AC_MSG_RESULT([  FastCGI support:           ${FASTCGI_ENABLED}])
+AC_MSG_RESULT([  Exempi support:            ${EXEMPI_ENABLED}])
 AC_MSG_RESULT([  Threading support:         ${THREAD_FLAG}])
 AC_MSG_RESULT([  GEOS support:              ${GEOS_ENABLED}])
 AC_MSG_RESULT([  XML Mapfile support:        ${XMLMAPFILE_ENABLED}])

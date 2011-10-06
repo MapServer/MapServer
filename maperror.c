@@ -538,6 +538,9 @@ char *msGetVersion() {
 #ifdef USE_ICONV
   strcat(version, " SUPPORTS=ICONV");
 #endif
+#ifdef USE_EXEMPI
+  strcat(version, " SUPPORTS=XMP");
+#endif
 #ifdef USE_FRIBIDI
   strcat(version, " SUPPORTS=FRIBIDI");
 #endif

@@ -162,9 +162,15 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     outputFormatObj *format = image->format;
     rasterBufferObj rb;
     GDALDataType eDataType = GDT_Byte;
+    int bUseXmp = MS_FALSE;
 
     msGDALInitialize();
     memset(&rb,0,sizeof(rasterBufferObj));
+    
+#ifdef USE_EXEMPI
+    bUseXmp = msXmpPresent(map);
+#endif        
+
 
 /* -------------------------------------------------------------------- */
 /*      Identify the proposed output driver.                            */
@@ -193,7 +199,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
             pszExtension = "img.tmp";
 
 #ifdef GDAL_DCAP_VIRTUALIO
-        if( GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL ) 
+        if( bUseXmp == MS_FALSE && GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL ) 
             != NULL )
         {
             CleanVSIDir( "/vsimem/msout" );
@@ -527,8 +533,25 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     GDALClose( hMemDS );
 
     GDALClose( hOutputDS );
-
     msReleaseLock( TLOCK_GDAL );
+
+
+/* -------------------------------------------------------------------- */
+/*      Are we writing license info into the image?                     */
+/*      If so, add it to the temp file on disk now.                     */
+/* -------------------------------------------------------------------- */
+#ifdef USE_EXEMPI
+    if ( bUseXmp == MS_TRUE )
+    {
+        if( msXmpWrite(map, filename) == MS_FAILURE )
+        {
+            /* Something bad happened. */
+            msSetError( MS_MISCERR, "XMP write to %s failed.\n%s",
+                        "msSaveImageGDAL()", filename);
+            return MS_FAILURE;
+        }
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Is this supposed to be a temporary file?  If so, stream to      */

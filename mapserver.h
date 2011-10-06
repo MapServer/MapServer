@@ -2479,7 +2479,11 @@ MS_DLL_EXPORT char *msDecryptStringTokens(mapObj *map, const char *in);
 MS_DLL_EXPORT void msHexEncode(const unsigned char *in, char *out, int numbytes);
 MS_DLL_EXPORT int msHexDecode(const char *in, unsigned char *out, int numchars);
 
-
+/* ==================================================================== */
+/*      prototypes for functions in mapxmp.c                            */
+/* ==================================================================== */
+MS_DLL_EXPORT int msXmpPresent(mapObj *map);
+MS_DLL_EXPORT int msXmpWrite(mapObj *map, const char *filename);
 
 /* ==================================================================== */
 /*      prototypes for functions in mapgeomtransform.c                  */

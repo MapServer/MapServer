@@ -177,7 +177,10 @@ XSLT_LIB=@XSLT_LIB@
 EXSLT_INC=@EXSLT_INC@
 EXSLT_LIB=@EXSLT_LIB@
 
-
+# Optional Exempi
+EXEMPI=@EXEMPI_ENABLED@
+EXEMPI_INC=@EXEMPI_INC@
+EXEMPI_LIB=@EXEMPI_LIB@
 
 # Optional FastCGI
 FASTCGI=@FASTCGI_ENABLED@
@@ -247,7 +250,7 @@ INCLUDES = $(FT_INC) $(REGEX_INC) $(PNG_INC) $(GIF_INC) $(JPEG_INC) $(GD_INC) \
         $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PROJ_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYSQL_INC) \
         $(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
-        $(FASTCGI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC)
+        $(FASTCGI_INC) $(EXEMPI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC)
 
 FLAGS = @DEBUG_FLAGS@ $(DEFINES) $(INCLUDES)
 
@@ -258,7 +261,7 @@ CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
 	  $(MYSQL_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
-	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
+	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(EXEMPI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
 	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
@@ -281,7 +284,7 @@ OBJS= $(AGG_OBJ) mapgeomutil.o mapdummyrenderer.o mapogl.o mapoglrenderer.o mapo
 				maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o \
 				mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o \
 				maplibxml2.o mapdebug.o mapchart.o maptclutf.o mapxml.o mapkml.o mapkmlrenderer.o \
-				mapogroutput.o mapwcs20.o  mapogcfiltercommon.o mapunion.o mapcluster.o
+				mapogroutput.o mapwcs20.o  mapogcfiltercommon.o mapunion.o mapcluster.o mapxmp.o
 
 EXE_LIST = 	shp2img legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \
