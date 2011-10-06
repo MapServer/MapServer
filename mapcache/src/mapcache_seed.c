@@ -126,8 +126,8 @@ void dummy_log(mapcache_context *ctx, mapcache_log_level level, char *msg, ...){
       va_start(args,msg);
       vfprintf(stderr,msg,args);
       va_end(args);
+      printf("\n");
    }
-   printf("\n");
 }
 
 
@@ -136,6 +136,7 @@ void mapcache_context_seeding_log(mapcache_context *ctx, mapcache_log_level leve
     va_start(args,msg);
     vfprintf(stderr,msg,args);
     va_end(args);
+    printf("\n");
 }
 
 #ifdef USE_CLIPPERS
@@ -482,7 +483,7 @@ int main(int argc, const char **argv) {
     ctx.log= mapcache_context_seeding_log;
     ctx.global_lock_aquire = dummy_lock_aquire;
     ctx.global_lock_release = dummy_lock_release;
-    //ctx.has_threads = 1;
+    ctx.has_threads = 1;
     apr_getopt_init(&opt, ctx.pool, argc, argv);
     
     seededtiles=seededtilestot=queuedtilestot=0;

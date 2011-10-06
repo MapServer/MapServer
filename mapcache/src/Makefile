@@ -11,18 +11,18 @@ fcgihelp:
 	echo "fcgi help"
 
 .c.o:
-	$(LIBTOOL) --tag CC --mode=compile $(CC) $(CFLAGS) $(INCLUDES) -c $<
+	$(LIBTOOL) --tag CC --mode=compile $(CC) $(ALL_ENABLED) $(CFLAGS) $(INCLUDES) -c $<
 	
 mod_mapcache.la: mod_mapcache.o
 
 mod_mapcache.o:  mod_mapcache.c $(OBJS)
-	$(APXS) "-Wc,$(CFLAGS) $(INCLUDES)" "-Wl,$(LIBS)" -c mod_mapcache.c $(LOBJS)
+	$(APXS) "-Wc,$(ALL_ENABLED) $(CFLAGS) $(INCLUDES)" "-Wl,$(LIBS)" -c mod_mapcache.c $(LOBJS)
 	
 mapcache: fastcgi_mapcache.c $(OBJS)
-	$(LIBTOOL) --mode=link --tag CC $(CC) -o mapcache $(CFLAGS) $(INCLUDES) $(FASTCGI_ENABLED) $(FASTCGI_INC) fastcgi_mapcache.c $(LOBJS) $(LIBS) $(FASTCGI_LIB)
+	$(LIBTOOL) --mode=link --tag CC $(CC) -o mapcache $(CFLAGS) $(ALL_ENABLED) $(INCLUDES) $(FASTCGI_ENABLED) $(FASTCGI_INC) fastcgi_mapcache.c $(LOBJS) $(LIBS) $(FASTCGI_LIB)
 
 mapcache_seed: mapcache_seed.c $(OBJS)
-	$(LIBTOOL) --mode=link --tag CC $(CC) -o mapcache_seed $(CFLAGS) $(INCLUDES) mapcache_seed.c $(LOBJS) $(LIBS) $(SEEDER_EXTRALIBS)
+	$(LIBTOOL) --mode=link --tag CC $(CC) -o mapcache_seed $(ALL_ENABLED) $(CFLAGS) $(INCLUDES) $(SEEDER_EXTRAINC) mapcache_seed.c $(LOBJS) $(LIBS) $(SEEDER_EXTRALIBS)
 
 
 clean:

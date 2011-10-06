@@ -28,14 +28,14 @@
  *****************************************************************************/
 
 #include "mapcache.h"
-#ifdef USE_FASTCGI
-#include <fcgi_stdio.h>
-#endif
 #include <stdlib.h>
 #include <apr_strings.h>
 #include <apr_pools.h>
 #include <apr_file_io.h>
 #include <apr_date.h>
+#ifdef USE_FASTCGI
+#include <fcgi_stdio.h>
+#endif
 
 typedef struct mapcache_context_fcgi mapcache_context_fcgi;
 typedef struct mapcache_context_fcgi_request mapcache_context_fcgi_request;

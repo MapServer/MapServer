@@ -610,6 +610,9 @@ GDALCONFIG
 PCRE_CFLAGS
 PCRE_LIBS
 PCRE_ENABLED
+TIFF_ENABLED
+TIFF_LIB
+TIFF_INC
 JPEG_LIB
 JPEG_INC
 PNG_LIB
@@ -708,6 +711,8 @@ with_pkg_config
 with_pixman
 with_png
 with_jpeg
+with_tiff
+enable_tiff_write_support
 with_pcre
 with_gdal
 with_geos
@@ -1337,6 +1342,8 @@ Optional Features:
                           header
   --enable-module         Enable apache module building
   --enable-memcache       Enable memcache backend
+  --enable-tiff-write-support
+                          Enable tiff cache write support (experimental)
   --enable-mapserver      Enable mapserver sources (experimental)
 
 Optional Packages:
@@ -1355,6 +1362,7 @@ Optional Packages:
                           pixman.pc)
   --with-png=DIR          Specify where PNG is installed
   --with-jpeg=DIR         Specify where JPEG is installed
+  --with-tiff=DIR         Specify where TIFF is installed
   --with-pcre[=prefix]    use pcre instead of posix regular expressions
   --with-gdal             path to gdal-config program
   --with-geos             path to geos-config program
@@ -3382,6 +3390,10 @@ TARGETS=
 
 
 
+
+
+
+
     # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug;
@@ -4899,6 +4911,158 @@ $as_echo "using libjpeg from system libs." >&6; }
     JPEG_INC=$JPEG_INC
 
     JPEG_LIB=$JPEG_LIB
+
+
+
+
+# Check whether --with-tiff was given.
+if test "${with_tiff+set}" = set; then :
+  withval=$with_tiff; TIFF_DIR=$withval
+else
+  TIFF_DIR=''
+fi
+
+
+
+  if test -z "$TIFF_DIR" || echo "$TIFF_DIR" | grep '^/' >/dev/null ; then
+    TIFF_DIR="$TIFF_DIR"
+  else
+    TIFF_DIR="`pwd`/$TIFF_DIR"
+  fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking where TIFF is installed..." >&5
+$as_echo "$as_me: checking where TIFF is installed..." >&6;}
+    TIFF_LIB=''
+    TIFF_INC=''
+    TIFF_FOUND='no'
+    TIFF_ENABLED="-DUSE_TIFF"
+
+    if test -n "$TIFF_DIR" -a  x$withval != "xno" -a  x$withval != "xyes"; then
+        test -f $TIFF_DIR/lib/libtiff.a -o -f $TIFF_DIR/lib/libtiff.so -o -f $TIFF_DIR/lib/libtiff.sl -o -f $TIFF_DIR/lib/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/lib"
+        test -f $TIFF_DIR/lib64/libtiff.a -o -f $TIFF_DIR/lib64/libtiff.so -o -f $TIFF_DIR/lib64/libtiff.sl -o -f $TIFF_DIR/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/lib64"
+        test -f $TIFF_DIR/libtiff.a -o -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl -o -f $TIFF_DIR/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR"
+        test -f $TIFF_DIR/include/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/include"
+        test -f $TIFF_DIR/lib/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/lib"
+        test -f $TIFF_DIR/tiffio.h && TIFF_INCLUDE="$TIFF_DIR"
+
+        if test -n "$TIFF_LIBDIR" ; then
+          TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libtiff from $TIFF_LIB" >&5
+$as_echo "        using libtiff from $TIFF_LIB" >&6; }
+        else
+          { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot find tiff lib in $TIFF_DIR" >&5
+$as_echo "$as_me: WARNING: cannot find tiff lib in $TIFF_DIR" >&2;}
+          TIFF_ENABLED=""
+        fi
+
+        if test -n "$TIFF_INCLUDE" ; then
+          as_ac_Header=`$as_echo "ac_cv_header_$TIFF_INCLUDE/tiffio.h" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$TIFF_INCLUDE/tiffio.h" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  TIFF_INC=-I$TIFF_INCLUDE
+else
+
+              { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot find tiff headers" >&5
+$as_echo "$as_me: WARNING: cannot find tiff headers" >&2;}
+              TIFF_ENABLED=""
+
+fi
+
+
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot find tiff headers in $TIFF_DIR" >&5
+$as_echo "$as_me: WARNING: cannot find tiff headers in $TIFF_DIR" >&2;}
+            TIFF_ENABLED=""
+        fi
+    else if test x$withval != "xno";
+       then
+
+
+         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for TIFFReadScanline in -ltiff" >&5
+$as_echo_n "checking for TIFFReadScanline in -ltiff... " >&6; }
+if test "${ac_cv_lib_tiff_TIFFReadScanline+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltiff  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char TIFFReadScanline ();
+int
+main ()
+{
+return TIFFReadScanline ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_tiff_TIFFReadScanline=yes
+else
+  ac_cv_lib_tiff_TIFFReadScanline=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tiff_TIFFReadScanline" >&5
+$as_echo "$ac_cv_lib_tiff_TIFFReadScanline" >&6; }
+if test "x$ac_cv_lib_tiff_TIFFReadScanline" = x""yes; then :
+  TIFF_LIB="-ltiff"
+fi
+
+         ac_fn_c_check_header_mongrel "$LINENO" "tiffio.h" "ac_cv_header_tiffio_h" "$ac_includes_default"
+if test "x$ac_cv_header_tiffio_h" = x""yes; then :
+
+else
+
+                  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot find tiff headers in system path" >&5
+$as_echo "$as_me: WARNING: cannot find tiff headers in system path" >&2;}
+                  TIFF_ENABLED=""
+
+fi
+
+
+         if test -n "$TIFF_LIB" ; then
+           { $as_echo "$as_me:${as_lineno-$LINENO}: result: using libtiff from system libs." >&5
+$as_echo "using libtiff from system libs." >&6; }
+         else
+           { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: TIFF (libtiff) library cannot be found. install or reconfigure with --with-tiff=DIR" >&5
+$as_echo "$as_me: WARNING: TIFF (libtiff) library cannot be found. install or reconfigure with --with-tiff=DIR" >&2;}
+           TIFF_ENABLED=""
+         fi
+      else
+         TIFF_ENABLED=""
+       fi
+    fi
+
+    if test -n $TIFF_ENABLED; then
+       # Check whether --enable-tiff_write_support was given.
+if test "${enable_tiff_write_support+set}" = set; then :
+  enableval=$enable_tiff_write_support;
+else
+  enable_tiff_write_support=no
+
+fi
+
+       if test "$enable_tiff_write_support" == "yes"; then
+          TIFF_ENABLED="$TIFF_ENABLED -DUSE_TIFF_WRITE"
+       fi
+    fi
+
+
+    TIFF_INC=$TIFF_INC
+
+    TIFF_LIB=$TIFF_LIB
+
+    TIFF_ENABLED=$TIFF_ENABLED
 
 
 

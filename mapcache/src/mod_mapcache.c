@@ -37,6 +37,7 @@
 #include <http_request.h>
 #include <apr_strings.h>
 #include <apr_time.h>
+#include <ap_mpm.h>
 #include <http_log.h>
 #include "mapcache.h"
 #include <unistd.h>
@@ -47,6 +48,7 @@
 
 module AP_MODULE_DECLARE_DATA mapcache_module;
 
+int is_threaded;
 
 typedef struct mapcache_context_apache mapcache_context_apache;
 typedef struct mapcache_context_apache_request mapcache_context_apache_request;
@@ -129,6 +131,9 @@ static mapcache_context_apache_request* apache_request_context_create(request_re
    mapcache_cfg *config = apr_hash_get(cfg->aliases,(void*)r->filename,APR_HASH_KEY_STRING);
    ctx->ctx.ctx.config = config;
    ctx->request = r;
+   if(is_threaded) {
+      ctx->ctx.ctx.has_threads = 1;
+   }
    init_apache_request_context(ctx);
    return ctx;
 }
@@ -361,6 +366,8 @@ static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
    }
    return OK;
 #endif
+
+   rv = ap_mpm_query(AP_MPMQ_IS_THREADED,&is_threaded);
 }
 
 static void mod_mapcache_child_init(apr_pool_t *pool, server_rec *s) {

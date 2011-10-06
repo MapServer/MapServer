@@ -433,6 +433,13 @@ void parseCache(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
       ctx->set_error(ctx,400, "failed to add cache \"%s\": memcache support is not available on this build",name);
       return;
 #endif
+   } else if(!strcmp(type,"tiff")) {
+#ifdef USE_TIFF
+      cache = mapcache_cache_tiff_create(ctx);
+#else
+      ctx->set_error(ctx,400, "failed to add cache \"%s\": tiff support is not available on this build",name);
+      return;
+#endif
    } else {
       ctx->set_error(ctx, 400, "unknown cache type %s for cache \"%s\"", type, name);
       return;

@@ -616,6 +616,85 @@ AC_DEFUN([FASTCGI_CHECK],[
     AC_SUBST(FASTCGI_ENABLED,$FASTCGI_ENABLED)
 ])
 
+AC_DEFUN([TIFF_CHECK],[
+    AC_ARG_WITH(tiff,
+        AC_HELP_STRING([--with-tiff=DIR],[Specify where TIFF is installed]),
+        TIFF_DIR=$withval,TIFF_DIR='')
+    
+    AC_EXPAND_PATH($TIFF_DIR, TIFF_DIR)
+    AC_CHECKING(where TIFF is installed)
+    TIFF_LIB=''
+    TIFF_INC=''  
+    TIFF_FOUND='no'
+    TIFF_ENABLED="-DUSE_TIFF"  
+    
+    if test -n "$TIFF_DIR" -a  x$withval != "xno" -a  x$withval != "xyes"; then
+        test -f $TIFF_DIR/lib/libtiff.a -o -f $TIFF_DIR/lib/libtiff.so -o -f $TIFF_DIR/lib/libtiff.sl -o -f $TIFF_DIR/lib/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/lib"
+        test -f $TIFF_DIR/lib64/libtiff.a -o -f $TIFF_DIR/lib64/libtiff.so -o -f $TIFF_DIR/lib64/libtiff.sl -o -f $TIFF_DIR/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR/lib64"
+        test -f $TIFF_DIR/libtiff.a -o -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl -o -f $TIFF_DIR/libtiff.dylib && TIFF_LIBDIR="$TIFF_DIR"
+        test -f $TIFF_DIR/include/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/include"
+        test -f $TIFF_DIR/lib/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/lib"
+        test -f $TIFF_DIR/tiffio.h && TIFF_INCLUDE="$TIFF_DIR"
+        
+        if test -n "$TIFF_LIBDIR" ; then   
+          TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
+          AC_MSG_RESULT([        using libtiff from $TIFF_LIB])
+        else
+          AC_MSG_WARN([cannot find tiff lib in $TIFF_DIR])
+          TIFF_ENABLED=""
+        fi
+        
+        if test -n "$TIFF_INCLUDE" ; then
+          AC_CHECK_HEADER([$TIFF_INCLUDE/tiffio.h],TIFF_INC=-I$TIFF_INCLUDE,
+            [
+              AC_MSG_WARN([cannot find tiff headers])
+              TIFF_ENABLED=""
+            ])
+        else
+            AC_MSG_WARN([cannot find tiff headers in $TIFF_DIR])
+            TIFF_ENABLED=""
+        fi
+    else if test x$withval != "xno";
+       then
+       
+         dnl check for tiff in system locations
+       
+         AC_CHECK_LIB(tiff, TIFFReadScanline, TIFF_LIB="-ltiff",,)
+         AC_CHECK_HEADER([tiffio.h],,
+               [
+                  AC_MSG_WARN([cannot find tiff headers in system path])
+                  TIFF_ENABLED=""
+               ])
+         if test -n "$TIFF_LIB" ; then
+           AC_MSG_RESULT([using libtiff from system libs.])
+         else
+           AC_MSG_WARN([TIFF (libtiff) library cannot be found. install or reconfigure with --with-tiff=DIR])
+           TIFF_ENABLED=""
+         fi
+      else
+         TIFF_ENABLED=""
+       fi
+    fi
+
+    if test -n $TIFF_ENABLED; then
+       AC_ARG_ENABLE(tiff_write_support,
+                     AC_HELP_STRING([--enable-tiff-write-support],[Enable tiff cache write support (experimental)]),
+                     ,
+                     [enable_tiff_write_support=no]
+                     )
+       if test "$enable_tiff_write_support" == "yes"; then
+          TIFF_ENABLED="$TIFF_ENABLED -DUSE_TIFF_WRITE"
+       fi
+    fi
+    
+    
+    AC_SUBST(TIFF_INC,$TIFF_INC)
+    AC_SUBST(TIFF_LIB,$TIFF_LIB)
+    AC_SUBST(TIFF_ENABLED,$TIFF_ENABLED)
+])
+
+
+
 AC_DEFUN([PNG_CHECK],[
     AC_ARG_WITH(png,
         AC_HELP_STRING([--with-png=DIR],[Specify where PNG is installed]),
@@ -842,6 +921,7 @@ PIXMAN_CHECK
 PNG_CHECK
 
 JPEG_CHECK
+TIFF_CHECK
 
 PCRE_CHECK
 

@@ -100,6 +100,9 @@ typedef struct mapcache_source_wms mapcache_source_wms;
 typedef struct mapcache_source_gdal mapcache_source_gdal;
 #endif
 typedef struct mapcache_cache_disk mapcache_cache_disk;
+#ifdef USE_TIFF
+typedef struct mapcache_cache_tiff mapcache_cache_tiff;
+#endif
 typedef struct mapcache_http mapcache_http;
 typedef struct mapcache_request mapcache_request;
 typedef struct mapcache_request_proxy mapcache_request_proxy;
@@ -206,7 +209,7 @@ struct mapcache_context {
     void (*global_lock_release)(mapcache_context * ctx);
 
     const char* (*get_instance_id)(mapcache_context * ctx);
-
+    int has_threads;
     apr_pool_t *pool;
     char *_contenttype;
     char *_errmsg;
@@ -350,6 +353,9 @@ typedef enum {
 #ifdef USE_SQLITE
        ,MAPCACHE_CACHE_SQLITE
 #endif
+#ifdef USE_TIFF
+       ,MAPCACHE_CACHE_TIFF
+#endif
 } mapcache_cache_type;
 
 /** \interface mapcache_cache
@@ -399,6 +405,16 @@ struct mapcache_cache_disk {
     int symlink_blank;
 };
 
+#ifdef USE_TIFF
+struct mapcache_cache_tiff {
+    mapcache_cache cache;
+    char *filename_template;
+    int count_x;
+    int count_y;
+    mapcache_image_format_jpeg *format;
+    apr_thread_mutex_t **threadlocks;
+};
+#endif
 
 #ifdef USE_SQLITE
 /**\class mapcache_cache_sqlite
@@ -965,6 +981,13 @@ mapcache_source* mapcache_source_mapserver_create(mapcache_context *ctx);
  */
 mapcache_cache* mapcache_cache_disk_create(mapcache_context *ctx);
 
+#ifdef USE_TIFF
+/**
+ * \memberof mapcache_cache_tiff
+ */
+mapcache_cache* mapcache_cache_tiff_create(mapcache_context *ctx);
+#endif
+
 
 /** \defgroup tileset Tilesets*/
 /** @{ */
@@ -1120,6 +1143,7 @@ struct mapcache_tileset {
 
     apr_table_t *metadata;
 };
+
 
 void mapcache_tileset_get_map_tiles(mapcache_context *ctx, mapcache_tileset *tileset,
       mapcache_grid_link *grid_link,
