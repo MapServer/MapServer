@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION PKG_CONFIG FT_BIN FT_ENABLED FT_INC FT_LIB ZLIB_ENABLED ZLIB_INC ZLIB_LIB PNG_ENABLED PNG_INC PNG_LIB GIF_ENABLED GIF_INC GIF_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN FTGL_ENABLED FTGL_INC FTGL_LIB OGL_ENABLED OGL_INC OGL_LIB AGG_LIB AGG_INC AGG_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYSQL_ENABLED MYSQL_INC MYSQL_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED XSLT_ENABLED XSLT_INC XSLT_LIB EXSLT_ENABLED EXSLT_INC EXSLT_LIB FRIBIDI_CONFIG FRIBIDI_ENABLED FRIBIDI_INC FRIBIDI_LIB CAIRO_ENABLED CAIRO_INC CAIRO_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION PKG_CONFIG FT_BIN FT_ENABLED FT_INC FT_LIB ZLIB_ENABLED ZLIB_INC ZLIB_LIB PNG_ENABLED PNG_INC PNG_LIB GIF_ENABLED GIF_INC GIF_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN FTGL_ENABLED FTGL_INC FTGL_LIB OGL_ENABLED OGL_INC OGL_LIB AGG_LIB AGG_INC AGG_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYSQL_ENABLED MYSQL_INC MYSQL_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB EXEMPI_ENABLED EXEMPI_INC EXEMPI_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED XSLT_ENABLED XSLT_INC XSLT_LIB EXSLT_ENABLED EXSLT_INC EXSLT_LIB FRIBIDI_CONFIG FRIBIDI_ENABLED FRIBIDI_INC FRIBIDI_LIB CAIRO_ENABLED CAIRO_INC CAIRO_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -923,6 +923,7 @@ Optional Packages:
                           OGR required).
   --with-curl-config=PATH Specify path to curl-config.
   --with-kml=                KML output Support (ARG=yes/no).
+  --with-exempi=DIR Specify path to exempi.
   --with-xml2-config=PATH Specify path to xml2-config.
   --with-xml-mapfile=                Include xml-mapfile Support (ARG=yes/no).
   --with-xslt=DIR         Include xslt Support (ARG=yes/path to
@@ -12616,6 +12617,404 @@ echo "${ECHO_T}no" >&6
 fi
 
 
+
+# Check whether --with-exempi or --without-exempi was given.
+if test "${with_exempi+set}" = set; then
+  withval="$with_exempi"
+
+fi;
+
+if test "$with_exempi" != "no" ; then
+
+  if test "$with_exempi" = "yes" ; then
+    if test "${ac_cv_header_xmp_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for xmp.h" >&5
+echo $ECHO_N "checking for xmp.h... $ECHO_C" >&6
+if test "${ac_cv_header_xmp_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_xmp_h" >&5
+echo "${ECHO_T}$ac_cv_header_xmp_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking xmp.h usability" >&5
+echo $ECHO_N "checking xmp.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <xmp.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking xmp.h presence" >&5
+echo $ECHO_N "checking xmp.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <xmp.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: xmp.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: xmp.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: xmp.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: xmp.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: xmp.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: xmp.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: xmp.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: xmp.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: xmp.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: xmp.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: xmp.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: xmp.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: xmp.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: xmp.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: xmp.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: xmp.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to the AC_PACKAGE_NAME lists.  ##
+## ------------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for xmp.h" >&5
+echo $ECHO_N "checking for xmp.h... $ECHO_C" >&6
+if test "${ac_cv_header_xmp_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_xmp_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_xmp_h" >&5
+echo "${ECHO_T}$ac_cv_header_xmp_h" >&6
+
+fi
+if test $ac_cv_header_xmp_h = yes; then
+  :
+else
+  { { echo "$as_me:$LINENO: error: cannot find xmp.h" >&5
+echo "$as_me: error: cannot find xmp.h" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+    EXEMPI_INC=""
+    EXEMPI_LIB="-lexempi"
+  else
+    xmp_dir=$with_exempi
+    xmp_include=$xmp_dir/include
+    xmp_lib=$xmp_dir/lib
+    xmp_found=
+    for xmp_subdir in / /exempi /exempi-2.0/exempi; do
+      as_ac_Header=`echo "ac_cv_header_$xmp_include$xmp_subdir/xmp.h" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $xmp_include$xmp_subdir/xmp.h" >&5
+echo $ECHO_N "checking for $xmp_include$xmp_subdir/xmp.h... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking $xmp_include$xmp_subdir/xmp.h usability" >&5
+echo $ECHO_N "checking $xmp_include$xmp_subdir/xmp.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <$xmp_include$xmp_subdir/xmp.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking $xmp_include$xmp_subdir/xmp.h presence" >&5
+echo $ECHO_N "checking $xmp_include$xmp_subdir/xmp.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <$xmp_include$xmp_subdir/xmp.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: $xmp_include$xmp_subdir/xmp.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $xmp_include$xmp_subdir/xmp.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $xmp_include$xmp_subdir/xmp.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $xmp_include$xmp_subdir/xmp.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: $xmp_include$xmp_subdir/xmp.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $xmp_include$xmp_subdir/xmp.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $xmp_include$xmp_subdir/xmp.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $xmp_include$xmp_subdir/xmp.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $xmp_include$xmp_subdir/xmp.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $xmp_include$xmp_subdir/xmp.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $xmp_include$xmp_subdir/xmp.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $xmp_include$xmp_subdir/xmp.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $xmp_include$xmp_subdir/xmp.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $xmp_include$xmp_subdir/xmp.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $xmp_include$xmp_subdir/xmp.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $xmp_include$xmp_subdir/xmp.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to the AC_PACKAGE_NAME lists.  ##
+## ------------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for $xmp_include$xmp_subdir/xmp.h" >&5
+echo $ECHO_N "checking for $xmp_include$xmp_subdir/xmp.h... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=\$ac_header_preproc"
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  xmp_found=$xmp_subdir
+fi
+
+
+    done
+    if test "x$xmp_found" = "x" ; then
+      { { echo "$as_me:$LINENO: error: cannot find xmp.h in $xmp_include" >&5
+echo "$as_me: error: cannot find xmp.h in $xmp_include" >&2;}
+   { (exit 1); exit 1; }; }
+    else
+      EXEMPI_INC="-I$xmp_include$xmp_subdir"
+    fi
+    EXEMPI_LIB="-L$xmp_lib -lexempi"
+  fi
+
+  echo "$as_me:$LINENO: checking for xmp_init in -lexempi" >&5
+echo $ECHO_N "checking for xmp_init in -lexempi... $ECHO_C" >&6
+if test "${ac_cv_lib_exempi_xmp_init+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lexempi $EXEMPI_LIB $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char xmp_init ();
+int
+main ()
+{
+xmp_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_exempi_xmp_init=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_exempi_xmp_init=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_exempi_xmp_init" >&5
+echo "${ECHO_T}$ac_cv_lib_exempi_xmp_init" >&6
+if test $ac_cv_lib_exempi_xmp_init = yes; then
+  EXEMPI_ENABLED=-DUSE_EXEMPI
+fi
+
+
+fi
+
+EXEMPI_ENABLED=$EXEMPI_ENABLED
+
+EXEMPI_INC=$EXEMPI_INC
+
+EXEMPI_LIB=$EXEMPI_LIB
+
+ALL_ENABLED="$EXEMPI_ENABLED $ALL_ENABLED"
+
+
 echo "$as_me:$LINENO: checking for libxml2" >&5
 echo $ECHO_N "checking for libxml2... $ECHO_C" >&6
 
@@ -14960,6 +15359,9 @@ s,@WCS_SVR_ENABLED@,$WCS_SVR_ENABLED,;t t
 s,@LIBCURL_CONFIG@,$LIBCURL_CONFIG,;t t
 s,@CURL_INC@,$CURL_INC,;t t
 s,@CURL_LIB@,$CURL_LIB,;t t
+s,@EXEMPI_ENABLED@,$EXEMPI_ENABLED,;t t
+s,@EXEMPI_INC@,$EXEMPI_INC,;t t
+s,@EXEMPI_LIB@,$EXEMPI_LIB,;t t
 s,@LIBXML2_CONFIG@,$LIBXML2_CONFIG,;t t
 s,@XML2_INC@,$XML2_INC,;t t
 s,@XML2_LIB@,$XML2_LIB,;t t
@@ -15334,6 +15736,8 @@ echo "$as_me:$LINENO: result:   Curl support:              ${CURL_ENABLED}" >&5
 echo "${ECHO_T}  Curl support:              ${CURL_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   FastCGI support:           ${FASTCGI_ENABLED}" >&5
 echo "${ECHO_T}  FastCGI support:           ${FASTCGI_ENABLED}" >&6
+echo "$as_me:$LINENO: result:   Exempi support:            ${EXEMPI_ENABLED}" >&5
+echo "${ECHO_T}  Exempi support:            ${EXEMPI_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   Threading support:         ${THREAD_FLAG}" >&5
 echo "${ECHO_T}  Threading support:         ${THREAD_FLAG}" >&6
 echo "$as_me:$LINENO: result:   GEOS support:              ${GEOS_ENABLED}" >&5
