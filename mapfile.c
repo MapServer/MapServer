@@ -616,19 +616,14 @@ static void writeAttributeBinding(FILE *stream, int indent, const char *name, at
   fprintf(stream, "%s [%s]\n", name, binding->item);
 }
 
-/* Force the color writing. Used when -1 -1 -1 is not the default color */
-static void writeColor(FILE *stream, int indent, const char *name, colorObj *color) {
+static void writeColor(FILE *stream, int indent, const char *name, colorObj defaultColor, colorObj *color) {
+  if(MS_COMPARE_COLOR(defaultColor, *color)) return; /* if defaultColor has the same value than the color, return.*/
   writeIndent(stream, ++indent);
 #if ALPHACOLOR_ENABLED
   fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue, color->alpha);
 #else
   fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
 #endif
-}
-
-static void writeColorDefault(FILE *stream, int indent, const char *name, colorObj *color) {
-  if(!MS_VALID_COLOR(*color)) return;
-  writeColor(stream, indent, name, color);
 }
 
 /* todo: deal with alpha's... */
@@ -1928,6 +1923,7 @@ int msUpdateLabelFromString(labelObj *label, char *string)
 static void writeLabel(FILE *stream, int indent, labelObj *label)
 {
   int i;
+  colorObj c;
 
   if(label->size == -1) return; /* there is no default label anymore */
 
@@ -1963,7 +1959,10 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_COLOR].item)
     writeAttributeBinding(stream, indent, "COLOR", &(label->bindings[MS_LABEL_BINDING_COLOR]));
-  else writeColor(stream, indent, "COLOR", &(label->color));
+  else {
+    MS_INIT_COLOR(c,0,0,0,255);
+    writeColor(stream, indent, "COLOR", c, &(label->color));
+  }
 
   writeString(stream, indent, "ENCODING", NULL, label->encoding);
   writeKeyword(stream, indent, "FORCE", label->force, 1, MS_TRUE, "TRUE");
@@ -1977,7 +1976,10 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
     
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].item)
     writeAttributeBinding(stream, indent, "OUTLINECOLOR", &(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR]));
-  else writeColorDefault(stream, indent, "OUTLINECOLOR", &(label->outlinecolor));
+  else {
+    MS_INIT_COLOR(c,-1,-1,-1,255);
+    writeColor(stream, indent, "OUTLINECOLOR", c, &(label->outlinecolor));
+  }
 
   writeNumber(stream, indent, "OUTLINEWIDTH", 1, label->outlinewidth);
   writeKeyword(stream, indent, "PARTIALS", label->partials, 1, MS_FALSE, "FALSE");
@@ -1991,7 +1993,8 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   else writeNumber(stream, indent, "PRIORITY", MS_DEFAULT_LABEL_PRIORITY, label->priority);
 
   writeNumber(stream, indent, "REPEATDISTANCE", 0, label->repeatdistance);
-  writeColorDefault(stream, indent, "SHADOWCOLOR", &(label->shadowcolor));
+  MS_INIT_COLOR(c,-1,-1,-1,255);
+  writeColor(stream, indent, "SHADOWCOLOR", c, &(label->shadowcolor));
   writeDimension(stream, indent, "SHADOWSIZE", label->shadowsizex, label->shadowsizey, label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].item, label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].item);
 
   writeNumber(stream, indent, "MAXOVERLAPANGLE", 22.5, label->maxoverlapangle);
@@ -2691,6 +2694,8 @@ int freeStyle(styleObj *style) {
 
 void writeStyle(FILE *stream, int indent, styleObj *style) {
 
+  colorObj c;
+
   indent++;
   writeBlockBegin(stream, indent, "STYLE");
 
@@ -2699,11 +2704,15 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   else writeNumberOrKeyword(stream, indent, "ANGLE", 360, style->angle, style->autoangle, 1, MS_TRUE, "AUTO");
 
   writeKeyword(stream, indent, "ANTIALIAS", style->antialias, 1, MS_TRUE, "TRUE");
-  writeColorDefault(stream, indent, "BACKGROUNDCOLOR", &(style->backgroundcolor));
+  MS_INIT_COLOR(c,-1,-1,-1,255);
+  writeColor(stream, indent, "BACKGROUNDCOLOR", c, &(style->backgroundcolor));
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
     writeAttributeBinding(stream, indent, "COLOR", &(style->bindings[MS_STYLE_BINDING_COLOR]));
-  else writeColorDefault(stream, indent, "COLOR", &(style->color));
+  else {
+    MS_INIT_COLOR(c,-1,-1,-1,255);
+    writeColor(stream, indent, "COLOR", c, &(style->color));
+  }
   
   writeNumber(stream, indent, "GAP", 0, style->gap);
 
@@ -2750,7 +2759,10 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].item)
     writeAttributeBinding(stream, indent, "OUTLINECOLOR", &(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR]));
-  else writeColorDefault(stream, indent, "OUTLINECOLOR", &(style->outlinecolor)); 
+  else {
+    MS_INIT_COLOR(c,-1,-1,-1,255);
+    writeColor(stream, indent, "OUTLINECOLOR", c, &(style->outlinecolor)); 
+  }
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].item)
     writeAttributeBinding(stream, indent, "OUTLINEWIDTH", &(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH]));
@@ -3977,6 +3989,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
 {
   int i;
   featureListNodeObjPtr current=NULL;
+  colorObj c;
 
   if(layer->status == MS_DELETE)
     return;
@@ -4012,7 +4025,8 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeNumber(stream, indent, "MINSCALEDENOM", -1, layer->minscaledenom);
   writeNumber(stream, indent, "MINFEATURESIZE", -1, layer->minfeaturesize);
   writeString(stream, indent, "NAME", NULL, layer->name);
-  writeColorDefault(stream, indent, "OFFSITE", &(layer->offsite));
+  MS_INIT_COLOR(c,-1,-1,-1,255);
+  writeColor(stream, indent, "OFFSITE", c, &(layer->offsite));
   writeString(stream, indent, "PLUGIN", NULL, layer->plugin_library_original);
   writeKeyword(stream, indent, "POSTLABELCACHE", layer->postlabelcache, 1, MS_TRUE, "TRUE");
   for(i=0; i<layer->numprocessing; i++)
@@ -4187,14 +4201,18 @@ int msUpdateReferenceMapFromString(referenceMapObj *ref, char *string, int url_s
 
 static void writeReferenceMap(FILE *stream, int indent, referenceMapObj *ref)
 {
+  colorObj c;
+
   if(!ref->image) return;
 
   indent++;
   writeBlockBegin(stream, indent, "REFERENCE");
-  writeColor(stream, indent, "COLOR", &(ref->color));
+  MS_INIT_COLOR(c,255,0,0,255);
+  writeColor(stream, indent, "COLOR", c, &(ref->color));
   writeExtent(stream, indent, "EXTENT", ref->extent);
   writeString(stream, indent, "IMAGE", NULL, ref->image);
-  writeColor(stream, indent, "OUTLINECOLOR", &(ref->outlinecolor));
+  MS_INIT_COLOR(c,0,0,0,255);
+  writeColor(stream, indent, "OUTLINECOLOR", c, &(ref->outlinecolor));
   writeDimension(stream, indent, "SIZE", ref->width, ref->height, NULL, NULL);
   writeKeyword(stream, indent, "STATUS", ref->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeNumberOrString(stream, indent, "MARKER", 0, ref->marker, ref->markername);
@@ -4521,14 +4539,18 @@ int msUpdateLegendFromString(legendObj *legend, char *string, int url_string)
 
 static void writeLegend(FILE *stream, int indent, legendObj *legend)
 {
+  colorObj c;
+
   indent++;
   writeBlockBegin(stream, indent, "LEGEND");
-  writeColor(stream, indent, "IMAGECOLOR", &(legend->imagecolor));
+  MS_INIT_COLOR(c,255,255,255,255);
+  writeColor(stream, indent, "IMAGECOLOR", c, &(legend->imagecolor));
   writeKeyword(stream, indent, "INTERLACE", legend->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeDimension(stream, indent, "KEYSIZE", legend->keysizex, legend->keysizey, NULL, NULL);
   writeDimension(stream, indent, "KEYSPACING", legend->keyspacingx, legend->keyspacingy, NULL, NULL);
   writeLabel(stream, indent, &(legend->label));
-  writeColorDefault(stream, indent, "OUTLINECOLOR", &(legend->outlinecolor));
+  MS_INIT_COLOR(c,-1,-1,-1,255);
+  writeColor(stream, indent, "OUTLINECOLOR", c, &(legend->outlinecolor));
   if(legend->status == MS_EMBED) writeKeyword(stream, indent, "POSITION", legend->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
   writeKeyword(stream, indent, "POSTLABELCACHE", legend->postlabelcache, 1, MS_TRUE, "TRUE");
   writeKeyword(stream, indent, "STATUS", legend->status, 3, MS_ON, "ON", MS_OFF, "OFF", MS_EMBED, "EMBED");
@@ -4664,16 +4686,22 @@ int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_stri
 
 static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar)
 {
+  colorObj c;
+
   indent++;
   writeBlockBegin(stream, indent, "SCALEBAR");
   writeKeyword(stream, indent, "ALIGN", scalebar->align, 2, MS_ALIGN_LEFT, "LEFT", MS_ALIGN_RIGHT, "RIGHT");
-  writeColorDefault(stream, indent, "BACKGROUNDCOLOR", &(scalebar->backgroundcolor));
-  writeColor(stream, indent, "COLOR", &(scalebar->color));
-  writeColorDefault(stream, indent, "IMAGECOLOR", &(scalebar->imagecolor));
+  MS_INIT_COLOR(c,-1,-1,-1,255);
+  writeColor(stream, indent, "BACKGROUNDCOLOR", c, &(scalebar->backgroundcolor));
+  MS_INIT_COLOR(c,0,0,0,255);
+  writeColor(stream, indent, "COLOR", c, &(scalebar->color));
+  MS_INIT_COLOR(c,-1,-1,-1,255);
+  writeColor(stream, indent, "IMAGECOLOR", c, &(scalebar->imagecolor));
   writeKeyword(stream, indent, "INTERLACE", scalebar->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeNumber(stream, indent, "INTERVALS", -1, scalebar->intervals);
   writeLabel(stream, indent, &(scalebar->label));
-  writeColorDefault(stream, indent, "OUTLINECOLOR", &(scalebar->outlinecolor));
+  MS_INIT_COLOR(c,-1,-1,-1,255);
+  writeColor(stream, indent, "OUTLINECOLOR", c, &(scalebar->outlinecolor));
   if(scalebar->status == MS_EMBED) writeKeyword(stream, indent, "POSITION", scalebar->position, 6, MS_LL, "LL", MS_UL, "UL", MS_UR, "UR", MS_LR, "LR", MS_UC, "UC", MS_LC, "LC");
   writeKeyword(stream, indent, "POSTLABELCACHE", scalebar->postlabelcache, 1, MS_TRUE, "TRUE");
   writeDimension(stream, indent, "SIZE", scalebar->width, scalebar->height, NULL, NULL);
@@ -4760,9 +4788,12 @@ int msUpdateQueryMapFromString(queryMapObj *querymap, char *string, int url_stri
 
 static void writeQueryMap(FILE *stream, int indent, queryMapObj *querymap)
 {
+  colorObj c;
+
   indent++;
   writeBlockBegin(stream, indent, "QUERYMAP");
-  writeColor(stream, indent, "COLOR", &(querymap->color));
+  MS_INIT_COLOR(c,255,255,0,255);
+  writeColor(stream, indent, "COLOR",  c, &(querymap->color));
   writeDimension(stream, indent, "SIZE", querymap->width, querymap->height, NULL, NULL);
   writeKeyword(stream, indent, "STATUS", querymap->status, 2, MS_ON, "ON", MS_OFF, "OFF");
   writeKeyword(stream, indent, "STYLE", querymap->style, 3, MS_NORMAL, "NORMAL", MS_HILITE, "HILITE", MS_SELECTED, "SELECTED");
@@ -5226,6 +5257,7 @@ int msSaveMap(mapObj *map, char *filename)
   int i, indent=0;
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
+  colorObj c;
 
   if(!map) {
     msSetError(MS_MISCERR, "Map is undefined.", "msSaveMap()");
@@ -5250,7 +5282,8 @@ int msSaveMap(mapObj *map, char *filename)
   writeNumber(stream, indent, "DEFRESOLUTION", 72.0, map->defresolution);
   writeExtent(stream, indent, "EXTENT", map->extent);
   writeString(stream, indent, "FONTSET", NULL, map->fontset.filename);
-  writeColor(stream, indent, "IMAGECOLOR", &(map->imagecolor));
+  MS_INIT_COLOR(c,255,255,255,255);
+  writeColor(stream, indent, "IMAGECOLOR", c, &(map->imagecolor));
   writeString(stream, indent, "IMAGETYPE", NULL, map->imagetype);
   writeKeyword(stream, indent, "INTERLACE", map->interlace, 2, MS_TRUE, "TRUE", MS_FALSE, "FALSE");
   writeNumber(stream, indent, "MAXSIZE", MS_MAXIMAGESIZE_DEFAULT, map->maxsize);
