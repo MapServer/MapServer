@@ -477,6 +477,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) 
       {
+	  numlayers = 0;
           if (sld_url == NULL &&   sld_body == NULL)
           {
               msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
@@ -540,7 +541,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                   layerfound = 1;
               }
           }
-          if (layerfound == 0)
+          if (layerfound == 0 && numlayers>0)
             invalidlayers++;
 
       }
@@ -3034,7 +3035,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
 
   }
   else 
-      img = msDrawMap(map, MS_FALSE);
+    img = msDrawMap(map, MS_FALSE);
   if (img == NULL)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
   
