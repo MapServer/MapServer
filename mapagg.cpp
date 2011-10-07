@@ -72,11 +72,7 @@
 #include "renderers/agg/include/agg_rasterizer_outline.h"
 #endif
 
-#ifdef CPL_MSB
-typedef mapserver::order_argb band_order;
-#else
 typedef mapserver::order_bgra band_order;
-#endif
 
 #define AGG_LINESPACE 1.33
 
