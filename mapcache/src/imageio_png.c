@@ -55,6 +55,14 @@ void _mapcache_imageio_png_flush_func(png_structp png_ptr) {
    // do nothing
 }
 
+static inline int
+premultiply (int color,int alpha)
+{
+    int temp = (alpha * color) + 0x80;
+    return ((temp + (temp >> 8)) >> 8);
+}
+
+
 void _mapcache_imageio_png_decode_to_image(mapcache_context *ctx, mapcache_buffer *buffer,
       mapcache_image *img) {
    int bit_depth,color_type,i;
@@ -123,6 +131,32 @@ void _mapcache_imageio_png_decode_to_image(mapcache_context *ctx, mapcache_buffe
    
    png_read_end(png_ptr,NULL);
    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+
+   /* switch buffer from rgba to premultiplied argb */
+   for(i=0;i<img->h;i++) {
+      unsigned int j;
+      unsigned char *pixptr = row_pointers[i];
+      for(j=0;j<img->w;j++) {
+         unsigned char pixel[4];
+         memcpy (pixel, pixptr, sizeof (uint32_t));
+         uint8_t  alpha = pixel[3];
+         if(alpha == 255) {
+            pixptr[0] = pixel[2];
+            pixptr[1] = pixel[1];
+            pixptr[2] = pixel[0];
+         } else if (alpha == 0) {
+            pixptr[0] = 0;
+            pixptr[1] = 0;
+            pixptr[2] = 0;
+         } else {
+            pixptr[0] = premultiply(pixel[2],alpha);
+            pixptr[1] = premultiply(pixel[1],alpha);
+            pixptr[2] = premultiply(pixel[0],alpha);
+         }
+         pixptr += 4;
+      }
+   }
+
 }
 
    
@@ -133,6 +167,51 @@ mapcache_image* _mapcache_imageio_png_decode(mapcache_context *ctx, mapcache_buf
       return NULL;
    return img;
 }
+
+/* png transform function to switch from premultiplied argb to png expected rgba */
+static void
+argb_to_rgba (png_structp png, png_row_infop row_info, png_bytep data)
+{
+   unsigned int i;
+
+   for (i = 0; i < row_info->rowbytes; i += 4) {
+      uint8_t *b = &data[i];
+      uint32_t pixel;
+      uint8_t  alpha;
+
+      memcpy (&pixel, b, sizeof (uint32_t));
+      alpha = (pixel & 0xff000000) >> 24;
+      if (alpha == 0) {
+         b[0] = b[1] = b[2] = b[3] = 0;
+      } else {
+         b[0] = (((pixel & 0xff0000) >> 16) * 255 + alpha / 2) / alpha;
+         b[1] = (((pixel & 0x00ff00) >>  8) * 255 + alpha / 2) / alpha;
+         b[2] = (((pixel & 0x0000ff) >>  0) * 255 + alpha / 2) / alpha;
+         b[3] = alpha;
+      }
+   }
+}
+
+
+/* png transform function to switch from xrgb to rgbx (x is ignored)*/
+static void
+xrgb_to_rgbx (png_structp png, png_row_infop row_info, png_bytep data)
+{
+   unsigned int i;
+
+   for (i = 0; i < row_info->rowbytes; i += 4) {
+      uint8_t *b = &data[i];
+      uint32_t pixel;
+
+      memcpy (&pixel, b, sizeof (uint32_t));
+
+      b[0] = (pixel & 0xff0000) >> 16;
+      b[1] = (pixel & 0x00ff00) >>  8;
+      b[2] = (pixel & 0x0000ff) >>  0;
+   }
+}
+
+
 
 /**
  * \brief encode an image to RGB(A) PNG format
@@ -186,8 +265,12 @@ mapcache_buffer* _mapcache_imageio_png_encode(mapcache_context *ctx, mapcache_im
          PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
    png_write_info(png_ptr, info_ptr);
-   if(color_type == PNG_COLOR_TYPE_RGB)
-       png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);
+   if(color_type == PNG_COLOR_TYPE_RGB) {
+      png_set_write_user_transform_fn (png_ptr, xrgb_to_rgbx);
+      png_set_filler(png_ptr, 255, PNG_FILLER_AFTER);
+   } else {
+      png_set_write_user_transform_fn (png_ptr, argb_to_rgba);
+   }
 
    png_bytep rowptr = img->data;
    for(row=0;row<img->h;row++) {
@@ -219,7 +302,7 @@ mapcache_buffer* _mapcache_imageio_png_encode(mapcache_context *ctx, mapcache_im
  */
 
 typedef struct {
-   unsigned char r,g,b,a;
+   unsigned char b,g,r,a;
 } rgbaPixel;
 
 typedef struct {
@@ -993,14 +1076,35 @@ int _mapcache_imageio_remap_palette(unsigned char *pixels, int npixels,
    for (x = 0; x < numPaletteEntries; ++x) {
       if(maxval == 255) {
          a[remap[x]] = palette[x].a;
-         rgb[remap[x]].r = palette[x].r;
-         rgb[remap[x]].g = palette[x].g;
-         rgb[remap[x]].b = palette[x].b;
+         if(palette[x].a == 255) {
+            rgb[remap[x]].r = palette[x].r;
+            rgb[remap[x]].g = palette[x].g;
+            rgb[remap[x]].b = palette[x].b;
+         } else if(palette[x].a == 0) {
+            rgb[remap[x]].r = 0;
+            rgb[remap[x]].g = 0;
+            rgb[remap[x]].b = 0;
+         } else {
+            /* un-premultiply the palette entries */
+            rgb[remap[x]].r = (palette[x].r * 255 + palette[x].a / 2) / palette[x].a ;
+            rgb[remap[x]].g = (palette[x].g * 255 + palette[x].a / 2) / palette[x].a ;
+            rgb[remap[x]].b = (palette[x].b * 255 + palette[x].a / 2) / palette[x].a ;
+         }
       } else {
-         rgb[remap[x]].r = (palette[x].r * 255 + (maxval >> 1)) / maxval;
-         rgb[remap[x]].g = (palette[x].g * 255 + (maxval >> 1)) / maxval;
-         rgb[remap[x]].b = (palette[x].b * 255 + (maxval >> 1)) / maxval;
-         a[remap[x]] = (palette[x].a * 255 + (maxval >> 1)) / maxval;
+         /* un-scale and un-premultiply the palette entries */
+         unsigned char al = a[remap[x]] = (palette[x].a * 255 + (maxval >> 1)) / maxval;
+         if(al == 255) {
+            rgb[remap[x]].r = (palette[x].r * 255 + (maxval >> 1)) / maxval;
+            rgb[remap[x]].g = (palette[x].g * 255 + (maxval >> 1)) / maxval;
+            rgb[remap[x]].b = (palette[x].b * 255 + (maxval >> 1)) / maxval;
+         } else if(al == 0) {
+            rgb[remap[x]].r = rgb[remap[x]].g = rgb[remap[x]].b = 0;
+
+         } else {
+            rgb[remap[x]].r = (((palette[x].r * 255 + (maxval >> 1)) / maxval) * 255 + al / 2) / al;
+            rgb[remap[x]].g = (((palette[x].g * 255 + (maxval >> 1)) / maxval) * 255 + al / 2) / al;
+            rgb[remap[x]].b = (((palette[x].b * 255 + (maxval >> 1)) / maxval) * 255 + al / 2) / al;
+         }
       }
    }
    return MAPCACHE_SUCCESS;

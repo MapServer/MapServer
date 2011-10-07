@@ -95,7 +95,7 @@ void mapcache_image_merge(mapcache_context *ctx, mapcache_image *base, mapcache_
                bptr[1]=optr[1];
                bptr[2]=optr[2];
                bptr[3]=optr[3];
-            } else {
+            } else if(optr[3] != 0) {
                unsigned int br = bptr[0];
                unsigned int bg = bptr[1];
                unsigned int bb = bptr[2];
@@ -104,10 +104,11 @@ void mapcache_image_merge(mapcache_context *ctx, mapcache_image *base, mapcache_
                unsigned int og = optr[1];
                unsigned int ob = optr[2];
                unsigned int oa = optr[3];
-               bptr[0] += (unsigned char)(((or - br)*oa) >> 8);
-               bptr[1] += (unsigned char)(((og - bg)*oa) >> 8);
-               bptr[2] += (unsigned char)(((ob - bb)*oa) >> 8);
-               bptr[3] = (ba==255)?255:(unsigned char)((oa + ba) - ((oa * ba + 255) >> 8));                        
+               bptr[0] = (unsigned char)(or + (((255-oa)*br)>>8));
+               bptr[1] = (unsigned char)(og + (((255-oa)*bg)>>8));
+               bptr[2] = (unsigned char)(ob + (((255-oa)*bb)>>8));
+
+               bptr[3] = oa+((ba*(255-oa))>>8);                    
             }
          }
          bptr+=4;optr+=4;

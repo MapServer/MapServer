@@ -183,9 +183,9 @@ mapcache_buffer* _mapcache_imageio_jpeg_encode(mapcache_context *ctx, mapcache_i
       JSAMPLE *pixptr = rowdata;
       int col;
       unsigned char *r,*g,*b;
-      r=&(img->data[0])+row*img->stride;
+      r=&(img->data[2])+row*img->stride;
       g=&(img->data[1])+row*img->stride;
-      b=&(img->data[2])+row*img->stride;
+      b=&(img->data[0])+row*img->stride;
       for(col=0;col<img->w;col++) {
          *(pixptr++) = *r;
          *(pixptr++) = *g;
@@ -249,10 +249,12 @@ void _mapcache_imageio_jpeg_decode_to_image(mapcache_context *r, mapcache_buffer
       {
          for (i = 0; i < img->w; i++)
          {
-            *rowptr++ = *tempptr++;
-            *rowptr++ = *tempptr++;
-            *rowptr++ = *tempptr++;
-            *rowptr++ = 255;
+            rowptr[0] = tempptr[2];
+            rowptr[1] = tempptr[1];
+            rowptr[2] = tempptr[0];
+            rowptr[3] = 255;
+            rowptr+=4;
+            tempptr+=3;
          }
       }
       else
