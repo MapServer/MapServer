@@ -15,7 +15,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Fixed Python Mapscript does not write COLOR to reference map (#4042)
+
 - Added XMP support for metadata embedding, RFC 76, (#3932)
+
 - Added GetLegendGraphic Cascading support (#3923)
 
 - Rewrite  postgres TIME queries to take advantage of indexes (#3374)
