@@ -1952,9 +1952,14 @@ AC_ARG_WITH(exempi,\
 if test -n "$with_exempi" -a "$with_exempi" != "no" ; then
 
   if test "$with_exempi" = "yes" ; then
-    AC_CHECK_HEADER([xmp.h],,[AC_MSG_ERROR([cannot find xmp.h])])
-    EXEMPI_INC=""
-    EXEMPI_LIB="-lexempi"
+    if test -f /usr/include/exempi-2.0/exempi/xmp.h; then
+        EXEMPI_INC="-I/usr/include/exempi-2.0/exempi"
+        EXEMPI_LIB="-lexempi"
+    else
+        AC_CHECK_HEADER([xmp.h],,[AC_MSG_ERROR([cannot find xmp.h])])
+        EXEMPI_INC=""
+        EXEMPI_LIB="-lexempi"
+    fi
   else
     xmp_dir=$with_exempi
     xmp_include=$xmp_dir/include

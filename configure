@@ -12630,7 +12630,11 @@ fi;
 if test -n "$with_exempi" -a "$with_exempi" != "no" ; then
 
   if test "$with_exempi" = "yes" ; then
-    if test "${ac_cv_header_xmp_h+set}" = set; then
+    if test -f /usr/include/exempi-2.0/exempi/xmp.h; then
+        EXEMPI_INC="-I/usr/include/exempi-2.0/exempi"
+        EXEMPI_LIB="-lexempi"
+    else
+        if test "${ac_cv_header_xmp_h+set}" = set; then
   echo "$as_me:$LINENO: checking for xmp.h" >&5
 echo $ECHO_N "checking for xmp.h... $ECHO_C" >&6
 if test "${ac_cv_header_xmp_h+set}" = set; then
@@ -12776,8 +12780,9 @@ echo "$as_me: error: cannot find xmp.h" >&2;}
 fi
 
 
-    EXEMPI_INC=""
-    EXEMPI_LIB="-lexempi"
+        EXEMPI_INC=""
+        EXEMPI_LIB="-lexempi"
+    fi
   else
     xmp_dir=$with_exempi
     xmp_include=$xmp_dir/include
