@@ -39,6 +39,7 @@
 #include <tiffio.h>
 
 
+#ifdef USE_TIFF_WRITE
 #if APR_HAS_THREADS
 #include <apr_thread_mutex.h>
 #define THREADLOCK_HASHARRAY_SIZE 64
@@ -50,6 +51,7 @@ static unsigned int _hash_key(char *key) {
 
   return(hashval % THREADLOCK_HASHARRAY_SIZE);
 }
+#endif
 #endif
 
 /**
@@ -650,6 +652,7 @@ static void _mapcache_cache_tiff_configuration_post_config(mapcache_context *ctx
       return;
    }
    
+#ifdef USE_TIFF_WRITE
 #if APR_HAS_THREADS
    if(ctx->has_threads) {
       /* create an array of thread locks */
@@ -660,6 +663,7 @@ static void _mapcache_cache_tiff_configuration_post_config(mapcache_context *ctx
          apr_thread_mutex_create(&(dcache->threadlocks[i]),APR_THREAD_MUTEX_UNNESTED,ctx->pool);
       }
    }
+#endif
 #endif
 }
 
