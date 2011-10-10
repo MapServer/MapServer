@@ -195,6 +195,12 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
         return MS_FAILURE;
 #endif /* defined(USE_LIBXML2) */
     }
+    else
+    {
+        msSetError(MS_OWSERR, "Unknown request method. Use either GET or POST.",
+                   "msOWSPreParseRequest()");
+        return MS_FAILURE;
+    }
     
     /* certain WMS requests do not require the service parameter */
     /* see: http://trac.osgeo.org/mapserver/ticket/2531          */

@@ -483,7 +483,7 @@ cgiRequestObj *msAllocCgiObj() {
   request->ParamNames = (char **) msSmallMalloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
   request->ParamValues = (char **) msSmallMalloc(MS_DEFAULT_CGI_PARAMS*sizeof(char*));
   request->NumParams = 0;
-  request->type = -1;
+  request->type = MS_GET_REQUEST;
   request->contenttype = NULL;
   request->postrequest = NULL;
   request->httpcookiedata = NULL;
