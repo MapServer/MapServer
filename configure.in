@@ -691,11 +691,10 @@ else
     fi
 
     if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
-      GD_INC=-I$GD_INCLUDE
-      GD_LIB="-L$GD_LIBDIR -lgd"
+      GD_INC=
+      GD_LIB="-lgd"
       GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
       AC_MSG_RESULT([        using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS).])
-      AC_ADD_RUNPATH("$GD_LIBDIR")
       FOUND_GD="true"
       break;
     fi

@@ -7995,33 +7995,11 @@ fi
     fi
 
     if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
-      GD_INC=-I$GD_INCLUDE
-      GD_LIB="-L$GD_LIBDIR -lgd"
+      GD_INC=
+      GD_LIB="-lgd"
       GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
       echo "$as_me:$LINENO: result:         using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&5
 echo "${ECHO_T}        using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&6
-
-  if test ""$GD_LIBDIR"" != "/usr/lib"; then
-
-  if test -z ""$GD_LIBDIR"" || echo ""$GD_LIBDIR"" | grep '^/' >/dev/null ; then
-    ai_p=""$GD_LIBDIR""
-  else
-    ai_p="`pwd`/"$GD_LIBDIR""
-  fi
-
-
-  unique=`echo $ac_n "$ai_p$ac_c" | tr -c -d a-zA-Z0-9`
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
-        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
-
-  fi
-
-  fi
-
       FOUND_GD="true"
       break;
     fi

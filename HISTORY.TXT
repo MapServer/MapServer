@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+- remove default compiler search paths from the GD CFLAGS/LDFLAGS (#4046)
 
 - Fixed Python Mapscript does not write COLOR to reference map (#4042)
 
