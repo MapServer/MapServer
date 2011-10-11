@@ -1207,7 +1207,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<Coverages\n"
             "     xmlns=\"http://www.opengis.net/wcs/1.1\"\n"
-            "     xmlns:ows=\"http://www.opengis.net/ows\"\n"
+            "     xmlns:ows=\"http://www.opengis.net/ows/1.1\"\n"
             "     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
             "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
             "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
@@ -1225,7 +1225,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<Coverages\n"
             "     xmlns=\"http://www.opengis.net/wcs/1.1\"\n"
-            "     xmlns:ows=\"http://www.opengis.net/ows\"\n"
+            "     xmlns:ows=\"http://www.opengis.net/ows/1.1\"\n"
             "     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
             "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
             "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
@@ -1241,7 +1241,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     {
         msIO_fprintf( 
             stdout,
-            "    <Reference xlink:href=\"cid:coverage/wcs.%s\"/>\n"
+            "    <ows:Reference xlink:href=\"cid:coverage/wcs.%s\"/>\n"
             "  </Coverage>\n"
             "</Coverages>\n"
             "--wcs\n"
@@ -1300,7 +1300,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         
         msIO_fprintf( 
             stdout,
-            "    <Reference xlink:href=\"cid:coverage/%s\"/>\n"
+            "    <ows:Reference xlink:href=\"cid:coverage/%s\"/>\n"
             "  </Coverage>\n"
             "</Coverages>\n",
             CPLGetFilename(filename) );
