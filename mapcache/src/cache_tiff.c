@@ -639,12 +639,6 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
       GTIFWriteKeys( psGTIF );
       GTIFFree( psGTIF );
 #endif
-
-            int cc = TIFFTileSize( hTIFF );
-            unsigned char *pabyZeros = (unsigned char *) calloc(cc,1);
-            TIFFWriteEncodedTile(hTIFF, 0, pabyZeros, cc);
-            free( pabyZeros );
-
    }
    int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
    int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
