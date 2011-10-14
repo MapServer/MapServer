@@ -256,7 +256,7 @@ static void _mapcache_cache_sqlite_set(mapcache_context *ctx, mapcache_tile *til
 }
 
 
-static void _mapcache_cache_sqlite_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache) {
+static void _mapcache_cache_sqlite_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache, mapcache_cfg *config) {
    ezxml_t cur_node;
    sqlite3_initialize();
    sqlite3_config(SQLITE_CONFIG_MULTITHREAD);

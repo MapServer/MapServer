@@ -313,6 +313,7 @@ mapcache_image_format* mapcache_imageio_create_jpeg_format(apr_pool_t *pool, cha
    format->format.create_empty_image = _mapcache_imageio_jpg_create_empty;
    format->format.write = _mapcache_imageio_jpeg_encode;
    format->quality = quality;
+   format->format.type = GC_JPEG;
    return (mapcache_image_format*)format;
 }
 

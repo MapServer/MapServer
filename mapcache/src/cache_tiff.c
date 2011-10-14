@@ -640,6 +640,9 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
       GTIFFree( psGTIF );
 #endif
    }
+   mapcache_image_format_jpeg *format = (mapcache_image_format_jpeg*) dcache->format;
+   TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, format->quality); 
+
    int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
    int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
 
@@ -698,7 +701,7 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
 /**
  * \private \memberof mapcache_cache_tiff
  */
-static void _mapcache_cache_tiff_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache) {
+static void _mapcache_cache_tiff_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache, mapcache_cfg *config) {
    ezxml_t cur_node;
    mapcache_cache_tiff *dcache = (mapcache_cache_tiff*)cache;
 
@@ -723,6 +726,40 @@ static void _mapcache_cache_tiff_configuration_parse_xml(mapcache_context *ctx, 
          return;
       }
    }
+   ezxml_t xformat = ezxml_child(node,"format");
+   char * format_name;
+   if(xformat && xformat->txt && *xformat->txt) {
+      format_name = xformat->txt;
+   } else {
+      format_name = "JPEG";
+   }
+   mapcache_image_format *pformat = mapcache_configuration_get_image_format(
+         config,format_name);
+   if(!pformat) {
+      ctx->set_error(ctx,500,"TIFF cache %s references unknown image format %s",
+            cache->name, format_name);
+      return;
+   }
+   if(pformat->type != GC_JPEG) {
+      ctx->set_error(ctx,500,"TIFF cache %s can only reference a JPEG image format",
+            cache->name);
+      return;
+   }
+   dcache->format = (mapcache_image_format_jpeg*)pformat;
+
+#ifdef USE_TIFF_WRITE
+#if APR_HAS_THREADS
+   if(ctx->has_threads) {
+      /* create an array of thread locks */
+      dcache->threadlocks = (apr_thread_mutex_t**)apr_pcalloc(ctx->pool,
+            THREADLOCK_HASHARRAY_SIZE*sizeof(apr_thread_mutex_t*));
+      int i;
+      for(i=0;i<THREADLOCK_HASHARRAY_SIZE;i++) {
+         apr_thread_mutex_create(&(dcache->threadlocks[i]),APR_THREAD_MUTEX_UNNESTED,ctx->pool);
+      }
+   }
+#endif
+#endif
 }
 
 /**
@@ -740,20 +777,6 @@ static void _mapcache_cache_tiff_configuration_post_config(mapcache_context *ctx
       ctx->set_error(ctx, 400, "tiff cache %s has invalid count (%d,%d)",dcache->count_x,dcache->count_y);
       return;
    }
-   
-#ifdef USE_TIFF_WRITE
-#if APR_HAS_THREADS
-   if(ctx->has_threads) {
-      /* create an array of thread locks */
-      dcache->threadlocks = (apr_thread_mutex_t**)apr_pcalloc(ctx->pool,
-            THREADLOCK_HASHARRAY_SIZE*sizeof(apr_thread_mutex_t*));
-      int i;
-      for(i=0;i<THREADLOCK_HASHARRAY_SIZE;i++) {
-         apr_thread_mutex_create(&(dcache->threadlocks[i]),APR_THREAD_MUTEX_UNNESTED,ctx->pool);
-      }
-   }
-#endif
-#endif
 }
 
 /**

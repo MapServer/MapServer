@@ -450,7 +450,7 @@ void parseCache(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    }
    cache->name = name;
 
-   cache->configuration_parse_xml(ctx,node,cache);
+   cache->configuration_parse_xml(ctx,node,cache,config);
    GC_CHECK_ERROR(ctx);
    mapcache_configuration_add_cache(config,cache,name);
    return;

@@ -1233,6 +1233,7 @@ mapcache_image_format* mapcache_imageio_create_png_format(apr_pool_t *pool, char
    format->format.metadata = apr_table_make(pool,3);
    format->format.write = _mapcache_imageio_png_encode;
    format->format.create_empty_image = _mapcache_imageio_png_create_empty;
+   format->format.type = GC_PNG;
    return (mapcache_image_format*)format;
 }
 
@@ -1246,6 +1247,7 @@ mapcache_image_format* mapcache_imageio_create_png_q_format(apr_pool_t *pool, ch
    format->format.format.create_empty_image = _mapcache_imageio_png_create_empty;
    format->format.format.metadata = apr_table_make(pool,3);
    format->ncolors = ncolors;
+   format->format.format.type = GC_PNG;
    return (mapcache_image_format*)format;
 }
 

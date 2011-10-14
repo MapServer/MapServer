@@ -68,6 +68,10 @@ static void _mapcache_cache_memcache_tile_key(mapcache_context *ctx, mapcache_ti
    if(!*path) {
       ctx->set_error(ctx,500, "failed to allocate tile key");
    }
+#ifdef DEBUG
+   ctx->log(ctx,MAPCACHE_DEBUG,"memcache key is %s (length:%d)",
+         *path,strlen(*path));
+#endif
   
 }
 
@@ -178,7 +182,7 @@ static void _mapcache_cache_memcache_set(mapcache_context *ctx, mapcache_tile *t
 /**
  * \private \memberof mapcache_cache_memcache
  */
-static void _mapcache_cache_memcache_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache) {
+static void _mapcache_cache_memcache_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache, mapcache_cfg *config) {
    ezxml_t cur_node;
    mapcache_cache_memcache *dcache = (mapcache_cache_memcache*)cache;
    int servercount = 0;

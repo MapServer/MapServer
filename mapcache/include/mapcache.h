@@ -390,7 +390,7 @@ struct mapcache_cache {
      */
     void (*tile_set)(mapcache_context *ctx, mapcache_tile * tile);
 
-    void (*configuration_parse_xml)(mapcache_context *ctx, ezxml_t xml, mapcache_cache * cache);
+    void (*configuration_parse_xml)(mapcache_context *ctx, ezxml_t xml, mapcache_cache * cache, mapcache_cfg *config);
     void (*configuration_post_config)(mapcache_context *ctx, mapcache_cache * cache, mapcache_cfg *config);
 };
 
@@ -1357,6 +1357,7 @@ struct mapcache_image_format {
     mapcache_buffer* (*create_empty_image)(mapcache_context *ctx, mapcache_image_format *format,
           size_t width, size_t height, unsigned int color);
     apr_table_t *metadata;
+    mapcache_image_format_type type;
 };
 
 /**\defgroup imageio_png PNG Image IO
