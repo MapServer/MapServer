@@ -104,6 +104,11 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
    msMapSetSize(omap, map->width, map->height);
 
    imageObj *image = msDrawMap(omap, MS_FALSE);
+   if(!image) {
+      ctx->set_error(ctx,500,"mapserver failed to create image, check logs");
+      msFreeMap(omap);
+      return;
+   }
    rasterBufferObj rb;
 
    image->format->vtable->getRasterBufferHandle(image,&rb);
