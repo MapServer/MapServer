@@ -176,6 +176,14 @@ mapcache_buffer* _mapcache_imageio_jpeg_encode(mapcache_context *ctx, mapcache_i
    cinfo.in_color_space = JCS_RGB;
    jpeg_set_defaults(&cinfo);
    jpeg_set_quality(&cinfo, ((mapcache_image_format_jpeg*)format)->quality, TRUE);
+   switch(((mapcache_image_format_jpeg*)format)->photometric) {
+      case MAPCACHE_PHOTOMETRIC_RGB:
+         jpeg_set_colorspace(&cinfo, JCS_RGB);
+         break;
+      case MAPCACHE_PHOTOMETRIC_YCBCR:
+      default:
+         jpeg_set_colorspace(&cinfo, JCS_YCbCr);
+   }
    jpeg_start_compress(&cinfo, TRUE);
 
    rowdata = (JSAMPLE*)malloc(img->w*cinfo.input_components*sizeof(JSAMPLE));
@@ -304,7 +312,8 @@ static mapcache_buffer* _mapcache_imageio_jpg_create_empty(mapcache_context *ctx
    return buf;
 }
 
-mapcache_image_format* mapcache_imageio_create_jpeg_format(apr_pool_t *pool, char *name, int quality ) {
+mapcache_image_format* mapcache_imageio_create_jpeg_format(apr_pool_t *pool, char *name, int quality,
+      mapcache_photometric photometric) {
    mapcache_image_format_jpeg *format = apr_pcalloc(pool, sizeof(mapcache_image_format_jpeg));
    format->format.name = name;
    format->format.extension = apr_pstrdup(pool,"jpg");
@@ -313,6 +322,7 @@ mapcache_image_format* mapcache_imageio_create_jpeg_format(apr_pool_t *pool, cha
    format->format.create_empty_image = _mapcache_imageio_jpg_create_empty;
    format->format.write = _mapcache_imageio_jpeg_encode;
    format->quality = quality;
+   format->photometric = photometric;
    format->format.type = GC_JPEG;
    return (mapcache_image_format*)format;
 }

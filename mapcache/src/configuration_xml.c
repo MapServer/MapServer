@@ -341,6 +341,7 @@ void parseFormat(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
       }
    } else if(!strcmp(type,"JPEG")){
       int quality = 95;
+      mapcache_photometric photometric = MAPCACHE_PHOTOMETRIC_YCBCR;
       if ((cur_node = ezxml_child(node,"quality")) != NULL) {
          char *endptr;
          quality = (int)strtol(cur_node->txt,&endptr,10);
@@ -352,8 +353,19 @@ void parseFormat(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
             return;
          }
       }
+      if ((cur_node = ezxml_child(node,"photometric")) != NULL) {
+         if(!strcasecmp(cur_node->txt,"RGB"))
+            photometric = MAPCACHE_PHOTOMETRIC_RGB;
+         else if(!strcasecmp(cur_node->txt,"YCBCR"))
+            photometric = MAPCACHE_PHOTOMETRIC_YCBCR;
+         else {
+            ctx->set_error(ctx,500,"failed to parse jpeg format %s photometric %s. expecting rgb or ycbcr",
+                  name,cur_node->txt);
+            return;
+         }
+      }
       format = mapcache_imageio_create_jpeg_format(ctx->pool,
-            name,quality);
+            name,quality,photometric);
    } else if(!strcmp(type,"MIXED")){
       mapcache_image_format *transparent=NULL, *opaque=NULL;
       if ((cur_node = ezxml_child(node,"transparent")) != NULL) {

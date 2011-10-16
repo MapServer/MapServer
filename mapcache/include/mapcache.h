@@ -1340,6 +1340,14 @@ typedef enum {
     MAPCACHE_COMPRESSION_DEFAULT /**< default compression*/
 } mapcache_compression_type;
 
+/**
+ * photometric interpretation for jpeg bands
+ */
+typedef enum {
+    MAPCACHE_PHOTOMETRIC_RGB,
+    MAPCACHE_PHOTOMETRIC_YCBCR
+} mapcache_photometric;
+
 /**\interface mapcache_image_format
  * \brief an image format
  * \sa mapcache_image_format_jpeg
@@ -1444,9 +1452,11 @@ mapcache_image_format* mapcache_imageio_create_png_q_format(apr_pool_t *pool, ch
 struct mapcache_image_format_jpeg {
     mapcache_image_format format;
     int quality; /**< JPEG quality, 1-100 */
+    mapcache_photometric photometric;
 };
 
-mapcache_image_format* mapcache_imageio_create_jpeg_format(apr_pool_t *pool, char *name, int quality);
+mapcache_image_format* mapcache_imageio_create_jpeg_format(apr_pool_t *pool, char *name, int quality,
+      mapcache_photometric photometric);
 
 /**
  * @param r

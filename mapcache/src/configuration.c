@@ -95,8 +95,7 @@ void mapcache_configuration_post_config(mapcache_context *ctx, mapcache_cfg *con
 mapcache_cfg* mapcache_configuration_create(apr_pool_t *pool) {
    mapcache_grid *grid;
    int i;
-   double wgs84_resolutions[19]={
-         1.40625000000000,
+   double wgs84_resolutions[18]={
          0.703125000000000,
          0.351562500000000,
          0.175781250000000,
@@ -159,7 +158,7 @@ mapcache_cfg* mapcache_configuration_create(apr_pool_t *pool) {
          mapcache_imageio_create_png_q_format(pool,"PNG8",MAPCACHE_COMPRESSION_FAST,256),
          "PNG8");
    mapcache_configuration_add_image_format(cfg,
-         mapcache_imageio_create_jpeg_format(pool,"JPEG",90),
+         mapcache_imageio_create_jpeg_format(pool,"JPEG",90,MAPCACHE_PHOTOMETRIC_YCBCR),
          "JPEG");
    cfg->default_image_format = mapcache_configuration_get_image_format(cfg,"JPEG");
    cfg->reporting = MAPCACHE_REPORT_MSG;
@@ -172,7 +171,7 @@ mapcache_cfg* mapcache_configuration_create(apr_pool_t *pool) {
    grid->srs = apr_pstrdup(pool,"EPSG:4326");
    grid->unit = MAPCACHE_UNIT_DEGREES;
    grid->tile_sx = grid->tile_sy = 256;
-   grid->nlevels = 19;
+   grid->nlevels = 18;
    grid->extent[0] = wgs84_extent[0];
    grid->extent[1] = wgs84_extent[1];
    grid->extent[2] = wgs84_extent[2];

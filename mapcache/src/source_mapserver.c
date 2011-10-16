@@ -43,6 +43,7 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
    mapcache_source_mapserver *mapserver = (mapcache_source_mapserver*)map->tileset->source;
    static mapObj *origmap = NULL;
    if(!origmap) {
+   msSetup();
       origmap = msLoadMap(mapserver->mapfile,NULL);
    }
    if(!origmap) {
@@ -110,8 +111,13 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
       return;
    }
    rasterBufferObj rb;
-
-   image->format->vtable->getRasterBufferHandle(image,&rb);
+   
+   if(image->format->vtable->supports_pixel_buffer) {
+      image->format->vtable->getRasterBufferHandle(image,&rb);
+   } else {
+      ctx->set_error(ctx,500,"format %s has no pixel export",image->format->name);
+      return;
+   }
 
    map->image = mapcache_image_create(ctx);
    map->image->w = map->width;

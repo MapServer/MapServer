@@ -502,6 +502,7 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    char errmsg[120];
    _mapcache_cache_tiff_tile_key(ctx, tile, &filename);
    mapcache_cache_tiff *dcache = (mapcache_cache_tiff*)tile->tileset->cache;
+   mapcache_image_format_jpeg *format = (mapcache_image_format_jpeg*) dcache->format;
    if(GC_HAS_ERROR(ctx)) {
       return;
    }
@@ -604,7 +605,6 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
 
       TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT );
       TIFFSetField( hTIFF, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG );
-      TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB );
       TIFFSetField( hTIFF, TIFFTAG_BITSPERSAMPLE, 8 );
       TIFFSetField( hTIFF, TIFFTAG_COMPRESSION, COMPRESSION_JPEG );
       TIFFSetField( hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB );
@@ -640,8 +640,13 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
       GTIFFree( psGTIF );
 #endif
    }
-   mapcache_image_format_jpeg *format = (mapcache_image_format_jpeg*) dcache->format;
    TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, format->quality); 
+   if(format->photometric == MAPCACHE_PHOTOMETRIC_RGB) {
+      TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+   } else {
+      TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR);
+   }
+   TIFFSetField( hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB );
 
    int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
    int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
