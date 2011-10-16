@@ -431,7 +431,9 @@
            values under around 80 produce small images but with visible artifacts.
            YMMV
       -->
-      <quality>75</quality>   
+      <quality>75</quality>  
+
+      <photometric>RGB</photometric>   <!-- RGB | YCBCR -->
    </format>
    <format name="PNG_BEST" type ="PNG">
       <compression>best</compression>
