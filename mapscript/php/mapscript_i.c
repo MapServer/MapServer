@@ -723,6 +723,21 @@ int labelObj_updateFromString(labelObj *self, char *snippet) {
    return msUpdateLabelFromString(self, snippet);
 }
 
+int labelObj_moveStyleUp(labelObj *self, int index)
+{
+    return msMoveLabelStyleUp(self, index);
+}
+
+int labelObj_moveStyleDown(labelObj *self, int index)
+{
+    return msMoveLabelStyleDown(self, index);
+}
+
+int labelObj_deleteStyle(labelObj *self, int index)
+{
+    return msDeleteLabelStyle(self, index);
+}
+
 /**********************************************************************
  * class extensions for legendObj
  **********************************************************************/
@@ -1387,6 +1402,21 @@ styleObj *styleObj_new(classObj *class, styleObj *style) {
     class->numstyles++;
 
     return class->styles[class->numstyles-1];
+  }
+
+styleObj *styleObj_label_new(labelObj *label, styleObj *style) {
+    if(msGrowLabelStyles(label) == NULL)
+      return NULL;
+
+    if(initStyle(label->styles[label->numstyles]) == -1)
+      return NULL;
+
+    if (style)
+      msCopyStyle(label->styles[label->numstyles], style);
+        
+    label->numstyles++;
+
+    return label->styles[label->numstyles-1];
   }
 
 int styleObj_updateFromString(styleObj *self, char *snippet) {

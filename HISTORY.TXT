@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+
+- Fixed cannot add a style to a label in PHP/SWIG Mapscript (#4038)
+
 - Fixed schema validity issue for WCS 1.1 GetCoverage responses (#4047)
 
 - remove default compiler search paths from the GD CFLAGS/LDFLAGS (#4046)
