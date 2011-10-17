@@ -93,10 +93,7 @@ msXmpPresent( mapObj *map )
 
     /* No first key? No license info. */
     if ( ! key ) 
-    {
-        rv = MS_FALSE;
-        break;
-    }
+        return MS_FALSE;
 
     do 
     {
