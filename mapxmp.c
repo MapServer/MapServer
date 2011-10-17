@@ -90,6 +90,14 @@ msXmpPresent( mapObj *map )
     
     /* Check all the keys for "xmp_" start pattern */
     key = msFirstKeyFromHashTable(&hash_metadata);
+
+    /* No first key? No license info. */
+    if ( ! key ) 
+    {
+        rv = MS_FALSE;
+        break;
+    }
+
     do 
     {
         /* Found one! Break out and return true */
@@ -172,6 +180,11 @@ msXmpWrite( mapObj *map, const char *filename )
     /* Check all the keys for "xmp_*_namespace" pattern */
     initHashTable(&hash_ns);
     key = msFirstKeyFromHashTable(&hash_metadata);
+
+    /* No first key? No license info. We shouldn't get here. */
+    if ( ! key )
+        return MS_SUCCESS;
+
     do 
     {
         /* Our regex has one match slot */
