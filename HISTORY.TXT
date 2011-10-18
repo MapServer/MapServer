@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (future 6.0.2, SVN branch-6-0):
 ---------------------------
+
+- Add missing support for outputFormat in WFS GetFeature POST XML requests (#4052)
+
 - Fixed schema validity issue for WCS 1.1 GetCoverage responses (#4047)
 
 - fix centroid geomtransform parser (#4029)
