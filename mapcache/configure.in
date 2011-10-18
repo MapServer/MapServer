@@ -616,6 +616,61 @@ AC_DEFUN([FASTCGI_CHECK],[
     AC_SUBST(FASTCGI_ENABLED,$FASTCGI_ENABLED)
 ])
 
+
+GEOTIFF_ENABLED=""
+AC_DEFUN([GEOTIFF_CHECK],[
+AC_ARG_WITH(geotiff,
+            [  --with-geotiff=ARG    Libgeotiff library to use (ARG=yes or path)],,[with_geotiff=no])
+
+if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
+
+    dnl We now require libgeotiff 1.2.1 (for XTIFFClientOpen). 
+    AC_CHECK_LIB(geotiff,XTIFFClientOpen,
+                 GEOTIFF_LIB="-lgeotiff",
+                 AC_MSG_ERROR([failed to link with libgeotiff. Specify path]))
+
+
+    dnl Now search for headers
+    AC_CHECK_HEADER([geotiff.h],
+                    [
+                     GEOTIFF_ENABLED="-DUSE_GEOTIFF"
+                     echo "using system libgeotiff."
+                    ],
+                    [
+                     if test -r /usr/include/geotiff/geotiff.h ; then
+                        GEOTIFF_INC="-I/usr/include/geotiff"
+                        echo "using system libgeotiff from /usr/include/geotiff/."
+                     elif test -r /usr/local/include/geotiff/geotiff.h ; then
+                        GEOTIFF_INC="-I/usr/local/include/geotiff"
+                        echo "using system libgeotiff from /usr/local/include/geotiff/."
+                     else
+                        AC_MSG_ERROR([failed to find geotiff.h in system locations. Specify path])
+                     fi
+                     GEOTIFF_ENABLED="-DUSE_GEOTIFF"
+                    ])
+
+elif test "$with_geotiff" != "no" ; then
+
+   GEOTIFF_LIB="-L$with_geotiff/lib -lgeotiff"
+   if test -r $with_geotiff/include/geotiff.h ; then
+      GEOTIFF_INC="-I$with_geotiff/include"
+      echo "using system libgeotiff from $with_geotiff/include/."
+   elif test -r $with_geotiff/include/geotiff/geotiff.h ; then
+      GEOTIFF_INC="-I$with_geotiff/include/geotiff"
+      echo "using system libgeotiff from $with_geotiff/geotiff/include/."
+   else
+      AC_MSG_ERROR([failed to find geotiff.h in $with_geotiff])
+   fi
+   GEOTIFF_ENABLED="-DUSE_GEOTIFF"
+fi
+
+AC_SUBST(GEOTIFF_ENABLED,$GEOTIFF_ENABLED)
+AC_SUBST(GEOTIFF_INC,$GEOTIFF_INC)
+AC_SUBST(GEOTIFF_LIB,$GEOTIFF_LIB)
+]
+)
+
+
 AC_DEFUN([TIFF_CHECK],[
     AC_ARG_WITH(tiff,
         AC_HELP_STRING([--with-tiff=DIR],[Specify where TIFF is installed]),
@@ -922,6 +977,7 @@ PNG_CHECK
 
 JPEG_CHECK
 TIFF_CHECK
+GEOTIFF_CHECK
 
 PCRE_CHECK
 

@@ -45,8 +45,13 @@
 #include "geo_normalize.h"
 #include "geo_tiffp.h"
 #include "geo_keyp.h"
-#include "xtiffio.h"
+#define MyTIFFOpen XTIFFOpen
+#define MyTIFFClose XTIFFClose
+#else
+#define MyTIFFOpen TIFFOpen
+#define MyTIFFClose TIFFClose
 #endif
+
 
 
 #ifdef USE_TIFF_WRITE
@@ -234,7 +239,7 @@ static int _mapcache_cache_tiff_has_tile(mapcache_context *ctx, mapcache_tile *t
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FALSE;
    }
-   hTIFF = TIFFOpen(filename,"r");
+   hTIFF = MyTIFFOpen(filename,"r");
 
    if(hTIFF) {
       do { 
@@ -252,7 +257,7 @@ static int _mapcache_cache_tiff_has_tile(mapcache_context *ctx, mapcache_tile *t
 #ifdef DEBUG
          check_tiff_format(ctx,tile,hTIFF,filename);
          if(GC_HAS_ERROR(ctx)) {
-            TIFFClose(hTIFF);
+            MyTIFFClose(hTIFF);
             return MAPCACHE_FALSE;
          }
 #endif
@@ -264,7 +269,7 @@ static int _mapcache_cache_tiff_has_tile(mapcache_context *ctx, mapcache_tile *t
          toff_t  *offsets=NULL, *sizes=NULL;
          TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &offsets );
          TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &sizes );
-         TIFFClose(hTIFF);
+         MyTIFFClose(hTIFF);
          if( offsets[tiff_off] > 0 && sizes[tiff_off] > 0 ) {
             return MAPCACHE_TRUE;
          } else {
@@ -303,7 +308,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
          tile->x,tile->y,tile->z,filename);
 #endif
    
-   hTIFF = TIFFOpen(filename,"r");
+   hTIFF = MyTIFFOpen(filename,"r");
 
    /* 
     * we currrently have no way of knowing if the opening failed because the tif
@@ -330,7 +335,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
 #ifdef DEBUG
          check_tiff_format(ctx,tile,hTIFF,filename);
          if(GC_HAS_ERROR(ctx)) {
-            TIFFClose(hTIFF);
+            MyTIFFClose(hTIFF);
             return MAPCACHE_FAILURE;
          }
 #endif
@@ -363,7 +368,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
          if( rv != 1 ) {
             ctx->set_error(ctx,500,"Failed to read TIFF file \"%s\" tile offsets",
                   filename);
-            TIFFClose(hTIFF);
+            MyTIFFClose(hTIFF);
             return MAPCACHE_FAILURE;
          }
 
@@ -372,7 +377,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
          if( rv != 1 ) {
             ctx->set_error(ctx,500,"Failed to read TIFF file \"%s\" tile sizes",
                   filename);
-            TIFFClose(hTIFF);
+            MyTIFFClose(hTIFF);
             return MAPCACHE_FAILURE;
          }
 
@@ -394,7 +399,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
                /* there is no common jpeg header in the tiff tags */
                ctx->set_error(ctx,500,"Failed to read TIFF file \"%s\" jpeg table",
                      filename);
-               TIFFClose(hTIFF);
+               MyTIFFClose(hTIFF);
                return MAPCACHE_FAILURE;
             }
 
@@ -444,7 +449,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
                if(bytes !=  sizes[tiff_off]-2) {
                   ctx->set_error(ctx,500,"failed to read jpeg body in \"%s\".\
                         (read %d of %d bytes)", filename,bytes,sizes[tiff_off]-2);
-                  TIFFClose(hTIFF);
+                  MyTIFFClose(hTIFF);
                   return MAPCACHE_FAILURE;
                }
 
@@ -452,7 +457,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
 
                /* finalize and cleanup */
                apr_file_close(f);
-               TIFFClose(hTIFF);
+               MyTIFFClose(hTIFF);
                return MAPCACHE_SUCCESS;
             } else {
                /* shouldn't usually happen. we managed to open the file with TIFFOpen,
@@ -461,12 +466,12 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
                 */
                ctx->set_error(ctx,500,"apr_file_open failed on already open tiff file \"%s\", giving up .... ",
                      filename);
-               TIFFClose(hTIFF);
+               MyTIFFClose(hTIFF);
                return MAPCACHE_FAILURE;
             }
          } else {
             /* sparse tiff file without the requested tile */
-            TIFFClose(hTIFF);
+            MyTIFFClose(hTIFF);
             return MAPCACHE_CACHE_MISS;
          }
       } /* loop through the tiff directories if there are multiple ones */
@@ -477,7 +482,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
        * finished looping through directories and didn't find anything suitable.
        * does the file only contain overviews?
        */
-      TIFFClose(hTIFF);
+      MyTIFFClose(hTIFF);
       return MAPCACHE_CACHE_MISS;
    }
    /* failed to open tiff file */
@@ -573,10 +578,10 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
     * check if the file exists by looking at its size
     */
    if(finfo.size) {
-      hTIFF = TIFFOpen(filename,"r+");
+      hTIFF = MyTIFFOpen(filename,"r+");
       create = 0;
    } else {
-      hTIFF = TIFFOpen(filename,"w+");
+      hTIFF = MyTIFFOpen(filename,"w+");
       create = 1;
    }
    if(!hTIFF) {
@@ -615,29 +620,66 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
       TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL,3 );
 
 #ifdef USE_GEOTIFF
-      double	adfPixelScale[3], adfTiePoints[6];
-#ifndef TIFFTAG_GEOPIXELSCALE
- #define TIFFTAG_GEOPIXELSCALE 33550
-#endif
-#ifndef TIFFTAG_GEOTIEPOINTS
- #define TIFFTAG_GEOTIEPOINTS 33922
-#endif
-      adfPixelScale[0] = adfPixelScale[1] = level->resolution;
-      adfPixelScale[2] = 0.0;
-      TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+      double	adfPixelScale[3], adfTiePoints[6], bbox[4];
 
-      adfTiePoints[0] = 0.0;
-      adfTiePoints[1] = 0.0;
-      adfTiePoints[2] = 0.0;
-      adfTiePoints[3] = -20000000;
-      adfTiePoints[4] = 20000000;
-      adfTiePoints[5] = 0.0;
-      TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+      GTIF *gtif = GTIFNew(hTIFF);
+      if(gtif) {
 
-      GTIF *psGTIF = GTIFNew( hTIFF );
-      GTIFSetFromProj4( psGTIF, apr_psprintf(ctx->pool,"+init=%s",tile->grid_link->grid->srs) );
-      GTIFWriteKeys( psGTIF );
-      GTIFFree( psGTIF );
+         GTIFKeySet(gtif, GTRasterTypeGeoKey, TYPE_SHORT, 1,
+               RasterPixelIsArea);
+
+         GTIFKeySet( gtif, GeographicTypeGeoKey, TYPE_SHORT, 1, 
+               0 );
+         GTIFKeySet( gtif, GeogGeodeticDatumGeoKey, TYPE_SHORT,
+               1, 0 );
+         GTIFKeySet( gtif, GeogEllipsoidGeoKey, TYPE_SHORT, 1, 
+               0 );
+         GTIFKeySet( gtif, GeogSemiMajorAxisGeoKey, TYPE_DOUBLE, 1,
+               0.0 );
+         GTIFKeySet( gtif, GeogSemiMinorAxisGeoKey, TYPE_DOUBLE, 1,
+               0.0 );
+         switch(tile->grid_link->grid->unit) {
+            case MAPCACHE_UNIT_FEET:
+               GTIFKeySet( gtif, ProjLinearUnitsGeoKey, TYPE_SHORT, 1, 
+                     Linear_Foot );
+               break;
+            case MAPCACHE_UNIT_METERS:
+               GTIFKeySet( gtif, ProjLinearUnitsGeoKey, TYPE_SHORT, 1, 
+                     Linear_Meter );
+               break;
+            case MAPCACHE_UNIT_DEGREES:
+               GTIFKeySet(gtif, GeogAngularUnitsGeoKey, TYPE_SHORT, 0, 
+                     Angular_Degree );
+               break;
+            default:
+               break;
+         }
+
+         GTIFWriteKeys(gtif);
+         GTIFFree(gtif);
+
+         adfPixelScale[0] = adfPixelScale[1] = level->resolution;
+         adfPixelScale[2] = 0.0;
+         TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
+
+
+         /* top left tile x,y */
+         int x,y;
+
+         x = (tile->x / dcache->count_x)*(dcache->count_x); 
+         y = (tile->y / dcache->count_y)*(dcache->count_y) + ntilesy - 1; 
+
+         mapcache_grid_get_extent(ctx, tile->grid_link->grid,
+               x,y,tile->z,bbox); 
+         adfTiePoints[0] = 0.0;
+         adfTiePoints[1] = 0.0;
+         adfTiePoints[2] = 0.0;
+         adfTiePoints[3] = bbox[0];
+         adfTiePoints[4] = bbox[3];
+         adfTiePoints[5] = 0.0;
+         TIFFSetField( hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints );
+      }
+
 #endif
    }
    TIFFSetField(hTIFF, TIFFTAG_JPEGQUALITY, format->quality); 
@@ -687,7 +729,7 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    TIFFFlush( hTIFF );
 
 
-   TIFFClose(hTIFF);
+   MyTIFFClose(hTIFF);
 
    apr_file_unlock(flock);
    apr_file_close(flock);
