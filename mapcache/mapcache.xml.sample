@@ -91,8 +91,7 @@
 
    <!-- this grid is identical to the previous one, except that it uses EPSG:900913 as the default srs as it is more supported -->
    <!--
-        <grid>
-            <name>g</name>
+        <grid name="g">
             <metadata>
                <title>GoogleMapsCompatible</title>
                <WellKnownScaleSet>urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible</WellKnownScaleSet>
@@ -835,5 +834,10 @@
         this location should be writable by the apache user
    -->
    <lock_dir>/tmp</lock_dir>
+   
+   
+   <!-- fastcgi only -->
+   <log_level>info</log_level> <!-- logging verbosity -->
+   <auto_reload>true</auto_reload> <!-- auto reload if config file changed -->
 
 </mapcache>
