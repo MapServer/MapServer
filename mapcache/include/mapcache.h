@@ -929,6 +929,13 @@ struct mapcache_cfg {
 
     const char *lockdir;
     const char *endpoint; /**< the uri where the base of the service is mapped */
+
+    /* for fastcgi only */
+    int autoreload; /* should the modification time of the config file be recorded
+                       and the file be reparsed if it is modified. */
+    mapcache_log_level loglevel; /* logging verbosity. Ignored for the apache module
+                                    as in that case the apache LogLevel directive is
+                                    used. */
 };
 
 /**

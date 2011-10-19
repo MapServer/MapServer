@@ -32,6 +32,7 @@
 #include <apr_strings.h>
 #include <apr_pools.h>
 #include <apr_file_io.h>
+#include <signal.h>
 #include <apr_date.h>
 #ifdef USE_FASTCGI
 #include <fcgi_stdio.h>
@@ -46,7 +47,7 @@ static char *err500 = "Internal Server Error";
 static char *err501 = "Not Implemented";
 static char *err502 = "Bad Gateway";
 static char *errother = "No Description";
-apr_pool_t *global_pool;
+apr_pool_t *global_pool = NULL,*config_pool, *tmp_config_pool;
 
 static char* err_msg(int code) {
    switch(code) {
@@ -71,15 +72,17 @@ struct mapcache_context_fcgi {
    apr_file_t *mutex_file;
 };
 
-void fcgi_context_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
+static void fcgi_context_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
    va_list args;
-   va_start(args,message);
-   fprintf(stderr,"%s\n",apr_pvsprintf(c->pool,message,args));
-   va_end(args);
+   if(!c->config || level >= c->config->loglevel) {
+      va_start(args,message);
+      fprintf(stderr,"%s\n",apr_pvsprintf(c->pool,message,args));
+      va_end(args);
+   }
 }
 
 
-void mapcache_fcgi_mutex_aquire(mapcache_context *gctx) {
+static void mapcache_fcgi_mutex_aquire(mapcache_context *gctx) {
    mapcache_context_fcgi *ctx = (mapcache_context_fcgi*)gctx;
    int ret;
 #ifdef DEBUG
@@ -101,7 +104,12 @@ void mapcache_fcgi_mutex_aquire(mapcache_context *gctx) {
    }
 }
 
-void mapcache_fcgi_mutex_release(mapcache_context *gctx) {
+static void handle_signal(int signal) {
+   apr_pool_destroy(global_pool);
+   exit(signal);
+}
+
+static void mapcache_fcgi_mutex_release(mapcache_context *gctx) {
    int ret;
    mapcache_context_fcgi *ctx = (mapcache_context_fcgi*)gctx;
 #ifdef DEBUG
@@ -132,6 +140,7 @@ static mapcache_context_fcgi* fcgi_context_create() {
    ctx->mutex_fname="/tmp/mapcache.fcgi.lock";
    ctx->ctx.global_lock_aquire = mapcache_fcgi_mutex_aquire;
    ctx->ctx.global_lock_release = mapcache_fcgi_mutex_release;
+   ctx->ctx.config = NULL;
    return ctx;
 }
 
@@ -172,44 +181,106 @@ static void fcgi_write_response(mapcache_context_fcgi *ctx, mapcache_http_respon
 }
 
 
-int main(int argc, char **argv) {
+apr_time_t mtime;
+char *conffile;
+
+static void load_config(mapcache_context *ctx, char *filename) {
+   apr_file_t *f;
+   apr_finfo_t finfo;
+   if((apr_file_open(&f, filename, APR_FOPEN_READ, APR_UREAD | APR_GREAD,
+               global_pool)) == APR_SUCCESS) {
+      apr_file_info_get(&finfo, APR_FINFO_MTIME, f);
+      apr_file_close(f);
+   } else {
+      ctx->set_error(ctx,500,"failed to open config file %s",filename);
+      return;
+   }
+   if(ctx->config) {
+      //we already have a loaded configuration, check that the config file hasn't changed
+      if(finfo.mtime > mtime) {
+         ctx->log(ctx,MAPCACHE_INFO,"config file has changed, reloading");
+      } else {
+         return;
+      }
+   }
+   mtime = finfo.mtime;
+
+   /* either we have no config, or it has changed */
+
+   mapcache_cfg *old_cfg = ctx->config;
+   apr_pool_create(&tmp_config_pool,global_pool);
+
+   mapcache_cfg *cfg = mapcache_configuration_create(tmp_config_pool);
+   ctx->config = cfg;
+   ctx->pool = tmp_config_pool;
+
+   mapcache_configuration_parse(ctx,conffile,cfg,1);
+   if(GC_HAS_ERROR(ctx)) goto failed_load;
+   mapcache_configuration_post_config(ctx, cfg);
+   if(GC_HAS_ERROR(ctx)) goto failed_load;
+
+   /* no error, destroy the previous pool if we are reloading the config */
+   if(config_pool) {
+      apr_pool_destroy(config_pool);
+   }
+   config_pool = tmp_config_pool;
+
+   return;
+
+failed_load:
+   /* we failed to load the config file */
+   if(config_pool) {
+      /* we already have a running configuration, keep it and only log the error to not
+       * interrupt the already running service */
+      ctx->log(ctx,MAPCACHE_ERROR,"failed to reload config file %s: %s", conffile,ctx->get_error_message(ctx));
+      ctx->clear_errors(ctx);
+      ctx->config = old_cfg;
+      ctx->pool = config_pool;
+      apr_pool_destroy(tmp_config_pool);
+   }
+
+}
+
+int main(int argc, const char **argv) {
+   (void) signal(SIGTERM,handle_signal);
+   (void) signal(SIGUSR1,handle_signal);
+   apr_initialize();
+   atexit(apr_terminate);
    apr_pool_initialize();
    if(apr_pool_create(&global_pool,NULL) != APR_SUCCESS) {
       return 1;
    }
+   config_pool = NULL;
    mapcache_context_fcgi* globalctx = fcgi_context_create();
    mapcache_context* ctx = (mapcache_context*)globalctx;
-   mapcache_cfg *cfg = mapcache_configuration_create(ctx->pool);
-   ctx->config = cfg;
-
-   char *conffile  = getenv("MAPCACHE_CONFIG_FILE");
+   
+   conffile  = getenv("MAPCACHE_CONFIG_FILE");
    if(!conffile) {
       ctx->log(ctx,MAPCACHE_ERROR,"no config file found in MAPCACHE_CONFIG_FILE envirronement");
       return 1;
    }
-   ctx->log(ctx,MAPCACHE_DEBUG,"mapcache fcgi conf file: %s",conffile);
-   mapcache_configuration_parse(ctx,conffile,cfg,1);
-   if(GC_HAS_ERROR(ctx)) {
-      ctx->log(ctx,500,"failed to parse %s: %s",conffile,ctx->get_error_message(ctx));
-      return 1;
-   }
-   mapcache_configuration_post_config(ctx, cfg);
-   if(GC_HAS_ERROR(ctx)) {
-      ctx->log(ctx,500,"post-config failed for %s: %s",conffile,ctx->get_error_message(ctx));
-      return 1;
-   }
+   ctx->log(ctx,MAPCACHE_INFO,"mapcache fcgi conf file: %s",conffile);
+   
    
 #ifdef USE_FASTCGI
    while (FCGI_Accept() >= 0) {
 #endif
       apr_table_t *params;
-      apr_pool_create(&(ctx->pool),global_pool);
+      ctx->pool = config_pool;
+      if(!ctx->config || ctx->config->autoreload) {
+         load_config(ctx,conffile);
+         if(GC_HAS_ERROR(ctx)) {
+            fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,NULL));
+            goto cleanup;
+         }
+      }
+      apr_pool_create(&(ctx->pool),config_pool);
       mapcache_request *request = NULL;
       char *pathInfo = getenv("PATH_INFO");
       
 
       params = mapcache_http_parse_param_string(ctx, getenv("QUERY_STRING"));
-      mapcache_service_dispatch_request(ctx,&request,pathInfo,params,cfg);
+      mapcache_service_dispatch_request(ctx,&request,pathInfo,params,ctx->config);
       if(GC_HAS_ERROR(ctx) || !request) {
          fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,(request)?request->service:NULL));
          goto cleanup;
@@ -239,7 +310,7 @@ int main(int argc, char **argv) {
                fullhost,
                getenv("SCRIPT_NAME")
                );
-         http_response = mapcache_core_get_capabilities(ctx,request->service,req,url,pathInfo,cfg);
+         http_response = mapcache_core_get_capabilities(ctx,request->service,req,url,pathInfo,ctx->config);
       } else if( request->type == MAPCACHE_REQUEST_GET_TILE) {
          mapcache_request_get_tile *req_tile = (mapcache_request_get_tile*)request;
          http_response = mapcache_core_get_tile(ctx,req_tile);

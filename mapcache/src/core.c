@@ -337,7 +337,7 @@ mapcache_http_response* mapcache_core_respond_to_error(mapcache_context *ctx, ma
    if(!msg) {
       msg = "an unspecified error has occured";
    }
-   ctx->log(ctx,MAPCACHE_INFO,msg);
+   ctx->log(ctx,MAPCACHE_ERROR,msg);
   
 
    if(ctx->config && ctx->config->reporting == MAPCACHE_REPORT_MSG) {

@@ -53,7 +53,7 @@ void mapcache_configuration_parse(mapcache_context *ctx, const char *filename, m
       while ((apr_dir_read(&finfo, APR_FINFO_DIRENT|APR_FINFO_TYPE|APR_FINFO_NAME, lockdir)) == APR_SUCCESS) {
          if(finfo.filetype == APR_REG) {
             if(!strncmp(finfo.name, MAPCACHE_LOCKFILE_PREFIX, strlen(MAPCACHE_LOCKFILE_PREFIX))) {
-               ctx->log(ctx,MAPCACHE_WARNING,"found old lockfile %s/%s, deleting it",config->lockdir,
+               ctx->log(ctx,MAPCACHE_WARN,"found old lockfile %s/%s, deleting it",config->lockdir,
                      finfo.name);
                rv = apr_file_remove(apr_psprintf(ctx->pool,"%s/%s",config->lockdir, finfo.name),ctx->pool);
                if(rv != APR_SUCCESS) {
@@ -230,6 +230,9 @@ mapcache_cfg* mapcache_configuration_create(apr_pool_t *pool) {
       grid->levels[i] = level;
    }
    mapcache_configuration_add_grid(cfg,grid,"g");
+
+   cfg->loglevel = MAPCACHE_WARN;
+   cfg->autoreload = 0;
 
    return cfg;
 }

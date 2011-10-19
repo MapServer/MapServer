@@ -879,7 +879,7 @@ void mapcache_configuration_parse_xml(mapcache_context *ctx, const char *filenam
       }
    }
    else if ((node = ezxml_child(doc,"services")) != NULL) {
-      ctx->log(ctx,MAPCACHE_WARNING,"<services> tag is deprecated, use <service type=\"wms\" enabled=\"true|false\">");
+      ctx->log(ctx,MAPCACHE_WARN,"<services> tag is deprecated, use <service type=\"wms\" enabled=\"true|false\">");
       parseServices(ctx, node, config);
    } else {
       ctx->set_error(ctx, 400, "no <services> configured");
@@ -924,6 +924,39 @@ void mapcache_configuration_parse_xml(mapcache_context *ctx, const char *filenam
       config->lockdir = apr_pstrdup(ctx->pool, node->txt);
    } else {
       config->lockdir = apr_pstrdup(ctx->pool,"/tmp");
+   }
+   
+   if((node = ezxml_child(doc,"log_level")) != NULL) {
+      if(!strcasecmp(node->txt,"debug")) {
+         config->loglevel = MAPCACHE_DEBUG;
+      } else if(!strcasecmp(node->txt,"info")) {
+         config->loglevel = MAPCACHE_INFO;
+      } else if(!strcasecmp(node->txt,"notice")) {
+         config->loglevel = MAPCACHE_NOTICE;
+      } else if(!strcasecmp(node->txt,"warn")) {
+         config->loglevel = MAPCACHE_WARN;
+      } else if(!strcasecmp(node->txt,"error")) {
+         config->loglevel = MAPCACHE_ERROR;
+      } else if(!strcasecmp(node->txt,"crit")) {
+         config->loglevel = MAPCACHE_CRIT;
+      } else if(!strcasecmp(node->txt,"alert")) {
+         config->loglevel = MAPCACHE_ALERT;
+      } else if(!strcasecmp(node->txt,"emerg")) {
+         config->loglevel = MAPCACHE_EMERG;
+      } else {
+         ctx->set_error(ctx,500,"failed to parse <log_level> \"%s\". Expecting debug, info, notice, warn, error, crit, alert or emerg",node->txt);
+         return;
+      }
+   }
+   if((node = ezxml_child(doc,"auto_reload")) != NULL) {
+      if(!strcasecmp(node->txt,"true")) {
+         config->autoreload = 1;
+      } else if(!strcasecmp(node->txt,"false")) {
+         config->autoreload = 0;
+      } else {
+         ctx->set_error(ctx,500,"failed to parse <auto_reload> \"%s\". Expecting true or false",node->txt);
+         return;
+      }
    }
 
 

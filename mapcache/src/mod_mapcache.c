@@ -75,15 +75,73 @@ void apache_context_server_log(mapcache_context *c, mapcache_log_level level, ch
    va_start(args,message);
    char *msg = apr_pvsprintf(c->pool,message,args);
    va_end(args);
-   ap_log_error(APLOG_MARK, APLOG_INFO, 0, ctx->server,"%s",msg);
+   int ap_log_level;
+   switch(level) {
+      case MAPCACHE_DEBUG:
+         ap_log_level = APLOG_DEBUG;
+         break;
+      case MAPCACHE_INFO:
+         ap_log_level = APLOG_INFO;
+         break;
+      case MAPCACHE_NOTICE:
+         ap_log_level = APLOG_NOTICE;
+         break;
+      case MAPCACHE_WARN:
+         ap_log_level = APLOG_WARNING;
+         break;
+      case MAPCACHE_ERROR:
+         ap_log_level = APLOG_ERR;
+         break;
+      case MAPCACHE_CRIT:
+         ap_log_level = APLOG_CRIT;
+         break;
+      case MAPCACHE_ALERT:
+         ap_log_level = APLOG_ALERT;
+         break;
+      case MAPCACHE_EMERG:
+         ap_log_level = APLOG_EMERG;
+         break;
+      default:
+         ap_log_level = APLOG_WARNING;
+   }
+   ap_log_error(APLOG_MARK, ap_log_level, 0, ctx->server,"%s",msg);
 }
 
 void apache_context_request_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
    mapcache_context_apache_request *ctx = (mapcache_context_apache_request*)c;
    va_list args;
    va_start(args,message);
-   ap_log_rerror(APLOG_MARK, APLOG_INFO, 0, ctx->request, "%s", apr_pvsprintf(c->pool,message,args));
    va_end(args);
+   int ap_log_level;
+   switch(level) {
+      case MAPCACHE_DEBUG:
+         ap_log_level = APLOG_DEBUG;
+         break;
+      case MAPCACHE_INFO:
+         ap_log_level = APLOG_INFO;
+         break;
+      case MAPCACHE_NOTICE:
+         ap_log_level = APLOG_NOTICE;
+         break;
+      case MAPCACHE_WARN:
+         ap_log_level = APLOG_WARNING;
+         break;
+      case MAPCACHE_ERROR:
+         ap_log_level = APLOG_ERR;
+         break;
+      case MAPCACHE_CRIT:
+         ap_log_level = APLOG_CRIT;
+         break;
+      case MAPCACHE_ALERT:
+         ap_log_level = APLOG_ALERT;
+         break;
+      case MAPCACHE_EMERG:
+         ap_log_level = APLOG_EMERG;
+         break;
+      default:
+         ap_log_level = APLOG_WARNING;
+   }
+   ap_log_rerror(APLOG_MARK, ap_log_level, 0, ctx->request, "%s", apr_pvsprintf(c->pool,message,args));
 }
 
 void mapcache_util_mutex_aquire(mapcache_context *gctx) {
