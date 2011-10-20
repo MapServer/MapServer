@@ -67,8 +67,6 @@ apr_time_t age_limit = 0;
 int seededtilestot=0, seededtiles=0, queuedtilestot=0;
 struct timeval lastlogtime,starttime;
 
-apr_thread_mutex_t *global_lock;
-
 typedef enum {
    MAPCACHE_CMD_SEED,
    MAPCACHE_CMD_STOP,
@@ -118,19 +116,6 @@ void handle_sig_int(int signal) {
     } else {
         exit(signal);
     }
-}
-
-void seed_lock_aquire(mapcache_context *ctx){
-   int rv = apr_thread_mutex_lock(global_lock);
-   if(rv != APR_SUCCESS) {
-      ctx->set_error(ctx,500,"failed to aquire seed mutex");
-   }
-}
-void seed_lock_release(mapcache_context *ctx){
-   int rv = apr_thread_mutex_unlock(global_lock);
-   if(rv != APR_SUCCESS) {
-      ctx->set_error(ctx,500,"failed to release seed mutex");
-   }
 }
 
 void seed_log(mapcache_context *ctx, mapcache_log_level level, char *msg, ...){
@@ -494,14 +479,9 @@ int main(int argc, const char **argv) {
     cfg = mapcache_configuration_create(ctx.pool);
     ctx.config = cfg;
     ctx.log= mapcache_context_seeding_log;
-    ctx.global_lock_aquire = seed_lock_aquire;
-    ctx.global_lock_release = seed_lock_release;
     ctx.has_threads = 1;
     apr_getopt_init(&opt, ctx.pool, argc, argv);
 
-
-    apr_thread_mutex_create(&global_lock,APR_THREAD_MUTEX_UNNESTED,ctx.pool);
-    
     seededtiles=seededtilestot=queuedtilestot=0;
     gettimeofday(&starttime,NULL);
     lastlogtime=starttime;

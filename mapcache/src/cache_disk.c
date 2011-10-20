@@ -332,9 +332,6 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
       if(mapcache_image_blank_color(image) != MAPCACHE_FALSE) {
          char *blankname;
          _mapcache_cache_disk_blank_tile_key(ctx,tile,image->data,&blankname);
-         GC_CHECK_ERROR(ctx);
-         ctx->global_lock_aquire(ctx);
-         GC_CHECK_ERROR(ctx);
          if(apr_file_open(&f, blankname, APR_FOPEN_READ, APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
             /* create the blank file */
             char *blankdirname = apr_psprintf(ctx->pool, "%s/%s/%s/blanks",
@@ -342,43 +339,48 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
                         tile->tileset->name,
                         tile->grid_link->grid->name);
             if(APR_SUCCESS != (ret = apr_dir_make_recursive(
-                  blankdirname,
-                  APR_OS_DEFAULT,ctx->pool))) {
-                  if(!APR_STATUS_IS_EEXIST(ret)) {
-                     ctx->set_error(ctx, 500,  "failed to create directory %s for blank tiles",blankdirname, apr_strerror(ret,errmsg,120));
-                     ctx->global_lock_release(ctx);
-                     return;
-                  }
-            }
-            if((ret = apr_file_open(&f, blankname,
-                  APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
-                  APR_OS_DEFAULT, ctx->pool)) != APR_SUCCESS) {
-               ctx->set_error(ctx, 500,  "failed to create file %s: %s",blankname, apr_strerror(ret,errmsg,120));
-               ctx->global_lock_release(ctx);
-               return; /* we could not create the file */
+                        blankdirname, APR_OS_DEFAULT,ctx->pool))) {
+               if(!APR_STATUS_IS_EEXIST(ret)) {
+                  ctx->set_error(ctx, 500,  "failed to create directory %s for blank tiles",blankdirname, apr_strerror(ret,errmsg,120));
+                  return;
+               }
             }
 
-            bytes = (apr_size_t)tile->data->size;
-            ret = apr_file_write(f,(void*)tile->data->buf,&bytes);
-            if(ret != APR_SUCCESS) {
-               ctx->set_error(ctx, 500,  "failed to write data to file %s (wrote %d of %d bytes): %s",blankname, (int)bytes, (int)tile->data->size, apr_strerror(ret,errmsg,120));
-               ctx->global_lock_release(ctx);
-               return; /* we could not create the file */
-            }
+            /* aquire a lock on the blank file */
+            int isLocked = mapcache_lock_or_wait_for_resource(ctx,blankname);
 
-            if(bytes != tile->data->size) {
-               ctx->set_error(ctx, 500,  "failed to write image data to %s, wrote %d of %d bytes", blankname, (int)bytes, (int)tile->data->size);
-               ctx->global_lock_release(ctx);
-               return;
-            }
-            apr_file_close(f);
+            if(isLocked == MAPCACHE_TRUE) {
+
+               if((ret = apr_file_open(&f, blankname,
+                           APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
+                           APR_OS_DEFAULT, ctx->pool)) != APR_SUCCESS) {
+                  ctx->set_error(ctx, 500,  "failed to create file %s: %s",blankname, apr_strerror(ret,errmsg,120));
+                  mapcache_unlock_resource(ctx,blankname);
+                  return; /* we could not create the file */
+               }
+
+               bytes = (apr_size_t)tile->data->size;
+               ret = apr_file_write(f,(void*)tile->data->buf,&bytes);
+               if(ret != APR_SUCCESS) {
+                  ctx->set_error(ctx, 500,  "failed to write data to file %s (wrote %d of %d bytes): %s",blankname, (int)bytes, (int)tile->data->size, apr_strerror(ret,errmsg,120));
+                  mapcache_unlock_resource(ctx,blankname);
+                  return; /* we could not create the file */
+               }
+
+               if(bytes != tile->data->size) {
+                  ctx->set_error(ctx, 500,  "failed to write image data to %s, wrote %d of %d bytes", blankname, (int)bytes, (int)tile->data->size);
+                  mapcache_unlock_resource(ctx,blankname);
+                  return;
+               }
+               apr_file_close(f);
+               mapcache_unlock_resource(ctx,blankname);
 #ifdef DEBUG
-            ctx->log(ctx,MAPCACHE_DEBUG,"created blank tile %s",blankname);
+               ctx->log(ctx,MAPCACHE_DEBUG,"created blank tile %s",blankname);
 #endif
+            }
          } else {
             apr_file_close(f);
          }
-         ctx->global_lock_release(ctx);
          if(symlink(blankname,filename) != 0) {
             char *error = strerror(errno);
             ctx->set_error(ctx, 500,  "failed to link tile %s to %s: %s",filename, blankname, error);

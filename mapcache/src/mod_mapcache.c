@@ -144,41 +144,14 @@ void apache_context_request_log(mapcache_context *c, mapcache_log_level level, c
    ap_log_rerror(APLOG_MARK, ap_log_level, 0, ctx->request, "%s", apr_pvsprintf(c->pool,message,args));
 }
 
-void mapcache_util_mutex_aquire(mapcache_context *gctx) {
-   int ret;
-   mapcache_context_apache_request *ctx = (mapcache_context_apache_request*)gctx;
-   mapcache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &mapcache_module);
-   ret = apr_global_mutex_lock(cfg->mutex);
-   if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx,500,"failed to lock mutex");
-      return;
-   }
-   apr_pool_cleanup_register(gctx->pool, cfg->mutex, (void*)apr_global_mutex_unlock, apr_pool_cleanup_null);
-}
-
-void mapcache_util_mutex_release(mapcache_context *gctx) {
-   int ret;
-   mapcache_context_apache_request *ctx = (mapcache_context_apache_request*)gctx;
-   mapcache_server_cfg *cfg = ap_get_module_config(ctx->request->server->module_config, &mapcache_module);
-   ret = apr_global_mutex_unlock(cfg->mutex);
-   if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx,500,"failed to unlock mutex");
-   }
-   apr_pool_cleanup_kill(gctx->pool, cfg->mutex, (void*)apr_global_mutex_unlock);
-}
-
 void init_apache_request_context(mapcache_context_apache_request *ctx) {
    mapcache_context_init((mapcache_context*)ctx);
    ctx->ctx.ctx.log = apache_context_request_log;
-   ctx->ctx.ctx.global_lock_aquire = mapcache_util_mutex_aquire;
-   ctx->ctx.ctx.global_lock_release = mapcache_util_mutex_release;
 }
 
 void init_apache_server_context(mapcache_context_apache_server *ctx) {
    mapcache_context_init((mapcache_context*)ctx);
    ctx->ctx.ctx.log = apache_context_server_log;
-   ctx->ctx.ctx.global_lock_aquire = mapcache_util_mutex_aquire;
-   ctx->ctx.ctx.global_lock_release = mapcache_util_mutex_release;
 }
 
 static mapcache_context_apache_request* apache_request_context_create(request_rec *r) {
@@ -318,7 +291,6 @@ static int mod_mapcache_request_handler(request_rec *r) {
 static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
    apr_status_t rc;
    mapcache_server_cfg* cfg = ap_get_module_config(s->module_config, &mapcache_module);
-   apr_lockmech_e lock_type = APR_LOCK_DEFAULT;
    server_rec *sconf;
 
    if(!cfg) {
@@ -326,30 +298,9 @@ static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       return 1;
    }
 
-#if APR_HAS_PROC_PTHREAD_SERIALIZE
-   lock_type = APR_LOCK_PROC_PTHREAD;
-#endif
-   rc = apr_global_mutex_create(&cfg->mutex,cfg->mutex_name,lock_type,p);
-   if(rc != APR_SUCCESS) {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, rc, s, "Could not create global parent mutex %s", cfg->mutex_name);
-      return rc;
-   }
-#ifdef AP_NEED_SET_MUTEX_PERMS
-   rc = unixd_set_global_mutex_perms(cfg->mutex);
-   if(rc != APR_SUCCESS) {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, rc, s, "Could not set permissions on global parent mutex %s", cfg->mutex_name);
-      return rc;
-   }
-#endif
-   apr_pool_cleanup_register(p,cfg->mutex,
-         (void*)apr_global_mutex_destroy, apr_pool_cleanup_null);
 #ifndef DISABLE_VERSION_STRING
    ap_add_version_component(p, MAPCACHE_USERAGENT);
 #endif
-   for (sconf = s->next; sconf; sconf = sconf->next) {
-      mapcache_server_cfg* config = ap_get_module_config(sconf->module_config, &mapcache_module);
-      config->mutex = cfg->mutex;
-   }
 
 #if APR_HAS_FORK
    /* fork a child process to let it accomplish post-configuration tasks with the uid of the runtime user */
@@ -429,11 +380,6 @@ static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 }
 
 static void mod_mapcache_child_init(apr_pool_t *pool, server_rec *s) {
-   while(s) {
-      mapcache_server_cfg* cfg = ap_get_module_config(s->module_config, &mapcache_module);
-      apr_global_mutex_child_init(&(cfg->mutex),cfg->mutex_name, pool);
-      s = s->next;
-   }
 }
 
 static int mapcache_alias_matches(const char *uri, const char *alias_fakename)
@@ -523,8 +469,6 @@ static void mod_mapcache_register_hooks(apr_pool_t *p) {
 
 static void* mod_mapcache_create_server_conf(apr_pool_t *pool, server_rec *s) {
    mapcache_server_cfg *cfg = apr_pcalloc(pool, sizeof(mapcache_server_cfg));
-   char *mutex_unique_name = apr_psprintf(pool,"mapcachemutex-%d",getpid());
-   cfg->mutex_name = ap_server_root_relative(pool, mutex_unique_name);
    cfg->aliases = NULL;
    return cfg;
 }
@@ -535,8 +479,6 @@ static void *mod_mapcache_merge_server_conf(apr_pool_t *p, void *base_, void *vh
    mapcache_server_cfg *base = (mapcache_server_cfg*)base_;
    mapcache_server_cfg *vhost = (mapcache_server_cfg*)vhost_;
    mapcache_server_cfg *cfg = apr_pcalloc(p,sizeof(mapcache_server_cfg));
-   cfg->mutex = base->mutex;
-   cfg->mutex_name = base->mutex_name;
    
    if (base->aliases && vhost->aliases) {
       cfg->aliases = apr_hash_overlay(p, vhost->aliases,base->aliases);

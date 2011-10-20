@@ -53,22 +53,6 @@
 #endif
 
 
-
-#ifdef USE_TIFF_WRITE
-#if APR_HAS_THREADS
-#include <apr_thread_mutex.h>
-#define THREADLOCK_HASHARRAY_SIZE 64
-static unsigned int _hash_key(char *key) {
-  unsigned hashval;
-  
-  for(hashval=0; *key!='\0'; key++)
-    hashval = *key + 31 * hashval;
-
-  return(hashval % THREADLOCK_HASHARRAY_SIZE);
-}
-#endif
-#endif
-
 /**
  * \brief return filename for given tile
  * 
@@ -541,38 +525,44 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
        }
    }
    *hackptr2 = '/';
+   
+   int tilew = tile->grid_link->grid->tile_sx;
+   int tileh = tile->grid_link->grid->tile_sy;
+   
+   mapcache_image *tileimg = mapcache_imageio_decode(ctx, tile->data);
 
-#if APR_HAS_THREADS
-   /*
-    * aquire a thread lock for the filename. The filename is hashed to avoid all
-    * threads locking here if they are to access different files
-    */
-   unsigned int threadkey;
-   if(ctx->has_threads) {
-      threadkey = _hash_key(filename);
-      rv = apr_thread_mutex_lock(dcache->threadlocks[threadkey]);
-      if(rv != APR_SUCCESS) {
-         ctx->set_error(ctx,500,"failed to lock threadlock %d for file %s",threadkey,filename);
-         return;
+   /* remap xrgb to rgb */
+   unsigned char *rgb = (unsigned char*)malloc(tilew*tileh*3);
+   int r,c;
+   for(r=0;r<tileimg->h;r++) {
+      unsigned char *imptr = tileimg->data + r * tileimg->stride;
+      unsigned char *rgbptr = rgb + r * tilew * 3;
+      for(c=0;c<tileimg->w;c++) {
+         rgbptr[0] = imptr[2];
+         rgbptr[1] = imptr[1];
+         rgbptr[2] = imptr[0];
+         rgbptr += 3;
+         imptr += 4;
       }
    }
-#endif
 
    /*
     * aquire a lock on the tiff file. This lock does not work for multiple threads of
     * a same process, but should work on network filesystems.
     * we previously aquired a thread lock so we should be ok here
     */
-   apr_file_t *flock;
-   rv = apr_file_open(&flock,filename,APR_FOPEN_READ|APR_FOPEN_CREATE,APR_OS_DEFAULT,ctx->pool);
+
+   while(mapcache_lock_or_wait_for_resource(ctx,filename) == MAPCACHE_FALSE);
+   
+   apr_file_t *ftiff;
+   rv = apr_file_open(&ftiff,filename,APR_FOPEN_READ|APR_FOPEN_CREATE,APR_OS_DEFAULT,ctx->pool);
    if(rv != APR_SUCCESS) {
       ctx->set_error(ctx, 500,  "failed to remove existing file %s: %s",filename, apr_strerror(rv,errmsg,120));
       return; /* we could not delete the file */
    }
 
-   apr_file_lock(flock,APR_FLOCK_EXCLUSIVE); /* aquire the lock (this call is blocking) */
    apr_finfo_t finfo;
-   rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, flock);
+   rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, ftiff);
 
    /*
     * check if the file exists by looking at its size
@@ -586,16 +576,11 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    }
    if(!hTIFF) {
       ctx->set_error(ctx,500,"failed to open/create tiff file %s\n",filename);
-      apr_file_unlock(flock);
-      apr_file_close(flock);
-      if(ctx->has_threads) {
-         apr_thread_mutex_unlock(dcache->threadlocks[threadkey]);
-      }
+      mapcache_unlock_resource(ctx,filename);
+      apr_file_close(ftiff);
       return;
    }
 
-   int tilew = tile->grid_link->grid->tile_sx;
-   int tileh = tile->grid_link->grid->tile_sy;
 
    /* 
     * compute the width and height of the full tiff file. This
@@ -703,22 +688,6 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    tiff_offy = ntilesy - (tile->y % ntilesy) -1;
    tiff_off = tiff_offy * ntilesx + tiff_offx;
 
-   mapcache_image *tileimg = mapcache_imageio_decode(ctx, tile->data);
-
-   /* remap xrgb to rgb */
-   unsigned char *rgb = (unsigned char*)malloc(tilew*tileh*3);
-   int r,c;
-   for(r=0;r<tileimg->h;r++) {
-      unsigned char *imptr = tileimg->data + r * tileimg->stride;
-      unsigned char *rgbptr = rgb + r * tilew * 3;
-      for(c=0;c<tileimg->w;c++) {
-         rgbptr[0] = imptr[2];
-         rgbptr[1] = imptr[1];
-         rgbptr[2] = imptr[0];
-         rgbptr += 3;
-         imptr += 4;
-      }
-   }
 
    TIFFWriteEncodedTile(hTIFF, tiff_off, rgb, tilew*tileh*3);
    free(rgb);
@@ -731,14 +700,8 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
 
    MyTIFFClose(hTIFF);
 
-   apr_file_unlock(flock);
-   apr_file_close(flock);
-
-#if APR_HAS_THREADS
-   if(ctx->has_threads) {
-      apr_thread_mutex_unlock(dcache->threadlocks[threadkey]);
-   }
-#endif
+   mapcache_unlock_resource(ctx,filename);
+   apr_file_close(ftiff);
 #else
    ctx->set_error(ctx,500,"tiff write support disabled by default");
 #endif
@@ -793,20 +756,6 @@ static void _mapcache_cache_tiff_configuration_parse_xml(mapcache_context *ctx, 
       return;
    }
    dcache->format = (mapcache_image_format_jpeg*)pformat;
-
-#ifdef USE_TIFF_WRITE
-#if APR_HAS_THREADS
-   if(ctx->has_threads) {
-      /* create an array of thread locks */
-      dcache->threadlocks = (apr_thread_mutex_t**)apr_pcalloc(ctx->pool,
-            THREADLOCK_HASHARRAY_SIZE*sizeof(apr_thread_mutex_t*));
-      int i;
-      for(i=0;i<THREADLOCK_HASHARRAY_SIZE;i++) {
-         apr_thread_mutex_create(&(dcache->threadlocks[i]),APR_THREAD_MUTEX_UNNESTED,ctx->pool);
-      }
-   }
-#endif
-#endif
 }
 
 /**

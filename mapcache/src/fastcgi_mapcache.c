@@ -81,52 +81,9 @@ static void fcgi_context_log(mapcache_context *c, mapcache_log_level level, char
    }
 }
 
-
-static void mapcache_fcgi_mutex_aquire(mapcache_context *gctx) {
-   mapcache_context_fcgi *ctx = (mapcache_context_fcgi*)gctx;
-   int ret;
-#ifdef DEBUG
-   if(ctx->mutex_file != NULL) {
-      gctx->set_error(gctx, 500, "SEVERE: fcgi recursive mutex acquire");
-      return; /* BUG ! */
-   }
-#endif
-   if (apr_file_open(&ctx->mutex_file, ctx->mutex_fname,
-             APR_FOPEN_CREATE | APR_FOPEN_WRITE | APR_FOPEN_SHARELOCK | APR_FOPEN_BINARY,
-             APR_OS_DEFAULT, gctx->pool) != APR_SUCCESS) {
-      gctx->set_error(gctx, 500, "failed to create fcgi mutex lockfile %s", ctx->mutex_fname);
-      return; /* we could not create the file */
-   }
-   ret = apr_file_lock(ctx->mutex_file, APR_FLOCK_EXCLUSIVE);
-   if (ret != APR_SUCCESS) {
-      gctx->set_error(gctx, 500, "failed to lock fcgi mutex file %s", ctx->mutex_fname);
-      return;
-   }
-}
-
 static void handle_signal(int signal) {
    apr_pool_destroy(global_pool);
    exit(signal);
-}
-
-static void mapcache_fcgi_mutex_release(mapcache_context *gctx) {
-   int ret;
-   mapcache_context_fcgi *ctx = (mapcache_context_fcgi*)gctx;
-#ifdef DEBUG
-   if(ctx->mutex_file == NULL) {
-      gctx->set_error(gctx, 500, "SEVERE: fcgi mutex unlock on unlocked file");
-      return; /* BUG ! */
-   }
-#endif
-   ret = apr_file_unlock(ctx->mutex_file);
-   if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx, 500,  "failed to unlock fcgi mutex file%s",ctx->mutex_fname);
-   }
-   ret = apr_file_close(ctx->mutex_file);
-   if(ret != APR_SUCCESS) {
-      gctx->set_error(gctx, 500,  "failed to close fcgi mutex file %s",ctx->mutex_fname);
-   }
-   ctx->mutex_file = NULL;
 }
 
 static mapcache_context_fcgi* fcgi_context_create() {
@@ -138,8 +95,6 @@ static mapcache_context_fcgi* fcgi_context_create() {
    mapcache_context_init((mapcache_context*)ctx);
    ctx->ctx.log = fcgi_context_log;
    ctx->mutex_fname="/tmp/mapcache.fcgi.lock";
-   ctx->ctx.global_lock_aquire = mapcache_fcgi_mutex_aquire;
-   ctx->ctx.global_lock_release = mapcache_fcgi_mutex_release;
    ctx->ctx.config = NULL;
    return ctx;
 }

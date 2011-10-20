@@ -182,32 +182,6 @@ struct mapcache_context {
      */
     void (*log)(mapcache_context *ctx, mapcache_log_level level, char *message, ...);
 
-    /**
-     * \brief aquire a lock shared between all instances of mapcache.
-     *
-     * depending on the underlying backend, this lock should be effective between threads and/or processes
-     * \memberof mapcache_context
-     * \param c
-     * \param nonblocking should the call block while waiting for the lock. if set to 0, the function will
-     *        return once the lock has been aquired. if set to 1, the function will return immediately, and
-     *        the return value should be checked to verify if the lock was successfully aquired, or if
-     *        another instance of mapcache had already quired the lock
-     * \returns MAPCACHE_SUCCESS if the lock was aquired
-     * \returns MAPCACHE_FAILURE if there was an error aquiring the lock
-     * \returns MAPCACHE_LOCKED if \param nonblocking was set to 1 and another instance has already aquired
-     *          the lock
-     */
-    void (*global_lock_aquire)(mapcache_context *ctx);
-
-    /**
-     * \brief release a previously aquired lock
-     *
-     * \memberof mapcache_context
-     * calling this function after an unsuccessful call to global_lock_aquire() or from a different thread
-     * or process that has called global_lock_aquire() has undefined behavior
-     */
-    void (*global_lock_release)(mapcache_context * ctx);
-
     const char* (*get_instance_id)(mapcache_context * ctx);
     int has_threads;
     apr_pool_t *pool;
@@ -412,7 +386,6 @@ struct mapcache_cache_tiff {
     int count_x;
     int count_y;
     mapcache_image_format_jpeg *format;
-    apr_thread_mutex_t **threadlocks;
 };
 #endif
 
@@ -1033,7 +1006,6 @@ struct mapcache_metatile {
    int metasize_x, metasize_y;
    int ntiles; /**< the number of mapcache_metatile::tiles contained in this metatile */
    mapcache_tile *tiles; /**< the list of mapcache_tile s contained in this metatile */
-   void *lock; /**< pointer to opaque structure set by the locking mechanism */
 };
 
 
@@ -1240,29 +1212,10 @@ void mapcache_tileset_configuration_check(mapcache_context *ctx, mapcache_tilese
 void mapcache_tileset_add_watermark(mapcache_context *ctx, mapcache_tileset *tileset, const char *filename);
 
 
-/**
- * lock the tile
- */
-void mapcache_tileset_metatile_lock(mapcache_context *ctx, mapcache_metatile *tile);
+int mapcache_lock_or_wait_for_resource(mapcache_context *ctx, char *resource);
+void mapcache_unlock_resource(mapcache_context *ctx, char *resource);
 
 mapcache_metatile* mapcache_tileset_metatile_get(mapcache_context *ctx, mapcache_tile *tile);
-
-/**
- * unlock the tile
- */
-void mapcache_tileset_metatile_unlock(mapcache_context *ctx, mapcache_metatile *tile);
-
-/**
- * check if there is a lock on the tile (the lock will have been set by another process/thread)
- * \returns MAPCACHE_TRUE if the tile is locked by another process/thread
- * \returns MAPCACHE_FALSE if there is no lock on the tile
- */
-int mapcache_tileset_metatile_lock_exists(mapcache_context *ctx, mapcache_metatile *tile);
-
-/**
- * wait for the lock set on the tile (the lock will have been set by another process/thread)
- */
-void mapcache_tileset_metatile_lock_wait(mapcache_context *ctx, mapcache_metatile *tile);
 
 
 /** @} */
@@ -1327,13 +1280,6 @@ int mapcache_util_extract_double_list(mapcache_context *ctx, const char* args, c
         int *numbers_count);
 char *mapcache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr,
       const char *replacement );
-
-/*
-int mapcache_util_mutex_aquire(mapcache_context *r);
-int mapcache_util_mutex_release(mapcache_context *r);
- */
-
-
 
 /**\defgroup imageio Image IO */
 /** @{ */

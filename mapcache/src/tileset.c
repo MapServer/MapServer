@@ -33,6 +33,35 @@
 #include <apr_file_io.h>
 #include <math.h>
 
+char* mapcache_tileset_metatile_resource_key(mapcache_context *ctx, mapcache_metatile *mt) {
+   char *lockname = apr_psprintf(ctx->pool,
+         "%d-%d-%d-%s",
+         mt->z,mt->y,mt->x,
+         mt->map.tileset->name);
+
+   /* if the tileset has multiple grids, add the name of the current grid to the lock key*/
+   if(mt->map.tileset->grid_links->nelts > 1) {
+      lockname = apr_pstrcat(ctx->pool,lockname,mt->map.grid_link->grid->name,NULL);
+   }
+
+   if(mt->map.dimensions && !apr_is_empty_table(mt->map.dimensions)) {
+      const apr_array_header_t *elts = apr_table_elts(mt->map.dimensions);
+      int i;
+      for(i=0;i<elts->nelts;i++) {
+         apr_table_entry_t entry = APR_ARRAY_IDX(elts,i,apr_table_entry_t);
+         char *dimvalue = apr_pstrdup(ctx->pool,entry.val);
+         char *iter = dimvalue;
+         while(*iter) {
+            if(*iter == '/') *iter='_';
+            iter++;
+         }
+         lockname = apr_pstrcat(ctx->pool,lockname,dimvalue,NULL);
+      }
+
+   }
+   return lockname;
+}
+
 void mapcache_tileset_configuration_check(mapcache_context *ctx, mapcache_tileset *tileset) {
    
    /* check we have all we want */
@@ -477,29 +506,12 @@ void mapcache_tileset_tile_get(mapcache_context *ctx, mapcache_tile *tile) {
        * - if the lock exists, we should wait for the other thread to finish
        */
 
-      ctx->global_lock_aquire(ctx);
-      GC_CHECK_ERROR(ctx);
-      
+      /* aquire a lock on the metatile */
       mt = mapcache_tileset_metatile_get(ctx, tile);
+      isLocked = mapcache_lock_or_wait_for_resource(ctx, mapcache_tileset_metatile_resource_key(ctx,mt));
 
-      isLocked = mapcache_tileset_metatile_lock_exists(ctx, mt);
-      if(isLocked == MAPCACHE_FALSE) {
-         /* no other thread is doing the rendering, we aquire and lock the metatile */
-         mapcache_tileset_metatile_lock(ctx, mt);
-      }
-      ctx->global_lock_release(ctx);
-      if(GC_HAS_ERROR(ctx))
-         return;
 
       if(isLocked == MAPCACHE_TRUE) {
-         /* another thread is rendering the tile, we should wait for it to finish */
-#ifdef DEBUG
-         ctx->log(ctx, MAPCACHE_DEBUG, "cache wait: tileset %s - tile %d %d %d",
-               tile->tileset->name,tile->x, tile->y,tile->z);
-#endif
-         mapcache_tileset_metatile_lock_wait(ctx,mt);
-         GC_CHECK_ERROR(ctx);
-      } else {
          /* no other thread is doing the rendering, do it ourselves */
 #ifdef DEBUG
          ctx->log(ctx, MAPCACHE_DEBUG, "cache miss: tileset %s - tile %d %d %d",
@@ -507,18 +519,16 @@ void mapcache_tileset_tile_get(mapcache_context *ctx, mapcache_tile *tile) {
 #endif
          /* this will query the source to create the tiles, and save them to the cache */
          _mapcache_tileset_render_metatile(ctx, mt);
-         
-         /* remove the lockfiles */
-         ctx->global_lock_aquire(ctx);
-         mapcache_tileset_metatile_unlock(ctx,mt);
-         ctx->global_lock_release(ctx);
-         GC_CHECK_ERROR(ctx);
+
+         mapcache_unlock_resource(ctx, mapcache_tileset_metatile_resource_key(ctx,mt));
       }
       
       /* the previous step has successfully finished, we can now query the cache to return the tile content */
       ret = tile->tileset->cache->tile_get(ctx, tile);
+      GC_CHECK_ERROR(ctx);
+
       if(ret != MAPCACHE_SUCCESS) {
-         if(isLocked == MAPCACHE_TRUE) {
+         if(isLocked == MAPCACHE_FALSE) {
             ctx->set_error(ctx, 500, "tileset %s: unknown error (another thread/process failed to create the tile I was waiting for)",
                   tile->tileset->name);
          } else {
