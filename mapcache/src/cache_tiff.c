@@ -90,9 +90,6 @@ static void _mapcache_cache_tiff_tile_key(mapcache_context *ctx, mapcache_tile *
    if(strstr(*path,"{grid}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{grid}",
             tile->grid_link->grid->name);
-   if(strstr(*path,"{z}"))
-      *path = mapcache_util_str_replace(ctx->pool,*path, "{z}",
-            apr_psprintf(ctx->pool,"%d",tile->z));
    if(tile->dimensions && strstr(*path,"{dim}")) {
       char *dimstring="";
       const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
@@ -114,20 +111,23 @@ static void _mapcache_cache_tiff_tile_key(mapcache_context *ctx, mapcache_tile *
    }
    
    
+   while(strstr(*path,"{z}"))
+      *path = mapcache_util_str_replace(ctx->pool,*path, "{z}",
+            apr_psprintf(ctx->pool,"%d",tile->z));
    /*
     * x and y replacing, when the tiff files are numbered with an increasing
     * x,y scheme (adjacent tiffs have x-x'=1 or y-y'=1
     */
-   if(strstr(*path,"{div_x}"))
+   while(strstr(*path,"{div_x}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{div_x}",
             apr_psprintf(ctx->pool,"%d",tile->x/dcache->count_x));
-   if(strstr(*path,"{div_y}"))
+   while(strstr(*path,"{div_y}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{div_y}",
             apr_psprintf(ctx->pool,"%d",tile->y/dcache->count_y));
-   if(strstr(*path,"{inv_div_y}"))
+   while(strstr(*path,"{inv_div_y}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_div_y}",
             apr_psprintf(ctx->pool,"%d",(tile->grid_link->grid->levels[tile->z]->maxy - tile->y - 1)/dcache->count_y));
-   if(strstr(*path,"{inv_div_x}"))
+   while(strstr(*path,"{inv_div_x}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_div_x}",
             apr_psprintf(ctx->pool,"%d",(tile->grid_link->grid->levels[tile->z]->maxx - tile->x - 1)/dcache->count_x));
    
@@ -136,16 +136,16 @@ static void _mapcache_cache_tiff_tile_key(mapcache_context *ctx, mapcache_tile *
     * of their bottom-left tile
     * adjacent tiffs have x-x'=count_x or y-y'=count_y
     */
-   if(strstr(*path,"{x}"))
+   while(strstr(*path,"{x}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{x}",
             apr_psprintf(ctx->pool,"%d",tile->x/dcache->count_x*dcache->count_x));
-   if(strstr(*path,"{y}"))
+   while(strstr(*path,"{y}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{y}",
             apr_psprintf(ctx->pool,"%d",tile->y/dcache->count_y*dcache->count_y));
-   if(strstr(*path,"{inv_y}"))
+   while(strstr(*path,"{inv_y}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_y}",
             apr_psprintf(ctx->pool,"%d",(tile->grid_link->grid->levels[tile->z]->maxy - tile->y - 1)/dcache->count_y*dcache->count_y));
-   if(strstr(*path,"{inv_x}"))
+   while(strstr(*path,"{inv_x}"))
       *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_x}",
             apr_psprintf(ctx->pool,"%d",(tile->grid_link->grid->levels[tile->z]->maxx - tile->x - 1)/dcache->count_x*dcache->count_y));
    if(!*path) {
