@@ -504,7 +504,7 @@ AC_DEFUN([GDAL_CHECK],[
               )
   GDALCONFIG=""
   if test "$with_gdal" = "no"; then
-      AC_MSG_WARN("gdal support disabled by request: advanced seeding options will not be available")
+      AC_MSG_WARN([gdal support disabled by request: advanced seeding options will not be available])
   else
       if test "$with_gdal" = "yes"; then
           AC_PATH_PROG(GDALCONFIG, gdal-config)
@@ -541,8 +541,12 @@ AC_DEFUN([GEOS_CHECK],[
               [with_geos=yes]
               )
   GEOSCONFIG=""
+  if test -z "$OGR_ENABLED"; then
+      AC_MSG_WARN([geos support disabled as gdal/ogr support was disabled/not found])
+   fi
+
   if test "$with_geos" = "no"; then
-      AC_MSG_WARN("geos support disabled by request: advanced seeding options will not be available")
+      AC_MSG_WARN([geos support disabled by request: advanced seeding options will not be available])
   else
       if test "$with_geos" = "yes"; then
           AC_PATH_PROG(GEOSCONFIG, geos-config)
@@ -558,7 +562,9 @@ AC_DEFUN([GEOS_CHECK],[
       if test -n "$GEOSCONFIG"; then
           GEOS_CFLAGS=`$GEOSCONFIG --cflags`
           GEOS_LIBS="`$GEOSCONFIG --ldflags` -lgeos_c"
-          GEOS_ENABLED="-DUSE_GEOS"
+          AC_CHECK_LIB(geos_c, GEOSPreparedIntersects, GEOS_ENABLED="-DUSE_GEOS",
+                       AC_MSG_WARN([Geos support disabled as installed version is too old]),
+                       "$GEOS_LIBS")
       fi
   fi
   AC_SUBST(GEOS_ENABLED,$GEOS_ENABLED)
@@ -620,7 +626,8 @@ AC_DEFUN([FASTCGI_CHECK],[
 GEOTIFF_ENABLED=""
 AC_DEFUN([GEOTIFF_CHECK],[
 AC_ARG_WITH(geotiff,
-            [  --with-geotiff=ARG    Libgeotiff library to use (ARG=yes or path)],,[with_geotiff=no])
+            [  --with-geotiff=ARG    Libgeotiff library to use (ARG=yes or path)],
+            ,[with_geotiff=no])
 
 if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
 
@@ -652,6 +659,9 @@ if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
 elif test "$with_geotiff" != "no" ; then
 
    GEOTIFF_LIB="-L$with_geotiff/lib -lgeotiff"
+   AC_CHECK_LIB(geotiff,XTIFFClientOpen,,
+                 AC_MSG_ERROR([failed to link with libgeotiff. Specify path]),
+                 "$GEOTIFF_LIB")
    if test -r $with_geotiff/include/geotiff.h ; then
       GEOTIFF_INC="-I$with_geotiff/include"
       echo "using system libgeotiff from $with_geotiff/include/."
@@ -693,6 +703,9 @@ AC_DEFUN([TIFF_CHECK],[
         
         if test -n "$TIFF_LIBDIR" ; then   
           TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
+          AC_CHECK_LIB(tiff, TIFFReadScanline,,
+                       AC_MSG_ERROR([failed to link against libtiff]),
+                       "$TIFF_LIB")
           AC_MSG_RESULT([        using libtiff from $TIFF_LIB])
         else
           AC_MSG_WARN([cannot find tiff lib in $TIFF_DIR])

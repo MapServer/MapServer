@@ -4965,6 +4965,53 @@ $as_echo "$as_me: checking where TIFF is installed..." >&6;}
 
         if test -n "$TIFF_LIBDIR" ; then
           TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for TIFFReadScanline in -ltiff" >&5
+$as_echo_n "checking for TIFFReadScanline in -ltiff... " >&6; }
+if ${ac_cv_lib_tiff_TIFFReadScanline+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltiff "$TIFF_LIB" $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char TIFFReadScanline ();
+int
+main ()
+{
+return TIFFReadScanline ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_tiff_TIFFReadScanline=yes
+else
+  ac_cv_lib_tiff_TIFFReadScanline=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tiff_TIFFReadScanline" >&5
+$as_echo "$ac_cv_lib_tiff_TIFFReadScanline" >&6; }
+if test "x$ac_cv_lib_tiff_TIFFReadScanline" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBTIFF 1
+_ACEOF
+
+  LIBS="-ltiff $LIBS"
+
+else
+  as_fn_error $? "failed to link against libtiff" "$LINENO" 5
+fi
+
           { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libtiff from $TIFF_LIB" >&5
 $as_echo "        using libtiff from $TIFF_LIB" >&6; }
         else
@@ -5165,6 +5212,53 @@ fi
 elif test "$with_geotiff" != "no" ; then
 
    GEOTIFF_LIB="-L$with_geotiff/lib -lgeotiff"
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XTIFFClientOpen in -lgeotiff" >&5
+$as_echo_n "checking for XTIFFClientOpen in -lgeotiff... " >&6; }
+if ${ac_cv_lib_geotiff_XTIFFClientOpen+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgeotiff "$GEOTIFF_LIB" $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XTIFFClientOpen ();
+int
+main ()
+{
+return XTIFFClientOpen ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_geotiff_XTIFFClientOpen=yes
+else
+  ac_cv_lib_geotiff_XTIFFClientOpen=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geotiff_XTIFFClientOpen" >&5
+$as_echo "$ac_cv_lib_geotiff_XTIFFClientOpen" >&6; }
+if test "x$ac_cv_lib_geotiff_XTIFFClientOpen" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBGEOTIFF 1
+_ACEOF
+
+  LIBS="-lgeotiff $LIBS"
+
+else
+  as_fn_error $? "failed to link with libgeotiff. Specify path" "$LINENO" 5
+fi
+
    if test -r $with_geotiff/include/geotiff.h ; then
       GEOTIFF_INC="-I$with_geotiff/include"
       echo "using system libgeotiff from $with_geotiff/include/."
@@ -5347,8 +5441,8 @@ fi
 
   GDALCONFIG=""
   if test "$with_gdal" = "no"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: \"gdal support disabled by request: advanced seeding options will not be available\"" >&5
-$as_echo "$as_me: WARNING: \"gdal support disabled by request: advanced seeding options will not be available\"" >&2;}
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: gdal support disabled by request: advanced seeding options will not be available" >&5
+$as_echo "$as_me: WARNING: gdal support disabled by request: advanced seeding options will not be available" >&2;}
   else
       if test "$with_gdal" = "yes"; then
           # Extract the first word of "gdal-config", so it can be a program name with args.
@@ -5432,9 +5526,14 @@ else
 fi
 
   GEOSCONFIG=""
+  if test -z "$OGR_ENABLED"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: geos support disabled as gdal/ogr support was disabled/not found" >&5
+$as_echo "$as_me: WARNING: geos support disabled as gdal/ogr support was disabled/not found" >&2;}
+   fi
+
   if test "$with_geos" = "no"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: \"geos support disabled by request: advanced seeding options will not be available\"" >&5
-$as_echo "$as_me: WARNING: \"geos support disabled by request: advanced seeding options will not be available\"" >&2;}
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: geos support disabled by request: advanced seeding options will not be available" >&5
+$as_echo "$as_me: WARNING: geos support disabled by request: advanced seeding options will not be available" >&2;}
   else
       if test "$with_geos" = "yes"; then
           # Extract the first word of "geos-config", so it can be a program name with args.
@@ -5491,7 +5590,49 @@ $as_echo "yes" >&6; }
       if test -n "$GEOSCONFIG"; then
           GEOS_CFLAGS=`$GEOSCONFIG --cflags`
           GEOS_LIBS="`$GEOSCONFIG --ldflags` -lgeos_c"
-          GEOS_ENABLED="-DUSE_GEOS"
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GEOSPreparedIntersects in -lgeos_c" >&5
+$as_echo_n "checking for GEOSPreparedIntersects in -lgeos_c... " >&6; }
+if ${ac_cv_lib_geos_c_GEOSPreparedIntersects+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgeos_c "$GEOS_LIBS" $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char GEOSPreparedIntersects ();
+int
+main ()
+{
+return GEOSPreparedIntersects ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_geos_c_GEOSPreparedIntersects=yes
+else
+  ac_cv_lib_geos_c_GEOSPreparedIntersects=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geos_c_GEOSPreparedIntersects" >&5
+$as_echo "$ac_cv_lib_geos_c_GEOSPreparedIntersects" >&6; }
+if test "x$ac_cv_lib_geos_c_GEOSPreparedIntersects" = xyes; then :
+  GEOS_ENABLED="-DUSE_GEOS"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Geos support disabled as installed version is too old" >&5
+$as_echo "$as_me: WARNING: Geos support disabled as installed version is too old" >&2;}
+fi
+
       fi
   fi
   GEOS_ENABLED=$GEOS_ENABLED
