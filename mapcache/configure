@@ -709,7 +709,6 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_debug
-with_lock_mechanism
 enable_version_string
 enable_module
 with_apxs
@@ -1361,9 +1360,6 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-lock-mechanism=file|semaphore
-                          Specify the locking mechanism to use, either file
-                          based or posix-semaphore based.
   --with-apxs=/path/to/apxs     Apache 2 apxs tool location
   --with-fastcgi=DIR      Specify where FASTCGI is installed
   --with-apr-config       path to apr-config program
@@ -3410,8 +3406,6 @@ GEOTIFF_ENABLED=""
 
 
 
-
-
     # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
   enableval=$enable_debug;
@@ -3427,57 +3421,6 @@ fi
     fi
     CFLAGS=$CFLAGS
 
-
-
-# On IRIX 5.3, sys/types and inttypes.h are conflicting.
-for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
-		  inttypes.h stdint.h unistd.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default
-"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-
-
-# Check whether --with-lock_mechanism was given.
-if test "${with_lock_mechanism+set}" = set; then :
-  withval=$with_lock_mechanism;
-else
-  with_lock_mechanism='file'
-fi
-
-   if test "x$with_lock_mechanism" = "xsemaphore"; then
-      ac_fn_c_check_header_mongrel "$LINENO" "semaphore.h" "ac_cv_header_semaphore_h" "$ac_includes_default"
-if test "x$ac_cv_header_semaphore_h" = xyes; then :
-
-else
-  as_fn_error $? "cannot find semaphore.h" "$LINENO" 5
-fi
-
-
-      ac_fn_c_check_header_mongrel "$LINENO" "fcntl.h" "ac_cv_header_fcntl_h" "$ac_includes_default"
-if test "x$ac_cv_header_fcntl_h" = xyes; then :
-
-else
-  as_fn_error $? "cannot find fcntl.h" "$LINENO" 5
-fi
-
-
-      MISC_ENABLED="-DUSE_SEMLOCK $MISC_ENABLED"
-   else
-      if test "x$with_lock_mechanism" != "xfile"; then
-        as_fn_error $? "lock mechanism can only be one of (file) or (semaphore). got $with_lock_mechanism" "$LINENO" 5
-      fi
-   fi
 
 
 # Check whether --enable-version_string was given.
@@ -3741,6 +3684,23 @@ else
     MODULE_TARGET=""
 
 fi
+
+# On IRIX 5.3, sys/types and inttypes.h are conflicting.
+for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
+		  inttypes.h stdint.h unistd.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default
+"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
 
 
 
