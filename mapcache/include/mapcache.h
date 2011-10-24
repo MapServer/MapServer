@@ -900,8 +900,23 @@ struct mapcache_cfg {
 
     apr_table_t *metadata;
 
+    /**
+     * directory where lock files will be placed.
+     * Must be readable and writable by the apache user.
+     * Must be placed on a network mounted shared directory if multiple mapcache instances
+     * need to be synchronized
+     */
     const char *lockdir;
-    const char *endpoint; /**< the uri where the base of the service is mapped */
+    
+    /**
+     * time in nanoseconds to wait before rechecking for lockfile presence
+     */
+    apr_interval_time_t lock_retry_interval; /* time in nanoseconds to wait before rechecking for lockfile presence */
+    
+    /**
+     * the uri where the base of the service is mapped
+     */
+    const char *endpoint;
 
     /* for fastcgi only */
     int autoreload; /* should the modification time of the config file be recorded

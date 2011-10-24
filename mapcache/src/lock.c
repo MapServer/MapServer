@@ -62,8 +62,8 @@ int mapcache_lock_or_wait_for_resource(mapcache_context *ctx, char *resource) {
       }
 #endif
       while(!APR_STATUS_IS_ENOENT(rv)) {
-         /* sleep for a tenth of a second */
-         apr_sleep(1000);
+         /* sleep for the configured number of micro-seconds (default is 1/100th of a second) */
+         apr_sleep(ctx->config->lock_retry_interval);
          rv = apr_file_open(&lockfile,lockname,APR_READ,APR_OS_DEFAULT,ctx->pool);
          if(rv == APR_SUCCESS) {
             apr_file_close(lockfile);

@@ -925,6 +925,16 @@ void mapcache_configuration_parse_xml(mapcache_context *ctx, const char *filenam
    } else {
       config->lockdir = apr_pstrdup(ctx->pool,"/tmp");
    }
+
+   if((node = ezxml_child(doc,"lock_retry")) != NULL) {
+      char *endptr;
+      config->lock_retry_interval = (unsigned int)strtol(node->txt,&endptr,10);
+      if(*endptr != 0 || config->lock_retry_interval < 0) {
+         ctx->set_error(ctx, 400, "failed to parse lock_retry microseconds \"%s\". Expecting a positive integer",
+               node->txt);
+         return;
+      }
+   }
    
    if((node = ezxml_child(doc,"log_level")) != NULL) {
       if(!strcasecmp(node->txt,"debug")) {

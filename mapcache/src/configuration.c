@@ -48,6 +48,8 @@ void mapcache_configuration_parse(mapcache_context *ctx, const char *filename, m
             ,config->lockdir,apr_strerror(rv,errmsg,120));
       return;
    }
+
+   /* only remove lockfiles if we're not in cgi mode */
    if(!cgi) {
       apr_finfo_t finfo;
       while ((apr_dir_read(&finfo, APR_FINFO_DIRENT|APR_FINFO_TYPE|APR_FINFO_NAME, lockdir)) == APR_SUCCESS) {
@@ -230,6 +232,9 @@ mapcache_cfg* mapcache_configuration_create(apr_pool_t *pool) {
       grid->levels[i] = level;
    }
    mapcache_configuration_add_grid(cfg,grid,"g");
+
+   /* default retry interval is 1/100th of a second, i.e. 10000 microseconds */
+   cfg->lock_retry_interval = 10000;
 
    cfg->loglevel = MAPCACHE_WARN;
    cfg->autoreload = 0;
