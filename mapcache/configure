@@ -5249,12 +5249,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_geotiff_XTIFFClientOpen" >&5
 $as_echo "$ac_cv_lib_geotiff_XTIFFClientOpen" >&6; }
 if test "x$ac_cv_lib_geotiff_XTIFFClientOpen" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBGEOTIFF 1
-_ACEOF
-
-  LIBS="-lgeotiff $LIBS"
-
+  GEOTIFF_LIB="-L$with_geotiff/lib -lgeotiff"
 else
   as_fn_error $? "failed to link with libgeotiff. Specify path" "$LINENO" 5
 fi

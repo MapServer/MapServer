@@ -659,7 +659,7 @@ if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
 elif test "$with_geotiff" != "no" ; then
 
    GEOTIFF_LIB="-L$with_geotiff/lib -lgeotiff"
-   AC_CHECK_LIB(geotiff,XTIFFClientOpen,,
+   AC_CHECK_LIB(geotiff,XTIFFClientOpen,GEOTIFF_LIB="-L$with_geotiff/lib -lgeotiff",
                  AC_MSG_ERROR([failed to link with libgeotiff. Specify path]),
                  "$GEOTIFF_LIB")
    if test -r $with_geotiff/include/geotiff.h ; then
