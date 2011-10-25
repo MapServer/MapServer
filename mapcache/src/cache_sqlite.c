@@ -129,8 +129,12 @@ static void _bind_sqlite_params(mapcache_context *ctx, sqlite3_stmt *stmt, mapca
    /* tile blob data */
    paramidx = sqlite3_bind_parameter_index(stmt, ":data");
    if(paramidx) {
-      if(tile->data && tile->data->size) {
-         sqlite3_bind_blob(stmt,paramidx,tile->data->buf, tile->data->size,SQLITE_STATIC);
+      if(!tile->encoded_data) {
+         tile->encoded_data = tile->tileset->format->write(ctx, tile->raw_image, tile->tileset->format);
+         GC_CHECK_ERROR(ctx);
+      }
+      if(tile->encoded_data && tile->encoded_data->size) {
+         sqlite3_bind_blob(stmt,paramidx,tile->encoded_data->buf, tile->encoded_data->size,SQLITE_STATIC);
       } else {
          sqlite3_bind_text(stmt,paramidx,"",-1,SQLITE_STATIC);
       }
@@ -210,9 +214,9 @@ static int _mapcache_cache_sqlite_get(mapcache_context *ctx, mapcache_tile *tile
    } else {
       const void *blob = sqlite3_column_blob(stmt,0);
       int size = sqlite3_column_bytes(stmt, 0);
-      tile->data = mapcache_buffer_create(size,ctx->pool);
-      memcpy(tile->data->buf, blob,size);
-      tile->data->size = size;
+      tile->encoded_data = mapcache_buffer_create(size,ctx->pool);
+      memcpy(tile->encoded_data->buf, blob,size);
+      tile->encoded_data->size = size;
       if(sqlite3_column_count(stmt) > 1) {
          time_t mtime = sqlite3_column_int64(stmt, 1);
          apr_time_ansi_put(&(tile->mtime),mtime);

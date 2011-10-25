@@ -66,8 +66,11 @@ mapcache_http_response *mapcache_core_get_tile(mapcache_context *ctx, mapcache_r
          expires = tile->expires;
          /* if we have multiple tiles to merge, decode the image data */
          if(req_tile->ntiles>1) {
-            base = mapcache_imageio_decode(ctx, tile->data);
-            if(!base) return NULL;
+            if(!tile->raw_image) {
+               tile->raw_image = mapcache_imageio_decode(ctx, tile->encoded_data);
+               if(!tile->raw_image) return NULL;
+            }
+            base = tile->raw_image;
          }
       } else {
          if(response->mtime < tile->mtime)
@@ -75,8 +78,11 @@ mapcache_http_response *mapcache_core_get_tile(mapcache_context *ctx, mapcache_r
          if(tile->expires < expires) {
             expires = tile->expires;
          }
-         overlay = mapcache_imageio_decode(ctx, tile->data);
-         if(!overlay) return NULL;
+         if(!tile->raw_image) {
+            tile->raw_image = mapcache_imageio_decode(ctx, tile->encoded_data);
+            if(!tile->raw_image) return NULL;
+         }
+         overlay = tile->raw_image;
          mapcache_image_merge(ctx, base, overlay);
          if(GC_HAS_ERROR(ctx)) {
             return NULL;
@@ -101,7 +107,7 @@ mapcache_http_response *mapcache_core_get_tile(mapcache_context *ctx, mapcache_r
          return NULL;
       }
    } else {
-      response->data = req_tile->tiles[0]->data;
+      response->data = req_tile->tiles[0]->encoded_data;
       format = req_tile->tiles[0]->tileset->format;
    }
 
@@ -132,7 +138,7 @@ mapcache_http_response *mapcache_core_get_tile(mapcache_context *ctx, mapcache_r
 
 
 
-mapcache_image* _core_get_single_map(mapcache_context *ctx, mapcache_map *map, mapcache_resample_mode mode) {
+void _core_get_single_map(mapcache_context *ctx, mapcache_map *map, mapcache_resample_mode mode) {
 
    mapcache_tile **maptiles;
    int i,nmaptiles;
@@ -143,8 +149,7 @@ mapcache_image* _core_get_single_map(mapcache_context *ctx, mapcache_map *map, m
       mapcache_tile *tile = maptiles[i];
       tile->dimensions = map->dimensions;
       mapcache_tileset_tile_get(ctx, tile);
-      if(GC_HAS_ERROR(ctx))
-         return NULL;
+      GC_CHECK_ERROR(ctx);
       
       /* update the map modification time if it is older than the tile mtime */
       if(tile->mtime>map->mtime) map->mtime = tile->mtime;
@@ -155,11 +160,10 @@ mapcache_image* _core_get_single_map(mapcache_context *ctx, mapcache_map *map, m
        */
       if(!map->expires || tile->expires<map->expires) map->expires = tile->expires;
    }
-   mapcache_image *getmapim = mapcache_tileset_assemble_map_tiles(ctx,map->tileset,map->grid_link,
+   map->raw_image = mapcache_tileset_assemble_map_tiles(ctx,map->tileset,map->grid_link,
          map->extent, map->width, map->height,
          nmaptiles, maptiles,
          mode);
-   return getmapim;
 }
 
 mapcache_http_response *mapcache_core_get_map(mapcache_context *ctx, mapcache_request_get_map *req_map) {
@@ -180,19 +184,16 @@ mapcache_http_response *mapcache_core_get_map(mapcache_context *ctx, mapcache_re
    mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
    mapcache_map *basemap = req_map->maps[0];
 
-   /* raw image data. if left NULL, there is no need to reencode the image */
-   mapcache_image *baseim = NULL;
-
    int i;
    char *timestr;
    if(req_map->getmap_strategy == MAPCACHE_GETMAP_ASSEMBLE) {
-      baseim = _core_get_single_map(ctx,basemap,req_map->resample_mode);
+      _core_get_single_map(ctx,basemap,req_map->resample_mode);
       if(GC_HAS_ERROR(ctx)) return NULL;
       for(i=1;i<req_map->nmaps;i++) {
          mapcache_map *overlaymap = req_map->maps[i];
-         mapcache_image *overlayim = _core_get_single_map(ctx,overlaymap,req_map->resample_mode); 
+         _core_get_single_map(ctx,overlaymap,req_map->resample_mode); 
          if(GC_HAS_ERROR(ctx)) return NULL;
-         mapcache_image_merge(ctx,baseim,overlayim);
+         mapcache_image_merge(ctx,basemap->raw_image,overlaymap->raw_image);
          if(GC_HAS_ERROR(ctx)) return NULL;
          if(overlaymap->mtime > basemap->mtime) basemap->mtime = overlaymap->mtime;
          if(!basemap->expires || overlaymap->expires<basemap->expires) basemap->expires = overlaymap->expires;
@@ -209,30 +210,41 @@ mapcache_http_response *mapcache_core_get_map(mapcache_context *ctx, mapcache_re
       basemap->tileset->source->render_map(ctx, basemap);
       if(GC_HAS_ERROR(ctx)) return NULL;
       if(req_map->nmaps>1) {
-         baseim = mapcache_imageio_decode(ctx,basemap->data);
-         if(GC_HAS_ERROR(ctx)) return NULL;
+         if(!basemap->raw_image) {
+            basemap->raw_image = mapcache_imageio_decode(ctx,basemap->encoded_data);
+            if(GC_HAS_ERROR(ctx)) return NULL;
+         }
          for(i=1;i<req_map->nmaps;i++) {
             mapcache_map *overlaymap = req_map->maps[i];
             overlaymap->tileset->source->render_map(ctx, overlaymap);
             if(GC_HAS_ERROR(ctx)) return NULL;
-            mapcache_image *overlayim = mapcache_imageio_decode(ctx,overlaymap->data); 
+            if(!overlaymap->raw_image) {
+               overlaymap->raw_image = mapcache_imageio_decode(ctx,overlaymap->encoded_data);
+               if(GC_HAS_ERROR(ctx)) return NULL;
+            }
             if(GC_HAS_ERROR(ctx)) return NULL;
-            mapcache_image_merge(ctx,baseim,overlayim);
+            mapcache_image_merge(ctx,basemap->raw_image,overlaymap->raw_image);
             if(GC_HAS_ERROR(ctx)) return NULL;
             if(!basemap->expires || overlaymap->expires<basemap->expires) basemap->expires = overlaymap->expires;
          }
       }
    }
    
-   if(baseim) {
+   if(basemap->raw_image) {
       format = req_map->getmap_format; /* always defined, defaults to JPEG */
-      response->data = format->write(ctx,baseim,format);
+      response->data = format->write(ctx,basemap->raw_image,format);
       if(GC_HAS_ERROR(ctx)) {
          return NULL;
       }
    } else {
       /* this case happens when we have a forward strategy for a single tileset */
-      response->data = basemap->data;
+#ifdef DEBUG
+      if(!basemap->encoded_data) {
+         ctx->set_error(ctx,500,"###BUG### core_get_map failed with null encoded_data");
+         return;
+      }
+#endif
+      response->data = basemap->encoded_data;
    }
 
    /* compute the content-type */
@@ -304,7 +316,7 @@ mapcache_http_response *mapcache_core_get_featureinfo(mapcache_context *ctx,
       tileset->source->query_info(ctx,fi);
       if(GC_HAS_ERROR(ctx)) return NULL;
       mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
-      response->data = fi->map.data;
+      response->data = fi->data;
       apr_table_set(response->headers,"Content-Type",fi->format);
       return response;
    } else {

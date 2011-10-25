@@ -119,13 +119,13 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
       return;
    }
 
-   map->image = mapcache_image_create(ctx);
-   map->image->w = map->width;
-   map->image->h = map->height;
-   map->image->stride = 4 * map->width;
-   map->image->data = malloc(map->width*map->height*4);
-   memcpy(map->image->data,rb.data.rgba.pixels,map->width*map->height*4);
-   apr_pool_cleanup_register(ctx->pool, map->image->data,(void*)free, apr_pool_cleanup_null);
+   map->raw_image = mapcache_image_create(ctx);
+   map->raw_image->w = map->width;
+   map->raw_image->h = map->height;
+   map->raw_image->stride = 4 * map->width;
+   map->raw_image->data = malloc(map->width*map->height*4);
+   memcpy(map->raw_image->data,rb.data.rgba.pixels,map->width*map->height*4);
+   apr_pool_cleanup_register(ctx->pool, map->raw_image->data,(void*)free, apr_pool_cleanup_null);
    msFreeImage(image);
    msFreeMap(omap);
     

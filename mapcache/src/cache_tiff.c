@@ -406,16 +406,16 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
                void *bufptr;
 
                /* create a memory buffer to contain the jpeg data */
-               tile->data = mapcache_buffer_create((jpegtable_size+sizes[tiff_off]-4),ctx->pool);
+               tile->encoded_data = mapcache_buffer_create((jpegtable_size+sizes[tiff_off]-4),ctx->pool);
 
                /* 
                 * copy the jpeg header to the beginning of the memory buffer,
                 * omitting the last 2 bytes
                 */
-               memcpy(tile->data->buf,jpegtable_ptr,(jpegtable_size-2));
+               memcpy(tile->encoded_data->buf,jpegtable_ptr,(jpegtable_size-2));
 
                /* advance the data pointer to after the header data */
-               bufptr = tile->data->buf + (jpegtable_size-2);
+               bufptr = tile->encoded_data->buf + (jpegtable_size-2);
 
                
                /* go to the specified offset in the tiff file, plus 2 bytes */
@@ -437,7 +437,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
                   return MAPCACHE_FAILURE;
                }
 
-               tile->data->size = (jpegtable_size+sizes[tiff_off]-4);
+               tile->encoded_data->size = (jpegtable_size+sizes[tiff_off]-4);
 
                /* finalize and cleanup */
                apr_file_close(f);
@@ -529,15 +529,18 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    int tilew = tile->grid_link->grid->tile_sx;
    int tileh = tile->grid_link->grid->tile_sy;
    
-   mapcache_image *tileimg = mapcache_imageio_decode(ctx, tile->data);
+   if(!tile->raw_image) {
+      tile->raw_image = mapcache_imageio_decode(ctx, tile->encoded_data);
+      GC_CHECK_ERROR(ctx);
+   }
 
    /* remap xrgb to rgb */
    unsigned char *rgb = (unsigned char*)malloc(tilew*tileh*3);
    int r,c;
-   for(r=0;r<tileimg->h;r++) {
-      unsigned char *imptr = tileimg->data + r * tileimg->stride;
+   for(r=0;r<tile->raw_image->h;r++) {
+      unsigned char *imptr = tile->raw_image->data + r * tile->raw_image->stride;
       unsigned char *rgbptr = rgb + r * tilew * 3;
-      for(c=0;c<tileimg->w;c++) {
+      for(c=0;c<tile->raw_image->w;c++) {
          rgbptr[0] = imptr[2];
          rgbptr[1] = imptr[1];
          rgbptr[2] = imptr[0];

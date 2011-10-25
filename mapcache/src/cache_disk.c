@@ -232,7 +232,7 @@ static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) 
        * i.e. normally only once.
        */
       tile->mtime = finfo.mtime;
-      tile->data = mapcache_buffer_create(size,ctx->pool);
+      tile->encoded_data = mapcache_buffer_create(size,ctx->pool);
 
 #ifndef NOMMAP
       apr_mmap_t *tilemmap;
@@ -242,16 +242,16 @@ static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) 
          ctx->set_error(ctx, 500,  "mmap error: %s",apr_strerror(rv,errmsg,120));
          return MAPCACHE_FAILURE;
       }
-      tile->data->buf = tilemmap->mm;
-      tile->data->size = tile->data->avail = finfo.size;
+      tile->encoded_data->buf = tilemmap->mm;
+      tile->encoded_data->size = tile->encoded_data->avail = finfo.size;
 #else
       //manually add the data to our buffer
-      apr_file_read(f,(void*)tile->data->buf,&size);
-      tile->data->size = size;
-      tile->data->avail = size;
+      apr_file_read(f,(void*)tile->encoded_data->buf,&size);
+      tile->encoded_data->size = size;
+      tile->encoded_data->avail = size;
 #endif
       apr_file_close(f);
-      if(tile->data->size != finfo.size) {
+      if(tile->encoded_data->size != finfo.size) {
          ctx->set_error(ctx, 500,  "failed to copy image data, got %d of %d bytes",(int)size, (int)finfo.size);
          return MAPCACHE_FAILURE;
       }
@@ -285,11 +285,16 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
    char *filename, *hackptr1, *hackptr2=NULL;
 #ifdef DEBUG
    /* all this should be checked at a higher level */
-   if(!tile->data || !tile->data->size) {
+   if(!tile->encoded_data && !tile->raw_image) {
       ctx->set_error(ctx,500,"attempting to write empty tile to disk");
       return;
    }
+   if(!tile->encoded_data && !tile->tileset->format) {
+      ctx->set_error(ctx,500,"received a raw tile image for a tileset with no format");
+      return;
+   }
 #endif
+
    _mapcache_cache_disk_tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
 
@@ -327,12 +332,18 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
   
 #ifdef HAVE_SYMLINK
    if(((mapcache_cache_disk*)tile->tileset->cache)->symlink_blank) {
-      mapcache_image *image = mapcache_imageio_decode(ctx, tile->data);
-      GC_CHECK_ERROR(ctx);
-      if(mapcache_image_blank_color(image) != MAPCACHE_FALSE) {
+      if(!tile->raw_image) {
+         tile->raw_image = mapcache_imageio_decode(ctx, tile->encoded_data);
+         GC_CHECK_ERROR(ctx);
+      }
+      if(mapcache_image_blank_color(tile->raw_image) != MAPCACHE_FALSE) {
          char *blankname;
-         _mapcache_cache_disk_blank_tile_key(ctx,tile,image->data,&blankname);
+         _mapcache_cache_disk_blank_tile_key(ctx,tile,tile->raw_image->data,&blankname);
          if(apr_file_open(&f, blankname, APR_FOPEN_READ, APR_OS_DEFAULT, ctx->pool) != APR_SUCCESS) {
+            if(!tile->encoded_data) {
+               tile->encoded_data = tile->tileset->format->write(ctx, tile->raw_image, tile->tileset->format);
+               GC_CHECK_ERROR(ctx);
+            }
             /* create the blank file */
             char *blankdirname = apr_psprintf(ctx->pool, "%s/%s/%s/blanks",
                         ((mapcache_cache_disk*)tile->tileset->cache)->base_directory,
@@ -359,16 +370,16 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
                   return; /* we could not create the file */
                }
 
-               bytes = (apr_size_t)tile->data->size;
-               ret = apr_file_write(f,(void*)tile->data->buf,&bytes);
+               bytes = (apr_size_t)tile->encoded_data->size;
+               ret = apr_file_write(f,(void*)tile->encoded_data->buf,&bytes);
                if(ret != APR_SUCCESS) {
-                  ctx->set_error(ctx, 500,  "failed to write data to file %s (wrote %d of %d bytes): %s",blankname, (int)bytes, (int)tile->data->size, apr_strerror(ret,errmsg,120));
+                  ctx->set_error(ctx, 500,  "failed to write data to file %s (wrote %d of %d bytes): %s",blankname, (int)bytes, (int)tile->encoded_data->size, apr_strerror(ret,errmsg,120));
                   mapcache_unlock_resource(ctx,blankname);
                   return; /* we could not create the file */
                }
 
-               if(bytes != tile->data->size) {
-                  ctx->set_error(ctx, 500,  "failed to write image data to %s, wrote %d of %d bytes", blankname, (int)bytes, (int)tile->data->size);
+               if(bytes != tile->encoded_data->size) {
+                  ctx->set_error(ctx, 500,  "failed to write image data to %s, wrote %d of %d bytes", blankname, (int)bytes, (int)tile->encoded_data->size);
                   mapcache_unlock_resource(ctx,blankname);
                   return;
                }
@@ -395,6 +406,12 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
 #endif /*HAVE_SYMLINK*/
 
    /* go the normal way: either we haven't configured blank tile detection, or the tile was not blank */
+   
+   if(!tile->encoded_data) {
+      tile->encoded_data = tile->tileset->format->write(ctx, tile->raw_image, tile->tileset->format);
+      GC_CHECK_ERROR(ctx);
+   }
+
    if((ret = apr_file_open(&f, filename,
          APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
          APR_OS_DEFAULT, ctx->pool)) != APR_SUCCESS) {
@@ -402,15 +419,15 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
       return; /* we could not create the file */
    }
 
-   bytes = (apr_size_t)tile->data->size;
-   ret = apr_file_write(f,(void*)tile->data->buf,&bytes);
+   bytes = (apr_size_t)tile->encoded_data->size;
+   ret = apr_file_write(f,(void*)tile->encoded_data->buf,&bytes);
    if(ret != APR_SUCCESS) {
-      ctx->set_error(ctx, 500,  "failed to write data to file %s (wrote %d of %d bytes): %s",filename, (int)bytes, (int)tile->data->size, apr_strerror(ret,errmsg,120));
+      ctx->set_error(ctx, 500,  "failed to write data to file %s (wrote %d of %d bytes): %s",filename, (int)bytes, (int)tile->encoded_data->size, apr_strerror(ret,errmsg,120));
       return; /* we could not create the file */
    }
 
-   if(bytes != tile->data->size) {
-      ctx->set_error(ctx, 500, "failed to write image data to %s, wrote %d of %d bytes", filename, (int)bytes, (int)tile->data->size);
+   if(bytes != tile->encoded_data->size) {
+      ctx->set_error(ctx, 500, "failed to write image data to %s, wrote %d of %d bytes", filename, (int)bytes, (int)tile->encoded_data->size);
    }
    ret = apr_file_close(f);
    if(ret != APR_SUCCESS) {

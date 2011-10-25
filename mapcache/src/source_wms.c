@@ -57,12 +57,12 @@ void _mapcache_source_wms_render_map(mapcache_context *ctx, mapcache_map *map) {
        }
  
     }      
-    map->data = mapcache_buffer_create(30000,ctx->pool);
-    mapcache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL,NULL);
+    map->encoded_data = mapcache_buffer_create(30000,ctx->pool);
+    mapcache_http_do_request_with_params(ctx,wms->http,params,map->encoded_data,NULL,NULL);
     GC_CHECK_ERROR(ctx);
  
-    if(!mapcache_imageio_is_valid_format(ctx,map->data)) {
-       char *returned_data = apr_pstrndup(ctx->pool,(char*)map->data->buf,map->data->size);
+    if(!mapcache_imageio_is_valid_format(ctx,map->encoded_data)) {
+       char *returned_data = apr_pstrndup(ctx->pool,(char*)map->encoded_data->buf,map->encoded_data->size);
        ctx->set_error(ctx, 502, "wms request for tileset %s returned an unsupported format:\n%s",
              map->tileset->name, returned_data);
     }
@@ -95,8 +95,8 @@ void _mapcache_source_wms_query(mapcache_context *ctx, mapcache_feature_info *fi
  
     }      
 
-    map->data = mapcache_buffer_create(30000,ctx->pool);
-    mapcache_http_do_request_with_params(ctx,wms->http,params,map->data,NULL,NULL);
+    fi->data = mapcache_buffer_create(30000,ctx->pool);
+    mapcache_http_do_request_with_params(ctx,wms->http,params,fi->data,NULL,NULL);
     GC_CHECK_ERROR(ctx);
    
 }

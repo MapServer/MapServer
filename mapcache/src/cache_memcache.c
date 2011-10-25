@@ -123,23 +123,23 @@ static int _mapcache_cache_memcache_get(mapcache_context *ctx, mapcache_tile *ti
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FAILURE;
    }
-   tile->data = mapcache_buffer_create(0,ctx->pool);
-   rv = apr_memcache_getp(cache->memcache,ctx->pool,key,(char**)&tile->data->buf,&tile->data->size,NULL);
+   tile->encoded_data = mapcache_buffer_create(0,ctx->pool);
+   rv = apr_memcache_getp(cache->memcache,ctx->pool,key,(char**)&tile->encoded_data->buf,&tile->encoded_data->size,NULL);
    if(rv != APR_SUCCESS) {
       return MAPCACHE_CACHE_MISS;
    }
-   if(tile->data->size == 0) {
+   if(tile->encoded_data->size == 0) {
       ctx->set_error(ctx,500,"memcache cache returned 0-length data for tile %d %d %d\n",tile->x,tile->y,tile->z);
       return MAPCACHE_FAILURE;
    }
    /* extract the tile modification time from the end of the data returned */
    memcpy(
          &tile->mtime,
-         &(((char*)tile->data->buf)[tile->data->size-sizeof(apr_time_t)]),
+         &(((char*)tile->encoded_data->buf)[tile->encoded_data->size-sizeof(apr_time_t)]),
          sizeof(apr_time_t));
-   ((char*)tile->data->buf)[tile->data->size+sizeof(apr_time_t)]='\0';
-   tile->data->avail = tile->data->size;
-   tile->data->size -= sizeof(apr_time_t);
+   ((char*)tile->encoded_data->buf)[tile->encoded_data->size+sizeof(apr_time_t)]='\0';
+   tile->encoded_data->avail = tile->encoded_data->size;
+   tile->encoded_data->size -= sizeof(apr_time_t);
    return MAPCACHE_SUCCESS;
 }
 
@@ -162,16 +162,21 @@ static void _mapcache_cache_memcache_set(mapcache_context *ctx, mapcache_tile *t
    mapcache_cache_memcache *cache = (mapcache_cache_memcache*)tile->tileset->cache;
    _mapcache_cache_memcache_tile_key(ctx, tile, &key);
    GC_CHECK_ERROR(ctx);
+   
+   if(!tile->encoded_data) {
+      tile->encoded_data = tile->tileset->format->write(ctx, tile->raw_image, tile->tileset->format);
+      GC_CHECK_ERROR(ctx);
+   }
 
    /* concatenate the current time to the end of the memcache data so we can extract it out
     * when we re-get the tile */
-   char *data = calloc(1,tile->data->size+sizeof(apr_time_t));
+   char *data = calloc(1,tile->encoded_data->size+sizeof(apr_time_t));
    apr_time_t now = apr_time_now();
    apr_pool_cleanup_register(ctx->pool, data, (void*)free, apr_pool_cleanup_null);
-   memcpy(data,tile->data->buf,tile->data->size);
-   memcpy(&(data[tile->data->size]),&now,sizeof(apr_time_t));
+   memcpy(data,tile->encoded_data->buf,tile->encoded_data->size);
+   memcpy(&(data[tile->encoded_data->size]),&now,sizeof(apr_time_t));
    
-   rv = apr_memcache_set(cache->memcache,key,data,tile->data->size+sizeof(apr_time_t),expires,0);
+   rv = apr_memcache_set(cache->memcache,key,data,tile->encoded_data->size+sizeof(apr_time_t),expires,0);
    if(rv != APR_SUCCESS) {
       ctx->set_error(ctx,500,"failed to store tile %d %d %d to memcache cache %s",
             tile->x,tile->y,tile->z,cache->cache.name);

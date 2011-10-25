@@ -249,7 +249,18 @@ mapcache_image* mapcache_tileset_assemble_map_tiles(mapcache_context *ctx, mapca
       mapcache_image fakeimg;
       fakeimg.stride = srcimage->stride;
       fakeimg.data = &(srcimage->data[oy*srcimage->stride+ox*4]);
-      mapcache_imageio_decode_to_image(ctx,tile->data,&fakeimg);
+      if(!tile->raw_image) {
+         mapcache_imageio_decode_to_image(ctx,tile->encoded_data,&fakeimg);
+      } else {
+         int r;
+         unsigned char *srcptr = tile->raw_image->data;
+         unsigned char *dstptr = fakeimg.data;
+         for(r=0;r<tile->raw_image->h;r++) {
+            memcpy(dstptr,srcptr,tile->raw_image->stride);
+            srcptr += tile->raw_image->stride;
+            dstptr += fakeimg.stride;
+         }
+      }
    }
 
    assert(toplefttile);

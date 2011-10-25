@@ -499,8 +499,8 @@ struct mapcache_map {
    mapcache_tileset *tileset;
    mapcache_grid_link *grid_link;
    apr_table_t *dimensions;
-   mapcache_buffer *data;
-   mapcache_image *image;
+   mapcache_buffer *encoded_data;
+   mapcache_image *raw_image;
    int width, height;
    double extent[4];
    apr_time_t mtime; /**< last modification time */
@@ -511,6 +511,7 @@ struct mapcache_feature_info {
    mapcache_map map;
    int i,j;
    char *format;
+   mapcache_buffer *data;
 };
 
 struct mapcache_request_get_feature_info {
@@ -1004,7 +1005,8 @@ struct mapcache_tile {
      * \sa mapcache_source::render_map()
      * \sa mapcache_image_format
      */
-    mapcache_buffer *data;
+    mapcache_buffer *encoded_data;
+    mapcache_image *raw_image;
     apr_time_t mtime; /**< last modification time */
     int expires; /**< time in seconds after which the tile should be rechecked for validity */
     
