@@ -104,6 +104,8 @@ IMPORTANT SECURITY FIX:
 
 - Fix for the cluster processing if the shape bounds doesn't overlap 
   with the given extent (#3913)
+  
+- Add support for dashes on polygon hatches (#3912)
 
 - Union layer 3 new processing options added (#3900)
 
