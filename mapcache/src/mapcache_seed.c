@@ -74,6 +74,13 @@ typedef enum {
    MAPCACHE_CMD_SKIP
 } cmd;
 
+typedef enum {
+   MAPCACHE_SEED_DEPTH_FIRST,
+   MAPCACHE_SEED_LEVEL_FIRST
+} mapcache_seed_mode;
+
+mapcache_seed_mode seed_mode = MAPCACHE_SEED_DEPTH_FIRST;
+
 struct seed_cmd {
    cmd command;
    int x;
@@ -87,7 +94,7 @@ cmd mode = MAPCACHE_CMD_SEED; /* the mode the utility will be running in: either
 
 static const apr_getopt_option_t seed_options[] = {
     /* long-option, short-option, has-arg flag, description */
-    { "config", 'c', TRUE, "configuration file (/path/to/geocacahe.xml)"},
+    { "config", 'c', TRUE, "configuration file (/path/to/mapcache.xml)"},
     { "tileset", 't', TRUE, "tileset to seed" },
     { "grid", 'g', TRUE, "grid to seed" },
     { "zoom", 'z', TRUE, "min and max zoomlevels to seed, separated by a comma. eg 0,6" },
@@ -345,23 +352,105 @@ void cmd_thread() {
    apr_pool_create(&cmd_ctx.pool,ctx.pool);
    mapcache_tile *tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
    tile->dimensions = dimensions;
-   do {
-      tile->x = x;
-      tile->y = y;
-      tile->z = z;
-      cmd_recurse(&cmd_ctx,tile);
-      x += tileset->metasize_x;
-      if( x >= grid_link->grid_limits[z][2] ) {
-         y += tileset->metasize_y;
-         if( y < grid_link->grid_limits[z][3]) {
-            x = grid_link->grid_limits[z][0];
+   if(seed_mode == MAPCACHE_SEED_DEPTH_FIRST) {
+      do {
+         tile->x = x;
+         tile->y = y;
+         tile->z = z;
+         cmd_recurse(&cmd_ctx,tile);
+         x += tileset->metasize_x;
+         if( x >= grid_link->grid_limits[z][2] ) {
+            y += tileset->metasize_y;
+            if( y < grid_link->grid_limits[z][3]) {
+               x = grid_link->grid_limits[z][0];
+            }
+         }
+      } while (
+            x < grid_link->grid_limits[z][2]
+            &&
+            y < grid_link->grid_limits[z][3]
+            );
+   } else {
+      while(1) {
+         apr_pool_clear(cmd_ctx.pool);
+         if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
+            //remove all items from the queue
+            void *entry;
+            while (apr_queue_trypop(work_queue,&entry)!=APR_EAGAIN) {queuedtilestot--;}
+            break;
+         }
+         int should_seed = 0;
+         tile->x = x;
+         tile->y = y;
+         tile->z = z;
+         int tile_exists = tileset->cache->tile_exists(&cmd_ctx,tile);
+         int intersects = -1;
+         /* if the tile exists and a time limit was specified, check the tile modification date */
+         if(tile_exists) {
+            if(age_limit) {
+               if(tileset->cache->tile_get(&cmd_ctx,tile) == MAPCACHE_SUCCESS) {
+                  if(tile->mtime && tile->mtime<age_limit) {
+#ifdef USE_CLIPPERS
+                     /* check we are in the requested features before deleting the tile */
+                     if(nClippers > 0) {
+                        intersects = ogr_features_intersect_tile(&cmd_ctx,tile);
+                     }
+#endif
+                     if(intersects != 0) {
+                        /* the tile intersects the ogr features, seed it */
+                        mapcache_tileset_tile_delete(&cmd_ctx,tile, MAPCACHE_TRUE);
+                        should_seed = 1;
+                     } else {
+                        /* the tile does not intersect the ogr features, and already exists, do nothing */
+                        should_seed = 0;
+                     }
+                  }
+               }
+            }
+         } else {
+            // the tile does not exist
+#ifdef USE_CLIPPERS
+            /* check we are in the requested features before deleting the tile */
+            if(nClippers > 0) {
+               if(ogr_features_intersect_tile(&cmd_ctx,tile)) {
+                  should_seed = 1;
+               } else {
+                  should_seed = 0;
+               }
+            } else {
+               should_seed = 1;
+            }
+#else
+            should_seed = 1;
+#endif
+         }
+
+         if(should_seed){
+            //current x,y,z needs seeding, add it to the queue
+            struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
+            cmd->x = x;
+            cmd->y = y;
+            cmd->z = z;
+            cmd->command = MAPCACHE_CMD_SEED;
+            apr_queue_push(work_queue,cmd);
+            queuedtilestot++;
+            progresslog(x,y,z);
+         }
+         //compute next x,y,z
+         x += tileset->metasize_x;
+         if(x >= grid_link->grid_limits[z][2]) {
+            //x is too big, increment y
+            y += tileset->metasize_y;
+            if(y >= grid_link->grid_limits[z][3]) {
+               //y is too big, increment z
+               z += 1;
+               if(z > maxzoom) break; //we've finished seeding
+               y = grid_link->grid_limits[z][1]; //set y to the smallest value for current z
+            }
+            x = grid_link->grid_limits[z][0]; //set x to smallest value for current z
          }
       }
-   } while (
-         x < grid_link->grid_limits[z][2]
-         &&
-         y < grid_link->grid_limits[z][3]
-   );
+   }
    //instruct rendering threads to stop working
    int n;
    for(n=0;n<nthreads;n++) {
