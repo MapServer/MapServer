@@ -209,8 +209,8 @@ void parseGrid(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
          level->resolution = values[nvalues];
          double unitheight = grid->tile_sy * level->resolution;
          double unitwidth = grid->tile_sx * level->resolution;
-         level->maxy = ceil((grid->extent[3]-grid->extent[1] - 0.01* unitheight)/unitheight);
-         level->maxx = ceil((grid->extent[2]-grid->extent[0] - 0.01* unitwidth)/unitwidth);
+         level->maxy = ceil((extent[3]-extent[1] - 0.01* unitheight)/unitheight);
+         level->maxx = ceil((extent[2]-extent[0] - 0.01* unitwidth)/unitwidth);
          grid->levels[nvalues] = level;
       }
    }
