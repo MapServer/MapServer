@@ -31,6 +31,7 @@
 #include <apr_file_info.h>
 #include <apr_strings.h>
 #include <apr_file_io.h>
+#include <math.h>
 
 void mapcache_configuration_parse(mapcache_context *ctx, const char *filename, mapcache_cfg *config, int cgi) {
    mapcache_configuration_parse_xml(ctx,filename,config);
