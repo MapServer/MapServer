@@ -204,9 +204,13 @@ void parseGrid(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
       grid->levels = (mapcache_grid_level**)apr_pcalloc(ctx->pool,
             grid->nlevels*sizeof(mapcache_grid_level));
       while(nvalues--) {
-         grid->levels[nvalues] = (mapcache_grid_level*)apr_pcalloc(ctx->pool,
-               sizeof(mapcache_grid_level));
-         grid->levels[nvalues]->resolution = values[nvalues];
+         mapcache_grid_level *level = (mapcache_grid_level*)apr_pcalloc(ctx->pool,sizeof(mapcache_grid_level));
+         level->resolution = values[nvalues];
+         double unitheight = grid->tile_sy * level->resolution;
+         double unitwidth = grid->tile_sx * level->resolution;
+         level->maxy = ceil((grid->extent[3]-grid->extent[1] - 0.01* unitheight)/unitheight);
+         level->maxx = ceil((grid->extent[2]-grid->extent[0] - 0.01* unitwidth)/unitwidth);
+         grid->levels[nvalues] = level;
       }
    }
 

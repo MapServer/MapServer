@@ -81,8 +81,6 @@ void mapcache_grid_compute_limits(const mapcache_grid *grid, const double *exten
       double unitheight = grid->tile_sy * level->resolution;
       double unitwidth = grid->tile_sx * level->resolution;
 
-      level->maxy = ceil((grid->extent[3]-grid->extent[1] - 0.01* unitheight)/unitheight);
-      level->maxx = ceil((grid->extent[2]-grid->extent[0] - 0.01* unitwidth)/unitwidth);
 
       limits[i][0] = floor((extent[0] - grid->extent[0]) / unitwidth + epsilon) - tolerance;
       limits[i][2] = ceil((extent[2] - grid->extent[0]) / unitwidth - epsilon) + tolerance;
