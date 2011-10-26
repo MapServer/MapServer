@@ -132,6 +132,18 @@ char* _mapcache_context_get_error_msg_default(mapcache_context *ctx) {
     return ctx->_errmsg;
 }
 
+void _mapcache_context_set_exception_default(mapcache_context *ctx, char *key, char *msg, ...) {
+   if(!ctx->exceptions) {
+      ctx->exceptions = apr_table_make(ctx->pool,1);
+   }
+   char *fullmsg;
+   va_list args;
+   va_start(args,msg);
+   fullmsg = apr_pvsprintf(ctx->pool,msg,args);
+   va_end(args);
+   apr_table_set(ctx->exceptions,key,fullmsg);
+}
+
 void _mapcache_context_set_error_default(mapcache_context *ctx, int code, char *msg, ...) {
     char *fmt;
     va_list args;
@@ -150,6 +162,9 @@ void _mapcache_context_set_error_default(mapcache_context *ctx, int code, char *
 void _mapcache_context_clear_error_default(mapcache_context *ctx) {
    ctx->_errcode = 0;
    ctx->_errmsg = NULL;
+   if(ctx->exceptions) {
+      apr_table_clear(ctx->exceptions);
+   }
 }
 
 
@@ -159,6 +174,7 @@ void mapcache_context_init(mapcache_context *ctx) {
     ctx->get_error = _mapcache_context_get_error_default;
     ctx->get_error_message = _mapcache_context_get_error_msg_default;
     ctx->set_error = _mapcache_context_set_error_default;
+    ctx->set_exception = _mapcache_context_set_exception_default;
     ctx->clear_errors = _mapcache_context_clear_error_default;
 }
 

@@ -156,6 +156,8 @@ struct mapcache_context {
      * \param message human readable message of what happened
      */
     void (*set_error)(mapcache_context *ctx, int code, char *message, ...);
+    
+    void (*set_exception)(mapcache_context *ctx, char *key, char *message, ...);
 
     /**
      * \brief query context to know if an error has occured
@@ -189,6 +191,8 @@ struct mapcache_context {
     char *_errmsg;
     int _errcode;
     mapcache_cfg *config;
+    mapcache_service *service;
+    apr_table_t *exceptions;
 };
 
 void mapcache_context_init(mapcache_context *ctx);
@@ -636,6 +640,9 @@ struct mapcache_service {
      * parse advanced configuration options for the selected service
      */
     void (*configuration_parse_xml)(mapcache_context *ctx, ezxml_t xml, mapcache_service * service, mapcache_cfg *config);
+    
+    void (*format_error)(mapcache_context *ctx, mapcache_service * service, char *err_msg,
+          char **err_body, apr_table_t *headers);
 };
 
 /**\class mapcache_service_wms
@@ -1247,7 +1254,7 @@ mapcache_http_response* mapcache_core_get_map(mapcache_context *ctx, mapcache_re
 mapcache_http_response* mapcache_core_get_featureinfo(mapcache_context *ctx, mapcache_request_get_feature_info *req_fi);
 
 mapcache_http_response* mapcache_core_proxy_request(mapcache_context *ctx, mapcache_request_proxy *req_proxy);
-mapcache_http_response* mapcache_core_respond_to_error(mapcache_context *ctx, mapcache_service *service);
+mapcache_http_response* mapcache_core_respond_to_error(mapcache_context *ctx);
 
 
 /* in grid.c */

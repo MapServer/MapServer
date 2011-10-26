@@ -233,7 +233,7 @@ static int mod_mapcache_request_handler(request_rec *r) {
    mapcache_service_dispatch_request(global_ctx,&request,r->path_info,params,global_ctx->config);
    if(GC_HAS_ERROR(global_ctx) || !request) {
       return write_http_response(apache_ctx,
-            mapcache_core_respond_to_error(global_ctx,(request)?request->service:NULL));
+            mapcache_core_respond_to_error(global_ctx));
    }
 
    mapcache_http_response *http_response = NULL;
@@ -284,7 +284,7 @@ static int mod_mapcache_request_handler(request_rec *r) {
 
    if(GC_HAS_ERROR(global_ctx)) {
       return write_http_response(apache_ctx,
-            mapcache_core_respond_to_error(global_ctx,request->service));
+            mapcache_core_respond_to_error(global_ctx));
    }
    return write_http_response(apache_ctx,http_response);
 }

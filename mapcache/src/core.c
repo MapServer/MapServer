@@ -241,7 +241,7 @@ mapcache_http_response *mapcache_core_get_map(mapcache_context *ctx, mapcache_re
 #ifdef DEBUG
       if(!basemap->encoded_data) {
          ctx->set_error(ctx,500,"###BUG### core_get_map failed with null encoded_data");
-         return;
+         return NULL;
       }
 #endif
       response->data = basemap->encoded_data;
@@ -337,7 +337,7 @@ mapcache_http_response* mapcache_core_get_capabilities(mapcache_context *ctx, ma
    return response;
 }
 
-mapcache_http_response* mapcache_core_respond_to_error(mapcache_context *ctx, mapcache_service *service) {
+mapcache_http_response* mapcache_core_respond_to_error(mapcache_context *ctx) {
    //TODO: have the service format the error response
    mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
    
@@ -350,15 +350,20 @@ mapcache_http_response* mapcache_core_respond_to_error(mapcache_context *ctx, ma
       msg = "an unspecified error has occured";
    }
    ctx->log(ctx,MAPCACHE_ERROR,msg);
+
   
 
    if(ctx->config && ctx->config->reporting == MAPCACHE_REPORT_MSG) {
+      char *err_body = msg;
+      apr_table_set(response->headers, "Content-Type", "text/plain");
+      if(ctx->service && ctx->service->format_error) {
+         ctx->service->format_error(ctx,ctx->service,msg,&err_body,response->headers);
+      }
       /* manually populate the mapcache_buffer with the error message */
       response->data = mapcache_buffer_create(0,ctx->pool);
-      response->data->size = strlen(msg);
-      response->data->buf = msg;
+      response->data->size = strlen(err_body);
+      response->data->buf = err_body;
       response->data->avail = response->data->size;
-      apr_table_set(response->headers, "Content-Type", "text/plain");
    } else if(ctx->config && ctx->config->reporting == MAPCACHE_REPORT_EMPTY_IMG) {
       response->data = ctx->config->empty_image;
       apr_table_set(response->headers, "Content-Type", ctx->config->default_image_format->mime_type);

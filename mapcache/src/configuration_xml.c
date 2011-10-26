@@ -36,6 +36,7 @@
 #include <apr_tables.h>
 #include <apr_file_io.h>
 #include <apr_file_info.h>
+#include <math.h>
 
 
 void parseMetadata(mapcache_context *ctx, ezxml_t node, apr_table_t *metadata) {

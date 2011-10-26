@@ -313,16 +313,20 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
    apr_table_t *dimtable = NULL;
    mapcache_tileset *tileset = NULL;
    int row,col,level;
+   int kvp = 0;
    service = apr_table_get(params,"SERVICE");
    if(service) {
       /*KVP Parsing*/
+      kvp = 1;
       if( strcasecmp(service,"wmts") ) {
          ctx->set_error(ctx,400,"received wmts request with invalid service param %s", service);
+         ctx->set_exception(ctx,"InvalidParameterValue","service");
          return;
       }
       str = apr_table_get(params,"REQUEST");
       if(!str) {
          ctx->set_error(ctx, 400, "received wmts request with no request");
+         ctx->set_exception(ctx,"MissingParameterValue","request");
          return;
       }
       if( ! strcasecmp(str,"getcapabilities") ) {
@@ -341,11 +345,13 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
          layer = apr_table_get(params,"LAYER");
          if(!layer) { /*we have to validate this now in order to be able to extract dimensions*/
             ctx->set_error(ctx, 400, "received wmts request with no layer");
+            ctx->set_exception(ctx,"MissingParameterValue","layer");
             return;
          } else {
             tileset = mapcache_configuration_get_tileset(config,layer);
             if(!tileset) {
                ctx->set_error(ctx, 400, "received wmts request with invalid layer %s",layer);
+               ctx->set_exception(ctx,"InvalidParameterValue","layer");
                return;
             }
          }
@@ -370,11 +376,18 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
             fi_j = apr_table_get(params,"J");
             if(!infoformat || !fi_i || !fi_j) {
                ctx->set_error(ctx, 400, "received wmts featureinfo request with missing infoformat, i or j");
+               if(!infoformat)
+                  ctx->set_exception(ctx,"MissingParameterValue","infoformat");
+               if(!fi_i)
+                  ctx->set_exception(ctx,"MissingParameterValue","i");
+               if(!fi_j)
+                  ctx->set_exception(ctx,"MissingParameterValue","j");
                return;
             }
          }
       } else {
          ctx->set_error(ctx, 501, "received wmts request with invalid request %s",str);
+         ctx->set_exception(ctx,"InvalidParameterValue","request");
          return;
       }
    } else {
@@ -478,6 +491,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
 
    if(!style || strcmp(style,"default")) {
       ctx->set_error(ctx,404, "received request with invalid style \"%s\" (expecting \"default\")",style);
+      if(kvp) ctx->set_exception(ctx,"InvalidParameterValue","style");
       return;
    }
    
@@ -485,6 +499,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
    if(tileset->dimensions) {
       if(!dimtable) {
          ctx->set_error(ctx,404, "received request with no dimensions");
+         if(kvp) ctx->set_exception(ctx,"InvalidParameterValue","dim");
          return;
       }
       int i;
@@ -493,6 +508,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
          const char *value = apr_table_get(dimtable,dimension->name);
          if(!value) {
             ctx->set_error(ctx,404,"received request with no value for dimension \"%s\"",dimension->name);
+            if(kvp) ctx->set_exception(ctx,"MissingParameterValue","%s",dimension->name);
             return;
          }
          char *tmpval = apr_pstrdup(ctx->pool,value);
@@ -501,6 +517,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
          if(ok != MAPCACHE_SUCCESS) {
             ctx->set_error(ctx,404,"dimension \"%s\" value \"%s\" fails to validate",
                   dimension->name, value);
+            if(kvp) ctx->set_exception(ctx,"InvalidParameterValue","%s",dimension->name);
             return;
          }
          
@@ -512,6 +529,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
 
    if(!matrixset) {
       ctx->set_error(ctx, 404, "received wmts request with no TILEMATRIXSET");
+      if(kvp) ctx->set_exception(ctx,"MissingParameterValue","tilematrixset");
       return;
    } else {
       int i;
@@ -523,42 +541,49 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
       }
       if(!grid_link) {
          ctx->set_error(ctx, 404, "received wmts request with invalid TILEMATRIXSET %s",matrixset);
+         if(kvp) ctx->set_exception(ctx,"InvalidParameterValue","tilematrixset");
          return;
       }
    }
 
    if(!matrix) {
       ctx->set_error(ctx, 404, "received wmts request with no TILEMATRIX");
+      if(kvp) ctx->set_exception(ctx,"MissingParameterValue","tilematrix");
       return;
    } else {
       char *endptr;
       level = (int)strtol(matrix,&endptr,10);
       if(*endptr != 0 || level < grid_link->minz || level >= grid_link->maxz) {
          ctx->set_error(ctx, 404, "received wmts request with invalid TILEMATRIX %s", matrix);
+         if(kvp) ctx->set_exception(ctx,"InvalidParameterValue","tilematrix");
          return;
       }
    }
    
    if(!tilerow) {
       ctx->set_error(ctx, 404, "received wmts request with no TILEROW");
+      if(kvp) ctx->set_exception(ctx,"MissingParameterValue","tilerow");
       return;
    } else {
       char *endptr;
       row = (int)strtol(tilerow,&endptr,10);
       if(*endptr != 0 || row < 0) {
          ctx->set_error(ctx, 404, "received wmts request with invalid TILEROW %s",tilerow);
+         if(kvp) ctx->set_exception(ctx,"InvalidParameterValue","tilerow");
          return;
       }
    }
 
    if(!tilecol) {
       ctx->set_error(ctx, 404, "received wmts request with no TILECOL");
+      if(kvp) ctx->set_exception(ctx,"MissingParameterValue","tilecol");
       return;
    } else {
       char *endptr;
       col = (int)strtol(tilecol,&endptr,10);
       if(endptr == tilecol || col < 0) {
          ctx->set_error(ctx, 404, "received wmts request with invalid TILECOL %s",tilecol);
+         if(kvp) ctx->set_exception(ctx,"InvalidParameterValue","tilecol");
          return;
       }
    }
@@ -597,6 +622,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
       req->tiles[0] = mapcache_tileset_tile_create(ctx->pool, tileset, grid_link);
       if(!req->tiles[0]) {
          ctx->set_error(ctx, 500, "failed to allocate tile");
+         if(kvp) ctx->set_exception(ctx,"NoApplicableCode","");
          return;
       }
 
@@ -616,7 +642,10 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
       req->tiles[0]->z = level;
 
       mapcache_tileset_tile_validate(ctx,req->tiles[0]);
-      GC_CHECK_ERROR(ctx);
+      if(GC_HAS_ERROR(ctx)) {
+         if(kvp) ctx->set_exception(ctx,"TileOutOfRange","");
+         return;
+      }
 
       *request = (mapcache_request*)req;
       return;
@@ -629,6 +658,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
       char *endptr;
       if(!tileset->source || !tileset->source->info_formats) {
          ctx->set_error(ctx,400,"tileset %s does not support featureinfo requests", tileset->name);
+         if(kvp) ctx->set_exception(ctx,"OperationNotSupported","");
          return;
       }
       mapcache_request_get_feature_info *req_fi = (mapcache_request_get_feature_info*)apr_pcalloc(
@@ -652,11 +682,13 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
       fi->i = (int)strtol(fi_i,&endptr,10);
       if(*endptr != 0 || fi->i < 0 || fi->i >= grid_link->grid->tile_sx) {
          ctx->set_error(ctx, 404, "received wmts featureinfo request with invalid I %s",fi_i);
+         if(kvp) ctx->set_exception(ctx,"PointIJOutOfRange","i");
          return;
       }
       fi->j = (int)strtol(fi_j,&endptr,10);
       if(*endptr != 0 || fi->j < 0 || fi->j >= grid_link->grid->tile_sy) {
          ctx->set_error(ctx, 404, "received wmts featureinfo request with invalid J %s",fi_j);
+         if(kvp) ctx->set_exception(ctx,"PointIJOutOfRange","j");
          return;
       }
       fi->map.width = grid_link->grid->tile_sx;
@@ -670,6 +702,34 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
    }
 }
 
+void _error_report_wmts(mapcache_context *ctx, mapcache_service *service, char *msg,
+      char **err_body, apr_table_t *headers) {
+   char *template = "\
+<?xml version=\"1.0\" encoding=\"UTF-8\"?>\
+   <ExceptionReport xmlns=\"http://www.opengis.net/ows/2.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ows/2.0 owsExceptionReport.xsd\" version=\"1.0.0\" xml:lang=\"en\">\
+   <!-- %s -->\
+   %s\
+</ExceptionReport>";
+   if(!ctx->exceptions) {
+      *err_body = msg;
+      return;
+   }
+   char *exceptions="";
+
+   const apr_array_header_t *array = apr_table_elts(ctx->exceptions);
+   apr_table_entry_t *elts = (apr_table_entry_t *) array->elts;
+   int i;
+   for (i = 0; i < array->nelts; i++) {
+      exceptions = apr_pstrcat(ctx->pool,exceptions,apr_psprintf(ctx->pool,
+               "<Exception exceptionCode=\"%s\" locator=\"%s\"/>",elts[i].key,elts[i].val),NULL);
+   }
+
+   *err_body = apr_psprintf(ctx->pool,template,msg,exceptions);
+   apr_table_set(headers, "Content-Type", "application/xml");
+
+
+}
+
 mapcache_service* mapcache_service_wmts_create(mapcache_context *ctx) {
    mapcache_service_wmts* service = (mapcache_service_wmts*)apr_pcalloc(ctx->pool, sizeof(mapcache_service_wmts));
    if(!service) {
@@ -681,6 +741,7 @@ mapcache_service* mapcache_service_wmts_create(mapcache_context *ctx) {
    service->service.type = MAPCACHE_SERVICE_WMTS;
    service->service.parse_request = _mapcache_service_wmts_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wmts;
+   service->service.format_error = _error_report_wmts;
    return (mapcache_service*)service;
 }
 

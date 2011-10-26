@@ -225,7 +225,7 @@ int main(int argc, const char **argv) {
       if(!ctx->config || ctx->config->autoreload) {
          load_config(ctx,conffile);
          if(GC_HAS_ERROR(ctx)) {
-            fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,NULL));
+            fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx));
             goto cleanup;
          }
       }
@@ -237,7 +237,7 @@ int main(int argc, const char **argv) {
       params = mapcache_http_parse_param_string(ctx, getenv("QUERY_STRING"));
       mapcache_service_dispatch_request(ctx,&request,pathInfo,params,ctx->config);
       if(GC_HAS_ERROR(ctx) || !request) {
-         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,(request)?request->service:NULL));
+         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx));
          goto cleanup;
       }
       
@@ -284,13 +284,13 @@ int main(int argc, const char **argv) {
 #endif
       }
       if(GC_HAS_ERROR(ctx)) {
-         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,request->service));
+         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx));
          goto cleanup;
       }
 #ifdef DEBUG
       if(!http_response) {
          ctx->set_error(ctx,500,"###BUG### NULL response");
-         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx,request->service));
+         fcgi_write_response(globalctx, mapcache_core_respond_to_error(ctx));
          goto cleanup;
       }
 #endif
