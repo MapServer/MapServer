@@ -907,8 +907,8 @@ void _format_error_wms(mapcache_context *ctx, mapcache_service *service, char *m
    char *template = "\
 <?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n\
 <!DOCTYPE ServiceExceptionReport SYSTEM \
-\"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n\
-<ServiceExceptionReport version=\"1.1.0\">\n\
+\"http://schemas.opengis.net/wms/1.1.1/exception_1_1_1.dtd\">\n\
+<ServiceExceptionReport version=\"1.1.1\">\n\
 <ServiceException>\n\
 <![CDATA[\n\
 %s\n\
