@@ -224,8 +224,8 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
             }
          }
 
-
-         /* gaia gis chokes if this is added to the capabilities doc,
+         /*
+          * gaia gis chokes if this is added to the capabilities doc,
           * so disable it for now
           *
          double *gbbox = grid_link->restricted_extent?grid_link->restricted_extent:grid_link->grid->extent;
@@ -266,7 +266,7 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
                grid->extent[0], grid->extent[1]));
       ezxml_set_txt(ezxml_add_child(bbox,"UpperCorner",0),apr_psprintf(ctx->pool,"%f %f",
                grid->extent[2], grid->extent[3]));
-
+      ezxml_set_attr(bbox,"crs",mapcache_grid_get_crs(ctx,grid));
       
       if(WellKnownScaleSet) {
          ezxml_set_txt(ezxml_add_child(tmset,"WellKnownScaleSet",0),WellKnownScaleSet);
@@ -278,9 +278,15 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
          ezxml_set_txt(ezxml_add_child(tm,"ows:Identifier",0),apr_psprintf(ctx->pool,"%d",level));
          double scaledenom = glevel->resolution * mapcache_meters_per_unit[grid->unit] / 0.00028;
          ezxml_set_txt(ezxml_add_child(tm,"ScaleDenominator",0),apr_psprintf(ctx->pool,"%.20f",scaledenom));
-         ezxml_set_txt(ezxml_add_child(tm,"TopLeftCorner",0),apr_psprintf(ctx->pool,"%f %f",
-                  grid->extent[0],
-                  grid->extent[1] + glevel->maxy * glevel->resolution * grid->tile_sy));
+         if(mapcache_is_axis_inverted(grid->srs)) {
+            ezxml_set_txt(ezxml_add_child(tm,"TopLeftCorner",0),apr_psprintf(ctx->pool,"%f %f",
+               grid->extent[1] + glevel->maxy * glevel->resolution * grid->tile_sy,
+               grid->extent[0]));
+         } else {
+            ezxml_set_txt(ezxml_add_child(tm,"TopLeftCorner",0),apr_psprintf(ctx->pool,"%f %f",
+                     grid->extent[0],
+                     grid->extent[1] + glevel->maxy * glevel->resolution * grid->tile_sy));
+         }
          ezxml_set_txt(ezxml_add_child(tm,"TileWidth",0),apr_psprintf(ctx->pool,"%d",grid->tile_sx));
          ezxml_set_txt(ezxml_add_child(tm,"TileHeight",0),apr_psprintf(ctx->pool,"%d",grid->tile_sy));
          ezxml_set_txt(ezxml_add_child(tm,"MatrixWidth",0),apr_psprintf(ctx->pool,"%d",glevel->maxx));
@@ -329,6 +335,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
          /* extract our wnated parameters, they will be validated later on */
          tilerow = apr_table_get(params,"TILEROW");
          style = apr_table_get(params,"STYLE");
+         if(!style || !*style) style = "default";
          tilecol = apr_table_get(params,"TILECOL");
          format = apr_table_get(params,"FORMAT");
          layer = apr_table_get(params,"LAYER");
@@ -467,7 +474,8 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
    }
       
    mapcache_grid_link *grid_link = NULL;
-   
+  
+
    if(!style || strcmp(style,"default")) {
       ctx->set_error(ctx,404, "received request with invalid style \"%s\" (expecting \"default\")",style);
       return;

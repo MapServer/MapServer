@@ -66,7 +66,7 @@ const char* mapcache_grid_get_crs(mapcache_context *ctx, mapcache_grid *grid) {
       epsgnum++;
    }
 
-   return apr_psprintf(ctx->pool,"urn:ogc:def:crs:EPSG::%s",epsgnum);
+   return apr_psprintf(ctx->pool,"urn:ogc:def:crs:EPSG:6.3:%s",epsgnum);
 }
 
 const char* mapcache_grid_get_srs(mapcache_context *ctx, mapcache_grid *grid) {
