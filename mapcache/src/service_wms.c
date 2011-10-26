@@ -319,6 +319,8 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
    if(!str) {
       errcode=400;
       errmsg = "received wms request with no service param";
+      /* set the service to null as we don't want service exceptions to be generated */
+      ctx->service = NULL;
       goto proxies;
    }
    if( strcasecmp(str,"wms") ) {
@@ -900,6 +902,37 @@ void _configuration_parse_wms_xml(mapcache_context *ctx, ezxml_t node, mapcache_
    }
 }
 
+void _format_error_wms(mapcache_context *ctx, mapcache_service *service, char *msg,
+      char **err_body, apr_table_t *headers) {
+   char *template = "\
+<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n\
+<!DOCTYPE ServiceExceptionReport SYSTEM \
+\"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n\
+<ServiceExceptionReport version=\"1.1.0\">\n\
+<ServiceException>\n\
+<![CDATA[\n\
+%s\n\
+]]>\n\
+</ServiceException>\n\
+%s\
+</ServiceExceptionReport>";
+
+   char *exceptions="";
+
+   if(ctx->exceptions) {
+      const apr_array_header_t *array = apr_table_elts(ctx->exceptions);
+      apr_table_entry_t *elts = (apr_table_entry_t *) array->elts;
+      int i;
+      for (i = 0; i < array->nelts; i++) {
+         exceptions = apr_pstrcat(ctx->pool,exceptions,apr_psprintf(ctx->pool,
+                  "<ServiceException code=\"%s\"><![CDATA[%s]]></ServiceException>\n",elts[i].key,elts[i].val),NULL);
+      }
+   }
+
+   *err_body = apr_psprintf(ctx->pool,template,msg,exceptions);
+   apr_table_set(headers, "Content-Type", "application/vnd.ogc.se_xml");
+}
+
 mapcache_service* mapcache_service_wms_create(mapcache_context *ctx) {
    mapcache_service_wms* service = (mapcache_service_wms*)apr_pcalloc(ctx->pool, sizeof(mapcache_service_wms));
    if(!service) {
@@ -914,6 +947,7 @@ mapcache_service* mapcache_service_wms_create(mapcache_context *ctx) {
    service->service.parse_request = _mapcache_service_wms_parse_request;
    service->service.create_capabilities_response = _create_capabilities_wms;
    service->service.configuration_parse_xml = _configuration_parse_wms_xml;
+   service->service.format_error = _format_error_wms;
    service->getmap_strategy = MAPCACHE_GETMAP_ASSEMBLE;
    service->resample_mode = MAPCACHE_RESAMPLE_BILINEAR;
    service->getmap_format = NULL;
