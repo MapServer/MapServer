@@ -225,6 +225,9 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
          }
 
 
+         /* gaia gis chokes if this is added to the capabilities doc,
+          * so disable it for now
+          *
          double *gbbox = grid_link->restricted_extent?grid_link->restricted_extent:grid_link->grid->extent;
          ezxml_t bbox = ezxml_add_child(layer,"ows:BoundingBox",0);
          ezxml_set_txt(ezxml_add_child(bbox,"ows:LowerCorner",0),
@@ -232,6 +235,7 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
          ezxml_set_txt(ezxml_add_child(bbox,"ows:UpperCorner",0),
                apr_psprintf(ctx->pool,"%f %f",gbbox[2], gbbox[3]));
          ezxml_set_attr(bbox,"crs",mapcache_grid_get_crs(ctx,grid_link->grid));
+         */
       }
       layer_index = apr_hash_next(layer_index);
    }
@@ -279,8 +283,8 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
                   grid->extent[1] + glevel->maxy * glevel->resolution * grid->tile_sy));
          ezxml_set_txt(ezxml_add_child(tm,"TileWidth",0),apr_psprintf(ctx->pool,"%d",grid->tile_sx));
          ezxml_set_txt(ezxml_add_child(tm,"TileHeight",0),apr_psprintf(ctx->pool,"%d",grid->tile_sy));
-         ezxml_set_txt(ezxml_add_child(tm,"MatrixWidth",0),apr_psprintf(ctx->pool,"%d",glevel->maxx+1));
-         ezxml_set_txt(ezxml_add_child(tm,"MatrixHeight",0),apr_psprintf(ctx->pool,"%d",glevel->maxy+1));
+         ezxml_set_txt(ezxml_add_child(tm,"MatrixWidth",0),apr_psprintf(ctx->pool,"%d",glevel->maxx));
+         ezxml_set_txt(ezxml_add_child(tm,"MatrixHeight",0),apr_psprintf(ctx->pool,"%d",glevel->maxy));
       }
       grid_index = apr_hash_next(grid_index);
    }
