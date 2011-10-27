@@ -124,7 +124,7 @@ void mapcache_tileset_add_watermark(mapcache_context *ctx, mapcache_tileset *til
       return;
    }
    rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, f);
-   if(!finfo.size) {
+   if(rv != APR_SUCCESS || !finfo.size) {
       ctx->set_error(ctx, 500, "watermark %s has no data",filename);
       return;
    }

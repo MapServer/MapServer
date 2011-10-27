@@ -52,7 +52,7 @@ mapcache_http_response *mapcache_core_get_tile(mapcache_context *ctx, mapcache_r
    mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
    int i;
    char *timestr;
-   mapcache_image *base,*overlay;
+   mapcache_image *base=NULL,*overlay;
 
    /* this loop retrieves the tiles from the caches, and eventually decodes and merges them together
     * if multiple tiles were asked for */

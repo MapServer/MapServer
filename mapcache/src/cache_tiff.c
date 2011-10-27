@@ -506,7 +506,7 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
 
    /* find the location of the last '/' in the string */
    char *hackptr1,*hackptr2;
-   hackptr1 = filename;
+   hackptr2 = hackptr1 = filename;
    while(*hackptr1) {
       if(*hackptr1 == '/')
          hackptr2 = hackptr1;

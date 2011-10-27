@@ -308,7 +308,10 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
 void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_service *this, mapcache_request **request,
       const char *pathinfo, apr_table_t *params, mapcache_cfg *config) {
    const char *str, *service = NULL, *style = NULL, *version = NULL, *layer = NULL, *matrixset = NULL,
-               *matrix = NULL, *tilecol = NULL, *tilerow = NULL, *format = NULL, *extension = NULL,
+#ifdef PEDANTIC_WMTS_FORMAT_CHECK
+               *format = NULL,
+#endif
+               *matrix = NULL, *tilecol = NULL, *tilerow = NULL, *extension = NULL,
                *infoformat = NULL, *fi_i = NULL, *fi_j = NULL;
    apr_table_t *dimtable = NULL;
    mapcache_tileset *tileset = NULL;
@@ -341,7 +344,9 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
          style = apr_table_get(params,"STYLE");
          if(!style || !*style) style = "default";
          tilecol = apr_table_get(params,"TILECOL");
+#ifdef PEDANTIC_WMTS_FORMAT_CHECK
          format = apr_table_get(params,"FORMAT");
+#endif
          layer = apr_table_get(params,"LAYER");
          if(!layer) { /*we have to validate this now in order to be able to extract dimensions*/
             ctx->set_error(ctx, 400, "received wmts request with no layer");

@@ -32,6 +32,14 @@
 #include <png.h>
 #include <apr_strings.h>
 
+#ifndef Z_BEST_SPEED
+#define Z_BEST_SPEED 1
+#endif
+#ifndef Z_BEST_COMPRESSION
+#define Z_BEST_COMPRESSION 9
+#endif
+
+
 
 /**\addtogroup imageio_png */
 /** @{ */
@@ -1122,7 +1130,6 @@ int _mapcache_imageio_remap_palette(unsigned char *pixels, int npixels,
  */
 mapcache_buffer* _mapcache_imageio_png_q_encode( mapcache_context *ctx, mapcache_image *image,
       mapcache_image_format *format) {
-   int ret;
    mapcache_buffer *buffer = mapcache_buffer_create(3000,ctx->pool);
    mapcache_image_format_png_q *f = (mapcache_image_format_png_q*)format;
    int compression = f->format.compression_level;
@@ -1130,8 +1137,16 @@ mapcache_buffer* _mapcache_imageio_png_q_encode( mapcache_context *ctx, mapcache
    unsigned char *pixels = (unsigned char*)apr_pcalloc(ctx->pool,image->w*image->h*sizeof(unsigned char));
    rgbaPixel palette[256];
    unsigned int maxval;
-   ret = _mapcache_imageio_quantize_image(image,&numPaletteEntries,palette, &maxval, NULL, 0);
-   ret = _mapcache_imageio_classify(image,pixels,palette,numPaletteEntries);
+   
+   if(MAPCACHE_SUCCESS != _mapcache_imageio_quantize_image(image,&numPaletteEntries,palette, &maxval, NULL, 0)) {
+      ctx->set_error(ctx,500,"failed to quantize image buffer");
+      return NULL;
+   }
+   if(MAPCACHE_SUCCESS != _mapcache_imageio_classify(image,pixels,palette,numPaletteEntries)) {
+      ctx->set_error(ctx,500,"failed to quantize image buffer");
+      return NULL;
+   }
+
    png_infop info_ptr;
    rgbPixel rgb[256];
    unsigned char a[256];
