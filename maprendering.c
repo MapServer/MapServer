@@ -490,8 +490,8 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                   int pw,ph;
                   imageObj* tile=NULL;
                   if(s.scale != 1) {
-                     pw = MS_NINT(symbol->sizex * s.scale)+1;
-                     ph = MS_NINT(symbol->sizey * s.scale)+1;
+                     pw = MS_NINT(symbol->sizex * s.scale);
+                     ph = MS_NINT(symbol->sizey * s.scale);
                   } else {
                      pw = symbol->sizex;
                      ph = symbol->sizey;
@@ -660,8 +660,8 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             }
 
             if(s.scale != 1) {
-               pw = MS_NINT(symbol->sizex * s.scale + s.gap)+1;
-               ph = MS_NINT(symbol->sizey * s.scale + s.gap)+1;
+               pw = MS_NINT(symbol->sizex * s.scale + s.gap);
+               ph = MS_NINT(symbol->sizey * s.scale + s.gap);
             } else {
                pw = symbol->sizex + s.gap;
                ph = symbol->sizey + s.gap;
