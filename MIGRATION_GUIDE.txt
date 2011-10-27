@@ -10,7 +10,12 @@ MapServer Migration Guide
     :depth: 2
     :backlinks: top
     
-    
+Mapserver 6.0 to 6.2 Migration
+==============================
+
+TODO:document changes in gap calculation for line markers and polygon
+tile symbols (#3879 and #3867)
+
 MapServer 5.6 to 6.0 Migration
 ==============================
     
