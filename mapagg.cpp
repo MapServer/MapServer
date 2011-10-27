@@ -208,15 +208,18 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
       mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > stroke_dash(dash);
       int patt_length = 0;
       for (int i = 0; i < style->patternlength; i += 2) {
-
          if (i < style->patternlength - 1) {
             dash.add_dash(MS_MAX(1,MS_NINT(style->pattern[i])),
                     MS_MAX(1,MS_NINT(style->pattern[i + 1])));
-            patt_length = MS_MAX(1,MS_NINT(style->pattern[i])) + 
+            if(style->patternoffset) {
+               patt_length = MS_MAX(1,MS_NINT(style->pattern[i])) + 
                     MS_MAX(1,MS_NINT(style->pattern[i + 1]));
+            }
          }
       }
-      dash.dash_start(patt_length - style->patternoffset);
+      if(style->patternoffset > 0) {
+         dash.dash_start(patt_length - style->patternoffset);
+      }
       stroke_dash.width(style->width);
       if(style->width>1)
          applyCJC(stroke_dash, style->linecap, style->linejoin);

@@ -263,7 +263,8 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
 }
 
 int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
-                           symbolStyleObj *style, double spacing, int auto_angle) {
+                           symbolStyleObj *style, double spacing, 
+                           double initialgap, int auto_angle) {
    rendererVTableObj *renderer = MS_IMAGE_RENDERER(image);
    int i,j;
    pointObj point;
@@ -282,7 +283,12 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
    for(i=0; i<p->numlines; i++)
    {
       int line_in = 0;
-      double current_length = (spacing+symbol_width)/2.0; /* initial padding for each line */
+      double current_length;
+      if(initialgap < 0) {
+         current_length = spacing/2.0; /* initial padding for each line */
+      } else {
+         current_length = initialgap; /* initial padding for each line */
+      }
       double line_length=0;
       for(j=1; j<p->line[i].numpoints; j++)
       {
@@ -323,22 +329,24 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
             }
             if( ret != MS_SUCCESS)
                return ret;
-            current_length += symbol_width + spacing;
+            current_length += spacing;
             in = 1;
             line_in=1;
          }
 
          if (in)
          {
-            current_length -= length + symbol_width/2.0;
+            current_length -= length;
          }
          else current_length -= length;
       }
 
-      /* if we couldn't place a symbol on the line, add one now
-      we don't add the symbol if the line is shorter than the
-      length of the symbol itself */
-      if(!line_in && line_length>symbol_width) {
+      /* 
+       * if we couldn't place a symbol on the line and no initialgap was
+       * specified,  add one now we don't add the symbol if the line is shorter
+       * than the length of the symbol itself
+       */
+      if(initialgap < 0 && !line_in && line_length>symbol_width) {
 
          /* total lengths of beginnning and end of current segment */
          double before_length=0,after_length=0;
@@ -440,7 +448,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             s.patternlength = style->patternlength;
             for(i=0; i<s.patternlength; i++)
                s.pattern[i] = style->pattern[i] * finalscalefactor;
-            s.patternoffset = style->initialgap * finalscalefactor;
+            s.patternoffset = (style->initialgap<=0) ? 0 : (style->initialgap * finalscalefactor);
 
             if(MS_VALID_COLOR(style->color))
                s.color = &style->color;
@@ -488,10 +496,12 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             /* compute a markerStyle and use it on the line */
             if(style->gap<0) {
                /* special function that treats any other symbol used as a marker, not a brush */
-               msImagePolylineMarkers(image,offsetLine,symbol,&s,-s.gap,1);
+               msImagePolylineMarkers(image,offsetLine,symbol,&s,-s.gap,
+                     style->initialgap * finalscalefactor, 1);
             }
             else if(style->gap>0) {
-               msImagePolylineMarkers(image,offsetLine,symbol,&s,s.gap,0);
+               msImagePolylineMarkers(image,offsetLine,symbol,&s,s.gap,
+                     style->initialgap * finalscalefactor,0);
             } else {
                if(renderer->renderLineTiled != NULL) {
                   int pw,ph;
@@ -667,11 +677,21 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             }
 
             if(s.scale != 1) {
-               pw = MS_NINT(symbol->sizex * s.scale + s.gap);
-               ph = MS_NINT(symbol->sizey * s.scale + s.gap);
+               if (s.gap > 0) {
+                  pw = MS_MAX(MS_NINT(s.gap),symbol->sizex * s.scale);
+                  ph = MS_MAX(MS_NINT(s.gap),symbol->sizey * s.scale);
+               } else {
+                  pw = MS_NINT(symbol->sizex * s.scale);
+                  ph = MS_NINT(symbol->sizey * s.scale);
+               }
             } else {
-               pw = symbol->sizex + s.gap;
-               ph = symbol->sizey + s.gap;
+               if (s.gap > 0) {
+                  pw = MS_MAX(s.gap,symbol->sizex);
+                  ph = MS_MAX(s.gap,symbol->sizey);
+               } else {
+                  pw = symbol->sizex;
+                  ph = symbol->sizey;
+               }
             }
             if(pw<1) pw=1;
             if(ph<1) ph=1;

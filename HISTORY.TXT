@@ -15,7 +15,12 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
-- Add intial gap support for line patterns (#3879)
+- Add initial gap support for line marker symbols (#3879)
+
+- Fix center to center computation of gaps for line marker symbols
+  and polygon tile patterns (#3867)
+
+- Add initial gap support for line patterns (#3879)
 
 - Fixed grid of thin lines in polygon symbol fills (#3868)
 

@@ -2399,7 +2399,7 @@ int initStyle(styleObj *style) {
 
   style->patternlength = 0; /* solid line */
   style->gap = 0;
-  style->initialgap = 0;
+  style->initialgap = -1;
   style->position = MS_CC;
   style->linecap = MS_CJC_DEFAULT_CAPS;
   style->linejoin = MS_CJC_DEFAULT_JOINS;
@@ -2486,6 +2486,10 @@ int loadStyle(styleObj *style) {
       break;
     case(INITIALGAP):
       if((getDouble(&style->initialgap)) == -1) return(MS_FAILURE);
+      if(style->initialgap < 0) {
+         msSetError(MS_MISCERR, "INITIALGAP requires a positive values", "loadStyle()");
+         return(MS_FAILURE);
+      }   
       break;
     case(MAXSCALEDENOM):
       if(getDouble(&(style->maxscaledenom)) == -1) return(MS_FAILURE);
@@ -2554,7 +2558,7 @@ int loadStyle(styleObj *style) {
         case(END):
           if(style->patternlength < 2) {
             msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required", "loadStyle()");
-            return(-1);
+            return(MS_FAILURE);
           }   
           done = MS_TRUE;
           break;
@@ -2711,7 +2715,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   else writeColor(stream, indent, "COLOR", NULL, &(style->color));
   
   writeNumber(stream, indent, "GAP", 0, style->gap);
-  writeNumber(stream, indent, "INITIALGAP", 0, style->initialgap);
+  writeNumber(stream, indent, "INITIALGAP", -1, style->initialgap);
 
   if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
     writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 6,
