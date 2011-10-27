@@ -206,14 +206,17 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
    } else {
       mapserver::conv_dash<line_adaptor> dash(lines);
       mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > stroke_dash(dash);
+      int patt_length = 0;
       for (int i = 0; i < style->patternlength; i += 2) {
 
          if (i < style->patternlength - 1) {
-
             dash.add_dash(MS_MAX(1,MS_NINT(style->pattern[i])),
                     MS_MAX(1,MS_NINT(style->pattern[i + 1])));
+            patt_length = MS_MAX(1,MS_NINT(style->pattern[i])) + 
+                    MS_MAX(1,MS_NINT(style->pattern[i + 1]));
          }
       }
+      dash.dash_start(patt_length - style->patternoffset);
       stroke_dash.width(style->width);
       if(style->width>1)
          applyCJC(stroke_dash, style->linecap, style->linejoin);
@@ -997,7 +1000,7 @@ template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSourc
    shape.line[0].point = (pointObj*)msSmallCalloc(allocated,sizeof(pointObj));
    shape.line[0].numpoints = 0;
    double x=0,y=0;
-   unsigned int cmd, prevCmd=-1;
+   unsigned int cmd;
    while((cmd = clipper.vertex(&x,&y)) != mapserver::path_cmd_stop) {
       switch(cmd) {
       case mapserver::path_cmd_line_to:
@@ -1010,7 +1013,6 @@ template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSourc
          shape.line[0].numpoints++;
          break;
       case mapserver::path_cmd_move_to:
-         //assert(shape.line[0].numpoints <= 1 || prevCmd == mapserver::path_cmd_line_to);
          shape.line[0].point[0].x = x;
          shape.line[0].point[0].y = y;
          shape.line[0].numpoints = 1;
@@ -1023,7 +1025,6 @@ template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSourc
       default:
          assert(0); //WTF?
       }
-      prevCmd = cmd;
    }
    free(shape.line[0].point);
 }
