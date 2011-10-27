@@ -257,6 +257,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>imageurl                              { MS_LEXER_RETURN_TOKEN(IMAGEURL); }
 <INITIAL>include                               { BEGIN(INCLUDE); }
 <INITIAL>index                                 { MS_LEXER_RETURN_TOKEN(INDEX); }
+<INITIAL>initialgap                            { MS_LEXER_RETURN_TOKEN(INITIALGAP); }
 <INITIAL>interlace                             { MS_LEXER_RETURN_TOKEN(INTERLACE); }
 <INITIAL,URL_STRING>intervals                  { MS_LEXER_RETURN_TOKEN(INTERVALS); } 
 <INITIAL>join                                  { MS_LEXER_RETURN_TOKEN(JOIN); }

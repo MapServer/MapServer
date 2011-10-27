@@ -2399,6 +2399,7 @@ int initStyle(styleObj *style) {
 
   style->patternlength = 0; /* solid line */
   style->gap = 0;
+  style->initialgap = 0;
   style->position = MS_CC;
   style->linecap = MS_CJC_DEFAULT_CAPS;
   style->linejoin = MS_CJC_DEFAULT_JOINS;
@@ -2482,6 +2483,9 @@ int loadStyle(styleObj *style) {
       break;
     case(GAP):
       if((getDouble(&style->gap)) == -1) return(MS_FAILURE);
+      break;
+    case(INITIALGAP):
+      if((getDouble(&style->initialgap)) == -1) return(MS_FAILURE);
       break;
     case(MAXSCALEDENOM):
       if(getDouble(&(style->maxscaledenom)) == -1) return(MS_FAILURE);
@@ -2707,6 +2711,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   else writeColor(stream, indent, "COLOR", NULL, &(style->color));
   
   writeNumber(stream, indent, "GAP", 0, style->gap);
+  writeNumber(stream, indent, "INITIALGAP", 0, style->initialgap);
 
   if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
     writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 6,

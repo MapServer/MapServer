@@ -184,7 +184,7 @@ int renderLineCairo(imageObj *img, shapeObj *p, strokeStyleObj *stroke) {
         }
     }
     if(stroke->patternlength>0) {
-        cairo_set_dash(r->cr,stroke->pattern,stroke->patternlength,0);
+        cairo_set_dash(r->cr,stroke->pattern,stroke->patternlength,-stroke->patternoffset);
     }
     switch(stroke->linecap) {
         case MS_CJC_BUTT:

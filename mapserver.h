@@ -885,6 +885,7 @@ typedef struct {
   double pattern[MS_MAXPATTERNLENGTH]; /*moved from symbolObj in version 6.0*/ 
   
   double gap; /*moved from symbolObj in version 6.0*/
+  double initialgap;
   int position; /*moved from symbolObj in version 6.0*/
   
   int linecap, linejoin; /*moved from symbolObj in version 6.0*/
@@ -2542,6 +2543,7 @@ typedef struct {
     /* line pattern, e.g. dots, dashes, etc.. */
     int patternlength;
     double pattern[MS_MAXPATTERNLENGTH];
+    double patternoffset;
     
     /* must be a valid color if not NULL */
     /* color.alpha must be used if supported by the renderer */

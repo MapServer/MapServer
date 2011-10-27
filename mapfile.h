@@ -297,7 +297,10 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define MAXDISTANCE 1227
 #define REGION 1228
 
+#define INITIALGAP 1229
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
+
 
 #endif /* MAPFILE_H */
