@@ -55,8 +55,6 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
 
       s->font = msLookupHashTable(&(fontset->fonts), l->font);
       if (!s->font) {
-         msSetError(MS_TTFERR, "Requested font (%s) not found.",
-                    "msDrawText()", l->font);
          return (MS_FAILURE);
       }
    }
@@ -887,7 +885,7 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
          labelStyleObj s;
          if (!string || !strlen(string))
             return (0); /* not errors, just don't want to do anything */
-         computeLabelStyle(&s, label, fontset, scalefactor);
+         if(computeLabelStyle(&s, label, fontset, scalefactor) != MS_SUCCESS) return MS_FAILURE;
          if (label->type == MS_TRUETYPE) {
             const char* string_ptr = string;
             int i;

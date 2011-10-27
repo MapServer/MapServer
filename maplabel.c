@@ -758,7 +758,7 @@ char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey) {
 	}
 	font = msLookupHashTable(&(fontset->fonts), fontKey);
 	if(!font) {
-	  msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSize()", fontKey);
+	  msSetError(MS_TTFERR, "Requested font (%s) not found.", "msFontsetLookupFont()", fontKey);
 	  return NULL;
 	}
 	return font;
