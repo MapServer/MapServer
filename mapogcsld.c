@@ -690,6 +690,22 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 }
 
 
+int _msSLDParseSizeParameter(CPLXMLNode *psSize)
+{
+    int nSize = 0;
+    CPLXMLNode *psLiteral = NULL;
+
+    if (psSize)
+    {
+	psLiteral = CPLGetXMLNode(psSize, "Literal");
+	if (psLiteral && psLiteral->psChild && psLiteral->psChild->pszValue)
+	  nSize = atof(psLiteral->psChild->pszValue);
+	else if (psSize->psChild && psSize->psChild->pszValue)
+	  nSize = atof(psSize->psChild->pszValue);
+    }
+
+    return nSize;
+}
 
 /************************************************************************/
 /*                           _SLDApplyRuleValues                        */
@@ -1671,8 +1687,8 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
         {
             /* extract symbol size */
             psSize = CPLGetXMLNode(psGraphic, "Size");
-            if (psSize && psSize->psChild && psSize->psChild->pszValue)
-              psStyle->size = atof(psSize->psChild->pszValue);
+            if (psSize)
+	      psStyle->size = _msSLDParseSizeParameter(psSize);
             else 
             {
                 /*do not set a default for external symbols #2305*/
