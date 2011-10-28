@@ -113,6 +113,7 @@ void initSymbol(symbolObj *s)
   s->full_font_path = NULL;
   s->full_pixmap_path = NULL;
   s->character = NULL;
+  s->anchorpoint_x = s->anchorpoint_y = 0.5;
 
   s->svg_text = NULL;
 }
@@ -152,6 +153,14 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 
   for(;;) {
     switch(msyylex()) {
+    case(ANCHORPOINT):
+      if(getDouble(&(s->anchorpoint_x)) == -1) return MS_FAILURE;
+      if(getDouble(&(s->anchorpoint_y)) == -1) return MS_FAILURE;
+      if(s->anchorpoint_x<0 || s->anchorpoint_x>1 || s->anchorpoint_y<0 || s->anchorpoint_y>1) {
+	    msSetError(MS_SYMERR, "ANCHORPOINT must be between 0 and 1", "loadSymbol()");
+       return(-1);
+      }
+      break;
     case(ANTIALIAS):
       if((s->antialias = getSymbol(2,MS_TRUE,MS_FALSE)) == -1)
 	return(-1);
@@ -804,6 +813,8 @@ int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   
   MS_COPYSTELEM(sizex);
   MS_COPYSTELEM(sizey);
+  MS_COPYSTELEM(anchorpoint_x);
+  MS_COPYSTELEM(anchorpoint_y);
   
   for (i=0; i < src->numpoints; i++) {
     MS_COPYPOINT(&(dst->points[i]), &(src->points[i]));

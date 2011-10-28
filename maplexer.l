@@ -202,7 +202,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>datarange                             { MS_LEXER_RETURN_TOKEN(DATARANGE); }
 <INITIAL>rangeitem                             { MS_LEXER_RETURN_TOKEN(RANGEITEM); }
 
-<INITIAL,URL_STRING>align                       { MS_LEXER_RETURN_TOKEN(ALIGN); }
+<INITIAL,URL_STRING>align                      { MS_LEXER_RETURN_TOKEN(ALIGN); }
+<INITIAL>anchorpoint                           { MS_LEXER_RETURN_TOKEN(ANCHORPOINT); }
 <INITIAL,URL_VARIABLE,URL_STRING>angle         { MS_LEXER_RETURN_TOKEN(ANGLE); }
 <INITIAL,URL_STRING>antialias                  { MS_LEXER_RETURN_TOKEN(ANTIALIAS); }
 <INITIAL,URL_STRING>backgroundcolor            { MS_LEXER_RETURN_TOKEN(BACKGROUNDCOLOR); }

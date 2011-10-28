@@ -773,6 +773,26 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
          p_x = p->x + style->offsetx * scalefactor;
          p_y = p->y + style->offsety * scalefactor;
 
+         if(symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
+            int sx,sy;
+            msGetMarkerSize(symbolset, style, &sx, &sy, scalefactor);
+            double ox, oy;
+            ox = (0.5 - symbol->anchorpoint_x) * sx;
+            oy = (0.5 - symbol->anchorpoint_y) * sy;
+            if(s.rotation != 0) {
+               double sina,cosa;
+               double rox,roy;
+               sincos(-s.rotation,&sina,&cosa);
+               rox = ox * cosa - oy * sina;
+               roy = ox * sina + oy * cosa;
+               p_x += rox;
+               p_y += roy;
+            } else {
+               p_x += ox;
+               p_y += oy;
+            }
+         }
+
          if(renderer->use_imagecache) {
             imageObj *tile = getTile(image, symbol, &s, -1, -1,0);
             if(tile!=NULL)

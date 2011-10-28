@@ -177,6 +177,8 @@ typedef struct {
   %mutable;
 #endif /* SWIG */
   int filled;
+
+  double anchorpoint_x, anchorpoint_y;
   
   /*
   ** MS_SYMBOL_PIXMAP options
