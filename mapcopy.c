@@ -401,6 +401,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(patternlength);
     for(i=0;i<src->patternlength;i++)
         dst->pattern[i]=src->pattern[i];
+    MS_COPYSTELEM(initialgap);
     MS_COPYSTELEM(gap);
     MS_COPYSTELEM(linejoin);
     MS_COPYSTELEM(linejoinmaxsize);
