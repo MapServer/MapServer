@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Fixed layer with inline feature to support multiple classes (#4070)
+
 - Add support for rfc45 anchorpoint on marker symbols (#4066)
 
 - Add initial gap support for line marker symbols (#3879)

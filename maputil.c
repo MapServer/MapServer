@@ -514,21 +514,6 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
 {
   int i, iclass;
 
-  /* INLINE features do not work with expressions, allow the classindex */
-  /* value set prior to calling this function to carry through. */
-  if(layer->connectiontype == MS_INLINE) {
-    if(shape->classindex < 0 || shape->classindex >= layer->numclasses) return(-1);
-
-    if(map->scaledenom > 0) {  /* verify scaledenom here */
-      if((layer->class[shape->classindex]->maxscaledenom > 0) && (map->scaledenom > layer->class[shape->classindex]->maxscaledenom))
-        return(-1); /* can skip this feature */
-      if((layer->class[shape->classindex]->minscaledenom > 0) && (map->scaledenom <= layer->class[shape->classindex]->minscaledenom))
-        return(-1); /* can skip this feature */
-    }
-
-    return(shape->classindex);
-  }
-
   if (layer->numclasses > 0) {
     if (classgroup == NULL || numclasses <=0)
       numclasses = layer->numclasses;
@@ -548,6 +533,9 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
          if((layer->class[iclass]->minscaledenom > 0) && (map->scaledenom <= layer->class[iclass]->minscaledenom))
            continue; /* can skip this one, next class */
         }
+
+       if (layer->connectiontype == MS_INLINE)
+           return (iclass);
 
        /* verify the minfeaturesize */
        if ((shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) && (layer->class[iclass]->minfeaturesize > 0))
