@@ -212,7 +212,7 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
             dash.add_dash(MS_MAX(1,MS_NINT(style->pattern[i])),
                     MS_MAX(1,MS_NINT(style->pattern[i + 1])));
             if(style->patternoffset) {
-               patt_length = MS_MAX(1,MS_NINT(style->pattern[i])) + 
+               patt_length += MS_MAX(1,MS_NINT(style->pattern[i])) + 
                     MS_MAX(1,MS_NINT(style->pattern[i + 1]));
             }
          }
