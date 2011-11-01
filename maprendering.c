@@ -281,13 +281,13 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
    for(i=0; i<p->numlines; i++)
    {
       int line_in = 0;
+      double line_length=0;
       double current_length;
       if(initialgap < 0) {
          current_length = spacing/2.0; /* initial padding for each line */
       } else {
          current_length = initialgap; /* initial padding for each line */
       }
-      double line_length=0;
       for(j=1; j<p->line[i].numpoints; j++)
       {
          double rx,ry,theta,length;
@@ -775,14 +775,16 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
 
          if(symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
             int sx,sy;
-            msGetMarkerSize(symbolset, style, &sx, &sy, scalefactor);
             double ox, oy;
+            msGetMarkerSize(symbolset, style, &sx, &sy, scalefactor);
             ox = (0.5 - symbol->anchorpoint_x) * sx;
             oy = (0.5 - symbol->anchorpoint_y) * sy;
             if(s.rotation != 0) {
                double sina,cosa;
                double rox,roy;
-               sincos(-s.rotation,&sina,&cosa);
+               /* sincos(-s.rotation,&sina,&cosa); */
+               sina = sin(-s.rotation);
+               cosa = cos(-s.rotation);
                rox = ox * cosa - oy * sina;
                roy = ox * sina + oy * cosa;
                p_x += rox;
