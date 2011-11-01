@@ -267,16 +267,18 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
    int i,j;
    pointObj point;
    double original_rotation = style->rotation;
-   double symbol_width;
+   double symbol_width,symbol_height;
    int ret = MS_FAILURE;
-   if(symbol->type != MS_SYMBOL_TRUETYPE)
+   if(symbol->type != MS_SYMBOL_TRUETYPE) {
       symbol_width = MS_MAX(1,symbol->sizex*style->scale);
-   else {
+      symbol_height = MS_MAX(1,symbol->sizey*style->scale);
+   } else {
       rectObj rect;
       if(MS_SUCCESS != renderer->getTruetypeTextBBox(renderer,symbol->full_font_path,style->scale,
             symbol->character,&rect,NULL))
          return MS_FAILURE;
       symbol_width=rect.maxx-rect.minx;
+      symbol_height=rect.maxy-rect.miny;
    }
    for(i=0; i<p->numlines; i++)
    {
@@ -311,6 +313,24 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
 
             point.x = p->line[i].point[j - 1].x + current_length * rx;
             point.y = p->line[i].point[j - 1].y + current_length * ry;
+            if(symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
+               double ox, oy;
+               ox = (0.5 - symbol->anchorpoint_x) * symbol_width;
+               oy = (0.5 - symbol->anchorpoint_y) * symbol_height;
+               if(style->rotation != 0) {
+                  double sina,cosa;
+                  double rox,roy;
+                  sina = sin(-style->rotation);
+                  cosa = cos(-style->rotation);
+                  rox = ox * cosa - oy * sina;
+                  roy = ox * sina + oy * cosa;
+                  point.x += rox;
+                  point.y += roy;
+               } else {
+                  point.x += ox;
+                  point.y += oy;
+               }
+            }
             switch (symbol->type) {
             case MS_SYMBOL_PIXMAP:
                ret = renderer->renderPixmapSymbol(image, point.x, point.y, symbol, style);
