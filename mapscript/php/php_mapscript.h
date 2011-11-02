@@ -610,6 +610,9 @@ int             layerObj_setConnectionType(layerObj *self, int connectiontype,
                                            const char *library_str) ;
 
 int             labelObj_updateFromString(labelObj *self, char *snippet);
+int             labelObj_moveStyleUp(labelObj *self, int index);
+int             labelObj_moveStyleDown(labelObj *self, int index);
+int             labelObj_deleteStyle(labelObj *self, int index);
 
 int             legendObj_updateFromString(legendObj *self, char *snippet);
 
@@ -741,6 +744,7 @@ int             DBFInfo_getFieldDecimals(DBFInfo *self, int iField);
 DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 
 styleObj       *styleObj_new(classObj *class, styleObj *style);
+styleObj       *styleObj_label_new(labelObj *label, styleObj *style);
 int             styleObj_updateFromString(styleObj *self, char *snippet);
 int             styleObj_setSymbolByName(styleObj *self, mapObj *map, 
                                          char* pszSymbolName);

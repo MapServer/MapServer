@@ -2303,6 +2303,14 @@ MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style,
                                 int nStyleIndex);
 MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *classo, int index);
 
+/* maplabel.c */
+MS_DLL_EXPORT int msInsertLabelStyle(labelObj *label, styleObj *style,
+                                     int nStyleIndex);
+MS_DLL_EXPORT int msMoveLabelStyleUp(labelObj *label, int nStyleIndex);
+MS_DLL_EXPORT int msMoveLabelStyleDown(labelObj *label, int nStyleIndex);
+MS_DLL_EXPORT int msDeleteLabelStyle(labelObj *label, int nStyleIndex);
+MS_DLL_EXPORT styleObj *msRemoveLabelStyle(labelObj *label, int nStyleIndex);
+
 /* Measured shape utility functions. */
 MS_DLL_EXPORT pointObj *msGetPointUsingMeasure(shapeObj *shape, double m);
 MS_DLL_EXPORT pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point);

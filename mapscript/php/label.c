@@ -60,6 +60,22 @@ ZEND_BEGIN_ARG_INFO_EX(label_removeBinding_args, 0, 0, 1)
   ZEND_ARG_INFO(0, labelBinding)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(label_getStyle_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(label_moveStyleUp_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(label_moveStyleDown_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(label_deleteStyle_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto void __construct() 
    labelObj CANNOT be instanciated, this will throw an exception on use */
 PHP_METHOD(labelObj, __construct)
@@ -104,6 +120,7 @@ PHP_METHOD(labelObj, __get)
     else IF_GET_LONG("minfeaturesize", php_label->label->minfeaturesize)
     else IF_GET_LONG("autominfeaturesize", php_label->label->autominfeaturesize)
     else IF_GET_LONG("repeatdistance", php_label->label->repeatdistance)
+    else IF_GET_LONG("numstyles", php_label->label->numstyles) 
     else IF_GET_LONG("mindistance", php_label->label->mindistance)
     else IF_GET_LONG("partials", php_label->label->partials)
     else IF_GET_LONG("force", php_label->label->force)
@@ -173,6 +190,10 @@ PHP_METHOD(labelObj, __set)
               (STRING_EQUAL("shadowcolor", property)) )
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
+    }
+    else if (STRING_EQUAL("numstyles", property))
+    {
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
     else 
     {
@@ -331,6 +352,111 @@ PHP_METHOD(labelObj, removeBinding)
 }
 /* }}} */
 
+/* {{{ proto int getstyle(int index)
+   return the style object. */
+PHP_METHOD(labelObj, getStyle)
+{
+    long index;
+    zval *zobj = getThis();
+    php_label_object *php_label;
+    styleObj *style = NULL;
+    parent_object parent;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if (index < 0 || index >= php_label->label->numstyles)
+    {
+        mapscript_throw_exception("Invalid style index." TSRMLS_CC);
+        return;
+    }
+    
+    style = php_label->label->styles[index];
+
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_style(style, parent, return_value TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ proto int moveStyleUp(int index)  */
+PHP_METHOD(labelObj, moveStyleUp)
+{
+    long index;
+    zval *zobj = getThis();
+    php_label_object *php_label;
+    int status = MS_FAILURE;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    status = labelObj_moveStyleUp(php_label->label, index);
+
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int moveStyleDown(int index) */
+PHP_METHOD(labelObj, moveStyleDown)
+{
+    long index;
+    zval *zobj = getThis();
+    php_label_object *php_label;
+    int status = MS_FAILURE;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    status = labelObj_moveStyleDown(php_label->label, index);
+
+    RETURN_LONG(status);
+}
+/* }}} */
+
+ /* {{{ proto int deleteStyle(int index) */
+PHP_METHOD(labelObj, deleteStyle)
+{
+    long index;
+    zval *zobj = getThis();
+    php_label_object *php_label;
+    int status = MS_FAILURE;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    status =  labelObj_deleteStyle(php_label->label, index);
+
+    RETURN_LONG(status);
+}
+/* }}} */
+
 /* {{{ proto int label.free()
    Free the object */
 PHP_METHOD(labelObj, free)
@@ -362,6 +488,10 @@ zend_function_entry label_functions[] = {
     PHP_ME(labelObj, setBinding, label_setBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, getBinding, label_getBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, removeBinding, label_removeBinding_args, ZEND_ACC_PUBLIC)
+    PHP_ME(labelObj, getStyle, label_getStyle_args, ZEND_ACC_PUBLIC)
+    PHP_ME(labelObj, moveStyleUp, label_moveStyleUp_args, ZEND_ACC_PUBLIC)
+    PHP_ME(labelObj, moveStyleDown, label_moveStyleDown_args, ZEND_ACC_PUBLIC)
+    PHP_ME(labelObj, deleteStyle, label_deleteStyle_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };

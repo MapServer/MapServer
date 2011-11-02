@@ -73,4 +73,41 @@
 
     return MS_SUCCESS;
   }
+
+  %newobject getStyle;
+  styleObj *getStyle(int i) {
+      if (i >= 0 && i < self->numstyles) {
+          MS_REFCNT_INCR(self->styles[i]);
+          return self->styles[i];
+      } else {
+          msSetError(MS_CHILDERR, "Invalid index: %d", "getStyle()", i);
+          return NULL;
+      }
+  }
+
+#ifdef SWIGCSHARP
+%apply SWIGTYPE *SETREFERENCE {styleObj *style};
+#endif
+    int insertStyle(styleObj *style, int index=-1) {
+        return msInsertLabelStyle(self, style, index);
+    }
+#ifdef SWIGCSHARP 
+%clear styleObj *style;
+#endif
+
+    %newobject removeStyle;
+    styleObj *removeStyle(int index) {
+	styleObj* style = (styleObj *) msRemoveLabelStyle(self, index);
+	if (style)
+		MS_REFCNT_INCR(style);
+        return style;
+    }
+
+    int moveStyleUp(int index) {
+        return msMoveLabelStyleUp(self, index);
+    }
+
+    int moveStyleDown(int index) {
+       return msMoveLabelStyleDown(self, index);
+    }
 }
