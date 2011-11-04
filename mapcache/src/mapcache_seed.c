@@ -328,11 +328,34 @@ void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
       tile->z -= 1;
       return;
    }
-   for(i=0;i<2;i++) {
-      tile->x = curx*2 + i* tileset->metasize_x;
+
+   /* 
+    * compute the x,y limits of the next zoom level that intersect the
+    * current metatile
+    */
+   int minchildx,maxchildx,minchildy,maxchildy;
+   double bboxtl[4],bboxbr[4];
+   mapcache_grid_get_extent(cmd_ctx, grid_link->grid,
+         curx, cury, curz, bboxtl);
+   mapcache_grid_get_extent(cmd_ctx, grid_link->grid,
+         curx+tileset->metasize_x-1, cury+tileset->metasize_y-1, curz, bboxbr);
+   mapcache_grid_get_xy(cmd_ctx,grid_link->grid,
+         (bboxtl[0]+bboxtl[2])/2,
+         (bboxtl[1]+bboxtl[3])/2,
+         tile->z,&minchildx,&minchildy);
+   mapcache_grid_get_xy(cmd_ctx,grid_link->grid,
+         (bboxbr[0]+bboxbr[2])/2,
+         (bboxbr[1]+bboxbr[3])/2,
+         tile->z,&maxchildx,&maxchildy);
+
+   minchildx = (minchildx / tileset->metasize_x)*tileset->metasize_x;
+   minchildy = (minchildy / tileset->metasize_y)*tileset->metasize_y;
+   maxchildx = (maxchildx / tileset->metasize_x + 1)*tileset->metasize_x;
+   maxchildy = (maxchildy / tileset->metasize_y + 1)*tileset->metasize_y;
+
+   for(tile->x = minchildx; tile->x < maxchildx; tile->x +=  tileset->metasize_x) {
       if(tile->x >= grid_link->grid_limits[tile->z][0] && tile->x < grid_link->grid_limits[tile->z][2]) {
-         for(j=0;j<2;j++) {
-            tile->y = cury*2 + j * tileset->metasize_y; 
+         for(tile->y = minchildy; tile->y < maxchildy; tile->y += tileset->metasize_y) {
             if(tile->y >= grid_link->grid_limits[tile->z][1] && tile->y < grid_link->grid_limits[tile->z][3]) {
                cmd_recurse(cmd_ctx,tile);
             }
