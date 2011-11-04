@@ -247,9 +247,21 @@ static int _mapcache_cache_tiff_has_tile(mapcache_context *ctx, mapcache_tile *t
 #endif
          int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
          int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
-         tiff_offx = tile->x % dcache->count_x;
-         tiff_offy = dcache->count_y - tile->y % dcache->count_y - 1;
-         tiff_off = tiff_offy * dcache->count_x + tiff_offx;
+         
+         mapcache_grid_level *level = tile->grid_link->grid->levels[tile->z];
+         int ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
+         int ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
+         
+         /* x offset of the tile along a row */
+         tiff_offx = tile->x % ntilesx;
+
+         /* 
+          * y offset of the requested row. we inverse it as the rows are ordered
+          * from top to bottom, whereas the tile y is bottom to top
+          */
+         tiff_offy = ntilesy - (tile->y % ntilesy) -1;
+         tiff_off = tiff_offy * ntilesx + tiff_offx;
+         
          toff_t  *offsets=NULL, *sizes=NULL;
          TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &offsets );
          TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &sizes );
