@@ -2059,7 +2059,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
 
         /* Average the points and calculate each angle */
         for (k = 1; k <= labelpath->path.numpoints; k++) {
-
+            double anglediff;
             if ( k < labelpath->path.numpoints ) {  
                 labelpath->path.point[k].x /= kernel_normal;
                 labelpath->path.point[k].y /= kernel_normal;
@@ -2076,7 +2076,9 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
             /* If the difference between the last char angle and the current one 
               is greater than the MAXOVERLAPANGLE value (set at 80% of 180deg by default)
               , bail the label */
-            if ( maxoverlapangle > 0 && (k > 2 && fabs(theta - labelpath->angles[k-2]) > maxoverlapangle) ) {
+            anglediff = fabs(theta - labelpath->angles[k-2]);
+            anglediff = MS_MIN(anglediff, MS_2PI - anglediff);
+            if ( maxoverlapangle > 0 && (k > 2 && anglediff > maxoverlapangle) ) {
                 goto LABEL_FAILURE;
             }
       
