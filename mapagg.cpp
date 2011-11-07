@@ -404,8 +404,57 @@ int agg2RenderBitmapGlyphs(imageObj *img, double x, double y, labelStyleObj *sty
 }
 
 int agg2RenderGlyphsLine(imageObj *img, labelPathObj *labelpath, labelStyleObj *style, char *text) {
-	msSetError(MS_AGGERR,"renderGlyphsLine not implemented","agg2RenderGlyphsLineLine()");
-	return MS_FAILURE;
+   AGG2Renderer *r = AGG_RENDERER(img);
+   aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(MS_IMAGE_RENDERER(img));
+   if (!cache->m_feng.load_font(style->font, 0, mapserver::glyph_ren_outline)) {
+      msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", style->font);
+      return MS_FAILURE;
+   }
+   r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
+
+   const mapserver::glyph_cache* glyph;
+   int unicode;
+   //cache->m_feng.hinting(true);
+   cache->m_feng.height(style->size);
+   cache->m_feng.resolution(96);
+   cache->m_feng.flip_y(true);
+   font_curve_type m_curves(cache->m_fman.path_adaptor());
+
+   mapserver::path_storage glyphs;
+
+   for (int i = 0; i < labelpath->path.numpoints; i++) {
+      assert(text);
+      mapserver::trans_affine mtx;
+      mtx *= mapserver::trans_affine_translation(-labelpath->path.point[i].x,-labelpath->path.point[i].y);
+      mtx *= mapserver::trans_affine_rotation(-labelpath->angles[i]);
+      mtx *= mapserver::trans_affine_translation(labelpath->path.point[i].x,labelpath->path.point[i].y);
+      text += msUTF8ToUniChar(text, &unicode);
+      glyph = cache->m_fman.glyph(unicode);
+      if (glyph) {
+         cache->m_fman.init_embedded_adaptors(glyph, labelpath->path.point[i].x,labelpath->path.point[i].y);
+         mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, mtx);
+         glyphs.concat_path(trans_c);
+      }
+   }
+   
+   if (style->outlinewidth) {
+      r->m_rasterizer_aa.reset();
+      r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
+      mapserver::conv_contour<mapserver::path_storage> cc(glyphs);
+      cc.width(style->outlinewidth + 1);
+      r->m_rasterizer_aa.add_path(cc);
+      r->m_renderer_scanline.color(aggColor(style->outlinecolor));
+      mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
+   }
+   if (style->color) {
+      r->m_rasterizer_aa.reset();
+      r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
+      r->m_rasterizer_aa.add_path(glyphs);
+      r->m_renderer_scanline.color(aggColor(style->color));
+      mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
+   }
+   
+   return MS_SUCCESS;
 }
 
 static mapserver::path_storage imageVectorSymbolAGG(symbolObj *symbol) {
@@ -1091,6 +1140,7 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer) {
    renderer->renderLineTiled = &agg2RenderLineTiled;
 
    renderer->renderGlyphs = &agg2RenderGlyphs;
+   renderer->renderGlyphsLine = &agg2RenderGlyphsLine;
    renderer->renderBitmapGlyphs = &agg2RenderBitmapGlyphs;
       
    renderer->renderVectorSymbol = &agg2RenderVectorSymbol;

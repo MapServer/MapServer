@@ -919,45 +919,72 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
 
 int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor)
 {
-   int nReturnVal = -1;
+   int nReturnVal = MS_SUCCESS;
    if(image) {
       if (MS_RENDERER_PLUGIN(image->format)) {
 
          rendererVTableObj *renderer = image->format->vtable;
          labelStyleObj s;
          if (!string || !strlen(string))
-            return (0); /* not errors, just don't want to do anything */
+            return (MS_SUCCESS); /* not errors, just don't want to do anything */
          if(computeLabelStyle(&s, label, fontset, scalefactor) != MS_SUCCESS) return MS_FAILURE;
          if (label->type == MS_TRUETYPE) {
-            const char* string_ptr = string;
-            int i;
-            double x, y;
-            char glyph[11];
-            if(MS_VALID_COLOR(label->outlinecolor)) {
-               s.outlinecolor = &(label->outlinecolor);
-               s.outlinewidth = s.size/label->size * label->outlinewidth;
+            if(renderer->renderGlyphsLine) {
+               if(MS_VALID_COLOR(label->outlinecolor)) {
+                  s.outlinecolor = &(label->outlinecolor);
+                  s.outlinewidth = s.size/label->size * label->outlinewidth;
+               } else {
+                  s.outlinewidth = 0;
+                  s.outlinecolor = NULL;
+               }
+               s.color = &(label->color);
+               nReturnVal = renderer->renderGlyphsLine(image,labelpath,&s,string);
+            } else {
+               /*
+                * if the renderer doesn't support direct labelPath usage,
+                * decompose the string and send it down character by character
+                */
+               const char* string_ptr = string;
+               int i;
+               double x, y;
+               char glyph[11];
+
+               /* 
+                * we first render all the outlines if present, so that the
+                * joining of characters stays correct
+                */
+               if(MS_VALID_COLOR(label->outlinecolor)) {
+                  s.outlinecolor = &(label->outlinecolor);
+                  s.outlinewidth = s.size/label->size * label->outlinewidth;
+                  for (i = 0; i < labelpath->path.numpoints; i++) {
+                     if (msGetNextGlyph(&string_ptr, glyph) == -1)
+                        break; /* Premature end of string??? */
+                     s.rotation = labelpath->angles[i];
+                     x = labelpath->path.point[i].x;
+                     y = labelpath->path.point[i].y;
+                     nReturnVal = renderer->renderGlyphs(image, x, y, &s, glyph);
+                     if(nReturnVal != MS_SUCCESS) {
+                        return nReturnVal;
+                     }
+                  }
+                  string_ptr = string; /* reset to beginning of string */
+               }
+               s.outlinecolor = NULL;
+               s.outlinewidth = 0;
+               s.color = &(label->color);
                for (i = 0; i < labelpath->path.numpoints; i++) {
                   if (msGetNextGlyph(&string_ptr, glyph) == -1)
                      break; /* Premature end of string??? */
+
                   s.rotation = labelpath->angles[i];
                   x = labelpath->path.point[i].x;
                   y = labelpath->path.point[i].y;
-                  renderer->renderGlyphs(image, x, y, &s, glyph);
+
+                  nReturnVal = renderer->renderGlyphs(image, x, y, &s, glyph);
+                  if(nReturnVal != MS_SUCCESS) {
+                     return nReturnVal;
+                  }
                }
-               string_ptr = string;
-            }
-            s.outlinecolor = NULL;
-            s.outlinewidth = 0;
-            s.color = &(label->color);
-            for (i = 0; i < labelpath->path.numpoints; i++) {
-               if (msGetNextGlyph(&string_ptr, glyph) == -1)
-                  break; /* Premature end of string??? */
-
-               s.rotation = labelpath->angles[i];
-               x = labelpath->path.point[i].x;
-               y = labelpath->path.point[i].y;
-
-               renderer->renderGlyphs(image, x, y, &s, glyph);
             }
          }
       }

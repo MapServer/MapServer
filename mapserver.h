@@ -2685,6 +2685,9 @@ struct rendererVTableObj {
 	int (*renderGlyphs)(imageObj *img, double x, double y,
 			labelStyleObj *style, char *text);
 
+	int (*renderGlyphsLine)(imageObj *img, labelPathObj *labelpath,
+			labelStyleObj *style, char *text);
+
 	int (*renderVectorSymbol)(imageObj *img, double x, double y,
 			symbolObj *symbol, symbolStyleObj *style);
 

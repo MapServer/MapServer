@@ -239,6 +239,7 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer) {
     renderer->initializeRasterBuffer=initializeRasterBufferDummy;
     renderer->renderPolygon=&renderPolygonDummy;
     renderer->renderGlyphs=&renderGlyphsDummy;
+    renderer->renderGlyphsLine = NULL;
     renderer->renderBitmapGlyphs = &renderGlyphsDummy;
     renderer->freeImage=&freeImageDummy;
     renderer->renderEllipseSymbol = &renderEllipseSymbolDummy;
