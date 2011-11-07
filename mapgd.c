@@ -399,11 +399,13 @@ int renderGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char
    SETPEN(ip, style->outlinecolor);
 
    if(style->antialias) {
-      c = style->color->pen;
+      if(style->color)
+         c = style->color->pen;
       if(style->outlinewidth > 0)
          oc = style->outlinecolor->pen;
    } else {
-      c = -style->color->pen;
+      if(style->color)
+         c = -style->color->pen;
       if(style->outlinewidth > 0)
          oc = -style->outlinecolor->pen;
    }
