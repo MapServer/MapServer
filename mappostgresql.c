@@ -326,7 +326,7 @@ int msPOSTGRESQLJoinNext(joinObj *join) {
         }
 
         /* Create the query string. */
-        sql = (char *)malloc(24 + strlen(columns) + strlen(join->table) + 
+        sql = (char *)malloc(26 + strlen(columns) + strlen(join->table) + 
                 strlen(join->to) + strlen(joininfo->from_value));
         if(!sql) {
             msSetError(MS_MEMERR, "Failure to malloc.\n", 
