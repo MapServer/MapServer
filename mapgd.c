@@ -389,7 +389,7 @@ int renderGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char
    gdImagePtr ip;
    char *error=NULL;
    int bbox[8];
-   int c,oc;
+   int c = 0,oc = 0;
    x = MS_NINT(x);
    y = MS_NINT(y);
    if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return MS_FAILURE;
@@ -643,7 +643,7 @@ int renderVectorSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, s
 int renderTruetypeSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *s) {
    int bbox[8];
    char *error;
-   int c,oc;
+   int c,oc = 0;
    gdImagePtr ip;
    if(!(ip = MS_IMAGE_GET_GDIMAGEPTR(img))) return MS_FAILURE;
    SETPEN(ip, s->color);
