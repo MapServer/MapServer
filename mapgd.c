@@ -350,8 +350,8 @@ int renderLineGD(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
      gdImageColorTransparent(brush,0);
      brush_fc = gdImageColorAllocate(brush, gdImageRed(ip,stroke->color->pen),
            gdImageGreen(ip,stroke->color->pen), gdImageBlue(ip,stroke->color->pen));
-     gdImageFilledEllipse(brush,ceil(stroke->width/2),ceil(stroke->width/2),
-           ceil(stroke->width),ceil(stroke->width), brush_fc);
+     gdImageFilledEllipse(brush,MS_NINT(brush->sx/2),MS_NINT(brush->sy/2),
+           MS_NINT(stroke->width),MS_NINT(stroke->width), brush_fc);
      gdImageSetBrush(ip, brush);
      if(stroke->patternlength > 0) {
        c = gdStyledBrushed;
