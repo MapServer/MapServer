@@ -52,18 +52,15 @@ static void _mapcache_cache_memcache_tile_key(mapcache_context *ctx, mapcache_ti
       int i = elts->nelts;
       while(i--) {
          apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
-         start = apr_pstrcat(ctx->pool,start,"/",entry->key,"/",entry->val,NULL);
+         const char *dimval = mapcache_util_str_sanitize(ctx->pool,entry->val," \r\n\t\f\e\a\b",'#');
+         start = apr_pstrcat(ctx->pool,start,"/",dimval,NULL);
       }
    }
-   *path = apr_psprintf(ctx->pool,"%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
+   *path = apr_psprintf(ctx->pool,"%s/%d/%d/%d.%s",
          start,
          tile->z,
-         tile->x / 1000000,
-         (tile->x / 1000) % 1000,
-         tile->x % 1000,
-         tile->y / 1000000,
-         (tile->y / 1000) % 1000,
-         tile->y % 1000,
+         tile->x,
+         tile->y,
          tile->tileset->format?tile->tileset->format->extension:"png");
    if(!*path) {
       ctx->set_error(ctx,500, "failed to allocate tile key");

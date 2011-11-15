@@ -54,6 +54,7 @@ static void _mapcache_cache_disk_blank_tile_key(mapcache_context *ctx, mapcache_
       ctx->set_error(ctx,500, "failed to allocate blank tile key");
    }
 }
+
 /**
  * \brief return filename for given tile
  * 
@@ -76,16 +77,8 @@ static void _mapcache_cache_disk_tile_key(mapcache_context *ctx, mapcache_tile *
          int i = elts->nelts;
          while(i--) {
             apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
-            char *dimval = apr_pstrdup(ctx->pool,entry->val);
-            char *iter = dimval;
-            while(*iter) {
-               /* replace dangerous characters by '#' */
-               if(*iter == '.' || *iter == '/') {
-                  *iter = '#';
-               }
-               iter++;
-            }
-            start = apr_pstrcat(ctx->pool,start,"/",entry->key,"/",dimval,NULL);
+            const char *dimval = mapcache_util_str_sanitize(ctx->pool,entry->val,"/.",'#');
+            start = apr_pstrcat(ctx->pool,start,"/",dimval,NULL);
          }
       }
       *path = apr_psprintf(ctx->pool,"%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",

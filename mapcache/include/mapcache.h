@@ -1305,6 +1305,16 @@ int mapcache_util_extract_double_list(mapcache_context *ctx, const char* args, c
 char *mapcache_util_str_replace(apr_pool_t *pool, const char *string, const char *substr,
       const char *replacement );
 
+/**
+ * \brief replace dangerous characters in string
+ * \param str the string that must be tested/replaced
+ * \param from array of chars that must be replaced
+ * \param to char that will replace a matched entry
+ * \return the original string if no matches were found, or the sanitized
+ *         string allocated from the given pool
+ */
+const char* mapcache_util_str_sanitize(apr_pool_t *pool, const char *str, const char* from, char to);
+
 /**\defgroup imageio Image IO */
 /** @{ */
 

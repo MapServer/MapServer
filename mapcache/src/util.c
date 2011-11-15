@@ -107,6 +107,18 @@ char *mapcache_util_str_replace(apr_pool_t *pool, const char *string, const char
    return newstr;
 }
 
+const char* mapcache_util_str_sanitize(apr_pool_t *pool, const char *str, const char* from, char to) {
+   size_t pos = strcspn(str,from);
+   if(str[pos]) {
+      str = apr_pstrdup(pool,str);
+      while(str[pos]) {
+         ((char*)str)[pos]=to;
+         pos += strcspn(&str[pos],from);
+      }
+   }
+   return str;
+}
+
 #if APR_MAJOR_VERSION < 1 || (APR_MAJOR_VERSION < 2 && APR_MINOR_VERSION < 3)
 APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p, const apr_table_t *t)
 {
