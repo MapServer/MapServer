@@ -80,16 +80,8 @@ static void _mapcache_cache_tiff_tile_key(mapcache_context *ctx, mapcache_tile *
       int i = elts->nelts;
       while(i--) {
          apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
-         char *dimval = apr_pstrdup(ctx->pool,entry->val);
-         char *iter = dimval;
-         while(*iter) {
-            /* replace dangerous characters by '#' */
-            if(*iter == '.' || *iter == '/') {
-               *iter = '#';
-            }
-            iter++;
-         }
-         dimstring = apr_pstrcat(ctx->pool,dimstring,"#",entry->key,"#",dimval,NULL);
+         const char *dimval = mapcache_util_str_sanitize(ctx->pool,entry->val,"/.",'#');
+         dimstring = apr_pstrcat(ctx->pool,dimstring,"#",dimval,NULL);
       }
       *path = mapcache_util_str_replace(ctx->pool,*path, "{dim}", dimstring);
    }
