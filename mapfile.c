@@ -5971,7 +5971,8 @@ static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const
   const char *filename; 
 
   filename = msGetOutputFormatOption(format, option, NULL);
-  if(filename) {
+  if(filename && strlen(filename)>0) {
+    char *tmpfilename = msStrdup(filename);
     const char *default_key = msFirstKeyFromHashTable(table);
     while(default_key) {
       if(!strncmp(default_key,"default_",8)) {
@@ -5980,7 +5981,7 @@ static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const
         char *tag = (char *)msSmallMalloc(buffer_size);
         snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
-        new_filename = msStrdup(filename);
+        new_filename = msStrdup(tmpfilename);
         new_filename = msCaseReplaceSubstring(new_filename, tag, msLookupHashTable(table, default_key));
         free(tag);
 
@@ -5989,6 +5990,7 @@ static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const
       }
       default_key = msNextKeyFromHashTable(table, default_key);
     }
+    msFree(tmpfilename);
   }
   return;
 }
