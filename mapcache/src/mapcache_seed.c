@@ -334,18 +334,19 @@ void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
     * current metatile
     */
    int minchildx,maxchildx,minchildy,maxchildy;
-   double bboxtl[4],bboxbr[4];
+   double bboxbl[4],bboxtr[4];
    mapcache_grid_get_extent(cmd_ctx, grid_link->grid,
-         curx, cury, curz, bboxtl);
+         curx, cury, curz, bboxbl);
    mapcache_grid_get_extent(cmd_ctx, grid_link->grid,
-         curx+tileset->metasize_x-1, cury+tileset->metasize_y-1, curz, bboxbr);
+         curx+tileset->metasize_x-1, cury+tileset->metasize_y-1, curz, bboxtr);
+   double epsilon = (bboxbl[2]-bboxbl[0])*0.01;
    mapcache_grid_get_xy(cmd_ctx,grid_link->grid,
-         (bboxtl[0]+bboxtl[2])/2,
-         (bboxtl[1]+bboxtl[3])/2,
+         bboxbl[0] + epsilon,
+         bboxbl[1] + epsilon,
          tile->z,&minchildx,&minchildy);
    mapcache_grid_get_xy(cmd_ctx,grid_link->grid,
-         (bboxbr[0]+bboxbr[2])/2,
-         (bboxbr[1]+bboxbr[3])/2,
+         bboxtr[2] - epsilon,
+         bboxtr[3] - epsilon,
          tile->z,&maxchildx,&maxchildy);
 
    minchildx = (minchildx / tileset->metasize_x)*tileset->metasize_x;
