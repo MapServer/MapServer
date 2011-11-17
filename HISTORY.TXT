@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (future 6.0.2, SVN branch-6-0):
 ---------------------------
+
+- Fixed segfault when calling classObj::updateFromString() with SYMBOL (#4062)
+
 - fix rendering offset on thick GD lines (#3962)
 
 - fix segfault on join with postgresql tables (#4074)
