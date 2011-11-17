@@ -792,6 +792,7 @@ classObj *classObj_new(layerObj *layer, classObj *class) {
     }
 
     layer->class[layer->numclasses]->type = layer->type;
+    layer->class[layer->numclasses]->layer = layer;
 
     layer->numclasses++;
 
