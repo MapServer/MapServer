@@ -560,6 +560,7 @@ int usage(const char *progname, char *msg) {
       }
       i++;
    }
+   apr_terminate();
    return 1;
 }
 
@@ -918,6 +919,7 @@ int main(int argc, const char **argv) {
            printf("\nseeded %d metatiles at %g tiles/sec\n",seededtilestot, seededtilestot/duration);
         }
     }
+    apr_terminate();
     return 0;
 }
 /* vim: ai ts=3 sts=3 et sw=3
