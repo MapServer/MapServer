@@ -722,18 +722,31 @@ int msWMSApplyDimension(layerObj *lp, int version, char *dimensionname, char *va
 			char *wms_exception_format)
 {
     char *dimensionitemname=NULL, *dimensionextentname=NULL, *dimensiontypename=NULL;
-    const char *dimensionitem, *dimensionextent, *dimensiontype;
+    char *dimensionunitname=NULL, *dimensiondefaultname=NULL;
+    const char *dimensionitem, *dimensionextent, *dimensiontype, *dimensionunit, *dimensiondefault;
     int forcecharcter;
     int result = MS_FALSE;
-    char *dimension = NULL;
+    char *dimension = NULL, *currentvalue=NULL;
 
-    if (lp && dimensionname && value && strlen(value) > 0)
+    if (lp && dimensionname && value)
     {
-	/*check if the dimension name passes starts with dim_. All deimensions should start with dim_, except elevation*/
+	/*check if the dimension name passes starts with dim_. All dimensions should start with dim_, except elevation*/
 	if (strncasecmp(dimensionname, "dim_", 4) == 0)
 	  dimension = msStrdup(dimensionname+4);
 	else
 	   dimension = msStrdup(dimensionname);
+
+	/*if value is empty and a default is defined, use it*/
+	if (strlen(value) > 0)
+	  currentvalue = msStrdup(value);
+	else
+	{
+	    dimensiondefaultname = msStrdup(dimension);
+	    dimensiondefaultname = msStringConcatenate(dimensiondefaultname, "_default");
+	    dimensiondefault = msOWSLookupMetadata(&(lp->metadata), "M", dimensiondefaultname);
+	    if (dimensiondefault && strlen(dimensiondefault) > 0)
+	      currentvalue = msStrdup(dimensiondefault);
+	}
 
 	/*check if the manadatory metada related to the dimension are set*/
 	dimensionitemname = msStrdup(dimension);
@@ -744,6 +757,10 @@ int msWMSApplyDimension(layerObj *lp, int version, char *dimensionname, char *va
 	dimensionextentname = msStringConcatenate(dimensionextentname, "_extent");
 	dimensionextent = msOWSLookupMetadata(&(lp->metadata), "M", dimensionextentname);
 	
+	dimensionunitname = msStrdup(dimension);
+	dimensionunitname = msStringConcatenate(dimensionunitname, "_units");
+	dimensionunit = msOWSLookupMetadata(&(lp->metadata), "M", dimensionunitname);
+
 	/*if the server want to force the type to character*/
 	dimensiontypename = msStrdup(dimension);
 	dimensiontypename = msStringConcatenate(dimensiontypename, "_type");
@@ -752,24 +769,30 @@ int msWMSApplyDimension(layerObj *lp, int version, char *dimensionname, char *va
 	if (dimensiontype && strcasecmp(dimensiontype, "Character") == 0)
 	  forcecharcter = MS_TRUE;
 	
-	if (dimensionitem && dimensionextent)
+	if (dimensionitem && dimensionextent && dimensionunit && currentvalue)
 	{
-	    if(msWMSValidateDimensionValue(value, dimensionextent, forcecharcter))
+	    if(msWMSValidateDimensionValue(currentvalue, dimensionextent, forcecharcter))
 	    {
-		result = msWMSApplyDimensionLayer(lp, dimensionitem, value, forcecharcter);
+		result = msWMSApplyDimensionLayer(lp, dimensionitem, currentvalue, forcecharcter);
 	    }
 	    else
 	    {
 		msSetError(MS_WMSERR, "Dimension %s with a value of %s is invalid or outside the extents defined", "msWMSApplyDimension", 
-			   dimension, value);
+			   dimension, currentvalue);
 		result =  MS_FALSE;
 	    }
 	}
+	else
+	  msSetError(MS_WMSERR, "Dimension %s : invalid settings. Make sure that item, units and extent are set.", "msWMSApplyDimension", 
+		     dimension, currentvalue);
     
 	msFree(dimensionitemname);
 	msFree(dimensionextentname);
 	msFree(dimensiontypename);
+	msFree(dimensionunitname);
+	msFree(dimensiondefaultname);
 	msFree(dimension);
+	msFree(currentvalue);
     }
     return result;
 }
@@ -1280,8 +1303,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 	continue;
 
       dimensionlist = msOWSLookupMetadata(&(lp->metadata), "M", "dimensionlist");
+      /*
       if (!dimensionlist)
 	dimensionlist = msOWSLookupMetadata(&(map->web.metadata), "M", "dimensionlist");
+      */
       if (dimensionlist)
       {
 	   tokens = msStringSplit(dimensionlist,  ',', &ntokens);
@@ -2016,6 +2041,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    int iclassgroups=0 ,j=0;
    char szVersionBuf[OWS_VERSION_MAXLEN];
    size_t bufferSize = 0;
+   const char *pszDimensionlist=NULL;
 
    /* if the layer status is set to MS_DEFAULT, output a warning */
    if (lp->status == MS_DEFAULT)
@@ -2198,8 +2224,76 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
        }
    }
 
-  if (nVersion >= OWS_1_0_7) {
-    msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
+   /*dimensions support: elevation + other user defined dimensions*/
+   pszDimensionlist = msOWSLookupMetadata(&(lp->metadata), "M", "dimensionlist");
+   if (pszDimensionlist)
+   {
+       char **tokens = NULL;
+       int ntokens = 0;
+       char *pszDimension=NULL, *pszDimensionItemName=NULL, *pszDimensionExtentName=NULL, *pszDimensionUnitName=NULL, *pszDimensionDefaultName=NULL;
+       const char *pszDimensionItem=NULL, *pszDimensionExtent=NULL, *pszDimensionUnit=NULL, *pszDimensionDefault=NULL;
+       int i;
+
+       tokens = msStringSplit(pszDimensionlist,  ',', &ntokens);
+       if (tokens && ntokens > 0)
+       {
+	   for (i=0; i<ntokens; i++)
+	   {
+	       /*check if manadatory unit and extent are set. Item should also be set. default value is optional*/
+	       pszDimension = msStrdup(tokens[i]);
+	       msStringTrim(pszDimension);
+
+	       pszDimensionItemName = msStrdup(pszDimension);
+	       pszDimensionItemName = msStringConcatenate(pszDimensionItemName, "_item");
+	       pszDimensionItem = msOWSLookupMetadata(&(lp->metadata), "M", pszDimensionItemName);
+
+	       pszDimensionExtentName = msStrdup(pszDimension);
+	       pszDimensionExtentName = msStringConcatenate(pszDimensionExtentName, "_extent");
+	       pszDimensionExtent = msOWSLookupMetadata(&(lp->metadata), "M", pszDimensionExtentName);
+
+	       pszDimensionUnitName = msStrdup(pszDimension);
+	       pszDimensionUnitName = msStringConcatenate(pszDimensionUnitName, "_units");
+	       pszDimensionUnit = msOWSLookupMetadata(&(lp->metadata), "M", pszDimensionUnitName);
+
+	       pszDimensionDefaultName = msStrdup(pszDimension);
+	       pszDimensionDefaultName = msStringConcatenate(pszDimensionDefaultName, "_default");
+	       pszDimensionDefault = msOWSLookupMetadata(&(lp->metadata), "M", pszDimensionDefaultName);
+
+	       if (pszDimensionItem && pszDimensionExtent && pszDimensionUnit)
+	       {
+		   if (nVersion >= OWS_1_3_0) 
+		   {
+		       if(pszDimensionDefault && strlen(pszDimensionDefault) > 0)
+			 msIO_fprintf(stdout, "        <Dimension name=\"%s\" units=\"%s\" default=\"%s\" multipleValues=\"1\" nearestValue=\"0\">%s</Dimension>\n",
+				      pszDimension, pszDimensionUnit, pszDimensionDefault, pszDimensionExtent);
+		       else
+			  msIO_fprintf(stdout, "        <Dimension name=\"%s\" units=\"%s\"  multipleValues=\"1\"  nearestValue=\"0\">%s</Dimension>\n",
+				       pszDimension, pszDimensionUnit, pszDimensionExtent);
+		   }
+		   else
+		   {
+		       msIO_fprintf(stdout, "        <Dimension name=\"%s\" units=\"%s\"/>\n", pszDimension, pszDimensionUnit);
+		       if(pszDimensionDefault && strlen(pszDimensionDefault) > 0)
+			 msIO_fprintf(stdout, "        <Extent name=\"%s\" default=\"%s\" nearestValue=\"0\">%s</Extent>\n",
+				       pszDimension, pszDimensionDefault, pszDimensionExtent);
+		       else
+			 msIO_fprintf(stdout, "        <Extent name=\"%s\" nearestValue=\"0\">%s</Extent>\n",
+				       pszDimension, pszDimensionExtent);
+		   }
+	       }
+	       msFree(pszDimension);
+	       msFree(pszDimensionItemName);
+	       msFree(pszDimensionUnitName);
+	       msFree(pszDimensionDefaultName);
+	       
+	   }
+	   msFreeCharArray(tokens, ntokens);
+       }
+   }
+
+
+   if (nVersion >= OWS_1_0_7) {
+     msWMSPrintAttribution(stdout, "    ", &(lp->metadata), "MO");
   }
 
   /* AuthorityURL support and Identifier support, only available > WMS 1.1.0 */
