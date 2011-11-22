@@ -282,6 +282,249 @@ int FLTIsSimpleFilterNoSpatial(FilterEncodingNode *psNode)
     return MS_FALSE;
 }
 
+char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  int forcecharcter)
+{
+    int bIscharacter, bSqlLayer;
+    char *pszExpression = NULL, *pszEscapedStr=NULL, *pszTmpExpression=NULL;
+    char **paszElements = NULL, **papszRangeElements=NULL;
+    int numelements,i,nrangeelements;
+    double minval, maxval;
+
+    if (lp && item && value)
+    {
+	if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
+	    lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN)
+	  bSqlLayer = MS_TRUE;
+	else
+	  bSqlLayer = MS_FALSE;
+	
+	if (strstr(value, "/") == NULL)
+	{
+	    /*value(s)*/
+	    paszElements = msStringSplit (value, ',', &numelements);
+	    if (paszElements && numelements > 0)
+	    {
+		if (forcecharcter)
+		  bIscharacter = MS_TRUE;
+		bIscharacter= !FLTIsNumeric(paszElements[0]);
+
+		pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
+		for (i=0; i<numelements; i++)
+		{
+		    pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
+		    if (bSqlLayer)
+		      pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
+		    else
+		    {
+			if (bIscharacter)
+			  pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
+			pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
+			pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
+			pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");			 
+			if (bIscharacter)
+			  pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
+		    }
+		    if (bIscharacter)
+		      pszTmpExpression = msStringConcatenate(pszTmpExpression, " = \"");
+		    else
+		      pszTmpExpression = msStringConcatenate(pszTmpExpression, " = ");
+			 
+		    pszEscapedStr = msLayerEscapeSQLParam(lp, paszElements[i]);
+		    pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+			 
+		    if (bIscharacter)
+		      pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
+			 
+		    pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
+
+		    msFree(pszEscapedStr);
+		    pszEscapedStr=NULL;
+		     
+		    if (pszExpression != NULL)
+		      pszExpression = msStringConcatenate(pszExpression, " OR ");
+		     
+		    pszExpression =  msStringConcatenate(pszExpression, pszTmpExpression);
+
+		    msFree(pszTmpExpression);
+		    pszTmpExpression = NULL;
+		}
+		pszExpression = msStringConcatenate(pszExpression, ")");
+		msFreeCharArray(paszElements, numelements);
+	    }
+	}
+	else
+	{
+	    /*range(s)*/
+	    paszElements = msStringSplit (value, ',', &numelements);
+	    if (paszElements && numelements > 0)
+	    {
+		pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
+		for (i=0; i<numelements; i++)
+		{
+		    papszRangeElements = msStringSplit (paszElements[i], '/', &nrangeelements);
+		    if (papszRangeElements && nrangeelements > 0)
+		    {
+			pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
+			if (nrangeelements == 2 || nrangeelements == 3)
+			{
+			    minval = atof(papszRangeElements[0]);
+			    maxval = atof(papszRangeElements[1]);
+			    if (bSqlLayer)
+			      pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
+			    else
+			    {
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");			 
+			    }
+
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, " >= ");
+
+			    pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[0]);
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+			    msFree(pszEscapedStr);
+			    pszEscapedStr=NULL;
+
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, " AND ");
+
+			    if (bSqlLayer)
+			      pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
+			    else
+			    {
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");			 
+			    }
+
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, " <= ");
+
+			    pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[1]);
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+			    msFree(pszEscapedStr);
+			    pszEscapedStr=NULL;
+
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
+			}
+			else if (nrangeelements == 1)
+			{
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
+			    if (bSqlLayer)
+			      pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
+			    else
+			    {
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, "[");
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
+				pszTmpExpression = msStringConcatenate(pszTmpExpression, "]");			 
+			    }
+
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, " = ");
+
+			    pszEscapedStr = msLayerEscapeSQLParam(lp, papszRangeElements[0]);
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
+			    msFree(pszEscapedStr);
+			    pszEscapedStr=NULL;
+
+			    pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
+			}
+			
+			if (pszExpression != NULL)
+			  pszExpression = msStringConcatenate(pszExpression, " OR ");
+      
+			pszExpression =  msStringConcatenate(pszExpression, pszTmpExpression);
+			msFree(pszTmpExpression);
+			pszTmpExpression = NULL;
+			
+			msFreeCharArray(papszRangeElements, nrangeelements);
+		    }
+		}
+		pszExpression = msStringConcatenate(pszExpression, ")");
+		msFreeCharArray(paszElements, numelements);
+	    }
+	}
+    }
+    return pszExpression;
+}
+
+
+/*
+** Apply an expression to the layer's filter element. 
+** 
+*/
+int FLTApplyExpressionToLayer(layerObj *lp, char *pszExpression)
+{
+    char *pszFinalExpression=NULL, *pszBuffer = NULL;
+    /*char *escapedTextString=NULL;*/
+    int bConcatWhere=0, bHasAWhere=0;
+    
+    if (lp && pszExpression)
+    {
+	 if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
+	     lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN)
+	 {
+	     pszFinalExpression = msStrdup("(");
+	     pszFinalExpression = msStringConcatenate(pszFinalExpression, pszExpression);
+	     pszFinalExpression = msStringConcatenate(pszFinalExpression, ")");
+	 }
+	 else if (lp->connectiontype == MS_OGR)
+	 {
+	     pszFinalExpression = msStrdup(pszExpression);
+	     if (lp->filter.type != MS_EXPRESSION)
+	     {
+		 bConcatWhere = 1;
+	     }
+	     else
+	     {
+		 if (lp->filter.string && EQUALN(lp->filter.string,"WHERE ",6))
+		 {
+		     bHasAWhere = 1;
+		     bConcatWhere =1;
+		 }
+	     }
+	  
+	 }
+	 else
+	    pszFinalExpression = msStrdup(pszExpression);
+
+	 if (bConcatWhere)
+	   pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
+	 /* if the filter is set and it's an expression type, concatenate it with
+               this filter. If not just free it */
+	 if (lp->filter.string && lp->filter.type == MS_EXPRESSION)
+	 {
+	     pszBuffer = msStringConcatenate(pszBuffer, "((");
+	    if (bHasAWhere)
+	      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string+6);
+	    else
+	      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+	    pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+	 }
+	 else if (lp->filter.string)
+	   freeExpression(&lp->filter);
+
+	 pszBuffer = msStringConcatenate(pszBuffer, pszFinalExpression);
+
+	if(lp->filter.string && lp->filter.type == MS_EXPRESSION)
+	  pszBuffer = msStringConcatenate(pszBuffer, ")");
+        
+	/*assuming that expression was properly escaped
+        escapedTextString = msStringEscape(pszBuffer); 
+        msLoadExpressionString(&lp->filter, 
+                               (char*)CPLSPrintf("%s", escapedTextString)); 
+        msFree(escapedTextString); 
+	*/
+	 msLoadExpressionString(&lp->filter, 
+                               (char*)CPLSPrintf("%s", pszBuffer)); 
+
+        msFree(pszFinalExpression);
+
+	if (pszBuffer)
+	  msFree(pszBuffer);
+
+	return MS_TRUE;
+    }
+
+    return MS_FALSE;
+}
 
 /************************************************************************/
 /*                      FLTApplySimpleSQLFilter()                       */

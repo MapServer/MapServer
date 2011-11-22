@@ -105,6 +105,8 @@ MS_DLL_EXPORT int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 /*SQL expressions related functions.*/
 MS_DLL_EXPORT int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex);
+MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, char *pszExpression);
+MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  int forcecharcter);
 
 MS_DLL_EXPORT char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,layerObj *lp);
 MS_DLL_EXPORT char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);

@@ -36,6 +36,7 @@
 #include "maptemplate.h"
 
 #include "mapogcsld.h"
+#include "mapogcfilter.h"
 
 #include "maptime.h"
 #include "mapproject.h"
@@ -371,6 +372,407 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
 }
 
 
+
+/*
+** Validate that a given dimension is inside the extents defined
+*/
+int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int forcecharcter)
+{
+    char **extents=NULL, **ranges=NULL, **onerange=NULL;
+    int numextents;
+    char **aextentvalues = NULL;  int nextentvalues=0;
+    pointObj *aextentranges=NULL;   int nextentranges=0;
+  
+    int isextentavalue = MS_FALSE, isextentarange=MS_FALSE;
+    int i,j, ntmp;
+    char **uservalues=NULL;
+    int numuservalues=0;
+    char *stmp = NULL;
+    int ischaracter = MS_FALSE;
+    float minval, maxval,currentval,mincurrentval,maxcurrentval, mincurrentrange, maxcurrentrange;
+
+    int uservaluevalid= MS_FALSE;
+
+    if (forcecharcter)
+      ischaracter = MS_TRUE;
+    
+    if (!value || !dimensionextent)
+      return MS_FALSE;
+
+    /*for the value, we support descrete values (2005) */
+    /* multiple values (abc, def, ...) */
+    /* and range(s) (1000/2000, 3000/5000) */
+    /** we do not support resolution*/
+    
+/* -------------------------------------------------------------------- */
+/*      parse the extent first.                                         */
+/* -------------------------------------------------------------------- */
+    extents = msStringSplit (dimensionextent, ',', &numextents);
+    if (numextents == 1)
+    {
+	if (strstr(dimensionextent, "/") == NULL)
+	{
+	    /*single value*/
+	    isextentavalue = MS_TRUE;
+	    nextentvalues = 1;
+	    aextentvalues = (char **)msSmallMalloc(sizeof(char *));
+	    msStringTrim(extents[0]);
+	    aextentvalues[0] = msStrdup(dimensionextent);
+	    if (!forcecharcter)
+	      ischaracter= !FLTIsNumeric((char *)dimensionextent);
+	    
+	}
+	else
+	{
+	    ntmp = -1;
+	    ranges = msStringSplit (dimensionextent, '/', &ntmp);
+	    if(ranges && (ntmp == 2 || ntmp == 3))
+	    {
+		/*single range*/
+		isextentarange = MS_TRUE;
+		aextentranges = msSmallMalloc(sizeof(pointObj));
+		nextentranges=1;
+		aextentranges[0].x = atof(ranges[0]);
+		aextentranges[0].y = atof(ranges[1]);
+		/*ranges should be numeric*/
+		ischaracter = MS_FALSE;
+	    }
+	    if (ranges && ntmp > 0)
+	    {
+		msFreeCharArray(ranges, ntmp);
+	        ranges = NULL;
+	    }
+	}
+    }
+    else if (numextents > 1) /*check if it is muliple values or mutliple ranges*/
+    {
+	if (strstr(dimensionextent, "/") == NULL)
+	{
+	    /*multiple values*/
+	    isextentavalue = MS_TRUE;
+	    aextentvalues = (char **)msSmallMalloc(sizeof(char *)*numextents);
+	    for (i=0; i<numextents; i++)
+	    {
+		stmp = msStrdup(extents[i]);
+		msStringTrim(stmp);
+		aextentvalues[i] = msStrdup(stmp);
+		msFree(stmp);
+	    }
+	    nextentvalues = numextents;
+	    if (!forcecharcter)
+	      ischaracter= !FLTIsNumeric(aextentvalues[0]);
+	} 
+	else /*multiple range extent*/
+	{
+	    int isvalidextent = MS_TRUE;
+	    /*ranges should be numeric*/
+	    ischaracter = MS_FALSE;
+	    isextentarange = MS_TRUE;
+	    aextentranges = msSmallMalloc(sizeof(pointObj) * numextents);
+	    nextentranges=0;
+
+	    for (i=0; i<numextents;i++)
+	    {
+		onerange = msStringSplit(extents[i], '/', &ntmp);
+		if (!onerange || (ntmp != 2 && ntmp != 3))
+		{
+		    isvalidextent = MS_FALSE;
+		    break;
+		}
+		if (isvalidextent)
+		{
+		    
+		    aextentranges[nextentranges].x = atof(onerange[0]);
+		    aextentranges[nextentranges++].y = atof(onerange[1]);
+		}
+		if (onerange && ntmp > 0 )
+		{
+		    msFreeCharArray(onerange, ntmp);
+		    onerange = NULL;
+		}
+	    }
+	    if (!isvalidextent)
+	    {
+		msFree(aextentranges);
+		nextentranges = 0;
+		isextentarange = MS_FALSE;
+	    }
+	}
+    }
+
+    if (numextents > 0)
+    {
+	msFreeCharArray(extents, numextents);
+	extents = NULL;
+    }
+
+
+    /* make sure that we got a valid extent*/
+    if (!isextentavalue && !isextentarange)
+    {
+	return MS_FALSE;
+    }
+
+    /*for the extent of the dimesion, we support
+    single value,  or list of mulitiple values comma separated,
+    a single range or multipe ranges */
+
+    
+    uservalues = msStringSplit (value, ',', &numuservalues);
+    uservaluevalid = MS_FALSE;
+    if (numuservalues == 1)
+    {
+	/*user iput=single*/
+	/*is it descret or range*/
+	ranges = msStringSplit(uservalues[0], '/', &ntmp);
+	if (ntmp == 1) /*discrete*/
+	{
+	    if (isextentavalue)
+	    {
+		/*single user value, single/multiple values extent*/
+		for (i=0; i<nextentvalues; i++)
+		{
+		    if (ischaracter)
+		      uservaluevalid = !strcmp(uservalues[0], aextentvalues[i]);
+		    else
+		    {
+			if (atof(uservalues[0]) == atof(aextentvalues[i]))
+			  uservaluevalid = MS_TRUE;
+		    }
+		    if(uservaluevalid)
+		      break;
+		}
+	    }
+	    else if (isextentarange)
+	    {
+		/*single user value, single/multiple range extent*/
+		currentval = atof(uservalues[0]);
+	
+		for (i=0; i<nextentranges; i++)
+		{
+		    minval = aextentranges[i].x;
+		    maxval = aextentranges[i].y;
+		    if (currentval >= minval && currentval <= maxval)
+		    {
+			uservaluevalid= MS_TRUE;
+			break;
+		    }
+		}
+	    }
+	}
+	else if (ntmp == 2 || ntmp == 3) /*range*/
+	{
+	    /*user input=single range. In this case the extents must
+	     be of a range type.*/
+	    mincurrentval = atof(ranges[0]);
+	    maxcurrentval = atof(ranges[1]);
+	    if (isextentarange)
+	    {
+		for (i=0; i<nextentranges; i++)
+		{
+		    minval = aextentranges[i].x;
+		    maxval = aextentranges[i].y;
+		    
+		    if(minval <= mincurrentval && maxval >= maxcurrentval &&
+		       minval <= maxval)
+		    {
+			uservaluevalid= MS_TRUE;
+			break;
+		    }
+		}
+	    }
+	}
+    }
+    else if (numuservalues > 1)	/*user input=multiple*/
+    {
+	if (strstr(value, "/") == NULL)
+	{
+	    /*user input=multiple value*/
+	    int valueisvalid = MS_FALSE;
+	    for (i=0; i<numuservalues;i++)
+	    {
+		valueisvalid = MS_FALSE;
+		if (isextentavalue)
+		{
+		    /*user input is multiple values, extent is defned as one or multiple values*/
+		    for (j=0; j<nextentvalues; j++)
+		    {
+			if (ischaracter)
+			{
+			    if (strcmp(uservalues[i], aextentvalues[j]) == 0)
+			    {
+				valueisvalid = MS_TRUE;
+				break;
+			    }
+			}
+			else
+			{
+			    if (atof(uservalues[i]) == atof(aextentvalues[j]))
+			    {
+				valueisvalid = MS_TRUE;
+				break;
+			    }
+			}
+		    }
+		    /*every value shoule be valid*/
+		    if (!valueisvalid)
+		      break;
+		}
+		else if (isextentarange)
+		{
+		    /*user input is multiple values, extent is defned as one or multiple ranges*/
+		    for (j=0; j<nextentranges; j++)
+		    {
+			minval = aextentranges[j].x;
+			maxval = aextentranges[j].y;
+			currentval = atof(uservalues[i]);
+			if(minval <= currentval && maxval >= currentval &&
+			   minval <= maxval)
+			{
+			    valueisvalid = MS_TRUE;
+			    break;
+			}
+		    }
+		    if (!valueisvalid)
+		      break;
+		}
+	    }
+	    uservaluevalid = valueisvalid;
+	}
+	else /*user input multiple ranges*/
+	{
+	    int valueisvalid = MS_TRUE;
+	    
+	    for (i=0; i<numuservalues;i++)
+	    {
+		/*each ranges should be valid*/
+		onerange = msStringSplit(uservalues[i], '/', &ntmp);
+		if (ntmp == 2 || ntmp == 3)
+		{
+		    mincurrentval = atof(onerange[0]);
+		    maxcurrentval = atof(onerange[1]);
+		    
+		    /*extent must be defined also as a rangle*/
+		    if (isextentarange)
+		    {
+			for (j=0; j<nextentranges;j++)
+			{
+			    mincurrentrange = aextentranges[j].x;
+			    maxcurrentrange = aextentranges[j].y;
+			    
+			    if(mincurrentval >=mincurrentrange && maxcurrentval <= maxcurrentrange &&
+			       mincurrentval <= maxcurrentval)
+			    {
+				break;
+			    }
+			    
+			}
+			if (j == nextentranges)
+			{
+			    valueisvalid = MS_FALSE;
+			    break;
+			}
+		    }
+		}
+		else
+		{
+		    valueisvalid = MS_FALSE;
+		}
+		if (onerange && ntmp > 0)
+		  msFreeCharArray(onerange, ntmp);
+	    }
+	    uservaluevalid = valueisvalid;
+	}
+
+    }
+    if(uservalues && numuservalues > 0)
+      msFreeCharArray(uservalues, numuservalues);
+
+    if(uservaluevalid)
+      return MS_TRUE;
+
+    return MS_FALSE;
+}
+
+
+int msWMSApplyDimensionLayer(layerObj *lp, const char *item, char *value, int forcecharcter)
+{
+    int result = MS_FALSE;
+    char *pszExpression=NULL;
+
+    if (lp && item && value)
+    {
+	/*for the value, we support descrete values (2005) */
+	/* multiple values (abc, def, ...) */
+	/* and range(s) (1000/2000, 3000/5000) */
+	pszExpression = FLTGetExpressionForValuesRanges(lp, (char *)item, value,  forcecharcter);
+
+	if (pszExpression)
+	{
+	    if(FLTApplyExpressionToLayer(lp, pszExpression))
+	      result = MS_TRUE;
+	    msFree(pszExpression);
+	}
+    }
+    return result;
+}
+
+
+int msWMSApplyDimension(layerObj *lp, int version, char *dimensionname, char *value,
+			char *wms_exception_format)
+{
+    char *dimensionitemname=NULL, *dimensionextentname=NULL, *dimensiontypename=NULL;
+    const char *dimensionitem, *dimensionextent, *dimensiontype;
+    int forcecharcter;
+    int result = MS_FALSE;
+    char *dimension = NULL;
+
+    if (lp && dimensionname && value && strlen(value) > 0)
+    {
+	/*check if the dimension name passes starts with dim_. All deimensions should start with dim_, except elevation*/
+	if (strncasecmp(dimensionname, "dim_", 4) == 0)
+	  dimension = msStrdup(dimensionname+4);
+	else
+	   dimension = msStrdup(dimensionname);
+
+	/*check if the manadatory metada related to the dimension are set*/
+	dimensionitemname = msStrdup(dimension);
+	dimensionitemname = msStringConcatenate(dimensionitemname, "_item");
+	dimensionitem = msOWSLookupMetadata(&(lp->metadata), "M", dimensionitemname);
+
+	dimensionextentname = msStrdup(dimension);
+	dimensionextentname = msStringConcatenate(dimensionextentname, "_extent");
+	dimensionextent = msOWSLookupMetadata(&(lp->metadata), "M", dimensionextentname);
+	
+	/*if the server want to force the type to character*/
+	dimensiontypename = msStrdup(dimension);
+	dimensiontypename = msStringConcatenate(dimensiontypename, "_type");
+	dimensiontype = msOWSLookupMetadata(&(lp->metadata), "M", dimensiontypename);
+	forcecharcter = MS_FALSE;
+	if (dimensiontype && strcasecmp(dimensiontype, "Character") == 0)
+	  forcecharcter = MS_TRUE;
+	
+	if (dimensionitem && dimensionextent)
+	{
+	    if(msWMSValidateDimensionValue(value, dimensionextent, forcecharcter))
+	    {
+		result = msWMSApplyDimensionLayer(lp, dimensionitem, value, forcecharcter);
+	    }
+	    else
+	    {
+		msSetError(MS_WMSERR, "Dimension %s with a value of %s is invalid or outside the extents defined", "msWMSApplyDimension", 
+			   dimension, value);
+		result =  MS_FALSE;
+	    }
+	}
+    
+	msFree(dimensionitemname);
+	msFree(dimensionextentname);
+	msFree(dimensiontypename);
+	msFree(dimension);
+    }
+    return result;
+}
 /*
 **
 */
@@ -861,6 +1263,77 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           return MS_FAILURE;/* msWMSException(map, nVersion, "InvalidTimeRequest"); */
       }
   } 
+
+  /*
+  ** Check/apply  wms dimensions
+  ** all dimension requests shoul start with dim_xxxx, except time and elevation.
+  */
+  for (i=0; i<map->numlayers; i++)
+  {
+      layerObj *lp = NULL;
+      const char *dimensionlist = NULL;
+      char **tokens;
+      int ntokens=0,k;
+
+      lp = (GET_LAYER(map, i));
+      if (lp->status != MS_ON && lp->status != MS_DEFAULT)
+	continue;
+
+      dimensionlist = msOWSLookupMetadata(&(lp->metadata), "M", "dimensionlist");
+      if (!dimensionlist)
+	dimensionlist = msOWSLookupMetadata(&(map->web.metadata), "M", "dimensionlist");
+      if (dimensionlist)
+      {
+	   tokens = msStringSplit(dimensionlist,  ',', &ntokens);
+	   if (tokens && ntokens > 0)
+	   {
+	       char *dimensionname=NULL;
+	       char *stmp = NULL;
+	       for (j=0; j<ntokens; j++)
+	       {
+		   for(k=0; map && k<numentries; k++)
+		   {
+		       if (strcasecmp(names[k], "elevation") == 0)
+			 dimensionname = msStrdup(names[k]);
+		       else
+		       {
+			   
+			   /*
+			     dimensionname = msStrdup("dim_");
+			     dimensionname = msStringConcatenate(dimensionname, names[k]);
+			   */
+			   dimensionname = msStrdup(names[k]);
+		       }
+		       
+		       /*the dim_ is supposed to be part of the dimension name in the request*/ 
+		       if (strcasecmp(tokens[j], "elevation") == 0)
+			 stmp = msStrdup(tokens[j]);
+		       else
+		       {
+			   stmp =  msStrdup("dim_");
+			   msStringTrim(tokens[j]);
+			   stmp = msStringConcatenate(stmp, tokens[j]);
+		       }
+		       if (strcasecmp(dimensionname, stmp) == 0)
+		       {
+			   if (!msWMSApplyDimension(lp, nVersion, dimensionname, values[k], 
+						    wms_exception_format))
+			   {
+			       msFreeCharArray(tokens, ntokens);
+			       msFree(dimensionname);
+			       
+			       return msWMSException(lp->map, nVersion, "InvalidDimensionValue",  wms_exception_format);
+			   }
+			   break;
+		       }
+		       msFree(dimensionname);
+		   }
+	       }
+	       msFreeCharArray(tokens, ntokens);
+	   }
+       }
+  }
+
   /*
   ** Apply the selected output format (if one was selected), and override
   ** the transparency if needed.
