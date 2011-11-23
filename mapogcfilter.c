@@ -325,7 +325,12 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
 			  pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
 		    }
 		    if (bIscharacter)
-		      pszTmpExpression = msStringConcatenate(pszTmpExpression, " = \"");
+		    {
+		       if (bSqlLayer)
+			 pszTmpExpression = msStringConcatenate(pszTmpExpression, " = '");
+		       else
+			 pszTmpExpression = msStringConcatenate(pszTmpExpression, " = \"");
+		    }
 		    else
 		      pszTmpExpression = msStringConcatenate(pszTmpExpression, " = ");
 			 
@@ -333,8 +338,12 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
 		    pszTmpExpression = msStringConcatenate(pszTmpExpression, pszEscapedStr);
 			 
 		    if (bIscharacter)
-		      pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
-			 
+		    {
+			if (bSqlLayer)
+			  pszTmpExpression = msStringConcatenate(pszTmpExpression, "'");
+			else
+			  pszTmpExpression = msStringConcatenate(pszTmpExpression, "\"");
+		    }	 
 		    pszTmpExpression = msStringConcatenate(pszTmpExpression, ")");
 
 		    msFree(pszEscapedStr);
