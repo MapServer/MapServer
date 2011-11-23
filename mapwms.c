@@ -506,6 +506,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
 	extents = NULL;
     }
 
+    
+
 
     /* make sure that we got a valid extent*/
     if (!isextentavalue && !isextentarange)
@@ -582,6 +584,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
 		}
 	    }
 	}
+	if (ranges && ntmp > 0)
+	  msFreeCharArray(ranges, ntmp);
     }
     else if (numuservalues > 1)	/*user input=multiple*/
     {
@@ -687,6 +691,18 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
     }
     if(uservalues && numuservalues > 0)
       msFreeCharArray(uservalues, numuservalues);
+
+    if (aextentvalues && nextentvalues > 0)
+    {
+	for (i=0; i<nextentvalues; i++)
+	  msFree(aextentvalues[i]);
+	msFree(aextentvalues);
+    }
+
+    if(aextentranges && nextentranges > 0)
+    {
+	msFree(aextentranges);
+    }
 
     if(uservaluevalid)
       return MS_TRUE;
