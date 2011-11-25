@@ -28,6 +28,7 @@
  *****************************************************************************/
 
 #include <assert.h>
+#include <math.h>
 #include "mapserver.h"
 #include "maptime.h"
 #include "mapcopy.h"
@@ -1326,7 +1327,6 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     return MS_FAILURE;
 }
-
 
 /**
  * msDrawWMSLayer()

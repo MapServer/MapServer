@@ -460,7 +460,7 @@ enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_
 
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION };
+enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER };
 enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
@@ -2142,6 +2142,7 @@ MS_DLL_EXPORT int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msWFSLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msGraticuleLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msRASTERLayerInitializeVirtualTable(layerObj *layer);
+MS_DLL_EXPORT int msUVRASTERLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msPluginLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msUnionLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT void msPluginFreeVirtualTableFactory();
@@ -2415,6 +2416,7 @@ MS_DLL_EXPORT int msCopyClass(classObj *dst, classObj *src, layerObj *layer);
 MS_DLL_EXPORT int msCopyStyle(styleObj *dst, styleObj *src);
 MS_DLL_EXPORT int msCopyLabel(labelObj *dst, labelObj *src);
 int msCopyExpression(expressionObj *dst, expressionObj *src);
+int msCopyProjection(projectionObj *dst, projectionObj *src);
 
 /* ==================================================================== */
 /*      end prototypes for functions in mapcopy                         */

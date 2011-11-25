@@ -3609,7 +3609,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       }
       break;
     case(CONNECTIONTYPE):
-      if((layer->connectiontype = getSymbol(9, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION)) == -1) return(-1);
+        if((layer->connectiontype = getSymbol(10, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION, MS_UVRASTER)) == -1) return(-1);
       break;
     case(DATA):
       if(getString(&layer->data) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
@@ -3999,7 +3999,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
   writeCluster(stream, indent, &(layer->cluster));
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 9, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 10, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER");
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */ 
   writeExtent(stream, indent, "EXTENT", layer->extent);

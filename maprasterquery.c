@@ -1188,7 +1188,7 @@ int msRASTERLayerOpen(layerObj *layer)
 #ifndef USE_GDAL
     msSetError( MS_IMGERR, 
                 "Rasters queries only supported with GDAL support enabled.",
-                "msRasterQueryByRect()" );
+                "msRASTERLayerOpen()" );
     return MS_FAILURE;
 #else
     rasterLayerInfo *rlinfo;

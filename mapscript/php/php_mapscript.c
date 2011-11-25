@@ -1103,7 +1103,8 @@ PHP_MINIT_FUNCTION(mapscript)
     REGISTER_LONG_CONSTANT("MS_RASTER",     MS_RASTER,      const_flag);
     REGISTER_LONG_CONSTANT("MS_PLUGIN",     MS_PLUGIN,      const_flag);
     REGISTER_LONG_CONSTANT("MS_UNION",      MS_UNION,      const_flag);
- 
+    REGISTER_LONG_CONSTANT("MS_UVRASTER",   MS_UVRASTER, const_flag); 
+
     /* output image type constants*/
     /*
     REGISTER_LONG_CONSTANT("MS_GIF",        MS_GIF,         const_flag);
