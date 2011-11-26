@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+
+- Fix compilation error with clang in renderers/agg/include/agg_renderer_outline_aa.h
+
 - Add stable hatch rendering (#3847)
 
 - Added vector field rendering (#4094)
