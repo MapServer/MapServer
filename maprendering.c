@@ -642,11 +642,7 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
                pattern[i] = style->pattern[i]*width/style->width;
             }
             
-            if(renderer->renderPolygonHatched) {
-               ret = renderer->renderPolygonHatched(image,offsetPolygon,spacing,width,pattern,style->patternlength,style->angle, &style->color);
-            } else {
-               ret = msHatchPolygon(image,offsetPolygon,spacing,width,pattern,style->patternlength,style->angle, &style->color);
-            }
+            ret = msHatchPolygon(image,offsetPolygon,spacing,width,pattern,style->patternlength,style->angle, &style->color);
             goto cleanup;
          }
          else {

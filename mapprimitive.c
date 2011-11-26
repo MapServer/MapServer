@@ -204,8 +204,7 @@ void msComputeBounds(shapeObj *shape)
         break;
      }
   }
-  if(i == shape->numlines)
-     return; /* no lines inside the shape contain any points */
+  if(i == shape->numlines) return;
     
   for( i=0; i<shape->numlines; i++ ) {
     for( j=0; j<shape->line[i].numpoints; j++ ) {
@@ -832,6 +831,7 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
     pointObj *point;
     double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
     if(shape->numlines == 0) return; /* nothing to transform */
+    int ok = 0;
 
     if(shape->type == MS_SHAPE_LINE) {
         /*
@@ -870,8 +870,11 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
                 shape->line[i].numpoints=k;
             }
             /* skip degenerate line once more */
-            if(shape->line[i].numpoints<2)
+            if(shape->line[i].numpoints<2) {
                shape->line[i].numpoints=0;
+            } else {
+               ok = 1; /* we have at least one line with more than two points */
+            }
         }
     }
     else if(shape->type == MS_SHAPE_POLYGON) {
@@ -907,6 +910,7 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
             point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
             point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
             shape->line[i].numpoints=k+1;
+            ok = 1;
         }
     }
     else { /* only for untyped shapes, as point layers don't go through this function */
@@ -917,6 +921,10 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
                 point[j].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
             }
         }
+        ok = 1;
+    }
+    if(!ok) {
+       shape->numlines = 0 ;
     }
 }
 

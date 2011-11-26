@@ -37,7 +37,6 @@
 #include "renderers/agg/include/agg_math_stroke.h"
 #include "renderers/agg/include/agg_scanline_p.h"
 #include "renderers/agg/include/agg_scanline_u.h"
-#include "renderers/agg/include/agg_scanline_bin.h"
 #include "renderers/agg/include/agg_rasterizer_scanline_aa.h"
 #include "renderers/agg/include/agg_span_pattern_rgba.h"
 #include "renderers/agg/include/agg_span_allocator.h"
@@ -54,8 +53,6 @@
 #include "renderers/agg/include/agg_ellipse.h"
 #include "renderers/agg/include/agg_gamma_functions.h"
 
-#include "renderers/agg/include/agg_scanline_boolean_algebra.h"
-#include "renderers/agg/include/agg_scanline_storage_aa.h"
 #include "renderers/agg/include/agg_rasterizer_outline_aa.h"
 #include "renderers/agg/include/agg_renderer_outline_aa.h"
 #include "renderers/agg/include/agg_renderer_outline_image.h"
@@ -147,7 +144,6 @@ public:
     than the perimeter, in number of pixels*/
    mapserver::scanline_u8 sl_line; /*unpacked scanlines, works faster if the area is roughly
     equal to the perimeter, in number of pixels*/
-   mapserver::scanline_bin m_sl_bin;
    bool use_alpha;
 };
 
@@ -156,7 +152,6 @@ public:
 template<class VertexSource>
 static void applyCJC(VertexSource &stroke, int caps, int joins) {
    switch (joins) {
-      case MS_CJC_NONE:
       case MS_CJC_ROUND:
          stroke.line_join(mapserver::round_join);
          break;
@@ -164,6 +159,7 @@ static void applyCJC(VertexSource &stroke, int caps, int joins) {
          stroke.line_join(mapserver::miter_join);
          break;
       case MS_CJC_BEVEL:
+      case MS_CJC_NONE:
          stroke.line_join(mapserver::bevel_join);
          break;
    }
@@ -200,8 +196,12 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
    if (style->patternlength <= 0) {
       mapserver::conv_stroke<line_adaptor> stroke(lines);
       stroke.width(style->width);
-      if(style->width>1)
+      if(style->width>1) {
          applyCJC(stroke, style->linecap, style->linejoin);
+      } else {
+         stroke.inner_join(mapserver::inner_bevel);
+         stroke.line_join(mapserver::bevel_join);
+      }
       r->m_rasterizer_aa.add_path(stroke);
    } else {
       mapserver::conv_dash<line_adaptor> dash(lines);
@@ -221,8 +221,12 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style) {
          dash.dash_start(patt_length - style->patternoffset);
       }
       stroke_dash.width(style->width);
-      if(style->width>1)
+      if(style->width>1) {
          applyCJC(stroke_dash, style->linecap, style->linejoin);
+      } else {
+         stroke_dash.inner_join(mapserver::inner_bevel);
+         stroke_dash.line_join(mapserver::bevel_join);
+      }
       r->m_rasterizer_aa.add_path(stroke_dash);
    }
    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
@@ -902,25 +906,34 @@ int agg2Cleanup(void *vcache) {
 // ------------------------------------------------------------------------ 
 // Function to create a custom hatch symbol based on an arbitrary angle. 
 // ------------------------------------------------------------------------
-static mapserver::path_storage createHatch(int sx, int sy, double angle, double step)
+static mapserver::path_storage createHatch(double ox, double oy,
+      double rx, double ry,
+      int sx, int sy, double angle, double step)
 {
     mapserver::path_storage path;
-    //path.start_new_path();
-    //restrict the angle to [0 180[
+    //restrict the angle to [0 180[, i.e ]-pi/2,pi/2] in radians
     angle = fmod(angle, 360.0);
     if(angle < 0) angle += 360;
     if(angle >= 180) angle -= 180;
 
     //treat 2 easy cases which would cause divide by 0 in generic case
     if(angle==0) {
-        for(double y=step/2.0;y<sy;y+=step) {
+       double y0 = step-fmod(oy-ry,step);
+       if((oy - ry) < 0) {
+          y0 -= step;
+       }
+        for(double y=y0; y<sy; y+=step) {
             path.move_to(0,y);
             path.line_to(sx,y);
         }
         return path;
     }
     if(angle==90) {
-        for(double x=step/2.0;x<sx;x+=step) {
+        double x0 = step-fmod(ox-rx,step);
+        if((ox - rx) < 0) {
+           x0 -= step;
+        }
+        for(double x=x0; x<sx; x+=step) {
             path.move_to(x,0);
             path.line_to(x,sy);
         }
@@ -928,16 +941,39 @@ static mapserver::path_storage createHatch(int sx, int sy, double angle, double 
     }
 
 
-    double theta = (90-angle)*MS_DEG_TO_RAD;
+    double theta = (90-angle)*MS_DEG_TO_RAD; /* theta in ]-pi/2 , pi/2] */
     double ct = cos(theta);
     double st = sin(theta);
-    double rmax = sqrt((double)sx*sx+sy*sy);
+    double invct = 1.0/ct;
+    double invst = 1.0/st;
+    double r0; /* distance from first hatch line to the top-left (if angle in  0,pi/2)
+                  or bottom-left (if angle in -pi/2,0) corner of the hatch bbox */ 
+    double rmax = sqrt(sx*sx+sy*sy); /* distance to the furthest hatch we will have to create
+TODO: this could be optimized for bounding boxes where width is very different than height for
+certain hatch angles */
+    double rref= rx*ct + ry*st; /* distance to the line passing through the refpoint, origin is
+                                   (0,0) of the imageObj */
+    double rcorner; /* distance to the line passing through the topleft or bottomleft corner
+                       of the hatch bbox (origin is (0,0) of imageObj) */
+
+    /* calculate the distance from the refpoint to the top right of the path */
+    if(angle < 90) {
+       rcorner = ox*ct + oy*st;
+       r0 = step - fmod(rcorner-rref,step);
+       if(rcorner-rref<0) r0 -= step;
+    } else {
+       rcorner = ox*ct + (oy+sy)*st;
+       r0 = step - fmod(rcorner-rref,step);
+       if(rcorner-rref<0) r0 -= step;
+       st = -st;
+    }
+
 
     //parametrize each line as r = x.cos(theta) + y.sin(theta)
-    for(double r=(angle<90)?step/2.:-rmax;r<rmax;r+=step) {
+    for(double r=r0;r<rmax;r+=step) {
         int inter=0;
         double x,y;
-        double pt[8]; //array to store the coordinates of intersection of the line with the sides
+        double pt[4]; //array to store the coordinates of intersection of the line with the sides
         //in the general case there will only be two intersections
         //so pt[4] should be sufficient to store the coordinates of the intersection,
         //but we allocate pt[8] to treat the special and rare/unfortunate case when the
@@ -947,69 +983,121 @@ static mapserver::path_storage createHatch(int sx, int sy, double angle, double 
         
         //test for intersection with each side
 
-        y=r/st;x=0; // test for intersection with top of image
+        y=r*invst;x=0; // test for intersection with left of image
         if(y>=0&&y<=sy) {
             pt[2*inter]=x;pt[2*inter+1]=y;
             inter++;
         }     
-        x=sx;y=(r-sx*ct)/st;// test for intersection with bottom of image
+        x=sx;y=(r-sx*ct)*invst;// test for intersection with right of image
         if(y>=0&&y<=sy) {
             pt[2*inter]=x;pt[2*inter+1]=y;
             inter++;
         }
-        y=0;x=r/ct;// test for intersection with left of image
-        if(x>=0&&x<=sx) {
-            pt[2*inter]=x;pt[2*inter+1]=y;
-            inter++;
+        if(inter<2) {
+           y=0;x=r*invct;// test for intersection with top of image
+           if(x>=0&&x<=sx) {
+              pt[2*inter]=x;pt[2*inter+1]=y;
+              inter++;
+           }
         }
-        y=sy;x=(r-sy*st)/ct;// test for intersection with right of image
-        if(x>=0&&x<=sx) {
-            pt[2*inter]=x;pt[2*inter+1]=y;
-            inter++;
+        if(inter<2) {
+           y=sy;x=(r-sy*st)*invct;// test for intersection with bottom of image
+           if(x>=0&&x<=sx) {
+              pt[2*inter]=x;pt[2*inter+1]=y;
+              inter++;
+           }
         }
         if(inter==2 && (pt[0]!=pt[2] || pt[1]!=pt[3])) { 
             //the line intersects with two sides of the image, it should therefore be drawn
-            path.move_to(pt[0],pt[1]);
-            path.line_to(pt[2],pt[3]);
+            if(angle<90) {
+              path.move_to(pt[0],pt[1]);
+              path.line_to(pt[2],pt[3]);
+            } else {
+              path.move_to(pt[0],sy-pt[1]);
+              path.line_to(pt[2],sy-pt[3]);
+            }
         }
     }
     return path;
 }
 
-int agg2RenderPolygonHatched(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color) {
-   
-   msComputeBounds(poly);
+template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSource &clipper, colorObj *color) {
+   if(img->format->renderer == MS_RENDER_WITH_AGG) {
+      AGG2Renderer *r = AGG_RENDERER(img);
+      r->m_rasterizer_aa_gamma.reset();
+      r->m_rasterizer_aa_gamma.filling_rule(mapserver::fill_non_zero);
+      r->m_rasterizer_aa_gamma.add_path(clipper);
+      r->m_renderer_scanline.color(aggColor(color));
+      mapserver::render_scanlines(r->m_rasterizer_aa_gamma, r->sl_poly, r->m_renderer_scanline);
+   } else {
+      shapeObj shape;
+      msInitShape(&shape);
+      int allocated = 20;
+      lineObj line;
+      shape.line = &line;
+      shape.numlines = 1;
+      shape.line[0].point = (pointObj*)msSmallCalloc(allocated,sizeof(pointObj));
+      shape.line[0].numpoints = 0;
+      double x=0,y=0;
+      unsigned int cmd;
+      clipper.rewind(0);
+      while((cmd = clipper.vertex(&x,&y)) != mapserver::path_cmd_stop) {
+         switch(cmd) {
+            case mapserver::path_cmd_line_to:
+               if(shape.line[0].numpoints == allocated) {
+                  allocated *= 2;
+                  shape.line[0].point = (pointObj*)msSmallRealloc(shape.line[0].point, allocated*sizeof(pointObj));
+               }
+               shape.line[0].point[shape.line[0].numpoints].x = x;
+               shape.line[0].point[shape.line[0].numpoints].y = y;
+               shape.line[0].numpoints++;
+               break;
+            case mapserver::path_cmd_move_to:
+               shape.line[0].point[0].x = x;
+               shape.line[0].point[0].y = y;
+               shape.line[0].numpoints = 1;
+               break;
+            case mapserver::path_cmd_end_poly|mapserver::path_flags_close:
+               if(shape.line[0].numpoints > 2) {
+                  MS_IMAGE_RENDERER(img)->renderPolygon(img,&shape,color);
+               }
+               break;
+            default:
+               assert(0); //WTF?
+         }
+      }
+      free(shape.line[0].point);
+   }
+}
 
-   /* 
-    * we create a hatch pattern that is the size of the shapeObj's bounds, expanded by the width 
-    * of the stroke we want to apply to the lines to account for end-caps artifacts
-    */
-   int pw=(int)(poly->bounds.maxx-poly->bounds.minx+width*2)+1;
-   int ph=(int)(poly->bounds.maxy-poly->bounds.miny+width*2)+1;
+int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color) {
+   assert(MS_RENDERER_PLUGIN(img->format));
+   msComputeBounds(poly);
+   
+   /* amount we should expand the bounding box by */
+   double exp = width * 0.7072;
+
+   /* width and height of the bounding box we will be creating the hatch in */
+   int pw=(int)(poly->bounds.maxx-poly->bounds.minx+exp*2)+1;
+   int ph=(int)(poly->bounds.maxy-poly->bounds.miny+exp*2)+1;
+
+   /* position of the top-left corner of the bounding box */
+   double ox = poly->bounds.minx - exp;
+   double oy = poly->bounds.miny - exp;
 
    //create a rectangular hatch of size pw,ph starting at 0,0
    //the created hatch is of the size of the shape's bounding box
-   mapserver::path_storage hatch = createHatch(pw,ph,angle,spacing);
+   mapserver::path_storage hatch = createHatch(ox,oy,
+         img->refpt.x,img->refpt.y,pw,ph,angle,spacing);
+   if(hatch.total_vertices()<=0) return MS_SUCCESS;
    
    //translate the hatch so it overlaps the current shape
-   hatch.transform(mapserver::trans_affine_translation(poly->bounds.minx-width,poly->bounds.miny-width));
-
-
-
-   //render the hatch clipped by the shape
+   hatch.transform(mapserver::trans_affine_translation(ox,oy));
    
    polygon_adaptor polygons(poly);
-   
-	AGG2Renderer *r = AGG_RENDERER(img);
-   
-   mapserver::rasterizer_scanline_aa<> ras1,ras2;
-   mapserver::scanline_storage_aa8 storage;
-   mapserver::scanline_storage_aa8 storage1;
-   mapserver::scanline_storage_aa8 storage2;
-   mapserver::scanline_p8 sl1,sl2;
-   ras1.filling_rule(mapserver::fill_non_zero);
-   
-   
+
+
+
    if(patternlength>1) {
       //dash the hatch and render it clipped by the shape
       mapserver::conv_dash<mapserver::path_storage > dash(hatch);
@@ -1021,98 +1109,14 @@ int agg2RenderPolygonHatched(imageObj *img, shapeObj *poly, double spacing, doub
       }
       stroke.width(width);
       stroke.line_cap(mapserver::butt_cap);
-      ras1.add_path(stroke);                    
+      mapserver::conv_clipper<polygon_adaptor,mapserver::conv_stroke<mapserver::conv_dash<mapserver::path_storage> > > clipper(polygons,stroke, mapserver::clipper_and); 
+      renderPolygonHatches(img,clipper,color);
    } else {
       //render the hatch clipped by the shape
       mapserver::conv_stroke <mapserver::path_storage > stroke(hatch);
       stroke.width(width);
       stroke.line_cap(mapserver::butt_cap);
-      ras1.add_path(stroke);                    
-   }
-   
-   mapserver::render_scanlines(ras1, r->sl_line, storage1);
-   ras2.filling_rule(mapserver::fill_even_odd);
-   ras2.add_path(polygons);
-   mapserver::render_scanlines(ras2,r->sl_poly,storage2);
-   mapserver::sbool_combine_shapes_aa(mapserver::sbool_and, storage1, storage2, sl1, sl2, r->sl_line, storage);
-   r->m_renderer_scanline.color(aggColor(color));
-   mapserver::render_scanlines ( storage, r->sl_poly, r->m_renderer_scanline );
-   return MS_SUCCESS;
-
-}
-
-template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSource &clipper, colorObj *color) {
-
-   shapeObj shape;
-   msInitShape(&shape);
-   int allocated = 20;
-   lineObj line;
-   shape.line = &line;
-   shape.numlines = 1;
-   shape.line[0].point = (pointObj*)msSmallCalloc(allocated,sizeof(pointObj));
-   shape.line[0].numpoints = 0;
-   double x=0,y=0;
-   unsigned int cmd;
-   while((cmd = clipper.vertex(&x,&y)) != mapserver::path_cmd_stop) {
-      switch(cmd) {
-      case mapserver::path_cmd_line_to:
-         if(shape.line[0].numpoints == allocated) {
-            allocated *= 2;
-            shape.line[0].point = (pointObj*)msSmallRealloc(shape.line[0].point, allocated*sizeof(pointObj));
-         }
-         shape.line[0].point[shape.line[0].numpoints].x = x;
-         shape.line[0].point[shape.line[0].numpoints].y = y;
-         shape.line[0].numpoints++;
-         break;
-      case mapserver::path_cmd_move_to:
-         shape.line[0].point[0].x = x;
-         shape.line[0].point[0].y = y;
-         shape.line[0].numpoints = 1;
-         break;
-      case mapserver::path_cmd_end_poly|mapserver::path_flags_close:
-         if(shape.line[0].numpoints > 2) {
-            MS_IMAGE_RENDERER(img)->renderPolygon(img,&shape,color);
-         }
-         break;
-      default:
-         assert(0); //WTF?
-      }
-   }
-   free(shape.line[0].point);
-}
-
-int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color) {
-   assert(MS_RENDERER_PLUGIN(img->format));
-   msComputeBounds(poly);
-   int pw=(int)(poly->bounds.maxx-poly->bounds.minx+width*2)+1;
-   int ph=(int)(poly->bounds.maxy-poly->bounds.miny+width*2)+1;
-   mapserver::path_storage lines = createHatch(pw,ph, angle, spacing);
-   lines.transform(mapserver::trans_affine_translation(poly->bounds.minx-width,poly->bounds.miny-width));
-   polygon_adaptor polygons(poly);
-
-
-
-   if(patternlength>1) {
-      //dash the hatch and render it clipped by the shape
-      mapserver::conv_dash<mapserver::path_storage > dash(lines);
-      mapserver::conv_stroke<mapserver::conv_dash<mapserver::path_storage> > stroke(dash);
-      for (int i=0; i<patternlength; i+=2) {
-         if (i < patternlength-1) {
-            dash.add_dash(pattern[i], pattern[i+1]);
-         }
-      }
-      stroke.width(width);
-      stroke.line_cap(mapserver::butt_cap);
-      mapserver::conv_clipper<polygon_adaptor,mapserver::conv_stroke<mapserver::conv_dash<mapserver::path_storage> > > clipper(polygons,stroke, mapserver::clipper_and); 
-      clipper.rewind(0);
-      renderPolygonHatches(img,clipper,color);
-   } else {
-      //render the hatch clipped by the shape
-      mapserver::conv_stroke <mapserver::path_storage > stroke(lines);
-      stroke.width(width);
-      stroke.line_cap(mapserver::butt_cap);
       mapserver::conv_clipper<polygon_adaptor,mapserver::conv_stroke<mapserver::path_storage> > clipper(polygons,stroke, mapserver::clipper_and); 
-      clipper.rewind(0);
       renderPolygonHatches(img,clipper,color);
    }
 
@@ -1136,7 +1140,6 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer) {
 
    renderer->renderPolygon = &agg2RenderPolygon;
    renderer->renderPolygonTiled = &agg2RenderPolygonTiled;
-   renderer->renderPolygonHatched = &agg2RenderPolygonHatched;
    renderer->renderLineTiled = &agg2RenderLineTiled;
 
    renderer->renderGlyphs = &agg2RenderGlyphs;

@@ -246,6 +246,9 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         GET_LAYER(map, i)->scalefactor = map->resolution/map->defresolution;
     }
 
+    image->refpt.x = MS_MAP2IMAGE_X_IC_DBL(0, map->extent.minx, 1.0/map->cellsize);
+    image->refpt.y = MS_MAP2IMAGE_Y_IC_DBL(0, map->extent.maxy, 1.0/map->cellsize);
+
     return image;
 }
 

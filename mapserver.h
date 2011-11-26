@@ -1632,6 +1632,7 @@ typedef struct {
     unsigned char *raw_byte;
   } img;
   ms_bitarray  img_mask;
+  pointObj refpt;
 #endif
 } imageObj;
 
@@ -2678,7 +2679,6 @@ struct rendererVTableObj {
 	int (*renderLine)(imageObj *img, shapeObj *p, strokeStyleObj *style);
 	int (*renderPolygon)(imageObj *img, shapeObj *p, colorObj *color);
 	int (*renderPolygonTiled)(imageObj *img, shapeObj *p, imageObj *tile);
-	int (*renderPolygonHatched)(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color);
 	int (*renderLineTiled)(imageObj *img, shapeObj *p, imageObj *tile);
 
 	int (*renderBitmapGlyphs)(imageObj *img, double x, double y,

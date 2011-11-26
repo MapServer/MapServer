@@ -1465,8 +1465,6 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
             image->imagepath = msStrdup(imagepath);
         if (imageurl)
             image->imageurl = msStrdup(imageurl);
-
-        return image;
     }
     else if( MS_RENDERER_RAWDATA(format) )
     {
@@ -1551,8 +1549,6 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
                 memset( image->img.raw_byte, nv, i );
             }
         }
-
-        return image;
     }
     else if( MS_RENDERER_IMAGEMAP(format) )
     {
@@ -1570,7 +1566,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 
     if(!image) 
         msSetError(MS_GDERR, "Unable to initialize image.", "msImageCreate()");
-
+    image->refpt.x = image->refpt.y = 0;
     return image;
 }
 

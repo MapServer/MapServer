@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+- Add stable hatch rendering (#3847)
 
 - Added vector field rendering (#4094)
 
