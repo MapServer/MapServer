@@ -830,8 +830,8 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
     double dx,dy;
     pointObj *point;
     double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
-    if(shape->numlines == 0) return; /* nothing to transform */
     int ok = 0;
+    if(shape->numlines == 0) return; /* nothing to transform */
 
     if(shape->type == MS_SHAPE_LINE) {
         /*
