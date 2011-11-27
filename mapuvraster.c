@@ -87,6 +87,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
 #ifdef USE_GDAL
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   int   i;
+  int *itemindexes;
   
   if (layer->numitems == 0)
       return MS_SUCCESS;
@@ -107,11 +108,11 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
     return(MS_FAILURE);
   }
 
-  int *itemindexes = (int*)layer->iteminfo;
+  itemindexes = (int*)layer->iteminfo;
   for(i=0;i<layer->numitems;i++) 
   {
-      // Special case for handling text string and angle coming from
-      // OGR style strings.  We use special attribute snames.
+      /* Special case for handling text string and angle coming from */
+      /* OGR style strings.  We use special attribute snames. */
       if (EQUAL(layer->items[i], MSUVRASTER_ANGLE))
           itemindexes[i] = MSUVRASTER_ANGLEINDEX;
       else if (EQUAL(layer->items[i], MSUVRASTER_LENGTH))
@@ -316,7 +317,7 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   if(layer->numitems == 0) 
       return(NULL);
 
-  if(!layer->iteminfo)  // Should not happen... but just in case!
+  if(!layer->iteminfo)  /* Should not happen... but just in case! */
       if (msUVRASTERLayerInitItemInfo(layer) != MS_SUCCESS)
           return NULL;
 
