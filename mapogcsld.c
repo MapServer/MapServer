@@ -2546,8 +2546,6 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
     char *pch = NULL, *pchPrevious=NULL;
     
     CPLXMLNode  *psNode=NULL, *psCategorize=NULL;
-    char **papszValues = (char **)malloc(sizeof(char*)*100);
-    char **papszThresholds = (char **)malloc(sizeof(char*)*100);
     char *pszTmp = NULL;
     int nValues=0, nThresholds=0;
     int i,nMaxValues= 100, nMaxThreshold=100;
@@ -2732,8 +2730,8 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
         }
         else if ((psCategorize = CPLGetXMLNode(psColorMap, "Categorize")))
         {
-            papszValues = (char **)malloc(sizeof(char*)*nMaxValues);
-            papszThresholds = (char **)malloc(sizeof(char*)*nMaxThreshold);
+            char** papszValues = (char **)malloc(sizeof(char*)*nMaxValues);
+            char** papszThresholds = (char **)malloc(sizeof(char*)*nMaxThreshold);
             psNode =  CPLGetXMLNode(psCategorize, "Value");
             while (psNode && psNode->pszValue &&
                    psNode->psChild && psNode->psChild->pszValue)
