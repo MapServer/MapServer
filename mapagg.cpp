@@ -966,6 +966,7 @@ certain hatch angles */
        r0 = step - fmod(rcorner-rref,step);
        if(rcorner-rref<0) r0 -= step;
        st = -st;
+       invst = -invst;
     }
 
 
