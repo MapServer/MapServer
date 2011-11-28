@@ -948,7 +948,7 @@ static mapserver::path_storage createHatch(double ox, double oy,
     double invst = 1.0/st;
     double r0; /* distance from first hatch line to the top-left (if angle in  0,pi/2)
                   or bottom-left (if angle in -pi/2,0) corner of the hatch bbox */ 
-    double rmax = sqrt(sx*sx+sy*sy); /* distance to the furthest hatch we will have to create
+    double rmax = sqrt((double)(sx*sx+sy*sy)); /* distance to the furthest hatch we will have to create
 TODO: this could be optimized for bounding boxes where width is very different than height for
 certain hatch angles */
     double rref= rx*ct + ry*st; /* distance to the line passing through the refpoint, origin is
