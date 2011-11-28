@@ -343,7 +343,7 @@ mapcache_cache* mapcache_cache_sqlite_create(mapcache_context *ctx) {
    cache->create_stmt.sql = apr_pstrdup(ctx->pool,
          "create table if not exists tiles(x integer, y integer, z integer, data blob, dim text, ctime datetime, atime datetime, hitcount integer default 0, primary key(x,y,z,dim))");
    cache->exists_stmt.sql = apr_pstrdup(ctx->pool,
-         "select 1 from tiles where x=?:x and y=:y and z=:z and dim=:dim");
+         "select 1 from tiles where x=:x and y=:y and z=:z and dim=:dim");
    cache->get_stmt.sql = apr_pstrdup(ctx->pool,
          "select data,strftime(\"%s\",ctime) from tiles where x=:x and y=:y and z=:z and dim=:dim");
    cache->set_stmt.sql = apr_pstrdup(ctx->pool,
@@ -366,7 +366,7 @@ mapcache_cache* mapcache_cache_mbtiles_create(mapcache_context *ctx) {
    cache->create_stmt.sql = apr_pstrdup(ctx->pool,
          "CREATE TABLE  IF NOT EXISTS tiles (zoom_level integer, tile_column integer, tile_row integer, tile_data blob, primary key(tile_row, tile_column, zoom_level)); create table if not exists metadata(name text, value text);");
    cache->exists_stmt.sql = apr_pstrdup(ctx->pool,
-         "select 1 from tiles where tile_column=?:x and tile_row=:y and zoom_level=:z");
+         "select 1 from tiles where tile_column=:x and tile_row=:y and zoom_level=:z");
    cache->get_stmt.sql = apr_pstrdup(ctx->pool,
          "select tile_data from tiles where tile_column=:x and tile_row=:y and zoom_level=:z");
    cache->set_stmt.sql = apr_pstrdup(ctx->pool,
