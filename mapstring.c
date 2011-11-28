@@ -302,9 +302,15 @@ int strncasecmp(const char *s1, const char *s2, int len)
 
   cp1 = s1;
   cp2 = s2;
-  if ((!*cp1) || (!*cp2 )) {
-    return (0);
-  }
+
+  if(len == 0)
+    return(0);
+  
+  if (!*cp1)
+     return -1;
+  else if (!*cp2)
+    return 1;
+  
   while(*cp1 && *cp2 && len) 
   {
       if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
