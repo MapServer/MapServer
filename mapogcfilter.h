@@ -30,6 +30,12 @@
 #define MAPOGCFILTER_H
 
 #include "mapserver.h"
+
+/*dont need ogr for these functikons*/
+MS_DLL_EXPORT int FLTIsNumeric(char *pszValue);
+MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, char *pszExpression);
+MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  int forcecharcter);
+
 #ifdef USE_OGR
 
 /* There is a dependency to OGR for the MiniXML parser */
@@ -105,8 +111,6 @@ MS_DLL_EXPORT int FLTHasSpatialFilter(FilterEncodingNode *psFilterNode);
 /*SQL expressions related functions.*/
 MS_DLL_EXPORT int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, 
                           int iLayerIndex);
-MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, char *pszExpression);
-MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  int forcecharcter);
 
 MS_DLL_EXPORT char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode,layerObj *lp);
 MS_DLL_EXPORT char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp);
@@ -122,7 +126,6 @@ MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszStri
 MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS);
 MS_DLL_EXPORT  int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
 
-MS_DLL_EXPORT int FLTIsNumeric(char *pszValue);
 /*common-expressions*/
 MS_DLL_EXPORT   char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT  char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
