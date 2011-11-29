@@ -14,6 +14,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+- Fixed subsetting in WCS 2.0 (#4099)
+
 - Upgrade clipper library to 4.6.3
 
 - Make openlayers wms template request images with mimetype of outputformat
