@@ -3526,7 +3526,14 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     /************************************************************************/
 
     msInitProjection(&imageProj);
-    msLoadProjectionString(&imageProj, cm.srs);
+    if (msLoadProjectionString(&imageProj, cm.srs) == -1)
+    {
+        msSetError(MS_WCSERR,
+            "Error loading CRS %s.",
+            "msWCSGetCoverage20()", params->subsetcrs);
+        return msWCSException(map, "InvalidParameterValue",
+            "projection", params->version);
+    }
 
     if(msWCSGetCoverage20_FinalizeParamsObj(params) == MS_FAILURE)
     {
@@ -3548,8 +3555,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
             x_1 = cm.geotransform[0]
                 + orig_bbox.minx * cm.geotransform[1]
                 + orig_bbox.miny * cm.geotransform[2];
-            x_2 =
-                    cm.geotransform[0]
+            x_2 = cm.geotransform[0]
                 + (orig_bbox.maxx+1) * cm.geotransform[1]
                 + (orig_bbox.maxy+1) * cm.geotransform[2];
 
@@ -3713,14 +3719,16 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     }
 
     /* set the bounding box as new map extent */
-    map->extent = layer->extent = bbox;
+    map->extent = bbox;
     map->width = params->width;
     map->height = params->height;
 
     /* Are we exceeding the MAXSIZE limit on result size? */
     if(map->width > map->maxsize || map->height > map->maxsize )
     {
-        msSetError(MS_WCSERR, "Raster size out of range, width and height of resulting coverage must be no more than MAXSIZE=%d.", "msWCSGetCoverage20()", map->maxsize);
+        msSetError(MS_WCSERR, "Raster size out of range, width and height of "
+                              "resulting coverage must be no more than MAXSIZE=%d.",
+                              "msWCSGetCoverage20()", map->maxsize);
 
         return msWCSException(map, "InvalidParameterValue", 
                                    "size", params->version);
