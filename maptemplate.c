@@ -70,7 +70,7 @@ static char *olLayerWMSTag = \
 "                                   '[mapserv_onlineresource]',\n"
 "                                   {layers: '[LAYERS]',\n"
 "                                   bbox: '[minx],[miny],[maxx],[maxy]',\n"
-"                                   width: [mapwidth], height: [mapheight], version: '[VERSION]'},"
+"                                   width: [mapwidth], height: [mapheight], version: '[VERSION]', format:'[openlayers_format]'},"
 "                                   {singleTile: \"true\", ratio:1, projection: '[openlayers_projection]'});\n";
 
 static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mode);
@@ -4388,6 +4388,7 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
     const char *tmpUrl = NULL;
     char *openlayersUrl = olUrl;
     char *projection = NULL;
+    char *format = NULL;
 
     /* 2 CGI parameters are used in the template. we need to transform them
      * to be sure the case match during the template processing. We also
@@ -4407,6 +4408,9 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
             free(mapserv->request->ParamNames[i]);
             mapserv->request->ParamNames[i] = msStrdup("VERSION");
         }
+    }
+    if(mapserv->map->outputformat->mimetype && *mapserv->map->outputformat->mimetype) {
+      format = mapserv->map->outputformat->mimetype; 
     }
 
     /* check if the environment variable or config MS_OPENLAYERS_JS_URL is set */
@@ -4429,6 +4433,10 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
     buffer = msReplaceSubstring(buffer, "[openlayers_layer]", layer);
     if (projection)
         buffer = msReplaceSubstring(buffer, "[openlayers_projection]", projection);
+    if (format)
+        buffer = msReplaceSubstring(buffer, "[openlayers_format]", format);
+    else
+        buffer = msReplaceSubstring(buffer, "[openlayers_format]", "image/jpeg");
     msIO_fwrite(buffer, strlen(buffer), 1, stdout);
     free(layer);
     free(buffer);

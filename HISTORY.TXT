@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Make openlayers wms template request images with mimetype of outputformat
+  defined in the mapfile's imagetype
+
 - Fix memory leak in msSLDParseRasterSymbolizer()
 
 - Fix compilation error with clang in renderers/agg/include/agg_renderer_outline_aa.h
