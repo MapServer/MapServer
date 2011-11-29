@@ -50,6 +50,7 @@ const GEOSPreparedGeometry **clippers=NULL;
 #endif
 
 mapcache_tileset *tileset;
+mapcache_tileset *tileset_transfer;
 mapcache_cfg *cfg;
 mapcache_context ctx;
 apr_table_t *dimensions;
@@ -71,7 +72,8 @@ typedef enum {
    MAPCACHE_CMD_SEED,
    MAPCACHE_CMD_STOP,
    MAPCACHE_CMD_DELETE,
-   MAPCACHE_CMD_SKIP
+   MAPCACHE_CMD_SKIP,
+   MAPCACHE_CMD_TRANSFER
 } cmd;
 
 typedef enum {
@@ -100,9 +102,10 @@ static const apr_getopt_option_t seed_options[] = {
     { "zoom", 'z', TRUE, "min and max zoomlevels to seed, separated by a comma. eg 0,6" },
     { "extent", 'e', TRUE, "extent to seed, format: minx,miny,maxx,maxy" },
     { "nthreads", 'n', TRUE, "number of parallel threads to use" },
-    { "mode", 'm', TRUE, "mode: seed (default) or delete" },
+    { "mode", 'm', TRUE, "mode: seed (default), delete or transfer" },
     { "older", 'o', TRUE, "reseed tiles older than supplied date (format: year/month/day hour:minute, eg: 2011/01/31 20:45" },
     { "dimension", 'D', TRUE, "set the value of a dimension (format DIMENSIONNAME=VALUE). Can be used multiple times for multiple dimensions" },
+    { "transfer", 'x', TRUE, "tileset to transfer" },    
 #ifdef USE_CLIPPERS
     { "ogr-datasource", 'd', TRUE, "ogr datasource to get features from"},
     { "ogr-layer", 'l', TRUE, "layer inside datasource"},
@@ -233,35 +236,37 @@ void progresslog(int x, int y, int z) {
    fflush(NULL);
 }
 
-
-void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
-   apr_pool_clear(cmd_ctx->pool);
-   if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
-      //remove all items from the queue
-      void *entry;
-      while (apr_queue_trypop(work_queue,&entry)!=APR_EAGAIN) {queuedtilestot--;}
-      return;
-   }
-   int tile_exists = tileset->cache->tile_exists(cmd_ctx,tile);
-   cmd action = MAPCACHE_CMD_SKIP;
+cmd examine_tile(mapcache_context *ctx, mapcache_tile *tile) 
+{
+   int action = MAPCACHE_CMD_SKIP;
    int intersects = -1;
+   int tile_exists = tileset->cache->tile_exists(ctx,tile);
+
    /* if the tile exists and a time limit was specified, check the tile modification date */
    if(tile_exists) {
       if(age_limit) {
-         if(tileset->cache->tile_get(cmd_ctx,tile) == MAPCACHE_SUCCESS) {
+         if(tileset->cache->tile_get(ctx,tile) == MAPCACHE_SUCCESS) {
             if(tile->mtime && tile->mtime<age_limit) {
                /* the tile modification time is older than the specified limit */
 #ifdef USE_CLIPPERS
                /* check we are in the requested features before deleting the tile */
                if(nClippers > 0) {
-                  intersects = ogr_features_intersect_tile(cmd_ctx,tile);
+                  intersects = ogr_features_intersect_tile(ctx,tile);
                }
 #endif
                if(intersects != 0) {
                   /* the tile intersects the ogr features, or there was no clipping asked for: seed it */
-                  if(mode == MAPCACHE_CMD_SEED) {
-                     mapcache_tileset_tile_delete(cmd_ctx,tile,MAPCACHE_TRUE);
-                     action = MAPCACHE_CMD_SEED;
+                  if(mode == MAPCACHE_CMD_SEED || mode == MAPCACHE_CMD_TRANSFER) {
+                     mapcache_tileset_tile_delete(ctx,tile,MAPCACHE_TRUE);
+		     /* if we are in mode transfer, delete it from the dst tileset */
+		     if (mode == MAPCACHE_CMD_TRANSFER) {
+		       tile->tileset = tileset_transfer;
+		       if (tileset_transfer->cache->tile_exists(ctx,tile)) {
+			 mapcache_tileset_tile_delete(ctx,tile,MAPCACHE_TRUE);
+		       }
+		       tile->tileset = tileset;
+		     }
+                     action = mode;
                   }
                   else { //if(action == MAPCACHE_CMD_DELETE)
                      action = MAPCACHE_CMD_DELETE;
@@ -279,34 +284,59 @@ void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
          if(mode == MAPCACHE_CMD_DELETE) {
             //the tile exists and we are in delete mode: delete it
             action = MAPCACHE_CMD_DELETE;
-         } else {
+         } else if (mode == MAPCACHE_CMD_TRANSFER) {
+	    /* the tile exists in the source tileset, 
+	       check if the tile exists in the destination cache */
+	    tile->tileset = tileset_transfer;
+	    if (tileset_transfer->cache->tile_exists(ctx,tile)) {
+	      action = MAPCACHE_CMD_SKIP;
+	    }
+	    else {
+	      action = MAPCACHE_CMD_TRANSFER;
+	    }
+	    tile->tileset = tileset;
+	 } else {
             // the tile exists and we are in seed mode, skip to next one
             action = MAPCACHE_CMD_SKIP;
          }
       }
    } else {
       // the tile does not exist
-      if(mode == MAPCACHE_CMD_SEED) {
+      if(mode == MAPCACHE_CMD_SEED || mode == MAPCACHE_CMD_TRANSFER) {
 #ifdef USE_CLIPPERS
          /* check we are in the requested features before deleting the tile */
          if(nClippers > 0) {
-            if(ogr_features_intersect_tile(cmd_ctx,tile)) {
-               action = MAPCACHE_CMD_SEED;
+            if(ogr_features_intersect_tile(ctx,tile)) {
+               action = mode;
             } else {
                action = MAPCACHE_CMD_SKIP;
             }
          } else {
-            action = MAPCACHE_CMD_SEED;
+            action = mode;
          }
 #else
-         action = MAPCACHE_CMD_SEED;
+         action = mode;
 #endif
       } else {
          action = MAPCACHE_CMD_SKIP;
       }
    }
 
-   if(action == MAPCACHE_CMD_SEED || action == MAPCACHE_CMD_DELETE){
+   return action;
+}
+
+void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
+   apr_pool_clear(cmd_ctx->pool);
+   if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
+      //remove all items from the queue
+      void *entry;
+      while (apr_queue_trypop(work_queue,&entry)!=APR_EAGAIN) {queuedtilestot--;}
+      return;
+   }
+
+   cmd action = examine_tile(cmd_ctx, tile);
+
+   if(action == MAPCACHE_CMD_SEED || action == MAPCACHE_CMD_DELETE || action == MAPCACHE_CMD_TRANSFER){
       //current x,y,z needs seeding, add it to the queue
       struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
       cmd->x = tile->x;
@@ -363,6 +393,7 @@ void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
          }
       }
    }
+
    tile->x = curx;
    tile->y = cury;
    tile->z = curz;
@@ -403,63 +434,23 @@ void cmd_thread() {
             while (apr_queue_trypop(work_queue,&entry)!=APR_EAGAIN) {queuedtilestot--;}
             break;
          }
-         int should_seed = 0;
          tile->x = x;
          tile->y = y;
          tile->z = z;
-         int tile_exists = tileset->cache->tile_exists(&cmd_ctx,tile);
-         int intersects = -1;
-         /* if the tile exists and a time limit was specified, check the tile modification date */
-         if(tile_exists) {
-            if(age_limit) {
-               if(tileset->cache->tile_get(&cmd_ctx,tile) == MAPCACHE_SUCCESS) {
-                  if(tile->mtime && tile->mtime<age_limit) {
-#ifdef USE_CLIPPERS
-                     /* check we are in the requested features before deleting the tile */
-                     if(nClippers > 0) {
-                        intersects = ogr_features_intersect_tile(&cmd_ctx,tile);
-                     }
-#endif
-                     if(intersects != 0) {
-                        /* the tile intersects the ogr features, seed it */
-                        mapcache_tileset_tile_delete(&cmd_ctx,tile, MAPCACHE_TRUE);
-                        should_seed = 1;
-                     } else {
-                        /* the tile does not intersect the ogr features, and already exists, do nothing */
-                        should_seed = 0;
-                     }
-                  }
-               }
-            }
-         } else {
-            // the tile does not exist
-#ifdef USE_CLIPPERS
-            /* check we are in the requested features before deleting the tile */
-            if(nClippers > 0) {
-               if(ogr_features_intersect_tile(&cmd_ctx,tile)) {
-                  should_seed = 1;
-               } else {
-                  should_seed = 0;
-               }
-            } else {
-               should_seed = 1;
-            }
-#else
-            should_seed = 1;
-#endif
-         }
+	 int action = examine_tile(&cmd_ctx, tile);
 
-         if(should_seed){
+         if(action == MAPCACHE_CMD_SEED || MAPCACHE_CMD_TRANSFER) {
             //current x,y,z needs seeding, add it to the queue
             struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
             cmd->x = x;
             cmd->y = y;
             cmd->z = z;
-            cmd->command = MAPCACHE_CMD_SEED;
+            cmd->command = action;
             apr_queue_push(work_queue,cmd);
             queuedtilestot++;
             progresslog(x,y,z);
          }
+
          //compute next x,y,z
          x += tileset->metasize_x;
          if(x >= grid_link->grid_limits[z][2]) {
@@ -505,7 +496,17 @@ static void* APR_THREAD_FUNC seed_thread(apr_thread_t *thread, void *data) {
       tile->z = cmd->z;
       if(cmd->command == MAPCACHE_CMD_SEED) {
          mapcache_tileset_tile_get(&seed_ctx,tile);
-      } else { //CMD_DELETE
+      } else if (cmd->command == MAPCACHE_CMD_TRANSFER) {
+	  int i;
+	  mapcache_metatile *mt = mapcache_tileset_metatile_get(&seed_ctx, tile);
+	  for(i=0;i<mt->ntiles;i++) {
+	    mapcache_tile *subtile = &mt->tiles[i];
+	    mapcache_tileset_tile_get(&seed_ctx,subtile);
+	    subtile->tileset =  tileset_transfer;
+	    tileset_transfer->cache->tile_set(&seed_ctx,subtile);
+	  }
+      }
+      else { //CMD_DELETE
          mapcache_tileset_tile_delete(&seed_ctx,tile,MAPCACHE_TRUE);
       }
       if(seed_ctx.get_error(&seed_ctx)) {
@@ -517,7 +518,6 @@ static void* APR_THREAD_FUNC seed_thread(apr_thread_t *thread, void *data) {
    apr_thread_exit(thread,MAPCACHE_SUCCESS);
    return NULL;
 }
-
 
 void
 notice(const char *fmt, ...) {
@@ -571,6 +571,7 @@ int main(int argc, const char **argv) {
     apr_thread_t **threads;
     apr_threadattr_t *thread_attrs;
     const char *tileset_name=NULL;
+    const char *tileset_transfer_name=NULL;
     const char *grid_name = NULL;
     int *zooms = NULL;//[2];
     double *extent = NULL;//[4];
@@ -624,11 +625,16 @@ int main(int argc, const char **argv) {
             case 't':
                 tileset_name = optarg;
                 break;
+            case 'x':
+                tileset_transfer_name = optarg;
+                break;
             case 'm':
                 if(!strcmp(optarg,"delete")) {
                    mode = MAPCACHE_CMD_DELETE;
+                } else if(!strcmp(optarg,"transfer")){
+  		   mode = MAPCACHE_CMD_TRANSFER;
                 } else if(strcmp(optarg,"seed")){
-                   return usage(argv[0],"invalid mode, expecting \"seed\" or \"delete\"");
+                   return usage(argv[0],"invalid mode, expecting \"seed\", \"delete\" or \"transfer\"");
                 } else {
                    mode = MAPCACHE_CMD_SEED;
                 }
@@ -825,6 +831,14 @@ int main(int argc, const char **argv) {
         if(maxzoom>= grid_link->maxz) maxzoom = grid_link->maxz - 1;
     }
 
+    if (mode == MAPCACHE_CMD_TRANSFER) {
+      if (!tileset_transfer_name)
+        return usage(argv[0],"tileset where tiles should be transfered to not specified");
+
+      tileset_transfer = mapcache_configuration_get_tileset(cfg,tileset_transfer_name);
+      if(!tileset_transfer)
+	return usage(argv[0], "tileset where tiles should be transfered to not found in configuration");
+    }
 
     if(old) {
        if(strcasecmp(old,"now")) {
