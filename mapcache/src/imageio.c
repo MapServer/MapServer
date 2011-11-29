@@ -75,7 +75,7 @@ void mapcache_image_create_empty(mapcache_context *ctx, mapcache_cfg *cfg) {
    unsigned int color=0;
 
    /* create a transparent image for PNG, and a white one for jpeg */
-   if(!strstr(cfg->default_image_format->mime_type,"png")) {
+   if(cfg->default_image_format->mime_type && !strstr(cfg->default_image_format->mime_type,"png")) {
       color = 0xffffffff;
    }
    cfg->empty_image = cfg->default_image_format->create_empty_image(ctx, cfg->default_image_format,
