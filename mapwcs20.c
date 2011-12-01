@@ -158,17 +158,6 @@ static int msWCSParseTimeOrScalar20(timeScalarUnion *u, const char *string)
 }
 
 /************************************************************************/
-/*                   msStringIsNCName()                                 */
-/*                                                                      */
-/*      Evaluates if a string is a valid NCName.                        */
-/************************************************************************/
-
-static int msStringIsNCName(char *string)
-{
-    return msEvalRegex("^[a-zA-z_][a-zA-Z0-9_.-]*$" , string);
-}
-
-/************************************************************************/
 /*                   msWCSCreateSubsetObj20()                           */
 /*                                                                      */
 /*      Creates a new wcs20SubsetObj and initializes it to standard     */
