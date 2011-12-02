@@ -1,0 +1,79 @@
+#
+# makefile.vc - Main mapcache makefile for MSVC++
+#
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id: $
+#
+
+!INCLUDE nmake.opt
+
+BASE_CFLAGS = 	$(OPTFLAGS)
+
+CFLAGS=$(BASE_CFLAGS) $(MAPCACHE_CFLAGS)
+CC=     cl
+LINK=   link
+
+#
+# Main mapcache library.
+#
+
+MAPCACHE_OBJS = src\axisorder.obj  src\dimension.obj  src\imageio_mixed.obj  src\service_wms.obj \
+	        src\buffer.obj src\ezxml.obj  src\imageio_png.obj  src\service_wmts.obj \
+                src\cache_disk.obj  src\lock.obj src\services.obj \
+                src\cache_memcache.obj src\grid.obj  src\source.obj \
+		src\cache_sqlite.obj src\http.obj src\source_gdal.obj \
+		src\cache_tiff.obj src\image.obj src\service_demo.obj src\source_mapserver.obj \
+		src\configuration.obj src\image_error.obj src\service_kml.obj src\source_wms.obj \
+		src\configuration_xml.obj src\imageio.obj src\service_tms.obj src\tileset.obj \
+		src\core.obj src\imageio_jpeg.obj src\service_ve.obj src\util.obj \
+		$(REGEX_OBJ)
+
+
+MAPCACHE_FCGI = 	mapcache.exe 
+MAPCACHE_SEED = 	mapcache_seed.exe 
+
+#
+#
+#
+default: 	all
+
+all:		$(MAPCACHE_LIB) $(MAPCACHE_FCGI) $(MAPCACHE_SEED)
+
+
+$(MAPCACHE_LIB): $(MAPCACHE_OBJS)
+	lib /debug /out:$(MAPCACHE_LIB) $(MAPCACHE_OBJS)
+
+
+$(MAPCACHE_FCGI): $(MAPCACHE_LIB)
+          $(CC) $(CFLAGS) src\fastcgi_mapcache.c /Femapcache.exe $(LIBS)
+	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+$(MAPCACHE_SEED): $(MAPCACHE_LIB)
+          $(CC) $(CFLAGS) src\mapcache_seed.c /Femapcache_seed.exe $(LIBS)
+	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+.c.obj:
+	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
+
+.cpp.obj:
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
+
+ 
+clean:
+    del src\*.obj
+    del $(MAPCACHE_FCGI)
+    del *.lib
+    del *.manifest
+        
+
+install: $(MAPCACHE_EXE)
+	-mkdir $(BINDIR)
+	copy *.exe $(BINDIR)
+
+
+

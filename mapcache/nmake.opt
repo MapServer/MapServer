@@ -1,0 +1,197 @@
+
+########################################################################
+# nmake.opt - mapcache
+########################################################################
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Uncomment the following if you are building for 64-bit windows
+# (x64). You'll need to have PATH, INCLUDE and LIB set up for 64-bit
+# compiles.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#WIN64=YES
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Check compiler version given in command line
+# nmake -f makefile.vc MSVC_VER=xxxx
+# 1310 = 7.1 (2003)   1400 = 8.0 (2005)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!IFNDEF MSVC_VER
+#assume msvc 7.1
+MSVC_VER=1310
+!ENDIF
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# File locations and where to install things
+# ----------------------------------------------------------------------
+# If you are using the MapServer Build Kit, almost everything should be
+# relative to this directory throughout this option file.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Set the following to point to the directory adjacent to the dependent libs.
+!IFNDEF MAPCACHE_BASE
+MAPCACHE_BASE =  c:/projects/mapserver-buildkit-2008/mapserver-trunk/mapcache
+#MAPCACHE_BASE =  .
+!ENDIF
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Optmization, debug, and related compile flags.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+!IF $(MSVC_VER) == 1400
+# Optimized, with using MSVCRT.
+OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+# Debug with MSVCRT
+#OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+#LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+!ELSE
+# Optimized, with using MSVCRT.
+OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
+# Debug with MSVCRT
+#OPTFLAGS = /nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
+#LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+!ENDIF
+
+# Set the Warning level for the compiler (defaults to W1)
+WARNING_LEVEL=/W3
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Debugging Options
+# ----------------------------------------------------------------------
+#NEED_NONBLOCKING_STDERR=-DNEED_NONBLOCKING_STDERR
+ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
+
+# Set the linker debug option
+LDEBUG=/debug
+
+# DEBUG Build flags
+# Set the DEBUG flag if you wish to make a debug build
+DEBUG=/DDEBUG
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# APR: Apacge Protable Runtime library
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#APR_DIR = $(MAPCACHE_BASE)\..\..\apr-1.4.5
+APR_DIR = $(MAPCACHE_BASE)\..\..\apr-dist
+
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# PNG support
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PNG_DIR=$(MAPCACHE_BASE)\..\..\libpng-1.2.35
+ZLIB_DIR=$(MAPCACHE_BASE)\..\..\zlib-1.2.5
+ZLIB_INC=-I$(ZLIB_DIR)
+
+
+CURL=-DUSE_CURL
+CURL_DIR=$(MAPCACHE_BASE)\..\..\curl-7.21.3
+WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\WS2_32.Lib"
+
+
+JPEG_DIR=$(MAPCACHE_BASE)\..\..\jpeg-8c
+JPEG_INC = -I$(JPEG_DIR)
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# FastCGI Support
+# ----------------------------------------------------------------------
+# Uncomment, and update accordingly.
+FCGI_DEF=-DUSE_FASTCGI
+FCGI_DIR=$(MAPCACHE_BASE)\..\..\fcgi-2.4.0
+
+########################################################################
+# Section II: Mapserver Rendering Configuration
+########################################################################
+
+
+########################################################################
+# Section VI: Support Libraries.
+########################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# REGEX Libary
+# ----------------------------------------------------------------------
+# VC++ does not include the REGEX library... so we must provide our one.
+# The following definitions will try to build GNU regex-0.12 located in the
+# regex-0.12 sub-directory.
+# If it was not included in the source distribution, then you can get it from:
+#    ftp://ftp.gnu.org/pub/gnu/regex/regex-0.12.tar.gz
+# Provide the full path to the REGEX project directory
+# You do not need this library if you are compiling for PHP mapscript.
+# In that case the PHP regex library will be used instead
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+REGEX_DIR=$(MAPCACHE_BASE)\..\..\regex-0.12
+
+
+
+# Set the png support libaries
+!IFDEF PNG_DIR
+!IFNDEF PNG_LIB
+PNG_LIB=$(PNG_DIR)\projects\visualc71\Win32_LIB_Release\libpng.lib $(ZLIB_DIR)/old/visualc6/Win32_DLL_Release/zlib1.lib
+!ENDIF
+PNG_INC=-I$(PNG_DIR)
+!ENDIF
+
+CURL_INC = -I$(CURL_DIR)/include
+CURL_LIB = $(CURL_DIR)/lib/libcurl_imp.lib
+
+!IFDEF JPEG_DIR
+JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
+!ENDIF
+
+FCGI_LIB=$(FCGI_DIR)\libfcgi\Release\libfcgi.lib
+FCGI_INC=-I$(FCGI_DIR)\include
+
+
+########################################################################
+# Section VII: Variable Setup
+########################################################################
+# Should not need to be updated.
+########################################################################
+MAPCACHE_LIB =    mapcache.lib
+
+MAPCACHE_INC= -I$(MAPCACHE_BASE)\include
+
+#APR
+APR_INC=-I$(APR_DIR)\include
+APR_LIB=$(APR_DIR)/lib/apr-1.lib $(APR_DIR)/lib/aprutil-1.lib $(APR_DIR)/lib/libapr-1.lib $(APR_DIR)/lib/libaprutil-1.lib 
+
+
+
+# Setup REGEX object and includes
+REGEX_OBJ=$(REGEX_DIR)\regex.obj
+REGEX_INC=-I$(REGEX_DIR)
+
+# REGEX needs some special flags... here they are for VC++ 6.0
+REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
+
+
+
+#######################################################################
+# Section IX: Collect compiler flags
+########################################################################
+# Should not need to be updated.
+########################################################################
+
+!IFNDEF EXTERNAL_LIBS
+EXTERNAL_LIBS= $(PNG_LIB) $(CURL_LIB) $(JPEG_LIB) $(APR_LIB) $(FRIBIDI_LIB) $(FCGI_LIB)
+!ENDIF
+
+LIBS=$(MAPCACHE_LIB) $(EXTERNAL_LIBS)
+
+!IFNDEF INCLUDES
+INCLUDES=$(MAPCACHE_INC) $(APR_INC) $(REGEX_INC) $(PNG_INC) $(ZLIB_INC) $(CURL_INC) $(JPEG_INC) $(FCGI_INC)
+!ENDIF
+
+
+MAPCACHE_DEFS =$(REGEX_OPT) $(FCGI_DEF)
+
+
+
+!IFDEF WIN64
+MAPCACHE_CFLAGS=$(INCLUDES) $(MAPCACHE_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
+!ELSE
+MAPCACHE_CFLAGS=$(INCLUDES) $(MAPCACHE_DEFS) -DWIN32 -D_WIN32
+!ENDIF
