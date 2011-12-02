@@ -33,7 +33,10 @@
 #include <apr_tables.h>
 #include <curl/curl.h>
 #include <math.h>
+
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846264338327
@@ -47,8 +50,9 @@ int mapcache_util_extract_int_list(mapcache_context *ctx, const char* cargs,
    int tmpcount=1;
    const char *delim = (sdelim)?sdelim:" ,\t\r\n";
    char sep;
+   int i;
    *numbers_count = 0;
-   int i=strlen(delim);
+   i=strlen(delim);
    while(i--) {
       sep = delim[i];
       for(key=args;*key;key++) {
@@ -74,8 +78,9 @@ int mapcache_util_extract_double_list(mapcache_context *ctx, const char* cargs,
    int tmpcount=1;
    const char *delim = (sdelim)?sdelim:" ,\t\r\n";
    char sep;
+   int i;
    *numbers_count = 0;
-   int i=strlen(delim);
+   i=strlen(delim);
    while(i--) {
       sep = delim[i];
       for(key=args;*key;key++) {
@@ -145,11 +150,12 @@ char* _mapcache_context_get_error_msg_default(mapcache_context *ctx) {
 }
 
 void _mapcache_context_set_exception_default(mapcache_context *ctx, char *key, char *msg, ...) {
+   char *fullmsg;
+   va_list args;
    if(!ctx->exceptions) {
       ctx->exceptions = apr_table_make(ctx->pool,1);
    }
-   char *fullmsg;
-   va_list args;
+  
    va_start(args,msg);
    fullmsg = apr_pvsprintf(ctx->pool,msg,args);
    va_end(args);

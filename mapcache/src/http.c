@@ -47,6 +47,7 @@ size_t _mapcache_curl_memory_callback(void *ptr, size_t size, size_t nmemb, void
 }
 
 size_t _mapcache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  void  *userdata) {
+  char *colonptr;
    struct _header_struct *h = (struct _header_struct*)userdata;
    char *header = apr_pstrndup(h->ctx->pool,ptr,size*nmemb);
    char *endptr = strstr(header,"\r\n");
@@ -60,7 +61,7 @@ size_t _mapcache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  vo
          return size*nmemb;
       }
    }
-   char *colonptr = strchr(header,':');
+   colonptr = strchr(header,':');
    if(colonptr) {
       *colonptr = '\0';
       *endptr = '\0';
@@ -72,9 +73,12 @@ size_t _mapcache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  vo
 
 void mapcache_http_do_request(mapcache_context *ctx, mapcache_http *req, mapcache_buffer *data, apr_table_t *headers, long *http_code) {
    CURL *curl_handle;
-   curl_handle = curl_easy_init();
-   int ret;
    char error_msg[CURL_ERROR_SIZE];
+   int ret;
+   struct curl_slist *curl_headers=NULL;
+   curl_handle = curl_easy_init();
+  
+   
    /* specify URL to get */
    curl_easy_setopt(curl_handle, CURLOPT_URL, req->url);
 #ifdef DEBUG
@@ -101,7 +105,7 @@ void mapcache_http_do_request(mapcache_context *ctx, mapcache_http *req, mapcach
    curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
 
 
-   struct curl_slist *curl_headers=NULL;
+
    if(req->headers) {
       const apr_array_header_t *array = apr_table_elts(req->headers);
       apr_table_entry_t *elts = (apr_table_entry_t *) array->elts;
@@ -136,13 +140,20 @@ void mapcache_http_do_request_with_params(mapcache_context *ctx, mapcache_http *
 }
 
 /* calculate the length of the string formed by key=value&, and add it to cnt */
+#ifdef _WIN32
+static int _mapcache_key_value_strlen_callback(void *cnt, const char *key, const char *value) {
+#else
 static APR_DECLARE_NONSTD(int) _mapcache_key_value_strlen_callback(void *cnt, const char *key, const char *value) {
+#endif
    *((int*)cnt) += strlen(key) + 2 + ((value && *value) ? strlen(value) : 0);
    return 1;
 }
 
-
+#ifdef _WIN32
+static int _mapcache_key_value_append_callback(void *cnt, const char *key, const char *value) {
+#else
 static APR_DECLARE_NONSTD(int) _mapcache_key_value_append_callback(void *cnt, const char *key, const char *value) {
+#endif
 #define _mystr *((char**)cnt)
    _mystr = apr_cpystrn(_mystr,key,MAX_STRING_LEN);
    *((_mystr)++) = '=';
@@ -288,8 +299,9 @@ apr_table_t *mapcache_http_parse_param_string(mapcache_context *r, char *args_st
 
 mapcache_http* mapcache_http_configuration_parse_xml(mapcache_context *ctx, ezxml_t node) {
    ezxml_t http_node;
+   mapcache_http *req;
    curl_global_init(CURL_GLOBAL_ALL);
-   mapcache_http *req = (mapcache_http*)apr_pcalloc(ctx->pool,
+   req = (mapcache_http*)apr_pcalloc(ctx->pool,
          sizeof(mapcache_http));
    if ((http_node = ezxml_child(node,"url")) != NULL) {
       req->url = apr_pstrdup(ctx->pool,http_node->txt);

@@ -215,8 +215,10 @@ mapcache_buffer* _mapcache_imageio_jpeg_encode(mapcache_context *ctx, mapcache_i
 
 void _mapcache_imageio_jpeg_decode_to_image(mapcache_context *r, mapcache_buffer *buffer,
       mapcache_image *img) {
+  int s;
    struct jpeg_decompress_struct cinfo = {NULL};
    struct jpeg_error_mgr jerr;
+   unsigned char *temp;
    jpeg_create_decompress(&cinfo);
    cinfo.err = jpeg_std_error(&jerr);
    if (_mapcache_imageio_jpeg_mem_src(&cinfo,buffer->buf, buffer->size) != MAPCACHE_SUCCESS){
@@ -228,14 +230,14 @@ void _mapcache_imageio_jpeg_decode_to_image(mapcache_context *r, mapcache_buffer
    jpeg_start_decompress(&cinfo);
    img->w = cinfo.output_width;
    img->h = cinfo.output_height;
-   int s = cinfo.output_components;
+   s = cinfo.output_components;
    if(!img->data) {
       img->data = calloc(1,img->w*img->h*4*sizeof(unsigned char));
       apr_pool_cleanup_register(r->pool, img->data, (void*)free, apr_pool_cleanup_null) ;
       img->stride = img->w * 4;
    }
 
-   unsigned char *temp = apr_pcalloc(r->pool,img->w*s);
+   temp = apr_pcalloc(r->pool,img->w*s);
    while ((int)cinfo.output_scanline < img->h)
    {
       int i;
@@ -288,18 +290,19 @@ mapcache_image* _mapcache_imageio_jpeg_decode(mapcache_context *r, mapcache_buff
 
 static mapcache_buffer* _mapcache_imageio_jpg_create_empty(mapcache_context *ctx, mapcache_image_format *format,
       size_t width, size_t height, unsigned int color) {
-
+  mapcache_image *empty;
+  mapcache_buffer *buf;
+   int i;
    apr_pool_t *pool = NULL;
    if(apr_pool_create(&pool,ctx->pool) != APR_SUCCESS) {
       ctx->set_error(ctx,500,"png create empty: failed to create temp memory pool");
       return NULL;
    }
-   mapcache_image *empty = mapcache_image_create(ctx);
+   empty = mapcache_image_create(ctx);
    if(GC_HAS_ERROR(ctx)) {
       return NULL;
    }
    empty->data = (unsigned char*)apr_pcalloc(pool,width*height*4*sizeof(unsigned char)); 
-   int i;
    for(i=0;i<width*height;i++) {
       ((unsigned int*)empty->data)[i] = color;
    }
@@ -307,7 +310,7 @@ static mapcache_buffer* _mapcache_imageio_jpg_create_empty(mapcache_context *ctx
    empty->h = height;
    empty->stride = width * 4;
 
-   mapcache_buffer *buf = format->write(ctx,empty,format);
+   buf = format->write(ctx,empty,format);
    apr_pool_destroy(pool);
    return buf;
 }

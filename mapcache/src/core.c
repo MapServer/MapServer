@@ -42,17 +42,22 @@ mapcache_http_response *mapcache_http_response_create(apr_pool_t *pool) {
 }
 
 mapcache_http_response *mapcache_core_get_tile(mapcache_context *ctx, mapcache_request_get_tile *req_tile) {
+  int expires = 0;
+  mapcache_http_response *response;
+   int i;
+   char *timestr;
+   mapcache_image *base=NULL,*overlay;
+   mapcache_image_format *format = NULL;
+
 #ifdef DEBUG
    if(req_tile->ntiles ==0) {
       ctx->set_error(ctx,500,"BUG: get_tile called with 0 tiles");
       return NULL;
    }
 #endif
-   int expires = 0;
-   mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
-   int i;
-   char *timestr;
-   mapcache_image *base=NULL,*overlay;
+   expires = 0;
+   response = mapcache_http_response_create(ctx->pool);
+  
 
    /* this loop retrieves the tiles from the caches, and eventually decodes and merges them together
     * if multiple tiles were asked for */
@@ -89,7 +94,7 @@ mapcache_http_response *mapcache_core_get_tile(mapcache_context *ctx, mapcache_r
          }
       }
    }
-   mapcache_image_format *format = NULL;
+   format = NULL;
 
    /* if we had more than one tile, we need to encode the raw image data into a mapcache_buffer */
    if(req_tile->ntiles > 1) {
@@ -167,6 +172,11 @@ void _core_get_single_map(mapcache_context *ctx, mapcache_map *map, mapcache_res
 }
 
 mapcache_http_response *mapcache_core_get_map(mapcache_context *ctx, mapcache_request_get_map *req_map) {
+  mapcache_image_format *format = NULL;
+  mapcache_http_response *response;
+  mapcache_map *basemap;
+  int i;
+   char *timestr;
 #ifdef DEBUG
    if(req_map->nmaps ==0) {
       ctx->set_error(ctx,500,"BUG: get_map called with 0 maps");
@@ -180,12 +190,11 @@ mapcache_http_response *mapcache_core_get_map(mapcache_context *ctx, mapcache_re
       return NULL;
    }
    
-   mapcache_image_format *format = NULL;
-   mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
-   mapcache_map *basemap = req_map->maps[0];
+   format = NULL;
+   response = mapcache_http_response_create(ctx->pool);
+  basemap = req_map->maps[0];
 
-   int i;
-   char *timestr;
+   
    if(req_map->getmap_strategy == MAPCACHE_GETMAP_ASSEMBLE) {
       _core_get_single_map(ctx,basemap,req_map->resample_mode);
       if(GC_HAS_ERROR(ctx)) return NULL;
@@ -275,9 +284,10 @@ mapcache_http_response *mapcache_core_get_map(mapcache_context *ctx, mapcache_re
 }
 
 mapcache_http_response *mapcache_core_proxy_request(mapcache_context *ctx, mapcache_request_proxy *req_proxy) {
+  mapcache_http *http;
    mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
     response->data = mapcache_buffer_create(30000,ctx->pool);
-    mapcache_http *http = req_proxy->http;
+    http = req_proxy->http;
     if(req_proxy->pathinfo) {
       http = mapcache_http_clone(ctx,http);
       if( (*(req_proxy->pathinfo)) == '/' ||
@@ -304,6 +314,7 @@ mapcache_http_response *mapcache_core_get_featureinfo(mapcache_context *ctx,
    }
    if(tileset->source->info_formats) {
       int i;
+      mapcache_http_response *response;
       for(i=0;i<tileset->source->info_formats->nelts;i++) {
          if(!strcmp(fi->format, APR_ARRAY_IDX(tileset->source->info_formats,i,char*))) {
             break;
@@ -315,7 +326,7 @@ mapcache_http_response *mapcache_core_get_featureinfo(mapcache_context *ctx,
       }
       tileset->source->query_info(ctx,fi);
       if(GC_HAS_ERROR(ctx)) return NULL;
-      mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
+      response = mapcache_http_response_create(ctx->pool);
       response->data = fi->data;
       apr_table_set(response->headers,"Content-Type",fi->format);
       return response;
@@ -327,8 +338,9 @@ mapcache_http_response *mapcache_core_get_featureinfo(mapcache_context *ctx,
 
 mapcache_http_response* mapcache_core_get_capabilities(mapcache_context *ctx, mapcache_service *service,
       mapcache_request_get_capabilities *req_caps, char *url, char *path_info, mapcache_cfg *config) {
+  mapcache_http_response *response;
    service->create_capabilities_response(ctx,req_caps,url,path_info,config);
-   mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
+   response = mapcache_http_response_create(ctx->pool);
    response->data = mapcache_buffer_create(0,ctx->pool);
    response->data->size = strlen(req_caps->capabilities);
    response->data->buf = req_caps->capabilities;
@@ -338,6 +350,7 @@ mapcache_http_response* mapcache_core_get_capabilities(mapcache_context *ctx, ma
 }
 
 mapcache_http_response* mapcache_core_respond_to_error(mapcache_context *ctx) {
+  char *msg;
    //TODO: have the service format the error response
    mapcache_http_response *response = mapcache_http_response_create(ctx->pool);
    
@@ -345,7 +358,7 @@ mapcache_http_response* mapcache_core_respond_to_error(mapcache_context *ctx) {
    response->code = ctx->_errcode;
    if(!response->code) response->code = 500;
 
-   char *msg = ctx->_errmsg;
+   msg = ctx->_errmsg;
    if(!msg) {
       msg = "an unspecified error has occured";
    }

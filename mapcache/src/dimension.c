@@ -36,19 +36,21 @@
 static int _mapcache_dimension_intervals_validate(mapcache_context *ctx, mapcache_dimension *dim, char **value) {
    int i;
    char *endptr;
+   mapcache_dimension_intervals *dimension;
    double val = strtod(*value,&endptr);
    *value = apr_psprintf(ctx->pool,"%g",val);
    if(*endptr != 0) {
       return MAPCACHE_FAILURE;
    }
-   mapcache_dimension_intervals *dimension = (mapcache_dimension_intervals*)dim;
+   dimension = (mapcache_dimension_intervals*)dim;
    for(i=0;i<dimension->nintervals;i++) {
+     double diff;
       mapcache_interval *interval = &dimension->intervals[i];
       if(val<interval->start || val>interval->end)
          continue;
       if(interval->resolution == 0)
          return MAPCACHE_SUCCESS;
-      double diff = fmod((val - interval->start),interval->resolution);
+      diff = fmod((val - interval->start),interval->resolution);
       if(diff == 0.0)
          return MAPCACHE_SUCCESS;
    }
@@ -70,15 +72,18 @@ static const char** _mapcache_dimension_intervals_print(mapcache_context *ctx, m
 
 static void _mapcache_dimension_intervals_parse_xml(mapcache_context *ctx, mapcache_dimension *dim,
       ezxml_t node) {
+  mapcache_dimension_intervals *dimension;
+  char *key,*last;
+  char *values;
    const char *entry = node->txt;
    int count = 1;
    if(!entry || !*entry) {
       ctx->set_error(ctx,400,"failed to parse dimension values: none supplied");
       return;
    }
-   mapcache_dimension_intervals *dimension = (mapcache_dimension_intervals*)dim;
-   char *values = apr_pstrdup(ctx->pool,entry);
-   char *key,*last;
+   dimension = (mapcache_dimension_intervals*)dim;
+   values = apr_pstrdup(ctx->pool,entry);
+   
    for(key=values;*key;key++) if(*key == ',') count++;
 
    dimension->intervals = (mapcache_interval*)apr_pcalloc(ctx->pool,count*sizeof(mapcache_interval));
@@ -140,12 +145,14 @@ static const char** _mapcache_dimension_regex_print(mapcache_context *ctx, mapca
 
 static void _mapcache_dimension_regex_parse_xml(mapcache_context *ctx, mapcache_dimension *dim,
       ezxml_t node) {
+  mapcache_dimension_regex *dimension;
+  int rc;
    const char *entry = node->txt;
    if(!entry || !*entry) {
       ctx->set_error(ctx,400,"failed to parse dimension regex: none supplied");
       return;
    }
-   mapcache_dimension_regex *dimension = (mapcache_dimension_regex*)dim;
+   dimension = (mapcache_dimension_regex*)dim;
    dimension->regex_string = apr_pstrdup(ctx->pool,entry);
 #ifdef USE_PCRE
    const char *pcre_err;
@@ -157,7 +164,7 @@ static void _mapcache_dimension_regex_parse_xml(mapcache_context *ctx, mapcache_
       return;
    }
 #else
-   int rc = regcomp(dimension->regex, entry, REG_EXTENDED);
+   rc = regcomp(dimension->regex, entry, REG_EXTENDED);
    if(rc) {
       char errmsg[200];
       regerror(rc,dimension->regex,errmsg,200);
@@ -199,20 +206,23 @@ static const char** _mapcache_dimension_values_print(mapcache_context *ctx, mapc
 static void _mapcache_dimension_values_parse_xml(mapcache_context *ctx, mapcache_dimension *dim,
       ezxml_t node) {
    int count = 1;
+   mapcache_dimension_values *dimension;
+   const char *case_sensitive;
+   char *key,*last;
+   char *values;
    const char *entry = node->txt;
    if(!entry || !*entry) {
       ctx->set_error(ctx,400,"failed to parse dimension values: none supplied");
       return;
    }
 
-   mapcache_dimension_values *dimension = (mapcache_dimension_values*)dim;
-   const char *case_sensitive = ezxml_attr(node,"case_sensitive");
+   dimension = (mapcache_dimension_values*)dim;
+   case_sensitive = ezxml_attr(node,"case_sensitive");
    if(case_sensitive && !strcasecmp(case_sensitive,"true")) {
       dimension->case_sensitive = 1;
    }
    
-   char *values = apr_pstrdup(ctx->pool,entry);
-   char *key,*last;
+   values = apr_pstrdup(ctx->pool,entry);
    for(key=values;*key;key++) if(*key == ',') count++;
 
    dimension->values = (char**)apr_pcalloc(ctx->pool,count*sizeof(char*));

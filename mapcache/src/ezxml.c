@@ -27,7 +27,13 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#define EZXML_NOMMAP 1
+#endif
+
 #include <sys/types.h>
 #ifndef EZXML_NOMMAP
 #include <sys/mman.h>

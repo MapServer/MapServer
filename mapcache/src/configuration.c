@@ -34,16 +34,20 @@
 #include <math.h>
 
 void mapcache_configuration_parse(mapcache_context *ctx, const char *filename, mapcache_cfg *config, int cgi) {
-   mapcache_configuration_parse_xml(ctx,filename,config);
+ apr_dir_t *lockdir;
+   apr_status_t rv;
+   char errmsg[120];  
+   char *url;
+
+ mapcache_configuration_parse_xml(ctx,filename,config);
+  
+
    GC_CHECK_ERROR(ctx);
 
    if(!config->lockdir || !strlen(config->lockdir)) {
       config->lockdir = apr_pstrdup(ctx->pool, "/tmp");
    }
-   apr_dir_t *lockdir;
-   apr_status_t rv;
    rv = apr_dir_open(&lockdir,config->lockdir,ctx->pool);
-   char errmsg[120];
    if(rv != APR_SUCCESS) {
       ctx->set_error(ctx,500, "failed to open lock directory %s: %s"
             ,config->lockdir,apr_strerror(rv,errmsg,120));
@@ -72,7 +76,6 @@ void mapcache_configuration_parse(mapcache_context *ctx, const char *filename, m
    apr_dir_close(lockdir);
 
    /* if we were suppplied with an onlineresource, make sure it ends with a / */
-   char *url;
    if(NULL != (url = (char*)apr_table_get(config->metadata,"url"))) {
       char *urlend = url + strlen(url)-1;
       if(*urlend != '/') {

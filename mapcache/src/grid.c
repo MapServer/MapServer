@@ -125,8 +125,9 @@ int mapcache_grid_get_level(mapcache_context *ctx, mapcache_grid *grid, double *
 
 void mapcache_grid_get_closest_level(mapcache_context *ctx, mapcache_grid *grid, double resolution, int *level) {
    double dst = fabs(grid->levels[0]->resolution - resolution);
+    int i;
    *level = 0;
-   int i;
+  
    for(i=1; i<grid->nlevels; i++) {
       double curdst = fabs(grid->levels[i]->resolution - resolution);
       if( curdst < dst) {
@@ -160,13 +161,14 @@ int mapcache_grid_get_cell(mapcache_context *ctx, mapcache_grid *grid, double *b
 
 void mapcache_grid_get_xy(mapcache_context *ctx, mapcache_grid *grid, double dx, double dy,
         int z, int *x, int *y) {
+  double res;
 #ifdef DEBUG
    if(z>=grid->nlevels) {
       ctx->set_error(ctx,500,"####BUG##### requesting invalid level");
       return;
    }
 #endif
-   double res = grid->levels[z]->resolution;
+   res = grid->levels[z]->resolution;
    *x = (int)((dx - grid->extent[0]) / (res * grid->tile_sx));
    *y = (int)((dy - grid->extent[1]) / (res * grid->tile_sy));
 }

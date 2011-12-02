@@ -3919,6 +3919,8 @@ static void writeErrorImage(mapcache_context *ctx, mapcache_image *im, char *txt
       char *strptr = txt;
       int curlinelength=0;
       int nlines = 1;
+      int curline = 0;
+       int x,y;
 
       /*find the positions of the spaces that we will use for line wrapping*/
       while(*strptr) {
@@ -3943,9 +3945,9 @@ static void writeErrorImage(mapcache_context *ctx, mapcache_image *im, char *txt
          nlines++;
       }
 
-      int curline = 0;
+      curline = 0;
       strptr=txt;
-      int x,y;
+     
       y = im->h/2 - nlines*(fontheight+2)/2 - 2;
       x=margin;
       while(*strptr) {

@@ -58,15 +58,20 @@ static ezxml_t _wmts_service_identification(mapcache_context *ctx, const char *t
 }
 
 static ezxml_t _wmts_operations_metadata(mapcache_context *ctx, const char *onlineresource, const char *operationstr) {
+  ezxml_t http;
+  ezxml_t dcp;
+  ezxml_t get;
+  ezxml_t constraint;
+  ezxml_t allowedvalues;
    ezxml_t operation = ezxml_new("ows:Operation");
    ezxml_set_attr(operation,"name",operationstr);
-   ezxml_t dcp = ezxml_add_child(operation,"ows:DCP",0);
-   ezxml_t http = ezxml_add_child(dcp,"ows:HTTP",0);
-   ezxml_t get = ezxml_add_child(http,"ows:Get",0);
+   dcp = ezxml_add_child(operation,"ows:DCP",0);
+   http = ezxml_add_child(dcp,"ows:HTTP",0);
+   get = ezxml_add_child(http,"ows:Get",0);
    ezxml_set_attr(get,"xlink:href",apr_pstrcat(ctx->pool,onlineresource,"wmts?",NULL));
-   ezxml_t constraint = ezxml_add_child(get,"ows:Constraint",0);
+   constraint = ezxml_add_child(get,"ows:Constraint",0);
    ezxml_set_attr(constraint,"name","GetEncoding");
-   ezxml_t allowedvalues = ezxml_add_child(constraint,"ows:AllowedValues",0);
+   allowedvalues = ezxml_add_child(constraint,"ows:AllowedValues",0);
    ezxml_set_txt(ezxml_add_child(allowedvalues,"ows:Value",0),"KVP");
    return operation;
 
@@ -81,10 +86,15 @@ static ezxml_t _wmts_service_provider(mapcache_context *ctx, const char *onliner
 
 
 void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capabilities *req, char *url, char *path_info, mapcache_cfg *cfg) {
+  const char *title;
+  const char *onlineresource;
    mapcache_request_get_capabilities_wmts *request = (mapcache_request_get_capabilities_wmts*)req;
    ezxml_t caps;
    ezxml_t contents;
    ezxml_t operations_metadata;
+   apr_hash_index_t *layer_index;
+   apr_hash_index_t *grid_index;
+   char *tmpcaps;
 #ifdef DEBUG
    if(request->request.request.type != MAPCACHE_REQUEST_GET_CAPABILITIES) {
       ctx->set_error(ctx,500,"wrong wmts capabilities request");
@@ -92,8 +102,7 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
    }
 #endif
    
-   const char *title;
-   const char *onlineresource = apr_table_get(cfg->metadata,"url");
+   onlineresource = apr_table_get(cfg->metadata,"url");
    if(!onlineresource) {
       onlineresource = url;
    }
@@ -116,28 +125,35 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
 
    contents = ezxml_add_child(caps,"Contents",0);
    
-   apr_hash_index_t *layer_index = apr_hash_first(ctx->pool,cfg->tilesets);
+   layer_index = apr_hash_first(ctx->pool,cfg->tilesets);
    while(layer_index) {
       int i;
       mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
+      ezxml_t layer;
+      const char *title;
+      const char *abstract;
+      ezxml_t style;
+       char *dimensionstemplate="";
+       ezxml_t resourceurl;
+
       apr_hash_this(layer_index,&key,&keylen,(void**)&tileset);
       
-      ezxml_t layer = ezxml_add_child(contents,"Layer",0);
-      const char *title = apr_table_get(tileset->metadata,"title");
+      layer = ezxml_add_child(contents,"Layer",0);
+      title = apr_table_get(tileset->metadata,"title");
       if(title) {
          ezxml_set_txt(ezxml_add_child(layer,"ows:Title",0),title);
       } else {
          ezxml_set_txt(ezxml_add_child(layer,"ows:Title",0),tileset->name);
       }
-      const char *abstract = apr_table_get(tileset->metadata,"abstract");
+      abstract = apr_table_get(tileset->metadata,"abstract");
       if(abstract) {
          ezxml_set_txt(ezxml_add_child(layer,"ows:Abstract",0),abstract);
       }
 
       ezxml_set_txt(ezxml_add_child(layer,"ows:Identifier",0),tileset->name);
       
-      ezxml_t style = ezxml_add_child(layer,"Style",0);
+      style = ezxml_add_child(layer,"Style",0);
       ezxml_set_attr(style,"isDefault","true");
       ezxml_set_txt(ezxml_add_child(style,"ows:Identifier",0),"default");
       
@@ -147,9 +163,11 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
          ezxml_set_txt(ezxml_add_child(layer,"Format",0),"image/unknown");
    
 
-      char *dimensionstemplate="";
+     
       if(tileset->dimensions) {
          for(i=0;i<tileset->dimensions->nelts;i++) {
+	   const char **values;
+	   const char **value;
             mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
             ezxml_t dim = ezxml_add_child(layer,"Dimension",0);
             ezxml_set_txt(ezxml_add_child(dim,"ows:Identifier",0),dimension->name);
@@ -158,8 +176,8 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
             if(dimension->unit) {
                ezxml_set_txt(ezxml_add_child(dim,"UOM",0),dimension->unit);
             }
-            const char **values = dimension->print_ogc_formatted_values(ctx,dimension);
-            const char **value = values;
+            values = dimension->print_ogc_formatted_values(ctx,dimension);
+            value = values;
             while(*value) {
                ezxml_set_txt(ezxml_add_child(dim,"Value",0),*value);
                value++;
@@ -171,8 +189,9 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
          int i;
          for(i=0;i<tileset->source->info_formats->nelts;i++) {
             char *iformat = APR_ARRAY_IDX(tileset->source->info_formats,i,char*);
+	    ezxml_t resourceurl;
             ezxml_set_txt(ezxml_add_child(layer,"InfoFormat",0),iformat);
-            ezxml_t resourceurl = ezxml_add_child(layer,"ResourceURL",0);
+            resourceurl = ezxml_add_child(layer,"ResourceURL",0);
             ezxml_set_attr(resourceurl,"format",iformat);
             ezxml_set_attr(resourceurl,"resourcetype","FeatureInfo");
             ezxml_set_attr(resourceurl,"template",
@@ -181,7 +200,7 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
          }
       }
 
-      ezxml_t resourceurl = ezxml_add_child(layer,"ResourceURL",0);
+      resourceurl = ezxml_add_child(layer,"ResourceURL",0);
       if(tileset->format && tileset->format->mime_type)
          ezxml_set_attr(resourceurl,"format",tileset->format->mime_type);
       else
@@ -242,25 +261,28 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
 
    
    
-   apr_hash_index_t *grid_index = apr_hash_first(ctx->pool,cfg->grids);
+   grid_index = apr_hash_first(ctx->pool,cfg->grids);
    while(grid_index) {
       mapcache_grid *grid;
       const void *key; apr_ssize_t keylen;
       int level;
       const char *WellKnownScaleSet;
+      ezxml_t tmset;
+      const char *title;
+      ezxml_t bbox;
       apr_hash_this(grid_index,&key,&keylen,(void**)&grid);
       
       WellKnownScaleSet = apr_table_get(grid->metadata,"WellKnownScaleSet");
      
-      ezxml_t tmset = ezxml_add_child(contents,"TileMatrixSet",0);
+      tmset = ezxml_add_child(contents,"TileMatrixSet",0);
       ezxml_set_txt(ezxml_add_child(tmset,"ows:Identifier",0),grid->name);
-      const char *title = apr_table_get(grid->metadata,"title");
+      title = apr_table_get(grid->metadata,"title");
       if(title) {
          ezxml_set_txt(ezxml_add_child(tmset,"ows:Title",0),title);
       }
       ezxml_set_txt(ezxml_add_child(tmset,"ows:SupportedCRS",0),mapcache_grid_get_crs(ctx,grid));
 
-      ezxml_t bbox = ezxml_add_child(tmset,"ows:BoundingBox",0);
+      bbox = ezxml_add_child(tmset,"ows:BoundingBox",0);
 
       ezxml_set_txt(ezxml_add_child(bbox,"LowerCorner",0),apr_psprintf(ctx->pool,"%f %f",
                grid->extent[0], grid->extent[1]));
@@ -273,10 +295,11 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
       }
       
       for(level=0;level<grid->nlevels;level++) {
+	double scaledenom;
          mapcache_grid_level *glevel = grid->levels[level];
          ezxml_t tm = ezxml_add_child(tmset,"TileMatrix",0);
          ezxml_set_txt(ezxml_add_child(tm,"ows:Identifier",0),apr_psprintf(ctx->pool,"%d",level));
-         double scaledenom = glevel->resolution * mapcache_meters_per_unit[grid->unit] / 0.00028;
+         scaledenom = glevel->resolution * mapcache_meters_per_unit[grid->unit] / 0.00028;
          ezxml_set_txt(ezxml_add_child(tm,"ScaleDenominator",0),apr_psprintf(ctx->pool,"%.20f",scaledenom));
          if(mapcache_is_axis_inverted(grid->srs)) {
             ezxml_set_txt(ezxml_add_child(tm,"TopLeftCorner",0),apr_psprintf(ctx->pool,"%f %f",
@@ -294,7 +317,7 @@ void _create_capabilities_wmts(mapcache_context *ctx, mapcache_request_get_capab
       }
       grid_index = apr_hash_next(grid_index);
    }
-   char *tmpcaps = ezxml_toxml(caps);
+   tmpcaps = ezxml_toxml(caps);
    ezxml_free(caps);
    request->request.capabilities = apr_pstrcat(ctx->pool,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",tmpcaps,NULL);
    free(tmpcaps);
@@ -317,7 +340,10 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
    mapcache_tileset *tileset = NULL;
    int row,col,level;
    int kvp = 0;
+   mapcache_grid_link *grid_link;
+     char *endptr;
    service = apr_table_get(params,"SERVICE");
+  
    if(service) {
       /*KVP Parsing*/
       kvp = 1;
@@ -428,9 +454,10 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
             continue;
          }
          if(tileset->dimensions) {
+	   int i;
             if(!dimtable)
                dimtable = apr_table_make(ctx->pool,tileset->dimensions->nelts);
-            int i = apr_table_elts(dimtable)->nelts;
+            i = apr_table_elts(dimtable)->nelts;
             if(i != tileset->dimensions->nelts) {
                /*we still have some dimensions to parse*/
                mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
@@ -491,7 +518,7 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
       }
    }
       
-   mapcache_grid_link *grid_link = NULL;
+   grid_link = NULL;
   
 
    if(!style || strcmp(style,"default")) {
@@ -502,13 +529,16 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
    
    /*validate dimensions*/
    if(tileset->dimensions) {
+     int i;
       if(!dimtable) {
          ctx->set_error(ctx,404, "received request with no dimensions");
          if(kvp) ctx->set_exception(ctx,"InvalidParameterValue","dim");
          return;
       }
-      int i;
+      
       for(i=0;i<tileset->dimensions->nelts;i++) {
+	char *tmpval;
+	int ok;
          mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
          const char *value = apr_table_get(dimtable,dimension->name);
          if(!value) {
@@ -516,8 +546,8 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
             if(kvp) ctx->set_exception(ctx,"MissingParameterValue","%s",dimension->name);
             return;
          }
-         char *tmpval = apr_pstrdup(ctx->pool,value);
-         int ok = dimension->validate(ctx,dimension,&tmpval);
+         tmpval = apr_pstrdup(ctx->pool,value);
+         ok = dimension->validate(ctx,dimension,&tmpval);
          GC_CHECK_ERROR(ctx);
          if(ok != MAPCACHE_SUCCESS) {
             ctx->set_error(ctx,404,"dimension \"%s\" value \"%s\" fails to validate",
@@ -655,21 +685,23 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
       *request = (mapcache_request*)req;
       return;
    } else { /* we have a featureinfo request */
+     mapcache_request_get_feature_info *req_fi;
+     mapcache_feature_info *fi;
       if(!fi_i || (!infoformat && !extension)) {
          ctx->set_error(ctx,400,"received wmts featureinfo request with missing i,j, or format");
          return;
       }
             
-      char *endptr;
+
       if(!tileset->source || !tileset->source->info_formats) {
          ctx->set_error(ctx,400,"tileset %s does not support featureinfo requests", tileset->name);
          if(kvp) ctx->set_exception(ctx,"OperationNotSupported","");
          return;
       }
-      mapcache_request_get_feature_info *req_fi = (mapcache_request_get_feature_info*)apr_pcalloc(
+      req_fi = (mapcache_request_get_feature_info*)apr_pcalloc(
             ctx->pool, sizeof(mapcache_request_get_feature_info));
       req_fi->request.type = MAPCACHE_REQUEST_GET_FEATUREINFO;
-      mapcache_feature_info *fi = mapcache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
+      fi = mapcache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
       req_fi->fi = fi;
       if(infoformat) {
          fi->format = (char*)infoformat;
@@ -709,6 +741,10 @@ void _mapcache_service_wmts_parse_request(mapcache_context *ctx, mapcache_servic
 
 void _error_report_wmts(mapcache_context *ctx, mapcache_service *service, char *msg,
       char **err_body, apr_table_t *headers) {
+   char *exceptions="";
+   const apr_array_header_t *array;
+   apr_table_entry_t *elts;
+    int i;
    char *template = "\
 <?xml version=\"1.0\" encoding=\"UTF-8\"?>\
    <ExceptionReport xmlns=\"http://www.opengis.net/ows/2.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ows/2.0 owsExceptionReport.xsd\" version=\"1.0.0\" xml:lang=\"en\">\
@@ -719,11 +755,11 @@ void _error_report_wmts(mapcache_context *ctx, mapcache_service *service, char *
       *err_body = msg;
       return;
    }
-   char *exceptions="";
+   exceptions="";
 
-   const apr_array_header_t *array = apr_table_elts(ctx->exceptions);
-   apr_table_entry_t *elts = (apr_table_entry_t *) array->elts;
-   int i;
+   array = apr_table_elts(ctx->exceptions);
+   elts = (apr_table_entry_t *) array->elts;
+  
    for (i = 0; i < array->nelts; i++) {
       exceptions = apr_pstrcat(ctx->pool,exceptions,apr_psprintf(ctx->pool,
                "<Exception exceptionCode=\"%s\" locator=\"%s\"/>",elts[i].key,elts[i].val),NULL);

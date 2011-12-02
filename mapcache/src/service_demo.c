@@ -399,9 +399,10 @@ void _mapcache_service_demo_parse_request(mapcache_context *ctx, mapcache_servic
       drequest->service = NULL;
       return;
    } else {
+     int i;
       while(*cpathinfo == '/')
          cpathinfo++; /* skip the leading /'s */
-      int i;
+      
       for(i=0;i<MAPCACHE_SERVICES_COUNT;i++) {
          /* loop through the services that have been configured */
          int prefixlen;
@@ -420,10 +421,11 @@ void _mapcache_service_demo_parse_request(mapcache_context *ctx, mapcache_servic
 
 void _create_demo_front(mapcache_context *ctx, mapcache_request_get_capabilities *req,
       const char *urlprefix) {
+  int i;
+  char *caps;
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
-   char *caps = apr_pstrdup(ctx->pool,
+   caps = apr_pstrdup(ctx->pool,
          "<html><head><title>mapcache demo landing page</title></head><body>");
-   int i;
    for(i=0;i<MAPCACHE_SERVICES_COUNT;i++) {
       mapcache_service *service = ctx->config->services[i];
       if(!service || service->type == MAPCACHE_SERVICE_DEMO) continue; /* skip an unconfigured service, and the demo one */
@@ -437,6 +439,9 @@ void _create_demo_front(mapcache_context *ctx, mapcache_request_get_capabilities
 
 void _create_demo_wms(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
+  char *caps;
+   char *ol_layer;
+   apr_hash_index_t *tileindex_index;
    mapcache_service_wms *service = (mapcache_service_wms*)ctx->config->services[MAPCACHE_SERVICE_WMS];
 #ifdef DEBUG
    if(!service) {
@@ -445,18 +450,19 @@ void _create_demo_wms(mapcache_context *ctx, mapcache_request_get_capabilities *
    }
 #endif
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
-   char *caps = apr_psprintf(ctx->pool,demo_head, "");
-   char *ol_layer;
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
+   caps = apr_psprintf(ctx->pool,demo_head, "");
+   tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
       mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
-      apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       int i,j;
+      apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
+      
       for(j=0;j<tileset->grid_links->nelts;j++) {
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
+	 char *ol_layer_name;
          mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
          mapcache_grid *grid = grid_link->grid;
          if(grid->unit == MAPCACHE_UNIT_METERS) {
@@ -467,7 +473,7 @@ void _create_demo_wms(mapcache_context *ctx, mapcache_request_get_capabilities *
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
             smerc = "true";
          }
-         char *ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
+         ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
          /* normalize name to something that is a valid variable name */
          for(i=0; i<strlen(ol_layer_name); i++)
             if ((!i && !isalpha(ol_layer_name[i]) && ol_layer_name[i] != '_')
@@ -531,22 +537,29 @@ void _create_demo_wms(mapcache_context *ctx, mapcache_request_get_capabilities *
 
 void _create_demo_tms(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
-   req->mime_type = apr_pstrdup(ctx->pool,"text/html");
-   char *caps = apr_psprintf(ctx->pool,demo_head, "");
+  char *caps;
    char *ol_layer;
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
+   apr_hash_index_t *tileindex_index;
+
+   req->mime_type = apr_pstrdup(ctx->pool,"text/html");
+   caps = apr_psprintf(ctx->pool,demo_head, "");
+  
+   tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
+      int i,j;
+      char *extension;
       mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      int i,j;
-      char *extension = "png";
+     
+      extension = "png";
       if (tileset->format && tileset->format->extension)
          extension = tileset->format->extension;
       for(j=0;j<tileset->grid_links->nelts;j++) {
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
+	 char *ol_layer_name;
          mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
          mapcache_grid *grid = grid_link->grid;
          if(grid->unit == MAPCACHE_UNIT_METERS) {
@@ -557,7 +570,7 @@ void _create_demo_tms(mapcache_context *ctx, mapcache_request_get_capabilities *
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
             smerc = "true";
          }
-         char *ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
+         ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
          /* normalize name to something that is a valid variable name */
          for(i=0; i<strlen(ol_layer_name); i++)
             if ((!i && !isalpha(ol_layer_name[i]) && ol_layer_name[i] != '_')
@@ -600,22 +613,28 @@ void _create_demo_tms(mapcache_context *ctx, mapcache_request_get_capabilities *
 
 void _create_demo_wmts(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
-   req->mime_type = apr_pstrdup(ctx->pool,"text/html");
-   char *caps = apr_psprintf(ctx->pool,demo_head, "");
+  char *caps;
    char *ol_layer;
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
+   apr_hash_index_t *tileindex_index;
+   req->mime_type = apr_pstrdup(ctx->pool,"text/html");
+   caps = apr_psprintf(ctx->pool,demo_head, "");
+  
+   tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
+      int i,j;
       mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
+      char *mime_type;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      int i,j;
-      char *mime_type = "image/png";
+     
+      mime_type = "image/png";
       if (tileset->format && tileset->format->mime_type)
          mime_type = tileset->format->mime_type;
       for(j=0;j<tileset->grid_links->nelts;j++) {
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
+	 char *ol_layer_name;
          mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
          mapcache_grid *grid = grid_link->grid;
          if(grid->unit == MAPCACHE_UNIT_METERS) {
@@ -626,7 +645,7 @@ void _create_demo_wmts(mapcache_context *ctx, mapcache_request_get_capabilities 
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
             smerc = "true";
          }
-         char *ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
+         ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
          /* normalize name to something that is a valid variable name */
          for(i=0; i<strlen(ol_layer_name); i++)
             if ((!i && !isalpha(ol_layer_name[i]) && ol_layer_name[i] != '_')
@@ -667,19 +686,24 @@ void _create_demo_wmts(mapcache_context *ctx, mapcache_request_get_capabilities 
 
 void _create_demo_ve(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
+  char *caps;
+  char *ol_layer;
+  apr_hash_index_t *tileindex_index;
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
-   char *caps = apr_psprintf(ctx->pool,demo_head, demo_ve_extra);
-   char *ol_layer;
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
+   caps = apr_psprintf(ctx->pool,demo_head, demo_ve_extra);
+   
+   tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
       mapcache_tileset *tileset;
       const void *key; apr_ssize_t keylen;
+       int i,j;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      int i,j;
+     
       for(j=0;j<tileset->grid_links->nelts;j++) {
          char *resolutions="";
          char *unit="dd";
          char *smerc = "false";
+	 char *ol_layer_name;
          mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
          mapcache_grid *grid = grid_link->grid;
          if(grid->unit == MAPCACHE_UNIT_METERS) {
@@ -690,7 +714,7 @@ void _create_demo_ve(mapcache_context *ctx, mapcache_request_get_capabilities *r
          if(strstr(grid->srs, ":900913") || strstr(grid->srs, ":3857")) {
             smerc = "true";
          }
-         char *ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
+         ol_layer_name = apr_psprintf(ctx->pool, "%s_%s", tileset->name, grid->name);
          /* normalize name to something that is a valid variable name */
          for(i=0; i<strlen(ol_layer_name); i++)
             if ((!i && !isalpha(ol_layer_name[i]) && ol_layer_name[i] != '_')
@@ -729,15 +753,18 @@ void _create_demo_ve(mapcache_context *ctx, mapcache_request_get_capabilities *r
 
 void _create_demo_kml(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
+  char *caps;
+  apr_hash_index_t *tileindex_index;
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
-   char *caps = apr_pstrdup(ctx->pool,
+   caps = apr_pstrdup(ctx->pool,
          "<html><head><title>mapcache kml links</title></head><body>");
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
+   tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
       mapcache_tileset *tileset;
+       int j;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      int j;
+     
       for(j=0;j<tileset->grid_links->nelts;j++) {
          mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
          if(!strstr(grid->srs, ":4326")) {
@@ -758,15 +785,19 @@ void _create_demo_kml(mapcache_context *ctx, mapcache_request_get_capabilities *
 
 void _create_demo_gmaps(mapcache_context *ctx, mapcache_request_get_capabilities *req,
          const char *url_prefix) {
+  char *caps;
+  char *ol_layer;
+  apr_hash_index_t *tileindex_index;
    req->mime_type = apr_pstrdup(ctx->pool,"text/html");
-   char *caps = apr_pstrdup(ctx->pool,demo_head_gmaps);
-   char *ol_layer;
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
+   caps = apr_pstrdup(ctx->pool,demo_head_gmaps);
+   
+   tileindex_index = apr_hash_first(ctx->pool,ctx->config->tilesets);
    while(tileindex_index) {
       mapcache_tileset *tileset;
+      int j;
       const void *key; apr_ssize_t keylen;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      int j;
+      
       for(j=0;j<tileset->grid_links->nelts;j++) {
          mapcache_grid_link *grid_link = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*);
          mapcache_grid *grid = grid_link->grid;

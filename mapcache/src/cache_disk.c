@@ -198,6 +198,8 @@ static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) 
    apr_finfo_t finfo;
    apr_status_t rv;
    apr_size_t size;
+   apr_mmap_t *tilemmap;
+     
    _mapcache_cache_disk_tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FAILURE;
@@ -228,7 +230,7 @@ static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) 
       tile->encoded_data = mapcache_buffer_create(size,ctx->pool);
 
 #ifndef NOMMAP
-      apr_mmap_t *tilemmap;
+
       rv = apr_mmap_create(&tilemmap,f,0,finfo.size,APR_MMAP_READ,ctx->pool);
       if(rv != APR_SUCCESS) {
          char errmsg[120];

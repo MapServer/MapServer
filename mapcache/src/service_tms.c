@@ -36,6 +36,9 @@
 
 
 void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabilities *req, char *url, char *path_info, mapcache_cfg *cfg) {
+  ezxml_t caps;
+  char *tmpcaps;
+  const char *onlineresource;
    mapcache_request_get_capabilities_tms *request = (mapcache_request_get_capabilities_tms*)req;
 #ifdef DEBUG
    if(request->request.request.type != MAPCACHE_REQUEST_GET_CAPABILITIES) {
@@ -43,59 +46,72 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
       return;
    }
 #endif
-   ezxml_t caps;
-   const char *onlineresource = apr_table_get(cfg->metadata,"url");
+
+   onlineresource = apr_table_get(cfg->metadata,"url");
    if(!onlineresource) {
       onlineresource = url;
    }
 
    request->request.mime_type = apr_pstrdup(ctx->pool,"text/xml");
    if(!request->version) {
+     ezxml_t TileMapService;
+     char* serviceurl;
       caps = ezxml_new("Services");
-      ezxml_t TileMapService = ezxml_add_child(caps,"TileMapService",0);
+      TileMapService = ezxml_add_child(caps,"TileMapService",0);
       ezxml_set_attr(TileMapService,"version","1.0");
-      char* serviceurl = apr_pstrcat(ctx->pool,onlineresource,"tms/1.0.0/",NULL);
+      serviceurl = apr_pstrcat(ctx->pool,onlineresource,"tms/1.0.0/",NULL);
       ezxml_set_attr(TileMapService,"href",serviceurl);
    } else {
       if(!request->tileset) {
+	apr_hash_index_t *tileindex_index;
+	ezxml_t tilemaps;
          caps = ezxml_new("TileMapService");
          ezxml_set_attr(caps,"version",request->version);
-         apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
-         ezxml_t tilemaps = ezxml_add_child(caps,"TileMaps",0);
+         tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
+	 tilemaps = ezxml_add_child(caps,"TileMaps",0);
          while(tileindex_index) {
             mapcache_tileset *tileset;
             int j;
             const void *key; apr_ssize_t keylen;
+	    const char *title;
             apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-            const char *title = apr_table_get(tileset->metadata,"title");
+            title = apr_table_get(tileset->metadata,"title");
             if(!title) {
                title = "no title set, add some in metadata";
             }
             for(j=0;j<tileset->grid_links->nelts;j++) {
+	      ezxml_t tilemap;
+	      char *href;
                mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
                const char *profile = apr_table_get(grid->metadata,"profile");
                if(!profile) profile = "none";
-               ezxml_t tilemap = ezxml_add_child(tilemaps,"TileMap",0);
+               tilemap = ezxml_add_child(tilemaps,"TileMap",0);
                ezxml_set_attr(tilemap,"title",title);
                ezxml_set_attr(tilemap,"srs",grid->srs);
                if(profile)
                   ezxml_set_attr(tilemap,"profile",profile);
-               char *href = apr_pstrcat(ctx->pool,onlineresource,"tms/1.0.0/",tileset->name,"@",grid->name,NULL);
+               href = apr_pstrcat(ctx->pool,onlineresource,"tms/1.0.0/",tileset->name,"@",grid->name,NULL);
                ezxml_set_attr(tilemap,"href",href);
             }
             tileindex_index = apr_hash_next(tileindex_index);
          }
       } else {
+	const char *title;
+	const char *abstract;
+	ezxml_t origin;
+	ezxml_t bbox;
+	ezxml_t tileformat;
+	ezxml_t tilesets;
          mapcache_tileset *tileset = request->tileset;
          mapcache_grid_link *grid_link = request->grid_link;
          mapcache_grid *grid = grid_link->grid;
          int i;
          double *extent = (request->grid_link->restricted_extent)?request->grid_link->restricted_extent:request->grid_link->grid->extent;
-         const char *title = apr_table_get(tileset->metadata,"title");
+         title = apr_table_get(tileset->metadata,"title");
          if(!title) {
             title = "no title set, add some in metadata";
          }
-         const char *abstract = apr_table_get(tileset->metadata,"abstract");
+         abstract = apr_table_get(tileset->metadata,"abstract");
          if(!abstract) {
             abstract = "no abstract set, add some in metadata";
          }
@@ -108,17 +124,17 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
          ezxml_set_txt(ezxml_add_child(caps,"Abstract",0),abstract);
          ezxml_set_txt(ezxml_add_child(caps,"SRS",0),grid->srs);
          
-         ezxml_t bbox = ezxml_add_child(caps,"BoundingBox",0);
+         bbox = ezxml_add_child(caps,"BoundingBox",0);
          ezxml_set_attr(bbox,"minx",apr_psprintf(ctx->pool,"%f",extent[0]));
          ezxml_set_attr(bbox,"miny",apr_psprintf(ctx->pool,"%f",extent[1]));
          ezxml_set_attr(bbox,"maxx",apr_psprintf(ctx->pool,"%f",extent[2]));
          ezxml_set_attr(bbox,"maxy",apr_psprintf(ctx->pool,"%f",extent[3]));
          
-         ezxml_t origin = ezxml_add_child(caps,"Origin",0);
+         origin = ezxml_add_child(caps,"Origin",0);
          ezxml_set_attr(origin,"x",apr_psprintf(ctx->pool,"%f",grid->extent[0]));
          ezxml_set_attr(origin,"y",apr_psprintf(ctx->pool,"%f",grid->extent[1]));
          
-         ezxml_t tileformat = ezxml_add_child(caps,"TileFormat",0);
+         tileformat = ezxml_add_child(caps,"TileFormat",0);
          ezxml_set_attr(tileformat,"width",apr_psprintf(ctx->pool,"%d",grid->tile_sx));
          ezxml_set_attr(tileformat,"height",apr_psprintf(ctx->pool,"%d",grid->tile_sy));
          if(tileset->format && tileset->format->mime_type) {
@@ -132,7 +148,7 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
             ezxml_set_attr(tileformat,"extension","xxx");
          }
          
-         ezxml_t tilesets = ezxml_add_child(caps,"TileSets",0);
+         tilesets = ezxml_add_child(caps,"TileSets",0);
          for(i=grid_link->minz;i<grid_link->maxz;i++) {
             ezxml_t xmltileset = ezxml_add_child(tilesets,"TileSet",0);
             char *order = apr_psprintf(ctx->pool,"%d",i);
@@ -145,7 +161,7 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
          }
       }
    }
-   char *tmpcaps = ezxml_toxml(caps);
+   tmpcaps = ezxml_toxml(caps);
    ezxml_free(caps);
    request->request.capabilities = apr_pstrdup(ctx->pool,tmpcaps);
    free(tmpcaps);
@@ -216,9 +232,10 @@ void _mapcache_service_tms_parse_request(mapcache_context *ctx, mapcache_service
       }
    }
    if(index == 5) {
+     char *gridname;
       mapcache_request_get_tile *req = (mapcache_request_get_tile*)apr_pcalloc(ctx->pool,sizeof(mapcache_request_get_tile));
       req->request.type = MAPCACHE_REQUEST_GET_TILE;
-      char *gridname = sTileset;  /*hijack the char* pointer while counting the number of commas */
+      gridname = sTileset;  /*hijack the char* pointer while counting the number of commas */
       while(*gridname) {
          if(*gridname == ',') req->ntiles++;
          gridname++;

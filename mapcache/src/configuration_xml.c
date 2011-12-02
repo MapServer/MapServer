@@ -176,8 +176,9 @@ void parseGrid(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    }
 
    if ((cur_node = ezxml_child(node,"size")) != NULL) {
+     int *sizes, nsizes;
       value = apr_pstrdup(ctx->pool,cur_node->txt);
-      int *sizes, nsizes;
+      
       if(MAPCACHE_SUCCESS != mapcache_util_extract_int_list(ctx, value, NULL, &sizes, &nsizes) ||
             nsizes != 2) {
          ctx->set_error(ctx, 400, "failed to parse size array %s in  grid %s"
@@ -190,9 +191,10 @@ void parseGrid(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    } 
 
    if ((cur_node = ezxml_child(node,"resolutions")) != NULL) {
-      value = apr_pstrdup(ctx->pool,cur_node->txt);
-      int nvalues;
+     int nvalues;
       double *values;
+      value = apr_pstrdup(ctx->pool,cur_node->txt);
+      
       if(MAPCACHE_SUCCESS != mapcache_util_extract_double_list(ctx, value, NULL, &values, &nvalues) ||
             !nvalues) {
          ctx->set_error(ctx, 400, "failed to parse resolutions array %s."
@@ -205,10 +207,12 @@ void parseGrid(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
       grid->levels = (mapcache_grid_level**)apr_pcalloc(ctx->pool,
             grid->nlevels*sizeof(mapcache_grid_level));
       while(nvalues--) {
+	double unitheight;
+	double unitwidth;
          mapcache_grid_level *level = (mapcache_grid_level*)apr_pcalloc(ctx->pool,sizeof(mapcache_grid_level));
          level->resolution = values[nvalues];
-         double unitheight = grid->tile_sy * level->resolution;
-         double unitwidth = grid->tile_sx * level->resolution;
+         unitheight = grid->tile_sy * level->resolution;
+         unitwidth = grid->tile_sx * level->resolution;
          level->maxy = ceil((extent[3]-extent[1] - 0.01* unitheight)/unitheight);
          level->maxx = ceil((extent[2]-extent[0] - 0.01* unitwidth)/unitwidth);
          grid->levels[nvalues] = level;
@@ -246,7 +250,7 @@ void parseGrid(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
 void parseSource(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    ezxml_t cur_node;
    char *name = NULL, *type = NULL;
-
+   mapcache_source *source;
 
    name = (char*)ezxml_attr(node,"name");
    type = (char*)ezxml_attr(node,"type");
@@ -266,7 +270,7 @@ void parseSource(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
       ctx->set_error(ctx, 400, "mandatory attribute \"type\" not found in <source>");
       return;
    }
-   mapcache_source *source = NULL;
+   source = NULL;
    if(!strcmp(type,"wms")) {
       source = mapcache_source_wms_create(ctx);
 #ifdef USE_MAPSERVER
@@ -522,17 +526,22 @@ void parseTileset(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
 
    for(cur_node = ezxml_child(node,"grid"); cur_node; cur_node = cur_node->next) {
       int i;
+      mapcache_grid *grid;
+      mapcache_grid_link *gridlink;
       char *restrictedExtent = NULL, *sTolerance = NULL;
+      double *extent;
+      int tolerance;
+
       if (tileset->grid_links == NULL) {
          tileset->grid_links = apr_array_make(ctx->pool,1,sizeof(mapcache_grid_link*));
       }
-      mapcache_grid *grid = mapcache_configuration_get_grid(config, cur_node->txt);
+      grid = mapcache_configuration_get_grid(config, cur_node->txt);
       if(!grid) {
          ctx->set_error(ctx, 400, "tileset \"%s\" references grid \"%s\","
                " but it is not configured", name, cur_node->txt);
          return;
       }
-      mapcache_grid_link *gridlink = apr_pcalloc(ctx->pool,sizeof(mapcache_grid_link));
+      gridlink = apr_pcalloc(ctx->pool,sizeof(mapcache_grid_link));
       gridlink->grid = grid;
       gridlink->minz = 0;
       gridlink->maxz = grid->nlevels;
@@ -540,7 +549,7 @@ void parseTileset(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
       for(i=0;i<grid->nlevels;i++) {
          gridlink->grid_limits[i] = apr_pcalloc(ctx->pool,4*sizeof(int));
       }
-      double *extent;
+
       restrictedExtent = (char*)ezxml_attr(cur_node,"restricted_extent");
       if(restrictedExtent) {
          int nvalues;
@@ -558,7 +567,7 @@ void parseTileset(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
          extent = grid->extent;
       }
 
-      int tolerance = 5;
+      tolerance = 5;
       sTolerance = (char*)ezxml_attr(cur_node,"tolerance");
       if(sTolerance) {
          char *endptr;
@@ -641,8 +650,9 @@ void parseTileset(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    }
 
    if ((cur_node = ezxml_child(node,"metatile")) != NULL) {
+     int *values, nvalues;
       value = apr_pstrdup(ctx->pool,cur_node->txt);
-         int *values, nvalues;
+         
          if(MAPCACHE_SUCCESS != mapcache_util_extract_int_list(ctx, cur_node->txt, NULL,
                   &values, &nvalues) ||
                nvalues != 2) {

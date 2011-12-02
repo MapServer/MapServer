@@ -32,6 +32,13 @@
 #include <png.h>
 #include <apr_strings.h>
 
+#ifdef _WIN32
+typedef unsigned char     uint8_t;
+typedef unsigned short    uint16_t;
+typedef unsigned int      uint32_t;
+typedef unsigned long int uint64_t;
+#endif
+
 #ifndef Z_BEST_SPEED
 #define Z_BEST_SPEED 1
 #endif
@@ -63,8 +70,11 @@ void _mapcache_imageio_png_flush_func(png_structp png_ptr) {
    // do nothing
 }
 
-static inline int
-premultiply (int color,int alpha)
+#ifndef _WIN32
+static inline int premultiply (int color,int alpha)
+#else
+static __inline int premultiply (int color,int alpha)
+#endif
 {
     int temp = (alpha * color) + 0x80;
     return ((temp + (temp >> 8)) >> 8);
@@ -73,6 +83,8 @@ premultiply (int color,int alpha)
 
 void _mapcache_imageio_png_decode_to_image(mapcache_context *ctx, mapcache_buffer *buffer,
       mapcache_image *img) {
+  unsigned char *rowptr;
+  png_uint_32 width, height;
    int bit_depth,color_type,i;
    unsigned char **row_pointers;
    png_structp png_ptr = NULL;
@@ -80,7 +92,7 @@ void _mapcache_imageio_png_decode_to_image(mapcache_context *ctx, mapcache_buffe
    _mapcache_buffer_closure b;
    b.buffer = buffer;
    b.ptr = buffer->buf;
-   png_uint_32 width, height;
+   
 
 
    /* could pass pointers to user-defined error handlers instead of NULLs: */
@@ -121,7 +133,7 @@ void _mapcache_imageio_png_decode_to_image(mapcache_context *ctx, mapcache_buffe
    }
    row_pointers = apr_pcalloc(ctx->pool,img->h * sizeof(unsigned char*));
 
-   unsigned char *rowptr = img->data;
+   rowptr = img->data;
    for(i=0;i<img->h;i++) {
       row_pointers[i] = rowptr;
       rowptr += img->stride;
@@ -143,11 +155,13 @@ void _mapcache_imageio_png_decode_to_image(mapcache_context *ctx, mapcache_buffe
    /* switch buffer from rgba to premultiplied argb */
    for(i=0;i<img->h;i++) {
       unsigned int j;
+      unsigned char pixel[4];
+      uint8_t  alpha;
       unsigned char *pixptr = row_pointers[i];
       for(j=0;j<img->w;j++) {
-         unsigned char pixel[4];
+         
          memcpy (pixel, pixptr, sizeof (uint32_t));
-         uint8_t  alpha = pixel[3];
+         alpha = pixel[3];
          if(alpha == 255) {
             pixptr[0] = pixel[2];
             pixptr[1] = pixel[1];
@@ -232,6 +246,7 @@ xrgb_to_rgbx (png_structp png, png_row_infop row_info, png_bytep data)
  * \sa mapcache_image_format::write()
  */
 mapcache_buffer* _mapcache_imageio_png_encode(mapcache_context *ctx, mapcache_image *img, mapcache_image_format *format) {
+  png_bytep rowptr;
    png_infop info_ptr;
    int color_type;
    size_t row;
@@ -285,7 +300,7 @@ mapcache_buffer* _mapcache_imageio_png_encode(mapcache_context *ctx, mapcache_im
       png_set_write_user_transform_fn (png_ptr, argb_to_rgba);
    }
 
-   png_bytep rowptr = img->data;
+   rowptr = img->data;
    for(row=0;row<img->h;row++) {
       png_write_row(png_ptr,rowptr);
       rowptr += img->stride;
@@ -1137,7 +1152,13 @@ mapcache_buffer* _mapcache_imageio_png_q_encode( mapcache_context *ctx, mapcache
    unsigned char *pixels = (unsigned char*)apr_pcalloc(ctx->pool,image->w*image->h*sizeof(unsigned char));
    rgbaPixel palette[256];
    unsigned int maxval;
-   
+   png_infop info_ptr;
+   rgbPixel rgb[256];
+   unsigned char a[256];
+   int num_a;
+   int row,sample_depth;
+   png_structp png_ptr;
+
    if(MAPCACHE_SUCCESS != _mapcache_imageio_quantize_image(image,&numPaletteEntries,palette, &maxval, NULL, 0)) {
       ctx->set_error(ctx,500,"failed to quantize image buffer");
       return NULL;
@@ -1147,12 +1168,8 @@ mapcache_buffer* _mapcache_imageio_png_q_encode( mapcache_context *ctx, mapcache
       return NULL;
    }
 
-   png_infop info_ptr;
-   rgbPixel rgb[256];
-   unsigned char a[256];
-   int num_a;
-   int row,sample_depth;
-   png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
+   
+   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL,NULL);
 
    if (!png_ptr)
       return (NULL);
@@ -1214,18 +1231,20 @@ mapcache_buffer* _mapcache_imageio_png_q_encode( mapcache_context *ctx, mapcache
 
 static mapcache_buffer* _mapcache_imageio_png_create_empty(mapcache_context *ctx, mapcache_image_format *format,
       size_t width, size_t height, unsigned int color) {
-
+    int i;
+ 
+  mapcache_image *empty;
    apr_pool_t *pool = NULL;
+   mapcache_buffer *buf;
    if(apr_pool_create(&pool,ctx->pool) != APR_SUCCESS) {
       ctx->set_error(ctx,500,"png create empty: failed to create temp memory pool");
       return NULL;
    }
-   mapcache_image *empty = mapcache_image_create(ctx);
+   empty = mapcache_image_create(ctx);
    if(GC_HAS_ERROR(ctx)) {
       return NULL;
    }
    empty->data = (unsigned char*)apr_pcalloc(pool,width*height*4*sizeof(unsigned char)); 
-   int i;
    for(i=0;i<width*height;i++) {
       ((unsigned int*)empty->data)[i] = color;
    }
@@ -1233,7 +1252,7 @@ static mapcache_buffer* _mapcache_imageio_png_create_empty(mapcache_context *ctx
    empty->h = height;
    empty->stride = width * 4;
 
-   mapcache_buffer *buf = format->write(ctx,empty,format);
+   buf = format->write(ctx,empty,format);
    apr_pool_destroy(pool);
    return buf;
 }

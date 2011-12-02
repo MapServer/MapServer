@@ -127,9 +127,11 @@ void _mapcache_source_wms_configuration_parse_xml(mapcache_context *ctx, ezxml_t
    if ((cur_node = ezxml_child(node,"getfeatureinfo")) != NULL){
       ezxml_t fi_node;
       if ((fi_node = ezxml_child(cur_node,"info_formats")) != NULL) {
+	 char *key,*last;
+	 char *iformats;
          source->info_formats = apr_array_make(ctx->pool,3,sizeof(char*));
-         char *iformats = apr_pstrdup(ctx->pool,fi_node->txt);
-         char *key,*last;
+         iformats = apr_pstrdup(ctx->pool,fi_node->txt);
+        
          for (key = apr_strtok(iformats, "," , &last); key != NULL;
                key = apr_strtok(NULL, ",", &last)) {
             APR_ARRAY_PUSH(source->info_formats,char*) = key;

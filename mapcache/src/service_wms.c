@@ -36,6 +36,17 @@
 /** @{ */
 
 void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabilities *req, char *guessed_url, char *path_info, mapcache_cfg *cfg) {
+   ezxml_t caps, tmpxml;
+   const char *title;
+   const char *url;
+   ezxml_t capxml;
+   ezxml_t reqxml;
+   ezxml_t vendorxml;
+   ezxml_t toplayer;
+   apr_hash_index_t *grid_index;
+   apr_hash_index_t *tileindex_index;
+   char *tmpcaps;
+   static char *capheader;
    mapcache_request_get_capabilities_wms *request = (mapcache_request_get_capabilities_wms*)req;
 #ifdef DEBUG
    if(request->request.request.type != MAPCACHE_REQUEST_GET_CAPABILITIES) {
@@ -43,9 +54,8 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
       return;
    }
 #endif
-   ezxml_t caps, tmpxml;
-   const char *title;
-   const char *url = apr_table_get(cfg->metadata,"url");
+
+   url = apr_table_get(cfg->metadata,"url");
    if(!url) {
       url = guessed_url;
    }
@@ -75,8 +85,8 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
       "<Capability>\n"
       "<Request>\n"
    */
-   ezxml_t capxml = ezxml_add_child(caps,"Capability",0);
-   ezxml_t reqxml = ezxml_add_child(capxml,"Request",0);
+   capxml = ezxml_add_child(caps,"Capability",0);
+   reqxml = ezxml_add_child(capxml,"Request",0);
    /*
       "<GetCapabilities>\n"
       " <Format>application/vnd.ogc.wms_xml</Format>\n"
@@ -150,8 +160,8 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
    tmpxml = ezxml_add_child(capxml,"Exceptions",0);
    ezxml_set_txt(ezxml_add_child(tmpxml,"Format",0),"text/plain");
 
-   ezxml_t vendorxml = ezxml_add_child(capxml,"VendorSpecificCapabilities",0);
-   ezxml_t toplayer = ezxml_add_child(capxml,"Layer",0);
+   vendorxml = ezxml_add_child(capxml,"VendorSpecificCapabilities",0);
+   toplayer = ezxml_add_child(capxml,"Layer",0);
    tmpxml = ezxml_add_child(toplayer,"Name",0);
    ezxml_set_txt(tmpxml,"rootlayer");
    tmpxml = ezxml_add_child(toplayer,"Title",0);
@@ -164,7 +174,7 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
     *
     * TODO: check for duplicates in gris srs
     */
-   apr_hash_index_t *grid_index = apr_hash_first(ctx->pool,cfg->grids);
+   grid_index = apr_hash_first(ctx->pool,cfg->grids);
    while(grid_index) {
       const void *key;
       apr_ssize_t keylen;
@@ -175,28 +185,33 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
    }
 
    
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
+   tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
 
    while(tileindex_index) {
       mapcache_tileset *tileset;
+      ezxml_t layerxml;
+      ezxml_t tsxml;
       const void *key; apr_ssize_t keylen;
+      const char *title;
+      const char *abstract;
+      int i;
       apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
       
-      ezxml_t layerxml = ezxml_add_child(toplayer,"Layer",0);
+      layerxml = ezxml_add_child(toplayer,"Layer",0);
       ezxml_set_attr(layerxml, "cascaded", "1");
       ezxml_set_attr(layerxml, "queryable", (tileset->source && tileset->source->info_formats)?"1":"0"),
       ezxml_set_txt(ezxml_add_child(layerxml,"Name",0),tileset->name);
 
-      ezxml_t tsxml = ezxml_add_child(vendorxml, "TileSet",0);
+      tsxml = ezxml_add_child(vendorxml, "TileSet",0);
       
       /*optional layer title*/
-      const char *title = apr_table_get(tileset->metadata,"title");
+      title = apr_table_get(tileset->metadata,"title");
       if(title) {
          ezxml_set_txt(ezxml_add_child(layerxml,"Title",0),title);
       }
 
       /*optional layer abstract*/
-      const char *abstract = apr_table_get(tileset->metadata,"abstract");
+      abstract = apr_table_get(tileset->metadata,"abstract");
       if(abstract) {
          ezxml_set_txt(ezxml_add_child(layerxml,"Abstract",0),abstract);
       }
@@ -210,8 +225,9 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
       }
 
       if(tileset->dimensions) {
-         int i;
          for(i=0;i<tileset->dimensions->nelts;i++) {
+	   const char **value;
+	   char *dimval;
             mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
             ezxml_t dimxml = ezxml_add_child(layerxml,"Dimension",0);
             ezxml_set_attr(dimxml,"name",dimension->name);
@@ -220,8 +236,8 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
             if(dimension->unit) {
                ezxml_set_attr(dimxml,"units",dimension->unit);
             }
-            const char **value = dimension->print_ogc_formatted_values(ctx,dimension);
-            char *dimval = apr_pstrdup(ctx->pool,*value);
+            value = dimension->print_ogc_formatted_values(ctx,dimension);
+            dimval = apr_pstrdup(ctx->pool,*value);
             value++;
             while(*value) {
                dimval = apr_pstrcat(ctx->pool,dimval,",",*value,NULL);
@@ -232,27 +248,30 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
       }
 
 
-      int i;
       for(i=0;i<tileset->grid_links->nelts;i++) {
+	int j;
+	ezxml_t bboxxml;
          mapcache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
          mapcache_grid *grid = gridlink->grid;
          double *extent = grid->extent;
          if(gridlink->restricted_extent)
             extent = gridlink->restricted_extent;
-         ezxml_t bboxxml = ezxml_add_child(layerxml,"BoundingBox",0);
+         bboxxml = ezxml_add_child(layerxml,"BoundingBox",0);
          ezxml_set_attr(bboxxml,"SRS", grid->srs);
          ezxml_set_attr(bboxxml,"minx",apr_psprintf(ctx->pool,"%f",extent[0]));
          ezxml_set_attr(bboxxml,"miny",apr_psprintf(ctx->pool,"%f",extent[1]));
          ezxml_set_attr(bboxxml,"maxx",apr_psprintf(ctx->pool,"%f",extent[2]));
          ezxml_set_attr(bboxxml,"maxy",apr_psprintf(ctx->pool,"%f",extent[3]));
          ezxml_set_txt(ezxml_add_child(layerxml,"SRS",0),grid->srs);
-         int j;
+         
          for(j=0;j<gridlink->grid->srs_aliases->nelts;j++) {
             ezxml_set_txt(ezxml_add_child(layerxml,"SRS",0),APR_ARRAY_IDX(gridlink->grid->srs_aliases,j,char*));
          }
 
 
          if(i==0) {
+	   char *resolutions;
+	   int i;
             /*wms-c only supports one grid per layer, so we use the first of the tileset's grids */
             ezxml_set_txt(ezxml_add_child(tsxml,"SRS",0),grid->srs);
             tmpxml = ezxml_add_child(tsxml,"BoundingBox",0);
@@ -262,9 +281,8 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
             ezxml_set_attr(tmpxml,"maxx",apr_psprintf(ctx->pool,"%f",grid->extent[2]));
             ezxml_set_attr(tmpxml,"maxy",apr_psprintf(ctx->pool,"%f",grid->extent[3]));
 
-            char *resolutions="";
+            resolutions="";
 
-            int i;
             for(i=gridlink->minz;i<gridlink->maxz;i++) {
                resolutions = apr_psprintf(ctx->pool,"%s%.20f ",resolutions,grid->levels[i]->resolution);
             }
@@ -284,9 +302,9 @@ void _create_capabilities_wms(mapcache_context *ctx, mapcache_request_get_capabi
    }
 
    
-   char *tmpcaps = ezxml_toxml(caps);
+   tmpcaps = ezxml_toxml(caps);
    ezxml_free(caps);
-   static char *capheader=
+   capheader=
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\
 <!DOCTYPE WMT_MS_Capabilities SYSTEM \"http://schemas.opengis.net/wms/1.1.0/capabilities_1_1_0.dtd\"\
 [\
@@ -453,6 +471,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
          mapcache_request_get_tile *tile_req = NULL;
          mapcache_grid_link *main_grid_link = NULL;
          mapcache_tileset *main_tileset = NULL;
+	 mapcache_request_type type;
          
          /* count the number of layers that are requested */
          for(key=str;*key;key++) if(*key == ',') count++;
@@ -462,7 +481,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
           * wms layer that was provided in the request.
           * Checking to see if all requested layers reference the grid will be done in a second step
           */
-         mapcache_request_type type = MAPCACHE_REQUEST_GET_TILE;
+         type = MAPCACHE_REQUEST_GET_TILE;
          
          if(count ==1) {
             key = str;
@@ -533,6 +552,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
 
          for (layeridx=0,key = ((count==1)?str:apr_strtok(layers, ",", &last)); key != NULL;
                key = ((count==1)?NULL:apr_strtok(NULL, ",", &last)),layeridx++) {
+	   int i;
             mapcache_tileset *tileset = main_tileset;
             mapcache_grid_link *grid_link = main_grid_link;
             apr_table_t *dimtable = NULL;
@@ -548,7 +568,6 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
                   errmsg = apr_psprintf(ctx->pool,"received wms request with invalid layer %s", key);
                   goto proxies;
                }
-               int i;
                grid_link = NULL;
                for(i=0;i<tileset->grid_links->nelts;i++){
                   grid_link = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
@@ -593,7 +612,6 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
 
             /*look for dimensions*/
             if(dimtable) {
-               int i;
                for(i=0;i<tileset->dimensions->nelts;i++) {
                   mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
                   const char *value;
@@ -620,6 +638,11 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
          }
       }
    } else {
+     int i;
+     int x,y;
+     mapcache_grid_link *grid_link;
+     mapcache_feature_info *fi; 
+     mapcache_request_get_feature_info *req_fi;
       //getfeatureinfo
       str = apr_table_get(params,"QUERY_LAYERS");
       if(!str) {
@@ -642,8 +665,8 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
             errmsg = apr_psprintf(ctx->pool,"received wms getfeatureinfo request for unqueryable layer %s", str);
             goto proxies;
          }
-         int i;
-         mapcache_grid_link *grid_link = NULL;
+
+         grid_link = NULL;
          for(i=0;i<tileset->grid_links->nelts;i++){
             mapcache_grid_link *sgrid = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
             if(strcasecmp(sgrid->grid->srs,srs)) continue;
@@ -656,7 +679,6 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
                   "received unsuitable wms request: no <grid> with suitable srs found for layer %s",tileset->name);
             goto proxies;
          }
-         int x,y;
          
          str = apr_table_get(params,"X");
          if(!str) {
@@ -688,7 +710,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
             }
          }
          
-         mapcache_feature_info *fi = mapcache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
+         fi = mapcache_tileset_feature_info_create(ctx->pool, tileset, grid_link);
          fi->i = x;
          fi->j = y;
          fi->format = apr_pstrdup(ctx->pool,apr_table_get(params,"INFO_FORMAT"));
@@ -724,7 +746,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
          fi->map.extent[1] = bbox[1];
          fi->map.extent[2] = bbox[2];
          fi->map.extent[3] = bbox[3];
-         mapcache_request_get_feature_info *req_fi = apr_pcalloc(ctx->pool, sizeof(mapcache_request_get_feature_info));
+         req_fi = apr_pcalloc(ctx->pool, sizeof(mapcache_request_get_feature_info));
          req_fi->request.type = MAPCACHE_REQUEST_GET_FEATUREINFO;
          req_fi->fi = fi;
          *request = (mapcache_request*)req_fi;
@@ -803,23 +825,28 @@ proxies:
 
 
 void _configuration_parse_wms_xml(mapcache_context *ctx, ezxml_t node, mapcache_service *gservice, mapcache_cfg *cfg) {
-   assert(gservice->type == MAPCACHE_SERVICE_WMS);
    mapcache_service_wms *wms = (mapcache_service_wms*)gservice;
    ezxml_t rule_node;
+   assert(gservice->type == MAPCACHE_SERVICE_WMS);
+
    for( rule_node = ezxml_child(node,"forwarding_rule"); rule_node; rule_node = rule_node->next) {
+     mapcache_forwarding_rule *rule;
+     ezxml_t http_node;
+     ezxml_t pathinfo_node;
+     ezxml_t param_node;
       char *name = (char*)ezxml_attr(rule_node,"name");
       if(!name) name = "(null)";
-      mapcache_forwarding_rule *rule = apr_pcalloc(ctx->pool, sizeof(mapcache_forwarding_rule));
+      rule = apr_pcalloc(ctx->pool, sizeof(mapcache_forwarding_rule));
       rule->name = apr_pstrdup(ctx->pool,name);
       rule->match_params = apr_array_make(ctx->pool,1,sizeof(mapcache_dimension*));
 
-      ezxml_t pathinfo_node = ezxml_child(rule_node,"append_pathinfo");
+      pathinfo_node = ezxml_child(rule_node,"append_pathinfo");
       if(pathinfo_node && !strcasecmp(pathinfo_node->txt,"true")) {
          rule->append_pathinfo = 1;
       } else {
          rule->append_pathinfo = 0;
       }
-      ezxml_t http_node = ezxml_child(rule_node,"http");
+      http_node = ezxml_child(rule_node,"http");
       if(!http_node) {
          ctx->set_error(ctx,500,"rule \"%s\" does not contain an <http> block",name);
          return;
@@ -827,7 +854,6 @@ void _configuration_parse_wms_xml(mapcache_context *ctx, ezxml_t node, mapcache_
       rule->http = mapcache_http_configuration_parse_xml(ctx,http_node);
       GC_CHECK_ERROR(ctx);
 
-      ezxml_t param_node;
       for(param_node = ezxml_child(rule_node,"param"); param_node; param_node = param_node->next) {
          char *name = (char*)ezxml_attr(param_node,"name");
          char *type = (char*)ezxml_attr(param_node,"type");

@@ -59,7 +59,13 @@ int mapcache_buffer_append(mapcache_buffer *buffer, size_t len, void *data) {
    size_t total = buffer->size + len;
    if(total > buffer->avail)
       _mapcache_buffer_realloc(buffer,total);
+
+#ifndef _WIN32
    memcpy(buffer->buf + buffer->size, data, len);
+#else
+   memcpy(((unsigned char*)buffer->buf) + buffer->size, data, len);
+#endif
+
    buffer->size += len;
    return len;
 }

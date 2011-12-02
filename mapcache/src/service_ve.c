@@ -50,6 +50,9 @@ void _mapcache_service_ve_parse_request(mapcache_context *ctx, mapcache_service 
    const char *layer,*quadkey;
    mapcache_tileset *tileset = NULL;
    mapcache_grid_link *grid_link = NULL;
+   mapcache_tile *tile;
+   mapcache_request_get_tile *req;
+
    layer = apr_table_get(params,"layer");
    if(layer) {
       /*tileset not found directly, test if it was given as "name@grid" notation*/
@@ -90,7 +93,7 @@ void _mapcache_service_ve_parse_request(mapcache_context *ctx, mapcache_service 
    }
 
    quadkey = apr_table_get(params,"tile");
-   mapcache_tile *tile = mapcache_tileset_tile_create(ctx->pool,tileset,grid_link);
+   tile = mapcache_tileset_tile_create(ctx->pool,tileset,grid_link);
    if(quadkey) {
       int i;
       tile->z = strlen(quadkey);
@@ -125,7 +128,7 @@ void _mapcache_service_ve_parse_request(mapcache_context *ctx, mapcache_service 
    }
 
 
-   mapcache_request_get_tile *req = (mapcache_request_get_tile*)apr_pcalloc(ctx->pool,sizeof(mapcache_request_get_tile));
+   req = (mapcache_request_get_tile*)apr_pcalloc(ctx->pool,sizeof(mapcache_request_get_tile));
    req->request.type = MAPCACHE_REQUEST_GET_TILE;
    req->ntiles = 1;
    req->tiles = (mapcache_tile**)apr_pcalloc(ctx->pool,sizeof(mapcache_tile*));

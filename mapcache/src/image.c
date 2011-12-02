@@ -58,6 +58,9 @@ int mapcache_image_has_alpha(mapcache_image *img) {
 
 void mapcache_image_merge(mapcache_context *ctx, mapcache_image *base, mapcache_image *overlay) {
    int starti,startj;
+   int i,j;
+   unsigned char *browptr, *orowptr, *bptr, *optr;
+
    if(base->w < overlay->w || base->h < overlay->h) {
       ctx->set_error(ctx, 500, "attempting to merge an larger image onto another");
       return;
@@ -80,8 +83,7 @@ void mapcache_image_merge(mapcache_context *ctx, mapcache_image *base, mapcache_
    pixman_image_unref(si);
    pixman_image_unref(bi);
 #else
-   int i,j;
-   unsigned char *browptr, *orowptr, *bptr, *optr;
+   
 
    browptr = base->data + starti * base->stride + startj*4;
    orowptr = overlay->data;
@@ -120,29 +122,38 @@ void mapcache_image_merge(mapcache_context *ctx, mapcache_image *base, mapcache_
 }
 
 #ifndef USE_PIXMAN
+#ifndef _WIN32
 static inline void bilinear_pixel(mapcache_image *img, double x, double y, unsigned char *dst) {
+#else
+static __inline void bilinear_pixel(mapcache_image *img, double x, double y, unsigned char *dst) {
+#endif
+
    int px,py;
+   int px1, py1;
+   unsigned char *p1, *p2, *p3, *p4;
+   float fx, fy, fx1, fy1;
+   int w1, w2, w3, w4;
    px = (int)x;
    py = (int)y;
 
-   int px1 = (px==(img->w-1))?(px):(px+1);
-   int py1 = (py==(img->h-1))?(py):(py+1);
+   px1 = (px==(img->w-1))?(px):(px+1);
+   py1 = (py==(img->h-1))?(py):(py+1);
 
-   unsigned char *p1 = &img->data[py*img->stride+px*4];
-   unsigned char *p2 = &img->data[py*img->stride+px1*4];
-   unsigned char *p3 = &img->data[py1*img->stride+px*4];
-   unsigned char *p4 = &img->data[py1*img->stride+px1*4];
+   p1 = &img->data[py*img->stride+px*4];
+   p2 = &img->data[py*img->stride+px1*4];
+   p3 = &img->data[py1*img->stride+px*4];
+   p4 = &img->data[py1*img->stride+px1*4];
 
    // Calculate the weights for each pixel
-   float fx = x - px;
-   float fy = y - py;
-   float fx1 = 1.0f - fx;
-   float fy1 = 1.0f - fy;
+   fx = x - px;
+   fy = y - py;
+   fx1 = 1.0f - fx;
+   fy1 = 1.0f - fy;
 
-   int w1 = fx1 * fy1 * 256.0f;
-   int w2 = fx  * fy1 * 256.0f;
-   int w3 = fx1 * fy  * 256.0f;
-   int w4 = fx  * fy  * 256.0f;
+   w1 = fx1 * fy1 * 256.0f;
+   w2 = fx  * fy1 * 256.0f;
+   w3 = fx1 * fy  * 256.0f;
+   w4 = fx  * fy  * 256.0f;
 
    // Calculate the weighted sum of pixels (for each color channel)
    dst[0] = (p1[0] * w1 + p2[0] * w2 + p3[0] * w3 + p4[0] * w4) >> 8;
