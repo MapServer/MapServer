@@ -32,8 +32,12 @@
 #include <apr_thread_mutex.h>
 #include <apr_getopt.h>
 #include <signal.h>
+
 #include <time.h>
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
+
 #include <apr_time.h>
 #include <apr_queue.h>
 #include <apr_strings.h>
@@ -181,9 +185,9 @@ int ogr_features_intersect_tile(mapcache_context *ctx, mapcache_tile *tile) {
 
 int lastmsglen = 0;
 void progresslog(int x, int y, int z) {
-
-   if(quiet) return;
    char msg[1024];
+   if(quiet) return;
+  
    
    sprintf(msg,"seeding tile %d %d %d",x,y,z);
    if(lastmsglen) {
@@ -200,18 +204,21 @@ void progresslog(int x, int y, int z) {
    return;
 
    if(queuedtilestot>nthreads) {
-      seededtilestot = queuedtilestot - nthreads;
       struct timeval now_t;
+      float duration;
+      float totalduration;
+      seededtilestot = queuedtilestot - nthreads;
+
       gettimeofday(&now_t,NULL);
-      float duration = ((now_t.tv_sec-lastlogtime.tv_sec)*1000000+(now_t.tv_usec-lastlogtime.tv_usec))/1000000.0;
-      float totalduration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
+      duration = ((now_t.tv_sec-lastlogtime.tv_sec)*1000000+(now_t.tv_usec-lastlogtime.tv_usec))/1000000.0;
+      totalduration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
       if(duration>=5) {
-         int Nx, Ny;
+	int Nx, Ny, Ntot, Ncur, ntilessincelast;
          Nx = (grid_link->grid_limits[z][2]-grid_link->grid_limits[z][0])/tileset->metasize_x;
          Ny = (grid_link->grid_limits[z][3]-grid_link->grid_limits[z][1])/tileset->metasize_y;
-         int Ntot = Nx*Ny;
-         int Ncur = (y-grid_link->grid_limits[z][1])/tileset->metasize_y*Nx+(x-grid_link->grid_limits[z][0]+1)/tileset->metasize_x;
-         int ntilessincelast = seededtilestot-seededtiles;
+         Ntot = Nx*Ny;
+         Ncur = (y-grid_link->grid_limits[z][1])/tileset->metasize_y*Nx+(x-grid_link->grid_limits[z][0]+1)/tileset->metasize_x;
+         ntilessincelast = seededtilestot-seededtiles;
          sprintf(msg,"seeding level %d [%d/%d]: %f metatiles/sec (avg since start: %f)",z,Ncur,Ntot,ntilessincelast/duration,
                seededtilestot/totalduration);
          lastlogtime=now_t;
@@ -326,6 +333,13 @@ cmd examine_tile(mapcache_context *ctx, mapcache_tile *tile)
 }
 
 void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
+  cmd action;
+  int i,j;
+  int curx, cury, curz;
+  int minchildx,maxchildx,minchildy,maxchildy;
+  double bboxbl[4],bboxtr[4];
+  double epsilon;
+
    apr_pool_clear(cmd_ctx->pool);
    if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
       //remove all items from the queue
@@ -334,7 +348,7 @@ void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
       return;
    }
 
-   cmd action = examine_tile(cmd_ctx, tile);
+   action = examine_tile(cmd_ctx, tile);
 
    if(action == MAPCACHE_CMD_SEED || action == MAPCACHE_CMD_DELETE || action == MAPCACHE_CMD_TRANSFER){
       //current x,y,z needs seeding, add it to the queue
@@ -349,10 +363,10 @@ void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
    }
 
    //recurse into our 4 child metatiles
-   int i,j;
-   int curx = tile->x;
-   int cury = tile->y;
-   int curz = tile->z;
+   
+   curx = tile->x;
+   cury = tile->y;
+   curz = tile->z;
    tile->z += 1;
    if(tile->z > maxzoom) {
       tile->z -= 1;
@@ -363,13 +377,13 @@ void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
     * compute the x,y limits of the next zoom level that intersect the
     * current metatile
     */
-   int minchildx,maxchildx,minchildy,maxchildy;
-   double bboxbl[4],bboxtr[4];
+   
+  
    mapcache_grid_get_extent(cmd_ctx, grid_link->grid,
          curx, cury, curz, bboxbl);
    mapcache_grid_get_extent(cmd_ctx, grid_link->grid,
          curx+tileset->metasize_x-1, cury+tileset->metasize_y-1, curz, bboxtr);
-   double epsilon = (bboxbl[2]-bboxbl[0])*0.01;
+   epsilon = (bboxbl[2]-bboxbl[0])*0.01;
    mapcache_grid_get_xy(cmd_ctx,grid_link->grid,
          bboxbl[0] + epsilon,
          bboxbl[1] + epsilon,
@@ -400,12 +414,14 @@ void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
 }
 
 void cmd_thread() {
+     int n;
+  mapcache_tile *tile;
    int z = minzoom;
    int x = grid_link->grid_limits[z][0];
    int y = grid_link->grid_limits[z][1];
    mapcache_context cmd_ctx = ctx;
    apr_pool_create(&cmd_ctx.pool,ctx.pool);
-   mapcache_tile *tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
+   tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
    tile->dimensions = dimensions;
    if(seed_mode == MAPCACHE_SEED_DEPTH_FIRST) {
       do {
@@ -427,6 +443,7 @@ void cmd_thread() {
             );
    } else {
       while(1) {
+	int action;
          apr_pool_clear(cmd_ctx.pool);
          if(sig_int_received || error_detected) { //stop if we were asked to stop by hitting ctrl-c
             //remove all items from the queue
@@ -437,7 +454,7 @@ void cmd_thread() {
          tile->x = x;
          tile->y = y;
          tile->z = z;
-	 int action = examine_tile(&cmd_ctx, tile);
+	 action = examine_tile(&cmd_ctx, tile);
 
          if(action == MAPCACHE_CMD_SEED || MAPCACHE_CMD_TRANSFER) {
             //current x,y,z needs seeding, add it to the queue
@@ -467,7 +484,7 @@ void cmd_thread() {
       }
    }
    //instruct rendering threads to stop working
-   int n;
+
    for(n=0;n<nthreads;n++) {
       struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
       cmd->command = MAPCACHE_CMD_STOP;
@@ -480,15 +497,17 @@ void cmd_thread() {
 }
 
 static void* APR_THREAD_FUNC seed_thread(apr_thread_t *thread, void *data) {
+  mapcache_tile *tile;
    mapcache_context seed_ctx = ctx;
    seed_ctx.log = seed_log;
    apr_pool_create(&seed_ctx.pool,ctx.pool);
-   mapcache_tile *tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
+   tile = mapcache_tileset_tile_create(ctx.pool, tileset, grid_link);
    tile->dimensions = dimensions;
    while(1) {
+     struct seed_cmd *cmd;
       apr_status_t ret;
       apr_pool_clear(seed_ctx.pool);
-      struct seed_cmd *cmd;
+      
       ret = apr_queue_pop(work_queue, (void**)&cmd);
       if(ret != APR_SUCCESS || cmd->command == MAPCACHE_CMD_STOP) break;
       tile->x = cmd->x;
@@ -579,6 +598,9 @@ int main(int argc, const char **argv) {
     int rv,n;
     const char *old = NULL;
     const char *optarg;
+    apr_table_t *argdimensions;
+    char *dimkey, *dimvalue,*key, *last, *optargcpy;
+    int keyidx;
 
 #ifdef USE_CLIPPERS
     const char *ogr_where = NULL;
@@ -600,9 +622,9 @@ int main(int argc, const char **argv) {
     seededtiles=seededtilestot=queuedtilestot=0;
     gettimeofday(&starttime,NULL);
     lastlogtime=starttime;
-    apr_table_t *argdimensions = apr_table_make(ctx.pool,3);
-    char *dimkey = NULL,*dimvalue = NULL,*key,*last,*optargcpy = NULL;
-    int keyidx;
+    argdimensions = apr_table_make(ctx.pool,3);
+    dimkey = NULL,*dimvalue = NULL,*key,*last,*optargcpy = NULL;
+    
 
     /* parse the all options based on opt_option[] */
     while ((rv = apr_getopt_long(opt, seed_options, &optch, &optarg)) == APR_SUCCESS) {
@@ -719,9 +741,10 @@ int main(int argc, const char **argv) {
     }
 
     if(ogr_datasource) {
-       OGRRegisterAll();
-       OGRDataSourceH hDS = NULL;
+      OGRDataSourceH hDS = NULL;
        OGRLayerH layer = NULL;
+       OGRRegisterAll();
+       
        hDS = OGROpen( ogr_datasource, FALSE, NULL );
        if( hDS == NULL )
        {
@@ -843,8 +866,9 @@ int main(int argc, const char **argv) {
     if(old) {
        if(strcasecmp(old,"now")) {
           struct tm oldtime;
+	  char *ret;
           memset(&oldtime,0,sizeof(oldtime));
-          char *ret = strptime(old,"%Y/%m/%d %H:%M",&oldtime);
+          ret = strptime(old,"%Y/%m/%d %H:%M",&oldtime);
           if(!ret || *ret){
              return usage(argv[0],"failed to parse time");
           }
@@ -881,9 +905,9 @@ int main(int argc, const char **argv) {
 
     /* validate the supplied dimensions */
     if (!apr_is_empty_array(tileset->dimensions)) {
-
+      int i;
        dimensions = apr_table_make(ctx.pool,3);
-       int i;
+       
        for(i=0;i<tileset->dimensions->nelts;i++) {
           mapcache_dimension *dimension = APR_ARRAY_IDX(tileset->dimensions,i,mapcache_dimension*);
           const char *value;
@@ -928,8 +952,9 @@ int main(int argc, const char **argv) {
 
         if(seededtilestot>0) {
            struct timeval now_t;
+	   float duration;
            gettimeofday(&now_t,NULL);
-           float duration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
+           duration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
            printf("\nseeded %d metatiles at %g tiles/sec\n",seededtilestot, seededtilestot/duration);
         }
     }

@@ -147,9 +147,9 @@ int mapcache_grid_get_cell(mapcache_context *ctx, mapcache_grid *grid, double *b
    double res = mapcache_grid_get_resolution(bbox,grid->tile_sx,grid->tile_sy);
    if(MAPCACHE_SUCCESS != mapcache_grid_get_level(ctx, grid, &res, z))
       return MAPCACHE_FAILURE;
-   
-   *x = (int)round((bbox[0] - grid->extent[0]) / (res * grid->tile_sx));
-   *y = (int)round((bbox[1] - grid->extent[1]) / (res * grid->tile_sy));
+
+   *x = (int)(((bbox[0] - grid->extent[0]) / (res * grid->tile_sx)) + 0.5);
+   *y = (int)(((bbox[1] - grid->extent[1]) / (res * grid->tile_sy)) + 0.5);
 
    if((fabs(bbox[0] - (*x * res * grid->tile_sx) - grid->extent[0] ) / res > 1) ||
          (fabs(bbox[1] - (*y * res * grid->tile_sy) - grid->extent[1] ) / res > 1)) {

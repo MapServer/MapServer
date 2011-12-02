@@ -184,10 +184,10 @@ void mapcache_image_copy_resampled_nearest(mapcache_context *ctx, mapcache_image
    unsigned char *dstrowptr = dst->data;
    for(dsty=0; dsty<dst->h; dsty++) {
       int *dstptr = (int*)dstrowptr;
-      int srcy = round((dsty-off_y)/scale_y);
+      int srcy = (int)(((dsty-off_y)/scale_y)+0.5);
       if(srcy >= 0 && srcy < src->h) {
          for(dstx=0; dstx<dst->w;dstx++) {
-            int srcx = round((dstx-off_x)/scale_x);
+	   int srcx = (int)(((dstx-off_x)/scale_x)+0.5);
             if(srcx >= 0 && srcx < src->w) {
                *dstptr = *((int*)&(src->data[srcy*src->stride+srcx*4]));
             }

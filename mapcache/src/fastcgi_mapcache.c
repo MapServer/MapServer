@@ -112,6 +112,7 @@ static void fcgi_write_response(mapcache_context_fcgi *ctx, mapcache_http_respon
       }
    }
    if(response->mtime) {
+     char *datestr;
       char *if_modified_since = getenv("HTTP_IF_MODIFIED_SINCE");
       if(if_modified_since) {
         apr_time_t ims_time;
@@ -125,7 +126,7 @@ static void fcgi_write_response(mapcache_context_fcgi *ctx, mapcache_http_respon
             printf("Status: 304 Not Modified\r\n");
         }
       }
-      char *datestr = apr_palloc(ctx->ctx.pool, APR_RFC822_DATE_LEN);
+      datestr = apr_palloc(ctx->ctx.pool, APR_RFC822_DATE_LEN);
       apr_rfc822_date(datestr, response->mtime);
       printf("Last-Modified: %s\r\n", datestr);
    }
@@ -142,6 +143,8 @@ char *conffile;
 static void load_config(mapcache_context *ctx, char *filename) {
    apr_file_t *f;
    apr_finfo_t finfo;
+   mapcache_cfg *old_cfg;
+   mapcache_cfg *cfg;
    if((apr_file_open(&f, filename, APR_FOPEN_READ, APR_UREAD | APR_GREAD,
                global_pool)) == APR_SUCCESS) {
       apr_file_info_get(&finfo, APR_FINFO_MTIME, f);
@@ -162,10 +165,10 @@ static void load_config(mapcache_context *ctx, char *filename) {
 
    /* either we have no config, or it has changed */
 
-   mapcache_cfg *old_cfg = ctx->config;
+   old_cfg = ctx->config;
    apr_pool_create(&tmp_config_pool,global_pool);
 
-   mapcache_cfg *cfg = mapcache_configuration_create(tmp_config_pool);
+   cfg = mapcache_configuration_create(tmp_config_pool);
    ctx->config = cfg;
    ctx->pool = tmp_config_pool;
 
@@ -197,8 +200,17 @@ failed_load:
 }
 
 int main(int argc, const char **argv) {
+  mapcache_context_fcgi* globalctx;
+  mapcache_context* ctx;
+   apr_table_t *params;
+   mapcache_request *request = NULL;
+   char *pathInfo;
+   mapcache_http_response *http_response;
+
    (void) signal(SIGTERM,handle_signal);
+#ifndef _WIN32
    (void) signal(SIGUSR1,handle_signal);
+#endif
    apr_initialize();
    atexit(apr_terminate);
    apr_pool_initialize();
@@ -206,8 +218,8 @@ int main(int argc, const char **argv) {
       return 1;
    }
    config_pool = NULL;
-   mapcache_context_fcgi* globalctx = fcgi_context_create();
-   mapcache_context* ctx = (mapcache_context*)globalctx;
+   globalctx = fcgi_context_create();
+   ctx = (mapcache_context*)globalctx;
    
    conffile  = getenv("MAPCACHE_CONFIG_FILE");
    if(!conffile) {
@@ -220,7 +232,7 @@ int main(int argc, const char **argv) {
 #ifdef USE_FASTCGI
    while (FCGI_Accept() >= 0) {
 #endif
-      apr_table_t *params;
+     
       ctx->pool = config_pool;
       if(!ctx->config || ctx->config->autoreload) {
          load_config(ctx,conffile);
@@ -230,8 +242,8 @@ int main(int argc, const char **argv) {
          }
       }
       apr_pool_create(&(ctx->pool),config_pool);
-      mapcache_request *request = NULL;
-      char *pathInfo = getenv("PATH_INFO");
+      request = NULL;
+      pathInfo = getenv("PATH_INFO");
       
 
       params = mapcache_http_parse_param_string(ctx, getenv("QUERY_STRING"));
@@ -241,7 +253,7 @@ int main(int argc, const char **argv) {
          goto cleanup;
       }
       
-      mapcache_http_response *http_response = NULL;
+      http_response = NULL;
       if(request->type == MAPCACHE_REQUEST_GET_CAPABILITIES) {
          mapcache_request_get_capabilities *req = (mapcache_request_get_capabilities*)request;
          char *host = getenv("SERVER_NAME");

@@ -32,6 +32,7 @@
 #include <unistd.h>
 #else
 #define EZXML_NOMMAP 1
+#define snprintf _snprintf
 #endif
 
 #include <sys/types.h>
