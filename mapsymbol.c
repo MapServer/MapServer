@@ -68,8 +68,9 @@ void freeImageCache(struct imageCacheObj *ic)
 */
 double msSymbolGetDefaultSize(symbolObj *s) {
   double size;
+  unsigned int svg_width, svg_height;
 
-  if(s == NULL)
+ if(s == NULL)
       return 1;
 
   switch(s->type) {  
@@ -81,6 +82,15 @@ double msSymbolGetDefaultSize(symbolObj *s) {
       if(s->pixmap_buffer == NULL) return 1; /* FIXME */
       size = (double)s->pixmap_buffer->height;
       break;
+  case(MS_SYMBOL_SVG):
+    size = 1;
+#ifdef USE_SVG_CAIRO
+    assert(s->svg_cairo_surface != NULL);
+    if(s->svg_cairo_surface == NULL) return 1; //FIXME
+    svg_cairo_get_size(s->svg_cairo_surface, &svg_width, &svg_height);
+    size = (double)svg_height;
+#endif
+    break;
     default: /* vector and ellipses, scalable */
       size = s->sizey;
       break;
@@ -116,6 +126,8 @@ void initSymbol(symbolObj *s)
   s->anchorpoint_x = s->anchorpoint_y = 0.5;
 
   s->svg_text = NULL;
+  s->svg_cairo_surface=NULL;
+
 }
 
 int msFreeSymbol(symbolObj *s) {
@@ -133,12 +145,20 @@ int msFreeSymbol(symbolObj *s) {
       free(s->pixmap_buffer);
   }
 
+#ifdef USE_SVG_CAIRO
+  if(s->svg_cairo_surface)
+    svg_cairo_destroy(s->svg_cairo_surface);
+#endif
+
   if(s->font) free(s->font);
   msFree(s->full_font_path);
   msFree(s->full_pixmap_path);
   if(s->imagepath) free(s->imagepath);
   if(s->character) free(s->character);
   
+  if (s->svg_text)
+    msFree(s->svg_text);
+
   return MS_SUCCESS;
 }
 
@@ -223,6 +243,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
           free(s->svg_text);
           return -1;
         }
+        s->svg_text[file_len-1]= '\0';
         fclose(stream);
 	    break;
       }

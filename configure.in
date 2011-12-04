@@ -2281,7 +2281,7 @@ elif test "$with_cairo" = "yes" ; then
     AC_MSG_ERROR([pkg-config required for cairo support, try using --with-pkg-config=PATH])
   fi 
 else
-  CAIRO_CONFIG=$with_cairo_config
+  CAIRO_CONFIG=$with_cairo
 fi
 
 if test "$CAIRO_CONFIG" = "no" ; then 
@@ -2302,6 +2302,57 @@ AC_SUBST(CAIRO_LIB,$CAIRO_LIB)
 ALL_ENABLED="$CAIRO_ENABLED $ALL_ENABLED"
 ALL_INC="$CAIRO_INC $ALL_INC"
 ALL_LIB="$CAIRO_LIB $ALL_LIB"
+
+
+dnl ---------------------------------------------------------------------------
+dnl Look for Cairo SVG parser if requested.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(if Cairo svg parser support requested)
+
+AC_ARG_WITH(libsvg-cairo,
+[  --with-libsvg-cairo[[=ARG]]      Include Cairo SVG Parser Support (ARG=yes/path to cairo.pc)],,)
+
+if test "$with_libsvg_cairo" = "no" -o "$with_libsvg_cairo" = "" ; then
+  AC_MSG_RESULT(no)
+  LIBSVG_CAIRO_CONFIG="no"
+
+elif test "$with_libsvg_cairo" = "yes" ; then
+  AC_MSG_RESULT(yes)
+  if test "$PKG_CONFIG" != "no" ; then 
+     AC_MSG_CHECKING(for libsvg-cairo pkg-config path)
+     `$PKG_CONFIG --silence-errors -- libsvg-cairo >> /dev/null`
+     if test $? -eq 0 ; then
+        AC_MSG_RESULT(yes)
+        LIBSVG_CAIRO_CONFIG="libsvg-cairo"
+     else
+       AC_MSG_ERROR([libsvg-cairo support requested, but not found.])
+     fi
+  else
+    AC_MSG_ERROR([pkg-config required for libsvg-cairo support, try using --with-pkg-config=PATH])
+  fi 
+else
+  LIBSVG_CAIRO_CONFIG=$with_libsvg_cairo
+fi
+
+if test "$LIBSVG_CAIRO_CONFIG" = "no" ; then 
+  LIBSVG_CAIRO_ENABLED=
+  LIBSVG_CAIRO_INC=
+  LIBSVG_CAIRO_LIB=
+else
+  AC_MSG_RESULT([yes, pkg-config defaults, or user supplied path to cairo.pc])
+  LIBSVG_CAIRO_ENABLED="-DUSE_SVG_CAIRO"
+  LIBSVG_CAIRO_LIB=`$PKG_CONFIG --libs $LIBSVG_CAIRO_CONFIG`
+  LIBSVG_CAIRO_INC=`$PKG_CONFIG --cflags $LIBSVG_CAIRO_CONFIG`
+fi
+
+AC_SUBST(LIBSVG_CAIRO_ENABLED,$LIBSVG_CAIRO_ENABLED)
+AC_SUBST(LIBSVG_CAIRO_INC,$LIBSVG_CAIRO_INC)
+AC_SUBST(LIBSVG_CAIRO_LIB,$LIBSVG_CAIRO_LIB)
+
+ALL_ENABLED="$LIBSVG_CAIRO_ENABLED $ALL_ENABLED"
+ALL_INC="$LIBSVG_CAIRO_INC $ALL_INC"
+ALL_LIB="$LIBSVG_CAIRO_LIB $ALL_LIB"
 
 
 dnl ---------------------------------------------------------------------
@@ -2902,6 +2953,7 @@ AC_MSG_RESULT([  iconv support:             ${ICONV_ENABLED}])
 AC_MSG_RESULT([  AGG support:               ${AGG_ENABLED}])
 AC_MSG_RESULT([  SVG Symbol support:        ${AGG_SVG_SYMBOLS_ENABLED}])
 AC_MSG_RESULT([  Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}])
+AC_MSG_RESULT([  Cairo SVG parser support:  ${LIBSVG_CAIRO_ENABLED}])
 AC_MSG_RESULT([  KML support:               ${KML_ENABLED}])
 AC_MSG_RESULT()
 

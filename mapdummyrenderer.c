@@ -226,6 +226,7 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer) {
     renderer->supports_transparent_layers = 0;
     renderer->supports_clipping = 0;
     renderer->supports_bitmap_fonts = 0;
+    renderer->supports_svg = 0;
     renderer->renderer_data = NULL;
     renderer->transform_mode = MS_TRANSFORM_SIMPLIFY;
     renderer->startLayer = &startLayerDummy;

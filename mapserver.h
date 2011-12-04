@@ -1960,6 +1960,7 @@ MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int index);
 MS_DLL_EXPORT int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename);
 MS_DLL_EXPORT int msLoadImageSymbol(symbolObj *symbol, const char *filename);
 MS_DLL_EXPORT int msPreloadImageSymbol(rendererVTableObj *renderer, symbolObj *symbol);
+MS_DLL_EXPORT int msPreloadSVGSymbol(symbolObj *symbol);
 MS_DLL_EXPORT symbolObj *msRotateSymbol(symbolObj *symbol, double angle);
 
 MS_DLL_EXPORT imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *format);
@@ -2666,6 +2667,7 @@ struct rendererVTableObj {
 	int supports_pixel_buffer;
 	int supports_clipping;
 	int supports_bitmap_fonts;
+   int supports_svg;
 	int use_imagecache;
 	enum MS_TRANSFORM_MODE default_transform_mode;
 	enum MS_TRANSFORM_MODE transform_mode;
@@ -2708,11 +2710,17 @@ struct rendererVTableObj {
 	void* (*createEllipseSymbolTile)(int width, int height,
 			symbolObj *symbol, symbolStyleObj *style);
 
-	int (*renderTruetypeSymbol)(imageObj *img, double x, double y,
-			symbolObj *symbol, symbolStyleObj *style);
+   int (*renderTruetypeSymbol)(imageObj *img, double x, double y,
+         symbolObj *symbol, symbolStyleObj *style);
 
-	void* (*createTruetypeSymbolTile)(int width, int height,
-			symbolObj *symbol, symbolStyleObj *style);
+   void* (*createTruetypeSymbolTile)(int width, int height,
+         symbolObj *symbol, symbolStyleObj *style);
+
+   int (*renderSVGSymbol)(imageObj *img, double x, double y,
+         symbolObj *symbol, symbolStyleObj *style);
+
+   void* (*createSVGSymbolTile)(int width, int height,
+         symbolObj *symbol, symbolStyleObj *style);
 
 	int (*renderTile)(imageObj *img, imageObj *tile, double x, double y);
 

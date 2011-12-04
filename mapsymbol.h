@@ -78,6 +78,9 @@ typedef struct {
 typedef struct {
 	int type;
 	unsigned int width,height;
+#ifdef USE_SVG_CAIRO
+    double scale, rotation;
+#endif
 	union {
 		rgbaArrayObj rgba;
 		paletteArrayObj palette;
@@ -189,6 +192,7 @@ typedef struct {
   void *renderer_cache;
   char *full_font_path;
   char *full_pixmap_path;
+  void *svg_cairo_surface;
 #endif /* SWIG */
 
 #ifdef SWIG

@@ -551,7 +551,7 @@ int agg2RenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol,
 
 	r->m_rasterizer_aa.reset();
 	r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-	if( (style->rotation != 0 && style->rotation != MS_PI*2.)|| style->scale != 1) {
+    if ( (style->rotation != 0 && style->rotation != MS_PI*2.)|| style->scale != 1) {
 		mapserver::trans_affine image_mtx;
 		image_mtx *= mapserver::trans_affine_translation(-(pf.width()/2.),-(pf.height()/2.));
 		/*agg angles are antitrigonometric*/
@@ -878,6 +878,7 @@ int agg2FreeImage(imageObj * image) {
 int agg2FreeSymbol(symbolObj * symbol) {
 	switch(symbol->type) {
 	case MS_SYMBOL_PIXMAP:
+        case MS_SYMBOL_SVG:
 	   if(symbol->renderer_cache) {
 	      rendering_buffer *rb = (rendering_buffer*)symbol->renderer_cache;
 	      free(rb->buf());
@@ -1133,8 +1134,8 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer) {
    renderer->supports_pixel_buffer = 1;
    renderer->use_imagecache = 0;
    renderer->supports_clipping = 0;
+   renderer->supports_svg = 0;
    renderer->default_transform_mode = MS_TRANSFORM_SIMPLIFY;
-   
    agg2InitCache(&(MS_RENDERER_CACHE(renderer)));
    renderer->cleanup = agg2Cleanup;
    renderer->renderLine = &agg2RenderLine;

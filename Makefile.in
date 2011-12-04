@@ -222,6 +222,10 @@ CAIRO=@CAIRO_ENABLED@
 CAIRO_LIB=@CAIRO_LIB@
 CAIRO_INC=@CAIRO_INC@
 
+LIBSVG_CAIRO=@LIBSVG_CAIRO_ENABLED@
+LIBSVG_CAIRO_LIB=@LIBSVG_CAIRO_LIB@
+LIBSVG_CAIRO_INC=@LIBSVG_CAIRO_INC@
+
 #
 # Pick a compiler, etc. Flex and bison are only required if you need to modify the mapserver lexer (maplexer.l) or expression parser (mapparser.y).
 #
@@ -238,7 +242,7 @@ YACC=   @YACC@
 # most of the relevant stuff is in AC_LD_SHARED in 
 # aclocal.m4
 
-LD_SHARED = @LD_SHARED@
+LD_SHARED = @LD_SHARED@ @LDFLAGS@
 LD_SONAME_LIBMAP = -W1,@SO_COMMAND_NAME@,$(LIBMAP_SH_VER)
 
 XTRALIBS= @XTRALIBS@
@@ -250,7 +254,7 @@ INCLUDES = $(FT_INC) $(REGEX_INC) $(PNG_INC) $(GIF_INC) $(JPEG_INC) $(GD_INC) \
         $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PROJ_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYSQL_INC) \
         $(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
-        $(FASTCGI_INC) $(EXEMPI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC)
+        $(FASTCGI_INC) $(EXEMPI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC) $(LIBSVG_CAIRO_INC)
 
 FLAGS = @DEBUG_FLAGS@ $(DEFINES) $(INCLUDES)
 
@@ -262,7 +266,7 @@ SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
 	  $(MYSQL_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(EXEMPI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
-	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB)
+	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB) $(LIBSVG_CAIRO_LIB)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC)

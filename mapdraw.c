@@ -1455,6 +1455,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     	  if(MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(map),symbol))
     		  return MS_FAILURE;
       }
+      else if(symbol->type == MS_SYMBOL_SVG) {
+#ifdef USE_SVG_CAIRO
+        if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
+          return MS_FAILURE;
+#else
+        msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawShape()");
+        return MS_FAILURE;
+#endif
+	  }
       maxsize = MS_MAX(
           msSymbolGetDefaultSize(symbol),MS_MAX(style->size,style->width)
       );
