@@ -450,14 +450,14 @@ static int msWCSParseSubset20(wcs20SubsetObjPtr subset, const char *axis,
         }
 
         if (subset->timeOrScalar == MS_WCS20_TIME_VALUE && subset->min.time
-                >= subset->max.time)
+                > subset->max.time)
         {
             msSetError(MS_WCSERR,
                     "Minimum value of subset axis %s is larger than maximum value",
                     "msWCSParseSubset20()", subset->axis);
             return MS_FAILURE;
         }
-        if (subset->timeOrScalar == MS_WCS20_SCALAR_VALUE && subset->min.scalar >= subset->max.scalar)
+        if (subset->timeOrScalar == MS_WCS20_SCALAR_VALUE && subset->min.scalar > subset->max.scalar)
         {
             msSetError(MS_WCSERR,
                     "Minimum value (%f) of subset axis '%s' is larger than maximum value (%f).",
