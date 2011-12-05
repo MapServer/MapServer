@@ -985,7 +985,7 @@ int msRenderSVGToPixmap(symbolObj *symbol, symbolStyleObj *style) {
       b=rb->data.rgba.b+row*rb->data.rgba.row_step;
       a=rb->data.rgba.a+row*rb->data.rgba.row_step;
       for(col=0;col<rb->width;col++) {
-         if(*a < 255) {
+         if(*a && *a < 255) {
             double da = *a/255.0;
             *r/=da;
             *g/=da;
