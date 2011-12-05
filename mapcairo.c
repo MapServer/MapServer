@@ -910,7 +910,7 @@ int msRenderSVGToPixmap(symbolObj *symbol, symbolStyleObj *style) {
     unsigned char *pb;
     rasterBufferObj *rb;
     //rendering_buffer *rc;
-    int width, height, surface_w, surface_h;
+    int width, height, surface_w, surface_h,row;
     double scale;
     
     //already rendered at the right size and scale? return
@@ -974,6 +974,30 @@ int msRenderSVGToPixmap(symbolObj *symbol, symbolStyleObj *style) {
    initializeRasterBufferCairo(symbol->pixmap_buffer, surface_w, surface_h, 0);
    rb = symbol->pixmap_buffer;
    memcpy(rb->data.rgba.pixels, pb, surface_w * surface_h * 4 * sizeof(unsigned char));
+
+   /* unpremultiply the data */
+
+   for(row=0;row<rb->height;row++) {
+      int col;
+      unsigned char *a,*r,*g,*b;
+      r=rb->data.rgba.r+row*rb->data.rgba.row_step;
+      g=rb->data.rgba.g+row*rb->data.rgba.row_step;
+      b=rb->data.rgba.b+row*rb->data.rgba.row_step;
+      a=rb->data.rgba.a+row*rb->data.rgba.row_step;
+      for(col=0;col<rb->width;col++) {
+         if(*a < 255) {
+            double da = *a/255.0;
+            *r/=da;
+            *g/=da;
+            *b/=da;
+         }
+         a+=rb->data.rgba.pixel_step;
+         r+=rb->data.rgba.pixel_step;
+         g+=rb->data.rgba.pixel_step;
+         b+=rb->data.rgba.pixel_step;
+      }
+   }
+
    rb->scale = style->scale;
    rb->rotation = style->rotation;
    cairo_destroy(cr);
