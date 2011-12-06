@@ -628,16 +628,16 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
     * this behavior is kind of a mapfile hack, and must be
     * kept for backwards compatibility
     */
-//   if (symbolset->symbol[style->symbol]->type != MS_SYMBOL_PIXMAP) {
-//      if (!MS_VALID_COLOR(style->color)) {
-//         if(MS_VALID_COLOR(style->outlinecolor))
-//            return msDrawLineSymbol(symbolset, image, p, style, scalefactor);
-//         else {
-//            /* just do nothing if no color has been set */
-//            return MS_SUCCESS;
-//         }
-//      }
-//   }
+   if (symbolset->symbol[style->symbol]->type != MS_SYMBOL_PIXMAP && symbolset->symbol[style->symbol]->type != MS_SYMBOL_SVG ) {
+      if (!MS_VALID_COLOR(style->color)) {
+         if(MS_VALID_COLOR(style->outlinecolor))
+            return msDrawLineSymbol(symbolset, image, p, style, scalefactor);
+         else {
+            /* just do nothing if no color has been set */
+            return MS_SUCCESS;
+         }
+      }
+   }
    if (image)
    {
       if (MS_RENDERER_PLUGIN(image->format)) {
