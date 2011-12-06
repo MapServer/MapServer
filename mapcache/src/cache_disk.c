@@ -162,25 +162,12 @@ static void _mapcache_cache_disk_delete(mapcache_context *ctx, mapcache_tile *ti
    apr_status_t ret;
    char errmsg[120];
    char *filename;
-   apr_file_t *f;
    _mapcache_cache_disk_tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
 
-   /* delete the tile file if it already exists */
-   if((ret = apr_file_open(&f, filename,APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool)) == APR_SUCCESS) {
-      apr_file_close(f);
-      ret = apr_file_remove(filename,ctx->pool);
-      if(ret != APR_SUCCESS) {
-         ctx->set_error(ctx, 500,  "failed to remove existing file %s: %s",filename, apr_strerror(ret,errmsg,120));
-         return; /* we could not delete the file */
-      }
-   } else {
-      int code = 500;
-      if(ret == ENOENT) {
-         code = 404;
-      }
-      ctx->set_error(ctx, code,  "failed to remove file %s: %s",filename, apr_strerror(ret,errmsg,120));
-      return; /* we could not open the file */
+   ret = apr_file_remove(filename,ctx->pool);
+   if(ret != APR_SUCCESS && ret != ENOENT) {
+      ctx->set_error(ctx, 500,  "failed to remove file %s: %s",filename, apr_strerror(ret,errmsg,120));
    }
 }
 
@@ -314,14 +301,9 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
    }
    *hackptr2 = '/';
 
-   /* delete the tile file if it already exists */
-   if((ret = apr_file_open(&f, filename,APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool)) == APR_SUCCESS) {
-      apr_file_close(f);
-      ret = apr_file_remove(filename,ctx->pool);
-      if(ret != APR_SUCCESS) {
-         ctx->set_error(ctx, 500,  "failed to remove existing file %s: %s",filename, apr_strerror(ret,errmsg,120));
-         return; /* we could not delete the file */
-      }
+   ret = apr_file_remove(filename,ctx->pool);
+   if(ret != APR_SUCCESS && ret != ENOENT) {
+      ctx->set_error(ctx, 500,  "failed to remove file %s: %s",filename, apr_strerror(ret,errmsg,120));
    }
 
   
