@@ -300,6 +300,8 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define INITIALGAP 1229
 #define ANCHORPOINT 1230
 
+#define MASK 1250
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 

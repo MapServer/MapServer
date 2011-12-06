@@ -130,6 +130,14 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     }
 
     msInitLabelCache(&(map->labelcache)); /* this clears any previously allocated cache */
+    
+    /* clear any previously created mask layer images */
+    for(i=0;i<map->numlayers; i++) {
+       if(GET_LAYER(map, i)->maskimage) {
+         msFreeImage(GET_LAYER(map, i)->maskimage);
+         GET_LAYER(map, i)->maskimage = NULL;
+       }
+    }
 
     status = msValidateContexts(map); /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
     if(status != MS_SUCCESS) return NULL;
@@ -672,6 +680,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   int retcode=MS_SUCCESS;
   int originalopacity = layer->opacity;
   const char *alternativeFomatString = NULL;
+  layerObj *maskLayer = NULL; 
 
   if(!msLayerIsVisible(map, layer))
     return MS_SUCCESS;  
@@ -682,8 +691,74 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
      layer->project true to recheck projection needs (Bug #673) */
   layer->project = MS_TRUE;
 
+  if(layer->masklayer) {
+     /* render the mask layer in its own imageObj */
+     if(!MS_IMAGE_RENDERER(image)->supports_pixel_buffer) {
+        msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msDrawLayer()",
+              layer->name);
+        return (MS_FAILURE);
+     }
+     int maskLayerIdx = msGetLayerIndex(map,layer->masklayer);
+     if(maskLayerIdx == -1) {
+        msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
+              layer->name,layer->masklayer);
+        return (MS_FAILURE);
+     }
+     maskLayer = GET_LAYER(map, maskLayerIdx); 
+     if(!maskLayer->maskimage) {
+        int i;
+        int origstatus, origlabelcache;
+        altFormat =  msSelectOutputFormat(map, "png24");
+        /* TODO: check the png24 format hasn't been tampered with, i.e. it's agg */
+        maskLayer->maskimage= msImageCreate(image->width, image->height,altFormat,
+              image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
+        if (!maskLayer->maskimage) {
+           msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
+           return (MS_FAILURE);
+        }
+
+        /* 
+         * force the masked layer to status on, and turn off the labelcache so that
+         * eventual labels are added to the temporary image instead of being added
+         * to the labelcache
+         */
+        origstatus = maskLayer->status;
+        origlabelcache = maskLayer->labelcache;
+        maskLayer->status = MS_ON;
+        maskLayer->labelcache = MS_OFF;
+
+        /* draw the mask layer in the temporary image */
+        retcode = msDrawLayer(map, maskLayer, maskLayer->maskimage);
+        maskLayer->status = origstatus;
+        maskLayer->labelcache = origlabelcache;
+        if(retcode != MS_SUCCESS) {
+           return MS_FAILURE;
+        }
+        /* 
+         * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain
+         * symbols that reference it. We want to remove those references before the altFormat is destroyed
+         * to avoid a segfault and/or a leak, and so the the main renderer doesn't pick the cache up thinking
+         * it's for him.
+         */
+        for(i=0; i<map->symbolset.numsymbols; i++) {
+           if (map->symbolset.symbol[i]!=NULL) {
+              symbolObj *s = map->symbolset.symbol[i];
+              if(s->renderer == MS_IMAGE_RENDERER(maskLayer->maskimage)) {
+                 MS_IMAGE_RENDERER(maskLayer->maskimage)->freeSymbol(s);
+                 s->renderer = NULL;
+              }
+           }
+        }
+        /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
+        msFree(map->imagetype);
+        map->imagetype = msStrdup(image->format->name);
+     }
+
+  }
+  altFormat = NULL;
   /* inform the rendering device that layer draw is starting. */
   msImageStartLayer(map, layer, image);
+
 
   /*check if an alternative renderer should be used for this layer*/
   alternativeFomatString = msLayerGetProcessingKey( layer, "RENDERER");
@@ -700,7 +775,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
   else if (MS_RENDERER_PLUGIN(image_draw->format)) {
 	    rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
-		if (layer->opacity > 0 && layer->opacity < 100) {
+		if (layer->masklayer || (layer->opacity > 0 && layer->opacity < 100)) {
 			if (!renderer->supports_transparent_layers) {
 				image_draw = msImageCreate(image->width, image->height,
 						image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
@@ -774,8 +849,47 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 	  renderer->endLayer(image_draw,map,layer);
 	  layer->opacity = originalopacity;
 
-	  renderer->getRasterBufferHandle(image_draw,&rb);
-	  renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);  
+     renderer->getRasterBufferHandle(image_draw,&rb);
+     if(maskLayer && maskLayer->maskimage) {
+        rasterBufferObj mask;
+        memset(&mask,0,sizeof(rasterBufferObj));
+        MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&mask);
+        /* modify the pixels of the overlay */
+        unsigned int row,col;
+        if(rb.type == MS_BUFFER_BYTE_RGBA) {
+           for(row=0;row<rb.height;row++) {
+              unsigned char *ma,*a,*r,*g,*b;
+              r=rb.data.rgba.r+row*rb.data.rgba.row_step;
+              g=rb.data.rgba.g+row*rb.data.rgba.row_step;
+              b=rb.data.rgba.b+row*rb.data.rgba.row_step;
+              a=rb.data.rgba.a+row*rb.data.rgba.row_step;
+              ma=mask.data.rgba.a+row*mask.data.rgba.row_step;
+              for(col=0;col<rb.width;col++) {
+                 if(*ma == 0) {
+                    *a = *r = *g = *b = 0;
+                 }
+                 a+=rb.data.rgba.pixel_step;
+                 r+=rb.data.rgba.pixel_step;
+                 g+=rb.data.rgba.pixel_step;
+                 b+=rb.data.rgba.pixel_step;
+                 ma+=mask.data.rgba.pixel_step;
+              }
+           }
+        } else if(rb.type == MS_BUFFER_GD) {
+           for(row=0;row<rb.height;row++) {
+              unsigned char *ma;
+              ma=mask.data.rgba.a+row*mask.data.rgba.row_step;
+              for(col=0;col<rb.width;col++) {
+                 if(*ma == 0) {
+                    gdImageSetPixel(rb.data.gd_img,col,row,0);
+                 }
+                 ma+=mask.data.rgba.pixel_step;
+              }
+           }
+
+        }
+     }  
+	  renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);
 	  msFreeImage(image_draw);
   }
   

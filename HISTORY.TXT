@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+
+- Add RFC79 Layer masking (#4111)
+
 - Fixed single pixel coverages in WCS 2.0 (#4110)
 
 - Add svg symbols support (#3671)

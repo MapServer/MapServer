@@ -117,6 +117,7 @@ typedef uint32_t        ms_uint32;
 /*forward declaration of rendering object*/
 typedef struct rendererVTableObj rendererVTableObj;
 typedef struct tileCacheObj tileCacheObj;
+typedef struct imageObj imageObj;
 
 
 
@@ -1479,6 +1480,12 @@ typedef struct layer_obj {
 #endif /* SWIG */
 
   char *classgroup;
+
+#ifndef SWIG
+  imageObj *maskimage;
+#endif
+  char *masklayer;
+
 } layerObj;
 
 /************************************************************************/
@@ -1600,7 +1607,7 @@ typedef struct map_obj{ /* structure for a map */
 /*                                                                      */
 /*      A wrapper for GD and other images.                              */
 /************************************************************************/
-typedef struct {
+struct imageObj{
 #ifdef SWIG
 %immutable;
 #endif
@@ -1634,7 +1641,7 @@ typedef struct {
   ms_bitarray  img_mask;
   pointObj refpt;
 #endif
-} imageObj;
+};
 
 
 /************************************************************************/

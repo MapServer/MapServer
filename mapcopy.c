@@ -920,6 +920,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYRECT(&(dst->extent), &(src->extent));
     
     MS_COPYSTRING(dst->classgroup, src->classgroup); 
+    MS_COPYSTRING(dst->masklayer, src->masklayer); 
 
     return MS_SUCCESS;
 }

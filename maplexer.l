@@ -285,6 +285,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_VARIABLE>map                      { MS_LEXER_RETURN_TOKEN(MAP); }
 <INITIAL>marker                                { MS_LEXER_RETURN_TOKEN(MARKER); }
 <INITIAL>markersize                            { MS_LEXER_RETURN_TOKEN(MARKERSIZE); }
+<INITIAL>mask                                  { MS_LEXER_RETURN_TOKEN(MASK); }
 <INITIAL>maxarcs                               { MS_LEXER_RETURN_TOKEN(MAXARCS); }
 <INITIAL>maxboxsize                            { MS_LEXER_RETURN_TOKEN(MAXBOXSIZE); }
 <INITIAL>maxdistance                           { MS_LEXER_RETURN_TOKEN(MAXDISTANCE); }

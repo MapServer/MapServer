@@ -316,6 +316,51 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
   layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
 
+  /* check that the label intersects the layer mask */
+  if(layerPtr->masklayer) {
+     int maskLayerIdx = msGetLayerIndex(map,layerPtr->masklayer);
+     layerObj *maskLayer = GET_LAYER(map,maskLayerIdx);
+     if(maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
+        rasterBufferObj rb;
+        memset(&rb,0,sizeof(rasterBufferObj));
+        MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&rb);
+        if(point) {
+           int x = MS_NINT(point->x);
+           int y = MS_NINT(point->y);
+           if(rb.type == MS_BUFFER_BYTE_RGBA) {
+              unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+              if(!*alphapixptr) {
+                 /* label point does not intersect mask */
+                 return MS_SUCCESS;
+              }
+           } else {
+              if(!gdImageGetPixel(rb.data.gd_img,x,y))
+                 return MS_SUCCESS;
+           }
+        } else if (labelpath) {
+           int i = 0;
+           for(i=0;i< labelpath->path.numpoints;i++) {
+              int x = MS_NINT(labelpath->path.point[i].x);
+              int y = MS_NINT(labelpath->path.point[i].y);
+              if(rb.type == MS_BUFFER_BYTE_RGBA) {
+                 unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+                 if(!*alphapixptr) {
+                    /* label point does not intersect mask */
+                    return MS_SUCCESS;
+                 }
+              } else {
+                 if(!gdImageGetPixel(rb.data.gd_img,x,y))
+                    return MS_SUCCESS;
+              }
+           }
+        }
+     } else {
+        msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabel()", layerPtr->name);
+        return (MS_FAILURE);
+     }
+  }
+
+
   if( label == NULL )
     label = &(classPtr->label);
 
