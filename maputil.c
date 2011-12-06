@@ -1614,7 +1614,7 @@ static pointObj point_sum(const pointObj a, const pointObj b) {
   retv.y = a.y+b.y;
 #ifdef USE_POINT_Z_M
   retv.z = a.z+b.z;
-  retv.m = a.m+b.m
+  retv.m = a.m+b.m;
 #endif
   return retv;
 }
