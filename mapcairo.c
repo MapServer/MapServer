@@ -638,7 +638,7 @@ imageObj* createImageCairo(int width, int height, outputFormatObj *format,colorO
         r->cr = cairo_create(r->surface);
         if(format->transparent || !bg || !MS_VALID_COLOR(*bg)) {
            r->use_alpha = 1;
-           cairo_set_source_rgba (r->cr, 255,255,255,1);
+	   cairo_set_source_rgba (r->cr, 0,0,0,0);
         } else {
            r->use_alpha = 0;
            msCairoSetSourceColor(r->cr,bg);
