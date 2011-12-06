@@ -692,13 +692,14 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   layer->project = MS_TRUE;
 
   if(layer->masklayer) {
+    int maskLayerIdx;
      /* render the mask layer in its own imageObj */
      if(!MS_IMAGE_RENDERER(image)->supports_pixel_buffer) {
         msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msDrawLayer()",
               layer->name);
         return (MS_FAILURE);
      }
-     int maskLayerIdx = msGetLayerIndex(map,layer->masklayer);
+     maskLayerIdx = msGetLayerIndex(map,layer->masklayer);
      if(maskLayerIdx == -1) {
         msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
               layer->name,layer->masklayer);
@@ -852,10 +853,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
      renderer->getRasterBufferHandle(image_draw,&rb);
      if(maskLayer && maskLayer->maskimage) {
         rasterBufferObj mask;
+	 unsigned int row,col;
         memset(&mask,0,sizeof(rasterBufferObj));
         MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&mask);
         /* modify the pixels of the overlay */
-        unsigned int row,col;
+       
         if(rb.type == MS_BUFFER_BYTE_RGBA) {
            for(row=0;row<rb.height;row++) {
               unsigned char *ma,*a,*r,*g,*b;
