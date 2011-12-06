@@ -599,7 +599,7 @@ int main(int argc, const char **argv) {
     const char *old = NULL;
     const char *optarg;
     apr_table_t *argdimensions;
-    char *dimkey, *dimvalue,*key, *last, *optargcpy;
+    char *dimkey=NULL, *dimvalue=NULL,*key, *last, *optargcpy=NULL;
     int keyidx;
 
 #ifdef USE_CLIPPERS
@@ -623,7 +623,6 @@ int main(int argc, const char **argv) {
     gettimeofday(&starttime,NULL);
     lastlogtime=starttime;
     argdimensions = apr_table_make(ctx.pool,3);
-    dimkey = NULL,*dimvalue = NULL,*key,*last,*optargcpy = NULL;
     
 
     /* parse the all options based on opt_option[] */
