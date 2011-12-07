@@ -33,7 +33,7 @@
 #include "zend_exceptions.h"
 #include "php_mapscript_util.h"
 #include <stdarg.h>
-#include "maperror.h"
+#include "../../maperror.h"
 
 #define MAX_EXCEPTION_MSG 256
 

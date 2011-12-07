@@ -50,13 +50,13 @@
 #include <unistd.h>
 #endif
 
-#include "mapserver.h"
-#include "mapregex.h"
+#include "../../mapserver.h"
+#include "../../mapregex.h"
 #endif /* USE_PHP_REGEX */
 
 
-#include "maptemplate.h"
-#include "mapogcsld.h"
+#include "../../maptemplate.h"
+#include "../../mapogcsld.h"
 
 #define MAPSCRIPT_VERSION "($Revision$ $Date$)"
 

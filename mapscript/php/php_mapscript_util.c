@@ -29,7 +29,7 @@
 
 
 #include "php_mapscript_util.h"
-#include "maperror.h"
+#include "../../maperror.h"
 
 
 zend_object_value mapscript_object_new(zend_object *zobj,

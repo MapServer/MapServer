@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION PKG_CONFIG FT_BIN FT_ENABLED FT_INC FT_LIB ZLIB_ENABLED ZLIB_INC ZLIB_LIB PNG_ENABLED PNG_INC PNG_LIB GIF_ENABLED GIF_INC GIF_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN FTGL_ENABLED FTGL_INC FTGL_LIB OGL_ENABLED OGL_INC OGL_LIB AGG_LIB AGG_INC AGG_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYSQL_ENABLED MYSQL_INC MYSQL_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB EXEMPI_ENABLED EXEMPI_INC EXEMPI_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED XSLT_ENABLED XSLT_INC XSLT_LIB EXSLT_ENABLED EXSLT_INC EXSLT_LIB FRIBIDI_CONFIG FRIBIDI_ENABLED FRIBIDI_INC FRIBIDI_LIB CAIRO_ENABLED CAIRO_INC CAIRO_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION PKG_CONFIG FT_BIN FT_ENABLED FT_INC FT_LIB ZLIB_ENABLED ZLIB_INC ZLIB_LIB PNG_ENABLED PNG_INC PNG_LIB GIF_ENABLED GIF_INC GIF_LIB JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN FTGL_ENABLED FTGL_INC FTGL_LIB OGL_ENABLED OGL_INC OGL_LIB AGG_LIB AGG_INC AGG_OBJ PROJ_ENABLED PROJ_INC PROJ_LIBS THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYSQL_ENABLED MYSQL_INC MYSQL_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG CURL_INC CURL_LIB EXEMPI_ENABLED EXEMPI_INC EXEMPI_LIB LIBXML2_CONFIG XML2_INC XML2_LIB WMS_LYR_ENABLED WFS_LYR_ENABLED SOS_SVR_ENABLED XSLT_ENABLED XSLT_INC XSLT_LIB EXSLT_ENABLED EXSLT_INC EXSLT_LIB FRIBIDI_CONFIG FRIBIDI_ENABLED FRIBIDI_INC FRIBIDI_LIB CAIRO_ENABLED CAIRO_INC CAIRO_LIB LIBSVG_CAIRO_ENABLED LIBSVG_CAIRO_INC LIBSVG_CAIRO_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA USE_POINT_Z_M USE_NINT DEBUG_FLAGS LD_SHARED SO_EXT SO_COMMAND_NAME PHP_LD_SHARED PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC OS_INCLUDE_DIR ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -935,6 +935,7 @@ Optional Packages:
                           Include FriBidi Support (ARG=yes/path to
                           fribidi-config or fribidi.pc)
   --with-cairo[=ARG]      Include Cairo Support (ARG=yes/path to cairo.pc)
+  --with-libsvg-cairo[=ARG]      Include Cairo SVG Parser Support (ARG=yes/path to cairo.pc)
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
   --with-httpd            Specify path to 'httpd' executable.
   --with-warnings[=flags] Enable strict warnings (or user defined warnings)
@@ -13471,7 +13472,7 @@ echo "$as_me: error: pkg-config required for cairo support, try using --with-pkg
    { (exit 1); exit 1; }; }
   fi
 else
-  CAIRO_CONFIG=$with_cairo_config
+  CAIRO_CONFIG=$with_cairo
 fi
 
 if test "$CAIRO_CONFIG" = "no" ; then
@@ -13496,6 +13497,83 @@ CAIRO_LIB=$CAIRO_LIB
 ALL_ENABLED="$CAIRO_ENABLED $ALL_ENABLED"
 ALL_INC="$CAIRO_INC $ALL_INC"
 ALL_LIB="$CAIRO_LIB $ALL_LIB"
+
+
+
+echo "$as_me:$LINENO: checking if Cairo svg parser support requested" >&5
+echo $ECHO_N "checking if Cairo svg parser support requested... $ECHO_C" >&6
+
+LIBSVG_CAIRO_ENABLED=$LIBSVG_CAIRO_ENABLED
+
+LIBSVG_CAIRO_INC=$LIBSVG_CAIRO_INC
+
+LIBSVG_CAIRO_LIB=$LIBSVG_CAIRO_LIB
+
+
+
+# Check whether --with-libsvg-cairo or --without-libsvg-cairo was given.
+if test "${with_libsvg_cairo+set}" = set; then
+  withval="$with_libsvg_cairo"
+
+fi;
+
+if test "$with_libsvg_cairo" = "no" -o "$with_libsvg_cairo" = "" ; then
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+  LIBSVG_CAIRO_CONFIG="no"
+
+elif test "$with_libsvg_cairo" = "yes" ; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  if test "$PKG_CONFIG" != "no" ; then
+     echo "$as_me:$LINENO: checking for libsvg-cairo pkg-config path" >&5
+echo $ECHO_N "checking for libsvg-cairo pkg-config path... $ECHO_C" >&6
+     `$PKG_CONFIG --silence-errors -- libsvg-cairo >> /dev/null`
+     if test $? -eq 0 ; then
+        echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+        LIBSVG_CAIRO_CONFIG="libsvg-cairo"
+     else
+       { { echo "$as_me:$LINENO: error: libsvg-cairo support requested, but not found." >&5
+echo "$as_me: error: libsvg-cairo support requested, but not found." >&2;}
+   { (exit 1); exit 1; }; }
+     fi
+  else
+    { { echo "$as_me:$LINENO: error: pkg-config required for libsvg-cairo support, try using --with-pkg-config=PATH" >&5
+echo "$as_me: error: pkg-config required for libsvg-cairo support, try using --with-pkg-config=PATH" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+else
+  LIBSVG_CAIRO_CONFIG=$with_libsvg_cairo
+fi
+
+if test "$LIBSVG_CAIRO_CONFIG" = "no" ; then
+  LIBSVG_CAIRO_ENABLED=
+  LIBSVG_CAIRO_INC=
+  LIBSVG_CAIRO_LIB=
+else
+  if test -z "$CAIRO_ENABLED"; then
+       { { echo "$as_me:$LINENO: error: libsvg-cairo support requires cairo support. (hint: rerun with --with-cairo)" >&5
+echo "$as_me: error: libsvg-cairo support requires cairo support. (hint: rerun with --with-cairo)" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+  echo "$as_me:$LINENO: result: yes, pkg-config defaults, or user supplied path to cairo.pc" >&5
+echo "${ECHO_T}yes, pkg-config defaults, or user supplied path to cairo.pc" >&6
+  LIBSVG_CAIRO_ENABLED="-DUSE_SVG_CAIRO"
+  LIBSVG_CAIRO_LIB=`$PKG_CONFIG --libs $LIBSVG_CAIRO_CONFIG`
+  LIBSVG_CAIRO_INC=`$PKG_CONFIG --cflags $LIBSVG_CAIRO_CONFIG`
+fi
+
+LIBSVG_CAIRO_ENABLED=$LIBSVG_CAIRO_ENABLED
+
+LIBSVG_CAIRO_INC=$LIBSVG_CAIRO_INC
+
+LIBSVG_CAIRO_LIB=$LIBSVG_CAIRO_LIB
+
+
+ALL_ENABLED="$LIBSVG_CAIRO_ENABLED $ALL_ENABLED"
+ALL_INC="$LIBSVG_CAIRO_INC $ALL_INC"
+ALL_LIB="$LIBSVG_CAIRO_LIB $ALL_LIB"
 
 
 echo "$as_me:$LINENO: checking FastCGI support" >&5
@@ -15370,6 +15448,9 @@ s,@FRIBIDI_LIB@,$FRIBIDI_LIB,;t t
 s,@CAIRO_ENABLED@,$CAIRO_ENABLED,;t t
 s,@CAIRO_INC@,$CAIRO_INC,;t t
 s,@CAIRO_LIB@,$CAIRO_LIB,;t t
+s,@LIBSVG_CAIRO_ENABLED@,$LIBSVG_CAIRO_ENABLED,;t t
+s,@LIBSVG_CAIRO_INC@,$LIBSVG_CAIRO_INC,;t t
+s,@LIBSVG_CAIRO_LIB@,$LIBSVG_CAIRO_LIB,;t t
 s,@FASTCGI_ENABLED@,$FASTCGI_ENABLED,;t t
 s,@FASTCGI_INC@,$FASTCGI_INC,;t t
 s,@FASTCGI_LIB@,$FASTCGI_LIB,;t t
@@ -15708,6 +15789,8 @@ echo "$as_me:$LINENO: result:   SVG Symbol support:        ${AGG_SVG_SYMBOLS_ENA
 echo "${ECHO_T}  SVG Symbol support:        ${AGG_SVG_SYMBOLS_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}" >&5
 echo "${ECHO_T}  Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}" >&6
+echo "$as_me:$LINENO: result:   Cairo SVG parser support:  ${LIBSVG_CAIRO_ENABLED}" >&5
+echo "${ECHO_T}  Cairo SVG parser support:  ${LIBSVG_CAIRO_ENABLED}" >&6
 echo "$as_me:$LINENO: result:   KML support:               ${KML_ENABLED}" >&5
 echo "${ECHO_T}  KML support:               ${KML_ENABLED}" >&6
 echo "$as_me:$LINENO: result: " >&5

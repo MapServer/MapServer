@@ -52,7 +52,7 @@
   doesn't #define away our ms_*/
 #define BUILDING_REGEX_PROXY 1
 
-#include "mapregex.h"
+#include "../../mapregex.h"
 
 /* regex_extra.h doesn't exist in PHP >=5.3 */
 #include "php.h"
