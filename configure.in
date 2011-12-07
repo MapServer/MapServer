@@ -2344,6 +2344,9 @@ if test "$LIBSVG_CAIRO_CONFIG" = "no" ; then
   LIBSVG_CAIRO_INC=
   LIBSVG_CAIRO_LIB=
 else
+  if test -z "$CAIRO_ENABLED"; then
+       AC_MSG_ERROR([libsvg-cairo support requires cairo support. (hint: rerun with --with-cairo)])
+  fi
   AC_MSG_RESULT([yes, pkg-config defaults, or user supplied path to cairo.pc])
   LIBSVG_CAIRO_ENABLED="-DUSE_SVG_CAIRO"
   LIBSVG_CAIRO_LIB=`$PKG_CONFIG --libs $LIBSVG_CAIRO_CONFIG`
