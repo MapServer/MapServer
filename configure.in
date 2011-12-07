@@ -2310,6 +2310,10 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if Cairo svg parser support requested)
 
+AC_SUBST(LIBSVG_CAIRO_ENABLED,$LIBSVG_CAIRO_ENABLED)
+AC_SUBST(LIBSVG_CAIRO_INC,$LIBSVG_CAIRO_INC)
+AC_SUBST(LIBSVG_CAIRO_LIB,$LIBSVG_CAIRO_LIB)
+
 AC_ARG_WITH(libsvg-cairo,
 [  --with-libsvg-cairo[[=ARG]]      Include Cairo SVG Parser Support (ARG=yes/path to cairo.pc)],,)
 
