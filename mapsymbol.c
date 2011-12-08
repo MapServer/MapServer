@@ -201,6 +201,27 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	msSetError(MS_SYMERR, "Symbol of type VECTOR or ELLIPSE has no point data.", "loadSymbol()"); 
 	return(-1);
       }
+      if(s->type == MS_SYMBOL_VECTOR) {
+         double minx = s->points[0].x;
+         double miny = s->points[0].y;
+         int i;
+         for(i=1;i<s->numpoints;i++) {
+            if(s->points[i].x != -99 && s->points[i].y != -99) {
+               if(s->points[i].x<minx) minx = s->points[i].x;
+               if(s->points[i].y<miny) miny = s->points[i].y;
+            }
+         }
+         if(minx!=0 || miny!=0) {
+            for(i=0;i<s->numpoints;i++) {
+               if(s->points[i].x != -99 && s->points[i].y != -99) {
+                  s->points[i].x -= minx;
+                  s->points[i].y -= miny;
+               }
+            }
+            s->sizex -= minx;
+            s->sizey -= miny;
+         }
+      }
 
       return(0);
       break;
