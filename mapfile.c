@@ -4076,6 +4076,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeNumber(stream, indent, "MAXFEATURES", -1, layer->maxfeatures);
   writeNumber(stream, indent, "MAXGEOWIDTH", -1, layer->maxgeowidth);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, layer->maxscaledenom);
+  writeString(stream, indent, "MASK", NULL, layer->masklayer);
   writeHashTable(stream, indent, "METADATA", &(layer->metadata));
   writeNumber(stream, indent, "MINGEOWIDTH", -1, layer->mingeowidth);
   writeNumber(stream, indent, "MINSCALEDENOM", -1, layer->minscaledenom);
