@@ -33,15 +33,19 @@
 #include "mapserver.h"
 #include "mapthread.h"
 
-#define MSUVRASTER_NUMITEMS        4 
+#define MSUVRASTER_NUMITEMS        6 
 #define MSUVRASTER_ANGLE    "uv_angle"
 #define MSUVRASTER_ANGLEINDEX   -100
+#define MSUVRASTER_MINUS_ANGLE    "uv_minus_angle"
+#define MSUVRASTER_MINUSANGLEINDEX   -101
 #define MSUVRASTER_LENGTH    "uv_length"
-#define MSUVRASTER_LENGTHINDEX   -101
+#define MSUVRASTER_LENGTHINDEX   -102
+#define MSUVRASTER_LENGTH_2    "uv_length_2"
+#define MSUVRASTER_LENGTH2INDEX   -103
 #define MSUVRASTER_U    "u"
-#define MSUVRASTER_UINDEX   -102
+#define MSUVRASTER_UINDEX   -104
 #define MSUVRASTER_V    "v"
-#define MSUVRASTER_VINDEX   -103
+#define MSUVRASTER_VINDEX   -105
 
 #define RQM_UNKNOWN               0
 #define RQM_ENTRY_PER_PIXEL       1
@@ -115,8 +119,12 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
       /* OGR style strings.  We use special attribute snames. */
       if (EQUAL(layer->items[i], MSUVRASTER_ANGLE))
           itemindexes[i] = MSUVRASTER_ANGLEINDEX;
+      if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
+          itemindexes[i] = MSUVRASTER_MINUSANGLEINDEX;
       else if (EQUAL(layer->items[i], MSUVRASTER_LENGTH))
           itemindexes[i] = MSUVRASTER_LENGTHINDEX;
+      else if (EQUAL(layer->items[i], MSUVRASTER_LENGTH_2))
+          itemindexes[i] = MSUVRASTER_LENGTH2INDEX;
       else if (EQUAL(layer->items[i], MSUVRASTER_U))
           itemindexes[i] = MSUVRASTER_UINDEX;
       else if (EQUAL(layer->items[i], MSUVRASTER_V))
@@ -285,7 +293,9 @@ int msUVRASTERLayerGetItems(layerObj *layer)
   layer->items = (char **) msSmallCalloc(sizeof(char *),10);;
 
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_ANGLE);
+  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_MINUS_ANGLE);
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LENGTH);
+  layer->items[layer->numitems++] = msStrdup(MSUVRASTER_LENGTH_2);
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_U);
   layer->items[layer->numitems++] = msStrdup(MSUVRASTER_V);
   layer->items[layer->numitems] = NULL;
@@ -344,10 +354,25 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
           snprintf(tmp, 100, "%f", (atan2((double)*v, (double)*u) * 180 / MS_PI));
           values[i] = msStrdup(tmp);
       }
-      else if (itemindexes[i] == MSUVRASTER_LENGTHINDEX)
+      else if (itemindexes[i] == MSUVRASTER_MINUSANGLEINDEX)
+      {
+	  double minus_angle;
+	  minus_angle = (atan2((double)*v, (double)*u) * 180 / MS_PI)+180;
+	  if (minus_angle >= 360)
+	    minus_angle -= 360;
+          snprintf(tmp, 100, "%f", minus_angle);
+          values[i] = msStrdup(tmp);
+      }
+      else if ( (itemindexes[i] == MSUVRASTER_LENGTHINDEX) ||
+		(itemindexes[i] == MSUVRASTER_LENGTH2INDEX) )
       {
           float length = sqrt((*u**u)+(*v**v))*size_scale;
-          snprintf(tmp, 100, "%f", length);
+	  
+	  if (itemindexes[i] == MSUVRASTER_LENGTHINDEX)
+	    snprintf(tmp, 100, "%f", length);
+	  else
+	    snprintf(tmp, 100, "%f", length/2);
+
           values[i] = msStrdup(tmp);
       }
       else if (itemindexes[i] == MSUVRASTER_UINDEX)

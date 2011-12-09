@@ -2389,6 +2389,7 @@ int initStyle(styleObj *style) {
   style->maxwidth = MS_MAXSYMBOLWIDTH;
   style->minscaledenom=style->maxscaledenom = -1.0;
   style->offsetx = style->offsety = 0; /* no offset */
+  style->polaroffsetpixel = style->polaroffsetangle = 0; /* no polar offset */
   style->antialias = MS_FALSE;
   style->angle = 0;
   style->autoangle= MS_FALSE;
@@ -2533,8 +2534,25 @@ int loadStyle(styleObj *style) {
       if(getDouble(&(style->minwidth)) == -1) return(MS_FAILURE);
       break;
     case(OFFSET):
-      if(getDouble(&(style->offsetx)) == -1) return(MS_FAILURE);
-      if(getDouble(&(style->offsety)) == -1) return(MS_FAILURE);
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+      if(symbol == MS_NUMBER)
+	style->offsetx = (double) msyynumber;
+      else {
+        if (style->bindings[MS_STYLE_BINDING_OFFSET_X].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_OFFSET_X].item);
+        style->bindings[MS_STYLE_BINDING_OFFSET_X].item = msStrdup(msyystring_buffer);
+        style->numbindings++;
+      }
+
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+      if(symbol == MS_NUMBER)
+	style->offsety = (double) msyynumber;
+      else {
+        if (style->bindings[MS_STYLE_BINDING_OFFSET_Y].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_OFFSET_Y].item);
+        style->bindings[MS_STYLE_BINDING_OFFSET_Y].item = msStrdup(msyystring_buffer);
+        style->numbindings++;
+      }
       break;
     case(OPACITY):
       if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
@@ -2647,6 +2665,27 @@ int loadStyle(styleObj *style) {
         style->numbindings++;
       }
       break;
+    case(POLAROFFSET):
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+      if(symbol == MS_NUMBER)
+	style->polaroffsetpixel = (double) msyynumber;
+      else {
+        if (style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item);
+        style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item = msStrdup(msyystring_buffer);
+        style->numbindings++;
+      }
+
+      if((symbol = getSymbol(2, MS_NUMBER,MS_BINDING)) == -1) return(MS_FAILURE);
+      if(symbol == MS_NUMBER)
+	style->polaroffsetangle = (double) msyynumber;
+      else {
+        if (style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item != NULL)
+          msFree(style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item);
+        style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item = msStrdup(msyystring_buffer);
+        style->numbindings++;
+      }
+      break;
     default:
       if(strlen(msyystring_buffer) > 0) {
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyystring_buffer, msyylineno);
@@ -2752,7 +2791,9 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
   writeNumber(stream, indent, "MINSCALEDENOM", -1, style->minscaledenom);
   writeNumber(stream, indent, "MINSIZE", MS_MINSYMBOLSIZE, style->minsize);
   writeNumber(stream, indent, "MINWIDTH", MS_MINSYMBOLWIDTH, style->minwidth);
-  writeDimension(stream, indent, "OFFSET", style->offsetx, style->offsety, NULL, NULL);
+  writeDimension(stream, indent, "OFFSET", style->offsetx, style->offsety, style->bindings[MS_STYLE_BINDING_OFFSET_X].item, style->bindings[MS_STYLE_BINDING_OFFSET_Y].item);
+  writeDimension(stream, indent, "POLAROFFSET", style->polaroffsetpixel, style->polaroffsetangle, 
+		 style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item, style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item);
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OPACITY].item)
     writeAttributeBinding(stream, indent, "OPACITY", &(style->bindings[MS_STYLE_BINDING_OPACITY]));

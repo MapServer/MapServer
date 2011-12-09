@@ -448,6 +448,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>small                                 { MS_LEXER_RETURN_TOKEN(MS_SMALL); }
 <INITIAL>square                                { MS_LEXER_RETURN_TOKEN(MS_CJC_SQUARE); }
 <INITIAL>svg                                   { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_SVG); }
+<INITIAL>polaroffset                           { MS_LEXER_RETURN_TOKEN(POLAROFFSET); }
 <INITIAL>tiny                                  { MS_LEXER_RETURN_TOKEN(MS_TINY); }
 <INITIAL>triangle                              { MS_LEXER_RETURN_TOKEN(MS_CJC_TRIANGLE); }
 <INITIAL,URL_STRING>true                       { MS_LEXER_RETURN_TOKEN(MS_TRUE); }

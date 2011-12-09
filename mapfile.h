@@ -302,6 +302,8 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 
 #define MASK 1250
 
+#define POLAROFFSET 1251
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 

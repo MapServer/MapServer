@@ -868,8 +868,19 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
          	return; // size too small
           */
 
-         p_x = p->x + style->offsetx * scalefactor;
-         p_y = p->y + style->offsety * scalefactor;
+	 p_x = p->x;
+	 p_y = p->y;
+
+	 if (style->polaroffsetpixel != 0 ||
+	     style->polaroffsetangle != 0) 
+	 {
+	   double angle = style->polaroffsetangle * MS_DEG_TO_RAD;
+	   p_x +=  (style->polaroffsetpixel * cos(-angle)) * scalefactor; 
+	   p_y +=  (style->polaroffsetpixel * sin(-angle)) * scalefactor;
+	 }
+
+	 p_x +=  style->offsetx * scalefactor;
+	 p_y +=  style->offsety * scalefactor;
 
          if(symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
             int sx,sy;
@@ -878,11 +889,11 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
             ox = (0.5 - symbol->anchorpoint_x) * sx;
             oy = (0.5 - symbol->anchorpoint_y) * sy;
             if(s.rotation != 0) {
-               double sina,cosa;
+	       double sina, cosa;
                double rox,roy;
-               /* sincos(-s.rotation,&sina,&cosa); */
-               sina = sin(-s.rotation);
-               cosa = cos(-s.rotation);
+	       /* sincos(-s.rotation,&sina,&cosa); */
+	       sina = sin(-s.rotation);
+	       cosa = cos(-s.rotation);
                rox = ox * cosa - oy * sina;
                roy = ox * sina + oy * cosa;
                p_x += rox;

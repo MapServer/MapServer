@@ -160,6 +160,27 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int que
 	style->maxcolor.alpha = alpha;
       }
     }
+    if(style->bindings[MS_STYLE_BINDING_OFFSET_X].index != -1) {
+        style->offsetx = 0;
+        bindDoubleAttribute(&style->offsetx, shape->values[style->bindings[MS_STYLE_BINDING_OFFSET_X].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_OFFSET_Y].index != -1) {
+        style->offsety = 0;
+        bindDoubleAttribute(&style->offsety, shape->values[style->bindings[MS_STYLE_BINDING_OFFSET_Y].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].index != -1) {
+        style->polaroffsetpixel = 0;
+        bindDoubleAttribute(&style->polaroffsetpixel, shape->values[style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].index != -1) {
+        style->polaroffsetangle = 0;
+        bindDoubleAttribute(&style->polaroffsetangle, shape->values[style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].index]);
+    }
+    if(style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index != -1) {
+        style->outlinewidth = 1;
+        bindDoubleAttribute(&style->outlinewidth, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINEWIDTH].index]);
+    }
+
   }
 }
 
