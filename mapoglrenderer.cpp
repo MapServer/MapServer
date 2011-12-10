@@ -579,7 +579,7 @@ void OglRenderer::renderPolygon(shapeObj *p, colorObj *color, colorObj *outlinec
 }
 
 void OglRenderer::renderGlyphs(double x, double y, colorObj *color,
-        colorObj *outlinecolor, double size, char* font, char *thechars, double angle,
+        colorObj *outlinecolor, double size, const char* font, char *thechars, double angle,
         colorObj *shadowcolor, double shdx, double shdy)
 {
     makeCurrent();    
@@ -734,7 +734,7 @@ bool OglRenderer::loadLine(shapeObj* shape, double width, int patternlength,
     return true;
 }
 
-FTFont* OglRenderer::getFTFont(char* font, double size)
+FTFont* OglRenderer::getFTFont(const char* font, double size)
 {
     FTFont** face = &fontCache[font][size];
     if (*face == NULL && ifstream(font))

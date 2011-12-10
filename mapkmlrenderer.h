@@ -167,7 +167,7 @@ class KmlRenderer
     void renderEllipseSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
     void renderTruetypeSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
 
-    int getTruetypeTextBBox(imageObj *img,char *font, double size, char *string, rectObj *rect, double **advances);
+    int getTruetypeTextBBox(imageObj *img,char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances);
     int mergeRasterBuffer(imageObj *image, rasterBufferObj *rb);
 };
 

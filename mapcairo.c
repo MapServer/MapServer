@@ -64,8 +64,9 @@ struct facecacheObj {
 };
 
 int freeFaceCache(faceCacheObj *fc) {
-    /* printf("***\nface has %d references\n***\n",cairo_font_face_get_reference_count(fc->face)); */
+    /* printf("***\nface %s has %d cairo references\n***\n",fc->path,cairo_font_face_get_reference_count(fc->face)); */
     cairo_font_face_destroy(fc->face);
+    FT_Done_Face(fc->ftface);
     free(fc->path);
     return MS_SUCCESS;
 }
@@ -166,7 +167,7 @@ faceCacheObj *getFontFace(cairoCacheData *cache, char *font) {
     newface->face = cairo_ft_font_face_create_for_ft_face(newface->ftface, 0);
 
     cairo_font_face_set_user_data (newface->face, &newface->facekey,
-            &(newface->ftface), (cairo_destroy_func_t) FT_Done_Face);
+            &(newface->ftface), (cairo_destroy_func_t) NULL); // we call FT_Done_Face ourselves in freeFaceCache
 
     newface->path = msStrdup(font);
     return newface;
@@ -450,28 +451,26 @@ int renderTileCairo(imageObj *img, imageObj *tile, double x, double y) {
 
 #define CAIROLINESPACE 1.33
 
-int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char *font, double size, char *text, rectObj *rect, double **advances) {
-    
-    
+int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *text, rectObj *rect, double **advances) {
     cairoCacheData *cache = MS_RENDERER_CACHE(renderer);
-    faceCacheObj *face = getFontFace(cache,font);
+    faceCacheObj* face = getFontFace(cache,fonts[0]);
  
+    int curfontidx = 0;
     char *utfptr=text;
-    int i,has_kerning,unicode;
+    int i,unicode;
     unsigned long previdx=0;
+    faceCacheObj* prevface = face;
     int numglyphs = msGetNumGlyphs(text);
     cairo_glyph_t glyph;
     cairo_text_extents_t extents;
     double px=0,py=0;
-
+	
     if(face == NULL) {
-        return MS_FAILURE;
+	  return MS_FAILURE;
     }
 
     cairo_set_font_face(cache->dummycr,face->face);
     cairo_set_font_size(cache->dummycr,size*96/72.0);
-
-    has_kerning = FT_HAS_KERNING((face->ftface));
 
     if(advances != NULL) {
         *advances = (double*)malloc(numglyphs*sizeof(double));
@@ -487,10 +486,31 @@ int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char *font, double siz
             previdx=0;
             continue;
         }
+
+	if(curfontidx != 0) {
+	    face = getFontFace(cache,fonts[0]);
+    	    cairo_set_font_face(cache->dummycr,face->face);
+            curfontidx = 0;
+        }
+
         glyph.index = FT_Get_Char_Index(face->ftface, unicode);
-        if( has_kerning && previdx ) {
+
+	if(glyph.index == 0) {
+	     int j;
+	     for(j=1;j<numfonts;j++) {
+		    curfontidx = j;
+	    	    face = getFontFace(cache,fonts[j]);
+        	    glyph.index = FT_Get_Char_Index(face->ftface, unicode);
+		    if(glyph.index != 0) {
+    	    	       cairo_set_font_face(cache->dummycr,face->face);
+		       break;
+		    }
+	     }
+	}
+
+        if( FT_HAS_KERNING((prevface->ftface)) && previdx ) {
             FT_Vector delta;
-            FT_Get_Kerning( face->ftface, previdx, glyph.index, FT_KERNING_DEFAULT, &delta );
+            FT_Get_Kerning( prevface->ftface, previdx, glyph.index, FT_KERNING_DEFAULT, &delta );
             px += delta.x / 64.;
         }
         cairo_glyph_extents(cache->dummycr,&glyph,1,&extents);
@@ -510,6 +530,7 @@ int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char *font, double siz
             (*advances)[i]=extents.x_advance;
         px += extents.x_advance;
         previdx=glyph.index;
+	prevface = face;
     }
     /*
     rect->minx = 0;
@@ -523,18 +544,20 @@ int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char *font, double siz
 int renderGlyphsCairo(imageObj *img,double x, double y, labelStyleObj *style, char *text) {
     cairo_renderer *r = CAIRO_RENDERER(img);
     cairoCacheData *cache = MS_IMAGE_RENDERER_CACHE(img);
-    faceCacheObj *face = getFontFace(cache,style->font);
+    faceCacheObj* face = getFontFace(cache,style->fonts[0]);
 
+    int curfontidx = 0;
     char *utfptr=text;
-    int i,has_kerning,unicode;
+    int i,unicode;
     unsigned long previdx=0;
+    faceCacheObj* prevface = face;
     int numglyphs = msGetNumGlyphs(text);
     cairo_glyph_t glyph;
     cairo_text_extents_t extents;
     double px=0,py=0;
 
     if(face == NULL) {
-        return MS_FAILURE;
+          return MS_FAILURE;
     }
 
     cairo_set_font_face(r->cr,face->face);
@@ -545,7 +568,6 @@ int renderGlyphsCairo(imageObj *img,double x, double y, labelStyleObj *style, ch
     if(style->rotation != 0.0)
        cairo_rotate(r->cr, -style->rotation);
 
-    has_kerning = FT_HAS_KERNING((face->ftface));
     for(i=0;i<numglyphs;i++) {
         utfptr+=msUTF8ToUniChar(utfptr, &unicode);
         glyph.x=px;
@@ -556,16 +578,35 @@ int renderGlyphsCairo(imageObj *img,double x, double y, labelStyleObj *style, ch
             previdx=0;
             continue;
         }
+	if(curfontidx != 0) {
+	    face = getFontFace(cache,style->fonts[0]);
+    	    cairo_set_font_face(r->cr,face->face);
+            curfontidx = 0;
+        }
         glyph.index = FT_Get_Char_Index(face->ftface, unicode);
-        if( has_kerning && previdx ) {
+	if(glyph.index == 0) {
+	     int j;
+	     for(j=1;j<style->numfonts;j++) {
+		    curfontidx = j;
+		    face = getFontFace(cache,style->fonts[j]);
+        	    glyph.index = FT_Get_Char_Index(face->ftface, unicode);
+		    if(glyph.index != 0) {
+    	    	       cairo_set_font_face(r->cr,face->face);
+		       break;
+		    }
+	     }
+	}
+
+        if(  FT_HAS_KERNING((prevface->ftface)) && previdx ) {
             FT_Vector delta;
-            FT_Get_Kerning( face->ftface, previdx, glyph.index, FT_KERNING_DEFAULT, &delta );
+            FT_Get_Kerning( prevface->ftface, previdx, glyph.index, FT_KERNING_DEFAULT, &delta );
             px += delta.x / 64.;
         }
         cairo_glyph_extents(r->cr,&glyph,1,&extents);
         cairo_glyph_path(r->cr,&glyph,1);
         px += extents.x_advance;
         previdx=glyph.index;
+	prevface=face;
     }
 
     if (style->outlinewidth > 0) {

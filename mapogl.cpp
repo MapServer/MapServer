@@ -126,9 +126,9 @@ int msRenderTileOgl(imageObj *img, imageObj *tile, double x, double y)
     return MS_SUCCESS;
 }
 
-int msGetTruetypeTextBBoxOgl(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances)
+int msGetTruetypeTextBBoxOgl(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances)
 {    
-    if (OglRenderer::getStringBBox(font, size, string, rect, advances))
+    if (OglRenderer::getStringBBox(fonts[0], size, string, rect, advances))
     {
         return MS_SUCCESS;
     }
@@ -142,7 +142,7 @@ int msRenderGlyphsOgl(imageObj *img, double x, double y,
             labelStyleObj *style, char *text)        
 {
     OglRenderer* renderer = getOglRenderer(img);
-    renderer->renderGlyphs(x, y, style->color, style->outlinecolor, style->size, style->font, text, style->rotation, NULL, 0.0, 0.0);
+    renderer->renderGlyphs(x, y, style->color, style->outlinecolor, style->size, style->fonts[0], text, style->rotation, NULL, 0.0, 0.0);
     return MS_SUCCESS;
 }
 

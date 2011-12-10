@@ -65,7 +65,7 @@ public:
 
     void renderPolyline(shapeObj *p, colorObj *c, double width, int patternlength, double* pattern, int lineCap = MS_CJC_ROUND, int joinStyle = MS_CJC_ROUND, colorObj *outlinecolor = NULL, double outlinewidth = 0);
     void renderPolygon(shapeObj*, colorObj *color, colorObj *outlinecolor, double outlinewidth, const OglCachePtr& tile = OglCachePtr(), int lineCap=MS_CJC_ROUND, int joinStyle=MS_CJC_ROUND);
-    void renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor, double size, char* font, char *thechars, double angle, colorObj *shadowcolor, double shdx, double shdy);
+    void renderGlyphs(double x, double y, colorObj *color, colorObj *outlinecolor, double size, const char* font, char *thechars, double angle, colorObj *shadowcolor, double shdx, double shdy);
     void renderPixmap(symbolObj *symbol, double x, double y, double angle, double scale);
     void renderEllipse(double x, double y, double angle, double w, double h, colorObj *color, colorObj *outlinecolor, double outlinewidth);
     void renderVectorSymbol(double x, double y, symbolObj *symbol, double scale, double angle, colorObj *c, colorObj *oc, double ow);
@@ -96,10 +96,10 @@ protected:
     GLsizei viewportWidth;
     GLsizei viewportHeight;
 
-    typedef std::map<char*,std::map<double,FTFont*> > fontCache_t;
+    typedef std::map<const char*,std::map<double,FTFont*> > fontCache_t;
     typedef std::map<symbolObj*,std::map<double,GLuint> > dashCache_t;
 
-    static FTFont* getFTFont(char* font, double size);
+    static FTFont* getFTFont(const char* font, double size);
     bool loadLine(shapeObj* shape, double width, int patternlength, double *pattern);
     double drawQuad(pointObj *p1, pointObj *p2, double width, double tilelength = 0.0, double textureStart = 0.0);
     double drawTriangles(pointObj *p1, pointObj *p2, double width, double tilelength = 0.0, double textureStart = 0.0);

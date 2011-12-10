@@ -228,6 +228,7 @@ extern "C" {
 #define MS_STYLE_ALLOCSIZE 4
 
 #define MS_MAX_LABEL_PRIORITY     10
+#define MS_MAX_LABEL_FONTS     5
 #define MS_DEFAULT_LABEL_PRIORITY 1
 
 /* General defines, not wrapable */
@@ -1990,9 +1991,10 @@ MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabe
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey);
+MS_DLL_EXPORT int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, const char **lookedUpFonts);
 
 MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj *label, char *text);
-MS_DLL_EXPORT int msGetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances);
+MS_DLL_EXPORT int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances);
 
 MS_DLL_EXPORT int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rectObj *rect, double **advances);
 MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
@@ -2615,7 +2617,8 @@ struct tileCacheObj {
  */
 typedef struct {
     /* full path to truetype font file */
-    char *font;
+    const char* fonts[MS_MAX_LABEL_FONTS];
+    int numfonts;
     double size;
     double rotation;
     colorObj *color;
@@ -2624,7 +2627,7 @@ typedef struct {
     int antialias; /*only for GD*/
 } labelStyleObj;
 
-#define INIT_LABEL_STYLE(s) {(s).font=NULL; (s).size=0; (s).rotation=0; (s).color=NULL; (s).outlinewidth=0; (s).outlinecolor=NULL;}
+#define INIT_LABEL_STYLE(s) {memset(&(s),'\0',sizeof(labelStyleObj));}
 
 #ifndef SWIG
 MS_DLL_EXPORT int msInitializeDummyRenderer(rendererVTableObj *vtable);
@@ -2749,7 +2752,7 @@ struct rendererVTableObj {
 	/*...*/
 
 	/* helper functions */
-	int (*getTruetypeTextBBox)(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances);
+	int (*getTruetypeTextBBox)(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances);
 
 	int (*startLayer)(imageObj *img, mapObj *map, layerObj *layer);
 	int (*endLayer)(imageObj *img, mapObj *map, layerObj *layer);

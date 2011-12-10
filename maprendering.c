@@ -48,14 +48,12 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
          return (MS_FAILURE);
       }
 
-      if (!l->font) {
-         msSetError(MS_TTFERR, "No Trueype font defined.","msDrawText()");
+      if (!l->font || !(*l->font)) {
          return (MS_FAILURE);
       }
 
-      s->font = msLookupHashTable(&(fontset->fonts), l->font);
-      if (!s->font) {
-         return (MS_FAILURE);
+      if(MS_FAILURE == msFontsetLookupFonts(l->font,&s->numfonts,fontset,&s->fonts)) {
+         return MS_FAILURE;
       }
    }
    s->rotation = l->angle * MS_DEG_TO_RAD;
@@ -325,7 +323,7 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
       symbol_height = MS_MAX(1,symbol->sizey*style->scale);
    } else {
       rectObj rect;
-      if(MS_SUCCESS != renderer->getTruetypeTextBBox(renderer,symbol->full_font_path,style->scale,
+      if(MS_SUCCESS != renderer->getTruetypeTextBBox(renderer,&symbol->full_font_path,1,style->scale,
             symbol->character,&rect,NULL))
          return MS_FAILURE;
       symbol_width=rect.maxx-rect.minx;

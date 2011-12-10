@@ -166,7 +166,7 @@ int saveImageDummy(imageObj *img, FILE *fp, outputFormatObj *format) {
 /*...*/
 
 /* helper functions */
-int getTruetypeTextBBoxDummy(rendererVTableObj *renderer, char *font, double size, char *string,rectObj *rect, double **advances) {
+int getTruetypeTextBBoxDummy(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string,rectObj *rect, double **advances) {
     msSetError(MS_RENDERERERR,"getTruetypeTextBBox not implemented","getTruetypeTextBBox()");
     return MS_FAILURE;
 }

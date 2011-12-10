@@ -138,7 +138,7 @@ int msGetRasterBufferKml(imageObj *img,rasterBufferObj *rb)
 }
 
 
-int msGetTruetypeTextBBoxKml(rendererVTableObj *r,char *font, double size, char *string,
+int msGetTruetypeTextBBoxKml(rendererVTableObj *r,char** fonts, int numfonts, double size, char *string,
 		rectObj *rect, double **advances)
 {
    rect->minx=0.0;

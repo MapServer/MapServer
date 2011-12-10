@@ -699,10 +699,14 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 }
 
-int msGetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances) {
-	if(renderer) {
-		return renderer->getTruetypeTextBBox(renderer,font,size,string,rect,advances);
-	} 
+int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances) {
+   const char *lookedUpFonts[MS_MAX_LABEL_FONTS];
+   int numfonts;
+   if(MS_FAILURE == msFontsetLookupFonts(fontstring, &numfonts, fontset, lookedUpFonts))
+      return MS_FAILURE;
+   if(renderer) {
+      return renderer->getTruetypeTextBBox(renderer,lookedUpFonts,numfonts,size,string,rect,advances);
+   } 
 #ifdef USE_GD_FT
 	else {
         int bbox[8];
@@ -713,9 +717,9 @@ int msGetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size, 
             int k;
             gdFTStringExtra strex;
             strex.flags = gdFTEX_XSHOW;
-            error = gdImageStringFTEx(NULL, bbox, 0, font, size, 0, 0, 0, string, &strex);
+            error = gdImageStringFTEx(NULL, bbox, 0, lookedUpFonts[0], size, 0, 0, 0, string, &strex);
             if(error) {
-                msSetError(MS_TTFERR, error, "gdImageStringFTEx()");
+                msSetError(MS_TTFERR, "gdImageStringFT: %s (%s)", "msGetTruetypeTextBBox()", error, lookedUpFonts[0]);
                 return(MS_FAILURE);
             }
 
@@ -743,9 +747,9 @@ int msGetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size, 
             return MS_FAILURE;
 #endif
         } else {
-            error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
+            error = gdImageStringFT(NULL, bbox, 0, lookedUpFonts[0], size, 0, 0, 0, string);
             if(error) {
-                msSetError(MS_TTFERR, "gdImageStringFT: %s (%s)", "msGetTruetypeTextBBox()", error, font);
+                msSetError(MS_TTFERR, "gdImageStringFT: %s (%s)", "msGetTruetypeTextBBox()", error, lookedUpFonts[0]);
                 return(MS_FAILURE);
             }
 
@@ -808,6 +812,47 @@ char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey) {
 	}
 	return font;
 }
+
+int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, const char **lookedUpFonts) {
+	char *start,*ptr;
+   *numfonts = 0;
+   start = ptr = fontstring;
+   while(*numfonts<MS_MAX_LABEL_FONTS) {
+      if(*ptr==',') {
+         if(start==ptr) { /*first char is a comma, or two successive commas*/
+            start = ++ptr;
+            continue;
+         }
+         *ptr = 0;
+         lookedUpFonts[*numfonts] = msLookupHashTable(&(fontset->fonts), start);
+         *ptr = ',';
+         if (!lookedUpFonts[*numfonts]) {
+            msSetError(MS_TTFERR, "Requested font (%s) not found.","msFontsetLookupFonts()", fontstring);
+            return MS_FAILURE;
+         }
+         start = ++ptr;
+         (*numfonts)++;
+      } else if(*ptr==0) {
+         if(start==ptr) { /* last char of string was a comma */
+            return MS_SUCCESS;
+         }
+         lookedUpFonts[*numfonts] = msLookupHashTable(&(fontset->fonts), start);
+         if (!lookedUpFonts[*numfonts]) {
+            msSetError(MS_TTFERR, "Requested font (%s) not found.","msFontsetLookupFonts()", fontstring);
+            return (MS_FAILURE);
+         }
+         (*numfonts)++;
+         return MS_SUCCESS;
+      } else {
+         ptr++;
+      }
+   }
+   msSetError(MS_TTFERR, "Requested font (%s) not has too many members (max is %d)",
+         "msFontsetLookupFonts()", fontstring, MS_MAX_LABEL_FONTS);
+   return MS_FAILURE;
+}
+
+
 /*
 ** Note: All these routines assume a reference point at the LL corner of the text. GD's
 ** bitmapped fonts use UL and this is compensated for. Note the rect is relative to the
@@ -825,12 +870,11 @@ int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rect
   if (!renderer)
     return MS_FAILURE;
   if(label->type == MS_TRUETYPE) {
-    char *font=msFontsetLookupFont(&(map->fontset), label->font);
-    if(!font) {
-    	/* error message already set in fontset lookup */
-    	return MS_FAILURE;
-    }
-    return msGetTruetypeTextBBox(renderer,font,size,string,rect,advances);
+     if(!label->font) {
+        msSetError(MS_MISCERR, "label has no true type font", "msGetLabelSize()");
+        return MS_FAILURE;
+     }
+     return msGetTruetypeTextBBox(renderer,label->font,&(map->fontset),size,string,rect,advances);
   } else if(label->type == MS_BITMAP){
 	  if(renderer->supports_bitmap_fonts)
 		  return msGetRasterTextBBox(renderer,MS_NINT(label->size),string,rect);

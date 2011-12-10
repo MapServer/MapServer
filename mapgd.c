@@ -411,23 +411,23 @@ int renderGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char
    }
    
    if(style->outlinewidth > 0) { /* handle the outline color */
-      error = gdImageStringFT(ip, bbox, oc, style->font, style->size, style->rotation, x, y-1, text);
+      error = gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x, y-1, text);
       if(error) {
          msSetError(MS_TTFERR, error, "msDrawTextGD()");
          return(MS_FAILURE);
       }
 
-      gdImageStringFT(ip, bbox, oc, style->font, style->size, style->rotation, x, y+1, text);
-      gdImageStringFT(ip, bbox, oc, style->font, style->size, style->rotation, x+1, y, text);
-      gdImageStringFT(ip, bbox, oc, style->font, style->size, style->rotation, x-1, y, text);
-      gdImageStringFT(ip, bbox, oc, style->font, style->size, style->rotation, x-1, y-1, text);      
-      gdImageStringFT(ip, bbox, oc, style->font, style->size, style->rotation, x-1, y+1, text);
-      gdImageStringFT(ip, bbox, oc, style->font, style->size, style->rotation, x+1, y-1, text);
-      gdImageStringFT(ip, bbox, oc, style->font, style->size, style->rotation, x+1, y+1, text);
+      gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x, y+1, text);
+      gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x+1, y, text);
+      gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x-1, y, text);
+      gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x-1, y-1, text);      
+      gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x-1, y+1, text);
+      gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x+1, y-1, text);
+      gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x+1, y+1, text);
    }
    
    if(style->color)
-      gdImageStringFT(ip, bbox, c, style->font, style->size, style->rotation, x, y, text);
+      gdImageStringFT(ip, bbox, c, style->fonts[0], style->size, style->rotation, x, y, text);
    return MS_SUCCESS;
 }
 
@@ -833,7 +833,7 @@ int mergeRasterBufferGD(imageObj *dest, rasterBufferObj *overlay, double opacity
 	return MS_SUCCESS;
 }
 
-int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char *font, double size, char *string, rectObj *rect, double **advances) {
+int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances) {
 #ifdef USE_GD_FT
    int bbox[8];
    char *error;
@@ -843,7 +843,7 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char *font, double size, 
       int k;
       gdFTStringExtra strex;
       strex.flags = gdFTEX_XSHOW;
-      error = gdImageStringFTEx(NULL, bbox, 0, font, size, 0, 0, 0, string, &strex);
+      error = gdImageStringFTEx(NULL, bbox, 0, fonts[0], size, 0, 0, 0, string, &strex);
       if(error) {
          msSetError(MS_TTFERR, error, "gdImageStringFTEx()");
          return(MS_FAILURE);
@@ -873,7 +873,7 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char *font, double size, 
       return(MS_FAILURE);
 #endif
    } else {
-      error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
+      error = gdImageStringFT(NULL, bbox, 0, fonts[0], size, 0, 0, 0, string);
       if(error) {
          msSetError(MS_TTFERR, error, "msGetTruetypeTextBBox()");
          return(MS_FAILURE);

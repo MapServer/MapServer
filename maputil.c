@@ -231,8 +231,10 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
       }
 
       if(label->bindings[MS_LABEL_BINDING_FONT].index != -1) {
-        msFree(label->font);
-        label->font = msStrdup(shape->values[label->bindings[MS_LABEL_BINDING_FONT].index]);
+         if(strcmp(label->font,shape->values[label->bindings[MS_LABEL_BINDING_FONT].index])) {
+            msFree(label->font);
+            label->font = msStrdup(shape->values[label->bindings[MS_LABEL_BINDING_FONT].index]);
+         }
       }
 
       if(label->bindings[MS_LABEL_BINDING_PRIORITY].index != -1) {

@@ -664,15 +664,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
    
 #ifdef USE_GD_FT
   case(MS_SYMBOL_TRUETYPE):
-	if(!symbol->full_font_path) {
-		char *font = msLookupHashTable(&(symbolset->fontset->fonts),symbol->font);
-		if(!font) {
-			msSetError(MS_MISCERR,"font (%s) not found in fontset","msGetMarkerSize()",symbol->font);
-			return(MS_FAILURE);
-		}
-		symbol->full_font_path =  msStrdup(font);
-	}
-    if(msGetTruetypeTextBBox(MS_MAP_RENDERER(symbolset->map),symbol->full_font_path,size,symbol->character,&rect,NULL) != MS_SUCCESS) 
+    if(msGetTruetypeTextBBox(MS_MAP_RENDERER(symbolset->map),symbol->font,symbolset->fontset,size,symbol->character,&rect,NULL) != MS_SUCCESS) 
       return(MS_FAILURE);
 
     *width = (int) MS_MAX(*width, rect.maxx - rect.minx);

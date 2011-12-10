@@ -286,12 +286,13 @@ int agg2RenderPolygonTiled(imageObj *img, shapeObj *p, imageObj * tile) {
 int agg2RenderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, char *text) {
    AGG2Renderer *r = AGG_RENDERER(img);
    aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(MS_IMAGE_RENDERER(img));
-   if (!cache->m_feng.load_font(style->font, 0, mapserver::glyph_ren_outline)) {
-      msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", style->font);
+   if (!cache->m_feng.load_font(style->fonts[0], 0, mapserver::glyph_ren_outline)) {
+      msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", style->fonts[0]);
       return MS_FAILURE;
    }
    r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
 
+   int curfontidx = 0;
    const mapserver::glyph_cache* glyph;
    int unicode;
    //cache->m_feng.hinting(true);
@@ -323,11 +324,38 @@ int agg2RenderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, ch
          continue;
       }
       utfptr += msUTF8ToUniChar(utfptr, &unicode);
+      if(curfontidx != 0) {
+         if (!cache->m_feng.load_font(style->fonts[0], 0, mapserver::glyph_ren_outline)) {
+            msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", style->fonts[0]);
+            return MS_FAILURE;
+         }
+         curfontidx = 0;
+      }
+
       glyph = cache->m_fman.glyph(unicode);
-      ;
+
+      if(!glyph || glyph->glyph_index == 0) {
+         int i;
+         for(i=1;i<style->numfonts;i++) {
+            if (!cache->m_feng.load_font(style->fonts[i], 0, mapserver::glyph_ren_outline)) {
+               msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", style->fonts[i]);
+               return MS_FAILURE;
+            }
+            curfontidx = i;
+            cache->m_feng.height(style->size);
+            cache->m_feng.resolution(96);
+            cache->m_feng.flip_y(true);
+            glyph = cache->m_fman.glyph(unicode);
+            if(glyph && glyph->glyph_index != 0) {
+               break;
+            }
+         }
+      }
+
+
       if (glyph) {
          //cache->m_fman.add_kerning(&fx, &fy);
-    	 cache->m_fman.init_embedded_adaptors(glyph, fx, fy);
+         cache->m_fman.init_embedded_adaptors(glyph, fx, fy);
          mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, mtx);
          glyphs.concat_path(trans_c);
          fx += glyph->advance_x;
@@ -410,14 +438,15 @@ int agg2RenderBitmapGlyphs(imageObj *img, double x, double y, labelStyleObj *sty
 int agg2RenderGlyphsLine(imageObj *img, labelPathObj *labelpath, labelStyleObj *style, char *text) {
    AGG2Renderer *r = AGG_RENDERER(img);
    aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(MS_IMAGE_RENDERER(img));
-   if (!cache->m_feng.load_font(style->font, 0, mapserver::glyph_ren_outline)) {
-      msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", style->font);
+   if (!cache->m_feng.load_font(style->fonts[0], 0, mapserver::glyph_ren_outline)) {
+      msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphsLine()", style->fonts[0]);
       return MS_FAILURE;
    }
    r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
 
    const mapserver::glyph_cache* glyph;
    int unicode;
+   int curfontidx = 0;
    //cache->m_feng.hinting(true);
    cache->m_feng.height(style->size);
    cache->m_feng.resolution(96);
@@ -433,7 +462,34 @@ int agg2RenderGlyphsLine(imageObj *img, labelPathObj *labelpath, labelStyleObj *
       mtx *= mapserver::trans_affine_rotation(-labelpath->angles[i]);
       mtx *= mapserver::trans_affine_translation(labelpath->path.point[i].x,labelpath->path.point[i].y);
       text += msUTF8ToUniChar(text, &unicode);
+
+      if(curfontidx != 0) {
+         if (!cache->m_feng.load_font(style->fonts[0], 0, mapserver::glyph_ren_outline)) {
+            msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphsLine()", style->fonts[0]);
+            return MS_FAILURE;
+         }
+         curfontidx = 0;
+      }
+
       glyph = cache->m_fman.glyph(unicode);
+
+      if(!glyph || glyph->glyph_index == 0) {
+         int i;
+         for(i=1;i<style->numfonts;i++) {
+            if (!cache->m_feng.load_font(style->fonts[i], 0, mapserver::glyph_ren_outline)) {
+               msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphsLine()", style->fonts[i]);
+               return MS_FAILURE;
+            }
+            curfontidx = i;
+            cache->m_feng.height(style->size);
+            cache->m_feng.resolution(96);
+            cache->m_feng.flip_y(true);
+            glyph = cache->m_fman.glyph(unicode);
+            if(glyph && glyph->glyph_index != 0) {
+               break;
+            }
+         }
+      }
       if (glyph) {
          cache->m_fman.init_embedded_adaptors(glyph, labelpath->path.point[i].x,labelpath->path.point[i].y);
          mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, mtx);
@@ -793,25 +849,55 @@ int agg2SaveImage(imageObj *img, FILE *fp, outputFormatObj * format) {
 /*...*/
 
 /* helper functions */
-int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size, char *string,
+int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string,
         rectObj *rect, double **advances) {
    
    aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(renderer);
-   if (!cache->m_feng.load_font(font, 0, mapserver::glyph_ren_outline)) {
-      msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2GetTruetypeTextBBox()", font);
+   if (!cache->m_feng.load_font(fonts[0], 0, mapserver::glyph_ren_outline)) {
+      msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2GetTruetypeTextBBox()", fonts[0]);
       return MS_FAILURE;
    }
    cache->m_feng.hinting(true);
    cache->m_feng.height(size);
    cache->m_feng.resolution(96);
    cache->m_feng.flip_y(true);
+   int curfontidx = 0;
+
    int unicode, curGlyph = 1, numglyphs = 0;
    if (advances) {
       numglyphs = msGetNumGlyphs(string);
    }
    const mapserver::glyph_cache* glyph;
    string += msUTF8ToUniChar(string, &unicode);
+
+   if(curfontidx != 0) {
+      if (!cache->m_feng.load_font(fonts[0], 0, mapserver::glyph_ren_outline)) {
+         msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", fonts[0]);
+         return MS_FAILURE;
+      }
+      cache->m_feng.height(size);
+      cache->m_feng.resolution(96);
+      cache->m_feng.flip_y(true);
+      curfontidx = 0;
+   }
    glyph = cache->m_fman.glyph(unicode);
+   if(!glyph || glyph->glyph_index == 0) {
+      int i;
+      for(i=1;i<numfonts;i++) {
+         if (!cache->m_feng.load_font(fonts[i], 0, mapserver::glyph_ren_outline)) {
+            msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", fonts[i]);
+            return MS_FAILURE;
+         }
+         curfontidx = i;
+         cache->m_feng.height(size);
+         cache->m_feng.resolution(96);
+         cache->m_feng.flip_y(true);
+         glyph = cache->m_fman.glyph(unicode);
+         if(glyph && glyph->glyph_index != 0) {
+            break;
+         }
+      }
+   }
    if (glyph) {
       rect->minx = glyph->bounds.x1;
       rect->maxx = glyph->bounds.x2;
@@ -842,7 +928,34 @@ int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char *font, double size
          continue;
       }
       string += msUTF8ToUniChar(string, &unicode);
+      if(curfontidx != 0) {
+         if (!cache->m_feng.load_font(fonts[0], 0, mapserver::glyph_ren_outline)) {
+            msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", fonts[0]);
+            return MS_FAILURE;
+         }
+         cache->m_feng.height(size);
+         cache->m_feng.resolution(96);
+         cache->m_feng.flip_y(true);
+         curfontidx = 0;
+      }
       glyph = cache->m_fman.glyph(unicode);
+      if(!glyph || glyph->glyph_index == 0) {
+         int i;
+         for(i=1;i<numfonts;i++) {
+            if (!cache->m_feng.load_font(fonts[i], 0, mapserver::glyph_ren_outline)) {
+               msSetError(MS_TTFERR, "AGG error loading font (%s)", "agg2RenderGlyphs()", fonts[i]);
+               return MS_FAILURE;
+            }
+            curfontidx = i;
+            cache->m_feng.height(size);
+            cache->m_feng.resolution(96);
+            cache->m_feng.flip_y(true);
+            glyph = cache->m_fman.glyph(unicode);
+            if(glyph && glyph->glyph_index != 0) {
+               break;
+            }
+         }
+      }
       if (glyph) {
          rect->minx = MS_MIN(rect->minx, fx+glyph->bounds.x1);
          rect->miny = MS_MIN(rect->miny, fy+glyph->bounds.y1);
