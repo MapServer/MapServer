@@ -342,7 +342,6 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
       for(j=1; j<p->line[i].numpoints; j++)
       {
          double rx,ry,theta,length;
-         int in;
          length = sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2)));
          line_length += length;
          if(length==0)continue;
@@ -357,7 +356,6 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
             else theta = -theta;
             style->rotation = original_rotation + theta;
          }
-         in = 0;
          while (current_length <= length) {
 
             point.x = p->line[i].point[j - 1].x + current_length * rx;
@@ -397,15 +395,10 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
             if( ret != MS_SUCCESS)
                return ret;
             current_length += spacing;
-            in = 1;
             line_in=1;
          }
 
-         if (in)
-         {
-            current_length -= length;
-         }
-         else current_length -= length;
+         current_length -= length;
       }
 
       /* 
@@ -459,6 +452,7 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
                   ret = renderer->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
                   break;
                }
+               break; /* we have rendered the single marker for this line */
             }
             before_length += length;
          }
