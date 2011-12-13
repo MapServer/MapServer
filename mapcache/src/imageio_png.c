@@ -131,7 +131,8 @@ void _mapcache_imageio_png_decode_to_image(mapcache_context *ctx, mapcache_buffe
       apr_pool_cleanup_register(ctx->pool, img->data, (void*)free, apr_pool_cleanup_null) ;
       img->stride = img->w * 4;
    }
-   row_pointers = apr_pcalloc(ctx->pool,img->h * sizeof(unsigned char*));
+   row_pointers = malloc(img->h * sizeof(unsigned char*));
+   apr_pool_cleanup_register(ctx->pool, row_pointers, (void*)free, apr_pool_cleanup_null) ;
 
    rowptr = img->data;
    for(i=0;i<img->h;i++) {
@@ -1244,7 +1245,7 @@ static mapcache_buffer* _mapcache_imageio_png_create_empty(mapcache_context *ctx
    if(GC_HAS_ERROR(ctx)) {
       return NULL;
    }
-   empty->data = (unsigned char*)apr_pcalloc(pool,width*height*4*sizeof(unsigned char)); 
+   empty->data = malloc(width*height*4*sizeof(unsigned char)); 
    for(i=0;i<width*height;i++) {
       ((unsigned int*)empty->data)[i] = color;
    }
@@ -1254,6 +1255,7 @@ static mapcache_buffer* _mapcache_imageio_png_create_empty(mapcache_context *ctx
 
    buf = format->write(ctx,empty,format);
    apr_pool_destroy(pool);
+   free(empty->data);
    return buf;
 }
 
