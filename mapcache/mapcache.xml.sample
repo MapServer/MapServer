@@ -834,6 +834,9 @@
         this location should be writable by the apache user
    -->
    <lock_dir>/tmp</lock_dir>
+
+   <!-- use multiple threads when fetching multiple tiles (used for wms tile assembling -->
+   <threaded_fetching>true</threaded_fetching>
    
    
    <!-- fastcgi only -->
