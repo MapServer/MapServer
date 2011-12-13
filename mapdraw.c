@@ -2421,6 +2421,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   lineObj labelPolyLine;
   pointObj labelPolyPoints[5];
   int needLabelPoly=MS_TRUE;
+  int needLabelPoint=MS_TRUE;
 
   int label_offset_x, label_offset_y;
   double size;
@@ -2446,18 +2447,13 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
 
   if(label->position != MS_XY) {
     pointObj p;
-    int needLabelPoint=MS_TRUE;
 
     if(label->numstyles > 0) {
       int i;
 
       for(i=0; i<label->numstyles; i++) {
         if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
-          if(needLabelPoint) {
-            p = get_metrics_line(&labelPnt, label->position, r, label_offset_x, label_offset_y, label->angle, 0, NULL);
-            needLabelPoint = MS_FALSE; /* don't re-compute */
-          } 
-          msDrawMarkerSymbol(&map->symbolset, image, &p, label->styles[i], scalefactor);
+          msDrawMarkerSymbol(&map->symbolset, image, &labelPnt, label->styles[i], scalefactor);
         } else if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
           if(needLabelPoly) {
             labelPoly.line = &labelPolyLine; /* setup the label polygon structure */
@@ -2622,7 +2618,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               return MS_FAILURE;
              
             /* adjust the baseline (see #1449) */
-            if(labelPtr->type == MS_TRUETYPE) {
+            if(1 || labelPtr->type == MS_TRUETYPE) {
               int nNewlines = msCountChars(cachePtr->text,'\n');
               if(!nNewlines) {
                 labelPtr->offsety += MS_NINT((((r.miny + r.maxy) + size) / 2.0)/scalefactor);
