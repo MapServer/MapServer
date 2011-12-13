@@ -237,7 +237,8 @@ void _mapcache_imageio_jpeg_decode_to_image(mapcache_context *r, mapcache_buffer
       img->stride = img->w * 4;
    }
 
-   temp = apr_pcalloc(r->pool,img->w*s);
+   temp = malloc(img->w*s);
+   apr_pool_cleanup_register(r->pool, temp, (void*)free, apr_pool_cleanup_null) ;
    while ((int)cinfo.output_scanline < img->h)
    {
       int i;
@@ -302,7 +303,7 @@ static mapcache_buffer* _mapcache_imageio_jpg_create_empty(mapcache_context *ctx
    if(GC_HAS_ERROR(ctx)) {
       return NULL;
    }
-   empty->data = (unsigned char*)apr_pcalloc(pool,width*height*4*sizeof(unsigned char)); 
+   empty->data = malloc(width*height*4*sizeof(unsigned char)); 
    for(i=0;i<width*height;i++) {
       ((unsigned int*)empty->data)[i] = color;
    }
@@ -312,6 +313,7 @@ static mapcache_buffer* _mapcache_imageio_jpg_create_empty(mapcache_context *ctx
 
    buf = format->write(ctx,empty,format);
    apr_pool_destroy(pool);
+   free(empty->data);
    return buf;
 }
 
