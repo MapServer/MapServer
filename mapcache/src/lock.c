@@ -50,12 +50,13 @@ int mapcache_lock_or_wait_for_resource(mapcache_context *ctx, char *resource) {
    apr_file_t *lockfile;
    apr_status_t rv;
    /* create the lockfile */
-   rv = apr_file_open(&lockfile,lockname,APR_WRITE|APR_CREATE|APR_EXCL,APR_OS_DEFAULT,ctx->pool);
+   rv = apr_file_open(&lockfile,lockname,APR_WRITE|APR_CREATE|APR_EXCL|APR_XTHREAD,APR_OS_DEFAULT,ctx->pool);
 
    /* if the file already exists, wait for it to disappear */
    /* TODO: check the lock isn't stale (i.e. too old) */
    if( rv != APR_SUCCESS ) {
-      rv = apr_file_open(&lockfile,lockname,APR_READ,APR_OS_DEFAULT,ctx->pool);
+      apr_finfo_t info;
+      rv = apr_stat(&info,lockname,0,ctx->pool);
 #ifdef DEBUG
       if(!APR_STATUS_IS_ENOENT(rv)) {
          ctx->log(ctx, MAPCACHE_DEBUG, "waiting on resource lock %s", resource);
@@ -64,10 +65,7 @@ int mapcache_lock_or_wait_for_resource(mapcache_context *ctx, char *resource) {
       while(!APR_STATUS_IS_ENOENT(rv)) {
          /* sleep for the configured number of micro-seconds (default is 1/100th of a second) */
          apr_sleep(ctx->config->lock_retry_interval);
-         rv = apr_file_open(&lockfile,lockname,APR_READ,APR_OS_DEFAULT,ctx->pool);
-         if(rv == APR_SUCCESS) {
-            apr_file_close(lockfile);
-         }
+         rv = apr_stat(&info,lockname,0,ctx->pool);
       }
       return MAPCACHE_FALSE;
    } else {
