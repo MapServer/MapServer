@@ -951,6 +951,15 @@ void mapcache_configuration_parse_xml(mapcache_context *ctx, const char *filenam
       }
    }
    
+   if((node = ezxml_child(doc,"threaded_fetching")) != NULL) {
+      if(!strcasecmp(node->txt,"true")) {
+         config->threaded_fetching = 1;
+      } else if(strcasecmp(node->txt,"false")) {
+         ctx->set_error(ctx, 400, "failed to parse threaded_fetching \"%s\". Expecting true or false",node->txt);
+         return;
+      }
+   }
+
    if((node = ezxml_child(doc,"log_level")) != NULL) {
       if(!strcasecmp(node->txt,"debug")) {
          config->loglevel = MAPCACHE_DEBUG;

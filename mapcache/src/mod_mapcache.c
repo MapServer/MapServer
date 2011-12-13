@@ -144,9 +144,22 @@ void apache_context_request_log(mapcache_context *c, mapcache_log_level level, c
    ap_log_rerror(APLOG_MARK, ap_log_level, 0, ctx->request, "%s", apr_pvsprintf(c->pool,message,args));
 }
 
+mapcache_context *mapcache_context_request_clone(mapcache_context *ctx) {
+   mapcache_context_apache_request *newctx = (mapcache_context_apache_request*)apr_pcalloc(ctx->pool,
+         sizeof(mapcache_context_apache_request));
+   mapcache_context *nctx = (mapcache_context*)newctx;
+   mapcache_context_copy(ctx,nctx);
+   //apr_pool_create(&nctx->pool,ctx->pool);
+   apr_pool_create(&nctx->pool,NULL);
+   apr_pool_cleanup_register(ctx->pool, nctx->pool,(void*)apr_pool_destroy, apr_pool_cleanup_null);
+   newctx->request = ((mapcache_context_apache_request*)ctx)->request;
+   return nctx;
+}
+
 void init_apache_request_context(mapcache_context_apache_request *ctx) {
    mapcache_context_init((mapcache_context*)ctx);
    ctx->ctx.ctx.log = apache_context_request_log;
+   ctx->ctx.ctx.clone = mapcache_context_request_clone;
 }
 
 void init_apache_server_context(mapcache_context_apache_server *ctx) {

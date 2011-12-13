@@ -68,9 +68,16 @@ static char* err_msg(int code) {
 
 struct mapcache_context_fcgi {
    mapcache_context ctx;
-   char *mutex_fname;
-   apr_file_t *mutex_file;
 };
+
+static mapcache_context* fcgi_context_clone(mapcache_context *ctx) {
+   mapcache_context_fcgi *newctx = (mapcache_context_fcgi*)apr_pcalloc(ctx->pool,
+         sizeof(mapcache_context_fcgi));
+   mapcache_context *nctx = (mapcache_context*)newctx;
+   mapcache_context_copy(ctx,nctx);
+   apr_pool_create(&nctx->pool,ctx->pool);
+   return nctx;
+}
 
 static void fcgi_context_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
    va_list args;
@@ -94,7 +101,7 @@ static mapcache_context_fcgi* fcgi_context_create() {
    ctx->ctx.pool = global_pool;
    mapcache_context_init((mapcache_context*)ctx);
    ctx->ctx.log = fcgi_context_log;
-   ctx->mutex_fname="/tmp/mapcache.fcgi.lock";
+   ctx->ctx.clone = fcgi_context_clone;
    ctx->ctx.config = NULL;
    return ctx;
 }
@@ -314,6 +321,7 @@ cleanup:
    }
 #endif
    apr_pool_destroy(global_pool);
+   apr_terminate();
    return 0;
 
 }

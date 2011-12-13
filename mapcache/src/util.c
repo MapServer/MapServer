@@ -196,5 +196,25 @@ void mapcache_context_init(mapcache_context *ctx) {
     ctx->clear_errors = _mapcache_context_clear_error_default;
 }
 
+void mapcache_context_copy(mapcache_context *src, mapcache_context *dst) {
+   dst->_contenttype = src->_contenttype;
+   dst->_errcode = src->_errcode;
+   dst->_errmsg = src->_errmsg;
+   dst->clear_errors = src->clear_errors;
+   dst->clone = src->clone;
+   dst->config = src->config;
+   dst->get_error = src->get_error;
+   dst->get_error_message = src->get_error_message;
+   dst->get_instance_id = src->get_instance_id;
+   dst->log = src->log;
+   dst->set_error = src->set_error;
+   dst->pool = src->pool;
+   dst->set_exception = src->set_exception;
+   dst->service = src->service;
+   dst->has_threads = src->has_threads;
+   dst->exceptions = src->exceptions;
+}
+
+
 /* vim: ai ts=3 sts=3 et sw=3
 */

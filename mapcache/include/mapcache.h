@@ -185,6 +185,7 @@ struct mapcache_context {
     void (*log)(mapcache_context *ctx, mapcache_log_level level, char *message, ...);
 
     const char* (*get_instance_id)(mapcache_context * ctx);
+    mapcache_context* (*clone)(mapcache_context *ctx);
     int has_threads;
     apr_pool_t *pool;
     char *_contenttype;
@@ -196,6 +197,7 @@ struct mapcache_context {
 };
 
 void mapcache_context_init(mapcache_context *ctx);
+void mapcache_context_copy(mapcache_context *src, mapcache_context *dst);
 
 #define GC_CHECK_ERROR_RETURN(ctx) (if(((mapcache_context*)ctx)->_errcode) return MAPCACHE_FAILURE;)
 #define GC_CHECK_ERROR(ctx) if(((mapcache_context*)ctx)->_errcode) return;
@@ -920,6 +922,8 @@ struct mapcache_cfg {
      * time in nanoseconds to wait before rechecking for lockfile presence
      */
     apr_interval_time_t lock_retry_interval; /* time in nanoseconds to wait before rechecking for lockfile presence */
+
+    int threaded_fetching;
     
     /**
      * the uri where the base of the service is mapped
