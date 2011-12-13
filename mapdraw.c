@@ -2618,7 +2618,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               return MS_FAILURE;
              
             /* adjust the baseline (see #1449) */
-            if(1 || labelPtr->type == MS_TRUETYPE) {
+            if(labelPtr->type == MS_TRUETYPE) {
               int nNewlines = msCountChars(cachePtr->text,'\n');
               if(!nNewlines) {
                 labelPtr->offsety += MS_NINT((((r.miny + r.maxy) + size) / 2.0)/scalefactor);
