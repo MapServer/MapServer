@@ -710,6 +710,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
         int i;
         int origstatus, origlabelcache;
         altFormat =  msSelectOutputFormat(map, "png24");
+        msInitializeRendererVTable(altFormat);
         /* TODO: check the png24 format hasn't been tampered with, i.e. it's agg */
         maskLayer->maskimage= msImageCreate(image->width, image->height,altFormat,
               image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
