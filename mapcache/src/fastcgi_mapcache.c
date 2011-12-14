@@ -229,6 +229,23 @@ int main(int argc, const char **argv) {
    ctx = (mapcache_context*)globalctx;
    
    conffile  = getenv("MAPCACHE_CONFIG_FILE");
+#ifdef DEBUG
+   if(!conffile) {
+      int i;
+      for(i=1;i<argc;i++) {
+         if( strncmp(argv[i], "-c", 2) == 0 ) {
+            conffile = argv[i+1];
+            putenv( "REQUEST_METHOD=GET" );
+         }
+         else if( strncmp(argv[i], "QUERY_STRING=", 13) == 0 ) {
+            putenv( argv[i] );
+         }
+         else if( strncmp(argv[i], "PATH_INFO=", 10) == 0 ) {
+            putenv( argv[i] );
+         }
+      }
+   }
+#endif
    if(!conffile) {
       ctx->log(ctx,MAPCACHE_ERROR,"no config file found in MAPCACHE_CONFIG_FILE envirronement");
       return 1;
