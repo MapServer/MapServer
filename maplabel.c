@@ -134,7 +134,7 @@ char *msWrapText(labelObj *label, char *text) {
         int numglyphs,numlines;
         maxlength = -maxlength; /* use a positive value*/
         numglyphs = msGetNumGlyphs(text);
-        numlines = numglyphs / maxlength; /*count total number of lines needed
+        numlines = (numglyphs-1) / maxlength + 1; /*count total number of lines needed
                                             after splitting*/
         if(numlines>1) {
             char *newtext = msSmallMalloc(strlen(text)+numlines+1);
