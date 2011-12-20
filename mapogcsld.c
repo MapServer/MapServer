@@ -1661,7 +1661,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     CPLXMLNode *psWellKnownName, *psStroke, *psFill;
     CPLXMLNode *psDisplacement=NULL, *psDisplacementX=NULL, *psDisplacementY=NULL;
     CPLXMLNode *psOpacity=NULL, *psRotation=NULL;
-    char *psColor=NULL, *psColorName = NULL;
+    char *psName=NULL, *psValue = NULL;
     int nLength = 0;
     char *pszSymbolName = NULL;
     int bFilled = 0, bStroked=0;
@@ -1788,26 +1788,38 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                                (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
                                 strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
                         {
-                            psColorName = 
+                            psName = 
                               (char*)CPLGetXMLValue(psCssParam, "name", NULL);
-                            if (psColorName && 
-                                strcasecmp(psColorName, "fill") == 0)
+                            if (psName && 
+                                strcasecmp(psName, "fill") == 0)
                             {
                                 if(psCssParam->psChild && 
                                    psCssParam->psChild->psNext && 
                                    psCssParam->psChild->psNext->pszValue)
-                                  psColor = psCssParam->psChild->psNext->pszValue;
+                                  psValue = psCssParam->psChild->psNext->pszValue;
 
-                                if (psColor)
+                                if (psValue)
                                 {
-                                    nLength = strlen(psColor);
-                                    if (nLength == 7 && psColor[0] == '#')
+                                    nLength = strlen(psValue);
+                                    if (nLength == 7 && psValue[0] == '#')
                                     {
-                                        msSLDSetColorObject(psColor,
+                                        msSLDSetColorObject(psValue,
                                                             &psStyle->color);
                                     }
                                 }
-                                break;
+                            }
+                            else if (psName && 
+                                strcasecmp(psName, "fill-opacity") == 0)
+                            {
+                                if(psCssParam->psChild && 
+                                   psCssParam->psChild->psNext && 
+                                   psCssParam->psChild->psNext->pszValue)
+                                  psValue = psCssParam->psChild->psNext->pszValue;
+
+                                if (psValue)
+                                {
+                                    psStyle->color.alpha = (int)(atof(psValue)*255);
+                                }
                             }
                         
                             psCssParam = psCssParam->psNext;
@@ -1824,26 +1836,51 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                                (strcasecmp(psCssParam->pszValue, "CssParameter") == 0 ||
                                 strcasecmp(psCssParam->pszValue, "SvgParameter") == 0))
                         {
-                            psColorName = 
+                            psName = 
                               (char*)CPLGetXMLValue(psCssParam, "name", NULL);
-                            if (psColorName && 
-                                strcasecmp(psColorName, "stroke") == 0) 
+                            if (psName && 
+                                strcasecmp(psName, "stroke") == 0) 
                             {
                                 if(psCssParam->psChild && 
                                    psCssParam->psChild->psNext && 
                                    psCssParam->psChild->psNext->pszValue)
-                                  psColor = psCssParam->psChild->psNext->pszValue;
+                                  psValue = psCssParam->psChild->psNext->pszValue;
 
-                                if (psColor)
+                                if (psValue)
                                 {
-                                    nLength = strlen(psColor);
-                                    if (nLength == 7 && psColor[0] == '#')
+                                    nLength = strlen(psValue);
+                                    if (nLength == 7 && psValue[0] == '#')
                                     {
-                                      msSLDSetColorObject(psColor,
+                                      msSLDSetColorObject(psValue,
                                                           &psStyle->outlinecolor);
                                     }
                                 }
-                                break;
+                            }
+                            else if (psName && 
+                                strcasecmp(psName, "stroke-opacity") == 0)
+                            {
+                                if(psCssParam->psChild && 
+                                   psCssParam->psChild->psNext && 
+                                   psCssParam->psChild->psNext->pszValue)
+                                  psValue = psCssParam->psChild->psNext->pszValue;
+
+                                if (psValue)
+                                {
+                                    psStyle->outlinecolor.alpha = (int)(atof(psValue)*255);
+                                }
+                            }
+                            else if (psName && 
+                                strcasecmp(psName, "stroke-width") == 0)
+                            {
+                                if(psCssParam->psChild && 
+                                   psCssParam->psChild->psNext && 
+                                   psCssParam->psChild->psNext->pszValue)
+                                  psValue = psCssParam->psChild->psNext->pszValue;
+
+                                if (psValue)
+                                {
+                                    psStyle->width = atof(psValue);
+                                }
                             }
                         
                             psCssParam = psCssParam->psNext;
