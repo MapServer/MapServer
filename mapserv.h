@@ -47,8 +47,6 @@
 #define NUMEXP "[-]?(([0-9]+)|([0-9]*[.][0-9]+)([eE][-+]?[0-9]+)?)"
 #define EXTENT_PADDING .05
 
-extern int enter_string;
-
 /*
 ** Macros
 */
@@ -57,27 +55,27 @@ extern int enter_string;
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
 */
-int numModes = 21;
+static int numModes = 21;
 static char *modeStrings[21] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
                                 "QUERY","NQUERY","ITEMQUERY","ITEMNQUERY",
 				"FEATUREQUERY","FEATURENQUERY","ITEMFEATUREQUERY","ITEMFEATURENQUERY",
 				"INDEXQUERY","TILE","OWS", "WFS"};
 
-/*
-** Global variables
-*/
-int SearchMap=MS_FALSE; /* apply pan/zoom BEFORE doing the query (e.g. query the output image rather than the input image) */
+int msCGIWriteLog(mapservObj *mapserv, int show_error);
+void msCGIWriteError(mapservObj *mapserv);
+mapObj *msCGILoadMap(mapservObj *mapserv);
+int msCGISetMode(mapservObj *mapserv);
+int msCGILoadForm(mapservObj *mapserv);
+int msCGIDispatchBrowseRequest(mapservObj *mapserv);
+int msCGIDispatchCoordinateRequest(mapservObj *mapserv);
+int msCGIDispatchQueryRequest(mapservObj *mapserv);
+int msCGIDispatchImageRequest(mapservObj *mapserv);
+int msCGIDispatchLegendRequest(mapservObj *mapserv);
+int msCGIDispatchLegendIconRequest(mapservObj *mapserv);
+int msCGIDispatchRequest(mapservObj *mapserv);
 
-char *QueryFile=NULL;
-char *QueryLayer=NULL, *SelectLayer=NULL;
-int QueryLayerIndex=-1, SelectLayerIndex=-1;
 
-char *QueryItem=NULL, *QueryString=NULL;
 
-int ShapeIndex=-1, TileIndex=-1;
 
-int QueryCoordSource=NONE;
-
-int ZoomSize=0; /* zoom absolute magnitude (i.e. > 0) */
 
 #endif /* MAPSERV_H */

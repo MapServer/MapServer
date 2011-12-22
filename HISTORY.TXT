@@ -15,6 +15,18 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Refactor cgi masperv to not call exit on argument errors (#3099)
+
+- Add --with-apache-module configure option to build an apache dso module
+  (#2565)
+
+- Use libtool to build object files and libraries
+
+- Dynamically link libmapserver to the created binaries by default
+  (requires the make install step to be run)
+
+- Python mapscript builds with make instead of setuptools
+
 - Fix LABELPNT geomtransform position for non-cached labels (#4121)
 
 - Add RFC80 font fallback support (#4114)

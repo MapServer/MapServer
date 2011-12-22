@@ -1,0 +1,59 @@
+# Run ./configure in the main MapServer directory to turn this Makefile.in
+# into a proper Makefile
+
+prefix		=	@prefix@
+exec_prefix	=	@exec_prefix@
+libdir	=	@libdir@
+bindir	=	@bindir@
+top_builddir = @top_builddir@
+SHELL = @SHELL@
+CXX=	@CXX@
+CC=     @CC@
+LD=     @CXX@
+LIBTOOL=@LIBTOOL@
+INSTALL=@INSTALL@
+PYTHON=python
+SWIG=swig
+
+LTCC=$(LIBTOOL) --mode=compile --tag=CC
+LTCXX=$(LIBTOOL) --mode=compile --tag=CXX
+LTLD=$(LIBTOOL) --mode=link --tag=CXX
+LTINSTALL=$(LIBTOOL) --mode=install
+
+XTRALIBS= @XTRALIBS@
+
+
+PYLIBDIR=`$(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
+PYINCDIR=`$(PYTHON) -c "from distutils.sysconfig import get_python_inc; print get_python_inc()"`
+
+RUNPATH= -rpath $(PYLIBDIR)
+DEFINES=@ALL_ENABLED@
+CFLAGS = $(DEFINES) @CFLAGS@ -I$(PYINCDIR) @MS_INC@ @ALL_INC@
+
+LT_LDFLAGS= $(RUNPATH) -module
+OBJ_SUFFIX=lo
+LINK=$(LTLD) $(LD) $(LT_LDFLAGS)
+MS_LIB =   $(top_builddir)/libmapserver.la
+
+
+.SUFFIXES:
+.SUFFIXES: .cpp .c .$(OBJ_SUFFIX)
+
+all: _mapscript.la
+
+_mapscript.la: mapscript_wrap.lo pygdioctx/pygdioctx.lo $(MS_LIB)
+	$(LINK) -o $@ mapscript_wrap.lo pygdioctx/pygdioctx.lo $(MS_LIB)
+
+%.lo: %.c
+	$(LTCC) $(CC) $(CFLAGS) -c -o $@ $<
+
+mapscript_wrap.c: ../mapscript.i
+	$(SWIG) -python -shadow -modern -templatereduce -fastdispatch -fvirtual -fastproxy -modernargs -castmode -dirvtable -fastinit -fastquery -noproxydel -nobuildnone $(DEFINES) -o mapscript_wrap.c ../mapscript.i
+
+install: _mapscript.la
+	$(LTINSTALL) $(INSTALL) _mapscript.la $(PYLIBDIR)
+	$(INSTALL) -c mapscript.py $(PYLIBDIR)
+
+clean:
+	-rm -rf .libs *.lo *.la *.so *.o pygdioctx/*.o pygdioctx/*.lo
+

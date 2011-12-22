@@ -41,9 +41,8 @@ MS_CVSID("$Id$")
 #define LF 10
 #define CR 13
 
-static char *readPostBody( cgiRequestObj *request ) 
+int readPostBody( cgiRequestObj *request, char **data ) 
 {
-  char *data; 
   size_t data_max, data_len;
   int chunk_size;
 
@@ -56,25 +55,28 @@ static char *readPostBody( cgiRequestObj *request )
     data_max = (size_t) atoi(getenv("CONTENT_LENGTH"));
     /* Test for suspicious CONTENT_LENGTH (negative value or SIZE_MAX) */
     if( data_max >= SIZE_MAX ) {
-      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_setHeader("Content-type","text/html");
+      msIO_sendHeaders();
       msIO_printf("Suspicious Content-Length.\n");
-      exit( 1 );
+      return MS_FAILURE;
     }
-    data = (char *) malloc(data_max+1);
-    if( data == NULL ) {
-      msIO_printf("Content-type: text/html%c%c",10,10);
+    *data = (char *) malloc(data_max+1);
+    if( *data == NULL ) {
+      msIO_setHeader("Content-type","text/html");
+      msIO_sendHeaders();
       msIO_printf("malloc() failed, Content-Length: %u unreasonably large?\n", data_max );
-      exit( 1 );
+      return MS_FAILURE;
     }
 
-    if( (int) msIO_fread(data, 1, data_max, stdin) < data_max ) {
-      msIO_printf("Content-type: text/html%c%c",10,10);
+    if( (int) msIO_fread(*data, 1, data_max, stdin) < data_max ) {
+      msIO_setHeader("Content-type","text/html");
+      msIO_sendHeaders();
       msIO_printf("POST body is short\n");
-      exit(1);
+      return MS_FAILURE;
     }
 
-    data[data_max] = '\0';
-    return data;
+    (*data)[data_max] = '\0';
+    return MS_SUCCESS;
   }
   /* -------------------------------------------------------------------- */
   /*      Otherwise read in chunks to the end.                            */
@@ -83,37 +85,27 @@ static char *readPostBody( cgiRequestObj *request )
 
   data_max = DATA_ALLOC_SIZE;
   data_len = 0;
-  data = (char *) malloc(data_max+1);
-  if (data == NULL) {
-    msIO_printf("Content-type: text/html%c%c",10,10);
-    msIO_printf("Out of memory allocating %u bytes.\n", data_max+1);
-    exit(1);
-  }
+  *data = (char *) msSmallMalloc(data_max+1);
 
-  while( (chunk_size = msIO_fread( data + data_len, 1, data_max-data_len, stdin )) > 0 ) {
+  while( (chunk_size = msIO_fread( *data + data_len, 1, data_max-data_len, stdin )) > 0 ) {
     data_len += chunk_size;
 
     if( data_len == data_max ) {
       /* Realloc buffer, making sure we check for possible size_t overflow */
         if ( data_max > SIZE_MAX - (DATA_ALLOC_SIZE+1) ) {
-        msIO_printf("Content-type: text/html%c%c",10,10);
+        msIO_setHeader("Content-type","text/html");
+        msIO_sendHeaders();
         msIO_printf("Possible size_t overflow, cannot reallocate input buffer, POST body too large?\n" );
-        exit(1);
+        return MS_FAILURE;
       }
 
       data_max = data_max + DATA_ALLOC_SIZE;
-      data = (char *) realloc(data, data_max+1);
-
-      if( data == NULL ) {
-        msIO_printf("Content-type: text/html%c%c",10,10);
-        msIO_printf("out of memory trying to allocate %u input buffer, POST body too large?\n", data_max+1 );
-        exit(1);
-      }
+      *data = (char *) msSmallRealloc(*data, data_max+1);
     }
   }
 
-  data[data_len] = '\0';  
-  return data;
+  *data[data_len] = '\0';  
+  return MS_SUCCESS;
 }
 
 static char* msGetEnv(const char *name, void* thread_context)
@@ -137,7 +129,7 @@ int loadParams(cgiRequestObj *request,
   if(getenv2("REQUEST_METHOD", thread_context)==NULL) {
     msIO_printf("This script can only be used to decode form results and \n");
     msIO_printf("should be initiated as a CGI process via a httpd server.\n");
-    exit(0);
+    return -1;
   }
 
   debuglevel = (int)msGetGlobalDebugLevel();
@@ -160,7 +152,8 @@ int loadParams(cgiRequestObj *request,
         data_len = raw_post_data_length;
     }
     else {
-        post_data = readPostBody( request );
+        if(MS_SUCCESS != readPostBody( request, &post_data ))
+           return -1;
         data_len = strlen(post_data);
     }
 
@@ -174,16 +167,8 @@ int loadParams(cgiRequestObj *request,
       while( post_data[0] ) {
         if(m >= maxParams) {
           maxParams *= 2;
-          request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
-          if (request->ParamNames == NULL) {
-              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
-              exit(1);
-          }
-          request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
-          if (request->ParamValues ==  NULL) {
-              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
-              exit(1);
-          }
+          request->ParamNames = (char **) msSmallRealloc(request->ParamNames,sizeof(char *) * maxParams);
+          request->ParamValues = (char **) msSmallRealloc(request->ParamValues,sizeof(char *) * maxParams);
         }
         request->ParamValues[m] = makeword(post_data,'&');
         plustospace(request->ParamValues[m]);
@@ -207,16 +192,8 @@ int loadParams(cgiRequestObj *request,
       for(x=0;queryString[0] != '\0';x++) {       
         if(m >= maxParams) {
           maxParams *= 2;
-          request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
-          if (request->ParamNames == NULL) {
-              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
-              exit(1);
-          }
-          request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
-          if (request->ParamValues ==  NULL) {
-              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
-              exit(1);
-          }
+          request->ParamNames = (char **) msSmallRealloc(request->ParamNames,sizeof(char *) * maxParams);
+          request->ParamValues = (char **) msSmallRealloc(request->ParamValues,sizeof(char *) * maxParams);
         } 
         request->ParamValues[m] = makeword(queryString,'&'); 
         plustospace(request->ParamValues[m]);
@@ -231,18 +208,20 @@ int loadParams(cgiRequestObj *request,
 
       s = getenv2("QUERY_STRING", thread_context);
       if(s == NULL) {
-        msIO_printf("Content-type: text/html%c%c",10,10);
+        msIO_setHeader("Content-type","text/html");
+        msIO_sendHeaders();
         msIO_printf("No query information to decode. QUERY_STRING not set.\n");	
-        exit(1);
+        return -1;
       }
             
       if (debuglevel >= MS_DEBUGLEVEL_DEBUG)
           msDebug("loadParams() QUERY_STRING: %s\n", s);
 
       if(strlen(s)==0) {
-        msIO_printf("Content-type: text/html%c%c",10,10);
+        msIO_setHeader("Content-type","text/html");
+        msIO_sendHeaders();
         msIO_printf("No query information to decode. QUERY_STRING is set, but empty.\n");
-        exit(1);
+        return -1;
       }
       
       /* don't modify the string returned by getenv2 */
@@ -250,16 +229,8 @@ int loadParams(cgiRequestObj *request,
       for(x=0;queryString[0] != '\0';x++) {
           if(m >= maxParams) {
             maxParams *= 2;
-            request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
-            if (request->ParamNames == NULL) {
-                msIO_printf("Out of memory trying to allocate name/value pairs.\n");
-                exit(1);
-            }
-            request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
-            if (request->ParamValues ==  NULL) {
-                msIO_printf("Out of memory trying to allocate name/value pairs.\n");
-                exit(1);
-            }
+            request->ParamNames = (char **) msSmallRealloc(request->ParamNames,sizeof(char *) * maxParams);
+            request->ParamValues = (char **) msSmallRealloc(request->ParamValues,sizeof(char *) * maxParams);
           } 
           request->ParamValues[m] = makeword(queryString,'&');
           plustospace(request->ParamValues[m]);
@@ -268,9 +239,10 @@ int loadParams(cgiRequestObj *request,
           m++; 
       }
     } else {
-      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_setHeader("Content-type","text/html");
+      msIO_sendHeaders();
       msIO_printf("This script should be referenced with a METHOD of GET or METHOD of POST.\n");
-      exit(1);
+      return -1;
     }
   }
 
@@ -282,16 +254,8 @@ int loadParams(cgiRequestObj *request,
     for(x=0;httpCookie[0] != '\0';x++) {
         if(m >= maxParams) {
           maxParams *= 2;
-          request->ParamNames = (char **) realloc(request->ParamNames,sizeof(char *) * maxParams);
-          if (request->ParamNames == NULL) {
-              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
-              exit(1);
-          }
-          request->ParamValues = (char **) realloc(request->ParamValues,sizeof(char *) * maxParams);
-          if (request->ParamValues ==  NULL) {
-              msIO_printf("Out of memory trying to allocate name/value pairs.\n");
-              exit(1);
-          }
+          request->ParamNames = (char **) msSmallRealloc(request->ParamNames,sizeof(char *) * maxParams);
+          request->ParamValues = (char **) msSmallRealloc(request->ParamValues,sizeof(char *) * maxParams);
       }
       request->ParamValues[m] = makeword(httpCookie,';');
       plustospace(request->ParamValues[m]);

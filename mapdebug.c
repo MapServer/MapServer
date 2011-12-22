@@ -169,10 +169,6 @@ int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath)
         debuginfo->fp = stderr;
         debuginfo->errorfile = msStrdup(pszErrorFile);
         debuginfo->debug_mode = MS_DEBUGMODE_STDERR;
-#if defined(NEED_NONBLOCKING_STDERR) && !defined(USE_MAPIO) && !defined(_WIN32)
-        fcntl(fileno(stderr), F_SETFL, O_NONBLOCK);
-        nonblocking_set = 1;
-#endif
     }
     else if (strcmp(pszErrorFile, "stdout") == 0)
     {

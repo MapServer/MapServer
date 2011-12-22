@@ -1742,13 +1742,10 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
     }
 
     if (encoding)
-    {
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
-    }
+        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
     else
-    {
-        msIO_printf("Content-type: text/xml%c%c",10,10);
-    }
+        msIO_setHeader("Content-type","text/xml");
+    msIO_sendHeaders();
 
     context = msIO_getHandler(stdout);
 
@@ -1836,27 +1833,41 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         if(multipart)
         {
             msIO_fprintf( stdout, "--wcs\n" );
-        }
-        msIO_fprintf(
-            stdout,
-            "Content-Type: %s\n"
-            "Content-Description: coverage data\n"
-            "Content-Transfer-Encoding: binary\n",
-            MS_IMAGE_MIME_TYPE(map->outputformat));
+            msIO_fprintf(
+                  stdout,
+                  "Content-Type: %s\n"
+                  "Content-Description: coverage data\n"
+                  "Content-Transfer-Encoding: binary\n",
+                  MS_IMAGE_MIME_TYPE(map->outputformat));
 
-        if( fo_filename != NULL )
-            msIO_fprintf( stdout, 
-                "Content-ID: coverage/%s\n"
-                "Content-Disposition: attachment; filename=%s%c%c",
-                fo_filename,
-                fo_filename,
-                10, 10 );
-        else
-            msIO_fprintf( stdout, 
-                "Content-ID: coverage/wcs.%s\n"
-                "Content-Disposition: INLINE%c%c",
-                MS_IMAGE_EXTENSION(map->outputformat),
-                10, 10 );
+            if( fo_filename != NULL )
+               msIO_fprintf( stdout, 
+                     "Content-ID: coverage/%s\n"
+                     "Content-Disposition: attachment; filename=%s%c%c",
+                     fo_filename,
+                     fo_filename,
+                     10, 10 );
+            else
+               msIO_fprintf( stdout, 
+                     "Content-ID: coverage/wcs.%s\n"
+                     "Content-Disposition: INLINE%c%c",
+                     MS_IMAGE_EXTENSION(map->outputformat),
+                     10, 10 );
+        } else {
+            msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(map->outputformat));
+            msIO_setHeader("Content-Description","coverage data");
+            msIO_setHeader("Content-Transfer-Encoding","binary");
+
+            if( fo_filename != NULL ) {
+               msIO_setHeader("Content-ID","coverage/%s",fo_filename);
+               msIO_setHeader("Content-Disposition","attachment; filename=%s",fo_filename);
+            }
+            else {
+               msIO_setHeader("Content-ID","coverage/wcs.%s",MS_IMAGE_EXTENSION(map->outputformat));
+               msIO_setHeader("Content-Disposition","INLINE");
+            }
+            msIO_sendHeaders();
+        }
 
         status = msSaveImage(map, image, NULL);
         if( status != MS_SUCCESS )
@@ -1911,8 +1922,8 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             msDebug( "msWCSWriteFile20(): force multipart output without gml summary because we have multiple files in the result.\n" );
 
             multipart = MS_TRUE;
-            msIO_printf(
-                "Content-Type: multipart/mixed; boundary=wcs%c%c", 10, 10);
+            msIO_setHeader("Content-Type","multipart/mixed; boundary=wcs");
+            msIO_sendHeaders();
         }
 
         for( i = 0; i < count; i++ )
@@ -1931,19 +1942,26 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             if(multipart)
             {
                 msIO_fprintf( stdout, "--wcs\n" );
+                msIO_fprintf(
+                      stdout,
+                      "Content-Type: %s\n"
+                      "Content-Description: coverage data\n"
+                      "Content-Transfer-Encoding: binary\n"
+                      "Content-ID: coverage/%s\n"
+                      "Content-Disposition: attachment; filename=%s%c%c",
+                      mimetype,
+                      all_files[i],
+                      all_files[i],
+                      10, 10 );
+            } else {
+               msIO_setHeader("Content-Type",mimetype);
+               msIO_setHeader("Content-Description","coverage data");
+               msIO_setHeader("Content-Transfer-Encoding","binary");
+               msIO_setHeader("Content-ID","coverage/%s",all_files[i]);
+               msIO_setHeader("Content-Disposition","attachment; filename=%s",all_files[i]);
+               msIO_sendHeaders();
             }
 
-            msIO_fprintf(
-                stdout,
-                "Content-Type: %s\n"
-                "Content-Description: coverage data\n"
-                "Content-Transfer-Encoding: binary\n"
-                "Content-ID: coverage/%s\n"
-                "Content-Disposition: attachment; filename=%s%c%c",
-                mimetype,
-                all_files[i],
-                all_files[i],
-                10, 10 );
 
             fp = VSIFOpenL(
                 CPLFormFilename("/vsimem/wcsout", all_files[i], NULL),
@@ -2646,9 +2664,10 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
     xmlDocSetRootElement(psDoc, psRootNode);
 
     if (encoding)
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding, 10, 10);
+        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
     else
-        msIO_printf("Content-type: text/xml%c%c", 10, 10);
+        msIO_setHeader("Content-type","text/xml");
+    msIO_sendHeaders();
 
     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding
             : "ISO-8859-1"), 1);
@@ -3858,8 +3877,9 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 
         msWCSCommon20_CreateRangeType(layer, &cm, bandlist, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psRootNode);
 
-        msIO_printf( "Content-Type: multipart/mixed; boundary=wcs%c%c"
-                     "--wcs\n", 10, 10);
+        msIO_setHeader("Content-Type","multipart/mixed; boundary=wcs");
+        msIO_sendHeaders();
+        msIO_printf("--wcs\n");
 
         msWCSWriteDocument20(map, psDoc);
         msWCSWriteFile20(map, image, params, 1);

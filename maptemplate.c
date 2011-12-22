@@ -95,13 +95,11 @@ static int isValidTemplate(FILE *stream, const char *filename)
 */
 int msRedirect(char *url)
 {
-  msIO_printf("Status: 302 Found\n");
-  msIO_printf("Uri: %s\n", url);
-  msIO_printf("Location: %s\n", url);
-  msIO_printf("Content-type: text/html%c%c",10,10);
-
-  /* the following may be an issue for fastcgi/msIO_.  */
-  fflush(stdout);
+  msIO_setHeader("Status","302 Found");
+  msIO_setHeader("Uri",url);
+  msIO_setHeader("Location",url);
+  msIO_setHeader("Content-type","text/html");
+  msIO_sendHeaders();
   return MS_SUCCESS;
 }
 
@@ -271,8 +269,10 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
        if(!img) return MS_FAILURE;
        map->outputformat = tempOutputFormat; /* restore format */
 
-       if(mapserv == NULL || mapserv->sendheaders) 
-           msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(outputFormat), 10,10);
+       if(mapserv == NULL || mapserv->sendheaders) {
+           msIO_setHeader("Content-type", MS_IMAGE_MIME_TYPE(outputFormat));
+           msIO_sendHeaders();
+       }
        status = msSaveImage(map, img, NULL);
        msFreeImage(img);
 
@@ -300,8 +300,10 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
 
     if(mapserv == NULL || mapserv->sendheaders) { 
       const char *attachment = msGetOutputFormatOption( outputFormat, "ATTACHMENT", NULL ); 
-      if(attachment) msIO_printf("Content-disposition: attachment; filename=%s\n", attachment);
-      msIO_printf("Content-type: %s%c%c", outputFormat->mimetype, 10, 10);
+      if(attachment)
+         msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
+      msIO_setHeader("Content-type", outputFormat->mimetype);
+      msIO_sendHeaders();
     }
     if((status = msReturnPage(mapserv, (char *) file, BROWSE, papszBuffer)) != MS_SUCCESS)
       return status;
@@ -4300,8 +4302,8 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     strcat((*papszBuffer), buffer);
     nCurrentSize += strlen(buffer);
   } else if(mapserv->sendheaders) {
-    msIO_printf("Content-type: %s%c%c", pszMimeType, 10, 10);
-    fflush(stdout);
+    msIO_setHeader("Content-type",pszMimeType);
+    msIO_sendHeaders();
   }
 
   if(mapserv->map->web.header) {
@@ -4516,6 +4518,20 @@ mapservObj *msAllocMapServObj()
   mapserv->NR=0; /* total number or results */
   mapserv->NLR=0; /* number of results in a layer */
    
+  mapserv->SearchMap=MS_FALSE; /* apply pan/zoom BEFORE doing the query (e.g. query the output image rather than the input image) */
+
+  mapserv->QueryFile=NULL;
+  mapserv->QueryLayer=NULL;
+  mapserv->SelectLayer=NULL;
+  mapserv->QueryLayerIndex=-1;
+  mapserv->SelectLayerIndex=-1;
+  mapserv->QueryItem=NULL;
+  mapserv->QueryString=NULL;
+  mapserv->ShapeIndex=-1;
+  mapserv->TileIndex=-1;
+  mapserv->QueryCoordSource=NONE;
+  mapserv->ZoomSize=0; /* zoom absolute magnitude (i.e. > 0) */
+  
   return mapserv;
 }
 
@@ -4541,6 +4557,13 @@ void msFreeMapServObj(mapservObj* mapserv)
     msFree(mapserv->Layers);
 
     msFree(mapserv->icon);
+    
+    msFree(mapserv->QueryItem);
+    msFree(mapserv->QueryString);
+    msFree(mapserv->QueryLayer);
+    msFree(mapserv->SelectLayer);
+    msFree(mapserv->QueryFile);
+    msFree(mapserv->QueryItem);
 
     msFree(mapserv);
   }

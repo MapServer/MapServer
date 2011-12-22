@@ -28,15 +28,31 @@ dnl FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 dnl DEALINGS IN THE SOFTWARE.
 dnl **************************************************************************
 
-AC_INIT(Makefile.in)
 
+AC_INIT(Makefile.in)
+LT_INIT()
+AC_CONFIG_MACRO_DIR([m4/])
+m4_include([m4/mapserver.m4])
+m4_include([m4/apache.m4])
+AC_CONFIG_SRCDIR([mapserv.c])
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_RANLIB
+PROG_CXX_WORKS
 AC_PROG_LEX
 AC_PROG_YACC
-AC_RUNPATH_SWITCH
+AC_PROG_LIBTOOL
+AC_PROG_INSTALL
+AC_PROG_SED
+
+dnl ---------------------------------------------------------------------
+dnl Look for MapServer version in mapserver.h
+dnl ---------------------------------------------------------------------
+MS_VERSION=`grep 'MS_VERSION ' mapserver.h | grep '#define' | cut -d\" -f2`
+AC_MSG_RESULT([MapServer Version from mapserver.h: '$MS_VERSION'])
+AC_SUBST(MS_VERSION,    "$MS_VERSION")
+
+
 
 dnl ---------------------------------------------------------------------
 dnl Checks for libraries.
@@ -55,13 +71,6 @@ dnl ---------------------------------------------------------------------
 AC_HEADER_STDC
 
 dnl ---------------------------------------------------------------------
-dnl Add -fPIC to compiler flags if appropriate
-dnl ---------------------------------------------------------------------
-AC_COMPILER_PIC
-CFLAGS="$CFLAGS $C_PIC"
-CXXFLAGS="$CXXFLAGS $C_PIC"
-
-dnl ---------------------------------------------------------------------
 dnl Check for some string functions
 dnl ---------------------------------------------------------------------
 AC_CHECK_FUNC(strcasecmp, ,  STRINGS="-DNEED_STRCASECMP $STRINGS")
@@ -74,12 +83,6 @@ AC_CHECK_FUNC(strlcpy, ,      STRINGS="-DNEED_STRLCPY $STRINGS")
 AC_CHECK_FUNC(vsnprintf, STRINGS="-DHAVE_VSNPRINTF $STRINGS", )
 AC_SUBST(STRINGS, $STRINGS)
 
-dnl ---------------------------------------------------------------------
-dnl Look for MapServer version in mapserver.h
-dnl ---------------------------------------------------------------------
-MS_VERSION=`grep 'MS_VERSION ' mapserver.h | grep '#define' | cut -d\" -f2`
-AC_MSG_RESULT([MapServer Version from mapserver.h: '$MS_VERSION'])
-AC_SUBST(MS_VERSION,    "$MS_VERSION")
 
 dnl ---------------------------------------------------------------------
 dnl Several libraries may use pkg-config.
@@ -1043,46 +1046,7 @@ dnl ---------------------------------------------------------------------
 
 AC_MSG_CHECKING(for AGG support)
 AGG_ENABLED="internal"
-AC_MSG_RESULT([        yes])
-AGG_OBJ="renderers/agg/src/clipper.o renderers/agg/src/agg_arc.o renderers/agg/src/agg_curves.o renderers/agg/src/agg_vcgen_contour.o renderers/agg/src/agg_vcgen_dash.o renderers/agg/src/agg_vcgen_stroke.o renderers/agg/src/agg_image_filters.o renderers/agg/src/agg_line_aa_basics.o renderers/agg/src/agg_line_profile_aa.o renderers/agg/src/agg_sqrt_tables.o renderers/agg/src/agg_embedded_raster_fonts.o renderers/agg/src/agg_trans_affine.o renderers/agg/src/agg_vpgen_clip_polygon.o renderers/agg/src/agg_vpgen_clip_polyline.o renderers/agg/src/agg_font_freetype.o"
-AGG_LIB=""
-AGG_INC="-Irenderers/agg/include"
-ALL_INC="$AGG_INC $ALL_INC"
-
-dnl ---------------------------------------------------------------------
-dnl Optional AGG SVG Symbol Support.
-dnl ---------------------------------------------------------------------
-
-AC_MSG_CHECKING(if SVG Symbol support requested)
-AC_ARG_WITH(agg-svg-symbols,
-[  --with-agg-svg-symbols[[=yes/no]]
-                          Include AGG SVG symbol support (Requires expat).],,)
-
-dnl Check for expat availability
-
-if test "$with_agg_svg_symbols" != "no" ; then
-    if test "$EXPAT_FOUND" = "yes" ; then
-        dnl add SVG to the AGG build
-        AGG_OBJ="$AGG_OBJ renderers/agg/src/agg_svg_parser.o renderers/agg/src/agg_svg_path_renderer.o renderers/agg/src/agg_svg_path_tokenizer.o"
-        AGG_LIB="$AGG_LIB $EXPAT_LIB"
-        AC_SUBST(AGG_LIB, $AGG_LIB)
-        ALL_LIB="$AGG_LIB $ALL_LIB"
-        AGG_INC="$AGG_INC $EXPAT_INC"
-        AC_SUBST(AGG_INC, $AGG_INC)
-        ALL_INC="$AGG_INC $ALL_INC"
-        AGG_SVG_SYMBOLS_ENABLED="-DUSE_AGG_SVG_SYMBOLS"
-        ALL_ENABLED="$AGG_SVG_SYMBOLS_ENABLED $ALL_ENABLED"
-        AC_MSG_RESULT([        enabled])
-
-    else
-        AC_MSG_RESULT([        disabled due to missing expat dependency])
-    fi
-fi
-
-AC_SUBST(AGG_OBJ,    $AGG_OBJ)
-
-
-
+AC_MSG_RESULT([        internal])
 
 
 dnl ---------------------------------------------------------------------
@@ -2401,61 +2365,21 @@ ALL_ENABLED="$FASTCGI_ENABLED $ALL_ENABLED"
 ALL_INC="$FASTCGI_INC $ALL_INC"
 ALL_LIB="$FASTCGI_LIB $ALL_LIB"
 
-dnl ---------------------------------------------------------------------
-dnl Try to detect Apache version (httpd -v)
-dnl ---------------------------------------------------------------------
-
-AC_CHECKING(HTTPD server (Apache) version)
-AC_ARG_WITH(httpd,
-[  --with-httpd            Specify path to 'httpd' executable.],,)
-
-
-if test "$with_httpd" = "no" ; then
-
-  AC_MSG_RESULT([        HTTPD server (Apache) version detection disabled by --without-httpd.])
-
-elif test "$with_httpd" = "yes" ; then
-  AC_MSG_ERROR([full path to httpd executable is required as argument when using --with-httpd])
-
-else
-
-  if test -n "$with_httpd" ; then
-    dnl
-    dnl User supplied explicit httpd path
-    dnl
-    HTTPD="$with_httpd"
-    
-    if test -f "$HTTPD" -a -x "$HTTPD" ; then
-      AC_MSG_RESULT([        using user-supplied httpd ($HTTPD)])
-    else
-      AC_MSG_ERROR([$HTTPD is not an executable.  Make sure you use --with-httpd=/path/to/httpd])
-    fi
-  else
-    dnl 
-    dnl Try to locate httpd
-    dnl
-    AC_PATH_PROG(HTTPD, httpd, "", "$PATH:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/apache/bin")
-  fi
-
-  if test -z "$HTTPD" ; then
-    AC_MSG_RESULT([        'httpd' not found, skipping Apache version detection. You may want to use --with-httpd=/path/to/httpd])
-  else
-    HTTPD_VERSION_STRING=`$HTTPD -v | grep "Server version" | awk '{print $3}'`
-    dnl If server is not Apache then APACHE_VERSION will be empty
-    APACHE_VERSION=`echo "$HTTPD_VERSION_STRING" | grep Apache | awk -F / '{print $2}' | awk -F . '{print $1*1000000 + $2*1000 + $3}'`
-
-    AC_MSG_RESULT([        $HTTPD version is $HTTPD_VERSION_STRING ($APACHE_VERSION).])
-
-
-    dnl Check whether msDebug() calls need non-blocking stderr
-    if test -n "$APACHE_VERSION" -a `expr "$APACHE_VERSION" \>= "2000000"` = 1 -a `expr "$APACHE_VERSION" \< "2000049"` = 1 ; then
-      AC_MSG_RESULT([        Your system is apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking for msDebug() due to Apache 2.0.0-2.0.48 bug (see MapServer bug 458 or Apache bug 22030).])
-      DEBUG_FLAGS="${DEBUG_FLAGS} -DNEED_NONBLOCKING_STDERR"
-    fi
-
-  fi
-
-fi
+AC_ARG_WITH(apache-module, 
+     AC_HELP_STRING([--with-apache-module], [enable building mod_mapserver module]), 
+     , 
+     [with_apache_module=no] 
+   ) 
+   if test "$with_apache_module" = "yes"; then 
+      APXS_CHECK
+      APR_CHECK
+      if test -z "$APRCONFIG"; then
+         AC_MSG_ERROR(apr-config utility not found. use --with-apr-config to specify its location.)
+      else
+         ALL_ENABLED="-DMOD_WMS_ENABLED $ALL_ENABLED"
+      fi
+   fi
+     
 
 
 dnl ---------------------------------------------------------------------
@@ -2678,6 +2602,12 @@ if test -n "$with_php" -a -d "$with_php" ; then
     PHP_CC="$CC $C_PIC"
     PHP_LD="$PHP_LD_SHARED $PHP_LD_XTRAFLAGS"
   fi
+  
+  test -z "$PHPCONFIG" -a -x "$PHP_SRC_DIR/php-config" && PHPCONFIG="$PHP_SRC_DIR/php-config"
+  test -z "$PHPCONFIG" -a -x "$PHP_SRC_DIR/bin/php-config" && PHPCONFIG="$PHP_SRC_DIR/bin/php-config"
+  test -z "$PHPCONFIG" && AC_PATH_PROG(PHPCONFIG, php-config, no)
+  test -z "$PHPCONFIG" && AC_MSG_ERROR([failed to find php-config utility])
+  AC_SUBST(PHPCONFIG,$PHPCONFIG)
 
   dnl
   dnl Look for PHP5's php_config.h.
@@ -2731,7 +2661,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
           dnl Found regex_extra.h
           USE_PHP_REGEX="-DUSE_PHP_REGEX"
           PHP_REGEX_INC="-I$PHP_SRC_DIR"
-          PHP_REGEX_OBJ=php_regex.o
+          PHP_REGEX_OBJ=php_regex.lo
           AC_MSG_RESULT([        found regex_extra.h - building PHP MapScript with PHP's bundled regex ])
         else
           dnl PHP 5.3 changed the layout of regex-related files.
@@ -2740,7 +2670,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
           dnl Found regex.h
           USE_PHP_REGEX="-DUSE_PHP_REGEX"
           PHP_REGEX_INC="-I$PHP_SRC_DIR/ext/ereg/"
-          PHP_REGEX_OBJ=php_regex.o
+          PHP_REGEX_OBJ=php_regex.lo
           AC_MSG_RESULT([        found regex.h - building PHP MapScript with PHP's bundled regex ])
           else
             AC_MSG_ERROR([
@@ -2786,109 +2716,6 @@ if test "x$LD_SHARED" = "x" ; then
   AC_LD_SHARED
 fi
 
-dnl ---------------------------------------------------------------------
-dnl 'apxs' option for PHP built as an Apache module (libphp3.so)
-dnl --with-apxs[=FILE] should be the exact same value that was passed
-dnl   to the PHP configure command.
-dnl
-dnl All we need is to add the Apache include files to the php module
-dnl include path.
-dnl
-dnl The APXS variable also affects the way AC_ADD_RUNPATH() works
-dnl ---------------------------------------------------------------------
-
-AC_ARG_WITH(apxs,
-[  --with-apxs[[=FILE]]      (CURRENTLY DISABLED) 
-                          Use this option only if building the PHP MapScript
-                          on a system where PHP was built as a shared Apache
-                          module.  FILE is the optional pathname to the
-                          Apache apxs tool; defaults to apxs.],,)
-
-if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
-
-  AC_MSG_ERROR([
-!!! The current version of PHP MapScript requires PHP4 configured as  !!!
-!!! a CGI and cannot be used with PHP4 configured as an Apache module,!!!
-!!! so you cannot use the --with-apxs option.                         !!!
-!!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!])
-
-
-  AC_MSG_CHECKING([for location of Apache headers using apxs])
-  if test -z "$MAKE_PHPMS" ; then
-    AC_MSG_ERROR([--with-apxs applies only if --with-php is used.])
-
-  elif test "$with_apxs" = "yes" ; then
-    APXS=apxs
-  else
-    APXS="$with_apxs"
-  fi
-
-  APACHE_INC=-I`$APXS -q INCLUDEDIR`
-  AC_MSG_RESULT($APACHE_INC)
-
-  dnl APACHE_INC substitution is done after --with-apache switch processing
-  dnl below.
-fi
-
-
-dnl ---------------------------------------------------------------------
-dnl '--with-apache' option for PHP built as an Apache module and statically
-dnl linked into the httpd executable.  This option is used to specify the
-dnl location of the apache include files.
-dnl ---------------------------------------------------------------------
-
-AC_ARG_WITH(apache,
-[  --with-apache=DIR       (CURRENTLY DISABLED) 
-                          Use this option only if building the PHP MapScript
-                          on a system where PHP was built as an Apache
-                          module statically linked into the httpd executable.
-                          DIR is the path to the apache include files.],,)
-
-if test -n "$with_apache" -a "$with_apache" != "no" ; then
-
-  AC_MSG_ERROR([
-!!! The current version of PHP MapScript requires PHP4 configured as  !!!
-!!! a CGI and cannot be used with PHP4 configured as an Apache module,!!!
-!!! so you cannot use the --with-apache option.                       !!!
-!!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!])
-
-  AC_MSG_CHECKING([for location of Apache headers])
-  if test -z "$MAKE_PHPMS" ; then
-    AC_MSG_ERROR([--with-apache applies only if --with-php is used.])
-  fi
-
-  AC_EXPAND_PATH($with_apache, APACHE_DIR)
-  test -f $APACHE_DIR/httpd.h && APACHE_INC_DIR="$APACHE_DIR"
-  test -f $APACHE_DIR/include/httpd.h && APACHE_INC_DIR="$APACHE_DIR/include"
-  test -f $APACHE_DIR/src/include/httpd.h && APACHE_INC_DIR="$APACHE_DIR/src/include"
-  if test -n "$APACHE_INC_DIR" ; then
-    APACHE_INC="-I$APACHE_INC_DIR $APACHE_INC"
-    AC_MSG_RESULT("-I$APACHE_INC_DIR")
-  else
-    AC_MSG_ERROR("Could not find httpd.h in $APACHE_DIR.")
-  fi
-fi
-
-AC_SUBST(APACHE_INC, $APACHE_INC)
-
-
-dnl ---------------------------------------------------------------------
-dnl Check --enable-runpath to request including -Wl,-R for runtime
-dnl lib path in link command (disabled by default)
-dnl ---------------------------------------------------------------------
-
-AC_MSG_CHECKING([if --enable-runpath requested])
-AC_ARG_ENABLE(runpath,
-[  --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
-                          Required on *BSD systems.
-  --disable-runpath       Do not link with runtime lib path (the default).],,)
-
-if test "$enable_runpath" != "yes" ; then
-  RPATHS=""
-  AC_MSG_RESULT([no])
-else
-  AC_MSG_RESULT([yes ($RPATHS)])
-fi
 
 dnl ---------------------------------------------------------------------
 dnl Check operating system (used by Java Mapscript and possibily
@@ -2933,7 +2760,7 @@ AC_SUBST(ALL_LIB, $ALL_LIB)
 AC_SUBST(ALL_STATIC_LIB, $ALL_STATIC_LIB)
 AC_SUBST(RPATHS, [$RPATHS])
 
-AC_OUTPUT(Makefile $PHPMS_MAKEFILE mapscript/java/Makefile mapscript/csharp/Makefile)
+AC_OUTPUT(Makefile $PHPMS_MAKEFILE mapscript/python/Makefile mapscript/java/Makefile mapscript/csharp/Makefile)
 
 dnl ---------------------------------------------------------------------------
 dnl Display configuration status

@@ -1,12 +1,15 @@
+# @configure_input@
 # Run ./configure in the main MapServer directory to turn this Makefile.in
 # into a proper Makefile
 
 prefix		=	@prefix@
 exec_prefix	=	@exec_prefix@
-INST_PREFIX	=	@exec_prefix@
-INST_LIB	=	@libdir@
-INST_BIN	=	@bindir@
-
+libdir	=	@libdir@
+bindir	=	@bindir@
+srcdir	=	@srcdir@
+top_builddir = @top_builddir@
+SHELL = @SHELL@
+package     = @PACKAGE_NAME@
 #
 # MS_VERSION - Set by configure based in mapserver.h
 #
@@ -15,9 +18,7 @@ MS_VERSION=	@MS_VERSION@
 #
 # Name of static and shared libs to produce
 #
-LIBMAP_STATIC=	libmapserver.a
-LIBMAP_SHARED=	libmapserver.@SO_EXT@
-LIBMAP_SH_VER=	libmapserver.$(MS_VERSION).@SO_EXT@
+LIBMAP=	libmapserver.la
 
 #
 # If you want to ignore missing datafile errors uncomment the following
@@ -60,19 +61,12 @@ PROJ=      @PROJ_ENABLED@
 #   - Versions 1.6 and greater write PNG (-DUSE_GD_1_6). Add -lpng -lz to GD_LIB line.
 #
 #
-GDFONT_OBJ=gd-1.2/gdfontt.o gd-1.2/gdfonts.o gd-1.2/gdfontmb.o gd-1.2/gdfontl.o gd-1.2/gdfontg.o
 GD_INC=  @GD_INC@
 GD_LIB=  @GD_LIB@
 GD=      @GD_DEF@
 GD_STATIC = @GD_STATIC@
 
-#
-# Optional Anti-Grain Geometry Support.
-#
-AGG=     @AGG_ENABLED@
-AGG_INC=  @AGG_INC@
-AGG_OBJ=  @AGG_OBJ@
-AGG_LIB= @AGG_LIB@
+AGG_INC=  -Irenderers/agg/include
 
 #
 # Optional Opengl Support.
@@ -187,6 +181,11 @@ FASTCGI=@FASTCGI_ENABLED@
 FASTCGI_INC=@FASTCGI_INC@
 FASTCGI_LIB=@FASTCGI_LIB@
 
+APXS=@APXS@
+APACHE_INC=@APACHE_INC@
+APR_INC=@APR_INC@
+APR_LIB=@APR_LIBS@
+
 # OWS: OGC Web Services support
 # OGC WMS Server:  -DUSE_WMS_SVR (Requires PROJ4 support)
 # OGC WMS Client Connections:  -DUSE_WMS_LYR (Requires PROJ4 and libcurl)
@@ -236,25 +235,30 @@ AR= ar rc
 RANLIB= @RANLIB@
 LEX=    @LEX@
 YACC=   @YACC@
+LIBTOOL=@LIBTOOL@
+INSTALL=@INSTALL@
+SED=@SED@
 
-
-# figure out how to build a shared library.  
-# most of the relevant stuff is in AC_LD_SHARED in 
-# aclocal.m4
-
-LD_SHARED = @LD_SHARED@ @LDFLAGS@
-LD_SONAME_LIBMAP = -W1,@SO_COMMAND_NAME@,$(LIBMAP_SH_VER)
+LTCC=$(LIBTOOL) --mode=compile --tag=CC
+LTCXX=$(LIBTOOL) --mode=compile --tag=CXX
+LTLD=$(LIBTOOL) --mode=link --tag=CXX
+LTINSTALL=$(LIBTOOL) --mode=install
+OBJ_SUFFIX=lo
 
 XTRALIBS= @XTRALIBS@
-RUNPATHS= @RPATHS@
+RUNPATHS= -rpath $(libdir)
 
-DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ $(FRIBIDI) -DDISABLE_CVSID
+LT_LDFLAGS= -release $(MS_VERSION) $(RUNPATHS)
+LINK=$(LTLD) $(LD) $(LT_LDFLAGS)
+
+DEFINES = $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ -DDISABLE_CVSID
 
 INCLUDES = $(FT_INC) $(REGEX_INC) $(PNG_INC) $(GIF_INC) $(JPEG_INC) $(GD_INC) \
         $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PROJ_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYSQL_INC) \
         $(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
-        $(FASTCGI_INC) $(EXEMPI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC) $(LIBSVG_CAIRO_INC)
+        $(FASTCGI_INC) $(EXEMPI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC) $(LIBSVG_CAIRO_INC) \
+		  $(APR_INC) $(APACHE_INC)
 
 FLAGS = @DEBUG_FLAGS@ $(DEFINES) $(INCLUDES)
 
@@ -262,34 +266,52 @@ CFLAGS   = @CFLAGS@ $(FLAGS)
 CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 
 # Link flags and shared libs only
-SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(AGG_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
+SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
 	  $(MYSQL_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(EXEMPI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
-	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB) $(LIBSVG_CAIRO_LIB)
+	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB) $(LIBSVG_CAIRO_LIB) \
+	  $(APR_LIB)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC)
 
-EXE_LDFLAGS =	$(RUNPATHS) -L. -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
+EXE_LDFLAGS =	$(RUNPATHS) -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
 
 RM= /bin/rm -f
 
-OBJS= $(AGG_OBJ) mapgeomutil.o mapdummyrenderer.o mapogl.o mapoglrenderer.o mapoglcontext.o \
-				mapimageio.o mapcairo.o maprendering.o mapgeomtransform.o mapquantization.o \
-				maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o \
-				maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o \
-				mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o \
-				mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o \
-				mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o \
-				mapgd.o mapagg.o mapoutput.o mapgdal.o mapimagemap.o mapows.o mapwfs.o \
-				mapwfs11.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mapjoin.o mapgraticule.o \
-				mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o mapwcs11.o mapcpl.o cgiutil.o \
-				maprasterquery.o mapobject.o mapgeos.o classobject.o layerobject.o mapio.o mappool.o \
-				mapregex.o mappluginlayer.o mapogcsos.o mappostgresql.o mapcrypto.o mapowscommon.o \
-				maplibxml2.o mapdebug.o mapchart.o maptclutf.o mapxml.o mapkml.o mapkmlrenderer.o \
-				mapogroutput.o mapwcs20.o  mapogcfiltercommon.o mapunion.o mapcluster.o mapxmp.o \
-				mapuvraster.o
+AGG_OBJ=renderers/agg/src/clipper.$(OBJ_SUFFIX) renderers/agg/src/agg_arc.$(OBJ_SUFFIX) renderers/agg/src/agg_curves.$(OBJ_SUFFIX)\
+		  renderers/agg/src/agg_vcgen_contour.$(OBJ_SUFFIX) renderers/agg/src/agg_vcgen_dash.$(OBJ_SUFFIX)\
+		  renderers/agg/src/agg_vcgen_stroke.$(OBJ_SUFFIX) renderers/agg/src/agg_image_filters.$(OBJ_SUFFIX)\
+		  renderers/agg/src/agg_line_aa_basics.$(OBJ_SUFFIX) renderers/agg/src/agg_line_profile_aa.$(OBJ_SUFFIX)\
+		  renderers/agg/src/agg_sqrt_tables.$(OBJ_SUFFIX) renderers/agg/src/agg_embedded_raster_fonts.$(OBJ_SUFFIX)\
+		  renderers/agg/src/agg_trans_affine.$(OBJ_SUFFIX) renderers/agg/src/agg_vpgen_clip_polygon.$(OBJ_SUFFIX)\
+		  renderers/agg/src/agg_vpgen_clip_polyline.$(OBJ_SUFFIX) renderers/agg/src/agg_font_freetype.$(OBJ_SUFFIX)
+
+OBJS= $(AGG_OBJ) mapgeomutil.$(OBJ_SUFFIX) mapdummyrenderer.$(OBJ_SUFFIX) mapogl.$(OBJ_SUFFIX) mapoglrenderer.$(OBJ_SUFFIX) mapoglcontext.$(OBJ_SUFFIX) \
+				mapimageio.$(OBJ_SUFFIX) mapcairo.$(OBJ_SUFFIX) maprendering.$(OBJ_SUFFIX) mapgeomtransform.$(OBJ_SUFFIX) mapquantization.$(OBJ_SUFFIX) \
+				maptemplate.$(OBJ_SUFFIX) mapbits.$(OBJ_SUFFIX) maphash.$(OBJ_SUFFIX) mapshape.$(OBJ_SUFFIX) mapxbase.$(OBJ_SUFFIX) mapparser.$(OBJ_SUFFIX) maplexer.$(OBJ_SUFFIX) \
+				maptree.$(OBJ_SUFFIX) mapsearch.$(OBJ_SUFFIX) mapstring.$(OBJ_SUFFIX) mapsymbol.$(OBJ_SUFFIX) mapfile.$(OBJ_SUFFIX) maplegend.$(OBJ_SUFFIX) maputil.$(OBJ_SUFFIX) \
+				mapscale.$(OBJ_SUFFIX) mapquery.$(OBJ_SUFFIX) maplabel.$(OBJ_SUFFIX) maperror.$(OBJ_SUFFIX) mapprimitive.$(OBJ_SUFFIX) mapproject.$(OBJ_SUFFIX) mapraster.$(OBJ_SUFFIX) \
+				mapsde.$(OBJ_SUFFIX) mapogr.$(OBJ_SUFFIX) mappostgis.$(OBJ_SUFFIX) maplayer.$(OBJ_SUFFIX) mapresample.$(OBJ_SUFFIX) mapwms.$(OBJ_SUFFIX) \
+				mapwmslayer.$(OBJ_SUFFIX) maporaclespatial.$(OBJ_SUFFIX) mapgml.$(OBJ_SUFFIX) mapprojhack.$(OBJ_SUFFIX) mapthread.$(OBJ_SUFFIX) mapdraw.$(OBJ_SUFFIX) \
+				mapgd.$(OBJ_SUFFIX) mapagg.$(OBJ_SUFFIX) mapoutput.$(OBJ_SUFFIX) mapgdal.$(OBJ_SUFFIX) mapimagemap.$(OBJ_SUFFIX) mapows.$(OBJ_SUFFIX) mapwfs.$(OBJ_SUFFIX) \
+				mapwfs11.$(OBJ_SUFFIX) mapwfslayer.$(OBJ_SUFFIX) mapcontext.$(OBJ_SUFFIX) maphttp.$(OBJ_SUFFIX) mapdrawgdal.$(OBJ_SUFFIX) mapjoin.$(OBJ_SUFFIX) mapgraticule.$(OBJ_SUFFIX) \
+				mapcopy.$(OBJ_SUFFIX) mapogcfilter.$(OBJ_SUFFIX) mapogcsld.$(OBJ_SUFFIX) maptime.$(OBJ_SUFFIX) mapwcs.$(OBJ_SUFFIX) mapwcs11.$(OBJ_SUFFIX) mapcpl.$(OBJ_SUFFIX) cgiutil.$(OBJ_SUFFIX) \
+				maprasterquery.$(OBJ_SUFFIX) mapobject.$(OBJ_SUFFIX) mapgeos.$(OBJ_SUFFIX) classobject.$(OBJ_SUFFIX) layerobject.$(OBJ_SUFFIX) mapio.$(OBJ_SUFFIX) mappool.$(OBJ_SUFFIX) \
+				mapregex.$(OBJ_SUFFIX) mappluginlayer.$(OBJ_SUFFIX) mapogcsos.$(OBJ_SUFFIX) mappostgresql.$(OBJ_SUFFIX) mapcrypto.$(OBJ_SUFFIX) mapowscommon.$(OBJ_SUFFIX) \
+				maplibxml2.$(OBJ_SUFFIX) mapdebug.$(OBJ_SUFFIX) mapchart.$(OBJ_SUFFIX) maptclutf.$(OBJ_SUFFIX) mapxml.$(OBJ_SUFFIX) mapkml.$(OBJ_SUFFIX) mapkmlrenderer.$(OBJ_SUFFIX) \
+				mapogroutput.$(OBJ_SUFFIX) mapwcs20.$(OBJ_SUFFIX)  mapogcfiltercommon.$(OBJ_SUFFIX) mapunion.$(OBJ_SUFFIX) mapcluster.$(OBJ_SUFFIX) mapxmp.$(OBJ_SUFFIX) \
+				mapuvraster.$(OBJ_SUFFIX) mapservutil.$(OBJ_SUFFIX) maptile.$(OBJ_SUFFIX)
+
+HEADERS=	cgiutil.h mapgml.h mapoglcontext.h mapregex.h\
+			maptile.h dxfcolor.h maphash.h mapoglrenderer.h mapresample.h\
+			maptime.h mapagg.h maphttp.h mapows.h mapserv.h\
+			maptree.h mapaxisorder.h mapio.h mapowscommon.h\
+			mapwcs.h mapcopy.h mapkmlrenderer.h mapparser.h mapshape.h\
+			mapentities.h maplibxml2.h mappostgis.h mapsymbol.h maperror.h\
+			mapogcfilter.h mapprimitive.h maptemplate.h mapfile.h mapogcsld.h\
+			mapproject.h mapthread.h
 
 EXE_LIST = 	shp2img legend mapserv shptree shptreevis \
 		shptreetst scalebar sortshp mapscriptvars tile4ms \
@@ -298,7 +320,8 @@ EXE_LIST = 	shp2img legend mapserv shptree shptreevis \
 #
 # --- You shouldn't have to edit anything else. ---
 #
-all: $(MAKE_GD) libmapserver.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
+all: $(LIBMAP) $(EXE_LIST) @MAKE_PHPMS@ 
+EXE_LDFLAGS = $(LIBMAP)
 
 # Explicitly invoke this rule when maplexer.l is altered.  We don't do
 # it automatically for the reasons listed in #2310
@@ -311,27 +334,29 @@ maplexer.c:	maplexer.l
 	@echo '--  Please run "make lexer" if you have altered maplexer.l     -'
 	@echo '----------------------------------------------------------------'
 
+Makefile: Makefile.in config.status
+	./config.status $@
+
+config.status: configure
+	./config.status --recheck
 #
 # Non-gnumake's don't seem to use this pattern rule, 
 # but have a similar built-in rule for C code.  So try not
 # to change these, since the change is unlikely to stick.
 # 
-.c.o:
-	$(CC) -c $(CFLAGS) $< -o $@
-   
-mapogl.o: mapogl.cpp
-	$(CXX) -c $(CXXFLAGS) mapogl.cpp -o mapogl.o
+.SUFFIXES:
+.SUFFIXES: .cpp .c .$(OBJ_SUFFIX)
 
-mapoglrenderer.o: mapoglrenderer.cpp mapoglrenderer.h
-	$(CXX) -c $(CXXFLAGS) mapoglrenderer.cpp -o mapoglrenderer.o
-   
-mapoglcontext.o: mapoglcontext.cpp mapoglcontext.h
-	$(CXX) -c $(CXXFLAGS) mapoglcontext.cpp -o mapoglcontext.o
-   
-mapogr.o:	mapogr.cpp
-	$(CXX) -c $(CXXFLAGS) mapogr.cpp -o mapogr.o
+mapserver.h: $(HEADERS)
+	touch mapserver.h
 
-php_mapscript:: $(LIBMAP_STATIC)
+.c.$(OBJ_SUFFIX): $(HEADERS)
+	$(LTCC) $(CC) -c $(CFLAGS) $< -o $@
+
+.cpp.$(OBJ_SUFFIX): mapserver.h
+	$(LTCXX) $(CXX) -c $(CXXFLAGS) $< -o $@
+   
+php_mapscript:: $(LIBMAP)
 	cd mapscript/php; $(MAKE); cd ../..
 
 maplexer.o: maplexer.c mapserver.h mapfile.h
@@ -341,70 +366,61 @@ mapparser.o: mapparser.c mapserver.h
 mapparser.c: mapparser.y
 	$(YACC) -d -omapparser.c mapparser.y
 
-lib:    $(LIBMAP_STATIC)
-libmapserver: $(LIBMAP_STATIC)
-libmapserver.a: mapserver.h $(OBJS)
-	$(AR) $(LIBMAP_STATIC) $(OBJS)
-	$(RANLIB) $(LIBMAP_STATIC)
-	# We don't want to let the shared library get out of sync with the
-	# static library if it exists. 
-	if test -r $(LIBMAP_SHARED) ; then \
-	  make shared ; \
-	fi
+mod_mapserver.la: $(LIBMAP) mod_mapserver.c
+	$(APXS) -c -Wc,"$(CFLAGS)" $(LIBMAP) mod_mapserver.c
 
-shared:	$(LIBMAP_SHARED)
-$(LIBMAP_SHARED):	$(LIBMAP_STATIC)
-	$(LD_SHARED) $(LD_SONAME_LIBMAP) -o $(LIBMAP_SH_VER) \
-		$(RUNPATHS) $(OBJS) $(SUP_LIBS) $(STATIC_LIBS) \
-	&& ln -f -s $(LIBMAP_SH_VER) $(LIBMAP_SHARED)
 
-shp2pdf: $(LIBMAP_STATIC) shp2pdf.o mapserver.h
-	$(LD) $(CFLAGS) shp2pdf.o $(EXE_LDFLAGS) -o shp2pdf
 
-shp2img: $(LIBMAP_STATIC)  shp2img.o mapserver.h
-	$(LD) $(CFLAGS) shp2img.o $(EXE_LDFLAGS) -o shp2img
+$(LIBMAP): $(OBJS)
+	$(LINK) $(OBJS) $(SUP_LIBS) $(STATIC_LIBS) -o $(LIBMAP)
 
-sym2img: $(LIBMAP_STATIC)   sym2img.o mapserver.h
-	$(LD) $(CFLAGS) sym2img.o $(EXE_LDFLAGS) -o sym2img
+shp2pdf: $(LIBMAP) shp2pdf.$(OBJ_SUFFIX)
+	$(LINK) shp2pdf.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shp2pdf
 
-legend: $(LIBMAP_STATIC)  legend.o mapserver.h
-	$(LD) $(CFLAGS) legend.o $(EXE_LDFLAGS) -o legend
+shp2img: $(LIBMAP) shp2img.$(OBJ_SUFFIX)
+	$(LINK) shp2img.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shp2img
 
-scalebar: $(LIBMAP_STATIC)  scalebar.o mapserver.h
-	$(LD) $(CFLAGS) scalebar.o $(EXE_LDFLAGS) -o scalebar
+sym2img:  sym2img.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) sym2img.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o sym2img
 
-mapserv: mapserv.h maptile.h $(LIBMAP_STATIC)  mapserv.o cgiutil.o maptile.o mapserver.h
-	$(LD) $(CFLAGS) mapserv.o cgiutil.o maptile.o $(EXE_LDFLAGS) -o mapserv
+legend: legend.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) legend.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o legend
 
-shpindex: $(LIBMAP_STATIC) shpindex.o mapserver.h
-	$(LD) $(CFLAGS) shpindex.o $(EXE_LDFLAGS) -o shpindex
+scalebar: scalebar.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) scalebar.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o scalebar
 
-shptree: $(LIBMAP_STATIC) shptree.o mapserver.h
-	$(LD) $(CFLAGS) shptree.o $(EXE_LDFLAGS) -o shptree
+mapserv: mapserv.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) mapserv.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o mapserv
 
-shptreevis: $(LIBMAP_STATIC) shptreevis.o mapserver.h
-	$(LD) $(CFLAGS) shptreevis.o $(EXE_LDFLAGS) -o shptreevis
+shpindex: shpindex.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) shpindex.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shpindex
 
-shptreetst: $(LIBMAP_STATIC) shptreetst.o mapserver.h
-	$(LD) $(CFLAGS) shptreetst.o $(EXE_LDFLAGS) -o shptreetst
+shptree: shptree.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) shptree.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shptree
 
-sortshp: $(LIBMAP_STATIC) sortshp.o mapserver.h
-	$(LD) $(CFLAGS) sortshp.o $(EXE_LDFLAGS) -o sortshp
+shptreevis: shptreevis.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) shptreevis.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shptreevis
 
-tile4ms: $(LIBMAP_STATIC) tile4ms.o mapserver.h
-	$(LD) $(CFLAGS) tile4ms.o $(EXE_LDFLAGS) -o tile4ms
+shptreetst: shptreetst.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) shptreetst.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shptreetst
 
-msencrypt: $(LIBMAP_STATIC) msencrypt.o mapserver.h
-	$(LD) $(CFLAGS) msencrypt.o $(EXE_LDFLAGS) -o msencrypt
+sortshp: sortshp.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) sortshp.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o sortshp
 
-testexpr: $(LIBMAP_STATIC) testexpr.o mapparser.o maplexer.o mapserver.h
-	$(LD) $(CFLAGS) testexpr.o $(EXE_LDFLAGS) -o testexpr
+tile4ms: tile4ms.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) tile4ms.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o tile4ms
 
-testcopy: $(LIBMAP_STATIC) testcopy.o mapcopy.o mapserver.h
-	$(LD) $(CFLAGS) testcopy.o $(EXE_LDFLAGS) -o testcopy
+msencrypt: msencrypt.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) msencrypt.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o msencrypt
 
-test_mapcrypto: $(LIBMAP_STATIC) mapcrypto.c mapserver.h
-	$(CC) $(CFLAGS) mapcrypto.c -DTEST_MAPCRYPTO $(EXE_LDFLAGS) -o test_mapcrypto
+testexpr: testexpr.$(OBJ_SUFFIX) mapparser.$(OBJ_SUFFIX) maplexer.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) testexpr.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o testexpr
+
+testcopy: testcopy.$(OBJ_SUFFIX) $(LIBMAP)
+	$(LINK) testcopy.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o testcopy
+
+test_mapcrypto: mapcrypto.c mapserver.h $(LIBMAP)
+	$(LINK) mapcrypto.c -DTEST_MAPCRYPTO $(EXE_LDFLAGS) -o test_mapcrypto
 
 mapscriptvars:	Makefile
 	touch mapscriptvars
@@ -423,35 +439,53 @@ mapserver-config: Makefile
 	echo 'CONFIG_CFLAGS="$(CFLAGS)"' >> mapserver-config
 	echo 'CONFIG_DEFINES="$(DEFINES)"' >> mapserver-config
 	echo 'CONFIG_INCLUDES="$(INCLUDES)"' >> mapserver-config
-	echo 'CONFIG_VERSION="'`grep '#define MS_VERSION ' mapserver.h | sed 's/\"//g' | sed 's/#define MS_VERSION //'`'"' >> mapserver-config
+	echo 'CONFIG_VERSION="'`grep '#define MS_VERSION ' mapserver.h | $(SED) 's/\"//g' | $(SED) 's/#define MS_VERSION //'`'"' >> mapserver-config
 	cat mapserver-config.in >> mapserver-config
 	chmod a+x mapserver-config
 
 php_mapscript_clean::
 	cd mapscript/php; $(MAKE) clean; cd ../..
 
-install:
+install: install-lib install-bin install-cgibin
+
+install-cgibin: install-lib install-bin
 	@echo ""
-	@echo "***** MapServer Installation *****"
-	@echo "To install MapServer, copy the 'mapserv' file to your web server's cgi-bin "
+	@echo "***** MapServer CGI / FastCGI Installation *****"
+	@echo "To install MapServer, copy the \"$(bindir)/mapserv\" file to your web server's cgi-bin "
 	@echo "directory."
 	@echo "If you use MapScript then see the documentation for your specific MapScript"
 	@echo "version for installation instructions."
 	@echo ""
 
-install-force:	all
-	cp $(EXE_LIST) $(INST_BIN)
-	if test -x $(LIBMAP_SHARED) ; then \
-	  cp $(LIBMAP_SH_VER) $(INST_LIB) ; \
-	  (cd $(INST_LIB) ; ln -f -s $(LIBMAP_SH_VER) $(LIBMAP_SHARED) ) ; \
-	fi
+install-dirs:
+	$(INSTALL) -d $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)
+
+install-bin: install-dirs install-lib $(EXE_LIST)
+	@list='$(EXE_LIST)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    $(LTINSTALL) $(INSTALL) $$p $(DESTDIR)$(bindir)/$$p; \
+	  else :; fi; \
+	done
+
+install-lib: install-dirs $(EXE_LIST)
+	$(LTINSTALL) $(INSTALL) $(LIBMAP) $(DESTDIR)$(libdir)/$(LIBMAP); \
 
 uninstall:
-	(cd $(INST_BIN) && rm $(EXE_LIST) )
-	(cd $(INST_LIB) && rm $(LIBMAP_SH_VER) $(LIBMAP_SHARED) )
+	@list='$(EXE_LIST)'; for p in $$list; do \
+	  if test -f $(DESTDIR)$(bindir)/$$p; then \
+	    $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(bindir)/$$p; \
+	  else :; fi; \
+	done
+	$(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$(LIBMAP)
 
-clean: @MAKE_PHPMS_CLEAN@
-	rm -f $(LIBMAP_STATIC) $(LIBMAP_SHARED) $(LIBMAP_SH_VER) *.o $(EXE_LIST) renderers/agg/src/*.o
+install-module: mod_mapserver.la install-lib
+	$(APXS) -i -a -n "mapserver" mod_mapserver.la
+
+clean:
+	rm -rf $(LIBMAP) *.o *.lo *.la .libs $(EXE_LIST) renderers/agg/src/*.o renderers/agg/src/*.lo renderers/agg/src/.libs
+	cd mapscript/python && make clean
+	cd mapscript/php && make clean
+
 
 exe-clean:
 	rm -f $(EXE_LIST)

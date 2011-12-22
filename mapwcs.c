@@ -152,9 +152,10 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   if (encoding)
-      msIO_printf("Content-type: application/vnd.ogc.se_xml; charset=%s%c%c", encoding,10,10);
+     msIO_setHeader("Content-type","application/vnd.ogc.se_xml; charset=%s", encoding);
   else
-      msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+     msIO_setHeader("Content-type","application/vnd.ogc.se_xml");
+  msIO_sendHeaders();
 
   /* msIO_printf("Content-type: text/xml%c%c",10,10); */
 
@@ -1003,9 +1004,10 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
       strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata") != 0 &&
       strcasecmp(params->section, "/") != 0) {
       if (encoding)
-          msIO_printf("Content-type: application/vnd.ogc.se_xml; charset=%s%c%c", encoding,10,10);
+         msIO_setHeader("Content-type","application/vnd.ogc.se_xml; charset=%s", encoding);
       else
-          msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+         msIO_setHeader("Content-type","application/vnd.ogc.se_xml");
+      msIO_sendHeaders();
       msSetError( MS_WCSERR,
         "Invalid SECTION parameter \"%s\"",
         "msWCSGetCapabilities()", params->section);
@@ -1015,9 +1017,10 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 
   else {
       if (encoding)
-          msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+         msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
       else
-          msIO_printf("Content-type: text/xml%c%c",10,10);
+         msIO_setHeader("Content-type","text/xml");
+      msIO_sendHeaders();
   
     /* print common capability elements  */
     /* TODO: DocType? */
@@ -1382,9 +1385,10 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
 
   /* printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
   if (encoding)
-      msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+     msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
   else
-      msIO_printf("Content-type: text/xml%c%c",10,10);
+     msIO_setHeader("Content-type","text/xml");
+  msIO_sendHeaders();
 
   /* print common capability elements  */
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
@@ -1969,13 +1973,12 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
       /* Do we have a predefined filename? */
       fo_filename = msGetOutputFormatOption( format, "FILENAME", NULL );
       if( fo_filename )
-            msIO_fprintf( stdout, 
-                          "Content-Disposition: attachment; filename=%s\n",
+            msIO_setHeader("Content-Disposition","attachment; filename=%s",
                           fo_filename );
 
       /* Emit back to client. */
-      msIO_printf("Content-type: %s%c%c", 
-                  MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+      msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(map->outputformat));
+      msIO_sendHeaders();
       status = msSaveImage(map, image, NULL);
       
       if( status != MS_SUCCESS )

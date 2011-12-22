@@ -37,6 +37,12 @@
 #include <io.h>
 #endif
 
+#ifdef MOD_WMS_ENABLED
+#  include "httpd.h"
+#  include "apr_strings.h"
+#endif
+
+
 MS_CVSID("$Id$")
 
 static int is_msIO_initialized = MS_FALSE;
@@ -172,6 +178,52 @@ msIOContext *msIO_getHandler( FILE * fp )
     else
         return NULL;
 }
+
+void msIO_setHeader (const char *header, const char* value, ...)
+{
+    va_list args;
+    va_start( args, value );
+#ifdef MOD_WMS_ENABLED
+   msIOContext *ioctx = msIO_getHandler (stdout);
+   if(ioctx && !strcmp(ioctx->label,"apache")) {
+
+      request_rec *r = (request_rec*) (ioctx->cbData);
+      char *fullvalue = apr_pvsprintf(r->pool, value,args);
+      if (strcasecmp (header, "Content-type") == 0)
+      {
+         r->content_type = fullvalue; 
+      }
+      else if (strcasecmp (header, "Status") == 0)
+      {
+         r->status = atoi (fullvalue);
+      }
+      else
+      {
+         apr_table_setn (r->headers_out,
+               apr_pstrdup (r->pool, header),
+               fullvalue
+               );
+      }
+   } else {
+#endif // MOD_WMS_ENABLED
+    msIO_fprintf(stdout,"%s: ",header);
+    msIO_vfprintf(stdout,value,args);
+    msIO_fprintf(stdout,"\n");
+#ifdef MOD_WMS_ENABLED
+   }
+#endif
+}
+
+void msIO_sendHeaders ()
+{
+#ifdef MOD_WMS_ENABLED
+   msIOContext *ioctx = msIO_getHandler (stdout);
+   if(ioctx && !strcmp(ioctx->label,"apache")) return;
+#endif // !MOD_WMS_ENABLED
+  msIO_printf ("\n");
+  fflush (stdout);
+}
+
 
 /************************************************************************/
 /*                        msIO_installHandlers()                        */
@@ -312,55 +364,12 @@ static int _ms_vsprintf(char **workBufPtr, const char *format, va_list ap )
 int msIO_printf( const char *format, ... )
 
 {
-    va_list args, args_copy;
-    int     return_val;
-    msIOContext *context;
-    char workBuf[8000], *largerBuf = NULL;
-
+    va_list args;
+    int ret;
     va_start( args, format );
-
-#if !defined(HAVE_VSNPRINTF)
-    return_val = vsprintf( workBuf, format, args);
-
-    if( return_val < 0 || return_val >= sizeof(workBuf) )
-    {
-        va_end( args );
-        msSetError(MS_MISCERR, "Possible buffer overrun.", "msIO_printf()");
-        return -1;
-    }
-
-#else
-
-#ifdef va_copy
-    va_copy( args_copy, args );
-#else
-    args_copy = args;
-#endif /* va_copy */
-
-    return_val = vsnprintf( workBuf, sizeof(workBuf), format, args );
-    if (return_val == -1 || return_val >= sizeof(workBuf)-1)
-    {
-        return_val = _ms_vsprintf(&largerBuf, format, args_copy );
-    }
-    va_end(args_copy);
-
-#endif /* HAVE_VSNPRINTF */
-
-    va_end( args );
-
-    if (return_val < 0)
-        return -1;
-
-    context = msIO_getHandler( stdout );
-    if( context == NULL )
-        return -1;
-
-    return_val = msIO_contextWrite( context, 
-                                    largerBuf?largerBuf:workBuf, 
-                                    return_val );
-    msFree(largerBuf);
-
-    return return_val;
+    ret = msIO_vfprintf(stdout,format,args);
+    va_end(args);
+    return ret;
 }
 
 /************************************************************************/
@@ -370,56 +379,12 @@ int msIO_printf( const char *format, ... )
 int msIO_fprintf( FILE *fp, const char *format, ... )
 
 {
-    va_list args, args_copy;
-    int     return_val;
-    msIOContext *context;
-    char workBuf[8000], *largerBuf = NULL;
-
+    va_list args;
+    int ret;
     va_start( args, format );
-
-#if !defined(HAVE_VSNPRINTF)
-    return_val = vsprintf( workBuf, format, args);
-
-    if( return_val < 0 || return_val >= sizeof(workBuf) )
-    {
-        va_end( args );
-        msSetError(MS_MISCERR, "Possible buffer overrun.", "msIO_fprintf()");
-        return -1;
-    }
-
-#else
-
-#ifdef va_copy
-    va_copy( args_copy, args );
-#else
-    args_copy = args;
-#endif /* va_copy */
-
-    return_val = vsnprintf( workBuf, sizeof(workBuf), format, args );
-    if (return_val == -1 || return_val >= sizeof(workBuf)-1)
-    {
-        return_val = _ms_vsprintf(&largerBuf, format, args_copy );
-    }
-    va_end(args_copy);
-
-#endif /* HAVE_VSNPRINTF */
-
-    va_end( args );
-
-    if (return_val < 0)
-        return -1;
-
-    context = msIO_getHandler( fp );
-    if( context == NULL )
-        return_val = fwrite( largerBuf?largerBuf:workBuf, 1, return_val, fp );
-    else
-        return_val =  msIO_contextWrite( context, 
-                                         largerBuf?largerBuf:workBuf, 
-                                         return_val );
-
-    msFree(largerBuf);
-
-    return return_val;
+    ret = msIO_vfprintf(fp,format,args);
+    va_end(args);
+    return ret;
 }
 
 /************************************************************************/

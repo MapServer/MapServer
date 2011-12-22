@@ -75,9 +75,10 @@ int msWFSException11(mapObj *map, const char *locator,
     xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
     if (encoding)
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
     else
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+        msIO_setHeader("Content-type","text/xml");
+    msIO_sendHeaders();
 
     xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
     
@@ -461,9 +462,10 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
         return MS_FAILURE;
      
     if (encoding)
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
     else
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+        msIO_setHeader("Content-type","text/xml");
+    msIO_sendHeaders();
     
     context = msIO_getHandler(stdout);
 

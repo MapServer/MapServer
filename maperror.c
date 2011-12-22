@@ -492,7 +492,8 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 
   /* actually write the image */
   if(!filename) {
-      msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
+      msIO_setHeader("Content-type","%s");
+      msIO_sendHeaders();
   }
   msSaveImage(NULL,img,filename);
   msFreeImage(img);

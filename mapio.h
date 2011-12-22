@@ -30,20 +30,11 @@
 #ifndef MAPIO_H
 #define MAPIO_H
 
-#define USE_MAPIO
-
-#if defined(USE_FASTCGI) && !defined(USE_MAPIO)
-#define USE_MAPIO
-#endif
-
-
 /*
 ** We deliberately emulate stdio functions in the msIO cover functions. 
 ** This makes it easy for folks to understand the semantics, and means we
 ** can just #define things to use stdio in the simplest case. 
 */
-
-#ifdef USE_MAPIO
 
 #include <stdarg.h>
 
@@ -57,16 +48,6 @@ int MS_DLL_EXPORT msIO_fprintf( FILE *stream, const char *format, ... );
 int MS_DLL_EXPORT msIO_fwrite( const void *ptr, size_t size, size_t nmemb, FILE *stream );
 int MS_DLL_EXPORT msIO_fread( void *ptr, size_t size, size_t nmemb, FILE *stream );
 int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap );
-
-#else
-
-#define msIO_printf   printf
-#define msIO_fprintf  fprintf
-#define msIO_fwrite   fwrite
-#define msIO_fread    fread
-#define msIO_vfprintf vfprintf
-
-#endif
 
 int MS_DLL_EXPORT msIO_installFastCGIRedirect( void );
 gdIOCtx MS_DLL_EXPORT *msIO_getGDIOCtx( FILE *fp );
@@ -89,6 +70,8 @@ int MS_DLL_EXPORT msIO_installHandlers( msIOContext *stdin_context,
                                         msIOContext *stdout_context,
                                         msIOContext *stderr_context );
 msIOContext MS_DLL_EXPORT *msIO_getHandler( FILE * );
+void msIO_setHeader (const char *header, const char* value, ...);
+void msIO_sendHeaders(void);
 
 /*
 ** These can be used instead of the stdio style functions if you have

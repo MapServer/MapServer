@@ -2157,7 +2157,7 @@ void *msSmallMalloc( size_t nSize )
 
     if( nSize < 0 )
     {
-        fprintf(stderr, "msSmallMalloc(%ld): Silly size requested.\n",
+        msIO_fprintf(stderr, "msSmallMalloc(%ld): Silly size requested.\n",
                 (long) nSize );
         return NULL;
     }
@@ -2165,7 +2165,7 @@ void *msSmallMalloc( size_t nSize )
     pReturn = malloc( nSize );
     if( pReturn == NULL )
     {
-        fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
+        msIO_fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
                 (long) nSize );
         exit(1);
     }
@@ -2188,7 +2188,7 @@ void * msSmallRealloc( void * pData, size_t nNewSize )
 
     if( nNewSize < 0 )
     {
-        fprintf(stderr, "msSmallRealloc(%ld): Silly size requested.\n",
+        msIO_fprintf(stderr, "msSmallRealloc(%ld): Silly size requested.\n",
                 (long) nNewSize );
         return NULL;
     }
@@ -2197,7 +2197,7 @@ void * msSmallRealloc( void * pData, size_t nNewSize )
 
     if( pReturn == NULL )
     {
-        fprintf(stderr, "msSmallRealloc(): Out of memory allocating %ld bytes.\n",
+        msIO_fprintf(stderr, "msSmallRealloc(): Out of memory allocating %ld bytes.\n",
                 (long)nNewSize );
         exit(1);
     }
@@ -2221,7 +2221,7 @@ void *msSmallCalloc( size_t nCount, size_t nSize )
     pReturn = calloc( nCount, nSize );
     if( pReturn == NULL )
     {
-        fprintf(stderr, "msSmallCalloc(): Out of memory allocating %ld bytes.\n",
+        msIO_fprintf(stderr, "msSmallCalloc(): Out of memory allocating %ld bytes.\n",
                 (long)(nCount*nSize));
         exit(1);
     }

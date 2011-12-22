@@ -626,10 +626,10 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 /* -------------------------------------------------------------------- */
     if( EQUAL(storage,"stream") )
     {
-        if( sendheaders && format->mimetype )
-            msIO_fprintf( stdout, 
-                          "Content-Type: %s%c%c",
-                          format->mimetype, 10, 10 );
+        if( sendheaders && format->mimetype ) {
+            msIO_setHeader("Content-type",format->mimetype);
+            msIO_sendHeaders();
+        }
         else
             msIO_fprintf( stdout, "%c", 10 );
     }
@@ -956,15 +956,13 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         int  bytes_read;
         FILE *fp;
 
-        if( sendheaders )
-            msIO_fprintf( stdout, 
-                          "Content-Disposition: attachment; filename=%s\n",
+        if( sendheaders ) {
+            msIO_setHeader("Content-Disposition","attachment; filename=%s",
                           CPLGetFilename( file_list[0] ) );
-
-        if( sendheaders && format->mimetype )
-            msIO_fprintf( stdout, 
-                          "Content-Type: %s%c%c",
-                          format->mimetype, 10, 10 );
+            if( format->mimetype )
+               msIO_setHeader("Content-Type",format->mimetype);
+            msIO_sendHeaders();
+        }
         else
             msIO_fprintf( stdout, "%c", 10 );
 
@@ -990,10 +988,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     else if( EQUAL(form,"multipart") )
     {
         static const char *boundary = "xxOGRBoundaryxx";
-        msIO_fprintf( stdout, 
-                      "Content-Type: multipart/mixed; boundary=%s%c%c"
-                      "--%s\n",
-                      boundary, 10, 10, boundary );
+        msIO_setHeader("Content-Type","multipart/mixed; boundary=%s",boundary);
+        msIO_sendHeaders();
+        msIO_fprintf(stdout,"--%s\n",boundary );
 
         for( i = 0; file_list != NULL && file_list[i] != NULL; i++ )
         {
@@ -1078,11 +1075,11 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         }
         CPLCloseZip( hZip );
 
-        if( sendheaders )
-            msIO_fprintf( stdout, 
-                          "Content-Disposition: attachment; filename=%s\n"
-                          "Content-Type: application/zip%c%c",
-                          fo_filename, 10, 10 );
+        if( sendheaders ) {
+            msIO_setHeader("Content-Disposition","attachment; filename=%s\n",fo_filename);
+            msIO_setHeader("Content-Type","application/zip");
+            msIO_sendHeaders();
+        }
 
         fp = VSIFOpenL( zip_filename, "r" );
         if( fp == NULL )

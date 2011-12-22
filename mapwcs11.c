@@ -82,9 +82,10 @@ int msWCSException11(mapObj *map, const char *locator,
   psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   if (encoding)
-      msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+     msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
   else
-      msIO_printf("Content-type: text/xml%c%c",10,10);
+     msIO_setHeader("Content-type","text/xml");
+  msIO_sendHeaders();
 
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
     
@@ -573,9 +574,10 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
         return MS_FAILURE;
      
     if (encoding)
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
     else
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+        msIO_setHeader("Content-type","text/xml");
+    msIO_sendHeaders();
     
     context = msIO_getHandler(stdout);
 
@@ -969,9 +971,10 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
             return MS_FAILURE;
      
         if (encoding)
-            msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+           msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
         else
-            msIO_printf("Content-type: text/xml%c%c",10,10);
+           msIO_setHeader("Content-type","text/xml");
+        msIO_sendHeaders();
     
         context = msIO_getHandler(stdout);
 
@@ -1197,11 +1200,11 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 /* -------------------------------------------------------------------- */
 /*      Output stock header.                                            */
 /* -------------------------------------------------------------------- */
-    if (encoding)
+    if (encoding) {
+        msIO_setHeader("Content-Type","multipart/mixed; boundary=wcs");
+        msIO_sendHeaders();
         msIO_fprintf( 
             stdout, 
-            "Content-Type: multipart/mixed; boundary=wcs%c%c"
-            "--wcs\n"
             "Content-Type: text/xml; charset=%s\n"
             "Content-ID: wcs.xml%c%c"
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -1212,14 +1215,13 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
             "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
             "  <Coverage>\n",
-            10, 10,
             encoding,
             10, 10 );
-    else
+    } else {
+        msIO_setHeader("Content-Type","multipart/mixed; boundary=wcs");
+        msIO_sendHeaders();
         msIO_fprintf( 
             stdout, 
-            "Content-Type: multipart/mixed; boundary=wcs%c%c"
-            "--wcs\n"
             "Content-Type: text/xml\n"
             "Content-ID: wcs.xml%c%c"
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -1230,8 +1232,8 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
             "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
             "  <Coverage>\n",
-            10, 10,
             10, 10 );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      If we weren't able to write data under /vsimem, then we just    */

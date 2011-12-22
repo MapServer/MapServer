@@ -2157,7 +2157,7 @@ MS_DLL_EXPORT int msRASTERLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msUVRASTERLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msPluginLayerInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msUnionLayerInitializeVirtualTable(layerObj *layer);
-MS_DLL_EXPORT void msPluginFreeVirtualTableFactory();
+MS_DLL_EXPORT void msPluginFreeVirtualTableFactory(void);
 
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */

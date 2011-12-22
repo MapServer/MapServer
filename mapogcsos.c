@@ -104,9 +104,10 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode) {
   psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   if (encoding)
-      msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+     msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
   else
-      msIO_printf("Content-type: text/xml%c%c",10,10);
+     msIO_setHeader("Content-type","text/xml");
+  msIO_sendHeaders();
 
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
     
@@ -1726,9 +1727,10 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
        return MS_FAILURE;
      
      if (encoding)
-         msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
      else
-         msIO_printf("Content-type: text/xml%c%c",10,10);
+        msIO_setHeader("Content-type","text/xml");
+     msIO_sendHeaders();
     
     /*TODO* : check the encoding validity. Internally libxml2 uses UTF-8
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -2602,9 +2604,10 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
    
     /* output results */    
     if (encoding)
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
     else
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+        msIO_setHeader("Content-type","text/xml");
+    msIO_sendHeaders();
 
      context = msIO_getHandler(stdout);
      xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);

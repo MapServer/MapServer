@@ -106,6 +106,24 @@ typedef struct
 
   double Buffer;
  
+  int SearchMap; /* apply pan/zoom BEFORE doing the query (e.g. query the output image rather than the input image) */
+
+  char *QueryFile;
+  char *QueryLayer;
+  char *SelectLayer;
+  int QueryLayerIndex;
+  int SelectLayerIndex;
+
+  char *QueryItem;
+  char *QueryString;
+
+  int ShapeIndex;
+  int TileIndex;
+
+  int QueryCoordSource;
+
+  int ZoomSize; /* zoom absolute magnitude (i.e. > 0) */
+  
   /* 
   ** variables for multiple query results processing 
   */

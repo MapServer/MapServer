@@ -65,9 +65,10 @@ int msWFSException(mapObj *map, const char *locator, const char *code,
 
     encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
     if (encoding)
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
     else
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+        msIO_setHeader("Content-type","text/xml");
+    msIO_sendHeaders();
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
@@ -724,10 +725,11 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   }
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-    if (encoding)
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
-    else
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+  if (encoding)
+      msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+  else
+      msIO_setHeader("Content-type","text/xml");
+  msIO_sendHeaders();
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
@@ -1173,9 +1175,10 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
   
   if (value)
-    msIO_printf("Content-type: %s; charset=%s%c%c", mimetype,value,10,10);
+      msIO_setHeader("Content-type","%s; charset=%s",mimetype, value);
   else
-    msIO_printf("Content-type: %s%c%c",mimetype,10,10);
+      msIO_setHeader("Content-type",mimetype);
+  msIO_sendHeaders();
 
   if (mimetype)
     msFree(mimetype);
@@ -2573,10 +2576,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     {
         value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
         if (value)
-            msIO_printf("Content-type: %s; charset=%s%c%c", 
-                        output_mime_type, value,10,10);
+            msIO_setHeader("Content-type","%s; charset=%s", output_mime_type,value);
         else
-            msIO_printf("Content-type: %s%c%c", output_mime_type,10,10);
+            msIO_setHeader("Content-type",output_mime_type);
+        msIO_sendHeaders();
 
         msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj, 
                                      outputformat,
