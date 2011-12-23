@@ -47,6 +47,7 @@ CC=     @CC@
 LD=     @CXX@
 LIBTOOL=@LIBTOOL@
 INSTALL=@INSTALL@
+PHPCONFIG=@PHPCONFIG@
 
 LTCC=$(LIBTOOL) --mode=compile --tag=CC
 LTCXX=$(LIBTOOL) --mode=compile --tag=CXX
@@ -58,13 +59,8 @@ RUNPATHS= -rpath $(libdir)
 
 CFLAGS = @CFLAGS@ @USE_PHP_REGEX@ -DCOMPILE_DL=1 @PHP_VERSION_FLAG@
 
-# Set PHP_SRC_DIR to point to the root of the PHP source tree
-#
-PHP_SRC_DIR = @PHP_SRC_DIR@
 
-PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl -I$(PHP_SRC_DIR)/main \
-	  -I$(PHP_SRC_DIR)/Zend -I$(PHP_SRC_DIR)/include \
-	  -I$(PHP_SRC_DIR)/TSRM @APACHE_INC@
+PHP_INC = `$(PHPCONFIG) --includes ` @APACHE_INC@
 
 #
 # IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
@@ -74,7 +70,6 @@ PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl -I$(PHP_SRC_DIR)/main \
 #
 PHP_REGEX_OBJ=@PHP_REGEX_OBJ@
 PHP_REGEX_INC=@PHP_REGEX_INC@
-PHPCONFIG=@PHPCONFIG@
 
 
 #

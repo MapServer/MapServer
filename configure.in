@@ -2560,10 +2560,11 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(for PHP/MapScript module options)
 AC_ARG_WITH(php,
-[  --with-php=DIR          Specify directory where PHP5's include files are
+[  --with-php=yes|no|/path/to/php-config
+                          Specify directory where PHP5's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript 
-                          module.],,)
+                          module.],,[with_php=no])
 
 AC_ARG_ENABLE(internal-ld-detect,
 [  --enable-perlv-ld-detect
@@ -2572,45 +2573,23 @@ AC_ARG_ENABLE(internal-ld-detect,
                           link php_mapscript.so.  Try this only if the default
                           internal macro didn't work.],,)
 
-if test -n "$with_php" -a -d "$with_php" ; then
-  AC_EXPAND_PATH($with_php, PHP_SRC_DIR)
-  dnl
-  dnl Checks for shared library linking.
-  dnl
-  dnl Default to internal AC_LD_SHARED macro, or use the the perl-based 
-  dnl if requested and perl is available... 
-  dnl (The perl-V macro was the default in 3.6 and before but this was
-  dnl  changed in 3.7 to use the internal AC_LD_SHARED macro by default)
-  dnl
-
-  if test "$enable_perlv_ld_detect" = "yes" ; then
-      AC_MSG_RESULT(Using perl -V macro to figure ld command to link php_mapscript.so)
-
-      AC_MSG_CHECKING([whether 'perl -V' works])
-      if  (perl -V > /dev/null 2>&1)  ; then
-        AC_MSG_RESULT(yes)
-        AC_LD_SHARED_FROM_PERL
-        PHP_CC="$PERL_CC"
-        PHP_LD="$PERL_LD $PHP_LD_XTRAFLAGS"
-      else
-        AC_MSG_RESULT(no)
-        AC_MSG_ERROR([ERROR: Cannot use --enable-perlv-ld-detect since Perl -V does not work on this system.])
+if test "$with_php" != "no" ; then
+  if test -d "$with_php"; then
+      AC_MSG_ERROR([--with-php now expects an optional path to php-config, not a directory])
+  fi
+  if test "$with_php" == "yes" ; then
+      AC_PATH_PROG(PHPCONFIG,php-config,no)
+      if test "x$PHPCONFIG" == "xno"; then
+         AC_MSG_ERROR([php-config not found on path, please give its full location])
       fi
   else
-    dnl The default: use the internal AC_LD_SHARED macro
-    dnl
-    AC_COMPILER_PIC
-    dnl AC_LD_SHARED
-    AC_PHP_LD_SHARED
-    PHP_CC="$CC $C_PIC"
-    PHP_LD="$PHP_LD_SHARED $PHP_LD_XTRAFLAGS"
+      PHPCONFIG="$with_php"
   fi
-  
-  test -z "$PHPCONFIG" -a -x "$PHP_SRC_DIR/php-config" && PHPCONFIG="$PHP_SRC_DIR/php-config"
-  test -z "$PHPCONFIG" -a -x "$PHP_SRC_DIR/bin/php-config" && PHPCONFIG="$PHP_SRC_DIR/bin/php-config"
-  test -z "$PHPCONFIG" && AC_PATH_PROG(PHPCONFIG, php-config, no)
-  test -z "$PHPCONFIG" && AC_MSG_ERROR([failed to find php-config utility])
-  AC_SUBST(PHPCONFIG,$PHPCONFIG)
+  if test ! -f "$PHPCONFIG"; then
+      AC_MSG_ERROR([$PHPCONFIG not found])
+  fi
+
+  PHPINCDIR=`$PHPCONFIG --include-dir`
 
   dnl
   dnl Look for PHP5's php_config.h.
@@ -2618,19 +2597,14 @@ if test -n "$with_php" -a -d "$with_php" ; then
   dnl
   AC_MSG_CHECKING([for location of php_config.h])
   dnl Look for the main/php_config.h
-  test -f "$PHP_SRC_DIR/main/php_config.h" && test -f "$PHP_SRC_DIR/main/php_version.h"  && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
-
-  dnl If php was installed, then the headers are under $prefix/include/php/*
-  test -f "$PHP_SRC_DIR/include/php/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
-  dnl In PHP 5, few distributions use "/usr/include/php5" directory
-  test -f "$PHP_SRC_DIR/include/php5/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php5/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
+  test -f "$PHPINCDIR/main/php_config.h" && PHP_CONFIG_H="$PHPINCDIR/main/php_config.h"
 
   if test -n "$PHP_CONFIG_H" ; then
     AC_MSG_RESULT([$PHP_CONFIG_H])
   else
     AC_MSG_ERROR([
-!!! Could not find php_config.h and php_version.h in $PHP_SRC_DIR.          !!!
-!!! Has PHP been configured yet?                                      !!!])
+!!! Could not find php_config.h and php_version.h in $PHPINCDIR.          !!!
+!!! Has PHP been installed yet?                                      !!!])
   fi
 
 
@@ -2638,7 +2612,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
   dnl Default is PHP3, and if ZEND_API is set then we assume that we have PHP4.
   dnl
   AC_MSG_CHECKING([if we have PHP 5.2.0+])
-  PHP_VERSION=`grep 'PHP_VERSION_ID' $PHP_SRC_DIR/main/php_version.h | cut -d' ' -f3`
+  PHP_VERSION=`$PHPCONFIG --vernum`
   if test -z "$PHP_VERSION" || test $PHP_VERSION -lt 50200; then
     AC_MSG_ERROR([
 !!! PHP MapScript now requires PHP 5.2.0 or more recent.              !!!
@@ -2647,7 +2621,6 @@ if test -n "$with_php" -a -d "$with_php" ; then
   else
      AC_MSG_RESULT([yes])
   fi
-  AC_MSG_RESULT([$PHP_VERSION_FLAG])
 
   dnl
   dnl Check if PHP was compiled with the bundled regex, and if so then
@@ -2659,20 +2632,20 @@ if test -n "$with_php" -a -d "$with_php" ; then
 
     dnl We'll check for regex_extra.h - that might let use build
     dnl without the source using libphp_common.so
-    test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
+    test -f "$PHPINCDIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
         if test -n "$PHP_NO_SOURCE" ; then
           dnl Found regex_extra.h
           USE_PHP_REGEX="-DUSE_PHP_REGEX"
-          PHP_REGEX_INC="-I$PHP_SRC_DIR"
+          PHP_REGEX_INC="-I$PHPINCDIR"
           PHP_REGEX_OBJ=php_regex.lo
           AC_MSG_RESULT([        found regex_extra.h - building PHP MapScript with PHP's bundled regex ])
         else
           dnl PHP 5.3 changed the layout of regex-related files.
-          test -f "$PHP_SRC_DIR/ext/ereg/regex/regex.h" && PHP_NO_SOURCE="1"
+          test -f "$PHPINCDIR/ext/ereg/regex/regex.h" && PHP_NO_SOURCE="1"
           if test -n "$PHP_NO_SOURCE" ; then
           dnl Found regex.h
           USE_PHP_REGEX="-DUSE_PHP_REGEX"
-          PHP_REGEX_INC="-I$PHP_SRC_DIR/ext/ereg/"
+          PHP_REGEX_INC="-I$PHPINCDIR/ext/ereg/"
           PHP_REGEX_OBJ=php_regex.lo
           AC_MSG_RESULT([        found regex.h - building PHP MapScript with PHP's bundled regex ])
           else
@@ -2690,17 +2663,13 @@ if test -n "$with_php" -a -d "$with_php" ; then
   MAKE_PHPMS=php_mapscript
   MAKE_PHPMS_CLEAN=php_mapscript_clean
 
-  AC_SUBST(PHP_VERSION_FLAG, $PHP_VERSION_FLAG)
-  AC_SUBST(PHP_SRC_DIR, $PHP_SRC_DIR)
-  AC_SUBST(PHP_CC, $PHP_CC)
-  AC_SUBST(PHP_LD, $PHP_LD)
+  AC_SUBST(PHP_VERSION_FLAG, "-DPHP_VERSION_ID=$PHP_VERSION")
+  AC_SUBST(PHPCONFIG, $PHPCONFIG)
   AC_SUBST(PHP_REGEX_INC, $PHP_REGEX_INC)
   AC_SUBST(PHP_REGEX_OBJ, $PHP_REGEX_OBJ)
   AC_SUBST(USE_PHP_REGEX, $USE_PHP_REGEX)
 
   AC_MSG_RESULT([        PHP/MapScript module configured.])
-elif test -n "$with_php" -a "$with_php" != "no" ; then
-  AC_MSG_ERROR([Missing or invalid PHP source directory in --with-php=DIR.])
 else
   AC_MSG_RESULT([        PHP/MapScript module not configured.])
 fi
@@ -2837,7 +2806,7 @@ AC_MSG_RESULT([  SOS Server:                ${SOS_SVR_ENABLED}])
 AC_MSG_RESULT()
 
 AC_MSG_RESULT([ -------------- MapScript ----------------- ])
-if test -n "${PHP_SRC_DIR}"; then
+if test -n "${PHPCONFIG}"; then
   AC_MSG_RESULT([  PHP MapScript:             yes])
 else
   AC_MSG_RESULT([  PHP MapScript:             no])

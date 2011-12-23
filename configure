@@ -620,21 +620,17 @@ ALL_ENABLED
 OS_INCLUDE_DIR
 JAVA_INCLUDE
 _ACJNI_JAVAC
+SO_COMMAND_NAME
+SO_EXT
+LD_SHARED
+C_PIC
 MAKE_PHPMS_CLEAN
 MAKE_PHPMS
 USE_PHP_REGEX
 PHP_REGEX_OBJ
 PHP_REGEX_INC
-PHP_LD
-PHP_CC
-PHP_SRC_DIR
 PHP_VERSION_FLAG
 PHPCONFIG
-PHP_LD_SHARED
-SO_COMMAND_NAME
-SO_EXT
-LD_SHARED
-C_PIC
 DEBUG_FLAGS
 USE_NINT
 USE_POINT_Z_M
@@ -1628,7 +1624,8 @@ Optional Packages:
   --with-apxs=/path/to/apxs     Apache 2 apxs tool location
   --with-apr-config       path to apr-config program
   --with-warnings[=flags] Enable strict warnings (or user defined warnings)
-  --with-php=DIR          Specify directory where PHP5's include files are
+  --with-php=yes|no|/path/to/php-config
+                          Specify directory where PHP5's include files are
                           installed (or a pointer to the full source tree)
                           Required in order to compile the PHP/MapScript
                           module.
@@ -21923,6 +21920,8 @@ $as_echo "$as_me: checking for PHP/MapScript module options..." >&6;}
 # Check whether --with-php was given.
 if test "${with_php+set}" = set; then :
   withval=$with_php;
+else
+  with_php=no
 fi
 
 
@@ -21932,269 +21931,12 @@ if test "${enable_internal_ld_detect+set}" = set; then :
 fi
 
 
-if test -n "$with_php" -a -d "$with_php" ; then
-
-  if test -z "$with_php" || echo "$with_php" | grep '^/' >/dev/null ; then
-    PHP_SRC_DIR="$with_php"
-  else
-    PHP_SRC_DIR="`pwd`/$with_php"
+if test "$with_php" != "no" ; then
+  if test -d "$with_php"; then
+      as_fn_error $? "--with-php now expects an optional path to php-config, not a directory" "$LINENO" 5
   fi
-
-
-  if test "$enable_perlv_ld_detect" = "yes" ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: Using perl -V macro to figure ld command to link php_mapscript.so" >&5
-$as_echo "Using perl -V macro to figure ld command to link php_mapscript.so" >&6; }
-
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether 'perl -V' works" >&5
-$as_echo_n "checking whether 'perl -V' works... " >&6; }
-      if  (perl -V > /dev/null 2>&1)  ; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-#
-# The following is a massive hack.  It tries to steal the
-# mechanism for build a dynamic library from Perl's -V output
-# If this script fails on this machine, try running 'perl -V'
-# manually and pick out the setting for:
-#
-#    cc, optimize, ccflags, ld, cccdlflags and lddlflags
-#
-# Replace the below definitions with the output you see.
-#
-
-if test ! -r "perl.out"; then
-	perl -V > perl.out
-fi
-
-# if the greps and cuts don't do the job, set these manually
-PERL_CC="`grep ' cc=' perl.out | cut -d, -f1 | cut -d\' -f2 | grep -v undef`"
-PERL_OPT="`grep ' optimize=' perl.out | cut -d, -f2 | cut -d\' -f2 | grep -v undef`"
-PERL_CCFLAGS="`grep ' ccflags' perl.out | cut -d, -f1 | grep cflags | cut -d\' -f2 | grep -v undef` `grep ' ccflags' perl.out | cut -d, -f2 | grep ccflags | cut -d\' -f2 | grep -v undef`"
-PERL_LD="`grep ' ld=' perl.out | cut -d, -f1 | cut -d\' -f2 | grep -v undef`"
-PERL_LFLAGS="`grep ' cccdlflags=' perl.out | cut -d, -f1 | cut -d\' -f2 | grep -v undef`"
-PERL_CCDLFLAGS="`grep ' ccdlflags=' perl.out | cut -d, -f4 | cut -d\' -f2 | sed 's, ,,' | grep -v undef`"
-PERL_LDDLFLAGS=`grep ' lddlflags' perl.out | cut -d, -f2 | cut -d\' -f2 | grep -v undef`
-#--------
-
-#if test -n "$PERL_CCDLFLAGS" ; then
-#	echo "-------------------------"
-#	echo "----- IMPORTANT !!! -----"
-#	echo "-------------------------"
-#	echo "To use PHP extensions on your OS, you will need to recompile "
-#	echo "PHP.                                                         "
-#	echo "You need to edit the Makefile in the php3 directory and add  "
-#	echo "$PERL_CCDLFLAGS to the start of the LDFLAGS line at the top  "
-#	echo "of the Makefile.  Then type: 'make clean; make'              "
-#	echo "You can still go ahead and build the extensions now by typing"
-#	echo "'make' in this directory.  They just won't work correctly    "
-#	echo "until you recompile your PHP.                                "
-#        echo "If you are compiling php as a module, you should also add    "
-#        echo "$PERL_CCDLFLAGS to the start of the EXTRA_LDFLAGS in Apache  "
-#        echo "Configuration file.  Note that if you are using the APACI    "
-#        echo "build mechanism you should make this change in the           "
-#        echo "Configuration.tmpl file instead.                             "
-#	echo "-------------------------"
-#	echo "-------------------------"
-#	echo "-------------------------"
-#fi
-
-PERL_CC="$PERL_CC $PERL_OPT $PERL_CCFLAGS -I. -I.. $PERL_LFLAGS"
-PERL_LD="$PERL_LD $PERL_LDDLFLAGS $PERL_CCDLFLAGS"
-
-rm -f perl.out
-
-
-        PHP_CC="$PERL_CC"
-        PHP_LD="$PERL_LD $PHP_LD_XTRAFLAGS"
-      else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-        as_fn_error $? "ERROR: Cannot use --enable-perlv-ld-detect since Perl -V does not work on this system." "$LINENO" 5
-      fi
-  else
-
-	echo 'void f(){}' > conftest.c
-	if test -z "`${CC} -fPIC -c conftest.c 2>&1`"; then
-	  C_PIC=-fPIC
-	else
-	  C_PIC=
-	fi
-	rm -f conftest*
-
-	C_PIC=$C_PIC
-
-
-
-
-
-
-
-  echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
-
-  echo '#include <stdio.h>' > conftest2.c
-  echo 'void g(); void g(){printf("");}' >> conftest2.c
-  ${CC} ${C_PIC} -c conftest2.c
-  SO_EXT="so"
-  SO_COMMAND_NAME="-soname"
-  export SO_EXT
-  export SO_COMMAND_NAME
-  LD_SHARED="/bin/true"
-  if test ! -z "`uname -a | grep IRIX`" ; then
-    IRIX_ALL=-all
-  else
-    IRIX_ALL=
-  fi
-
-
-# Check whether --with-ld-shared was given.
-if test "${with_ld_shared+set}" = set; then :
-  withval=$with_ld_shared;
-fi
-
-
-      if test "$with_ld_shared" != "" -a "$with_ld_shared" != "yes"; then
-    if test "$with_ld_shared" = "no" ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: user disabled shared library support." >&5
-$as_echo "user disabled shared library support." >&6; }
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: using user supplied .so link command ... $with_ld_shared" >&5
-$as_echo "using user supplied .so link command ... $with_ld_shared" >&6; }
-    fi
-    LD_SHARED="$with_ld_shared"
-  fi
-
-    if test ! -z "`uname -a | grep CYGWIN`" \
-        -a "$LD_SHARED" = "/bin/true" ; then
-    if test -z "`gcc -shared conftest2.o -o libconftest.dll`" ; then
-      if test -z "`${CC} conftest1.c -L./ -lconftest -o conftest1 2>&1`"; then
-        LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-        if test -z "$LD_LIBRARY_PATH" ; then
-          LD_LIBRARY_PATH="`pwd`"
-        else
-          LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
-        fi
-        export LD_LIBRARY_PATH
-        if test -z "`./conftest1 2>&1`" ; then
-          echo "checking for Cygwin gcc -shared ... yes"
-          LD_SHARED="c++ -shared"
-          SO_EXT="dll"
-        fi
-        LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-      fi
-    fi
-  fi
-
-
-    if test ! -z "`uname | grep Darwin`" \
-          -a "$LD_SHARED" = "/bin/true" ; then
-    if test -z "`${CXX} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
-      ${CC} -c conftest1.c
-      if test -z "`${CXX} conftest1.o libconftest.so -o conftest1 2>&1`"; then
-        DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
-        if test -z "$DYLD_LIBRARY_PATH" ; then
-          DYLD_LIBRARY_PATH="`pwd`"
-        else
-          DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
-        fi
-        export DYLD_LIBRARY_PATH
-        if test -z "`./conftest1 2>&1`" ; then
-          echo "checking for ${CXX} -dynamiclib ... yes"
-          LD_SHARED="${CXX} -dynamiclib -single_module -flat_namespace -undefined suppress"
-	  SO_EXT=dylib
-          SO_COMMAND_NAME='-dylib_install_name'
-        fi
-        DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
-      fi
-      rm -f conftest1.o
-    fi
-  fi
-
-  if test "$LD_SHARED" = "/bin/true" \
-	-a -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
-    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
-      LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-      if test -z "$LD_LIBRARY_PATH" ; then
-        LD_LIBRARY_PATH="`pwd`"
-      else
-        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
-      fi
-      export LD_LIBRARY_PATH
-      if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ${CXX} -shared ... yes"
-        LD_SHARED="${CXX} -shared $IRIX_ALL"
-      else
-        echo "checking for ${CXX} -shared ... no(3)"
-      fi
-      LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-    else
-      echo "checking for ${CXX} -shared ... no(2)"
-    fi
-  else
-    if test "$LD_SHARED" = "/bin/true" ; then
-      echo "checking for ${CXX} -shared ... no(1)"
-    fi
-  fi
-
-  if test "$LD_SHARED" = "/bin/true" \
-          -a -z "`ld -shared conftest2.o -o libconftest.so 2>&1`" ; then
-    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
-      LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-      if test -z "$LD_LIBRARY_PATH" ; then
-        LD_LIBRARY_PATH="`pwd`"
-      else
-        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
-      fi
-      export LD_LIBRARY_PATH
-      if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ld -shared ... yes"
-        LD_SHARED="ld -shared"
-      fi
-      LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-    fi
-  fi
-
-  if test "$LD_SHARED" = "/bin/true" ; then
-    echo "checking for ld -shared ... no"
-    if test ! -x /bin/true ; then
-      LD_SHARED=/usr/bin/true
-    fi
-  fi
-  if test "$LD_SHARED" = "no" ; then
-    if test -x /bin/true ; then
-      LD_SHARED=/bin/true
-    else
-      LD_SHARED=/usr/bin/true
-    fi
-  fi
-
-  rm -f conftest* libconftest*
-
-  LD_SHARED=$LD_SHARED
-
-  SO_EXT=$SO_EXT
-
-  SO_COMMAND_NAME=$SO_COMMAND_NAME
-
-
-
-    if test ! -z "`uname | grep Darwin`" ;then
-          PHP_LD_SHARED="${CXX} -bundle -flat_namespace -undefined suppress"
-  else
-	  PHP_LD_SHARED=$LD_SHARED
-  fi
-
-export PHP_LD_SHARED
-PHP_LD_SHARED=$PHP_LD_SHARED
-
-
-
-    PHP_CC="$CC $C_PIC"
-    PHP_LD="$PHP_LD_SHARED $PHP_LD_XTRAFLAGS"
-  fi
-
-  test -z "$PHPCONFIG" -a -x "$PHP_SRC_DIR/php-config" && PHPCONFIG="$PHP_SRC_DIR/php-config"
-  test -z "$PHPCONFIG" -a -x "$PHP_SRC_DIR/bin/php-config" && PHPCONFIG="$PHP_SRC_DIR/bin/php-config"
-  test -z "$PHPCONFIG" && # Extract the first word of "php-config", so it can be a program name with args.
+  if test "$with_php" == "yes" ; then
+      # Extract the first word of "php-config", so it can be a program name with args.
 set dummy php-config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -22235,30 +21977,35 @@ $as_echo "no" >&6; }
 fi
 
 
-  test -z "$PHPCONFIG" && as_fn_error $? "failed to find php-config utility" "$LINENO" 5
-  PHPCONFIG=$PHPCONFIG
+      if test "x$PHPCONFIG" == "xno"; then
+         as_fn_error $? "php-config not found on path, please give its full location" "$LINENO" 5
+      fi
+  else
+      PHPCONFIG="$with_php"
+  fi
+  if test ! -f "$PHPCONFIG"; then
+      as_fn_error $? "$PHPCONFIG not found" "$LINENO" 5
+  fi
 
+  PHPINCDIR=`$PHPCONFIG --include-dir`
 
           { $as_echo "$as_me:${as_lineno-$LINENO}: checking for location of php_config.h" >&5
 $as_echo_n "checking for location of php_config.h... " >&6; }
-    test -f "$PHP_SRC_DIR/main/php_config.h" && test -f "$PHP_SRC_DIR/main/php_version.h"  && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
-
-    test -f "$PHP_SRC_DIR/include/php/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
-    test -f "$PHP_SRC_DIR/include/php5/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php5/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
+    test -f "$PHPINCDIR/main/php_config.h" && PHP_CONFIG_H="$PHPINCDIR/main/php_config.h"
 
   if test -n "$PHP_CONFIG_H" ; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PHP_CONFIG_H" >&5
 $as_echo "$PHP_CONFIG_H" >&6; }
   else
     as_fn_error $? "
-!!! Could not find php_config.h and php_version.h in $PHP_SRC_DIR.          !!!
-!!! Has PHP been configured yet?                                      !!!" "$LINENO" 5
+!!! Could not find php_config.h and php_version.h in $PHPINCDIR.          !!!
+!!! Has PHP been installed yet?                                      !!!" "$LINENO" 5
   fi
 
 
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking if we have PHP 5.2.0+" >&5
 $as_echo_n "checking if we have PHP 5.2.0+... " >&6; }
-  PHP_VERSION=`grep 'PHP_VERSION_ID' $PHP_SRC_DIR/main/php_version.h | cut -d' ' -f3`
+  PHP_VERSION=`$PHPCONFIG --vernum`
   if test -z "$PHP_VERSION" || test $PHP_VERSION -lt 50200; then
     as_fn_error $? "
 !!! PHP MapScript now requires PHP 5.2.0 or more recent.              !!!
@@ -22268,8 +22015,6 @@ $as_echo_n "checking if we have PHP 5.2.0+... " >&6; }
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
   fi
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PHP_VERSION_FLAG" >&5
-$as_echo "$PHP_VERSION_FLAG" >&6; }
 
           { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should use PHP's regex" >&5
 $as_echo_n "checking whether we should use PHP's regex... " >&6; }
@@ -22277,18 +22022,18 @@ $as_echo_n "checking whether we should use PHP's regex... " >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 
-            test -f "$PHP_SRC_DIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
+            test -f "$PHPINCDIR/regex/regex_extra.h" && PHP_NO_SOURCE="1"
         if test -n "$PHP_NO_SOURCE" ; then
                     USE_PHP_REGEX="-DUSE_PHP_REGEX"
-          PHP_REGEX_INC="-I$PHP_SRC_DIR"
+          PHP_REGEX_INC="-I$PHPINCDIR"
           PHP_REGEX_OBJ=php_regex.lo
           { $as_echo "$as_me:${as_lineno-$LINENO}: result:         found regex_extra.h - building PHP MapScript with PHP's bundled regex " >&5
 $as_echo "        found regex_extra.h - building PHP MapScript with PHP's bundled regex " >&6; }
         else
-                    test -f "$PHP_SRC_DIR/ext/ereg/regex/regex.h" && PHP_NO_SOURCE="1"
+                    test -f "$PHPINCDIR/ext/ereg/regex/regex.h" && PHP_NO_SOURCE="1"
           if test -n "$PHP_NO_SOURCE" ; then
                     USE_PHP_REGEX="-DUSE_PHP_REGEX"
-          PHP_REGEX_INC="-I$PHP_SRC_DIR/ext/ereg/"
+          PHP_REGEX_INC="-I$PHPINCDIR/ext/ereg/"
           PHP_REGEX_OBJ=php_regex.lo
           { $as_echo "$as_me:${as_lineno-$LINENO}: result:         found regex.h - building PHP MapScript with PHP's bundled regex " >&5
 $as_echo "        found regex.h - building PHP MapScript with PHP's bundled regex " >&6; }
@@ -22308,13 +22053,9 @@ $as_echo "no" >&6; }
   MAKE_PHPMS=php_mapscript
   MAKE_PHPMS_CLEAN=php_mapscript_clean
 
-  PHP_VERSION_FLAG=$PHP_VERSION_FLAG
+  PHP_VERSION_FLAG="-DPHP_VERSION_ID=$PHP_VERSION"
 
-  PHP_SRC_DIR=$PHP_SRC_DIR
-
-  PHP_CC=$PHP_CC
-
-  PHP_LD=$PHP_LD
+  PHPCONFIG=$PHPCONFIG
 
   PHP_REGEX_INC=$PHP_REGEX_INC
 
@@ -22325,8 +22066,6 @@ $as_echo "no" >&6; }
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: result:         PHP/MapScript module configured." >&5
 $as_echo "        PHP/MapScript module configured." >&6; }
-elif test -n "$with_php" -a "$with_php" != "no" ; then
-  as_fn_error $? "Missing or invalid PHP source directory in --with-php=DIR." "$LINENO" 5
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result:         PHP/MapScript module not configured." >&5
 $as_echo "        PHP/MapScript module not configured." >&6; }
@@ -25145,7 +24884,7 @@ $as_echo "" >&6; }
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result:  -------------- MapScript ----------------- " >&5
 $as_echo " -------------- MapScript ----------------- " >&6; }
-if test -n "${PHP_SRC_DIR}"; then
+if test -n "${PHPCONFIG}"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result:   PHP MapScript:             yes" >&5
 $as_echo "  PHP MapScript:             yes" >&6; }
 else
