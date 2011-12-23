@@ -75,6 +75,9 @@ mapcache_http_response *mapcache_http_response_create(apr_pool_t *pool) {
 
 void mapcache_prefetch_tiles(mapcache_context *ctx, mapcache_tile **tiles, int ntiles) {
 
+   apr_thread_t **threads;
+   apr_threadattr_t *thread_attrs;
+   int nthreads;
 #if !APR_HAS_THREADS
    int i;
    for(i=0;i<ntiles;i++) {
@@ -83,6 +86,7 @@ void mapcache_prefetch_tiles(mapcache_context *ctx, mapcache_tile **tiles, int n
    }
 #else
    int i,rv;
+   _thread_tile* thread_tiles;
    if(ntiles==1 || ctx->config->threaded_fetching == 0) {
    /* if threads disabled, or only fetching a single tile, don't launch a thread for the operation */
       for(i=0;i<ntiles;i++) {
@@ -94,18 +98,17 @@ void mapcache_prefetch_tiles(mapcache_context *ctx, mapcache_tile **tiles, int n
 
 
    /* allocate a thread struct for each tile. Not all will be used */
-   _thread_tile* thread_tiles = (_thread_tile*)apr_pcalloc(ctx->pool,ntiles*sizeof(_thread_tile));
+   thread_tiles = (_thread_tile*)apr_pcalloc(ctx->pool,ntiles*sizeof(_thread_tile));
 #if 1 || !USE_THREADPOOL
    /* use multiple threads, to fetch from multiple metatiles and/or multiple tilesets */
-   apr_thread_t **threads;
-   apr_threadattr_t *thread_attrs;
    apr_threadattr_create(&thread_attrs, ctx->pool);
    threads = (apr_thread_t**)apr_pcalloc(ctx->pool, ntiles*sizeof(apr_thread_t*));
-   int nthreads = 0;
+   nthreads = 0;
    for(i=0;i<ntiles;i++) {
+     int j;
       thread_tiles[i].tile = tiles[i];
       thread_tiles[i].launch = 1;
-      int j=i-1;
+      j=i-1;
       /* 
        * we only launch one thread per metatile as in the unseeded case the threads
        * for a same metatile will lock while only a single thread launches the actual
