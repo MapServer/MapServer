@@ -34,6 +34,7 @@ LT_INIT()
 AC_CONFIG_MACRO_DIR([m4/])
 m4_include([m4/mapserver.m4])
 m4_include([m4/apache.m4])
+m4_include([m4/ax_jni_include_dir.m4])
 AC_CONFIG_SRCDIR([mapserv.c])
 dnl Checks for programs.
 AC_PROG_CC
@@ -82,6 +83,7 @@ AC_CHECK_FUNC(strlcat, ,      STRINGS="-DNEED_STRLCAT $STRINGS")
 AC_CHECK_FUNC(strlcpy, ,      STRINGS="-DNEED_STRLCPY $STRINGS")
 AC_CHECK_FUNC(vsnprintf, STRINGS="-DHAVE_VSNPRINTF $STRINGS", )
 AC_SUBST(STRINGS, $STRINGS)
+ALL_ENABLED="$STRINGS $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
@@ -2410,6 +2412,7 @@ if test "$enable_ignore_missing_data" = "yes" ; then
   AC_MSG_RESULT([Compiling with -DIGNORE_MISSING_DATA.])
 fi
 AC_SUBST(IGNORE_MISSING_DATA, $IGNORE_MISSING_DATA)
+ALL_ENABLED="$IGNORE_MISSING_DATA $ALL_ENABLED"
 
 dnl ---------------------------------------------------------------------
 dnl Check USE_POINT_Z_M option (OFF by default)
@@ -2748,13 +2751,24 @@ esac
 AC_MSG_RESULT([no, autodetected $OS_INCLUDE_DIR])
 fi
 
+if test -z $JAVAC; then
+   JAVAC="javac"
+fi
+AX_JNI_INCLUDE_DIR
+for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+do
+   JAVA_INCLUDE="$JAVA_INCLUDE -I$JNI_INCLUDE_DIR"
+done
+AC_SUBST(JAVA_INCLUDE,$JAVA_INCLUDE)
+
+
 AC_SUBST(OS_INCLUDE_DIR, $OS_INCLUDE_DIR)
 
 dnl ---------------------------------------------------------------------
 dnl Generate output files
 dnl ---------------------------------------------------------------------
 
-AC_SUBST(ALL_ENABLED, $ALL_ENABLED)
+AC_SUBST(ALL_ENABLED, "$ALL_ENABLED -DDISABLE_CVSID")
 AC_SUBST(ALL_INC, $ALL_INC)
 AC_SUBST(ALL_LIB, $ALL_LIB)
 AC_SUBST(ALL_STATIC_LIB, $ALL_STATIC_LIB)

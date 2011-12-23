@@ -618,6 +618,8 @@ ALL_LIB
 ALL_INC
 ALL_ENABLED
 OS_INCLUDE_DIR
+JAVA_INCLUDE
+_ACJNI_JAVAC
 MAKE_PHPMS_CLEAN
 MAKE_PHPMS
 USE_PHP_REGEX
@@ -11081,6 +11083,80 @@ CC="$lt_save_CC"
 
 
 
+# ===========================================================================
+#    http://www.gnu.org/software/autoconf-archive/ax_jni_include_dir.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   AX_JNI_INCLUDE_DIR
+#
+# DESCRIPTION
+#
+#   AX_JNI_INCLUDE_DIR finds include directories needed for compiling
+#   programs using the JNI interface.
+#
+#   JNI include directories are usually in the java distribution This is
+#   deduced from the value of JAVAC. When this macro completes, a list of
+#   directories is left in the variable JNI_INCLUDE_DIRS.
+#
+#   Example usage follows:
+#
+#     AX_JNI_INCLUDE_DIR
+#
+#     for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+#     do
+#             CPPFLAGS="$CPPFLAGS -I$JNI_INCLUDE_DIR"
+#     done
+#
+#   If you want to force a specific compiler:
+#
+#   - at the configure.in level, set JAVAC=yourcompiler before calling
+#   AX_JNI_INCLUDE_DIR
+#
+#   - at the configure level, setenv JAVAC
+#
+#   Note: This macro can work with the autoconf M4 macros for Java programs.
+#   This particular macro is not part of the original set of macros.
+#
+# LICENSE
+#
+#   Copyright (c) 2008 Don Anderson <dda@sleepycat.com>
+#
+#   Copying and distribution of this file, with or without modification, are
+#   permitted in any medium without royalty provided the copyright notice
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 7
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
+# _ACJNI_FOLLOW_SYMLINKS <path>
+# Follows symbolic links on <path>,
+# finally setting variable _ACJNI_FOLLOWED
+# ----------------------------------------
+# _ACJNI
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -15747,6 +15823,7 @@ fi
 
 STRINGS=$STRINGS
 
+ALL_ENABLED="$STRINGS $ALL_ENABLED"
 
 
 
@@ -21691,6 +21768,7 @@ $as_echo "Compiling with -DIGNORE_MISSING_DATA." >&6; }
 fi
 IGNORE_MISSING_DATA=$IGNORE_MISSING_DATA
 
+ALL_ENABLED="$IGNORE_MISSING_DATA $ALL_ENABLED"
 
 
 # Check whether --enable-point-z-m was given.
@@ -22451,11 +22529,132 @@ esac
 $as_echo "no, autodetected $OS_INCLUDE_DIR" >&6; }
 fi
 
+if test -z $JAVAC; then
+   JAVAC="javac"
+fi
+
+
+JNI_INCLUDE_DIRS=""
+
+test "x$JAVAC" = x && as_fn_error $? "'\$JAVAC' undefined" "$LINENO" 5
+# Extract the first word of "$JAVAC", so it can be a program name with args.
+set dummy $JAVAC; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path__ACJNI_JAVAC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $_ACJNI_JAVAC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path__ACJNI_JAVAC="$_ACJNI_JAVAC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path__ACJNI_JAVAC="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path__ACJNI_JAVAC" && ac_cv_path__ACJNI_JAVAC="no"
+  ;;
+esac
+fi
+_ACJNI_JAVAC=$ac_cv_path__ACJNI_JAVAC
+if test -n "$_ACJNI_JAVAC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $_ACJNI_JAVAC" >&5
+$as_echo "$_ACJNI_JAVAC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test "x$_ACJNI_JAVAC" = xno; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JAVAC could not be found in path" >&5
+$as_echo "$JAVAC could not be found in path" >&6; }
+else
+
+# find the include directory relative to the javac executable
+_cur=""$_ACJNI_JAVAC""
+while ls -ld "$_cur" 2>/dev/null | grep " -> " >/dev/null; do
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking symlink for $_cur" >&5
+$as_echo_n "checking symlink for $_cur... " >&6; }
+        _slink=`ls -ld "$_cur" | sed 's/.* -> //'`
+        case "$_slink" in
+        /*) _cur="$_slink";;
+        # 'X' avoids triggering unwanted echo options.
+        *) _cur=`echo "X$_cur" | sed -e 's/^X//' -e 's:[^/]*$::'`"$_slink";;
+        esac
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $_cur" >&5
+$as_echo "$_cur" >&6; }
+done
+_ACJNI_FOLLOWED="$_cur"
+
+   _JTOPDIR=`echo "$_ACJNI_FOLLOWED" | sed -e 's://*:/:g' -e 's:/[^/]*$::'`
+   case "$host_os" in
+           darwin*)        _JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[^/]*$::'`
+                           _JINC="$_JTOPDIR/Headers";;
+           *)              _JINC="$_JTOPDIR/include";;
+   esac
+   $as_echo "$as_me:${as_lineno-$LINENO}: _JTOPDIR=$_JTOPDIR" >&5
+   $as_echo "$as_me:${as_lineno-$LINENO}: _JINC=$_JINC" >&5
+
+   # On Mac OS X 10.6.4, jni.h is a symlink:
+   # /System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers/jni.h
+   # -> ../../CurrentJDK/Headers/jni.h.
+   if test -f "$_JINC/jni.h" || test -L "$_JINC/jni.h"; then
+           JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JINC"
+   else
+           _JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[^/]*$::'`
+           if test -f "$_JTOPDIR/include/jni.h"; then
+                   JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include"
+           else
+                   as_fn_error $? "cannot find java include files" "$LINENO" 5
+           fi
+   fi
+
+   # get the likely subdirectories for system specific java includes
+   case "$host_os" in
+   bsdi*)          _JNI_INC_SUBDIRS="bsdos";;
+   linux*)         _JNI_INC_SUBDIRS="linux genunix";;
+   osf*)           _JNI_INC_SUBDIRS="alpha";;
+   solaris*)       _JNI_INC_SUBDIRS="solaris";;
+   mingw*)		_JNI_INC_SUBDIRS="win32";;
+   cygwin*)	_JNI_INC_SUBDIRS="win32";;
+   *)              _JNI_INC_SUBDIRS="genunix";;
+   esac
+
+   # add any subdirectories that are present
+   for JINCSUBDIR in $_JNI_INC_SUBDIRS
+   do
+       if test -d "$_JTOPDIR/include/$JINCSUBDIR"; then
+            JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include/$JINCSUBDIR"
+       fi
+   done
+fi
+
+for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+do
+   JAVA_INCLUDE="$JAVA_INCLUDE -I$JNI_INCLUDE_DIR"
+done
+JAVA_INCLUDE=$JAVA_INCLUDE
+
+
+
 OS_INCLUDE_DIR=$OS_INCLUDE_DIR
 
 
 
-ALL_ENABLED=$ALL_ENABLED
+ALL_ENABLED="$ALL_ENABLED -DDISABLE_CVSID"
 
 ALL_INC=$ALL_INC
 
