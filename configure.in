@@ -35,6 +35,8 @@ AC_CONFIG_MACRO_DIR([m4/])
 m4_include([m4/mapserver.m4])
 m4_include([m4/apache.m4])
 m4_include([m4/ax_jni_include_dir.m4])
+m4_include([m4/ax_pkg_swig.m4])
+
 AC_CONFIG_SRCDIR([mapserv.c])
 dnl Checks for programs.
 AC_PROG_CC
@@ -2659,10 +2661,10 @@ if test "$with_php" != "no" ; then
     AC_MSG_RESULT(no)
   fi
 
-  PHPMS_MAKEFILE=mapscript/php/Makefile
-  MAKE_PHPMS=php_mapscript
-  MAKE_PHPMS_CLEAN=php_mapscript_clean
 
+  MAKE_PHP_MAPSCRIPT="php_mapscript"
+  MAKE_PHP_MAPSCRIPT_CLEAN="php_mapscript_clean"
+  MAKE_PHP_MAPSCRIPT_INSTALL="php_mapscript_install"
   AC_SUBST(PHP_VERSION_FLAG, "-DPHP_VERSION_ID=$PHP_VERSION")
   AC_SUBST(PHPCONFIG, $PHPCONFIG)
   AC_SUBST(PHP_REGEX_INC, $PHP_REGEX_INC)
@@ -2674,8 +2676,9 @@ else
   AC_MSG_RESULT([        PHP/MapScript module not configured.])
 fi
 
-AC_SUBST(MAKE_PHPMS, $MAKE_PHPMS)
-AC_SUBST(MAKE_PHPMS_CLEAN, $MAKE_PHPMS_CLEAN)
+AC_SUBST(MAKE_PHP_MAPSCRIPT,$MAKE_PHP_MAPSCRIPT)
+AC_SUBST(MAKE_PHP_MAPSCRIPT_CLEAN,$MAKE_PHP_MAPSCRIPT_CLEAN)
+AC_SUBST(MAKE_PHP_MAPSCRIPT_INSTALL,$MAKE_PHP_MAPSCRIPT_INSTALL)
 
 dnl ---------------------------------------------------------------------
 dnl Shared library building.
@@ -2731,6 +2734,52 @@ done
 AC_SUBST(JAVA_INCLUDE,$JAVA_INCLUDE)
 
 
+AC_DEFUN([PYTHON_CHECK],[
+AC_MSG_CHECKING(if python path is provided)
+
+AC_ARG_WITH(python,
+[  --with-python[[=PATH]] Specify python binary (PATH is path to python)],,[with_python=yes])
+
+if test -n "$with_python" -a "$with_python" != "yes" ; then
+   AC_MSG_RESULT([yes])
+   if test -x "$with_python"; then
+      PYTHON=$with_python
+   else
+      AC_MSG_ERROR([$with_python does not seem to be an executable])
+   fi
+else
+   AC_MSG_RESULT([using system default])
+   AC_PATH_PROG(PYTHON,python)
+   if test -z "$PYTHON"; then
+      AC_MSG_ERROR([no python found on path])
+   fi
+fi
+AC_SUBST(PYTHON,$PYTHON)
+])
+
+
+AC_ARG_ENABLE(python-mapscript,
+[  --enable-python-mapscript     build the python mapscript module. ],,[enable_python_mapscript=no])
+AC_MSG_CHECKING([if we should build python mapscript])
+if test "$enable_python_mapscript" = "yes" ; then
+  AX_PKG_SWIG([2.0.0])
+  if test -z $SWIG; then
+      AC_MSG_WARN([swig not found, you will not be able to build/update wrappers])
+  fi
+  PYTHON_CHECK
+  MAKE_PYTHON_MAPSCRIPT="python_mapscript"
+  MAKE_PYTHON_MAPSCRIPT_CLEAN="python_mapscript_clean"
+  MAKE_PYTHON_MAPSCRIPT_INSTALL="python_mapscript_install"
+
+  AC_MSG_RESULT([        Python/MapScript module configured.])
+else
+  AC_MSG_RESULT([        Python/MapScript module not configured.])
+fi
+
+AC_SUBST(MAKE_PYTHON_MAPSCRIPT,$MAKE_PYTHON_MAPSCRIPT)
+AC_SUBST(MAKE_PYTHON_MAPSCRIPT_CLEAN,$MAKE_PYTHON_MAPSCRIPT_CLEAN)
+AC_SUBST(MAKE_PYTHON_MAPSCRIPT_INSTALL,$MAKE_PYTHON_MAPSCRIPT_INSTALL)
+
 AC_SUBST(OS_INCLUDE_DIR, $OS_INCLUDE_DIR)
 
 dnl ---------------------------------------------------------------------
@@ -2743,7 +2792,7 @@ AC_SUBST(ALL_LIB, $ALL_LIB)
 AC_SUBST(ALL_STATIC_LIB, $ALL_STATIC_LIB)
 AC_SUBST(RPATHS, [$RPATHS])
 
-AC_OUTPUT(Makefile $PHPMS_MAKEFILE mapscript/python/Makefile mapscript/java/Makefile mapscript/csharp/Makefile mapscript/perl/Makefile.PL)
+AC_OUTPUT(Makefile mapscript/php/Makefile mapscript/python/Makefile mapscript/java/Makefile mapscript/csharp/Makefile mapscript/perl/Makefile.PL)
 
 dnl ---------------------------------------------------------------------------
 dnl Display configuration status
@@ -2810,6 +2859,11 @@ if test -n "${PHPCONFIG}"; then
   AC_MSG_RESULT([  PHP MapScript:             yes])
 else
   AC_MSG_RESULT([  PHP MapScript:             no])
+fi
+if test -n "${MAKE_PYTHON_MAPSCRIPT}"; then
+  AC_MSG_RESULT([  Python MapScript:          yes])
+else
+  AC_MSG_RESULT([  Python MapScript:          no])
 fi
 
 AC_MSG_RESULT()

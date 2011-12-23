@@ -320,7 +320,7 @@ EXE_LIST = 	shp2img legend mapserv shptree shptreevis \
 #
 # --- You shouldn't have to edit anything else. ---
 #
-all: $(LIBMAP) $(EXE_LIST) @MAKE_PHPMS@ 
+all: $(LIBMAP) $(EXE_LIST) @MAKE_PHP_MAPSCRIPT@ @MAKE_PYTHON_MAPSCRIPT@ 
 EXE_LDFLAGS = $(LIBMAP)
 
 # Explicitly invoke this rule when maplexer.l is altered.  We don't do
@@ -356,9 +356,6 @@ mapserver.h: $(HEADERS)
 .cpp.$(OBJ_SUFFIX): mapserver.h
 	$(LTCXX) $(CXX) -c $(CXXFLAGS) $< -o $@
    
-php_mapscript:: $(LIBMAP)
-	cd mapscript/php; $(MAKE); cd ../..
-
 maplexer.o: maplexer.c mapserver.h mapfile.h
 
 mapparser.o: mapparser.c mapserver.h
@@ -369,7 +366,7 @@ mapparser.c: mapparser.y
 mod_mapserver.la: $(LIBMAP) mod_mapserver.c
 	$(APXS) -c -Wc,"$(CFLAGS)" $(LIBMAP) mod_mapserver.c
 
-
+mapscript: mapscriptvars mapserver-config
 
 $(LIBMAP): $(OBJS)
 	$(LINK) $(OBJS) $(SUP_LIBS) $(STATIC_LIBS) -o $(LIBMAP)
@@ -443,10 +440,25 @@ mapserver-config: Makefile
 	cat mapserver-config.in >> mapserver-config
 	chmod a+x mapserver-config
 
-php_mapscript_clean::
-	cd mapscript/php; $(MAKE) clean; cd ../..
+php_mapscript: $(LIBMAP)
+	cd mapscript/php; $(MAKE);
 
-install: install-lib install-bin install-cgibin
+php_mapscript_clean:
+	cd mapscript/php; $(MAKE) clean;
+
+php_mapscript_install:
+	cd mapscript/php; $(MAKE) install;
+
+python_mapscript: $(LIBMAP)
+	cd mapscript/python; $(MAKE);
+
+python_mapscript_clean:
+	cd mapscript/python; $(MAKE) clean;
+
+python_mapscript_install:
+	cd mapscript/python; $(MAKE) install;
+
+install: install-lib install-bin install-cgibin @MAKE_PHP_MAPSCRIPT_INSTALL@ @MAKE_PYTHON_MAPSCRIPT_INSTALL@
 
 install-cgibin: install-lib install-bin
 	@echo ""
@@ -481,21 +493,18 @@ uninstall:
 install-module: mod_mapserver.la install-lib
 	$(APXS) -i -a -n "mapserver" mod_mapserver.la
 
-clean:
+clean: @MAKE_PHP_MAPSCRIPT_CLEAN@ @MAKE_PYTHON_MAPSCRIPT_CLEAN@
 	rm -rf $(LIBMAP) *.o *.lo *.la .libs $(EXE_LIST) renderers/agg/src/*.o renderers/agg/src/*.lo renderers/agg/src/.libs
-	cd mapscript/python && make clean
-	cd mapscript/php && make clean
-
 
 exe-clean:
 	rm -f $(EXE_LIST)
 
 distclean:
 	$(MAKE) clean
-	rm config.*
+	rm config.log
 	if test -d autom4te.cache ; then \
 	  rm -f -r autom4te.cache ; \
 	fi
 
 sorta-clean:
-	rm -f *.o
+	rm -f *.o *.lo

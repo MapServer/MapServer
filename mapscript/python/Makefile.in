@@ -12,8 +12,8 @@ CC=     @CC@
 LD=     @CXX@
 LIBTOOL=@LIBTOOL@
 INSTALL=@INSTALL@
-PYTHON=python
-SWIG=swig
+PYTHON=@PYTHON@
+SWIG=@SWIG@
 
 LTCC=$(LIBTOOL) --mode=compile --tag=CC
 LTCXX=$(LIBTOOL) --mode=compile --tag=CXX
@@ -55,5 +55,5 @@ install: _mapscript.la
 	$(INSTALL) -c mapscript.py $(PYLIBDIR)
 
 clean:
-	-rm -rf .libs *.lo *.la *.so *.o pygdioctx/*.o pygdioctx/*.lo
+	-rm -rf .libs *.lo *.la *.so *.o pygdioctx/*.o pygdioctx/*.lo mapscript_wrap.c mapscript.py
 
