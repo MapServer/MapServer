@@ -15,6 +15,14 @@ For a complete change history, please see the Subversion log comments.
 Current Version (future 6.0.2, SVN branch-6-0):
 ---------------------------
 
+- Fixed a problem with calls to labelInImage() (maplabel.c) when label gutter
+  and label buffers are both used (#3303). Also changed the usage around that
+  function to make it easier to understand. At a result the
+  "labelcache_map_edge_buffer" processing option (i.e. gutter) can be provided
+  as a positive or negative value. (closes #1355 too)
+
+- Added label->style markers to collision detection (#4133)
+
 - Fixed single pixel coverages in WCS 2.0 (#4110)
 
 - Fixed subsetting in WCS 2.0 (#4099)

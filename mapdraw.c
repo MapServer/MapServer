@@ -2395,6 +2395,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
 int msDrawLabelCache(imageObj *image, mapObj *map)
 {
   int nReturnVal = MS_SUCCESS;
+
   if(image) {
     if(MS_RENDERER_PLUGIN(image->format)) {          
       pointObj p;
@@ -2429,7 +2430,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
        * map image where labels can't fall
        */
       if((value = msLookupHashTable(&(map->web.metadata), "labelcache_map_edge_buffer")) != NULL) {
-        map_edge_buffer = atoi(value);
+        map_edge_buffer = MS_ABS(atoi(value));
         if(map->debug) msDebug("msDrawLabelCache(): labelcache_map_edge_buffer = %d\n", map_edge_buffer);
       }
 
@@ -2461,7 +2462,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               msRectToPolygon(marker_rect, cachePtr->poly);
                  
               if(!labelPtr->force)
-                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, 0);
+                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, (map_edge_buffer-label_buffer), cachePtr, priority, l, label_mindistance, 0);
                  
               if(cachePtr->status == MS_FALSE)
                 continue;
@@ -2486,6 +2487,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               }
             }
           } else {
+
             if(labelPtr->type == MS_TRUETYPE) {
               size = labelPtr->size * layerPtr->scalefactor;
               size = MS_MAX(size, labelPtr->minsize*image->resolutionfactor);
@@ -2493,7 +2495,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               scalefactor = size / labelPtr->size;
             } else {
               size = labelPtr->size;
-              scalefactor = 1;
+              scalefactor = 1; /* can't scale bitmap fonts */
             }
             if(msGetLabelSize(map,labelPtr,cachePtr->text,size,&r,NULL) != MS_SUCCESS)
               return MS_FAILURE;
@@ -2532,6 +2534,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               continue; /* label too large relative to the feature */
    
             marker_offset_x = marker_offset_y = 0; /* assume no marker */
+            marker_width = marker_height = 0;
             if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { /* there might be a marker added to the image */
    
               /* TODO: at the moment only checks the bottom (first) marker style, perhaps should check all of them */
@@ -2553,6 +2556,33 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               marker_offset_y = MS_NINT(marker_height/2.0);
             }
 
+            /* TODO: might need this in the no text/empty text section above */
+            if(labelPtr->numstyles > 0) {
+              int temp_marker_width, temp_marker_height;
+
+	      for(i=0; i<labelPtr->numstyles; i++) {
+                /* TODO: at the moment only checks the bottom (first) label style, perhaps should check all of them */
+		if(labelPtr->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
+                  if(msGetMarkerSize(&map->symbolset, labelPtr->styles[i], &temp_marker_width, &temp_marker_height, layerPtr->scalefactor) != MS_SUCCESS)
+		    return MS_FAILURE;
+                  break;
+		}
+	      }
+
+	      if(temp_marker_width > marker_width || temp_marker_height > marker_height) {
+                marker_width = temp_marker_width;
+		marker_height = temp_marker_height;
+
+		marker_offset_x = MS_NINT(marker_width/2.0);
+		marker_offset_y = MS_NINT(marker_height/2.0);
+
+		marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width) - labelPtr->buffer;
+		marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height) - labelPtr->buffer;
+		marker_rect.maxx = MS_NINT(cachePtr->point.x + .5 * marker_width) + labelPtr->buffer; // marker_rect.minx + (marker_width-1) + labelPtr->buffer;
+		marker_rect.maxy = MS_NINT(cachePtr->point.y + .5 * marker_height) + labelPtr->buffer; // marker_rect.miny + (marker_height-1) + labelPtr->buffer;
+	      }
+            }
+
             /* handle path following labels first (position does not matter) */
             if(cachePtr->labelpath) {
               cachePtr->status = MS_TRUE;
@@ -2563,9 +2593,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
    
               /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip it */
               if(!labelPtr->force)
-                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
+                msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, (map_edge_buffer-label_buffer), cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
             } else {
-   
+
               if(labelPtr->position == MS_AUTO) {
                 int positions[MS_POSITIONS_LENGTH], npositions=0;
    
@@ -2589,11 +2619,12 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
    
                   p = get_metrics(&(cachePtr->point), positions[i], r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, label_buffer, cachePtr->poly);
-                  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
+
+                  if(marker_width > 0 && marker_height > 0)
                     msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
    
                   /* Compare against image bounds, rendered labels and markers (sets cachePtr->status) */
-                  msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
+                  msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, (map_edge_buffer-label_buffer), cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));
 
                   /* found a suitable place for this label */
                   if(cachePtr->status) {
@@ -2621,18 +2652,18 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   if(drawLabelPoly) get_metrics_line(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + label_offset_x), (marker_offset_y + label_offset_y), labelPtr->angle, 1, labelPoly.line);
                 }
 
-                if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
+                if(marker_width > 0 && marker_height > 0)
                   msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests (TODO: might need to do something similar with label styles?) */
 
                 /* Compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip the test */
                 if(!labelPtr->force)
-                  msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, label_buffer + map_edge_buffer, cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));  
+                  msTestLabelCacheCollisions(&(map->labelcache), labelPtr, image->width, image->height, (map_edge_buffer-label_buffer), cachePtr, priority, l, label_mindistance, (r.maxx-r.minx));  
               }
-            }
+            } /* end (not) POSITION FOLLOW/AUTO */
    
             if(!cachePtr->status)
               continue; /* next label */
-   
+
             /* here's where we draw the label styles */
             if(!cachePtr->labelpath && cachePtr->label.numstyles > 0) {
               for(i=0; i<cachePtr->label.numstyles; i++) {
