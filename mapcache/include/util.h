@@ -88,6 +88,18 @@ APR_DECLARE(apr_table_t *) apr_table_clone(apr_pool_t *p,
 #endif
 
 
+#if defined(_WIN32)
+struct mctimeval {
+    long    tv_sec;         /* seconds */
+    long    tv_usec;        /* and microseconds */
+};
+void  mapcache_gettimeofday(struct mctimeval *t, void *__not_used_here__);
+#else
+#  include <sys/time.h>     /* for gettimeofday() */
+#  define  mctimeval timeval
+#  define  mapcache_gettimeofday(t,u) gettimeofday(t,u)
+#endif
+
 
 #endif /* UTIL_H_ */
 /* vim: ai ts=3 sts=3 et sw=3

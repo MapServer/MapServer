@@ -218,3 +218,58 @@ void mapcache_context_copy(mapcache_context *src, mapcache_context *dst) {
 
 /* vim: ai ts=3 sts=3 et sw=3
 */
+
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+
+int strncasecmp(const char *s1, const char *s2, int len)
+{
+  register const char *cp1, *cp2;
+  int cmp = 0;
+
+  cp1 = s1;
+  cp2 = s2;
+
+  if(len == 0)
+    return(0);
+  
+  if (!*cp1)
+     return -1;
+  else if (!*cp2)
+    return 1;
+  
+  while(*cp1 && *cp2 && len) 
+  {
+      if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
+        return(cmp);
+      cp1++;
+      cp2++;
+      len--;
+  }
+  
+  if(len == 0) {
+    return(0);
+  }
+  if(*cp1 || *cp2)
+  {
+      if (*cp1)
+        return(1);
+      else
+        return (-1);
+  }
+  return(0);
+}
+
+
+#include <sys/timeb.h>
+void mapcache_gettimeofday(struct mctimeval* tp, void* tzp)
+{
+    struct _timeb theTime;
+ 
+    _ftime(&theTime);
+    tp->tv_sec = theTime.time;
+    tp->tv_usec = theTime.millitm * 1000;
+}
+
+
+#endif

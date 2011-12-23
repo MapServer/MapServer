@@ -30,7 +30,7 @@ MAPCACHE_OBJS = src\axisorder.obj  src\dimension.obj  src\imageio_mixed.obj  src
 		src\cache_tiff.obj src\image.obj src\service_demo.obj src\source_mapserver.obj \
 		src\configuration.obj src\image_error.obj src\service_kml.obj src\source_wms.obj \
 		src\configuration_xml.obj src\imageio.obj src\service_tms.obj src\tileset.obj \
-		src\core.obj src\imageio_jpeg.obj src\service_ve.obj src\util.obj \
+		src\core.obj src\imageio_jpeg.obj src\service_ve.obj src\util.obj src\strptime.obj \
 		$(REGEX_OBJ)
 
 

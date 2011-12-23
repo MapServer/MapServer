@@ -70,7 +70,7 @@ apr_queue_t *work_queue;
 
 apr_time_t age_limit = 0;
 int seededtilestot=0, seededtiles=0, queuedtilestot=0;
-struct timeval lastlogtime,starttime;
+struct mctimeval lastlogtime,starttime;
 
 typedef enum {
    MAPCACHE_CMD_SEED,
@@ -204,12 +204,12 @@ void progresslog(int x, int y, int z) {
    return;
 
    if(queuedtilestot>nthreads) {
-      struct timeval now_t;
+      struct mctimeval now_t;
       float duration;
       float totalduration;
       seededtilestot = queuedtilestot - nthreads;
 
-      gettimeofday(&now_t,NULL);
+      mapcache_gettimeofday(&now_t,NULL);
       duration = ((now_t.tv_sec-lastlogtime.tv_sec)*1000000+(now_t.tv_usec-lastlogtime.tv_usec))/1000000.0;
       totalduration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
       if(duration>=5) {
@@ -620,7 +620,7 @@ int main(int argc, const char **argv) {
     apr_getopt_init(&opt, ctx.pool, argc, argv);
 
     seededtiles=seededtilestot=queuedtilestot=0;
-    gettimeofday(&starttime,NULL);
+    mapcache_gettimeofday(&starttime,NULL);
     lastlogtime=starttime;
     argdimensions = apr_table_make(ctx.pool,3);
     
@@ -950,9 +950,9 @@ int main(int argc, const char **argv) {
         }
 
         if(seededtilestot>0) {
-           struct timeval now_t;
+           struct mctimeval now_t;
 	   float duration;
-           gettimeofday(&now_t,NULL);
+           mapcache_gettimeofday(&now_t,NULL);
            duration = ((now_t.tv_sec-starttime.tv_sec)*1000000+(now_t.tv_usec-starttime.tv_usec))/1000000.0;
            printf("\nseeded %d metatiles at %g tiles/sec\n",seededtilestot, seededtilestot/duration);
         }
