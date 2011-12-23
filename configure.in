@@ -2760,7 +2760,7 @@ AC_SUBST(ALL_LIB, $ALL_LIB)
 AC_SUBST(ALL_STATIC_LIB, $ALL_STATIC_LIB)
 AC_SUBST(RPATHS, [$RPATHS])
 
-AC_OUTPUT(Makefile $PHPMS_MAKEFILE mapscript/python/Makefile mapscript/java/Makefile mapscript/csharp/Makefile)
+AC_OUTPUT(Makefile $PHPMS_MAKEFILE mapscript/python/Makefile mapscript/java/Makefile mapscript/csharp/Makefile mapscript/perl/Makefile.PL)
 
 dnl ---------------------------------------------------------------------------
 dnl Display configuration status

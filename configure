@@ -22466,7 +22466,7 @@ ALL_STATIC_LIB=$ALL_STATIC_LIB
 RPATHS=$RPATHS
 
 
-ac_config_files="$ac_config_files Makefile $PHPMS_MAKEFILE mapscript/python/Makefile mapscript/java/Makefile mapscript/csharp/Makefile"
+ac_config_files="$ac_config_files Makefile $PHPMS_MAKEFILE mapscript/python/Makefile mapscript/java/Makefile mapscript/csharp/Makefile mapscript/perl/Makefile.PL"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -23576,6 +23576,7 @@ do
     "mapscript/python/Makefile") CONFIG_FILES="$CONFIG_FILES mapscript/python/Makefile" ;;
     "mapscript/java/Makefile") CONFIG_FILES="$CONFIG_FILES mapscript/java/Makefile" ;;
     "mapscript/csharp/Makefile") CONFIG_FILES="$CONFIG_FILES mapscript/csharp/Makefile" ;;
+    "mapscript/perl/Makefile.PL") CONFIG_FILES="$CONFIG_FILES mapscript/perl/Makefile.PL" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

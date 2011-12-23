@@ -3,6 +3,9 @@ use ExtUtils::MakeMaker;
 
 open(STREAM, '../../mapscriptvars') or die('Unable to open mapscriptvars, have you built the MapServer yet?'); 
 
+$prefix="@prefix@";
+$exec_prefix="@exec_prefix@";
+$libdir="@libdir@";
 $home = <STREAM>;
 chomp $home;
 
@@ -15,7 +18,7 @@ $inc =~ s/\-I\./\-I$home/g;
 
 $libs = <STREAM>;
 chomp $libs;
-$libs =~ s/\-L\./\-L$home/g;
+$libs = "-L$libdir -lmapserver";
 
 $static_libs = <STREAM>;
 chomp $static_libs;
