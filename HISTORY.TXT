@@ -131,6 +131,8 @@ Current Version (SVN trunk, 6.1-dev, future 6.2):
 
 - Initialize the scalebar image color to transparent by default (#3957)
 
+- Do not divide by zero in io read/write funcs (#4135)
+
 IMPORTANT SECURITY FIX:
 
 -  Fixes to prevent SQL injections through OGC filter encoding (in WMS, WFS 

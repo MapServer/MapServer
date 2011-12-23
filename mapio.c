@@ -450,6 +450,9 @@ int msIO_fwrite( const void *data, size_t size, size_t nmemb, FILE *fp )
 {
     msIOContext *context;
 
+    if( size == 0 || nmemb == 0 )
+      return 0;
+
     context = msIO_getHandler( fp );
     if( context == NULL )
         return fwrite( data, size, nmemb, fp );
@@ -465,6 +468,9 @@ int msIO_fread( void *data, size_t size, size_t nmemb, FILE *fp )
 
 {
     msIOContext *context;
+
+    if( size == 0 || nmemb == 0 )
+      return 0;
 
     context = msIO_getHandler( fp );
     if( context == NULL )
