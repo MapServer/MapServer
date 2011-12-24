@@ -464,6 +464,9 @@ mapcache_http_response *mapcache_core_proxy_request(mapcache_context *ctx, mapca
        /* the http request was successful, but the server returned an error */
        ctx->clear_errors(ctx);
     }
+    /*remove some headers that should not be sent back to the client*/
+    apr_table_unset(response->headers,"Transfer-Encoding");
+    apr_table_unset(response->headers,"Connection");
     return response;
 }
 
