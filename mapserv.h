@@ -61,9 +61,9 @@ static char *modeStrings[21] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGE
 				"FEATUREQUERY","FEATURENQUERY","ITEMFEATUREQUERY","ITEMFEATURENQUERY",
 				"INDEXQUERY","TILE","OWS", "WFS"};
 
-int msCGIWriteLog(mapservObj *mapserv, int show_error);
-void msCGIWriteError(mapservObj *mapserv);
-mapObj *msCGILoadMap(mapservObj *mapserv);
+MS_DLL_EXPORT int msCGIWriteLog(mapservObj *mapserv, int show_error);
+MS_DLL_EXPORT void msCGIWriteError(mapservObj *mapserv);
+MS_DLL_EXPORT mapObj *msCGILoadMap(mapservObj *mapserv);
 int msCGISetMode(mapservObj *mapserv);
 int msCGILoadForm(mapservObj *mapserv);
 int msCGIDispatchBrowseRequest(mapservObj *mapserv);
@@ -72,7 +72,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv);
 int msCGIDispatchImageRequest(mapservObj *mapserv);
 int msCGIDispatchLegendRequest(mapservObj *mapserv);
 int msCGIDispatchLegendIconRequest(mapservObj *mapserv);
-int msCGIDispatchRequest(mapservObj *mapserv);
+MS_DLL_EXPORT int msCGIDispatchRequest(mapservObj *mapserv);
 
 
 

@@ -1680,6 +1680,8 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
    mapservObj* mapserv = NULL;
    char *queryString;
    int maxParams = MS_DEFAULT_CGI_PARAMS;
+   msIOContext *ctx;
+   msIOBuffer  *buf;
 
    msIO_installStdoutToBuffer();
    /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
@@ -1765,8 +1767,7 @@ end_request:
             (execendtime.tv_sec+execendtime.tv_usec/1.0e6)-
             (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
    }
-   msIOContext *ctx = msIO_getHandler( (FILE *) "stdout" );
-   msIOBuffer  *buf;
+   ctx = msIO_getHandler( (FILE *) "stdout" );
    buf = (msIOBuffer *) ctx->cbData;
    *out_buffer = buf->data;
    *buffer_length = buf->data_offset;
