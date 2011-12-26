@@ -284,14 +284,6 @@ static int mod_mapcache_request_handler(request_rec *r) {
       http_response = mapcache_core_get_tile(global_ctx,req_tile);
    } else if( request->type == MAPCACHE_REQUEST_PROXY ) {
       mapcache_request_proxy *req_proxy = (mapcache_request_proxy*)request;
-      char *url;
-      request_rec *original;
-      if(r->main)
-         original = r->main;
-      else
-         original = r;
-      url = ap_construct_url(r->pool,original->uri,original);
-      apr_table_add(req_proxy->params,"url",url);
       http_response = mapcache_core_proxy_request(global_ctx, req_proxy);
    } else if( request->type == MAPCACHE_REQUEST_GET_MAP) {
       mapcache_request_get_map *req_map = (mapcache_request_get_map*)request;
