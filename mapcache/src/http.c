@@ -66,6 +66,9 @@ size_t _mapcache_curl_header_callback( void *ptr, size_t size, size_t nmemb,  vo
       *colonptr = '\0';
       *endptr = '\0';
       apr_table_setn(h->headers,header,colonptr+2);
+#ifdef DEBUG
+         h->ctx->log(h->ctx,MAPCACHE_DEBUG,"received header %s: %s",header, colonptr+2);
+#endif
    }
 
    return size*nmemb;

@@ -5,6 +5,7 @@ AC_INIT(Makefile.inc.in)
 : ${CFLAGS="-Wall"}
 
 AC_PROG_CC
+AC_PROG_INSTALL
 
 dnl ---------------------------------------------------------------------
 dnl Checks for header files.
@@ -468,8 +469,7 @@ AC_DEFUN([MAPSERVER_CHECK],[
     )
     if test "$enable_mapserver" == "yes"; then
       AC_SUBST(MAPSERVER_ENABLED,"-DUSE_MAPSERVER")
-      MAPSERVER_LIB=`../mapserver-config --libs`
-      MAPSERVER_LIB="$MAPSERVER_LIB ../../libmapserver.a"
+      MAPSERVER_LIB="../../libmapserver.la"
       AC_SUBST(MAPSERVER_LIB,$MAPSERVER_LIB)
    fi
 ])

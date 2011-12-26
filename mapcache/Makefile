@@ -3,7 +3,13 @@ include ./Makefile.inc
 all: .header
 	cd src; $(MAKE) $(MFLAGS)
 	
-install-module: .header
+install-lib: .header
+	cd src; $(MAKE) $(MFLAGS) install-lib
+
+install: .header install-lib
+	cd src; $(MAKE) $(MFLAGS) install
+
+install-module: .header install-lib
 	cd src; $(MAKE) $(MFLAGS) install-module
 
 # make clean and rerun if essential files have been modified

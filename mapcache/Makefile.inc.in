@@ -1,7 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+bindir=@bindir@
+
 TARGETS=mapcache mapcache_seed @MODULE_TARGET@
 APXS=@APXS@
 HTTPD=@HTTPD@
 CC=@CC@
+INSTALL=@INSTALL@
 APACHECTL=@APACHECTL@
 CFLAGS=@APR_CFLAGS@ @CFLAGS@ 
 CURLCONFIG=@CURLCONFIG@
