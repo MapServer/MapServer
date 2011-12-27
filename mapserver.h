@@ -117,8 +117,6 @@ typedef uint32_t        ms_uint32;
 /*forward declaration of rendering object*/
 typedef struct rendererVTableObj rendererVTableObj;
 typedef struct tileCacheObj tileCacheObj;
-typedef struct imageObj imageObj;
-
 
 
 /* ms_bitarray is used by the bit mask in mapbit.c */
@@ -1321,6 +1319,47 @@ typedef struct layerVTable layerVTableObj;
 #endif /*SWIG*/
 
 /************************************************************************/
+/*                               imageObj                               */
+/*                                                                      */
+/*      A wrapper for GD and other images.                              */
+/************************************************************************/
+typedef struct {
+#ifdef SWIG
+%immutable;
+#endif
+  int width, height;
+  double resolution;
+  double resolutionfactor;
+
+  char *imagepath, *imageurl;
+
+  outputFormatObj *format;
+#ifndef SWIG
+  tileCacheObj *tilecache;
+  int ntiles;
+#endif
+#ifdef SWIG
+%mutable;
+#endif
+#ifndef SWIG
+  int size;
+#endif
+
+#ifndef SWIG
+  union {
+    void *plugin;
+
+    char *imagemap;
+    short *raw_16bit;
+    float *raw_float;
+    unsigned char *raw_byte;
+  } img;
+  ms_bitarray  img_mask;
+  pointObj refpt;
+#endif
+} imageObj;
+
+/************************************************************************/
 /*                               layerObj                               */
 /*                                                                      */
 /*      base unit of a map.                                             */
@@ -1603,48 +1642,6 @@ typedef struct map_obj{ /* structure for a map */
   queryObj query;
 #endif
 } mapObj;
-
-/************************************************************************/
-/*                               imageObj                               */
-/*                                                                      */
-/*      A wrapper for GD and other images.                              */
-/************************************************************************/
-struct imageObj{
-#ifdef SWIG
-%immutable;
-#endif
-  int width, height;
-  double resolution;
-  double resolutionfactor;
-
-  char *imagepath, *imageurl;
-
-  outputFormatObj *format;
-#ifndef SWIG
-  tileCacheObj *tilecache;
-  int ntiles;
-#endif
-#ifdef SWIG
-%mutable;
-#endif
-#ifndef SWIG
-  int size;
-#endif
-
-#ifndef SWIG
-  union {
-    void *plugin;
-
-    char *imagemap;
-    short *raw_16bit;
-    float *raw_float;
-    unsigned char *raw_byte;
-  } img;
-  ms_bitarray  img_mask;
-  pointObj refpt;
-#endif
-};
-
 
 /************************************************************************/
 /*                             layerVTable                              */
