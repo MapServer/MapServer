@@ -1205,6 +1205,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         msIO_sendHeaders();
         msIO_fprintf( 
             stdout, 
+            "--wcs\n"
             "Content-Type: text/xml; charset=%s\n"
             "Content-ID: wcs.xml%c%c"
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -1222,6 +1223,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         msIO_sendHeaders();
         msIO_fprintf( 
             stdout, 
+            "--wcs\n"
             "Content-Type: text/xml\n"
             "Content-ID: wcs.xml%c%c"
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
