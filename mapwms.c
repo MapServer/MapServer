@@ -2949,7 +2949,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   if (nVersion <= OWS_1_0_7)
   {
     /* WMS 1.0.0 to 1.0.7 - We don't try to use outputformats list here for now */
-      if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_TRUE)) 
+      if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_FALSE)) 
           msWMSPrintRequestCap(nVersion, "Map", script_url_encoded, ""
 
 #ifdef USE_GD_GIF
@@ -2963,9 +2963,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 #endif
                        "<SVG />"  
                       , NULL);
-      if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE)) 
+      if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_FALSE)) 
           msWMSPrintRequestCap(nVersion, "Capabilities", script_url_encoded, "<WMS_XML />", NULL);
-      if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_TRUE)) 
+      if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_FALSE)) 
           msWMSPrintRequestCap(nVersion, "FeatureInfo", script_url_encoded, "<MIME /><GML.1 />", NULL);
   }
   else
@@ -2976,7 +2976,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     /* WMS 1.1.0 and later */
     /* Note changes to the request names, their ordering, and to the formats */
 
-     if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE)) 
+     if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_FALSE)) 
      {
          if (nVersion >= OWS_1_3_0)
              msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
@@ -2989,7 +2989,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
      }
 
     msGetOutputFormatMimeListWMS(map,mime_list,sizeof(mime_list)/sizeof(char*));
-    if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_TRUE))
+    if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_FALSE))
         msWMSPrintRequestCap(nVersion, "GetMap", script_url_encoded,
                              mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                              mime_list[4], mime_list[5], mime_list[6], mime_list[7],
@@ -3038,7 +3038,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
         }
         
         
-        if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_TRUE)) 
+        if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_FALSE)) 
         {
             if (mime_count>0)
             {
@@ -3065,7 +3065,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     }
     else 
     {
-        if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_TRUE)) 
+        if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_FALSE)) 
             msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
                                  "text/plain",
                                  "application/vnd.ogc.gml",
@@ -3074,7 +3074,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     
 
     if (strcasecmp(sldenabled, "true") == 0) {
-        if (msOWSRequestIsEnabled(map, NULL, "M", "DescribeLayer", MS_TRUE)) 
+        if (msOWSRequestIsEnabled(map, NULL, "M", "DescribeLayer", MS_FALSE)) 
         {
             if (nVersion == OWS_1_3_0)
                 msWMSPrintRequestCap(nVersion, "sld:DescribeLayer", script_url_encoded, "text/xml", NULL);
@@ -3087,7 +3087,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
         if (nVersion >= OWS_1_1_1) {
            if (nVersion == OWS_1_3_0)
            {
-               if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_TRUE)) 
+               if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_FALSE)) 
                    msWMSPrintRequestCap(nVersion, "sld:GetLegendGraphic", script_url_encoded,
                                         mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                                         mime_list[4], mime_list[5], mime_list[6], mime_list[7],
@@ -3095,12 +3095,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                                         mime_list[12], mime_list[13], mime_list[14], mime_list[15],
                                         mime_list[16], mime_list[17], mime_list[18], mime_list[19],
                                         NULL );
-               if (msOWSRequestIsEnabled(map, NULL, "M", "GetStyles", MS_TRUE)) 
+               if (msOWSRequestIsEnabled(map, NULL, "M", "GetStyles", MS_FALSE)) 
                    msWMSPrintRequestCap(nVersion, "ms:GetStyles", script_url_encoded, "text/xml", NULL);
            }
            else 
            {
-               if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_TRUE)) 
+               if (msOWSRequestIsEnabled(map, NULL, "M", "GetLegendGraphic", MS_FALSE)) 
                    msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
                                         mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                                         mime_list[4], mime_list[5], mime_list[6], mime_list[7],
@@ -3108,7 +3108,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                                         mime_list[12], mime_list[13], mime_list[14], mime_list[15],
                                         mime_list[16], mime_list[17], mime_list[18], mime_list[19],
                                         NULL );
-               if (msOWSRequestIsEnabled(map, NULL, "M", "GetStyles", MS_TRUE)) 
+               if (msOWSRequestIsEnabled(map, NULL, "M", "GetStyles", MS_FALSE)) 
                    msWMSPrintRequestCap(nVersion, "GetStyles", script_url_encoded, "text/xml", NULL);
            }
        }
@@ -3151,289 +3151,297 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   }
 
   /* Top-level layer with map extents and SRS, encloses all map layers */
-  msIO_printf("  <Layer>\n");
-
-  /* Layer Name is optional but title is mandatory. */
-  if (map->name && strlen(map->name) > 0 &&
-      (msIsXMLTagValid(map->name) == MS_FALSE || isdigit(map->name[0])))
-    msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
-                 "invalid characters or may start with a number. This could lead to potential problems. -->\n", 
-                 map->name);
-  msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR,
-                        "    <Name>%s</Name>\n", NULL);
-
-  if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_title"))
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "rootlayer_title", OWS_WARN, "    <Title>%s</Title>\n", map->name);
-
-  else 
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title", OWS_WARN, "    <Title>%s</Title>\n", map->name);
-
-  if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_abstract"))
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "rootlayer_abstract", OWS_NOERR, "    <Abstract>%s</Abstract>\n", map->name);
-  else
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "abstract", OWS_NOERR, "    <Abstract>%s</Abstract>\n", map->name);
-
-
-  if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_keywordlist"))
-    pszTmp = msStrdup("rootlayer_keywordlist");
-   else
-    pszTmp = msStrdup("keywordlist");
-
-  if (nVersion == OWS_1_0_0)
+  /* Output only if at least one layers is enabled. */
+  if (ows_request->numlayers == 0)
   {
-     /* <Keywords> in V 1.0.0 */
-     /* The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces */
-     msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "MO",
-                                  pszTmp,
-                                  "    <Keywords>",
-                                  "    </Keywords>\n",
-                                  "%s ", NULL);
+    msIO_fprintf(stdout, "  <!-- WARNING: No WMS layers are enabled. Check wms/ows_enable_request settings. -->\n");
   }
   else
   {
-     /* <KeywordList><Keyword> ... in V1.0.6+ */
-     msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "MO",
-                                  pszTmp,
-                                  "    <KeywordList>\n",
-                                  "    </KeywordList>\n",
-                                  "     <Keyword>%s</Keyword>\n", NULL);
-  }
+    msIO_printf("  <Layer>\n");
 
-  msFree(pszTmp);
+    /* Layer Name is optional but title is mandatory. */
+    if (map->name && strlen(map->name) > 0 &&
+        (msIsXMLTagValid(map->name) == MS_FALSE || isdigit(map->name[0])))
+      msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
+                   "invalid characters or may start with a number. This could lead to potential problems. -->\n", 
+                   map->name);
+    msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR,
+                          "    <Name>%s</Name>\n", NULL);
 
-  /* According to normative comments in the 1.0.7 DTD, the root layer's SRS tag */
-  /* is REQUIRED.  It also suggests that we use an empty SRS element if there */
-  /* is no common SRS. */
-  if (nVersion > OWS_1_1_0)
-  {
-      /* starting 1.1.1 SRS are given in individual tags */
-      if (nVersion >= OWS_1_3_0)
+    if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_title"))
+      msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "rootlayer_title", OWS_WARN, "    <Title>%s</Title>\n", map->name);
+
+    else 
+      msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title", OWS_WARN, "    <Title>%s</Title>\n", map->name);
+
+    if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_abstract"))
+      msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "rootlayer_abstract", OWS_NOERR, "    <Abstract>%s</Abstract>\n", map->name);
+    else
+      msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "abstract", OWS_NOERR, "    <Abstract>%s</Abstract>\n", map->name);
+
+
+    if (msOWSLookupMetadata(&(map->web.metadata), "MO", "rootlayer_keywordlist"))
+      pszTmp = msStrdup("rootlayer_keywordlist");
+     else
+      pszTmp = msStrdup("keywordlist");
+
+    if (nVersion == OWS_1_0_0)
+    {
+       /* <Keywords> in V 1.0.0 */
+       /* The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces */
+       msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "MO",
+                                    pszTmp,
+                                    "    <Keywords>",
+                                    "    </Keywords>\n",
+                                    "%s ", NULL);
+    }
+    else
+    {
+       /* <KeywordList><Keyword> ... in V1.0.6+ */
+       msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "MO",
+                                    pszTmp,
+                                    "    <KeywordList>\n",
+                                    "    </KeywordList>\n",
+                                    "     <Keyword>%s</Keyword>\n", NULL);
+    }
+
+    msFree(pszTmp);
+
+    /* According to normative comments in the 1.0.7 DTD, the root layer's SRS tag */
+    /* is REQUIRED.  It also suggests that we use an empty SRS element if there */
+    /* is no common SRS. */
+    if (nVersion > OWS_1_1_0)
+    {
+        /* starting 1.1.1 SRS are given in individual tags */
+        if (nVersion >= OWS_1_3_0)
+            msOWSPrintEncodeParamList(stdout, "(at least one of) "
+                                  "MAP.PROJECTION, LAYER.PROJECTION "
+                                  "or wms_srs metadata", 
+                                  msOWSGetEPSGProj(&(map->projection), 
+                                                   &(map->web.metadata),
+                                                   "MO", MS_FALSE),
+                                  OWS_WARN, ' ', NULL, NULL, 
+                                  "    <CRS>%s</CRS>\n", "");
+        else
           msOWSPrintEncodeParamList(stdout, "(at least one of) "
-                                "MAP.PROJECTION, LAYER.PROJECTION "
-                                "or wms_srs metadata", 
-                                msOWSGetEPSGProj(&(map->projection), 
-                                                 &(map->web.metadata),
-                                                 "MO", MS_FALSE),
-                                OWS_WARN, ' ', NULL, NULL, 
-                                "    <CRS>%s</CRS>\n", "");
-      else
-        msOWSPrintEncodeParamList(stdout, "(at least one of) "
-                                "MAP.PROJECTION, LAYER.PROJECTION "
-                                "or wms_srs metadata", 
-                                msOWSGetEPSGProj(&(map->projection), 
-                                                 &(map->web.metadata),
-                                                 "MO", MS_FALSE),
-                                OWS_WARN, ' ', NULL, NULL, 
-                                "    <SRS>%s</SRS>\n", "");
-  }
-  else
-      /* If map has no proj then every layer MUST have one or produce a warning */
-    msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
-                            msOWSGetEPSGProj(&(map->projection), 
-                                             &(map->web.metadata),
-                                             "MO", MS_FALSE),
-                            OWS_WARN, "    <SRS>%s</SRS>\n", "");
+                                  "MAP.PROJECTION, LAYER.PROJECTION "
+                                  "or wms_srs metadata", 
+                                  msOWSGetEPSGProj(&(map->projection), 
+                                                   &(map->web.metadata),
+                                                   "MO", MS_FALSE),
+                                  OWS_WARN, ' ', NULL, NULL, 
+                                  "    <SRS>%s</SRS>\n", "");
+    }
+    else
+        /* If map has no proj then every layer MUST have one or produce a warning */
+      msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
+                              msOWSGetEPSGProj(&(map->projection), 
+                                               &(map->web.metadata),
+                                               "MO", MS_FALSE),
+                              OWS_WARN, "    <SRS>%s</SRS>\n", "");
 
-  if (nVersion >= OWS_1_3_0)
-    msOWSPrintEX_GeographicBoundingBox(stdout, "    ", &(map->extent),
-                                       &(map->projection));
-  else
-    msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent),
-                                &(map->projection), NULL, OWS_WMS);
+    if (nVersion >= OWS_1_3_0)
+      msOWSPrintEX_GeographicBoundingBox(stdout, "    ", &(map->extent),
+                                         &(map->projection));
+    else
+      msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent),
+                                  &(map->projection), NULL, OWS_WMS);
 
-  msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
-                         NULL, &(map->web.metadata), "MO", nVersion);
+    msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
+                           NULL, &(map->web.metadata), "MO", nVersion);
 
-  if (nVersion >= OWS_1_0_7) {
-    msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
-  }
+    if (nVersion >= OWS_1_0_7) {
+      msWMSPrintAttribution(stdout, "    ", &(map->web.metadata), "MO");
+    }
 
-  if (nVersion <  OWS_1_3_0)
-    msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
-                        map->resolution);
-  else
-    msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
+    if (nVersion <  OWS_1_3_0)
+      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
+                          map->resolution);
+    else
+      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
 
 
-  /*  */
-  /* Dump list of layers organized by groups.  Layers with no group are listed */
-  /* individually, at the same level as the groups in the layer hierarchy */
-  /*  */
-  if (map->numlayers)
-  {
-     int i, j;
-     char *pabLayerProcessed = NULL;
-     char ***nestedGroups = NULL; 
-     int *numNestedGroups = NULL; 
+    /*  */
+    /* Dump list of layers organized by groups.  Layers with no group are listed */
+    /* individually, at the same level as the groups in the layer hierarchy */
+    /*  */
+    if (map->numlayers)
+    {
+       int i, j;
+       char *pabLayerProcessed = NULL;
+       char ***nestedGroups = NULL; 
+       int *numNestedGroups = NULL; 
 
-     /* We'll use this array of booleans to track which layer/group have been */
-     /* processed already */
-     pabLayerProcessed = (char *)msSmallCalloc(map->numlayers, sizeof(char*));
-     /* This array holds the arrays of groups that have been set through the WMS_LAYER_GROUP metadata */
-     nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
-     /* This array holds the number of groups set in WMS_LAYER_GROUP for each layer */
-     numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+       /* We'll use this array of booleans to track which layer/group have been */
+       /* processed already */
+       pabLayerProcessed = (char *)msSmallCalloc(map->numlayers, sizeof(char*));
+       /* This array holds the arrays of groups that have been set through the WMS_LAYER_GROUP metadata */
+       nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
+       /* This array holds the number of groups set in WMS_LAYER_GROUP for each layer */
+       numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
 
-     msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups);
+       msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups);
 
-     for(i=0; i<map->numlayers; i++)
-     {
-         layerObj *lp;
-         lp = (GET_LAYER(map, i));
+       for(i=0; i<map->numlayers; i++)
+       {
+           layerObj *lp;
+           lp = (GET_LAYER(map, i));
 
-         if (pabLayerProcessed[i] || (lp->status == MS_DELETE) || 
-             (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)))
-             continue;  /* Layer is hidden or has already been handled */
-         
-         if (numNestedGroups[i] > 0) 
-         {
-            /* Has nested groups.  */
-             msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed, i, 0, 
-                                    nestedGroups, numNestedGroups, 
-                                    script_url_encoded);
-         }
-         else if (lp->group == NULL || strlen(lp->group) == 0)
-         {
-             /* This layer is not part of a group... dump it directly */
-             msDumpLayer(map, lp, nVersion, script_url_encoded, "");
-             pabLayerProcessed[i] = 1;
-         }
-         else
-         {
-             /* Beginning of a new group... enclose the group in a layer block */
-             msIO_printf("    <Layer>\n");
+           if (pabLayerProcessed[i] || (lp->status == MS_DELETE) || 
+               (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)))
+               continue;  /* Layer is hidden or has already been handled */
+           
+           if (numNestedGroups[i] > 0) 
+           {
+              /* Has nested groups.  */
+               msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed, i, 0, 
+                                      nestedGroups, numNestedGroups, 
+                                      script_url_encoded);
+           }
+           else if (lp->group == NULL || strlen(lp->group) == 0)
+           {
+               /* This layer is not part of a group... dump it directly */
+               msDumpLayer(map, lp, nVersion, script_url_encoded, "");
+               pabLayerProcessed[i] = 1;
+           }
+           else
+           {
+               /* Beginning of a new group... enclose the group in a layer block */
+               msIO_printf("    <Layer>\n");
 
-             /* Layer Name is optional but title is mandatory. */
-             if (lp->group &&  strlen(lp->group) > 0 &&
-                 (msIsXMLTagValid(lp->group) == MS_FALSE || isdigit(lp->group[0])))
-               msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
-                        "invalid characters or may start with a number. This could lead to potential problems. -->\n", 
-                            lp->group);
-             msOWSPrintEncodeParam(stdout, "GROUP.NAME", lp->group,
-                                   OWS_NOERR, "      <Name>%s</Name>\n", NULL);
-             msOWSPrintGroupMetadata(stdout, map, lp->group,
-                                     "MO", "GROUP_TITLE", OWS_WARN,
-                                     "      <Title>%s</Title>\n", lp->group);
-             msOWSPrintGroupMetadata(stdout, map, lp->group,
-                                     "MO", "GROUP_ABSTRACT", OWS_NOERR,
-                                     "      <Abstract>%s</Abstract>\n", lp->group);
+               /* Layer Name is optional but title is mandatory. */
+               if (lp->group &&  strlen(lp->group) > 0 &&
+                   (msIsXMLTagValid(lp->group) == MS_FALSE || isdigit(lp->group[0])))
+                 msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
+                          "invalid characters or may start with a number. This could lead to potential problems. -->\n", 
+                              lp->group);
+               msOWSPrintEncodeParam(stdout, "GROUP.NAME", lp->group,
+                                     OWS_NOERR, "      <Name>%s</Name>\n", NULL);
+               msOWSPrintGroupMetadata(stdout, map, lp->group,
+                                       "MO", "GROUP_TITLE", OWS_WARN,
+                                       "      <Title>%s</Title>\n", lp->group);
+               msOWSPrintGroupMetadata(stdout, map, lp->group,
+                                       "MO", "GROUP_ABSTRACT", OWS_NOERR,
+                                       "      <Abstract>%s</Abstract>\n", lp->group);
 
-             /*build a getlegendgraphicurl*/
-             if( script_url_encoded)
-             {
-                 int num_layers = 0;
-                 size_t bufferSize = 0;
-                 char width[10], height[10];
-                 char *name_encoded = msEncodeHTMLEntities(lp->group);
-                 int *group_layers = (int *)msSmallMalloc(sizeof(int)*map->numlayers);
-                 char *legendurl = NULL;
-                 int size_x=0, size_y=0;
-                 char *mimetype = NULL;
-                 char **tokens = NULL;
-                 int numtokens = 0;
+               /*build a getlegendgraphicurl*/
+               if( script_url_encoded)
+               {
+                   int num_layers = 0;
+                   size_t bufferSize = 0;
+                   char width[10], height[10];
+                   char *name_encoded = msEncodeHTMLEntities(lp->group);
+                   int *group_layers = (int *)msSmallMalloc(sizeof(int)*map->numlayers);
+                   char *legendurl = NULL;
+                   int size_x=0, size_y=0;
+                   char *mimetype = NULL;
+                   char **tokens = NULL;
+                   int numtokens = 0;
 
-                 for(j=i; j<map->numlayers; j++)
+                   for(j=i; j<map->numlayers; j++)
+                     if (!pabLayerProcessed[j] &&
+                         GET_LAYER(map, j)->group &&
+                         strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
+                         msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers))
+                       group_layers[num_layers++] = j;
+                   if ( num_layers > 0)
+                   {
+                       group_layers =(int *)msSmallRealloc(group_layers,  sizeof(int)*num_layers);
+
+                       if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers) == MS_SUCCESS)
+                       {
+                           bufferSize = strlen(script_url_encoded)+200;
+                           legendurl = (char*)msSmallMalloc(bufferSize);
+                           snprintf(width, sizeof(width), "%d", size_x);
+                           snprintf(height, sizeof(height), "%d", size_y);
+
+                           format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
+                                                             "getlegendgraphic_formatlist");
+                           if (format_list && strlen(format_list) > 0) 
+                           {
+                               tokens = msStringSplit(format_list,  ',', &numtokens);
+                               if (tokens && numtokens > 0)
+                               {
+                                   /*just grab the first mime type*/
+                                   mimetype = msEncodeHTMLEntities(tokens[0]);
+                                   msFreeCharArray(tokens, numtokens);
+                               }
+                           }
+                           else
+                             mimetype = msEncodeHTMLEntities("image/png; mode=24bit");
+
+                           if (nVersion >= OWS_1_3_0)
+                             
+                             snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=%s&amp;format=%s&amp;STYLE=default", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
+                                      mimetype);
+                           else 
+                             snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=default", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
+                                      mimetype);
+                           msIO_fprintf(stdout, "        <Style>\n");
+                           msIO_fprintf(stdout, "          <Name>default</Name>\n");
+                           msIO_fprintf(stdout, "          <Title>default</Title>\n");
+                        
+                           msOWSPrintURLType(stdout, NULL, 
+                                             "O", "ttt",
+                                             OWS_NOERR, NULL, 
+                                             "LegendURL", NULL, 
+                                             " width=\"%s\"", " height=\"%s\"", 
+                                             ">\n             <Format>%s</Format", 
+                                             "\n             <OnlineResource "
+                                             "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                                             " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                                             "          ",
+                                             MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
+                                             NULL, width, height, mimetype, legendurl, "          ");
+                   
+
+                           msIO_fprintf(stdout, "        </Style>\n");
+                           msFree(legendurl);
+                           msFree(mimetype);
+                           msFree(name_encoded);
+
+                   
+                       
+                       }
+                   }
+               }
+               /* Dump all layers for this group */
+               for(j=i; j<map->numlayers; j++)
+               {
                    if (!pabLayerProcessed[j] &&
                        GET_LAYER(map, j)->group &&
                        strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
                        msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers))
-                     group_layers[num_layers++] = j;
-                 if ( num_layers > 0)
-                 {
-                     group_layers =(int *)msSmallRealloc(group_layers,  sizeof(int)*num_layers);
+                   {
+                       msDumpLayer(map, (GET_LAYER(map, j)), nVersion, script_url_encoded, "  ");
+                       pabLayerProcessed[j] = 1;
+                   }
+               }
 
-                     if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers) == MS_SUCCESS)
-                     {
-                         bufferSize = strlen(script_url_encoded)+200;
-                         legendurl = (char*)msSmallMalloc(bufferSize);
-                         snprintf(width, sizeof(width), "%d", size_x);
-                         snprintf(height, sizeof(height), "%d", size_y);
-
-                         format_list = msOWSLookupMetadata(&(map->web.metadata), "M",
-                                                           "getlegendgraphic_formatlist");
-                         if (format_list && strlen(format_list) > 0) 
-                         {
-                             tokens = msStringSplit(format_list,  ',', &numtokens);
-                             if (tokens && numtokens > 0)
-                             {
-                                 /*just grab the first mime type*/
-                                 mimetype = msEncodeHTMLEntities(tokens[0]);
-                                 msFreeCharArray(tokens, numtokens);
-                             }
-                         }
-                         else
-                           mimetype = msEncodeHTMLEntities("image/png; mode=24bit");
-
-                         if (nVersion >= OWS_1_3_0)
-                           
-                           snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=%s&amp;format=%s&amp;STYLE=default", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
-                                    mimetype);
-                         else 
-                           snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=default", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
-                                    mimetype);
-                         msIO_fprintf(stdout, "        <Style>\n");
-                         msIO_fprintf(stdout, "          <Name>default</Name>\n");
-                         msIO_fprintf(stdout, "          <Title>default</Title>\n");
-                      
-                         msOWSPrintURLType(stdout, NULL, 
-                                           "O", "ttt",
-                                           OWS_NOERR, NULL, 
-                                           "LegendURL", NULL, 
-                                           " width=\"%s\"", " height=\"%s\"", 
-                                           ">\n             <Format>%s</Format", 
-                                           "\n             <OnlineResource "
-                                           "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                                           " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
-                                           "          ",
-                                           MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
-                                           NULL, width, height, mimetype, legendurl, "          ");
-                 
-
-                         msIO_fprintf(stdout, "        </Style>\n");
-                         msFree(legendurl);
-                         msFree(mimetype);
-                         msFree(name_encoded);
-
-                 
-                     
-                     }
-                 }
-             }
-             /* Dump all layers for this group */
-             for(j=i; j<map->numlayers; j++)
-             {
-                 if (!pabLayerProcessed[j] &&
-                     GET_LAYER(map, j)->group &&
-                     strcmp(lp->group, GET_LAYER(map, j)->group) == 0 &&
-                     msIntegerInArray(GET_LAYER(map, j)->index, ows_request->enabled_layers, ows_request->numlayers))
-                 {
-                     msDumpLayer(map, (GET_LAYER(map, j)), nVersion, script_url_encoded, "  ");
-                     pabLayerProcessed[j] = 1;
-                 }
-             }
-
-             /* Close group layer block */
-             msIO_printf("    </Layer>\n");
-         }
-     }
-
-     free(pabLayerProcessed);
-
-     /* free the stuff used for nested layers */
-     for (i = 0; i < map->numlayers; i++)
-     {
-       if (numNestedGroups[i] > 0)
-       {
-         msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
+               /* Close group layer block */
+               msIO_printf("    </Layer>\n");
+           }
        }
-     }
-     free(nestedGroups);
-     free(numNestedGroups);
+
+       free(pabLayerProcessed);
+
+       /* free the stuff used for nested layers */
+       for (i = 0; i < map->numlayers; i++)
+       {
+         if (numNestedGroups[i] > 0)
+         {
+           msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
+         }
+       }
+       free(nestedGroups);
+       free(numNestedGroups);
 
 
+    }
+
+    msIO_printf("  </Layer>\n");
   }
-
-  msIO_printf("  </Layer>\n");
 
   msIO_printf("</Capability>\n");
   if ( nVersion >= OWS_1_3_0)
@@ -4742,6 +4750,9 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
   if (request && (strcasecmp(request, "capabilities") == 0 ||
                   strcasecmp(request, "GetCapabilities") == 0) )
   {
+      const char *enable_request;
+      int globally_enabled, disabled = MS_FALSE;
+      
       if (nVersion == OWS_VERSION_NOTSET)
       {
           version = msOWSLookupMetadata(&(map->web.metadata), "M", "getcapabilities_version");
@@ -4754,8 +4765,12 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
         return msWMSException(map, nVersion, NULL, wms_exception_format);
 
-      msOWSRequestLayersEnabled(map, "M", "GetCapabilities", ows_request); 
-      if (ows_request->numlayers == 0)
+      msOWSRequestLayersEnabled(map, "M", "GetCapabilities", ows_request);
+      
+      enable_request = msOWSLookupMetadata(&map->web.metadata, "OM", "enable_request");
+      globally_enabled = msOWSParseRequestMetadata(enable_request, "GetCapabilities", &disabled);
+
+      if (ows_request->numlayers == 0 && !globally_enabled)
       {
           msSetError(MS_WMSERR, "WMS request not enabled. Check wms/ows_enable_request settings.", "msWMSGetCapabilities()");
           return msWMSException(map, nVersion, NULL, wms_exception_format);
