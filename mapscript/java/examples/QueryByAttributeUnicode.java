@@ -38,7 +38,13 @@ public class QueryByAttributeUnicode {
 			layer.queryByAttributes(map,"KREIS_NAME", filter, mapscriptConstants.MS_MULTIPLE);
 			layer.open();
 
-			System.out.println( "Results number (should be always 1): " +layer.getNumResults() );
+        		int results=layer.getNumResults();
+		        System.out.println( "Results number (should be always 1): " +results );
+        		for(int i=0;i<results;i++) {
+                		shapeObj shape=layer.getShape(layer.getResult(i));
+		                System.out.println( "shape["+i+"]=" +shape );
+        		}
+
 			layer.close();     
 		}
 	}

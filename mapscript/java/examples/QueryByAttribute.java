@@ -1,6 +1,7 @@
 import edu.umn.gis.mapscript.imageObj;
 import edu.umn.gis.mapscript.mapObj;
 import edu.umn.gis.mapscript.layerObj;
+import edu.umn.gis.mapscript.shapeObj;
 import edu.umn.gis.mapscript.mapscriptConstants;
 
 
@@ -22,7 +23,12 @@ public class QueryByAttribute {
 	layer.queryByAttributes(map,"FNAME", filter, mapscriptConstants.MS_MULTIPLE);
 	layer.open();
 	System.out.println( "Searched for: " +filter );        
-	System.out.println( "Results number (should be always 1): " +layer.getNumResults() );
+	int results=layer.getNumResults();
+	System.out.println( "Results number (should be always 1): " +results );
+	for(int i=0;i<results;i++) {
+		shapeObj shape=layer.getShape(layer.getResult(i));
+		System.out.println( "shape["+i+"]=" +shape );
+	}
 	layer.close();
 
 
