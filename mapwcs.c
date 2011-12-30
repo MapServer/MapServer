@@ -827,9 +827,9 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   msIO_printf("  <Request>\n");
 
   msWCSPrintRequestCapability(params->version, "GetCapabilities", script_url_encoded);
-  if (msOWSRequestIsEnabled(map, NULL, "C", "DescribeCoverage", MS_TRUE)) 
+  if (msOWSRequestIsEnabled(map, NULL, "C", "DescribeCoverage", MS_FALSE))
       msWCSPrintRequestCapability(params->version, "DescribeCoverage", script_url_encoded);
-  if (msOWSRequestIsEnabled(map, NULL, "C", "GetCoverage", MS_TRUE)) 
+  if (msOWSRequestIsEnabled(map, NULL, "C", "GetCoverage", MS_FALSE))
       msWCSPrintRequestCapability(params->version, "GetCoverage", script_url_encoded);
  
   msIO_printf("  </Request>\n");
@@ -921,15 +921,21 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" 
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->updatesequence, msOWSGetSchemasLocation(map), params->version); 
 
-  for(i=0; i<map->numlayers; i++) {
-  
+  if(ows_request->numlayers == 0)
+  {
+    msIO_printf("  <!-- WARNING: No WCS layers are enabled. Check wcs/ows_enable_request settings. -->\n");
+  }
+  else
+  {
+    for(i=0; i<map->numlayers; i++) {
       if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
-          continue;
-  
+        continue;
+
       if( msWCSGetCapabilities_CoverageOfferingBrief((GET_LAYER(map, i)), params) != MS_SUCCESS ) {
-          msIO_printf("</ContentMetadata>\n");
-          return MS_FAILURE;
+         msIO_printf("</ContentMetadata>\n");
+         return MS_FAILURE;
       }
+    }
   }
 
   /* done */
@@ -1025,8 +1031,8 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
     /* print common capability elements  */
     /* TODO: DocType? */
 
-  if (!updatesequence)
-    updatesequence = msStrdup("0");
+    if (!updatesequence)
+      updatesequence = msStrdup("0");
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n", "ISO-8859-1");
   
@@ -2027,17 +2033,6 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
         return msWCSException(map, "MissingParameterValue", "request",
                               ows_request->version );
     }
-
-    /* Check the number of enabled layers for the REQUEST */
-    msOWSRequestLayersEnabled(map, "C", ows_request->request, ows_request);
-    if (ows_request->numlayers == 0)
-    {
-        msSetError(MS_WCSERR, "WCS request not enabled. Check "
-                              "wcs/ows_enable_request settings.",
-                              "msWCSDispatch()");
-        return msWCSException(map, "InvalidParameterValue", "request",
-                              ows_request->version );
-    }
     
     if (EQUAL(ows_request->request, "GetCapabilities"))
     {
@@ -2059,6 +2054,28 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
                               ows_request->version);
     }
     
+    /* Check the number of enabled layers for the REQUEST */
+    msOWSRequestLayersEnabled(map, "C", ows_request->request, ows_request);
+    if (ows_request->numlayers == 0)
+    {
+        int caps_globally_enabled = MS_FALSE, disabled = MS_FALSE;
+        const char *enable_request;
+        if(operation == MS_WCS_GET_CAPABILITIES)
+        {
+            enable_request = msOWSLookupMetadata(&map->web.metadata, "OC", "enable_request");
+            caps_globally_enabled = msOWSParseRequestMetadata(enable_request, "GetCapabilities", &disabled);
+        }
+
+        if(caps_globally_enabled == MS_FALSE)
+        {
+            msSetError(MS_WCSERR, "WCS request not enabled. Check "
+                                  "wcs/ows_enable_request settings.",
+                                  "msWCSDispatch()");
+            return msWCSException(map, "InvalidParameterValue", "request",
+                                  ows_request->version );
+        }
+    }
+
     /* Check the VERSION parameter */
     if (ows_request->version == NULL)
     {

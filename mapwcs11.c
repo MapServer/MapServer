@@ -491,7 +491,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      DescribeCoverage                                                */
 /* -------------------------------------------------------------------- */
-        if (msOWSRequestIsEnabled(map, NULL, "C", "DescribeCoverage", MS_TRUE)) 
+        if (msOWSRequestIsEnabled(map, NULL, "C", "DescribeCoverage", MS_FALSE))
         {
             psNode = msOWSCommonOperationsMetadataOperation(
                 psOwsNs, psXLinkNs,
@@ -509,7 +509,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 /* -------------------------------------------------------------------- */
 /*      GetCoverage                                                     */
 /* -------------------------------------------------------------------- */
-        if (msOWSRequestIsEnabled(map, NULL, "C", "GetCoverage", MS_TRUE)) 
+        if (msOWSRequestIsEnabled(map, NULL, "C", "GetCoverage", MS_FALSE))
         {
 
             psNode = msOWSCommonOperationsMetadataOperation(
@@ -549,20 +549,29 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     {
         psMainNode = xmlNewChild( psRootNode, NULL, BAD_CAST "Contents", NULL );
 
-        for(i=0; i<map->numlayers; i++)
+        if(ows_request->numlayers == 0)
         {
-            layerObj *layer = map->layers[i];
-            int       status;
-            
-            if(!msWCSIsLayerSupported(layer)) 
-                continue;
-            
-            if (!msIntegerInArray(layer->index, ows_request->enabled_layers, ows_request->numlayers))
-                continue;
+            xmlAddChild(psMainNode,
+                    xmlNewComment("WARNING: No WCS layers are enabled. "
+                                  "Check wcs/ows_enable_request settings."));
+        }
+        else
+        {
+            for(i=0; i<map->numlayers; i++)
+            {
+                layerObj *layer = map->layers[i];
+                int       status;
 
-            status = msWCSGetCapabilities11_CoverageSummary( 
-                map, params, req, psDoc, psMainNode, layer );
-            if(status != MS_SUCCESS) return MS_FAILURE;
+                if(!msWCSIsLayerSupported(layer))
+                    continue;
+
+                if (!msIntegerInArray(layer->index, ows_request->enabled_layers, ows_request->numlayers))
+                    continue;
+
+                status = msWCSGetCapabilities11_CoverageSummary(
+                    map, params, req, psDoc, psMainNode, layer );
+                if(status != MS_SUCCESS) return MS_FAILURE;
+            }
         }
     }
 
