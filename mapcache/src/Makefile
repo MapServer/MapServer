@@ -12,7 +12,7 @@ install-module: mod_mapcache.o
 	$(LIBTOOL) --tag CC --mode=compile $(CC) $(ALL_ENABLED) $(CFLAGS) $(INCLUDES) -c $<
 
 libmapcache.la: $(OBJS)
-	$(LIBTOOL) --mode=link --tag CC $(CC) -rpath $(libdir) $(LOBJS) -Wl,"$(LIBS)"  -o $@
+	$(LIBTOOL) --mode=link --tag CC $(CC) -rpath $(libdir) $(LOBJS) $(LIBS)-o $@
 
 mod_mapcache.la: mod_mapcache.o
 
