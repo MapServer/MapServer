@@ -533,7 +533,7 @@ AC_CHECKING(where libiconv is installed)
 
 ICONV_LIB=''
 
-if test -n "$ICONV_DIR" ; then
+if test -n "$ICONV_DIR" -a "$ICONV_DIR" != "yes" ; then
 
   AC_EXPAND_PATH($ICONV_DIR, ICONV_DIR)
 

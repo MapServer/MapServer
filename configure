@@ -16962,7 +16962,7 @@ $as_echo "$as_me: checking where libiconv is installed..." >&6;}
 
 ICONV_LIB=''
 
-if test -n "$ICONV_DIR" ; then
+if test -n "$ICONV_DIR" -a "$ICONV_DIR" != "yes" ; then
 
 
   if test -z "$ICONV_DIR" || echo "$ICONV_DIR" | grep '^/' >/dev/null ; then
