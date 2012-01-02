@@ -284,7 +284,7 @@ static void _mapcache_cache_tiff_delete(mapcache_context *ctx, mapcache_tile *ti
  */
 static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) {
    char *filename;
-   TIFF *hTIFF;
+   TIFF *hTIFF = NULL;
    int rv;
    _mapcache_cache_tiff_tile_key(ctx, tile, &filename);
    mapcache_cache_tiff *dcache = (mapcache_cache_tiff*)tile->tileset->cache;
@@ -489,7 +489,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
 static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile) {
 #ifdef USE_TIFF_WRITE
    char *filename;
-   TIFF *hTIFF;
+   TIFF *hTIFF = NULL;
    int rv;
    int create;
    char errmsg[120];
@@ -554,27 +554,15 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    }
 
    /*
-    * aquire a lock on the tiff file. This lock does not work for multiple threads of
-    * a same process, but should work on network filesystems.
-    * we previously aquired a thread lock so we should be ok here
+    * aquire a lock on the tiff file. 
     */
 
    while(mapcache_lock_or_wait_for_resource(ctx,filename) == MAPCACHE_FALSE);
    
-   apr_file_t *ftiff;
-   rv = apr_file_open(&ftiff,filename,APR_FOPEN_READ|APR_FOPEN_CREATE,APR_OS_DEFAULT,ctx->pool);
-   if(rv != APR_SUCCESS) {
-      ctx->set_error(ctx, 500,  "failed to remove existing file %s: %s",filename, apr_strerror(rv,errmsg,120));
-      return; /* we could not delete the file */
-   }
-
+   /* check if the tiff file exists already */
    apr_finfo_t finfo;
-   rv = apr_file_info_get(&finfo, APR_FINFO_SIZE, ftiff);
-
-   /*
-    * check if the file exists by looking at its size
-    */
-   if(finfo.size) {
+   rv = apr_stat(&finfo,filename,0,ctx->pool);
+   if(!APR_STATUS_IS_ENOENT(rv)) {
       hTIFF = MyTIFFOpen(filename,"r+");
       create = 0;
    } else {
@@ -583,9 +571,7 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    }
    if(!hTIFF) {
       ctx->set_error(ctx,500,"failed to open/create tiff file %s\n",filename);
-      mapcache_unlock_resource(ctx,filename);
-      apr_file_close(ftiff);
-      return;
+      goto close_tiff;
    }
 
 
@@ -696,19 +682,30 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    tiff_off = tiff_offy * ntilesx + tiff_offx;
 
 
-   TIFFWriteEncodedTile(hTIFF, tiff_off, rgb, tilew*tileh*3);
+   rv = TIFFWriteEncodedTile(hTIFF, tiff_off, rgb, tilew*tileh*3);
    free(rgb);
-   TIFFWriteCheck( hTIFF, 1, "cache_set()");
+   if(!rv) {
+      ctx->set_error(ctx,500,"failed TIFFWriteEncodedTile to %s",filename);
+      goto close_tiff;
+   }
+   rv = TIFFWriteCheck( hTIFF, 1, "cache_set()");
+   if(!rv) {
+      ctx->set_error(ctx,500,"failed TIFFWriteCheck %s",filename);
+      goto close_tiff;
+   }
 
-   if(create)
-      TIFFWriteDirectory(hTIFF);
-   TIFFFlush( hTIFF );
+   if(create) {
+      rv = TIFFWriteDirectory(hTIFF);
+      if(!rv) {
+         ctx->set_error(ctx,500,"failed TIFFWriteDirectory to %s",filename);
+         goto close_tiff;
+      }
+   }
 
-
-   MyTIFFClose(hTIFF);
-
+close_tiff:
+   if(hTIFF)
+      MyTIFFClose(hTIFF);
    mapcache_unlock_resource(ctx,filename);
-   apr_file_close(ftiff);
 #else
    ctx->set_error(ctx,500,"tiff write support disabled by default");
 #endif
