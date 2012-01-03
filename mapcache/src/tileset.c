@@ -412,6 +412,30 @@ mapcache_tileset* mapcache_tileset_create(mapcache_context *ctx) {
    return tileset;
 }
 
+mapcache_tileset* mapcache_tileset_clone(mapcache_context *ctx, mapcache_tileset *src) {
+   mapcache_tileset* dst = (mapcache_tileset*)apr_pcalloc(ctx->pool, sizeof(mapcache_tileset));
+   dst->metasize_x = src->metasize_x;
+   dst->metasize_y = src->metasize_y;
+   dst->metabuffer = src->metabuffer;
+   dst->expires = src->expires;
+   dst->auto_expire = src->auto_expire;
+   dst->metadata = src->metadata;
+   dst->dimensions = src->dimensions;
+   dst->format = src->format;
+   dst->grid_links = src->grid_links;
+   dst->config = src->config;
+   dst->name = src->name;
+   dst->cache = src->cache;
+   dst->source = src->source;
+   dst->watermark = src->watermark;
+   dst->wgs84bbox[0] = src->wgs84bbox[0];
+   dst->wgs84bbox[1] = src->wgs84bbox[1];
+   dst->wgs84bbox[2] = src->wgs84bbox[2];
+   dst->wgs84bbox[3] = src->wgs84bbox[3];
+   dst->format = src->format;
+   return dst;
+}
+
 /*
  * allocate and initialize a tile for a given tileset
  */
@@ -587,6 +611,7 @@ void mapcache_tileset_tile_delete(mapcache_context *ctx, mapcache_tile *tile, in
       }
    }
 }
+
 
 /* vim: ai ts=3 sts=3 et sw=3
 */

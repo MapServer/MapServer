@@ -275,7 +275,11 @@ mapcache_grid *mapcache_configuration_get_grid(mapcache_cfg *config, const char 
 }
 
 mapcache_tileset *mapcache_configuration_get_tileset(mapcache_cfg *config, const char *key) {
-   return (mapcache_tileset*)apr_hash_get(config->tilesets, (void*)key, APR_HASH_KEY_STRING);
+   if(config->mode == MAPCACHE_MODE_NORMAL) {
+      return (mapcache_tileset*)apr_hash_get(config->tilesets, (void*)key, APR_HASH_KEY_STRING);
+   } else {
+      return (mapcache_tileset*)apr_hash_get(config->tilesets, (void*)"mirror", APR_HASH_KEY_STRING);
+   }
 }
 
 mapcache_image_format *mapcache_configuration_get_image_format(mapcache_cfg *config, const char *key) {

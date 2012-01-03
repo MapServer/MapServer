@@ -296,7 +296,7 @@ void parseSource(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    
    source->configuration_parse_xml(ctx,node,source);
    GC_CHECK_ERROR(ctx);
-   source->configuration_check(ctx,source);
+   source->configuration_check(ctx,config,source);
    GC_CHECK_ERROR(ctx);
    mapcache_configuration_add_source(config,source,name);
 }
@@ -375,7 +375,7 @@ void parseFormat(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
       }
       format = mapcache_imageio_create_jpeg_format(ctx->pool,
             name,quality,photometric);
-   } else if(!strcmp(type,"MIXED")){
+   } else if(!strcasecmp(type,"MIXED")){
       mapcache_image_format *transparent=NULL, *opaque=NULL;
       if ((cur_node = ezxml_child(node,"transparent")) != NULL) {
          transparent = mapcache_configuration_get_image_format(config,cur_node->txt);
@@ -483,7 +483,11 @@ void parseTileset(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    ezxml_t cur_node;
    char* value;
    int havewgs84bbox=0;
-   name = (char*)ezxml_attr(node,"name");
+   if(config->mode == MAPCACHE_MODE_NORMAL) {
+      name = (char*)ezxml_attr(node,"name");
+   } else {
+      name = "mirror";
+   }
    if(!name || !strlen(name)) {
       ctx->set_error(ctx, 400, "mandatory attribute \"name\" not found in <tileset>");
       return;
@@ -800,6 +804,21 @@ void mapcache_configuration_parse_xml(mapcache_context *ctx, const char *filenam
    if(strcmp(doc->name,"mapcache")) {
       ctx->set_error(ctx,400, "failed to parse file %s. first node is not <mapcache>", filename);
       goto cleanup;
+   }
+   const char *mode = ezxml_attr(doc,"mode");
+   if(mode) {
+      if(!strcmp(mode,"combined_mirror")) {
+         config->mode = MAPCACHE_MODE_MIRROR_COMBINED;
+      } else if(!strcmp(mode,"split_mirror")) {
+         config->mode = MAPCACHE_MODE_MIRROR_SPLIT;
+      } else if(!strcmp(mode,"normal")) {
+         config->mode = MAPCACHE_MODE_NORMAL;
+      } else {
+         ctx->set_error(ctx,400,"unknown mode \"%s\" for <mapcache>",mode);
+         goto cleanup;
+      }
+   } else {
+         config->mode = MAPCACHE_MODE_NORMAL;
    }
 
    for(node = ezxml_child(doc,"metadata"); node; node = node->next) {

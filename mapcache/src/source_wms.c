@@ -47,7 +47,7 @@ void _mapcache_source_wms_render_map(mapcache_context *ctx, mapcache_map *map) {
     apr_table_setn(params,"FORMAT","image/png");
     apr_table_setn(params,"SRS",map->grid_link->grid->srs);
  
-    apr_table_overlap(params,wms->getmap_params,0);
+    apr_table_overlap(params,wms->getmap_params,APR_OVERLAP_TABLES_SET);
     if(map->dimensions && !apr_is_empty_table(map->dimensions)) {
        const apr_array_header_t *elts = apr_table_elts(map->dimensions);
        int i;
@@ -56,7 +56,16 @@ void _mapcache_source_wms_render_map(mapcache_context *ctx, mapcache_map *map) {
           apr_table_setn(params,entry.key,entry.val);
        }
  
-    }      
+    }
+
+    /* if the source has no LAYERS parameter defined, then use the tileset name
+     * as the LAYERS to request. When using mirror-mode, the source has no layers
+     * defined, it is added based on the incoming request
+     */
+    if(!apr_table_get(params,"layers")) {
+       apr_table_set(params,"LAYERS",map->tileset->name);
+    }
+
     map->encoded_data = mapcache_buffer_create(30000,ctx->pool);
     mapcache_http_do_request_with_params(ctx,wms->http,params,map->encoded_data,NULL,NULL);
     GC_CHECK_ERROR(ctx);
@@ -158,14 +167,17 @@ void _mapcache_source_wms_configuration_parse_xml(mapcache_context *ctx, ezxml_t
  * \private \memberof mapcache_source_wms
  * \sa mapcache_source::configuration_check()
  */
-void _mapcache_source_wms_configuration_check(mapcache_context *ctx, mapcache_source *source) {
+void _mapcache_source_wms_configuration_check(mapcache_context *ctx, mapcache_cfg *cfg,
+      mapcache_source *source) {
    mapcache_source_wms *src = (mapcache_source_wms*)source;
    /* check all required parameters are configured */
    if(!src->http) {
       ctx->set_error(ctx, 400, "wms source %s has no <http> request configured",source->name);
    }
    if(!apr_table_get(src->getmap_params,"LAYERS")) {
-      ctx->set_error(ctx, 400, "wms source %s has no LAYERS", source->name);
+      if(cfg->mode == MAPCACHE_MODE_NORMAL) {
+         ctx->set_error(ctx, 400, "wms source %s has no LAYERS", source->name);
+      }
    }
    if(source->info_formats) {
       if(!apr_table_get(src->getfeatureinfo_params,"QUERY_LAYERS")) {

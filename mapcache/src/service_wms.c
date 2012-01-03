@@ -443,7 +443,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
       }
    }
    if(iswms130) {
-      /*check if we should flib the axis order*/
+      /*check if we should flip the axis order*/
       if(mapcache_is_axis_inverted(srs)) {
          double swap;
          swap = bbox[0];
@@ -471,10 +471,14 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
          mapcache_request_get_tile *tile_req = NULL;
          mapcache_grid_link *main_grid_link = NULL;
          mapcache_tileset *main_tileset = NULL;
-	 mapcache_request_type type;
+         mapcache_request_type type;
          
-         /* count the number of layers that are requested */
-         for(key=str;*key;key++) if(*key == ',') count++;
+         /* count the number of layers that are requested.
+          * if we are in combined-mirror mode, then there is
+          * always a single layer */
+         if(config->mode != MAPCACHE_MODE_MIRROR_COMBINED) {
+            for(key=str;*key;key++) if(*key == ',') count++;
+         }
 
          /* 
           * look to see if we have a getTile or a getMap request. We do this by looking at the first
@@ -483,7 +487,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
           */
          type = MAPCACHE_REQUEST_GET_TILE;
          
-         if(count ==1) {
+         if(count ==1 || config->mode == MAPCACHE_MODE_MIRROR_COMBINED) {
             key = str;
          } else {
             layers = apr_pstrdup(ctx->pool,str);
@@ -494,6 +498,10 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
             errcode = 404;
             errmsg = apr_psprintf(ctx->pool,"received wms request with invalid layer %s", key);
             goto proxies;
+         }
+         if(config->mode != MAPCACHE_MODE_NORMAL) {
+            main_tileset = mapcache_tileset_clone(ctx,main_tileset);
+            main_tileset->name = key;
          }
 
          for(i=0;i<main_tileset->grid_links->nelts;i++){
@@ -552,7 +560,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
 
          for (layeridx=0,key = ((count==1)?str:apr_strtok(layers, ",", &last)); key != NULL;
                key = ((count==1)?NULL:apr_strtok(NULL, ",", &last)),layeridx++) {
-	   int i;
+            int i;
             mapcache_tileset *tileset = main_tileset;
             mapcache_grid_link *grid_link = main_grid_link;
             apr_table_t *dimtable = NULL;
@@ -567,6 +575,10 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
                   errcode = 404;
                   errmsg = apr_psprintf(ctx->pool,"received wms request with invalid layer %s", key);
                   goto proxies;
+               }
+               if(config->mode != MAPCACHE_MODE_NORMAL) {
+                  tileset = mapcache_tileset_clone(ctx,tileset);
+                  tileset->name = key;
                }
                grid_link = NULL;
                for(i=0;i<tileset->grid_links->nelts;i++){

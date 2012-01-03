@@ -241,7 +241,8 @@ void _mapcache_source_gdal_configuration_parse(mapcache_context *ctx, ezxml_t no
  * \private \memberof mapcache_source_gdal
  * \sa mapcache_source::configuration_check()
  */
-void _mapcache_source_gdal_configuration_check(mapcache_context *ctx, mapcache_source *source) {
+void _mapcache_source_gdal_configuration_check(mapcache_context *ctx, mapcache_cfg *cfg,
+      mapcache_source *source) {
    mapcache_source_gdal *src = (mapcache_source_gdal*)source;
    /* check all required parameters are configured */
    if(!strlen(src->datastr)) {

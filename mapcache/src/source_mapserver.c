@@ -180,7 +180,8 @@ void _mapcache_source_mapserver_configuration_parse_xml(mapcache_context *ctx, e
  * \private \memberof mapcache_source_mapserver
  * \sa mapcache_source::configuration_check()
  */
-void _mapcache_source_mapserver_configuration_check(mapcache_context *ctx, mapcache_source *source) {
+void _mapcache_source_mapserver_configuration_check(mapcache_context *ctx, mapcache_cfg *cfg,
+      mapcache_source *source) {
    mapcache_source_mapserver *src = (mapcache_source_mapserver*)source;
    /* check all required parameters are configured */
    if(!src->mapfile) {

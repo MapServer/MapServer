@@ -36,7 +36,6 @@
 
 #include <apr_tables.h>
 #include <apr_hash.h>
-#include <apr_global_mutex.h>
 #include "util.h"
 #include "ezxml.h"
 
@@ -267,7 +266,7 @@ struct mapcache_source {
     void (*query_info)(mapcache_context *ctx, mapcache_feature_info *fi);
 
     void (*configuration_parse_xml)(mapcache_context *ctx, ezxml_t xml, mapcache_source * source);
-    void (*configuration_check)(mapcache_context *ctx, mapcache_source * source);
+    void (*configuration_check)(mapcache_context *ctx, mapcache_cfg *cfg, mapcache_source * source);
 };
 
 mapcache_http* mapcache_http_configuration_parse_xml(mapcache_context *ctx,ezxml_t node);
@@ -848,10 +847,16 @@ apr_table_t *mapcache_http_parse_param_string(mapcache_context *ctx, char *args)
 /** @{ */
 
 struct mapcache_server_cfg {
-   apr_global_mutex_t *mutex;
-   char *mutex_name;
    apr_hash_t *aliases; /**< list of mapcache configurations aliased to a server uri */
 };
+
+
+
+typedef enum {
+   MAPCACHE_MODE_NORMAL,
+   MAPCACHE_MODE_MIRROR_COMBINED,
+   MAPCACHE_MODE_MIRROR_SPLIT
+} mapcache_mode;
 
 /**
  * a configuration that will be served
@@ -936,6 +941,7 @@ struct mapcache_cfg {
     mapcache_log_level loglevel; /* logging verbosity. Ignored for the apache module
                                     as in that case the apache LogLevel directive is
                                     used. */
+    mapcache_mode mode;
 };
 
 /**
@@ -1143,14 +1149,11 @@ struct mapcache_tileset {
      */
     mapcache_cfg *config;
    
-    /**
-     * should we service wms requests not aligned to a grid
-     */
-    int full_wms;
-
     apr_table_t *metadata;
 };
 
+
+mapcache_tileset* mapcache_tileset_clone(mapcache_context *ctx, mapcache_tileset *tileset);
 
 void mapcache_tileset_get_map_tiles(mapcache_context *ctx, mapcache_tileset *tileset,
       mapcache_grid_link *grid_link,
