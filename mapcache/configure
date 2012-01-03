@@ -636,11 +636,13 @@ SQLITE_ENABLED
 SQLITE_LIB
 SQLITE_INC
 APU_LIBS
+APU_INCDIR
 APU_INC
 MEMCACHE_ENABLED
 APUCONFIG
 LIBTOOL
 APR_LIBS
+APR_INCDIR
 APR_INC
 APR_CFLAGS
 APRCONFIG
@@ -4083,7 +4085,9 @@ $as_echo "yes" >&6; }
 
     APR_INC=`$APRCONFIG --includes`
 
-    APR_LIBS=`$APRCONFIG --link-libtool`
+    APR_INCDIR=`$APRCONFIG --includedir`
+
+    APR_LIBS=`$APRCONFIG --link-ld`
 
     LIBTOOL=`$APRCONFIG --apr-libtool`
 
@@ -4225,9 +4229,11 @@ $as_echo "yes" >&6; }
     if test -z "$APUCONFIG"; then
       as_fn_error $? "apu-config utility not found" "$LINENO" 5
     else
-      APU_LIBS=`$APUCONFIG --link-libtool`
+      APU_LIBS=`$APUCONFIG --link-ld`
       APU_INC=`$APUCONFIG --includes`
+      APU_INCDIR=`$APUCONFIG --includedir`
     fi
+
 
 
 
@@ -5820,7 +5826,7 @@ $as_echo "yes" >&6; }
 
 
 # Write config.status and the Makefile
-ac_config_files="$ac_config_files Makefile.inc"
+ac_config_files="$ac_config_files Makefile.inc nginx/config"
 
 
 cat >confcache <<\_ACEOF
@@ -6542,6 +6548,7 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "Makefile.inc") CONFIG_FILES="$CONFIG_FILES Makefile.inc" ;;
+    "nginx/config") CONFIG_FILES="$CONFIG_FILES nginx/config" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
