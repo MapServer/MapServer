@@ -1,0 +1,23 @@
+include ../Makefile.inc
+
+all: libmapcache.la
+
+install: libmapcache.la
+	$(LIBTOOL) --mode=install $(INSTALL) libmapcache.la $(libdir)
+
+.c.o:
+	$(LIBTOOL) --tag CC --mode=compile $(CC) $(ALL_ENABLED) $(CFLAGS) $(INCLUDES) -c $<
+
+libmapcache.la: $(OBJS)
+	$(LIBTOOL) --mode=link --tag CC $(CC) -rpath $(libdir) $(LOBJS) $(LIBS)-o $@
+
+clean:
+	rm -f *.o
+	rm -f *.so
+	rm -f *.slo
+	rm -f *.lo
+	rm -rf .libs
+	rm -f *.la
+	rm -f *.sla
+	rm -rf *.dSYM
+

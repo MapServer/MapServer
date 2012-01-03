@@ -1,0 +1,25 @@
+include ../Makefile.inc
+
+all: mapcache
+
+.c.o:
+	$(LIBTOOL) --tag CC --mode=compile $(CC) $(ALL_ENABLED) $(CFLAGS) $(INCLUDES) -c $<
+
+mapcache: mapcache.c ../lib/libmapcache.la
+	$(LIBTOOL) --mode=link --tag CC $(CC) -rpath $(bindir) -o mapcache $(CFLAGS) $(ALL_ENABLED) $(INCLUDES) $(FASTCGI_ENABLED) $(FASTCGI_INC) mapcache.c ../lib/libmapcache.la $(LIBS) $(FASTCGI_LIB)
+
+install: mapcache
+	$(LIBTOOL) --mode=install $(INSTALL) mapcache $(bindir)
+
+clean:
+	rm -f *.o
+	rm -f *.so
+	rm -f *.slo
+	rm -f *.lo
+	rm -rf .libs
+	rm -f *.la
+	rm -f *.sla
+	rm -rf *.dSYM
+	rm -f mapcache
+	rm -f mapcache_seed
+
