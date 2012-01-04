@@ -492,7 +492,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 
   /* actually write the image */
   if(!filename) {
-      msIO_setHeader("Content-type","image/gif");
+      msIO_setHeader("Content-type","%s", MS_IMAGE_MIME_TYPE(format));
       msIO_sendHeaders();
   }
   msSaveImage(NULL,img,filename);
