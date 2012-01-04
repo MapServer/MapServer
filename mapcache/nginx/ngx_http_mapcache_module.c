@@ -26,19 +26,27 @@ ngx_http_mapcache_cleanup(void *data)
 {
 }
 
+typedef struct {
+   mapcache_context ctx;
+   ngx_http_request_t *r;
+} mapcache_ngx_context;
+
 static void ngx_mapcache_context_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
+   mapcache_ngx_context *ctx = (mapcache_ngx_context*)c;
    va_list args;
    if(!c->config || level >= c->config->loglevel) {
       va_start(args,message);
-      fprintf(stderr,"%s\n",apr_pvsprintf(c->pool,message,args));
+      ngx_log_error(NGX_LOG_ALERT, ctx->r->connection->log, 0,
+            apr_pvsprintf(c->pool,message,args));
       va_end(args);
    }
 }
 
 static mapcache_context* ngx_mapcache_context_clone(mapcache_context *ctx) {
    mapcache_context *nctx = (mapcache_context*)apr_pcalloc(ctx->pool,
-         sizeof(mapcache_context));
+         sizeof(mapcache_ngx_context));
    mapcache_context_copy(ctx,nctx);
+   ((mapcache_ngx_context*)nctx)->r = ((mapcache_ngx_context*)ctx)->r;
    apr_pool_create(&nctx->pool,ctx->pool);
    return nctx;
 }
@@ -53,7 +61,7 @@ ngx_http_mapcache_create_conf(ngx_conf_t *cf)
     atexit(apr_terminate);
     apr_pool_initialize();
     apr_pool_create(&pool,NULL);
-    mapcache_context *ctx = apr_pcalloc(pool, sizeof(mapcache_context));
+    mapcache_context *ctx = apr_pcalloc(pool, sizeof(mapcache_ngx_context));
     ctx->pool = pool;
     mapcache_context_init(ctx);
     ctx->log = ngx_mapcache_context_log;
@@ -190,9 +198,11 @@ ngx_http_mapcache_handler(ngx_http_request_t *r)
     if (!(r->method & (NGX_HTTP_GET))) {
         return NGX_HTTP_NOT_ALLOWED;
     }
-    mapcache_context *ctx = ngx_http_get_module_loc_conf(r, ngx_http_mapcache_module);
+    mapcache_ngx_context *ngctx = ngx_http_get_module_loc_conf(r, ngx_http_mapcache_module);
+    mapcache_context *ctx = (mapcache_context*)ngctx;
     apr_pool_t *main_pool = ctx->pool;
     apr_pool_create(&(ctx->pool),main_pool);
+    ngctx->r = r;
     mapcache_request *request = NULL;
     mapcache_http_response *http_response;
 
