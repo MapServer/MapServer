@@ -552,7 +552,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
         if(ows_request->numlayers == 0)
         {
             xmlAddChild(psMainNode,
-                    xmlNewComment("WARNING: No WCS layers are enabled. "
+                    xmlNewComment(BAD_CAST "WARNING: No WCS layers are enabled. "
                                   "Check wcs/ows_enable_request settings."));
         }
         else
