@@ -14,3 +14,6 @@ the relevant part is:
 
 the <path_info> and $url_prefix are important and are used by mapcache
 to parse the incoming requests.
+
+before running nginx, set LD_LIBRARY_PATH to where libmapcache was installed if that 
+is a non standard location.
