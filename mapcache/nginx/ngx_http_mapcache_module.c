@@ -179,6 +179,10 @@ ngx_module_t  ngx_http_mapcache_module = {
     NGX_MODULE_V1_PADDING
 };
 
+static ngx_str_t  pathinfo_str = ngx_string("path_info");
+static ngx_int_t pathinfo_index;
+static ngx_str_t  urlprefix_str = ngx_string("url_prefix");
+static ngx_int_t urlprefix_index;
 
 static ngx_int_t
 ngx_http_mapcache_handler(ngx_http_request_t *r)
@@ -192,9 +196,12 @@ ngx_http_mapcache_handler(ngx_http_request_t *r)
     mapcache_request *request = NULL;
     mapcache_http_response *http_response;
 
-    char* pathInfo = "/";
+   ngx_http_variable_value_t      *pathinfovv = ngx_http_get_indexed_variable(r, pathinfo_index);
+
+    char* pathInfo = apr_pstrndup(ctx->pool, (char*)pathinfovv->data, pathinfovv->len);
       char *sparams = apr_pstrndup(ctx->pool, (char*)r->args.data, r->args.len);
       apr_table_t *params = mapcache_http_parse_param_string(ctx, sparams);
+
       mapcache_service_dispatch_request(ctx,&request,pathInfo,params,ctx->config);
       if(GC_HAS_ERROR(ctx) || !request) {
          ngx_http_mapcache_write_response(ctx,r, mapcache_core_respond_to_error(ctx));
@@ -204,26 +211,13 @@ ngx_http_mapcache_handler(ngx_http_request_t *r)
       http_response = NULL;
       if(request->type == MAPCACHE_REQUEST_GET_CAPABILITIES) {
          mapcache_request_get_capabilities *req = (mapcache_request_get_capabilities*)request;
-         char *host = getenv("SERVER_NAME");
-         char *port = getenv("SERVER_PORT");
-         char *fullhost;
-         char *url;
-         if(getenv("HTTPS")) {
-            if(!port || !strcmp(port,"443")) {
-               fullhost = apr_psprintf(ctx->pool,"https://%s",host);
-            } else {
-               fullhost = apr_psprintf(ctx->pool,"https://%s:%s",host,port);
-            }
-         } else {
-            if(!port || !strcmp(port,"80")) {
-               fullhost = apr_psprintf(ctx->pool,"http://%s",host);
-            } else {
-               fullhost = apr_psprintf(ctx->pool,"http://%s:%s",host,port);
-            }
-         }
-         url = apr_psprintf(ctx->pool,"%s%s/",
-               fullhost,
-               getenv("SCRIPT_NAME")
+         ngx_http_variable_value_t      *urlprefixvv = ngx_http_get_indexed_variable(r, urlprefix_index);
+         char *url = apr_pstrcat(ctx->pool,
+               "http://",
+               apr_pstrndup(ctx->pool, (char*)r->headers_in.host->value.data, r->headers_in.host->value.len),
+               apr_pstrndup(ctx->pool, (char*)urlprefixvv->data, urlprefixvv->len),
+               "/",
+               NULL
                );
          http_response = mapcache_core_get_capabilities(ctx,request->service,req,url,pathInfo,ctx->config);
       } else if( request->type == MAPCACHE_REQUEST_GET_TILE) {
@@ -288,6 +282,15 @@ ngx_http_mapcache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
     clcf->handler = ngx_http_mapcache_handler;
+
+   pathinfo_index = ngx_http_get_variable_index(cf, &pathinfo_str);
+   if (pathinfo_index == NGX_ERROR) {
+		return NGX_CONF_ERROR;
+	}
+   urlprefix_index = ngx_http_get_variable_index(cf, &urlprefix_str);
+   if (urlprefix_index == NGX_ERROR) {
+		return NGX_CONF_ERROR;
+	}
 
     return NGX_CONF_OK;
 }

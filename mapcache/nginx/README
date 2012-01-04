@@ -1,0 +1,16 @@
+minimal install instructions:
+
+- configure nginx with
+
+./configure --add-module=/path/to/mapcache/nginx
+
+the supplied nginx.conf contains an example configuration to load mapcache.
+the relevant part is:
+
+        location ~ ^/mapcache(?<path_info>/.*|$) {
+           set $url_prefix "/mapcache";
+           mapcache /home/tbonfort/dev/mapserver-trunk/mapcache/mapcache.xml;
+        }
+
+the <path_info> and $url_prefix are important and are used by mapcache
+to parse the incoming requests.
