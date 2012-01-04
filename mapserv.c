@@ -44,6 +44,7 @@ MS_CVSID("$Id$")
 /************************************************************************/
 /*                      FastCGI cleanup functions.                      */
 /************************************************************************/
+static int exitSignal;
 #ifndef WIN32
 void msCleanupOnSignal( int nInData )
 {
@@ -52,8 +53,7 @@ void msCleanupOnSignal( int nInData )
   /* normal stdio functions. */
   msIO_installHandlers( NULL, NULL, NULL );
   msIO_fprintf( stderr, "In msCleanupOnSignal.\n" );
-  msCleanup();
-  exit( 0 );
+  exitSignal = 1;
 }
 #endif
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
   mapservObj* mapserv = NULL;
-
+  exitSignal = 0;
   msSetup();
 
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
 
   /* In FastCGI case we loop accepting multiple requests.  In normal CGI */
   /* use we only accept and process one request.  */
-  while( FCGI_Accept() >= 0 ) {
+  while( !exitSignal && FCGI_Accept() >= 0 ) {
 #endif /* def USE_FASTCGI */
 
     /* -------------------------------------------------------------------- */

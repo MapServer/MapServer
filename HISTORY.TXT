@@ -14,6 +14,7 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+- avoid potential gd fontcache deadlock on fastcgi exit signals(#4093)
 
 - Adjusted WCS GetCapabilities for an empty list of layers (#4140)
 
