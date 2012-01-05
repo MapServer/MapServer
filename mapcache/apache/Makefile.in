@@ -7,7 +7,8 @@ all: mod_mapcache.la
 install: mod_mapcache.la
 	$(APXS) -i -a -n mapcache mod_mapcache.la
 
-mod_mapcache.la:  mod_mapcache.c $(libdir)/libmapcache.la
+mod_mapcache.la:  mod_mapcache.c
+	@if test ! -f $(libdir)/libmapcache.la; then echo "$(libdir)/libmapcache.la not found, please install before building the mapcache apache module"; exit 1; fi
 	$(APXS) -Wc,"$(ALL_ENABLED) $(CFLAGS) $(INCLUDES)" -Wl,"$(LIBS)" -c mod_mapcache.c $(libdir)/libmapcache.la
 	
 clean:
