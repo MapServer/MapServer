@@ -108,7 +108,7 @@ static mapcache_context_fcgi* fcgi_context_create() {
 
 static void fcgi_write_response(mapcache_context_fcgi *ctx, mapcache_http_response *response) {
    if(response->code != 200) {
-      printf("Status: %d %s\r\n",response->code, err_msg(response->code));
+      printf("Status: %ld %s\r\n",response->code, err_msg(response->code));
    }
    if(response->headers && !apr_is_empty_table(response->headers)) {
       const apr_array_header_t *elts = apr_table_elts(response->headers);
@@ -138,7 +138,7 @@ static void fcgi_write_response(mapcache_context_fcgi *ctx, mapcache_http_respon
       printf("Last-Modified: %s\r\n", datestr);
    }
    if(response->data) {
-      printf("Content-Length: %d\r\n\r\n", response->data->size);
+      printf("Content-Length: %zd\r\n\r\n", response->data->size);
       fwrite((char*)response->data->buf, response->data->size,1,stdout);
    }
 }
