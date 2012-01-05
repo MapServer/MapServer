@@ -145,8 +145,7 @@ static const char** _mapcache_dimension_regex_print(mapcache_context *ctx, mapca
 
 static void _mapcache_dimension_regex_parse_xml(mapcache_context *ctx, mapcache_dimension *dim,
       ezxml_t node) {
-  mapcache_dimension_regex *dimension;
-  int rc;
+   mapcache_dimension_regex *dimension;
    const char *entry = node->txt;
    if(!entry || !*entry) {
       ctx->set_error(ctx,400,"failed to parse dimension regex: none supplied");

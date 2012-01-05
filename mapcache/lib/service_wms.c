@@ -501,7 +501,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
          }
          if(config->mode != MAPCACHE_MODE_NORMAL) {
             main_tileset = mapcache_tileset_clone(ctx,main_tileset);
-            main_tileset->name = key;
+            main_tileset->name = (char*)key;
          }
 
          for(i=0;i<main_tileset->grid_links->nelts;i++){
@@ -578,7 +578,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
                }
                if(config->mode != MAPCACHE_MODE_NORMAL) {
                   tileset = mapcache_tileset_clone(ctx,tileset);
-                  tileset->name = key;
+                  tileset->name = (char*)key;
                }
                grid_link = NULL;
                for(i=0;i<tileset->grid_links->nelts;i++){

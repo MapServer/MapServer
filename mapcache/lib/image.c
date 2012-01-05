@@ -58,8 +58,10 @@ int mapcache_image_has_alpha(mapcache_image *img) {
 
 void mapcache_image_merge(mapcache_context *ctx, mapcache_image *base, mapcache_image *overlay) {
    int starti,startj;
+#ifndef USE_PIXMAN
    int i,j;
    unsigned char *browptr, *orowptr, *bptr, *optr;
+#endif
 
    if(base->w < overlay->w || base->h < overlay->h) {
       ctx->set_error(ctx, 500, "attempting to merge an larger image onto another");

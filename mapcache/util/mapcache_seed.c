@@ -334,7 +334,6 @@ cmd examine_tile(mapcache_context *ctx, mapcache_tile *tile)
 
 void cmd_recurse(mapcache_context *cmd_ctx, mapcache_tile *tile) {
   cmd action;
-  int i,j;
   int curx, cury, curz;
   int minchildx,maxchildx,minchildy,maxchildy;
   double bboxbl[4],bboxtr[4];

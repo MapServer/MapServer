@@ -301,8 +301,8 @@ static int mod_mapcache_request_handler(request_rec *r) {
    }
    return write_http_response(apache_ctx,http_response);
 }
+
 static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
-   apr_status_t rc;
    mapcache_server_cfg* cfg = ap_get_module_config(s->module_config, &mapcache_module);
    server_rec *sconf;
 
