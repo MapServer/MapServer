@@ -3,21 +3,25 @@ include ./Makefile.inc
 all: .header
 	cd lib; $(MAKE) $(MFLAGS)
 	cd util; $(MAKE) $(MFLAGS)
-	cd apache; $(MAKE) $(MFLAGS)
 	cd cgi; $(MAKE) $(MFLAGS)
 	
 install: .header install-module install-lib install-util install-cgi
 
 install-util: .header install-lib
+	$(INSTALL) -d $(bindir)
 	cd util; $(MAKE) $(MFLAGS) install
 
 install-cgi: .header install-lib
 	cd cgi; $(MAKE) $(MFLAGS) install
 
 install-lib: .header
+	$(INSTALL) -d $(libdir)
 	cd lib; $(MAKE) $(MFLAGS) install
 
-install-module: .header install-lib
+module: .header
+	cd apache; $(MAKE) $(MFLAGS)
+
+install-module: .header install-lib module
 	cd apache; $(MAKE) $(MFLAGS) install
 
 # make clean and rerun if essential files have been modified
