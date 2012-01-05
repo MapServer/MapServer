@@ -4,8 +4,10 @@ AC_INIT(Makefile.inc.in)
 # don't let AC_PROG_CC force "-g -O2"
 : ${CFLAGS="-Wall"}
 
+LT_INIT
 AC_PROG_CC
 AC_PROG_INSTALL
+AC_PROG_LIBTOOL
 
 dnl ---------------------------------------------------------------------
 dnl Checks for header files.
@@ -414,7 +416,6 @@ AC_DEFUN([APR_CHECK],[
     AC_SUBST(APR_INC,`$APRCONFIG --includes`)
     AC_SUBST(APR_INCDIR,`$APRCONFIG --includedir`)
     AC_SUBST(APR_LIBS,`$APRCONFIG --link-ld`)
-    AC_SUBST(LIBTOOL, `$APRCONFIG --apr-libtool`)
 ])
 
 AC_DEFUN([PCRE_CHECK],[
@@ -990,6 +991,6 @@ AC_SUBST(MISC_ENABLED,$MISC_ENABLED)
 CURL_CHECK
 
 # Write config.status and the Makefile
-AC_CONFIG_FILES(Makefile.inc nginx/config)
+AC_CONFIG_FILES(Makefile.inc nginx/config lib/Makefile apache/Makefile util/Makefile cgi/Makefile)
 
 AC_OUTPUT
