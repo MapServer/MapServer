@@ -75,7 +75,8 @@ DEBUG=/DDEBUG
 #APR_DIR = $(MAPCACHE_BASE)\..\..\apr-1.4.5
 APR_DIR = $(MAPCACHE_BASE)\..\..\apr-dist
 
-
+# APACHE HTTPD (Only required for apache module)
+APACHE_DIR=$(MAPCACHE_BASE)\..\httpd
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PNG support
@@ -158,7 +159,9 @@ MAPCACHE_INC= -I$(MAPCACHE_BASE)\include
 APR_INC=-I$(APR_DIR)\include
 APR_LIB=$(APR_DIR)/lib/apr-1.lib $(APR_DIR)/lib/aprutil-1.lib $(APR_DIR)/lib/libapr-1.lib $(APR_DIR)/lib/libaprutil-1.lib 
 
-
+#APACHE
+APACHE_INC=-I$(APACHE_DIR)\include
+APACHE_LIB=$(APACHE_DIR)\lib\libhttpd.lib 
 
 # Setup REGEX object and includes
 REGEX_OBJ=$(REGEX_DIR)\regex.obj
@@ -176,13 +179,13 @@ REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
 ########################################################################
 
 !IFNDEF EXTERNAL_LIBS
-EXTERNAL_LIBS= $(PNG_LIB) $(CURL_LIB) $(JPEG_LIB) $(APR_LIB) $(FRIBIDI_LIB) $(FCGI_LIB)
+EXTERNAL_LIBS= $(PNG_LIB) $(CURL_LIB) $(JPEG_LIB) $(APR_LIB) $(APACHE_LIB) $(FRIBIDI_LIB) $(FCGI_LIB)
 !ENDIF
 
 LIBS=$(MAPCACHE_LIB) $(EXTERNAL_LIBS)
 
 !IFNDEF INCLUDES
-INCLUDES=$(MAPCACHE_INC) $(APR_INC) $(REGEX_INC) $(PNG_INC) $(ZLIB_INC) $(CURL_INC) $(JPEG_INC) $(FCGI_INC)
+INCLUDES=$(MAPCACHE_INC) $(APR_INC) $(APACHE_INC) $(REGEX_INC) $(PNG_INC) $(ZLIB_INC) $(CURL_INC) $(JPEG_INC) $(FCGI_INC)
 !ENDIF
 
 

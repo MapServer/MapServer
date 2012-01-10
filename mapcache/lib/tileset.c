@@ -33,6 +33,10 @@
 #include <apr_file_io.h>
 #include <math.h>
 
+#ifdef _WIN32
+#include <limits.h>
+#endif
+
 char* mapcache_tileset_metatile_resource_key(mapcache_context *ctx, mapcache_metatile *mt) {
    char *lockname = apr_psprintf(ctx->pool,
          "%d-%d-%d-%s",

@@ -22,19 +22,20 @@ LINK=   link
 # Main mapcache library.
 #
 
-MAPCACHE_OBJS = src\axisorder.obj  src\dimension.obj  src\imageio_mixed.obj  src\service_wms.obj \
-	        src\buffer.obj src\ezxml.obj  src\imageio_png.obj  src\service_wmts.obj \
-                src\cache_disk.obj  src\lock.obj src\services.obj \
-                src\cache_memcache.obj src\grid.obj  src\source.obj \
-		src\cache_sqlite.obj src\http.obj src\source_gdal.obj \
-		src\cache_tiff.obj src\image.obj src\service_demo.obj src\source_mapserver.obj \
-		src\configuration.obj src\image_error.obj src\service_kml.obj src\source_wms.obj \
-		src\configuration_xml.obj src\imageio.obj src\service_tms.obj src\tileset.obj \
-		src\core.obj src\imageio_jpeg.obj src\service_ve.obj src\util.obj src\strptime.obj \
+MAPCACHE_OBJS = lib\axisorder.obj  lib\dimension.obj  lib\imageio_mixed.obj  lib\service_wms.obj \
+	        lib\buffer.obj lib\ezxml.obj  lib\imageio_png.obj  lib\service_wmts.obj \
+                lib\cache_disk.obj  lib\lock.obj lib\services.obj \
+                lib\cache_memcache.obj lib\grid.obj  lib\source.obj \
+		lib\cache_sqlite.obj lib\http.obj lib\source_gdal.obj \
+		lib\cache_tiff.obj lib\image.obj lib\service_demo.obj lib\source_mapserver.obj \
+		lib\configuration.obj lib\image_error.obj lib\service_kml.obj lib\source_wms.obj \
+		lib\configuration_xml.obj lib\imageio.obj lib\service_tms.obj lib\tileset.obj \
+		lib\core.obj lib\imageio_jpeg.obj lib\service_ve.obj lib\util.obj lib\strptime.obj \
 		$(REGEX_OBJ)
 
 
 MAPCACHE_FCGI = 	mapcache.exe 
+MAPCACHE_APACHE =       mod_mapcache.dll
 MAPCACHE_SEED = 	mapcache_seed.exe 
 
 #
@@ -42,7 +43,7 @@ MAPCACHE_SEED = 	mapcache_seed.exe
 #
 default: 	all
 
-all:		$(MAPCACHE_LIB) $(MAPCACHE_FCGI) $(MAPCACHE_SEED)
+all:		$(MAPCACHE_LIB) $(MAPCACHE_FCGI) $(MAPCACHE_APACHE) $(MAPCACHE_SEED)
 
 
 $(MAPCACHE_LIB): $(MAPCACHE_OBJS)
@@ -50,11 +51,15 @@ $(MAPCACHE_LIB): $(MAPCACHE_OBJS)
 
 
 $(MAPCACHE_FCGI): $(MAPCACHE_LIB)
-          $(CC) $(CFLAGS) src\fastcgi_mapcache.c /Femapcache.exe $(LIBS)
+          $(CC) $(CFLAGS) cgi\mapcache.c /Fecgi\mapcache.exe $(LIBS)
+	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+$(MAPCACHE_APACHE): $(MAPCACHE_LIB)
+          $(CC) $(CFLAGS) apache\mod_mapcache.c /link /DLL /out:apache\mod_mapcache.dll $(LIBS)
 	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 $(MAPCACHE_SEED): $(MAPCACHE_LIB)
-          $(CC) $(CFLAGS) src\mapcache_seed.c /Femapcache_seed.exe $(LIBS)
+          $(CC) $(CFLAGS) util\mapcache_seed.c /Feutil\mapcache_seed.exe $(LIBS)
 	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 .c.obj:
@@ -65,8 +70,12 @@ $(MAPCACHE_SEED): $(MAPCACHE_LIB)
 
  
 clean:
-    del src\*.obj
-    del $(MAPCACHE_FCGI)
+    del lib\*.obj
+    del *.obj
+    del *.exp
+    del apache\$(MAPCACHE_APACHE)
+    del cgi\$(MAPCACHE_FCGI)
+    del util\$(MAPCACHE_SEED)
     del *.lib
     del *.manifest
         

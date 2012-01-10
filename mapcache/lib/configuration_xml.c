@@ -789,6 +789,7 @@ void parseServices(mapcache_context *ctx, ezxml_t root, mapcache_cfg *config) {
 
 void mapcache_configuration_parse_xml(mapcache_context *ctx, const char *filename, mapcache_cfg *config) {
    ezxml_t doc, node;
+   const char *mode;
    doc = ezxml_parse_file(filename);
    if (doc == NULL) {
       ctx->set_error(ctx,400, "failed to parse file %s. Is it valid XML?", filename);
@@ -805,7 +806,7 @@ void mapcache_configuration_parse_xml(mapcache_context *ctx, const char *filenam
       ctx->set_error(ctx,400, "failed to parse file %s. first node is not <mapcache>", filename);
       goto cleanup;
    }
-   const char *mode = ezxml_attr(doc,"mode");
+   mode = ezxml_attr(doc,"mode");
    if(mode) {
       if(!strcmp(mode,"combined_mirror")) {
          config->mode = MAPCACHE_MODE_MIRROR_COMBINED;

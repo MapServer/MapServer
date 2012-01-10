@@ -40,7 +40,10 @@
 #include <ap_mpm.h>
 #include <http_log.h>
 #include "mapcache.h"
+
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 #ifdef AP_NEED_SET_MUTEX_PERMS
 #include "unixd.h"
@@ -72,10 +75,11 @@ struct mapcache_context_apache_request {
 void apache_context_server_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
    mapcache_context_apache_server *ctx = (mapcache_context_apache_server*)c;
    va_list args;
-   va_start(args,message);
-   char *msg = apr_pvsprintf(c->pool,message,args);
-   va_end(args);
+   char *msg;
    int ap_log_level;
+   va_start(args,message);
+   msg = apr_pvsprintf(c->pool,message,args);
+   va_end(args);
    switch(level) {
       case MAPCACHE_DEBUG:
          ap_log_level = APLOG_DEBUG;
@@ -110,9 +114,9 @@ void apache_context_server_log(mapcache_context *c, mapcache_log_level level, ch
 void apache_context_request_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
    mapcache_context_apache_request *ctx = (mapcache_context_apache_request*)c;
    va_list args;
+   int ap_log_level;
    va_start(args,message);
    va_end(args);
-   int ap_log_level;
    switch(level) {
       case MAPCACHE_DEBUG:
          ap_log_level = APLOG_DEBUG;
@@ -169,10 +173,13 @@ void init_apache_server_context(mapcache_context_apache_server *ctx) {
 
 static mapcache_context_apache_request* apache_request_context_create(request_rec *r) {
    mapcache_context_apache_request *ctx = apr_pcalloc(r->pool, sizeof(mapcache_context_apache_request));
+   mapcache_server_cfg *cfg = NULL;
+   mapcache_cfg *config = NULL;
+
    ctx->ctx.ctx.pool = r->pool;
    /* lookup the configuration object given the configuration file name */
-   mapcache_server_cfg* cfg = ap_get_module_config(r->server->module_config, &mapcache_module);
-   mapcache_cfg *config = apr_hash_get(cfg->aliases,(void*)r->filename,APR_HASH_KEY_STRING);
+   cfg = ap_get_module_config(r->server->module_config, &mapcache_module);
+   config = apr_hash_get(cfg->aliases,(void*)r->filename,APR_HASH_KEY_STRING);
    ctx->ctx.ctx.config = config;
    ctx->request = r;
    if(is_threaded) {
@@ -194,13 +201,14 @@ static mapcache_context_apache_server* apache_server_context_create(server_rec *
 static int write_http_response(mapcache_context_apache_request *ctx, mapcache_http_response *response) {
    request_rec *r = ctx->request;
    int rc;
+   char *timestr;
 
    if(response->mtime) {
       ap_update_mtime(r, response->mtime);
       if((rc = ap_meets_conditions(r)) != OK) {
          return rc;
       }
-      char *timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
+      timestr = apr_palloc(r->pool, APR_RFC822_DATE_LEN);
       apr_rfc822_date(timestr, response->mtime);
       apr_table_setn(r->headers_out, "Last-Modified", timestr);
    }
@@ -229,6 +237,9 @@ static int write_http_response(mapcache_context_apache_request *ctx, mapcache_ht
 static int mod_mapcache_request_handler(request_rec *r) {
    apr_table_t *params;
    mapcache_request *request = NULL;
+   mapcache_context_apache_request *apache_ctx = NULL;
+   mapcache_http_response *http_response = NULL;
+   mapcache_context *global_ctx =  NULL;
 
    if (!r->handler || strcmp(r->handler, "mapcache")) {
       return DECLINED;
@@ -238,8 +249,8 @@ static int mod_mapcache_request_handler(request_rec *r) {
    }
    
    
-   mapcache_context_apache_request *apache_ctx = apache_request_context_create(r); 
-   mapcache_context *global_ctx = (mapcache_context*)apache_ctx;
+   apache_ctx = apache_request_context_create(r); 
+   global_ctx = (mapcache_context*)apache_ctx;
 
    params = mapcache_http_parse_param_string(global_ctx, r->args);
 
@@ -248,8 +259,6 @@ static int mod_mapcache_request_handler(request_rec *r) {
       return write_http_response(apache_ctx,
             mapcache_core_respond_to_error(global_ctx));
    }
-
-   mapcache_http_response *http_response = NULL;
 
    if(request->type == MAPCACHE_REQUEST_GET_CAPABILITIES) {
       mapcache_request_get_capabilities *req_caps = (mapcache_request_get_capabilities*)request;
@@ -305,6 +314,11 @@ static int mod_mapcache_request_handler(request_rec *r) {
 static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
    mapcache_server_cfg* cfg = ap_get_module_config(s->module_config, &mapcache_module);
    server_rec *sconf;
+   apr_status_t rv;
+#if APR_HAS_FORK
+   apr_proc_t proc;
+#endif
+   mapcache_context *ctx = (mapcache_context*)apache_server_context_create(s,p);
 
    if(!cfg) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "configuration not found in server context");
@@ -317,8 +331,6 @@ static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 
 #if APR_HAS_FORK
    /* fork a child process to let it accomplish post-configuration tasks with the uid of the runtime user */
-   apr_proc_t proc;
-   apr_status_t rv;
    rv = apr_proc_fork(&proc, ptemp);
    if (rv == APR_INCHILD) {
 #define ap_unixd_setup_child unixd_setup_child
@@ -364,7 +376,6 @@ static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
       return APR_EGENERAL;
    }
 #else /* APR_HAS_FORK */
-   mapcache_context *ctx = (mapcache_context*)apache_server_context_create(s,p);
    for (sconf = s; sconf; sconf = sconf->next) {
       mapcache_server_cfg* config = ap_get_module_config(sconf->module_config, &mapcache_module);
       if(config->aliases) {
@@ -438,6 +449,7 @@ static int mapcache_alias_matches(const char *uri, const char *alias_fakename)
 static int mapcache_hook_intercept(request_rec *r)
 {
    mapcache_server_cfg *sconfig = ap_get_module_config(r->server->module_config, &mapcache_module);
+   apr_hash_index_t *entry;
 
    if (!sconfig->aliases)
       return DECLINED;
@@ -445,7 +457,7 @@ static int mapcache_hook_intercept(request_rec *r)
    if (r->uri[0] != '/' && r->uri[0])
       return DECLINED;
 
-   apr_hash_index_t *entry = apr_hash_first(r->pool,sconfig->aliases);
+   entry = apr_hash_first(r->pool,sconfig->aliases);
 
    /* loop through the entries to find one where the alias matches */
    while (entry) {
@@ -470,12 +482,12 @@ static int mapcache_hook_intercept(request_rec *r)
 
 
 static void mod_mapcache_register_hooks(apr_pool_t *p) {
-   ap_hook_child_init(mod_mapcache_child_init, NULL, NULL, APR_HOOK_MIDDLE);
-   ap_hook_post_config(mod_mapcache_post_config, NULL, NULL, APR_HOOK_MIDDLE);
-   ap_hook_handler(mod_mapcache_request_handler, NULL, NULL, APR_HOOK_MIDDLE);
    static const char * const p1[] = { "mod_alias.c", "mod_rewrite.c", NULL };
    static const char * const n1[]= { "mod_userdir.c",
                                       "mod_vhost_alias.c", NULL };
+   ap_hook_child_init(mod_mapcache_child_init, NULL, NULL, APR_HOOK_MIDDLE);
+   ap_hook_post_config(mod_mapcache_post_config, NULL, NULL, APR_HOOK_MIDDLE);
+   ap_hook_handler(mod_mapcache_request_handler, NULL, NULL, APR_HOOK_MIDDLE);
    ap_hook_translate_name(mapcache_hook_intercept, p1, n1, APR_HOOK_MIDDLE);
 
 }
