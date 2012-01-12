@@ -701,13 +701,13 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 	if(lp->filter.string && lp->filter.type == MS_EXPRESSION)
 	  pszBuffer = msStringConcatenate(pszBuffer, ")");
         
-        escapedTextString = msStringEscape(pszBuffer); 
-	pszTmp =  (char *)msSmallMalloc(sizeof(char)*(strlen(lp->filter.string)+3));
+        escapedTextString = msStringEscape(pszBuffer);
+	pszTmp =  (char *)msSmallMalloc(sizeof(char)*(strlen(escapedTextString)+3));
 	sprintf(pszTmp,"\"%s\"",escapedTextString);
 	msLoadExpressionString(&lp->filter, pszTmp);
 	free(pszTmp);
         /*msLoadExpressionString(&lp->filter,  (char*)CPLSPrintf("\"%s\"", escapedTextString)); */
-        free(escapedTextString); 
+        free(escapedTextString);
         free(szExpression);
     }
 
