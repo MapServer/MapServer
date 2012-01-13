@@ -34,9 +34,9 @@ MAPCACHE_OBJS = lib\axisorder.obj  lib\dimension.obj  lib\imageio_mixed.obj  lib
 		$(REGEX_OBJ)
 
 
-MAPCACHE_FCGI = 	mapcache.exe 
+MAPCACHE_FCGI = 	mapcache.exe
 MAPCACHE_APACHE =       mod_mapcache.dll
-MAPCACHE_SEED = 	mapcache_seed.exe 
+MAPCACHE_SEED = 	mapcache_seed.exe
 
 #
 #
@@ -52,15 +52,15 @@ $(MAPCACHE_LIB): $(MAPCACHE_OBJS)
 
 $(MAPCACHE_FCGI): $(MAPCACHE_LIB)
           $(CC) $(CFLAGS) cgi\mapcache.c /Fecgi\mapcache.exe $(LIBS)
-	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	         if exist cgi\$(MAPCACHE_FCGI).manifest mt -manifest cgi\$(MAPCACHE_FCGI).manifest -outputresource:cgi\$(MAPCACHE_FCGI);1
 
 $(MAPCACHE_APACHE): $(MAPCACHE_LIB)
           $(CC) $(CFLAGS) apache\mod_mapcache.c /link /DLL /out:apache\mod_mapcache.dll $(LIBS)
-	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	         if exist apache\$(MAPCACHE_APACHE).manifest mt -manifest apache\$(MAPCACHE_APACHE).manifest -outputresource:apache\$(MAPCACHE_APACHE);2
 
 $(MAPCACHE_SEED): $(MAPCACHE_LIB)
           $(CC) $(CFLAGS) util\mapcache_seed.c /Feutil\mapcache_seed.exe $(LIBS)
-	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+	         if exist util\$(MAPCACHE_SEED).manifest mt -manifest util\$(MAPCACHE_SEED).manifest -outputresource:util\$(MAPCACHE_SEED);1
 
 .c.obj:
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
@@ -68,17 +68,26 @@ $(MAPCACHE_SEED): $(MAPCACHE_LIB)
 .cpp.obj:
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
 
- 
+
 clean:
     del lib\*.obj
     del *.obj
     del *.exp
     del apache\$(MAPCACHE_APACHE)
+    del apache\*.manifest
+    del apache\*.exp
+    del apache\*.lib
     del cgi\$(MAPCACHE_FCGI)
+    del cgi\*.manifest
+    del cgi\*.exp
+    del cgi\*.lib
     del util\$(MAPCACHE_SEED)
+    del util\*.manifest
+    del util\*.exp
+    del util\*.lib
     del *.lib
     del *.manifest
-        
+
 
 install: $(MAPCACHE_EXE)
 	-mkdir $(BINDIR)
