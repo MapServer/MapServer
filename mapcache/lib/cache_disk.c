@@ -166,7 +166,7 @@ static void _mapcache_cache_disk_delete(mapcache_context *ctx, mapcache_tile *ti
    GC_CHECK_ERROR(ctx);
 
    ret = apr_file_remove(filename,ctx->pool);
-   if(ret != APR_SUCCESS && ret != ENOENT) {
+   if(ret != APR_SUCCESS && !APR_STATUS_IS_ENOENT(ret)) {
       ctx->set_error(ctx, 500,  "failed to remove file %s: %s",filename, apr_strerror(ret,errmsg,120));
    }
 }
@@ -239,7 +239,7 @@ static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) 
       }
       return MAPCACHE_SUCCESS;
    } else {
-      if(rv == ENOENT) {
+      if(APR_STATUS_IS_ENOENT(rv)) {
          /* the file doesn't exist on the disk */
          return MAPCACHE_CACHE_MISS;
       } else {
@@ -302,7 +302,7 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
    *hackptr2 = '/';
 
    ret = apr_file_remove(filename,ctx->pool);
-   if(ret != APR_SUCCESS && ret != ENOENT) {
+   if(ret != APR_SUCCESS && !APR_STATUS_IS_ENOENT(ret)) {
       ctx->set_error(ctx, 500,  "failed to remove file %s: %s",filename, apr_strerror(ret,errmsg,120));
    }
 
