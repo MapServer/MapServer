@@ -77,14 +77,20 @@ clean:
     del apache\*.manifest
     del apache\*.exp
     del apache\*.lib
+    del apache\*.pdb
+    del apache\*.ilk
     del cgi\$(MAPCACHE_FCGI)
     del cgi\*.manifest
     del cgi\*.exp
     del cgi\*.lib
+    del cgi\*.pdb
+    del cgi\*.ilk
     del util\$(MAPCACHE_SEED)
     del util\*.manifest
     del util\*.exp
     del util\*.lib
+    del util\*.pdb
+    del util\*.ilk
     del *.lib
     del *.manifest
 
