@@ -111,11 +111,13 @@ void apache_context_server_log(mapcache_context *c, mapcache_log_level level, ch
    ap_log_error(APLOG_MARK, ap_log_level, 0, ctx->server,"%s",msg);
 }
 
-void apache_context_request_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {
+void apache_context_request_log(mapcache_context *c, mapcache_log_level level, char *message, ...) {   
    mapcache_context_apache_request *ctx = (mapcache_context_apache_request*)c;
    va_list args;
+   char *res;
    int ap_log_level;
    va_start(args,message);
+   res = apr_pvsprintf(c->pool, message, args);
    va_end(args);
    switch(level) {
       case MAPCACHE_DEBUG:
@@ -145,7 +147,7 @@ void apache_context_request_log(mapcache_context *c, mapcache_log_level level, c
       default:
          ap_log_level = APLOG_WARNING;
    }
-   ap_log_rerror(APLOG_MARK, ap_log_level, 0, ctx->request, "%s", apr_pvsprintf(c->pool,message,args));
+   ap_log_rerror(APLOG_MARK, ap_log_level, 0, ctx->request, "%s", res);
 }
 
 mapcache_context *mapcache_context_request_clone(mapcache_context *ctx) {
