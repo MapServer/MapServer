@@ -94,6 +94,12 @@ WINSOCK_LIB ="C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib\WS2_32.Lib"
 JPEG_DIR=$(MAPCACHE_BASE)\..\..\jpeg-8c
 JPEG_INC = -I$(JPEG_DIR)
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SQLite3 Support
+# ----------------------------------------------------------------------
+# Uncomment, and update accordingly.
+#SQLITE_DEF=-DUSE_SQLITE
+#SQLITE_DIR=$(MAPCACHE_BASE)\..\..\sqlite3
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # FastCGI Support
@@ -142,6 +148,9 @@ CURL_LIB = $(CURL_DIR)/lib/libcurl_imp.lib
 JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 !ENDIF
 
+SQLITE_LIB=$(SQLITE_DIR)\lib\sqlite3_i.lib
+SQLITE_INC=-I$(SQLITE_DIR)\include
+
 FCGI_LIB=$(FCGI_DIR)\libfcgi\Release\libfcgi.lib
 FCGI_INC=-I$(FCGI_DIR)\include
 
@@ -179,17 +188,17 @@ REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
 ########################################################################
 
 !IFNDEF EXTERNAL_LIBS
-EXTERNAL_LIBS= $(PNG_LIB) $(CURL_LIB) $(JPEG_LIB) $(APR_LIB) $(APACHE_LIB) $(FRIBIDI_LIB) $(FCGI_LIB)
+EXTERNAL_LIBS= $(PNG_LIB) $(CURL_LIB) $(JPEG_LIB) $(APR_LIB) $(APACHE_LIB) $(FRIBIDI_LIB) $(SQLITE_LIB) $(FCGI_LIB)
 !ENDIF
 
 LIBS=$(MAPCACHE_LIB) $(EXTERNAL_LIBS)
 
 !IFNDEF INCLUDES
-INCLUDES=$(MAPCACHE_INC) $(APR_INC) $(APACHE_INC) $(REGEX_INC) $(PNG_INC) $(ZLIB_INC) $(CURL_INC) $(JPEG_INC) $(FCGI_INC)
+INCLUDES=$(MAPCACHE_INC) $(APR_INC) $(APACHE_INC) $(REGEX_INC) $(PNG_INC) $(ZLIB_INC) $(CURL_INC) $(JPEG_INC) $(SQLITE_INC) $(FCGI_INC)
 !ENDIF
 
 
-MAPCACHE_DEFS =$(REGEX_OPT) $(FCGI_DEF)
+MAPCACHE_DEFS =$(REGEX_OPT) $(SQLITE_DEF) $(FCGI_DEF)
 
 
 
