@@ -148,8 +148,10 @@ CURL_LIB = $(CURL_DIR)/lib/libcurl_imp.lib
 JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 !ENDIF
 
+!IFDEF SQLITE_DIR
 SQLITE_LIB=$(SQLITE_DIR)\lib\sqlite3_i.lib
 SQLITE_INC=-I$(SQLITE_DIR)\include
+!ENDIF
 
 FCGI_LIB=$(FCGI_DIR)\libfcgi\Release\libfcgi.lib
 FCGI_INC=-I$(FCGI_DIR)\include
@@ -166,11 +168,11 @@ MAPCACHE_INC= -I$(MAPCACHE_BASE)\include
 
 #APR
 APR_INC=-I$(APR_DIR)\include
-APR_LIB=$(APR_DIR)/lib/apr-1.lib $(APR_DIR)/lib/aprutil-1.lib $(APR_DIR)/lib/libapr-1.lib $(APR_DIR)/lib/libaprutil-1.lib 
+APR_LIB=$(APR_DIR)/lib/apr-1.lib $(APR_DIR)/lib/aprutil-1.lib $(APR_DIR)/lib/libapr-1.lib $(APR_DIR)/lib/libaprutil-1.lib
 
 #APACHE
 APACHE_INC=-I$(APACHE_DIR)\include
-APACHE_LIB=$(APACHE_DIR)\lib\libhttpd.lib 
+APACHE_LIB=$(APACHE_DIR)\lib\libhttpd.lib
 
 # Setup REGEX object and includes
 REGEX_OBJ=$(REGEX_DIR)\regex.obj
