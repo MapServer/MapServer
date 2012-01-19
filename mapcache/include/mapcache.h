@@ -209,7 +209,7 @@ void mapcache_context_copy(mapcache_context *src, mapcache_context *dst);
  * 
  */
 struct mapcache_buffer {
-    void* buf; /**< pointer to the actual data contained in buffer */
+    char* buf; /**< pointer to the actual data contained in buffer */
     size_t size; /**< number of bytes actually used in the buffer */
     size_t avail; /**< number of bytes allocated */
     apr_pool_t* pool; /**< apache pool to allocate from */

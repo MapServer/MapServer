@@ -102,6 +102,20 @@ JPEG_INC = -I$(JPEG_DIR)
 #SQLITE_DIR=$(MAPCACHE_BASE)\..\..\sqlite3
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# TIFF Support
+# ----------------------------------------------------------------------
+# Uncomment, and update accordingly.
+#TIFF_DEF=-DUSE_TIFF -DUSE_TIFF_WRITE
+#TIFF_DIR=$(MAPCACHE_BASE)\..\..\libtiff
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# GEOTIFF Support
+# ----------------------------------------------------------------------
+# Uncomment, and update accordingly.
+#GEOTIFF_DEF=-DUSE_GEOTIFF
+#GEOTIFF_DIR=$(MAPCACHE_BASE)\..\..\libgeotiff
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # FastCGI Support
 # ----------------------------------------------------------------------
 # Uncomment, and update accordingly.
@@ -153,6 +167,16 @@ SQLITE_LIB=$(SQLITE_DIR)\lib\sqlite3_i.lib
 SQLITE_INC=-I$(SQLITE_DIR)\include
 !ENDIF
 
+!IFDEF TIFF_DIR
+TIFF_LIB=$(TIFF_DIR)\lib\libtiff_i.lib
+TIFF_INC=-I$(TIFF_DIR)\include
+!ENDIF
+
+!IFDEF GEOTIFF_DIR
+GEOTIFF_LIB=$(GEOTIFF_DIR)\lib\geotiff.lib
+GEOTIFF_INC=-I$(GEOTIFF_DIR)\include
+!ENDIF
+
 FCGI_LIB=$(FCGI_DIR)\libfcgi\Release\libfcgi.lib
 FCGI_INC=-I$(FCGI_DIR)\include
 
@@ -190,17 +214,17 @@ REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
 ########################################################################
 
 !IFNDEF EXTERNAL_LIBS
-EXTERNAL_LIBS= $(PNG_LIB) $(CURL_LIB) $(JPEG_LIB) $(APR_LIB) $(APACHE_LIB) $(FRIBIDI_LIB) $(SQLITE_LIB) $(FCGI_LIB)
+EXTERNAL_LIBS= $(PNG_LIB) $(CURL_LIB) $(JPEG_LIB) $(APR_LIB) $(APACHE_LIB) $(FRIBIDI_LIB) $(SQLITE_LIB) $(TIFF_LIB) $(GEOTIFF_LIB) $(FCGI_LIB)
 !ENDIF
 
 LIBS=$(MAPCACHE_LIB) $(EXTERNAL_LIBS)
 
 !IFNDEF INCLUDES
-INCLUDES=$(MAPCACHE_INC) $(APR_INC) $(APACHE_INC) $(REGEX_INC) $(PNG_INC) $(ZLIB_INC) $(CURL_INC) $(JPEG_INC) $(SQLITE_INC) $(FCGI_INC)
+INCLUDES=$(MAPCACHE_INC) $(APR_INC) $(APACHE_INC) $(REGEX_INC) $(PNG_INC) $(ZLIB_INC) $(CURL_INC) $(JPEG_INC) $(SQLITE_INC) $(TIFF_INC) $(GEOTIFF_INC) $(FCGI_INC)
 !ENDIF
 
 
-MAPCACHE_DEFS =$(REGEX_OPT) $(SQLITE_DEF) $(FCGI_DEF)
+MAPCACHE_DEFS =$(REGEX_OPT) $(SQLITE_DEF) $(TIFF_DEF) $(GEOTIFF_DEF) $(FCGI_DEF)
 
 
 

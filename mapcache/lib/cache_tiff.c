@@ -135,7 +135,11 @@ static void check_tiff_format(mapcache_context *ctx, mapcache_tile *tile, TIFF *
    uint32 imwidth,imheight,tilewidth,tileheight;
    int16 planarconfig,orientation;
    uint16 compression;
+   uint16 photometric;
    int rv;
+   mapcache_grid_level *level;
+   int ntilesx;
+   int ntilesy;
    TIFFGetField( hTIFF, TIFFTAG_IMAGEWIDTH, &imwidth );
    TIFFGetField( hTIFF, TIFFTAG_IMAGELENGTH, &imheight );
    TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &tilewidth );
@@ -164,7 +168,6 @@ static void check_tiff_format(mapcache_context *ctx, mapcache_tile *tile, TIFF *
    }
    
    /* is this test needed once we now we have JPEG ? */
-   uint16 photometric;
    rv = TIFFGetField( hTIFF, TIFFTAG_PHOTOMETRIC, &photometric );
    if(rv == 1 && (photometric != PHOTOMETRIC_RGB && photometric != PHOTOMETRIC_YCBCR)) {
       ctx->set_error(ctx,500,"TIFF file \"%s\" is not RGB: %d",
@@ -185,9 +188,9 @@ static void check_tiff_format(mapcache_context *ctx, mapcache_tile *tile, TIFF *
     * - the number of tiles in each direction in the tiff must match what has been
     *   configured for the cache
     */
-   mapcache_grid_level *level = tile->grid_link->grid->levels[tile->z];
-   int ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
-   int ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
+   level = tile->grid_link->grid->levels[tile->z];
+   ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
+   ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
    if( tilewidth != tile->grid_link->grid->tile_sx ||
          tileheight != tile->grid_link->grid->tile_sy ||
          imwidth != tile->grid_link->grid->tile_sx * ntilesx ||
@@ -210,8 +213,9 @@ static void check_tiff_format(mapcache_context *ctx, mapcache_tile *tile, TIFF *
 static int _mapcache_cache_tiff_has_tile(mapcache_context *ctx, mapcache_tile *tile) {
    char *filename;
    TIFF *hTIFF;
+   mapcache_cache_tiff *dcache;
    _mapcache_cache_tiff_tile_key(ctx, tile, &filename);
-   mapcache_cache_tiff *dcache = (mapcache_cache_tiff*)tile->tileset->cache;
+   dcache = (mapcache_cache_tiff*)tile->tileset->cache;
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FALSE;
    }
@@ -220,6 +224,13 @@ static int _mapcache_cache_tiff_has_tile(mapcache_context *ctx, mapcache_tile *t
    if(hTIFF) {
       do { 
          uint32 nSubType = 0;
+         int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
+         int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
+         
+         mapcache_grid_level *level;
+         int ntilesx;
+         int ntilesy;
+         toff_t  *offsets=NULL, *sizes=NULL;
 
          if( !TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType) )
             nSubType = 0;
@@ -237,12 +248,9 @@ static int _mapcache_cache_tiff_has_tile(mapcache_context *ctx, mapcache_tile *t
             return MAPCACHE_FALSE;
          }
 #endif
-         int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
-         int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
-         
-         mapcache_grid_level *level = tile->grid_link->grid->levels[tile->z];
-         int ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
-         int ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
+	 level = tile->grid_link->grid->levels[tile->z];
+         ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
+         ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
          
          /* x offset of the tile along a row */
          tiff_offx = tile->x % ntilesx;
@@ -254,7 +262,6 @@ static int _mapcache_cache_tiff_has_tile(mapcache_context *ctx, mapcache_tile *t
          tiff_offy = ntilesy - (tile->y % ntilesy) -1;
          tiff_off = tiff_offy * ntilesx + tiff_offx;
          
-         toff_t  *offsets=NULL, *sizes=NULL;
          TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &offsets );
          TIFFGetField( hTIFF, TIFFTAG_TILEBYTECOUNTS, &sizes );
          MyTIFFClose(hTIFF);
@@ -286,8 +293,9 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
    char *filename;
    TIFF *hTIFF = NULL;
    int rv;
+   mapcache_cache_tiff *dcache;
    _mapcache_cache_tiff_tile_key(ctx, tile, &filename);
-   mapcache_cache_tiff *dcache = (mapcache_cache_tiff*)tile->tileset->cache;
+   dcache = (mapcache_cache_tiff*)tile->tileset->cache;
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FALSE;
    }
@@ -311,7 +319,14 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
    if(hTIFF) {
       do { 
          uint32 nSubType = 0;
-
+         int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
+         int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
+         
+         mapcache_grid_level *level;
+         int ntilesx;
+         int ntilesy;
+         toff_t  *offsets=NULL, *sizes=NULL;
+         
          if( !TIFFGetField(hTIFF, TIFFTAG_SUBFILETYPE, &nSubType) )
             nSubType = 0;
 
@@ -327,17 +342,14 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
             return MAPCACHE_FAILURE;
          }
 #endif
-         int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
-         int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
-         
          /* 
           * compute the width and height of the full tiff file. This
           * is not simply the tile size times the number of tiles per
           * file for lower zoom levels
           */
-         mapcache_grid_level *level = tile->grid_link->grid->levels[tile->z];
-         int ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
-         int ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
+	 level = tile->grid_link->grid->levels[tile->z];
+         ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
+         ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
          
          /* x offset of the tile along a row */
          tiff_offx = tile->x % ntilesx;
@@ -348,8 +360,6 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
           */
          tiff_offy = ntilesy - (tile->y % ntilesy) -1;
          tiff_off = tiff_offy * ntilesx + tiff_offx;
-         
-         toff_t  *offsets=NULL, *sizes=NULL;
          
          /* get the offset of the jpeg data from the start of the file for each tile */
          rv = TIFFGetField( hTIFF, TIFFTAG_TILEOFFSETS, &offsets );
@@ -398,6 +408,9 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
             if((ret=apr_file_open(&f, filename, 
                         APR_FOPEN_READ|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,APR_OS_DEFAULT,
                         ctx->pool)) == APR_SUCCESS) {
+               char *bufptr;
+	       apr_off_t off;
+	       apr_size_t bytes;
                ret = apr_file_info_get(&finfo, APR_FINFO_MTIME, f);
                if(ret == APR_SUCCESS) {
                   /* 
@@ -405,9 +418,7 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
                    * modification time of the actual tile, but it's the best we can do
                    */
                   tile->mtime = finfo.mtime;
-               }
-            
-               void *bufptr;
+               }           
 
                /* create a memory buffer to contain the jpeg data */
                tile->encoded_data = mapcache_buffer_create((jpegtable_size+sizes[tiff_off]-4),ctx->pool);
@@ -423,14 +434,14 @@ static int _mapcache_cache_tiff_get(mapcache_context *ctx, mapcache_tile *tile) 
 
                
                /* go to the specified offset in the tiff file, plus 2 bytes */
-               apr_off_t off = offsets[tiff_off]+2;
+               off = offsets[tiff_off]+2;
                apr_file_seek(f,APR_SET,&off);
 
                /*
                 * copy the jpeg body at the end of the memory buffer, accounting
                 * for the two bytes we omitted in the previous step
                 */
-               apr_size_t bytes = sizes[tiff_off]-2;
+               bytes = sizes[tiff_off]-2;
                apr_file_read(f,bufptr,&bytes);
 
                /* check we have correctly read the requested number of bytes */
@@ -493,9 +504,23 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    int rv;
    int create;
    char errmsg[120];
+   mapcache_cache_tiff *dcache;
+   mapcache_image_format_jpeg *format;
+   char *hackptr1,*hackptr2;
+   int tilew;
+   int tileh;
+   unsigned char *rgb;
+   int r,c;
+   apr_finfo_t finfo;
+   mapcache_grid_level *level;
+   int ntilesx;
+   int ntilesy;
+   int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
+   int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
+
    _mapcache_cache_tiff_tile_key(ctx, tile, &filename);
-   mapcache_cache_tiff *dcache = (mapcache_cache_tiff*)tile->tileset->cache;
-   mapcache_image_format_jpeg *format = (mapcache_image_format_jpeg*) dcache->format;
+   dcache = (mapcache_cache_tiff*)tile->tileset->cache;
+   format = (mapcache_image_format_jpeg*) dcache->format;
    if(GC_HAS_ERROR(ctx)) {
       return;
    }
@@ -509,7 +534,6 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
     */
 
    /* find the location of the last '/' in the string */
-   char *hackptr1,*hackptr2;
    hackptr2 = hackptr1 = filename;
    while(*hackptr1) {
       if(*hackptr1 == '/')
@@ -530,8 +554,8 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    }
    *hackptr2 = '/';
    
-   int tilew = tile->grid_link->grid->tile_sx;
-   int tileh = tile->grid_link->grid->tile_sy;
+   tilew = tile->grid_link->grid->tile_sx;
+   tileh = tile->grid_link->grid->tile_sy;
    
    if(!tile->raw_image) {
       tile->raw_image = mapcache_imageio_decode(ctx, tile->encoded_data);
@@ -539,8 +563,7 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    }
 
    /* remap xrgb to rgb */
-   unsigned char *rgb = (unsigned char*)malloc(tilew*tileh*3);
-   int r,c;
+   rgb = (unsigned char*)malloc(tilew*tileh*3);
    for(r=0;r<tile->raw_image->h;r++) {
       unsigned char *imptr = tile->raw_image->data + r * tile->raw_image->stride;
       unsigned char *rgbptr = rgb + r * tilew * 3;
@@ -560,7 +583,6 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
    while(mapcache_lock_or_wait_for_resource(ctx,filename) == MAPCACHE_FALSE);
    
    /* check if the tiff file exists already */
-   apr_finfo_t finfo;
    rv = apr_stat(&finfo,filename,0,ctx->pool);
    if(!APR_STATUS_IS_ENOENT(rv)) {
       hTIFF = MyTIFFOpen(filename,"r+");
@@ -580,10 +602,15 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
     * is not simply the tile size times the number of tiles per
     * file for lower zoom levels
     */
-   mapcache_grid_level *level = tile->grid_link->grid->levels[tile->z];
-   int ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
-   int ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
+   level = tile->grid_link->grid->levels[tile->z];
+   ntilesx = MAPCACHE_MIN(dcache->count_x, level->maxx);
+   ntilesy = MAPCACHE_MIN(dcache->count_y, level->maxy);
    if(create) {
+#ifdef USE_GEOTIFF
+      double	adfPixelScale[3], adfTiePoints[6], bbox[4];
+      GTIF *gtif;
+      int x,y;
+#endif
       /* populate the TIFF tags if we are creating the file */
 
       TIFFSetField( hTIFF, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT );
@@ -598,9 +625,7 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
       TIFFSetField( hTIFF, TIFFTAG_SAMPLESPERPIXEL,3 );
 
 #ifdef USE_GEOTIFF
-      double	adfPixelScale[3], adfTiePoints[6], bbox[4];
-
-      GTIF *gtif = GTIFNew(hTIFF);
+      gtif = GTIFNew(hTIFF);
       if(gtif) {
 
          GTIFKeySet(gtif, GTRasterTypeGeoKey, TYPE_SHORT, 1,
@@ -642,8 +667,6 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
 
 
          /* top left tile x,y */
-         int x,y;
-
          x = (tile->x / dcache->count_x)*(dcache->count_x); 
          y = (tile->y / dcache->count_y)*(dcache->count_y) + ntilesy - 1; 
 
@@ -667,9 +690,6 @@ static void _mapcache_cache_tiff_set(mapcache_context *ctx, mapcache_tile *tile)
       TIFFSetField( hTIFF, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_YCBCR);
    }
    TIFFSetField( hTIFF, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB );
-
-   int tiff_offx, tiff_offy; /* the x and y offset of the tile inside the tiff image */
-   int tiff_off; /* the index of the tile inside the list of tiles of the tiff image */
 
    /* x offset of the tile along a row */
    tiff_offx = tile->x % ntilesx;
@@ -718,11 +738,15 @@ close_tiff:
 static void _mapcache_cache_tiff_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache, mapcache_cfg *config) {
    ezxml_t cur_node;
    mapcache_cache_tiff *dcache = (mapcache_cache_tiff*)cache;
-
+   ezxml_t xcount;
+   ezxml_t ycount;
+   ezxml_t xformat;
+   char * format_name;
+   mapcache_image_format *pformat;
    if ((cur_node = ezxml_child(node,"template")) != NULL) {
       dcache->filename_template = apr_pstrdup(ctx->pool,cur_node->txt);
    }
-   ezxml_t xcount = ezxml_child(node,"xcount");
+   xcount = ezxml_child(node,"xcount");
    if(xcount && xcount->txt && *xcount->txt) {
       char *endptr;
       dcache->count_x = (int)strtol(xcount->txt,&endptr,10);
@@ -731,7 +755,7 @@ static void _mapcache_cache_tiff_configuration_parse_xml(mapcache_context *ctx, 
          return;
       }
    }
-   ezxml_t ycount = ezxml_child(node,"ycount");
+   ycount = ezxml_child(node,"ycount");
    if(ycount && ycount->txt && *ycount->txt) {
       char *endptr;
       dcache->count_y = (int)strtol(ycount->txt,&endptr,10);
@@ -740,14 +764,13 @@ static void _mapcache_cache_tiff_configuration_parse_xml(mapcache_context *ctx, 
          return;
       }
    }
-   ezxml_t xformat = ezxml_child(node,"format");
-   char * format_name;
+   xformat = ezxml_child(node,"format");
    if(xformat && xformat->txt && *xformat->txt) {
       format_name = xformat->txt;
    } else {
       format_name = "JPEG";
    }
-   mapcache_image_format *pformat = mapcache_configuration_get_image_format(
+   pformat = mapcache_configuration_get_image_format(
          config,format_name);
    if(!pformat) {
       ctx->set_error(ctx,500,"TIFF cache %s references unknown image format %s",
