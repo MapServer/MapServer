@@ -435,10 +435,24 @@ static int treeNodeTrim( treeNodeObj *node )
       }
     }
 
-    if( node->numsubnodes == 1 && node->numshapes == 0 ) {
-      node = node->subnode[0];
+/* -------------------------------------------------------------------- */
+/*      If the current node has 1 subnode and no shapes, promote that   */
+/*      subnode to the current node position.                           */
+/* -------------------------------------------------------------------- */
+    if( node->numsubnodes == 1 && node->numshapes == 0)
+    {
+        treeNodeObj* psSubNode = node->subnode[0];
+
+        memcpy(&node->rect, &psSubNode->rect,
+               sizeof(psSubNode->rect));
+        node->numshapes = psSubNode->numshapes;
+        assert(node->ids == NULL);
+        node->ids = psSubNode->ids;
+        node->numsubnodes = psSubNode->numsubnodes;
+        for( i = 0; i < psSubNode->numsubnodes; i++ )
+            node->subnode[i] = psSubNode->subnode[i];
+        free(psSubNode);
     }
-/* if I only have 1 subnode promote that subnode to my positon */ 
 
     /* -------------------------------------------------------------------- */
     /*      We should be trimmed if we have no subnodes, and no shapes.     */
