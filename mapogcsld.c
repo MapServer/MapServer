@@ -887,6 +887,10 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                             if (psNode)
                             {
+				char *pszExpression = NULL;
+				char *pszEscapedExpression = NULL;
+				int i;
+
                                 /*preparse the filter for possible gml aliases set on the layer's metada:
                                   "gml_NA3DESC_alias" "alias_name" and filter could be  
                                 <ogc:PropertyName>alias_name</ogc:PropertyName> #3079*/
@@ -920,40 +924,28 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                     }
                                     FLTPreParseFilterForAlias(psNode, psLayer->map, j, "G");
                                 }
-
   
-/* ==================================================================== */
-/*      If the filter has a spatial filter or is a simple, we keep      */
-/*      the node. This node will be parsed when applying the SLD and    */
-/*      be used to do queries on the layer.  Simple filers              */
-/*      (Comparision operators (PropertyIsEqualTo,                      */
-/*      PropertyNotEqualTo, ... combined or not with logical            */
-/*      operators such as AND/OR/NOT) will be used to set the FILTER    */
-/*      element of the layer.                                           */
-/* ==================================================================== */
-                                psLayer->layerinfo = (void *)psNode;
-                                /*
-                                szExpression = FLTGetCommonExpression(psNode, psLayer);
-                              if (FLTHasSpatialFilter(psNode)) 
-                                psLayer->layerinfo = (void *)psNode;
-                              else
+                                pszExpression = FLTGetCommonExpression(psNode, psLayer);
                                 FLTFreeFilterEncodingNode(psNode);
-                              psNode = NULL;
+				psNode = NULL;
 
-                                if (szExpression)
+                                if (pszExpression)
                                 {
+				    pszEscapedExpression = msStringEscape(pszExpression);
                                     nNewClasses = 
                                       nClassAfterFilter - nClassBeforeFilter;
                                     for (i=0; i<nNewClasses; i++)
                                     {
                                         msLoadExpressionString(&psLayer->
                                                              class[psLayer->numclasses-1-i]->
-                                                             expression, szExpression);
+                                                             expression, pszEscapedExpression);
                                     }
-                                    msFree(szExpression);
-                                    szExpression = NULL;
+                                    msFree(pszExpression);
+                                    pszExpression = NULL;
+				    msFree(pszEscapedExpression);
+                                    pszEscapedExpression = NULL;
                                 }
-                                */
+                                
                             }
                         }
                         nClassAfterRule = psLayer->numclasses;
