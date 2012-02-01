@@ -1641,35 +1641,34 @@ int msCGIDispatchRequest(mapservObj *mapserv) {
     if(mapserv->CoordSource == FROMREFPNT) /* force browse mode if the reference coords are set */
       mapserv->Mode = BROWSE;
 
-    switch(mapserv->Mode) {
-       case BROWSE:
-          return msCGIDispatchBrowseRequest(mapserv);
-       case QUERY:
-          return msCGIDispatchQueryRequest(mapserv);
-       case COORDINATE:
-          return msCGIDispatchCoordinateRequest(mapserv);
-       case TILE:
-          /*
-           ** Tile mode:
-           ** Set the projection up and test the parameters for legality.
-           */
-          if( msTileSetup(mapserv) != MS_SUCCESS ) {
-             return MS_FAILURE;
-          }
-       case MAP:
-       case SCALEBAR:
-       case REFERENCE:
-          /* tile, map, scalebar and reference all need the extent to be set up correctly */
-          if(setExtent(mapserv) != MS_SUCCESS) return MS_FAILURE;
-          if(checkWebScale(mapserv) != MS_SUCCESS) return MS_FAILURE;
-          return msCGIDispatchImageRequest(mapserv);
-       case LEGEND:
-          return msCGIDispatchLegendRequest(mapserv);
-       case LEGENDICON:
-          return msCGIDispatchLegendIconRequest(mapserv);
-       default:
-          msSetError(MS_WEBERR, "Bug: unsupported mode", "msDispatchRequest");
+    if(mapserv->Mode == TILE) {
+       /*
+        ** Tile mode:
+        ** Set the projection up and test the parameters for legality.
+        */
+       if( msTileSetup(mapserv) != MS_SUCCESS ) {
           return MS_FAILURE;
+       }
+    }
+    if(mapserv->Mode == BROWSE) {
+       return msCGIDispatchBrowseRequest(mapserv);
+    } else if(mapserv->Mode == MAP || mapserv->Mode == SCALEBAR || mapserv->Mode == REFERENCE || mapserv->Mode == TILE) { /* "image" only modes */
+       /* tile, map, scalebar and reference all need the extent to be set up correctly */
+       if(setExtent(mapserv) != MS_SUCCESS) return MS_FAILURE;
+       if(checkWebScale(mapserv) != MS_SUCCESS) return MS_FAILURE;
+       return msCGIDispatchImageRequest(mapserv);
+    } else if(mapserv->Mode == LEGEND) {
+       return msCGIDispatchLegendRequest(mapserv);
+    } else if(mapserv->Mode == LEGENDICON) {
+       return msCGIDispatchLegendIconRequest(mapserv);
+    } else if(mapserv->Mode >= QUERY) {
+       return msCGIDispatchQueryRequest(mapserv);
+    } else if(mapserv->Mode == COORDINATE) {
+       return msCGIDispatchCoordinateRequest(mapserv);
+    }
+    else {
+       msSetError(MS_WEBERR, "Bug: unsupported mode", "msDispatchRequest");
+       return MS_FAILURE;
     }
 }
 
