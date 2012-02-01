@@ -357,7 +357,7 @@ void _mapcache_service_wms_parse_request(mapcache_context *ctx, mapcache_service
    if( ! strcasecmp(str,"getmap")) {
       isGetMap = 1;
       str = apr_table_get(params,"VERSION");
-      if(!strcmp(str,"1.3.0")) {
+      if(str && !strcmp(str,"1.3.0")) {
          iswms130 = 1;
       }
    } else {
