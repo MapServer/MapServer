@@ -20,12 +20,6 @@ static ngx_command_t  ngx_http_mapcache_commands[] = {
       ngx_null_command
 };
 
-static void
-ngx_http_mapcache_cleanup(void *data)
-{
-   apr_pool_destroy((apr_pool_t*)data);
-}
-
 typedef struct {
    mapcache_context ctx;
    ngx_http_request_t *r;
@@ -195,10 +189,6 @@ ngx_http_mapcache_handler(ngx_http_request_t *r)
     apr_pool_t *main_pool = ctx->pool;
     apr_pool_create(&(ctx->pool),main_pool);
     ngctx->r = r;
-    ngx_pool_cleanup_t     *cln;
-    cln = ngx_pool_cleanup_add(r->pool, 0);
-    cln->handler = ngx_http_mapcache_cleanup;
-    cln->data = ctx->pool;
     mapcache_request *request = NULL;
     mapcache_http_response *http_response;
 
@@ -260,14 +250,6 @@ cleanup:
       apr_pool_destroy(ctx->pool);
       ctx->pool = main_pool;
       return NGX_HTTP_OK;
-
-      /*
-    cv.value.len = sizeof(ngx_empty_gif);
-    cv.value.data = ngx_empty_gif;
-    r->headers_out.last_modified_time = 23349600;
-
-    return ngx_http_send_response(r, NGX_HTTP_OK, &ngx_http_gif_type, &cv);
-    */
 }
 
 
