@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Raster layer fails to be drawn if the window is less than half a pixel (#4172)
+
 - shptree: Improvement to reduce size of .qix files (#4169)
 
 - avoid potential gd fontcache deadlock on fastcgi exit signals(#4093)
