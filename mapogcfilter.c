@@ -2569,7 +2569,10 @@ char *FLTGetBinaryComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
         psFilterNode->psRightNode->pOther && 
         (*(int *)psFilterNode->psRightNode->pOther) == 1)
     {
-        snprintf(szTmp, sizeof(szTmp), "lower('%s') ", psFilterNode->psRightNode->pszValue);
+        char* pszEscapedStr;
+        pszEscapedStr = msLayerEscapeSQLParam(lp, psFilterNode->psRightNode->pszValue);
+        snprintf(szTmp, sizeof(szTmp), "lower('%s') ", pszEscapedStr);
+        msFree(pszEscapedStr);
         strlcat(szBuffer, szTmp, bufferSize);
     }
     else
