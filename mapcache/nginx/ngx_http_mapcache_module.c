@@ -20,13 +20,11 @@ static ngx_command_t  ngx_http_mapcache_commands[] = {
       ngx_null_command
 };
 
-/*
 static void
 ngx_http_mapcache_cleanup(void *data)
 {
    apr_pool_destroy((apr_pool_t*)data);
 }
-*/
 
 typedef struct {
    mapcache_context ctx;
@@ -121,8 +119,13 @@ static void ngx_http_mapcache_write_response(mapcache_context *ctx, ngx_http_req
    if(response->data) {
       r->headers_out.content_length_n = response->data->size;
    }
+   int rc;
    r->headers_out.status = response->code;
-   ngx_http_send_header(r);
+   rc = ngx_http_send_header(r);
+   if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+      return;
+   }
+
    if(response->data) {
       ngx_buf_t    *b;
       ngx_chain_t   out;
@@ -133,27 +136,15 @@ static void ngx_http_mapcache_write_response(mapcache_context *ctx, ngx_http_req
          return;
       }
 
-      /* steal the buffer's data and associate our own cleanup function to it
-      ngx_pool_cleanup_t     *cln;
-      cln = ngx_pool_cleanup_add(r->pool, 0);
-      cln->handler = free;
-      cln->data = response->data->buf ;
-      apr_pool_cleanup_kill(response->data->pool, response->data->buf, (void*)free) ;
-      */
-      b->pos = response->data->buf;
+      b->pos = ngx_pcalloc(r->pool,response->data->size);
+      memcpy(b->pos,response->data->buf,response->data->size);
       b->last = b->pos + response->data->size;
       b->memory = 1;
       b->last_buf = 1;
       b->flush = 1;
-      ngx_blocking(r->connection->fd);
       out.buf = b;
       out.next = NULL;
-      int rc;
-      do {
-         rc = ngx_http_output_filter(r, &out);
-         r->connection->write->ready = 1;
-      } while (rc == NGX_AGAIN && !ngx_quit && !ngx_terminate);
-      ngx_nonblocking(r->connection->fd);
+      ngx_http_output_filter(r, &out);
    }
 
 }
@@ -204,12 +195,10 @@ ngx_http_mapcache_handler(ngx_http_request_t *r)
     apr_pool_t *main_pool = ctx->pool;
     apr_pool_create(&(ctx->pool),main_pool);
     ngctx->r = r;
-    /*
     ngx_pool_cleanup_t     *cln;
     cln = ngx_pool_cleanup_add(r->pool, 0);
     cln->handler = ngx_http_mapcache_cleanup;
     cln->data = ctx->pool;
-    */
     mapcache_request *request = NULL;
     mapcache_http_response *http_response;
 
