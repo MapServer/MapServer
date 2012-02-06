@@ -664,10 +664,14 @@ namespace mapserver
                     m_name = 0;
                 }
                 if( FT_Select_Charmap(m_cur_face, FT_ENCODING_UNICODE) ) {
-                    if( FT_Select_Charmap(m_cur_face, FT_ENCODING_APPLE_ROMAN) ) {
-                        m_char_map = FT_ENCODING_NONE;
+                    if( FT_Select_Charmap(m_cur_face, FT_ENCODING_MS_SYMBOL) ) {
+                        if( FT_Select_Charmap(m_cur_face, FT_ENCODING_APPLE_ROMAN) ) {
+                            m_char_map = FT_ENCODING_NONE;
+                        } else {
+                            m_char_map = FT_ENCODING_APPLE_ROMAN;
+                        }
                     } else {
-                        m_char_map = FT_ENCODING_APPLE_ROMAN;
+                        m_char_map = FT_ENCODING_MS_SYMBOL;
                     }
                 } else {
                     m_char_map = FT_ENCODING_UNICODE;
@@ -909,6 +913,14 @@ namespace mapserver
     //------------------------------------------------------------------------
     bool font_engine_freetype_base::prepare_glyph(unsigned glyph_code)
     {
+        /* FT_ENCODING_MS_SYMBOL hack inspired from GD's gdft.c:  */
+        /* I do not know the significance of the constant 0xf000. */
+        /* It was determined by inspection of the character codes */
+        /* stored in Microsoft font symbol.ttf                    */
+        if (m_cur_face->charmap &&
+            m_cur_face->charmap->encoding == FT_ENCODING_MS_SYMBOL)
+            glyph_code |= 0xf000;
+
         m_glyph_index = FT_Get_Char_Index(m_cur_face, glyph_code);
         m_last_error = FT_Load_Glyph(m_cur_face, 
                                      m_glyph_index, 
