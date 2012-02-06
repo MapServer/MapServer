@@ -248,7 +248,7 @@ OBJ_SUFFIX=lo
 XTRALIBS= @XTRALIBS@
 RUNPATHS= -rpath $(libdir)
 
-LT_LDFLAGS= -release $(MS_VERSION) $(RUNPATHS)
+LT_LDFLAGS= $(RUNPATHS)
 LINK=$(LTLD) $(LD) $(LT_LDFLAGS)
 
 DEFINES = @ALL_ENABLED@ 
@@ -369,7 +369,7 @@ mod_mapserver.la: $(LIBMAP) mod_mapserver.c
 mapscript: mapscriptvars mapserver-config
 
 $(LIBMAP): $(OBJS)
-	$(LINK) $(OBJS) $(SUP_LIBS) $(STATIC_LIBS) -o $(LIBMAP)
+	$(LINK) -release $(MS_VERSION)  $(OBJS) $(SUP_LIBS) $(STATIC_LIBS) -o $(LIBMAP)
 
 shp2pdf: $(LIBMAP) shp2pdf.$(OBJ_SUFFIX)
 	$(LINK) shp2pdf.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shp2pdf
