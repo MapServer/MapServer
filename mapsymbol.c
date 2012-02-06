@@ -68,7 +68,9 @@ void freeImageCache(struct imageCacheObj *ic)
 */
 double msSymbolGetDefaultSize(symbolObj *s) {
   double size;
+#ifdef USE_SVG_CAIRO
   unsigned int svg_width, svg_height;
+#endif
 
  if(s == NULL)
       return 1;
