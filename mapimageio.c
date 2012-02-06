@@ -1241,12 +1241,14 @@ int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb) {
     if(png_sig_cmp(signature,0,8) == 0) {
         ret = readPNG(path,rb);
     }
-#ifdef USE_GIF
     else if (!strncmp((char*)signature,"GIF",3)) {
-
+#ifdef USE_GIF
         ret = readGIF(path,rb);
-    }
+#else
+        msSetError(MS_MISCERR,"pixmap %s seems to be GIF formatted, but this server is compiled without GIF support","readImage()",path);
+        return MS_FAILURE;
 #endif
+    }
     else {
         msSetError(MS_MISCERR,"unsupported pixmap format","readImage()");
         return MS_FAILURE;

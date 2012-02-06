@@ -358,44 +358,45 @@ GIF_LIB=''
 GIF_INC=''
 GIF_ENABLED=''
 
-
-if test -n "$GIF_DIR" -a "GIF_DIR" != "yes" ; then
-    test -f $GIF_DIR/lib/libgif.a -o -f $GIF_DIR/lib/libgif.so -o -f $GIF_DIR/lib/libgif.sl -o -f $GIF_DIR/lib/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib"
-    test -f $GIF_DIR/lib64/libgif.a -o -f $GIF_DIR/lib64/libgif.so -o -f $GIF_DIR/lib64/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib64"
-    test -f $GIF_DIR/libgif.a -o -f $GIF_DIR/libgif.so -o -f $GIF_DIR/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR"
-    test -f $GIF_DIR/include/gif_lib.h && GIF_INCLUDE="$GIF_DIR/include"
-    test -f $GIF_DIR/lib/gif_lib.h && GIF_INCLUDE="$GIF_DIR/lib"
-    test -f $GIF_DIR/gif_lib.h && GIF_INCLUDE="$GIF_DIR"
-    
-    if test -n "$GIF_LIBDIR" ; then   
-      GIF_LIB="-L$GIF_LIBDIR -lgif"
-      AC_MSG_RESULT([        using libgif from $GIF_LIB])
-      AC_ADD_RUNPATH("$GIF_LIBDIR")
-    else
-      AC_MSG_ERROR([cannot find gif lib in $GIF_DIR])
-    fi
-    
-    if test -n "$GIF_INCLUDE" ; then
-      AC_CHECK_HEADER([$GIF_INCLUDE/gif_lib.h],GIF_INC=-I$GIF_INCLUDE,
-        [AC_MSG_ERROR([cannot find gif headers])])
-      ALL_INC="$GIF_INC $ALL_INC"
-    else
-        AC_MSG_ERROR([cannot find gif headers in $GIF_DIR])
-    fi
-    GIF_ENABLED="-DUSE_GIF"
-else
-
-  dnl check for gif in system locations
-
-  AC_CHECK_LIB(gif, DGifOpenFileHandle, GIF_LIB="-lgif",,)
-  AC_CHECK_HEADER([gif_lib.h],,
-        [AC_MSG_ERROR([cannot find gif headers in system path])])
-  if test -n "$GIF_LIB" ; then
-    AC_MSG_RESULT([        using libgif from system libs.])
-  else
-    AC_MSG_ERROR([GIF (libgif) library cannot be found. install or reconfigure with --with-gif=DIR])
-  fi
-  GIF_ENABLED="-DUSE_GIF"
+if test "$withval" != "no" ; then
+   if test -n "$GIF_DIR" -a "GIF_DIR" != "yes" ; then
+       test -f $GIF_DIR/lib/libgif.a -o -f $GIF_DIR/lib/libgif.so -o -f $GIF_DIR/lib/libgif.sl -o -f $GIF_DIR/lib/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib"
+       test -f $GIF_DIR/lib64/libgif.a -o -f $GIF_DIR/lib64/libgif.so -o -f $GIF_DIR/lib64/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib64"
+       test -f $GIF_DIR/libgif.a -o -f $GIF_DIR/libgif.so -o -f $GIF_DIR/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR"
+       test -f $GIF_DIR/include/gif_lib.h && GIF_INCLUDE="$GIF_DIR/include"
+       test -f $GIF_DIR/lib/gif_lib.h && GIF_INCLUDE="$GIF_DIR/lib"
+       test -f $GIF_DIR/gif_lib.h && GIF_INCLUDE="$GIF_DIR"
+       
+       if test -n "$GIF_LIBDIR" ; then   
+         GIF_LIB="-L$GIF_LIBDIR -lgif"
+         AC_MSG_RESULT([        using libgif from $GIF_LIB])
+         AC_ADD_RUNPATH("$GIF_LIBDIR")
+       else
+         AC_MSG_ERROR([cannot find gif lib in $GIF_DIR. To disable gif support run with --without-gif.])
+       fi
+       
+       if test -n "$GIF_INCLUDE" ; then
+         AC_CHECK_HEADER([$GIF_INCLUDE/gif_lib.h],GIF_INC=-I$GIF_INCLUDE,
+           [AC_MSG_ERROR([cannot find gif headers. To disable gif support run with --without-gif.])])
+         ALL_INC="$GIF_INC $ALL_INC"
+       else
+           AC_MSG_ERROR([cannot find gif headers in $GIF_DIR. To disable gif support run with --without-gif.])
+       fi
+       GIF_ENABLED="-DUSE_GIF"
+   else
+   
+     dnl check for gif in system locations
+   
+     AC_CHECK_LIB(gif, DGifOpenFileHandle, GIF_LIB="-lgif",,)
+     AC_CHECK_HEADER([gif_lib.h],,
+           [AC_MSG_ERROR([cannot find gif headers in system path. To disable gif support run with --without-gif.])])
+     if test -n "$GIF_LIB" ; then
+       AC_MSG_RESULT([        using libgif from system libs.])
+     else
+       AC_MSG_ERROR([GIF (libgif) library cannot be found. install or reconfigure with --with-gif=DIR].  To disable gif support run with --without-gif.)
+     fi
+     GIF_ENABLED="-DUSE_GIF"
+   fi
 fi
 
 ALL_ENABLED="$GIF_ENABLED $ALL_ENABLED"

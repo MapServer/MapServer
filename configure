@@ -16503,18 +16503,18 @@ GIF_LIB=''
 GIF_INC=''
 GIF_ENABLED=''
 
+if test "$withval" != "no" ; then
+   if test -n "$GIF_DIR" -a "GIF_DIR" != "yes" ; then
+       test -f $GIF_DIR/lib/libgif.a -o -f $GIF_DIR/lib/libgif.so -o -f $GIF_DIR/lib/libgif.sl -o -f $GIF_DIR/lib/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib"
+       test -f $GIF_DIR/lib64/libgif.a -o -f $GIF_DIR/lib64/libgif.so -o -f $GIF_DIR/lib64/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib64"
+       test -f $GIF_DIR/libgif.a -o -f $GIF_DIR/libgif.so -o -f $GIF_DIR/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR"
+       test -f $GIF_DIR/include/gif_lib.h && GIF_INCLUDE="$GIF_DIR/include"
+       test -f $GIF_DIR/lib/gif_lib.h && GIF_INCLUDE="$GIF_DIR/lib"
+       test -f $GIF_DIR/gif_lib.h && GIF_INCLUDE="$GIF_DIR"
 
-if test -n "$GIF_DIR" -a "GIF_DIR" != "yes" ; then
-    test -f $GIF_DIR/lib/libgif.a -o -f $GIF_DIR/lib/libgif.so -o -f $GIF_DIR/lib/libgif.sl -o -f $GIF_DIR/lib/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib"
-    test -f $GIF_DIR/lib64/libgif.a -o -f $GIF_DIR/lib64/libgif.so -o -f $GIF_DIR/lib64/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib64"
-    test -f $GIF_DIR/libgif.a -o -f $GIF_DIR/libgif.so -o -f $GIF_DIR/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR"
-    test -f $GIF_DIR/include/gif_lib.h && GIF_INCLUDE="$GIF_DIR/include"
-    test -f $GIF_DIR/lib/gif_lib.h && GIF_INCLUDE="$GIF_DIR/lib"
-    test -f $GIF_DIR/gif_lib.h && GIF_INCLUDE="$GIF_DIR"
-
-    if test -n "$GIF_LIBDIR" ; then
-      GIF_LIB="-L$GIF_LIBDIR -lgif"
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgif from $GIF_LIB" >&5
+       if test -n "$GIF_LIBDIR" ; then
+         GIF_LIB="-L$GIF_LIBDIR -lgif"
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgif from $GIF_LIB" >&5
 $as_echo "        using libgif from $GIF_LIB" >&6; }
 
   if test ""$GIF_LIBDIR"" != "/usr/lib"; then
@@ -16538,29 +16538,29 @@ $as_echo "        using libgif from $GIF_LIB" >&6; }
 
   fi
 
-    else
-      as_fn_error $? "cannot find gif lib in $GIF_DIR" "$LINENO" 5
-    fi
+       else
+         as_fn_error $? "cannot find gif lib in $GIF_DIR. To disable gif support run with --without-gif." "$LINENO" 5
+       fi
 
-    if test -n "$GIF_INCLUDE" ; then
-      as_ac_Header=`$as_echo "ac_cv_header_$GIF_INCLUDE/gif_lib.h" | $as_tr_sh`
+       if test -n "$GIF_INCLUDE" ; then
+         as_ac_Header=`$as_echo "ac_cv_header_$GIF_INCLUDE/gif_lib.h" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$GIF_INCLUDE/gif_lib.h" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   GIF_INC=-I$GIF_INCLUDE
 else
-  as_fn_error $? "cannot find gif headers" "$LINENO" 5
+  as_fn_error $? "cannot find gif headers. To disable gif support run with --without-gif." "$LINENO" 5
 fi
 
 
-      ALL_INC="$GIF_INC $ALL_INC"
-    else
-        as_fn_error $? "cannot find gif headers in $GIF_DIR" "$LINENO" 5
-    fi
-    GIF_ENABLED="-DUSE_GIF"
-else
+         ALL_INC="$GIF_INC $ALL_INC"
+       else
+           as_fn_error $? "cannot find gif headers in $GIF_DIR. To disable gif support run with --without-gif." "$LINENO" 5
+       fi
+       GIF_ENABLED="-DUSE_GIF"
+   else
 
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DGifOpenFileHandle in -lgif" >&5
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DGifOpenFileHandle in -lgif" >&5
 $as_echo_n "checking for DGifOpenFileHandle in -lgif... " >&6; }
 if ${ac_cv_lib_gif_DGifOpenFileHandle+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16600,21 +16600,22 @@ if test "x$ac_cv_lib_gif_DGifOpenFileHandle" = xyes; then :
   GIF_LIB="-lgif"
 fi
 
-  ac_fn_c_check_header_mongrel "$LINENO" "gif_lib.h" "ac_cv_header_gif_lib_h" "$ac_includes_default"
+     ac_fn_c_check_header_mongrel "$LINENO" "gif_lib.h" "ac_cv_header_gif_lib_h" "$ac_includes_default"
 if test "x$ac_cv_header_gif_lib_h" = xyes; then :
 
 else
-  as_fn_error $? "cannot find gif headers in system path" "$LINENO" 5
+  as_fn_error $? "cannot find gif headers in system path. To disable gif support run with --without-gif." "$LINENO" 5
 fi
 
 
-  if test -n "$GIF_LIB" ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgif from system libs." >&5
+     if test -n "$GIF_LIB" ; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgif from system libs." >&5
 $as_echo "        using libgif from system libs." >&6; }
-  else
-    as_fn_error $? "GIF (libgif) library cannot be found. install or reconfigure with --with-gif=DIR" "$LINENO" 5
-  fi
-  GIF_ENABLED="-DUSE_GIF"
+     else
+       as_fn_error $? "GIF (libgif) library cannot be found. install or reconfigure with --with-gif=DIR.  To disable gif support run with --without-gif." "$LINENO" 5
+     fi
+     GIF_ENABLED="-DUSE_GIF"
+   fi
 fi
 
 ALL_ENABLED="$GIF_ENABLED $ALL_ENABLED"
