@@ -25120,12 +25120,10 @@ $as_echo "  freetype support:          ${FT_ENABLED}" >&6; }
 $as_echo "  iconv support:             ${ICONV_ENABLED}" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result:   AGG support:               ${AGG_ENABLED}" >&5
 $as_echo "  AGG support:               ${AGG_ENABLED}" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result:   SVG Symbol support:        ${AGG_SVG_SYMBOLS_ENABLED}" >&5
-$as_echo "  SVG Symbol support:        ${AGG_SVG_SYMBOLS_ENABLED}" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result:   Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}" >&5
 $as_echo "  Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result:   Cairo SVG parser support:  ${LIBSVG_CAIRO_ENABLED}" >&5
-$as_echo "  Cairo SVG parser support:  ${LIBSVG_CAIRO_ENABLED}" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result:   Cairo SVG symbol support:  ${LIBSVG_CAIRO_ENABLED}" >&5
+$as_echo "  Cairo SVG symbol support:  ${LIBSVG_CAIRO_ENABLED}" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result:   KML support:               ${KML_ENABLED}" >&5
 $as_echo "  KML support:               ${KML_ENABLED}" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5

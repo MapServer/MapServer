@@ -781,11 +781,6 @@ renderers\agg\src\agg_svg_parser.obj renderers\agg\src\agg_svg_path_renderer.obj
 renderers\agg\src\agg_svg_path_tokenizer.obj renderers\agg\src\clipper.obj
 !ENDIF
 
-!IFDEF AGG_SVG_SYMBOL
-AGG_LIB= -lexpat
-AGG_OBJ=$(AGG_OBJ) renderers/agg/src/agg_svg_parser.obj renderers/agg/src/agg_svg_path_renderer.obj renderers/agg/src/agg_svg_path_tokenizer.obj
-!ENDIF
-
 # Setup PDF includes and libs
 !IFDEF PDF
 PDF_LIB=$(PDF_DIR)/libs/pdflib/Release_DLL/pdflib.lib
@@ -880,7 +875,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) \
           $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
-          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(AGG_SVG_SYMBOLS) $(KML) $(GIF) $(CURL)
+          $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(KML) $(GIF) $(CURL)
 
 !IFDEF WIN64
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
