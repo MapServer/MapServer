@@ -150,13 +150,10 @@ void msFreeCharArray(char **array, int num_items)
 {
   int i;
 
-  if((num_items < 0) || !array) return;
-
   for(i=0;i<num_items;i++)
     msFree(array[i]);
+  
   msFree(array);
-
-  return;
 }
 
 /*
