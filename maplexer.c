@@ -4130,6 +4130,8 @@ YY_RULE_SETUP
                                                   ++msyystring_size;
                                                   *msyystring_buffer_ptr++ = *msyytext;
                                                   if (strlen(msyytext)==2) {
+                                                      MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
+                                                                              msyystring_buffer_size, msyystring_buffer_ptr);
                                                      ++msyystring_size;
                                                      *msyystring_buffer_ptr++ = msyytext[1];
                                                   }
@@ -4138,7 +4140,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 311:
 YY_RULE_SETUP
-#line 613 "maplexer.l"
+#line 615 "maplexer.l"
 { 
                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
                                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4153,7 +4155,7 @@ YY_RULE_SETUP
 case 312:
 /* rule 312 can match eol */
 YY_RULE_SETUP
-#line 624 "maplexer.l"
+#line 626 "maplexer.l"
 {
                                                  char *yptr = msyytext;
                                                  while ( *yptr ) { 
@@ -4167,7 +4169,7 @@ YY_RULE_SETUP
 case 313:
 /* rule 313 can match eol */
 YY_RULE_SETUP
-#line 634 "maplexer.l"
+#line 636 "maplexer.l"
 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
@@ -4195,7 +4197,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 314:
 YY_RULE_SETUP
-#line 659 "maplexer.l"
+#line 661 "maplexer.l"
 {
                                                  msyystring_return_state = MS_TOKEN_LITERAL_STRING;
                                                  msyystring_begin = msyytext[0]; 
@@ -4206,7 +4208,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 315:
 YY_RULE_SETUP
-#line 667 "maplexer.l"
+#line 669 "maplexer.l"
 { 
                                                     MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                                                                             msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4217,11 +4219,11 @@ YY_RULE_SETUP
 case 316:
 /* rule 316 can match eol */
 YY_RULE_SETUP
-#line 674 "maplexer.l"
+#line 676 "maplexer.l"
 { msyylineno++; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 676 "maplexer.l"
+#line 678 "maplexer.l"
 {
                                                   if( --include_stack_ptr < 0 )
                                                     return(EOF); /* end of main file */
@@ -4236,14 +4238,14 @@ case YY_STATE_EOF(INITIAL):
 case 317:
 /* rule 317 can match eol */
 YY_RULE_SETUP
-#line 687 "maplexer.l"
+#line 689 "maplexer.l"
 {
   return(0); 
 }
 	YY_BREAK
 case 318:
 YY_RULE_SETUP
-#line 691 "maplexer.l"
+#line 693 "maplexer.l"
 { 
                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                                                                           msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4253,15 +4255,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case 319:
 YY_RULE_SETUP
-#line 697 "maplexer.l"
+#line 699 "maplexer.l"
 { return(msyytext[0]); }
 	YY_BREAK
 case 320:
 YY_RULE_SETUP
-#line 698 "maplexer.l"
+#line 700 "maplexer.l"
 ECHO;
 	YY_BREAK
-#line 4265 "maplexer.c"
+#line 4267 "maplexer.c"
 case YY_STATE_EOF(URL_VARIABLE):
 case YY_STATE_EOF(URL_STRING):
 case YY_STATE_EOF(EXPRESSION_STRING):
@@ -5263,7 +5265,7 @@ void msyyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 698 "maplexer.l"
+#line 700 "maplexer.l"
 
 
 

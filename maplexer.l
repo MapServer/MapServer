@@ -604,6 +604,8 @@ char path[MS_MAXPATHLEN];
                                                   ++msyystring_size;
                                                   *msyystring_buffer_ptr++ = *msyytext;
                                                   if (strlen(msyytext)==2) {
+                                                      MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
+                                                                              msyystring_buffer_size, msyystring_buffer_ptr);
                                                      ++msyystring_size;
                                                      *msyystring_buffer_ptr++ = msyytext[1];
                                                   }
