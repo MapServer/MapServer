@@ -716,10 +716,9 @@ AC_DEFUN([TIFF_CHECK],[
         test -f $TIFF_DIR/tiffio.h && TIFF_INCLUDE="$TIFF_DIR"
         
         if test -n "$TIFF_LIBDIR" ; then   
-          TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
-          AC_CHECK_LIB(tiff, TIFFReadScanline,,
+                    AC_CHECK_LIB(tiff, TIFFReadScanline,[TIFF_LIB=[-L$TIFF_LIBDIR -ltiff]],
                        AC_MSG_ERROR([failed to link against libtiff]),
-                       "$TIFF_LIB")
+                       [-L$TIFF_LIBDIR -ltiff])
           AC_MSG_RESULT([        using libtiff from $TIFF_LIB])
         else
           AC_MSG_WARN([cannot find tiff lib in $TIFF_DIR])

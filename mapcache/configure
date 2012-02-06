@@ -13003,14 +13003,13 @@ $as_echo "$as_me: checking where TIFF is installed..." >&6;}
         test -f $TIFF_DIR/tiffio.h && TIFF_INCLUDE="$TIFF_DIR"
 
         if test -n "$TIFF_LIBDIR" ; then
-          TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for TIFFReadScanline in -ltiff" >&5
+                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for TIFFReadScanline in -ltiff" >&5
 $as_echo_n "checking for TIFFReadScanline in -ltiff... " >&6; }
 if ${ac_cv_lib_tiff_TIFFReadScanline+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-ltiff "$TIFF_LIB" $LIBS"
+LIBS="-ltiff -L$TIFF_LIBDIR -ltiff $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13041,12 +13040,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tiff_TIFFReadScanline" >&5
 $as_echo "$ac_cv_lib_tiff_TIFFReadScanline" >&6; }
 if test "x$ac_cv_lib_tiff_TIFFReadScanline" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBTIFF 1
-_ACEOF
-
-  LIBS="-ltiff $LIBS"
-
+  TIFF_LIB=-L$TIFF_LIBDIR -ltiff
 else
   as_fn_error $? "failed to link against libtiff" "$LINENO" 5
 fi
