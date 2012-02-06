@@ -52,7 +52,7 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
          return (MS_FAILURE);
       }
 
-      if(MS_FAILURE == msFontsetLookupFonts(l->font,&s->numfonts,fontset,&s->fonts)) {
+      if(MS_FAILURE == msFontsetLookupFonts(l->font,&s->numfonts,fontset,s->fonts)) {
          return MS_FAILURE;
       }
    }
@@ -188,7 +188,9 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
    if(tile==NULL) {
       imageObj *tileimg;
       double p_x,p_y;
+#ifdef USE_SVG_CAIRO
       double scale, rotation;
+#endif
       tileimg = msImageCreate(width,height,img->format,NULL,NULL,img->resolution, img->resolution, NULL);
       if(!seamlessmode) {
          p_x = width/2.0;
