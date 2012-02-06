@@ -210,6 +210,7 @@ char *msAlignText(mapObj *map, imageObj *image, labelObj *label, char *text) {
     } else {
         spacewidth = label->space_size_10 * (double)label->size/10.0;
     }
+    spacewidth = MS_MAX(1,spacewidth);
    
     
     /*length in pixels of each line*/
