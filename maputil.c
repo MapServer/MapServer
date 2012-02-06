@@ -2315,3 +2315,47 @@ int msIntegerInArray(const int value, int *array, int numelements)
     }
     return MS_FALSE;
 }
+
+
+/************************************************************************
+ *                            msMapSetProjections                       *
+ *                                                                      * 
+ *   Ensure that all the layers in the map file have a projection       *
+ *   by copying the map-level projection to all layers than have no     *
+ *   projection.                                                        *
+ ************************************************************************/
+
+int msMapSetLayerProjections(mapObj* map) {
+
+  char *mapProjStr = NULL;
+  int i;
+    
+  if (map->projection.numargs <= 0) {
+    msSetError(MS_WMSERR, "Cannot set new SRS on a map that doesn't "
+                          "have any projection set. Please make sure your mapfile "
+                          "has a PROJECTION defined at the top level.", 
+                          "msTileSetProjectionst()");
+    return(MS_FAILURE);
+  }
+
+  for(i=0; i<map->numlayers; i++) {
+    /* This layer is turned on and needs a projection? */
+    if (GET_LAYER(map, i)->projection.numargs <= 0 &&
+        GET_LAYER(map, i)->status != MS_OFF &&
+        GET_LAYER(map, i)->transform == MS_TRUE) {
+   
+      /* Fetch main map projection string only now that we need it */
+      if (mapProjStr == NULL)
+        mapProjStr = msGetProjectionString(&(map->projection));
+      
+      /* Set the projection to the map file projection */  
+      if (msLoadProjectionString(&(GET_LAYER(map, i)->projection), mapProjStr) != 0) {
+        msSetError(MS_CGIERR, "Unable to set projection on layer.", "msTileSetProjectionst()");
+        return(MS_FAILURE);
+      }
+      GET_LAYER(map, i)->project = MS_TRUE;
+    }
+  }
+  msFree(mapProjStr);
+  return(MS_SUCCESS);
+}

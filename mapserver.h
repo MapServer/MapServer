@@ -2293,6 +2293,8 @@ MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overl
 MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
 MS_DLL_EXPORT unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format);
 MS_DLL_EXPORT shapeObj* msOffsetPolyline(shapeObj* shape, double offsetx, double offsety);
+MS_DLL_EXPORT int msMapSetLayerProjections(mapObj* map);
+
 /* Functions to chnage the drawing order of the layers. */
 /* Defined in mapobject.c */
 MS_DLL_EXPORT int msMoveLayerUp(mapObj *map, int nLayerIndex);
