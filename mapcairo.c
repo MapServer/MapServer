@@ -147,7 +147,7 @@ int freeImageCairo(imageObj *img) {
 }
 
 
-faceCacheObj *getFontFace(cairoCacheData *cache, char *font) {
+faceCacheObj *getFontFace(cairoCacheData *cache, const char *font) {
     faceCacheObj *newface = NULL;
     faceCacheObj *cur=cache->facecache;
     while(cur) {
