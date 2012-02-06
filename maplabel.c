@@ -700,7 +700,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 }
 
 int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances) {
-   const char *lookedUpFonts[MS_MAX_LABEL_FONTS];
+   char *lookedUpFonts[MS_MAX_LABEL_FONTS];
    int numfonts;
    if(MS_FAILURE == msFontsetLookupFonts(fontstring, &numfonts, fontset, lookedUpFonts))
       return MS_FAILURE;
@@ -813,7 +813,7 @@ char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey) {
 	return font;
 }
 
-int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, const char **lookedUpFonts) {
+int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, char **lookedUpFonts) {
 	char *start,*ptr;
    *numfonts = 0;
    start = ptr = fontstring;

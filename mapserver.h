@@ -1988,7 +1988,7 @@ MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabe
 MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey);
-MS_DLL_EXPORT int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, const char **lookedUpFonts);
+MS_DLL_EXPORT int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, char **lookedUpFonts);
 
 MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj *label, char *text);
 MS_DLL_EXPORT int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances);
@@ -2613,8 +2613,8 @@ struct tileCacheObj {
  * labelStyleObj
  */
 typedef struct {
-    /* full path to truetype font file */
-    const char* fonts[MS_MAX_LABEL_FONTS];
+    /* full paths to truetype font file */
+    char* fonts[MS_MAX_LABEL_FONTS];
     int numfonts;
     double size;
     double rotation;
