@@ -887,7 +887,7 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
          * least its first, second and last point
          */
         for(i=0; i<shape->numlines; i++) { /* for each part */
-            if(shape->line[i].numpoints<3) {
+            if(shape->line[i].numpoints<4) {
                 shape->line[i].numpoints=0;
                 continue; /*skip degenerate lines*/
             }
@@ -897,8 +897,8 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
             point[0].y = MS_MAP2IMAGE_Y_IC_DBL(point[0].y, extent.maxy, inv_cs);
             point[1].x = MS_MAP2IMAGE_X_IC_DBL(point[1].x, extent.minx, inv_cs);
             point[1].y = MS_MAP2IMAGE_Y_IC_DBL(point[1].y, extent.maxy, inv_cs);         
-            beforelast=shape->line[i].numpoints-1;
-            for(j=2,k=2; j < beforelast; j++ ) { /*loop from second point to first-before-last point*/
+            beforelast=shape->line[i].numpoints-2;
+            for(j=2,k=2; j < beforelast; j++ ) { /*loop from second point to second-before-last point*/
                 point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
                 point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
                 dx=(point[k].x-point[k-1].x);
@@ -906,10 +906,13 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
                 if(dx*dx+dy*dy>1)
                     k++;
             }
-            /*always keep last point*/
+            /*always keep last two points (the last point is the repetition of the
+             * first one */
             point[k].x = MS_MAP2IMAGE_X_IC_DBL(point[j].x, extent.minx, inv_cs);
             point[k].y = MS_MAP2IMAGE_Y_IC_DBL(point[j].y, extent.maxy, inv_cs);
-            shape->line[i].numpoints=k+1;
+            point[k+1].x = MS_MAP2IMAGE_X_IC_DBL(point[j+1].x, extent.minx, inv_cs);
+            point[k+1].y = MS_MAP2IMAGE_Y_IC_DBL(point[j+1].y, extent.maxy, inv_cs);
+            shape->line[i].numpoints = k+2;
             ok = 1;
         }
     }
