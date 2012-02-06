@@ -1423,22 +1423,24 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot=DIR Search for dependent libraries within DIR
                         (or the compiler's sysroot if not specified).
-  --with-apxs=/path/to/apxs     Apache 2 apxs tool location
-  --with-fastcgi=DIR      Specify where FASTCGI is installed
+  --with-apxs[=PATH]      Apache 2 apxs tool location
+  --with-fastcgi[=DIR]    Specify where FASTCGI is installed
   --with-apr-config       path to apr-config program
   --with-apu-config       path to apu-config program
   --with-sqlite           path to sqlite-config program
-  --with-pkg-config=PATH  path to pkg-config)
-  --with-pixman=ARG     Include Pixman Support (ARG=yes/no/path to
+  --with-pkg-config[=PATH]
+                          path to pkg-config)
+  --with-pixman[=ARG]     Include Pixman Support (ARG=yes/no/path to
                           pixman.pc)
-  --with-png=DIR          Specify where PNG is installed
-  --with-jpeg=DIR         Specify where JPEG is installed
-  --with-tiff=DIR         Specify where TIFF is installed
-  --with-geotiff=ARG    Libgeotiff library to use (ARG=yes or path)
+  --with-png[=DIR]        Specify where PNG is installed
+  --with-jpeg[=DIR]       Specify where JPEG is installed
+  --with-tiff[=DIR]       Specify where TIFF is installed
+  --with-geotiff[=ARG]    Libgeotiff library to use (ARG=yes or path)
   --with-pcre[=prefix]    use pcre instead of posix regular expressions
   --with-gdal             path to gdal-config program
   --with-geos             path to geos-config program
-  --enable-mapserver      Enable mapserver sources (experimental)
+  --with-mapserver[=/path/to/mapserver-prefix]
+                          Enable mapserver sources (experimental)
   --with-curl-config      path to curl-config program
 
 Some influential environment variables:

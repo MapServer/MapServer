@@ -31,8 +31,8 @@ AC_DEFUN([APXS_CHECK],[
     AC_SUBST(APXS)
     
     AC_ARG_WITH(
-        apxs,
-        [  --with-apxs[=/path/to/apxs]     Apache 2 apxs tool location],
+        apxs,  
+    AC_HELP_STRING([--with-apxs@<:@=PATH@:>@],[Apache 2 apxs tool location]),
         ,
         [with_apxs="yes"]
     )
@@ -124,7 +124,7 @@ AC_DEFUN([CURL_CHECK],[
 AC_DEFUN([PKGCONFIG_CHECK],[
     AC_SUBST(PKGCONFIG)
     AC_ARG_WITH(pkg-config,
-    AC_HELP_STRING([--with-pkg-config[=PATH]],[path to pkg-config)]),
+    AC_HELP_STRING([--with-pkg-config@<:@=PATH@:>@],[path to pkg-config)]),
     ,
     [with_pkg_config=yes])
     if test "$with_pkg_config" = "no"; then
@@ -151,7 +151,7 @@ AC_DEFUN([PKGCONFIG_CHECK],[
 
 AC_DEFUN([CAIRO_CHECK],[
     AC_ARG_WITH(cairo,
-        AC_HELP_STRING([--with-cairo[[=ARG]]],[Include Cairo Support (ARG=yes/no/path to cairo.pc)]),
+        AC_HELP_STRING([--with-cairo@<:@=ARG@:>@],[Include Cairo Support (ARG=yes/no/path to cairo.pc)]),
         ,
         [with_cairo=yes])
     
@@ -194,7 +194,7 @@ AC_DEFUN([CAIRO_CHECK],[
 
 AC_DEFUN([PIXMAN_CHECK],[
     AC_ARG_WITH(pixman,
-        AC_HELP_STRING([--with-pixman[[=ARG]]],[Include Pixman Support (ARG=yes/no/path to pixman.pc)]),
+        AC_HELP_STRING([--with-pixman@<:@=ARG@:>@],[Include Pixman Support (ARG=yes/no/path to pixman.pc)]),
         ,
         [with_pixman=yes])
     
@@ -467,7 +467,7 @@ AC_DEFUN([PCRE_CHECK],[
 
 AC_DEFUN([MAPSERVER_CHECK],[
     AC_ARG_WITH(mapserver,
-        AC_HELP_STRING([--enable-mapserver],[Enable mapserver sources (experimental)]),
+        AC_HELP_STRING([--with-mapserver@<:@=/path/to/mapserver-prefix@:>@ ],[Enable mapserver sources (experimental)]),
         ,
         [enable_mapserver=no]
     )
@@ -588,7 +588,7 @@ AC_DEFUN([GEOS_CHECK],[
 
 AC_DEFUN([FASTCGI_CHECK],[
     AC_ARG_WITH(fastcgi,
-        AC_HELP_STRING([--with-fastcgi=DIR],[Specify where FASTCGI is installed]),
+        AC_HELP_STRING([--with-fastcgi@<:@=DIR@:>@],[Specify where FASTCGI is installed]),
         ,[with_fastcgi=no])
     
     AC_MSG_CHECKING(whether to enable FASTCGI)
@@ -640,7 +640,7 @@ AC_DEFUN([FASTCGI_CHECK],[
 GEOTIFF_ENABLED=""
 AC_DEFUN([GEOTIFF_CHECK],[
 AC_ARG_WITH(geotiff,
-            [  --with-geotiff=ARG    Libgeotiff library to use (ARG=yes or path)],
+        AC_HELP_STRING([--with-geotiff@<:@=ARG@:>@],[Libgeotiff library to use (ARG=yes or path)]),
             ,[with_geotiff=no])
 
 if test "$with_geotiff" = "yes" -o "$with_geotiff" = "" ; then
@@ -697,7 +697,7 @@ AC_SUBST(GEOTIFF_LIB,$GEOTIFF_LIB)
 
 AC_DEFUN([TIFF_CHECK],[
     AC_ARG_WITH(tiff,
-        AC_HELP_STRING([--with-tiff=DIR],[Specify where TIFF is installed]),
+        AC_HELP_STRING([--with-tiff@<:@=DIR@:>@],[Specify where TIFF is installed]),
         TIFF_DIR=$withval,TIFF_DIR='')
     
     AC_EXPAND_PATH($TIFF_DIR, TIFF_DIR)
@@ -778,7 +778,7 @@ AC_DEFUN([TIFF_CHECK],[
 
 AC_DEFUN([PNG_CHECK],[
     AC_ARG_WITH(png,
-        AC_HELP_STRING([--with-png=DIR],[Specify where PNG is installed]),
+        AC_HELP_STRING([--with-png@<:@=DIR@:>@],[Specify where PNG is installed]),
         PNG_DIR=$withval,PNG_DIR='')
     
     AC_EXPAND_PATH($PNG_DIR, PNG_DIR)
@@ -901,7 +901,7 @@ AC_DEFUN([SQLITE_CHECK],[
 
 AC_DEFUN([JPEG_CHECK],[
     AC_ARG_WITH(jpeg,
-        AC_HELP_STRING([--with-jpeg=DIR],[Specify where JPEG is installed]),
+        AC_HELP_STRING([--with-jpeg@<:@=DIR@:>@],[Specify where JPEG is installed]),
         JPEG_DIR=$withval,JPEG_DIR='')
     
     AC_EXPAND_PATH($JPEG_DIR, JPEG_DIR)
