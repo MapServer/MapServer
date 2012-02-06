@@ -32,6 +32,16 @@
 #include "mapserv.h"
 #include "maptime.h"
 
+/*
+** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
+*/
+static int numModes = 21;
+static char *modeStrings[21] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
+                                "QUERY","NQUERY","ITEMQUERY","ITEMNQUERY",
+				"FEATUREQUERY","FEATURENQUERY","ITEMFEATUREQUERY","ITEMFEATURENQUERY",
+				"INDEXQUERY","TILE","OWS", "WFS"};
+
+
 
 int msCGIWriteLog(mapservObj *mapserv, int show_error)
 {
