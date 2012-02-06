@@ -1782,7 +1782,10 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect) {
 
     /* Something went wrong. */
     if (!pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
-        msSetError(MS_QUERYERR, "Error (%s) executing query: %s", "msPostGISLayerWhichShapes()", PQerrorMessage(layerinfo->pgconn), strSQL);
+        if ( layer->debug ) {
+	    msDebug("Error (%s) executing query: %s", "msPostGISLayerWhichShapes()\n", PQerrorMessage(layerinfo->pgconn), strSQL);
+	}
+        msSetError(MS_QUERYERR, "Error executing query: %s ", "msPostGISLayerWhichShapes()", PQerrorMessage(layerinfo->pgconn));
         free(strSQL);
         if (pgresult) {
             PQclear(pgresult);
@@ -1983,7 +1986,10 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long reco
 
     /* Something went wrong. */
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
-        msSetError(MS_QUERYERR, "Error (%s) executing SQL: %s", "msPostGISLayerGetShape()", PQerrorMessage(layerinfo->pgconn), strSQL );
+        if ( layer->debug ) {
+	    msDebug("Error (%s) executing SQL: %s", "msPostGISLayerGetShape()\n", PQerrorMessage(layerinfo->pgconn), strSQL );
+        }            
+        msSetError(MS_QUERYERR, "Error executing SQL: %s", "msPostGISLayerGetShape()", PQerrorMessage(layerinfo->pgconn));
 
         if (pgresult) {
             PQclear(pgresult);
@@ -2076,7 +2082,10 @@ int msPostGISLayerGetItems(layerObj *layer) {
     pgresult = PQexecParams(layerinfo->pgconn, sql,0, NULL, NULL, NULL, NULL, 0);
     
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
-        msSetError(MS_QUERYERR, "Error (%s) executing SQL: %s", "msPostGISLayerGetItems()", PQerrorMessage(layerinfo->pgconn), sql);
+        if ( layer->debug ) {
+	  msDebug("Error (%s) executing SQL: %s", "msPostGISLayerGetItems()\n", PQerrorMessage(layerinfo->pgconn), sql);
+	}
+        msSetError(MS_QUERYERR, "Error executing SQL: %s", "msPostGISLayerGetItems()", PQerrorMessage(layerinfo->pgconn));
         if (pgresult) {
             PQclear(pgresult);
         }
