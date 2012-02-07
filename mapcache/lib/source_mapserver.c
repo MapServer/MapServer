@@ -43,8 +43,9 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
    mapcache_source_mapserver *mapserver = (mapcache_source_mapserver*)map->tileset->source;
    static mapObj *origmap = NULL;
    if(!origmap) {
-   msSetup();
+      msSetup();
       origmap = msLoadMap(mapserver->mapfile,NULL);
+      msMapSetLayerProjections(origmap);
    }
    if(!origmap) {
       msWriteError(stderr);
@@ -53,42 +54,23 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
    }
    mapObj *omap = msNewMapObj();
    msCopyMap(omap,origmap);
-
-  
-  /* copy the original mapfile's projection to any layer that doesn't already 
-  ** have a projection. This will prevent problems when users forget to 
-  ** explicitly set a projection on all layers in a WMS mapfile.
-  */
-   projectionObj newProj;
-   msInitProjection(&newProj);
-   msLoadProjectionString(&newProj, map->grid_link->grid->srs);
-   
-   if(msProjectionsDiffer(&(omap->projection), &newProj)) {
-      char *original_srs = NULL;
-      int i;
-      for(i=0; i<omap->numlayers; i++)
-      {
-         if (GET_LAYER(omap, i)->projection.numargs <= 0 &&
-               GET_LAYER(omap, i)->status != MS_OFF &&
-               GET_LAYER(omap, i)->transform == MS_TRUE)
-         {
-            /* This layer is turned on and needs a projection */
-
-            /* Fetch main map projection string only now that we need it */
-            if (original_srs == NULL)
-               original_srs = msGetProjectionString(&(omap->projection));
-
-            msLoadProjectionString(&(GET_LAYER(omap, i)->projection),original_srs);
-            GET_LAYER(omap, i)->project = MS_TRUE;
-         }
-      }
-      msFree(original_srs);
-      msLoadProjectionString(&(omap->projection), map->grid_link->grid->srs);
-      omap->units = GetMapserverUnitUsingProj(&(omap->projection));
-
+   if (msLoadProjectionString(&(omap->projection), map->grid_link->grid->srs) != 0) {
+      ctx->set_error(ctx,500, "Unable to set projection on mapObj.");
+      return;
+   }
+   switch(map->grid_link->grid->unit) {
+      case MAPCACHE_UNIT_DEGREES:
+         omap->units = MS_DD;
+         break;
+      case MAPCACHE_UNIT_FEET:
+         omap->units = MS_FEET;
+         break;
+      case MAPCACHE_UNIT_METERS:
+         omap->units = MS_METERS;
+         break;
    }
 
-
+  
   /*
   ** WMS extents are edge to edge while MapServer extents are center of
   ** pixel to center of pixel.  Here we try to adjust the WMS extents
