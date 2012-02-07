@@ -2045,14 +2045,24 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         return(MS_SUCCESS);
       }
       msTransformShape(shape, map->extent, map->cellsize, image);
-      if(hasGeomTransform)
-        msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
+      if(shape->numlines == 0) {
+         if(hasGeomTransform)
+            msFreeShape(&nonClippedShape);   
+         return(MS_SUCCESS);
+      }
+      if(hasGeomTransform) {
+         msTransformShape(&nonClippedShape, map->extent, map->cellsize, image);
+         if(nonClippedShape.numlines == 0) {
+            msFreeShape(&nonClippedShape);   
+            return(MS_SUCCESS);
+         }
+      }
     } else {
       msOffsetShapeRelativeTo(shape, layer);
+      if(hasGeomTransform)
+         msOffsetShapeRelativeTo(&nonClippedShape, layer);
     }
     
-    if(hasGeomTransform)
-      msOffsetShapeRelativeTo(&nonClippedShape, layer);
 	
     /*RFC48: loop through the styles, and pass off to the type-specific
     function if the style has an appropriate type*/

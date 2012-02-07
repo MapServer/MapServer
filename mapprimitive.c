@@ -927,6 +927,9 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
         ok = 1;
     }
     if(!ok) {
+       for(i=0;i<shape->numlines;i++) {
+          free(shape->line[i].point);
+       }
        shape->numlines = 0 ;
     }
 }
@@ -1751,12 +1754,13 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   segment_index = max_line_index = 0;
   total_length = max_line_length = 0.0;
 
+
   labelpaths = (labelPathObj **) msSmallMalloc(sizeof(labelPathObj *) * labelpaths_size);
   (*regular_lines) = (int *) msSmallMalloc(sizeof(int) * regular_lines_size);
 
   msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
  
-  if (label->repeatdistance > 0)
+  if(label->repeatdistance > 0)
     for(i=0; i<p->numlines; i++) {
       msPolylineLabelPathLineString(map,img, p,min_length, fontset, string, label, scalefactor, i, segment_lengths, line_lengths[i], total_length, 
                                     &labelpaths_index, &labelpaths_size, &labelpaths, regular_lines, &regular_lines_index, &regular_lines_size);
@@ -1764,7 +1768,7 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   else
     msPolylineLabelPathLineString(map, img, p,min_length, fontset, string, label, scalefactor, max_line_index, segment_lengths, line_lengths[max_line_index], total_length, 
                                   &labelpaths_index, &labelpaths_size, &labelpaths, regular_lines, &regular_lines_index, &regular_lines_size);
-
+  
   /* freeing memory: allocated by msPolylineComputeLineSegments */
   if ( segment_lengths ) {
     for ( i = 0; i < p->numlines; i++ )
@@ -2084,13 +2088,15 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
 
             theta = -atan2(dy,dx);
 
-            /* If the difference between the last char angle and the current one 
-              is greater than the MAXOVERLAPANGLE value (set at 80% of 180deg by default)
-              , bail the label */
-            anglediff = fabs(theta - labelpath->angles[k-2]);
-            anglediff = MS_MIN(anglediff, MS_2PI - anglediff);
-            if ( maxoverlapangle > 0 && (k > 2 && anglediff > maxoverlapangle) ) {
-                goto LABEL_FAILURE;
+            if ( maxoverlapangle > 0 && k > 1) {
+               /* If the difference between the last char angle and the current one 
+                  is greater than the MAXOVERLAPANGLE value (set at 80% of 180deg by default)
+                  , bail the label */
+               anglediff = fabs(theta - labelpath->angles[k-2]);
+               anglediff = MS_MIN(anglediff, MS_2PI - anglediff);
+               if(anglediff > maxoverlapangle ) {
+                  goto LABEL_FAILURE;
+               }
             }
       
             /* msDebug("s: %c (x,y): (%0.2f,%0.2f) t: %0.2f\n", string[k-1], labelpath->path.point[k-1].x, labelpath->path.point[k-1].y, theta); */
