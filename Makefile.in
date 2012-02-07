@@ -479,7 +479,7 @@ install-bin: install-dirs install-lib $(EXE_LIST)
 	  else :; fi; \
 	done
 
-install-lib: install-dirs $(EXE_LIST)
+install-lib: install-dirs $(LIBMAP)
 	$(LTINSTALL) $(INSTALL) $(LIBMAP) $(DESTDIR)$(libdir)/$(LIBMAP); \
 
 uninstall:
