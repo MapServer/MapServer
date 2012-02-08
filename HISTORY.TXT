@@ -15,6 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- reuse a pre-parsed mapfile across fastcgi loops in case the mapfile is
+  specified with the MS_MAPFILE env variable. (#4018)
+
 - Ability to do use PropertyIsLike with a column of a different type than text (postgis) (#4176)
 
 - Fixed SLD with FILTER doesn't apply properly to database layers (#4112)

@@ -31,6 +31,7 @@
 #include "mapserver.h"
 #include "mapserv.h"
 #include "maptime.h"
+#include <sys/stat.h>
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
@@ -175,35 +176,59 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
 {
   int i;
   mapObj *map = NULL;
+  static mapObj *preloadedmap = NULL;
+  static struct timespec preloadedmap_mtime;
+  static char *ms_mapfile = NULL;
+  struct stat mapfile_stat;
 
-  for(i=0;i<mapserv->request->NumParams;i++) /* find the mapfile parameter first */
-    if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
-  
-  if(i == mapserv->request->NumParams) {
-    if(getenv("MS_MAPFILE")) /* has a default file has not been set */
-      map = msLoadMap(getenv("MS_MAPFILE"), NULL);
-    else {
-      msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
-      return NULL;
-    }
+  /* check if we should use and/or create a pre-parsed mapfile */
+  ms_mapfile = getenv("MS_MAPFILE");
+  if(preloadedmap || ms_mapfile) {
+     if(preloadedmap) {
+        /* we already have a preloaded mapfile, check if the mapfile itself hasn't changed */
+        stat(ms_mapfile,&mapfile_stat);
+        if(mapfile_stat.st_mtimespec.tv_sec > preloadedmap_mtime.tv_sec) {
+           /* the mapfile has been updated on disk, discard the cached mapObj */
+           msFreeMap(preloadedmap);
+           preloadedmap = NULL;
+           msDebug("reloading mapfile %s as it has been changed on disk",ms_mapfile);
+        }
+     }
+     if(!preloadedmap) {
+        /* either the mapfile has never been loaded, or it has been destroyed because it was outdated */
+        preloadedmap = msLoadMap(ms_mapfile,NULL);
+        if(!preloadedmap) return NULL;
+        stat(ms_mapfile,&mapfile_stat);
+        preloadedmap_mtime = mapfile_stat.st_mtimespec;
+     }
+     map = msNewMapObj();
+     msCopyMap(map,preloadedmap);
   } else {
-    if(getenv(mapserv->request->ParamValues[i])) /* an environment variable references the actual file to use */
-      map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
-    else {
-      /* by here we know the request isn't for something in an environment variable */
-      if(getenv("MS_MAP_NO_PATH")) {
-        msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
-        return NULL;
-      }
+     for(i=0;i<mapserv->request->NumParams;i++) /* find the mapfile parameter first */
+        if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
-      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
-        msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
+     if(i == mapserv->request->NumParams) {
+        msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
         return NULL;
-      }
+     } else {
+        if(getenv(mapserv->request->ParamValues[i])) /* an environment variable references the actual file to use */
+           map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
+        else {
+           /* by here we know the request isn't for something in an environment variable */
+           if(getenv("MS_MAP_NO_PATH")) {
+              msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
+              return NULL;
+           }
 
-      /* ok to try to load now */
-      map = msLoadMap(mapserv->request->ParamValues[i], NULL);
-    }
+           if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
+              msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
+              return NULL;
+           }
+
+           /* ok to try to load now */
+           map = msLoadMap(mapserv->request->ParamValues[i], NULL);
+        }
+     }
   }
 
   if(!map) return NULL;
