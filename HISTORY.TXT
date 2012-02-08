@@ -15,9 +15,9 @@ For a complete change history, please see the Subversion log comments.
 Version 6.0.2 (2012-02-08):
 ---------------------------
 
-- Fixed lexer buffer size issue with single quotes in a string  (#4175)
+- Fix security issue with quote escape in WFS GetFeature Filter (#4087)
 
-- WFS Quote Escape issue (#4087)
+- Fixed lexer buffer size issue with single quotes in a string  (#4175)
 
 - Raster layer fails to be drawn if the window is less than half a pixel (#4172)
 
