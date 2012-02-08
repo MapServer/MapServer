@@ -1,0 +1,26 @@
+============ =====================  ===================================  ================================
+ Login(s)     Name                   Email / Contact                     Area(s)
+============ =====================  ===================================  ================================
+sdlime       Steve Lime             steve.lime at dnr.state.mn.us        Overall
+dan          Daniel Morissette      dmorissette at mapgears.com          OGC Web Services, PHP MapScript
+sean         Sean Gillies           sgillies at frii.com                 SWIG MapScript (retired)
+assefa       Assefa Yewondwossen    assefa at dmsolutions.ca             OGC Web Services, Flash, SVG, 
+julien       Julien-Samuel Lacroix  jlacroix at dmsolutions.ca           OGC Web Services
+warmerdam    Frank Warmerdam        warmerdam at pobox.com               Raster, outputFormatObj, 
+hobu         Howard Butler          hobu.inc at gmail.com                mapsde.c
+pramsey      Paul Ramsey            pramsey at cleverelephant.ca         mappostgis.c, maptile.c
+jerryp       Jerry Pisk             jerry.pisk at gmail.com             
+ned          Ned Harding            nharding at extendthereach.com      
+attila       Attila Csipa           plists at prometheus.org.yu          imagemap, mygis
+fsimon       Fernando Simon         fsimon at univali.br                 maporacle
+novak        John Novak             hetzerrrat gmail.com                 mapgraticule
+jani         Jani Averbach          javerbach extendthereach com         External Plugin Layers
+tamas        Tamas Szekeres         szekerest at gmail.com               MapScript C#
+umberto      Umberto Nicoletti      umberto.nicoletti at gmail.com       MapScript Java
+tomkralidis  Tom Kralidis           tomkralidis at hotmail.com           OGC, Perl Mapscript
+tbonfort     Thomas Bonfort         thomas.bonfort at gmail.com          AGG, Charting
+jmckenna     Jeff McKenna           jmckenna at gatewaygeomatics.com     Documentation
+aboudreault  Alan Boudreault        aboudreault at mapgears.com          OGR, general bug fixes
+toby         Toby Rahilly           toby.rahilly at gmail.com            OpenGL
+jbourke      Jonathan Bourke        jonathan.bourke at mapds.com.au      OpenGL
+============ =====================  ===================================  ================================
