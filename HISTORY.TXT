@@ -14,7 +14,7 @@ For a complete change history, please see the Subversion log comments.
 Version 5.6.8 (2012-02-08):
 ---------------------------
 
-- Fix potential security issue with quote escape in WFS exceptions (#4087)
+- Fix security issue with quote escape in WFS GetFeature Filter (#4087)
 
 - Fix segfault on join with postgresql tables (#4074)
 
