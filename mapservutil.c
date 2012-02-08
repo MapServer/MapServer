@@ -233,43 +233,48 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
 
   if(!map) return NULL;
 
-  /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
-  /* services can take advantage of these "vendor specific" extensions */
-  for(i=0;i<mapserv->request->NumParams;i++) {
-    /*
-    ** a few CGI variables should be skipped altogether
-    **
-    ** qstring: there is separate per layer validation for attribute queries and the substitution checks
-    **          below conflict with that so we avoid it here
-    */
-    if(strncasecmp(mapserv->request->ParamNames[i],"qstring",7) == 0) continue;
 
-    if(strncasecmp(mapserv->request->ParamNames[i],"map_",4) == 0 || strncasecmp(mapserv->request->ParamNames[i],"map.",4) == 0) { /* check to see if there are any additions to the mapfile */
-      if(msUpdateMapFromURL(map, mapserv->request->ParamNames[i], mapserv->request->ParamValues[i]) != MS_SUCCESS) {
-         msFreeMap(map);
-         return NULL;
-      }
-      continue;
-    }
+
+  if(!msLookupHashTable(&(map->web.validation), "immutable")) {
+     /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
+     /* services can take advantage of these "vendor specific" extensions */
+     for(i=0;i<mapserv->request->NumParams;i++) {
+        /*
+         ** a few CGI variables should be skipped altogether
+         **
+         ** qstring: there is separate per layer validation for attribute queries and the substitution checks
+         **          below conflict with that so we avoid it here
+         */
+        if(strncasecmp(mapserv->request->ParamNames[i],"qstring",7) == 0) continue;
+
+        if(strncasecmp(mapserv->request->ParamNames[i],"map_",4) == 0 || strncasecmp(mapserv->request->ParamNames[i],"map.",4) == 0) { /* check to see if there are any additions to the mapfile */
+           if(msUpdateMapFromURL(map, mapserv->request->ParamNames[i], mapserv->request->ParamValues[i]) != MS_SUCCESS) {
+              msFreeMap(map);
+              return NULL;
+           }
+           continue;
+        }
+     }
+
+     msApplySubstitutions(map, mapserv->request->ParamNames, mapserv->request->ParamValues, mapserv->request->NumParams);
+     msApplyDefaultSubstitutions(map);
+
+     /* check to see if a ogc map context is passed as argument. if there */
+     /* is one load it */
+
+     for(i=0;i<mapserv->request->NumParams;i++) {
+        if(strcasecmp(mapserv->request->ParamNames[i],"context") == 0) {
+           if(mapserv->request->ParamValues[i] && strlen(mapserv->request->ParamValues[i]) > 0) {
+              if(strncasecmp(mapserv->request->ParamValues[i],"http",4) == 0) {
+                 if(msGetConfigOption(map, "CGI_CONTEXT_URL"))
+                    msLoadMapContextURL(map, mapserv->request->ParamValues[i], MS_FALSE);
+              } else
+                 msLoadMapContext(map, mapserv->request->ParamValues[i], MS_FALSE); 
+           }
+        }
+     }
   }
 
-  msApplySubstitutions(map, mapserv->request->ParamNames, mapserv->request->ParamValues, mapserv->request->NumParams);
-  msApplyDefaultSubstitutions(map);
-
-  /* check to see if a ogc map context is passed as argument. if there */
-  /* is one load it */
-
-  for(i=0;i<mapserv->request->NumParams;i++) {
-    if(strcasecmp(mapserv->request->ParamNames[i],"context") == 0) {
-      if(mapserv->request->ParamValues[i] && strlen(mapserv->request->ParamValues[i]) > 0) {
-        if(strncasecmp(mapserv->request->ParamValues[i],"http",4) == 0) {
-          if(msGetConfigOption(map, "CGI_CONTEXT_URL"))
-            msLoadMapContextURL(map, mapserv->request->ParamValues[i], MS_FALSE);
-        } else
-            msLoadMapContext(map, mapserv->request->ParamValues[i], MS_FALSE); 
-      }
-    }
-  } 
   /*
    * RFC-42 HTTP Cookie Forwarding
    * Here we set the http_cookie_data metadata to handle the 
