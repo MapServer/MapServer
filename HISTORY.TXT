@@ -11,14 +11,14 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Version 5.6.8 (SVN branch-5-6):
+Version 5.6.8 (2012-02-08):
 ---------------------------
 
-- WFS Quote Escape issue (#4087)
+- Fix potential security issue with quote escape in WFS exceptions (#4087)
 
-- fix segfault on join with postgresql tables (#4074)
+- Fix segfault on join with postgresql tables (#4074)
 
-- define Z_BEST_COMPRESSION for newer libpng versions (#4033)
+- Define Z_BEST_COMPRESSION for newer libpng versions (#4033)
 
 - Fixes to support latest PROJ versions (#4008)
 
