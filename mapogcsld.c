@@ -470,14 +470,14 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                                                     msFree(pszSqlExpression);
                                                 }
                                                 else
-                                                {
+						{
                                                     bFailedExpression =1;
                                                     break;
                                                 }
                                                 FLTFreeFilterEncodingNode(psExpressionNode);
                                             }
                                             else
-                                            {
+					    {   
                                                 bFailedExpression =1;
                                                 break;
                                             }
@@ -487,9 +487,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                                             snprintf(szTmp, sizeof(szTmp), "%s", "))");
                                             pszBuffer =msStringConcatenate(pszBuffer, szTmp);
                                             msLoadExpressionString(&lp->filter, pszBuffer);
-                                            for (k=0;k<lp->numclasses;k++)
-                                              freeExpression(&lp->class[k]->expression);
-                                              
                                         }
                                         msFree(pszBuffer);
                                     }
@@ -4824,31 +4821,14 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
 /*      tests here are minimal to be able to parse simple expression    */
 /*      like A AND B, A OR B, NOT A.                                    */
 /* -------------------------------------------------------------------- */
-    pszAnd = strstr(pszExpression, " AND ");
-    if (!pszAnd)
-       pszAnd = strstr(pszExpression, " and ");
-
-    pszOr = strstr(pszExpression, " OR ");
-    if (!pszOr)
-      pszOr = strstr(pszExpression, " or ");
-    
-
-    pszNot = strstr(pszExpression, "NOT ");
-    if (!pszNot)
-    {
-        pszNot = strstr(pszExpression, "not ");
-    }
-    
+    pszAnd = strcasestr(pszExpression, " AND ");
+    pszOr = strcasestr(pszExpression, " OR ");
+    pszNot = strcasestr(pszExpression, "NOT ");
 
     if (!pszAnd && !pszOr)
     {
-        pszAnd = strstr(pszExpression, "AND(");
-        if (!pszAnd)
-          pszAnd = strstr(pszExpression, "and(");
-        
-        pszOr = strstr(pszExpression, "OR(");
-        if (!pszOr)
-          pszOr = strstr(pszExpression, "or(");
+        pszAnd = strcasestr(pszExpression, "AND(");
+        pszOr = strcasestr(pszExpression, "OR(");
     }
 
     if (!pszAnd && !pszOr && !pszNot)
@@ -4860,24 +4840,13 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
 
     if (pszAnd)
     {
-        pszSecondAnd = strstr(pszAnd+3, " AND ");
-        if (!pszSecondAnd)
-           pszSecondAnd = strstr(pszAnd+3, " and ");
-
-        pszSecondOr = strstr(pszAnd+3, " OR ");
-        if (!pszSecondOr)
-          pszSecondOr = strstr(pszAnd+3, " or ");
+        pszSecondAnd = strcasestr(pszAnd+3, " AND ");
+        pszSecondOr = strcasestr(pszAnd+3, " OR ");
     }
     else if (pszOr)
     {
-        pszSecondAnd = strstr(pszOr+2, " AND ");
-        if (!pszSecondAnd)
-          pszSecondAnd = strstr(pszOr+2, " and ");
-
-        pszSecondOr = strstr(pszOr+2, " OR ");
-        if (!pszSecondOr)
-          pszSecondOr = strstr(pszOr+2, " or ");
-
+        pszSecondAnd = strcasestr(pszOr+2, " AND ");
+        pszSecondOr = strcasestr(pszOr+2, " OR ");
     }
 
     if (!pszSecondAnd && !pszSecondOr)
