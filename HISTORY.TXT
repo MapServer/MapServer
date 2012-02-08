@@ -12,7 +12,7 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (future 6.0.2, SVN branch-6-0):
+Version 6.0.2 (2012-02-08):
 ---------------------------
 
 - Fixed lexer buffer size issue with single quotes in a string  (#4175)
@@ -45,7 +45,7 @@ Current Version (future 6.0.2, SVN branch-6-0):
  
 - Fixed cannot add a style to a label in PHP/SWIG Mapscript (#4038) 
 
-- Add missing support for outputFormat in WFS GetFeature POST XML requests (#4052)
+- Add missing outputFormat support in WFS GetFeature POST XML requests (#4052)
 
 - Fixed schema validity issue for WCS 1.1 GetCoverage responses (#4047)
 
@@ -57,13 +57,15 @@ Current Version (future 6.0.2, SVN branch-6-0):
 
 - WCS 1.0: Fix crash with some _rangeset_axes values (#4020)
 
-- Changed msDrawVectorLayer() not to cache shapes if attribute binding is present after the first style (#3976)
+- Changed msDrawVectorLayer() not to cache shapes if attribute binding is 
+  present after the first style (#3976)
 
 - Fix mapscript to build when TRUE macro is not defined (#3926)
 
 - Fix mapscript php build issues with MSVC (#4004)
 
-- PHP/Mapscript: Segmentation fault when getting complex object using PHP 5.2 (#3930)
+- PHP/Mapscript: Segmentation fault when getting complex object using 
+  PHP 5.2 (#3930)
 
 - Fixed contains operator in logical expresions (#3974)
 
