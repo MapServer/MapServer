@@ -1569,7 +1569,7 @@ char *msPostGISBuildSQLBox(layerObj *layer, rectObj *rect, char *strSRID) {
     }
 
     if ( strSRID ) {
-        static char *strBoxTemplate = "GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)";
+        static char *strBoxTemplate = "ST_GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))',%s)";
         /* 10 doubles + 1 integer + template characters */
         sz = 10 * 22 + strlen(strSRID) + strlen(strBoxTemplate);
         strBox = (char*)msSmallMalloc(sz+1); /* add space for terminating NULL */
@@ -1585,7 +1585,7 @@ char *msPostGISBuildSQLBox(layerObj *layer, rectObj *rect, char *strSRID) {
                 return NULL;
             }
         } else {
-            static char *strBoxTemplate = "GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))')";
+            static char *strBoxTemplate = "ST_GeomFromText('POLYGON((%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g,%.15g %.15g))')";
             /* 10 doubles + template characters */
             sz = 10 * 22 + strlen(strBoxTemplate);
             strBox = (char*)msSmallMalloc(sz+1); /* add space for terminating NULL */
