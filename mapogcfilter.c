@@ -3249,11 +3249,15 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
     msFree(pszEscapedStr);
     pszEscapedStr = NULL;
 
-    if (bCaseInsensitive == 1 && lp->connectiontype == MS_POSTGIS)
-      strlcat(szBuffer, " ilike '", bufferSize);
+    if (lp->connectiontype == MS_POSTGIS)
+    {
+	if (bCaseInsensitive == 1)
+	    strlcat(szBuffer, "::text ilike '", bufferSize);
+	else
+	    strlcat(szBuffer, "::text like '", bufferSize);
+    }
     else
-      strlcat(szBuffer, " like '", bufferSize);
-        
+      strlcat(szBuffer, " like '", bufferSize);        
    
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
