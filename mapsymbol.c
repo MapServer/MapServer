@@ -475,6 +475,11 @@ void msInitSymbolSet(symbolSetObj *symbolset)
    */
   if (msGrowSymbolSet(symbolset) == NULL)
       return; /* alloc failed */
+  symbolset->symbol[0]->type = MS_SYMBOL_ELLIPSE;
+  symbolset->symbol[0]->filled = MS_TRUE;
+  symbolset->symbol[0]->numpoints = 1;
+  symbolset->symbol[0]->points[0].x = 1;
+  symbolset->symbol[0]->points[0].y = 1;
 
   /* Just increment numsymbols to reserve symbol 0.
    * initSymbol() has already been called
