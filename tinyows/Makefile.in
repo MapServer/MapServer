@@ -44,7 +44,7 @@ install:
 doc-clean:
 	@rm -rf doc/doxygen
 
-doxygen: clean-doc
+doxygen: doc-clean
 	@(which doxygen 2> /dev/null > /dev/null	\
 	&& mkdir -p doc/doxygen				\
 	&& doxygen doc/Doxyfile				\
