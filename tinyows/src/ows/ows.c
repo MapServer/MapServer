@@ -129,6 +129,7 @@ void ows_flush(ows * o, FILE * output)
 		ows_layer_list_flush(o->layers, output);
 		fprintf(output, "\n");
 	}
+
 	if (o->request != NULL)
 	{
 		fprintf(output, "request: ");
@@ -200,6 +201,20 @@ void ows_free(ows * o)
 }
 
 
+void ows_usage(ows * o) {
+    printf("TinyOWS should be called by CGI throw a Web Server !\n\n");
+    printf("___________\n");
+    printf("Config File Path: %s\n", OWS_CONFIG_FILE_PATH);
+    printf("PostGIS dsn: '%s'\n", o->pg_dsn->buf);
+    printf("___________\n");
+    printf("WFS 1.0.0 Basic Schema Path: %s\n", WFS_SCHEMA_100_BASIC_PATH);
+    printf("WFS 1.0.0 Transactional Schema Path: %s\n", 
+        WFS_SCHEMA_100_TRANS_PATH);
+    printf("WFS 1.1.0 Schema Path: %s\n", WFS_SCHEMA_110_PATH);
+    printf("___________\n");
+}
+
+
 int main(int argc, char *argv[])
 {
 	char *query;
@@ -240,7 +255,6 @@ int main(int argc, char *argv[])
 		/* Process service request */
 		o->request = ows_request_init();
 		ows_request_check(o, o->request, o->cgi, query);
-		/* ows_cache_try(o, o->request); */
 
 		/* Run the right OWS service */
 		switch (o->request->service)
@@ -259,7 +273,15 @@ int main(int argc, char *argv[])
 			ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
 			   "service unknown", "service");
 		}
-	}
+	} else if (argc > 1 && (strncmp(argv[1], "--help", 6) == 0
+            || strncmp(argv[1], "--h", 3) == 0)) {
+		ows_parse_config(o, OWS_CONFIG_FILE_PATH);
+        ows_usage(o);
+    } else {
+			ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+			   "service unknown", "service");
+    }
+  
 	ows_free(o);
 
 	return EXIT_SUCCESS;
