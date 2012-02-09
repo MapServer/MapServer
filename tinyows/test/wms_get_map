@@ -1,0 +1,129 @@
+#!/bin/sh
+
+VALGRIND=$1
+RUN_TEST=test/run_test
+
+#$RUN_TEST $VALGRIND 0100 "service=wms&request=getMap&version=1.3.0"
+
+#$RUN_TEST $VALGRIND 0101 "service=wms&request=getmap&version=1.3.0"
+
+
+#$RUN_TEST $VALGRIND 0101 "service=wms&request=getmap&version=1.3.0&layers=park"
+
+#$RUN_TEST $VALGRIND 0101 "service=wms&request=getmap&version=1.3.0&layers=park,park"
+
+#$RUN_TEST $VALGRIND 0101 "service=wms&request=getmap&version=1.3.0&layers=park,WRONG_ONE,poi"
+
+
+#$RUN_TEST $VALGRIND 0101 "service=wms&request=getmap&version=1.3.0&layers=park&width=80"
+
+#$RUN_TEST $VALGRIND 0101 "service=wms&request=getmap&version=1.3.0&layers=park&width=80&height=80"
+
+
+
+#$RUN_TEST $VALGRIND 0101 "service=wms&request=getmap&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=,"
+
+
+
+############### request check #################
+# Capitalize check
+$RUN_TEST $VALGRIND 0201 "service=wms&ReQuest=getmap&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0202 "service=wms&REQUEST=getmap&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0203 "service=wms&request=geTmaP&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0204 "service=wms&request=GETMAP&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+
+# junk char after
+$RUN_TEST $VALGRIND 0202 "service=wms&request=getmapz&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0203 "service=wms&request=getmap1&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+
+$RUN_TEST $VALGRIND 0205 "service=wms&ReQuest=%20getMap&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0206 "service=wms&ReQuest=getMap%20&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+
+############### version check #################
+
+# No version at all
+$RUN_TEST $VALGRIND 0300 "service=wms&request=getmap&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+# Capitalize check
+$RUN_TEST $VALGRIND 0301 "service=wms&request=getmap&VerSion=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+# No release
+$RUN_TEST $VALGRIND 0302 "service=wms&request=getmap&version=1.3&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+# No minor nor release
+$RUN_TEST $VALGRIND 0303 "service=wms&request=getmap&version=1&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+# No value at all
+$RUN_TEST $VALGRIND 0303 "service=wms&request=getmap&version=&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+
+# No dot separator
+$RUN_TEST $VALGRIND 0310 "service=wms&request=getmap&version=13.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0311 "service=wms&request=getmap&version=1.30.&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0312 "service=wms&request=getmap&version=.1.30&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+# Only dot separator
+$RUN_TEST $VALGRIND 0313 "service=wms&request=getmap&version=.&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0314 "service=wms&request=getmap&version=..&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+
+# Text rather than digit
+$RUN_TEST $VALGRIND 0320 "service=wms&request=getmap&version=a.1.e&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0321 "service=wms&request=getmap&version=a.1.e&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0322 "service=wms&request=getmap&version=1.1.1&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+
+# Space %20 in input
+$RUN_TEST $VALGRIND 0330 "service=wms&request=getmap&version=%201.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0331 "service=wms&request=getmap&version=1.3%20.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0332 "service=wms&request=getmap&version=1.3.0%20&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0333 "service=wms&request=getmap&version=1.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+
+# Useless Zero
+$RUN_TEST $VALGRIND 0340 "service=wms&request=getmap&version=01.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0341 "service=wms&request=getmap&version=1.03.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0342 "service=wms&request=getmap&version=1.3.00&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+
+# Several wrong WMS version
+$RUN_TEST $VALGRIND 0350 "service=wms&request=getmap&version=0.0.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0351 "service=wms&request=getmap&version=1.0.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0352 "service=wms&request=getmap&version=1.1.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0353 "service=wms&request=getmap&version=1.1.1&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0354 "service=wms&request=getmap&version=1.3.1&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0355 "service=wms&request=getmap&version=1.4.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0356 "service=wms&request=getmap&version=2.3.0&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+# WMS 1.1.1
+$RUN_TEST $VALGRIND 0360 "service=wms&request=getmap&version=1.1.1&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"
+
+$RUN_TEST $VALGRIND 0361 "service=wms&request=getmap&version=1.1.1&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&SRS=EPSG:31463"
+
+
+# Digit more than INT_MAX
+$RUN_TEST $VALGRIND 0370 "service=wms&request=getmap&version=1000000000000000000000000000000000000000000000.10000000000000000000000000000000000000000000000.10000000000000000000000000000000000000000000000000000000000&layers=park&width=80&height=80&format=image/svg+xml&styles=&bbox=3427000,5787594,3444004,5800876&CRS=EPSG:31463"

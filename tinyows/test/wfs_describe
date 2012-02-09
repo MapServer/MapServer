@@ -1,0 +1,60 @@
+#!/bin/sh
+
+VALGRIND=$1
+RUN_TEST=test/run_test
+
+$RUN_TEST $VALGRIND 2001 '
+<foo:DescribeFeatureType xmlns:foo="http://www.opengis.net/wfs" service="WFS" version="1.1.0"/>'
+
+$RUN_TEST $VALGRIND 2002 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" version="" service="WFS">
+	<wfs:TypeName>sf:PrimitiveGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>'
+
+$RUN_TEST $VALGRIND 2003 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" version="1.1.0" service="">
+	<wfs:TypeName>sf:PrimitiveGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>'
+
+$RUN_TEST $VALGRIND 2004 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" version="1.1.0">
+	<wfs:TypeName>sf:PrimitiveGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>'
+
+$RUN_TEST $VALGRIND 2005 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" service="WFS" version="1.1.0">
+	<wfs:TypeName>sf:PrimitiveGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>
+'
+
+$RUN_TEST $VALGRIND 2006 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" service="WFS" version="1.1.0">
+	<wfs:TypeName>sf:PrimitiveGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>'
+
+$RUN_TEST $VALGRIND 2007 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" service="WFS">
+	<wfs:TypeName>sf:PrimitiveGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>'
+
+$RUN_TEST $VALGRIND 2008 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" version="2.0.0" service="WFS">
+	<wfs:TypeName>sf:PrimitiveGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>
+'
+
+$RUN_TEST $VALGRIND 2009 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" service="WFS" version="1.1.0"/>
+'
+
+$RUN_TEST $VALGRIND 2010 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" version="1.1.0" service="FOO">
+	<wfs:TypeName>sf:PrimitiveGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>'
+
+$RUN_TEST $VALGRIND 2011 '
+<wfs:DescribeFeatureType xmlns:sf="http://cite.opengeospatial.org/gmlsf" xmlns:wfs="http://www.opengis.net/wfs" service="WFS" version="1.1.0">
+	<wfs:TypeName>sf:ComplexGeoFeature</wfs:TypeName>
+</wfs:DescribeFeatureType>
+'
+

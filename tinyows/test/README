@@ -1,0 +1,22 @@
+To be able to launch unit test 
+
+1) create postgis spatial database (as usual),
+  named 'tinyows_test'
+
+  createdb tinyows_test
+  createlang plpgsql tinyows_test
+  psql -d tinyows_test < lwpostgis.sql
+  psql -d tinyows_test < spatial_ref_sys.sql
+
+2) load wfs.sql data 
+
+ psql -d tinyows_test < ogc_wfs_data.sql
+
+3) Replace tinyows config file by 'owg_test_config.xml' one
+   (Check postgresql connection parameter)
+
+4) Install valgrind if not yet done
+
+5) Play with tests :
+ make valgrind
+

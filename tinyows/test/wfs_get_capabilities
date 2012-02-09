@@ -1,0 +1,8 @@
+#!/bin/sh
+
+VALGRIND=$1
+RUN_TEST=test/run_test
+
+$RUN_TEST $VALGRIND 1001 '<foo:GetCapabilities service="WFS" xmlns:foo="http://www.opengis.net/wfs"/>'
+$RUN_TEST $VALGRIND 1002 '<wfs:GetCapabilities xmlns:wfs="http://www.opengis.net/wfs" service="WFS"/>'
+$RUN_TEST $VALGRIND 1003 '<wfs:GetCapabilities xmlns:wfs="http://www.opengis.net/wfs" service="WFS"/>'

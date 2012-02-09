@@ -1,0 +1,70 @@
+#!/bin/sh
+
+VALGRIND=$1
+RUN_TEST=test/run_test
+
+$RUN_TEST $VALGRIND 0001 ""
+
+$RUN_TEST $VALGRIND 0002 "service=wms"
+
+$RUN_TEST $VALGRIND 0003 "seRviCe=wms"
+
+$RUN_TEST $VALGRIND 0004 "service=WmS"
+
+$RUN_TEST $VALGRIND 0005 "service=wMsz"
+
+$RUN_TEST $VALGRIND 0006 "service=aze"
+
+$RUN_TEST $VALGRIND 0007 "services=wms"
+
+$RUN_TEST $VALGRIND 0008 "service=WMS"
+
+
+
+$RUN_TEST $VALGRIND 0010 "service=WMS&request=getCapabilities"
+
+$RUN_TEST $VALGRIND 0011 "service=WMS&reQueSt=getCapabilities"
+
+$RUN_TEST $VALGRIND 0012 "service=WMS&reQueSt=GetcapabIlities"
+
+$RUN_TEST $VALGRIND 0013 "service=WMS&request=getCapabilitiesz"
+
+$RUN_TEST $VALGRIND 0014 "service=WMS&request=ieozeozoez"
+
+$RUN_TEST $VALGRIND 0015 "service=WMS&requests=getCapabilities"
+
+
+
+$RUN_TEST $VALGRIND 0020 "service=WMS&request=getCapabilities&version=1.1.1"
+
+$RUN_TEST $VALGRIND 0021 "service=WMS&request=getCapabilities&verSion=1.1.1"
+
+$RUN_TEST $VALGRIND 0022 "service=WMS&request=getCapabilities&version=1.1.1z"
+
+$RUN_TEST $VALGRIND 0023 "service=WMS&request=getCapabilities&version=1.3.0"
+
+$RUN_TEST $VALGRIND 0024 "service=WMS&request=getCapabilities&version=1.3.0z"
+
+$RUN_TEST $VALGRIND 0025 "service=WMS&request=getCapabilities&versions=1.3.0"
+
+$RUN_TEST $VALGRIND 0026 "service=WMS&request=getCapabilities&version=1.4.0"
+
+$RUN_TEST $VALGRIND 0027 "service=WMS&request=getCapabilities&version=1.0.0"
+
+$RUN_TEST $VALGRIND 0028 "service=WMS&request=getCapabilities&version=1.1.0"
+
+
+
+$RUN_TEST $VALGRIND 0030 "service=WMS&requests=getCapabilities;"
+
+$RUN_TEST $VALGRIND 0031 "service=WMS&\nrequests=getCapabilities"
+
+$RUN_TEST $VALGRIND 0032 "service=WMS&\trequests=getCapabilities"
+
+$RUN_TEST $VALGRIND 0033 "service=\"WMS\"&requests=getCapabilities"
+
+$RUN_TEST $VALGRIND 0034 "service=WMS&request=getCapabilities&version=<1.1.0/>"
+
+$RUN_TEST $VALGRIND 0035 "service=WMS&request=getCapabilities&filter=<bla>gugukg</bla>"
+
+

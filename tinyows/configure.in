@@ -1,0 +1,33 @@
+AC_INIT()
+
+AC_CHECK_PROG(HAVE_LIBXML, xml2-config, yes, no)
+if test [ $HAVE_LIBXML = no ]; then 
+	AC_MSG_ERROR(libxml2 must be installed)
+fi
+
+AC_CHECK_PROG(HAVE_PGSQL, pg_config, yes, no)
+if test [ $HAVE_PGSQL = no ]; then 
+	AC_MSG_ERROR(postgresql must be installed)
+fi
+
+AC_ARG_ENABLE(api,
+        [  --enable-api        	  Generate api.h file (developpers only)],
+        ENABLE_API=1, ENABLE_API=0)
+
+if test [ $ENABLE_API == 1]; then
+        AC_CHECK_PROG(HAVE_CTAGS, ctags, yes, no)
+        if test [ $HAVE_CTAGS = no ]; then
+                AC_MSG_ERROR(ctags must be installed to deal with api.h generation)
+        fi
+
+	API=api
+fi
+
+	
+AC_CHECK_FUNCS()
+
+AC_SUBST(API)
+AC_OUTPUT(Makefile src/ows_define.h)
+
+rm -rf autom4te.cache
+rm -f config.log config.status

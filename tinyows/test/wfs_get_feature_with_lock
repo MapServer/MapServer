@@ -1,0 +1,109 @@
+#!/bin/sh
+
+VALGRIND=$1
+RUN_TEST=test/run_test
+
+$RUN_TEST $VALGRIND 6001 '
+<wfs:GetFeatureWithLock service="WFS" version="1.1.0" 
+  handle="GetFeatureWithLock-tc2.1.2"
+  expiry="5"
+  resultType="results"
+  xmlns:wfs="http://www.opengis.net/wfs" 
+  xmlns:sf="http://cite.opengeospatial.org/gmlsf"
+  xmlns:ogc="http://www.opengis.net/ogc"
+  xmlns:gml="http://www.opengis.net/gml">
+  
+  <wfs:Query handle="qry-1" typeName="sf:AggregateGeoFeature">
+    <ogc:Filter>
+      <ogc:BBOX>
+        <ogc:PropertyName xmlns:sf="http://cite.opengeospatial.org/gmlsf">sf:multiPointProperty</ogc:PropertyName>
+        <gml:Envelope srsName="urn:x-ogc:def:crs:EPSG:6.11.2:4326">
+          <gml:lowerCorner>34.9 -10.6</gml:lowerCorner>
+          <gml:upperCorner>72.0 32.2</gml:upperCorner>
+        </gml:Envelope>
+      </ogc:BBOX>
+    </ogc:Filter>
+  </wfs:Query>
+</wfs:GetFeatureWithLock>
+'
+
+$RUN_TEST $VALGRIND 6002 '
+<wfs:Transaction service="WFS" version="1.1.0" 
+  xmlns:wfs="http://www.opengis.net/wfs" 
+  xmlns:gml="http://www.opengis.net/gml" 
+  xmlns:sf="http://cite.opengeospatial.org/gmlsf">
+	<wfs:Insert handle="insert-1">
+      <sf:PrimitiveGeoFeature gml:id="cite.gmlsf0-f503">
+        <gml:name codeSpace="http://cite.opengeospatial.org/gmlsf">cite.gmlsf0-f503</gml:name>
+        <sf:curveProperty>
+          <gml:LineString srsName="urn:x-ogc:def:crs:EPSG:6.11.2:4326">
+            <gml:posList>45.608284 17.034142 47.286873 12.7836 47.849854 13.764992</gml:posList>
+          </gml:LineString>
+        </sf:curveProperty>
+        <sf:intProperty>-72</sf:intProperty>
+        <sf:measurand>76.80</sf:measurand>
+        <sf:dateTimeProperty>2006-10-23T11:55:12Z</sf:dateTimeProperty>
+        <sf:decimalProperty>12.10</sf:decimalProperty>
+      </sf:PrimitiveGeoFeature>
+    </wfs:Insert>
+</wfs:Transaction>
+'
+
+$RUN_TEST $VALGRIND 6003 '
+<wfs:Transaction service="WFS" version="1.1.0" 
+  xmlns:wfs="http://www.opengis.net/wfs" 
+  xmlns:ogc="http://www.opengis.net/ogc" 
+  xmlns:gml="http://www.opengis.net/gml" 
+  xmlns:sf="http://cite.opengeospatial.org/gmlsf">
+    <wfs:Delete handle="del-1" typeName="sf:PrimitiveGeoFeature">
+      <ogc:Filter>
+			<ogc:PropertyIsEqualTo>
+				<ogc:PropertyName>gml:name</ogc:PropertyName>
+				<ogc:Literal>cite.gmlsf0-f503</ogc:Literal>
+			</ogc:PropertyIsEqualTo>
+	  </ogc:Filter>
+    </wfs:Delete>
+</wfs:Transaction>
+'
+
+$RUN_TEST $VALGRIND 6004 '
+<wfs:GetFeatureWithLock service="WFS" version="1.1.0" 
+  handle="GetFeatureWithLock-tc1"
+  expiry="5"
+  resultType="results"
+  xmlns:wfs="http://www.opengis.net/wfs" 
+  xmlns:sf="http://cite.opengeospatial.org/gmlsf">
+  <wfs:Query handle="qry-1" typeName="sf:PrimitiveGeoFeature" />
+</wfs:GetFeatureWithLock>
+'
+
+$RUN_TEST $VALGRIND 6005 '
+<wfs:Transaction service="WFS" version="1.1.0" 
+  releaseAction="ALL"
+  xmlns:wfs="http://www.opengis.net/wfs" 
+  xmlns:ogc="http://www.opengis.net/ogc" 
+  xmlns:gml="http://www.opengis.net/gml" 
+  xmlns:sf="http://cite.opengeospatial.org/gmlsf"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <wfs:LockId><xsl:value-of select="$LockId"/></wfs:LockId>
+    <wfs:Delete handle="del-1" typeName="sf:PrimitiveGeoFeature">
+      <ogc:Filter>
+			<ogc:PropertyIsEqualTo>
+				<ogc:PropertyName>gml:name</ogc:PropertyName>
+				<ogc:Literal>cite.gmlsf0-f503</ogc:Literal>
+			</ogc:PropertyIsEqualTo>
+	  </ogc:Filter>
+    </wfs:Delete>
+</wfs:Transaction>'
+
+$RUN_TEST $VALGRIND 6006 '
+<wfs:GetFeatureWithLock service="WFS" version="1.1.0" 
+  handle="GetFeatureWithLock-tc2.1.1"
+  expiry="5"
+  resultType="results"
+  xmlns:wfs="http://www.opengis.net/wfs" 
+  xmlns:sf="http://cite.opengeospatial.org/gmlsf">
+  <wfs:Query handle="qry-1" typeName="sf:AggregateGeoFeature" />
+</wfs:GetFeatureWithLock>
+'
+
