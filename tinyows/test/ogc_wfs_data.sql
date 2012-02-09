@@ -328,23 +328,6 @@ ALTER TABLE public."Updates" OWNER TO postgres;
 SET default_with_oids = true;
 
 --
--- Name: geometry_columns; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE geometry_columns (
-    f_table_catalog character varying(256) NOT NULL,
-    f_table_schema character varying(256) NOT NULL,
-    f_table_name character varying(256) NOT NULL,
-    f_geometry_column character varying(256) NOT NULL,
-    coord_dimension integer NOT NULL,
-    srid integer NOT NULL,
-    "type" character varying(30) NOT NULL
-);
-
-
-ALTER TABLE public.geometry_columns OWNER TO postgres;
-
---
 -- Data for Name: AggregateGeoFeature; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -620,14 +603,6 @@ ALTER TABLE ONLY "EntitéGénérique"
 
 ALTER TABLE ONLY "PrimitiveGeoFeature"
     ADD CONSTRAINT "PrimitiveGeoFeature_pkey" PRIMARY KEY (id);
-
-
---
--- Name: geometry_columns_pk; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY geometry_columns
-    ADD CONSTRAINT geometry_columns_pk PRIMARY KEY (f_table_catalog, f_table_schema, f_table_name, f_geometry_column);
 
 
 --
