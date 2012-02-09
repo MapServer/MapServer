@@ -455,7 +455,7 @@ void cmd_thread() {
          tile->z = z;
 	 action = examine_tile(&cmd_ctx, tile);
 
-         if(action == MAPCACHE_CMD_SEED || MAPCACHE_CMD_TRANSFER) {
+         if(action == MAPCACHE_CMD_SEED || action == MAPCACHE_CMD_TRANSFER) {
             //current x,y,z needs seeding, add it to the queue
             struct seed_cmd *cmd = malloc(sizeof(struct seed_cmd));
             cmd->x = x;
