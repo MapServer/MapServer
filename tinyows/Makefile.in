@@ -9,8 +9,13 @@ PREFIX=@prefix@
 
 SRC = $(wildcard src/*/*.c)
 
-all: @API@
+all: @API@ check_api
 	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(SRC) -o tinyows
+
+
+check_api: 
+	@ls src/ows_api.h > /dev/null 2> /dev/null || (echo "You must run ./configure --enable-api first !" && exit 1)
+	
 
 api:
 	@echo  "ows_api.h generation"
