@@ -1,0 +1,2 @@
+service=WFS&request=GetCapabilities&version=1.1.0&acceptversions=2006-10-26
+

@@ -1,0 +1,2 @@
+service=WFS&version=1.1.0&request=GetFeature&typename=sf:PrimitiveGeoFeature&namespace=xmlns(sf=http://cite.opengeospatial.org/gmlsf)&filter=<ogc:Filter%20xmlns:sf="http://cite.opengeospatial.org/gmlsf"%20xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsGreaterThan><ogc:PropertyName>sf:intProperty</ogc:PropertyName><ogc:Literal>100</ogc:Literal></ogc:PropertyIsGreaterThan></ogc:Filter>
+

@@ -1,0 +1,640 @@
+<wfs:Transaction
+  xmlns:cdf="http://www.opengis.net/cite/data"
+  xmlns:gml="http://www.opengis.net/gml"
+  xmlns:ogc="http://www.opengis.net/ogc"
+  xmlns:wfs="http://www.opengis.net/wfs"
+  xmlns:cgf="http://www.opengis.net/cite/geometry"
+  version="1.0.0"
+  service="WFS"
+>
+
+  <!-- 
+        Original file version retrieved from OGC CITE: 
+        http://cite.opengeospatial.org/te2/wfs-1.0.0-r3/data/data-wfs-1.0.0.zip 
+      
+        Then concatenation of wfsBasicTestData.xml and wfsTransactionTestData.xml
+  -->
+
+  <!-- Null Feature test data -->
+  <wfs:Delete typeName="cdf:Nulls">
+  	<ogc:Filter>
+  		<ogc:PropertyIsNull>
+  			<ogc:PropertyName>gml:name</ogc:PropertyName>
+  		</ogc:PropertyIsNull>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cdf:Nulls">
+    <cdf:Nulls>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+    </cdf:Nulls>
+  </wfs:Insert>
+  
+  <!-- Seven Feature test data -->
+  <wfs:Delete typeName="cdf:Seven">
+  	<ogc:Filter>
+  		<ogc:PropertyIsNull>
+  			<ogc:PropertyName>gml:name</ogc:PropertyName>
+  		</ogc:PropertyIsNull>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cdf:Seven">
+    <cdf:Seven>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Seven>
+    <cdf:Seven>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Seven>
+    <cdf:Seven>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Seven>
+    <cdf:Seven>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Seven>
+    <cdf:Seven>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Seven>
+    <cdf:Seven>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Seven>
+    <cdf:Seven>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Seven>
+  </wfs:Insert>
+
+  <!-- Fifteen Feature test data -->
+  <wfs:Delete typeName="cdf:Fifteen">
+  	<ogc:Filter>
+  		<ogc:PropertyIsNull>
+  			<ogc:PropertyName>gml:name</ogc:PropertyName>
+  		</ogc:PropertyIsNull>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cdf:Fifteen">
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+    <cdf:Fifteen>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Fifteen>
+  </wfs:Insert>
+  
+  <!-- Other Feature test data -->
+  <wfs:Delete typeName="cdf:Other">
+  	<ogc:Filter>
+  		<ogc:PropertyIsNotEqualTo>
+  			<ogc:PropertyName>gml:name</ogc:PropertyName>
+  			<ogc:Literal>XXXXXXXXXXXXXXXX</ogc:Literal>
+  		</ogc:PropertyIsNotEqualTo>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cdf:Other">
+    <cdf:Other>
+      <gml:description>A Single Feature used to test returning of properties</gml:description>
+      <gml:name>singleFeature</gml:name>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+      <cdf:string1>always</cdf:string1>
+      <cdf:string2>sometimes</cdf:string2>
+      <cdf:integers>7</cdf:integers>
+      <cdf:dates>2002-12-02</cdf:dates>
+    </cdf:Other>
+  </wfs:Insert>
+  
+  <!-- PointFeature test data -->
+  <wfs:Delete typeName="cgf:Points">
+    <ogc:Filter>
+       <ogc:Not>
+         <ogc:PropertyIsNull>
+           <ogc:PropertyName>cgf:id</ogc:PropertyName>
+         </ogc:PropertyIsNull>
+       </ogc:Not>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cgf:Points">
+    <cgf:Points>
+      <cgf:id>t0000</cgf:id>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cgf:Points>
+  </wfs:Insert>
+
+  <!-- LineStringFeature test data -->
+  <wfs:Delete typeName="cgf:Lines">
+    <ogc:Filter>
+       <ogc:Not>
+         <ogc:PropertyIsNull>
+           <ogc:PropertyName>cgf:id</ogc:PropertyName>
+         </ogc:PropertyIsNull>
+       </ogc:Not>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cgf:Lines">
+    <cgf:Lines>
+      <cgf:id>t0001</cgf:id>
+      <gml:lineStringProperty>
+        <gml:LineString srsName="EPSG:32615">
+          <gml:coordinates>500125,500025 500175,500075</gml:coordinates>
+        </gml:LineString>
+      </gml:lineStringProperty>
+    </cgf:Lines>
+  </wfs:Insert>
+
+  <!-- PolygonFeature test data -->
+  <wfs:Delete typeName="cgf:Polygons">
+    <ogc:Filter>
+       <ogc:Not>
+         <ogc:PropertyIsNull>
+           <ogc:PropertyName>cgf:id</ogc:PropertyName>
+         </ogc:PropertyIsNull>
+       </ogc:Not>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cgf:Polygons">
+    <cgf:Polygons>
+      <cgf:id>t0002</cgf:id>
+      <gml:polygonProperty>
+        <gml:Polygon srsName="EPSG:32615">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>500225,500025 500225,500075 500275,500050 500275,500025 500225,500025</gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+      </gml:polygonProperty>
+    </cgf:Polygons>
+  </wfs:Insert>
+
+  <!-- MultiPointFeature test data -->
+  <wfs:Delete typeName="cgf:MPoints">
+    <ogc:Filter>
+       <ogc:Not>
+         <ogc:PropertyIsNull>
+           <ogc:PropertyName>cgf:id</ogc:PropertyName>
+         </ogc:PropertyIsNull>
+       </ogc:Not>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cgf:MPoints">
+    <cgf:MPoints>
+      <cgf:id>t0003</cgf:id>
+      <gml:multiPointProperty>
+        <gml:MultiPoint srsName="EPSG:32615">
+          <gml:pointMember>
+            <gml:Point>
+              <gml:coordinates>500325,500025</gml:coordinates>
+            </gml:Point>
+          </gml:pointMember>
+          <gml:pointMember>
+            <gml:Point>
+              <gml:coordinates>500375,500075</gml:coordinates>
+            </gml:Point>
+          </gml:pointMember>
+        </gml:MultiPoint>
+      </gml:multiPointProperty>
+    </cgf:MPoints>
+  </wfs:Insert>
+
+  <!-- MultiLineStringFeature test data -->
+  <wfs:Delete typeName="cgf:MLines">
+    <ogc:Filter>
+       <ogc:Not>
+         <ogc:PropertyIsNull>
+           <ogc:PropertyName>cgf:id</ogc:PropertyName>
+         </ogc:PropertyIsNull>
+       </ogc:Not>
+    </ogc:Filter>
+  </wfs:Delete>
+   <wfs:Insert handle="cgf:MLines">
+    <cgf:MLines>
+      <cgf:id>t0004</cgf:id>
+      <gml:multiLineStringProperty>
+        <gml:MultiLineString srsName="EPSG:32615">
+          <gml:lineStringMember>
+            <gml:LineString>
+              <gml:coordinates>500425,500025 500475,500075</gml:coordinates>
+            </gml:LineString>
+          </gml:lineStringMember>
+          <gml:lineStringMember>
+            <gml:LineString>
+              <gml:coordinates>500425,500075 500475,500025</gml:coordinates>
+            </gml:LineString>
+          </gml:lineStringMember>
+        </gml:MultiLineString>
+      </gml:multiLineStringProperty>
+    </cgf:MLines>
+  </wfs:Insert>
+
+  <!-- MutliPolygonFeature test data -->
+  <wfs:Delete typeName="cgf:MPolygons">
+    <ogc:Filter>
+       <ogc:Not>
+         <ogc:PropertyIsNull>
+           <ogc:PropertyName>cgf:id</ogc:PropertyName>
+         </ogc:PropertyIsNull>
+       </ogc:Not>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert handle="cgf:MPolygons">
+    <cgf:MPolygons>
+      <cgf:id>t0005</cgf:id>
+      <gml:multiPolygonProperty>
+        <gml:MultiPolygon srsName="EPSG:32615">
+          <gml:polygonMember>
+            <gml:Polygon>
+              <gml:outerBoundaryIs>
+                <gml:LinearRing>
+                  <gml:coordinates>500525,500025 500550,500050 500575,500025 500525,500025</gml:coordinates>
+                </gml:LinearRing>
+              </gml:outerBoundaryIs>
+            </gml:Polygon>
+          </gml:polygonMember>
+          <gml:polygonMember>
+            <gml:Polygon>
+              <gml:outerBoundaryIs>
+                <gml:LinearRing>
+                  <gml:coordinates>500525,500050 500525,500075 500550,500075 500550,500050 500525,500050</gml:coordinates>
+                </gml:LinearRing>
+              </gml:outerBoundaryIs>
+            </gml:Polygon>
+          </gml:polygonMember>
+        </gml:MultiPolygon>
+      </gml:multiPolygonProperty>
+    </cgf:MPolygons>
+  </wfs:Insert>
+
+  <!-- InsertFeature test data -->
+  <wfs:Delete typeName="cdf:Inserts">
+  	<ogc:Filter>
+  		<ogc:PropertyIsNotEqualTo>
+  			<ogc:PropertyName>cdf:id</ogc:PropertyName>
+  			<ogc:Literal>XXXXXXXXXXXXXXXX</ogc:Literal>
+  		</ogc:PropertyIsNotEqualTo>
+    </ogc:Filter>
+  </wfs:Delete>
+  <!-- DeleteFeature test data -->
+  <wfs:Delete typeName="cdf:Deletes">
+  	<ogc:Filter>
+  		<ogc:PropertyIsNotEqualTo>
+  			<ogc:PropertyName>cdf:id</ogc:PropertyName>
+  			<ogc:Literal>XXXXXXXXXXXXXXXX</ogc:Literal>
+  		</ogc:PropertyIsNotEqualTo>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert>
+    <cdf:Deletes>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <cdf:id>td0001</cdf:id>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Deletes>
+    <cdf:Deletes>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <cdf:id>td0002</cdf:id>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Deletes>
+    <cdf:Deletes>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <cdf:id>td0003</cdf:id>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Deletes>
+  </wfs:Insert>
+  <!-- UpdateFeature test data -->
+  <wfs:Delete typeName="cdf:Updates">
+  	<ogc:Filter>
+  		<ogc:PropertyIsNotEqualTo>
+  			<ogc:PropertyName>cdf:id</ogc:PropertyName>
+  			<ogc:Literal>XXXXXXXXXXXXXXXX</ogc:Literal>
+  		</ogc:PropertyIsNotEqualTo>
+    </ogc:Filter>
+  </wfs:Delete>
+  <wfs:Insert>
+    <cdf:Updates>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <cdf:id>tu0001</cdf:id>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Updates>
+    <cdf:Updates>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <cdf:id>tu0002</cdf:id>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Updates>
+    <cdf:Updates>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <cdf:id>tu0003</cdf:id>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Updates>
+    <cdf:Updates>
+      <gml:boundedBy>
+        <gml:Box srsName="EPSG:32615">
+          <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
+        </gml:Box>
+      </gml:boundedBy>
+      <cdf:id>tu0004</cdf:id>
+      <gml:pointProperty>
+        <gml:Point srsName="EPSG:32615">
+          <gml:coordinates>500050,500050</gml:coordinates>
+        </gml:Point>
+      </gml:pointProperty>
+    </cdf:Updates>
+  </wfs:Insert>
+</wfs:Transaction>
+

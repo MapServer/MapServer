@@ -1,0 +1,41 @@
+1.0.0
+ - Configuration change with broken backward compatibility:
+    * default config file is now /etc/tinyows.xml
+    * default schema dir is now $PREFIX/share/tinyows/schema 
+    * rename server and prefix to ns_uri ans ns_prefix
+    * rename wfs_display_bbox to display_bbox
+ - Encoding support, written by Carlos Ruiz: cruizch@gmail.com
+ - Estimated_bbox option for GetCapabilities response (default is false)
+ - Schema cache for fast-cgi mode (huge performance improvement on transaction operations)
+ - Improve drasticaly GetCapabilities performance on huge layer (Thanks to Nicklas Aven for report)
+ - Add ability to use different names for layer and storage table (table property)
+ - Mapfile config file support (use related TINYOWS_MAPFILE env. var)
+ - Debug option available from configure step (--enable-debug) 
+ - Improve result from --check option 
+ - Add wfs_default_version config file option, to set server default WFS Version
+ - Add gml_ns config file option, to set if any, layers properties using GML namespace
+ - Add log_level config file option, to allow more granularity in log output
+ - PostGIS version init check (support 1.5 and coming 2.0)
+ - Update XSD schema (WFS, FE, GML), so need a new 'make install' step if you upgrade
+ - CITE WFS-T 1.0.0 SF-0 full compliant (require PostGIS 2.0)
+ - CITE WFS-T 1.1.0 SF-0 full compliant (require PostGIS 2.0)
+ - Lot of debug stuff (a special thanks to Boris Leukert, Jukka Rahkonen and Even Rouault for detailled reports)
+ - Security fixes (SQL Injection vulnerability - Reported by Even Rouault)
+
+
+0.9.0   (19/06/2010)
+ - Fast-CGI support
+ - Error log handle
+ - Improve --check behaviour
+ - And a still a lot of debug stuff
+
+0.8.0   (01/05/2010)
+ - PostgreSQL schema support 
+ - Command line --check option, to check configure stuff
+ - JSON output format for GetFeature (use OUTPUTFORMAT=application/json)
+ - PostGIS geography support (Need PostGIS 1.5) 
+ - Input request log mechanism
+ - Ability to deactivate XSD schema and/or OGC SFS validation 
+ - Up to date documentation and OpenLayers integration step by step HowTo
+ - Slighlty improve performance for GetFeature operation
+ - And a lot of debug stuff

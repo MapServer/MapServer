@@ -1,0 +1,214 @@
+
+########################################################################
+# nmake.opt - Tinyows configuration for MSVC++
+########################################################################
+
+########################################################################
+# Section I: Tinyows Compilation Options
+########################################################################
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Uncomment the following if you are building for 64-bit windows
+# (x64). You'll need to have PATH, INCLUDE and LIB set up for 64-bit
+# compiles.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#WIN64=YES
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Check compiler version given in command line
+# nmake -f makefile.vc MSVC_VER=xxxx
+# 1310 = 7.1 (2003)   1400 = 8.0 (2005)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!IFNDEF MSVC_VER
+#assume msvc 7.1
+MSVC_VER=1310
+!ENDIF
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# File locations and where to install things
+# ----------------------------------------------------------------------
+# If you are using the MapServer Build Kit, almost everything should be
+# relative to this directory throughout this option file.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Set the following to point to the directory adjacent to the dependent libs.
+!IFNDEF TINY_BASE
+TINY_BASE =  C:\build\release-1400-dev\tinyows-svn
+#TINY_BASE =  .
+!ENDIF
+
+# Set the following to point to the current (tinyows) directory.
+!IFNDEF TINY_CURRENT
+TINY_CURRENT = $(TINY_BASE)
+!ENDIF
+
+!IFNDEF BINDIR
+BINDIR = $(TINY_BASE)\..\bin
+!ENDIF
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Optmization, debug, and related compile flags.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+!IF $(MSVC_VER) == 1400
+# Optimized, with using MSVCRT.
+OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+# Debug with MSVCRT
+#OPTFLAGS = /nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG) /EHsc /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE
+#LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+!ELSE
+# Optimized, with using MSVCRT.
+OPTFLAGS =	/nologo /Ox /MD $(WARNING_LEVEL) $(DEBUG) /EHsc
+# Debug with MSVCRT
+#OPTFLAGS = /nologo /Zi /MDd $(WARNING_LEVEL) $(DEBUG) /EHsc
+#LDFLAGS =  /NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /DEBUG
+!ENDIF
+
+# Set the Warning level for the compiler (defaults to W1)
+WARNING_LEVEL=/W3
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Debugging Options
+# ----------------------------------------------------------------------
+#NEED_NONBLOCKING_STDERR=-DNEED_NONBLOCKING_STDERR
+ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
+
+# Set the linker debug option
+LDEBUG=/debug
+
+# DEBUG Build flags
+# Set the DEBUG flag if you wish to make a debug build
+DEBUG=/DDEBUG
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# String methods
+# ----------------------------------------------------------------------
+# Apparently these aren't as commonplace. Edit the
+# following line to reflect the missing functions on your platform.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
+STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRLCAT -DNEED_STRRSTR
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Direct connectivity to Postgresql PostGIS.
+# ----------------------------------------------------------------------
+# To turn on direct connectivity to Postgresql PostGIS uncomment the following
+# flag and set the full path name to the project directory for the
+# Postgresql native Win32 client library.
+# See http://www.postgresql.org for support library.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+POSTGIS =-DUSE_POSTGIS
+POSTGIS_DIR =$(TINY_BASE)\..\release-1400\postgresql-8.3.3
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# LIBXML: utility library to write xml.
+# http://xmlsoft.org/index.html
+# WFS, WCS and SOS all need this flag to be activated
+# NOTE: ICONV is required when libxml2 is activated
+# ----------------------------------------------------------------------
+XML2_ENABLED=-DUSE_LIBXML2
+LIBXML_DIR=$(TINY_BASE)\..\release-1400
+
+
+########################################################################
+# Section II: Mapserver Rendering Configuration
+########################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ICONV
+# ----------------------------------------------------------------------
+#libiconv support is used for to support double bytes (see bug 911).
+#uncomment the following to build with libiconv support.
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ICONV=-DUSE_ICONV
+ICONV_DIR=$(TINY_BASE)\..\release-1400
+
+########################################################################
+# Section VI: Support Libraries.
+########################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# REGEX Libary
+# ----------------------------------------------------------------------
+# VC++ does not include the REGEX library... so we must provide our one.
+# The following definitions will try to build GNU regex-0.12 located in the
+# regex-0.12 sub-directory.
+# If it was not included in the source distribution, then you can get it from:
+#    ftp://ftp.gnu.org/pub/gnu/regex/regex-0.12.tar.gz
+# Provide the full path to the REGEX project directory
+# You do not need this library if you are compiling for PHP mapscript.
+# In that case the PHP regex library will be used instead
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!IFNDEF PHP_REGEX
+REGEX_DIR=$(TINY_BASE)\..\regex-0.12
+!ENDIF
+
+
+########################################################################
+# Section VII: Variable Setup
+########################################################################
+# Should not need to be updated.
+########################################################################
+TINY_LIB =    tiny.lib
+
+#libiconv support
+!IFDEF ICONV
+ICONV_LIB=$(ICONV_DIR)\lib\iconv.lib
+ICONV_INC= -I$(ICONV_DIR)\include
+!ENDIF
+
+# LIBXML include and library
+!IFDEF XML2_ENABLED
+LIBXML_INC = -I$(LIBXML_DIR)/include/libxml
+LIBXML_LIB = $(LIBXML_DIR)/lib/libxml2.lib
+!ENDIF
+
+# Setup REGEX object and includes
+!IFNDEF PHP_REGEX
+REGEX_OBJ=$(REGEX_DIR)\regex.obj
+REGEX_INC=-I$(REGEX_DIR)
+!ELSE
+REGEX_OBJ=$(PHP_HOME)\regex\regcomp.obj $(PHP_HOME)\regex\regerror.obj \
+          $(PHP_HOME)\regex\regexec.obj $(PHP_HOME)\regex\regfree.obj
+REGEX_INC=-I$(PHP_HOME)/regex -DPHP_NO_ALIASES
+!ENDIF
+
+# REGEX needs some special flags... here they are for VC++ 6.0
+REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
+
+# Setup Postgesql PostGIS includes and libs
+!IFDEF POSTGIS
+!IFNDEF PHP_BUILD_CALL
+# If we're building PHP MapScript, there is a macro conflict
+POSTGIS_INC=-I$(POSTGIS_DIR)/src/interfaces/libpq -I$(POSTGIS_DIR)/src/include
+!ENDIF
+POSTGIS_LIB=$(POSTGIS_DIR)/src/interfaces/libpq/release/libpqdll.lib
+!ENDIF
+
+#######################################################################
+# Section IX: Collect compiler flags
+########################################################################
+# Should not need to be updated.
+########################################################################
+
+!IFNDEF EXTERNAL_LIBS
+EXTERNAL_LIBS=$(POSTGIS_LIB) $(ERR_LIB) $(ICONV_LIB) $(LIBXML_LIB)
+!ENDIF
+
+LIBS=$(TINY_LIB) $(EXTERNAL_LIBS)
+
+!IFNDEF INCLUDES
+INCLUDES=$(REGEX_INC) $(POSTGIS_INC) $(ICONV_INC) $(LIBXML_INC)
+!ENDIF
+
+
+TINY_DEFS =$(REGEX_OPT) $(STRINGS) $(POSTGIS) $(NEED_NONBLOCKING_STDERR) \
+          $(ENABLE_STDERR_DEBUG) $(ICONV) $(XML2_ENABLED)
+
+
+
+!IFDEF WIN64
+TINY_CFLAGS=$(INCLUDES) $(TINY_DEFS) -DWIN32 -D_WIN32 -DUSE_GENERIC_MS_NINT
+!ELSE
+TINY_CFLAGS=$(INCLUDES) $(TINY_DEFS) -DWIN32 -D_WIN32
+!ENDIF

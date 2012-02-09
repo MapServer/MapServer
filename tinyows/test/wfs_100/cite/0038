@@ -1,0 +1,2 @@
+service=WFS&version=0.99.99&request=GetCapabilities
+

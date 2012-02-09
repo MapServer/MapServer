@@ -1,0 +1,196 @@
+AC_INIT()
+AC_CHECK_FUNCS()
+
+dnl ---------------------------------------------------------------------
+dnl Look for libxml2
+dnl ---------------------------------------------------------------------
+
+AC_ARG_WITH(xml2-config,
+[  --with-xml2-config=PATH Specify path to xml2-config.],,)
+
+if test "$with_xml2_config" = "no" ; then
+  AC_MSG_ERROR([LibXML2 support is a need to TinyOWS !])
+fi
+
+if test "`basename xx/$with_xml2_config`" = "xml2-config" ; then
+  LIBXML2_CONFIG="$with_xml2_config"
+  if ! test -f "$LIBXML2_CONFIG" -a -x "$LIBXML2_CONFIG" ; then
+    AC_MSG_ERROR(['$LIBXML2_CONFIG' is not an executable.  Make sure you use --with-xml2-config=/path/to/xml2-config])
+  fi
+else
+  AC_PATH_PROG(LIBXML2_CONFIG, xml2-config, no)
+fi
+
+if test "$LIBXML2_CONFIG" = "no" ; then
+ AC_MSG_ERROR([couldn't find xml2-config, try using --with-xml2-config=PATH])
+fi
+
+XML2_VER=`$LIBXML2_CONFIG --version`
+AC_MSG_RESULT([checking for libxml2 version... $XML2_VER])
+
+xml2_vers=`$LIBXML2_CONFIG --version | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
+if test "$xml2_vers" -lt 2006020 ; then
+	AC_MSG_ERROR([You need at least libxml 2.6.20])
+fi
+
+
+
+XML2_INC=`$LIBXML2_CONFIG --cflags`
+XML2_LIB=`$LIBXML2_CONFIG --libs`
+
+AC_SUBST(XML2_INC)
+AC_SUBST(XML2_LIB)
+
+
+dnl ---------------------------------------------------------------------
+dnl Debug
+dnl ---------------------------------------------------------------------
+
+AC_ARG_ENABLE(debug,
+[  --enable-debug          enable debug mode], TINYOWS_DEBUG=1, TINYOWS_DEBUG=0)
+AC_SUBST(TINYOWS_DEBUG)
+
+
+dnl ---------------------------------------------------------------------------
+dnl svnversion
+dnl ---------------------------------------------------------------------------
+AC_CHECK_PROG(svnversion, svnversion, yes)
+if test "$svnversion" = "yes"; then
+	SVN_FLAGS='"-D TINYOWS_SVN_REV=\"$(shell svnversion -n .)\""'
+	AC_SUBST(SVN_FLAGS)
+fi
+
+
+dnl ---------------------------------------------------------------------------
+dnl PostgreSQL / PostGIS support
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(pg_config,[  --with-pg_config[[=ARG]]  Include PostGIS Support (ARG=yes/path to pg_config)],,)
+
+if test "$with_pg_config" = "no" ; then
+  AC_MSG_ERROR([PostGIS support is a need to TinyOWS !])
+elif test "$with_pg_config" = "yes" -o "$with_pg_config" = "" ; then
+  AC_PATH_PROG(PG_CONFIG, pg_config, no)
+else
+  AC_MSG_RESULT(yes)
+  PG_CONFIG=$with_pg_config
+fi
+
+if ! test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
+  AC_MSG_ERROR(['$PG_CONFIG' is not an executable.  Make sure you use --with-pg_config=/path/to/pg_config])
+fi
+
+PG_VER=`$PG_CONFIG --version`
+AC_MSG_RESULT([checking for PostgreSQL version... $PG_VER])
+
+pg_vers=`$PG_CONFIG --version | sed 's/PostgreSQL //' | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
+if test "$pg_vers" -lt 8001000 ; then
+	AC_MSG_ERROR([You need at least PostgreSQL 8.1.0])
+fi
+
+
+POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
+POSTGIS_INC="-I`$PG_CONFIG --includedir`"
+POSTGIS_SHARE=`$PG_CONFIG --sharedir`
+POSTGIS_BIN=`$PG_CONFIG --bindir`
+
+AC_SUBST(POSTGIS_INC)
+AC_SUBST(POSTGIS_LIB)
+AC_SUBST(POSTGIS_SHARE)
+AC_SUBST(POSTGIS_BIN)
+
+
+dnl ---------------------------------------------------------------------------
+dnl Shp2PgSQL
+dnl ---------------------------------------------------------------------------
+AC_ARG_WITH(shp2pgsql,[  --with-shp2pgsql[[=ARG]]  shp2pgsql directory Support (ARG=path to shp2pgsql)],,)
+
+if test "$with_shp2gpsql" = "no" ; then
+  AC_MSG_ERROR([shp2pgsql is a need to TinyOWS !])
+elif test "$with_shp2pgsql" = "yes" -o "$with_shp2pgsql" = "" ; then
+  AC_PATH_PROG(SHP2PGSQL, shp2pgsql, no)
+else
+  AC_MSG_RESULT(yes)
+  SHP2PGSQL=$with_shp2pgsql
+fi
+
+if ! test -f "$SHP2PGSQL" -a -x "$SHP2PGSQL" ; then
+  AC_MSG_ERROR(['$SHP2PGSQL' is not an executable.  Make sure you use --with-shp2pgsql=/path/to/shp2pgsql])
+fi
+
+AC_SUBST(SHP2PGSQL)
+
+
+dnl ---------------------------------------------------------------------------
+dnl Flex check
+dnl ---------------------------------------------------------------------------
+AC_PROG_LEX
+if test "$LEX" != flex; then
+  AC_MSG_ERROR("TinyOWS: Need flex to compile")
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl FastCGI
+dnl ---------------------------------------------------------------------------
+
+USE_FCGI=0
+AC_ARG_WITH(fastcgi,
+	    [  --with-fastcgi[[=ARG]]    Include FastCGI support: recommanded (ARG=no/path to fastcgi dir)],
+	    [FCGI_PATH="$withval"], [FCGI_PATH=""]) 
+
+
+if test "x$FCGI_PATH" != "x"; then
+        AC_MSG_RESULT([checking user-specified fast-cgi location: $FCGI_PATH])
+        FCGI_INC="-I$FCGI_PATH/include"
+        FCGI_LIB="-L$FCGI_PATH/lib"
+fi
+
+
+if test "x$FCGI_PATH" != "xno"; then
+	AC_CHECK_LIB(fcgi, FCGI_Accept, [
+ 		AC_CHECK_HEADERS([fcgi_config.h fcgi_stdio.h],[
+   		USE_FCGI=1
+ 		])
+	])
+
+	dnl Some platforms use fastcgi subdir in include  
+	if test "$USE_FCGI" = "0" ; then
+		echo "checking now FCGI in alternate fastcgi include dir"
+		AC_CHECK_LIB(fcgi, FCGI_Accept, [
+ 			AC_CHECK_HEADERS([fastcgi/fcgi_config.h fastcgi/fcgi_stdio.h],[
+   			USE_FCGI=1
+ 			])
+		])
+		if test "x$FCGI_PATH" != "x"; then
+        		FCGI_INC="-I$FCGI_PATH/include/fastcgi"
+		else
+        		FCGI_INC="-I/usr/include/fastcgi"
+		fi
+	fi
+fi
+
+
+
+if test "$USE_FCGI" = "0" ; then
+  AC_MSG_WARN([No FastCGI support. Performances will be strongly reduced !])
+else
+  FCGI_LIB="$FCGI_LIB -lfcgi"
+fi
+
+AC_SUBST(FCGI_INC)
+AC_SUBST(FCGI_LIB)
+AC_SUBST(USE_FCGI)
+
+
+
+AC_OUTPUT(Makefile src/ows_define.h demo/tinyows.xml demo/install.sh test/wfs_100/config_wfs_100.xml test/wfs_110/config_wfs_110.xml test/wfs_100/install_wfs_100.sh test/wfs_110/install_wfs_110.sh test/regress/install.sh test/regress/config.xml)
+
+rm -rf autom4te.cache
+rm -f config.log config.status
+
+echo "------------------------"
+echo "NOTA: This TinyOWS version will need at least PostGIS 1.5.x"
+echo "------------------------"
+echo "IMPORTANT: Make sure that you read:"
+echo "<http://tinyows.org/trac/wiki/LibxmlSchemaGmlBug>"
+echo "------------------------"

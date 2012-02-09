@@ -1,0 +1,1 @@
+service=wfs&version=1.1.0&request=GetFeature&typename=utm_point&bbox=380000,830000,390000,840000

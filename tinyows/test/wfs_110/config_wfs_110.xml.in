@@ -1,0 +1,38 @@
+<!-- TinyOWS WFS 1.1.0 OGC CITE configuration -->
+
+<!-- BEGIN configuration -->
+<tinyows
+  online_resource="http://127.0.0.1/cgi-bin/tinyows"
+  schema_dir="@prefix@/share/tinyows/schema/"
+  check_schema="0">
+
+  <pg 
+    host="127.0.0.1" 
+    user="postgres" 
+    password="postgres" 
+    dbname="tinyows_test" 
+    port="5432" 
+    encoding="LATIN1"/>
+<!-- END configuration -->
+
+<!-- Don't need to change anything below this point -->
+  <metadata
+    name="TinyOWS-OGC-CITE"
+    title="TinyOWS - OGC CITE Test">
+  </metadata>
+
+  <contact name="TinyOWS Server"
+           site="http://www.tinyows.org/"
+           email="tinyows-users@lists.maptools.org" />
+
+  <layer name="SimpleFeatures" title="features110"
+         ns_prefix="sf" ns_uri="http://cite.opengeospatial.org/gmlsf"
+         retrievable="1" writable="1" srid="4326">
+
+       <layer name="AggregateGeoFeature" title="AggregateGeoFeature" gml_ns="description,name" />
+       <layer name="EntitéGénérique" title="EntitéGénérique" gml_ns="description,name" />
+       <layer name="PrimitiveGeoFeature" title="PrimitiveGeoFeature" gml_ns="description,name" />
+
+  </layer>
+
+</tinyows>

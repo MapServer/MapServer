@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.opengis.net/ows" 
+xmlns:ows="http://www.opengis.net/ows" 
+xmlns="http://www.w3.org/2001/XMLSchema" 
+elementFormDefault="qualified" version="1.0.0 2010-01-30" xml:lang="en">
+	<annotation>
+		<appinfo>owsAll.xsd 2010-01-30</appinfo>
+		<documentation>This XML Schema Document includes and imports, directly and indirectly, all the XML Schemas defined by the OWS Common Implemetation Specification.
+		
+		OWS is an OGC Standard.
+		Copyright (c) 2005,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+		To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+		</documentation>
+	</annotation>
+	<!-- ==============================================================
+		includes and imports
+	============================================================== -->
+	<include schemaLocation="owsGetCapabilities.xsd"/>
+	<include schemaLocation="owsExceptionReport.xsd"/>
+</schema>

@@ -1,0 +1,2 @@
+request=DescribeFeatureType&service=WFS&version=1.1.0&outputformat=text%2Fxml%3B+subtype%3Dgml%2F2.1.2
+

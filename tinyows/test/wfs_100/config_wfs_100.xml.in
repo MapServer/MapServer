@@ -1,0 +1,51 @@
+<!-- TinyOWS WFS 1.0.0 OGC CITE configuration -->
+
+<!-- BEGIN configuration -->
+<tinyows
+  online_resource="http://127.0.0.1/cgi-bin/tinyows"
+  schema_dir="@prefix@/share/tinyows/schema/"
+  check_valid_geom="0">
+
+  <pg 
+    host="127.0.0.1" 
+    user="postgres" 
+    password="postgres" 
+    dbname="tinyows_test" 
+    port="5432" />
+<!-- END configuration -->
+
+<!-- Don't need to change anything below this point -->
+  <metadata
+    name="TinyOWS-OGC-CITE"
+    title="TinyOWS - OGC CITE Test">
+  </metadata>
+
+  <contact name="TinyOWS Server"
+           site="http://www.tinyows.org/"
+           email="tinyows-users@lists.maptools.org" />
+
+  <layer name="OGCfeatures" title="OGCfeatures" srid="32615"
+         ns_prefix="cdf" ns_uri="http://www.opengis.net/cite/data" 
+         retrievable="1" writable="1">
+       <layer name="Nulls" title="Nulls" gml_ns="boundedBy,name,description,pointProperty" />
+       <layer name="Seven" title="Seven" gml_ns="boundedBy,name,pointProperty" />
+       <layer name="Fifteen" title="Fifteen" gml_ns="boundedBy,name,pointProperty" />
+       <layer name="Other" title="Other" gml_ns="boundedBy,name,description,pointProperty" />
+       <layer name="Inserts" title="Inserts" gml_ns="boundedBy,pointProperty" />
+       <layer name="Updates" title="Updates" gml_ns="boundedBy,pointProperty" />
+       <layer name="Deletes" title="Deletes" gml_ns="boundedBy,pointProperty" />
+       <layer name="Locks" title="Locks" gml_ns="boundedBy,pointProperty" />
+   </layer>
+
+   <layer name="OGCgeometries" title="OGCgeometries" srid="32615"
+          ns_prefix="cgf" ns_uri="http://www.opengis.net/cite/geometry"
+          retrievable="1" writable="1">
+       <layer name="Points" title="Points" gml_ns="pointProperty" />
+       <layer name="Lines" title="Lines" gml_ns="lineStringProperty" />
+       <layer name="Polygons" title="Polygons" gml_ns="polygonProperty" />
+       <layer name="MPoints" title="MPoints" gml_ns="multiPointProperty" />
+       <layer name="MLines" title="MLines" gml_ns="multiLineStringProperty" />
+       <layer name="MPolygons" title="MPolygons" gml_ns="multiPolygonProperty" />
+   </layer>
+
+</tinyows>

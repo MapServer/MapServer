@@ -1,0 +1,130 @@
+#!/bin/sh
+
+
+#
+# DO NOT call this file directly, use make check or make valgrind instead.
+#
+
+path=$1
+mode=$2
+file_tmp=._file_tmp
+list_tmp=._list_tmp
+sed_tmp=._sed_tmp
+
+#valgrind_opt="--run-libc-freeres=no --show-reachable=yes --gen-suppressions=yes"
+valgrind_opt="--run-libc-freeres=no --show-reachable=yes"
+valgrind_all=$valgrind_opt" --leak-check=yes "
+
+# Check tinyows binary
+if [ ! -x ./tinyows ]; then
+	echo "No tinyows binary founded, try to run 'make' before !"
+	exit 1
+fi
+
+# Check tinyows binary
+if [ $mode -eq 1 ]; then
+	if [ ! -x `which valgrind` ]; then
+		echo "No valgrind binary founded !"
+		exit 1
+	fi
+fi
+
+
+# Create unit test list
+rm -f $list_tmp
+for file in `ls $1`; do
+	if [ -f $1/$file ]; then
+		echo $1/$file >> $list_tmp
+	elif [ -f $1 ]; then
+		echo $1 >> $list_tmp
+	fi
+done
+
+# remove .out and LIST files if any
+sed "/.*\.out$/d" $list_tmp > $sed_tmp && mv $sed_tmp $list_tmp
+sed "/LIST$/d" $list_tmp > $sed_tmp && mv $sed_tmp $list_tmp
+	
+# run into the created list
+for unit_id in `cat $list_tmp`; do
+
+option=`cat $unit_id`
+export QUERY_STRING=$option
+
+# Valgrind resume mode
+if [ $mode -eq 1 ]; then
+    valgrind $valgrind_all ./tinyows 2> $file_tmp 1> /dev/null
+    valgrind_error=`grep ERROR $file_tmp                                  \
+	    	    | sed -e 's/^==[0-9]\+== ERROR SUMMARY: //g'          \
+	  	          -e 's/from.\+$//'                               \
+			  -e 's/ errors //'`
+   valgrind_report=`(grep "definitely lost: 0 bytes in 0 blocks" $file_tmp && grep "indirectly lost: 0 bytes in 0 blocks" $file_tmp && grep "possibly lost: 0 bytes in 0 blocks" $file_tmp && grep "still reachable: 0 bytes in 0 blocks" $file_tmp) | wc -l` 
+   valgrind_noleak=`(grep "All heap blocks were freed -- no leaks are possible" $file_tmp) | wc -l` 
+			
+    echo -n "$unit_id		-> $valgrind_error errors "
+
+    if [ $valgrind_noleak -eq 1 -o $valgrind_report -eq 4 ] ; then
+      echo " |  No leak detected"
+    else
+      echo " |  Memory leak detected"
+    fi
+    rm -f $file_tmp
+    
+# Valgrind error mode
+elif [ $mode -eq 2 ]; then
+    valgrind -v $valgrind_opt ./tinyows
+
+# Valgrind leak mode
+elif [ $mode -eq 3 ]; then
+    valgrind -v $valgrind_all ./tinyows
+
+# Stdout mode
+elif [ $mode -eq 4 ]; then
+    ./tinyows
+
+# http mode
+elif [ $mode -eq 5 ]; then
+echo $unit_id
+    if [ ! $TINYOWS_CONFIG_FILE ]; then
+	TINYOWS_CONFIG_FILE=/etc/tinyows.xml
+    fi
+    IP=`grep online_resource $TINYOWS_CONFIG_FILE | sed -e 's/.*online_resource="//' -e 's/".*//'`
+    FIRST_CHAR=`cat $unit_id | sed -e '2,$d' -e 's/\(.\).*/\1/'` 
+    if [ $FIRST_CHAR = '<' ]; then
+        curl -D /tmp/$unit_id -s -i -H "Content-Type: text/xml" --data @$unit_id $IP
+    else
+        QUERY=`cat $unit_id`
+        curl -D /tmp/$unit_id -s -i "$IP?$QUERY"
+    fi
+
+# Exception mode
+elif [ $mode -eq 6 ]; then
+    ows_ret=`./tinyows 2> /dev/null | grep ExceptionText`
+    if [ "$ows_ret" ]; then
+	    echo -n "$unit_id  -> "
+	    echo $ows_ret | sed -e 's/<\/ExceptionText>//' -e 's/<ExceptionText>//'
+    fi
+
+# stderr mode
+elif [ $mode -eq 7 ]; then
+    ./tinyows > /dev/null 2> $file_tmp
+    ows_ret=`cat $file_tmp`
+    if [ "$ows_ret" ]; then
+	    echo "$unit_id => stderr"
+    fi
+    rm -f $file_tmp
+
+
+# regression test mode
+elif [ $mode -eq 8 ]; then
+    path=`dirname $unit_id`
+    ows_ret=`./tinyows > $file_tmp && diff $file_tmp $unit_id.out | wc -l`
+    if [ "$ows_ret" -eq "0" ]; then
+	    echo "$unit_id => OK"
+    else
+	    echo "$unit_id => ERROR"
+    fi
+    rm -f $file_tmp
+fi
+
+done
+rm -f $list_tmp

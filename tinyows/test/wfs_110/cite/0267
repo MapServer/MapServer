@@ -1,0 +1,2 @@
+service=WFS&version=1.1.0&request=GetFeature&typename=sf:PrimitiveGeoFeature&namespace=xmlns(sf=http://cite.opengeospatial.org/gmlsf)&filter=<ogc:Filter%20xmlns:gml="http://www.opengis.net/gml"%20xmlns:ogc="http://www.opengis.net/ogc"><ogc:PropertyIsEqualTo><ogc:PropertyName>gml:description</ogc:PropertyName><ogc:Literal>description-f008</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>
+

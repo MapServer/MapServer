@@ -1,0 +1,148 @@
+- WFS 100
+  - bbox with crsuri -> ERROR
+  - srsName different than layer one ?
+  - bbox and srsname different -> ERROR
+  - eastern 
+  - no revert if long crsuri
+
+
+- WFS 110 
+  - GetFeature - No Bbox - srsName 
+    - No reprojection (same srsName than the data stored)
+      - WGS84
+        - Short srs -> 110A01
+        - Long srs  -> 110A02
+      - UTM  
+        - Short srs -> 110A03
+        - Long srs  -> 110A04
+      - Eastern
+        - Short srs -> 110A05 
+        - Long srs  -> 110A06
+
+  - GetFeature - Bbox - No srsName
+    - WGS84 
+      - Bbox IN
+        - No crsuri    -> 110B01
+        - Short crsuri -> 110B02
+        - Long crsuri  -> 100B03 
+      - Bbox OUT
+        - No crsuri    -> 110B04
+        - Short crsuri -> 110B05
+        - Long crsuri  -> 100B06 
+      - Bbox reversed axis (so OUT) 
+        - No crsuri    -> 110B07
+        - Short crsuri -> 110B08
+        - Long crsuri  -> 100B09 
+          
+    - UTM  
+      - Bbox IN
+        - No crsuri    -> 110B21   (so OUT)
+        - Short crsuri -> 110B22 
+        - Long crsuri  -> 100B23 
+      - Bbox OUT
+        - No crsuri    -> 110B24
+        - Short crsuri -> 110B25
+        - Long crsuri  -> 100B26 
+      - Bbox reversed axis (so OUT) 
+        - No crsuri    -> 110B27
+        - Short crsuri -> 110B28
+        - Long crsuri  -> 100B29 
+
+    - Eastern  
+      - Bbox IN
+        - No crsuri    -> 110B41   (so OUT)
+        - Short crsuri -> 110B42
+        - Long crsuri  -> 100B43 
+      - Bbox OUT
+        - No crsuri    -> 110B44
+        - Short crsuri -> 110B45
+        - Long crsuri  -> 100B46 
+      - Bbox reversed axis (so OUT) 
+        - No crsuri    -> 110B47
+        - Short crsuri -> 110B48
+        - Long crsuri  -> 100B49 
+
+  - GetFeature - No Bbox - srsName 
+    - Reprojection to WGS84
+      - UTM  
+        - Short srs -> 110C01
+        - Long srs  -> 110C02
+      - Eastern
+        - Short srs -> 110C03 
+        - Long srs  -> 110C04
+
+    - Reprojection to UTM
+      - WGS84  
+        - Short srs -> 110C11
+        - Long srs  -> 110C12
+      - Eastern
+        - Short srs -> 110C13 
+        - Long srs  -> 110C14
+
+    - Reprojection to Eastern
+      - WGS84  
+        - Short srs -> 110C21
+        - Long srs  -> 110C22
+      - UTM
+        - Short srs -> 110C23 
+        - Long srs  -> 110C24
+
+  - GetFeature - Bbox (no crsuri) same than data srs - srsName with reprojection 
+      - WGS84 - BBOX IN - TO UTM
+        - Short srs -> 110D01
+        - Long srs  -> 110D02
+      - WGS84 - BBOX IN - TO Eastern
+        - Short srs -> 110D03
+        - Long srs  -> 110D04
+      - UTM - BBOX IN (but OUT as no crsuri) TO WGS84
+        - Short srs -> 110D05
+        - Long srs  -> 110D06
+      - UTM - BBOX IN (but OUT as no crsuri) TO Eastern
+        - Short srs -> 110D07
+        - Long srs  -> 110D08
+      - Eastern - BBOX IN (but OUT as no crsuri) TO WGS84
+        - Short srs -> 110D09
+        - Long srs  -> 110D10
+      - Eastern - BBOX IN (but OUT as no crsuri) TO UTM
+        - Short srs -> 110D11
+        - Long srs  -> 110D12
+          
+  - GetFeature - Bbox (crsuri) - srsName with reprojection (same than crsuri)
+      - WGS84 - BBOX IN and srsName in UTM
+        - Short srs -> 110D21
+        - Long srs  -> 110D22
+      - WGS84 - BBOX IN and srsName in Eastern
+        - Short srs -> 110D23
+        - Long srs  -> 110D24
+      - UTM - BBOX IN and srsName in WGS84
+        - Short srs -> 110D25
+        - Long srs  -> 110D26
+      - UTM - BBOX IN and srsName in Eastern
+        - Short srs -> 110D27
+        - Long srs  -> 110D28
+      - Eastern - BBOX IN and srsName in WGS84
+        - Short srs -> 110D29
+        - Long srs  -> 110D30
+      - Eastern - BBOX IN and srsName in UTM
+        - Short srs -> 110D31
+        - Long srs  -> 110D32
+
+  - GetFeature - Bbox (crsuri) - srsName with reprojection (different from crsuri)
+      - WGS84 - BBOX IN UTM TO Eastern 
+        - Short srs -> 110D41
+        - Long srs  -> 110D42
+      - WGS84 - BBOX IN Eastern TO UTM
+        - Short srs -> 110D43
+        - Long srs  -> 110D44
+      - UTM - BBOX IN WGS84 TO Eastern
+        - Short srs -> 110D45
+        - Long srs  -> 110D46
+      - UTM - BBOX IN Eastern TO UTM
+        - Short srs -> 110D47
+        - Long srs  -> 110D48
+      - Eastern - BBOX IN WGS84 TO UTM
+        - Short srs -> 110D49
+        - Long srs  -> 110D50
+      - Eastern - BBOX IN UTM TO WGS84
+        - Short srs -> 110D51
+        - Long srs  -> 110D52

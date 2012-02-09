@@ -1,0 +1,2 @@
+service=WFS&version=1.0.0&request=GetFeature&outputformat=GML2&typename=cdf:Other&filter=%3Cogc%3AFilter+xmlns%3Aogc%3D%22http%3A%2F%2Fwww.opengis.net%2Fogc%22+xmlns%3Acdf%3D%22http%3A%2F%2Fwww.opengis.net%2Fcite%2Fdata%22%3E%3Cogc%3APropertyIsNotEqualTo%3E%3Cogc%3APropertyName%3Ecdf%3Adates%3C%2Fogc%3APropertyName%3E%3Cogc%3ALiteral%3E2002-12-02%3C%2Fogc%3ALiteral%3E%3C%2Fogc%3APropertyIsNotEqualTo%3E%3C%2Fogc%3AFilter%3E
+

@@ -1,0 +1,16 @@
+=======
+1) Documentation HowTo Launch Demonstration
+=======
+Cf <http://tinyows.org/trac/tinyows/wiki/LaunchDemo>
+
+=======
+2) Datas
+=======
+World Administrative Boundaries
+http://www.cipotato.org/diva/data/misc/world_adm0.zip
+EPSG:4326
+-------
+France Sub Administrative boundaries
+http://professionnels.ign.fr/DISPLAY/000/526/741/5267418/GEOFLA-dep-L2-SF.ZIP
+EPSG:27582
+-------

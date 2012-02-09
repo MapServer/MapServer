@@ -1,0 +1,1 @@
+service=wfs&version=1.1.0&request=GetFeature&typename=wgs84_point&bbox=7830000,1380000,7840000,1390000,EPSG:32631&srsName=urn:ogc:def:crs:EPSG::32631

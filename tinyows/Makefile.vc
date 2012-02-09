@@ -1,0 +1,114 @@
+#
+# makefile.vc - Main Tinyows makefile for MSVC++
+#
+# This  VC++ makefile will build TINYOWS.EXES.
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id: $
+#
+TINYOWS_ROOT = .
+
+!INCLUDE nmake.opt
+
+BASE_CFLAGS = 	$(OPTFLAGS)
+
+CFLAGS=$(BASE_CFLAGS) $(TINY_CFLAGS)
+CC=     cl
+LINK=   link
+
+#
+# Main Tinyows library.
+#
+TINY_DLL = libtiny.dll
+
+TINY_OBJS = src\fe\fe_comparison_ops.obj src\fe\fe_error.obj src\fe\fe_filter.obj \
+            src\fe\fe_filter_capabilities.obj src\fe\fe_function.obj \
+            src\fe\fe_logical_ops.obj src\fe\fe_spatial_ops.obj \
+            src\mapfile\mapfile.obj \
+            src\ows\ows_bbox.obj src\ows\ows_libxml.obj src\ows\ows.obj src\ows\ows_config.obj \
+            src\ows\ows_error.obj src\ows\ows_geobbox.obj src\ows\ows_get_capabilities.obj \
+            src\ows\ows_layer.obj src\ows\ows_metadata.obj src\ows\ows_psql.obj \
+            src\ows\ows_request.obj src\ows\ows_srs.obj src\ows\ows_storage.obj  src\ows\ows_version.obj \
+            src\struct\alist.obj src\struct\array.obj src\struct\buffer.obj src\struct\cgi_request.obj \
+            src\struct\list.obj src\struct\mlist.obj src\struct\regexp.obj \
+            src\wfs\wfs_describe.obj src\wfs\wfs_error.obj src\wfs\wfs_get_capabilities.obj \
+            src\wfs\wfs_get_feature.obj src\wfs\wfs_request.obj src\wfs\wfs_transaction.obj \
+            $(REGEX_OBJ)
+    
+
+TINY_HDRS = 	src\ows_api.h src\ows_define.h src\ows\ows.h
+
+TINY_EXE = 	tinyows.exe 
+
+
+#
+#
+#
+default: 	all
+
+all:		$(TINY_LIB) $(TINY_EXE)
+
+$(TINY_OBJS):	$(TINY_HDRS)
+
+$(TINY_LIB):	ows_define.h $(TINY_OBJS)
+	lib /debug /out:$(TINY_LIB) $(TINY_OBJS)
+
+
+$(TINY_EXE): $(TINY_LIB)
+          $(CC) $(CFLAGS) src\ows\ows.c /Fetinyows.exe $(LIBS)
+	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+svn_update:
+        svn update
+
+.c.obj:
+	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
+
+.cpp.obj:
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
+
+ows_define.h:	src\ows_define.h.in
+	copy /y src\ows_define.h.in src\ows_define.h
+
+
+ms4w:   all
+        if EXIST builds rd /s /q builds  
+
+        mkdir builds
+        cd builds
+
+        svn export http://www.tinyows.org/svn/tinyows/ms4w
+        
+        cd ms4w\apps\tinyows-svn 
+        svn export http://www.tinyows.org/svn/tinyows/schema
+        svn export http://www.tinyows.org/svn/tinyows/demo
+
+        cd ..\..\..\..
+
+        copy /y tinyows.exe builds\ms4w\Apache\cgi-bin\ 
+
+        cd builds
+
+        zip -r -q -9 tinyows_ms4w-svn.zip ms4w
+ 
+clean:
+    del *.obj
+    del $(TINY_EXE)
+    del *.lib
+    del *.manifest
+    del src\fe\*.obj
+    del src\ows\*.obj
+    del src\struct\*.obj
+    del src\wfs\*.obj
+        
+
+install: $(TINY_EXE)
+	-mkdir $(BINDIR)
+	copy *.exe $(BINDIR)
+
+
+

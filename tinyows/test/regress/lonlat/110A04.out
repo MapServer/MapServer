@@ -1,0 +1,27 @@
+Content-Type: text/xml; subtype=gml/3.1.1
+
+<?xml version='1.0' encoding='UTF-8'?>
+<wfs:FeatureCollection
+ xmlns:tows='http://www.tinyows.org/'
+ xmlns:wfs='http://www.opengis.net/wfs'
+ xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+ xmlns:gml='http://www.opengis.net/gml'
+ xmlns:xsd='http://www.w3.org/2001/XMLSchema'
+ xmlns:ogc='http://www.opengis.net/ogc'
+ xmlns:xlink='http://www.w3.org/1999/xlink'
+ xmlns:ows='http://www.opengis.net/ows'
+ xsi:schemaLocation='http://www.tinyows.org/
+    http://127.0.0.1/cgi-bin/tinyows?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType&amp;Typename=tows:utm_point   http://www.opengis.net/wfs
+   http://schemas.opengis.net/wfs/1.1.0/wfs.xsd
+   http://www.opengis.net/gml
+   http://schemas.opengis.net/gml/3.1.1/base/gml.xsd'
+>
+<gml:boundedBy>
+  <gml:Envelope srsName="urn:ogc:def:crs:EPSG::32631"><gml:lowerCorner>7837461 1385320</gml:lowerCorner><gml:upperCorner>7837461 1385320</gml:upperCorner></gml:Envelope>
+</gml:boundedBy>
+  <gml:featureMember>
+   <tows:utm_point gml:id="utm_point.1">
+   <tows:the_geom><gml:Point srsName="urn:ogc:def:crs:EPSG::32631"><gml:pos>7837461 1385320</gml:pos></gml:Point></tows:the_geom>
+   </tows:utm_point>
+  </gml:featureMember>
+</wfs:FeatureCollection>

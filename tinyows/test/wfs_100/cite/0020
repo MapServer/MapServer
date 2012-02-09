@@ -1,0 +1,2 @@
+service=WFS&version=1.0.0&request=DescribeFeatureType&typename=Nulls,Seven,Fifteen,Other,Inserts,Updates,Deletes,Locks
+

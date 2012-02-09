@@ -1,0 +1,92 @@
+# compiler flags 
+CC=@CC@
+CFLAGS=@CFLAGS@ -ansi -pedantic -Wall
+
+# postgresql ... required
+POSTGIS_INC=@POSTGIS_INC@
+POSTGIS_LIB=@POSTGIS_LIB@
+PGFLAGS=$(POSTGIS_INC) $(POSTGIS_LIB)
+# libxml2 ... required
+XML2_INC=@XML2_INC@
+XML2_LIB=@XML2_LIB@
+XMLFLAGS=$(XML2_INC) $(XML2_LIB)
+
+# fast-cgi ... optional
+FCGI_INC=@FCGI_INC@
+FCGI_LIB=@FCGI_LIB@
+FCGIFLAGS=$(FCGI_INC) $(FCGI_LIB)
+
+# install path
+PREFIX=@prefix@
+
+# Revision number if subversion there
+SVN_FLAGS=@SVN_FLAGS@
+
+SRC=src/fe/fe_comparison_ops.c src/fe/fe_error.c src/fe/fe_filter.c src/fe/fe_filter_capabilities.c src/fe/fe_function.c src/fe/fe_logical_ops.c src/fe/fe_spatial_ops.c src/mapfile/mapfile.c src/ows/ows_bbox.c src/ows/ows.c src/ows/ows_config.c src/ows/ows_error.c src/ows/ows_geobbox.c src/ows/ows_get_capabilities.c src/ows/ows_layer.c src/ows/ows_metadata.c src/ows/ows_psql.c src/ows/ows_request.c src/ows/ows_srs.c src/ows/ows_storage.c src/ows/ows_version.c src/struct/alist.c src/struct/array.c src/struct/buffer.c src/struct/cgi_request.c src/struct/list.c src/struct/mlist.c src/struct/regexp.c src/wfs/wfs_describe.c src/wfs/wfs_error.c src/wfs/wfs_get_capabilities.c src/wfs/wfs_get_feature.c src/wfs/wfs_request.c src/wfs/wfs_transaction.c src/ows/ows_libxml.c
+
+all:
+	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(FCGIFLAGS) $(SVN_FLAGS) $(SRC) -o tinyows -lfl
+	@rm -rf tinyows.dSYM
+
+flex:
+	lex -i -osrc/mapfile/mapfile.c src/mapfile/mapfile.l
+
+svn-clean: clean doc-clean 
+	@find . -name '*~' -exec rm {} \;	
+	@rm -f configure
+
+clean: 
+	@rm -f tinyows Makefile src/ows_define.h
+	@rm -rf tinyows.dSYM
+	@rm -f demo/tinyows.xml demo/install.sh
+	@rm -f test/tinyows.xml test/install.sh
+
+install:
+	@echo "-----"
+	@echo "TinyOWS Schema install dir in $(PREFIX)/share/tinyows/schema"
+	mkdir -p $(PREFIX)/share/tinyows
+	rm -rf $(PREFIX)/share/tinyows/schema
+	cp -rf schema $(PREFIX)/share/tinyows/
+	@echo "-----"
+	@echo "Now:"
+	@echo " 1) copy 'tinyows' binary to cgi-bin directory"
+	@echo " 2) - put a workable tinyows.xml file in /etc dir"
+	@echo "    - OR launch 'make install-demo' as a superuser"
+
+install-demo:
+	@chmod +x demo/install.sh
+	@demo/install.sh
+	cp -i demo/tinyows.xml /etc/tinyows.xml
+
+install-test100:
+	@chmod +x test/wfs_100/install_wfs_100.sh
+	@test/wfs_100/install_wfs_100.sh
+	cp -i test/wfs_100/config_wfs_100.xml /etc/tinyows.xml
+
+install-test110:
+	@chmod +x test/wfs_110/install_wfs_110.sh
+	@test/wfs_110/install_wfs_110.sh
+	cp -i test/wfs_110/config_wfs_110.xml /etc/tinyows.xml
+
+install-regress:
+	@chmod +x test/regress/install.sh
+	@test/regress/install.sh
+	cp -i test/regress/config.xml /etc/tinyows.xml
+
+doc-clean:
+	@rm -rf doc/doxygen
+
+astyle:
+	astyle --style=kr --unpad=paren --indent=spaces=2 $(SRC)
+
+doxygen: doc-clean
+	@(which doxygen 2> /dev/null > /dev/null	\
+	&& mkdir -p doc/doxygen				\
+	&& doxygen doc/Doxyfile				\
+	) || echo "doxygen seems not installed"
+
+test-valgrind110:
+	@test/unit_test test/wfs_110/cite 1
+
+test-valgrind100:
+	@test/unit_test test/wfs_100/cite 1

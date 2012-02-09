@@ -1,0 +1,2 @@
+service=WFS&version=1.0.0&request=GetFeature&outputformat=GML2&typename=cdf:Nulls&filter=%3Cogc%3AFilter+xmlns%3Agml%3D%22http%3A%2F%2Fwww.opengis.net%2Fgml%22+xmlns%3Aogc%3D%22http%3A%2F%2Fwww.opengis.net%2Fogc%22+xmlns%3Acdf%3D%22http%3A%2F%2Fwww.opengis.net%2Fcite%2Fdata%22%3E%3Cogc%3APropertyIsNull%3E%3Cogc%3APropertyName%3Egml%3ApointProperty%3C%2Fogc%3APropertyName%3E%3C%2Fogc%3APropertyIsNull%3E%3C%2Fogc%3AFilter%3E
+
