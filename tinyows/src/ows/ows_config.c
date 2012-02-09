@@ -247,7 +247,7 @@ void ows_parse_config_abstract(ows * o, xmlTextReaderPtr r)
 		o->metadata->abstract = buffer_init();
 		buffer_add_str(o->metadata->abstract, (char *) v);
 		free(v);
-    }
+    	}
 }
 
 
