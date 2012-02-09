@@ -121,8 +121,8 @@ void ows_contact_free(ows_contact * contact)
 ows_meta *ows_metadata_init()
 {
 	ows_meta *metadata;
-	metadata = malloc(sizeof(ows_meta));
 
+	metadata = malloc(sizeof(ows_meta));
 	assert(metadata != NULL);
 
 	metadata->name = NULL;
@@ -183,13 +183,11 @@ void ows_metadata_free(ows_meta * metadata)
  */
 void ows_metadata_fill(ows * o, array * cgi)
 {
-	ows_meta *metadata;
 	buffer *b;
 
 	assert(o != NULL);
+	assert(o->metadata != NULL);
 	assert(cgi != NULL);
-
-	metadata = ows_metadata_init();
 
 	/* retrieve the requested service from request */
 	if (array_is_key(cgi, "xmlns"))
@@ -197,70 +195,42 @@ void ows_metadata_fill(ows * o, array * cgi)
 		b = array_get(cgi, "xmlns");
 		if (buffer_case_cmp(b, "http://www.opengis.net/wfs"))
 		{
-			metadata->type = buffer_init();
-			buffer_add_str(metadata->type, "WFS");
-			metadata->name = buffer_init();
-			buffer_add_str(metadata->name, "WFS");
-		}
-		else if (buffer_case_cmp(b, "http://www.opengis.net/wms"))
-		{
-			metadata->type = buffer_init();
-			buffer_add_str(metadata->type, "WMS");
-			metadata->name = buffer_init();
-			buffer_add_str(metadata->name, "WMS");
+			o->metadata->type = buffer_init();
+			buffer_add_str(o->metadata->type, "WFS");
+			o->metadata->name = buffer_init();
+			buffer_add_str(o->metadata->name, "WFS");
 		}
 	}
 	else if (array_is_key(cgi, "service"))
 	{
 		b = array_get(cgi, "service");
-		metadata->type = buffer_init();
-		buffer_copy(metadata->type, b);
-		metadata->name = buffer_init();
-		buffer_copy(metadata->name, b);
+		o->metadata->type = buffer_init();
+		buffer_copy(o->metadata->type, b);
+		o->metadata->name = buffer_init();
+		buffer_copy(o->metadata->name, b);
 	}
 	else
 	{
-		ows_metadata_free(metadata);
 		ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
 		   "service unknown", "service");
 	}
 
 	/* initialize supported versions from service type */
-	if (metadata->type != NULL)
+	if (o->metadata->type != NULL)
 	{
-		if (buffer_case_cmp(metadata->type, "WFS"))
+		if (buffer_case_cmp(o->metadata->type, "WFS"))
 		{
-			metadata->versions = list_init();
-			list_add_str(metadata->versions, "1.0.0");
-			list_add_str(metadata->versions, "1.1.0");
+			o->metadata->versions = list_init();
+			list_add_str(o->metadata->versions, "1.0.0");
+			list_add_str(o->metadata->versions, "1.1.0");
 		}
-		else if (buffer_case_cmp(metadata->type, "WMS"))
+		else if (buffer_case_cmp(o->metadata->type, "WMS"))
 		{
-			metadata->versions = list_init();
-			list_add_str(metadata->versions, "1.1.0");
-			list_add_str(metadata->versions, "1.3.0");
+			o->metadata->versions = list_init();
+			list_add_str(o->metadata->versions, "1.1.0");
+			list_add_str(o->metadata->versions, "1.3.0");
 		}
 	}
-
-	/* change here metadata information */
-	metadata->title = buffer_init();
-	buffer_add_str(metadata->title, "TinyOWS");
-
-	metadata->abstract = buffer_init();
-	buffer_add_str(metadata->abstract,
-	   "TinyOWS : a Web Feature Server maintained by Camptocamp");
-
-	metadata->keywords = list_init();
-	list_add_str(metadata->keywords, "WFS");
-	list_add_str(metadata->keywords, "WMS");
-	list_add_str(metadata->keywords, "Camptocamp");
-	list_add_str(metadata->keywords, "TinyOWS");
-
-	metadata->online_resource = buffer_init();
-	buffer_add_str(metadata->online_resource,
-	   "http://dev.camptocamp.com/~tinyows/tinyows");
-
-	o->metadata = metadata;
 }
 
 
@@ -277,101 +247,101 @@ void ows_contact_flush(ows_contact * contact, FILE * output)
 	if (contact->name != NULL)
 	{
 		fprintf(output, "name: ");
-		buffer_flush(contact->name, stdout);
+		buffer_flush(contact->name, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->site != NULL)
 	{
 		fprintf(output, "site: ");
-		buffer_flush(contact->site, stdout);
+		buffer_flush(contact->site, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->indiv_name != NULL)
 	{
 		fprintf(output, "individual name: ");
-		buffer_flush(contact->indiv_name, stdout);
+		buffer_flush(contact->indiv_name, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->position != NULL)
 	{
 		fprintf(output, "position: ");
-		buffer_flush(contact->position, stdout);
+		buffer_flush(contact->position, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->phone != NULL)
 	{
 		fprintf(output, "phone: ");
-		buffer_flush(contact->phone, stdout);
+		buffer_flush(contact->phone, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->fax != NULL)
 	{
 		fprintf(output, "fax: ");
-		buffer_flush(contact->fax, stdout);
+		buffer_flush(contact->fax, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->online_resource != NULL)
 	{
 		fprintf(output, "online_resource: ");
-		buffer_flush(contact->online_resource, stdout);
+		buffer_flush(contact->online_resource, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->address != NULL)
 	{
 		fprintf(output, "address: ");
-		buffer_flush(contact->address, stdout);
+		buffer_flush(contact->address, output);
 		fprintf(output, "\n");
 	}
 	if (contact->postcode != NULL)
 	{
 		fprintf(output, "postcode: ");
-		buffer_flush(contact->postcode, stdout);
+		buffer_flush(contact->postcode, output);
 		fprintf(output, "\n");
 	}
 	if (contact->city != NULL)
 	{
 		fprintf(output, "city: ");
-		buffer_flush(contact->city, stdout);
+		buffer_flush(contact->city, output);
 		fprintf(output, "\n");
 	}
 	if (contact->state != NULL)
 	{
 		fprintf(output, "administrative_area: ");
-		buffer_flush(contact->city, stdout);
+		buffer_flush(contact->city, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->country != NULL)
 	{
 		fprintf(output, "country: ");
-		buffer_flush(contact->country, stdout);
+		buffer_flush(contact->country, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->email != NULL)
 	{
 		fprintf(output, "email: ");
-		buffer_flush(contact->email, stdout);
+		buffer_flush(contact->email, output);
 		fprintf(output, "\n");
 	}
 	if (contact->hours != NULL)
 	{
 		fprintf(output, "hours_of_service: ");
-		buffer_flush(contact->hours, stdout);
+		buffer_flush(contact->hours, output);
 		fprintf(output, "\n");
 	}
 
 	if (contact->instructions != NULL)
 	{
 		fprintf(output, "contact_instructions: ");
-		buffer_flush(contact->instructions, stdout);
+		buffer_flush(contact->instructions, output);
 		fprintf(output, "\n");
 	}
 
@@ -392,63 +362,63 @@ void ows_metadata_flush(ows_meta * metadata, FILE * output)
 	if (metadata->name != NULL)
 	{
 		fprintf(output, "name: ");
-		buffer_flush(metadata->name, stdout);
+		buffer_flush(metadata->name, output);
 		fprintf(output, "\n");
 	}
 
 	if (metadata->type != NULL)
 	{
 		fprintf(output, "type: ");
-		buffer_flush(metadata->type, stdout);
+		buffer_flush(metadata->type, output);
 		fprintf(output, "\n");
 	}
 
 	if (metadata->versions != NULL)
 	{
 		fprintf(output, "version: ");
-		list_flush(metadata->versions, stdout);
+		list_flush(metadata->versions, output);
 		fprintf(output, "\n");
 	}
 
 	if (metadata->title != NULL)
 	{
 		fprintf(output, "title: ");
-		buffer_flush(metadata->title, stdout);
+		buffer_flush(metadata->title, output);
 		fprintf(output, "\n");
 	}
 
 	if (metadata->abstract != NULL)
 	{
 		fprintf(output, "abstract: ");
-		buffer_flush(metadata->abstract, stdout);
+		buffer_flush(metadata->abstract, output);
 		fprintf(output, "\n");
 	}
 
 	if (metadata->keywords != NULL)
 	{
 		fprintf(output, "keywords: ");
-		list_flush(metadata->keywords, stdout);
+		list_flush(metadata->keywords, output);
 		fprintf(output, "\n");
 	}
 
 	if (metadata->online_resource != NULL)
 	{
 		fprintf(output, "online_resource: ");
-		buffer_flush(metadata->online_resource, stdout);
+		buffer_flush(metadata->online_resource, output);
 		fprintf(output, "\n");
 	}
 
 	if (metadata->fees != NULL)
 	{
 		fprintf(output, "fees: ");
-		buffer_flush(metadata->fees, stdout);
+		buffer_flush(metadata->fees, output);
 		fprintf(output, "\n");
 	}
 
 	if (metadata->access_constraints != NULL)
 	{
 		fprintf(output, "access_constraints: ");
-		buffer_flush(metadata->access_constraints, stdout);
+		buffer_flush(metadata->access_constraints, output);
 		fprintf(output, "\n");
 	}
 }

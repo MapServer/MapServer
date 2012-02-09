@@ -1,110 +1,80 @@
-<!-- TinyOWS' configuration -->
+<!-- TinyOWS WFS OGC TEST configuration -->
 <tinyows>
+
 <!-- metadata about the organization operating the server -->
+
+ <metadata
+   name="TinyOWS"
+   title="TinyOWS Service"
+   keywords="tinyows,ows,wfs,ogc"
+   online_resource="http://www.tinyows.org/"
+   fees="free"
+   access_constraint="nope" >
+   <abstract>
+    Here a text abstract related to the service...
+   </abstract>
    <contact
-   name="Camptocamp"
-   site="http://camptocamp.com"
-   individual_name="Barbara Philippot"
-   position="stagiaire"
-   phone="04.79.00.00.00"
-   address="Savoie Technolac, le Square, bat.Suroit"
-   postcode="73370"
-   city="Le Bourget du Lac"
-   country="France"
-   email="barbara.philippot@camptocamp.com" />
+     name="Camptocamp"
+     site="http://www.camptocamp.com/"
+     individual_name="Barbara Philippot"
+     position="Developper"
+     phone="+33 (0)4.79.44.44.94"
+     address="Savoie Technolac, BP 352"
+     postcode="73370"
+     city="Le Bourget du Lac"
+     country="France"
+     email="barbara.philippot@camptocamp.com" />
+ </metadata>
+
 <!-- limits of the service -->
   <limits 
     layers="12" 
-    features="500" 
+    features="1000"
     width="800"  
     height="600" 
- />
+   />
+
 <!-- information about database connection  -->
   <pg 
     host="127.0.0.1" 
     user="postgres" 
     password="postgres" 
-    dbname="base_spatiale" 
+    dbname="tinyows_test" 
     port="5432" />
-<!-- information about SLD  -->
-  <style sld="url_or_filepath" writable="bool" />
+
 <!-- layers' definition  -->
-  <layer name="root" title="root" srid="4326" queryable="1" retrievable ="1" writable ="1">
- <layer name="mydata" title="mydata" geobbox="-180,20,180,60" prefix="tinyows" srid="27561" server="http://dev.camptocamp.com/~tinyows/ows">
-    <layer 
-      name="us_lakes"
-      title="USA lakes"
-      opaque="0" />
-    <layer name="group" title="group">
-      <layer 
-        name="us_urban_areas"
-        title="USA urban areas" />
-      <layer 
-        name="us_states"
-        title="USA states" />
+  <layer name="root" title="root" srid="4326" 
+         queryable="1" retrievable ="1" writable ="1">
+
+    <layer name="OGCfeatures" title="OGCfeatures" prefix="cdf" 
+           server="http://www.opengis.net/cite/data" srid="32615">
+       <layer name="Nulls" title="Nulls" />
+       <layer name="Seven" title="Seven" />
+       <layer name="Fifteen" title="Fifteen" />
+       <layer name="Other" title="Other" />
+       <layer name="Inserts" title="Inserts" />
+       <layer name="Updates" title="Updates" />
+       <layer name="Deletes" title="Deletes" />
+       <layer name="Locks" title="Locks" />
     </layer>
-    <layer 
-      name="us_interstate"
-      title="USA interstate" 
-      />
-</layer>
- <layer name="OGCfeatures" title="OGCfeatures" prefix="cdf" server="http://www.opengis.net/cite/data" srid="32615">
-       <layer 
-        name="Nulls"
-        title="Nulls" />
-<layer 
-        name="Seven"
-        title="Seven" />
-<layer 
-        name="Fifteen"
-        title="Fifteen" />
-<layer 
-        name="Other"
-        title="Other" />
-<layer 
-        name="Inserts"
-        title="Inserts" />
-<layer 
-        name="Updates"
-        title="Updates" />
-<layer 
-        name="Deletes"
-        title="Deletes" />
-<layer 
-        name="Locks"
-        title="Locks" />
-</layer>
- <layer name="OGCgeometries" title="OGCgeometries" prefix="cgf" server="http://www.opengis.net/cite/geometry" srid="32615" >
- <layer 
-        name="Points"
-        title="Points" />
-<layer 
-        name="Lines"
-        title="Lines" />
-<layer 
-        name="Polygons"
-        title="Polygons" />
-<layer 
-        name="MPoints"
-        title="MPoints" />
-<layer 
-        name="MLines"
-        title="MLines" />
-<layer 
-        name="MPolygons"
-        title="MPolygons" />
-</layer>
- <layer name="SimpleFeatures" title="features110" prefix="sf" server="http://cite.opengeospatial.org/gmlsf" >
-<layer 
-        name="AggregateGeoFeature"
-        title="AggregateGeoFeature" />
-<layer 
-        name="EntitéGénérique"
-        title="EntitéGénérique" />
-<layer 
-        name="PrimitiveGeoFeature"
-        title="PrimitiveGeoFeature" />
- </layer>
+
+    <layer name="OGCgeometries" title="OGCgeometries" prefix="cgf" 
+           server="http://www.opengis.net/cite/geometry" srid="32615" >
+       <layer name="Points" title="Points" />
+       <layer name="Lines" title="Lines" />
+       <layer name="Polygons" title="Polygons" />
+       <layer name="MPoints" title="MPoints" />
+       <layer name="MLines" title="MLines" />
+       <layer name="MPolygons" title="MPolygons" />
+    </layer>
+
+    <layer name="SimpleFeatures" title="features110" prefix="sf" 
+           server="http://cite.opengeospatial.org/gmlsf" >
+      <layer name="AggregateGeoFeature" title="AggregateGeoFeature" />
+      <layer name="EntitéGénérique" title="EntitéGénérique" />
+      <layer name="PrimitiveGeoFeature" title="PrimitiveGeoFeature" />
+    </layer>
+
   </layer>
 
 </tinyows>

@@ -493,18 +493,18 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
 	else
 		fprintf(o->output, "Content-Type: application/xml\n\n");
 	fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
-	fprintf(o->output, "<WFS_Capabilities\n");
-	fprintf(o->output, "version='1.1.0' updateSequence='0'\n");
+	fprintf(o->output, "<WFS_Capabilities");
+	fprintf(o->output, " version='1.1.0' updateSequence='0'\n");
 
-	fprintf(o->output, " xmlns='http://www.opengis.net/wfs'\n");
+	fprintf(o->output, "  xmlns='http://www.opengis.net/wfs'\n");
 	fprintf(o->output,
-	   " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
-	fprintf(o->output, " xmlns:ogc='http://www.opengis.net/ogc'");
-	fprintf(o->output, " xmlns:gml='http://www.opengis.net/gml'");
-	fprintf(o->output, " xmlns:ows='http://www.opengis.net/ows'");
-	fprintf(o->output, " xmlns:xlink='http://www.w3.org/1999/xlink'");
-	fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/wfs");
-	fprintf(o->output, " http://schemas.opengis.net/wfs/1.1.0/wfs.xsd' >\n");
+	   "  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
+	fprintf(o->output, "  xmlns:ogc='http://www.opengis.net/ogc'\n");
+	fprintf(o->output, "  xmlns:gml='http://www.opengis.net/gml'\n");
+	fprintf(o->output, "  xmlns:ows='http://www.opengis.net/ows'\n");
+	fprintf(o->output, "  xmlns:xlink='http://www.w3.org/1999/xlink'\n");
+	fprintf(o->output, "  xsi:schemaLocation='http://www.opengis.net/wfs\n");
+	fprintf(o->output, "  http://schemas.opengis.net/wfs/1.1.0/wfs.xsd' >\n");
 
 	name = buffer_init();
 

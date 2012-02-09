@@ -86,7 +86,7 @@ void ows_service_metadata(const ows * o)
 		for (ln = o->metadata->keywords->first; ln->next != NULL;
 		   ln = ln->next)
 			fprintf(o->output, "%s,", ln->value->buf);
-		fprintf(o->output, "%s </Keywords>\n", ln->value->buf);
+		fprintf(o->output, "%s</Keywords>\n", ln->value->buf);
 	}
 
 	fprintf(o->output, "  <OnlineResource>%s</OnlineResource>\n",
@@ -132,13 +132,10 @@ void ows_service_identification(const ows * o)
 
 	if (o->metadata->keywords != NULL)
 	{
-		fprintf(o->output, "  <ows:Keywords>");
+		fprintf(o->output, "  <ows:Keywords>\n");
 		for (ln = o->metadata->keywords->first; ln != NULL; ln = ln->next)
-		{
-			fprintf(o->output, "  <ows:Keyword>");
-			fprintf(o->output, "%s", ln->value->buf);
-			fprintf(o->output, "  </ows:Keyword>");
-		}
+			fprintf(o->output, "   <ows:Keyword>%s</ows:Keyword>\n",
+                    ln->value->buf);
 		fprintf(o->output, "  </ows:Keywords>\n");
 	}
 
@@ -152,7 +149,7 @@ void ows_service_identification(const ows * o)
 		if (ln->next != NULL)
 			fprintf(o->output, ",");
 	}
-	fprintf(o->output, "  </ows:ServiceTypeVersion>\n");
+	fprintf(o->output, "</ows:ServiceTypeVersion>\n");
 
 	if (o->metadata->fees != NULL)
 		fprintf(o->output, "  <ows:Fees>%s</ows:Fees>\n",
@@ -169,7 +166,7 @@ void ows_service_identification(const ows * o)
 
 /*
  * Provides metadata about the organisation operating the server
- * Assume that provuider name figures in the metadata
+ * Assume that provider name figures in the metadata
  * Used for version 1.1.0 de WFS GetCapabilities
  */
 void ows_service_provider(const ows * o)
@@ -186,12 +183,12 @@ void ows_service_provider(const ows * o)
 		fprintf(o->output, "  <ows:ProviderSite xlink:href=\"%s\" />\n",
 		   o->contact->site->buf);
 
-	fprintf(o->output, "<ows:ServiceContact>");
+	fprintf(o->output, "  <ows:ServiceContact>\n");
 	if (o->contact->indiv_name != NULL)
-		fprintf(o->output, "<ows:IndividualName>%s</ows:IndividualName>",
+		fprintf(o->output, "   <ows:IndividualName>%s</ows:IndividualName>\n",
 		   o->contact->indiv_name->buf);
 	if (o->contact->position != NULL)
-		fprintf(o->output, "<ows:PositionName>%s</ows:PositionName>",
+		fprintf(o->output, "   <ows:PositionName>%s</ows:PositionName>\n",
 		   o->contact->position->buf);
 
 	if (o->contact->phone != NULL
@@ -205,18 +202,18 @@ void ows_service_provider(const ows * o)
 	   || o->contact->online_resource != NULL
 	   || o->contact->hours != NULL || o->contact->instructions != NULL)
 	{
-		fprintf(o->output, "<ows:ContactInfo>");
+		fprintf(o->output, "   <ows:ContactInfo>\n");
 
 		if (o->contact->phone != NULL || o->contact->fax != NULL)
 		{
-			fprintf(o->output, "<ows:Phone>");
+			fprintf(o->output, "    <ows:Phone>\n");
 			if (o->contact->phone != NULL)
-				fprintf(o->output, "<ows:Voice>%s</ows:Voice>",
+				fprintf(o->output, "     <ows:Voice>%s</ows:Voice>\n",
 				   o->contact->phone->buf);
 			if (o->contact->fax != NULL)
-				fprintf(o->output, "<ows:Facsimile>%s</ows:Facsimile>",
+				fprintf(o->output, "     <ows:Facsimile>%s</ows:Facsimile>\n",
 				   o->contact->fax->buf);
-			fprintf(o->output, "</ows:Phone>");
+			fprintf(o->output, "    </ows:Phone>\n");
 		}
 
 		if (o->contact->address != NULL
@@ -225,47 +222,47 @@ void ows_service_provider(const ows * o)
 		   || o->contact->state != NULL
 		   || o->contact->country != NULL || o->contact->email != NULL)
 		{
-			fprintf(o->output, "<ows:Address>");
+			fprintf(o->output, "    <ows:Address>\n");
 			if (o->contact->address != NULL)
 				fprintf(o->output,
-				   "<ows:DeliveryPoint>%s</ows:DeliveryPoint>",
+				   "     <ows:DeliveryPoint>%s</ows:DeliveryPoint>\n",
 				   o->contact->address->buf);
 			if (o->contact->city != NULL)
-				fprintf(o->output, "<ows:City>%s</ows:City>",
+				fprintf(o->output, "     <ows:City>%s</ows:City>\n",
 				   o->contact->city->buf);
 			if (o->contact->state != NULL)
 				fprintf(o->output,
-				   "<ows:AdministrativeArea>%s</ows:AdministrativeArea>",
+				   "     <ows:AdministrativeArea>%s</ows:AdministrativeArea>\n",
 				   o->contact->state->buf);
 			if (o->contact->postcode != NULL)
-				fprintf(o->output, "<ows:PostalCode>%s</ows:PostalCode>",
+				fprintf(o->output, "     <ows:PostalCode>%s</ows:PostalCode>\n",
 				   o->contact->postcode->buf);
 			if (o->contact->country != NULL)
-				fprintf(o->output, "<ows:Country>%s</ows:Country>",
+				fprintf(o->output, "     <ows:Country>%s</ows:Country>\n",
 				   o->contact->country->buf);
 			if (o->contact->email != NULL)
 				fprintf(o->output,
-				   "<ows:ElectronicMailAddress>%s</ows:ElectronicMailAddress>",
+				   "    <ows:ElectronicMailAddress>%s</ows:ElectronicMailAddress>\n",
 				   o->contact->email->buf);
-			fprintf(o->output, "</ows:Address>");
+			fprintf(o->output, "    </ows:Address>\n");
 		}
 		if (o->contact->online_resource != NULL)
-			fprintf(o->output, "<ows:OnlineResource xlink:href=\"%s\" />",
+			fprintf(o->output, "    <ows:OnlineResource xlink:href=\"%s\" />\n",
 			   o->contact->online_resource->buf);
 
 		if (o->contact->hours != NULL)
 			fprintf(o->output,
-			   "<ows:HoursOfService>%s</ows:HoursOfService>",
+			   "    <ows:HoursOfService>%s</ows:HoursOfService>\n",
 			   o->contact->hours->buf);
 
 		if (o->contact->instructions != NULL)
 			fprintf(o->output,
-			   "<ows:ContactInstructions>%s</ows:ContactInstructions>",
+			   "    <ows:ContactInstructions>%s</ows:ContactInstructions>\n",
 			   o->contact->instructions->buf);
 
-		fprintf(o->output, "</ows:ContactInfo>");
+		fprintf(o->output, "   </ows:ContactInfo>\n");
 	}
-	fprintf(o->output, "</ows:ServiceContact>");
+	fprintf(o->output, "  </ows:ServiceContact>\n");
 
 	fprintf(o->output, " </ows:ServiceProvider>\n");
 }

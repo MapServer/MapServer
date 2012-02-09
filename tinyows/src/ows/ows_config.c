@@ -35,14 +35,12 @@
 void ows_parse_config_contact(ows * o, xmlTextReaderPtr r)
 {
 	xmlChar *a;
-	buffer *b;
 	ows_contact *contact;
 
 	assert(o != NULL);
 	assert(r != NULL);
 
 	contact = ows_contact_init();
-	b = buffer_init();
 
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "name");
 	if (a != NULL)
@@ -166,8 +164,90 @@ void ows_parse_config_contact(ows * o, xmlTextReaderPtr r)
 	}
 
 	o->contact = contact;
+}
 
-	buffer_free(b);
+
+/* 
+ * Parse the configuration file's metadata element
+ */
+void ows_parse_config_metadata(ows * o, xmlTextReaderPtr r)
+{
+	xmlChar *a;
+
+	assert(o != NULL);
+	assert(r != NULL);
+
+	o->metadata = ows_metadata_init();
+
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "name");
+	if (a != NULL)
+	{
+		o->metadata->name = buffer_init();
+		buffer_add_str(o->metadata->name, (char *) a);
+		free(a);
+	}
+
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "title");
+	if (a != NULL)
+	{
+		o->metadata->title = buffer_init();
+		buffer_add_str(o->metadata->title, (char *) a);
+		free(a);
+	}
+    
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "keywords");
+	if (a != NULL)
+	{
+        o->metadata->keywords = list_explode_str(',', (char *) a);
+		free(a);
+	}
+
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "online_resource");
+	if (a != NULL)
+	{
+		o->metadata->online_resource = buffer_init();
+		buffer_add_str(o->metadata->online_resource, (char *) a);
+		free(a);
+	}
+    
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "fees");
+	if (a != NULL)
+	{
+		o->metadata->fees = buffer_init();
+		buffer_add_str(o->metadata->fees, (char *) a);
+		free(a);
+	}
+    
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "access_constraints");
+	if (a != NULL)
+	{
+		o->metadata->access_constraints = buffer_init();
+		buffer_add_str(o->metadata->access_constraints, (char *) a);
+		free(a);
+	}
+}
+
+
+/* 
+ * Parse the configuration file's abstract metadata element
+ */
+void ows_parse_config_abstract(ows * o, xmlTextReaderPtr r)
+{
+	xmlChar *v;
+
+	assert(o != NULL);
+	assert(o->metadata != NULL);
+	assert(r != NULL);
+
+    /* FIXME should use XmlTextReader expand on metadata parent */
+	xmlTextReaderRead(r);
+	v = xmlTextReaderValue(r);
+	if (v != NULL)
+	{
+		o->metadata->abstract = buffer_init();
+		buffer_add_str(o->metadata->abstract, (char *) v);
+		free(v);
+    }
 }
 
 
@@ -259,6 +339,7 @@ void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
 		free(a);
 	}
 	while (xmlTextReaderMoveToNextAttribute(r) == 1);
+    buffer_pop(b,1); /* remove unused last space */
 
 	o->pg_dsn = b;
 }
@@ -342,7 +423,8 @@ void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 		buffer_free(b);
 	}
 
-	/* inherits from layer parent and replaces with specified value if defined */
+	/* inherits from layer parent and replaces with specified value 
+       if defined */
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "queryable");
 	if (a != NULL && atoi((char *) a) == 1)
 	{
@@ -355,7 +437,8 @@ void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 	else
 		free(a);
 
-	/* inherits from layer parent and replaces with specified value if defined */
+	/* inherits from layer parent and replaces with specified value 
+       if defined */
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "retrievable");
 	if (a != NULL && atoi((char *) a) == 1)
 	{
@@ -368,7 +451,8 @@ void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 	else
 		free(a);
 
-	/* inherits from layer parent and replaces with specified value if defined */
+	/* inherits from layer parent and replaces with specified value
+       if defined */
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "writable");
 	if (a != NULL && atoi((char *) a) == 1)
 	{
@@ -381,7 +465,8 @@ void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 	else
 		free(a);
 
-	/* inherits from layer parent and replaces with specified value if defined */
+	/* inherits from layer parent and replaces with specified value
+       if defined */
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "opaque");
 	if (a != NULL && atoi((char *) a) == 1)
 	{
@@ -434,7 +519,8 @@ void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 		list_free(l);
 	}
 
-	/* inherits from layer parent and replaces with specified value if defined */
+	/* inherits from layer parent and replaces with specified value
+       if defined */
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "geobbox");
 	if (a != NULL)
 	{
@@ -454,7 +540,8 @@ void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 	else
 		free(a);
 
-	/* inherits from layer parent and replaces with specified value if defined */
+	/* inherits from layer parent and replaces with specified value
+       if defined */
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "prefix");
 	if (a != NULL)
 	{
@@ -471,7 +558,8 @@ void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 	else
 		free(a);
 
-	/* inherits from layer parent and replaces with specified value if defined */
+	/* inherits from layer parent and replaces with specified value
+       if defined */
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "server");
 	if (a != NULL)
 	{
@@ -552,6 +640,12 @@ void ows_parse_config(ows * o, const char *filename)
 		{
 			name = xmlTextReaderConstLocalName(r);
 
+			if (strcmp((char *) name, "metadata") == 0)
+				ows_parse_config_metadata(o, r);
+
+			if (strcmp((char *) name, "abstract") == 0)
+				ows_parse_config_abstract(o, r);
+
 			if (strcmp((char *) name, "contact") == 0)
 				ows_parse_config_contact(o, r);
 
@@ -578,7 +672,6 @@ void ows_parse_config(ows * o, const char *filename)
 
 	xmlFreeTextReader(r);
 	xmlCleanupParser();
-
 }
 
 
