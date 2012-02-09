@@ -2155,13 +2155,6 @@ void *msSmallMalloc( size_t nSize )
     if( nSize == 0 )
         return NULL;
 
-    if( nSize < 0 )
-    {
-        msIO_fprintf(stderr, "msSmallMalloc(%ld): Silly size requested.\n",
-                (long) nSize );
-        return NULL;
-    }
-    
     pReturn = malloc( nSize );
     if( pReturn == NULL )
     {
@@ -2185,13 +2178,6 @@ void * msSmallRealloc( void * pData, size_t nNewSize )
 
     if ( nNewSize == 0 )
         return NULL;
-
-    if( nNewSize < 0 )
-    {
-        msIO_fprintf(stderr, "msSmallRealloc(%ld): Silly size requested.\n",
-                (long) nNewSize );
-        return NULL;
-    }
 
     pReturn = realloc( pData, nNewSize );
 
