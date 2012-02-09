@@ -1,18 +1,14 @@
-TinyOWS is a simple WMS and WFS server based on PostGIS spatial database.
+TinyOWS is a simple WFS-T server based on PostGIS spatial database.
 
 TinyOWS was writed with following things in mind:
 
 - KISS approach !
 
 - OGC standart as compliant as possible, aim to support:
-   - WMS (1.1.1 and 1.3.0)
    - WFS (1.0 and 1.1)
-   - SLD (1.0 and 1.1)
    - FE (1.0 and 1.1)
 	
 - Performance is matter, maps are cools as they're quick to display !
-
-- Graphical renderer is browser jobs (SVG for the moment)
 
 - Clean code source 
 
@@ -21,9 +17,9 @@ TinyOWS was writed with following things in mind:
 Quality code policy
 All code must check following rules :
 - gcc -ansi -pedantic -Wall compile without any warning (make)
-- Unit test battery without error (make check)
 - Unit test with Valgrind error and leak free (make valgrind)
 - Doxygen comments (make doxygen)
+- Extensive assert use
 
 Code dynamically linked with following other librairies
 - postgresql 8.x
