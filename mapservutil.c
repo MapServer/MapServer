@@ -177,7 +177,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
   int i;
   mapObj *map = NULL;
   static mapObj *preloadedmap = NULL;
-  static struct timespec preloadedmap_mtime;
+  static time_t preloadedmap_mtime;
   static char *ms_mapfile = NULL;
   struct stat mapfile_stat;
 
@@ -187,7 +187,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
      if(preloadedmap) {
         /* we already have a preloaded mapfile, check if the mapfile itself hasn't changed */
         stat(ms_mapfile,&mapfile_stat);
-        if(mapfile_stat.st_mtimespec.tv_sec > preloadedmap_mtime.tv_sec) {
+        if(mapfile_stat.st_mtime > preloadedmap_mtime) {
            /* the mapfile has been updated on disk, discard the cached mapObj */
            msFreeMap(preloadedmap);
            preloadedmap = NULL;
@@ -199,7 +199,7 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
         preloadedmap = msLoadMap(ms_mapfile,NULL);
         if(!preloadedmap) return NULL;
         stat(ms_mapfile,&mapfile_stat);
-        preloadedmap_mtime = mapfile_stat.st_mtimespec;
+        preloadedmap_mtime = mapfile_stat.st_mtime;
      }
      map = msNewMapObj();
      msCopyMap(map,preloadedmap);
