@@ -183,7 +183,7 @@ typedef struct Ows_meta {
     list * keywords;
     buffer * online_resource;
     buffer * fees;
-    buffer * access_constraints;   
+    buffer * access_constraints;
 } ows_meta;
 
 typedef struct Ows_contact {
@@ -377,7 +377,7 @@ typedef struct Ows {
     ows_geobbox * max_geobbox;
 
     array * cgi;
-  list * psql_requests;
+    list * psql_requests;
     ows_layer_list * layers;
     ows_request * request;
   
