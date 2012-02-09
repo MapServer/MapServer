@@ -182,7 +182,7 @@ list *ows_psql_geometry_column(ows * o, buffer * layer_name)
 
 
 /* 
- * Check if the specified column of the specified layer_name is a geometry column
+ * Check if the specified column from a layer_name is (or not) a geometry column
  */
 bool ows_psql_is_geometry_column(ows * o, buffer * layer_name,
    buffer * column)
