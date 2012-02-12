@@ -277,17 +277,18 @@ int main(int argc, char *argv[])
       }
 
       for(j=0; j<map->numlayers; j++) {
-	if(GET_LAYER(map, j)->status == MS_DEFAULT)
-          continue;
-	else {
-	  GET_LAYER(map, j)->status = MS_OFF;
-	  for(k=0; k<num_layers; k++) {
-	    if(GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) {
-	      GET_LAYER(map, j)->status = MS_ON;
-	      break;
-	    }
-	  }
-	}
+          if(GET_LAYER(map, j)->status == MS_DEFAULT)
+              continue;
+          else {
+              GET_LAYER(map, j)->status = MS_OFF;
+              for(k=0; k<num_layers; k++) {
+                  if((GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, layers[k]) == 0) ||
+                     (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[k]) == 0)) {
+                      GET_LAYER(map, j)->status = MS_ON;
+                      break;
+                  }
+              }
+          }
       }
 
       msFreeCharArray(layers, num_layers);
