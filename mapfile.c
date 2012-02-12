@@ -67,8 +67,9 @@ extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
 static int loadGrid( layerObj *pLayer );
 static int loadStyle(styleObj *style);
 static void writeStyle(FILE* stream, int indent, styleObj *style);
-static int msResolveSymbolNames(mapObj *map);
-
+static int resolveSymbolNames(mapObj *map);
+static int loadExpression(expressionObj *exp);
+static void writeExpression(FILE *stream, int indent, const char *name, expressionObj *exp);
 
 /************************************************************************/
 /*                           int msIsAxisInverted                       */
@@ -1649,10 +1650,17 @@ void initLabel(labelObj *label)
     label->bindings[i].index = -1;
   }
 
+  label->status = MS_ON;
+  initExpression(&(label->expression));
+  initExpression(&(label->text));
+
+  label->annotext = NULL;
+  label->annopoly = NULL;
+
   return;
 }
 
-static void freeLabel(labelObj *label)
+static int freeLabel(labelObj *label)
 {
   int i;
 
@@ -1670,6 +1678,18 @@ static void freeLabel(labelObj *label)
 
   for(i=0; i<MS_LABEL_BINDING_LENGTH; i++)
     msFree(label->bindings[i].item);
+
+  freeExpression(&(label->expression));
+  freeExpression(&(label->text));
+
+  /* free book keeping vars associated with the label cache */
+  msFree(label->annotext);
+  if(label->annopoly) {
+    msFreeShape(label->annopoly);
+    msFree(label->annopoly);
+  }
+
+  return MS_SUCCESS;
 }
 
 static int loadLabel(labelObj *label)
@@ -1724,6 +1744,14 @@ static int loadLabel(labelObj *label)
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadLabel()");      
       return(-1);
+    case(EXPRESSION):
+      if(loadExpression(&(label->expression)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
+      if(msyysource == MS_URL_TOKENS) {
+        msSetError(MS_MISCERR, "URL-based EXPRESSION configuration not supported." , "loadLabel()");
+        freeExpression(&(label->expression));
+        return(-1);
+      }
+      break;
     case(FONT):
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if((symbol = getSymbol(2, MS_STRING, MS_BINDING)) == -1)
@@ -1880,6 +1908,18 @@ static int loadLabel(labelObj *label)
         label->styles[label->numstyles]->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT; /* set a default, a marker? */
       label->numstyles++;
       break;
+    case(TEXT):
+      if(loadExpression(&(label->text)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
+      if(msyysource == MS_URL_TOKENS) {
+        msSetError(MS_MISCERR, "URL-based TEXT configuration not supported for labels." , "loadLabel()");
+        freeExpression(&(label->text));
+        return(-1);
+      }
+      if((label->text.type != MS_STRING) && (label->text.type != MS_EXPRESSION)) {
+	msSetError(MS_MISCERR, "Text expressions support constant or tagged replacement strings." , "loadLabel()");
+	return(-1);
+      }
+      break;
     case(TYPE):
       if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return(-1);
       break;    
@@ -1941,6 +1981,8 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
 
     writeKeyword(stream, indent, "ANTIALIAS", label->antialias, 1, MS_TRUE, "TRUE");
 
+    writeExpression(stream, indent, "EXPRESSION", &(label->expression));
+
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_FONT].item)
       writeAttributeBinding(stream, indent, "FONT", &(label->bindings[MS_LABEL_BINDING_FONT]));
     else writeString(stream, indent, "FONT", NULL, label->font);
@@ -1995,6 +2037,9 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   writeNumber(stream, indent, "MAXOVERLAPANGLE", 22.5, label->maxoverlapangle);
   for(i=0; i<label->numstyles; i++)
     writeStyle(stream, indent, label->styles[i]);
+
+  writeExpression(stream, indent, "TEXT", &(label->text));
+
   writeKeyword(stream, indent, "TYPE", label->type, 2, MS_BITMAP, "BITMAP", MS_TRUETYPE, "TRUETYPE");
   writeCharacter(stream, indent, "WRAP", '\0', label->wrap);
   writeBlockEnd(stream, indent, "LABEL");
@@ -2849,8 +2894,6 @@ void writeStyle(FILE *stream, int indent, styleObj *style) {
 */
 int initClass(classObj *class)
 {
-  /* printf("Init class at %p\n", class); */
-
   class->status = MS_ON;
   class->debug = MS_OFF;
   MS_REFCNT_INIT(class);
@@ -2860,9 +2903,6 @@ int initClass(classObj *class)
   class->title = NULL;
   initExpression(&(class->text));
   
-  initLabel(&(class->label));
-  class->label.size = -1; /* no default */
-
   class->template = NULL;
 
   class->type = -1;
@@ -2879,6 +2919,9 @@ int initClass(classObj *class)
   class->numstyles = class->maxstyles = 0;   
   class->styles = NULL;  
 
+  class->numlabels = class->maxlabels = 0;   
+  class->labels = NULL;
+
   class->keyimage = NULL;
 
   class->group = NULL;
@@ -2891,9 +2934,7 @@ int freeClass(classObj *class)
   int i;
 
   if( MS_REFCNT_DECR_IS_NOT_ZERO(class) ) { return MS_FAILURE; }
-  /* printf("Freeing class at %p (%s)\n", class, class->name); */
 
-  freeLabel(&(class->label));
   freeExpression(&(class->expression));
   freeExpression(&(class->text));
   msFree(class->name);
@@ -2912,6 +2953,16 @@ int freeClass(classObj *class)
     }
   }
   msFree(class->styles);
+
+  for(i=0;i<class->numlabels;i++) { /* each label */
+    if(class->labels[i]!=NULL) {
+      if(freeLabel(class->labels[i]) == MS_SUCCESS) {
+        msFree(class->labels[i]);
+      }
+    }
+  }
+  msFree(class->labels);
+
   msFree(class->keyimage);
 
   return MS_SUCCESS;
@@ -3032,7 +3083,16 @@ void resetClassStyle(classObj *class)
 {
   int i;
 
-  freeLabel(&(class->label));
+  /* reset labels */
+  for(i=0; i<class->numlabels; i++) {
+    if(class->styles[i] != NULL) {
+      if(freeLabel(class->labels[i]) == MS_SUCCESS ) {
+        msFree(class->labels[i]);
+      }
+      class->labels[i] = NULL;
+    }
+  }
+  class->numlabels = 0;
 
   freeExpression(&(class->text));
   initExpression(&(class->text));
@@ -3048,11 +3108,37 @@ void resetClassStyle(classObj *class)
   }
   class->numstyles = 0;
 
-  initLabel(&(class->label));
-  class->label.size = -1; /* no default */
-
   class->type = -1;
   class->layer = NULL;
+}
+
+labelObj *msGrowClassLabels( classObj *class ) {
+
+  /* Do we need to increase the size of labels[] by MS_LABEL_ALLOCSIZE?
+   */
+  if (class->numlabels == class->maxlabels) {
+    labelObj **newLabelPtr;
+    int i, newsize;
+
+    newsize = class->maxlabels + MS_LABEL_ALLOCSIZE;
+
+    /* Alloc/realloc labels */
+    newLabelPtr = (labelObj**)realloc(class->labels, newsize*sizeof(labelObj*));
+    MS_CHECK_ALLOC(newLabelPtr, newsize*sizeof(labelObj*), NULL);
+
+    class->labels = newLabelPtr;
+    class->maxlabels = newsize;
+    for(i=class->numlabels; i<class->maxlabels; i++) {
+      class->labels[i] = NULL;
+    }
+  }
+
+  if (class->labels[class->numlabels]==NULL) {
+    class->labels[class->numlabels]=(labelObj*)calloc(1,sizeof(labelObj));
+    MS_CHECK_ALLOC(class->labels[class->numlabels], sizeof(labelObj), NULL);
+  }
+
+  return class->labels[class->numlabels];
 }
 
 int loadClass(classObj *class, layerObj *layer)
@@ -3108,8 +3194,11 @@ int loadClass(classObj *class, layerObj *layer)
       }
       break;
     case(LABEL):
-      class->label.size = MS_MEDIUM; /* only set a default if the LABEL section is present */
-      if(loadLabel(&(class->label)) == -1) return(-1);
+      if(msGrowClassLabels(class) == NULL) return(-1);
+      initLabel(class->labels[class->numlabels]);
+      class->labels[class->numlabels]->size = MS_MEDIUM; /* only set a default if the LABEL section is present */
+      if(loadLabel(class->labels[class->numlabels]) == -1) return(-1);
+      class->numlabels++;
       break;
     case(MAXSCALE):
     case(MAXSCALEDENOM):
@@ -3275,9 +3364,37 @@ int loadClass(classObj *class, layerObj *layer)
   }
 }
 
+static int classResolveSymbolNames(classObj *class) {
+  int i,j;
+
+  /* step through styles and labels to resolve symbol names */
+  /* class styles */
+  for(i=0; i<class->numstyles; i++) {
+    if(class->styles[i]->symbolname) {
+      if((class->styles[i]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->styles[i]->symbolname, MS_TRUE)) == -1) {
+        msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class, style %d of layer %s.", "classResolveSymbolNames()", class->styles[i]->symbolname, i, class->layer->name);
+        return MS_FAILURE;
+      }
+    }
+  }
+
+  /* label styles */
+  for(i=0; i<class->numlabels; i++) {
+    for(j=0; j<class->labels[i]->numstyles; j++) {
+      if(class->labels[i]->styles[j]->symbolname) {
+        if((class->labels[i]->styles[j]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->labels[i]->styles[j]->symbolname, MS_TRUE)) == -1) {
+          msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class, label style %d of layer %s.", "classResolveSymbolNames()", class->labels[i]->styles[j]->symbolname, j, class->layer->name);
+          return MS_FAILURE;
+        }
+      }
+    }
+  }
+
+  return MS_SUCCESS;
+}
+
 int msUpdateClassFromString(classObj *class, char *string, int url_string)
 {
-  int k;
   if(!class || !string) return MS_FAILURE;
 
   msAcquireLock( TLOCK_PARSER );
@@ -3299,27 +3416,7 @@ int msUpdateClassFromString(classObj *class, char *string, int url_string)
 
   msyylex_destroy();
 
-  /* step through styles and labels to resolve symbol names */
-  /* class styles */
-  for(k=0; k<class->numstyles; k++) {
-      if(class->styles[k]->symbolname) {
-          if((class->styles[k]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->styles[k]->symbolname, MS_TRUE)) == -1) {
-              msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class, style %d of layer %s.", "msUpdateClassFromString()", class->styles[k]->symbolname, k, class->layer->name);
-              return MS_FAILURE;
-          }
-      }
-  }
-
-  /* label styles */
-  for(k=0; k<class->label.numstyles; k++) {
-      if(class->label.styles[k]->symbolname) {
-          if((class->label.styles[k]->symbol =  msGetSymbolIndex(&(class->layer->map->symbolset), class->label.styles[k]->symbolname, MS_TRUE)) == -1) {
-              msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class, label style %d of layer %s.", 
-                         "msUpdateClassFromString()", class->label.styles[k]->symbolname, k, class->layer->name);
-              return MS_FAILURE;
-          }
-      }
-  }
+  if(classResolveSymbolNames(class) != MS_SUCCESS) return MS_FAILURE;
 
   return MS_SUCCESS;
 }
@@ -3337,7 +3434,7 @@ static void writeClass(FILE *stream, int indent, classObj *class)
   writeNumber(stream, indent, "DEBUG", 0, class->debug); 
   writeExpression(stream, indent, "EXPRESSION", &(class->expression));
   writeString(stream, indent, "KEYIMAGE", NULL, class->keyimage);
-  writeLabel(stream, indent, &(class->label));
+  for(i=0; i<class->numlabels; i++) writeLabel(stream, indent, class->labels[i]);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, class->maxscaledenom);
   writeHashTable(stream, indent, "METADATA", &(class->metadata));
   writeNumber(stream, indent, "MINSCALEDENOM", -1, class->minscaledenom);
@@ -3988,7 +4085,7 @@ int loadLayer(layerObj *layer, mapObj *map)
 
 int msUpdateLayerFromString(layerObj *layer, char *string, int url_string)
 {
-  int j, k;
+  int i;
 
   if(!layer || !string) return MS_FAILURE;
 
@@ -4012,28 +4109,8 @@ int msUpdateLayerFromString(layerObj *layer, char *string, int url_string)
   msyylex_destroy();
 
   /* step through classes to resolve symbol names */
-  for(j=0; j<layer->numclasses; j++) {
-
-      /* class styles */
-      for(k=0; k<layer->class[j]->numstyles; k++) {
-          if(layer->class[j]->styles[k]->symbolname) {
-              if((layer->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(layer->map->symbolset), layer->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
-                  msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msUpdateLayerFromString()", layer->class[j]->styles[k]->symbolname, j, k, layer->name);
-                  return MS_FAILURE;
-              }
-          }
-      }
-
-      /* label styles */
-      for(k=0; k<layer->class[j]->label.numstyles; k++) {
-          if(layer->class[j]->label.styles[k]->symbolname) {
-              if((layer->class[j]->label.styles[k]->symbol =  msGetSymbolIndex(&(layer->map->symbolset), layer->class[j]->label.styles[k]->symbolname, MS_TRUE)) == -1) {
-                  msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, label style %d of layer %s.", 
-                             "msUpdateLayerFromString()", layer->class[j]->label.styles[k]->symbolname, j, k, layer->name);
-                  return MS_FAILURE;
-              }
-          }
-      }          
+  for(i=0; i<layer->numclasses; i++) {
+    if(classResolveSymbolNames(layer->class[i]) != MS_SUCCESS) return MS_FAILURE;
   }
 
   return MS_SUCCESS;
@@ -5225,28 +5302,33 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot) {
   int i, j;
 
   /* free the labels */
-  if (cacheslot->labels)
+  if (cacheslot->labels) {
     for(i=0; i<cacheslot->numlabels; i++) {
-      msFree(cacheslot->labels[i].text);
       if (cacheslot->labels[i].labelpath)
         msFreeLabelPathObj(cacheslot->labels[i].labelpath);
-      freeLabel(&(cacheslot->labels[i].label));
+
+      for(j=0;j<cacheslot->labels[i].numlabels; j++) freeLabel(&(cacheslot->labels[i].labels[j]));
+      msFree(cacheslot->labels[i].labels);
+
       msFreeShape(cacheslot->labels[i].poly); /* empties the shape */
       msFree(cacheslot->labels[i].poly); /* free's the pointer */
+
       for(j=0;j<cacheslot->labels[i].numstyles; j++) freeStyle(&(cacheslot->labels[i].styles[j]));
       msFree(cacheslot->labels[i].styles);
     }
+  }
   msFree(cacheslot->labels);
   cacheslot->labels = NULL;
   cacheslot->cachesize = 0;
   cacheslot->numlabels = 0;
   
   /* free the markers */
-  if (cacheslot->markers)
+  if (cacheslot->markers) {
     for(i=0; i<cacheslot->nummarkers; i++) {
       msFreeShape(cacheslot->markers[i].poly);
       msFree(cacheslot->markers[i].poly);
     }
+  }
   msFree(cacheslot->markers);
   cacheslot->markers = NULL;
   cacheslot->markercachesize = 0;
@@ -5435,7 +5517,7 @@ static int loadMapInternal(mapObj *map)
 
       if(loadSymbolSet(&(map->symbolset), map) == -1) return MS_FAILURE;
 
-      if (msResolveSymbolNames(map) == MS_FAILURE) return MS_FAILURE;
+      if (resolveSymbolNames(map) == MS_FAILURE) return MS_FAILURE;
       
 
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
@@ -5650,7 +5732,7 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   if (mappath != NULL) free(mappath);
   msyylex_destroy();
 
-  if (msResolveSymbolNames(map) == MS_FAILURE) return NULL;
+  if (resolveSymbolNames(map) == MS_FAILURE) return NULL;
 
   return map;
 }
@@ -6282,38 +6364,15 @@ void initResultCache(resultCacheObj *resultcache)
     }
 }
 
-static int msResolveSymbolNames(mapObj* map)
-{
-    int i, j, k;
-    /* step through layers and classes to resolve symbol names */
-    for(i=0; i<map->numlayers; i++) {
-        for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
-            /* class styles */
-            for(k=0; k<GET_LAYER(map, i)->class[j]->numstyles; k++) {
-                if(GET_LAYER(map, i)->class[j]->styles[k]->symbolname) {
-                    if((GET_LAYER(map, i)->class[j]->styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->styles[k]->symbolname, MS_TRUE)) == -1) {
-                        msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, style %d of layer %s.", "msLoadMap()", GET_LAYER(map, i)->class[j]->styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
-                        return MS_FAILURE;
-                    }
-                }
-                if(!MS_IS_VALID_ARRAY_INDEX(GET_LAYER(map, i)->class[j]->styles[k]->symbol, map->symbolset.numsymbols)) {
-                    msSetError(MS_MISCERR, "Invalid symbol index in class %d, style %d of layer %s.", "msLoadMap()", j, k, GET_LAYER(map, i)->name);
-                    return MS_FAILURE;
-                }
-            }
+static int resolveSymbolNames(mapObj* map) {
+  int i, j;
 
-            /* label styles */
-            for(k=0; k<GET_LAYER(map, i)->class[j]->label.numstyles; k++) {
-                if(GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname) {
-                    if((GET_LAYER(map, i)->class[j]->label.styles[k]->symbol =  msGetSymbolIndex(&(map->symbolset), GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname, MS_TRUE)) == -1) {
-                        msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class %d, label style %d of layer %s.", 
-                                   "msLoadMap()", GET_LAYER(map, i)->class[j]->label.styles[k]->symbolname, j, k, GET_LAYER(map, i)->name);
-                        return MS_FAILURE;
-                    }
-                }
-            }          
-        }
+  /* step through layers and classes to resolve symbol names */
+  for(i=0; i<map->numlayers; i++) {
+    for(j=0; j<GET_LAYER(map, i)->numclasses; j++) {
+      if(classResolveSymbolNames(GET_LAYER(map, i)->class[j]) != MS_SUCCESS) return MS_FAILURE;
     }
+  }
 
-    return MS_SUCCESS;
+  return MS_SUCCESS;
 }

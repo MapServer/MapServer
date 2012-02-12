@@ -144,18 +144,18 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     if (theclass->numstyles > 0) {
       for(i=0; i<theclass->numstyles; i++)
         msDrawMarkerSymbol(&map->symbolset, image_draw, &marker, theclass->styles[i], lp->scalefactor);          
-    } else if (theclass->label.size!=-1) {
-      labelObj label = theclass->label;
-      double lsize = label.size;
-      double langle = label.angle;
-      int lpos = label.position;
-      label.angle = 0;
-      label.position = MS_CC;
-      if (label.type == MS_TRUETYPE) label.size = height;
-      msDrawLabel(map, image_draw, marker, (char*)"Az", &label,1.0);
-      label.size = lsize;
-      label.position = lpos;
-      label.angle = langle;
+    } else if (theclass->labels && theclass->numlabels > 0) {
+      labelObj *label = theclass->labels[0]; /* use the first label definition */
+      double lsize = label->size;
+      double langle = label->angle;
+      int lpos = label->position;
+      label->angle = 0;
+      label->position = MS_CC;
+      if (label->type == MS_TRUETYPE) label->size = height;
+      msDrawLabel(map, image_draw, marker, (char*)"Az", label,1.0);
+      label->size = lsize;
+      label->position = lpos;
+      label->angle = langle;
     }
     break;
   case MS_LAYER_POINT:
@@ -532,7 +532,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
 
       if(cur->transformedText==NULL || 
     		  msGetLabelSize(map, &map->legend.label, cur->transformedText, map->legend.label.size, &rect, NULL) != MS_SUCCESS) { /* something bad happened, free allocated mem */
-        while(cur) {          
+        while(cur) {
           free(cur->transformedText);
           head = cur;
           cur = cur->pred;
@@ -709,14 +709,20 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   if(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
   GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
-  GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;
-  GET_LAYER(map, l)->class[0]->label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
-  GET_LAYER(map, l)->class[0]->label.priority = MS_MAX_LABEL_PRIORITY;
+
+  if(!GET_LAYER(map, l)->class[0]->labels) {
+    if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
+  }
+  initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
+  GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
+  GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
+  GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
+  GET_LAYER(map, l)->class[0]->labels[0]->annotext = msStrdup("");
 
   if(map->legend.postlabelcache) /* add it directly to the image */
     msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
   else
-    msAddLabel(map, l, 0, NULL, &point, NULL, "", 1.0, NULL);
+    msAddLabel(map, GET_LAYER(map, l)->class[0]->labels[0], l, 0, NULL, &point, NULL, -1);
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or with saving maps */
   GET_LAYER(map, l)->status = MS_DELETE;

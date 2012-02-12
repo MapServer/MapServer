@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Allow multiple label definitions within a class (RFC 77/#4127)
+
 - shp2img: make it possible to specify layers (with -l option) that match GROUP names.
 
 - reuse a pre-parsed mapfile across fastcgi loops in case the mapfile is

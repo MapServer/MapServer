@@ -224,6 +224,7 @@ extern "C" {
 #define MS_LAYER_ALLOCSIZE 64
 #define MS_CLASS_ALLOCSIZE 8
 #define MS_STYLE_ALLOCSIZE 4
+#define MS_LABEL_ALLOCSIZE 2 /* not too common */
 
 #define MS_MAX_LABEL_PRIORITY     10
 #define MS_MAX_LABEL_FONTS     5
@@ -944,8 +945,7 @@ typedef struct {
   char wrap;
   int maxlength;
   int minlength;
-  double space_size_10; /*cached size of a single space character -
-                       used for label text alignment of rfc40 */
+  double space_size_10; /*cached size of a single space character used for label text alignment of rfc40 */
 
   int minfeaturesize; /* minimum feature size (in pixels) to label */
   int autominfeaturesize; /* true or false */
@@ -963,6 +963,12 @@ typedef struct {
 
   int priority;  /* Priority level 1 to MS_MAX_LABEL_PRIORITY, default=1 */
 
+  int status;
+#ifndef SWIG
+  expressionObj expression;
+  expressionObj text;
+#endif
+
 #ifndef SWIG
   styleObj **styles;
   int maxstyles;
@@ -974,6 +980,10 @@ typedef struct {
   int numbindings;
 #endif
 
+  /* book keeping variable- used on a feature-by-feature basis (similar to bindings) */
+  char *annotext;
+  pointObj annopoint;
+  shapeObj *annopoly;
 } labelObj;
 
 /************************************************************************/
@@ -993,15 +1003,13 @@ typedef struct class_obj{
   styleObj **styles;
   int maxstyles;
 #endif
-  int numstyles;
+  int numstyles; /* should be immutable */
 
-#ifdef SWIG
-%immutable;
-#endif /* SWIG */
-  labelObj label;
-#ifdef SWIG
-%mutable;
-#endif /* SWIG */
+#ifndef SWIG
+  labelObj **labels;
+  int maxlabels;
+#endif
+  int numlabels; /* should be immutable */
 
   char *name; /* should be unique within a layer */
   char *title; /* used for legend labeling */
@@ -1057,13 +1065,13 @@ typedef struct class_obj{
 %immutable;
 #endif /* SWIG */
 typedef struct {
-  char *text;
   double featuresize;
 
   styleObj *styles; /* copied from the classObj, only present if there is a marker to be drawn */
   int numstyles;
 
-  labelObj label; /* copied from the classObj */
+  labelObj *labels; /* copied from the classObj (1 or more depending on situation) */
+  int numlabels;
 
   int layerindex; /* indexes */
   int classindex;
@@ -1082,7 +1090,6 @@ typedef struct {
 #endif /* SWIG */
 
   int markerid; /* corresponding marker (POINT layers only) */
-  
 } labelCacheMemberObj;
 
 /************************************************************************/
@@ -1710,6 +1717,7 @@ MS_DLL_EXPORT classObj *msGrowLayerClasses( layerObj *layer );
 MS_DLL_EXPORT int initClass(classObj *_class);
 MS_DLL_EXPORT int freeClass( classObj * );
 MS_DLL_EXPORT styleObj *msGrowClassStyles( classObj *_class );
+MS_DLL_EXPORT labelObj *msGrowClassLabels( classObj *_class );
 MS_DLL_EXPORT styleObj *msGrowLabelStyles( labelObj *label );
 MS_DLL_EXPORT int msMaybeAllocateClassStyle(classObj* c, int idx);
 MS_DLL_EXPORT void initLabel(labelObj *label);
@@ -1741,7 +1749,6 @@ MS_DLL_EXPORT void msApplyDefaultSubstitutions(mapObj *map);
 MS_DLL_EXPORT int getClassIndex(layerObj *layer, char *str);
 
 /* For maplabel */
-int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
 int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
 pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, lineObj *poly);
 pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly);
@@ -1812,7 +1819,6 @@ MS_DLL_EXPORT void msOGRInitialize(void);
 MS_DLL_EXPORT void msOGRCleanup(void);
 MS_DLL_EXPORT void msGDALCleanup(void);
 MS_DLL_EXPORT void msGDALInitialize(void);
-   
 
 MS_DLL_EXPORT imageObj *msDrawScalebar(mapObj *map); /* in mapscale.c */
 MS_DLL_EXPORT int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scaledenom);
@@ -1994,7 +2000,9 @@ MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj 
 MS_DLL_EXPORT int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances);
 
 MS_DLL_EXPORT int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rectObj *rect, double **advances);
-MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label);
+
+MS_DLL_EXPORT int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, double featuresize);
+MS_DLL_EXPORT int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize);
 MS_DLL_EXPORT void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, int mapwidth, int mapheight, int buffer, labelCacheMemberObj *cachePtr, int current_priority, int current_label, int mindistance, double label_size);
 MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
 
@@ -2017,8 +2025,6 @@ MS_DLL_EXPORT void msRectToPolygon(rectObj rect, shapeObj *poly);
 MS_DLL_EXPORT void msClipPolylineRect(shapeObj *shape, rectObj rect);
 MS_DLL_EXPORT void msClipPolygonRect(shapeObj *shape, rectObj rect);
 MS_DLL_EXPORT void msTransformShape(shapeObj *shape, rectObj extent, double cellsize, imageObj *image);
-
-
 MS_DLL_EXPORT void msTransformPoint(pointObj *point, rectObj *extent, double cellsize, imageObj *image);
 
 MS_DLL_EXPORT void msOffsetPointRelativeTo(pointObj *point, layerObj *layer);
@@ -2269,6 +2275,7 @@ MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image
 /*      Prototypes for functions in maputil.c                           */
 /* ==================================================================== */
 
+MS_DLL_EXPORT int msScaleInBounds(double scale, double minscale, double maxscale);
 MS_DLL_EXPORT void *msSmallMalloc( size_t nSize );
 MS_DLL_EXPORT void * msSmallRealloc( void * pData, size_t nNewSize );
 MS_DLL_EXPORT void *msSmallCalloc( size_t nCount, size_t nSize );
@@ -2285,7 +2292,7 @@ MS_DLL_EXPORT int msValidateContexts(mapObj *map);
 MS_DLL_EXPORT int msEvalContext(mapObj *map, layerObj *layer, char *context);
 MS_DLL_EXPORT int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex);
 MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgroup, int numclasses);
-MS_DLL_EXPORT char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
+MS_DLL_EXPORT int msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msShapeCheckSize(shapeObj *shape, double minfeaturesize);
 MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
 MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);

@@ -52,6 +52,14 @@ extern char *msyystring_buffer;
 extern int msyylex_destroy(void);
 extern int yyparse(parseObj *);
 
+int msScaleInBounds(double scale, double minscale, double maxscale) {
+  if(scale > 0) {
+    if(maxscale != -1 && scale >= maxscale) return MS_FALSE;
+    if(minscale != -1 && scale < minscale) return MS_FALSE;
+  }
+  return MS_TRUE;
+}
+
 /*
 ** Helper functions to convert from strings to other types or objects.
 */
@@ -184,102 +192,104 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int que
   }
 }
 
+static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int querymapMode) {
+  int i;
+
+  /* check the label styleObj's (TODO: do we need to use querymapMode here? */
+  for(i=0; i<label->numstyles; i++) {
+    bindStyle(layer, shape, label->styles[i], querymapMode);
+  }
+
+  if(label->numbindings > 0) {
+    if(label->bindings[MS_LABEL_BINDING_ANGLE].index != -1) {
+      label->angle = 0.0;
+      bindDoubleAttribute(&label->angle, shape->values[label->bindings[MS_LABEL_BINDING_ANGLE].index]);
+    }
+
+    if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1) {
+      label->size = 1;
+      bindDoubleAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
+    }
+
+    if(label->bindings[MS_LABEL_BINDING_COLOR].index != -1) {
+      MS_INIT_COLOR(label->color, -1,-1,-1,255);
+      bindColorAttribute(&label->color, shape->values[label->bindings[MS_LABEL_BINDING_COLOR].index]);
+    }
+
+    if(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index != -1) {
+      MS_INIT_COLOR(label->outlinecolor, -1,-1,-1,255);
+      bindColorAttribute(&label->outlinecolor, shape->values[label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index]);
+    }
+
+    if(label->bindings[MS_LABEL_BINDING_FONT].index != -1) {
+      msFree(label->font);
+      label->font = msStrdup(shape->values[label->bindings[MS_LABEL_BINDING_FONT].index]);
+    }
+
+    if(label->bindings[MS_LABEL_BINDING_PRIORITY].index != -1) {
+      label->priority = MS_DEFAULT_LABEL_PRIORITY;
+      bindIntegerAttribute(&label->priority, shape->values[label->bindings[MS_LABEL_BINDING_PRIORITY].index]);
+    }
+
+    if(label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].index != -1) { 
+      label->shadowsizex = 1; 
+      bindIntegerAttribute(&label->shadowsizex, shape->values[label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].index]); 
+    } 
+    if(label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].index != -1) { 
+      label->shadowsizey = 1; 
+      bindIntegerAttribute(&label->shadowsizey, shape->values[label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].index]); 
+    } 
+
+    if(label->bindings[MS_LABEL_BINDING_POSITION].index != -1) {
+      int tmpPosition;
+      bindIntegerAttribute(&tmpPosition, shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]);
+      if(tmpPosition != 0) { /* is this test sufficient? */
+        label->position = tmpPosition;
+      } else { /* Integer binding failed, look for strings like cc, ul, lr, etc... */
+        if(strlen(shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]) == 2) {
+          char *vp = shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index];
+          if(!strncasecmp(vp,"ul",2))
+            label->position = MS_UL;
+          else if(!strncasecmp(vp,"lr",2))
+            label->position = MS_LR;     
+          else if(!strncasecmp(vp,"ur",2))
+            label->position = MS_UR;     
+          else if(!strncasecmp(vp,"ll",2))
+            label->position = MS_LL;     
+          else if(!strncasecmp(vp,"cr",2))
+            label->position = MS_CR;     
+          else if(!strncasecmp(vp,"cl",2))
+            label->position = MS_CL;     
+          else if(!strncasecmp(vp,"uc",2))
+            label->position = MS_UC;     
+          else if(!strncasecmp(vp,"lc",2))
+            label->position = MS_LC;     
+          else if(!strncasecmp(vp,"cc",2))
+            label->position = MS_CC;     
+        }       
+      }
+    }
+  }
+}
+
 /*
 ** Function to bind various layer properties to shape attributes.
 */
 int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
 {
   int i, j;
-  labelObj *label; /* for brevity */
 
   if(!layer || !shape) return MS_FAILURE;
 
   for(i=0; i<layer->numclasses; i++) {
-
     /* check the styleObj's */
     for(j=0; j<layer->class[i]->numstyles; j++) {
       bindStyle(layer, shape, layer->class[i]->styles[j], querymapMode);
-    } /* next styleObj */
-
-    /* check the labelObj */
-    label = &(layer->class[i]->label);
-
-    /* check the label styleObj's */
-    for(j=0; j<label->numstyles; j++) {
-      bindStyle(layer, shape, label->styles[j], querymapMode);
     }
 
-    if(label->numbindings > 0) {
-      if(label->bindings[MS_LABEL_BINDING_ANGLE].index != -1) {
-        label->angle = 0.0;
-        bindDoubleAttribute(&label->angle, shape->values[label->bindings[MS_LABEL_BINDING_ANGLE].index]);
-      }
-
-      if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1) {
-        label->size = 1;
-        bindDoubleAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
-      }
-
-      if(label->bindings[MS_LABEL_BINDING_COLOR].index != -1) {
-        MS_INIT_COLOR(label->color, -1,-1,-1,255);
-        bindColorAttribute(&label->color, shape->values[label->bindings[MS_LABEL_BINDING_COLOR].index]);
-      }
-
-      if(label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index != -1) {
-        MS_INIT_COLOR(label->outlinecolor, -1,-1,-1,255);
-        bindColorAttribute(&label->outlinecolor, shape->values[label->bindings[MS_LABEL_BINDING_OUTLINECOLOR].index]);
-      }
-
-      if(label->bindings[MS_LABEL_BINDING_FONT].index != -1) {
-         if(strcmp(label->font,shape->values[label->bindings[MS_LABEL_BINDING_FONT].index])) {
-            msFree(label->font);
-            label->font = msStrdup(shape->values[label->bindings[MS_LABEL_BINDING_FONT].index]);
-         }
-      }
-
-      if(label->bindings[MS_LABEL_BINDING_PRIORITY].index != -1) {
-        label->priority = MS_DEFAULT_LABEL_PRIORITY;
-        bindIntegerAttribute(&label->priority, shape->values[label->bindings[MS_LABEL_BINDING_PRIORITY].index]);
-      }
-
-      if(label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].index != -1) { 
-        label->shadowsizex = 1; 
-        bindIntegerAttribute(&label->shadowsizex, shape->values[label->bindings[MS_LABEL_BINDING_SHADOWSIZEX].index]); 
-      } 
-      if(label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].index != -1) { 
-        label->shadowsizey = 1; 
-        bindIntegerAttribute(&label->shadowsizey, shape->values[label->bindings[MS_LABEL_BINDING_SHADOWSIZEY].index]); 
-      } 
-
-      if(label->bindings[MS_LABEL_BINDING_POSITION].index != -1) {
-        int tmpPosition;
-        bindIntegerAttribute(&tmpPosition, shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]);
-        if(tmpPosition != 0) { /* is this test sufficient */
-          label->position = tmpPosition;
-        } else { /* Integer binding failed, look for strings like cc,ul,lr etc */
-          if(strlen(shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]) == 2) {
-            char *vp = shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index];
-            if(!strncasecmp(vp,"ul",2))
-              label->position = MS_UL;     
-            else if(!strncasecmp(vp,"lr",2))
-              label->position = MS_LR;     
-            else if(!strncasecmp(vp,"ur",2))
-              label->position = MS_UR;     
-            else if(!strncasecmp(vp,"ll",2))
-              label->position = MS_LL;     
-            else if(!strncasecmp(vp,"cr",2))
-              label->position = MS_CR;     
-            else if(!strncasecmp(vp,"cl",2))
-              label->position = MS_CL;     
-	    else if(!strncasecmp(vp,"uc",2))
-              label->position = MS_UC;     
-            else if(!strncasecmp(vp,"lc",2))
-              label->position = MS_LC;     
-            else if(!strncasecmp(vp,"cc",2))
-              label->position = MS_CC;     
-          }       
-        }
-      }
+    /* check the labelObj's */
+    for(j=0; j<layer->class[i]->numlabels; j++) {
+      bindLabel(layer, shape, layer->class[i]->labels[j], querymapMode);
     }
   } /* next classObj */
 
@@ -577,64 +587,103 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
   return(-1); /* no match */
 }
 
-char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
-{
-  char *tmpstr=NULL;
+static char *evalTextExpression(expressionObj *expr, shapeObj *shape) {
+  char *result=NULL;
 
-  if(layer->class[shape->classindex]->text.string) { /* test for global label first */
-    switch(layer->class[shape->classindex]->text.type) {
-    case(MS_STRING):
-      {
-        char *target=NULL;
-        tokenListNodeObjPtr node=NULL;
-        tokenListNodeObjPtr nextNode=NULL;
+  if(!expr->string) return result; /* nothing to do */
 
-        tmpstr = msStrdup(layer->class[shape->classindex]->text.string);
+  switch(expr->type) {
+  case(MS_STRING):
+    {
+      char *target=NULL;
+      tokenListNodeObjPtr node=NULL;
+      tokenListNodeObjPtr nextNode=NULL;
 
-        node = layer->class[shape->classindex]->text.tokens;
-        if(node) {
-          while(node != NULL) {
-            nextNode = node->next;
-            if(node->token == MS_TOKEN_BINDING_DOUBLE || node->token == MS_TOKEN_BINDING_INTEGER || node->token == MS_TOKEN_BINDING_STRING || node->token == MS_TOKEN_BINDING_TIME) {
-              target = (char *) msSmallMalloc(strlen(node->tokenval.bindval.item) + 3);
-              sprintf(target, "[%s]", node->tokenval.bindval.item);
-              tmpstr = msReplaceSubstring(tmpstr, target, shape->values[node->tokenval.bindval.index]);
-              msFree(target);
-	    }
-            node = nextNode;
+      result = msStrdup(expr->string);
+
+      node = expr->tokens;
+      if(node) {
+        while(node != NULL) {
+          nextNode = node->next;
+          if(node->token == MS_TOKEN_BINDING_DOUBLE || node->token == MS_TOKEN_BINDING_INTEGER || node->token == MS_TOKEN_BINDING_STRING || node->token == MS_TOKEN_BINDING_TIME) {
+            target = (char *) msSmallMalloc(strlen(node->tokenval.bindval.item) + 3);
+            sprintf(target, "[%s]", node->tokenval.bindval.item);
+            result = msReplaceSubstring(result, target, shape->values[node->tokenval.bindval.index]);
+            msFree(target);
           }
+          node = nextNode;
         }
       }
-      break;
-    case(MS_EXPRESSION):
-      {
-        int status;
-        parseObj p;
+    }
+    break;
+  case(MS_EXPRESSION):
+    {
+      int status;
+      parseObj p;
 
-        p.shape = shape;
-        p.expr = &(layer->class[shape->classindex]->text);
-        p.expr->curtoken = p.expr->tokens; /* reset */
-        p.type = MS_PARSE_TYPE_STRING;
+      p.shape = shape;
+      p.expr = expr;
+      p.expr->curtoken = p.expr->tokens; /* reset */
+      p.type = MS_PARSE_TYPE_STRING;
 
-        status = yyparse(&p);
+      status = yyparse(&p);
 
-        if (status != 0) {
-	  msSetError(MS_PARSEERR, "Failed to process text expression: %s", "msShapeGetAnnotation", layer->class[shape->classindex]->text.string);
-	  return NULL;
-        }
-
-        tmpstr = p.result.strval;        
-        break;
+      if (status != 0) {
+        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "evalTextExpression", expr->string);
+        return NULL;
       }
-    default:
+
+      result = p.result.strval;        
       break;
     }
-  } else {
-    if (shape->values && layer->labelitemindex >= 0)
-      tmpstr = msStrdup(shape->values[layer->labelitemindex]);
+  default:
+    break;
   }
 
-  return(tmpstr);
+  return result;
+}
+
+int msShapeGetAnnotation(layerObj *layer, shapeObj *shape) {
+  int i, j;
+
+  /* RFC77 TODO: check and throw some errors here... */
+  if(!layer || !shape) return MS_FAILURE;
+
+  i = shape->classindex;
+  for(j=0; j<layer->class[i]->numlabels; j++) {
+
+    layer->class[i]->labels[j]->status = MS_ON;
+    if(layer->map->scaledenom > 0) {
+      if((layer->class[i]->labels[j]->maxscaledenom != -1) && (layer->map->scaledenom >= layer->class[i]->labels[j]->maxscaledenom)) {
+        layer->class[i]->labels[j]->status = MS_OFF;
+        continue; /* next label */
+      }
+      if((layer->class[i]->labels[j]->minscaledenom != -1) && (layer->map->scaledenom < layer->class[i]->labels[j]->minscaledenom)) {
+        layer->class[i]->labels[j]->status = MS_OFF;
+        continue; /* next label */
+      }
+    }
+    if(msEvalExpression(layer, shape, &(layer->class[i]->labels[j]->expression), -1) != MS_TRUE) {
+      layer->class[i]->labels[j]->status = MS_OFF;
+      continue; /* next label */
+    }
+
+    msFree(layer->class[i]->labels[j]->annotext);
+    layer->class[i]->labels[j]->annotext = NULL;
+
+    if(layer->class[i]->labels[j]->text.string) {    
+      layer->class[i]->labels[j]->annotext = evalTextExpression(&(layer->class[i]->labels[j]->text), shape);
+    } else if(layer->class[i]->text.string) {
+      layer->class[i]->labels[j]->annotext = evalTextExpression(&(layer->class[i]->text), shape);
+    } else {
+      if (shape->values && layer->labelitemindex >= 0)
+        layer->class[i]->labels[j]->annotext = msStrdup(shape->values[layer->labelitemindex]);
+      else
+	layer->class[i]->labels[j]->annotext = msStrdup(shape->text); /* last resort but common with iniline features */
+    }
+  }
+
+  return MS_SUCCESS;
 }
 
 /* Check if the shape is enough big to be drawn with the

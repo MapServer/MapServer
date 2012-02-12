@@ -303,82 +303,32 @@ char *msTransformLabelText(mapObj *map, imageObj* image,labelObj *label, char *t
     return newtext;
 }
 
-int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, char *string, double featuresize, labelObj *label )
-{
-  int i;
+int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize) {
+  int i, priority;
   labelCacheSlotObj *cacheslot;
 
   labelCacheMemberObj *cachePtr=NULL;
   layerObj *layerPtr=NULL;
   classObj *classPtr=NULL;
 
-  if(!string) return(MS_SUCCESS); /* not an error */ 
-
   layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
 
-  /* check that the label intersects the layer mask */
-  if(layerPtr->masklayer) {
-     int maskLayerIdx = msGetLayerIndex(map,layerPtr->masklayer);
-     layerObj *maskLayer = GET_LAYER(map,maskLayerIdx);
-     if(maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
-        rasterBufferObj rb;
-        memset(&rb,0,sizeof(rasterBufferObj));
-        MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&rb);
-        if(point) {
-           int x = MS_NINT(point->x);
-           int y = MS_NINT(point->y);
-           if(rb.type == MS_BUFFER_BYTE_RGBA) {
-              unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
-              if(!*alphapixptr) {
-                 /* label point does not intersect mask */
-                 return MS_SUCCESS;
-              }
-           } else {
-              if(!gdImageGetPixel(rb.data.gd_img,x,y))
-                 return MS_SUCCESS;
-           }
-        } else if (labelpath) {
-           int i = 0;
-           for(i=0;i< labelpath->path.numpoints;i++) {
-              int x = MS_NINT(labelpath->path.point[i].x);
-              int y = MS_NINT(labelpath->path.point[i].y);
-              if(rb.type == MS_BUFFER_BYTE_RGBA) {
-                 unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
-                 if(!*alphapixptr) {
-                    /* label point does not intersect mask */
-                    return MS_SUCCESS;
-                 }
-              } else {
-                 if(!gdImageGetPixel(rb.data.gd_img,x,y))
-                    return MS_SUCCESS;
-              }
-           }
-        }
-     } else {
-        msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabel()", layerPtr->name);
-        return (MS_FAILURE);
-     }
-  }
+  if(classPtr->numlabels == 0) return MS_SUCCESS; /* not an error just nothing to do */
 
-
-  if( label == NULL )
-    label = &(classPtr->label);
-
-  if(map->scaledenom > 0) {
-    if((label->maxscaledenom != -1) && (map->scaledenom >= label->maxscaledenom))
-      return(MS_SUCCESS);
-    if((label->minscaledenom != -1) && (map->scaledenom < label->minscaledenom))
-      return(MS_SUCCESS);
+  /* if the number of labels is 1 then call msAddLabel() accordingly */
+  if(classPtr->numlabels == 1) {
+    return msAddLabel(map, classPtr->labels[0], layerindex, classindex, shape, point, NULL, featuresize);
   }
 
   /* Validate label priority value and get ref on label cache for it */
-  if (label->priority < 1)
-    label->priority = 1;
-  else if (label->priority > MS_MAX_LABEL_PRIORITY)
-    label->priority = MS_MAX_LABEL_PRIORITY;
+  priority = classPtr->labels[0]->priority; /* take priority from the first label */
+  if (priority < 1)
+    priority = 1;
+  else if (priority > MS_MAX_LABEL_PRIORITY)
+    priority = MS_MAX_LABEL_PRIORITY;
 
-  cacheslot = &(map->labelcache.slots[label->priority-1]);
+  cacheslot = &(map->labelcache.slots[priority-1]);
 
   if(cacheslot->numlabels == cacheslot->cachesize) { /* just add it to the end */
     cacheslot->labels = (labelCacheMemberObj *) realloc(cacheslot->labels, sizeof(labelCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT));
@@ -400,22 +350,13 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
     cachePtr->shapetype = MS_SHAPE_POINT;
   }
 
-  /* Store the label point or the label path (Bug #1620) */
-  if ( point ) {
-    cachePtr->point = *point; /* the actual label point */
-    cachePtr->point.x = MS_NINT(cachePtr->point.x);
-    cachePtr->point.y = MS_NINT(cachePtr->point.y);
-    cachePtr->labelpath = NULL;
-  } else if ( labelpath ) {
-    int i;
-    cachePtr->labelpath = labelpath;
-    /* Use the middle point of the labelpath for mindistance calculations */
-    i = labelpath->path.numpoints / 2;
-    cachePtr->point.x = MS_NINT(labelpath->path.point[i].x);
-    cachePtr->point.y = MS_NINT(labelpath->path.point[i].y);
-  }
+  /* store the label point and set the labelpath to NULL */
+  cachePtr->point = *point; /* the actual label point */
+  cachePtr->point.x = MS_NINT(cachePtr->point.x);
+  cachePtr->point.y = MS_NINT(cachePtr->point.y);
+  cachePtr->labelpath = NULL;
 
-  cachePtr->text = msStrdup(string); /* the actual text */
+  // cachePtr->text = msStrdup(string); /* the actual text */
 
   /* TODO: perhaps we can get rid of this next section and just store a marker size? Why do we cache the styles for a point layer? */
 
@@ -435,9 +376,16 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
     }
   }
 
-  /* copy the label */
-  initLabel(&(cachePtr->label));
-  msCopyLabel(&(cachePtr->label), label);
+  /* 
+  ** copy the labels (we are guaranteed to have more than one): 
+  **   we cannot simply keep refs because the rendering code alters some members of the style objects
+  */
+  cachePtr->numlabels = classPtr->numlabels;
+  cachePtr->labels = (labelObj *) msSmallMalloc(sizeof(labelObj)*classPtr->numlabels);
+  for(i=0; i<classPtr->numlabels; i++) {
+    initLabel(&(cachePtr->labels[i]));
+    msCopyLabel(&(cachePtr->labels[i]), classPtr->labels[i]);
+  }
 
   cachePtr->markerid = -1;
 
@@ -492,6 +440,206 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, shapeObj *shape, poi
   return(MS_SUCCESS);
 }
 
+int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, double featuresize) {
+  int i;
+  labelCacheSlotObj *cacheslot;
+
+  labelCacheMemberObj *cachePtr=NULL;
+  layerObj *layerPtr=NULL;
+  classObj *classPtr=NULL;
+
+  if(!label) return(MS_FAILURE); // RFC 77 TODO: set a proper message
+  if(!label->annotext) return(MS_SUCCESS); /* not an error */ 
+
+  layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
+  classPtr = GET_LAYER(map, layerindex)->class[classindex];
+
+  /* check that the label intersects the layer mask */
+  /*   RFC 77 TODO: make sure this is right- ask Thomas, perhaps move to function to use with msAddLabelGroup() */
+  if(layerPtr->masklayer) {
+     int maskLayerIdx = msGetLayerIndex(map,layerPtr->masklayer);
+     layerObj *maskLayer = GET_LAYER(map,maskLayerIdx);
+     if(maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
+        rasterBufferObj rb;
+        memset(&rb,0,sizeof(rasterBufferObj));
+        MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&rb);
+        if(point) {
+           int x = MS_NINT(point->x);
+           int y = MS_NINT(point->y);
+           if(rb.type == MS_BUFFER_BYTE_RGBA) {
+              unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+              if(!*alphapixptr) {
+                 /* label point does not intersect mask */
+                 return MS_SUCCESS;
+              }
+           } else {
+              if(!gdImageGetPixel(rb.data.gd_img,x,y))
+                 return MS_SUCCESS;
+           }
+        } else if (labelpath) {
+           int i = 0;
+           for(i=0;i< labelpath->path.numpoints;i++) {
+              int x = MS_NINT(labelpath->path.point[i].x);
+              int y = MS_NINT(labelpath->path.point[i].y);
+              if(rb.type == MS_BUFFER_BYTE_RGBA) {
+                 unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+                 if(!*alphapixptr) {
+                    /* label point does not intersect mask */
+                    return MS_SUCCESS;
+                 }
+              } else {
+                 if(!gdImageGetPixel(rb.data.gd_img,x,y))
+                    return MS_SUCCESS;
+              }
+           }
+        }
+     } else {
+        msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabel()", layerPtr->name);
+        return (MS_FAILURE);
+     }
+  }
+
+  /* Validate label priority value and get ref on label cache for it */
+  if (label->priority < 1)
+    label->priority = 1;
+  else if (label->priority > MS_MAX_LABEL_PRIORITY)
+    label->priority = MS_MAX_LABEL_PRIORITY;
+
+  cacheslot = &(map->labelcache.slots[label->priority-1]);
+
+  if(cacheslot->numlabels == cacheslot->cachesize) { /* just add it to the end */
+    cacheslot->labels = (labelCacheMemberObj *) realloc(cacheslot->labels, sizeof(labelCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT));
+    MS_CHECK_ALLOC(cacheslot->labels, sizeof(labelCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT), MS_FAILURE);
+    cacheslot->cachesize += MS_LABELCACHEINCREMENT;
+  }
+
+  cachePtr = &(cacheslot->labels[cacheslot->numlabels]);
+
+  cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
+  cachePtr->classindex = classindex;
+
+  if(shape) {
+    cachePtr->tileindex = shape->tileindex;
+    cachePtr->shapeindex = shape->index;
+    cachePtr->shapetype = shape->type;
+  } else {
+    cachePtr->tileindex = cachePtr->shapeindex = -1;    
+    cachePtr->shapetype = MS_SHAPE_POINT;
+  }
+
+  /* Store the label point or the label path (Bug #1620) */
+  if ( point ) {
+    cachePtr->point = *point; /* the actual label point */
+    cachePtr->point.x = MS_NINT(cachePtr->point.x);
+    cachePtr->point.y = MS_NINT(cachePtr->point.y);
+    cachePtr->labelpath = NULL;
+  } else if ( labelpath ) {
+    int i;
+    cachePtr->labelpath = labelpath;
+    /* Use the middle point of the labelpath for mindistance calculations */
+    i = labelpath->path.numpoints / 2;
+    cachePtr->point.x = MS_NINT(labelpath->path.point[i].x);
+    cachePtr->point.y = MS_NINT(labelpath->path.point[i].y);
+  }
+
+  /* TODO: perhaps we can get rid of this next section and just store a marker size? Why do we cache the styles for a point layer? */
+
+  /* copy the styles (only if there is an accompanying marker)
+   * We cannot simply keeep refs because the rendering code alters some members of the style objects
+   */
+  cachePtr->styles = NULL;
+  cachePtr->numstyles = 0;
+  if(layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) {
+    cachePtr->numstyles = classPtr->numstyles;
+    cachePtr->styles = (styleObj *) msSmallMalloc(sizeof(styleObj)*classPtr->numstyles);
+    if (classPtr->numstyles > 0) {
+      for(i=0; i<classPtr->numstyles; i++) {
+	initStyle(&(cachePtr->styles[i]));
+	msCopyStyle(&(cachePtr->styles[i]), classPtr->styles[i]);
+      }
+    }
+  }
+
+  /* copy the label */
+  cachePtr->numlabels = 1;
+  cachePtr->labels = (labelObj *) msSmallMalloc(sizeof(labelObj));
+  initLabel(cachePtr->labels);
+  msCopyLabel(cachePtr->labels, label);
+
+  cachePtr->markerid = -1;
+
+  cachePtr->featuresize = featuresize;
+
+  cachePtr->poly = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
+  msInitShape(cachePtr->poly);
+
+  cachePtr->status = MS_FALSE;
+
+  if(layerPtr->type == MS_LAYER_POINT) { /* cache the marker placement, it's already on the map */
+    rectObj rect;
+    int w, h;
+
+    if(cacheslot->nummarkers == cacheslot->markercachesize) { /* just add it to the end */
+      cacheslot->markers = (markerCacheMemberObj *) realloc(cacheslot->markers, sizeof(markerCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT));
+      MS_CHECK_ALLOC(cacheslot->markers, sizeof(markerCacheMemberObj)*(cacheslot->cachesize+MS_LABELCACHEINCREMENT), MS_FAILURE); 
+      cacheslot->markercachesize+=MS_LABELCACHEINCREMENT;
+    }
+
+    i = cacheslot->nummarkers;
+
+    cacheslot->markers[i].poly = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
+    msInitShape(cacheslot->markers[i].poly);
+
+    /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
+    /* #2347: after RFC-24 classPtr->styles could be NULL so we check it */
+    if(classPtr->styles != NULL) {
+      if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS) 
+        return(MS_FAILURE);
+    } else {
+      msSetError(MS_MISCERR, "msAddLabel error: missing style definition for layer '%s'", "msAddLabel()", layerPtr->name);
+      return(MS_FAILURE);
+    }
+    rect.minx = MS_NINT(point->x - .5 * w);
+    rect.miny = MS_NINT(point->y - .5 * h);
+    rect.maxx = rect.minx + (w-1);
+    rect.maxy = rect.miny + (h-1);
+    msRectToPolygon(rect, cacheslot->markers[i].poly);    
+    cacheslot->markers[i].id = cacheslot->numlabels;
+ 
+    cachePtr->markerid = i;
+
+    cacheslot->nummarkers++;
+  }
+
+  cacheslot->numlabels++;
+
+  /* Maintain main labelCacheObj.numlabels only for backwards compatibility */
+  map->labelcache.numlabels++;
+
+  return(MS_SUCCESS);
+}
+
+/* 
+** Is a label completely in the image, reserving a gutter (in pixels) inside  
+** image for no labels (effectively making image larger. The gutter can be  
+** negative in cases where a label has a buffer around it. 
+*/ 
+static int labelInImage(int width, int height, shapeObj *lpoly, int gutter) 
+{ 
+  int i,j; 
+	 
+  for(i=0; i<lpoly->numlines; i++) { 
+    for(j=1; j<lpoly->line[i].numpoints; j++) { 
+      if(lpoly->line[i].point[j].x < gutter) return(MS_FALSE); 
+      if(lpoly->line[i].point[j].x >= width-gutter) return(MS_FALSE); 
+      if(lpoly->line[i].point[j].y < gutter) return(MS_FALSE); 
+      if(lpoly->line[i].point[j].y >= height-gutter) return(MS_FALSE); 
+    }
+  }
+
+  return(MS_TRUE); 
+}
+
 /* msTestLabelCacheCollisions()
 **
 ** Compares current label against labels already drawn and markers from cache and discards it
@@ -505,65 +653,76 @@ void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr,
                                 labelCacheMemberObj *cachePtr, int current_priority, 
                                 int current_label, int mindistance, double label_size)
 {
-    int i, p;
+  int i, p;
+  labelCacheMemberObj *curCachePtr=NULL; 
 
-    /* Check against image bounds first 
-    ** Pass mapwidth=-1 to skip this test
-     */
-    if(!labelPtr->partials && mapwidth > 0 && mapheight > 0) {
-        if(labelInImage(mapwidth, mapheight, cachePtr->poly, buffer) == MS_FALSE) {
-	    cachePtr->status = MS_FALSE;
-            return;
-        }
+  cachePtr->status = MS_TRUE; /* by default */
+
+  /* Check against image bounds first 
+  ** Pass mapwidth=-1 to skip this test
+   */
+  if(!labelPtr->partials && mapwidth > 0 && mapheight > 0) {
+    if(labelInImage(mapwidth, mapheight, cachePtr->poly, buffer) == MS_FALSE) {
+      cachePtr->status = MS_FALSE;
+      return;
     }
+  }
 
-    /* Compare against all rendered markers from this priority level and higher.
-    ** Labels can overlap their own marker and markers from lower priority levels
-    */
-    for (p=current_priority; p < MS_MAX_LABEL_PRIORITY; p++) {
-        labelCacheSlotObj *markerslot;
-        markerslot = &(labelcache->slots[p]);
+  /* Compare against all rendered markers from this priority level and higher.
+  ** Labels can overlap their own marker and markers from lower priority levels
+  */
+  for (p=current_priority; p < MS_MAX_LABEL_PRIORITY; p++) {
+    labelCacheSlotObj *markerslot;
+    markerslot = &(labelcache->slots[p]);
 
-        for ( i = 0; i < markerslot->nummarkers; i++ ) {
-            if ( !(p == current_priority && current_label == markerslot->markers[i].id) ) {  /* labels can overlap their own marker */
-                if ( intersectLabelPolygons(markerslot->markers[i].poly, cachePtr->poly ) == MS_TRUE ) {
-                    cachePtr->status = MS_FALSE;  /* polys intersect */
-                    return;
-                }
-            }
+    for ( i = 0; i < markerslot->nummarkers; i++ ) {
+      if ( !(p == current_priority && current_label == markerslot->markers[i].id) ) {  /* labels can overlap their own marker */
+        if ( intersectLabelPolygons(markerslot->markers[i].poly, cachePtr->poly ) == MS_TRUE ) {
+          cachePtr->status = MS_FALSE;  /* polys intersect */
+          return;
         }
+      }
     }
+  }
 
-    /* compare against rendered labels */
-    i = current_label+1;
+  /* compare against rendered labels */
+  i = current_label+1;
 
-    for(p=current_priority; p<MS_MAX_LABEL_PRIORITY; p++) {
-        labelCacheSlotObj *cacheslot;
-        cacheslot = &(labelcache->slots[p]);
+  for(p=current_priority; p<MS_MAX_LABEL_PRIORITY; p++) {
+    labelCacheSlotObj *cacheslot;
+    cacheslot = &(labelcache->slots[p]);
 
-        for(  ; i < cacheslot->numlabels; i++) { 
-            if(cacheslot->labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-                /* We add the label_size to the mindistance value when comparing because we do want the mindistance 
-                   value between the labels and not only from point to point. */
-                if(label_size > 0 && (mindistance != -1) && 
-                   (cachePtr->layerindex == cacheslot->labels[i].layerindex) && (cachePtr->classindex == cacheslot->labels[i].classindex) && 
-                   (strcmp(cachePtr->text,cacheslot->labels[i].text) == 0) &&
-                   (msDistancePointToPoint(&(cachePtr->point), &(cacheslot->labels[i].point)) <= (mindistance + label_size))) { /* label is a duplicate */
-                    cachePtr->status = MS_FALSE;
-                    return;
-                }
+    for(  ; i < cacheslot->numlabels; i++) { 
+      curCachePtr = &(cacheslot->labels[i]);
 
-                if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-                    cachePtr->status = MS_FALSE;
-                    return;
-                }
-            }
-        } /* i */
+      if(curCachePtr->status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-        i = 0; /* Start over with 1st label of next slot */
-    } /* p */
+        /* 
+	** Note 1: We add the label_size to the mindistance value when comparing because we do want the mindistance 
+        ** value between the labels and not only from point to point. 
+        **
+        ** Note 2: We only check the first label (could be multiples (RFC 77)) since that is *by far* the most common
+        ** use case. Could change in the future but it's not worth the overhead at this point.
+        */
+        if(label_size > 0 && (mindistance != -1) && 
+          (cachePtr->layerindex == curCachePtr->layerindex) && 
+          (cachePtr->classindex == curCachePtr->classindex) && 
+          (strcmp(cachePtr->labels[0].annotext, curCachePtr->labels[0].annotext) == 0) &&
+          (msDistancePointToPoint(&(cachePtr->point), &(curCachePtr->point)) <= (mindistance + label_size))) { /* label is a duplicate */
+          cachePtr->status = MS_FALSE;
+          return;
+        }
+
+        if(intersectLabelPolygons(cacheslot->labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+          cachePtr->status = MS_FALSE;
+          return;
+        }
+      }
+    } /* i */
+
+    i = 0; /* Start over with 1st label of next slot */
+  } /* p */
 }
-
 
 /* msGetLabelCacheMember()
 **
@@ -1043,26 +1202,6 @@ pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, do
         msComputeBounds(poly);
     }
     return rp;
-}
-
-/*
-** is a label completely in the image (excluding label buffer)
-*/
-/* static int labelInImage(int width, int height, shapeObj *lpoly, int buffer) */
-int labelInImage(int width, int height, shapeObj *lpoly, int buffer)
-{
-  int i,j;
-
-  for(i=0; i<lpoly->numlines; i++) {
-    for(j=1; j<lpoly->line[i].numpoints; j++) {
-      if(lpoly->line[i].point[j].x < -buffer) return(MS_FALSE);
-      if(lpoly->line[i].point[j].x >= width+buffer) return(MS_FALSE);
-      if(lpoly->line[i].point[j].y < -buffer) return(MS_FALSE);
-      if(lpoly->line[i].point[j].y >= height+buffer) return(MS_FALSE);
-    }
-  }
-
-  return(MS_TRUE);
 }
 
 /*

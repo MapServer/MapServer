@@ -326,6 +326,11 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     dst->numstyles++;
   }
 
+  /*
+  ** other book keeping information (RFC77 TODO)
+  */
+  MS_COPYSTELEM(status);
+  MS_COPYSTRING(dst->annotext, src->annotext);
 
   return MS_SUCCESS;
 }
@@ -477,9 +482,14 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
         dst->numstyles++;
     }
 
-    if (msCopyLabel(&(dst->label), &(src->label)) != MS_SUCCESS) {
-        msSetError(MS_MEMERR, "Failed to copy label.", "msCopyClass()");
-        return MS_FAILURE;
+    for (i=0; i<src->numlabels; i++) {
+        if (msGrowClassLabels(dst) == NULL)
+	    return MS_FAILURE;
+	initLabel(dst->labels[i]);
+        if (msCopyLabel(dst->labels[i], src->labels[i]) != MS_SUCCESS) {
+            msSetError(MS_MEMERR, "Failed to copy label.", "msCopyClass()");
+            return MS_FAILURE;
+        }
     }
 
     MS_COPYSTRING(dst->keyimage, src->keyimage);
@@ -544,20 +554,23 @@ int msCopyCluster(clusterObj *dst, clusterObj *src)
  * make exact copies, this method might not get much use.              *
  **********************************************************************/
 
-int msCopyLabelCacheMember(labelCacheMemberObj *dst,
-                           labelCacheMemberObj *src)
+int msCopyLabelCacheMember(labelCacheMemberObj *dst, labelCacheMemberObj *src)
 {
     int i;
 
-    MS_COPYSTRING(dst->text, src->text);
     MS_COPYSTELEM(featuresize);
-    MS_COPYSTELEM(numstyles);
 
+    MS_COPYSTELEM(numstyles);
     for (i = 0; i < dst->numstyles; i++) {
         msCopyStyle(&(dst->styles[i]), &(src->styles[i]));
     }
 
-    msCopyLabel(&(dst->label), &(src->label));
+    MS_COPYSTELEM(numlabels);
+    dst->labels = (labelObj *) msSmallMalloc(sizeof(labelObj)*dst->numlabels);
+    for (i = 0; i < dst->numlabels; i++) {
+      msCopyLabel(&(dst->labels[i]), &(src->labels[i]));
+    }
+
     MS_COPYSTELEM(layerindex);
     MS_COPYSTELEM(classindex);
     MS_COPYSTELEM(tileindex);

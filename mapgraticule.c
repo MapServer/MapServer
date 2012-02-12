@@ -83,10 +83,10 @@ int msGraticuleLayerOpen(layerObj *layer)
   if( layer->numclasses == 0 )
       msDebug( "GRID layer has no classes, nothing will be rendered.\n" );
 
-  if( layer->numclasses == 0 || layer->class[0]->label.size == -1 )
-    pInfo->blabelaxes = 0;
-  else
+  if( layer->numclasses > 0 && layer->class[0]->numlabels > 0 )
     pInfo->blabelaxes = 1;
+  else
+    pInfo->blabelaxes = 0;
   
   if( pInfo->labelformat == NULL ) {
     pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DEFAULT ) + 1 );
@@ -1083,7 +1083,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   graticuleObj *pInfo = (graticuleObj  *) pLayer->layerinfo;
   rectObj rectLabel;
   pointObj ptPoint;
-  double size = pLayer->class[0]->label.size; /* TODO TBT: adjust minsize/maxsize/resolution */
+  double size = -1;
 
   if( pInfo == NULL || pShape == NULL ) {
     msSetError(MS_MISCERR, "Assertion failed: Null shape or layerinfo!, ", "_AdjustLabelPosition()");
@@ -1092,7 +1092,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
  
   if(msCheckParentPointer(pLayer->map,"map")==MS_FAILURE)
     return MS_FAILURE;
-   
+  
   ptPoint = pShape->line->point[0];
 
 #ifdef USE_PROJ
@@ -1104,8 +1104,9 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
      msTransformShapeToPixelRound(pShape, pLayer->map->extent, pLayer->map->cellsize);
   }
 
-  if(msGetLabelSize(pLayer->map, &pLayer->class[0]->label,pShape->text, size,&rectLabel,NULL) != MS_SUCCESS)
-	  return MS_FAILURE;  /* msSetError already called */
+  size = pLayer->class[0]->labels[0]->size; /* TODO TBT: adjust minsize/maxsize/resolution. TODO RFC 77: ok to use first label? */
+  if(msGetLabelSize(pLayer->map, pLayer->class[0]->labels[0], pShape->text, size, &rectLabel, NULL) != MS_SUCCESS)
+    return MS_FAILURE;  /* msSetError already called */
 
   switch( ePosition ) {
   case posBottom:

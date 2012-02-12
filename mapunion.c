@@ -543,10 +543,10 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
                     }
                     /* set up annotation */
                     msFree(layerinfo->classText);
-                    if((srclayer->class[layerinfo->classIndex]->text.string || srclayer->labelitem) && 
-                        srclayer->class[layerinfo->classIndex]->label.size != -1)
-                        layerinfo->classText = msShapeGetAnnotation(srclayer, shape);
-                    else
+                    if(srclayer->class[layerinfo->classIndex]->numlabels > 0) {                       
+                        msShapeGetAnnotation(srclayer, shape);
+                        layerinfo->classText = msStrdup(srclayer->class[layerinfo->classIndex]->labels[0]->annotext); /* pull text from the first label only */
+                    } else
                         layerinfo->classText = NULL;
                 }
 
@@ -735,19 +735,27 @@ static int msUnionLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, s
             c->styles[i]->numbindings = 0;
         }
 
-        if (msCopyLabel(&(c->label), &(src->label)) != MS_SUCCESS) 
+        for (i = 0; i < src->numlabels; i++) 
         {
-            msSetError(MS_MEMERR, "Failed to copy label.", "msCopyClass()");
-            return MS_FAILURE;
-        }
+	    // RFC77 TODO: allocation need to be done, but is the right way (from mapcopy.c)?
+            if (msGrowClassLabels(c) == NULL)
+	        return MS_FAILURE;
+	    initLabel(c->labels[i]);
 
-        /* remove the bindings on the label */
-        for(j=0; j<MS_LABEL_BINDING_LENGTH; j++)
-        {
-            msFree(c->label.bindings[j].item);
-            c->label.bindings[j].item = NULL;
+            if (msCopyLabel(c->labels[i], src->labels[i]) != MS_SUCCESS) 
+            {
+                msSetError(MS_MEMERR, "Failed to copy label.", "msUnionLayerGetAutoStyle()");
+                return MS_FAILURE;
+            }
+
+            /* remove the bindings on the label */
+            for(j=0; j<MS_LABEL_BINDING_LENGTH; j++)
+            {
+                msFree(c->labels[i]->bindings[j].item);
+                c->labels[i]->bindings[j].item = NULL;
+            }
+            c->labels[i]->numbindings = 0;
         }
-        c->label.numbindings = 0;
 
         c->type = src->type;
         c->layer = layer;

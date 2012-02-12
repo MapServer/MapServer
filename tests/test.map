@@ -55,7 +55,7 @@ MAP
     END
     DATA "raster.tif"
     PROCESSING "BANDS=1"
-    STATUS DEFAULT
+    STATUS ON # DEFAULT
   END
   
   LAYER
@@ -64,7 +64,7 @@ MAP
     PROJECTION
       "init=epsg:4326"
     END
-    STATUS DEFAULT
+    STATUS ON # DEFAULT
     DATA "polygon"
     METADATA
       "key1" "value1"
@@ -84,9 +84,9 @@ MAP
       STYLE
         COLOR 255 153 102
         OUTLINECOLOR 0 0 204
-        SYMBOL 1
-        SIZE 2
-      END
+        #SYMBOL 1
+        #SIZE 2
+      END      
     END
     CLASS
       NAME "1"
@@ -106,16 +106,17 @@ MAP
     PROJECTION
       "init=epsg:4326"
     END
-    TRANSPARENCY 1
-    STATUS DEFAULT
+    #TRANSPARENCY 1
+    STATUS ON # DEFAULT
     DATA "line"
     CLASSITEM "FNAME"
     CLASS
       NAME "0"
       STYLE
         COLOR 0 153 0
-        SYMBOL 1
-        SIZE 3
+        #SYMBOL 1
+        #SIZE 3
+        WIDTH 3
       END
     END
     CLASS
@@ -136,7 +137,7 @@ MAP
     PROJECTION
       "init=epsg:4326"
     END
-    STATUS DEFAULT
+    STATUS OFF # DEFAULT
     DATA "point"
     CLASSITEM "FNAME"
     LABELITEM "FNAME"
@@ -178,7 +179,7 @@ MAP
     PROJECTION
       "init=epsg:4326"
     END
-    STATUS DEFAULT
+    STATUS OFF # DEFAULT
     FEATURE
       POINTS -0.2 51.5 END
     END
@@ -223,7 +224,7 @@ LAYER
     PROJECTION
       "init=epsg:4326"
     END
-    STATUS DEFAULT
+    STATUS OFF # DEFAULT
     FEATURE
       POINTS 0.2 51.2 END
     END

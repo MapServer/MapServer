@@ -434,16 +434,20 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
   if (msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = map->symbolset.numsymbols -1 ;
   GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
-  GET_LAYER(map, l)->class[0]->label.force = MS_TRUE;
-  GET_LAYER(map, l)->class[0]->label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
-  GET_LAYER(map, l)->class[0]->label.priority = MS_MAX_LABEL_PRIORITY;
+
+  if(!GET_LAYER(map, l)->class[0]->labels) {
+    if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
+  }
+  initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
+  GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
+  GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
+  GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
+  GET_LAYER(map, l)->class[0]->labels[0]->annotext = msStrdup("");
 
   if(map->scalebar.postlabelcache) /* TODO: add it directly to the image */
-  {
-      msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
-  } else {
-    msAddLabel(map, l, 0, NULL, &point, NULL, "", 1.0, NULL);
-  }
+    msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
+  else
+    msAddLabel(map, GET_LAYER(map, l)->class[0]->labels[0], l, 0, NULL, &point, NULL, -1);
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or with saving maps */
   GET_LAYER(map, l)->status = MS_DELETE;
