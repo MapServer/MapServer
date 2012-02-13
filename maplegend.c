@@ -717,7 +717,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
   GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
   GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
-  GET_LAYER(map, l)->class[0]->labels[0]->annotext = msStrdup("");
+  GET_LAYER(map, l)->class[0]->labels[0]->annotext = msStrdup(" ");
 
   if(map->legend.postlabelcache) /* add it directly to the image */
     msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
