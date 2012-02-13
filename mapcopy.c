@@ -298,6 +298,7 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTRING(dst->encoding, src->encoding);
 
   MS_COPYSTELEM(outlinewidth);
+  MS_COPYSTELEM(space_size_10);
 
   /* 
   ** now the styles 
@@ -491,6 +492,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
             return MS_FAILURE;
         }
     }
+    MS_COPYSTELEM(numlabels);
 
     MS_COPYSTRING(dst->keyimage, src->keyimage);
     MS_COPYSTRING(dst->name, src->name);

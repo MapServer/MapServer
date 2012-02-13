@@ -12,17 +12,30 @@
       <getmap>
          <params>
             <FORMAT>image/png</FORMAT>
-            <LAYERS>basic</LAYERS>
+            <LAYERS>default</LAYERS>
          </params>
       </getmap>
       
       <http>
-         <url>http://vmap0.tiles.osgeo.org/wms/vmap0</url>
+         <url>http://localhost/cgi-bin/mapserv?map=/gro1/mapserver-utils/osm-google.map</url>
       </http>
+   </source>
+   <source name="ms" type="mapserver">
+      <mapfile>/gro1/mapserver-utils/osm-google.map</mapfile>
    </source>
    
    <tileset name="test">
       <source>vmap0</source>
+      <cache>disk</cache>
+      <grid>WGS84</grid>
+      <grid>g</grid>
+      <format>PNG</format>
+      <metatile>5 5</metatile>
+      <metabuffer>10</metabuffer>
+      <expires>3600</expires>
+   </tileset>
+   <tileset name="ms">
+      <source>ms</source>
       <cache>disk</cache>
       <grid>WGS84</grid>
       <grid>g</grid>
