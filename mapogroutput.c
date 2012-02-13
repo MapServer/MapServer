@@ -1077,7 +1077,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         CPLCloseZip( hZip );
 
         if( sendheaders ) {
-            msIO_setHeader("Content-Disposition","attachment; filename=%s\n",fo_filename);
+            msIO_setHeader("Content-Disposition","attachment; filename=%s",fo_filename);
             msIO_setHeader("Content-Type","application/zip");
             msIO_sendHeaders();
         }
