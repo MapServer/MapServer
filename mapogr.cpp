@@ -2902,7 +2902,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
       poStylePart->SetUnit(OGRSTUPixel, map->cellsize*72.0*39.37);
 #endif
 
-      if (eStylePartType == OGRSTCLabel)
+      if (eStylePartType == OGRSTCLabel && c->numlabels >= 1)
 #if GDAL_VERSION_NUM >= 1500 /* Use OGR Style C API */
       {
           OGRStyleToolH hLabelStyle = hStylePart;
@@ -2918,16 +2918,16 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                  (char*)CPLSPrintf("\"%s\"", escapedTextString));
           free(escapedTextString);
 
-          c->label.angle = OGR_ST_GetParamDbl(hLabelStyle, 
+          c->labels[0]->angle = OGR_ST_GetParamDbl(hLabelStyle, 
                                               OGRSTLabelAngle, &bIsNull);
 
-          c->label.size = OGR_ST_GetParamDbl(hLabelStyle, 
+          c->labels[0]->size = OGR_ST_GetParamDbl(hLabelStyle, 
                                              OGRSTLabelSize, &bIsNull);
-          if( c->label.size < 1 ) /* no point dropping to zero size */
-              c->label.size = 1;
+          if( c->labels[0]->size < 1 ) /* no point dropping to zero size */
+              c->labels[0]->size = 1;
 
           // OGR default is anchor point = LL, so label is at UR of anchor
-          c->label.position = MS_UR;
+          c->labels[0]->position = MS_UR;
 
           int nPosition = OGR_ST_GetParamNum(hLabelStyle, 
                                              OGRSTLabelAnchor,
@@ -2935,18 +2935,18 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if( !bIsNull )
           {
               switch( nPosition ) {
-                case 1: c->label.position = MS_UR; break;
-                case 2: c->label.position = MS_UC; break;
-                case 3: c->label.position = MS_UL; break;
-                case 4: c->label.position = MS_CR; break;
-                case 5: c->label.position = MS_CC; break;
-                case 6: c->label.position = MS_CL; break;
-                case 7: c->label.position = MS_LR; break;
-                case 8: c->label.position = MS_LC; break;
-                case 9: c->label.position = MS_LL; break;
-                case 10: c->label.position = MS_UR; break; /*approximate*/
-                case 11: c->label.position = MS_UC; break;
-                case 12: c->label.position = MS_UL; break;
+                case 1:  c->labels[0]->position = MS_UR; break;
+                case 2:  c->labels[0]->position = MS_UC; break;
+                case 3:  c->labels[0]->position = MS_UL; break;
+                case 4:  c->labels[0]->position = MS_CR; break;
+                case 5:  c->labels[0]->position = MS_CC; break;
+                case 6:  c->labels[0]->position = MS_CL; break;
+                case 7:  c->labels[0]->position = MS_LR; break;
+                case 8:  c->labels[0]->position = MS_LC; break;
+                case 9:  c->labels[0]->position = MS_LL; break;
+                case 10: c->labels[0]->position = MS_UR; break; /*approximate*/
+                case 11: c->labels[0]->position = MS_UC; break;
+                case 12: c->labels[0]->position = MS_UL; break;
                 default: break;
               }
           }
@@ -2957,7 +2957,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
                                                   &r, &g, &b, &t))
           {
-              MS_INIT_COLOR(c->label.color, r, g, b, t);
+              MS_INIT_COLOR(c->labels[0]->color, r, g, b, t);
           }
 
           pszColor = OGR_ST_GetParamStr(hLabelStyle, 
@@ -2966,7 +2966,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
                                                   &r, &g, &b, &t))
           {
-              MS_INIT_COLOR(c->label.shadowcolor, r, g, b, t);
+              MS_INIT_COLOR(c->labels[0]->shadowcolor, r, g, b, t);
           }
 
 #if GDAL_VERSION_NUM >= 1600
@@ -2976,7 +2976,7 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bIsNull && OGR_ST_GetRGBFromString(hLabelStyle, pszColor,
                                                   &r, &g, &b, &t))
           {
-              MS_INIT_COLOR(c->label.outlinecolor, r, g, b, t);
+              MS_INIT_COLOR(c->labels[0]->outlinecolor, r, g, b, t);
           }
 #endif /* GDAL_VERSION_NUM >= 1600 */
 
@@ -2999,23 +2999,23 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           {
               if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
               {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = msStrdup(pszName);
+                  c->labels[0]->type = MS_TRUETYPE;
+                  c->labels[0]->font = msStrdup(pszName);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using '%s' TTF font **\n", pszName);
               }
               else if ( (strcmp(pszFontName,pszName) != 0) &&
                         msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
               {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = msStrdup(pszFontName);
+                  c->labels[0]->type = MS_TRUETYPE;
+                  c->labels[0]->font = msStrdup(pszFontName);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using '%s' TTF font **\n", pszFontName);
               }
               else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
               {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = msStrdup("default");
+                  c->labels[0]->type = MS_TRUETYPE;
+                  c->labels[0]->font = msStrdup("default");
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using 'default' TTF font **\n");
               }
@@ -3026,8 +3026,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bFont)
 #endif /* USE_GD_FT || USE_GD_FT */
           {
-              c->label.type = MS_BITMAP;
-              c->label.size = MS_MEDIUM;
+              c->labels[0]->type = MS_BITMAP;
+              c->labels[0]->size = MS_MEDIUM;
               if (layer->debug >= MS_DEBUGLEVEL_VVV)
                   msDebug("** Using 'medium' BITMAP font **\n");
           }
@@ -3046,31 +3046,31 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
                                  (char*)CPLSPrintf("\"%s\"", escapedTextString));
           free(escapedTextString);
 
-          c->label.angle = poLabelStyle->Angle(bIsNull);
+          c->labels[0]->angle = poLabelStyle->Angle(bIsNull);
 
-          c->label.size = (int)poLabelStyle->Size(bIsNull);
-          if( c->label.size < 1 ) /* no point dropping to zero size */
-              c->label.size = 1;
+          c->labels[0]->size = (int)poLabelStyle->Size(bIsNull);
+          if( c->labels[0]->size < 1 ) /* no point dropping to zero size */
+              c->labels[0]->size = 1;
 
           // OGR default is anchor point = LL, so label is at UR of anchor
-          c->label.position = MS_UR;
+          c->labels[0]->position = MS_UR;
 
           const char *pszColor = poLabelStyle->ForeColor(bIsNull);
           if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
           {
-              MS_INIT_COLOR(c->label.color, r, g, b, t);
+              MS_INIT_COLOR(c->labels[0]->color, r, g, b, t);
           }
 
           pszColor = poLabelStyle->BackColor(bIsNull);
           if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
           {
-              MS_INIT_COLOR(c->label.backgroundcolor, r, g, b, t);
+              MS_INIT_COLOR(c->labels[0]->backgroundcolor, r, g, b, t);
           }
 #if GDAL_VERSION_NUM >= 1400
           pszColor = poLabelStyle->ShadowColor(bIsNull);
           if (!bIsNull && poLabelStyle->GetRGBFromString(pszColor,r,g,b,t))
           {
-              MS_INIT_COLOR(c->label.shadowcolor, r, g, b, t);
+              MS_INIT_COLOR(c->labels[0]->shadowcolor, r, g, b, t);
           }
 #endif
           // Label font... do our best to use TrueType fonts, otherwise
@@ -3086,23 +3086,23 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           {
               if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
               {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = msStrdup(pszName);
+                  c->labels[0]->type = MS_TRUETYPE;
+                  c->labels[0]->font = msStrdup(pszName);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using '%s' TTF font **\n", pszName);
               }
               else if ( (strcmp(pszFontName,pszName) != 0) &&
                         msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL)
               {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = msStrdup(pszFontName);
+                  c->labels[0]->type = MS_TRUETYPE;
+                  c->labels[0]->font = msStrdup(pszFontName);
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using '%s' TTF font **\n", pszFontName);
               }
               else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
               {
-                  c->label.type = MS_TRUETYPE;
-                  c->label.font = msStrdup("default");
+                  c->labels[0]->type = MS_TRUETYPE;
+                  c->labels[0]->font = msStrdup("default");
                   if (layer->debug >= MS_DEBUGLEVEL_VVV)
                       msDebug("** Using 'default' TTF font **\n");
               }
@@ -3113,8 +3113,8 @@ static int msOGRUpdateStyle(OGRStyleMgr *poStyleMgr, mapObj *map, layerObj *laye
           if (!bFont)
 #endif /* USE_GD_FT || USE_GD_FT */
           {
-              c->label.type = MS_BITMAP;
-              c->label.size = MS_MEDIUM;
+              c->labels[0]->type = MS_BITMAP;
+              c->labels[0]->size = MS_MEDIUM;
               if (layer->debug >= MS_DEBUGLEVEL_VVV)
                   msDebug("** Using 'medium' BITMAP font **\n");
           }

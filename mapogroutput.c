@@ -867,7 +867,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
             if( resultshape.classindex >= 0 
                 && (layer->class[resultshape.classindex]->text.string 
                     || layer->labelitem) 
-                && layer->class[resultshape.classindex]->label.size != -1 )
+                && layer->class[resultshape.classindex]->numlabels > 0
+                && layer->class[resultshape.classindex]->labels[0]->size != -1 )
             {
                 resultshape.text = msShapeGetAnnotation(layer, &resultshape);
             }

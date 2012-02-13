@@ -2898,15 +2898,21 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
     CPLXMLNode *psTmpNode = NULL;
     char *pszClassText = NULL;
     char szTmp[100];
-
+    labelObj *psLabelObj = NULL;
     szFontName[0]='\0';
 
     if (!psRoot || !psClass || !psLayer)
         return MS_FAILURE;
+
+    if(psClass->numlabels == 0) {
+      if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
+      initLabel(psClass->labels[0]);
+    }
+    psLabelObj = psClass->labels[0];
     
         /*set the angle by default to auto. the angle can be
           modified Label Placement #2806*/
-        psClass->label.anglemode = MS_AUTO;
+        psLabelObj->anglemode = MS_AUTO;
 
 
         /* label  */
@@ -3036,15 +3042,15 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                     if ((msLookupHashTable(&(psLayer->map->fontset.fonts), szFontName) !=NULL))
                     {
                         bFontSet = 1;
-                        psClass->label.font = msStrdup(szFontName);
-                        psClass->label.type = MS_TRUETYPE;
-                        psClass->label.size = dfFontSize;
+                        psLabelObj->font = msStrdup(szFontName);
+                        psLabelObj->type = MS_TRUETYPE;
+                        psLabelObj->size = dfFontSize;
                     }
                 }       
                 if (!bFontSet)
                 {
-                    psClass->label.type = MS_BITMAP;
-                    psClass->label.size = MS_MEDIUM;
+                    psLabelObj->type = MS_BITMAP;
+                    psLabelObj->size = MS_MEDIUM;
                 }
 /* -------------------------------------------------------------------- */
 /*      parse the label placement.                                      */
@@ -3070,7 +3076,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                 {
                     psHaloRadius =  CPLGetXMLNode(psHalo, "Radius");
                     if (psHaloRadius && psHaloRadius->psChild && psHaloRadius->psChild->pszValue)
-                      psClass->label.outlinewidth = atoi(psHaloRadius->psChild->pszValue);
+                      psLabelObj->outlinewidth = atoi(psHaloRadius->psChild->pszValue);
 
                     psHaloFill =  CPLGetXMLNode(psHalo, "Fill");
                     if (psHaloFill)
@@ -3099,9 +3105,9 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                                         /* expecting hexadecimal ex : #aaaaff */
                                         if (nLength == 7 && pszColor[0] == '#')
                                         {
-                                            psClass->label.outlinecolor.red = msHexToInt(pszColor+1);
-                                            psClass->label.outlinecolor.green = msHexToInt(pszColor+3);
-                                            psClass->label.outlinecolor.blue = msHexToInt(pszColor+5);
+                                            psLabelObj->outlinecolor.red = msHexToInt(pszColor+1);
+                                            psLabelObj->outlinecolor.green = msHexToInt(pszColor+3);
+                                            psLabelObj->outlinecolor.blue = msHexToInt(pszColor+5);
                                         }
                                     }
                                 }
@@ -3142,9 +3148,9 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                                     /* expecting hexadecimal ex : #aaaaff */
                                     if (nLength == 7 && pszColor[0] == '#')
                                     {
-                                        psClass->label.color.red = msHexToInt(pszColor+1);
-                                        psClass->label.color.green = msHexToInt(pszColor+3);
-                                        psClass->label.color.blue = msHexToInt(pszColor+5);
+                                        psLabelObj->color.red = msHexToInt(pszColor+1);
+                                        psLabelObj->color.green = msHexToInt(pszColor+3);
+                                        psLabelObj->color.blue = msHexToInt(pszColor+5);
                                     }
                                 }
                             }
@@ -3171,12 +3177,18 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
     CPLXMLNode *psDisplacement, *psDisplacementX, *psDisplacementY;
     CPLXMLNode *psRotation=NULL, *psPropertyName=NULL;
     char szTmp[100];
+    labelObj *psLabelObj = NULL;
 
     if (!psRoot || !psClass)
         return MS_FAILURE;
+    if(psClass->numlabels == 0) {
+      if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
+      initLabel(psClass->labels[0]);
+    }
+    psLabelObj = psClass->labels[0];
 
         /* init the label with the default position */
-        psClass->label.position = MS_CL;
+        psLabelObj->position = MS_CL;
 
 /* -------------------------------------------------------------------- */
 /*      parse anchor point. see function msSLDParseTextSymbolizer       */
@@ -3202,25 +3214,25 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
                     (dfAnchorY == 0 || dfAnchorY == 0.5 || dfAnchorY == 1))
                 {
                     if (dfAnchorX == 0 && dfAnchorY == 0)
-                      psClass->label.position = MS_LL;
+                      psLabelObj->position = MS_LL;
                     if (dfAnchorX == 0 && dfAnchorY == 0.5)
-                      psClass->label.position = MS_CL;
+                      psLabelObj->position = MS_CL;
                     if (dfAnchorX == 0 && dfAnchorY == 1)
-                      psClass->label.position = MS_UL;
+                      psLabelObj->position = MS_UL;
 
                     if (dfAnchorX == 0.5 && dfAnchorY == 0)
-                      psClass->label.position = MS_LC;
+                      psLabelObj->position = MS_LC;
                     if (dfAnchorX == 0.5 && dfAnchorY == 0.5)
-                      psClass->label.position = MS_CC;
+                      psLabelObj->position = MS_CC;
                     if (dfAnchorX == 0.5 && dfAnchorY == 1)
-                      psClass->label.position = MS_UC;
+                      psLabelObj->position = MS_UC;
 
                     if (dfAnchorX == 1 && dfAnchorY == 0)
-                      psClass->label.position = MS_LR;
+                      psLabelObj->position = MS_LR;
                     if (dfAnchorX == 1 && dfAnchorY == 0.5)
-                      psClass->label.position = MS_CR;
+                      psLabelObj->position = MS_CR;
                     if (dfAnchorX == 1 && dfAnchorY == 1)
-                      psClass->label.position = MS_UR;
+                      psLabelObj->position = MS_UR;
                 }
             }
         }
@@ -3241,8 +3253,8 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
                 psDisplacementY->psChild && 
                 psDisplacementY->psChild->pszValue)
             {
-                psClass->label.offsetx = atoi(psDisplacementX->psChild->pszValue);
-                psClass->label.offsety = atoi(psDisplacementY->psChild->pszValue);
+                psLabelObj->offsetx = atoi(psDisplacementX->psChild->pszValue);
+                psLabelObj->offsety = atoi(psDisplacementY->psChild->pszValue);
             }
         }
 
@@ -3256,13 +3268,13 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
             if (psPropertyName)
             {   
                 snprintf(szTmp, sizeof(szTmp), "%s", CPLGetXMLValue(psPropertyName, NULL, NULL));
-                psClass->label.bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(szTmp);
-                psClass->label.numbindings++;
+                psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(szTmp);
+                psLabelObj->numbindings++;
             }
             else
             {
                 if (psRotation->psChild && psRotation->psChild->pszValue)
-                  psClass->label.angle = atof(psRotation->psChild->pszValue);
+                  psLabelObj->angle = atof(psRotation->psChild->pszValue);
             }
         }
         
@@ -3277,27 +3289,34 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
 int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
 {
   CPLXMLNode *psOffset = NULL, *psAligned=NULL;
+  labelObj *psLabelObj = NULL;
 
   if (!psRoot || !psClass)
       return MS_FAILURE;
+  
+  if(psClass->numlabels == 0) {
+     if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
+     initLabel(psClass->labels[0]);
+  }
+  psLabelObj = psClass->labels[0];
 
         /*if there is a line placement, we will assume that the 
           best setting for mapserver would be for the text to follow
           the line #2806*/
-        psClass->label.anglemode = MS_FOLLOW;         
+        psLabelObj->anglemode = MS_FOLLOW;         
 
         /*sld 1.1.0 has a parameter IsAligned. default value is true*/
         psAligned = CPLGetXMLNode(psRoot, "IsAligned");
         if (psAligned && psAligned->psChild && psAligned->psChild->pszValue && 
             strcasecmp(psAligned->psChild->pszValue, "false") == 0)
         {
-            psClass->label.anglemode = MS_NONE;
+            psLabelObj->anglemode = MS_NONE;
         }
         psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
         if (psOffset && psOffset->psChild && psOffset->psChild->pszValue)
         {
-            psClass->label.offsetx = atoi(psOffset->psChild->pszValue);
-            psClass->label.offsety = atoi(psOffset->psChild->pszValue);
+            psLabelObj->offsetx = atoi(psOffset->psChild->pszValue);
+            psLabelObj->offsety = atoi(psOffset->psChild->pszValue);
 
             /*if there is a PerpendicularOffset, we will assume that the 
               best setting for mapserver would be to use angle=0 and the
@@ -3306,7 +3325,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
                set the angles if the parameter is not set*/
             if (!psAligned)
             {
-                psClass->label.anglemode = MS_NONE;
+                psLabelObj->anglemode = MS_NONE;
             }
         }
 
@@ -4132,6 +4151,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     int i = 0;
     char sCssParam[30];
     char sNameSpace[10];
+    labelObj *psLabelObj = NULL;
 
     sCssParam[0] = '\0';
     if (nVersion > OWS_1_0_0)
@@ -4145,8 +4165,9 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 
 
     if (psClass && psLayer && psLayer->labelitem && 
-        strlen(psLayer->labelitem) > 0)
+        strlen(psLayer->labelitem) > 0 && psClass->numlabels > 0)
     {
+       psLabelObj = psClass->labels[0];
         snprintf(szTmp, sizeof(szTmp), "<%sTextSymbolizer>\n",  sNameSpace);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
@@ -4161,9 +4182,9 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 /*      font-weight (bold, normal). These 3 elements are separated      */
 /*      with -.                                                         */
 /* -------------------------------------------------------------------- */
-        if (psClass->label.type == MS_TRUETYPE && psClass->label.font)
+        if (psLabelObj->type == MS_TRUETYPE && psLabelObj->font)
         {
-            aszFontsParts = msStringSplit(psClass->label.font, '-', &nFontParts);
+            aszFontsParts = msStringSplit(psLabelObj->font, '-', &nFontParts);
             if (nFontParts > 0)
             {
                 snprintf(szTmp, sizeof(szTmp), "<%sFont>\n",  sNameSpace);
@@ -4194,11 +4215,11 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
                     }
                 }
                 /* size */
-                if (psClass->label.size > 0)
+                if (psLabelObj->size > 0)
                 {
                     snprintf(szTmp, sizeof(szTmp),
                             "<%s name=\"font-size\">%.2f</%s>\n",
-                            sCssParam, psClass->label.size, sCssParam);
+                            sCssParam, psLabelObj->size, sCssParam);
                     pszSLD = msStringConcatenate(pszSLD, szTmp);
                 }
                 snprintf(szTmp, sizeof(szTmp), "</%sFont>\n",  sNameSpace);
@@ -4217,49 +4238,49 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
         snprintf(szTmp, sizeof(szTmp), "<%sAnchorPoint>\n", sNameSpace);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-        if (psClass->label.position == MS_LL)
+        if (psLabelObj->position == MS_LL)
         {
             dfAnchorX =0; 
             dfAnchorY = 0;
         }
-        else if (psClass->label.position == MS_CL)
+        else if (psLabelObj->position == MS_CL)
         {
             dfAnchorX =0; 
             dfAnchorY = 0.5;
         }
-        else if (psClass->label.position == MS_UL)
+        else if (psLabelObj->position == MS_UL)
         {
             dfAnchorX =0; 
             dfAnchorY = 1;
         }
         
-        else if (psClass->label.position == MS_LC)
+        else if (psLabelObj->position == MS_LC)
         {
             dfAnchorX =0.5; 
             dfAnchorY = 0;
         }
-        else if (psClass->label.position == MS_CC)
+        else if (psLabelObj->position == MS_CC)
         {
             dfAnchorX =0.5; 
             dfAnchorY = 0.5;
         }
-        else if (psClass->label.position == MS_UC)
+        else if (psLabelObj->position == MS_UC)
         {
             dfAnchorX =0.5; 
             dfAnchorY = 1;
         }
         
-        else if (psClass->label.position == MS_LR)
+        else if (psLabelObj->position == MS_LR)
         {
             dfAnchorX =1; 
             dfAnchorY = 0;
         }
-        else if (psClass->label.position == MS_CR)
+        else if (psLabelObj->position == MS_CR)
         {
             dfAnchorX =1; 
             dfAnchorY = 0.5;
         }
-        else if (psClass->label.position == MS_UR)
+        else if (psLabelObj->position == MS_UR)
         {
             dfAnchorX =1; 
             dfAnchorY = 1;
@@ -4275,21 +4296,21 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
         pszSLD = msStringConcatenate(pszSLD, szTmp);
 
         /* displacement */
-        if (psClass->label.offsetx > 0 || psClass->label.offsety > 0)
+        if (psLabelObj->offsetx > 0 || psLabelObj->offsety > 0)
         {
             snprintf(szTmp, sizeof(szTmp), "<%sDisplacement>\n",  sNameSpace);
             pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-            if (psClass->label.offsetx > 0)
+            if (psLabelObj->offsetx > 0)
             {
                 snprintf(szTmp, sizeof(szTmp), "<%sDisplacementX>%d</%sDisplacementX>\n", 
-                         sNameSpace, psClass->label.offsetx, sNameSpace);
+                         sNameSpace, psLabelObj->offsetx, sNameSpace);
                 pszSLD = msStringConcatenate(pszSLD, szTmp);
             }
-            if (psClass->label.offsety > 0)
+            if (psLabelObj->offsety > 0)
             {
                 snprintf(szTmp, sizeof(szTmp), "<%sDisplacementY>%d</%sDisplacementY>\n", 
-                         sNameSpace, psClass->label.offsety, sNameSpace);
+                         sNameSpace, psLabelObj->offsety, sNameSpace);
                 pszSLD = msStringConcatenate(pszSLD, szTmp);
             }
 
@@ -4297,10 +4318,10 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
             pszSLD = msStringConcatenate(pszSLD, szTmp);
         }
         /* rotation */
-        if (psClass->label.angle > 0)
+        if (psLabelObj->angle > 0)
         {
             snprintf(szTmp, sizeof(szTmp), "<%sRotation>%.2f</%sRotation>\n", 
-                     sNameSpace, psClass->label.angle, sNameSpace);
+                     sNameSpace, psLabelObj->angle, sNameSpace);
             pszSLD = msStringConcatenate(pszSLD, szTmp);
         }
 
@@ -4311,21 +4332,21 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
 
 
         /* color */
-        if (psClass->label.color.red != -1 &&
-            psClass->label.color.green != -1 &&
-            psClass->label.color.blue != -1)
+        if (psLabelObj->color.red != -1 &&
+            psLabelObj->color.green != -1 &&
+            psLabelObj->color.blue != -1)
         {
-            nColorRed = psClass->label.color.red;
-            nColorGreen = psClass->label.color.green;
-            nColorBlue = psClass->label.color.blue;
+            nColorRed = psLabelObj->color.red;
+            nColorGreen = psLabelObj->color.green;
+            nColorBlue = psLabelObj->color.blue;
         }
-        else if (psClass->label.outlinecolor.red != -1 &&
-                 psClass->label.outlinecolor.green != -1 &&
-                 psClass->label.outlinecolor.blue != -1)
+        else if (psLabelObj->outlinecolor.red != -1 &&
+                 psLabelObj->outlinecolor.green != -1 &&
+                 psLabelObj->outlinecolor.blue != -1)
         {
-            nColorRed = psClass->label.outlinecolor.red;
-            nColorGreen = psClass->label.outlinecolor.green;
-            nColorBlue = psClass->label.outlinecolor.blue;
+            nColorRed = psLabelObj->outlinecolor.red;
+            nColorGreen = psLabelObj->outlinecolor.green;
+            nColorBlue = psLabelObj->outlinecolor.blue;
         }
         if (nColorRed >= 0 && nColorGreen >= 0  && nColorBlue >=0)
         {
