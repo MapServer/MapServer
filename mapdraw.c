@@ -2657,6 +2657,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 
             for(ll=0; ll<cachePtr->numlabels; ll++) {
               labelPtr = &(cachePtr->labels[ll]);
+              if(labelPtr->status != MS_ON) continue; /* skip labels who failed expression test */
 
               /* here's where we draw the label styles */
               if(labelPtr->numstyles > 0) {
