@@ -88,7 +88,7 @@ $(CSHARP_DLL)::
 	$(CSC) $(CSFLAGS) /t:library /out:mapscript_csharp.dll *.cs config\AssemblyInfo.cs
 	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:shpdump.exe examples\shpdump.cs
 	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:drawmap.exe examples\drawmap.cs
-	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:inline.exe examples\inline.cs
+#	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:inline.exe examples\inline.cs
 	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:shapeinfo.exe examples\shapeinfo.cs
 	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:drawquery.exe examples\drawquery.cs
 	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:getbytes.exe examples\getbytes.cs
@@ -101,13 +101,13 @@ test:
 !IFDEF MONO
 	mono shpdump.exe ../../tests/point.shp
 	mono shapeinfo.exe ../../tests/point.shp
-	mono inline.exe aggpng24 inline_test.png
+#	mono inline.exe aggpng24 inline_test.png
 	mono getbytes.exe ../../tests/test.map test_csharp2.png
 	mono RFC24.exe ../../tests/test.map
 !ELSE
 	shpdump ../../tests/point.shp
 	shapeinfo ../../tests/point.shp
-	inline png24 inline_test.png
+#	inline png24 inline_test.png
 	getbytes ../../tests/test.map test_csharp2.png
 	RFC24.exe ../../tests/test.map
 !ENDIF
