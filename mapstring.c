@@ -1650,6 +1650,8 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     outstring[j] = '\0';
 
 #endif
+     
+     free(visual);
      return msStrdup(outstring);
   }
 }
