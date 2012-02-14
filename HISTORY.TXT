@@ -12,6 +12,11 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
+Current Version (future 6.0.3, SVN branch-6-0):
+---------------------------
+
+- Fixed Memory leak with fribidi strings (#4188)
+
 Version 6.0.2 (2012-02-08):
 ---------------------------
 
