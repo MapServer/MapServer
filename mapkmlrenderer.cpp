@@ -233,7 +233,7 @@ void KmlRenderer::processLayer(layerObj *layer, outputFormatObj *format)
     /*if there are labels we want the coordinates to 
       be the center of the element.*/
     for(i=0; i<layer->numclasses; i++)
-      layer->_class[i]->label.position = MS_XY;
+      if(layer->_class[i]->numlabels > 0) layer->_class[i]->labels[0]->position = MS_XY;
    
     /*we do not want to draw multiple styles.
       the new rendering architecture does not allow
