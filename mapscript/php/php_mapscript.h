@@ -138,7 +138,6 @@ typedef struct _php_class_object {
     zend_object std;
     parent_object parent; //old layer
     zval *metadata;
-    zval *label;
     classObj *class;
 } php_class_object;
 
@@ -264,7 +263,7 @@ typedef struct _php_labelcache_object {
 typedef struct _php_labelcachemember_object {
     zend_object std;
     parent_object parent;
-    zval *label; /* should be immutable */
+    zval *labels; /* should be immutable */
     zval *point; /* should be immutable */
     zval *styles; /* should be immutable */
     zval *poly; /* should be immutable */

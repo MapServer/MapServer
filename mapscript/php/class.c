@@ -169,8 +169,7 @@ PHP_METHOD(classObj, __get)
     else IF_GET_STRING("template", php_class->class->template)
     else IF_GET_STRING("keyimage", php_class->class->keyimage)
     else IF_GET_STRING("group", php_class->class->group)
-    else IF_GET_LONG("numstyles", php_class->class->numstyles) 
-    else IF_GET_OBJECT("label", mapscript_ce_label, php_class->label, &php_class->class->label) 
+    else IF_GET_LONG("numstyles", php_class->class->numstyles)
     else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_class->metadata, &php_class->class->metadata) 
     else 
     {
@@ -206,8 +205,7 @@ PHP_METHOD(classObj, __set)
     else IF_SET_STRING("template", php_class->class->template, value)
     else IF_SET_STRING("keyimage", php_class->class->keyimage, value)
     else IF_SET_STRING("group", php_class->class->group, value)
-    else if ( (STRING_EQUAL("label", property)) ||
-              (STRING_EQUAL("metadata", property)))
+    else if ( (STRING_EQUAL("metadata", property)))
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
@@ -686,7 +684,6 @@ PHP_METHOD(classObj, free)
     
     php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    MAPSCRIPT_DELREF(php_class->label);
     MAPSCRIPT_DELREF(php_class->metadata);
 }
 /* }}} */
@@ -733,7 +730,6 @@ static void mapscript_class_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_PARENT(php_class->parent);
 
-    MAPSCRIPT_DELREF(php_class->label);
     MAPSCRIPT_DELREF(php_class->metadata);
 
     /* We don't need to free the classObj */ 
@@ -757,7 +753,6 @@ static zend_object_value mapscript_class_object_new_ex(zend_class_entry *ce, php
 
     MAPSCRIPT_INIT_PARENT(php_class->parent);
 
-    php_class->label = NULL;
     php_class->metadata = NULL;
 
     return retval;

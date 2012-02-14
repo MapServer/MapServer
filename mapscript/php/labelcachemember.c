@@ -67,17 +67,17 @@ PHP_METHOD(labelCacheMemberObj, __get)
     
     php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    IF_GET_STRING("text", php_labelcachemember->labelcachemember->text)
-    else IF_GET_LONG("classindex", php_labelcachemember->labelcachemember->classindex)
+    IF_GET_LONG("classindex", php_labelcachemember->labelcachemember->classindex)
     else IF_GET_LONG("featuresize", php_labelcachemember->labelcachemember->featuresize) 
     else IF_GET_LONG("layerindex", php_labelcachemember->labelcachemember->layerindex) 
     else IF_GET_LONG("numstyles", php_labelcachemember->labelcachemember->numstyles) 
+    else IF_GET_LONG("numlabels", php_labelcachemember->labelcachemember->numlabels) 
     else IF_GET_LONG("shapeindex", php_labelcachemember->labelcachemember->shapeindex) 
     else IF_GET_LONG("status", php_labelcachemember->labelcachemember->status) 
     else IF_GET_LONG("markerid", php_labelcachemember->labelcachemember->markerid) 
     else IF_GET_LONG("tileindex", php_labelcachemember->labelcachemember->tileindex) 
     else IF_GET_OBJECT("point", mapscript_ce_point, php_labelcachemember->point, &php_labelcachemember->labelcachemember->point) 
-    else IF_GET_OBJECT("label", mapscript_ce_label, php_labelcachemember->label, &php_labelcachemember->labelcachemember->label) 
+    else IF_GET_OBJECT("labels", mapscript_ce_label, php_labelcachemember->labels, &php_labelcachemember->labelcachemember->labels) 
     else IF_GET_OBJECT("styles", mapscript_ce_style, php_labelcachemember->styles, php_labelcachemember->labelcachemember->styles) 
     else IF_GET_OBJECT("poly", mapscript_ce_shape, php_labelcachemember->poly, php_labelcachemember->labelcachemember->poly) 
     else 
@@ -104,16 +104,16 @@ PHP_METHOD(labelCacheMemberObj, __set)
     
     php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-    if ( (STRING_EQUAL("text", property)) ||
-         (STRING_EQUAL("classindex", property)) ||
+    if ( (STRING_EQUAL("classindex", property)) ||
          (STRING_EQUAL("featuresize", property)) ||
          (STRING_EQUAL("layerindex", property)) ||
          (STRING_EQUAL("numstyles", property)) ||
+         (STRING_EQUAL("numlabels", property)) ||
          (STRING_EQUAL("shapeindex", property)) ||
          (STRING_EQUAL("status", property)) ||
          (STRING_EQUAL("markerid", property)) ||
          (STRING_EQUAL("tileindex", property)) ||
-         (STRING_EQUAL("label", property)) ||
+         (STRING_EQUAL("labels", property)) ||
          (STRING_EQUAL("styles", property)) ||
          (STRING_EQUAL("poly", property)) ||
          (STRING_EQUAL("point", property)))
@@ -143,7 +143,7 @@ PHP_METHOD(labelCacheMemberObj, free)
     php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     MAPSCRIPT_DELREF(php_labelcachemember->point);
-    MAPSCRIPT_DELREF(php_labelcachemember->label);
+    MAPSCRIPT_DELREF(php_labelcachemember->labels);
     MAPSCRIPT_DELREF(php_labelcachemember->styles);
     MAPSCRIPT_DELREF(php_labelcachemember->poly);
 }
@@ -180,7 +180,7 @@ static void mapscript_labelcachemember_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_PARENT(php_labelcachemember->parent);
     MAPSCRIPT_DELREF(php_labelcachemember->point);
-    MAPSCRIPT_DELREF(php_labelcachemember->label);
+    MAPSCRIPT_DELREF(php_labelcachemember->labels);
     MAPSCRIPT_DELREF(php_labelcachemember->styles);
     MAPSCRIPT_DELREF(php_labelcachemember->poly);
 
@@ -201,7 +201,7 @@ static zend_object_value mapscript_labelcachemember_object_new(zend_class_entry 
 
     MAPSCRIPT_INIT_PARENT(php_labelcachemember->parent);
     php_labelcachemember->point = NULL;
-    php_labelcachemember->label = NULL;
+    php_labelcachemember->labels = NULL;
     php_labelcachemember->styles = NULL;
     php_labelcachemember->poly = NULL;
 
