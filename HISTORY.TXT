@@ -17,6 +17,8 @@ Current Version (future 6.0.3, SVN branch-6-0):
 
 - Fixed Memory leak with fribidi strings (#4188)
 
+- Added missing properties in styleObj setter of PHP/MapScript (#3901)
+
 Version 6.0.2 (2012-02-08):
 ---------------------------
 
