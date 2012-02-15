@@ -234,7 +234,24 @@ PHP_METHOD(styleObj, __set)
     else IF_SET_LONG("linejoinmaxsize", php_style->style->linejoinmaxsize, value)
     else IF_SET_DOUBLE("angle", php_style->style->angle, value)
     else IF_SET_LONG("autoangle", php_style->style->autoangle, value)
-    else IF_SET_LONG("opacity", php_style->style->opacity, value)
+    else if (STRING_EQUAL("opacity", property))
+    {
+        int alpha;
+        convert_to_long(value);
+        php_style->style->opacity = Z_LVAL_P(value);
+
+        /* apply opacity as the alpha channel color(s) */
+        if(php_style->style->opacity < 100)
+          alpha = MS_NINT(php_style->style->opacity*2.55);
+        else
+            alpha = 255;
+
+        php_style->style->color.alpha = alpha; 
+        php_style->style->outlinecolor.alpha = alpha;
+        php_style->style->backgroundcolor.alpha = alpha;
+        php_style->style->mincolor.alpha = alpha;
+        php_style->style->maxcolor.alpha = alpha;
+    }
     else if (STRING_EQUAL("symbolname", property))
     {
         convert_to_string(value);
