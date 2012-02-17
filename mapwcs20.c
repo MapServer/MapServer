@@ -44,6 +44,7 @@
 #include "cpl_string.h"
 #include <proj_api.h>
 #include <string.h>
+#include "mapaxisorder.h"
 
 #if defined(USE_LIBXML2)
 
@@ -1502,13 +1503,44 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
 }
 
 /************************************************************************/
+/*                   msWCSSwapAxes20                                    */
+/*                                                                      */
+/*      Helper function to determine if a SRS mandates swapped axes.    */
+/************************************************************************/
+
+static int msWCSSwapAxes20(char *srs_uri)
+{
+    int srid = 0, i;
+    /* get SRID from the srs uri */
+    if(srs_uri != NULL && strlen(srs_uri) > 0) {
+        if(sscanf(srs_uri, "http://www.opengis.net/def/crs/EPSG/0/%d", &srid) != EOF)
+            ;
+        else if(sscanf(srs_uri, "http://www.opengis.net/def/crs/%d", &srid) != EOF)
+            ;
+        else
+            srid = 0;
+    }
+    if (srid == 0)
+        return MS_FALSE;
+
+    /*check the static table*/
+    for (i=0; i<AXIS_ORIENTATION_TABLE_SIZE; i++)
+    {
+        if (axisOrientationEpsgCodes[i].code == srid)
+          return MS_TRUE;
+    }
+
+    return MS_FALSE;
+}
+
+/************************************************************************/
 /*                   msWCSCommon20_CreateBoundedBy()                    */
 /*                                                                      */
 /*      Inserts the BoundedBy section into an existing DOM structure.   */
 /************************************************************************/
 
 static void msWCSCommon20_CreateBoundedBy(layerObj *layer, wcs20coverageMetadataObjPtr cm,
-        xmlNsPtr psGmlNs, xmlNodePtr psRoot, projectionObj *projection)
+        xmlNsPtr psGmlNs, xmlNodePtr psRoot, projectionObj *projection, int swapAxes)
 {
     xmlNodePtr psBoundedBy, psEnvelope;
     char lowerCorner[100], upperCorner[100], axisLabels[100], uomLabels[100];
@@ -1521,20 +1553,42 @@ static void msWCSCommon20_CreateBoundedBy(layerObj *layer, wcs20coverageMetadata
 
             if(projection->proj != NULL && pj_is_latlong(projection->proj))
             {
-                strlcpy(axisLabels, "lat long", sizeof(axisLabels));
+                if (swapAxes == MS_FALSE)
+                {
+                    strlcpy(axisLabels, "long lat", sizeof(axisLabels));
+                }
+                else
+                {
+                    strlcpy(axisLabels, "lat long", sizeof(axisLabels));
+                }
                 strlcpy(uomLabels, "deg deg", sizeof(uomLabels));
             }
             else
             {
-                strlcpy(axisLabels, "x y", sizeof(axisLabels));
+                if (swapAxes == MS_FALSE)
+                {
+                    strlcpy(axisLabels, "x y", sizeof(axisLabels));
+                }
+                else
+                {
+                    strlcpy(axisLabels, "y x", sizeof(axisLabels));
+                }
                 strlcpy(uomLabels, "m m", sizeof(uomLabels));
             }
             xmlNewProp(psEnvelope, BAD_CAST "axisLabels", BAD_CAST axisLabels);
             xmlNewProp(psEnvelope, BAD_CAST "uomLabels", BAD_CAST uomLabels);
             xmlNewProp(psEnvelope, BAD_CAST "srsDimension", BAD_CAST "2");
 
-            snprintf(lowerCorner, sizeof(lowerCorner), "%.15g %.15g", cm->extent.minx, cm->extent.miny);
-            snprintf(upperCorner, sizeof(upperCorner), "%.15g %.15g", cm->extent.maxx, cm->extent.maxy);
+            if (swapAxes == MS_FALSE)
+            {
+                snprintf(lowerCorner, sizeof(lowerCorner), "%.15g %.15g", cm->extent.minx, cm->extent.miny);
+                snprintf(upperCorner, sizeof(upperCorner), "%.15g %.15g", cm->extent.maxx, cm->extent.maxy);
+            }
+            else
+            {
+                snprintf(lowerCorner, sizeof(lowerCorner), "%.15g %.15g", cm->extent.miny, cm->extent.minx);
+                snprintf(upperCorner, sizeof(upperCorner), "%.15g %.15g", cm->extent.maxy, cm->extent.maxx);
+            }
 
             xmlNewChild(psEnvelope, psGmlNs, BAD_CAST "lowerCorner", BAD_CAST lowerCorner);
             xmlNewChild(psEnvelope, psGmlNs, BAD_CAST "upperCorner", BAD_CAST upperCorner);
@@ -1549,7 +1603,7 @@ static void msWCSCommon20_CreateBoundedBy(layerObj *layer, wcs20coverageMetadata
 /************************************************************************/
 
 static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadataObjPtr cm,
-        xmlNsPtr psGmlNs, xmlNodePtr psRoot, projectionObj *projection)
+        xmlNsPtr psGmlNs, xmlNodePtr psRoot, projectionObj *projection, int swapAxes)
 {
     xmlNodePtr psDomainSet, psGrid, psLimits, psGridEnvelope, psOrigin,
         psPos, psOffsetX, psOffsetY;
@@ -1575,20 +1629,41 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
                 }
             }
             
-            if(pj_is_latlong(projection->proj))
+            if(projection->proj != NULL && pj_is_latlong(projection->proj))
             {
-                strlcpy(axisLabels, "lat long", sizeof(axisLabels));
+                if (swapAxes == MS_FALSE)
+                {
+                    strlcpy(axisLabels, "long lat", sizeof(axisLabels));
+                }
+                else
+                {
+                    strlcpy(axisLabels, "lat long", sizeof(axisLabels));
+                }
             }
             else
             {
-                strlcpy(axisLabels, "x y", sizeof(axisLabels));
+                if (swapAxes == MS_FALSE)
+                {
+                    strlcpy(axisLabels, "x y", sizeof(axisLabels));
+                }
+                else
+                {
+                    strlcpy(axisLabels, "y x", sizeof(axisLabels));
+                }
             }
 
             xmlNewChild(psGrid, psGmlNs, BAD_CAST "axisLabels", BAD_CAST axisLabels);
 
             psOrigin = xmlNewChild(psGrid, psGmlNs, BAD_CAST "origin", NULL);
             {
-                snprintf(point, sizeof(point), "%f %f", cm->extent.minx, cm->extent.maxy);
+                if (swapAxes == MS_FALSE)
+                {
+                    snprintf(point, sizeof(point), "%f %f", cm->extent.minx, cm->extent.maxy);
+                }
+                else
+                {
+                    snprintf(point, sizeof(point), "%f %f", cm->extent.maxy, cm->extent.minx);
+                }
                 psOrigin = xmlNewChild(psOrigin, psGmlNs, BAD_CAST "Point", NULL);
                 snprintf(id, sizeof(id), "grid_origin_%s", layer->name);
                 xmlNewNsProp(psOrigin, psGmlNs, BAD_CAST "id", BAD_CAST id);
@@ -1598,9 +1673,19 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
             }
             snprintf(resx, sizeof(resx), "%f 0", cm->xresolution);
             snprintf(resy, sizeof(resy), "0 %f", -fabs(cm->yresolution));
-            psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resx);
+
+            if (swapAxes == MS_FALSE)
+            {
+                psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resx);
+                psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resy);
+            }
+            else
+            {
+                psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resy);
+                psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resx);
+            }
+
             xmlNewProp(psOffsetX, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
-            psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resy);
             xmlNewProp(psOffsetY, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
         }
     }
@@ -2983,7 +3068,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
     layerObj *layer, wcs20ParamsObjPtr params, xmlDocPtr psDoc, xmlNodePtr psRootNode )
 {
-    int status;
+    int status, swapAxes;
     wcs20coverageMetadataObj cm;
     xmlNodePtr psCD;
     xmlNsPtr psWcsNs, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs;
@@ -3011,6 +3096,8 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
     if(status != MS_SUCCESS)
         return status;
 
+    swapAxes = msWCSSwapAxes20(cm.srs_uri);
+
     /* fill in bands rangeset info, if required. */
     /* msWCSSetDefaultBandsRangeSetInfo( NULL, &cm, layer ); */
 
@@ -3023,14 +3110,14 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
     /* -------------------------------------------------------------------- */
     /*      gml:boundedBy                                                   */
     /* -------------------------------------------------------------------- */
-    msWCSCommon20_CreateBoundedBy(layer, &cm, psGmlNs, psCD, &(layer->projection));
+    msWCSCommon20_CreateBoundedBy(layer, &cm, psGmlNs, psCD, &(layer->projection), swapAxes);
 
     xmlNewChild(psCD, psWcsNs, BAD_CAST "CoverageId", BAD_CAST layer->name);
 
     /* -------------------------------------------------------------------- */
     /*      gml:domainSet                                                   */
     /* -------------------------------------------------------------------- */
-    msWCSCommon20_CreateDomainSet(layer, &cm, psGmlNs, psCD, &(layer->projection));
+    msWCSCommon20_CreateDomainSet(layer, &cm, psGmlNs, psCD, &(layer->projection), swapAxes);
 
     /* -------------------------------------------------------------------- */
     /*      gmlcov:rangeType                                                */
@@ -3821,7 +3908,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         char *srs_uri, *default_filename;
         const char *filename;
         char *file_ref;
-        int length = 0;
+        int length = 0, swapAxes;
 
         /* Create Document  */
         psDoc = xmlNewDoc(BAD_CAST "1.0");
@@ -3856,10 +3943,11 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         tmpCm.extent.miny -= params->resolutionY * 0.5;
         tmpCm.extent.maxy += params->resolutionY * 0.5;
 
+        swapAxes = msWCSSwapAxes20(cm.srs_uri);
 
         /* Setup layer information  */
-        msWCSCommon20_CreateBoundedBy(layer, &tmpCm, psGmlNs, psRootNode, &(map->projection));
-        msWCSCommon20_CreateDomainSet(layer, &tmpCm, psGmlNs, psRootNode, &(map->projection));
+        msWCSCommon20_CreateBoundedBy(layer, &tmpCm, psGmlNs, psRootNode, &(map->projection), swapAxes);
+        msWCSCommon20_CreateDomainSet(layer, &tmpCm, psGmlNs, psRootNode, &(map->projection), swapAxes);
 
         psRangeSet = xmlNewChild(psRootNode, psGmlNs, BAD_CAST "rangeSet", NULL);
         psFile     = xmlNewChild(psRangeSet, psGmlNs, BAD_CAST "File", NULL);
