@@ -124,10 +124,10 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
 
   to->type = from->type;
 
-  to->bounds.minx = from->bounds.minx;
-  to->bounds.miny = from->bounds.miny;
-  to->bounds.maxx = from->bounds.maxx;
-  to->bounds.maxy = from->bounds.maxy;
+  to->bounds.minx = MS_MIN(to->bounds.minx,from->bounds.minx);
+  to->bounds.miny = MS_MIN(to->bounds.miny,from->bounds.miny);
+  to->bounds.maxx = MS_MAX(to->bounds.maxx,from->bounds.maxx);
+  to->bounds.maxy = MS_MAX(to->bounds.maxy,from->bounds.maxy);
 
   if(from->text) to->text = msStrdup(from->text);
 
