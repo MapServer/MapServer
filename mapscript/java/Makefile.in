@@ -43,26 +43,29 @@ MS_LIB =   $(top_builddir)/libmapserver.la
 .SUFFIXES:
 .SUFFIXES: .cpp .c .$(OBJ_SUFFIX)
 
-all: mapscript.jar
+all: javamapscript.jar
 
-libmapscript.la: mapscript_wrap.lo $(MS_LIB)
-	$(LINK) -o $@ mapscript_wrap.lo $(MS_LIB)
+libjavamapscript.la: javamapscript_wrap.lo $(MS_LIB)
+	$(LINK) -o $@ javamapscript_wrap.lo $(MS_LIB)
 
 %.lo: %.c
 	$(LTCC) $(CC) -fno-strict-aliasing -fpic -c $(CFLAGS) $(JAVA_INCLUDE) -c -o $@ $<
 
-mapscript_wrap.c: ../mapscript.i
+javamapscript_wrap.c: ../mapscript.i
 	mkdir -p edu/umn/gis/mapscript 
-	$(SWIG) -java -package edu.umn.gis.mapscript $(DEFINES) -outdir edu/umn/gis/mapscript -o mapscript_wrap.c ../mapscript.i
+	$(SWIG) -java -package edu.umn.gis.mapscript $(DEFINES) -outdir edu/umn/gis/mapscript -o javamapscript_wrap.c ../mapscript.i
 
-mapscript_java: mapscript_wrap.c
+javamapscript_java: javamapscript_wrap.c
 	$(JAVAC) edu/umn/gis/mapscript/*.java
 
-mapscript_javadoc: mapscript_wrap.c
+mapscript_javadoc: javamapscript_wrap.c
 	$(JAVADOC) -d doc -sourcepath edu/umn/gis/mapscript/*.java
 
-mapscript.jar: mapscript_java libmapscript.la
+javamapscript.jar: javamapscript_java libjavamapscript.la
 	$(JAR) cf mapscript.jar edu
+
+install: mapscript.jar
+	$(LTINSTALL) $(INSTALL) libjavamapscript.la $(DESTDIR)$(libdir)
 
 clean:
 	-rm -rf .libs *.lo *.la *.so *.o pygdioctx/*.o pygdioctx/*.lo
@@ -76,18 +79,18 @@ ifneq ($(findstring GDAL, $(DEFINES)),)
 test:
 	$(JAVAC) -classpath ./:examples/:./mapscript.jar -d examples/ examples/RFC24.java examples/ConnPool.java examples/DrawMap.java examples/DumpShp.java examples/MakePoint.java examples/QueryByAttribute.java examples/ShapeInfo.java examples/WxSTest.java examples/Metadata.java examples/RunTimeBuiltWMSClient.java
 	$(JAVAC) -encoding utf8 -classpath ./:examples/:./mapscript.jar -d examples/ examples/QueryByAttributeUnicode.java 
-	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DumpShp ../../tests/point.shp
-	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ShapeInfo ../../tests/point.shp ../../tests/point.dbf
-	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DrawMap ../../tests/test.map ./map.png
-	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ConnPool
-	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttribute ../../tests/test.map
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ DumpShp ../../tests/point.shp
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ ShapeInfo ../../tests/point.shp ../../tests/point.dbf
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ DrawMap ../../tests/test.map ./map.png
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ ConnPool
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ QueryByAttribute ../../tests/test.map
 ifneq ($(findstring USE_WCS_SVR, $(DEFINES)),)
-	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. WxSTest ../../tests/test.map
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ WxSTest ../../tests/test.map
 else
 	@echo "WARN: Skipping WxSTest because OWS is not enabled"
 endif
-	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. RFC24 ../../tests/test.map
-	LC_ALL=en_US.UTF-8 $(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttributeUnicode data/subset-umlauts.map
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ RFC24 ../../tests/test.map
+	LC_ALL=en_US.UTF-8 $(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ QueryByAttributeUnicode data/subset-umlauts.map
 else
 test:
 	@echo "To run the tests GDAL and PROJ must be enabled"

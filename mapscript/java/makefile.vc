@@ -22,7 +22,7 @@ JAVA_INCLUDE=-I$(JAVA_HOME)\include -I$(JAVA_HOME)\include\win32
 CC=     cl /MD
 LINK=   link
 
-MS_DLL = mapscript.dll
+MS_DLL = javamapscript.dll
 
 LDFLAGS =	/NODEFAULTLIB:"MSVCRTD" /NODEFAULTLIB:libcd /NODEFAULTLIB:libcmtd /NODEFAULTLIB:msvcrtd /NODEFAULTLIB:LIBC /DEBUG
 

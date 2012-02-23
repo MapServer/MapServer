@@ -9,7 +9,7 @@
 
 %pragma(java) jniclasscode=%{
     static {
-        String  library = System.getProperty("mapserver.library.name", "mapscript");
+        String  library = System.getProperty("mapserver.library.name", "javamapscript");
 
         System.loadLibrary(library);
         /* TODO Throw when return value not MS_SUCCESS? */
