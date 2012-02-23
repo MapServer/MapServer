@@ -15,6 +15,11 @@ INSTALL=@INSTALL@
 SWIG=swig
 
 #
+# MS_VERSION - Set by configure based in mapserver.h
+#
+MS_VERSION=	@MS_VERSION@
+
+#
 # Java Stuff
 #
 JAVADOC=javadoc
@@ -46,7 +51,7 @@ MS_LIB =   $(top_builddir)/libmapserver.la
 all: javamapscript.jar
 
 libjavamapscript.la: javamapscript_wrap.lo $(MS_LIB)
-	$(LINK) -o $@ javamapscript_wrap.lo $(MS_LIB)
+	$(LINK) -release $(MS_VERSION) -o $@ javamapscript_wrap.lo $(MS_LIB)
 
 %.lo: %.c
 	$(LTCC) $(CC) -fno-strict-aliasing -fpic -c $(CFLAGS) $(JAVA_INCLUDE) -c -o $@ $<
