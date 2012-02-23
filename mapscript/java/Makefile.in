@@ -49,7 +49,7 @@ libmapscript.la: mapscript_wrap.lo $(MS_LIB)
 	$(LINK) -o $@ mapscript_wrap.lo $(MS_LIB)
 
 %.lo: %.c
-	$(LTCC) $(CC) $(CFLAGS) $(JAVA_INCLUDE) -c -o $@ $<
+	$(LTCC) $(CC) -fno-strict-aliasing -fpic -c $(CFLAGS) $(JAVA_INCLUDE) -c -o $@ $<
 
 mapscript_wrap.c: ../mapscript.i
 	mkdir -p edu/umn/gis/mapscript 
@@ -71,8 +71,8 @@ clean:
 	rm -rf tests/threadtest/*.class
 
 
-ifneq ($(PROJ),)
-ifneq ($(GDAL),)
+ifneq ($(findstring PROJ, $(DEFINES)),)
+ifneq ($(findstring GDAL, $(DEFINES)),)
 test:
 	$(JAVAC) -classpath ./:examples/:./mapscript.jar -d examples/ examples/RFC24.java examples/ConnPool.java examples/DrawMap.java examples/DumpShp.java examples/MakePoint.java examples/QueryByAttribute.java examples/ShapeInfo.java examples/WxSTest.java examples/Metadata.java examples/RunTimeBuiltWMSClient.java
 	$(JAVAC) -encoding utf8 -classpath ./:examples/:./mapscript.jar -d examples/ examples/QueryByAttributeUnicode.java 
@@ -81,7 +81,7 @@ test:
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. DrawMap ../../tests/test.map ./map.png
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. ConnPool
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. QueryByAttribute ../../tests/test.map
-ifneq ($(findstring USE_WCS_SVR, $(OWS)),)
+ifneq ($(findstring USE_WCS_SVR, $(DEFINES)),)
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=. WxSTest ../../tests/test.map
 else
 	@echo "WARN: Skipping WxSTest because OWS is not enabled"
