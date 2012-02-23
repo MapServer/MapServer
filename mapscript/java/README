@@ -40,11 +40,8 @@ mapscript location and execute:
     $ make
     $ make test (recommended)
     $ make threadtests (optional)
-    $ make install (recommended)
+    $ make install (required as of 6.1)
 
-Copy .libs/libmapscript.so and mapscript.jar to the appropriate location or
-use let make install install them in the configured location (defaults to
-/urs/local/lib).
 Remember to set the appropriate variable (LD_LIBRARY_PATH, java.library.path
 or edit /etc/ld.so.conf) to make sure Java can locate and load the libraries.
 
