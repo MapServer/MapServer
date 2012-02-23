@@ -166,7 +166,19 @@ void msCGIWriteError(mapservObj *mapserv)
   }\
 } while (0)
 
+static void setClassGroup(layerObj *layer, char *classgroup) {
+  int i;
 
+  if(!layer || !classgroup) return;
+
+  for(i=0; i<layer->numclasses; i++) {
+    if(layer->class[i]->group && strcmp(layer->class[i]->group, classgroup) == 0) {
+      msFree(layer->classgroup);
+      layer->classgroup = msStrdup(classgroup); 
+      return; /* bail */
+    }
+  }
+}
 
 /*
 ** Extract Map File name from params and load it.  
@@ -174,7 +186,7 @@ void msCGIWriteError(mapservObj *mapserv)
 */
 mapObj *msCGILoadMap(mapservObj *mapserv)
 {
-  int i;
+  int i, j;
   mapObj *map = NULL;
   static mapObj *preloadedmap = NULL;
   static time_t preloadedmap_mtime;
@@ -233,8 +245,6 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
 
   if(!map) return NULL;
 
-
-
   if(!msLookupHashTable(&(map->web.validation), "immutable")) {
      /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
      /* services can take advantage of these "vendor specific" extensions */
@@ -247,12 +257,20 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
          */
         if(strncasecmp(mapserv->request->ParamNames[i],"qstring",7) == 0) continue;
 
-        if(strncasecmp(mapserv->request->ParamNames[i],"map_",4) == 0 || strncasecmp(mapserv->request->ParamNames[i],"map.",4) == 0) { /* check to see if there are any additions to the mapfile */
+        /* check to see if there are any additions to the mapfile */
+        if(strncasecmp(mapserv->request->ParamNames[i],"map_",4) == 0 || strncasecmp(mapserv->request->ParamNames[i],"map.",4) == 0) {
            if(msUpdateMapFromURL(map, mapserv->request->ParamNames[i], mapserv->request->ParamValues[i]) != MS_SUCCESS) {
               msFreeMap(map);
               return NULL;
            }
            continue;
+        }
+
+        if(strncasecmp(mapserv->request->ParamNames[i],"classgroup",10) == 0) { /* #4207 */
+          for(j=0; j<map->numlayers; j++) {
+            setClassGroup(GET_LAYER(map, j), mapserv->request->ParamValues[i]);
+          }
+          continue;
         }
      }
 
