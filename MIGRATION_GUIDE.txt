@@ -13,8 +13,25 @@ MapServer Migration Guide
 Mapserver 6.0 to 6.2 Migration
 ==============================
 
+This section documents the changes that must be made to MapServer 
+applications when migrating from version 6.0.x (or earlier versions) 
+to 6.2 (i.e. backwards incompatibilities), as well as information
+on some of the new features.
+
 TODO:document changes in gap calculation for line markers and polygon
 tile symbols (#3879 and #3867)
+
+--------------------
+Build system changes
+--------------------
+
+If you are building MapServer from source, then the following may be of interest to you:
+
+* Use of libtool: In version 6.2, the Unix/Linux build scripts and Makefiles were converted to use libtool. One impact of this change is that the 'mapserv' file in the main source tree is a libtool wrapper script and not the actual binary. To use 'mapserv' you actually have to use 'make install' and then point to the installed binary. More info is available in the Compiling on Unix document at http://mapserver.org/trunk/installation/unix.html#installation
+
+* The --with-php configure option has been changed to point directly to the php-config script instead of to the directory where the PHP headers are located.
+
+
 
 MapServer 5.6 to 6.0 Migration
 ==============================

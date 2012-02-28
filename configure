@@ -1635,8 +1635,7 @@ Optional Packages:
   --with-apr-config       path to apr-config program
   --with-warnings[=flags] Enable strict warnings (or user defined warnings)
   --with-php=yes|no|/path/to/php-config
-                          Specify directory where PHP5's include files are
-                          installed (or a pointer to the full source tree)
+                          Specify location of php-config script.
                           Required in order to compile the PHP/MapScript
                           module.
   --with-ld-shared=CMD    Specify link command to use to build shared libs

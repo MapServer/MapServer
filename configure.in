@@ -2564,8 +2564,7 @@ dnl ---------------------------------------------------------------------
 AC_CHECKING(for PHP/MapScript module options)
 AC_ARG_WITH(php,
 [  --with-php=yes|no|/path/to/php-config
-                          Specify directory where PHP5's include files are
-                          installed (or a pointer to the full source tree)
+                          Specify location of php-config script.
                           Required in order to compile the PHP/MapScript 
                           module.],,[with_php=no])
 

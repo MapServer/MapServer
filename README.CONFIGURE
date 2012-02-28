@@ -5,7 +5,7 @@ README.CONFIGURE - MapServer "configure" script compilation options
 For Unix users, Mapserver comes with a GNU autoconf "configure" script 
 that should take care of (hopefully!) all compilation issues for you.
 
-The configure script won't work on Windows NT.  See the file README.WIN32
+The configure script won't work on Windows.  See the file README.WIN32
 for details on compiling on Windows systems.
 
 The default configure behavior is to try to locate on your system the most
@@ -22,16 +22,19 @@ directory where you extracted the MapServer source code package and...
 
 ::
 
- $ cd mapserver-6.0.x
+ $ cd mapserver-6.2.x
  $ ./configure
  $ make
+ $ make install
 
-Unless something went wrong, you should have executables in the current 
-directory for the "mapserv" CGI program and the other utility programs.
-You can copy the "mapserv" program to your HTTP server's CGI directory
-and start using it.  
+Unless something went wrong, this should compile and install the "mapserv"
+CGI program and the other utility programs.
 
-See the MapServer web site at http://mapserver.gis.umn.edu/ for usage
+You should then locate the installed "mapserv" executable and link to it
+from your web server's cgi-bin directory. More information on how to do this
+is available at http://mapserver.org/installation/unix.html#installation
+
+See the MapServer web site at http://mapserver.org/ for usage
 instructions.
 
 
@@ -125,8 +128,8 @@ Optional Packages:
   --with-fastcgi=path     Enable FastCGI, point to installed tree.
   --with-httpd            Specify path to 'httpd' executable.
   --with-warnings[=flags] Enable strict warnings (or user defined warnings)
-  --with-php=DIR          Specify directory where PHP4's include files are
-                          installed (or a pointer to the full source tree)
+  --with-php=yes|no|/path/to/php-config
+                          Specify location of php-config script.
                           Required in order to compile the PHP/MapScript
                           module.
   --without-ld-shared     Disable shared library support
@@ -696,8 +699,8 @@ PHP/MapScript module:
 
 ::
 
-  --with-php=DIR          Specify directory where PHP4's include files are
-                          installed (or a pointer to the full source tree)
+  --with-php=yes|no|/path/to/php-config
+                          Specify location of php-config script.
                           Required in order to compile the PHP/MapScript
                           module.
   --enable-perlv-ld-detect (applies to --with-php only)
@@ -707,22 +710,15 @@ PHP/MapScript module:
 
 
 - The --with-php option will trigger the compilation of the PHP MapScript
-  module in the ./mapscript/php3/ directory.  
+  module in the ./mapscript/php/ directory.  
 
-- DIR should be the location of the PHP4 or PHP5 distribution (source or dev
-  package).  The module may work with older versions of PHP (4.1.x or 4.2.x), but 
-  PHP 4.3.x is strongly recommended. The configure script should 
-  automatically detect which version of PHP you are attempting to build 
-  with and take the necessary actions.
+- The argument to the --with-php option is the full path to the php-config
+  script
+    e.g.  $ ./configure --with-php=/usr/local/bin/php-config
 
-    e.g.  $ ./configure --with-php=../php-4.3.11
-
-- The PHP module has to be built as a shared library that will then
-  be loaded as a Dynamic Module by the PHP interpreter using the dl()
-  PHP command.  See the Wiki for detailed build instructions for various
-  platforms: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScript
-  See also the file ./mapscript/php3/README for more details on the
-  MapScript classes and functions.  
+- PHP MapScript now requires PHP 5.2.0 or more recent.
+  Support for PHP3 has been dropped after MapServer version 3.5.
+  Support for PHP4 has been dropped after MapServer version 5.6.
 
 - Some libraries are used by both PHP and MapServer, and using different 
   versions of these libs will lead to potential crashes at runtime.  In most
