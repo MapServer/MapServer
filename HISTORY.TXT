@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Python mapscript: fix swig mappings to work with both python 2.5.and 2.6 (#3940)
+
 - Added classgroup CGI parameter support (#4207)
 
 - Java mapscript: renamed shared library and completed libtool support (#2595)
