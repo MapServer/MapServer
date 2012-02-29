@@ -52,7 +52,7 @@ OglRenderer* getOglRenderer(imageObj* img)
     return (OglRenderer*) img->img.plugin;
 }
 
-int msSaveImageOgl(imageObj *img, FILE *fp, outputFormatObj *format)
+int msSaveImageOgl(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format)
 {
     rasterBufferObj data;
     OglRenderer* renderer = getOglRenderer(img);

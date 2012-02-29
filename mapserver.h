@@ -2753,7 +2753,7 @@ struct rendererVTableObj {
 
 	/* image i/o */
 	imageObj* (*createImage)(int width, int height, outputFormatObj *format, colorObj* bg);
-	int (*saveImage)(imageObj *img, FILE *fp, outputFormatObj *format);
+	int (*saveImage)(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format);
 	unsigned char* (*saveImageBuffer)(imageObj *img, int *size_ptr, outputFormatObj *format);
 	/*...*/
 

@@ -841,7 +841,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 
                 nReturnVal = msSaveRasterBuffer(map,&data,stream,img->format );
             } else {
-                nReturnVal = renderer->saveImage(img, stream, img->format);
+                nReturnVal = renderer->saveImage(img, map, stream, img->format);
             }
             if( stream != stdout )
                 fclose(stream);

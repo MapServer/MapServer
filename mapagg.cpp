@@ -841,7 +841,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
    return image;
 }
 
-int agg2SaveImage(imageObj *img, FILE *fp, outputFormatObj * format) {
+int agg2SaveImage(imageObj *img, mapObj* map, FILE *fp, outputFormatObj * format) {
    msSetError(MS_MISCERR, "AGG2 does not support direct image saving", "agg2SaveImage()");
 
    return MS_FAILURE;

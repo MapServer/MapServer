@@ -88,7 +88,7 @@ imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj
 
 
 
-int saveImageGD(imageObj *img, FILE *fp, outputFormatObj *format) 
+int saveImageGD(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format) 
 {
   gdImagePtr ip;
 

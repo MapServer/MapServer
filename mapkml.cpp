@@ -55,7 +55,7 @@ imageObj* msCreateImageKml(int width, int height, outputFormatObj *format, color
     return image;
 }
 
-int msSaveImageKml(imageObj *img, FILE *fp, outputFormatObj *format)
+int msSaveImageKml(imageObj *img, mapObj* map, FILE *fp, outputFormatObj *format)
 {
     KmlRenderer* renderer = getKmlRenderer(img);
     return renderer->saveImage(img, fp, format);

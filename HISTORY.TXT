@@ -15,6 +15,10 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- PDF backend: add support for generating geospatial PDF, when
+  GDAL 2.0 with PDF driver is used, and the GEO_ENCODING FORMATOPTION
+  (set to ISO32000 or OGC_BP) is added to the OUTPUTFORMAT definition. (#4216)
+
 - Python mapscript: fix swig mappings to work with both python 2.5.and 2.6 (#3940)
 
 - Added classgroup CGI parameter support (#4207)

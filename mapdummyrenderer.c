@@ -159,7 +159,7 @@ imageObj* createImageDummy(int width, int height, outputFormatObj *format, color
     return NULL;
 }
 
-int saveImageDummy(imageObj *img, FILE *fp, outputFormatObj *format) {
+int saveImageDummy(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format) {
     msSetError(MS_RENDERERERR,"saveImage not implemented","saveImage()");
     return MS_FAILURE;
 }
