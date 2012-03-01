@@ -116,7 +116,8 @@
             if (file)
             {
                 renderer = self->format->vtable;
-                retval = renderer->saveImage(self, file, self->format);
+                /* FIXME? as an improvement, pass a map argument instead of the NULL (see #4216) */
+                retval = renderer->saveImage(self, NULL, file, self->format);
             }
             else
             {

@@ -349,7 +349,8 @@ def fromstring(data, mappath=None):
         else if (PyFile_Check(file)) /* a Python (C) file */
         {
             renderer = self->format->vtable;
-            retval = renderer->saveImage(self, PyFile_AsFile(file), self->format);
+            /* FIXME? as an improvement, pass a map argument instead of the NULL (see #4216) */
+            retval = renderer->saveImage(self, NULL, PyFile_AsFile(file), self->format);
         }
         else /* presume a Python file-like object */
         {
