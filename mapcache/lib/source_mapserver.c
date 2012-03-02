@@ -55,8 +55,8 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
       char* msg = (char*) msSmallMalloc(MESSAGELENGTH+1);
       msg = msStrdup(errors->message);
 
-      msFree(msg);
       ctx->set_error(ctx,500,"Failed to load mapfile '%s'. Mapserver reports: ",mapserver->mapfile, msg);
+      msFree(msg);
       return;
    }
    mapObj *omap = msNewMapObj();
