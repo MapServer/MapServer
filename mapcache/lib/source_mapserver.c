@@ -52,22 +52,14 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
    if(!origmap) {
       msWriteError(stderr);
       errors = msGetErrorObj();
-      char* msg = (char*) msSmallMalloc(MESSAGELENGTH+1);
-      msg = msStrdup(errors->message);
-
-      ctx->set_error(ctx,500,"Failed to load mapfile '%s'. Mapserver reports: ",mapserver->mapfile, msg);
-      msFree(msg);
+      ctx->set_error(ctx,500,"Failed to load mapfile '%s'. Mapserver reports: ",mapserver->mapfile, errors->message);
       return;
    }
    mapObj *omap = msNewMapObj();
    msCopyMap(omap,origmap);
    if (msLoadProjectionString(&(omap->projection), map->grid_link->grid->srs) != 0) {
       errors = msGetErrorObj();
-      char* msg = (char*) msSmallMalloc(MESSAGELENGTH+1);
-      msg = msStrdup(errors->message);
-
-      ctx->set_error(ctx,500, "Unable to set projection on mapObj. MapServer reports: %s", msg);
-      msFree(msg);
+      ctx->set_error(ctx,500, "Unable to set projection on mapObj. MapServer reports: %s", errors->message);
       return;
    }
    switch(map->grid_link->grid->unit) {
@@ -101,11 +93,7 @@ void _mapcache_source_mapserver_render_map(mapcache_context *ctx, mapcache_map *
    imageObj *image = msDrawMap(omap, MS_FALSE);
    if(!image) {
       errors = msGetErrorObj();
-      char* msg = (char*) msSmallMalloc(MESSAGELENGTH+1);
-      msg = msStrdup(errors->message);
-
-      ctx->set_error(ctx,500, "MapServer failed to create image. MapServer reports: %s", msg);
-      msFree(msg);
+      ctx->set_error(ctx,500, "MapServer failed to create image. MapServer reports: %s", errors->message);
       msFreeMap(omap);
       return;
    }
