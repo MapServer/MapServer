@@ -870,7 +870,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                 && layer->class[resultshape.classindex]->numlabels > 0
                 && layer->class[resultshape.classindex]->labels[0]->size != -1 )
             {
-                resultshape.text = msShapeGetAnnotation(layer, &resultshape);
+                msShapeGetAnnotation(layer, &resultshape);
             }
 
             /*
