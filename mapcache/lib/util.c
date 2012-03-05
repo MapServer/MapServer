@@ -211,7 +211,6 @@ void mapcache_context_copy(mapcache_context *src, mapcache_context *dst) {
    dst->pool = src->pool;
    dst->set_exception = src->set_exception;
    dst->service = src->service;
-   dst->has_threads = src->has_threads;
    dst->exceptions = src->exceptions;
 }
 

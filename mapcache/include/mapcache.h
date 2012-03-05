@@ -185,7 +185,6 @@ struct mapcache_context {
 
     const char* (*get_instance_id)(mapcache_context * ctx);
     mapcache_context* (*clone)(mapcache_context *ctx);
-    int has_threads;
     apr_pool_t *pool;
     char *_contenttype;
     char *_errmsg;

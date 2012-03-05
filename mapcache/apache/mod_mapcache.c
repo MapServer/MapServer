@@ -51,8 +51,6 @@
 
 module AP_MODULE_DECLARE_DATA mapcache_module;
 
-int is_threaded;
-
 typedef struct mapcache_context_apache mapcache_context_apache;
 typedef struct mapcache_context_apache_request mapcache_context_apache_request;
 typedef struct mapcache_context_apache_server mapcache_context_apache_server;
@@ -184,9 +182,6 @@ static mapcache_context_apache_request* apache_request_context_create(request_re
    config = apr_hash_get(cfg->aliases,(void*)r->filename,APR_HASH_KEY_STRING);
    ctx->ctx.ctx.config = config;
    ctx->request = r;
-   if(is_threaded) {
-      ctx->ctx.ctx.has_threads = 1;
-   }
    init_apache_request_context(ctx);
    return ctx;
 }
@@ -315,10 +310,6 @@ static int mod_mapcache_request_handler(request_rec *r) {
 
 static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s) {
    mapcache_server_cfg* cfg = ap_get_module_config(s->module_config, &mapcache_module);
-   server_rec *sconf;
-   apr_status_t rv;
-   mapcache_context *ctx = (mapcache_context*)apache_server_context_create(s,p);
-
    if(!cfg) {
       ap_log_error(APLOG_MARK, APLOG_CRIT, 0, s, "configuration not found in server context");
       return 1;
@@ -328,10 +319,7 @@ static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
    ap_add_version_component(p, MAPCACHE_USERAGENT);
 #endif
 
-   rv = ap_mpm_query(AP_MPMQ_IS_THREADED,&is_threaded);
-}
-
-static void mod_mapcache_child_init(apr_pool_t *pool, server_rec *s) {
+   return 0;
 }
 
 static int mapcache_alias_matches(const char *uri, const char *alias_fakename)
@@ -413,7 +401,6 @@ static void mod_mapcache_register_hooks(apr_pool_t *p) {
    static const char * const p1[] = { "mod_alias.c", "mod_rewrite.c", NULL };
    static const char * const n1[]= { "mod_userdir.c",
                                       "mod_vhost_alias.c", NULL };
-   ap_hook_child_init(mod_mapcache_child_init, NULL, NULL, APR_HOOK_MIDDLE);
    ap_hook_post_config(mod_mapcache_post_config, NULL, NULL, APR_HOOK_MIDDLE);
    ap_hook_handler(mod_mapcache_request_handler, NULL, NULL, APR_HOOK_MIDDLE);
    ap_hook_translate_name(mapcache_hook_intercept, p1, n1, APR_HOOK_MIDDLE);

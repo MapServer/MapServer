@@ -615,7 +615,6 @@ int main(int argc, const char **argv) {
     cfg = mapcache_configuration_create(ctx.pool);
     ctx.config = cfg;
     ctx.log= mapcache_context_seeding_log;
-    ctx.has_threads = 1;
     apr_getopt_init(&opt, ctx.pool, argc, argv);
 
     seededtiles=seededtilestot=queuedtilestot=0;
