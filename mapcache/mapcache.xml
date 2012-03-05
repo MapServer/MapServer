@@ -7,6 +7,9 @@
       <base>/tmp</base>
       <symlink_blank/>
    </cache>
+   <cache name="sqlite" type="sqlite3">
+      <base>/tmp</base>
+   </cache>
 
    <source name="vmap0" type="wms">
       <getmap>
@@ -26,7 +29,7 @@
    
    <tileset name="test">
       <source>vmap0</source>
-      <cache>disk</cache>
+      <cache>sqlite</cache>
       <grid>WGS84</grid>
       <grid>g</grid>
       <format>PNG</format>

@@ -83,13 +83,36 @@ static sqlite3* _get_conn(mapcache_context *ctx, mapcache_tile* tile, int readon
    if(readonly) {
       flags = SQLITE_OPEN_READONLY;
    } else {
-      flags = SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE;
+      flags = SQLITE_OPEN_READWRITE;
    }
    dbfile = _get_dbname(ctx,tile->tileset, tile->grid_link->grid);
    ret = sqlite3_open_v2(dbfile,&handle,flags,NULL);
    if(ret != SQLITE_OK) {
-      ctx->set_error(ctx,500,"failed to connect to sqlite db %s: %s",dbfile,sqlite3_errmsg(handle));
-      return NULL;
+      /* maybe the database file doesn't exist yet. so we create it and setup the schema */
+      mapcache_cache_sqlite *cache = (mapcache_cache_sqlite*)tile->tileset->cache;
+      ret = sqlite3_open_v2(dbfile, &handle,SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE,NULL);
+      if (ret != SQLITE_OK) {
+         ctx->set_error(ctx, 500, "sqlite backend failed to open db %s: %s", dbfile, sqlite3_errmsg(handle));
+         sqlite3_close(handle);
+         return NULL;
+      }
+      ret = sqlite3_exec(handle, cache->create_stmt.sql, 0, 0, NULL);
+      if(ret != SQLITE_OK) {
+         ctx->set_error(ctx, 500, "sqlite backend failed to create db schema on %s: %s",dbfile, sqlite3_errmsg(handle));
+         sqlite3_close(handle);
+         return NULL;
+      }
+
+      /* re-open the db read-only if that's what we were asked for */
+      if(readonly) {
+         sqlite3_close(handle);
+         ret = sqlite3_open_v2(dbfile,&handle,flags,NULL);
+         if (ret != SQLITE_OK) {
+            ctx->set_error(ctx, 500, "sqlite backend failed to re-open freshly created db %s readonly: %s",dbfile, sqlite3_errmsg(handle));
+            sqlite3_close(handle);
+            return NULL;
+         }
+      }
    }
    sqlite3_busy_timeout(handle,300000);
    return handle;
@@ -294,40 +317,6 @@ static void _mapcache_cache_sqlite_configuration_parse_xml(mapcache_context *ctx
  */
 static void _mapcache_cache_sqlite_configuration_post_config(mapcache_context *ctx,
       mapcache_cache *cache, mapcache_cfg *cfg) {
-   mapcache_cache_sqlite *dcache = (mapcache_cache_sqlite*)cache;
-   sqlite3 *db;
-   char *errmsg;
-   int ret;
-
-   apr_hash_index_t *tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
-
-   while(tileindex_index) {
-      mapcache_tileset *tileset;
-      const void *key; apr_ssize_t keylen;
-      apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
-      if(!strcmp(tileset->cache->name,cache->name)) {
-         int i;
-         for(i=0;i<tileset->grid_links->nelts;i++) {
-            mapcache_grid_link *gridlink = APR_ARRAY_IDX(tileset->grid_links,i,mapcache_grid_link*);
-            mapcache_grid *grid = gridlink->grid;
-            char *dbname = _get_dbname(ctx,tileset,grid);
-            ret = sqlite3_open(dbname, &db);
-            if(ret != SQLITE_OK) {
-               ctx->set_error(ctx,500,"sqlite backend failed to open db %s: %s",dbname,sqlite3_errmsg(db));
-               sqlite3_close(db);
-               return;
-            }
-            ret = sqlite3_exec(db, dcache->create_stmt.sql, 0, 0, &errmsg);
-            if(ret != SQLITE_OK) {
-               ctx->set_error(ctx,500,"sqlite backend failed to create tiles table: %s",sqlite3_errmsg(db));
-               sqlite3_close(db);
-               return;
-            }
-            sqlite3_close(db);
-         }
-      }
-      tileindex_index = apr_hash_next(tileindex_index);
-   }
 }
 
 /**

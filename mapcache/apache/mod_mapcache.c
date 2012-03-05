@@ -317,9 +317,6 @@ static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
    mapcache_server_cfg* cfg = ap_get_module_config(s->module_config, &mapcache_module);
    server_rec *sconf;
    apr_status_t rv;
-#if APR_HAS_FORK
-   apr_proc_t proc;
-#endif
    mapcache_context *ctx = (mapcache_context*)apache_server_context_create(s,p);
 
    if(!cfg) {
@@ -329,77 +326,6 @@ static int mod_mapcache_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t 
 
 #ifndef DISABLE_VERSION_STRING
    ap_add_version_component(p, MAPCACHE_USERAGENT);
-#endif
-
-#if APR_HAS_FORK
-   /* fork a child process to let it accomplish post-configuration tasks with the uid of the runtime user */
-   rv = apr_proc_fork(&proc, ptemp);
-   if (rv == APR_INCHILD) {
-#define ap_unixd_setup_child unixd_setup_child
-      ap_unixd_setup_child();
-      mapcache_context *ctx = (mapcache_context*)apache_server_context_create(s,p);
-      for (sconf = s; sconf; sconf = sconf->next) {
-         mapcache_server_cfg* config = ap_get_module_config(sconf->module_config, &mapcache_module);
-         if(config->aliases) {
-            apr_hash_index_t *entry = apr_hash_first(ptemp,config->aliases);
-
-            /* loop through the configured configurations */
-            while (entry) {
-               const char *alias;
-               apr_ssize_t aliaslen;
-               mapcache_cfg *c;
-               apr_hash_this(entry,(const void**)&alias,&aliaslen,(void**)&c);
-               mapcache_configuration_post_config(ctx, c);
-               if(GC_HAS_ERROR(ctx)) {
-                  ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "post config for %s failed: %s", alias,
-                        ctx->get_error_message(ctx));
-                  exit(APR_EGENERAL);
-               }
-               entry = apr_hash_next(entry);
-            }
-         }
-      }
-      exit(0);
-   } else if (rv == APR_INPARENT) {
-      apr_exit_why_e exitwhy;
-      int exitcode;
-      apr_proc_wait(&proc,&exitcode,&exitwhy,APR_WAIT);
-      if(exitwhy != APR_PROC_EXIT) {
-         ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "mapcache post-config child terminated abnormally");
-         return APR_EGENERAL;
-      } else {
-         if(exitcode != 0) {
-            return APR_EGENERAL;
-         }
-      }
-      return OK;
-   } else {
-      ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "failed to fork mapcache post-config child");
-      return APR_EGENERAL;
-   }
-#else /* APR_HAS_FORK */
-   for (sconf = s; sconf; sconf = sconf->next) {
-      mapcache_server_cfg* config = ap_get_module_config(sconf->module_config, &mapcache_module);
-      if(config->aliases) {
-         apr_hash_index_t *entry = apr_hash_first(ptemp,config->aliases);
-
-         /* loop through the configured configurations */
-         while (entry) {
-            const char *alias;
-            apr_ssize_t aliaslen;
-            mapcache_cfg *c;
-            apr_hash_this(entry,(const void**)&alias,&aliaslen,(void**)&c);
-            mapcache_configuration_post_config(ctx, c);
-            if(GC_HAS_ERROR(ctx)) {
-               ap_log_error(APLOG_MARK, APLOG_CRIT, APR_EGENERAL, s, "post config for %s failed: %s", alias,
-                     ctx->get_error_message(ctx));
-               return APR_EGENERAL;
-            }
-            entry = apr_hash_next(entry);
-         }
-      }
-   }
-   return OK;
 #endif
 
    rv = ap_mpm_query(AP_MPMQ_IS_THREADED,&is_threaded);
@@ -527,6 +453,10 @@ static const char* mapcache_add_alias(cmd_parms *cmd, void *cfg, const char *ali
    config->configFile = apr_pstrdup(cmd->pool,configfile);
    config->endpoint = alias;
    mapcache_configuration_parse(ctx,configfile,config,0);
+   if(GC_HAS_ERROR(ctx)) {
+      return ctx->get_error_message(ctx);
+   }
+   mapcache_configuration_post_config(ctx, config);
    if(GC_HAS_ERROR(ctx)) {
       return ctx->get_error_message(ctx);
    }
