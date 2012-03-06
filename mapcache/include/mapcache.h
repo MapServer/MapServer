@@ -381,6 +381,7 @@ struct mapcache_cache_disk {
     char *base_directory;
     char *filename_template;
     int symlink_blank;
+    int creation_retry;
 };
 
 #ifdef USE_TIFF

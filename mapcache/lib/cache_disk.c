@@ -265,6 +265,8 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
    apr_status_t ret;
    char errmsg[120];
    char *filename, *hackptr1, *hackptr2=NULL;
+   const int creation_retry = ((mapcache_cache_disk*)tile->tileset->cache)->creation_retry;
+
 #ifdef DEBUG
    /* all this should be checked at a higher level */
    if(!tile->encoded_data && !tile->raw_image) {
@@ -369,10 +371,32 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
          } else {
             apr_file_close(f);
          }
-         if(symlink(blankname,filename) != 0) {
-            char *error = strerror(errno);
-            ctx->set_error(ctx, 500,  "failed to link tile %s to %s: %s",filename, blankname, error);
-            return; /* we could not create the file */
+
+         int retry_count_create_symlink = 0;
+         /*
+          * depending on configuration symlink creation will retry if it fails.
+          * this can happen on nfs mounted network storage.
+          * the solution is to create the containing directory again and retry the symlink creation.
+          */
+         while(symlink(blankname,filename) != 0) {
+            retry_count_create_symlink++;
+
+            if(retry_count_create_symlink > creation_retry) {
+               char *error = strerror(errno);
+               ctx->set_error(ctx, 500, "failed to link tile %s to %s: %s",filename, blankname, error);
+               return; /* we could not create the file */
+            }
+
+            *hackptr2 = '\0';
+
+            if(APR_SUCCESS != (ret = apr_dir_make_recursive(filename,APR_OS_DEFAULT,ctx->pool))) {
+               if(!APR_STATUS_IS_EEXIST(ret)) {
+                  ctx->set_error(ctx, 500, "failed to create symlink, can not create directory %s: %s",filename, apr_strerror(ret,errmsg,120));
+                  return; /* we could not create the file */
+               }
+            }
+
+            *hackptr2 = '/';
          }
 #ifdef DEBUG        
          ctx->log(ctx, MAPCACHE_DEBUG, "linked blank tile %s to %s",filename,blankname);
@@ -389,11 +413,33 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
       GC_CHECK_ERROR(ctx);
    }
 
-   if((ret = apr_file_open(&f, filename,
+   int retry_count_create_file = 0;
+   /*
+    * depending on configuration file creation will retry if it fails.
+    * this can happen on nfs mounted network storage.
+    * the solution is to create the containing directory again and retry the file creation.
+    */
+   while((ret = apr_file_open(&f, filename,
          APR_FOPEN_CREATE|APR_FOPEN_WRITE|APR_FOPEN_BUFFERED|APR_FOPEN_BINARY,
          APR_OS_DEFAULT, ctx->pool)) != APR_SUCCESS) {
-      ctx->set_error(ctx, 500,  "failed to create file %s: %s",filename, apr_strerror(ret,errmsg,120));
-      return; /* we could not create the file */
+
+      retry_count_create_file++;
+
+      if(retry_count_create_file > creation_retry) {
+         ctx->set_error(ctx, 500, "failed to create file %s: %s",filename, apr_strerror(ret,errmsg,120));
+         return; /* we could not create the file */
+      }
+
+      *hackptr2 = '\0';
+
+      if(APR_SUCCESS != (ret = apr_dir_make_recursive(filename,APR_OS_DEFAULT,ctx->pool))) {
+         if(!APR_STATUS_IS_EEXIST(ret)) {
+            ctx->set_error(ctx, 500, "failed to create file, can not create directory %s: %s",filename, apr_strerror(ret,errmsg,120));
+            return; /* we could not create the file */
+         }
+      }
+
+      *hackptr2 = '/';
    }
 
    bytes = (apr_size_t)tile->encoded_data->size;
@@ -439,6 +485,10 @@ static void _mapcache_cache_disk_configuration_parse_xml(mapcache_context *ctx, 
          dcache->filename_template = apr_pstrdup(ctx->pool,cur_node->txt);
       }
    }
+
+   if ((cur_node = ezxml_child(node,"creation_retry")) != NULL) {
+      dcache->creation_retry = atoi(cur_node->txt);
+   }
 }
 
 /**
@@ -465,6 +515,7 @@ mapcache_cache* mapcache_cache_disk_create(mapcache_context *ctx) {
       return NULL;
    }
    cache->symlink_blank = 0;
+   cache->creation_retry = 0;
    cache->cache.metadata = apr_table_make(ctx->pool,3);
    cache->cache.type = MAPCACHE_CACHE_DISK;
    cache->cache.tile_delete = _mapcache_cache_disk_delete;
