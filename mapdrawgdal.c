@@ -251,10 +251,16 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                         GDALGetRasterYSize(hDS) - src_yoff);
 
        /* We want very small windows to use at least one source pixel (#4172) */
-       if( src_xsize == 0 && (urx - llx) > 0.0 )
+       if( src_xsize == 0 && (urx - llx) > 0.0 ) 
+       {
            src_xsize = 1;
+	   src_xoff = MIN(src_xoff,GDALGetRasterXSize(hDS)-1);
+       }
        if( src_ysize == 0 && (lly - ury) > 0.0 )
+       {
            src_ysize = 1;
+	   src_yoff = MIN(src_yoff,GDALGetRasterYSize(hDS)-1);
+       }
 
         if( src_xsize == 0 || src_ysize == 0 )
         {
