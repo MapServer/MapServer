@@ -45,13 +45,7 @@ extern int InvGeoTransform( double *gt_in, double *gt_out );
 #include "gdal.h"
 #include "cpl_string.h"
 
-#if GDAL_VERSION_NUM > 1174
-#  define ENABLE_DITHER
-#endif
-
-#ifdef ENABLE_DITHER
 #include "gdal_alg.h"
-#endif
 
 static int
 LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
@@ -74,13 +68,10 @@ msDrawRasterLayerGDAL_16BitClassification(
     int src_xoff, int src_yoff, int src_xsize, int src_ysize,
     int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
 
-
-#ifdef ENABLE_DITHER
 static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
                          GByte *pabyDithered, int xsize, int ysize, 
                          int bTransparent, colorObj transparentColor,
                          gdImagePtr gdImg );
-#endif
 
 /*
  * Stuff for allocating color cubes, and mapping between RGB values and
@@ -783,7 +774,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*      load it as massage it so it will function as our alpha for      */
 /*      transparency purposes.                                          */
 /* -------------------------------------------------------------------- */
-#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1500 
     if( hBandAlpha == NULL )
     {
         int nMaskFlags = GDALGetMaskFlags(hBand1); 
@@ -846,7 +836,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             } 
         } 
     }
-#endif /* defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1500 */
 
 /* -------------------------------------------------------------------- */
 /*      Single band plus colormap with alpha blending to 8bit.          */
@@ -1035,7 +1024,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         /* Dithered 24bit to 8bit conversion */
         if( CSLFetchBoolean( layer->processing, "DITHER", FALSE ) )
         {
-#ifdef ENABLE_DITHER
             unsigned char *pabyDithered;
 
             pabyDithered = (unsigned char *) malloc(dst_xsize * dst_ysize);
@@ -1075,11 +1063,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             }
           
             free( pabyDithered );
-#else
-            msSetError( MS_IMGERR, 
-                        "DITHER not supported in this build.  Update to latest GDAL, and define the ENABLE_DITHER macro.", "drawGDAL()" );
-            return -1;
-#endif 
         }
 
         /* Color cubed 24bit to 8bit conversion. */
@@ -1712,22 +1695,6 @@ static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
 /*      Wrapper for GDAL dithering algorithm.                           */
 /************************************************************************/
 
-#ifdef ENABLE_DITHER
-
-#if GDAL_VERSION_NUM <= 1240 
-static int CPLPrintPointer( char *buffer, void *pData, int nMax )
-
-{
-#ifdef WIN32
-    sprintf( buffer, "%ld", (long) pData );
-#else
-    sprintf( buffer, "%p", pData );
-#endif
-
-    return strlen( buffer );
-}
-#endif /* GDAL_VERSION_NUM <= 1240 */
-
 static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
                          GByte *pabyDithered, int xsize, int ysize, 
                          int bTransparent, colorObj transparent,
@@ -1821,7 +1788,7 @@ static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
     GDALDestroyColorTable( hCT );
     GDALClose( hDS );
 }
-#endif /* def ENABLE_DITHER */
+
 
 /************************************************************************/
 /*                       msGetGDALGeoTransform()                        */
@@ -1996,18 +1963,6 @@ msDrawRasterLayerGDAL_RawMode(
                     "msDrawRasterLayerGDAL_RawMode()" );
         return -1;
     }
-
-/* -------------------------------------------------------------------- */
-/*      We need at least GDAL 1.2.0 for the DatasetRasterIO             */
-/*      function.                                                       */
-/* -------------------------------------------------------------------- */
-#if !defined(GDAL_VERSION_NUM) || GDAL_VERSION_NUM < 1200
-    msSetError(MS_IMGERR, 
-               "RAWMODE raster support requires GDAL 1.2.0 or newer.", 
-               "msDrawRasterLayerGDAL_RawMode()" );
-    free( pBuffer );
-    return -1;
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      What data type do we need?                                      */

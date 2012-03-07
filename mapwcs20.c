@@ -1861,7 +1861,6 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     /*      Fetch the driver we will be using and check if it supports      */
     /*      VSIL IO.                                                        */
     /* -------------------------------------------------------------------- */
-#ifdef GDAL_DCAP_VIRTUALIO
     if( EQUALN(image->format->driver,"GDAL/",5) )
     {
         GDALDriverH hDriver;
@@ -1907,7 +1906,6 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         }
         msReleaseLock( TLOCK_GDAL );
     }
-#endif
 
     /* -------------------------------------------------------------------- */
     /*      If we weren't able to write data under /vsimem, then we just    */
@@ -1970,7 +1968,6 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     /*      to identify the "primary" file and list it first.  In fact      */
     /*      it is the only file listed in the coverages document.           */
     /* -------------------------------------------------------------------- */
-#ifdef GDAL_DCAP_VIRTUALIO
     {
         char **all_files = CPLReadDir( "/vsimem/wcsout" );
         int count = CSLCount(all_files);
@@ -2075,7 +2072,6 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
             msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
         return MS_SUCCESS;
     }
-#endif /* def GDAL_DCAP_VIRTUALIO */
 
     return MS_SUCCESS;
 }

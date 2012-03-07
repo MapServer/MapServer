@@ -525,28 +525,14 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
         calloc(sizeof(float),nWinXSize*nWinYSize*nBandCount);
     MS_CHECK_ALLOC(pafRaster, sizeof(float)*nWinXSize*nWinYSize*nBandCount, -1);
 
-#if defined(GDAL_VERSION_NUM) && GDAL_VERSION_NUM >= 1199
-    eErr = GDALDatasetRasterIO( hDS, GF_Read, 
+    eErr = GDALDatasetRasterIO( hDS, GF_Read,
                                 nWinXOff, nWinYOff, nWinXSize, nWinYSize,
                                 pafRaster, nWinXSize, nWinYSize, GDT_Float32,
                                 nBandCount, panBandMap, 
                                 4 * nBandCount, 
                                 4 * nBandCount * nWinXSize, 
                                 4 );
-#else
-    /*
-     * The above could actually be implemented for pre-1.2.0 GDALs
-     * reading band by band, but it would be hard to do and test and would
-     * be very rarely useful so we skip it.
-     */
-    msSetError(MS_IMGERR, 
-               "Raster query support requires GDAL 1.2.0 or newer.", 
-               "msRasterQueryByRectLow()" );
-    free( pafRaster );
-    return MS_FAILURE;
-#endif
 
-    
     if( eErr != CE_None )
     {
         msSetError( MS_IOERR, "GDALDatasetRasterIO() failed: %s", 

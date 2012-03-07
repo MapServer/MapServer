@@ -1158,7 +1158,6 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 /*      Fetch the driver we will be using and check if it supports      */
 /*      VSIL IO.                                                        */
 /* -------------------------------------------------------------------- */
-#ifdef GDAL_DCAP_VIRTUALIO
     if( EQUALN(image->format->driver,"GDAL/",5) )
     {
         GDALDriverH hDriver;
@@ -1204,7 +1203,6 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         }
         msReleaseLock( TLOCK_GDAL );
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Output stock header.                                            */
@@ -1284,7 +1282,6 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 /*      to identify the "primary" file and list it first.  In fact      */
 /*      it is the only file listed in the coverages document.           */
 /* -------------------------------------------------------------------- */
-#ifdef GDAL_DCAP_VIRTUALIO
     {
         char **all_files = CPLReadDir( "/vsimem/wcsout" );
         int count = CSLCount(all_files);
@@ -1374,9 +1371,6 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
         return MS_SUCCESS;
     }
-#else
-    return MS_SUCCESS;
-#endif /* def GDAL_DCAP_VIRTUALIO */
 }
 #endif /* defined(USE_WCS_SVR) && defined(USE_LIBXML2) */
 

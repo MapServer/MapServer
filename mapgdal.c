@@ -198,14 +198,13 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         if( pszExtension == NULL )
             pszExtension = "img.tmp";
 
-#ifdef GDAL_DCAP_VIRTUALIO
-        if( bUseXmp == MS_FALSE && GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL ) 
+        if( bUseXmp == MS_FALSE && GDALGetMetadataItem( hOutputDriver, GDAL_DCAP_VIRTUALIO, NULL )
             != NULL )
         {
             CleanVSIDir( "/vsimem/msout" );
             filename = msTmpFile(map, NULL, "/vsimem/msout/", pszExtension );
         }
-#endif
+
         if( filename == NULL && map != NULL)
             filename = msTmpFile(map, map->mappath,NULL,pszExtension);
         else if( filename == NULL )
@@ -427,7 +426,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         GDALDestroyColorTable( hCT );
     }
 
-#if GDAL_VERSION_NUM > 1170
     else if( format->imagemode == MS_IMAGEMODE_RGB )
     {
         GDALSetRasterColorInterpretation( 
@@ -448,7 +446,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         GDALSetRasterColorInterpretation( 
             GDALGetRasterBand( hMemDS, 4 ), GCI_AlphaBand );
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Assign the projection and coordinate system to the memory       */
@@ -569,7 +566,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         /* We aren't sure how far back GDAL exports the VSI*L API, so 
            we only use it if we suspect we need it.  But we do need it if
            holding temporary file in memory. */
-#ifdef GDAL_DCAP_VIRTUALIO
         fp = VSIFOpenL( filename, "rb" );
         if( fp == NULL )
         {
@@ -586,23 +582,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 
         VSIUnlink( filename );
         CleanVSIDir( "/vsimem/msout" );
-#else
-        fp = fopen( filename, "rb" );
-        if( fp == NULL )
-        {
-            msSetError( MS_MISCERR, 
-                        "Failed to open %s for streaming to stdout.",
-                        "msSaveImageGDAL()", filename );
-            return MS_FAILURE;
-        }
 
-        while( (bytes_read = fread(block, 1, sizeof(block), fp)) > 0 )
-            msIO_fwrite( block, 1, bytes_read, stdout );
-
-        fclose( fp );
-
-        unlink( filename );
-#endif
         free( filename );
     }
     
@@ -633,15 +613,13 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
         return MS_FAILURE;
     }
 
-#ifdef GDAL_DCAP_CREATE
-    if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL 
+    if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL
         && GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) == NULL )
     {
         msSetError( MS_MISCERR, "GDAL `%s' driver does not support output.", 
                     "msInitGDALOutputFormat()", format->driver+5 );
         return MS_FAILURE;
     }
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      Initialize the object.                                          */
@@ -649,7 +627,6 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
     format->imagemode = MS_IMAGEMODE_RGB;
     format->renderer = MS_RENDER_WITH_AGG;
 
-#ifdef GDAL_DMD_MIMETYPE 
     if( GDALGetMetadataItem( hDriver, GDAL_DMD_MIMETYPE, NULL ) != NULL )
         format->mimetype = 
             msStrdup(GDALGetMetadataItem(hDriver,GDAL_DMD_MIMETYPE,NULL));
@@ -657,14 +634,6 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
         format->extension = 
             msStrdup(GDALGetMetadataItem(hDriver,GDAL_DMD_EXTENSION,NULL));
 
-#else
-    if( strcasecmp(format->driver,"GDAL/GTiff") )
-    {
-        format->mimetype = msStrdup("image/tiff");
-        format->extension = msStrdup("tif");
-    }
-#endif
-    
     return MS_SUCCESS;
 }
 
