@@ -599,12 +599,16 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
 /*
  * Test whether a layer should be drawn or not in the current map view and
- * at the current scale.  
+ * at the current scale and in the current extent.  
  * Returns TRUE if layer is visible, FALSE if not.
 */
 int msLayerIsVisible(mapObj *map, layerObj *layer)
 {
   int i;
+  int shouldFreeProjection = MS_FALSE;
+  projectionObj projection;
+  rectObj ext;
+  const char *value;
 
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features && !layer->layerinfo)
     return(MS_FALSE); /* no data associated with this layer, not an error since layer may be used as a template from MapScript */
@@ -672,6 +676,59 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
         }
         return(MS_FALSE);
       }
+  }
+
+  /* With wms_respect_extent true, mark layer is invisible if the request bbox is
+     fully outside of the layer extent */
+  value = msOWSLookupMetadata(&(layer->metadata), "MO", "respect_extent");
+  if(value && strncasecmp(value, "true", 5) == 0) {
+
+#ifdef USE_PROJ
+    /* Use a temporary projectionObj which does not affect further layer handling */
+    if (layer->projection.numargs == 0) {
+      msInitProjection(&projection);
+      shouldFreeProjection = MS_TRUE;
+
+      /* If layer has no projection (e.g. annotation layer), read it from wms_srs metadata */
+      if ((value = (char*)msOWSGetEPSGProj(NULL, &(layer->metadata), "MO", MS_TRUE)) != NULL) {
+        msLoadProjectionStringEPSG(&projection, (char *)value);
+      }
+    }
+    /* Or use a pointer to the current layer projection, which we do not free afterwards */
+    else {
+      projection = layer->projection;
+    }
+
+    /* Check presence of projection again */
+    if ( projection.numargs == 0 ) {
+      msDebug("msLayerIsVisible(): cannot comply with respect_extent metadata, layer has no projection.\n");
+    }
+    /* Get the bounding box of this layer */
+    else if (msOWSGetLayerExtent(map, layer, "MO", &ext) != MS_SUCCESS) {
+      msDebug("msLayerIsVisible(): cannot comply with respect_extent metadata, layer has no extent.\n");
+    }
+    else
+    {
+      /* reproject layer extent to request srs */
+      if (msProjectionsDiffer(&(map->projection), &projection) == MS_TRUE)
+      {
+        msProjectRect(&projection, &(map->projection), &ext);
+      }
+#endif
+      /* compare request extent to layer extent */
+      if (MS_FALSE == msRectOverlap(&(map->extent), &ext)) {
+        if (MS_TRUE == shouldFreeProjection) {
+          msFreeProjection(&projection);
+        }
+        return MS_FALSE;
+      }
+#ifdef USE_PROJ
+    }
+
+    if (MS_TRUE == shouldFreeProjection) {
+      msFreeProjection(&projection);
+    }
+#endif
   }
 
   return MS_TRUE;  /* All tests passed.  Layer is visible. */

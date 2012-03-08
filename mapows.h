@@ -119,6 +119,8 @@ MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mod
 
 MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj *metadata, 
                                     const char *namespaces, const char *name);
+MS_DLL_EXPORT const char * msOWSLookupMetadataWithLanguage(hashTableObj *metadata, 
+                                    const char *namespaces, const char *name, const char *validated_language);
 MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
                                                 hashTableObj *sec,
                                                 const char *namespaces,
@@ -158,8 +160,11 @@ MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
 MS_DLL_EXPORT int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
 MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
+MS_DLL_EXPORT char *msOWSGetOnlineResource2(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req, const char *validated_language);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
+MS_DLL_EXPORT char **msOWSGetLanguageList(mapObj *map, const char *namespaces, int *numitems);
+MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *requested_language);
 
 
 /* OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata() */
@@ -171,6 +176,14 @@ MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 #define OWS_WMS     1
 #define OWS_WFS     2
 
+MS_DLL_EXPORT int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
+                                                const int action_if_not_found, const char *tag_name,
+                                                const char *validated_language, const int service);
+int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
+                                       int action_if_not_found);
+int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *namespaces,
+                               int action_if_not_found, const char *validated_language);
+
 MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata, 
                        const char *namespaces, const char *name, 
                        int action_if_not_found, const char *format, 
@@ -179,6 +192,11 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
                              const char *namespaces, const char *name, 
                              int action_if_not_found, 
                              const char *format, const char *default_value) ;
+int msOWSPrintEncodeMetadata2(FILE *stream, hashTableObj *metadata, 
+                             const char *namespaces, const char *name, 
+                             int action_if_not_found, 
+                             const char *format, const char *default_value,
+                             const char *validated_language);
 char *msOWSGetEncodeMetadata(hashTableObj *metadata, 
                              const char *namespaces, const char *name, 
                              const char *default_value);
@@ -191,6 +209,11 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
                             const char *namespaces, const char *name, 
                             int action_if_not_found, 
                             const char *format, const char *default_value);
+int msOWSPrintGroupMetadata2(FILE *stream, mapObj *map, char* pszGroupName,
+                            const char *namespaces, const char *name,
+                            int action_if_not_found,
+                            const char *format, const char *default_value,
+                            const char *validated_language);
 int msOWSPrintURLType(FILE *stream, hashTableObj *metadata, 
                       const char *namespaces, const char *name, 
                       int action_if_not_found, const char *tag_format, 
@@ -334,9 +357,9 @@ typedef struct {
 } gmlGroupListObj;
 
 typedef struct {
-	char *prefix;
-	char *uri;
-	char *schemalocation;
+    char *prefix;
+    char *uri;
+    char *schemalocation;
 } gmlNamespaceObj;
 
 typedef struct {

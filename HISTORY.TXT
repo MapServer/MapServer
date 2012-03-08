@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Add support for INSPIRE view service (RFC 75)
+
 - Drop support for GDAL/OGR older than 1.5.0 (#4224)
 
 - PDF backend: add support for generating geospatial PDF, when

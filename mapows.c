@@ -628,6 +628,38 @@ const char *msOWSLookupMetadata(hashTableObj *metadata,
     return value;
 }
 
+
+/*
+** msOWSLookupMetadataWithLanguage()
+**
+** Attempts to lookup a given metadata name in multiple OWS namespaces
+** for a specific language.
+*/
+const char *msOWSLookupMetadataWithLanguage(hashTableObj *metadata, 
+                                const char *namespaces, const char *name, const char* validated_language)
+{
+    const char *value = NULL;
+    char *name2 = NULL;
+    size_t bufferSize = 0;
+
+    if ( name && validated_language )
+    {
+       bufferSize = strlen(name)+strlen(validated_language)+2;
+       name2 = (char *) msSmallMalloc( bufferSize );
+       snprintf(name2, bufferSize, "%s.%s", name, validated_language);
+       value = msOWSLookupMetadata(metadata, namespaces, name2);
+    }
+
+    if (value == NULL)
+    {
+       value = msOWSLookupMetadata(metadata, namespaces, name);
+    }
+
+    msFree( name2 );
+
+    return value;
+}
+
 /*
 ** msOWSLookupMetadata2()
 **
@@ -888,6 +920,32 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
 }
 
 
+/*
+** msOWSGetOnlineResource()
+**
+** Return the online resource for this service and add language parameter.
+**
+** Returns a newly allocated string that should be freed by the caller or
+** NULL in case of error.
+*/
+char * msOWSGetOnlineResource2(mapObj *map, const char *namespaces, const char *metadata_name, 
+                              cgiRequestObj *req, const char* validated_language)
+{
+    char *online_resource = msOWSGetOnlineResource(map, namespaces, metadata_name, req);
+
+    if ( online_resource && validated_language )
+    {
+        /* online_resource is already terminated, so we can simply add language=...& */
+        /* but first we need to make sure that online_resource has enough capacity */
+        online_resource = (char *)msSmallRealloc(online_resource, strlen(online_resource) + strlen(validated_language) +  11);
+        strcat(online_resource, "language=");
+        strcat(online_resource, validated_language);
+        strcat(online_resource, "&");
+    }
+
+    return online_resource;
+}
+
 /* msOWSGetSchemasLocation()
 **
 ** schemas location is the root of the web tree where all WFS-related 
@@ -935,6 +993,189 @@ const char *msOWSGetLanguage(mapObj *map, const char *context)
       }
     }
     return language;
+}
+
+/* msOWSGetLanguageList
+**
+** Returns the list of languages that this service supports
+**
+** Use value of "languages" metadata (comma-separated list), or NULL if not set
+**
+** Returns a malloced char** of length numitems which must be freed
+** by the caller, or NULL (with numitems = 0)
+*/
+char **msOWSGetLanguageList(mapObj *map, const char *namespaces, int *numitems) {
+
+  const char *languages = NULL;
+
+  languages = msOWSLookupMetadata(&(map->web.metadata), namespaces, "languages");
+  if (languages && strlen(languages) > 0) {
+      return msStringSplit(languages, ',', numitems);
+  } else {
+      *numitems = 0;
+      return NULL;
+  }
+}
+
+/* msOWSGetLanguageFromList
+**
+** Returns a language according to the language requested by the client
+**
+** If the requested language is in the languages metadata then use it, 
+** otherwise ignore it and use the defaul language, which is the first entry in 
+** the languages metadata list. Calling with a NULL requested_langauge 
+** therefore returns this default language. If the language metadata list is 
+** not defined then the language is set to NULL.
+**
+** Returns a malloced char* which must be freed by the caller, or NULL
+*/
+char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *requested_language) {
+  int num_items = 0;
+  char **languages = msOWSGetLanguageList(map, namespaces, &num_items);
+  char *language = NULL;
+
+  if( languages && num_items > 0 ) {
+    if ( !requested_language || !msStringInArray( requested_language, languages, num_items) ) {
+      language = msStrdup(languages[0]);
+    } else {
+      language = msStrdup(requested_language);
+    }
+  }
+  msFreeCharArray(languages, num_items);
+
+  return language;
+}
+
+/* msOWSPrintInspireCommonExtendedCapabilities
+**
+** Output INSPIRE common extended capabilities items to stream
+** The currently supported items are metadata and languages
+**
+** tag_name is the name (including ns prefix) of the tag to include the whole
+** extended capabilities block in
+**
+** service is currently included for future compatibility when differing
+** extended capabilities elements are included for different service types
+**
+** Returns a status code; MS_NOERR if all ok, action_if_not_found otherwise
+*/
+int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
+                                                int action_if_not_found, const char *tag_name,
+                                                const char *validated_language, const int service) {
+
+    int metadataStatus = 0; 
+    int languageStatus = 0;
+
+    msIO_fprintf(stream, "  <%s>\n", tag_name);
+
+    metadataStatus = msOWSPrintInspireCommonMetadata(stream, map, namespaces, action_if_not_found);
+    languageStatus = msOWSPrintInspireCommonLanguages(stream, map, namespaces, action_if_not_found, validated_language);
+
+    msIO_fprintf(stream, "  </%s>\n", tag_name);
+
+    return (metadataStatus != MS_NOERR) ? metadataStatus : languageStatus;
+}
+
+/* msOWSPrintInspireCommonMetadata
+**
+** Output INSPIRE common metadata items to a stream
+**
+** Returns a status code; MS_NOERR if all OK, action_if_not_found otherwise
+*/
+int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
+                                       int action_if_not_found) {
+
+    int status = MS_NOERR;
+    const char *inspire_capabilities = NULL;
+
+    inspire_capabilities = msOWSLookupMetadata(&(map->web.metadata), namespaces, "inspire_capabilities");
+
+    if (strcasecmp("url",inspire_capabilities) == 0)
+    {
+        if ( msOWSLookupMetadata(&(map->web.metadata), namespaces, "inspire_metadataurl_href") != NULL )
+        {
+            msIO_fprintf(stream, "    <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n");
+            msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_metadataurl_href", OWS_WARN, "      <inspire_common:URL>%s</inspire_common:URL>\n", "");
+            msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_metadataurl_format", OWS_WARN, "      <inspire_common:MediaType>%s</inspire_common:MediaType>\n", "");
+            msIO_fprintf(stream, "    </inspire_common:MetadataUrl>\n");
+        }
+        else
+        {
+            status = action_if_not_found;
+            if (OWS_WARN == action_if_not_found)
+            {
+                msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), "inspire_metadataurl_href");
+            }
+        }
+    }
+    else if (strcasecmp("embed",inspire_capabilities) == 0)
+    {
+        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_resourcelocator", OWS_NOERR, "    <inspire_common:ResourceLocator>\n      <inspire_common:URL>%s</inspire_common:URL>\n    </inspire_common:ResourceLocator>\n", NULL);
+        msIO_fprintf(stream,"    <inspire_common:ResourceType>service</inspire_common:ResourceType>\n");
+        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_temporal_reference", OWS_WARN, "    <inspire_common:TemporalReference>\n      <inspire_common:DateOfLastRevision>%s</inspire_common:DateOfLastRevision>\n    </inspire_common:TemporalReference>\n", "");
+        msIO_fprintf(stream, "    <inspire_common:Conformity>\n");
+        msIO_fprintf(stream, "      <inspire_common:Specification>\n");
+        msIO_fprintf(stream, "        <inspire_common:Title>-</inspire_common:Title>\n");
+        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_temporal_reference", OWS_NOERR, "        <inspire_common:DateOfLastRevision>%s</inspire_common:DateOfLastRevision>\n", "");
+        msIO_fprintf(stream, "      </inspire_common:Specification>\n");
+        msIO_fprintf(stream, "      <inspire_common:Degree>notEvaluated</inspire_common:Degree>\n");
+        msIO_fprintf(stream, "    </inspire_common:Conformity>\n");
+        msIO_fprintf(stream, "    <inspire_common:MetadataPointOfContact>\n");
+        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_mpoc_name", OWS_WARN, "      <inspire_common:OrganisationName>%s</inspire_common:OrganisationName>\n", "");
+        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_mpoc_email", OWS_WARN, "      <inspire_common:EmailAddress>%s</inspire_common:EmailAddress>\n", "");
+        msIO_fprintf(stream, "    </inspire_common:MetadataPointOfContact>\n");
+        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_metadatadate", OWS_WARN, "      <inspire_common:MetadataDate>%s</inspire_common:MetadataDate>\n", "");
+        msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n");
+        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_keyword", OWS_WARN, "    <inspire_common:MandatoryKeyword xsi:type='inspire_common:classificationOfSpatialDataService'>\n      <inspire_common:KeywordValue>%s</inspire_common:KeywordValue>\n    </inspire_common:MandatoryKeyword>\n", "");
+    }
+    else
+    {
+        status = action_if_not_found;
+        if (OWS_WARN == action_if_not_found)
+        {
+            msIO_fprintf(stream, "<!-- WARNING: invalid value '%s' for 'inspire_capabilities', only 'embed' and 'url' are supported. -->\n", inspire_capabilities);
+        }
+    }
+
+    return status;
+}
+
+/* msOWSPrintInspireCommonLanguages
+**
+** Output INSPIRE supported languages block to stream
+**
+** Returns a status code; MS_NOERR if all OK; action_if_not_found otherwise
+*/
+int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *namespaces,
+                               int action_if_not_found, const char *validated_language) {
+    char *buffer = NULL; /* temp variable for malloced strings that will need freeing */
+    int status = MS_NOERR;
+
+    char *default_language = msOWSGetLanguageFromList(map, namespaces, NULL);
+
+    if(validated_language && default_language)
+    {
+      msIO_fprintf(stream, "    <inspire_common:SupportedLanguages>\n");
+      msIO_fprintf(stream, "      <inspire_common:DefaultLanguage><inspire_common:Language>%s"
+                           "</inspire_common:Language></inspire_common:DefaultLanguage>\n",
+                           buffer = msEncodeHTMLEntities(default_language));
+      msFree(buffer);
+      msOWSPrintEncodeMetadataList(stream, &(map->web.metadata), namespaces, "languages", NULL, NULL,
+                                   "      <inspire_common:SupportedLanguage><inspire_common:Language>%s"
+                                   "</inspire_common:Language></inspire_common:SupportedLanguage>\n", msStringConcatenate(default_language, "_exclude"));
+      msIO_fprintf(stream, "    </inspire_common:SupportedLanguages>\n");
+      msIO_fprintf(stream, "    <inspire_common:ResponseLanguage><inspire_common:Language>%s"
+                           "</inspire_common:Language></inspire_common:ResponseLanguage>\n", validated_language);
+    } else {
+      status = action_if_not_found;
+      if (OWS_WARN == action_if_not_found) {
+        msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), "languages");
+      }
+    }
+
+    msFree(default_language);
+
+    return status;
 }
 
 /*
@@ -989,11 +1230,27 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
                              int action_if_not_found, 
                              const char *format, const char *default_value) 
 {
+    return msOWSPrintEncodeMetadata2(stream, metadata, namespaces, name, action_if_not_found, format, default_value, NULL);
+}
+
+
+/*
+** msOWSPrintEncodeMetadata2()
+**
+** Attempt to output a capability item in the requested language.
+** Fallback using no language parameter.
+*/
+int msOWSPrintEncodeMetadata2(FILE *stream, hashTableObj *metadata, 
+                              const char *namespaces, const char *name, 
+                              int action_if_not_found, 
+                              const char *format, const char *default_value, 
+                              const char *validated_language)
+{
     const char *value;
     char * pszEncodedValue=NULL;
     int status = MS_NOERR;
 
-    if((value = msOWSLookupMetadata(metadata, namespaces, name)))
+    if((value = msOWSLookupMetadataWithLanguage(metadata, namespaces, name, validated_language)))
     {
         pszEncodedValue = msEncodeHTMLEntities(value);
         msIO_fprintf(stream, format, pszEncodedValue);
@@ -1003,7 +1260,7 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
     {
         if (action_if_not_found == OWS_WARN)
         {
-            msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+            msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name, (validated_language?".":""), (validated_language?validated_language:""));
             status = action_if_not_found;
         }
 
@@ -1094,11 +1351,25 @@ int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata,
 ** If a default value is provided and metadata is absent then the 
 ** default will be used.
 */
+int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
+                            const char *namespaces, const char *name,
+                            int action_if_not_found,
+                            const char *format, const char *default_value)
+{
+    return msOWSPrintGroupMetadata2(stream, map, pszGroupName, namespaces, name, action_if_not_found, format, default_value, NULL);
+}
 
-int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName, 
+/*
+** msOWSPrintGroupMetadata2()
+**
+** Attempt to output a capability item in the requested language.
+** Fallback using no language parameter.
+*/
+int msOWSPrintGroupMetadata2(FILE *stream, mapObj *map, char* pszGroupName,
                             const char *namespaces, const char *name, 
                             int action_if_not_found, 
-                            const char *format, const char *default_value) 
+                            const char *format, const char *default_value,
+                            const char *validated_language)
 {
     const char *value;
     char *encoded;
@@ -1109,7 +1380,7 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
     {
         if (GET_LAYER(map, i)->group && (strcmp(GET_LAYER(map, i)->group, pszGroupName) == 0) && &(GET_LAYER(map, i)->metadata))
        {
-         if((value = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), namespaces, name)))
+         if((value = msOWSLookupMetadataWithLanguage(&(GET_LAYER(map, i)->metadata), namespaces, name, validated_language)))
          { 
             encoded = msEncodeHTMLEntities(value);
             msIO_fprintf(stream, format, encoded);
@@ -1421,6 +1692,10 @@ int msOWSPrintEncodeParam(FILE *stream, const char *name, const char *value,
 /* msOWSPrintMetadataList()
 **
 ** Prints comma-separated lists metadata.  (e.g. keywordList)
+** default_value serves 2 purposes if specified:
+** - won't be printed if part of MetadataList (default_value == key"_exclude")
+**  (exclusion)
+** - will be printed if MetadataList is empty (fallback)
 **/
 int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata, 
                            const char *namespaces, const char *name, 
@@ -1429,8 +1704,16 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
                            const char *default_value) 
 {
     const char *value;
-    if((value = msOWSLookupMetadata(metadata, namespaces, name)) ||
-       (value = default_value) != NULL ) 
+
+    value = msOWSLookupMetadata(metadata, namespaces, name);
+
+    if(value == NULL)
+    {
+        value = default_value;
+        default_value = NULL;
+    }
+
+    if(value != NULL)
     {
       char **keywords;
       int numkeywords;
@@ -1438,11 +1721,18 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
       keywords = msStringSplit(value, ',', &numkeywords);
       if(keywords && numkeywords > 0) {
         int kw;
-	    if(startTag) msIO_fprintf(stream, "%s", startTag);
-	    for(kw=0; kw<numkeywords; kw++) 
+        if(startTag) msIO_fprintf(stream, "%s", startTag);
+        for(kw=0; kw<numkeywords; kw++)
+        {
+            if (default_value != NULL
+                && strncasecmp(keywords[kw],default_value,strlen(keywords[kw])) == 0
+                && strncasecmp("_exclude",default_value+strlen(default_value)-8,8) == 0)
+                continue;
+
             msIO_fprintf(stream, itemFormat, keywords[kw]);
-	    if(endTag) msIO_fprintf(stream, "%s", endTag);
-	    msFreeCharArray(keywords, numkeywords);
+        }
+        if(endTag) msIO_fprintf(stream, "%s", endTag);
+        msFreeCharArray(keywords, numkeywords);
       }
       return MS_TRUE;
     }
@@ -1453,6 +1743,10 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
 **
 ** Prints comma-separated lists metadata.  (e.g. keywordList)
 ** This will print HTML encoded values.
+** default_value serves 2 purposes if specified:
+** - won't be printed if part of MetadataList (default_value == key"_exclude")
+**  (exclusion)
+** - will be printed if MetadataList is empty (fallback)
 **/
 int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata, 
                                  const char *namespaces, const char *name, 
@@ -1462,8 +1756,16 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
 {
     const char *value;
     char *encoded;
-    if((value = msOWSLookupMetadata(metadata, namespaces, name)) ||
-       (value = default_value) != NULL ) 
+
+    value = msOWSLookupMetadata(metadata, namespaces, name);
+
+    if(value == NULL)
+    {
+        value = default_value;
+        default_value = NULL;
+    }
+
+    if(value != NULL)
     {
       char **keywords;
       int numkeywords;
@@ -1471,15 +1773,20 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
       keywords = msStringSplit(value, ',', &numkeywords);
       if(keywords && numkeywords > 0) {
         int kw;
-	    if(startTag) msIO_fprintf(stream, "%s", startTag);
-	    for(kw=0; kw<numkeywords; kw++)
-            {
-                encoded = msEncodeHTMLEntities(keywords[kw]);
-                msIO_fprintf(stream, itemFormat, encoded);
-                msFree(encoded);
-            }
-	    if(endTag) msIO_fprintf(stream, "%s", endTag);
-	    msFreeCharArray(keywords, numkeywords);
+        if(startTag) msIO_fprintf(stream, "%s", startTag);
+        for(kw=0; kw<numkeywords; kw++)
+        {
+            if (default_value != NULL
+                && strncasecmp(keywords[kw],default_value,strlen(keywords[kw])) == 0
+                && strncasecmp("_exclude",default_value+strlen(default_value)-8,8) == 0)
+                continue;
+
+            encoded = msEncodeHTMLEntities(keywords[kw]);
+            msIO_fprintf(stream, itemFormat, encoded);
+            msFree(encoded);
+        }
+        if(endTag) msIO_fprintf(stream, "%s", endTag);
+        msFreeCharArray(keywords, numkeywords);
       }
       return MS_TRUE;
     }
@@ -1625,7 +1932,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
                            const char *namespaces,
                            int wms_version) 
 {
-  const char	*value, *resx, *resy, *wms_bbox_extended, *epsg_str;
+  const char    *value, *resx, *resy, *wms_bbox_extended, *epsg_str;
   char *encoded, *encoded_resx, *encoded_resy;
   char **epsgs;
   int i, num_epsgs;
