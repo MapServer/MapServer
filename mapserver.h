@@ -78,6 +78,7 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid ); }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define MS_DLL_EXPORT     __declspec(dllexport)
+#define USE_MSFREE
 #else
 #define  MS_DLL_EXPORT
 #endif
@@ -229,6 +230,7 @@ extern "C" {
 #define MS_MAX_LABEL_PRIORITY     10
 #define MS_MAX_LABEL_FONTS     5
 #define MS_DEFAULT_LABEL_PRIORITY 1
+#define MS_LABEL_FORCE_GROUP 2 /* other values are MS_ON/MS_OFF */
 
 /* General defines, not wrapable */
 #ifndef SWIG
@@ -439,6 +441,7 @@ extern "C" {
 #define MS_ENCRYPTION_KEY_SIZE  16   /* Key size: 128 bits = 16 bytes */
 
 #define GET_LAYER(map, pos) map->layers[pos]
+#define GET_CLASS(map, lid, cid) map->layers[lid]->class[cid]
 #define MS_REFCNT_INCR(obj) obj->refcount++
 #define MS_REFCNT_DECR(obj) (--(obj->refcount))
 #define MS_REFCNT_INIT(obj) obj->refcount=1
@@ -911,6 +914,26 @@ typedef struct {
 #endif
 } styleObj;
 
+
+
+/********************************************************************/
+/*                          labelLeaderObj                          */
+/*                                                                  */
+/*  parameters defining how a label or a group of labels may be     */
+/*  offsetted from its original position                            */
+/********************************************************************/
+
+typedef struct {
+   int maxdistance;
+   int gridstep;
+#ifndef SWIG
+   styleObj **styles;
+   int maxstyles;
+#endif
+   int numstyles;
+} labelLeaderObj;
+
+
 /************************************************************************/
 /*                               labelObj                               */
 /*                                                                      */
@@ -984,6 +1007,8 @@ typedef struct {
   char *annotext;
   pointObj annopoint;
   shapeObj *annopoly;
+
+  labelLeaderObj leader;
 } labelObj;
 
 /************************************************************************/
@@ -1050,6 +1075,7 @@ typedef struct class_obj{
   char *keyimage;
   
    char *group;
+  labelLeaderObj leader;
 } classObj;
 
 /************************************************************************/
@@ -1081,7 +1107,7 @@ typedef struct {
   int shapetype; /* source geometry type */
 
   pointObj point; /* label point */
-  shapeObj *poly; /* label bounding box */
+  shapeObj *poly; /* label bounding box, accumulation of individual label's bounding boxes */
 
   int status; /* has this label been drawn or not */
 
@@ -1090,6 +1116,8 @@ typedef struct {
 #endif /* SWIG */
 
   int markerid; /* corresponding marker (POINT layers only) */
+  lineObj *leaderline;
+  rectObj *leaderbbox;
 } labelCacheMemberObj;
 
 /************************************************************************/
@@ -1123,6 +1151,7 @@ typedef struct {
      * The slots[].numlabels are the real values to rely on.
      */
     int numlabels;
+    int gutter; /* space in pixels around the image where labels cannot be placed */
 } labelCacheObj;
 
 /************************************************************************/
@@ -1719,6 +1748,7 @@ MS_DLL_EXPORT int freeClass( classObj * );
 MS_DLL_EXPORT styleObj *msGrowClassStyles( classObj *_class );
 MS_DLL_EXPORT labelObj *msGrowClassLabels( classObj *_class );
 MS_DLL_EXPORT styleObj *msGrowLabelStyles( labelObj *label );
+MS_DLL_EXPORT styleObj *msGrowLeaderStyles( labelLeaderObj *leader );
 MS_DLL_EXPORT int msMaybeAllocateClassStyle(classObj* c, int idx);
 MS_DLL_EXPORT void initLabel(labelObj *label);
 MS_DLL_EXPORT void resetClassStyle(classObj *_class);
@@ -1808,7 +1838,11 @@ MS_DLL_EXPORT int msUpdateClassFromString(classObj *_class, char *string, int ur
 MS_DLL_EXPORT int msUpdateLayerFromString(layerObj *layer, char *string, int url_string);
 MS_DLL_EXPORT int msUpdateMapFromURL(mapObj *map, char *variable, char *string);
 MS_DLL_EXPORT int msEvalRegex(char *e, char *s);
+#ifdef USE_MSFREE
 MS_DLL_EXPORT void msFree(void *p);
+#else
+#define msFree free
+#endif
 MS_DLL_EXPORT char **msTokenizeMap(char *filename, int *numtokens);
 MS_DLL_EXPORT int msInitLabelCache(labelCacheObj *cache);
 MS_DLL_EXPORT int msFreeLabelCache(labelCacheObj *cache);
@@ -1920,7 +1954,6 @@ MS_DLL_EXPORT int msGetNumGlyphs(const char *in_ptr);
 MS_DLL_EXPORT int msGetUnicodeEntity(const char *inptr, int *unicode);
 MS_DLL_EXPORT int msStringIsInteger(const char *string);
 MS_DLL_EXPORT int msUTF8ToUniChar(const char *str, int *chPtr); /* maptclutf.c */
-MS_DLL_EXPORT char* msGetFirstLine(char* text);
 MS_DLL_EXPORT char* msStringEscape( const char * pszString );
 MS_DLL_EXPORT int msStringInArray( const char * pszString, char **array, int numelements);
 
@@ -1978,7 +2011,7 @@ MS_DLL_EXPORT symbolObj *msRotateSymbol(symbolObj *symbol, double angle);
 MS_DLL_EXPORT imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *format);
 MS_DLL_EXPORT int msSymbolSetImageGD(symbolObj *symbol, imageObj *image);
 
-MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
+MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, double *height, double scalefactor);
 /* MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect); */
 MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
 MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
@@ -1996,14 +2029,14 @@ MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey);
 MS_DLL_EXPORT int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, char **lookedUpFonts);
 
-MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, imageObj* image, labelObj *label, char *text);
+MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, labelObj *label, char *text);
 MS_DLL_EXPORT int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances);
 
 MS_DLL_EXPORT int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rectObj *rect, double **advances);
 
 MS_DLL_EXPORT int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, double featuresize);
 MS_DLL_EXPORT int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize);
-MS_DLL_EXPORT void msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr, int mapwidth, int mapheight, int buffer, labelCacheMemberObj *cachePtr, int current_priority, int current_label, int mindistance, double label_size);
+MS_DLL_EXPORT int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, int mindistance, int current_priority, int current_label);
 MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);

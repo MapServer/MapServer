@@ -614,6 +614,10 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape) {
           node = nextNode;
         }
       }
+      if(!strlen(result)) {
+         msFree(result);
+         result = NULL;
+      }
     }
     break;
   case(MS_EXPRESSION):
@@ -639,7 +643,10 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape) {
   default:
     break;
   }
-
+  if(result && !strlen(result)) {
+     msFree(result);
+     result = NULL;
+  }
   return result;
 }
 
@@ -651,35 +658,42 @@ int msShapeGetAnnotation(layerObj *layer, shapeObj *shape) {
 
   i = shape->classindex;
   for(j=0; j<layer->class[i]->numlabels; j++) {
+     labelObj *lbl = layer->class[i]->labels[j]; /* shortcut */
 
-    layer->class[i]->labels[j]->status = MS_ON;
+    lbl->status = MS_ON;
     if(layer->map->scaledenom > 0) {
-      if((layer->class[i]->labels[j]->maxscaledenom != -1) && (layer->map->scaledenom >= layer->class[i]->labels[j]->maxscaledenom)) {
-        layer->class[i]->labels[j]->status = MS_OFF;
+      if((lbl->maxscaledenom != -1) && (layer->map->scaledenom >= lbl->maxscaledenom)) {
+        lbl->status = MS_OFF;
         continue; /* next label */
       }
-      if((layer->class[i]->labels[j]->minscaledenom != -1) && (layer->map->scaledenom < layer->class[i]->labels[j]->minscaledenom)) {
-        layer->class[i]->labels[j]->status = MS_OFF;
+      if((lbl->minscaledenom != -1) && (layer->map->scaledenom < lbl->minscaledenom)) {
+        lbl->status = MS_OFF;
         continue; /* next label */
       }
     }
-    if(msEvalExpression(layer, shape, &(layer->class[i]->labels[j]->expression), -1) != MS_TRUE) {
-      layer->class[i]->labels[j]->status = MS_OFF;
+    if(msEvalExpression(layer, shape, &(lbl->expression), -1) != MS_TRUE) {
+      lbl->status = MS_OFF;
       continue; /* next label */
     }
 
-    msFree(layer->class[i]->labels[j]->annotext);
-    layer->class[i]->labels[j]->annotext = NULL;
+    msFree(lbl->annotext);
+    lbl->annotext = NULL;
 
-    if(layer->class[i]->labels[j]->text.string) {    
-      layer->class[i]->labels[j]->annotext = evalTextExpression(&(layer->class[i]->labels[j]->text), shape);
+    if(lbl->text.string) {    
+      lbl->annotext = evalTextExpression(&(lbl->text), shape);
     } else if(layer->class[i]->text.string) {
-      layer->class[i]->labels[j]->annotext = evalTextExpression(&(layer->class[i]->text), shape);
+      lbl->annotext = evalTextExpression(&(layer->class[i]->text), shape);
     } else {
-      if (shape->values && layer->labelitemindex >= 0)
-        layer->class[i]->labels[j]->annotext = msStrdup(shape->values[layer->labelitemindex]);
-      else
-	layer->class[i]->labels[j]->annotext = msStrdup(shape->text); /* last resort but common with iniline features */
+      if (shape->values && layer->labelitemindex >= 0 && shape->values[layer->labelitemindex] && strlen(shape->values[layer->labelitemindex]) )
+        lbl->annotext = msStrdup(shape->values[layer->labelitemindex]);
+      else if(shape->text)
+        lbl->annotext = msStrdup(shape->text); /* last resort but common with iniline features */
+    }
+
+    if(lbl->annotext && (lbl->encoding || lbl->wrap || lbl->maxlength)) {
+       char *newtext = msTransformLabelText(layer->map , lbl, lbl->annotext);
+       free(lbl->annotext);
+       lbl->annotext = newtext;
     }
   }
 

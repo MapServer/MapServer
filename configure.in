@@ -30,7 +30,7 @@ dnl **************************************************************************
 
 
 AC_INIT(Makefile.in)
-LT_INIT()
+LT_INIT([disable-static])
 AC_CONFIG_MACRO_DIR([m4/])
 m4_include([m4/mapserver.m4])
 m4_include([m4/apache.m4])

@@ -244,6 +244,46 @@ int msCopyQueryMap(queryMapObj *dst, queryMapObj *src)
   return MS_SUCCESS;
 }
 
+
+/***********************************************************************
+ * msCopyLeader()                                                      *
+ *                                                                     *
+ * Copy a labelLeaderObj, using msCopyStyle()                          *
+ **********************************************************************/
+
+int msCopyLeader(labelLeaderObj *dst, labelLeaderObj *src) {
+   int i;
+   MS_COPYSTELEM(gridstep);
+   MS_COPYSTELEM(maxdistance);
+   /* 
+    ** now the styles 
+    */
+
+   /* free any previous styles on the dst label */
+   for(i=0;i<dst->numstyles;i++) { /* each style */
+      if (dst->styles[i]!=NULL) {
+         if( freeStyle(dst->styles[i]) == MS_SUCCESS ) msFree(dst->styles[i]);
+      }
+   }
+   msFree(dst->styles);
+   dst->numstyles = 0;
+
+   for (i = 0; i < src->numstyles; i++) {
+      if (msGrowLeaderStyles(dst) == NULL)
+         return MS_FAILURE;
+      if (initStyle(dst->styles[i]) != MS_SUCCESS) {
+         msSetError(MS_MEMERR, "Failed to init style.", "msCopyLabel()");
+         return MS_FAILURE;
+      }
+      if (msCopyStyle(dst->styles[i], src->styles[i]) != MS_SUCCESS) {
+         msSetError(MS_MEMERR, "Failed to copy style.", "msCopyLabel()");
+         return MS_FAILURE;
+      }
+      dst->numstyles++;
+   }
+   return MS_SUCCESS;
+}
+
 /***********************************************************************
  * msCopyLabel()                                                       *
  *                                                                     *
@@ -332,6 +372,8 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   */
   MS_COPYSTELEM(status);
   MS_COPYSTRING(dst->annotext, src->annotext);
+  
+  msCopyLeader(&(dst->leader),&(src->leader));
 
   return MS_SUCCESS;
 }
@@ -493,6 +535,8 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
         }
     }
     MS_COPYSTELEM(numlabels);
+
+    msCopyLeader(&(dst->leader),&(src->leader));
 
     MS_COPYSTRING(dst->keyimage, src->keyimage);
     MS_COPYSTRING(dst->name, src->name);

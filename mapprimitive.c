@@ -124,10 +124,10 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
 
   to->type = from->type;
 
-  to->bounds.minx = MS_MIN(to->bounds.minx,from->bounds.minx);
-  to->bounds.miny = MS_MIN(to->bounds.miny,from->bounds.miny);
-  to->bounds.maxx = MS_MAX(to->bounds.maxx,from->bounds.maxx);
-  to->bounds.maxy = MS_MAX(to->bounds.maxy,from->bounds.maxy);
+  to->bounds.minx = from->bounds.minx;
+  to->bounds.miny = from->bounds.miny;
+  to->bounds.maxx = from->bounds.maxx;
+  to->bounds.maxy = from->bounds.maxy;
 
   if(from->text) to->text = msStrdup(from->text);
 
@@ -691,6 +691,7 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
 
   shape->line = tmp.line;
   shape->numlines = tmp.numlines;
+  msComputeBounds(shape);
 
   return;
 }
@@ -1307,7 +1308,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
   maxx = p->bounds.maxx;
   maxy = p->bounds.maxy;
 
-  if(min_dimension != -1)
+  if(min_dimension > 0)
     if(MS_MIN(maxx-minx,maxy-miny) < min_dimension) return(MS_FAILURE);
 
   cp.x = (maxx+minx)/2.0;
@@ -1753,6 +1754,8 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   *numpaths = 0;
   segment_index = max_line_index = 0;
   total_length = max_line_length = 0.0;
+
+  if(!string) return NULL;
 
 
   labelpaths = (labelPathObj **) msSmallMalloc(sizeof(labelPathObj *) * labelpaths_size);

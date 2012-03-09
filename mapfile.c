@@ -140,9 +140,11 @@ int msEvalRegex(char *e, char *s) {
   return(MS_TRUE);
 }
 
+#ifdef USE_MSFREE
 void msFree(void *p) {
   if(p) free(p);
 }
+#endif
 
 /*
 ** Free memory allocated for a character array
@@ -1593,6 +1595,17 @@ static void writeProjection(FILE *stream, int indent, projectionObj *p) {
 #endif
 }
 
+void initLeader(labelLeaderObj *leader) {
+   leader->gridstep = 5;
+   leader->maxdistance = 0;
+
+   /* Set maxstyles = 0, styles[] will be allocated as needed on first call 
+    * to msGrowLabelLeaderStyles()
+    */
+   leader->numstyles = leader->maxstyles = 0;   
+   leader->styles = NULL;  
+}
+
 /*
 ** Initialize, load and free a labelObj structure
 */
@@ -1635,7 +1648,7 @@ void initLabel(labelObj *label)
 
   label->encoding = NULL;
 
-  label->force = MS_FALSE;
+  label->force = MS_OFF;
   label->priority = MS_DEFAULT_LABEL_PRIORITY;
 
   /* Set maxstyles = 0, styles[] will be allocated as needed on first call 
@@ -1657,9 +1670,20 @@ void initLabel(labelObj *label)
   label->annotext = NULL;
   label->annopoly = NULL;
 
+  initLeader(&(label->leader));
+
   return;
 }
 
+static int freeLabelLeader(labelLeaderObj *leader) {
+   int i;
+   for(i=0;i<leader->numstyles;i++) {
+      msFree(leader->styles[i]);
+   }
+   msFree(leader->styles);
+
+   return MS_SUCCESS;
+}
 static int freeLabel(labelObj *label)
 {
   int i;
@@ -1689,7 +1713,43 @@ static int freeLabel(labelObj *label)
     msFree(label->annopoly);
   }
 
+  freeLabelLeader(&(label->leader));
+
   return MS_SUCCESS;
+}
+
+static int loadLeader(labelLeaderObj *leader)
+{
+   for(;;) {
+      switch(msyylex()) {
+         case(END):
+            return(0);
+            break;
+         case(EOF):
+            msSetError(MS_EOFERR, NULL, "loadLeader()");      
+            return(-1);
+         case GRIDSTEP:
+            if(getInteger(&(leader->gridstep)) == -1) return(-1);
+            break;
+         case MAXDISTANCE:
+            if(getInteger(&(leader->maxdistance)) == -1) return(-1);
+            break;
+         case STYLE:
+            if(msGrowLeaderStyles(leader) == NULL)
+               return(-1);
+            initStyle(leader->styles[leader->numstyles]);
+            if(loadStyle(leader->styles[leader->numstyles]) != MS_SUCCESS) return(-1);
+            leader->numstyles++;
+            break;
+         default:
+            if(strlen(msyystring_buffer) > 0) {
+               msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadLeader()", msyystring_buffer, msyylineno);
+               return(-1);
+            } else {
+               return(0); /* end of a string, not an error */
+            }
+      }
+   }
 }
 
 static int loadLabel(labelObj *label)
@@ -1739,6 +1799,11 @@ static int loadLabel(labelObj *label)
       if((getString(&label->encoding)) == MS_FAILURE) return(-1);
       break;
     case(END):
+       /* sanity check */
+       if(label->anglemode == MS_FOLLOW && label->type == MS_BITMAP) {
+          msSetError(MS_MISCERR,"Follow labels not supported with bitmap fonts.", "loadLabel()");
+          return -1;
+       }
       return(0);
       break;
     case(EOF):
@@ -1773,10 +1838,26 @@ static int loadLabel(labelObj *label)
 #endif
       break;
     case(FORCE):
-      if((label->force = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
+      switch(msyylex()) {
+         case MS_ON:
+            label->force = MS_ON;
+            break;
+         case MS_OFF:
+            label->force = MS_OFF;
+            break;
+         case GROUP:
+            label->force = MS_LABEL_FORCE_GROUP;
+            break;
+         default:
+          msSetError(MS_MISCERR, "Invalid FORCE, must be ON,OFF,or GROUP" , "loadLabel()");
+          return(-1);
+      }
       break;
     case(LABEL):
       break; /* for string loads */
+    case(LEADER):
+      if(loadLeader(&(label->leader)) == -1) return(-1);
+      break;
     case(MAXSIZE):      
       if(getDouble(&(label->maxsize)) == -1) return(-1);
       break;
@@ -1959,6 +2040,22 @@ int msUpdateLabelFromString(labelObj *label, char *string)
   return MS_SUCCESS;
 }
 
+static void writeLeader(FILE *stream, int indent, labelLeaderObj *leader)
+{
+   int i;
+   if(leader->maxdistance == 0 && leader->numstyles == 0) {
+      return;
+   }
+   indent++;
+   writeBlockBegin(stream, indent, "LEADER");
+   writeNumber(stream, indent, "MAXDISTANCE", 0, leader->maxdistance);
+   writeNumber(stream, indent, "GRIDSTEP", 5, leader->gridstep);
+   for(i=0; i<leader->numstyles; i++)
+      writeStyle(stream, indent, leader->styles[i]);
+
+   writeBlockEnd(stream, indent, "LEADER");
+}
+
 static void writeLabel(FILE *stream, int indent, labelObj *label)
 {
   int i;
@@ -2006,7 +2103,8 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   }
 
   writeString(stream, indent, "ENCODING", NULL, label->encoding);
-  writeKeyword(stream, indent, "FORCE", label->force, 1, MS_TRUE, "TRUE");
+  writeLeader(stream,indent,&(label->leader));
+  writeKeyword(stream, indent, "FORCE", label->force, 2, MS_TRUE, "TRUE", MS_LABEL_FORCE_GROUP, "GROUP");
   writeNumber(stream, indent, "MAXLENGTH", 0, label->maxlength);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, label->maxscaledenom);
   writeNumber(stream, indent, "MINDISTANCE", -1, label->mindistance);
@@ -2926,6 +3024,8 @@ int initClass(classObj *class)
 
   class->group = NULL;
 
+  initLeader(&(class->leader));
+
   return(0);
 }
 
@@ -2964,6 +3064,7 @@ int freeClass(classObj *class)
   msFree(class->labels);
 
   msFree(class->keyimage);
+  freeLabelLeader(&(class->leader));
 
   return MS_SUCCESS;
 }
@@ -3039,6 +3140,37 @@ styleObj *msGrowLabelStyles( labelObj *label )
     }
 
     return label->styles[label->numstyles];
+}
+
+/* exactly the same as for a labelLeaderObj, needs refactoring */
+styleObj *msGrowLeaderStyles( labelLeaderObj *leader )
+{
+    /* Do we need to increase the size of styles[] by  MS_STYLE_ALLOCSIZE?
+     */
+    if (leader->numstyles == leader->maxstyles) {
+        styleObj **newStylePtr;
+        int i, newsize;
+
+        newsize = leader->maxstyles + MS_STYLE_ALLOCSIZE;
+
+        /* Alloc/realloc styles */
+        newStylePtr = (styleObj**)realloc(leader->styles,
+                                          newsize*sizeof(styleObj*));
+        MS_CHECK_ALLOC(newStylePtr, newsize*sizeof(styleObj*), NULL);
+
+        leader->styles = newStylePtr;
+        leader->maxstyles = newsize;
+        for(i=leader->numstyles; i<leader->maxstyles; i++) {
+            leader->styles[i] = NULL;
+        }
+    }
+
+    if (leader->styles[leader->numstyles]==NULL) {
+        leader->styles[leader->numstyles]=(styleObj*)calloc(1,sizeof(styleObj));
+        MS_CHECK_ALLOC(leader->styles[leader->numstyles], sizeof(styleObj), NULL);
+    }
+
+    return leader->styles[leader->numstyles];
 }
 
 /* msMaybeAllocateClassStyle()
@@ -3199,6 +3331,9 @@ int loadClass(classObj *class, layerObj *layer)
       class->labels[class->numlabels]->size = MS_MEDIUM; /* only set a default if the LABEL section is present */
       if(loadLabel(class->labels[class->numlabels]) == -1) return(-1);
       class->numlabels++;
+      break;
+    case(LEADER):
+      if(loadLeader(&(class->leader)) == -1) return(-1);
       break;
     case(MAXSCALE):
     case(MAXSCALEDENOM):
@@ -3435,6 +3570,7 @@ static void writeClass(FILE *stream, int indent, classObj *class)
   writeExpression(stream, indent, "EXPRESSION", &(class->expression));
   writeString(stream, indent, "KEYIMAGE", NULL, class->keyimage);
   for(i=0; i<class->numlabels; i++) writeLabel(stream, indent, class->labels[i]);
+  writeLeader(stream,indent,&(class->leader));
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, class->maxscaledenom);
   writeHashTable(stream, indent, "METADATA", &(class->metadata));
   writeNumber(stream, indent, "MINSCALEDENOM", -1, class->minscaledenom);
@@ -5310,11 +5446,18 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot) {
       for(j=0;j<cacheslot->labels[i].numlabels; j++) freeLabel(&(cacheslot->labels[i].labels[j]));
       msFree(cacheslot->labels[i].labels);
 
-      msFreeShape(cacheslot->labels[i].poly); /* empties the shape */
-      msFree(cacheslot->labels[i].poly); /* free's the pointer */
+      if(cacheslot->labels[i].poly) {
+         msFreeShape(cacheslot->labels[i].poly); /* empties the shape */
+         msFree(cacheslot->labels[i].poly); /* free's the pointer */
+      }
 
       for(j=0;j<cacheslot->labels[i].numstyles; j++) freeStyle(&(cacheslot->labels[i].styles[j]));
       msFree(cacheslot->labels[i].styles);
+      if(cacheslot->labels[i].leaderline) {
+         msFree(cacheslot->labels[i].leaderline->point);
+         msFree(cacheslot->labels[i].leaderline);
+         msFree(cacheslot->labels[i].leaderbbox);
+      }
     }
   }
   msFree(cacheslot->labels);
@@ -5378,6 +5521,7 @@ int msInitLabelCache(labelCacheObj *cache) {
           return MS_FAILURE;
   }
   cache->numlabels = 0;
+  cache->gutter = 0;
 
   return MS_SUCCESS;
 }

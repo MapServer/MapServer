@@ -643,7 +643,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 ** layer collision avoidance. A marker is made up of a number of styles so the calling code must either do the looping
 ** itself or call this function for the bottom style which should be the largest.
 */
-int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor)
+int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, double *height, double scalefactor)
 {  
   rectObj rect;
   int size;
@@ -660,10 +660,10 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
   
   symbol = symbolset->symbol[style->symbol];
   if(style->size == -1) {
-      size = MS_NINT( msSymbolGetDefaultSize(symbol) * scalefactor );
+      size = ( msSymbolGetDefaultSize(symbol) * scalefactor );
   }
   else
-      size = MS_NINT(style->size*scalefactor);
+      size = (style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
@@ -674,32 +674,32 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
     if(msGetTruetypeTextBBox(MS_MAP_RENDERER(symbolset->map),symbol->font,symbolset->fontset,size,symbol->character,&rect,NULL) != MS_SUCCESS) 
       return(MS_FAILURE);
 
-    *width = (int) MS_MAX(*width, rect.maxx - rect.minx);
-    *height = (int) MS_MAX(*height, rect.maxy - rect.miny);
+    *width = MS_MAX(*width, rect.maxx - rect.minx);
+    *height = MS_MAX(*height, rect.maxy - rect.miny);
 
     break;
 #endif
 
   case(MS_SYMBOL_PIXMAP): 
-    if(!symbol->pixmap_buffer) {
-        msSetError(MS_MISCERR,"msGetMarkerSize() called on unloaded pixmap symbol, this is a bug in mapserver itself","msGetMArkerSize()");
-        return MS_FAILURE;
+    if (!symbol->pixmap_buffer) {
+       if (MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(symbolset->map), symbol))
+          return MS_FAILURE;
     }
     if(size == 1) {        
       *width = MS_MAX(*width, symbol->pixmap_buffer->width);
       *height = MS_MAX(*height, symbol->pixmap_buffer->height);
     } else {
-      *width = MS_MAX(*width, MS_NINT((size/symbol->pixmap_buffer->height) * symbol->pixmap_buffer->width));
+      *width = MS_MAX(*width, ((size/symbol->pixmap_buffer->height) * symbol->pixmap_buffer->width));
       *height = MS_MAX(*height, size);
     }
     break;
   default: /* vector and ellipses, scalable */
     if(style->size > 0) {
-      *width = MS_MAX(*width, MS_NINT((size/symbol->sizey) * symbol->sizex));
+      *width = MS_MAX(*width, ((size/symbol->sizey) * symbol->sizex));
       *height = MS_MAX(*height, size);
     } else { /* use symbol defaults */
-      *width = (int) MS_MAX(*width, symbol->sizex);
-      *height = (int) MS_MAX(*height, symbol->sizey);
+      *width = MS_MAX(*width, symbol->sizex);
+      *height = MS_MAX(*height, symbol->sizey);
     }
     break;
   }  

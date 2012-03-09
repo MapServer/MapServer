@@ -2070,45 +2070,6 @@ int msStringIsInteger(const char *string) {
   return MS_SUCCESS;
 }
 
-/**
- * msGetFirstLine()
- *
- * returns the first line of a given string.
- * called by getLabelSize functions for calculating 
- * the baseline offsets of labels
- *
- * this function was implemented to avoid using the 
- * msSplitString function and its multiple mallocs, as
- * only one malloc is used here.
- *
- * this function can be called if the input isn't a
- * multiline string, but this wastes a malloc
- */
-char* msGetFirstLine(char* text) {
-    int firstLineLength=0; /*number of bytes up to first \n character */
-    int glyphLength;
-    char glyph[11];
-    const char *textptr=text;
-    char *firstLine,*firstLineCur;
-    /*loop through glyphs in text*/
-    while((glyphLength=msGetNextGlyph(&textptr,glyph))) {
-        if(glyphLength==1 && *glyph=='\n') { /*we've hit the first \n char*/
-            firstLineCur = firstLine = msSmallMalloc(firstLineLength+1);
-            
-            /*copy the first line into the return array*/
-            while(firstLineLength--) {
-                *firstLineCur++ = *text++;
-            }
-            *firstLineCur='\0';
-            return firstLine;
-        }
-        /*increment byte count if we haven't hit a \n yet*/
-        firstLineLength+=glyphLength;
-    }
-    /*no newline found in text*/
-    return msStrdup(text);
-}
-
 /************************************************************************/
 /*                             msStrdup()                               */
 /************************************************************************/

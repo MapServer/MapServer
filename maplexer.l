@@ -245,6 +245,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>gap                                   { MS_LEXER_RETURN_TOKEN(GAP); }
 <INITIAL>geomtransform                         { MS_LEXER_RETURN_TOKEN(GEOMTRANSFORM); }
 <INITIAL>grid                                  { MS_LEXER_RETURN_TOKEN(GRID); }
+<INITIAL>gridstep                              { MS_LEXER_RETURN_TOKEN(GRIDSTEP); }
 <INITIAL>graticule                             { MS_LEXER_RETURN_TOKEN(GRATICULE); }
 <INITIAL,URL_STRING>group                      { MS_LEXER_RETURN_TOKEN(GROUP); }
 <INITIAL,URL_STRING>header                     { MS_LEXER_RETURN_TOKEN(HEADER); }
@@ -276,6 +277,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>labelrequires              { MS_LEXER_RETURN_TOKEN(LABELREQUIRES); }
 <INITIAL>latlon                                { MS_LEXER_RETURN_TOKEN(LATLON); }
 <INITIAL,URL_VARIABLE>layer                    { MS_LEXER_RETURN_TOKEN(LAYER); }
+<INITIAL>leader                                { MS_LEXER_RETURN_TOKEN(LEADER); }
 <INITIAL,URL_VARIABLE>legend                   { MS_LEXER_RETURN_TOKEN(LEGEND); }
 <INITIAL>legendformat                          { MS_LEXER_RETURN_TOKEN(LEGENDFORMAT); }
 <INITIAL>linecap                               { MS_LEXER_RETURN_TOKEN(LINECAP); }

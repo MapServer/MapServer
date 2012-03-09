@@ -86,6 +86,7 @@ typedef struct {
   long index;
   int tileindex;
   int classindex;
+  char **texts;
   char *text;
   
   int scratch;

@@ -304,6 +304,10 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 
 #define POLAROFFSET 1251
 
+/* rfc78 leader-lines labels */
+#define LEADER 1260
+#define GRIDSTEP 1261
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 

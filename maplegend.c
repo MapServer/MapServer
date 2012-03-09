@@ -411,7 +411,7 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
         * same as the class name pointer
         */
        if(map->legend.label.encoding || map->legend.label.wrap)
-         transformedText = msTransformLabelText(map,NULL,&map->legend.label, text);
+         transformedText = msTransformLabelText(map,&map->legend.label, text);
        else
          transformedText = msStrdup(text);
 
@@ -521,7 +521,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
        * same as the class name pointer
        */
       if(map->legend.label.encoding || map->legend.label.wrap)
-        cur->transformedText = msTransformLabelText(map,NULL,&map->legend.label,text);
+        cur->transformedText = msTransformLabelText(map,&map->legend.label,text);
       else
         cur->transformedText = msStrdup(text); /* so we can always do msFree() when cleaning up */
 
