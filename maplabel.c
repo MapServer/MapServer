@@ -322,6 +322,14 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
   }
   if(numactivelabels == 0) return MS_SUCCESS;
 
+  /* if the number of labels is 1 then call msAddLabel() accordingly */
+  if(numactivelabels == 1) {
+     for(i=0;i<classPtr->numlabels;i++) {
+        if(classPtr->labels[i]->status == MS_ON)
+           return msAddLabel(map, classPtr->labels[i], layerindex, classindex, shape, point, NULL, featuresize);
+     }
+  }
+
   assert(layerPtr->type != MS_LAYER_ANNOTATION || numactivelabels == 1);
   
   /* check that the label intersects the layer mask */
@@ -351,13 +359,6 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
   }
 
 
-  /* if the number of labels is 1 then call msAddLabel() accordingly */
-  if(numactivelabels == 1) {
-     for(i=0;i<classPtr->numlabels;i++) {
-        if(classPtr->labels[i]->status == MS_ON)
-           return msAddLabel(map, classPtr->labels[i], layerindex, classindex, shape, point, NULL, featuresize);
-     }
-  }
 
   /* Validate label priority value and get ref on label cache for it */
   priority = classPtr->labels[0]->priority; /* take priority from the first label */
@@ -492,6 +493,52 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
 
   layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
+
+  /* check that the label intersects the layer mask */
+
+  if (layerPtr->masklayer) {
+    int maskLayerIdx = msGetLayerIndex(map, layerPtr->masklayer);
+    layerObj *maskLayer = GET_LAYER(map, maskLayerIdx);
+    if (maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
+      rasterBufferObj rb;
+      memset(&rb, 0, sizeof (rasterBufferObj));
+      MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage, &rb);
+      if (point) {
+         int x = MS_NINT(point->x);
+         int y = MS_NINT(point->y);
+         if (rb.type == MS_BUFFER_BYTE_RGBA) {
+            unsigned char *alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
+            if (!*alphapixptr) {
+               /* label point does not intersect mask */
+               return MS_SUCCESS;
+            }
+         } else {
+            if (!gdImageGetPixel(rb.data.gd_img, x, y))
+               return MS_SUCCESS;
+         }
+      } else if (labelpath) {
+         int i = 0;
+         for (i = 0; i < labelpath->path.numpoints; i++) {
+            int x = MS_NINT(labelpath->path.point[i].x);
+            int y = MS_NINT(labelpath->path.point[i].y);
+            if (rb.type == MS_BUFFER_BYTE_RGBA) {
+               unsigned char *alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
+               if (!*alphapixptr) {
+                  /* label point does not intersect mask */
+                  return MS_SUCCESS;
+               }
+            } else {
+               if (!gdImageGetPixel(rb.data.gd_img, x, y))
+                  return MS_SUCCESS;
+            }
+         }
+      }
+    } else {
+       msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabel()", layerPtr->name);
+       return (MS_FAILURE);
+    }
+  }
+
 
 
   /* Validate label priority value and get ref on label cache for it */
