@@ -2160,24 +2160,10 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
 {
     rectObj map_extent;
     rectObj layer_extent;
-    int haveOwnProjection = MS_FALSE;
-    projectionObj projection;
-    const char *value;
     
     /* No extent info? Nothing we can do, return MS_UNKNOWN. */
-    /* Otherwise copy extents and leave the originals intact, */
-    /* beacuse we will need to transform our rectangles for comparison. */
     if( (map->extent.minx == -1) && (map->extent.miny == -1) && (map->extent.maxx == -1 ) && (map->extent.maxy == -1) ) return MS_UNKNOWN;
-    else MS_COPYRECT(&map_extent, &(map->extent) );
-
-    /* For the layer extent, do a second try to read the extent */
-    /* from wms_extent or layer data */
-    if( (layer->extent.minx == -1) && (layer->extent.miny == -1) && (layer->extent.maxx == -1 ) && (layer->extent.maxy == -1) ) {
-      if (msOWSGetLayerExtent(map, layer, "MO", &layer_extent) != MS_SUCCESS) {
-        return MS_UNKNOWN;
-      }
-    }
-    else MS_COPYRECT(&layer_extent, &(layer->extent) );
+    if( (layer->extent.minx == -1) && (layer->extent.miny == -1) && (layer->extent.maxx == -1 ) && (layer->extent.maxy == -1) ) return MS_UNKNOWN;
         
 #ifdef USE_PROJ
 
@@ -2185,46 +2171,23 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
     if( ! (map->projection.numargs > 0) ) 
         return MS_UNKNOWN;
 
-    /* No layer projection? Try to get it from wms_srs. */
-    if( ! (layer->projection.numargs > 0) ) {
-      value = (char*)msOWSGetEPSGProj(NULL, &(layer->metadata), "MO", MS_TRUE);
-      if (value != NULL) {
-        msInitProjection(&projection);
-        haveOwnProjection = MS_TRUE;
-        msLoadProjectionStringEPSG(&projection, (char *)value);
-      }
-    }
-
-    /* Agaian no layer projection? Return MS_UNKNOWN. We can not perform */
-    /* naive comparison, because in WMS mode, map->extent is expressed in */
-    /* the request SRS. */
-    if( ! (layer->projection.numargs > 0) && ! (projection.numargs > 0) ) {
-        if ( MS_TRUE == haveOwnProjection ) msFreeProjection(&projection);
-        return MS_UNKNOWN;
-    }
+    /* No layer projection? Perform naive comparison, because they are 
+    ** in the same projection. */
+    if( ! (layer->projection.numargs > 0) ) 
+        return msRectOverlap( &(map->extent), &(layer->extent) );
     
+    /* We need to transform our rectangles for comparison, 
+    ** so we will work with copies and leave the originals intact. */
+    MS_COPYRECT(&map_extent, &(map->extent) );
+    MS_COPYRECT(&layer_extent, &(layer->extent) );
+
     /* Transform map extents into geographics for comparison. */
-    if( msProjectRect(&(map->projection), &(map->latlon), &map_extent) ) {
-        if ( MS_TRUE == haveOwnProjection ) msFreeProjection(&projection);
+    if( msProjectRect(&(map->projection), &(map->latlon), &map_extent) )
         return MS_UNKNOWN;
-    }
         
     /* Transform layer extents into geographics for comparison. */
-    /* First case: using layer projection */
-    /* Second case: using temporarily read projection from wms_srs */
-    if( MS_FALSE == haveOwnProjection ) {
-      if( msProjectRect(&(layer->projection), &(map->latlon), &layer_extent) ) 
-          return MS_UNKNOWN;
-    }
-    else {
-      if( msProjectRect(&(projection), &(map->latlon), &layer_extent) ) {
-          if ( MS_TRUE == haveOwnProjection ) msFreeProjection(&projection);
-          return MS_UNKNOWN;
-      }
-    }
-
-    /* Finally free the possibly created projectionObj agaian */
-    if ( MS_TRUE == haveOwnProjection ) msFreeProjection(&projection);
+    if( msProjectRect(&(layer->projection), &(map->latlon), &layer_extent) )
+        return MS_UNKNOWN;
 
     /* Simple case? Return simple answer. */
     if ( map_extent.minx < map_extent.maxx && layer_extent.minx < layer_extent.maxx )
@@ -2236,7 +2199,7 @@ int msExtentsOverlap(mapObj *map, layerObj *layer)
    
 #else
     /* No proj? Naive comparison. */
-    if( msRectOverlap( &(map_extent), &(layer_extent) ) ) return MS_TRUE;
+    if( msRectOverlap( &(map->extent), &(layer->extent) ) ) return MS_TRUE;
     return MS_FALSE;
 #endif
 
