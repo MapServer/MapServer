@@ -903,6 +903,7 @@ enable_gcov
 with_php
 enable_internal_ld_detect
 with_ld_shared
+enable_java_mapscript
 with_java_include_os_name
 enable_python_mapscript
 with_python
@@ -1561,6 +1562,7 @@ Optional Features:
                           Use perl -V output to figure the command to use to
                           link php_mapscript.so.  Try this only if the default
                           internal macro didn't work.
+  --enable-java-mapscript Specify if java mapscript should be configured
   --enable-python-mapscript     build the python mapscript module.
 
 Optional Packages:
@@ -1641,13 +1643,13 @@ Optional Packages:
   --with-ld-shared=CMD    Specify link command to use to build shared libs
   --without-ld-shared     Disable shared library support
   --with-java-include-os-name=dirname
-                          (AUTODETECTED)
-                          Use this option only if building of Java Mapscript
-                          fails because os-dependent headers are not found.
-                          dirname is the name of subdirectory of the Java
-                          installation where os-dependent include files are
-                          found (for instance linux or solaris).
-                          Only used by Java mapscript.
+                             (AUTODETECTED)
+                             Use this option only if building of Java Mapscript
+                             fails because os-dependent headers are not found.
+                             dirname is the name of subdirectory of the Java
+                             installation where os-dependent include files are
+                             found (for instance linux or solaris).
+                             Only used by Java mapscript.
   --with-python[=PATH] Specify python binary (PATH is path to python)
 
 Some influential environment variables:
@@ -22325,7 +22327,17 @@ fi
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if --with-java-include-os-name specified" >&5
+# Check whether --enable-java-mapscript was given.
+if test "${enable_java_mapscript+set}" = set; then :
+  enableval=$enable_java_mapscript;
+else
+  enable_java_mapscript=no
+fi
+
+
+if test "x$enable_java_mapscript" == "xyes" ; then
+
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if --with-java-include-os-name specified" >&5
 $as_echo_n "checking if --with-java-include-os-name specified... " >&6; }
 
 # Check whether --with-java-include-os-name was given.
@@ -22333,26 +22345,26 @@ if test "${with_java_include_os_name+set}" = set; then :
   withval=$with_java_include_os_name;
 fi
 
-if test -n "${with_java_include_os_name}" ; then
-OS_INCLUDE_DIR="${with_java_include_os_name}"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($OS_INCLUDE_DIR)" >&5
+   if test -n "${with_java_include_os_name}" ; then
+   OS_INCLUDE_DIR="${with_java_include_os_name}"
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes ($OS_INCLUDE_DIR)" >&5
 $as_echo "yes ($OS_INCLUDE_DIR)" >&6; }
-else
-OUR_OSNAME=`uname -s`
-case "${OUR_OSNAME}" in
-[Ll]inux) OS_INCLUDE_DIR="linux" ;;
-[sS]olaris*) OS_INCLUDE_DIR="solaris" ;;
-[sS]unOS*) OS_INCLUDE_DIR="solaris" ;;
-[Ww]in*) OS_INCLUDE_DIR="win32" ;;
-*) OS_INCLUDE_DIR="linux" ;;
-esac
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no, autodetected $OS_INCLUDE_DIR" >&5
+   else
+      OUR_OSNAME=`uname -s`
+   case "${OUR_OSNAME}" in
+   [Ll]inux) OS_INCLUDE_DIR="linux" ;;
+   [sS]olaris*) OS_INCLUDE_DIR="solaris" ;;
+   [sS]unOS*) OS_INCLUDE_DIR="solaris" ;;
+   [Ww]in*) OS_INCLUDE_DIR="win32" ;;
+   *) OS_INCLUDE_DIR="linux" ;;
+   esac
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, autodetected $OS_INCLUDE_DIR" >&5
 $as_echo "no, autodetected $OS_INCLUDE_DIR" >&6; }
-fi
+   fi
 
-if test -z $JAVAC; then
-   JAVAC="javac"
-fi
+   if test -z $JAVAC; then
+      JAVAC="javac"
+   fi
 
 
 JNI_INCLUDE_DIRS=""
@@ -22463,11 +22475,13 @@ _ACJNI_FOLLOWED="$_cur"
    done
 fi
 
-for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
-do
-   JAVA_INCLUDE="$JAVA_INCLUDE -I$JNI_INCLUDE_DIR"
-done
+   for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+   do
+      JAVA_INCLUDE="$JAVA_INCLUDE -I$JNI_INCLUDE_DIR"
+   done
+fi
 JAVA_INCLUDE=$JAVA_INCLUDE
+
 
 
 
