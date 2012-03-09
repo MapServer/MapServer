@@ -506,6 +506,9 @@ mapcache_http_response* mapcache_core_get_capabilities(mapcache_context *ctx, ma
       mapcache_request_get_capabilities *req_caps, char *url, char *path_info, mapcache_cfg *config) {
   mapcache_http_response *response;
    service->create_capabilities_response(ctx,req_caps,url,path_info,config);
+   if(GC_HAS_ERROR(ctx)) {
+      return NULL;
+   }
    response = mapcache_http_response_create(ctx->pool);
    response->data = mapcache_buffer_create(0,ctx->pool);
    response->data->size = strlen(req_caps->capabilities);

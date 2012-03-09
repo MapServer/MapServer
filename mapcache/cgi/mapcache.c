@@ -157,6 +157,7 @@ static void load_config(mapcache_context *ctx, char *filename) {
       apr_file_info_get(&finfo, APR_FINFO_MTIME, f);
       apr_file_close(f);
    } else {
+      if(!ctx->pool) ctx->pool = global_pool;
       ctx->set_error(ctx,500,"failed to open config file %s",filename);
       return;
    }
@@ -220,7 +221,6 @@ int main(int argc, const char **argv) {
 #endif
    apr_initialize();
    atexit(apr_terminate);
-   apr_pool_initialize();
    if(apr_pool_create(&global_pool,NULL) != APR_SUCCESS) {
       return 1;
    }

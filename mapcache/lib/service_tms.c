@@ -54,8 +54,8 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
 
    request->request.mime_type = apr_pstrdup(ctx->pool,"text/xml");
    if(!request->version) {
-     ezxml_t TileMapService;
-     char* serviceurl;
+      ezxml_t TileMapService;
+      char* serviceurl;
       caps = ezxml_new("Services");
       TileMapService = ezxml_add_child(caps,"TileMapService",0);
       ezxml_set_attr(TileMapService,"version","1.0");
@@ -63,25 +63,25 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
       ezxml_set_attr(TileMapService,"href",serviceurl);
    } else {
       if(!request->tileset) {
-	apr_hash_index_t *tileindex_index;
-	ezxml_t tilemaps;
+         apr_hash_index_t *tileindex_index;
+         ezxml_t tilemaps;
          caps = ezxml_new("TileMapService");
          ezxml_set_attr(caps,"version",request->version);
          tileindex_index = apr_hash_first(ctx->pool,cfg->tilesets);
-	 tilemaps = ezxml_add_child(caps,"TileMaps",0);
+         tilemaps = ezxml_add_child(caps,"TileMaps",0);
          while(tileindex_index) {
             mapcache_tileset *tileset;
             int j;
             const void *key; apr_ssize_t keylen;
-	    const char *title;
+            const char *title;
             apr_hash_this(tileindex_index,&key,&keylen,(void**)&tileset);
             title = apr_table_get(tileset->metadata,"title");
             if(!title) {
                title = "no title set, add some in metadata";
             }
             for(j=0;j<tileset->grid_links->nelts;j++) {
-	      ezxml_t tilemap;
-	      char *href;
+               ezxml_t tilemap;
+               char *href;
                mapcache_grid *grid = APR_ARRAY_IDX(tileset->grid_links,j,mapcache_grid_link*)->grid;
                const char *profile = apr_table_get(grid->metadata,"profile");
                if(!profile) profile = "none";
@@ -96,12 +96,12 @@ void _create_capabilities_tms(mapcache_context *ctx, mapcache_request_get_capabi
             tileindex_index = apr_hash_next(tileindex_index);
          }
       } else {
-	const char *title;
-	const char *abstract;
-	ezxml_t origin;
-	ezxml_t bbox;
-	ezxml_t tileformat;
-	ezxml_t tilesets;
+         const char *title;
+         const char *abstract;
+         ezxml_t origin;
+         ezxml_t bbox;
+         ezxml_t tileformat;
+         ezxml_t tilesets;
          mapcache_tileset *tileset = request->tileset;
          mapcache_grid_link *grid_link = request->grid_link;
          mapcache_grid *grid = grid_link->grid;
@@ -207,21 +207,21 @@ void _mapcache_service_tms_parse_request(mapcache_context *ctx, mapcache_service
          case 3:
             z = (int)strtol(key,&endptr,10);
             if(*endptr != 0) {
-               ctx->set_error(ctx,404, "received tms request %s with invalid z %s", pathinfo, key);
+               ctx->set_error(ctx,404, "failed to parse z");
                return;
             }
             break;
          case 4:
             x = (int)strtol(key,&endptr,10);
             if(*endptr != 0) {
-               ctx->set_error(ctx,404, "received tms request %s with invalid x %s", pathinfo, key);
+               ctx->set_error(ctx,404, "failed to parse x");
                return;
             }
             break;
          case 5:
             y = (int)strtol(key,&endptr,10);
             if(*endptr != '.') {
-               ctx->set_error(ctx,404, "received tms request %s with invalid y %s", pathinfo, key);
+               ctx->set_error(ctx,404, "failed to parse y");
                return;
             }
             break;
@@ -309,7 +309,7 @@ void _mapcache_service_tms_parse_request(mapcache_context *ctx, mapcache_service
       }
       *request = (mapcache_request*)req;
       return;
-   } else if(index<3) {
+   } else if(index<3 && this->type == MAPCACHE_SERVICE_TMS) {
       mapcache_request_get_capabilities_tms *req = (mapcache_request_get_capabilities_tms*)apr_pcalloc(
             ctx->pool,sizeof(mapcache_request_get_capabilities_tms));
       req->request.request.type = MAPCACHE_REQUEST_GET_CAPABILITIES;
@@ -324,7 +324,7 @@ void _mapcache_service_tms_parse_request(mapcache_context *ctx, mapcache_service
       return;
    }
    else {
-      ctx->set_error(ctx,404, "received tms request %s with wrong number of arguments", pathinfo);
+      ctx->set_error(ctx,404, "received request with wrong number of arguments", pathinfo);
       return;
    }
 }
@@ -345,7 +345,7 @@ mapcache_service* mapcache_service_tms_create(mapcache_context *ctx) {
 }
 
 void _create_capabilities_gmaps(mapcache_context *ctx, mapcache_request_get_capabilities *req, char *url, char *path_info, mapcache_cfg *cfg) {
-   ctx->set_error(ctx,501,"gmaps service does not support capapbilities");
+   ctx->set_error(ctx,404,"gmaps service does not support capabilities");
 }
 
 mapcache_service* mapcache_service_gmaps_create(mapcache_context *ctx) {
