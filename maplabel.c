@@ -338,10 +338,11 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
      layerObj *maskLayer = GET_LAYER(map,maskLayerIdx);
      if(maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
         rasterBufferObj rb;
+        int x,y;
         memset(&rb,0,sizeof(rasterBufferObj));
         MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&rb);
-        int x = MS_NINT(point->x);
-        int y = MS_NINT(point->y);
+        x = MS_NINT(point->x);
+        y = MS_NINT(point->y);
         if(rb.type == MS_BUFFER_BYTE_RGBA) {
            unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
            if(!*alphapixptr) {

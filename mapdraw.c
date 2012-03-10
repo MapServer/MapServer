@@ -1559,8 +1559,10 @@ int circleLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj
 }
 
 int annotationLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *shape) {
+   int bClipShape;
    int c = shape->classindex;
    rectObj cliprect;
+   labelObj *label;
    double minfeaturesize;
    labelPathObj **annopaths = NULL; /* Curved label path. Bug #1620 implementation */
    pointObj **annopoints = NULL;
@@ -1587,7 +1589,7 @@ int annotationLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shap
       layer->project = MS_FALSE;
 #endif
 
-   int bClipShape = MS_FALSE;
+   bClipShape = MS_FALSE;
    /* check if we need to clip the shape */
    if(!msLayerGetProcessingKey(layer, "LABEL_NO_CLIP") && 
            (
@@ -1607,7 +1609,7 @@ int annotationLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shap
    msComputeBounds(shape);
    
    /* annotation layers can only have one layer, don't treat the multi layer case */
-   labelObj *label = layer->class[c]->labels[0]; /* for brevity */
+   label = layer->class[c]->labels[0]; /* for brevity */
    minfeaturesize = label->minfeaturesize * image->resolutionfactor;
    
 
@@ -2422,12 +2424,12 @@ void offsetAndTest(imageObj*image, mapObj *map, labelCacheMemberObj *cachePtr, d
 }
 
 int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority) {
-   assert(MS_RENDERER_PLUGIN(image->format));
    int retval = MS_SUCCESS;
    int l;
    labelCacheObj *labelcache = &(map->labelcache);
    labelCacheSlotObj *cacheslot;
    labelCacheMemberObj *cachePtr;
+   assert(MS_RENDERER_PLUGIN(image->format));
    cacheslot = &(labelcache->slots[priority]);
    for(l=cacheslot->numlabels-1; l>=0; l--) {
       cachePtr = &(cacheslot->labels[l]); /* point to right spot in the label cache */
@@ -2436,6 +2438,8 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority) {
          classObj *classPtr = (GET_CLASS(map,cachePtr->layerindex,cachePtr->classindex));
          layerObj *layerPtr = (GET_LAYER(map,cachePtr->layerindex));
          if(classPtr->leader.maxdistance) { /* only test labels that can be offsetted */
+            shapeObj origPoly;
+            int steps,i;
             if(cachePtr->point.x < labelcache->gutter ||
                   cachePtr->point.y < labelcache->gutter ||
                   cachePtr->point.x >= image->width - labelcache->gutter ||
@@ -2448,7 +2452,6 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority) {
 
             /* TODO: if the entry has a single label and it has position != CC, 
              * recompute the cachePtr->poly and labelPtr->annopoint using POSITION CC */
-            shapeObj origPoly;
             msInitShape(&origPoly);
             msCopyShape(cachePtr->poly,&origPoly);
             
@@ -2458,8 +2461,7 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority) {
             cachePtr->leaderline->point[0] = cachePtr->point;
             cachePtr->leaderbbox = msSmallMalloc(sizeof(rectObj));
 
-            int steps = classPtr->leader.maxdistance / classPtr->leader.gridstep;
-            int i;
+            steps = classPtr->leader.maxdistance / classPtr->leader.gridstep;
 
 #define x0 (cachePtr->leaderline->point[0].x)
 #define y0 (cachePtr->leaderline->point[0].y)
@@ -2571,11 +2573,11 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority) {
                otest(0,i*gridstepsc);
             }
             if(cachePtr->status) {
+               int ll;
                shapeObj labelLeader; /* label polygon (bounding box, possibly rotated) */
                labelLeader.line = cachePtr->leaderline; /* setup the label polygon structure */
                labelLeader.numlines = 1;
 
-               int ll;
                for(ll=0;ll<classPtr->leader.numstyles;ll++) {
                   msDrawLineSymbol(&map->symbolset, image,&labelLeader , classPtr->leader.styles[ll], layerPtr->scalefactor);
                }
@@ -2687,10 +2689,13 @@ int computeLabelMarkerPoly(mapObj *map, imageObj *img, labelCacheMemberObj *cach
       if(style->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT &&
             style->symbol < map->symbolset.numsymbols && style->symbol > 0) {
          double sx,sy;
+         pointObj *point;
+         int p;
+         double aox,aoy;
          symbolObj *symbol = map->symbolset.symbol[style->symbol];
          if(msGetMarkerSize(&map->symbolset, style, &sx, &sy, layerPtr->scalefactor) != MS_SUCCESS)
             return MS_FAILURE;
-         pointObj *point = markerPoly->line[0].point;
+         point = markerPoly->line[0].point;
          point[0].x = sx / 2.0;
          point[0].y = sy / 2.0;
          point[1].x =  point[0].x;
@@ -2701,8 +2706,6 @@ int computeLabelMarkerPoly(mapObj *map, imageObj *img, labelCacheMemberObj *cach
          point[3].y =  point[0].y;
          point[4].x =  point[0].x;
          point[4].y =  point[0].y;
-         int p;
-         double aox,aoy;
          if(symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
             aox = (0.5 - symbol->anchorpoint_x) * sx;
             aoy = (0.5 - symbol->anchorpoint_y) * sy;
@@ -2743,7 +2746,20 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
     if(MS_RENDERER_PLUGIN(image->format)) {
       int i, l, ll, priority;
       rectObj r;
+      shapeObj marker_poly;
+      lineObj  marker_line;
+      pointObj marker_points[5];
+      shapeObj label_marker_poly;
+      lineObj  label_marker_line;
+      pointObj label_marker_points[5];
+      shapeObj metrics_poly;
+      lineObj metrics_line;
+      pointObj metrics_points[5];
 
+      double marker_offset_x, marker_offset_y;
+      int label_offset_x, label_offset_y;
+      int label_mindistance=-1, label_buffer=0;
+      const char *value;
       
       labelCacheMemberObj *cachePtr=NULL;
       layerObj *layerPtr=NULL;
@@ -2751,9 +2767,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
       labelObj *labelPtr=NULL;
       
       /* holds the contour of the label styles that correspond to markers */
-      shapeObj marker_poly;
-      lineObj  marker_line;
-      pointObj marker_points[5];
       marker_line.point = marker_points;
       marker_line.numpoints = 5;
       msInitShape(&marker_poly);
@@ -2761,9 +2774,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
       marker_poly.numlines = 0;
       marker_poly.type = MS_SHAPE_POLYGON;
       
-      shapeObj label_marker_poly;
-      lineObj  label_marker_line;
-      pointObj label_marker_points[5];
       label_marker_line.point = label_marker_points;
       label_marker_line.numpoints = 5;
       msInitShape(&label_marker_poly);
@@ -2771,24 +2781,12 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
       label_marker_poly.numlines = 0;
       label_marker_poly.type = MS_SHAPE_POLYGON;
       
-      shapeObj metrics_poly;
-      lineObj metrics_line;
-      pointObj metrics_points[5];
       metrics_line.point = metrics_points;
       metrics_line.numpoints = 5;
       msInitShape(&metrics_poly);
       metrics_poly.line = &metrics_line;
       metrics_poly.numlines = 1;
       metrics_poly.type = MS_SHAPE_POLYGON;
-
-      double marker_offset_x, marker_offset_y;
- 
-      int label_offset_x, label_offset_y;
- 
-
-      int label_mindistance=-1, label_buffer=0;
-
-      const char *value;
 
       /* Look for labelcache_map_edge_buffer map metadata
        * If set then the value defines a buffer (in pixels) along the edge of the
@@ -2898,9 +2896,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             */
             cachePtr->status = MS_OFF; /* assume this cache element *can't* be placed */
             for(ll=0; ll<cachePtr->numlabels; ll++) { /* RFC 77 TODO: Still may want to step through backwards... */
+              int label_marker_status = MS_ON;
               labelPtr = &(cachePtr->labels[ll]);
               labelPtr->status = MS_OFF;
-              int label_marker_status = MS_ON;
               
               /* first check if there's anything to do with this label */
               if(!labelPtr->annotext) {
