@@ -1101,10 +1101,8 @@ typedef struct {
 
   int layerindex; /* indexes */
   int classindex;
-  int tileindex;
-  int shapeindex;
-
-  int shapetype; /* source geometry type */
+  
+  int shapetype; /* source geometry type, can be removed once annotation layers are dropped */
 
   pointObj point; /* label point */
   shapeObj *poly; /* label bounding box, accumulation of individual label's bounding boxes */

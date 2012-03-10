@@ -380,14 +380,10 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
 
   cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
   cachePtr->classindex = classindex;
-
   if(shape) {
-    cachePtr->tileindex = shape->tileindex;
-    cachePtr->shapeindex = shape->index;
-    cachePtr->shapetype = shape->type;
+      cachePtr->shapetype = shape->type;
   } else {
-    cachePtr->tileindex = cachePtr->shapeindex = -1;    
-    cachePtr->shapetype = MS_SHAPE_POINT;
+      cachePtr->shapetype = MS_SHAPE_POINT;
   }
 
   cachePtr->point = *point; /* the actual label point */
@@ -560,29 +556,22 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
 
   cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
   cachePtr->classindex = classindex;
+  if(shape) {
+      cachePtr->shapetype = shape->type;
+  } else {
+      cachePtr->shapetype = MS_SHAPE_POINT;
+  }
   cachePtr->leaderline = NULL;
   cachePtr->leaderbbox = NULL;
-
-  if(shape) {
-    cachePtr->tileindex = shape->tileindex;
-    cachePtr->shapeindex = shape->index;
-    cachePtr->shapetype = shape->type;
-  } else {
-    cachePtr->tileindex = cachePtr->shapeindex = -1;    
-    cachePtr->shapetype = MS_SHAPE_POINT;
-  }
 
   /* Store the label point or the label path (Bug #1620) */
   if ( point ) {
     cachePtr->point = *point; /* the actual label point */
     cachePtr->labelpath = NULL;
   } else if ( labelpath ) {
-    int i;
     cachePtr->labelpath = labelpath;
     /* Use the middle point of the labelpath for mindistance calculations */
-    i = labelpath->path.numpoints / 2;
-    cachePtr->point.x = labelpath->path.point[i].x;
-    cachePtr->point.y = labelpath->path.point[i].y;
+    cachePtr->point = labelpath->path.point[labelpath->path.numpoints / 2];
   }
 
   /* TODO: perhaps we can get rid of this next section and just store a marker size? Why do we cache the styles for a point layer? */
