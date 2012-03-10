@@ -591,6 +591,8 @@ int msCopyCluster(clusterObj *dst, clusterObj *src)
     return MS_SUCCESS;
 }
 
+#ifdef why_on_earth_would_you_copy_a_labelcache
+
 /***********************************************************************
  * msCopyLabelCacheMember()                                            *
  *                                                                     *
@@ -679,6 +681,8 @@ int msCopyLabelCache(labelCacheObj *dst, labelCacheObj *src)
 
     return MS_SUCCESS;
 }
+
+#endif
 
 /***********************************************************************
  * msCopyResult()                                                      *
