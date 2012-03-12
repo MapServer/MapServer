@@ -659,6 +659,10 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
   }
   
   symbol = symbolset->symbol[style->symbol];
+  if (symbol->type == MS_SYMBOL_PIXMAP && !symbol->pixmap_buffer) {
+      if (MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(symbolset->map), symbol))
+         return MS_FAILURE;
+  }
   if(style->size == -1) {
       size = ( msSymbolGetDefaultSize(symbol) * scalefactor );
   }
@@ -681,10 +685,6 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
 #endif
 
   case(MS_SYMBOL_PIXMAP): 
-    if (!symbol->pixmap_buffer) {
-       if (MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(symbolset->map), symbol))
-          return MS_FAILURE;
-    }
     if(size == 1) {        
       *width = MS_MAX(*width, symbol->pixmap_buffer->width);
       *height = MS_MAX(*height, symbol->pixmap_buffer->height);
