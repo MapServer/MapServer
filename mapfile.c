@@ -1856,6 +1856,8 @@ static int loadLabel(labelObj *label)
     case(LABEL):
       break; /* for string loads */
     case(LEADER):
+      msSetError(MS_MISCERR, "LABEL LEADER not implemented. LEADER goes at the CLASS level." , "loadLabel()");
+      return(-1);
       if(loadLeader(&(label->leader)) == -1) return(-1);
       break;
     case(MAXSIZE):      
