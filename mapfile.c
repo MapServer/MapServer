@@ -205,10 +205,6 @@ int getString(char **s) {
   if(msyylex() == MS_STRING) {
     if(*s) free(*s); /* avoid leak */
     *s = msStrdup(msyystring_buffer);
-    if (*s == NULL) {
-      msSetError(MS_MEMERR, NULL, "getString()");
-      return(MS_FAILURE);
-    }
     return(MS_SUCCESS);
   }
 
