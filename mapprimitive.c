@@ -527,10 +527,13 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
       y1 = shape->line[i].point[j].y;
     }
 
-    if(line.numpoints > 0)
-      msAddLine(&tmp, &line);
-    free(line.point);
-    line.numpoints = 0; /* new line */
+    if(line.numpoints > 0) {
+      msAddLineDirectly(&tmp, &line);
+    }
+    else {
+      free(line.point);
+      line.numpoints = 0; /* new line */
+    }
   }
   
   for (i=0; i<shape->numlines; i++) free(shape->line[i].point);
@@ -538,6 +541,7 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
 
   shape->line = tmp.line;
   shape->numlines = tmp.numlines;
+  msComputeBounds(shape);
 }
 
 /*
@@ -680,10 +684,10 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
       line.point[line.numpoints].x = line.point[0].x; /* force closure */
       line.point[line.numpoints].y = line.point[0].y;
       line.numpoints++;
-      msAddLine(&tmp, &line);
+      msAddLineDirectly(&tmp, &line);
+    } else {
+      free(line.point);
     }
-
-    free(line.point);
   } /* next line */
   
   for (i=0; i<shape->numlines; i++) free(shape->line[i].point);
