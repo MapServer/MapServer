@@ -1110,8 +1110,12 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (classgroup)
     msFree(classgroup);
 
-  if(status != MS_DONE) {
+  if(status != MS_DONE || retcode == MS_FAILURE) {
     msLayerClose(layer);
+    if(shpcache) {
+      freeFeatureList(shpcache);
+      shpcache = NULL;
+    }
     return MS_FAILURE;
   }
   
@@ -2333,7 +2337,7 @@ void offsetAndTest(imageObj*image, mapObj *map, labelCacheMemberObj *cachePtr, d
       cachePtr->leaderbbox->maxy = cachePtr->leaderline->point[0].y;
       cachePtr->leaderbbox->miny = cachePtr->point.y;
    }
-   cachePtr->status = msTestLabelCacheCollisions(map, cachePtr, 0,0,0);
+   cachePtr->status = msTestLabelCacheCollisions(map, cachePtr, cachePtr->poly, cachePtr->labels[0].mindistance,0,0);
    if(cachePtr->status) {
       int ll;
       for(ll=0;ll<cachePtr->numlabels;ll++) {
@@ -2753,15 +2757,12 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             /* compare against image bounds, rendered labels and markers (sets cachePtr->status), if FORCE=TRUE then skip it */
             cachePtr->status = MS_TRUE;
             assert(cachePtr->poly == NULL);
-            /* use a ref to the bounds as the cache's polygon */
-            cachePtr->poly = &cachePtr->labelpath->bounds;
             
             if(!labelPtr->force)
-              cachePtr->status = msTestLabelCacheCollisions(map,cachePtr,label_mindistance,priority,l);
+              cachePtr->status = msTestLabelCacheCollisions(map,cachePtr,&cachePtr->labelpath->bounds,label_mindistance,priority,l);
 
             
             if(!cachePtr->status) {
-               cachePtr->poly = NULL;
                msFreeShape(&cachePtr->labelpath->bounds);
                continue;
             } else {
@@ -2783,7 +2784,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             msDrawTextLine(image, labelPtr->annotext, labelPtr, cachePtr->labelpath, &(map->fontset), layerPtr->scalefactor); /* Draw the curved label */
 
           } else { /* point-based label */
-            shapeObj *tmppoly;
             
             marker_offset_x = marker_offset_y = 0; /* assume no marker */
             
@@ -2796,13 +2796,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   marker_offset_x = (marker_poly.bounds.maxx-marker_poly.bounds.minx)/2.0;
                   marker_offset_y = (marker_poly.bounds.maxy-marker_poly.bounds.miny)/2.0;
                /* if this is an annotation layer, transfer the markerPoly */
-                  tmppoly = cachePtr->poly;
-                  cachePtr->poly = &marker_poly;
-                  if( MS_OFF == msTestLabelCacheCollisions(map, cachePtr, 0,priority, l)) {
-                     cachePtr->poly = tmppoly;
+                  if( MS_OFF == msTestLabelCacheCollisions(map, cachePtr, &marker_poly, 0,priority, l)) {
                      continue; /* the marker collided, no point continuing */
                   }
-                  cachePtr->poly = tmppoly;
                }
             } else if (layerPtr->type == MS_LAYER_POINT && cachePtr->markerid!=-1) { /* there is a marker already in the image that we need to account for */
                markerCacheMemberObj *markerPtr = &(cacheslot->markers[cachePtr->markerid]); /* point to the right spot in the marker cache*/
@@ -2847,10 +2843,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                  }
                  /* add marker to cachePtr->poly */
                  if(labelPtr->force != MS_TRUE) {
-                    tmppoly = cachePtr->poly;
-                    cachePtr->poly = &label_marker_poly;
-                    label_marker_status = msTestLabelCacheCollisions(map, cachePtr, 0,priority, l);
-                    cachePtr->poly = tmppoly;
+                    label_marker_status = msTestLabelCacheCollisions(map, cachePtr,&label_marker_poly, 0,priority, l);
                  }
                  if(label_marker_status == MS_OFF &&
                          !(labelPtr->force || classPtr->leader.maxdistance))
@@ -2956,10 +2949,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                      }
                   }
 
-                  tmppoly = cachePtr->poly;
-                  cachePtr->poly = &metrics_poly;
-                  labelPtr->status = msTestLabelCacheCollisions(map, cachePtr, label_mindistance,priority, l);
-                  cachePtr->poly = tmppoly;
+                  labelPtr->status = msTestLabelCacheCollisions(map, cachePtr,&metrics_poly, label_mindistance,priority, l);
 
                   /* found a suitable place for this label */
                   if(labelPtr->status == MS_TRUE || (i==(npositions-1) && labelPtr->force == MS_ON)) {
@@ -3006,13 +2996,10 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                            break; /* collision within the group */
                         }
                      }
-                     tmppoly = cachePtr->poly;
-                     cachePtr->poly = &metrics_poly;
                      /* TODO: in case we have leader lines and multiple labels, there's no use in testing for labelcache collisions
                      * once a first collision has been found. we only need to know that the label group has collided, and the 
                      * poly of the whole label group: if(label_group) testLabelCacheCollisions */
-                     labelPtr->status = msTestLabelCacheCollisions(map, cachePtr, label_mindistance, priority, l);
-                     cachePtr->poly = tmppoly;
+                     labelPtr->status = msTestLabelCacheCollisions(map, cachePtr,&metrics_poly, label_mindistance, priority, l);
                    }
                 } else {
                    labelPtr->status = MS_ON;

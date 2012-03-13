@@ -330,7 +330,10 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
      }
   }
 
-  assert(layerPtr->type != MS_LAYER_ANNOTATION || numactivelabels == 1);
+  if (layerPtr->type == MS_LAYER_ANNOTATION && (cachePtr->numlabels > 1 || classPtr->leader.maxdistance)) {
+     msSetError(MS_MISCERR, "Multiple Labels and/or LEADERs are not supported with annotation layers", "msAddLabelGroup()");
+     return MS_FAILURE;
+  }
   
   /* check that the label intersects the layer mask */
   if(layerPtr->masklayer) {
@@ -354,7 +357,7 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
               return MS_SUCCESS;
         }
      } else {
-        msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabel()", layerPtr->name);
+        msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabelGroup()", layerPtr->name);
         return (MS_FAILURE);
      }
   }
@@ -486,11 +489,21 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
   classObj *classPtr=NULL;
 
   if(!label) return(MS_FAILURE); // RFC 77 TODO: set a proper message
-  if(!label->annotext) return(MS_SUCCESS); /* not an error */ 
+  if(!label->annotext || label->status == MS_OFF) return(MS_SUCCESS); /* not an error */ 
 
   layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
 
+  if(classPtr->leader.maxdistance) {
+    if (layerPtr->type == MS_LAYER_ANNOTATION) {
+      msSetError(MS_MISCERR, "LEADERs are not supported on annotation layers", "msAddLabel()");
+      return MS_FAILURE;
+    }
+    if(labelpath) {
+      msSetError(MS_MISCERR, "LEADERs are not supported on ANGLE FOLLOW labels", "msAddLabel()");
+      return MS_FAILURE;
+    }
+  }
   /* check that the label intersects the layer mask */
 
   if (layerPtr->masklayer) {
@@ -568,7 +581,8 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
   if ( point ) {
     cachePtr->point = *point; /* the actual label point */
     cachePtr->labelpath = NULL;
-  } else if ( labelpath ) {
+  } else {
+    assert(labelpath);
     cachePtr->labelpath = labelpath;
     /* Use the middle point of the labelpath for mindistance calculations */
     cachePtr->point = labelpath->path.point[labelpath->path.numpoints / 2];
@@ -692,8 +706,8 @@ int msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr,
                                 int current_label, int mindistance, double label_size);
 */
 
-int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, int mindistance, 
-      int current_priority, int current_label) {
+int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, shapeObj *poly,
+        int mindistance, int current_priority, int current_label) {
    labelCacheObj *labelcache = &(map->labelcache);
   int i, p, ll, pp;
   double label_width = 0;
@@ -703,7 +717,7 @@ int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, int m
    * Check against image bounds first 
    */
   if(!cachePtr->labels[0].partials) {
-    if(labelInImage(map->width, map->height, cachePtr->poly, labelcache->gutter) == MS_FALSE) {
+    if(labelInImage(map->width, map->height, poly, labelcache->gutter) == MS_FALSE) {
       return MS_FALSE;
     }
   }
@@ -725,7 +739,7 @@ int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, int m
 
     for ( ll = 0; ll < markerslot->nummarkers; ll++ ) {
       if ( !(p == current_priority && current_label == markerslot->markers[ll].id ) ) {  /* labels can overlap their own marker */
-        if ( intersectLabelPolygons(markerslot->markers[ll].poly, cachePtr->poly ) == MS_TRUE ) {
+        if ( intersectLabelPolygons(markerslot->markers[ll].poly, poly ) == MS_TRUE ) {
           return MS_FALSE;
         }
       }
@@ -733,7 +747,7 @@ int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, int m
   }
 
   if(mindistance > 0)
-     label_width = cachePtr->poly->bounds.maxx - cachePtr->poly->bounds.minx;
+     label_width = poly->bounds.maxx - poly->bounds.minx;
 
   for(p=current_priority; p<MS_MAX_LABEL_PRIORITY; p++) {
     labelCacheSlotObj *cacheslot;
@@ -762,19 +776,19 @@ int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, int m
           return MS_FALSE;
         }
 
-        if(intersectLabelPolygons(curCachePtr->poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+        if(intersectLabelPolygons(curCachePtr->poly, poly) == MS_TRUE) { /* polys intersect */
           return MS_FALSE;
         }
         if(curCachePtr->leaderline) {
            /* our poly against rendered leader lines */
            /* first do a bbox check */
-           if(msRectOverlap(curCachePtr->leaderbbox, &(cachePtr->poly->bounds))) {
+           if(msRectOverlap(curCachePtr->leaderbbox, &(poly->bounds))) {
               /* look for intersecting line segments */
-              for(ll=0; ll<cachePtr->poly->numlines; ll++)
-                 for(pp=1; pp<cachePtr->poly->line[ll].numpoints; pp++)
+              for(ll=0; ll<poly->numlines; ll++)
+                 for(pp=1; pp<poly->line[ll].numpoints; pp++)
                     if(msIntersectSegments(
-                             &(cachePtr->poly->line[ll].point[pp-1]),
-                             &(cachePtr->poly->line[ll].point[pp]),
+                             &(poly->line[ll].point[pp-1]),
+                             &(poly->line[ll].point[pp]),
                              &(curCachePtr->leaderline->point[0]),
                              &(curCachePtr->leaderline->point[1])) ==  MS_TRUE)
                     {

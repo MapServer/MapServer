@@ -2034,7 +2034,7 @@ MS_DLL_EXPORT int msGetLabelSize(mapObj *map, labelObj *label, char *string, dou
 
 MS_DLL_EXPORT int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, double featuresize);
 MS_DLL_EXPORT int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize);
-MS_DLL_EXPORT int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, int mindistance, int current_priority, int current_label);
+MS_DLL_EXPORT int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, shapeObj *poly, int mindistance, int current_priority, int current_label);
 MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);
