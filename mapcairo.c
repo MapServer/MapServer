@@ -492,26 +492,26 @@ int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numf
             continue;
         }
 
-	if(curfontidx != 0) {
-	    face = getFontFace(cache,fonts[0]);
-    	    cairo_set_font_face(cache->dummycr,face->face);
-            curfontidx = 0;
+        if (curfontidx != 0) {
+           face = getFontFace(cache, fonts[0]);
+           cairo_set_font_face(cache->dummycr, face->face);
+           curfontidx = 0;
         }
 
         glyph.index = FT_Get_Char_Index(face->ftface, unicode);
 
-	if(glyph.index == 0) {
-	     int j;
-	     for(j=1;j<numfonts;j++) {
-		    curfontidx = j;
-	    	    face = getFontFace(cache,fonts[j]);
-        	    glyph.index = FT_Get_Char_Index(face->ftface, unicode);
-		    if(glyph.index != 0) {
-    	    	       cairo_set_font_face(cache->dummycr,face->face);
-		       break;
-		    }
-	     }
-	}
+        if (glyph.index == 0) {
+           int j;
+           for (j = 1; j < numfonts; j++) {
+              curfontidx = j;
+              face = getFontFace(cache, fonts[j]);
+              glyph.index = FT_Get_Char_Index(face->ftface, unicode);
+              if (glyph.index != 0) {
+                 cairo_set_font_face(cache->dummycr, face->face);
+                 break;
+              }
+           }
+        }
 
         if( FT_HAS_KERNING((prevface->ftface)) && previdx ) {
             FT_Vector delta;
@@ -524,18 +524,18 @@ int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numf
             rect->minx = px+extents.x_bearing;
             rect->miny = py+extents.y_bearing;
             rect->maxx = px+extents.x_bearing+extents.width;
-            rect->maxy = py+extents.y_bearing+extents.height;
+            rect->maxy = py+1;
         } else {
             rect->minx = MS_MIN(rect->minx,px+extents.x_bearing);
             rect->miny = MS_MIN(rect->miny,py+extents.y_bearing);
-            rect->maxy = MS_MAX(rect->maxy,py+extents.y_bearing+extents.height);
+            rect->maxy = MS_MAX(rect->maxy,py+1);
             rect->maxx = MS_MAX(rect->maxx,px+extents.x_bearing+extents.width);
         }
         if(advances!=NULL)
             (*advances)[i]=extents.x_advance;
         px += extents.x_advance;
         previdx=glyph.index;
-	prevface = face;
+	     prevface = face;
     }
     /*
     rect->minx = 0;

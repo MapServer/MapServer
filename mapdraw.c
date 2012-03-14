@@ -2884,6 +2884,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                  label_buffer = (labelPtr->buffer*image->resolutionfactor);
                  label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
                  
+#ifdef oldcode
                  /* adjust the baseline (see #1449) */
                  if(labelPtr->type == MS_TRUETYPE) {
                     char *lastline = strrchr(labelPtr->annotext,'\n');
@@ -2895,6 +2896,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                        label_offset_y += ((rect2.miny+rect2.maxy) + size) / 2.0;
                     }
                  }
+#endif
 
                  
                  /* compute the label annopoly  if we need to render the background billboard */
