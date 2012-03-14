@@ -323,6 +323,9 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   char tmp[100];
   float size_scale;
   int *itemindexes = (int*)layer->iteminfo;
+#ifndef USE_GDAL
+    return NULL;
+#else
 
   if(layer->numitems == 0) 
       return(NULL);
@@ -388,6 +391,7 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   }
 
   return values;
+#endif
 }
 
 int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) 
