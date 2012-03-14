@@ -460,11 +460,12 @@ python_mapscript_install:
 
 install: install-lib install-bin install-cgibin @MAKE_PHP_MAPSCRIPT_INSTALL@ @MAKE_PYTHON_MAPSCRIPT_INSTALL@
 
-install-cgibin: install-lib install-bin
+install-cgibin: install-lib mapserv
+	$(LTINSTALL) $(INSTALL) mapserv $(DESTDIR)$(bindir)/mapserv
 	@echo ""
 	@echo "***** MapServer CGI / FastCGI Installation *****"
-	@echo "To install MapServer, copy the \"$(bindir)/mapserv\" file to your web server's cgi-bin "
-	@echo "directory."
+	@echo "To install MapServer, copy or symlink the \"$(bindir)/mapserv\" file"
+	@echo "to your web server's cgi-bin directory."
 	@echo "If you use MapScript then see the documentation for your specific MapScript"
 	@echo "version for installation instructions."
 	@echo ""
