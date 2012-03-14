@@ -27,10 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#include "mapserver.h"
+#ifdef USE_GDAL
+
 #include <assert.h>
 #include <math.h>
 #include "mapresample.h"
-#include "mapserver.h"
 #include "mapthread.h"
 
 #define MSUVRASTER_NUMITEMS        6 
@@ -88,7 +90,6 @@ typedef struct {
 
 static int msUVRASTERLayerInitItemInfo(layerObj *layer)
 {
-#ifdef USE_GDAL
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   int   i;
   int *itemindexes;
@@ -141,27 +142,14 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
   }
 
   return(MS_SUCCESS);
-#else
-  msSetError(MS_MISCERR, "GDAL support is not available.", 
-             "msUVRASTERLayerInitItemInfo()");
-
-#endif
 }
 
 
 void msUVRASTERLayerFreeItemInfo(layerObj *layer)
 {
-#ifdef USE_GDAL
-
   if (layer->iteminfo)
       free(layer->iteminfo);
   layer->iteminfo = NULL;
-
-#else
-  msSetError(MS_MISCERR, "GDAL support is not available.", 
-             "msUVRASTERLayerFreeItemInfo()");
-
-#endif
 }
 
 static void msUVRasterLayerInfoInitialize(layerObj *layer)
@@ -228,12 +216,6 @@ static void msUVRasterLayerInfoFree( layerObj *layer )
 
 int msUVRASTERLayerOpen(layerObj *layer) 
 {
-#ifndef USE_GDAL
-    msSetError( MS_IMGERR, 
-                "UV Rasters queries only supported with GDAL support enabled.",
-                "msUVRASTERLayerOpen()" );
-    return MS_FAILURE;
-#else
     uvRasterLayerInfo *uvlinfo;
 
     /* If we don't have info, initialize an empty one now */
@@ -245,29 +227,18 @@ int msUVRASTERLayerOpen(layerObj *layer)
     uvlinfo->refcount = uvlinfo->refcount + 1;
 
     return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 int msUVRASTERLayerIsOpen(layerObj *layer) 
 {
-#ifndef USE_GDAL
-    msSetError( MS_IMGERR, 
-                "UV Rasters queries only supported with GDAL support enabled.",
-                "msRasterLayerIsOpen()" );
-    return MS_FALSE;
-#else
     if (layer->layerinfo)
         return MS_TRUE;
     return MS_FALSE;
-#endif
 }
 
 
 int msUVRASTERLayerClose(layerObj *layer) 
 {
-#ifndef USE_GDAL
-    return MS_FAILURE;
-#else
     uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
 
     if( uvlinfo != NULL )
@@ -278,12 +249,10 @@ int msUVRASTERLayerClose(layerObj *layer)
             msUVRasterLayerInfoFree( layer );
     }
     return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 int msUVRASTERLayerGetItems(layerObj *layer)
 {
-#ifdef USE_GDAL
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   
   if( uvlinfo == NULL )
@@ -301,13 +270,6 @@ int msUVRASTERLayerGetItems(layerObj *layer)
   layer->items[layer->numitems] = NULL;
 
   return msUVRASTERLayerInitItemInfo(layer);
-
-#else
-  msSetError(MS_MISCERR, "GDAL support is not available.", 
-             "msGDALLayerGetItems()");
-  return(MS_FAILURE);
-
-#endif
 }
 
 /**********************************************************************
@@ -323,9 +285,6 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   char tmp[100];
   float size_scale;
   int *itemindexes = (int*)layer->iteminfo;
-#ifndef USE_GDAL
-    return NULL;
-#else
 
   if(layer->numitems == 0) 
       return(NULL);
@@ -391,15 +350,11 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   }
 
   return values;
-#endif
 }
 
 int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery) 
 
 {
-#ifndef USE_GDAL
-    return MS_FAILURE;
-#else
     uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
     imageObj *image_tmp;
     mapObj   map_tmp;
@@ -565,14 +520,10 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     uvlinfo->next_shape = 0;
 
     return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
-#ifndef USE_GDAL
-    return MS_FAILURE;
-#else 
     uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
     lineObj line ;
     pointObj point;
@@ -625,14 +576,10 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
     return MS_SUCCESS;
 
-#endif /* def USE_GDAL */
 }
 
 int msUVRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
 {
-#ifndef USE_GDAL
-    return MS_FAILURE;
-#else
     uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
 
     if( uvlinfo->next_shape < 0 
@@ -651,7 +598,6 @@ int msUVRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
 
       return msUVRASTERLayerGetShape( layer, shape, &record);
     }
-#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -662,9 +608,6 @@ int msUVRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
 int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
 { 
-#ifndef USE_GDAL
-    return MS_FAILURE;
-#else
   char szPath[MS_MAXPATHLEN];
   mapObj *map = layer->map;
   double adfGeoTransform[6];
@@ -751,7 +694,6 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
   extent->miny = adfGeoTransform[3] + nYSize * adfGeoTransform[5];
   
   return MS_SUCCESS;
-#endif /* def USE_GDAL */
 }
 
 
@@ -837,4 +779,11 @@ msUVRASTERLayerInitializeVirtualTable(layerObj *layer)
 
     return MS_SUCCESS;
 }
+
+#else 
+int msUVRASTERLayerInitializeVirtualTable(layerObj *layer) {
+   msSetError(MS_MISCERR, "UVRaster Layer needs GDAL support, but it it not compiled in", "msUVRASTERLayerInitializeVirtualTable()");
+   return MS_FAILURE;
+}
+#endif
 
