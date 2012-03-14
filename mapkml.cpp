@@ -139,7 +139,7 @@ int msGetRasterBufferKml(imageObj *img,rasterBufferObj *rb)
 
 
 int msGetTruetypeTextBBoxKml(rendererVTableObj *r,char** fonts, int numfonts, double size, char *string,
-		rectObj *rect, double **advances)
+		rectObj *rect, double **advances, int bAdjustBaseline)
 {
    rect->minx=0.0;
    rect->maxx=0.0;
