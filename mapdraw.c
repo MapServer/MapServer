@@ -2337,12 +2337,18 @@ void offsetAndTest(imageObj*image, mapObj *map, labelCacheMemberObj *cachePtr, d
       cachePtr->leaderbbox->maxy = cachePtr->leaderline->point[0].y;
       cachePtr->leaderbbox->miny = cachePtr->point.y;
    }
-   cachePtr->status = msTestLabelCacheCollisions(map, cachePtr, cachePtr->poly, cachePtr->labels[0].mindistance,0,0);
+   cachePtr->status = msTestLabelCacheCollisions(map, cachePtr, cachePtr->poly, cachePtr->labels[0].mindistance,priority,-label_idx);
    if(cachePtr->status) {
       int ll;
       for(ll=0;ll<cachePtr->numlabels;ll++) {
          cachePtr->labels[ll].annopoint.x += ox;
          cachePtr->labels[ll].annopoint.y += oy;
+         if(cachePtr->labels[ll].annopoly) {
+            for(i=0;i<5;i++) {
+               cachePtr->labels[ll].annopoly->line[0].point[i].x += ox;
+               cachePtr->labels[ll].annopoly->line[0].point[i].y += oy;
+            }
+         }
       }
    }
 }
@@ -2390,6 +2396,7 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority) {
 #define x0 (cachePtr->leaderline->point[0].x)
 #define y0 (cachePtr->leaderline->point[0].y)
 #define gridstepsc (classPtr->leader.gridstep)
+
 
 #define otest(ox,oy) if((x0+(ox)) >= labelcache->gutter &&\
                   (y0+(oy)) >= labelcache->gutter &&\
@@ -2969,6 +2976,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   labelPtr->annopoint = get_metrics_line(&(cachePtr->point), MS_CC, r,
                         marker_offset_x + label_offset_x, marker_offset_y + label_offset_y,
                         labelPtr->angle, label_buffer, &metrics_line);
+                  if(labelPtr->annopoly) get_metrics_line(&(cachePtr->point), MS_CC, r,
+                          marker_offset_x + label_offset_x, marker_offset_y + label_offset_y,
+                          labelPtr->angle, 1, labelPtr->annopoly->line);
                   fastComputeBounds(&metrics_poly);
                 }
               } else { /* explicit position */
