@@ -833,7 +833,7 @@ int mergeRasterBufferGD(imageObj *dest, rasterBufferObj *overlay, double opacity
 	return MS_SUCCESS;
 }
 
-int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances) {
+int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances, int bAdjustBaseline) {
 #ifdef USE_GD_FT
    int bbox[8];
    char *error;

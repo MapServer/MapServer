@@ -326,7 +326,7 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
    } else {
       rectObj rect;
       if(MS_SUCCESS != renderer->getTruetypeTextBBox(renderer,&symbol->full_font_path,1,style->scale,
-            symbol->character,&rect,NULL))
+            symbol->character,&rect,NULL,0))
          return MS_FAILURE;
       symbol_width=rect.maxx-rect.minx;
       symbol_height=rect.maxy-rect.miny;

@@ -456,7 +456,8 @@ int renderTileCairo(imageObj *img, imageObj *tile, double x, double y) {
 
 #define CAIROLINESPACE 1.33
 
-int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *text, rectObj *rect, double **advances) {
+int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numfonts, double size,
+        char *text, rectObj *rect, double **advances, int bAdjustBaseline) {
     cairoCacheData *cache = MS_RENDERER_CACHE(renderer);
     faceCacheObj* face = getFontFace(cache,fonts[0]);
  
@@ -524,11 +525,11 @@ int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numf
             rect->minx = px+extents.x_bearing;
             rect->miny = py+extents.y_bearing;
             rect->maxx = px+extents.x_bearing+extents.width;
-            rect->maxy = py+1;
+            rect->maxy = py+(bAdjustBaseline?1:(extents.y_bearing+extents.height));
         } else {
             rect->minx = MS_MIN(rect->minx,px+extents.x_bearing);
             rect->miny = MS_MIN(rect->miny,py+extents.y_bearing);
-            rect->maxy = MS_MAX(rect->maxy,py+1);
+            rect->maxy = MS_MAX(rect->maxy,py+(bAdjustBaseline?1:(extents.y_bearing+extents.height)));
             rect->maxx = MS_MAX(rect->maxx,px+extents.x_bearing+extents.width);
         }
         if(advances!=NULL)
@@ -537,12 +538,6 @@ int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numf
         previdx=glyph.index;
 	     prevface = face;
     }
-    /*
-    rect->minx = 0;
-    rect->miny = 0;
-    rect->maxx = 1;
-    rect->maxy = 1;
-    */
     return MS_SUCCESS;
 }
 

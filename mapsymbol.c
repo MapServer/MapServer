@@ -675,7 +675,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
    
 #ifdef USE_GD_FT
   case(MS_SYMBOL_TRUETYPE):
-    if(msGetTruetypeTextBBox(MS_MAP_RENDERER(symbolset->map),symbol->font,symbolset->fontset,size,symbol->character,&rect,NULL) != MS_SUCCESS) 
+    if(msGetTruetypeTextBBox(MS_MAP_RENDERER(symbolset->map),symbol->font,symbolset->fontset,size,symbol->character,&rect,NULL,0) != MS_SUCCESS) 
       return(MS_FAILURE);
 
     *width = MS_MAX(*width, rect.maxx - rect.minx);

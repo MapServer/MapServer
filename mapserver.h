@@ -2028,7 +2028,7 @@ MS_DLL_EXPORT char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey);
 MS_DLL_EXPORT int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, char **lookedUpFonts);
 
 MS_DLL_EXPORT char *msTransformLabelText(mapObj *map, labelObj *label, char *text);
-MS_DLL_EXPORT int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances);
+MS_DLL_EXPORT int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances, int bAdjustBaseline);
 
 MS_DLL_EXPORT int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rectObj *rect, double **advances);
 
@@ -2789,7 +2789,7 @@ struct rendererVTableObj {
 	/*...*/
 
 	/* helper functions */
-	int (*getTruetypeTextBBox)(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances);
+	int (*getTruetypeTextBBox)(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances, int bAdjustBaseline);
 
 	int (*startLayer)(imageObj *img, mapObj *map, layerObj *layer);
 	int (*endLayer)(imageObj *img, mapObj *map, layerObj *layer);

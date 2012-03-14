@@ -965,13 +965,14 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 }
 
-int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset, double size, char *string, rectObj *rect, double **advances) {
+int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset,
+        double size, char *string, rectObj *rect, double **advances, int bAdjustbaseline) {
    char *lookedUpFonts[MS_MAX_LABEL_FONTS];
    int numfonts;
    if(MS_FAILURE == msFontsetLookupFonts(fontstring, &numfonts, fontset, lookedUpFonts))
       return MS_FAILURE;
    if(renderer) {
-      return renderer->getTruetypeTextBBox(renderer,lookedUpFonts,numfonts,size,string,rect,advances);
+      return renderer->getTruetypeTextBBox(renderer,lookedUpFonts,numfonts,size,string,rect,advances,bAdjustbaseline);
    } 
 #ifdef USE_GD_FT
 	else {
@@ -1140,7 +1141,7 @@ int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rect
         msSetError(MS_MISCERR, "label has no true type font", "msGetLabelSize()");
         return MS_FAILURE;
      }
-     return msGetTruetypeTextBBox(renderer,label->font,&(map->fontset),size,string,rect,advances);
+     return msGetTruetypeTextBBox(renderer,label->font,&(map->fontset),size,string,rect,advances,1);
   } else if(label->type == MS_BITMAP){
 	  if(renderer->supports_bitmap_fonts)
 		  return msGetRasterTextBBox(renderer,MS_NINT(label->size),string,rect);
