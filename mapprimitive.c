@@ -1055,7 +1055,7 @@ void msTransformShapeToPixelRound(shapeObj *shape, rectObj extent, double cellsi
       }
    } else { /* points or untyped shapes */
       for(i=0; i<shape->numlines; i++) { /* for each part */
-         for(j=1; j < shape->line[i].numpoints; j++ ) {
+         for(j=0; j < shape->line[i].numpoints; j++ ) {
             shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
             shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
          }
