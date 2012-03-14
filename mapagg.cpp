@@ -838,7 +838,7 @@ int agg2SaveImage(imageObj *img, mapObj* map, FILE *fp, outputFormatObj * format
 
 /* helper functions */
 int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string,
-        rectObj *rect, double **advances) {
+        rectObj *rect, double **advances,int bAdjustBaseline) {
    
    aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(renderer);
    if(aggLoadFont(cache,fonts[0],size) == MS_FAILURE)
@@ -874,7 +874,7 @@ int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char **fonts, int numfo
       rect->minx = glyph->bounds.x1;
       rect->maxx = glyph->bounds.x2;
       rect->miny = glyph->bounds.y1;
-      rect->maxy = 1;
+      rect->maxy = bAdjustBaseline?1:glyph->bounds.y2;
    } else
       return MS_FAILURE;
    if (advances) {
@@ -922,7 +922,7 @@ int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char **fonts, int numfo
          rect->minx = MS_MIN(rect->minx, fx+glyph->bounds.x1);
          rect->miny = MS_MIN(rect->miny, fy+glyph->bounds.y1);
          rect->maxx = MS_MAX(rect->maxx, fx+glyph->bounds.x2);
-         rect->maxy = MS_MAX(rect->maxy, fy+1);
+         rect->maxy = MS_MAX(rect->maxy, fy+(bAdjustBaseline?1:glyph->bounds.y2));
 
          fx += glyph->advance_x;
          fy += glyph->advance_y;
