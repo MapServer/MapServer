@@ -853,6 +853,7 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfont
       MS_CHECK_ALLOC(*advances, strlen(string) * sizeof(double), MS_FAILURE);
       s = strex.xshow;
       k = 0;
+      /* TODO this smells buggy and can cause errors at a higher level. strlen NOK here*/
       while ( *s && k < strlen(string) ) {
          (*advances)[k++] = atof(s);      
          while ( *s && *s != ' ')
