@@ -1933,7 +1933,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   int bNeedUnclippedShape = MS_FALSE;
   int bNeedUnclippedAnnoShape = MS_FALSE;
   int bShapeNeedsClipping = MS_TRUE;
-  
+
+  if(shape->numlines == 0 || shape->type == MS_SHAPE_NULL) return MS_SUCCESS;
+
   msDrawStartShape(map, layer, image, shape);
   c = shape->classindex;
 
