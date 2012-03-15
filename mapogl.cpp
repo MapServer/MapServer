@@ -126,7 +126,7 @@ int msRenderTileOgl(imageObj *img, imageObj *tile, double x, double y)
     return MS_SUCCESS;
 }
 
-int msGetTruetypeTextBBoxOgl(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances)
+int msGetTruetypeTextBBoxOgl(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances, int bAdjustBaseline)
 {    
     if (OglRenderer::getStringBBox(fonts[0], size, string, rect, advances))
     {
