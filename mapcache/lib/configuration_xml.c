@@ -433,6 +433,13 @@ void parseCache(mapcache_context *ctx, ezxml_t node, mapcache_cfg *config) {
    }
    if(!strcmp(type,"disk")) {
       cache = mapcache_cache_disk_create(ctx);
+   } else if(!strcmp(type,"bdb")) {
+#ifdef USE_BDB
+      cache = mapcache_cache_bdb_create(ctx);
+#else
+      ctx->set_error(ctx,400, "failed to add cache \"%s\": Berkeley DB support is not available on this build",name);
+      return;
+#endif
    } else if(!strcmp(type,"sqlite3")) {
 #ifdef USE_SQLITE
       cache = mapcache_cache_sqlite_create(ctx);

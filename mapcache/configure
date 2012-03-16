@@ -614,6 +614,9 @@ LIBOBJS
 CURL_LIBS
 CURL_CFLAGS
 CURLCONFIG
+BDB_INC
+BDB_LIB
+BDB_ENABLED
 MAPSERVER_LIB
 MAPSERVER_ENABLED
 GEOS_LIB
@@ -778,6 +781,7 @@ with_pcre
 with_gdal
 with_geos
 with_mapserver
+with_bdb_dir
 with_curl_config
 '
       ac_precious_vars='build_alias
@@ -1441,6 +1445,7 @@ Optional Packages:
   --with-geos             path to geos-config program
   --with-mapserver[=/path/to/mapserver-prefix]
                           Enable mapserver sources (experimental)
+  --with-bdb-dir=DIR      Berkeley DB installation directory
   --with-curl-config      path to curl-config program
 
 Some influential environment variables:
@@ -11500,6 +11505,179 @@ GEOTIFF_ENABLED=""
 
 
 
+# ===========================================================================
+#    http://www.gnu.org/software/autoconf-archive/ax_compare_version.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   AX_COMPARE_VERSION(VERSION_A, OP, VERSION_B, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
+#
+# DESCRIPTION
+#
+#   This macro compares two version strings. Due to the various number of
+#   minor-version numbers that can exist, and the fact that string
+#   comparisons are not compatible with numeric comparisons, this is not
+#   necessarily trivial to do in a autoconf script. This macro makes doing
+#   these comparisons easy.
+#
+#   The six basic comparisons are available, as well as checking equality
+#   limited to a certain number of minor-version levels.
+#
+#   The operator OP determines what type of comparison to do, and can be one
+#   of:
+#
+#    eq  - equal (test A == B)
+#    ne  - not equal (test A != B)
+#    le  - less than or equal (test A <= B)
+#    ge  - greater than or equal (test A >= B)
+#    lt  - less than (test A < B)
+#    gt  - greater than (test A > B)
+#
+#   Additionally, the eq and ne operator can have a number after it to limit
+#   the test to that number of minor versions.
+#
+#    eq0 - equal up to the length of the shorter version
+#    ne0 - not equal up to the length of the shorter version
+#    eqN - equal up to N sub-version levels
+#    neN - not equal up to N sub-version levels
+#
+#   When the condition is true, shell commands ACTION-IF-TRUE are run,
+#   otherwise shell commands ACTION-IF-FALSE are run. The environment
+#   variable 'ax_compare_version' is always set to either 'true' or 'false'
+#   as well.
+#
+#   Examples:
+#
+#     AX_COMPARE_VERSION([3.15.7],[lt],[3.15.8])
+#     AX_COMPARE_VERSION([3.15],[lt],[3.15.8])
+#
+#   would both be true.
+#
+#     AX_COMPARE_VERSION([3.15.7],[eq],[3.15.8])
+#     AX_COMPARE_VERSION([3.15],[gt],[3.15.8])
+#
+#   would both be false.
+#
+#     AX_COMPARE_VERSION([3.15.7],[eq2],[3.15.8])
+#
+#   would be true because it is only comparing two minor versions.
+#
+#     AX_COMPARE_VERSION([3.15.7],[eq0],[3.15])
+#
+#   would be true because it is only comparing the lesser number of minor
+#   versions of the two values.
+#
+#   Note: The characters that separate the version numbers do not matter. An
+#   empty string is the same as version 0. OP is evaluated by autoconf, not
+#   configure, so must be a string, not a variable.
+#
+#   The author would like to acknowledge Guido Draheim whose advice about
+#   the m4_case and m4_ifvaln functions make this macro only include the
+#   portions necessary to perform the specific comparison specified by the
+#   OP argument in the final configure script.
+#
+# LICENSE
+#
+#   Copyright (c) 2008 Tim Toolan <toolan@ele.uri.edu>
+#
+#   Copying and distribution of this file, with or without modification, are
+#   permitted in any medium without royalty provided the copyright notice
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 11
+
+
+
+# ===========================================================================
+#        http://www.gnu.org/software/autoconf-archive/ax_path_bdb.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   AX_PATH_BDB([MINIMUM-VERSION], [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
+#
+# DESCRIPTION
+#
+#   This macro finds the latest version of Berkeley DB on the system, and
+#   ensures that the header file and library versions match. If
+#   MINIMUM-VERSION is specified, it will ensure that the library found is
+#   at least that version.
+#
+#   It determines the name of the library as well as the path to the header
+#   file and library. It will check both the default environment as well as
+#   the default Berkeley DB install location. When found, it sets BDB_LIBS,
+#   BDB_CPPFLAGS, and BDB_LDFLAGS to the necessary values to add to LIBS,
+#   CPPFLAGS, and LDFLAGS, as well as setting BDB_VERSION to the version
+#   found. HAVE_DB_H is defined also.
+#
+#   The option --with-bdb-dir=DIR can be used to specify a specific Berkeley
+#   DB installation to use.
+#
+#   An example of it's use is:
+#
+#     AX_PATH_BDB([3],[
+#       LIBS="$BDB_LIBS $LIBS"
+#       LDFLAGS="$BDB_LDFLAGS $LDFLAGS"
+#       CPPFLAGS="$CPPFLAGS $BDB_CPPFLAGS"
+#     ])
+#
+#   which will locate the latest version of Berkeley DB on the system, and
+#   ensure that it is version 3.0 or higher.
+#
+#   Details: This macro does not use either AC_CHECK_HEADERS or AC_CHECK_LIB
+#   because, first, the functions inside the library are sometimes renamed
+#   to contain a version code that is only available from the db.h on the
+#   system, and second, because it is common to have multiple db.h and libdb
+#   files on a system it is important to make sure the ones being used
+#   correspond to the same version. Additionally, there are many different
+#   possible names for libdb when installed by an OS distribution, and these
+#   need to be checked if db.h does not correspond to libdb.
+#
+#   When cross compiling, only header versions are verified since it would
+#   be difficult to check the library version. Additionally the default
+#   Berkeley DB installation locations /usr/local/BerkeleyDB* are not
+#   searched for higher versions of the library.
+#
+#   The format for the list of library names to search came from the Cyrus
+#   IMAP distribution, although they are generated dynamically here, and
+#   only for the version found in db.h.
+#
+#   The macro AX_COMPARE_VERSION is required to use this macro, and should
+#   be available from the Autoconf Macro Archive.
+#
+#   The author would like to acknowledge the generous and valuable feedback
+#   from Guido Draheim, without which this macro would be far less robust,
+#   and have poor and inconsistent cross compilation support.
+#
+#   Changes:
+#
+#    1/5/05 applied patch from Rafal Rzepecki to eliminate compiler
+#           warning about unused variable, argv
+#
+# LICENSE
+#
+#   Copyright (c) 2008 Tim Toolan <toolan@ele.uri.edu>
+#
+#   Copying and distribution of this file, with or without modification, are
+#   permitted in any medium without royalty provided the copyright notice
+#   and this notice are preserved. This file is offered as-is, without any
+#   warranty.
+
+#serial 11
+
+
+
+
+
+#############################################################################
+
+#############################################################################
+
+#############################################################################
+
+
 
 
     # Check whether --enable-debug was given.
@@ -13781,6 +13959,2626 @@ fi
 
     fi
 
+
+
+    ax_path_bdb_ok=no
+
+  # Add --with-bdb-dir option to configure.
+
+# Check whether --with-bdb-dir was given.
+if test "${with_bdb_dir+set}" = set; then :
+  withval=$with_bdb_dir;
+fi
+
+
+  # Check if --with-bdb-dir was specified.
+  if test "x$with_bdb_dir" = "x" ; then
+    # No option specified, so just search the system.
+
+    ax_path_bdb_no_options_ok=no
+
+  # Values to add to environment to use Berkeley DB.
+  BDB_VERSION=''
+  BDB_LIBS=''
+  BDB_CPPFLAGS=''
+  BDB_LDFLAGS=''
+
+  # Check cross compilation here.
+  if test "x$cross_compiling" = "xyes" ; then
+    # If cross compiling, can't use AC_RUN_IFELSE so do these tests.
+    # The AC_PREPROC_IFELSE confirms that db.h is preprocessable,
+    # and extracts the version number from it.
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for db.h" >&5
+$as_echo_n "checking for db.h... " >&6; }
+
+        ax_path_bdb_no_options_HEADER_VERSION=''
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <db.h>
+AX_PATH_BDB_STUFF DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH
+
+
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+
+      # Extract version from preprocessor output.
+      ax_path_bdb_no_options_HEADER_VERSION=`eval "$ac_cpp conftest.$ac_ext" 2> /dev/null \
+        | grep AX_PATH_BDB_STUFF | sed 's/[^0-9,]//g;s/,/./g;1q'`
+
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+    if test "x$ax_path_bdb_no_options_HEADER_VERSION" = "x" ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_no_options_HEADER_VERSION" >&5
+$as_echo "$ax_path_bdb_no_options_HEADER_VERSION" >&6; }
+
+      # Check that version is high enough.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_no_options_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "4" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort -r | sed "s/x${ax_compare_version_A}/true/;s/x${ax_compare_version_B}/false/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+        # get major and minor version numbers
+                ax_path_bdb_no_options_MAJOR=`echo $ax_path_bdb_no_options_HEADER_VERSION | sed 's,\..*,,'`
+                ax_path_bdb_no_options_MINOR=`echo $ax_path_bdb_no_options_HEADER_VERSION | sed 's,^[0-9]*\.,,;s,\.[0-9]*$,,'`
+
+		ax_path_bdb_no_options_save_LIBS="$LIBS"
+
+        # Check that we can link with the library.
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing db_version" >&5
+$as_echo_n "checking for library containing db_version... " >&6; }
+if ${ac_cv_search_db_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char db_version ();
+int
+main ()
+{
+return db_version ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' db db-$ax_path_bdb_no_options_MAJOR.$ax_path_bdb_no_options_MINOR db$ax_path_bdb_no_options_MAJOR.$ax_path_bdb_no_options_MINOR db$ax_path_bdb_no_options_MAJOR$ax_path_bdb_no_options_MINOR db-$ax_path_bdb_no_options_MAJOR db$ax_path_bdb_no_options_MAJOR; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_db_version=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_db_version+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_db_version+:} false; then :
+
+else
+  ac_cv_search_db_version=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_db_version" >&5
+$as_echo "$ac_cv_search_db_version" >&6; }
+ac_res=$ac_cv_search_db_version
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+            # Sucessfully found library.
+            ax_path_bdb_no_options_ok=yes
+            BDB_VERSION=$ax_path_bdb_no_options_HEADER_VERSION
+
+	    # Extract library from LIBS
+	    ax_path_bdb_no_options_LEN=` \
+              echo "x$ax_path_bdb_no_options_save_LIBS" \
+              | awk '{print(length)}'`
+            BDB_LIBS=`echo "x$LIBS " \
+              | sed "s/.\{$ax_path_bdb_no_options_LEN\}\$//;s/^x//;s/ //g"`
+
+fi
+
+
+        	LIBS="$ax_path_bdb_no_options_save_LIBS"
+
+
+      fi
+
+    fi
+
+      else
+    # Not cross compiling.
+    # Check version of Berkeley DB in the current environment.
+
+    ax_path_bdb_env_get_version_ok=no
+
+  ax_path_bdb_env_get_version_VERSION=''
+  ax_path_bdb_env_get_version_LIBS=''
+
+
+  # Indicate status of checking for Berkeley DB library.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for db.h" >&5
+$as_echo_n "checking for db.h... " >&6; }
+
+  # Compile and run a program that determines the Berkeley DB version
+  # in the header file db.h.
+  ax_path_bdb_env_get_version_HEADER_VERSION=''
+  if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  (void) argv;
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  return 0;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by adding an argument.
+    ax_path_bdb_env_get_version_HEADER_VERSION=`./conftest$ac_exeext x`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_env_get_version_HEADER_VERSION" >&5
+$as_echo "$ax_path_bdb_env_get_version_HEADER_VERSION" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+  # Have header version, so try to find corresponding library.
+  # Looks for library names in the order:
+  #   nothing, db, db-X.Y, dbX.Y, dbXY, db-X, dbX
+  # and stops when it finds the first one that matches the version
+  # of the header file.
+  if test "x$ax_path_bdb_env_get_version_HEADER_VERSION" != "x" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing Berkeley DB $ax_path_bdb_env_get_version_HEADER_VERSION" >&5
+$as_echo_n "checking for library containing Berkeley DB $ax_path_bdb_env_get_version_HEADER_VERSION... " >&6; }
+
+
+    # get major and minor version numbers
+    ax_path_bdb_env_get_version_MAJOR=`echo $ax_path_bdb_env_get_version_HEADER_VERSION | sed 's,\..*,,'`
+    ax_path_bdb_env_get_version_MINOR=`echo $ax_path_bdb_env_get_version_HEADER_VERSION | sed 's,^[0-9]*\.,,;s,\.[0-9]*$,,'`
+
+    # see if it is already specified in LIBS
+    ax_path_bdb_env_get_version_TEST_LIBNAME=''
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "db"
+      ax_path_bdb_env_get_version_TEST_LIBNAME='-ldb'
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "db-X.Y"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb-${ax_path_bdb_env_get_version_MAJOR}.$ax_path_bdb_env_get_version_MINOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "dbX.Y"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb${ax_path_bdb_env_get_version_MAJOR}.$ax_path_bdb_env_get_version_MINOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "dbXY"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb$ax_path_bdb_env_get_version_MAJOR$ax_path_bdb_env_get_version_MINOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "db-X"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb-$ax_path_bdb_env_get_version_MAJOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "dbX"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb$ax_path_bdb_env_get_version_MAJOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+        if test "$ax_path_bdb_env_confirm_lib_ok" = "yes" ; then
+      if test "x$ax_path_bdb_env_get_version_TEST_LIBNAME" = "x" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: none required" >&5
+$as_echo "none required" >&6; }
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_env_get_version_TEST_LIBNAME" >&5
+$as_echo "$ax_path_bdb_env_get_version_TEST_LIBNAME" >&6; }
+      fi
+      ax_path_bdb_env_get_version_VERSION="$ax_path_bdb_env_get_version_HEADER_VERSION"
+      ax_path_bdb_env_get_version_LIBS="$ax_path_bdb_env_get_version_TEST_LIBNAME"
+      ax_path_bdb_env_get_version_ok=yes
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+
+          fi
+
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "yes" ; then
+
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_get_version_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "4" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort -r | sed "s/x${ax_compare_version_A}/true/;s/x${ax_compare_version_B}/false/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+        # Found acceptable version in current environment.
+        ax_path_bdb_no_options_ok=yes
+        BDB_VERSION="$ax_path_bdb_env_get_version_VERSION"
+        BDB_LIBS="$ax_path_bdb_env_get_version_LIBS"
+
+      fi
+
+
+      fi
+
+
+
+    # Determine if we need to search /usr/local/BerkeleyDB*
+    ax_path_bdb_no_options_DONE=no
+    if test "xHIGHEST" = "xENVONLY" ; then
+      ax_path_bdb_no_options_DONE=yes
+    elif test "xHIGHEST" = "xENVFIRST" ; then
+      ax_path_bdb_no_options_DONE=$ax_path_bdb_no_options_ok
+    fi
+
+    if test "$ax_path_bdb_no_options_DONE" = "no" ; then
+      # Check for highest in /usr/local/BerkeleyDB*
+
+    ax_path_bdb_path_find_highest_ok=no
+
+    ax_path_bdb_path_find_highest_VERSION=''
+
+  ax_path_bdb_path_find_highest_DIR=''
+
+  # find highest verison in default install directory for Berkeley DB
+
+  for ax_path_bdb_path_find_highest_CURDIR in `ls -d /usr/local/BerkeleyDB* 2> /dev/null`
+  do
+
+    ax_path_bdb_path_get_version_ok=no
+
+  # Indicate status of checking for Berkeley DB header.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking in $ax_path_bdb_path_find_highest_CURDIR/include for db.h" >&5
+$as_echo_n "checking in $ax_path_bdb_path_find_highest_CURDIR/include for db.h... " >&6; }
+  ax_path_bdb_path_get_version_got_header=no
+  test -f "$ax_path_bdb_path_find_highest_CURDIR/include/db.h" && ax_path_bdb_path_get_version_got_header=yes
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_path_get_version_got_header" >&5
+$as_echo "$ax_path_bdb_path_get_version_got_header" >&6; }
+
+  # Indicate status of checking for Berkeley DB library.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking in $ax_path_bdb_path_find_highest_CURDIR/lib for library -ldb" >&5
+$as_echo_n "checking in $ax_path_bdb_path_find_highest_CURDIR/lib for library -ldb... " >&6; }
+
+  ax_path_bdb_path_get_version_VERSION=''
+
+  if test -d "$ax_path_bdb_path_find_highest_CURDIR/include" && test -d "$ax_path_bdb_path_find_highest_CURDIR/lib" &&
+     test "$ax_path_bdb_path_get_version_got_header" = "yes" ; then
+        ax_path_bdb_path_get_version_save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="-I$ax_path_bdb_path_find_highest_CURDIR/include $CPPFLAGS"
+
+    ax_path_bdb_path_get_version_save_LIBS="$LIBS"
+    LIBS="$LIBS -ldb"
+
+    ax_path_bdb_path_get_version_save_LDFLAGS="$LDFLAGS"
+    LDFLAGS="-L$ax_path_bdb_path_find_highest_CURDIR/lib $LDFLAGS"
+
+    # Compile and run a program that compares the version defined in
+    # the header file with a version defined in the library function
+    # db_version.
+    if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+      # Program compiled and ran, so get version by adding argument.
+      ax_path_bdb_path_get_version_VERSION=`./conftest$ac_exeext x`
+      ax_path_bdb_path_get_version_ok=yes
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+        CPPFLAGS="$ax_path_bdb_path_get_version_save_CPPFLAGS"
+    LIBS="$ax_path_bdb_path_get_version_save_LIBS"
+    LDFLAGS="$ax_path_bdb_path_get_version_save_LDFLAGS"
+  fi
+
+    if test "$ax_path_bdb_path_get_version_ok" = "yes" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_path_get_version_VERSION" >&5
+$as_echo "$ax_path_bdb_path_get_version_VERSION" >&6; }
+
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_path_get_version_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_path_find_highest_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort | sed "s/x${ax_compare_version_A}/false/;s/x${ax_compare_version_B}/true/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+        ax_path_bdb_path_find_highest_ok=yes
+        ax_path_bdb_path_find_highest_DIR="$ax_path_bdb_path_find_highest_CURDIR"
+        ax_path_bdb_path_find_highest_VERSION="$ax_path_bdb_path_get_version_VERSION"
+
+      fi
+
+
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      fi
+
+  done
+
+
+    if test "$ax_path_bdb_path_find_highest_ok" = "yes" ; then
+
+        if test "$ax_path_bdb_no_options_ok" = "yes" ; then
+        # If we already have an acceptable version use this if higher.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_path_find_highest_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$BDB_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort | sed "s/x${ax_compare_version_A}/false/;s/x${ax_compare_version_B}/true/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+    :
+      fi
+
+        else
+          # Since we didn't have an acceptable version check if this one is.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_path_find_highest_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "4" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort -r | sed "s/x${ax_compare_version_A}/true/;s/x${ax_compare_version_B}/false/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+    :
+      fi
+
+        fi
+
+      fi
+
+
+
+            if test "$ax_compare_version" = "true" ; then
+        ax_path_bdb_no_options_ok=yes
+        BDB_LIBS="-ldb"
+	if test "x$ax_path_bdb_path_find_highest_DIR" != x ; then
+	  BDB_CPPFLAGS="-I$ax_path_bdb_path_find_highest_DIR/include"
+	  BDB_LDFLAGS="-L$ax_path_bdb_path_find_highest_DIR/lib"
+	fi
+        BDB_VERSION="$ax_path_bdb_path_find_highest_VERSION"
+      fi
+    fi
+  fi
+
+    if test "$ax_path_bdb_no_options_ok" = "yes" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: using Berkeley DB version $BDB_VERSION" >&5
+$as_echo "$as_me: using Berkeley DB version $BDB_VERSION" >&6;}
+
+$as_echo "#define HAVE_DB_H 1" >>confdefs.h
+
+
+      ax_path_bdb_ok=yes
+
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: no Berkeley DB version 4 or higher found" >&5
+$as_echo "$as_me: no Berkeley DB version 4 or higher found" >&6;}
+      fi
+
+   else
+     # Set --with-bdb-dir option.
+     ax_path_bdb_INC="$with_bdb_dir/include"
+     ax_path_bdb_LIB="$with_bdb_dir/lib"
+
+          ax_path_bdb_save_CPPFLAGS="$CPPFLAGS"
+     CPPFLAGS="-I$ax_path_bdb_INC $CPPFLAGS"
+
+     ax_path_bdb_save_LDFLAGS=$LDFLAGS
+     LDFLAGS="-L$ax_path_bdb_LIB $LDFLAGS"
+
+     # Check for specific header file db.h
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking db.h presence in $ax_path_bdb_INC" >&5
+$as_echo_n "checking db.h presence in $ax_path_bdb_INC... " >&6; }
+     if test -f "$ax_path_bdb_INC/db.h" ; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+       # Check for library
+
+    ax_path_bdb_no_options_ok=no
+
+  # Values to add to environment to use Berkeley DB.
+  BDB_VERSION=''
+  BDB_LIBS=''
+  BDB_CPPFLAGS=''
+  BDB_LDFLAGS=''
+
+  # Check cross compilation here.
+  if test "x$cross_compiling" = "xyes" ; then
+    # If cross compiling, can't use AC_RUN_IFELSE so do these tests.
+    # The AC_PREPROC_IFELSE confirms that db.h is preprocessable,
+    # and extracts the version number from it.
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for db.h" >&5
+$as_echo_n "checking for db.h... " >&6; }
+
+        ax_path_bdb_no_options_HEADER_VERSION=''
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <db.h>
+AX_PATH_BDB_STUFF DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH
+
+
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+
+      # Extract version from preprocessor output.
+      ax_path_bdb_no_options_HEADER_VERSION=`eval "$ac_cpp conftest.$ac_ext" 2> /dev/null \
+        | grep AX_PATH_BDB_STUFF | sed 's/[^0-9,]//g;s/,/./g;1q'`
+
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+
+    if test "x$ax_path_bdb_no_options_HEADER_VERSION" = "x" ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_no_options_HEADER_VERSION" >&5
+$as_echo "$ax_path_bdb_no_options_HEADER_VERSION" >&6; }
+
+      # Check that version is high enough.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_no_options_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "4" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort -r | sed "s/x${ax_compare_version_A}/true/;s/x${ax_compare_version_B}/false/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+        # get major and minor version numbers
+                ax_path_bdb_no_options_MAJOR=`echo $ax_path_bdb_no_options_HEADER_VERSION | sed 's,\..*,,'`
+                ax_path_bdb_no_options_MINOR=`echo $ax_path_bdb_no_options_HEADER_VERSION | sed 's,^[0-9]*\.,,;s,\.[0-9]*$,,'`
+
+		ax_path_bdb_no_options_save_LIBS="$LIBS"
+
+        # Check that we can link with the library.
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing db_version" >&5
+$as_echo_n "checking for library containing db_version... " >&6; }
+if ${ac_cv_search_db_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char db_version ();
+int
+main ()
+{
+return db_version ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' db db-$ax_path_bdb_no_options_MAJOR.$ax_path_bdb_no_options_MINOR db$ax_path_bdb_no_options_MAJOR.$ax_path_bdb_no_options_MINOR db$ax_path_bdb_no_options_MAJOR$ax_path_bdb_no_options_MINOR db-$ax_path_bdb_no_options_MAJOR db$ax_path_bdb_no_options_MAJOR; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_db_version=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_db_version+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_db_version+:} false; then :
+
+else
+  ac_cv_search_db_version=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_db_version" >&5
+$as_echo "$ac_cv_search_db_version" >&6; }
+ac_res=$ac_cv_search_db_version
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+            # Sucessfully found library.
+            ax_path_bdb_no_options_ok=yes
+            BDB_VERSION=$ax_path_bdb_no_options_HEADER_VERSION
+
+	    # Extract library from LIBS
+	    ax_path_bdb_no_options_LEN=` \
+              echo "x$ax_path_bdb_no_options_save_LIBS" \
+              | awk '{print(length)}'`
+            BDB_LIBS=`echo "x$LIBS " \
+              | sed "s/.\{$ax_path_bdb_no_options_LEN\}\$//;s/^x//;s/ //g"`
+
+fi
+
+
+        	LIBS="$ax_path_bdb_no_options_save_LIBS"
+
+
+      fi
+
+    fi
+
+      else
+    # Not cross compiling.
+    # Check version of Berkeley DB in the current environment.
+
+    ax_path_bdb_env_get_version_ok=no
+
+  ax_path_bdb_env_get_version_VERSION=''
+  ax_path_bdb_env_get_version_LIBS=''
+
+
+  # Indicate status of checking for Berkeley DB library.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for db.h" >&5
+$as_echo_n "checking for db.h... " >&6; }
+
+  # Compile and run a program that determines the Berkeley DB version
+  # in the header file db.h.
+  ax_path_bdb_env_get_version_HEADER_VERSION=''
+  if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  (void) argv;
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  return 0;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by adding an argument.
+    ax_path_bdb_env_get_version_HEADER_VERSION=`./conftest$ac_exeext x`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_env_get_version_HEADER_VERSION" >&5
+$as_echo "$ax_path_bdb_env_get_version_HEADER_VERSION" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+  # Have header version, so try to find corresponding library.
+  # Looks for library names in the order:
+  #   nothing, db, db-X.Y, dbX.Y, dbXY, db-X, dbX
+  # and stops when it finds the first one that matches the version
+  # of the header file.
+  if test "x$ax_path_bdb_env_get_version_HEADER_VERSION" != "x" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing Berkeley DB $ax_path_bdb_env_get_version_HEADER_VERSION" >&5
+$as_echo_n "checking for library containing Berkeley DB $ax_path_bdb_env_get_version_HEADER_VERSION... " >&6; }
+
+
+    # get major and minor version numbers
+    ax_path_bdb_env_get_version_MAJOR=`echo $ax_path_bdb_env_get_version_HEADER_VERSION | sed 's,\..*,,'`
+    ax_path_bdb_env_get_version_MINOR=`echo $ax_path_bdb_env_get_version_HEADER_VERSION | sed 's,^[0-9]*\.,,;s,\.[0-9]*$,,'`
+
+    # see if it is already specified in LIBS
+    ax_path_bdb_env_get_version_TEST_LIBNAME=''
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "db"
+      ax_path_bdb_env_get_version_TEST_LIBNAME='-ldb'
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "db-X.Y"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb-${ax_path_bdb_env_get_version_MAJOR}.$ax_path_bdb_env_get_version_MINOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "dbX.Y"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb${ax_path_bdb_env_get_version_MAJOR}.$ax_path_bdb_env_get_version_MINOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "dbXY"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb$ax_path_bdb_env_get_version_MAJOR$ax_path_bdb_env_get_version_MINOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "db-X"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb-$ax_path_bdb_env_get_version_MAJOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "no" ; then
+      # try format "dbX"
+      ax_path_bdb_env_get_version_TEST_LIBNAME="-ldb$ax_path_bdb_env_get_version_MAJOR"
+
+    ax_path_bdb_env_confirm_lib_ok=no
+
+    ax_path_bdb_env_confirm_lib_save_LIBS="$LIBS"
+  LIBS="$LIBS $ax_path_bdb_env_get_version_TEST_LIBNAME"
+
+  # Compile and run a program that compares the version defined in
+  # the header file with a version defined in the library function
+  # db_version.
+  if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+    # Program compiled and ran, so get version by giving an argument,
+    # which will tell the program to print the output.
+    ax_path_bdb_env_confirm_lib_VERSION=`./conftest$ac_exeext x`
+
+    # If the versions all match up, indicate success.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_confirm_lib_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_env_get_version_HEADER_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+
+
+    # Pad zeros at end of numbers to make same length.
+    ax_compare_version_tmp_A="$ax_compare_version_A`echo $ax_compare_version_B | sed 's/./0/g'`"
+    ax_compare_version_B="$ax_compare_version_B`echo $ax_compare_version_A | sed 's/./0/g'`"
+    ax_compare_version_A="$ax_compare_version_tmp_A"
+
+    # Check for equality or inequality as necessary.
+
+      test "x$ax_compare_version_A" = "x$ax_compare_version_B" && ax_compare_version=true
+
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+      ax_path_bdb_env_confirm_lib_ok=yes
+
+      fi
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+    LIBS="$ax_path_bdb_env_confirm_lib_save_LIBS"
+
+
+    fi
+
+        if test "$ax_path_bdb_env_confirm_lib_ok" = "yes" ; then
+      if test "x$ax_path_bdb_env_get_version_TEST_LIBNAME" = "x" ; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: none required" >&5
+$as_echo "none required" >&6; }
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_env_get_version_TEST_LIBNAME" >&5
+$as_echo "$ax_path_bdb_env_get_version_TEST_LIBNAME" >&6; }
+      fi
+      ax_path_bdb_env_get_version_VERSION="$ax_path_bdb_env_get_version_HEADER_VERSION"
+      ax_path_bdb_env_get_version_LIBS="$ax_path_bdb_env_get_version_TEST_LIBNAME"
+      ax_path_bdb_env_get_version_ok=yes
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+
+          fi
+
+
+    if test "$ax_path_bdb_env_confirm_lib_ok" = "yes" ; then
+
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_env_get_version_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "4" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort -r | sed "s/x${ax_compare_version_A}/true/;s/x${ax_compare_version_B}/false/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+        # Found acceptable version in current environment.
+        ax_path_bdb_no_options_ok=yes
+        BDB_VERSION="$ax_path_bdb_env_get_version_VERSION"
+        BDB_LIBS="$ax_path_bdb_env_get_version_LIBS"
+
+      fi
+
+
+      fi
+
+
+
+    # Determine if we need to search /usr/local/BerkeleyDB*
+    ax_path_bdb_no_options_DONE=no
+    if test "xENVONLY" = "xENVONLY" ; then
+      ax_path_bdb_no_options_DONE=yes
+    elif test "xENVONLY" = "xENVFIRST" ; then
+      ax_path_bdb_no_options_DONE=$ax_path_bdb_no_options_ok
+    fi
+
+    if test "$ax_path_bdb_no_options_DONE" = "no" ; then
+      # Check for highest in /usr/local/BerkeleyDB*
+
+    ax_path_bdb_path_find_highest_ok=no
+
+    ax_path_bdb_path_find_highest_VERSION=''
+
+  ax_path_bdb_path_find_highest_DIR=''
+
+  # find highest verison in default install directory for Berkeley DB
+
+  for ax_path_bdb_path_find_highest_CURDIR in `ls -d /usr/local/BerkeleyDB* 2> /dev/null`
+  do
+
+    ax_path_bdb_path_get_version_ok=no
+
+  # Indicate status of checking for Berkeley DB header.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking in $ax_path_bdb_path_find_highest_CURDIR/include for db.h" >&5
+$as_echo_n "checking in $ax_path_bdb_path_find_highest_CURDIR/include for db.h... " >&6; }
+  ax_path_bdb_path_get_version_got_header=no
+  test -f "$ax_path_bdb_path_find_highest_CURDIR/include/db.h" && ax_path_bdb_path_get_version_got_header=yes
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_path_get_version_got_header" >&5
+$as_echo "$ax_path_bdb_path_get_version_got_header" >&6; }
+
+  # Indicate status of checking for Berkeley DB library.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking in $ax_path_bdb_path_find_highest_CURDIR/lib for library -ldb" >&5
+$as_echo_n "checking in $ax_path_bdb_path_find_highest_CURDIR/lib for library -ldb... " >&6; }
+
+  ax_path_bdb_path_get_version_VERSION=''
+
+  if test -d "$ax_path_bdb_path_find_highest_CURDIR/include" && test -d "$ax_path_bdb_path_find_highest_CURDIR/lib" &&
+     test "$ax_path_bdb_path_get_version_got_header" = "yes" ; then
+        ax_path_bdb_path_get_version_save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="-I$ax_path_bdb_path_find_highest_CURDIR/include $CPPFLAGS"
+
+    ax_path_bdb_path_get_version_save_LIBS="$LIBS"
+    LIBS="$LIBS -ldb"
+
+    ax_path_bdb_path_get_version_save_LDFLAGS="$LDFLAGS"
+    LDFLAGS="-L$ax_path_bdb_path_find_highest_CURDIR/lib $LDFLAGS"
+
+    # Compile and run a program that compares the version defined in
+    # the header file with a version defined in the library function
+    # db_version.
+    if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <stdio.h>
+#include <db.h>
+int main(int argc,char **argv)
+{
+  int major,minor,patch;
+  (void) argv;
+  db_version(&major,&minor,&patch);
+  if (argc > 1)
+    printf("%d.%d.%d\n",DB_VERSION_MAJOR,DB_VERSION_MINOR,DB_VERSION_PATCH);
+  if (DB_VERSION_MAJOR == major && DB_VERSION_MINOR == minor &&
+      DB_VERSION_PATCH == patch)
+    return 0;
+  else
+    return 1;
+}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+      # Program compiled and ran, so get version by adding argument.
+      ax_path_bdb_path_get_version_VERSION=`./conftest$ac_exeext x`
+      ax_path_bdb_path_get_version_ok=yes
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+        CPPFLAGS="$ax_path_bdb_path_get_version_save_CPPFLAGS"
+    LIBS="$ax_path_bdb_path_get_version_save_LIBS"
+    LDFLAGS="$ax_path_bdb_path_get_version_save_LDFLAGS"
+  fi
+
+    if test "$ax_path_bdb_path_get_version_ok" = "yes" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_path_bdb_path_get_version_VERSION" >&5
+$as_echo "$ax_path_bdb_path_get_version_VERSION" >&6; }
+
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_path_get_version_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$ax_path_bdb_path_find_highest_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort | sed "s/x${ax_compare_version_A}/false/;s/x${ax_compare_version_B}/true/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+
+        ax_path_bdb_path_find_highest_ok=yes
+        ax_path_bdb_path_find_highest_DIR="$ax_path_bdb_path_find_highest_CURDIR"
+        ax_path_bdb_path_find_highest_VERSION="$ax_path_bdb_path_get_version_VERSION"
+
+      fi
+
+
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      fi
+
+  done
+
+
+    if test "$ax_path_bdb_path_find_highest_ok" = "yes" ; then
+
+        if test "$ax_path_bdb_no_options_ok" = "yes" ; then
+        # If we already have an acceptable version use this if higher.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_path_find_highest_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "$BDB_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort | sed "s/x${ax_compare_version_A}/false/;s/x${ax_compare_version_B}/true/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+    :
+      fi
+
+        else
+          # Since we didn't have an acceptable version check if this one is.
+
+
+
+  # Used to indicate true or false condition
+  ax_compare_version=false
+
+  # Convert the two version strings to be compared into a format that
+  # allows a simple string comparison.  The end result is that a version
+  # string of the form 1.12.5-r617 will be converted to the form
+  # 0001001200050617.  In other words, each number is zero padded to four
+  # digits, and non digits are removed.
+
+  ax_compare_version_A=`echo "$ax_path_bdb_path_find_highest_VERSION" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+  ax_compare_version_B=`echo "4" | sed -e 's/\([0-9]*\)/Z\1Z/g' \
+                     -e 's/Z\([0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/Z\([0-9][0-9][0-9]\)Z/Z0\1Z/g' \
+                     -e 's/[^0-9]//g'`
+
+
+    ax_compare_version=`echo "x$ax_compare_version_A
+x$ax_compare_version_B" | sed 's/^ *//' | sort -r | sed "s/x${ax_compare_version_A}/true/;s/x${ax_compare_version_B}/false/;1q"`
+
+
+
+    if test "$ax_compare_version" = "true" ; then
+    :
+      fi
+
+        fi
+
+      fi
+
+
+
+            if test "$ax_compare_version" = "true" ; then
+        ax_path_bdb_no_options_ok=yes
+        BDB_LIBS="-ldb"
+	if test "x$ax_path_bdb_path_find_highest_DIR" != x ; then
+	  BDB_CPPFLAGS="-I$ax_path_bdb_path_find_highest_DIR/include"
+	  BDB_LDFLAGS="-L$ax_path_bdb_path_find_highest_DIR/lib"
+	fi
+        BDB_VERSION="$ax_path_bdb_path_find_highest_VERSION"
+      fi
+    fi
+  fi
+
+    if test "$ax_path_bdb_no_options_ok" = "yes" ; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: using Berkeley DB version $BDB_VERSION" >&5
+$as_echo "$as_me: using Berkeley DB version $BDB_VERSION" >&6;}
+
+$as_echo "#define HAVE_DB_H 1" >>confdefs.h
+
+
+         ax_path_bdb_ok=yes
+         BDB_CPPFLAGS="-I$ax_path_bdb_INC"
+         BDB_LDFLAGS="-L$ax_path_bdb_LIB"
+
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: no Berkeley DB version 4 or higher found" >&5
+$as_echo "$as_me: no Berkeley DB version 4 or higher found" >&6;}
+      fi
+
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+       { $as_echo "$as_me:${as_lineno-$LINENO}: no usable Berkeley DB not found" >&5
+$as_echo "$as_me: no usable Berkeley DB not found" >&6;}
+     fi
+
+          CPPFLAGS="$ax_path_bdb_save_CPPFLAGS"
+     LDFLAGS="$ax_path_bdb_save_LDFLAGS"
+
+  fi
+
+    if test "$ax_path_bdb_ok" = "yes" ; then
+    BDB_ENABLED=-DUSE_BDB
+
+      fi
+
+
+BDB_LIB="$BDB_LDFLAGS $BDB_LIBS"
+
+BDB_INC=$BDB_CPPFLAGS
 
 MISC_ENABLED=$MISC_ENABLED
 

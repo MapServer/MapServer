@@ -398,6 +398,26 @@
    </cache>
    -->
 
+   <!-- Berkeley DB cache
+     note that a bdb cache will create a single database file, even if multiple
+     tilesets/grids/dimensions are going to be used with it.
+     if you need to have different db files for each tileset, then create multiple
+     cache entries
+   -->
+   <cache name="bdb" type="bdb">
+      <!-- base (required)
+         absolute filesystem path where the berkeley db database file is to be stored.
+         this directory must exist, and be writable
+      -->
+      <base>/tmp/foo/</base>
+      <!-- key_template (optional)
+         string template used to create the key for a tile entry in the database.
+         defaults to the value below. you should include {tileset}, {grid} and {dim} here
+         unless you know what you are doing, or you will end up with mixed tiles
+      <key_template>{tileset}-{grid}-{dim}-{z}-{y}-{x}.{ext}</key_template>
+      -->
+   </cache>
+
    <!-- format
 
         a format is an image algorithm used for compressing images

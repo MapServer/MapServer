@@ -3,6 +3,9 @@ top_builddir = @top_builddir@
 
 all: libmapcache.la
 
+OBJS=$(shell find . -regex '^.*\.c$$' -print |sed "s/^\(.*\)\.c$$/\1.o/") 
+LOBJS=$(shell find . -regex '^.*\.c$$' -print | sed "s/^\(.*\)\.c$$/\1.lo/")
+
 install: libmapcache.la
 	$(LIBTOOL) --mode=install $(INSTALL) libmapcache.la $(libdir)
 
@@ -21,4 +24,5 @@ clean:
 	rm -f *.la
 	rm -f *.sla
 	rm -rf *.dSYM
+
 

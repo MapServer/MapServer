@@ -32,16 +32,22 @@
 #define INITIAL_BUFFER_SIZE 100
 
 static void _mapcache_buffer_realloc(mapcache_buffer *buffer, size_t len) {
-   unsigned char* newbuf ;
-   while ( len > buffer->avail ) {
-      buffer->avail += buffer->avail;
-   }
-   newbuf = realloc(buffer->buf, buffer->avail) ;
-   if ( newbuf != buffer->buf ) {
-      if ( buffer->buf )
-         apr_pool_cleanup_kill(buffer->pool, buffer->buf, (void*)free) ;
-      apr_pool_cleanup_register(buffer->pool, newbuf,(void*)free, apr_pool_cleanup_null);
-      buffer->buf = newbuf ;
+   if(buffer->avail) {
+      unsigned char* newbuf ;
+      while ( len > buffer->avail ) {
+         buffer->avail += buffer->avail;
+      }
+      newbuf = realloc(buffer->buf, buffer->avail) ;
+      if ( newbuf != buffer->buf ) {
+         if ( buffer->buf )
+            apr_pool_cleanup_kill(buffer->pool, buffer->buf, (void*)free) ;
+         apr_pool_cleanup_register(buffer->pool, newbuf,(void*)free, apr_pool_cleanup_null);
+         buffer->buf = newbuf ;
+      }
+   } else {
+      buffer->avail = len;
+      buffer->buf = malloc(buffer->avail);
+      apr_pool_cleanup_register(buffer->pool, buffer->buf,(void*)free, apr_pool_cleanup_null);
    }
 }
 
@@ -49,9 +55,13 @@ mapcache_buffer *mapcache_buffer_create(size_t initialStorage, apr_pool_t* pool)
    mapcache_buffer *buffer = apr_pcalloc(pool, sizeof(mapcache_buffer));
    if(!buffer) return NULL;
    buffer->pool = pool;
-   buffer->avail = (initialStorage > INITIAL_BUFFER_SIZE) ? initialStorage : INITIAL_BUFFER_SIZE;
-   buffer->buf = malloc(buffer->avail);
-   apr_pool_cleanup_register(buffer->pool, buffer->buf,(void*)free, apr_pool_cleanup_null);
+   buffer->avail = initialStorage;
+   if(buffer->avail) {
+      buffer->buf = malloc(buffer->avail);
+      apr_pool_cleanup_register(buffer->pool, buffer->buf,(void*)free, apr_pool_cleanup_null);
+   } else {
+      buffer->buf = NULL;
+   }
    return buffer;
 }
 
