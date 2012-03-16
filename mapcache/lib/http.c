@@ -297,10 +297,20 @@ apr_table_t *mapcache_http_parse_param_string(mapcache_context *r, char *args_st
    return params;
 }
 
+#ifdef DEBUG
+static void http_cleanup(void *dummy) {
+   curl_global_cleanup();
+}
+#endif
+
 mapcache_http* mapcache_http_configuration_parse_xml(mapcache_context *ctx, ezxml_t node) {
    ezxml_t http_node;
    mapcache_http *req;
    curl_global_init(CURL_GLOBAL_ALL);
+#ifdef DEBUG
+   /* make valgrind happy */
+   apr_pool_cleanup_register(ctx->pool, NULL,(void*)http_cleanup, apr_pool_cleanup_null);
+#endif
    req = (mapcache_http*)apr_pcalloc(ctx->pool,
          sizeof(mapcache_http));
    if ((http_node = ezxml_child(node,"url")) != NULL) {
