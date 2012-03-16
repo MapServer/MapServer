@@ -145,17 +145,18 @@ static void _mapcache_cache_disk_tile_key(mapcache_context *ctx, mapcache_tile *
 
 static int _mapcache_cache_disk_has_tile(mapcache_context *ctx, mapcache_tile *tile) {
    char *filename;
-   apr_file_t *f;
+   apr_finfo_t finfo;
+   int rv;
    _mapcache_cache_disk_tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FALSE;
    }
-   if(apr_file_open(&f, filename, APR_FOPEN_READ,APR_OS_DEFAULT, ctx->pool) == APR_SUCCESS) {
-      apr_file_close(f);
+   rv = apr_stat(&finfo,filename,0,ctx->pool);
+   if(rv != APR_SUCCESS) {
+      return MAPCACHE_FALSE;
+   } else {
       return MAPCACHE_TRUE;
    }
-   else
-      return MAPCACHE_FALSE;
 }
 
 static void _mapcache_cache_disk_delete(mapcache_context *ctx, mapcache_tile *tile) {
