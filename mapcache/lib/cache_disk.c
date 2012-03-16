@@ -39,6 +39,30 @@
 #include <unistd.h>
 #endif
 
+/**
+ * \brief returns base path for given tile
+ * 
+ * \param tile the tile to get base path from
+ * \param path pointer to a char* that will contain the filename
+ * \private \memberof mapcache_cache_disk
+ */
+static void _mapcache_cache_disk_base_tile_key(mapcache_context *ctx, mapcache_tile *tile, char **path) {
+  *path = apr_pstrcat(ctx->pool,
+        ((mapcache_cache_disk*)tile->tileset->cache)->base_directory,"/",
+        tile->tileset->name,"/",
+        tile->grid_link->grid->name,
+        NULL);
+  if(tile->dimensions) {
+    const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
+    int i = elts->nelts;
+    while(i--) {
+      apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
+      const char *dimval = mapcache_util_str_sanitize(ctx->pool,entry->val,"/.",'#');
+      *path = apr_pstrcat(ctx->pool,*path,"/",dimval,NULL);
+    }
+  }
+}
+
 static void _mapcache_cache_disk_blank_tile_key(mapcache_context *ctx, mapcache_tile *tile, unsigned char *color, char **path) {
    /* not implemented for template caches, as symlink_blank will never be set */
    *path = apr_psprintf(ctx->pool,"%s/%s/%s/blanks/%02X%02X%02X%02X.%s",
@@ -63,24 +87,11 @@ static void _mapcache_cache_disk_blank_tile_key(mapcache_context *ctx, mapcache_
  * \param r 
  * \private \memberof mapcache_cache_disk
  */
-static void _mapcache_cache_disk_tile_key(mapcache_context *ctx, mapcache_tile *tile, char **path) {
+static void _mapcache_cache_disk_tilecache_tile_key(mapcache_context *ctx, mapcache_tile *tile, char **path) {
    mapcache_cache_disk *dcache = (mapcache_cache_disk*)tile->tileset->cache;
    if(dcache->base_directory) {
       char *start;
-      start = apr_pstrcat(ctx->pool,
-            dcache->base_directory,"/",
-            tile->tileset->name,"/",
-            tile->grid_link->grid->name,
-            NULL);
-      if(tile->dimensions) {
-         const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
-         int i = elts->nelts;
-         while(i--) {
-            apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
-            const char *dimval = mapcache_util_str_sanitize(ctx->pool,entry->val,"/.",'#');
-            start = apr_pstrcat(ctx->pool,start,"/",dimval,NULL);
-         }
-      }
+      _mapcache_cache_disk_base_tile_key(ctx, tile, &start);
       *path = apr_psprintf(ctx->pool,"%s/%02d/%03d/%03d/%03d/%03d/%03d/%03d.%s",
             start,
             tile->z,
@@ -143,11 +154,85 @@ static void _mapcache_cache_disk_tile_key(mapcache_context *ctx, mapcache_tile *
    }
 }
 
+static void _mapcache_cache_disk_template_tile_key(mapcache_context *ctx, mapcache_tile *tile, char **path) {
+   mapcache_cache_disk *dcache = (mapcache_cache_disk*)tile->tileset->cache;
+
+   *path = dcache->filename_template;
+   *path = mapcache_util_str_replace(ctx->pool,*path, "{tileset}", tile->tileset->name);
+   *path = mapcache_util_str_replace(ctx->pool,*path, "{grid}", tile->grid_link->grid->name);
+   *path = mapcache_util_str_replace(ctx->pool,*path, "{ext}",
+         tile->tileset->format?tile->tileset->format->extension:"png");
+
+   if(strstr(*path,"{x}"))
+     *path = mapcache_util_str_replace(ctx->pool,*path, "{x}",
+           apr_psprintf(ctx->pool,"%d",tile->x));
+   else
+     *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_x}",
+           apr_psprintf(ctx->pool,"%d",
+              tile->grid_link->grid->levels[tile->z]->maxx - tile->x - 1));
+   if(strstr(*path,"{y}"))
+     *path = mapcache_util_str_replace(ctx->pool,*path, "{y}",
+           apr_psprintf(ctx->pool,"%d",tile->y));
+   else
+     *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_y}",
+           apr_psprintf(ctx->pool,"%d",
+              tile->grid_link->grid->levels[tile->z]->maxy - tile->y - 1));
+   if(strstr(*path,"{z}"))
+     *path = mapcache_util_str_replace(ctx->pool,*path, "{z}",
+           apr_psprintf(ctx->pool,"%d",tile->z));
+   else
+     *path = mapcache_util_str_replace(ctx->pool,*path, "{inv_z}",
+           apr_psprintf(ctx->pool,"%d",
+              tile->grid_link->grid->nlevels - tile->z - 1));
+   if(tile->dimensions) {
+     char *dimstring="";
+     const apr_array_header_t *elts = apr_table_elts(tile->dimensions);
+     int i = elts->nelts;
+     while(i--) {
+       apr_table_entry_t *entry = &(APR_ARRAY_IDX(elts,i,apr_table_entry_t));
+       char *dimval = apr_pstrdup(ctx->pool,entry->val);
+       char *iter = dimval;
+       while(*iter) {
+         /* replace dangerous characters by '#' */
+         if(*iter == '.' || *iter == '/') {
+           *iter = '#';
+         }
+         iter++;
+       }
+       dimstring = apr_pstrcat(ctx->pool,dimstring,"#",entry->key,"#",dimval,NULL);
+     }
+     *path = mapcache_util_str_replace(ctx->pool,*path, "{dim}", dimstring);
+   }
+   
+   if(!*path) {
+      ctx->set_error(ctx,500, "failed to allocate tile key");
+   }
+}
+
+static void _mapcache_cache_disk_arcgis_tile_key(mapcache_context *ctx, mapcache_tile *tile, char **path) {
+   mapcache_cache_disk *dcache = (mapcache_cache_disk*)tile->tileset->cache;
+   if(dcache->base_directory) {
+      char *start;
+      _mapcache_cache_disk_base_tile_key(ctx, tile, &start);
+      *path = apr_psprintf(ctx->pool,"%s/L%02d/R%08x/C%08x.%s" ,
+            start,
+            tile->z,
+            tile->y,
+            tile->x,
+            tile->tileset->format?tile->tileset->format->extension:"png");
+   }
+   
+   if(!*path) {
+      ctx->set_error(ctx,500, "failed to allocate tile key");
+   }
+}
+
+
 static int _mapcache_cache_disk_has_tile(mapcache_context *ctx, mapcache_tile *tile) {
    char *filename;
    apr_finfo_t finfo;
    int rv;
-   _mapcache_cache_disk_tile_key(ctx, tile, &filename);
+   ((mapcache_cache_disk*)tile->tileset->cache)->tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FALSE;
    }
@@ -163,7 +248,7 @@ static void _mapcache_cache_disk_delete(mapcache_context *ctx, mapcache_tile *ti
    apr_status_t ret;
    char errmsg[120];
    char *filename;
-   _mapcache_cache_disk_tile_key(ctx, tile, &filename);
+   ((mapcache_cache_disk*)tile->tileset->cache)->tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
 
    ret = apr_file_remove(filename,ctx->pool);
@@ -188,7 +273,7 @@ static int _mapcache_cache_disk_get(mapcache_context *ctx, mapcache_tile *tile) 
    apr_size_t size;
    apr_mmap_t *tilemmap;
      
-   _mapcache_cache_disk_tile_key(ctx, tile, &filename);
+   ((mapcache_cache_disk*)tile->tileset->cache)->tile_key(ctx, tile, &filename);
    if(GC_HAS_ERROR(ctx)) {
       return MAPCACHE_FAILURE;
    }
@@ -280,7 +365,7 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
    }
 #endif
 
-   _mapcache_cache_disk_tile_key(ctx, tile, &filename);
+   ((mapcache_cache_disk*)tile->tileset->cache)->tile_key(ctx, tile, &filename);
    GC_CHECK_ERROR(ctx);
 
    /* find the location of the last '/' in the string */
@@ -467,24 +552,42 @@ static void _mapcache_cache_disk_set(mapcache_context *ctx, mapcache_tile *tile)
 static void _mapcache_cache_disk_configuration_parse_xml(mapcache_context *ctx, ezxml_t node, mapcache_cache *cache, mapcache_cfg *config) {
    ezxml_t cur_node;
    mapcache_cache_disk *dcache = (mapcache_cache_disk*)cache;
-
-   if ((cur_node = ezxml_child(node,"base")) != NULL) {
-      dcache->base_directory = apr_pstrdup(ctx->pool,cur_node->txt);
-      /* we don't check for symlinking in the case where we are using a "template" cache type */
-      if ((cur_node = ezxml_child(node,"symlink_blank")) != NULL) {
-         if(strcasecmp(cur_node->txt,"false")){
-#ifdef HAVE_SYMLINK
-            dcache->symlink_blank = 1;
-#else
-            ctx->set_error(ctx,400,"cache %s: host system does not support file symbolic linking",cache->name);
-            return;
-#endif
-         }
-      }
-   } else {
-      if ((cur_node = ezxml_child(node,"template")) != NULL) {
+   char *layout = NULL;
+   int template_layout = MAPCACHE_FALSE;
+   
+   layout = (char*)ezxml_attr(node,"layout");
+   if (!layout || !strlen(layout) || !strcmp(layout,"tilecache")) {
+     dcache->tile_key = _mapcache_cache_disk_tilecache_tile_key;
+   } else if(!strcmp(layout,"arcgis")) {
+       dcache->tile_key = _mapcache_cache_disk_arcgis_tile_key;
+   } else if (!strcmp(layout,"template")) {
+       dcache->tile_key = _mapcache_cache_disk_template_tile_key;
+       template_layout = MAPCACHE_TRUE;
+       if ((cur_node = ezxml_child(node,"template")) != NULL) {
          dcache->filename_template = apr_pstrdup(ctx->pool,cur_node->txt);
-      }
+       } else {
+         ctx->set_error(ctx, 400, "no template specified for cache \"%s\"", cache->name);
+         return;
+       }
+   }
+   else {
+     ctx->set_error(ctx, 400, "unknown layout type %s for cache \"%s\"", layout, cache->name);
+     return;
+   }
+
+   if (!template_layout && (cur_node = ezxml_child(node,"base")) != NULL) {
+      dcache->base_directory = apr_pstrdup(ctx->pool,cur_node->txt);
+   }
+
+   if (!template_layout && (cur_node = ezxml_child(node,"symlink_blank")) != NULL) {
+     if(strcasecmp(cur_node->txt,"false")){
+#ifdef HAVE_SYMLINK
+       dcache->symlink_blank = 1;
+#else
+       ctx->set_error(ctx,400,"cache %s: host system does not support file symbolic linking",cache->name);
+       return;
+#endif
+     }
    }
 
    if ((cur_node = ezxml_child(node,"creation_retry")) != NULL) {

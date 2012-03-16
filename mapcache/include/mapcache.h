@@ -385,6 +385,12 @@ struct mapcache_cache_disk {
     char *filename_template;
     int symlink_blank;
     int creation_retry;
+
+    /**
+     * Set filename for a given tile
+     * \memberof mapcache_cache_disk
+     */
+    void (*tile_key)(mapcache_context *ctx, mapcache_tile *tile, char **path);
 };
 
 #ifdef USE_TIFF
