@@ -86,9 +86,6 @@ typedef struct {
   long index;
   int tileindex;
   int classindex;
-#ifndef SWIG
-  char **texts;
-#endif
   char *text;
   
   int scratch;
