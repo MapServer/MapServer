@@ -815,7 +815,7 @@ int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, shape
               
            }
            if(curCachePtr->leaderline) {
-              /* check intersection of leader lines ? */
+              /* TODO: check intersection of leader lines, not only bbox test ? */
               if(msRectOverlap(curCachePtr->leaderbbox, cachePtr->leaderbbox)) {
                  return MS_FALSE;
               }
