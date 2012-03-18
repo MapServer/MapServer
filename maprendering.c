@@ -44,7 +44,7 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
       s->size = MS_MAX(s->size, l->minsize);
       s->size = MS_MIN(s->size, l->maxsize);
       if (!fontset) {
-         msSetError(MS_TTFERR, "No fontset defined.","msDrawText()");
+         msSetError(MS_TTFERR, "No fontset defined.","computeLabelStyle()");
          return (MS_FAILURE);
       }
 
