@@ -1577,7 +1577,7 @@ int annotationLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shap
    int numpaths = 1, numpoints = 1, numRegularLines = 0, i,j,s;
    if (layer->class[c]->numlabels == 0) return (MS_SUCCESS); /* nothing to draw (RFC77 TDOO: could expand this test) */
    if (layer->class[c]->numlabels > 1) {
-      msSetError(MS_MISCERR, "Multiple labels not supported on annotation layers.", "msDrawShape()");
+      msSetError(MS_MISCERR, "Multiple labels not supported on annotation layers.", "annotationLayerDrawShape()");
       return MS_FAILURE;
    }
 
