@@ -2934,10 +2934,10 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                 ** If the ANNOTATION has an associated marker then the position is handled like a point regardless of underlying shape type. (#2993)
                 **   (Note: might be able to re-order this for more speed.)
                 */
-                if(layerPtr->type == MS_LAYER_POLYGON || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_POLYGON && cachePtr->numstyles == 0)) {
+                if((layerPtr->type == MS_LAYER_POLYGON && marker_offset_x==0 )|| (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_POLYGON && cachePtr->numstyles == 0)) {
                   positions[0]=MS_CC; positions[1]=MS_UC; positions[2]=MS_LC; positions[3]=MS_CL; positions[4]=MS_CR;
                   npositions = 5;
-                } else if(layerPtr->type == MS_LAYER_LINE || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_LINE && cachePtr->numstyles == 0)) {
+                } else if((layerPtr->type == MS_LAYER_LINE && marker_offset_x == 0) || (layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->shapetype == MS_SHAPE_LINE && cachePtr->numstyles == 0)) {
                   positions[0]=MS_UC; positions[1]=MS_LC; positions[2]=MS_CC;
                   npositions = 3;
                 } else {
