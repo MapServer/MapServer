@@ -159,18 +159,30 @@ MapServerChildError = _mapscript.MapServerChildError
 /* The bogus "if 1:" is to introduce a new scope to work around indentation
    handling with pythonappend in different versions.  (#3180) */
 %feature("pythonappend") layerObj %{if 1:
-	  if args and len(args)!=0:
-		self.p_map=args[0]
-	  else:
-		self.p_map=None%}
+            self.p_map=None
+            try:
+                # python 2.5
+                if args and len(args)!=0: 
+                    self.p_map=args[0]
+            except NameError:
+                # python 2.6
+                if map: 
+                    self.p_map=map
+       %}
 
 /* The bogus "if 1:" is to introduce a new scope to work around indentation
    handling with pythonappend in different versions. (#3180) */
 %feature("pythonappend") classObj %{if 1:
-	   if args and len(args)!=0:
-		self.p_layer=args[0]
-	   else:
-		self.p_layer=None%}
+            self.p_layer =None
+            try:
+                # python 2.5
+                if args and len(args)!=0: 
+                    self.p_layer=args[0]
+            except NameError:
+                # python 2.6
+                if layer: 
+                    self.p_layer=layer
+       %}
 
 %feature("shadow") insertClass %{
 	def insertClass(*args):
