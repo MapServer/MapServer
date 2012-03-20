@@ -1778,18 +1778,20 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
 
                 psPos = xmlNewChild(psOrigin, psGmlNs, BAD_CAST "pos", BAD_CAST point);
             }
-            snprintf(resx, sizeof(resx), "%f 0", cm->xresolution);
-            snprintf(resy, sizeof(resy), "0 %f", -fabs(cm->yresolution));
+
             if (swapAxes == MS_FALSE)
             {
-                psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resx);
-                psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resy);
+                snprintf(resx, sizeof(resx), "%f 0", cm->xresolution);
+                snprintf(resy, sizeof(resy), "0 %f", -fabs(cm->yresolution));
             }
             else
             {
-                psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resy);
-                psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resx);
+                snprintf(resx, sizeof(resx), "0 %f", cm->xresolution);
+                snprintf(resy, sizeof(resy), "%f 0", -fabs(cm->yresolution));
             }
+            psOffsetX = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resx);
+            psOffsetY = xmlNewChild(psGrid, psGmlNs, BAD_CAST "offsetVector", BAD_CAST resy);
+
             xmlNewProp(psOffsetX, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
             xmlNewProp(psOffsetY, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
         }
@@ -3802,6 +3804,10 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
             msProjectRect(&(map->projection), &outputProj, &bbox);
             msFreeProjection(&(map->projection));
             map->projection = outputProj;
+
+            /* recalculate resolutions, needed if UOM changes (e.g: deg -> m) */
+            params->resolutionX = (bbox.maxx - bbox.minx) / params->width;
+            params->resolutionY = (bbox.maxy - bbox.miny) / params->height;
         }
     }
 
