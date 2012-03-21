@@ -138,7 +138,7 @@ static void fcgi_write_response(mapcache_context_fcgi *ctx, mapcache_http_respon
       printf("Last-Modified: %s\r\n", datestr);
    }
    if(response->data) {
-      printf("Content-Length: %zd\r\n\r\n", response->data->size);
+      printf("Content-Length: %ld\r\n\r\n", response->data->size);
       fwrite((char*)response->data->buf, response->data->size,1,stdout);
    }
 }
