@@ -941,6 +941,14 @@ typedef struct {
 /************************************************************************/
 
 typedef struct {
+#ifdef SWIG
+  %immutable;
+#endif /* SWIG */
+  int refcount;
+#ifdef SWIG
+  %mutable;
+#endif /* SWIG */
+
   char *font;
   enum MS_FONT_TYPE type;
     

@@ -1609,6 +1609,8 @@ void initLabel(labelObj *label)
 {
   int i;
 
+  MS_REFCNT_INIT(label);
+
   label->antialias = -1; /* off  */
   label->align = MS_ALIGN_LEFT;
   MS_INIT_COLOR(label->color, 0,0,0,255);  
@@ -1683,6 +1685,8 @@ static int freeLabelLeader(labelLeaderObj *leader) {
 static int freeLabel(labelObj *label)
 {
   int i;
+
+  if( MS_REFCNT_DECR_IS_NOT_ZERO(label) ) { return MS_FAILURE; }
 
   msFree(label->font);
   msFree(label->encoding);
@@ -3090,8 +3094,7 @@ styleObj *msGrowClassStyles( classObj *class )
         newsize = class->maxstyles + MS_STYLE_ALLOCSIZE;
 
         /* Alloc/realloc styles */
-        newStylePtr = (styleObj**)realloc(class->styles,
-                                          newsize*sizeof(styleObj*));
+        newStylePtr = (styleObj**)realloc(class->styles, newsize*sizeof(styleObj*));
         MS_CHECK_ALLOC(newStylePtr, newsize*sizeof(styleObj*), NULL);
 
         class->styles = newStylePtr;
@@ -3121,8 +3124,7 @@ styleObj *msGrowLabelStyles( labelObj *label )
         newsize = label->maxstyles + MS_STYLE_ALLOCSIZE;
 
         /* Alloc/realloc styles */
-        newStylePtr = (styleObj**)realloc(label->styles,
-                                          newsize*sizeof(styleObj*));
+        newStylePtr = (styleObj**)realloc(label->styles, newsize*sizeof(styleObj*));
         MS_CHECK_ALLOC(newStylePtr, newsize*sizeof(styleObj*), NULL);
 
         label->styles = newStylePtr;
