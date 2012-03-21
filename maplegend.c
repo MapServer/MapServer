@@ -149,13 +149,21 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
       double lsize = label->size;
       double langle = label->angle;
       int lpos = label->position;
+      int loffsetx = label->offsetx;
+      int loffsety = label->offsety;
+
+      label->offsetx = 0;
+      label->offsety = 0;
       label->angle = 0;
       label->position = MS_CC;
       if (label->type == MS_TRUETYPE) label->size = height;
       msDrawLabel(map, image_draw, marker, (char*)"Az", label,1.0);
+
       label->size = lsize;
       label->position = lpos;
       label->angle = langle;
+      label->offsetx = loffsetx;
+      label->offsety = loffsety;
     }
     break;
   case MS_LAYER_POINT:

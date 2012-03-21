@@ -14,6 +14,9 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
+
+- Fixed legend image problem with annotation layers with label offsets (#4147)
+
 - Add support for mutiple labels per feature (RFC81)
 
 - Add support for INSPIRE view service (RFC 75)
