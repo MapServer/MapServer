@@ -15,6 +15,8 @@ For a complete change history, please see the Subversion log comments.
 Current Version (SVN trunk, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Fixed mapscript is unusable in a web application due to memory leaks (#4262)
+ 
 - Fixed legend image problem with annotation layers with label offsets (#4147)
 
 - Add support for mutiple labels per feature (RFC81)

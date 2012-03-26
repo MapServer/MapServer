@@ -1433,15 +1433,15 @@ msDrawRasterLayerPlugin( mapObj *map, layerObj *layer, imageObj *image)
         	renderer->mergeRasterBuffer( image, rb, 1.0, 0, 0, 0, 0, rb->width, rb->height );
         }
 
-        msFreeRasterBuffer(rb);
-        free(rb); 
-        
+	msFreeRasterBuffer(rb);
     }
 #define RB_GET_R(rb,x,y) *((rb)->data.rgba.r + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
 #define RB_GET_G(rb,x,y) *((rb)->data.rgba.g + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
 #define RB_GET_B(rb,x,y) *((rb)->data.rgba.b + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
 #define RB_GET_A(rb,x,y) *((rb)->data.rgba.a + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
 
+    free(rb);         
+	
     return ret;
 }
 
