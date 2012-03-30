@@ -188,9 +188,6 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
    if(tile==NULL) {
       imageObj *tileimg;
       double p_x,p_y;
-#ifdef USE_SVG_CAIRO
-      double scale, rotation;
-#endif
       tileimg = msImageCreate(width,height,img->format,NULL,NULL,img->resolution, img->resolution, NULL);
       if(!seamlessmode) {
          p_x = width/2.0;
@@ -217,18 +214,14 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
               if(msPreloadSVGSymbol(symbol) != MS_SUCCESS) {
                   return NULL; //failed to load image, renderer should have set the error message
               }
-              if (renderer->supports_svg)
-                renderer->renderSVGSymbol(tileimg, p_x, p_y, symbol, s);
-              else
-              {
-                if (msRenderSVGToPixmap(symbol, s) == MS_SUCCESS){
-                    scale = s->scale;
-                    rotation = s->rotation;
-                    s->scale = 1.0;
-                    s->rotation = 0;
-                    renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
-                    s->scale = scale;
-                    s->rotation = rotation;
+              if (renderer->supports_svg) {
+                if(renderer->renderSVGSymbol(tileimg, p_x, p_y, symbol, s) != MS_SUCCESS) {
+                   return NULL;
+                }
+              }
+              else {
+                 if (msRenderRasterizedSVGSymbol(tileimg,p_x,p_y,symbol, s) != MS_SUCCESS){
+                    return NULL;
                  }
               }
 #else
@@ -278,15 +271,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
                    if (renderer->supports_svg) {
                      renderer->renderSVGSymbol(tile3img, p_x, p_y, symbol, s);
                    } else {
-                    if (msRenderSVGToPixmap(symbol, s) == MS_SUCCESS){
-                       scale = s->scale;
-                       rotation = s->rotation;
-                       s->scale = 1.0;
-                       s->rotation = 0;
-                       renderer->renderPixmapSymbol(tile3img, p_x, p_y, symbol, s);
-                       s->scale = scale;
-                       s->rotation = rotation;
-                     }
+                      msRenderRasterizedSVGSymbol(tile3img,p_x,p_y,symbol, s);
                    }
 #else
                      msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "getTile()");
@@ -836,7 +821,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
             case (MS_SYMBOL_SVG):
             {
 #ifdef USE_SVG_CAIRO
-               if (!symbol->svg_cairo_surface) {
+               if (!symbol->renderer_cache) {
                   if (MS_SUCCESS != msPreloadSVGSymbol(symbol))
                      return MS_FAILURE;
                }
@@ -933,17 +918,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
                ret = renderer->renderSVGSymbol(image, p_x, p_y, symbol, &s);
             } else {
 #ifdef USE_SVG_CAIRO
-               if (msRenderSVGToPixmap(symbol, &s) == MS_SUCCESS){
-                 //store style, render pixmap then reset style
-                 double scale, rotation;
-                 scale = s.scale;
-                 rotation = s.rotation;
-                 s.scale = 1.0;
-                 s.rotation = 0;
-                 ret = renderer->renderPixmapSymbol(image,p_x,p_y,symbol,&s);
-                 s.scale = scale;
-                 s.rotation = rotation;
-               }
+               ret = msRenderRasterizedSVGSymbol(image, p_x,p_y, symbol, &s);
 #else
                msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawMarkerSymbol()");
                return MS_FAILURE;
@@ -953,9 +928,8 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
          break;
          default:
             break;
-         //}
+         }
          return ret;
-      }
       }
       else if( MS_RENDERER_IMAGEMAP(image->format) )
          msDrawMarkerSymbolIM(symbolset, image, p, style, scalefactor);

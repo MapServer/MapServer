@@ -328,55 +328,39 @@ int renderVectorSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol
     return MS_SUCCESS;
 }
 
+#ifdef USE_SVG_CAIRO
+struct svg_symbol_cache{
+   rasterBufferObj pixmap_buffer;
+   svg_cairo_t *svgc;
+   double scale,rotation;
+} ;
+#endif
+
 int renderSVGSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
                             symbolStyleObj *style) {
 #ifdef USE_SVG_CAIRO
     cairo_renderer *r = CAIRO_RENDERER(img);
     //double ox=symbol->sizex*0.5,oy=symbol->sizey*0.5;
        
-    unsigned int svg_width, svg_height;
     svg_cairo_status_t status;
-    svg_cairo_t *svgc;
-    double scale;
-    
-    //use cache for svg surface
-    if(!symbol->renderer_cache) {
-       status = svg_cairo_create(&svgc);
-       status = svg_cairo_parse_buffer(svgc, symbol->svg_text, strlen(symbol->svg_text));
-       if (status) {
-          msSetError(MS_RENDERERERR, "problem creating cairo svg", "renderSVGSymbolCairo()");
-          return MS_FAILURE;
-       }
-       symbol->renderer_cache = svgc;
-    }
+    struct svg_symbol_cache *cache;
+
+    msPreloadSVGSymbol(symbol);
     assert(symbol->renderer_cache);
-    svgc=(svg_cairo_t *)symbol->renderer_cache;    
+    cache = symbol->renderer_cache;
 
-    svg_cairo_get_size (svgc, &svg_width, &svg_height);
-
-    //scale such that the SVG is rendered at the desired size in pixels
-    scale = style->scale;
-    /*
-    if (style->scale != 1) {
-	    scale = MS_MIN(style->scale / (double) svg_width,
-                   style->scale / (double) svg_height);
-    } else {
-        scale = style->scale;
-    }
-    */
-   
     cairo_save(r->cr);
     cairo_translate(r->cr,x,y);
-    cairo_scale(r->cr,scale,scale);
+    cairo_scale(r->cr,style->scale,style->scale);
     
     if (style->rotation != 0) {
       cairo_rotate(r->cr, -style->rotation);
-      cairo_translate (r->cr, -(int)svg_width/2, -(int)svg_height/2);
+      cairo_translate (r->cr, -(int)(symbol->sizex/2), -(int)(symbol->sizey/2));
     }
     else
-      cairo_translate (r->cr, -(int)svg_width/2, -(int)svg_height/2);
+      cairo_translate (r->cr, -(int)(symbol->sizex/2), -(int)(symbol->sizey/2));
 
-    status = svg_cairo_render(svgc, r->cr);
+    status = svg_cairo_render(cache->svgc, r->cr);
     cairo_restore(r->cr);
     return MS_SUCCESS;
 
@@ -1006,12 +990,17 @@ int freeSymbolCairo(symbolObj *s) {
         cairo_path_destroy(s->renderer_cache);
         break;
     case MS_SYMBOL_PIXMAP:
-    case MS_SYMBOL_SVG:
-      if (s->renderer_cache) {
-        //cairo_surface_finish(s->renderer_cache);
-        cairo_surface_destroy(s->renderer_cache);
-      }
-        break;
+       cairo_surface_destroy(s->renderer_cache);
+       break;
+    case MS_SYMBOL_SVG: {
+#ifdef USE_SVG_CAIRO
+       struct svg_symbol_cache *cache = s->renderer_cache;
+       assert(cache->svgc);
+       svg_cairo_destroy(cache->svgc);
+       msFree(s->renderer_cache);
+#endif
+    }
+      break;
     }
     s->renderer_cache=NULL;
     return MS_SUCCESS;
@@ -1031,30 +1020,36 @@ int initializeRasterBufferCairo(rasterBufferObj *rb, int width, int height, int 
    return MS_SUCCESS;
 }
 
+
 int msPreloadSVGSymbol(symbolObj *symbol)
 {
 #ifdef USE_SVG_CAIRO
-    svg_cairo_t *svgc;  
     int status;
     unsigned int svg_width, svg_height;
-
-    if(symbol->svg_cairo_surface)
+    struct svg_symbol_cache *cache;
+    
+    if(!symbol->renderer_cache) {
+       cache = msSmallCalloc(1,sizeof(struct svg_symbol_cache));
+    } else {
+       cache = symbol->renderer_cache;
+    }
+    if(cache->svgc)
       return MS_SUCCESS;
 
     if(!symbol->svg_text)
       return MS_FAILURE;
 
-    status = svg_cairo_create(&svgc);
+    status = svg_cairo_create(&cache->svgc);
     if (status) {
       msSetError(MS_RENDERERERR, "problem creating cairo svg", "msPreloadSVGSymbol()");
       return MS_FAILURE;
     }
-    status = svg_cairo_parse_buffer(svgc, symbol->svg_text, strlen(symbol->svg_text));
+    status = svg_cairo_parse_buffer(cache->svgc, symbol->svg_text, strlen(symbol->svg_text));
     if (status) {
       msSetError(MS_RENDERERERR, "problem parsing svg symbol", "msPreloadSVGSymbol()");
       return MS_FAILURE;
     }
-    svg_cairo_get_size (svgc, &svg_width, &svg_height);
+    svg_cairo_get_size (cache->svgc, &svg_width, &svg_height);
     if (svg_width == 0 || svg_height == 0)
     {
       msSetError(MS_RENDERERERR, "problem parsing svg symbol", "msPreloadSVGSymbol()");
@@ -1063,9 +1058,8 @@ int msPreloadSVGSymbol(symbolObj *symbol)
 
     symbol->sizex = svg_width;
     symbol->sizey = svg_height;
+    symbol->renderer_cache = cache;
     
-    symbol->svg_cairo_surface = (void *)svgc;
-
     return MS_SUCCESS;
 
 #else
@@ -1075,110 +1069,76 @@ int msPreloadSVGSymbol(symbolObj *symbol)
 #endif
 }
 
-int msRenderSVGToPixmap(symbolObj *symbol, symbolStyleObj *style) {
+
+
+int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style) {
    
 #ifdef USE_SVG_CAIRO
-    unsigned int svg_width, svg_height;
-    svg_cairo_status_t status;
-    cairo_t *cr;
-    svg_cairo_t *svgc;
-    cairo_surface_t *surface;
-    unsigned char *pb;
-    rasterBufferObj *rb;
-    //rendering_buffer *rc;
-    int width, height, surface_w, surface_h,row;
-    double scale;
+    struct svg_symbol_cache *svg_cache;
+    symbolStyleObj pixstyle;
+    symbolObj pixsymbol;
     
     //already rendered at the right size and scale? return
-    if (symbol->pixmap_buffer) {
-        if (style->scale == symbol->pixmap_buffer->scale &&
-            style->rotation == symbol->pixmap_buffer->rotation) {
-            return MS_SUCCESS;
-        } else {
-          if(symbol->renderer!=NULL) 
-            symbol->renderer->freeSymbol(symbol);
-           msFreeRasterBuffer(symbol->pixmap_buffer);
-        }
-    }
-    
-    if (!symbol->svg_cairo_surface )
-      msPreloadSVGSymbol(symbol);
+    if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
+       return MS_FAILURE;
+    svg_cache = (struct svg_symbol_cache*) symbol->renderer_cache;
 
-    if (!symbol->svg_cairo_surface)
-      return MS_FAILURE;
+    if(svg_cache->scale != style->scale || svg_cache->rotation != style->rotation) {
+      cairo_t *cr;
+      cairo_surface_t *surface;
+      unsigned char *pb;
+      int width, height, surface_w, surface_h;
+      /* need to recompute the pixmap */
+      msFreeRasterBuffer(&svg_cache->pixmap_buffer);
 
-    //set up raster
-
-    svgc =symbol->svg_cairo_surface; 
-    
-    svg_cairo_get_size (svgc, &svg_width, &svg_height);
-    width = surface_w = svg_width;
-    height = surface_h = svg_height;
-
-    //scale such that the SVG is rendered at the desired size in pixels
-    scale = style->scale; /*MS_MIN(style->scale / (double) svg_width,
-                            style->scale / (double) svg_height);*/
-
-    //increase pixmap size to accomodate scaling/rotation
-    if (scale != 1.0 && style->scale != 1.0) {
-        width = surface_w = (svg_width * scale + 0.5);
-        height = surface_h = (svg_height * scale + 0.5);
-    }
-    if (style->rotation != 0) {
-       surface_w = MS_NINT(width * 1.415);
-       surface_h = MS_NINT(height * 1.415);
-    }
-
-    surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, surface_w, surface_h);
-    cr = cairo_create(surface);
-
-    if (style->rotation != 0) {
-      cairo_translate (cr, surface_w/2, surface_h/2);
-      cairo_rotate(cr, -style->rotation);
-      cairo_translate (cr, -width/2, -height/2);
-    }
-    if (style->scale != 1.0) {
-      cairo_scale(cr,scale,scale);
-    }
-    status = svg_cairo_render(svgc, cr);
-
-    pb = cairo_image_surface_get_data(surface);
-
-    //set up raster
-   symbol->pixmap_buffer = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
-   MS_CHECK_ALLOC(symbol->pixmap_buffer, sizeof(rasterBufferObj), MS_FAILURE);
-   initializeRasterBufferCairo(symbol->pixmap_buffer, surface_w, surface_h, 0);
-   rb = symbol->pixmap_buffer;
-   memcpy(rb->data.rgba.pixels, pb, surface_w * surface_h * 4 * sizeof(unsigned char));
-
-   /* unpremultiply the data */
-
-   for(row=0;row<rb->height;row++) {
-      int col;
-      unsigned char *a,*r,*g,*b;
-      r=rb->data.rgba.r+row*rb->data.rgba.row_step;
-      g=rb->data.rgba.g+row*rb->data.rgba.row_step;
-      b=rb->data.rgba.b+row*rb->data.rgba.row_step;
-      a=rb->data.rgba.a+row*rb->data.rgba.row_step;
-      for(col=0;col<rb->width;col++) {
-         if(*a && *a < 255) {
-            double da = *a/255.0;
-            *r/=da;
-            *g/=da;
-            *b/=da;
-         }
-         a+=rb->data.rgba.pixel_step;
-         r+=rb->data.rgba.pixel_step;
-         g+=rb->data.rgba.pixel_step;
-         b+=rb->data.rgba.pixel_step;
+      //increase pixmap size to accomodate scaling/rotation
+      if (style->scale != 1.0) {
+         width = surface_w = (symbol->sizex * style->scale + 0.5);
+         height = surface_h = (symbol->sizey * style->scale + 0.5);
+      } else {
+         width = surface_w = symbol->sizex;
+         height = surface_h = symbol->sizey;
       }
+      if (style->rotation != 0) {
+         surface_w = MS_NINT(width * 1.415);
+         surface_h = MS_NINT(height * 1.415);
+      }
+
+      surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, surface_w, surface_h);
+      cr = cairo_create(surface);
+
+      if (style->rotation != 0) {
+         cairo_translate(cr, surface_w / 2, surface_h / 2);
+         cairo_rotate(cr, -style->rotation);
+         cairo_translate(cr, -width / 2, -height / 2);
+      }
+      if (style->scale != 1.0) {
+         cairo_scale(cr, style->scale, style->scale);
+      }
+      if(svg_cairo_render(svg_cache->svgc, cr) != SVG_CAIRO_STATUS_SUCCESS) {
+         return MS_FAILURE;
+      }
+      pb = cairo_image_surface_get_data(surface);
+
+      //set up raster
+      initializeRasterBufferCairo(&svg_cache->pixmap_buffer, surface_w, surface_h, 0);
+      memcpy(svg_cache->pixmap_buffer.data.rgba.pixels, pb, surface_w * surface_h * 4 * sizeof (unsigned char));
+      svg_cache->scale = style->scale;
+      svg_cache->rotation = style->rotation;
+      cairo_destroy(cr);
+      cairo_surface_destroy(surface);
    }
+   assert(svg_cache->pixmap_buffer.height && svg_cache->pixmap_buffer.width);
 
-   rb->scale = style->scale;
-   rb->rotation = style->rotation;
-   cairo_destroy(cr);
-   cairo_surface_destroy(surface);
+   pixstyle = *style;
+   pixstyle.rotation = 0.0;
+   pixstyle.scale = 1.0;
 
+   pixsymbol.pixmap_buffer = &svg_cache->pixmap_buffer;
+   pixsymbol.type = MS_SYMBOL_PIXMAP;
+
+   MS_IMAGE_RENDERER(img)->renderPixmapSymbol(img,x,y,&pixsymbol,&pixstyle);
+   MS_IMAGE_RENDERER(img)->freeSymbol(&pixsymbol);
    return MS_SUCCESS;
 #else
     msSetError(MS_MISCERR, "SVG Symbols requested but MapServer is not built with libsvgcairo", 

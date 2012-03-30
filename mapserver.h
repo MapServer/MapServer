@@ -2811,6 +2811,7 @@ struct rendererVTableObj {
 	int (*freeSymbol)(symbolObj *symbol);
 	int (*cleanup)(void *renderer_data);
 } ;
+MS_DLL_EXPORT int msRenderRasterizedSVGSymbol(imageObj* img, double x, double y, symbolObj* symbol, symbolStyleObj* style);
 
 #endif /* SWIG */
 

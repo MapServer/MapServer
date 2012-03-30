@@ -78,6 +78,7 @@ typedef mapserver::rgba8 color_type;
 typedef mapserver::pixel32_type pixel_type;
 
 typedef mapserver::blender_rgba_pre<color_type, band_order> blender_pre;
+
 typedef mapserver::pixfmt_alpha_blend_rgba<blender_pre, mapserver::rendering_buffer, pixel_type> pixel_format;
 typedef mapserver::rendering_buffer rendering_buffer;
 typedef mapserver::renderer_base<pixel_format> renderer_base;
@@ -565,39 +566,10 @@ int agg2RenderVectorSymbol(imageObj *img, double x, double y,
 
 int agg2RenderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj * style) {
 	AGG2Renderer *r = AGG_RENDERER(img);
-	pixel_format pf;
-   rendering_buffer b;
 	rasterBufferObj *pixmap = symbol->pixmap_buffer;
 	assert(pixmap->type == MS_BUFFER_BYTE_RGBA);
-    if(!symbol->renderer_cache) {
-        band_type *data = (band_type*)msSmallMalloc(pixmap->width*pixmap->height*4*sizeof(band_type));
-        for(unsigned int row=0; row<pixmap->height;row++) {
-           unsigned char *a = pixmap->data.rgba.a + row * pixmap->data.rgba.row_step;
-           unsigned char *r = pixmap->data.rgba.r + row * pixmap->data.rgba.row_step;
-           unsigned char *g = pixmap->data.rgba.g + row * pixmap->data.rgba.row_step;
-           unsigned char *b = pixmap->data.rgba.b + row * pixmap->data.rgba.row_step;
-           band_type* pixptr = data + row * pixmap->width * 4;
-           for(unsigned int col=0;col<pixmap->width;col++) {
-              pixptr[band_order::A] = *a;
-              pixptr[band_order::G] = *g;
-              pixptr[band_order::B] = *b;
-              pixptr[band_order::R] = *r;
-              pixptr+=4;
-              a += pixmap->data.rgba.pixel_step;
-              r += pixmap->data.rgba.pixel_step;
-              g += pixmap->data.rgba.pixel_step;
-              b += pixmap->data.rgba.pixel_step;                                          
-           }
-        }
-        //memcpy(data,pixmap->data.rgba.pixels,pixmap->width*pixmap->height*4);
-        rendering_buffer *b = new rendering_buffer(data, pixmap->width, pixmap->height, (int)pixmap->width*4);
-        symbol->renderer_cache = (void*)b;
-        pf.attach(*b);
-        pf.premultiply();
-    } else {
-        rendering_buffer *b = (rendering_buffer*)symbol->renderer_cache;
-        pf.attach(*b);
-    }
+   rendering_buffer b(pixmap->data.rgba.pixels,pixmap->width,pixmap->height,pixmap->data.rgba.row_step);
+   pixel_format pf(b);
 
 	r->m_rasterizer_aa.reset();
 	r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
@@ -951,19 +923,7 @@ int agg2FreeImage(imageObj * image) {
 }
 
 int agg2FreeSymbol(symbolObj * symbol) {
-	switch(symbol->type) {
-	case MS_SYMBOL_PIXMAP:
-        case MS_SYMBOL_SVG:
-	   if(symbol->renderer_cache) {
-	      rendering_buffer *rb = (rendering_buffer*)symbol->renderer_cache;
-	      free(rb->buf());
-	      delete (rendering_buffer*)symbol->renderer_cache;
-	   }
-	   symbol->renderer_cache = NULL;
-	   break;
-	}
 	return MS_SUCCESS;
-
 }
 
 int agg2InitCache(void **vcache) {

@@ -719,6 +719,7 @@ int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb) {
 
 int readPNG(char *path, rasterBufferObj *rb) {
     png_uint_32 width,height,row_bytes;
+    unsigned char *a,*r,*g,*b;
     int bit_depth,color_type,i;
     unsigned char **row_pointers;
     png_structp png_ptr = NULL;
@@ -757,10 +758,10 @@ int readPNG(char *path, rasterBufferObj *rb) {
     row_pointers = (unsigned char**)malloc(height*sizeof(unsigned char*));
     rb->data.rgba.pixel_step=4;
     rb->data.rgba.row_step = width*4;
-    rb->data.rgba.b = &rb->data.rgba.pixels[0];
-    rb->data.rgba.g = &rb->data.rgba.pixels[1];
-    rb->data.rgba.r = &rb->data.rgba.pixels[2];
-    rb->data.rgba.a = &rb->data.rgba.pixels[3];
+    b = rb->data.rgba.b = &rb->data.rgba.pixels[0];
+    g = rb->data.rgba.g = &rb->data.rgba.pixels[1];
+    r = rb->data.rgba.r = &rb->data.rgba.pixels[2];
+    a = rb->data.rgba.a = &rb->data.rgba.pixels[3];
     
     for(i=0;i<height;i++) {
         row_pointers[i] = &(rb->data.rgba.pixels[i*rb->data.rgba.row_step]);
@@ -797,6 +798,21 @@ int readPNG(char *path, rasterBufferObj *rb) {
     row_pointers=NULL;
     png_read_end(png_ptr,NULL);
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+
+    /*premultiply data*/
+    for(i=0;i<width*height;i++) {
+       if(*a < 255) {
+          if(*a == 0)
+          {
+              *r=*g=*b=0;
+          } else {
+            *r = (*r * *a + 255) >> 8;
+            *g = (*g * *a + 255) >> 8;
+            *b = (*b * *a + 255) >> 8;
+          }
+       }
+       a+=4;b+=4;g+=4;r+=4;
+    }
     
     fclose(stream);
     return MS_SUCCESS; 
