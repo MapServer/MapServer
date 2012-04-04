@@ -3,7 +3,7 @@ Summary
 -------
 
    
-The MapServer is a system for developing web-based GIS applications. 
+MapServer is a system for developing web-based GIS applications. 
 The basic system consists of a CGI program that can be configured to 
 respond to a variety of spatial requests like making maps, scalebars, 
 and point, area and feature queries. Virtually all aspects of an 
@@ -19,7 +19,7 @@ Bug reports and enhancment submissions can be reported in the MapServer
 Bugzilla at the following url.   If you do make changes and/or enhancements, 
 please let us know so that they might be incorporated into future releases.
 
-  http://trac.osgeo.org/mapserver
+  https://github.com/mapserver/mapserver/issues
 
 
 Join the MapServer user mailing list online at:
