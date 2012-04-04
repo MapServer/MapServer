@@ -1,4 +1,3 @@
-
 MapServer Revision History
 ==========================
 
@@ -13,7 +12,9 @@ the top of the list.)
 For a complete change history, please see the Subversion log comments.
 
 Current Version (future 6.0.3, SVN branch-6-0):
----------------------------
+-----------------------------------------------
+
+- Added missing DEFRESOLUTION parameter to msCopyMap() function (#4272) 
 
 - Fixed Python MapScript layerObj/classObj Error (#3940)
 
