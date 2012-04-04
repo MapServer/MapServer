@@ -1043,6 +1043,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
     MS_COPYSTELEM(cellsize);
     MS_COPYSTELEM(units);
     MS_COPYSTELEM(scaledenom);
+    MS_COPYSTELEM(defresolution);
     MS_COPYSTELEM(resolution);
     MS_COPYSTRING(dst->shapepath, src->shapepath); 
     MS_COPYSTRING(dst->mappath, src->mappath); 
