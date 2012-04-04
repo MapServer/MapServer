@@ -1,4 +1,3 @@
-
 MapServer Revision History
 ==========================
 
@@ -14,6 +13,8 @@ For a complete change history, please see the Subversion log comments.
 
 Current Version (git master, 6.1-dev, future 6.2): 
 -------------------------------------------------
+
+- Added missing DEFRESOLUTION parameter to msCopyMap() function (#4272)
 
 - Migrated svn to git, and issue tracking from trac to github
 
