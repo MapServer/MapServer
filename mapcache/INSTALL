@@ -1,11 +1,6 @@
 Unix compilation instructions
 -----------------------------
 
-If you are using an svn checkout rather than a tarball distribution, you must first
-run autoconf in the root directory, to create the configure file from configure.in:
-
-$ autoconf
-
 For unix users, the compilation process should resume to:
 
 $ ./configure
