@@ -1,0 +1,7 @@
+.libs
+*.o
+*.lo
+config.log
+config.status
+*.dll
+
