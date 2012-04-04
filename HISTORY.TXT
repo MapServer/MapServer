@@ -12,8 +12,10 @@ the top of the list.)
 
 For a complete change history, please see the Subversion log comments.
 
-Current Version (SVN trunk, 6.1-dev, future 6.2): 
+Current Version (git master, 6.1-dev, future 6.2): 
 -------------------------------------------------
+
+- Migrated svn to git, and issue tracking from trac to github
 
 - Fixed mapscript is unusable in a web application due to memory leaks (#4262)
  
