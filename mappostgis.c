@@ -296,12 +296,11 @@ wkbReadPoint(wkbObj *w)
 ** Linestrings, circular strings, polygon rings, all show this
 ** form.
 */
-static lineObj*
-wkbReadLine(wkbObj *w)
+static void
+wkbReadLine(wkbObj *w, lineObj *line)
 {
     int i;
     pointObj p;
-    lineObj *line = msSmallMalloc(sizeof(lineObj));
     int npoints = wkbReadInt(w);
 
     line->numpoints = npoints;
@@ -310,7 +309,6 @@ wkbReadLine(wkbObj *w)
         wkbReadPointP(w, &p);
         line->point[i] = p;
     }
-    return line;
 }
 
 /*
@@ -363,7 +361,7 @@ wkbConvPointToShape(wkbObj *w, shapeObj *shape)
 {
     char endian;
     int type;
-    lineObj *line;
+    lineObj line;
 
     endian = wkbReadChar(w);
     type = wkbTypeMap(w,wkbReadInt(w));
@@ -371,12 +369,10 @@ wkbConvPointToShape(wkbObj *w, shapeObj *shape)
     if( type != WKB_POINT ) return MS_FAILURE;
 
     if( ! (shape->type == MS_SHAPE_POINT) ) return MS_FAILURE;
-    line = msSmallMalloc(sizeof(lineObj));
-    line->numpoints = 1;
-    line->point = msSmallMalloc(sizeof(pointObj));
-    line->point[0] = wkbReadPoint(w);
-    msAddLineDirectly(shape, line);
-    free(line);
+    line.numpoints = 1;
+    line.point = msSmallMalloc(sizeof(pointObj));
+    line.point[0] = wkbReadPoint(w);
+    msAddLineDirectly(shape, &line);
     return MS_SUCCESS;
   }
 
@@ -388,16 +384,15 @@ wkbConvLineStringToShape(wkbObj *w, shapeObj *shape)
 {
     char endian;
     int type;
-    lineObj *line;
+    lineObj line;
 
     endian = wkbReadChar(w);
     type = wkbTypeMap(w,wkbReadInt(w));
 
     if( type != WKB_LINESTRING ) return MS_FAILURE;
     
-    line = wkbReadLine(w);
-    msAddLineDirectly(shape, line);
-    free(line);
+    wkbReadLine(w,&line);
+    msAddLineDirectly(shape, &line);
     
     return MS_SUCCESS;
 }
@@ -411,7 +406,7 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
     char endian;
     int type;
     int i, nrings;
-    lineObj *line;
+    lineObj line;
 
     endian = wkbReadChar(w);
     type = wkbTypeMap(w,wkbReadInt(w));
@@ -423,9 +418,8 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
     
     /* Add each ring to the shape */
     for( i = 0; i < nrings; i++ ) { 
-        line = wkbReadLine(w);
-        msAddLineDirectly(shape, line);
-        free(line);
+        wkbReadLine(w,&line);
+        msAddLineDirectly(shape, &line);
     }    
 
     return MS_SUCCESS;
@@ -2036,9 +2030,11 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid) {
 
 }
 
+#define wkbstaticsize 4096
 int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
 
     char *wkbstr = NULL;
+    unsigned char wkbstatic[wkbstaticsize];
     unsigned char *wkb = NULL;
     wkbObj w;
     msPostGISLayerInfo *layerinfo = NULL;
@@ -2061,8 +2057,11 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
         return MS_FAILURE;
     }
 
-
-    wkb = calloc(wkbstrlen, sizeof(char));
+    if(wkbstrlen > wkbstaticsize) {
+        wkb = calloc(wkbstrlen, sizeof(char));
+    } else {
+        wkb = wkbstatic;
+    }
 #if TRANSFER_ENCODING == 64
     result = msPostGISBase64Decode(wkb, wkbstr, wkbstrlen - 1);
 #else
@@ -2070,7 +2069,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
 #endif
 
     if( ! result ) {
-        free(wkb);
+        if(wkb!=wkbstatic) free(wkb);
         return MS_FAILURE;
     }
 
@@ -2122,7 +2121,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape) {
     }
 
     /* All done with WKB geometry, free it! */
-    free(wkb);
+    if(wkb!=wkbstatic) free(wkb);
 
     if (result != MS_FAILURE) {
         int t;
