@@ -8,8 +8,11 @@ config.status
 Makefile
 legend
 libmapserver.a
+libmapserver.la
+libtool
 mapscript/csharp/Makefile
 mapscript/java/Makefile
+mapscript/perl/Makefile.PL
 mapscriptvars
 mapserv
 mapserver-config
