@@ -30,11 +30,14 @@
 /*
 ** maplabel.c: Routines to enable text drawing, BITMAP or TRUETYPE.
 */
+
+#ifdef USE_GD
 #include <gdfonts.h>
 #include <gdfontl.h>
 #include <gdfontt.h>
 #include <gdfontmb.h>
 #include <gdfontg.h>
+#endif
 
 #include "mapserver.h"
 
@@ -910,7 +913,6 @@ int msFreeFontSet(fontSetObj *fontset)
 
 int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 {
-#ifdef USE_GD_FT
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH];
   char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
@@ -986,10 +988,6 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
   free(path);
 
   return(0);
-#else
-  msSetError(MS_TTFERR, "TrueType font support is not available.", "msLoadFontSet()");
-  return(-1);
-#endif
 }
 
 int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset,
@@ -1182,6 +1180,7 @@ int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rect
   }
 }
 
+#ifdef USE_GD
 gdFontPtr msGetBitmapFont(int size)
 {
   switch(size) { /* set the font to use */
@@ -1225,6 +1224,7 @@ gdFontPtr msGetBitmapFont(int size)
     return(NULL);
   }
 }
+#endif
 
 #define MARKER_SLOP 2
 

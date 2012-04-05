@@ -559,6 +559,8 @@ typedef struct {
 #define gdIOCtx void
 #endif
 
+
+#ifdef USE_GD
 /************************************************************************/
 /*                            msIO_gd_putC()                            */
 /*                                                                      */
@@ -589,6 +591,7 @@ static int msIO_gd_putBuf( gdIOCtx *cbData, const void *data, int byteCount )
 
     return msIO_contextWrite( merged_context->ms_io_ctx, data, byteCount );
 }
+#endif
 
 /************************************************************************/
 /*                          msIO_getGDIOCtx()                           */

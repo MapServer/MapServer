@@ -30,7 +30,6 @@
 #ifndef RESAMPLE_H
 #define RESAMPLE_H
 
-#include <gd.h>
 #include "mapserver.h"
 #include "mapproject.h"
 

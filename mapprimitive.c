@@ -1832,10 +1832,6 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
 
   offsets = NULL;
 
-#ifndef GD_HAS_FTEX_XSHOW
-  goto ANGLEFOLLOW_FAILURE; /* we don't have a current enough version of GD, fall back to ANGLE AUTO */
-#else
-
   tmp_length = total_length;
   if (label->repeatdistance > 0)
     tmp_length = line_length;
@@ -2205,7 +2201,6 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
   }
 
   goto END; /* normal exit */
-#endif
 
   ANGLEFOLLOW_FAILURE: /* Angle follow failure: add the line index in the arrays */
   if (*regular_lines_index == *regular_lines_size) {

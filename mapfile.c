@@ -1770,12 +1770,7 @@ static int loadLabel(labelObj *label)
         label->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(msyystring_buffer);
         label->numbindings++;
       } else if ( symbol == MS_FOLLOW ) {
-#ifndef GD_HAS_FTEX_XSHOW
-	msSetError(MS_IDENTERR, "Keyword FOLLOW is not valid without TrueType font support and GD version 2.0.29 or higher.", "loadlabel()");
-	return(-1);
-#else 
         label->anglemode = MS_FOLLOW;         
-#endif
       } else if ( symbol == MS_AUTO2 ) {
 	label->anglemode = MS_AUTO2;
       } else
@@ -1818,7 +1813,6 @@ static int loadLabel(labelObj *label)
       }
       break;
     case(FONT):
-#if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if((symbol = getSymbol(2, MS_STRING, MS_BINDING)) == -1)
         return(-1);
 
@@ -1832,10 +1826,6 @@ static int loadLabel(labelObj *label)
         label->bindings[MS_LABEL_BINDING_FONT].item = msStrdup(msyystring_buffer);
         label->numbindings++;
       }
-#else
-      msSetError(MS_IDENTERR, "Keyword FONT is not valid without TrueType font support.", "loadlabel()");    
-      return(-1);
-#endif
       break;
     case(FORCE):
       switch(msyylex()) {
@@ -1960,7 +1950,6 @@ static int loadLabel(labelObj *label)
       }
       break;
     case(SIZE):
-#if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if(label->bindings[MS_LABEL_BINDING_SIZE].item) {
         msFree(label->bindings[MS_LABEL_BINDING_SIZE].item);
         label->bindings[MS_LABEL_BINDING_SIZE].item = NULL;
@@ -1977,10 +1966,6 @@ static int loadLabel(labelObj *label)
         label->numbindings++;
       } else
         label->size = symbol;
-#else
-      if((label->size = getSymbol(5, MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
-        return(-1);
-#endif
       break; 
     case(STYLE):
       if(msGrowLabelStyles(label) == NULL)
@@ -5674,9 +5659,7 @@ static int loadMapInternal(mapObj *map)
       if (resolveSymbolNames(map) == MS_FAILURE) return MS_FAILURE;
       
 
-#if defined (USE_GD_TTF) || defined (USE_GD_FT)
       if(msLoadFontSet(&(map->fontset), map) == -1) return MS_FAILURE;
-#endif
 
       return MS_SUCCESS;
       break;

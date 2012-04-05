@@ -198,6 +198,7 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue, int red, int green, int b
     return msGetClass_String( layer, &color, pixel_value );
 }
 
+#ifdef USE_GD
 /************************************************************************/
 /*                            msAddColorGD()                            */
 /*                                                                      */
@@ -313,6 +314,8 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
 
   return op; /* Return newly allocated color */  
 }
+
+#endif
 
 /************************************************************************/
 /*                        msDrawRasterLayerLow()                        */
