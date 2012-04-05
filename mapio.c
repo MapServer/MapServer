@@ -549,9 +549,15 @@ static void msIO_Initialize( void )
 /* ==================================================================== */
 
 typedef struct {
+#ifdef USE_GD
     gdIOCtx        gd_io_ctx;
+#endif
     msIOContext    *ms_io_ctx;
 } msIO_gdIOCtx;
+
+#ifndef USE_GD
+#define gdIOCtx void
+#endif
 
 /************************************************************************/
 /*                            msIO_gd_putC()                            */
@@ -601,8 +607,10 @@ gdIOCtx *msIO_getGDIOCtx( FILE *fp )
         return NULL;
 
     merged_context = (msIO_gdIOCtx *) calloc(1,sizeof(msIO_gdIOCtx));
+#ifdef USE_GD
     merged_context->gd_io_ctx.putC = msIO_gd_putC;
     merged_context->gd_io_ctx.putBuf = msIO_gd_putBuf;
+#endif
     merged_context->ms_io_ctx = context;
 
     return (gdIOCtx *) merged_context;

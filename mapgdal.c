@@ -256,8 +256,17 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     }
     else
     {
+#ifdef USE_GD
         assert( format->imagemode == MS_IMAGEMODE_PC256
                 && format->renderer == MS_RENDER_WITH_GD );
+#else
+        {
+            msReleaseLock( TLOCK_GDAL );
+            msSetError( MS_MEMERR, "GD not compiled in. This is a bug.", "msSaveImageGDAL()");
+            return MS_FAILURE;
+        }
+#endif
+        
     }
 
 /* -------------------------------------------------------------------- */
@@ -317,12 +326,14 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
                               + iBand * image->width * image->height,
                               image->width, 1, GDT_Byte, 1, 0 );
             }
+#ifdef USE_GD
             else if(format->renderer == MS_RENDER_WITH_GD) {
                gdImagePtr img = (gdImagePtr)image->img.plugin;
                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
                               img->pixels[iLine], 
                               image->width, 1, GDT_Byte, 0, 0 );
             }
+#endif
             else {
                GByte *pabyData;
                unsigned char *pixptr = NULL;
@@ -395,6 +406,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /* -------------------------------------------------------------------- */
 /*      Attach the palette if appropriate.                              */
 /* -------------------------------------------------------------------- */
+#ifdef USE_GD
     if( format->renderer == MS_RENDER_WITH_GD )
     {
         GDALColorEntry sEntry;
@@ -425,8 +437,9 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 
         GDALDestroyColorTable( hCT );
     }
-
-    else if( format->imagemode == MS_IMAGEMODE_RGB )
+    else
+#endif
+    if( format->imagemode == MS_IMAGEMODE_RGB )
     {
         GDALSetRasterColorInterpretation( 
             GDALGetRasterBand( hMemDS, 1 ), GCI_RedBand );

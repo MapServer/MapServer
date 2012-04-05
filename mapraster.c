@@ -170,9 +170,9 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
 
 int msGetClass(layerObj *layer, colorObj *color )
 {
-    char pixel_value[12];
+    char pixel_value[100];
 
-    snprintf( pixel_value, sizeof(pixel_value), "%d", color->pen );
+    snprintf( pixel_value, sizeof(pixel_value), "%03d%03d%03d", color->red, color->green, color->blue );
 
     return msGetClass_String( layer, color, pixel_value );
 }

@@ -35,6 +35,7 @@
 
 MS_CVSID("$Id$")
 
+#ifdef USE_GD
 /*
  * Functions to reset any pen (color index) values previously set. Used primarily to reset things when
  * using MapScript to create multiple images. How the pen values are set is irrelevant (definitely output
@@ -115,6 +116,7 @@ void msClearPenValues(mapObj *map) {
   msClearQueryMapPenValues(&(map->querymap));
   
 }
+#endif
 
 /* msPrepareImage()
  *
@@ -884,6 +886,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
                  ma+=mask.data.rgba.pixel_step;
               }
            }
+#ifdef USE_GD
         } else if(rb.type == MS_BUFFER_GD) {
            for(row=0;row<rb.height;row++) {
               unsigned char *ma;
@@ -895,7 +898,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
                  ma+=mask.data.rgba.pixel_step;
               }
            }
-
+#endif
         }
      }  
 	  renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);
@@ -932,8 +935,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
   }
 
+#ifdef USE_GD
   /* reset layer pen values just in case the map has been previously processed */
   msClearLayerPenValues(layer);
+#endif
   
   /* open this layer */
   status = msLayerOpen(layer);
@@ -1244,8 +1249,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(map->querymap.style == MS_NORMAL || status != MS_SUCCESS) return(status);
   }
 
+#ifdef USE_GD
   /* reset layer pen values just in case the map has been previously processed */
   msClearLayerPenValues(layer);
+#endif
 
   /* if MS_HILITE, alter the one style (always at least 1 style), and set a MINDISTANCE for the labelObj to avoid duplicates */
   if(map->querymap.style == MS_HILITE) {
@@ -3256,7 +3263,9 @@ int msValueToRange(styleObj *style, double fieldVal)
   style->color.red = (int)(MS_MAX(0,(MS_MIN(255, (style->mincolor.red + ((style->maxcolor.red - style->mincolor.red) * scaledVal))))));
   style->color.green = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.green + ((style->maxcolor.green - style->mincolor.green) * scaledVal))))));
   style->color.blue = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.blue + ((style->maxcolor.blue - style->mincolor.blue) * scaledVal))))));
+#ifdef USE_GD
   style->color.pen = MS_PEN_UNSET; /*so it will recalculate pen*/
+#endif
 
   /*( "msMapRange(): %i %i %i", style->color.red , style->color.green, style->color.blue);*/
 

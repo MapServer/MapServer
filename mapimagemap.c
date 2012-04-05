@@ -944,21 +944,6 @@ DEBUG_IF printf("msCircleDrawShadeSymbolIM<BR>\n");
 void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
-/*  int offset_x, offset_y, x, y;
-  int j;
-  gdPoint oldpnt,newpnt;
-  gdPoint mPoints[MS_MAXVECTORPOINTS];
-
-  gdImagePtr tmp;
-  int tmp_fc=-1, tmp_bc, tmp_oc=-1;
-*/  int fc, bc, oc;
-/*  double d;
-
-  
-  int bbox[8];
-  rectObj rect;
-  char *font=NULL;
-*/
   int ox, oy;
   double size;
 	
@@ -970,14 +955,8 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
 
   if(!p) return;
 
-/* if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor)); */
-/* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
-/* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
 
   symbol = symbolset->symbol[style->symbol];
-  bc = style->backgroundcolor.pen;
-  fc = style->color.pen;
-  oc = style->outlinecolor.pen;
   ox = style->offsetx*scalefactor;
   oy = style->offsety*scalefactor;
   if(style->size == -1) {
@@ -990,12 +969,10 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
   size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
-/* if(fc<0 && oc<0) return; // nothing to do */
   if(size < 1) return; /* size too small */
 
 /* DEBUG_IF printf(".%d.%d.%d.", symbol->type, style->symbol, fc); */
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color */
-/* gdImageSetPixel(img, p->x + ox, p->y + oy, fc); */
 		
     if (dxf) {
       if (dxf==2)
@@ -1035,75 +1012,9 @@ DEBUG_IF printf("A");
   switch(symbol->type) {  
   case(MS_SYMBOL_TRUETYPE):
 DEBUG_IF printf("T");
-/*
- * #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-    font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
-    if(!font) return;
-
-    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
-
-    x = p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx;
-    y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
-
-#ifdef USE_GD_TTF
-    gdImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
-#else
-    gdImageStringFT(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
-#endif
-
-#endif
-*/
     break;
   case(MS_SYMBOL_PIXMAP):
 DEBUG_IF printf("P");
-/*    if(size == 1) { // don't scale
-      offset_x = MS_NINT(p->x - .5*symbol->img->sx + ox);
-      offset_y = MS_NINT(p->y - .5*symbol->img->sy + oy);
-      gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
-    } else {
-      d = size/symbol->img->sy;
-      offset_x = MS_NINT(p->x - .5*symbol->img->sx*d + ox);
-      offset_y = MS_NINT(p->y - .5*symbol->img->sy*d + oy);
-      gdImageCopyResized(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*d, symbol->img->sy*d, symbol->img->sx, symbol->img->sy);
-    }
-    break;
-  case(MS_SYMBOL_ELLIPSE):
-    d = size/symbol->sizey;
-    x = MS_NINT(symbol->sizex*d)+1;
-    y = MS_NINT(symbol->sizey*d)+1;
-
-    // create temporary image and allocate a few colors //
-    tmp = gdImageCreate(x, y);
-    tmp_bc = gdImageColorAllocate(tmp, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-    gdImageColorTransparent(tmp, 0);
-    if(fc >= 0)
-      tmp_fc = gdImageColorAllocate(tmp, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
-    if(oc >= 0)
-      tmp_oc = gdImageColorAllocate(tmp, gdImageRed(img, oc), gdImageGreen(img, oc), gdImageBlue(img, oc));
-
-    x = MS_NINT(tmp->sx/2);
-    y = MS_NINT(tmp->sy/2);
-
-    // draw in the temporary image //
-    if(tmp_oc >= 0) {
-      gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_oc);
-      if(symbol->filled && tmp_fc >= 0)
-	gdImageFillToBorder(tmp, x, y, tmp_oc, tmp_fc);
-    } else {
-      if(tmp_fc >= 0) {
-	gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_fc);
-	if(symbol->filled)
-	  gdImageFillToBorder(tmp, x, y, tmp_fc, tmp_fc);
-      }
-    }
-
-    // paste the tmp image in the main image //
-    offset_x = MS_NINT(p->x - .5*tmp->sx + ox);
-    offset_y = MS_NINT(p->y - .5*tmp->sx + oy);
-    gdImageCopy(img, tmp, offset_x, offset_y, 0, 0, tmp->sx, tmp->sy);
-
-    gdImageDestroy(tmp);
-*/
     break;
   case(MS_SYMBOL_VECTOR):
 DEBUG_IF printf("V");
@@ -1164,13 +1075,6 @@ DEBUG_IF printf("DEF");
 void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
-/* int styleDashed[100]; */
-/* int x, y; */
-/* int brush_bc, brush_fc; */
-/* double size, d; */
-/* gdImagePtr brush=NULL; */
-/* gdPoint points[MS_MAXVECTORPOINTS]; */
-  int fc, bc;
   int i,j,l;
 char first = 1;
 double size;
@@ -1180,14 +1084,7 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
   if(!p) return;
   if(p->numlines <= 0) return;
 
-/* if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor)); */
-/* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
-/* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
-
   symbol = symbolset->symbol[style->symbol];
-  bc = style->backgroundcolor.pen;
-  fc = style->color.pen;
-  if(fc==-1) fc = style->outlinecolor.pen;
   if(style->size == -1) {
       size = msSymbolGetDefaultSize( symbol );
       size = MS_NINT(size*scalefactor);
@@ -1199,10 +1096,7 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
-/* if(fc < 0) return; // nothing to do */
-/* if(size < 1) return; // size too small */
   if(style->symbol == 0) { /* just draw a single width line */
-/* imagePolyline(img, p, fc, style->offsetx, style->offsety); */
 		  for(l=0,j=0; j<p->numlines; j++) {
 		    if (dxf == 2){
 		      im_iprintf (&imgStr, "LINE\n%d\n", matchdxfcolor(style->color));
@@ -1254,107 +1148,6 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 
   DEBUG_IF printf("-%d-",symbol->type);
   
-/*  switch(symbol->type) {
-  case(MS_SYMBOL_SIMPLE):
-    if(bc == -1) bc = imTransparent;
-    break;
-  case(MS_SYMBOL_TRUETYPE):
-    msImageTruetypePolyline(symbolset, img, p, style, scalefactor);
-    return;
-    break;
-  case(MS_SYMBOL_ELLIPSE):
-    bc = imTransparent;
-
-    d = (size)/symbol->sizey;
-    x = MS_NINT(symbol->sizex*d);    
-    y = MS_NINT(symbol->sizey*d);
-    
-    if((x < 2) && (y < 2)) break;
-    
-    // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { // not in cache, create
-      brush = gdImageCreate(x, y);
-      brush_bc = gdImageColorAllocate(brush,gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));    
-      gdImageColorTransparent(brush,0);
-      brush_fc = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
-      
-      x = MS_NINT(brush->sx/2); // center the ellipse
-      y = MS_NINT(brush->sy/2);
-      
-      // draw in the brush image
-      gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
-      if(symbol->filled)
-	gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
-      
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
-    }
-
-    gdImageSetBrush(img, brush);
-    fc = 1; bc = 0;
-    break;
-  case(MS_SYMBOL_PIXMAP):
-    gdImageSetBrush(img, symbol->img);
-    fc = 1; bc = 0;
-    break;
-  case(MS_SYMBOL_VECTOR):
-    if(bc == -1) bc = imTransparent;
-
-    d = size/symbol->sizey;
-    x = MS_NINT(symbol->sizex*d);    
-    y = MS_NINT(symbol->sizey*d);
-
-    if((x < 2) && (y < 2)) break;
-
-    // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style, fc, size)) == NULL) { // not in cache, create
-      brush = gdImageCreate(x, y);
-      if(bc >= 0)
-	brush_bc = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-      else {
-	brush_bc = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-	gdImageColorTransparent(brush,0);
-      }
-      brush_fc = gdImageColorAllocate(brush,style->color.red, style->color.green, style->color.blue);
-      
-      // draw in the brush image 
-      for(i=0;i < symbol->numpoints;i++) {
-	points[i].x = MS_NINT(d*symbol->points[i].x);
-	points[i].y = MS_NINT(d*symbol->points[i].y);
-      }
-      gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
-
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
-    }
-
-    gdImageSetBrush(img, brush);
-    fc = 1; bc = 0;
-    break;
-  }  
-
-  if(symbol->patternlength > 0) {
-    int k=0, sc;
-   
-    sc = fc; // start with foreground color
-    for(i=0; i<symbol->patternlength; i++) {      
-      for(j=0; j<symbol->pattern[i]; j++) {
-	styleDashed[k] = sc;
-	k++;
-      } 
-      if(sc==fc) sc = bc; else sc = fc;
-    }
-    gdImageSetStyle(img, styleDashed, k);
-
-    if(!brush && !symbol->img)
-      imagePolyline(img, p, imStyled, style->offsetx, style->offsety);
-    else 
-      imagePolyline(img, p, imStyledBrushed, style->offsetx, style->offsety);
-  } else {
-    if(!brush && !symbol->img)
-      imagePolyline(img, p, fc, style->offsetx, style->offsety);
-    else
-      imagePolyline(img, p, imBrushed, style->offsetx, style->offsety);
-  }
-*/
   return;
 }
 
@@ -1365,17 +1158,6 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
-/*  gdPoint oldpnt, newpnt;
-  gdPoint sPoints[MS_MAXVECTORPOINTS];
-  gdImagePtr tile;
-  int x, y;
-  int tile_bc=-1, tile_fc=-1; // colors (background and foreground) //
-  int fc, bc, oc;
-  double d;
-  int bbox[8];
-  rectObj rect;
-  char *font=NULL;
-  */
   int i,j,l;
 char first = 1;
 double size;
@@ -1383,14 +1165,8 @@ double size;
 DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   if(!p) return;
   if(p->numlines <= 0) return;
-/* if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor)); */
-/* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
-/* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
 
   symbol = symbolset->symbol[style->symbol];
-/* bc = style->backgroundcolor.pen; */
-/* fc = style->color.pen; */
-/* oc = style->outlinecolor.pen; */
   if(style->size == -1) {
       size = msSymbolGetDefaultSize( symbol );
       size = MS_NINT(size*scalefactor);
@@ -1400,22 +1176,7 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   size = MS_MAX(size, style->minsize*img->resolutionfactor);
   size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
-/* DEBUG_IF printf ("a"); */
-/* if(fc==-1 && oc!=-1) { // use msDrawLineSymbolIM() instead (POLYLINE) */
-/* msDrawLineSymbolIM(symbolset, img, p, style, scalefactor); */
-/* return; */
-/* } */
-/* DEBUG_IF printf ("b"); */
-
-/* if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK */
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
-/* DEBUG_IF printf ("1"); */
-/* if(fc < 0) return; // nothing to do */
-/* DEBUG_IF printf ("2"); */
-/* if(size < 1) return; // size too small */
-/* DEBUG_IF printf ("3"); */
-      
-/* DEBUG_IF printf("BEF%s", img->img.imagemap); */
 	  if(style->symbol == 0) { /* simply draw a single pixel of the specified color //     */
 		  for(l=0,j=0; j<p->numlines; j++) {
 		    if (dxf == 2){
@@ -1461,349 +1222,28 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
 		      im_iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
   
-/* DEBUG_IF printf("AFT%s", img->img.imagemap); */
-/* STOOPID. GD draws polygons pixel by pixel ?! */
-	
-/* msImageFilledPolygon(img, p, fc); */
-/* if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety); */
   	     return;
 	  }
 /* DEBUG_IF printf ("d"); */
   DEBUG_IF printf("-%d-",symbol->type);
-/*  
-  switch(symbol->type) {
-  case(MS_SYMBOL_TRUETYPE):    
-    
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
-    font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
-    if(!font) return;
-
-    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
-    x = rect.maxx - rect.minx;
-    y = rect.maxy - rect.miny;
-
-    tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }    
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue);
-    
-    x = -rect.minx;
-    y = -rect.miny;
-
-#ifdef USE_GD_TTF
-    gdImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
-#else
-    gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
-#endif    
-
-    gdImageSetTile(img, tile);
-    msImageFilledPolygon(img,p,gdTiled);
-    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
-    gdImageDestroy(tile);
-#endif
-
-    break;
-  case(MS_SYMBOL_PIXMAP):
-    
-    gdImageSetTile(img, symbol->img);
-    msImageFilledPolygon(img, p, imTiled);
-    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
-
-    break;
-  case(MS_SYMBOL_ELLIPSE):    
-    d = size/symbol->sizey; // size ~ height in pixels
-    x = MS_NINT(symbol->sizex*d)+1;
-    y = MS_NINT(symbol->sizey*d)+1;
-
-    if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid //
-      msImageFilledPolygon(img, p, fc);
-      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
-      return;
-    }
-
-    tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }    
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue);
-    
-    x = MS_NINT(tile->sx/2);
-    y = MS_NINT(tile->sy/2);
-
-    //
-   //draw in the tile image
-    //
-    gdImageArc(tile, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tile_fc);
-    if(symbol->filled)
-      gdImageFillToBorder(tile, x, y, tile_fc, tile_fc);
-
-    //
-   //Fill the polygon in the main image
-    //
-    gdImageSetTile(img, tile);
-    msImageFilledPolygon(img,p,gdTiled);
-    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
-    gdImageDestroy(tile);
-
-    break;
-  case(MS_SYMBOL_VECTOR):
-    d = size/symbol->sizey; // size ~ height in pixels
-    x = MS_NINT(symbol->sizex*d)+1;    
-    y = MS_NINT(symbol->sizey*d)+1;
-
-    if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid //
-      msImageFilledPolygon(img, p, fc);
-      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
-      return;
-    }
-
-    //
-   //create tile image
-    //
-    tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, bc), gdImageGreen(img, bc), gdImageBlue(img, bc));
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }
-    tile_fc = gdImageColorAllocate(tile, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
-   
-    //
-   //draw in the tile image
-    //
-    if(symbol->filled) {
-
-      for(i=0;i < symbol->numpoints;i++) {
-	sPoints[i].x = MS_NINT(d*symbol->points[i].x);
-	sPoints[i].y = MS_NINT(d*symbol->points[i].y);
-      }
-      gdImageFilledPolygon(tile, sPoints, symbol->numpoints, tile_fc);      
-
-    } else  { // shade is a vector drawing //
-      
-      oldpnt.x = MS_NINT(d*symbol->points[0].x); // convert first point in shade smbol //
-      oldpnt.y = MS_NINT(d*symbol->points[0].y);
-
-      // step through the shade sy //
-      for(i=1;i < symbol->numpoints;i++) {
-	if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) {
-	  oldpnt.x = MS_NINT(d*symbol->points[i].x);
-	  oldpnt.y = MS_NINT(d*symbol->points[i].y);
-	} else {
-	  if((symbol->points[i-1].x < 0) && (symbol->points[i-1].y < 0)) { // Last point was PENUP, now a new beginning //
-	    oldpnt.x = MS_NINT(d*symbol->points[i].x);
-	    oldpnt.y = MS_NINT(d*symbol->points[i].y);
-	  } else {
-	    newpnt.x = MS_NINT(d*symbol->points[i].x);
-	    newpnt.y = MS_NINT(d*symbol->points[i].y);
-	    gdImageLine(tile, oldpnt.x, oldpnt.y, newpnt.x, newpnt.y, tile_fc);
-	    oldpnt = newpnt;
-	  }
-	}
-      } // end for loop //
-    }
-
-    //
-   //Fill the polygon in the main image
-    //
-    gdImageSetTile(img, tile);
-    msImageFilledPolygon(img, p, imTiled);
-    if(oc>-1)
-      imagePolyline(img, p, oc, style->offsetx, style->offsety);
-
-    break;
-  default:
-    break;
-  }
-*/
   return;
 }
-
-#ifdef notdef /* not currently used */
-static void billboardIM(imageObj* img, shapeObj *shape, labelObj *label)
-{
-/* int i; */
-/* shapeObj temp; */
-DEBUG_IF printf("billboardIM<BR>\n");
-/*
-  msInitShape(&temp);
-  msAddLine(&temp, &shape->line[0]);
-
-  if(label->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->backgroundcolor));
-  if(label->backgroundshadowcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->backgroundshadowcolor));
-
-  if(label->backgroundshadowcolor.pen >= 0) {
-    for(i=0; i<temp.line[0].numpoints; i++) {
-      temp.line[0].point[i].x += label->backgroundshadowsizex;
-      temp.line[0].point[i].y += label->backgroundshadowsizey;
-    }
-    msImageFilledPolygon(img, &temp, label->backgroundshadowcolor.pen);
-    for(i=0; i<temp.line[0].numpoints; i++) {
-      temp.line[0].point[i].x -= label->backgroundshadowsizex;
-      temp.line[0].point[i].y -= label->backgroundshadowsizey;
-    }
-  }
-
-  msImageFilledPolygon(img, &temp, label->backgroundcolor.pen);
-
-  msFreeShape(&temp);
-*/
-  
-}
-#endif /* def notdef */
 
 /*
  * Simply draws a label based on the label point and the supplied label object.
  */
 int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
 {
-  int x, y;
-		
-
   DEBUG_IF printf("msDrawText<BR>\n");
   if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);
   if(!dxf) return (0);
-  x = MS_NINT(labelPnt.x);
-  y = MS_NINT(labelPnt.y);
 
 	if (dxf == 2) {
 		im_iprintf (&imgStr, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
 	} else if (dxf) {
 		im_iprintf (&imgStr, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
 	}
-/*
-  if(label->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->color));
-  if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->outlinecolor));
-  if(label->shadowcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->shadowcolor));
-
-  if(label->type == MS_TRUETYPE) {
-    char *error=NULL, *font=NULL;
-    int bbox[8];
-    double angle_radians = MS_DEG_TO_RAD*label->angle;
-    double size;
-
-    size = label->size*scalefactor;
-
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
-    if(!fontset) {
-      msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextIM()");
-      return(-1);
-    }
-
-    if(!label->font) {
-      msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextIM()");
-      return(-1);
-    }
-
-    font = msLookupHashTable(&(fontset->fonts), label->font);
-    if(!font) {
-       msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextIM()",
-                  label->font);
-      return(-1);
-    }
-
-    if(label->outlinecolor.pen >= 0) { // handle the outline color //
-#ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);
-#else
-      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);
-#endif
-      if(error) {
-	msSetError(MS_TTFERR, error, "msDrawTextIM()");
-	return(-1);
-      }
-
-#ifdef USE_GD_TTF
-      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
-      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
-      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
-#else
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
-      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
-#endif
-
-    }
-
-    if(label->shadowcolor.pen >= 0) { // handle the shadow color //
-#ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
-#else
-      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
-#endif
-      if(error) {
-	msSetError(MS_TTFERR, error, "msDrawTextIM()");
-	return(-1);
-      }
-    }
-
-#ifdef USE_GD_TTF
-    gdImageStringTTF(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
-#else
-    gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
-#endif
-
-#else
-    msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextIM()");
-    return(-1);
-#endif
-
-  } else { // MS_BITMAP //
-    char **token=NULL;
-    int t, num_tokens;
-    imFontPtr fontPtr;
-
-    if((fontPtr = msGetBitmapFont(label->size)) == NULL)
-      return(-1);
-
-    if(label->wrap != '\0') {
-      if((token = msStringSplit(string, label->wrap, &(num_tokens))) == NULL)
-	return(-1);
-
-      y -= fontPtr->h*num_tokens;
-      for(t=0; t<num_tokens; t++) {
-	if(label->outlinecolor.pen >= 0) {
-	  gdImageString(img, fontPtr, x-1, y-1, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x-1, y+1, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x+1, y+1, token[t], label->outlinecolor.pen);
-	  gdImageString(img, fontPtr, x+1, y-1, token[t], label->outlinecolor.pen);
-	}
-
-	if(label->shadowcolor.pen >= 0)
-	  gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, token[t], label->shadowcolor.pen);
-
-	gdImageString(img, fontPtr, x, y, token[t], label->color.pen);
-
-	y += fontPtr->h; // shift down //
-      }
-
-      msFreeCharArray(token, num_tokens);
-    } else {
-      y -= fontPtr->h;
-
-      if(label->outlinecolor.pen >= 0) {
-	gdImageString(img, fontPtr, x-1, y-1, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x-1, y+1, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x+1, y+1, string, label->outlinecolor.pen);
-	gdImageString(img, fontPtr, x+1, y-1, string, label->outlinecolor.pen);
-      }
-
-      if(label->shadowcolor.pen >= 0)
-	gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, string, label->shadowcolor.pen);
-
-      gdImageString(img, fontPtr, x, y, string, label->color.pen);
-    }
-  }
-*/
   return(0);
 }
 
@@ -1846,13 +1286,6 @@ if(filename != NULL && strlen(filename) > 0) {
     stream = stdout;
   }
 
-/*  if( strcasecmp("ON",msGetOutputFormatOption( format, "INTERLACE", "ON" ))
-      == 0 )
-      gdImageInterlace(img, 1);
-
-  if(format->transparent)
-    gdImageColorTransparent(img, 0);
-*/
   if( strcasecmp(format->driver,"imagemap") == 0 )
   {
 DEBUG_IF printf("ALLOCD %d<BR>\n", img->size);
@@ -1893,12 +1326,6 @@ DEBUG_IF printf("FLEN %d<BR>\n", (int)strlen(img->img.imagemap));
 			  msIO_fprintf(stream, "0\nENDSEC\n0\nEOF\n");
 		  else 
 			  msIO_fprintf(stream, "</map>");
-/*#ifdef USE_GD_GIF
-    gdImageGif(img, stream);
-#else
-    msSetError(MS_MISCERR, "GIF output is not available.", "msSaveImage()");
-    return(MS_FAILURE);
-#endif*/
 	  }
   }
   else

@@ -1869,10 +1869,12 @@ int msSetup()
   if (msDebugInitFromEnv() != MS_SUCCESS)
     return MS_FAILURE;
 
+#ifdef USE_GD
 #ifdef USE_GD_FT
   if (gdFontCacheSetup() != 0) {
     return MS_FAILURE;
    }
+#endif
 #endif
 
 #ifdef USE_GEOS
@@ -1913,8 +1915,10 @@ void msCleanup()
   msHTTPCleanup();
 #endif
 
+#ifdef USE_GD
 #ifdef USE_GD_FT
   gdFontCacheShutdown(); 
+#endif
 #endif
 
 #ifdef USE_GEOS
@@ -2135,11 +2139,14 @@ void msFreeRasterBuffer(rasterBufferObj *b) {
     	b->data.palette.pixels = NULL;
     	b->data.palette.palette = NULL;
     	break;
+#ifdef USE_GD
     case MS_BUFFER_GD:
     	gdImageDestroy(b->data.gd_img);
         b->data.gd_img = NULL;
         break;
+#endif
     }
+    
 }
 
 /*

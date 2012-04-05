@@ -134,8 +134,9 @@ typedef ms_uint32 *     ms_bitarray;
 #include "mapproject.h"
 #include "cgiutil.h"
 
-
+#ifdef USE_GD
 #include <gd.h>
+#endif
 
 #if defined USE_PDF
 #include <pdflib.h>
@@ -368,7 +369,11 @@ extern "C" {
 /* #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE) */
 #define MS_VALID_EXTENT(rect)  (((rect.minx < rect.maxx && rect.miny < rect.maxy))?MS_TRUE:MS_FALSE)
 
+#ifdef USE_GD
 #define MS_INIT_COLOR(color,r,g,b,a) { (color).red = r; (color).green = g; (color).blue = b; (color).pen = MS_PEN_UNSET; (color).alpha=a; }
+#else
+#define MS_INIT_COLOR(color,r,g,b,a) { (color).red = r; (color).green = g; (color).blue = b; (color).alpha=a; }
+#endif
 #define MS_VALID_COLOR(color) (((color).red==-1 || (color).green==-1 || (color).blue==-1)?MS_FALSE:MS_TRUE)
 #define MS_COMPARE_COLOR(color1, color2) (((color2).red==(color1).red && (color2).green==(color1).green && (color2).blue==(color1).blue)?MS_TRUE:MS_FALSE)
 #define MS_TRANSPARENT_COLOR(color) (((color).alpha==0 || (color).red==-255 || (color).green==-255 || (color).blue==-255)?MS_TRUE:MS_FALSE)
@@ -377,8 +382,9 @@ extern "C" {
 
 #define MS_IMAGE_MIME_TYPE(format) (format->mimetype ? format->mimetype : "unknown")
 #define MS_IMAGE_EXTENSION(format)  (format->extension ? format->extension : "unknown")
-
+#ifdef USE_GD
 #define MS_DRIVER_GD(format)  (strncasecmp((format)->driver,"gd/",3)==0)
+#endif
 #define MS_DRIVER_SWF(format) (strncasecmp((format)->driver,"swf",3)==0)
 #define MS_DRIVER_GDAL(format)  (strncasecmp((format)->driver,"gdal/",5)==0)
 #define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
@@ -401,7 +407,9 @@ extern "C" {
 #define MS_RENDER_WITH_CAIRO_SVG 103
 #define MS_RENDER_WITH_OGL      104
 #define MS_RENDER_WITH_AGG 105
+#ifdef USE_GD
 #define MS_RENDER_WITH_GD 106
+#endif
 #define MS_RENDER_WITH_KML 107
 
 #ifndef SWIG
@@ -2014,9 +2022,6 @@ MS_DLL_EXPORT int msPreloadImageSymbol(rendererVTableObj *renderer, symbolObj *s
 MS_DLL_EXPORT int msPreloadSVGSymbol(symbolObj *symbol);
 MS_DLL_EXPORT symbolObj *msRotateSymbol(symbolObj *symbol, double angle);
 
-MS_DLL_EXPORT imageObj *msSymbolGetImageGD(symbolObj *symbol, outputFormatObj *format);
-MS_DLL_EXPORT int msSymbolSetImageGD(symbolObj *symbol, imageObj *image);
-
 MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, double *height, double scalefactor);
 /* MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect); */
 MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
@@ -2045,10 +2050,6 @@ MS_DLL_EXPORT int msAddLabelGroup(mapObj *map, int layerindex, int classindex, s
 MS_DLL_EXPORT int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, shapeObj *poly, int mindistance, int current_priority, int current_label);
 MS_DLL_EXPORT labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i);
 
-MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);
-MS_DLL_EXPORT int msImageTruetypePolyline(symbolSetObj *symbolset, imageObj *img, shapeObj *p, styleObj *style, double scalefactor);
-MS_DLL_EXPORT int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
-
 MS_DLL_EXPORT void msFreeShape(shapeObj *shape); /* in mapprimitive.c */
 MS_DLL_EXPORT void msFreeLabelPathObj(labelPathObj *path);
 MS_DLL_EXPORT shapeObj *msShapeFromWKT(const char *string);
@@ -2074,7 +2075,6 @@ MS_DLL_EXPORT void msTransformShapeToPixelRound(shapeObj *shape, rectObj extent,
 MS_DLL_EXPORT void msTransformShapeToPixelDoublePrecision(shapeObj *shape, rectObj extent, double cellsize);
 
 MS_DLL_EXPORT void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize);
-MS_DLL_EXPORT void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor);
 MS_DLL_EXPORT void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, double **line_lengths, int *max_line_index, double *max_line_length, int *segment_index, double *total_length);
 MS_DLL_EXPORT pointObj** msPolylineLabelPoint(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints, int center_on_longest_segment);
 MS_DLL_EXPORT pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints, int *regularLines, int numlines, int center_on_longest_segment);
@@ -2180,8 +2180,6 @@ MS_DLL_EXPORT int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
                          OGRwkbGeometryType type);
 #endif /* USE_OGR */
 
-MS_DLL_EXPORT int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img);
-
 MS_DLL_EXPORT int msInitializeVirtualTable(layerObj *layer);
 MS_DLL_EXPORT int msConnectLayer(layerObj *layer, const int connectiontype, 
                                  const char *library_str);
@@ -2262,8 +2260,10 @@ MS_DLL_EXPORT int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, 
 /* ==================================================================== */
 MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
 MS_DLL_EXPORT imageObj *msImageLoadIM( const char *filename );
+#ifdef USE_GD
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
 MS_DLL_EXPORT imageObj *msImageLoadGDCtx( gdIOCtx *ctx, const char *driver );
+#endif
 MS_DLL_EXPORT void msImageInitIM( imageObj *image );
 MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
@@ -2281,8 +2281,6 @@ MS_DLL_EXPORT int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 /*      End of Prototypes for functions in mapimagemap.c                */
 /* ==================================================================== */
 
-#define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
-MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 /* various JOIN functions (in mapjoin.c) */
 MS_DLL_EXPORT int msJoinConnect(layerObj *layer, joinObj *join);
@@ -2292,7 +2290,9 @@ MS_DLL_EXPORT int msJoinClose(joinObj *join);
 
 /*in mapraster.c */
 MS_DLL_EXPORT int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image, rasterBufferObj *rb );
+#ifdef USE_GD
 MS_DLL_EXPORT int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
+#endif
 MS_DLL_EXPORT int msGetClass(layerObj *layer, colorObj *color);
 MS_DLL_EXPORT int msGetClass_FloatRGB(layerObj *layer, float fValue,
                                       int red, int green, int blue );
@@ -2705,9 +2705,11 @@ int msClassifyRasterBuffer(rasterBufferObj *rb, rasterBufferObj *qrb);
 int msSaveRasterBuffer(mapObj *map, rasterBufferObj *data, FILE *stream, outputFormatObj *format);
 int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer, outputFormatObj *format);
 int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb);
+#ifdef USE_GD
 int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb);
 int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format);
 int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format);
+#endif
 
 void msBufferInit(bufferObj *buffer);
 void msBufferResize(bufferObj *buffer, size_t target_size);

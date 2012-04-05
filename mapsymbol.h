@@ -30,7 +30,10 @@
 #ifndef MAPSYMBOL_H
 #define MAPSYMBOL_H
 
+#ifdef USE_GD
 #include <gd.h>
+#endif
+
 #include <assert.h>
 
 enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_HATCH, MS_SYMBOL_SVG};
@@ -43,7 +46,9 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE,
 
 /* COLOR OBJECT */
 typedef struct {
+#ifdef USE_GD
   int pen;
+#endif
   int red;
   int green;
   int blue;
@@ -81,7 +86,9 @@ typedef struct {
 	union {
 		rgbaArrayObj rgba;
 		paletteArrayObj palette;
+#ifdef USE_GD
 		gdImagePtr gd_img;
+#endif
 	} data;
 } rasterBufferObj;
 

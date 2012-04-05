@@ -99,7 +99,9 @@ struct defaultOutputFormatEntry{
 struct defaultOutputFormatEntry defaultoutputformats[] = {
    {"png","AGG/PNG","image/png"},
    {"jpeg","AGG/JPEG","image/jpeg"},
+#ifdef USE_GD
    {"gif","GD/GIF","image/gif"},
+#endif
    {"png8","AGG/PNG8","image/png; mode=8bit"},
    {"png24","AGG/PNG","image/png; mode=24bit"},
 #ifdef USE_CAIRO
@@ -160,7 +162,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 
 {
     outputFormatObj *format = NULL;
-
+#ifdef USE_GD
     if( strcasecmp(driver,"GD/PC256") == 0 )
     {
 #ifdef USE_GD_GIF
@@ -195,6 +197,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->renderer = MS_RENDER_WITH_GD;
     }
 #endif /* USE_GD_PNG */
+#endif
 
     if( strcasecmp(driver,"AGG/PNG") == 0 )
     {
@@ -920,7 +923,10 @@ void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
         }
 
         if( j == mime_count && map->outputformatlist[i]->driver &&
-            (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
+            (
+#ifdef USE_GD
+             strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
+#endif
              strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0))
             mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
     }
@@ -974,7 +980,10 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
             }
 
             if( j == mime_count && map->outputformatlist[i]->driver &&
-               (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
+               (
+#ifdef USE_GD
+                strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
+#endif
                 strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
                 strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0 ||
                 strcasecmp(map->outputformatlist[i]->driver, "CAIRO/SVG")==0 ||
@@ -1075,7 +1084,7 @@ int msOutputFormatValidate( outputFormatObj *format, int issue_error )
         if( format->renderer != MS_RENDER_WITH_RAWDATA ) /* see bug 724 */
             format->renderer = MS_RENDER_WITH_RAWDATA;
     }
-    
+#ifdef USE_GD 
     if(format->renderer == MS_RENDER_WITH_GD && format->imagemode != MS_IMAGEMODE_PC256) {
        if( issue_error )
            msSetError( MS_MISCERR,
@@ -1086,6 +1095,7 @@ int msOutputFormatValidate( outputFormatObj *format, int issue_error )
                  format->name );
        format->renderer = MS_RENDER_WITH_AGG;
     }
+#endif
 
     return result;
 }
@@ -1106,8 +1116,10 @@ int msInitializeRendererVTable(outputFormatObj *format) {
     switch(format->renderer) {
         case MS_RENDER_WITH_AGG:
             return msPopulateRendererVTableAGG(format->vtable);
+#ifdef USE_GD
         case MS_RENDER_WITH_GD:
             return msPopulateRendererVTableGD(format->vtable);
+#endif
         case MS_RENDER_WITH_CAIRO_RASTER:
             return msPopulateRendererVTableCairoRaster(format->vtable);
         case MS_RENDER_WITH_CAIRO_PDF:

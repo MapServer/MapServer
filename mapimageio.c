@@ -547,6 +547,9 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
 #define SEEK_SET 0
 #endif /* SEEK_SET */
 
+
+
+#ifdef USE_GD
 /* #include <math.h> */
 /* #include <string.h> */
 /* #include <stdlib.h> */
@@ -716,6 +719,7 @@ int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb) {
     rb->data.gd_img = img;
     return MS_SUCCESS;
 }
+#endif
 
 int readPNG(char *path, rasterBufferObj *rb) {
     png_uint_32 width,height,row_bytes;
@@ -819,6 +823,7 @@ int readPNG(char *path, rasterBufferObj *rb) {
 
 }
 
+#ifdef USE_GD
 int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format) {
     gdIOCtx *ctx = NULL;
 
@@ -925,12 +930,17 @@ int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format)
     ctx->gd_free(ctx);
     return MS_SUCCESS;
 }
+#endif
 
 int msSaveRasterBuffer(mapObj *map, rasterBufferObj *rb, FILE *stream,
         outputFormatObj *format) {
+#ifdef USE_GD
 	if(rb->type == MS_BUFFER_GD) {
 		return saveGdImage(rb->data.gd_img, stream, format);
 	}
+#else
+   assert(rb->type != MS_BUFFER_GD);
+#endif
     if(strcasestr(format->driver,"/png")) {
         streamInfo info;
         info.fp = stream;
@@ -950,9 +960,13 @@ int msSaveRasterBuffer(mapObj *map, rasterBufferObj *rb, FILE *stream,
 
 int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer,
         outputFormatObj *format) {
+#ifdef USE_GD
     if(data->type == MS_BUFFER_GD) {
 		return saveGdImageBuffer(data->data.gd_img, buffer, format);
 	}
+#else
+    assert(data->type != MS_BUFFER_GD);
+#endif
     if(strcasestr(format->driver,"/png")) {
         streamInfo info;
         info.fp = NULL;

@@ -4562,7 +4562,17 @@ static int loadOutputFormat(mapObj *map)
                 || format->imagemode == MS_IMAGEMODE_BYTE )
                 format->renderer = MS_RENDER_WITH_RAWDATA;
             if( format->imagemode == MS_IMAGEMODE_PC256 )
+#ifdef USE_GD
                 format->renderer = MS_RENDER_WITH_GD;
+#else
+            {
+               msSetError(MS_MISCERR, 
+                       "OUTPUTFORMAT clause imagemode PC256, but the GD driver isn't configured in this build", 
+                       "loadOutputFormat()", driver );
+               return -1;
+            }
+            
+#endif
         }
 
         format->numformatoptions = numformatoptions;

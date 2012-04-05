@@ -433,7 +433,6 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
   /* TODO: Change this when we get rid of MS_MAXSTYLES */
   if (msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = map->symbolset.numsymbols -1 ;
-  GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
 
   if(!GET_LAYER(map, l)->class[0]->labels) {
     if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;

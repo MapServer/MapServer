@@ -27,6 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 #include "mapserver.h"
+#ifdef USE_GD
+
 #include "mapthread.h"
 #include <time.h>
 #include <gdfonts.h>
@@ -41,6 +43,8 @@
 #endif
 
 #define MS_IMAGE_GET_GDIMAGEPTR(image) ((gdImagePtr) image->img.plugin)
+#define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
+MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 fontMetrics bitmapFontMetricsGD[5];
 
@@ -947,8 +951,10 @@ int renderBitmapGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style
 int freeSymbolGD(symbolObj *s) {
   return MS_SUCCESS;
 }
+#endif
 
 int msPopulateRendererVTableGD( rendererVTableObj *renderer ) {
+#ifdef USE_GD
   int i;
   renderer->use_imagecache=0;
   renderer->supports_pixel_buffer=1;
@@ -988,4 +994,9 @@ int msPopulateRendererVTableGD( rendererVTableObj *renderer ) {
   renderer->renderPolygonTiled = &renderPolygonTiledGD;
   renderer->freeSymbol = &freeSymbolGD;
   return MS_SUCCESS;
+#else
+  msSetError(MS_MISCERR,"GD renderer requested but it is not configured in this build","msPopulateRendererVtableGD()");
+  return MS_FAILURE;
+#endif
 }
+

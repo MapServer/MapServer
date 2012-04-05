@@ -329,7 +329,9 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   /* (If class is NULL draw the legend for all classes. Modifications done */
   /* Fev 2004 by AY) */
   if (lp) {
+#ifdef USE_GD
     msClearLayerPenValues(lp); /* just in case the mapfile has already been processed */
+#endif
     if (class) {
       msDrawLegendIcon(map, lp, class, width, height, image, 0, 0);
     } else {
@@ -567,7 +569,9 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
+#ifdef USE_GD
   msClearPenValues(map); /* just in case the mapfile has already been processed */
+#endif
   pnt.y = VMARGIN;
   pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
 
@@ -716,7 +720,6 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   if(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
   GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
-  GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
 
   if(!GET_LAYER(map, l)->class[0]->labels) {
     if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
