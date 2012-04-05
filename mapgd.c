@@ -43,8 +43,6 @@
 #endif
 
 #define MS_IMAGE_GET_GDIMAGEPTR(image) ((gdImagePtr) image->img.plugin)
-#define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
-MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 fontMetrics bitmapFontMetricsGD[5];
 

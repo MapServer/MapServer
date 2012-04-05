@@ -17318,9 +17318,9 @@ if test "${with_gd+set}" = set; then :
 fi
 
 
-if test "$with_gd" = "no" ; then
-  as_fn_error $? "GD library cannot be disabled" "$LINENO" 5
-elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
+if test "$with_gd" != "no" ; then
+
+   if test -n "$with_gd" -a "$with_gd" != "yes" ; then
 
   if echo "$with_gd" | grep '^static,' >/dev/null ; then
     GD_DIR=`echo "$with_gd" | sed "s/^static,//"`
@@ -17337,23 +17337,23 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
     GD_DIR="`pwd`/$GD_DIR"
   fi
 
-  test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
-  test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
-  test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
+     test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
+     test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
+     test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
 
-  test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
-  test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
-  test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
-  test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
-  test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
+     test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+     test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
+     test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
+     test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
+     test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
 
-  test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
-  test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
-  test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl -o -f $GD_DIR/.libs/libgd.dylib && GD_LIBDIR="$GD_DIR/.libs"
-  test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
-  test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
+     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
+     test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
+     test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl -o -f $GD_DIR/.libs/libgd.dylib && GD_LIBDIR="$GD_DIR/.libs"
+     test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
+     test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
 $as_echo_n "checking for gdImageCreatePaletteFromTrueColor in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -17394,11 +17394,11 @@ if test "x$ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" = xyes; then :
 fi
 
 
-  if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-        unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether GD needs libiconv..." >&5
+     if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
+              unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
+       { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether GD needs libiconv..." >&5
 $as_echo "$as_me: checking whether GD needs libiconv..." >&6;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
+       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
 $as_echo_n "checking for gdImageCreatePaletteFromTrueColor in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -17438,14 +17438,14 @@ if test "x$ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" = xyes; then :
   IS_GD2="true"
 fi
 
-    GD_NEED_ICONV_LIB="$ICONV_LIB"
-  fi
+       GD_NEED_ICONV_LIB="$ICONV_LIB"
+     fi
 
-  if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
-      GD_INC=-I$GD_INCLUDE
-      GD_LIB="-L$GD_LIBDIR -lgd"
-      GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgd 2.0.28 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&5
+     if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
+         GD_INC=-I$GD_INCLUDE
+         GD_LIB="-L$GD_LIBDIR -lgd"
+         GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgd 2.0.28 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&5
 $as_echo "        using libgd 2.0.28 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&6; }
 
   if test ""$GD_LIBDIR"" != "/usr/lib"; then
@@ -17469,20 +17469,20 @@ $as_echo "        using libgd 2.0.28 (or higher) from $GD_LIB $GD_XTRA_LIBS" >&6
 
   fi
 
-  else
-      as_fn_error $? "Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." "$LINENO" 5
-  fi
-else
-    FOUND_GD="false"
-  for GD_DIR in /usr /usr/local
-  do
-    test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
-    test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
-    test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
-    test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
-    test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
+     else
+         as_fn_error $? "Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." "$LINENO" 5
+     fi
+   else
+          FOUND_GD="false"
+     for GD_DIR in /usr /usr/local
+     do
+       test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
+       test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+       test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
+       test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
+       test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
 
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
+              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
 $as_echo_n "checking for gdImageCreatePaletteFromTrueColor in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -17523,11 +17523,11 @@ if test "x$ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" = xyes; then :
 fi
 
 
-    if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-            { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether GD needs libiconv..." >&5
+       if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
+                  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether GD needs libiconv..." >&5
 $as_echo "$as_me: checking whether GD needs libiconv..." >&6;}
-      unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
+         unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
+         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreatePaletteFromTrueColor in -lgd" >&5
 $as_echo_n "checking for gdImageCreatePaletteFromTrueColor in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -17567,42 +17567,42 @@ if test "x$ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor" = xyes; then :
   IS_GD2="true"
 fi
 
-      GD_NEED_ICONV_LIB="$ICONV_LIB"
-    fi
+         GD_NEED_ICONV_LIB="$ICONV_LIB"
+       fi
 
-    if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
-      GD_INC=
-      GD_LIB="-lgd"
-      GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&5
+       if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
+         GD_INC=
+         GD_LIB="-lgd"
+         GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&5
 $as_echo "        using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS)." >&6; }
-      FOUND_GD="true"
-      break;
-    fi
-  done
+         FOUND_GD="true"
+         break;
+       fi
+     done
 
-  if test "$FOUND_GD" = "false" ; then
-    as_fn_error $? "Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." "$LINENO" 5
-  fi
-fi
-
-
-if test -n "$with_gd" -a "$with_gd" != "yes" ; then
+     if test "$FOUND_GD" = "false" ; then
+       as_fn_error $? "Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv)." "$LINENO" 5
+     fi
+   fi
 
 
-  if test "$GD_STATIC" = "yes" ; then
-            GD_CHECKLIB=c
-    GD_LIB=$GD_LIBDIR/libgd.a
-    GD_STATIC=$GD_LIBDIR/libgd.a
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: static linkage of $GD_STATIC requested... testing supported formats..." >&5
+   if test -n "$with_gd" -a "$with_gd" != "yes" ; then
+
+
+     if test "$GD_STATIC" = "yes" ; then
+                     GD_CHECKLIB=c
+       GD_LIB=$GD_LIBDIR/libgd.a
+       GD_STATIC=$GD_LIBDIR/libgd.a
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: static linkage of $GD_STATIC requested... testing supported formats..." >&5
 $as_echo "static linkage of $GD_STATIC requested... testing supported formats..." >&6; }
-  else
-    GD_CHECKLIB=c
-    # GD_LIB was already set above
-    GD_STATIC=""
-  fi
+     else
+       GD_CHECKLIB=c
+       # GD_LIB was already set above
+       GD_STATIC=""
+     fi
 
-  as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageGif" | $as_tr_sh`
+     as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageGif" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGif in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageGif in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -17644,7 +17644,7 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
   GD_DEF="$GD_DEF -DUSE_GD_GIF"
 fi
 
-  as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImagePng" | $as_tr_sh`
+     as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImagePng" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImagePng in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImagePng in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -17686,7 +17686,7 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
   GD_DEF="$GD_DEF -DUSE_GD_PNG"
 fi
 
-  as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageJpeg" | $as_tr_sh`
+     as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageJpeg" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageJpeg in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageJpeg in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -17728,7 +17728,7 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
   GD_DEF="$GD_DEF -DUSE_GD_JPEG"
 fi
 
-  as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageWBMP" | $as_tr_sh`
+     as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageWBMP" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageWBMP in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageWBMP in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -17771,53 +17771,7 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
 fi
 
 
-    GD_FT_SUPPORT=no
-  as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageStringFT" | $as_tr_sh`
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageStringFT in -l$GD_CHECKLIB" >&5
-$as_echo_n "checking for gdImageStringFT in -l$GD_CHECKLIB... " >&6; }
-if eval \${$as_ac_Lib+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-l$GD_CHECKLIB $GD_STATIC $GD_LIB $GD_XTRA_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char gdImageStringFT ();
-int
-main ()
-{
-return gdImageStringFT ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  eval "$as_ac_Lib=yes"
-else
-  eval "$as_ac_Lib=no"
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-eval ac_res=\$$as_ac_Lib
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  GD_FT_SUPPORT=yes
-fi
-
-
-    if test -n "$GD_STATIC" ; then
-     GD_LIB="$GD_LIB -lfontconfig"
-     unset ac_cv_lib_c___gdImageStringFT
+          GD_FT_SUPPORT=no
      as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageStringFT" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageStringFT in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageStringFT in -l$GD_CHECKLIB... " >&6; }
@@ -17860,14 +17814,60 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
   GD_FT_SUPPORT=yes
 fi
 
-  fi
 
-  if test "$GD_FT_SUPPORT" = "yes"; then
-     GD_DEF="$GD_DEF -DUSE_GD_FT"
-  fi
+          if test -n "$GD_STATIC" ; then
+        GD_LIB="$GD_LIB -lfontconfig"
+        unset ac_cv_lib_c___gdImageStringFT
+        as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageStringFT" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageStringFT in -l$GD_CHECKLIB" >&5
+$as_echo_n "checking for gdImageStringFT in -l$GD_CHECKLIB... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$GD_CHECKLIB $GD_STATIC $GD_LIB $GD_XTRA_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
 
-    GD_RESOLUTION_SUPPORT=no
-  as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageSetResolution" | $as_tr_sh`
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gdImageStringFT ();
+int
+main ()
+{
+return gdImageStringFT ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  GD_FT_SUPPORT=yes
+fi
+
+     fi
+
+     if test "$GD_FT_SUPPORT" = "yes"; then
+        GD_DEF="$GD_DEF -DUSE_GD_FT"
+     fi
+
+          GD_RESOLUTION_SUPPORT=no
+     as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageSetResolution" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageSetResolution in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageSetResolution in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -17910,11 +17910,11 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
 fi
 
 
-  if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
-     GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
-  fi
+     if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
+        GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
+     fi
 
-    as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageOpenPolygon" | $as_tr_sh`
+          as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageOpenPolygon" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageOpenPolygon in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageOpenPolygon in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -17957,7 +17957,7 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
 fi
 
 
-    as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageGifPtr" | $as_tr_sh`
+          as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageGifPtr" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGifPtr in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageGifPtr in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -18000,7 +18000,7 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
 fi
 
 
-      as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdFontGetTiny" | $as_tr_sh`
+               as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdFontGetTiny" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdFontGetTiny in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdFontGetTiny in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -18043,23 +18043,23 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
 fi
 
 
-        GD_HAS_GET_TRUE_COLOR_PIXEL=
+                    GD_HAS_GET_TRUE_COLOR_PIXEL=
 
-    CFLAGS_BACKUP="$CFLAGS"
-  CXXFLAGS_BACKUP="$CXXFLAGS"
-  CFLAGS="$CFLAGS $GD_INC"
-  CXXFLAGS="$CXXFLAGS $GD_INC"
-  ac_fn_c_check_decl "$LINENO" "gdImageGetTrueColorPixel" "ac_cv_have_decl_gdImageGetTrueColorPixel" "#include <gd.h>
+          CFLAGS_BACKUP="$CFLAGS"
+     CXXFLAGS_BACKUP="$CXXFLAGS"
+     CFLAGS="$CFLAGS $GD_INC"
+     CXXFLAGS="$CXXFLAGS $GD_INC"
+     ac_fn_c_check_decl "$LINENO" "gdImageGetTrueColorPixel" "ac_cv_have_decl_gdImageGetTrueColorPixel" "#include <gd.h>
 "
 if test "x$ac_cv_have_decl_gdImageGetTrueColorPixel" = xyes; then :
   GD_HAS_GET_TRUE_COLOR_PIXEL=yes
 fi
 
-  CFLAGS="$CFLAGS_BACKUP"
-  CXXFLAGS="$CXXFLAGS_BACKUP"
+     CFLAGS="$CFLAGS_BACKUP"
+     CXXFLAGS="$CXXFLAGS_BACKUP"
 
-    if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
-    as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageGetTrueColorPixel" | $as_tr_sh`
+          if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
+       as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageGetTrueColorPixel" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGetTrueColorPixel in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageGetTrueColorPixel in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -18101,15 +18101,15 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
   GD_DEF="$GD_DEF -DGD_HAS_GET_TRUE_COLOR_PIXEL"
 fi
 
-  fi
+     fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using GD ($GD_DEF) from $GD_DIR." >&5
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using GD ($GD_DEF) from $GD_DIR." >&5
 $as_echo "        using GD ($GD_DEF) from $GD_DIR." >&6; }
 
-else
+   else
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreate in -lgd" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageCreate in -lgd" >&5
 $as_echo_n "checking for gdImageCreate in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageCreate+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18149,11 +18149,11 @@ if test "x$ac_cv_lib_gd_gdImageCreate" = xyes; then :
   GD_FOUND=yes
 fi
 
-  if test -z "$GD_FOUND" ; then
-      as_fn_error $? "GD is required but was not found... use --with-gd=DIR to specify its location." "$LINENO" 5
-  fi
+     if test -z "$GD_FOUND" ; then
+         as_fn_error $? "GD is required but was not found... use --with-gd=DIR to specify its location." "$LINENO" 5
+     fi
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGif in -lgd" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGif in -lgd" >&5
 $as_echo_n "checking for gdImageGif in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageGif+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18193,7 +18193,7 @@ if test "x$ac_cv_lib_gd_gdImageGif" = xyes; then :
   GD_DEF="$GD_DEF -DUSE_GD_GIF"
 fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImagePng in -lgd" >&5
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImagePng in -lgd" >&5
 $as_echo_n "checking for gdImagePng in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImagePng+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18233,7 +18233,7 @@ if test "x$ac_cv_lib_gd_gdImagePng" = xyes; then :
   GD_DEF="$GD_DEF -DUSE_GD_PNG"
 fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageJpeg in -lgd" >&5
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageJpeg in -lgd" >&5
 $as_echo_n "checking for gdImageJpeg in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageJpeg+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18273,7 +18273,7 @@ if test "x$ac_cv_lib_gd_gdImageJpeg" = xyes; then :
   GD_DEF="$GD_DEF -DUSE_GD_JPEG"
 fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageWBMP in -lgd" >&5
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageWBMP in -lgd" >&5
 $as_echo_n "checking for gdImageWBMP in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageWBMP+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18314,7 +18314,7 @@ if test "x$ac_cv_lib_gd_gdImageWBMP" = xyes; then :
 fi
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageStringFT in -lgd" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageStringFT in -lgd" >&5
 $as_echo_n "checking for gdImageStringFT in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageStringFT+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18355,7 +18355,7 @@ if test "x$ac_cv_lib_gd_gdImageStringFT" = xyes; then :
 fi
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageOpenPolygon in -lgd" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageOpenPolygon in -lgd" >&5
 $as_echo_n "checking for gdImageOpenPolygon in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageOpenPolygon+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18396,7 +18396,7 @@ if test "x$ac_cv_lib_gd_gdImageOpenPolygon" = xyes; then :
 fi
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGifPtr in -lgd" >&5
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGifPtr in -lgd" >&5
 $as_echo_n "checking for gdImageGifPtr in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageGifPtr+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18437,7 +18437,7 @@ if test "x$ac_cv_lib_gd_gdImageGifPtr" = xyes; then :
 fi
 
 
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdFontGetTiny in -lgd" >&5
+               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdFontGetTiny in -lgd" >&5
 $as_echo_n "checking for gdFontGetTiny in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdFontGetTiny+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18478,8 +18478,8 @@ if test "x$ac_cv_lib_gd_gdFontGetTiny" = xyes; then :
 fi
 
 
-    GD_RESOLUTION_SUPPORT=no
-  as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageSetResolution" | $as_tr_sh`
+          GD_RESOLUTION_SUPPORT=no
+     as_ac_Lib=`$as_echo "ac_cv_lib_$GD_CHECKLIB''_gdImageSetResolution" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageSetResolution in -l$GD_CHECKLIB" >&5
 $as_echo_n "checking for gdImageSetResolution in -l$GD_CHECKLIB... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -18522,19 +18522,19 @@ if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
 fi
 
 
-  if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
-     GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
-  fi
+     if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
+        GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
+     fi
 
-        GD_HAS_GET_TRUE_COLOR_PIXEL=
-  ac_fn_c_check_decl "$LINENO" "gdImageGetTrueColorPixel" "ac_cv_have_decl_gdImageGetTrueColorPixel" "#include <gd.h>
+                    GD_HAS_GET_TRUE_COLOR_PIXEL=
+     ac_fn_c_check_decl "$LINENO" "gdImageGetTrueColorPixel" "ac_cv_have_decl_gdImageGetTrueColorPixel" "#include <gd.h>
 "
 if test "x$ac_cv_have_decl_gdImageGetTrueColorPixel" = xyes; then :
   GD_HAS_GET_TRUE_COLOR_PIXEL=yes
 fi
 
-    if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGetTrueColorPixel in -lgd" >&5
+          if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdImageGetTrueColorPixel in -lgd" >&5
 $as_echo_n "checking for gdImageGetTrueColorPixel in -lgd... " >&6; }
 if ${ac_cv_lib_gd_gdImageGetTrueColorPixel+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -18574,16 +18574,18 @@ if test "x$ac_cv_lib_gd_gdImageGetTrueColorPixel" = xyes; then :
   GD_DEF="$GD_DEF -DGD_HAS_GET_TRUE_COLOR_PIXEL"
 fi
 
-  fi
+     fi
 
-  if test -n "$GD_DEF" ; then
-      GD_LIB="-lgd $GD_LIB"
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using GD ($GD_DEF) from system libs." >&5
+     if test -n "$GD_DEF" ; then
+         GD_LIB="-lgd $GD_LIB"
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using GD ($GD_DEF) from system libs." >&5
 $as_echo "        using GD ($GD_DEF) from system libs." >&6; }
-  fi
+     fi
+   fi
+   GD_LIB="$GD_LIB $GD_XTRA_LIBS"
+   GD_DEF="-DUSE_GD $GD_DEF"
 fi
 
-GD_LIB="$GD_LIB $GD_XTRA_LIBS"
 
 GD_DEF=$GD_DEF
 

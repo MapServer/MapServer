@@ -371,6 +371,8 @@ extern "C" {
 
 #ifdef USE_GD
 #define MS_INIT_COLOR(color,r,g,b,a) { (color).red = r; (color).green = g; (color).blue = b; (color).pen = MS_PEN_UNSET; (color).alpha=a; }
+#define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
+MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 #else
 #define MS_INIT_COLOR(color,r,g,b,a) { (color).red = r; (color).green = g; (color).blue = b; (color).alpha=a; }
 #endif
