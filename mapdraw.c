@@ -2800,7 +2800,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
              * the offset needed for point layer with markerPtr */
             marker_poly.numlines = 0;
             if(layerPtr->type == MS_LAYER_ANNOTATION) {
-               computeMarkerPoly(map,image,cachePtr,cacheslot,&marker_poly);
+               if(computeMarkerPoly(map,image,cachePtr,cacheslot,&marker_poly)!=MS_SUCCESS) return MS_FAILURE;
                if(marker_poly.numlines) {
                   marker_offset_x = (marker_poly.bounds.maxx-marker_poly.bounds.minx)/2.0;
                   marker_offset_y = (marker_poly.bounds.maxy-marker_poly.bounds.miny)/2.0;
@@ -2840,7 +2840,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               }
 
               /* compute the poly of the label styles */
-              computeLabelMarkerPoly(map,image,cachePtr,labelPtr,&label_marker_poly);
+              if(computeLabelMarkerPoly(map,image,cachePtr,labelPtr,&label_marker_poly)!=MS_SUCCESS) return MS_FAILURE;
               if(label_marker_poly.numlines) {
                  if(cachePtr->numlabels > 1) { /* FIXME this test doesn't seem right, should probably check if we have an annotation layer with a regular style defined */
                     marker_offset_x = (label_marker_poly.bounds.maxx-label_marker_poly.bounds.minx)/2.0;
