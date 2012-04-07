@@ -16821,6 +16821,7 @@ fi
 $as_echo "        using libjpeg from system libs." >&6; }
 fi
 
+ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
 JPEG_ENABLED=$JPEG_ENABLED
 
 JPEG_INC=$JPEG_INC

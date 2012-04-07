@@ -162,42 +162,38 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 
 {
     outputFormatObj *format = NULL;
-#ifdef USE_GD
     if( strcasecmp(driver,"GD/PC256") == 0 )
     {
-#ifdef USE_GD_GIF
-        return msCreateDefaultOutputFormat( map, "GD/GIF", "gif" );
-#elif defined(USE_GD_PNG)
         return msCreateDefaultOutputFormat( map, "GD/PNG", "gdpng" );
-#else
-        return NULL;
-#endif
     }
 
-#ifdef USE_GD_GIF
     if( strcasecmp(driver,"GD/GIF") == 0 )
     {
         if(!name) name="gif";
+#ifdef USE_GD_GIF
         format = msAllocOutputFormat( map, name, driver );
         format->mimetype = msStrdup("image/gif");
         format->imagemode = MS_IMAGEMODE_PC256;
         format->extension = msStrdup("gif");
         format->renderer = MS_RENDER_WITH_GD;
-    }
+#else
+        return msCreateDefaultOutputFormat( map, "AGG/PNG8", name );
 #endif
+    }
 
-#ifdef USE_GD_PNG
     if( strcasecmp(driver,"GD/PNG") == 0 )
     {
         if(!name) name="gdpng";
+#ifdef USE_GD_PNG
         format = msAllocOutputFormat( map, name, driver );
         format->mimetype = msStrdup("image/png");
         format->imagemode = MS_IMAGEMODE_PC256;
         format->extension = msStrdup("png");
         format->renderer = MS_RENDER_WITH_GD;
-    }
+#else
+        return msCreateDefaultOutputFormat( map, "AGG/PNG8", name );
 #endif /* USE_GD_PNG */
-#endif
+    }
 
     if( strcasecmp(driver,"AGG/PNG") == 0 )
     {

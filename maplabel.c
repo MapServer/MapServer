@@ -31,14 +31,6 @@
 ** maplabel.c: Routines to enable text drawing, BITMAP or TRUETYPE.
 */
 
-#ifdef USE_GD
-#include <gdfonts.h>
-#include <gdfontl.h>
-#include <gdfontt.h>
-#include <gdfontmb.h>
-#include <gdfontg.h>
-#endif
-
 #include "mapserver.h"
 
 MS_CVSID("$Id$")
@@ -992,102 +984,70 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
 int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset,
         double size, char *string, rectObj *rect, double **advances, int bAdjustbaseline) {
+   outputFormatObj *format = NULL;
+   int ret = MS_FAILURE;
+   if(!renderer) {
+      outputFormatObj *format = msCreateDefaultOutputFormat(NULL,"AGG/PNG","tmp");
+      if(!format) {
+         goto tt_cleanup;
+      }
+      msInitializeRendererVTable(format);
+      renderer = format->vtable;
+   }
    char *lookedUpFonts[MS_MAX_LABEL_FONTS];
    int numfonts;
    if(MS_FAILURE == msFontsetLookupFonts(fontstring, &numfonts, fontset, lookedUpFonts))
-      return MS_FAILURE;
-   if(renderer) {
-      return renderer->getTruetypeTextBBox(renderer,lookedUpFonts,numfonts,size,string,rect,advances,bAdjustbaseline);
-   } 
-#ifdef USE_GD_FT
-	else {
-        int bbox[8];
-        char *error;
-        if(advances) {
-#if defined (GD_HAS_FTEX_XSHOW)
-            char *s;
-            int k;
-            gdFTStringExtra strex;
-            strex.flags = gdFTEX_XSHOW;
-            error = gdImageStringFTEx(NULL, bbox, 0, lookedUpFonts[0], size, 0, 0, 0, string, &strex);
-            if(error) {
-                msSetError(MS_TTFERR, "gdImageStringFT: %s (%s)", "msGetTruetypeTextBBox()", error, lookedUpFonts[0]);
-                return(MS_FAILURE);
-            }
-
-            *advances = (double*)malloc( strlen(string) * sizeof(double) );
-            MS_CHECK_ALLOC(*advances, strlen(string) * sizeof(double), MS_FAILURE);
-            s = strex.xshow;
-            k = 0;
-            while ( *s && k < strlen(string) ) {
-                (*advances)[k++] = atof(s);      
-                while ( *s && *s != ' ')
-                    s++;
-                if ( *s == ' ' )
-                    s++;
-            }
-
-            gdFree(strex.xshow); /* done with character advances */
-
-            rect->minx = bbox[0];
-            rect->miny = bbox[5];
-            rect->maxx = bbox[2];
-            rect->maxy = bbox[1];
-            return MS_SUCCESS;
-#else
-            msSetError(MS_TTFERR, "gdImageStringFTEx support is not available or is not current enough (requires 2.0.29 or higher).", "msGetTruetypeTextBBox()");
-            return MS_FAILURE;
-#endif
-        } else {
-            error = gdImageStringFT(NULL, bbox, 0, lookedUpFonts[0], size, 0, 0, 0, string);
-            if(error) {
-                msSetError(MS_TTFERR, "gdImageStringFT: %s (%s)", "msGetTruetypeTextBBox()", error, lookedUpFonts[0]);
-                return(MS_FAILURE);
-            }
-
-            rect->minx = bbox[0];
-            rect->miny = bbox[5];
-            rect->maxx = bbox[2];
-            rect->maxy = bbox[1];
-            return MS_SUCCESS;
-        }
-    }
-#else
-    /*shouldn't happen*/
-    return MS_FAILURE;
-#endif
+      goto tt_cleanup;
+   ret = renderer->getTruetypeTextBBox(renderer,lookedUpFonts,numfonts,size,string,rect,advances,bAdjustbaseline);
+tt_cleanup:
+   if(format) {
+      msFreeOutputFormat(format);
+   }
+   return ret;
 }
 
 int msGetRasterTextBBox(rendererVTableObj *renderer, int size, char *string, rectObj *rect) {
-    if(renderer && renderer->supports_bitmap_fonts) {
-    	int num_lines=1, cur_line_length=0, max_line_length=0;
-    	char *stringPtr = string;
-    	fontMetrics *fontPtr;
-    	if((fontPtr=renderer->bitmapFontMetrics[size]) == NULL) {
-    		msSetError(MS_MISCERR, "selected renderer does not support bitmap font size %d", "msGetRasterTextBBox()",size);
-    		return MS_FAILURE;
-    	}
-    	while(*stringPtr) {
-    		if(*stringPtr=='\n') {
-    			max_line_length = MS_MAX(cur_line_length,max_line_length);
-    			num_lines++;
-    			cur_line_length=0;
-    		} else {
-    			if(*stringPtr!='\r')
-    				cur_line_length++;
-    		}
-    		stringPtr++;
-    	}
-    	max_line_length = MS_MAX(cur_line_length,max_line_length);
-    	rect->minx = 0;
-		rect->miny = -(fontPtr->charHeight * num_lines);
-		rect->maxx = fontPtr->charWidth * max_line_length;
-		rect->maxy = 0;
-    	return MS_SUCCESS;
-    } else {
-		msSetError(MS_MISCERR, "selected renderer does not support raster fonts", "msGetRasterTextBBox()");
-		return MS_FAILURE;
-	}
+   if(renderer && renderer->supports_bitmap_fonts) {
+      int num_lines=1, cur_line_length=0, max_line_length=0;
+      char *stringPtr = string;
+      fontMetrics *fontPtr;
+      if((fontPtr=renderer->bitmapFontMetrics[size]) == NULL) {
+         msSetError(MS_MISCERR, "selected renderer does not support bitmap font size %d", "msGetRasterTextBBox()",size);
+         return MS_FAILURE;
+      }
+      while(*stringPtr) {
+         if(*stringPtr=='\n') {
+            max_line_length = MS_MAX(cur_line_length,max_line_length);
+            num_lines++;
+            cur_line_length=0;
+         } else {
+            if(*stringPtr!='\r')
+               cur_line_length++;
+         }
+         stringPtr++;
+      }
+      max_line_length = MS_MAX(cur_line_length,max_line_length);
+      rect->minx = 0;
+      rect->miny = -(fontPtr->charHeight * num_lines);
+      rect->maxx = fontPtr->charWidth * max_line_length;
+      rect->maxy = 0;
+      return MS_SUCCESS;
+   } else if(!renderer){
+      int ret = MS_FAILURE;
+      outputFormatObj *format = msCreateDefaultOutputFormat(NULL,"AGG/PNG","tmp");
+      if(!format) {
+         msSetError(MS_MISCERR, "failed to create default format", "msGetRasterTextBBox()");
+         return MS_FAILURE;
+      }
+      msInitializeRendererVTable(format);
+      renderer = format->vtable;
+      ret = msGetRasterTextBBox(renderer,size,string,rect);
+      msFreeOutputFormat(format);
+      return ret;
+   } else {
+      msSetError(MS_MISCERR, "selected renderer does not support raster fonts", "msGetRasterTextBBox()");
+      return MS_FAILURE;
+   }
 }
 
 
@@ -1159,8 +1119,6 @@ int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rect
   if (map)
     renderer =MS_MAP_RENDERER(map);
 
-  if (!renderer)
-    return MS_FAILURE;
   if(label->type == MS_TRUETYPE) {
      if(!label->font) {
         msSetError(MS_MISCERR, "label has no true type font", "msGetLabelSize()");
@@ -1179,52 +1137,6 @@ int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rect
 	  return MS_FAILURE;
   }
 }
-
-#ifdef USE_GD
-gdFontPtr msGetBitmapFont(int size)
-{
-  switch(size) { /* set the font to use */
-  case MS_TINY:
-#ifdef GD_HAS_GETBITMAPFONT
-    return gdFontGetTiny();
-#else
-    return(gdFontTiny);
-#endif
-    break;
-  case MS_SMALL:
-#ifdef GD_HAS_GETBITMAPFONT
-    return gdFontGetSmall();
-#else
-    return(gdFontSmall);
-#endif
-    break;
-  case MS_MEDIUM:
-#ifdef GD_HAS_GETBITMAPFONT
-    return gdFontGetMediumBold();
-#else
-    return(gdFontMediumBold);
-#endif
-    break;
-  case MS_LARGE:
-#ifdef GD_HAS_GETBITMAPFONT
-    return gdFontGetLarge();
-#else
-    return(gdFontLarge);
-#endif
-    break;
-  case MS_GIANT:
-#ifdef GD_HAS_GETBITMAPFONT
-    return gdFontGetGiant();
-#else
-    return(gdFontGiant);
-#endif
-    break;
-  default:
-    msSetError(MS_GDERR,"Invalid bitmap font. Must be one of tiny, small, medium, large or giant." , "msGetBitmapFont()");
-    return(NULL);
-  }
-}
-#endif
 
 #define MARKER_SLOP 2
 

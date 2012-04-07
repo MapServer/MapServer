@@ -2676,9 +2676,6 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
           }
 #endif /* GDAL_VERSION_NUM >= 1600 */
 
-          // Label font... do our best to use TrueType fonts, otherwise
-          // fallback on bitmap fonts.
-#if defined(USE_GD_TTF) || defined (USE_GD_FT)
           const char *pszBold = OGR_ST_GetParamNum(hLabelStyle, 
                                                        OGRSTLabelBold, 
                                                        &bIsNull) ? "-bold" : "";
@@ -2720,7 +2717,6 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
           }
 
           if (!bFont)
-#endif /* USE_GD_FT || USE_GD_FT */
           {
               c->labels[0]->type = MS_BITMAP;
               c->labels[0]->size = MS_MEDIUM;

@@ -46,6 +46,50 @@
 
 fontMetrics bitmapFontMetricsGD[5];
 
+gdFontPtr msGetBitmapFont(int size)
+{
+  switch(size) { /* set the font to use */
+  case MS_TINY:
+#ifdef GD_HAS_GETBITMAPFONT
+    return gdFontGetTiny();
+#else
+    return(gdFontTiny);
+#endif
+    break;
+  case MS_SMALL:
+#ifdef GD_HAS_GETBITMAPFONT
+    return gdFontGetSmall();
+#else
+    return(gdFontSmall);
+#endif
+    break;
+  case MS_MEDIUM:
+#ifdef GD_HAS_GETBITMAPFONT
+    return gdFontGetMediumBold();
+#else
+    return(gdFontMediumBold);
+#endif
+    break;
+  case MS_LARGE:
+#ifdef GD_HAS_GETBITMAPFONT
+    return gdFontGetLarge();
+#else
+    return(gdFontLarge);
+#endif
+    break;
+  case MS_GIANT:
+#ifdef GD_HAS_GETBITMAPFONT
+    return gdFontGetGiant();
+#else
+    return(gdFontGiant);
+#endif
+    break;
+  default:
+    msSetError(MS_GDERR,"Invalid bitmap font. Must be one of tiny, small, medium, large or giant." , "msGetBitmapFont()");
+    return(NULL);
+  }
+}
+
 int msImageSetPenGD(gdImagePtr img, colorObj *color) 
 {
   if(MS_VALID_COLOR(*color))

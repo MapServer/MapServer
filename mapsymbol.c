@@ -295,15 +295,10 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       if(getInteger(&(s->transparentcolor)) == -1) return(-1);
       break;
     case(TYPE):
-#ifdef USE_GD_FT
       if((s->type = getSymbol(8,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_TRUETYPE,MS_SYMBOL_HATCH,MS_SYMBOL_SVG)) == -1)
-	return(-1);	
-#else
-      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_HATCH)) == -1)
-	return(-1);
-#endif
+         return(-1);	
       if(s->type == MS_TRUETYPE) /* TrueType keyword is valid several place in map files and symbol files, this simplifies the lexer */
-	s->type = MS_SYMBOL_TRUETYPE;
+         s->type = MS_SYMBOL_TRUETYPE;
       break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
@@ -662,7 +657,6 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
 
   switch(symbol->type) {  
    
-#ifdef USE_GD_FT
   case(MS_SYMBOL_TRUETYPE):
     if(msGetTruetypeTextBBox(MS_MAP_RENDERER(symbolset->map),symbol->font,symbolset->fontset,size,symbol->character,&rect,NULL,0) != MS_SUCCESS) 
       return(MS_FAILURE);
@@ -671,7 +665,6 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
     *height = MS_MAX(*height, rect.maxy - rect.miny);
 
     break;
-#endif
 
   case(MS_SYMBOL_PIXMAP): 
     if(size == 1) {        

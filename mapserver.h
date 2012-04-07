@@ -2429,10 +2429,6 @@ MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
 MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format, 
                                           int issue_error );
 
-#ifndef gdImageTrueColor
-#  define gdImageTrueColor(x) (0)
-#endif /* not gdImageTrueColor */
-
 /* ==================================================================== */
 /*      End of prototypes for functions in mapoutput.c                  */
 /* ==================================================================== */
