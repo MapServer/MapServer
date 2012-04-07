@@ -461,7 +461,7 @@ static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name,
     format->refcount = 0;
     format->vtable = NULL;
     format->device = NULL;
-    format->imagemode = MS_IMAGEMODE_PC256;
+    format->imagemode = MS_IMAGEMODE_RGB;
 
 /* -------------------------------------------------------------------- */
 /*      Attach to map.                                                  */

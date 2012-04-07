@@ -511,10 +511,10 @@ char *msGetVersion() {
 #ifdef USE_GD_GIF
   strcat(version, " OUTPUT=GIF");
 #endif
-#ifdef USE_GD_PNG
+#if (defined USE_GD_PNG || defined USE_PNG)
   strcat(version, " OUTPUT=PNG");
 #endif
-#ifdef USE_GD_JPEG
+#if (defined USE_GD_JPEG || defined USE_JPEG)
   strcat(version, " OUTPUT=JPEG");
 #endif
 #ifdef USE_PDF
@@ -527,14 +527,12 @@ char *msGetVersion() {
   strcat(version, " SUPPORTS=PROJ");
 #endif
   strcat(version, " SUPPORTS=AGG");
+  strcat(version, " SUPPORTS=FREETYPE");
 #ifdef USE_CAIRO
   strcat(version, " SUPPORTS=CAIRO");
 #endif
 #ifdef USE_OGL
   strcat(version, " SUPPORTS=OPENGL");
-#endif
-#ifdef USE_GD_FT
-  strcat(version, " SUPPORTS=FREETYPE");
 #endif
 #ifdef USE_ICONV
   strcat(version, " SUPPORTS=ICONV");

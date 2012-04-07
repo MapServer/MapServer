@@ -4533,6 +4533,10 @@ static int loadOutputFormat(mapObj *map)
         }
         if( imagemode != MS_NOOVERRIDE )
         {
+#ifndef USE_GD
+          /* don't override a GD format if GD isn't configured in */
+          if(imagemode != MS_IMAGEMODE_PC256)
+#endif
             format->imagemode = imagemode;
 
             if( transparent == MS_NOOVERRIDE )
@@ -4546,17 +4550,9 @@ static int loadOutputFormat(mapObj *map)
                 || format->imagemode == MS_IMAGEMODE_FLOAT32 
                 || format->imagemode == MS_IMAGEMODE_BYTE )
                 format->renderer = MS_RENDER_WITH_RAWDATA;
-            if( format->imagemode == MS_IMAGEMODE_PC256 )
 #ifdef USE_GD
+            if( format->imagemode == MS_IMAGEMODE_PC256 )
                 format->renderer = MS_RENDER_WITH_GD;
-#else
-            {
-               msSetError(MS_MISCERR, 
-                       "OUTPUTFORMAT clause imagemode PC256, but the GD driver isn't configured in this build", 
-                       "loadOutputFormat()", driver );
-               return -1;
-            }
-            
 #endif
         }
 
@@ -4571,8 +4567,7 @@ static int loadOutputFormat(mapObj *map)
 
         format->inmapfile = MS_TRUE;
 
-        if( !msOutputFormatValidate( format, MS_TRUE ) )
-            return -1;
+        msOutputFormatValidate( format, MS_FALSE );
         return(0);
     }
     case(NAME):

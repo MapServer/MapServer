@@ -910,12 +910,13 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
         assert( k == dst_xsize * dst_ysize );
     }
+    else
 #endif
 
 /* -------------------------------------------------------------------- */
 /*      Single band plus colormap and alpha to truecolor. (RB)          */
 /* -------------------------------------------------------------------- */
-    else if( hBand2 == NULL && rb->type == MS_BUFFER_BYTE_RGBA && hBandAlpha != NULL )
+    if( hBand2 == NULL && rb->type == MS_BUFFER_BYTE_RGBA && hBandAlpha != NULL )
     {
         assert( cmap_set );
 
