@@ -1636,7 +1636,6 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     {
         image = msImageCreateIM(width, height, format,
                                 imagepath, imageurl, resolution, defresolution);
-        if( image != NULL ) msImageInitIM( image );
     }
     else 
     {

@@ -2269,6 +2269,7 @@ MS_DLL_EXPORT void msGDCleanup();
 #endif
 MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
+MS_DLL_EXPORT void msFreeImageIM(imageObj* img);
 MS_DLL_EXPORT void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
