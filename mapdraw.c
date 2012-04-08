@@ -182,7 +182,6 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     {
         image = msImageCreateIM(map->width, map->height, map->outputformat, 
 				map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution);        
-        if( image != NULL ) msImageInitIM( image );
     }
     else if( MS_RENDERER_RAWDATA(map->outputformat) )
     {
@@ -3129,8 +3128,6 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 #endif
 
       return MS_SUCCESS; /* necessary? */
-    } else if( MS_RENDERER_IMAGEMAP(image->format) ) {
-      nReturnVal = msDrawLabelCacheIM(image, map);
     }
   }
 
