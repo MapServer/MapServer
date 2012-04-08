@@ -2693,15 +2693,15 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                            bufferSize = strlen(script_url_encoded)+300;
                            legendurl = (char*)msSmallMalloc(bufferSize);
 
-#ifdef USE_GD_PNG
+#if defined USE_GD_PNG || defined USE_PNG
                            mimetype = msEncodeHTMLEntities("image/png");
 #endif
-#ifdef USE_GD_GIF
+#if defined USE_GD_GIF
                            if (!mimetype)
                              mimetype = msEncodeHTMLEntities("image/gif");
 #endif
 
-#ifdef USE_GD_JPEG
+#if defined USE_GD_JPEG || defined USE_JPEG
                            if (!mimetype)
                              mimetype = msEncodeHTMLEntities("image/jpeg");
 #endif
@@ -3192,10 +3192,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 #ifdef USE_GD_GIF
                       "<GIF />"
 #endif
-#ifdef USE_GD_PNG
+#if defined USE_GD_PNG || defined USE_PNG
                       "<PNG />"
 #endif
-#ifdef USE_GD_JPEG
+#if defined USE_GD_JPEG || defined USE_JPEG
                       "<JPEG />"
 #endif
                        "<SVG />"  
