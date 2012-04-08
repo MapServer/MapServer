@@ -1036,8 +1036,26 @@ int msPreloadSVGSymbol(symbolObj *symbol)
     if(cache->svgc)
       return MS_SUCCESS;
 
-    if(!symbol->svg_text)
-      return MS_FAILURE;
+    if (!symbol->svg_text) {
+       FILE *stream;
+       long int file_len;
+       
+       if ((stream = fopen(symbol->full_pixmap_path, "rb")) == NULL) {
+          msSetError(MS_IOERR, "Could not open svg file %s", "msPreloadSVGSymbol()",symbol->full_pixmap_path);
+          return (MS_FAILURE);
+       }
+       fseek(stream, 0, SEEK_END);
+       file_len = ftell(stream);
+       rewind(stream);
+       symbol->svg_text = (char*) msSmallMalloc(sizeof (char) * file_len);
+       if (1 != fread(symbol->svg_text, file_len, 1, stream)) {
+          msSetError(MS_IOERR, "failed to read %d bytes from svg file %s", "loadSymbol()", file_len, symbol->full_pixmap_path);
+          free(symbol->svg_text);
+          return MS_FAILURE;
+       }
+       symbol->svg_text[file_len - 1] = '\0';
+       fclose(stream);
+    }
 
     status = svg_cairo_create(&cache->svgc);
     if (status) {

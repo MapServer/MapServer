@@ -403,6 +403,9 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   colorObj labelcolor, labeloutlinecolor, imagecolor, *imagecolorptr=NULL;
   ls.color = &labelcolor;
   ls.outlinecolor = &labeloutlinecolor;
+  if(!errormsg) {
+     errormsg = msStrdup("No error found sorry. This is likely a bug");
+  }
   
   if (map) {
       if( map->width > 0 && map->height > 0 )

@@ -705,7 +705,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
     map->numlayers++;
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
     GET_LAYER(map, l)->name = msStrdup("__embed__legend");
-    GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
+    GET_LAYER(map, l)->type = MS_LAYER_POINT;
 
     if(msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)
         return(-1);
@@ -718,22 +718,30 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   GET_LAYER(map, l)->status = MS_ON;
 
-  if(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
-  GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
-
-  if(!GET_LAYER(map, l)->class[0]->labels) {
-    if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
-  }
-  initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
-  GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
-  GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
-  GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
-  GET_LAYER(map, l)->class[0]->labels[0]->annotext = msStrdup(" ");
-
-  if(map->legend.postlabelcache) /* add it directly to the image */
+  if(map->legend.postlabelcache) /* add it directly to the image */ {
+    if(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
+    GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
     msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
-  else
+  }
+  else {
+    if(!GET_LAYER(map, l)->class[0]->labels) {
+      if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
+      initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
+      GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
+      GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
+      GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
+      GET_LAYER(map, l)->class[0]->labels[0]->annotext = NULL;
+    }
+    if(GET_LAYER(map, l)->class[0]->labels[0]->numstyles == 0) {
+      if(msGrowLabelStyles(GET_LAYER(map,l)->class[0]->labels[0]) == NULL)
+        return(MS_FAILURE);
+      GET_LAYER(map,l)->class[0]->labels[0]->numstyles = 1;
+      initStyle(GET_LAYER(map,l)->class[0]->labels[0]->styles[0]);
+      GET_LAYER(map,l)->class[0]->labels[0]->styles[0]->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT;
+    }
+    GET_LAYER(map,l)->class[0]->labels[0]->styles[0]->symbol = s;
     msAddLabel(map, GET_LAYER(map, l)->class[0]->labels[0], l, 0, NULL, &point, NULL, -1);
+  }
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or with saving maps */
   GET_LAYER(map, l)->status = MS_DELETE;

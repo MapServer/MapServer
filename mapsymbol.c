@@ -156,9 +156,7 @@ int msFreeSymbol(symbolObj *s) {
 int loadSymbol(symbolObj *s, char *symbolpath)
 {
   int done=MS_FALSE;
-  FILE *stream;
   char szPath[MS_MAXPATHLEN];
-  int file_len = 0;
   
   initSymbol(s);
 
@@ -229,36 +227,12 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       break;  
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
-	msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
-	return(-1);
+         msSetError(MS_TYPEERR, "Parsing error near (%s):(line %d)", "loadSymbol()", msyystring_buffer, msyylineno);
+         return(-1);
       }
       s->full_pixmap_path = msStrdup(msBuildPath(szPath, symbolpath, msyystring_buffer)); 
-      
       /* Set imagepath */
       s->imagepath = msStrdup(msyystring_buffer);
-
-      /* if this is SVG, load the SVG and
-         punt if this is for a SVG symbol */
-      if(s->type == MS_SYMBOL_SVG) {
-        if((stream = fopen(s->full_pixmap_path, "rb")) == NULL)
-        {
-	        msSetError(MS_IOERR, "Parsing error near (%s):(line %d)", "loadSymbol()", 
-                     msyystring_buffer, msyylineno);
-	        return(-1);
-        }      
-        fseek(stream, 0, SEEK_END);
-        file_len = ftell(stream);
-        rewind(stream);
-        s->svg_text = (char*)malloc(sizeof(char) * file_len);
-        if(1 != fread(s->svg_text, file_len, 1, stream)) {
-          msSetError(MS_IOERR, "failed to read %d bytes from svg file %s", "loadSymbol()", file_len, s->full_pixmap_path);
-          free(s->svg_text);
-          return -1;
-        }
-        s->svg_text[file_len-1]= '\0';
-        fclose(stream);
-	    break;
-      }
       break;
     case(NAME):
       if(getString(&s->name) == MS_FAILURE) return(-1);
@@ -646,6 +620,15 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
   if (symbol->type == MS_SYMBOL_PIXMAP && !symbol->pixmap_buffer) {
       if (MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(symbolset->map), symbol))
          return MS_FAILURE;
+  }
+  if(symbol->type == MS_SYMBOL_SVG && !symbol->renderer_cache) {
+#ifdef USE_SVG_CAIRO
+     if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
+        return MS_FAILURE;
+#else
+     msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msGetMarkerSize()");
+     return MS_FAILURE;
+#endif
   }
   if(style->size == -1) {
       size = ( msSymbolGetDefaultSize(symbol) * scalefactor );

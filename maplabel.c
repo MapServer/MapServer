@@ -493,7 +493,18 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
   classObj *classPtr=NULL;
 
   if(!label) return(MS_FAILURE); // RFC 77 TODO: set a proper message
-  if(!label->annotext || label->status == MS_OFF) return(MS_SUCCESS); /* not an error */ 
+  if(label->status == MS_OFF) return(MS_SUCCESS); /* not an error */ 
+  if(!label->annotext) {
+    /* check if we have a labelpnt style */
+    for(i=0;i<label->numstyles;i++) {
+      if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT)
+        break;
+    }
+    if(i==label->numstyles) {
+       /* label has no text or marker symbols */
+       return MS_SUCCESS;
+    }
+  }
 
   layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
