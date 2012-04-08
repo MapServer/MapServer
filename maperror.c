@@ -32,8 +32,6 @@
 #include "mapthread.h"
 #include "maptime.h"
 
-#include "gdfonts.h"
-
 #include <time.h>
 #ifndef _WIN32
 #include <sys/time.h>
