@@ -417,7 +417,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 
   /* Default to GIF if no suitable GD output format set */
   if (format == NULL || !MS_RENDERER_PLUGIN(format) || !format->vtable->supports_bitmap_fonts) 
-    format = msCreateDefaultOutputFormat( NULL, "GD/PC256", "gif" );
+    format = msCreateDefaultOutputFormat( NULL, "AGG/PNG8", "png" );
 
   if(!format->transparent) {
      if(map && MS_VALID_COLOR(map->imagecolor)) {
@@ -525,6 +525,9 @@ char *msGetVersion() {
 #endif
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
+#endif
+#ifdef USE_GD
+  strcat(version, " SUPPORTS=GD");
 #endif
   strcat(version, " SUPPORTS=AGG");
   strcat(version, " SUPPORTS=FREETYPE");
