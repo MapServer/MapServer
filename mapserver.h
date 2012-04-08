@@ -2261,26 +2261,18 @@ MS_DLL_EXPORT int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, 
 /*      Prototypes for functions in mapimagemap.c                       */
 /* ==================================================================== */
 MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, double resolution, double defresolution);
-MS_DLL_EXPORT imageObj *msImageLoadIM( const char *filename );
 #ifdef USE_GD
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
 MS_DLL_EXPORT imageObj *msImageLoadGDCtx( gdIOCtx *ctx, const char *driver );
 MS_DLL_EXPORT int msGDSetup();
 MS_DLL_EXPORT void msGDCleanup();
 #endif
-MS_DLL_EXPORT void msImageInitIM( imageObj *image );
 MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageIM_LL(imageObj* img, char *filename, int type, int transparent, int interlace, int quality);
-MS_DLL_EXPORT void msFreeImagexsIM(imageObj* img);
-MS_DLL_EXPORT void msFreeImageIM(imageObj* img);
-MS_DLL_EXPORT void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, double r, styleObj *style, double scalefactor);
-MS_DLL_EXPORT void msCircleDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 /* ==================================================================== */
 /*      End of Prototypes for functions in mapimagemap.c                */
 /* ==================================================================== */
