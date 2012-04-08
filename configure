@@ -18585,6 +18585,7 @@ $as_echo "        using GD ($GD_DEF) from system libs." >&6; }
    fi
    GD_LIB="$GD_LIB $GD_XTRA_LIBS"
    GD_DEF="-DUSE_GD $GD_DEF"
+   GD_ENABLED="-DUSE_GD"
 fi
 
 
@@ -25135,6 +25136,8 @@ $as_echo "  freetype support:          ${FT_ENABLED}" >&6; }
 $as_echo "  iconv support:             ${ICONV_ENABLED}" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result:   AGG support:               ${AGG_ENABLED}" >&5
 $as_echo "  AGG support:               ${AGG_ENABLED}" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result:   GD support:                ${GD_ENABLED}" >&5
+$as_echo "  GD support:                ${GD_ENABLED}" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result:   Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}" >&5
 $as_echo "  Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result:   Cairo SVG symbol support:  ${LIBSVG_CAIRO_ENABLED}" >&5

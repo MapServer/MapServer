@@ -850,6 +850,7 @@ if test "$with_gd" != "no" ; then
    fi
    GD_LIB="$GD_LIB $GD_XTRA_LIBS"
    GD_DEF="-DUSE_GD $GD_DEF"
+   GD_ENABLED="-DUSE_GD"
 fi
 
 
@@ -2827,6 +2828,7 @@ AC_MSG_RESULT([  jpeg support:              ${JPEG_ENABLED}])
 AC_MSG_RESULT([  freetype support:          ${FT_ENABLED}])
 AC_MSG_RESULT([  iconv support:             ${ICONV_ENABLED}])
 AC_MSG_RESULT([  AGG support:               ${AGG_ENABLED}])
+AC_MSG_RESULT([  GD support:                ${GD_ENABLED}])
 AC_MSG_RESULT([  Cairo (SVG,PDF) support:   ${CAIRO_ENABLED}])
 AC_MSG_RESULT([  Cairo SVG symbol support:  ${LIBSVG_CAIRO_ENABLED}])
 AC_MSG_RESULT([  KML support:               ${KML_ENABLED}])
