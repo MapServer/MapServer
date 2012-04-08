@@ -2265,6 +2265,8 @@ MS_DLL_EXPORT imageObj *msImageLoadIM( const char *filename );
 #ifdef USE_GD
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
 MS_DLL_EXPORT imageObj *msImageLoadGDCtx( gdIOCtx *ctx, const char *driver );
+MS_DLL_EXPORT int msGDSetup();
+MS_DLL_EXPORT void msGDCleanup();
 #endif
 MS_DLL_EXPORT void msImageInitIM( imageObj *image );
 MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);

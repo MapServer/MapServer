@@ -42,6 +42,21 @@
 #include <io.h>
 #endif
 
+int msGDSetup() {
+#ifdef USE_GD_FT
+  if (gdFontCacheSetup() != 0) {
+    return MS_FAILURE;
+  }
+#endif
+  return MS_SUCCESS;
+}
+
+void msGDCleanup() {
+#ifdef USE_GD_FT
+  gdFontCacheShutdown(); 
+#endif
+}
+
 #define MS_IMAGE_GET_GDIMAGEPTR(image) ((gdImagePtr) image->img.plugin)
 
 fontMetrics bitmapFontMetricsGD[5];

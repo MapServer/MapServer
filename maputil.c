@@ -1870,11 +1870,7 @@ int msSetup()
     return MS_FAILURE;
 
 #ifdef USE_GD
-#ifdef USE_GD_FT
-  if (gdFontCacheSetup() != 0) {
-    return MS_FAILURE;
-   }
-#endif
+   msGDSetup();
 #endif
 
 #ifdef USE_GEOS
@@ -1916,9 +1912,7 @@ void msCleanup()
 #endif
 
 #ifdef USE_GD
-#ifdef USE_GD_FT
-  gdFontCacheShutdown(); 
-#endif
+  msGDCleanup();
 #endif
 
 #ifdef USE_GEOS
