@@ -341,7 +341,7 @@ imageObj *msDrawScalebar(mapObj *map)
 
 int msEmbedScalebar(mapObj *map, imageObj *img)
 {
-  int l,index;
+  int l,index,s;
   pointObj point;
   imageObj *image = NULL;
   rendererVTableObj *renderer = MS_MAP_RENDERER(map);
@@ -358,11 +358,11 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
 
   if((embededSymbol=msGrowSymbolSet(&map->symbolset)) == NULL)
     return MS_FAILURE;
+  s = map->symbolset.numsymbols;
   map->symbolset.numsymbols++;
   
   image = msDrawScalebar(map);
   if(!image) {
-	  msSetError(MS_RENDERERERR,"failed to create scalebar image","msEmbedScalebar()");
 	  return MS_FAILURE;
   }
   embededSymbol->pixmap_buffer = calloc(1,sizeof(rasterBufferObj));
@@ -416,7 +416,7 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
     map->numlayers++;
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
     GET_LAYER(map, l)->name = msStrdup("__embed__scalebar");
-    GET_LAYER(map, l)->type = MS_LAYER_ANNOTATION;
+    GET_LAYER(map, l)->type = MS_LAYER_POINT;
 
     if (msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)
         return(-1);
@@ -429,25 +429,33 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
   }
 
   GET_LAYER(map, l)->status = MS_ON;
-
-  /* TODO: Change this when we get rid of MS_MAXSTYLES */
-  if (msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
-  GET_LAYER(map, l)->class[0]->styles[0]->symbol = map->symbolset.numsymbols -1 ;
-  GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
-
-  if(!GET_LAYER(map, l)->class[0]->labels) {
-    if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
-  }
-  initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
-  GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
-  GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
-  GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
-  GET_LAYER(map, l)->class[0]->labels[0]->annotext = msStrdup(" ");
-
-  if(map->scalebar.postlabelcache) /* TODO: add it directly to the image */
+  
+  if(map->scalebar.postlabelcache) /* add it directly to the image */ {
+    if(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
+    GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
+    GET_LAYER(map, l)->class[0]->styles[0]->color.pen = -1;
     msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
-  else
+  }
+  else {
+    if(!GET_LAYER(map, l)->class[0]->labels) {
+      if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
+      initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
+      GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
+      GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
+      GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
+      GET_LAYER(map, l)->class[0]->labels[0]->annotext = NULL;
+    }
+    if(GET_LAYER(map, l)->class[0]->labels[0]->numstyles == 0) {
+      if(msGrowLabelStyles(GET_LAYER(map,l)->class[0]->labels[0]) == NULL)
+        return(MS_FAILURE);
+      GET_LAYER(map,l)->class[0]->labels[0]->numstyles = 1;
+      initStyle(GET_LAYER(map,l)->class[0]->labels[0]->styles[0]);
+      GET_LAYER(map,l)->class[0]->labels[0]->styles[0]->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT;
+    }
+    GET_LAYER(map,l)->class[0]->labels[0]->styles[0]->symbol = s;
     msAddLabel(map, GET_LAYER(map, l)->class[0]->labels[0], l, 0, NULL, &point, NULL, -1);
+  }
+
 
   /* Mark layer as deleted so that it doesn't interfere with html legends or with saving maps */
   GET_LAYER(map, l)->status = MS_DELETE;
