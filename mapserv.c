@@ -44,7 +44,6 @@ MS_CVSID("$Id$")
 /************************************************************************/
 /*                      FastCGI cleanup functions.                      */
 /************************************************************************/
-static int exitSignal;
 #ifndef WIN32
 void msCleanupOnSignal( int nInData )
 {
@@ -53,7 +52,8 @@ void msCleanupOnSignal( int nInData )
   /* normal stdio functions. */
   msIO_installHandlers( NULL, NULL, NULL );
   msIO_fprintf( stderr, "In msCleanupOnSignal.\n" );
-  exitSignal = 1;
+  msCleanup(1);
+  exit(0);
 }
 #endif
 
@@ -70,7 +70,7 @@ void msCleanupOnExit( void )
   fprintf( fp_out, "In msCleanupOnExit\n" );
   fclose( fp_out );
 #endif    
-  msCleanup();
+  msCleanup(1);
 }
 #endif
 
@@ -83,13 +83,12 @@ int main(int argc, char *argv[]) {
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
   mapservObj* mapserv = NULL;
-  exitSignal = 0;
   msSetup();
 
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if( msDebugInitFromEnv() != MS_SUCCESS ) {
     msCGIWriteError(mapserv);
-    msCleanup();
+    msCleanup(0);
     exit(0);
   }
 
@@ -162,7 +161,7 @@ int main(int argc, char *argv[]) {
 
   /* In FastCGI case we loop accepting multiple requests.  In normal CGI */
   /* use we only accept and process one request.  */
-  while( !exitSignal && FCGI_Accept() >= 0 ) {
+  while( FCGI_Accept() >= 0 ) {
 #endif /* def USE_FASTCGI */
 
     /* -------------------------------------------------------------------- */
@@ -229,6 +228,6 @@ end_request:
            (execendtime.tv_sec+execendtime.tv_usec/1.0e6)-
            (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
   }
-  msCleanup();
+  msCleanup(0);
   exit( 0 );
 } 
