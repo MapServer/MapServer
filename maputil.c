@@ -1881,7 +1881,7 @@ int msSetup()
   
 /* This is intended to be a function to cleanup anything that "hangs around"
    when all maps are destroyed, like Registered GDAL drivers, and so forth. */
-void msCleanup()
+void msCleanup(int signal)
 {
   msForceTmpFileBase( NULL );
   msConnPoolFinalCleanup();
@@ -1911,7 +1911,7 @@ void msCleanup()
 #endif
 
 #ifdef USE_GD
-  msGDCleanup();
+  msGDCleanup(signal);
 #endif
 
 #ifdef USE_GEOS

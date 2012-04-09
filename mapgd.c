@@ -51,9 +51,14 @@ int msGDSetup() {
   return MS_SUCCESS;
 }
 
-void msGDCleanup() {
+void msGDCleanup(int signal) {
 #ifdef USE_GD_FT
-  gdFontCacheShutdown(); 
+    if(!signal) {
+        /* there's a potential deadlock if we're killed by a signal and the font
+         cache is already locked. We don't tear down the fontcache in this case
+         to avoid it (issue 4093)*/
+        gdFontCacheShutdown();
+    }
 #endif
 }
 

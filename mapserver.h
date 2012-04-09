@@ -1731,7 +1731,7 @@ struct layerVTable {
 MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
 MS_DLL_EXPORT int msSetup(void);
-MS_DLL_EXPORT void msCleanup(void);
+MS_DLL_EXPORT void msCleanup(int signal);
 MS_DLL_EXPORT mapObj *msLoadMapFromString(char *buffer, char *new_mappath);
 
 /* Function prototypes, not wrapable */
@@ -2265,7 +2265,7 @@ MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
 MS_DLL_EXPORT imageObj *msImageLoadGDCtx( gdIOCtx *ctx, const char *driver );
 MS_DLL_EXPORT int msGDSetup();
-MS_DLL_EXPORT void msGDCleanup();
+MS_DLL_EXPORT void msGDCleanup(int signal);
 #endif
 MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
