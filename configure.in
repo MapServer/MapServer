@@ -631,9 +631,9 @@ AC_CHECKING(for GD 2.0.28 or higher)
 AC_ARG_WITH(gd,
 [  --with-gd[[=[static,]DIR]]
                           Specify which version of GD to use (DIR is GD's
-                          install dir).],,)
+                          install dir).],,[with_gd=no])
 
-if test "$with_gd" != "no" ; then
+if test "x$with_gd" != "xno" ; then
 
    if test -n "$with_gd" -a "$with_gd" != "yes" ; then
      dnl

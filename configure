@@ -17316,10 +17316,12 @@ $as_echo "$as_me: checking for GD 2.0.28 or higher..." >&6;}
 # Check whether --with-gd was given.
 if test "${with_gd+set}" = set; then :
   withval=$with_gd;
+else
+  with_gd=no
 fi
 
 
-if test "$with_gd" != "no" ; then
+if test "x$with_gd" != "xno" ; then
 
    if test -n "$with_gd" -a "$with_gd" != "yes" ; then
 
