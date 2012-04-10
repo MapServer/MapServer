@@ -143,7 +143,9 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
             switch( map->outputformatlist[i]->renderer )
             {
                 /* seeminly normal raster format */
+#ifdef USE_GD
               case MS_RENDER_WITH_GD:
+#endif
               case MS_RENDER_WITH_AGG:
               case MS_RENDER_WITH_RAWDATA:
                 tokens[numtokens++] = msStrdup(map->outputformatlist[i]->name);
