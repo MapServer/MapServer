@@ -47,6 +47,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * ***************************************************************************/
 
+#ifdef USE_GD
+
 #include "pygdioctx.h"
 
 int PyFileIfaceObj_IOCtx_GetC(gdIOCtx *ctx)
@@ -160,4 +162,6 @@ imageObj *createImageObjFromPyFile(PyObject *file, const char *driver)
         return image;
     }
 }
+
+#endif
 

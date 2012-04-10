@@ -47,6 +47,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * ***************************************************************************/
 
+#ifdef USE_GD
+
 #include <Python.h>
 #include <gd.h>
 #include <gdfonts.h>
@@ -73,4 +75,6 @@ struct PyFileIfaceObj_gdIOCtx {
 struct PyFileIfaceObj_gdIOCtx * alloc_PyFileIfaceObj_IOCtx(PyObject *fileIfaceObj);
 void free_PyFileIfaceObj_IOCtx(struct PyFileIfaceObj_gdIOCtx *pctx);
 imageObj *createImageObjFromPyFile(PyObject *file, const char *driver);
+
+#endif
 

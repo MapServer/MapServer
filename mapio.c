@@ -553,11 +553,7 @@ typedef struct {
     gdIOCtx        gd_io_ctx;
 #endif
     msIOContext    *ms_io_ctx;
-} msIO_gdIOCtx;
-
-#ifndef USE_GD
-#define gdIOCtx void
-#endif
+} msIO_IOCtx;
 
 
 #ifdef USE_GD
@@ -600,6 +596,7 @@ static int msIO_gd_putBuf( gdIOCtx *cbData, const void *data, int byteCount )
 /*      longer needed.                                                  */
 /************************************************************************/
 
+#ifdef USE_GD
 gdIOCtx *msIO_getGDIOCtx( FILE *fp )
 
 {
@@ -609,15 +606,14 @@ gdIOCtx *msIO_getGDIOCtx( FILE *fp )
     if( context == NULL )
         return NULL;
 
-    merged_context = (msIO_gdIOCtx *) calloc(1,sizeof(msIO_gdIOCtx));
-#ifdef USE_GD
+    merged_context = (msIO_IOCtx *) calloc(1,sizeof(msIO_IOCtx));
     merged_context->gd_io_ctx.putC = msIO_gd_putC;
     merged_context->gd_io_ctx.putBuf = msIO_gd_putBuf;
-#endif
     merged_context->ms_io_ctx = context;
 
     return (gdIOCtx *) merged_context;
 }
+#endif
 
 /* ==================================================================== */
 /* ==================================================================== */

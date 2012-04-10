@@ -143,6 +143,7 @@
     Tcl_Obj *saveToString() 
     {
 
+#ifdef FORCE_BROKEN_GD_CODE
         unsigned char *imgbytes;
         int size;
         Tcl_Obj *imgstring;
@@ -210,6 +211,11 @@
         gdFree(imgbytes);
 
         return imgstring;
+#else /* force_gd_broken_code */
+        msSetError(MS_MISCERR, "saveToString() is long deprecated and severley broken", "saveToString()", self->format->driver );
+        return(MS_FAILURE);
+#endif
+
     }
 #endif
 
