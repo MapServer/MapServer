@@ -72,10 +72,10 @@ PHP_METHOD(labelCacheMemberObj, __get)
     else IF_GET_LONG("layerindex", php_labelcachemember->labelcachemember->layerindex) 
     else IF_GET_LONG("numstyles", php_labelcachemember->labelcachemember->numstyles) 
     else IF_GET_LONG("numlabels", php_labelcachemember->labelcachemember->numlabels) 
-    else IF_GET_LONG("shapeindex", php_labelcachemember->labelcachemember->shapeindex) 
+    /* else IF_GET_LONG("shapeindex", php_labelcachemember->labelcachemember->shapeindex) */
     else IF_GET_LONG("status", php_labelcachemember->labelcachemember->status) 
     else IF_GET_LONG("markerid", php_labelcachemember->labelcachemember->markerid) 
-    else IF_GET_LONG("tileindex", php_labelcachemember->labelcachemember->tileindex) 
+    /* else IF_GET_LONG("tileindex", php_labelcachemember->labelcachemember->tileindex) */
     else IF_GET_OBJECT("point", mapscript_ce_point, php_labelcachemember->point, &php_labelcachemember->labelcachemember->point) 
     else IF_GET_OBJECT("labels", mapscript_ce_label, php_labelcachemember->labels, &php_labelcachemember->labelcachemember->labels) 
     else IF_GET_OBJECT("styles", mapscript_ce_style, php_labelcachemember->styles, php_labelcachemember->labelcachemember->styles) 
