@@ -1226,8 +1226,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           {
               format = msOwsIsOutputFormatValid(map, values[i], &(map->web.metadata),
                                                 "M", "getmap_formatlist");
-              if (format == NULL &&
-                  strcasecmp(values[i], "application/openlayers")!=0)
+              if (format == NULL)
               {
                   msSetError(MS_IMGERR,
                              "Unsupported output format (%s).",
@@ -4039,9 +4038,8 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       msIO_sendHeaders();
       if (msSaveImage(map, img, NULL) != MS_SUCCESS)
         return msWMSException(map, nVersion, NULL, wms_exception_format);
-
-      msFreeImage(img);
   }
+  msFreeImage(img);
 
   return(MS_SUCCESS);
 }
