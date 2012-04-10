@@ -4036,8 +4036,10 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   {
       msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(map->outputformat));
       msIO_sendHeaders();
-      if (msSaveImage(map, img, NULL) != MS_SUCCESS)
+      if (msSaveImage(map, img, NULL) != MS_SUCCESS) {
+        msFreeImage(img);
         return msWMSException(map, nVersion, NULL, wms_exception_format);
+      }
   }
   msFreeImage(img);
 
