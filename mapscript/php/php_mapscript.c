@@ -1247,7 +1247,7 @@ PHP_MINIT_FUNCTION(mapscript)
 PHP_MSHUTDOWN_FUNCTION(mapscript)
 {
     /* Cleanup MapServer resources */
-    msCleanup();    
+    msCleanup(0);    
     
     return SUCCESS;
 }
