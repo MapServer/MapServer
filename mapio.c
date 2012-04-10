@@ -553,7 +553,7 @@ typedef struct {
     gdIOCtx        gd_io_ctx;
 #endif
     msIOContext    *ms_io_ctx;
-} msIO_IOCtx;
+} msIO_gdIOCtx;
 
 
 #ifdef USE_GD
@@ -606,7 +606,7 @@ gdIOCtx *msIO_getGDIOCtx( FILE *fp )
     if( context == NULL )
         return NULL;
 
-    merged_context = (msIO_IOCtx *) calloc(1,sizeof(msIO_IOCtx));
+    merged_context = (msIO_gdIOCtx *) calloc(1,sizeof(msIO_gdIOCtx));
     merged_context->gd_io_ctx.putC = msIO_gd_putC;
     merged_context->gd_io_ctx.putBuf = msIO_gd_putBuf;
     merged_context->ms_io_ctx = context;
