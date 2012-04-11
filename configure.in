@@ -2529,6 +2529,16 @@ else
   CFLAGS=`echo "$CFLAGS -DNDEBUG " | sed "s/-g //"`
 fi
 
+AC_CHECKING(whether to enable proj shortcuts)
+AC_ARG_ENABLE(proj-fastpath,
+     AC_HELP_STRING([--enable-proj-fastpath], [bypass proj.4 for epsg:4326 to epsg:3857 reprojections]),,) 
+
+if test "$enable_proj_fastpath" = "yes" ; then
+   PROJ_FASTPATH_ENABLED="-DUSE_PROJ_FASTPATHS"
+   ALL_ENABLED="$PROJ_FASTPATH_ENABLED $ALL_ENABLED"
+fi
+AC_SUBST(PROJ_FASTPATH_ENABLED,$PROJ_FASTPATH_ENABLED)
+
 dnl ---------------------------------------------------------------------
 dnl Check --enable-cgi-cl-debug-args option (OFF by default)
 dnl ---------------------------------------------------------------------
@@ -2836,6 +2846,7 @@ AC_MSG_RESULT()
 
 AC_MSG_RESULT([ -------------- Support Libraries --------- ])
 AC_MSG_RESULT([  Proj.4 support:            ${PROJ_ENABLED}])
+AC_MSG_RESULT([  Proj Fastpaths:            ${PROJ_FASTPATH_ENABLED}])
 AC_MSG_RESULT([  Libxml2 support:           ${XML2_ENABLED}])
 AC_MSG_RESULT([  FriBidi support:           ${FRIBIDI_ENABLED}])
 AC_MSG_RESULT([  Curl support:              ${CURL_ENABLED}])

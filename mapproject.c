@@ -292,6 +292,30 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
     int line_alloc = numpoints_in;
     int wrap_test;
 
+#ifdef USE_PROJ_FASTPATHS
+#define MAXEXTENT 20037508.34
+#define M_PIby360 .0087266462599716479
+#define MAXEXTENTby180 111319.4907777777777777777
+ if(in->wellknownprojection == wkp_lonlat && out->wellknownprojection == wkp_gmerc) {
+       for( i = line->numpoints-1; i >= 0; i-- ) {
+#define p_x line->point[i].x
+#define p_y line->point[i].y
+          p_x *= MAXEXTENTby180;
+          p_y = log(tan((90 + p_y) * M_PIby360)) * MS_RAD_TO_DEG;
+          p_y *= MAXEXTENTby180;
+          if (p_x > MAXEXTENT) p_x = MAXEXTENT;
+          if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
+          if (p_y > MAXEXTENT) p_y = MAXEXTENT;
+          if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
+#undef p_x
+#undef p_y
+       }
+       return MS_SUCCESS;
+    }
+#endif
+
+
+
     wrap_test = out != NULL && out->proj != NULL && pj_is_latlong(out->proj)
         && !pj_is_latlong(in->proj);
 
@@ -473,6 +497,30 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 {
 #ifdef USE_PROJ
   int i;
+#ifdef USE_PROJ_FASTPATHS
+  int j;
+ 
+  if(in->wellknownprojection == wkp_lonlat && out->wellknownprojection == wkp_gmerc) {
+     for( i = shape->numlines-1; i >= 0; i-- ) {
+        for( j = shape->line[i].numpoints-1; j >= 0; j-- ) {
+#define p_x shape->line[i].point[j].x
+#define p_y shape->line[i].point[j].y
+           p_x *= MAXEXTENTby180;
+           p_y = log(tan((90 + p_y) * M_PIby360)) * MS_RAD_TO_DEG;
+           p_y *= MAXEXTENTby180;
+           if (p_x > MAXEXTENT) p_x = MAXEXTENT;
+           if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
+           if (p_y > MAXEXTENT) p_y = MAXEXTENT;
+           if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
+#undef p_x
+#undef p_y
+        }
+     }
+     return MS_SUCCESS;
+  }
+#endif
+
+
 
   for( i = shape->numlines-1; i >= 0; i-- )
   {

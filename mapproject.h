@@ -41,6 +41,10 @@ extern "C" {
 #  include <proj_api.h>
 #endif
 
+#define wkp_none 0
+#define wkp_lonlat 1
+#define wkp_gmerc 2
+
 
 typedef struct {
 #ifdef SWIG
@@ -63,6 +67,7 @@ typedef struct {
 #endif
   geotransformObj gt; /* extra transformation to apply */
 #endif
+  int wellknownprojection;
 } projectionObj;
 
 #ifndef SWIG

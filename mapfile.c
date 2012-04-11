@@ -1308,7 +1308,17 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 #ifdef USE_PROJ
    if(p) msFreeProjection(p);
 
+#ifdef USE_FASTPATH_PROJS
     p->gt.need_geotransform = MS_FALSE;
+    if(strcasestr(value,"epsg:4326")) {
+       p->wellknownprojection = wkp_lonlat;
+    } else if(strcasestr(value,"epsg:3857")) {
+       p->wellknownprojection = wkp_gmerc;
+    } else {
+       p->wellknownprojection = wkp_none;
+    }
+#endif
+               
     
     if (strncasecmp(value, "EPSG:", 5) == 0)
     {
