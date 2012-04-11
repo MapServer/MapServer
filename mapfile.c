@@ -1026,6 +1026,7 @@ int msInitProjection(projectionObj *p)
   p->gt.need_geotransform = MS_FALSE;
   p->numargs = 0;
   p->args = NULL;
+  p->wellknownprojection = wkp_none;
 #ifdef USE_PROJ  
   p->proj = NULL;
   p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *));
@@ -1227,6 +1228,17 @@ int msProcessProjection(projectionObj *p)
     
     msReleaseLock( TLOCK_PROJ );
 
+#ifdef USE_PROJ_FASTPATHS
+    if(strcasestr(p->args[0],"epsg:4326")) {
+       p->wellknownprojection = wkp_lonlat;
+    } else if(strcasestr(p->args[0],"epsg:3857")) {
+       p->wellknownprojection = wkp_gmerc;
+    } else {
+       p->wellknownprojection = wkp_none;
+    }
+#endif
+               
+
     return(0);
 #else
   msSetError(MS_PROJERR, "Projection support is not available.", 
@@ -1308,8 +1320,8 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 #ifdef USE_PROJ
    if(p) msFreeProjection(p);
 
-#ifdef USE_FASTPATH_PROJS
     p->gt.need_geotransform = MS_FALSE;
+#ifdef USE_PROJ_FASTPATHS
     if(strcasestr(value,"epsg:4326")) {
        p->wellknownprojection = wkp_lonlat;
     } else if(strcasestr(value,"epsg:3857")) {
