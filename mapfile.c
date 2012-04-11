@@ -1038,7 +1038,12 @@ void msFreeProjection(projectionObj *p) {
 #ifdef USE_PROJ
   if(p->proj)
   {
+#if PJ_VERSION < 480
       pj_free(p->proj);
+#else
+      pj_ctx_free(p->proj_ctx);
+      p->proj_ctx = NULL;
+#endif
       p->proj = NULL;
   }
 
@@ -1165,8 +1170,8 @@ static int _msProcessAutoProjection(projectionObj *p)
     if( !(p->proj = pj_init(numargs, args)) ) {
         int *pj_errno_ref = pj_get_errno_ref();
         msReleaseLock( TLOCK_PROJ );
-        msSetError(MS_PROJERR, pj_strerrno(*pj_errno_ref), 
-                   "msProcessProjection()");	  
+        msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+                   "msProcessProjection()", pj_strerrno(*pj_errno_ref), szProjBuf) ;	  
         return(-1);
     }
     
@@ -1194,7 +1199,7 @@ int msProcessProjection(projectionObj *p)
     }
 
     if (strcasecmp(p->args[0], "AUTO") == 0) {
-	p->proj = NULL;
+        p->proj = NULL;
         return 0;
     }
 
@@ -1206,11 +1211,17 @@ int msProcessProjection(projectionObj *p)
         return _msProcessAutoProjection(p);
     }
     msAcquireLock( TLOCK_PROJ );
+#if PJ_VERSION < 480
     if( !(p->proj = pj_init(p->numargs, p->args)) ) {
+#else
+    p->proj_ctx = pj_ctx_alloc();
+    if( !(p->proj=pj_init_ctx(p->proj_ctx, p->numargs, p->args)) ) {
+#endif
+
         int *pj_errno_ref = pj_get_errno_ref();
         msReleaseLock( TLOCK_PROJ );
-        msSetError(MS_PROJERR, pj_strerrno(*pj_errno_ref), 
-                   "msProcessProjection()");	  
+        msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
+                   "msProcessProjection()", pj_strerrno(*pj_errno_ref), p->args[0],p->args[1]) ;	  
         return(-1);
     }
     

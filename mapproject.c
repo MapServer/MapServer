@@ -90,10 +90,14 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
           point->y *= DEG_TO_RAD;
       }
 
+#if PJ_VERSION < 480
       msAcquireLock( TLOCK_PROJ );
+#endif
       error = pj_transform( in->proj, out->proj, 1, 0, 
                             &(point->x), &(point->y), &z );
+#if PJ_VERSION < 480
       msReleaseLock( TLOCK_PROJ );
+#endif
 
       if( error || point->x == HUGE_VAL || point->y == HUGE_VAL )
           return MS_FAILURE;
