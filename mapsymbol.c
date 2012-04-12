@@ -183,16 +183,18 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 		return(-1);
 	  }
       if((s->type == MS_SYMBOL_PIXMAP) && (s->full_pixmap_path == NULL)) {
-	msSetError(MS_SYMERR, "Symbol of type PIXMAP has no image data.", "loadSymbol()"); 
-	return(-1);
+         msSetError(MS_SYMERR, "Symbol of type PIXMAP has no image data.", "loadSymbol()"); 
+         return(-1);
       }
       if(((s->type == MS_SYMBOL_ELLIPSE) || (s->type == MS_SYMBOL_VECTOR)) && (s->numpoints == 0)) {
-	msSetError(MS_SYMERR, "Symbol of type VECTOR or ELLIPSE has no point data.", "loadSymbol()"); 
-	return(-1);
+         msSetError(MS_SYMERR, "Symbol of type VECTOR or ELLIPSE has no point data.", "loadSymbol()");
+         return(-1);
       }
       if(s->type == MS_SYMBOL_VECTOR) {
          double minx = s->points[0].x;
          double miny = s->points[0].y;
+         /* should only negative points be shifted? (#4116)*/
+         int shiftpositive = ((s->anchorpoint_x!=0.5)||(s->anchorpoint_y!=0.5));
          int i;
          for(i=1;i<s->numpoints;i++) {
             if(s->points[i].x != -99 && s->points[i].y != -99) {
@@ -200,7 +202,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
                if(s->points[i].y<miny) miny = s->points[i].y;
             }
          }
-         if(minx!=0 || miny!=0) {
+         if(minx<0 || miny<0 || (shiftpositive && (minx!=0 || miny!=0))) {
             for(i=0;i<s->numpoints;i++) {
                if(s->points[i].x != -99 && s->points[i].y != -99) {
                   s->points[i].x -= minx;

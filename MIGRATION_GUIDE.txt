@@ -20,6 +20,7 @@ on some of the new features.
 
 TODO:document changes in gap calculation for line markers and polygon
 tile symbols (#3879 and #3867)
+TODO: document vector type symbol size calculation change (#4116)
 
 --------------------
 Build system changes
