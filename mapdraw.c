@@ -3088,7 +3088,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   if(labelPtr->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT)
                     msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), labelPtr->styles[i], layerPtr->scalefactor);
                   else if(labelPtr->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
-                    msDrawShadeSymbol(&map->symbolset, image, labelPtr->annopoly, labelPtr->styles[i], layerPtr->scalefactor);
+                    msDrawShadeSymbol(&map->symbolset, image, labelPtr->annopoly, labelPtr->styles[i], scalefactor);
                   } else {
                     msSetError(MS_MISCERR,"Labels only support LABELPNT and LABELPOLY GEOMTRANSFORMS", "msDrawLabelCAche()");
                     return MS_FAILURE;
