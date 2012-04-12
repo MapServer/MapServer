@@ -2,9 +2,32 @@
 INFILE="./mapaxisorder.csv"
 OUTFILE="./mapaxisorder.h"
 
-# create array of elements from $INFILE
-unset ARRAY i
-while read -r LINE; do ARRAY[i++]=$LINE; done < $INFILE
+# define an array 8x4096 filled with 0
+unset ARRAY
+declare -a ARRAY
+for i in {0..4095}
+do
+	ARRAY[$i]="00000000"
+done
+	
+# fill array from $INFILE
+while read -r LINE
+do
+	# numeric values only
+	if [ "$LINE" -eq "$LINE" ] 2>/dev/null
+	then
+		let row=$(( $LINE / 8 ))
+		let index=$(( $LINE % 8 ))
+		unset tmp
+
+		if [ $index -gt 0 ]
+		then
+			tmp=${ARRAY[$row]:0:$(( $index ))}
+		fi
+
+		ARRAY[$row]=${tmp}1${ARRAY[$row]:$(( $index+1 ))}
+	fi
+done < $INFILE
 
 print_header ()
 {
@@ -53,28 +76,27 @@ print_comment ()
 
 print_body ()
 {
-	
 	echo '#ifdef __cplusplus'
 	echo 'extern "C" '{
 	echo '#endif'
 	echo ' '
-	echo 'static struct axisOrientationEpsgCodes_s {'
-	echo '	int	code;'
-	echo '} axisOrientationEpsgCodes[] = {'
+	echo 'static unsigned char axisOrientationEpsgCodes[] = {'
    
-	# unset first array element
-   unset ARRAY[0]
-   # traverse array and print out elements
-        let count=0
-	for x in "${ARRAY[@]}"; do
-		echo " { ${x} },"
-		((count++))
+	# traverse array and print out elements
+	for i in {0..4095}
+	do
+		echo -n "        ${ARRAY[$i]:7:1} << 7 | ${ARRAY[$i]:6:1} << 6 | ${ARRAY[$i]:5:1} << 5 | ${ARRAY[$i]:4:1} << 4 | ${ARRAY[$i]:3:1} << 3 | ${ARRAY[$i]:2:1} << 2 | ${ARRAY[$i]:1:1} << 1 | ${ARRAY[$i]:0:1} << 0"
+		if [ $i -le 4094 ]
+		then
+			echo ,
+		else
+			echo
+		fi
 	done
 
 	echo '};'
-   echo ' '
-	echo '#define AXIS_ORIENTATION_TABLE_SIZE '${count}
-   echo ' '
+	echo ' '
+
 	echo '#ifdef __cplusplus'
 	echo '}'
 	echo '#endif'

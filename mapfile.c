@@ -37,7 +37,6 @@
 #include "mapfile.h"
 #include "mapthread.h"
 #include "maptime.h"
-#include "mapaxisorder.h"
 
 #ifdef USE_GDAL
 #  include "cpl_conv.h"
@@ -71,24 +70,6 @@ static int resolveSymbolNames(mapObj *map);
 static int loadExpression(expressionObj *exp);
 static void writeExpression(FILE *stream, int indent, const char *name, expressionObj *exp);
 
-/************************************************************************/
-/*                           int msIsAxisInverted                       */
-/*      check to see if we shoudl invert the axis.                      */
-/*                                                                      */
-/************************************************************************/
-static int msIsAxisInverted(int epsg_code)
-{
-    int i;
-    /*check the static table*/
-    for (i=0; i<AXIS_ORIENTATION_TABLE_SIZE; i++)
-    {
-        if (axisOrientationEpsgCodes[i].code == epsg_code)
-          return MS_TRUE;
-    }
-
-    return MS_FALSE;
-    
-}
 
 /*
 ** Symbol to string static arrays needed for writing map files.

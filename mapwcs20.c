@@ -44,7 +44,6 @@
 #include "cpl_string.h"
 #include <proj_api.h>
 #include <string.h>
-#include "mapaxisorder.h"
 
 #if defined(USE_LIBXML2)
 
@@ -1512,7 +1511,8 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
 
 static int msWCSSwapAxes20(char *srs_uri)
 {
-    int srid = 0, i;
+    int srid = 0;
+
     /* get SRID from the srs uri */
     if(srs_uri != NULL && strlen(srs_uri) > 0) {
         if(sscanf(srs_uri, "http://www.opengis.net/def/crs/EPSG/0/%d", &srid) != EOF)
@@ -1525,14 +1525,7 @@ static int msWCSSwapAxes20(char *srs_uri)
     if (srid == 0)
         return MS_FALSE;
 
-    /*check the static table*/
-    for (i=0; i<AXIS_ORIENTATION_TABLE_SIZE; i++)
-    {
-        if (axisOrientationEpsgCodes[i].code == srid)
-          return MS_TRUE;
-    }
-
-    return MS_FALSE;
+    return msIsAxisInverted(srid);
 }
 
 /************************************************************************/
