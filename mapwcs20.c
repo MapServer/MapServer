@@ -4006,19 +4006,20 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 
         tmpCm = cm;
         tmpCm.extent = map->extent;
-        tmpCm.xsize = params->width;
-        tmpCm.ysize = params->height;
-        tmpCm.xresolution = params->resolutionX;
-        tmpCm.yresolution = params->resolutionY;
+        tmpCm.xsize = map->width;
+        tmpCm.ysize = map->height;
         strlcpy(tmpCm.srs_uri, srs_uri, sizeof(tmpCm.srs_uri));
-        msFree(srs_uri);
-        /* WCS 2.0 is center of pixel oriented */
-        tmpCm.extent.minx -= params->resolutionX * 0.5;
-        tmpCm.extent.maxx += params->resolutionX * 0.5;
-        tmpCm.extent.miny -= params->resolutionY * 0.5;
-        tmpCm.extent.maxy += params->resolutionY * 0.5;
+        
+        tmpCm.xresolution = map->gt.geotransform[1];
+        tmpCm.yresolution = map->gt.geotransform[5];
+        
+        tmpCm.extent.minx = MIN(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
+        tmpCm.extent.miny = MIN(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
+        tmpCm.extent.maxx = MAX(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
+        tmpCm.extent.maxy = MAX(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
 
-        swapAxes = msWCSSwapAxes20(cm.srs_uri);
+        swapAxes = msWCSSwapAxes20(srs_uri);
+        msFree(srs_uri);
 
         /* Setup layer information  */
         msWCSCommon20_CreateBoundedBy(layer, &tmpCm, psGmlNs, psRootNode, &(map->projection), swapAxes);
