@@ -23,7 +23,7 @@
 
 %typemap(out) gdBuffer
 %{ $result = SWIG_JavaArrayOutSchar(jenv, $1.data, $1.size); 
-   if( $1.owns_data ) gdFree($1.data); %}
+   if( $1.owns_data ) msFree($1.data); %}
 
 %typemap(javain) gdBuffer "$javainput"
 %typemap(javaout) gdBuffer {
