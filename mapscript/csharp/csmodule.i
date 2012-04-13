@@ -320,7 +320,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 
 %typemap(out, null="") gdBuffer
 %{ SWIG_csharp_bytearray_callback($1.data, $1.size);
-	if( $1.owns_data ) gdFree($1.data); %}
+	if( $1.owns_data ) msFree($1.data); %}
 
 // SWIGEXCODE is a macro used by many other csout typemaps
 #ifdef SWIGEXCODE

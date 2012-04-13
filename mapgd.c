@@ -928,7 +928,7 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfont
             s++;
       }
 
-      gdFree(strex.xshow); /* done with character advances */
+      msFree(strex.xshow); /* done with character advances */
 
       rect->minx = bbox[0];
       rect->miny = bbox[5];

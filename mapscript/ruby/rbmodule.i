@@ -20,7 +20,7 @@
 /* To support imageObj::getBytes */
 %typemap(out) gdBuffer {
     $result = rb_str_new($1.data, $1.size);
-    gdFree($1.data);
+    msFree($1.data);
 }
 
 /**************************************************************************
