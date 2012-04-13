@@ -41,7 +41,7 @@
         sv_2mortal($result);
         argvi++;
         if( $1.owns_data )
-            gdFree($1.data);
+            msFree($1.data);
 }
 
 /*

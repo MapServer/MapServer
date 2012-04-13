@@ -208,7 +208,7 @@
         /* Tcl implementation to create string */
         imgstring = Tcl_NewByteArrayObj(imgbytes, size);    
     
-        gdFree(imgbytes);
+        msFree(imgbytes);
 
         return imgstring;
 #else /* force_gd_broken_code */
@@ -223,7 +223,7 @@
     -------------------------------------------------------------------------
     getBytes returns a gdBuffer structure (defined in mapscript.i) which must
     be typemapped to an object appropriate to the target language.  This
-    typemap must also gdFree the data member of the gdBuffer.  See the type-
+    typemap must also msFree the data member of the gdBuffer.  See the type-
     maps in java/javamodule.i and python/pymodule.i for examples.
 
     contributed by Jerry Pisk, jerry.pisk@gmail.com
