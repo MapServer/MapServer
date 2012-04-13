@@ -997,6 +997,8 @@ int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSet
         double size, char *string, rectObj *rect, double **advances, int bAdjustbaseline) {
    outputFormatObj *format = NULL;
    int ret = MS_FAILURE;
+   char *lookedUpFonts[MS_MAX_LABEL_FONTS];
+   int numfonts;
    if(!renderer) {
       outputFormatObj *format = msCreateDefaultOutputFormat(NULL,"AGG/PNG","tmp");
       if(!format) {
@@ -1005,8 +1007,6 @@ int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSet
       msInitializeRendererVTable(format);
       renderer = format->vtable;
    }
-   char *lookedUpFonts[MS_MAX_LABEL_FONTS];
-   int numfonts;
    if(MS_FAILURE == msFontsetLookupFonts(fontstring, &numfonts, fontset, lookedUpFonts))
       goto tt_cleanup;
    ret = renderer->getTruetypeTextBBox(renderer,lookedUpFonts,numfonts,size,string,rect,advances,bAdjustbaseline);
