@@ -13,6 +13,10 @@ libtool
 mapscript/csharp/Makefile
 mapscript/java/Makefile
 mapscript/perl/Makefile.PL
+mapscript/python/_mapscript.la
+mapscript/python/build/
+mapscript/python/mapscript.py
+mapscript/python/mapscript_wrap.c
 mapscriptvars
 mapserv
 mapserver-config
