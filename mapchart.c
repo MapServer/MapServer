@@ -329,7 +329,7 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     int         status=MS_SUCCESS;
     const char *chartRangeProcessingKey=NULL;
     const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
-    float diameter, mindiameter=-1, maxdiameter, minvalue, maxvalue;
+    float diameter, mindiameter=-1, maxdiameter, minvalue, maxvalue, exponent=0;
     float *values;
     styleObj **styles;
     pointObj center;
@@ -340,8 +340,8 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         if(chartRangeProcessingKey==NULL)
             diameter=20;
         else {
-            sscanf(chartRangeProcessingKey,"%*s %f %f %f %f",
-                &mindiameter,&maxdiameter,&minvalue,&maxvalue);
+            sscanf(chartRangeProcessingKey,"%*s %f %f %f %f %f",
+                &mindiameter,&maxdiameter,&minvalue,&maxvalue,&exponent);
         }
     }
     else
@@ -377,11 +377,18 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
                 else if(diameter>=maxvalue)
                     diameter=maxdiameter;
                 else {
-                    diameter=MS_NINT(
+                    if (exponent <= 0)
+                        diameter=MS_NINT(
                             mindiameter+
                             ((diameter-minvalue)/(maxvalue-minvalue))*
                             (maxdiameter-mindiameter)
-                    );
+                        );
+                    else
+                        diameter=MS_NINT(
+                            mindiameter+
+                            pow((diameter-minvalue)/(maxvalue-minvalue),1.0/exponent)*
+                            (maxdiameter-mindiameter)
+                        );
                 }
             }
         }
