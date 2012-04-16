@@ -244,7 +244,7 @@ int msDrawPieChart(mapObj *map, imageObj *image,
     return MS_SUCCESS;
 }
 
-int getNextShape(mapObj *map, layerObj *layer, float *values, styleObj **styles, shapeObj *shape) {
+int getNextShape(mapObj *map, layerObj *layer, float *values, int *nvalues, styleObj **styles, shapeObj *shape) {
     int status;
     int c;
     status = msLayerNextShape(layer, shape);
@@ -259,10 +259,14 @@ int getNextShape(mapObj *map, layerObj *layer, float *values, styleObj **styles,
         if(msBindLayerToShape(layer, shape, MS_FALSE) != MS_SUCCESS)
             return MS_FAILURE; /* error message is set in msBindLayerToShape() */
 
+        *nvalues = 0;
         for(c=0;c<layer->numclasses;c++)
         {
-            values[c]=(layer->class[c]->styles[0]->size);
-            styles[c]=layer->class[c]->styles[0];
+           if(msEvalExpression(layer, shape, &(layer->class[c]->expression), layer->classitemindex) == MS_TRUE) {
+              values[*nvalues]=(layer->class[c]->styles[0]->size);
+              styles[*nvalues]=layer->class[c]->styles[0];
+              (*nvalues)++;
+           }
         }
     }
     return status;
@@ -365,12 +369,17 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         return MS_FAILURE;
     }
 
-    if(chartRangeProcessingKey!=NULL) 
-        numvalues--;
-    while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
+    int numvalues_for_shape = 0;
+    while(MS_SUCCESS == getNextShape(map,layer,values,&numvalues_for_shape,styles,&shape)) {
+       if(chartRangeProcessingKey!=NULL) 
+          numvalues_for_shape--;
+       if(numvalues_for_shape == 0) {
+          msFreeShape(&shape);
+          continue;
+       }
         msDrawStartShape(map, layer, image, &shape);
         if(chartRangeProcessingKey!=NULL) {
-            diameter = values[numvalues];
+            diameter = values[numvalues_for_shape];
             if(mindiameter>=0) {
                 if(diameter<=minvalue)
                     diameter=mindiameter;
@@ -394,7 +403,7 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         }
         if(findChartPoint(map, &shape, diameter, diameter, &center) == MS_SUCCESS) {
             status = msDrawPieChart(map,image, &center, diameter,
-                values,styles,numvalues);
+                values,styles,numvalues_for_shape);
         }
         msDrawEndShape(map,layer,image,&shape);
         msFreeShape(&shape);
@@ -415,6 +424,7 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     styleObj **styles;
     pointObj center;
     int numvalues = layer->numclasses; 
+    int numvalues_for_shape;
     if(chartSizeProcessingKey==NULL)
     {
         barWidth=20;
@@ -446,10 +456,13 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         return MS_FAILURE;
     }
 
-    while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
+    while(MS_SUCCESS == getNextShape(map,layer,values,&numvalues_for_shape,styles,&shape)) {
         int i;
         double h=0;
-        for(i=0;i<numvalues;i++) {
+        if(numvalues_for_shape == 0) {
+           continue;
+        }
+        for(i=0;i<numvalues_for_shape;i++) {
             values[i]*=scale;
             h += values[i];
         }
@@ -457,7 +470,7 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         if(findChartPoint(map, &shape, barWidth,h, &center)==MS_SUCCESS) {
             status = msDrawVBarChart(map,image,
                 &center,
-                values, styles, numvalues,
+                values, styles, numvalues_for_shape,
                 barWidth);
         }
         msDrawEndShape(map,layer,image,&shape);
@@ -483,6 +496,7 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     pointObj center;
     float barMaxVal,barMinVal;
     int numvalues = layer->numclasses; 
+    int numvalues_for_shape;
     if(chartSizeProcessingKey==NULL)
     {
         width=height=20;
@@ -537,12 +551,13 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         return MS_FAILURE;
     }
 
-    while(MS_SUCCESS == getNextShape(map,layer,values,styles,&shape)) {
+    while(MS_SUCCESS == getNextShape(map,layer,values,&numvalues_for_shape,styles,&shape)) {
+       if(numvalues_for_shape == 0 ) continue;
         msDrawStartShape(map, layer, image, &shape);
         if(findChartPoint(map, &shape, width,height, &center)==MS_SUCCESS) {
             status = msDrawBarChart(map,image,
                 &center,
-                values, styles, numvalues,
+                values, styles, numvalues_for_shape,
                 width,height,
                 (barMax!=NULL)?&barMaxVal:NULL,
                 (barMin!=NULL)?&barMinVal:NULL,
