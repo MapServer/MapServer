@@ -140,7 +140,7 @@ PHP_FUNCTION(ms_newMapObj)
 
     if (map == NULL)
     {
-        mapscript_throw_mapserver_exception("Failed to open map file \"%s\"" TSRMLS_CC,  filename);
+        mapscript_throw_mapserver_exception("Failed to open map file \"%s\", or map file error." TSRMLS_CC,  filename);
         return;
     }
 
@@ -171,7 +171,7 @@ PHP_FUNCTION(ms_newMapObjFromString)
 
     if (map == NULL)
     {
-        mapscript_throw_mapserver_exception("Failed to open map file \"%s\"" TSRMLS_CC,  string);
+        mapscript_throw_mapserver_exception("Failed to open map file \"%s\", or map file error." TSRMLS_CC,  string);
         return;
     }
 
