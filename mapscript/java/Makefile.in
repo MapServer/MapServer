@@ -111,5 +111,5 @@ threadtests:
 	@echo "   You can use your own map! Copy the following command in your shell"
 	@echo "        and change the file to the map file (the last argument)"
 	@echo "-------------------------------------------------------------------------"
-	$(JAVA) -Djava.library.path=./ -cp tests/threadtest/:./mapscript.jar MapTest -t 10 -i 5 ../../tests/test.map
+	$(JAVA) -Djava.library.path=./ -Djava.library.path=.libs/ -cp tests/threadtest/:./mapscript.jar MapTest -t 10 -i 5 ../../tests/test.map
 
