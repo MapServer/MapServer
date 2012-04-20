@@ -447,7 +447,7 @@ php_mapscript_clean:
 	cd mapscript/php; $(MAKE) clean;
 
 php_mapscript_install:
-	cd mapscript/php; $(MAKE) install;
+	cd mapscript/php; $(MAKE) install DESTDIR=$(DESTDIR);
 
 python_mapscript: $(LIBMAP)
 	cd mapscript/python; $(MAKE);
@@ -456,7 +456,7 @@ python_mapscript_clean:
 	cd mapscript/python; $(MAKE) clean;
 
 python_mapscript_install:
-	cd mapscript/python; $(MAKE) install;
+	cd mapscript/python; $(MAKE) install DESTDIR=$(DESTDIR);
 
 install: install-lib install-bin install-cgibin @MAKE_PHP_MAPSCRIPT_INSTALL@ @MAKE_PYTHON_MAPSCRIPT_INSTALL@
 
