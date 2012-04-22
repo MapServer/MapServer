@@ -338,6 +338,8 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     styleObj **styles;
     pointObj center;
     int numvalues = layer->numclasses; /* the number of classes to represent in the graph */
+    int numvalues_for_shape = 0;
+    
     if(chartSizeProcessingKey==NULL)
     {
         chartRangeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE_RANGE" );
@@ -369,7 +371,6 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
         return MS_FAILURE;
     }
 
-    int numvalues_for_shape = 0;
     while(MS_SUCCESS == getNextShape(map,layer,values,&numvalues_for_shape,styles,&shape)) {
        if(chartRangeProcessingKey!=NULL) 
           numvalues_for_shape--;
