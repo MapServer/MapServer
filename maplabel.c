@@ -804,7 +804,8 @@ int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, shape
         if(mindistance >0  && 
           (cachePtr->layerindex == curCachePtr->layerindex) && 
           (cachePtr->classindex == curCachePtr->classindex) && 
-          (strcmp(cachePtr->labels[0].annotext, curCachePtr->labels[0].annotext) == 0) &&
+          (cachePtr->labels[0].annotext && curCachePtr->labels[0].annotext &&
+           strcmp(cachePtr->labels[0].annotext, curCachePtr->labels[0].annotext) == 0) &&
           (msDistancePointToPoint(&(cachePtr->point), &(curCachePtr->point)) <= (mindistance + label_width))) { /* label is a duplicate */
           return MS_FALSE;
         }
