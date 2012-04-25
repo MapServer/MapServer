@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.0.3, SVN branch-6-0):
 -----------------------------------------------
 
+- Fixed getFeature request with custom output format fails on filter encoding (#4190)
+
 - Fixed resolution when UoM changes in WCS 2.0 (#4283)
 
 - Added missing DEFRESOLUTION parameter to msCopyMap() function (#4272) 
