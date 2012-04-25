@@ -4704,7 +4704,7 @@ static void writeOutputformat(FILE *stream, int indent, mapObj *map)
 
   writeOutputformatobject(stream, indent, map->outputformat);
   for(i=0; i<map->numoutputformats; i++) {
-    if(map->outputformatlist[i]->inmapfile == MS_TRUE && strcmp(map->outputformatlist[i]->driver, map->outputformat->driver) != 0)
+    if(map->outputformatlist[i]->inmapfile == MS_TRUE && strcmp(map->outputformatlist[i]->name, map->outputformat->name) != 0)
       writeOutputformatobject(stream, indent, map->outputformatlist[i]);
   }
 }

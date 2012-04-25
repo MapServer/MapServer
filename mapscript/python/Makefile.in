@@ -23,8 +23,8 @@ LTINSTALL=$(LIBTOOL) --mode=install
 XTRALIBS= @XTRALIBS@
 
 
-PYLIBDIR=`$(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"`
-PYINCDIR=`$(PYTHON) -c "from distutils.sysconfig import get_python_inc; print get_python_inc()"`
+PYLIBDIR=`$(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)"`
+PYINCDIR=`$(PYTHON) -c "from distutils.sysconfig import get_python_inc; print get_python_inc(1)"`
 
 RUNPATH= -rpath $(PYLIBDIR)
 DEFINES=@ALL_ENABLED@
@@ -51,8 +51,8 @@ mapscript_wrap.c: ../mapscript.i
 	$(SWIG) -python -shadow -modern -templatereduce -fastdispatch -fvirtual -fastproxy -modernargs -castmode -dirvtable -fastinit -fastquery -noproxydel -nobuildnone $(DEFINES) -o mapscript_wrap.c ../mapscript.i
 
 install: _mapscript.la
-	$(LTINSTALL) $(INSTALL) _mapscript.la $(PYLIBDIR)
-	$(INSTALL) -c mapscript.py $(PYLIBDIR)
+	$(LTINSTALL) $(INSTALL) _mapscript.la $(DESTDIR)$(PYLIBDIR)
+	$(INSTALL) -c mapscript.py $(DESTDIR)$(PYLIBDIR)
 
 clean:
 	-rm -rf .libs *.lo *.la *.so *.o pygdioctx/*.o pygdioctx/*.lo mapscript_wrap.c mapscript.py
