@@ -647,12 +647,14 @@ if test "x$with_gd" != "xno" ; then
    
      test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
      test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
+     test -f $GD_DIR/lib/x86_64-linux-gnu/libgd.a && GD_LIBDIR="$GD_DIR/lib/x86_64-linux-gnu"
      test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
      test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
      test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
    
      test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
      test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
+     test -f $GD_DIR/lib/x86_64-linux-gnu/libgd.so && GD_LIBDIR="$GD_DIR/lib/x86_64-linux-gnu"
      test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl -o -f $GD_DIR/.libs/libgd.dylib && GD_LIBDIR="$GD_DIR/.libs"
      test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
      test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
@@ -1918,7 +1920,7 @@ dnl Exempi support
 dnl ---------------------------------------------------------------------
 
 AC_MSG_CHECKING(if exempi support requested)
-AC_ARG_WITH(exempi,\
+AC_ARG_WITH(exempi,
 [  --with-exempi=DIR Specify path to exempi.],,)
 
 if test -n "$with_exempi" -a "$with_exempi" != "no" ; then
@@ -2090,6 +2092,7 @@ else
   test -f $XSLT_DIR/include/libxslt/xslt.h && XSLT_INCDIR="$XSLT_DIR/include"
   test -f $XSLT_DIR/lib/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib"
   test -f $XSLT_DIR/lib64/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib64"
+  test -f $XSLT_DIR/lib/x86_64-linux-gnu/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib/x86_64-linux-gnu"
 
   if test -n "$XSLT_LIBDIR" -a -n "$XSLT_INCDIR" ; then
     dnl
@@ -2137,6 +2140,7 @@ else
   test -f $EXSLT_DIR/include/libexslt/exslt.h && EXSLT_INCDIR="$EXSLT_DIR/include"
   test -f $EXSLT_DIR/lib/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib"
   test -f $EXSLT_DIR/lib64/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib64"
+  test -f $EXSLT_DIR/lib/x86_64-linux-gnu/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib/x86_64-linux-gnu"
 
   if test -n "$EXSLT_LIBDIR" -a -n "$EXSLT_INCDIR" ; then
     dnl
@@ -2442,7 +2446,7 @@ dnl ---------------------------------------------------------------------
 dnl Force use of slow (generic) MS_NINT macro.
 dnl ---------------------------------------------------------------------
 
-AC_ARG_ENABLE(point-z-m,
+AC_ARG_ENABLE(fast-nint,
 [  --disable-fast-nint     Use safe MS_NINT with reliable rounding],,)
 
 if test "$enable_fast_nint" = "no" ; then
@@ -2711,49 +2715,41 @@ dnl Check operating system (used by Java Mapscript and possibily
 dnl other mapscripts)
 dnl ---------------------------------------------------------------------
 
-AC_ARG_ENABLE(java-mapscript,
-[  --enable-java-mapscript Specify if java mapscript should be configured],,[enable_java_mapscript=no])
-
-if test "x$enable_java_mapscript" == "xyes" ; then
-
-   AC_MSG_CHECKING([if --with-java-include-os-name specified])
-   AC_ARG_WITH(java-include-os-name,
-   [  --with-java-include-os-name=dirname
-                             (AUTODETECTED)
-                             Use this option only if building of Java Mapscript
-                             fails because os-dependent headers are not found.
-                             dirname is the name of subdirectory of the Java 
-                             installation where os-dependent include files are 
-                             found (for instance linux or solaris).
-                             Only used by Java mapscript.],,)
-   if test -n "${with_java_include_os_name}" ; then
-   OS_INCLUDE_DIR="${with_java_include_os_name}"
-   AC_MSG_RESULT([yes ($OS_INCLUDE_DIR)])
-   else
-   dnl might break on Windows???
-   OUR_OSNAME=`uname -s`
-   case "${OUR_OSNAME}" in
-   [[Ll]inux]) OS_INCLUDE_DIR="linux" ;;
-   [[sS]olaris*]) OS_INCLUDE_DIR="solaris" ;;
-   [[sS]unOS*]) OS_INCLUDE_DIR="solaris" ;;
-   [[Ww]in*]) OS_INCLUDE_DIR="win32" ;;
-   *) OS_INCLUDE_DIR="linux" ;;
-   esac
-   AC_MSG_RESULT([no, autodetected $OS_INCLUDE_DIR])
-   fi
-   
-   if test -z $JAVAC; then
-      JAVAC="javac"
-   fi
-   AX_JNI_INCLUDE_DIR
-   for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
-   do
-      JAVA_INCLUDE="$JAVA_INCLUDE -I$JNI_INCLUDE_DIR"
-   done
+AC_MSG_CHECKING([if --with-java-include-os-name specified])
+AC_ARG_WITH(java-include-os-name,
+[  --with-java-include-os-name=dirname
+                          (AUTODETECTED)
+                          Use this option only if building of Java Mapscript
+                          fails because os-dependent headers are not found.
+                          dirname is the name of subdirectory of the Java 
+                          installation where os-dependent include files are 
+                          found (for instance linux or solaris).
+                          Only used by Java mapscript.],,)
+if test -n "${with_java_include_os_name}" ; then
+OS_INCLUDE_DIR="${with_java_include_os_name}"
+AC_MSG_RESULT([yes ($OS_INCLUDE_DIR)])
+else
+dnl might break on Windows???
+OUR_OSNAME=`uname -s`
+case "${OUR_OSNAME}" in
+[[Ll]inux]) OS_INCLUDE_DIR="linux" ;;
+[[sS]olaris*]) OS_INCLUDE_DIR="solaris" ;;
+[[sS]unOS*]) OS_INCLUDE_DIR="solaris" ;;
+[[Ww]in*]) OS_INCLUDE_DIR="win32" ;;
+*) OS_INCLUDE_DIR="linux" ;;
+esac
+AC_MSG_RESULT([no, autodetected $OS_INCLUDE_DIR])
 fi
+
+if test -z $JAVAC; then
+   JAVAC="javac"
+fi
+AX_JNI_INCLUDE_DIR
+for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+do
+   JAVA_INCLUDE="$JAVA_INCLUDE -I$JNI_INCLUDE_DIR"
+done
 AC_SUBST(JAVA_INCLUDE,$JAVA_INCLUDE)
-
-
 
 AC_DEFUN([PYTHON_CHECK],[
 AC_MSG_CHECKING(if python path is provided)
