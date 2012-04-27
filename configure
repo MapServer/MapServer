@@ -897,6 +897,7 @@ with_apxs
 with_apr_config
 enable_ignore_missing_data
 enable_point_z_m
+enable_fast_nint
 with_warnings
 enable_debug
 enable_proj_fastpath
@@ -21912,9 +21913,9 @@ ALL_ENABLED="$USE_POINT_Z_M $ALL_ENABLED"
 
 
 
-# Check whether --enable-point-z-m was given.
-if test "${enable_point_z_m+set}" = set; then :
-  enableval=$enable_point_z_m;
+# Check whether --enable-fast-nint was given.
+if test "${enable_fast_nint+set}" = set; then :
+  enableval=$enable_fast_nint;
 fi
 
 
