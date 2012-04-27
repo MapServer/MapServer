@@ -55,5 +55,5 @@ install: _mapscript.la
 	$(INSTALL) -c mapscript.py $(DESTDIR)$(PYLIBDIR)
 
 clean:
-	-rm -rf .libs *.lo *.la *.so *.o pygdioctx/*.o pygdioctx/*.lo mapscript_wrap.c mapscript.py
+	-rm -rf .libs *.lo *.la *.so *.o pygdioctx/.libs pygdioctx/*.o pygdioctx/*.lo mapscript_wrap.c mapscript.py
 
