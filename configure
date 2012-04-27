@@ -897,6 +897,7 @@ with_apxs
 with_apr_config
 enable_ignore_missing_data
 enable_point_z_m
+enable_fast_nint
 with_warnings
 enable_debug
 enable_proj_fastpath
@@ -1622,7 +1623,6 @@ Optional Packages:
                           OGR required).
   --with-curl-config=PATH Specify path to curl-config.
   --with-kml=                KML output Support (ARG=yes/no).
-\
   --with-exempi=DIR Specify path to exempi.
   --with-xml2-config=PATH Specify path to xml2-config.
   --with-xml-mapfile=                Include xml-mapfile Support (ARG=yes/no).
@@ -4772,7 +4772,7 @@ linux* | k*bsd*-gnu | kopensolaris*-gnu)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
-netbsd*)
+netbsd* | netbsdelf*-gnu)
   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
   else
@@ -8210,6 +8210,9 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
   openbsd*)
     with_gnu_ld=no
     ;;
+  linux* | k*bsd*-gnu | gnu*)
+    link_all_deplibs=no
+    ;;
   esac
 
   ld_shlibs=yes
@@ -8431,7 +8434,7 @@ _LT_EOF
       fi
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
 	wlarc=
@@ -8608,6 +8611,7 @@ _LT_EOF
 	if test "$aix_use_runtimelinking" = yes; then
 	  shared_flag="$shared_flag "'${wl}-G'
 	fi
+	link_all_deplibs=no
       else
 	# not using gcc
 	if test "$host_cpu" = ia64; then
@@ -9061,7 +9065,7 @@ $as_echo "$lt_cv_irix_exported_symbol" >&6; }
       link_all_deplibs=yes
       ;;
 
-    netbsd*)
+    netbsd* | netbsdelf*-gnu)
       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
       else
@@ -10087,6 +10091,18 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
+  ;;
+
+netbsdelf*-gnu)
+  version_type=linux
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -13934,7 +13950,7 @@ lt_prog_compiler_static_CXX=
 	    ;;
 	esac
 	;;
-      netbsd*)
+      netbsd* | netbsdelf*-gnu)
 	;;
       *qnx* | *nto*)
         # QNX uses GNU C++, but need to define -shared option too, otherwise
@@ -14304,6 +14320,9 @@ $as_echo_n "checking whether the $compiler linker ($LD) supports shared librarie
       exclude_expsyms_CXX='[_]+GLOBAL_OFFSET_TABLE_|[_]+GLOBAL__[FID]_.*|[_]+head_[A-Za-z0-9_]+_dll|[A-Za-z0-9_]+_dll_iname'
       ;;
     esac
+    ;;
+  linux* | k*bsd*-gnu | gnu*)
+    link_all_deplibs_CXX=no
     ;;
   *)
     export_symbols_cmds_CXX='$NM $libobjs $convenience | $global_symbol_pipe | $SED '\''s/.* //'\'' | sort | uniq > $export_symbols'
@@ -14928,6 +14947,18 @@ fi
   # people can always --disable-shared, the test was removed, and we
   # assume the GNU/Linux dynamic linker is in use.
   dynamic_linker='GNU/Linux ld.so'
+  ;;
+
+netbsdelf*-gnu)
+  version_type=linux
+  need_lib_prefix=no
+  need_version=no
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  shlibpath_var=LD_LIBRARY_PATH
+  shlibpath_overrides_runpath=no
+  hardcode_into_libs=yes
+  dynamic_linker='NetBSD ld.elf_so'
   ;;
 
 netbsd*)
@@ -17350,12 +17381,14 @@ if test "x$with_gd" != "xno" ; then
 
      test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
      test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
+     test -f $GD_DIR/lib/x86_64-linux-gnu/libgd.a && GD_LIBDIR="$GD_DIR/lib/x86_64-linux-gnu"
      test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
      test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
      test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
 
      test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
      test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
+     test -f $GD_DIR/lib/x86_64-linux-gnu/libgd.so && GD_LIBDIR="$GD_DIR/lib/x86_64-linux-gnu"
      test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl -o -f $GD_DIR/.libs/libgd.dylib && GD_LIBDIR="$GD_DIR/.libs"
      test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
      test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
@@ -20962,6 +20995,7 @@ else
   test -f $XSLT_DIR/include/libxslt/xslt.h && XSLT_INCDIR="$XSLT_DIR/include"
   test -f $XSLT_DIR/lib/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib"
   test -f $XSLT_DIR/lib64/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib64"
+  test -f $XSLT_DIR/lib/x86_64-linux-gnu/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib/x86_64-linux-gnu"
 
   if test -n "$XSLT_LIBDIR" -a -n "$XSLT_INCDIR" ; then
                 XSLT_ENABLED="-DUSE_XSLT"
@@ -21034,6 +21068,7 @@ else
   test -f $EXSLT_DIR/include/libexslt/exslt.h && EXSLT_INCDIR="$EXSLT_DIR/include"
   test -f $EXSLT_DIR/lib/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib"
   test -f $EXSLT_DIR/lib64/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib64"
+  test -f $EXSLT_DIR/lib/x86_64-linux-gnu/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib/x86_64-linux-gnu"
 
   if test -n "$EXSLT_LIBDIR" -a -n "$EXSLT_INCDIR" ; then
                 EXSLT_ENABLED="-DUSE_EXSLT"
@@ -21878,9 +21913,9 @@ ALL_ENABLED="$USE_POINT_Z_M $ALL_ENABLED"
 
 
 
-# Check whether --enable-point-z-m was given.
-if test "${enable_point_z_m+set}" = set; then :
-  enableval=$enable_point_z_m;
+# Check whether --enable-fast-nint was given.
+if test "${enable_fast_nint+set}" = set; then :
+  enableval=$enable_fast_nint;
 fi
 
 
