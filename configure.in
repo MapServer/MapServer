@@ -647,12 +647,14 @@ if test "x$with_gd" != "xno" ; then
    
      test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
      test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
+     test -f $GD_DIR/lib/x86_64-linux-gnu/libgd.a && GD_LIBDIR="$GD_DIR/lib/x86_64-linux-gnu"
      test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
      test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
      test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
    
      test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
      test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
+     test -f $GD_DIR/lib/x86_64-linux-gnu/libgd.so && GD_LIBDIR="$GD_DIR/lib/x86_64-linux-gnu"
      test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl -o -f $GD_DIR/.libs/libgd.dylib && GD_LIBDIR="$GD_DIR/.libs"
      test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
      test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
@@ -2090,6 +2092,7 @@ else
   test -f $XSLT_DIR/include/libxslt/xslt.h && XSLT_INCDIR="$XSLT_DIR/include"
   test -f $XSLT_DIR/lib/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib"
   test -f $XSLT_DIR/lib64/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib64"
+  test -f $XSLT_DIR/lib/x86_64-linux-gnu/libxslt.so && XSLT_LIBDIR="$XSLT_DIR/lib/x86_64-linux-gnu"
 
   if test -n "$XSLT_LIBDIR" -a -n "$XSLT_INCDIR" ; then
     dnl
@@ -2137,6 +2140,7 @@ else
   test -f $EXSLT_DIR/include/libexslt/exslt.h && EXSLT_INCDIR="$EXSLT_DIR/include"
   test -f $EXSLT_DIR/lib/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib"
   test -f $EXSLT_DIR/lib64/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib64"
+  test -f $EXSLT_DIR/lib/x86_64-linux-gnu/libexslt.so && EXSLT_LIBDIR="$EXSLT_DIR/lib/x86_64-linux-gnu"
 
   if test -n "$EXSLT_LIBDIR" -a -n "$EXSLT_INCDIR" ; then
     dnl
