@@ -50,7 +50,7 @@ def unique(list):
 # ---------------------------------------------------------------------------
 
 include_dirs = ['../..']
-library_dirs = ['../../']
+library_dirs = ['../../.libs']
 libraries = ['mapserver']
 
 extra_link_args = []
