@@ -51,6 +51,90 @@
 
 MS_CVSID("$Id$")
 
+/* Native geometry parser macros */
+
+/* parser error codes */
+#define NOERROR 0
+#define NOT_ENOUGH_DATA 1
+#define CORRUPT_DATA 2
+#define UNSUPPORTED_GEOMETRY_TYPE 3
+
+/* geometry format to transfer geometry column */
+#define MSSQLGEOMETRY_NATIVE 0
+#define MSSQLGEOMETRY_WKB 1
+#define MSSQLGEOMETRY_WKT 2
+
+/* geometry column types */
+#define MSSQLCOLTYPE_GEOMETRY  0
+#define MSSQLCOLTYPE_GEOGRAPHY 1
+#define MSSQLCOLTYPE_BINARY 2
+#define MSSQLCOLTYPE_TEXT 3
+
+#define SP_NONE 0
+#define SP_HASZVALUES 1
+#define SP_HASMVALUES 2
+#define SP_ISVALID 4
+#define SP_ISSINGLEPOINT 8
+#define SP_ISSINGLELINESEGMENT 0x10
+#define SP_ISWHOLEGLOBE 0x20
+
+#define ST_UNKNOWN 0
+#define ST_POINT 1
+#define ST_LINESTRING 2
+#define ST_POLYGON 3
+#define ST_MULTIPOINT 4
+#define ST_MULTILINESTRING 5
+#define ST_MULTIPOLYGON 6
+#define ST_GEOMETRYCOLLECTION 7
+
+#define ReadInt32(nPos) (*((unsigned int*)(gpi->pszData + (nPos))))
+
+#define ReadByte(nPos) (gpi->pszData[nPos])
+
+#define ReadDouble(nPos) (*((double*)(gpi->pszData + (nPos))))
+
+#define ParentOffset(iShape) (ReadInt32(gpi->nShapePos + (iShape) * 9 ))
+#define FigureOffset(iShape) (ReadInt32(gpi->nShapePos + (iShape) * 9 + 4))
+#define ShapeType(iShape) (ReadByte(gpi->nShapePos + (iShape) * 9 + 8))
+
+#define NextFigureOffset(iShape) (iShape + 1 < gpi->nNumShapes? FigureOffset((iShape) +1) : gpi->nNumFigures)
+
+#define FigureAttribute(iFigure) (ReadByte(gpi->nFigurePos + (iFigure) * 5))
+#define PointOffset(iFigure) (ReadInt32(gpi->nFigurePos + (iFigure) * 5 + 1))
+#define NextPointOffset(iFigure) (iFigure + 1 < gpi->nNumFigures? PointOffset((iFigure) +1) : gpi->nNumPoints)
+
+#define ReadX(iPoint) (ReadDouble(gpi->nPointPos + gpi->nPointSize * (iPoint)))
+#define ReadY(iPoint) (ReadDouble(gpi->nPointPos + gpi->nPointSize * (iPoint) + 8))
+#define ReadZ(iPoint) (ReadDouble(gpi->nPointPos + gpi->nPointSize * (iPoint) + 16))
+#define ReadM(iPoint) (ReadDouble(gpi->nPointPos + gpi->nPointSize * (iPoint) + 24))
+
+/* Native geometry parser struct */
+typedef struct msGeometryParserInfo_t
+{
+    unsigned char* pszData;
+    int nLen;
+    /* serialization propeties */
+    char chProps;
+    /* point array */
+    int nPointSize;
+    int nPointPos;
+    int nNumPoints;
+    /* figure array */
+    int nFigurePos;
+    int nNumFigures;
+    /* shape array */
+    int nShapePos;
+    int nNumShapes;
+    int nSRSId;
+    /* geometry or geography */
+    int nColType;
+    /* bounds */
+    double minx;
+    double miny;
+    double maxx;
+    double maxy;
+} msGeometryParserInfo;
+
 /* Structure for connection to an ODBC database (Microsoft preferred way to connect to SQL Server 2005 from c/c++) */
 typedef struct msODBCconn_t
 {
@@ -72,6 +156,8 @@ typedef struct ms_MSSQL2008_layer_info_t
 	char		*index_name;	/* hopefully this isn't necessary - but if the optimizer ain't cuttin' it... */
 
     msODBCconn * conn;          /* Connection to db */
+    msGeometryParserInfo gpi;   /* struct for the geometry parser */
+    int geometry_format;        /* Geometry format to be retrieved from the database */
 } msMSSQL2008LayerInfo;
 
 #define SQL_COLUMN_NAME_MAX_LENGTH 128
@@ -85,8 +171,219 @@ typedef struct ms_MSSQL2008_layer_info_t
     "For more help, please see http://www.mapdotnet.com \n\n<br><br>" \
     "mapmssql2008.c - version of 2007/7/1.\n"
 
-/* Little dummy buffer used to clean up memory allocation */
-char dummyBuffer[1];
+/* Native geometry parser code */
+void ReadPoint(msGeometryParserInfo* gpi, pointObj* p, int iPoint, int iOrder)
+{
+    if (gpi->nColType == MSSQLCOLTYPE_GEOGRAPHY)
+    {
+        p->x = ReadY(iPoint);
+        p->y = ReadX(iPoint);
+    }
+    else
+    {
+        p->x = ReadX(iPoint);
+        p->y = ReadY(iPoint);
+    }
+    /* calculate bounds */
+    if (iOrder == 0)
+    {
+        gpi->minx = gpi->maxx = p->x;
+        gpi->miny = gpi->maxy = p->y;
+    }
+    else
+    {
+        if (gpi->minx > p->x) gpi->minx = p->x;
+        else if (gpi->maxx < p->x) gpi->maxx = p->x;
+        if (gpi->miny > p->y) gpi->miny = p->y;
+        else if (gpi->maxy < p->y) gpi->maxy = p->y;
+    }
+
+#ifdef USE_POINT_Z_M
+    if ( gpi->chProps & SP_HASZVALUES )
+        p->z = ReadZ(iPoint);
+    if ( gpi->chProps & SP_HASMVALUES )
+        p->z = ReadM(iPoint);
+#endif
+}
+
+int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
+{
+    msGeometryParserInfo* gpi = &layerinfo->gpi;
+
+    if (gpi->nLen < 10)
+    {
+        msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");
+        return NOT_ENOUGH_DATA;
+    }
+   
+    /* store the SRS id for further use */
+    gpi->nSRSId = ReadInt32(0);
+    
+    if ( ReadByte(4) != 1 )
+    {
+        msDebug("ParseSqlGeometry CORRUPT_DATA\n");
+        return CORRUPT_DATA;
+    }
+
+    gpi->chProps = ReadByte(5);
+
+    if ( gpi->chProps & SP_HASMVALUES )
+        gpi->nPointSize = 32;
+    else if ( gpi->chProps & SP_HASZVALUES )
+        gpi->nPointSize = 24;
+    else
+        gpi->nPointSize = 16;
+
+    if ( gpi->chProps & SP_ISSINGLEPOINT )
+    {
+        // single point geometry
+        if (gpi->nLen < 6 + gpi->nPointSize)
+        {
+            msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");
+            return NOT_ENOUGH_DATA;
+        }
+
+        shape->type = MS_SHAPE_POINT;
+        shape->line = (lineObj *) msSmallMalloc(sizeof(lineObj));
+        shape->numlines = 1;
+        shape->line[0].point = (pointObj *) msSmallMalloc(sizeof(pointObj));
+        shape->line[0].numpoints = 1;
+        gpi->nPointPos = 6;
+
+        ReadPoint(gpi, &shape->line[0].point[0], 0, 0);
+    }
+    else if ( gpi->chProps & SP_ISSINGLELINESEGMENT )
+    {
+        // single line segment with 2 points
+        if (gpi->nLen < 6 + 2 * gpi->nPointSize)
+        {
+            msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");
+            return NOT_ENOUGH_DATA;
+        }
+
+        shape->type = MS_SHAPE_LINE;
+        shape->line = (lineObj *) msSmallMalloc(sizeof(lineObj));
+        shape->numlines = 1;
+        shape->line[0].point = (pointObj *) msSmallMalloc(sizeof(pointObj) * 2);
+        shape->line[0].numpoints = 2;
+        gpi->nPointPos = 6;
+
+        ReadPoint(gpi, &shape->line[0].point[0], 0, 0);
+        ReadPoint(gpi, &shape->line[0].point[1], 1, 1);
+    }
+    else
+    {
+        int iShape, iFigure;
+        // complex geometries
+        gpi->nNumPoints = ReadInt32(6);
+
+        if ( gpi->nNumPoints <= 0 )
+        {
+            return NOERROR;
+        }
+
+        // position of the point array
+        gpi->nPointPos = 10;
+
+        // position of the figures
+        gpi->nFigurePos = gpi->nPointPos + gpi->nPointSize * gpi->nNumPoints + 4;
+        
+        if (gpi->nLen < gpi->nFigurePos)
+        {
+            msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");
+            return NOT_ENOUGH_DATA;
+        }
+
+        gpi->nNumFigures = ReadInt32(gpi->nFigurePos - 4);
+        
+        if ( gpi->nNumFigures <= 0 )
+        {
+            return NOERROR;
+        }
+
+        // position of the shapes
+        gpi->nShapePos = gpi->nFigurePos + 5 * gpi->nNumFigures + 4;
+
+        if (gpi->nLen < gpi->nShapePos)
+        {
+            msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");            
+            return NOT_ENOUGH_DATA;
+        }
+
+        gpi->nNumShapes = ReadInt32(gpi->nShapePos - 4);
+
+        if (gpi->nLen < gpi->nShapePos + 9 * gpi->nNumShapes)
+        {
+            msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");            
+            return NOT_ENOUGH_DATA;
+        }
+
+        if ( gpi->nNumShapes <= 0 )
+        {
+            return NOERROR;
+        }
+
+        // pick up the root shape
+        if ( ParentOffset(0) != 0xFFFFFFFF)
+        {
+            msDebug("ParseSqlGeometry CORRUPT_DATA\n");
+            return CORRUPT_DATA;
+        }
+
+        // determine the shape type
+        for (iShape = 0; iShape < gpi->nNumShapes; iShape++)
+        {
+            unsigned char shapeType = ShapeType(iShape);
+            if (shapeType == ST_POINT || shapeType == ST_MULTIPOINT)
+            {
+                shape->type = MS_SHAPE_POINT;
+                break;
+            }
+            else if (shapeType == ST_LINESTRING || shapeType == ST_MULTILINESTRING)
+            {
+                shape->type = MS_SHAPE_LINE;
+                break;
+            }
+            else if (shapeType == ST_POLYGON || shapeType == ST_MULTIPOLYGON)
+            {
+                shape->type = MS_SHAPE_POLYGON;
+                break;
+            }
+        }
+      
+        shape->line = (lineObj *) msSmallMalloc(sizeof(lineObj) * gpi->nNumFigures);
+        shape->numlines = gpi->nNumFigures;
+        // read figures
+        for (iFigure = 0; iFigure < gpi->nNumFigures; iFigure++)
+        {
+            int iPoint, iNextPoint, i;
+            iPoint = PointOffset(iFigure);
+            iNextPoint = NextPointOffset(iFigure);
+            
+            shape->line[iFigure].point = (pointObj *) msSmallMalloc(sizeof(pointObj)*(iNextPoint - iPoint));
+
+            i = 0;
+            while (iPoint < iNextPoint)
+            {
+                ReadPoint(gpi, &shape->line[iFigure].point[i], iPoint, i);
+                ++iPoint;
+                ++i;
+            }
+
+            shape->line[iFigure].numpoints = i;
+        }
+    }
+
+    /* set bounds */
+    shape->bounds.minx = gpi->minx;
+    shape->bounds.miny = gpi->miny;
+    shape->bounds.maxx = gpi->maxx;
+    shape->bounds.maxy = gpi->maxy;
+
+    return NOERROR;
+}
+
+/* MS SQL driver code*/
 
 msMSSQL2008LayerInfo *getMSSQL2008LayerInfo(const layerObj *layer)
 {
@@ -444,6 +741,18 @@ int msMSSQL2008LayerOpen(layerObj *layer)
         return MS_FAILURE;
     }
 
+    /* identify the geometry transfer type */
+    if (msLayerGetProcessingKey( layer, "MSSQL_READ_WKB" ) != NULL)
+        layerinfo->geometry_format = MSSQLGEOMETRY_WKB;
+    else 
+    {
+        layerinfo->geometry_format = MSSQLGEOMETRY_NATIVE;
+        if (strcasecmp(layerinfo->geom_column_type, "geography") == 0)
+            layerinfo->gpi.nColType = MSSQLCOLTYPE_GEOGRAPHY;
+        else
+            layerinfo->gpi.nColType = MSSQLCOLTYPE_GEOMETRY;
+    }
+
     return MS_SUCCESS;
 }
 
@@ -563,7 +872,10 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     {
         char buffer[1000];
 
-        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
+            snprintf(buffer, sizeof(buffer), "%s,convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        else
+            snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = msStrdup(buffer);
     } 
@@ -575,7 +887,10 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
             snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
         }
 
-        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
+            snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s,convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        else
+            snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = msStrdup(buffer);
     }
@@ -1349,59 +1664,86 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
                 if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
                     handleSQLError(layer);
 
-                memcpy(&geomType, wkbBuffer + 1, 4);
-
-                /* is this a single type? */
-                if (geomType < 4)
+                if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
                 {
-                    /* copy byte order marker (although we don't check it) */
-                    wkbTemp[0] = wkbBuffer[0];
-                    wkbBuffer = wkbTemp;
+                    layerinfo->gpi.pszData = (unsigned char*)wkbBuffer;
+                    layerinfo->gpi.nLen = retLen;
 
-                    /* indicate type is geometry collection (although geomType + 3 would also work) */
-                    wkbBuffer[1] = (char)7;
-                    wkbBuffer[2] = (char)0;
-                    wkbBuffer[3] = (char)0;
-                    wkbBuffer[4] = (char)0;
+                    if (!ParseSqlGeometry(layerinfo, shape))
+                    {
+                        switch(layer->type) 
+                        {
+                            case MS_LAYER_POINT:
+						        shape->type = MS_SHAPE_POINT;
+                                break;
 
-                    /* indicate 1 shape */
-                    wkbBuffer[5] = (char)1;
-                    wkbBuffer[6] = (char)0;
-                    wkbBuffer[7] = (char)0;
-                    wkbBuffer[8] = (char)0;
+                            case MS_LAYER_LINE:
+						        shape->type = MS_SHAPE_LINE;
+                                break;
+
+                            case MS_LAYER_POLYGON:
+						        shape->type = MS_SHAPE_POLYGON;
+                                break;
+                        }
+                    }
                 }
-
-                switch(layer->type) 
+                else
                 {
-                    case MS_LAYER_POINT:
-						result = force_to_points(wkbBuffer, shape);
-                        break;
+                    memcpy(&geomType, wkbBuffer + 1, 4);
 
-                    case MS_LAYER_LINE:
-						result = force_to_lines(wkbBuffer, shape);
-                        break;
+                    /* is this a single type? */
+                    if (geomType < 4)
+                    {
+                        /* copy byte order marker (although we don't check it) */
+                        wkbTemp[0] = wkbBuffer[0];
+                        wkbBuffer = wkbTemp;
 
-                    case MS_LAYER_POLYGON:
-						result = force_to_polygons(wkbBuffer, shape);
-                        break;
+                        /* indicate type is geometry collection (although geomType + 3 would also work) */
+                        wkbBuffer[1] = (char)7;
+                        wkbBuffer[2] = (char)0;
+                        wkbBuffer[3] = (char)0;
+                        wkbBuffer[4] = (char)0;
 
-                    case MS_LAYER_ANNOTATION:
-                    case MS_LAYER_QUERY:
-                    case MS_LAYER_CHART:
-                        result = dont_force(wkbBuffer, shape);
-                        break;
+                        /* indicate 1 shape */
+                        wkbBuffer[5] = (char)1;
+                        wkbBuffer[6] = (char)0;
+                        wkbBuffer[7] = (char)0;
+                        wkbBuffer[8] = (char)0;
+                    }
 
-                    case MS_LAYER_RASTER:
-                        msDebug( "Ignoring MS_LAYER_RASTER in mapMSSQL2008.c\n" );
-                        break;
+                    switch(layer->type) 
+                    {
+                        case MS_LAYER_POINT:
+						    result = force_to_points(wkbBuffer, shape);
+                            break;
 
-                    case MS_LAYER_CIRCLE:
-                        msDebug( "Ignoring MS_LAYER_CIRCLE in mapMSSQL2008.c\n" );
-                        break;
+                        case MS_LAYER_LINE:
+						    result = force_to_lines(wkbBuffer, shape);
+                            break;
 
-                    default:
-                       msDebug( "Unsupported layer type in msMSSQL2008LayerNextShape()!" );
-                       break;
+                        case MS_LAYER_POLYGON:
+						    result = force_to_polygons(wkbBuffer, shape);
+                            break;
+
+                        case MS_LAYER_ANNOTATION:
+                        case MS_LAYER_QUERY:
+                        case MS_LAYER_CHART:
+                            result = dont_force(wkbBuffer, shape);
+                            break;
+
+                        case MS_LAYER_RASTER:
+                            msDebug( "Ignoring MS_LAYER_RASTER in mapMSSQL2008.c\n" );
+                            break;
+
+                        case MS_LAYER_CIRCLE:
+                            msDebug( "Ignoring MS_LAYER_CIRCLE in mapMSSQL2008.c\n" );
+                            break;
+
+                        default:
+                           msDebug( "Unsupported layer type in msMSSQL2008LayerNextShape()!" );
+                           break;
+                    }
+                    find_bounds(shape);
                 }
 
                 //free(wkbBuffer);
@@ -1419,7 +1761,6 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
             shape->index = record_oid;
             shape->resultindex = (*record);
 
-            find_bounds(shape);
             (*record)++;        /* move to next shape */
 
             if(shape->type != MS_SHAPE_NULL) 
@@ -1516,7 +1857,10 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
 
     if(layer->numitems == 0) 
     {
-        snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
+            snprintf(buffer, sizeof(buffer), "%s, convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        else
+            snprintf(buffer, sizeof(buffer), "%s.STAsBinary(), convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
         columns_wanted = msStrdup(buffer);
     } 
     else 
@@ -1525,7 +1869,10 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
             snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
         }
 
-        snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
+            snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s, convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+        else
+            snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(), convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
 
         columns_wanted = msStrdup(buffer);
     }
