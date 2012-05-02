@@ -53,14 +53,10 @@ static char *msGetEnvURL( const char *key, void *thread_context )
 
 %extend cgiRequestObj {
 
-#if defined(SWIGJAVA) || defined(SWIGCSHARP)
     cgiRequestObj()
-#else
-    cgiRequestObj(void)
-#endif
     {
         cgiRequestObj *request;
-        
+
         request = msAllocCgiObj();
         if (!request) {
             msSetError(MS_CGIERR, "Failed to initialize object","OWSRequest()");
@@ -70,13 +66,9 @@ static char *msGetEnvURL( const char *key, void *thread_context )
         return request;
     }
 
-#if defined(SWIGJAVA) || defined(SWIGCSHARP)
     ~cgiRequestObj()
-#else
-    ~cgiRequestObj(void)
-#endif
     {
-        free(self);
+        msFreeCgiObj(self);
     }
 
     int loadParams()
