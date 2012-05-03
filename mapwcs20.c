@@ -2863,12 +2863,11 @@ static int msWCSGetCapabilities20_CreateProfiles(
         MS_WCS_20_PROFILE_CORE,     NULL,
         MS_WCS_20_PROFILE_KVP,      NULL,
         MS_WCS_20_PROFILE_POST,     NULL,
-        MS_WCS_20_PROFILE_EPSG,     NULL,
+        MS_WCS_20_PROFILE_CRS,     NULL,
         MS_WCS_20_PROFILE_IMAGECRS, NULL,
         MS_WCS_20_PROFILE_GEOTIFF,  "image/tiff",
         MS_WCS_20_PROFILE_GML_GEOTIFF, NULL,
         MS_WCS_20_PROFILE_SCALING, NULL,
-        MS_WCS_20_PROFILE_INTERPOLATION, NULL,
         MS_WCS_20_PROFILE_RANGESUBSET, NULL,
         NULL, NULL /* guardian */
     };
@@ -2971,7 +2970,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
                            wcs20ParamsObjPtr params, owsRequestObj *ows_request)
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
-    xmlNodePtr psRootNode, psOperationsNode, psServiceMetadataNode, psNode;
+    xmlNodePtr psRootNode,
+            psOperationsNode,
+            psNode;
     const char *updatesequence = NULL;
     xmlNsPtr psOwsNs = NULL,
             psXLinkNs = NULL,
@@ -3004,8 +3005,6 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     xmlSetNs(psRootNode, psWcsNs);
 
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->version );
-
-    /* TODO: remove updatesequence? */
 
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
     if (params->updatesequence != NULL)
@@ -3069,6 +3068,10 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         psNode = msOWSCommonOperationsMetadataOperation(
             psOwsNs, psXLinkNs,
             "GetCapabilities", OWS_METHOD_GETPOST, script_url_encoded);
+        
+        xmlAddChild(psNode->last->last->last,
+            msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                    "PostEncoding", "XML"));
         xmlAddChild(psOperationsNode, psNode);
 
         /* -------------------------------------------------------------------- */
@@ -3079,6 +3082,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             psNode = msOWSCommonOperationsMetadataOperation(
                 psOwsNs, psXLinkNs,
                 "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+            xmlAddChild(psNode->last->last->last,
+                msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                        "PostEncoding", "XML"));
             xmlAddChild(psOperationsNode, psNode);
         }
 
@@ -3090,18 +3096,20 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             psNode = msOWSCommonOperationsMetadataOperation(
                 psOwsNs, psXLinkNs,
                 "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
-            xmlAddChild(psOperationsNode, psNode);
             
-            msFree(script_url_encoded);
+            xmlAddChild(psNode->last->last->last,
+                msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                        "PostEncoding", "XML"));
+            xmlAddChild(psOperationsNode, psNode);
         }
+        msFree(script_url_encoded);
     }
 
     /* -------------------------------------------------------------------- */
     /*      Service metadata.                                               */
     /* -------------------------------------------------------------------- */
     /* it is mandatory, but unused for now */
-    psServiceMetadataNode = xmlAddChild(psRootNode, xmlNewNode(psWcsNs, BAD_CAST "ServiceMetadata"));
-    xmlNewProp(psServiceMetadataNode, BAD_CAST "version", BAD_CAST "1.0.0");
+    xmlAddChild(psRootNode, xmlNewNode(psWcsNs, BAD_CAST "ServiceMetadata"));
 
     /* -------------------------------------------------------------------- */
     /*      Contents section.                                               */
