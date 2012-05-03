@@ -318,7 +318,6 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
     params->bbox.minx = params->bbox.miny = -DBL_MAX;
     params->bbox.maxx = params->bbox.maxy =  DBL_MAX;
     params->range_subset    = NULL;
-    params->invalid_get_parameters = NULL;
 
     return params;
 }
@@ -355,7 +354,6 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
     }
     msFree(params->axes);
     CSLDestroy(params->range_subset);
-    CSLDestroy(params->invalid_get_parameters);
     msFree(params);
 }
 
@@ -1347,17 +1345,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
             }
             msFreeCharArray(tokens, num);
         }
-        /* insert other mapserver internal, to be ignored parameters here */
-        else if(EQUAL(key, "MAP"))
-        {
-            continue;
-        }
-        else
-        {
-            /* append unknown parameter to the list */
-            params->invalid_get_parameters
-                = CSLAddString(params->invalid_get_parameters, key);
-        }
+        /* Ignore all other parameters here */
     }
 
 
@@ -4200,29 +4188,6 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_requ
                          params->version );
         msWCSFreeParamsObj20(params); /* clean up */
         return MS_FAILURE;
-    }
-
-    /* check if any unknown parameters are present              */
-    /* create an error message, containing all unknown params   */
-    if (params->invalid_get_parameters != NULL)
-    {
-        char *concat = NULL;
-        int i, count = CSLCount(params->invalid_get_parameters);
-        for(i = 0; i < count; ++i)
-        {
-            concat = msStringConcatenate(concat, (char *)"'");
-            concat = msStringConcatenate(concat, params->invalid_get_parameters[i]);
-            concat = msStringConcatenate(concat, (char *)"'");
-            if(i + 1 != count)
-            {
-                concat = msStringConcatenate(concat, ", ");
-            }
-        }
-        msSetError(MS_WCSERR, "Unknown parameter%s: %s.",
-                "msWCSParseRequest20()", (count > 1) ? "s" : "", concat);
-        msFree(concat);
-        msWCSFreeParamsObj20(params);
-        return msWCSException(map, "InvalidParameterValue", "request", "2.0.0");
     }
 
     /* check if all layer names are valid NCNames */
