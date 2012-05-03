@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.0.3, SVN branch-6-0):
 -----------------------------------------------
 
+- Added coverage metadata in WCS (#4306)
+
 - Adjusted WCS 2.0 GetCapbilities response (#4003)
 
 - Ignore unknown requets parameteres in WCS 2.0 (#4307).
