@@ -14,11 +14,7 @@ For a complete change history, please see the Git log comments.
 Current Version (git master, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
-- Fixed getFeature request with custom output format fails on filter encoding (#4190)
-
 - Ignore unknown requets parameteres in WCS 2.0 (#4307).
-
-- Fixed mapscript is unusable in a web application due to memory leaks (#4262)
 
 - Fixed getFeature request with custom output format fails on filter encoding (#4190)
 
