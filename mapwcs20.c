@@ -318,7 +318,6 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
     params->bbox.minx = params->bbox.miny = -DBL_MAX;
     params->bbox.maxx = params->bbox.maxy =  DBL_MAX;
     params->range_subset    = NULL;
-    params->invalid_get_parameters = NULL;
 
     return params;
 }
@@ -355,7 +354,6 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
     }
     msFree(params->axes);
     CSLDestroy(params->range_subset);
-    CSLDestroy(params->invalid_get_parameters);
     msFree(params);
 }
 
@@ -1347,17 +1345,7 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
             }
             msFreeCharArray(tokens, num);
         }
-        /* insert other mapserver internal, to be ignored parameters here */
-        else if(EQUAL(key, "MAP"))
-        {
-            continue;
-        }
-        else
-        {
-            /* append unknown parameter to the list */
-            params->invalid_get_parameters
-                = CSLAddString(params->invalid_get_parameters, key);
-        }
+        /* Ignore all other parameters here */
     }
 
 
@@ -2875,12 +2863,11 @@ static int msWCSGetCapabilities20_CreateProfiles(
         MS_WCS_20_PROFILE_CORE,     NULL,
         MS_WCS_20_PROFILE_KVP,      NULL,
         MS_WCS_20_PROFILE_POST,     NULL,
-        MS_WCS_20_PROFILE_EPSG,     NULL,
+        MS_WCS_20_PROFILE_CRS,     NULL,
         MS_WCS_20_PROFILE_IMAGECRS, NULL,
         MS_WCS_20_PROFILE_GEOTIFF,  "image/tiff",
         MS_WCS_20_PROFILE_GML_GEOTIFF, NULL,
         MS_WCS_20_PROFILE_SCALING, NULL,
-        MS_WCS_20_PROFILE_INTERPOLATION, NULL,
         MS_WCS_20_PROFILE_RANGESUBSET, NULL,
         NULL, NULL /* guardian */
     };
@@ -2983,7 +2970,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
                            wcs20ParamsObjPtr params, owsRequestObj *ows_request)
 {
     xmlDocPtr psDoc = NULL;       /* document pointer */
-    xmlNodePtr psRootNode, psOperationsNode, psServiceMetadataNode, psNode;
+    xmlNodePtr psRootNode,
+            psOperationsNode,
+            psNode;
     const char *updatesequence = NULL;
     xmlNsPtr psOwsNs = NULL,
             psXLinkNs = NULL,
@@ -3016,8 +3005,6 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     xmlSetNs(psRootNode, psWcsNs);
 
     xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->version );
-
-    /* TODO: remove updatesequence? */
 
     updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
     if (params->updatesequence != NULL)
@@ -3081,6 +3068,10 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         psNode = msOWSCommonOperationsMetadataOperation(
             psOwsNs, psXLinkNs,
             "GetCapabilities", OWS_METHOD_GETPOST, script_url_encoded);
+        
+        xmlAddChild(psNode->last->last->last,
+            msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                    "PostEncoding", "XML"));
         xmlAddChild(psOperationsNode, psNode);
 
         /* -------------------------------------------------------------------- */
@@ -3091,6 +3082,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             psNode = msOWSCommonOperationsMetadataOperation(
                 psOwsNs, psXLinkNs,
                 "DescribeCoverage", OWS_METHOD_GETPOST, script_url_encoded);
+            xmlAddChild(psNode->last->last->last,
+                msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                        "PostEncoding", "XML"));
             xmlAddChild(psOperationsNode, psNode);
         }
 
@@ -3102,18 +3096,20 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             psNode = msOWSCommonOperationsMetadataOperation(
                 psOwsNs, psXLinkNs,
                 "GetCoverage", OWS_METHOD_GETPOST, script_url_encoded);
-            xmlAddChild(psOperationsNode, psNode);
             
-            msFree(script_url_encoded);
+            xmlAddChild(psNode->last->last->last,
+                msOWSCommonOperationsMetadataDomainType(OWS_2_0_0, psOwsNs, "Constraint",
+                                                        "PostEncoding", "XML"));
+            xmlAddChild(psOperationsNode, psNode);
         }
+        msFree(script_url_encoded);
     }
 
     /* -------------------------------------------------------------------- */
     /*      Service metadata.                                               */
     /* -------------------------------------------------------------------- */
     /* it is mandatory, but unused for now */
-    psServiceMetadataNode = xmlAddChild(psRootNode, xmlNewNode(psWcsNs, BAD_CAST "ServiceMetadata"));
-    xmlNewProp(psServiceMetadataNode, BAD_CAST "version", BAD_CAST "1.0.0");
+    xmlAddChild(psRootNode, xmlNewNode(psWcsNs, BAD_CAST "ServiceMetadata"));
 
     /* -------------------------------------------------------------------- */
     /*      Contents section.                                               */
@@ -4200,29 +4196,6 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_requ
                          params->version );
         msWCSFreeParamsObj20(params); /* clean up */
         return MS_FAILURE;
-    }
-
-    /* check if any unknown parameters are present              */
-    /* create an error message, containing all unknown params   */
-    if (params->invalid_get_parameters != NULL)
-    {
-        char *concat = NULL;
-        int i, count = CSLCount(params->invalid_get_parameters);
-        for(i = 0; i < count; ++i)
-        {
-            concat = msStringConcatenate(concat, (char *)"'");
-            concat = msStringConcatenate(concat, params->invalid_get_parameters[i]);
-            concat = msStringConcatenate(concat, (char *)"'");
-            if(i + 1 != count)
-            {
-                concat = msStringConcatenate(concat, ", ");
-            }
-        }
-        msSetError(MS_WCSERR, "Unknown parameter%s: %s.",
-                "msWCSParseRequest20()", (count > 1) ? "s" : "", concat);
-        msFree(concat);
-        msWCSFreeParamsObj20(params);
-        return msWCSException(map, "InvalidParameterValue", "request", "2.0.0");
     }
 
     /* check if all layer names are valid NCNames */
