@@ -16,6 +16,10 @@ Current Version (git master, 6.1-dev, future 6.2):
 
 - Fixed getFeature request with custom output format fails on filter encoding (#4190)
 
+- Fixed mapscript is unusable in a web application due to memory leaks (#4262)
+
+- Fixed getFeature request with custom output format fails on filter encoding (#4190)
+
 - Fixed resolution when UoM changes in WCS 2.0 (#4283)
 
 - Added missing DEFRESOLUTION parameter to msCopyMap() function (#4272) 
