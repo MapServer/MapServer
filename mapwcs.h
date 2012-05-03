@@ -191,7 +191,6 @@ typedef struct
     int numaxes;        /* number of axes */
     wcs20AxisObjPtr *axes; /* list of axes, NULL if none*/
     char **range_subset;
-    char **invalid_get_parameters; /* NULL terminated list of invalid GET parameters */
 } wcs20ParamsObj;
 typedef wcs20ParamsObj * wcs20ParamsObjPtr;
 

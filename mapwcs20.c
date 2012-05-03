@@ -307,7 +307,6 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
     params->bbox.minx = params->bbox.miny = -DBL_MAX;
     params->bbox.maxx = params->bbox.maxy =  DBL_MAX;
     params->range_subset    = NULL;
-    params->invalid_get_parameters = NULL;
 
     return params;
 }
@@ -344,7 +343,6 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
     }
     msFree(params->axes);
     CSLDestroy(params->range_subset);
-    CSLDestroy(params->invalid_get_parameters);
     msFree(params);
 }
 
@@ -1244,17 +1242,7 @@ int msWCSParseRequest20(mapObj *map,
             }
             msFreeCharArray(tokens, num);
         }
-        /* insert other mapserver internal, to be ignored parameters here */
-        else if(EQUAL(key, "MAP"))
-        {
-            continue;
-        }
-        else
-        {
-            /* append unknown parameter to the list */
-            params->invalid_get_parameters
-                = CSLAddString(params->invalid_get_parameters, key);
-        }
+        /* Ignore all other parameters here */
     }
 
     return MS_SUCCESS;
