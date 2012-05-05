@@ -438,9 +438,17 @@ extern "C" {
 #define MS_ENCRYPTION_KEY_SIZE  16   /* Key size: 128 bits = 16 bytes */
 
 #define GET_LAYER(map, pos) map->layers[pos]
+
+#if defined(USE_THREAD) && (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__) >= 40102
+  // __sync* appeared in GCC 4.1.2
+#define MS_REFCNT_INCR(obj) __sync_fetch_and_add(&obj->refcount, +1)
+#define MS_REFCNT_DECR(obj) __sync_sub_and_fetch(&obj->refcount, +1)
+#define MS_REFCNT_INIT(obj) obj->refcount=1, __sync_synchronize()
+#else
 #define MS_REFCNT_INCR(obj) obj->refcount++
 #define MS_REFCNT_DECR(obj) (--(obj->refcount))
 #define MS_REFCNT_INIT(obj) obj->refcount=1
+#endif
 #define MS_REFCNT_DECR_IS_NOT_ZERO(obj) (MS_REFCNT_DECR(obj))>0
 #define MS_REFCNT_DECR_IS_ZERO(obj) (MS_REFCNT_DECR(obj))<=0
 
