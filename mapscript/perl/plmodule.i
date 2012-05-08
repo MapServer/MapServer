@@ -44,6 +44,11 @@
             msFree($1.data);
 }
 
+%typemap(out) char[ANY] {
+        $result = newSVpvn($1, strlen($1));
+        argvi++;
+}
+
 /*
 ===============================================================================
 RFC-24 implementation follows
