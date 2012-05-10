@@ -454,28 +454,38 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 #define GET_CLASS(map, lid, cid) map->layers[lid]->class[cid]
 
 #if defined(USE_THREAD) && (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__) >= 40102
+
   // __sync* appeared in GCC 4.1.2
   #define MS_REFCNT_INCR(obj) __sync_fetch_and_add(&obj->refcount, +1)
   #define MS_REFCNT_DECR(obj) __sync_sub_and_fetch(&obj->refcount, +1)
   #define MS_REFCNT_INIT(obj) obj->refcount=1, __sync_synchronize()
+
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+
+  #pragma intrinsic (_InterlockedExchangeAdd)
+
   #if defined(_MSC_VER) && (_MSC_VER <= 1200)
-    #define MS_REFCNT_INCR(obj) InterlockedExchangeAdd((LONG*)&obj->refcount, (LONG)+1)
-    #define MS_REFCNT_DECR(obj) InterlockedExchangeAdd((LONG*)&obj->refcount, (LONG)+1)
+    #define MS_REFCNT_INCR(obj) _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1))
+    #define MS_REFCNT_DECR(obj) _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1))
     #define MS_REFCNT_INIT(obj) obj->refcount=1
   #else
-    #define MS_REFCNT_INCR(obj) InterlockedExchangeAdd((volatile LONG*)&obj->refcount, (LONG)+1)
-    #define MS_REFCNT_DECR(obj) InterlockedExchangeAdd((volatile LONG*)&obj->refcount, (LONG)+1)
+    #define MS_REFCNT_INCR(obj) _InterlockedExchangeAdd((volatile long*)(&obj->refcount), (long)(+1))
+    #define MS_REFCNT_DECR(obj) _InterlockedExchangeAdd((volatile long*)(&obj->refcount), (long)(+1))
     #define MS_REFCNT_INIT(obj) obj->refcount=1
   #endif
+
 #elif defined(__MINGW32__) && defined(__i386__)
-  #define MS_REFCNT_INCR(obj) InterlockedExchangeAdd((LONG*)&obj->refcount, (LONG)+1)
-  #define MS_REFCNT_DECR(obj) InterlockedExchangeAdd((LONG*)&obj->refcount, (LONG)+1)
+
+  #define MS_REFCNT_INCR(obj) InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1))
+  #define MS_REFCNT_DECR(obj) InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1))
   #define MS_REFCNT_INIT(obj) obj->refcount=1
+
 #else
+
   #define MS_REFCNT_INCR(obj) obj->refcount++
   #define MS_REFCNT_DECR(obj) (--(obj->refcount))
   #define MS_REFCNT_INIT(obj) obj->refcount=1
+
 #endif
 #define MS_REFCNT_DECR_IS_NOT_ZERO(obj) (MS_REFCNT_DECR(obj))>0
 #define MS_REFCNT_DECR_IS_ZERO(obj) (MS_REFCNT_DECR(obj))<=0
