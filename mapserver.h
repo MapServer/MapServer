@@ -465,19 +465,19 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
   #pragma intrinsic (_InterlockedExchangeAdd)
 
   #if defined(_MSC_VER) && (_MSC_VER <= 1200)
-    #define MS_REFCNT_INCR(obj) _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1))
-    #define MS_REFCNT_DECR(obj) _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1))
+    #define MS_REFCNT_INCR(obj) ( _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1)) +1 )
+    #define MS_REFCNT_DECR(obj) ( _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(-1)) -1 )
     #define MS_REFCNT_INIT(obj) obj->refcount=1
   #else
-    #define MS_REFCNT_INCR(obj) _InterlockedExchangeAdd((volatile long*)(&obj->refcount), (long)(+1))
-    #define MS_REFCNT_DECR(obj) _InterlockedExchangeAdd((volatile long*)(&obj->refcount), (long)(+1))
+    #define MS_REFCNT_INCR(obj) ( _InterlockedExchangeAdd((volatile long*)(&obj->refcount), (long)(+1)) +1 )
+    #define MS_REFCNT_DECR(obj) ( _InterlockedExchangeAdd((volatile long*)(&obj->refcount), (long)(-1)) -1 )
     #define MS_REFCNT_INIT(obj) obj->refcount=1
   #endif
 
 #elif defined(__MINGW32__) && defined(__i386__)
 
   #define MS_REFCNT_INCR(obj) InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1))
-  #define MS_REFCNT_DECR(obj) InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1))
+  #define MS_REFCNT_DECR(obj) InterlockedExchangeAdd((long*)(&obj->refcount), (long)(-1))
   #define MS_REFCNT_INIT(obj) obj->refcount=1
 
 #else
