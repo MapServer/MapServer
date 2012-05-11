@@ -182,17 +182,17 @@
 
   %newobject getLabel;
   labelObj *getLabel(int i) {
-    if (i >= 0 && i < self->labels) {
+    if (i >= 0 && i < self->numlabels) {
       MS_REFCNT_INCR(self->labels[i]);
       return self->labels[i];
     } else {
-      msSetError(MS_CHILDERR, "Invalid index: %d.", "getStyle()", i);
+      msSetError(MS_CHILDERR, "Invalid index: %d.", "getLabel()", i);
       return NULL;
     }
   }
 
   int addLabel(labelObj *label) {
-    return msAddLabelToClass(self, label):
+    return msAddLabelToClass(self, label);
   }
 
   %newobject removeLabel;
