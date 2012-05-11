@@ -2399,11 +2399,12 @@ MS_DLL_EXPORT int msMoveClassUp(layerObj *layer, int nClassIndex);
 MS_DLL_EXPORT int msMoveClassDown(layerObj *layer, int nClassIndex);
 
 /* classobject.c */
+MS_DLL_EXPORT int msAddLabelToClass(classObj *classo, labelObj *label);
+MS_DLL_EXPORT int msRemoveLabelFromClass(classObj *classo, int nLabelIndex); 
 MS_DLL_EXPORT int msMoveStyleUp(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msMoveStyleDown(classObj *classo, int nStyleIndex);
-MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int iStyleIndex);
-MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style,
-                                int nStyleIndex);
+MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int nStyleIndex);
+MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style, int nStyleIndex);
 MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *classo, int index);
 
 /* maplabel.c */
