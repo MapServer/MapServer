@@ -14,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in 
+ *
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
@@ -38,11 +38,16 @@ zend_object_value mapscript_object_new(zend_object *zobj,
 {
     zend_object_value retval;
     zval *temp;
-    
+
     zobj->ce = ce;
     ALLOC_HASHTABLE(zobj->properties);
     zend_hash_init(zobj->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-    zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    //handle changes in PHP 5.4.x
+    #if PHP_VERSION_ID < 50399
+      zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    #else
+      object_properties_init(zobj, ce);
+    #endif
     retval.handle = zend_objects_store_put(zobj, NULL, (zend_objects_free_object_storage_t)zend_objects_free_object, NULL TSRMLS_CC);
     retval.handlers = &mapscript_std_object_handlers;
     return retval;
@@ -55,11 +60,16 @@ zend_object_value mapscript_object_new_ex(zend_object *zobj,
 {
     zend_object_value retval;
     zval *temp;
-    
+
     zobj->ce = ce;
     ALLOC_HASHTABLE(zobj->properties);
     zend_hash_init(zobj->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-    zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    //handle changes in PHP 5.4.x
+    #if PHP_VERSION_ID < 50399
+      zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    #else
+      object_properties_init(zobj, ce);
+    #endif
     retval.handle = zend_objects_store_put(zobj, NULL, (zend_objects_free_object_storage_t)zend_objects_free_object, NULL TSRMLS_CC);
     retval.handlers = object_handlers;
     return retval;
@@ -70,15 +80,15 @@ int mapscript_extract_associative_array(HashTable *php, char **array)
     zval **value;
     char *string_key = NULL;
     ulong num_key;
-    int i = 0;    
+    int i = 0;
 
-    for(zend_hash_internal_pointer_reset(php); 
-        zend_hash_has_more_elements(php) == SUCCESS; 
+    for(zend_hash_internal_pointer_reset(php);
+        zend_hash_has_more_elements(php) == SUCCESS;
         zend_hash_move_forward(php))
-    { 
+    {
         zend_hash_get_current_data(php, (void **)&value);
 
-        switch (zend_hash_get_current_key(php, &string_key, &num_key, 1)) 
+        switch (zend_hash_get_current_key(php, &string_key, &num_key, 1))
         {
             case HASH_KEY_IS_STRING:
                 array[i++] = string_key;
@@ -91,10 +101,10 @@ int mapscript_extract_associative_array(HashTable *php, char **array)
     return 1;
 }
 
-/* This method returns an object property of a php class. If the object exists, it returns a reference to it, 
+/* This method returns an object property of a php class. If the object exists, it returns a reference to it,
    otherwise it creates it */
-void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_object* layer, 
-                            void *internal_object, 
+void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_object* layer,
+                            void *internal_object,
                             zval **php_object_storage TSRMLS_DC)
 {
     parent_object p;
@@ -103,7 +113,7 @@ void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_o
     p.val = zval_parent;
     p.child_ptr = &*php_object_storage;
     MAKE_STD_ZVAL(*php_object_storage);
-        
+
     if (ce == mapscript_ce_outputformat)
         mapscript_create_outputformat((outputFormatObj*)internal_object, p, *php_object_storage TSRMLS_CC);
     else if (ce == mapscript_ce_color)

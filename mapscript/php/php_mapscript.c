@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  PHP/MapScript extension for MapServer.  External interface 
+ * Purpose:  PHP/MapScript extension for MapServer.  External interface
  *           functions
  * Author:   Daniel Morissette, DM Solutions Group (dmorissette@dmsolutions.ca)
  *
@@ -15,19 +15,19 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in 
+ *
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
- 
+
 
 #include "php_mapscript.h"
 #include "php_mapscript_util.h"
@@ -51,12 +51,12 @@
    "main/php_compat.h" file of php source) should be added here too for
    compatibility reasons: when php compiles gd as a shared extention */
 #if defined(HAVE_GD_BUNDLED)
-#undef gdImageColorExact                                                                    
+#undef gdImageColorExact
 #undef gdImageColorTransparent
 #undef gdImageCopy
 #endif
 
-#ifndef DLEXPORT 
+#ifndef DLEXPORT
 #define DLEXPORT ZEND_DLEXPORT
 #endif
 
@@ -117,7 +117,7 @@ ZEND_BEGIN_ARG_INFO_EX(ms_newGridObj_args, 0, 0, 1)
   ZEND_ARG_OBJ_INFO(0, layer, layerObj, 0)
 ZEND_END_ARG_INFO()
 
-/* {{{ proto mapObj ms_newMapObj(string mapFileName, newMapPath) 
+/* {{{ proto mapObj ms_newMapObj(string mapFileName, newMapPath)
    Create a new mapObj instance. */
 PHP_FUNCTION(ms_newMapObj)
 {
@@ -133,9 +133,9 @@ PHP_FUNCTION(ms_newMapObj)
                               &path, &path_len) == FAILURE) {
         return;
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    }    
+    }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     map = mapObj_new(filename, path);
 
     if (map == NULL)
@@ -148,7 +148,7 @@ PHP_FUNCTION(ms_newMapObj)
 }
 /* }}} */
 
-/* {{{ proto mapObj ms_newMapObj(string mapFileString, newMapPath) 
+/* {{{ proto mapObj ms_newMapObj(string mapFileString, newMapPath)
    Create a new mapObj instance. */
 PHP_FUNCTION(ms_newMapObjFromString)
 {
@@ -166,7 +166,7 @@ PHP_FUNCTION(ms_newMapObjFromString)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     map = mapObj_newFromString(string, path);
 
     if (map == NULL)
@@ -179,7 +179,7 @@ PHP_FUNCTION(ms_newMapObjFromString)
 }
 /* }}} */
 
-/* {{{ proto layerObj ms_newLayerObj(mapObj map [, layerObj layer]) 
+/* {{{ proto layerObj ms_newLayerObj(mapObj map [, layerObj layer])
    Create a new layerObj instance. */
 PHP_FUNCTION(ms_newLayerObj)
 {
@@ -238,14 +238,14 @@ PHP_FUNCTION(ms_newProjectionObj)
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }
-    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);    
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
     if ((projection = projectionObj_new(projString)) == NULL)
     {
         mapscript_throw_mapserver_exception("Unable to construct projectionObj." TSRMLS_CC);
         return;
     }
-    
+
     MAPSCRIPT_MAKE_PARENT(NULL, NULL);
     mapscript_create_projection(projection, parent, return_value TSRMLS_CC);
 }
@@ -263,10 +263,10 @@ PHP_FUNCTION(ms_newRectObj)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
-    object_init_ex(return_value, mapscript_ce_rect); 
+
+    object_init_ex(return_value, mapscript_ce_rect);
     php_rect = (php_rect_object *)zend_object_store_get_object(return_value TSRMLS_CC);
-    
+
     if ((php_rect->rect = rectObj_new()) == NULL)
     {
         mapscript_throw_exception("Unable to construct rectObj." TSRMLS_CC);
@@ -275,8 +275,8 @@ PHP_FUNCTION(ms_newRectObj)
 }
 /* }}} */
 
-/* {{{ proto pointObj ms_newPointObj()                                                                                                    
-   Create a new pointObj instance. */ 
+/* {{{ proto pointObj ms_newPointObj()
+   Create a new pointObj instance. */
 PHP_FUNCTION(ms_newPointObj)
 {
     pointObj *point = NULL;
@@ -319,10 +319,10 @@ PHP_FUNCTION(ms_newLineObj)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
-    object_init_ex(return_value, mapscript_ce_line); 
+
+    object_init_ex(return_value, mapscript_ce_line);
     php_line = (php_line_object *)zend_object_store_get_object(return_value TSRMLS_CC);
-    
+
     if ((php_line->line = lineObj_new()) == NULL)
     {
         mapscript_throw_exception("Unable to construct lineObj." TSRMLS_CC);
@@ -331,7 +331,7 @@ PHP_FUNCTION(ms_newLineObj)
 }
 /* }}} */
 
-/* {{{ proto styleObj __construct(classObj class [, styleObj style]) 
+/* {{{ proto styleObj __construct(classObj class [, styleObj style])
    Create a new styleObj instance */
 PHP_FUNCTION(ms_newStyleObj)
 {
@@ -383,7 +383,7 @@ PHP_FUNCTION(ms_newClassObj)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_layer = (php_layer_object *) zend_object_store_get_object(zlayer TSRMLS_CC);
     if (zclass)
         php_class = (php_class_object *) zend_object_store_get_object(zclass TSRMLS_CC);
@@ -412,15 +412,15 @@ PHP_FUNCTION(ms_newSymbolObj)
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Os",
-                              &zmap, mapscript_ce_map, 
+                              &zmap, mapscript_ce_map,
                               &symbolName, &symbolName_len) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_map = (php_map_object *)zend_object_store_get_object(zmap TSRMLS_CC);
-    
+
     retval = msAddNewSymbol(php_map->map, symbolName);
 
     RETURN_LONG(retval);
@@ -441,10 +441,10 @@ PHP_FUNCTION(ms_newShapeObj)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
-    object_init_ex(return_value, mapscript_ce_shape); 
+
+    object_init_ex(return_value, mapscript_ce_shape);
     php_shape = (php_shape_object *)zend_object_store_get_object(return_value TSRMLS_CC);
-    
+
     if ((php_shape->shape = shapeObj_new(type)) == NULL)
     {
         mapscript_throw_exception("Unable to construct shapeObj." TSRMLS_CC);
@@ -471,10 +471,10 @@ PHP_FUNCTION(ms_shapeObjFromWkt)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
-    object_init_ex(return_value, mapscript_ce_shape); 
+
+    object_init_ex(return_value, mapscript_ce_shape);
     php_shape = (php_shape_object *)zend_object_store_get_object(return_value TSRMLS_CC);
-    
+
     if ((php_shape->shape = msShapeFromWKT(wkt)) == NULL)
     {
         mapscript_throw_exception("Unable to construct shapeObj." TSRMLS_CC);
@@ -502,14 +502,14 @@ PHP_FUNCTION(ms_newShapeFileObj)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     shapefile = shapefileObj_new(filename, type);
     if (shapefile == NULL)
     {
         mapscript_throw_mapserver_exception("Failed to open shapefile %s" TSRMLS_CC, filename);
         return;
     }
-    
+
     mapscript_create_shapefile(shapefile, return_value TSRMLS_CC);
 }
 /* }}} */
@@ -551,7 +551,7 @@ PHP_FUNCTION(ms_newGridObj)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_layer = (php_layer_object *) zend_object_store_get_object(zlayer TSRMLS_CC);
 
     php_layer->layer->connectiontype = MS_GRATICULE;
@@ -568,7 +568,7 @@ PHP_FUNCTION(ms_newGridObj)
         php_grid->parent.child_ptr = NULL;
         zend_objects_store_del_ref(php_layer->grid TSRMLS_CC);
     }
-    
+
     MAKE_STD_ZVAL(php_layer->grid);
 
     MAPSCRIPT_MAKE_PARENT(zlayer, &php_layer->grid);
@@ -584,7 +584,7 @@ PHP_FUNCTION(ms_newGridObj)
 PHP_FUNCTION(ms_GetErrorObj)
 {
     errorObj *error;
-    
+
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
@@ -647,7 +647,7 @@ PHP_FUNCTION(ms_GetVersionInt)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     RETURN_LONG(msGetVersionInt());
 }
 
@@ -689,7 +689,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferString)
         php_error(E_ERROR, "Can't identify msIO buffer");
         RETURN_FALSE;
     }
-    
+
     buf = (msIOBuffer *) ctx->cbData;
 
     /* write one zero byte and backtrack if it isn't already there */
@@ -702,7 +702,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferString)
 
     RETURN_STRING(buffer, 1);
 }
-  
+
 
 typedef struct {
     unsigned char *data;
@@ -717,7 +717,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferBytes)
     msIOBuffer  *buf;
     gdBuffer     gdBuf;
 
-    if( ctx == NULL || ctx->write_channel == MS_FALSE 
+    if( ctx == NULL || ctx->write_channel == MS_FALSE
         || strcmp(ctx->label,"buffer") != 0 )
     {
         php_error(E_ERROR, "Can't identify msIO buffer");
@@ -736,7 +736,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferBytes)
     buf->data = NULL;
 
     php_write(gdBuf.data, gdBuf.size TSRMLS_CC);
-   
+
     /* return the gdBuf.size, which is the "really used length" of the msIOBuffer */
     RETURN_LONG(gdBuf.size);
 }
@@ -789,7 +789,7 @@ PHP_FUNCTION(ms_getCwd)
 {
     char  buffer[PATH_MAX];
     char *p;
-   
+
     p = getcwd(buffer, PATH_MAX);
     if (!p) {
       //php3_error(E_WARNING, "posix_getcwd() failed with '%s'",
@@ -837,7 +837,7 @@ PHP_FUNCTION(ms_getScale)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_geoRefExt = (php_rect_object *)zend_object_store_get_object(zgeoRefExt TSRMLS_CC);
 
     if (msCalculateScale(*(php_geoRefExt->rect), unit, width, height, resolution, &dfScale) != MS_SUCCESS)
@@ -845,14 +845,14 @@ PHP_FUNCTION(ms_getScale)
         mapscript_throw_mapserver_exception("" TSRMLS_CC);
         return;
     }
-    
+
     RETURN_DOUBLE(dfScale);
 }
 
 /**********************************************************************
  *                        ms_tokenizeMap()
  *
- * Preparse mapfile and return an array containg one item for each 
+ * Preparse mapfile and return an array containg one item for each
  * token in the map.
  **********************************************************************/
 
@@ -860,13 +860,13 @@ PHP_FUNCTION(ms_getScale)
    Preparse mapfile and return an array containg one item for each token in the map.*/
 
 PHP_FUNCTION(ms_tokenizeMap)
-{ 
+{
     char *filename;
     long filename_len;
     char  **tokens;
     int i, numtokens=0;
 
-  
+
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
                               &filename, &filename_len) == FAILURE) {
@@ -877,13 +877,13 @@ PHP_FUNCTION(ms_tokenizeMap)
 
     if ((tokens = msTokenizeMap(filename, &numtokens)) == NULL)
     {
-        mapscript_throw_mapserver_exception("Failed tokenizing map file %s" TSRMLS_CC, 
+        mapscript_throw_mapserver_exception("Failed tokenizing map file %s" TSRMLS_CC,
                                             filename);
         return;
     }
     else
     {
-        if (array_init(return_value) == FAILURE) 
+        if (array_init(return_value) == FAILURE)
         {
             RETURN_FALSE;
         }
@@ -899,7 +899,7 @@ PHP_FUNCTION(ms_tokenizeMap)
 
 }
 
-function_entry mapscript_functions[] = {
+zend_function_entry mapscript_functions[] = {
     PHP_FE(ms_GetVersion, NULL)
     PHP_FE(ms_GetVersionInt,  NULL)
     PHP_FE(ms_newLineObj, NULL)
@@ -934,15 +934,15 @@ function_entry mapscript_functions[] = {
 
 zend_module_entry mapscript_module_entry = {
     STANDARD_MODULE_HEADER,
-    "MapScript", 
+    "MapScript",
     mapscript_functions,
-    /* MINIT()/MSHUTDOWN() are called once only when PHP starts up and 
+    /* MINIT()/MSHUTDOWN() are called once only when PHP starts up and
      * shutdowns.  They're really called only once and *not* when a new Apache
      * child process is created.
      */
     PHP_MINIT(mapscript),
     PHP_MSHUTDOWN(mapscript),
-    /* RINIT()/RSHUTDOWN() are called once per request 
+    /* RINIT()/RSHUTDOWN() are called once per request
      * We shouldn't really be using them since they are run on every request
      * and can hit performance.
      */
@@ -950,7 +950,7 @@ zend_module_entry mapscript_module_entry = {
     NULL /* PHP_RSHUTDOWN(mapscript) */,
     PHP_MINFO(mapscript),
     MAPSCRIPT_VERSION,          /* extension version number (string) */
-    STANDARD_MODULE_PROPERTIES 
+    STANDARD_MODULE_PROPERTIES
 };
 
 #if COMPILE_DL
@@ -1103,7 +1103,7 @@ PHP_MINIT_FUNCTION(mapscript)
     REGISTER_LONG_CONSTANT("MS_RASTER",     MS_RASTER,      const_flag);
     REGISTER_LONG_CONSTANT("MS_PLUGIN",     MS_PLUGIN,      const_flag);
     REGISTER_LONG_CONSTANT("MS_UNION",      MS_UNION,      const_flag);
-    REGISTER_LONG_CONSTANT("MS_UVRASTER",   MS_UVRASTER, const_flag); 
+    REGISTER_LONG_CONSTANT("MS_UVRASTER",   MS_UVRASTER, const_flag);
 
     /* output image type constants*/
     /*
@@ -1123,7 +1123,7 @@ PHP_MINIT_FUNCTION(mapscript)
     REGISTER_LONG_CONSTANT("MS_SUCCESS",    MS_SUCCESS,     const_flag);
     REGISTER_LONG_CONSTANT("MS_FAILURE",    MS_FAILURE,     const_flag);
     REGISTER_LONG_CONSTANT("MS_DONE",       MS_DONE,        const_flag);
-   
+
     /* error code constants */
     REGISTER_LONG_CONSTANT("MS_NOERR",      MS_NOERR,       const_flag);
     REGISTER_LONG_CONSTANT("MS_IOERR",      MS_IOERR,       const_flag);
@@ -1157,7 +1157,7 @@ PHP_MINIT_FUNCTION(mapscript)
     REGISTER_LONG_CONSTANT("MS_MAPCONTEXTERR", MS_MAPCONTEXTERR, const_flag);
     REGISTER_LONG_CONSTANT("MS_HTTPERR",    MS_HTTPERR,     const_flag);
     REGISTER_LONG_CONSTANT("MS_WCSERR",    MS_WCSERR,     const_flag);
- 
+
     /*symbol types */
     REGISTER_LONG_CONSTANT("MS_SYMBOL_SIMPLE", MS_SYMBOL_SIMPLE, const_flag);
     REGISTER_LONG_CONSTANT("MS_SYMBOL_VECTOR", MS_SYMBOL_VECTOR, const_flag);
@@ -1187,7 +1187,7 @@ PHP_MINIT_FUNCTION(mapscript)
     REGISTER_LONG_CONSTANT("MS_STYLE_BINDING_OFFSET_Y", MS_STYLE_BINDING_OFFSET_Y, const_flag);
     REGISTER_LONG_CONSTANT("MS_STYLE_BINDING_POLAROFFSET_PIXEL", MS_STYLE_BINDING_POLAROFFSET_PIXEL, const_flag);
     REGISTER_LONG_CONSTANT("MS_STYLE_BINDING_POLAROFFSET_ANGLE", MS_STYLE_BINDING_POLAROFFSET_ANGLE, const_flag);
-      
+
     REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_SIZE",  MS_LABEL_BINDING_SIZE, const_flag);
     REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_ANGLE", MS_LABEL_BINDING_ANGLE, const_flag);
     REGISTER_LONG_CONSTANT("MS_LABEL_BINDING_COLOR", MS_LABEL_BINDING_COLOR, const_flag);
@@ -1201,11 +1201,11 @@ PHP_MINIT_FUNCTION(mapscript)
     /* MS_CAPS_JOINS_AND_CORNERS */
     REGISTER_LONG_CONSTANT("MS_CJC_NONE", MS_CJC_NONE, const_flag);
     REGISTER_LONG_CONSTANT("MS_CJC_BEVEL", MS_CJC_BEVEL, const_flag);
-    REGISTER_LONG_CONSTANT("MS_CJC_BUTT", MS_CJC_BUTT, const_flag); 
-    REGISTER_LONG_CONSTANT("MS_CJC_MITER", MS_CJC_MITER, const_flag); 
-    REGISTER_LONG_CONSTANT("MS_CJC_ROUND", MS_CJC_ROUND, const_flag); 
-    REGISTER_LONG_CONSTANT("MS_CJC_SQUARE", MS_CJC_SQUARE, const_flag); 
-    REGISTER_LONG_CONSTANT("MS_CJC_TRIANGLE", MS_CJC_TRIANGLE, const_flag); 
+    REGISTER_LONG_CONSTANT("MS_CJC_BUTT", MS_CJC_BUTT, const_flag);
+    REGISTER_LONG_CONSTANT("MS_CJC_MITER", MS_CJC_MITER, const_flag);
+    REGISTER_LONG_CONSTANT("MS_CJC_ROUND", MS_CJC_ROUND, const_flag);
+    REGISTER_LONG_CONSTANT("MS_CJC_SQUARE", MS_CJC_SQUARE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_CJC_TRIANGLE", MS_CJC_TRIANGLE, const_flag);
 
     /*cgi request types*/
     REGISTER_LONG_CONSTANT("MS_GET_REQUEST", MS_GET_REQUEST, const_flag);
@@ -1247,8 +1247,8 @@ PHP_MINIT_FUNCTION(mapscript)
 PHP_MSHUTDOWN_FUNCTION(mapscript)
 {
     /* Cleanup MapServer resources */
-    msCleanup(0);    
-    
+    msCleanup(0);
+
     return SUCCESS;
 }
 
