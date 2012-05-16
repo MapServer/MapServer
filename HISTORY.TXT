@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.0.3, SVN branch-6-0):
 -----------------------------------------------
 
+- Fix creation of a vector symbolObj in mapscript (#4318)
+
 - Added coverage metadata in WCS (#4306)
 
 - Adjusted WCS 2.0 GetCapbilities response (#4003)
