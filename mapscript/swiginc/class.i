@@ -180,41 +180,62 @@
     return msCreateLegendIcon(map, layer, self, width, height);
   } 
 
-    /* See Bugzilla issue 548 for more details about the *Style methods */
-    %newobject getStyle;
-    styleObj *getStyle(int i) {
-        if (i >= 0 && i < self->numstyles) {
-	    MS_REFCNT_INCR(self->styles[i]);
-            return self->styles[i];
-	} else {
-            msSetError(MS_CHILDERR, "Invalid index: %d", "getStyle()", i);
-            return NULL;
-        }
+  %newobject getLabel;
+  labelObj *getLabel(int i) {
+    if (i >= 0 && i < self->numlabels) {
+      MS_REFCNT_INCR(self->labels[i]);
+      return self->labels[i];
+    } else {
+      msSetError(MS_CHILDERR, "Invalid index: %d.", "getLabel()", i);
+      return NULL;
     }
+  }
+
+  int addLabel(labelObj *label) {
+    return msAddLabelToClass(self, label);
+  }
+
+  %newobject removeLabel;
+  labelObj *removeLabel(int index) {
+    labelObj* label = (labelObj *) msRemoveLabelFromClass(self, index);
+    if (label) MS_REFCNT_INCR(label);
+    return label;
+  }
+  
+  /* See Bugzilla issue 548 for more details about the *Style methods */
+  %newobject getStyle;
+  styleObj *getStyle(int i) {
+    if (i >= 0 && i < self->numstyles) {
+      MS_REFCNT_INCR(self->styles[i]);
+      return self->styles[i];
+    } else {
+      msSetError(MS_CHILDERR, "Invalid index: %d", "getStyle()", i);
+      return NULL;
+    }
+  }
 
 #ifdef SWIGCSHARP
 %apply SWIGTYPE *SETREFERENCE {styleObj *style};
 #endif
-    int insertStyle(styleObj *style, int index=-1) {
-        return msInsertStyle(self, style, index);
-    }
+  int insertStyle(styleObj *style, int index=-1) {
+    return msInsertStyle(self, style, index);
+  }
 #ifdef SWIGCSHARP 
 %clear styleObj *style;
 #endif
 
-    %newobject removeStyle;
-    styleObj *removeStyle(int index) {
-	styleObj* style = (styleObj *) msRemoveStyle(self, index);
-	if (style)
-		MS_REFCNT_INCR(style);
-        return style;
-    }
+  %newobject removeStyle;
+  styleObj *removeStyle(int index) {
+    styleObj* style = (styleObj *) msRemoveStyle(self, index);
+    if (style) MS_REFCNT_INCR(style);
+    return style;
+  }
 
-    int moveStyleUp(int index) {
-        return msMoveStyleUp(self, index);
-    }
+  int moveStyleUp(int index) {
+    return msMoveStyleUp(self, index);
+  }
 
-    int moveStyleDown(int index) {
-       return msMoveStyleDown(self, index);
-    }
+  int moveStyleDown(int index) {
+    return msMoveStyleDown(self, index);
+  }
 }
