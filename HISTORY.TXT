@@ -11,6 +11,11 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
+Current Version (future 6.0.4, GIT branch-6-0):
+-----------------------------------------------
+
+- ...
+
 Version 6.0.3 (2012-05-18):
 ---------------------------
 
