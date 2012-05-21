@@ -314,7 +314,7 @@ HEADERS=	cgiutil.h mapgml.h mapoglcontext.h mapregex.h\
 			mapproject.h mapthread.h
 
 EXE_LIST = 	shp2img legend mapserv shptree shptreevis \
-		shptreetst scalebar sortshp mapscriptvars tile4ms \
+		shptreetst scalebar sortshp tile4ms \
 		msencrypt mapserver-config
 
 #
