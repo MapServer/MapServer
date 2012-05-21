@@ -191,9 +191,15 @@
     }
   }
 
+#ifdef SWIGCSHARP
+%apply SWIGTYPE *SETREFERENCE {labelObj *label};
+#endif
   int addLabel(labelObj *label) {
     return msAddLabelToClass(self, label);
   }
+#ifdef SWIGCSHARP 
+%clear labelObj *label;
+#endif
 
   %newobject removeLabel;
   labelObj *removeLabel(int index) {
