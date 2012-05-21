@@ -292,6 +292,30 @@ static int msWCSGetCapabilities11_CoverageSummary(
     }
 
 /* -------------------------------------------------------------------- */
+/*      Metadata Link                                                   */
+/* -------------------------------------------------------------------- */
+    value = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href");
+
+    if (value)
+    {
+        xmlNodePtr psMetadata = xmlNewChild(psCSummary, psOwsNs, BAD_CAST "Metadata", NULL);
+        xmlNsPtr psXlinkNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "xlink" );
+        const char *metadatalink_type = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_type");
+        const char *metadatalink_format = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_format");
+
+        xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "type", BAD_CAST "simple");
+        xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "href", BAD_CAST value);
+        if (metadatalink_type != NULL)
+        {
+            xmlNewProp(psMetadata, BAD_CAST "about", BAD_CAST metadatalink_type);
+        }
+        if (metadatalink_format != NULL)
+        {
+            xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "role", BAD_CAST metadatalink_format);
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      WGS84 bounding box.                                             */
 /* -------------------------------------------------------------------- */
     xmlAddChild( 

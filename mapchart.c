@@ -590,7 +590,7 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
             return MS_FAILURE;
         }
         
-        if( layer->numclasses < 2 ) {
+        if( layer->numclasses < 2 && !layer->class[0]->expression.string) {
             msSetError(MS_MISCERR,"chart drawing requires at least 2 classes in layer", "msDrawChartLayer()");
             return MS_FAILURE;
         }

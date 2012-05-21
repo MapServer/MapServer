@@ -306,7 +306,6 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
     params->bbox.minx = params->bbox.miny = -DBL_MAX;
     params->bbox.maxx = params->bbox.maxy =  DBL_MAX;
     params->range_subset    = NULL;
-    params->invalid_get_parameters = NULL;
 
     return params;
 }
@@ -343,7 +342,6 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
     }
     msFree(params->axes);
     CSLDestroy(params->range_subset);
-    CSLDestroy(params->invalid_get_parameters);
     msFree(params);
 }
 
@@ -1243,17 +1241,7 @@ int msWCSParseRequest20(mapObj *map,
             }
             msFreeCharArray(tokens, num);
         }
-        /* insert other mapserver internal, to be ignored parameters here */
-        else if(EQUAL(key, "MAP"))
-        {
-            continue;
-        }
-        else
-        {
-            /* append unknown parameter to the list */
-            params->invalid_get_parameters
-                = CSLAddString(params->invalid_get_parameters, key);
-        }
+        /* Ignore all other parameters here */
     }
 
     return MS_SUCCESS;
@@ -2834,9 +2822,13 @@ static int msWCSGetCapabilities20_CoverageSummary(
 {
     wcs20coverageMetadataObj cm;
     int status;
-    xmlNodePtr psCSummary;
+    xmlNodePtr psCSummary, psMetadata;
+    const char *metadatalink_href = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_href");
+
 
     xmlNsPtr psWcsNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "wcs" );
+    xmlNsPtr psOwsNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "ows" );
+    xmlNsPtr psXlinkNs = xmlSearchNs( doc, xmlDocGetRootElement(doc), BAD_CAST "xlink" );
 
     status = msWCSGetCoverageMetadata20(layer, &cm);
     if(status != MS_SUCCESS) return MS_FAILURE;
@@ -2844,6 +2836,25 @@ static int msWCSGetCapabilities20_CoverageSummary(
     psCSummary = xmlNewChild( psContents, psWcsNs, BAD_CAST "CoverageSummary", NULL );
     xmlNewChild(psCSummary, psWcsNs, BAD_CAST "CoverageId", BAD_CAST layer->name);
     xmlNewChild(psCSummary, psWcsNs, BAD_CAST "CoverageSubtype", BAD_CAST "RectifiedGridCoverage");
+
+    /* Add references to additional coverage metadata */
+    if (metadatalink_href != NULL)
+    {
+        const char *metadatalink_type = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_type");
+        const char *metadatalink_format = msOWSLookupMetadata(&(layer->metadata), "CO", "metadatalink_format");
+
+        psMetadata = xmlNewChild(psCSummary, psOwsNs, BAD_CAST "Metadata", NULL);
+        xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "type", BAD_CAST "simple");
+        xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "href", BAD_CAST metadatalink_href);
+        if (metadatalink_type != NULL)
+        {
+            xmlNewProp(psMetadata, BAD_CAST "about", BAD_CAST metadatalink_type);
+        }
+        if (metadatalink_format != NULL)
+        {
+            xmlNewNsProp(psMetadata, psXlinkNs, BAD_CAST "role", BAD_CAST metadatalink_format);
+        }
+    }
 
     msWCSClearCoverageMetadata20(&cm);
 

@@ -2640,7 +2640,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
                         if( to_allow < 0 )
                             to_allow = 0;
 
-                        lp->resultcache->numresults = 0;
                     }
                 }
             }

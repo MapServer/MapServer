@@ -13,7 +13,7 @@ mapscriptvars.close
 $CFLAGS = ""
 $CPPFLAGS = make_inc + " -idirafter $(rubylibdir)/$(arch) " + make_define
 $LDFLAGS += " -fPIC"
-$LOCAL_LIBS += " -L../.. " + make_libs + " " + make_static_libs
+$LOCAL_LIBS += " -L../../.libs/ " + " -lmapserver " + make_static_libs
 
 # if the source file 'mapscript_wrap.c' is missing nothing works
 # this is a workaround !!

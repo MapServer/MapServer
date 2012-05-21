@@ -72,6 +72,7 @@ int msCopyProjection(projectionObj *dst, projectionObj *src) {
 
     }
 #endif
+    MS_COPYSTELEM(wellknownprojection);
     return MS_SUCCESS;
 }
 

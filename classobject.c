@@ -38,6 +38,44 @@
 
 MS_CVSID("$Id$")
 
+/*
+** Add a label to a classObj (order doesn't matter for labels like it does with styles)
+*/
+int msAddLabelToClass(classObj *class, labelObj *label) {
+  if (!label) {
+    msSetError(MS_CHILDERR, "Can't add a NULL label.", "msAddLabelToClass()");
+    return MS_FAILURE;
+  }
+  if (msGrowClassLabels(class) == NULL) return MS_FAILURE;
+
+  class->labels[class->numlabels] = label;
+  MS_REFCNT_INCR(label);
+  class->numlabels++;
+  return MS_SUCCESS;
+}
+
+/*
+** Remove a label from a classObj.
+*/
+int msRemoveLabelFromClass(classObj *class, int nLabelIndex) {
+  int i;
+  labelObj *label;
+
+  if (nLabelIndex < 0 || nLabelIndex >= class->numlabels) {
+    msSetError(MS_CHILDERR, "Cannot remove label, invalid index %d", "msRemoveLabelFromClass()", nLabelIndex);
+    return NULL;
+  } else {
+    label=class->labels[nLabelIndex];
+    for (i=nLabelIndex; i<class->numlabels-1; i++) {
+      class->labels[i]=class->labels[i+1];
+    }
+    class->labels[class->numlabels-1]=NULL;
+    class->numlabels--;
+    MS_REFCNT_DECR(label);
+    return label;
+  }
+}
+
 /**
  * Move the style up inside the array of styles.
  */  

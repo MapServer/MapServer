@@ -452,9 +452,53 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 #define GET_LAYER(map, pos) map->layers[pos]
 #define GET_CLASS(map, lid, cid) map->layers[lid]->class[cid]
-#define MS_REFCNT_INCR(obj) obj->refcount++
-#define MS_REFCNT_DECR(obj) (--(obj->refcount))
-#define MS_REFCNT_INIT(obj) obj->refcount=1
+
+#if defined(USE_THREAD) && (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__) >= 40102
+
+  // __sync* appeared in GCC 4.1.2
+  #define MS_REFCNT_INCR(obj) __sync_fetch_and_add(&obj->refcount, +1)
+  #define MS_REFCNT_DECR(obj) __sync_sub_and_fetch(&obj->refcount, +1)
+  #define MS_REFCNT_INIT(obj) obj->refcount=1, __sync_synchronize()
+
+/*
+ * TODO: fix it
+ * This particular piece of code provides a locking mechanism around the
+ * the reference counter macro so that multiple threads can safely incr/decr
+ * the same counter using a MS VC utility function.
+ *
+ * Unfortunately it does not work (it builds, but hangs) and since building mapserver on Windows
+ * is a b***h I'm going to leave it as it is and hope someone else might step up to the challenge.
+ * 
+ * https://github.com/mapserver/mapserver/issues/4231
+ *
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+
+  #pragma intrinsic (_InterlockedExchangeAdd)
+
+  #if defined(_MSC_VER) && (_MSC_VER <= 1200)
+    #define MS_REFCNT_INCR(obj) ( _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1)) +1 )
+    #define MS_REFCNT_DECR(obj) ( _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(-1)) -1 )
+    #define MS_REFCNT_INIT(obj) obj->refcount=1
+  #else
+    #define MS_REFCNT_INCR(obj) ( _InterlockedExchangeAdd((volatile long*)(&obj->refcount), (long)(+1)) +1 )
+    #define MS_REFCNT_DECR(obj) ( _InterlockedExchangeAdd((volatile long*)(&obj->refcount), (long)(-1)) -1 )
+    #define MS_REFCNT_INIT(obj) obj->refcount=1
+  #endif
+
+#elif defined(__MINGW32__) && defined(__i386__)
+
+  #define MS_REFCNT_INCR(obj) ( InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1)) +1 )
+  #define MS_REFCNT_DECR(obj) ( InterlockedExchangeAdd((long*)(&obj->refcount), (long)(-1)) -1 )
+  #define MS_REFCNT_INIT(obj) obj->refcount=1
+*/
+
+#else
+
+  #define MS_REFCNT_INCR(obj) obj->refcount++
+  #define MS_REFCNT_DECR(obj) (--(obj->refcount))
+  #define MS_REFCNT_INIT(obj) obj->refcount=1
+
+#endif
 #define MS_REFCNT_DECR_IS_NOT_ZERO(obj) (MS_REFCNT_DECR(obj))>0
 #define MS_REFCNT_DECR_IS_ZERO(obj) (MS_REFCNT_DECR(obj))<=0
 
@@ -2355,11 +2399,12 @@ MS_DLL_EXPORT int msMoveClassUp(layerObj *layer, int nClassIndex);
 MS_DLL_EXPORT int msMoveClassDown(layerObj *layer, int nClassIndex);
 
 /* classobject.c */
+MS_DLL_EXPORT int msAddLabelToClass(classObj *classo, labelObj *label);
+MS_DLL_EXPORT int msRemoveLabelFromClass(classObj *classo, int nLabelIndex); 
 MS_DLL_EXPORT int msMoveStyleUp(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msMoveStyleDown(classObj *classo, int nStyleIndex);
-MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int iStyleIndex);
-MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style,
-                                int nStyleIndex);
+MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int nStyleIndex);
+MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style, int nStyleIndex);
 MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *classo, int index);
 
 /* maplabel.c */

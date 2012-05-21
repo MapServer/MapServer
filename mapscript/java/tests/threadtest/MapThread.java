@@ -43,7 +43,7 @@ public class MapThread extends Thread {
 	       }
 	    }
    	    // We use this to test swig's memory management code
-	    System.gc();
+	    //System.gc();
             //map.draw().save("/tmp/mapthread"+id+"-"+i+".png", map);
             map.draw();
 	    

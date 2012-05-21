@@ -2,7 +2,7 @@
  * $Id: php_mapscript.c 9765 2010-01-28 15:32:10Z aboudreault $
  *
  * Project:  MapServer
- * Purpose:  PHP/MapScript extension for MapServer.  External interface 
+ * Purpose:  PHP/MapScript extension for MapServer.  External interface
  *           functions
  * Author:   Daniel Morissette, DM Solutions Group (dmorissette@dmsolutions.ca)
  *           Alan Boudreault, Mapgears
@@ -16,16 +16,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in 
+ *
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
@@ -80,17 +80,17 @@ PHP_METHOD(imageObj, __get)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_image = (php_image_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     IF_GET_LONG("width", php_image->image->width)
-    else IF_GET_LONG("height", php_image->image->height) 
-    else IF_GET_LONG("resolution", php_image->image->resolution) 
-    else IF_GET_LONG("resolutionfactor", php_image->image->resolutionfactor) 
-    else IF_GET_STRING("imagepath", php_image->image->imagepath) 
-    else IF_GET_STRING("imageurl", php_image->image->imageurl) 
-    else IF_GET_STRING("imagetype", php_image->image->format->name) 
-    else 
+    else IF_GET_LONG("height", php_image->image->height)
+    else IF_GET_LONG("resolution", php_image->image->resolution)
+    else IF_GET_LONG("resolutionfactor", php_image->image->resolutionfactor)
+    else IF_GET_STRING("imagepath", php_image->image->imagepath)
+    else IF_GET_STRING("imageurl", php_image->image->imageurl)
+    else IF_GET_STRING("imagetype", php_image->image->format->name)
+    else
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
@@ -111,12 +111,12 @@ PHP_METHOD(imageObj, __set)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_image = (php_image_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     IF_SET_STRING("imagepath", php_image->image->imagepath, value)
-    else IF_SET_STRING("imageurl", php_image->image->imageurl, value) 
-    else IF_SET_STRING("imagetype", php_image->image->format->name, value) 
+    else IF_SET_STRING("imageurl", php_image->image->imageurl, value)
+    else IF_SET_STRING("imagetype", php_image->image->format->name, value)
     else if ( (STRING_EQUAL("width", property)) ||
               (STRING_EQUAL("resolution", property)) ||
               (STRING_EQUAL("resolutionfactor", property)) ||
@@ -124,7 +124,7 @@ PHP_METHOD(imageObj, __set)
     {
         mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
-    else 
+    else
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
@@ -140,14 +140,14 @@ PHP_METHOD(imageObj, saveWebImage)
     char *imageFilename = NULL;
     char path[MS_MAXPATHLEN];
     char *imageUrlFull = NULL;
- 
+
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters_none() == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_image = (php_image_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     imageFilename = msTmpFilename(php_image->image->format->extension);
@@ -161,7 +161,7 @@ PHP_METHOD(imageObj, saveWebImage)
 
     imageUrlFull = msBuildPath(path, php_image->image->imageurl, imageFilename);
     msFree(imageFilename);
-    
+
     RETURN_STRING(imageUrlFull, 1);
 }
 /* }}} */
@@ -196,16 +196,16 @@ PHP_METHOD(imageObj, pasteImage)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     if  (ZEND_NUM_ARGS() == 3) {
         mapscript_report_php_error(E_WARNING, "dstX parameter given but not dstY" TSRMLS_CC);
     }
-    else 
+    else
         angleSet = MS_TRUE;
 
     php_image = (php_image_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     php_imageSrc = (php_image_object *) zend_object_store_get_object(zimage TSRMLS_CC);
-        
+
     if (!MS_RENDERER_PLUGIN(php_imageSrc->image->format) ||
  	!MS_RENDERER_PLUGIN(php_image->image->format))
         {
@@ -214,16 +214,16 @@ PHP_METHOD(imageObj, pasteImage)
         }
 
 #ifdef undef //USE_AGG
-    if( MS_RENDERER_AGG(php_imageSrc->image->format)) 
-      msAlphaAGG2GD(php_imageSrc->image); 
-    if( MS_RENDERER_AGG(php_image->image->format)) 
-      msAlphaAGG2GD(php_image->image); 
+    if( MS_RENDERER_AGG(php_imageSrc->image->format))
+      msAlphaAGG2GD(php_imageSrc->image);
+    if( MS_RENDERER_AGG(php_image->image->format))
+      msAlphaAGG2GD(php_image->image);
 #endif
 
 
     renderer = MS_IMAGE_RENDERER(php_image->image);
     memset(&rb,0,sizeof(rasterBufferObj));
-    
+
     renderer->getRasterBufferHandle(php_imageSrc->image, &rb);
     renderer->mergeRasterBuffer(php_image->image, &rb, 1.0, 0, 0, dstx, dsty, rb.width, rb.height);
 
@@ -243,10 +243,10 @@ PHP_METHOD(imageObj, pasteImage)
     gdImageColorTransparent(php_imageSrc->image->img.gd, newTransparentColor);
 
     if (!angleSet)
-        gdImageCopy(php_image->image->img.gd, php_imageSrc->image->img.gd, dstx, dsty, 
+        gdImageCopy(php_image->image->img.gd, php_imageSrc->image->img.gd, dstx, dsty,
                     0, 0, php_imageSrc->image->img.gd->sx, php_imageSrc->image->img.gd->sy);
     else
-        gdImageCopyRotated(php_image->image->img.gd, php_imageSrc->image->img.gd, dstx, dsty, 
+        gdImageCopyRotated(php_image->image->img.gd, php_imageSrc->image->img.gd, dstx, dsty,
                            0, 0, php_imageSrc->image->img.gd->sx, php_imageSrc->image->img.gd->sy,
                            angle);
 
@@ -284,7 +284,7 @@ PHP_METHOD(imageObj, saveImage)
         return;
     }
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-    
+
     php_image = (php_image_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     if (zmap)
         php_map = (php_map_object *) zend_object_store_get_object(zmap TSRMLS_CC);
@@ -303,11 +303,18 @@ PHP_METHOD(imageObj, saveImage)
     /* no filename - read stdout */
 
     /* if there is no output buffer active, set the header */
-    if (OG(ob_nesting_level)<=0)
-    {
-        php_header(TSRMLS_C);
-    }
-   
+    //handle changes in PHP 5.4.x
+    #if PHP_VERSION_ID < 50399
+      if (OG(ob_nesting_level)<=0)
+      {
+          php_header(TSRMLS_C);
+      }
+    #else
+      if (php_output_get_level(TSRMLS_C)<=0)
+      {
+          php_header(TSRMLS_C);
+      }
+    #endif
 
     if (MS_RENDERER_PLUGIN(php_image->image->format))
     {
@@ -322,7 +329,7 @@ PHP_METHOD(imageObj, saveImage)
     if (size == 0) {
         mapscript_throw_mapserver_exception("Failed writing image to stdout" TSRMLS_CC);
         return;
-    } 
+    }
     else
     {
         php_write(iptr, size TSRMLS_CC);
@@ -350,9 +357,9 @@ zend_function_entry image_functions[] = {
 void mapscript_create_image(imageObj *image, zval *return_value TSRMLS_DC)
 {
     php_image_object * php_image;
-    object_init_ex(return_value, mapscript_ce_image); 
+    object_init_ex(return_value, mapscript_ce_image);
     php_image = (php_image_object *)zend_object_store_get_object(return_value TSRMLS_CC);
-    php_image->image = image;    
+    php_image->image = image;
 }
 
 static void mapscript_image_object_destroy(void *object TSRMLS_DC)
@@ -362,7 +369,7 @@ static void mapscript_image_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_FREE_OBJECT(php_image);
 
     msFreeImage(php_image->image);
-    
+
     efree(object);
 }
 
@@ -383,12 +390,12 @@ PHP_MINIT_FUNCTION(image)
 {
     zend_class_entry ce;
 
-    MAPSCRIPT_REGISTER_CLASS("imageObj", 
+    MAPSCRIPT_REGISTER_CLASS("imageObj",
                              image_functions,
                              mapscript_ce_image,
                              mapscript_image_object_new);
 
-    mapscript_ce_image->ce_flags |= ZEND_ACC_FINAL_CLASS; 
-    
+    mapscript_ce_image->ce_flags |= ZEND_ACC_FINAL_CLASS;
+
     return SUCCESS;
 }

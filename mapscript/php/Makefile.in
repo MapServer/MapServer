@@ -123,7 +123,8 @@ php_proj.la:  $(PHPPROJ_OBJS) ../libmapserver.la
 	$(LTCC) $(CC) $(CFLAGS112) -c -o $@ $<
 
 install: php_mapscript.la
-	$(LTINSTALL) $(INSTALL) php_mapscript.la $(PHP_EXT_DIR)
+	$(INSTALL) -d $(DESTDIR)$(PHP_EXT_DIR)
+	$(LTINSTALL) $(INSTALL) php_mapscript.la $(DESTDIR)$(PHP_EXT_DIR)
 
 clean:
 	-rm -rf .libs *.lo *.la *.so *.o perl.out

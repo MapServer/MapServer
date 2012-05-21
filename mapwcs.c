@@ -2209,7 +2209,6 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
     {
 #if defined(USE_LIBXML2)
         int i;
-        char **invalid_get_parameters;
         
         if (params == NULL)
         {
@@ -2221,31 +2220,6 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
                 return msWCSException(map, "InvalidParameterValue",
                                       "request", "2.0.0");
             }
-        }
-        
-        /* check if any unknown parameters are present              */
-        /* create an error message, containing all unknown params   */
-        invalid_get_parameters = ((wcs20ParamsObj*)params)->invalid_get_parameters;
-        if (invalid_get_parameters != NULL)
-        {
-            char *concat = NULL;
-            int i, count = CSLCount(invalid_get_parameters);
-            for(i = 0; i < count; ++i)
-            {
-                concat = msStringConcatenate(concat, (char *)"'");
-                concat = msStringConcatenate(concat, invalid_get_parameters[i]);
-                concat = msStringConcatenate(concat, (char *)"'");
-                if(i + 1 != count)
-                {
-                    concat = msStringConcatenate(concat, ", ");
-                }
-            }
-            msSetError(MS_WCSERR, "Unknown parameter%s: %s.",
-                       "msWCSDispatch()",
-                       (count > 1) ? "s" : "", concat);
-            msFree(concat);
-            msWCSFreeParamsObj20(params);
-            return msWCSException(map, "InvalidParameterValue", "request", "2.0.0");
         }
 
         /* check if all layer names are valid NCNames */
