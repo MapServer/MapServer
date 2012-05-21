@@ -1202,8 +1202,13 @@ int msProcessProjection(projectionObj *p)
 
         int *pj_errno_ref = pj_get_errno_ref();
         msReleaseLock( TLOCK_PROJ );
-        msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
+        if(p->numargs>1) {
+          msSetError(MS_PROJERR, "proj error \"%s\" for \"%s:%s\"",
                    "msProcessProjection()", pj_strerrno(*pj_errno_ref), p->args[0],p->args[1]) ;	  
+        } else {
+          msSetError(MS_PROJERR, "proj error \"%s\" for \"%s\"",
+                   "msProcessProjection()", pj_strerrno(*pj_errno_ref), p->args[0]) ;
+        }
         return(-1);
     }
     
