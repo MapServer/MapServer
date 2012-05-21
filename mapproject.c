@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "mapaxisorder.h"
 
 MS_CVSID("$Id$")
 
@@ -41,6 +42,24 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
                            projectionObj *src_proj, 
                            projectionObj *dst_proj );
 #endif
+
+
+/************************************************************************/
+/*                           int msIsAxisInverted                       */
+/*      Check to see if we shoud invert the axis.                       */
+/*                                                                      */
+/************************************************************************/
+int msIsAxisInverted(int epsg_code)
+{
+    const unsigned int row = epsg_code / 8;
+    const unsigned char index = epsg_code % 8;
+
+    /*check the static table*/
+    if ((row < sizeof(axisOrientationEpsgCodes)) && (axisOrientationEpsgCodes[row] & (1 << index)))
+        return MS_TRUE;
+    else
+        return MS_FALSE;
+}
 
 /************************************************************************/
 /*                           msProjectPoint()                           */

@@ -63,6 +63,8 @@ typedef struct {
 } projectionObj;
 
 #ifndef SWIG
+
+MS_DLL_EXPORT int msIsAxisInverted(int epsg_code);
 MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point);
 MS_DLL_EXPORT int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
 MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
