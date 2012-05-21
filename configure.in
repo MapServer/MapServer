@@ -1012,9 +1012,9 @@ EXPAT_FOUND='no'
 
 
 if test -n "$EXPAT_DIR" ; then
-    test -f $EXPAT_DIR/lib/libexpat.a -o -f $EXPAT_DIR/lib/libexpat.so -o -f $EXPAT_DIR/lib/libexpat.sl -o -f $EXPAT_DIR/lib/libexpat.dylib && EXPAT_LIBDIR="$PNG_DIR/lib"
-    test -f $EXPAT_DIR/lib64/libexpat.a -o -f $EXPAT_DIR/lib64/libexpat.so -o -f $EXPAT_DIR/lib64/libexpat.sl -o -f $EXPAT_DIR/libexpat.dylib && EXPAT_LIBDIR="$PNG_DIR/lib64"
-    test -f $EXPAT_DIR/libexpat.a -o -f $EXPAT_DIR/libexpat.so -o -f $EXPAT_DIR/libexpat.sl -o -f $PNG_DIR/libexpat.dylib && EXPAT_LIBDIR="$PNG_DIR"
+    test -f $EXPAT_DIR/lib/libexpat.a -o -f $EXPAT_DIR/lib/libexpat.so -o -f $EXPAT_DIR/lib/libexpat.sl -o -f $EXPAT_DIR/lib/libexpat.dylib && EXPAT_LIBDIR="$EXPAT_DIR/lib"
+    test -f $EXPAT_DIR/lib64/libexpat.a -o -f $EXPAT_DIR/lib64/libexpat.so -o -f $EXPAT_DIR/lib64/libexpat.sl -o -f $EXPAT_DIR/libexpat.dylib && EXPAT_LIBDIR="$EXPAT_DIR/lib64"
+    test -f $EXPAT_DIR/libexpat.a -o -f $EXPAT_DIR/libexpat.so -o -f $EXPAT_DIR/libexpat.sl -o -f $EXPAT_DIR/libexpat.dylib && EXPAT_LIBDIR="$EXPAT_DIR"
     test -f $EXPAT_DIR/include/expat.h && EXPAT_INCDIR="$EXPAT_DIR/include"
     test -f $EXPAT_DIR/lib/expat.h && EXPAT_INCDIR="$EXPAT_DIR/lib"
     test -f $EXPAT_DIR/expat.h && EXPAT_INCDIR="$EXPAT_DIR"
