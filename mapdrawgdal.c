@@ -611,6 +611,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
         for(i=0; i < color_count; i++) {
             colorObj pixel;
+            int colormap_index;
             GDALColorEntry sEntry;
 
             GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
@@ -618,13 +619,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
             pixel.red = sEntry.c1;
             pixel.green = sEntry.c2;
             pixel.blue = sEntry.c3;
-#ifdef USE_GD
-            pixel.pen = i;
-#endif
+            colormap_index = i;
         
             if(!MS_COMPARE_COLORS(pixel, layer->offsite))
             {
-                c = msGetClass(layer, &pixel);
+                c = msGetClass(layer, &pixel, colormap_index);
             
                 if(c == -1)/* doesn't belong to any class, so handle like offsite*/
                 {

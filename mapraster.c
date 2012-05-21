@@ -168,11 +168,11 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
 /*                             msGetClass()                             */
 /************************************************************************/
 
-int msGetClass(layerObj *layer, colorObj *color )
+int msGetClass(layerObj *layer, colorObj *color, int colormap_index)
 {
-    char pixel_value[100];
+    char pixel_value[12];
 
-    snprintf( pixel_value, sizeof(pixel_value), "%03d%03d%03d", color->red, color->green, color->blue );
+    snprintf( pixel_value, sizeof(pixel_value), "%d", colormap_index );
 
     return msGetClass_String( layer, color, pixel_value );
 }
