@@ -1595,8 +1595,7 @@ Optional Packages:
   --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is
                               path to freetype-config program or install dir).
   --with-png              libpng location: [yes|/path/to/png/prefix]
-  --with-gif=DIR          Specify where GIF is installed (DIR is path to
-                              GIF install dir).
+  --with-gif              libgif location: [yes|no|/path/to/gif/prefix]
   --with-jpeg             libjpeg location: [yes|/path/to/jpeg/prefix]
   --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the
                               libXpm install prefix).
@@ -16372,86 +16371,37 @@ fi
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include GIF support..." >&5
+$as_echo "$as_me: checking whether we should include GIF support..." >&6;}
+
+
+
 
 # Check whether --with-gif was given.
 if test "${with_gif+set}" = set; then :
-  withval=$with_gif; GIF_DIR=$withval
+  withval=$with_gif;
 else
-  GIF_DIR=''
+  with_gif=yes
 fi
 
+   if test x"$with_gif" == "xno"; then
+      GIF_ENABLED=""
 
+      GIF_INC=""
 
-  if test -z "$GIF_DIR" || echo "$GIF_DIR" | grep '^/' >/dev/null ; then
-    GIF_DIR="$GIF_DIR"
-  else
-    GIF_DIR="`pwd`/$GIF_DIR"
-  fi
+      GIF_LIB=""
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking where GIF is installed..." >&5
-$as_echo "$as_me: checking where GIF is installed..." >&6;}
-GIF_LIB=''
-GIF_INC=''
-GIF_ENABLED=''
-
-if test "$withval" != "no" ; then
-   if test -n "$GIF_DIR" -a "GIF_DIR" != "yes" ; then
-       test -f $GIF_DIR/lib/libgif.a -o -f $GIF_DIR/lib/libgif.so -o -f $GIF_DIR/lib/libgif.sl -o -f $GIF_DIR/lib/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib"
-       test -f $GIF_DIR/lib64/libgif.a -o -f $GIF_DIR/lib64/libgif.so -o -f $GIF_DIR/lib64/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib64"
-       test -f $GIF_DIR/libgif.a -o -f $GIF_DIR/libgif.so -o -f $GIF_DIR/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR"
-       test -f $GIF_DIR/include/gif_lib.h && GIF_INCLUDE="$GIF_DIR/include"
-       test -f $GIF_DIR/lib/gif_lib.h && GIF_INCLUDE="$GIF_DIR/lib"
-       test -f $GIF_DIR/gif_lib.h && GIF_INCLUDE="$GIF_DIR"
-
-       if test -n "$GIF_LIBDIR" ; then
-         GIF_LIB="-L$GIF_LIBDIR -lgif"
-         { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgif from $GIF_LIB" >&5
-$as_echo "        using libgif from $GIF_LIB" >&6; }
-
-  if test ""$GIF_LIBDIR"" != "/usr/lib"; then
-
-  if test -z ""$GIF_LIBDIR"" || echo ""$GIF_LIBDIR"" | grep '^/' >/dev/null ; then
-    ai_p=""$GIF_LIBDIR""
-  else
-    ai_p="`pwd`/"$GIF_LIBDIR""
-  fi
-
-
-  unique=`echo $ac_n "$ai_p$ac_c" | tr -c -d a-zA-Z0-9`
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
-        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
-
-  fi
-
-  fi
-
-       else
-         as_fn_error $? "cannot find gif lib in $GIF_DIR. To disable gif support run with --without-gif." "$LINENO" 5
-       fi
-
-       if test -n "$GIF_INCLUDE" ; then
-         as_ac_Header=`$as_echo "ac_cv_header_$GIF_INCLUDE/gif_lib.h" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$GIF_INCLUDE/gif_lib.h" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  GIF_INC=-I$GIF_INCLUDE
-else
-  as_fn_error $? "cannot find gif headers. To disable gif support run with --without-gif." "$LINENO" 5
-fi
-
-
-         ALL_INC="$GIF_INC $ALL_INC"
-       else
-           as_fn_error $? "cannot find gif headers in $GIF_DIR. To disable gif support run with --without-gif." "$LINENO" 5
-       fi
-       GIF_ENABLED="-DUSE_GIF"
    else
+      if test -z "$with_gif" -o "$with_gif" == "yes" -o "$with_gif" == "/usr"; then
+         ac_fn_c_check_header_mongrel "$LINENO" "gif_lib.h" "ac_cv_header_gif_lib_h" "$ac_includes_default"
+if test "x$ac_cv_header_gif_lib_h" = xyes; then :
+
+else
+  as_fn_error $? "gif_lib.h header not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix" "$LINENO" 5
+fi
 
 
-     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DGifOpenFileHandle in -lgif" >&5
+         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DGifOpenFileHandle in -lgif" >&5
 $as_echo_n "checking for DGifOpenFileHandle in -lgif... " >&6; }
 if ${ac_cv_lib_gif_DGifOpenFileHandle+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16488,39 +16438,88 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gif_DGifOpenFileHandle" >&5
 $as_echo "$ac_cv_lib_gif_DGifOpenFileHandle" >&6; }
 if test "x$ac_cv_lib_gif_DGifOpenFileHandle" = xyes; then :
-  GIF_LIB="-lgif"
+
+else
+  as_fn_error $? "libgif library not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix" "$LINENO" 5
 fi
 
-     ac_fn_c_check_header_mongrel "$LINENO" "gif_lib.h" "ac_cv_header_gif_lib_h" "$ac_includes_default"
+
+      else
+         old_LDFLAGS="$LDFLAGS"
+         old_CPPFLAGS="$CPPFLAGS"
+
+         CPPFLAGS="-I$with_gif/include"
+         LDFLAGS="-L$with_gif/lib"
+
+         ac_fn_c_check_header_mongrel "$LINENO" "gif_lib.h" "ac_cv_header_gif_lib_h" "$ac_includes_default"
 if test "x$ac_cv_header_gif_lib_h" = xyes; then :
 
 else
-  as_fn_error $? "cannot find gif headers in system path. To disable gif support run with --without-gif." "$LINENO" 5
+  as_fn_error $? "gif_lib.h header not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix" "$LINENO" 5
 fi
 
 
-     if test -n "$GIF_LIB" ; then
-       { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libgif from system libs." >&5
-$as_echo "        using libgif from system libs." >&6; }
-     else
-       as_fn_error $? "GIF (libgif) library cannot be found. install or reconfigure with --with-gif=DIR.  To disable gif support run with --without-gif." "$LINENO" 5
-     fi
-     GIF_ENABLED="-DUSE_GIF"
+         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for DGifOpenFileHandle in -lgif" >&5
+$as_echo_n "checking for DGifOpenFileHandle in -lgif... " >&6; }
+if ${ac_cv_lib_gif_DGifOpenFileHandle+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgif  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char DGifOpenFileHandle ();
+int
+main ()
+{
+return DGifOpenFileHandle ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gif_DGifOpenFileHandle=yes
+else
+  ac_cv_lib_gif_DGifOpenFileHandle=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gif_DGifOpenFileHandle" >&5
+$as_echo "$ac_cv_lib_gif_DGifOpenFileHandle" >&6; }
+if test "x$ac_cv_lib_gif_DGifOpenFileHandle" = xyes; then :
+
+else
+  as_fn_error $? "libgif library not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix" "$LINENO" 5
+fi
+
+         GIF_INC="$CFLAGS"
+         GIF_LIB="$LDFLAGS"
+         CPPFLAGS="$old_CPPFLAGS"
+         LDFLAGS="$old_LDFLAGS"
+      fi
+      GIF_ENABLED="-DUSE_GIF"
+
+      ALL_ENABLED="$GIF_ENABLED $ALL_ENABLED"
+      GIF_ENABLED="$GIF_ENABLED"
+
+      GIF_INC="$GIF_INC"
+
+      GIF_LIB="$GIF_LIB -lgif"
+
    fi
-fi
-
-ALL_ENABLED="$GIF_ENABLED $ALL_ENABLED"
-GIF_ENABLED=$GIF_ENABLED
-
-GIF_INC=$GIF_INC
-
-GIF_LIB=$GIF_LIB
 
 
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include JPEG support..." >&5
-$as_echo "$as_me: checking whether we should include JPEG support..." >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for jpeg library location (mandatory)..." >&5
+$as_echo "$as_me: checking for jpeg library location (mandatory)..." >&6;}
 
 
 # Check whether --with-jpeg was given.
