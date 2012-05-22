@@ -447,13 +447,11 @@ AC_DEFUN([MS_CHECK_GD],[
       [],
       [with_gd=no])
 
-   AC_MSG_CHECKING(where libgd is installed)
-   
    if test x"$with_gd" == "xno"; then
       AC_SUBST(GD_ENABLED, "")
       AC_SUBST(GD_INC, "")
       AC_SUBST(GD_LIB, "")
-      AC_MSG_RESULT([not requested, disabling])
+      AC_MSG_RESULT([GD support not requested, disabling])
    else
       if test "$with_gd" == "yes"; then
          AC_PATH_PROG(GDCONFIG,gdlib-config,no)
@@ -477,7 +475,6 @@ AC_DEFUN([MS_CHECK_GD],[
          if test "$GDCONFIG" == "no"; then
             AC_MSG_ERROR([gdlib-config not usable, reconfigure with --with-gd[=(yes|no|/path/to/gdlib-config)]])
          fi
-         AC_MSG_RESULT([using $GDCONFIG])
       fi
 
       GDMAJOR=`$GDCONFIG --majorversion`
@@ -485,6 +482,7 @@ AC_DEFUN([MS_CHECK_GD],[
       GDREV=`$GDCONFIG --revision`
       GDVERSION=`$GDCONFIG --version`
       GDFEATURES=`$GDCONFIG --features`
+      AC_MSG_RESULT([using libgd $GDVERSION from $GDCONFIG])
       
       if test -z "`echo $GDFEATURES | grep 'GD_PNG'`"  ; then
          AC_MSG_ERROR([supplied GD is missing PNG support])
