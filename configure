@@ -17124,7 +17124,7 @@ $as_echo "using $GDCONFIG" >&6; }
 
 
             GD_INC=`$GDCONFIG --includes`
-      GD_INC=`echo "$GD_INC" | sed 's# /usr/include # #' | sed 's# /usr/include/ # #'`
+      GD_INC=`echo "$GD_INC" | sed 's#-I/usr/include # #' | sed 's#-I/usr/include/ # #'`
 
             GD_LIB=`$GDCONFIG --ldflags`
       GD_LIB=`echo "$GD_LIB" | sed 's# /usr/lib # #' | sed 's# /usr/lib/ # #'`

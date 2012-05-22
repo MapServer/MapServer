@@ -518,7 +518,7 @@ AC_DEFUN([MS_CHECK_GD],[
 
       dnl remove /usr/include/ from default include path
       GD_INC=`$GDCONFIG --includes`
-      GD_INC=`echo "$GD_INC" | sed 's# /usr/include # #' | sed 's# /usr/include/ # #'`
+      GD_INC=`echo "$GD_INC" | sed 's#-I/usr/include # #' | sed 's#-I/usr/include/ # #'`
       
       dnl remove /usr/lib/ from default lib path
       GD_LIB=`$GDCONFIG --ldflags`
