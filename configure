@@ -17094,12 +17094,38 @@ $as_echo "using $GDCONFIG" >&6; }
       GDMINOR=`$GDCONFIG --minorversion`
       GDREV=`$GDCONFIG --revision`
       GDVERSION=`$GDCONFIG --version`
+      GDFEATURES=`$GDCONFIG --features`
+
+      if test -z "`echo $GDFEATURES | grep 'GD_PNG'`"  ; then
+         as_fn_error $? "supplied GD is missing PNG support" "$LINENO" 5
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_PNG"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_JPEG'`"  ; then
+         as_fn_error $? "supplied GD is missing JPEG support" "$LINENO" 5
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_JPEG"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_GIF'`"  ; then
+         as_fn_error $? "supplied GD is missing GIF support" "$LINENO" 5
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_GIF"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_FREETYPE'`"  ; then
+         as_fn_error $? "supplied GD is missing FT support" "$LINENO" 5
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_FT"
+      fi
+
+
 
       if test $GDMAJOR -lt 2 -o $GDMINOR -lt 0 -o $GDREV -lt 28 ; then
          as_fn_error $? "GD version $GDVERSION too old. need at least 2.0.28" "$LINENO" 5
       fi
 
-      GD_ENABLED="-DUSE_GD"
+
+
+      GD_ENABLED="-DUSE_GD $GD_ENABLED"
       ALL_ENABLED="$GD_ENABLED $ALL_ENABLED"
       GD_ENABLED="$GD_ENABLED"
 

@@ -484,12 +484,36 @@ AC_DEFUN([MS_CHECK_GD],[
       GDMINOR=`$GDCONFIG --minorversion`
       GDREV=`$GDCONFIG --revision`
       GDVERSION=`$GDCONFIG --version`
+      GDFEATURES=`$GDCONFIG --features`
+      
+      if test -z "`echo $GDFEATURES | grep 'GD_PNG'`"  ; then
+         AC_MSG_ERROR([supplied GD is missing PNG support])
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_PNG"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_JPEG'`"  ; then
+         AC_MSG_ERROR([supplied GD is missing JPEG support])
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_JPEG"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_GIF'`"  ; then
+         AC_MSG_ERROR([supplied GD is missing GIF support])
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_GIF"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_FREETYPE'`"  ; then
+         AC_MSG_ERROR([supplied GD is missing FT support])
+      fi
+
+
 
       if test $GDMAJOR -lt 2 -o $GDMINOR -lt 0 -o $GDREV -lt 28 ; then
          AC_MSG_ERROR([GD version $GDVERSION too old. need at least 2.0.28])
       fi
 
-      GD_ENABLED="-DUSE_GD"
+
+
+      GD_ENABLED="-DUSE_GD $GD_ENABLED"
       ALL_ENABLED="$GD_ENABLED $ALL_ENABLED"
       AC_SUBST(GD_ENABLED, "$GD_ENABLED")
       AC_SUBST(GD_INC,    `$GDCONFIG --includes`)

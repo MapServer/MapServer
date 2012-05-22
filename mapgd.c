@@ -43,23 +43,19 @@
 #endif
 
 int msGDSetup() {
-#ifdef USE_GD_FT
   if (gdFontCacheSetup() != 0) {
     return MS_FAILURE;
   }
-#endif
   return MS_SUCCESS;
 }
 
 void msGDCleanup(int signal) {
-#ifdef USE_GD_FT
     if(!signal) {
         /* there's a potential deadlock if we're killed by a signal and the font
          cache is already locked. We don't tear down the fontcache in this case
          to avoid it (issue 4093)*/
         gdFontCacheShutdown();
     }
-#endif
 }
 
 #define MS_IMAGE_GET_GDIMAGEPTR(image) ((gdImagePtr) image->img.plugin)
