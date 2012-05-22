@@ -29,7 +29,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 #define VMARGIN 3 /* buffer around the scalebar */
 #define HMARGIN 3

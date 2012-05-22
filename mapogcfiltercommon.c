@@ -34,7 +34,7 @@
 #include "mapserver.h"
 #include "mapowscommon.h"
 
-MS_CVSID("$Id$")
+
 
 #ifdef USE_OGR
 

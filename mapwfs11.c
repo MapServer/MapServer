@@ -30,7 +30,7 @@
 #include "mapserver.h"
 #include "mapows.h"
 
-MS_CVSID("$Id$")
+
 
 #if defined(USE_WFS_SVR) && defined(USE_LIBXML2)
 #include "maplibxml2.h"

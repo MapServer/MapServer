@@ -50,7 +50,7 @@
 #include <string.h>
 #include <ctype.h> /* tolower() */
 
-MS_CVSID("$Id$")
+
 
 
 typedef struct {

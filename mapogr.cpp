@@ -40,7 +40,7 @@
 #  include "ogr_srs_api.h"
 #endif
 
-MS_CVSID("$Id$")
+
 
 #define ACQUIRE_OGR_LOCK       msAcquireLock( TLOCK_OGR )
 #define RELEASE_OGR_LOCK       msReleaseLock( TLOCK_OGR )

@@ -37,7 +37,7 @@
 #include <process.h>
 #endif
 
-MS_CVSID("$Id$")
+
 
 #define WFS_V_0_0_14  14
 #define WFS_V_1_0_0  100

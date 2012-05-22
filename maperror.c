@@ -39,7 +39,7 @@
 #endif
 #include <stdarg.h>
 
-MS_CVSID("$Id$")
+
 
 static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"Unable to access file.",

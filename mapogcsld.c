@@ -34,7 +34,7 @@
 #include "cpl_string.h"
 #endif
 
-MS_CVSID("$Id$")
+
 
 #define SLD_LINE_SYMBOL_NAME "sld_line_symbol"
 #define SLD_LINE_SYMBOL_DASH_NAME "sld_line_symbol_dash"

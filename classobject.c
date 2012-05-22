@@ -36,7 +36,7 @@
 #  include "cpl_conv.h"
 #endif
 
-MS_CVSID("$Id$")
+
 
 /*
 ** Add a label to a classObj (order doesn't matter for labels like it does with styles)

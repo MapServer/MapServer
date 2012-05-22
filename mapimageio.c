@@ -38,7 +38,7 @@
 #include "gif_lib.h"
 #endif
 
-MS_CVSID("$Id$")
+
 
 typedef struct _streamInfo {
     FILE *fp;

@@ -41,7 +41,7 @@
 #include <assert.h>
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 /* should be size of largest possible filename */
 #define MS_PATH_BUF_SIZE 2048

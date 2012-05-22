@@ -32,7 +32,7 @@
 #include "mapserver.h"
 
 
-MS_CVSID("$Id$")
+
 
 #if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
 

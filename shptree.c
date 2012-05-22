@@ -31,7 +31,7 @@
 #include "maptree.h"
 #include <string.h>
 
-MS_CVSID("$Id$")
+
 
 char* AddFileSuffix ( const char * Filename, const char * Suffix ) {
   char	*pszFullname, *pszBasename;

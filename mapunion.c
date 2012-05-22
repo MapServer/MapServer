@@ -33,7 +33,7 @@
 #include <assert.h>
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 #define MSUNION_NUMITEMS        3
 #define MSUNION_SOURCELAYERNAME        "Union:SourceLayerName"

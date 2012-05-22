@@ -49,7 +49,7 @@
 #include <process.h>
 #endif
 
-MS_CVSID("$Id$")
+
 
 /* ==================================================================
  * WMS Server stuff.

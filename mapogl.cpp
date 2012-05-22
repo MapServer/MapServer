@@ -35,7 +35,7 @@
 #include "mapoglrenderer.h"
 #include "mapoglcontext.h"
 
-MS_CVSID("$Id$")
+
 
 imageObj* createImageObjOgl(OglRenderer* renderer)
 {    

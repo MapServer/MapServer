@@ -38,7 +38,7 @@
 #include "mapserver.h"
 #include "mapowscommon.h"
 
-MS_CVSID("$Id$")
+
 
 
 int FLTIsNumeric(char *pszValue)

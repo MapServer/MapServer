@@ -31,7 +31,7 @@
 #include "maperror.h"
 #include "mapgml.h"
 
-MS_CVSID("$Id$")
+
 
 /* Use only mapgml.c if WMS or WFS is available (with minor exceptions at end)*/
 

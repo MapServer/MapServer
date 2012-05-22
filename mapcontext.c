@@ -28,7 +28,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
 

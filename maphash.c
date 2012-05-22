@@ -32,7 +32,7 @@
 #include "mapserver.h"
 #include "maphash.h"
 
-MS_CVSID("$Id$")
+
 
 static unsigned hash(const char *key)
 {

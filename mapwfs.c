@@ -28,7 +28,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 #if defined(USE_WFS_SVR)
 

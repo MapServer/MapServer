@@ -32,7 +32,7 @@
 #include <assert.h>
 #include <locale.h>
 
-MS_CVSID("$Id$")
+
 
 typedef enum {CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT} CLIP_STATE;
 

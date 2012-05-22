@@ -41,7 +41,7 @@
 #  include "cpl_string.h"
 #endif
 
-MS_CVSID("$Id$")
+
 
 #ifdef USE_OGR
 

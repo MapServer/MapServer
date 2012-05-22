@@ -33,7 +33,7 @@
 #include "maptime.h"
 #include "mapcopy.h"
 
-MS_CVSID("$Id$")
+
 
 #ifdef USE_GD
 /*

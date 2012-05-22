@@ -30,7 +30,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 #define MS_CHART_TYPE_PIE 1
 #define MS_CHART_TYPE_BAR 2

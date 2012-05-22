@@ -53,7 +53,7 @@
 
 #endif /* defined(USE_LIBXML2) */
 
-MS_CVSID("$Id$")
+
 
 /************************************************************************/
 /*                   msStringParseInteger()                             */
