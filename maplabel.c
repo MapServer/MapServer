@@ -33,7 +33,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 
 /**

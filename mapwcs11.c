@@ -35,7 +35,7 @@
 #include "mapthread.h"
 #include "mapwcs.h"
 
-MS_CVSID("$Id$")
+
 
 #if defined(USE_WCS_SVR) && defined(USE_LIBXML2)
 

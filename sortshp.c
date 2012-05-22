@@ -36,7 +36,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 typedef struct {
   double number;

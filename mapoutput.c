@@ -30,7 +30,7 @@
 #include <assert.h>
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name, 
                                              const char *driver );

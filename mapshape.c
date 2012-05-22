@@ -38,7 +38,7 @@
 #include <assert.h>
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 /* Only use this macro on 32-bit integers! */
 #define SWAP_FOUR_BYTES(data) \

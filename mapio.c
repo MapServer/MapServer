@@ -43,7 +43,7 @@
 #endif
 
 
-MS_CVSID("$Id$")
+
 
 static int is_msIO_initialized = MS_FALSE;
 

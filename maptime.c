@@ -36,7 +36,7 @@
 #include "maptime.h"
 #include "maperror.h"
 
-MS_CVSID("$Id$")
+
 
 typedef struct {
   char pattern[64];

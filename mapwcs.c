@@ -32,7 +32,7 @@
 #include "mapthread.h"
 #include <assert.h>
 
-MS_CVSID("$Id$")
+
 
 #if defined(USE_WCS_SVR)
 

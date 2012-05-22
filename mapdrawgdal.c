@@ -33,7 +33,7 @@
 #include "mapresample.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$")
+
 
 extern int InvGeoTransform( double *gt_in, double *gt_out );
 

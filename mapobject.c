@@ -35,7 +35,7 @@
 #  include "cpl_conv.h"
 #endif
 
-MS_CVSID("$Id$")
+
 
 void freeWeb(webObj *web);
 void freeScalebar(scalebarObj *scalebar);

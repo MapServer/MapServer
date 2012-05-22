@@ -45,7 +45,7 @@
 #include "mapserver.h"
 #include "mapsymbol.h"
 
-MS_CVSID("$Id$")
+
 
 #include "mapcopy.h"
 

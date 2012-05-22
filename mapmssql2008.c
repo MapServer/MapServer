@@ -49,7 +49,7 @@
 #include <string.h>
 #include <ctype.h> /* tolower() */
 
-MS_CVSID("$Id$")
+
 
 /* Native geometry parser macros */
 

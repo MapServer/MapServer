@@ -42,7 +42,7 @@
 #include "mapowscommon.h"
 #include "maplibxml2.h"
 
-MS_CVSID("$Id$")
+
 
 
 

@@ -36,7 +36,7 @@
 #include "mapparser.h"
 
 #include <assert.h>
-MS_CVSID("$Id$")
+
 
 static int populateVirtualTable(layerVTableObj *vtable);
 

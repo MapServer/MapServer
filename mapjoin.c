@@ -29,7 +29,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 #define ROW_ALLOCATION_SIZE 10
 

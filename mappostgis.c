@@ -80,7 +80,7 @@
  
 #ifdef USE_POSTGIS
   
-MS_CVSID("$Id$")
+
 
 /*
 ** msPostGISCloseConnection()

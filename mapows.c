@@ -42,7 +42,7 @@
 #include <stdarg.h> 
 #include <assert.h>
 
-MS_CVSID("$Id$")
+
 
 /*
 ** msOWSInitRequestObj() initializes an owsRequestObj; i.e: sets

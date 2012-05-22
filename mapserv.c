@@ -39,7 +39,7 @@
 #include <signal.h>
 #endif
 
-MS_CVSID("$Id$")
+
 
 /************************************************************************/
 /*                      FastCGI cleanup functions.                      */

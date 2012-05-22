@@ -48,7 +48,7 @@
 #include <windows.h> /* OutputDebugStringA() */
 #endif
 
-MS_CVSID("$Id$")
+
 
 
 #ifndef USE_THREAD

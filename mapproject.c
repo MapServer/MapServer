@@ -35,7 +35,7 @@
 #include <sys/stat.h>
 #include "mapaxisorder.h"
 
-MS_CVSID("$Id$")
+
 
 #ifdef USE_PROJ
 static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,

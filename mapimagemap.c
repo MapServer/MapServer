@@ -38,7 +38,7 @@
 #include <io.h>
 #endif
 
-MS_CVSID("$Id$")
+
 
 #define MYDEBUG 0
 #define DEBUG_IF if (MYDEBUG > 2) 

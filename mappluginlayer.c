@@ -30,7 +30,7 @@
 #include "mapserver.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$")
+
 
 typedef struct {
     char *name;

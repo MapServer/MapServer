@@ -30,7 +30,7 @@
 #include "mapserver.h"
 #include "maptime.h"
 
-MS_CVSID("$Id$")
+
 
 int main(int argc, char *argv[])
 {

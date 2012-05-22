@@ -33,7 +33,7 @@
 #include <assert.h>
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 
 #ifdef USE_CLUSTER_PLUGIN

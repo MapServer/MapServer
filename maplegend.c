@@ -29,7 +29,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 #define PSF .8
 #define VMARGIN 5 /* margin at top and bottom of legend graphic */

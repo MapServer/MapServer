@@ -33,7 +33,7 @@
 #include "mapparser.h"
 #include "mapfile.h"
 
-MS_CVSID("$Id$")
+
 
 extern int msyyparse();
 extern int msyylex();

@@ -31,7 +31,7 @@
 #include "mapserver.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$")
+
 
 #if defined(USE_GDAL) || defined(USE_OGR)
 #include "cpl_conv.h"

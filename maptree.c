@@ -31,7 +31,7 @@
 #include "mapserver.h"
 #include "maptree.h"
 
-MS_CVSID("$Id$")
+
 
 /* -------------------------------------------------------------------- */
 /*      If the following is 0.5, nodes will be split in half.  If it    */

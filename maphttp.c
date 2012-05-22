@@ -37,7 +37,7 @@
 #include "maperror.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$")
+
 
 #include <time.h>
 #ifndef _WIN32

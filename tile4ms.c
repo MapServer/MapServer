@@ -43,7 +43,7 @@
 #include "mapserver.h"
 #include <string.h>
 
-MS_CVSID("$Id$")
+
 
 /***********************************************************************/
 int process_shapefiles(char *metaFileNameP, char *tileFileNameP, 

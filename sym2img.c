@@ -32,7 +32,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 #define MAXCOLORS 256
 #define CELLSIZE 100

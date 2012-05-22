@@ -36,7 +36,7 @@
 #include "mapserver.h"
 #include "cgiutil.h"
 
-MS_CVSID("$Id$")
+
 
 #define LF 10
 #define CR 13

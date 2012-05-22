@@ -34,7 +34,7 @@
 #endif
 #include <stdlib.h>
 
-MS_CVSID("$Id$")
+
 
 #ifdef SHPT_POLYGON
    #undef MAPSERVER

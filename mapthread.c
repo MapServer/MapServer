@@ -137,7 +137,7 @@ files instead.
 #include "mapserver.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$")
+
 
 #if defined(USE_THREAD)
 static int thread_debug = 0;

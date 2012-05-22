@@ -43,7 +43,7 @@
 #  include "gdal.h"
 #endif
 
-MS_CVSID("$Id$")
+
 
 extern int msyylex(void);
 extern void msyyrestart(FILE *);

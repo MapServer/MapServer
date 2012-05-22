@@ -29,7 +29,7 @@
 
 #include "mapserver.h"
 
-MS_CVSID("$Id$")
+
 
 int msInitQuery(queryObj *query)
 {

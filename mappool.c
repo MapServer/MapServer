@@ -134,7 +134,7 @@ o The connection pooling API will let a connection be used/referenced multiple
 #include "mapserver.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$")
+
 
 /* defines for lifetime.  
    A positive number is a time-from-last use in seconds */

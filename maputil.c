@@ -46,7 +46,7 @@
 #include <process.h>
 #endif
 
-MS_CVSID("$Id$")
+
 
 extern char *msyystring_buffer;
 extern int msyylex_destroy(void);

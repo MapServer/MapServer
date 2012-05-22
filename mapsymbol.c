@@ -35,7 +35,7 @@
 #include "mapcopy.h"
 #include "mapthread.h"
 
-MS_CVSID("$Id$")
+
 
 extern int msyylex(void); /* lexer globals */
 extern void msyyrestart(FILE *);

@@ -36,7 +36,7 @@
 #include "maperror.h"
 #include "mapoglrenderer.h"
 
-MS_CVSID("$Id$")
+
 
 using namespace std;
 
