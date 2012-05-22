@@ -17130,6 +17130,8 @@ $as_echo "using libgd $GDVERSION from $GDCONFIG" >&6; }
       ALL_ENABLED="$GD_ENABLED $ALL_ENABLED"
       GD_ENABLED="$GD_ENABLED"
 
+      ALL_INC="$ALL_INC $GD_INC"
+      ALL_LIB="$ALL_LIB $GD_LIB -lgd"
       GD_INC="$GD_INC"
 
       GD_LIB="$GD_LIB -lgd"
