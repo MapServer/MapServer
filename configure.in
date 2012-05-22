@@ -512,12 +512,23 @@ AC_DEFUN([MS_CHECK_GD],[
       fi
 
 
+      dnl gdlib-config adds /usr/include and /usr/lib to the compile paths
+      dnl which we do not want, as they may take precedence on locally
+      dnl supplied paths for other libraries
+
+      dnl remove /usr/include/ from default include path
+      GD_INC=`$GDCONFIG --includes`
+      GD_INC=`echo "$GD_INC" | sed 's# /usr/include # #' | sed 's# /usr/include/ # #'`
+      
+      dnl remove /usr/lib/ from default lib path
+      GD_LIB=`$GDCONFIG --ldflags`
+      GD_LIB=`echo "$GD_LIB" | sed 's# /usr/lib # #' | sed 's# /usr/lib/ # #'`
 
       GD_ENABLED="-DUSE_GD $GD_ENABLED"
       ALL_ENABLED="$GD_ENABLED $ALL_ENABLED"
       AC_SUBST(GD_ENABLED, "$GD_ENABLED")
-      AC_SUBST(GD_INC,    `$GDCONFIG --includes`)
-      AC_SUBST(GD_LIB,    "`$GDCONFIG --ldflags` -lgd")
+      AC_SUBST(GD_INC, "$GD_INC")
+      AC_SUBST(GD_LIB, "$GD_LIB -lgd")
    fi
 
 ])

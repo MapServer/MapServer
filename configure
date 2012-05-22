@@ -17113,8 +17113,6 @@ $as_echo "using $GDCONFIG" >&6; }
       fi
       if test -z "`echo $GDFEATURES | grep 'GD_FREETYPE'`"  ; then
          as_fn_error $? "supplied GD is missing FT support" "$LINENO" 5
-      else
-         GD_ENABLED="$GD_ENABLED -DUSE_GD_FT"
       fi
 
 
@@ -17125,13 +17123,19 @@ $as_echo "using $GDCONFIG" >&6; }
 
 
 
+            GD_INC=`$GDCONFIG --includes`
+      GD_INC=`echo "$GD_INC" | sed 's# /usr/include # #' | sed 's# /usr/include/ # #'`
+
+            GD_LIB=`$GDCONFIG --ldflags`
+      GD_LIB=`echo "$GD_LIB" | sed 's# /usr/lib # #' | sed 's# /usr/lib/ # #'`
+
       GD_ENABLED="-DUSE_GD $GD_ENABLED"
       ALL_ENABLED="$GD_ENABLED $ALL_ENABLED"
       GD_ENABLED="$GD_ENABLED"
 
-      GD_INC=`$GDCONFIG --includes`
+      GD_INC="$GD_INC"
 
-      GD_LIB="`$GDCONFIG --ldflags` -lgd"
+      GD_LIB="$GD_LIB -lgd"
 
    fi
 
