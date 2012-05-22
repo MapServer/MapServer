@@ -243,6 +243,8 @@ AC_DEFUN([MS_CHECK_PNG],[
    PNG_ENABLED="-DUSE_PNG"
 
    ALL_ENABLED="$PNG_ENABLED $ALL_ENABLED"
+   ALL_INC="$ALL_INC $PNG_INC"
+   ALL_LIB="$ALL_LIB $PNG_LIB -lpng"
    AC_SUBST(PNG_ENABLED, "$PNG_ENABLED")
    AC_SUBST(PNG_INC,    "$PNG_INC")
    AC_SUBST(PNG_LIB,    "$PNG_LIB -lpng")
@@ -284,6 +286,8 @@ AC_DEFUN([MS_CHECK_JPEG],[
    JPEG_ENABLED="-DUSE_JPEG"
 
    ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
+   ALL_INC="$ALL_INC $JPEG_INC"
+   ALL_LIB="$ALL_LIB $JPEG_LIB -ljpeg"
    AC_SUBST(JPEG_ENABLED, "$JPEG_ENABLED")
    AC_SUBST(JPEG_INC,    "$JPEG_INC")
    AC_SUBST(JPEG_LIB,    "$JPEG_LIB -ljpeg")
@@ -301,7 +305,7 @@ dnl ---------------------------------------------------------------------
 dnl Check where GIF is installed
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include GIF support)
+AC_MSG_CHECKING(whether we should include GIF support)
 AC_DEFUN([MS_CHECK_GIF],[
    AC_ARG_WITH(gif,
       AC_HELP_STRING([--with-gif], [libgif location: [yes|no|/path/to/gif/prefix]]),
@@ -311,7 +315,9 @@ AC_DEFUN([MS_CHECK_GIF],[
       AC_SUBST(GIF_ENABLED, "")
       AC_SUBST(GIF_INC,    "")
       AC_SUBST(GIF_LIB,    "")
+      AC_MSG_RESULT([no])
    else
+      AC_MSG_RESULT([yes])
       if test -z "$with_gif" -o "$with_gif" == "yes" -o "$with_gif" == "/usr"; then
          AC_CHECK_HEADER([gif_lib.h], [] ,
                       [AC_MSG_ERROR([gif_lib.h header not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
@@ -337,6 +343,8 @@ AC_DEFUN([MS_CHECK_GIF],[
       GIF_ENABLED="-DUSE_GIF"
 
       ALL_ENABLED="$GIF_ENABLED $ALL_ENABLED"
+      ALL_INC="$ALL_INC $GIF_INC"
+      ALL_LIB="$ALL_LIB $GIF_LIB -lgif"
       AC_SUBST(GIF_ENABLED, "$GIF_ENABLED")
       AC_SUBST(GIF_INC,    "$GIF_INC")
       AC_SUBST(GIF_LIB,    "$GIF_LIB -lgif")
@@ -347,54 +355,6 @@ MS_CHECK_GIF
 
 AC_CHECKING([for jpeg library location (mandatory)])
 MS_CHECK_JPEG
-
-
-dnl ---------------------------------------------------------------------
-dnl Look for X11 and XPM libs used by GD
-dnl ---------------------------------------------------------------------
-
-unset ac_cv_lib_Xpm_XpmFreeXpmImage
-
-AC_ARG_WITH(xpm,
-[  --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the 
-                              libXpm install prefix).],
-    XPM_DIR=$withval,XPM_DIR='')
-
-if test "$with_xpm" != "no" ; then
-
-  AC_EXPAND_PATH($XPM_DIR, XPM_DIR)
-  AC_CHECKING(where libXpm is installed)
-  XPM_LIB=''
-
-  test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl -o -f $XPM_DIR/lib/libXpm.dylib && XPM_LIBDIR="$XPM_DIR/lib"
-  test -f $XPM_DIR/lib64/libXpm.a -o -f $XPM_DIR/lib64/libXpm.so -o -f $XPM_DIR/lib64/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib64"
-  test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl -o -f $XPM_DIR/libXpm.dylib && XPM_LIBDIR="$XPM_DIR"
-
-  if test -n "$XPM_LIBDIR" ; then
-
-    XPM_LIB="-L$XPM_LIBDIR -lXpm -lX11"
-    AC_MSG_RESULT([        using libXpm from $XPM_LIB])
-    AC_ADD_RUNPATH("$XPM_LIBDIR")
-
-  else
-  
-    dnl check for lib in system libs
-
-    AC_CHECK_LIB(Xpm, XpmFreeXpmImage, XPM_LIB="-lXpm -lX11",,-lX11)
-
-    if test -n "$XPM_LIB" ; then
-      AC_MSG_RESULT([        using libXpm from system libs.])
-    else
-      AC_MSG_RESULT([        XPM (libXpm) library cannot be found, possibly needed for GD])
-    fi
-  fi
-
-fi
-
-dnl Note: don't include iconv by default in GD_XTRA_LIBS as it may not
-dnl       be required by GD.
-
-GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZLIB_LIB $XPM_LIB"
 
 
 dnl ---------------------------------------------------------------------
@@ -486,21 +446,38 @@ AC_DEFUN([MS_CHECK_GD],[
       AC_HELP_STRING([--with-gd], [libgd location: [yes|no|/path/to/gdlib-config]]),
       [],
       [with_gd=no])
+
+   AC_MSG_CHECKING(where libgd is installed)
+   
    if test x"$with_gd" == "xno"; then
       AC_SUBST(GD_ENABLED, "")
       AC_SUBST(GD_INC, "")
       AC_SUBST(GD_LIB, "")
+      AC_MSG_RESULT([not requested, disabling])
    else
       if test "$with_gd" == "yes"; then
          AC_PATH_PROG(GDCONFIG,gdlib-config,no)
          if test "$GDCONFIG" == "no"; then
-            AC_MSG_ERROR([gdlib-config not found in path, reconfigure with --with-png=/path/to/gdlib-config])
+            AC_MSG_ERROR([gdlib-config not found in path, reconfigure with --with-gd=/path/to/gdlib-config])
          fi
       else
-         GDCONFIG="$with_gd"
-         if test ! -f "$GDCONFIG"; then
-            AC_MSG_ERROR([$GDCONFIG not found])
+         if test ! -f "$with_gd"; then
+            if test ! -d "$with_gd"; then
+               AC_MSG_ERROR([cannot find $with_gd])
+            fi
+            if test ! -f "$with_gd/bin/gdlib-config"; then
+               AC_MSG_ERROR([gdlib-config not found in $with_gd (tried $with_gd/bin/gdlib-config)])
+            else
+               GDCONFIG="$with_gd/bin/gdlib-config"
+            fi
+         else
+            GDCONFIG="$with_gd"
          fi
+         AC_PATH_PROG(GDCONFIG,$GDCONFIG,no)
+         if test "$GDCONFIG" == "no"; then
+            AC_MSG_ERROR([gdlib-config not usable, reconfigure with --with-gd[=(yes|no|/path/to/gdlib-config)]])
+         fi
+         AC_MSG_RESULT([using $GDCONFIG])
       fi
 
       GDMAJOR=`$GDCONFIG --majorversion`

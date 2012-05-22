@@ -873,7 +873,6 @@ with_freetype
 with_png
 with_gif
 with_jpeg
-with_xpm
 with_libiconv
 with_gd
 with_ftgl
@@ -1595,8 +1594,6 @@ Optional Packages:
   --with-png              libpng location: [yes|/path/to/png/prefix]
   --with-gif              libgif location: [yes|no|/path/to/gif/prefix]
   --with-jpeg             libjpeg location: [yes|/path/to/jpeg/prefix]
-  --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the
-                              libXpm install prefix).
   --with-libiconv=DIR     Specify where libiconv is installed (DIR is path
                           to libiconv install dir (prefix)).
   --with-gd               libgd location: [yes|no|/path/to/gdlib-config]
@@ -16310,6 +16307,8 @@ fi
    PNG_ENABLED="-DUSE_PNG"
 
    ALL_ENABLED="$PNG_ENABLED $ALL_ENABLED"
+   ALL_INC="$ALL_INC $PNG_INC"
+   ALL_LIB="$ALL_LIB $PNG_LIB -lpng"
    PNG_ENABLED="$PNG_ENABLED"
 
    PNG_INC="$PNG_INC"
@@ -16321,8 +16320,8 @@ fi
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include GIF support..." >&5
-$as_echo "$as_me: checking whether we should include GIF support..." >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include GIF support" >&5
+$as_echo_n "checking whether we should include GIF support... " >&6; }
 
 
 
@@ -16341,7 +16340,11 @@ fi
 
       GIF_LIB=""
 
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
       if test -z "$with_gif" -o "$with_gif" == "yes" -o "$with_gif" == "/usr"; then
          ac_fn_c_check_header_mongrel "$LINENO" "gif_lib.h" "ac_cv_header_gif_lib_h" "$ac_includes_default"
 if test "x$ac_cv_header_gif_lib_h" = xyes; then :
@@ -16459,6 +16462,8 @@ fi
       GIF_ENABLED="-DUSE_GIF"
 
       ALL_ENABLED="$GIF_ENABLED $ALL_ENABLED"
+      ALL_INC="$ALL_INC $GIF_INC"
+      ALL_LIB="$ALL_LIB $GIF_LIB -lgif"
       GIF_ENABLED="$GIF_ENABLED"
 
       GIF_INC="$GIF_INC"
@@ -16600,6 +16605,8 @@ fi
    JPEG_ENABLED="-DUSE_JPEG"
 
    ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
+   ALL_INC="$ALL_INC $JPEG_INC"
+   ALL_LIB="$ALL_LIB $JPEG_LIB -ljpeg"
    JPEG_ENABLED="$JPEG_ENABLED"
 
    JPEG_INC="$JPEG_INC"
@@ -16608,122 +16615,6 @@ fi
 
 
 
-
-
-
-unset ac_cv_lib_Xpm_XpmFreeXpmImage
-
-
-# Check whether --with-xpm was given.
-if test "${with_xpm+set}" = set; then :
-  withval=$with_xpm; XPM_DIR=$withval
-else
-  XPM_DIR=''
-fi
-
-
-if test "$with_xpm" != "no" ; then
-
-
-  if test -z "$XPM_DIR" || echo "$XPM_DIR" | grep '^/' >/dev/null ; then
-    XPM_DIR="$XPM_DIR"
-  else
-    XPM_DIR="`pwd`/$XPM_DIR"
-  fi
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking where libXpm is installed..." >&5
-$as_echo "$as_me: checking where libXpm is installed..." >&6;}
-  XPM_LIB=''
-
-  test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl -o -f $XPM_DIR/lib/libXpm.dylib && XPM_LIBDIR="$XPM_DIR/lib"
-  test -f $XPM_DIR/lib64/libXpm.a -o -f $XPM_DIR/lib64/libXpm.so -o -f $XPM_DIR/lib64/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib64"
-  test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl -o -f $XPM_DIR/libXpm.dylib && XPM_LIBDIR="$XPM_DIR"
-
-  if test -n "$XPM_LIBDIR" ; then
-
-    XPM_LIB="-L$XPM_LIBDIR -lXpm -lX11"
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libXpm from $XPM_LIB" >&5
-$as_echo "        using libXpm from $XPM_LIB" >&6; }
-
-  if test ""$XPM_LIBDIR"" != "/usr/lib"; then
-
-  if test -z ""$XPM_LIBDIR"" || echo ""$XPM_LIBDIR"" | grep '^/' >/dev/null ; then
-    ai_p=""$XPM_LIBDIR""
-  else
-    ai_p="`pwd`/"$XPM_LIBDIR""
-  fi
-
-
-  unique=`echo $ac_n "$ai_p$ac_c" | tr -c -d a-zA-Z0-9`
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
-        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
-
-  fi
-
-  fi
-
-
-  else
-
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XpmFreeXpmImage in -lXpm" >&5
-$as_echo_n "checking for XpmFreeXpmImage in -lXpm... " >&6; }
-if ${ac_cv_lib_Xpm_XpmFreeXpmImage+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXpm -lX11 $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XpmFreeXpmImage ();
-int
-main ()
-{
-return XpmFreeXpmImage ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_Xpm_XpmFreeXpmImage=yes
-else
-  ac_cv_lib_Xpm_XpmFreeXpmImage=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xpm_XpmFreeXpmImage" >&5
-$as_echo "$ac_cv_lib_Xpm_XpmFreeXpmImage" >&6; }
-if test "x$ac_cv_lib_Xpm_XpmFreeXpmImage" = xyes; then :
-  XPM_LIB="-lXpm -lX11"
-fi
-
-
-    if test -n "$XPM_LIB" ; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result:         using libXpm from system libs." >&5
-$as_echo "        using libXpm from system libs." >&6; }
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result:         XPM (libXpm) library cannot be found, possibly needed for GD" >&5
-$as_echo "        XPM (libXpm) library cannot be found, possibly needed for GD" >&6; }
-    fi
-  fi
-
-fi
-
-
-GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZLIB_LIB $XPM_LIB"
 
 
 
@@ -17079,6 +16970,10 @@ else
   with_gd=no
 fi
 
+
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking where libgd is installed" >&5
+$as_echo_n "checking where libgd is installed... " >&6; }
+
    if test x"$with_gd" == "xno"; then
       GD_ENABLED=""
 
@@ -17086,6 +16981,8 @@ fi
 
       GD_LIB=""
 
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: not requested, disabling" >&5
+$as_echo "not requested, disabling" >&6; }
    else
       if test "$with_gd" == "yes"; then
          # Extract the first word of "gdlib-config", so it can be a program name with args.
@@ -17130,13 +17027,67 @@ fi
 
 
          if test "$GDCONFIG" == "no"; then
-            as_fn_error $? "gdlib-config not found in path, reconfigure with --with-png=/path/to/gdlib-config" "$LINENO" 5
+            as_fn_error $? "gdlib-config not found in path, reconfigure with --with-gd=/path/to/gdlib-config" "$LINENO" 5
          fi
       else
-         GDCONFIG="$with_gd"
-         if test ! -f "$GDCONFIG"; then
-            as_fn_error $? "$GDCONFIG not found" "$LINENO" 5
+         if test ! -f "$with_gd"; then
+            if test ! -d "$with_gd"; then
+               as_fn_error $? "cannot find $with_gd" "$LINENO" 5
+            fi
+            if test ! -f "$with_gd/bin/gdlib-config"; then
+               as_fn_error $? "gdlib-config not found in $with_gd (tried $with_gd/bin/gdlib-config)" "$LINENO" 5
+            else
+               GDCONFIG="$with_gd/bin/gdlib-config"
+            fi
+         else
+            GDCONFIG="$with_gd"
          fi
+         # Extract the first word of "$GDCONFIG", so it can be a program name with args.
+set dummy $GDCONFIG; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_GDCONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $GDCONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GDCONFIG="$GDCONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_GDCONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_GDCONFIG" && ac_cv_path_GDCONFIG="no"
+  ;;
+esac
+fi
+GDCONFIG=$ac_cv_path_GDCONFIG
+if test -n "$GDCONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GDCONFIG" >&5
+$as_echo "$GDCONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+         if test "$GDCONFIG" == "no"; then
+            as_fn_error $? "gdlib-config not usable, reconfigure with --with-gd=(yes|no|/path/to/gdlib-config)" "$LINENO" 5
+         fi
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: using $GDCONFIG" >&5
+$as_echo "using $GDCONFIG" >&6; }
       fi
 
       GDMAJOR=`$GDCONFIG --majorversion`
