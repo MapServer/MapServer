@@ -19294,6 +19294,39 @@ THREAD_LIB=$THREAD_LIB
 ALL_ENABLED="$THREAD_FLAG $ALL_ENABLED"
 ALL_LIB="$THREAD_LIB $ALL_LIB"
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __sync_fetch_and_add" >&5
+$as_echo_n "checking for __sync_fetch_and_add... " >&6; }
+if test "${ac_cv_func_sync_fetch_and_add+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+int x;__sync_fetch_and_add(&x,1);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_func_sync_fetch_and_add=yes
+else
+  ac_cv_func_sync_fetch_and_add=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_sync_fetch_and_add" >&5
+$as_echo "$ac_cv_func_sync_fetch_and_add" >&6; }
+if test "$ac_cv_func_sync_fetch_and_add" = yes; then
+  ALL_ENABLED="-DHAVE_SYNC_FETCH_AND_ADD $ALL_ENABLED"
+
+$as_echo "#define HAVE_SYNC_FETCH_AND_ADD 1" >>confdefs.h
+
+fi
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether we should include ESRI SDE support..." >&5
 $as_echo "$as_me: checking whether we should include ESRI SDE support..." >&6;}

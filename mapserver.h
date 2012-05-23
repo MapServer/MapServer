@@ -442,7 +442,7 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 #define GET_LAYER(map, pos) map->layers[pos]
 #define GET_CLASS(map, lid, cid) map->layers[lid]->class[cid]
 
-#if defined(USE_THREAD) && (__GNUC__*10000 + __GNUC_MINOR__*100 + __GNUC_PATCHLEVEL__) >= 40102
+#if defined(USE_THREAD) && defined(HAVE_SYNC_FETCH_AND_ADD)
 
   // __sync* appeared in GCC 4.1.2
   #define MS_REFCNT_INCR(obj) __sync_fetch_and_add(&obj->refcount, +1)
