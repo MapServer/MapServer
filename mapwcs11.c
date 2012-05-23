@@ -37,13 +37,17 @@
 
 
 
-#if defined(USE_WCS_SVR) && defined(USE_LIBXML2)
-
+#if defined(USE_WCS_SVR)
 #include "mapwcs.h"
-#include "maplibxml2.h"
 #include "gdal.h"
 #include "cpl_string.h" /* GDAL string handling */
+#endif
 
+#if defined(USE_LIBXML2)
+#include "maplibxml2.h"
+#endif
+
+#if defined(USE_WCS_SVR) && defined(USE_LIBXML2)
 /*
 ** msWCSException11()
 **
