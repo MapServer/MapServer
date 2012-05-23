@@ -731,10 +731,15 @@ int msQueryByAttributes(mapObj *map)
 #endif
 
     addResult(lp->resultcache, &shape);
-    
     msFreeShape(&shape);
 
     if(map->query.mode == MS_QUERY_SINGLE) { /* no need to look any further */
+      status = MS_DONE;
+      break;
+    }
+
+    /* check shape count */
+    if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
       status = MS_DONE;
       break;
     }
@@ -912,6 +917,12 @@ int msQueryByFilter(mapObj *map)
 
       addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
+
+      /* check shape count */
+      if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+        status = MS_DONE;
+        break;
+      }
     } /* next shape */
 
     if(classgroup) msFree(classgroup);
@@ -1108,8 +1119,13 @@ int msQueryByRect(mapObj *map)
 
       if(status == MS_TRUE)
 	addResult(lp->resultcache, &shape);
-
       msFreeShape(&shape);
+
+      /* check shape count */
+      if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+        status = MS_DONE;
+        break;
+      }
     } /* next shape */
       
     if (classgroup)
@@ -1407,8 +1423,13 @@ int msQueryByFeatures(mapObj *map)
 
 	if(status == MS_TRUE)
 	  addResult(lp->resultcache, &shape);
-
 	msFreeShape(&shape);
+
+	/* check shape count */
+	if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+	  status = MS_DONE;
+	  break;
+	}
       } /* next shape */
 
       if (classgroup)
@@ -1616,6 +1637,12 @@ int msQueryByPoint(mapObj *map)
 
       if(map->query.mode == MS_QUERY_MULTIPLE && map->query.maxresults > 0 && lp->resultcache->numresults == map->query.maxresults) {
         status = MS_DONE;   /* got enough results for this layer */
+        break;
+      }
+
+      /* check shape count */
+      if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+        status = MS_DONE;
         break;
       }
     } /* next shape */
@@ -1877,8 +1904,13 @@ int msQueryByShape(mapObj *map)
 
       if(status == MS_TRUE)
 	addResult(lp->resultcache, &shape);
-
       msFreeShape(&shape);
+
+      /* check shape count */
+      if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+        status = MS_DONE;
+        break;
+      }
     } /* next shape */
 
     if(status != MS_DONE) return(MS_FAILURE);

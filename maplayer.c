@@ -1194,7 +1194,9 @@ msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 
 int msLayerSupportsPaging(layerObj *layer)
 {
-    if (layer && layer->connectiontype == MS_ORACLESPATIAL)
+    if (layer &&
+        ((layer->connectiontype == MS_ORACLESPATIAL) ||
+         (layer->connectiontype == MS_POSTGIS)) )
       return MS_TRUE;
 
     return MS_FALSE;
