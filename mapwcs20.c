@@ -3769,9 +3769,26 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
                map->width, map->height, map->cellsize, map->extent.minx,
                map->extent.miny, map->extent.maxx, map->extent.maxy);
 
+    /**
+     * Which format to use?
+     *
+     * 1) format parameter
+     * 2) native format (from metadata) or GDAL format of the input dataset
+     * 3) exception
+     **/
+
     if (!params->format)
     {
-        msSetError(MS_WCSERR, "Required parameter FORMAT was not supplied.",
+        if (cm.native_format)
+        {
+            params->format = msStrdup(cm.native_format);
+        }
+    }
+
+    if (!params->format)
+    {
+        msSetError(MS_WCSERR, "Output format could not be automatically determined. "
+                "Use the FORMAT parameter to specify a format.",
                 "msWCSGetCoverage20()");
         return msWCSException(map, "MissingParameterValue", "format",
                 params->version);
