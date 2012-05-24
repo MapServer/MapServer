@@ -719,6 +719,26 @@ int layerObj_setConnectionType(layerObj *self, int connectiontype,
 /**********************************************************************
  * class extensions for labelObj
  **********************************************************************/
+labelObj *labelObj_new()
+{
+  labelObj *label;
+  
+  label = (labelObj *)malloc(sizeof(labelObj));
+  if(!label)
+    return(NULL);
+
+  initLabel(label);
+
+  return label;
+}
+
+void labelObj_destroy(labelObj *self) {
+  if (freeLabel(self) == MS_SUCCESS)
+    free(self);
+  
+}
+
+
 int labelObj_updateFromString(labelObj *self, char *snippet) {
    return msUpdateLabelFromString(self, snippet);
 }
@@ -797,6 +817,21 @@ classObj *classObj_new(layerObj *layer, classObj *class) {
     layer->numclasses++;
 
     return (layer->class[layer->numclasses-1]);
+  }
+
+int classObj_addLabel(classObj *self, labelObj *label) {
+    return msAddLabelToClass(self, label);
+}
+
+labelObj *classObj_removeLabel(classObj *self, int index) {
+    return msRemoveLabelFromClass(self, index);
+}
+
+labelObj *classObj_getLabel(classObj *self, int i) { // returns an EXISTING label
+    if(i >= 0 && i < self->numlabels)
+      return (self->labels[i]); 
+    else
+      return(NULL);
   }
 
 int classObj_updateFromString(classObj *self, char *snippet) {

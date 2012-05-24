@@ -199,6 +199,7 @@ typedef struct _php_referencemap_object {
 typedef struct _php_label_object {
     zend_object std;
     parent_object parent;
+    int is_ref;
     zval *color;
     zval *outlinecolor;
     zval *shadowcolor;
@@ -624,6 +625,8 @@ int             scalebarObj_updateFromString(scalebarObj *self, char *snippet);
 int             webObj_updateFromString(webObj *self, char *snippet);
 
 classObj       *classObj_new(layerObj *layer, classObj *class);
+int             classObj_addLabel(classObj *self, labelObj *label);
+labelObj       *classObj_removeLabel(classObj *self, int index);
 int             classObj_updateFromString(classObj *self, char *snippet);
 void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);

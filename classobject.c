@@ -48,6 +48,8 @@ int msAddLabelToClass(classObj *class, labelObj *label) {
   }
   if (msGrowClassLabels(class) == NULL) return MS_FAILURE;
 
+  /* msGrowClassLabels will alloc the label, free it in this case */
+  free(class->labels[class->numlabels]);
   class->labels[class->numlabels] = label;
   MS_REFCNT_INCR(label);
   class->numlabels++;
@@ -57,7 +59,7 @@ int msAddLabelToClass(classObj *class, labelObj *label) {
 /*
 ** Remove a label from a classObj.
 */
-int msRemoveLabelFromClass(classObj *class, int nLabelIndex) {
+labelObj *msRemoveLabelFromClass(classObj *class, int nLabelIndex) {
   int i;
   labelObj *label;
 
