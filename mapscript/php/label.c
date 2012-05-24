@@ -528,7 +528,7 @@ void mapscript_create_label(labelObj *label, parent_object parent, zval *return_
 static void mapscript_label_object_destroy(void *object TSRMLS_DC)
 {
     php_label_object *php_label = (php_label_object *)object;
-    printf("ummm\n");
+
     MAPSCRIPT_FREE_OBJECT(php_label);
 
     MAPSCRIPT_FREE_PARENT(php_label->parent);
@@ -537,7 +537,6 @@ static void mapscript_label_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_DELREF(php_label->shadowcolor);
     
     if (php_label->label && !php_label->is_ref) {
-      printf("ummm2\n");
         labelObj_destroy(php_label->label);
     }
 

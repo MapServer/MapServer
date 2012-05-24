@@ -255,6 +255,7 @@ PHP_METHOD(classObj, addLabel)
     php_label = (php_label_object *) zend_object_store_get_object(zlabel TSRMLS_CC);
     
     status = classObj_addLabel(php_class->class, php_label->label);
+    php_label->is_ref = 1;
     
     RETURN_LONG(status);
 }

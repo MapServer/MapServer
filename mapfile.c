@@ -1706,7 +1706,6 @@ int freeLabel(labelObj *label)
   int i;
 
   if( MS_REFCNT_DECR_IS_NOT_ZERO(label) ) { return MS_FAILURE; }
-  printf("%s: siboire\n", label->font);
 
   msFree(label->font);
   msFree(label->encoding);
