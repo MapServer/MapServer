@@ -14,7 +14,7 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.0.4, GIT branch-6-0):
 -----------------------------------------------
 
-- ...
+- Made format parameter for WCS 2.0 GetCoverage requests optional  (#4003)
 
 Version 6.0.3 (2012-05-18):
 ---------------------------
