@@ -48,6 +48,18 @@ ZEND_BEGIN_ARG_INFO_EX(class___set_args, 0, 0, 2)
   ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(class_addLabel_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, label, labelObj, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(class_removeLabel_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(class_getLabel_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(class_updateFromString_args, 0, 0, 1)
   ZEND_ARG_INFO(0, snippet)
 ZEND_END_ARG_INFO()
@@ -165,7 +177,8 @@ PHP_METHOD(classObj, __get)
     else IF_GET_LONG("status", php_class->class->status) 
     else IF_GET_DOUBLE("minscaledenom", php_class->class->minscaledenom) 
     else IF_GET_DOUBLE("maxscaledenom", php_class->class->maxscaledenom) 
-    else IF_GET_LONG("minfeaturesize", php_class->class->minfeaturesize) 
+    else IF_GET_LONG("minfeaturesize", php_class->class->minfeaturesize)
+    else IF_GET_LONG("numlabels", php_class->class->numlabels)            
     else IF_GET_STRING("template", php_class->class->template)
     else IF_GET_STRING("keyimage", php_class->class->keyimage)
     else IF_GET_STRING("group", php_class->class->group)
@@ -209,7 +222,8 @@ PHP_METHOD(classObj, __set)
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
-    else if (STRING_EQUAL("numstyles", property))
+    else if ( (STRING_EQUAL("numstyles", property)) ||
+              (STRING_EQUAL("numstyles", property)) )
     {
         mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }
@@ -218,6 +232,99 @@ PHP_METHOD(classObj, __set)
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
     }
 }
+
+/* {{{ proto int addLabel(labelObj *label)
+   Add a label to the class.  Returns MS_SUCCESS/MS_FAILURE */
+PHP_METHOD(classObj, addLabel)
+{
+    zval *zobj = getThis();
+    zval *zlabel;
+    php_class_object *php_class;
+    php_label_object *php_label;
+    int status = MS_FAILURE;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
+                              &zlabel, mapscript_ce_label) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_label = (php_label_object *) zend_object_store_get_object(zlabel TSRMLS_CC);
+    
+    status = classObj_addLabel(php_class->class, php_label->label);
+    php_label->is_ref = 1;
+    
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int removeLabel(int index)
+   Removes the label indicated and returns a copy, or NULL in the case of a
+   failure. */
+PHP_METHOD(classObj, removeLabel)
+{
+    zval *zobj = getThis();
+    long index;
+    labelObj *label;
+    php_class_object *php_class;
+    parent_object parent;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    
+    if ((label = classObj_removeLabel(php_class->class, index)) == NULL)
+    {
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    /* Return a copy of the class object just removed */
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_label(label, parent, return_value TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ proto int class.getLabel(int i)
+   Returns a labelObj from the class given an index value (0=first label) */
+PHP_METHOD(classObj, getLabel)
+{
+    zval *zobj = getThis();
+    long index;
+    labelObj *label = NULL;
+    php_class_object *php_class;
+    parent_object parent;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if ((label = classObj_getLabel(php_class->class, index)) == NULL)
+    {
+        mapscript_throw_exception("Invalid label index." TSRMLS_CC);
+        return;
+    }
+
+    /* Return class object */
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_label(label, parent, return_value TSRMLS_CC);
+}
+/* }}} */
 
 /* {{{ proto int updateFromString(string snippet)
    Update a class from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
@@ -693,6 +800,9 @@ zend_function_entry class_functions[] = {
     PHP_ME(classObj, __get, class___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, __set, class___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(classObj, set, __set, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(classObj, addLabel, class_addLabel_args, ZEND_ACC_PUBLIC)
+    PHP_ME(classObj, removeLabel, class_removeLabel_args, ZEND_ACC_PUBLIC)
+    PHP_ME(classObj, getLabel, class_getLabel_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, updateFromString, class_updateFromString_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, setExpression, class_setExpression_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, getExpressionString, NULL, ZEND_ACC_PUBLIC)
