@@ -2978,7 +2978,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             psXLinkNs = NULL,
             psWcsNs = NULL,
             psGmlNs = NULL;
-    char *script_url=NULL, *script_url_encoded=NULL;
+    char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
     int i;
 
     /* -------------------------------------------------------------------- */
@@ -3108,8 +3108,16 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     /* -------------------------------------------------------------------- */
     /*      Service metadata.                                               */
     /* -------------------------------------------------------------------- */
-    /* it is mandatory, but unused for now */
-    xmlAddChild(psRootNode, xmlNewNode(psWcsNs, BAD_CAST "ServiceMetadata"));
+
+    if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceMetadata") )
+    {
+        psNode = xmlNewChild(psRootNode, psWcsNs, BAD_CAST "ServiceMetadata", NULL);
+
+        /* Add formats list */
+        format_list = msWCSGetFormatsList20(map, NULL);
+        msLibXml2GenerateList(psNode, psWcsNs, "formatSupported", format_list, ',');
+        msFree(format_list);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Contents section.                                               */
@@ -3275,18 +3283,20 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
                         "SupportedFormat", format_list, ',');
             }
 
-            if(cm.native_format != NULL)
-            {
-                xmlNewChild(psSupportedFormats, psWcsNs,
-                        BAD_CAST "NativeFormat", BAD_CAST cm.native_format);
-            }
-            else
-            {
-                msDebug("msWCSDescribeCoverage20_CoverageDescription(): "
-                        "No native format specified.\n");
-            }
-
             msFree(format_list);
+        }
+
+        /* -------------------------------------------------------------------- */
+        /*      nativeFormat                                                    */
+        /* -------------------------------------------------------------------- */
+        xmlNewChild(psSP, psWcsNs,
+                BAD_CAST "nativeFormat", BAD_CAST (cm.native_format ?
+                                                    cm.native_format : ""));
+
+        if (!cm.native_format)
+        {
+            msDebug("msWCSDescribeCoverage20_CoverageDescription(): "
+                    "No native format specified.\n");
         }
     }
 
