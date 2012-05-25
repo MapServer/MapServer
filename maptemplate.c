@@ -2947,7 +2947,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
    int  *panCurrentDrawingOrder = NULL;
    char szPath[MS_MAXPATHLEN];
 
-   if(ms_regcomp(&re, MS_TEMPLATE_EXPR, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
+   if(ms_regcomp(&re, MS_TEMPLATE_EXPR, MS_REG_EXTENDED|MS_REG_NOSUB|MS_REG_ICASE) != 0) {
       msSetError(MS_IOERR, "Error regcomp.", "generateLegendTemplate()");      
       return NULL;
    }
@@ -4046,7 +4046,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
     return MS_FAILURE;
   }
 
-  if(ms_regcomp(&re, MS_TEMPLATE_EXPR, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
+  if(ms_regcomp(&re, MS_TEMPLATE_EXPR, MS_REG_EXTENDED|MS_REG_NOSUB|MS_REG_ICASE) != 0) {
     msSetError(MS_REGEXERR, NULL, "msReturnPage()");
     return MS_FAILURE;
   }
