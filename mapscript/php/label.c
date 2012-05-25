@@ -1,4 +1,3 @@
-
 /**********************************************************************
  * $Id: php_mapscript.c 9765 2010-01-28 15:32:10Z aboudreault $
  *
@@ -77,10 +76,25 @@ ZEND_BEGIN_ARG_INFO_EX(label_deleteStyle_args, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 /* {{{ proto void __construct() 
-   labelObj CANNOT be instanciated, this will throw an exception on use */
+   Create a new label instance. */
 PHP_METHOD(labelObj, __construct)
 {
-    mapscript_throw_exception("labelObj cannot be constructed" TSRMLS_CC);
+    php_label_object *php_label;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_label = (php_label_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    
+    if ((php_label->label = labelObj_new()) == NULL)
+    {
+        mapscript_throw_exception("Unable to construct labelObj." TSRMLS_CC);
+        return;
+    }
 }
 /* }}} */
 
@@ -504,8 +518,10 @@ void mapscript_create_label(labelObj *label, parent_object parent, zval *return_
     php_label = (php_label_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_label->label = label;
 
-    php_label->parent = parent;
-    
+    if (parent.val)
+      php_label->is_ref = 1;
+
+    php_label->parent = parent;    
     MAPSCRIPT_ADDREF(parent.val);
 }
 
@@ -520,7 +536,9 @@ static void mapscript_label_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_DELREF(php_label->outlinecolor);
     MAPSCRIPT_DELREF(php_label->shadowcolor);
     
-    /* We don't need to free the labelObj, the mapObj will do it */ 
+    if (php_label->label && !php_label->is_ref) {
+        labelObj_destroy(php_label->label);
+    }
 
     efree(object);
 }
@@ -535,6 +553,7 @@ static zend_object_value mapscript_label_object_new(zend_class_entry *ce TSRMLS_
     retval = mapscript_object_new(&php_label->std, ce,
                                   &mapscript_label_object_destroy TSRMLS_CC);
 
+    php_label->is_ref = 0;    
     MAPSCRIPT_INIT_PARENT(php_label->parent);
     php_label->color = NULL;
     php_label->outlinecolor = NULL;

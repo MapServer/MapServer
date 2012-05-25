@@ -1669,7 +1669,7 @@ void initLabel(labelObj *label)
   label->priority = MS_DEFAULT_LABEL_PRIORITY;
 
   /* Set maxstyles = 0, styles[] will be allocated as needed on first call 
-   * to msGrowLabelStyles()
+   * to msGrowLabelStyles()   
    */
   label->numstyles = label->maxstyles = 0;   
   label->styles = NULL;  
@@ -1701,7 +1701,7 @@ static int freeLabelLeader(labelLeaderObj *leader) {
 
    return MS_SUCCESS;
 }
-static int freeLabel(labelObj *label)
+int freeLabel(labelObj *label)
 {
   int i;
 
