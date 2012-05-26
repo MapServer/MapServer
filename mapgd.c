@@ -141,10 +141,13 @@ imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj
 
   /* we're only doing PC256 for the moment */
   ip = gdImageCreate(width, height);
-  if(!format->transparent && bg && MS_VALID_COLOR(*bg))
+  if(bg && MS_VALID_COLOR(*bg)) {
 	  gdImageColorAllocate(ip, bg->red, bg->green, bg->blue); /* set the background color */
+  }
   else {
 	  gdImageColorAllocate(ip,117,17,91); /*random bg color (same one as picked in msResampleGDALToMap) */
+  }
+  if(format->transparent) {
 	  gdImageColorTransparent(ip, 0);
   }
 
