@@ -621,65 +621,7 @@ gdIOCtx *msIO_getGDIOCtx( FILE *fp )
 /* ==================================================================== */
 /* ==================================================================== */
 
-#ifdef USE_FASTCGI
 
-#define NO_FCGI_DEFINES
-#include "fcgi_stdio.h"
-
-/************************************************************************/
-/*                           msIO_fcgiRead()                            */
-/*                                                                      */
-/*      This is the default implementation via stdio.                   */
-/************************************************************************/
-
-static int msIO_fcgiRead( void *cbData, void *data, int byteCount )
-
-{
-    return FCGI_fread( data, 1, byteCount, (FCGI_FILE *) cbData );
-}
-
-/************************************************************************/
-/*                           msIO_fcgiWrite()                           */
-/*                                                                      */
-/*      This is the default implementation via stdio.                   */
-/************************************************************************/
-
-static int msIO_fcgiWrite( void *cbData, void *data, int byteCount )
-
-{
-    return FCGI_fwrite( data, 1, byteCount, (FCGI_FILE *) cbData );
-}
-
-/************************************************************************/
-/*                    msIO_installFastCGIRedirect()                     */
-/************************************************************************/
-
-int msIO_installFastCGIRedirect()
-
-{
-    msIOContext stdin_ctx, stdout_ctx, stderr_ctx;
-
-    stdin_ctx.label = "fcgi";
-    stdin_ctx.write_channel = MS_FALSE;
-    stdin_ctx.readWriteFunc = msIO_fcgiRead;
-    stdin_ctx.cbData = (void *) FCGI_stdin;
-
-    stdout_ctx.label = "fcgi";
-    stdout_ctx.write_channel = MS_TRUE;
-    stdout_ctx.readWriteFunc = msIO_fcgiWrite;
-    stdout_ctx.cbData = (void *) FCGI_stdout;
-
-    stderr_ctx.label = "fcgi";
-    stderr_ctx.write_channel = MS_TRUE;
-    stderr_ctx.readWriteFunc = msIO_fcgiWrite;
-    stderr_ctx.cbData = (void *) FCGI_stderr;
-
-    msIO_installHandlers( &stdin_ctx, &stdout_ctx, &stderr_ctx );
-
-    return MS_TRUE;
-}
-
-#endif
 
 /************************************************************************/
 /*                       msIO_needBinaryStdout()                        */
