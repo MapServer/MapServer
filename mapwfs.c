@@ -2216,20 +2216,25 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
 	}
 	psNode = FLTParseFilterEncoding(paszFilter[i]);
 
+        bComplexFilter = !FLTIsSimpleFilter(psNode);
+
         /* Set the driver-level pagination if it's not a complex filter #4011*/
-        if (FLTIsSimpleFilter(psNode))
+        if (lpQueried)
         {
-          lpQueried->paginate = MS_TRUE;  /* don't really need to call msLayerSupportsPaging
-                                             this will be ignored by other drivers... */
-        }
-        else
-        {
-          /* ensure it's disabled... msQueryBy* might enable it */
-          startindex = lpQueried->startindex;
-          lpQueried->startindex = -1;
-          
-          maxfeatures = lpQueried->maxfeatures;
-          lpQueried->maxfeatures = -1;
+          if (!bComplexFilter && (nQueriedLayers == 1))
+          {
+            lpQueried->paginate = MS_TRUE;  /* don't really need to call msLayerSupportsPaging
+                                               this will be ignored by other drivers... */
+          }
+          else
+          {
+            /* ensure it's disabled... msQueryBy* might enable it */
+            startindex = lpQueried->startindex;
+            lpQueried->startindex = -1;
+            
+            maxfeatures = lpQueried->maxfeatures;
+            lpQueried->maxfeatures = -1;
+          }
         }
         
 	if (!psNode) {
