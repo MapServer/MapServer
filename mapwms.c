@@ -2747,16 +2747,18 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                            for (i=0; i<iclassgroups; i++)
                            {
                                char *name_encoded = msEncodeHTMLEntities(lp->name);
+                               char *classgroup_encoded = msEncodeHTMLEntities(classgroups[i]);
                                if (nVersion >= OWS_1_3_0)
                                    snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
                                            script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
-                                           mimetype,  classgroups[i]);
+                                           mimetype,  classgroup_encoded);
                                else 
                                    snprintf(legendurl, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=%s",  
                                            script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),name_encoded,
-                                           mimetype,  classgroups[i]);
+                                           mimetype,  classgroup_encoded);
 
                                msFree(name_encoded);
+                               msFree(classgroup_encoded);
 
                                msIO_fprintf(stdout, "        <Style>\n");
                                msIO_fprintf(stdout, "          <Name>%s</Name>\n",  classgroups[i]);

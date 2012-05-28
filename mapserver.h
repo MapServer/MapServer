@@ -1804,6 +1804,7 @@ MS_DLL_EXPORT styleObj *msGrowLabelStyles( labelObj *label );
 MS_DLL_EXPORT styleObj *msGrowLeaderStyles( labelLeaderObj *leader );
 MS_DLL_EXPORT int msMaybeAllocateClassStyle(classObj* c, int idx);
 MS_DLL_EXPORT void initLabel(labelObj *label);
+MS_DLL_EXPORT int  freeLabel(labelObj *label);
 MS_DLL_EXPORT void resetClassStyle(classObj *_class);
 MS_DLL_EXPORT int initStyle(styleObj *style);
 MS_DLL_EXPORT int freeStyle(styleObj *style);
@@ -2393,7 +2394,7 @@ MS_DLL_EXPORT int msMoveClassDown(layerObj *layer, int nClassIndex);
 
 /* classobject.c */
 MS_DLL_EXPORT int msAddLabelToClass(classObj *classo, labelObj *label);
-MS_DLL_EXPORT int msRemoveLabelFromClass(classObj *classo, int nLabelIndex); 
+MS_DLL_EXPORT labelObj *msRemoveLabelFromClass(classObj *classo, int nLabelIndex); 
 MS_DLL_EXPORT int msMoveStyleUp(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msMoveStyleDown(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int nStyleIndex);

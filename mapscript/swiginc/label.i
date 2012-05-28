@@ -30,6 +30,26 @@
 
 %extend labelObj
 {
+
+  labelObj() 
+    {
+      labelObj *label;
+        
+      label = (labelObj *)calloc(1, sizeof(labelObj));
+      if (!label)
+        return(NULL);
+    
+      initLabel(label);
+      
+      return(label);    	
+    }
+
+  ~labelObj() 
+    {
+      freeLabel(self);
+    }
+
+    
   int updateFromString(char *snippet)
   {
     return msUpdateLabelFromString(self, snippet);
