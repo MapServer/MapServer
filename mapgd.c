@@ -43,23 +43,19 @@
 #endif
 
 int msGDSetup() {
-#ifdef USE_GD_FT
   if (gdFontCacheSetup() != 0) {
     return MS_FAILURE;
   }
-#endif
   return MS_SUCCESS;
 }
 
 void msGDCleanup(int signal) {
-#ifdef USE_GD_FT
     if(!signal) {
         /* there's a potential deadlock if we're killed by a signal and the font
          cache is already locked. We don't tear down the fontcache in this case
          to avoid it (issue 4093)*/
         gdFontCacheShutdown();
     }
-#endif
 }
 
 #define MS_IMAGE_GET_GDIMAGEPTR(image) ((gdImagePtr) image->img.plugin)
@@ -70,39 +66,19 @@ gdFontPtr msGetBitmapFont(int size)
 {
   switch(size) { /* set the font to use */
   case MS_TINY:
-#ifdef GD_HAS_GETBITMAPFONT
     return gdFontGetTiny();
-#else
-    return(gdFontTiny);
-#endif
     break;
   case MS_SMALL:
-#ifdef GD_HAS_GETBITMAPFONT
     return gdFontGetSmall();
-#else
-    return(gdFontSmall);
-#endif
     break;
   case MS_MEDIUM:
-#ifdef GD_HAS_GETBITMAPFONT
     return gdFontGetMediumBold();
-#else
-    return(gdFontMediumBold);
-#endif
     break;
   case MS_LARGE:
-#ifdef GD_HAS_GETBITMAPFONT
     return gdFontGetLarge();
-#else
-    return(gdFontLarge);
-#endif
     break;
   case MS_GIANT:
-#ifdef GD_HAS_GETBITMAPFONT
     return gdFontGetGiant();
-#else
-    return(gdFontGiant);
-#endif
     break;
   default:
     msSetError(MS_GDERR,"Invalid bitmap font. Must be one of tiny, small, medium, large or giant." , "msGetBitmapFont()");
@@ -903,11 +879,9 @@ int mergeRasterBufferGD(imageObj *dest, rasterBufferObj *overlay, double opacity
 }
 
 int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances, int bAdjustBaseline) {
-#ifdef USE_GD_FT
    int bbox[8];
    char *error;
    if(advances) {
-#if defined (GD_HAS_FTEX_XSHOW)
       char *s;
       int k;
       gdFTStringExtra strex;
@@ -938,10 +912,6 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfont
       rect->maxx = bbox[2];
       rect->maxy = bbox[1];
       return MS_SUCCESS;
-#else
-      msSetError(MS_TTFERR, "gdImageStringFTEx support is not available or is not current enough (requires 2.0.29 or higher).", "msGetTruetypeTextBBox()");
-      return(MS_FAILURE);
-#endif
    } else {
       error = gdImageStringFT(NULL, bbox, 0, fonts[0], size, 0, 0, 0, string);
       if(error) {
@@ -955,10 +925,6 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfont
       rect->maxy = bbox[1];
       return MS_SUCCESS;
    }
-#else
-    msSetError(MS_TTFERR,"Truetype support not available", "getTruetypeTextBBoxGD()");
-    return(MS_FAILURE);
-#endif
 }
 
 int renderBitmapGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char *text) {

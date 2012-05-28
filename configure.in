@@ -204,316 +204,157 @@ ALL_INC="$FT_CFLAGS $ALL_INC"
 ALL_LIB="$FT_LDFLAGS $ALL_LIB"
 
 
-dnl ---------------------------------------------------------------------
-dnl Check where zlib is installed (used by libpng and by ZVG compressed output)
-dnl ---------------------------------------------------------------------
 
-unset ac_cv_lib_z_zlibVersion
+AC_DEFUN([MS_CHECK_PNG],[
+   AC_ARG_WITH(png,
+      AC_HELP_STRING([--with-png], [libpng location: [yes|/path/to/png/prefix]]),
+      [],
+      [with_png=yes])
+   if test x"$with_png" == "xno"; then
+      AC_MSG_ERROR([png support cannot be disabled])
+   fi
 
-AC_ARG_WITH(zlib,
-[  --with-zlib=DIR         GD,SVG: Specify where zlib is installed (DIR is path
-                              to zlib install dir).],
-    ZLIB_DIR=$withval,ZLIB_DIR='')
+   if test -z "$with_png" -o "$with_png" == "yes" -o "$with_png" == "/usr"; then
+      AC_CHECK_HEADER([png.h], [] ,
+                   [AC_MSG_ERROR([png.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
+      AC_CHECK_HEADER([setjmp.h], [] ,
+                   [AC_MSG_ERROR([setjmp.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
+      AC_CHECK_LIB([png], [png_init_io], [] ,
+                   [AC_MSG_ERROR([libpng library not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
 
-AC_EXPAND_PATH($ZLIB_DIR, ZLIB_DIR)
-AC_CHECKING(where Zlib is installed)
-ZLIB_LIB=''
+   else
+      old_LDFLAGS="$LDFLAGS"
+      old_CPPFLAGS="$CPPFLAGS"
 
-test -f $ZLIB_DIR/include/zlib.h && ZLIB_INCDIR="$ZLIB_DIR/include"
+      CPPFLAGS="-I$with_png/include"
+      LDFLAGS="-L$with_png/lib"
+      
+      AC_CHECK_HEADER([png.h], [] ,
+                   [AC_MSG_ERROR([png.h header not found in $with_png. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
+      AC_CHECK_HEADER([setjmp.h], [] ,
+                   [AC_MSG_ERROR([setjmp.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
+      AC_CHECK_LIB([png], [png_init_io], [] ,
+                   [AC_MSG_ERROR([libpng library not found in $with_png. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
+      PNG_INC="$CFLAGS"
+      PNG_LIB="$LDFLAGS"
+      CPPFLAGS="$old_CPPFLAGS"
+      LDFLAGS="$old_LDFLAGS"
+   fi
+   PNG_ENABLED="-DUSE_PNG"
 
-test -f $ZLIB_DIR/lib/libz.a -o -f $ZLIB_DIR/lib/libz.so -o -f $ZLIB_DIR/lib/libz.sl -o -f $ZLIB_DIR/lib/libz.dylib && ZLIB_LIBDIR="$ZLIB_DIR/lib"
-test -f $ZLIB_DIR/lib64/libz.a -o -f $ZLIB_DIR/lib64/libz.so -o -f $ZLIB_DIR/lib64/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR/lib64"
-test -f $ZLIB_DIR/libz.a -o -f $ZLIB_DIR/libz.so -o -f $ZLIB_DIR/libz.sl && ZLIB_LIBDIR="$ZLIB_DIR"
+   ALL_ENABLED="$PNG_ENABLED $ALL_ENABLED"
+   ALL_INC="$ALL_INC $PNG_INC"
+   ALL_LIB="$ALL_LIB $PNG_LIB -lpng"
+   AC_SUBST(PNG_ENABLED, "$PNG_ENABLED")
+   AC_SUBST(PNG_INC,    "$PNG_INC")
+   AC_SUBST(PNG_LIB,    "$PNG_LIB -lpng")
+
+])
 
 
-if test -n "$ZLIB_LIBDIR" -a -n "$ZLIB_INCDIR" ; then
+AC_DEFUN([MS_CHECK_JPEG],[
+   AC_ARG_WITH(jpeg,
+      AC_HELP_STRING([--with-jpeg], [libjpeg location: [yes|/path/to/jpeg/prefix]]),
+      [],
+      [with_jpeg=yes])
+   if test x"$with_jpeg" == "xno"; then
+      AC_MSG_ERROR([jpeg support cannot be disabled])
+   fi
 
-  dnl
-  dnl Found libz runtime and headers. Enable USE_ZLIB (SVG compressed output)
-  dnl
-  ZLIB_ENABLED="-DUSE_ZLIB"
-  ZLIB_INC="-I$ZLIB_INCDIR"
-  ZLIB_LIB="-L$ZLIB_LIBDIR -lz"
-  AC_MSG_RESULT([        using libz from $ZLIB_LIB ($ZLIB_ENABLED)])
-  AC_ADD_RUNPATH("$ZLIB_DIR")
+   if test -z "$with_jpeg" -o "$with_jpeg" == "yes" -o "$with_jpeg" == "/usr"; then
+      AC_CHECK_HEADER([jpeglib.h], [] ,
+                   [AC_MSG_ERROR([jpeglib.h header not found. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
+      AC_CHECK_LIB([jpeg], [jpeg_read_header], [] ,
+                   [AC_MSG_ERROR([libjpeg library not found. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
 
-elif test -n "$ZLIB_LIBDIR" ; then
+   else
+      old_LDFLAGS="$LDFLAGS"
+      old_CPPFLAGS="$CPPFLAGS"
 
-  dnl
-  dnl Found only runtime but no headers (good only for libpng)
-  dnl
-  ZLIB_LIB="-L$ZLIB_LIBDIR -lz"
-  AC_MSG_RESULT([        using runtime libz from $ZLIB_LIB])
-  AC_ADD_RUNPATH("$ZLIB_DIR")
+      CPPFLAGS="-I$with_jpeg/include"
+      LDFLAGS="-L$with_jpeg/lib"
+      
+      AC_CHECK_HEADER([jpeglib.h], [] ,
+                   [AC_MSG_ERROR([jpeglib.h header not found in $with_jpeg. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
+      AC_CHECK_LIB([jpeg], [jpeg_read_header], [] ,
+                   [AC_MSG_ERROR([libjpeg library not found in $with_jpeg. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
+      JPEG_INC="$CFLAGS"
+      JPEG_LIB="$LDFLAGS"
+      CPPFLAGS="$old_CPPFLAGS"
+      LDFLAGS="$old_LDFLAGS"
+   fi
+   JPEG_ENABLED="-DUSE_JPEG"
 
-else
+   ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
+   ALL_INC="$ALL_INC $JPEG_INC"
+   ALL_LIB="$ALL_LIB $JPEG_LIB -ljpeg"
+   AC_SUBST(JPEG_ENABLED, "$JPEG_ENABLED")
+   AC_SUBST(JPEG_INC,    "$JPEG_INC")
+   AC_SUBST(JPEG_LIB,    "$JPEG_LIB -ljpeg")
 
-  dnl check for lib in system libs
-
-  AC_CHECK_LIB(z, zlibVersion, ZLIB_LIB="-lz",,)
-
-  if test -n "$ZLIB_LIB" ; then
-    ZLIB_ENABLED="-DUSE_ZLIB"
-    AC_MSG_RESULT([        using libz from system libs ($ZLIB_ENABLED).])
-  else
-    AC_MSG_RESULT([        Zlib (libz) library cannot be found, possibly needed for GD])
-  fi
-
-fi
-
-dnl If we found ZLIB headers then enable it by default since SVG output
-dnl is enabled by default and will take advantage of it, otherwise the 
-dnl PNG code below will take care of including the runtime lib only.
-
-AC_SUBST(ZLIB_ENABLED,$ZLIB_ENABLED)
-AC_SUBST(ZLIB_INC,    $ZLIB_INC)
-AC_SUBST(ZLIB_LIB,    $ZLIB_LIB)
-
-ALL_ENABLED="$ZLIB_ENABLED $ALL_ENABLED"
-ALL_INC="$ZLIB_INC $ALL_INC"
-ALL_LIB="$ZLIB_LIB $ALL_LIB"
+])
 
 dnl ---------------------------------------------------------------------
 dnl Check where PNG is installed
 dnl ---------------------------------------------------------------------
 
-unset ac_cv_lib_png_png_init_io
-
-AC_ARG_WITH(png,
-[  --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
-                              PNG install dir).],
-    PNG_DIR=$withval,PNG_DIR='')
-
-AC_EXPAND_PATH($PNG_DIR, PNG_DIR)
-AC_CHECKING(where PNG is installed)
-PNG_LIB=''
-PNG_INC=''
-PNG_ENABLED=''
-
-
-if test -n "$PNG_DIR" -a "$with_png" != "yes" ; then
-    test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl -o -f $PNG_DIR/lib/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib"
-    test -f $PNG_DIR/lib64/libpng.a -o -f $PNG_DIR/lib64/libpng.so -o -f $PNG_DIR/lib64/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR/lib64"
-    test -f $PNG_DIR/libpng.a -o -f $PNG_DIR/libpng.so -o -f $PNG_DIR/libpng.sl -o -f $PNG_DIR/libpng.dylib && PNG_LIBDIR="$PNG_DIR"
-    test -f $PNG_DIR/include/png.h && PNG_INCLUDE="$PNG_DIR/include"
-    test -f $PNG_DIR/lib/png.h && PNG_INCLUDE="$PNG_DIR/lib"
-    test -f $PNG_DIR/png.h && PNG_INCLUDE="$PNG_DIR"
-    
-    if test -n "$PNG_LIBDIR" ; then   
-      PNG_LIB="-L$PNG_LIBDIR -lpng"
-      AC_MSG_RESULT([        using libpng from $PNG_LIB])
-      AC_ADD_RUNPATH("$PNG_LIBDIR")
-    else
-      AC_MSG_ERROR([cannot find png lib in $PNG_DIR])
-    fi
-    
-    if test -n "$PNG_INCLUDE" ; then
-      dnl make sure we'll be able to find zlib.h
-      old_cflags="$CFLAGS"
-      CFLAGS="$ZLIB_INC $CFLAGS"
-      AC_CHECK_HEADER([$PNG_INCLUDE/png.h],PNG_INC=-I$PNG_INCLUDE,
-        [AC_MSG_ERROR([cannot find png headers])])
-      CFLAGS="$old_cflags"
-      ALL_INC="$PNG_INC $ALL_INC"
-    else
-        AC_MSG_ERROR([cannot find png headers in $PNG_DIR])
-    fi
-    PNG_ENABLED="-DUSE_PNG"
-else
-
-  dnl check for png in system locations
-
-  AC_CHECK_LIB(png, png_init_io, PNG_LIB="-lpng",, $ZLIB_LIB)
-  AC_CHECK_HEADER([png.h],,
-        [AC_MSG_ERROR([cannot find png headers in system path])])
-  if test -n "$PNG_LIB" ; then
-    AC_MSG_RESULT([        using libpng from system libs.])
-  else
-    AC_MSG_ERROR([PNG (libpng) library cannot be found. install or reconfigure with --with-png=DIR])
-  fi
-  PNG_ENABLED="-DUSE_PNG"
-fi
-
-AC_CHECK_HEADER([setjmp.h],,
-        [AC_MSG_ERROR([setjmp.h is required with libpng])])
-
-ALL_ENABLED="$PNG_ENABLED $ALL_ENABLED"
-AC_SUBST(PNG_ENABLED, $PNG_ENABLED)
-AC_SUBST(PNG_INC,    $PNG_INC)
-AC_SUBST(PNG_LIB,    $PNG_LIB)
+MS_CHECK_PNG
 
 
 dnl ---------------------------------------------------------------------
 dnl Check where GIF is installed
 dnl ---------------------------------------------------------------------
 
-AC_ARG_WITH(gif,
-[  --with-gif=DIR          Specify where GIF is installed (DIR is path to
-                              GIF install dir).],
-    GIF_DIR=$withval,GIF_DIR='')
-
-AC_EXPAND_PATH($GIF_DIR, GIF_DIR)
-AC_CHECKING(where GIF is installed)
-GIF_LIB=''
-GIF_INC=''
-GIF_ENABLED=''
-
-if test "$withval" != "no" ; then
-   if test -n "$GIF_DIR" -a "GIF_DIR" != "yes" ; then
-       test -f $GIF_DIR/lib/libgif.a -o -f $GIF_DIR/lib/libgif.so -o -f $GIF_DIR/lib/libgif.sl -o -f $GIF_DIR/lib/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib"
-       test -f $GIF_DIR/lib64/libgif.a -o -f $GIF_DIR/lib64/libgif.so -o -f $GIF_DIR/lib64/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR/lib64"
-       test -f $GIF_DIR/libgif.a -o -f $GIF_DIR/libgif.so -o -f $GIF_DIR/libgif.sl -o -f $GIF_DIR/libgif.dylib && GIF_LIBDIR="$GIF_DIR"
-       test -f $GIF_DIR/include/gif_lib.h && GIF_INCLUDE="$GIF_DIR/include"
-       test -f $GIF_DIR/lib/gif_lib.h && GIF_INCLUDE="$GIF_DIR/lib"
-       test -f $GIF_DIR/gif_lib.h && GIF_INCLUDE="$GIF_DIR"
-       
-       if test -n "$GIF_LIBDIR" ; then   
-         GIF_LIB="-L$GIF_LIBDIR -lgif"
-         AC_MSG_RESULT([        using libgif from $GIF_LIB])
-         AC_ADD_RUNPATH("$GIF_LIBDIR")
-       else
-         AC_MSG_ERROR([cannot find gif lib in $GIF_DIR. To disable gif support run with --without-gif.])
-       fi
-       
-       if test -n "$GIF_INCLUDE" ; then
-         AC_CHECK_HEADER([$GIF_INCLUDE/gif_lib.h],GIF_INC=-I$GIF_INCLUDE,
-           [AC_MSG_ERROR([cannot find gif headers. To disable gif support run with --without-gif.])])
-         ALL_INC="$GIF_INC $ALL_INC"
-       else
-           AC_MSG_ERROR([cannot find gif headers in $GIF_DIR. To disable gif support run with --without-gif.])
-       fi
-       GIF_ENABLED="-DUSE_GIF"
+AC_MSG_CHECKING(whether we should include GIF support)
+AC_DEFUN([MS_CHECK_GIF],[
+   AC_ARG_WITH(gif,
+      AC_HELP_STRING([--with-gif], [libgif location: [yes|no|/path/to/gif/prefix]]),
+      [],
+      [with_gif=yes])
+   if test x"$with_gif" == "xno"; then
+      AC_SUBST(GIF_ENABLED, "")
+      AC_SUBST(GIF_INC,    "")
+      AC_SUBST(GIF_LIB,    "")
+      AC_MSG_RESULT([no])
    else
-   
-     dnl check for gif in system locations
-   
-     AC_CHECK_LIB(gif, DGifOpenFileHandle, GIF_LIB="-lgif",,)
-     AC_CHECK_HEADER([gif_lib.h],,
-           [AC_MSG_ERROR([cannot find gif headers in system path. To disable gif support run with --without-gif.])])
-     if test -n "$GIF_LIB" ; then
-       AC_MSG_RESULT([        using libgif from system libs.])
-     else
-       AC_MSG_ERROR([GIF (libgif) library cannot be found. install or reconfigure with --with-gif=DIR].  To disable gif support run with --without-gif.)
-     fi
-     GIF_ENABLED="-DUSE_GIF"
+      AC_MSG_RESULT([yes])
+      if test -z "$with_gif" -o "$with_gif" == "yes" -o "$with_gif" == "/usr"; then
+         AC_CHECK_HEADER([gif_lib.h], [] ,
+                      [AC_MSG_ERROR([gif_lib.h header not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
+         AC_CHECK_LIB([gif], [DGifOpenFileHandle], [] ,
+                      [AC_MSG_ERROR([libgif library not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
+
+      else
+         old_LDFLAGS="$LDFLAGS"
+         old_CPPFLAGS="$CPPFLAGS"
+
+         CPPFLAGS="-I$with_gif/include"
+         LDFLAGS="-L$with_gif/lib"
+         
+         AC_CHECK_HEADER([gif_lib.h], [] ,
+                      [AC_MSG_ERROR([gif_lib.h header not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
+         AC_CHECK_LIB([gif], [DGifOpenFileHandle], [] ,
+                      [AC_MSG_ERROR([libgif library not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
+         GIF_INC="$CFLAGS"
+         GIF_LIB="$LDFLAGS"
+         CPPFLAGS="$old_CPPFLAGS"
+         LDFLAGS="$old_LDFLAGS"
+      fi
+      GIF_ENABLED="-DUSE_GIF"
+
+      ALL_ENABLED="$GIF_ENABLED $ALL_ENABLED"
+      ALL_INC="$ALL_INC $GIF_INC"
+      ALL_LIB="$ALL_LIB $GIF_LIB -lgif"
+      AC_SUBST(GIF_ENABLED, "$GIF_ENABLED")
+      AC_SUBST(GIF_INC,    "$GIF_INC")
+      AC_SUBST(GIF_LIB,    "$GIF_LIB -lgif")
    fi
-fi
+])
 
-ALL_ENABLED="$GIF_ENABLED $ALL_ENABLED"
-AC_SUBST(GIF_ENABLED, $GIF_ENABLED)
-AC_SUBST(GIF_INC,    $GIF_INC)
-AC_SUBST(GIF_LIB,    $GIF_LIB)
+MS_CHECK_GIF
 
-
-dnl ---------------------------------------------------------------------
-dnl libJPEG (included by default if found on system).
-dnl ---------------------------------------------------------------------
-
-unset ac_cv_lib_jpeg_jpeg_read_header
-
-AC_CHECKING(whether we should include JPEG support)
-AC_ARG_WITH(jpeg,
-[  --with-jpeg[[=DIR]]       Include JPEG support (DIR is LibJPEG's install dir).],,)
-
-if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
-
-  AC_EXPAND_PATH($with_jpeg, JPEG_DIR)
-  test -f $JPEG_DIR/include/jpeg/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include/jpeg"
-  test -f $JPEG_DIR/include/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include"
-  test -f $JPEG_DIR/lib/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/lib"
-  test -f $JPEG_DIR/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR"
-
-  test -f $JPEG_DIR/lib/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib"
-  test -f $JPEG_DIR/lib64/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib64"
-  test -f $JPEG_DIR/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR"
-
-  test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl -o -f $JPEG_DIR/lib/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR/lib"
-  test -f $JPEG_DIR/lib64/libjpeg.so -o -f $JPEG_DIR/lib64/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib64"
-  test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl -o -f $JPEG_DIR/libjpeg.dylib && JPEG_LIBDIR="$JPEG_DIR"
-
-  if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then
-      JPEG_INC=-I$JPEG_INCLUDE
-      JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
-      AC_ADD_RUNPATH("$JPEG_LIBDIR")
-  else
-        AC_MSG_ERROR("Could not find jpeglib.h or libjpeg.a/libjpeg.so/libjpeg.dylib in $JPEG_DIR.")
-  fi
-
-
-    _cppflags="$CPPFLAGS"
-    _ldflags="$LDFLAGS"
-    _libs="$LIBS"
-    CPPFLAGS="$JPEG_INC $CPPFLAGS"
-    LDFLAGS="$JPEG_LIB $LDFLAGS"
-    AC_CHECK_LIB(jpeg, jpeg_read_header,,AC_MSG_ERROR(["cannot link with libjpeg"]),,)
-    AC_CHECK_HEADER(jpeglib.h,,AC_MSG_ERROR(["cannot find jpeg headers"]))
-    JPEG_ENABLED="-DUSE_JPEG"
-    CPPFLAGS=$_cppflags
-    LDFLAGS=$_ldflags
-    LIBS=$_libs
-    AC_MSG_RESULT([        using libjpeg from system $JPEG_LIB])
-
-else
-    dnl Look for libjpeg in system dirs
-
-    AC_CHECK_LIB(jpeg, jpeg_read_header,,AC_MSG_ERROR(["cannot link with libjpeg"]),,)
-    AC_CHECK_HEADER(jpeglib.h,,AC_MSG_ERROR(["cannot find jpeg headers"]))
-    JPEG_ENABLED="-DUSE_JPEG"
-    JPEG_LIB="-ljpeg"
-    AC_MSG_RESULT([        using libjpeg from system libs.])
-fi
-
-ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
-AC_SUBST(JPEG_ENABLED,$JPEG_ENABLED)
-AC_SUBST(JPEG_INC,    $JPEG_INC)
-AC_SUBST(JPEG_LIB,    $JPEG_LIB)
-
-dnl ---------------------------------------------------------------------
-dnl Look for X11 and XPM libs used by GD
-dnl ---------------------------------------------------------------------
-
-unset ac_cv_lib_Xpm_XpmFreeXpmImage
-
-AC_ARG_WITH(xpm,
-[  --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the 
-                              libXpm install prefix).],
-    XPM_DIR=$withval,XPM_DIR='')
-
-if test "$with_xpm" != "no" ; then
-
-  AC_EXPAND_PATH($XPM_DIR, XPM_DIR)
-  AC_CHECKING(where libXpm is installed)
-  XPM_LIB=''
-
-  test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl -o -f $XPM_DIR/lib/libXpm.dylib && XPM_LIBDIR="$XPM_DIR/lib"
-  test -f $XPM_DIR/lib64/libXpm.a -o -f $XPM_DIR/lib64/libXpm.so -o -f $XPM_DIR/lib64/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib64"
-  test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl -o -f $XPM_DIR/libXpm.dylib && XPM_LIBDIR="$XPM_DIR"
-
-  if test -n "$XPM_LIBDIR" ; then
-
-    XPM_LIB="-L$XPM_LIBDIR -lXpm -lX11"
-    AC_MSG_RESULT([        using libXpm from $XPM_LIB])
-    AC_ADD_RUNPATH("$XPM_LIBDIR")
-
-  else
-  
-    dnl check for lib in system libs
-
-    AC_CHECK_LIB(Xpm, XpmFreeXpmImage, XPM_LIB="-lXpm -lX11",,-lX11)
-
-    if test -n "$XPM_LIB" ; then
-      AC_MSG_RESULT([        using libXpm from system libs.])
-    else
-      AC_MSG_RESULT([        XPM (libXpm) library cannot be found, possibly needed for GD])
-    fi
-  fi
-
-fi
-
-dnl Note: don't include iconv by default in GD_XTRA_LIBS as it may not
-dnl       be required by GD.
-
-GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZLIB_LIB $XPM_LIB"
+AC_CHECKING([for jpeg library location (mandatory)])
+MS_CHECK_JPEG
 
 
 dnl ---------------------------------------------------------------------
@@ -597,279 +438,102 @@ ALL_LIB="$ICONV_LIB $ALL_LIB"
 dnl ---------------------------------------------------------------------
 dnl Find GD library
 dnl
-dnl If --with-gd not given, then check in system libs.
 dnl ---------------------------------------------------------------------
 
-dnl We don't want LIBS updated by all the GD stuff, so we save it and
-dnl restore later.
 
-ms_saved_LIBS="$LIBS"
-IS_GD2="false";
+AC_DEFUN([MS_CHECK_GD],[
+   AC_ARG_WITH(gd,
+      AC_HELP_STRING([--with-gd], [libgd location: [yes|no|/path/to/gdlib-config]]),
+      [],
+      [with_gd=no])
 
-dnl Clear some cache variables
-unset ac_cv_lib_gd_gdImageCreate
-unset ac_cv_lib_gd_gdImageString16
-unset ac_cv_lib_gd_gdImageGif
-unset ac_cv_lib_gd_gdImagePng
-unset ac_cv_lib_gd_gdImageJpeg
-unset ac_cv_lib_gd_gdImageWBMP
-unset ac_cv_lib_gd_gdImageStringFT
-unset ac_cv_lib_gd_gdImageGifPtr
-unset ac_cv_lib_gd_gdFontGetTiny
-unset ac_cv_lib_c_gdImageCreate
-unset ac_cv_lib_c_gdImageString16
-unset ac_cv_lib_c_gdImageGif
-unset ac_cv_lib_c_gdImagePng
-unset ac_cv_lib_c_gdImageJpeg
-unset ac_cv_lib_c_gdImageWBMP
-unset ac_cv_lib_c_gdImageStringFT
-unset ac_cv_lib_c_gdImageGifPtr
-unset ac_cv_lib_c_gdFontGetTiny
-unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
-
-AC_CHECKING(for GD 2.0.28 or higher)
-AC_ARG_WITH(gd,
-[  --with-gd[[=[static,]DIR]]
-                          Specify which version of GD to use (DIR is GD's
-                          install dir).],,[with_gd=no])
-
-if test "x$with_gd" != "xno" ; then
-
-   if test -n "$with_gd" -a "$with_gd" != "yes" ; then
-     dnl
-     dnl --with-gd was specified explicitly... 
-     dnl
-     AC_PARSE_WITH_LIB_STATIC($with_gd, GD_DIR, GD_STATIC)
-     AC_EXPAND_PATH($GD_DIR, GD_DIR)
-     test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
-     test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
-     test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
-   
-     test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
-     test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
-     test -f $GD_DIR/lib/x86_64-linux-gnu/libgd.a && GD_LIBDIR="$GD_DIR/lib/x86_64-linux-gnu"
-     test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
-     test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
-     test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
-   
-     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
-     test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
-     test -f $GD_DIR/lib/x86_64-linux-gnu/libgd.so && GD_LIBDIR="$GD_DIR/lib/x86_64-linux-gnu"
-     test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl -o -f $GD_DIR/.libs/libgd.dylib && GD_LIBDIR="$GD_DIR/.libs"
-     test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl -o -f $GD_DIR/_libs/libgd.dylib && GD_LIBDIR="$GD_DIR/_libs"
-     test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl -o -f $GD_DIR/libgd.dylib && GD_LIBDIR="$GD_DIR"
-   
-     dnl make sure it is GD 2.0.28+ with antialias and gdFontCacheSetup() and gdImageCreatePaletteFromTrueColor support
-     AC_CHECK_LIB(gd, gdImageCreatePaletteFromTrueColor,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR)
-   
-     if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-       dnl try again including libiconv this time
-       unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
-       AC_CHECKING(whether GD needs libiconv)
-       AC_CHECK_LIB(gd, gdImageCreatePaletteFromTrueColor,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR $ICONV_LIB)
-       GD_NEED_ICONV_LIB="$ICONV_LIB"
-     fi
-   
-     if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
-         GD_INC=-I$GD_INCLUDE
-         GD_LIB="-L$GD_LIBDIR -lgd"
-         GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-         AC_MSG_RESULT([        using libgd 2.0.28 (or higher) from $GD_LIB $GD_XTRA_LIBS])
-         AC_ADD_RUNPATH("$GD_LIBDIR")
-     else
-         AC_MSG_ERROR([Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv).])
-     fi
+   if test x"$with_gd" == "xno"; then
+      AC_SUBST(GD_ENABLED, "")
+      AC_SUBST(GD_INC, "")
+      AC_SUBST(GD_LIB, "")
+      AC_MSG_RESULT([GD support not requested, disabling])
    else
-     dnl  --with-gd specified without a DIR, look for gd in system dirs /usr or /usr/local
-     FOUND_GD="false"
-     for GD_DIR in /usr /usr/local
-     do
-       test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
-       test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
-       test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
-       test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl -o -f $GD_DIR/lib/libgd.dylib && GD_LIBDIR="$GD_DIR/lib"
-       test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
-   
-       dnl make sure it is GD 2.0.28 or higher
-       AC_CHECK_LIB(gd, gdImageCreatePaletteFromTrueColor, IS_GD2="true",,$GD_XTRA_LIBS)
-    
-       if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-         dnl try again including libiconv this time
-         AC_CHECKING(whether GD needs libiconv)
-         unset ac_cv_lib_gd_gdImageCreatePaletteFromTrueColor
-         AC_CHECK_LIB(gd, gdImageCreatePaletteFromTrueColor,IS_GD2="true",,$GD_XTRA_LIBS $ICONV_LIB)
-         GD_NEED_ICONV_LIB="$ICONV_LIB"
-       fi
-   
-       if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
-         GD_INC=
-         GD_LIB="-lgd"
-         GD_XTRA_LIBS="$GD_XTRA_LIBS $GD_NEED_ICONV_LIB"
-         AC_MSG_RESULT([        using libgd 2.0.28 (or higher) from system libs ($GD_LIB $GD_XTRA_LIBS).])
-         FOUND_GD="true"
-         break;
-       fi
-     done
-   
-     if test "$FOUND_GD" = "false" ; then
-       AC_MSG_ERROR([Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.28 or higher is compiled before calling configure. You may also get this error if you didn't specify the appropriate location for one of GD's dependencies (freetype, libpng, libjpeg or libiconv).])
-     fi
+      if test "$with_gd" == "yes"; then
+         AC_PATH_PROG(GDCONFIG,gdlib-config,no)
+         if test "$GDCONFIG" == "no"; then
+            AC_MSG_ERROR([gdlib-config not found in path, reconfigure with --with-gd=/path/to/gdlib-config])
+         fi
+      else
+         if test ! -f "$with_gd"; then
+            if test ! -d "$with_gd"; then
+               AC_MSG_ERROR([cannot find $with_gd])
+            fi
+            if test ! -f "$with_gd/bin/gdlib-config"; then
+               AC_MSG_ERROR([gdlib-config not found in $with_gd (tried $with_gd/bin/gdlib-config)])
+            else
+               GDCONFIG="$with_gd/bin/gdlib-config"
+            fi
+         else
+            GDCONFIG="$with_gd"
+         fi
+         AC_PATH_PROG(GDCONFIG,$GDCONFIG,no)
+         if test "$GDCONFIG" == "no"; then
+            AC_MSG_ERROR([gdlib-config not usable, reconfigure with --with-gd[=(yes|no|/path/to/gdlib-config)]])
+         fi
+      fi
+
+      GDMAJOR=`$GDCONFIG --majorversion`
+      GDMINOR=`$GDCONFIG --minorversion`
+      GDREV=`$GDCONFIG --revision`
+      GDVERSION=`$GDCONFIG --version`
+      GDFEATURES=`$GDCONFIG --features`
+      AC_MSG_RESULT([using libgd $GDVERSION from $GDCONFIG])
+      
+      if test -z "`echo $GDFEATURES | grep 'GD_PNG'`"  ; then
+         AC_MSG_ERROR([supplied GD is missing PNG support])
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_PNG"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_JPEG'`"  ; then
+         AC_MSG_ERROR([supplied GD is missing JPEG support])
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_JPEG"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_GIF'`"  ; then
+         AC_MSG_ERROR([supplied GD is missing GIF support])
+      else
+         GD_ENABLED="$GD_ENABLED -DUSE_GD_GIF"
+      fi
+      if test -z "`echo $GDFEATURES | grep 'GD_FREETYPE'`"  ; then
+         AC_MSG_ERROR([supplied GD is missing FT support])
+      fi
+
+
+
+      if test $GDMAJOR -lt 2 -o $GDMINOR -lt 0 -o $GDREV -lt 28 ; then
+         AC_MSG_ERROR([GD version $GDVERSION too old. need at least 2.0.28])
+      fi
+
+
+      dnl gdlib-config adds /usr/include and /usr/lib to the compile paths
+      dnl which we do not want, as they may take precedence on locally
+      dnl supplied paths for other libraries
+
+      dnl remove /usr/include/ from default include path
+      GD_INC=`$GDCONFIG --includes`
+      GD_INC=`echo "$GD_INC" | sed 's#-I/usr/include # #' | sed 's#-I/usr/include/ # #'`
+      
+      dnl remove /usr/lib/ from default lib path
+      GD_LIB=`$GDCONFIG --ldflags`
+      GD_LIB=`echo "$GD_LIB" | sed 's# /usr/lib # #' | sed 's# /usr/lib/ # #'`
+
+      GD_ENABLED="-DUSE_GD $GD_ENABLED"
+      ALL_ENABLED="$GD_ENABLED $ALL_ENABLED"
+      AC_SUBST(GD_ENABLED, "$GD_ENABLED")
+      ALL_INC="$ALL_INC $GD_INC"
+      ALL_LIB="$ALL_LIB $GD_LIB -lgd"
+      AC_SUBST(GD_INC, "$GD_INC")
+      AC_SUBST(GD_LIB, "$GD_LIB -lgd")
    fi
-   
-   dnl ----------------------------------------------------------------------
-   dnl Continue with GD processing - determine GD formats and other features
-   dnl ----------------------------------------------------------------------
-   
-   if test -n "$with_gd" -a "$with_gd" != "yes" ; then
-   
-     dnl check gd lib that was found on --with-gd=
-     
-     if test "$GD_STATIC" = "yes" ; then
-       dnl To test against static GD, do AC_CHECK_LIB calls against -lc and
-       dnl include libgd.a in GD_LIB param
-       GD_CHECKLIB=c
-       GD_LIB=$GD_LIBDIR/libgd.a
-       GD_STATIC=$GD_LIBDIR/libgd.a
-       AC_MSG_RESULT([static linkage of $GD_STATIC requested... testing supported formats...])
-     else
-       GD_CHECKLIB=c
-       # GD_LIB was already set above
-       GD_STATIC=""
-     fi
-     
-     AC_CHECK_LIB($GD_CHECKLIB, gdImageGif, GD_DEF="$GD_DEF -DUSE_GD_GIF",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-     AC_CHECK_LIB($GD_CHECKLIB, gdImagePng, GD_DEF="$GD_DEF -DUSE_GD_PNG",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-     AC_CHECK_LIB($GD_CHECKLIB, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-     AC_CHECK_LIB($GD_CHECKLIB, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl check for Freetype 2.x support
-     GD_FT_SUPPORT=no  
-     AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_FT_SUPPORT=yes,, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl If GD static is requested, it may needs libfontconfig.
-     if test -n "$GD_STATIC" ; then
-        GD_LIB="$GD_LIB -lfontconfig"
-        unset ac_cv_lib_c___gdImageStringFT
-        AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_FT_SUPPORT=yes,, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-     fi
-   
-     if test "$GD_FT_SUPPORT" = "yes"; then
-        GD_DEF="$GD_DEF -DUSE_GD_FT"
-     fi
-   
-     dnl check for Resolution support
-     GD_RESOLUTION_SUPPORT=no  
-     AC_CHECK_LIB($GD_CHECKLIB, gdImageSetResolution, GD_RESOLUTION_SUPPORT=yes,, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-   
-     if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
-        GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
-     fi
-   
-     dnl check for gdImageOpenPolygon (means GD version 2.0.29 or higher)
-     AC_CHECK_LIB($GD_CHECKLIB, gdImageOpenPolygon, GD_DEF="$GD_DEF -DGD_HAS_FTEX_XSHOW",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl gdImageGifPtr is there only in GIF-patched GD versions
-     AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl GD 2.0.22 and more recent replaced the static font pointers with 
-     dnl getter functions.
-     AC_CHECK_LIB($GD_CHECKLIB, gdFontGetTiny, GD_DEF="$GD_DEF -DGD_HAS_GETBITMAPFONTS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl check for gdImageGetTrueColorPixel.
-     dnl In some GD versions this function is defined, but not declared in gd.h,
-     dnl so check headers first
-     GD_HAS_GET_TRUE_COLOR_PIXEL=
-   
-     dnl AC_CHECK_DECL needs to know the gd include path
-     CFLAGS_BACKUP="$CFLAGS"
-     CXXFLAGS_BACKUP="$CXXFLAGS"
-     CFLAGS="$CFLAGS $GD_INC"
-     CXXFLAGS="$CXXFLAGS $GD_INC"
-     AC_CHECK_DECL(gdImageGetTrueColorPixel,[GD_HAS_GET_TRUE_COLOR_PIXEL=yes],,[#include <gd.h>])
-     CFLAGS="$CFLAGS_BACKUP"
-     CXXFLAGS="$CXXFLAGS_BACKUP"
-   
-     dnl if it's declared, check if we can link with it
-     if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
-       AC_CHECK_LIB($GD_CHECKLIB, gdImageGetTrueColorPixel, GD_DEF="$GD_DEF -DGD_HAS_GET_TRUE_COLOR_PIXEL",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-     fi
-   
-     AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
-   
-   else
-   
-     dnl
-     dnl --with-gd was not given... then look in system libs
-     dnl
-   
-     dnl Make sure GD is at least there!
-     AC_CHECK_LIB(gd, gdImageCreate, GD_FOUND=yes , ,$GD_XTRA_LIBS)
-     if test -z "$GD_FOUND" ; then
-         AC_MSG_ERROR([GD is required but was not found... use --with-gd=DIR to specify its location.])
-     fi
-   
-     dnl Check supported formats
-     AC_CHECK_LIB(gd, gdImageGif, GD_DEF="$GD_DEF -DUSE_GD_GIF",, $GD_LIB $GD_XTRA_LIBS)
-     AC_CHECK_LIB(gd, gdImagePng, GD_DEF="$GD_DEF -DUSE_GD_PNG",, $GD_LIB $GD_XTRA_LIBS)
-     AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG",, $GD_LIB $GD_XTRA_LIBS)
-     AC_CHECK_LIB(gd, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl Check for Freetype 2 support
-     AC_CHECK_LIB(gd, gdImageStringFT, GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl check for gdImageOpenPolygon (means GD version 2.0.29 or higher)
-     AC_CHECK_LIB(gd, gdImageOpenPolygon, GD_DEF="$GD_DEF -DGD_HAS_FTEX_XSHOW",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl gdImageGifPtr is there only in GIF-patched GD versions
-     AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl GD 2.0.22 and more recent replaced the static font pointers with 
-     dnl getter functions.
-     AC_CHECK_LIB(gd, gdFontGetTiny, GD_DEF="$GD_DEF -DGD_HAS_GETBITMAPFONTS",, $GD_LIB $GD_XTRA_LIBS)
-   
-     dnl check for Resolution support
-     GD_RESOLUTION_SUPPORT=no  
-     AC_CHECK_LIB($GD_CHECKLIB, gdImageSetResolution, GD_RESOLUTION_SUPPORT=yes,, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-   
-     if test "$GD_RESOLUTION_SUPPORT" = "yes"; then
-        GD_DEF="$GD_DEF -DUSE_GD_RESOLUTION"
-     fi
-   
-     dnl check for gdImageGetTrueColorPixel.
-     dnl In some GD versions this function is defined, but not declared in gd.h,
-     dnl so check headers first
-     GD_HAS_GET_TRUE_COLOR_PIXEL=
-     AC_CHECK_DECL(gdImageGetTrueColorPixel,[GD_HAS_GET_TRUE_COLOR_PIXEL=yes],,[#include <gd.h>])
-     dnl if it's declared, check if we can link with it
-     if test .$GD_HAS_GET_TRUE_COLOR_PIXEL = .yes ; then
-       AC_CHECK_LIB(gd, gdImageGetTrueColorPixel, GD_DEF="$GD_DEF -DGD_HAS_GET_TRUE_COLOR_PIXEL",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-     fi
-   
-     if test -n "$GD_DEF" ; then
-         GD_LIB="-lgd $GD_LIB"
-         AC_MSG_RESULT([        using GD ($GD_DEF) from system libs.])
-     fi
-   fi
-   GD_LIB="$GD_LIB $GD_XTRA_LIBS"
-   GD_DEF="-DUSE_GD $GD_DEF"
-   GD_ENABLED="-DUSE_GD"
-fi
 
+])
 
-AC_SUBST(GD_DEF, $GD_DEF)
-AC_SUBST(GD_INC, $GD_INC)
-AC_SUBST(GD_LIB, $GD_LIB)
-AC_SUBST(GD_STATIC, $GD_STATIC)
-AC_SUBST(MAKE_GD, $MAKE_GD)
-AC_SUBST(MAKE_GD_CLEAN, $MAKE_GD_CLEAN)
-
-ALL_ENABLED="$GD_DEF $ALL_ENABLED"
-ALL_INC="$GD_INC $ALL_INC"
-ALL_LIB="$GD_LIB $ALL_LIB"
-ALL_STATIC_LIB="$GD_STATIC $ALL_STATIC_LIB"
-
-dnl Restore LIBS environment to state at beginning of gd tests.
-LIBS="$ms_saved_LIBS"
+MS_CHECK_GD
 
 
 dnl ---------------------------------------------------------------------
