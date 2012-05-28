@@ -2072,7 +2072,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
 
     osFilteritem(layer, function, query_str, sizeof(query_str), 1);
 
-    if (layer->maxfeatures > 0 && layer->startindex < 0)
+    if (layer->paginate && layer->maxfeatures > 0 && layer->startindex < 0)
     {
        if (function == FUNCTION_NONE && layer->filter.string == NULL)
            snprintf( query_str + strlen(query_str), sizeof(query_str)-strlen(query_str), "%s"," WHERE ");
@@ -2091,7 +2091,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
 
 
     /*assuming startindex starts at 1*/
-    if (layer->startindex > 0)
+    if (layer->paginate && layer->startindex > 0)
      {
        tmp1_str = msStrdup("SELECT * from (SELECT atmp.*, ROWNUM rnum from (");
        tmp_str = msStringConcatenate(tmp_str,  tmp1_str);

@@ -1862,10 +1862,12 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     char *strUid = 0;
     char *strWhere = 0;
     char *strLimit = 0;
+    char *strOffset = 0;
     size_t strRectLength = 0;
     size_t strFilterLength = 0;
     size_t strUidLength = 0;
     size_t strLimitLength = 0;
+    size_t strOffsetLength = 0;
     size_t bufferSize = 0;
     int insert_and = 0;
     msPostGISLayerInfo *layerinfo;
@@ -1884,13 +1886,21 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     }
 
     /* Populate strLimit, if necessary. */
-    if( layer->maxfeatures >= 0 ) {
+    if ( layer->paginate && layer->maxfeatures >= 0 ) {
         static char *strLimitTemplate = " limit %d";
         strLimit = msSmallMalloc(strlen(strLimitTemplate) + 12);
         sprintf(strLimit, strLimitTemplate, layer->maxfeatures);
         strLimitLength = strlen(strLimit);
     }
-    
+
+    /* Populate strOffset, if necessary. */
+    if ( layer->paginate && layer->startindex > 0 ) {
+        static char *strOffsetTemplate = " offset %d";
+        strOffset = msSmallMalloc(strlen(strOffsetTemplate) + 12);
+        sprintf(strOffset, strOffsetTemplate, layer->maxfeatures);
+        strOffsetLength = strlen(strOffset);
+    }
+
     /* Populate strRect, if necessary. */
     if ( rect && layerinfo->geomcolumn ) {
         char *strBox = 0;
@@ -1936,7 +1946,8 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
         strUidLength = strlen(strUid);
     }
 
-    bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength + strLimitLength;
+    bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength
+        + strLimitLength + strOffsetLength;
     strWhere = (char*)msSmallMalloc(bufferSize);
     *strWhere = '\0';
     if ( strRect ) {
@@ -1963,6 +1974,10 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     if ( strLimit ) {
         strlcat(strWhere, strLimit, bufferSize);
         free(strLimit);
+    }
+    if ( strOffset ) {
+        strlcat(strWhere, strOffset, bufferSize);
+        free(strOffset);
     }
 
     return strWhere;

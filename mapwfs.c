@@ -2215,21 +2215,23 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
 	  return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
 	}
 	psNode = FLTParseFilterEncoding(paszFilter[i]);
-	
-        /*if we have a complex filter, make sure that paging is done at the gml output level
-          and not at the driver level #3305*/
-        bComplexFilter = (!FLTIsSimpleFilter(psNode));
-        if (bComplexFilter && nQueriedLayers == 1 && lpQueried &&
-            msLayerSupportsPaging(lpQueried) && 
-            (lpQueried->startindex > 0 || lpQueried->maxfeatures > 0))
+
+        /* Set the driver-level pagination if it's not a complex filter #4011*/
+        if (FLTIsSimpleFilter(psNode))
         {
-            startindex = lpQueried->startindex;
-            lpQueried->startindex = -1;
-
-            maxfeatures = lpQueried->maxfeatures;
-            lpQueried->maxfeatures = -1;
+          lpQueried->paginate = MS_TRUE;  /* don't really need to call msLayerSupportsPaging
+                                             this will be ignored by other drivers... */
         }
-
+        else
+        {
+          /* ensure it's disabled... msQueryBy* might enable it */
+          startindex = lpQueried->startindex;
+          lpQueried->startindex = -1;
+          
+          maxfeatures = lpQueried->maxfeatures;
+          lpQueried->maxfeatures = -1;
+        }
+        
 	if (!psNode) {
 	  msSetError(MS_WFSERR, 
 		     "Invalid or Unsupported FILTER in GetFeature : %s", 

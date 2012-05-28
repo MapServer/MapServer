@@ -313,6 +313,9 @@
         self->status = MS_ON;
         retval = msQueryByAttributes(map);
         self->status = status;
+        /* reset paginate property */
+        self->paginate = MS_FALSE;
+
         return retval;
     }
 
@@ -333,6 +336,9 @@
         self->status = MS_ON;
         retval = msQueryByPoint(map);
         self->status = status;
+        /* reset paginate property */
+        self->paginate = MS_FALSE;
+
         return retval;
     }
 
@@ -352,6 +358,9 @@
         self->status = MS_ON;
         retval = msQueryByRect(map);
         self->status = status;
+        /* reset paginate property */
+        self->paginate = MS_FALSE;
+
         return retval;
     }
 

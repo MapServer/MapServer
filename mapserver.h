@@ -1505,14 +1505,18 @@ typedef struct layer_obj {
   double mingeowidth, maxgeowidth; /* map width (in map units) at which the layer should be drawn */
 
   int sizeunits; /* applies to all classes */
-
+  
   int maxfeatures;      
   int startindex;
-
+#ifndef SWIG
+  /* boolean variable, do we need to handle pagination at driver level */
+  int paginate;
+#endif
+  
   colorObj offsite; /* transparent pixel value for raster images */
-
+  
   int transform; /* does this layer have to be transformed to file coordinates */
-
+  
   int labelcache, postlabelcache; /* on or off */
 
   char *labelitem;

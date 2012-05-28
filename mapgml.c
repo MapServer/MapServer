@@ -1532,8 +1532,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
         msFreeShape(&shape); /* init too */
 
         features++;
-        if (maxfeatures > 0 && features == maxfeatures)
-          break; 
       }      
 
       /* done with this layer, do a little clean-up */      
@@ -1546,9 +1544,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
 
       /* msLayerClose(lp); */
     }
-
-    if (maxfeatures > 0 && features == maxfeatures)
-      break;
 
   } /* next layer */
 

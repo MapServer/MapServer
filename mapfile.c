@@ -3632,6 +3632,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->maxfeatures = -1; /* no quota */
   layer->startindex = -1; /*used for pagination*/
+  layer->paginate = MS_FALSE; /* driver level pagination */
   
   layer->template = layer->header = layer->footer = NULL;
 
