@@ -1893,7 +1893,8 @@ int msSOSGetObservation(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *req
   }
 
   if (i==map->numlayers) {
-    msSetError(MS_SOSERR, "Offering %s not found.", "msSOSGetObservation()", sosparams->pszOffering);
+    msSetError(MS_SOSERR, "Offering %s not found. A layer might be disabled for \
+this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", sosparams->pszOffering);
     return msSOSException(map, "offering", "InvalidParameterValue");
   }
 

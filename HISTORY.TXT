@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (git master, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Fix wms_enable_request-related errors are not properly tagged (#4187)
+
 - Swig mapscript for multi-label support (#4310)
 
 - Fix creation of a vector symbolObj in mapscript (#4318)
