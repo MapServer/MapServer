@@ -1378,7 +1378,8 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
 
         /* i = msGetLayerIndex(map, coverages[k]); */
         if(i == map->numlayers) { /* coverage not found */
-          msSetError( MS_WCSERR, "COVERAGE %s cannot be opened / does not exist", "msWCSDescribeCoverage()", coverages[k]);
+          msSetError( MS_WCSERR, "COVERAGE %s cannot be opened / does not exist. A layer might be disabled for \
+this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()", coverages[k]);
           return msWCSException(map, "CoverageNotDefined", "coverage", params->version );
         }
       } /* next coverage */
@@ -1652,7 +1653,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   }
 
   if(lp == NULL) {
-    msSetError( MS_WCSERR, "COVERAGE=%s not found, not in supported layer list.", "msWCSGetCoverage()", params->coverages[0] );
+    msSetError( MS_WCSERR, "COVERAGE=%s not found, not in supported layer list. A layer might be disabled for \
+this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", params->coverages[0] );
     return msWCSException(map, "InvalidParameterValue", "coverage", params->version);
   }
 

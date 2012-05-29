@@ -1153,7 +1153,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
     for (i=0; i<numlayers; i++) {
         int index = msGetLayerIndex(map, layers[i]);
         if ( (index < 0) || (!msIntegerInArray(GET_LAYER(map, index)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
-	      msSetError(MS_WFSERR, "Invalid typename (%s).", "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
+	      msSetError(MS_WFSERR, "Invalid typename (%s). A layer might be disabled for \
+this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType()", layers[i]);/* paramsObj->pszTypeName); */
               return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
       }
     }
@@ -2231,7 +2232,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
       for (i=0; i<nFilters; i++) {
 	iLayerIndex = msGetLayerIndex(map, layers[i]);
 	if (iLayerIndex < 0) {
-	  msSetError(MS_WFSERR, "Invalid Typename in GetFeature : %s", "msWFSGetFeature()", layers[i]);
+	  msSetError(MS_WFSERR, "Invalid Typename in GetFeature : %s. A layer might be disabled for \
+this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", layers[i]);
 	  return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
 	}
 	psNode = FLTParseFilterEncoding(paszFilter[i]);
@@ -2393,7 +2395,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
              if (k == map->numlayers)/*layer not found*/
              {
                  msSetError(MS_WFSERR, 
-                            "Invalid typename given with FeatureId in GetFeature : %s", "msWFSGetFeature()", 
+                            "Invalid typename given with FeatureId in GetFeature : %s. A layer might be disabled for \
+this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", 
                             aFIDLayers[j]);
 
                  if (aFIDLayers && aFIDValues)
