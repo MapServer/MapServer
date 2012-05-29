@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (git master, 6.1-dev, future 6.2): 
 -------------------------------------------------
 
+- Fix pixmap symbol loading issue (#4329)
+
 - Added INSPIRE ExtendedCapabilities and DOCTYPE definition to WMS 1.1.1 (#3608)
 
 - Fix wms_enable_request-related errors are not properly tagged (#4187)
