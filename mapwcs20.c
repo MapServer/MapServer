@@ -3532,8 +3532,8 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     if (layer == NULL)
     {
         msSetError(MS_WCSERR,
-                "COVERAGE=%s not found, not in supported layer list.",
-                "msWCSGetCoverage20()", params->ids[0]);
+                "COVERAGE=%s not found, not in supported layer list. A layer might be disabled for \
+this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", params->ids[0]);
         return msWCSException(map, "InvalidParameterValue", "coverage",
                 params->version);
     }

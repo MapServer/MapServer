@@ -1484,7 +1484,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   {
       if (invalidlayers > 0)
       {
-          msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
+        msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter. A layer might be disabled for \
+this request. Check wms/ows_enable_request settings.",
                      "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, "LayerNotDefined", wms_exception_format);
       }
@@ -4870,7 +4871,8 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
 
      if (nLayers == 0)
      {
-         msSetError(MS_WMSERR, "Invalid layer given in the LAYER parameter.",
+         msSetError(MS_WMSERR, "Invalid layer given in the LAYER parameter. A layer might be disabled for \
+this request. Check wms/ows_enable_request settings.",
                  "msWMSGetLegendGraphic()");
          return msWMSException(map, nVersion, "LayerNotDefined", wms_exception_format);
      }
@@ -5112,7 +5114,8 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
     /* validate all layers given. If an invalid layer is sent, return an exception. */
     if (validlayer == 0)
     {
-        msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
+        msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter. A layer might be disabled for \
+this request. Check wms/ows_enable_request settings.",
                    "msWMSGetStyles()");
         return msWMSException(map, nVersion, "LayerNotDefined", wms_exception_format);
     }
