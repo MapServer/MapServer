@@ -3710,7 +3710,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->extent.maxx = -1.0;
   layer->extent.maxy = -1.0;
 
-  layer->masklayer = NULL;
+  layer->mask = NULL;
   layer->maskimage = NULL;
 
   return(0);
@@ -3788,7 +3788,7 @@ int freeLayer(layerObj *layer) {
 
   layer->classgroup = NULL;
 
-  msFree(layer->masklayer);
+  msFree(layer->mask);
   if(layer->maskimage) {
      msFreeImage(layer->maskimage);
   }
@@ -4053,11 +4053,11 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(LAYER):
       break; /* for string loads */
     case(MASK):
-      if(getString(&layer->masklayer) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+      if(getString(&layer->mask) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
       if(msyysource == MS_URL_TOKENS) {
-        if(msValidateParameter(layer->masklayer, msLookupHashTable(&(layer->validation), "mask"), msLookupHashTable(&(map->web.validation), "mask"), NULL, NULL) != MS_SUCCESS) {
+        if(msValidateParameter(layer->mask, msLookupHashTable(&(layer->validation), "mask"), msLookupHashTable(&(map->web.validation), "mask"), NULL, NULL) != MS_SUCCESS) {
           msSetError(MS_MISCERR, "URL-based MASK configuration failed pattern validation." , "loadLayer()");
-          msFree(layer->masklayer); layer->masklayer=NULL;
+          msFree(layer->mask); layer->mask=NULL;
           return(-1);
         }
       }
@@ -4290,7 +4290,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeNumber(stream, indent, "MAXFEATURES", -1, layer->maxfeatures);
   writeNumber(stream, indent, "MAXGEOWIDTH", -1, layer->maxgeowidth);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, layer->maxscaledenom);
-  writeString(stream, indent, "MASK", NULL, layer->masklayer);
+  writeString(stream, indent, "MASK", NULL, layer->mask);
   writeHashTable(stream, indent, "METADATA", &(layer->metadata));
   writeNumber(stream, indent, "MINGEOWIDTH", -1, layer->mingeowidth);
   writeNumber(stream, indent, "MINSCALEDENOM", -1, layer->minscaledenom);

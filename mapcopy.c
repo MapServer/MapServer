@@ -984,7 +984,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYRECT(&(dst->extent), &(src->extent));
     
     MS_COPYSTRING(dst->classgroup, src->classgroup); 
-    MS_COPYSTRING(dst->masklayer, src->masklayer); 
+    MS_COPYSTRING(dst->mask, src->mask); 
 
     return MS_SUCCESS;
 }

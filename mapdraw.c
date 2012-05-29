@@ -698,7 +698,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
      layer->project true to recheck projection needs (Bug #673) */
   layer->project = MS_TRUE;
 
-  if(layer->masklayer) {
+  if(layer->mask) {
     int maskLayerIdx;
      /* render the mask layer in its own imageObj */
      if(!MS_IMAGE_RENDERER(image)->supports_pixel_buffer) {
@@ -706,10 +706,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
               layer->name);
         return (MS_FAILURE);
      }
-     maskLayerIdx = msGetLayerIndex(map,layer->masklayer);
+     maskLayerIdx = msGetLayerIndex(map,layer->mask);
      if(maskLayerIdx == -1) {
         msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
-              layer->name,layer->masklayer);
+              layer->name,layer->mask);
         return (MS_FAILURE);
      }
      maskLayer = GET_LAYER(map, maskLayerIdx); 
@@ -784,7 +784,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
   else if (MS_RENDERER_PLUGIN(image_draw->format)) {
 	    rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
-		if (layer->masklayer || (layer->opacity > 0 && layer->opacity < 100)) {
+		if (layer->mask || (layer->opacity > 0 && layer->opacity < 100)) {
 			if (!renderer->supports_transparent_layers) {
 				image_draw = msImageCreate(image->width, image->height,
 						image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);

@@ -1610,7 +1610,7 @@ typedef struct layer_obj {
 #ifndef SWIG
   imageObj *maskimage;
 #endif
-  char *masklayer;
+  char *mask;
 
 } layerObj;
 
