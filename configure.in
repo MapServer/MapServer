@@ -215,11 +215,11 @@ AC_DEFUN([MS_CHECK_PNG],[
    fi
 
    if test -z "$with_png" -o "$with_png" == "yes" -o "$with_png" == "/usr"; then
-      AC_CHECK_HEADER([png.h], [] ,
+      AC_CHECK_HEADER([png.h],[],
                    [AC_MSG_ERROR([png.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      AC_CHECK_HEADER([setjmp.h], [] ,
+      AC_CHECK_HEADER([setjmp.h],[],
                    [AC_MSG_ERROR([setjmp.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      AC_CHECK_LIB([png], [png_init_io], [] ,
+      AC_CHECK_LIB([png], [png_init_io],[],
                    [AC_MSG_ERROR([libpng library not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
 
    else
@@ -229,11 +229,11 @@ AC_DEFUN([MS_CHECK_PNG],[
       CPPFLAGS="-I$with_png/include"
       LDFLAGS="-L$with_png/lib"
       
-      AC_CHECK_HEADER([png.h], [] ,
+      AC_CHECK_HEADER([png.h],[],
                    [AC_MSG_ERROR([png.h header not found in $with_png. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      AC_CHECK_HEADER([setjmp.h], [] ,
+      AC_CHECK_HEADER([setjmp.h],[],
                    [AC_MSG_ERROR([setjmp.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      AC_CHECK_LIB([png], [png_init_io], [] ,
+      AC_CHECK_LIB([png], [png_init_io],[],
                    [AC_MSG_ERROR([libpng library not found in $with_png. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
       PNG_INC="$CFLAGS"
       PNG_LIB="$LDFLAGS"
@@ -262,9 +262,9 @@ AC_DEFUN([MS_CHECK_JPEG],[
    fi
 
    if test -z "$with_jpeg" -o "$with_jpeg" == "yes" -o "$with_jpeg" == "/usr"; then
-      AC_CHECK_HEADER([jpeglib.h], [] ,
+      AC_CHECK_HEADER([jpeglib.h],[],
                    [AC_MSG_ERROR([jpeglib.h header not found. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
-      AC_CHECK_LIB([jpeg], [jpeg_read_header], [] ,
+      AC_CHECK_LIB([jpeg], [jpeg_read_header],[],
                    [AC_MSG_ERROR([libjpeg library not found. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
 
    else
@@ -274,9 +274,9 @@ AC_DEFUN([MS_CHECK_JPEG],[
       CPPFLAGS="-I$with_jpeg/include"
       LDFLAGS="-L$with_jpeg/lib"
       
-      AC_CHECK_HEADER([jpeglib.h], [] ,
+      AC_CHECK_HEADER([jpeglib.h],[],
                    [AC_MSG_ERROR([jpeglib.h header not found in $with_jpeg. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
-      AC_CHECK_LIB([jpeg], [jpeg_read_header], [] ,
+      AC_CHECK_LIB([jpeg], [jpeg_read_header],[],
                    [AC_MSG_ERROR([libjpeg library not found in $with_jpeg. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
       JPEG_INC="$CFLAGS"
       JPEG_LIB="$LDFLAGS"
@@ -319,9 +319,9 @@ AC_DEFUN([MS_CHECK_GIF],[
    else
       AC_MSG_RESULT([yes])
       if test -z "$with_gif" -o "$with_gif" == "yes" -o "$with_gif" == "/usr"; then
-         AC_CHECK_HEADER([gif_lib.h], [] ,
+         AC_CHECK_HEADER([gif_lib.h],,
                       [AC_MSG_ERROR([gif_lib.h header not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
-         AC_CHECK_LIB([gif], [DGifOpenFileHandle], [] ,
+         AC_CHECK_LIB([gif], [DGifOpenFileHandle],[],
                       [AC_MSG_ERROR([libgif library not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
 
       else
@@ -331,9 +331,9 @@ AC_DEFUN([MS_CHECK_GIF],[
          CPPFLAGS="-I$with_gif/include"
          LDFLAGS="-L$with_gif/lib"
          
-         AC_CHECK_HEADER([gif_lib.h], [] ,
+         AC_CHECK_HEADER([gif_lib.h],[],
                       [AC_MSG_ERROR([gif_lib.h header not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
-         AC_CHECK_LIB([gif], [DGifOpenFileHandle], [] ,
+         AC_CHECK_LIB([gif], [DGifOpenFileHandle],[],
                       [AC_MSG_ERROR([libgif library not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
          GIF_INC="$CFLAGS"
          GIF_LIB="$LDFLAGS"
