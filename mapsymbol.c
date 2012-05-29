@@ -791,8 +791,12 @@ int msPreloadImageSymbol(rendererVTableObj *renderer, symbolObj *symbol) {
 	} else {
 		symbol->pixmap_buffer = (rasterBufferObj*)calloc(1,sizeof(rasterBufferObj));
 	}
-	if(MS_SUCCESS != renderer->loadImageFromFile(symbol->full_pixmap_path, symbol->pixmap_buffer))
-		return MS_FAILURE;
+	if(MS_SUCCESS != renderer->loadImageFromFile(symbol->full_pixmap_path, symbol->pixmap_buffer)) {
+            /* Free pixmap_buffer already allocated */
+            free(symbol->pixmap_buffer);
+            symbol->pixmap_buffer = NULL;
+            return MS_FAILURE;
+        }
 	symbol->renderer = renderer;
 	symbol->sizex = symbol->pixmap_buffer->width;
 	symbol->sizey = symbol->pixmap_buffer->height;
