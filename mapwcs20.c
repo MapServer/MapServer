@@ -1398,6 +1398,17 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
     }
 
     /* -------------------------------------------------------------------- */
+    /*      Parse from map.web metadata.                                    */
+    /* -------------------------------------------------------------------- */
+
+    else if(layer == NULL
+            && (value = msOWSGetEncodeMetadata( &(map->web.metadata), "CO", "formats",
+                                                NULL)) != NULL )
+    {
+        tokens = msStringSplit(value, ' ', &numtokens);
+    }
+
+    /* -------------------------------------------------------------------- */
     /*      Or generate from all configured raster output formats that      */
     /*      look plausible.                                                 */
     /* -------------------------------------------------------------------- */
@@ -3180,7 +3191,8 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
         /* -------------------------------------------------------------------- */
         /*      SupportedFormats                                                */
         /* -------------------------------------------------------------------- */
-        {
+        /* for now, WCS 2.0 does not allow per coverage format definitions */
+        /*{
             xmlNodePtr psSupportedFormats;
             char *format_list;
 
@@ -3196,7 +3208,7 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
             }
 
             msFree(format_list);
-        }
+        }*/
 
         /* -------------------------------------------------------------------- */
         /*      nativeFormat                                                    */
