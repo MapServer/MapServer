@@ -3279,7 +3279,8 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
         /* -------------------------------------------------------------------- */
         /*      SupportedFormats                                                */
         /* -------------------------------------------------------------------- */
-        {
+        /* for now, WCS 2.0 does not allow per coverage format definitions */
+        /*{
             xmlNodePtr psSupportedFormats;
             char *format_list;
 
@@ -3295,7 +3296,7 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
             }
 
             msFree(format_list);
-        }
+        }*/
 
         /* -------------------------------------------------------------------- */
         /*      nativeFormat                                                    */
