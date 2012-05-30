@@ -139,8 +139,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
 /*      Parse from map.web metadata.                                    */
 /* -------------------------------------------------------------------- */
 
-    else if(layer == NULL
-            && (value = msOWSGetEncodeMetadata( &(map->web.metadata), "CO", "formats",
+    else if((value = msOWSGetEncodeMetadata( &(map->web.metadata), "CO", "formats",
                                                 NULL)) != NULL )
     {
         tokens = msStringSplit(value, ' ', &numtokens);
