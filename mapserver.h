@@ -973,7 +973,15 @@ typedef struct {
    styleObj **styles;
    int maxstyles;
 #endif
+
+#ifdef SWIG
+%immutable
+#endif
    int numstyles;
+#ifdef SWIG
+%mutable
+#endif
+  
 } labelLeaderObj;
 
 
@@ -1079,7 +1087,14 @@ typedef struct class_obj{
   styleObj **styles;
   int maxstyles;
 #endif
-  int numstyles; /* should be immutable */
+
+#ifdef SWIG
+%immutable
+#endif
+  int numstyles;
+#ifdef SWIG
+%mutable
+#endif
 
 #ifndef SWIG
   labelObj **labels;

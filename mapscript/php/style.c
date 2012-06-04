@@ -82,7 +82,7 @@ PHP_METHOD(styleObj, __construct)
     styleObj *style;
     php_class_object *php_class = NULL;
     php_label_object *php_label = NULL;
-    php_style_object *php_style, *php_style2;
+    php_style_object *php_style, *php_style2 = NULL;
     parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -197,7 +197,7 @@ PHP_METHOD(styleObj, __set)
     zval *value;
     zval *zobj = getThis();
     php_style_object *php_style;
-    php_map_object *php_map;
+    php_map_object *php_map = NULL;
     php_class_object *php_class;
     php_layer_object *php_layer;
     php_labelcachemember_object *php_labelcachemember;

@@ -76,6 +76,15 @@ ZEND_BEGIN_ARG_INFO_EX(class_getStyle_args, 0, 0, 1)
   ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(class_insertStyle_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, style, styleObj, 0)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(class_removeStyle_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(class_moveStyleUp_args, 0, 0, 1)
   ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
@@ -183,7 +192,8 @@ PHP_METHOD(classObj, __get)
     else IF_GET_STRING("keyimage", php_class->class->keyimage)
     else IF_GET_STRING("group", php_class->class->group)
     else IF_GET_LONG("numstyles", php_class->class->numstyles)
-    else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_class->metadata, &php_class->class->metadata) 
+    else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_class->metadata, &php_class->class->metadata)
+    else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_class->leader, &php_class->class->leader)            
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -218,7 +228,8 @@ PHP_METHOD(classObj, __set)
     else IF_SET_STRING("template", php_class->class->template, value)
     else IF_SET_STRING("keyimage", php_class->class->keyimage, value)
     else IF_SET_STRING("group", php_class->class->group, value)
-    else if ( (STRING_EQUAL("metadata", property)))
+    else if ( (STRING_EQUAL("metadata", property)) ||
+              (STRING_EQUAL("leader", property)) )
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
@@ -481,7 +492,7 @@ PHP_METHOD(classObj, getTextString)
 }
 /* }}} */
 
-/* {{{ proto int getstyle(int index)
+/* {{{ proto styleObj getstyle(int index)
    return the style object. */
 PHP_METHOD(classObj, getStyle)
 {
@@ -510,6 +521,59 @@ PHP_METHOD(classObj, getStyle)
     style = php_class->class->styles[index];
 
     MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_style(style, parent, return_value TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ proto int insertStyle(styleObj style)
+   return MS_SUCCESS or MS_FAILURE. */
+PHP_METHOD(classObj, insertStyle)
+{
+    zval *zobj = getThis();
+    zval *zstyle = NULL;
+    long index = -1;
+    php_class_object *php_class;
+    php_style_object *php_style;    
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|l",
+                              &zstyle, mapscript_ce_style, &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_style = (php_style_object *) zend_object_store_get_object(zstyle TSRMLS_CC);
+
+    RETURN_LONG(msInsertStyle(php_class->class, php_style->style, index));
+}
+/* }}} */
+
+/* {{{ proto styleObj removeStyle(int index)
+   return the styleObj removed. */
+PHP_METHOD(classObj, removeStyle)
+{
+    zval *zobj = getThis();
+    long index;
+    styleObj *style;
+    php_class_object *php_class;
+    parent_object parent;
+    
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    style = msRemoveStyle(php_class->class, index);
+    
+    /* Return a copy of the class object just removed */
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
     mapscript_create_style(style, parent, return_value TSRMLS_CC);
 }
 /* }}} */
@@ -809,6 +873,8 @@ zend_function_entry class_functions[] = {
     PHP_ME(classObj, setText, class_setText_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, getTextString, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, getStyle, class_getStyle_args, ZEND_ACC_PUBLIC)
+    PHP_ME(classObj, insertStyle, class_insertStyle_args, ZEND_ACC_PUBLIC)
+    PHP_ME(classObj, removeStyle, class_removeStyle_args, ZEND_ACC_PUBLIC)        
     PHP_ME(classObj, moveStyleUp, class_moveStyleUp_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, moveStyleDown, class_moveStyleDown_args, ZEND_ACC_PUBLIC)
     PHP_ME(classObj, deleteStyle, class_deleteStyle_args, ZEND_ACC_PUBLIC)
@@ -841,6 +907,7 @@ static void mapscript_class_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_FREE_PARENT(php_class->parent);
 
     MAPSCRIPT_DELREF(php_class->metadata);
+    MAPSCRIPT_DELREF(php_class->leader);    
 
     /* We don't need to free the classObj */ 
     
@@ -864,6 +931,7 @@ static zend_object_value mapscript_class_object_new_ex(zend_class_entry *ce, php
     MAPSCRIPT_INIT_PARENT(php_class->parent);
 
     php_class->metadata = NULL;
+    php_class->leader = NULL;    
 
     return retval;
 }

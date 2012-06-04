@@ -607,6 +607,50 @@ int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
     return retval;
   }
 
+int layerObj_queryByFilter(layerObj *self, mapObj *map, char *string) {
+    int status;
+    int retval;
+
+    msInitQuery(&(map->query));
+
+    map->query.type = MS_QUERY_BY_FILTER;
+    
+    map->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
+    map->query.filter->string = strdup(string);
+    map->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
+    
+    map->query.layer = self->index;
+    map->query.rect = map->extent;
+    
+    status = self->status;
+    self->status = MS_ON;
+    retval = msQueryByFilter(map);
+    self->status = status;
+            
+    return retval;
+}
+
+int layerObj_queryByIndex(layerObj *self, mapObj *map, int tileindex, int shapeindex, int addtoquery) {
+    int status;
+    int retval;
+
+    msInitQuery(&(map->query));
+
+    map->query.type = MS_QUERY_BY_INDEX;
+    map->query.mode = MS_QUERY_SINGLE;
+    map->query.tileindex = tileindex;
+    map->query.shapeindex = shapeindex;
+    map->query.clear_resultcache = !addtoquery;
+    map->query.layer = self->index;
+
+    status = self->status;
+    self->status = MS_ON;
+    retval = msQueryByIndex(map);
+    self->status = status;
+    
+    return retval;
+}
+
 int layerObj_setFilter(layerObj *self, char *string) {
     if (!string || strlen(string) == 0) {
         freeExpression(&self->filter);
