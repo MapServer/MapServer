@@ -185,6 +185,18 @@ int mapObj_queryByFeatures(mapObj* self, int slayer) {
     return msQueryByFeatures(self);
   }
 
+int mapObj_queryByFilter(mapObj* self, char *string) {
+    msInitQuery(&(self->query));
+
+    self->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
+    self->query.filter->string = strdup(string);
+    self->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
+
+    self->query.rect = self->extent;
+
+    return msQueryByFilter(self);
+}
+
 int mapObj_queryByShape(mapObj *self, shapeObj *shape) {
     msInitQuery(&(self->query));
 
@@ -1691,3 +1703,99 @@ int clusterObj_setFilter(clusterObj *self, char *string) {
 char *clusterObj_getFilterString(clusterObj *self) {
     return msGetExpressionString(&(self->filter));
   }
+
+outputFormatObj* outputFormatObj_new(const char *driver, char *name) {
+  outputFormatObj *format;
+
+  format = msCreateDefaultOutputFormat(NULL, driver, name);
+
+  /* in the case of unsupported formats, msCreateDefaultOutputFormat
+     should return NULL */
+  if (!format)
+    {
+      msSetError(MS_MISCERR, "Unsupported format driver: %s",
+                 "outputFormatObj()", driver);
+      return NULL;
+    }
+        
+  msInitializeRendererVTable(format);
+
+  /* Else, continue */
+  format->refcount++;
+  format->inmapfile = MS_TRUE;
+
+  return format;
+}
+
+void  outputFormatObj_destroy(outputFormatObj* self) {
+  if ( --self->refcount < 1 )
+    msFreeOutputFormat( self );
+}
+
+imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format) {
+  imageObj *image;
+  outputFormatObj *format = NULL;
+  rendererVTableObj *renderer = NULL;
+  
+  if (self->type != MS_SYMBOL_PIXMAP)
+  {
+    msSetError(MS_SYMERR, "Can't return image from non-pixmap symbol",
+               "getImage()");
+    return NULL;
+  }
+  
+  if (input_format)
+  {
+    format = input_format;
+  }
+  else 
+  {
+    format = msCreateDefaultOutputFormat(NULL, "GD/GIF", "gdgif");
+    if (format == NULL)
+      format = msCreateDefaultOutputFormat(NULL, "GD/PNG", "gdpng");
+    
+    if (format)
+      msInitializeRendererVTable(format);
+  }
+  
+  if (format == NULL) 
+  {
+    msSetError(MS_IMGERR, "Could not create output format",
+               "getImage()");
+    return NULL;
+  }
+  
+  renderer = format->vtable;
+  msPreloadImageSymbol(renderer, self);
+  if (self->pixmap_buffer) 
+  {
+    image = msImageCreate(self->pixmap_buffer->width, self->pixmap_buffer->height, format, NULL, NULL,
+                          MS_DEFAULT_RESOLUTION, MS_DEFAULT_RESOLUTION, NULL);
+    renderer->mergeRasterBuffer(image, self->pixmap_buffer, 1.0, 0, 0, 0, 0, 
+                                self->pixmap_buffer->width, self->pixmap_buffer->height);
+  }
+  
+  return image;
+}
+
+int symbolObj_setImage(symbolObj *self, imageObj *image) {
+  rendererVTableObj *renderer = NULL;
+        
+  renderer = image->format->vtable;
+        
+  if (self->pixmap_buffer) {
+    msFreeRasterBuffer(self->pixmap_buffer);
+    free(self->pixmap_buffer);
+  }
+        
+  self->pixmap_buffer = (rasterBufferObj*)malloc(sizeof(rasterBufferObj));
+  if (!self->pixmap_buffer) {
+    msSetError(MS_MEMERR, NULL, "setImage()");
+    return MS_FAILURE;
+  }
+  renderer->initializeRasterBuffer(self->pixmap_buffer, image->width, image->height, image->format->imagemode);
+  self->type = MS_SYMBOL_PIXMAP;
+  renderer->getRasterBufferCopy(image, self->pixmap_buffer);
+
+  return MS_SUCCESS;
+}

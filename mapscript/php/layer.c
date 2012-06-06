@@ -203,7 +203,7 @@ PHP_METHOD(layerObj, __construct)
     layerObj *layer;
     int index;
     php_map_object *php_map;
-    php_layer_object *php_layer, *php_layer2;
+    php_layer_object *php_layer, *php_layer2=NULL;
     parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -941,7 +941,7 @@ PHP_METHOD(layerObj, setProjection)
     long projection_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
-    php_projection_object *php_projection;
+    php_projection_object *php_projection=NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -1005,7 +1005,7 @@ PHP_METHOD(layerObj, setWKTProjection)
     long projection_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
-    php_projection_object *php_projection;
+    php_projection_object *php_projection=NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",

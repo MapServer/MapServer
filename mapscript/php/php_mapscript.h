@@ -152,6 +152,7 @@ typedef struct _php_web_object {
     parent_object parent;
     zval *extent;
     zval *metadata;
+    zval *validation;  
     webObj *web;
 } php_web_object;
 
@@ -167,6 +168,7 @@ typedef struct _php_legend_object {
 typedef struct _php_outputformat_object {
     zend_object std;
     parent_object parent;
+    int is_ref;  
     outputFormatObj *outputformat;
 } php_outputformat_object;
 
@@ -328,6 +330,7 @@ typedef struct _php_map_object {
     zval *labelcache;
     zval *projection;
     zval *metadata;
+    zval *configoptions;  
     mapObj *map;
 } php_map_object;
 
@@ -526,6 +529,7 @@ int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
 int              mapObj_queryByIndex(mapObj *self, int qlayer, 
                                      int tileindex, int shapeindex,
                                      int bAddToQuery);
+int             mapObj_queryByFilter(mapObj* self, char *string);
 int             mapObj_saveQuery(mapObj *self, char *filename, int results);
 int             mapObj_loadQuery(mapObj *self, char *filename);
 
@@ -802,4 +806,10 @@ char *clusterObj_getGroupString(clusterObj *self);
 int clusterObj_setFilter(clusterObj *self, char *string);
 char *clusterObj_getFilterString(clusterObj *self);
 
+outputFormatObj *outputFormatObj_new(const char *driver, char *name);
+void  outputFormatObj_destroy(outputFormatObj* self);
+
+int symbolObj_setImage(symbolObj *self, imageObj *image);
+imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format);
+  
 #endif /* PHP_MAPSCRIPT_H */

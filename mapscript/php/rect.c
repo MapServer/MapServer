@@ -272,8 +272,42 @@ PHP_METHOD(rectObj, fit)
 }
 /* }}} */
 
+/* {{{ proto rect getCenter()
+   Get center point of the extent. */
+PHP_METHOD(rectObj, getCenter)
+{
+    php_rect_object *php_rect;
+    pointObj *center;
+    parent_object parent;
+    
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters_none() == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_rect = (php_rect_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+    center = (pointObj *)calloc(1, sizeof(pointObj));
+    if (!center)
+    {
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
+        RETURN_NULL();
+    }
+
+    center->x = (php_rect->rect->minx + php_rect->rect->maxx)/2;
+    center->y = (php_rect->rect->miny + php_rect->rect->maxy)/2;
+
+    /* Return result object */
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_point(center, parent, return_value TSRMLS_CC);    
+}
+/* }}} */
+
 zend_function_entry rect_functions[] = {
     PHP_ME(rectObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+    PHP_ME(rectObj, getCenter, NULL, ZEND_ACC_PUBLIC)    
     PHP_ME(rectObj, __get, rect___get_args, ZEND_ACC_PUBLIC)
     PHP_ME(rectObj, __set, rect___set_args, ZEND_ACC_PUBLIC)
     PHP_MALIAS(rectObj, set, __set, NULL, ZEND_ACC_PUBLIC)

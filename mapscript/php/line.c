@@ -46,6 +46,11 @@ ZEND_BEGIN_ARG_INFO_EX(line_add_args, 0, 0, 1)
   ZEND_ARG_OBJ_INFO(0, point, pointObj, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(line_set_args, 0, 0, 2)
+  ZEND_ARG_INFO(0, index)
+  ZEND_ARG_OBJ_INFO(0, point, pointObj, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(line_addXY_args, 0, 0, 2)
   ZEND_ARG_INFO(0, x)
   ZEND_ARG_INFO(0, y)
@@ -301,6 +306,41 @@ PHP_METHOD(lineObj, point)
 }
 /* }}} */
 
+/* {{{ proto int line.set(int, index, pointObj point)
+   Set the point values at the specified index */
+PHP_METHOD(lineObj, set)
+{
+    zval *zobj =  getThis();
+    zval *zobj_point;
+    long index;
+    php_line_object *php_line;
+    php_point_object *php_point;
+    
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lO",
+                              &index, &zobj_point, mapscript_ce_point) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if ( (index < 0) || (index >= php_line->line->numpoints))
+    {
+        mapscript_throw_exception("Point '%d' does not exist in this object." TSRMLS_CC, index);
+        return;
+    }
+        
+    php_point = (php_point_object *) zend_object_store_get_object(zobj_point TSRMLS_CC);
+
+    php_line->line->point[index].x = php_point->point->x;
+    php_line->line->point[index].y = php_point->point->y;
+    
+    RETURN_LONG(MS_SUCCESS);
+}
+/* }}} */
+
 zend_function_entry line_functions[] = {
     PHP_ME(lineObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(lineObj, __get, line___get_args, ZEND_ACC_PUBLIC)
@@ -310,6 +350,8 @@ zend_function_entry line_functions[] = {
     PHP_ME(lineObj, addXYZ, line_addXYZ_args, ZEND_ACC_PUBLIC)
     PHP_ME(lineObj, project, line_project_args, ZEND_ACC_PUBLIC)
     PHP_ME(lineObj, point, line_point_args, ZEND_ACC_PUBLIC)
+    PHP_MALIAS(lineObj, get, point, line_point_args, ZEND_ACC_PUBLIC)
+    PHP_ME(lineObj, set, line_set_args, ZEND_ACC_PUBLIC)    
     {NULL, NULL, NULL}
 };
 

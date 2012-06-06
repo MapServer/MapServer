@@ -142,6 +142,14 @@ ZEND_BEGIN_ARG_INFO_EX(shape_draw_args, 0, 0, 3)
   ZEND_ARG_OBJ_INFO(0, image, imageObj, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(shape_distanceToPoint_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, point, pointObj, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(shape_distanceToShape_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, shape, shapeObj, 0)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto shape __construct(int type)
    Create a new shapeObj instance. */
 PHP_METHOD(shapeObj, __construct)
@@ -191,7 +199,8 @@ PHP_METHOD(shapeObj, __get)
     IF_GET_STRING("text", php_shape->shape->text)
     else IF_GET_LONG("classindex", php_shape->shape->classindex) 
     else IF_GET_LONG("index", php_shape->shape->index) 
-    else IF_GET_LONG("tileindex", php_shape->shape->tileindex) 
+    else IF_GET_LONG("tileindex", php_shape->shape->tileindex)
+    else IF_GET_LONG("resultindex", php_shape->shape->resultindex)            
     else IF_GET_LONG("numlines", php_shape->shape->numlines) 
     else IF_GET_LONG("numvalues", php_shape->shape->numvalues) 
     else IF_GET_LONG("type", php_shape->shape->type) 
@@ -227,6 +236,7 @@ PHP_METHOD(shapeObj, __set)
     else if ( (STRING_EQUAL("type", property)) ||
               (STRING_EQUAL("numlines", property)) ||
               (STRING_EQUAL("tileindex", property)) ||
+              (STRING_EQUAL("resultindex", property)) ||              
               (STRING_EQUAL("bounds", property)) ||
               (STRING_EQUAL("values", property)) ||
               (STRING_EQUAL("numvalues", property)) )
@@ -1175,6 +1185,54 @@ PHP_METHOD(shapeObj, free)
 }
 /* }}} */
 
+/* {{{ proto int shape.distanceToPoint(pointObj point)
+   Returns the distance from the point to shape. */
+PHP_METHOD(shapeObj, distanceToPoint)
+{
+    zval *zobj =  getThis();
+    zval *zpoint;
+    php_shape_object *php_shape;    
+    php_point_object *php_point;
+    
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
+                              &zpoint, mapscript_ce_point) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_shape = (php_shape_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_point = (php_point_object *) zend_object_store_get_object(zpoint TSRMLS_CC);
+
+    RETURN_DOUBLE(msDistancePointToShape(php_point->point, php_shape->shape));
+}
+/* }}} */
+
+/* {{{ proto int shape.distanceToShape(shapeObj shape)
+   Returns the distance from the shape to shape2. */
+PHP_METHOD(shapeObj, distanceToShape)
+{
+    zval *zobj =  getThis();
+    zval *zshape;
+    php_shape_object *php_shape;
+    php_shape_object *php_shape2;    
+    
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
+                              &zshape, mapscript_ce_shape) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_shape = (php_shape_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_shape2 = (php_shape_object *) zend_object_store_get_object(zshape TSRMLS_CC);
+
+    RETURN_DOUBLE(msGEOSDistance(php_shape->shape, php_shape2->shape));
+}
+/* }}} */
+      
 zend_function_entry shape_functions[] = {
     PHP_ME(shapeObj, __construct, shape___construct_args, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(shapeObj, __get, shape___get_args, ZEND_ACC_PUBLIC)

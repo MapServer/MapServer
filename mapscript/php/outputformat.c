@@ -33,10 +33,15 @@
 
 zend_class_entry *mapscript_ce_outputformat;
 
-ZEND_BEGIN_ARG_INFO_EX(outputformat___get_args, 0, 0, 1)
-  ZEND_ARG_INFO(0, property)
+ZEND_BEGIN_ARG_INFO_EX(outputformat___construct_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, driver)
+  ZEND_ARG_INFO(0, name)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(outputformat___get_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, property)
+
+ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(outputformat___set_args, 0, 0, 2)
   ZEND_ARG_INFO(0, property)
   ZEND_ARG_INFO(0, value)
@@ -51,11 +56,36 @@ ZEND_BEGIN_ARG_INFO_EX(outputformat_getOption_args, 0, 0, 1)
   ZEND_ARG_INFO(0, property)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(outputformat_getOptionByIndex_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto outputformat __construct()
-   outputFormatObj CANNOT be instanciated, this will throw an exception on use */
+   instanciate outputFormatObj */
 PHP_METHOD(outputFormatObj, __construct)
 {
-    mapscript_throw_exception("outputFormatObj cannot be constructed" TSRMLS_CC);
+    zval *zobj = getThis();
+    php_outputformat_object *php_outputformat;
+    char *driver;
+    long driver_len;
+    char *name = NULL;
+    long name_len;    
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s",
+                              &driver, &driver_len, &name, &name_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_outputformat = (php_outputformat_object *)zend_object_store_get_object(zobj TSRMLS_CC);
+    
+    if ((php_outputformat->outputformat = outputFormatObj_new(driver, name)) == NULL)
+    {
+        mapscript_throw_exception("Unable to construct outputFormatObj." TSRMLS_CC);
+        return;
+    }  
 }
 /* }}} */
 
@@ -84,6 +114,8 @@ PHP_METHOD(outputFormatObj, __get)
     else IF_GET_LONG("renderer", php_outputformat->outputformat->renderer)
     else IF_GET_LONG("imagemode", php_outputformat->outputformat->imagemode)
     else IF_GET_LONG("transparent", php_outputformat->outputformat->transparent)
+    else IF_GET_LONG("bands", php_outputformat->outputformat->bands)
+    else IF_GET_LONG("numformatoptions", php_outputformat->outputformat->bands)           
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -205,6 +237,34 @@ PHP_METHOD(outputFormatObj, validate)
 }
 /* }}} */
 
+/* {{{ proto int outputformat.getOptionByIndex(int index). 
+   Return the option at index position. */
+PHP_METHOD(outputFormatObj, getOptionByIndex)
+{
+    zval *zobj = getThis();
+    long index = -1;
+    php_outputformat_object *php_outputformat;    
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_outputformat = (php_outputformat_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if (index < 0 || index >= php_outputformat->outputformat->numformatoptions)
+    {
+        mapscript_throw_mapserver_exception("Invalid format option index." TSRMLS_CC);
+        return;
+    }
+    
+    RETURN_STRING(php_outputformat->outputformat->formatoptions[index],1);    
+}
+/* }}} */
+
 zend_function_entry outputformat_functions[] = {
     PHP_ME(outputFormatObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(outputFormatObj, __get, outputformat___get_args, ZEND_ACC_PUBLIC)
@@ -212,6 +272,7 @@ zend_function_entry outputformat_functions[] = {
     PHP_MALIAS(outputFormatObj, set, __set, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(outputFormatObj, setOption, outputformat_setOption_args, ZEND_ACC_PUBLIC)
     PHP_ME(outputFormatObj, getOption, outputformat_getOption_args, ZEND_ACC_PUBLIC)
+    PHP_ME(outputFormatObj, getOptionByIndex, outputformat_getOptionByIndex_args, ZEND_ACC_PUBLIC)    
     PHP_ME(outputFormatObj, validate, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };
@@ -223,6 +284,9 @@ void mapscript_create_outputformat(outputFormatObj *outputformat, parent_object 
     php_outputformat = (php_outputformat_object *)zend_object_store_get_object(return_value TSRMLS_CC);
     php_outputformat->outputformat = outputformat;
 
+    if (parent.val) 
+      php_outputformat->is_ref = 1;
+    
     php_outputformat->parent = parent;
     MAPSCRIPT_ADDREF(parent.val);
 }
@@ -235,7 +299,9 @@ static void mapscript_outputformat_object_destroy(void *object TSRMLS_DC)
 
     MAPSCRIPT_FREE_PARENT(php_outputformat->parent);
 
-    /* We don't need to free the outputFormatObj */ 
+    if (php_outputformat->outputformat && !php_outputformat->is_ref) {
+        outputFormatObj_destroy(php_outputformat->outputformat);
+    }
 
     efree(object);
 }
@@ -250,6 +316,7 @@ static zend_object_value mapscript_outputformat_object_new(zend_class_entry *ce 
     retval = mapscript_object_new(&php_outputformat->std, ce,
                                   &mapscript_outputformat_object_destroy TSRMLS_CC);
 
+    php_outputformat->is_ref = 0;
     MAPSCRIPT_INIT_PARENT(php_outputformat->parent);
 
     return retval;

@@ -405,6 +405,7 @@ zend_function_entry point_functions[] = {
     PHP_ME(pointObj, project, point_project_args, ZEND_ACC_PUBLIC)
     PHP_ME(pointObj, distanceToPoint, point_distanceToPoint_args, ZEND_ACC_PUBLIC)
     PHP_ME(pointObj, distanceToLine, point_distanceToLine_args, ZEND_ACC_PUBLIC)
+    PHP_MALIAS(pointObj, distanceToSegment, distanceToLine, point_distanceToLine_args, ZEND_ACC_PUBLIC)
     PHP_ME(pointObj, distanceToShape, point_distanceToShape_args, ZEND_ACC_PUBLIC)
     PHP_ME(pointObj, draw, point_draw_args, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
