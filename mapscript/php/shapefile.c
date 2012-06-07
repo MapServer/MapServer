@@ -120,7 +120,9 @@ PHP_METHOD(shapeFileObj, __get)
     php_shapefile = (php_shapefile_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     IF_GET_LONG("numshapes", php_shapefile->shapefile->numshapes) 
-    else IF_GET_LONG("type", php_shapefile->shapefile->type) 
+    else IF_GET_LONG("type", php_shapefile->shapefile->type)
+    else IF_GET_LONG("isopen", php_shapefile->shapefile->isopen)
+    else IF_GET_LONG("lastshape", php_shapefile->shapefile->isopen)                       
     else IF_GET_STRING("source", php_shapefile->shapefile->source) 
     else IF_GET_OBJECT("bounds", mapscript_ce_rect, php_shapefile->bounds, &php_shapefile->shapefile->bounds) 
     else 
@@ -150,6 +152,8 @@ PHP_METHOD(shapeFileObj, __set)
     if ( (STRING_EQUAL("numshapes", property)) ||
          (STRING_EQUAL("type", property)) ||
          (STRING_EQUAL("source", property)) ||
+         (STRING_EQUAL("isopen", property)) ||
+         (STRING_EQUAL("lastshape", property)) ||         
          (STRING_EQUAL("bounds", property)) )
     {
         mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);

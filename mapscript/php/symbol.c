@@ -55,6 +55,14 @@ ZEND_BEGIN_ARG_INFO_EX(symbol_setImagePath_args, 0, 0, 1)
   ZEND_ARG_INFO(0, filename)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(symbol_setImage_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, image, imageObj, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(symbol_getImage_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, outputformat, outputFormatObj, 0)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto void __construct(mapObj map, string symbolname)
    Create a new symbolObj instance. */
 PHP_METHOD(symbolObj, __construct)
@@ -123,7 +131,14 @@ PHP_METHOD(symbolObj, __get)
     else IF_GET_LONG("transparent", php_symbol->symbol->transparent) 
     else IF_GET_LONG("transparentcolor", php_symbol->symbol->transparentcolor) 
     else IF_GET_STRING("character", php_symbol->symbol->character)
-    else IF_GET_LONG("antialias", php_symbol->symbol->antialias) 
+    else IF_GET_STRING("svg_text", php_symbol->symbol->svg_text)             
+    else IF_GET_LONG("antialias", php_symbol->symbol->antialias)
+    else IF_GET_DOUBLE("anchorpoint_y", php_symbol->symbol->anchorpoint_y)
+    else IF_GET_DOUBLE("anchorpoint_x", php_symbol->symbol->anchorpoint_x)
+    else IF_GET_DOUBLE("maxx", php_symbol->symbol->maxx)
+    else IF_GET_DOUBLE("minx", php_symbol->symbol->minx)
+    else IF_GET_DOUBLE("miny", php_symbol->symbol->miny)
+    else IF_GET_DOUBLE("maxy", php_symbol->symbol->maxy)              
     else IF_GET_STRING("font", php_symbol->symbol->font)
     else 
     {
@@ -158,8 +173,15 @@ PHP_METHOD(symbolObj, __set)
     else IF_SET_LONG("transparent", php_symbol->symbol->transparent, value) 
     else IF_SET_LONG("transparentcolor", php_symbol->symbol->transparentcolor, value) 
     else IF_SET_STRING("character", php_symbol->symbol->character, value)
+    else IF_SET_STRING("svg_text", php_symbol->symbol->svg_text, value)             
     else IF_SET_LONG("antialias", php_symbol->symbol->antialias, value) 
     else IF_SET_STRING("font", php_symbol->symbol->font, value)
+    else IF_SET_DOUBLE("anchorpoint_y", php_symbol->symbol->anchorpoint_y, value)
+    else IF_SET_DOUBLE("anchorpoint_x", php_symbol->symbol->anchorpoint_x, value)             
+    else IF_SET_DOUBLE("maxx", php_symbol->symbol->maxx, value)
+    else IF_SET_DOUBLE("maxy", php_symbol->symbol->maxy, value)
+    else IF_SET_DOUBLE("minx", php_symbol->symbol->minx, value)
+    else IF_SET_DOUBLE("miny", php_symbol->symbol->miny, value)                         
     else if ( (STRING_EQUAL("numpoints", property)) ||
          (STRING_EQUAL("imagepath", property)))
     {
@@ -295,6 +317,59 @@ PHP_METHOD(symbolObj, setImagePath)
 }
 /* }}} */
 
+/* {{{ proto int setImage(imageObj image)
+   Set image pixmap symbol */
+PHP_METHOD(symbolObj, setImage)
+{
+    zval *zimage;
+    php_symbol_object *php_symbol;
+    php_image_object *php_image;    
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
+                              &zimage, mapscript_ce_image) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_symbol = (php_symbol_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    php_image = (php_image_object *)zend_object_store_get_object(zimage TSRMLS_CC);
+
+    RETURN_LONG(symbolObj_setImage(php_symbol->symbol, php_image->image));
+}
+/* }}} */
+
+/* {{{ proto imageObj getImage(outputFormatObj outputformat)
+   Get the symbol image */
+PHP_METHOD(symbolObj, getImage)
+{
+    zval *zoutputformat;
+    imageObj *image = NULL;
+    php_symbol_object *php_symbol;
+    php_outputformat_object *php_outputformat;    
+    
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
+                              &zoutputformat, mapscript_ce_outputformat) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_symbol = (php_symbol_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+    php_outputformat = (php_outputformat_object *)zend_object_store_get_object(zoutputformat TSRMLS_CC);
+    image = symbolObj_getImage(php_symbol->symbol, php_outputformat->outputformat);
+    if (image == NULL)
+    {
+        mapscript_throw_exception("Unable to get the symbol image" TSRMLS_CC);
+        return;
+    }
+
+    mapscript_create_image(image, return_value TSRMLS_CC);
+}
+/* }}} */
+
 zend_function_entry symbol_functions[] = {
     PHP_ME(symbolObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
     PHP_ME(symbolObj, __get, symbol___get_args, ZEND_ACC_PUBLIC)
@@ -302,6 +377,8 @@ zend_function_entry symbol_functions[] = {
     PHP_MALIAS(symbolObj, set, __set, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(symbolObj, setPoints, symbol_setPoints_args, ZEND_ACC_PUBLIC)
     PHP_ME(symbolObj, getPointsArray, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(symbolObj, setImage, symbol_setImage_args, ZEND_ACC_PUBLIC)
+    PHP_ME(symbolObj, getImage, symbol_getImage_args, ZEND_ACC_PUBLIC)        
     PHP_ME(symbolObj, setImagePath, symbol_setImagePath_args, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };

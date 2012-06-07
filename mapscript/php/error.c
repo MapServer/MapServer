@@ -70,6 +70,7 @@ PHP_METHOD(errorObj, __get)
     IF_GET_LONG("code", php_error->error->code)
     else IF_GET_STRING("routine", php_error->error->routine)
     else IF_GET_STRING("message", php_error->error->message)
+    else IF_GET_LONG("isreported", php_error->error->isreported)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -96,6 +97,7 @@ PHP_METHOD(errorObj, __set)
 
     if ( (STRING_EQUAL("code", property)) ||
          (STRING_EQUAL("routine", property)) ||
+         (STRING_EQUAL("isreported", property)) ||         
          (STRING_EQUAL("message", property)))
     {
         mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);

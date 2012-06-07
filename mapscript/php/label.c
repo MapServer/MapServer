@@ -63,6 +63,15 @@ ZEND_BEGIN_ARG_INFO_EX(label_getStyle_args, 0, 0, 1)
   ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(label_insertStyle_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, style, styleObj, 0)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(label_removeStyle_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(label_moveStyleUp_args, 0, 0, 1)
   ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
@@ -123,6 +132,8 @@ PHP_METHOD(labelObj, __get)
     else IF_GET_DOUBLE("size", php_label->label->size)
     else IF_GET_DOUBLE("minsize", php_label->label->minsize)
     else IF_GET_DOUBLE("maxsize", php_label->label->maxsize)
+    else IF_GET_DOUBLE("minscaledenom", php_label->label->minscaledenom)
+    else IF_GET_DOUBLE("maxscaledenom", php_label->label->maxscaledenom)           
     else IF_GET_LONG("position", php_label->label->position)
     else IF_GET_LONG("offsetx", php_label->label->offsetx)
     else IF_GET_LONG("offsety", php_label->label->offsety)
@@ -144,7 +155,8 @@ PHP_METHOD(labelObj, __get)
     else IF_GET_LONG("minlength", php_label->label->minlength)
     else IF_GET_LONG("maxoverlapangle", php_label->label->maxoverlapangle)
     else IF_GET_LONG("priority", php_label->label->priority)
-    else IF_GET_OBJECT("color", mapscript_ce_color, php_label->color, &php_label->label->color) 
+    else IF_GET_OBJECT("color", mapscript_ce_color, php_label->color, &php_label->label->color)
+    else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_label->leader, &php_label->label->leader)     
     else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_label->outlinecolor, &php_label->label->outlinecolor) 
     else IF_GET_OBJECT("shadowcolor", mapscript_ce_color, php_label->shadowcolor, &php_label->label->shadowcolor) 
     else 
@@ -201,6 +213,7 @@ PHP_METHOD(labelObj, __set)
     else IF_SET_LONG("priority", php_label->label->priority, value)
     else if ( (STRING_EQUAL("color", property)) ||
               (STRING_EQUAL("outlinecolor", property)) ||
+              (STRING_EQUAL("leader", property)) ||              
               (STRING_EQUAL("shadowcolor", property)) )
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
@@ -399,6 +412,59 @@ PHP_METHOD(labelObj, getStyle)
 }
 /* }}} */
 
+/* {{{ proto int insertStyle(styleObj style)
+   return MS_SUCCESS or MS_FAILURE. */
+PHP_METHOD(labelObj, insertStyle)
+{
+    zval *zobj = getThis();
+    zval *zstyle = NULL;
+    long index = -1;
+    php_label_object *php_label;
+    php_style_object *php_style;    
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O|l",
+                              &zstyle, mapscript_ce_style, &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_style = (php_style_object *) zend_object_store_get_object(zstyle TSRMLS_CC);
+
+    RETURN_LONG(msInsertLabelStyle(php_label->label, php_style->style, index));
+}
+/* }}} */
+
+/* {{{ proto styleObj removeStyle(int index)
+   return the styleObj removed. */
+PHP_METHOD(labelObj, removeStyle)
+{
+    zval *zobj = getThis();
+    long index;
+    styleObj *style;
+    php_label_object *php_label;
+    parent_object parent;
+    
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    style = msRemoveLabelStyle(php_label->label, index);
+    
+    /* Return a copy of the class object just removed */
+    MAPSCRIPT_MAKE_PARENT(NULL, NULL);
+    mapscript_create_style(style, parent, return_value TSRMLS_CC);
+}
+/* }}} */
+
 /* {{{ proto int moveStyleUp(int index)  */
 PHP_METHOD(labelObj, moveStyleUp)
 {
@@ -503,6 +569,8 @@ zend_function_entry label_functions[] = {
     PHP_ME(labelObj, getBinding, label_getBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, removeBinding, label_removeBinding_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, getStyle, label_getStyle_args, ZEND_ACC_PUBLIC)
+    PHP_ME(labelObj, insertStyle, label_insertStyle_args, ZEND_ACC_PUBLIC) 
+    PHP_ME(labelObj, removeStyle, label_removeStyle_args, ZEND_ACC_PUBLIC)   
     PHP_ME(labelObj, moveStyleUp, label_moveStyleUp_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, moveStyleDown, label_moveStyleDown_args, ZEND_ACC_PUBLIC)
     PHP_ME(labelObj, deleteStyle, label_deleteStyle_args, ZEND_ACC_PUBLIC)
@@ -535,6 +603,7 @@ static void mapscript_label_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_DELREF(php_label->color);
     MAPSCRIPT_DELREF(php_label->outlinecolor);
     MAPSCRIPT_DELREF(php_label->shadowcolor);
+    MAPSCRIPT_DELREF(php_label->leader);    
     
     if (php_label->label && !php_label->is_ref) {
         labelObj_destroy(php_label->label);
@@ -558,6 +627,7 @@ static zend_object_value mapscript_label_object_new(zend_class_entry *ce TSRMLS_
     php_label->color = NULL;
     php_label->outlinecolor = NULL;
     php_label->shadowcolor = NULL;
+    php_label->leader = NULL;    
 
     return retval;
 }

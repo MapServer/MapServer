@@ -165,9 +165,18 @@ ZEND_BEGIN_ARG_INFO_EX(map_queryByIndex_args, 0, 0, 3)
   ZEND_ARG_INFO(0, addToQuery)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(map_queryByFilter_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, string)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(map_saveQuery_args, 0, 0, 1)
   ZEND_ARG_INFO(0, filename)
   ZEND_ARG_INFO(0, results)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(map_saveQueryAsGML_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, filename)
+  ZEND_ARG_INFO(0, namespace)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(map_loadQuery_args, 0, 0, 1)
@@ -245,6 +254,18 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(map_selectOutputFormat_args, 0, 0, 1)
   ZEND_ARG_INFO(0, type)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(map_appendOutputFormat_args, 0, 0, 1)
+  ZEND_ARG_OBJ_INFO(0, outputFormat, outputObj, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(map_removeOutputFormat_args, 0, 0, 1)
+ ZEND_ARG_INFO(0, name)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(map_getOutputFormat_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(map_saveMapContext_args, 0, 0, 1)
@@ -350,6 +371,7 @@ PHP_METHOD(mapObj, __get)
     IF_GET_LONG("numlayers",  php_map->map->numlayers)
     else IF_GET_STRING("name", php_map->map->name)
     else IF_GET_STRING("mappath", php_map->map->mappath)
+    else IF_GET_STRING("imagetype", php_map->map->imagetype)           
     else IF_GET_LONG("status",  php_map->map->status)
     else IF_GET_LONG("debug", php_map->map->debug)
     else IF_GET_LONG("width", php_map->map->width)
@@ -366,8 +388,10 @@ PHP_METHOD(mapObj, __get)
     else IF_GET_LONG("keyspacingx", php_map->map->legend.keyspacingx)
     else IF_GET_LONG("keyspacingy", php_map->map->legend.keyspacingy)
     else IF_GET_STRING("symbolsetfilename", php_map->map->symbolset.filename)
+    else IF_GET_LONG("numoutputformats", php_map->map->numoutputformats)           
     else IF_GET_STRING("fontsetfilename", php_map->map->fontset.filename)
-    else IF_GET_OBJECT("outputformat", mapscript_ce_outputformat, php_map->outputformat, php_map->map->outputformat) 
+    else IF_GET_OBJECT("outputformat", mapscript_ce_outputformat, php_map->outputformat, php_map->map->outputformat)
+    else IF_GET_OBJECT("configoptions", mapscript_ce_hashtable, php_map->configoptions, &php_map->map->configoptions)            
     else IF_GET_OBJECT("extent", mapscript_ce_rect, php_map->extent, &php_map->map->extent) 
     else IF_GET_OBJECT("web", mapscript_ce_web, php_map->web, &php_map->map->web) 
     else IF_GET_OBJECT("reference", mapscript_ce_referencemap, php_map->reference, &php_map->map->reference) 
@@ -428,12 +452,15 @@ PHP_METHOD(mapObj, __set)
               (STRING_EQUAL("labelcache", property)) ||
               (STRING_EQUAL("projection", property)) ||
               (STRING_EQUAL("metadata", property)) ||
+              (STRING_EQUAL("configoptions", property)) ||              
               (STRING_EQUAL("imagecolor", property)) )
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
     }
     else if ( (STRING_EQUAL("numlayers", property)) ||
               (STRING_EQUAL("symbolsetfilename", property)) ||
+              (STRING_EQUAL("imagetype", property)) ||
+              (STRING_EQUAL("numoutputformats", property)) ||
               (STRING_EQUAL("mappath", property)) ||
               (STRING_EQUAL("fontsetfilename", property)) )
     {
@@ -1108,7 +1135,7 @@ PHP_METHOD(mapObj, zoomPoint)
     double      dfNewScale = 0.0;
     double      dfDeltaExt = -1.0;
     php_point_object *php_pixelPosition;
-    php_rect_object *php_geoRefExtent, *php_maxGeoRefExtent;
+    php_rect_object *php_geoRefExtent=NULL, *php_maxGeoRefExtent=NULL;
     php_map_object *php_map;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -1354,7 +1381,7 @@ PHP_METHOD(mapObj, zoomRectangle)
     double      dfDeltaExt = -1.0;
     double      dfMiddleX =0.0;
     double      dfMiddleY =0.0;
-    php_rect_object *php_geoRefExtent, *php_maxGeoRefExtent, *php_pixelExtent;
+    php_rect_object *php_geoRefExtent=NULL, *php_maxGeoRefExtent=NULL, *php_pixelExtent=NULL;
     php_map_object *php_map;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -1570,7 +1597,7 @@ PHP_METHOD(mapObj, zoomScale)
     double      dfDeltaExt = -1.0;
     int         tmp = 0;
     php_point_object *php_pixelPosition;
-    php_rect_object *php_geoRefExtent, *php_maxGeoRefExtent;
+    php_rect_object *php_geoRefExtent=NULL, *php_maxGeoRefExtent=NULL;
     php_map_object *php_map;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -1992,6 +2019,35 @@ PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 }
 /* }}} */
 
+/* {{{ proto int map.queryByFilter(char string) */
+PHP_METHOD(mapObj, queryByFilter)
+{
+    zval *zobj = getThis();
+    char *string;
+    long string_len;
+    int status = MS_FAILURE;
+    php_map_object *php_map;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                              &string, &string_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    
+    status = mapObj_queryByFilter(php_map->map, string);
+    if (status != MS_SUCCESS)
+    {
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
+    }
+    
+    RETURN_LONG(status);
+}
+/* }}} */
+
 /* {{{ proto int map.savequery(string filename, int results) 
    Save the current query to a specfied file. Can be used with loadquery */
 PHP_METHOD(mapObj, saveQuery)
@@ -2014,6 +2070,34 @@ PHP_METHOD(mapObj, saveQuery)
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     status = mapObj_saveQuery(php_map->map, filename, results);    
+
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int map.savequeryasgml(string filename, string namespace) 
+   Save the current query to a specfied file as GML. */
+PHP_METHOD(mapObj, saveQueryAsGML)
+{
+    zval *zobj = getThis();
+    char *filename;
+    long filename_len;
+    char *namespace = "GOMF";
+    long namespace_len;    
+    int status = MS_FAILURE;
+    php_map_object *php_map;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s",
+                              &filename, &filename_len, &namespace, &namespace_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    status = msGMLWriteQuery(php_map->map, filename, namespace);    
 
     RETURN_LONG(status);
 }
@@ -2853,7 +2937,7 @@ PHP_METHOD(mapObj, selectOutputFormat)
     long type_len;
     int status = MS_FAILURE;
     php_map_object *php_map;
-    php_outputformat_object *php_outputformat;
+    php_outputformat_object *php_outputformat = NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -2880,6 +2964,99 @@ PHP_METHOD(mapObj, selectOutputFormat)
     }
 
     RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int appendOutputFormat(outputFormatObj outputformat)
+   Appends outputformat object in the map object. Returns MS_SUCCESS/MS_FAILURE. */
+PHP_METHOD(mapObj, appendOutputFormat)
+{
+    zval *zobj = getThis();
+    zval *zoutputformat = NULL;
+    int status = MS_FAILURE;
+    php_map_object *php_map;
+    php_outputformat_object *php_outputformat;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "O",
+                              &zoutputformat, mapscript_ce_outputformat) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    php_outputformat = (php_outputformat_object *) zend_object_store_get_object(zoutputformat TSRMLS_CC);    
+
+    if ((status = msAppendOutputFormat(php_map->map, php_outputformat->outputformat)) != MS_SUCCESS)
+
+    {
+        mapscript_report_php_error(E_WARNING, "Unable to append output format." TSRMLS_CC);
+    }
+
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int removeOutputFormat(string name)
+   Remove outputformat from the map. Returns MS_SUCCESS/MS_FAILURE. */
+PHP_METHOD(mapObj, removeOutputFormat)
+{
+    zval *zobj = getThis();
+    char *name;
+    long name_len;
+    int status = MS_FAILURE;
+    php_map_object *php_map;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                              &name, &name_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if ((status = msRemoveOutputFormat(php_map->map, name)) != MS_SUCCESS)
+
+    {
+        mapscript_report_php_error(E_WARNING, "Unable to remove output format to '%s'" TSRMLS_CC, 
+                                   name);
+    }
+
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int map.getOutputFormat(int index). 
+   Return the outputformat at index position. */
+PHP_METHOD(mapObj, getOutputFormat)
+{
+    zval *zobj = getThis();
+    long index = -1;
+    php_map_object *php_map;    
+    parent_object parent;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+                              &index) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if (index < 0 || index >= php_map->map->numoutputformats)
+    {
+        mapscript_throw_mapserver_exception("Invalid outputformat index." TSRMLS_CC);
+        return;
+    }
+    
+    MAPSCRIPT_MAKE_PARENT(zobj, NULL);
+    mapscript_create_outputformat(php_map->map->outputformatlist[index],
+                                  parent, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3395,8 +3572,10 @@ zend_function_entry map_functions[] = {
     PHP_ME(mapObj, queryByRect, map_queryByRect_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, queryByShape, map_queryByShape_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, queryByFeatures, map_queryByFeatures_args, ZEND_ACC_PUBLIC)
+    PHP_ME(mapObj, queryByFilter, map_queryByFilter_args, ZEND_ACC_PUBLIC)    
     PHP_ME(mapObj, queryByIndex, map_queryByIndex_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, saveQuery, map_saveQuery_args, ZEND_ACC_PUBLIC)
+    PHP_ME(mapObj, saveQueryAsGML, map_saveQueryAsGML_args, ZEND_ACC_PUBLIC)    
     PHP_ME(mapObj, loadQuery, map_loadQuery_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, freeQuery, map_freeQuery_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, save, map_save_args, ZEND_ACC_PUBLIC)
@@ -3420,6 +3599,9 @@ zend_function_entry map_functions[] = {
     PHP_ME(mapObj, getNumSymbols, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, setFontSet, map_setFontSet_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, selectOutputFormat, map_selectOutputFormat_args, ZEND_ACC_PUBLIC)
+    PHP_ME(mapObj, appendOutputFormat, map_appendOutputFormat_args, ZEND_ACC_PUBLIC)
+    PHP_ME(mapObj, removeOutputFormat, map_removeOutputFormat_args, ZEND_ACC_PUBLIC)
+    PHP_ME(mapObj, getOutputFormat, map_getOutputFormat_args, ZEND_ACC_PUBLIC)       
     PHP_ME(mapObj, saveMapContext, map_saveMapContext_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, loadMapContext, map_loadMapContext_args, ZEND_ACC_PUBLIC)
     PHP_ME(mapObj, applySLD, map_applySLD_args, ZEND_ACC_PUBLIC)
@@ -3448,8 +3630,8 @@ static int mapscript_map_setProjection(int isWKTProj, php_map_object *php_map,
     projectionObj       out;
     rectObj             rect;
     int                 setNewExtents = 0; 
-    php_projection_object *php_projection;
-    php_rect_object *php_extent;
+    php_projection_object *php_projection = NULL;
+    php_rect_object *php_extent = NULL;
 
     if (php_map->projection)
         php_projection = (php_projection_object *) zend_object_store_get_object(php_map->projection TSRMLS_CC);
@@ -3544,6 +3726,7 @@ static void mapscript_map_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_DELREF(php_map->labelcache);
     MAPSCRIPT_DELREF(php_map->projection);
     MAPSCRIPT_DELREF(php_map->metadata);
+    MAPSCRIPT_DELREF(php_map->configoptions);    
 
     mapObj_destroy(php_map->map);
     efree(object);
@@ -3574,6 +3757,7 @@ static zend_object_value mapscript_map_object_new_ex(zend_class_entry *ce, php_m
     php_map->labelcache = NULL;
     php_map->projection = NULL;
     php_map->metadata = NULL;
+    php_map->configoptions = NULL;    
 
     return retval;
 }

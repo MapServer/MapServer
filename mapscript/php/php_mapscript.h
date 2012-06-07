@@ -138,6 +138,7 @@ typedef struct _php_class_object {
     zend_object std;
     parent_object parent; //old layer
     zval *metadata;
+    zval *leader;
     classObj *class;
 } php_class_object;
 
@@ -151,6 +152,7 @@ typedef struct _php_web_object {
     parent_object parent;
     zval *extent;
     zval *metadata;
+    zval *validation;  
     webObj *web;
 } php_web_object;
 
@@ -166,6 +168,7 @@ typedef struct _php_legend_object {
 typedef struct _php_outputformat_object {
     zend_object std;
     parent_object parent;
+    int is_ref;  
     outputFormatObj *outputformat;
 } php_outputformat_object;
 
@@ -205,6 +208,7 @@ typedef struct _php_label_object {
     zval *shadowcolor;
     zval *backgroundcolor;
     zval *backgroundshadowcolor;
+    zval *leader;  
     labelObj *label;
 } php_label_object;
 
@@ -261,6 +265,12 @@ typedef struct _php_labelcache_object {
     labelCacheObj *labelcache;
 } php_labelcache_object;
 
+typedef struct _php_labelleader_object {
+    zend_object std;
+    parent_object parent;
+    labelLeaderObj *labelleader;
+} php_labelleader_object;
+
 typedef struct _php_labelcachemember_object {
     zend_object std;
     parent_object parent;
@@ -302,6 +312,7 @@ typedef struct _php_layer_object {
     zval *bindvals;
     zval *projection;
     zval *cluster;
+    zval *extent;  
     int is_ref;
     layerObj *layer;
 } php_layer_object;
@@ -319,6 +330,7 @@ typedef struct _php_map_object {
     zval *labelcache;
     zval *projection;
     zval *metadata;
+    zval *configoptions;  
     mapObj *map;
 } php_map_object;
 
@@ -353,6 +365,7 @@ PHP_MINIT_FUNCTION(class);
 PHP_MINIT_FUNCTION(projection);
 PHP_MINIT_FUNCTION(labelcachemember);
 PHP_MINIT_FUNCTION(labelcache);
+PHP_MINIT_FUNCTION(labelleader);
 PHP_MINIT_FUNCTION(result);
 PHP_MINIT_FUNCTION(scalebar);
 PHP_MINIT_FUNCTION(owsrequest);
@@ -424,6 +437,7 @@ extern zend_class_entry *mapscript_ce_shape;
 extern zend_class_entry *mapscript_ce_shapefile;
 extern zend_class_entry *mapscript_ce_labelcachemember;
 extern zend_class_entry *mapscript_ce_labelcache;
+extern zend_class_entry *mapscript_ce_labelleader;
 extern zend_class_entry *mapscript_ce_result;
 extern zend_class_entry *mapscript_ce_scalebar;
 extern zend_class_entry *mapscript_ce_owsrequest;
@@ -449,6 +463,8 @@ extern void mapscript_create_class(classObj *class, parent_object parent, zval *
 extern void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember, 
                                               parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_labelcache(labelCacheObj *labelcache, 
+                                              parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_labelleader(labelLeaderObj *labelleader, 
                                               parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_result(resultObj *result, 
                                     parent_object parent, zval *return_value TSRMLS_DC);
@@ -513,6 +529,7 @@ int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
 int              mapObj_queryByIndex(mapObj *self, int qlayer, 
                                      int tileindex, int shapeindex,
                                      int bAddToQuery);
+int             mapObj_queryByFilter(mapObj* self, char *string);
 int             mapObj_saveQuery(mapObj *self, char *filename, int results);
 int             mapObj_loadQuery(mapObj *self, char *filename);
 
@@ -586,6 +603,9 @@ int             layerObj_queryByFeatures(layerObj *self, mapObj *map,
                                          int slayer);
 int             layerObj_queryByShape(layerObj *self, mapObj *map, 
                                       shapeObj *shape);
+int             layerObj_queryByFilter(layerObj *self, mapObj *map, char *string);
+int             layerObj_queryByIndex(layerObj *self, mapObj *map, int tileindex,
+                                      int shapeindex, int addtoquery);
 int             layerObj_setFilter(layerObj *self, char *string);
 char*           layerObj_getFilter(layerObj *self);
 int             layerObj_setWKTProjection(layerObj *self, char *string);
@@ -609,7 +629,9 @@ classObj        *layerObj_removeClass(layerObj *self, int index);
 int             layerObj_setConnectionType(layerObj *self, int connectiontype, 
                                            const char *library_str) ;
 
+labelObj        *labelObj_new();
 int             labelObj_updateFromString(labelObj *self, char *snippet);
+void            labelObj_destroy(labelObj *self);
 int             labelObj_moveStyleUp(labelObj *self, int index);
 int             labelObj_moveStyleDown(labelObj *self, int index);
 int             labelObj_deleteStyle(labelObj *self, int index);
@@ -625,6 +647,7 @@ int             scalebarObj_updateFromString(scalebarObj *self, char *snippet);
 int             webObj_updateFromString(webObj *self, char *snippet);
 
 classObj       *classObj_new(layerObj *layer, classObj *class);
+labelObj       *classObj_getLabel(classObj *self, int i);
 int             classObj_addLabel(classObj *self, labelObj *label);
 labelObj       *classObj_removeLabel(classObj *self, int index);
 int             classObj_updateFromString(classObj *self, char *snippet);
@@ -783,4 +806,10 @@ char *clusterObj_getGroupString(clusterObj *self);
 int clusterObj_setFilter(clusterObj *self, char *string);
 char *clusterObj_getFilterString(clusterObj *self);
 
+outputFormatObj *outputFormatObj_new(const char *driver, char *name);
+void  outputFormatObj_destroy(outputFormatObj* self);
+
+int symbolObj_setImage(symbolObj *self, imageObj *image);
+imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format);
+  
 #endif /* PHP_MAPSCRIPT_H */
