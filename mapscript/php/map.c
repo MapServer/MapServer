@@ -257,7 +257,7 @@ ZEND_BEGIN_ARG_INFO_EX(map_selectOutputFormat_args, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(map_appendOutputFormat_args, 0, 0, 1)
-  ZEND_ARG_OBJ_INFO(0, outputFormat, outputObj, 0)
+  ZEND_ARG_OBJ_INFO(0, outputformat, outputFormatObj, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(map_removeOutputFormat_args, 0, 0, 1)
@@ -2968,12 +2968,12 @@ PHP_METHOD(mapObj, selectOutputFormat)
 /* }}} */
 
 /* {{{ proto int appendOutputFormat(outputFormatObj outputformat)
-   Appends outputformat object in the map object. Returns MS_SUCCESS/MS_FAILURE. */
+   Appends outputformat object in the map object. Returns the new numoutputformats value */
 PHP_METHOD(mapObj, appendOutputFormat)
 {
     zval *zobj = getThis();
     zval *zoutputformat = NULL;
-    int status = MS_FAILURE;
+    int retval = 0;
     php_map_object *php_map;
     php_outputformat_object *php_outputformat;
 
@@ -2988,13 +2988,9 @@ PHP_METHOD(mapObj, appendOutputFormat)
     php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
     php_outputformat = (php_outputformat_object *) zend_object_store_get_object(zoutputformat TSRMLS_CC);    
 
-    if ((status = msAppendOutputFormat(php_map->map, php_outputformat->outputformat)) != MS_SUCCESS)
+    retval = msAppendOutputFormat(php_map->map, php_outputformat->outputformat);
 
-    {
-        mapscript_report_php_error(E_WARNING, "Unable to append output format." TSRMLS_CC);
-    }
-
-    RETURN_LONG(status);
+    RETURN_LONG(retval);
 }
 /* }}} */
 
