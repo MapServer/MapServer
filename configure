@@ -16294,7 +16294,7 @@ else
   as_fn_error $? "libpng library not found in $with_png. install png development package, or reconfigure with --with-png=/path/to/png/prefix" "$LINENO" 5
 fi
 
-      PNG_INC="$CFLAGS"
+      PNG_INC="$CPPFLAGS"
       PNG_LIB="$LDFLAGS"
       CPPFLAGS="$old_CPPFLAGS"
       LDFLAGS="$old_LDFLAGS"
@@ -16449,7 +16449,7 @@ else
   as_fn_error $? "libgif library not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix" "$LINENO" 5
 fi
 
-         GIF_INC="$CFLAGS"
+         GIF_INC="$CPPFLAGS"
          GIF_LIB="$LDFLAGS"
          CPPFLAGS="$old_CPPFLAGS"
          LDFLAGS="$old_LDFLAGS"
@@ -16592,7 +16592,7 @@ else
   as_fn_error $? "libjpeg library not found in $with_jpeg. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix" "$LINENO" 5
 fi
 
-      JPEG_INC="$CFLAGS"
+      JPEG_INC="$CPPFLAGS"
       JPEG_LIB="$LDFLAGS"
       CPPFLAGS="$old_CPPFLAGS"
       LDFLAGS="$old_LDFLAGS"
