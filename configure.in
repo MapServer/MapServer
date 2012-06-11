@@ -515,13 +515,21 @@ AC_DEFUN([MS_CHECK_GD],[
       dnl supplied paths for other libraries
 
       dnl remove /usr/include/ from default include path
-      GD_INC=`$GDCONFIG --includes`
-      GD_INC=`echo "$GD_INC" | sed 's#-I/usr/include # #' | sed 's#-I/usr/include/ # #'`
+      GD_INC=`$GDCONFIG --includedir`
+      if test "x$GD_INC" != "x/usr/include" -a "x$GD_INC" != "x/usr/include/" -a -n "$GD_INC"; then
+         GD_INC="-I$GD_INC"
+      else
+         GD_INC=""
+      fi
       
       dnl remove /usr/lib/ from default lib path
-      GD_LIB=`$GDCONFIG --ldflags`
-      GD_LIB=`echo "$GD_LIB" | sed 's# /usr/lib # #' | sed 's# /usr/lib/ # #'`
-
+      GD_LIB=`$GDCONFIG --libdir`
+      if test "x$GD_LIB" != "x/usr/lib" -a "x$GD_LIB" != "x/usr/lib/" -a -n "$GD_LIB"; then
+         GD_LIB="-L$GD_LIB"
+      else
+         GD_LIB=""
+      fi
+      
       GD_ENABLED="-DUSE_GD $GD_ENABLED"
       ALL_ENABLED="$GD_ENABLED $ALL_ENABLED"
       AC_SUBST(GD_ENABLED, "$GD_ENABLED")
