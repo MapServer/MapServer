@@ -49,7 +49,6 @@ int MS_DLL_EXPORT msIO_fwrite( const void *ptr, size_t size, size_t nmemb, FILE 
 int MS_DLL_EXPORT msIO_fread( void *ptr, size_t size, size_t nmemb, FILE *stream );
 int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap );
 
-int MS_DLL_EXPORT msIO_installFastCGIRedirect( void );
 #ifdef USE_GD
 gdIOCtx MS_DLL_EXPORT *msIO_getGDIOCtx( FILE *fp );
 #endif
