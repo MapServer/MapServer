@@ -105,7 +105,7 @@ all: php_mapscript.la
 PHPMS_CLASS_OBJS =  mapscript_error.$(OBJ_SUFFIX) color.$(OBJ_SUFFIX) rect.$(OBJ_SUFFIX) hashtable.$(OBJ_SUFFIX) web.$(OBJ_SUFFIX) grid.$(OBJ_SUFFIX) error.$(OBJ_SUFFIX)\
 						  referencemap.$(OBJ_SUFFIX) querymap.$(OBJ_SUFFIX) outputformat.$(OBJ_SUFFIX) scalebar.$(OBJ_SUFFIX) label.$(OBJ_SUFFIX) legend.$(OBJ_SUFFIX)\
 						  symbol.$(OBJ_SUFFIX) style.$(OBJ_SUFFIX) image.$(OBJ_SUFFIX) class.$(OBJ_SUFFIX) projection.$(OBJ_SUFFIX) line.$(OBJ_SUFFIX) shape.$(OBJ_SUFFIX) shapefile.$(OBJ_SUFFIX)\
-						  point.$(OBJ_SUFFIX) labelcache.$(OBJ_SUFFIX) labelcachemember.$(OBJ_SUFFIX) result.$(OBJ_SUFFIX) owsrequest.$(OBJ_SUFFIX) cluster.$(OBJ_SUFFIX)\
+						  point.$(OBJ_SUFFIX) labelcache.$(OBJ_SUFFIX) labelleader.$(OBJ_SUFFIX) labelcachemember.$(OBJ_SUFFIX) result.$(OBJ_SUFFIX) owsrequest.$(OBJ_SUFFIX) cluster.$(OBJ_SUFFIX)\
 						  layer.$(OBJ_SUFFIX) map.$(OBJ_SUFFIX)
 PHPMS_OBJS =  php_mapscript_util.$(OBJ_SUFFIX) $(PHPMS_CLASS_OBJS) php_mapscript.$(OBJ_SUFFIX) mapscript_i.$(OBJ_SUFFIX)\
 				  $(PHP_REGEX_OBJ)

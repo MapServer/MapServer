@@ -37,6 +37,10 @@ ZEND_BEGIN_ARG_INFO_EX(projection___construct_args, 0, 0, 1)
 	ZEND_ARG_INFO(0, projString)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(projection_setWKTProjection_args, 0, 0, 1)
+	ZEND_ARG_INFO(0, wkt)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto projectionObj __construct(string projString)
    Create a new projectionObj instance. */
 PHP_METHOD(projectionObj, __construct)
@@ -62,6 +66,28 @@ PHP_METHOD(projectionObj, __construct)
 }
 /* }}} */
 
+/* {{{ proto projectionObj setWKTProjection(string wkt)
+   Set the wkt projection. */
+PHP_METHOD(projectionObj, setWKTProjection)
+{
+    char *wkt;
+    long wkt_len;
+    php_projection_object *php_projection;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                              &wkt, &wkt_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    php_projection = (php_projection_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+
+    RETURN_LONG(msOGCWKT2ProjectionObj(wkt, php_projection->projection, MS_FALSE));
+}
+/* }}} */
+
 /* {{{ proto int projectionObj.getunits()
    Returns the units of a projection object */
 PHP_METHOD(projectionObj, getUnits)
@@ -83,6 +109,7 @@ PHP_METHOD(projectionObj, getUnits)
 
 zend_function_entry projection_functions[] = {
     PHP_ME(projectionObj, __construct, projection___construct_args, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+    PHP_ME(projectionObj, setWKTProjection, projection_setWKTProjection_args, ZEND_ACC_PUBLIC)    
     PHP_ME(projectionObj, getUnits, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };

@@ -17,6 +17,7 @@ mapscript/python/_mapscript.la
 mapscript/python/build/
 mapscript/python/mapscript.py
 mapscript/python/mapscript_wrap.c
+mapscript/php/php_mapscript.la
 mapscriptvars
 mapserv
 mapserver-config

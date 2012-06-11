@@ -74,6 +74,7 @@ PHP_METHOD(queryMapObj, __get)
     IF_GET_LONG("width", php_querymap->querymap->width)
     else IF_GET_LONG("height", php_querymap->querymap->height)
     else IF_GET_LONG("style", php_querymap->querymap->style)
+    else IF_GET_LONG("status", php_querymap->querymap->status)           
     else IF_GET_OBJECT("color", mapscript_ce_color, php_querymap->color, &php_querymap->querymap->color)
     else 
     {
@@ -102,6 +103,7 @@ PHP_METHOD(queryMapObj, __set)
     IF_SET_LONG("width", php_querymap->querymap->width, value)
     else IF_SET_LONG("height", php_querymap->querymap->height, value)
     else IF_SET_LONG("style", php_querymap->querymap->style, value)
+    else IF_SET_LONG("status", php_querymap->querymap->status, value)           
     else if ( (STRING_EQUAL("color", property)))
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);

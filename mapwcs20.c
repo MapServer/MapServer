@@ -2881,7 +2881,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
             psXLinkNs = NULL,
             psWcsNs = NULL,
             psGmlNs = NULL;
-    char *script_url=NULL, *script_url_encoded=NULL;
+    char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
     int i;
 
     /* -------------------------------------------------------------------- */
@@ -3011,8 +3011,16 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     /* -------------------------------------------------------------------- */
     /*      Service metadata.                                               */
     /* -------------------------------------------------------------------- */
-    /* it is mandatory, but unused for now */
-    xmlAddChild(psRootNode, xmlNewNode(psWcsNs, BAD_CAST "ServiceMetadata"));
+
+    if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceMetadata") )
+    {
+        psNode = xmlNewChild(psRootNode, psWcsNs, BAD_CAST "ServiceMetadata", NULL);
+
+        /* Add formats list */
+        format_list = msWCSGetFormatsList20(map, NULL);
+        msLibXml2GenerateList(psNode, psWcsNs, "formatSupported", format_list, ',');
+        msFree(format_list);
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Contents section.                                               */
@@ -3187,18 +3195,20 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
                         "SupportedFormat", format_list, ',');
             }
 
-            if(cm.native_format != NULL)
-            {
-                xmlNewChild(psSupportedFormats, psWcsNs,
-                        BAD_CAST "NativeFormat", BAD_CAST cm.native_format);
-            }
-            else
-            {
-                msDebug("msWCSDescribeCoverage20_CoverageDescription(): "
-                        "No native format specified.\n");
-            }
-
             msFree(format_list);
+        }
+
+        /* -------------------------------------------------------------------- */
+        /*      nativeFormat                                                    */
+        /* -------------------------------------------------------------------- */
+        xmlNewChild(psSP, psWcsNs,
+                BAD_CAST "nativeFormat", BAD_CAST (cm.native_format ?
+                                                    cm.native_format : ""));
+
+        if (!cm.native_format)
+        {
+            msDebug("msWCSDescribeCoverage20_CoverageDescription(): "
+                    "No native format specified.\n");
         }
     }
 
@@ -3522,8 +3532,8 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
     if (layer == NULL)
     {
         msSetError(MS_WCSERR,
-                "COVERAGE=%s not found, not in supported layer list.",
-                "msWCSGetCoverage20()", params->ids[0]);
+                "COVERAGE=%s not found, not in supported layer list. A layer might be disabled for \
+this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", params->ids[0]);
         return msWCSException(map, "InvalidParameterValue", "coverage",
                 params->version);
     }
@@ -3769,9 +3779,26 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
                map->width, map->height, map->cellsize, map->extent.minx,
                map->extent.miny, map->extent.maxx, map->extent.maxy);
 
+    /**
+     * Which format to use?
+     *
+     * 1) format parameter
+     * 2) native format (from metadata) or GDAL format of the input dataset
+     * 3) exception
+     **/
+
     if (!params->format)
     {
-        msSetError(MS_WCSERR, "Required parameter FORMAT was not supplied.",
+        if (cm.native_format)
+        {
+            params->format = msStrdup(cm.native_format);
+        }
+    }
+
+    if (!params->format)
+    {
+        msSetError(MS_WCSERR, "Output format could not be automatically determined. "
+                "Use the FORMAT parameter to specify a format.",
                 "msWCSGetCoverage20()");
         return msWCSException(map, "MissingParameterValue", "format",
                 params->version);

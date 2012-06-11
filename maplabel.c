@@ -331,8 +331,8 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
   }
   
   /* check that the label intersects the layer mask */
-  if(layerPtr->masklayer) {
-     int maskLayerIdx = msGetLayerIndex(map,layerPtr->masklayer);
+  if(layerPtr->mask) {
+     int maskLayerIdx = msGetLayerIndex(map,layerPtr->mask);
      layerObj *maskLayer = GET_LAYER(map,maskLayerIdx);
      if(maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
         rasterBufferObj rb;
@@ -521,8 +521,8 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
   }
   /* check that the label intersects the layer mask */
 
-  if (layerPtr->masklayer) {
-    int maskLayerIdx = msGetLayerIndex(map, layerPtr->masklayer);
+  if (layerPtr->mask) {
+    int maskLayerIdx = msGetLayerIndex(map, layerPtr->mask);
     layerObj *maskLayer = GET_LAYER(map, maskLayerIdx);
     if (maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
       rasterBufferObj rb;

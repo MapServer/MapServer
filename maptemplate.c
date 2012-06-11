@@ -1257,41 +1257,41 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     ** now we know which item so build the tagValue
     */
     if(shape->values[i] && strlen(shape->values[i]) > 0) {
+      char *itemValue=NULL;
 
+      /* set tag text depending on pattern (if necessary), nullFormat can contain $value (#3637) */
       if(pattern && msEvalRegex(pattern, shape->values[i]) != MS_TRUE)
         tagValue = msStrdup(nullFormat);
-      else {
-        char *itemValue=NULL;
-
-        if(precision != -1) {
-          char numberFormat[16];
-        
-          itemValue = (char *) msSmallMalloc(64); /* plenty big */
-          snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
-          snprintf(itemValue, 64, numberFormat, atof(shape->values[i]));
-        } else
-          itemValue = msStrdup(shape->values[i]);
-
-        if(commify == MS_TRUE)
-          itemValue = msCommifyString(itemValue);
-
-        /* apply other effects */
-        if(uc == MS_TRUE)
-          for(j=0; j<strlen(itemValue); j++) itemValue[j] = toupper(itemValue[j]);
-        if(lc == MS_TRUE)
-          for(j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
-      
+      else 
         tagValue = msStrdup(format);
-        tagValue = msReplaceSubstring(tagValue, "$value", itemValue);
-        msFree(itemValue);
 
-        if(!tagValue) {
-          msSetError(MS_WEBERR, "Error applying item format.", "processItemTag()");
-          return(MS_FAILURE); /* todo leaking... */
-        }
-      }
+      if(precision != -1) {
+        char numberFormat[16];
+       
+        itemValue = (char *) msSmallMalloc(64); /* plenty big */
+        snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
+        snprintf(itemValue, 64, numberFormat, atof(shape->values[i]));
+      } else
+        itemValue = msStrdup(shape->values[i]);
+
+      if(commify == MS_TRUE)
+        itemValue = msCommifyString(itemValue);
+
+      /* apply other effects */
+      if(uc == MS_TRUE)
+        for(j=0; j<strlen(itemValue); j++) itemValue[j] = toupper(itemValue[j]);
+      if(lc == MS_TRUE)
+        for(j=0; j<strlen(itemValue); j++) itemValue[j] = tolower(itemValue[j]);
+      
+      tagValue = msReplaceSubstring(tagValue, "$value", itemValue);
+      msFree(itemValue);
+
+      if(!tagValue) {
+        msSetError(MS_WEBERR, "Error applying item format.", "processItemTag()");
+        return(MS_FAILURE); /* todo leaking... */
+      }     
     } else {
-      tagValue = msStrdup(nullFormat);
+      tagValue = msStrdup(nullFormat); /* attribute value is NULL or empty */
     }
 
     /* find the end of the tag */
@@ -1808,7 +1808,7 @@ static int processDateTag(char **line)
   struct tm *datetime;
   time_t t;
   int result;
-  char *tag, *tagStart, *tagEnd;
+  char *tag=NULL, *tagStart, *tagEnd;
   hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 #define DATE_BUFLEN 1024
@@ -1870,7 +1870,7 @@ static int processDateTag(char **line)
     }
 
     /* clean up */
-    free(tag); tag = NULL;
+    msFree(tag); tag = NULL;
     msFreeHashTable(tagArgs); tagArgs=NULL;
 
     if((*line)[tagOffset] != '\0')

@@ -69,12 +69,49 @@ PHP_METHOD(hashtableObj, __construct)
 
 PHP_METHOD(hashtableObj, __get)
 {
-    mapscript_throw_exception("hashTableObj has no property." TSRMLS_CC);
+    char *property;
+    long property_len;
+    zval *zobj = getThis();
+    php_hashtable_object *php_hashtable;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                              &property, &property_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_hashtable = (php_hashtable_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    IF_GET_LONG("numitems", php_hashtable->hashtable->numitems) 
+    else 
+    {
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+    }
 }
 
 PHP_METHOD(hashtableObj, __set)
 {
-    mapscript_throw_exception("hashTableObj has no property." TSRMLS_CC);
+    char *property;
+    long property_len;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                              &property, &property_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+    if ( (STRING_EQUAL("numitems", property)))
+    {
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
+    }
+    else 
+    {
+        mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
+    }
 }
 
 /* {{{ proto int hashtable.get(string key)

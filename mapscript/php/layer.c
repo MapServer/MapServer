@@ -51,6 +51,13 @@ ZEND_BEGIN_ARG_INFO_EX(layer_updateFromString_args, 0, 0, 1)
   ZEND_ARG_INFO(0, snippet)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(layer_setExtent_args, 0, 0, 4)
+  ZEND_ARG_INFO(0, minx)
+  ZEND_ARG_INFO(0, miny)
+  ZEND_ARG_INFO(0, maxx)
+  ZEND_ARG_INFO(0, maxy)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(layer_getClass_args, 0, 0, 1)
   ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
@@ -107,6 +114,11 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(layer_setProcessing_args, 0, 0, 1)
   ZEND_ARG_INFO(0, string)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(layer_setProcessingKey_args, 0, 0, 2)
+  ZEND_ARG_INFO(0, key)
+  ZEND_ARG_INFO(0, value)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(layer_applySLD_args, 0, 0, 2)
@@ -168,6 +180,16 @@ ZEND_BEGIN_ARG_INFO_EX(layer_queryByAttributes_args, 0, 0, 3)
   ZEND_ARG_INFO(0, mode)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(layer_queryByFilter_args, 0, 0, 1)
+  ZEND_ARG_INFO(0, string)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(layer_queryByIndex_args, 0, 0, 2)
+  ZEND_ARG_INFO(0, tileindex)
+  ZEND_ARG_INFO(0, shapeindex)
+  ZEND_ARG_INFO(0, addtoquery)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(layer_getShape_args, 0, 0, 1)
   ZEND_ARG_OBJ_INFO(0, record, resultObj, 0)
 ZEND_END_ARG_INFO()
@@ -181,7 +203,7 @@ PHP_METHOD(layerObj, __construct)
     layerObj *layer;
     int index;
     php_map_object *php_map;
-    php_layer_object *php_layer, *php_layer2;
+    php_layer_object *php_layer, *php_layer2=NULL;
     parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -250,6 +272,7 @@ PHP_METHOD(layerObj, __get)
     else IF_GET_LONG("index", php_layer->layer->index)
     else IF_GET_LONG("status", php_layer->layer->status)
     else IF_GET_LONG("debug",  php_layer->layer->debug)
+    else IF_GET_STRING("bandsitem", php_layer->layer->bandsitem)           
     else IF_GET_STRING("classitem", php_layer->layer->classitem)
     else IF_GET_STRING("classgroup", php_layer->layer->classgroup)
     else IF_GET_STRING("name", php_layer->layer->name)
@@ -261,11 +284,14 @@ PHP_METHOD(layerObj, __get)
     else IF_GET_LONG("toleranceunits", php_layer->layer->toleranceunits)
     else IF_GET_LONG("sizeunits", php_layer->layer->sizeunits)
     else IF_GET_DOUBLE("symbolscaledenom", php_layer->layer->symbolscaledenom)
+    else IF_GET_LONG("maxclasses",  php_layer->layer->maxclasses)                      
     else IF_GET_DOUBLE("minscaledenom", php_layer->layer->minscaledenom)
     else IF_GET_DOUBLE("maxscaledenom", php_layer->layer->maxscaledenom)
     else IF_GET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom)
     else IF_GET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom)
-    else IF_GET_STRING("masklayer", php_layer->layer->masklayer)
+    else IF_GET_DOUBLE("maxgeowidth", php_layer->layer->maxgeowidth)
+    else IF_GET_DOUBLE("mingeowidth", php_layer->layer->mingeowidth)           
+    else IF_GET_STRING("mask", php_layer->layer->mask)
     else IF_GET_LONG("minfeaturesize", php_layer->layer->minfeaturesize)
     else IF_GET_LONG("maxfeatures", php_layer->layer->maxfeatures)
     else IF_GET_LONG("startindex", php_layer->layer->startindex)
@@ -284,10 +310,13 @@ PHP_METHOD(layerObj, __get)
     else IF_GET_STRING("template", php_layer->layer->template)
     else IF_GET_LONG("opacity", php_layer->layer->opacity)
     else IF_GET_STRING("styleitem", php_layer->layer->styleitem)
+    else IF_GET_LONG("numitems", php_layer->layer->numitems)
+    else IF_GET_LONG("numjoins", php_layer->layer->numjoins)
     else IF_GET_LONG("num_processing", php_layer->layer->numprocessing)
     else IF_GET_STRING("requires", php_layer->layer->requires)
     else IF_GET_STRING("labelrequires", php_layer->layer->labelrequires)
-    else IF_GET_OBJECT("offsite", mapscript_ce_color, php_layer->offsite, &php_layer->layer->offsite) 
+    else IF_GET_OBJECT("offsite", mapscript_ce_color, php_layer->offsite, &php_layer->layer->offsite)
+    else IF_GET_OBJECT("extent", mapscript_ce_rect, php_layer->extent, &php_layer->layer->extent)  
     else IF_GET_OBJECT("grid",  mapscript_ce_grid, php_layer->grid, (graticuleObj *)(php_layer->layer->layerinfo)) 
     else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_layer->metadata, &php_layer->layer->metadata) 
     else IF_GET_OBJECT("bindvals", mapscript_ce_hashtable, php_layer->bindvals, &php_layer->layer->bindvals) 
@@ -320,6 +349,7 @@ PHP_METHOD(layerObj, __set)
     IF_SET_LONG("status", php_layer->layer->status, value)
     else IF_SET_LONG("debug",  php_layer->layer->debug, value)
     else IF_SET_STRING("classitem", php_layer->layer->classitem, value)
+    else IF_SET_STRING("bandsitem", php_layer->layer->bandsitem, value)           
     else IF_SET_STRING("classgroup", php_layer->layer->classgroup, value)
     else IF_SET_STRING("name", php_layer->layer->name, value)
     else IF_SET_STRING("group", php_layer->layer->group, value)
@@ -335,7 +365,9 @@ PHP_METHOD(layerObj, __set)
     else IF_SET_LONG("minfeaturesize", php_layer->layer->minfeaturesize, value)
     else IF_SET_DOUBLE("labelminscaledenom", php_layer->layer->labelminscaledenom, value)
     else IF_SET_DOUBLE("labelmaxscaledenom", php_layer->layer->labelmaxscaledenom, value)
-    else IF_SET_STRING("masklayer", php_layer->layer->masklayer, value)
+    else IF_SET_DOUBLE("maxgeowidth", php_layer->layer->maxgeowidth, value)
+    else IF_SET_DOUBLE("mingeowidth", php_layer->layer->mingeowidth, value)           
+    else IF_SET_STRING("mask", php_layer->layer->mask, value)
     else IF_SET_LONG("maxfeatures", php_layer->layer->maxfeatures, value)
     else IF_SET_LONG("startindex", php_layer->layer->startindex, value)
     else IF_SET_LONG("annotate", php_layer->layer->annotate, value)
@@ -360,6 +392,10 @@ PHP_METHOD(layerObj, __set)
               (STRING_EQUAL("metadata", property)) ||
               (STRING_EQUAL("bindvals", property)) ||
               (STRING_EQUAL("projection", property)) ||
+              (STRING_EQUAL("maxclasses", property)) ||
+              (STRING_EQUAL("numitems", property)) ||
+              (STRING_EQUAL("numjoins", property)) ||                            
+              (STRING_EQUAL("extent", property)) ||
               (STRING_EQUAL("cluster", property)) )
     {
         mapscript_throw_exception("Property '%s' is an object and can only be modified through its accessors." TSRMLS_CC, property);
@@ -642,6 +678,80 @@ PHP_METHOD(layerObj, queryByAttributes)
 }
 /* }}} */
 
+/* {{{ proto int layer.queryByFilter(string string)
+   Query by filter. */
+PHP_METHOD(layerObj, queryByFilter)
+{
+    zval *zobj = getThis();
+    char *string;
+    long string_len;
+    int status = MS_FAILURE;
+    php_layer_object *php_layer;
+    php_map_object *php_map;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                              &string, &string_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if (!php_layer->parent.val)
+    {
+        mapscript_throw_exception("No map object associated with this layer object." TSRMLS_CC);
+        return;
+    }
+    
+    php_map = (php_map_object *) zend_object_store_get_object(php_layer->parent.val TSRMLS_CC);
+    
+    if ((status = layerObj_queryByFilter(php_layer->layer, php_map->map,
+                                         string)) != MS_SUCCESS)
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
+    
+    RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto int layer.queryByIndex(int tileindex, int shapeindex, int addtoquery)
+   Query by index. */
+PHP_METHOD(layerObj, queryByIndex)
+{
+    zval *zobj = getThis();
+    long tileindex, shapeindex;
+    long addtoquery=MS_FALSE;
+    int status = MS_FAILURE;
+    php_layer_object *php_layer;
+    php_map_object *php_map;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll|l",
+                              &tileindex, &shapeindex, &addtoquery) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if (!php_layer->parent.val)
+    {
+        mapscript_throw_exception("No map object associated with this layer object." TSRMLS_CC);
+        return;
+    }
+    
+    php_map = (php_map_object *) zend_object_store_get_object(php_layer->parent.val TSRMLS_CC);
+    
+    if ((status = layerObj_queryByIndex(php_layer->layer, php_map->map,
+                                        tileindex, shapeindex, addtoquery)) != MS_SUCCESS)
+        mapscript_report_mapserver_error(E_WARNING TSRMLS_CC);
+    
+    RETURN_LONG(status);
+}
+/* }}} */
+
 /* {{{ proto int layer.updateFromString(string snippet)
    Update a layer from a string snippet.  Returns MS_SUCCESS/MS_FAILURE */
 PHP_METHOD(layerObj, updateFromString)
@@ -831,7 +941,7 @@ PHP_METHOD(layerObj, setProjection)
     long projection_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
-    php_projection_object *php_projection;
+    php_projection_object *php_projection=NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -895,7 +1005,7 @@ PHP_METHOD(layerObj, setWKTProjection)
     long projection_len;
     int status = MS_FAILURE;
     php_layer_object *php_layer;
-    php_projection_object *php_projection;
+    php_projection_object *php_projection=NULL;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -1161,6 +1271,34 @@ PHP_METHOD(layerObj, getExtent)
 }
 /* }}} */
 
+/* {{{ proto int layer.setExtent(int minx, int miny, int maxx, int maxy)
+   Set the layer extent. */
+PHP_METHOD(layerObj, setExtent)
+{
+    zval *zobj = getThis();
+    int minx, miny, maxx, maxy;
+    php_layer_object *php_layer;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "llll",
+                              &minx, &miny, &maxx, &maxy) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+
+    php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    if (minx > maxx || miny > maxy)
+    {
+        mapscript_throw_mapserver_exception("Invalid min/max values" TSRMLS_CC);
+        return;
+    }
+
+    RETURN_LONG(msLayerSetExtent(php_layer->layer, minx, miny, maxx, maxy))
+}
+/* }}} */
+    
+
 /* {{{ proto int layer.addFeature(ShapeObj poShape)
    Add a shape */
 PHP_METHOD(layerObj, addFeature)
@@ -1371,6 +1509,33 @@ PHP_METHOD(layerObj, setProcessing)
     
     php_layer->layer->processing[php_layer->layer->numprocessing-1] = strdup(string);
     php_layer->layer->processing[php_layer->layer->numprocessing] = NULL;
+    
+    RETURN_LONG(MS_SUCCESS);
+}
+/* }}} */
+
+/* {{{ boolean layer.setProcessingKe(string key, string value)
+  set a processing key string to the layer*/
+PHP_METHOD(layerObj, setProcessingKey)
+{
+    zval *zobj = getThis();
+    char *key = NULL;
+    long key_len;
+    char *value = NULL;
+    long value_len;    
+    php_layer_object *php_layer;
+
+    PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+                              &key, &key_len, &value, &value_len) == FAILURE) {
+        PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+        return;
+    }
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    
+    php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+    
+    msLayerSetProcessingKey( php_layer->layer, key, value );
     
     RETURN_LONG(MS_SUCCESS);
 }
@@ -1948,6 +2113,8 @@ zend_function_entry layer_functions[] = {
     PHP_ME(layerObj, queryByShape, layer_queryByShape_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, queryByFeatures, layer_queryByFeatures_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, queryByAttributes, layer_queryByAttributes_args, ZEND_ACC_PUBLIC)
+    PHP_ME(layerObj, queryByFilter, layer_queryByFilter_args, ZEND_ACC_PUBLIC)
+    PHP_ME(layerObj, queryByIndex, layer_queryByIndex_args, ZEND_ACC_PUBLIC)    
     PHP_ME(layerObj, setFilter, layer_setFilter_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, getFilterString, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, setProjection, layer_setProjection_args, ZEND_ACC_PUBLIC)
@@ -1960,7 +2127,8 @@ zend_function_entry layer_functions[] = {
     PHP_ME(layerObj, whichShapes, layer_whichShapes_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, nextShape, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, close, NULL, ZEND_ACC_PUBLIC)
-    PHP_ME(layerObj, getExtent, NULL, ZEND_ACC_PUBLIC)
+    PHP_ME(layerObj, getExtent, NULL, ZEND_ACC_PUBLIC) 
+    PHP_ME(layerObj, setExtent, layer_setExtent_args, ZEND_ACC_PUBLIC)   
     PHP_ME(layerObj, addFeature, layer_addFeature_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, getMetaData, layer_getMetaData_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, setMetaData, layer_setMetaData_args, ZEND_ACC_PUBLIC)
@@ -1968,6 +2136,7 @@ zend_function_entry layer_functions[] = {
     PHP_ME(layerObj, getWMSFeatureInfoURL, layer_getWMSFeatureInfoURL_args, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, getItems, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, setProcessing, layer_setProcessing_args, ZEND_ACC_PUBLIC)
+    PHP_ME(layerObj, setProcessingKey, layer_setProcessingKey_args, ZEND_ACC_PUBLIC)    
     PHP_ME(layerObj, getProcessing, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, clearProcessing, NULL, ZEND_ACC_PUBLIC)
     PHP_ME(layerObj, executeWFSGetFeature, NULL, ZEND_ACC_PUBLIC)
@@ -2020,6 +2189,7 @@ static void mapscript_layer_object_destroy(void *object TSRMLS_DC)
     MAPSCRIPT_DELREF(php_layer->bindvals);
     MAPSCRIPT_DELREF(php_layer->cluster);
     MAPSCRIPT_DELREF(php_layer->projection);
+    MAPSCRIPT_DELREF(php_layer->extent);
 
     if (php_layer->layer && !php_layer->is_ref) {
         layerObj_destroy(php_layer->layer);
@@ -2045,6 +2215,7 @@ static zend_object_value mapscript_layer_object_new(zend_class_entry *ce TSRMLS_
     php_layer->bindvals = NULL;
     php_layer->cluster = NULL;
     php_layer->projection = NULL;
+    php_layer->extent = NULL;    
 
     return retval;
 }

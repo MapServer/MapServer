@@ -76,6 +76,7 @@ PHP_METHOD(colorObj, __get)
     IF_GET_LONG("red", php_color->color->red)
     else IF_GET_LONG("green", php_color->color->green)
     else IF_GET_LONG("blue", php_color->color->blue)
+    else IF_GET_LONG("alpha", php_color->color->alpha)
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
@@ -103,6 +104,7 @@ PHP_METHOD(colorObj, __set)
     IF_SET_COLOR("red", php_color->color->red, value)
     else IF_SET_COLOR("green", php_color->color->green, value)
     else IF_SET_COLOR("blue", php_color->color->blue, value)
+    else IF_SET_COLOR("alpha", php_color->color->alpha, value)           
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);

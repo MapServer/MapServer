@@ -82,7 +82,7 @@ PHP_METHOD(styleObj, __construct)
     styleObj *style;
     php_class_object *php_class = NULL;
     php_label_object *php_label = NULL;
-    php_style_object *php_style, *php_style2;
+    php_style_object *php_style, *php_style2 = NULL;
     parent_object parent;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -171,6 +171,9 @@ PHP_METHOD(styleObj, __get)
     else IF_GET_STRING("rangeitem", php_style->style->rangeitem)
     else IF_GET_LONG("rangeitemindex", php_style->style->rangeitemindex)
     else IF_GET_DOUBLE("gap", php_style->style->gap)
+    else IF_GET_DOUBLE("initialgap", php_style->style->initialgap)
+    else IF_GET_DOUBLE("maxscaledenom", php_style->style->maxscaledenom) 
+    else IF_GET_DOUBLE("minscaledenom", php_style->style->minscaledenom)          
     else IF_GET_LONG("patternlength", php_style->style->patternlength)  
     else IF_GET_LONG("position", php_style->style->position)
     else IF_GET_LONG("linecap", php_style->style->linecap)
@@ -197,7 +200,7 @@ PHP_METHOD(styleObj, __set)
     zval *value;
     zval *zobj = getThis();
     php_style_object *php_style;
-    php_map_object *php_map;
+    php_map_object *php_map = NULL;
     php_class_object *php_class;
     php_layer_object *php_layer;
     php_labelcachemember_object *php_labelcachemember;
@@ -226,11 +229,14 @@ PHP_METHOD(styleObj, __set)
     else IF_SET_LONG("polaroffsetangle", php_style->style->polaroffsetangle, value)
     else IF_SET_DOUBLE("angle", php_style->style->angle, value)
     else IF_SET_LONG("antialias", php_style->style->antialias, value)
-    else IF_SET_DOUBLE("minvalue", php_style->style->minvalue, value)
+    else IF_SET_DOUBLE("minvalue", php_style->style->minvalue, value)           
     else IF_SET_DOUBLE("maxvalue", php_style->style->maxvalue, value)
+    else IF_SET_DOUBLE("minscaledenom", php_style->style->minscaledenom, value)
+    else IF_SET_DOUBLE("maxscaledenom", php_style->style->maxscaledenom, value)           
     else IF_SET_STRING("rangeitem", php_style->style->rangeitem, value)
     else IF_SET_LONG("rangeitemindex", php_style->style->rangeitemindex, value)
     else IF_SET_DOUBLE("gap", php_style->style->gap, value)
+    else IF_SET_DOUBLE("initialgap", php_style->style->initialgap, value)           
     else IF_SET_LONG("position", php_style->style->position, value)
     else IF_SET_LONG("linecap", php_style->style->linecap, value)
     else IF_SET_LONG("linejoin", php_style->style->linejoin, value)

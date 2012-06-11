@@ -114,6 +114,9 @@ PHP_METHOD(OWSRequestObj, __get)
 
 
     IF_GET_LONG("numparams", php_owsrequest->cgirequest->NumParams)
+    else IF_GET_STRING("contenttype", php_owsrequest->cgirequest->contenttype)
+    else IF_GET_STRING("postrequest", php_owsrequest->cgirequest->postrequest)
+    else IF_GET_STRING("httpcookiedata", php_owsrequest->cgirequest->httpcookiedata)           
     else IF_GET_LONG("type", php_owsrequest->cgirequest->type)
     else 
     {
@@ -140,7 +143,10 @@ PHP_METHOD(OWSRequestObj, __set)
     php_owsrequest = (php_owsrequest_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
     if ( (STRING_EQUAL("numparams", property)) ||
-         (STRING_EQUAL("type", property)))
+         (STRING_EQUAL("type", property)) ||
+         (STRING_EQUAL("contenttype", property)) ||
+         (STRING_EQUAL("postrequest", property)) ||
+         (STRING_EQUAL("httpcookiedata", property)))
     {
         mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
     }

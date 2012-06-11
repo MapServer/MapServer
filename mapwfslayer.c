@@ -156,7 +156,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "filter");
     if (pszTmp && strlen(pszTmp) > 0)
     {
-        if (strstr(pszTmp, "<Filter>") !=NULL || strstr(pszTmp, "<ogc:Filter>") != NULL)
+        if (strstr(pszTmp, "<Filter>") !=NULL || strstr(pszTmp, "<ogc:Filter") != NULL)
           psParams->pszFilter = msStrdup(pszTmp);
         else
         {

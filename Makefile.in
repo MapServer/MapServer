@@ -55,16 +55,9 @@ PROJ_INC=  @PROJ_INC@
 PROJ_LIBS= @PROJ_LIBS@
 PROJ=      @PROJ_ENABLED@
 
-# GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
-#
-#   - Versions 1.3 to 1.5 write non-LZW GIF (-DUSE_GD_1_3).
-#   - Versions 1.6 and greater write PNG (-DUSE_GD_1_6). Add -lpng -lz to GD_LIB line.
-#
-#
+# GD distribution
 GD_INC=  @GD_INC@
 GD_LIB=  @GD_LIB@
-GD=      @GD_DEF@
-GD_STATIC = @GD_STATIC@
 
 AGG_INC=  -Irenderers/agg/include
 
@@ -98,12 +91,6 @@ GIF_INC= @GIF_INC@
 GIF_LIB= @GIF_LIB@
 GIF=	 @GIF_ENABLED@
 
-# 
-# ZLIB option (compressed SVG)
-#
-ZLIB_INC=  @ZLIB_INC@
-ZLIB_LIB=  @ZLIB_LIB@
-ZLIB=      @ZLIB_ENABLED@
 
 # JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
 JPEG_INC= @JPEG_INC@
@@ -257,7 +244,7 @@ INCLUDES = $(FT_INC) $(REGEX_INC) $(PNG_INC) $(GIF_INC) $(JPEG_INC) $(GD_INC) \
         $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PROJ_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYSQL_INC) \
         $(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
-        $(EXEMPI_INC) $(ZLIB_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC) $(LIBSVG_CAIRO_INC) \
+        $(EXEMPI_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC) $(LIBSVG_CAIRO_INC) \
 		  $(APR_INC) $(APACHE_INC)
 
 FLAGS = @DEBUG_FLAGS@ $(DEFINES) $(INCLUDES)
@@ -270,13 +257,11 @@ SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
 	  $(MYSQL_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
 	  $(THREAD_LIB) $(ICONV_LIB) $(EXEMPI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
-	  $(ZLIB_LIB) $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB) $(LIBSVG_CAIRO_LIB) \
+	  $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB) $(LIBSVG_CAIRO_LIB) \
 	  $(APR_LIB)
 
-# STATIC_LIBS is full filename with path of libs that will be statically linked
-STATIC_LIBS= $(GD_STATIC)
 
-EXE_LDFLAGS =	$(RUNPATHS) -lmapserver $(SUP_LIBS) $(STATIC_LIBS)
+EXE_LDFLAGS =	$(RUNPATHS) -lmapserver $(SUP_LIBS)
 
 RM= /bin/rm -f
 
@@ -371,7 +356,7 @@ mod_mapserver.la: $(LIBMAP) mod_mapserver.c
 mapscript: mapscriptvars mapserver-config
 
 $(LIBMAP): $(OBJS)
-	$(LINK) -release $(MS_VERSION)  $(OBJS) $(SUP_LIBS) $(STATIC_LIBS) -o $(LIBMAP)
+	$(LINK) -release $(MS_VERSION)  $(OBJS) $(SUP_LIBS) -o $(LIBMAP)
 
 shp2pdf: $(LIBMAP) shp2pdf.$(OBJ_SUFFIX)
 	$(LINK) shp2pdf.$(OBJ_SUFFIX) $(LIBMAP) -o shp2pdf
@@ -427,7 +412,7 @@ mapscriptvars:	Makefile
 	echo $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ >> mapscriptvars
 	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) $(GEOS_INC) >> mapscriptvars
 	echo $(LIBMAP) >> mapscriptvars
-	echo $(STATIC_LIBS) >> mapscriptvars
+	echo $(EXE_LDFLAGS) >> mapscriptvars
 	grep '#define MS_VERSION ' mapserver.h >> mapscriptvars
 
 mapserver-config: Makefile
