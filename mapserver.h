@@ -975,11 +975,11 @@ typedef struct {
 #endif
 
 #ifdef SWIG
-%immutable
+%immutable;
 #endif
    int numstyles;
 #ifdef SWIG
-%mutable
+%mutable;
 #endif
   
 } labelLeaderObj;
@@ -1089,11 +1089,11 @@ typedef struct class_obj{
 #endif
 
 #ifdef SWIG
-%immutable
+%immutable;
 #endif
   int numstyles;
 #ifdef SWIG
-%mutable
+%mutable;
 #endif
 
 #ifndef SWIG
