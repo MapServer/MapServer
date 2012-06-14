@@ -965,9 +965,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
 #endif
 
-  layer->paginate = MS_TRUE; /* mapscript pagination support for drawing ? */
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
-  layer->paginate = MS_FALSE;
   if(status == MS_DONE) { /* no overlap */
     msLayerClose(layer);
     return MS_SUCCESS;

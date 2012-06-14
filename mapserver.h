@@ -1508,10 +1508,6 @@ typedef struct layer_obj {
   
   int maxfeatures;      
   int startindex;
-#ifndef SWIG
-  /* boolean variable, do we need to handle pagination at driver level */
-  int paginate;
-#endif
   
   colorObj offsite; /* transparent pixel value for raster images */
   
@@ -1741,7 +1737,7 @@ typedef struct map_obj{ /* structure for a map */
 /************************************************************************/
 #ifndef SWIG
 struct layerVTable {
-  int (*LayerSupportsCommonFilters)(layerObj *layer);
+  int (*LayerSupportsCommonFilters)(layerObj *layer);  
   int (*LayerInitItemInfo)(layerObj *layer);
   void (*LayerFreeItemInfo)(layerObj *layer);
   int (*LayerOpen)(layerObj *layer);
@@ -1761,6 +1757,7 @@ struct layerVTable {
   int (*LayerGetAutoProjection)(layerObj *layer, projectionObj *projection);
   char* (*LayerEscapeSQLParam)(layerObj *layer, const char* pszString);
   char* (*LayerEscapePropertyName)(layerObj *layer, const char* pszString);
+  void (*LayerEnablePaging)(layerObj *layer, int value);  
 };
 #endif /*SWIG*/
 
@@ -2202,6 +2199,8 @@ MS_DLL_EXPORT int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, map
 MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
 
 MS_DLL_EXPORT int msLayerSupportsPaging(layerObj *layer);
+
+MS_DLL_EXPORT void msLayerEnablePaging(layerObj *layer, int value);
 
 MS_DLL_EXPORT int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format);
 

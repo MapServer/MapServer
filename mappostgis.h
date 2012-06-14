@@ -63,6 +63,7 @@ typedef struct {
     char        *fromsource; /* Specified record source, ed "thegeom from THETABLE" or "thegeom from (SELECT..) AS FOO" */
     int         endian;      /* Endianness of the mapserver host */
     int         version;     /* PostGIS version of the database */
+    int         paging;      /* Driver handling of pagination, enabled by default */
 }
 msPostGISLayerInfo;
 

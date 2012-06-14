@@ -488,7 +488,7 @@ int msQueryByIndex(mapObj *map)
   }
 
   lp = (GET_LAYER(map, map->query.layer));
-
+  
   if(!msIsLayerQueryable(lp)) {
     msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByIndex()"); 
     return(MS_FAILURE);
@@ -503,6 +503,8 @@ int msQueryByIndex(mapObj *map)
   }
 
   msLayerClose(lp); /* reset */
+  /* disable driver paging */
+  msLayerEnablePaging(lp, MS_FALSE);  
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -667,8 +669,6 @@ int msQueryByAttributes(mapObj *map)
 
   /* identify candidate shapes */
   searchrect = map->query.rect;
-  /* enable driver-level pagination */
-  lp->paginate = MS_TRUE;
 #ifdef USE_PROJ  
   if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))  
     msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
@@ -677,7 +677,6 @@ int msQueryByAttributes(mapObj *map)
 #endif
 
   status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
-  lp->paginate = MS_FALSE; /* reset */
   if(status == MS_DONE) { /* no overlap */
     msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
     msLayerClose(lp);
@@ -811,7 +810,7 @@ int msQueryByFilter(mapObj *map)
     /* conditions may have changed since this layer last drawn, so set 
        layer->project true to recheck projection needs (Bug #673) */ 
     lp->project = MS_TRUE; 
-
+    
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
@@ -840,6 +839,9 @@ int msQueryByFilter(mapObj *map)
     }
 
     msLayerClose(lp); /* reset */
+    /* disable driver paging */
+    msLayerEnablePaging(lp, MS_FALSE);
+
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) goto query_error;
 
@@ -1043,9 +1045,6 @@ int msQueryByRect(mapObj *map)
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
-    /* enable driver-level pagination */
-    lp->paginate = MS_TRUE;
-
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
@@ -1053,7 +1052,6 @@ int msQueryByRect(mapObj *map)
       lp->project = MS_FALSE;
 #endif
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
-    lp->paginate = MS_FALSE; /* reset */
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
       continue;
@@ -1570,8 +1568,6 @@ int msQueryByPoint(mapObj *map)
 
     /* identify target shapes */
     searchrect = rect;
-    /* enable driver-level pagination */
-    lp->paginate = MS_TRUE;
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
@@ -1579,7 +1575,6 @@ int msQueryByPoint(mapObj *map)
       lp->project = MS_FALSE;
 #endif
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
-    lp->paginate = MS_FALSE; /* reset */
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
       continue;
@@ -1764,6 +1759,8 @@ int msQueryByShape(mapObj *map)
       tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
    
     msLayerClose(lp); /* reset */
+    /* disable driver paging */
+    msLayerEnablePaging(lp, MS_FALSE);        
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
