@@ -3710,8 +3710,8 @@ char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 		                                    CPLES_SQL ); 
 	pszEscapedStr = msStrdup(pszEscapedOGRStr);
         CPLFree(pszEscapedOGRStr);
-	return pszEscapedStr; 
     }
+    return pszEscapedStr;     
 #else
 /* ------------------------------------------------------------------
  * OGR Support not included...
@@ -3719,8 +3719,7 @@ char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 
   msSetError(MS_MISCERR, "OGR support is not available.", 
              "msOGREscapeSQLParam()");
-  return NULL;
-
+  return NULL;  
 #endif /* USE_OGR */  
 }
 
@@ -3753,8 +3752,8 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 
   msSetError(MS_MISCERR, "OGR support is not available.", 
              "msOGREscapePropertyName()");
-  return NULL;
 
+  return NULL;
 #endif /* USE_OGR */  
 }
 /************************************************************************/
