@@ -1285,6 +1285,7 @@ else
   fi
 
   dnl Try to locate include directory
+  test -f $ORA_HOME/include/oci.h && ORA_INCDIR="$ORA_HOME/include"
   test -f $ORA_HOME/sdk/include/oci.h && ORA_INCDIR="$ORA_HOME/sdk/include"
   test -f $ORA_HOME/rdbms/public/oci.h && ORA_INCDIR="$ORA_HOME/rdbms/public"
   test -f $ORA_HOME/rdbms/demo/oci.h && ORA_INCDIR="$ORA_HOME/rdbms/public"

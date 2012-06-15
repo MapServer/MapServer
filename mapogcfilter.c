@@ -3676,6 +3676,7 @@ void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
     layerObj *lp=NULL;
     char szTmp[256];
     const char *pszFullName = NULL;
+    int layerWasOpened =  MS_FALSE;
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
@@ -3685,6 +3686,7 @@ void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
         FLTStripNameSpacesFromPropertyName(psFilterNode);
 
         lp = GET_LAYER(map, i);
+        layerWasOpened = msLayerIsOpen(lp); 
         if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS)
         {
             for(i=0; i<lp->numitems; i++) 
@@ -3699,7 +3701,8 @@ void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
                                            lp->items[i]);
                 }
             }
-            msLayerClose(lp);
+            if (!layerWasOpened) /* do not close the layer if it has been opened somewhere else (paging?) */
+                msLayerClose(lp);
         }
     } 
 #else

@@ -3500,6 +3500,22 @@ int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c,
     return MS_FAILURE; 
 }
 
+int msOrableSpatialGetPaging(layerObj *layer)
+{
+    msOracleSpatialLayerInfo *layerinfo = NULL;
+    
+    if (layer->debug)
+        msDebug("msOracleSpatialLayerGetPaging was called.\n");
+
+    if(!msOracleSpatialLayerIsOpen(layer))
+      return MS_TRUE;
+    
+    assert( layer->layerinfo != NULL);
+    layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
+
+    return layerinfo->paging;
+}
+
 void msOrableSpatialEnablePaging(layerObj *layer, int value)
 {
     msOracleSpatialLayerInfo *layerinfo = NULL;
@@ -3511,11 +3527,11 @@ void msOrableSpatialEnablePaging(layerObj *layer, int value)
         msOracleSpatialLayerOpen(layer);
 
     assert( layer->layerinfo != NULL);
-    layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo
+    layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
 
     layerinfo->paging = value;
     
-  return;
+    return;
 }
 
 #else
@@ -3586,9 +3602,15 @@ int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c,
   return MS_FAILURE;
 }
 
-void msOrableSpatialEnablePaging(int value)
+void msOrableSpatialEnablePaging(layerObj *layer, int value)
 {
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerEnablePaging()" );  
+  return;
+}
+
+int msOrableSpatialGetPaging(layerObj *layer)
+{
+  msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerGetPaging()" );  
   return;
 }
 
@@ -3621,6 +3643,7 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     /* layer->vtable->LayerGetNumFeatures, use default */
     /* layer->vtable->LayerGetAutoProjection = msOracleSpatialLayerGetAutoProjection; Disabled until tested */
     vtable->LayerEnablePaging = msOrableSpatialEnablePaging;
+    vtable->LayerGetPaging = msOrableSpatialGetPaging;    
     
     return MS_SUCCESS;
 }
@@ -3650,6 +3673,7 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
     /* layer->vtable->LayerGetNumFeatures, use default */
     /* layer->vtable->LayerGetAutoProjection = msOracleSpatialLayerGetAutoProjection; Disabled until tested */
     layer->vtable->LayerEnablePaging = msOrableSpatialEnablePaging;
+    layer->vtable->LayerGetPaging = msOrableSpatialGetPaging;    
     
     return MS_SUCCESS;
 }

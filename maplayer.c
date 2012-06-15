@@ -1213,6 +1213,18 @@ msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 #endif
 }
 
+int msLayerGetPaging(layerObj *layer)
+{
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS) {
+      msSetError(MS_MISCERR, "Unable to initialize virtual table", "msLayerGetPaging()");
+      return;
+    }
+  }
+    return layer->vtable->LayerGetPaging(layer);
+}
+
 void msLayerEnablePaging(layerObj *layer, int value) 
 {
     if ( ! layer->vtable) {
@@ -1267,6 +1279,11 @@ int LayerDefaultAutoProjection(layerObj *layer, projectionObj* projection)
 int LayerDefaultSupportsCommonFilters(layerObj *layer)
 {
   return MS_FALSE;
+}
+
+int msLayerDefaultGetPaging(layerObj *layer)
+{
+  return MS_TRUE;
 }
 
 void msLayerDefaultEnablePaging(layerObj *layer, int value)
@@ -1418,6 +1435,7 @@ static int populateVirtualTable(layerVTableObj *vtable)
   vtable->LayerEscapePropertyName = LayerDefaultEscapePropertyName;
 
   vtable->LayerEnablePaging = msLayerDefaultEnablePaging;
+  vtable->LayerGetPaging = msLayerDefaultGetPaging;
 
   return MS_SUCCESS;
 }
@@ -1654,6 +1672,7 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
     /*layer->vtable->LayerEscapePropertyName, use default*/
 
     /* layer->vtable->LayerEnablePaging, use default */
+    /* layer->vtable->LayerGetPaging, use default */    
     
     return MS_SUCCESS;
 }

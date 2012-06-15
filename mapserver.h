@@ -1757,7 +1757,8 @@ struct layerVTable {
   int (*LayerGetAutoProjection)(layerObj *layer, projectionObj *projection);
   char* (*LayerEscapeSQLParam)(layerObj *layer, const char* pszString);
   char* (*LayerEscapePropertyName)(layerObj *layer, const char* pszString);
-  void (*LayerEnablePaging)(layerObj *layer, int value);  
+  void (*LayerEnablePaging)(layerObj *layer, int value);
+  int (*LayerGetPaging)(layerObj *layer);    
 };
 #endif /*SWIG*/
 
@@ -2201,6 +2202,7 @@ MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
 MS_DLL_EXPORT int msLayerSupportsPaging(layerObj *layer);
 
 MS_DLL_EXPORT void msLayerEnablePaging(layerObj *layer, int value);
+MS_DLL_EXPORT int msLayerGetPaging(layerObj *layer);
 
 MS_DLL_EXPORT int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format);
 

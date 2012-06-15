@@ -3317,6 +3317,23 @@ void msPostGISEnablePaging(layerObj *layer, int value) {
     return;
 }
 
+int msPostGISGetPaging(layerObj *layer) {
+
+    msPostGISLayerInfo *layerinfo = NULL;
+
+    if (layer->debug) {
+        msDebug("msPostGISGetPaging called.\n");
+    }
+
+    if(!msPostGISLayerIsOpen(layer))
+      return MS_TRUE;
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+    return layerinfo->paging;
+}
+
 int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
     assert(layer != NULL);
     assert(layer->vtable != NULL);
@@ -3341,7 +3358,8 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
     /* layer->vtable->LayerGetAutoProjection, use defaut*/  
 
     layer->vtable->LayerEscapeSQLParam = msPostGISEscapeSQLParam;
-    layer->vtable->LayerEnablePaging = msPostGISEnablePaging;    
+    layer->vtable->LayerEnablePaging = msPostGISEnablePaging;
+    layer->vtable->LayerGetPaging = msPostGISGetPaging;        
 
     return MS_SUCCESS;
 }

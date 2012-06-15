@@ -503,10 +503,10 @@ int msQueryByIndex(mapObj *map)
   }
 
   msLayerClose(lp); /* reset */
-  /* disable driver paging */
-  msLayerEnablePaging(lp, MS_FALSE);  
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
+  /* disable driver paging */
+  msLayerEnablePaging(lp, MS_FALSE);  
 
   /* build item list, we want *all* items */
   status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -598,6 +598,7 @@ int msQueryByAttributes(mapObj *map)
   rectObj searchrect;
 
   shapeObj shape;
+  int paging;
   
   int nclasses = 0;
   int *classgroup = NULL;
@@ -653,12 +654,15 @@ int msQueryByAttributes(mapObj *map)
 
   msInitShape(&shape);
 
+  /* Paging could have been disabled before */ 
+  paging = msLayerGetPaging(lp);
   msLayerClose(lp); /* reset */
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) {
     msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
     return(MS_FAILURE);
   }
+  msLayerEnablePaging(lp, paging);  
   
   /* build item list, we want *all* items */
   status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -839,11 +843,10 @@ int msQueryByFilter(mapObj *map)
     }
 
     msLayerClose(lp); /* reset */
-    /* disable driver paging */
-    msLayerEnablePaging(lp, MS_FALSE);
-
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) goto query_error;
+    /* disable driver paging */
+    msLayerEnablePaging(lp, MS_FALSE);
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -967,7 +970,8 @@ int msQueryByRect(mapObj *map)
   shapeObj shape, searchshape;
   rectObj searchrect;
   double layer_tolerance = 0, tolerance = 0;
-  
+
+  int paging;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -1037,10 +1041,13 @@ int msQueryByRect(mapObj *map)
       continue;
     }
 
+    /* Paging could have been disabled before */ 
+    paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
-
+    msLayerEnablePaging(lp, paging);
+    
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -1252,6 +1259,7 @@ int msQueryByFeatures(mapObj *map)
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
+    msLayerEnablePaging(lp, MS_FALSE);
     
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -1482,6 +1490,7 @@ int msQueryByPoint(mapObj *map)
 
   layerObj *lp;
 
+  int paging;
   char status;
   rectObj rect, searchrect;
   shapeObj shape;
@@ -1558,10 +1567,13 @@ int msQueryByPoint(mapObj *map)
     rect.miny = map->query.point.y - t;
     rect.maxy = map->query.point.y + t;
 
+    /* Paging could have been disabled before */ 
+    paging = msLayerGetPaging(lp);    
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
-
+    msLayerEnablePaging(lp, paging);
+    
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -1759,10 +1771,10 @@ int msQueryByShape(mapObj *map)
       tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
    
     msLayerClose(lp); /* reset */
-    /* disable driver paging */
-    msLayerEnablePaging(lp, MS_FALSE);        
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
+    /* disable driver paging */
+    msLayerEnablePaging(lp, MS_FALSE);        
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
