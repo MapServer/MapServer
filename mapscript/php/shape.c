@@ -1269,6 +1269,8 @@ zend_function_entry shape_functions[] = {
     PHP_ME(shapeObj, simplify, shape_simplify_args, ZEND_ACC_PUBLIC)
     PHP_ME(shapeObj, topologyPreservingSimplify, shape_topologyPreservingSimplify_args, ZEND_ACC_PUBLIC)
     PHP_ME(shapeObj, draw, shape_draw_args, ZEND_ACC_PUBLIC)
+    PHP_ME(shapeObj, distanceToPoint, shape_distanceToPoint_args, ZEND_ACC_PUBLIC)
+    PHP_ME(shapeObj, distanceToShape, shape_distanceToShape_args, ZEND_ACC_PUBLIC)        
     PHP_ME(shapeObj, free, NULL, ZEND_ACC_PUBLIC)
     {NULL, NULL, NULL}
 };

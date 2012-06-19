@@ -160,5 +160,7 @@ void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_o
         mapscript_create_layer((layerObj*)internal_object, p, *php_object_storage TSRMLS_CC);
     else if (ce == mapscript_ce_cluster)
         mapscript_create_cluster((clusterObj*)internal_object, p, *php_object_storage TSRMLS_CC);
+    else if (ce == mapscript_ce_labelleader)
+        mapscript_create_labelleader((labelLeaderObj*)internal_object, p, *php_object_storage TSRMLS_CC);    
 }
 

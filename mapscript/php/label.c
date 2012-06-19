@@ -211,6 +211,8 @@ PHP_METHOD(labelObj, __set)
     else IF_SET_LONG("minlength", php_label->label->minlength, value)
     else IF_SET_LONG("maxoverlapangle", php_label->label->maxoverlapangle, value)
     else IF_SET_LONG("priority", php_label->label->priority, value)
+    else IF_SET_DOUBLE("maxscaledenom", php_label->label->maxscaledenom, value)
+    else IF_SET_DOUBLE("minscaledenom", php_label->label->minscaledenom, value)           
     else if ( (STRING_EQUAL("color", property)) ||
               (STRING_EQUAL("outlinecolor", property)) ||
               (STRING_EQUAL("leader", property)) ||              

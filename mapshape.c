@@ -2633,6 +2633,8 @@ int msSHPLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     if(!shape->values) return MS_FAILURE;
   }
 
+  shpfile->lastshape = shapeindex;
+  
   return MS_SUCCESS;
 }
 

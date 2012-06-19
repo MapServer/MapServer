@@ -67,7 +67,7 @@ PHP_METHOD(projectionObj, __construct)
 /* }}} */
 
 /* {{{ proto projectionObj setWKTProjection(string wkt)
-   Set the wkt projection. */
+   Set the wkt projection. Return MS_SUCCESS or MS_FAILURE .*/
 PHP_METHOD(projectionObj, setWKTProjection)
 {
     char *wkt;

@@ -188,6 +188,8 @@ int mapObj_queryByFeatures(mapObj* self, int slayer) {
 int mapObj_queryByFilter(mapObj* self, char *string) {
     msInitQuery(&(self->query));
 
+    self->query.type = MS_QUERY_BY_FILTER;
+    
     self->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
     self->query.filter->string = strdup(string);
     self->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
@@ -1372,7 +1374,8 @@ int shapefileObj_get(shapefileObj *self, int i, shapeObj *shape) {
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
     msSHPReadShape(self->hSHP, i, shape);
-
+    self->lastshape = i;
+    
     return MS_SUCCESS;
   }
 

@@ -147,6 +147,12 @@ PHP_METHOD(outputFormatObj, __set)
     else IF_SET_LONG("renderer", php_outputformat->outputformat->renderer, value)
     else IF_SET_LONG("imagemode", php_outputformat->outputformat->imagemode, value)
     else IF_SET_LONG("transparent", php_outputformat->outputformat->transparent, value)
+    else if ( (STRING_EQUAL("bands", property)) ||
+              (STRING_EQUAL("numformatoptions", property)) )
+    {
+        mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);
+    }
+           
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);

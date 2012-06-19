@@ -122,7 +122,7 @@ PHP_METHOD(shapeFileObj, __get)
     IF_GET_LONG("numshapes", php_shapefile->shapefile->numshapes) 
     else IF_GET_LONG("type", php_shapefile->shapefile->type)
     else IF_GET_LONG("isopen", php_shapefile->shapefile->isopen)
-    else IF_GET_LONG("lastshape", php_shapefile->shapefile->isopen)                       
+    else IF_GET_LONG("lastshape", php_shapefile->shapefile->lastshape)                       
     else IF_GET_STRING("source", php_shapefile->shapefile->source) 
     else IF_GET_OBJECT("bounds", mapscript_ce_rect, php_shapefile->bounds, &php_shapefile->shapefile->bounds) 
     else 

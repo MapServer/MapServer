@@ -1276,7 +1276,7 @@ PHP_METHOD(layerObj, getExtent)
 PHP_METHOD(layerObj, setExtent)
 {
     zval *zobj = getThis();
-    int minx, miny, maxx, maxy;
+    long minx, miny, maxx, maxy;
     php_layer_object *php_layer;
 
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -1514,7 +1514,7 @@ PHP_METHOD(layerObj, setProcessing)
 }
 /* }}} */
 
-/* {{{ boolean layer.setProcessingKe(string key, string value)
+/* {{{ boolean layer.setProcessingKey(string key, string value)
   set a processing key string to the layer*/
 PHP_METHOD(layerObj, setProcessingKey)
 {
