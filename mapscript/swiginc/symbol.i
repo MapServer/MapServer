@@ -158,7 +158,6 @@
             msSetError(MS_MEMERR, NULL, "setImage()");
             return MS_FAILURE;
         }
-        renderer->initializeRasterBuffer(self->pixmap_buffer, image->width, image->height, image->format->imagemode);
         self->type = MS_SYMBOL_PIXMAP;
         renderer->getRasterBufferCopy(image, self->pixmap_buffer);
 
