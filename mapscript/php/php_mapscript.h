@@ -626,8 +626,9 @@ char            *layerObj_generateSLD(layerObj *self);
 int             layerObj_moveClassUp(layerObj *self, int index);
 int             layerObj_moveClassDown(layerObj *self, int index);
 classObj        *layerObj_removeClass(layerObj *self, int index);
-int             layerObj_setConnectionType(layerObj *self, int connectiontype, 
+int             layerObj_setConnectionType(layerObj *self, int connectiontype,
                                            const char *library_str) ;
+layerObj        *layerObj_clone(layerObj *layer);
 
 labelObj        *labelObj_new();
 int             labelObj_updateFromString(labelObj *self, char *snippet);
@@ -635,6 +636,7 @@ void            labelObj_destroy(labelObj *self);
 int             labelObj_moveStyleUp(labelObj *self, int index);
 int             labelObj_moveStyleDown(labelObj *self, int index);
 int             labelObj_deleteStyle(labelObj *self, int index);
+labelObj        *labelObj_clone(labelObj *label);
 
 int             legendObj_updateFromString(legendObj *self, char *snippet);
 
@@ -682,20 +684,21 @@ int             classObj_removeMetaData(classObj *self, char *name);
 
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);
-int             pointObj_project(pointObj *self, projectionObj *in, 
+int             pointObj_project(pointObj *self, projectionObj *in,
                                  projectionObj *out);
-int             pointObj_draw(pointObj *self, mapObj *map, layerObj *layer, 
-                              imageObj *img, int class_index, 
+int             pointObj_draw(pointObj *self, mapObj *map, layerObj *layer,
+                              imageObj *img, int class_index,
                               char *label_string);
 double          pointObj_distanceToPoint(pointObj *self, pointObj *point);
-double          pointObj_distanceToLine(pointObj *self, pointObj *a, 
+double          pointObj_distanceToLine(pointObj *self, pointObj *a,
                                         pointObj *b);
 double          pointObj_distanceToShape(pointObj *self, shapeObj *shape);
 
 
 lineObj        *lineObj_new();
 void            lineObj_destroy(lineObj *self);
-int             lineObj_project(lineObj *self, projectionObj *in, 
+lineObj        *lineObj_clone(lineObj *line);
+int             lineObj_project(lineObj *self, projectionObj *in,
                                 projectionObj *out);
 pointObj       *lineObj_get(lineObj *self, int i);
 int             lineObj_add(lineObj *self, pointObj *p);
@@ -750,14 +753,15 @@ shapefileObj   *shapefileObj_new(char *filename, int type);
 void            shapefileObj_destroy(shapefileObj *self);
 int             shapefileObj_get(shapefileObj *self, int i, shapeObj *shape);
 int             shapefileObj_getPoint(shapefileObj *self, int i, pointObj *point);
-int             shapefileObj_getTransformed(shapefileObj *self, mapObj *map, 
+int             shapefileObj_getTransformed(shapefileObj *self, mapObj *map,
                                             int i, shapeObj *shape);
-void            shapefileObj_getExtent(shapefileObj *self, int i, 
+void            shapefileObj_getExtent(shapefileObj *self, int i,
                                        rectObj *rect);
 int             shapefileObj_add(shapefileObj *self, shapeObj *shape);
 int             shapefileObj_addPoint(shapefileObj *self, pointObj *point);
 
 projectionObj   *projectionObj_new(char *string);
+projectionObj   *projectionObj_clone(projectionObj *projection);
 int             projectionObj_getUnits(projectionObj *self);
 void            projectionObj_destroy(projectionObj *self);
 
