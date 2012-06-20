@@ -16,22 +16,23 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in 
+ *
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_projection;
+zend_object_handlers mapscript_projection_object_handlers;
 
 ZEND_BEGIN_ARG_INFO_EX(projection___construct_args, 0, 0, 1)
 	ZEND_ARG_INFO(0, projString)
@@ -134,41 +135,69 @@ static void mapscript_projection_object_destroy(void *object TSRMLS_DC)
     php_projection_object *php_projection = (php_projection_object *)object;
 
     MAPSCRIPT_FREE_OBJECT(php_projection);
-    
+
     MAPSCRIPT_FREE_PARENT(php_projection->parent);
 
     if (php_projection->projection && !php_projection->is_ref) {
         projectionObj_destroy(php_projection->projection);
     }
-    
+
     efree(object);
 }
 
-static zend_object_value mapscript_projection_object_new(zend_class_entry *ce TSRMLS_DC)
+static zend_object_value mapscript_projection_object_new_ex(zend_class_entry *ce, php_projection_object **ptr TSRMLS_DC)
 {
     zend_object_value retval;
     php_projection_object *php_projection;
 
     MAPSCRIPT_ALLOC_OBJECT(php_projection, php_projection_object);
 
-    retval = mapscript_object_new(&php_projection->std, ce,
-                                  &mapscript_projection_object_destroy TSRMLS_CC);
+    retval = mapscript_object_new_ex(&php_projection->std, ce,
+                                  &mapscript_projection_object_destroy,
+                                  &mapscript_projection_object_handlers TSRMLS_CC);
+
+    if (ptr)
+        *ptr = php_projection;
+
     php_projection->is_ref = 0;
     MAPSCRIPT_INIT_PARENT(php_projection->parent);
-    
+
     return retval;
+}
+
+static zend_object_value mapscript_projection_object_new(zend_class_entry *ce TSRMLS_DC)
+{
+    return mapscript_projection_object_new_ex(ce, NULL TSRMLS_CC);
+}
+
+static zend_object_value mapscript_projection_object_clone(zval *zobj TSRMLS_DC)
+{
+    php_projection_object *php_projection_old, *php_projection_new;
+    zend_object_value new_ov;
+
+    php_projection_old = (php_projection_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    new_ov = mapscript_projection_object_new_ex(mapscript_ce_projection, &php_projection_new TSRMLS_CC);
+    zend_objects_clone_members(&php_projection_new->std, new_ov, &php_projection_old->std, Z_OBJ_HANDLE_P(zobj) TSRMLS_CC);
+
+    php_projection_new->projection = projectionObj_clone(php_projection_old->projection);
+
+    return new_ov;
 }
 
 PHP_MINIT_FUNCTION(projection)
 {
     zend_class_entry ce;
 
-    MAPSCRIPT_REGISTER_CLASS("projectionObj", 
+    memcpy(&mapscript_projection_object_handlers, zend_get_std_object_handlers(), sizeof(zend_object_handlers));
+    mapscript_projection_object_handlers.clone_obj = mapscript_projection_object_clone;
+
+    MAPSCRIPT_REGISTER_CLASS("projectionObj",
                              projection_functions,
                              mapscript_ce_projection,
                              mapscript_projection_object_new);
 
-    mapscript_ce_projection->ce_flags |= ZEND_ACC_FINAL_CLASS; 
-    
+    mapscript_ce_projection->ce_flags |= ZEND_ACC_FINAL_CLASS;
+
     return SUCCESS;
 }

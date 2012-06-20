@@ -445,12 +445,21 @@ void layerObj_destroy(layerObj *self) {
          freeLayer(self);
          free(self);
          self = NULL;
-   } else 
+   } else
    {
-      MS_REFCNT_DECR(self);  
+      MS_REFCNT_DECR(self);
    }
    return;
 }
+
+layerObj *layerObj_clone(layerObj *layer)
+{
+    layerObj *dstLayer;
+    dstLayer = (layerObj *)malloc(sizeof(layerObj));
+    initLayer(dstLayer, layer->map);
+    msCopyLayer(dstLayer, layer);
+}
+
 
 int layerObj_updateFromString(layerObj *self, char *snippet) {
    return msUpdateLayerFromString(self, snippet, MS_FALSE);
@@ -793,9 +802,19 @@ labelObj *labelObj_new()
 void labelObj_destroy(labelObj *self) {
   if (freeLabel(self) == MS_SUCCESS)
     free(self);
-  
+
 }
 
+labelObj *labelObj_clone(labelObj *label)
+{
+    labelObj *dstLabel;
+    dstLabel = (labelObj *)malloc(sizeof(labelObj));
+    initLabel(dstLabel);
+    dstLabel->font = NULL;
+    msCopyLabel(dstLabel, label);
+
+    return dstLabel;
+}
 
 int labelObj_updateFromString(labelObj *self, char *snippet) {
    return msUpdateLabelFromString(self, snippet);
@@ -1030,8 +1049,20 @@ lineObj *lineObj_new() {
 
 void lineObj_destroy(lineObj *self) {
     free(self->point);
-    free(self);		
+    free(self);
   }
+
+lineObj *lineObj_clone(lineObj *line)
+{
+    lineObj *dstLine;
+    dstLine = (lineObj *)malloc(sizeof(lineObj));
+    dstLine->numpoints= line->numpoints;
+    dstLine->point = (pointObj *)malloc(sizeof(pointObj)*(dstLine->numpoints));
+    msCopyLine(dstLine, line);
+
+
+    return dstLine;
+}
 
 int lineObj_project(lineObj *self, projectionObj *in, projectionObj *out) {
     return msProjectLine(in, out, self);
@@ -1442,12 +1473,22 @@ void projectionObj_destroy(projectionObj *self) {
     free(self);
   }
 
+projectionObj *projectionObj_clone(projectionObj *projection)
+{
+    projectionObj *dstProjection;
+    dstProjection = (projectionObj *)malloc(sizeof(projectionObj));
+    msInitProjection(dstProjection);
+    msCopyProjection(dstProjection, projection);
+
+    return dstProjection;
+}
+
 /**********************************************************************
  * class extensions for labelCacheObj - TP mods
  **********************************************************************/
 void labelCacheObj_freeCache(labelCacheObj *self) {
-  msFreeLabelCache(self);    
-  
+  msFreeLabelCache(self);
+
   }
 
 /**********************************************************************
