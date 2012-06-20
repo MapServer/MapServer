@@ -710,10 +710,19 @@ int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol) {
     /* Allocate memory for new symbol if needed */
     if (msGrowSymbolSet(symbolset) == NULL)
         return -1;
-    symbolset->numsymbols++;
-    symbolset->symbol[symbolset->numsymbols-1]=symbol;
+
+    /* we need to free the symbolObj that was already allocated as we are
+     going to replace it with the provided symbolObj*. Not the most efficient
+     technique, but this function should be rarely called, and in any case only
+     by mapscript. Another option could be to use msCopySymbol(), in which case
+     the call to MS_REFCNT_INCR(symbol) should be removed.*/
+    if(symbolset->symbol[symbolset->numsymbols]) {
+        msFreeSymbol(symbolset->symbol[symbolset->numsymbols]);
+        msFree(symbolset->symbol[symbolset->numsymbols]);
+    }
+    symbolset->symbol[symbolset->numsymbols]=symbol;
     MS_REFCNT_INCR(symbol);
-    return symbolset->numsymbols-1;
+    return symbolset->numsymbols++;
 }
 
 
