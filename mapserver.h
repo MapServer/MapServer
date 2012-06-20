@@ -398,9 +398,7 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 #define MS_RENDER_WITH_CAIRO_SVG 103
 #define MS_RENDER_WITH_OGL      104
 #define MS_RENDER_WITH_AGG 105
-#ifdef USE_GD
 #define MS_RENDER_WITH_GD 106
-#endif
 #define MS_RENDER_WITH_KML 107
 
 #ifndef SWIG
