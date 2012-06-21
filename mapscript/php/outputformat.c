@@ -115,7 +115,7 @@ PHP_METHOD(outputFormatObj, __get)
     else IF_GET_LONG("imagemode", php_outputformat->outputformat->imagemode)
     else IF_GET_LONG("transparent", php_outputformat->outputformat->transparent)
     else IF_GET_LONG("bands", php_outputformat->outputformat->bands)
-    else IF_GET_LONG("numformatoptions", php_outputformat->outputformat->bands)           
+    else IF_GET_LONG("numformatoptions", php_outputformat->outputformat->numformatoptions)           
     else 
     {
         mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
