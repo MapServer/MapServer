@@ -107,6 +107,7 @@ msPostGISLayerInfo *msPostGISCreateLayerInfo(void) {
     layerinfo->endian = 0;
     layerinfo->rownum = 0;
     layerinfo->version = 0;
+    layerinfo->paging = MS_TRUE;        
     return layerinfo;
 }
 
@@ -1862,10 +1863,12 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     char *strUid = 0;
     char *strWhere = 0;
     char *strLimit = 0;
+    char *strOffset = 0;
     size_t strRectLength = 0;
     size_t strFilterLength = 0;
     size_t strUidLength = 0;
     size_t strLimitLength = 0;
+    size_t strOffsetLength = 0;
     size_t bufferSize = 0;
     int insert_and = 0;
     msPostGISLayerInfo *layerinfo;
@@ -1884,13 +1887,21 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     }
 
     /* Populate strLimit, if necessary. */
-    if( layer->maxfeatures >= 0 ) {
+    if ( layerinfo->paging && layer->maxfeatures >= 0 ) {
         static char *strLimitTemplate = " limit %d";
         strLimit = msSmallMalloc(strlen(strLimitTemplate) + 12);
         sprintf(strLimit, strLimitTemplate, layer->maxfeatures);
         strLimitLength = strlen(strLimit);
     }
-    
+
+    /* Populate strOffset, if necessary. */
+    if ( layerinfo->paging && layer->startindex > 0 ) {
+        static char *strOffsetTemplate = " offset %d";
+        strOffset = msSmallMalloc(strlen(strOffsetTemplate) + 12);
+        sprintf(strOffset, strOffsetTemplate, layer->maxfeatures);
+        strOffsetLength = strlen(strOffset);
+    }
+
     /* Populate strRect, if necessary. */
     if ( rect && layerinfo->geomcolumn ) {
         char *strBox = 0;
@@ -1936,7 +1947,8 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
         strUidLength = strlen(strUid);
     }
 
-    bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength + strLimitLength;
+    bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength
+        + strLimitLength + strOffsetLength;
     strWhere = (char*)msSmallMalloc(bufferSize);
     *strWhere = '\0';
     if ( strRect ) {
@@ -1963,6 +1975,10 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid) {
     if ( strLimit ) {
         strlcat(strWhere, strLimit, bufferSize);
         free(strLimit);
+    }
+    if ( strOffset ) {
+        strlcat(strWhere, strOffset, bufferSize);
+        free(strOffset);
     }
 
     return strWhere;
@@ -2219,7 +2235,7 @@ int msPostGISLayerOpen(layerObj *layer) {
     ** Initialize the layerinfo 
     **/
     layerinfo = msPostGISCreateLayerInfo();
-
+    
     if (((char*) &order_test)[0] == 1) {
         layerinfo->endian = LITTLE_ENDIAN;
     } else {
@@ -3282,6 +3298,41 @@ char *msPostGISEscapeSQLParam(layerObj *layer, const char *pszString)
 #endif
 }
 
+void msPostGISEnablePaging(layerObj *layer, int value) {
+
+    msPostGISLayerInfo *layerinfo = NULL;
+
+    if (layer->debug) {
+        msDebug("msPostGISEnablePaging called.\n");
+    }
+
+    if(!msPostGISLayerIsOpen(layer))
+      msPostGISLayerOpen(layer);
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+    layerinfo->paging = value;
+
+    return;
+}
+
+int msPostGISGetPaging(layerObj *layer) {
+
+    msPostGISLayerInfo *layerinfo = NULL;
+
+    if (layer->debug) {
+        msDebug("msPostGISGetPaging called.\n");
+    }
+
+    if(!msPostGISLayerIsOpen(layer))
+      return MS_TRUE;
+
+    assert( layer->layerinfo != NULL);
+
+    layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+    return layerinfo->paging;
+}
 
 int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
     assert(layer != NULL);
@@ -3307,6 +3358,8 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer) {
     /* layer->vtable->LayerGetAutoProjection, use defaut*/  
 
     layer->vtable->LayerEscapeSQLParam = msPostGISEscapeSQLParam;
+    layer->vtable->LayerEnablePaging = msPostGISEnablePaging;
+    layer->vtable->LayerGetPaging = msPostGISGetPaging;        
 
     return MS_SUCCESS;
 }

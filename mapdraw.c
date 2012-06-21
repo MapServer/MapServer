@@ -964,7 +964,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
     msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
 #endif
-    
+
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
   if(status == MS_DONE) { /* no overlap */
     msLayerClose(layer);

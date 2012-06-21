@@ -488,7 +488,7 @@ int msQueryByIndex(mapObj *map)
   }
 
   lp = (GET_LAYER(map, map->query.layer));
-
+  
   if(!msIsLayerQueryable(lp)) {
     msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByIndex()"); 
     return(MS_FAILURE);
@@ -505,6 +505,8 @@ int msQueryByIndex(mapObj *map)
   msLayerClose(lp); /* reset */
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
+  /* disable driver paging */
+  msLayerEnablePaging(lp, MS_FALSE);  
 
   /* build item list, we want *all* items */
   status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -596,6 +598,7 @@ int msQueryByAttributes(mapObj *map)
   rectObj searchrect;
 
   shapeObj shape;
+  int paging;
   
   int nclasses = 0;
   int *classgroup = NULL;
@@ -651,12 +654,15 @@ int msQueryByAttributes(mapObj *map)
 
   msInitShape(&shape);
 
+  /* Paging could have been disabled before */ 
+  paging = msLayerGetPaging(lp);
   msLayerClose(lp); /* reset */
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) {
     msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
     return(MS_FAILURE);
   }
+  msLayerEnablePaging(lp, paging);  
   
   /* build item list, we want *all* items */
   status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -731,10 +737,15 @@ int msQueryByAttributes(mapObj *map)
 #endif
 
     addResult(lp->resultcache, &shape);
-    
     msFreeShape(&shape);
 
     if(map->query.mode == MS_QUERY_SINGLE) { /* no need to look any further */
+      status = MS_DONE;
+      break;
+    }
+
+    /* check shape count */
+    if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
       status = MS_DONE;
       break;
     }
@@ -803,7 +814,7 @@ int msQueryByFilter(mapObj *map)
     /* conditions may have changed since this layer last drawn, so set 
        layer->project true to recheck projection needs (Bug #673) */ 
     lp->project = MS_TRUE; 
-
+    
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
@@ -834,6 +845,8 @@ int msQueryByFilter(mapObj *map)
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) goto query_error;
+    /* disable driver paging */
+    msLayerEnablePaging(lp, MS_FALSE);
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -912,6 +925,12 @@ int msQueryByFilter(mapObj *map)
 
       addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
+
+      /* check shape count */
+      if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+        status = MS_DONE;
+        break;
+      }
     } /* next shape */
 
     if(classgroup) msFree(classgroup);
@@ -951,7 +970,8 @@ int msQueryByRect(mapObj *map)
   shapeObj shape, searchshape;
   rectObj searchrect;
   double layer_tolerance = 0, tolerance = 0;
-  
+
+  int paging;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -1021,10 +1041,13 @@ int msQueryByRect(mapObj *map)
       continue;
     }
 
+    /* Paging could have been disabled before */ 
+    paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
-
+    msLayerEnablePaging(lp, paging);
+    
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -1108,8 +1131,13 @@ int msQueryByRect(mapObj *map)
 
       if(status == MS_TRUE)
 	addResult(lp->resultcache, &shape);
-
       msFreeShape(&shape);
+
+      /* check shape count */
+      if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+        status = MS_DONE;
+        break;
+      }
     } /* next shape */
       
     if (classgroup)
@@ -1231,6 +1259,7 @@ int msQueryByFeatures(mapObj *map)
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
+    msLayerEnablePaging(lp, MS_FALSE);
     
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -1407,8 +1436,13 @@ int msQueryByFeatures(mapObj *map)
 
 	if(status == MS_TRUE)
 	  addResult(lp->resultcache, &shape);
-
 	msFreeShape(&shape);
+
+	/* check shape count */
+	if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+	  status = MS_DONE;
+	  break;
+	}
       } /* next shape */
 
       if (classgroup)
@@ -1456,6 +1490,7 @@ int msQueryByPoint(mapObj *map)
 
   layerObj *lp;
 
+  int paging;
   char status;
   rectObj rect, searchrect;
   shapeObj shape;
@@ -1481,7 +1516,7 @@ int msQueryByPoint(mapObj *map)
     /* conditions may have changed since this layer last drawn, so set 
        layer->project true to recheck projection needs (Bug #673) */ 
     lp->project = MS_TRUE; 
-
+    
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
@@ -1532,10 +1567,13 @@ int msQueryByPoint(mapObj *map)
     rect.miny = map->query.point.y - t;
     rect.maxy = map->query.point.y + t;
 
+    /* Paging could have been disabled before */ 
+    paging = msLayerGetPaging(lp);    
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
-
+    msLayerEnablePaging(lp, paging);
+    
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -1616,6 +1654,12 @@ int msQueryByPoint(mapObj *map)
 
       if(map->query.mode == MS_QUERY_MULTIPLE && map->query.maxresults > 0 && lp->resultcache->numresults == map->query.maxresults) {
         status = MS_DONE;   /* got enough results for this layer */
+        break;
+      }
+
+      /* check shape count */
+      if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+        status = MS_DONE;
         break;
       }
     } /* next shape */
@@ -1729,6 +1773,8 @@ int msQueryByShape(mapObj *map)
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
+    /* disable driver paging */
+    msLayerEnablePaging(lp, MS_FALSE);        
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -1877,8 +1923,13 @@ int msQueryByShape(mapObj *map)
 
       if(status == MS_TRUE)
 	addResult(lp->resultcache, &shape);
-
       msFreeShape(&shape);
+
+      /* check shape count */
+      if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+        status = MS_DONE;
+        break;
+      }
     } /* next shape */
 
     if(status != MS_DONE) return(MS_FAILURE);

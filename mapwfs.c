@@ -2072,8 +2072,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     startindex = paramsObj->nStartIndex;
 
 
-  /*maxfeatures set but no startindex*/
-  if (maxfeatures > 0 && startindex < 0)
+  /* maxfeatures set */
+  if (maxfeatures > 0)
   {
       for(j=0; j<map->numlayers; j++) 
       {
@@ -2089,32 +2089,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
       }
   }
   
-  /*no maxfeatures set but startindex set*/
-  if (maxfeatures <=0 && startindex > 0)
+  /* startindex set */
+  if (startindex > 0 &&
+      (nQueriedLayers == 1 && msLayerSupportsPaging(lpQueried)))
   {
-      if (nQueriedLayers == 1 && msLayerSupportsPaging(lpQueried))
-      {
           lpQueried->startindex = startindex;
-          startindex = -1;
-      }
   }
-
-  /*maxfeatures set and startindex set*/
-  if (maxfeatures >0 && startindex > 0)
-  {
-      if (nQueriedLayers == 1 && msLayerSupportsPaging(lpQueried))
-      {
-          lpQueried->startindex = startindex;
-          if (lpQueried->maxfeatures <=0 || 
-              (lpQueried->maxfeatures > 0 && maxfeatures < lpQueried->maxfeatures))
-            lpQueried->maxfeatures = maxfeatures;
-          
-          startindex = -1;
-          maxfeatures = -1;
-      }
-  }
-
-
   
   if (paramsObj->pszFilter) {
     bFilterSet = 1;
@@ -2237,21 +2217,13 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
 	  return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
 	}
 	psNode = FLTParseFilterEncoding(paszFilter[i]);
-	
-        /*if we have a complex filter, make sure that paging is done at the gml output level
-          and not at the driver level #3305*/
-        bComplexFilter = (!FLTIsSimpleFilter(psNode));
-        if (bComplexFilter && nQueriedLayers == 1 && lpQueried &&
-            msLayerSupportsPaging(lpQueried) && 
-            (lpQueried->startindex > 0 && lpQueried->maxfeatures > 0))
+
+        /* Not querying a single layer? no driver pagination */
+        if (lpQueried && (nQueriedLayers > 1))
         {
-            startindex = lpQueried->startindex;
-            lpQueried->startindex = -1;
-
-            maxfeatures = lpQueried->maxfeatures;
-            lpQueried->maxfeatures = -1;
+          msLayerEnablePaging(lpQueried, MS_FALSE);
         }
-
+        
 	if (!psNode) {
 	  msSetError(MS_WFSERR, 
 		     "Invalid or Unsupported FILTER in GetFeature : %s", 

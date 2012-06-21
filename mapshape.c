@@ -2554,19 +2554,6 @@ int msSHPLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     return status;
   }
 
-  /* now apply the maxshapes criteria (NOTE: this ignores the filter so you could get less than maxfeatures) */
-  if(layer->maxfeatures > 0) {
-
-    for( i = (shpfile->numshapes - 1); i >= 0; i-- ) {
-      n2 = msGetBit(shpfile->status, i);
-      n1 += n2;
-      if( n2 && n1 > layer->maxfeatures ) {
-        msSetBit(shpfile->status, i, 0);
-      }
-    }
-
-  }
-    
   return MS_SUCCESS;
 }
 

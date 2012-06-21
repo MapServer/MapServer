@@ -167,7 +167,9 @@ typedef
          * disposed by CloseLayer (if set)
          */
         msOracleSpatialStatement *orastmt2;
-        
+        /* Driver handling of pagination, enabled by default */
+        int paging;
+      
     } msOracleSpatialLayerInfo;
     
 static OCIType  *ordinates_tdo = NULL;
@@ -1775,7 +1777,7 @@ int msOracleSpatialLayerOpen( layerObj *layer )
     dthand = (msOracleSpatialDataHandler *)malloc(sizeof(msOracleSpatialDataHandler));
     sthand = (msOracleSpatialStatement *)malloc(sizeof(msOracleSpatialStatement));
     sthand2 = (msOracleSpatialStatement *)malloc(sizeof(msOracleSpatialStatement));
-
+    
     if ((dthand == NULL) || (layerinfo == NULL))
     {
         msSetError(MS_MEMERR, NULL, "msOracleSpatialLayerOpen()");
@@ -1786,7 +1788,8 @@ int msOracleSpatialLayerOpen( layerObj *layer )
     memset( sthand, 0, sizeof(msOracleSpatialStatement) );
     memset( sthand2, 0, sizeof(msOracleSpatialStatement) );
     memset( layerinfo, 0, sizeof(msOracleSpatialLayerInfo) );
-
+    layerinfo->paging = MS_TRUE;
+      
     msSplitLogin( layer->connection, layer->map, &username, &password, &dblink );
 
     hand = (msOracleSpatialHandler *) msConnPoolRequest( layer );
@@ -2072,7 +2075,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
 
     osFilteritem(layer, function, query_str, sizeof(query_str), 1);
 
-    if (layer->maxfeatures > 0 && layer->startindex < 0)
+    if (layerinfo->paging && layer->maxfeatures > 0 && layer->startindex < 0)
     {
        if (function == FUNCTION_NONE && layer->filter.string == NULL)
            snprintf( query_str + strlen(query_str), sizeof(query_str)-strlen(query_str), "%s"," WHERE ");
@@ -2091,7 +2094,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
 
 
     /*assuming startindex starts at 1*/
-    if (layer->startindex > 0)
+    if (layerinfo->paging && layer->startindex > 0)
      {
        tmp1_str = msStrdup("SELECT * from (SELECT atmp.*, ROWNUM rnum from (");
        tmp_str = msStringConcatenate(tmp_str,  tmp1_str);
@@ -3497,6 +3500,40 @@ int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c,
     return MS_FAILURE; 
 }
 
+int msOrableSpatialGetPaging(layerObj *layer)
+{
+    msOracleSpatialLayerInfo *layerinfo = NULL;
+    
+    if (layer->debug)
+        msDebug("msOracleSpatialLayerGetPaging was called.\n");
+
+    if(!msOracleSpatialLayerIsOpen(layer))
+      return MS_TRUE;
+    
+    assert( layer->layerinfo != NULL);
+    layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
+
+    return layerinfo->paging;
+}
+
+void msOrableSpatialEnablePaging(layerObj *layer, int value)
+{
+    msOracleSpatialLayerInfo *layerinfo = NULL;
+    
+    if (layer->debug)
+        msDebug("msOracleSpatialLayerEnablePaging was called.\n");
+
+    if(!msOracleSpatialLayerIsOpen(layer))
+        msOracleSpatialLayerOpen(layer);
+
+    assert( layer->layerinfo != NULL);
+    layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
+
+    layerinfo->paging = value;
+    
+    return;
+}
+
 #else
 /* OracleSpatial "not-supported" procedures */
 
@@ -3565,6 +3602,18 @@ int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c,
   return MS_FAILURE;
 }
 
+void msOrableSpatialEnablePaging(layerObj *layer, int value)
+{
+  msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerEnablePaging()" );  
+  return;
+}
+
+int msOrableSpatialGetPaging(layerObj *layer)
+{
+  msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerGetPaging()" );  
+  return;
+}
+
 #endif
 
 #ifdef USE_ORACLE_PLUGIN 
@@ -3593,7 +3642,9 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
     vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
     /* layer->vtable->LayerGetNumFeatures, use default */
     /* layer->vtable->LayerGetAutoProjection = msOracleSpatialLayerGetAutoProjection; Disabled until tested */
-
+    vtable->LayerEnablePaging = msOrableSpatialEnablePaging;
+    vtable->LayerGetPaging = msOrableSpatialGetPaging;    
+    
     return MS_SUCCESS;
 }
 #endif
@@ -3621,7 +3672,9 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
     /* layer->vtable->LayerCreateItems, use default */
     /* layer->vtable->LayerGetNumFeatures, use default */
     /* layer->vtable->LayerGetAutoProjection = msOracleSpatialLayerGetAutoProjection; Disabled until tested */
-
+    layer->vtable->LayerEnablePaging = msOrableSpatialEnablePaging;
+    layer->vtable->LayerGetPaging = msOrableSpatialGetPaging;    
+    
     return MS_SUCCESS;
 }
 
