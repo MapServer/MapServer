@@ -77,10 +77,11 @@ PHP_METHOD(labelLeaderObj, __set)
 {
     char *property;
     long property_len;
-
+    zval *value;
+    
     PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
-                              &property, &property_len) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
+                              &property, &property_len, &value) == FAILURE) {
         PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
         return;
     }
