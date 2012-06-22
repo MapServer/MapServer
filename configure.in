@@ -998,8 +998,13 @@ if test -n "$with_geos" -a "$with_geos" != "no" ; then
 
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
-  GEOS_LIB="`$GEOS_CONFIG --libs`_c"
-
+  dnl Geos >=3.3 has a new config option: --clibs.
+  if test $ac_geos_version -ge 300300; then
+     GEOS_LIB="`$GEOS_CONFIG --clibs`"
+  else
+     GEOS_LIB="`$GEOS_CONFIG --libs`_c"
+  fi
+  
   AC_SUBST(GEOS_ENABLED,$GEOS_ENABLED)
   AC_SUBST(GEOS_INC,    $GEOS_INC)
   AC_SUBST(GEOS_LIB,    $GEOS_LIB)
