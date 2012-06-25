@@ -93,6 +93,11 @@ static int msGetClass_String( layerObj *layer, colorObj *color, const char *pixe
 /* -------------------------------------------------------------------- */
     for(i=0; i<layer->numclasses; i++) {
 
+        /* check for correct classgroup, if set */
+        if ( layer->class[i]->group && layer->classgroup && 
+                strcasecmp(layer->class[i]->group, layer->classgroup) != 0 )
+            continue;
+
         /* Empty expression - always matches */
         if (layer->class[i]->expression.string == NULL)
             return(i);
