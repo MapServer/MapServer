@@ -1219,7 +1219,7 @@ int msLayerGetPaging(layerObj *layer)
     int rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS) {
       msSetError(MS_MISCERR, "Unable to initialize virtual table", "msLayerGetPaging()");
-      return;
+      return MS_FAILURE;
     }
   }
     return layer->vtable->LayerGetPaging(layer);
