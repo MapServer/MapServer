@@ -1,2 +1,0 @@
-service=WFS&version=2006-11-14&request=GetFeature&typename=sf:PrimitiveGeoFeature&namespace=xmlns(sf=http://cite.opengeospatial.org/gmlsf)
-
