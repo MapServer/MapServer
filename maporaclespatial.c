@@ -3611,7 +3611,7 @@ void msOrableSpatialEnablePaging(layerObj *layer, int value)
 int msOrableSpatialGetPaging(layerObj *layer)
 {
   msSetError( MS_ORACLESPATIALERR, "OracleSpatial is not supported", "msLayerGetPaging()" );  
-  return;
+  return MS_FAILURE;
 }
 
 #endif

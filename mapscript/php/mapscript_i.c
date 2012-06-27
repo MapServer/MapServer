@@ -458,6 +458,7 @@ layerObj *layerObj_clone(layerObj *layer)
     dstLayer = (layerObj *)malloc(sizeof(layerObj));
     initLayer(dstLayer, layer->map);
     msCopyLayer(dstLayer, layer);
+    return dstLayer;
 }
 
 
