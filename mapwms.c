@@ -3382,7 +3382,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   }
   msIO_printf("  </Exception>\n");
 
-  if (nVersion != OWS_1_3_0) 
+  if (nVersion != OWS_1_3_0) {
     /* INSPIRE extended capabilities for WMS 1.1.1 */
     if (nVersion == OWS_1_1_1 && msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
         msIO_printf("  <VendorSpecificCapabilities>\n");
@@ -3391,7 +3391,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     } else {
         msIO_printf("  <VendorSpecificCapabilities />\n"); /* nothing yet */
     }
-
+  }
+  
   /* SLD support */
   if (strcasecmp(sldenabled, "true") == 0)
   {

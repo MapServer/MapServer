@@ -3299,7 +3299,7 @@ char *msPostGISEscapeSQLParam(layerObj *layer, const char *pszString)
 }
 
 void msPostGISEnablePaging(layerObj *layer, int value) {
-
+#ifdef USE_POSTGIS
     msPostGISLayerInfo *layerinfo = NULL;
 
     if (layer->debug) {
@@ -3314,11 +3314,16 @@ void msPostGISEnablePaging(layerObj *layer, int value) {
     layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
     layerinfo->paging = value;
 
-    return;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISEnablePaging()");
+#endif
+    return;    
 }
 
 int msPostGISGetPaging(layerObj *layer) {
-
+#ifdef USE_POSTGIS
     msPostGISLayerInfo *layerinfo = NULL;
 
     if (layer->debug) {
@@ -3332,6 +3337,12 @@ int msPostGISGetPaging(layerObj *layer) {
 
     layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
     return layerinfo->paging;
+#else
+    msSetError( MS_MISCERR,
+                "PostGIS support is not available.",
+                "msPostGISEnablePaging()");
+    return MS_FAILURE;
+#endif
 }
 
 int msPostGISLayerInitializeVirtualTable(layerObj *layer) {

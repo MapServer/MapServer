@@ -256,7 +256,7 @@
     }
 
     int setItems(char **items, int numitems) {
-        msLayerSetItems(self, items, numitems);
+        return msLayerSetItems(self, items, numitems);
     }
 
     int draw(mapObj *map, imageObj *image) 
@@ -314,7 +314,7 @@
         retval = msQueryByAttributes(map);
         self->status = status;
         /* reset paginate property */
-        self->paginate = MS_FALSE;
+        msLayerEnablePaging(self, MS_FALSE);
 
         return retval;
     }
@@ -337,7 +337,7 @@
         retval = msQueryByPoint(map);
         self->status = status;
         /* reset paginate property */
-        self->paginate = MS_FALSE;
+        msLayerEnablePaging(self, MS_FALSE);
 
         return retval;
     }
@@ -359,7 +359,7 @@
         retval = msQueryByRect(map);
         self->status = status;
         /* reset paginate property */
-        self->paginate = MS_FALSE;
+        msLayerEnablePaging(self, MS_FALSE);
 
         return retval;
     }
