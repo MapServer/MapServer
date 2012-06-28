@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -87,27 +87,27 @@ int msExecuteQuery(mapObj *map)
   }
 
   switch(map->query.type) {
-  case MS_QUERY_BY_POINT:
-    status = msQueryByPoint(map);
-    break;
-  case MS_QUERY_BY_RECT:
-    status = msQueryByRect(map);
-    break;
-  case MS_QUERY_BY_ATTRIBUTE:
-    status = msQueryByAttributes(map);
-    break;
-  case MS_QUERY_BY_FILTER:
-    status = msQueryByFilter(map);
-    break;
-  case MS_QUERY_BY_SHAPE:
-    status = msQueryByShape(map);
-    break;
-  case MS_QUERY_BY_INDEX:
-    status = msQueryByIndex(map);
-    break;
-  default:
-    msSetError(MS_QUERYERR, "Malformed queryObj.", "msExecuteQuery()");
-    return(MS_FAILURE);
+    case MS_QUERY_BY_POINT:
+      status = msQueryByPoint(map);
+      break;
+    case MS_QUERY_BY_RECT:
+      status = msQueryByRect(map);
+      break;
+    case MS_QUERY_BY_ATTRIBUTE:
+      status = msQueryByAttributes(map);
+      break;
+    case MS_QUERY_BY_FILTER:
+      status = msQueryByFilter(map);
+      break;
+    case MS_QUERY_BY_SHAPE:
+      status = msQueryByShape(map);
+      break;
+    case MS_QUERY_BY_INDEX:
+      status = msQueryByIndex(map);
+      break;
+    default:
+      msSetError(MS_QUERYERR, "Malformed queryObj.", "msExecuteQuery()");
+      return(MS_FAILURE);
   }
 
   if(map->query.slayer >= 0) {
@@ -150,7 +150,7 @@ static int addResult(resultCacheObj *cache, shapeObj *shape)
     if(!cache->results) {
       msSetError(MS_MEMERR, "Realloc() error.", "addResult()");
       return(MS_FAILURE);
-    }   
+    }
     cache->cachesize += MS_RESULTCACHEINCREMENT;
   }
 
@@ -173,7 +173,8 @@ static int addResult(resultCacheObj *cache, shapeObj *shape)
 /*
 ** Serialize a query result set to disk.
 */
-static int saveQueryResults(mapObj *map, char *filename) {
+static int saveQueryResults(mapObj *map, char *filename)
+{
   FILE *stream;
   int i, j, n=0;
 
@@ -202,7 +203,7 @@ static int saveQueryResults(mapObj *map, char *filename) {
       fwrite(&(GET_LAYER(map, i)->resultcache->numresults), sizeof(int), 1, stream); /* number of results */
       fwrite(&(GET_LAYER(map, i)->resultcache->bounds), sizeof(rectObj), 1, stream); /* bounding box */
       for(j=0; j<GET_LAYER(map, i)->resultcache->numresults; j++)
-	fwrite(&(GET_LAYER(map, i)->resultcache->results[j]), sizeof(resultObj), 1, stream); /* each result */
+        fwrite(&(GET_LAYER(map, i)->resultcache->results[j]), sizeof(resultObj), 1, stream); /* each result */
     }
   }
 
@@ -210,19 +211,20 @@ static int saveQueryResults(mapObj *map, char *filename) {
   return MS_SUCCESS;
 }
 
-static int loadQueryResults(mapObj *map, FILE *stream) {
+static int loadQueryResults(mapObj *map, FILE *stream)
+{
   int i, j, k, n=0;
 
   if(1 != fread(&n, sizeof(int), 1, stream)) {
-     msSetError(MS_MISCERR,"failed to read query count from query file stream", "loadQueryResults()");
-    return MS_FAILURE; 
+    msSetError(MS_MISCERR,"failed to read query count from query file stream", "loadQueryResults()");
+    return MS_FAILURE;
   }
 
   /* now load the result set for each layer found in the query file */
   for(i=0; i<n; i++) {
     if(1 != fread(&j, sizeof(int), 1, stream)) { /* layer index */
-       msSetError(MS_MISCERR,"failed to read layer index from query file stream", "loadQueryResults()");
-       return MS_FAILURE; 
+      msSetError(MS_MISCERR,"failed to read layer index from query file stream", "loadQueryResults()");
+      return MS_FAILURE;
     }
 
     if(j<0 || j>map->numlayers) {
@@ -235,37 +237,36 @@ static int loadQueryResults(mapObj *map, FILE *stream) {
     MS_CHECK_ALLOC(GET_LAYER(map, j)->resultcache, sizeof(resultCacheObj), MS_FAILURE);
 
     if(1 != fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream)) { /* number of results */
-       msSetError(MS_MISCERR,"failed to read number of results from query file stream", "loadQueryResults()");
-       free(GET_LAYER(map, j)->resultcache);
-       GET_LAYER(map, j)->resultcache = NULL;
-       return MS_FAILURE; 
+      msSetError(MS_MISCERR,"failed to read number of results from query file stream", "loadQueryResults()");
+      free(GET_LAYER(map, j)->resultcache);
+      GET_LAYER(map, j)->resultcache = NULL;
+      return MS_FAILURE;
     }
     GET_LAYER(map, j)->resultcache->cachesize = GET_LAYER(map, j)->resultcache->numresults;
 
     if(1 != fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream)) { /* bounding box */
-       msSetError(MS_MISCERR,"failed to read bounds from query file stream", "loadQueryResults()");
-       free(GET_LAYER(map, j)->resultcache);
-       GET_LAYER(map, j)->resultcache = NULL;
-       return MS_FAILURE; 
+      msSetError(MS_MISCERR,"failed to read bounds from query file stream", "loadQueryResults()");
+      free(GET_LAYER(map, j)->resultcache);
+      GET_LAYER(map, j)->resultcache = NULL;
+      return MS_FAILURE;
     }
 
     GET_LAYER(map, j)->resultcache->results = (resultObj *) malloc(sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);
-    if (GET_LAYER(map, j)->resultcache->results == NULL) 
-    {
-        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "loadQueryResults()",
-                   __FILE__, __LINE__, sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);       
-        free(GET_LAYER(map, j)->resultcache);
-        GET_LAYER(map, j)->resultcache = NULL;
-        return MS_FAILURE;
+    if (GET_LAYER(map, j)->resultcache->results == NULL) {
+      msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "loadQueryResults()",
+                 __FILE__, __LINE__, sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);
+      free(GET_LAYER(map, j)->resultcache);
+      GET_LAYER(map, j)->resultcache = NULL;
+      return MS_FAILURE;
     }
 
     for(k=0; k<GET_LAYER(map, j)->resultcache->numresults; k++) {
       if(1 != fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultObj), 1, stream)) { /* each result */
-         msSetError(MS_MISCERR,"failed to read result %d from query file stream", "loadQueryResults()", k);
-         free(GET_LAYER(map, j)->resultcache->results);
-         free(GET_LAYER(map, j)->resultcache);
-         GET_LAYER(map, j)->resultcache = NULL;
-         return MS_FAILURE; 
+        msSetError(MS_MISCERR,"failed to read result %d from query file stream", "loadQueryResults()", k);
+        free(GET_LAYER(map, j)->resultcache->results);
+        free(GET_LAYER(map, j)->resultcache);
+        GET_LAYER(map, j)->resultcache = NULL;
+        return MS_FAILURE;
       }
       if(!GET_LAYER(map, j)->tileindex) GET_LAYER(map, j)->resultcache->results[k].tileindex = -1; /* reset the tile index for non-tiled layers */
       GET_LAYER(map, j)->resultcache->results[k].resultindex = -1; /* all results loaded this way have a -1 result (set) index */
@@ -278,7 +279,8 @@ static int loadQueryResults(mapObj *map, FILE *stream) {
 /*
 ** Serialize the parameters necessary to duplicate a query to disk. (TODO: add filter query...)
 */
-static int saveQueryParams(mapObj *map, char *filename) {
+static int saveQueryParams(mapObj *map, char *filename)
+{
   FILE *stream;
 
   if(!filename) {
@@ -321,7 +323,8 @@ static int saveQueryParams(mapObj *map, char *filename) {
   return MS_SUCCESS;
 }
 
-static int loadQueryParams(mapObj *map, FILE *stream) {
+static int loadQueryParams(mapObj *map, FILE *stream)
+{
   char buffer[MS_BUFFER_LENGTH];
   int lineno;
 
@@ -332,58 +335,58 @@ static int loadQueryParams(mapObj *map, FILE *stream) {
   lineno = 2; /* line 1 is the magic string */
   while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {
     switch(lineno) {
-    case 2:
-      if(sscanf(buffer, "%d %d %d %d\n", &(map->query.mode), &(map->query.type), &(map->query.layer), &(map->query.slayer)) != 4) goto parse_error;
-      break;
-    case 3:
-      if(sscanf(buffer, "%lf %lf %lf %d\n", &map->query.point.x, &map->query.point.y, &map->query.buffer, &map->query.maxresults) != 4) goto parse_error;
-      break;
-    case 4:
-      if(sscanf(buffer, "%lf %lf %lf %lf\n", &map->query.rect.minx, &map->query.rect.miny, &map->query.rect.maxx, &map->query.rect.maxy) != 4) goto parse_error;
-      break;
-    case 5:
-      if(sscanf(buffer, "%ld %ld %d\n", &map->query.shapeindex, &map->query.tileindex, &map->query.clear_resultcache) != 3) goto parse_error;
-      break;
-    case 6:
-      if(strncmp(buffer, "NULL", 4) != 0) {
-        map->query.item = msStrdup(buffer);
-        msStringChop(map->query.item);
-      }
-      break;
-    case 7:
-      if(strncmp(buffer, "NULL", 4) != 0) {
-        map->query.str = msStrdup(buffer);
-        msStringChop(map->query.str);
-      }
-      break;
-    case 8:
-      if(sscanf(buffer, "%d\n", &shapetype) != 1) goto parse_error;
-
-      if(shapetype != MS_SHAPE_NULL) { /* load the rest of the shape */
-        int i, j;
-        lineObj line;
-
-        map->query.shape = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
-        msInitShape(map->query.shape);
-        map->query.shape->type = shapetype;
-
-        if(fscanf(stream, "%d\n", &numlines) != 1) goto parse_error;
-	for(i=0; i<numlines; i++) {
-          if(fscanf(stream, "%d\n", &numpoints) != 1) goto parse_error;
-
-	  line.numpoints = numpoints;
-	  line.point = (pointObj *) msSmallMalloc(line.numpoints*sizeof(pointObj));
-
-          for(j=0; j<numpoints; j++)
-            if(fscanf(stream, "%lf %lf\n", &line.point[j].x, &line.point[j].y) != 2) goto parse_error;
-
-          msAddLine(map->query.shape, &line);
-          free(line.point);
+      case 2:
+        if(sscanf(buffer, "%d %d %d %d\n", &(map->query.mode), &(map->query.type), &(map->query.layer), &(map->query.slayer)) != 4) goto parse_error;
+        break;
+      case 3:
+        if(sscanf(buffer, "%lf %lf %lf %d\n", &map->query.point.x, &map->query.point.y, &map->query.buffer, &map->query.maxresults) != 4) goto parse_error;
+        break;
+      case 4:
+        if(sscanf(buffer, "%lf %lf %lf %lf\n", &map->query.rect.minx, &map->query.rect.miny, &map->query.rect.maxx, &map->query.rect.maxy) != 4) goto parse_error;
+        break;
+      case 5:
+        if(sscanf(buffer, "%ld %ld %d\n", &map->query.shapeindex, &map->query.tileindex, &map->query.clear_resultcache) != 3) goto parse_error;
+        break;
+      case 6:
+        if(strncmp(buffer, "NULL", 4) != 0) {
+          map->query.item = msStrdup(buffer);
+          msStringChop(map->query.item);
         }
-      }
-      break;
-    default:
-      break;
+        break;
+      case 7:
+        if(strncmp(buffer, "NULL", 4) != 0) {
+          map->query.str = msStrdup(buffer);
+          msStringChop(map->query.str);
+        }
+        break;
+      case 8:
+        if(sscanf(buffer, "%d\n", &shapetype) != 1) goto parse_error;
+
+        if(shapetype != MS_SHAPE_NULL) { /* load the rest of the shape */
+          int i, j;
+          lineObj line;
+
+          map->query.shape = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
+          msInitShape(map->query.shape);
+          map->query.shape->type = shapetype;
+
+          if(fscanf(stream, "%d\n", &numlines) != 1) goto parse_error;
+          for(i=0; i<numlines; i++) {
+            if(fscanf(stream, "%d\n", &numpoints) != 1) goto parse_error;
+
+            line.numpoints = numpoints;
+            line.point = (pointObj *) msSmallMalloc(line.numpoints*sizeof(pointObj));
+
+            for(j=0; j<numpoints; j++)
+              if(fscanf(stream, "%lf %lf\n", &line.point[j].x, &line.point[j].y) != 2) goto parse_error;
+
+            msAddLine(map->query.shape, &line);
+            free(line.point);
+          }
+        }
+        break;
+      default:
+        break;
     }
 
     lineno++;
@@ -398,9 +401,9 @@ static int loadQueryParams(mapObj *map, FILE *stream) {
   /* now execute the query */
   return msExecuteQuery(map);
 
-  parse_error:
-    msSetError(MS_MISCERR, "Parse error line %d.", "loadQueryParameters()", lineno);    
-    return MS_FAILURE;
+parse_error:
+  msSetError(MS_MISCERR, "Parse error line %d.", "loadQueryParameters()", lineno);
+  return MS_FAILURE;
 }
 
 /*
@@ -408,7 +411,8 @@ static int loadQueryParams(mapObj *map, FILE *stream) {
 ** all the shape indexes. Note the latter can be very slow against certain data sources but has a certain usefulness
 ** on occation.
 */
-int msSaveQuery(mapObj *map, char *filename, int results) {
+int msSaveQuery(mapObj *map, char *filename, int results)
+{
   if(results)
     return saveQueryResults(map, filename);
   else
@@ -418,7 +422,7 @@ int msSaveQuery(mapObj *map, char *filename, int results) {
 /*
 ** Loads a query file contained either serialized 1) query parameters or 2) query results (e.g. indexes).
 */
-int msLoadQuery(mapObj *map, char *filename) 
+int msLoadQuery(mapObj *map, char *filename)
 {
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH];
@@ -429,10 +433,10 @@ int msLoadQuery(mapObj *map, char *filename)
     return MS_FAILURE;
   }
 
-  /*                                                                                                                                               
-  ** Make sure the file at least has the right extension.                                                         
+  /*
+  ** Make sure the file at least has the right extension.
   */
-  if(msEvalRegex("\\.qy$", filename) != MS_TRUE) { 
+  if(msEvalRegex("\\.qy$", filename) != MS_TRUE) {
     msSetError(MS_MISCERR, "Queryfile %s has incorrect file extension.",  "msLoadQuery()", filename);
     return MS_FAILURE;
   }
@@ -447,7 +451,7 @@ int msLoadQuery(mapObj *map, char *filename)
   }
 
   if(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {
-    /* 
+    /*
     ** Call correct reader based on the magic string.
     */
     if(strncasecmp(buffer, MS_QUERY_RESULTS_MAGIC_STRING, strlen(MS_QUERY_RESULTS_MAGIC_STRING)) == 0) {
@@ -483,14 +487,14 @@ int msQueryByIndex(mapObj *map)
   }
 
   if(map->query.layer < 0 || map->query.layer >= map->numlayers) {
-    msSetError(MS_QUERYERR, "No query layer defined.", "msQueryByIndex()"); 
+    msSetError(MS_QUERYERR, "No query layer defined.", "msQueryByIndex()");
     return(MS_FAILURE);
   }
 
   lp = (GET_LAYER(map, map->query.layer));
-  
+
   if(!msIsLayerQueryable(lp)) {
-    msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByIndex()"); 
+    msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByIndex()");
     return(MS_FAILURE);
   }
 
@@ -506,7 +510,7 @@ int msQueryByIndex(mapObj *map)
   status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
   /* disable driver paging */
-  msLayerEnablePaging(lp, MS_FALSE);  
+  msLayerEnablePaging(lp, MS_FALSE);
 
   /* build item list, we want *all* items */
   status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -525,24 +529,22 @@ int msQueryByIndex(mapObj *map)
 
   status = msLayerGetShape(lp, &shape, &record);
   if(status != MS_SUCCESS) {
-    msSetError(MS_NOTFOUND, "Not valid record request.", "msQueryByIndex()"); 
+    msSetError(MS_NOTFOUND, "Not valid record request.", "msQueryByIndex()");
     return(MS_FAILURE);
   }
 
   if (lp->minfeaturesize > 0)
-      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+    minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
   /* Check if the shape size is ok to be drawn */
-  if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
-  {
+  if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
 
-      if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
-      {
-          msSetError(MS_NOTFOUND, "Requested shape not valid against layer minfeaturesize.", "msQueryByIndex()");
-          msFreeShape(&shape);
-          msLayerClose(lp);
-          return(MS_FAILURE);
-      }
+    if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
+      msSetError(MS_NOTFOUND, "Requested shape not valid against layer minfeaturesize.", "msQueryByIndex()");
+      msFreeShape(&shape);
+      msLayerClose(lp);
+      return(MS_FAILURE);
+    }
   }
 
   shape.classindex = msShapeGetClass(lp, map, &shape, NULL, 0);
@@ -576,12 +578,12 @@ void msRestoreOldFilter(layerObj *lp, int old_filtertype, char *old_filteritem, 
     lp->filteritem = NULL;
     lp->filteritemindex = -1;
   }
-  
+
   /* restore any previously defined filter */
   if(old_filterstring) {
     lp->filter.type = old_filtertype;
     lp->filter.string = old_filterstring;
-    if(old_filteritem) { 
+    if(old_filteritem) {
       lp->filteritem = old_filteritem;
     }
   }
@@ -591,7 +593,7 @@ int msQueryByAttributes(mapObj *map)
 {
   layerObj *lp;
   int status;
-  
+
   int old_filtertype=-1;
   char *old_filterstring=NULL, *old_filteritem=NULL;
 
@@ -599,10 +601,10 @@ int msQueryByAttributes(mapObj *map)
 
   shapeObj shape;
   int paging;
-  
+
   int nclasses = 0;
   int *classgroup = NULL;
-  double minfeaturesize = -1; 
+  double minfeaturesize = -1;
 
   if(map->query.type != MS_QUERY_BY_ATTRIBUTE) {
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByAttribute()");
@@ -610,15 +612,15 @@ int msQueryByAttributes(mapObj *map)
   }
 
   if(map->query.layer < 0 || map->query.layer >= map->numlayers) {
-    msSetError(MS_MISCERR, "No query layer defined.", "msQueryByAttributes()"); 
+    msSetError(MS_MISCERR, "No query layer defined.", "msQueryByAttributes()");
     return(MS_FAILURE);
   }
 
   lp = (GET_LAYER(map, map->query.layer));
 
-  /* conditions may have changed since this layer last drawn, so set 
-     layer->project true to recheck projection needs (Bug #673) */ 
-  lp->project = MS_TRUE; 
+  /* conditions may have changed since this layer last drawn, so set
+     layer->project true to recheck projection needs (Bug #673) */
+  lp->project = MS_TRUE;
 
   /* free any previous search results, do now in case one of the following tests fails */
   if(lp->resultcache) {
@@ -628,12 +630,12 @@ int msQueryByAttributes(mapObj *map)
   }
 
   if(!msIsLayerQueryable(lp)) {
-    msSetError(MS_QUERYERR, "Requested layer has no templates defined so is not queryable.", "msQueryByAttributes()"); 
+    msSetError(MS_QUERYERR, "Requested layer has no templates defined so is not queryable.", "msQueryByAttributes()");
     return(MS_FAILURE);
   }
 
   if(!map->query.str) {
-    msSetError(MS_QUERYERR, "No query expression defined.", "msQueryByAttributes()"); 
+    msSetError(MS_QUERYERR, "No query expression defined.", "msQueryByAttributes()");
     return(MS_FAILURE);
   }
 
@@ -641,12 +643,12 @@ int msQueryByAttributes(mapObj *map)
   if(lp->filter.string) {
     old_filtertype = lp->filter.type;
     old_filterstring = msStrdup(lp->filter.string);
-    if(lp->filteritem) 
+    if(lp->filteritem)
       old_filteritem = msStrdup(lp->filteritem);
   }
 
   /* apply the passed query parameters */
-  if(map->query.item && map->query.item[0] != '\0') 
+  if(map->query.item && map->query.item[0] != '\0')
     lp->filteritem = msStrdup(map->query.item);
   else
     lp->filteritem = NULL;
@@ -654,7 +656,7 @@ int msQueryByAttributes(mapObj *map)
 
   msInitShape(&shape);
 
-  /* Paging could have been disabled before */ 
+  /* Paging could have been disabled before */
   paging = msLayerGetPaging(lp);
   msLayerClose(lp); /* reset */
   status = msLayerOpen(lp);
@@ -662,8 +664,8 @@ int msQueryByAttributes(mapObj *map)
     msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
     return(MS_FAILURE);
   }
-  msLayerEnablePaging(lp, paging);  
-  
+  msLayerEnablePaging(lp, paging);
+
   /* build item list, we want *all* items */
   status = msLayerWhichItems(lp, MS_TRUE, NULL);
   if(status != MS_SUCCESS) {
@@ -673,8 +675,8 @@ int msQueryByAttributes(mapObj *map)
 
   /* identify candidate shapes */
   searchrect = map->query.rect;
-#ifdef USE_PROJ  
-  if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))  
+#ifdef USE_PROJ
+  if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
     msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
   else
     lp->project = MS_FALSE;
@@ -695,27 +697,25 @@ int msQueryByAttributes(mapObj *map)
   lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
   MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
   initResultCache( lp->resultcache);
-  
+
   nclasses = 0;
   classgroup = NULL;
   if (lp->classgroup && lp->numclasses > 0)
     classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
   if (lp->minfeaturesize > 0)
-      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+    minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
   while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
-      
+
     /* Check if the shape size is ok to be drawn */
-    if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
-    {
-        if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
-        {
-            if( lp->debug >= MS_DEBUGLEVEL_V )
-                msDebug("msQueryByAttributes(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
-            msFreeShape(&shape);
-            continue;
-        }
+    if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
+      if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
+        if( lp->debug >= MS_DEBUGLEVEL_V )
+          msDebug("msQueryByAttributes(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+        msFreeShape(&shape);
+        continue;
+      }
     }
 
     shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
@@ -766,7 +766,7 @@ int msQueryByAttributes(mapObj *map)
     return(MS_SUCCESS);
 
   msLayerClose(lp);
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByAttributes()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByAttributes()");
   return(MS_FAILURE);
 }
 
@@ -781,13 +781,13 @@ int msQueryByFilter(mapObj *map)
   layerObj *lp;
 
   char status;
-  
+
   expressionObj old_filter;
 
   rectObj search_rect;
 
   shapeObj shape;
-  
+
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -800,7 +800,7 @@ int msQueryByFilter(mapObj *map)
     msSetError(MS_QUERYERR, "Filter is not set.", "msQueryByFilter()");
     return(MS_FAILURE);
   }
-  
+
   msInitShape(&shape);
 
   if(map->query.layer < 0 || map->query.layer >= map->numlayers)
@@ -811,10 +811,10 @@ int msQueryByFilter(mapObj *map)
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
 
-    /* conditions may have changed since this layer last drawn, so set 
-       layer->project true to recheck projection needs (Bug #673) */ 
-    lp->project = MS_TRUE; 
-    
+    /* conditions may have changed since this layer last drawn, so set
+       layer->project true to recheck projection needs (Bug #673) */
+    lp->project = MS_TRUE;
+
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
@@ -882,29 +882,27 @@ int msQueryByFilter(mapObj *map)
 
 
     if (lp->minfeaturesize > 0)
-        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
       if(!msLayerSupportsCommonFilters(lp)) { /* we have to apply the filter here instead of within the driver */
-	if(msEvalExpression(lp, &shape, map->query.filter, -1) != MS_TRUE) { /* next shape */
+        if(msEvalExpression(lp, &shape, map->query.filter, -1) != MS_TRUE) { /* next shape */
           msFreeShape(&shape);
-	  continue;
+          continue;
         }
       }
 
       /* Check if the shape size is ok to be drawn */
-      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
-      {
-          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
-          {
-              if( lp->debug >= MS_DEBUGLEVEL_V )
-                  msDebug("msQueryByFilter(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
-              msFreeShape(&shape);
-              continue;
-          }
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
+        if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
+          if( lp->debug >= MS_DEBUGLEVEL_V )
+            msDebug("msQueryByFilter(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+          msFreeShape(&shape);
+          continue;
+        }
       }
-      
+
       shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
         msFreeShape(&shape);
@@ -944,22 +942,22 @@ int msQueryByFilter(mapObj *map)
   } /* next layer */
 
   /* was anything found? */
-  for(l=start; l>=stop; l--) {    
+  for(l=start; l>=stop; l--) {
     if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
       return MS_SUCCESS;
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFilter()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFilter()");
   return MS_FAILURE;
 
- query_error:
+query_error:
   msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
   freeExpression(&old_filter);
   msLayerClose(lp);
   return MS_FAILURE;
 }
 
-int msQueryByRect(mapObj *map) 
+int msQueryByRect(mapObj *map)
 {
   int l; /* counters */
   int start, stop=0;
@@ -992,9 +990,9 @@ int msQueryByRect(mapObj *map)
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
 
-    /* conditions may have changed since this layer last drawn, so set 
-       layer->project true to recheck projection needs (Bug #673) */ 
-    lp->project = MS_TRUE; 
+    /* conditions may have changed since this layer last drawn, so set
+       layer->project true to recheck projection needs (Bug #673) */
+    lp->project = MS_TRUE;
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -1018,19 +1016,19 @@ int msQueryByRect(mapObj *map)
 
     searchrect = map->query.rect;
     if(lp->tolerance > 0) {
-        layer_tolerance = lp->tolerance;
-        
-        if(lp->toleranceunits == MS_PIXELS)
-            tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
-        else
-            tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
-        
-        searchrect.minx -= tolerance;
-        searchrect.maxx += tolerance;
-        searchrect.miny -= tolerance;
-        searchrect.maxy += tolerance;
+      layer_tolerance = lp->tolerance;
+
+      if(lp->toleranceunits == MS_PIXELS)
+        tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
+      else
+        tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
+
+      searchrect.minx -= tolerance;
+      searchrect.maxx += tolerance;
+      searchrect.miny -= tolerance;
+      searchrect.maxy += tolerance;
     }
-    
+
     msRectToPolygon(searchrect, &searchshape);
 
     /* Raster layers are handled specially. */
@@ -1041,13 +1039,13 @@ int msQueryByRect(mapObj *map)
       continue;
     }
 
-    /* Paging could have been disabled before */ 
+    /* Paging could have been disabled before */
     paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     msLayerEnablePaging(lp, paging);
-    
+
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -1077,20 +1075,18 @@ int msQueryByRect(mapObj *map)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
     if (lp->minfeaturesize > 0)
-        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
-    
+      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
-        
+
       /* Check if the shape size is ok to be drawn */
-      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
-      {
-          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
-          {
-              if( lp->debug >= MS_DEBUGLEVEL_V )
-                  msDebug("msQueryByRect(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
-              msFreeShape(&shape);
-              continue;      
-          }
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
+        if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
+          if( lp->debug >= MS_DEBUGLEVEL_V )
+            msDebug("msQueryByRect(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+          msFreeShape(&shape);
+          continue;
+        }
       }
 
       shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
@@ -1106,31 +1102,31 @@ int msQueryByRect(mapObj *map)
 
 #ifdef USE_PROJ
       if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
-	msProjectShape(&(lp->projection), &(map->projection), &shape);
+        msProjectShape(&(lp->projection), &(map->projection), &shape);
       else
-	lp->project = MS_FALSE;
+        lp->project = MS_FALSE;
 #endif
 
-      if(msRectContained(&shape.bounds, &searchrect) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
+      if(msRectContained(&shape.bounds, &searchrect) == MS_TRUE) { /* if the whole shape is in, don't intersect */
         status = MS_TRUE;
       } else {
-	switch(shape.type) { /* make sure shape actually intersects the qrect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */
-	case MS_SHAPE_POINT:
-	  status = msIntersectMultipointPolygon(&shape, &searchshape);
-	  break;
-	case MS_SHAPE_LINE:
-	  status = msIntersectPolylinePolygon(&shape, &searchshape);
-	  break;
-	case MS_SHAPE_POLYGON:
-	  status = msIntersectPolygons(&shape, &searchshape);
-	  break;
-	default:
-	  break;
-	}
-      }	
+        switch(shape.type) { /* make sure shape actually intersects the qrect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */
+          case MS_SHAPE_POINT:
+            status = msIntersectMultipointPolygon(&shape, &searchshape);
+            break;
+          case MS_SHAPE_LINE:
+            status = msIntersectPolylinePolygon(&shape, &searchshape);
+            break;
+          case MS_SHAPE_POLYGON:
+            status = msIntersectPolygons(&shape, &searchshape);
+            break;
+          default:
+            break;
+        }
+      }
 
       if(status == MS_TRUE)
-	addResult(lp->resultcache, &shape);
+        addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
 
       /* check shape count */
@@ -1139,7 +1135,7 @@ int msQueryByRect(mapObj *map)
         break;
       }
     } /* next shape */
-      
+
     if (classgroup)
       msFree(classgroup);
 
@@ -1147,23 +1143,24 @@ int msQueryByRect(mapObj *map)
 
     if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
- 
+
   msFreeShape(&searchshape);
- 
+
   /* was anything found? */
-  for(l=start; l>=stop; l--) {    
+  for(l=start; l>=stop; l--) {
     if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
- 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByRect()"); 
+
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByRect()");
   return(MS_FAILURE);
 }
 
-static int is_duplicate(resultCacheObj *resultcache, int shapeindex, int tileindex) {
+static int is_duplicate(resultCacheObj *resultcache, int shapeindex, int tileindex)
+{
   int i;
 
-  for(i=0; i<resultcache->numresults; i++)    
+  for(i=0; i<resultcache->numresults; i++)
     if(resultcache->results[i].shapeindex == shapeindex && resultcache->results[i].tileindex == tileindex) return(MS_TRUE);
 
   return(MS_FALSE);
@@ -1197,9 +1194,9 @@ int msQueryByFeatures(mapObj *map)
     return(MS_FAILURE);
   }
 
-  /* conditions may have changed since this layer last drawn, so set 
-     layer->project true to recheck projection needs (Bug #673) */ 
-  slp->project = MS_TRUE; 
+  /* conditions may have changed since this layer last drawn, so set
+     layer->project true to recheck projection needs (Bug #673) */
+  slp->project = MS_TRUE;
 
   if(map->query.layer < 0 || map->query.layer >= map->numlayers)
     start = map->numlayers-1;
@@ -1215,12 +1212,12 @@ int msQueryByFeatures(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     if(l == map->query.slayer) continue; /* skip the selection layer */
-    
+
     lp = (GET_LAYER(map, l));
 
-    /* conditions may have changed since this layer last drawn, so set 
-       layer->project true to recheck projection needs (Bug #673) */ 
-    lp->project = MS_TRUE; 
+    /* conditions may have changed since this layer last drawn, so set
+       layer->project true to recheck projection needs (Bug #673) */
+    lp->project = MS_TRUE;
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -1229,7 +1226,7 @@ int msQueryByFeatures(mapObj *map)
       lp->resultcache = NULL;
     }
 
-    if(!msIsLayerQueryable(lp)) continue;    
+    if(!msIsLayerQueryable(lp)) continue;
     if(lp->status == MS_OFF) continue;
 
     if(map->scaledenom > 0) {
@@ -1246,11 +1243,11 @@ int msQueryByFeatures(mapObj *map)
     if(lp->tolerance == -1) {
       if(lp->type == MS_LAYER_POINT || lp->type == MS_LAYER_LINE)
         layer_tolerance = 3;
-       else
+      else
         layer_tolerance = 0;
     } else
       layer_tolerance = lp->tolerance;
-  
+
     if(lp->toleranceunits == MS_PIXELS)
       tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
     else
@@ -1260,34 +1257,34 @@ int msQueryByFeatures(mapObj *map)
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     msLayerEnablePaging(lp, MS_FALSE);
-    
+
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
-    
+
     /* for each selection shape */
     for(i=0; i<slp->resultcache->numresults; i++) {
 
       status = msLayerGetShape(slp, &selectshape, &(slp->resultcache->results[i]));
       if(status != MS_SUCCESS) {
-	msLayerClose(lp);
-	msLayerClose(slp);
-	return(MS_FAILURE);
+        msLayerClose(lp);
+        msLayerClose(slp);
+        return(MS_FAILURE);
       }
 
       if(selectshape.type != MS_SHAPE_POLYGON && selectshape.type != MS_SHAPE_LINE) {
-	msLayerClose(lp);
-	msLayerClose(slp);
-	msSetError(MS_QUERYERR, "Selection features MUST be polygons or lines.", "msQueryByFeatures()");
-	return(MS_FAILURE);
+        msLayerClose(lp);
+        msLayerClose(slp);
+        msSetError(MS_QUERYERR, "Selection features MUST be polygons or lines.", "msQueryByFeatures()");
+        return(MS_FAILURE);
       }
-      
+
 #ifdef USE_PROJ
       if(slp->project && msProjectionsDiffer(&(slp->projection), &(map->projection))) {
-	msProjectShape(&(slp->projection), &(map->projection), &selectshape);
-	msComputeBounds(&selectshape); /* recompute the bounding box AFTER projection */
+        msProjectShape(&(slp->projection), &(map->projection), &selectshape);
+        msComputeBounds(&selectshape); /* recompute the bounding box AFTER projection */
       } else
-	slp->project = MS_FALSE;
+        slp->project = MS_FALSE;
 #endif
 
       /* identify target shapes */
@@ -1299,28 +1296,28 @@ int msQueryByFeatures(mapObj *map)
       searchrect.maxy += tolerance;
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))      
-	msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
+      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+        msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
       else
-	lp->project = MS_FALSE;
+        lp->project = MS_FALSE;
 #endif
 
       status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
       if(status == MS_DONE) { /* no overlap */
-	msLayerClose(lp);
-	break; /* next layer */
+        msLayerClose(lp);
+        break; /* next layer */
       } else if(status != MS_SUCCESS) {
-	msLayerClose(lp);
-	msLayerClose(slp);
-	return(MS_FAILURE);
+        msLayerClose(lp);
+        msLayerClose(slp);
+        return(MS_FAILURE);
       }
 
       if(i == 0) {
-	lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+        lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
         MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
         initResultCache( lp->resultcache);
 
-      }      
+      }
 
       nclasses = 0;
       classgroup = NULL;
@@ -1328,121 +1325,119 @@ int msQueryByFeatures(mapObj *map)
         classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
       if (lp->minfeaturesize > 0)
-          minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
       while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
-          
-	/* check for dups when there are multiple selection shapes */
-	if(i > 0 && is_duplicate(lp->resultcache, shape.index, shape.tileindex)) continue;
-        
+
+        /* check for dups when there are multiple selection shapes */
+        if(i > 0 && is_duplicate(lp->resultcache, shape.index, shape.tileindex)) continue;
+
 
         /* Check if the shape size is ok to be drawn */
-        if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
-        {
-            if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
-            {
-                if( lp->debug >= MS_DEBUGLEVEL_V )
-                    msDebug("msQueryByFeature(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
-                msFreeShape(&shape);
-                continue;      
-            }
+        if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
+          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
+            if( lp->debug >= MS_DEBUGLEVEL_V )
+              msDebug("msQueryByFeature(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msFreeShape(&shape);
+            continue;
+          }
         }
 
-	shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
-	if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
-	  msFreeShape(&shape);
-	  continue;
-	}
+        shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
+        if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
+          msFreeShape(&shape);
+          continue;
+        }
 
-	if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
-	  msFreeShape(&shape);
-	  continue;
-	}
-	
+        if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
+          msFreeShape(&shape);
+          continue;
+        }
+
 #ifdef USE_PROJ
-	if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))	
-	  msProjectShape(&(lp->projection), &(map->projection), &shape);
+        if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+          msProjectShape(&(lp->projection), &(map->projection), &shape);
         else
-	  lp->project = MS_FALSE;
+          lp->project = MS_FALSE;
 #endif
- 
-	switch(selectshape.type) { /* may eventually support types other than polygon on line */
-	case MS_SHAPE_POLYGON:	  
-	  switch(shape.type) { /* make sure shape actually intersects the selectshape */
-	  case MS_SHAPE_POINT:
-	    if(tolerance == 0) /* just test for intersection */
-	      status = msIntersectMultipointPolygon(&shape, &selectshape);
-	    else { /* check distance, distance=0 means they intersect */
-	      distance = msDistanceShapeToShape(&selectshape, &shape);
-	      if(distance < tolerance) status = MS_TRUE;
-            }
-	    break;
-	  case MS_SHAPE_LINE:
-	    if(tolerance == 0) { /* just test for intersection */
-	      status = msIntersectPolylinePolygon(&shape, &selectshape);
-	    } else { /* check distance, distance=0 means they intersect */
-	      distance = msDistanceShapeToShape(&selectshape, &shape);
-	      if(distance < tolerance) status = MS_TRUE;
-            }
-	    break;
-	  case MS_SHAPE_POLYGON:
-	    if(tolerance == 0) /* just test for intersection */
-	      status = msIntersectPolygons(&shape, &selectshape);
-	    else { /* check distance, distance=0 means they intersect */
-	      distance = msDistanceShapeToShape(&selectshape, &shape);
-	      if(distance < tolerance) status = MS_TRUE;
-            }
-	    break;
-	  default:
-            status = MS_FALSE;
-	    break;
-	  }
-	  break;
-	case MS_SHAPE_LINE:
-          switch(shape.type) { /* make sure shape actually intersects the selectshape */
-          case MS_SHAPE_POINT:
-            if(tolerance == 0) { /* just test for intersection */
-              distance = msDistanceShapeToShape(&selectshape, &shape);
-              if(distance == 0) status = MS_TRUE;
-            } else {
-	      distance = msDistanceShapeToShape(&selectshape, &shape);
-              if(distance < tolerance) status = MS_TRUE;
+
+        switch(selectshape.type) { /* may eventually support types other than polygon on line */
+          case MS_SHAPE_POLYGON:
+            switch(shape.type) { /* make sure shape actually intersects the selectshape */
+              case MS_SHAPE_POINT:
+                if(tolerance == 0) /* just test for intersection */
+                  status = msIntersectMultipointPolygon(&shape, &selectshape);
+                else { /* check distance, distance=0 means they intersect */
+                  distance = msDistanceShapeToShape(&selectshape, &shape);
+                  if(distance < tolerance) status = MS_TRUE;
+                }
+                break;
+              case MS_SHAPE_LINE:
+                if(tolerance == 0) { /* just test for intersection */
+                  status = msIntersectPolylinePolygon(&shape, &selectshape);
+                } else { /* check distance, distance=0 means they intersect */
+                  distance = msDistanceShapeToShape(&selectshape, &shape);
+                  if(distance < tolerance) status = MS_TRUE;
+                }
+                break;
+              case MS_SHAPE_POLYGON:
+                if(tolerance == 0) /* just test for intersection */
+                  status = msIntersectPolygons(&shape, &selectshape);
+                else { /* check distance, distance=0 means they intersect */
+                  distance = msDistanceShapeToShape(&selectshape, &shape);
+                  if(distance < tolerance) status = MS_TRUE;
+                }
+                break;
+              default:
+                status = MS_FALSE;
+                break;
             }
             break;
           case MS_SHAPE_LINE:
-            if(tolerance == 0) { /* just test for intersection */
-              status = msIntersectPolylines(&shape, &selectshape);
-            } else { /* check distance, distance=0 means they intersect */
-              distance = msDistanceShapeToShape(&selectshape, &shape);
-              if(distance < tolerance) status = MS_TRUE;
-            }
-            break;
-          case MS_SHAPE_POLYGON:
-            if(tolerance == 0) /* just test for intersection */
-              status = msIntersectPolylinePolygon(&selectshape, &shape);
-            else { /* check distance, distance=0 means they intersect */
-              distance = msDistanceShapeToShape(&selectshape, &shape);
-              if(distance < tolerance) status = MS_TRUE;
+            switch(shape.type) { /* make sure shape actually intersects the selectshape */
+              case MS_SHAPE_POINT:
+                if(tolerance == 0) { /* just test for intersection */
+                  distance = msDistanceShapeToShape(&selectshape, &shape);
+                  if(distance == 0) status = MS_TRUE;
+                } else {
+                  distance = msDistanceShapeToShape(&selectshape, &shape);
+                  if(distance < tolerance) status = MS_TRUE;
+                }
+                break;
+              case MS_SHAPE_LINE:
+                if(tolerance == 0) { /* just test for intersection */
+                  status = msIntersectPolylines(&shape, &selectshape);
+                } else { /* check distance, distance=0 means they intersect */
+                  distance = msDistanceShapeToShape(&selectshape, &shape);
+                  if(distance < tolerance) status = MS_TRUE;
+                }
+                break;
+              case MS_SHAPE_POLYGON:
+                if(tolerance == 0) /* just test for intersection */
+                  status = msIntersectPolylinePolygon(&selectshape, &shape);
+                else { /* check distance, distance=0 means they intersect */
+                  distance = msDistanceShapeToShape(&selectshape, &shape);
+                  if(distance < tolerance) status = MS_TRUE;
+                }
+                break;
+              default:
+                status = MS_FALSE;
+                break;
             }
             break;
           default:
-            status = MS_FALSE;
-            break;
-          }
+            break; /* should never get here as we test for selection shape type explicitly earlier */
+        }
+
+        if(status == MS_TRUE)
+          addResult(lp->resultcache, &shape);
+        msFreeShape(&shape);
+
+        /* check shape count */
+        if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
+          status = MS_DONE;
           break;
-	default:
-	  break; /* should never get here as we test for selection shape type explicitly earlier */
-	}
-
-	if(status == MS_TRUE)
-	  addResult(lp->resultcache, &shape);
-	msFreeShape(&shape);
-
-	/* check shape count */
-	if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
-	  status = MS_DONE;
-	  break;
-	}
+        }
       } /* next shape */
 
       if (classgroup)
@@ -1457,12 +1452,12 @@ int msQueryByFeatures(mapObj *map)
   } /* next layer */
 
   /* was anything found? */
-  for(l=start; l>=stop; l--) {  
+  for(l=start; l>=stop; l--) {
     if(l == map->query.slayer) continue; /* skip the selection layer */
     if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0) return(MS_SUCCESS);
   }
 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFeatures()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFeatures()");
   return(MS_FAILURE);
 }
 
@@ -1511,12 +1506,12 @@ int msQueryByPoint(mapObj *map)
     start = stop = map->query.layer;
 
   for(l=start; l>=stop; l--) {
-      lp = (GET_LAYER(map, l));    
+    lp = (GET_LAYER(map, l));
 
-    /* conditions may have changed since this layer last drawn, so set 
-       layer->project true to recheck projection needs (Bug #673) */ 
-    lp->project = MS_TRUE; 
-    
+    /* conditions may have changed since this layer last drawn, so set
+       layer->project true to recheck projection needs (Bug #673) */
+    lp->project = MS_TRUE;
+
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
@@ -1554,11 +1549,11 @@ int msQueryByPoint(mapObj *map)
       layer_tolerance = lp->tolerance;
 
     if(map->query.buffer <= 0) { /* use layer tolerance */
-      if(lp->toleranceunits == MS_PIXELS)       
-	t = layer_tolerance * MS_MAX(MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width), 
+      if(lp->toleranceunits == MS_PIXELS)
+        t = layer_tolerance * MS_MAX(MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width),
                                      MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height));
       else
-	t = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
+        t = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
     } else /* use buffer distance */
       t = map->query.buffer;
 
@@ -1567,13 +1562,13 @@ int msQueryByPoint(mapObj *map)
     rect.miny = map->query.point.y - t;
     rect.maxy = map->query.point.y + t;
 
-    /* Paging could have been disabled before */ 
-    paging = msLayerGetPaging(lp);    
+    /* Paging could have been disabled before */
+    paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     msLayerEnablePaging(lp, paging);
-    
+
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -1605,51 +1600,49 @@ int msQueryByPoint(mapObj *map)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
     if (lp->minfeaturesize > 0)
-        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
-        
+
       /* Check if the shape size is ok to be drawn */
-      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
-      {
-          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
-          {
-              if( lp->debug >= MS_DEBUGLEVEL_V )
-                  msDebug("msQueryByPoint(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
-              msFreeShape(&shape);
-              continue;      
-          }
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
+        if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
+          if( lp->debug >= MS_DEBUGLEVEL_V )
+            msDebug("msQueryByPoint(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+          msFreeShape(&shape);
+          continue;
+        }
       }
-      
+
       shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
-	msFreeShape(&shape);
-	continue;
+        msFreeShape(&shape);
+        continue;
       }
 
       if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
-	msFreeShape(&shape);
-	continue;
+        msFreeShape(&shape);
+        continue;
       }
 
 #ifdef USE_PROJ
       if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
-	msProjectShape(&(lp->projection), &(map->projection), &shape);
+        msProjectShape(&(lp->projection), &(map->projection), &shape);
       else
-	lp->project = MS_FALSE;
+        lp->project = MS_FALSE;
 #endif
 
       d = msDistancePointToShape(&(map->query.point), &shape);
       if( d <= t ) { /* found one */
-	if(map->query.mode == MS_QUERY_SINGLE) {
-	  lp->resultcache->numresults = 0;
-	  addResult(lp->resultcache, &shape);	  
-	  t = d; /* next one must be closer */
-	} else {
-	  addResult(lp->resultcache, &shape);
-	}
+        if(map->query.mode == MS_QUERY_SINGLE) {
+          lp->resultcache->numresults = 0;
+          addResult(lp->resultcache, &shape);
+          t = d; /* next one must be closer */
+        } else {
+          addResult(lp->resultcache, &shape);
+        }
       }
- 
+
       msFreeShape(&shape);
 
       if(map->query.mode == MS_QUERY_MULTIPLE && map->query.maxresults > 0 && lp->resultcache->numresults == map->query.maxresults) {
@@ -1671,17 +1664,17 @@ int msQueryByPoint(mapObj *map)
 
     if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
 
-    if((lp->resultcache->numresults > 0) && (map->query.mode == MS_QUERY_SINGLE) && (map->query.maxresults == 0)) 
+    if((lp->resultcache->numresults > 0) && (map->query.mode == MS_QUERY_SINGLE) && (map->query.maxresults == 0))
       break;   /* no need to search any further */
   } /* next layer */
 
   /* was anything found? */
-  for(l=start; l>=stop; l--) {    
+  for(l=start; l>=stop; l--) {
     if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
- 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByPoint()"); 
+
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByPoint()");
   return(MS_FAILURE);
 }
 
@@ -1721,13 +1714,13 @@ int msQueryByShape(mapObj *map)
     start = stop = map->query.layer;
 
   msComputeBounds(qshape); /* make sure an accurate extent exists */
- 
+
   for(l=start; l>=stop; l--) { /* each layer */
     lp = (GET_LAYER(map, l));
 
-    /* conditions may have changed since this layer last drawn, so set 
-       layer->project true to recheck projection needs (Bug #673) */ 
-    lp->project = MS_TRUE; 
+    /* conditions may have changed since this layer last drawn, so set
+       layer->project true to recheck projection needs (Bug #673) */
+    lp->project = MS_TRUE;
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -1738,7 +1731,7 @@ int msQueryByShape(mapObj *map)
 
     if(!msIsLayerQueryable(lp)) continue;
     if(lp->status == MS_OFF) continue;
-    
+
     if(map->scaledenom > 0) {
       if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
       if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
@@ -1769,12 +1762,12 @@ int msQueryByShape(mapObj *map)
       tolerance = layer_tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
     else
       tolerance = layer_tolerance * (msInchesPerUnit(lp->toleranceunits,0)/msInchesPerUnit(map->units,0));
-   
+
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     /* disable driver paging */
-    msLayerEnablePaging(lp, MS_FALSE);        
+    msLayerEnablePaging(lp, MS_FALSE);
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
@@ -1814,115 +1807,113 @@ int msQueryByShape(mapObj *map)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
     if (lp->minfeaturesize > 0)
-        minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
+      minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
     while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
 
       /* Check if the shape size is ok to be drawn */
-      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) )
-      {
-          if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)
-          {
-              if( lp->debug >= MS_DEBUGLEVEL_V )
-                  msDebug("msQueryByShape(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
-              msFreeShape(&shape);
-              continue;      
-          }
+      if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
+        if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
+          if( lp->debug >= MS_DEBUGLEVEL_V )
+            msDebug("msQueryByShape(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+          msFreeShape(&shape);
+          continue;
+        }
       }
 
       shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
       if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
-	msFreeShape(&shape);
-	continue;
+        msFreeShape(&shape);
+        continue;
       }
 
       if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
-	msFreeShape(&shape);
-	continue;
+        msFreeShape(&shape);
+        continue;
       }
 
 #ifdef USE_PROJ
       if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
-	msProjectShape(&(lp->projection), &(map->projection), &shape);
+        msProjectShape(&(lp->projection), &(map->projection), &shape);
       else
-	lp->project = MS_FALSE;
+        lp->project = MS_FALSE;
 #endif
 
       switch(qshape->type) { /* may eventually support types other than polygon or line */
-      case MS_SHAPE_POLYGON:
-        switch(shape.type) { /* make sure shape actually intersects the shape */
-        case MS_SHAPE_POINT:
-          if(tolerance == 0) /* just test for intersection */
-	     status = msIntersectMultipointPolygon(&shape, qshape);
-	  else { /* check distance, distance=0 means they intersect */
-	    distance = msDistanceShapeToShape(qshape, &shape);
-	    if(distance < tolerance) status = MS_TRUE;
-          }
-	  break;
-        case MS_SHAPE_LINE:
-          if(tolerance == 0) { /* just test for intersection */
-	    status = msIntersectPolylinePolygon(&shape, qshape);
-	  } else { /* check distance, distance=0 means they intersect */
-	    distance = msDistanceShapeToShape(qshape, &shape);
-	    if(distance < tolerance) status = MS_TRUE;
-          }
-	  break;
-        case MS_SHAPE_POLYGON:	
-	  if(tolerance == 0) /* just test for intersection */
-	    status = msIntersectPolygons(&shape, qshape);
-	  else { /* check distance, distance=0 means they intersect */
-	    distance = msDistanceShapeToShape(qshape, &shape);
-	    if(distance < tolerance) status = MS_TRUE;
+        case MS_SHAPE_POLYGON:
+          switch(shape.type) { /* make sure shape actually intersects the shape */
+            case MS_SHAPE_POINT:
+              if(tolerance == 0) /* just test for intersection */
+                status = msIntersectMultipointPolygon(&shape, qshape);
+              else { /* check distance, distance=0 means they intersect */
+                distance = msDistanceShapeToShape(qshape, &shape);
+                if(distance < tolerance) status = MS_TRUE;
+              }
+              break;
+            case MS_SHAPE_LINE:
+              if(tolerance == 0) { /* just test for intersection */
+                status = msIntersectPolylinePolygon(&shape, qshape);
+              } else { /* check distance, distance=0 means they intersect */
+                distance = msDistanceShapeToShape(qshape, &shape);
+                if(distance < tolerance) status = MS_TRUE;
+              }
+              break;
+            case MS_SHAPE_POLYGON:
+              if(tolerance == 0) /* just test for intersection */
+                status = msIntersectPolygons(&shape, qshape);
+              else { /* check distance, distance=0 means they intersect */
+                distance = msDistanceShapeToShape(qshape, &shape);
+                if(distance < tolerance) status = MS_TRUE;
+              }
+              break;
+            default:
+              break;
           }
           break;
+        case MS_SHAPE_LINE:
+          switch(shape.type) { /* make sure shape actually intersects the selectshape */
+            case MS_SHAPE_POINT:
+              if(tolerance == 0) { /* just test for intersection */
+                distance = msDistanceShapeToShape(qshape, &shape);
+                if(distance == 0) status = MS_TRUE;
+              } else {
+                distance = msDistanceShapeToShape(qshape, &shape);
+                if(distance < tolerance) status = MS_TRUE;
+              }
+              break;
+            case MS_SHAPE_LINE:
+              if(tolerance == 0) { /* just test for intersection */
+                status = msIntersectPolylines(&shape, qshape);
+              } else { /* check distance, distance=0 means they intersect */
+                distance = msDistanceShapeToShape(qshape, &shape);
+                if(distance < tolerance) status = MS_TRUE;
+              }
+              break;
+            case MS_SHAPE_POLYGON:
+              if(tolerance == 0) /* just test for intersection */
+                status = msIntersectPolylinePolygon(qshape, &shape);
+              else { /* check distance, distance=0 means they intersect */
+                distance = msDistanceShapeToShape(qshape, &shape);
+                if(distance < tolerance) status = MS_TRUE;
+              }
+              break;
+            default:
+              status = MS_FALSE;
+              break;
+          }
+          break;
+        case MS_SHAPE_POINT:
+          distance = msDistanceShapeToShape(qshape, &shape);
+          status = MS_FALSE;
+          if(tolerance == 0 && distance == 0) status = MS_TRUE; /* shapes intersect */
+          else if(distance < tolerance) status = MS_TRUE; /* shapes are close enough */
+          break;
         default:
-	  break;
-        }
-        break;
-      case MS_SHAPE_LINE:
-	switch(shape.type) { /* make sure shape actually intersects the selectshape */
-	case MS_SHAPE_POINT:
-	  if(tolerance == 0) { /* just test for intersection */
-	    distance = msDistanceShapeToShape(qshape, &shape);
-	    if(distance == 0) status = MS_TRUE;
-	  } else {
-	    distance = msDistanceShapeToShape(qshape, &shape);
-	    if(distance < tolerance) status = MS_TRUE;
-	  }
-	  break;
-	case MS_SHAPE_LINE:
-	  if(tolerance == 0) { /* just test for intersection */
-	    status = msIntersectPolylines(&shape, qshape);
-	  } else { /* check distance, distance=0 means they intersect */
-	    distance = msDistanceShapeToShape(qshape, &shape);
-	    if(distance < tolerance) status = MS_TRUE;
-	  }
-	  break;
-	case MS_SHAPE_POLYGON:
-	  if(tolerance == 0) /* just test for intersection */
-	    status = msIntersectPolylinePolygon(qshape, &shape);
-	  else { /* check distance, distance=0 means they intersect */
-	    distance = msDistanceShapeToShape(qshape, &shape);
-	    if(distance < tolerance) status = MS_TRUE;
-	  }
-	  break;
-	default:
-	  status = MS_FALSE;
-	  break;
-	}
-	break;
-      case MS_SHAPE_POINT:
-        distance = msDistanceShapeToShape(qshape, &shape);
-        status = MS_FALSE;
-        if(tolerance == 0 && distance == 0) status = MS_TRUE; /* shapes intersect */
-        else if(distance < tolerance) status = MS_TRUE; /* shapes are close enough */
-        break;
-      default:
-	break; /* should never get here as we test for selection shape type explicitly earlier */
+          break; /* should never get here as we test for selection shape type explicitly earlier */
       }
 
       if(status == MS_TRUE)
-	addResult(lp->resultcache, &shape);
+        addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
 
       /* check shape count */
@@ -1938,12 +1929,12 @@ int msQueryByShape(mapObj *map)
   } /* next layer */
 
   /* was anything found? */
-  for(l=start; l>=stop; l--) {    
+  for(l=start; l>=stop; l--) {
     if(GET_LAYER(map, l)->resultcache && GET_LAYER(map, l)->resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
- 
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByShape()"); 
+
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByShape()");
   return(MS_FAILURE);
 }
 
@@ -1990,7 +1981,7 @@ void msQueryFree(mapObj *map, int qlayer)
   int l; /* counters */
   int start, stop=0;
   layerObj *lp;
-    
+
   if(qlayer < 0 || qlayer >= map->numlayers)
     start = map->numlayers-1;
   else
@@ -1998,9 +1989,9 @@ void msQueryFree(mapObj *map, int qlayer)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
-        
+
     if(lp->resultcache) {
-      if(lp->resultcache->results) 
+      if(lp->resultcache->results)
         free(lp->resultcache->results);
       free(lp->resultcache);
       lp->resultcache = NULL;

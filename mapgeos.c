@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -47,7 +47,7 @@ static void msGEOSError(const char *format, ...)
   return;
 }
 
-static void msGEOSNotice(const char *fmt, ...) 
+static void msGEOSNotice(const char *fmt, ...)
 {
   return; /* do nothing with notices at this point */
 }
@@ -55,12 +55,12 @@ static void msGEOSNotice(const char *fmt, ...)
 /*
 ** Setup/Cleanup wrappers
 */
-void msGEOSSetup() 
+void msGEOSSetup()
 {
   initGEOS(msGEOSNotice, msGEOSError);
 }
 
-void msGEOSCleanup() 
+void msGEOSCleanup()
 {
   finishGEOS();
 }
@@ -72,18 +72,18 @@ static GEOSGeom msGEOSShape2Geometry_point(pointObj *point)
 {
   GEOSCoordSeq coords;
   GEOSGeom g;
-  
+
   if(!point) return NULL;
-  
+
   coords = GEOSCoordSeq_create(1, 2); /* todo handle z's */
   if(!coords) return NULL;
-  
+
   GEOSCoordSeq_setX(coords, 0, point->x);
   GEOSCoordSeq_setY(coords, 0, point->y);
   /* GEOSCoordSeq_setY(coords, 0, point->z); */
 
   g = GEOSGeom_createPoint(coords); /* g owns the coordinate in coords */
-  
+
   return g;
 }
 
@@ -97,12 +97,12 @@ static GEOSGeom msGEOSShape2Geometry_multipoint(lineObj *multipoint)
 
   points = malloc(multipoint->numpoints*sizeof(GEOSGeom));
   if(!points) return NULL;
-  
+
   for(i=0; i<multipoint->numpoints; i++)
     points[i] = msGEOSShape2Geometry_point(&(multipoint->point[i]));
 
   g = GEOSGeom_createCollection(GEOS_MULTIPOINT, points, multipoint->numpoints);
-  
+
   free(points);
 
   return g;
@@ -112,10 +112,10 @@ static GEOSGeom msGEOSShape2Geometry_line(lineObj *line)
 {
   int i;
   GEOSGeom g;
-  GEOSCoordSeq coords;  
+  GEOSCoordSeq coords;
 
   if(!line) return NULL;
-  
+
   coords = GEOSCoordSeq_create(line->numpoints, 2); /* todo handle z's */
   if(!coords) return NULL;
 
@@ -126,7 +126,7 @@ static GEOSGeom msGEOSShape2Geometry_line(lineObj *line)
   }
 
   g = GEOSGeom_createLineString(coords); /* g owns the coordinates in coords */
-  
+
   return g;
 }
 
@@ -145,7 +145,7 @@ static GEOSGeom msGEOSShape2Geometry_multiline(shapeObj *multiline)
     lines[i] = msGEOSShape2Geometry_line(&(multiline->line[i]));
 
   g = GEOSGeom_createCollection(GEOS_MULTILINESTRING, lines, multiline->numlines);
-  
+
   free(lines);
 
   return g;
@@ -154,28 +154,28 @@ static GEOSGeom msGEOSShape2Geometry_multiline(shapeObj *multiline)
 static GEOSGeom msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *outerList)
 {
   int i, j, k;
-  GEOSCoordSeq coords; 
+  GEOSCoordSeq coords;
   GEOSGeom g;
   GEOSGeom outerRing;
   GEOSGeom *innerRings=NULL;
   int numInnerRings=0, *innerList;
 
   if(!shape || !outerList) return NULL;
-    
+
   /* build the outer shell */
   coords = GEOSCoordSeq_create(shape->line[r].numpoints, 2); /* todo handle z's */
   if(!coords) return NULL;
-    
+
   for(i=0; i<shape->line[r].numpoints; i++) {
     GEOSCoordSeq_setX(coords, i, shape->line[r].point[i].x);
     GEOSCoordSeq_setY(coords, i, shape->line[r].point[i].y);
     /* GEOSCoordSeq_setZ(coords, i, shape->line[r].point[i].z); */
   }
-  
-  outerRing = GEOSGeom_createLinearRing(coords); /* outerRing owns the coordinates in coords */ 
-    
+
+  outerRing = GEOSGeom_createLinearRing(coords); /* outerRing owns the coordinates in coords */
+
   /* build the holes */
-  innerList = msGetInnerList(shape, r, outerList);    
+  innerList = msGetInnerList(shape, r, outerList);
   for(j=0; j<shape->numlines; j++)
     if(innerList[j] == MS_TRUE) numInnerRings++;
 
@@ -184,28 +184,28 @@ static GEOSGeom msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *
 
     innerRings = malloc(numInnerRings*sizeof(GEOSGeom));
     if(!innerRings) return NULL; /* todo, this will leak memory (outerRing) */
-  
+
     for(j=0; j<shape->numlines; j++) {
-	  if(innerList[j] == MS_FALSE) continue;
-	
-	  coords = GEOSCoordSeq_create(shape->line[j].numpoints, 2); /* todo handle z's */
+      if(innerList[j] == MS_FALSE) continue;
+
+      coords = GEOSCoordSeq_create(shape->line[j].numpoints, 2); /* todo handle z's */
       if(!coords) return NULL; /* todo, this will leak memory (shell + allocated holes) */
-	
-	  for(i=0; i<shape->line[j].numpoints; i++) {
+
+      for(i=0; i<shape->line[j].numpoints; i++) {
         GEOSCoordSeq_setX(coords, i, shape->line[j].point[i].x);
         GEOSCoordSeq_setY(coords, i, shape->line[j].point[i].y);
         /* GEOSCoordSeq_setZ(coords, i, shape->line[j].point[i].z); */
-	  }
+      }
 
-	  innerRings[k] = GEOSGeom_createLinearRing(coords); /* innerRings[k] owns the coordinates in coords */
-	  k++;
+      innerRings[k] = GEOSGeom_createLinearRing(coords); /* innerRings[k] owns the coordinates in coords */
+      k++;
     }
   }
 
   g = GEOSGeom_createPolygon(outerRing, innerRings, numInnerRings);
 
   free(innerList); /* clean up */
-   
+
   return g;
 }
 
@@ -219,12 +219,12 @@ static GEOSGeom msGEOSShape2Geometry_polygon(shapeObj *shape)
   outerList = msGetOuterList(shape);
   for(i=0; i<shape->numlines; i++) {
     if(outerList[i] == MS_TRUE) {
-	  numOuterRings++;
-	  lastOuterRing = i; /* save for the simple case */
+      numOuterRings++;
+      lastOuterRing = i; /* save for the simple case */
     }
   }
 
-  if(numOuterRings == 1) { 
+  if(numOuterRings == 1) {
     g = msGEOSShape2Geometry_simplepolygon(shape, lastOuterRing, outerList);
   } else { /* a true multipolygon */
     polygons = malloc(numOuterRings*sizeof(GEOSGeom));
@@ -232,9 +232,9 @@ static GEOSGeom msGEOSShape2Geometry_polygon(shapeObj *shape)
 
     j = 0; /* part counter */
     for(i=0; i<shape->numlines; i++) {
-	  if(outerList[i] == MS_FALSE) continue;
-	  polygons[j] = msGEOSShape2Geometry_simplepolygon(shape, i, outerList); /* TODO: account for NULL return values */
-	  j++;
+      if(outerList[i] == MS_FALSE) continue;
+      polygons[j] = msGEOSShape2Geometry_simplepolygon(shape, i, outerList); /* TODO: account for NULL return values */
+      j++;
     }
 
     g = GEOSGeom_createCollection(GEOS_MULTIPOLYGON, polygons, numOuterRings);
@@ -250,32 +250,32 @@ GEOSGeom msGEOSShape2Geometry(shapeObj *shape)
     return NULL; /* a NULL shape generates a NULL geometry */
 
   switch(shape->type) {
-  case MS_SHAPE_POINT:
-    if(shape->numlines == 0 || shape->line[0].numpoints == 0) /* not enough info for a point */
-      return NULL;
+    case MS_SHAPE_POINT:
+      if(shape->numlines == 0 || shape->line[0].numpoints == 0) /* not enough info for a point */
+        return NULL;
 
-    if(shape->line[0].numpoints == 1) /* simple point */
-      return msGEOSShape2Geometry_point(&(shape->line[0].point[0]));
-    else /* multi-point */
-      return msGEOSShape2Geometry_multipoint(&(shape->line[0]));
-    break;
-  case MS_SHAPE_LINE:
-    if(shape->numlines == 0 || shape->line[0].numpoints < 2) /* not enough info for a line */
-      return NULL;
+      if(shape->line[0].numpoints == 1) /* simple point */
+        return msGEOSShape2Geometry_point(&(shape->line[0].point[0]));
+      else /* multi-point */
+        return msGEOSShape2Geometry_multipoint(&(shape->line[0]));
+      break;
+    case MS_SHAPE_LINE:
+      if(shape->numlines == 0 || shape->line[0].numpoints < 2) /* not enough info for a line */
+        return NULL;
 
-    if(shape->numlines == 1) /* simple line */
-      return msGEOSShape2Geometry_line(&(shape->line[0]));
-    else /* multi-line */
-      return msGEOSShape2Geometry_multiline(shape);
-    break;
-  case MS_SHAPE_POLYGON:
-    if(shape->numlines == 0 || shape->line[0].numpoints < 4) /* not enough info for a polygon (first=last) */
-      return NULL;
+      if(shape->numlines == 1) /* simple line */
+        return msGEOSShape2Geometry_line(&(shape->line[0]));
+      else /* multi-line */
+        return msGEOSShape2Geometry_multiline(shape);
+      break;
+    case MS_SHAPE_POLYGON:
+      if(shape->numlines == 0 || shape->line[0].numpoints < 4) /* not enough info for a polygon (first=last) */
+        return NULL;
 
-    return msGEOSShape2Geometry_polygon(shape); /* simple and multipolygon cases are addressed */
-    break;
-  default:
-    break;
+      return msGEOSShape2Geometry_polygon(shape); /* simple and multipolygon cases are addressed */
+      break;
+    default:
+      break;
   }
 
   return NULL; /* should not get here */
@@ -285,12 +285,12 @@ static shapeObj *msGEOSGeometry2Shape_point(GEOSGeom g)
 {
   GEOSCoordSeq coords;
   shapeObj *shape=NULL;
-  
+
   if(!g) return NULL;
-    
+
   shape = (shapeObj *) malloc(sizeof(shapeObj));
   msInitShape(shape);
-    
+
   shape->type = MS_SHAPE_POINT;
   shape->line = (lineObj *) malloc(sizeof(lineObj));
   shape->numlines = 1;
@@ -306,7 +306,7 @@ static shapeObj *msGEOSGeometry2Shape_point(GEOSGeom g)
 
   shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;
   shape->bounds.miny = shape->bounds.maxy = shape->line[0].point[0].y;
- 
+
   return shape;
 }
 
@@ -316,7 +316,7 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(GEOSGeom g)
   int numPoints;
   GEOSCoordSeq coords;
   GEOSGeom point;
-  
+
   shapeObj *shape=NULL;
 
   if(!g) return NULL;
@@ -340,8 +340,8 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(GEOSGeom g)
     GEOSCoordSeq_getY(coords, 0, &(shape->line[0].point[i].y));
     /* GEOSCoordSeq_getZ(coords, 0, &(shape->line[0].point[i].z)); */
   }
- 
-  msComputeBounds(shape); 
+
+  msComputeBounds(shape);
 
   return shape;
 }
@@ -361,7 +361,7 @@ static shapeObj *msGEOSGeometry2Shape_line(GEOSGeom g)
   shape = (shapeObj *) malloc(sizeof(shapeObj));
   msInitShape(shape);
 
-  shape->type = MS_SHAPE_LINE; 
+  shape->type = MS_SHAPE_LINE;
   shape->line = (lineObj *) malloc(sizeof(lineObj));
   shape->numlines = 1;
   shape->line[0].point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
@@ -374,7 +374,7 @@ static shapeObj *msGEOSGeometry2Shape_line(GEOSGeom g)
     /* GEOSCoordSeq_getZ(coords, i, &(shape->line[0].point[i].z)); */
   }
 
-  msComputeBounds(shape); 
+  msComputeBounds(shape);
 
   return shape;
 }
@@ -409,13 +409,13 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
     for(i=0; i<numPoints; i++) {
       GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
       GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
-      /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */  	
+      /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
     }
 
     msAddLineDirectly(shape, &line);
   }
 
-  msComputeBounds(shape); 
+  msComputeBounds(shape);
 
   return shape;
 }
@@ -441,14 +441,14 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
   ring = (GEOSGeom) GEOSGetExteriorRing(g);
   numPoints = GEOSGetNumCoordinates(ring);
   coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
-  
+
   line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
   line.numpoints = numPoints;
 
   for(i=0; i<numPoints; i++) {
     GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
     GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
-    /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */    
+    /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
   }
   msAddLineDirectly(shape, &line);
 
@@ -472,7 +472,7 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
     msAddLineDirectly(shape, &line);
   }
 
-  msComputeBounds(shape); 
+  msComputeBounds(shape);
 
   return shape;
 }
@@ -507,70 +507,70 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
     line.numpoints = numPoints;
 
     for(i=0; i<numPoints; i++) {
-	  GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
+      GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
       GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
       /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
     }
     msAddLineDirectly(shape, &line);
-    
+
     /* interior rings */
     numRings = GEOSGetNumInteriorRings(polygon);
 
     for(j=0; j<numRings; j++) {
       ring = (GEOSGeom) GEOSGetInteriorRingN(polygon, j);
-      if(GEOSisRing(ring) != 1) continue; /* skip it */      
+      if(GEOSisRing(ring) != 1) continue; /* skip it */
 
       numPoints = GEOSGetNumCoordinates(ring);
-      coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);	  
+      coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
 
       line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
       line.numpoints = numPoints;
 
       for(i=0; i<numPoints; i++) {
-	GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
+        GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
         GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
         /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
       }
-      msAddLineDirectly(shape, &line);	  
+      msAddLineDirectly(shape, &line);
     }
   } /* next polygon */
 
-  msComputeBounds(shape); 
+  msComputeBounds(shape);
 
-  return shape; 
+  return shape;
 }
 
 shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
 {
   int type;
 
-  if(!g) 
+  if(!g)
     return NULL; /* a NULL geometry generates a NULL shape */
 
   type = GEOSGeomTypeId(g);
   switch(type) {
-  case GEOS_POINT:
-    return msGEOSGeometry2Shape_point(g);
-    break;
-  case GEOS_MULTIPOINT:
-    return msGEOSGeometry2Shape_multipoint(g);
-    break;
-  case GEOS_LINESTRING:
-    return msGEOSGeometry2Shape_line(g);
-    break;
-  case GEOS_MULTILINESTRING:
-    return msGEOSGeometry2Shape_multiline(g);
-    break;
-  case GEOS_POLYGON:
-    return msGEOSGeometry2Shape_polygon(g);
-    break;
-  case GEOS_MULTIPOLYGON:
-    return msGEOSGeometry2Shape_multipolygon(g);
-    break;
-  default:
-    if (!GEOSisEmpty(g))
+    case GEOS_POINT:
+      return msGEOSGeometry2Shape_point(g);
+      break;
+    case GEOS_MULTIPOINT:
+      return msGEOSGeometry2Shape_multipoint(g);
+      break;
+    case GEOS_LINESTRING:
+      return msGEOSGeometry2Shape_line(g);
+      break;
+    case GEOS_MULTILINESTRING:
+      return msGEOSGeometry2Shape_multiline(g);
+      break;
+    case GEOS_POLYGON:
+      return msGEOSGeometry2Shape_polygon(g);
+      break;
+    case GEOS_MULTIPOLYGON:
+      return msGEOSGeometry2Shape_multipolygon(g);
+      break;
+    default:
+      if (!GEOSisEmpty(g))
         msSetError(MS_GEOSERR, "Unsupported GEOS geometry type (%d).", "msGEOSGeometry2Shape()", type);
-    return NULL;
+      return NULL;
   }
 }
 #endif
@@ -584,7 +584,7 @@ void msGEOSFreeGeometry(shapeObj *shape)
 #ifdef USE_GEOS
   GEOSGeom g=NULL;
 
-  if(!shape || !shape->geometry) 
+  if(!shape || !shape->geometry)
     return;
 
   g = (GEOSGeom) shape->geometry;
@@ -603,7 +603,7 @@ shapeObj *msGEOSShapeFromWKT(const char *wkt)
 #ifdef USE_GEOS
   GEOSGeom g;
 
-  if(!wkt) 
+  if(!wkt)
     return NULL;
 
   g = GEOSGeomFromWKT(wkt);
@@ -626,9 +626,9 @@ char *msGEOSShapeToWKT(shapeObj *shape)
 #ifdef USE_GEOS
   GEOSGeom g;
 
-  if(!shape) 
+  if(!shape)
     return NULL;
-    
+
   /* if we have a geometry, we should update it*/
   msGEOSFreeGeometry(shape);
 
@@ -661,9 +661,9 @@ void msGEOSFreeWKT(char* pszGEOSWKT)
 shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 {
 #ifdef USE_GEOS
-  GEOSGeom g1, g2; 
+  GEOSGeom g1, g2;
 
-  if(!shape) 
+  if(!shape)
     return NULL;
 
   if(!shape->geometry) /* if no geometry for the shape then build one */
@@ -671,7 +671,7 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
-  
+
   g2 = GEOSBuffer(g1, width, 30);
   return msGEOSGeometry2Shape(g2);
 #else
@@ -683,9 +683,9 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
 {
 #ifdef USE_GEOS
-  GEOSGeom g1, g2; 
+  GEOSGeom g1, g2;
 
-  if(!shape) 
+  if(!shape)
     return NULL;
 
   if(!shape->geometry) /* if no geometry for the shape then build one */
@@ -693,7 +693,7 @@ shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
 
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
-  
+
   g2 = GEOSSimplify(g1, tolerance);
   return msGEOSGeometry2Shape(g2);
 #else
@@ -705,9 +705,9 @@ shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
 shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance)
 {
 #ifdef USE_GEOS
-  GEOSGeom g1, g2; 
+  GEOSGeom g1, g2;
 
-  if(!shape) 
+  if(!shape)
     return NULL;
 
   if(!shape->geometry) /* if no geometry for the shape then build one */
@@ -715,7 +715,7 @@ shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance)
 
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
-  
+
   g2 = GEOSTopologyPreserveSimplify(g1, tolerance);
   return msGEOSGeometry2Shape(g2);
 #else
@@ -901,7 +901,7 @@ shapeObj *msGEOSSymDifference(shapeObj *shape1, shapeObj *shape2)
 #endif
 }
 
-/* 
+/*
 ** Binary predicates exposed to MapServer/MapScript
 */
 
@@ -927,7 +927,7 @@ int msGEOSContains(shapeObj *shape1, shapeObj *shape2)
   g2 = shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSContains(g1, g2);  
+  result = GEOSContains(g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSContains()");
@@ -957,7 +957,7 @@ int msGEOSOverlaps(shapeObj *shape1, shapeObj *shape2)
   g2 = shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSOverlaps(g1, g2);  
+  result = GEOSOverlaps(g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSOverlaps()");
@@ -987,7 +987,7 @@ int msGEOSWithin(shapeObj *shape1, shapeObj *shape2)
   g2 = shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSWithin(g1, g2);  
+  result = GEOSWithin(g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSWithin()");
@@ -1017,7 +1017,7 @@ int msGEOSCrosses(shapeObj *shape1, shapeObj *shape2)
   g2 = shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSCrosses(g1, g2);  
+  result = GEOSCrosses(g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSCrosses()");
@@ -1047,29 +1047,29 @@ int msGEOSIntersects(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSIntersects(g1, g2);  
+  result = GEOSIntersects(g1, g2);
   return ((result==2) ? -1 : result);
 #else
   if(!shape1 || !shape2)
     return -1;
 
   switch(shape1->type) { /* todo: deal with point shapes */
-  case(MS_SHAPE_LINE):
-    switch(shape2->type) {
     case(MS_SHAPE_LINE):
-      return msIntersectPolylines(shape1, shape2);
+      switch(shape2->type) {
+        case(MS_SHAPE_LINE):
+          return msIntersectPolylines(shape1, shape2);
+        case(MS_SHAPE_POLYGON):
+          return msIntersectPolylinePolygon(shape1, shape2);
+      }
+      break;
     case(MS_SHAPE_POLYGON):
-      return msIntersectPolylinePolygon(shape1, shape2);
-    }
-    break;
-  case(MS_SHAPE_POLYGON):
-    switch(shape2->type) {
-    case(MS_SHAPE_LINE):
-      return msIntersectPolylinePolygon(shape2, shape1);
-    case(MS_SHAPE_POLYGON):
-      return msIntersectPolygons(shape1, shape2);
-    }
-    break;
+      switch(shape2->type) {
+        case(MS_SHAPE_LINE):
+          return msIntersectPolylinePolygon(shape2, shape1);
+        case(MS_SHAPE_POLYGON):
+          return msIntersectPolygons(shape1, shape2);
+      }
+      break;
   }
 
   return -1;
@@ -1098,7 +1098,7 @@ int msGEOSTouches(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSTouches(g1, g2);  
+  result = GEOSTouches(g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSTouches()");
@@ -1128,7 +1128,7 @@ int msGEOSEquals(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSEquals(g1, g2);  
+  result = GEOSEquals(g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSEquals()");
@@ -1158,7 +1158,7 @@ int msGEOSDisjoint(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSDisjoint(g1, g2);  
+  result = GEOSDisjoint(g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSDisjoint()");
@@ -1240,7 +1240,7 @@ double msGEOSDistance(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSDistance(g1, g2, &distance);  
+  result = GEOSDistance(g1, g2, &distance);
   return ((result==0) ? -1 : distance);
 #else
   return msDistanceShapeToShape(shape1, shape2); /* fall back on brute force method (for MapScript) */

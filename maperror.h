@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -34,12 +34,12 @@
 extern "C" {
 #endif
 
-/*====================================================================
- *   maperror.c
- *====================================================================*/
+  /*====================================================================
+   *   maperror.c
+   *====================================================================*/
 
 #define MS_NOERR 0 /* general error codes */
-#define MS_IOERR 1 
+#define MS_IOERR 1
 #define MS_MEMERR 2
 #define MS_TYPEERR 3
 #define MS_SYMERR 4
@@ -94,60 +94,59 @@ extern "C" {
 #define  MS_DLL_EXPORT
 #endif
 
-typedef struct error_obj {
-  int code;
-  char routine[ROUTINELENGTH];
-  char message[MESSAGELENGTH];
-  int isreported;
+  typedef struct error_obj {
+    int code;
+    char routine[ROUTINELENGTH];
+    char message[MESSAGELENGTH];
+    int isreported;
 #ifndef SWIG
-  struct error_obj *next;
+    struct error_obj *next;
 #endif
-} errorObj;
+  } errorObj;
 
-/*
-** Function prototypes
-*/
-MS_DLL_EXPORT errorObj *msGetErrorObj(void);
-MS_DLL_EXPORT void msResetErrorList(void);
-MS_DLL_EXPORT char *msGetVersion(void);
-MS_DLL_EXPORT int  msGetVersionInt(void);
-MS_DLL_EXPORT char *msGetErrorString(char *delimiter);
+  /*
+  ** Function prototypes
+  */
+  MS_DLL_EXPORT errorObj *msGetErrorObj(void);
+  MS_DLL_EXPORT void msResetErrorList(void);
+  MS_DLL_EXPORT char *msGetVersion(void);
+  MS_DLL_EXPORT int  msGetVersionInt(void);
+  MS_DLL_EXPORT char *msGetErrorString(char *delimiter);
 
 #ifndef SWIG
-MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...);
-MS_DLL_EXPORT void msWriteError(FILE *stream);
-MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
-MS_DLL_EXPORT char *msGetErrorCodeString(int code);
-MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
+  MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...);
+  MS_DLL_EXPORT void msWriteError(FILE *stream);
+  MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
+  MS_DLL_EXPORT char *msGetErrorCodeString(int code);
+  MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
 
-struct map_obj;
-MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
+  struct map_obj;
+  MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
 
 #endif /* SWIG */
 
-/*====================================================================
- *   mapdebug.c (See also MS-RFC-28)
- *====================================================================*/
+  /*====================================================================
+   *   mapdebug.c (See also MS-RFC-28)
+   *====================================================================*/
 
-typedef enum { MS_DEBUGLEVEL_ERRORSONLY = 0,  /* DEBUG OFF, log fatal errors */
-               MS_DEBUGLEVEL_DEBUG      = 1,  /* DEBUG ON */
-               MS_DEBUGLEVEL_TUNING     = 2,  /* Reports timing info */
-               MS_DEBUGLEVEL_V          = 3,  /* Verbose */
-               MS_DEBUGLEVEL_VV         = 4,  /* Very verbose */
-               MS_DEBUGLEVEL_VVV        = 5   /* Very very verbose */
-} debugLevel;
+  typedef enum { MS_DEBUGLEVEL_ERRORSONLY = 0,  /* DEBUG OFF, log fatal errors */
+                 MS_DEBUGLEVEL_DEBUG      = 1,  /* DEBUG ON */
+                 MS_DEBUGLEVEL_TUNING     = 2,  /* Reports timing info */
+                 MS_DEBUGLEVEL_V          = 3,  /* Verbose */
+                 MS_DEBUGLEVEL_VV         = 4,  /* Very verbose */
+                 MS_DEBUGLEVEL_VVV        = 5   /* Very very verbose */
+               } debugLevel;
 
 #ifndef SWIG
 
-typedef enum { MS_DEBUGMODE_OFF,
-               MS_DEBUGMODE_FILE,
-               MS_DEBUGMODE_STDERR,
-               MS_DEBUGMODE_STDOUT,
-               MS_DEBUGMODE_WINDOWSDEBUG
-} debugMode;
+  typedef enum { MS_DEBUGMODE_OFF,
+                 MS_DEBUGMODE_FILE,
+                 MS_DEBUGMODE_STDERR,
+                 MS_DEBUGMODE_STDOUT,
+                 MS_DEBUGMODE_WINDOWSDEBUG
+               } debugMode;
 
-typedef struct debug_info_obj 
-{
+  typedef struct debug_info_obj {
     debugLevel  global_debug_level;
     debugMode   debug_mode;
     char        *errorfile;
@@ -155,17 +154,17 @@ typedef struct debug_info_obj
     /* The following 2 members are used only with USE_THREAD (but we won't #ifndef them) */
     int         thread_id;
     struct debug_info_obj *next;
-} debugInfoObj;
+  } debugInfoObj;
 
 
-MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
-MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath);
-MS_DLL_EXPORT void msCloseErrorFile( void );
-MS_DLL_EXPORT const char *msGetErrorFile( void );
-MS_DLL_EXPORT void msSetGlobalDebugLevel(int level);
-MS_DLL_EXPORT debugLevel msGetGlobalDebugLevel( void );
-MS_DLL_EXPORT int msDebugInitFromEnv( void );
-MS_DLL_EXPORT void msDebugCleanup( void );
+  MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
+  MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath);
+  MS_DLL_EXPORT void msCloseErrorFile( void );
+  MS_DLL_EXPORT const char *msGetErrorFile( void );
+  MS_DLL_EXPORT void msSetGlobalDebugLevel(int level);
+  MS_DLL_EXPORT debugLevel msGetGlobalDebugLevel( void );
+  MS_DLL_EXPORT int msDebugInitFromEnv( void );
+  MS_DLL_EXPORT void msDebugCleanup( void );
 
 #endif /* SWIG */
 

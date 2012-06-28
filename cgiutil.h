@@ -5,7 +5,7 @@
  * Purpose:  cgiRequestObj and CGI parsing utility related declarations.
  * Author:   Steve Lime and the MapServer team.
  *
- * Notes: Portions derived from NCSA HTTPd Server's example CGI programs (util.c). 
+ * Notes: Portions derived from NCSA HTTPd Server's example CGI programs (util.c).
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
@@ -17,7 +17,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -47,19 +47,18 @@
 enum MS_REQUEST_TYPE {MS_GET_REQUEST, MS_POST_REQUEST};
 
 /* structure to hold request information */
-typedef struct
-{
+typedef struct {
 #ifndef SWIG
   char **ParamNames;
   char **ParamValues;
 #endif
 
 #ifdef SWIG
-%immutable;
+  %immutable;
 #endif
   int NumParams;
 #ifdef SWIG
-%mutable;
+  %mutable;
 #endif
 
   enum MS_REQUEST_TYPE type;
@@ -69,13 +68,13 @@ typedef struct
 
   char *httpcookiedata;
 } cgiRequestObj;
-      
+
 
 /*
 ** Function prototypes
 */
 #ifndef SWIG
-MS_DLL_EXPORT int loadParams(cgiRequestObj *request, char* (*getenv2)(const char*, void* thread_context), 
+MS_DLL_EXPORT int loadParams(cgiRequestObj *request, char* (*getenv2)(const char*, void* thread_context),
                              char *raw_post_data, ms_uint32 raw_post_data_length, void* thread_context);
 MS_DLL_EXPORT void getword(char *, char *, char);
 MS_DLL_EXPORT char *makeword_skip(char *, char, char);

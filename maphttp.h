@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -41,23 +41,21 @@ extern "C" {
 
 #define MS_HTTP_SUCCESS(status)  (status == 200 || status == 242)
 
-enum MS_HTTP_PROXY_TYPE
-{
+  enum MS_HTTP_PROXY_TYPE
+  {
     MS_HTTP,
     MS_SOCKS5
-};
+  };
 
-enum MS_HTTP_AUTH_TYPE
-{
+  enum MS_HTTP_AUTH_TYPE {
     MS_BASIC,
     MS_DIGEST,
     MS_NTLM,
     MS_ANY,
     MS_ANYSAFE
-};
+  };
 
-typedef struct http_request_info
-{
+  typedef struct http_request_info {
     int     nLayerId;
     char    *pszGetUrl;
     char    *pszOutputFile;
@@ -72,14 +70,14 @@ typedef struct http_request_info
     char    *pszPostContentType;/* post request MIME type */
     char    *pszUserAgent;      /* User-Agent, auto-generated if not set */
     char    *pszHTTPCookieData; /* HTTP Cookie data */
-    
+
     char    *pszProxyAddress;   /* The address (IP or hostname) of proxy svr */
     long     nProxyPort;        /* The proxy's port                          */
     enum MS_HTTP_PROXY_TYPE eProxyType; /* The type of proxy                 */
     enum MS_HTTP_AUTH_TYPE  eProxyAuthType; /* Auth method against proxy     */
     char    *pszProxyUsername;  /* Proxy authentication username             */
     char    *pszProxyPassword;  /* Proxy authentication password             */
-    
+
     enum MS_HTTP_AUTH_TYPE eHttpAuthType; /* HTTP Authentication type        */
     char    *pszHttpUsername;   /* HTTP Authentication username              */
     char    *pszHttpPassword;   /* HTTP Authentication password              */
@@ -90,25 +88,25 @@ typedef struct http_request_info
     /* Private members */
     void      * curl_handle;   /* CURLM * handle */
     FILE      * fp;            /* FILE * used during download */
-    
+
     char      * result_data;   /* output if pszOutputFile is NULL */
     int       result_size;
     int       result_buf_size;
 
-} httpRequestObj;
+  } httpRequestObj;
 
 #ifdef USE_CURL
 
-int msHTTPInit(void);
-void msHTTPCleanup(void);
+  int msHTTPInit(void);
+  void msHTTPCleanup(void);
 
-void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
-                           int bCheckLocalCache);
-int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile, 
-                   int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
-                   int bDebug);
+  void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+  void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+  int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
+                             int bCheckLocalCache);
+  int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
+                     int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
+                     int bDebug);
 
 #endif /*USE_CURL*/
 

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  PHP/MapScript extension for MapServer. Header file 
+ * Purpose:  PHP/MapScript extension for MapServer. Header file
  *           - prototypes / module definitions
  * Author:   Daniel Morissette, DM Solutions Group (dmorissette@dmsolutions.ca)
  *
@@ -15,16 +15,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in 
+ *
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
@@ -64,8 +64,8 @@ extern zend_module_entry mapscript_module_entry;
 #define phpext_mapscript_ptr &mapscript_module_entry
 
 #ifndef zend_parse_parameters_none
-#define zend_parse_parameters_none()			  \
-	zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
+#define zend_parse_parameters_none()        \
+  zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "")
 #endif
 
 /* it looks like that macro is not always defined: ticket #3926 */
@@ -78,267 +78,267 @@ extern zend_module_entry mapscript_module_entry;
 #if defined(PHP_VERSION_ID) && PHP_VERSION_ID >= 50300
 /* 5.3 version of the macros */
 #define PHP_MAPSCRIPT_ERROR_HANDLING(force_exceptions) \
-	zend_error_handling error_handling; \
-	if(force_exceptions || getThis()) { \
-		zend_replace_error_handling(EH_THROW, mapscript_ce_mapscriptexception, &error_handling TSRMLS_CC); \
-	}
+  zend_error_handling error_handling; \
+  if(force_exceptions || getThis()) { \
+    zend_replace_error_handling(EH_THROW, mapscript_ce_mapscriptexception, &error_handling TSRMLS_CC); \
+  }
 
 #define PHP_MAPSCRIPT_RESTORE_ERRORS(force_exceptions) \
-	if(force_exceptions || getThis()) { \
-		zend_restore_error_handling(&error_handling TSRMLS_CC); \
-	}
+  if(force_exceptions || getThis()) { \
+    zend_restore_error_handling(&error_handling TSRMLS_CC); \
+  }
 
 #else
 /* 5.2 versions of the macros */
 #define PHP_MAPSCRIPT_ERROR_HANDLING(force_exceptions) \
-	if(force_exceptions || getThis()) { \
-		php_set_error_handling(EH_THROW, mapscript_ce_mapscriptexception TSRMLS_CC); \
-	}
+  if(force_exceptions || getThis()) { \
+    php_set_error_handling(EH_THROW, mapscript_ce_mapscriptexception TSRMLS_CC); \
+  }
 
 #define PHP_MAPSCRIPT_RESTORE_ERRORS(force_exceptions) \
-	if(force_exceptions || getThis()) { \
-		php_std_error_handling(); \
-	}
+  if(force_exceptions || getThis()) { \
+    php_std_error_handling(); \
+  }
 
 #endif
 
 /* MapScript objects */
 typedef struct _parent_object {
-    zval *val; // the zval of the parent
-    zval **child_ptr; // a ptr to a parent property, which point to the child object.
-                           // should be set to NULL when the child is destroyed
+  zval *val; // the zval of the parent
+  zval **child_ptr; // a ptr to a parent property, which point to the child object.
+  // should be set to NULL when the child is destroyed
 } parent_object;
 
 typedef struct _php_color_object {
-    zend_object std;
-    parent_object parent;
-    colorObj *color;
+  zend_object std;
+  parent_object parent;
+  colorObj *color;
 } php_color_object;
 
 typedef struct _php_rect_object {
-    zend_object std;
-    parent_object parent;
-    int is_ref;
-    rectObj *rect;
+  zend_object std;
+  parent_object parent;
+  int is_ref;
+  rectObj *rect;
 } php_rect_object;
 
 typedef struct _php_hashtable_object {
-    zend_object std;
-    parent_object parent;
-    hashTableObj *hashtable;
+  zend_object std;
+  parent_object parent;
+  hashTableObj *hashtable;
 } php_hashtable_object;
 
 typedef struct _php_symbol_object {
-    zend_object std;
-    parent_object parent;
-    symbolObj *symbol;
+  zend_object std;
+  parent_object parent;
+  symbolObj *symbol;
 } php_symbol_object;
 
 typedef struct _php_class_object {
-    zend_object std;
-    parent_object parent; //old layer
-    zval *metadata;
-    zval *leader;
-    classObj *class;
+  zend_object std;
+  parent_object parent; //old layer
+  zval *metadata;
+  zval *leader;
+  classObj *class;
 } php_class_object;
 
 typedef struct _php_image_object {
-    zend_object std;
-    imageObj *image;
+  zend_object std;
+  imageObj *image;
 } php_image_object;
 
 typedef struct _php_web_object {
-    zend_object std;
-    parent_object parent;
-    zval *extent;
-    zval *metadata;
-    zval *validation;  
-    webObj *web;
+  zend_object std;
+  parent_object parent;
+  zval *extent;
+  zval *metadata;
+  zval *validation;
+  webObj *web;
 } php_web_object;
 
 typedef struct _php_legend_object {
-    zend_object std;
-    parent_object parent;
-    zval *outlinecolor;
-    zval *label;
-    zval *imagecolor;
-    legendObj *legend;
+  zend_object std;
+  parent_object parent;
+  zval *outlinecolor;
+  zval *label;
+  zval *imagecolor;
+  legendObj *legend;
 } php_legend_object;
 
 typedef struct _php_outputformat_object {
-    zend_object std;
-    parent_object parent;
-    int is_ref;  
-    outputFormatObj *outputformat;
+  zend_object std;
+  parent_object parent;
+  int is_ref;
+  outputFormatObj *outputformat;
 } php_outputformat_object;
 
 typedef struct _php_querymap_object {
-    zend_object std;
-    parent_object parent;
-    zval *color;
-    queryMapObj *querymap;
+  zend_object std;
+  parent_object parent;
+  zval *color;
+  queryMapObj *querymap;
 } php_querymap_object;
 
 typedef struct _php_grid_object {
-    zend_object std;
-    parent_object parent;
-    graticuleObj *grid;
+  zend_object std;
+  parent_object parent;
+  graticuleObj *grid;
 } php_grid_object;
 
 typedef struct _php_error_object {
-    zend_object std;
-    errorObj *error;
+  zend_object std;
+  errorObj *error;
 } php_error_object;
 
 typedef struct _php_referencemap_object {
-    zend_object std;
-    parent_object parent;
-    zval *extent;
-    zval *color;
-    zval *outlinecolor;
-    referenceMapObj *referencemap;
+  zend_object std;
+  parent_object parent;
+  zval *extent;
+  zval *color;
+  zval *outlinecolor;
+  referenceMapObj *referencemap;
 } php_referencemap_object;
 
 typedef struct _php_label_object {
-    zend_object std;
-    parent_object parent;
-    int is_ref;
-    zval *color;
-    zval *outlinecolor;
-    zval *shadowcolor;
-    zval *backgroundcolor;
-    zval *backgroundshadowcolor;
-    zval *leader;  
-    labelObj *label;
+  zend_object std;
+  parent_object parent;
+  int is_ref;
+  zval *color;
+  zval *outlinecolor;
+  zval *shadowcolor;
+  zval *backgroundcolor;
+  zval *backgroundshadowcolor;
+  zval *leader;
+  labelObj *label;
 } php_label_object;
 
 typedef struct _php_style_object {
-    zend_object std;
-    parent_object parent;
-    zval *color;
-    zval *outlinecolor;
-    zval *backgroundcolor;
-    zval *mincolor;
-    zval *maxcolor;
-    styleObj *style;
+  zend_object std;
+  parent_object parent;
+  zval *color;
+  zval *outlinecolor;
+  zval *backgroundcolor;
+  zval *mincolor;
+  zval *maxcolor;
+  styleObj *style;
 } php_style_object;
 
 typedef struct _php_projection_object {
-    zend_object std;
-    parent_object parent;
-    int is_ref;
-    projectionObj *projection;
+  zend_object std;
+  parent_object parent;
+  int is_ref;
+  projectionObj *projection;
 } php_projection_object;
 
 typedef struct _php_point_object {
-    zend_object std;
-    parent_object parent;
-    int is_ref;
-    pointObj *point;
+  zend_object std;
+  parent_object parent;
+  int is_ref;
+  pointObj *point;
 } php_point_object;
 
 typedef struct _php_line_object {
-    zend_object std;
-    parent_object parent;
-    int is_ref;
-    lineObj *line;
+  zend_object std;
+  parent_object parent;
+  int is_ref;
+  lineObj *line;
 } php_line_object;
 
 typedef struct _php_shape_object {
-    zend_object std;
-    parent_object parent;
-    zval *bounds;
-    zval *values;
-    int is_ref;
-    shapeObj *shape;
+  zend_object std;
+  parent_object parent;
+  zval *bounds;
+  zval *values;
+  int is_ref;
+  shapeObj *shape;
 } php_shape_object;
 
 typedef struct _php_shapefile_object {
-    zend_object std;
-    zval *bounds;
-    shapefileObj *shapefile;
+  zend_object std;
+  zval *bounds;
+  shapefileObj *shapefile;
 } php_shapefile_object;
 
 typedef struct _php_labelcache_object {
-    zend_object std;
-    parent_object parent;
-    labelCacheObj *labelcache;
+  zend_object std;
+  parent_object parent;
+  labelCacheObj *labelcache;
 } php_labelcache_object;
 
 typedef struct _php_labelleader_object {
-    zend_object std;
-    parent_object parent;
-    labelLeaderObj *labelleader;
+  zend_object std;
+  parent_object parent;
+  labelLeaderObj *labelleader;
 } php_labelleader_object;
 
 typedef struct _php_labelcachemember_object {
-    zend_object std;
-    parent_object parent;
-    zval *labels; /* should be immutable */
-    zval *point; /* should be immutable */
-    zval *styles; /* should be immutable */
-    zval *poly; /* should be immutable */
-    labelCacheMemberObj *labelcachemember;
+  zend_object std;
+  parent_object parent;
+  zval *labels; /* should be immutable */
+  zval *point; /* should be immutable */
+  zval *styles; /* should be immutable */
+  zval *poly; /* should be immutable */
+  labelCacheMemberObj *labelcachemember;
 } php_labelcachemember_object;
 
 typedef struct _php_result_object {
-    zend_object std;
-    parent_object parent;
-    resultObj *result;
+  zend_object std;
+  parent_object parent;
+  resultObj *result;
 } php_result_object;
 
 typedef struct _php_scalebar_object {
-    zend_object std;
-    parent_object parent;
-    zval *color;
-    zval *backgroundcolor;
-    zval *outlinecolor;
-    zval *label;
-    zval *imagecolor;
-    scalebarObj *scalebar;
+  zend_object std;
+  parent_object parent;
+  zval *color;
+  zval *backgroundcolor;
+  zval *outlinecolor;
+  zval *label;
+  zval *imagecolor;
+  scalebarObj *scalebar;
 } php_scalebar_object;
 
 typedef struct _php_owsrequest_object {
-    zend_object std;
-    cgiRequestObj *cgirequest;
+  zend_object std;
+  cgiRequestObj *cgirequest;
 } php_owsrequest_object;
 
 typedef struct _php_layer_object {
-    zend_object std;
-    parent_object parent; //old map
-    zval *offsite;
-    zval *grid;
-    zval *metadata;
-    zval *bindvals;
-    zval *projection;
-    zval *cluster;
-    zval *extent;  
-    int is_ref;
-    layerObj *layer;
+  zend_object std;
+  parent_object parent; //old map
+  zval *offsite;
+  zval *grid;
+  zval *metadata;
+  zval *bindvals;
+  zval *projection;
+  zval *cluster;
+  zval *extent;
+  int is_ref;
+  layerObj *layer;
 } php_layer_object;
 
 typedef struct _php_map_object {
-    zend_object std;
-    zval *outputformat;
-    zval *extent;
-    zval *web;
-    zval *reference;
-    zval *imagecolor;
-    zval *scalebar;
-    zval *legend;
-    zval *querymap;
-    zval *labelcache;
-    zval *projection;
-    zval *metadata;
-    zval *configoptions;  
-    mapObj *map;
+  zend_object std;
+  zval *outputformat;
+  zval *extent;
+  zval *web;
+  zval *reference;
+  zval *imagecolor;
+  zval *scalebar;
+  zval *legend;
+  zval *querymap;
+  zval *labelcache;
+  zval *projection;
+  zval *metadata;
+  zval *configoptions;
+  mapObj *map;
 } php_map_object;
 
 typedef struct _php_cluster_object {
-    zend_object std;
-    parent_object parent;
-    int is_ref;
-    clusterObj *cluster;
+  zend_object std;
+  parent_object parent;
+  int is_ref;
+  clusterObj *cluster;
 } php_cluster_object;
 
 /* Lifecyle functions*/
@@ -447,11 +447,11 @@ extern zend_class_entry *mapscript_ce_cluster;
 
 /* PHP Object constructors */
 extern zend_object_value mapscript_object_new(zend_object *zobj, zend_class_entry *ce,
-                                              void (*zend_objects_free_object) TSRMLS_DC);
+    void (*zend_objects_free_object) TSRMLS_DC);
 extern zend_object_value mapscript_object_new_ex(zend_object *zobj, zend_class_entry *ce,
-                                                 void (*zend_objects_free_object),
-                                                 zend_object_handlers *object_handlers TSRMLS_DC);
-extern void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_object* layer, 
+    void (*zend_objects_free_object),
+    zend_object_handlers *object_handlers TSRMLS_DC);
+extern void mapscript_fetch_object(zend_class_entry *ce, zval* zval_parent, php_layer_object* layer,
                                    void *internal_object, zval **php_object_storage TSRMLS_DC);
 extern void mapscript_create_color(colorObj *color, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_rect(rectObj *rect, parent_object php_parent, zval *return_value TSRMLS_DC);
@@ -460,13 +460,13 @@ extern void mapscript_create_label(labelObj *label, parent_object parent, zval *
 extern void mapscript_create_style(styleObj *style, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_symbol(symbolObj *symbol, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_class(classObj *class, parent_object parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember, 
-                                              parent_object parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_labelcache(labelCacheObj *labelcache, 
-                                              parent_object parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_labelleader(labelLeaderObj *labelleader, 
-                                              parent_object parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_result(resultObj *result, 
+extern void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember,
+    parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_labelcache(labelCacheObj *labelcache,
+                                        parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_labelleader(labelLeaderObj *labelleader,
+    parent_object parent, zval *return_value TSRMLS_DC);
+extern void mapscript_create_result(resultObj *result,
                                     parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_scalebar(scalebarObj *scalebar, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_owsrequest(cgiRequestObj *cgirequest, zval *return_value TSRMLS_DC);
@@ -479,7 +479,7 @@ extern void mapscript_create_grid(graticuleObj *grid, parent_object parent, zval
 extern void mapscript_create_error(errorObj *error, zval *return_value TSRMLS_DC);
 extern void mapscript_create_referencemap(referenceMapObj *referenceMap, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_point(pointObj *point, parent_object parent, zval *return_value TSRMLS_DC);
-extern void mapscript_create_projection(projectionObj *projection, 
+extern void mapscript_create_projection(projectionObj *projection,
                                         parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_line(lineObj *line, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_shape(shapeObj *shape, parent_object parent, php_layer_object *php_layer, zval *return_value TSRMLS_DC);
@@ -507,8 +507,8 @@ mapObj         *mapObj_clone(mapObj* self);
 int             mapObj_setRotation(mapObj* self, double rotation_angle );
 layerObj       *mapObj_getLayer(mapObj* self, int i);
 layerObj       *mapObj_getLayerByName(mapObj* self, char *name);
-int             *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname, 
-                                             int *pnCount);
+int             *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname,
+    int *pnCount);
 int             mapObj_getSymbolByName(mapObj* self, char *name);
 void            mapObj_prepareQuery(mapObj* self);
 imageObj        *mapObj_prepareImage(mapObj* self);
@@ -521,12 +521,12 @@ int             mapObj_embedScalebar(mapObj* self, imageObj *img);
 int             mapObj_embedLegend(mapObj* self, imageObj *img);
 int             mapObj_drawLabelCache(mapObj* self, imageObj *img);
 labelCacheMemberObj *mapObj_getLabel(mapObj* self, int i);
-int             mapObj_queryByPoint(mapObj* self, pointObj *point, 
+int             mapObj_queryByPoint(mapObj* self, pointObj *point,
                                     int mode, double buffer);
 int             mapObj_queryByRect(mapObj* self, rectObj rect);
 int             mapObj_queryByFeatures(mapObj* self, int slayer);
 int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
-int              mapObj_queryByIndex(mapObj *self, int qlayer, 
+int              mapObj_queryByIndex(mapObj *self, int qlayer,
                                      int tileindex, int shapeindex,
                                      int bAddToQuery);
 int             mapObj_queryByFilter(mapObj* self, char *string);
@@ -546,16 +546,16 @@ int             mapObj_moveLayerdown(mapObj *self, int layerindex);
 int             *mapObj_getLayersdrawingOrder(mapObj *self);
 int             mapObj_setLayersdrawingOrder(mapObj *self, int *panIndexes);
 
-char            *mapObj_processTemplate(mapObj *self, int bGenerateImages, 
-                                        char **names, char **values, 
+char            *mapObj_processTemplate(mapObj *self, int bGenerateImages,
+                                        char **names, char **values,
                                         int numentries);
 char            *mapObj_processLegendTemplate(mapObj *self,
-                                              char **names, char **values, 
-                                              int numentries);
+    char **names, char **values,
+    int numentries);
 char            *mapObj_processQueryTemplate(mapObj *self,
-                                             int bGenerateImages,
-                                             char **names, char **values, 
-                                             int numentries);
+    int bGenerateImages,
+    char **names, char **values,
+    int numentries);
 int             mapObj_setSymbolSet(mapObj *self, char *szFileName);
 int             mapObj_getNumSymbols(mapObj *self);
 int             mapObj_setFontSet(mapObj *self, char *szFileName);
@@ -563,19 +563,19 @@ int             mapObj_saveMapContext(mapObj *self, char *szFileName);
 int             mapObj_loadMapContext(mapObj *self, char *szFileName,
                                       int bUniqueLayerName);
 int             mapObj_selectOutputFormat(mapObj *self,
-                                          const char *imagetype);
+    const char *imagetype);
 int             mapObj_applySLD(mapObj *self, char *sld);
 int             mapObj_applySLDURL(mapObj *self, char *sld);
 char            *mapObj_generateSLD(mapObj *self);
-int             mapObj_loadOWSParameters(mapObj *self, cgiRequestObj *request, 
-                                          char *wmtver_string);
+int             mapObj_loadOWSParameters(mapObj *self, cgiRequestObj *request,
+    char *wmtver_string);
 int             mapObj_OWSDispatch(mapObj *self, cgiRequestObj *req );
 int             mapObj_insertLayer(mapObj *self, layerObj *layer, int index);
 layerObj        *mapObj_removeLayer(mapObj *self, int layerindex);
 
 int             mapObj_setCenter(mapObj *self, pointObj *center);
 int             mapObj_offsetExtent(mapObj *self, double x, double y);
-int             mapObj_scaleExtent(mapObj *self, double zoomfactor, double minscaledenom, 
+int             mapObj_scaleExtent(mapObj *self, double zoomfactor, double minscaledenom,
                                    double maxscaledenom);
 
 layerObj       *layerObj_new(mapObj *map);
@@ -589,19 +589,19 @@ int             layerObj_getShape(layerObj *self, shapeObj *shape,
                                   int tileindex, int shapeindex);
 resultObj *layerObj_getResult(layerObj *self, int i);
 classObj       *layerObj_getClass(layerObj *self, int i);
-int layerObj_getClassIndex(layerObj *self, mapObj *map, shapeObj *shape, 
+int layerObj_getClassIndex(layerObj *self, mapObj *map, shapeObj *shape,
                            int *classgroup, int numclasses);
 int             layerObj_draw(layerObj *self, mapObj *map, imageObj *img);
 int             layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img);
-int             layerObj_queryByAttributes(layerObj *self, mapObj *map, 
-                                           char *qitem, char *qstring, 
-                                           int mode);
-int             layerObj_queryByPoint(layerObj *self, mapObj *map, 
-                          pointObj *point, int mode, double buffer);
+int             layerObj_queryByAttributes(layerObj *self, mapObj *map,
+    char *qitem, char *qstring,
+    int mode);
+int             layerObj_queryByPoint(layerObj *self, mapObj *map,
+                                      pointObj *point, int mode, double buffer);
 int             layerObj_queryByRect(layerObj *self, mapObj *map,rectObj rect);
-int             layerObj_queryByFeatures(layerObj *self, mapObj *map, 
-                                         int slayer);
-int             layerObj_queryByShape(layerObj *self, mapObj *map, 
+int             layerObj_queryByFeatures(layerObj *self, mapObj *map,
+    int slayer);
+int             layerObj_queryByShape(layerObj *self, mapObj *map,
                                       shapeObj *shape);
 int             layerObj_queryByFilter(layerObj *self, mapObj *map, char *string);
 int             layerObj_queryByIndex(layerObj *self, mapObj *map, int tileindex,
@@ -615,10 +615,10 @@ int             layerObj_addFeature(layerObj *self, shapeObj *shape);
 char            *layerObj_getMetaData(layerObj *self, char *name);
 int             layerObj_setMetaData(layerObj *self, char *name, char *value);
 int             layerObj_removeMetaData(layerObj *self, char *name);
-char            *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map, 
-                                               int click_x, int click_y,     
-                                               int feature_count, 
-                                               char *info_format);
+char            *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map,
+    int click_x, int click_y,
+    int feature_count,
+    char *info_format);
 char            *layerObj_executeWFSGetFeature(layerObj *self);
 int             layerObj_applySLD(layerObj *self, char *sld, char *stylelayer);
 int             layerObj_applySLDURL(layerObj *self, char *sld, char *stylelayer);
@@ -627,7 +627,7 @@ int             layerObj_moveClassUp(layerObj *self, int index);
 int             layerObj_moveClassDown(layerObj *self, int index);
 classObj        *layerObj_removeClass(layerObj *self, int index);
 int             layerObj_setConnectionType(layerObj *self, int connectiontype,
-                                           const char *library_str) ;
+    const char *library_str) ;
 layerObj        *layerObj_clone(layerObj *layer);
 
 labelObj        *labelObj_new();
@@ -660,20 +660,20 @@ int             classObj_setText(classObj *self,layerObj *layer,char *string);
 char           *classObj_getTextString(classObj *self);
 int             classObj_drawLegendIcon(classObj *self,
                                         mapObj *map,
-                                        layerObj *layer, 
-                                        int width, int height, 
-                                        imageObj *im, 
+                                        layerObj *layer,
+                                        int width, int height,
+                                        imageObj *im,
                                         int dstX, int dstY);
-imageObj       *classObj_createLegendIcon(classObj *self, 
-                                          mapObj *map, 
-                                          layerObj *layer, 
-                                          int width, int height);
+imageObj       *classObj_createLegendIcon(classObj *self,
+    mapObj *map,
+    layerObj *layer,
+    int width, int height);
 int             classObj_setSymbolByName(classObj *self,
-                                         mapObj *map,
-                                         char *pszSymbolName);
+    mapObj *map,
+    char *pszSymbolName);
 int             classObj_setOverlaySymbolByName(classObj *self,
-                                                mapObj *map,
-                                                char *pszOverlaySymbolName);
+    mapObj *map,
+    char *pszOverlaySymbolName);
 classObj        *classObj_clone(classObj *class, layerObj *layer);
 int             classObj_moveStyleUp(classObj *self, int index);
 int             classObj_moveStyleDown(classObj *self, int index);
@@ -706,11 +706,11 @@ int             lineObj_add(lineObj *self, pointObj *p);
 
 shapeObj       *shapeObj_new(int type);
 void            shapeObj_destroy(shapeObj *self);
-int             shapeObj_project(shapeObj *self, projectionObj *in, 
+int             shapeObj_project(shapeObj *self, projectionObj *in,
                                  projectionObj *out);
 lineObj        *shapeObj_get(shapeObj *self, int i);
 int             shapeObj_add(shapeObj *self, lineObj *line);
-int             shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer, 
+int             shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer,
                               imageObj *img);
 void            shapeObj_setBounds(shapeObj *self);
 int             shapeObj_copy(shapeObj *self, shapeObj *dest);
@@ -742,7 +742,7 @@ pointObj        *shapeObj_getLabelPoint(shapeObj *self);
 
 rectObj        *rectObj_new();
 void            rectObj_destroy(rectObj *self);
-int             rectObj_project(rectObj *self, projectionObj *in, 
+int             rectObj_project(rectObj *self, projectionObj *in,
                                 projectionObj *out);
 double          rectObj_fit(rectObj *self, int width, int height);
 int             rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
@@ -754,7 +754,7 @@ void            shapefileObj_destroy(shapefileObj *self);
 int             shapefileObj_get(shapefileObj *self, int i, shapeObj *shape);
 int             shapefileObj_getPoint(shapefileObj *self, int i, pointObj *point);
 int             shapefileObj_getTransformed(shapefileObj *self, mapObj *map,
-                                            int i, shapeObj *shape);
+    int i, shapeObj *shape);
 void            shapefileObj_getExtent(shapefileObj *self, int i,
                                        rectObj *rect);
 int             shapefileObj_add(shapefileObj *self, shapeObj *shape);
@@ -775,13 +775,13 @@ DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 styleObj       *styleObj_new(classObj *class, styleObj *style);
 styleObj       *styleObj_label_new(labelObj *label, styleObj *style);
 int             styleObj_updateFromString(styleObj *self, char *snippet);
-int             styleObj_setSymbolByName(styleObj *self, mapObj *map, 
-                                         char* pszSymbolName);
+int             styleObj_setSymbolByName(styleObj *self, mapObj *map,
+    char* pszSymbolName);
 styleObj       *styleObj_clone(styleObj *style);
 void           styleObj_setGeomTransform(styleObj *style, char *transform);
 
 hashTableObj   *hashTableObj_new();
-int             hashTableObj_set(hashTableObj *self, const char *key, 
+int             hashTableObj_set(hashTableObj *self, const char *key,
                                  const char *value);
 const char     *hashTableObj_get(hashTableObj *self, const char *key);
 int            hashTableObj_remove(hashTableObj *self, const char *key);
@@ -790,8 +790,8 @@ char           *hashTableObj_nextKey(hashTableObj *self, const char *prevkey);
 
 
 cgiRequestObj *cgirequestObj_new();
-int cgirequestObj_loadParams(cgiRequestObj *self, 
-                             char* (*getenv2)(const char*, void* thread_context), 
+int cgirequestObj_loadParams(cgiRequestObj *self,
+                             char* (*getenv2)(const char*, void* thread_context),
                              char *raw_post_data,
                              ms_uint32 raw_post_data_length,
                              void* thread_context);
@@ -815,5 +815,5 @@ void  outputFormatObj_destroy(outputFormatObj* self);
 
 int symbolObj_setImage(symbolObj *self, imageObj *image);
 imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format);
-  
+
 #endif /* PHP_MAPSCRIPT_H */

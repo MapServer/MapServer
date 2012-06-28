@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  .qix spatial index implementation.  Derived from shapelib, and 
+ * Purpose:  .qix spatial index implementation.  Derived from shapelib, and
  *           relicensed with permission of Frank Warmerdam (shapelib author).
  * Author:   Steve Lime
  *
@@ -16,7 +16,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -47,155 +47,147 @@ static int treeAddShapeId(treeObj *tree, int id, rectObj rect);
 static void SwapWord( int length, void * wordP )
 {
   int i;
-  uchar	temp;
-  
-  for( i=0; i < length/2; i++ )
-    {
-      temp = ((uchar *) wordP)[i];
-      ((uchar *)wordP)[i] = ((uchar *) wordP)[length-i-1];
-      ((uchar *) wordP)[length-i-1] = temp;
-    }
+  uchar temp;
+
+  for( i=0; i < length/2; i++ ) {
+    temp = ((uchar *) wordP)[i];
+    ((uchar *)wordP)[i] = ((uchar *) wordP)[length-i-1];
+    ((uchar *) wordP)[length-i-1] = temp;
+  }
 }
 
 static void * SfRealloc( void * pMem, int nNewSize )
 
 {
-    if( pMem == NULL )
-        return( (void *) malloc(nNewSize) );
-    else
-        return( (void *) realloc(pMem,nNewSize) );
+  if( pMem == NULL )
+    return( (void *) malloc(nNewSize) );
+  else
+    return( (void *) realloc(pMem,nNewSize) );
 }
 
 static treeNodeObj *treeNodeCreate(rectObj rect)
 {
-    treeNodeObj	*node;
+  treeNodeObj *node;
 
-    node = (treeNodeObj *) msSmallMalloc(sizeof(treeNodeObj));
+  node = (treeNodeObj *) msSmallMalloc(sizeof(treeNodeObj));
 
-    node->numshapes = 0;
-    node->ids = NULL;
+  node->numshapes = 0;
+  node->ids = NULL;
 
-    node->numsubnodes = 0;
+  node->numsubnodes = 0;
 
-    memcpy(&(node->rect), &(rect), sizeof(rectObj));
+  memcpy(&(node->rect), &(rect), sizeof(rectObj));
 
-    return node;
+  return node;
 }
 
 
 SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
 {
-    char		*pszFullname, *pszBasename;
-    SHPTreeHandle	psTree;
-  
-    char		pabyBuf[16];
-    int			i;
-    char		bBigEndian;
-    
+  char    *pszFullname, *pszBasename;
+  SHPTreeHandle psTree;
+
+  char    pabyBuf[16];
+  int     i;
+  char    bBigEndian;
+
   /* -------------------------------------------------------------------- */
-  /*	Establish the byte order on this machine.			    */
+  /*  Establish the byte order on this machine.         */
   /* -------------------------------------------------------------------- */
-    i = 1;
-    if( *((uchar *) &i) == 1 )
-      bBigEndian = MS_FALSE;
-    else
-      bBigEndian = MS_TRUE;
-  
+  i = 1;
+  if( *((uchar *) &i) == 1 )
+    bBigEndian = MS_FALSE;
+  else
+    bBigEndian = MS_TRUE;
+
   /* -------------------------------------------------------------------- */
-  /*	Initialize the info structure.					    */
+  /*  Initialize the info structure.              */
   /* -------------------------------------------------------------------- */
-    psTree = (SHPTreeHandle) msSmallMalloc(sizeof(SHPTreeInfo));
-  
+  psTree = (SHPTreeHandle) msSmallMalloc(sizeof(SHPTreeInfo));
+
   /* -------------------------------------------------------------------- */
-  /*	Compute the base (layer) name.  If there is any extension	    */
-  /*	on the passed in filename we will strip it off.			    */
+  /*  Compute the base (layer) name.  If there is any extension     */
+  /*  on the passed in filename we will strip it off.         */
   /* -------------------------------------------------------------------- */
-    pszBasename = (char *) msSmallMalloc(strlen(pszTree)+5);
-    strcpy( pszBasename, pszTree );
-    for( i = strlen(pszBasename)-1; 
+  pszBasename = (char *) msSmallMalloc(strlen(pszTree)+5);
+  strcpy( pszBasename, pszTree );
+  for( i = strlen(pszBasename)-1;
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-	 && pszBasename[i] != '\\';
+       && pszBasename[i] != '\\';
        i-- ) {}
-  
-    if( pszBasename[i] == '.' )
-      pszBasename[i] = '\0';
-  
-  /* -------------------------------------------------------------------- */
-  /*	Open the .shp and .shx files.  Note that files pulled from	    */
-  /*	a PC to Unix with upper case filenames won't work!		    */
-  /* -------------------------------------------------------------------- */
-    pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
-    sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
-    psTree->fp = fopen(pszFullname, "rb" );
 
-    msFree(pszBasename); /* don't need these any more */
-    msFree(pszFullname);    
+  if( pszBasename[i] == '.' )
+    pszBasename[i] = '\0';
 
-    if( psTree->fp == NULL ) {      
-      msFree(psTree);
-      return( NULL );
+  /* -------------------------------------------------------------------- */
+  /*  Open the .shp and .shx files.  Note that files pulled from      */
+  /*  a PC to Unix with upper case filenames won't work!        */
+  /* -------------------------------------------------------------------- */
+  pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
+  sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION);
+  psTree->fp = fopen(pszFullname, "rb" );
+
+  msFree(pszBasename); /* don't need these any more */
+  msFree(pszFullname);
+
+  if( psTree->fp == NULL ) {
+    msFree(psTree);
+    return( NULL );
+  }
+
+  fread( pabyBuf, 8, 1, psTree->fp );
+
+  memcpy( &psTree->signature, pabyBuf, 3 );
+  if( strncmp(psTree->signature,"SQT",3) ) {
+    /* ---------------------------------------------------------------------- */
+    /*     must check if the 2 first bytes equal 0 of max depth that cannot   */
+    /*     be more than 65535. If yes, we must swap all value. The problem    */
+    /*     here is if there's no Depth (bytea 5,6,7,8 in the file) all bytes  */
+    /*     will be set to 0. So,we will test with the number of shapes (bytes */
+    /*     1,2,3,4) that cannot be more than 65535 too.                       */
+    /* ---------------------------------------------------------------------- */
+    if (debug) {
+      msDebug("WARNING in msSHPDiskTreeOpen(): %s is in old index format "
+              "which has been deprecated.  It is strongly recommended to "
+              "regenerate it in new format.\n", pszTree);
     }
-    
+    if((pabyBuf[4] == 0 && pabyBuf[5] == 0 &&
+        pabyBuf[6] == 0 && pabyBuf[7] == 0)) {
+      psTree->LSB_order = !(pabyBuf[0] == 0 && pabyBuf[1] == 0);
+    } else {
+      psTree->LSB_order = !(pabyBuf[4] == 0 && pabyBuf[5] == 0);
+    }
+    psTree->needswap = ((psTree->LSB_order) != (!bBigEndian));
+
+    /* ---------------------------------------------------------------------- */
+    /*     poor hack to see if this quadtree was created by a computer with a */
+    /*     different Endian                                                   */
+    /* ---------------------------------------------------------------------- */
+    psTree->version = 0;
+  } else {
+    psTree->needswap = (( pabyBuf[3] == MS_NEW_MSB_ORDER ) ^ ( bBigEndian ));
+
+    psTree->LSB_order = ( pabyBuf[3] == MS_NEW_LSB_ORDER );
+    memcpy( &psTree->version, pabyBuf+4, 1 );
+    memcpy( &psTree->flags, pabyBuf+5, 3 );
+
     fread( pabyBuf, 8, 1, psTree->fp );
+  }
 
-    memcpy( &psTree->signature, pabyBuf, 3 );
-    if( strncmp(psTree->signature,"SQT",3) )
-    {
-  /* ---------------------------------------------------------------------- */
-  /*     must check if the 2 first bytes equal 0 of max depth that cannot   */
-  /*     be more than 65535. If yes, we must swap all value. The problem    */
-  /*     here is if there's no Depth (bytea 5,6,7,8 in the file) all bytes  */
-  /*     will be set to 0. So,we will test with the number of shapes (bytes */
-  /*     1,2,3,4) that cannot be more than 65535 too.                       */
-  /* ---------------------------------------------------------------------- */
-      if (debug)
-      {
-          msDebug("WARNING in msSHPDiskTreeOpen(): %s is in old index format "
-                  "which has been deprecated.  It is strongly recommended to "
-                  "regenerate it in new format.\n", pszTree);
-      }
-      if((pabyBuf[4] == 0 && pabyBuf[5] == 0 && 
-          pabyBuf[6] == 0 && pabyBuf[7] == 0))
-      {
-        psTree->LSB_order = !(pabyBuf[0] == 0 && pabyBuf[1] == 0);
-      }
-      else
-      {
-        psTree->LSB_order = !(pabyBuf[4] == 0 && pabyBuf[5] == 0);
-      }
-      psTree->needswap = ((psTree->LSB_order) != (!bBigEndian));
+  if( psTree->needswap ) SwapWord( 4, pabyBuf );
+  memcpy( &psTree->nShapes, pabyBuf, 4 );
 
-  /* ---------------------------------------------------------------------- */
-  /*     poor hack to see if this quadtree was created by a computer with a */
-  /*     different Endian                                                   */
-  /* ---------------------------------------------------------------------- */
-      psTree->version = 0;
-    }
-    else
-    {
-      psTree->needswap = (( pabyBuf[3] == MS_NEW_MSB_ORDER ) ^ ( bBigEndian ));
+  if( psTree->needswap ) SwapWord( 4, pabyBuf+4 );
+  memcpy( &psTree->nDepth, pabyBuf+4, 4 );
 
-      psTree->LSB_order = ( pabyBuf[3] == MS_NEW_LSB_ORDER );      
-      memcpy( &psTree->version, pabyBuf+4, 1 );
-      memcpy( &psTree->flags, pabyBuf+5, 3 );
-
-      fread( pabyBuf, 8, 1, psTree->fp );
-    }
-
-    if( psTree->needswap ) SwapWord( 4, pabyBuf );
-    memcpy( &psTree->nShapes, pabyBuf, 4 );
-  
-    if( psTree->needswap ) SwapWord( 4, pabyBuf+4 );
-    memcpy( &psTree->nDepth, pabyBuf+4, 4 );
-  
-    return( psTree );
+  return( psTree );
 }
 
 
 void msSHPDiskTreeClose(SHPTreeHandle disktree)
 {
-    fclose( disktree->fp );  
-    free( disktree );
+  fclose( disktree->fp );
+  free( disktree );
 }
 
 
@@ -211,7 +203,7 @@ treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth)
   /*      Allocate the tree object                                        */
   /* -------------------------------------------------------------------- */
   tree = (treeObj *) msSmallMalloc(sizeof(treeObj));
-  
+
   tree->numshapes = shapefile->numshapes;
   tree->maxdepth = maxdepth;
 
@@ -221,7 +213,7 @@ treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth)
   /* -------------------------------------------------------------------- */
   if( tree->maxdepth == 0 ) {
     int numnodes = 1;
-    
+
     while(numnodes*4 < shapefile->numshapes) {
       tree->maxdepth += 1;
       numnodes = numnodes * 2;
@@ -244,12 +236,12 @@ treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth)
 static void destroyTreeNode(treeNodeObj *node)
 {
   int i;
-  
+
   for(i=0; i<node->numsubnodes; i++ ) {
-    if(node->subnode[i]) 
+    if(node->subnode[i])
       destroyTreeNode(node->subnode[i]);
   }
-  
+
   if(node->ids)
     free(node->ids);
 
@@ -272,13 +264,13 @@ static void treeSplitBounds( rectObj *in, rectObj *out1, rectObj *out2)
   /* -------------------------------------------------------------------- */
   memcpy(out1, in, sizeof(rectObj));
   memcpy(out2, in, sizeof(rectObj));
-  
+
   /* -------------------------------------------------------------------- */
   /*      Split in X direction.                                           */
   /* -------------------------------------------------------------------- */
   if((in->maxx - in->minx) > (in->maxy - in->miny)) {
     range = in->maxx - in->minx;
-    
+
     out1->maxx = in->minx + range * SPLITRATIO;
     out2->minx = in->maxx - range * SPLITRATIO;
   }
@@ -288,7 +280,7 @@ static void treeSplitBounds( rectObj *in, rectObj *out1, rectObj *out2)
   /* -------------------------------------------------------------------- */
   else {
     range = in->maxy - in->miny;
-    
+
     out1->maxy = in->miny + range * SPLITRATIO;
     out2->miny = in->maxy - range * SPLITRATIO;
   }
@@ -297,7 +289,7 @@ static void treeSplitBounds( rectObj *in, rectObj *out1, rectObj *out2)
 static int treeNodeAddShapeId( treeNodeObj *node, int id, rectObj rect, int maxdepth)
 {
   int i;
-    
+
   /* -------------------------------------------------------------------- */
   /*      If there are subnodes, then consider whether this object        */
   /*      will fit in them.                                               */
@@ -305,7 +297,7 @@ static int treeNodeAddShapeId( treeNodeObj *node, int id, rectObj rect, int maxd
   if( maxdepth > 1 && node->numsubnodes > 0 ) {
     for(i=0; i<node->numsubnodes; i++ ) {
       if( msRectContained(&rect, &node->subnode[i]->rect)) {
-	return treeNodeAddShapeId( node->subnode[i], id, rect, maxdepth-1);
+        return treeNodeAddShapeId( node->subnode[i], id, rect, maxdepth-1);
       }
     }
   }
@@ -321,56 +313,55 @@ static int treeNodeAddShapeId( treeNodeObj *node, int id, rectObj rect, int maxd
     treeSplitBounds(&node->rect, &half1, &half2);
     treeSplitBounds(&half1, &quad1, &quad2);
     treeSplitBounds(&half2, &quad3, &quad4);
-  
-    if(msRectContained(&rect, &quad1) || msRectContained(&rect, &quad2) || 	msRectContained(&rect, &quad3) || msRectContained(&rect, &quad4)) {
+
+    if(msRectContained(&rect, &quad1) || msRectContained(&rect, &quad2) ||  msRectContained(&rect, &quad3) || msRectContained(&rect, &quad4)) {
       node->numsubnodes = 4;
       node->subnode[0] = treeNodeCreate(quad1);
       node->subnode[1] = treeNodeCreate(quad2);
       node->subnode[2] = treeNodeCreate(quad3);
       node->subnode[3] = treeNodeCreate(quad4);
-      
+
       /* recurse back on this node now that it has subnodes */
       return(treeNodeAddShapeId(node, id, rect, maxdepth));
     }
   }
 #endif
 
-    /* -------------------------------------------------------------------- */
-    /*      Otherwise, consider creating two subnodes if could fit into     */
-    /*      them, and adding to the appropriate subnode.                    */
-    /* -------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------- */
+  /*      Otherwise, consider creating two subnodes if could fit into     */
+  /*      them, and adding to the appropriate subnode.                    */
+  /* -------------------------------------------------------------------- */
 #if MAX_SUBNODE == 2
-    else if( maxdepth > 1 && node->numsubnodes == 0 ) {
-      rectObj half1, half2;
-      
-      treeSplitBounds(&node->rect, &half1, &half2);
+  else if( maxdepth > 1 && node->numsubnodes == 0 ) {
+    rectObj half1, half2;
 
-      if( msRectContained(&rect, &half1)) {
-	node->numsubnodes = 2;
-	node->subnode[0] = treeNodeCreate(half1);
-	node->subnode[1] = treeNodeCreate(half2);
-	
-	return(treeNodeAddShapeId(node->subnode[0], id, rect, maxdepth-1));
-      } else 
-	if(msRectContained(&rect, &half2)) {
-            node->numsubnodes = 2;
-            node->subnode[0] = treeNodeCreate(&half1);
-            node->subnode[1] = treeNodeCreate(&half2);
+    treeSplitBounds(&node->rect, &half1, &half2);
 
-            return(treeNodeAddShapeId(node->subnode[1], id, rect, maxdepth-1));
-        }
+    if( msRectContained(&rect, &half1)) {
+      node->numsubnodes = 2;
+      node->subnode[0] = treeNodeCreate(half1);
+      node->subnode[1] = treeNodeCreate(half2);
+
+      return(treeNodeAddShapeId(node->subnode[0], id, rect, maxdepth-1));
+    } else if(msRectContained(&rect, &half2)) {
+      node->numsubnodes = 2;
+      node->subnode[0] = treeNodeCreate(&half1);
+      node->subnode[1] = treeNodeCreate(&half2);
+
+      return(treeNodeAddShapeId(node->subnode[1], id, rect, maxdepth-1));
     }
+  }
 #endif /* MAX_SUBNODE == 2 */
 
-/* -------------------------------------------------------------------- */
-/*      If none of that worked, just add it to this nodes list.         */
-/* -------------------------------------------------------------------- */
-    node->numshapes++;
+  /* -------------------------------------------------------------------- */
+  /*      If none of that worked, just add it to this nodes list.         */
+  /* -------------------------------------------------------------------- */
+  node->numshapes++;
 
-    node->ids = SfRealloc( node->ids, sizeof(ms_int32) * node->numshapes );
-    node->ids[node->numshapes-1] = id;
+  node->ids = SfRealloc( node->ids, sizeof(ms_int32) * node->numshapes );
+  node->ids[node->numshapes-1] = id;
 
-    return MS_TRUE;
+  return MS_TRUE;
 }
 
 static int treeAddShapeId(treeObj *tree, int id, rectObj rect)
@@ -381,7 +372,7 @@ static int treeAddShapeId(treeObj *tree, int id, rectObj rect)
 static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi, ms_bitarray status)
 {
   int i;
-    
+
   /* -------------------------------------------------------------------- */
   /*      Does this node overlap the area of interest at all?  If not,    */
   /*      return without adding to the list at all.                       */
@@ -394,7 +385,7 @@ static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi, ms_bitarray stat
   /* -------------------------------------------------------------------- */
   for(i=0; i<node->numshapes; i++)
     msSetBit(status, node->ids[i], 1);
-  
+
   /* -------------------------------------------------------------------- */
   /*      Recurse to subnodes if they exist.                              */
   /* -------------------------------------------------------------------- */
@@ -413,7 +404,7 @@ ms_bitarray msSearchTree(treeObj *tree, rectObj aoi)
     msSetError(MS_MEMERR, NULL, "msSearchTree()");
     return(NULL);
   }
-  
+
   treeCollectShapeIds(tree->root, aoi, status);
 
   return(status);
@@ -421,44 +412,43 @@ ms_bitarray msSearchTree(treeObj *tree, rectObj aoi)
 
 static int treeNodeTrim( treeNodeObj *node )
 {
-    int	i;
+  int i;
 
-    /* -------------------------------------------------------------------- */
-    /*      Trim subtrees, and free subnodes that come back empty.          */
-    /* -------------------------------------------------------------------- */
-    for(i=0; i<node->numsubnodes; i++ ) {
-      if(treeNodeTrim(node->subnode[i])) {
-	destroyTreeNode(node->subnode[i]);
-	node->subnode[i] = node->subnode[node->numsubnodes-1];
-	node->numsubnodes--;
-	i--; /* process the new occupant of this subnode entry */
-      }
+  /* -------------------------------------------------------------------- */
+  /*      Trim subtrees, and free subnodes that come back empty.          */
+  /* -------------------------------------------------------------------- */
+  for(i=0; i<node->numsubnodes; i++ ) {
+    if(treeNodeTrim(node->subnode[i])) {
+      destroyTreeNode(node->subnode[i]);
+      node->subnode[i] = node->subnode[node->numsubnodes-1];
+      node->numsubnodes--;
+      i--; /* process the new occupant of this subnode entry */
     }
+  }
 
-/* -------------------------------------------------------------------- */
-/*      If the current node has 1 subnode and no shapes, promote that   */
-/*      subnode to the current node position.                           */
-/* -------------------------------------------------------------------- */
-    if( node->numsubnodes == 1 && node->numshapes == 0)
-    {
-        treeNodeObj* psSubNode = node->subnode[0];
+  /* -------------------------------------------------------------------- */
+  /*      If the current node has 1 subnode and no shapes, promote that   */
+  /*      subnode to the current node position.                           */
+  /* -------------------------------------------------------------------- */
+  if( node->numsubnodes == 1 && node->numshapes == 0) {
+    treeNodeObj* psSubNode = node->subnode[0];
 
-        memcpy(&node->rect, &psSubNode->rect,
-               sizeof(psSubNode->rect));
-        node->numshapes = psSubNode->numshapes;
-        assert(node->ids == NULL);
-        node->ids = psSubNode->ids;
-        node->numsubnodes = psSubNode->numsubnodes;
-        for( i = 0; i < psSubNode->numsubnodes; i++ )
-            node->subnode[i] = psSubNode->subnode[i];
-        free(psSubNode);
-    }
+    memcpy(&node->rect, &psSubNode->rect,
+           sizeof(psSubNode->rect));
+    node->numshapes = psSubNode->numshapes;
+    assert(node->ids == NULL);
+    node->ids = psSubNode->ids;
+    node->numsubnodes = psSubNode->numsubnodes;
+    for( i = 0; i < psSubNode->numsubnodes; i++ )
+      node->subnode[i] = psSubNode->subnode[i];
+    free(psSubNode);
+  }
 
-    /* -------------------------------------------------------------------- */
-    /*      We should be trimmed if we have no subnodes, and no shapes.     */
-    /* -------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------- */
+  /*      We should be trimmed if we have no subnodes, and no shapes.     */
+  /* -------------------------------------------------------------------- */
 
-    return(node->numsubnodes == 0 && node->numshapes == 0);
+  return(node->numsubnodes == 0 && node->numshapes == 0);
 }
 
 void msTreeTrim(treeObj *tree)
@@ -466,7 +456,7 @@ void msTreeTrim(treeObj *tree)
   treeNodeTrim(tree->root);
 }
 
-static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray status) 
+static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray status)
 {
   int i;
   ms_int32 offset;
@@ -483,7 +473,7 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
   if ( disktree->needswap ) SwapWord ( 8, &rect.miny );
   if ( disktree->needswap ) SwapWord ( 8, &rect.maxx );
   if ( disktree->needswap ) SwapWord ( 8, &rect.maxy );
-      
+
   fread( &numshapes, 4, 1, disktree->fp );
   if ( disktree->needswap ) SwapWord ( 4, &numshapes );
 
@@ -496,16 +486,12 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
     ids = (int *)msSmallMalloc(numshapes*sizeof(ms_int32));
 
     fread( ids, numshapes*sizeof(ms_int32), 1, disktree->fp );
-    if (disktree->needswap )
-    {
-      for( i=0; i<numshapes; i++ )
-      {
-        SwapWord( 4, &ids[i] );    
+    if (disktree->needswap ) {
+      for( i=0; i<numshapes; i++ ) {
+        SwapWord( 4, &ids[i] );
         msSetBit(status, ids[i], 1);
       }
-    }
-    else
-    {
+    } else {
       for(i=0; i<numshapes; i++)
         msSetBit(status, ids[i], 1);
     }
@@ -523,7 +509,7 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
 
 ms_bitarray msSearchDiskTree(char *filename, rectObj aoi, int debug)
 {
-  SHPTreeHandle	disktree;
+  SHPTreeHandle disktree;
   ms_bitarray status=NULL;
 
   disktree = msSHPDiskTreeOpen (filename, debug);
@@ -548,7 +534,7 @@ ms_bitarray msSearchDiskTree(char *filename, rectObj aoi, int debug)
   return(status);
 }
 
-treeNodeObj *readTreeNode( SHPTreeHandle disktree ) 
+treeNodeObj *readTreeNode( SHPTreeHandle disktree )
 {
   int i,res;
   ms_int32 offset;
@@ -558,37 +544,36 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
   node->ids = NULL;
 
   res = fread( &offset, 4, 1, disktree->fp );
-  if ( !res ) 
-      return NULL;
+  if ( !res )
+    return NULL;
 
   if ( disktree->needswap ) SwapWord ( 4, &offset );
-   
+
   fread( &node->rect, sizeof(rectObj), 1, disktree->fp );
   if ( disktree->needswap ) SwapWord ( 8, &node->rect.minx );
   if ( disktree->needswap ) SwapWord ( 8, &node->rect.miny );
   if ( disktree->needswap ) SwapWord ( 8, &node->rect.maxx );
   if ( disktree->needswap ) SwapWord ( 8, &node->rect.maxy );
-      
+
   fread( &node->numshapes, 4, 1, disktree->fp );
   if ( disktree->needswap ) SwapWord ( 4, &node->numshapes );
   if( node->numshapes > 0 )
     node->ids = (ms_int32 *)msSmallMalloc(sizeof(ms_int32)*node->numshapes);
   fread( node->ids, node->numshapes*4, 1, disktree->fp );
-  for( i=0; i < node->numshapes; i++ )
-  {
-    if ( disktree->needswap ) SwapWord ( 4, &node->ids[i] );    
+  for( i=0; i < node->numshapes; i++ ) {
+    if ( disktree->needswap ) SwapWord ( 4, &node->ids[i] );
   }
 
   fread( &node->numsubnodes, 4, 1, disktree->fp );
   if ( disktree->needswap ) SwapWord ( 4, &node->numsubnodes );
-  
+
   return node;
 }
 
 treeObj *msReadTree(char *filename, int debug)
 {
   treeObj *tree=NULL;
-  SHPTreeHandle	disktree;
+  SHPTreeHandle disktree;
 
   disktree = msSHPDiskTreeOpen( filename, debug );
   if(!disktree) {
@@ -598,7 +583,7 @@ treeObj *msReadTree(char *filename, int debug)
 
   tree = (treeObj *) malloc(sizeof(treeObj));
   MS_CHECK_ALLOC(tree, sizeof(treeObj), NULL);
-  
+
   tree->numshapes = disktree->nShapes;
   tree->maxdepth = disktree->nDepth;
 
@@ -607,7 +592,7 @@ treeObj *msReadTree(char *filename, int debug)
   return(tree);
 }
 
-static ms_int32 getSubNodeOffset(treeNodeObj *node) 
+static ms_int32 getSubNodeOffset(treeNodeObj *node)
 {
   int i;
   ms_int32 offset=0;
@@ -621,31 +606,31 @@ static ms_int32 getSubNodeOffset(treeNodeObj *node)
 
   /* offset is the disk offset in the index file on disk       */
   /*   that format is (per node)                               */
-  /*      int       offset			4 bytes						*/
-  /*      rectObj   rect			4 * 8 bytes					*/
-  /*	  int		numShapes		4 bytes						*/
-  /*	  int		ids[numShapes]	4 * numShapes bytes			*/
-  /*	  int		numSubNodes		4 bytes						*/
-  /*				                                       */
-  
+  /*      int       offset      4 bytes           */
+  /*      rectObj   rect      4 * 8 bytes         */
+  /*    int   numShapes   4 bytes           */
+  /*    int   ids[numShapes]  4 * numShapes bytes     */
+  /*    int   numSubNodes   4 bytes           */
+  /*                                               */
+
   return(offset);
 }
 
 
-static void writeTreeNode(SHPTreeHandle disktree, treeNodeObj *node) 
+static void writeTreeNode(SHPTreeHandle disktree, treeNodeObj *node)
 {
   int i,j;
   ms_int32 offset;
   char *pabyRec = NULL;
 
   offset = getSubNodeOffset(node);
-  
+
   pabyRec = msSmallMalloc(sizeof(rectObj) + (3 * sizeof(ms_int32)) + (node->numshapes * sizeof(ms_int32)) );
 
   memcpy( pabyRec, &offset, 4);
   if( disktree->needswap ) SwapWord( 4, pabyRec );
-    
-   memcpy( pabyRec+4, &node->rect, sizeof(rectObj));
+
+  memcpy( pabyRec+4, &node->rect, sizeof(rectObj));
   for (i=0; i < 4; i++)
     if( disktree->needswap ) SwapWord( 8, pabyRec+4+(8*i) );
 
@@ -656,13 +641,13 @@ static void writeTreeNode(SHPTreeHandle disktree, treeNodeObj *node)
   memcpy( pabyRec+40, node->ids, j);
   for (i=0; i<node->numshapes; i++)
     if( disktree->needswap ) SwapWord( 4, pabyRec+40+(4*i));
-  
+
   memcpy( pabyRec+j+40, &node->numsubnodes, 4);
-  if( disktree->needswap ) SwapWord( 4, pabyRec+40+j ); 
+  if( disktree->needswap ) SwapWord( 4, pabyRec+40+j );
 
   fwrite( pabyRec, 44+j, 1, disktree->fp);
   free (pabyRec);
-  
+
   for(i=0; i<node->numsubnodes; i++ ) {
     if(node->subnode[i])
       writeTreeNode(disktree, node->subnode[i]);
@@ -670,104 +655,104 @@ static void writeTreeNode(SHPTreeHandle disktree, treeNodeObj *node)
 
 
   return;
-  
+
 }
 
 int msWriteTree(treeObj *tree, char *filename, int B_order)
 {
-  char		signature[3] = "SQT";
-  char		version = 1;
-  char		reserved[3] = {0,0,0};
+  char    signature[3] = "SQT";
+  char    version = 1;
+  char    reserved[3] = {0,0,0};
   SHPTreeHandle disktree;
-  int		i;
-  char		mtBigEndian;
-  char		pabyBuf[32];
-  char		*pszBasename, *pszFullname;
-  
-  
+  int   i;
+  char    mtBigEndian;
+  char    pabyBuf[32];
+  char    *pszBasename, *pszFullname;
+
+
   disktree = (SHPTreeHandle) malloc(sizeof(SHPTreeInfo));
   MS_CHECK_ALLOC(disktree, sizeof(SHPTreeInfo), MS_FALSE);
 
   /* -------------------------------------------------------------------- */
-  /*	Compute the base (layer) name.  If there is any extension	    */
-  /*	on the passed in filename we will strip it off.			    */
+  /*  Compute the base (layer) name.  If there is any extension     */
+  /*  on the passed in filename we will strip it off.         */
   /* -------------------------------------------------------------------- */
   pszBasename = (char *) msSmallMalloc(strlen(filename)+5);
   strcpy( pszBasename, filename );
-  for( i = strlen(pszBasename)-1; 
+  for( i = strlen(pszBasename)-1;
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-	 && pszBasename[i] != '\\';
+       && pszBasename[i] != '\\';
        i-- ) {}
-  
+
   if( pszBasename[i] == '.' )
     pszBasename[i] = '\0';
-  
+
   /* -------------------------------------------------------------------- */
-  /*	Open the .shp and .shx files.  Note that files pulled from	    */
-  /*	a PC to Unix with upper case filenames won't work!		    */
+  /*  Open the .shp and .shx files.  Note that files pulled from      */
+  /*  a PC to Unix with upper case filenames won't work!        */
   /* -------------------------------------------------------------------- */
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
-  sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
+  sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION);
   disktree->fp = fopen(pszFullname, "wb");
-  
+
   msFree(pszBasename); /* not needed */
   msFree(pszFullname);
-  
+
   if(!disktree->fp) {
     msFree(disktree);
     msSetError(MS_IOERR, NULL, "msWriteTree()");
     return(MS_FALSE);
   }
-  
-  
+
+
   /* for efficiency, trim the tree */
   msTreeTrim(tree);
-  
+
   /* -------------------------------------------------------------------- */
-  /*	Establish the byte order on this machine.			    */
+  /*  Establish the byte order on this machine.         */
   /* -------------------------------------------------------------------- */
   i = 1;
   if( *((uchar *) &i) == 1 )
     mtBigEndian = MS_FALSE;
   else
     mtBigEndian = MS_TRUE;
-  
+
   if( !(mtBigEndian ^ ( B_order == MS_LSB_ORDER || B_order == MS_NEW_LSB_ORDER )) )
     disktree->needswap = 1;
   else
     disktree->needswap = 0;
-  
+
   if( B_order == MS_NATIVE_ORDER )
     disktree->needswap = 0;
-  
+
   /* write the header */
-  if ( B_order > 0 ) {  
+  if ( B_order > 0 ) {
     memcpy( pabyBuf, &signature, 3 );
     memcpy (&disktree->signature, &signature, 3);
     pabyBuf[3] = B_order;
-    
+
     memcpy( pabyBuf+4, &version, 1);
     memcpy( pabyBuf+5, &reserved, 3);
-    
+
     memcpy( &disktree->version, &version, 1);
     memcpy( &disktree->flags, &reserved, 3);
-    
+
     fwrite( pabyBuf, 8, 1, disktree->fp );
   }
-  
+
   memcpy( pabyBuf, &tree->numshapes, 4 );
   if( disktree->needswap ) SwapWord( 4, pabyBuf );
-  
+
   memcpy( pabyBuf+4, &tree->maxdepth, 4 );
   if( disktree->needswap ) SwapWord( 4, pabyBuf+4 );
-  
+
   i = fwrite( pabyBuf, 8, 1, disktree->fp );
   if( !i ) {
     fprintf (stderr, "unable to write to index file ... exiting \n");
     return (MS_FALSE);
   }
-  
-  writeTreeNode(disktree, tree->root);  
+
+  writeTreeNode(disktree, tree->root);
 
   msSHPDiskTreeClose( disktree );
 
@@ -783,8 +768,8 @@ void msFilterTreeSearch(shapefileObj *shp, ms_bitarray status, rectObj search_re
   i = msGetNextBit(status, 0, shp->numshapes);
   while(i >= 0) {
     if(msSHPReadBounds(shp->hSHP, i, &shape_rect) == MS_SUCCESS) {
-	    if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE) {
-	      msSetBit(status, i, 0);
+      if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE) {
+        msSetBit(status, i, 0);
       }
     }
     i = msGetNextBit(status, i+1, shp->numshapes);

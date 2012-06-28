@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -207,14 +207,14 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define FILEPATTERN 1151
 #define TEMPLATEPATTERN 1152
 
-#define PROCESSING	1153
+#define PROCESSING  1153
 
 /* The DEBUG macro is also used to request debugging output.  Redefine
    for keyword purposes.  */
 
 #ifdef DEBUG
 #undef DEBUG
-#endif 
+#endif
 
 #define DEBUG 1154
 
@@ -234,7 +234,7 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 
 #define OUTLINEWIDTH 1166
 
- /* Color Range support (was Gradient Support)*/
+/* Color Range support (was Gradient Support)*/
 #define COLORRANGE 1170
 #define DATARANGE 1172
 #define RANGEITEM 1173

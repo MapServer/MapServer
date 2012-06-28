@@ -1,15 +1,15 @@
 /******************************************************************************
- * $Id$ 
+ * $Id$
  *
  * Project:  MapServer
- * Purpose:  Functions copied from GDAL's CPL. This file contain utility 
+ * Purpose:  Functions copied from GDAL's CPL. This file contain utility
  *           functions that come from the GDAL/OGR cpl library. The idea
  *           behind it is to have access in mapserver to all these
  *           utilities, without being constrained to link with GDAL/OGR.
  * Author:   Y. Assefa, DM Solutions Group (assefa@dmsolutions.ca)
- * 
- * 
- * Note: 
+ *
+ *
+ * Note:
  * Names of functions used here are the same as those in the cpl
  * library with the exception the the CPL prefix is changed to ms
  * (eg : CPLGetBasename() would become msGetBasename())
@@ -24,7 +24,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -45,7 +45,7 @@
 
 /* should be size of largest possible filename */
 #define MS_PATH_BUF_SIZE 2048
-static char     szStaticResult[MS_PATH_BUF_SIZE]; 
+static char     szStaticResult[MS_PATH_BUF_SIZE];
 
 
 /************************************************************************/
@@ -55,15 +55,15 @@ static char     szStaticResult[MS_PATH_BUF_SIZE];
 static int msFindFilenameStart( const char * pszFilename )
 
 {
-    int         iFileStart;
+  int         iFileStart;
 
-    for( iFileStart = strlen(pszFilename);
-         iFileStart > 0
-             && pszFilename[iFileStart-1] != '/'
-             && pszFilename[iFileStart-1] != '\\';
-         iFileStart-- ) {}
+  for( iFileStart = strlen(pszFilename);
+       iFileStart > 0
+       && pszFilename[iFileStart-1] != '/'
+       && pszFilename[iFileStart-1] != '\\';
+       iFileStart-- ) {}
 
-    return iFileStart;
+  return iFileStart;
 }
 
 /************************************************************************/
@@ -93,23 +93,23 @@ static int msFindFilenameStart( const char * pszFilename )
 const char *msGetBasename( const char *pszFullFilename )
 
 {
-    int iFileStart = msFindFilenameStart( pszFullFilename );
-    int iExtStart, nLength;
+  int iFileStart = msFindFilenameStart( pszFullFilename );
+  int iExtStart, nLength;
 
-    for( iExtStart = strlen(pszFullFilename);
-         iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
-         iExtStart-- ) {}
+  for( iExtStart = strlen(pszFullFilename);
+       iExtStart > iFileStart && pszFullFilename[iExtStart] != '.';
+       iExtStart-- ) {}
 
-    if( iExtStart == iFileStart )
-        iExtStart = strlen(pszFullFilename);
+  if( iExtStart == iFileStart )
+    iExtStart = strlen(pszFullFilename);
 
-    nLength = iExtStart - iFileStart;
+  nLength = iExtStart - iFileStart;
 
-    assert( nLength < MS_PATH_BUF_SIZE );
+  assert( nLength < MS_PATH_BUF_SIZE );
 
-    strlcpy( szStaticResult, pszFullFilename + iFileStart, nLength+1 );
+  strlcpy( szStaticResult, pszFullFilename + iFileStart, nLength+1 );
 
-    return szStaticResult;
+  return szStaticResult;
 }
 
 /* Id: GDAL/port/cplgetsymbol.cpp,v 1.14 2004/11/11 20:40:38 fwarmerdam Exp */
@@ -141,14 +141,14 @@ const char *msGetBasename( const char *pszFullFilename )
  * Currently msGetSymbol() doesn't try to:
  * <ul>
  *  <li> prevent the reference count on the library from going up
- *    for every request, or given any opportunity to unload      
- *    the library.                                            
- *  <li> Attempt to look for the library in non-standard         
- *    locations.                                              
- *  <li> Attempt to try variations on the symbol name, like      
+ *    for every request, or given any opportunity to unload
+ *    the library.
+ *  <li> Attempt to look for the library in non-standard
+ *    locations.
+ *  <li> Attempt to try variations on the symbol name, like
  *    pre-prending or post-pending an underscore.
  * </ul>
- * 
+ *
  * Some of these issues may be worked on in the future.
  *
  * @param pszLibrary the name of the shared library or DLL containing
@@ -161,43 +161,41 @@ const char *msGetBasename( const char *pszFullFilename )
 
 void *msGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 {
-    void        *pLibrary;
-    void        *pSymbol;
+  void        *pLibrary;
+  void        *pSymbol;
 
-    pLibrary = dlopen(pszLibrary, RTLD_LAZY);
-    if( pLibrary == NULL )
-    {
-        msSetError(MS_MISCERR, 
-                   "Dynamic loading failed: %s",
-                   "msGetSymbol()", dlerror());
-        return NULL;
-    }
+  pLibrary = dlopen(pszLibrary, RTLD_LAZY);
+  if( pLibrary == NULL ) {
+    msSetError(MS_MISCERR,
+               "Dynamic loading failed: %s",
+               "msGetSymbol()", dlerror());
+    return NULL;
+  }
 
-    pSymbol = dlsym( pLibrary, pszSymbolName );
+  pSymbol = dlsym( pLibrary, pszSymbolName );
 
 #if (defined(__APPLE__) && defined(__MACH__))
-    /* On mach-o systems, C symbols have a leading underscore and depending
-     * on how dlcompat is configured it may or may not add the leading
-     * underscore.  So if dlsym() fails add an underscore and try again.
-     */
-    if( pSymbol == NULL )
-    {
-        char withUnder[strlen(pszSymbolName) + 2];
-        withUnder[0] = '_'; withUnder[1] = 0;
-        strcat(withUnder, pszSymbolName);
-        pSymbol = dlsym( pLibrary, withUnder );
-    }
+  /* On mach-o systems, C symbols have a leading underscore and depending
+   * on how dlcompat is configured it may or may not add the leading
+   * underscore.  So if dlsym() fails add an underscore and try again.
+   */
+  if( pSymbol == NULL ) {
+    char withUnder[strlen(pszSymbolName) + 2];
+    withUnder[0] = '_';
+    withUnder[1] = 0;
+    strcat(withUnder, pszSymbolName);
+    pSymbol = dlsym( pLibrary, withUnder );
+  }
 #endif
 
-    if( pSymbol == NULL )
-    {
-        msSetError(MS_MISCERR, 
-                   "Dynamic loading failed: %s",
-                   "msGetSymbol()", dlerror());
-        return NULL;
-    }
-    
-    return( pSymbol );
+  if( pSymbol == NULL ) {
+    msSetError(MS_MISCERR,
+               "Dynamic loading failed: %s",
+               "msGetSymbol()", dlerror());
+    return NULL;
+  }
+
+  return( pSymbol );
 }
 
 #endif /* def __unix__ && defined(HAVE_DLFCN_H) */
@@ -217,29 +215,27 @@ void *msGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 void *msGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 {
-    void        *pLibrary;
-    void        *pSymbol;
+  void        *pLibrary;
+  void        *pSymbol;
 
-    pLibrary = LoadLibrary(pszLibrary);
-    if( pLibrary == NULL )
-    {
-        msSetError(MS_MISCERR, 
-                  "Can't load requested dynamic library: %s", 
-                   "msGetSymbol()", pszLibrary);
-        return NULL;
-    }
+  pLibrary = LoadLibrary(pszLibrary);
+  if( pLibrary == NULL ) {
+    msSetError(MS_MISCERR,
+               "Can't load requested dynamic library: %s",
+               "msGetSymbol()", pszLibrary);
+    return NULL;
+  }
 
-    pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
+  pSymbol = (void *) GetProcAddress( (HINSTANCE) pLibrary, pszSymbolName );
 
-    if( pSymbol == NULL )
-    {
-        msSetError(MS_MISCERR, 
-            "Can't find requested entry point: %s in lib %s",
-                   "msGetSymbol()", pszSymbolName, pLibrary);
-        return NULL;
-    }
-    
-    return( pSymbol );
+  if( pSymbol == NULL ) {
+    msSetError(MS_MISCERR,
+               "Can't find requested entry point: %s in lib %s",
+               "msGetSymbol()", pszSymbolName, pLibrary);
+    return NULL;
+  }
+
+  return( pSymbol );
 }
 
 #endif /* def _WIN32 */
@@ -258,9 +254,9 @@ void *msGetSymbol( const char * pszLibrary, const char * pszSymbolName )
 
 void *msGetSymbol(const char *pszLibrary, const char *pszEntryPoint)
 {
-    msSetError(MS_MISCERR, 
-               "msGetSymbol(%s,%s) called.  Failed as this is stub implementation.",  
-               "msGetSymbol()", pszLibrary, pszEntryPoint);
-    return NULL;
+  msSetError(MS_MISCERR,
+             "msGetSymbol(%s,%s) called.  Failed as this is stub implementation.",
+             "msGetSymbol()", pszLibrary, pszEntryPoint);
+  return NULL;
 }
 #endif
