@@ -2520,6 +2520,8 @@ MS_DLL_EXPORT char *copyStringProperty(char **dst, char *src);
 MS_DLL_EXPORT int msCopyClass(classObj *dst, classObj *src, layerObj *layer);
 MS_DLL_EXPORT int msCopyStyle(styleObj *dst, styleObj *src);
 MS_DLL_EXPORT int msCopyLabel(labelObj *dst, labelObj *src);
+MS_DLL_EXPORT int msCopyLine(lineObj *dst, lineObj *src);
+MS_DLL_EXPORT int msCopyProjection(projectionObj *dst, projectionObj *src);
 int msCopyExpression(expressionObj *dst, expressionObj *src);
 int msCopyProjection(projectionObj *dst, projectionObj *src);
 
