@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -34,8 +34,8 @@
 #include "maphttp.h"
 #include <time.h>
 
-/* This is the URL to the official OGC Schema Repository. We use it by 
- * default for OGC services unless the ows_schemas_lcoation web metadata 
+/* This is the URL to the official OGC Schema Repository. We use it by
+ * default for OGC services unless the ows_schemas_lcoation web metadata
  * is set in the mapfile.
  */
 #define OWS_DEFAULT_SCHEMAS_LOCATION   "http://schemas.opengis.net"
@@ -44,8 +44,7 @@
  *   mapows.c
  *====================================================================*/
 
-typedef struct
-{
+typedef struct {
   char *pszVersion;
   char *pszUpdateSequence;
   char *pszRequest;
@@ -78,7 +77,7 @@ typedef struct {
   char *pszOutputFormat;
   char *pszSensorId;
   char *pszProcedure;
-  char *pszOffering; 
+  char *pszOffering;
   char *pszObservedProperty;
   char *pszEventTime;
   char *pszResult;
@@ -95,8 +94,7 @@ typedef struct {
  * Used to preprocess WMS request parameters and combine layers that can
  * be comined in a GetMap request.
  */
-typedef  struct
-{
+typedef  struct {
   char        *onlineresource;
   hashTableObj *params;
   int          numparams;
@@ -104,33 +102,32 @@ typedef  struct
 } wmsParamsObj;
 
 /* owsRequestObj: Represent a OWS specific request with its enabled layers */
-typedef struct
-{
-    int numlayers;
-    int *enabled_layers;
-    
-    char *service;
-    char *version;
-    char *request;
-    void *document; /* xmlDocPtr or CPLXMLNode* */
+typedef struct {
+  int numlayers;
+  int *enabled_layers;
+
+  char *service;
+  char *version;
+  char *request;
+  void *document; /* xmlDocPtr or CPLXMLNode* */
 } owsRequestObj;
 
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode);
 
-MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj *metadata, 
-                                    const char *namespaces, const char *name);
-MS_DLL_EXPORT const char * msOWSLookupMetadataWithLanguage(hashTableObj *metadata, 
-                                    const char *namespaces, const char *name, const char *validated_language);
+MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj *metadata,
+    const char *namespaces, const char *name);
+MS_DLL_EXPORT const char * msOWSLookupMetadataWithLanguage(hashTableObj *metadata,
+    const char *namespaces, const char *name, const char *validated_language);
 MS_DLL_EXPORT const char * msOWSLookupMetadata2(hashTableObj *pri,
-                                                hashTableObj *sec,
-                                                const char *namespaces,
-                                                const char *name);
-MS_DLL_EXPORT int msOWSRequestIsEnabled(mapObj *map, layerObj *layer, 
+    hashTableObj *sec,
+    const char *namespaces,
+    const char *name);
+MS_DLL_EXPORT int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
                                         const char *namespaces, const char *name, int check_all_layers);
-MS_DLL_EXPORT void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces, 
-                                             const char *request, owsRequestObj *request_layers);
-MS_DLL_EXPORT int msOWSParseRequestMetadata(const char *metadata, const char *request, 
-                                            int *disabled);
+MS_DLL_EXPORT void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
+    const char *request, owsRequestObj *request_layers);
+MS_DLL_EXPORT int msOWSParseRequestMetadata(const char *metadata, const char *request,
+    int *disabled);
 
 /* Constants for OWS Service version numbers */
 #define OWS_0_1_2   0x000102
@@ -177,90 +174,90 @@ MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces
 #define OWS_WFS     2
 
 MS_DLL_EXPORT int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
-                                                const int action_if_not_found, const char *tag_name,
-                                                const char *validated_language, const int service);
+    const int action_if_not_found, const char *tag_name,
+    const char *validated_language, const int service);
 int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
-                                       int action_if_not_found);
+                                    int action_if_not_found);
 int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *namespaces,
-                               int action_if_not_found, const char *validated_language);
+                                     int action_if_not_found, const char *validated_language);
 
-MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata, 
-                       const char *namespaces, const char *name, 
-                       int action_if_not_found, const char *format, 
-                       const char *default_value);
-int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata, 
-                             const char *namespaces, const char *name, 
-                             int action_if_not_found, 
+MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata,
+                                     const char *namespaces, const char *name,
+                                     int action_if_not_found, const char *format,
+                                     const char *default_value);
+int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
+                             const char *namespaces, const char *name,
+                             int action_if_not_found,
                              const char *format, const char *default_value) ;
-int msOWSPrintEncodeMetadata2(FILE *stream, hashTableObj *metadata, 
-                             const char *namespaces, const char *name, 
-                             int action_if_not_found, 
-                             const char *format, const char *default_value,
-                             const char *validated_language);
-char *msOWSGetEncodeMetadata(hashTableObj *metadata, 
-                             const char *namespaces, const char *name, 
+int msOWSPrintEncodeMetadata2(FILE *stream, hashTableObj *metadata,
+                              const char *namespaces, const char *name,
+                              int action_if_not_found,
+                              const char *format, const char *default_value,
+                              const char *validated_language);
+char *msOWSGetEncodeMetadata(hashTableObj *metadata,
+                             const char *namespaces, const char *name,
                              const char *default_value);
 
-int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata, 
-                               const char *namespaces, const char *name, 
-                               int action_if_not_found, 
+int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata,
+                               const char *namespaces, const char *name,
+                               int action_if_not_found,
                                const char *format, const char *default_value);
-int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName, 
-                            const char *namespaces, const char *name, 
-                            int action_if_not_found, 
-                            const char *format, const char *default_value);
-int msOWSPrintGroupMetadata2(FILE *stream, mapObj *map, char* pszGroupName,
+int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
                             const char *namespaces, const char *name,
                             int action_if_not_found,
-                            const char *format, const char *default_value,
-                            const char *validated_language);
-int msOWSPrintURLType(FILE *stream, hashTableObj *metadata, 
-                      const char *namespaces, const char *name, 
-                      int action_if_not_found, const char *tag_format, 
-                      const char *tag_name, const char *type_format, 
-                      const char *width_format, const char *height_format, 
+                            const char *format, const char *default_value);
+int msOWSPrintGroupMetadata2(FILE *stream, mapObj *map, char* pszGroupName,
+                             const char *namespaces, const char *name,
+                             int action_if_not_found,
+                             const char *format, const char *default_value,
+                             const char *validated_language);
+int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
+                      const char *namespaces, const char *name,
+                      int action_if_not_found, const char *tag_format,
+                      const char *tag_name, const char *type_format,
+                      const char *width_format, const char *height_format,
                       const char *urlfrmt_format, const char *href_format,
-                      int type_is_mandatory, int width_is_mandatory, 
-                      int height_is_mandatory, int format_is_mandatory, 
-                      int href_is_mandatory, const char *default_type, 
-                      const char *default_width, const char *default_height, 
-                      const char *default_urlfrmt, const char *default_href, 
+                      int type_is_mandatory, int width_is_mandatory,
+                      int height_is_mandatory, int format_is_mandatory,
+                      int href_is_mandatory, const char *default_type,
+                      const char *default_width, const char *default_height,
+                      const char *default_urlfrmt, const char *default_href,
                       const char *tabspace);
-int msOWSPrintParam(FILE *stream, const char *name, const char *value, 
-                    int action_if_not_found, const char *format, 
+int msOWSPrintParam(FILE *stream, const char *name, const char *value,
+                    int action_if_not_found, const char *format,
                     const char *default_value);
-int msOWSPrintEncodeParam(FILE *stream, const char *name, const char *value, 
-                          int action_if_not_found, const char *format, 
+int msOWSPrintEncodeParam(FILE *stream, const char *name, const char *value,
+                          int action_if_not_found, const char *format,
                           const char *default_value);
-int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata, 
-                           const char *namespaces, const char *name, 
-                           const char *startTag, 
+int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
+                           const char *namespaces, const char *name,
+                           const char *startTag,
                            const char *endTag, const char *itemFormat,
                            const char *default_value);
-int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata, 
-                                 const char *namespaces, const char *name, 
-                                 const char *startTag, 
+int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
+                                 const char *namespaces, const char *name,
+                                 const char *startTag,
                                  const char *endTag, const char *itemFormat,
                                  const char *default_value);
-int msOWSPrintEncodeParamList(FILE *stream, const char *name, 
-                              const char *value, int action_if_not_found, 
-                              char delimiter, const char *startTag, 
-                              const char *endTag, const char *format, 
+int msOWSPrintEncodeParamList(FILE *stream, const char *name,
+                              const char *value, int action_if_not_found,
+                              char delimiter, const char *startTag,
+                              const char *endTag, const char *format,
                               const char *default_value);
-void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
+void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
                                  rectObj *extent, projectionObj *srcproj,
                                  projectionObj *wfsproj, int nService);
-void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace, 
+void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
                                         rectObj *extent, projectionObj *srcproj);
 
-void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
-                           rectObj *extent, 
+void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
+                           rectObj *extent,
                            projectionObj *srcproj,
                            hashTableObj *layer_meta,
                            hashTableObj *map_meta,
                            const char *namespaces,
                            int wms_version);
-void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
+void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
                             int nVersion, hashTableObj *metadata,
                             const char *namespaces  );
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectObj *ext);
@@ -268,26 +265,26 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectO
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                          mapObj *map, int bCheckLocalCache);
 
-void msOWSProcessException(layerObj *lp, const char *pszFname, 
+void msOWSProcessException(layerObj *lp, const char *pszFname,
                            int nErrorCode, const char *pszFuncName);
-char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL, 
+char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
                             const char *pszExt);
 const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 
-void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension, 
-                           const char **pszDimUserValue, 
-                           const char **pszDimUnits, 
-                           const char **pszDimDefault, 
-                           const char **pszDimNearValue, 
-                           const char **pszDimUnitSymbol, 
+void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension,
+                           const char **pszDimUserValue,
+                           const char **pszDimUnits,
+                           const char **pszDimDefault,
+                           const char **pszDimNearValue,
+                           const char **pszDimUnitSymbol,
                            const char **pszDimMultiValue);
 
 int msOWSNegotiateUpdateSequence(const char *requested_updateSequence, const char *updatesequence);
 
-outputFormatObj *msOwsIsOutputFormatValid(mapObj *map, const char *format, hashTableObj *metadata, 
-                                          const char *namespaces, const char *name);
+outputFormatObj *msOwsIsOutputFormatValid(mapObj *map, const char *format, hashTableObj *metadata,
+    const char *namespaces, const char *name);
 #endif /* #if any wxs service enabled */
 
 /*====================================================================
@@ -306,13 +303,13 @@ typedef struct {
   char *name;     /* name of the item */
   char *alias;    /* is the item aliased for presentation? (NULL if not) */
   char *type;     /* raw type for this item (NULL for a "string") (TODO: should this be a lookup table instead?) */
-#ifndef __cplusplus 
+#ifndef __cplusplus
   char *template;  /* presentation string for this item, needs to be a complete XML tag */
 #else
   char *_template;  /* presentation string for this item, needs to be a complete XML tag */
 #endif
   int encode;     /* should the value be HTML encoded? Default is MS_TRUE */
-  int visible;    /* should this item be output, default is MS_FALSE */  
+  int visible;    /* should this item be output, default is MS_FALSE */
   int width;      /* field width, zero if unknown */
   int precision;  /* field precision (decimal places), zero if unknown or N/A */
 } gmlItemObj;
@@ -357,9 +354,9 @@ typedef struct {
 } gmlGroupListObj;
 
 typedef struct {
-    char *prefix;
-    char *uri;
-    char *schemalocation;
+  char *prefix;
+  char *uri;
+  char *schemalocation;
 } gmlNamespaceObj;
 
 typedef struct {
@@ -387,7 +384,7 @@ MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *names
 
 
 #ifdef USE_WFS_SVR
-MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeatures, char *wfs_namespace, 
+MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeatures, char *wfs_namespace,
                                      int outputformat);
 #endif
 
@@ -395,9 +392,9 @@ MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, 
 /*====================================================================
  *   mapwms.c
  *====================================================================*/
-int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, int force_wms_mode); 
+int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, int force_wms_mode);
 MS_DLL_EXPORT int msWMSLoadGetMapParams(mapObj *map, int nVersion,
-                                        char **names, char **values, int numentries, 
+                                        char **names, char **values, int numentries,
                                         char *wms_exception_format, const char *wms_request, owsRequestObj *ows_request);
 
 
@@ -417,12 +414,12 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                              wmsParamsObj *psLastWMSParams,
                              int nClickX, int nClickY, int nFeatureCount, const char *pszInfoFormat,
                              httpRequestObj *pasReqInfo, int *numRequests);
-int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
-                      int numRequests, mapObj *map, layerObj *lp, 
+int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
+                      int numRequests, mapObj *map, layerObj *lp,
                       imageObj *img);
 MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
-                             int nClickX, int nClickY, int nFeatureCount,
-                             const char *pszInfoFormat); 
+    int nClickX, int nClickY, int nFeatureCount,
+    const char *pszInfoFormat);
 int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
                              int nFeatureCount, const char *pszInfoFormat, int type);
 
@@ -434,23 +431,23 @@ int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClic
 #define OWS_DEFAULT_SCHEMA 0 /* basically a GML 2.1 schema */
 #define OWS_SFE_SCHEMA 1 /* GML for simple feature exchange (formerly GML3L0) */
 
-MS_DLL_EXPORT int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, 
+MS_DLL_EXPORT int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj,
                                 owsRequestObj *ows_request, int force_wfs_mode);
 int msWFSParseRequest(mapObj *map, cgiRequestObj *, owsRequestObj *ows_request,
                       wfsParamsObj *, int force_wfs_mode);
 wfsParamsObj *msWFSCreateParamsObj(void);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
 int msWFSIsLayerSupported(layerObj *lp);
-int msWFSException(mapObj *map, const char *locator, const char *code, 
+int msWFSException(mapObj *map, const char *locator, const char *code,
                    const char *version);
 
 #ifdef USE_WFS_SVR
 const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp);
 
-int msWFSException11(mapObj *map, const char *locator, 
+int msWFSException11(mapObj *map, const char *locator,
                      const char *exceptionCode, const char *version);
-int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams, 
-                           cgiRequestObj *req, owsRequestObj *ows_request); 
+int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams,
+                           cgiRequestObj *req, owsRequestObj *ows_request);
 char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer,const char*version);
 #endif
 
@@ -461,9 +458,9 @@ char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer,const char*version);
 int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                              httpRequestObj *pasReqInfo, int *numRequests);
 void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo);
-int msWFSLayerOpen(layerObj *lp, 
+int msWFSLayerOpen(layerObj *lp,
                    const char *pszGMLFilename, rectObj *defaultBBOX);
-int msWFSLayerIsOpen(layerObj *lp); 
+int msWFSLayerIsOpen(layerObj *lp);
 int msWFSLayerInitItemInfo(layerObj *layer);
 int msWFSLayerGetItems(layerObj *layer);
 int msWFSLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery);

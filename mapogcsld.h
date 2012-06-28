@@ -14,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in 
+ *
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  ****************************************************************************/
 
 #include "mapserver.h"
@@ -31,7 +31,7 @@
 MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer, const char *pszVersion);
 MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
                                    char *pszStyleLayerName, char **ppszLayerNames);
-MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
+MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                                 char *pszStyleLayerName, char **ppszLayerNames);
 
 #ifdef USE_OGR
@@ -49,22 +49,22 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer);
 int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                      mapObj *map, int iColorParam);
 int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
-                           mapObj *map);
+                          mapObj *map);
 
-int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,  
+int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                              int bNewClass);
 int msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                                 int bNewClass);
-int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer, 
+int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
                               int bNewClass);
 int msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
-                              int bOtherSymboliser);
+                             int bOtherSymboliser);
 int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
 
 int msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
                                   char *pszDashValue,
                                   styleObj *psStyle, mapObj *map, int bPointLayer);
-int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle, 
+int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle,
                               mapObj *map);
 
 int msSLDGetLineSymbol(mapObj *map);

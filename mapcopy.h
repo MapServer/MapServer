@@ -2,10 +2,10 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  Declarations related to copyng mapObjs.  Provided by Mladen Turk 
- *           for resolution of bug 701 
+ * Purpose:  Declarations related to copyng mapObjs.  Provided by Mladen Turk
+ *           for resolution of bug 701
  *           http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=701.
- * Author:   Mladen Turk (and Sean Gilles?) 
+ * Author:   Mladen Turk (and Sean Gilles?)
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
@@ -17,7 +17,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -35,7 +35,7 @@
 #define MS_COPYSTELEM(_name) (dst)->/**/_name = (src)->/**/_name
 
 #define MS_MACROBEGIN              do {
-#define MS_MACROEND                } while (0) 
+#define MS_MACROEND                } while (0)
 
 #define MS_COPYRECT(_dst, _src)       \
     MS_MACROBEGIN                     \

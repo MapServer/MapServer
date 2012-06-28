@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -188,45 +188,45 @@ static zend_class_entry *proj_class_entry_ptr;
 static int le_projobj;
 
 function_entry php_proj_functions[] = {
-    {"pj_fwd",  php_proj_pj_fwd,   NULL},
-    {"pj_inv",  php_proj_pj_inv,   NULL},
-    {"pj_init",  php_proj_pj_init,   NULL},
-    {"pj_transform",  php_proj_pj_transform,   NULL},
-    {"pj_datum_transform",  php_proj_pj_datum_transform,   NULL},
-    {"pj_free",  php_proj_pj_free,   NULL},
-    {NULL, NULL, NULL}
+  {"pj_fwd",  php_proj_pj_fwd,   NULL},
+  {"pj_inv",  php_proj_pj_inv,   NULL},
+  {"pj_init",  php_proj_pj_init,   NULL},
+  {"pj_transform",  php_proj_pj_transform,   NULL},
+  {"pj_datum_transform",  php_proj_pj_datum_transform,   NULL},
+  {"pj_free",  php_proj_pj_free,   NULL},
+  {NULL, NULL, NULL}
 };
 
 
 php3_module_entry php_proj_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
-    STANDARD_MODULE_HEADER,
+  STANDARD_MODULE_HEADER,
 #endif
-    "PHPPROJ", php_proj_functions, php_init_proj, php_end_proj,
-    NULL, NULL,
+  "PHPPROJ", php_proj_functions, php_init_proj, php_end_proj,
+  NULL, NULL,
 #ifdef ZEND_VERSION
-    PHP_MINFO(phpproj),
+  PHP_MINFO(phpproj),
 #else
-    php_info_proj,
+  php_info_proj,
 #endif
 #if ZEND_MODULE_API_NO >= 20010901
-    "phpproj, php4.1version",          /* extension version number (string) */
+  "phpproj, php4.1version",          /* extension version number (string) */
 #endif
-    STANDARD_MODULE_PROPERTIES
+  STANDARD_MODULE_PROPERTIES
 };
 
 
 #if COMPILE_DL
 DLEXPORT php3_module_entry *get_module(void)
 {
-    return &php_proj_module_entry;
+  return &php_proj_module_entry;
 }
 #endif
 
 
 function_entry php_proj_class_functions[] = {
-    {"ttt",             ttt,        NULL},
-    {NULL, NULL, NULL}
+  {"ttt",             ttt,        NULL},
+  {NULL, NULL, NULL}
 };
 
 DLEXPORT void ttt(INTERNAL_FUNCTION_PARAMETERS)
@@ -239,28 +239,28 @@ PHP_MINFO_FUNCTION(phpproj)
 DLEXPORT void php_info_proj(void)
 #endif
 {
-    php3_printf(" Version %s<br>\n", PHP_PROJ_VERSION);
+  php3_printf(" Version %s<br>\n", PHP_PROJ_VERSION);
 
-    php3_printf("<BR>\n");
+  php3_printf("<BR>\n");
 }
 
 DLEXPORT int php_init_proj(INIT_FUNC_ARGS)
 {
-    zend_class_entry tmp_class_entry;
+  zend_class_entry tmp_class_entry;
 
-    PHPMS_GLOBAL(le_projobj)  =
-        register_list_destructors(php_proj_pj_free,
-                                  NULL);
+  PHPMS_GLOBAL(le_projobj)  =
+    register_list_destructors(php_proj_pj_free,
+                              NULL);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "proj", php_proj_class_functions);
-    proj_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+  INIT_CLASS_ENTRY(tmp_class_entry, "proj", php_proj_class_functions);
+  proj_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    return SUCCESS;
+  return SUCCESS;
 }
 
 DLEXPORT int php_end_proj(SHUTDOWN_FUNC_ARGS)
 {
-    return SUCCESS;
+  return SUCCESS;
 }
 
 
@@ -269,7 +269,7 @@ DLEXPORT int php_end_proj(SHUTDOWN_FUNC_ARGS)
 #endif
 
 #if !defined RAD_TO_DEG
-#define RAD_TO_DEG	57.29577951308232
+#define RAD_TO_DEG  57.29577951308232
 #endif
 
 /**********************************************************************
@@ -278,17 +278,17 @@ DLEXPORT int php_end_proj(SHUTDOWN_FUNC_ARGS)
 static long _php_proj_build_proj_object(PJ *pj,
                                         HashTable *list, pval *return_value TSRMLS_DC)
 {
-    int pj_id;
+  int pj_id;
 
-    if (pj == NULL)
-        return 0;
+  if (pj == NULL)
+    return 0;
 
-    pj_id = php3_list_insert(pj, PHPMS_GLOBAL(le_projobj));
+  pj_id = php3_list_insert(pj, PHPMS_GLOBAL(le_projobj));
 
-    _phpms_object_init(return_value, pj_id, php_proj_class_functions,
-                       PHP4_CLASS_ENTRY(proj_class_entry_ptr) TSRMLS_CC);
+  _phpms_object_init(return_value, pj_id, php_proj_class_functions,
+                     PHP4_CLASS_ENTRY(proj_class_entry_ptr) TSRMLS_CC);
 
-    return pj_id;
+  return pj_id;
 }
 
 
@@ -316,54 +316,51 @@ static long _php_proj_build_proj_object(PJ *pj,
 /************************************************************************/
 DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval        *pArrayOfParams = NULL;
+  pval        *pArrayOfParams = NULL;
 
-    pval        **pParam = NULL;
-    HashTable   *list=NULL;
+  pval        **pParam = NULL;
+  HashTable   *list=NULL;
 
-    int         nParamCount = 0;
-    int         i = 0;
-    PJ          *pj = NULL;
+  int         nParamCount = 0;
+  int         i = 0;
+  PJ          *pj = NULL;
 
-    char        **papszBuf = NULL;
+  char        **papszBuf = NULL;
 
 //    char        *strttt = NULL;
 //    int         ttt;
 
-    //ttt = strlen(strttt);
-/* -------------------------------------------------------------------- */
-/*      extract parameters.                                             */
-/* -------------------------------------------------------------------- */
-    if (getParameters(ht, 1, &pArrayOfParams) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
+  //ttt = strlen(strttt);
+  /* -------------------------------------------------------------------- */
+  /*      extract parameters.                                             */
+  /* -------------------------------------------------------------------- */
+  if (getParameters(ht, 1, &pArrayOfParams) != SUCCESS) {
+    WRONG_PARAM_COUNT;
+  }
+
+  if (pArrayOfParams->type == IS_ARRAY)
+    nParamCount = _php3_hash_num_elements(pArrayOfParams->value.ht);
+  else
+    nParamCount = 0;
+
+  if (nParamCount <= 0)
+    RETURN_LONG(-1);
+
+  papszBuf = (char **) malloc((nParamCount+2)*sizeof(char *));
+
+  for (i = 0; i < nParamCount; i++) {
+    if (_php3_hash_index_find(pArrayOfParams->value.ht, i,
+                              (void **)&pParam) != FAILURE) {
+      convert_to_string((*pParam));
+      if ((*pParam)->value.str.val != NULL)
+        papszBuf[i] = strdup((*pParam)->value.str.val);
     }
+  }
+  papszBuf[i] = NULL;
 
-    if (pArrayOfParams->type == IS_ARRAY)
-        nParamCount = _php3_hash_num_elements(pArrayOfParams->value.ht);
-    else
-      nParamCount = 0;
+  pj = pj_init(nParamCount, papszBuf);
 
-    if (nParamCount <= 0)
-      RETURN_LONG(-1);
-
-    papszBuf = (char **) malloc((nParamCount+2)*sizeof(char *));
-
-    for (i = 0; i < nParamCount; i++)
-    {
-        if (_php3_hash_index_find(pArrayOfParams->value.ht, i,
-                                  (void **)&pParam) != FAILURE)
-        {
-            convert_to_string((*pParam));
-            if ((*pParam)->value.str.val != NULL)
-              papszBuf[i] = strdup((*pParam)->value.str.val);
-        }
-    }
-     papszBuf[i] = NULL;
-
-    pj = pj_init(nParamCount, papszBuf);
-
-    _php_proj_build_proj_object(pj, list, return_value TSRMLS_CC);
+  _php_proj_build_proj_object(pj, list, return_value TSRMLS_CC);
 }
 
 
@@ -389,45 +386,42 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 {
-    HashTable   *list=NULL;
-    pval        *p1, *p2;
-    pval        *pj = NULL;
-    PJ          *popj = NULL;
-    projUV      pnt;
-    projUV      pntReturn = {0,0};
+  HashTable   *list=NULL;
+  pval        *p1, *p2;
+  pval        *pj = NULL;
+  PJ          *popj = NULL;
+  projUV      pnt;
+  projUV      pntReturn = {0,0};
 
-/* -------------------------------------------------------------------- */
-/*      extract parameters.                                             */
-/* -------------------------------------------------------------------- */
-    if (getParameters(ht, 3, &p1, &p2, &pj) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
-    }
+  /* -------------------------------------------------------------------- */
+  /*      extract parameters.                                             */
+  /* -------------------------------------------------------------------- */
+  if (getParameters(ht, 3, &p1, &p2, &pj) != SUCCESS) {
+    WRONG_PARAM_COUNT;
+  }
 
-/* -------------------------------------------------------------------- */
-/*      initilize return array.                                         */
-/* -------------------------------------------------------------------- */
-    if (array_init(return_value) == FAILURE)
-    {
-        RETURN_FALSE;
-    }
+  /* -------------------------------------------------------------------- */
+  /*      initilize return array.                                         */
+  /* -------------------------------------------------------------------- */
+  if (array_init(return_value) == FAILURE) {
+    RETURN_FALSE;
+  }
 
-    convert_to_double(p1);
-    convert_to_double(p2);
+  convert_to_double(p1);
+  convert_to_double(p2);
 
-    popj = (PJ *)_phpms_fetch_handle(pj,
-                                     PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
+  popj = (PJ *)_phpms_fetch_handle(pj,
+                                   PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
-    if (popj)
-    {
-        pnt.u = p2->value.dval * DEG_TO_RAD;
-        pnt.v = p1->value.dval * DEG_TO_RAD;
+  if (popj) {
+    pnt.u = p2->value.dval * DEG_TO_RAD;
+    pnt.v = p1->value.dval * DEG_TO_RAD;
 
-        pntReturn = pj_fwd(pnt, popj);
-    }
+    pntReturn = pj_fwd(pnt, popj);
+  }
 
-    add_assoc_double(return_value, "u", pntReturn.u);
-    add_assoc_double(return_value, "v", pntReturn.v);
+  add_assoc_double(return_value, "u", pntReturn.u);
+  add_assoc_double(return_value, "v", pntReturn.v);
 }
 
 
@@ -457,46 +451,43 @@ DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 {
-    HashTable   *list=NULL;
-    pval        *p1, *p2;
-    pval        *pj = NULL;
-    PJ          *popj = NULL;
-    projUV      pnt;
-    projUV      pntReturn = {0,0};
-/* -------------------------------------------------------------------- */
-/*      extract parameters.                                             */
-/* -------------------------------------------------------------------- */
-    if (getParameters(ht, 3, &p1, &p2, &pj) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
-    }
+  HashTable   *list=NULL;
+  pval        *p1, *p2;
+  pval        *pj = NULL;
+  PJ          *popj = NULL;
+  projUV      pnt;
+  projUV      pntReturn = {0,0};
+  /* -------------------------------------------------------------------- */
+  /*      extract parameters.                                             */
+  /* -------------------------------------------------------------------- */
+  if (getParameters(ht, 3, &p1, &p2, &pj) != SUCCESS) {
+    WRONG_PARAM_COUNT;
+  }
 
-/* -------------------------------------------------------------------- */
-/*      initilize return array.                                         */
-/* -------------------------------------------------------------------- */
-    if (array_init(return_value) == FAILURE)
-    {
-        RETURN_FALSE;
-    }
+  /* -------------------------------------------------------------------- */
+  /*      initilize return array.                                         */
+  /* -------------------------------------------------------------------- */
+  if (array_init(return_value) == FAILURE) {
+    RETURN_FALSE;
+  }
 
-    convert_to_double(p1);
-    convert_to_double(p2);
+  convert_to_double(p1);
+  convert_to_double(p2);
 
-    popj = (PJ *)_phpms_fetch_handle(pj,
-                                     PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
+  popj = (PJ *)_phpms_fetch_handle(pj,
+                                   PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
-    if (popj)
-    {
-        pnt.u = p1->value.dval;
-        pnt.v = p2->value.dval;
+  if (popj) {
+    pnt.u = p1->value.dval;
+    pnt.v = p2->value.dval;
 
-        pntReturn = pj_inv(pnt, popj);
-        pntReturn.u *= RAD_TO_DEG;
-        pntReturn.v *= RAD_TO_DEG;
-    }
+    pntReturn = pj_inv(pnt, popj);
+    pntReturn.u *= RAD_TO_DEG;
+    pntReturn.v *= RAD_TO_DEG;
+  }
 
-    add_assoc_double(return_value, "u", pntReturn.v);
-    add_assoc_double(return_value, "v", pntReturn.u);
+  add_assoc_double(return_value, "u", pntReturn.v);
+  add_assoc_double(return_value, "v", pntReturn.u);
 }
 
 /************************************************************************/
@@ -515,71 +506,63 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
 {
-    HashTable   *list=NULL;
-    pval        *p1, *p2;
-    pval        *pjin, *pjout = NULL;
-    PJ          *in = NULL;
-    PJ          *out = NULL;
-    projUV      pnt = {0, 0};
-    double      z = 0;
-    int         error = -1;
-/* -------------------------------------------------------------------- */
-/*      extract parameters.                                             */
-/* -------------------------------------------------------------------- */
-    if (getParameters(ht, 4, &pjin , &pjout, &p1, &p2) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
+  HashTable   *list=NULL;
+  pval        *p1, *p2;
+  pval        *pjin, *pjout = NULL;
+  PJ          *in = NULL;
+  PJ          *out = NULL;
+  projUV      pnt = {0, 0};
+  double      z = 0;
+  int         error = -1;
+  /* -------------------------------------------------------------------- */
+  /*      extract parameters.                                             */
+  /* -------------------------------------------------------------------- */
+  if (getParameters(ht, 4, &pjin , &pjout, &p1, &p2) != SUCCESS) {
+    WRONG_PARAM_COUNT;
+  }
+
+  /* -------------------------------------------------------------------- */
+  /*      initilize return array.                                         */
+  /* -------------------------------------------------------------------- */
+  if (array_init(return_value) == FAILURE) {
+    RETURN_FALSE;
+  }
+
+  convert_to_double(p1);
+  convert_to_double(p2);
+
+  in = (PJ *)_phpms_fetch_handle(pjin,
+                                 PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
+
+  out = (PJ *)_phpms_fetch_handle(pjout,
+                                  PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
+
+  if (in && out) {
+    pnt.u = p1->value.dval;
+    pnt.v = p2->value.dval;
+
+    if( pj_is_latlong(in) ) {
+      pnt.u *= DEG_TO_RAD;
+      pnt.v *= DEG_TO_RAD;
     }
 
-/* -------------------------------------------------------------------- */
-/*      initilize return array.                                         */
-/* -------------------------------------------------------------------- */
-    if (array_init(return_value) == FAILURE)
-    {
-        RETURN_FALSE;
+    error = pj_transform(in, out, 1, 0,
+                         &(pnt.u), &(pnt.v), &z );
+
+    if( pj_is_latlong(out) ) {
+      pnt.u *= RAD_TO_DEG;
+      pnt.v *= RAD_TO_DEG;
     }
+  }
 
-    convert_to_double(p1);
-    convert_to_double(p2);
+  if (error) {
+    php_error(E_ERROR,"Error in pj_transform");
 
-    in = (PJ *)_phpms_fetch_handle(pjin,
-                                   PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
-
-    out = (PJ *)_phpms_fetch_handle(pjout,
-                                    PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
-
-    if (in && out)
-    {
-        pnt.u = p1->value.dval;
-        pnt.v = p2->value.dval;
-
-        if( pj_is_latlong(in) )
-        {
-            pnt.u *= DEG_TO_RAD;
-            pnt.v *= DEG_TO_RAD;
-        }
-
-        error = pj_transform(in, out, 1, 0,
-                             &(pnt.u), &(pnt.v), &z );
-
-        if( pj_is_latlong(out) )
-        {
-            pnt.u *= RAD_TO_DEG;
-            pnt.v *= RAD_TO_DEG;
-        }
-    }
-
-    if (error)
-    {
-        php_error(E_ERROR,"Error in pj_transform");
-
-        RETURN_LONG(-1);
-    }
-    else
-    {
-        add_assoc_double(return_value, "u", pnt.u);
-        add_assoc_double(return_value, "v", pnt.v);
-    }
+    RETURN_LONG(-1);
+  } else {
+    add_assoc_double(return_value, "u", pnt.u);
+    add_assoc_double(return_value, "v", pnt.v);
+  }
 }
 
 
@@ -601,74 +584,65 @@ DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
 {
-    HashTable   *list=NULL;
-    pval        *p1, *p2;
-    pval        *pjin, *pjout = NULL;
-    PJ          *in = NULL;
-    PJ          *out = NULL;
-    projUV      pnt = {0, 0};
-    double      z = 0;
-    int         error = -1;
-/* -------------------------------------------------------------------- */
-/*      extract parameters.                                             */
-/* -------------------------------------------------------------------- */
-    if (getParameters(ht, 4, &pjin , &pjout, &p1, &p2) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
+  HashTable   *list=NULL;
+  pval        *p1, *p2;
+  pval        *pjin, *pjout = NULL;
+  PJ          *in = NULL;
+  PJ          *out = NULL;
+  projUV      pnt = {0, 0};
+  double      z = 0;
+  int         error = -1;
+  /* -------------------------------------------------------------------- */
+  /*      extract parameters.                                             */
+  /* -------------------------------------------------------------------- */
+  if (getParameters(ht, 4, &pjin , &pjout, &p1, &p2) != SUCCESS) {
+    WRONG_PARAM_COUNT;
+  }
+
+  /* -------------------------------------------------------------------- */
+  /*      initilize return array.                                         */
+  /* -------------------------------------------------------------------- */
+  if (array_init(return_value) == FAILURE) {
+    RETURN_FALSE;
+  }
+
+  convert_to_double(p1);
+  convert_to_double(p2);
+
+  in = (PJ *)_phpms_fetch_handle(pjin,
+                                 PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
+
+  out = (PJ *)_phpms_fetch_handle(pjout,
+                                  PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
+
+  if (in && out) {
+    pnt.u = p1->value.dval;
+    pnt.v = p2->value.dval;
+
+    if( pj_is_latlong(in) ) {
+      pnt.u *= DEG_TO_RAD;
+      pnt.v *= DEG_TO_RAD;
     }
 
-/* -------------------------------------------------------------------- */
-/*      initilize return array.                                         */
-/* -------------------------------------------------------------------- */
-    if (array_init(return_value) == FAILURE)
-    {
-        RETURN_FALSE;
+    error = pj_transform(in, out, 1, 0,
+                         &(pnt.u), &(pnt.v), &z );
+
+    if (!error) {
+      if( pj_is_latlong(out) ) {
+        pnt.u *= RAD_TO_DEG;
+        pnt.v *= RAD_TO_DEG;
+      }
     }
+  }
 
-    convert_to_double(p1);
-    convert_to_double(p2);
+  if (error) {
+    php_error(E_ERROR,"Error in pj_datum_transform");
 
-    in = (PJ *)_phpms_fetch_handle(pjin,
-                                   PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
-
-    out = (PJ *)_phpms_fetch_handle(pjout,
-                                    PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
-
-    if (in && out)
-    {
-        pnt.u = p1->value.dval;
-        pnt.v = p2->value.dval;
-
-        if( pj_is_latlong(in) )
-        {
-            pnt.u *= DEG_TO_RAD;
-            pnt.v *= DEG_TO_RAD;
-        }
-
-        error = pj_transform(in, out, 1, 0,
-                             &(pnt.u), &(pnt.v), &z );
-
-        if (!error)
-        {
-            if( pj_is_latlong(out) )
-            {
-                pnt.u *= RAD_TO_DEG;
-                pnt.v *= RAD_TO_DEG;
-            }
-        }
-    }
-
-    if (error)
-    {
-        php_error(E_ERROR,"Error in pj_datum_transform");
-
-        RETURN_LONG(-1);
-    }
-    else
-    {
-        add_assoc_double(return_value, "u", pnt.u);
-        add_assoc_double(return_value, "v", pnt.v);
-    }
+    RETURN_LONG(-1);
+  } else {
+    add_assoc_double(return_value, "u", pnt.u);
+    add_assoc_double(return_value, "v", pnt.v);
+  }
 }
 
 /************************************************************************/
@@ -677,29 +651,27 @@ DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)
 {
 
-/* ==================================================================== */
-/*      TODO : freeing does not work properly on PHP4.                  */
-/* ==================================================================== */
+  /* ==================================================================== */
+  /*      TODO : freeing does not work properly on PHP4.                  */
+  /* ==================================================================== */
 #ifdef PHP4_BAD_FREEING
 
-    HashTable   *list=NULL;
-    pval        *pj = NULL;
-    PJ          *popj = NULL;
-/* -------------------------------------------------------------------- */
-/*      extract parameters.                                             */
-/* -------------------------------------------------------------------- */
-    if (getParameters(ht, 1, &pj) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
-    }
+  HashTable   *list=NULL;
+  pval        *pj = NULL;
+  PJ          *popj = NULL;
+  /* -------------------------------------------------------------------- */
+  /*      extract parameters.                                             */
+  /* -------------------------------------------------------------------- */
+  if (getParameters(ht, 1, &pj) != SUCCESS) {
+    WRONG_PARAM_COUNT;
+  }
 
-    popj = (PJ *)_phpms_fetch_handle(pj,
-                                     PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
+  popj = (PJ *)_phpms_fetch_handle(pj,
+                                   PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
-    if (popj)
-    {
-        pj_free(popj);
-    }
+  if (popj) {
+    pj_free(popj);
+  }
 #endif
 }
 

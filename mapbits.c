@@ -5,12 +5,12 @@
  * Purpose:  Implementation of bit array functions.
  * Author:   Steve Lime and the MapServer team.
  *
- * Notes: Derived from code placed in the public domain by Bob Stout, for more 
+ * Notes: Derived from code placed in the public domain by Bob Stout, for more
  * information see http://c.snippets.org/snip_lister.php?fname=bitarray.c.
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
- 
+
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -18,7 +18,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -36,8 +36,8 @@
 
 #include <limits.h>
 
-/* 
- * Hardcoded size of our bit array. 
+/*
+ * Hardcoded size of our bit array.
  * See function msGetNextBit for another hardcoded value.
  */
 
@@ -51,7 +51,7 @@ size_t msGetBitArraySize(int numbits)
 ms_bitarray msAllocBitArray(int numbits)
 {
   ms_bitarray array = calloc((numbits + MS_ARRAY_BIT - 1) / MS_ARRAY_BIT, MS_ARRAY_BIT);
-  
+
   return(array);
 }
 
@@ -68,7 +68,8 @@ int msGetBit(ms_bitarray array, int index)
 ** If hits end of bitmap without finding set bit, will return -1.
 **
 */
-int msGetNextBit(ms_bitarray array, int i, int size) { 
+int msGetNextBit(ms_bitarray array, int i, int size)
+{
 
   register ms_uint32 b;
 
@@ -80,36 +81,34 @@ int msGetNextBit(ms_bitarray array, int i, int size) {
       if( b & ( 1 << (i % MS_ARRAY_BIT)) ) {
         /* There is something at this bit! */
         return i;
-      }
-      else {
+      } else {
         i++;
       }
-    }
-    else {
+    } else {
       /* Nothing in this byte, move to start of next byte */
       i += MS_ARRAY_BIT - (i % MS_ARRAY_BIT);
     }
   }
-  
+
   /* Got to the last byte with no hits! */
   return -1;
 }
-  
+
 void msSetBit(ms_bitarray array, int index, int value)
 {
   array += index / MS_ARRAY_BIT;
   if (value)
     *array |= 1 << (index % MS_ARRAY_BIT);           /* set bit */
-  else    
+  else
     *array &= ~(1 << (index % MS_ARRAY_BIT));        /* clear bit */
 }
-  
+
 void msSetAllBits(ms_bitarray array, int numbits, int value)
 {
   if (value)
-      memset(array, 0xff, ((numbits + 7) / 8) ); /* set bit */
-  else    
-      memset(array, 0x0,  ((numbits + 7) / 8) ); /* clear bit */
+    memset(array, 0xff, ((numbits + 7) / 8) ); /* set bit */
+  else
+    memset(array, 0x0,  ((numbits + 7) / 8) ); /* clear bit */
 }
 
 void msFlipBit(ms_bitarray array, int index)

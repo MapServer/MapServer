@@ -7,11 +7,11 @@
  *
  ******************************************************************************
  * The PyFileIfaceObj_IOCtx API is
- * 
+ *
  * Copyright 1995 Richard Jones, Bureau of Meteorology Australia.
  * richard@bofh.asn.au
  *
- * Current maintainer is 
+ * Current maintainer is
  * Chris Gonnerman <chris.gonnerman@newcenturycomputers.net>
  * Please direct all questions and problems to me.
  *
@@ -32,7 +32,7 @@
  * distribution.  Neither the name of the Bureau of Meteorology
  * Australia nor the names of its contributors may be used to endorse
  * or promote products derived from this software without specific
- * prior written permission. 
+ * prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -67,9 +67,9 @@
 */
 
 struct PyFileIfaceObj_gdIOCtx {
-    gdIOCtx ctx;
-    PyObject *fileIfaceObj;
-    PyObject *strObj;
+  gdIOCtx ctx;
+  PyObject *fileIfaceObj;
+  PyObject *strObj;
 };
 
 struct PyFileIfaceObj_gdIOCtx * alloc_PyFileIfaceObj_IOCtx(PyObject *fileIfaceObj);

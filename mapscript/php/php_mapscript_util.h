@@ -15,19 +15,19 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in 
+ *
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
- 
+
 
 #ifndef PHP_MAPSCRIPT_UTIL_H
 #define PHP_MAPSCRIPT_UTIL_H
@@ -37,7 +37,7 @@
 #include "php_mapscript.h"
 
 #if ZEND_MODULE_API_NO < 20010901
-#define TSRMLS_D	void
+#define TSRMLS_D  void
 #define TSRMLS_DC
 #define TSRMLS_C
 #define TSRMLS_CC
@@ -46,32 +46,32 @@
 /* Add pseudo refcount macros for PHP version < 5.3 */
 #ifndef Z_REFCOUNT_PP
 
-#define Z_REFCOUNT_PP(ppz)				Z_REFCOUNT_P(*(ppz))
-#define Z_SET_REFCOUNT_PP(ppz, rc)		Z_SET_REFCOUNT_P(*(ppz), rc)
-#define Z_ADDREF_PP(ppz)				Z_ADDREF_P(*(ppz))
-#define Z_DELREF_PP(ppz)				Z_DELREF_P(*(ppz))
-#define Z_ISREF_PP(ppz)					Z_ISREF_P(*(ppz))
-#define Z_SET_ISREF_PP(ppz)				Z_SET_ISREF_P(*(ppz))
-#define Z_UNSET_ISREF_PP(ppz)			Z_UNSET_ISREF_P(*(ppz))
-#define Z_SET_ISREF_TO_PP(ppz, isref)	Z_SET_ISREF_TO_P(*(ppz), isref)
+#define Z_REFCOUNT_PP(ppz)        Z_REFCOUNT_P(*(ppz))
+#define Z_SET_REFCOUNT_PP(ppz, rc)    Z_SET_REFCOUNT_P(*(ppz), rc)
+#define Z_ADDREF_PP(ppz)        Z_ADDREF_P(*(ppz))
+#define Z_DELREF_PP(ppz)        Z_DELREF_P(*(ppz))
+#define Z_ISREF_PP(ppz)         Z_ISREF_P(*(ppz))
+#define Z_SET_ISREF_PP(ppz)       Z_SET_ISREF_P(*(ppz))
+#define Z_UNSET_ISREF_PP(ppz)     Z_UNSET_ISREF_P(*(ppz))
+#define Z_SET_ISREF_TO_PP(ppz, isref) Z_SET_ISREF_TO_P(*(ppz), isref)
 
-#define Z_REFCOUNT_P(pz)				zval_refcount_p(pz)
-#define Z_SET_REFCOUNT_P(pz, rc)		zval_set_refcount_p(pz, rc)
-#define Z_ADDREF_P(pz)					zval_addref_p(pz)
-#define Z_DELREF_P(pz)					zval_delref_p(pz)
-#define Z_ISREF_P(pz)					zval_isref_p(pz)
-#define Z_SET_ISREF_P(pz)				zval_set_isref_p(pz)
-#define Z_UNSET_ISREF_P(pz)				zval_unset_isref_p(pz)
-#define Z_SET_ISREF_TO_P(pz, isref)		zval_set_isref_to_p(pz, isref)
+#define Z_REFCOUNT_P(pz)        zval_refcount_p(pz)
+#define Z_SET_REFCOUNT_P(pz, rc)    zval_set_refcount_p(pz, rc)
+#define Z_ADDREF_P(pz)          zval_addref_p(pz)
+#define Z_DELREF_P(pz)          zval_delref_p(pz)
+#define Z_ISREF_P(pz)         zval_isref_p(pz)
+#define Z_SET_ISREF_P(pz)       zval_set_isref_p(pz)
+#define Z_UNSET_ISREF_P(pz)       zval_unset_isref_p(pz)
+#define Z_SET_ISREF_TO_P(pz, isref)   zval_set_isref_to_p(pz, isref)
 
-#define Z_REFCOUNT(z)					Z_REFCOUNT_P(&(z))
-#define Z_SET_REFCOUNT(z, rc)			Z_SET_REFCOUNT_P(&(z), rc)
-#define Z_ADDREF(z)						Z_ADDREF_P(&(z))
-#define Z_DELREF(z)						Z_DELREF_P(&(z))
-#define Z_ISREF(z)						Z_ISREF_P(&(z))
-#define Z_SET_ISREF(z)					Z_SET_ISREF_P(&(z))
-#define Z_UNSET_ISREF(z)				Z_UNSET_ISREF_P(&(z))
-#define Z_SET_ISREF_TO(z, isref)		Z_SET_ISREF_TO_P(&(z), isref)
+#define Z_REFCOUNT(z)         Z_REFCOUNT_P(&(z))
+#define Z_SET_REFCOUNT(z, rc)     Z_SET_REFCOUNT_P(&(z), rc)
+#define Z_ADDREF(z)           Z_ADDREF_P(&(z))
+#define Z_DELREF(z)           Z_DELREF_P(&(z))
+#define Z_ISREF(z)            Z_ISREF_P(&(z))
+#define Z_SET_ISREF(z)          Z_SET_ISREF_P(&(z))
+#define Z_UNSET_ISREF(z)        Z_UNSET_ISREF_P(&(z))
+#define Z_SET_ISREF_TO(z, isref)    Z_SET_ISREF_TO_P(&(z), isref)
 
 #if defined(__GNUC__)
 #define zend_always_inline inline __attribute__((always_inline))
@@ -81,36 +81,44 @@
 #define zend_always_inline inline
 #endif
 
-static zend_always_inline zend_uint zval_refcount_p(zval* pz) {
-	return pz->refcount;
+static zend_always_inline zend_uint zval_refcount_p(zval* pz)
+{
+  return pz->refcount;
 }
 
-static zend_always_inline zend_uint zval_set_refcount_p(zval* pz, zend_uint rc) {
-	return pz->refcount = rc;
+static zend_always_inline zend_uint zval_set_refcount_p(zval* pz, zend_uint rc)
+{
+  return pz->refcount = rc;
 }
 
-static zend_always_inline zend_uint zval_addref_p(zval* pz) {
-	return ++pz->refcount;
+static zend_always_inline zend_uint zval_addref_p(zval* pz)
+{
+  return ++pz->refcount;
 }
 
-static zend_always_inline zend_uint zval_delref_p(zval* pz) {
-	return --pz->refcount;
+static zend_always_inline zend_uint zval_delref_p(zval* pz)
+{
+  return --pz->refcount;
 }
 
-static zend_always_inline zend_bool zval_isref_p(zval* pz) {
-	return pz->is_ref;
+static zend_always_inline zend_bool zval_isref_p(zval* pz)
+{
+  return pz->is_ref;
 }
 
-static zend_always_inline zend_bool zval_set_isref_p(zval* pz) {
-	return pz->is_ref = 1;
+static zend_always_inline zend_bool zval_set_isref_p(zval* pz)
+{
+  return pz->is_ref = 1;
 }
 
-static zend_always_inline zend_bool zval_unset_isref_p(zval* pz) {
-	return pz->is_ref = 0;
+static zend_always_inline zend_bool zval_unset_isref_p(zval* pz)
+{
+  return pz->is_ref = 0;
 }
 
-static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isref) {
-	return pz->is_ref = isref;
+static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isref)
+{
+  return pz->is_ref = isref;
 }
 
 #endif
@@ -177,19 +185,19 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
     { \
         RETVAL_STRING( (value ? value:"") , 1);    \
     } \
-
+ 
 #define IF_GET_LONG(property_name, value)  \
     if (strcmp(property, property_name)==0) \
     { \
         RETVAL_LONG(value); \
     } \
-
+ 
 #define IF_GET_DOUBLE(property_name, value)  \
     if (strcmp(property, property_name)==0) \
     { \
         RETVAL_DOUBLE(value); \
     } \
-
+ 
 #define IF_GET_OBJECT(property_name, mapscript_ce, php_object_storage, internal_object) \
     if (strcmp(property, property_name)==0)  \
     {   \
@@ -198,7 +206,7 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
                                    &php_object_storage TSRMLS_CC); \
         }                                                               \
         RETURN_ZVAL(php_object_storage, 1, 0);                          \
-    } 
+    }
 
 #define CHECK_OBJECT(mapscript_ce, php_object_storage, internal_object) \
     if (!php_object_storage) {                                          \
@@ -214,28 +222,28 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
         if (internal) free(internal);    \
         if (Z_STRVAL_P(value))                        \
             internal = strdup(Z_STRVAL_P(value));     \
-    } 
+    }
 
 #define IF_SET_LONG(property_name, internal, value)        \
     if (strcmp(property, property_name)==0)                  \
     { \
         convert_to_long(value); \
         internal = Z_LVAL_P(value);             \
-    } 
+    }
 
 #define IF_SET_DOUBLE(property_name, internal, value)        \
     if (strcmp(property, property_name)==0)                  \
     { \
         convert_to_double(value); \
         internal = Z_DVAL_P(value);             \
-    } 
+    }
 
 #define IF_SET_BYTE(property_name, internal, value)        \
     if (strcmp(property, property_name)==0)                  \
     { \
         convert_to_long(value); \
         internal = (unsigned char)Z_LVAL_P(value);            \
-    } 
+    }
 
 #define IF_SET_COLOR(property_name, internal, value)        \
     if (strcmp(property, property_name)==0)                  \
@@ -247,7 +255,7 @@ static zend_always_inline zend_bool zval_set_isref_to_p(zval* pz, zend_bool isre
             return;   \
         }             \
         internal = Z_LVAL_P(value);             \
-    } 
+    }
 
 
 zend_object_value mapscript_object_new(zend_object *zobj,

@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  Scale object rendering. 
+ * Purpose:  Scale object rendering.
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -39,8 +39,8 @@
 /*
 ** Match this with with unit enumerations is mapserver.h
 */
-static char *unitText[9]={"in", "ft", "mi", "m", "km", "dd", "??", "??", "NM"}; /* MS_PIXEL and MS_PERCENTAGE not used */
-double inchesPerUnit[9]={1, 12, 63360.0, 39.3701, 39370.1, 4374754, 1, 1, 72913.3858 };
+static char *unitText[9]= {"in", "ft", "mi", "m", "km", "dd", "??", "??", "NM"}; /* MS_PIXEL and MS_PERCENTAGE not used */
+double inchesPerUnit[9]= {1, 12, 63360.0, 39.3701, 39370.1, 4374754, 1, 1, 72913.3858 };
 
 static double roundInterval(double d)
 {
@@ -83,28 +83,28 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
     msSetError(MS_MISCERR, "Invalid image extent, minx=%lf, miny=%lf, maxx=%lf, maxy=%lf.", "msCalculateScale()", extent.minx, extent.miny, extent.maxx, extent.maxy);
     return(MS_FAILURE);
   }
-  
+
   if((width <= 0) || (height <= 0)) {
     msSetError(MS_MISCERR, "Invalid image width or height.", "msCalculateScale()");
     return(MS_FAILURE);
   }
 
   switch (units) {
-  case(MS_DD):
-  case(MS_METERS):    
-  case(MS_KILOMETERS):
-  case(MS_MILES):
-  case(MS_NAUTICALMILES):
-  case(MS_INCHES):  
-  case(MS_FEET):
-    center_y = (extent.miny+extent.maxy)/2.0;
-    md = (width-1)/(resolution*msInchesPerUnit(units, center_y)); /* remember, we use a pixel-center to pixel-center extent, hence the width-1 */
-    gd = extent.maxx - extent.minx;
-    *scale = gd/md;
-    break;
-  default:
-    *scale = -1; /* this is not an error */
-    break;
+    case(MS_DD):
+    case(MS_METERS):
+    case(MS_KILOMETERS):
+    case(MS_MILES):
+    case(MS_NAUTICALMILES):
+    case(MS_INCHES):
+    case(MS_FEET):
+      center_y = (extent.miny+extent.maxy)/2.0;
+      md = (width-1)/(resolution*msInchesPerUnit(units, center_y)); /* remember, we use a pixel-center to pixel-center extent, hence the width-1 */
+      gd = extent.maxx - extent.minx;
+      *scale = gd/md;
+      break;
+    default:
+      *scale = -1; /* this is not an error */
+      break;
   }
 
   return(MS_SUCCESS);
@@ -115,31 +115,30 @@ double msInchesPerUnit(int units, double center_lat)
   double lat_adj = 1.0, ipu = 1.0;
 
   switch (units) {
-  case(MS_METERS):    
-  case(MS_KILOMETERS):
-  case(MS_MILES):
-  case(MS_NAUTICALMILES):
-  case(MS_INCHES):  
-  case(MS_FEET):
-    ipu = inchesPerUnit[units]; 
-    break;
-  case(MS_DD):
-    /* With geographical (DD) coordinates, we adjust the inchesPerUnit
-     * based on the latitude of the center of the view. For this we assume
-     * we have a perfect sphere and just use cos(lat) in our calculation.
-     */
+    case(MS_METERS):
+    case(MS_KILOMETERS):
+    case(MS_MILES):
+    case(MS_NAUTICALMILES):
+    case(MS_INCHES):
+    case(MS_FEET):
+      ipu = inchesPerUnit[units];
+      break;
+    case(MS_DD):
+      /* With geographical (DD) coordinates, we adjust the inchesPerUnit
+       * based on the latitude of the center of the view. For this we assume
+       * we have a perfect sphere and just use cos(lat) in our calculation.
+       */
 #ifdef ENABLE_VARIABLE_INCHES_PER_DEGREE
-    if (center_lat != 0.0)
-    {
+      if (center_lat != 0.0) {
         double cos_lat;
         cos_lat = cos(MS_PI*center_lat/180.0);
         lat_adj = sqrt(1+cos_lat*cos_lat)/sqrt(2.0);
-    }
+      }
 #endif
-    ipu = inchesPerUnit[units]*lat_adj;
-    break;
-  default:
-    break;
+      ipu = inchesPerUnit[units]*lat_adj;
+      break;
+    default:
+      break;
   }
 
   return ipu;
@@ -168,7 +167,7 @@ imageObj *msDrawScalebar(mapObj *map)
   rendererVTableObj *renderer;
 
   strokeStyle.patternlength=0;
-  
+
   if(map->units == -1) {
     msSetError(MS_MISCERR, "Map units not set.", "msDrawScalebar()");
     return(NULL);
@@ -176,33 +175,32 @@ imageObj *msDrawScalebar(mapObj *map)
 
   renderer = MS_MAP_RENDERER(map);
   if(!renderer || !MS_MAP_RENDERER(map)->supports_pixel_buffer) {
-	msSetError(MS_MISCERR, "Outputformat not supported for scalebar", "msDrawScalebar()");
-	return(NULL);
+    msSetError(MS_MISCERR, "Outputformat not supported for scalebar", "msDrawScalebar()");
+    return(NULL);
   }
-  
-/*
- *  A string containing the ten decimal digits is rendered to compute an average cell size 
- *  for each number, which is used later to place labels on the scalebar.
- */
-  
+
+  /*
+   *  A string containing the ten decimal digits is rendered to compute an average cell size
+   *  for each number, which is used later to place labels on the scalebar.
+   */
+
   if(msGetLabelSize(map,&map->scalebar.label,"0123456789",map->scalebar.label.size,&r,NULL) != MS_SUCCESS) {
-	  return NULL;
+    return NULL;
   }
   fontWidth = (r.maxx-r.minx)/10.0;
   fontHeight = r.maxy -r.miny;
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
-  if(status != MS_SUCCESS)
-  { 	
-	return(NULL);
+  if(status != MS_SUCCESS) {
+    return(NULL);
   }
   dsx = map->scalebar.width - 2*HMARGIN;
   do {
     msx = (map->cellsize * dsx)/(msInchesPerUnit(map->scalebar.units,0)/msInchesPerUnit(map->units,0));
     i = roundInterval(msx/map->scalebar.intervals);
     snprintf(label, sizeof(label), "%g", map->scalebar.intervals*i); /* last label */
-    isx = MS_NINT((i/(msInchesPerUnit(map->units,0)/msInchesPerUnit(map->scalebar.units,0)))/map->cellsize);  
+    isx = MS_NINT((i/(msInchesPerUnit(map->units,0)/msInchesPerUnit(map->scalebar.units,0)))/map->cellsize);
     sx = (map->scalebar.intervals*isx) + MS_NINT((1.5 + strlen(label)/2.0 + strlen(unitText[map->scalebar.units]))*fontWidth);
 
     if(sx <= (map->scalebar.width - 2*HMARGIN)) break; /* it will fit */
@@ -213,20 +211,20 @@ imageObj *msDrawScalebar(mapObj *map)
   sy = (2*VMARGIN) + MS_NINT(VSPACING*fontHeight) + fontHeight + map->scalebar.height - VSLOP;
 
   /*Ensure we have an image format representing the options for the scalebar.*/
-  msApplyOutputFormat( &format, map->outputformat, 
-                       map->scalebar.transparent, 
-                       map->scalebar.interlace, 
+  msApplyOutputFormat( &format, map->outputformat,
+                       map->scalebar.transparent,
+                       map->scalebar.interlace,
                        MS_NOOVERRIDE );
 
   if(map->scalebar.transparent == MS_OFF) {
-     if(!MS_VALID_COLOR(map->scalebar.imagecolor))
-        MS_INIT_COLOR(map->scalebar.imagecolor,255,255,255,255);
+    if(!MS_VALID_COLOR(map->scalebar.imagecolor))
+      MS_INIT_COLOR(map->scalebar.imagecolor,255,255,255,255);
   }
   image = msImageCreate(map->scalebar.width, sy, format,
-          map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->scalebar.imagecolor);
+                        map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->scalebar.imagecolor);
 
   /* drop this reference to output format */
-  msApplyOutputFormat( &format, NULL, 
+  msApplyOutputFormat( &format, NULL,
                        MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
 
   /* did we succeed in creating the image? */
@@ -234,106 +232,103 @@ imageObj *msDrawScalebar(mapObj *map)
     msSetError(MS_MISCERR, "Unable to initialize image.", "msDrawScalebar()");
     return NULL;
   }
-  
+
   switch(map->scalebar.align) {
-  case(MS_ALIGN_LEFT):
-    ox = HMARGIN;
-    break;
-  case(MS_ALIGN_RIGHT):
-    ox = MS_NINT((map->scalebar.width - sx) + fontWidth);
-    break;
-  default:
-    ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontWidth/2.0); /* center the computed scalebar */
+    case(MS_ALIGN_LEFT):
+      ox = HMARGIN;
+      break;
+    case(MS_ALIGN_RIGHT):
+      ox = MS_NINT((map->scalebar.width - sx) + fontWidth);
+      break;
+    default:
+      ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontWidth/2.0); /* center the computed scalebar */
   }
   oy = VMARGIN;
 
   switch(map->scalebar.style) {
-  case(0):
-		{
-	  
-	  line.numpoints = 5;
-	  line.point = points;
-	  shape.line = &line;
-	  shape.numlines = 1;
-	  if(MS_VALID_COLOR(map->scalebar.color)) {
-	     INIT_STROKE_STYLE(strokeStyle);
-	     strokeStyle.color = &map->scalebar.outlinecolor;
-	     strokeStyle.color->alpha = 255;
-	     strokeStyle.width = 1;
-	  }
-	  map->scalebar.backgroundcolor.alpha = 255;
-	  map->scalebar.color.alpha = 255;
-	  state = 1; /* 1 means filled */
-	  for(j=0; j<map->scalebar.intervals; j++) {
-		  points[0].x = points[4].x = points[3].x = ox + j*isx + 0.5;
-		  points[0].y = points[4].y = points[1].y = oy + 0.5;
-		  points[1].x = points[2].x = ox + (j+1)*isx + 0.5;
-		  points[2].y = points[3].y = oy + map->scalebar.height + 0.5;
-		  if(state == 1 && MS_VALID_COLOR(map->scalebar.color))
-			  renderer->renderPolygon(image,&shape,&map->scalebar.color);
-		  else 
-			  if(MS_VALID_COLOR(map->scalebar.backgroundcolor))
-				  renderer->renderPolygon(image,&shape,&map->scalebar.backgroundcolor);
+    case(0): {
 
-		  if(strokeStyle.color)
-			  renderer->renderLine(image,&shape,&strokeStyle);
+      line.numpoints = 5;
+      line.point = points;
+      shape.line = &line;
+      shape.numlines = 1;
+      if(MS_VALID_COLOR(map->scalebar.color)) {
+        INIT_STROKE_STYLE(strokeStyle);
+        strokeStyle.color = &map->scalebar.outlinecolor;
+        strokeStyle.color->alpha = 255;
+        strokeStyle.width = 1;
+      }
+      map->scalebar.backgroundcolor.alpha = 255;
+      map->scalebar.color.alpha = 255;
+      state = 1; /* 1 means filled */
+      for(j=0; j<map->scalebar.intervals; j++) {
+        points[0].x = points[4].x = points[3].x = ox + j*isx + 0.5;
+        points[0].y = points[4].y = points[1].y = oy + 0.5;
+        points[1].x = points[2].x = ox + (j+1)*isx + 0.5;
+        points[2].y = points[3].y = oy + map->scalebar.height + 0.5;
+        if(state == 1 && MS_VALID_COLOR(map->scalebar.color))
+          renderer->renderPolygon(image,&shape,&map->scalebar.color);
+        else if(MS_VALID_COLOR(map->scalebar.backgroundcolor))
+          renderer->renderPolygon(image,&shape,&map->scalebar.backgroundcolor);
 
-		  sprintf(label, "%g", j*i);
-		  map->scalebar.label.position = MS_CC;
-		  p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
-		  p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
-		  msDrawLabel(map,image,p,label,&map->scalebar.label,1.0);
-		  state = -state;
-	  }
-	  sprintf(label, "%g", j*i);
-	  ox = ox + j*isx - MS_NINT((strlen(label)*fontWidth)/2.0);
-	  sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
-	  map->scalebar.label.position = MS_CR;
-	  p.x = ox; /* + MS_NINT(fontPtr->w/2); */
-	  p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
-	  msDrawLabel(map,image,p,label,&map->scalebar.label,1.0);
+        if(strokeStyle.color)
+          renderer->renderLine(image,&shape,&strokeStyle);
 
-	  break;
-		}
-  case(1):
-		{
-	  line.numpoints = 2;
-	  line.point = points;
-	  shape.line = &line;
-	  shape.numlines = 1;
-	  if(MS_VALID_COLOR(map->scalebar.color)) {
+        sprintf(label, "%g", j*i);
+        map->scalebar.label.position = MS_CC;
+        p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
+        p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
+        msDrawLabel(map,image,p,label,&map->scalebar.label,1.0);
+        state = -state;
+      }
+      sprintf(label, "%g", j*i);
+      ox = ox + j*isx - MS_NINT((strlen(label)*fontWidth)/2.0);
+      sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
+      map->scalebar.label.position = MS_CR;
+      p.x = ox; /* + MS_NINT(fontPtr->w/2); */
+      p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
+      msDrawLabel(map,image,p,label,&map->scalebar.label,1.0);
+
+      break;
+    }
+    case(1): {
+      line.numpoints = 2;
+      line.point = points;
+      shape.line = &line;
+      shape.numlines = 1;
+      if(MS_VALID_COLOR(map->scalebar.color)) {
         strokeStyle.width = 1;
         strokeStyle.color = &map->scalebar.color;
-	  }
-	  
-	  points[0].y = points[1].y = oy;
-	  points[0].x = ox;
-	  points[1].x = ox + isx*map->scalebar.intervals;
-	  renderer->renderLine(image,&shape,&strokeStyle);
-	  
-	  points[0].y = oy;
-	  points[1].y = oy + map->scalebar.height;
-	  p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
-	  for(j=0; j<=map->scalebar.intervals; j++) {
-		  points[0].x = points[1].x = ox + j*isx;
-		  renderer->renderLine(image,&shape,&strokeStyle);
-		  
-		  sprintf(label, "%g", j*i);
-		  if(j!=map->scalebar.intervals) {
-			  map->scalebar.label.position = MS_CC;
-			  p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
-		  } else {
-			  sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
-			  map->scalebar.label.position = MS_CR;
-			  p.x = ox + j*isx - MS_NINT((strlen(label)*fontWidth)/2.0);
-		  }
-		  msDrawLabel(map,image,p,label,&map->scalebar.label,1.0);
-	  }
-	  break;
-		}
-  default:
-	  msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");
-	  return(NULL);
+      }
+
+      points[0].y = points[1].y = oy;
+      points[0].x = ox;
+      points[1].x = ox + isx*map->scalebar.intervals;
+      renderer->renderLine(image,&shape,&strokeStyle);
+
+      points[0].y = oy;
+      points[1].y = oy + map->scalebar.height;
+      p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
+      for(j=0; j<=map->scalebar.intervals; j++) {
+        points[0].x = points[1].x = ox + j*isx;
+        renderer->renderLine(image,&shape,&strokeStyle);
+
+        sprintf(label, "%g", j*i);
+        if(j!=map->scalebar.intervals) {
+          map->scalebar.label.position = MS_CC;
+          p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
+        } else {
+          sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
+          map->scalebar.label.position = MS_CR;
+          p.x = ox + j*isx - MS_NINT((strlen(label)*fontWidth)/2.0);
+        }
+        msDrawLabel(map,image,p,label,&map->scalebar.label,1.0);
+      }
+      break;
+    }
+    default:
+      msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");
+      return(NULL);
   }
   return(image);
 
@@ -346,72 +341,72 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
   imageObj *image = NULL;
   rendererVTableObj *renderer = MS_MAP_RENDERER(map);
   symbolObj *embededSymbol;
-  
+
   if( ! renderer ) {
-	  msSetError(MS_MISCERR,"unsupported outputformat","msEmbedScalebar()");
-	  return MS_FAILURE;
+    msSetError(MS_MISCERR,"unsupported outputformat","msEmbedScalebar()");
+    return MS_FAILURE;
   }
   index = msGetSymbolIndex(&(map->symbolset), "scalebar", MS_FALSE);
   if(index != -1)
-	  msRemoveSymbol(&(map->symbolset), index); /* remove cached symbol in case the function is called multiple
-											times with different zoom levels */
+    msRemoveSymbol(&(map->symbolset), index); /* remove cached symbol in case the function is called multiple
+                      times with different zoom levels */
 
   if((embededSymbol=msGrowSymbolSet(&map->symbolset)) == NULL)
     return MS_FAILURE;
   s = map->symbolset.numsymbols;
   map->symbolset.numsymbols++;
-  
+
   image = msDrawScalebar(map);
   if(!image) {
-	  return MS_FAILURE;
+    return MS_FAILURE;
   }
   embededSymbol->pixmap_buffer = calloc(1,sizeof(rasterBufferObj));
   MS_CHECK_ALLOC(embededSymbol->pixmap_buffer, sizeof(rasterBufferObj), MS_FAILURE);
 
   if(MS_SUCCESS != renderer->getRasterBufferCopy(image,embededSymbol->pixmap_buffer)) {
-	  return MS_FAILURE;
+    return MS_FAILURE;
   }
-  
+
   embededSymbol->type = MS_SYMBOL_PIXMAP; /* intialize a few things */
-  embededSymbol->name = msStrdup("scalebar");  
+  embededSymbol->name = msStrdup("scalebar");
   embededSymbol->sizex = embededSymbol->pixmap_buffer->width;
   embededSymbol->sizey = embededSymbol->pixmap_buffer->height;
   if(map->scalebar.transparent) {
-      embededSymbol->transparent = MS_TRUE;
-      embededSymbol->transparentcolor = 0;
+    embededSymbol->transparent = MS_TRUE;
+    embededSymbol->transparentcolor = 0;
   }
 
   switch(map->scalebar.position) {
-  case(MS_LL):
-    point.x = MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
-    point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
-    break;
-  case(MS_LR):
-    point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
-    point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
-    break;
-  case(MS_LC):
-    point.x = MS_NINT(map->width/2.0);
-    point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
-    break;
-  case(MS_UR):
-    point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
-    point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
-    break;
-  case(MS_UL):
-    point.x = MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
-    point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
-    break;
-  case(MS_UC):
-    point.x = MS_NINT(map->width/2.0);
-    point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
-    break;
+    case(MS_LL):
+      point.x = MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
+      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      break;
+    case(MS_LR):
+      point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
+      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      break;
+    case(MS_LC):
+      point.x = MS_NINT(map->width/2.0);
+      point.y = map->height - MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      break;
+    case(MS_UR):
+      point.x = map->width - MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
+      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      break;
+    case(MS_UL):
+      point.x = MS_NINT(embededSymbol->pixmap_buffer->width/2.0);
+      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      break;
+    case(MS_UC):
+      point.x = MS_NINT(map->width/2.0);
+      point.y = MS_NINT(embededSymbol->pixmap_buffer->height/2.0);
+      break;
   }
 
   l = msGetLayerIndex(map, "__embed__scalebar");
   if(l == -1) {
     if (msGrowMapLayers(map) == NULL)
-        return(-1);
+      return(-1);
     l = map->numlayers;
     map->numlayers++;
     if(initLayer((GET_LAYER(map, l)), map) == -1) return(-1);
@@ -419,22 +414,21 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
     GET_LAYER(map, l)->type = MS_LAYER_POINT;
 
     if (msGrowLayerClasses( GET_LAYER(map, l) ) == NULL)
-        return(-1);
+      return(-1);
 
     if(initClass(GET_LAYER(map, l)->class[0]) == -1) return(-1);
     GET_LAYER(map, l)->numclasses = 1; /* so we make sure to free it */
-    
+
     /* update the layer order list with the layer's index. */
     map->layerorder[l] = l;
   }
 
   GET_LAYER(map, l)->status = MS_ON;
-  if(map->scalebar.postlabelcache) /* add it directly to the image */ {
+  if(map->scalebar.postlabelcache) { /* add it directly to the image */
     if(msMaybeAllocateClassStyle(GET_LAYER(map, l)->class[0], 0)==MS_FAILURE) return MS_FAILURE;
     GET_LAYER(map, l)->class[0]->styles[0]->symbol = s;
     msDrawMarkerSymbol(&map->symbolset, img, &point, GET_LAYER(map, l)->class[0]->styles[0], 1.0);
-  }
-  else {
+  } else {
     if(!GET_LAYER(map, l)->class[0]->labels) {
       if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
       initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
@@ -479,31 +473,30 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
 /************************************************************************/
 double GetDeltaExtentsUsingScale(double scale, int units, double centerLat, int width, double resolution)
 {
-    double md = 0.0;
-    double dfDelta = -1.0;
+  double md = 0.0;
+  double dfDelta = -1.0;
 
-    if (scale <= 0 || width <=0)
-      return -1;
+  if (scale <= 0 || width <=0)
+    return -1;
 
-    switch (units) 
-    {
-      case(MS_DD):
-      case(MS_METERS):    
-      case(MS_KILOMETERS):
-      case(MS_MILES):
-      case(MS_NAUTICALMILES):
-      case(MS_INCHES):  
-      case(MS_FEET):
-        /* remember, we use a pixel-center to pixel-center extent, hence the width-1 */
-        md = (width-1)/(resolution*msInchesPerUnit(units,centerLat));
-        dfDelta = md * scale;
-        break;
-          
-      default:
-        break;
-    }
+  switch (units) {
+    case(MS_DD):
+    case(MS_METERS):
+    case(MS_KILOMETERS):
+    case(MS_MILES):
+    case(MS_NAUTICALMILES):
+    case(MS_INCHES):
+    case(MS_FEET):
+      /* remember, we use a pixel-center to pixel-center extent, hence the width-1 */
+      md = (width-1)/(resolution*msInchesPerUnit(units,centerLat));
+      dfDelta = md * scale;
+      break;
 
-    return dfDelta;
+    default:
+      break;
+  }
+
+  return dfDelta;
 }
 
 /************************************************************************/
@@ -516,33 +509,32 @@ double GetDeltaExtentsUsingScale(double scale, int units, double centerLat, int 
 /*      considered to be the Y origin.                                  */
 /*                                                                      */
 /************************************************************************/
-double Pix2Georef(int nPixPos, int nPixMin, int nPixMax, 
-                         double dfGeoMin, double dfGeoMax, int bULisYOrig)
+double Pix2Georef(int nPixPos, int nPixMin, int nPixMax,
+                  double dfGeoMin, double dfGeoMax, int bULisYOrig)
 {
-    double      dfWidthGeo = 0.0;
-    int         nWidthPix = 0;
-    double      dfPixToGeo = 0.0;
-    double      dfPosGeo = 0.0;
-    double      dfDeltaGeo = 0.0;
-    int         nDeltaPix = 0;
+  double      dfWidthGeo = 0.0;
+  int         nWidthPix = 0;
+  double      dfPixToGeo = 0.0;
+  double      dfPosGeo = 0.0;
+  double      dfDeltaGeo = 0.0;
+  int         nDeltaPix = 0;
 
-    dfWidthGeo = dfGeoMax - dfGeoMin;
-    nWidthPix = nPixMax - nPixMin;
-   
-    if (dfWidthGeo > 0.0 && nWidthPix > 0)
-    {
-        dfPixToGeo = dfWidthGeo / (double)nWidthPix;
+  dfWidthGeo = dfGeoMax - dfGeoMin;
+  nWidthPix = nPixMax - nPixMin;
 
-        if (!bULisYOrig)
-            nDeltaPix = nPixPos - nPixMin;
-        else
-            nDeltaPix = nPixMax - nPixPos;
-        
-        dfDeltaGeo = nDeltaPix * dfPixToGeo;
+  if (dfWidthGeo > 0.0 && nWidthPix > 0) {
+    dfPixToGeo = dfWidthGeo / (double)nWidthPix;
 
-        dfPosGeo = dfGeoMin + dfDeltaGeo;
-    }
-    return (dfPosGeo);
+    if (!bULisYOrig)
+      nDeltaPix = nPixPos - nPixMin;
+    else
+      nDeltaPix = nPixMax - nPixPos;
+
+    dfDeltaGeo = nDeltaPix * dfPixToGeo;
+
+    dfPosGeo = dfGeoMin + dfDeltaGeo;
+  }
+  return (dfPosGeo);
 }
 
 /* This function converts a pixel value in geo ref. The return value is in
@@ -550,14 +542,14 @@ double Pix2Georef(int nPixPos, int nPixMin, int nPixMax,
 
 double Pix2LayerGeoref(mapObj *map, layerObj *layer, int value)
 {
-    double cellsize = MS_MAX(MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width), 
-                             MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height));
-    
-    double resolutionFactor = map->resolution/map->defresolution;
-    double unitsFactor = 1;
-    
-    if (layer->sizeunits != MS_PIXELS)
-        unitsFactor = msInchesPerUnit(map->units,0)/msInchesPerUnit(layer->sizeunits,0);
-    
-    return value*cellsize*resolutionFactor*unitsFactor;
+  double cellsize = MS_MAX(MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width),
+                           MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height));
+
+  double resolutionFactor = map->resolution/map->defresolution;
+  double unitsFactor = 1;
+
+  if (layer->sizeunits != MS_PIXELS)
+    unitsFactor = msInchesPerUnit(map->units,0)/msInchesPerUnit(layer->sizeunits,0);
+
+  return value*cellsize*resolutionFactor*unitsFactor;
 }

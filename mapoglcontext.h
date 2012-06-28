@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -64,52 +64,59 @@ typedef GLXPbuffer OGL_PBUFFER;
 
 class OglRenderer;
 
-class OglContext {
+class OglContext
+{
 private:
-    static OglContext* current;
-    static bool initWindow();
-    static bool initSharingContext();
-    static ms_uint32 getTextureSize(GLuint dimension, ms_uint32 value);
-    static GLuint NextPowerOf2(GLuint in);
+  static OglContext* current;
+  static bool initWindow();
+  static bool initSharingContext();
+  static ms_uint32 getTextureSize(GLuint dimension, ms_uint32 value);
+  static GLuint NextPowerOf2(GLuint in);
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    static HDC window;
-    static HGLRC sharingContext;
-    HDC hPBufferDC;
-    HGLRC hPBufferRC;
+  static HDC window;
+  static HGLRC sharingContext;
+  HDC hPBufferDC;
+  HGLRC hPBufferRC;
 #else
-    static Display* window;
-    static GLXContext sharingContext;
-    static GLXFBConfig* configs;
-    GLXPbuffer pbuffer;
+  static Display* window;
+  static GLXContext sharingContext;
+  static GLXFBConfig* configs;
+  GLXPbuffer pbuffer;
 #endif
 
 public:
-    static ms_uint32 MAX_MULTISAMPLE_SAMPLES;
-    static ms_uint32 MAX_ANISOTROPY;
-    static ms_uint32 MAX_TEXTURE_SIZE;
-    static ms_uint32 MIN_TEXTURE_SIZE;
+  static ms_uint32 MAX_MULTISAMPLE_SAMPLES;
+  static ms_uint32 MAX_ANISOTROPY;
+  static ms_uint32 MAX_TEXTURE_SIZE;
+  static ms_uint32 MIN_TEXTURE_SIZE;
 
-    OglContext(ms_uint32 width, ms_uint32 height);
-    ~OglContext();
-    int getHeight() const { return height; }
-    int getWidth() const { return width; }
-    bool isValid() const { return valid; }
-    bool makeCurrent();
-    void bindPBufferToTexture();
+  OglContext(ms_uint32 width, ms_uint32 height);
+  ~OglContext();
+  int getHeight() const {
+    return height;
+  }
+  int getWidth() const {
+    return width;
+  }
+  bool isValid() const {
+    return valid;
+  }
+  bool makeCurrent();
+  void bindPBufferToTexture();
 private:
-    bool createPBuffer(ms_uint32 width, ms_uint32 height);
-    ms_uint32 width;
-    ms_uint32 height;
-    bool valid;
-    int windowPixelFormat;    
+  bool createPBuffer(ms_uint32 width, ms_uint32 height);
+  ms_uint32 width;
+  ms_uint32 height;
+  bool valid;
+  int windowPixelFormat;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
-    static PFNWGLCREATEPBUFFERARBPROC wglCreatePbufferARB;
-    static PFNWGLGETPBUFFERDCARBPROC wglGetPbufferDCARB;
-    static PFNWGLRELEASEPBUFFERDCARBPROC wglReleasePbufferDCARB;
-    static PFNWGLMAKECONTEXTCURRENTARBPROC wglMakeContextCurrentARB;
+  static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+  static PFNWGLCREATEPBUFFERARBPROC wglCreatePbufferARB;
+  static PFNWGLGETPBUFFERDCARBPROC wglGetPbufferDCARB;
+  static PFNWGLRELEASEPBUFFERDCARBPROC wglReleasePbufferDCARB;
+  static PFNWGLMAKECONTEXTCURRENTARBPROC wglMakeContextCurrentARB;
 #endif
 };
 

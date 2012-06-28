@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$ 
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  MapServer Tile Access API
@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -26,22 +26,22 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
- 
+
 #include "mapserver.h"
 #include "maptemplate.h"
 
 #ifdef USE_PROJ
 #define USE_TILE_API 1
-#endif 
+#endif
 
 #define SPHEREMERC_PROJ4 "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +units=m +k=1.0 +nadgrids=@null"
 #define SPHEREMERC_GROUND_SIZE (20037508.34*2)
 #define SPHEREMERC_IMAGE_SIZE 0x0100
 
 enum tileModes { TILE_GMAP, TILE_VE };
- 
-MS_DLL_EXPORT int msTileSetup(mapservObj *msObj); 
-MS_DLL_EXPORT int msTileSetExtent(mapservObj *msObj); 
+
+MS_DLL_EXPORT int msTileSetup(mapservObj *msObj);
+MS_DLL_EXPORT int msTileSetExtent(mapservObj *msObj);
 MS_DLL_EXPORT int msTileSetProjections(mapObj *map);
 MS_DLL_EXPORT imageObj* msTileDraw(mapservObj *msObj);
 

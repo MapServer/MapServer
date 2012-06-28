@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -42,8 +42,8 @@ int main(int argc, char *argv[])
   }
 
   if( argc < 3 ) {
-      fprintf(stdout,"Syntax: legend [mapfile] [output image]\n" );
-      exit(0);
+    fprintf(stdout,"Syntax: legend [mapfile] [output image]\n" );
+    exit(0);
   }
 
   map = msLoadMap(argv[1], NULL);
@@ -62,6 +62,6 @@ int main(int argc, char *argv[])
 
   msFreeImage(img);
   msFreeMap(map);
-  
+
   return(MS_TRUE);
 }

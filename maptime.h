@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -36,8 +36,8 @@
  */
 #if defined(_WIN32) && !defined(__CYGWIN__)
 struct mstimeval {
-    long    tv_sec;         /* seconds */
-    long    tv_usec;        /* and microseconds */
+  long    tv_sec;         /* seconds */
+  long    tv_usec;        /* and microseconds */
 };
 MS_DLL_EXPORT void msGettimeofday(struct mstimeval *t, void *__not_used_here__);
 #else
@@ -46,18 +46,17 @@ MS_DLL_EXPORT void msGettimeofday(struct mstimeval *t, void *__not_used_here__);
 #  define  msGettimeofday(t,u) gettimeofday(t,u)
 #endif
 
-typedef enum 
-{
-    TIME_RESOLUTION_UNDEFINED = -1,
-    TIME_RESOLUTION_MICROSECOND =0,
-    TIME_RESOLUTION_MILLISECOND =1,
-    TIME_RESOLUTION_SECOND =2,
-    TIME_RESOLUTION_MINUTE =3,
-    TIME_RESOLUTION_HOUR =4,
-    TIME_RESOLUTION_DAY =5,
-    TIME_RESOLUTION_MONTH =6,
-    TIME_RESOLUTION_YEAR =7
-}MS_TIME_RESOLUTION;
+typedef enum {
+  TIME_RESOLUTION_UNDEFINED = -1,
+  TIME_RESOLUTION_MICROSECOND =0,
+  TIME_RESOLUTION_MILLISECOND =1,
+  TIME_RESOLUTION_SECOND =2,
+  TIME_RESOLUTION_MINUTE =3,
+  TIME_RESOLUTION_HOUR =4,
+  TIME_RESOLUTION_DAY =5,
+  TIME_RESOLUTION_MONTH =6,
+  TIME_RESOLUTION_YEAR =7
+} MS_TIME_RESOLUTION;
 
 /* function prototypes */
 void msTimeInit(struct tm *time);

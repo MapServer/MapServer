@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -48,22 +48,22 @@ static int populateVirtualTable(layerVTableObj *vtable);
 ** helper functions below initialize and free that structure member which is used locally by layer
 ** specific functions.
 */
-int msLayerInitItemInfo(layerObj *layer) 
-{
-    if ( ! layer->vtable) {
-        int rv =  msInitializeVirtualTable(layer);
-        if (rv != MS_SUCCESS)
-            return rv;
-    }
-    return layer->vtable->LayerInitItemInfo(layer);
-}
-
-void msLayerFreeItemInfo(layerObj *layer) 
+int msLayerInitItemInfo(layerObj *layer)
 {
   if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS)
-          return;
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
+  }
+  return layer->vtable->LayerInitItemInfo(layer);
+}
+
+void msLayerFreeItemInfo(layerObj *layer)
+{
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return;
   }
   layer->vtable->LayerFreeItemInfo(layer);
 }
@@ -76,8 +76,8 @@ int msLayerOpen(layerObj *layer)
   /* RFC-69 clustering support */
   if (layer->cluster.region)
     return msClusterLayerOpen(layer);
-    
-  if(layer->features && layer->connectiontype != MS_GRATICULE ) 
+
+  if(layer->features && layer->connectiontype != MS_GRATICULE )
     layer->connectiontype = MS_INLINE;
 
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
@@ -87,9 +87,9 @@ int msLayerOpen(layerObj *layer)
     layer->connectiontype = MS_RASTER;
 
   if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS)
-          return rv;
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
   }
   return layer->vtable->LayerOpen(layer);
 }
@@ -100,9 +100,9 @@ int msLayerOpen(layerObj *layer)
 int msLayerIsOpen(layerObj *layer)
 {
   if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS)
-          return rv;
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
   }
   return layer->vtable->LayerIsOpen(layer);
 }
@@ -133,9 +133,9 @@ int msLayerSupportsCommonFilters(layerObj *layer)
 int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
   if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS)
-          return rv;
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
   }
   return layer->vtable->LayerWhichShapes(layer, rect, isQuery);
 }
@@ -146,15 +146,15 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 **
 ** Shapefiles: NULL shapes (shapes with attributes but NO vertices are skipped)
 */
-int msLayerNextShape(layerObj *layer, shapeObj *shape) 
+int msLayerNextShape(layerObj *layer, shapeObj *shape)
 {
   if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS)
-          return rv;
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
   }
 
-  /* At the end of switch case (default -> break; -> return MS_FAILURE), 
+  /* At the end of switch case (default -> break; -> return MS_FAILURE),
    * was following TODO ITEM:
    */
   /* TO DO! This is where dynamic joins will happen. Joined attributes will be */
@@ -202,7 +202,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 /*
 ** Closes resources used by a particular layer.
 */
-void msLayerClose(layerObj *layer) 
+void msLayerClose(layerObj *layer)
 {
   int i,j;
 
@@ -218,7 +218,7 @@ void msLayerClose(layerObj *layer)
   freeExpressionTokens(&(layer->filter));
   freeExpressionTokens(&(layer->cluster.group));
   freeExpressionTokens(&(layer->cluster.filter));
-  for(i=0; i<layer->numclasses; i++) {    
+  for(i=0; i<layer->numclasses; i++) {
     freeExpressionTokens(&(layer->class[i]->expression));
     freeExpressionTokens(&(layer->class[i]->text));
     for(j=0; j<layer->class[i]->numstyles; j++)
@@ -235,7 +235,7 @@ void msLayerClose(layerObj *layer)
 ** at this point. This function is used when processing query results to expose attributes to query
 ** templates. At that point all attributes are fair game.
 */
-int msLayerGetItems(layerObj *layer) 
+int msLayerGetItems(layerObj *layer)
 {
   const char *itemNames;
   /* clean up any previously allocated instances */
@@ -247,30 +247,28 @@ int msLayerGetItems(layerObj *layer)
   }
 
   if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS)
-          return rv;
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
   }
 
-  /* At the end of switch case (default -> break; -> return MS_FAILURE), 
+  /* At the end of switch case (default -> break; -> return MS_FAILURE),
    * was following TODO ITEM:
    */
   /* TO DO! Need to add any joined itemd on to the core layer items, one long list!  */
   itemNames = msLayerGetProcessingKey( layer, "ITEMS" );
-  if (itemNames)
-  {
+  if (itemNames) {
     layer->items = msStringSplit(itemNames, ',', &layer->numitems);
     /* populate the iteminfo array */
     return (msLayerInitItemInfo(layer));
-  }
-  else
+  } else
     return layer->vtable->LayerGetItems(layer);
 }
 
 /*
 ** Returns extent of spatial coverage for a layer.
 **
-** If layer->extent is set then this value is used, otherwise the 
+** If layer->extent is set then this value is used, otherwise the
 ** driver-specific implementation is called (this can be expensive).
 **
 ** If layer is not already opened then it is opened and closed (so this
@@ -278,35 +276,33 @@ int msLayerGetItems(layerObj *layer)
 **
 ** Returns MS_SUCCESS/MS_FAILURE.
 */
-int msLayerGetExtent(layerObj *layer, rectObj *extent) 
+int msLayerGetExtent(layerObj *layer, rectObj *extent)
 {
   int need_to_close = MS_FALSE, status = MS_SUCCESS;
 
-  if (MS_VALID_EXTENT(layer->extent))
-  {
-      *extent = layer->extent;
-      return MS_SUCCESS;
+  if (MS_VALID_EXTENT(layer->extent)) {
+    *extent = layer->extent;
+    return MS_SUCCESS;
   }
 
-  if (!msLayerIsOpen(layer))
-  {
-      if (msLayerOpen(layer) != MS_SUCCESS)
-          return MS_FAILURE;
-      need_to_close = MS_TRUE;
+  if (!msLayerIsOpen(layer)) {
+    if (msLayerOpen(layer) != MS_SUCCESS)
+      return MS_FAILURE;
+    need_to_close = MS_TRUE;
   }
 
   if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS) {
-        if (need_to_close)
-            msLayerClose(layer);
-            return rv;
-      }
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS) {
+      if (need_to_close)
+        msLayerClose(layer);
+      return rv;
+    }
   }
   status = layer->vtable->LayerGetExtent(layer, extent);
 
   if (need_to_close)
-      msLayerClose(layer);
+    msLayerClose(layer);
 
   return(status);
 }
@@ -318,7 +314,7 @@ int msLayerGetItemIndex(layerObj *layer, char *item)
   for(i=0; i<layer->numitems; i++) {
     if(strcasecmp(layer->items[i], item) == 0) return(i);
   }
-    
+
   return -1; /* item not found */
 }
 
@@ -372,62 +368,62 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
     node->next = NULL;
 
     switch(token) {
-    case MS_TOKEN_LITERAL_NUMBER:
-      node->token = token;
-      node->tokenval.dblval = msyynumber;
-      break;
-    case MS_TOKEN_LITERAL_STRING:
-      node->token = token;
-      node->tokenval.strval = msStrdup(msyystring_buffer);
-      break;
-    case MS_TOKEN_LITERAL_TIME:
-      node->token = token;
-      msTimeInit(&(node->tokenval.tmval));
-      if(msParseTime(msyystring_buffer, &(node->tokenval.tmval)) != MS_TRUE) {
-        msSetError(MS_PARSEERR, "Parsing time value failed.", "msTokenizeExpression()");
-        goto parse_error;
-      }
-      break;
-    case MS_TOKEN_BINDING_DOUBLE: /* we've encountered an attribute (binding) reference */
-    case MS_TOKEN_BINDING_INTEGER:
-    case MS_TOKEN_BINDING_STRING:
-    case MS_TOKEN_BINDING_TIME: 
-      node->token = token; /* binding type */
-      node->tokenval.bindval.item = msStrdup(msyystring_buffer);
-      if(list) node->tokenval.bindval.index = string2list(list, listsize, msyystring_buffer);
-      break;
-    case MS_TOKEN_BINDING_SHAPE:
-      node->token = token;
-      break;
-    case MS_TOKEN_FUNCTION_FROMTEXT: /* we want to process a shape from WKT once and not for every feature being evaluated */
-      if((token = msyylex()) != 40) { /* ( */
-        msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
-        goto parse_error;
-      }
+      case MS_TOKEN_LITERAL_NUMBER:
+        node->token = token;
+        node->tokenval.dblval = msyynumber;
+        break;
+      case MS_TOKEN_LITERAL_STRING:
+        node->token = token;
+        node->tokenval.strval = msStrdup(msyystring_buffer);
+        break;
+      case MS_TOKEN_LITERAL_TIME:
+        node->token = token;
+        msTimeInit(&(node->tokenval.tmval));
+        if(msParseTime(msyystring_buffer, &(node->tokenval.tmval)) != MS_TRUE) {
+          msSetError(MS_PARSEERR, "Parsing time value failed.", "msTokenizeExpression()");
+          goto parse_error;
+        }
+        break;
+      case MS_TOKEN_BINDING_DOUBLE: /* we've encountered an attribute (binding) reference */
+      case MS_TOKEN_BINDING_INTEGER:
+      case MS_TOKEN_BINDING_STRING:
+      case MS_TOKEN_BINDING_TIME:
+        node->token = token; /* binding type */
+        node->tokenval.bindval.item = msStrdup(msyystring_buffer);
+        if(list) node->tokenval.bindval.index = string2list(list, listsize, msyystring_buffer);
+        break;
+      case MS_TOKEN_BINDING_SHAPE:
+        node->token = token;
+        break;
+      case MS_TOKEN_FUNCTION_FROMTEXT: /* we want to process a shape from WKT once and not for every feature being evaluated */
+        if((token = msyylex()) != 40) { /* ( */
+          msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          goto parse_error;
+        }
 
-      if((token = msyylex()) != MS_TOKEN_LITERAL_STRING) {
-	msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
-        goto parse_error;
-      }
+        if((token = msyylex()) != MS_TOKEN_LITERAL_STRING) {
+          msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          goto parse_error;
+        }
 
-      node->token = MS_TOKEN_LITERAL_SHAPE;
-      node->tokenval.shpval = msShapeFromWKT(msyystring_buffer);
+        node->token = MS_TOKEN_LITERAL_SHAPE;
+        node->tokenval.shpval = msShapeFromWKT(msyystring_buffer);
 
-      if(!node->tokenval.shpval) {
-        msSetError(MS_PARSEERR, "Parsing fromText function failed, WKT processing failed.", "msTokenizeExpression()");
-        goto parse_error;
-      }
+        if(!node->tokenval.shpval) {
+          msSetError(MS_PARSEERR, "Parsing fromText function failed, WKT processing failed.", "msTokenizeExpression()");
+          goto parse_error;
+        }
 
-      /* todo: perhaps process optional args (e.g. projection) */
+        /* todo: perhaps process optional args (e.g. projection) */
 
-      if((token = msyylex()) != 41) { /* ) */
-        msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
-        goto parse_error;
-      }
-      break;
-    default:
-      node->token = token; /* for everything else */
-      break;
+        if((token = msyylex()) != 41) { /* ) */
+          msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          goto parse_error;
+        }
+        break;
+      default:
+        node->token = token; /* for everything else */
+        break;
     }
 
     /* add node to token list */
@@ -435,11 +431,11 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
       expression->tokens = node;
     } else {
       if(expression->tokens->tailifhead != NULL) /* this should never be NULL, but just in case */
-	expression->tokens->tailifhead->next = node; /* put the node at the end of the list */
+        expression->tokens->tailifhead->next = node; /* put the node at the end of the list */
     }
 
-    /* repoint the head of the list to the end  - our new element                                                                                                   
-       this causes a loop if we are at the head, be careful not to                                                                                                  
+    /* repoint the head of the list to the end  - our new element
+       this causes a loop if we are at the head, be careful not to
        walk in a loop */
     expression->tokens->tailifhead = node;
   }
@@ -449,9 +445,9 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
   msReleaseLock(TLOCK_PARSER);
   return MS_SUCCESS;
 
-  parse_error:
-    msReleaseLock(TLOCK_PARSER);
-    return MS_FAILURE;
+parse_error:
+  msReleaseLock(TLOCK_PARSER);
+  return MS_FAILURE;
 }
 
 /*
@@ -535,7 +531,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 
   /* always retrieve all items in some cases */
   if(layer->connectiontype == MS_INLINE || get_all == MS_TRUE ||
-     (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
+      (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
     msLayerGetItems(layer);
     if(nt > 0) /* need to realloc the array to accept the possible new items*/
       layer->items = (char **)msSmallRealloc(layer->items, sizeof(char *)*(layer->numitems + nt));
@@ -566,7 +562,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
         if(layer->class[i]->styles[j]->rangeitem) layer->class[i]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->rangeitem);
         for(k=0; k<MS_STYLE_BINDING_LENGTH; k++)
           if(layer->class[i]->styles[j]->bindings[k].item) layer->class[i]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->styles[j]->bindings[k].item);
-        if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) 
+        if(layer->class[i]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
           msTokenizeExpression(&(layer->class[i]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
       }
 
@@ -576,7 +572,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
           if(layer->class[i]->labels[l]->styles[j]->rangeitem) layer->class[i]->labels[l]->styles[j]->rangeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->styles[j]->rangeitem);
           for(k=0; k<MS_STYLE_BINDING_LENGTH; k++)
             if(layer->class[i]->labels[l]->styles[j]->bindings[k].item) layer->class[i]->labels[l]->styles[j]->bindings[k].index = string2list(layer->items, &(layer->numitems), layer->class[i]->labels[l]->styles[j]->bindings[k].item);
-          if(layer->class[i]->labels[l]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) 
+          if(layer->class[i]->labels[l]->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
             msTokenizeExpression(&(layer->class[i]->labels[l]->styles[j]->_geomtransform), layer->items, &(layer->numitems));
         }
         for(k=0; k<MS_LABEL_BINDING_LENGTH; k++)
@@ -669,17 +665,17 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 /*
 ** Fills a classObj with style info from the specified shape.  This is used
 ** with STYLEITEM AUTO when rendering shapes.
-** For optimal results, this should be called immediately after 
+** For optimal results, this should be called immediately after
 ** GetNextShape() or GetShape() so that the shape doesn't have to be read
 ** twice.
-** 
+**
 */
 int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
 {
   if ( ! layer->vtable) {
-      int rv =  msInitializeVirtualTable(layer);
-      if (rv != MS_SUCCESS)
-          return rv;
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
   }
   return layer->vtable->LayerGetAutoStyle(map, layer, c, shape);
 }
@@ -687,132 +683,120 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* sha
 /*
 ** Fills a classObj with style info from the specified attribute.  This is used
 ** with STYLEITEM "attribute" when rendering shapes.
-** 
+**
 */
 int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape)
 {
-    char* stylestring;
-    if (layer->styleitem && layer->styleitemindex >=0)
-    {
-        stylestring = shape->values[layer->styleitemindex];
-        /* try to find out the current style format */
-        if (strncasecmp(stylestring,"style",5) == 0)
-        {
-            resetClassStyle(c);
-            if (msMaybeAllocateClassStyle(c, 0))
-                return(MS_FAILURE);
+  char* stylestring;
+  if (layer->styleitem && layer->styleitemindex >=0) {
+    stylestring = shape->values[layer->styleitemindex];
+    /* try to find out the current style format */
+    if (strncasecmp(stylestring,"style",5) == 0) {
+      resetClassStyle(c);
+      if (msMaybeAllocateClassStyle(c, 0))
+        return(MS_FAILURE);
 
-            msUpdateStyleFromString(c->styles[0], stylestring, MS_FALSE);
-        }
-        else if (strncasecmp(stylestring,"class",5) == 0)
-        {
-            msUpdateClassFromString(c, stylestring, MS_FALSE);
-        }
-        else if (strncasecmp(stylestring,"pen",3) == 0 || strncasecmp(stylestring,"brush",5) == 0 ||
-            strncasecmp(stylestring,"symbol",6) == 0 || strncasecmp(stylestring,"label",5) == 0)
-        {
-            msOGRUpdateStyleFromString(map, layer, c, stylestring);
-        }
-
-        return MS_SUCCESS;
+      msUpdateStyleFromString(c->styles[0], stylestring, MS_FALSE);
+    } else if (strncasecmp(stylestring,"class",5) == 0) {
+      msUpdateClassFromString(c, stylestring, MS_FALSE);
+    } else if (strncasecmp(stylestring,"pen",3) == 0 || strncasecmp(stylestring,"brush",5) == 0 ||
+               strncasecmp(stylestring,"symbol",6) == 0 || strncasecmp(stylestring,"label",5) == 0) {
+      msOGRUpdateStyleFromString(map, layer, c, stylestring);
     }
-    return MS_FAILURE;
+
+    return MS_SUCCESS;
+  }
+  return MS_FAILURE;
 }
 
 
 /*
 Returns the number of inline feature of a layer
 */
-int msLayerGetNumFeatures(layerObj *layer) 
+int msLayerGetNumFeatures(layerObj *layer)
 {
-    if ( ! layer->vtable) {
-        int rv =  msInitializeVirtualTable(layer);
-        if (rv != MS_SUCCESS)
-            return rv;
-    }
-    return layer->vtable->LayerGetNumFeatures(layer);
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return rv;
+  }
+  return layer->vtable->LayerGetNumFeatures(layer);
 }
 
-void 
+void
 msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value)
 
 {
-    int len = strlen(key);
-    int i;
-    char *directive = NULL;
+  int len = strlen(key);
+  int i;
+  char *directive = NULL;
 
-    if( value != NULL )
-    {
-        directive = (char *) msSmallMalloc(strlen(key)+strlen(value)+2);
-        sprintf( directive, "%s=%s", key, value );
+  if( value != NULL ) {
+    directive = (char *) msSmallMalloc(strlen(key)+strlen(value)+2);
+    sprintf( directive, "%s=%s", key, value );
+  }
+
+  for( i = 0; i < layer->numprocessing; i++ ) {
+    if( strncasecmp( key, layer->processing[i], len ) == 0
+        && layer->processing[i][len] == '=' ) {
+      free( layer->processing[i] );
+
+      /*
+      ** Either replace the existing entry with a new one or
+      ** clear the entry.
+      */
+      if( directive != NULL )
+        layer->processing[i] = directive;
+      else {
+        layer->processing[i] = layer->processing[layer->numprocessing-1];
+        layer->processing[layer->numprocessing-1] = NULL;
+        layer->numprocessing--;
+      }
+      return;
     }
+  }
 
-    for( i = 0; i < layer->numprocessing; i++ )
-    {
-        if( strncasecmp( key, layer->processing[i], len ) == 0 
-            && layer->processing[i][len] == '=' )
-        {
-            free( layer->processing[i] );
+  /* otherwise add the directive at the end. */
 
-            /* 
-            ** Either replace the existing entry with a new one or
-            ** clear the entry.
-            */
-            if( directive != NULL )
-                layer->processing[i] = directive;
-            else
-            {
-                layer->processing[i] = layer->processing[layer->numprocessing-1];
-                layer->processing[layer->numprocessing-1] = NULL;
-                layer->numprocessing--;
-            }
-            return;
-        }
-    }
-
-    /* otherwise add the directive at the end. */
-
-    if( directive != NULL )
-    {
-        msLayerAddProcessing( layer, directive );
-        free( directive );
-    }
+  if( directive != NULL ) {
+    msLayerAddProcessing( layer, directive );
+    free( directive );
+  }
 }
 
 void msLayerAddProcessing( layerObj *layer, const char *directive )
 
 {
-    layer->numprocessing++;
-    if( layer->numprocessing == 1 )
-        layer->processing = (char **) msSmallMalloc(2*sizeof(char *));
-    else
-        layer->processing = (char **) msSmallRealloc(layer->processing, sizeof(char*) * (layer->numprocessing+1) );
-    layer->processing[layer->numprocessing-1] = msStrdup(directive);
-    layer->processing[layer->numprocessing] = NULL;
+  layer->numprocessing++;
+  if( layer->numprocessing == 1 )
+    layer->processing = (char **) msSmallMalloc(2*sizeof(char *));
+  else
+    layer->processing = (char **) msSmallRealloc(layer->processing, sizeof(char*) * (layer->numprocessing+1) );
+  layer->processing[layer->numprocessing-1] = msStrdup(directive);
+  layer->processing[layer->numprocessing] = NULL;
 }
 
-char *msLayerGetProcessing( layerObj *layer, int proc_index) {
-    if (proc_index < 0 || proc_index >= layer->numprocessing) {
-        msSetError(MS_CHILDERR, "Invalid processing index.", "msLayerGetProcessing()");
-        return NULL;
-    }
-    else {
-        return layer->processing[proc_index];
-    }
-}
-
-char *msLayerGetProcessingKey( layerObj *layer, const char *key ) 
+char *msLayerGetProcessing( layerObj *layer, int proc_index)
 {
-    int i, len = strlen(key);
-
-    for( i = 0; i < layer->numprocessing; i++ )
-    {
-        if( strncasecmp(layer->processing[i],key,len) == 0 
-            && layer->processing[i][len] == '=' )
-            return layer->processing[i] + len + 1;
-    }
-    
+  if (proc_index < 0 || proc_index >= layer->numprocessing) {
+    msSetError(MS_CHILDERR, "Invalid processing index.", "msLayerGetProcessing()");
     return NULL;
+  } else {
+    return layer->processing[proc_index];
+  }
+}
+
+char *msLayerGetProcessingKey( layerObj *layer, const char *key )
+{
+  int i, len = strlen(key);
+
+  for( i = 0; i < layer->numprocessing; i++ ) {
+    if( strncasecmp(layer->processing[i],key,len) == 0
+        && layer->processing[i][len] == '=' )
+      return layer->processing[i] + len + 1;
+  }
+
+  return NULL;
 }
 
 
@@ -825,310 +809,291 @@ char *msLayerGetProcessingKey( layerObj *layer, const char *key )
 /************************************************************************/
 int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format)
 {
-    int nMaxFeatures = -1;
-    const char *pszTmp = NULL;
-    if (layer && format)
-    {
-        pszTmp = msLookupHashTable(&layer->metadata, "maxfeaturestodraw");
-        if (pszTmp)
-          nMaxFeatures = atoi(pszTmp);
-        else
-        {
-            pszTmp = msLookupHashTable(&layer->map->web.metadata, "maxfeaturestodraw");
-            if (pszTmp)
-              nMaxFeatures = atoi(pszTmp);
-        }
-        if (nMaxFeatures < 0)
-          nMaxFeatures = atoi(msGetOutputFormatOption( format, "maxfeaturestodraw", "-1"));
-     }
-    
-    return nMaxFeatures;
-
-}
-int msLayerClearProcessing( layerObj *layer ) {
-    if (layer->numprocessing > 0) {
-        msFreeCharArray( layer->processing, layer->numprocessing );
-        layer->processing = NULL;
-        layer->numprocessing = 0;
+  int nMaxFeatures = -1;
+  const char *pszTmp = NULL;
+  if (layer && format) {
+    pszTmp = msLookupHashTable(&layer->metadata, "maxfeaturestodraw");
+    if (pszTmp)
+      nMaxFeatures = atoi(pszTmp);
+    else {
+      pszTmp = msLookupHashTable(&layer->map->web.metadata, "maxfeaturestodraw");
+      if (pszTmp)
+        nMaxFeatures = atoi(pszTmp);
     }
-    return layer->numprocessing;
+    if (nMaxFeatures < 0)
+      nMaxFeatures = atoi(msGetOutputFormatOption( format, "maxfeaturestodraw", "-1"));
+  }
+
+  return nMaxFeatures;
+
+}
+int msLayerClearProcessing( layerObj *layer )
+{
+  if (layer->numprocessing > 0) {
+    msFreeCharArray( layer->processing, layer->numprocessing );
+    layer->processing = NULL;
+    layer->numprocessing = 0;
+  }
+  return layer->numprocessing;
 }
 
 
-int 
-makeTimeFilter(layerObj *lp, 
-               const char *timestring, 
+int
+makeTimeFilter(layerObj *lp,
+               const char *timestring,
                const char *timefield,
                const int addtimebacktics)
 {
-  
-    char **atimes, **tokens = NULL;
-    int numtimes,i, ntmp = 0;
-    char *pszBuffer = NULL;
-    int bOnlyExistingFilter = 0;
 
-    if (!lp || !timestring || !timefield)
-      return MS_FALSE;
+  char **atimes, **tokens = NULL;
+  int numtimes,i, ntmp = 0;
+  char *pszBuffer = NULL;
+  int bOnlyExistingFilter = 0;
 
-    /* parse the time string. We support dicrete times (eg 2004-09-21),  */
-    /* multiple times (2004-09-21, 2004-09-22, ...) */
-    /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
+  if (!lp || !timestring || !timefield)
+    return MS_FALSE;
 
-    if (strstr(timestring, ",") == NULL && 
-        strstr(timestring, "/") == NULL) /* discrete time */
-    {   
-        /*
-        if(lp->filteritem) free(lp->filteritem);
-        lp->filteritem = msStrdup(timefield);
-        if (&lp->filter)
-          freeExpression(&lp->filter);
-        */
+  /* parse the time string. We support dicrete times (eg 2004-09-21),  */
+  /* multiple times (2004-09-21, 2004-09-22, ...) */
+  /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
 
-        if (&lp->filter)
-        {
-            /* if the filter is set and it's a sting type, concatenate it with
-               the time. If not just free it */
-            if (lp->filter.type == MS_EXPRESSION)
-            {
-                pszBuffer = msStringConcatenate(pszBuffer, "((");
-                pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
-                pszBuffer = msStringConcatenate(pszBuffer, ") and ");
-            }
-            else
-            {
-                freeExpression(&lp->filter);
-            }
+  if (strstr(timestring, ",") == NULL &&
+      strstr(timestring, "/") == NULL) { /* discrete time */
+    /*
+    if(lp->filteritem) free(lp->filteritem);
+    lp->filteritem = msStrdup(timefield);
+    if (&lp->filter)
+      freeExpression(&lp->filter);
+    */
+
+    if (&lp->filter) {
+      /* if the filter is set and it's a sting type, concatenate it with
+         the time. If not just free it */
+      if (lp->filter.type == MS_EXPRESSION) {
+        pszBuffer = msStringConcatenate(pszBuffer, "((");
+        pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+        pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+      } else {
+        freeExpression(&lp->filter);
+      }
+    }
+
+    pszBuffer = msStringConcatenate(pszBuffer, "(");
+    if (addtimebacktics)
+      pszBuffer = msStringConcatenate(pszBuffer,  "`");
+
+    if (addtimebacktics)
+      pszBuffer = msStringConcatenate(pszBuffer, "[");
+    pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
+    if (addtimebacktics)
+      pszBuffer = msStringConcatenate(pszBuffer, "]");
+    if (addtimebacktics)
+      pszBuffer = msStringConcatenate(pszBuffer,  "`");
+
+
+    pszBuffer = msStringConcatenate(pszBuffer, " = ");
+    if (addtimebacktics)
+      pszBuffer = msStringConcatenate(pszBuffer,  "`");
+    else
+      pszBuffer = msStringConcatenate(pszBuffer,  "'");
+
+    pszBuffer = msStringConcatenate(pszBuffer, (char *)timestring);
+    if (addtimebacktics)
+      pszBuffer = msStringConcatenate(pszBuffer,  "`");
+    else
+      pszBuffer = msStringConcatenate(pszBuffer,  "'");
+
+    pszBuffer = msStringConcatenate(pszBuffer, ")");
+
+    /* if there was a filter, It was concatenate with an And ans should be closed*/
+    if(&lp->filter && lp->filter.type == MS_EXPRESSION) {
+      pszBuffer = msStringConcatenate(pszBuffer, ")");
+    }
+
+    loadExpressionString(&lp->filter, pszBuffer);
+
+    if (pszBuffer)
+      msFree(pszBuffer);
+
+    return MS_TRUE;
+  }
+
+  atimes = msStringSplit(timestring, ',', &numtimes);
+  if (atimes == NULL || numtimes < 1)
+    return MS_FALSE;
+
+  if (numtimes >= 1) {
+    if (&lp->filter && lp->filter.type == MS_EXPRESSION) {
+      pszBuffer = msStringConcatenate(pszBuffer, "((");
+      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+      pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+      /*this flag is used to indicate that the buffer contains only the
+        existing filter. It is set to 0 when time filter parts are
+        added to the buffer */
+      bOnlyExistingFilter = 1;
+    } else
+      freeExpression(&lp->filter);
+
+    /* check to see if we have ranges by parsing the first entry */
+    tokens = msStringSplit(atimes[0],  '/', &ntmp);
+    if (ntmp == 2) { /* ranges */
+      msFreeCharArray(tokens, ntmp);
+      for (i=0; i<numtimes; i++) {
+        tokens = msStringSplit(atimes[i],  '/', &ntmp);
+        if (ntmp == 2) {
+          if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
+            pszBuffer = msStringConcatenate(pszBuffer, " OR ");
+          else
+            pszBuffer = msStringConcatenate(pszBuffer, "(");
+
+          bOnlyExistingFilter = 0;
+
+          pszBuffer = msStringConcatenate(pszBuffer, "(");
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer,  "`");
+
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer, "[");
+          pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer, "]");
+
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer,  "`");
+
+          pszBuffer = msStringConcatenate(pszBuffer, " >= ");
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer,  "`");
+          else
+            pszBuffer = msStringConcatenate(pszBuffer,  "'");
+
+          pszBuffer = msStringConcatenate(pszBuffer, tokens[0]);
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer,  "`");
+          else
+            pszBuffer = msStringConcatenate(pszBuffer,  "'");
+          pszBuffer = msStringConcatenate(pszBuffer, " AND ");
+
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer,  "`");
+
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer, "[");
+          pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer, "]");
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer,  "`");
+
+          pszBuffer = msStringConcatenate(pszBuffer, " <= ");
+
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer,  "`");
+          else
+            pszBuffer = msStringConcatenate(pszBuffer,  "'");
+          pszBuffer = msStringConcatenate(pszBuffer, tokens[1]);
+          if (addtimebacktics)
+            pszBuffer = msStringConcatenate(pszBuffer,  "`");
+          else
+            pszBuffer = msStringConcatenate(pszBuffer,  "'");
+          pszBuffer = msStringConcatenate(pszBuffer, ")");
         }
-        
+
+        msFreeCharArray(tokens, ntmp);
+      }
+      if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
+        pszBuffer = msStringConcatenate(pszBuffer, ")");
+    } else if (ntmp == 1) { /* multiple times */
+      msFreeCharArray(tokens, ntmp);
+      pszBuffer = msStringConcatenate(pszBuffer, "(");
+      for (i=0; i<numtimes; i++) {
+        if (i > 0)
+          pszBuffer = msStringConcatenate(pszBuffer, " OR ");
+
         pszBuffer = msStringConcatenate(pszBuffer, "(");
         if (addtimebacktics)
-          pszBuffer = msStringConcatenate(pszBuffer,  "`");
+          pszBuffer = msStringConcatenate(pszBuffer, "`");
 
         if (addtimebacktics)
-           pszBuffer = msStringConcatenate(pszBuffer, "[");
+          pszBuffer = msStringConcatenate(pszBuffer, "[");
         pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
         if (addtimebacktics)
           pszBuffer = msStringConcatenate(pszBuffer, "]");
-        if (addtimebacktics)
-          pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
-         
+        if (addtimebacktics)
+          pszBuffer = msStringConcatenate(pszBuffer, "`");
+
         pszBuffer = msStringConcatenate(pszBuffer, " = ");
+
+        if (addtimebacktics)
+          pszBuffer = msStringConcatenate(pszBuffer, "`");
+        else
+          pszBuffer = msStringConcatenate(pszBuffer,  "'");
+        pszBuffer = msStringConcatenate(pszBuffer, atimes[i]);
         if (addtimebacktics)
           pszBuffer = msStringConcatenate(pszBuffer,  "`");
         else
           pszBuffer = msStringConcatenate(pszBuffer,  "'");
-
-        pszBuffer = msStringConcatenate(pszBuffer, (char *)timestring);
-        if (addtimebacktics)
-          pszBuffer = msStringConcatenate(pszBuffer,  "`");
-        else
-          pszBuffer = msStringConcatenate(pszBuffer,  "'");
-
         pszBuffer = msStringConcatenate(pszBuffer, ")");
-        
-        /* if there was a filter, It was concatenate with an And ans should be closed*/
-        if(&lp->filter && lp->filter.type == MS_EXPRESSION)
-        {
-            pszBuffer = msStringConcatenate(pszBuffer, ")");
-        }
-
-        loadExpressionString(&lp->filter, pszBuffer);
-
-        if (pszBuffer)
-          msFree(pszBuffer);
-
-        return MS_TRUE;
-    }
-    
-    atimes = msStringSplit(timestring, ',', &numtimes);
-    if (atimes == NULL || numtimes < 1)
+      }
+      pszBuffer = msStringConcatenate(pszBuffer, ")");
+    } else {
+      msFreeCharArray(atimes, numtimes);
       return MS_FALSE;
-
-    if (numtimes >= 1)
-    {
-        if (&lp->filter && lp->filter.type == MS_EXPRESSION)
-        {
-            pszBuffer = msStringConcatenate(pszBuffer, "((");
-            pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
-            pszBuffer = msStringConcatenate(pszBuffer, ") and ");
-            /*this flag is used to indicate that the buffer contains only the 
-              existing filter. It is set to 0 when time filter parts are
-              added to the buffer */
-            bOnlyExistingFilter = 1;
-        }
-        else
-          freeExpression(&lp->filter);
-
-        /* check to see if we have ranges by parsing the first entry */
-        tokens = msStringSplit(atimes[0],  '/', &ntmp);
-        if (ntmp == 2) /* ranges */
-        {
-            msFreeCharArray(tokens, ntmp);
-            for (i=0; i<numtimes; i++)
-            {
-                 tokens = msStringSplit(atimes[i],  '/', &ntmp);
-                 if (ntmp == 2)
-                 {
-                     if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
-                       pszBuffer = msStringConcatenate(pszBuffer, " OR ");
-                     else
-                       pszBuffer = msStringConcatenate(pszBuffer, "(");
-
-                     bOnlyExistingFilter = 0;
-
-                     pszBuffer = msStringConcatenate(pszBuffer, "(");
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
-
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer, "[");
-                     pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer, "]");
-                     
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
-
-                     pszBuffer = msStringConcatenate(pszBuffer, " >= ");
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
-                     else
-                       pszBuffer = msStringConcatenate(pszBuffer,  "'");
-
-                     pszBuffer = msStringConcatenate(pszBuffer, tokens[0]);
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
-                     else
-                       pszBuffer = msStringConcatenate(pszBuffer,  "'");
-                     pszBuffer = msStringConcatenate(pszBuffer, " AND ");
-
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
-
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer, "[");
-                     pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer, "]");
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
-
-                     pszBuffer = msStringConcatenate(pszBuffer, " <= ");
-                     
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
-                     else
-                       pszBuffer = msStringConcatenate(pszBuffer,  "'");
-                     pszBuffer = msStringConcatenate(pszBuffer, tokens[1]);
-                     if (addtimebacktics)
-                       pszBuffer = msStringConcatenate(pszBuffer,  "`");
-                     else
-                       pszBuffer = msStringConcatenate(pszBuffer,  "'");
-                     pszBuffer = msStringConcatenate(pszBuffer, ")");
-                 }
-                 
-                  msFreeCharArray(tokens, ntmp);
-            }
-            if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
-              pszBuffer = msStringConcatenate(pszBuffer, ")");
-        }
-        else if (ntmp == 1) /* multiple times */
-        {
-            msFreeCharArray(tokens, ntmp);
-            pszBuffer = msStringConcatenate(pszBuffer, "(");
-            for (i=0; i<numtimes; i++)
-            {
-                if (i > 0)
-                  pszBuffer = msStringConcatenate(pszBuffer, " OR ");
-
-                pszBuffer = msStringConcatenate(pszBuffer, "(");
-                if (addtimebacktics)
-                  pszBuffer = msStringConcatenate(pszBuffer, "`");
-                  
-                if (addtimebacktics)
-                  pszBuffer = msStringConcatenate(pszBuffer, "[");
-                pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
-                if (addtimebacktics)
-                  pszBuffer = msStringConcatenate(pszBuffer, "]");
-
-                if (addtimebacktics)
-                  pszBuffer = msStringConcatenate(pszBuffer, "`");
-
-                pszBuffer = msStringConcatenate(pszBuffer, " = ");
-                  
-                if (addtimebacktics)
-                  pszBuffer = msStringConcatenate(pszBuffer, "`");
-                else
-                  pszBuffer = msStringConcatenate(pszBuffer,  "'");
-                pszBuffer = msStringConcatenate(pszBuffer, atimes[i]);
-                if (addtimebacktics)
-                  pszBuffer = msStringConcatenate(pszBuffer,  "`");
-                else
-                  pszBuffer = msStringConcatenate(pszBuffer,  "'");
-                pszBuffer = msStringConcatenate(pszBuffer, ")");
-            } 
-            pszBuffer = msStringConcatenate(pszBuffer, ")");
-        }
-        else
-        {
-            msFreeCharArray(atimes, numtimes);
-            return MS_FALSE;
-        }
-
-        msFreeCharArray(atimes, numtimes);
-
-        /* load the string to the filter */
-        if (pszBuffer && strlen(pszBuffer) > 0)
-        {
-            if(&lp->filter && lp->filter.type == MS_EXPRESSION)
-              pszBuffer = msStringConcatenate(pszBuffer, ")");
-            /*
-            if(lp->filteritem) 
-              free(lp->filteritem);
-            lp->filteritem = msStrdup(timefield);
-            */     
-
-            loadExpressionString(&lp->filter, pszBuffer);
-
-            if (pszBuffer)
-              msFree(pszBuffer);
-        }
-
-        return MS_TRUE;
-                 
     }
-    
-     return MS_FALSE;
+
+    msFreeCharArray(atimes, numtimes);
+
+    /* load the string to the filter */
+    if (pszBuffer && strlen(pszBuffer) > 0) {
+      if(&lp->filter && lp->filter.type == MS_EXPRESSION)
+        pszBuffer = msStringConcatenate(pszBuffer, ")");
+      /*
+      if(lp->filteritem)
+        free(lp->filteritem);
+      lp->filteritem = msStrdup(timefield);
+      */
+
+      loadExpressionString(&lp->filter, pszBuffer);
+
+      if (pszBuffer)
+        msFree(pszBuffer);
+    }
+
+    return MS_TRUE;
+
+  }
+
+  return MS_FALSE;
 }
 
 /**
   set the filter parameter for a time filter
 **/
 
-int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
-                         const char *timefield) 
+int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
+                         const char *timefield)
 {
   if ( ! lp->vtable) {
-      int rv =  msInitializeVirtualTable(lp);
-      if (rv != MS_SUCCESS)
-          return rv;
+    int rv =  msInitializeVirtualTable(lp);
+    if (rv != MS_SUCCESS)
+      return rv;
   }
   return lp->vtable->LayerSetTimeFilter(lp, timestring, timefield);
-}   
-
-int 
-msLayerMakeBackticsTimeFilter(layerObj *lp, const char *timestring, 
-                              const char *timefield) 
-{
-    return makeTimeFilter(lp, timestring, timefield, MS_TRUE);
 }
 
-int 
-msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring, 
-                              const char *timefield) 
+int
+msLayerMakeBackticsTimeFilter(layerObj *lp, const char *timestring,
+                              const char *timefield)
 {
-    return makeTimeFilter(lp, timestring, timefield, MS_FALSE);
+  return makeTimeFilter(lp, timestring, timefield, MS_TRUE);
+}
+
+int
+msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring,
+                           const char *timefield)
+{
+  return makeTimeFilter(lp, timestring, timefield, MS_FALSE);
 }
 
 
@@ -1180,36 +1145,36 @@ int LayerDefaultGetItems(layerObj *layer)
   return MS_SUCCESS; /* returning no items is legit */
 }
 
-int 
-msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+int
+msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                  int iLayerIndex)
 {
 #if USE_OGR
   return FLTLayerApplyCondSQLFilterToLayer(psNode, map, iLayerIndex);
 
 #else
-    return MS_FAILURE;
+  return MS_FAILURE;
 #endif
 }
 
 int msLayerSupportsPaging(layerObj *layer)
 {
-    if (layer &&
-        ((layer->connectiontype == MS_ORACLESPATIAL) ||
-         (layer->connectiontype == MS_POSTGIS)) )
-      return MS_TRUE;
+  if (layer &&
+      ((layer->connectiontype == MS_ORACLESPATIAL) ||
+       (layer->connectiontype == MS_POSTGIS)) )
+    return MS_TRUE;
 
-    return MS_FALSE;
+  return MS_FALSE;
 }
 
-int 
-msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+int
+msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                int iLayerIndex)
 {
 #if USE_OGR
-  return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex); 
+  return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
 #else
-    return MS_FAILURE;
+  return MS_FAILURE;
 #endif
 }
 
@@ -1222,19 +1187,19 @@ int msLayerGetPaging(layerObj *layer)
       return MS_FAILURE;
     }
   }
-    return layer->vtable->LayerGetPaging(layer);
+  return layer->vtable->LayerGetPaging(layer);
 }
 
-void msLayerEnablePaging(layerObj *layer, int value) 
+void msLayerEnablePaging(layerObj *layer, int value)
 {
-    if ( ! layer->vtable) {
-        int rv =  msInitializeVirtualTable(layer);
-        if (rv != MS_SUCCESS) {
-            msSetError(MS_MISCERR, "Unable to initialize virtual table", "msLayerEnablePaging()");
-            return;
-        }
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS) {
+      msSetError(MS_MISCERR, "Unable to initialize virtual table", "msLayerEnablePaging()");
+      return;
     }
-    return layer->vtable->LayerEnablePaging(layer, value);
+  }
+  return layer->vtable->LayerEnablePaging(layer, value);
 }
 
 int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
@@ -1245,7 +1210,7 @@ int LayerDefaultGetExtent(layerObj *layer, rectObj *extent)
 int LayerDefaultGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj *shape)
 {
   msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
-  return MS_FAILURE; 
+  return MS_FAILURE;
 }
 
 int LayerDefaultCloseConnection(layerObj *layer)
@@ -1300,33 +1265,27 @@ void msLayerDefaultEnablePaging(layerObj *layer, int value)
 /************************************************************************/
 char *LayerDefaultEscapeSQLParam(layerObj *layer, const char* pszString)
 {
-     char *pszEscapedStr=NULL;
-     if (pszString)
-     {
-         int nSrcLen;
-         char c;
-         int i=0, j=0;
-         nSrcLen = (int)strlen(pszString);
-         pszEscapedStr = (char*) msSmallMalloc( 2 * nSrcLen + 1);
-         for(i = 0, j = 0; i < nSrcLen; i++)
-         {
-             c = pszString[i];
-             if (c == '\'')
-             {
-                 pszEscapedStr[j++] = '\'';
-                 pszEscapedStr[j++] = '\'';
-             }
-             else if (c == '\\')
-             {
-                 pszEscapedStr[j++] = '\\';
-                 pszEscapedStr[j++] = '\\';
-             }
-             else
-               pszEscapedStr[j++] = c;
-         }
-         pszEscapedStr[j] = 0;
-     }  
-     return pszEscapedStr;
+  char *pszEscapedStr=NULL;
+  if (pszString) {
+    int nSrcLen;
+    char c;
+    int i=0, j=0;
+    nSrcLen = (int)strlen(pszString);
+    pszEscapedStr = (char*) msSmallMalloc( 2 * nSrcLen + 1);
+    for(i = 0, j = 0; i < nSrcLen; i++) {
+      c = pszString[i];
+      if (c == '\'') {
+        pszEscapedStr[j++] = '\'';
+        pszEscapedStr[j++] = '\'';
+      } else if (c == '\\') {
+        pszEscapedStr[j++] = '\\';
+        pszEscapedStr[j++] = '\\';
+      } else
+        pszEscapedStr[j++] = c;
+    }
+    pszEscapedStr[j] = 0;
+  }
+  return pszEscapedStr;
 }
 
 /************************************************************************/
@@ -1336,37 +1295,31 @@ char *LayerDefaultEscapeSQLParam(layerObj *layer, const char* pszString)
 /************************************************************************/
 char *LayerDefaultEscapePropertyName(layerObj *layer, const char* pszString)
 {
-     char* pszEscapedStr=NULL;
-     int i, j = 0;   
+  char* pszEscapedStr=NULL;
+  int i, j = 0;
 
-     if (layer && pszString && strlen(pszString) > 0)
-     {
-         int nLength = strlen(pszString);
+  if (layer && pszString && strlen(pszString) > 0) {
+    int nLength = strlen(pszString);
 
-         pszEscapedStr = (char*) msSmallMalloc( 1 + 2 * nLength + 1 + 1);
-         pszEscapedStr[j++] = '"';
+    pszEscapedStr = (char*) msSmallMalloc( 1 + 2 * nLength + 1 + 1);
+    pszEscapedStr[j++] = '"';
 
-         for (i=0; i<nLength; i++)
-         {
-             char c = pszString[i];
-             if (c == '"')
-             {
-                 pszEscapedStr[j++] = '"';
-                 pszEscapedStr[j++] ='"';
-             }
-             else if (c == '\\')
-             {
-                 pszEscapedStr[j++] = '\\';
-                 pszEscapedStr[j++] = '\\';
-             }
-             else
-               pszEscapedStr[j++] = c;
-         }
-         pszEscapedStr[j++] = '"';
-         pszEscapedStr[j++] = 0;
-        
-     }
-     return pszEscapedStr;
+    for (i=0; i<nLength; i++) {
+      char c = pszString[i];
+      if (c == '"') {
+        pszEscapedStr[j++] = '"';
+        pszEscapedStr[j++] ='"';
+      } else if (c == '\\') {
+        pszEscapedStr[j++] = '\\';
+        pszEscapedStr[j++] = '\\';
+      } else
+        pszEscapedStr[j++] = c;
+    }
+    pszEscapedStr[j++] = '"';
+    pszEscapedStr[j++] = 0;
+
+  }
+  return pszEscapedStr;
 }
 
 
@@ -1382,22 +1335,22 @@ int msConnectLayer(layerObj *layer,
                    const int connectiontype,
                    const char *library_str)
 {
-    layer->connectiontype = connectiontype;
-    /* For internal types, library_str is ignored */
-    if (connectiontype == MS_PLUGIN) {
-        int rv;
-        msFree(layer->plugin_library);
-        msFree(layer->plugin_library_original);
+  layer->connectiontype = connectiontype;
+  /* For internal types, library_str is ignored */
+  if (connectiontype == MS_PLUGIN) {
+    int rv;
+    msFree(layer->plugin_library);
+    msFree(layer->plugin_library_original);
 
-        layer->plugin_library_original = msStrdup(library_str);
-        rv = msBuildPluginLibraryPath(&layer->plugin_library, 
-                                      layer->plugin_library_original, 
-                                      layer->map);
-        if (rv != MS_SUCCESS) {
-            return rv;
-        }
+    layer->plugin_library_original = msStrdup(library_str);
+    rv = msBuildPluginLibraryPath(&layer->plugin_library,
+                                  layer->plugin_library_original,
+                                  layer->map);
+    if (rv != MS_SUCCESS) {
+      return rv;
     }
-    return msInitializeVirtualTable(layer) ;   
+  }
+  return msInitializeVirtualTable(layer) ;
 }
 
 static int populateVirtualTable(layerVTableObj *vtable)
@@ -1425,9 +1378,9 @@ static int populateVirtualTable(layerVTableObj *vtable)
   vtable->LayerApplyFilterToLayer = msLayerApplyPlainFilterToLayer;
 
   vtable->LayerCreateItems = LayerDefaultCreateItems;
-    
+
   vtable->LayerGetNumFeatures = LayerDefaultGetNumFeatures;
-  
+
   vtable->LayerGetAutoProjection = LayerDefaultAutoProjection;
 
   vtable->LayerEscapeSQLParam = LayerDefaultEscapeSQLParam;
@@ -1462,8 +1415,8 @@ int msInitializeVirtualTable(layerObj *layer)
     destroyVirtualTable(&layer->vtable);
   }
   createVirtualTable(&layer->vtable);
-   
-  if(layer->features && layer->connectiontype != MS_GRATICULE ) 
+
+  if(layer->features && layer->connectiontype != MS_GRATICULE )
     layer->connectiontype = MS_INLINE;
 
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
@@ -1520,95 +1473,95 @@ int msInitializeVirtualTable(layerObj *layer)
       msSetError(MS_MISCERR, "Unknown connectiontype, it was %d", "msInitializeVirtualTable()", layer->connectiontype);
       return MS_FAILURE;
       break;
-    }
+  }
 
-    /* not reached */
-    return MS_FAILURE;
+  /* not reached */
+  return MS_FAILURE;
 }
 
-/* 
- * INLINE: Virtual table functions 
+/*
+ * INLINE: Virtual table functions
  */
 
 int msINLINELayerIsOpen(layerObj *layer)
 {
-    if (layer->currentfeature)
-        return(MS_TRUE);
-    else
-        return(MS_FALSE);
+  if (layer->currentfeature)
+    return(MS_TRUE);
+  else
+    return(MS_FALSE);
 }
 
 
 int msINLINELayerOpen(layerObj *layer)
 {
-    layer->currentfeature = layer->features; /* point to the begining of the feature list */
-    return(MS_SUCCESS);
+  layer->currentfeature = layer->features; /* point to the begining of the feature list */
+  return(MS_SUCCESS);
 }
 
 /* Author: Cristoph Spoerri and Sean Gillies */
-int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record) 
+int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
-    int i=0;
-    featureListNodeObjPtr current;
+  int i=0;
+  featureListNodeObjPtr current;
 
-    int shapeindex = record->shapeindex; /* only index necessary */
+  int shapeindex = record->shapeindex; /* only index necessary */
 
-    current = layer->features;
-    while (current!=NULL && i!=shapeindex) {
-        i++;
-        current = current->next;
-    }
-    if (current == NULL) {
-        msSetError(MS_SHPERR, "No inline feature with this index.", "msINLINELayerGetShape()");
-        return MS_FAILURE;
-    } 
-    
-    if (msCopyShape(&(current->shape), shape) != MS_SUCCESS) {
-        msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msINLINELayerGetShape()");
-        return MS_FAILURE;
-    }
-    /* check for the expected size of the values array */
-    if (layer->numitems > shape->numvalues) {
-        shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
-        for (i = shape->numvalues; i < layer->numitems; i++)
-            shape->values[i] = msStrdup("");
-    }
-    return MS_SUCCESS;
+  current = layer->features;
+  while (current!=NULL && i!=shapeindex) {
+    i++;
+    current = current->next;
+  }
+  if (current == NULL) {
+    msSetError(MS_SHPERR, "No inline feature with this index.", "msINLINELayerGetShape()");
+    return MS_FAILURE;
+  }
+
+  if (msCopyShape(&(current->shape), shape) != MS_SUCCESS) {
+    msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msINLINELayerGetShape()");
+    return MS_FAILURE;
+  }
+  /* check for the expected size of the values array */
+  if (layer->numitems > shape->numvalues) {
+    shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
+    for (i = shape->numvalues; i < layer->numitems; i++)
+      shape->values[i] = msStrdup("");
+  }
+  return MS_SUCCESS;
 }
 
-int msINLINELayerNextShape(layerObj *layer, shapeObj *shape) 
+int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
 {
-    if( ! (layer->currentfeature)) {
-        /* out of features */
-        return(MS_DONE); 
-    }
+  if( ! (layer->currentfeature)) {
+    /* out of features */
+    return(MS_DONE);
+  }
 
-    msCopyShape(&(layer->currentfeature->shape), shape);
+  msCopyShape(&(layer->currentfeature->shape), shape);
 
-    layer->currentfeature = layer->currentfeature->next;
+  layer->currentfeature = layer->currentfeature->next;
 
-    /* check for the expected size of the values array */
-    if (layer->numitems > shape->numvalues) {
-        int i;
-        shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
-        for (i = shape->numvalues; i < layer->numitems; i++)
-            shape->values[i] = msStrdup("");
-    }
+  /* check for the expected size of the values array */
+  if (layer->numitems > shape->numvalues) {
+    int i;
+    shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
+    for (i = shape->numvalues; i < layer->numitems; i++)
+      shape->values[i] = msStrdup("");
+  }
 
-    return(MS_SUCCESS);
+  return(MS_SUCCESS);
 }
 
 int msINLINELayerGetNumFeatures(layerObj *layer)
 {
-    int i = 0;
-    featureListNodeObjPtr current;
+  int i = 0;
+  featureListNodeObjPtr current;
 
-    current = layer->features;
-    while (current != NULL) {
-        i++;
-        current = current->next;
-    }
-    return i;
+  current = layer->features;
+  while (current != NULL) {
+    i++;
+    current = current->next;
+  }
+  return i;
 }
 
 
@@ -1616,65 +1569,65 @@ int msINLINELayerGetNumFeatures(layerObj *layer)
 /*
 Returns an escaped string
 */
-char  *msLayerEscapeSQLParam(layerObj *layer, const char*pszString) 
+char  *msLayerEscapeSQLParam(layerObj *layer, const char*pszString)
 {
-    if ( ! layer->vtable) {
-        int rv =  msInitializeVirtualTable(layer);
-        if (rv != MS_SUCCESS)
-            return "";
-    }
-    return layer->vtable->LayerEscapeSQLParam(layer, pszString);
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return "";
+  }
+  return layer->vtable->LayerEscapeSQLParam(layer, pszString);
 }
 
-char  *msLayerEscapePropertyName(layerObj *layer, const char*pszString) 
+char  *msLayerEscapePropertyName(layerObj *layer, const char*pszString)
 {
-    if ( ! layer->vtable) {
-        int rv =  msInitializeVirtualTable(layer);
-        if (rv != MS_SUCCESS)
-            return "";
-    }
-    return layer->vtable->LayerEscapePropertyName(layer, pszString);
+  if ( ! layer->vtable) {
+    int rv =  msInitializeVirtualTable(layer);
+    if (rv != MS_SUCCESS)
+      return "";
+  }
+  return layer->vtable->LayerEscapePropertyName(layer, pszString);
 }
 
 
 int
 msINLINELayerInitializeVirtualTable(layerObj *layer)
 {
-    assert(layer != NULL);
-    assert(layer->vtable != NULL);
+  assert(layer != NULL);
+  assert(layer->vtable != NULL);
 
-    /* layer->vtable->LayerInitItemInfo, use default */
-    /* layer->vtable->LayerFreeItemInfo, use default */
-    layer->vtable->LayerOpen = msINLINELayerOpen;
-    layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
-    /* layer->vtable->LayerWhichShapes, use default */
-    layer->vtable->LayerNextShape = msINLINELayerNextShape;
-    layer->vtable->LayerGetShape = msINLINELayerGetShape;
-    /* layer->vtable->LayerClose, use default */
-    /* layer->vtable->LayerGetItems, use default */
+  /* layer->vtable->LayerInitItemInfo, use default */
+  /* layer->vtable->LayerFreeItemInfo, use default */
+  layer->vtable->LayerOpen = msINLINELayerOpen;
+  layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
+  /* layer->vtable->LayerWhichShapes, use default */
+  layer->vtable->LayerNextShape = msINLINELayerNextShape;
+  layer->vtable->LayerGetShape = msINLINELayerGetShape;
+  /* layer->vtable->LayerClose, use default */
+  /* layer->vtable->LayerGetItems, use default */
 
-    /* 
-     * Original code contained following 
-     * TODO: need to compute extents
-     */
-    /* layer->vtable->LayerGetExtent, use default */
+  /*
+   * Original code contained following
+   * TODO: need to compute extents
+   */
+  /* layer->vtable->LayerGetExtent, use default */
 
-    /* layer->vtable->LayerGetAutoStyle, use default */
-    /* layer->vtable->LayerCloseConnection, use default */
-    layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+  /* layer->vtable->LayerGetAutoStyle, use default */
+  /* layer->vtable->LayerCloseConnection, use default */
+  layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
 
-    /* layer->vtable->LayerApplyFilterToLayer, use default */
+  /* layer->vtable->LayerApplyFilterToLayer, use default */
 
-    /* layer->vtable->LayerCreateItems, use default */
-    layer->vtable->LayerGetNumFeatures = msINLINELayerGetNumFeatures;
+  /* layer->vtable->LayerCreateItems, use default */
+  layer->vtable->LayerGetNumFeatures = msINLINELayerGetNumFeatures;
 
-    /*layer->vtable->LayerEscapeSQLParam, use default*/
-    /*layer->vtable->LayerEscapePropertyName, use default*/
+  /*layer->vtable->LayerEscapeSQLParam, use default*/
+  /*layer->vtable->LayerEscapePropertyName, use default*/
 
-    /* layer->vtable->LayerEnablePaging, use default */
-    /* layer->vtable->LayerGetPaging, use default */    
-    
-    return MS_SUCCESS;
+  /* layer->vtable->LayerEnablePaging, use default */
+  /* layer->vtable->LayerGetPaging, use default */
+
+  return MS_SUCCESS;
 }
 
 
