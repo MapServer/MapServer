@@ -346,7 +346,7 @@
 					</xs:union>
 				</xs:simpleType>
 			</xs:element>
-			<xs:element name="Style" type="ms:Style" minOccurs="0"/>
+			<xs:element name="Style" type="ms:Style" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="wrap" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="type" use="required">
@@ -358,6 +358,14 @@
 			</xs:simpleType>
 		</xs:attribute>
 	</xs:complexType>
+    <!-- LABELLEADER Definition -->
+    <xs:complexType name="LabelLeader">
+        <xs:sequence>
+            <xs:element name="gridstep" type="xs:positiveInteger" minOccurs="0"/>
+            <xs:element name="maxdistance" type="xs:positiveInteger" minOccurs="0"/>
+            <xs:element name="Style"  type="ms:Style" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
 	<!-- STYLE Definition -->
 	<xs:complexType name="Style">
 		<xs:sequence>
@@ -456,6 +464,7 @@
 			<xs:element name="group" type="xs:string" minOccurs="0"/>
 			<xs:element name="keyImage" type="xs:string" minOccurs="0"/>
 			<xs:element name="Label" type="ms:Label" minOccurs="0"/>
+            <xs:element name="LabelLeader" type="ms:LabelLeader" minOccurs="0"/>
 			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="maxSize" type="xs:integer" default="50" minOccurs="0"/>
 			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
