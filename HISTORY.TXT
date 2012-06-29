@@ -11,7 +11,7 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-Current Version (git master, 6.1-dev, future 6.2): 
+Version 6.2.0-beta1 (2012-06-29):
 -------------------------------------------------
 
 - Fix WFS filter is produced as non-standard XML (#4171)
