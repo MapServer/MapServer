@@ -175,7 +175,7 @@
   </xsl:call-template>
 </xsl:template>
 
-<xsl:template match="ms:size | ms:offset | ms:keySize | ms:keySpacing | ms:shadowSize">
+<xsl:template match="ms:size | ms:offset | ms:keySize | ms:keySpacing | ms:shadowSize | ms:anchorPoint">
   <xsl:param name="indent"/>
   <xsl:choose>
     <xsl:when test="starts-with(name(), 'ms:')">
@@ -785,6 +785,10 @@
     </xsl:call-template>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:initialGap'"/>
+    </xsl:call-template>
+    <xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:maxSize'"/>
     </xsl:call-template>
     <xsl:call-template name="print">
@@ -818,6 +822,10 @@
     <xsl:apply-templates select="ms:pattern">
       <xsl:with-param name="indent" select="$indent"/>
     </xsl:apply-templates>
+    <xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:polarOffset'"/>
+    </xsl:call-template>
     <xsl:apply-templates select="ms:offset">
       <xsl:with-param name="indent" select="$indent"/>
     </xsl:apply-templates>
@@ -963,6 +971,9 @@
       <xsl:with-param name="node" select="@type"/>
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
+    <xsl:apply-templates select="ms:anchorPoint">
+      <xsl:with-param name="indent" select="$indent"/>
+    </xsl:apply-templates>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:antialias'"/>
@@ -1250,6 +1261,10 @@
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:labelRequires'"/>
       <xsl:with-param name="quote" select="1"/>
+    </xsl:call-template>
+    <xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:mask'"/>
     </xsl:call-template>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>

@@ -17,6 +17,7 @@
         <encoding>ISO 8859-1</encoding>
         <font>serif</font>
         <force>TRUE</force>
+        <mask>layerName</mask>
         <maxLength>244</maxLength>
         <maxSize>244</maxSize>
         <minDistance>24</minDistance>

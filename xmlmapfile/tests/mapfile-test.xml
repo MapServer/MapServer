@@ -126,6 +126,8 @@
 			<size>SMALL</size>
                         <Style>
                           <geomTransform>VERTICES</geomTransform>
+                          <initialGap>20.5</initialGap>
+                          <polarOffset>[uv_angle]</polarOffset>
                         </Style>
 			<wrap>\n</wrap>
 		</Label>
@@ -141,6 +143,7 @@
 	<size x="600" y="400"/>
 	<symbolSet>/tmp/mySymbolSet.sym</symbolSet>
 	<Symbol name="mySymbol2-test2" type="SIMPLE">
+        <anchorPoint x="0.5" y="0.6"/>
 		<antialias>FALSE</antialias>
 		<character>C</character>
 		<filled>TRUE</filled>
