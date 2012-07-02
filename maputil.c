@@ -199,7 +199,7 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
   /* check the label styleObj's (TODO: do we need to use querymapMode here? */
   for(i=0; i<label->numstyles; i++) {
     /* force MS_DRAWMODE_FEATURES for label styles */
-    bindStyle(layer, shape, label->styles[i], drawmode|MS_DRAWMODE_FEATURES); 
+    bindStyle(layer, shape, label->styles[i], drawmode|MS_DRAWMODE_FEATURES);
   }
 
   if(label->numbindings > 0) {
@@ -1622,6 +1622,7 @@ void  msTransformPoint(pointObj *point, rectObj *extent, double cellsize,
 
 
 
+#if ! defined HAVE_GEOS_OFFSET_CURVE
 /*
 ** Helper functions supplied as part of bug #2868 solution. Consider moving these to
 ** mapprimitive.c for more general use.
@@ -1717,16 +1718,98 @@ static double point_cross(const pointObj a, const pointObj b)
   return a.x*b.y-a.y*b.x;
 }
 
-/*
-** For offset corner point calculation 1/sin() is used
-** to avoid 1/0 division (and long spikes) we define a
-** limit for sin().
-*/
+#endif
+
+shapeObj *msOffsetCurve(shapeObj *p, double offset)
+{
+#if defined HAVE_GEOS_OFFSET_CURVE
+  return msGEOSOffsetCurve(p,offset);
+#else
+  /*
+  ** For offset corner point calculation 1/sin() is used
+  ** to avoid 1/0 division (and long spikes) we define a
+  ** limit for sin().
+  */
 #define CURVE_SIN_LIMIT 0.3
+  int i, j, first,idx;
+  shapeObj *ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  msInitShape(ret);
+  ret->numlines = p->numlines;
+  ret->line=(lineObj*)msSmallMalloc(sizeof(lineObj)*ret->numlines);
+  for(i=0; i<ret->numlines; i++) {
+    ret->line[i].numpoints=p->line[i].numpoints;
+    ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
+  }
+  for (i = 0; i < p->numlines; i++) {
+    pointObj old_pt, old_diffdir, old_offdir;
+    /* initialize old_offdir and old_diffdir, as gcc isn't smart enough to see that it
+     * is not an error to do so, and prints a warning */
+    old_offdir.x=old_offdir.y=old_diffdir.x=old_diffdir.y = 0;
+
+    idx=0;
+    first = 1;
+
+    /* saved metrics of the last processed point */
+    if (p->line[i].numpoints>0)
+      old_pt=p->line[i].point[0];
+    for(j=1; j<p->line[i].numpoints; j++) {
+      const pointObj pt = p->line[i].point[j]; /* place of the point */
+      const pointObj diffdir = point_norm(point_diff(pt,old_pt)); /* direction of the line */
+      const pointObj offdir = point_rotz90(diffdir); /* direction where the distance between the line and the offset is measured */
+      pointObj offpt; /* this will be the corner point of the offset line */
+
+      /* offset line points computation */
+      if(first == 1) { /* first point */
+        first = 0;
+        offpt = point_sum(old_pt,point_mul(offdir,offset));
+      } else { /* middle points */
+        /* curve is the angle of the last and the current line's direction (supplementary angle of the shape's inner angle) */
+        double sin_curve = point_cross(diffdir,old_diffdir);
+        double cos_curve = point_cross(old_offdir,diffdir);
+        if ((-1.0)*CURVE_SIN_LIMIT < sin_curve && sin_curve < CURVE_SIN_LIMIT) {
+          /* do not calculate 1/sin, instead use a corner point approximation: average of the last and current offset direction and length */
+
+          /*
+          ** TODO: fair for obtuse inner angles, however, positive and negative
+          ** acute inner angles would need special handling - similar to LINECAP
+          ** to avoid drawing of long spikes
+          */
+          offpt = point_sum(old_pt, point_mul(point_sum(offdir, old_offdir),0.5*offset));
+        } else {
+          double base_shift = -1.0*(1.0+cos_curve)/sin_curve;
+          offpt = point_sum(old_pt, point_mul(point_sum(point_mul(diffdir,base_shift),offdir), offset));
+        }
+      }
+      ret->line[i].point[idx]=offpt;
+      idx++;
+      old_pt=pt;
+      old_diffdir=diffdir;
+      old_offdir=offdir;
+    }
+
+    /* last point */
+    if(first == 0) {
+      pointObj offpt=point_sum(old_pt,point_mul(old_offdir,offset));
+      ret->line[i].point[idx]=offpt;
+      idx++;
+    }
+
+    if(idx != p->line[i].numpoints) {
+      /* printf("shouldn't happen :(\n"); */
+      ret->line[i].numpoints=idx;
+      ret->line=msSmallRealloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
+    }
+  }
+  return ret;
+#endif
+}
 
 shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
 {
-  int i, j, first,idx;
+  int i, j;
+  if(offsety == -99) { /* complex calculations */
+    return msOffsetCurve(p,offsetx);
+  }
 
   shapeObj *ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
   msInitShape(ret);
@@ -1737,80 +1820,10 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
     ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
   }
 
-  if(offsety == -99) { /* complex calculations */
-    int ok = 0;
-    for (i = 0; i < p->numlines; i++) {
-      if(p->line[i].numpoints<2) {
-        ret->line[i].numpoints = 0;
-        continue; /* skip degenerate lines */
-      }
-      ok =1;
-      pointObj old_pt, old_diffdir, old_offdir;
-      /* initialize old_offdir and old_diffdir, as gcc isn't smart enough to see that it
-       * is not an error to do so, and prints a warning */
-      old_offdir.x=old_offdir.y=old_diffdir.x=old_diffdir.y = 0;
-
-      idx=0;
-      first = 1;
-
-      /* saved metrics of the last processed point */
-      if (p->line[i].numpoints>0)
-        old_pt=p->line[i].point[0];
-      for(j=1; j<p->line[i].numpoints; j++) {
-        const pointObj pt = p->line[i].point[j]; /* place of the point */
-        const pointObj diffdir = point_norm(point_diff(pt,old_pt)); /* direction of the line */
-        const pointObj offdir = point_rotz90(diffdir); /* direction where the distance between the line and the offset is measured */
-        pointObj offpt; /* this will be the corner point of the offset line */
-
-        /* offset line points computation */
-        if(first == 1) { /* first point */
-          first = 0;
-          offpt = point_sum(old_pt,point_mul(offdir,offsetx));
-        } else { /* middle points */
-          /* curve is the angle of the last and the current line's direction (supplementary angle of the shape's inner angle) */
-          double sin_curve = point_cross(diffdir,old_diffdir);
-          double cos_curve = point_cross(old_offdir,diffdir);
-          if ((-1.0)*CURVE_SIN_LIMIT < sin_curve && sin_curve < CURVE_SIN_LIMIT) {
-            /* do not calculate 1/sin, instead use a corner point approximation: average of the last and current offset direction and length */
-
-            /*
-            ** TODO: fair for obtuse inner angles, however, positive and negative
-            ** acute inner angles would need special handling - similar to LINECAP
-            ** to avoid drawing of long spikes
-            */
-            offpt = point_sum(old_pt, point_mul(point_sum(offdir, old_offdir),0.5*offsetx));
-          } else {
-            double base_shift = -1.0*(1.0+cos_curve)/sin_curve;
-            offpt = point_sum(old_pt, point_mul(point_sum(point_mul(diffdir,base_shift),offdir), offsetx));
-          }
-        }
-        ret->line[i].point[idx]=offpt;
-        idx++;
-        old_pt=pt;
-        old_diffdir=diffdir;
-        old_offdir=offdir;
-      }
-
-      /* last point */
-      if(first == 0) {
-        pointObj offpt=point_sum(old_pt,point_mul(old_offdir,offsetx));
-        ret->line[i].point[idx]=offpt;
-        idx++;
-      }
-
-      if(idx != p->line[i].numpoints) {
-        /* printf("shouldn't happen :(\n"); */
-        ret->line[i].numpoints=idx;
-        ret->line=msSmallRealloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
-      }
-    }
-    if(!ok) ret->numlines = 0; /* all lines where degenerate */
-  } else { /* normal offset (eg. drop shadow) */
-    for (i = 0; i < p->numlines; i++) {
-      for(j=0; j<p->line[i].numpoints; j++) {
-        ret->line[i].point[j].x=p->line[i].point[j].x+offsetx;
-        ret->line[i].point[j].y=p->line[i].point[j].y+offsety;
-      }
+  for (i = 0; i < p->numlines; i++) {
+    for(j=0; j<p->line[i].numpoints; j++) {
+      ret->line[i].point[j].x=p->line[i].point[j].x+offsetx;
+      ret->line[i].point[j].y=p->line[i].point[j].y+offsety;
     }
   }
 

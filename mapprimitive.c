@@ -1749,11 +1749,16 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   segment_index = max_line_index = 0;
   total_length = max_line_length = 0.0;
 
-  if(!string) return NULL;
 
+  if(!string) return NULL;
 
   labelpaths = (labelPathObj **) msSmallMalloc(sizeof(labelPathObj *) * labelpaths_size);
   (*regular_lines) = (int *) msSmallMalloc(sizeof(int) * regular_lines_size);
+
+  if(label->offsety == -99 && label->offsetx != 0) {
+    p = msOffsetPolyline(p,label->offsetx + label->size/2, -99);
+    if(!p) return NULL;
+  }
 
   msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
 
@@ -1778,6 +1783,10 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   /* set the number of paths in the array */
   *numpaths = labelpaths_index;
   *num_regular_lines = regular_lines_index;
+  if(label->offsety == -99 && label->offsetx != 0) {
+     msFreeShape(p);
+     msFree(p);
+  }
   return labelpaths;
 }
 
@@ -1811,7 +1820,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
   labelPathObj *labelpath = NULL;
 
   /* Line smoothing kernel */
-  double kernel[] = {0.1, 0.2, 2, 0.2, 0.1}; /* {1.5, 2, 15, 2, 1.5}; */
+  double kernel[] = {0.1,0.2,2,0.2,0.1}; /* {1.5, 2, 15, 2, 1.5}; */
   double kernel_normal = 2.6; /* Must be sum of kernel elements */
   int kernel_size = 5;
 

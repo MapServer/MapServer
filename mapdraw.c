@@ -2916,12 +2916,17 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   /* TODO: treat the case with multiple labels and/or leader lines */
                 }
 
-                /* apply offset and buffer settings */
-                label_offset_x = labelPtr->offsetx*scalefactor;
-                label_offset_y = labelPtr->offsety*scalefactor;
-                label_buffer = (labelPtr->buffer*image->resolutionfactor);
-                label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
-
+                 /* apply offset and buffer settings */
+                 if(labelPtr->anglemode != MS_FOLLOW) {
+                   label_offset_x = labelPtr->offsetx*scalefactor;
+                   label_offset_y = labelPtr->offsety*scalefactor;
+                 } else {
+                   label_offset_x = 0;
+                   label_offset_y = 0;
+                 }
+                 label_buffer = (labelPtr->buffer*image->resolutionfactor);
+                 label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
+                 
 #ifdef oldcode
                 /* adjust the baseline (see #1449) */
                 if(labelPtr->type == MS_TRUETYPE) {

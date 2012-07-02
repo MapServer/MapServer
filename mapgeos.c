@@ -654,6 +654,27 @@ void msGEOSFreeWKT(char* pszGEOSWKT)
 #endif
 }
 
+shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
+#if defined USE_GEOS && defined HAVE_GEOS_OFFSET_CURVE
+   GEOSGeom g1, g2; 
+
+  if(!p) 
+    return NULL;
+
+  if(!p->geometry) /* if no geometry for the shape then build one */
+    p->geometry = (GEOSGeom) msGEOSShape2Geometry(p);
+
+  g1 = (GEOSGeom) p->geometry;
+  if(!g1) return NULL;
+  
+  g2 = GEOSOffsetCurve(g1, offset, 4, GEOSBUF_JOIN_MITRE, offset*1.5);
+  return msGEOSGeometry2Shape(g2);
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSingleSidedBuffer()");
+  return NULL;
+#endif
+}
+
 /*
 ** Analytical functions exposed to MapServer/MapScript.
 */
