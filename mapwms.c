@@ -2690,9 +2690,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msIO_setHeader("Content-type","text/xml");
   else /* 1.1.0 and later */
     if (encoding)
-      msIO_setHeader("Content-type","application/vnd.ogc.se_xml; charset=%s", encoding);
+      msIO_setHeader("Content-type","application/vnd.ogc.wms_xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","application/vnd.ogc.se_xml");
+      msIO_setHeader("Content-type","application/vnd.ogc.wms_xml");
   msIO_sendHeaders();
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
