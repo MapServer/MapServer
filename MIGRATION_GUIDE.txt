@@ -18,10 +18,6 @@ applications when migrating from version 6.0.x (or earlier versions)
 to 6.2 (i.e. backwards incompatibilities), as well as information
 on some of the new features.
 
-TODO:document changes in gap calculation for line markers and polygon
-tile symbols (#3879 and #3867)
-TODO: document vector type symbol size calculation change (#4116)
-
 --------------------
 Build system changes
 --------------------
@@ -32,7 +28,47 @@ If you are building MapServer from source, then the following may be of interest
 
 * The --with-php configure option has been changed to point directly to the php-config script instead of to the directory where the PHP headers are located.
 
+-----------------
+Rendering changes
+-----------------
 
+* STYLE->GAP interpretation
+  Starting in 6.2, STYLE->GAP specifies the gap between the symbols
+  using the centre to centre distance.
+  In earlier versions of Mapserver, GAP was used as the approximate
+  distance between the symbol boundaries.
+  See ticket #3867 for more information.
+
+  In order to get the same effect with 6.2 as with 6.0, STYLE->GAP
+  must be increased with the size of the symbol.
+
+* Removal of one pixel gap between symbols
+  In earlier versions of Mapserver, an extra gap of one pixel was
+  added between the symbols (in addition to the gap specified in
+  STYLE->GAP).  This has been discontinued in 6.2.
+  See ticket #3868 for more information.
+
+  In order to get the same effect with 6.2 as with 6.0, STYLE->GAP
+  must be increased with one pixel.
+
+* STYLE->INITIALGAP introduced
+  Support for more powerful line styling has been provided with the
+  introduction of STYLE->INITIALGAP.  See ticket #3879 and the
+  documentation for more information.
+
+* SYMBOL->ANCHORPOINT introduced
+  A symbol anchorpoint has been introduced to facilitate precise
+  positioning of symbols.  See ticket #4066 and the documentation for
+  more information.
+
+* Change in vector symbol size calculation.
+  In 6.2, vector symbol coordinates are shifted to get rid of
+  negative x and y coordinate values.
+  See ticket #4116 for more information.
+
+  In order to get the shifting effect that could be obtained using
+  negative coordinate values, SYMBOL->ANCHORPOINT should be used
+  instead.
 
 MapServer 5.6 to 6.0 Migration
 ==============================
