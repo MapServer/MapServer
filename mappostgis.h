@@ -53,29 +53,30 @@
 ** Specific information needed for managing this layer.
 */
 typedef struct {
-    char        *sql;        /* SQL query to send to database */
-    PGconn      *pgconn;     /* Connection to database */
-    long        rownum;      /* What row is the next to be read (for random access) */
-    PGresult    *pgresult;   /* For fetching rows from the database */
-    char        *uid;        /* Name of user-specified unique identifier, if set */
-    char        *srid;       /* Name of user-specified SRID: zero-length => calculate; non-zero => use this value! */
-    char        *geomcolumn; /* Specified geometry column, eg "THEGEOM from thetable" */
-    char        *fromsource; /* Specified record source, ed "thegeom from THETABLE" or "thegeom from (SELECT..) AS FOO" */
-    int         endian;      /* Endianness of the mapserver host */
-    int         version;     /* PostGIS version of the database */
+  char        *sql;        /* SQL query to send to database */
+  PGconn      *pgconn;     /* Connection to database */
+  long        rownum;      /* What row is the next to be read (for random access) */
+  PGresult    *pgresult;   /* For fetching rows from the database */
+  char        *uid;        /* Name of user-specified unique identifier, if set */
+  char        *srid;       /* Name of user-specified SRID: zero-length => calculate; non-zero => use this value! */
+  char        *geomcolumn; /* Specified geometry column, eg "THEGEOM from thetable" */
+  char        *fromsource; /* Specified record source, ed "thegeom from THETABLE" or "thegeom from (SELECT..) AS FOO" */
+  int         endian;      /* Endianness of the mapserver host */
+  int         version;     /* PostGIS version of the database */
+  int         paging;      /* Driver handling of pagination, enabled by default */
 }
 msPostGISLayerInfo;
 
 
 /*
-** Utility structure for handling the WKB returned by the database while 
+** Utility structure for handling the WKB returned by the database while
 ** reading.
 */
 typedef struct {
-    char *wkb; /* Pointer to front of WKB */
-    char *ptr; /* Pointer to current write point */
-    size_t size; /* Size of allocated space */
-    int *typemap; /* Look-up array to valid OGC types */
+  char *wkb; /* Pointer to front of WKB */
+  char *ptr; /* Pointer to current write point */
+  size_t size; /* Size of allocated space */
+  int *typemap; /* Look-up array to valid OGC types */
 } wkbObj;
 
 /*
@@ -83,74 +84,74 @@ typedef struct {
 ** handling curved feature types.
 */
 typedef struct {
-    pointObj *data; /* Re-sizeable point buffer */
-    int npoints;  /* How many points are we currently storing */
-    int maxpoints; /* How big is our point buffer */
+  pointObj *data; /* Re-sizeable point buffer */
+  int npoints;  /* How many points are we currently storing */
+  int maxpoints; /* How big is our point buffer */
 } pointArrayObj;
 
 /*
-** All the WKB type numbers from the OGC 
+** All the WKB type numbers from the OGC
 */
 typedef enum {
-    WKB_POINT=1,
-    WKB_LINESTRING=2,
-    WKB_POLYGON=3,
-    WKB_MULTIPOINT=4,
-    WKB_MULTILINESTRING=5,
-    WKB_MULTIPOLYGON=6,
-    WKB_GEOMETRYCOLLECTION=7,
-    WKB_CIRCULARSTRING=8,
-    WKB_COMPOUNDCURVE=9,
-    WKB_CURVEPOLYGON=10,
-    WKB_MULTICURVE=11,
-    WKB_MULTISURFACE=12
+  WKB_POINT=1,
+  WKB_LINESTRING=2,
+  WKB_POLYGON=3,
+  WKB_MULTIPOINT=4,
+  WKB_MULTILINESTRING=5,
+  WKB_MULTIPOLYGON=6,
+  WKB_GEOMETRYCOLLECTION=7,
+  WKB_CIRCULARSTRING=8,
+  WKB_COMPOUNDCURVE=9,
+  WKB_CURVEPOLYGON=10,
+  WKB_MULTICURVE=11,
+  WKB_MULTISURFACE=12
 } wkb_typenum;
 
-/* 
+/*
 ** See below.
 */
 #define WKB_TYPE_COUNT 16
 
 /*
-** Map the WKB type numbers returned by PostGIS < 2.0 to the 
+** Map the WKB type numbers returned by PostGIS < 2.0 to the
 ** valid OGC numbers
 */
 static int wkb_postgis15[WKB_TYPE_COUNT] = {
-    0,
-    WKB_POINT,
-    WKB_LINESTRING,
-    WKB_POLYGON,
-    WKB_MULTIPOINT,
-    WKB_MULTILINESTRING,
-    WKB_MULTIPOLYGON,
-    WKB_GEOMETRYCOLLECTION,
-    WKB_CIRCULARSTRING,
-    WKB_COMPOUNDCURVE,
-    0,0,0,
-    WKB_CURVEPOLYGON,
-    WKB_MULTICURVE,
-    WKB_MULTISURFACE 
+  0,
+  WKB_POINT,
+  WKB_LINESTRING,
+  WKB_POLYGON,
+  WKB_MULTIPOINT,
+  WKB_MULTILINESTRING,
+  WKB_MULTIPOLYGON,
+  WKB_GEOMETRYCOLLECTION,
+  WKB_CIRCULARSTRING,
+  WKB_COMPOUNDCURVE,
+  0,0,0,
+  WKB_CURVEPOLYGON,
+  WKB_MULTICURVE,
+  WKB_MULTISURFACE
 };
 
 /*
-** Map the WKB type numbers returned by PostGIS >= 2.0 to the 
+** Map the WKB type numbers returned by PostGIS >= 2.0 to the
 ** valid OGC numbers
 */
 static int wkb_postgis20[WKB_TYPE_COUNT] = {
-    0,
-    WKB_POINT,
-    WKB_LINESTRING,
-    WKB_POLYGON,
-    WKB_MULTIPOINT,
-    WKB_MULTILINESTRING,
-    WKB_MULTIPOLYGON,
-    WKB_GEOMETRYCOLLECTION,
-    WKB_CIRCULARSTRING,
-    WKB_COMPOUNDCURVE,
-    WKB_CURVEPOLYGON,
-    WKB_MULTICURVE,
-    WKB_MULTISURFACE,
-    0,0,0 
+  0,
+  WKB_POINT,
+  WKB_LINESTRING,
+  WKB_POLYGON,
+  WKB_MULTIPOINT,
+  WKB_MULTILINESTRING,
+  WKB_MULTIPOLYGON,
+  WKB_GEOMETRYCOLLECTION,
+  WKB_CIRCULARSTRING,
+  WKB_COMPOUNDCURVE,
+  WKB_CURVEPOLYGON,
+  WKB_MULTICURVE,
+  WKB_MULTISURFACE,
+  0,0,0
 };
 
 

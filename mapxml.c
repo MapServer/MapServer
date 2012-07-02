@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -39,54 +39,51 @@
 
 extern int xmlLoadExtDtdDefaultValue;
 
-int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile) 
+int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile)
 {
-    xsltStylesheetPtr cur = NULL;
-    int status = MS_FAILURE;
-    xmlDocPtr doc, res;
+  xsltStylesheetPtr cur = NULL;
+  int status = MS_FAILURE;
+  xmlDocPtr doc, res;
 
-    exsltRegisterAll();
-    xsltRegisterTestModule();
+  exsltRegisterAll();
+  xsltRegisterTestModule();
 
-    xmlSubstituteEntitiesDefault(1);
-    xmlLoadExtDtdDefaultValue = 1;
+  xmlSubstituteEntitiesDefault(1);
+  xmlLoadExtDtdDefaultValue = 1;
 
-    cur = xsltParseStylesheetFile((const xmlChar *)stylesheet);
-    if (cur == NULL) 
-    {
-        msSetError(MS_MISCERR, "Failed to load xslt stylesheet", "msTransformXmlMapfile()"); 
-        goto done;
-    }
-    
-    doc = xmlParseFile(xmlMapfile);
-    if (doc == NULL) 
-    {
-        msSetError(MS_MISCERR, "Failed to load xml mapfile", "msTransformXmlMapfile()"); 
-        goto done;
-    }
+  cur = xsltParseStylesheetFile((const xmlChar *)stylesheet);
+  if (cur == NULL) {
+    msSetError(MS_MISCERR, "Failed to load xslt stylesheet", "msTransformXmlMapfile()");
+    goto done;
+  }
 
-    res = xsltApplyStylesheet(cur, doc, NULL);
-    if (res == NULL) 
-    {
-        msSetError(MS_MISCERR, "Failed to apply style sheet to %s", "msTransformXmlMapfile()", xmlMapfile); 
-        goto done;
-    }
+  doc = xmlParseFile(xmlMapfile);
+  if (doc == NULL) {
+    msSetError(MS_MISCERR, "Failed to load xml mapfile", "msTransformXmlMapfile()");
+    goto done;
+  }
 
-    if ( xsltSaveResultToFile(tmpfile, res, cur) != -1 )
-        status =  MS_SUCCESS;
+  res = xsltApplyStylesheet(cur, doc, NULL);
+  if (res == NULL) {
+    msSetError(MS_MISCERR, "Failed to apply style sheet to %s", "msTransformXmlMapfile()", xmlMapfile);
+    goto done;
+  }
+
+  if ( xsltSaveResultToFile(tmpfile, res, cur) != -1 )
+    status =  MS_SUCCESS;
 
 done:
-    if (cur)
-        xsltFreeStylesheet(cur);
-    if (res)
-        xmlFreeDoc(res);
-    if (doc)
-        xmlFreeDoc(doc);
+  if (cur)
+    xsltFreeStylesheet(cur);
+  if (res)
+    xmlFreeDoc(res);
+  if (doc)
+    xmlFreeDoc(doc);
 
-    xsltCleanupGlobals();
-    xmlCleanupParser();
+  xsltCleanupGlobals();
+  xmlCleanupParser();
 
-    return status;
+  return status;
 }
 
 #endif

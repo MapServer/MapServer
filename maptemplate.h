@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -42,23 +42,23 @@
 
 enum coordSources {NONE, FROMIMGPNT, FROMIMGBOX, FROMIMGSHAPE, FROMREFPNT, FROMUSERPNT, FROMUSERBOX, FROMUSERSHAPE, FROMBUF, FROMSCALE, FROMTILE};
 
-enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, LEGENDICON, REFERENCE, SCALEBAR, COORDINATE, 
-            QUERY, NQUERY, ITEMQUERY, ITEMNQUERY, 
-            FEATUREQUERY, FEATURENQUERY, ITEMFEATUREQUERY, ITEMFEATURENQUERY, 
-            INDEXQUERY, TILE, OWS, WFS};
+enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, LEGENDICON, REFERENCE, SCALEBAR, COORDINATE,
+            QUERY, NQUERY, ITEMQUERY, ITEMNQUERY,
+            FEATUREQUERY, FEATURENQUERY, ITEMFEATUREQUERY, ITEMFEATURENQUERY,
+            INDEXQUERY, TILE, OWS, WFS
+           };
 
 
 /* struct mapservObj
  * Global structure used by templates and mapserver CGI interface.
- * 
+ *
  * This structur was created to seperate template functionality
  * from the main mapserv file. Instead of moving all template
  * related functions in a new file (maptemplate.c) and change
  * their signatures to pass all global variables, we created this
  * structure with all global variables needed by template.
 */
-typedef struct
-{
+typedef struct {
   /* should the query and/or map be saved */
   int savemap, savequery;
 
@@ -70,12 +70,12 @@ typedef struct
 
   char **Layers;
   char *icon; /* layer:class combination that defines a legend icon */
-    
+
   int NumLayers; /* number of layers specfied by a use */
   int MaxLayers; /* Allocated size of Layers[] array */
 
   layerObj *resultlayer;
-   
+
   int UseShapes; /* are results of a query to be used in calculating an extent of some sort */
 
   shapeObj resultshape;
@@ -83,29 +83,29 @@ typedef struct
   rectObj RawExt;
 
   pointObj mappnt;
-  
-  double fZoom, Zoom;     
+
+  double fZoom, Zoom;
   int ZoomDirection; /* whether zooming in or out, default is pan or 0 */
 
   int Mode; /* can be BROWSE, QUERY, etc. */
-   
+
   int TileMode; /* can be GMAP, VE */
   char *TileCoords; /* for GMAP: 0 0 1; for VE: 013021023 */
-   
+
   char Id[IDSIZE]; /* big enough for time + pid */
-   
+
   int CoordSource;
   double ScaleDenom; /* used to create a map extent around a point */
 
   int ImgRows, ImgCols;
   rectObj ImgExt; /* Existing image's mapextent */
   rectObj ImgBox;
-   
+
   pointObj RefPnt;
   pointObj ImgPnt;
 
   double Buffer;
- 
+
   int SearchMap; /* apply pan/zoom BEFORE doing the query (e.g. query the output image rather than the input image) */
 
   char *QueryFile;
@@ -123,9 +123,9 @@ typedef struct
   int QueryCoordSource;
 
   int ZoomSize; /* zoom absolute magnitude (i.e. > 0) */
-  
-  /* 
-  ** variables for multiple query results processing 
+
+  /*
+  ** variables for multiple query results processing
   */
   int RN; /* overall result number */
   int LRN; /* result number within a layer */
@@ -133,8 +133,8 @@ typedef struct
   int NR; /* total number or results */
   int NLR; /* number of results in a layer */
 } mapservObj;
-   
-   
+
+
 
 /*! \fn msAllocMapServObj
  * Allocate memory for all variables in strusture
@@ -165,18 +165,18 @@ MS_DLL_EXPORT char *generateLegendTemplate(mapservObj *msObj);
 MS_DLL_EXPORT int msGenerateImages(mapservObj *msObj, int bQueryMap, int bReturnOnError);
 
 
-MS_DLL_EXPORT char *msProcessTemplate(mapObj *map, int bGenerateImages, 
-                         char **names, char **values, 
-                         int numentries);
+MS_DLL_EXPORT char *msProcessTemplate(mapObj *map, int bGenerateImages,
+                                      char **names, char **values,
+                                      int numentries);
 
 MS_DLL_EXPORT char *msProcessLegendTemplate(mapObj *map,
-                              char **names, char **values, 
-                              int numentries);
+    char **names, char **values,
+    int numentries);
 
 MS_DLL_EXPORT char *msProcessQueryTemplate(mapObj *map,
-                             int bGenerateImages, 
-                             char **names, char **values, 
-                             int numentries);
+    int bGenerateImages,
+    char **names, char **values,
+    int numentries);
 
 MS_DLL_EXPORT int msGrowMapservLayers( mapservObj* msObj );
 

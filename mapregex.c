@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -70,9 +70,9 @@ MS_API_EXPORT(int) ms_regexec(const ms_regex_t *regex, const char *string, size_
 {
   /*This next line only works because we know that regmatch_t
     and ms_regmatch_t are exactly alike (POSIX STANDARD)*/
-  return regexec((const regex_t*)(regex->sys_regex), 
-	       string, nmatch, 
-	       (regmatch_t*) pmatch, eflags);
+  return regexec((const regex_t*)(regex->sys_regex),
+                 string, nmatch,
+                 (regmatch_t*) pmatch, eflags);
 }
 
 MS_API_EXPORT(void) ms_regfree(ms_regex_t *regex)

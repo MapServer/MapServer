@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -46,62 +46,62 @@ extern "C" {
 #define wkp_gmerc 2
 
 
-typedef struct {
+  typedef struct {
 #ifdef SWIG
-  %immutable;
+    %immutable;
 #endif
-  int numargs; /* actual number of projection args */
-  int automatic; /* projection object was to fetched from the layer */ 
+    int numargs; /* actual number of projection args */
+    int automatic; /* projection object was to fetched from the layer */
 #ifdef SWIG
-  %mutable;
+    %mutable;
 #endif
 #ifndef SWIG
-  char **args; /* variable number of projection args */
+    char **args; /* variable number of projection args */
 #ifdef USE_PROJ
-  projPJ proj; /* a projection structure for the PROJ package */
+    projPJ proj; /* a projection structure for the PROJ package */
 #if PJ_VERSION >= 480
-  projCtx proj_ctx;
+    projCtx proj_ctx;
 #endif
 #else
-  void *proj;
+    void *proj;
 #endif
-  geotransformObj gt; /* extra transformation to apply */
+    geotransformObj gt; /* extra transformation to apply */
 #endif
-  int wellknownprojection;
-} projectionObj;
+    int wellknownprojection;
+  } projectionObj;
 
 #ifndef SWIG
 
-MS_DLL_EXPORT int msIsAxisInverted(int epsg_code);
-MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point);
-MS_DLL_EXPORT int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
-MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
-MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect);
-MS_DLL_EXPORT int msProjectionsDiffer(projectionObj *, projectionObj *);
-MS_DLL_EXPORT int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int
-                            debug_flag );
-MS_DLL_EXPORT char *msProjectionObj2OGCWKT( projectionObj *proj );
+  MS_DLL_EXPORT int msIsAxisInverted(int epsg_code);
+  MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point);
+  MS_DLL_EXPORT int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
+  MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
+  MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect);
+  MS_DLL_EXPORT int msProjectionsDiffer(projectionObj *, projectionObj *);
+  MS_DLL_EXPORT int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int
+      debug_flag );
+  MS_DLL_EXPORT char *msProjectionObj2OGCWKT( projectionObj *proj );
 
-MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
-MS_DLL_EXPORT int msInitProjection(projectionObj *p);
-MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
-MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, const char *value);
-MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p, const char *value);
-MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
-MS_DLL_EXPORT void msAxisNormalizePoints( projectionObj *proj, int count,
-                                          double *x, double *y );
-MS_DLL_EXPORT void msAxisDenormalizePoints( projectionObj *proj, int count,
-                                            double *x, double *y );
+  MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
+  MS_DLL_EXPORT int msInitProjection(projectionObj *p);
+  MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
+  MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, const char *value);
+  MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p, const char *value);
+  MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
+  MS_DLL_EXPORT void msAxisNormalizePoints( projectionObj *proj, int count,
+      double *x, double *y );
+  MS_DLL_EXPORT void msAxisDenormalizePoints( projectionObj *proj, int count,
+      double *x, double *y );
 
-MS_DLL_EXPORT void msSetPROJ_LIB( const char *, const char * );
+  MS_DLL_EXPORT void msSetPROJ_LIB( const char *, const char * );
 
-/* Provides compatiblity with PROJ.4 4.4.2 */
+  /* Provides compatiblity with PROJ.4 4.4.2 */
 #ifndef PJ_VERSION
-#  define pj_is_latlong(x)	((x)->is_latlong)
+#  define pj_is_latlong(x)  ((x)->is_latlong)
 #endif
 
-/*utility functions */
-MS_DLL_EXPORT int GetMapserverUnitUsingProj(projectionObj *psProj);
+  /*utility functions */
+  MS_DLL_EXPORT int GetMapserverUnitUsingProj(projectionObj *psProj);
 #endif
 
 #ifdef __cplusplus

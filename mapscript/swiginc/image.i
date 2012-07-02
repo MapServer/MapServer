@@ -69,7 +69,7 @@
                 msSetError(MS_MEMERR, NULL, "imageObj()");
                 return NULL;
             }
-            if ( (renderer->loadImageFromFile(file, rb)) == MS_FAILURE)
+            if ( (renderer->loadImageFromFile((char *)file, rb)) == MS_FAILURE)
                 return NULL;
 
             image = msImageCreate(rb->width, rb->height, format, NULL, NULL, 

@@ -256,7 +256,7 @@
     }
 
     int setItems(char **items, int numitems) {
-        msLayerSetItems(self, items, numitems);
+        return msLayerSetItems(self, items, numitems);
     }
 
     int draw(mapObj *map, imageObj *image) 
@@ -313,6 +313,7 @@
         self->status = MS_ON;
         retval = msQueryByAttributes(map);
         self->status = status;
+
         return retval;
     }
 
@@ -333,6 +334,7 @@
         self->status = MS_ON;
         retval = msQueryByPoint(map);
         self->status = status;
+
         return retval;
     }
 
@@ -352,6 +354,7 @@
         self->status = MS_ON;
         retval = msQueryByRect(map);
         self->status = status;
+
         return retval;
     }
 

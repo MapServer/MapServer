@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -33,31 +33,32 @@
 
 
 
-char* AddFileSuffix ( const char * Filename, const char * Suffix ) {
-  char	*pszFullname, *pszBasename;
-  int	i;
-  
+char* AddFileSuffix ( const char * Filename, const char * Suffix )
+{
+  char  *pszFullname, *pszBasename;
+  int i;
+
   /* -------------------------------------------------------------------- */
-  /*	Compute the base (layer) name.  If there is any extension	    */
-  /*	on the passed in filename we will strip it off.			    */
+  /*  Compute the base (layer) name.  If there is any extension     */
+  /*  on the passed in filename we will strip it off.         */
   /* -------------------------------------------------------------------- */
   pszBasename = (char *) msSmallMalloc(strlen(Filename)+5);
   strcpy( pszBasename, Filename );
-  for( i = strlen(pszBasename)-1; 
+  for( i = strlen(pszBasename)-1;
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-	 && pszBasename[i] != '\\';
+       && pszBasename[i] != '\\';
        i-- ) {}
-  
+
   if( pszBasename[i] == '.' )
     pszBasename[i] = '\0';
-  
+
   /* -------------------------------------------------------------------- */
-  /*	Open the .shp and .shx files.  Note that files pulled from	    */
-  /*	a PC to Unix with upper case filenames won't work!		    */
+  /*  Open the .shp and .shx files.  Note that files pulled from      */
+  /*  a PC to Unix with upper case filenames won't work!        */
   /* -------------------------------------------------------------------- */
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
-  sprintf( pszFullname, "%s%s", pszBasename, Suffix); 
-  
+  sprintf( pszFullname, "%s%s", pszBasename, Suffix);
+
   free(pszBasename);
   return (pszFullname);
 }
@@ -77,61 +78,60 @@ int main(int argc, char *argv[])
   }
 
   /* -------------------------------------------------------------------- */
-  /*	Establish the byte order on this machine to decide default        */
+  /*  Establish the byte order on this machine to decide default        */
   /*    index format                                                      */
   /* -------------------------------------------------------------------- */
-    i = 1;
-    if( *((uchar *) &i) == 1 )
-      byte_order = MS_NEW_LSB_ORDER;
-    else
-      byte_order = MS_NEW_MSB_ORDER;
+  i = 1;
+  if( *((uchar *) &i) == 1 )
+    byte_order = MS_NEW_LSB_ORDER;
+  else
+    byte_order = MS_NEW_MSB_ORDER;
 
 
   if(argc<2) {
-   fprintf(stdout,"Syntax:\n");
-   fprintf(stdout,"    shptree <shpfile> [<depth>] [<index_format>]\n" );
-   fprintf(stdout,"Where:\n");
-   fprintf(stdout," <shpfile> is the name of the .shp file to index.\n");
-   fprintf(stdout," <depth>   (optional) is the maximum depth of the index\n");
-   fprintf(stdout,"           to create, default is 0 meaning that shptree\n");
-   fprintf(stdout,"           will calculate a reasonable default depth.\n");
-   fprintf(stdout," <index_format> (optional) is one of:\n");
-   fprintf(stdout,"           NL: LSB byte order, using new index format\n");
-   fprintf(stdout,"           NM: MSB byte order, using new index format\n");
-   fprintf(stdout,"       The following old format options are deprecated:\n");
-   fprintf(stdout,"           N:  Native byte order\n");
-   fprintf(stdout,"           L:  LSB (intel) byte order\n");
-   fprintf(stdout,"           M:  MSB byte order\n");
-   fprintf(stdout,"       The default index_format on this system is: %s\n\n",
-           (byte_order == MS_NEW_LSB_ORDER) ? "NL" : "NM" );
-   exit(0);
+    fprintf(stdout,"Syntax:\n");
+    fprintf(stdout,"    shptree <shpfile> [<depth>] [<index_format>]\n" );
+    fprintf(stdout,"Where:\n");
+    fprintf(stdout," <shpfile> is the name of the .shp file to index.\n");
+    fprintf(stdout," <depth>   (optional) is the maximum depth of the index\n");
+    fprintf(stdout,"           to create, default is 0 meaning that shptree\n");
+    fprintf(stdout,"           will calculate a reasonable default depth.\n");
+    fprintf(stdout," <index_format> (optional) is one of:\n");
+    fprintf(stdout,"           NL: LSB byte order, using new index format\n");
+    fprintf(stdout,"           NM: MSB byte order, using new index format\n");
+    fprintf(stdout,"       The following old format options are deprecated:\n");
+    fprintf(stdout,"           N:  Native byte order\n");
+    fprintf(stdout,"           L:  LSB (intel) byte order\n");
+    fprintf(stdout,"           M:  MSB byte order\n");
+    fprintf(stdout,"       The default index_format on this system is: %s\n\n",
+            (byte_order == MS_NEW_LSB_ORDER) ? "NL" : "NM" );
+    exit(0);
   }
 
   if(argc >= 3)
     depth = atoi(argv[2]);
 
-  if(argc >= 4)
-  {
+  if(argc >= 4) {
     if( !strcasecmp(argv[3],"N" ))
-      byte_order = MS_NATIVE_ORDER; 
+      byte_order = MS_NATIVE_ORDER;
     if( !strcasecmp(argv[3],"L" ))
-      byte_order = MS_LSB_ORDER; 
+      byte_order = MS_LSB_ORDER;
     if( !strcasecmp(argv[3],"M" ))
-      byte_order = MS_MSB_ORDER; 
+      byte_order = MS_MSB_ORDER;
     if( !strcasecmp(argv[3],"NL" ))
-      byte_order = MS_NEW_LSB_ORDER; 
+      byte_order = MS_NEW_LSB_ORDER;
     if( !strcasecmp(argv[3],"NM" ))
-      byte_order = MS_NEW_MSB_ORDER; 
+      byte_order = MS_NEW_MSB_ORDER;
   }
-    
+
   if(msShapefileOpen(&shapefile, "rb", argv[1], MS_TRUE) == -1) {
     fprintf(stdout, "Error opening shapefile %s.\n", argv[1]);
     exit(0);
   }
 
-  printf( "creating index of %s %s format\n",(byte_order < 1 ? "old (deprecated)" :"new"), 
-     ((byte_order == MS_NATIVE_ORDER) ? "native" : 
-     ((byte_order == MS_LSB_ORDER) || (byte_order == MS_NEW_LSB_ORDER)? " LSB":"MSB")));
+  printf( "creating index of %s %s format\n",(byte_order < 1 ? "old (deprecated)" :"new"),
+          ((byte_order == MS_NATIVE_ORDER) ? "native" :
+           ((byte_order == MS_LSB_ORDER) || (byte_order == MS_NEW_LSB_ORDER)? " LSB":"MSB")));
 
   tree = msCreateTree(&shapefile, depth);
   if(!tree) {

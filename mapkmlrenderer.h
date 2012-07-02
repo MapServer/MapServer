@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$ 
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Headers for mapkmlrenderer.cpp Google Earth KML output
@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -39,136 +39,136 @@
 
 class KmlRenderer
 {
-  private:
-    const char *pszLayerDescMetadata; /*if the kml_description is set*/
-    char **papszLayerIncludeItems;
-    int nIncludeItems;
-    char **papszLayerExcludeItems;
-    int nExcludeItems;
-    char *pszLayerNameAttributeMetadata;
+private:
+  const char *pszLayerDescMetadata; /*if the kml_description is set*/
+  char **papszLayerIncludeItems;
+  int nIncludeItems;
+  char **papszLayerExcludeItems;
+  int nExcludeItems;
+  char *pszLayerNameAttributeMetadata;
 
-  protected:
+protected:
 
-    // map properties
-    int				Width, Height;
-    rectObj			MapExtent;
-    double			MapCellsize;
-    colorObj		BgColor;
-    char			MapPath[MS_MAXPATHLEN];
+  // map properties
+  int       Width, Height;
+  rectObj     MapExtent;
+  double      MapCellsize;
+  colorObj    BgColor;
+  char      MapPath[MS_MAXPATHLEN];
 
-    // xml nodes pointers
-    xmlDocPtr	XmlDoc;
-    xmlNodePtr	DocNode;
-    xmlNodePtr	LayerNode;
-    xmlNodePtr	GroundOverlayNode;
+  // xml nodes pointers
+  xmlDocPtr XmlDoc;
+  xmlNodePtr  DocNode;
+  xmlNodePtr  LayerNode;
+  xmlNodePtr  GroundOverlayNode;
 
-    xmlNodePtr	PlacemarkNode;
-    xmlNodePtr	GeomNode;
-    xmlNodePtr	DescriptionNode;
+  xmlNodePtr  PlacemarkNode;
+  xmlNodePtr  GeomNode;
+  xmlNodePtr  DescriptionNode;
 
-    int	        CurrentShapeIndex;
-    int	        CurrentDrawnShapeIndex;
-    char            *CurrentShapeName;
-    char		**Items;
-    int			NumItems;
-    int			DumpAttributes;
+  int         CurrentShapeIndex;
+  int         CurrentDrawnShapeIndex;
+  char            *CurrentShapeName;
+  char    **Items;
+  int     NumItems;
+  int     DumpAttributes;
 
-    // placemark symbology
-    hashTableObj	*StyleHashTable;
+  // placemark symbology
+  hashTableObj  *StyleHashTable;
 
-    labelStyleObj	        LabelStyle;
-    strokeStyleObj	        *LineStyle;
-    int                     numLineStyle;
-    colorObj		PolygonColor;
+  labelStyleObj         LabelStyle;
+  strokeStyleObj          *LineStyle;
+  int                     numLineStyle;
+  colorObj    PolygonColor;
 
-    char			SymbolName[128];
-    char			SymbolUrl[128];
+  char      SymbolName[128];
+  char      SymbolUrl[128];
 
-    enum			{ NumSymbologyFlag = 4};
-    char			SymbologyFlag[NumSymbologyFlag];
+  enum      { NumSymbologyFlag = 4};
+  char      SymbologyFlag[NumSymbologyFlag];
 
-    enum			symbFlagsEnum { Label, Line, Polygon, Symbol };
+  enum      symbFlagsEnum { Label, Line, Polygon, Symbol };
 
-    int				FirstLayer;
-        
-    mapObj                  *map;
-    layerObj                *currentLayer;
+  int       FirstLayer;
 
-    int				AltitudeMode;
-    int				Tessellate;
-    int				Extrude;
+  mapObj                  *map;
+  layerObj                *currentLayer;
 
-    enum altitudeModeEnum { undefined, clampToGround, relativeToGround, absolute };
-    /**True if elevation is taken from a feature attribute*/
-    bool mElevationFromAttribute;
-    /**Attribute index of elevation (or -1 if elevation is not attribute driven*/
-    int mElevationAttributeIndex;
-    double mCurrentElevationValue;
- 	
+  int       AltitudeMode;
+  int       Tessellate;
+  int       Extrude;
 
-    outputFormatObj *aggFormat;
+  enum altitudeModeEnum { undefined, clampToGround, relativeToGround, absolute };
+  /**True if elevation is taken from a feature attribute*/
+  bool mElevationFromAttribute;
+  /**Attribute index of elevation (or -1 if elevation is not attribute driven*/
+  int mElevationAttributeIndex;
+  double mCurrentElevationValue;
 
-  protected:
 
-    imageObj* createInternalImage();
-    xmlNodePtr createPlacemarkNode(xmlNodePtr parentNode, char *styleUrl);
-    xmlNodePtr createGroundOverlayNode(xmlNodePtr parentNode, char *imageHref, layerObj *layer);
-    xmlNodePtr createDescriptionNode(shapeObj *shape);
+  outputFormatObj *aggFormat;
 
-    char* lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *style);
+protected:
 
-    void addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts);
+  imageObj* createInternalImage();
+  xmlNodePtr createPlacemarkNode(xmlNodePtr parentNode, char *styleUrl);
+  xmlNodePtr createGroundOverlayNode(xmlNodePtr parentNode, char *imageHref, layerObj *layer);
+  xmlNodePtr createDescriptionNode(shapeObj *shape);
 
-    void setupRenderingParams(hashTableObj *layerMetadata);
-    void addAddRenderingSpecifications(xmlNodePtr node);
+  char* lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyleObj *style);
 
-    int checkProjection(mapObj *map);
+  void addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts);
 
-    int createIconImage(char *fileName, symbolObj *symbol, symbolStyleObj *style);
+  void setupRenderingParams(hashTableObj *layerMetadata);
+  void addAddRenderingSpecifications(xmlNodePtr node);
 
-    void renderSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
+  int checkProjection(mapObj *map);
 
-    //////////////////////////////////////////////////////////////////////////////
+  int createIconImage(char *fileName, symbolObj *symbol, symbolStyleObj *style);
 
-    void renderLineVector(imageObj *img, shapeObj *p, strokeStyleObj *style);
-    void renderPolygonVector(imageObj *img, shapeObj *p, colorObj *color);
-    void renderGlyphsVector(imageObj *img, double x, double y, labelStyleObj *style, char *text);
+  void renderSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
 
-    char* lookupPlacemarkStyle();
-    void flushPlacemark();
-    xmlNodePtr getGeomParentNode(const char *geomName);
-    char* getLayerName(layerObj *layer);
-    void processLayer(layerObj *layer, outputFormatObj *format);
-    void addLineStyleToList(strokeStyleObj *style);
-    const char *getAliasName(layerObj *lp, char *pszItemName, const char *namespaces);
+  //////////////////////////////////////////////////////////////////////////////
 
-  public:
+  void renderLineVector(imageObj *img, shapeObj *p, strokeStyleObj *style);
+  void renderPolygonVector(imageObj *img, shapeObj *p, colorObj *color);
+  void renderGlyphsVector(imageObj *img, double x, double y, labelStyleObj *style, char *text);
 
-    KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color = NULL);
-    virtual ~KmlRenderer();
+  char* lookupPlacemarkStyle();
+  void flushPlacemark();
+  xmlNodePtr getGeomParentNode(const char *geomName);
+  char* getLayerName(layerObj *layer);
+  void processLayer(layerObj *layer, outputFormatObj *format);
+  void addLineStyleToList(strokeStyleObj *style);
+  const char *getAliasName(layerObj *lp, char *pszItemName, const char *namespaces);
 
-    imageObj* createImage(int width, int height, outputFormatObj *format, colorObj* bg);
-    int saveImage(imageObj *img, FILE *fp, outputFormatObj *format);
-    
-    int startNewLayer(imageObj *img, layerObj *layer);
-    int closeNewLayer(imageObj *img, layerObj *layer);
+public:
 
-    void startShape(imageObj *img, shapeObj *shape);
-    void endShape(imageObj *img, shapeObj *shape);
+  KmlRenderer(int width, int height, outputFormatObj *format, colorObj* color = NULL);
+  virtual ~KmlRenderer();
 
-    void renderLine(imageObj *img, shapeObj *p, strokeStyleObj *style);
-    void renderPolygon(imageObj *img, shapeObj *p, colorObj *color);
+  imageObj* createImage(int width, int height, outputFormatObj *format, colorObj* bg);
+  int saveImage(imageObj *img, FILE *fp, outputFormatObj *format);
 
-    void renderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, char *text);
+  int startNewLayer(imageObj *img, layerObj *layer);
+  int closeNewLayer(imageObj *img, layerObj *layer);
 
-    // Symbols
-    void renderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
-    void renderVectorSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
-    void renderEllipseSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
-    void renderTruetypeSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
+  void startShape(imageObj *img, shapeObj *shape);
+  void endShape(imageObj *img, shapeObj *shape);
 
-    int getTruetypeTextBBox(imageObj *img,char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances);
-    int mergeRasterBuffer(imageObj *image, rasterBufferObj *rb);
+  void renderLine(imageObj *img, shapeObj *p, strokeStyleObj *style);
+  void renderPolygon(imageObj *img, shapeObj *p, colorObj *color);
+
+  void renderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, char *text);
+
+  // Symbols
+  void renderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
+  void renderVectorSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
+  void renderEllipseSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
+  void renderTruetypeSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);
+
+  int getTruetypeTextBBox(imageObj *img,char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances);
+  int mergeRasterBuffer(imageObj *image, rasterBufferObj *rb);
 };
 
 #endif /* USE_KML */

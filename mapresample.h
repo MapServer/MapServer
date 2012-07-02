@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -38,19 +38,19 @@
 #  include <cpl_string.h>
 #endif
 
-typedef int (*SimpleTransformer)( void *pCBData, int nPoints, 
+typedef int (*SimpleTransformer)( void *pCBData, int nPoints,
                                   double *x, double *y, int *panSuccess );
 
-void *msInitProjTransformer( projectionObj *psSrc, 
-                             double *padfSrcGeoTransform, 
-                             projectionObj *psDst, 
+void *msInitProjTransformer( projectionObj *psSrc,
+                             double *padfSrcGeoTransform,
+                             projectionObj *psDst,
                              double *padfDstGeoTransform );
 void msFreeProjTransformer( void * );
-int msProjTransformer( void *pCBData, int nPoints, 
+int msProjTransformer( void *pCBData, int nPoints,
                        double *x, double *y, int *panSuccess );
 #ifdef USE_GDAL
-int msResampleGDALToMap( mapObj *map, layerObj *layer, 
-                         imageObj *image, rasterBufferObj *rb, 
+int msResampleGDALToMap( mapObj *map, layerObj *layer,
+                         imageObj *image, rasterBufferObj *rb,
                          GDALDatasetH hDS );
 #endif
 #endif /* ndef RESAMPLE_H */

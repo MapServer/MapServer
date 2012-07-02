@@ -186,10 +186,10 @@ _libs="$LIBS"
 CPPFLAGS="$FT_CFLAGS $CPPFLAGS"
 LDFLAGS="$FT_LDFLAGS $LDFLAGS"
 
-AC_CHECK_LIB(freetype,FT_Init_FreeType,,
+AC_CHECK_LIB(freetype,FT_Init_FreeType,[:],
              AC_MSG_ERROR([unable to link - reconfigure with correct --with-freetype=dir ]))
 
-AC_CHECK_HEADERS(ft2build.h,,
+AC_CHECK_HEADERS(ft2build.h,[:],
                  AC_MSG_ERROR([ft2build.h header not found - reconfigure with correct --with-freetype=dir ]))
 
 CPPFLAGS=$_cppflags
@@ -215,11 +215,11 @@ AC_DEFUN([MS_CHECK_PNG],[
    fi
 
    if test -z "$with_png" -o "$with_png" == "yes" -o "$with_png" == "/usr"; then
-      AC_CHECK_HEADER([png.h],[],
+      AC_CHECK_HEADER([png.h],[:],
                    [AC_MSG_ERROR([png.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      AC_CHECK_HEADER([setjmp.h],[],
+      AC_CHECK_HEADER([setjmp.h],[:],
                    [AC_MSG_ERROR([setjmp.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      AC_CHECK_LIB([png], [png_init_io],[],
+      AC_CHECK_LIB([png], [png_init_io],[:],
                    [AC_MSG_ERROR([libpng library not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
 
    else
@@ -229,13 +229,13 @@ AC_DEFUN([MS_CHECK_PNG],[
       CPPFLAGS="-I$with_png/include"
       LDFLAGS="-L$with_png/lib"
       
-      AC_CHECK_HEADER([png.h],[],
+      AC_CHECK_HEADER([png.h],[:],
                    [AC_MSG_ERROR([png.h header not found in $with_png. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      AC_CHECK_HEADER([setjmp.h],[],
+      AC_CHECK_HEADER([setjmp.h],[:],
                    [AC_MSG_ERROR([setjmp.h header not found. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      AC_CHECK_LIB([png], [png_init_io],[],
+      AC_CHECK_LIB([png], [png_init_io],[:],
                    [AC_MSG_ERROR([libpng library not found in $with_png. install png development package, or reconfigure with --with-png=/path/to/png/prefix])])
-      PNG_INC="$CFLAGS"
+      PNG_INC="$CPPFLAGS"
       PNG_LIB="$LDFLAGS"
       CPPFLAGS="$old_CPPFLAGS"
       LDFLAGS="$old_LDFLAGS"
@@ -262,9 +262,9 @@ AC_DEFUN([MS_CHECK_JPEG],[
    fi
 
    if test -z "$with_jpeg" -o "$with_jpeg" == "yes" -o "$with_jpeg" == "/usr"; then
-      AC_CHECK_HEADER([jpeglib.h],[],
+      AC_CHECK_HEADER([jpeglib.h],[:],
                    [AC_MSG_ERROR([jpeglib.h header not found. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
-      AC_CHECK_LIB([jpeg], [jpeg_read_header],[],
+      AC_CHECK_LIB([jpeg], [jpeg_read_header],[:],
                    [AC_MSG_ERROR([libjpeg library not found. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
 
    else
@@ -274,11 +274,11 @@ AC_DEFUN([MS_CHECK_JPEG],[
       CPPFLAGS="-I$with_jpeg/include"
       LDFLAGS="-L$with_jpeg/lib"
       
-      AC_CHECK_HEADER([jpeglib.h],[],
+      AC_CHECK_HEADER([jpeglib.h],[:],
                    [AC_MSG_ERROR([jpeglib.h header not found in $with_jpeg. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
-      AC_CHECK_LIB([jpeg], [jpeg_read_header],[],
+      AC_CHECK_LIB([jpeg], [jpeg_read_header],[:],
                    [AC_MSG_ERROR([libjpeg library not found in $with_jpeg. install jpeg development package, or reconfigure with --with-jpeg=/path/to/jpeg/prefix])])
-      JPEG_INC="$CFLAGS"
+      JPEG_INC="$CPPFLAGS"
       JPEG_LIB="$LDFLAGS"
       CPPFLAGS="$old_CPPFLAGS"
       LDFLAGS="$old_LDFLAGS"
@@ -319,9 +319,9 @@ AC_DEFUN([MS_CHECK_GIF],[
    else
       AC_MSG_RESULT([yes])
       if test -z "$with_gif" -o "$with_gif" == "yes" -o "$with_gif" == "/usr"; then
-         AC_CHECK_HEADER([gif_lib.h],,
+         AC_CHECK_HEADER([gif_lib.h],[:],
                       [AC_MSG_ERROR([gif_lib.h header not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
-         AC_CHECK_LIB([gif], [DGifOpenFileHandle],[],
+         AC_CHECK_LIB([gif], [DGifOpenFileHandle],[:],
                       [AC_MSG_ERROR([libgif library not found. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
 
       else
@@ -331,11 +331,11 @@ AC_DEFUN([MS_CHECK_GIF],[
          CPPFLAGS="-I$with_gif/include"
          LDFLAGS="-L$with_gif/lib"
          
-         AC_CHECK_HEADER([gif_lib.h],[],
+         AC_CHECK_HEADER([gif_lib.h],[:],
                       [AC_MSG_ERROR([gif_lib.h header not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
-         AC_CHECK_LIB([gif], [DGifOpenFileHandle],[],
+         AC_CHECK_LIB([gif], [DGifOpenFileHandle],[:],
                       [AC_MSG_ERROR([libgif library not found in $with_gif. install gif development package, or reconfigure with --with-gif=/path/to/gif/prefix])])
-         GIF_INC="$CFLAGS"
+         GIF_INC="$CPPFLAGS"
          GIF_LIB="$LDFLAGS"
          CPPFLAGS="$old_CPPFLAGS"
          LDFLAGS="$old_LDFLAGS"
@@ -515,13 +515,21 @@ AC_DEFUN([MS_CHECK_GD],[
       dnl supplied paths for other libraries
 
       dnl remove /usr/include/ from default include path
-      GD_INC=`$GDCONFIG --includes`
-      GD_INC=`echo "$GD_INC" | sed 's#-I/usr/include # #' | sed 's#-I/usr/include/ # #'`
+      GD_INC=`$GDCONFIG --includedir`
+      if test "x$GD_INC" != "x/usr/include" -a "x$GD_INC" != "x/usr/include/" -a -n "$GD_INC"; then
+         GD_INC="-I$GD_INC"
+      else
+         GD_INC=""
+      fi
       
       dnl remove /usr/lib/ from default lib path
-      GD_LIB=`$GDCONFIG --ldflags`
-      GD_LIB=`echo "$GD_LIB" | sed 's# /usr/lib # #' | sed 's# /usr/lib/ # #'`
-
+      GD_LIB=`$GDCONFIG --libdir`
+      if test "x$GD_LIB" != "x/usr/lib" -a "x$GD_LIB" != "x/usr/lib/" -a -n "$GD_LIB"; then
+         GD_LIB="-L$GD_LIB"
+      else
+         GD_LIB=""
+      fi
+      
       GD_ENABLED="-DUSE_GD $GD_ENABLED"
       ALL_ENABLED="$GD_ENABLED $ALL_ENABLED"
       AC_SUBST(GD_ENABLED, "$GD_ENABLED")
@@ -990,8 +998,13 @@ if test -n "$with_geos" -a "$with_geos" != "no" ; then
 
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
-  GEOS_LIB="`$GEOS_CONFIG --libs`_c"
-
+  dnl Geos >=3.3 has a new config option: --clibs.
+  if test $ac_geos_version -ge 300300; then
+     GEOS_LIB="`$GEOS_CONFIG --clibs`"
+  else
+     GEOS_LIB="`$GEOS_CONFIG --libs`_c"
+  fi
+  
   AC_SUBST(GEOS_ENABLED,$GEOS_ENABLED)
   AC_SUBST(GEOS_INC,    $GEOS_INC)
   AC_SUBST(GEOS_LIB,    $GEOS_LIB)
@@ -1285,6 +1298,7 @@ else
   fi
 
   dnl Try to locate include directory
+  test -f $ORA_HOME/include/oci.h && ORA_INCDIR="$ORA_HOME/include"
   test -f $ORA_HOME/sdk/include/oci.h && ORA_INCDIR="$ORA_HOME/sdk/include"
   test -f $ORA_HOME/rdbms/public/oci.h && ORA_INCDIR="$ORA_HOME/rdbms/public"
   test -f $ORA_HOME/rdbms/demo/oci.h && ORA_INCDIR="$ORA_HOME/rdbms/public"
