@@ -11,7 +11,7 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-Current Version (git master, 6.1-dev, future 6.2):
+Current Version (git master, 6.3-dev, future 6.4):
 -------------------------------------------------
 
 - Add notable changes here. Less important changes should go only in the
