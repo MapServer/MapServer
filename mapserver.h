@@ -441,12 +441,11 @@ extern "C" {
 #define GET_LAYER(map, pos) map->layers[pos]
 #define GET_CLASS(map, lid, cid) map->layers[lid]->class[cid]
 
-#if defined(USE_THREAD) && defined(HAVE_SYNC_FETCH_AND_ADD)
+#if defined(HAVE_SYNC_FETCH_AND_ADD)
 #define MS_REFCNT_INCR(obj) __sync_fetch_and_add(&obj->refcount, +1)
 #define MS_REFCNT_DECR(obj) __sync_sub_and_fetch(&obj->refcount, +1)
 #define MS_REFCNT_INIT(obj) obj->refcount=1, __sync_synchronize()
-#elif defined(USE_THREAD)
-#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 #pragma intrinsic (_InterlockedExchangeAdd)
 #if defined(_MSC_VER) && (_MSC_VER <= 1200)
 #define MS_REFCNT_INCR(obj) ( _InterlockedExchangeAdd((long*)(&obj->refcount), (long)(+1)) +1 )
@@ -467,14 +466,11 @@ extern "C" {
 #define MS_REFCNT_DECR(obj) (--(obj->refcount))
 #define MS_REFCNT_INIT(obj) obj->refcount=1
 #endif // close if defined(_MSC..
-#endif // close elif
 
-#if defined(USE_THREAD)
 #define MS_REFCNT_DECR_IS_NOT_ZERO(obj) (MS_REFCNT_DECR(obj))>0
 #define MS_REFCNT_DECR_IS_ZERO(obj) (MS_REFCNT_DECR(obj))<=0
 
 #define MS_IS_VALID_ARRAY_INDEX(index, size) ((index<0 || index>=size)?MS_FALSE:MS_TRUE)
-#endif
 
 #endif
 
