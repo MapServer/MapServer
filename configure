@@ -18321,6 +18321,11 @@ $as_echo "no" >&6; }
 
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
+
+    if test $ac_geos_version -ge 300300; then
+     GEOS_ENABLED="-DUSE_GEOS -DHAVE_GEOS_OFFSET_CURVE"
+  fi
+
     if test $ac_geos_version -ge 300300; then
      GEOS_LIB="`$GEOS_CONFIG --clibs`"
   else

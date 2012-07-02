@@ -1000,6 +1000,12 @@ if test -n "$with_geos" -a "$with_geos" != "no" ; then
 
   GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
+
+  dnl Geos >=3.3 has SingleSidedBuffer for offset lines
+  if test $ac_geos_version -ge 300300; then
+     GEOS_ENABLED="-DUSE_GEOS -DHAVE_GEOS_OFFSET_CURVE"
+  fi
+  
   dnl Geos >=3.3 has a new config option: --clibs.
   if test $ac_geos_version -ge 300300; then
      GEOS_LIB="`$GEOS_CONFIG --clibs`"
