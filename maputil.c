@@ -449,7 +449,7 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
         msSetError(MS_MISCERR, "Cannot evaluate expression, no item index defined.", "msEvalExpression()");
         return MS_FALSE;
       }
-      if(itemindex >= layer->numitems) {
+      if(itemindex >= layer->numitems || itemindex >= shape->numvalues) {
         msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
         return MS_FALSE;
       }
@@ -483,7 +483,7 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
         msSetError(MS_MISCERR, "Cannot evaluate expression, no item index defined.", "msEvalExpression()");
         return MS_FALSE;
       }
-      if(itemindex >= layer->numitems) {
+      if(itemindex >= layer->numitems || itemindex >= shape->numvalues) {
         msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
         return MS_FALSE;
       }

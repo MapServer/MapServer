@@ -2359,8 +2359,9 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority)
   cacheslot = &(labelcache->slots[priority]);
   for(l=cacheslot->numlabels-1; l>=0; l--) {
     cachePtr = &(cacheslot->labels[l]); /* point to right spot in the label cache */
-    if(cachePtr->status == MS_FALSE && !cachePtr->labelpath) {
-      /* only test regular labels that haven't been rendered */
+    if(cachePtr->status == MS_FALSE && !cachePtr->labelpath && cachePtr->poly) {
+      /* only test regular labels that have had their bounding box computed
+       and that haven't been rendered  */
       classObj *classPtr = (GET_CLASS(map,cachePtr->layerindex,cachePtr->classindex));
       layerObj *layerPtr = (GET_LAYER(map,cachePtr->layerindex));
       if(classPtr->leader.maxdistance) { /* only test labels that can be offsetted */
