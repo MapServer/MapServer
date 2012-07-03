@@ -242,7 +242,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>force                                 { MS_LEXER_RETURN_TOKEN(FORCE); }
 <INITIAL>formatoption                          { MS_LEXER_RETURN_TOKEN(FORMATOPTION); }
 <INITIAL>from                                  { MS_LEXER_RETURN_TOKEN(FROM); }
-<INITIAL>gap                                   { MS_LEXER_RETURN_TOKEN(GAP); }
+<INITIAL,URL_STRING>gap                        { MS_LEXER_RETURN_TOKEN(GAP); }
 <INITIAL>geomtransform                         { MS_LEXER_RETURN_TOKEN(GEOMTRANSFORM); }
 <INITIAL>grid                                  { MS_LEXER_RETURN_TOKEN(GRID); }
 <INITIAL>gridstep                              { MS_LEXER_RETURN_TOKEN(GRIDSTEP); }
@@ -259,7 +259,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>imageurl                              { MS_LEXER_RETURN_TOKEN(IMAGEURL); }
 <INITIAL>include                               { BEGIN(INCLUDE); }
 <INITIAL>index                                 { MS_LEXER_RETURN_TOKEN(INDEX); }
-<INITIAL>initialgap                            { MS_LEXER_RETURN_TOKEN(INITIALGAP); }
+<INITIAL,URL_STRING>initialgap                 { MS_LEXER_RETURN_TOKEN(INITIALGAP); }
 <INITIAL>interlace                             { MS_LEXER_RETURN_TOKEN(INTERLACE); }
 <INITIAL,URL_STRING>intervals                  { MS_LEXER_RETURN_TOKEN(INTERVALS); } 
 <INITIAL>join                                  { MS_LEXER_RETURN_TOKEN(JOIN); }
@@ -319,7 +319,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>mintemplate                           { MS_LEXER_RETURN_TOKEN(MINTEMPLATE); }
 <INITIAL>minwidth                              { MS_LEXER_RETURN_TOKEN(MINWIDTH); }
 <INITIAL>name                                  { MS_LEXER_RETURN_TOKEN(NAME); }
-<INITIAL>offset                                { MS_LEXER_RETURN_TOKEN(OFFSET); }
+<INITIAL,URL_STRING>offset                     { MS_LEXER_RETURN_TOKEN(OFFSET); }
 <INITIAL>offsite                               { MS_LEXER_RETURN_TOKEN(OFFSITE); }
 <INITIAL,URL_STRING>opacity                    { MS_LEXER_RETURN_TOKEN(OPACITY); }
 <INITIAL,URL_STRING>outlinecolor               { MS_LEXER_RETURN_TOKEN(OUTLINECOLOR); }
@@ -333,7 +333,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>overlaysize                { MS_LEXER_RETURN_TOKEN(OVERLAYSIZE); }
 <INITIAL,URL_STRING>overlaysymbol              { MS_LEXER_RETURN_TOKEN(OVERLAYSYMBOL); }
 <INITIAL>partials                              { MS_LEXER_RETURN_TOKEN(PARTIALS); }
-<INITIAL>pattern                               { MS_LEXER_RETURN_TOKEN(PATTERN); }
+<INITIAL,URL_STRING>pattern                    { MS_LEXER_RETURN_TOKEN(PATTERN); }
 <INITIAL,URL_STRING>points                     { MS_LEXER_RETURN_TOKEN(POINTS); }
 <INITIAL>items                                 { MS_LEXER_RETURN_TOKEN(ITEMS); }
 <INITIAL,URL_STRING>position                   { MS_LEXER_RETURN_TOKEN(POSITION); }
