@@ -1865,7 +1865,8 @@ int msTiledSHPOpenFile(layerObj *layer)
     free(tSHP);
     return MS_FAILURE;
   }
-
+  
+  tSHP->shpfile->isopen = MS_FALSE; /* in case of error: do not try to close the shpfile */
   tSHP->tileshpfile = NULL; /* may need this if not using a tile layer, look for malloc later */
   layer->layerinfo = tSHP;
 
@@ -1899,6 +1900,7 @@ int msTiledSHPOpenFile(layerObj *layer)
                  __FILE__, __LINE__, sizeof(shapefileObj));
       free(tSHP->shpfile);
       free(tSHP);
+      layer->layerinfo = NULL;
       return MS_FAILURE;
     }
 
