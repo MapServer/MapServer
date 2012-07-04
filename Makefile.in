@@ -244,7 +244,7 @@ INCLUDES = $(FT_INC) $(REGEX_INC) $(PNG_INC) $(GIF_INC) $(JPEG_INC) $(GD_INC) \
         $(AGG_INC) $(OGL_INC) $(FTGL_INC) $(PROJ_INC) $(EGIS_INC) \
         $(SDE_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYSQL_INC) \
         $(CURL_INC) $(ORACLESPATIAL_INC) $(GEOS_INC) $(ICONV_INC) \
-        $(FASTCGI_INC) $(EXEMPI_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC) $(LIBSVG_CAIRO_INC) \
+        $(EXEMPI_INC) $(XML2_INC) $(FRIBIDI_INC) $(CAIRO_INC) $(LIBSVG_CAIRO_INC) \
 		  $(APR_INC) $(APACHE_INC)
 
 FLAGS = @DEBUG_FLAGS@ $(DEFINES) $(INCLUDES)
@@ -256,7 +256,7 @@ CXXFLAGS = @CXXFLAGS@ $(FLAGS)
 SUP_LIBS =  $(FT_LIB) $(GD_LIB) $(OGL_LIB) $(FTGL_LIB) $(PROJ_LIBS) \
           $(JPEG_LIB) $(PNG_LIB) $(GIF_LIB) $(SDE_LIB) $(GDAL_LIB) $(POSTGIS_LIB) \
 	  $(MYSQL_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) $(GEOS_LIB) \
-	  $(THREAD_LIB) $(ICONV_LIB) $(FASTCGI_LIB) $(EXEMPI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
+	  $(THREAD_LIB) $(ICONV_LIB) $(EXEMPI_LIB) $(XSLT_LIB) $(EXSLT_LIB) \
 	  $(XML2_LIB) $(FRIBIDI_LIB) $(XTRALIBS)  $(CAIRO_LIB) $(LIBSVG_CAIRO_LIB) \
 	  $(APR_LIB)
 
@@ -306,7 +306,6 @@ EXE_LIST = 	shp2img legend mapserv shptree shptreevis \
 # --- You shouldn't have to edit anything else. ---
 #
 all: $(LIBMAP) $(EXE_LIST) @MAKE_PHP_MAPSCRIPT@ @MAKE_PYTHON_MAPSCRIPT@ 
-EXE_LDFLAGS = $(LIBMAP)
 
 # Explicitly invoke this rule when maplexer.l is altered.  We don't do
 # it automatically for the reasons listed in #2310
@@ -338,6 +337,9 @@ mapserver.h: $(HEADERS)
 .c.$(OBJ_SUFFIX): $(HEADERS)
 	$(LTCC) $(CC) -c $(CFLAGS) $< -o $@
 
+mapserv.$(OBJ_SUFFIX): mapserv.c $(HEADERS)
+	$(LTCC) $(CC) -c $(CFLAGS) $(FASTCGI_INC) mapserv.c -o $@
+
 .cpp.$(OBJ_SUFFIX): mapserver.h
 	$(LTCXX) $(CXX) -c $(CXXFLAGS) $< -o $@
    
@@ -357,58 +359,59 @@ $(LIBMAP): $(OBJS)
 	$(LINK) -release $(MS_VERSION)  $(OBJS) $(SUP_LIBS) -o $(LIBMAP)
 
 shp2pdf: $(LIBMAP) shp2pdf.$(OBJ_SUFFIX)
-	$(LINK) shp2pdf.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shp2pdf
+	$(LINK) shp2pdf.$(OBJ_SUFFIX) $(LIBMAP) -o shp2pdf
 
 shp2img: $(LIBMAP) shp2img.$(OBJ_SUFFIX)
-	$(LINK) shp2img.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shp2img
+	$(LINK) shp2img.$(OBJ_SUFFIX) $(LIBMAP) -o shp2img
 
 sym2img:  sym2img.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) sym2img.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o sym2img
+	$(LINK) sym2img.$(OBJ_SUFFIX) $(LIBMAP) -o sym2img
 
 legend: legend.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) legend.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o legend
+	$(LINK) legend.$(OBJ_SUFFIX) $(LIBMAP) -o legend
 
 scalebar: scalebar.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) scalebar.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o scalebar
+	$(LINK) scalebar.$(OBJ_SUFFIX) $(LIBMAP) -o scalebar
 
 mapserv: mapserv.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) mapserv.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o mapserv
+	$(LINK) mapserv.$(OBJ_SUFFIX) $(LIBMAP) $(FASTCGI_LIB) -o mapserv
 
 shpindex: shpindex.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) shpindex.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shpindex
+	$(LINK) shpindex.$(OBJ_SUFFIX) $(LIBMAP) -o shpindex
 
 shptree: shptree.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) shptree.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shptree
+	$(LINK) shptree.$(OBJ_SUFFIX) $(LIBMAP) -o shptree
 
 shptreevis: shptreevis.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) shptreevis.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shptreevis
+	$(LINK) shptreevis.$(OBJ_SUFFIX) $(LIBMAP) -o shptreevis
 
 shptreetst: shptreetst.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) shptreetst.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o shptreetst
+	$(LINK) shptreetst.$(OBJ_SUFFIX) $(LIBMAP) -o shptreetst
 
 sortshp: sortshp.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) sortshp.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o sortshp
+	$(LINK) sortshp.$(OBJ_SUFFIX) $(LIBMAP) -o sortshp
 
 tile4ms: tile4ms.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) tile4ms.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o tile4ms
+	$(LINK) tile4ms.$(OBJ_SUFFIX) $(LIBMAP) -o tile4ms
 
 msencrypt: msencrypt.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) msencrypt.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o msencrypt
+	$(LINK) msencrypt.$(OBJ_SUFFIX) $(LIBMAP) -o msencrypt
 
 testexpr: testexpr.$(OBJ_SUFFIX) mapparser.$(OBJ_SUFFIX) maplexer.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) testexpr.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o testexpr
+	$(LINK) testexpr.$(OBJ_SUFFIX) $(LIBMAP) -o testexpr
 
 testcopy: testcopy.$(OBJ_SUFFIX) $(LIBMAP)
-	$(LINK) testcopy.$(OBJ_SUFFIX) $(EXE_LDFLAGS) -o testcopy
+	$(LINK) testcopy.$(OBJ_SUFFIX) $(LIBMAP) -o testcopy
 
 test_mapcrypto: mapcrypto.c mapserver.h $(LIBMAP)
-	$(LINK) mapcrypto.c -DTEST_MAPCRYPTO $(EXE_LDFLAGS) -o test_mapcrypto
+	$(LINK) mapcrypto.c -DTEST_MAPCRYPTO $(LIBMAP) -o test_mapcrypto
 
 mapscriptvars:	Makefile
 	touch mapscriptvars
 	pwd > mapscriptvars
 	echo $(IGNORE_MISSING_DATA) $(USE_POINT_Z_M) $(STRINGS) @ALL_ENABLED@ >> mapscriptvars
 	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) $(GEOS_INC) >> mapscriptvars
+	echo $(LIBMAP) >> mapscriptvars
 	echo $(EXE_LDFLAGS) >> mapscriptvars
 	grep '#define MS_VERSION ' mapserver.h >> mapscriptvars
 

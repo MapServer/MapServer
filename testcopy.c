@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -33,52 +33,53 @@
 
 void printAtts(mapObj*, const char*);
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
-    mapObj *original_map, *clone_map;
+  mapObj *original_map, *clone_map;
 
-    /* ---------------------------------------------------------------------
-     * Test 1: free original before freeing clone
-     * --------------------------------------------------------------------- */
+  /* ---------------------------------------------------------------------
+   * Test 1: free original before freeing clone
+   * --------------------------------------------------------------------- */
 
-    /* Load map file */
-    original_map = msLoadMap("tests/test.map", NULL);
-    
-    if (original_map ==  NULL)
-    {
-        /* Write errors */
-        msWriteError(stderr);
-        msResetErrorList();
-        exit(0);
-    }
+  /* Load map file */
+  original_map = msLoadMap("tests/test.map", NULL);
 
-    /* Dump out some attributes */
-    printAtts(original_map, "Original"); 
-
-    /* Clone it */
-    clone_map = msNewMapObj();
-    msCopyMap(clone_map, original_map);
-
+  if (original_map ==  NULL) {
     /* Write errors */
     msWriteError(stderr);
     msResetErrorList();
+    exit(0);
+  }
 
-    /* Free */
-    msFreeMap(original_map);
+  /* Dump out some attributes */
+  printAtts(original_map, "Original");
 
-    /* Dump clone's attributes */
-    printAtts(clone_map, "Clone");
-  
-    /* Free clone */
-    msFreeMap(clone_map);
+  /* Clone it */
+  clone_map = msNewMapObj();
+  msCopyMap(clone_map, original_map);
 
-    exit(0);    
+  /* Write errors */
+  msWriteError(stderr);
+  msResetErrorList();
+
+  /* Free */
+  msFreeMap(original_map);
+
+  /* Dump clone's attributes */
+  printAtts(clone_map, "Clone");
+
+  /* Free clone */
+  msFreeMap(clone_map);
+
+  exit(0);
 }
 
-void printAtts(mapObj *map, const char *title) {
-    printf("\n%s Attributes\n----------------------\n", title);
-    printf("Map Name: %s\n", map->name);
-    printf("Numlayers: %d\n", map->numlayers);
-    printf("Map Fontset Filename: %s\n", map->fontset.filename);
-    printf("Map Symbolset Filename: %s\n", map->symbolset.filename);
+void printAtts(mapObj *map, const char *title)
+{
+  printf("\n%s Attributes\n----------------------\n", title);
+  printf("Map Name: %s\n", map->name);
+  printf("Numlayers: %d\n", map->numlayers);
+  printf("Map Fontset Filename: %s\n", map->fontset.filename);
+  printf("Map Symbolset Filename: %s\n", map->symbolset.filename);
 }

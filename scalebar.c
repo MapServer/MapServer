@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -48,14 +48,14 @@ int main(int argc, char *argv[])
   }
 
   map = msLoadMap(argv[1], NULL);
-  if(!map) { 
+  if(!map) {
     msWriteError(stderr);
     exit(1);
   }
 
   image = msDrawScalebar(map);
 
-  if(!image) { 
+  if(!image) {
     msWriteError(stderr);
     exit(1);
   }
@@ -63,6 +63,6 @@ int main(int argc, char *argv[])
   msSaveImage(map, image, argv[2]);
   msFreeImage(image);
 
-  msFreeMap(map);  
+  msFreeMap(map);
   return(MS_TRUE);
 }

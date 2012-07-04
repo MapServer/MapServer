@@ -12,14 +12,13 @@
 #include "apr_tables.h"
 #include "apr_file_info.h"
 
-#include "mapserver.h"	/* for mapObj */
+#include "mapserver.h"  /* for mapObj */
 #include "cgiutil.h"
 #include "mapserv.h"
 
 module AP_MODULE_DECLARE_DATA mapserver_module;
 
-typedef struct
-{
+typedef struct {
   apr_pool_t *config_pool;
   apr_time_t mtime;
   char   *mapfile_name;
@@ -75,7 +74,7 @@ msIO_installApacheRedirect (request_rec *r)
  */
 static int
 mapserver_decode_args (apr_pool_t *p, char *args,
-                 char ***ParamNames, char ***ParamValues)
+                       char ***ParamNames, char ***ParamValues)
 {
   char **argv = NULL;
   int    i;
@@ -94,8 +93,7 @@ mapserver_decode_args (apr_pool_t *p, char *args,
 
   /* separate the arguments */
   for (i = 1, n = 0; args [n] && (i < WMS_MAX_ARGS); n++)
-    if (args [n] == '&')
-    {
+    if (args [n] == '&') {
       argv [i++] = args + n + 1;
       args [n  ] = '\0';
     }
@@ -111,23 +109,19 @@ mapserver_decode_args (apr_pool_t *p, char *args,
   argc = n;
 
   /* split the name/value pairs */
-  for (i = 0; argv [i]; i++)
-  {
+  for (i = 0; argv [i]; i++) {
     sep = strchr (argv [i], '=');
     if (!sep) continue;
     *sep = '\0';
     argv [i + WMS_MAX_ARGS + 1] = (char*) apr_pstrdup (p, sep + 1);
 
-    if (ap_unescape_url (argv [i + WMS_MAX_ARGS + 1]) == HTTP_BAD_REQUEST)
-    {
+    if (ap_unescape_url (argv [i + WMS_MAX_ARGS + 1]) == HTTP_BAD_REQUEST) {
       ap_log_error (APLOG_MARK, APLOG_ERR, 0, NULL,
                     "%s: malformed URI, couldn't unescape parm %s",
                     __func__, argv [i]);
 
       argv [i + WMS_MAX_ARGS + 1] = NULL;
-    }
-    else
-    {
+    } else {
       plustospace (argv [i + WMS_MAX_ARGS + 1]);
     }
   }
@@ -156,14 +150,10 @@ mapserver_read_post_data (request_rec *r)
   if (!buffer)
     return NULL;
 
-  while ((blen = ap_get_client_block (r, buf, sizeof (buf))) > 0)
-  {
-    if (rpos + blen > size)
-    {
+  while ((blen = ap_get_client_block (r, buf, sizeof (buf))) > 0) {
+    if (rpos + blen > size) {
       rsize = blen - rpos;
-    }
-    else
-    {
+    } else {
       rsize = blen;
     }
     memcpy ((char*) buffer + rpos, buf, rsize);
@@ -174,7 +164,7 @@ mapserver_read_post_data (request_rec *r)
 }
 
 /*
-** Extract Map File name from params and load it.  
+** Extract Map File name from params and load it.
 ** Returns map object or NULL on error.
 */
 static mapObj*
@@ -192,7 +182,7 @@ msModuleLoadMap(mapservObj *mapserv, mapserver_dir_config *conf)
 
   /* check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS  */
   /* services can take advantage of these "vendor specific" extensions */
-  for(i=0;i<mapserv->request->NumParams;i++) {
+  for(i=0; i<mapserv->request->NumParams; i++) {
     /*
     ** a few CGI variables should be skipped altogether
     **
@@ -203,8 +193,8 @@ msModuleLoadMap(mapservObj *mapserv, mapserver_dir_config *conf)
 
     if(strncasecmp(mapserv->request->ParamNames[i],"map_",4) == 0 || strncasecmp(mapserv->request->ParamNames[i],"map.",4) == 0) { /* check to see if there are any additions to the mapfile */
       if(msUpdateMapFromURL(map, mapserv->request->ParamNames[i], mapserv->request->ParamValues[i]) != MS_SUCCESS) {
-         msFreeMap(map);
-         return NULL;
+        msFreeMap(map);
+        return NULL;
       }
       continue;
     }
@@ -216,29 +206,28 @@ msModuleLoadMap(mapservObj *mapserv, mapserver_dir_config *conf)
   /* check to see if a ogc map context is passed as argument. if there */
   /* is one load it */
 
-  for(i=0;i<mapserv->request->NumParams;i++) {
+  for(i=0; i<mapserv->request->NumParams; i++) {
     if(strcasecmp(mapserv->request->ParamNames[i],"context") == 0) {
       if(mapserv->request->ParamValues[i] && strlen(mapserv->request->ParamValues[i]) > 0) {
         if(strncasecmp(mapserv->request->ParamValues[i],"http",4) == 0) {
           if(msGetConfigOption(map, "CGI_CONTEXT_URL"))
             msLoadMapContextURL(map, mapserv->request->ParamValues[i], MS_FALSE);
         } else
-            msLoadMapContext(map, mapserv->request->ParamValues[i], MS_FALSE); 
+          msLoadMapContext(map, mapserv->request->ParamValues[i], MS_FALSE);
       }
     }
-  } 
+  }
   /*
    * RFC-42 HTTP Cookie Forwarding
-   * Here we set the http_cookie_data metadata to handle the 
-   * HTTP Cookie Forwarding. The content of this metadata is the cookie 
+   * Here we set the http_cookie_data metadata to handle the
+   * HTTP Cookie Forwarding. The content of this metadata is the cookie
    * content. In the future, this metadata will probably be replaced
-   * by an object that is part of the mapObject that would contain 
+   * by an object that is part of the mapObject that would contain
    * information on the application status (such as cookie).
    */
-  if( mapserv->request->httpcookiedata != NULL )
-  {
-     msInsertHashTable( &(map->web.metadata), "http_cookie_data",
-           mapserv->request->httpcookiedata );
+  if( mapserv->request->httpcookiedata != NULL ) {
+    msInsertHashTable( &(map->web.metadata), "http_cookie_data",
+                       mapserv->request->httpcookiedata );
   }
 
   return map;
@@ -253,33 +242,26 @@ mapserver_handler (request_rec *r)
   /* aquire the apropriate configuration for this directory */
   mapserver_dir_config *conf;
   conf = (mapserver_dir_config*) ap_get_module_config (r->per_dir_config,
-                                                 &mapserver_module);
+         &mapserver_module);
 
   /* decline the request if there's no map configured */
   if (!conf || !conf->map)
     return DECLINED;
 
   apr_finfo_t mapstat;
-  if (apr_stat (&mapstat, conf->mapfile_name, APR_FINFO_MTIME, r->pool) == APR_SUCCESS)
-  {
-    if (apr_time_sec (mapstat.mtime) > apr_time_sec (conf->mtime))
-    {
+  if (apr_stat (&mapstat, conf->mapfile_name, APR_FINFO_MTIME, r->pool) == APR_SUCCESS) {
+    if (apr_time_sec (mapstat.mtime) > apr_time_sec (conf->mtime)) {
       mapObj *newmap = msLoadMap (conf->mapfile_name, NULL);
-      if (newmap)
-      {
+      if (newmap) {
         msFreeMap (conf->map);
         conf->map   = newmap;
         conf->mtime = mapstat.mtime;
-      }
-      else
-      {
+      } else {
         ap_log_error (APLOG_MARK, APLOG_WARNING, 0, NULL,
                       "unable to reload map file %s", conf->mapfile_name);
       }
     }
-  }
-  else
-  {
+  } else {
     ap_log_error (APLOG_MARK, APLOG_WARNING, 0, NULL,
                   "%s: unable to stat file %s", __func__, conf->mapfile_name);
   }
@@ -303,34 +285,29 @@ mapserver_handler (request_rec *r)
   mapservObj *mapserv = NULL;
 
   /* Try decoding the query string */
-  if (r->method_number == M_GET)
-  {
+  if (r->method_number == M_GET) {
     argc = mapserver_decode_args (r->pool, (char*) apr_pstrdup (r->pool, r->args),
-                            &ParamNames, &ParamValues);
+                                  &ParamNames, &ParamValues);
     szMethod = MS_GET_REQUEST;
-  }
-  else if (r->method_number == M_POST)
-  {
+  } else if (r->method_number == M_POST) {
     szContentType = (char*) apr_table_get (r->headers_in, "Content-type");
     post_data = mapserver_read_post_data (r);
     szMethod  = MS_POST_REQUEST;
-    if (strcmp (szContentType, "application/x-www-form-urlencoded") == 0)
-    {
-       argc = mapserver_decode_args (r->pool, (char*) apr_pstrdup (r->pool, r->args),
-             &ParamNames, &ParamValues);
+    if (strcmp (szContentType, "application/x-www-form-urlencoded") == 0) {
+      argc = mapserver_decode_args (r->pool, (char*) apr_pstrdup (r->pool, r->args),
+                                    &ParamNames, &ParamValues);
     }
-  }
-  else
-     return HTTP_METHOD_NOT_ALLOWED;
+  } else
+    return HTTP_METHOD_NOT_ALLOWED;
 
   if (!argc && !post_data)
-     return HTTP_BAD_REQUEST;
+    return HTTP_BAD_REQUEST;
 
   /* Now we install the IO redirection.
   */
   if (msIO_installApacheRedirect (r) != MS_TRUE)
-     ap_log_error (APLOG_MARK, APLOG_ERR, 0, NULL,
-           "%s: could not install apache redirect", __func__);
+    ap_log_error (APLOG_MARK, APLOG_ERR, 0, NULL,
+                  "%s: could not install apache redirect", __func__);
 
 
   mapserv = msAllocMapServObj();
@@ -344,25 +321,25 @@ mapserver_handler (request_rec *r)
   //mapserv->map = msModuleLoadMap(mapserv,conf);
   mapserv->map = conf->map;
   if(!mapserv->map) {
-     msCGIWriteError(mapserv);
-     goto end_request;
+    msCGIWriteError(mapserv);
+    goto end_request;
   }
 
   if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
-     msCGIWriteError(mapserv);
-     goto end_request;
+    msCGIWriteError(mapserv);
+    goto end_request;
   }
 
 
 end_request:
   if(mapserv) {
-     msCGIWriteLog(mapserv,MS_FALSE);
-     mapserv->request->ParamNames  = NULL;
-     mapserv->request->ParamValues = NULL;
-     mapserv->request->postrequest = NULL;
-     mapserv->request->contenttype = NULL;
-     mapserv->map = NULL;
-     msFreeMapServObj(mapserv);
+    msCGIWriteLog(mapserv,MS_FALSE);
+    mapserv->request->ParamNames  = NULL;
+    mapserv->request->ParamValues = NULL;
+    mapserv->request->postrequest = NULL;
+    mapserv->request->contenttype = NULL;
+    mapserv->map = NULL;
+    msFreeMapServObj(mapserv);
   }
   msResetErrorList();
 
@@ -372,7 +349,7 @@ end_request:
    * from maptemplate.c
    */
   if (r->status == HTTP_MOVED_TEMPORARILY)
-     return r->status;
+    return r->status;
 
   return OK;
 }
@@ -399,8 +376,7 @@ mapserver_set_map (cmd_parms *cmd, void *config, const char *arg)
   /* if the mapObj already exists the WMS_Map was given more than once -
    * may be the user forgot to comment something out...
    */
-  if (conf->map)
-  {
+  if (conf->map) {
     msWriteError (stderr);
     return (char*) apr_psprintf (cmd->temp_pool,
                                  "An MAP-file has already been registered for "
@@ -414,8 +390,7 @@ mapserver_set_map (cmd_parms *cmd, void *config, const char *arg)
    * configcheck before really restarting your web server!
    */
 
-  if (!conf->map)
-  {
+  if (!conf->map) {
     msWriteError (stderr);
     return (char*) apr_psprintf (cmd->temp_pool,
                                  "The given MAP-file '%s' could not be loaded",
@@ -423,8 +398,7 @@ mapserver_set_map (cmd_parms *cmd, void *config, const char *arg)
   }
 
   apr_finfo_t status;
-  if (apr_stat (&status, conf->mapfile_name, APR_FINFO_MTIME, cmd->pool) != APR_SUCCESS)
-  {
+  if (apr_stat (&status, conf->mapfile_name, APR_FINFO_MTIME, cmd->pool) != APR_SUCCESS) {
     ap_log_error (APLOG_MARK, APLOG_WARNING, 0, NULL,
                   "%s: unable to stat file %s", __func__, conf->mapfile_name);
   }
@@ -446,8 +420,7 @@ mapserver_create_dir_config (apr_pool_t *p, char *dir)
   newconf->mapfile_name = NULL;
   newconf->mtime = apr_time_from_sec (0);
 
-  if (dir)
-  {
+  if (dir) {
     int len = strlen (dir);
     if (len > 1 && dir [len - 1] == '/' )
       newconf->uri [len - 1] = '\0';
@@ -458,8 +431,7 @@ mapserver_create_dir_config (apr_pool_t *p, char *dir)
 /* This structure defines our single config option which takes exactly one
  * argument.
  */
-static const command_rec mapserver_options[] =
-{
+static const command_rec mapserver_options[] = {
   AP_INIT_TAKE1(
     "Mapfile",
     mapserver_set_map,
@@ -475,14 +447,13 @@ static const command_rec mapserver_options[] =
  * doesn't make much sense here since we would only inherit the map file...
  */
 /* Dispatch list for API hooks */
-module AP_MODULE_DECLARE_DATA mapserver_module =
-{
-    STANDARD20_MODULE_STUFF,
-    mapserver_create_dir_config,	/* create per-dir    config structures */
-    NULL,			/* merge  per-dir    config structures */
-    NULL,			/* create per-server config structures */
-    NULL,			/* merge  per-server config structures */
-    mapserver_options,		/* table of config file commands       */
-    mapserver_register_hooks		/* register hooks                      */
+module AP_MODULE_DECLARE_DATA mapserver_module = {
+  STANDARD20_MODULE_STUFF,
+  mapserver_create_dir_config,  /* create per-dir    config structures */
+  NULL,     /* merge  per-dir    config structures */
+  NULL,     /* create per-server config structures */
+  NULL,     /* merge  per-server config structures */
+  mapserver_options,    /* table of config file commands       */
+  mapserver_register_hooks    /* register hooks                      */
 };
 

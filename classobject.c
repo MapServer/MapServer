@@ -3,7 +3,7 @@
  *
  * Project:  MapServer
  * Purpose:  Functions for operating on a classObj that don't belong in a
- *           more specific file such as mapfile.c.  
+ *           more specific file such as mapfile.c.
  *           Adapted from mapobject.c.
  * Author:   Sean Gillies, sgillies@frii.com
  *
@@ -17,7 +17,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -41,7 +41,8 @@
 /*
 ** Add a label to a classObj (order doesn't matter for labels like it does with styles)
 */
-int msAddLabelToClass(classObj *class, labelObj *label) {
+int msAddLabelToClass(classObj *class, labelObj *label)
+{
   if (!label) {
     msSetError(MS_CHILDERR, "Can't add a NULL label.", "msAddLabelToClass()");
     return MS_FAILURE;
@@ -59,7 +60,8 @@ int msAddLabelToClass(classObj *class, labelObj *label) {
 /*
 ** Remove a label from a classObj.
 */
-labelObj *msRemoveLabelFromClass(classObj *class, int nLabelIndex) {
+labelObj *msRemoveLabelFromClass(classObj *class, int nLabelIndex)
+{
   int i;
   labelObj *label;
 
@@ -80,141 +82,134 @@ labelObj *msRemoveLabelFromClass(classObj *class, int nLabelIndex) {
 
 /**
  * Move the style up inside the array of styles.
- */  
+ */
 int msMoveStyleUp(classObj *class, int nStyleIndex)
 {
-    styleObj *psTmpStyle = NULL;
-    if (class && nStyleIndex < class->numstyles && nStyleIndex >0)
-    {
-        psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
-        initStyle(psTmpStyle);
-        
-        msCopyStyle(psTmpStyle, class->styles[nStyleIndex]);
+  styleObj *psTmpStyle = NULL;
+  if (class && nStyleIndex < class->numstyles && nStyleIndex >0) {
+    psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
+    initStyle(psTmpStyle);
 
-        msCopyStyle(class->styles[nStyleIndex], 
-                    class->styles[nStyleIndex-1]);
-        
-        msCopyStyle(class->styles[nStyleIndex-1], psTmpStyle);
+    msCopyStyle(psTmpStyle, class->styles[nStyleIndex]);
 
-        return(MS_SUCCESS);
-    }
-    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveStyleUp()",
-               nStyleIndex);
-    return (MS_FAILURE);
+    msCopyStyle(class->styles[nStyleIndex],
+                class->styles[nStyleIndex-1]);
+
+    msCopyStyle(class->styles[nStyleIndex-1], psTmpStyle);
+
+    return(MS_SUCCESS);
+  }
+  msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveStyleUp()",
+             nStyleIndex);
+  return (MS_FAILURE);
 }
 
 
 /**
  * Move the style down inside the array of styles.
- */  
+ */
 int msMoveStyleDown(classObj *class, int nStyleIndex)
 {
-    styleObj *psTmpStyle = NULL;
+  styleObj *psTmpStyle = NULL;
 
-    if (class && nStyleIndex < class->numstyles-1 && nStyleIndex >=0)
-    {
-        psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
-        initStyle(psTmpStyle);
-        
-        msCopyStyle(psTmpStyle, class->styles[nStyleIndex]);
+  if (class && nStyleIndex < class->numstyles-1 && nStyleIndex >=0) {
+    psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
+    initStyle(psTmpStyle);
 
-        msCopyStyle(class->styles[nStyleIndex], 
-                    class->styles[nStyleIndex+1]);
-        
-        msCopyStyle(class->styles[nStyleIndex+1], psTmpStyle);
+    msCopyStyle(psTmpStyle, class->styles[nStyleIndex]);
 
-        return(MS_SUCCESS);
-    }
-    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveStyleDown()",
-               nStyleIndex);
-    return (MS_FAILURE);
+    msCopyStyle(class->styles[nStyleIndex],
+                class->styles[nStyleIndex+1]);
+
+    msCopyStyle(class->styles[nStyleIndex+1], psTmpStyle);
+
+    return(MS_SUCCESS);
+  }
+  msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveStyleDown()",
+             nStyleIndex);
+  return (MS_FAILURE);
 }
 
-/* Moved here from mapscript.i 
+/* Moved here from mapscript.i
  *
  * Returns the index at which the style was inserted
  *
  */
-int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
-    int i;
+int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex)
+{
+  int i;
 
-    if (!style)
-    {
-        msSetError(MS_CHILDERR, "Can't insert a NULL Style", "msInsertStyle()");
-        return -1;
-    }
+  if (!style) {
+    msSetError(MS_CHILDERR, "Can't insert a NULL Style", "msInsertStyle()");
+    return -1;
+  }
 
-    /* Ensure there is room for a new style */
-    if (msGrowClassStyles(class) == NULL) {
-        return -1;
+  /* Ensure there is room for a new style */
+  if (msGrowClassStyles(class) == NULL) {
+    return -1;
+  }
+  /* Catch attempt to insert past end of styles array */
+  else if (nStyleIndex >= class->numstyles) {
+    msSetError(MS_CHILDERR, "Cannot insert style beyond index %d", "insertStyle()", class->numstyles-1);
+    return -1;
+  } else if (nStyleIndex < 0) { /* Insert at the end by default */
+    class->styles[class->numstyles]=style;
+    MS_REFCNT_INCR(style);
+    class->numstyles++;
+    return class->numstyles-1;
+  } else if (nStyleIndex >= 0 && nStyleIndex < class->numstyles) {
+    /* Move styles existing at the specified nStyleIndex or greater */
+    /* to a higher nStyleIndex */
+    for (i=class->numstyles-1; i>=nStyleIndex; i--) {
+      class->styles[i+1] = class->styles[i];
     }
-    /* Catch attempt to insert past end of styles array */
-    else if (nStyleIndex >= class->numstyles) {
-        msSetError(MS_CHILDERR, "Cannot insert style beyond index %d", "insertStyle()", class->numstyles-1);
-        return -1;
-    }
-    else if (nStyleIndex < 0) { /* Insert at the end by default */
-        class->styles[class->numstyles]=style;
-	MS_REFCNT_INCR(style);
-        class->numstyles++;
-        return class->numstyles-1;
-    }
-    else if (nStyleIndex >= 0 && nStyleIndex < class->numstyles) {
-        /* Move styles existing at the specified nStyleIndex or greater */
-        /* to a higher nStyleIndex */
-        for (i=class->numstyles-1; i>=nStyleIndex; i--) {
-            class->styles[i+1] = class->styles[i];
-        }
-        class->styles[nStyleIndex]=style;
-	MS_REFCNT_INCR(style);
-        class->numstyles++;
-        return nStyleIndex;
-    }
-    else {
-        msSetError(MS_CHILDERR, "Invalid nStyleIndex", "insertStyle()");
-        return -1;
-    }
+    class->styles[nStyleIndex]=style;
+    MS_REFCNT_INCR(style);
+    class->numstyles++;
+    return nStyleIndex;
+  } else {
+    msSetError(MS_CHILDERR, "Invalid nStyleIndex", "insertStyle()");
+    return -1;
+  }
 }
 
-styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
-    int i;
-    styleObj *style;
-    if (nStyleIndex < 0 || nStyleIndex >= class->numstyles) {
-        msSetError(MS_CHILDERR, "Cannot remove style, invalid nStyleIndex %d", "removeStyle()", nStyleIndex);
-        return NULL;
+styleObj *msRemoveStyle(classObj *class, int nStyleIndex)
+{
+  int i;
+  styleObj *style;
+  if (nStyleIndex < 0 || nStyleIndex >= class->numstyles) {
+    msSetError(MS_CHILDERR, "Cannot remove style, invalid nStyleIndex %d", "removeStyle()", nStyleIndex);
+    return NULL;
+  } else {
+    style=class->styles[nStyleIndex];
+    for (i=nStyleIndex; i<class->numstyles-1; i++) {
+      class->styles[i]=class->styles[i+1];
     }
-    else {
-        style=class->styles[nStyleIndex];
-        for (i=nStyleIndex; i<class->numstyles-1; i++) {
-             class->styles[i]=class->styles[i+1];
-        }
-	class->styles[class->numstyles-1]=NULL;
-        class->numstyles--;
-	MS_REFCNT_DECR(style);
-        return style;
-    }
+    class->styles[class->numstyles-1]=NULL;
+    class->numstyles--;
+    MS_REFCNT_DECR(style);
+    return style;
+  }
 }
 
 /**
  * Delete the style identified by the index and shift
  * styles that follows the deleted style.
- */  
+ */
 int msDeleteStyle(classObj *class, int nStyleIndex)
 {
-    int i = 0;
-    if (class && nStyleIndex < class->numstyles && nStyleIndex >=0)
-    {
-        if (freeStyle(class->styles[nStyleIndex]) == MS_SUCCESS)
-            msFree(class->styles[nStyleIndex]);
-        for (i=nStyleIndex; i< class->numstyles-1; i++)
-        {
-            class->styles[i] = class->styles[i+1];
-        }
-        class->styles[class->numstyles-1] = NULL;
-        class->numstyles--;
-        return(MS_SUCCESS);
+  int i = 0;
+  if (class && nStyleIndex < class->numstyles && nStyleIndex >=0) {
+    if (freeStyle(class->styles[nStyleIndex]) == MS_SUCCESS)
+      msFree(class->styles[nStyleIndex]);
+    for (i=nStyleIndex; i< class->numstyles-1; i++) {
+      class->styles[i] = class->styles[i+1];
     }
-    msSetError(MS_CHILDERR, "Invalid index: %d", "msDeleteStyle()",
-               nStyleIndex);
-    return (MS_FAILURE);
+    class->styles[class->numstyles-1] = NULL;
+    class->numstyles--;
+    return(MS_SUCCESS);
+  }
+  msSetError(MS_CHILDERR, "Invalid index: %d", "msDeleteStyle()",
+             nStyleIndex);
+  return (MS_FAILURE);
 }

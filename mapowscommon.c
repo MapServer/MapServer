@@ -6,7 +6,7 @@
  *           versions:
  *           1.0.0 (OGC Document 05-008c1)
  *           1.1.0 (OGC document 06-121r3)
- *           
+ *
  * Author:   Tom Kralidis (tomkralidis@hotmail.com)
  *
  ******************************************************************************
@@ -62,7 +62,8 @@
  *
  */
 
-xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version, const char *namespaces) {
+xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version, const char *namespaces)
+{
   const char *value    = NULL;
 
   xmlNodePtr   psRootNode = NULL;
@@ -104,7 +105,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
   }
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceType", BAD_CAST servicetype);
-  
+
   xmlNewProp(psNode, BAD_CAST "codeSpace", BAD_CAST MS_OWSCOMMON_OGC_CODESPACE);
 
   psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceTypeVersion", BAD_CAST version);
@@ -132,7 +133,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
  * msOWSCommonServiceProvider()
  *
  * returns an object of ServiceProvider as per:
- * 
+ *
  *
  * 1.0.0 subclause 7.4.4
  * 1.1.0 subclause 7.4.5
@@ -144,7 +145,8 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const
  */
 
 xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
-                                      mapObj *map, const char *namespaces) {
+                                      mapObj *map, const char *namespaces)
+{
   const char *value = NULL;
 
   xmlNodePtr   psNode          = NULL;
@@ -192,7 +194,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadata(&(map->web.metadata), namespaces, "contactposition");
 
-  psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "PositionName", BAD_CAST value); 
+  psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "PositionName", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactposition\" was missing for ows:PositionName"));
@@ -320,7 +322,8 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws) {
+xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws)
+{
   xmlNodePtr psRootNode = NULL;
 
   if (_validateNamespace(psNsOws) == MS_FAILURE)
@@ -334,7 +337,7 @@ xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws) {
  * msOWSCommonOperationsMetadataOperation()
  *
  * returns an Operation element of OperationsMetadata as per:
- * 
+ *
  * 1.0.0 subclause 7.4.5
  * 1.1.0 subclause 7.4.6
  *
@@ -345,7 +348,8 @@ xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws) {
  * @return psRootNode xmlNodePtr pointer of XML construct
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, char *name, int method, char *url) {
+xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, char *name, int method, char *url)
+{
   xmlNodePtr psRootNode      = NULL;
   xmlNodePtr psNode          = NULL;
   xmlNodePtr psSubNode       = NULL;
@@ -396,7 +400,8 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
  *
  */
 
-xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, char *elname, char *name, char *values) {
+xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws, char *elname, char *name, char *values)
+{
   xmlNodePtr psRootNode = NULL;
   xmlNodePtr psNode = NULL;
 
@@ -428,14 +433,15 @@ xmlNodePtr msOWSCommonOperationsMetadataDomainType(int version, xmlNsPtr psNsOws
  * @param version the version of the calling specification
  * @param language ISO3166 code of language
  * @param exceptionCode a code from the calling specification's list of exceptions, or from OWS Common
- * @param locator where the exception was encountered (i.e. "layers" keyword) 
+ * @param locator where the exception was encountered (i.e. "layers" keyword)
  * @param ExceptionText the actual error message
  *
  * @return psRootNode xmlNodePtr pointer of XML construct
  *
  */
 
-xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText) {
+xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const char *schemas_location, const char *version, const char *language, const char *exceptionCode, const char *locator, const char *ExceptionText)
+{
   char *xsi_schemaLocation = NULL;
   char szVersionBuf[OWS_VERSION_MAXLEN];
 
@@ -505,24 +511,23 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
  * @return psRootNode xmlNodePtr pointer of XML construct
  */
 
-xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy) {
+xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensions, double minx, double miny, double maxx, double maxy)
+{
   char LowerCorner[100];
   char UpperCorner[100];
   char dim_string[100];
   xmlNodePtr psRootNode = NULL;
 
   /* Do we need to reorient tuple axes? */
-  if(crs && strstr(crs, "imageCRS") == NULL)
-  {
-      projectionObj proj;
+  if(crs && strstr(crs, "imageCRS") == NULL) {
+    projectionObj proj;
 
-      msInitProjection( &proj );
-      if( msLoadProjectionString( &proj, (char *) crs ) == 0 )
-      {
-          msAxisNormalizePoints( &proj, 1, &minx, &miny );
-          msAxisNormalizePoints( &proj, 1, &maxx, &maxy );
-      }
-      msFreeProjection( &proj );
+    msInitProjection( &proj );
+    if( msLoadProjectionString( &proj, (char *) crs ) == 0 ) {
+      msAxisNormalizePoints( &proj, 1, &minx, &miny );
+      msAxisNormalizePoints( &proj, 1, &maxx, &maxy );
+    }
+    msFreeProjection( &proj );
   }
 
 
@@ -563,13 +568,14 @@ xmlNodePtr msOWSCommonBoundingBox(xmlNsPtr psNsOws, const char *crs, int dimensi
  * @return psRootNode xmlNodePtr pointer of XML construct
  */
 
-xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double minx, double miny, double maxx, double maxy) {
+xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double minx, double miny, double maxx, double maxy)
+{
   char LowerCorner[100];
   char UpperCorner[100];
   char dim_string[100];
 
   xmlNodePtr psRootNode = NULL;
-  
+
   if (_validateNamespace(psNsOws) == MS_FAILURE)
     psNsOws = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
 
@@ -600,30 +606,29 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
  *
  */
 
-int _validateNamespace(xmlNsPtr psNsOws) {
+int _validateNamespace(xmlNsPtr psNsOws)
+{
   char namespace_prefix[10];
   snprintf(namespace_prefix, sizeof(namespace_prefix), "%s", psNsOws->prefix);
   if (strcmp(namespace_prefix, MS_OWSCOMMON_OWS_NAMESPACE_PREFIX) == 0)
     return MS_SUCCESS;
-  else 
+  else
     return MS_FAILURE;
 }
 
-xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, const char* name, 
-					  const char *content, const char *encoding)
+xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, const char* name,
+    const char *content, const char *encoding)
 {
-    char *encoded = NULL;
-    xmlNodePtr psNode;
+  char *encoded = NULL;
+  xmlNodePtr psNode;
 
-    if (encoding && content)
-    {
-	encoded = msGetEncodedString(content, encoding);
-	psNode =  xmlNewChild(psParent, psNs, BAD_CAST name, BAD_CAST encoded);
-	msFree(encoded);
-	return psNode;
-    }
-    else
-      return xmlNewChild(psParent, psNs, BAD_CAST name, BAD_CAST content);
+  if (encoding && content) {
+    encoded = msGetEncodedString(content, encoding);
+    psNode =  xmlNewChild(psParent, psNs, BAD_CAST name, BAD_CAST encoded);
+    msFree(encoded);
+    return psNode;
+  } else
+    return xmlNewChild(psParent, psNs, BAD_CAST name, BAD_CAST content);
 }
 
 /*
@@ -633,61 +638,61 @@ xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, co
  */
 int msOWSSchemaValidation(const char* xml_schema, const char* xml)
 {
-    xmlSchemaPtr schema;
-    xmlSchemaParserCtxtPtr ctxt;
-    xmlSchemaValidCtxtPtr validctxt;
-    int ret;
-    xmlDocPtr doc;
+  xmlSchemaPtr schema;
+  xmlSchemaParserCtxtPtr ctxt;
+  xmlSchemaValidCtxtPtr validctxt;
+  int ret;
+  xmlDocPtr doc;
 
-    if (!xml_schema || !xml)
-      return MS_FAILURE;
+  if (!xml_schema || !xml)
+    return MS_FAILURE;
 
-    xmlInitParser();
-    schema = NULL;
-    ret = -1;
+  xmlInitParser();
+  schema = NULL;
+  ret = -1;
 
-    /* Open XML Schema File */
-    ctxt = xmlSchemaNewParserCtxt(xml_schema);
-    /*
-    else ctxt = xmlSchemaNewMemParserCtxt(xml_schema);
-    */
-    /*
-    xmlSchemaSetParserErrors(ctxt,
-                             (xmlSchemaValidityErrorFunc) libxml2_callback,
-                             (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
-    */
+  /* Open XML Schema File */
+  ctxt = xmlSchemaNewParserCtxt(xml_schema);
+  /*
+  else ctxt = xmlSchemaNewMemParserCtxt(xml_schema);
+  */
+  /*
+  xmlSchemaSetParserErrors(ctxt,
+                           (xmlSchemaValidityErrorFunc) libxml2_callback,
+                           (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
+  */
 
-    schema = xmlSchemaParse(ctxt);
-    xmlSchemaFreeParserCtxt(ctxt);
+  schema = xmlSchemaParse(ctxt);
+  xmlSchemaFreeParserCtxt(ctxt);
 
-    /* If XML Schema hasn't been rightly loaded */
-    if (schema == NULL) {
-        xmlSchemaCleanupTypes();
-        xmlMemoryDump();
-        xmlCleanupParser();
-        return ret;
-    }
-
-    doc = xmlParseDoc((xmlChar *)xml);
-
-    if (doc != NULL) {
-        /* Loading XML Schema content */
-        validctxt = xmlSchemaNewValidCtxt(schema);
-        /*
-        xmlSchemaSetValidErrors(validctxt,
-                                (xmlSchemaValidityErrorFunc) libxml2_callback,
-                                (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
-        */
-        /* validation */
-        ret = xmlSchemaValidateDoc(validctxt, doc);
-        xmlSchemaFreeValidCtxt(validctxt);
-    }
-
-    xmlSchemaFree(schema);
-    xmlFreeDoc(doc);
+  /* If XML Schema hasn't been rightly loaded */
+  if (schema == NULL) {
+    xmlSchemaCleanupTypes();
+    xmlMemoryDump();
     xmlCleanupParser();
-
     return ret;
+  }
+
+  doc = xmlParseDoc((xmlChar *)xml);
+
+  if (doc != NULL) {
+    /* Loading XML Schema content */
+    validctxt = xmlSchemaNewValidCtxt(schema);
+    /*
+    xmlSchemaSetValidErrors(validctxt,
+                            (xmlSchemaValidityErrorFunc) libxml2_callback,
+                            (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
+    */
+    /* validation */
+    ret = xmlSchemaValidateDoc(validctxt, doc);
+    xmlSchemaFreeValidCtxt(validctxt);
+  }
+
+  xmlSchemaFree(schema);
+  xmlFreeDoc(doc);
+  xmlCleanupParser();
+
+  return ret;
 }
 
 #endif /* defined(USE_LIBXML2) */
@@ -706,7 +711,8 @@ int msOWSSchemaValidation(const char* xml_schema, const char* xml)
  *
  */
 
-int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions) {
+int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions)
+{
   int i;
 
   /* if version is not set return error */

@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -46,27 +46,27 @@ typedef struct {
   double x;
   double y;
 #ifdef USE_POINT_Z_M
-  double z;  
-  double m;  
+  double z;
+  double m;
 #endif
 } pointObj;
 
 typedef struct {
 #ifdef SWIG
-%immutable;
+  %immutable;
 #endif
   int numpoints;
 #ifndef SWIG
   pointObj *point;
 #endif
 #ifdef SWIG
-%mutable;
+  %mutable;
 #endif
 } lineObj;
 
 typedef struct {
 #ifdef SWIG
-%immutable;
+  %immutable;
 #endif
   int numlines;
   int numvalues;
@@ -78,7 +78,7 @@ typedef struct {
 #endif
 
 #ifdef SWIG
-%mutable;
+  %mutable;
 #endif
 
   rectObj bounds;
@@ -87,7 +87,7 @@ typedef struct {
   int tileindex;
   int classindex;
   char *text;
-  
+
   int scratch;
   int resultindex; /* index within a query result set */
 } shapeObj;
@@ -108,7 +108,7 @@ typedef struct {
 #ifndef SWIG
 typedef struct {
   int  need_geotransform;
-  double rotation_angle;  
+  double rotation_angle;
   double geotransform[6];    /* Pixel/line to georef. */
   double invgeotransform[6]; /* georef to pixel/line */
 } geotransformObj;

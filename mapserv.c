@@ -15,7 +15,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -33,6 +33,7 @@
 #endif
 
 #include "mapserv.h"
+#include "mapio.h"
 #include "maptime.h"
 
 #ifndef WIN32
@@ -63,21 +64,77 @@ void msCleanupOnExit( void )
   /* note that stderr and stdout seem to be non-functional in the */
   /* fastcgi/win32 case.  If you really want to check functioning do */
   /* some sort of hack logging like below ... otherwise just trust it! */
-       
+
 #ifdef notdef
   FILE *fp_out = fopen( "D:\\temp\\mapserv.log", "w" );
-    
+
   fprintf( fp_out, "In msCleanupOnExit\n" );
   fclose( fp_out );
-#endif    
+#endif
   msCleanup(1);
 }
 #endif
 
+#ifdef USE_FASTCGI
+
+/************************************************************************/
+/*                           msIO_fcgiRead()                            */
+/*                                                                      */
+/*      This is the default implementation via stdio.                   */
+/************************************************************************/
+
+static int msIO_fcgiRead( void *cbData, void *data, int byteCount )
+
+{
+  return FCGI_fread( data, 1, byteCount, (FCGI_FILE *) cbData );
+}
+
+/************************************************************************/
+/*                           msIO_fcgiWrite()                           */
+/*                                                                      */
+/*      This is the default implementation via stdio.                   */
+/************************************************************************/
+
+static int msIO_fcgiWrite( void *cbData, void *data, int byteCount )
+
+{
+  return FCGI_fwrite( data, 1, byteCount, (FCGI_FILE *) cbData );
+}
+
+/************************************************************************/
+/*                    msIO_installFastCGIRedirect()                     */
+/************************************************************************/
+static int msIO_installFastCGIRedirect()
+
+{
+  msIOContext stdin_ctx, stdout_ctx, stderr_ctx;
+
+  stdin_ctx.label = "fcgi";
+  stdin_ctx.write_channel = MS_FALSE;
+  stdin_ctx.readWriteFunc = msIO_fcgiRead;
+  stdin_ctx.cbData = (void *) FCGI_stdin;
+
+  stdout_ctx.label = "fcgi";
+  stdout_ctx.write_channel = MS_TRUE;
+  stdout_ctx.readWriteFunc = msIO_fcgiWrite;
+  stdout_ctx.cbData = (void *) FCGI_stdout;
+
+  stderr_ctx.label = "fcgi";
+  stderr_ctx.write_channel = MS_TRUE;
+  stderr_ctx.readWriteFunc = msIO_fcgiWrite;
+  stderr_ctx.cbData = (void *) FCGI_stderr;
+
+  msIO_installHandlers( &stdin_ctx, &stdout_ctx, &stderr_ctx );
+
+  return MS_TRUE;
+}
+
+#endif
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   int iArg;
   int sendheaders = MS_TRUE;
   struct mstimeval execstarttime, execendtime;
@@ -92,8 +149,8 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
-  if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING) 
-      msGettimeofday(&execstarttime, NULL);
+  if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
+    msGettimeofday(&execstarttime, NULL);
 
   /* -------------------------------------------------------------------- */
   /*      Process arguments.  In normal use as a cgi-bin there are no     */
@@ -131,13 +188,13 @@ int main(int argc, char *argv[]) {
       } else {
         msCGIWriteError(mapserv);
       }
-            
+
       exit(0);
     } else if( strncmp(argv[iArg], "MS_ERRORFILE=", 13) == 0 ) {
-        msSetErrorFile( argv[iArg] + 13, NULL );
+      msSetErrorFile( argv[iArg] + 13, NULL );
     } else if( strncmp(argv[iArg], "MS_DEBUGLEVEL=", 14) == 0) {
       msSetGlobalDebugLevel( atoi(argv[iArg] + 14) );
-    } 
+    }
 #endif /* MS_ENABLE_CGI_CL_DEBUG_ARGS */
     else {
       /* we don't produce a usage message as some web servers pass junk arguments */
@@ -157,7 +214,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef WIN32
   atexit( msCleanupOnExit );
-#endif    
+#endif
 
   /* In FastCGI case we loop accepting multiple requests.  In normal CGI */
   /* use we only accept and process one request.  */
@@ -172,17 +229,17 @@ int main(int argc, char *argv[]) {
 
     mapserv->request->NumParams = loadParams(mapserv->request, NULL, NULL, 0, NULL);
     if( mapserv->request->NumParams == -1 ) {
-       msCGIWriteError(mapserv);
-       goto end_request;
+      msCGIWriteError(mapserv);
+      goto end_request;
     }
 
     mapserv->map = msCGILoadMap(mapserv);
     if(!mapserv->map) {
-       msCGIWriteError(mapserv);
-       goto end_request;
+      msCGIWriteError(mapserv);
+      goto end_request;
     }
 
-    if( mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) 
+    if( mapserv->map->debug >= MS_DEBUGLEVEL_TUNING)
       msGettimeofday(&requeststarttime, NULL);
 
 #ifdef USE_FASTCGI
@@ -196,38 +253,38 @@ int main(int argc, char *argv[]) {
 
 
 
-    
+
     if(msCGIDispatchRequest(mapserv) != MS_SUCCESS) {
-        msCGIWriteError(mapserv);
-        goto end_request;
+      msCGIWriteError(mapserv);
+      goto end_request;
     }
 
 
 end_request:
     if(mapserv) {
-       if(mapserv->map && mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
-          msGettimeofday(&requestendtime, NULL);
-          msDebug("mapserv request processing time (msLoadMap not incl.): %.3fs\n", 
+      if(mapserv->map && mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
+        msGettimeofday(&requestendtime, NULL);
+        msDebug("mapserv request processing time (msLoadMap not incl.): %.3fs\n",
                 (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
                 (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
-       }
-       msCGIWriteLog(mapserv,MS_FALSE);
-       msFreeMapServObj(mapserv);
+      }
+      msCGIWriteLog(mapserv,MS_FALSE);
+      msFreeMapServObj(mapserv);
     }
 #ifdef USE_FASTCGI
-      /* FCGI_ --- return to top of loop */
-      msResetErrorList();
-      continue;
+    /* FCGI_ --- return to top of loop */
+    msResetErrorList();
+    continue;
   } /* end fastcgi loop */
 #endif
-  
+
   /* normal case, processing is complete */
   if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING) {
-     msGettimeofday(&execendtime, NULL);
-     msDebug("mapserv total execution time: %.3fs\n", 
-           (execendtime.tv_sec+execendtime.tv_usec/1.0e6)-
-           (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
+    msGettimeofday(&execendtime, NULL);
+    msDebug("mapserv total execution time: %.3fs\n",
+            (execendtime.tv_sec+execendtime.tv_usec/1.0e6)-
+            (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
   }
   msCleanup(0);
   exit( 0 );
-} 
+}

@@ -73,23 +73,23 @@
 
 /* WCS namespaces */
 
-#define MS_OWSCOMMON_WCS_20_NAMESPACE_URI		"http://www.opengis.net/wcs/2.0"
+#define MS_OWSCOMMON_WCS_20_NAMESPACE_URI   "http://www.opengis.net/wcs/2.0"
 #define MS_OWSCOMMON_WCS_20_SCHEMAS_LOCATION    "/wcs/2.0/wcsAll.xsd"
-#define MS_OWSCOMMON_WCS_NAMESPACE_PREFIX		"wcs"
+#define MS_OWSCOMMON_WCS_NAMESPACE_PREFIX   "wcs"
 
 /* GML namespaces */
 
-#define MS_OWSCOMMON_GML_32_NAMESPACE_URI		"http://www.opengis.net/gml/3.2"
-#define MS_OWSCOMMON_GML_NAMESPACE_PREFIX		"gml"
+#define MS_OWSCOMMON_GML_32_NAMESPACE_URI   "http://www.opengis.net/gml/3.2"
+#define MS_OWSCOMMON_GML_NAMESPACE_PREFIX   "gml"
 
 /* GMLCov namespaces */
 
-#define MS_OWSCOMMON_GMLCOV_10_NAMESPACE_URI		"http://www.opengis.net/gmlcov/1.0"
-#define MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX		"gmlcov"
+#define MS_OWSCOMMON_GMLCOV_10_NAMESPACE_URI    "http://www.opengis.net/gmlcov/1.0"
+#define MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX    "gmlcov"
 
 /* SWE namespaces */
-#define MS_OWSCOMMON_SWE_20_NAMESPACE_URI		"http://www.opengis.net/swe/2.0"
-#define MS_OWSCOMMON_SWE_NAMESPACE_PREFIX		"swe"
+#define MS_OWSCOMMON_SWE_20_NAMESPACE_URI   "http://www.opengis.net/swe/2.0"
+#define MS_OWSCOMMON_SWE_NAMESPACE_PREFIX   "swe"
 
 /* function prototypes */
 
@@ -117,7 +117,7 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
 int _validateNamespace(xmlNsPtr psNsOws);
 
 xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, const char* name,
-                                          const char *content, const char *encoding);
+    const char *content, const char *encoding);
 
 int msOWSSchemaValidation(const char* xml_schema, const char* xml);
 

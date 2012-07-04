@@ -5,6 +5,7 @@ config.log
 config.status
 *.dll
 *.swp
+*.pyc
 Makefile
 legend
 libmapserver.a
