@@ -613,7 +613,11 @@ char *msStripPath(char *fn)
 {
   char *str;
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+  if((str = strrchr(fn,'\\')) != NULL) { /* return pointer to last "backslash" */
+#else
   if((str = strrchr(fn,'/')) != NULL) { /* return pointer to last "slash" */
+#endif
     str++; /* skip past the "slash" */
     return(str);
   } else
