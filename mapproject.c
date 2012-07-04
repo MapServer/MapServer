@@ -641,20 +641,12 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
   }
 
   if( !rect_initialized ) {
-    if( out == NULL || out->proj == NULL
-        || pj_is_latlong(in->proj) ) {
-      prj_rect.minx = -180;
-      prj_rect.maxx = 180;
-      prj_rect.miny = -90;
-      prj_rect.maxy = 90;
-    } else {
-      prj_rect.minx = -22000000;
-      prj_rect.maxx = 22000000;
-      prj_rect.miny = -11000000;
-      prj_rect.maxy = 11000000;
-    }
+    prj_rect.minx = 0;
+    prj_rect.maxx = 0;
+    prj_rect.miny = 0;
+    prj_rect.maxy = 0;
 
-    msDebug( "msProjectRect(): all points failed to reproject, trying to fall back to using world bounds ... hope this helps.\n" );
+    msSetError(MS_PROJERR, "All points failed to reproject.", "msProjectRect()");
   } else {
     msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
   }
