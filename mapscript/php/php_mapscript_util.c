@@ -42,7 +42,12 @@ zend_object_value mapscript_object_new(zend_object *zobj,
     zobj->ce = ce;
     ALLOC_HASHTABLE(zobj->properties);
     zend_hash_init(zobj->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-    zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    //handle changes in PHP 5.4.x
+    #if PHP_VERSION_ID < 50399
+      zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    #else
+      object_properties_init(zobj, ce);
+    #endif
     retval.handle = zend_objects_store_put(zobj, NULL, (zend_objects_free_object_storage_t)zend_objects_free_object, NULL TSRMLS_CC);
     retval.handlers = &mapscript_std_object_handlers;
     return retval;
@@ -59,7 +64,12 @@ zend_object_value mapscript_object_new_ex(zend_object *zobj,
     zobj->ce = ce;
     ALLOC_HASHTABLE(zobj->properties);
     zend_hash_init(zobj->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-    zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    //handle changes in PHP 5.4.x
+    #if PHP_VERSION_ID < 50399
+      zend_hash_copy(zobj->properties, &ce->default_properties, (copy_ctor_func_t) zval_add_ref,(void *) &temp, sizeof(zval *));
+    #else
+      object_properties_init(zobj, ce);
+    #endif
     retval.handle = zend_objects_store_put(zobj, NULL, (zend_objects_free_object_storage_t)zend_objects_free_object, NULL TSRMLS_CC);
     retval.handlers = object_handlers;
     return retval;

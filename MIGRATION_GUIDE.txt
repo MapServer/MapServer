@@ -178,6 +178,21 @@ are evaluated in OGC WCS services. Previous versions used "wms_*"
 prefixed entries as fallback which is dropped in version 6.0 in favor of
 forcing explicit decisions.
 
+-------------------------------------------------------
+Mapfile Changes - OGC requests - DUMP parameter removed
+-------------------------------------------------------
+
+The DUMP LAYER parameter has been removed.  To enable output of
+geometries in WMS getfeatureinfo requests - GML
+(INFO_FORMAT=application/vnd.ogc.gml), LAYER METADATA is used
+instead::
+
+   METADATA
+     gml_geometries "geom"
+     gml_geom_type "polygon"
+     ...
+   END
+
 --------------------------------------------------------
 Mapfile Changes - Ability to escape single/double quotes
 --------------------------------------------------------

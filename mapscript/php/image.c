@@ -303,12 +303,17 @@ PHP_METHOD(imageObj, saveImage)
     /* no filename - read stdout */
 
     /* if there is no output buffer active, set the header */
-    if (OG(ob_nesting_level)<=0)
-    {
-        php_header(TSRMLS_C);
-    }
+    //handle changes in PHP 5.4.x
+    #if PHP_VERSION_ID < 50399
+    if (OG(ob_nesting_level)<=0) {
+      php_header(TSRMLS_C);
+      }
+    #else
+    if (php_output_get_level(TSRMLS_C)<=0) {
+      php_header(TSRMLS_C);
+      }
+    #endif
    
-
     if (MS_RENDERER_PLUGIN(php_image->image->format))
     {
         iptr = (void *)msSaveImageBuffer(php_image->image, &size, php_image->image->format);

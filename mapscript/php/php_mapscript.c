@@ -899,7 +899,7 @@ PHP_FUNCTION(ms_tokenizeMap)
 
 }
 
-function_entry mapscript_functions[] = {
+zend_function_entry mapscript_functions[] = {
     PHP_FE(ms_GetVersion, NULL)
     PHP_FE(ms_GetVersionInt,  NULL)
     PHP_FE(ms_newLineObj, NULL)
