@@ -1682,6 +1682,12 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 {
   const char *extent_priority = NULL;
   const char *value;
+  const char *gdalDesc;
+  const char *fullPath;
+  char *fileExtension = NULL;
+  char szPath[MS_MAXPATHLEN];
+  int fullPathLen;
+  int success = 0;
   rectObj  rect;
 
   /* -------------------------------------------------------------------- */
@@ -1702,11 +1708,49 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 
   if( extent_priority != NULL
       && EQUALN(extent_priority,"WORLD",5) ) {
-    if( GDALGetDescription(hDS) != NULL
-        && GDALReadWorldFile(GDALGetDescription(hDS), "wld",
-                             padfGeoTransform) ) {
-      return MS_SUCCESS;
+    /* is there a user configured worldfile? */
+    value = CSLFetchNameValue( layer->processing, "WORLDFILE" );
+
+    if( value != NULL ) {
+      /* at this point, fullPath may be a filePath or path only */
+      fullPath = msBuildPath(szPath, map->mappath, value);
+
+      /* fullPath is a path only, so let's append the dataset filename */
+      if( strrchr(szPath,'.') == NULL ) {
+        fullPathLen = strlen(fullPath);
+        gdalDesc = msStripPath((char*)GDALGetDescription(hDS));
+
+        if ( (fullPathLen + strlen(gdalDesc)) < MS_MAXPATHLEN ) {
+          strcpy((char*)(fullPath + fullPathLen), gdalDesc);
+        } else {
+          msDebug("Path length to alternative worldfile exceeds MS_MAXPATHLEN.\n");
+          fullPath = NULL;
+        }
+      }
+      /* fullPath has a filename included, so get the extension */
+      else {
+        fileExtension = msStrdup(strrchr(szPath,'.') + 1);
+      }
     }
+    /* common behaviour with worldfile generated from basename + .wld */
+    else {
+      fullPath = GDALGetDescription(hDS);
+      fileExtension = msStrdup("wld");
+    }
+
+    if( fullPath )
+      success = GDALReadWorldFile(fullPath, fileExtension, padfGeoTransform);
+
+    if( success && layer->debug >= MS_DEBUGLEVEL_VVV ) {
+      msDebug("Worldfile location: %s.\n", fullPath);
+    } else if( layer->debug >= MS_DEBUGLEVEL_VVV ) {
+      msDebug("Failed using worldfile location: %s.\n", fullPath);
+    }
+
+    msFree(fileExtension);
+
+    if( success )
+      return MS_SUCCESS;
   }
 
   /* -------------------------------------------------------------------- */
