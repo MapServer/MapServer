@@ -1729,7 +1729,7 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
       }
       /* fullPath has a filename included, so get the extension */
       else {
-        fileExtension = strrchr(szPath,'.') + 1;
+        fileExtension = msStrdup(strrchr(szPath,'.') + 1);
       }
     }
     /* common behaviour with worldfile generated from basename + .wld */
