@@ -611,16 +611,23 @@ int msCountChars(char *str, char ch)
 /* ------------------------------------------------------------------------------- */
 char *msStripPath(char *fn)
 {
-  char *str;
+  char *pSlash;
+  char *pBackslash;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-  if((str = strrchr(fn,'\\')) != NULL) { /* return pointer to last "backslash" */
-#else
-  if((str = strrchr(fn,'/')) != NULL) { /* return pointer to last "slash" */
-#endif
-    str++; /* skip past the "slash" */
-    return(str);
-  } else
+  /* try to locate both, the last slash or backslash */
+  pSlash = strrchr(fn,'/');
+  pBackslash = strrchr(fn,'\\');
+
+  if( pSlash != NULL && pBackslash != NULL ) {
+    if( pSlash < pBackslash )
+      return ++pBackslash;
+    else
+      return ++pSlash;
+  } else if ( pSlash != NULL )
+    return ++pSlash; /* skip past the "slash" */
+  else if ( pBackslash != NULL )
+    return ++pBackslash; /* skip past the "backslash" */
+  else
     return(fn);
 }
 
