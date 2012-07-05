@@ -1899,7 +1899,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
         }
         if (psFormat == NULL) {
           msSetError(MS_WFSERR,
-                     "'%s' is not a permitted output format for layer '%s', review wfs_formats setting.",
+                     "'%s' is not a permitted output format for layer '%s', review wfs_getfeature_formatlist setting.",
                      "msWFSGetFeature()",
                      paramsObj->pszOutputFormat,
                      lp->name );
