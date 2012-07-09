@@ -28,6 +28,12 @@ If you are building MapServer from source, then the following may be of interest
 
 * The --with-php configure option has been changed to point directly to the php-config script instead of to the directory where the PHP headers are located.
 
+-----------
+CGI Changes
+-----------
+
+* Changing MIN/MAXSCALE or MIN/MAXSCALEDENOM via URL is no longer supported.
+
 -----------------
 Rendering changes
 -----------------
