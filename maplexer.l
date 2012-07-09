@@ -293,8 +293,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>maxdistance                           { MS_LEXER_RETURN_TOKEN(MAXDISTANCE); }
 <INITIAL>maxfeatures                           { MS_LEXER_RETURN_TOKEN(MAXFEATURES); }
 <INITIAL>maxinterval                           { MS_LEXER_RETURN_TOKEN(MAXINTERVAL); }
-<INITIAL,URL_STRING>maxscale                   { MS_LEXER_RETURN_TOKEN(MAXSCALE); }
-<INITIAL,URL_STRING>maxscaledenom              { MS_LEXER_RETURN_TOKEN(MAXSCALEDENOM); }
+<INITIAL>maxscale                              { MS_LEXER_RETURN_TOKEN(MAXSCALE); }
+<INITIAL>maxscaledenom                         { MS_LEXER_RETURN_TOKEN(MAXSCALEDENOM); }
 <INITIAL>maxgeowidth                           { MS_LEXER_RETURN_TOKEN(MAXGEOWIDTH); }
 <INITIAL>maxlength                             { MS_LEXER_RETURN_TOKEN(MAXLENGTH); }
 <INITIAL>maxsize                               { MS_LEXER_RETURN_TOKEN(MAXSIZE); }
@@ -310,8 +310,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>maxoverlapangle                       { MS_LEXER_RETURN_TOKEN(MAXOVERLAPANGLE); } 
 <INITIAL>minfeaturesize                        { MS_LEXER_RETURN_TOKEN(MINFEATURESIZE); }
 <INITIAL>mininterval                           { MS_LEXER_RETURN_TOKEN(MININTERVAL); }
-<INITIAL,URL_STRING>minscale                   { MS_LEXER_RETURN_TOKEN(MINSCALE); }
-<INITIAL,URL_STRING>minscaledenom              { MS_LEXER_RETURN_TOKEN(MINSCALEDENOM); }
+<INITIAL>minscale                              { MS_LEXER_RETURN_TOKEN(MINSCALE); }
+<INITIAL>minscaledenom                         { MS_LEXER_RETURN_TOKEN(MINSCALEDENOM); }
 <INITIAL>mingeowidth                           { MS_LEXER_RETURN_TOKEN(MINGEOWIDTH); }
 <INITIAL>minlength                             { MS_LEXER_RETURN_TOKEN(MINLENGTH); }
 <INITIAL>minsize                               { MS_LEXER_RETURN_TOKEN(MINSIZE); }
