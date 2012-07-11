@@ -766,7 +766,7 @@ int selectClusterShape(layerObj* layer, long shapeindex)
   msClusterLayerInfo* layerinfo = (msClusterLayerInfo*)layer->layerinfo;
 
   if (!layerinfo) {
-    msSetError(MS_MISCERR, "Layer not open: %s", layer->name);
+    msSetError(MS_MISCERR, "Layer not open: %s", "selectClusterShape()", layer->name);
     return MS_FAILURE;
   }
 
@@ -871,12 +871,12 @@ int RebuildClusters(layerObj *layer, int isQuery)
   msClusterLayerInfo* layerinfo = layer->layerinfo;
 
   if (!layerinfo) {
-    msSetError(MS_MISCERR, "Layer is not open: %s", layer->name);
+    msSetError(MS_MISCERR, "Layer is not open: %s", "RebuildClusters()", layer->name);
     return MS_FAILURE;
   }
 
   if (!layer->map) {
-    msSetError(MS_MISCERR, "No map associated with this layer: %s", layer->name);
+    msSetError(MS_MISCERR, "No map associated with this layer: %s", "RebuildClusters()", layer->name);
     return MS_FAILURE;
   }
 
@@ -1279,7 +1279,7 @@ int msClusterLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   msClusterLayerInfo* layerinfo = (msClusterLayerInfo*)layer->layerinfo;
 
   if (!layerinfo) {
-    msSetError(MS_MISCERR, "Layer not open: %s", layer->name);
+    msSetError(MS_MISCERR, "Layer not open: %s", "msClusterLayerGetShape()", layer->name);
     return MS_FAILURE;
   }
 
@@ -1308,7 +1308,7 @@ int msClusterLayerNextShape(layerObj *layer, shapeObj *shape)
   msClusterLayerInfo* layerinfo = (msClusterLayerInfo*)layer->layerinfo;
 
   if (!layerinfo) {
-    msSetError(MS_MISCERR, "Layer not open: %s", layer->name);
+    msSetError(MS_MISCERR, "Layer not open: %s", "msClusterLayerNextShape()", layer->name);
     return MS_FAILURE;
   }
 
@@ -1388,7 +1388,7 @@ int msClusterLayerOpen(layerObj *layer)
   msClusterLayerInfo* layerinfo;
 
   if (layer->type != MS_LAYER_POINT) {
-    msSetError(MS_MISCERR, "Only point layers are supported for clustering: %s", layer->name);
+    msSetError(MS_MISCERR, "Only point layers are supported for clustering: %s", "msClusterLayerOpen()", layer->name);
     return MS_FAILURE;
   }
 
@@ -1414,12 +1414,12 @@ int msClusterLayerOpen(layerObj *layer)
   layerIndex = msGetLayerIndex(layer->map, layer->connection);
 
   if (layerIndex < 0 && layerIndex >= layer->map->numlayers) {
-    msSetError(MS_MISCERR, "No source layers specified in layer: %s", layer->name);
+    msSetError(MS_MISCERR, "No source layers specified in layer: %s", "msClusterLayerOpen()", layer->name);
     return MS_FAILURE;
   }
 
   if (layer->map->layers[layerIndex]->type != MS_LAYER_POINT) {
-    msSetError(MS_MISCERR, "Only point layers are supported for cluster data source: %s", layer->name);
+    msSetError(MS_MISCERR, "Only point layers are supported for cluster data source: %s", "msClusterLayerOpen()", layer->name);
     return MS_FAILURE;
   }
 
