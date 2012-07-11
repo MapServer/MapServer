@@ -133,12 +133,12 @@ int msUnionLayerOpen(layerObj *layer)
   }
 
   if (!layer->connection) {
-    msSetError(MS_MISCERR, "The CONNECTION option is not specified for layer: %s", layer->name);
+    msSetError(MS_MISCERR, "The CONNECTION option is not specified for layer: %s", "msUnionLayerOpen()", layer->name);
     return MS_FAILURE;
   }
 
   if (!layer->map) {
-    msSetError(MS_MISCERR, "No map assigned to this layer: %s", layer->name);
+    msSetError(MS_MISCERR, "No map assigned to this layer: %s", "msUnionLayerOpen()", layer->name);
     return MS_FAILURE;
   }
 
@@ -174,7 +174,7 @@ int msUnionLayerOpen(layerObj *layer)
   layerNames = msStringSplit(layer->connection, ',', &layerCount);
 
   if (layerCount == 0) {
-    msSetError(MS_MISCERR, "No source layers specified in layer: %s", layer->name);
+    msSetError(MS_MISCERR, "No source layers specified in layer: %s", "msUnionLayerOpen()", layer->name);
     if(layerNames)
       msFreeCharArray(layerNames, layerinfo->layerCount);
     msUnionLayerClose(layer);
@@ -193,7 +193,7 @@ int msUnionLayerOpen(layerObj *layer)
       layerObj* srclayer = map->layers[layerindex];
 
       if (srclayer->type != layer->type) {
-        msSetError(MS_MISCERR, "The type of the source layer doesn't match with the union layer: %s", srclayer->name);
+        msSetError(MS_MISCERR, "The type of the source layer doesn't match with the union layer: %s", "msUnionLayerOpen()", srclayer->name);
         if(layerNames)
           msFreeCharArray(layerNames, layerinfo->layerCount);
         msUnionLayerClose(layer);
@@ -202,7 +202,7 @@ int msUnionLayerOpen(layerObj *layer)
 
       /* we need to create a new layer in order make the singlepass query to work */
       if(initLayer(&layerinfo->layers[i], map) == -1) {
-        msSetError(MS_MISCERR, "Cannot initialize source layer: %s", srclayer->name);
+        msSetError(MS_MISCERR, "Cannot initialize source layer: %s", "msUnionLayerOpen()", srclayer->name);
         if(layerNames)
           msFreeCharArray(layerNames, layerinfo->layerCount);
         msUnionLayerClose(layer);
@@ -212,7 +212,7 @@ int msUnionLayerOpen(layerObj *layer)
       ++layerinfo->layerCount;
 
       if (msCopyLayer(&layerinfo->layers[i], srclayer) != MS_SUCCESS) {
-        msSetError(MS_MISCERR, "Cannot copy source layer: %s", srclayer->name);
+        msSetError(MS_MISCERR, "Cannot copy source layer: %s", "msUnionLayerOpen()", srclayer->name);
         if(layerNames)
           msFreeCharArray(layerNames, layerinfo->layerCount);
         msUnionLayerClose(layer);
@@ -244,7 +244,7 @@ int msUnionLayerOpen(layerObj *layer)
         return MS_FAILURE;
       }
     } else {
-      msSetError(MS_MISCERR, "Invalid layer: %s", layerNames[i]);
+      msSetError(MS_MISCERR, "Invalid layer: %s", "msUnionLayerOpen()", layerNames[i]);
       if(layerNames)
         msFreeCharArray(layerNames, layerinfo->layerCount);
       msUnionLayerClose(layer);
@@ -568,7 +568,7 @@ int msUnionLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     return MS_FAILURE;
 
   if (tile < 0 || tile >= layerinfo->layerCount) {
-    msSetError(MS_MISCERR, "Invalid tile index: %s", layer->name);
+    msSetError(MS_MISCERR, "Invalid tile index: %s", "msUnionLayerGetShape()", layer->name);
     return MS_FAILURE;
   }
 
@@ -639,7 +639,7 @@ static int msUnionLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, s
     return MS_FAILURE;
 
   if (shape->tileindex < 0 || shape->tileindex >= layerinfo->layerCount) {
-    msSetError(MS_MISCERR, "Invalid tile index: %s", layer->name);
+    msSetError(MS_MISCERR, "Invalid tile index: %s", "msUnionLayerGetAutoStyle()", layer->name);
     return MS_FAILURE;
   }
 
