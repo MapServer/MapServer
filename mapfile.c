@@ -1602,6 +1602,19 @@ int msLoadProjectionString(projectionObj *p, const char *value)
     p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
     p->args[0] = msStrdup(init_string);
     p->numargs = 1;
+  /* Mandatory support for this URI format specified in WFS1.1 (also in 1.0?) */
+  } else if (EQUALN("http://www.opengis.net/gml/srs/epsg.xml#", value, 40)) {
+  	/* We assume always lon/lat ordering, as that is what GeoServer does... */
+  	const char *code;
+
+  	code = value + 40;
+
+  	p->args = (char **) msSmallMalloc(sizeof(char *));
+  	/* translate into PROJ.4 format as we go */
+  	p->args[0] = (char *) msSmallMalloc(11 + strlen(code));
+  	snprintf(p->args[0], 11 + strlen(code), "init=epsg:%s", code);
+  	p->numargs = 1;
+
   } else if (strncasecmp(value, "CRS:",4) == 0 ) {
     char init_string[100];
     init_string[0] = '\0';
