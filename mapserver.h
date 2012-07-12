@@ -2248,7 +2248,17 @@ extern "C" {
   MS_DLL_EXPORT int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
   MS_DLL_EXPORT int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
   MS_DLL_EXPORT int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image);
-  MS_DLL_EXPORT int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style, int querymapMode);
+  
+#define MS_DRAWMODE_FEATURES    0x00001
+#define MS_DRAW_FEATURES(mode) (MS_DRAWMODE_FEATURES&(mode))
+#define MS_DRAWMODE_LABELS      0x00002
+#define MS_DRAW_LABELS(mode) (MS_DRAWMODE_LABELS&(mode))
+#define MS_DRAWMODE_SINGLESTYLE 0x00004
+#define MS_DRAW_SINGLESTYLE(mode) (MS_DRAWMODE_SINGLESTYLE&(mode))
+#define MS_DRAWMODE_QUERY       0x00008
+#define MS_DRAW_QUERY(mode) (MS_DRAWMODE_QUERY&(mode))
+
+  MS_DLL_EXPORT int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style, int mode);
   MS_DLL_EXPORT int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
 
   /*Range Support*/
