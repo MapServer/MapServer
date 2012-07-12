@@ -1782,7 +1782,7 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
           layer->class[c]->styles[s]->maxscaledenom)) {
         if (layer->class[c]->styles[s]->_geomtransform.type != MS_GEOMTRANSFORM_NONE)
           msDrawTransformedShape(map, &map->symbolset, image, unclipped_shape, layer->class[c]->styles[s], layer->scalefactor);
-        else if (style == -1 || s == style)
+        else if (!MS_DRAW_SINGLESTYLE(drawmode) || s == style)
           msDrawLineSymbol(&map->symbolset, image, shape, layer->class[c]->styles[s], layer->scalefactor);
       }
     }
