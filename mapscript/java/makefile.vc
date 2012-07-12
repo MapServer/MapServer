@@ -24,6 +24,7 @@ LINK=   link
 
 MS_DLL = javamapscript.dll
 
+BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32
 LDFLAGS =	/NODEFAULTLIB:"MSVCRTD" /NODEFAULTLIB:libcd /NODEFAULTLIB:libcmtd /NODEFAULTLIB:msvcrtd /NODEFAULTLIB:LIBC /DEBUG
 
 
@@ -38,10 +39,10 @@ mapscript_java:
 	$(JAVAC) edu\umn\gis\mapscript\*.java
 
 mapscript_wrap:
-        $(CC) $(MS_CFLAGS) $(JAVA_INCLUDE) /c mapscript_wrap.c  /Fomapscript_wrap.obj
+        $(CC) $(BASE_CFLAGS) $(MS_CFLAGS) $(JAVA_INCLUDE) /c mapscript_wrap.c  /Fomapscript_wrap.obj
 
 .c.obj:	
-	$(CC) $(MS_CFLAGS) $(JAVA_INCLUDE) /c $*.c /Fo$*.obj
+	$(CC) $(BASE_CFLAGS) $(MS_CFLAGS) $(JAVA_INCLUDE) /c $*.c /Fo$*.obj
 
 mapscript_lib: mapscript_wrap.obj
         link /dll /debug \
