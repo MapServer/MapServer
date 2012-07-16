@@ -1736,7 +1736,13 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
   }
 
   if(offsety == -99) { /* complex calculations */
+    int ok = 0;
     for (i = 0; i < p->numlines; i++) {
+      if(p->line[i].numpoints<2) {
+        ret->line[i].numpoints = 0;
+        continue; /* skip degenerate lines */
+      }
+      ok =1;
       pointObj old_pt, old_diffdir, old_offdir;
       /* initialize old_offdir and old_diffdir, as gcc isn't smart enough to see that it
        * is not an error to do so, and prints a warning */
@@ -1796,6 +1802,7 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
         ret->line=msSmallRealloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
       }
     }
+    if(!ok) ret->numlines = 0; /* all lines where degenerate */
   } else { /* normal offset (eg. drop shadow) */
     for (i = 0; i < p->numlines; i++) {
       for(j=0; j<p->line[i].numpoints; j++) {
