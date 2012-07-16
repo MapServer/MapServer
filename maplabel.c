@@ -1044,9 +1044,9 @@ int msGetRasterTextBBox(rendererVTableObj *renderer, int size, char *string, rec
     }
     max_line_length = MS_MAX(cur_line_length,max_line_length);
     rect->minx = 0;
-    rect->miny = -(fontPtr->charHeight * num_lines);
+    rect->miny = -fontPtr->charHeight;
     rect->maxx = fontPtr->charWidth * max_line_length;
-    rect->maxy = 0;
+    rect->maxy = fontPtr->charHeight * (num_lines-1);
     return MS_SUCCESS;
   } else if(!renderer) {
     int ret = MS_FAILURE;
