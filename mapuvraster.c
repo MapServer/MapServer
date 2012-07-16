@@ -535,7 +535,6 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   line.numpoints = 1;
   line.point = &point;
   msAddLine( shape, &line );
-  msComputeBounds( shape );
 
   shape->numvalues = layer->numitems;
   shape->values = msUVRASTERGetValues(layer, &uvlinfo->u[x][y], &uvlinfo->v[x][y]);
