@@ -148,8 +148,9 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 */
 int msLayerNextShape(layerObj *layer, shapeObj *shape)
 {
+  int rv;
   if ( ! layer->vtable) {
-    int rv =  msInitializeVirtualTable(layer);
+    rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS)
       return rv;
   }
@@ -161,7 +162,9 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   /* tagged on to the main attributes with the naming scheme [join name].[item name]. */
   /* We need to leverage the iteminfo (I think) at this point */
 
-  return layer->vtable->LayerNextShape(layer, shape);
+  rv = layer->vtable->LayerNextShape(layer, shape);
+  msComputeBounds(shape);
+  return rv;
 }
 
 /*
@@ -185,8 +188,9 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 */
 int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  int rv;
   if( ! layer->vtable) {
-    int rv =  msInitializeVirtualTable(layer);
+    rv =  msInitializeVirtualTable(layer);
     if(rv != MS_SUCCESS)
       return rv;
   }
@@ -196,7 +200,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   ** tagged on to the main attributes with the naming scheme [join name].[item name].
   */
 
-  return layer->vtable->LayerGetShape(layer, shape, record);
+  rv = layer->vtable->LayerGetShape(layer, shape, record);
+  msComputeBounds(shape);
+  return rv;
 }
 
 /*
