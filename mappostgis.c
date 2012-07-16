@@ -2204,8 +2204,6 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
     }
 
     shape->numvalues = layer->numitems;
-
-    msComputeBounds(shape);
   }
 
   if( layer->debug > 2 ) {
