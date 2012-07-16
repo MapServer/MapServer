@@ -1033,6 +1033,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(annotate && layer->class[shape.classindex]->numlabels > 0) {
       msShapeGetAnnotation(layer, &shape);
       drawmode |= MS_DRAWMODE_LABELS;
+      if (msLayerGetProcessingKey(layer, "LABEL_NO_CLIP")) {
+        drawmode |= MS_DRAWMODE_UNCLIPPEDLABELS;
+      }
     }
 
     if (cache) {
@@ -2009,11 +2012,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       bShapeNeedsClipping = MS_TRUE;
     }
 
-    if(MS_DRAW_LABELS(drawmode)) {
-      if (msLayerGetProcessingKey(layer, "LABEL_NO_CLIP")) {
-        bNeedUnclippedAnnoShape = MS_TRUE;
-        bNeedUnclippedShape = MS_TRUE;
-      }
+    if(MS_DRAW_LABELS(drawmode) && MS_DRAW_UNCLIPPED_LABELS(drawmode)) {
+      bNeedUnclippedAnnoShape = MS_TRUE;
+      bNeedUnclippedShape = MS_TRUE;
     }
   } else {
     bShapeNeedsClipping = MS_FALSE;

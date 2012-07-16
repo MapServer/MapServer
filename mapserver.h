@@ -2257,6 +2257,8 @@ extern "C" {
 #define MS_DRAW_SINGLESTYLE(mode) (MS_DRAWMODE_SINGLESTYLE&(mode))
 #define MS_DRAWMODE_QUERY       0x00008
 #define MS_DRAW_QUERY(mode) (MS_DRAWMODE_QUERY&(mode))
+#define MS_DRAWMODE_UNCLIPPEDLABELS       0x00010
+#define MS_DRAW_UNCLIPPED_LABELS(mode) (MS_DRAWMODE_UNCLIPPEDLABELS&(mode))
 
   MS_DLL_EXPORT int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style, int mode);
   MS_DLL_EXPORT int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
