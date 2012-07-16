@@ -253,7 +253,7 @@ int getNextShape(mapObj *map, layerObj *layer, float *values, int *nvalues, styl
       layer->project = MS_FALSE;
 #endif
 
-    if(msBindLayerToShape(layer, shape, MS_FALSE) != MS_SUCCESS)
+    if(msBindLayerToShape(layer, shape, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS) != MS_SUCCESS)
       return MS_FAILURE; /* error message is set in msBindLayerToShape() */
 
     *nvalues = 0;
