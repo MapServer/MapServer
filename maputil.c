@@ -123,8 +123,9 @@ static int bindColorAttribute(colorObj *attribute, char *value)
   return MS_FAILURE; /* shouldn't get here */
 }
 
-static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int querymapMode)
+static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int drawmode)
 {
+  assert(MS_DRAW_FEATURES(drawmode));
   if(style->numbindings > 0) {
     if(style->bindings[MS_STYLE_BINDING_SYMBOL].index != -1) {
       style->symbol = msGetSymbolIndex(&(layer->map->symbolset), shape->values[style->bindings[MS_STYLE_BINDING_SYMBOL].index], MS_TRUE);
@@ -142,11 +143,11 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int que
       style->width = 1;
       bindDoubleAttribute(&style->width, shape->values[style->bindings[MS_STYLE_BINDING_WIDTH].index]);
     }
-    if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && (querymapMode != MS_TRUE)) {
+    if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && !MS_DRAW_QUERY(drawmode)) {
       MS_INIT_COLOR(style->color, -1,-1,-1,255);
       bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
     }
-    if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1 && (querymapMode != MS_TRUE)) {
+    if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1 && !MS_DRAW_QUERY(drawmode)) {
       MS_INIT_COLOR(style->outlinecolor, -1,-1,-1,255);
       bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
     }
@@ -190,13 +191,15 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int que
   }
 }
 
-static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int querymapMode)
+static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int drawmode)
 {
   int i;
+  assert(MS_DRAW_LABELS(drawmode));
 
   /* check the label styleObj's (TODO: do we need to use querymapMode here? */
   for(i=0; i<label->numstyles; i++) {
-    bindStyle(layer, shape, label->styles[i], querymapMode);
+    /* force MS_DRAWMODE_FEATURES for label styles */
+    bindStyle(layer, shape, label->styles[i], drawmode|MS_DRAWMODE_FEATURES); 
   }
 
   if(label->numbindings > 0) {
@@ -274,7 +277,7 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int que
 /*
 ** Function to bind various layer properties to shape attributes.
 */
-int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
+int msBindLayerToShape(layerObj *layer, shapeObj *shape, int drawmode)
 {
   int i, j;
 
@@ -282,13 +285,17 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
 
   for(i=0; i<layer->numclasses; i++) {
     /* check the styleObj's */
-    for(j=0; j<layer->class[i]->numstyles; j++) {
-      bindStyle(layer, shape, layer->class[i]->styles[j], querymapMode);
+    if(MS_DRAW_FEATURES(drawmode)) {
+      for(j=0; j<layer->class[i]->numstyles; j++) {
+        bindStyle(layer, shape, layer->class[i]->styles[j], drawmode);
+      }
     }
 
     /* check the labelObj's */
-    for(j=0; j<layer->class[i]->numlabels; j++) {
-      bindLabel(layer, shape, layer->class[i]->labels[j], querymapMode);
+    if(MS_DRAW_LABELS(drawmode)) {
+      for(j=0; j<layer->class[i]->numlabels; j++) {
+        bindLabel(layer, shape, layer->class[i]->labels[j], drawmode);
+      }
     }
   } /* next classObj */
 
