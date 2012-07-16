@@ -1135,7 +1135,6 @@ int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*      :                                                               */
 /*        0 : for color                                                 */
 /*        1 : outlinecolor                                              */
-/*        2 : backgroundcolor                                           */
 /************************************************************************/
 int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                      mapObj *map, int iColorParam)
@@ -1217,8 +1216,13 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
       } else if (strcasecmp(psStrkName, "stroke-opacity") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
             psCssParam->psChild->psNext->pszValue) {
-          psStyle->color.alpha =
-            (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+          if (iColorParam == 0) {
+            psStyle->color.alpha =
+              (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+          } else {
+            psStyle->outlinecolor.alpha =
+              (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+          }
         }
       }
     }
