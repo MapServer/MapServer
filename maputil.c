@@ -1234,8 +1234,10 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
   int         i, j = 0;
   lineObj     line;
   pointObj    *poIntersectionPt = NULL;
+#ifdef USE_POINT_Z_M
   double      dfFactor = 0;
   double      dfDistTotal, dfDistToIntersection = 0;
+#endif
 
   if (shape && point) {
     for (i=0; i<shape->numlines; i++) {
@@ -1271,6 +1273,7 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
     /* -------------------------------------------------------------------- */
     poIntersectionPt = msIntersectionPointLine(point, &oFirst, &oSecond);
     if (poIntersectionPt) {
+#ifdef USE_POINT_Z_M
       dfDistTotal = sqrt(((oSecond.x - oFirst.x)*(oSecond.x - oFirst.x)) +
                          ((oSecond.y - oFirst.y)*(oSecond.y - oFirst.y)));
 
@@ -1281,7 +1284,6 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 
       dfFactor = dfDistToIntersection / dfDistTotal;
 
-#ifdef USE_POINT_Z_M
       poIntersectionPt->m = oFirst.m + (oSecond.m - oFirst.m)*dfFactor;
 #endif
 
