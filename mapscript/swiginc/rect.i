@@ -92,7 +92,7 @@
         shape.classindex = classindex;
         shape.text = strdup(text);
 
-        msDrawShape(map, layer, &shape, image, -1, MS_FALSE);
+        msDrawShape(map, layer, &shape, image, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
 
         msFreeShape(&shape);
     
