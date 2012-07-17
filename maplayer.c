@@ -1526,6 +1526,7 @@ int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     for (i = shape->numvalues; i < layer->numitems; i++)
       shape->values[i] = msStrdup("");
   }
+  msComputeBounds(shape);
   return MS_SUCCESS;
 }
 
@@ -1547,6 +1548,7 @@ int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
     for (i = shape->numvalues; i < layer->numitems; i++)
       shape->values[i] = msStrdup("");
   }
+  msComputeBounds(shape);
 
   return(MS_SUCCESS);
 }
