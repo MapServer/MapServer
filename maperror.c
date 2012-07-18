@@ -426,6 +426,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
       ls.size = i;
       MS_INIT_COLOR(*ls.color,0,0,0,255);
       MS_INIT_COLOR(*ls.outlinecolor,255,255,255,255);
+      ls.outlinewidth = 1;
       break;
     }
   }
