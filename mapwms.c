@@ -797,7 +797,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int status = 0;
   const char *layerlimit = NULL;
 
-  char *bboxrequest=NULL;
   const char *sldenabled=NULL;
   char *sld_url=NULL, *sld_body=NULL;
 
@@ -1020,17 +1019,16 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                    "msWMSLoadGetMapParams()");
         return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
-      bboxrequest = values[i];
+      map->extent.minx = atof(tokens[0]);
+      map->extent.miny = atof(tokens[1]);
+      map->extent.maxx = atof(tokens[2]);
+      map->extent.maxy = atof(tokens[3]);
 
+      msFreeCharArray(tokens, n);
+      
       /*for wms 1.3.0 we will do the validation of the bbox after all parameters
        are read to account for the axes order*/
       if (nVersion < OWS_1_3_0) {
-        map->extent.minx = atof(tokens[0]);
-        map->extent.miny = atof(tokens[1]);
-        map->extent.maxx = atof(tokens[2]);
-        map->extent.maxy = atof(tokens[3]);
-
-        msFreeCharArray(tokens, n);
 
         /* validate bbox values */
         if ( map->extent.minx >= map->extent.maxx ||
@@ -1121,21 +1119,13 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       return msWMSException(map, nVersion, "InvalidFormat", wms_exception_format);
     }
   }
-  if (bboxfound && bboxrequest && nVersion >= OWS_1_3_0) {
-    char **tokens;
-    int n;
+  if (bboxfound && nVersion >= OWS_1_3_0) {
     rectObj rect;
     projectionObj proj;
-    tokens = msStringSplit(bboxrequest, ',', &n);
 
     /*we have already validated that the request format when reding
      the request parameters*/
-    rect.minx = atof(tokens[0]);
-    rect.miny = atof(tokens[1]);
-    rect.maxx = atof(tokens[2]);
-    rect.maxy = atof(tokens[3]);
-
-    msFreeCharArray(tokens, n);
+    rect = map->extent;
 
     /*try to adjust the axes if necessary*/
     if (strlen(srsbuffer) > 1) {
@@ -1165,10 +1155,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       msFreeCharArray(args, numargs);
     }
 
-    map->extent.minx = rect.minx;
-    map->extent.miny = rect.miny;
-    map->extent.maxx = rect.maxx;
-    map->extent.maxy = rect.maxy;
+    map->extent = rect;
 
     /* validate bbox values */
     if ( map->extent.minx >= map->extent.maxx ||
