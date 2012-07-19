@@ -1039,7 +1039,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     if (cache) {
-      drawmode |= MS_DRAWMODE_SINGLESTYLE;
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
       if (pStyle->outlinewidth > 0) {
@@ -1063,7 +1062,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
         pStyle->color = pStyle->outlinecolor;
         pStyle->outlinecolor = tmp;
       }
-      status = msDrawShape(map, layer, &shape, image, 0, drawmode); /* draw a single style */
+      status = msDrawShape(map, layer, &shape, image, 0, drawmode|MS_DRAWMODE_SINGLESTYLE); /* draw a single style */
       if (pStyle->outlinewidth > 0) {
         /*
          * RFC 49 implementation: switch back the styleobj to its
