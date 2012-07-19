@@ -667,7 +667,7 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
   g1 = (GEOSGeom) p->geometry;
   if(!g1) return NULL;
   
-  g2 = GEOSOffsetCurve(g1, offset, 4, GEOSBUF_JOIN_MITRE, offset*1.5);
+  g2 = GEOSOffsetCurve(g1, offset, 4, GEOSBUF_JOIN_MITRE, fabs(offset*1.5));
   return msGEOSGeometry2Shape(g2);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSingleSidedBuffer()");
