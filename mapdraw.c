@@ -1039,7 +1039,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     if (cache) {
-      drawmode |= MS_DRAWMODE_SINGLESTYLE;
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
       if (pStyle->outlinewidth > 0) {
@@ -1063,7 +1062,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
         pStyle->color = pStyle->outlinecolor;
         pStyle->outlinecolor = tmp;
       }
-      status = msDrawShape(map, layer, &shape, image, 0, drawmode); /* draw a single style */
+      status = msDrawShape(map, layer, &shape, image, 0, drawmode|MS_DRAWMODE_SINGLESTYLE); /* draw a single style */
       if (pStyle->outlinewidth > 0) {
         /*
          * RFC 49 implementation: switch back the styleobj to its
@@ -2916,12 +2915,17 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   /* TODO: treat the case with multiple labels and/or leader lines */
                 }
 
-                /* apply offset and buffer settings */
-                label_offset_x = labelPtr->offsetx*scalefactor;
-                label_offset_y = labelPtr->offsety*scalefactor;
-                label_buffer = (labelPtr->buffer*image->resolutionfactor);
-                label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
-
+                 /* apply offset and buffer settings */
+                 if(labelPtr->anglemode != MS_FOLLOW) {
+                   label_offset_x = labelPtr->offsetx*scalefactor;
+                   label_offset_y = labelPtr->offsety*scalefactor;
+                 } else {
+                   label_offset_x = 0;
+                   label_offset_y = 0;
+                 }
+                 label_buffer = (labelPtr->buffer*image->resolutionfactor);
+                 label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
+                 
 #ifdef oldcode
                 /* adjust the baseline (see #1449) */
                 if(labelPtr->type == MS_TRUETYPE) {
