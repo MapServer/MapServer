@@ -126,7 +126,7 @@ imageObj *createImageGD(int width, int height, outputFormatObj *format, colorObj
   } else {
     gdImageColorAllocate(ip,117,17,91); /*random bg color (same one as picked in msResampleGDALToMap) */
   }
-  if(format->transparent) {
+  if(format->transparent || !bg || !MS_VALID_COLOR(*bg)) {
     gdImageColorTransparent(ip, 0);
   }
 
