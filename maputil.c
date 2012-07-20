@@ -1620,9 +1620,6 @@ void  msTransformPoint(pointObj *point, rectObj *extent, double cellsize,
 }
 
 
-
-
-#if ! defined HAVE_GEOS_OFFSET_CURVE
 /*
 ** Helper functions supplied as part of bug #2868 solution. Consider moving these to
 ** mapprimitive.c for more general use.
@@ -1718,13 +1715,16 @@ static double point_cross(const pointObj a, const pointObj b)
   return a.x*b.y-a.y*b.x;
 }
 
-#endif
-
 shapeObj *msOffsetCurve(shapeObj *p, double offset)
 {
+  shapeObj *ret = NULL;
 #if defined HAVE_GEOS_OFFSET_CURVE
-  return msGEOSOffsetCurve(p,offset);
-#else
+  ret = msGEOSOffsetCurve(p,offset);
+  /* GEOS curve offsetting can fail sometimes, we continue with our own implementation
+   if that is the case.*/
+  if(ret)
+    return ret;
+#endif
   /*
   ** For offset corner point calculation 1/sin() is used
   ** to avoid 1/0 division (and long spikes) we define a
@@ -1732,7 +1732,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
   */
 #define CURVE_SIN_LIMIT 0.3
   int i, j, first,idx;
-  shapeObj *ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
   msInitShape(ret);
   ret->numlines = p->numlines;
   ret->line=(lineObj*)msSmallMalloc(sizeof(lineObj)*ret->numlines);
@@ -1801,7 +1801,6 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
     }
   }
   return ret;
-#endif
 }
 
 shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
