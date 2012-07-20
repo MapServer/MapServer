@@ -31,7 +31,7 @@
 #include "mapcopy.h"
 
 int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
-                      double scalefactor)
+                      double scalefactor, double resolutionfactor)
 {
   INIT_LABEL_STYLE(*s);
   if(!MS_VALID_COLOR(l->color))
@@ -42,8 +42,8 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
   s->size = l->size;
   if(l->type == MS_TRUETYPE) {
     s->size *=  scalefactor;
-    s->size = MS_MAX(s->size, l->minsize);
-    s->size = MS_MIN(s->size, l->maxsize);
+    s->size = MS_MAX(s->size, l->minsize*resolutionfactor);
+    s->size = MS_MIN(s->size, l->maxsize*resolutionfactor);
     if (!fontset) {
       msSetError(MS_TTFERR, "No fontset defined.","computeLabelStyle()");
       return (MS_FAILURE);
@@ -61,7 +61,9 @@ int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
   s->antialias = l->antialias;
   return MS_SUCCESS;
 }
-void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, double scalefactor)
+
+void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, double scalefactor,
+    double resolutionfactor)
 {
   double default_size;
   double target_size;
@@ -92,15 +94,15 @@ void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, dou
   }
 
   target_size = style_size * scalefactor;
-  target_size = MS_MAX(target_size, src->minsize);
-  target_size = MS_MIN(target_size, src->maxsize);
+  target_size = MS_MAX(target_size, src->minsize*resolutionfactor);
+  target_size = MS_MIN(target_size, src->maxsize*resolutionfactor);
   s->scale = target_size / default_size;
   s->gap = src->gap * target_size / style_size;
 
   if(s->outlinecolor) {
     s->outlinewidth =  src->width * scalefactor;
-    s->outlinewidth = MS_MAX(s->outlinewidth, src->minwidth);
-    s->outlinewidth = MS_MIN(s->outlinewidth, src->maxwidth);
+    s->outlinewidth = MS_MAX(s->outlinewidth, src->minwidth*resolutionfactor);
+    s->outlinewidth = MS_MIN(s->outlinewidth, src->maxwidth*resolutionfactor);
   } else {
     s->outlinewidth = 0;
   }
@@ -472,8 +474,8 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
       symbol->renderer = renderer;
 
       width = style->width * scalefactor;
-      width = MS_MIN(width,style->maxwidth);
-      width = MS_MAX(width,style->minwidth);
+      width = MS_MIN(width,style->maxwidth*image->resolutionfactor);
+      width = MS_MAX(width,style->minwidth*image->resolutionfactor);
       if(style->width != 0) {
         finalscalefactor = width / style->width;
       } else {
@@ -530,7 +532,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         }
 
         INIT_SYMBOL_STYLE(s);
-        computeSymbolStyle(&s,style,symbol,scalefactor);
+        computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
         s.style = style;
         if(symbol->type == MS_SYMBOL_TRUETYPE) {
           if(!symbol->full_font_path)
@@ -656,11 +658,11 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
           if(ret != MS_SUCCESS) goto cleanup;
         }
         width = (style->width <= 0)?scalefactor:style->width*scalefactor;
-        width = MS_MIN(width, style->maxwidth);
-        width = MS_MAX(width, style->minwidth);
+        width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
+        width = MS_MAX(width, style->minwidth*image->resolutionfactor);
         spacing = (style->size <= 0)?scalefactor:style->size*scalefactor;
-        spacing = MS_MIN(spacing, style->maxsize);
-        spacing = MS_MAX(spacing, style->minsize);
+        spacing = MS_MIN(spacing, style->maxsize*image->resolutionfactor);
+        spacing = MS_MAX(spacing, style->minsize*image->resolutionfactor);
 
         /* scale the pattern by the factor applied to the width */
         for(i=0; i<style->patternlength; i++) {
@@ -714,7 +716,7 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         }
 
         INIT_SYMBOL_STYLE(s);
-        computeSymbolStyle(&s,style,symbol,scalefactor);
+        computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
         s.style = style;
 
         if (!s.color && !s.outlinecolor && symbol->type != MS_SYMBOL_PIXMAP && symbol->type != MS_SYMBOL_SVG) {
@@ -823,7 +825,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
       }
 
       s.style = style;
-      computeSymbolStyle(&s,style,symbol,scalefactor);
+      computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
       s.style = style;
       if (!s.color && !s.outlinecolor && symbol->type != MS_SYMBOL_PIXMAP &&
           symbol->type != MS_SYMBOL_SVG) {
@@ -944,7 +946,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string,
         return (0); /* not errors, just don't want to do anything */
 
 
-      if(computeLabelStyle(&s,label,fontset,scalefactor) == MS_FAILURE) {
+      if(computeLabelStyle(&s,label,fontset,scalefactor,image->resolutionfactor) == MS_FAILURE) {
         return MS_FAILURE;
       }
       if(s.rotation == 0 && !MS_RENDERER_KML(image->format)) {
@@ -995,7 +997,7 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
       labelStyleObj s;
       if (!string || !strlen(string))
         return (MS_SUCCESS); /* not errors, just don't want to do anything */
-      if(computeLabelStyle(&s, label, fontset, scalefactor) != MS_SUCCESS) return MS_FAILURE;
+      if(computeLabelStyle(&s, label, fontset, scalefactor,image->resolutionfactor) != MS_SUCCESS) return MS_FAILURE;
       if (label->type == MS_TRUETYPE) {
         if(renderer->renderGlyphsLine) {
           if(MS_VALID_COLOR(label->outlinecolor)) {
