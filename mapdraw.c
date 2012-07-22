@@ -1039,9 +1039,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     if (cache) {
-      drawmode |= MS_DRAWMODE_SINGLESTYLE;
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
+      drawmode |= MS_DRAWMODE_SINGLESTYLE;
       if (pStyle->outlinewidth > 0) {
         /*
          * RFC 49 implementation
