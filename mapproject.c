@@ -213,7 +213,7 @@ static void msProjectGrowRect(projectionObj *in, projectionObj *out,
 /*      Interpolate along a line segment for which one end              */
 /*      reprojects and the other end does not.  Finds the horizon.      */
 /************************************************************************/
-
+#ifdef USE_PROJ
 static int msProjectSegment( projectionObj *in, projectionObj *out,
                              pointObj *start, pointObj *end )
 
@@ -269,6 +269,7 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
   else
     return MS_SUCCESS;
 }
+#endif
 
 /************************************************************************/
 /*                         msProjectShapeLine()                         */

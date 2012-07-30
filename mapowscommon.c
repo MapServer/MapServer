@@ -448,7 +448,6 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
   xmlNsPtr     psNsXsi     = NULL;
   xmlNodePtr   psRootNode  = NULL;
   xmlNodePtr   psMainNode  = NULL;
-  xmlNodePtr   psNode      = NULL;
 
   psRootNode = xmlNewNode(psNsOws, BAD_CAST "ExceptionReport");
 
@@ -485,7 +484,7 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
   }
 
   if (ExceptionText != NULL) {
-    psNode = xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST ExceptionText);
+    xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST ExceptionText);
   }
 
   free(xsi_schemaLocation);

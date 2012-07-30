@@ -2822,7 +2822,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
             msDrawTextLine(image, labelPtr->annotext, labelPtr, cachePtr->labelpath, &(map->fontset), layerPtr->scalefactor); /* Draw the curved label */
 
           } else { /* point-based label */
-
+            scalefactor = layerPtr->scalefactor; /* FIXME avoid compiler warning, see also #4408  */
             marker_offset_x = marker_offset_y = 0; /* assume no marker */
 
             /* compute label bbox of a marker used in an annotation layer and/or
@@ -3123,8 +3123,8 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                 for(i=0; i<labelPtr->numstyles; i++) {
                   if(labelPtr->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT)
                     msDrawMarkerSymbol(&map->symbolset, image, &(cachePtr->point), labelPtr->styles[i], layerPtr->scalefactor);
-                  else if(labelPtr->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
-                    msDrawShadeSymbol(&map->symbolset, image, labelPtr->annopoly, labelPtr->styles[i], scalefactor);
+                  else if(labelPtr->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY && labelPtr->annotext) {
+                    msDrawShadeSymbol(&map->symbolset, image, labelPtr->annopoly, labelPtr->styles[i], scalefactor); /* FIXME: scalefactor here should be adjusted by the label minsize/maxsize adjustments of each label, not only the last one. see #4408 */
                   } else {
                     msSetError(MS_MISCERR,"Labels only support LABELPNT and LABELPOLY GEOMTRANSFORMS", "msDrawLabelCAche()");
                     return MS_FAILURE;

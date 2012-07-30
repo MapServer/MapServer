@@ -1563,7 +1563,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
 
 xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx, double maxy, const char *psEpsg)
 {
-  xmlNodePtr psNode = NULL, psSubNode = NULL, psSubSubNode = NULL;
+  xmlNodePtr psNode = NULL, psSubNode = NULL;
   char *pszTmp = NULL;
   char *pszTmp2 = NULL;
   char *pszEpsg = NULL;
@@ -1591,7 +1591,7 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
   pszTmp = msStringConcatenate(pszTmp, " ");
   pszTmp2 = msDoubleToString(miny, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
-  psSubSubNode = xmlNewChild(psSubNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
+  xmlNewChild(psSubNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
   free(pszTmp);
   free(pszTmp2);
 
@@ -1599,7 +1599,7 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
   pszTmp = msStringConcatenate(pszTmp, " ");
   pszTmp2 = msDoubleToString(maxy,MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
-  psSubSubNode = xmlNewChild(psSubNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
+  xmlNewChild(psSubNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
   free(pszTmp);
   free(pszTmp2);
   return psNode;
@@ -1623,7 +1623,7 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
 
 xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, double x, double y)
 {
-  xmlNodePtr psNode = NULL, psSubNode = NULL;
+  xmlNodePtr psNode = NULL;
   char *pszTmp = NULL;
   int dimension = 2;
   char *pszSrsName = NULL;
@@ -1655,7 +1655,7 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
   pszTmp = msStringConcatenate(pszTmp, " ");
   pszTmp2 = msDoubleToString(y, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
-  psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "pos", BAD_CAST pszTmp);
+  xmlNewChild(psNode, NULL, BAD_CAST "pos", BAD_CAST pszTmp);
 
   free(pszTmp);
   free(pszTmp2);
@@ -1677,14 +1677,14 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
 
 xmlNodePtr msGML3TimePeriod(xmlNsPtr psNs, char *pszStart, char *pszEnd)
 {
-  xmlNodePtr psNode=NULL,psSubNode=NULL;
+  xmlNodePtr psNode=NULL;
 
   psNode = xmlNewNode(psNs, BAD_CAST "TimePeriod");
-  psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
+  xmlNewChild(psNode, NULL, BAD_CAST "beginPosition", BAD_CAST pszStart);
   if (pszEnd)
-    psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
+    xmlNewChild(psNode, NULL, BAD_CAST "endPosition", BAD_CAST pszEnd);
   else {
-    psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "endPosition", NULL);
+    xmlNewChild(psNode, NULL, BAD_CAST "endPosition", NULL);
     xmlNewProp(psNode, BAD_CAST "indeterminatePosition", BAD_CAST "now");
   }
   return psNode;
@@ -1704,10 +1704,10 @@ xmlNodePtr msGML3TimePeriod(xmlNsPtr psNs, char *pszStart, char *pszEnd)
 
 xmlNodePtr msGML3TimeInstant(xmlNsPtr psNs, char *pszTime)
 {
-  xmlNodePtr psNode=NULL,psSubNode=NULL;
+  xmlNodePtr psNode=NULL;
 
   psNode = xmlNewNode(psNs, BAD_CAST "TimeInstant");
-  psSubNode = xmlNewChild(psNode, NULL, BAD_CAST "timePosition", BAD_CAST pszTime);
+  xmlNewChild(psNode, NULL, BAD_CAST "timePosition", BAD_CAST pszTime);
   return psNode;
 }
 

@@ -1035,13 +1035,12 @@ int msCGILoadForm(mapservObj *mapserv)
 
 int setExtentFromShapes(mapservObj *mapserv)
 {
-  int found=0;
   double dx, dy, cellsize;
 
   rectObj tmpext= {-1.0,-1.0,-1.0,-1.0};
   pointObj tmppnt= {-1.0,-1.0};
 
-  found = msGetQueryResultBounds(mapserv->map, &(tmpext));
+  msGetQueryResultBounds(mapserv->map, &(tmpext));
 
   dx = tmpext.maxx - tmpext.minx;
   dy = tmpext.maxy - tmpext.miny;
@@ -1461,7 +1460,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
 int msCGIDispatchImageRequest(mapservObj *mapserv)
 {
   int status;
-  imageObj *img;
+  imageObj *img = NULL;
   switch(mapserv->Mode) {
     case MAP:
       if(mapserv->QueryFile) {
@@ -1732,7 +1731,7 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
   mapservObj* mapserv = NULL;
-  char *queryString;
+  char *queryString = NULL;
   int maxParams = MS_DEFAULT_CGI_PARAMS;
   msIOContext *ctx;
   msIOBuffer  *buf;
