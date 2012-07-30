@@ -504,6 +504,7 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 #undef p_y
       }
     }
+    msComputeBounds( shape ); /* fixes bug 1586 */
     return MS_SUCCESS;
   }
 #endif
