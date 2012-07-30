@@ -213,7 +213,7 @@ static void msProjectGrowRect(projectionObj *in, projectionObj *out,
 /*      Interpolate along a line segment for which one end              */
 /*      reprojects and the other end does not.  Finds the horizon.      */
 /************************************************************************/
-
+#ifdef USE_PROJ
 static int msProjectSegment( projectionObj *in, projectionObj *out,
                              pointObj *start, pointObj *end )
 
@@ -269,6 +269,7 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
   else
     return MS_SUCCESS;
 }
+#endif
 
 /************************************************************************/
 /*                         msProjectShapeLine()                         */
@@ -504,6 +505,7 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 #undef p_y
       }
     }
+    msComputeBounds( shape ); /* fixes bug 1586 */
     return MS_SUCCESS;
   }
 #endif
@@ -785,6 +787,17 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /* -------------------------------------------------------------------- */
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
+
+  if(dx==0 && dy==0) {
+    pointObj foo;
+    msDebug( "msProjectRect(): Warning: degenerate rect {%f,%f,%f,%f}\n",rect->minx,rect->miny,rect->minx,rect->miny );
+    foo.x = rect->minx;
+    foo.y = rect->miny;
+    msProjectPoint(in,out,&foo);
+    rect->minx=rect->maxx=foo.x;
+    rect->miny=rect->maxy=foo.y;
+    return MS_SUCCESS;
+  }
 
   /* sample along top */
   if(dx != 0) {

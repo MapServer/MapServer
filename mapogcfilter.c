@@ -147,8 +147,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
   char *pszExpression = NULL, *pszEscapedStr=NULL, *pszTmpExpression=NULL;
   char **paszElements = NULL, **papszRangeElements=NULL;
   int numelements,i,nrangeelements;
-  double minval, maxval;
-
+  /* double minval, maxval; */
   if (lp && item && value) {
     if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
         lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN)
@@ -221,8 +220,10 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
           if (papszRangeElements && nrangeelements > 0) {
             pszTmpExpression = msStringConcatenate(pszTmpExpression, "(");
             if (nrangeelements == 2 || nrangeelements == 3) {
+              /*
               minval = atof(papszRangeElements[0]);
               maxval = atof(papszRangeElements[1]);
+              */
               if (bSqlLayer)
                 pszTmpExpression = msStringConcatenate(pszTmpExpression, item);
               else {
@@ -2102,7 +2103,6 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
   char *pszExpression = NULL;
-  int connectiontype;
   const char *pszAttribute = NULL;
   char szTmp[256];
   char **tokens = NULL;
@@ -2111,7 +2111,6 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
   if (psFilterNode == NULL || lp == NULL)
     return NULL;
 
-  connectiontype = lp->connectiontype;
   if (psFilterNode->eType == FILTER_NODE_TYPE_COMPARISON) {
     if ( psFilterNode->psLeftNode && psFilterNode->psRightNode) {
       if (FLTIsBinaryComparisonFilterType(psFilterNode->pszValue)) {
@@ -2232,12 +2231,9 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
   char *pszBuffer = NULL;
   char *pszTmp = NULL;
   int nTmp = 0;
-  int connectiontype;
 
   if (lp == NULL)
     return NULL;
-
-  connectiontype = lp->connectiontype;
 
   /* ==================================================================== */
   /*      special case for BBOX node.                                     */

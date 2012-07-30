@@ -2120,8 +2120,10 @@ void msFreeRasterBuffer(rasterBufferObj *b)
 */
 int msExtentsOverlap(mapObj *map, layerObj *layer)
 {
+#ifdef USE_PROJ
   rectObj map_extent;
   rectObj layer_extent;
+#endif
 
   /* No extent info? Nothing we can do, return MS_UNKNOWN. */
   if( (map->extent.minx == -1) && (map->extent.miny == -1) && (map->extent.maxx == -1 ) && (map->extent.maxy == -1) ) return MS_UNKNOWN;

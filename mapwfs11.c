@@ -255,7 +255,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 {
   xmlDocPtr psDoc = NULL;       /* document pointer */
   xmlNodePtr psRootNode, psMainNode, psNode, psFtNode;
-  xmlNodePtr psTmpNode;
   const char *updatesequence=NULL;
   xmlNsPtr psNsOws, psNsXLink, psNsOgc;
   char *schemalocation = NULL;
@@ -354,11 +353,11 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   /*      Service metadata.                                               */
   /* -------------------------------------------------------------------- */
 
-  psTmpNode = xmlAddChild(psRootNode,
+  xmlAddChild(psRootNode,
                           msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion, "FO"));
 
   /*service provider*/
-  psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(
+  xmlAddChild(psRootNode, msOWSCommonServiceProvider(
                             psNsOws, psNsXLink, map, "FO"));
 
   /*operation metadata */

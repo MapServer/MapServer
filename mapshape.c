@@ -2513,7 +2513,6 @@ int msSHPLayerIsOpen(layerObj *layer)
 
 int msSHPLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
-  int i, n1=0, n2=0;
   int status;
   shapefileObj *shpfile;
 

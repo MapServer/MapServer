@@ -220,7 +220,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
                                   wmsParamsObj *psWMSParams)
 {
   const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
-  const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
+  const char *pszFormatList, *pszStyle, /* *pszStyleList,*/ *pszTime;
   const char *pszBgColor, *pszTransparent;
   const char *pszSLD=NULL, *pszStyleSLDBody=NULL, *pszVersionKeyword=NULL;
   const char *pszSLDBody=NULL, *pszSLDURL = NULL;
@@ -237,7 +237,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
   pszFormat =         msOWSLookupMetadata(&(lp->metadata), "MO", "format");
   pszFormatList =     msOWSLookupMetadata(&(lp->metadata), "MO", "formatlist");
   pszStyle =          msOWSLookupMetadata(&(lp->metadata), "MO", "style");
-  pszStyleList =      msOWSLookupMetadata(&(lp->metadata), "MO", "stylelist");
+  /*pszStyleList =      msOWSLookupMetadata(&(lp->metadata), "MO", "stylelist");*/
   pszTime =           msOWSLookupMetadata(&(lp->metadata), "MO", "time");
   pszSLDBody =        msOWSLookupMetadata(&(lp->metadata), "MO", "sld_body");
   pszSLDURL =         msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url");

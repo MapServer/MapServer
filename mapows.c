@@ -1079,9 +1079,14 @@ int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *name
                  "</inspire_common:Language></inspire_common:DefaultLanguage>\n",
                  buffer = msEncodeHTMLEntities(default_language));
     msFree(buffer);
+    
+    /* append _exclude to our default_language*/
+    default_language = msSmallRealloc(default_language,strlen(default_language)+strlen("_exclude")+1);
+    strcat(default_language,"_exclude");
+
     msOWSPrintEncodeMetadataList(stream, &(map->web.metadata), namespaces, "languages", NULL, NULL,
                                  "      <inspire_common:SupportedLanguage><inspire_common:Language>%s"
-                                 "</inspire_common:Language></inspire_common:SupportedLanguage>\n", msStringConcatenate(default_language, "_exclude"));
+                                 "</inspire_common:Language></inspire_common:SupportedLanguage>\n", default_language);
     msIO_fprintf(stream, "    </inspire_common:SupportedLanguages>\n");
     msIO_fprintf(stream, "    <inspire_common:ResponseLanguage><inspire_common:Language>%s"
                  "</inspire_common:Language></inspire_common:ResponseLanguage>\n", validated_language);
