@@ -787,6 +787,17 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
 
+  if(dx==0 && dy==0) {
+    pointObj foo;
+    msDebug( "msProjectRect(): Warning: degenerate rect {%f,%f,%f,%f}\n",rect->minx,rect->miny,rect->minx,rect->miny );
+    foo.x = rect->minx;
+    foo.y = rect->miny;
+    msProjectPoint(in,out,&foo);
+    rect->minx=rect->maxx=foo.x;
+    rect->miny=rect->maxy=foo.y;
+    return MS_SUCCESS;
+  }
+
   /* sample along top */
   if(dx != 0) {
     for(ix = 0; ix <= NUMBER_OF_SAMPLE_POINTS; ix++ ) {
