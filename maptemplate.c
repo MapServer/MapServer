@@ -30,6 +30,7 @@
 #include "maptemplate.h"
 #include "maphash.h"
 #include "mapserver.h"
+#include "maptile.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -110,6 +111,11 @@ int setExtent(mapservObj *mapserv)
 {
   double cellx,celly,cellsize;
 
+  if(mapserv->Mode == TILE) {
+    if(MS_SUCCESS != msTileSetExtent(mapserv)) {
+      return MS_FAILURE;
+    }
+  }
   switch(mapserv->CoordSource) {
     case FROMUSERBOX: /* user passed in a map extent */
       break;
