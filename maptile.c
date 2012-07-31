@@ -185,7 +185,7 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
     int i = 0;
     char j = 0;
 
-    if( strlen( msObj->TileCoords ) - params.metatile_level < 0 ) {
+    if( (int)strlen( msObj->TileCoords ) - params.metatile_level < 0 ) {
       return(NULL);
     }
 

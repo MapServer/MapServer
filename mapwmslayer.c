@@ -1377,7 +1377,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
         size_t nSize;
 
         nSize = fread(szBuf, sizeof(char), MS_BUFFER_LENGTH-1, fp);
-        if (nSize >= 0 && nSize < MS_BUFFER_LENGTH)
+        if (nSize < MS_BUFFER_LENGTH)
           szBuf[nSize] = '\0';
         else {
           strlcpy(szBuf, "(!!!)", sizeof(szBuf)); /* This should never happen */
