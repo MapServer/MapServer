@@ -919,7 +919,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
     mapserv->resultshape.classindex = msShapeGetClass(layer, layer->map, &mapserv->resultshape,  NULL, -1);
 
-    if(layer->class[mapserv->resultshape.classindex]->numlabels > 0)
+    if(mapserv->resultshape.classindex >=0 && layer->class[mapserv->resultshape.classindex]->numlabels > 0)
       msShapeGetAnnotation(layer, &mapserv->resultshape); // RFC 77 TODO: check return value
 
 
