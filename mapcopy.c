@@ -539,6 +539,8 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
       msSetError(MS_MEMERR, "Failed to copy label.", "msCopyClass()");
       return MS_FAILURE;
     }
+
+    dst->numlabels++;
   }
   MS_COPYSTELEM(numlabels);
 

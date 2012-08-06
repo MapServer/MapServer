@@ -737,6 +737,11 @@ PHP_FUNCTION(ms_ioStripStdoutBufferContentType)
   }
 }
 
+PHP_FUNCTION(ms_ioStripStdoutBufferContentHeaders)
+{
+  msIO_stripStdoutBufferContentHeaders();
+}
+
 /* ==================================================================== */
 /*      utility functions                                               */
 /* ==================================================================== */
@@ -902,6 +907,7 @@ zend_function_entry mapscript_functions[] = {
   PHP_FE(ms_ioGetStdoutBufferString, NULL)
   PHP_FE(ms_ioResetHandlers, NULL)
   PHP_FE(ms_ioStripStdoutBufferContentType, NULL)
+  PHP_FE(ms_ioStripStdoutBufferContentHeaders, NULL)
   PHP_FE(ms_ioGetStdoutBufferBytes, NULL) {
     NULL, NULL, NULL
   }

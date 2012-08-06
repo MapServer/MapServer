@@ -702,6 +702,8 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
     } else if (strncasecmp(stylestring,"pen",3) == 0 || strncasecmp(stylestring,"brush",5) == 0 ||
                strncasecmp(stylestring,"symbol",6) == 0 || strncasecmp(stylestring,"label",5) == 0) {
       msOGRUpdateStyleFromString(map, layer, c, stylestring);
+    } else {
+      resetClassStyle(c);
     }
 
     return MS_SUCCESS;
