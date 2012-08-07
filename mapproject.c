@@ -114,8 +114,10 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
     msReleaseLock( TLOCK_PROJ );
 #endif
 
-    if( error || point->x == HUGE_VAL || point->y == HUGE_VAL )
+    if( error || point->x == HUGE_VAL || point->y == HUGE_VAL ) {
+      msSetError(MS_PROJERR,"proj says: %s","msProjectPoint()",pj_strerrno(error));
       return MS_FAILURE;
+    }
 
     if( pj_is_latlong(out->proj) ) {
       point->x *= RAD_TO_DEG;

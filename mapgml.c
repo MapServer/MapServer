@@ -1215,8 +1215,13 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
-        if(pszOutputSRS == pszMapSRS && msProjectionsDiffer(&(lp->projection), &(map->projection)))
-          msProjectShape(&lp->projection, &map->projection, &shape);
+        if(pszOutputSRS == pszMapSRS && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
+          status = msProjectShape(&lp->projection, &map->projection, &shape);
+          if(status != MS_SUCCESS) {
+            msIO_fprintf(stream, "<!-- Warning: Failed to reproject shape: %s -->\n",msGetErrorString(","));
+            continue;
+          }
+        }
 #endif
 
         /* start this feature */
