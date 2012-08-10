@@ -122,14 +122,17 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
 
   /* add namespace to layer name */
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
-  n = strlen(value)+strlen(lp->name)+1+1;
-  valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);
-  snprintf(valueToFree, n, "%s%s%s", (value ? value : ""), (value ? ":" : ""), lp->name);
+  if(value) {
+    n = strlen(value)+strlen(lp->name)+1+1;
+    valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);
+    snprintf(valueToFree, n, "%s%s%s", (value ? value : ""), (value ? ":" : ""), lp->name);
 
-  /*if there is an encoding using it on some of the items*/
-  psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", valueToFree, encoding);
-
-  msFree(valueToFree);
+    /*if there is an encoding using it on some of the items*/
+    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", valueToFree, encoding);
+    msFree(valueToFree);
+  } else {
+    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", lp->name, encoding);
+  }
 
   if (lp->name && strlen(lp->name) > 0 &&
       (msIsXMLTagValid(lp->name) == MS_FALSE || isdigit(lp->name[0])))
