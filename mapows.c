@@ -1019,6 +1019,12 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
 
   inspire_capabilities = msOWSLookupMetadata(&(map->web.metadata), namespaces, "inspire_capabilities");
 
+  if(!inspire_capabilities) {
+    if (OWS_WARN == action_if_not_found) {
+      msIO_fprintf(stream, "<!-- WARNING: missing metadata entry for 'inspire_capabilities', one of 'embed' and 'url' must be supplied. -->\n");
+    }
+    return action_if_not_found;
+  }
   if (strcasecmp("url",inspire_capabilities) == 0) {
     if ( msOWSLookupMetadata(&(map->web.metadata), namespaces, "inspire_metadataurl_href") != NULL ) {
       msIO_fprintf(stream, "    <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n");
