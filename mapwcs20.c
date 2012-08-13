@@ -1228,7 +1228,8 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         }
         else if (EQUAL(key, "MEDIATYPE"))
         {
-            if(EQUAL(value, "multipart/mixed"))
+            if (EQUAL(value, "multipart/mixed")
+               || EQUAL(value, "multipart/related"))
             {
                 params->multipart = MS_TRUE;
             }
