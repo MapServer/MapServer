@@ -601,6 +601,19 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
   }
   
   symbol = symbolset->symbol[style->symbol];
+    if (symbol->type == MS_SYMBOL_PIXMAP && !symbol->pixmap_buffer) {
+        if (MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(symbolset->map), symbol))
+          return MS_FAILURE;
+      }
+      if(symbol->type == MS_SYMBOL_SVG && !symbol->renderer_cache) {
+#ifdef USE_SVG_CAIRO
+          if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
+            return MS_FAILURE;
+#else
+          msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msGetMarkerSize()");
+          return MS_FAILURE;
+#endif
+        }
   if(style->size == -1) {
       size = MS_NINT( msSymbolGetDefaultSize(symbol) * scalefactor );
   }
