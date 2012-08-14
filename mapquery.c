@@ -524,6 +524,7 @@ int msQueryByIndex(mapObj *map)
 
   msInitShape(&shape);
 
+  record.resultindex = -1;
   record.shapeindex = map->query.shapeindex;
   record.tileindex = map->query.tileindex;
 

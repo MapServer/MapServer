@@ -1,0 +1,5 @@
+blib/*
+mapscript.bs
+mapscript.pm
+mapscript_wrap.c
+pm_to_blib

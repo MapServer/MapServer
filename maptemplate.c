@@ -30,6 +30,7 @@
 #include "maptemplate.h"
 #include "maphash.h"
 #include "mapserver.h"
+#include "maptile.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -110,6 +111,11 @@ int setExtent(mapservObj *mapserv)
 {
   double cellx,celly,cellsize;
 
+  if(mapserv->Mode == TILE) {
+    if(MS_SUCCESS != msTileSetExtent(mapserv)) {
+      return MS_FAILURE;
+    }
+  }
   switch(mapserv->CoordSource) {
     case FROMUSERBOX: /* user passed in a map extent */
       break;
@@ -913,7 +919,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
     mapserv->resultshape.classindex = msShapeGetClass(layer, layer->map, &mapserv->resultshape,  NULL, -1);
 
-    if(layer->class[mapserv->resultshape.classindex]->numlabels > 0)
+    if(mapserv->resultshape.classindex >=0 && layer->class[mapserv->resultshape.classindex]->numlabels > 0)
       msShapeGetAnnotation(layer, &mapserv->resultshape); // RFC 77 TODO: check return value
 
 

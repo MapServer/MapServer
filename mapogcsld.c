@@ -431,6 +431,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                       msLoadExpressionString(&lp->filter, pszBuffer);
                     }
                     msFree(pszBuffer);
+                    pszBuffer = NULL;
                   }
                 }
               }

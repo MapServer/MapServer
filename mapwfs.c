@@ -2396,10 +2396,13 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       msIO_setHeader("Content-type",output_mime_type);
     msIO_sendHeaders();
 
-    msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj,
+    status = msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj,
                                  outputformat,
                                  iResultTypeHits,
                                  iNumberOfFeatures );
+    if(status != MS_SUCCESS) {
+      return MS_FAILURE;
+    }
   }
 
   /* handle case of maxfeatures = 0 */

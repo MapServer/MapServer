@@ -2281,7 +2281,7 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
 
   if (hostname && port && script) {
     size_t buffer_size;
-    buffer_size = strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+10;
+    buffer_size = strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+11; /* 11 comes from https://[host]:[port][scriptname]?[map]\0, i.e. "https://:?\0" */
     online_resource = (char*)msSmallMalloc(buffer_size);
     if ((atoi(port) == 80 && strcmp(protocol, "http") == 0) ||
         (atoi(port) == 443 && strcmp(protocol, "https") == 0) )
