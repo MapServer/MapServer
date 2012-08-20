@@ -2650,6 +2650,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   if(psClass->numlabels == 0) {
     if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
     initLabel(psClass->labels[0]);
+    psClass->numlabels++;
   }
   psLabelObj = psClass->labels[0];
 
@@ -2891,6 +2892,7 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
   if(psClass->numlabels == 0) {
     if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
     initLabel(psClass->labels[0]);
+    psClass->numlabels++;
   }
   psLabelObj = psClass->labels[0];
 
@@ -2995,6 +2997,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
   if(psClass->numlabels == 0) {
     if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
     initLabel(psClass->labels[0]);
+    psClass->numlabels++;
   }
   psLabelObj = psClass->labels[0];
 
