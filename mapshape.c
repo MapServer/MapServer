@@ -2180,6 +2180,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
     }
     shape->tileindex = tSHP->tileshpfile->lastshape;
     shape->values = msDBFGetValueList(tSHP->shpfile->hDBF, i, layer->iteminfo, layer->numitems);
+    if(!shape->values) return(MS_FAILURE);
     shape->numvalues = layer->numitems;
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
