@@ -282,6 +282,10 @@ static int ERROR( char *routine, msOracleSpatialHandler *hand, msOracleSpatialDa
   if (hand->last_oci_status == MS_FAILURE) {
     /* there was an error */
     msSetError( MS_ORACLESPATIALERR, (char *)hand->last_oci_error, routine );
+    
+    /* reset error flag */
+    hand->last_oci_status = MS_SUCCESS;
+    
     return 1; /* error processed */
   } else
     return 0; /* no error */
@@ -2271,11 +2275,12 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
 
       success = TRY( hand, OCIStmtFetch2( sthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub2)OCI_FETCH_ABSOLUTE, (sb4)resultindex+1, (ub4)OCI_DEFAULT ) )
                 && TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) );
-
-      ERROR("msOracleSpatialLayerGetShape", hand, dthand);
-
+      
       sthand->row_num = resultindex;
       sthand->row = 0; /* reset row index */
+
+      if(ERROR("msOracleSpatialLayerGetShape", hand, dthand))
+          return MS_FAILURE;
 
       if (!success || sthand->rows_fetched == 0) {
         msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetShape could not fetch specified record.", "msOracleSpatialLayerGetShape()" );
