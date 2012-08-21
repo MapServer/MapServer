@@ -795,7 +795,6 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
             if (psNode) {
               char *pszExpression = NULL;
-              char *pszEscapedExpression = NULL;
               int i;
 
               /*preparse the filter for possible gml aliases set on the layer's metada:
@@ -834,18 +833,15 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
               psNode = NULL;
 
               if (pszExpression) {
-                pszEscapedExpression = msStringEscape(pszExpression);
                 nNewClasses =
                   nClassAfterFilter - nClassBeforeFilter;
                 for (i=0; i<nNewClasses; i++) {
                   msLoadExpressionString(&psLayer->
                                          class[psLayer->numclasses-1-i]->
-                                         expression, pszEscapedExpression);
+                                         expression, pszExpression);
                 }
                 msFree(pszExpression);
                 pszExpression = NULL;
-                msFree(pszEscapedExpression);
-                pszEscapedExpression = NULL;
               }
 
             }
