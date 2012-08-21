@@ -722,6 +722,7 @@ int msEmbedLegend(mapObj *map, imageObj *img)
     if(!GET_LAYER(map, l)->class[0]->labels) {
       if(msGrowClassLabels(GET_LAYER(map, l)->class[0]) == NULL) return MS_FAILURE;
       initLabel(GET_LAYER(map, l)->class[0]->labels[0]);
+      GET_LAYER(map, l)->class[0]->numlabels = 1;
       GET_LAYER(map, l)->class[0]->labels[0]->force = MS_TRUE;
       GET_LAYER(map, l)->class[0]->labels[0]->size = MS_MEDIUM; /* must set a size to have a valid label definition */
       GET_LAYER(map, l)->class[0]->labels[0]->priority = MS_MAX_LABEL_PRIORITY;
