@@ -2554,6 +2554,9 @@ int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
       continue; /* skip NULL shapes */
     }
     shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
+    if(!shape->values) {
+      return MS_FAILURE;
+    }
     shape->numvalues = layer->numitems;
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
