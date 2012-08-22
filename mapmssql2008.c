@@ -1656,10 +1656,18 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
       if (rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO)
         handleSQLError(layer);
 
-      oidBuffer[retLen] = 0;
-      record_oid = strtol(oidBuffer, NULL, 10);
+      if (retLen < sizeof(oidBuffer))
+	  {
+		oidBuffer[retLen] = 0;
+		record_oid = strtol(oidBuffer, NULL, 10);
+		shape->index = record_oid;
+	  }
+	  else
+	  {
+		/* non integer fid column, use single pass */
+		shape->index = -1;
+	  }
 
-      shape->index = record_oid;
       shape->resultindex = (*record);
 
       (*record)++;        /* move to next shape */

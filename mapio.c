@@ -197,7 +197,7 @@ void msIO_setHeader (const char *header, const char* value, ...)
 #endif // MOD_WMS_ENABLED
     msIO_fprintf(stdout,"%s: ",header);
     msIO_vfprintf(stdout,value,args);
-    msIO_fprintf(stdout,"\n");
+    msIO_fprintf(stdout,"\r\n");
 #ifdef MOD_WMS_ENABLED
   }
 #endif
@@ -209,7 +209,7 @@ void msIO_sendHeaders ()
   msIOContext *ioctx = msIO_getHandler (stdout);
   if(ioctx && !strcmp(ioctx->label,"apache")) return;
 #endif // !MOD_WMS_ENABLED
-  msIO_printf ("\n");
+  msIO_printf ("\r\n");
   fflush (stdout);
 }
 

@@ -887,8 +887,10 @@ char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int nu
 
   for(i=0; i<numitems; i++) {
     value = msDBFReadStringAttribute(dbffile, record, itemindexes[i]);
-    if (value == NULL)
+    if (value == NULL) {
+      free(values);
       return NULL; /* Error already reported by msDBFReadStringAttribute() */
+    }
     values[i] = msStrdup(value);
   }
 
