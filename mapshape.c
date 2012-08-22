@@ -2179,9 +2179,9 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
       continue; /* skip NULL shapes */
     }
     shape->tileindex = tSHP->tileshpfile->lastshape;
-    shape->values = msDBFGetValueList(tSHP->shpfile->hDBF, i, layer->iteminfo, layer->numitems);
-    if(!shape->values) return(MS_FAILURE);
     shape->numvalues = layer->numitems;
+    shape->values = msDBFGetValueList(tSHP->shpfile->hDBF, i, layer->iteminfo, layer->numitems);
+    if(!shape->values) shape->numvalues = 0;
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
     if(layer->numitems > 0 && layer->iteminfo) {
@@ -2556,9 +2556,8 @@ int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
     }
     shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
     if(!shape->values) {
-      return MS_FAILURE;
+      shape->numvalues = 0;
     }
-    shape->numvalues = layer->numitems;
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
     if(layer->numitems > 0 && layer->iteminfo) {
