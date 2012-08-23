@@ -38,6 +38,8 @@
 #  define MAX(a,b)      ((a>b) ? a : b)
 #endif
 
+#define SKIP_MASK(x,y) (mask_rb && !*(mask_rb->data.rgba.a+(y)*mask_rb->data.rgba.row_step+(x)*mask_rb->data.rgba.pixel_step))
+
 /************************************************************************/
 /*                          InvGeoTransform()                           */
 /*                                                                      */
@@ -86,7 +88,7 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                           imageObj *psDstImage, rasterBufferObj *dst_rb,
                           int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
-                          int debug )
+                          int debug, rasterBufferObj *mask_rb )
 
 {
   double  *x, *y;
@@ -116,6 +118,8 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
     for( nDstX = 0; nDstX < nDstXSize; nDstX++ ) {
       int   nSrcX, nSrcY;
+      if(SKIP_MASK(nDstX,nDstY))
+        continue;
 
       if( !panSuccess[nDstX] ) {
         nFailedPoints++;
@@ -330,7 +334,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                            imageObj *psDstImage, rasterBufferObj *dst_rb,
                            int *panCMap,
                            SimpleTransformer pfnTransform, void *pCBData,
-                           int debug )
+                           int debug, rasterBufferObj *mask_rb )
 
 {
   double  *x, *y;
@@ -363,6 +367,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     for( nDstX = 0; nDstX < nDstXSize; nDstX++ ) {
       int   nSrcX, nSrcY, nSrcX2, nSrcY2;
       double      dfRatioX2, dfRatioY2, dfWeightSum = 0.0;
+      if(SKIP_MASK(nDstX,nDstY)) continue;
 
       if( !panSuccess[nDstX] ) {
         nFailedPoints++;
@@ -569,7 +574,7 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                           imageObj *psDstImage, rasterBufferObj *dst_rb,
                           int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
-                          int debug )
+                          int debug, rasterBufferObj *mask_rb )
 
 {
   double  *x1, *y1, *x2, *y2;
@@ -607,6 +612,7 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     for( nDstX = 0; nDstX < nDstXSize; nDstX++ ) {
       double  dfXMin, dfYMin, dfXMax, dfYMax;
       double  dfAlpha01;
+      if(SKIP_MASK(nDstX,nDstY)) continue;
 
       /* Do not generate a pixel unless all four corners transformed */
       if( !panSuccess1[nDstX] || !panSuccess1[nDstX+1]
@@ -1246,7 +1252,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   char       **papszAlteredProcessing = NULL;
   int         nLoadImgXSize, nLoadImgYSize;
   double      dfOversampleRatio;
-  rasterBufferObj src_rb, *psrc_rb = NULL;
+  rasterBufferObj src_rb, *psrc_rb = NULL, *mask_rb = NULL;
 
 
   const char *resampleMode = CSLFetchNameValue( layer->processing,
@@ -1254,6 +1260,15 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 
   if( resampleMode == NULL )
     resampleMode = "NEAREST";
+  
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      We will require source and destination to have a valid          */
@@ -1490,13 +1505,15 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   {
     char **papszSavedProcessing = layer->processing;
-
+    char* origMask = layer->mask;
+    layer->mask = NULL;
     layer->processing = papszAlteredProcessing;
 
     result = msDrawRasterLayerGDAL( &sDummyMap, layer, srcImage,
                                     psrc_rb, hDS );
 
     layer->processing = papszSavedProcessing;
+    layer->mask = origMask;
     CSLDestroy( papszAlteredProcessing );
 
     if( result ) {
@@ -1563,17 +1580,17 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     result =
       msAverageRasterResampler( srcImage, psrc_rb, image, rb,
                                 anCMap, msApproxTransformer, pACBData,
-                                layer->debug );
+                                layer->debug, mask_rb );
   else if( EQUAL(resampleMode,"BILINEAR") )
     result =
       msBilinearRasterResampler( srcImage, psrc_rb, image, rb,
                                  anCMap, msApproxTransformer, pACBData,
-                                 layer->debug );
+                                 layer->debug, mask_rb );
   else
     result =
       msNearestRasterResampler( srcImage, psrc_rb, image, rb,
                                 anCMap, msApproxTransformer, pACBData,
-                                layer->debug );
+                                layer->debug, mask_rb );
 
   /* -------------------------------------------------------------------- */
   /*      cleanup                                                         */

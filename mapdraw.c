@@ -776,8 +776,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     renderer->startLayer(image_draw,map,layer);
   } else if (MS_RENDERER_PLUGIN(image_draw->format)) {
     rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
-    if (layer->mask || (layer->opacity > 0 && layer->opacity < 100)) {
-      if (!renderer->supports_transparent_layers) {
+    if ((layer->mask && layer->connectiontype!=MS_WMS && layer->type != MS_LAYER_RASTER) || (layer->opacity > 0 && layer->opacity < 100)) {
+      if (layer->mask || !renderer->supports_transparent_layers) {
         image_draw = msImageCreate(image->width, image->height,
                                    image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
         if (!image_draw) {
