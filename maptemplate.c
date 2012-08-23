@@ -4479,7 +4479,6 @@ void msFreeMapServObj(mapservObj* mapserv)
     msFree(mapserv->QueryLayer);
     msFree(mapserv->SelectLayer);
     msFree(mapserv->QueryFile);
-    msFree(mapserv->QueryItem);
 
     msFree(mapserv);
   }
