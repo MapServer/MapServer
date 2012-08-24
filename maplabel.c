@@ -338,6 +338,7 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
   if(layerPtr->mask) {
     int maskLayerIdx = msGetLayerIndex(map,layerPtr->mask);
     layerObj *maskLayer = GET_LAYER(map,maskLayerIdx);
+    unsigned char *alphapixptr;
     if(maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
       rasterBufferObj rb;
       int x,y;
@@ -347,7 +348,7 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
       y = MS_NINT(point->y);
 #ifdef USE_GD
       if(rb.type == MS_BUFFER_BYTE_RGBA) {
-        unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+        alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
         if(!*alphapixptr) {
           /* label point does not intersect mask */
           return MS_SUCCESS;
@@ -358,7 +359,7 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
       }
 #else
       assert(rb.type == MS_BUFFER_BYTE_RGBA);
-      unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+      alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
       if(!*alphapixptr) {
         /* label point does not intersect mask */
         return MS_SUCCESS;
@@ -529,6 +530,7 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
   if (layerPtr->mask) {
     int maskLayerIdx = msGetLayerIndex(map, layerPtr->mask);
     layerObj *maskLayer = GET_LAYER(map, maskLayerIdx);
+    unsigned char *alphapixptr;
     if (maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
       rasterBufferObj rb;
       memset(&rb, 0, sizeof (rasterBufferObj));
@@ -538,7 +540,7 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
         int y = MS_NINT(point->y);
 #ifdef USE_GD
         if(rb.type == MS_BUFFER_BYTE_RGBA) {
-          unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+          alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
           if(!*alphapixptr) {
             /* label point does not intersect mask */
             return MS_SUCCESS;
@@ -549,7 +551,7 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
         }
 #else
         assert(rb.type == MS_BUFFER_BYTE_RGBA);
-        unsigned char *alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+        alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
         if(!*alphapixptr) {
           /* label point does not intersect mask */
           return MS_SUCCESS;
@@ -562,7 +564,7 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
           int y = MS_NINT(labelpath->path.point[i].y);
 #ifdef USE_GD
           if (rb.type == MS_BUFFER_BYTE_RGBA) {
-            unsigned char *alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
+            alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
             if (!*alphapixptr) {
               /* label point does not intersect mask */
               return MS_SUCCESS;
@@ -573,7 +575,7 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
           }
 #else
           assert(rb.type == MS_BUFFER_BYTE_RGBA);
-          unsigned char *alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
+          alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
           if (!*alphapixptr) {
             /* label point does not intersect mask */
             return MS_SUCCESS;
@@ -1044,9 +1046,9 @@ int msGetRasterTextBBox(rendererVTableObj *renderer, int size, char *string, rec
     }
     max_line_length = MS_MAX(cur_line_length,max_line_length);
     rect->minx = 0;
-    rect->miny = -(fontPtr->charHeight * num_lines);
+    rect->miny = -fontPtr->charHeight;
     rect->maxx = fontPtr->charWidth * max_line_length;
-    rect->maxy = 0;
+    rect->maxy = fontPtr->charHeight * (num_lines-1);
     return MS_SUCCESS;
   } else if(!renderer) {
     int ret = MS_FAILURE;

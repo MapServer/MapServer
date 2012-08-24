@@ -1034,6 +1034,9 @@ int msInitProjection(projectionObj *p)
   p->proj = NULL;
   p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *));
   MS_CHECK_ALLOC(p->args, MS_MAXPROJARGS*sizeof(char *), -1);
+#if PJ_VERSION >= 480
+  p->proj_ctx = NULL;
+#endif
 #endif
   return(0);
 }
@@ -1042,14 +1045,15 @@ void msFreeProjection(projectionObj *p)
 {
 #ifdef USE_PROJ
   if(p->proj) {
-#if PJ_VERSION < 480
     pj_free(p->proj);
-#else
-    pj_ctx_free(p->proj_ctx);
-    p->proj_ctx = NULL;
-#endif
     p->proj = NULL;
   }
+#if PJ_VERSION >= 480
+  if(p->proj_ctx) {
+    pj_ctx_free(p->proj_ctx);
+    p->proj_ctx = NULL;
+  }
+#endif
 
   msFreeCharArray(p->args, p->numargs);
   p->args = NULL;

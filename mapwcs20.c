@@ -1391,7 +1391,7 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
     xmlNsPtr psGmlNs, xmlNodePtr psRoot, projectionObj *projection, int swapAxes)
 {
   xmlNodePtr psDomainSet, psGrid, psLimits, psGridEnvelope, psOrigin,
-             psPos, psOffsetX, psOffsetY;
+             psOffsetX, psOffsetY;
   char low[100], high[100], id[100], point[100], resx[100], resy[100], axisLabels[100];
 
   psDomainSet = xmlNewChild( psRoot, psGmlNs, BAD_CAST "domainSet", NULL);
@@ -1442,7 +1442,7 @@ static void msWCSCommon20_CreateDomainSet(layerObj* layer, wcs20coverageMetadata
         xmlNewNsProp(psOrigin, psGmlNs, BAD_CAST "id", BAD_CAST id);
         xmlNewProp(psOrigin, BAD_CAST "srsName", BAD_CAST cm->srs_uri);
 
-        psPos = xmlNewChild(psOrigin, psGmlNs, BAD_CAST "pos", BAD_CAST point);
+        xmlNewChild(psOrigin, psGmlNs, BAD_CAST "pos", BAD_CAST point);
       }
 
       if (swapAxes == MS_FALSE) {
@@ -2353,7 +2353,6 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   xmlDocPtr psDoc = NULL;
   xmlNodePtr psRootNode = NULL;
   xmlNodePtr psMainNode = NULL;
-  xmlNodePtr psNode = NULL;
   xmlNsPtr psNsOws = NULL;
   xmlNsPtr psNsXsi = NULL;
   xmlChar *buffer = NULL;
@@ -2401,7 +2400,7 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   }
 
   if (errorMessage != NULL) {
-    psNode = xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST errorMessage);
+    xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST errorMessage);
   }
 
   /*psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_2_0_0,
@@ -2555,8 +2554,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   const char *updatesequence = NULL;
   xmlNsPtr psOwsNs = NULL,
            psXLinkNs = NULL,
-           psWcsNs = NULL,
-           psGmlNs = NULL;
+           psWcsNs = NULL;
   char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
   int i;
 
@@ -2578,7 +2576,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /* lookup namespaces */
   psOwsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX );
   psWcsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_WCS_NAMESPACE_PREFIX );
-  psGmlNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX );
+  xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX );
   psXLinkNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST "xlink" );
 
   xmlSetNs(psRootNode, psWcsNs);
@@ -3041,7 +3039,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
                                        wcs20ParamsObjPtr params, wcs20coverageMetadataObjPtr cm, char **bandlist)
 {
   int i = 0, count, maxlen, index;
-  char *current = NULL, *tmp = NULL;
+  char *tmp = NULL;
   char **band_ids = NULL;
 
   /* if rangesubset parameter is not given, default to all bands */
@@ -3058,7 +3056,6 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   count = CSLCount(params->range_subset);
   maxlen = count * 4 * sizeof(char);
   *bandlist = msSmallCalloc(sizeof(char), maxlen);
-  current = *bandlist;
 
   if (NULL == (tmp = msOWSGetEncodeMetadata(&layer->metadata,
                      "CO", "rangeset_axes", NULL))) {
@@ -3074,7 +3071,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   for(i = 0; i < count; ++i) {
     /* print ',' if not the first value */
     if(i != 0) {
-      current = strlcat(*bandlist, ",", maxlen) + *bandlist;
+      strlcat(*bandlist, ",", maxlen);
     }
 
     /* check if the string represents an integer */
@@ -3498,7 +3495,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     xmlNsPtr psGmlNs = NULL,
              psGmlcovNs = NULL,
              psSweNs = NULL,
-             psWcsNs = NULL,
              psXLinkNs = NULL;
     wcs20coverageMetadataObj tmpCm;
     char *srs_uri, *default_filename;
@@ -3516,7 +3512,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     psGmlNs    = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX);
     psGmlcovNs = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GMLCOV_NAMESPACE_PREFIX);
     psSweNs    = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_SWE_NAMESPACE_PREFIX);
-    psWcsNs    = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_WCS_NAMESPACE_PREFIX);
+    xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_WCS_NAMESPACE_PREFIX);
     psXLinkNs  = xmlSearchNs(psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
 
     xmlNewNsProp(psRootNode, psGmlNs, BAD_CAST "id", BAD_CAST layer->name);

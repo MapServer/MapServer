@@ -906,7 +906,9 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
  * Open an OGR connection, and initialize a msOGRFileInfo.
  **********************************************************************/
 
+#ifdef USE_OGR
 static int bOGRDriversRegistered = MS_FALSE;
+#endif
 
 void msOGRInitialize(void)
 
@@ -1223,20 +1225,44 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
    * ------------------------------------------------------------------ */
   ACQUIRE_OGR_LOCK;
 
-  OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
-  OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
+  if (rect.minx == rect.maxx && rect.miny == rect.maxy)
+  {
+      OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
 
-  OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
-  OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
-  OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
-  OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
-  OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+      OGR_G_SetPoint_2D( hSpatialFilterPoint, 0, rect.minx, rect.miny );
+      
+      OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPoint );
 
-  OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
+      OGR_G_DestroyGeometry( hSpatialFilterPoint );
+  }
+  else if (rect.minx == rect.maxx || rect.miny == rect.maxy)
+  {
+      OGRGeometryH hSpatialFilterLine = OGR_G_CreateGeometry( wkbLineString );
 
-  OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
+      OGR_G_AddPoint_2D( hSpatialFilterLine, rect.minx, rect.miny );
+      OGR_G_AddPoint_2D( hSpatialFilterLine, rect.maxx, rect.maxy );
 
-  OGR_G_DestroyGeometry( hSpatialFilterPolygon );
+      OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterLine );
+
+      OGR_G_DestroyGeometry( hSpatialFilterLine );
+  }
+  else
+  {
+      OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
+      OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
+
+      OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+      OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
+      OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
+      OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
+      OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+
+      OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
+
+      OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
+
+      OGR_G_DestroyGeometry( hSpatialFilterPolygon );
+  }
 
   psInfo->rect = rect;
 
@@ -2387,7 +2413,7 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
 #ifdef USE_OGR
 static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer, classObj *c)
 {
-  GBool bIsNull, bIsBrush=MS_FALSE, bIsPen=MS_FALSE;
+  GBool bIsNull, bIsBrush=MS_FALSE;
   int r=0,g=0,b=0,t=0;
   double dfTmp;
   int try_addimage_if_notfound = MS_FALSE;
@@ -2554,7 +2580,6 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       }
     } else if (eStylePartType == OGRSTCPen) {
       OGRStyleToolH hPenStyle = hStylePart;
-      bIsPen = TRUE;
 
       const char *pszPenName = OGR_ST_GetParamStr(hPenStyle,
                                OGRSTPenId,
@@ -2893,8 +2918,8 @@ void msOGRCleanup( void )
 /************************************************************************/
 char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 {
-  char* pszEscapedStr =NULL;
 #ifdef USE_OGR
+  char* pszEscapedStr =NULL;
   if(layer && pszString && strlen(pszString) > 0) {
     char* pszEscapedOGRStr =  CPLEscapeString(pszString, strlen(pszString),
                               CPLES_SQL );
@@ -2920,9 +2945,9 @@ char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 /************************************************************************/
 char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 {
+#ifdef USE_OGR
   char* pszEscapedStr =NULL;
   int i =0;
-#ifdef USE_OGR
   if(layer && pszString && strlen(pszString) > 0) {
     unsigned char ch;
     for(i=0; (ch = ((unsigned char*)pszString)[i]) != '\0'; i++) {

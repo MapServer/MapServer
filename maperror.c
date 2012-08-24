@@ -384,6 +384,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
   int nWidthTxt = 0;
   outputFormatObj *format = NULL;
   char *errormsg = msGetErrorString("; ");
+  errorObj *error = msGetErrorObj();
   fontMetrics *font = NULL;
   char *imagepath = NULL, *imageurl = NULL;
   labelStyleObj ls;
@@ -426,6 +427,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
       ls.size = i;
       MS_INIT_COLOR(*ls.color,0,0,0,255);
       MS_INIT_COLOR(*ls.outlinecolor,255,255,255,255);
+      ls.outlinewidth = 1;
       break;
     }
   }
@@ -486,6 +488,12 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
   }
   msSaveImage(NULL,img,filename);
   msFreeImage(img);
+
+  /* the errors are reported */
+  while(error && error->code != MS_NOERR) {
+    error->isreported = MS_TRUE;
+    error = error->next;
+  }
 
   if (format->refcount == 0)
     msFreeOutputFormat(format);

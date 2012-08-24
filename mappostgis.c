@@ -323,9 +323,8 @@ wkbReadLine(wkbObj *w, lineObj *line)
 static void
 wkbSkipGeometry(wkbObj *w)
 {
-  char endian;
   int type, npoints, nrings, ngeoms, i;
-  endian = wkbReadChar(w);
+  /*endian = */wkbReadChar(w);
   type = wkbTypeMap(w,wkbReadInt(w));
   switch(type) {
     case WKB_POINT:
@@ -364,11 +363,10 @@ wkbSkipGeometry(wkbObj *w)
 static int
 wkbConvPointToShape(wkbObj *w, shapeObj *shape)
 {
-  char endian;
   int type;
   lineObj line;
 
-  endian = wkbReadChar(w);
+  /*endian = */wkbReadChar(w);
   type = wkbTypeMap(w,wkbReadInt(w));
 
   if( type != WKB_POINT ) return MS_FAILURE;
@@ -387,11 +385,10 @@ wkbConvPointToShape(wkbObj *w, shapeObj *shape)
 static int
 wkbConvLineStringToShape(wkbObj *w, shapeObj *shape)
 {
-  char endian;
   int type;
   lineObj line;
 
-  endian = wkbReadChar(w);
+  /*endian = */wkbReadChar(w);
   type = wkbTypeMap(w,wkbReadInt(w));
 
   if( type != WKB_LINESTRING ) return MS_FAILURE;
@@ -408,12 +405,11 @@ wkbConvLineStringToShape(wkbObj *w, shapeObj *shape)
 static int
 wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
 {
-  char endian;
   int type;
   int i, nrings;
   lineObj line;
 
-  endian = wkbReadChar(w);
+  /*endian = */wkbReadChar(w);
   type = wkbTypeMap(w,wkbReadInt(w));
 
   if( type != WKB_POLYGON ) return MS_FAILURE;
@@ -438,12 +434,11 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
 static int
 wkbConvCurvePolygonToShape(wkbObj *w, shapeObj *shape)
 {
-  char endian;
   int type, i, ncomponents;
   int failures = 0;
   int was_poly = ( shape->type == MS_SHAPE_POLYGON );
 
-  endian = wkbReadChar(w);
+  /*endian = */wkbReadChar(w);
   type = wkbTypeMap(w,wkbReadInt(w));
   ncomponents = wkbReadInt(w);
 
@@ -476,11 +471,10 @@ wkbConvCurvePolygonToShape(wkbObj *w, shapeObj *shape)
 static int
 wkbConvCircularStringToShape(wkbObj *w, shapeObj *shape)
 {
-  char endian;
   int type;
   lineObj line = {0, NULL};
 
-  endian = wkbReadChar(w);
+  /*endian = */wkbReadChar(w);
   type = wkbTypeMap(w,wkbReadInt(w));
 
   if( type != WKB_CIRCULARSTRING ) return MS_FAILURE;
@@ -510,13 +504,12 @@ wkbConvCircularStringToShape(wkbObj *w, shapeObj *shape)
 static int
 wkbConvCompoundCurveToShape(wkbObj *w, shapeObj *shape)
 {
-  char endian;
   int npoints = 0;
   int type, ncomponents, i, j;
   lineObj *line;
   shapeObj shapebuf;
 
-  endian = wkbReadChar(w);
+  /*endian = */wkbReadChar(w);
   type = wkbTypeMap(w,wkbReadInt(w));
 
   /* Init our shape buffer */
@@ -581,12 +574,11 @@ wkbConvCompoundCurveToShape(wkbObj *w, shapeObj *shape)
 static int
 wkbConvCollectionToShape(wkbObj *w, shapeObj *shape)
 {
-  char endian;
-  int type, i, ncomponents;
+  int i, ncomponents;
   int failures = 0;
 
-  endian = wkbReadChar(w);
-  type = wkbTypeMap(w,wkbReadInt(w));
+  /*endian = */wkbReadChar(w);
+  /*type = */wkbTypeMap(w,wkbReadInt(w));
   ncomponents = wkbReadInt(w);
 
   /*
@@ -790,7 +782,7 @@ arcStrokeCircle(const pointObj *p1, const pointObj *p2, const pointObj *p3,
   double radius; /* Radius of our circular arc */
   double sweep_angle_r; /* Total angular size of our circular arc in radians */
   double segment_angle_r; /* Segment angle in radians */
-  double a1, a2, a3; /* Angles represented by p1, p2, p3 relative to center */
+  double a1, /*a2,*/ a3; /* Angles represented by p1, p2, p3 relative to center */
   int side = arcSegmentSide(p1, p3, p2); /* What side of p1,p3 is the middle point? */
   int num_edges; /* How many edges we will be generating */
   double current_angle_r; /* What angle are we generating now (radians)? */
@@ -817,7 +809,9 @@ arcStrokeCircle(const pointObj *p1, const pointObj *p2, const pointObj *p3,
 
   /* Calculate the angles that our three points represent */
   a1 = atan2(p1->y - center.y, p1->x - center.x);
+  /* UNUSED
   a2 = atan2(p2->y - center.y, p2->x - center.x);
+   */
   a3 = atan2(p3->y - center.y, p3->x - center.x);
   segment_angle_r = M_PI * segment_angle / 180.0;
 
@@ -2601,9 +2595,8 @@ int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape)
   */
   while (shape->type == MS_SHAPE_NULL) {
     if (layerinfo->rownum < PQntuples(layerinfo->pgresult)) {
-      int rv;
       /* Retrieve this shape, cursor access mode. */
-      rv = msPostGISReadShape(layer, shape);
+      msPostGISReadShape(layer, shape);
       if( shape->type != MS_SHAPE_NULL ) {
         (layerinfo->rownum)++; /* move to next shape */
         return MS_SUCCESS;
@@ -2639,7 +2632,6 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
   PGresult *pgresult = NULL;
   msPostGISLayerInfo *layerinfo = NULL;
-  int result = MS_SUCCESS;
 
   long shapeindex = record->shapeindex;
   int resultindex = record->resultindex;
@@ -2691,7 +2683,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     shape->type = MS_SHAPE_NULL;
 
     /* Return the shape, cursor access mode. */
-    result = msPostGISReadShape(layer, shape);
+    msPostGISReadShape(layer, shape);
 
     return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : MS_SUCCESS;
   } else { /* no resultindex, fetch the shape from the DB */
@@ -2757,7 +2749,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
     if (num_tuples > 0) {
       /* Get shape in random access mode. */
-      result = msPostGISReadShape(layer, shape);
+      msPostGISReadShape(layer, shape);
     }
 
     return (shape->type == MS_SHAPE_NULL) ? MS_FAILURE : ( (num_tuples > 0) ? MS_SUCCESS : MS_DONE );

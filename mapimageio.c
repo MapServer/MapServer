@@ -728,7 +728,7 @@ int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb)
 
 int readPNG(char *path, rasterBufferObj *rb)
 {
-  png_uint_32 width,height,row_bytes;
+  png_uint_32 width,height;
   unsigned char *a,*r,*g,*b;
   int bit_depth,color_type,i;
   unsigned char **row_pointers;
@@ -800,8 +800,7 @@ int readPNG(char *path, rasterBufferObj *rb)
     png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
 
   png_read_update_info(png_ptr, info_ptr);
-  row_bytes = png_get_rowbytes(png_ptr, info_ptr);
-  assert(row_bytes == rb->data.rgba.row_step);
+  assert(png_get_rowbytes(png_ptr, info_ptr) == rb->data.rgba.row_step);
 
   png_read_image(png_ptr, row_pointers);
   free(row_pointers);

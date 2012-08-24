@@ -248,7 +248,7 @@ layerObj *msSOSGetFirstLayerForOffering(mapObj *map, const char *pszOffering,
 
 xmlNodePtr msSOSAddTimeNode(xmlNsPtr psNs, xmlNsPtr psNsGml, char *pszStart, char *pszEnd)
 {
-  xmlNodePtr psNode=NULL,psTimeNode=NULL;
+  xmlNodePtr psNode=NULL;
 
   char *timeel= NULL;
 
@@ -260,7 +260,7 @@ xmlNodePtr msSOSAddTimeNode(xmlNsPtr psNs, xmlNsPtr psNsGml, char *pszStart, cha
     timeel = "time";
 
   psNode = xmlNewNode(psNs, BAD_CAST timeel);
-  psTimeNode = xmlAddChild(psNode, msGML3TimePeriod(psNsGml, pszStart, pszEnd));
+  xmlAddChild(psNode, msGML3TimePeriod(psNsGml, pszStart, pszEnd));
   return psNode;
 }
 
@@ -632,7 +632,7 @@ void msSOSAddDataBlockDefinition(xmlNsPtr psNsSwe, xmlNodePtr psParent, layerObj
 void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNsPtr psNsMs, xmlNodePtr psParent, mapObj *map, layerObj *lp,
                         int iFeatureId, const char *script_url, const char *opLayerName)
 {
-  xmlNodePtr psObsNode, psNode, psSubNode, psLayerNode = NULL;
+  xmlNodePtr psObsNode, psNode, psLayerNode = NULL;
   const char *pszEpsg = NULL, *pszValue = NULL;
   int status,i,j;
   shapeObj sShape;
@@ -686,7 +686,7 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
           if (sShape.values[i] && strlen(sShape.values[i]) > 0) {
             pszTime = msStringConcatenate(pszTime, sShape.values[i]);
             psNode = xmlNewChild(psObsNode, psNsOm, BAD_CAST "samplingTime", NULL);
-            psSubNode = xmlAddChild(psNode, msGML3TimeInstant(psNsGml, pszTime));
+            xmlAddChild(psNode, msGML3TimeInstant(psNsGml, pszTime));
             msFree(pszTime);
           }
           break;
@@ -1102,7 +1102,6 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
   xmlDocPtr psDoc = NULL;       /* document pointer */
   xmlNodePtr psRootNode, psMainNode, psNode;
   xmlNodePtr psOfferingNode;
-  xmlNodePtr psTmpNode;
 
   char *schemalocation = NULL;
   char *xsi_schemaLocation = NULL;
@@ -1243,13 +1242,13 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/sosGetCapabilities.xsd");
   xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
 
-  psTmpNode = xmlAddChild(psRootNode, xmlNewComment(BAD_CAST msGetVersion()));
+  xmlAddChild(psRootNode, xmlNewComment(BAD_CAST msGetVersion()));
 
   /*service identification*/
-  psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(psNsOws, map, "SOS", pszSOSVersion, "SO"));
+  xmlAddChild(psRootNode, msOWSCommonServiceIdentification(psNsOws, map, "SOS", pszSOSVersion, "SO"));
 
   /*service provider*/
-  psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(psNsOws, psNsXLink, map, "SO"));
+  xmlAddChild(psRootNode, msOWSCommonServiceProvider(psNsOws, psNsXLink, map, "SO"));
 
   /*operation metadata */
 
@@ -1259,36 +1258,36 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
   psMainNode = xmlAddChild(psRootNode, msOWSCommonOperationsMetadata(psNsOws));
 
   psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetCapabilities", OWS_METHOD_GETPOST, (char *) script_url));
-  psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
-  psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
+  xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
+  xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
 
   if (msOWSRequestIsEnabled(map, NULL, "S", "DescribeSensor", MS_TRUE)) {
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"DescribeSensor", OWS_METHOD_GETPOST, (char *) script_url));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "sensorid", "urn:ogc:object:procedure"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "outputFormat", (char *)pszSOSDescribeSensorMimeType));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "sensorid", "urn:ogc:object:procedure"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "outputFormat", (char *)pszSOSDescribeSensorMimeType));
   }
 
   if (msOWSRequestIsEnabled(map, NULL, "S", "DescribeObservationType", MS_TRUE)) {
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"DescribeObservationType", OWS_METHOD_GETPOST, (char *) script_url));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "observedproperty", "urn:ogc:object:observedproperty"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "observedproperty", "urn:ogc:object:observedproperty"));
   }
 
   if (msOWSRequestIsEnabled(map, NULL, "S", "GetObservation", MS_TRUE)) {
     psNode     = xmlAddChild(psMainNode, msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetObservation", OWS_METHOD_GETPOST, (char *) script_url));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "offering", "urn:ogc:object:offering"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "observedproperty", "urn:ogc:object:observedproperty"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "eventtime", "sos:time"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "procedure", "urn:ogc:object:sensor"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "featureofinterest", "gml:location"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "result", "ogc:Filter"));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "responseFormat", (char *)pszSOSGetObservationMimeType));
-    psTmpNode  = xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "resultModel", "Observation,Measurement"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "service", "SOS"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "version", (char *)pszSOSVersion));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "offering", "urn:ogc:object:offering"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "observedproperty", "urn:ogc:object:observedproperty"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "eventtime", "sos:time"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "procedure", "urn:ogc:object:sensor"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "featureofinterest", "gml:location"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "result", "ogc:Filter"));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "responseFormat", (char *)pszSOSGetObservationMimeType));
+    xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,"Parameter", "resultModel", "Observation,Measurement"));
   }
 
   value = msOWSLookupMetadata(&(map->web.metadata), "SO", "maxfeatures");
@@ -1298,7 +1297,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
   }
 
   /*<ogc:Filter_Capabilities> */
-  psTmpNode = xmlAddChild(psRootNode, FLTGetCapabilities(psNsSos, psNsOgc, MS_TRUE));
+  xmlAddChild(psRootNode, FLTGetCapabilities(psNsSos, psNsOgc, MS_TRUE));
 
   /*Offerings */
   psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Contents", NULL);

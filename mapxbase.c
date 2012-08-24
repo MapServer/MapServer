@@ -788,7 +788,6 @@ int msDBFWriteStringAttribute( DBFHandle psDBF, int iRecord, int iField, const c
 int msDBFGetItemIndex(DBFHandle dbffile, char *name)
 {
   int i;
-  DBFFieldType dbfField;
   int fWidth,fnDecimals; /* field width and number of decimals */
   char fName[32]; /* field name */
 
@@ -799,7 +798,7 @@ int msDBFGetItemIndex(DBFHandle dbffile, char *name)
 
   /* does name exist as a field? */
   for(i=0; i<msDBFGetFieldCount(dbffile); i++) {
-    dbfField = msDBFGetFieldInfo(dbffile,i,fName,&fWidth,&fnDecimals);
+    msDBFGetFieldInfo(dbffile,i,fName,&fWidth,&fnDecimals);
     if(strcasecmp(name,fName) == 0) /* found it */
       return(i);
   }
@@ -888,8 +887,10 @@ char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int nu
 
   for(i=0; i<numitems; i++) {
     value = msDBFReadStringAttribute(dbffile, record, itemindexes[i]);
-    if (value == NULL)
+    if (value == NULL) {
+      free(values);
       return NULL; /* Error already reported by msDBFReadStringAttribute() */
+    }
     values[i] = msStrdup(value);
   }
 

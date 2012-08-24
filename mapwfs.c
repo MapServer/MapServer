@@ -509,7 +509,6 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
   rectObj ext;
   const char *pszWfsSrs = NULL;
   projectionObj poWfs;
-  int result = 0;
 
   msIO_printf("    <FeatureType>\n");
 
@@ -559,7 +558,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
   if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
     msInitProjection(&poWfs);
     if (pszWfsSrs != NULL)
-      result = msLoadProjectionString(&(poWfs), pszWfsSrs);
+      msLoadProjectionString(&(poWfs), pszWfsSrs);
 
     if(lp->projection.numargs > 0) {
       msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext),
@@ -1591,8 +1590,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
   int nQueriedLayers=0;
   layerObj *lpQueried=NULL;
 
-  /*use msLayerGetShape instead of msLayerResultsGetShape of complex filter #3305*/
+  /*use msLayerGetShape instead of msLayerResultsGetShape of complex filter #3305
   int bComplexFilter = MS_FALSE;
+  */
 
   /* Initialize gml options */
   memset( &gmlinfo, 0, sizeof(gmlinfo) );
@@ -1899,7 +1899,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
         }
         if (psFormat == NULL) {
           msSetError(MS_WFSERR,
-                     "'%s' is not a permitted output format for layer '%s', review wfs_formats setting.",
+                     "'%s' is not a permitted output format for layer '%s', review wfs_getfeature_formatlist setting.",
                      "msWFSGetFeature()",
                      paramsObj->pszOutputFormat,
                      lp->name );
@@ -2396,10 +2396,13 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       msIO_setHeader("Content-type",output_mime_type);
     msIO_sendHeaders();
 
-    msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj,
+    status = msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj,
                                  outputformat,
                                  iResultTypeHits,
                                  iNumberOfFeatures );
+    if(status != MS_SUCCESS) {
+      return MS_FAILURE;
+    }
   }
 
   /* handle case of maxfeatures = 0 */

@@ -134,7 +134,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
   layerObj *pasLayers = NULL;
   int i, j, k, z, iClass;
   int bUseSpecificLayer = 0;
-  int bSuccess =0;
   const char *pszTmp = NULL;
   int bFreeTemplate = 0;
   int nLayerStatus = 0;
@@ -213,7 +212,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                strcasecmp(GET_LAYER(map, i)->group, pasLayers[j].name) == 0))) ||
             (bUseSpecificLayer && pszStyleLayerName && pasLayers[j].name &&
              strcasecmp(pasLayers[j].name, pszStyleLayerName) == 0)) {
-          bSuccess =1;
 #ifdef notdef
           /*this is a test code if we decide to flag some layers as not supporting SLD*/
           pszSLDNotSupported = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "M", "SLD_NOT_SUPPORTED");
@@ -433,6 +431,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                       msLoadExpressionString(&lp->filter, pszBuffer);
                     }
                     msFree(pszBuffer);
+                    pszBuffer = NULL;
                   }
                 }
               }
@@ -796,7 +795,6 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
             if (psNode) {
               char *pszExpression = NULL;
-              char *pszEscapedExpression = NULL;
               int i;
 
               /*preparse the filter for possible gml aliases set on the layer's metada:
@@ -835,18 +833,15 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
               psNode = NULL;
 
               if (pszExpression) {
-                pszEscapedExpression = msStringEscape(pszExpression);
                 nNewClasses =
                   nClassAfterFilter - nClassBeforeFilter;
                 for (i=0; i<nNewClasses; i++) {
                   msLoadExpressionString(&psLayer->
                                          class[psLayer->numclasses-1-i]->
-                                         expression, pszEscapedExpression);
+                                         expression, pszExpression);
                 }
                 msFree(pszExpression);
                 pszExpression = NULL;
-                msFree(pszEscapedExpression);
-                pszEscapedExpression = NULL;
               }
 
             }
@@ -1135,7 +1130,6 @@ int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /*      :                                                               */
 /*        0 : for color                                                 */
 /*        1 : outlinecolor                                              */
-/*        2 : backgroundcolor                                           */
 /************************************************************************/
 int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                      mapObj *map, int iColorParam)
@@ -1217,8 +1211,13 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
       } else if (strcasecmp(psStrkName, "stroke-opacity") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
             psCssParam->psChild->psNext->pszValue) {
-          psStyle->color.alpha =
-            (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+          if (iColorParam == 0) {
+            psStyle->color.alpha =
+              (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+          } else {
+            psStyle->outlinecolor.alpha =
+              (int)(atof(psCssParam->psChild->psNext->pszValue)*255);
+          }
         }
       }
     }
@@ -1499,7 +1498,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
   char *psName=NULL, *psValue = NULL;
   int nLength = 0;
   char *pszSymbolName = NULL;
-  int bFilled = 0, bStroked=0;
+  int bFilled = 0;
   CPLXMLNode *psPropertyName=NULL;
   char szTmp[256];
 
@@ -1595,11 +1594,6 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
           bFilled = 1;
         else
           bFilled = 0;
-
-        if (psStroke)
-          bStroked = 1;
-        else
-          bStroked = 0;
 
         if (psFill) {
           psCssParam =  CPLGetXMLNode(psFill, "CssParameter");
@@ -2652,6 +2646,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
   if(psClass->numlabels == 0) {
     if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
     initLabel(psClass->labels[0]);
+    psClass->numlabels++;
   }
   psLabelObj = psClass->labels[0];
 
@@ -2893,6 +2888,7 @@ int ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
   if(psClass->numlabels == 0) {
     if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
     initLabel(psClass->labels[0]);
+    psClass->numlabels++;
   }
   psLabelObj = psClass->labels[0];
 
@@ -2997,6 +2993,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
   if(psClass->numlabels == 0) {
     if(msGrowClassLabels(psClass) == NULL) return(MS_FAILURE);
     initLabel(psClass->labels[0]);
+    psClass->numlabels++;
   }
   psLabelObj = psClass->labels[0];
 
@@ -4704,15 +4701,9 @@ char *msSLDGetAttributeValue(char *pszExpression,
 FilterEncodingNode *BuildExpressionTree(char *pszExpression,
                                         FilterEncodingNode *psNode)
 {
-  char *apszExpression[20];
   int nLength = 0;
-  /* int bInsideExpression = 0; */
-  int i =0, nOperators=0;
+  int nOperators=0;
   char *pszFinalExpression = NULL;
-  int iFinal = 0, iIndiceExp=0, nOpeningBrackets=0;/* nIndice=0; */
-  /* char szTmp[6]; */
-  int iExpression = 0;
-  /* char *pszSimplifiedExpression = NULL; */
   char *pszComparionValue=NULL, *pszAttibuteName=NULL;
   char *pszAttibuteValue=NULL;
   char *pszLeftExpression=NULL, *pszRightExpression=NULL, *pszOperator=NULL;
@@ -4720,16 +4711,8 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
   if (!pszExpression || (nLength = strlen(pszExpression)) <=0)
     return NULL;
 
-  for (i=0; i<20; i++)
-    apszExpression[i] = (char *)malloc(sizeof(char)*(nLength+1));
-
   pszFinalExpression = (char *)malloc(sizeof(char)*(nLength+1));
   pszFinalExpression[0] = '\0';
-
-  iExpression = -1; /* first incremnt will put it to 0; */
-  iFinal = 0;
-  iIndiceExp = 0;
-  nOpeningBrackets = 0;
 
   /* -------------------------------------------------------------------- */
   /*      First we check how many logical operators are there :           */
@@ -4852,145 +4835,6 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
     return psNode;
   } else
     return NULL;
-
-  /*
-  for (i=0; i<nLength; i++)
-  {
-      if (pszExpression[i] == '(')
-      {
-          if (bInsideExpression)
-          {
-              pszFinalExpression[iFinal++] = pszExpression[i];
-              nOpeningBrackets++;
-          }
-          else
-          {
-              bInsideExpression = 1;
-              iExpression++;
-              iIndiceExp = 0;
-          }
-      }
-      else if (pszExpression[i] == ')')
-      {
-          if (bInsideExpression)
-          {
-              if (nOpeningBrackets > 0)
-              {
-                  nOpeningBrackets--;
-                  apszExpression[iExpression][iIndiceExp++] = pszExpression[i];
-              }
-              else
-              {
-                  // end of an expression
-                  pszFinalExpression[iFinal++] = ' ';
-                  pszFinalExpression[iFinal] = '\0';
-                  sprintf(szTmp, "exp%d ", iExpression);
-                  strcat(pszFinalExpression,szTmp);
-                  if (iExpression < 10)
-                    iFinal+=5;
-                  else
-                    iFinal+=6;
-                  bInsideExpression = 0;
-              }
-          }
-      }
-      else
-      {
-          if (bInsideExpression)
-          {
-              apszExpression[iExpression][iIndiceExp++] = pszExpression[i];
-          }
-          else
-          {
-              pszFinalExpression[iFinal++] =  pszExpression[i];
-          }
-      }
-
-      if (iExpression >=0 && iIndiceExp >0)
-        apszExpression[iExpression][iIndiceExp] = '\0';
-      if (iFinal > 0)
-        pszFinalExpression[iFinal] = '\0';
-  }
-
-  if (msSLDHasMoreThatOneLogicalOperator(pszFinalExpression))
-  {
-      pszSimplifiedExpression =
-        msSLDSimplifyExpression(pszFinalExpression);
-      free(pszFinalExpression);
-
-      // increase the size so it can fit the brakets () that will be added
-      pszFinalExpression = (char *)malloc(sizeof(char)*(nLength+3));
-      if(iExpression > 0)
-      {
-          nLength = strlen(pszSimplifiedExpression);
-          iFinal = 0;
-          for (i=0; i<nLength; i++)
-          {
-              if (i < nLength-4)
-              {
-                  if (pszSimplifiedExpression[i] == 'e' &&
-                      pszSimplifiedExpression[i+1] == 'x' &&
-                      pszSimplifiedExpression[i+2] == 'p')
-                  {
-                      nIndice = atoi(pszSimplifiedExpression[i+3]);
-                      if (nIndice >=0 && nIndice < iExpression)
-                      {
-                          strcat(pszFinalExpression,
-                                 apszExpression[nIndice]);
-                          iFinal+= strlen(apszExpression[nIndice]);
-                      }
-                  }
-              }
-              else
-              {
-                  pszFinalExpression[iFinal++] = pszSimplifiedExpression[i];
-              }
-          }
-      }
-      else
-        pszFinalExpression = msStrdup(pszFinalExpression);
-
-      return BuildExpressionTree(pszFinalExpression, psNode);
-  }
-  pszLogicalOper = msSLDGetLogicalOperator(pszFinalExpression);
-  //TODO : NOT operator
-  if (pszLogicalOper)
-  {
-      if (strcasecmp(pszLogicalOper, "AND") == 0 ||
-          strcasecmp(pszLogicalOper, "OR") == 0)
-      {
-          if (!psNode)
-            psNode = FLTCreateFilterEncodingNode();
-
-          psNode->eType = FILTER_NODE_TYPE_LOGICAL;
-          if (strcasecmp(pszLogicalOper, "AND") == 0)
-            psNode->pszValue = "AND";
-          else
-            psNode->pszValue = "OR";
-
-          psNode->psLeftNode =  FLTCreateFilterEncodingNode();
-          psNode->psRightNode =  FLTCreateFilterEncodingNode();
-
-          psLeftExpresion =
-            msSLDGetLogicalOperatorExpression(pszFinalExpression, 0);
-          psRightExpresion =
-            msSLDGetLogicalOperatorExpression(pszFinalExpression, 0);
-
-          BuildExpressionTree(psNode->psLeftNode, psLeftExpresion);
-
-          BuildExpressionTree(psNode->psRightNode,psRightExpresion);
-
-          if (psLeftExpresion)
-            free(psLeftExpresion);
-          if (psRightExpresion)
-            free(psRightExpresion);
-      }
-  }
-  else //means it is a simple expression with comaprison
-  {
-
-  */
-
 }
 
 char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)

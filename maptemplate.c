@@ -30,6 +30,7 @@
 #include "maptemplate.h"
 #include "maphash.h"
 #include "mapserver.h"
+#include "maptile.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -110,6 +111,11 @@ int setExtent(mapservObj *mapserv)
 {
   double cellx,celly,cellsize;
 
+  if(mapserv->Mode == TILE) {
+    if(MS_SUCCESS != msTileSetExtent(mapserv)) {
+      return MS_FAILURE;
+    }
+  }
   switch(mapserv->CoordSource) {
     case FROMUSERBOX: /* user passed in a map extent */
       break;
@@ -913,7 +919,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
     mapserv->resultshape.classindex = msShapeGetClass(layer, layer->map, &mapserv->resultshape,  NULL, -1);
 
-    if(layer->class[mapserv->resultshape.classindex]->numlabels > 0)
+    if(mapserv->resultshape.classindex >=0 && layer->class[mapserv->resultshape.classindex]->numlabels > 0)
       msShapeGetAnnotation(layer, &mapserv->resultshape); // RFC 77 TODO: check return value
 
 
@@ -1165,7 +1171,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 
   char *tag, *tagStart, *tagEnd;
   hashTableObj *tagArgs=NULL;
-  int tagOffset, tagLength;
+  int tagLength;
   char *encodedTagValue=NULL, *tagValue=NULL;
 
   char *argValue=NULL;
@@ -1192,8 +1198,6 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     name = pattern = NULL;
     uc = lc = commify = MS_FALSE;
     escape=ESCAPE_HTML;
-
-    tagOffset = tagStart - *line;
 
     /* check for any tag arguments */
     if(getTagArgs("item", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
@@ -1922,8 +1926,6 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
   double scale_x, scale_y;
 
-  double buffer;
-  int bufferUnits;
 
   char *projectionString=NULL;
 
@@ -1950,6 +1952,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
   }
 
   while (tagStart) {
+#ifdef USE_GEOS
+    double buffer = 0;
+    int bufferUnits = -1;
+#endif
     xh = yh = yf = ph = pf = sh = sf = ""; /* initialize the tag arguments */
     xf= ",";
     irh = irf = orh = orf = "";
@@ -1958,9 +1964,6 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     centroid = MS_FALSE;
     precision = 0;
     scale_x = scale_y = 1.0;
-
-    buffer = 0;
-    bufferUnits = -1;
 
     projectionString = NULL;
 
@@ -2004,11 +2007,13 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       argValue = msLookupHashTable(tagArgs, "sf");
       if(argValue) sf = argValue;
 
+#ifdef USE_GEOS
       argValue = msLookupHashTable(tagArgs, "buffer");
       if(argValue) {
         buffer = atof(argValue);
         if(strstr(argValue, "px")) bufferUnits = MS_PIXELS; /* may support others at some point */
       }
+#endif
 
       argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
@@ -4474,7 +4479,6 @@ void msFreeMapServObj(mapservObj* mapserv)
     msFree(mapserv->QueryLayer);
     msFree(mapserv->SelectLayer);
     msFree(mapserv->QueryFile);
-    msFree(mapserv->QueryItem);
 
     msFree(mapserv);
   }

@@ -2179,8 +2179,9 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
       continue; /* skip NULL shapes */
     }
     shape->tileindex = tSHP->tileshpfile->lastshape;
-    shape->values = msDBFGetValueList(tSHP->shpfile->hDBF, i, layer->iteminfo, layer->numitems);
     shape->numvalues = layer->numitems;
+    shape->values = msDBFGetValueList(tSHP->shpfile->hDBF, i, layer->iteminfo, layer->numitems);
+    if(!shape->values) shape->numvalues = 0;
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
     if(layer->numitems > 0 && layer->iteminfo) {
@@ -2513,7 +2514,6 @@ int msSHPLayerIsOpen(layerObj *layer)
 
 int msSHPLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
-  int i, n1=0, n2=0;
   int status;
   shapefileObj *shpfile;
 
@@ -2554,8 +2554,11 @@ int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
       msFreeShape(shape);
       continue; /* skip NULL shapes */
     }
-    shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
     shape->numvalues = layer->numitems;
+    shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
+    if(!shape->values) {
+      shape->numvalues = 0;
+    }
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
     if(layer->numitems > 0 && layer->iteminfo) {

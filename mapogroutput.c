@@ -569,8 +569,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
   /* Validate that the filename does not contain any directory */
   /* information, which might lead to removal of unwanted files. (#4086) */
-  if( strchr(fo_filename, "/") != NULL || strchr(fo_filename, ":") != NULL ||
-        strchr(fo_filename, "\\") != NULL ) {
+  if( strchr(fo_filename, '/') != NULL || strchr(fo_filename, ':') != NULL ||
+        strchr(fo_filename, '\\') != NULL ) {
     msSetError( MS_MISCERR,
            "Invalid value for FILENAME option. "
            "It must not contain any directory information.",

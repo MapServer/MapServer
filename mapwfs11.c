@@ -120,9 +120,19 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
 
   psRootNode = xmlNewNode(NULL, BAD_CAST "FeatureType");
 
-  /*if there is an encoding using it on some of the items*/
-  psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", lp->name, encoding);
+  /* add namespace to layer name */
+  value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
+  if(value) {
+    n = strlen(value)+strlen(lp->name)+1+1;
+    valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);
+    snprintf(valueToFree, n, "%s%s%s", (value ? value : ""), (value ? ":" : ""), lp->name);
 
+    /*if there is an encoding using it on some of the items*/
+    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", valueToFree, encoding);
+    msFree(valueToFree);
+  } else {
+    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", lp->name, encoding);
+  }
 
   if (lp->name && strlen(lp->name) > 0 &&
       (msIsXMLTagValid(lp->name) == MS_FALSE || isdigit(lp->name[0])))
@@ -248,11 +258,13 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 {
   xmlDocPtr psDoc = NULL;       /* document pointer */
   xmlNodePtr psRootNode, psMainNode, psNode, psFtNode;
-  xmlNodePtr psTmpNode;
   const char *updatesequence=NULL;
   xmlNsPtr psNsOws, psNsXLink, psNsOgc;
   char *schemalocation = NULL;
   char *xsi_schemaLocation = NULL;
+  const char *user_namespace_prefix = NULL;
+  const char *user_namespace_uri = NULL;
+  gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
 
   char *script_url=NULL, *script_url_encoded=NULL, *formats_list;
   const char *value = NULL;
@@ -307,6 +319,24 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
 
+  value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
+  if(value) user_namespace_uri = value;
+
+  value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
+  if(value) user_namespace_prefix = value;
+  if(user_namespace_prefix != NULL && msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
+    msIO_printf("<!-- WARNING: The value '%s' is not valid XML namespace. -->\n", user_namespace_prefix);
+  else
+    xmlNewNs(psRootNode, BAD_CAST user_namespace_uri, BAD_CAST user_namespace_prefix);
+
+  /* any additional namespaces */
+  namespaceList = msGMLGetNamespaces(&(map->web), "G");
+  for(i=0; i<namespaceList->numnamespaces; i++) {
+    if(namespaceList->namespaces[i].uri) {
+      xmlNewNs(psRootNode, BAD_CAST namespaceList->namespaces[i].uri, BAD_CAST namespaceList->namespaces[i].prefix);
+    }
+  }
+
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->pszVersion );
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
@@ -326,11 +356,11 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   /*      Service metadata.                                               */
   /* -------------------------------------------------------------------- */
 
-  psTmpNode = xmlAddChild(psRootNode,
+  xmlAddChild(psRootNode,
                           msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion, "FO"));
 
   /*service provider*/
-  psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(
+  xmlAddChild(psRootNode, msOWSCommonServiceProvider(
                             psNsOws, psNsXLink, map, "FO"));
 
   /*operation metadata */

@@ -554,6 +554,22 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     return MS_FAILURE;
   }
 
+    dst->numlabels++;
+  }
+  MS_COPYSTELEM(numlabels);
+
+  msCopyLeader(&(dst->leader),&(src->leader));
+
+  MS_COPYSTRING(dst->keyimage, src->keyimage);
+  MS_COPYSTRING(dst->name, src->name);
+  MS_COPYSTRING(dst->title, src->title);
+  MS_COPYSTRING(dst->group, src->group);
+
+  if (msCopyExpression(&(dst->text), &(src->text)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy text.", "msCopyClass()");
+    return MS_FAILURE;
+  }
+
 #ifndef __cplusplus
   MS_COPYSTRING(dst->template, src->template);
 #else

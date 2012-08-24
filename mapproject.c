@@ -114,8 +114,10 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
     msReleaseLock( TLOCK_PROJ );
 #endif
 
-    if( error || point->x == HUGE_VAL || point->y == HUGE_VAL )
+    if( error || point->x == HUGE_VAL || point->y == HUGE_VAL ) {
+      msSetError(MS_PROJERR,"proj says: %s","msProjectPoint()",pj_strerrno(error));
       return MS_FAILURE;
+    }
 
     if( pj_is_latlong(out->proj) ) {
       point->x *= RAD_TO_DEG;
@@ -213,7 +215,7 @@ static void msProjectGrowRect(projectionObj *in, projectionObj *out,
 /*      Interpolate along a line segment for which one end              */
 /*      reprojects and the other end does not.  Finds the horizon.      */
 /************************************************************************/
-
+#ifdef USE_PROJ
 static int msProjectSegment( projectionObj *in, projectionObj *out,
                              pointObj *start, pointObj *end )
 
@@ -269,6 +271,7 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
   else
     return MS_SUCCESS;
 }
+#endif
 
 /************************************************************************/
 /*                         msProjectShapeLine()                         */
@@ -504,6 +507,7 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 #undef p_y
       }
     }
+    msComputeBounds( shape ); /* fixes bug 1586 */
     return MS_SUCCESS;
   }
 #endif
@@ -641,20 +645,12 @@ int msProjectRectGrid(projectionObj *in, projectionObj *out, rectObj *rect)
   }
 
   if( !rect_initialized ) {
-    if( out == NULL || out->proj == NULL
-        || pj_is_latlong(in->proj) ) {
-      prj_rect.minx = -180;
-      prj_rect.maxx = 180;
-      prj_rect.miny = -90;
-      prj_rect.maxy = 90;
-    } else {
-      prj_rect.minx = -22000000;
-      prj_rect.maxx = 22000000;
-      prj_rect.miny = -11000000;
-      prj_rect.maxy = 11000000;
-    }
+    prj_rect.minx = 0;
+    prj_rect.maxx = 0;
+    prj_rect.miny = 0;
+    prj_rect.maxy = 0;
 
-    msDebug( "msProjectRect(): all points failed to reproject, trying to fall back to using world bounds ... hope this helps.\n" );
+    msSetError(MS_PROJERR, "All points failed to reproject.", "msProjectRect()");
   } else {
     msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
   }
@@ -793,6 +789,17 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   /* -------------------------------------------------------------------- */
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
+
+  if(dx==0 && dy==0) {
+    pointObj foo;
+    msDebug( "msProjectRect(): Warning: degenerate rect {%f,%f,%f,%f}\n",rect->minx,rect->miny,rect->minx,rect->miny );
+    foo.x = rect->minx;
+    foo.y = rect->miny;
+    msProjectPoint(in,out,&foo);
+    rect->minx=rect->maxx=foo.x;
+    rect->miny=rect->maxy=foo.y;
+    return MS_SUCCESS;
+  }
 
   /* sample along top */
   if(dx != 0) {

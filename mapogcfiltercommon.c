@@ -213,7 +213,7 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   if (aszBounds[0]) {
     snprintf(szBuffer,  bufferSize, "%s_type",  psFilterNode->psLeftNode->pszValue);
     if (msOWSLookupMetadata(&(lp->metadata), "OFG", szBuffer) != NULL &&
-        (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szBuffer), "Character") == 0))
+        (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "OFG", szBuffer), "Character") == 0))
       bString = 1;
     else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)
       bString = 1;
@@ -315,7 +315,7 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
   if (psFilterNode->psRightNode->pszValue) {
     snprintf(szTmp, sizeof(szTmp), "%s_type",  psFilterNode->psLeftNode->pszValue);
     if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
-        (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "G", szTmp), "Character") == 0))
+        (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp), "Character") == 0))
       bString = 1;
     else if (FLTIsNumeric(psFilterNode->psRightNode->pszValue) == MS_FALSE)
       bString = 1;

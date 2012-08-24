@@ -116,7 +116,6 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
     for( nDstX = 0; nDstX < nDstXSize; nDstX++ ) {
       int   nSrcX, nSrcY;
-      int   nValue = 0;
 
       if( !panSuccess[nDstX] ) {
         nFailedPoints++;
@@ -140,6 +139,7 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
 #ifdef USE_GD
         if(src_rb->type == MS_BUFFER_GD) {
+          int   nValue = 0;
           assert(!gdImageTrueColor(src_rb->data.gd_img));
           nValue = panCMap[src_rb->data.gd_img->pixels[nSrcY][nSrcX]];
 
@@ -256,35 +256,31 @@ static void msSourceSample( imageObj *psSrcImage, rasterBufferObj *rb,
 
 {
   if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
+    rgbaArrayObj *rgba;
+    int rb_off;
     assert(rb);
 #ifdef USE_GD
     if(rb->type == MS_BUFFER_GD) {
       assert(!gdImageTrueColor(rb->data.gd_img) );
       padfPixelSum[0] += (dfWeight * rb->data.gd_img->pixels[iSrcY][iSrcX]);
       *pdfWeightSum += dfWeight;
-    } else
-#else
+      return;
+    }
+#endif
     assert(rb->type == MS_BUFFER_BYTE_RGBA);
-#endif
-#ifdef USE_GD
-      if(rb->type == MS_BUFFER_BYTE_RGBA) {
-#endif
-        rgbaArrayObj *rgba = &(rb->data.rgba);
-        int rb_off = iSrcX * rgba->pixel_step + iSrcY * rgba->row_step;
+    rgba = &(rb->data.rgba);
+    rb_off = iSrcX * rgba->pixel_step + iSrcY * rgba->row_step;
 
-        if( rgba->a == NULL || rgba->a[rb_off] > 1 ) {
-          padfPixelSum[0] += rgba->r[rb_off] * dfWeight;
-          padfPixelSum[1] += rgba->g[rb_off] * dfWeight;
-          padfPixelSum[2] += rgba->b[rb_off] * dfWeight;
+    if( rgba->a == NULL || rgba->a[rb_off] > 1 ) {
+      padfPixelSum[0] += rgba->r[rb_off] * dfWeight;
+      padfPixelSum[1] += rgba->g[rb_off] * dfWeight;
+      padfPixelSum[2] += rgba->b[rb_off] * dfWeight;
 
-          if( rgba->a == NULL )
-            *pdfWeightSum += dfWeight;
-          else
-            *pdfWeightSum += dfWeight * (rgba->a[rb_off] / 255.0);
-        }
-#ifdef USE_GD
-      }
-#endif
+      if( rgba->a == NULL )
+        *pdfWeightSum += dfWeight;
+      else
+        *pdfWeightSum += dfWeight * (rgba->a[rb_off] / 255.0);
+    }
   } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
     int band;
     int src_off;
@@ -442,14 +438,13 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 #else
           assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
 #endif
-            int dst_rb_off;
             assert( src_rb->type == dst_rb->type );
 
-            dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
 
             nSetPoints++;
 
             if( dfWeightSum > 0.001 ) {
+              int dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
               unsigned char red, green, blue, alpha;
 
               red   = (unsigned char) MAX(0,MIN(255,padfPixelSum[0]));

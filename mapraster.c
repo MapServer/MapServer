@@ -474,7 +474,14 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     searchrect = map->extent;
 #ifdef USE_PROJ
     /* if necessary, project the searchrect to source coords */
-    if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) msProjectRect(&map->projection, &layer->projection, &searchrect);
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
+      if( msProjectRect(&map->projection, &layer->projection, &searchrect)
+          != MS_SUCCESS ) {
+        msDebug( "msDrawRasterLayerLow(%s): unable to reproject map request rectangle into layer projection, canceling.\n", layer->name );
+        final_status = MS_FAILURE;
+        goto cleanup;
+      }
+    }
 #endif
     status = msLayerWhichShapes(tlp, searchrect, MS_FALSE);
     if (status != MS_SUCCESS) {

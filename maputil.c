@@ -123,8 +123,9 @@ static int bindColorAttribute(colorObj *attribute, char *value)
   return MS_FAILURE; /* shouldn't get here */
 }
 
-static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int querymapMode)
+static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int drawmode)
 {
+  assert(MS_DRAW_FEATURES(drawmode));
   if(style->numbindings > 0) {
     if(style->bindings[MS_STYLE_BINDING_SYMBOL].index != -1) {
       style->symbol = msGetSymbolIndex(&(layer->map->symbolset), shape->values[style->bindings[MS_STYLE_BINDING_SYMBOL].index], MS_TRUE);
@@ -142,11 +143,11 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int que
       style->width = 1;
       bindDoubleAttribute(&style->width, shape->values[style->bindings[MS_STYLE_BINDING_WIDTH].index]);
     }
-    if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && (querymapMode != MS_TRUE)) {
+    if(style->bindings[MS_STYLE_BINDING_COLOR].index != -1 && !MS_DRAW_QUERY(drawmode)) {
       MS_INIT_COLOR(style->color, -1,-1,-1,255);
       bindColorAttribute(&style->color, shape->values[style->bindings[MS_STYLE_BINDING_COLOR].index]);
     }
-    if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1 && (querymapMode != MS_TRUE)) {
+    if(style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index != -1 && !MS_DRAW_QUERY(drawmode)) {
       MS_INIT_COLOR(style->outlinecolor, -1,-1,-1,255);
       bindColorAttribute(&style->outlinecolor, shape->values[style->bindings[MS_STYLE_BINDING_OUTLINECOLOR].index]);
     }
@@ -190,13 +191,15 @@ static void bindStyle(layerObj *layer, shapeObj *shape, styleObj *style, int que
   }
 }
 
-static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int querymapMode)
+static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int drawmode)
 {
   int i;
+  assert(MS_DRAW_LABELS(drawmode));
 
   /* check the label styleObj's (TODO: do we need to use querymapMode here? */
   for(i=0; i<label->numstyles; i++) {
-    bindStyle(layer, shape, label->styles[i], querymapMode);
+    /* force MS_DRAWMODE_FEATURES for label styles */
+    bindStyle(layer, shape, label->styles[i], drawmode|MS_DRAWMODE_FEATURES); 
   }
 
   if(label->numbindings > 0) {
@@ -274,7 +277,7 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int que
 /*
 ** Function to bind various layer properties to shape attributes.
 */
-int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
+int msBindLayerToShape(layerObj *layer, shapeObj *shape, int drawmode)
 {
   int i, j;
 
@@ -282,13 +285,17 @@ int msBindLayerToShape(layerObj *layer, shapeObj *shape, int querymapMode)
 
   for(i=0; i<layer->numclasses; i++) {
     /* check the styleObj's */
-    for(j=0; j<layer->class[i]->numstyles; j++) {
-      bindStyle(layer, shape, layer->class[i]->styles[j], querymapMode);
+    if(MS_DRAW_FEATURES(drawmode)) {
+      for(j=0; j<layer->class[i]->numstyles; j++) {
+        bindStyle(layer, shape, layer->class[i]->styles[j], drawmode);
+      }
     }
 
     /* check the labelObj's */
-    for(j=0; j<layer->class[i]->numlabels; j++) {
-      bindLabel(layer, shape, layer->class[i]->labels[j], querymapMode);
+    if(MS_DRAW_LABELS(drawmode)) {
+      for(j=0; j<layer->class[i]->numlabels; j++) {
+        bindLabel(layer, shape, layer->class[i]->labels[j], drawmode);
+      }
     }
   } /* next classObj */
 
@@ -1227,8 +1234,10 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
   int         i, j = 0;
   lineObj     line;
   pointObj    *poIntersectionPt = NULL;
+#ifdef USE_POINT_Z_M
   double      dfFactor = 0;
   double      dfDistTotal, dfDistToIntersection = 0;
+#endif
 
   if (shape && point) {
     for (i=0; i<shape->numlines; i++) {
@@ -1264,6 +1273,7 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
     /* -------------------------------------------------------------------- */
     poIntersectionPt = msIntersectionPointLine(point, &oFirst, &oSecond);
     if (poIntersectionPt) {
+#ifdef USE_POINT_Z_M
       dfDistTotal = sqrt(((oSecond.x - oFirst.x)*(oSecond.x - oFirst.x)) +
                          ((oSecond.y - oFirst.y)*(oSecond.y - oFirst.y)));
 
@@ -1274,7 +1284,6 @@ pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 
       dfFactor = dfDistToIntersection / dfDistTotal;
 
-#ifdef USE_POINT_Z_M
       poIntersectionPt->m = oFirst.m + (oSecond.m - oFirst.m)*dfFactor;
 #endif
 
@@ -1729,8 +1738,14 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
   }
 
   if(offsety == -99) { /* complex calculations */
+    int ok = 0;
     for (i = 0; i < p->numlines; i++) {
       pointObj old_pt, old_diffdir, old_offdir;
+      if(p->line[i].numpoints<2) {
+        ret->line[i].numpoints = 0;
+        continue; /* skip degenerate lines */
+      }
+      ok =1;
       /* initialize old_offdir and old_diffdir, as gcc isn't smart enough to see that it
        * is not an error to do so, and prints a warning */
       old_offdir.x=old_offdir.y=old_diffdir.x=old_diffdir.y = 0;
@@ -1789,6 +1804,7 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
         ret->line=msSmallRealloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
       }
     }
+    if(!ok) ret->numlines = 0; /* all lines where degenerate */
   } else { /* normal offset (eg. drop shadow) */
     for (i = 0; i < p->numlines; i++) {
       for(j=0; j<p->line[i].numpoints; j++) {
@@ -2104,8 +2120,10 @@ void msFreeRasterBuffer(rasterBufferObj *b)
 */
 int msExtentsOverlap(mapObj *map, layerObj *layer)
 {
+#ifdef USE_PROJ
   rectObj map_extent;
   rectObj layer_extent;
+#endif
 
   /* No extent info? Nothing we can do, return MS_UNKNOWN. */
   if( (map->extent.minx == -1) && (map->extent.miny == -1) && (map->extent.maxx == -1 ) && (map->extent.maxy == -1) ) return MS_UNKNOWN;
@@ -2263,7 +2281,7 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
 
   if (hostname && port && script) {
     size_t buffer_size;
-    buffer_size = strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+10;
+    buffer_size = strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+11; /* 11 comes from https://[host]:[port][scriptname]?[map]\0, i.e. "https://:?\0" */
     online_resource = (char*)msSmallMalloc(buffer_size);
     if ((atoi(port) == 80 && strcmp(protocol, "http") == 0) ||
         (atoi(port) == 443 && strcmp(protocol, "https") == 0) )

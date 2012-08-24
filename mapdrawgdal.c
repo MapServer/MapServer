@@ -109,7 +109,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
 {
   int i,j, k; /* loop counters */
-  int cmap[MAXCOLORS], cmap_set = FALSE;
+  int cmap[MAXCOLORS];
+#ifndef NDEBUG
+  int cmap_set = FALSE;
+#endif
   unsigned char rb_cmap[4][MAXCOLORS];
   double adfGeoTransform[6], adfInvGeoTransform[6];
   int dst_xoff, dst_yoff, dst_xsize, dst_ysize;
@@ -556,7 +559,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   if( classified ) {
     int c, color_count;
 
+#ifndef NDEBUG
     cmap_set = TRUE;
+#endif
 
     if( hColorMap == NULL ) {
       msSetError(MS_IOERR,
@@ -564,6 +569,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                  "drawGDAL()");
       return -1;
     }
+#ifdef USE_GD
+  } else if( hColorMap != NULL && rb->type == MS_BUFFER_GD ) {
+    int color_count;
+    cmap_set = TRUE;
 
     color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
     for(i=0; i < color_count; i++) {
@@ -635,10 +644,13 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 #endif
       }
     }
+  }
 #ifdef USE_GD
   } else if( hColorMap != NULL && rb->type == MS_BUFFER_GD ) {
     int color_count;
+#ifndef NDEBUG
     cmap_set = TRUE;
+#endif
 
     color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
 
@@ -660,7 +672,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 #endif
   } else if( hBand2 == NULL && hColorMap != NULL && rb->type == MS_BUFFER_BYTE_RGBA ) {
     int color_count;
+#ifndef NDEBUG
     cmap_set = TRUE;
+#endif
 
     color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
 
@@ -1682,6 +1696,12 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 {
   const char *extent_priority = NULL;
   const char *value;
+  const char *gdalDesc;
+  const char *fullPath;
+  char *fileExtension = NULL;
+  char szPath[MS_MAXPATHLEN];
+  int fullPathLen;
+  int success = 0;
   rectObj  rect;
 
   /* -------------------------------------------------------------------- */
@@ -1702,11 +1722,49 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 
   if( extent_priority != NULL
       && EQUALN(extent_priority,"WORLD",5) ) {
-    if( GDALGetDescription(hDS) != NULL
-        && GDALReadWorldFile(GDALGetDescription(hDS), "wld",
-                             padfGeoTransform) ) {
-      return MS_SUCCESS;
+    /* is there a user configured worldfile? */
+    value = CSLFetchNameValue( layer->processing, "WORLDFILE" );
+
+    if( value != NULL ) {
+      /* at this point, fullPath may be a filePath or path only */
+      fullPath = msBuildPath(szPath, map->mappath, value);
+
+      /* fullPath is a path only, so let's append the dataset filename */
+      if( strrchr(szPath,'.') == NULL ) {
+        fullPathLen = strlen(fullPath);
+        gdalDesc = msStripPath((char*)GDALGetDescription(hDS));
+
+        if ( (fullPathLen + strlen(gdalDesc)) < MS_MAXPATHLEN ) {
+          strcpy((char*)(fullPath + fullPathLen), gdalDesc);
+        } else {
+          msDebug("Path length to alternative worldfile exceeds MS_MAXPATHLEN.\n");
+          fullPath = NULL;
+        }
+      }
+      /* fullPath has a filename included, so get the extension */
+      else {
+        fileExtension = msStrdup(strrchr(szPath,'.') + 1);
+      }
     }
+    /* common behaviour with worldfile generated from basename + .wld */
+    else {
+      fullPath = GDALGetDescription(hDS);
+      fileExtension = msStrdup("wld");
+    }
+
+    if( fullPath )
+      success = GDALReadWorldFile(fullPath, fileExtension, padfGeoTransform);
+
+    if( success && layer->debug >= MS_DEBUGLEVEL_VVV ) {
+      msDebug("Worldfile location: %s.\n", fullPath);
+    } else if( layer->debug >= MS_DEBUGLEVEL_VVV ) {
+      msDebug("Failed using worldfile location: %s.\n", fullPath);
+    }
+
+    msFree(fileExtension);
+
+    if( success )
+      return MS_SUCCESS;
   }
 
   /* -------------------------------------------------------------------- */
@@ -2020,7 +2078,6 @@ msDrawRasterLayerGDAL_16BitClassification(
   float fDataMin=0.0, fDataMax=255.0, fNoDataValue;
   const char *pszScaleInfo;
   const char *pszBuckets;
-  int  bUseIntegers = FALSE;
   int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
   unsigned char *rb_cmap[4];
   CPLErr eErr;
@@ -2118,7 +2175,6 @@ msDrawRasterLayerGDAL_16BitClassification(
 
     if( pszBuckets == NULL ) {
       nBucketCount = (int) floor(fDataMax - fDataMin + 1.1);
-      bUseIntegers = TRUE;
     }
   }
 
@@ -2220,8 +2276,6 @@ msDrawRasterLayerGDAL_16BitClassification(
   k = 0;
 
   for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
-    int result;
-
     for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
       float fRawValue = pafRawData[k++];
       int   iMapIndex;
@@ -2244,7 +2298,7 @@ msDrawRasterLayerGDAL_16BitClassification(
       }
 #ifdef USE_GD
       if( rb->type == MS_BUFFER_GD ) {
-        result = cmap[iMapIndex];
+        int result = cmap[iMapIndex];
         if( result == -1 )
           continue;
 

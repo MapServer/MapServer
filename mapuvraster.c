@@ -495,7 +495,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   lineObj line ;
   pointObj point;
-  int i, j, k, x, y;
+  int i, j, k, x=0, y=0;
   long shapeindex = record->shapeindex;
 
   msFreeShape(shape);

@@ -702,6 +702,8 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
     } else if (strncasecmp(stylestring,"pen",3) == 0 || strncasecmp(stylestring,"brush",5) == 0 ||
                strncasecmp(stylestring,"symbol",6) == 0 || strncasecmp(stylestring,"label",5) == 0) {
       msOGRUpdateStyleFromString(map, layer, c, stylestring);
+    } else {
+      resetClassStyle(c);
     }
 
     return MS_SUCCESS;
@@ -1526,6 +1528,7 @@ int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     for (i = shape->numvalues; i < layer->numitems; i++)
       shape->values[i] = msStrdup("");
   }
+  msComputeBounds(shape);
   return MS_SUCCESS;
 }
 
@@ -1547,6 +1550,7 @@ int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
     for (i = shape->numvalues; i < layer->numitems; i++)
       shape->values[i] = msStrdup("");
   }
+  msComputeBounds(shape);
 
   return(MS_SUCCESS);
 }

@@ -187,6 +187,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
                      tokens[i]) == 0 )
         break;
     }
+  }
 
 
     if( format_i == map->numoutputformats ) {
@@ -373,7 +374,6 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 {
   xmlDocPtr psDoc = NULL;       /* document pointer */
   xmlNodePtr psRootNode, psMainNode, psNode;
-  xmlNodePtr psTmpNode;
   char *identifier_list = NULL, *format_list = NULL;
   const char *updatesequence=NULL;
   const char *encoding;
@@ -469,7 +469,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
   if( params->section == NULL
       || strstr(params->section,"All") != NULL
       || strstr(params->section,"ServiceIdentification") != NULL ) {
-    psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
+    xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
                               psOwsNs, map, "OGC WCS", params->version, "CO"));
   }
 
@@ -477,7 +477,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
   if( params->section == NULL
       || strstr(params->section,"All") != NULL
       || strstr(params->section,"ServiceProvider") != NULL ) {
-    psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(
+    xmlAddChild(psRootNode, msOWSCommonServiceProvider(
                               psOwsNs, psXLinkNs, map, "CO"));
   }
 
@@ -775,7 +775,7 @@ msWCSDescribeCoverage_CoverageDescription11(
   /*      Range                                                           */
   /* -------------------------------------------------------------------- */
   {
-    xmlNodePtr psField, psInterpMethods, psAxis, psDefinition;
+    xmlNodePtr psField, psInterpMethods, psAxis;
     const char *value;
 
     psField =
@@ -794,8 +794,7 @@ msWCSDescribeCoverage_CoverageDescription11(
                                     "rangeset_name", "raster" );
     xmlNewChild( psField, NULL, BAD_CAST "Identifier", BAD_CAST value );
 
-    psDefinition =
-      xmlNewChild(
+    xmlNewChild(
         xmlNewChild( psField, NULL, BAD_CAST "Definition", NULL ),
         psOwsNs, BAD_CAST "AnyValue", NULL );
 
@@ -890,7 +889,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
 {
   xmlDocPtr psDoc = NULL;       /* document pointer */
   xmlNodePtr psRootNode;
-  xmlNsPtr psOwsNs, psXLinkNs;
+  xmlNsPtr psOwsNs;
   char *schemaLocation = NULL;
   char *xsi_schemaLocation = NULL;
   const char *encoding;
@@ -942,7 +941,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
   /* -------------------------------------------------------------------- */
   xmlSetNs(psRootNode, xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/wcs/1.1", NULL));
   psOwsNs = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OWS_110_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OWS_NAMESPACE_PREFIX);
-  psXLinkNs = xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
+  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XLINK_NAMESPACE_PREFIX);
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_OGC_NAMESPACE_PREFIX );
 

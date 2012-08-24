@@ -36,6 +36,7 @@ m4_include([m4/mapserver.m4])
 m4_include([m4/apache.m4])
 m4_include([m4/ax_jni_include_dir.m4])
 m4_include([m4/ax_pkg_swig.m4])
+m4_include([m4/ax_cflags_warn_all.m4])
 
 AC_CONFIG_SRCDIR([mapserv.c])
 dnl Checks for programs.
@@ -61,6 +62,7 @@ dnl ---------------------------------------------------------------------
 dnl Checks for libraries.
 dnl ---------------------------------------------------------------------
 AC_CHECK_LIB(m,exp, XTRALIBS="$XTRALIBS -lm",,)
+AC_CHECK_LIB(dl,dlopen, XTRALIBS="$XTRALIBS -ldl",,)
 AC_SUBST(XTRALIBS, $XTRALIBS)
 
 AC_CHECK_LIB(stdc++,__gxx_personality_v0, XTRALIBS="$XTRALIBS -lstdc++",,)
@@ -2162,42 +2164,33 @@ AC_MSG_CHECKING(compiler warnings)
 AC_ARG_WITH(warnings,
 [  --with-warnings[[=flags]] Enable strict warnings (or user defined warnings)],,)
 
+AX_CFLAGS_WARN_ALL(C_WFLAGS)
+AX_CXXFLAGS_WARN_ALL(CXX_WFLAGS)
+
 if test "$with_warnings" = "yes" ; then 
   if test "$GCC" = "yes" ; then
-    WFLAGS="-W -Wall -Wcast-align -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith -Wreturn-type"
-    C_EXTRA_WFLAGS="-Wmissing-declarations"
+    WFLAGS="-W -Wcast-align -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith -Wreturn-type"
+    C_WFLAGS="$C_WFLAGS -Wmissing-declarations"
   
     AC_MSG_RESULT([strict])
   else
     WFLAGS=""
-    C_EXTRA_WFLAGS=""
-    AC_MSG_RESULT([disabled])
-  fi
-
-elif test "$with_warnings" = "" ; then 
-  if test "$GCC" = "yes" ; then
-    WFLAGS="-Wall"
-    C_EXTRA_WFLAGS=""
-    AC_MSG_RESULT([basic])
-  else
-    WFLAGS=""
-    C_EXTRA_WFLAGS=""
     AC_MSG_RESULT([disabled])
   fi
 
 elif test "$with_warnings" = "no" ; then
   WFLAGS=""
-  C_EXTRA_WFLAGS=""
+  C_WFLAGS=""
+  CXX_WFLAGS=""
   AC_MSG_RESULT([disabled])
 
-else
+elif test "$with_warnings" != "" ; then 
   WFLAGS="$with_warnings"
-  C_EXTRA_WFLAGS=""
   AC_MSG_RESULT([user defined])
 fi
 
-CFLAGS="$CFLAGS $WFLAGS $C_EXTRA_WFLAGS"
-CXXFLAGS="$CXXFLAGS $WFLAGS "
+CFLAGS="$CFLAGS $WFLAGS $C_WFLAGS"
+CXXFLAGS="$CXXFLAGS $WFLAGS $CXX_WFLAGS"
 
 dnl ---------------------------------------------------------------------
 dnl Check --enable-debug option for "-g" compile flag. (OFF by default)
