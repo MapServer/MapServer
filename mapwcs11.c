@@ -187,7 +187,6 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
                      tokens[i]) == 0 )
         break;
     }
-  }
 
 
     if( format_i == map->numoutputformats ) {

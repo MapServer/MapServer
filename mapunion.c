@@ -695,6 +695,7 @@ static int msUnionLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, s
       c->labels[i]->numbindings = 0;
     }
     c->numlabels = src->numlabels;
+
     c->type = src->type;
     c->layer = layer;
     c->text.string = layerinfo->classText;

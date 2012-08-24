@@ -16,7 +16,7 @@ Current Version (git master, 6.3-dev, future 6.4):
 
 - Add notable changes here. Less important changes should go only in the
   commit message and not appear here.
-
+  
 Version 6.2 (beta1: 20120629): 
 -------------------------------------------------
 

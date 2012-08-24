@@ -569,10 +569,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                  "drawGDAL()");
       return -1;
     }
-#ifdef USE_GD
-  } else if( hColorMap != NULL && rb->type == MS_BUFFER_GD ) {
-    int color_count;
-    cmap_set = TRUE;
 
     color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
     for(i=0; i < color_count; i++) {
@@ -644,7 +640,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 #endif
       }
     }
-  }
 #ifdef USE_GD
   } else if( hColorMap != NULL && rb->type == MS_BUFFER_GD ) {
     int color_count;

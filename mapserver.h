@@ -961,13 +961,6 @@ extern "C" {
 
   } labelLeaderObj;
 
-#ifdef SWIG
-    %immutable;
-#endif
-    int numstyles;
-#ifdef SWIG
-    %mutable;
-#endif
 
   /************************************************************************/
   /*                               labelObj                               */

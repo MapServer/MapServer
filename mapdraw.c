@@ -1858,7 +1858,6 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
           }
         }
       }
-    }
 
 line_cleanup:
       /* clean up and reset */
