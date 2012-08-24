@@ -601,6 +601,10 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
   }
   
   symbol = symbolset->symbol[style->symbol];
+  if (symbol->type == MS_SYMBOL_PIXMAP && !symbol->pixmap_buffer) {
+    if (MS_SUCCESS != msPreloadImageSymbol(MS_MAP_RENDERER(symbolset->map), symbol))
+        return MS_FAILURE;
+  }
   if(style->size == -1) {
       size = MS_NINT( msSymbolGetDefaultSize(symbol) * scalefactor );
   }
