@@ -546,7 +546,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /* -------------------------------------------------------------------- */
   for( iLine = 0; iLine < nWinYSize; iLine++ ) {
     for( iPixel = 0; iPixel < nWinXSize; iPixel++ ) {
-      pointObj  sPixelLocation;
+      pointObj  sPixelLocation, sPixelLocationInLayerSRS;
 
       if( rlinfo->query_results == rlinfo->query_result_hard_max )
         break;
@@ -561,7 +561,10 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 
       /* If projections differ, convert this back into the map  */
       /* projection for distance testing, and comprison to the  */
-      /* search shape.  */
+      /* search shape.  Save the original pixel location coordinates */
+      /* in sPixelLocationInLayerSRS, so that we can return those */
+      /* coordinates if we have a hit */
+      sPixelLocationInLayerSRS = sPixelLocation;
       if( needReproject )
         msProjectPoint( &(layer->projection), &(map->projection),
                         &sPixelLocation );
@@ -609,7 +612,8 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
         }
       }
 
-      msRasterQueryAddPixel( layer, &sPixelLocation,
+      msRasterQueryAddPixel( layer,
+			     &sPixelLocationInLayerSRS, // return coords in layer SRS
                              pafRaster
                              + (iLine*nWinXSize + iPixel) * nBandCount );
     }
