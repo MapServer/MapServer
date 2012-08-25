@@ -1175,8 +1175,18 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
               pStyle->color = pStyle->outlinecolor;
               pStyle->outlinecolor = tmp;
             }
-            if(MS_VALID_COLOR(pStyle->color))
+            /* draw a valid line, i.e. one with a color defined or of type pixmap*/
+            if(MS_VALID_COLOR(pStyle->color) || 
+                    (
+                      pStyle->symbol<map->symbolset.numsymbols &&
+                      ( 
+                        map->symbolset.symbol[pStyle->symbol]->type == MS_SYMBOL_PIXMAP ||
+                        map->symbolset.symbol[pStyle->symbol]->type == MS_SYMBOL_SVG
+                      )
+                    )
+              ) {
               msDrawLineSymbol(&map->symbolset, image, &current->shape, pStyle, layer->scalefactor);
+            }
           }
         }
       }
