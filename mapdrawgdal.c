@@ -1051,6 +1051,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   ** Cleanup
   */
 
+  msFree( mask_rb );
   free( pabyRaw1 );
 
   if( hColorMap != NULL )
@@ -1890,7 +1891,6 @@ msDrawRasterLayerGDAL_RawMode(
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
 
 {
-  //TODO mask
   void *pBuffer;
   GDALDataType eDataType;
   int *band_list, band_count;
@@ -1900,6 +1900,15 @@ msDrawRasterLayerGDAL_RawMode(
   unsigned char *b_nodatas = NULL;
   GInt16 *i_nodatas = NULL;
   int got_nodata=FALSE;
+  rasterBufferObj *mask_rb = NULL;
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
   if( image->format->bands > 256 ) {
     msSetError( MS_IMGERR, "Too many bands (more than 256).",
@@ -2019,8 +2028,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( i_nodatas
-              && ((GInt16 *) pBuffer)[k] == i_nodatas[band] ) {
+          if( ( i_nodatas && ((GInt16 *) pBuffer)[k] == i_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2034,8 +2043,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( f_nodatas
-              && ((float *) pBuffer)[k] == f_nodatas[band] ) {
+          if( ( f_nodatas && ((float *) pBuffer)[k] == f_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2049,8 +2058,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( b_nodatas
-              && ((unsigned char *) pBuffer)[k] == b_nodatas[band] ) {
+          if( ( b_nodatas && ((unsigned char *) pBuffer)[k] == b_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2062,6 +2071,7 @@ msDrawRasterLayerGDAL_RawMode(
     }
   }
 
+  msFree( mask_rb );
   free( pBuffer );
 
   return 0;
@@ -2087,7 +2097,6 @@ msDrawRasterLayerGDAL_16BitClassification(
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
 
 {
-  //TODO mask
   float *pafRawData;
   double dfScaleMin=0.0, dfScaleMax=0.0, dfScaleRatio;
   int   nPixelCount = dst_xsize * dst_ysize, i, nBucketCount=0;
@@ -2098,6 +2107,15 @@ msDrawRasterLayerGDAL_16BitClassification(
   int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
   unsigned char *rb_cmap[4];
   CPLErr eErr;
+  rasterBufferObj *mask_rb = NULL;
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
   assert( rb->type == MS_BUFFER_GD || rb->type == MS_BUFFER_BYTE_RGBA );
 
@@ -2304,6 +2322,9 @@ msDrawRasterLayerGDAL_16BitClassification(
         continue;
       }
 
+      if(SKIP_MASK(j,i))
+        continue;
+
       /*
        * The funny +1/-1 is to avoid odd rounding around zero.
        * We could use floor() but sometimes it is expensive.
@@ -2343,6 +2364,7 @@ msDrawRasterLayerGDAL_16BitClassification(
   free( rb_cmap[1] );
   free( rb_cmap[2] );
   free( rb_cmap[3] );
+  msFree( mask_rb );
 
   assert( k == dst_xsize * dst_ysize );
 
