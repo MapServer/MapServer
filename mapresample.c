@@ -233,6 +233,7 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess );
   free( x );
   free( y );
+  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
@@ -494,6 +495,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess );
   free( x );
   free( y );
+  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
@@ -714,6 +716,7 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess2 );
   free( x2 );
   free( y2 );
+  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
