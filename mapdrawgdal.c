@@ -1890,6 +1890,7 @@ msDrawRasterLayerGDAL_RawMode(
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
 
 {
+  //TODO mask
   void *pBuffer;
   GDALDataType eDataType;
   int *band_list, band_count;
@@ -2087,6 +2088,7 @@ msDrawRasterLayerGDAL_16BitClassification(
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
 
 {
+  //TODO mask
   float *pafRawData;
   double dfScaleMin=0.0, dfScaleMax=0.0, dfScaleRatio;
   int   nPixelCount = dst_xsize * dst_ysize, i, nBucketCount=0;
