@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.2.0-beta2, GIT branch-6-2):
 -------------------------------------------------
 
+- Fix bad handling of startindex in some drivers (#4011)
+
 - Fixed bugs with WCS 1.1/2.0 with VSIMEM (#4369)
 
 Version 6.2.0-beta1 (2012-06-29):
