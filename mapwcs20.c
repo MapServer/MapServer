@@ -1960,6 +1960,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 {
     int status;
     char* filename = NULL;
+    char *base_dir = NULL;
     const char *fo_filename;
     int i;
 
@@ -1994,11 +1995,12 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         if( GDALGetMetadataItem( hDriver, GDAL_DCAP_VIRTUALIO, NULL )
             != NULL )
         {
+            base_dir = msTmpFile(map, map->mappath, "/vsimem/wcsout", NULL);
             if( fo_filename )
-                filename = msStrdup(CPLFormFilename("/vsimem/wcsout",
+                filename = msStrdup(CPLFormFilename(base_dir,
                                                     fo_filename,NULL));
             else
-                filename = msStrdup(CPLFormFilename("/vsimem/wcsout", 
+                filename = msStrdup(CPLFormFilename(base_dir,
                                                     "out", pszExtension ));
 
             /*            CleanVSIDir( "/vsimem/wcsout" ); */
@@ -2066,7 +2068,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     /* -------------------------------------------------------------------- */
 #ifdef GDAL_DCAP_VIRTUALIO
     {
-        char **all_files = CPLReadDir( "/vsimem/wcsout" );
+        char **all_files = CPLReadDir( base_dir );
         int count = CSLCount(all_files);
 
         if( msIO_needBinaryStdout() == MS_FAILURE )
@@ -2136,7 +2138,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
                 10, 10 );
 
             fp = VSIFOpenL(
-                CPLFormFilename("/vsimem/wcsout", all_files[i], NULL),
+                CPLFormFilename(base_dir, all_files[i], NULL),
                 "rb" );
             if( fp == NULL )
             {
@@ -2152,9 +2154,10 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 
             VSIFCloseL( fp );
 
-            VSIUnlink( all_files[i] );
+            VSIUnlink( CPLFormFilename(base_dir, all_files[i], NULL) );
         }
 
+        msFree(base_dir);
         msFree(filename);
         CSLDestroy( all_files );
         msReleaseLock( TLOCK_GDAL );
