@@ -1215,10 +1215,8 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
   /* -------------------------------------------------------------------- */
   /*      Parse from map.web metadata.                                    */
   /* -------------------------------------------------------------------- */
-
   else if((value = msOWSGetEncodeMetadata( &(map->web.metadata), "CO", "formats",
-                                           NULL)) != NULL )
-  {
+                                           NULL)) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
   }
 
@@ -2837,19 +2835,19 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
     /* -------------------------------------------------------------------- */
     /* for now, WCS 2.0 does not allow per coverage format definitions */
     /*{
-        xmlNodePtr psSupportedFormats;
-        char *format_list;
+      xmlNodePtr psSupportedFormats;
+      char *format_list;
 
-        psSupportedFormats =
-        xmlNewChild(psSP, psWcsNs, BAD_CAST "SupportedFormats", NULL);
+      psSupportedFormats =
+      xmlNewChild(psSP, psWcsNs, BAD_CAST "SupportedFormats", NULL);
 
-        format_list = msWCSGetFormatsList20(layer->map, layer);
+      format_list = msWCSGetFormatsList20(layer->map, layer);
 
-        if (strlen(format_list) > 0) {
-          msLibXml2GenerateList(psSupportedFormats, psWcsNs,
-                                "SupportedFormat", format_list, ',');
+      if (strlen(format_list) > 0) {
+        msLibXml2GenerateList(psSupportedFormats, psWcsNs,
+                              "SupportedFormat", format_list, ',');
 
-        msFree(format_list);
+      msFree(format_list);
     }*/
 
 

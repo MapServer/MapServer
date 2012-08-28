@@ -938,7 +938,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     static const char *boundary = "xxOGRBoundaryxx";
     msIO_setHeader("Content-Type","multipart/mixed; boundary=%s",boundary);
     msIO_sendHeaders();
-    msIO_fprintf(stdout,"--%s\n",boundary );
+    msIO_fprintf(stdout,"--%s\r\n",boundary );
 
     for( i = 0; file_list != NULL && file_list[i] != NULL; i++ ) {
       FILE *fp;
@@ -947,11 +947,10 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
       if( sendheaders )
         msIO_fprintf( stdout,
-                      "Content-Disposition: attachment; filename=%s\n"
-                      "Content-Type: application/binary\n"
-                      "Content-Transfer-Encoding: binary%c%c",
-                      CPLGetFilename( file_list[i] ),
-                      10, 10 );
+                      "Content-Disposition: attachment; filename=%s\r\n"
+                      "Content-Type: application/binary\r\n"
+                      "Content-Transfer-Encoding: binary\r\n\r\n",
+                      CPLGetFilename( file_list[i] ));
 
 
       fp = VSIFOpenL( file_list[i], "r" );
@@ -969,9 +968,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       VSIFCloseL( fp );
 
       if (file_list[i+1] == NULL)
-        msIO_fprintf( stdout, "\n--%s--\n", boundary );
+        msIO_fprintf( stdout, "\r\n--%s--\r\n", boundary );
       else
-        msIO_fprintf( stdout, "\n--%s\n", boundary );
+        msIO_fprintf( stdout, "\r\n--%s\r\n", boundary );
     }
   }
 

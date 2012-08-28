@@ -28,6 +28,12 @@ Version 6.2 (beta1: 20120629):
 
 - Fix wms_enable_request-related errors are not properly tagged (#4187)
 
+- Fixed "msGetMarkerSize() called on unloaded pixmap symbol" in mapsymbol.c (#4225)
+
+- Fixed PHP MapScript support for PHP 5.4 (#4309)
+
+- Fix msOGREscapeSQLParam could return random data (#4335)
+
 - Fixed locations of supported and native formats in Capabilities and CoverageDescriptions for WCS 2.0 (#4003)
 
 - Made format parameter for WCS 2.0 GetCoverage requests optional (#4003)
