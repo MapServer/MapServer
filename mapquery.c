@@ -562,7 +562,7 @@ int msQueryByIndex(mapObj *map)
     msLayerClose(lp);
     return(MS_FAILURE);
   }
-
+  
   addResult(lp->resultcache, &shape);
 
   msFreeShape(&shape);
@@ -601,7 +601,7 @@ int msQueryByAttributes(mapObj *map)
   rectObj searchrect;
 
   shapeObj shape;
-  int paging;
+  int paging, result_skipped = 0;
 
   int nclasses = 0;
   int *classgroup = NULL;
@@ -737,6 +737,13 @@ int msQueryByAttributes(mapObj *map)
       lp->project = MS_FALSE;
 #endif
 
+    /* Should we skip this feature? */
+    if (!paging && lp->startindex > 1 && result_skipped < lp->startindex-1) {
+      ++result_skipped;
+      msFreeShape(&shape);
+      continue;
+    }
+
     addResult(lp->resultcache, &shape);
     msFreeShape(&shape);
 
@@ -789,6 +796,7 @@ int msQueryByFilter(mapObj *map)
 
   shapeObj shape;
 
+  int result_skipped = 0;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -922,6 +930,13 @@ int msQueryByFilter(mapObj *map)
         lp->project = MS_FALSE;
 #endif
 
+      /* Should we skip this feature? */
+      if (!msLayerGetPaging(lp) && lp->startindex > 1 && result_skipped < lp->startindex-1) {
+        ++result_skipped;
+        msFreeShape(&shape);
+        continue;
+      }
+      
       addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
 
@@ -970,7 +985,7 @@ int msQueryByRect(mapObj *map)
   rectObj searchrect;
   double layer_tolerance = 0, tolerance = 0;
 
-  int paging;
+  int paging, result_skipped = 0;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -1126,8 +1141,15 @@ int msQueryByRect(mapObj *map)
         }
       }
 
-      if(status == MS_TRUE)
+      if(status == MS_TRUE) {
+        /* Should we skip this feature? */
+        if (!paging && lp->startindex > 1 && result_skipped < lp->startindex-1) {
+          ++result_skipped;
+          msFreeShape(&shape);
+          continue;
+        }
         addResult(lp->resultcache, &shape);
+      }
       msFreeShape(&shape);
 
       /* check shape count */
@@ -1135,6 +1157,7 @@ int msQueryByRect(mapObj *map)
         status = MS_DONE;
         break;
       }
+      
     } /* next shape */
 
     if (classgroup)
@@ -1176,6 +1199,7 @@ int msQueryByFeatures(mapObj *map)
 
   double distance, tolerance, layer_tolerance;
 
+  int result_skipped = 0;
   rectObj searchrect;
   shapeObj shape, selectshape;
   int nclasses = 0;
@@ -1430,8 +1454,15 @@ int msQueryByFeatures(mapObj *map)
             break; /* should never get here as we test for selection shape type explicitly earlier */
         }
 
-        if(status == MS_TRUE)
+        if(status == MS_TRUE) {
+          /* Should we skip this feature? */
+          if (!msLayerGetPaging(lp) && lp->startindex > 1 && result_skipped < lp->startindex-1) {
+            ++result_skipped;
+            msFreeShape(&shape);
+            continue;
+          }
           addResult(lp->resultcache, &shape);
+        }
         msFreeShape(&shape);
 
         /* check shape count */
@@ -1486,7 +1517,7 @@ int msQueryByPoint(mapObj *map)
 
   layerObj *lp;
 
-  int paging;
+  int paging, result_skipped = 0;
   char status;
   rectObj rect, searchrect;
   shapeObj shape;
@@ -1635,6 +1666,14 @@ int msQueryByPoint(mapObj *map)
 
       d = msDistancePointToShape(&(map->query.point), &shape);
       if( d <= t ) { /* found one */
+
+        /* Should we skip this feature? */
+        if (!paging && lp->startindex > 1 && result_skipped < lp->startindex-1) {
+          ++result_skipped;
+          msFreeShape(&shape);
+          continue;
+        }
+
         if(map->query.mode == MS_QUERY_SINGLE) {
           lp->resultcache->numresults = 0;
           addResult(lp->resultcache, &shape);
@@ -1688,6 +1727,7 @@ int msQueryByShape(mapObj *map)
   double distance, tolerance, layer_tolerance;
   rectObj searchrect;
 
+  int result_skipped = 0;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -1913,8 +1953,15 @@ int msQueryByShape(mapObj *map)
           break; /* should never get here as we test for selection shape type explicitly earlier */
       }
 
-      if(status == MS_TRUE)
+      if(status == MS_TRUE) {
+        /* Should we skip this feature? */
+        if (!msLayerGetPaging(lp) && lp->startindex > 1 && result_skipped < lp->startindex-1) {
+          ++result_skipped;
+          msFreeShape(&shape);
+          continue;
+        }
         addResult(lp->resultcache, &shape);
+      }
       msFreeShape(&shape);
 
       /* check shape count */

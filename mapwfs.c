@@ -1975,9 +1975,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     }
   }
 
-  /* startindex set */
+  /* startindex set. We set lp->startindex even if the driver doesn't support
+     pagination. Built-in pagination will be handled in mapquery.c */
   if (startindex > 0 &&
-      (nQueriedLayers == 1 && msLayerSupportsPaging(lpQueried))) {
+      (nQueriedLayers == 1)) {
     lpQueried->startindex = startindex;
   }
 
@@ -2406,7 +2407,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
   }
 
   /* handle case of maxfeatures = 0 */
-  /*internally use a start index that start with with 0 as the first index*/
+  /*internally use a start index that start with 0 as the first index*/
   if( psFormat == NULL ) {
     if(maxfeatures != 0 && iResultTypeHits == 0)
       status = msGMLWriteWFSQuery(map, stdout, startindex-1, maxfeatures,
