@@ -34,6 +34,8 @@ Version 6.2 (beta1: 20120629):
 
 - Fix wms_enable_request-related errors are not properly tagged (#4187)
 
+- Fixed bugs with WCS 1.1/2.0 with VSIMEM (#4369)
+
 - Fixed "msGetMarkerSize() called on unloaded pixmap symbol" in mapsymbol.c (#4225)
 
 - Fixed PHP MapScript support for PHP 5.4 (#4309)
