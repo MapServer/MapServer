@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.0.4, GIT branch-6-0):
 -----------------------------------------------
 
+- Fixed bugs with WCS 1.1/2.0 with VSIMEM (#4369)
+
 - Fixed locations of supported and native formats in Capabilities and CoverageDescriptions for WCS 2.0 (#4003)
 
 - Made format parameter for WCS 2.0 GetCoverage requests optional  (#4003)

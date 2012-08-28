@@ -1391,6 +1391,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
             VSIUnlink( CPLFormFilename(base_dir, all_files[i], NULL) );
         }
 
+        msFree(base_dir);
         CSLDestroy( all_files );
         msReleaseLock( TLOCK_GDAL );
 
