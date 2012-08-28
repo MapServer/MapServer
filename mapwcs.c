@@ -1642,6 +1642,15 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   /* make sure the layer is on */
   lp->status = MS_ON;
 
+  /* If the layer has no projection set, set it to the map's projection (#4079) */
+  if(lp->projection.numargs <=0) {
+    char *map_original_srs = msGetProjectionString(&(map->projection));
+    if (msLoadProjectionString(&(lp->projection), map_original_srs) != 0) {
+      msSetError( MS_WCSERR, "Error when setting map projection to a layer with no projection", "msWCSGetCoverage()" );
+      return msWCSException(map, NULL, NULL, params->version);
+    }
+  }
+
   /* we need the coverage metadata, since things like numbands may not be available otherwise */
   status = msWCSGetCoverageMetadata(lp, &cm);
   if(status != MS_SUCCESS) return MS_FAILURE;
