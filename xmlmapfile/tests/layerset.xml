@@ -34,6 +34,13 @@
         <size>TINY</size>
         <wrap>\n</wrap>
       </Label>
+      <LabelLeader>
+        <gridstep>6</gridstep>
+        <maxdistance>15</maxdistance>
+            <Style>
+                <initialGap>2</initialGap>
+            </Style>
+      </LabelLeader>
       <maxScaleDenom>24000</maxScaleDenom>
       <maxSize>50</maxSize>
       <minScaleDenom>1000000</minScaleDenom>
@@ -62,6 +69,9 @@
         <symbol type="NAME">star.gif</symbol>
         <width>[myWidth]</width>
       </Style>
+            <Style>
+                <initialGap>2</initialGap>
+            </Style>
       <symbol type="ID">261</symbol>
       <template>http://mapgears.com/templates/myTemplates1.html</template>
       <text>myText1</text>
@@ -111,6 +121,7 @@
     <labelMaxScaleDenom>2334342</labelMaxScaleDenom>
     <labelMinScaleDenom>100000</labelMinScaleDenom>
     <labelRequires>![orthoquads]</labelRequires>
+    <mask>layerName</mask>
     <maxFeatures>250000</maxFeatures>
     <maxScaleDenom>300000</maxScaleDenom>
     <Metadata>
