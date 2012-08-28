@@ -11,20 +11,18 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-<<<<<<< HEAD
-Version 6.2.0-beta1 (2012-06-29):
-=======
-Current Version (git master, 6.3-dev, future 6.4):
+Current Version (future 6.2.0-beta2, GIT branch-6-2):
 -------------------------------------------------
+
+- Fixed bugs with WCS 1.1/2.0 with VSIMEM (#4369)
+
+Version 6.2.0-beta1 (2012-06-29):
+---------------------------------
 
 - Add notable changes here. Less important changes should go only in the
   commit message and not appear here.
   
 - Fixed the OGR driver to use point or line spatial filter geometries in degenerated cases (#4420)
-
-Version 6.2 (beta1: 20120629): 
->>>>>>> 98f50f9... Fixed the OGR driver to use point or line spatial filter geometries in degenerated cases (#4420)
--------------------------------------------------
 
 - Fix WFS filter is produced as non-standard XML (#4171)
 
@@ -33,6 +31,12 @@ Version 6.2 (beta1: 20120629):
 - Added INSPIRE ExtendedCapabilities and DOCTYPE definition to WMS 1.1.1 (#3608)
 
 - Fix wms_enable_request-related errors are not properly tagged (#4187)
+
+- Fixed "msGetMarkerSize() called on unloaded pixmap symbol" in mapsymbol.c (#4225)
+
+- Fixed PHP MapScript support for PHP 5.4 (#4309)
+
+- Fix msOGREscapeSQLParam could return random data (#4335)
 
 - Fixed locations of supported and native formats in Capabilities and CoverageDescriptions for WCS 2.0 (#4003)
 
