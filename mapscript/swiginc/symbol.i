@@ -97,7 +97,7 @@
     %newobject getImage;
     imageObj *getImage(outputFormatObj *input_format)
     {
-        imageObj *image;
+        imageObj *image = NULL;
         outputFormatObj *format = NULL;
         rendererVTableObj *renderer = NULL;
 
