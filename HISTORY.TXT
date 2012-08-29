@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.2.0-beta2, GIT branch-6-2):
 -------------------------------------------------
 
+- Fix segfault in queryByFilter function in PHP/MapScript
+
 - Adjusted mediatype to multipart/related in WCS 2.0 (#4003)
 
 - Fix symbolObj.getImage seg fault in PHP/MapScript
