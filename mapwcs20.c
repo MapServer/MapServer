@@ -2878,10 +2878,12 @@ static int msWCSGetCapabilities20_CreateProfiles(
         MS_WCS_20_PROFILE_CORE,     NULL,
         MS_WCS_20_PROFILE_KVP,      NULL,
         MS_WCS_20_PROFILE_POST,     NULL,
-        MS_WCS_20_PROFILE_CRS,     NULL,
-        MS_WCS_20_PROFILE_IMAGECRS, NULL,
-        MS_WCS_20_PROFILE_GEOTIFF,  "image/tiff",
+        MS_WCS_20_PROFILE_GML,      NULL,
+        MS_WCS_20_PROFILE_GML_MULTIPART, NULL,
+        MS_WCS_20_PROFILE_GML_SPECIAL, NULL,
         MS_WCS_20_PROFILE_GML_GEOTIFF, NULL,
+        MS_WCS_20_PROFILE_GEOTIFF,  "image/tiff",
+        MS_WCS_20_PROFILE_CRS,     NULL,
         MS_WCS_20_PROFILE_SCALING, NULL,
         MS_WCS_20_PROFILE_RANGESUBSET, NULL,
         NULL, NULL /* guardian */
@@ -3249,8 +3251,8 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
         /* -------------------------------------------------------------------- */
         /*      SupportedCRS                                                    */
         /* -------------------------------------------------------------------- */
-
-        {
+        /* for now, WCS 2.0 does not allow per coverage CRS definitions */
+        /*{
             xmlNodePtr psSupportedCrss;
             char *owned_value;
 
@@ -3278,7 +3280,7 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
                     BAD_CAST "NativeCRS", BAD_CAST cm.srs_uri);
 
             msFree(owned_value);
-        }
+        }*/
 
         /* -------------------------------------------------------------------- */
         /*      SupportedFormats                                                */
@@ -4158,7 +4160,7 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_requ
     if(status == MS_FAILURE)
     {
         msDebug("msWCSDispatch20(): Parse error occurred.\n");
-        msWCSException20(map, "InvalidParameterValue", "request", "2.0.0" );
+        msWCSException20(map, "InvalidParameterValue", "request", "2.0" );
         msWCSFreeParamsObj20(params);
         return MS_FAILURE;
     }
@@ -4208,7 +4210,7 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_requ
             if (version == OWS_VERSION_BADFORMAT)
             {
                 msWCSException20(map, "InvalidParameterValue",
-                        "request", "2.0.0" );
+                        "request", "2.0" );
                 msWCSFreeParamsObj20(params);
                 return MS_FAILURE;
             }
@@ -4223,9 +4225,9 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_requ
 
     /* Now the version has to be set */
     if(params->version == NULL
-        || !EQUAL(params->version, "2.0.0"))
+        || (!EQUAL(params->version, "2.0.0") && !EQUAL(params->version, "2.0.1")))
     {
-        msDebug("msWCSDispatch20(): version and service are not compliant with WCS 2.0.0\n");
+        msDebug("msWCSDispatch20(): version and service are not compliant with WCS 2.0\n");
         msWCSFreeParamsObj20(params);
         msResetErrorList();
         return MS_DONE;
@@ -4254,7 +4256,7 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_requ
                 msSetError(MS_WCSERR, "Layer name '%s' is not a valid NCName.",
                         "msWCSDescribeCoverage20()", map->layers[i]->name);
                 msWCSFreeParamsObj20(params);
-                return msWCSException(map, "mapserv", "Internal", "2.0.0");
+                return msWCSException(map, "mapserv", "Internal", "2.0");
             }
         }
     }
@@ -4285,9 +4287,9 @@ int msWCSDispatch20(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_requ
 
 #else /* defined(USE_LIBXML2) */
     if(params->service && params->version &&
-            EQUAL(params->service, "WCS") && EQUAL(params->version, "2.0.0"))
+            EQUAL(params->service, "WCS") && (EQUAL(params->version, "2.0.0") || EQUAL(params->version, "2.0.1")))
     {
-        msSetError(MS_WCSERR, "WCS 2.0.0 needs mapserver to be compiled with libxml2.", "msWCSDispatch20()");
+        msSetError(MS_WCSERR, "WCS 2.0 needs mapserver to be compiled with libxml2.", "msWCSDispatch20()");
         return msWCSException(map, "mapserv", "NoApplicableCode", "1.0.0");
     }
     else
