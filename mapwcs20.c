@@ -692,7 +692,8 @@ static int msWCSParseRequest20_XMLGetCoverage(
       params->format = (char *)xmlNodeGetContent(child);
     } else if (EQUAL((char *) child->name, "Mediatype")) {
       char *content = (char *)xmlNodeGetContent(child);
-      if(content != NULL && EQUAL(content, "multipart/mixed")) {
+      if(content != NULL && (EQUAL(content, "multipart/mixed")
+                          || EQUAL(content, "multipart/related"))) {
         params->multipart = MS_TRUE;
       }
       xmlFree(content);
@@ -978,7 +979,7 @@ int msWCSParseRequest20(mapObj *map,
     } else if (EQUAL(key, "FORMAT")) {
       params->format = msStrdup(value);
     } else if (EQUAL(key, "MEDIATYPE")) {
-      if(EQUAL(value, "multipart/mixed")) {
+      if(EQUAL(value, "multipart/mixed") || EQUAL(value, "multipart/related")) {
         params->multipart = MS_TRUE;
       }
     } else if (EQUAL(key, "INTERPOLATION")) {
@@ -1743,7 +1744,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
       msDebug( "msWCSWriteFile20(): force multipart output without gml summary because we have multiple files in the result.\n" );
 
       multipart = MS_TRUE;
-      msIO_setHeader("Content-Type","multipart/mixed; boundary=wcs");
+      msIO_setHeader("Content-Type","multipart/related; boundary=wcs");
       msIO_sendHeaders();
     }
 
@@ -3568,7 +3569,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
     msWCSCommon20_CreateRangeType(layer, &cm, bandlist, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psRootNode);
 
-    msIO_setHeader("Content-Type","multipart/mixed; boundary=wcs");
+    msIO_setHeader("Content-Type","multipart/related; boundary=wcs");
     msIO_sendHeaders();
     msIO_printf("--wcs\n");
 
