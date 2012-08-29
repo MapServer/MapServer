@@ -771,7 +771,8 @@ static int msWCSParseRequest20_XMLGetCoverage(
         else if (EQUAL((char *) child->name, "Mediatype"))
         {
             char *content = (char *)xmlNodeGetContent(child);
-            if(content != NULL && EQUAL(content, "multipart/mixed"))
+            if(content != NULL && (EQUAL(content, "multipart/mixed")
+                               || EQUAL(content, "multipart/related")))
             {
                 params->multipart = MS_TRUE;
             }
@@ -1228,7 +1229,8 @@ int msWCSParseRequest20(cgiRequestObj *request, wcs20ParamsObjPtr params)
         }
         else if (EQUAL(key, "MEDIATYPE"))
         {
-            if(EQUAL(value, "multipart/mixed"))
+            if (EQUAL(value, "multipart/mixed")
+               || EQUAL(value, "multipart/related"))
             {
                 params->multipart = MS_TRUE;
             }
@@ -2104,7 +2106,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 
             multipart = MS_TRUE;
             msIO_printf(
-                "Content-Type: multipart/mixed; boundary=wcs%c%c", 10, 10);
+                "Content-Type: multipart/related; boundary=wcs%c%c", 10, 10);
         }
 
         for( i = 0; i < count; i++ )
@@ -4110,7 +4112,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
 
         msWCSCommon20_CreateRangeType(layer, &cm, bandlist, psGmlNs, psGmlcovNs, psSweNs, psXLinkNs, psRootNode);
 
-        msIO_printf( "Content-Type: multipart/mixed; boundary=wcs%c%c"
+        msIO_printf( "Content-Type: multipart/related; boundary=wcs%c%c"
                      "--wcs\n", 10, 10);
 
         msWCSWriteDocument20(map, psDoc);
