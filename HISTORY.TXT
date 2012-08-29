@@ -14,6 +14,12 @@ For a complete change history, please see the Git log comments.
 Current Version (git master, 6.3-dev, future 6.4):
 --------------------------------------------------
 
+- Adjusted mediatype to multipart/related in WCS 2.0 (#4003)
+
+- Fix symbolObj.getImage seg fault in PHP/MapScript
+
+- Fix bad handling of startindex in some drivers (#4011)
+
 - Fixed bugs with WCS 1.1/2.0 with VSIMEM (#4369)
 
 - Add notable changes here. Less important changes should go only in the

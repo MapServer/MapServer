@@ -1923,7 +1923,7 @@ void  outputFormatObj_destroy(outputFormatObj* self)
 
 imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format)
 {
-  imageObj *image;
+  imageObj *image = NULL;
   outputFormatObj *format = NULL;
   rendererVTableObj *renderer = NULL;
 

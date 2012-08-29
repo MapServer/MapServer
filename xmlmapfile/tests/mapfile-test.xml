@@ -126,6 +126,11 @@
 			<size>SMALL</size>
                         <Style>
                           <geomTransform>VERTICES</geomTransform>
+                          <initialGap>20.5</initialGap>
+                          <polarOffset>[uv_length_2] [uv_angle]</polarOffset>
+                        </Style>
+                        <Style>
+                          <initialGap>2</initialGap>
                         </Style>
 			<wrap>\n</wrap>
 		</Label>

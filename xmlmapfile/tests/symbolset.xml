@@ -12,6 +12,7 @@
 		<transparent>0</transparent>
 	</Symbol>
         <Symbol name="mySymbol222" type="SIMPLE">
+          <anchorPoint x="0.5" y="0.2"/>
           <antialias>FALSE</antialias>
           <character>C</character>
           <filled>TRUE</filled>

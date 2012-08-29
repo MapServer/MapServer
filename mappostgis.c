@@ -1910,7 +1910,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
   if ( layerinfo->paging && layer->startindex > 0 ) {
     static char *strOffsetTemplate = " offset %d";
     strOffset = msSmallMalloc(strlen(strOffsetTemplate) + 12);
-    sprintf(strOffset, strOffsetTemplate, layer->maxfeatures);
+    sprintf(strOffset, strOffsetTemplate, layer->startindex-1);
     strOffsetLength = strlen(strOffset);
   }
 
