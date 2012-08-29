@@ -1935,11 +1935,11 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
 
     if (encoding)
     {
-        msIO_printf("Content-type: text/xml; charset=%s%c%c", encoding,10,10);
+        msIO_printf("Content-type: application/gml+xml; charset=%s%c%c", encoding,10,10);
     }
     else
     {
-        msIO_printf("Content-type: text/xml%c%c",10,10);
+        msIO_printf("Content-type: application/gml+xml%c%c",10,10);
     }
 
     context = msIO_getHandler(stdout);
@@ -2041,7 +2041,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         if( fo_filename != NULL )
             msIO_fprintf( stdout, 
                 "Content-ID: coverage/%s\n"
-                "Content-Disposition: attachment; filename=%s%c%c",
+                "Content-Disposition: INLINE; filename=%s%c%c",
                 fo_filename,
                 fo_filename,
                 10, 10 );
@@ -2133,7 +2133,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
                 "Content-Description: coverage data\n"
                 "Content-Transfer-Encoding: binary\n"
                 "Content-ID: coverage/%s\n"
-                "Content-Disposition: attachment; filename=%s%c%c",
+                "Content-Disposition: INLINE; filename=%s%c%c",
                 mimetype,
                 all_files[i],
                 all_files[i],
@@ -2881,7 +2881,7 @@ static int msWCSGetCapabilities20_CreateProfiles(
         MS_WCS_20_PROFILE_GML,      NULL,
         MS_WCS_20_PROFILE_GML_MULTIPART, NULL,
         MS_WCS_20_PROFILE_GML_SPECIAL, NULL,
-        MS_WCS_20_PROFILE_GML_GEOTIFF, NULL,
+        MS_WCS_20_PROFILE_GML_GEOTIFF, "image/tiff",
         MS_WCS_20_PROFILE_GEOTIFF,  "image/tiff",
         MS_WCS_20_PROFILE_CRS,     NULL,
         MS_WCS_20_PROFILE_SCALING, NULL,
@@ -4046,7 +4046,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         wcs20coverageMetadataObj tmpCm;
         char *srs_uri, *default_filename;
         const char *filename;
-        char *file_ref;
+        char *file_ref, *role;
         int length = 0, swapAxes;
 
         /* Create Document  */
@@ -4099,13 +4099,23 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         default_filename = msStringConcatenate(default_filename, MS_IMAGE_EXTENSION(image->format));
 
         filename = msGetOutputFormatOption(image->format, "FILENAME", default_filename);
-        length = strlen("coverage/") + strlen(filename) + 1;
+        length = strlen("cid:coverage/") + strlen(filename) + 1;
         file_ref = msSmallMalloc(length);
-        strlcpy(file_ref, "coverage/", length);
+        strlcpy(file_ref, "cid:coverage/", length);
         strlcat(file_ref, filename, length);
 
+        if(EQUAL(MS_IMAGE_MIME_TYPE(map->outputformat), "image/tiff")) {
+            length = strlen(MS_WCS_20_PROFILE_GML_GEOTIFF) + 1;
+            role = msSmallMalloc(length);
+            strlcpy(role, MS_WCS_20_PROFILE_GML_GEOTIFF, length);
+        } else {
+            length = strlen(MS_IMAGE_MIME_TYPE(map->outputformat)) + 1;
+            role = msSmallMalloc(length);
+            strlcpy(role, MS_IMAGE_MIME_TYPE(map->outputformat), length);
+        }
+
         xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "href", BAD_CAST file_ref);
-        xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "role", BAD_CAST MS_IMAGE_MIME_TYPE(map->outputformat));
+        xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "role", BAD_CAST role);
         xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "arcrole", BAD_CAST "fileReference");
 
         xmlNewChild(psFile, psGmlNs, BAD_CAST "fileReference", BAD_CAST file_ref);
@@ -4121,6 +4131,7 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
         msWCSWriteFile20(map, image, params, 1);
 
         msFree(file_ref);
+        msFree(role);
         xmlFreeDoc(psDoc);
         xmlCleanupParser();
     }
