@@ -622,6 +622,10 @@ int msQueryByAttributes(mapObj *map)
 
   lp = (GET_LAYER(map, map->query.layer));
 
+  /* using mapscript, the map->query.startindex will be unset... */
+  if (lp->startindex > 1 && map->query.startindex < 0)
+    map->query.startindex = lp->startindex;
+  
   /* conditions may have changed since this layer last drawn, so set
      layer->project true to recheck projection needs (Bug #673) */
   lp->project = MS_TRUE;
@@ -826,6 +830,10 @@ int msQueryByFilter(mapObj *map)
     else if (map->query.maxfeatures > 0)
       lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -1017,6 +1025,10 @@ int msQueryByRect(mapObj *map)
     else if (map->query.maxfeatures > 0)
       lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -1254,6 +1266,10 @@ int msQueryByFeatures(mapObj *map)
       break; /* nothing else to do */
     else if (map->query.maxfeatures > 0)
       lp->maxfeatures = map->query.maxfeatures;
+
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1559,6 +1575,10 @@ int msQueryByPoint(mapObj *map)
     else if (map->query.maxfeatures > 0)
       lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -1780,6 +1800,10 @@ int msQueryByShape(mapObj *map)
       break; /* nothing else to do */
     else if (map->query.maxfeatures > 0)
       lp->maxfeatures = map->query.maxfeatures;
+
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
