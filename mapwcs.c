@@ -2043,7 +2043,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
     /* be determined (GetCapabilities). To determine the */
     /* version, the request has to be fully parsed to    */
     /* obtain the ACCEPTVERSIONS parameter. If this is   */
-    /* present also, set version to "2.0.0".             */
+    /* present also, set version to "2.0.1".             */
 
     if (operation == MS_WCS_GET_CAPABILITIES) {
       /* Parse it as if it was a WCS 2.0 request */
@@ -2052,7 +2052,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       if (status == MS_FAILURE) {
         msWCSFreeParamsObj20(params);
         return msWCSException(map, "InvalidParameterValue",
-                              "request", "2.0.0");
+                              "request", "2.0");
       }
 
       /* VERSION negotiation */
@@ -2076,12 +2076,12 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
         ows_request->version = msStrdup(version_string);
       } else {
         /* set to highest acceptable */
-        params_tmp->version = msStrdup("2.0.0");
-        ows_request->version = msStrdup("2.0.0");
+        params_tmp->version = msStrdup("2.0.1");
+        ows_request->version = msStrdup("2.0.1");
       }
 
       /* check if we can keep the params object */
-      if (EQUAL(params_tmp->version, "2.0.0")) {
+      if (EQUAL(params_tmp->version, "2.0.1")) {
         params = params_tmp;
       } else {
         msWCSFreeParamsObj20(params_tmp);
@@ -2107,7 +2107,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       /* In case of GetCapabilities, make  */
       char version_string[OWS_VERSION_MAXLEN];
       int version, supported_versions[] =
-      {OWS_2_0_0, OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
+      {OWS_2_0_1, OWS_2_0_0, OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
       version = msOWSNegotiateVersion(requested_version,
                                       supported_versions,
                                       sizeof(supported_versions)/sizeof(int));
@@ -2128,7 +2128,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       msWCSFreeParams(params);
       free(params);
       return msWCSException(map, "InvalidParameterValue",
-                            "request", "2.0.0");
+                            "request", "2.0");
     }
 
     if (operation == MS_WCS_GET_CAPABILITIES) {
@@ -2139,7 +2139,8 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       retVal = msWCSGetCoverage(map, request, params, ows_request);
     }
     return retVal;
-  } else if (strcmp(ows_request->version, "2.0.0") == 0) {
+  } else if (strcmp(ows_request->version, "2.0.0") == 0
+             || strcmp(ows_request->version, "2.0.1") == 0) {
 #if defined(USE_LIBXML2)
     int i;
 
@@ -2149,7 +2150,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       if (status == MS_FAILURE) {
         msWCSFreeParamsObj20(params);
         return msWCSException(map, "InvalidParameterValue",
-                              "request", "2.0.0");
+                              "request", "2.0");
       }
     }
 
@@ -2163,7 +2164,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
         msSetError(MS_WCSERR, "Layer name '%s' is not a valid NCName.",
                    "msWCSDispatch()", map->layers[i]->name);
         msWCSFreeParamsObj20(params);
-        return msWCSException(map, "mapserv", "Internal", "2.0.0");
+        return msWCSException(map, "mapserv", "Internal", "2.0");
       }
     }
 
@@ -2178,13 +2179,13 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       msSetError(MS_WCSERR, "Invalid request '%s'.",
                  "msWCSDispatch20()", ows_request->request);
       retVal = msWCSException20(map, "InvalidParameterValue",
-                                "request", "2.0.0");
+                                "request", "2.0");
     }
     /* clean up */
     msWCSFreeParamsObj20(params);
     return retVal;
 #else /* def USE_LIBXML2 */
-    msSetError(MS_WCSERR, "WCS 2.0.0 needs mapserver to be compiled with libxml2.",
+    msSetError(MS_WCSERR, "WCS 2.0 needs mapserver to be compiled with libxml2.",
                "msWCSDispatch()");
     return msWCSException(map, "mapserv", "NoApplicableCode", "1.0.0");
 #endif /* def USE_LIBXML2 */
