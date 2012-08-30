@@ -333,6 +333,7 @@ PHP_METHOD(symbolObj, getImage)
 {
   zval *zoutputformat;
   imageObj *image = NULL;
+  php_map_object *php_map;
   php_symbol_object *php_symbol;
   php_outputformat_object *php_outputformat;
 
@@ -345,16 +346,22 @@ PHP_METHOD(symbolObj, getImage)
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
   php_symbol = (php_symbol_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  php_map = (php_map_object *) zend_object_store_get_object(php_symbol->parent.val TSRMLS_CC);
   php_outputformat = (php_outputformat_object *)zend_object_store_get_object(zoutputformat TSRMLS_CC);
+
   image = symbolObj_getImage(php_symbol->symbol, php_outputformat->outputformat);
   if (image == NULL) {
     mapscript_throw_exception("Unable to get the symbol image" TSRMLS_CC);
     return;
   }
 
+  /* the outputformat HAS to be added to the map, since the renderer is now used
+     by the current symbol */
+  if (msGetOutputFormatIndex(php_map->map, php_outputformat->outputformat->name) == -1)
+    msAppendOutputFormat(php_map->map, php_outputformat->outputformat);
+
   mapscript_create_image(image, return_value TSRMLS_CC);
-}
-/* }}} */
+  } /* }}} */
 
 zend_function_entry symbol_functions[] = {
   PHP_ME(symbolObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)

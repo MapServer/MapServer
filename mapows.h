@@ -144,6 +144,7 @@ MS_DLL_EXPORT int msOWSParseRequestMetadata(const char *metadata, const char *re
 #define OWS_1_1_2   0x010102
 #define OWS_1_3_0   0x010300
 #define OWS_2_0_0   0x020000
+#define OWS_2_0_1   0x020001
 #define OWS_VERSION_MAXLEN   20  /* Buffer size for msOWSGetVersionString() */
 #define OWS_VERSION_NOTSET    -1
 #define OWS_VERSION_BADFORMAT -2
