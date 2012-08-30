@@ -14,7 +14,7 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.2.0-beta2, GIT branch-6-2):
 -------------------------------------------------
 
-- Fix segfault in queryByFilter function in PHP/MapScript
+- Fix segfault in queryByFilter function in MapScript
 
 - Adjusted WCS 2.0 to WCS Core 2.0.1 and GMLCOV 1.0.1 corrigenda (#4003)
 

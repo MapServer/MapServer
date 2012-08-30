@@ -284,7 +284,10 @@
         map->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
         map->query.filter->string = strdup(string);
 	map->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
-
+        map->query.filter->compiled = MS_FALSE;
+        map->query.filter->flags = 0;
+        map->query.filter->tokens = map->query.filter->curtoken = NULL;
+        
         map->query.layer = self->index;
      	map->query.rect = map->extent;
 
