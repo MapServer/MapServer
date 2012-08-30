@@ -1577,9 +1577,9 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   }
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-type","application/gml+xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-type","application/gml+xml");
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
@@ -1672,7 +1672,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
       if( fo_filename != NULL )
         msIO_fprintf( stdout,
                       "Content-ID: coverage/%s\n"
-                      "Content-Disposition: attachment; filename=%s%c%c",
+                      "Content-Disposition: INLINE; filename=%s%c%c",
                       fo_filename,
                       fo_filename,
                       10, 10 );
@@ -1689,7 +1689,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
 
       if( fo_filename != NULL ) {
         msIO_setHeader("Content-ID","coverage/%s",fo_filename);
-        msIO_setHeader("Content-Disposition","attachment; filename=%s",fo_filename);
+        msIO_setHeader("Content-Disposition","INLINE; filename=%s",fo_filename);
       } else {
         msIO_setHeader("Content-ID","coverage/wcs.%s",MS_IMAGE_EXTENSION(map->outputformat));
         msIO_setHeader("Content-Disposition","INLINE");
@@ -1768,7 +1768,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
           "Content-Description: coverage data\n"
           "Content-Transfer-Encoding: binary\n"
           "Content-ID: coverage/%s\n"
-          "Content-Disposition: attachment; filename=%s%c%c",
+          "Content-Disposition: INLINE; filename=%s%c%c",
           mimetype,
           all_files[i],
           all_files[i],
@@ -1778,7 +1778,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
         msIO_setHeader("Content-Description","coverage data");
         msIO_setHeader("Content-Transfer-Encoding","binary");
         msIO_setHeader("Content-ID","coverage/%s",all_files[i]);
-        msIO_setHeader("Content-Disposition","attachment; filename=%s",all_files[i]);
+        msIO_setHeader("Content-Disposition","INLINE; filename=%s",all_files[i]);
         msIO_sendHeaders();
       }
 
@@ -2449,10 +2449,12 @@ static int msWCSGetCapabilities20_CreateProfiles(
     MS_WCS_20_PROFILE_CORE,     NULL,
     MS_WCS_20_PROFILE_KVP,      NULL,
     MS_WCS_20_PROFILE_POST,     NULL,
-    MS_WCS_20_PROFILE_CRS,     NULL,
-    MS_WCS_20_PROFILE_IMAGECRS, NULL,
+    MS_WCS_20_PROFILE_GML,      NULL,
+    MS_WCS_20_PROFILE_GML_MULTIPART, NULL,
+    MS_WCS_20_PROFILE_GML_SPECIAL, NULL,
+    MS_WCS_20_PROFILE_GML_GEOTIFF, "image/tiff",
     MS_WCS_20_PROFILE_GEOTIFF,  "image/tiff",
-    MS_WCS_20_PROFILE_GML_GEOTIFF, NULL,
+    MS_WCS_20_PROFILE_CRS,     NULL,
     MS_WCS_20_PROFILE_SCALING, NULL,
     MS_WCS_20_PROFILE_RANGESUBSET, NULL,
     NULL, NULL /* guardian */
@@ -2805,8 +2807,8 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
     /* -------------------------------------------------------------------- */
     /*      SupportedCRS                                                    */
     /* -------------------------------------------------------------------- */
-
-    {
+    /* for now, WCS 2.0 does not allow per coverage CRS definitions */
+    /*{
       xmlNodePtr psSupportedCrss;
       char *owned_value;
 
@@ -2832,7 +2834,7 @@ static int msWCSDescribeCoverage20_CoverageDescription(mapObj *map,
                   BAD_CAST "NativeCRS", BAD_CAST cm.srs_uri);
 
       msFree(owned_value);
-    }
+    }*/
 
     /* -------------------------------------------------------------------- */
     /*      SupportedFormats                                                */
@@ -3501,7 +3503,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     wcs20coverageMetadataObj tmpCm;
     char *srs_uri, *default_filename;
     const char *filename;
-    char *file_ref;
+    char *file_ref, *role;
     int length = 0, swapAxes;
 
     /* Create Document  */
@@ -3554,13 +3556,23 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     default_filename = msStringConcatenate(default_filename, MS_IMAGE_EXTENSION(image->format));
 
     filename = msGetOutputFormatOption(image->format, "FILENAME", default_filename);
-    length = strlen("coverage/") + strlen(filename) + 1;
+    length = strlen("cid:coverage/") + strlen(filename) + 1;
     file_ref = msSmallMalloc(length);
-    strlcpy(file_ref, "coverage/", length);
+    strlcpy(file_ref, "cid:coverage/", length);
     strlcat(file_ref, filename, length);
 
+    if(EQUAL(MS_IMAGE_MIME_TYPE(map->outputformat), "image/tiff")) {
+      length = strlen(MS_WCS_20_PROFILE_GML_GEOTIFF) + 1;
+      role = msSmallMalloc(length);
+      strlcpy(role, MS_WCS_20_PROFILE_GML_GEOTIFF, length);
+    } else {
+      length = strlen(MS_IMAGE_MIME_TYPE(map->outputformat)) + 1;
+      role = msSmallMalloc(length);
+      strlcpy(role, MS_IMAGE_MIME_TYPE(map->outputformat), length);
+    }
+
     xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "href", BAD_CAST file_ref);
-    xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "role", BAD_CAST MS_IMAGE_MIME_TYPE(map->outputformat));
+    xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "role", BAD_CAST role);
     xmlNewNsProp(psRangeParameters, psXLinkNs, BAD_CAST "arcrole", BAD_CAST "fileReference");
 
     xmlNewChild(psFile, psGmlNs, BAD_CAST "fileReference", BAD_CAST file_ref);
@@ -3577,11 +3589,11 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msWCSWriteFile20(map, image, params, 1);
 
     msFree(file_ref);
+    msFree(role);
     xmlFreeDoc(psDoc);
     xmlCleanupParser();
-  }
   /* just print out the file without gml */
-  else {
+  } else {
     msWCSWriteFile20(map, image, params, 0);
   }
 
