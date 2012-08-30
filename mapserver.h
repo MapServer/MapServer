@@ -795,6 +795,9 @@ extern "C" {
     long tileindex;
     int clear_resultcache;
 
+    int  maxfeatures; /* global maxfeatures */    
+    int  startindex;
+    
     char *item; /* by attribute */
     char *str;
 

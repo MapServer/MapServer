@@ -21,6 +21,8 @@ Current Version (future 6.2.0-beta2, GIT branch-6-2):
 - Fix symbolObj.getImage seg fault in PHP/MapScript
 
 - Fix bad handling of startindex in some drivers (#4011)
+  WFSGetFeature also now uses a global maxfeatures and startindex to support
+  maxfeatures across layers rather than within layers
 
 - Fixed bugs with WCS 1.1/2.0 with VSIMEM (#4369)
 

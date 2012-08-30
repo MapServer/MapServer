@@ -1341,8 +1341,7 @@ void msAxisSwapShape(shapeObj *shape)
 **
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeatures,
-                       char *default_namespace_prefix, int outputformat)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, char *default_namespace_prefix, int outputformat)
 {
 #ifdef USE_WFS_SVR
   int status;

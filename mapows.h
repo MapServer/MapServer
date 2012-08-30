@@ -384,8 +384,7 @@ MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *names
 
 
 #ifdef USE_WFS_SVR
-MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeatures, char *wfs_namespace,
-                                     int outputformat);
+MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, char *wfs_namespace, int outputformat);
 #endif
 
 

@@ -1957,8 +1957,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     }
   }
 
-  if (paramsObj->nStartIndex > 0)
+  if (paramsObj->nStartIndex > 0) {
     startindex = paramsObj->nStartIndex;
+    map->query.startindex = startindex;    
+  } 
 
 
   /* maxfeatures set */
@@ -1973,13 +1975,20 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
           lp->maxfeatures = maxfeatures;
       }
     }
+    map->query.maxfeatures = maxfeatures;
   }
 
-  /* startindex set. We set lp->startindex even if the driver doesn't support
-     pagination. Built-in pagination will be handled in mapquery.c */
-  if (startindex > 0 &&
-      (nQueriedLayers == 1)) {
-    lpQueried->startindex = startindex;
+  /* startindex set */
+  if (startindex > 0 && nQueriedLayers > 1) {
+    for(j=0; j<map->numlayers; j++) {
+      layerObj *lp;
+      lp = GET_LAYER(map, j);
+      if (lp->status == MS_ON) {
+        msLayerEnablePaging(lp, MS_FALSE);
+      }
+    }
+  } else if (startindex > 0 && lpQueried) {
+    lpQueried->startindex = startindex;    
   }
 
   if (paramsObj->pszFilter) {
@@ -2098,11 +2107,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
         return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
       }
       psNode = FLTParseFilterEncoding(paszFilter[i]);
-
-      /* Not querying a single layer? no driver pagination */
-      if (lpQueried && (nQueriedLayers > 1)) {
-        msLayerEnablePaging(lpQueried, MS_FALSE);
-      }
 
       if (!psNode) {
         msSetError(MS_WFSERR,
@@ -2380,8 +2384,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       iNumberOfFeatures += GET_LAYER(map, j)->resultcache->numresults;
     }
   }
-  if(maxfeatures > 0 && maxfeatures < iNumberOfFeatures)
-    iNumberOfFeatures = maxfeatures;
 
   /*
   ** GML Header generation.
@@ -2410,11 +2412,10 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
   /*internally use a start index that start with 0 as the first index*/
   if( psFormat == NULL ) {
     if(maxfeatures != 0 && iResultTypeHits == 0)
-      status = msGMLWriteWFSQuery(map, stdout, startindex-1, maxfeatures,
+      status = msGMLWriteWFSQuery(map, stdout,
                                   (char *) gmlinfo.user_namespace_prefix,
                                   outputformat);
   } else {
-    int to_allow = maxfeatures, to_skip = startindex-1;
     mapservObj *mapserv = msAllocMapServObj();
 
     /* Setup dummy mapserv object */
@@ -2423,35 +2424,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
     msFreeCgiObj(mapserv->request);
     mapserv->request = req;
     map->querymap.status = MS_FALSE;
-
-    /* trim the query result(s) if maxfeatures or startindex set. */
-    for( j=0; j < map->numlayers; j++ ) {
-      layerObj *lp = GET_LAYER(map, j);
-      if (lp->resultcache && lp->resultcache->numresults > 0) {
-        if( to_skip > 0 && lp->resultcache->numresults < to_skip ) {
-          to_skip -= lp->resultcache->numresults;
-          lp->resultcache->numresults = 0;
-        } else if( to_skip > 0 ) {
-          memmove( lp->resultcache->results + 0,
-                   lp->resultcache->results + to_skip,
-                   sizeof(resultObj) * (lp->resultcache->numresults - to_skip) );
-          lp->resultcache->numresults -= to_skip;
-          to_skip = 0;
-        }
-
-        if( maxfeatures > 0 ) {
-          if( lp->resultcache->numresults > to_allow ) {
-            lp->resultcache->numresults = to_allow;
-            to_allow = 0;
-          } else {
-            to_allow -= lp->resultcache->numresults;
-            if( to_allow < 0 )
-              to_allow = 0;
-
-          }
-        }
-      }
-    }
 
     status = msReturnTemplateQuery( mapserv, psFormat->name, NULL );
 

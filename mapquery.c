@@ -52,6 +52,9 @@ int msInitQuery(queryObj *query)
   query->shapeindex = query->tileindex = -1;
   query->clear_resultcache = MS_TRUE; /* index queries allow the old results to persist */
 
+  query->maxfeatures = -1;
+  query->startindex = -1;
+  
   query->item = query->str = NULL;
   query->filter = NULL;
 
@@ -601,7 +604,7 @@ int msQueryByAttributes(mapObj *map)
   rectObj searchrect;
 
   shapeObj shape;
-  int paging, result_skipped = 0;
+  int paging;
 
   int nclasses = 0;
   int *classgroup = NULL;
@@ -738,8 +741,8 @@ int msQueryByAttributes(mapObj *map)
 #endif
 
     /* Should we skip this feature? */
-    if (!paging && lp->startindex > 1 && result_skipped < lp->startindex-1) {
-      ++result_skipped;
+    if (!paging && map->query.startindex > 1) {
+      --map->query.startindex;
       msFreeShape(&shape);
       continue;
     }
@@ -796,7 +799,6 @@ int msQueryByFilter(mapObj *map)
 
   shapeObj shape;
 
-  int result_skipped = 0;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -819,6 +821,10 @@ int msQueryByFilter(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -931,8 +937,8 @@ int msQueryByFilter(mapObj *map)
 #endif
 
       /* Should we skip this feature? */
-      if (!msLayerGetPaging(lp) && lp->startindex > 1 && result_skipped < lp->startindex-1) {
-        ++result_skipped;
+      if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+        --map->query.startindex;
         msFreeShape(&shape);
         continue;
       }
@@ -985,7 +991,7 @@ int msQueryByRect(mapObj *map)
   rectObj searchrect;
   double layer_tolerance = 0, tolerance = 0;
 
-  int paging, result_skipped = 0;
+  int paging;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -1005,6 +1011,11 @@ int msQueryByRect(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    /* Set the global maxfeatures */
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1143,12 +1154,13 @@ int msQueryByRect(mapObj *map)
 
       if(status == MS_TRUE) {
         /* Should we skip this feature? */
-        if (!paging && lp->startindex > 1 && result_skipped < lp->startindex-1) {
-          ++result_skipped;
+        if (!paging && map->query.startindex > 1) {
+          --map->query.startindex;
           msFreeShape(&shape);
           continue;
         }
         addResult(lp->resultcache, &shape);
+        --map->query.maxfeatures;
       }
       msFreeShape(&shape);
 
@@ -1199,7 +1211,6 @@ int msQueryByFeatures(mapObj *map)
 
   double distance, tolerance, layer_tolerance;
 
-  int result_skipped = 0;
   rectObj searchrect;
   shapeObj shape, selectshape;
   int nclasses = 0;
@@ -1239,6 +1250,10 @@ int msQueryByFeatures(mapObj *map)
     if(l == map->query.slayer) continue; /* skip the selection layer */
 
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1456,8 +1471,8 @@ int msQueryByFeatures(mapObj *map)
 
         if(status == MS_TRUE) {
           /* Should we skip this feature? */
-          if (!msLayerGetPaging(lp) && lp->startindex > 1 && result_skipped < lp->startindex-1) {
-            ++result_skipped;
+          if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+            --map->query.startindex;
             msFreeShape(&shape);
             continue;
           }
@@ -1517,7 +1532,7 @@ int msQueryByPoint(mapObj *map)
 
   layerObj *lp;
 
-  int paging, result_skipped = 0;
+  int paging;
   char status;
   rectObj rect, searchrect;
   shapeObj shape;
@@ -1539,6 +1554,10 @@ int msQueryByPoint(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1668,8 +1687,8 @@ int msQueryByPoint(mapObj *map)
       if( d <= t ) { /* found one */
 
         /* Should we skip this feature? */
-        if (!paging && lp->startindex > 1 && result_skipped < lp->startindex-1) {
-          ++result_skipped;
+        if (!paging && map->query.startindex > 1) {
+          --map->query.startindex;
           msFreeShape(&shape);
           continue;
         }
@@ -1727,7 +1746,6 @@ int msQueryByShape(mapObj *map)
   double distance, tolerance, layer_tolerance;
   rectObj searchrect;
 
-  int result_skipped = 0;
   int nclasses = 0;
   int *classgroup = NULL;
   double minfeaturesize = -1;
@@ -1758,6 +1776,10 @@ int msQueryByShape(mapObj *map)
 
   for(l=start; l>=stop; l--) { /* each layer */
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1955,8 +1977,8 @@ int msQueryByShape(mapObj *map)
 
       if(status == MS_TRUE) {
         /* Should we skip this feature? */
-        if (!msLayerGetPaging(lp) && lp->startindex > 1 && result_skipped < lp->startindex-1) {
-          ++result_skipped;
+        if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+          --map->query.startindex;
           msFreeShape(&shape);
           continue;
         }
