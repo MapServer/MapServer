@@ -14,7 +14,7 @@ For a complete change history, please see the Git log comments.
 Current Version (git master, 6.3-dev, future 6.4):
 --------------------------------------------------
 
-- Fix segfault in queryByFilter function in PHP/MapScript
+- Fix segfault in queryByFilter function in MapScript
 
 - Adjusted WCS 2.0 to WCS Core 2.0.1 and GMLCOV 1.0.1 corrigenda (#4003)
 
@@ -23,6 +23,8 @@ Current Version (git master, 6.3-dev, future 6.4):
 - Fix symbolObj.getImage seg fault in PHP/MapScript
 
 - Fix bad handling of startindex in some drivers (#4011)
+  WFSGetFeature also now uses a global maxfeatures and startindex to support
+  maxfeatures across layers rather than within layers
 
 - Fixed bugs with WCS 1.1/2.0 with VSIMEM (#4369)
 
