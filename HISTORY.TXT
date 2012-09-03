@@ -14,6 +14,8 @@ For a complete change history, please see the Git log comments.
 Current Version (git master, 6.3-dev, future 6.4):
 --------------------------------------------------
 
+- Fix wms_style_name in GetMap requests (#4439)
+
 - Fix segfault in queryByFilter function in MapScript
 
 - Adjusted WCS 2.0 to WCS Core 2.0.1 and GMLCOV 1.0.1 corrigenda (#4003)
