@@ -1598,7 +1598,6 @@ this request. Check wms/ows_enable_request settings.",
           for (j=0; j<map->numlayers; j++) {
             if ((GET_LAYER(map, j)->name &&
                  strcasecmp(GET_LAYER(map, j)->name, layers[i]) == 0) ||
-                (map->name && strcasecmp(map->name, layers[i]) == 0) ||
                 (GET_LAYER(map, j)->group && strcasecmp(GET_LAYER(map, j)->group, layers[i]) == 0)) {
               lp =   GET_LAYER(map, j);
               for (k=0; k<lp->numclasses; k++) {
@@ -1617,6 +1616,18 @@ this request. Check wms/ows_enable_request settings.",
 
                 return msWMSException(map, nVersion, "StyleNotDefined", wms_exception_format);
               }
+            /* Check the style of the root layer */
+            } else if (map->name && strcasecmp(map->name, layers[i]) == 0) {
+                const char *styleName = NULL;
+                styleName = msOWSLookupMetadata(&(map->web.metadata), "MO", "style_name");
+                if (!styleName || strcasecmp(styleName, tokens[i]) != 0) {
+                    msSetError(MS_WMSERR, "Style (%s) not defined on root layer.",
+                               "msWMSLoadGetMapParams()", tokens[i]);
+                    msFreeCharArray(tokens, n);
+                    msFreeCharArray(layers, numlayers);
+
+                    return msWMSException(map, nVersion, "StyleNotDefined", wms_exception_format);
+                }
             }
 
           }
