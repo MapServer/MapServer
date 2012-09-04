@@ -603,6 +603,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 
 #ifdef SE_NCLOB_TYPE
     SE_NCLOB_INFO nclobval;
+    SE_WCHAR* nclobstring; /* null terminated */
 #endif
 
 #ifdef SE_NSTRING_TYPE
@@ -802,13 +803,29 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 #ifdef SE_CLOB_TYPE
 
         case SE_NCLOB_TYPE:
+            memset(&nclobval, 0, sizeof(nclobval)); /* to prevent from the crash in SE_stream_get_nclob */
             status = SE_stream_get_nclob(sde->connPoolInfo->stream, (short) (i+1), &nclobval);
             if(status == SE_SUCCESS) {
-                shape->values[i] = (char *)msSmallMalloc(sizeof(char)*nclobval.nclob_length);
-                shape->values[i] = memcpy(  shape->values[i],
-                                            nclobval.nclob_buffer, 
-                                            nclobval.nclob_length);
-                SE_nclob_free(&nclobval);
+                /* the returned string is not null-terminated */
+              nclobstring = (SE_WCHAR*)malloc(sizeof(char)*(nclobval.nclob_length+2));
+              memcpy(nclobstring, nclobval.nclob_buffer, nclobval.nclob_length);
+              nclobstring[nclobval.nclob_length / 2] = '\0';
+
+              if (sde->bBigEndian)
+                shape->values[i] = msConvertWideStringToUTF8((const wchar_t*) nclobstring, "UTF-16BE");
+              else
+                shape->values[i] = msConvertWideStringToUTF8((const wchar_t*) nclobstring, "UTF-16LE");
+      
+              if (!shape->values[i]) {  /* There was an error */
+                msSetError( MS_SDEERR,
+                            "msConvertWideStringToUTF8()==NULL.",
+                            "sdeGetRecord()");
+                shape->values[i] = (char *)malloc(itemdefs[i].size*sizeof(char)+1);
+                shape->values[i][0] = '\0'; /* empty string */
+              }                
+
+              SE_nclob_free(&nclobval);
+              msFree(nclobstring);
             }
             else if (status == SE_NULL_VALUE) {
                 shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
