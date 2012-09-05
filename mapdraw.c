@@ -2033,11 +2033,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     /* compute the size of the clipping buffer, in pixels. This buffer must account
      for the size of symbols drawn to avoid artifacts around the image edges */
     int clip_buf = 0;
+    int s;
     rectObj cliprect;
-    if (layer->class[c]->numstyles > 0) {
+    for (s=0;s<layer->class[c]->numstyles;s++) {
       double maxsize, maxunscaledsize;
       symbolObj *symbol;
-      styleObj *style = layer->class[c]->styles[0];
+      styleObj *style = layer->class[c]->styles[s];
       if (!MS_IS_VALID_ARRAY_INDEX(style->symbol, map->symbolset.numsymbols)) {
         msSetError(MS_SYMERR, "Invalid symbol index: %d", "msDrawShape()", style->symbol);
         return MS_FAILURE;
@@ -2056,8 +2057,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 #endif
       }
       maxsize = MS_MAX(msSymbolGetDefaultSize(symbol), MS_MAX(style->size, style->width));
-      maxunscaledsize = MS_MAX(style->minsize, style->minwidth);
-      clip_buf = MS_NINT(MS_MAX(maxsize * layer->scalefactor, maxunscaledsize) + 1);
+      maxunscaledsize = MS_MAX(style->minsize*image->resolutionfactor, style->minwidth*image->resolutionfactor);
+      clip_buf = MS_MAX(clip_buf,MS_NINT(MS_MAX(maxsize * layer->scalefactor, maxunscaledsize) + 1));
     }
 
 
@@ -2092,10 +2093,18 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       }
     } else {
       /* clip first, then transform. This means we are clipping in geographical space */
-      cliprect.minx = map->extent.minx - clip_buf*map->cellsize;
-      cliprect.miny = map->extent.miny - clip_buf*map->cellsize;
-      cliprect.maxx = map->extent.maxx + clip_buf*map->cellsize;
-      cliprect.maxy = map->extent.maxy + clip_buf*map->cellsize;
+      if(shape->type == MS_SHAPE_POLYGON) {
+         /*
+          * add a small buffer around the cliping rectangle to
+          * avoid lines around the edges : #179
+          */
+         clip_buf += 2;
+      }
+      clip_buf *= map->cellsize;
+      cliprect.minx = map->extent.minx - clip_buf;
+      cliprect.miny = map->extent.miny - clip_buf;
+      cliprect.maxx = map->extent.maxx + clip_buf;
+      cliprect.maxy = map->extent.maxy + clip_buf;
       if(shape->type == MS_SHAPE_POLYGON) {
         msClipPolygonRect(shape, cliprect);
       } else {
