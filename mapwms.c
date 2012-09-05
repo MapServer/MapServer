@@ -3170,52 +3170,63 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                           MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE,
                           NULL, NULL, NULL, NULL, NULL, "       ");
       } else {
-        int size_x=0, size_y=0;
-        size_t bufferSize = 0;
-        char *pszLegendURL = NULL;
-        char *pszMimetype = NULL;
-        char **tokens = NULL;
-        int numtokens = 0;
-        char width[10], height[10];
-        if (msLegendCalcSize(map, 1, &size_x, &size_y,  NULL, 0) == MS_SUCCESS) {
-          bufferSize = strlen(script_url_encoded)+300;
-          pszLegendURL = (char*)msSmallMalloc(bufferSize);
-          snprintf(width, sizeof(width), "%d", size_x);
-          snprintf(height, sizeof(height), "%d", size_y);
+        int i, num_layers = 0;
+        int *group_layers = (int *)msSmallMalloc(sizeof(int)*map->numlayers);
 
-          format_list = msOWSLookupMetadata(&(map->web.metadata), "M", "getlegendgraphic_formatlist");
-          if (format_list && strlen(format_list) > 0) {
-            tokens = msStringSplit(format_list,  ',', &numtokens);
-            if (tokens && numtokens > 0) {
-              /*just grab the first mime type*/
-              pszMimetype = msEncodeHTMLEntities(tokens[0]);
-              msFreeCharArray(tokens, numtokens);
-            }
-          } else
-            pszMimetype = msEncodeHTMLEntities("image/png");
+        for(i=0; i<map->numlayers; i++)
+          if (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
+            group_layers[num_layers++] = i;
 
-          if (nVersion >= OWS_1_3_0)
-            snprintf(pszLegendURL, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=%s&amp;format=%s&amp;STYLE=%s", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),pszEncodedName,
-                     pszMimetype, pszEncodedStyleName);
-          else
-            snprintf(pszLegendURL, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=%s", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),pszEncodedName,
-                     pszMimetype, pszEncodedStyleName);
+        if (num_layers > 0) {
+          int size_x=0, size_y=0;
+          size_t bufferSize = 0;
+          char *pszLegendURL = NULL;
+          char *pszMimetype = NULL;
+          char **tokens = NULL;
+          int numtokens = 0;
+          char width[10], height[10];
 
-          msOWSPrintURLType(stdout, NULL,
-                            "O", "ttt",
-                            OWS_NOERR, NULL,
-                            "LegendURL", NULL,
-                            " width=\"%s\"", " height=\"%s\"",
-                            ">\n          <Format>%s</Format",
-                            "\n          <OnlineResource "
-                            "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                            " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
-                            "       ",
-                            MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE,
-                            NULL, width, height, pszMimetype, pszLegendURL, "       ");
+          group_layers =(int *)msSmallRealloc(group_layers,  sizeof(int)*num_layers);
+          if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers) == MS_SUCCESS) {
+            bufferSize = strlen(script_url_encoded)+300;
+            pszLegendURL = (char*)msSmallMalloc(bufferSize);
+            snprintf(width, sizeof(width), "%d", size_x);
+            snprintf(height, sizeof(height), "%d", size_y);
+
+            format_list = msOWSLookupMetadata(&(map->web.metadata), "M", "getlegendgraphic_formatlist");
+            if (format_list && strlen(format_list) > 0) {
+              tokens = msStringSplit(format_list,  ',', &numtokens);
+              if (tokens && numtokens > 0) {
+                /*just grab the first mime type*/
+                pszMimetype = msEncodeHTMLEntities(tokens[0]);
+                msFreeCharArray(tokens, numtokens);
+              }
+            } else
+              pszMimetype = msEncodeHTMLEntities("image/png");
+
+            if (nVersion >= OWS_1_3_0)
+              snprintf(pszLegendURL, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=%s&amp;format=%s&amp;STYLE=%s", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),pszEncodedName,
+                       pszMimetype, pszEncodedStyleName);
+            else
+              snprintf(pszLegendURL, bufferSize, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s&amp;STYLE=%s", script_url_encoded,msOWSGetVersionString(nVersion, szVersionBuf),pszEncodedName,
+                       pszMimetype, pszEncodedStyleName);
+
+            msOWSPrintURLType(stdout, NULL,
+                              "O", "ttt",
+                              OWS_NOERR, NULL,
+                              "LegendURL", NULL,
+                              " width=\"%s\"", " height=\"%s\"",
+                              ">\n          <Format>%s</Format",
+                              "\n          <OnlineResource "
+                              "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                              " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                              "       ",
+                              MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE,
+                              NULL, width, height, pszMimetype, pszLegendURL, "       ");
+          }
+          msFree(pszLegendURL);
+          msFree(pszMimetype);
         }
-        msFree(pszLegendURL);
-        msFree(pszMimetype);
       }
       msIO_fprintf(stdout, "    </Style>\n");
       msFree(pszEncodedName);
