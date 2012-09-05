@@ -305,7 +305,7 @@ EXE_LIST = 	shp2img legend mapserv shptree shptreevis \
 #
 # --- You shouldn't have to edit anything else. ---
 #
-all: $(LIBMAP) $(EXE_LIST) @MAKE_PHP_MAPSCRIPT@ @MAKE_PYTHON_MAPSCRIPT@ 
+all: $(LIBMAP) $(EXE_LIST) mapscriptvars @MAKE_PHP_MAPSCRIPT@ @MAKE_PYTHON_MAPSCRIPT@ 
 
 # Explicitly invoke this rule when maplexer.l is altered.  We don't do
 # it automatically for the reasons listed in #2310
@@ -482,7 +482,7 @@ install-module: mod_mapserver.la install-lib
 	$(APXS) -i -a -n "mapserver" mod_mapserver.la
 
 clean: @MAKE_PHP_MAPSCRIPT_CLEAN@ @MAKE_PYTHON_MAPSCRIPT_CLEAN@
-	rm -rf $(LIBMAP) *.o *.lo *.la .libs $(EXE_LIST) renderers/agg/src/*.o renderers/agg/src/*.lo renderers/agg/src/.libs
+	rm -rf $(LIBMAP) mapscriptvars *.o *.lo *.la .libs $(EXE_LIST) renderers/agg/src/*.o renderers/agg/src/*.lo renderers/agg/src/.libs
 
 exe-clean:
 	rm -f $(EXE_LIST)
