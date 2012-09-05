@@ -1540,7 +1540,7 @@ this request. Check wms/ows_enable_request settings.",
     int numlayers =0;
     layerObj *lp = NULL;
 
-    tokens = msStringSplit(styles, ',' ,&n);
+    tokens = msStringSplitComplex(styles, ",",&n,MS_ALLOWEMPTYTOKENS);
     for (i=0; i<n; i++) {
       if (tokens[i] && strlen(tokens[i]) > 0 &&
           strcasecmp(tokens[i],"default") != 0) {
