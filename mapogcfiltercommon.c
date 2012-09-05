@@ -538,6 +538,8 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
 
     if (strncasecmp(psNode->pszValue, "intersect", 9) == 0)
       pszTmp = msStrdup("intersects");
+    if (strncasecmp(psNode->pszValue, "equals", 9) == 0)
+      pszTmp = msStrdup("eq");
     else
       pszTmp = msStrdup(psNode->pszValue);
     msStringToLower(pszTmp);
