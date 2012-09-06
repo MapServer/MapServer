@@ -2076,6 +2076,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       unclipped_shape = (shapeObj *) msSmallMalloc(sizeof (shapeObj));
       msInitShape(unclipped_shape);
       msCopyShape(shape, unclipped_shape);
+      if(shape->type == MS_SHAPE_POLYGON) {
+         /* #179: additional buffer for polygons */
+         clip_buf += 2;
+      }
 
       cliprect.minx = cliprect.miny = -clip_buf;
       cliprect.maxx = image->width + clip_buf;
