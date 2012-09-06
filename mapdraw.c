@@ -903,7 +903,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   int         status, retcode=MS_SUCCESS;
   int         drawmode=MS_DRAWMODE_FEATURES;
   char        annotate=MS_TRUE;
-  shapeObj    shape;
+  shapeObj    shape, *unclipped_shape = NULL;
   rectObj     searchrect;
   char        cache=MS_FALSE;
   int         maxnumstyles=1;
@@ -1038,6 +1038,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       }
     }
 
+    if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
+      drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
+    }
+    
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
@@ -1062,7 +1066,14 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
         pStyle->color = pStyle->outlinecolor;
         pStyle->outlinecolor = tmp;
       }
-      status = msDrawShape(map, layer, &shape, image, 0, drawmode|MS_DRAWMODE_SINGLESTYLE); /* draw a single style */
+
+      if (MS_DRAW_UNCLIPPED_LINES(drawmode))
+        status = msDrawShape(map, layer, &shape,
+                             image, 0, drawmode|MS_DRAWMODE_SINGLESTYLE, &unclipped_shape); /* draw a single style */
+      else
+        status = msDrawShape(map, layer, &shape,
+                             image, 0, drawmode|MS_DRAWMODE_SINGLESTYLE, NULL); /* draw a single style */
+      
       if (pStyle->outlinewidth > 0) {
         /*
          * RFC 49 implementation: switch back the styleobj to its
@@ -1083,27 +1094,43 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       }
     }
 
-    else
-      status = msDrawShape(map, layer, &shape, image, -1, drawmode); /* all styles  */
+    else 
+      status = msDrawShape(map, layer, &shape, image, -1, drawmode, NULL); /* all styles  */
     if(status != MS_SUCCESS) {
+      if(unclipped_shape) {
+        msFreeShape(unclipped_shape);
+        msFree(unclipped_shape);
+      }
       msFreeShape(&shape);
       retcode = MS_FAILURE;
       break;
     }
 
     if(shape.numlines == 0) { /* once clipped the shape didn't need to be drawn */
+      if(unclipped_shape) {
+        msFreeShape(unclipped_shape);
+        msFree(unclipped_shape);
+      }
       msFreeShape(&shape);
       continue;
     }
 
     if(cache) {
-      if(insertFeatureList(&shpcache, &shape) == NULL) {
-        retcode = MS_FAILURE; /* problem adding to the cache */
-        break;
+      shapeObj *s = &shape;
+      if (unclipped_shape)
+        s = unclipped_shape;
+      if(insertFeatureList(&shpcache, s) == NULL) {
+      retcode = MS_FAILURE; /* problem adding to the cache */
+      break;
       }
     }
 
     maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex]->numstyles);
+
+    if(unclipped_shape) {
+      msFreeShape(unclipped_shape);
+      msFree(unclipped_shape);
+    }
     msFreeShape(&shape);
   }
 
@@ -1209,7 +1236,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   int i, status;
   char annotate=MS_TRUE, cache=MS_FALSE;
   int drawmode = MS_DRAWMODE_FEATURES|MS_DRAWMODE_QUERY;
-  shapeObj shape;
+  shapeObj shape, *unclipped_shape = NULL;
   int maxnumstyles=1;
 
   featureListNodeObjPtr shpcache=NULL, current=NULL;
@@ -1344,11 +1371,18 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     if(cache) {
       drawmode |= MS_DRAWMODE_SINGLESTYLE;
-      status = msDrawShape(map, layer, &shape, image, 0, drawmode); /* draw only the first style */
+      if (MS_DRAW_UNCLIPPED_LINES(drawmode))
+        status = msDrawShape(map, layer, &shape, image, 0, drawmode, &unclipped_shape); /* draw only the first style */
+      else
+        status = msDrawShape(map, layer, &shape, image, 0, drawmode, NULL); /* draw only the first style */        
     }
     else
-      status = msDrawShape(map, layer, &shape, image, -1, drawmode); /* all styles  */
+      status = msDrawShape(map, layer, &shape, image, -1, drawmode, NULL); /* all styles  */
     if(status != MS_SUCCESS) {
+      if(unclipped_shape) {
+        msFreeShape(unclipped_shape);
+        msFree(unclipped_shape);
+      }
       msLayerClose(layer);
       msFree(colorbuffer);
       msFree(mindistancebuffer);
@@ -1356,15 +1390,27 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     if(shape.numlines == 0) { /* once clipped the shape didn't need to be drawn */
+      if(unclipped_shape) {
+        msFreeShape(unclipped_shape);
+        msFree(unclipped_shape);
+      }
       msFreeShape(&shape);
       continue;
     }
 
     if(cache) {
-      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); /* problem adding to the cache */
+      shapeObj *s = &shape;
+      if (unclipped_shape)
+        s = unclipped_shape;      
+      if(insertFeatureList(&shpcache, s) == NULL) return(MS_FAILURE); /* problem adding to the cache */
     }
 
     maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex]->numstyles);
+
+    if(unclipped_shape) {
+      msFreeShape(unclipped_shape);
+      msFree(unclipped_shape);
+    }
     msFreeShape(&shape);
   }
 
@@ -1794,8 +1840,13 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
           layer->class[c]->styles[s]->maxscaledenom)) {
         if (layer->class[c]->styles[s]->_geomtransform.type != MS_GEOMTRANSFORM_NONE)
           msDrawTransformedShape(map, &map->symbolset, image, unclipped_shape, layer->class[c]->styles[s], layer->scalefactor);
-        else if (!MS_DRAW_SINGLESTYLE(drawmode) || s == style)
-          msDrawLineSymbol(&map->symbolset, image, shape, layer->class[c]->styles[s], layer->scalefactor);
+        else if (!MS_DRAW_SINGLESTYLE(drawmode) || s == style) {
+          if (MS_DRAW_UNCLIPPED_LINES(drawmode)) {
+            msDrawLineSymbol(&map->symbolset, image, unclipped_shape, layer->class[c]->styles[s], layer->scalefactor);
+          }
+          else
+            msDrawLineSymbol(&map->symbolset, image, shape, layer->class[c]->styles[s], layer->scalefactor);
+        }
       }
     }
   }
@@ -1953,10 +2004,10 @@ int polygonLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer,
 ** through caching. "querymapMode" parameter is used to tell msBindLayerToShape to not override the
 ** QUERYMAP HILITE color.
 */
-int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style, int drawmode)
+int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style, int drawmode, shapeObj **unclipped_shape)
 {
   int c,s,ret=MS_SUCCESS;
-  shapeObj *anno_shape, *unclipped_shape = shape;
+  shapeObj *anno_shape, *unclipped_shape_tmp = shape;
   int bNeedUnclippedShape = MS_FALSE;
   int bNeedUnclippedAnnoShape = MS_FALSE;
   int bShapeNeedsClipping = MS_TRUE;
@@ -2021,6 +2072,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       bShapeNeedsClipping = MS_TRUE;
     }
 
+    if(MS_DRAW_UNCLIPPED_LINES(drawmode)) {
+      bNeedUnclippedShape = MS_TRUE;
+    }
+   
     if(MS_DRAW_LABELS(drawmode) && MS_DRAW_UNCLIPPED_LABELS(drawmode)) {
       bNeedUnclippedAnnoShape = MS_TRUE;
       bNeedUnclippedShape = MS_TRUE;
@@ -2072,9 +2127,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
          - the calls to msClipXXXRect will discard the original lineObjs, whereas
            we have just copied them because they where needed. These two functions
            could be changed so they are instructed not to free the original lineObjs. */
-      unclipped_shape = (shapeObj *) msSmallMalloc(sizeof (shapeObj));
-      msInitShape(unclipped_shape);
-      msCopyShape(shape, unclipped_shape);
+      unclipped_shape_tmp = (shapeObj *) msSmallMalloc(sizeof (shapeObj));
+      msInitShape(unclipped_shape_tmp);
+      msCopyShape(shape, unclipped_shape_tmp);
 
       cliprect.minx = cliprect.miny = -clip_buf;
       cliprect.maxx = image->width + clip_buf;
@@ -2086,7 +2141,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         msClipPolylineRect(shape, cliprect);
       }
       if(bNeedUnclippedAnnoShape) {
-        anno_shape = unclipped_shape;
+        anno_shape = unclipped_shape_tmp;
       } else {
         anno_shape = shape;
       }
@@ -2136,10 +2191,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         ret = MS_SUCCESS;
       break;
     case MS_LAYER_LINE:
-      ret = lineLayerDrawShape(map, image, layer, shape, anno_shape, unclipped_shape, style, drawmode);
+      ret = lineLayerDrawShape(map, image, layer, shape, anno_shape, unclipped_shape_tmp, style, drawmode);
       break;
     case MS_LAYER_POLYGON:
-      ret = polygonLayerDrawShape(map, image, layer, shape, anno_shape, unclipped_shape, drawmode);
+      ret = polygonLayerDrawShape(map, image, layer, shape, anno_shape, unclipped_shape_tmp, drawmode);
       break;
     case MS_LAYER_POINT:
     case MS_LAYER_RASTER:
@@ -2151,9 +2206,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 draw_shape_cleanup:
   msDrawEndShape(map,layer,image,shape);
-  if(unclipped_shape != shape) {
-    msFreeShape(unclipped_shape);
-    msFree(unclipped_shape);
+  if(unclipped_shape_tmp != shape) {
+    if (unclipped_shape)
+      *unclipped_shape = unclipped_shape_tmp;
+    else {
+      msFreeShape(unclipped_shape_tmp);
+      msFree(unclipped_shape_tmp);
+    }
   }
   return ret;
 }

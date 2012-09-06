@@ -82,7 +82,7 @@
     }
 
     int draw(mapObj *map, layerObj *layer, imageObj *image) {
-        return msDrawShape(map, layer, self, image, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
+        return msDrawShape(map, layer, self, image, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS, NULL);
     }
 
     void setBounds() 
