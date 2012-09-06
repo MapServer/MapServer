@@ -343,6 +343,11 @@ PHP_METHOD(layerObj, __set)
 
   php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
+  /* special case for "template" which we want to set to NULL and not an empty string */
+  if(Z_TYPE_P(value)==IS_NULL && !strcmp(property,"template")) {
+    msFree(php_layer->layer->template);
+    php_layer->layer->template = NULL;
+  } else
   IF_SET_LONG("status", php_layer->layer->status, value)
   else IF_SET_LONG("debug",  php_layer->layer->debug, value)
     else IF_SET_STRING("classitem", php_layer->layer->classitem, value)
