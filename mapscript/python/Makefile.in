@@ -50,7 +50,10 @@ _mapscript.la: mapscript_wrap.lo pygdioctx/pygdioctx.lo $(MS_LIB)
 mapscript_wrap.c: ../mapscript.i
 	$(SWIG) -python -shadow -modern -templatereduce -fastdispatch -fvirtual -fastproxy -modernargs -castmode -dirvtable -fastinit -fastquery -noproxydel -nobuildnone $(DEFINES) -o mapscript_wrap.c ../mapscript.i
 
-install: _mapscript.la
+install-dirs:
+	$(INSTALL) -d $(DESTDIR)$(PYLIBDIR)
+
+install: install-dirs _mapscript.la
 	$(LTINSTALL) $(INSTALL) _mapscript.la $(DESTDIR)$(PYLIBDIR)
 	$(INSTALL) -c mapscript.py $(DESTDIR)$(PYLIBDIR)
 
