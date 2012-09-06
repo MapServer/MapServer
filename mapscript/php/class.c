@@ -216,6 +216,11 @@ PHP_METHOD(classObj, __set)
 
   php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
+  /* special case for "template" which we want to set to NULL and not an empty string */
+  if(Z_TYPE_P(value)==IS_NULL && !strcmp(property,"template")) {
+    msFree(php_class->class->template);
+    php_class->class->template = NULL;
+  } else
   IF_SET_STRING("name", php_class->class->name, value)
   else IF_SET_STRING("title", php_class->class->title, value)
     else IF_SET_LONG("type", php_class->class->type, value)
