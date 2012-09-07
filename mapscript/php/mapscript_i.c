@@ -1244,7 +1244,7 @@ int shapeObj_add(shapeObj *self, lineObj *line)
 int shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer,
                   imageObj *img)
 {
-  return msDrawShape(map, layer, self, img, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS, NULL);
+  return msDrawShape(map, layer, self, img, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
 }
 
 void shapeObj_setBounds(shapeObj *self)
@@ -1479,7 +1479,7 @@ int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
   shape.classindex = classindex;
   shape.text = strdup(text);
 
-  msDrawShape(map, layer, &shape, img, -1, MS_FALSE, NULL);
+  msDrawShape(map, layer, &shape, img, -1, MS_FALSE);
 
   msFreeShape(&shape);
 
