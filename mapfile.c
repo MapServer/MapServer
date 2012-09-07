@@ -2899,7 +2899,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_ANGLE].item)
     writeAttributeBinding(stream, indent, "ANGLE", &(style->bindings[MS_STYLE_BINDING_ANGLE]));
-  else writeNumberOrKeyword(stream, indent, "ANGLE", 360, style->angle, style->autoangle, 1, MS_TRUE, "AUTO");
+  else writeNumberOrKeyword(stream, indent, "ANGLE", 0, style->angle, style->autoangle, 1, MS_TRUE, "AUTO");
 
   writeKeyword(stream, indent, "ANTIALIAS", style->antialias, 1, MS_TRUE, "TRUE");
   writeColor(stream, indent, "BACKGROUNDCOLOR", NULL, &(style->backgroundcolor));
@@ -2946,8 +2946,10 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   writeNumber(stream, indent, "MINSCALEDENOM", -1, style->minscaledenom);
   writeNumber(stream, indent, "MINSIZE", MS_MINSYMBOLSIZE, style->minsize);
   writeNumber(stream, indent, "MINWIDTH", MS_MINSYMBOLWIDTH, style->minwidth);
-  writeDimension(stream, indent, "OFFSET", style->offsetx, style->offsety, style->bindings[MS_STYLE_BINDING_OFFSET_X].item, style->bindings[MS_STYLE_BINDING_OFFSET_Y].item);
-  writeDimension(stream, indent, "POLAROFFSET", style->polaroffsetpixel, style->polaroffsetangle,
+  if((style->numbindings > 0 && (style->bindings[MS_STYLE_BINDING_OFFSET_X].item||style->bindings[MS_STYLE_BINDING_OFFSET_Y].item))||style->offsetx!=0||style->offsety!=0)
+    writeDimension(stream, indent, "OFFSET", style->offsetx, style->offsety, style->bindings[MS_STYLE_BINDING_OFFSET_X].item, style->bindings[MS_STYLE_BINDING_OFFSET_Y].item);
+  if((style->numbindings > 0 && (style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item||style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item))||style->polaroffsetangle!=0||style->polaroffsetpixel!=0)
+    writeDimension(stream, indent, "POLAROFFSET", style->polaroffsetpixel, style->polaroffsetangle,
                  style->bindings[MS_STYLE_BINDING_POLAROFFSET_PIXEL].item, style->bindings[MS_STYLE_BINDING_POLAROFFSET_ANGLE].item);
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_OPACITY].item)

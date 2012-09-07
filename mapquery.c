@@ -52,6 +52,9 @@ int msInitQuery(queryObj *query)
   query->shapeindex = query->tileindex = -1;
   query->clear_resultcache = MS_TRUE; /* index queries allow the old results to persist */
 
+  query->maxfeatures = -1;
+  query->startindex = -1;
+  
   query->item = query->str = NULL;
   query->filter = NULL;
 
@@ -562,7 +565,7 @@ int msQueryByIndex(mapObj *map)
     msLayerClose(lp);
     return(MS_FAILURE);
   }
-
+  
   addResult(lp->resultcache, &shape);
 
   msFreeShape(&shape);
@@ -619,6 +622,10 @@ int msQueryByAttributes(mapObj *map)
 
   lp = (GET_LAYER(map, map->query.layer));
 
+  /* using mapscript, the map->query.startindex will be unset... */
+  if (lp->startindex > 1 && map->query.startindex < 0)
+    map->query.startindex = lp->startindex;
+  
   /* conditions may have changed since this layer last drawn, so set
      layer->project true to recheck projection needs (Bug #673) */
   lp->project = MS_TRUE;
@@ -737,6 +744,13 @@ int msQueryByAttributes(mapObj *map)
       lp->project = MS_FALSE;
 #endif
 
+    /* Should we skip this feature? */
+    if (!paging && map->query.startindex > 1) {
+      --map->query.startindex;
+      msFreeShape(&shape);
+      continue;
+    }
+
     addResult(lp->resultcache, &shape);
     msFreeShape(&shape);
 
@@ -811,7 +825,15 @@ int msQueryByFilter(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -922,6 +944,13 @@ int msQueryByFilter(mapObj *map)
         lp->project = MS_FALSE;
 #endif
 
+      /* Should we skip this feature? */
+      if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+        --map->query.startindex;
+        msFreeShape(&shape);
+        continue;
+      }
+      
       addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
 
@@ -990,7 +1019,16 @@ int msQueryByRect(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    /* Set the global maxfeatures */
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -1126,8 +1164,16 @@ int msQueryByRect(mapObj *map)
         }
       }
 
-      if(status == MS_TRUE)
+      if(status == MS_TRUE) {
+        /* Should we skip this feature? */
+        if (!paging && map->query.startindex > 1) {
+          --map->query.startindex;
+          msFreeShape(&shape);
+          continue;
+        }
         addResult(lp->resultcache, &shape);
+        --map->query.maxfeatures;
+      }
       msFreeShape(&shape);
 
       /* check shape count */
@@ -1135,6 +1181,7 @@ int msQueryByRect(mapObj *map)
         status = MS_DONE;
         break;
       }
+      
     } /* next shape */
 
     if (classgroup)
@@ -1215,6 +1262,14 @@ int msQueryByFeatures(mapObj *map)
     if(l == map->query.slayer) continue; /* skip the selection layer */
 
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
+
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1430,8 +1485,15 @@ int msQueryByFeatures(mapObj *map)
             break; /* should never get here as we test for selection shape type explicitly earlier */
         }
 
-        if(status == MS_TRUE)
+        if(status == MS_TRUE) {
+          /* Should we skip this feature? */
+          if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+            --map->query.startindex;
+            msFreeShape(&shape);
+            continue;
+          }
           addResult(lp->resultcache, &shape);
+        }
         msFreeShape(&shape);
 
         /* check shape count */
@@ -1508,7 +1570,15 @@ int msQueryByPoint(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -1635,6 +1705,14 @@ int msQueryByPoint(mapObj *map)
 
       d = msDistancePointToShape(&(map->query.point), &shape);
       if( d <= t ) { /* found one */
+
+        /* Should we skip this feature? */
+        if (!paging && map->query.startindex > 1) {
+          --map->query.startindex;
+          msFreeShape(&shape);
+          continue;
+        }
+
         if(map->query.mode == MS_QUERY_SINGLE) {
           lp->resultcache->numresults = 0;
           addResult(lp->resultcache, &shape);
@@ -1718,6 +1796,14 @@ int msQueryByShape(mapObj *map)
 
   for(l=start; l>=stop; l--) { /* each layer */
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
+
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1913,8 +1999,15 @@ int msQueryByShape(mapObj *map)
           break; /* should never get here as we test for selection shape type explicitly earlier */
       }
 
-      if(status == MS_TRUE)
+      if(status == MS_TRUE) {
+        /* Should we skip this feature? */
+        if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+          --map->query.startindex;
+          msFreeShape(&shape);
+          continue;
+        }
         addResult(lp->resultcache, &shape);
+      }
       msFreeShape(&shape);
 
       /* check shape count */

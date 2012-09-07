@@ -1815,7 +1815,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
   double kernel_normal = 2.6; /* Must be sum of kernel elements */
   int kernel_size = 5;
 
-  double letterspacing = 1.25;
+  double letterspacing = 1.05;
   /* As per RFC 60, if label->maxoverlapangle == 0 then fall back on pre-6.0 behavior
      which was to use maxoverlapangle = 0.4*MS_PI ( 40% of 180 degrees ) */
   double maxoverlapangle = 0.4 * MS_PI;

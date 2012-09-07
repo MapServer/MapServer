@@ -1341,8 +1341,7 @@ void msAxisSwapShape(shapeObj *shape)
 **
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeatures,
-                       char *default_namespace_prefix, int outputformat)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, char *default_namespace_prefix, int outputformat)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -1351,7 +1350,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
   shapeObj shape;
   rectObj  resultBounds = {-1.0,-1.0,-1.0,-1.0};
   int features = 0;
-  int currentfeature =0;
 
   gmlGroupListObj *groupList=NULL;
   gmlItemListObj *itemList=NULL;
@@ -1446,11 +1444,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int startindex, int maxfeature
       }
 
       for(j=0; j<lp->resultcache->numresults; j++) {
-
-        if (startindex > 0 && currentfeature < startindex) {
-          currentfeature++;
-          continue;
-        }
 
         status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
         if(status != MS_SUCCESS)

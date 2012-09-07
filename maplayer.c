@@ -1250,7 +1250,7 @@ int LayerDefaultSupportsCommonFilters(layerObj *layer)
 
 int msLayerDefaultGetPaging(layerObj *layer)
 {
-  return MS_TRUE;
+  return MS_FALSE;
 }
 
 void msLayerDefaultEnablePaging(layerObj *layer, int value)

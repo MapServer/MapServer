@@ -213,6 +213,9 @@ int mapObj_queryByFilter(mapObj* self, char *string)
   self->query.type = MS_QUERY_BY_FILTER;
 
   self->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
+  self->query.filter->compiled = MS_FALSE;
+  self->query.filter->flags = 0;
+  self->query.filter->tokens = self->query.filter->curtoken = NULL;
   self->query.filter->string = strdup(string);
   self->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
 
@@ -696,6 +699,9 @@ int layerObj_queryByFilter(layerObj *self, mapObj *map, char *string)
   map->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
   map->query.filter->string = strdup(string);
   map->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
+  map->query.filter->compiled = MS_FALSE;
+  map->query.filter->flags = 0;
+  map->query.filter->tokens = map->query.filter->curtoken = NULL;
 
   map->query.layer = self->index;
   map->query.rect = map->extent;
@@ -1923,7 +1929,7 @@ void  outputFormatObj_destroy(outputFormatObj* self)
 
 imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format)
 {
-  imageObj *image;
+  imageObj *image = NULL;
   outputFormatObj *format = NULL;
   rendererVTableObj *renderer = NULL;
 

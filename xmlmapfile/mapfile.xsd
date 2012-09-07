@@ -193,6 +193,7 @@
 			<xs:element name="Validation" type="ms:itemType" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
+	<!-- OUTPUTFORMAT Definition -->
 	<xs:complexType name="OutputFormat">
 		<xs:sequence>
 			<xs:element name="driver" type="xs:string" minOccurs="0"/>
@@ -207,6 +208,7 @@
 						<xs:enumeration value="BYTE"/>
 						<xs:enumeration value="INT16"/>
 						<xs:enumeration value="FLOAT32"/>
+						<xs:enumeration value="FEATURE"/>
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>
@@ -344,7 +346,7 @@
 					</xs:union>
 				</xs:simpleType>
 			</xs:element>
-			<xs:element name="Style" type="ms:Style" minOccurs="0"/>
+			<xs:element name="Style" type="ms:Style" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="wrap" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="type" use="required">
@@ -356,6 +358,14 @@
 			</xs:simpleType>
 		</xs:attribute>
 	</xs:complexType>
+    <!-- LABELLEADER Definition -->
+    <xs:complexType name="LabelLeader">
+        <xs:sequence>
+            <xs:element name="gridstep" type="xs:positiveInteger" minOccurs="0"/>
+            <xs:element name="maxdistance" type="xs:positiveInteger" minOccurs="0"/>
+            <xs:element name="Style"  type="ms:Style" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
 	<!-- STYLE Definition -->
 	<xs:complexType name="Style">
 		<xs:sequence>
@@ -389,6 +399,7 @@
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:element>
+            <xs:element name="initialGap" type="xs:double" minOccurs="0"/>
 			<xs:element name="lineCap" default="BUTT" minOccurs="0">
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
@@ -425,6 +436,11 @@
 					<xs:list itemType="xs:float"/>
 				</xs:simpleType>
 			</xs:element>
+            <xs:element name="polarOffset" minOccurs="0">
+                <xs:simpleType>
+                    <xs:union memberTypes="xs:positiveInteger ms:attributeType xs:positiveInteger ms:attributeType"/>
+                </xs:simpleType>
+            </xs:element>
 			<xs:element name="size" default="1" minOccurs="0">
 				<xs:simpleType>
 					<xs:union memberTypes="xs:positiveInteger ms:attributeType"/>
@@ -448,6 +464,7 @@
 			<xs:element name="group" type="xs:string" minOccurs="0"/>
 			<xs:element name="keyImage" type="xs:string" minOccurs="0"/>
 			<xs:element name="Label" type="ms:Label" minOccurs="0"/>
+            <xs:element name="LabelLeader" type="ms:LabelLeader" minOccurs="0"/>
 			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="maxSize" type="xs:integer" default="50" minOccurs="0"/>
 			<xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
@@ -468,6 +485,7 @@
 	<!-- SYMBOL Definition -->
 	<xs:complexType name="Symbol">
 		<xs:sequence>
+            <xs:element name="anchorPoint" type="ms:pointType" minOccurs="0"/>
 			<xs:element name="antialias" type="ms:booleanEnum" minOccurs="0"/>
 			<xs:element name="character" type="xs:string" minOccurs="0"/>
 			<xs:element name="filled" type="ms:booleanEnum" minOccurs="0"/>
@@ -630,6 +648,7 @@
 			<xs:element name="labelMaxScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="labelMinScaleDenom" type="xs:double" minOccurs="0"/>
 			<xs:element name="labelRequires" type="xs:string" minOccurs="0"/>
+			<xs:element name="mask" type="xs:string" minOccurs="0"/>
 			<xs:element name="maxFeatures" type="xs:positiveInteger" minOccurs="0"/>
 			<xs:element name="maxGeoWidth" type="xs:double" minOccurs="0"/>
 			<xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
