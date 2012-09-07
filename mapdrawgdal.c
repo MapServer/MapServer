@@ -818,6 +818,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         alpha = pabyRawAlpha[k];
 
         result = cmap[pabyRaw1[k++]];
+        if(SKIP_MASK(j,i)) {
+          continue;
+        }
 
         /*
         ** We don't do alpha blending in non-truecolor mode, just
@@ -844,6 +847,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
       for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
         result = cmap[pabyRaw1[k++]];
+        if(SKIP_MASK(j,i)) {
+          continue;
+        }
         if( result != -1 ) {
           rb->data.gd_img->pixels[i][j] = result;
         }
@@ -992,6 +998,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         k = 0;
         for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
           for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ ) {
+            if(SKIP_MASK(j,i)) {
+              continue;
+            }
             if( MS_VALID_COLOR( layer->offsite )
                 && pabyRaw1[k] == layer->offsite.red
                 && pabyRaw2[k] == layer->offsite.green
@@ -1020,6 +1029,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
           for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ ) {
             int cc_index;
+            if(SKIP_MASK(j,i)) {
+              continue;
+            }
 
             if( MS_VALID_COLOR( layer->offsite )
                 && pabyRaw1[k] == layer->offsite.red
