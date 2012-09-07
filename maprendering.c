@@ -367,6 +367,15 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
             point.y += oy;
           }
         }
+
+        /* if the point is not in the map extent, skip it. (POLYLINE_NO_CLIP) */
+        if ( (point.x < -(symbol_width) || point.x > (image->width+symbol_width)) ||
+             (point.y < -(symbol_height) || point.y > (image->height+symbol_height)) ) {
+          current_length += spacing;
+          line_in=1;          
+          continue;
+        }
+          
         switch (symbol->type) {
           case MS_SYMBOL_PIXMAP:
             ret = renderer->renderPixmapSymbol(image, point.x, point.y, symbol, style);
