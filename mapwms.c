@@ -1976,7 +1976,7 @@ void msWMSPrintKeywordlist(FILE *stream, const char *tabspace,
 
     /* find out if there's a vocabulary list set */
     vocabularylist = msOWSLookupMetadata(metadata, namespaces, vocname);
-    if ( vocabularylist ) {
+    if ( vocabularylist && nVersion >= OWS_1_3_0 ) {
       tokens = msStringSplit(vocabularylist, ',', &ntokens);
       if ( tokens && ntokens > 0 ) {
         /* In order to do malloc only once, the length of the metadata*/
