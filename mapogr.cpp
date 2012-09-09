@@ -2442,7 +2442,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
 
     OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
 
-    if (eStylePartType == OGRSTCLabel && c->numlabels >= 1) {
+    if (eStylePartType == OGRSTCLabel) {
       OGRStyleToolH hLabelStyle = hStylePart;
 
       // Enclose the text string inside quotes to make sure it is seen
@@ -2455,6 +2455,14 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       msLoadExpressionString(&(c->text),
                              (char*)CPLSPrintf("\"%s\"", escapedTextString));
       free(escapedTextString);
+
+      if (c->numlabels == 0) {
+        /* allocate a new label object */
+        if(msGrowClassLabels(c) == NULL) 
+          return MS_FAILURE;
+        c->numlabels++;
+        initLabel(c->labels[0]);
+      }
 
       c->labels[0]->angle = OGR_ST_GetParamDbl(hLabelStyle,
                             OGRSTLabelAngle, &bIsNull);
