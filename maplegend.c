@@ -43,7 +43,7 @@
 int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
                      int width, int height, imageObj *image, int dstX, int dstY)
 {
-  int i, type;
+  int i, type, hasmarkersymbol;
   double offset;
   shapeObj box, zigzag;
   pointObj marker;
@@ -139,7 +139,14 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     case MS_LAYER_ANNOTATION:
       marker.x = dstX + MS_NINT(width / 2.0);
       marker.y = dstY + MS_NINT(height / 2.0);
-      if (theclass->numstyles > 0) {
+      hasmarkersymbol = 0;
+      for(i=0; i<theclass->numstyles; i++) {
+          if (theclass->styles[i]->symbol < map->symbolset.numsymbols && theclass->styles[i]->symbol > 0) {
+             hasmarkersymbol = 1;
+             break;
+          }
+      }
+      if (hasmarkersymbol) {
         for(i=0; i<theclass->numstyles; i++)
           msDrawMarkerSymbol(&map->symbolset, image_draw, &marker, theclass->styles[i], lp->scalefactor);
       } else if (theclass->labels && theclass->numlabels > 0) {
