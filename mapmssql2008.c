@@ -103,10 +103,10 @@
 #define PointOffset(iFigure) (ReadInt32(gpi->nFigurePos + (iFigure) * 5 + 1))
 #define NextPointOffset(iFigure) (iFigure + 1 < gpi->nNumFigures? PointOffset((iFigure) +1) : gpi->nNumPoints)
 
-#define ReadX(iPoint) (ReadDouble(gpi->nPointPos + gpi->nPointSize * (iPoint)))
-#define ReadY(iPoint) (ReadDouble(gpi->nPointPos + gpi->nPointSize * (iPoint) + 8))
-#define ReadZ(iPoint) (ReadDouble(gpi->nPointPos + gpi->nPointSize * (iPoint) + 16))
-#define ReadM(iPoint) (ReadDouble(gpi->nPointPos + gpi->nPointSize * (iPoint) + 24))
+#define ReadX(iPoint) (ReadDouble(gpi->nPointPos + 16 * (iPoint)))
+#define ReadY(iPoint) (ReadDouble(gpi->nPointPos + 16 * (iPoint) + 8))
+#define ReadZ(iPoint) (ReadDouble(gpi->nPointPos + 16 * gpi->nNumPoints + 8 * (iPoint)))
+#define ReadM(iPoint) (ReadDouble(gpi->nPointPos + 24 * gpi->nNumPoints + 8 * (iPoint)))
 
 /* Native geometry parser struct */
 typedef struct msGeometryParserInfo_t {
@@ -225,6 +225,7 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
 
   if ( gpi->chProps & SP_ISSINGLEPOINT ) {
     // single point geometry
+    gpi->nNumPoints = 1;
     if (gpi->nLen < 6 + gpi->nPointSize) {
       msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");
       return NOT_ENOUGH_DATA;
@@ -240,6 +241,7 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
     ReadPoint(gpi, &shape->line[0].point[0], 0, 0);
   } else if ( gpi->chProps & SP_ISSINGLELINESEGMENT ) {
     // single line segment with 2 points
+    gpi->nNumPoints = 2;
     if (gpi->nLen < 6 + 2 * gpi->nPointSize) {
       msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");
       return NOT_ENOUGH_DATA;
