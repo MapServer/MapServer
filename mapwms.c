@@ -370,7 +370,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
           msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
           /* cannot return exception at this point because we are already writing to stdout */
         } else {
-          /* split into subgroups. Start at adres + 1 because the first '/' would cause an extra emtpy group */
+          /* split into subgroups. Start at address + 1 because the first '/' would cause an extra empty group */
           nestedGroups[i] = msStringSplit(groups + 1, '/', &numNestedGroups[i]);
           /* */
           for (j = 0; j < map->numlayers; j++) {
@@ -1619,15 +1619,21 @@ this request. Check wms/ows_enable_request settings.",
             /* Check the style of the root layer */
             } else if (map->name && strcasecmp(map->name, layers[i]) == 0) {
                 const char *styleName = NULL;
+                char *pszEncodedStyleName = NULL;
                 styleName = msOWSLookupMetadata(&(map->web.metadata), "MO", "style_name");
-                if (!styleName || strcasecmp(styleName, tokens[i]) != 0) {
+                if (styleName == NULL)
+                  styleName = "default";
+                pszEncodedStyleName = msEncodeHTMLEntities(styleName);
+                if (strcasecmp(pszEncodedStyleName, tokens[i]) != 0) {
                     msSetError(MS_WMSERR, "Style (%s) not defined on root layer.",
                                "msWMSLoadGetMapParams()", tokens[i]);
                     msFreeCharArray(tokens, n);
                     msFreeCharArray(layers, numlayers);
+                    msFree(pszEncodedStyleName);
 
                     return msWMSException(map, nVersion, "StyleNotDefined", wms_exception_format);
                 }
+                msFree(pszEncodedStyleName);
             }
 
           }
@@ -1970,7 +1976,7 @@ void msWMSPrintKeywordlist(FILE *stream, const char *tabspace,
 
     /* find out if there's a vocabulary list set */
     vocabularylist = msOWSLookupMetadata(metadata, namespaces, vocname);
-    if ( vocabularylist ) {
+    if ( vocabularylist && nVersion >= OWS_1_3_0 ) {
       tokens = msStringSplit(vocabularylist, ',', &ntokens);
       if ( tokens && ntokens > 0 ) {
         /* In order to do malloc only once, the length of the metadata*/
@@ -2349,10 +2355,36 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
             }
           }
           if (classnameset) {
-            int size_x=0, size_y=0;
-            int layer_index[1];
-            layer_index[0] = lp->index;
-            if (msLegendCalcSize(map, 1, &size_x, &size_y,  layer_index, 1) == MS_SUCCESS) {
+            int k, l, size_x=0, size_y=0, num_layers=0;
+            int *group_layers = (int *)msSmallMalloc(sizeof(int)*map->numlayers);
+            char ***nestedGroups = NULL;
+            int *numNestedGroups = NULL;
+            int *isUsedInNestedGroup = NULL;
+
+            nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
+            numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+            isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
+            msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups, isUsedInNestedGroup);
+
+            num_layers = 1;
+            group_layers[0] = lp->index;
+            if (isUsedInNestedGroup[lp->index]) {
+              for (j=0; j < map->numlayers; j++) {
+                for(k = 0; k < numNestedGroups[j]; k++) {
+                  if (strcasecmp(lp->name, nestedGroups[j][k]) == 0) {
+                    group_layers[num_layers++] = j;
+                    break;
+                  }
+                }
+              }
+            }
+            group_layers =(int *)msSmallRealloc(group_layers, sizeof(int)*num_layers);
+            
+            if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers, num_layers) == MS_SUCCESS) {
+              const char *styleName = NULL;
+              char *pszEncodedStyleName = NULL;
+              layerObj *lp2 = NULL;
+
               snprintf(width, sizeof(width), "%d", size_x);
               snprintf(height, sizeof(height), "%d", size_y);
 
@@ -2376,16 +2408,45 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
               /* -------------------------------------------------------------------- */
               /*      check if the group parameters for the classes are set. We       */
-              /*      should then publish the deffrent class groups as diffrent styles.*/
+              /*      should then publish the different class groups as different styles.*/
               /* -------------------------------------------------------------------- */
               iclassgroups = 0;
               classgroups = NULL;
+
+              styleName = msOWSLookupMetadata(&(map->web.metadata), "MO", "style_name");
+              if (styleName == NULL)
+                styleName = "default";
+              pszEncodedStyleName = msEncodeHTMLEntities(styleName);
+
               for (i=0; i<lp->numclasses; i++) {
                 if (lp->class[i]->name && lp->class[i]->group) {
+                  /* Check that style is not inherited from root layer (#4442). */
+                  if (strcasecmp(pszEncodedStyleName, lp->class[i]->group) == 0)
+                    continue;
+                  /* Check that style is not inherited from group layer(s) (#4442). */
+                  if (numNestedGroups[lp->index] > 0) {
+                    for (j=0; j<numNestedGroups[lp->index]; j++) {
+                      for (k=0; k < map->numlayers; k++) {
+                        if (GET_LAYER(map, k)->name && strcasecmp(GET_LAYER(map, k)->name, nestedGroups[lp->index][j]) == 0) {
+                          lp2 = (GET_LAYER(map, k));
+                          for (l=0; l < lp2->numclasses; l++) {
+                            if (strcasecmp(lp2->class[l]->group, lp->class[i]->group) == 0)
+                              break;
+                          }
+                          break;
+                        }
+                      }
+                      if (l < lp2->numclasses)
+                        break;
+                    }
+                    if (j < numNestedGroups[lp->index])
+                      continue;
+                  }
                   if (!classgroups) {
                     classgroups = (char **)msSmallMalloc(sizeof(char *));
                     classgroups[iclassgroups++]= msStrdup(lp->class[i]->group);
                   } else {
+                    /* Output style only once. */
                     for (j=0; j<iclassgroups; j++) {
                       if (strcasecmp(classgroups[j], lp->class[i]->group) == 0)
                         break;
@@ -2398,6 +2459,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                   }
                 }
               }
+              msFree(pszEncodedStyleName);
               if (classgroups == NULL) {
                 classgroups = (char **)msSmallMalloc(sizeof(char *));
                 classgroups[0]= msStrdup("default");
@@ -2461,12 +2523,18 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                 msIO_fprintf(stdout, "        </Style>\n");
               }
               msFree(legendurl);
-              for (i=0; i<iclassgroups; i++)
-                msFree(classgroups[i]);
-              msFree(classgroups);
-
+              msFreeCharArray(classgroups, iclassgroups);
               msFree(mimetype);
             }
+            /* free the stuff used for nested layers */
+            for (i = 0; i < map->numlayers; i++) {
+              if (numNestedGroups[i] > 0) {
+                msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
+              }
+            }
+            free(nestedGroups);
+            free(numNestedGroups);
+            free(isUsedInNestedGroup);
           }
         }
       }
@@ -3186,7 +3254,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
           int numtokens = 0;
           char width[10], height[10];
 
-          group_layers =(int *)msSmallRealloc(group_layers,  sizeof(int)*num_layers);
+          group_layers =(int *)msSmallRealloc(group_layers, sizeof(int)*num_layers);
           if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers) == MS_SUCCESS) {
             bufferSize = strlen(script_url_encoded)+300;
             pszLegendURL = (char*)msSmallMalloc(bufferSize);
