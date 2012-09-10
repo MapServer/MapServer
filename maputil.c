@@ -570,9 +570,6 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
           continue; /* can skip this one, next class */
       }
 
-      if (layer->connectiontype == MS_INLINE)
-        return (iclass);
-
       /* verify the minfeaturesize */
       if ((shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) && (layer->class[iclass]->minfeaturesize > 0)) {
         double minfeaturesize = Pix2LayerGeoref(map, layer,
