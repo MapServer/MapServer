@@ -1038,6 +1038,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       }
     }
 
+    if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
+      drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
+    }
+    
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
@@ -2020,10 +2024,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         shape->bounds.maxy > map->extent.maxy) {
       bShapeNeedsClipping = MS_TRUE;
     }
-
+   
     if(MS_DRAW_LABELS(drawmode) && MS_DRAW_UNCLIPPED_LABELS(drawmode)) {
       bNeedUnclippedAnnoShape = MS_TRUE;
       bNeedUnclippedShape = MS_TRUE;
+    }
+
+    if(MS_DRAW_UNCLIPPED_LINES(drawmode)) {
+      bShapeNeedsClipping = MS_FALSE;
     }
   } else {
     bShapeNeedsClipping = MS_FALSE;
