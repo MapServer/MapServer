@@ -4468,6 +4468,25 @@ this request. Check wms/ows_enable_request settings.",
   msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE,
                       MS_NOOVERRIDE, MS_NOOVERRIDE );
 
+  if (psRule == NULL || nLayers > 1) {
+    /* if SCALE was provided in request, calculate an extent and use a default width and height */
+    if (psScale != NULL) {
+      double center_y, scale, cellsize;
+
+      scale = atof(psScale);
+      map->width = 600;
+      map->height = 600;
+      center_y = 0.0;
+
+      cellsize = (scale/map->resolution)/msInchesPerUnit(map->units, center_y);
+
+      map->extent.minx = 0.0 - cellsize*map->width/2.0;
+      map->extent.miny = 0.0 - cellsize*map->height/2.0;
+      map->extent.maxx = 0.0 + cellsize*map->width/2.0;
+      map->extent.maxy = 0.0 + cellsize*map->height/2.0;
+    }
+  }
+
   /* It's a valid Cascading WMS GetLegendGraphic request */
   if (wms_layer)
     return msWMSLayerExecuteRequest(map, 1, 0, 0,
@@ -4498,20 +4517,6 @@ this request. Check wms/ows_enable_request settings.",
   if ( psRule == NULL || nLayers > 1) {
     /* if SCALE was provided in request, calculate an extent and use a default width and height */
     if ( psScale != NULL ) {
-      double center_y, scale, cellsize;
-
-      scale = atof(psScale);
-      map->width = 600;
-      map->height = 600;
-      center_y = 0.0;
-
-      cellsize = (scale/map->resolution)/msInchesPerUnit(map->units, center_y);
-
-      map->extent.minx = 0.0 - cellsize*map->width/2.0;
-      map->extent.miny = 0.0 - cellsize*map->height/2.0;
-      map->extent.maxx = 0.0 + cellsize*map->width/2.0;
-      map->extent.maxy = 0.0 + cellsize*map->height/2.0;
-
       img = msDrawLegend(map, MS_FALSE);
     } else {
       /* Scale-independent legend */

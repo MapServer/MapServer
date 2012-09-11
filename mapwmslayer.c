@@ -788,6 +788,14 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
 
   } else if (nRequestType == WMS_GETLEGENDGRAPHIC) {
+    if(map->extent.maxx > map->extent.minx && map->width > 0 && map->height > 0) {
+      char szBuf[20] = "";
+      double scaledenom;
+      msCalculateScale(map->extent, map->units, map->width, map->height,
+                     map->resolution, &scaledenom);
+      snprintf(szBuf, 20, "%g",scaledenom);
+      msSetWMSParamString(psWMSParams, "SCALE", szBuf, MS_FALSE);
+    }
     pszRequestParam = "GetLegendGraphic";
 
     pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
