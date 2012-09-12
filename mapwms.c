@@ -4340,6 +4340,8 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
       nHeight = atoi(values[i]);
     else if (strcasecmp(names[i], "FORMAT") == 0)
       pszFormat = values[i];
+    else if (strcasecmp(names[i], "SCALE") == 0)
+      psScale = values[i];
 #ifdef USE_OGR
     /* -------------------------------------------------------------------- */
     /*      SLD support :                                                   */
@@ -4356,8 +4358,6 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
       msSLDApplySLD(map, values[i], -1, NULL, NULL);
     else if (strcasecmp(names[i], "RULE") == 0)
       psRule = values[i];
-    else if (strcasecmp(names[i], "SCALE") == 0)
-      psScale = values[i];
     else if (strcasecmp(names[i], "STYLE") == 0)
       pszStyle = values[i];
 #endif
@@ -4468,6 +4468,22 @@ this request. Check wms/ows_enable_request settings.",
   msApplyOutputFormat(&(map->outputformat), psFormat, MS_NOOVERRIDE,
                       MS_NOOVERRIDE, MS_NOOVERRIDE );
 
+  /* if SCALE was provided in request, calculate an extent and use a default width and height */
+  if ( psScale != NULL ) {
+    double scale, cellsize;
+
+    scale = atof(psScale);
+    map->width = 600;
+    map->height = 600;
+
+    cellsize = (scale/map->resolution)/msInchesPerUnit(map->units, 0.0);
+
+    map->extent.maxx = cellsize*map->width/2.0;
+    map->extent.maxy = cellsize*map->height/2.0;
+    map->extent.minx = -map->extent.maxx;
+    map->extent.miny = -map->extent.maxy;
+  }
+  
   /* It's a valid Cascading WMS GetLegendGraphic request */
   if (wms_layer)
     return msWMSLayerExecuteRequest(map, 1, 0, 0,
@@ -4496,22 +4512,8 @@ this request. Check wms/ows_enable_request settings.",
   }
 
   if ( psRule == NULL || nLayers > 1) {
-    /* if SCALE was provided in request, calculate an extent and use a default width and height */
     if ( psScale != NULL ) {
-      double center_y, scale, cellsize;
-
-      scale = atof(psScale);
-      map->width = 600;
-      map->height = 600;
-      center_y = 0.0;
-
-      cellsize = (scale/map->resolution)/msInchesPerUnit(map->units, center_y);
-
-      map->extent.minx = 0.0 - cellsize*map->width/2.0;
-      map->extent.miny = 0.0 - cellsize*map->height/2.0;
-      map->extent.maxx = 0.0 + cellsize*map->width/2.0;
-      map->extent.maxy = 0.0 + cellsize*map->height/2.0;
-
+      /* Scale-dependent legend. map->scaledenom will be calculated in msDrawLegend */
       img = msDrawLegend(map, MS_FALSE);
     } else {
       /* Scale-independent legend */
@@ -4520,6 +4522,7 @@ this request. Check wms/ows_enable_request settings.",
   } else {
     /* RULE was specified. Get the class corresponding to the RULE */
     /* (RULE = class->name) */
+    /* TBT FIXME? also check the map->scaledenom if multiple scale-dependant classes with same name */
 
     for (i=0; i<GET_LAYER(map, iLayerIndex)->numclasses; i++) {
       if (GET_LAYER(map, iLayerIndex)->classgroup &&
