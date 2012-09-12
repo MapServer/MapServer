@@ -2105,6 +2105,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       }
     } else {
       /* clip first, then transform. This means we are clipping in geographical space */
+      double clip_buf_d;
       if(shape->type == MS_SHAPE_POLYGON) {
          /*
           * add a small buffer around the cliping rectangle to
@@ -2112,11 +2113,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
           */
          clip_buf += 2;
       }
-      clip_buf *= map->cellsize;
-      cliprect.minx = map->extent.minx - clip_buf;
-      cliprect.miny = map->extent.miny - clip_buf;
-      cliprect.maxx = map->extent.maxx + clip_buf;
-      cliprect.maxy = map->extent.maxy + clip_buf;
+      clip_buf_d = clip_buf * map->cellsize;
+      cliprect.minx = map->extent.minx - clip_buf_d;
+      cliprect.miny = map->extent.miny - clip_buf_d;
+      cliprect.maxx = map->extent.maxx + clip_buf_d;
+      cliprect.maxy = map->extent.maxy + clip_buf_d;
       if(shape->type == MS_SHAPE_POLYGON) {
         msClipPolygonRect(shape, cliprect);
       } else {
