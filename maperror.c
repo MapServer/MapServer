@@ -532,6 +532,9 @@ char *msGetVersion()
 #ifdef USE_CAIRO
   strcat(version, " SUPPORTS=CAIRO");
 #endif
+#ifdef USE_SVG_CAIRO
+  strcat(version, " SUPPORTS=SVG_SYMBOLS");
+#endif
 #ifdef USE_OGL
   strcat(version, " SUPPORTS=OPENGL");
 #endif
