@@ -6,7 +6,7 @@ compiler:
 before_install:
   - git submodule update --init --recursive
   - sudo apt-get update -qq
-  - sudo apt-get install -qq libpq-dev libpng12-dev libjpeg-dev libgif-dev libgeos-dev libgd2-xpm-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal1-dev libproj-dev libxml2-dev
+  - sudo apt-get install -qq libpq-dev libpng12-dev libjpeg-dev libgif-dev libgeos-dev libgd2-noxpm-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal1-dev libproj-dev libxml2-dev
 
 install:
   - ./configure --with-gd --with-postgis --with-wmsclient --with-proj --with-wfsclient --with-kml --with-cairo --with-wcs --with-proj --with-geos --with-gdal --with-ogr --with-wfs --with-sos
