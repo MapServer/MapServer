@@ -3,7 +3,6 @@
 ret=0
 
 tests=( misc gdal renderers wxs )
-tests=( wxs renderers gdal )
 
 for testcase in  "${tests[@]}" ; do
    cd msautotest/$testcase
