@@ -2023,7 +2023,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
   const char *pszLegendURL=NULL;
   char *pszMetadataName=NULL, *mimetype=NULL;
   char **classgroups = NULL;
-  int iclassgroups=0 ,j=0;
+  int iclassgroups=0;
   char szVersionBuf[OWS_VERSION_MAXLEN];
   size_t bufferSize = 0;
   const char *pszDimensionlist=NULL;
@@ -2355,7 +2355,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
             }
           }
           if (classnameset) {
-            int k, l, size_x=0, size_y=0, num_layers=0;
+            int j=0, k=0, l=0, size_x=0, size_y=0, num_layers=0;
             int *group_layers = (int *)msSmallMalloc(sizeof(int)*map->numlayers);
             char ***nestedGroups = NULL;
             int *numNestedGroups = NULL;
