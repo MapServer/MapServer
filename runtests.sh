@@ -38,8 +38,8 @@ for testcase in "${tests[@]}"; do
    echo "failing tests:"
    for failedtest in $failedtests; do
       echo $failedtest
-      #for gml and xml files, print a diff
-      if echo "$failedtest" | egrep -q "(xml|gml)$"; then
+      #for txt, gml and xml files, print a diff
+      if echo "$failedtest" | egrep -q "(txt|xml|gml)$"; then
         diff -u "../expected/$failedtest" "$failedtest"
      fi
    done
