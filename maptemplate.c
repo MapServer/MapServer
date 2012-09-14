@@ -4113,7 +4113,8 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
 {
   int status;
   int i,j,k;
-  char buffer[1024];
+  char buffer[1024] = "";
+  const char *encoding;
   int nBufferSize =0;
   int nCurrentSize = 0;
   int nExpandBuffer = 0;
@@ -4219,7 +4220,11 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     strcat((*papszBuffer), buffer);
     nCurrentSize += strlen(buffer);
   } else if(mapserv->sendheaders) {
-    msIO_setHeader("Content-type",pszMimeType);
+    encoding = msOWSLookupMetadata(&(mapserv->map->web.metadata), "MO", "encoding");
+    if (encoding)
+      snprintf(buffer, sizeof(buffer), "; charset=%s", encoding);
+
+    msIO_setHeader("Content-type", "%s%s", pszMimeType, buffer);
     msIO_sendHeaders();
   }
 

@@ -1135,7 +1135,7 @@ char *msEncodeHTMLEntities(const char *string)
 
   for(i=0, c=string; *c != '\0'; c++) {
     /* Need to realloc buffer? */
-    if (i+8 > buflen) {
+    if (i+6 > buflen) {
       /* If we had to realloc then this string must contain several */
       /* entities... so let's go with twice the previous buffer size */
       buflen *= 2;
@@ -1143,10 +1143,29 @@ char *msEncodeHTMLEntities(const char *string)
       MS_CHECK_ALLOC(newstring, buflen+1, NULL);
     }
 
-    if( (unsigned char)*c > 127 || *c == '&' || *c == '<' || *c == '>' || *c == '"' || *c == '\'' ) {
-      i += snprintf(newstring+i, buflen-i, "&#%i;", (unsigned char)*c);
-    } else {
-      newstring[i++] = *c;
+    switch(*c) {
+      case '&':
+        strcpy(newstring+i, "&amp;");
+        i += 5;
+        break;
+      case '<':
+        strcpy(newstring+i, "&lt;");
+        i += 4;
+        break;
+      case '>':
+        strcpy(newstring+i, "&gt;");
+        i += 4;
+        break;
+      case '"':
+        strcpy(newstring+i, "&quot;");
+        i += 6;
+        break;
+      case '\'':
+        strcpy(newstring+i, "&#39;"); /* changed from &apos; and i += 6 (bug 1040) */
+        i += 5;
+        break;
+      default:
+        newstring[i++] = *c;
     }
   }
 
