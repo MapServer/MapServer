@@ -544,7 +544,7 @@ static void writeString(FILE *stream, int indent, const char *name, const char *
   else {
     string_tmp = msStringEscape(string);
     fprintf(stream, "\"%s\"\n", string_tmp);
-    free(string_tmp);
+    if(string!=string_tmp) free(string_tmp);
   }
 }
 
@@ -594,7 +594,7 @@ static void writeNameValuePair(FILE *stream, int indent, const char *name, const
   else {
     string_tmp = msStringEscape(name);
     fprintf(stream, "\"%s\"\t", string_tmp);
-    free(string_tmp);
+    if(name!=string_tmp) free(string_tmp);
   }
 
   if ( (strchr(value, '\'') == NULL) && (strchr(value, '\"') == NULL))
@@ -606,7 +606,7 @@ static void writeNameValuePair(FILE *stream, int indent, const char *name, const
   else {
     string_tmp = msStringEscape(value);
     fprintf(stream, "\"%s\"\n", string_tmp);
-    free(string_tmp);
+    if(value!=string_tmp) free(string_tmp);
   }
 }
 
@@ -2343,7 +2343,7 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
       else {
         string_tmp = msStringEscape(exp->string);
         fprintf(stream, "%s \"%s\"", name, string_tmp);
-        free(string_tmp);
+        if(exp->string!=string_tmp) free(string_tmp);
       }
       break;
     case(MS_EXPRESSION):

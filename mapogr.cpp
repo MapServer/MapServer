@@ -2454,7 +2454,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       char *escapedTextString = msStringEscape((char*)labelTextString);
       msLoadExpressionString(&(c->text),
                              (char*)CPLSPrintf("\"%s\"", escapedTextString));
-      free(escapedTextString);
+      if(escapedTextString != labelTextString) free(escapedTextString);
 
       if (c->numlabels == 0) {
         /* allocate a new label object */
