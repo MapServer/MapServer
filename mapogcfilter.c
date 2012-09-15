@@ -629,9 +629,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     if(lp->filter.string && lp->filter.type == MS_EXPRESSION)
       pszBuffer = msStringConcatenate(pszBuffer, ")");
 
-    escapedTextString = msStringEscape(pszBuffer);
-    msLoadExpressionString(&lp->filter, escapedTextString);
-    free(escapedTextString);
+    msLoadExpressionString(&lp->filter, pszBuffer);
     free(szExpression);
   }
 
