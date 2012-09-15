@@ -606,7 +606,6 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
 
   if (szExpression) {
-    char *escapedTextString;
 
     if (bConcatWhere)
       pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
