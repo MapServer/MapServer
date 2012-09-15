@@ -607,7 +607,6 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
   if (szExpression) {
     char *escapedTextString;
-    char *pszTmp= NULL;
 
     if (bConcatWhere)
       pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
@@ -631,11 +630,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
       pszBuffer = msStringConcatenate(pszBuffer, ")");
 
     escapedTextString = msStringEscape(pszBuffer);
-    pszTmp =  (char *)msSmallMalloc(sizeof(char)*(strlen(escapedTextString)+3));
-    sprintf(pszTmp,"\"%s\"",escapedTextString);
-    msLoadExpressionString(&lp->filter, pszTmp);
-    free(pszTmp);
-    /*msLoadExpressionString(&lp->filter,  (char*)CPLSPrintf("\"%s\"", escapedTextString)); */
+    msLoadExpressionString(&lp->filter, escapedTextString);
     free(escapedTextString);
     free(szExpression);
   }

@@ -2218,6 +2218,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
             /* Force setting a template to enable query. */
             lp->template = msStrdup("ttt.html");
           }
+          msDebug("filter %d: %s",j,aFIDValues[j]);
           psNode = FLTCreateFeatureIdFilterEncoding(aFIDValues[j]);
 
           if( FLTApplyFilterToLayer(psNode, map, lp->index) != MS_SUCCESS ) {

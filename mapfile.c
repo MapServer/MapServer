@@ -2274,7 +2274,10 @@ int loadExpressionString(expressionObj *exp, char *value)
   } else {
     msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
     exp->type = MS_STRING;
-    exp->string = msStrdup(msyystring_buffer);
+    if((strlen(value) - strlen(msyystring_buffer)) == 2)
+      exp->string = msStrdup(msyystring_buffer); /* value was quoted */
+    else
+      exp->string = msStrdup(value); /* use the whole value */
   }
 
   return(0);
