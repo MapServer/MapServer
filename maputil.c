@@ -1886,6 +1886,7 @@ void msCleanup(int signal)
 #ifdef USE_CAIRO
   msCairoCleanup();
 #endif
+  msTimeCleanup();
 
   msIO_Cleanup();
 
