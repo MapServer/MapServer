@@ -40,7 +40,6 @@
 
 typedef struct {
   char pattern[64];
-  ms_regex_t *regex;
   char  format[32];
   char userformat[32];
   MS_TIME_RESOLUTION resolution;
@@ -49,19 +48,19 @@ typedef struct {
 #define MS_NUMTIMEFORMATS 13
 
 timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
-  {"^[0-9]{8}", NULL, "%Y%m%d","YYYYMMDD",TIME_RESOLUTION_DAY},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ",TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS",TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS", TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM",TIME_RESOLUTION_MINUTE},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM",TIME_RESOLUTION_MINUTE},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}", NULL, "%Y-%m-%dT%H", "YYYY-MM-DDTHH",TIME_RESOLUTION_HOUR},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}", NULL, "%Y-%m-%d %H", "YYYY-MM-DD HH",TIME_RESOLUTION_HOUR},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}", NULL, "%Y-%m-%d", "YYYY-MM-DD", TIME_RESOLUTION_DAY},
-  {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM",TIME_RESOLUTION_MONTH},
-  {"^[0-9]{4}", NULL, "%Y", "YYYY",TIME_RESOLUTION_YEAR},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ",TIME_RESOLUTION_SECOND},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{8}", "%Y%m%d","YYYYMMDD",TIME_RESOLUTION_DAY},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ",TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS",TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}", "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM",TIME_RESOLUTION_MINUTE},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}", "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM",TIME_RESOLUTION_MINUTE},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}", "%Y-%m-%dT%H", "YYYY-MM-DDTHH",TIME_RESOLUTION_HOUR},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}", "%Y-%m-%d %H", "YYYY-MM-DD HH",TIME_RESOLUTION_HOUR},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}", "%Y-%m-%d", "YYYY-MM-DD", TIME_RESOLUTION_DAY},
+  {"^[0-9]{4}-[0-9]{2}", "%Y-%m", "YYYY-MM",TIME_RESOLUTION_MONTH},
+  {"^[0-9]{4}", "%Y", "YYYY",TIME_RESOLUTION_YEAR},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", "T%H:%M:%SZ", "THH:MM:SSZ",TIME_RESOLUTION_SECOND},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND},
 };
 
 int *ms_limited_pattern = NULL;
@@ -162,12 +161,13 @@ int msTimeMatchPattern(char *timestring, char *timeformat)
   }
 
   if (i >= 0 && i < MS_NUMTIMEFORMATS) {
-    if(!ms_timeFormats[i].regex) {
-      ms_timeFormats[i].regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
-      ms_regcomp(ms_timeFormats[i].regex,
-                 ms_timeFormats[i].pattern, MS_REG_EXTENDED|MS_REG_NOSUB);
-    }
-    if (ms_regexec(ms_timeFormats[i].regex, timestring, 0,NULL, 0) == 0)
+    int match;
+    ms_regex_t *regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
+    ms_regcomp(regex, ms_timeFormats[i].pattern, MS_REG_EXTENDED|MS_REG_NOSUB);
+    match = ms_regexec(regex, timestring, 0,NULL, 0);
+    ms_regfree(regex);
+    msFree(regex);
+    if(match == 0)
       return MS_TRUE;
 
   }
@@ -238,25 +238,30 @@ int msParseTime(const char *string, struct tm *tm)
     num_patterns = MS_NUMTIMEFORMATS;
 
   for(i=0; i<num_patterns; i++) {
+    ms_regex_t *regex;
+    int match;
     if (ms_num_limited_pattern > 0)
       indice = ms_limited_pattern[i];
     else
       indice = i;
 
-    if(!ms_timeFormats[indice].regex) { /* compile the expression */
-      ms_timeFormats[indice].regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
-      if(ms_regcomp(ms_timeFormats[indice].regex, ms_timeFormats[indice].pattern, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
-        msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[indice].pattern);
-        return(MS_FALSE);
-      }
+    regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
+    if(ms_regcomp(regex, ms_timeFormats[indice].pattern, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
+      msFree(regex);
+      msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[indice].pattern);
+      return MS_FALSE;
     }
-
+    match = ms_regexec(regex, string, 0,NULL, 0);
     /* test the expression against the string */
-    if(ms_regexec(ms_timeFormats[indice].regex, string, 0, NULL, 0) == 0) {
+    if(match == 0) {
       /* match    */
       msStrptime(string, ms_timeFormats[indice].format, tm);
+      ms_regfree(regex);
+      msFree(regex);
       return(MS_TRUE);
     }
+    ms_regfree(regex);
+    msFree(regex);
   }
 
   msSetError(MS_REGEXERR, "Unrecognized date or time format (%s).", "msParseTime()", string);
@@ -274,19 +279,22 @@ int msTimeGetResolution(const char *timestring)
     return -1;
 
   for(i=0; i<MS_NUMTIMEFORMATS; i++) {
-    if(!ms_timeFormats[i].regex) {
-      ms_timeFormats[i].regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
-      if(ms_regcomp(ms_timeFormats[i].regex, ms_timeFormats[i].pattern,
-                    MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
-        msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[i].pattern);
-        return -1;
-      }
+    ms_regex_t *regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
+    if(ms_regcomp(regex, ms_timeFormats[i].pattern,
+                  MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
+      msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[i].pattern);
+      msFree(regex);
+      return -1;
     }
     /* test the expression against the string */
-    if(ms_regexec(ms_timeFormats[i].regex, timestring, 0, NULL, 0) == 0) {
+    if(ms_regexec(regex, timestring, 0, NULL, 0) == 0) {
       /* match    */
+      ms_regfree(regex);
+      msFree(regex);
       return ms_timeFormats[i].resolution;
     }
+    ms_regfree(regex);
+    msFree(regex);
   }
 
   return -1;
