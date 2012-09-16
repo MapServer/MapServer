@@ -43,7 +43,7 @@
 
 int FLTIsNumeric(char *pszValue)
 {
-  if (pszValue) {
+  if (pszValue != NULL && *pszValue != '\0' && !isspace(*pszValue)) {
     /*the regex seems to have a problem on windows when mapserver is built using
       PHP regex*/
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -64,8 +64,9 @@ int FLTIsNumeric(char *pszValue)
     if (!bString)
       return MS_TRUE;
 #else
-    if (msEvalRegex("^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$", pszValue) == MS_TRUE)
-      return MS_TRUE;
+    char * p;
+    strtod (pszValue, &p);
+    if (*p == '\0') return MS_TRUE;
 #endif
   }
 
