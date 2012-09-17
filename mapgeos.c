@@ -239,6 +239,7 @@ static GEOSGeom msGEOSShape2Geometry_polygon(shapeObj *shape)
     }
 
     g = GEOSGeom_createCollection(GEOS_MULTIPOLYGON, polygons, numOuterRings);
+    free(polygons);
   }
 
   free(outerList);

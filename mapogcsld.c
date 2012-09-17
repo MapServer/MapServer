@@ -185,6 +185,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
           msFree(pasLayers[l].name);
           pasLayers[l].name = strdup(tmpId);
           msInsertLayer(map, psTmpLayer, -1);
+          MS_REFCNT_DECR(psTmpLayer);
         }
       }
     }
@@ -238,8 +239,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
             /*unset the classgroup on the layer if it was set. This allows the layer to render
               with all the classes defined in the SLD*/
-            if (GET_LAYER(map, i)->classgroup)
-              msFree(GET_LAYER(map, i)->classgroup);
+            msFree(GET_LAYER(map, i)->classgroup);
             GET_LAYER(map, i)->classgroup = NULL;
 
             iClass = 0;
@@ -290,8 +290,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                   break;
               }
               if (k < GET_LAYER(map, i)->numclasses) {
-                if ( GET_LAYER(map, i)->classgroup)
-                  msFree( GET_LAYER(map, i)->classgroup);
+                msFree( GET_LAYER(map, i)->classgroup);
                 GET_LAYER(map, i)->classgroup = msStrdup(pasLayers[j].classgroup);
               } else {
                 /* TODO  we throw an exception ?*/
@@ -774,12 +773,14 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
           psFilter = CPLGetXMLNode(psRule, "Filter");
           if (psFilter && psFilter->psChild &&
               psFilter->psChild->pszValue) {
-
+            CPLXMLNode *psTmpNextNode = NULL;
             /* clone the tree and set the next node to null */
             /* so we only have the Filter node */
             psTmpNode = CPLCloneXMLTree(psFilter);
+            psTmpNextNode = psTmpNode->psNext;
             psTmpNode->psNext = NULL;
             pszTmpFilter = CPLSerializeXMLTree(psTmpNode);
+            psTmpNode->psNext = psTmpNextNode;
             CPLDestroyXMLNode(psTmpNode);
 
             if (pszTmpFilter) {
@@ -888,8 +889,10 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     psNamedStyle = CPLGetXMLNode(psRoot, "NamedStyle");
     if (psNamedStyle) {
       psSLDName = CPLGetXMLNode(psNamedStyle, "Name");
-      if (psSLDName && psSLDName->psChild &&  psSLDName->psChild->pszValue)
+      if (psSLDName && psSLDName->psChild &&  psSLDName->psChild->pszValue) {
+        msFree(psLayer->classgroup);
         psLayer->classgroup = msStrdup(psSLDName->psChild->pszValue);
+      }
     }
   }
 
@@ -1573,15 +1576,17 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 
       /* default symbol is square */
 
-      if (!pszSymbolName ||
+      if (!pszSymbolName || !*pszSymbolName || 
           (strcasecmp(pszSymbolName, "square") != 0 &&
            strcasecmp(pszSymbolName, "circle") != 0 &&
            strcasecmp(pszSymbolName, "triangle") != 0 &&
            strcasecmp(pszSymbolName, "star") != 0 &&
            strcasecmp(pszSymbolName, "cross") != 0 &&
            strcasecmp(pszSymbolName, "x") != 0)) {
-        if (msGetSymbolIndex(&map->symbolset, pszSymbolName,  MS_FALSE) < 0)
+        if (!pszSymbolName || !*pszSymbolName || msGetSymbolIndex(&map->symbolset, pszSymbolName,  MS_FALSE) < 0) {
+          msFree(pszSymbolName);
           pszSymbolName = msStrdup("square");
+        }
       }
 
 
@@ -1712,6 +1717,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
       if (psExternalGraphic)
         msSLDParseExternalGraphic(psExternalGraphic, psStyle, map);
     }
+    msFree(pszSymbolName);
   }
 
   return MS_SUCCESS;

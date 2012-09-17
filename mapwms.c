@@ -198,9 +198,8 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
     msIO_printf("</ServiceException>\n");
     msIO_printf("</ServiceExceptionReport>\n");
 
-    free(schemalocation);
-
   }
+  free(schemalocation);
 
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
@@ -637,14 +636,14 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
             }
             if (j == nextentranges) {
               valueisvalid = MS_FALSE;
+              msFreeCharArray(onerange, ntmp);
               break;
             }
           }
         } else {
           valueisvalid = MS_FALSE;
         }
-        if (onerange && ntmp > 0)
-          msFreeCharArray(onerange, ntmp);
+        msFreeCharArray(onerange, ntmp);
       }
       uservaluevalid = valueisvalid;
     }
@@ -858,6 +857,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
+        msFreeCharArray(layers,numlayers);
+        msFree(layerOrder);
         numlayers = 0;
         if (sld_url == NULL &&   sld_body == NULL) {
           msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
@@ -870,6 +871,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         layerlimit = msOWSLookupMetadata(&(map->web.metadata), "MO", "layerlimit");
         if(layerlimit) {
           if (numlayers > atoi(layerlimit)) {
+            msFreeCharArray(layers,numlayers);
+            msFree(layerOrder);
             msSetError(MS_WMSERR, "Number of layers requested exceeds LayerLimit.",
                        "msWMSLoadGetMapParams()");
             return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -1244,12 +1247,16 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                                        wms_exception_format)) {
                 msFreeCharArray(tokens, ntokens);
                 msFree(dimensionname);
+                msFree(stmp);
 
                 return msWMSException(lp->map, nVersion, "InvalidDimensionValue",  wms_exception_format);
               }
+              msFree(dimensionname);
+              msFree(stmp);
               break;
             }
             msFree(dimensionname);
+            msFree(stmp);
           }
         }
         msFreeCharArray(tokens, ntokens);
@@ -1583,6 +1590,8 @@ this request. Check wms/ows_enable_request settings.",
                   layers[l] = strdup(tmpId);
                   msInsertLayer(map, psTmpLayer, -1);
                   bLayerInserted =MS_TRUE;
+                  /* layer was copied, we need to decrement its refcount */
+                  MS_REFCNT_DECR(psTmpLayer);
                 }
               }
             }
@@ -1602,8 +1611,7 @@ this request. Check wms/ows_enable_request settings.",
               lp =   GET_LAYER(map, j);
               for (k=0; k<lp->numclasses; k++) {
                 if (lp->class[k]->group && strcasecmp(lp->class[k]->group, tokens[i]) == 0) {
-                  if (lp->classgroup)
-                    msFree(lp->classgroup);
+                  msFree(lp->classgroup);
                   lp->classgroup = msStrdup( tokens[i]);
                   break;
                 }
@@ -1640,16 +1648,14 @@ this request. Check wms/ows_enable_request settings.",
         } else {
           msSetError(MS_WMSERR, "Invalid style (%s). Mapserver is expecting an empty string for the STYLES : STYLES= or STYLES=,,, or using keyword default  STYLES=default,default, ...",
                      "msWMSLoadGetMapParams()", styles);
-          if (tokens && n > 0)
-            msFreeCharArray(tokens, n);
-          if (layers && numlayers > 0)
-            msFreeCharArray(layers, numlayers);
+          msFreeCharArray(tokens, n);
+          msFreeCharArray(layers, numlayers);
           return msWMSException(map, nVersion, "StyleNotDefined", wms_exception_format);
         }
       }
     }
-    if (tokens && n > 0)
-      msFreeCharArray(tokens, n);
+    msFreeCharArray(tokens, n);
+    msFreeCharArray(layers, numlayers);
   }
 
   /*
@@ -2227,6 +2233,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
         msFree(pszDimension);
         msFree(pszDimensionItemName);
         msFree(pszDimensionUnitName);
+        msFree(pszDimensionExtentName);
         msFree(pszDimensionDefaultName);
 
       }
@@ -4505,8 +4512,7 @@ this request. Check wms/ows_enable_request settings.",
                  "msWMSGetLegendGraphic()");
       return msWMSException(map, nVersion, "StyleNotDefined", wms_exception_format);
     } else {
-      if (GET_LAYER(map, iLayerIndex)->classgroup)
-        msFree(GET_LAYER(map, iLayerIndex)->classgroup);
+      msFree(GET_LAYER(map, iLayerIndex)->classgroup);
       GET_LAYER(map, iLayerIndex)->classgroup = msStrdup(pszStyle);
 
     }

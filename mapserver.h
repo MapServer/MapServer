@@ -2729,8 +2729,8 @@ extern "C" {
   MS_DLL_EXPORT int msPopulateRendererVTableGD( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableKML( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
-#ifdef CAIRO
-  MS_DLL_EXPORT void msCairoCleanup();
+#ifdef USE_CAIRO
+  MS_DLL_EXPORT void msCairoCleanup(void);
 #endif
 
   /* allocate 50k for starters */

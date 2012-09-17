@@ -536,21 +536,22 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
 
-    if (strncasecmp(psNode->pszValue, "intersect", 9) == 0)
-      pszTmp = msStrdup("intersects");
-    if (strncasecmp(psNode->pszValue, "equals", 6) == 0)
-      pszTmp = msStrdup("eq");
-    else
-      pszTmp = msStrdup(psNode->pszValue);
-    msStringToLower(pszTmp);
-    if (bBBoxQuery)
+    if (bBBoxQuery) {
       sprintf(szBuffer, " %s ", "intersects");
-    /* sprintf(szBuffer, " %s ", "disjoint"); */
-    else
-      sprintf(szBuffer, " %s ", pszTmp);
+    } else {
+      if (strncasecmp(psNode->pszValue, "intersect", 9) == 0)
+        sprintf(szBuffer, " %s ", "intersects");
+      else if (strncasecmp(psNode->pszValue, "equals", 6) == 0)
+        sprintf(szBuffer, " %s ", "eq");
+      else {
+        pszTmp = msStrdup(psNode->pszValue);
+        msStringToLower(pszTmp);
+        sprintf(szBuffer, " %s ", pszTmp);
+        msFree(pszTmp);
+      }
+    }
 
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
-    msFree(pszTmp);
 
     pszWktText = msGEOSShapeToWKT(psTmpShape);
     sprintf(szBuffer, "%s", " fromText('");
@@ -560,8 +561,14 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
     msGEOSFreeWKT(pszWktText);
   }
-  if (psBufferShape)
+  if (psBufferShape) {
     msFreeShape(psBufferShape);
+    msFree(psBufferShape);
+  }
+  if(bBBoxQuery) {
+     msFreeShape(psTmpShape);
+     msFree(psTmpShape);
+  }
 
 
   sprintf(szBuffer, "%s", ")");
