@@ -72,7 +72,6 @@ int msWCSException11(mapObj *map, const char *locator,
   xmlChar *buffer       = NULL;
 
   psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
-  //TODO leak?
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   errorString = msGetErrorString("\n");
@@ -85,8 +84,7 @@ int msWCSException11(mapObj *map, const char *locator,
 
   xmlDocSetRootElement(psDoc, psRootNode);
 
-  psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
-  //TODO leak?
+  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   if (encoding)
     msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
@@ -104,6 +102,7 @@ int msWCSException11(mapObj *map, const char *locator,
   free(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
+  xmlFreeNs(psNsOws);
 
   /* clear error since we have already reported it */
   msResetErrorList();
@@ -125,7 +124,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
   char *format_list = msStrdup("");
   char **tokens = NULL, **formats = NULL;
   int  i, numtokens = 0, numformats;
-  const char *value;
+  char *value;
 
   msApplyDefaultOutputFormats(map);
 
@@ -136,6 +135,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
       && (value = msOWSGetEncodeMetadata( &(layer->metadata),"CO","formats",
                                           "GTiff" )) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
+    msFree(value);
   }
 
   /* -------------------------------------------------------------------- */
@@ -144,6 +144,7 @@ static char *msWCSGetFormatsList11( mapObj *map, layerObj *layer )
   else if((value = msOWSGetEncodeMetadata( &(map->web.metadata), "CO", "formats",
                                            NULL)) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
+    msFree(value);
   }
 
   /* -------------------------------------------------------------------- */
@@ -461,6 +462,8 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemaLocation);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/ows/1.1.0/owsAll.xsd");
   xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
+  msFree(schemaLocation);
+  msFree(xsi_schemaLocation);
 
   /* -------------------------------------------------------------------- */
   /*      Service metadata.                                               */
@@ -775,7 +778,7 @@ msWCSDescribeCoverage_CoverageDescription11(
   /* -------------------------------------------------------------------- */
   {
     xmlNodePtr psField, psInterpMethods, psAxis;
-    const char *value;
+    char *value;
 
     psField =
       xmlNewChild(
@@ -786,12 +789,14 @@ msWCSDescribeCoverage_CoverageDescription11(
                                     "rangeset_label", NULL );
     if( value )
       xmlNewChild( psField, psOwsNs, BAD_CAST "Title", BAD_CAST value );
+    msFree(value);
 
     /* ows:Abstract? TODO */
 
     value = msOWSGetEncodeMetadata( &(layer->metadata), "CO",
                                     "rangeset_name", "raster" );
     xmlNewChild( psField, NULL, BAD_CAST "Identifier", BAD_CAST value );
+    msFree(value);
 
     xmlNewChild(
         xmlNewChild( psField, NULL, BAD_CAST "Definition", NULL ),
@@ -803,6 +808,7 @@ msWCSDescribeCoverage_CoverageDescription11(
     if( value )
       xmlNewChild( psField, NULL, BAD_CAST "NullValue",
                    BAD_CAST value );
+    msFree(value);
 
     /* InterpolationMethods */
     psInterpMethods =
@@ -823,6 +829,7 @@ msWCSDescribeCoverage_CoverageDescription11(
                                       "bands_name", "bands" );
       psAxis = xmlNewChild( psField, NULL, BAD_CAST "Axis", NULL );
       xmlNewProp( psAxis, BAD_CAST "identifier", BAD_CAST value );
+      msFree(value);
 
       psKeys = xmlNewChild( psAxis, NULL, BAD_CAST
                             "AvailableKeys",  NULL );
@@ -954,6 +961,8 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemaLocation);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/ows/1.1.0/owsAll.xsd");
   xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
+  msFree(schemaLocation);
+  msFree(xsi_schemaLocation);
 
   /* -------------------------------------------------------------------- */
   /*      Generate a CoverageDescription for each requested coverage.     */
@@ -1196,6 +1205,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
       msReleaseLock( TLOCK_GDAL );
       status = msSaveImage(map, image, filename);
       if( status != MS_SUCCESS ) {
+        msFree(filename);
         msSetError(MS_MISCERR, "msSaveImage() failed",
                    "msWCSReturnCoverage11()");
         return msWCSException11(map, "mapserv", "NoApplicableCode",
@@ -1360,6 +1370,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     }
 
     msFree(base_dir);
+    msFree(filename);
     CSLDestroy( all_files );
     msReleaseLock( TLOCK_GDAL );
 

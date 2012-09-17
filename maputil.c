@@ -1883,9 +1883,16 @@ void msCleanup(int signal)
   msGEOSCleanup();
 #endif
 
+/* make valgrind happy on debug code */
+#ifndef NDEBUG
 #ifdef USE_CAIRO
   msCairoCleanup();
 #endif
+#if defined(USE_LIBXML2)
+  xmlCleanupParser();
+#endif
+#endif
+
   msTimeCleanup();
 
   msIO_Cleanup();
