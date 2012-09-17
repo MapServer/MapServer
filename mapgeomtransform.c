@@ -190,6 +190,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
       msDrawShadeSymbol(symbolset, image, tmpshp, style, scalefactor);
 
       msFreeShape(tmpshp);
+      msFree(tmpshp);
     }
     break;
     case MS_GEOMTRANSFORM_LABELPOINT:

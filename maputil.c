@@ -1865,7 +1865,7 @@ void msCleanup(int signal)
   msGDALCleanup();
 #endif
 #ifdef USE_PROJ
-#  if PJ_VERSION >= 480
+#  if PJ_VERSION >= 470
   pj_clear_initcache();
 #  endif
   pj_deallocate_grids();
@@ -1881,6 +1881,10 @@ void msCleanup(int signal)
 
 #ifdef USE_GEOS
   msGEOSCleanup();
+#endif
+
+#ifdef USE_CAIRO
+  msCairoCleanup();
 #endif
 
   msIO_Cleanup();

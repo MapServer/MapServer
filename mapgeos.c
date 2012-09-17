@@ -205,6 +205,7 @@ static GEOSGeom msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *
   g = GEOSGeom_createPolygon(outerRing, innerRings, numInnerRings);
 
   free(innerList); /* clean up */
+  free(innerRings); /* clean up */
 
   return g;
 }

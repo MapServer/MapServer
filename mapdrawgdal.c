@@ -2042,6 +2042,7 @@ msDrawRasterLayerGDAL_RawMode(
   }
 
   free( pBuffer );
+  free( f_nodatas );
 
   return 0;
 }

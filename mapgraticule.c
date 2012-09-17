@@ -91,14 +91,17 @@ int msGraticuleLayerOpen(layerObj *layer)
     pInfo->ilabeltype = (int) lpDefault;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DEFAULT );
   } else if( strcmp( pInfo->labelformat, "DDMMSS" ) == 0 ) {
+    msFree(pInfo->labelformat);
     pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMMSS ) + 1 );
     pInfo->ilabeltype = (int) lpDDMMSS;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMMSS );
   } else if( strcmp( pInfo->labelformat, "DDMM" )   == 0 ) {
+    msFree(pInfo->labelformat);
     pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
     pInfo->ilabeltype = (int) lpDDMM;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
   } else if( strcmp( pInfo->labelformat, "DD" )   == 0 ) {
+    msFree(pInfo->labelformat);
     pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DD ) + 1 );
     pInfo->ilabeltype = (int) lpDD;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DD );

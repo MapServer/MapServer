@@ -872,16 +872,17 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
     argValue = msLookupHashTable(tagArgs, "trimlast");
     if(argValue) trimLast = argValue;
-    msFreeHashTable(tagArgs);
   }
 
   if(strstr(*line, "[/feature]") == NULL) { /* we know the closing tag must be here, if not throw an error */
     msSetError(MS_WEBERR, "[feature] tag found without closing [/feature].", "processFeatureTag()");
+    msFreeHashTable(tagArgs);
     return(MS_FAILURE);
   }
 
   if(getInlineTag("feature", *line, &tag) != MS_SUCCESS) {
     msSetError(MS_WEBERR, "Malformed feature tag.", "processFeatureTag()");
+    msFreeHashTable(tagArgs);
     return MS_FAILURE;
   }
 
@@ -904,7 +905,10 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   if(layer->numjoins > 0) { /* initialize necessary JOINs here */
     for(j=0; j<layer->numjoins; j++) {
       status = msJoinConnect(layer, &(layer->joins[j]));
-      if(status != MS_SUCCESS) return status;
+      if(status != MS_SUCCESS) {
+        msFreeHashTable(tagArgs);
+        return status;
+      }
     }
   }
 
@@ -919,7 +923,10 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
   for(i=0; i<limit; i++) {
     status = msLayerGetShape(layer, &(mapserv->resultshape), &(layer->resultcache->results[i]));
-    if(status != MS_SUCCESS) return status;
+    if(status != MS_SUCCESS) {
+      msFreeHashTable(tagArgs);
+      return status;
+    }
 
     mapserv->resultshape.classindex = msShapeGetClass(layer, layer->map, &mapserv->resultshape,  NULL, -1);
 
@@ -967,6 +974,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   */
   free(postTag);
   free(tag);
+  msFreeHashTable(tagArgs);
 
   return(MS_SUCCESS);
 }
@@ -1008,18 +1016,18 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     if(tagArgs) {
       layerName = msLookupHashTable(tagArgs, "layer");
       nodata = msLookupHashTable(tagArgs, "nodata");
-      msFreeHashTable(tagArgs);
-      tagArgs=NULL;
     }
 
     if(!layerName) {
       msSetError(MS_WEBERR, "[resultset] tag missing required 'layer' argument.", "processResultSetTag()");
+      msFreeHashTable(tagArgs);
       return(MS_FAILURE);
     }
 
     layerIndex = msGetLayerIndex(mapserv->map, layerName);
     if(layerIndex>=mapserv->map->numlayers || layerIndex<0) {
       msSetError(MS_MISCERR, "Layer named '%s' does not exist.", "processResultSetTag()", layerName);
+      msFreeHashTable(tagArgs);
       return MS_FAILURE;
     }
     lp = GET_LAYER(mapserv->map, layerIndex);
@@ -1027,6 +1035,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
       if(!stream) {
         msSetError(MS_WEBERR, "Invalid file pointer.", "processResultSetTag()");
+        msFreeHashTable(tagArgs);
         return(MS_FAILURE);
       }
 
@@ -1041,12 +1050,14 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
       }
       if(foundTagEnd == MS_FALSE) {
         msSetError(MS_WEBERR, "[resultset] tag found without closing [/resultset].", "processResultSetTag()");
+        msFreeHashTable(tagArgs);
         return(MS_FAILURE);
       }
     }
 
     if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
       msSetError(MS_WEBERR, "Malformed resultset tag.", "processResultSetTag()");
+      msFreeHashTable(tagArgs);
       return MS_FAILURE;
     }
 
@@ -1059,8 +1070,10 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
     if(lp->resultcache && lp->resultcache->numresults > 0) {
       /* probably will need a while-loop here to handle multiple instances of [feature ...] tags */
-      if(processFeatureTag(mapserv, &tag, lp) != MS_SUCCESS)
+      if(processFeatureTag(mapserv, &tag, lp) != MS_SUCCESS) {
+        msFreeHashTable(tagArgs);
         return(MS_FAILURE); /* TODO: how to handle */
+      }
       *line = msStringConcatenate(*line, tag);
     } else if(nodata) {
       *line = msStringConcatenate(*line, nodata);
@@ -1074,6 +1087,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
     tagStart = findTag(*line, "resultset");
   }
+  msFreeHashTable(tagArgs);
 
   return(MS_SUCCESS);
 }

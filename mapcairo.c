@@ -1191,6 +1191,10 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
 #endif
 }
 
+void msCairoCleanup() {
+   cairo_debug_reset_static_data();
+}
+
 #endif /*USE_CAIRO*/
 
 

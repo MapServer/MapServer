@@ -39,6 +39,9 @@ extern "C" {
 
 #ifdef USE_PROJ
 #  include <proj_api.h>
+#if PJ_VERSION >= 470 && PJ_VERSION < 480
+   void pj_clear_initcache();
+#endif
 #endif
 
 #define wkp_none 0
