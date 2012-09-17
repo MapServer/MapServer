@@ -3196,7 +3196,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msSetError(MS_WCSERR,
                "Error loading CRS %s.",
                "msWCSGetCoverage20()", params->subsetcrs);
-    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "InvalidParameterValue",
                           "projection", params->version);
   }
@@ -3248,7 +3247,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       msSetError(MS_WCSERR,
                  "Error loading CRS %s.",
                  "msWCSGetCoverage20()", params->subsetcrs);
-      msWCSClearCoverageMetadata20(&cm);
       return msWCSException(map, "InvalidParameterValue",
                             "projection", params->version);
     }
@@ -3272,7 +3270,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Image extent does not intersect with desired region.",
                "msWCSGetCoverage20()");
-    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "ExtentError", "extent", params->version);
   }
 
@@ -3288,7 +3285,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "GetCoverage operation supports only one of SIZE or RESOLUTION per axis.",
                "msWCSGetCoverage20()");
-    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "TooManyParameterValues", "coverage",
                           params->version);
   }
@@ -3377,7 +3373,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                "resulting coverage must be no more than MAXSIZE=%d.",
                "msWCSGetCoverage20()", map->maxsize);
 
-    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "InvalidParameterValue",
                           "size", params->version);
   }
@@ -3408,7 +3403,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   if (!params->format) {
-    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Output format could not be automatically determined. "
                "Use the FORMAT parameter to specify a format.",
                "msWCSGetCoverage20()");
@@ -3429,7 +3423,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   msApplyDefaultOutputFormats(map);
 
   if (msGetOutputFormatIndex(map, params->format) == -1) {
-    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Unrecognized value '%s' for the FORMAT parameter.",
                "msWCSGetCoverage20()", params->format);
     msWCSClearCoverageMetadata20(&cm);
@@ -3462,7 +3455,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     } else if(EQUAL(params->interpolation,"AVERAGE")) {
       msLayerSetProcessingKey(layer, "RESAMPLE", "AVERAGE");
     } else {
-      msWCSClearCoverageMetadata20(&cm);
       msFree(bandlist);
       msSetError( MS_WCSERR, "'%s' specifies an unsupported interpolation method.",
                   "msWCSGetCoverage20()", params->interpolation );
@@ -3487,7 +3479,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msFree(bandlist);
     msSetError(MS_WCSERR, "The map outputformat is missing!",
                "msWCSGetCoverage20()");
-    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, NULL, NULL, params->version);
   } else if (MS_RENDERER_PLUGIN(map->outputformat)) {
     image = msImageCreate(map->width, map->height, map->outputformat,

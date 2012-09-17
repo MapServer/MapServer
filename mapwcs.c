@@ -1280,7 +1280,6 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   if( (value = msOWSGetEncodeMetadata( &(layer->metadata), "CO", "formats",
                                        "GTiff" )) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
-    msFree((char*)value);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msIO_printf("      <formats>%s</formats>\n", tokens[i]);
