@@ -3303,6 +3303,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
           msFree(pszLegendURL);
           msFree(pszMimetype);
         }
+        msFree(group_layers);
       }
       msIO_fprintf(stdout, "    </Style>\n");
       msFree(pszEncodedName);

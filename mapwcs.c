@@ -962,7 +962,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 
   else { /* set default updatesequence */
     if(!updatesequence)
-      updatesequence = msStrdup("0");
+      updatesequence = "0";
     params->updatesequence = msStrdup(updatesequence);
   }
 
@@ -995,7 +995,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
     /* TODO: DocType? */
 
     if (!updatesequence)
-      updatesequence = msStrdup("0");
+      updatesequence = "0";
 
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n", "ISO-8859-1");
 
@@ -1280,6 +1280,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   if( (value = msOWSGetEncodeMetadata( &(layer->metadata), "CO", "formats",
                                        "GTiff" )) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
+    msFree((char*)value);
     if(tokens && numtokens > 0) {
       for(i=0; i<numtokens; i++)
         msIO_printf("      <formats>%s</formats>\n", tokens[i]);
@@ -1335,8 +1336,11 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
         for(i=0; i<map->numlayers; i++) {
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
           if( EQUAL(coverageName, coverages[k]) &&
-              (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) )
+              (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
+            msFree(coverageName);
             break;
+          }
+          msFree(coverageName);
         }
 
         /* i = msGetLayerIndex(map, coverages[k]); */
@@ -1346,6 +1350,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
           return msWCSException(map, "CoverageNotDefined", "coverage", params->version );
         }
       } /* next coverage */
+      msFreeCharArray(coverages,numcoverages);
     }
   }
 
@@ -1378,10 +1383,15 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
       for(k=0; k<numcoverages; k++) {
         for(i=0; i<map->numlayers; i++) {
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
-          if( EQUAL(coverageName, coverages[k]) ) break;
+          if( EQUAL(coverageName, coverages[k]) ) {
+            msFree(coverageName);
+            break;
+          }
+          msFree(coverageName);
         }
         msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
       }
+      msFreeCharArray(coverages,numcoverages);
     }
   } else { /* return all layers */
     for(i=0; i<map->numlayers; i++) {
