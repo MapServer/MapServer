@@ -336,6 +336,8 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
       xmlNewNs(psRootNode, BAD_CAST namespaceList->namespaces[i].uri, BAD_CAST namespaceList->namespaces[i].prefix);
     }
   }
+  msGMLFreeNamespaces(namespaceList);
+  
 
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->pszVersion );
 

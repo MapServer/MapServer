@@ -1286,6 +1286,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
         msIO_printf("      <formats>%s</formats>\n", tokens[i]);
       msFreeCharArray(tokens, numtokens);
     }
+    msFree((char*)value);
   }
   msIO_printf("    </supportedFormats>\n");
 
@@ -1337,8 +1338,13 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
           if( EQUAL(coverageName, coverages[k]) &&
               (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
+<<<<<<< HEAD
             msFree(coverageName);
             break;
+=======
+             msFree(coverageName);
+             break;
+>>>>>>> memcheck
           }
           msFree(coverageName);
         }
@@ -1437,14 +1443,18 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
 
       /* ok, a parameter has been passed which matches a token in wcs_rangeset_axes */
       if(msWCSValidateRangeSetParam(lp, tokens[i], value) != MS_SUCCESS) {
+        int ret;
         msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
-        return msWCSException(map, "InvalidParameterValue", tokens[i], params->version );
+        ret = msWCSException(map, "InvalidParameterValue", tokens[i], params->version );
+        msFreeCharArray(tokens, numtokens);
+        return ret;
       }
 
       /* xxxxx_rangeitem tells us how to subset */
       snprintf(tag, sizeof(tag), "%s_rangeitem", tokens[i]);
       if((rangeitem = msOWSLookupMetadata(&(lp->metadata), "CO", tag)) == NULL) {
         msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
+        msFreeCharArray(tokens, numtokens);
         return msWCSException(map, NULL, NULL, params->version);
       }
 
@@ -1453,12 +1463,15 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
 
         if(!*p_bandlist) {
           msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
+          msFreeCharArray(tokens, numtokens);
           return msWCSException(map, NULL, NULL, params->version );
         }
       } else if(strcasecmp(rangeitem, "_pixels") == 0) { /* special case, subset pixels */
+        msFreeCharArray(tokens, numtokens);
         msSetError( MS_WCSERR, "Arbitrary range sets based on pixel values are not yet supported.", "msWCSGetCoverage()" );
         return msWCSException(map, NULL, NULL, params->version);
       } else {
+        msFreeCharArray(tokens, numtokens);
         msSetError( MS_WCSERR, "Arbitrary range sets based on tile (i.e. image) attributes are not yet supported.", "msWCSGetCoverage()" );
         return msWCSException(map, NULL, NULL, params->version );
       }

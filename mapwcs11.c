@@ -791,7 +791,6 @@ msWCSDescribeCoverage_CoverageDescription11(
       xmlNewChild( psField, psOwsNs, BAD_CAST "Title", BAD_CAST value );
     msFree(value);
 
-
     /* ows:Abstract? TODO */
 
     value = msOWSGetEncodeMetadata( &(layer->metadata), "CO",
@@ -1206,6 +1205,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
       msReleaseLock( TLOCK_GDAL );
       status = msSaveImage(map, image, filename);
       if( status != MS_SUCCESS ) {
+        msFree(filename);
         msSetError(MS_MISCERR, "msSaveImage() failed",
                    "msWCSReturnCoverage11()");
         return msWCSException11(map, "mapserv", "NoApplicableCode",
@@ -1370,6 +1370,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     }
 
     msFree(base_dir);
+    msFree(filename);
     CSLDestroy( all_files );
     msReleaseLock( TLOCK_GDAL );
 

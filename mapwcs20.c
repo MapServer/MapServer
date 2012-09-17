@@ -1202,7 +1202,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
   char *format_list = msStrdup("");
   char **tokens = NULL, **formats = NULL;
   int  i, numtokens = 0, numformats;
-  const char *value;
+  char *value;
 
   /* -------------------------------------------------------------------- */
   /*      Parse from layer metadata.                                      */
@@ -1211,6 +1211,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
       && (value = msOWSGetEncodeMetadata( &(layer->metadata),"CO","formats",
                                           NULL )) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
+    msFree(value);
   }
 
   /* -------------------------------------------------------------------- */
@@ -1219,6 +1220,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
   else if((value = msOWSGetEncodeMetadata( &(map->web.metadata), "CO", "formats",
                                            NULL)) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
+    msFree(value);
   }
 
   /* -------------------------------------------------------------------- */
@@ -2594,12 +2596,14 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     if (i == 0) { /* current */
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)",
                  "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
+      xmlFreeDoc(psDoc);
       return msWCSException(map, "updatesequence",
                             "CurrentUpdateSequence", params->version);
     }
     if (i > 0) { /* invalid */
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)",
                  "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
+      xmlFreeDoc(psDoc);
       return msWCSException(map, "updatesequence",
                             "InvalidUpdateSequence", params->version);
     }
@@ -2629,6 +2633,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "OperationsMetadata") ) {
     if ((script_url = msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL
         || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
+      xmlFreeDoc(psDoc);
       msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities20()");
       return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
     }
@@ -3187,6 +3192,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   msInitProjection(&imageProj);
   if (msLoadProjectionString(&imageProj, cm.srs) == -1) {
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR,
                "Error loading CRS %s.",
                "msWCSGetCoverage20()", params->subsetcrs);
@@ -3238,6 +3244,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     /* if the subsets have a crs given, project the image extent to it */
     msInitProjection(&subsetProj);
     if(msLoadProjectionString(&subsetProj, params->subsetcrs) != MS_SUCCESS) {
+      msWCSClearCoverageMetadata20(&cm);
       msSetError(MS_WCSERR,
                  "Error loading CRS %s.",
                  "msWCSGetCoverage20()", params->subsetcrs);
@@ -3262,6 +3269,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /* create boundings of params subsets and image extent */
   if(msRectOverlap(&subsets, &(layer->extent)) == MS_FALSE) {
     /* extent and bbox do not overlap -> exit */
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Image extent does not intersect with desired region.",
                "msWCSGetCoverage20()");
     msWCSClearCoverageMetadata20(&cm);
@@ -3277,6 +3285,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /* check if we are overspecified  */
   if((params->width != 0 &&  params->resolutionX != MS_WCS20_UNBOUNDED)
       || (params->height != 0 && params->resolutionY != MS_WCS20_UNBOUNDED)) {
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "GetCoverage operation supports only one of SIZE or RESOLUTION per axis.",
                "msWCSGetCoverage20()");
     msWCSClearCoverageMetadata20(&cm);
@@ -3363,6 +3372,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* Are we exceeding the MAXSIZE limit on result size? */
   if(map->width > map->maxsize || map->height > map->maxsize ) {
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Raster size out of range, width and height of "
                "resulting coverage must be no more than MAXSIZE=%d.",
                "msWCSGetCoverage20()", map->maxsize);
@@ -3398,6 +3408,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   if (!params->format) {
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Output format could not be automatically determined. "
                "Use the FORMAT parameter to specify a format.",
                "msWCSGetCoverage20()");
@@ -3418,6 +3429,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   msApplyDefaultOutputFormats(map);
 
   if (msGetOutputFormatIndex(map, params->format) == -1) {
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Unrecognized value '%s' for the FORMAT parameter.",
                "msWCSGetCoverage20()", params->format);
     msWCSClearCoverageMetadata20(&cm);
@@ -3431,6 +3443,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                       MS_NOOVERRIDE, MS_NOOVERRIDE);
 
   if(msWCSGetCoverage20_GetBands(map, layer, params, &cm, &bandlist) != MS_SUCCESS) {
+    msFree(bandlist);
     msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "InvalidParameterValue", "rangesubset",
                           params->version);
@@ -3449,6 +3462,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     } else if(EQUAL(params->interpolation,"AVERAGE")) {
       msLayerSetProcessingKey(layer, "RESAMPLE", "AVERAGE");
     } else {
+      msWCSClearCoverageMetadata20(&cm);
+      msFree(bandlist);
       msSetError( MS_WCSERR, "'%s' specifies an unsupported interpolation method.",
                   "msWCSGetCoverage20()", params->interpolation );
       msWCSClearCoverageMetadata20(&cm);
@@ -3468,6 +3483,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* create the image object  */
   if (!map->outputformat) {
+    msWCSClearCoverageMetadata20(&cm);
+    msFree(bandlist);
     msSetError(MS_WCSERR, "The map outputformat is missing!",
                "msWCSGetCoverage20()");
     msWCSClearCoverageMetadata20(&cm);
