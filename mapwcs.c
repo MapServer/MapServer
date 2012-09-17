@@ -2129,6 +2129,8 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
     } else if (operation == MS_WCS_GET_COVERAGE) {
       retVal = msWCSGetCoverage(map, request, params, ows_request);
     }
+    msWCSFreeParams(params);
+    free(params);
     return retVal;
   } else if (strcmp(ows_request->version, "2.0.0") == 0
              || strcmp(ows_request->version, "2.0.1") == 0) {

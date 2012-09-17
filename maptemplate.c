@@ -561,7 +561,10 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
 
         /* msReturnTemplateQuerycheck all argument if they have values */
         for (i=0; i<nArgs; i++) {
-          if(strlen(papszArgs[i]) == 0) continue;
+          if(strlen(papszArgs[i]) == 0) {
+            free(papszArgs[i]);
+            continue;
+          }
 
           if(strchr(papszArgs[i], '=')) {
             papszVarVal = msStringTokenize(papszArgs[i], "=", &nDummy, MS_FALSE);
@@ -869,6 +872,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
     argValue = msLookupHashTable(tagArgs, "trimlast");
     if(argValue) trimLast = argValue;
+    msFreeHashTable(tagArgs);
   }
 
   if(strstr(*line, "[/feature]") == NULL) { /* we know the closing tag must be here, if not throw an error */
@@ -1004,6 +1008,8 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     if(tagArgs) {
       layerName = msLookupHashTable(tagArgs, "layer");
       nodata = msLookupHashTable(tagArgs, "nodata");
+      msFreeHashTable(tagArgs);
+      tagArgs=NULL;
     }
 
     if(!layerName) {
@@ -1063,8 +1069,6 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     *line = msStringConcatenate(*line, postTag);
 
     /* clean up */
-    msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     free(postTag);
     free(tag);
 

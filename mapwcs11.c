@@ -72,6 +72,7 @@ int msWCSException11(mapObj *map, const char *locator,
   xmlChar *buffer       = NULL;
 
   psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
+  //TODO leak?
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   errorString = msGetErrorString("\n");
@@ -85,6 +86,7 @@ int msWCSException11(mapObj *map, const char *locator,
   xmlDocSetRootElement(psDoc, psRootNode);
 
   psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
+  //TODO leak?
 
   if (encoding)
     msIO_setHeader("Content-type","text/xml; charset=%s", encoding);

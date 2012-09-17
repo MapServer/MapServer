@@ -777,12 +777,6 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 
   double dx, dy;
 
-  ringPoints = (pointObj*) calloc(sizeof(pointObj),NUMBER_OF_SAMPLE_POINTS*4+4);
-  ring.point = ringPoints;
-  ring.numpoints = 0;
-
-  msInitShape( &polygonObj );
-  polygonObj.type = MS_SHAPE_POLYGON;
 
   /* -------------------------------------------------------------------- */
   /*      Build polygon as steps around the source rectangle.             */
@@ -800,6 +794,13 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     rect->miny=rect->maxy=foo.y;
     return MS_SUCCESS;
   }
+  
+  ringPoints = (pointObj*) calloc(sizeof(pointObj),NUMBER_OF_SAMPLE_POINTS*4+4);
+  ring.point = ringPoints;
+  ring.numpoints = 0;
+
+  msInitShape( &polygonObj );
+  polygonObj.type = MS_SHAPE_POLYGON;
 
   /* sample along top */
   if(dx != 0) {

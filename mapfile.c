@@ -901,6 +901,8 @@ static int loadFeature(layerObj *player, int type)
         /* todo, what do we do with multiple WKT property occurances? */
 
         if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
+        msFreeShape(shape);
+        msFree(shape);
         if((shape = msShapeFromWKT(string)) == NULL)
           status = MS_FAILURE;
 
