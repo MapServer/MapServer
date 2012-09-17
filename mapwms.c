@@ -2535,6 +2535,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
             free(nestedGroups);
             free(numNestedGroups);
             free(isUsedInNestedGroup);
+            free(group_layers);
           }
         }
       }
