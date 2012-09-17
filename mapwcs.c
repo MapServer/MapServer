@@ -962,8 +962,9 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 
   else { /* set default updatesequence */
     if(!updatesequence)
-      updatesequence = msStrdup("0");
-    params->updatesequence = msStrdup(updatesequence);
+      params->updatesequence = msStrdup("0");
+    else
+      params->updatesequence = msStrdup(updatesequence);
   }
 
   /* if a bum section param is passed, throw exception */

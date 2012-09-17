@@ -368,8 +368,8 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
     nTmp = msLoadProjectionStringEPSG(&(sProjTmp), pszOutputSRS);
     if (nTmp == 0) {
       msProjectRect(&(map->projection), &(sProjTmp), &map->extent);
-      msFreeProjection(&(sProjTmp));
     }
+    msFreeProjection(&(sProjTmp));
     /*check if the srs passed is valid. Assuming that it is an EPSG:xxx format,
       Or urn:ogc:def:crs:EPSG:xxx format. */
     if (strncasecmp(pszOutputSRS, "EPSG:", 5) == 0 ||
