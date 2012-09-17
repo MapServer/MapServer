@@ -1338,13 +1338,8 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
           if( EQUAL(coverageName, coverages[k]) &&
               (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
-<<<<<<< HEAD
             msFree(coverageName);
             break;
-=======
-             msFree(coverageName);
-             break;
->>>>>>> memcheck
           }
           msFree(coverageName);
         }
