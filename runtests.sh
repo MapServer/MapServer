@@ -47,6 +47,10 @@ for testcase in "${tests[@]}"; do
 done
 
 # PHP tests
+echo ""
+echo "        PHP Tests        "
+echo "#########################"
+echo ""
 cd msautotest/php
 ./run_test.py
 if [ ! "$?" -eq 0 ]; then
