@@ -9,7 +9,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libpq-dev libpng12-dev libjpeg-dev libgif-dev libgeos-dev libgd2-noxpm-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal1-dev libproj-dev libxml2-dev
   - sudo apt-get install php-pear
-  - sudo pear channel-discover pear.phpunit.de && sudo pear install channel://pear.phpunit.de/PHPUnit
+  - sudo pear config-set auto_discover 1 && sudo pear install --alldeps channel://pear.phpunit.de/PHPUnit
   - echo "extension=php_mapscript.so" | sudo tee -a /etc/php5/cli/php.ini
 
 install:
