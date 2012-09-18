@@ -774,6 +774,7 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   int         t;
 
   char        *pos_from, *pos_ftab, *pos_space, *pos_paren;
+  rectObj     extent;
 
   layerinfo =  getMSSQL2008LayerInfo(layer);
 
@@ -900,12 +901,23 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     data_source = tmp;
   }
 
-  if(!layer->filter.string) {
-    snprintf(query_string_temp, sizeof(query_string_temp),  "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ",
-             columns_wanted, data_source, layerinfo->geom_column, box3d );
-  } else {
-    snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ",
-             columns_wanted, data_source, layer->filter.string, layerinfo->geom_column, box3d );
+  /* test whether we should omit spatial filtering */
+  msMSSQL2008LayerGetExtent(layer, &extent);
+  if (extent.minx <= rect.minx && extent.miny <= rect.miny && 
+      extent.maxx >= rect.maxx && extent.maxy >= rect.maxy) {
+      /* no spatial filter used */
+      if(!layer->filter.string) {
+        snprintf(query_string_temp, sizeof(query_string_temp),  "SELECT %s from %s", columns_wanted, data_source );
+      } else {
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, layer->filter.string );
+      }
+  }
+  else {
+      if(!layer->filter.string) {
+        snprintf(query_string_temp, sizeof(query_string_temp),  "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layerinfo->geom_column, box3d );
+      } else {
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layer->filter.string, layerinfo->geom_column, box3d );
+      }
   }
 
   msFree(data_source);
