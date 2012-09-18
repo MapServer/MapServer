@@ -3570,13 +3570,16 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[map]", repstr);
   }
 
+  if(strstr(outstr,"[mapserv_onlineresource]")) {
+    char *ol;
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-  outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",
-                              msOWSGetOnlineResource(mapserv->map, "O", "onlineresource", mapserv->request));
+    ol = msOWSGetOnlineResource(mapserv->map, "O", "onlineresource", mapserv->request);
 #else
-  outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",
-                              msBuildOnlineResource(mapserv->map, mapserv->request));
+    ol = msBuildOnlineResource(mapserv->map, mapserv->request);
 #endif
+    outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",ol);
+    msFree(ol);
+  }
 
   if(getenv("HTTP_HOST")) {
     snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("HTTP_HOST"));
