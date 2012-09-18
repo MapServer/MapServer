@@ -13,9 +13,10 @@ before_install:
   - echo "extension=php_mapscript.so" | sudo tee -a /etc/php5/cli/php.ini
 
 install:
-  - ./configure --prefix=/usr --with-gd --with-postgis --with-wmsclient --with-wfsclient --with-kml --with-cairo --with-wcs --with-proj --with-geos --with-gdal --with-ogr --with-wfs --with-sos --with-php
+  - ./configure --with-gd --with-postgis --with-wmsclient --with-wfsclient --with-kml --with-cairo --with-wcs --with-proj --with-geos --with-gdal --with-ogr --with-wfs --with-sos --with-php
   - make -j4
   - sudo make install 
+  - sudo ldconfig
 
 script:
   - ./runtests.sh
