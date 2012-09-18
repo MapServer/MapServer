@@ -49,7 +49,6 @@ done
 # PHP tests
 cd msautotest/php
 ./run_test.py
-echo `which phpunit`
 if [ ! "$?" -eq 0 ]; then
     ret=1
 fi
