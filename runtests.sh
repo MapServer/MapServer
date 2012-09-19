@@ -2,7 +2,7 @@
 
 ret=0
 
-tests=( query )
+tests=( query misc gdal wxs renderers )
 command_exists () {
    type "$1" &> /dev/null ;
 }
