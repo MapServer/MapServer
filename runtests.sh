@@ -46,4 +46,17 @@ for testcase in "${tests[@]}"; do
    cd ../../..
 done
 
+# PHP tests
+echo ""
+echo "        PHP Tests        "
+echo "#########################"
+echo ""
+cd msautotest/php
+./run_test.py
+if [ ! "$?" -eq 0 ]; then
+    ret=1
+fi
+
+cd ../..
+
 exit $ret
