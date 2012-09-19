@@ -1565,7 +1565,7 @@ msRASTERLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerGetExtent = msRASTERLayerGetExtent;
   /* layer->vtable->LayerGetAutoStyle, use default */
   /* layer->vtable->LayerApplyFilterToLayer, use default */
-  layer->vtable->LayerCloseConnection = msRASTERLayerClose;
+  /* layer->vtable->LayerCloseConnection = msRASTERLayerClose; */
   /* we use backtics for proper tileindex shapefile functioning */
   layer->vtable->LayerSetTimeFilter = msRASTERLayerSetTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */

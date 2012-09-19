@@ -727,7 +727,7 @@ msUVRASTERLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerGetExtent = msUVRASTERLayerGetExtent;
   /* layer->vtable->LayerGetAutoStyle, use default */
   /* layer->vtable->LayerApplyFilterToLayer, use default */
-  layer->vtable->LayerCloseConnection = msUVRASTERLayerClose;
+  /* layer->vtable->LayerCloseConnection = msUVRASTERLayerClose; */
   /* we use backtics for proper tileindex shapefile functioning */
   layer->vtable->LayerSetTimeFilter = msUVRASTERLayerSetTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */

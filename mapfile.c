@@ -544,7 +544,7 @@ static void writeString(FILE *stream, int indent, const char *name, const char *
   else {
     string_tmp = msStringEscape(string);
     fprintf(stream, "\"%s\"\n", string_tmp);
-    free(string_tmp);
+    if(string!=string_tmp) free(string_tmp);
   }
 }
 
@@ -594,7 +594,7 @@ static void writeNameValuePair(FILE *stream, int indent, const char *name, const
   else {
     string_tmp = msStringEscape(name);
     fprintf(stream, "\"%s\"\t", string_tmp);
-    free(string_tmp);
+    if(name!=string_tmp) free(string_tmp);
   }
 
   if ( (strchr(value, '\'') == NULL) && (strchr(value, '\"') == NULL))
@@ -606,7 +606,7 @@ static void writeNameValuePair(FILE *stream, int indent, const char *name, const
   else {
     string_tmp = msStringEscape(value);
     fprintf(stream, "\"%s\"\n", string_tmp);
-    free(string_tmp);
+    if(value!=string_tmp) free(string_tmp);
   }
 }
 
@@ -2274,7 +2274,10 @@ int loadExpressionString(expressionObj *exp, char *value)
   } else {
     msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
     exp->type = MS_STRING;
-    exp->string = msStrdup(msyystring_buffer);
+    if((strlen(value) - strlen(msyystring_buffer)) == 2)
+      exp->string = msStrdup(msyystring_buffer); /* value was quoted */
+    else
+      exp->string = msStrdup(value); /* use the whole value */
   }
 
   return(0);
@@ -2340,7 +2343,7 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
       else {
         string_tmp = msStringEscape(exp->string);
         fprintf(stream, "%s \"%s\"", name, string_tmp);
-        free(string_tmp);
+        if(exp->string!=string_tmp) free(string_tmp);
       }
       break;
     case(MS_EXPRESSION):

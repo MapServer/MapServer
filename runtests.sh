@@ -2,7 +2,15 @@
 
 ret=0
 
-tests=( misc gdal renderers wxs )
+tests=( query misc gdal wxs renderers )
+command_exists () {
+   type "$1" &> /dev/null ;
+}
+
+DIFF=diff
+if command_exists colordiff ; then
+   DIFF="colordiff"
+fi
 
 for testcase in  "${tests[@]}" ; do
    cd msautotest/$testcase
@@ -37,13 +45,29 @@ for testcase in "${tests[@]}"; do
    echo "!!!!! $testcase: FAIL !!!!!"
    echo "failing tests:"
    for failedtest in $failedtests; do
-      echo $failedtest
-      #for gml and xml files, print a diff
-      if echo "$failedtest" | egrep -q "(xml|gml)$"; then
-        diff -u "../expected/$failedtest" "$failedtest"
+      echo ""
+      echo "######################################"
+      echo "# $failedtest"
+      echo "######################################"
+      #for txt, gml and xml files, print a diff
+      if echo "$failedtest" | egrep -q "(txt|xml|gml)$"; then
+        $DIFF -u "../expected/$failedtest" "$failedtest"
      fi
    done
    cd ../../..
 done
+
+# PHP tests
+echo ""
+echo "        PHP Tests        "
+echo "#########################"
+echo ""
+cd msautotest/php
+./run_test.py
+if [ ! "$?" -eq 0 ]; then
+    ret=1
+fi
+
+cd ../..
 
 exit $ret

@@ -43,7 +43,7 @@
 
 int FLTIsNumeric(char *pszValue)
 {
-  if (pszValue) {
+  if (pszValue != NULL && *pszValue != '\0' && !isspace(*pszValue)) {
     /*the regex seems to have a problem on windows when mapserver is built using
       PHP regex*/
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -64,8 +64,9 @@ int FLTIsNumeric(char *pszValue)
     if (!bString)
       return MS_TRUE;
 #else
-    if (msEvalRegex("^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$", pszValue) == MS_TRUE)
-      return MS_TRUE;
+    char * p;
+    strtod (pszValue, &p);
+    if (*p == '\0') return MS_TRUE;
 #endif
   }
 
@@ -606,8 +607,6 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
 
   if (szExpression) {
-    char *escapedTextString;
-    char *pszTmp= NULL;
 
     if (bConcatWhere)
       pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
@@ -630,13 +629,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     if(lp->filter.string && lp->filter.type == MS_EXPRESSION)
       pszBuffer = msStringConcatenate(pszBuffer, ")");
 
-    escapedTextString = msStringEscape(pszBuffer);
-    pszTmp =  (char *)msSmallMalloc(sizeof(char)*(strlen(escapedTextString)+3));
-    sprintf(pszTmp,"\"%s\"",escapedTextString);
-    msLoadExpressionString(&lp->filter, pszTmp);
-    free(pszTmp);
-    /*msLoadExpressionString(&lp->filter,  (char*)CPLSPrintf("\"%s\"", escapedTextString)); */
-    free(escapedTextString);
+    msLoadExpressionString(&lp->filter, pszBuffer);
     free(szExpression);
   }
 
