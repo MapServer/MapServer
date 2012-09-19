@@ -3351,7 +3351,7 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer)
   /* layer->vtable->LayerGetExtent = msPostGISLayerGetExtent; */
   layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
   /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
-  layer->vtable->LayerCloseConnection = msPostGISLayerClose;
+  /* layer->vtable->LayerCloseConnection = msPostGISLayerClose; */
   layer->vtable->LayerSetTimeFilter = msPostGISLayerSetTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
