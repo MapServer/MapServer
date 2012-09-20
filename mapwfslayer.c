@@ -214,6 +214,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 {
   char *pszPostReq = NULL;
   char *pszFilter = NULL;
+  char *nGeometryName = "Geometry";
   size_t bufferSize = 0;
 
   if (psParams->pszVersion == NULL ||
@@ -231,6 +232,8 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
   }
 
 
+  if (psParams->pszGeometryName)
+    nGeometryName = psParams->pszGeometryName);
 
   if (psParams->pszFilter)
     pszFilter = psParams->pszFilter;
@@ -239,12 +242,12 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
     pszFilter = (char *)msSmallMalloc(bufferSize);
     snprintf(pszFilter, bufferSize, "<ogc:Filter>\n"
              "<ogc:BBOX>\n"
-             "<ogc:PropertyName>Geometry</ogc:PropertyName>\n"
+             "<ogc:PropertyName>%f</ogc:PropertyName>\n"
              "<gml:Box>\n"
              "<gml:coordinates>%f,%f %f,%f</gml:coordinates>\n"
              "</gml:Box>\n"
              "</ogc:BBOX>\n"
-             "</ogc:Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+             "</ogc:Filter>", nGeometryName, bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
   }
 
   bufferSize = strlen(pszFilter)+500;
