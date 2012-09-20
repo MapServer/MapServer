@@ -57,8 +57,6 @@ for testcase in "${tests[@]}"; do
    cd ../../..
 done
 
-exit $ret
-
 # PHP tests
 echo ""
 echo "        PHP Tests        "
