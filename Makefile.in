@@ -496,3 +496,27 @@ distclean:
 
 sorta-clean:
 	rm -f *.o *.lo
+
+
+wxs-testcase:
+	cd msautotest/wxs && export PATH=../..:$(PATH) && ./run_test.py
+
+renderers-testcase:
+	cd msautotest/renderers && export PATH=../..:$(PATH) && ./run_test.py
+
+misc-testcase:
+	cd msautotest/misc && export PATH=../..:$(PATH) && ./run_test.py
+
+gdal-testcase:
+	cd msautotest/gdal && export PATH=../..:$(PATH) && ./run_test.py
+
+query-testcase:
+	cd msautotest/query && export PATH=../..:$(PATH) && ./run_test.py
+
+autotest-update:
+	git submodule init
+	git submodule update
+
+test: shp2img mapserv
+	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
+	@./print-test-results.sh
