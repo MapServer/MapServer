@@ -11,12 +11,9 @@ before_install:
   - sudo apt-get install php-pear
   - sudo pear config-set auto_discover 1 && sudo pear install --alldeps channel://pear.phpunit.de/PHPUnit
   - echo "extension=php_mapscript.so" | sudo tee -a /etc/php5/cli/php.ini
-  - psql -c 'create database msautotest;' -U postgres
-  - psql -c 'create extension postgis;' -d msautotest -U postgres 
-  - shp2pgsql -g the_geom msautotest/query/data/bdry_counpy2.shp bdry_counpy2 | psql -U postgres -d msautotest
-  - shp2pgsql -g the_geom -s 3978 msautotest/wxs/data/popplace.shp popplace | psql -U postgres -d msautotest
-  - shp2pgsql -g the_geom -s 3978 msautotest/wxs/data/province.shp province | psql -U postgres -d msautotest
-  - shp2pgsql -g the_geom -s 3978 msautotest/wxs/data/road.shp road | psql -U postgres -d msautotest
+  - cd msautotest
+  - ./create_postgis_test_data.sh
+  - cd ..
 
 install:
   - ./configure --with-gd --with-postgis --with-wmsclient --with-wfsclient --with-kml --with-cairo --with-wcs --with-proj --with-geos --with-gdal --with-ogr --with-wfs --with-sos --with-php
