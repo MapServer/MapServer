@@ -46,7 +46,7 @@ int yyerror(parseObj *, const char *);
 %left INTERSECTS DISJOINT TOUCHES OVERLAPS CROSSES WITHIN CONTAINS BEYOND DWITHIN
 %left AREA LENGTH COMMIFY ROUND
 %left TOSTRING
-%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE
+%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA
 %left '+' '-'
 %left '*' '/' '%'
 %left NEG
@@ -588,6 +588,47 @@ shape_exp: SHAPE
       s->scratch = MS_TRUE;
       $$ = s;
     }
+  | SMOOTHSIA '(' shape_exp ')' {
+      shapeObj *s;
+      s = msSmoothShapeSIA($3, 3, 1, NULL);
+      if(!s) {
+        yyerror(p, "Executing smoothsia failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
+  | SMOOTHSIA '(' shape_exp ',' math_exp ')' {
+      shapeObj *s;
+      s = msSmoothShapeSIA($3, $5, 1, NULL);
+      if(!s) {
+        yyerror(p, "Executing smoothsia failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
+  | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ')' {
+      shapeObj *s;
+      s = msSmoothShapeSIA($3, $5, $7, NULL);
+      if(!s) {
+        yyerror(p, "Executing smoothsia failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
+  | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ',' string_exp ')' {
+      shapeObj *s;
+      s = msSmoothShapeSIA($3, $5, $7, $9);
+      free($9);
+      if(!s) {
+        yyerror(p, "Executing smoothsia failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
 ;
 
 string_exp: STRING
@@ -686,6 +727,10 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_BINDING_MAP_CELLSIZE:
     token = NUMBER;
     (*lvalp).dblval = p->dblval;
+    break;
+  case MS_TOKEN_BINDING_DATA_CELLSIZE:
+    token = NUMBER;
+    (*lvalp).dblval = p->dblval2;
     break;    
   case MS_TOKEN_BINDING_TIME:
     token = TIME;
@@ -706,7 +751,8 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_FUNCTION_DIFFERENCE: token = DIFFERENCE; break;
   case MS_TOKEN_FUNCTION_SIMPLIFY: token = SIMPLIFY; break;
   case MS_TOKEN_FUNCTION_SIMPLIFYPT: token = SIMPLIFYPT; break;
-  case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;        
+  case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;
+  case MS_TOKEN_FUNCTION_SMOOTHSIA: token = SMOOTHSIA; break;    
 
   default:
     break;

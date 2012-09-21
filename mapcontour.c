@@ -4,6 +4,7 @@
  * Project:  MapServer
  * Purpose:  Contour Layer
  * Author:   Alan Boudreault (aboudreault@mapgears.com)
+ * Author:   Daniel Morissette (dmorissette@mapgears.com)
  *
  **********************************************************************
  * Copyright (c) 2011, Alan Boudreault, MapGears
@@ -55,6 +56,7 @@ typedef struct {
   double *buffer; /* memory dataset buffer */
   rectObj extent; /* original dataset extent */
   OGRDataSourceH hOGRDS;
+  double cellsize;
 
 } contourLayerInfo;
 
@@ -100,7 +102,6 @@ static void msContourLayerInfoInitialize(layerObj *layer)
   clinfo->extent.miny = -1.0;
   clinfo->extent.maxx = -1.0;
   clinfo->extent.maxy = -1.0;
-  
   
   initLayer(&clinfo->ogrLayer, layer->map);
   clinfo->ogrLayer.type = layer->type;
@@ -149,8 +150,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
   if (clinfo == NULL || clinfo->hOrigDS == NULL) {
     msSetError(MS_MISCERR, "Assertion failed: Contour layer not opened!!!",
                "msContourLayerReadRaster()");
-    return MS_FAILURE;
-    
+    return MS_FAILURE;    
   }
 
   bands = CSLTokenizeStringComplex(
@@ -233,7 +233,6 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
 
     mapRect = rect;
     map_cellsize_x = map_cellsize_y = map->cellsize;      
-
 #ifdef USE_PROJ
     /* if necessary, project the searchrect to source coords */
     if (msProjectionsDiffer( &(map->projection), &(layer->projection)))  {
@@ -316,7 +315,6 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
       copyRect.minx = GEO_TRANS(adfGeoTransform,0,src_ysize);
     if (copyRect.maxx > GEO_TRANS(adfGeoTransform,src_xsize,0))
       copyRect.maxx = GEO_TRANS(adfGeoTransform,src_xsize,0);
-    
     if (copyRect.miny < GEO_TRANS(adfGeoTransform+3,0,src_ysize))
       copyRect.miny = GEO_TRANS(adfGeoTransform+3,0,src_ysize);
     if (copyRect.maxy > GEO_TRANS(adfGeoTransform+3,src_xsize,0))
@@ -433,6 +431,13 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
   adfGeoTransform[4] = 0;
   adfGeoTransform[5] = -dst_cellsize_y;
 
+  clinfo->cellsize = MAX(dst_cellsize_x, dst_cellsize_y);
+  {
+    char buf[64];
+    sprintf(buf, "%lf", clinfo->cellsize);
+    msInsertHashTable(&layer->metadata, "__data_cellsize__", buf);
+  }
+      
   GDALSetGeoTransform(clinfo->hDS, adfGeoTransform);
   return MS_SUCCESS;
 }
@@ -672,15 +677,16 @@ int msContourLayerClose(layerObj *layer)
     }
 
     msContourLayerInfoFree(layer);
-  }
 
+  }
+  
   return MS_SUCCESS;
 }
 
 int msContourLayerGetItems(layerObj *layer)
 {
   contourLayerInfo *clinfo = (contourLayerInfo *) layer->layerinfo;
-  
+
   if (clinfo == NULL) {
     msSetError(MS_MISCERR, "Assertion failed: Contour layer not opened!!!",
                "msContourLayerGetItems()");

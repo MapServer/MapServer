@@ -202,7 +202,7 @@ mapogcfiltercommon.c maprendering.c mapwcs20.c mapgd.c mapogcsld.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c
 mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp
-mapogr.cpp mapcontour.c ${REGEX_SOURCES})
+mapogr.cpp mapcontour.c mapsmoothing.c ${REGEX_SOURCES})
 
 add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES})
 set_target_properties( mapserver  PROPERTIES

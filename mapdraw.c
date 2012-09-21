@@ -34,7 +34,6 @@
 #include "mapcopy.h"
 
 
-
 #ifdef USE_GD
 /*
  * Functions to reset any pen (color index) values previously set. Used primarily to reset things when
@@ -1044,7 +1043,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
       drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
     }
-  
+
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
@@ -1097,7 +1096,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       retcode = MS_FAILURE;
       break;
     }
-
+    
     if(shape.numlines == 0) { /* once clipped the shape didn't need to be drawn */
       msFreeShape(&shape);
       continue;
@@ -1111,6 +1110,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex]->numstyles);
+
     msFreeShape(&shape);
   }
 

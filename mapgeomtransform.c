@@ -234,7 +234,15 @@ int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
       p.expr->curtoken = p.expr->tokens; /* reset */
       p.type = MS_PARSE_TYPE_SHAPE;
       p.dblval = map->cellsize * (msInchesPerUnit(map->units,0)/msInchesPerUnit(layer->units,0));
-
+      p.dblval2 = 0;
+      /* data_cellsize is only set with contour layer */
+      if (layer->connectiontype == MS_CONTOUR)
+      {
+        char *value = msLookupHashTable(&layer->metadata, "__data_cellsize__");
+        if (value)
+          p.dblval2 = atof(value);
+      }
+          
       status = yyparse(&p);
       if (status != 0) {
         msSetError(MS_PARSEERR, "Failed to process shape expression: %s", "msGeomTransformShape()", e->string);
