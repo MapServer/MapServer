@@ -68,7 +68,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   rectObj bbox;
   const char *pszTmp;
   int nLength, i = 0;
-  char *pszVersion, *pszTypeName = NULL;
+  char *pszVersion, *pszTypeName, *pszGeometryName = NULL;
 
   if (!map || !lp || !bbox_ret)
     return NULL;
@@ -113,6 +113,10 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
       }
   }
   */
+
+  pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "geometryname");
+  if (pszTmp)
+    psParams->pszGeometryName = msStrdup(pszTmp);
 
   pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "typename");
   if (pszTmp)
@@ -232,8 +236,9 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
   }
 
 
-  if (psParams->pszGeometryName)
-    nGeometryName = psParams->pszGeometryName);
+  if (psParams->pszGeometryName) {
+    nGeometryName = psParams->pszGeometryName;
+  }
 
   if (psParams->pszFilter)
     pszFilter = psParams->pszFilter;
@@ -242,7 +247,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
     pszFilter = (char *)msSmallMalloc(bufferSize);
     snprintf(pszFilter, bufferSize, "<ogc:Filter>\n"
              "<ogc:BBOX>\n"
-             "<ogc:PropertyName>%f</ogc:PropertyName>\n"
+             "<ogc:PropertyName>%s</ogc:PropertyName>\n"
              "<gml:Box>\n"
              "<gml:coordinates>%f,%f %f,%f</gml:coordinates>\n"
              "</gml:Box>\n"
