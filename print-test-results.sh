@@ -20,8 +20,9 @@ for testcase in "${tests[@]}"; do
       continue
    fi
    cd result
+   rm -f *.aux.xml
    #leftover .aux.xml files are valid for some gdal tests
-   failedtests=`find . ! -name '*.aux.xml' -type f -printf "%f\n" `
+   failedtests=`find . -type f -printf "%f\n" `
    if [ -z "$failedtests" ]; then
       cd ../../..
       continue
