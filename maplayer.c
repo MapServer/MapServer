@@ -1471,6 +1471,9 @@ int msInitializeVirtualTable(layerObj *layer)
     case(MS_UVRASTER):
       return(msUVRASTERLayerInitializeVirtualTable(layer));
       break;
+    case(MS_CONTOUR):
+      return(msContourLayerInitializeVirtualTable(layer));
+      break;      
     default:
       msSetError(MS_MISCERR, "Unknown connectiontype, it was %d", "msInitializeVirtualTable()", layer->connectiontype);
       return MS_FAILURE;
