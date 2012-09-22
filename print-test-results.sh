@@ -34,10 +34,6 @@ for testcase in "${tests[@]}"; do
       echo "######################################"
       echo "# $testcase => $failedtest"
       echo "######################################"
-      #for txt, gml and xml files, print a diff
-      if echo "$failedtest" | egrep -q "(txt|xml|gml)$"; then
-        $DIFF -u "../expected/$failedtest" "$failedtest"
-     fi
    done
    cd ../../..
 done
