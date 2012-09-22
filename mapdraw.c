@@ -3007,7 +3007,7 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   positions[2]=MS_CC;
                   npositions = 3;
                 } else {
-                  positions[0]=MS_UL;
+                  positions[0]=MS_UR;
                   positions[1]=MS_LR;
                   positions[2]=MS_UR;
                   positions[3]=MS_LL;
