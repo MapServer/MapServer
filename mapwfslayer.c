@@ -149,7 +149,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     if (strstr(pszTmp, "<Filter>") !=NULL || strstr(pszTmp, "<ogc:Filter") != NULL)
       psParams->pszFilter = msStrdup(pszTmp);
     else {
-      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter>");
+      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc>");
       psParams->pszFilter = msStringConcatenate(psParams->pszFilter, (char*)pszTmp);
       psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "</ogc:Filter>");
     }
@@ -255,7 +255,8 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
              "service=\"WFS\"\n"
              "version=\"1.0.0\"\n"
              "maxFeatures=\"%d\"\n"
-             "outputFormat=\"GML2\">\n"
+             "outputFormat=\"GML2\"\n"
+			 "xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:ogc=\"http://www.opengis.net/ogc\" xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-transaction.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml\">\n"
              "<wfs:Query typeName=\"%s\">\n"
              "%s"
              "</wfs:Query>\n"
@@ -265,7 +266,8 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
              "<wfs:GetFeature\n"
              "service=\"WFS\"\n"
              "version=\"1.0.0\"\n"
-             "outputFormat=\"GML2\">\n"
+             "outputFormat=\"GML2\"\n"
+             "xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:ogc=\"http://www.opengis.net/ogc\" xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-transaction.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml\">\n"
              "<wfs:Query typeName=\"%s\">\n"
              "%s"
              "</wfs:Query>\n"
