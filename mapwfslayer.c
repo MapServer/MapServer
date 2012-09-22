@@ -149,7 +149,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     if (strstr(pszTmp, "<Filter>") !=NULL || strstr(pszTmp, "<ogc:Filter") != NULL)
       psParams->pszFilter = msStrdup(pszTmp);
     else {
-      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc>");
+      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">");
       psParams->pszFilter = msStringConcatenate(psParams->pszFilter, (char*)pszTmp);
       psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "</ogc:Filter>");
     }
