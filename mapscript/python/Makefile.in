@@ -48,6 +48,7 @@ _mapscript.la: mapscript_wrap.lo pygdioctx/pygdioctx.lo $(MS_LIB)
 	$(LTCC) $(CC) $(CFLAGS) -c -o $@ $<
 
 mapscript_wrap.c: ../mapscript.i
+	@test -n "$(SWIG)" || (echo "swig binary not found, cannot procede. install swig and rerun ./configure"; exit 1;)
 	$(SWIG) -python -shadow -modern -templatereduce -fastdispatch -fvirtual -fastproxy -modernargs -castmode -dirvtable -fastinit -fastquery -noproxydel -nobuildnone $(DEFINES) -o mapscript_wrap.c ../mapscript.i
 
 install-dirs:
