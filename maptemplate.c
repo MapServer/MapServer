@@ -183,11 +183,7 @@ int checkWebScale(mapservObj *mapserv)
 
   if((mapserv->map->scaledenom < mapserv->map->web.minscaledenom) && (mapserv->map->web.minscaledenom > 0)) {
     if(mapserv->map->web.mintemplate) { /* use the template provided */
-      if(TEMPLATE_TYPE(mapserv->map->web.mintemplate) == MS_FILE) {
-        if((status = msReturnPage(mapserv, mapserv->map->web.mintemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
-      } else {
-        if((status = msReturnURL(mapserv, mapserv->map->web.mintemplate, BROWSE)) != MS_SUCCESS) return status;
-      }
+      if((status = msReturnPageOrUrl(mapserv, mapserv->map->web.mintemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
     } else { /* force zoom = 1 (i.e. pan) */
       mapserv->fZoom = mapserv->Zoom = 1;
       mapserv->ZoomDirection = 0;
@@ -202,11 +198,7 @@ int checkWebScale(mapservObj *mapserv)
   } else {
     if((mapserv->map->scaledenom > mapserv->map->web.maxscaledenom) && (mapserv->map->web.maxscaledenom > 0)) {
       if(mapserv->map->web.maxtemplate) { /* use the template provided */
-        if(TEMPLATE_TYPE(mapserv->map->web.maxtemplate) == MS_FILE) {
-          if((status = msReturnPage(mapserv, mapserv->map->web.maxtemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
-        } else {
-          if((status = msReturnURL(mapserv, mapserv->map->web.maxtemplate, BROWSE)) != MS_SUCCESS) return status;
-        }
+        if((status = msReturnPageOrUrl(mapserv, mapserv->map->web.maxtemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
       } else { /* force zoom = 1 (i.e. pan) */
         mapserv->fZoom = mapserv->Zoom = 1;
         mapserv->ZoomDirection = 0;
@@ -4104,6 +4096,28 @@ int msReturnURL(mapservObj* ms, char* url, int mode)
   free(tmpurl);
 
   return MS_SUCCESS;
+}
+
+int msReturnPageOrUrl(mapservObj* ms, char* template, int mode, char **papszBuffer)
+{
+  const char *encoding;
+
+  if( !template ) 
+    return MS_FAILURE;
+
+  if( TEMPLATE_TYPE(template) == MS_FILE ) {
+    if(ms->sendheaders) {
+      encoding = msOWSLookupMetadata(&(ms->map->web.metadata), "MO", "encoding");
+      if (encoding)
+        msIO_setHeader("Content-type","%s; charset=%s", ms->map->web.browseformat, encoding);
+      else
+        msIO_setHeader("Content-type","%s", ms->map->web.browseformat);
+      msIO_sendHeaders();
+    }
+    return msReturnPage(ms, template, BROWSE, papszBuffer);
+  } else {
+    return msReturnURL(ms, template, BROWSE);
+  }
 }
 
 /*
