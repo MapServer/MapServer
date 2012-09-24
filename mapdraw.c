@@ -3094,9 +3094,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               } /* end POSITION AUTO vs Fixed POSITION */
 
               if((!labelPtr->status || !label_marker_status) && classPtr->leader.maxdistance == 0) {
+                labelPtr->status = MS_OFF;
                 break; /* no point looking at more labels, unless their is a leader defined, in which
                 case we still want to compute the full cachePtr->poly to be used for offset tests */
-                labelPtr->status = MS_OFF;
               } else {
                 if(!cachePtr->poly) {
                   cachePtr->poly = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
