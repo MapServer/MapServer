@@ -4222,7 +4222,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   } else if(mapserv->sendheaders) {
     encoding = msOWSLookupMetadata(&(mapserv->map->web.metadata), "MO", "encoding");
     if (encoding)
-      msIO_setHeader("Content-type", "%s charset=%s", pszMimeType, encoding);
+      msIO_setHeader("Content-type", "%s; charset=%s", pszMimeType, encoding);
     else
       msIO_setHeader("Content-type", "%s", pszMimeType);
 
