@@ -51,6 +51,7 @@ typedef struct {
   char *pszService;
   char *pszTypeName;
   char *pszFilter;
+  char *pszGeometryName;
   int nMaxFeatures;
   char *pszBbox; /* only used with a Get Request */
   char *pszOutputFormat; /* only used with DescibeFeatureType */
