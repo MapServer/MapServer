@@ -3006,6 +3006,7 @@ int postgresTimeStampForTimeString(const char *timestring, char *dest, size_t de
 {
   int nlength = strlen(timestring);
   int timeresolution = msTimeGetResolution(timestring);
+  int bNoDate = (*timestring == 'T');
   if (timeresolution < 0)
     return MS_FALSE;
 
@@ -3029,20 +3030,35 @@ int postgresTimeStampForTimeString(const char *timestring, char *dest, size_t de
       break;
     case TIME_RESOLUTION_HOUR:
       if (timestring[nlength-1] != ':') {
-        snprintf(dest, destsize,"timestamp '%s:00:00'", timestring);
+        if(bNoDate)
+          snprintf(dest, destsize,"time '%s:00:00'", timestring);
+        else
+          snprintf(dest, destsize,"timestamp '%s:00:00'", timestring);
       } else {
-        snprintf(dest, destsize,"timestamp '%s00:00'", timestring);
+        if(bNoDate)
+          snprintf(dest, destsize,"time '%s00:00'", timestring);
+        else
+          snprintf(dest, destsize,"timestamp '%s00:00'", timestring);
       }
       break;
     case TIME_RESOLUTION_MINUTE:
       if (timestring[nlength-1] != ':') {
-        snprintf(dest, destsize,"timestamp '%s:00'", timestring);
+        if(bNoDate)
+          snprintf(dest, destsize,"time '%s:00'", timestring);
+        else
+          snprintf(dest, destsize,"timestamp '%s:00'", timestring);
       } else {
-        snprintf(dest, destsize,"timestamp '%s00'", timestring);
+        if(bNoDate)
+          snprintf(dest, destsize,"time '%s00'", timestring);
+        else
+          snprintf(dest, destsize,"timestamp '%s00'", timestring);
       }
       break;
     case TIME_RESOLUTION_SECOND:
-      snprintf(dest, destsize,"timestamp '%s'", timestring);
+      if(bNoDate)
+         snprintf(dest, destsize,"time '%s'", timestring);
+      else
+         snprintf(dest, destsize,"timestamp '%s'", timestring);
       break;
     default:
       return MS_FAILURE;

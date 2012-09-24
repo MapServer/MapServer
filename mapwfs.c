@@ -2741,6 +2741,7 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
     free(wfsparams->pszTypeName);
     free(wfsparams->pszFilter);
     free(wfsparams->pszBbox);
+    free(wfsparams->pszGeometryName);
     free(wfsparams->pszOutputFormat);
     free(wfsparams->pszFeatureId);
     free(wfsparams->pszSrs);

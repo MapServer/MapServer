@@ -2361,9 +2361,7 @@ if test "$with_php" != "no" ; then
   fi
 
 
-  MAKE_PHP_MAPSCRIPT="php_mapscript"
-  MAKE_PHP_MAPSCRIPT_CLEAN="php_mapscript_clean"
-  MAKE_PHP_MAPSCRIPT_INSTALL="php_mapscript_install"
+  PHP_MAPSCRIPT="php_mapscript"
   AC_SUBST(PHP_VERSION_FLAG, "-DPHP_VERSION_ID=$PHP_VERSION")
   AC_SUBST(PHPCONFIG, $PHPCONFIG)
   AC_SUBST(PHP_REGEX_INC, $PHP_REGEX_INC)
@@ -2375,9 +2373,7 @@ else
   AC_MSG_RESULT([        PHP/MapScript module not configured.])
 fi
 
-AC_SUBST(MAKE_PHP_MAPSCRIPT,$MAKE_PHP_MAPSCRIPT)
-AC_SUBST(MAKE_PHP_MAPSCRIPT_CLEAN,$MAKE_PHP_MAPSCRIPT_CLEAN)
-AC_SUBST(MAKE_PHP_MAPSCRIPT_INSTALL,$MAKE_PHP_MAPSCRIPT_INSTALL)
+AC_SUBST(PHP_MAPSCRIPT,$PHP_MAPSCRIPT)
 
 dnl ---------------------------------------------------------------------
 dnl Shared library building.
@@ -2465,18 +2461,14 @@ if test "$enable_python_mapscript" = "yes" ; then
       AC_MSG_WARN([swig not found, you will not be able to build/update wrappers])
   fi
   PYTHON_CHECK
-  MAKE_PYTHON_MAPSCRIPT="python_mapscript"
-  MAKE_PYTHON_MAPSCRIPT_CLEAN="python_mapscript_clean"
-  MAKE_PYTHON_MAPSCRIPT_INSTALL="python_mapscript_install"
+  PYTHON_MAPSCRIPT="python_mapscript"
 
   AC_MSG_RESULT([        Python/MapScript module configured.])
 else
   AC_MSG_RESULT([        Python/MapScript module not configured.])
 fi
 
-AC_SUBST(MAKE_PYTHON_MAPSCRIPT,$MAKE_PYTHON_MAPSCRIPT)
-AC_SUBST(MAKE_PYTHON_MAPSCRIPT_CLEAN,$MAKE_PYTHON_MAPSCRIPT_CLEAN)
-AC_SUBST(MAKE_PYTHON_MAPSCRIPT_INSTALL,$MAKE_PYTHON_MAPSCRIPT_INSTALL)
+AC_SUBST(PYTHON_MAPSCRIPT,$PYTHON_MAPSCRIPT)
 
 AC_SUBST(OS_INCLUDE_DIR, $OS_INCLUDE_DIR)
 
@@ -2554,12 +2546,12 @@ AC_MSG_RESULT([  SOS Server:                ${SOS_SVR_ENABLED}])
 AC_MSG_RESULT()
 
 AC_MSG_RESULT([ -------------- MapScript ----------------- ])
-if test -n "${PHPCONFIG}"; then
+if test -n "${PHP_MAPSCRIPT}"; then
   AC_MSG_RESULT([  PHP MapScript:             yes])
 else
   AC_MSG_RESULT([  PHP MapScript:             no])
 fi
-if test -n "${MAKE_PYTHON_MAPSCRIPT}"; then
+if test -n "${PYTHON_MAPSCRIPT}"; then
   AC_MSG_RESULT([  Python MapScript:          yes])
 else
   AC_MSG_RESULT([  Python MapScript:          no])

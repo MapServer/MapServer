@@ -196,6 +196,8 @@ logical_exp:
 			                   $$ = MS_FALSE;
 
                                          ms_regfree(&re);
+                                         free($1);
+                                         free($3);
                                        }
        | string_exp IRE string_exp     {
                                          ms_regex_t re;
@@ -209,6 +211,8 @@ logical_exp:
 			                   $$ = MS_FALSE;
 
                                          ms_regfree(&re);
+                                         free($1);
+                                         free($3);
                                        }
        | math_exp EQ math_exp          {
 	                                 if($1 == $3)

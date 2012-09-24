@@ -212,6 +212,9 @@ LIBSVG_CAIRO=@LIBSVG_CAIRO_ENABLED@
 LIBSVG_CAIRO_LIB=@LIBSVG_CAIRO_LIB@
 LIBSVG_CAIRO_INC=@LIBSVG_CAIRO_INC@
 
+PHP_MAPSCRIPT=@PHP_MAPSCRIPT@
+PYTHON_MAPSCRIPT=@PYTHON_MAPSCRIPT@
+
 #
 # Pick a compiler, etc. Flex and bison are only required if you need to modify the mapserver lexer (maplexer.l) or expression parser (mapparser.y).
 #
@@ -305,7 +308,7 @@ EXE_LIST = 	shp2img legend mapserv shptree shptreevis \
 #
 # --- You shouldn't have to edit anything else. ---
 #
-all: $(LIBMAP) $(EXE_LIST) mapscriptvars @MAKE_PHP_MAPSCRIPT@ @MAKE_PYTHON_MAPSCRIPT@ 
+all: $(LIBMAP) $(EXE_LIST) mapscriptvars $(PHP_MAPSCRIPT) $(PYTHON_MAPSCRIPT)
 
 # Explicitly invoke this rule when maplexer.l is altered.  We don't do
 # it automatically for the reasons listed in #2310
@@ -428,24 +431,24 @@ mapserver-config: Makefile
 	chmod a+x mapserver-config
 
 php_mapscript: $(LIBMAP)
-	cd mapscript/php; $(MAKE);
+	cd mapscript/php; $(MAKE) $(MFLAGS);
 
 php_mapscript_clean:
-	cd mapscript/php; $(MAKE) clean;
+	test -z "$(PHP_MAPSCRIPT)" || (cd mapscript/php; $(MAKE) clean;)
 
 php_mapscript_install:
-	cd mapscript/php; $(MAKE) install DESTDIR=$(DESTDIR);
+	test -z "$(PHP_MAPSCRIPT)" || (cd mapscript/php; $(MAKE) install DESTDIR=$(DESTDIR);)
 
 python_mapscript: $(LIBMAP)
-	cd mapscript/python; $(MAKE);
+	cd mapscript/python; $(MAKE) $(MFLAGS);
 
 python_mapscript_clean:
-	cd mapscript/python; $(MAKE) clean;
+	test -z "$(PYTHON_MAPSCRIPT)" || (cd mapscript/python; $(MAKE) clean;)
 
 python_mapscript_install:
-	cd mapscript/python; $(MAKE) install DESTDIR=$(DESTDIR);
+	test -z "$(PYTHON_MAPSCRIPT)" || (cd mapscript/python; $(MAKE) install DESTDIR=$(DESTDIR);)
 
-install: install-lib install-bin install-cgibin @MAKE_PHP_MAPSCRIPT_INSTALL@ @MAKE_PYTHON_MAPSCRIPT_INSTALL@
+install: install-lib install-bin install-cgibin php_mapscript_install python_mapscript_install
 
 install-cgibin: install-lib mapserv
 	$(LTINSTALL) $(INSTALL) mapserv $(DESTDIR)$(bindir)/mapserv
@@ -481,7 +484,7 @@ uninstall:
 install-module: mod_mapserver.la install-lib
 	$(APXS) -i -a -n "mapserver" mod_mapserver.la
 
-clean: @MAKE_PHP_MAPSCRIPT_CLEAN@ @MAKE_PYTHON_MAPSCRIPT_CLEAN@
+clean: php_mapscript_clean python_mapscript_clean
 	rm -rf $(LIBMAP) mapscriptvars *.o *.lo *.la .libs $(EXE_LIST) renderers/agg/src/*.o renderers/agg/src/*.lo renderers/agg/src/.libs
 
 exe-clean:
@@ -496,3 +499,30 @@ distclean:
 
 sorta-clean:
 	rm -f *.o *.lo
+
+
+wxs-testcase:
+	cd msautotest/wxs && export PATH=../..:$(PATH) && ./run_test.py
+
+renderers-testcase:
+	cd msautotest/renderers && export PATH=../..:$(PATH) && ./run_test.py
+
+misc-testcase:
+	cd msautotest/misc && export PATH=../..:$(PATH) && ./run_test.py
+
+gdal-testcase:
+	cd msautotest/gdal && export PATH=../..:$(PATH) && ./run_test.py
+
+query-testcase:
+	cd msautotest/query && export PATH=../..:$(PATH) && ./run_test.py
+
+autotest-install:
+	test -d "msautotest/wxs" ||  ( git submodule init && git submodule update )
+
+php-testcase:
+	test -z "$(PHP_MAPSCRIPT)" || (export PHP_MAPSCRIPT_SO="../../mapscript/php/.libs/php_mapscript.so" && cd msautotest/php && ./run_test.sh)
+
+test: shp2img mapserv autotest-install $(PHP_MAPSCRIPT) $(PYTHON_MAPSCRIPT)
+	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
+	@./print-test-results.sh
+	@$(MAKE) php-testcase

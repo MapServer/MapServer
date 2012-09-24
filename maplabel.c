@@ -546,8 +546,9 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
             return MS_SUCCESS;
           }
         } else {
-          if(!gdImageGetPixel(rb.data.gd_img,x,y))
+          if(!gdImageGetPixel(rb.data.gd_img,x,y)) {
             return MS_SUCCESS;
+          }
         }
 #else
         assert(rb.type == MS_BUFFER_BYTE_RGBA);
@@ -567,17 +568,21 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
             alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
             if (!*alphapixptr) {
               /* label point does not intersect mask */
+              msFreeLabelPathObj(labelpath);
               return MS_SUCCESS;
             }
           } else {
-            if (!gdImageGetPixel(rb.data.gd_img, x, y))
+            if (!gdImageGetPixel(rb.data.gd_img, x, y)) {
+              msFreeLabelPathObj(labelpath);
               return MS_SUCCESS;
+            }
           }
 #else
           assert(rb.type == MS_BUFFER_BYTE_RGBA);
           alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
           if (!*alphapixptr) {
             /* label point does not intersect mask */
+            msFreeLabelPathObj(labelpath);
             return MS_SUCCESS;
           }
 #endif
