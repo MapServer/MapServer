@@ -4085,7 +4085,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     msObj->mappnt.y = point.y;
 
     if (query_status == MS_NOTFOUND && msObj->map->web.empty) {
-      if(msReturnURL(msObj, msObj->map->web.empty, BROWSE) != MS_SUCCESS)
+      if(msReturnPageOrUrl(msObj, msObj->map->web.empty, BROWSE, NULL) != MS_SUCCESS)
         return msWMSException(map, nVersion, NULL, wms_exception_format);
     } else if (msReturnTemplateQuery(msObj, (char *)info_format, NULL) != MS_SUCCESS)
       return msWMSException(map, nVersion, NULL, wms_exception_format);
