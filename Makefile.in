@@ -522,7 +522,10 @@ autotest-install:
 php-testcase:
 	test -z "$(PHP_MAPSCRIPT)" || (export PHP_MAPSCRIPT_SO="../../mapscript/php/.libs/php_mapscript.so" && cd msautotest/php && ./run_test.sh)
 
-test: shp2img mapserv autotest-install $(PHP_MAPSCRIPT) $(PYTHON_MAPSCRIPT)
-	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
+print-test-results:
 	@./print-test-results.sh
+
+test: shp2img mapserv test-clean autotest-install $(PHP_MAPSCRIPT) $(PYTHON_MAPSCRIPT)
+	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
+	@$(MAKE) print-test-results
 	@$(MAKE) php-testcase

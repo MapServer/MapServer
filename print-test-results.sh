@@ -8,8 +8,12 @@ command_exists () {
 }
 
 DIFF=diff
+COMPARE=
 if command_exists colordiff ; then
    DIFF="colordiff"
+fi
+if command_exists compare ; then
+   COMPARE="compare"
 fi
 
 for testcase in "${tests[@]}"; do
@@ -37,7 +41,14 @@ for testcase in "${tests[@]}"; do
       #for txt, gml and xml files, print a diff
       if echo "$failedtest" | egrep -q "(txt|xml|gml)$"; then
         $DIFF -u "../expected/$failedtest" "$failedtest"
-     fi
+      fi
+      if echo "$failedtest" | egrep -q "(png|gif|tif)$"; then
+        if echo "$failedtest" | egrep -v -q "\\.diff\\.png$"; then
+           if [ -n $COMPARE ]; then
+              $COMPARE ../expected/$failedtest $failedtest -compose Src $failedtest.diff.png
+           fi
+        fi
+      fi
    done
    cd ../../..
 done
