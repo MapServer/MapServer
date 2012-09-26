@@ -784,8 +784,8 @@ char *msIO_stripStdoutBufferContentType()
   /* -------------------------------------------------------------------- */
   end_of_ct = 13;
   while( end_of_ct+1 < buf->data_offset
-         && buf->data[end_of_ct+1] != 10
-         && buf->data[end_of_ct+1] != '\r' )
+         && buf->data[end_of_ct+1] != '\r'
+         && buf->data[end_of_ct+1] != '\n' )
     end_of_ct++;
 
   if( end_of_ct+1 == buf->data_offset ) {
@@ -800,8 +800,8 @@ char *msIO_stripStdoutBufferContentType()
   /* -------------------------------------------------------------------- */
   start_of_data = end_of_ct+3;
   if( start_of_data  < buf->data_offset
-      && ( buf->data[start_of_data] == 10
-           || buf->data[start_of_data] == '\r' ) )
+      && ( buf->data[start_of_data] == '\r'
+           || buf->data[start_of_data] == '\n' ) )
     start_of_data +=2;
   
   if( start_of_data == buf->data_offset ) {
@@ -870,8 +870,8 @@ void msIO_stripStdoutBufferContentHeaders()
     /* -------------------------------------------------------------------- */
     start_of_data +=7;
     while( start_of_data+1 < buf->data_offset
-           && buf->data[start_of_data+1] != 10
-           && buf->data[start_of_data+1] != '\r' )
+           && buf->data[start_of_data+1] != '\r'
+           && buf->data[start_of_data+1] != '\n' )
       start_of_data++;
 
     if( start_of_data+1 == buf->data_offset ) {
@@ -890,8 +890,8 @@ void msIO_stripStdoutBufferContentHeaders()
   /*      Skip next line if empty.                                        */
   /* -------------------------------------------------------------------- */
   if( start_of_data  < buf->data_offset
-      && ( buf->data[start_of_data] == 10
-           || buf->data[start_of_data] == '\r' ) )
+      && ( buf->data[start_of_data] == '\r'
+           || buf->data[start_of_data] == '\n' ) )
     start_of_data +=2;
 
   if( start_of_data == buf->data_offset ) {
