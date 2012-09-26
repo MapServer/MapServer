@@ -1572,6 +1572,7 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   xmlChar *buffer = NULL;
   int size = 0;
   msIOContext *context = NULL;
+  const char *contenttype = NULL;
 
   const char *encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
@@ -1579,10 +1580,15 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
     return MS_FAILURE;
   }
 
-  if (encoding)
-    msIO_setHeader("Content-type","application/gml+xml; charset=%s", encoding);
+  if( EQUAL((char *)xmlDocGetRootElement(psDoc)->name, "RectifiedGridCoverage") )
+    contenttype = msStrdup("application/gml+xml");
   else
-    msIO_setHeader("Content-type","application/gml+xml");
+    contenttype = msStrdup("text/xml");
+
+  if (encoding)
+    msIO_setHeader("Content-type","%s; charset=%s", contenttype, encoding);
+  else
+    msIO_setHeader("Content-type","%s", contenttype);
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
