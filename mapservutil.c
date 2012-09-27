@@ -1116,17 +1116,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv)
     if(msReturnTemplateQuery(mapserv, mapserv->map->web.queryformat, NULL) != MS_SUCCESS)
       return MS_FAILURE;
   } else {
-    if(TEMPLATE_TYPE(mapserv->map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
-      if(mapserv->sendheaders) {
-        msIO_setHeader("Content-type",mapserv->map->web.browseformat); /* write MIME header */
-        msIO_sendHeaders();
-      }
-      if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, NULL) != MS_SUCCESS)
-        return MS_FAILURE;
-    } else {
-      if(msReturnURL(mapserv, mapserv->map->web.template, BROWSE) != MS_SUCCESS)
-        return MS_FAILURE;
-    }
+    if((status = msReturnPageOrUrl(mapserv, mapserv->map->web.template, BROWSE, NULL)) != MS_SUCCESS) return MS_FAILURE;
   }
   return MS_SUCCESS;
 }
