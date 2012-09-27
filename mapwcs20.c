@@ -1586,9 +1586,9 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
     contenttype = msStrdup("text/xml");
 
   if (encoding)
-    msIO_setHeader("Content-type","%s; charset=%s", contenttype, encoding);
+    msIO_setHeader("Content-Type","%s; charset=%s", contenttype, encoding);
   else
-    msIO_setHeader("Content-type","%s", contenttype);
+    msIO_setHeader("Content-Type","%s", contenttype);
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
@@ -2418,9 +2418,9 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   xmlDocSetRootElement(psDoc, psRootNode);
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding

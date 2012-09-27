@@ -65,9 +65,9 @@ int msWFSException(mapObj *map, const char *locator, const char *code,
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
@@ -676,9 +676,9 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
@@ -1115,9 +1115,9 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
 
   if (value)
-    msIO_setHeader("Content-type","%s; charset=%s",mimetype, value);
+    msIO_setHeader("Content-Type","%s; charset=%s",mimetype, value);
   else
-    msIO_setHeader("Content-type",mimetype);
+    msIO_setHeader("Content-Type",mimetype);
   msIO_sendHeaders();
 
   if (mimetype)
@@ -2394,9 +2394,9 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
   if( psFormat == NULL ) {
     value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
     if (value)
-      msIO_setHeader("Content-type","%s; charset=%s", output_mime_type,value);
+      msIO_setHeader("Content-Type","%s; charset=%s", output_mime_type,value);
     else
-      msIO_setHeader("Content-type",output_mime_type);
+      msIO_setHeader("Content-Type",output_mime_type);
     msIO_sendHeaders();
 
     status = msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj,

@@ -104,7 +104,7 @@ void msCGIWriteError(mapservObj *mapserv)
   msCGIWriteLog(mapserv,MS_TRUE);
 
   if(!mapserv || !mapserv->map) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("<HTML>\n");
     msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -118,7 +118,7 @@ void msCGIWriteError(mapservObj *mapserv)
   if((ms_error->code == MS_NOTFOUND) && (mapserv->map->web.empty)) {
     /* msRedirect(mapserv->map->web.empty); */
     if(msReturnURL(mapserv, mapserv->map->web.empty, BROWSE) != MS_SUCCESS) {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -131,7 +131,7 @@ void msCGIWriteError(mapservObj *mapserv)
     if(mapserv->map->web.error) {
       /* msRedirect(mapserv->map->web.error); */
       if(msReturnURL(mapserv, mapserv->map->web.error, BROWSE) != MS_SUCCESS) {
-        msIO_setHeader("Content-type","text/html");
+        msIO_setHeader("Content-Type","text/html");
         msIO_sendHeaders();
         msIO_printf("<HTML>\n");
         msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -141,7 +141,7 @@ void msCGIWriteError(mapservObj *mapserv)
         msIO_printf("</BODY></HTML>");
       }
     } else {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -1108,7 +1108,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv)
     return MS_FAILURE;
 
   if ( (template != NULL) && (strcasecmp(template, "openlayers")==0) ) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     if (msReturnOpenLayersPage(mapserv) != MS_SUCCESS)
       return MS_FAILURE;
@@ -1118,7 +1118,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv)
   } else {
     if(TEMPLATE_TYPE(mapserv->map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
       if(mapserv->sendheaders) {
-        msIO_setHeader("Content-type",mapserv->map->web.browseformat); /* write MIME header */
+        msIO_setHeader("Content-Type",mapserv->map->web.browseformat); /* write MIME header */
         msIO_sendHeaders();
       }
       if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, NULL) != MS_SUCCESS)
@@ -1476,7 +1476,7 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
     const char *attachment = msGetOutputFormatOption(mapserv->map->outputformat, "ATTACHMENT", NULL );
     if(attachment)
       msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
-    msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+    msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
     msIO_sendHeaders();
   }
 
@@ -1499,7 +1499,7 @@ int msCGIDispatchLegendRequest(mapservObj *mapserv)
     legendTemplate = generateLegendTemplate(mapserv);
     if(legendTemplate) {
       if(mapserv->sendheaders) {
-        msIO_setHeader("Content-type",mapserv->map->web.legendformat);
+        msIO_setHeader("Content-Type",mapserv->map->web.legendformat);
         msIO_sendHeaders();
       }
       msIO_fwrite(legendTemplate, strlen(legendTemplate), 1, stdout);
@@ -1570,7 +1570,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
     return MS_FAILURE;
 
   if(mapserv->sendheaders) {
-    msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+    msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
     msIO_sendHeaders();
   }
   /*
@@ -1625,7 +1625,7 @@ int msCGIDispatchRequest(mapservObj *mapserv)
       }
       if (service && strcasecmp(service,"WMS")==0) {
         if(mapserv->sendheaders) {
-          msIO_setHeader("Content-type","text/html");
+          msIO_setHeader("Content-Type","text/html");
           msIO_sendHeaders();
         }
 
@@ -1727,7 +1727,7 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   mapserv->request->type = MS_GET_REQUEST;
 
   if(!query_string || !*query_string) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("No query information to decode. QUERY_STRING not set.\n");
     goto end_request;
