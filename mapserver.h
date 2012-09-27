@@ -32,7 +32,7 @@
 /*
 ** MapServer version - to be updated for every release
 */
-#define MS_VERSION "6.2-beta3"
+#define MS_VERSION "6.2-beta4"
 
 #define MS_VERSION_MAJOR    6
 #define MS_VERSION_MINOR    2
