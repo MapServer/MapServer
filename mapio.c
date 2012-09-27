@@ -784,7 +784,7 @@ char *msIO_stripStdoutBufferContentType()
   /* -------------------------------------------------------------------- */
   end_of_ct = 13;
   while( end_of_ct+1 < buf->data_offset
-         && buf->data[end_of_ct+1] != 10 )
+         && buf->data[end_of_ct+1] != '\r' )
     end_of_ct++;
 
   if( end_of_ct+1 == buf->data_offset ) {
@@ -794,21 +794,19 @@ char *msIO_stripStdoutBufferContentType()
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Continue on to the start of data ... skipping two newline       */
-  /*      markers.                                                        */
+  /*      Continue on to the start of data ...                            */
+  /*      Go to next line and skip if empty.                              */
   /* -------------------------------------------------------------------- */
-  start_of_data = end_of_ct+2;
-  while( start_of_data  < buf->data_offset
-         && buf->data[start_of_data] != 10 )
-    start_of_data++;
-
+  start_of_data = end_of_ct+3;
+  if( start_of_data  < buf->data_offset
+      && buf->data[start_of_data] == '\r' )
+    start_of_data +=2;
+  
   if( start_of_data == buf->data_offset ) {
     msSetError( MS_MISCERR, "Corrupt Content-type header.",
                 "msIO_stripStdoutBufferContentType" );
     return NULL;
   }
-
-  start_of_data++;
 
   /* -------------------------------------------------------------------- */
   /*      Copy out content type.                                          */
@@ -870,7 +868,7 @@ void msIO_stripStdoutBufferContentHeaders()
     /* -------------------------------------------------------------------- */
     start_of_data +=7;
     while( start_of_data+1 < buf->data_offset
-           && buf->data[start_of_data+1] != 10 )
+           && buf->data[start_of_data+1] != '\r' )
       start_of_data++;
 
     if( start_of_data+1 == buf->data_offset ) {
@@ -878,24 +876,25 @@ void msIO_stripStdoutBufferContentHeaders()
                   "msIO_stripStdoutBufferContentHeaders" );
       return;
     }
-    start_of_data +=2;
+    /* -------------------------------------------------------------------- */
+    /*      Go to next line.                                                */
+    /* -------------------------------------------------------------------- */
+    start_of_data +=3;
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Continue on to the start of data ... skipping two newline       */
-  /*      markers.                                                        */
+  /*      Continue on to the start of data ...                            */
+  /*      Skip next line if empty.                                        */
   /* -------------------------------------------------------------------- */
-  while( start_of_data  < buf->data_offset
-         && buf->data[start_of_data] != 10 )
-    start_of_data++;
+  if( start_of_data  < buf->data_offset
+      && buf->data[start_of_data] == '\r' )
+    start_of_data +=2;
 
   if( start_of_data == buf->data_offset ) {
     msSetError( MS_MISCERR, "Corrupt Content-* header.",
                 "msIO_stripStdoutBufferContentHeaders" );
     return;
   }
-
-  start_of_data++;
 
   /* -------------------------------------------------------------------- */
   /*      Move data to front of buffer, and reset length.                 */
