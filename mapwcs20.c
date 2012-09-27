@@ -1572,6 +1572,7 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   xmlChar *buffer = NULL;
   int size = 0;
   msIOContext *context = NULL;
+  const char *contenttype = NULL;
 
   const char *encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
@@ -1579,10 +1580,15 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
     return MS_FAILURE;
   }
 
-  if (encoding)
-    msIO_setHeader("Content-type","application/gml+xml; charset=%s", encoding);
+  if( EQUAL((char *)xmlDocGetRootElement(psDoc)->name, "RectifiedGridCoverage") )
+    contenttype = msStrdup("application/gml+xml");
   else
-    msIO_setHeader("Content-type","application/gml+xml");
+    contenttype = msStrdup("text/xml");
+
+  if (encoding)
+    msIO_setHeader("Content-Type","%s; charset=%s", contenttype, encoding);
+  else
+    msIO_setHeader("Content-Type","%s", contenttype);
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
@@ -1664,27 +1670,25 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
   /* -------------------------------------------------------------------- */
   if( filename == NULL ) {
     if(multipart) {
-      msIO_fprintf( stdout, "--wcs\n" );
+      msIO_fprintf( stdout, "\r\n--wcs\r\n" );
       msIO_fprintf(
         stdout,
-        "Content-Type: %s\n"
-        "Content-Description: coverage data\n"
-        "Content-Transfer-Encoding: binary\n",
+        "Content-Type: %s\r\n"
+        "Content-Description: coverage data\r\n"
+        "Content-Transfer-Encoding: binary\r\n",
         MS_IMAGE_MIME_TYPE(map->outputformat));
 
       if( fo_filename != NULL )
         msIO_fprintf( stdout,
-                      "Content-ID: coverage/%s\n"
-                      "Content-Disposition: INLINE; filename=%s%c%c",
+                      "Content-ID: coverage/%s\r\n"
+                      "Content-Disposition: INLINE; filename=%s\r\n\r\n",
                       fo_filename,
-                      fo_filename,
-                      10, 10 );
+                      fo_filename);
       else
         msIO_fprintf( stdout,
-                      "Content-ID: coverage/wcs.%s\n"
-                      "Content-Disposition: INLINE%c%c",
-                      MS_IMAGE_EXTENSION(map->outputformat),
-                      10, 10 );
+                      "Content-ID: coverage/wcs.%s\r\n"
+                      "Content-Disposition: INLINE\r\n\r\n",
+                      MS_IMAGE_EXTENSION(map->outputformat));
     } else {
       msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(map->outputformat));
       msIO_setHeader("Content-Description","coverage data");
@@ -1706,7 +1710,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
       return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
     }
     if(multipart)
-      msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
+      msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
     return MS_SUCCESS;
   }
 
@@ -1764,18 +1768,17 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
       if( mimetype == NULL )
         mimetype = "application/octet-stream";
       if(multipart) {
-        msIO_fprintf( stdout, "--wcs\n" );
+        msIO_fprintf( stdout, "\r\n--wcs\r\n" );
         msIO_fprintf(
           stdout,
-          "Content-Type: %s\n"
-          "Content-Description: coverage data\n"
-          "Content-Transfer-Encoding: binary\n"
-          "Content-ID: coverage/%s\n"
-          "Content-Disposition: INLINE; filename=%s%c%c",
+          "Content-Type: %s\r\n"
+          "Content-Description: coverage data\r\n"
+          "Content-Transfer-Encoding: binary\r\n"
+          "Content-ID: coverage/%s\r\n"
+          "Content-Disposition: INLINE; filename=%s\r\n\r\n",
           mimetype,
           all_files[i],
-          all_files[i],
-          10, 10 );
+          all_files[i]);
       } else {
         msIO_setHeader("Content-Type",mimetype);
         msIO_setHeader("Content-Description","coverage data");
@@ -1810,7 +1813,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     CSLDestroy( all_files );
     msReleaseLock( TLOCK_GDAL );
     if(multipart)
-      msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
+      msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
     return MS_SUCCESS;
   }
 
@@ -2415,9 +2418,9 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   xmlDocSetRootElement(psDoc, psRootNode);
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding
@@ -3611,7 +3614,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
     msIO_setHeader("Content-Type","multipart/related; boundary=wcs");
     msIO_sendHeaders();
-    msIO_printf("--wcs\n");
+    msIO_printf("\r\n--wcs\r\n");
 
     msWCSWriteDocument20(map, psDoc);
     msWCSWriteFile20(map, image, params, 1);

@@ -591,7 +591,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   if( EQUAL(storage,"stream") ) {
     if( sendheaders && format->mimetype ) {
-      msIO_setHeader("Content-type",format->mimetype);
+      msIO_setHeader("Content-Type",format->mimetype);
       msIO_sendHeaders();
     } else
       msIO_fprintf( stdout, "%c", 10 );

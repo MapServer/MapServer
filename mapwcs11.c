@@ -87,9 +87,9 @@ int msWCSException11(mapObj *map, const char *locator,
   xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
@@ -600,9 +600,9 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     return MS_FAILURE;
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
@@ -999,9 +999,9 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
       return MS_FAILURE;
 
     if (encoding)
-      msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+      msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","text/xml");
+      msIO_setHeader("Content-Type","text/xml");
     msIO_sendHeaders();
 
     context = msIO_getHandler(stdout);
@@ -1223,9 +1223,9 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     msIO_sendHeaders();
     msIO_fprintf(
       stdout,
-      "--wcs\n"
-      "Content-Type: text/xml; charset=%s\n"
-      "Content-ID: wcs.xml%c%c"
+      "\r\n--wcs\r\n"
+      "Content-Type: text/xml; charset=%s\r\n"
+      "Content-ID: wcs.xml\r\n\r\n"
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
       "<Coverages\n"
       "     xmlns=\"http://www.opengis.net/wcs/1.1\"\n"
@@ -1234,16 +1234,15 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
       "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
       "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
       "  <Coverage>\n",
-      encoding,
-      10, 10 );
+      encoding);
   } else {
     msIO_setHeader("Content-Type","multipart/mixed; boundary=wcs");
     msIO_sendHeaders();
     msIO_fprintf(
       stdout,
-      "--wcs\n"
-      "Content-Type: text/xml\n"
-      "Content-ID: wcs.xml%c%c"
+      "\r\n--wcs\r\n"
+      "Content-Type: text/xml\r\n"
+      "Content-ID: wcs.xml\r\n\r\n"
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
       "<Coverages\n"
       "     xmlns=\"http://www.opengis.net/wcs/1.1\"\n"
@@ -1251,8 +1250,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
       "     xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n"
       "     xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
       "     xsi:schemaLocation=\"http://www.opengis.net/ows/1.1 ../owsCoverages.xsd\">\n"
-      "  <Coverage>\n",
-      10, 10 );
+      "  <Coverage>\n");
   }
 
   /* -------------------------------------------------------------------- */
@@ -1265,16 +1263,15 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
       "    <ows:Reference xlink:href=\"cid:coverage/wcs.%s\"/>\n"
       "  </Coverage>\n"
       "</Coverages>\n"
-      "--wcs\n"
-      "Content-Type: %s\n"
-      "Content-Description: coverage data\n"
-      "Content-Transfer-Encoding: binary\n"
-      "Content-ID: coverage/wcs.%s\n"
-      "Content-Disposition: INLINE%c%c",
+      "\r\n--wcs\r\n"
+      "Content-Type: %s\r\n"
+      "Content-Description: coverage data\r\n"
+      "Content-Transfer-Encoding: binary\r\n"
+      "Content-ID: coverage/wcs.%s\r\n"
+      "Content-Disposition: INLINE\r\n\r\n",
       MS_IMAGE_EXTENSION(map->outputformat),
       MS_IMAGE_MIME_TYPE(map->outputformat),
-      MS_IMAGE_EXTENSION(map->outputformat),
-      10, 10 );
+      MS_IMAGE_EXTENSION(map->outputformat));
 
     status = msSaveImage(map, image, NULL);
     if( status != MS_SUCCESS ) {
@@ -1282,7 +1279,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
       return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
     }
 
-    msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
+    msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
     return MS_SUCCESS;
   }
 
@@ -1340,15 +1337,14 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
 
       msIO_fprintf(
         stdout,
-        "--wcs\n"
-        "Content-Type: %s\n"
-        "Content-Description: coverage data\n"
-        "Content-Transfer-Encoding: binary\n"
-        "Content-ID: coverage/%s\n"
-        "Content-Disposition: INLINE%c%c",
+        "\r\n--wcs\r\n"
+        "Content-Type: %s\r\n"
+        "Content-Description: coverage data\r\n"
+        "Content-Transfer-Encoding: binary\r\n"
+        "Content-ID: coverage/%s\r\n"
+        "Content-Disposition: INLINE\r\n\r\n",
         mimetype,
-        all_files[i],
-        10, 10 );
+        all_files[i]);
 
       fp = VSIFOpenL(
              CPLFormFilename(base_dir, all_files[i], NULL),
@@ -1374,7 +1370,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     CSLDestroy( all_files );
     msReleaseLock( TLOCK_GDAL );
 
-    msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
+    msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
     return MS_SUCCESS;
   }
 }
