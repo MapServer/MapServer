@@ -684,7 +684,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferString)
 
   buffer = (char *) (buf->data);
 
-  RETURN_STRING(buffer, 1);
+  RETURN_STRINGL(buffer, buf->data_offset, 1);
 }
 
 
