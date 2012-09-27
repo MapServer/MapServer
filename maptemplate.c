@@ -99,7 +99,7 @@ int msRedirect(char *url)
   msIO_setHeader("Status","302 Found");
   msIO_setHeader("Uri",url);
   msIO_setHeader("Location",url);
-  msIO_setHeader("Content-type","text/html");
+  msIO_setHeader("Content-Type","text/html");
   msIO_sendHeaders();
   return MS_SUCCESS;
 }
@@ -274,7 +274,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       map->outputformat = tempOutputFormat; /* restore format */
 
       if(mapserv == NULL || mapserv->sendheaders) {
-        msIO_setHeader("Content-type", MS_IMAGE_MIME_TYPE(outputFormat));
+        msIO_setHeader("Content-Type", MS_IMAGE_MIME_TYPE(outputFormat));
         msIO_sendHeaders();
       }
       status = msSaveImage(map, img, NULL);
@@ -306,7 +306,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       const char *attachment = msGetOutputFormatOption( outputFormat, "ATTACHMENT", NULL );
       if(attachment)
         msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
-      msIO_setHeader("Content-type", outputFormat->mimetype);
+      msIO_setHeader("Content-Type", outputFormat->mimetype);
       msIO_sendHeaders();
     }
     if((status = msReturnPage(mapserv, (char *) file, BROWSE, papszBuffer)) != MS_SUCCESS)
@@ -4236,7 +4236,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   ** so why should this. Note that new-style templates don't buffer the mime-type either.
   */
   if(papszBuffer && mapserv->sendheaders) {
-    snprintf(buffer, sizeof(buffer), "Content-type: %s%c%c", pszMimeType, 10, 10);
+    snprintf(buffer, sizeof(buffer), "Content-Type: %s%c%c", pszMimeType, 10, 10);
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
       (*papszBuffer) = (char *)msSmallRealloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);
@@ -4245,7 +4245,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     strcat((*papszBuffer), buffer);
     nCurrentSize += strlen(buffer);
   } else if(mapserv->sendheaders) {
-    msIO_setHeader("Content-type",pszMimeType);
+    msIO_setHeader("Content-Type",pszMimeType);
     msIO_sendHeaders();
   }
 

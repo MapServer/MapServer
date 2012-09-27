@@ -87,9 +87,9 @@ int msWCSException11(mapObj *map, const char *locator,
   xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
@@ -600,9 +600,9 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     return MS_FAILURE;
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
@@ -999,9 +999,9 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
       return MS_FAILURE;
 
     if (encoding)
-      msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+      msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","text/xml");
+      msIO_setHeader("Content-Type","text/xml");
     msIO_sendHeaders();
 
     context = msIO_getHandler(stdout);
