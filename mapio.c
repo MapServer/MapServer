@@ -183,7 +183,7 @@ void msIO_setHeader (const char *header, const char* value, ...)
 
     request_rec *r = (request_rec*) (ioctx->cbData);
     char *fullvalue = apr_pvsprintf(r->pool, value,args);
-    if (strcasecmp (header, "Content-type") == 0) {
+    if (strcasecmp (header, "Content-Type") == 0) {
       r->content_type = fullvalue;
     } else if (strcasecmp (header, "Status") == 0) {
       r->status = atoi (fullvalue);
@@ -746,10 +746,10 @@ void msIO_installStdinFromBuffer()
 /************************************************************************/
 /*                 msIO_stripStdoutBufferContentType()                  */
 /*                                                                      */
-/*      Strip off content-type header from buffer, and return to        */
+/*      Strip off Content-Type header from buffer, and return to        */
 /*      caller.  Returned string is the callers responsibility to       */
 /*      call msFree() on to deallocate.  This function will return      */
-/*      NULL if there is no content-type header.                        */
+/*      NULL if there is no Content-Type header.                        */
 /************************************************************************/
 
 char *msIO_stripStdoutBufferContentType()
@@ -773,10 +773,10 @@ char *msIO_stripStdoutBufferContentType()
   buf = (msIOBuffer *) ctx->cbData;
 
   /* -------------------------------------------------------------------- */
-  /*      Return NULL if we don't have a content-type header.             */
+  /*      Return NULL if we don't have a Content-Type header.             */
   /* -------------------------------------------------------------------- */
   if( buf->data_offset < 14
-      || strncasecmp((const char*) buf->data,"Content-type: ",14) != 0 )
+      || strncasecmp((const char*) buf->data,"Content-Type: ",14) != 0 )
     return NULL;
 
   /* -------------------------------------------------------------------- */
@@ -788,7 +788,7 @@ char *msIO_stripStdoutBufferContentType()
     end_of_ct++;
 
   if( end_of_ct+1 == buf->data_offset ) {
-    msSetError( MS_MISCERR, "Corrupt Content-type header.",
+    msSetError( MS_MISCERR, "Corrupt Content-Type header.",
                 "msIO_stripStdoutBufferContentType" );
     return NULL;
   }
@@ -803,7 +803,7 @@ char *msIO_stripStdoutBufferContentType()
     start_of_data +=2;
   
   if( start_of_data == buf->data_offset ) {
-    msSetError( MS_MISCERR, "Corrupt Content-type header.",
+    msSetError( MS_MISCERR, "Corrupt Content-Type header.",
                 "msIO_stripStdoutBufferContentType" );
     return NULL;
   }
