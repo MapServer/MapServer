@@ -289,7 +289,7 @@ OBJS= $(AGG_OBJ) mapgeomutil.$(OBJ_SUFFIX) mapdummyrenderer.$(OBJ_SUFFIX) mapogl
 				maprasterquery.$(OBJ_SUFFIX) mapobject.$(OBJ_SUFFIX) mapgeos.$(OBJ_SUFFIX) classobject.$(OBJ_SUFFIX) layerobject.$(OBJ_SUFFIX) mapio.$(OBJ_SUFFIX) mappool.$(OBJ_SUFFIX) \
 				mapregex.$(OBJ_SUFFIX) mappluginlayer.$(OBJ_SUFFIX) mapogcsos.$(OBJ_SUFFIX) mappostgresql.$(OBJ_SUFFIX) mapcrypto.$(OBJ_SUFFIX) mapowscommon.$(OBJ_SUFFIX) \
 				maplibxml2.$(OBJ_SUFFIX) mapdebug.$(OBJ_SUFFIX) mapchart.$(OBJ_SUFFIX) maptclutf.$(OBJ_SUFFIX) mapxml.$(OBJ_SUFFIX) mapkml.$(OBJ_SUFFIX) mapkmlrenderer.$(OBJ_SUFFIX) \
-				mapogroutput.$(OBJ_SUFFIX) mapwcs20.$(OBJ_SUFFIX)  mapogcfiltercommon.$(OBJ_SUFFIX) mapunion.$(OBJ_SUFFIX) mapcluster.$(OBJ_SUFFIX) mapxmp.$(OBJ_SUFFIX) \
+				mapogroutput.$(OBJ_SUFFIX) mapwcs20.$(OBJ_SUFFIX)  mapmetadata.$(OBJ_SUFFIX) mapogcfiltercommon.$(OBJ_SUFFIX) mapunion.$(OBJ_SUFFIX) mapcluster.$(OBJ_SUFFIX) mapxmp.$(OBJ_SUFFIX) \
 				mapuvraster.$(OBJ_SUFFIX) mapservutil.$(OBJ_SUFFIX) maptile.$(OBJ_SUFFIX)
 
 HEADERS=	cgiutil.h mapgml.h mapoglcontext.h mapregex.h\
