@@ -223,7 +223,12 @@ char *msAlignText(mapObj *map, labelObj *label, char *text)
   /*length in pixels of the longest line*/
   maxlinelength=0;
   for(i=0; i<numlines; i++) {
-    msGetLabelSize(map,label,textlines[i],label->size, &label_rect,NULL);
+    if(MS_SUCCESS != msGetLabelSize(map,label,textlines[i],label->size, &label_rect,NULL)) {
+      msFreeCharArray(textlines,numlines);
+      msFree(textlinelengths);
+      msFree(numspacesforpadding);
+      return text;
+    }
     textlinelengths[i] = label_rect.maxx-label_rect.minx;
     if(maxlinelength<textlinelengths[i])
       maxlinelength=textlinelengths[i];
