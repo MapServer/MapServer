@@ -1707,18 +1707,16 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
         (*labelpoints)[index]->y = t * (p->line[i].point[k+1].y - p->line[i].point[k].y) + p->line[i].point[k].y;
       }
 
-      theta = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((((p->line[i].point[j].x - p->line[i].point[j-1].x)*(p->line[i].point[j].x - p->line[i].point[j-1].x)) + ((p->line[i].point[j].y - p->line[i].point[j-1].y)*(p->line[i].point[j].y - p->line[i].point[j-1].y)))));
+      theta = atan2(p->line[i].point[j].x - p->line[i].point[j-1].x, p->line[i].point[j].y - p->line[i].point[j-1].y);
 
-      if(p->line[i].point[j-1].x < p->line[i].point[j].x || anglemode == MS_AUTO2) { /* i.e. to the left */
-        if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
-          *(*angles)[index] = -(90.0 - MS_RAD_TO_DEG*theta);
-        else
-          *(*angles)[index] = (90.0 - MS_RAD_TO_DEG*theta);
+      if(anglemode != MS_AUTO2) {
+        if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
+          *(*angles)[index] = (MS_RAD_TO_DEG*theta) - 90;
+        } else {
+          *(*angles)[index] = (MS_RAD_TO_DEG*theta) + 90;
+        }
       } else {
-        if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
-          *(*angles)[index] = (90.0 - MS_RAD_TO_DEG*theta);
-        else
-          *(*angles)[index] = -(90.0 - MS_RAD_TO_DEG*theta);
+         *(*angles)[index] = (MS_RAD_TO_DEG*theta) - 90;
       }
 
       point_position = left_point_position;
