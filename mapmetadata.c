@@ -28,21 +28,65 @@
 
 #include "mapserver.h"
 #include "mapowscommon.h"
+#include "maplibxml2.h"
+
 
 /************************************************************************/
 /*                   _msMetadataGetCharacterString                      */
 /*                                                                      */
 /*      Create a gmd:name/gmd:CharacterString element pattern           */
 /************************************************************************/
+
 xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, char *name, char *value) {
   xmlNsPtr psNsGco = NULL;
   xmlNodePtr psNode = NULL;
 
   psNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
 
-
   psNode = xmlNewNode(namespace, BAD_CAST name);
   xmlNewChild(psNode, psNsGco, BAD_CAST "CharacterString", BAD_CAST value);
+  return psNode;
+
+}
+
+
+/************************************************************************/
+/*                   _msMetadataGetInteger                              */
+/*                                                                      */
+/*      Create a gmd:name/gmd:Integer element pattern                   */
+/************************************************************************/
+
+xmlNodePtr _msMetadataGetInteger(xmlNsPtr namespace, char *name, int value) {
+  char buffer[8];
+  xmlNsPtr psNsGco = NULL;
+  xmlNodePtr psNode = NULL;
+
+  sprintf(buffer, "%d", value);
+
+  psNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
+
+  psNode = xmlNewNode(namespace, BAD_CAST name);
+  xmlNewChild(psNode, psNsGco, BAD_CAST "Integer", BAD_CAST buffer);
+  return psNode;
+}
+
+/************************************************************************/
+/*                   _msMetadataGetDecimal                              */
+/*                                                                      */
+/*      Create a gmd:name/gmd:Decimal element pattern                   */
+/************************************************************************/
+
+xmlNodePtr _msMetadataGetDecimal(xmlNsPtr namespace, char *name, double value) {
+  char buffer[32];
+  xmlNsPtr psNsGco = NULL;
+  xmlNodePtr psNode = NULL;
+
+  sprintf(buffer, "%f", value);
+
+  psNsGco = xmlNewNs(NULL, BAD_CAST "http://www.isotc211.org/2005/gmd", BAD_CAST "gco");
+
+  psNode = xmlNewNode(namespace, BAD_CAST name);
+  xmlNewChild(psNode, psNsGco, BAD_CAST "Decimal", BAD_CAST buffer);
   return psNode;
 }
 
@@ -51,6 +95,7 @@ xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, char *name, char *v
 /*                                                                      */
 /*      Create a gmd:name/gmd:* code list element pattern               */
 /************************************************************************/
+
 xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, char *parent_element, char *name, char *value) {
   char *codelist = NULL;
   xmlNodePtr psNode = NULL;
@@ -72,6 +117,7 @@ xmlNodePtr _msMetadataGetCodeList(xmlNsPtr namespace, char *parent_element, char
 /*                                                                      */
 /*      Create a gmd:date or gmd:dateStamp element pattern              */
 /************************************************************************/
+
 xmlNodePtr _msMetadataGetDate(xmlNsPtr namespace, char *parent_element, char *date_type, char *value) {
   xmlNsPtr psNsGco = NULL;
   xmlNodePtr psNode = NULL;
@@ -87,34 +133,244 @@ xmlNodePtr _msMetadataGetDate(xmlNsPtr namespace, char *parent_element, char *da
   }
 
   psNode2 = xmlNewChild(psNode, namespace, BAD_CAST "date", NULL);
-  xmlNewChild(psNode2, NULL, BAD_CAST "Date", BAD_CAST value);
+  xmlNewChild(psNode2, psNsGco, BAD_CAST "Date", BAD_CAST value);
   xmlAddChild(psNode, _msMetadataGetCodeList(namespace, "dateType", "CI_DateTypeCode", date_type));
 
   return psNode;
 }
 
+/************************************************************************/
+/*                   _msMetadataGetGMLTimePeriod                        */
+/*                                                                      */
+/*      Create a gml:TimePeriod element pattern                         */
+/************************************************************************/
+
+xmlNodePtr _msMetadataGetGMLTimePeriod(char **temporal)
+{
+  xmlNsPtr psNsGml = NULL;
+  xmlNodePtr psNode = NULL;
+
+  psNsGml = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+  psNode = xmlNewNode(psNsGml, BAD_CAST "TimePeriod");
+  xmlNewNsProp(psNode, psNsGml, BAD_CAST "id", BAD_CAST "T001");
+  xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml");
+  xmlSetNs(psNode, psNsGml);
+  xmlNewChild(psNode, psNsGml, BAD_CAST "beginPosition", BAD_CAST temporal[0]);
+  xmlNewChild(psNode, psNsGml, BAD_CAST "endPosition", BAD_CAST temporal[1]);
+
+  return psNode;
+}
+
+
+/************************************************************************/
+/*                   _msMetadataGetExtent                               */
+/*                                                                      */
+/*            Create a gmd:extent element pattern                       */
+/************************************************************************/
+
+xmlNodePtr _msMetadataGetExtent(xmlNsPtr namespace, layerObj *layer)
+{
+  int n;
+  int status;
+  char *value = NULL;
+  char **temporal = NULL;
+  xmlNodePtr psNode = NULL;
+  xmlNodePtr psEXNode = NULL;
+  xmlNodePtr psGNode = NULL;
+  xmlNodePtr psGNode2 = NULL;
+  xmlNodePtr psTNode = NULL;
+  xmlNodePtr psTNode2 = NULL;
+  xmlNodePtr psENode = NULL;
+
+  rectObj rect;
+
+  psNode = xmlNewNode(namespace, BAD_CAST "extent");
+  psEXNode = xmlNewChild(psNode, namespace, BAD_CAST "EX_Extent", NULL);
+
+  /* scan for geospatial extent */
+  status = msLayerGetExtent(layer, &rect);
+
+  if (status == 0) {
+    psGNode = xmlNewChild(psEXNode, namespace, BAD_CAST "geographicElement", NULL);
+    psGNode2 = xmlNewChild(psGNode, namespace, BAD_CAST "EX_GeographicBoundingBox", NULL);
+    xmlAddChild(psGNode2, _msMetadataGetDecimal(namespace, "westBoundLongitude", rect.minx));
+    xmlAddChild(psGNode2, _msMetadataGetDecimal(namespace, "eastBoundLongitude", rect.maxx));
+    xmlAddChild(psGNode2, _msMetadataGetDecimal(namespace, "southBoundLatitude", rect.miny));
+    xmlAddChild(psGNode2, _msMetadataGetDecimal(namespace, "northBoundLatitude", rect.maxy));
+  }
+
+  /* scan for temporal extent */
+  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MO", "timeextent");
+  if (value) { /* WMS */
+    temporal = msStringSplit(value, '/', &n);
+  }
+  else { /* WCS */
+    value = (char *)msOWSLookupMetadata(&(layer->metadata), "CO", "timeposition");
+    if (value) {
+      /* split extent */
+      temporal = msStringSplit(value, ',', &n);
+    }
+  }
+  if (value) { 
+    if (temporal && n > 0) {
+      psTNode = xmlNewChild(psEXNode, namespace, BAD_CAST "temporalElement", NULL);
+      psTNode2 = xmlNewChild(psTNode, namespace, BAD_CAST "EX_TemporalExtent", NULL);
+      psENode = xmlNewChild(psTNode2, namespace, BAD_CAST "extent", NULL);
+      xmlAddChild(psENode, _msMetadataGetGMLTimePeriod(temporal));
+
+      msFreeCharArray(temporal, n);
+    }
+  }
+
+  return psNode;
+}
+
+
+/************************************************************************/
+/*                   _msMetadataGetReferenceSystemInfo                  */
+/*                                                                      */
+/*      Create a gmd:referenceSystemInfo element pattern                */
+/************************************************************************/
+
 xmlNodePtr _msMetadataGetReferenceSystemInfo(xmlNsPtr namespace, layerObj *layer)
 {
   char *value;
   xmlNodePtr psNode = NULL;
+  xmlNodePtr psRSNode = NULL;
   xmlNodePtr psRSINode = NULL;
   xmlNodePtr psRSINode2 = NULL;
 
-  psNode = xmlNewNode(namespace, BAD_CAST "MD_ReferenceSystem");
-  psRSINode = xmlNewChild(psNode, namespace, BAD_CAST "referenceSystemIdentifier", NULL);
+  psNode = xmlNewNode(namespace, BAD_CAST "referenceSystemInfo");
+  psRSNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_ReferenceSystem", NULL);
+  psRSINode = xmlNewChild(psRSNode, namespace, BAD_CAST "referenceSystemIdentifier", NULL);
   psRSINode2 = xmlNewChild(psRSINode, namespace, BAD_CAST "RS_Identifier", NULL);
 
   value = (char *)msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "MO", MS_TRUE);
   xmlAddChild(psRSINode2, _msMetadataGetCharacterString(namespace, "code", value));
-
+  xmlAddChild(psRSINode2, _msMetadataGetCharacterString(namespace, "codeSpace", "http://www.epsg-registry.org"));
+  xmlAddChild(psRSINode2, _msMetadataGetCharacterString(namespace, "version", "6.14"));
 
   return psNode;
 }
+
+
+/************************************************************************/
+/*                   _msMetadataGetIdentificationInfo                   */
+/*                                                                      */
+/*      Create a gmd:identificationInfo element pattern                 */
+/************************************************************************/
+
+xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, layerObj *layer)
+{
+  int i = 0;
+  int n;
+  char *value;
+  char **tokens = NULL;
+  xmlNodePtr psNode = NULL;
+  xmlNodePtr psDINode = NULL;
+  xmlNodePtr psCNode = NULL;
+  xmlNodePtr psCINode = NULL;
+  xmlNodePtr psDNode = NULL;
+  xmlNodePtr psKWNode = NULL;
+  xmlNodePtr psMDKNode = NULL;
+
+  psNode = xmlNewNode(namespace, BAD_CAST "identificationInfo");
+
+  psDINode = xmlNewChild(psNode, namespace, BAD_CAST "MD_DataIdentification", NULL);
+  xmlNewProp(psDINode, BAD_CAST "id", BAD_CAST layer->name);
+  psCNode = xmlNewChild(psDINode, namespace, BAD_CAST "citation", NULL);
+  psCINode = xmlNewChild(psCNode, namespace, BAD_CAST "CI_Citation", NULL);
+
+  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFSGO", "title");
+  xmlAddChild(psCINode, _msMetadataGetCharacterString(namespace, "title", value));
+
+  psDNode = xmlNewChild(psCINode, namespace, BAD_CAST "date", NULL);
+
+  xmlAddChild(psDNode, _msMetadataGetDate(namespace, "CI_Date", "publication", "2011"));
+
+  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFSGO", "abstract");
+  xmlAddChild(psDINode, _msMetadataGetCharacterString(namespace, "abstract", value));
+
+  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFSGO", "keywordlist");
+
+  if (value) {
+    psKWNode = xmlNewChild(psDINode, namespace, BAD_CAST "descriptiveKeywords", NULL);
+    psMDKNode = xmlNewChild(psKWNode, namespace, BAD_CAST "MD_Keywords", NULL);
+
+    tokens = msStringSplit(value, ',', &n);
+    if (tokens && n > 0) {
+      for (i=0; i<n; i++) {
+        xmlAddChild(psMDKNode, _msMetadataGetCharacterString(namespace, "keyword", tokens[i]));
+      }
+      msFreeCharArray(tokens, n);
+    }
+  }
+
+  xmlAddChild(psDINode, _msMetadataGetCharacterString(namespace, "language", (char *)msOWSGetLanguage(map, "exception")));
+  xmlAddChild(psDINode, _msMetadataGetExtent(namespace, layer));
+
+  return psNode;
+}
+
+
+/************************************************************************/
+/*                   _msMetadataGetSpatialRepresentationInfo            */
+/*                                                                      */
+/*      Create a gmd:spatialRepresentationInfo element pattern          */
+/************************************************************************/
+
+xmlNodePtr _msMetadataGetSpatialRepresentationInfo(xmlNsPtr namespace, layerObj *layer)
+{
+  char *value;
+  xmlNodePtr psNode = NULL;
+  xmlNodePtr psSRNode = NULL;
+  xmlNodePtr psGONode = NULL;
+  xmlNodePtr psGONode2 = NULL;
+
+  psNode = xmlNewNode(namespace, BAD_CAST "spatialRepresentationInfo");
+
+  if (layer->type == MS_LAYER_RASTER) {
+    psSRNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_GridSpatialRepresentation", NULL);
+    xmlAddChild(psSRNode, _msMetadataGetInteger(namespace, "numberOfDimensions", 2));
+    xmlAddChild(psSRNode, _msMetadataGetCodeList(namespace, "cellGeometry", "MD_CellGeometryCode", "area"));
+  }
+  else {
+    psSRNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_VectorSpatialRepresentation", NULL);
+    xmlAddChild(psSRNode, _msMetadataGetCodeList(namespace, "topologyLevel", "MD_TopologyLevelCode", "geometryOnly"));
+    psGONode = xmlNewChild(psSRNode, namespace, BAD_CAST "geometricObjects", NULL);
+    psGONode2 = xmlNewChild(psGONode, namespace, BAD_CAST "MD_GeometricObjects", NULL);
+    if (layer->type == MS_LAYER_POINT)
+      value = "point";
+    else if (layer->type == MS_LAYER_LINE)
+      value = "curve";
+    else if (layer->type == MS_LAYER_POLYGON)
+      value = "surface";
+    else
+      value = "complex";
+    xmlAddChild(psGONode2, _msMetadataGetCodeList(namespace, "geometricObjectType", "MD_GeometricObjectTypeCode", value));
+    xmlAddChild(psGONode2, _msMetadataGetInteger(namespace, "geometricObjectCount", msLayerGetNumFeatures(layer)));
+  }
+
+  return psNode;
+}
+
+
+/************************************************************************/
+/*                   msMetadataGetServiceMetadata                       */
+/*                                                                      */
+/*      Generate an ISO 19119:2005 representation of service metadata   */
+/************************************************************************/
 
 int msMetadataGetServiceMetadata(mapObj *map, metadataParamsObj *paramsObj, owsRequestObj *ows_request)
 {
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                   msMetadataGetLayerMetadata                         */
+/*                                                                      */
+/*      Generate an ISO 19139:2007 representation of service metadata   */
+/************************************************************************/
 
 int msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj, owsRequestObj *ows_request)
 {
@@ -126,7 +382,6 @@ int msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj, owsReq
   char *schemas_location = NULL;
 
   xmlNodePtr psRootNode = NULL;
-  xmlNodePtr psRSNode = NULL;
   xmlDocPtr xml_document;
   xmlChar *xml_buffer;
   xmlNsPtr psNsOws = NULL;
@@ -170,8 +425,10 @@ int msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj, owsReq
     xmlNewNs(psRootNode, BAD_CAST "http://www.isotc211.org/2005/gco", BAD_CAST "gco");
     xmlSetNs(psRootNode, psNsGmd);
 
+    xmlNewProp(psRootNode, BAD_CAST "id", BAD_CAST layer->name);
+
     /* gmd:identifier */
-    xmlAddChild(psRootNode, _msMetadataGetCharacterString(psNsGmd, "identifier", layer->name));
+    xmlAddChild(psRootNode, _msMetadataGetCharacterString(psNsGmd, "fileIdentifier", layer->name));
 
     /* gmd:language */
     xmlAddChild(psRootNode, _msMetadataGetCharacterString(psNsGmd, "language", (char *)msOWSGetLanguage(map, "exception")));
@@ -187,20 +444,21 @@ int msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj, owsReq
 
     /* gmd:metadataStandardName */
     xmlAddChild(psRootNode, _msMetadataGetCharacterString(psNsGmd, "metadataStandardName", "ISO 19115"));
+
     /* gmd:metadataStandardVersion */
     xmlAddChild(psRootNode, _msMetadataGetCharacterString(psNsGmd, "metadataStandardVersion", "2003"));
 
+    /* gmd:spatialRepresentationInfo */
+    xmlAddChild(psRootNode, _msMetadataGetSpatialRepresentationInfo(psNsGmd, layer));
+
     /* gmd:referenceSystemInfo */
-    psRSNode = xmlNewChild(psRootNode, psNsGmd, BAD_CAST "referenceSystemInfo", NULL);
-    xmlAddChild(psRSNode, _msMetadataGetReferenceSystemInfo(psNsGmd, layer));
+    xmlAddChild(psRootNode, _msMetadataGetReferenceSystemInfo(psNsGmd, layer));
 
     /* gmd:identificationInfo */
-    xmlAddChild(psRootNode, _msMetadataGetDate(psNsGmd, "CI_Date", "publication", "2011"));
-  
+    xmlAddChild(psRootNode, _msMetadataGetIdentificationInfo(psNsGmd, map, layer));
 
     /* gmd:distributionInfo */
 
-    /* gmd:dataQualityInfo */
 
     result = MS_SUCCESS;
   }
@@ -215,14 +473,20 @@ int msMetadataGetLayerMetadata(mapObj *map, metadataParamsObj *paramsObj, owsReq
   return result;
 }
 
-/*
-** msMetadataDispatch() is the entry point for metadata requests.
-** - If this is a valid request then it is processed and MS_SUCCESS is returned
-**   on success, or MS_FAILURE on failure.
-** - If this does not appear to be a valid WFS request then MS_DONE
-**   is returned and MapServer is expected to process this as a regular
-**   MapServer request.
-*/
+
+/************************************************************************/
+/*                  msMetadataDispatch                                  */
+/*                                                                      */
+/* Entry point for metadata requests.                                   */
+/*                                                                      */
+/* - If this is a valid request then it is processed and MS_SUCCESS     */
+/*   is returned on success, or MS_FAILURE on failure.                  */ 
+/*                                                                      */
+/* - If this does not appear to be a valid WFS request then MS_DONE     */
+/*   is returned and MapServer is expected to process this as a regular */
+/*   MapServer request.                                                 */
+/************************************************************************/
+
 int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request)
 {
   int returnvalue = MS_DONE;
@@ -259,12 +523,14 @@ int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ow
 
 }
 
+
 /************************************************************************/
 /*                           msMetadataCreateParamsObj                  */
 /*                                                                      */
-/*      Create a parameter object, initialize it.                       */
-/*      The caller should free the object using msMetadataFreeParamsObj.*/
+/*   Create a parameter object, initialize it.                          */
+/*   The caller should free the object using msMetadataFreeParamsObj.   */
 /************************************************************************/
+
 metadataParamsObj *msMetadataCreateParamsObj()
 {
   metadataParamsObj *paramsObj = (metadataParamsObj *)calloc(1, sizeof(metadataParamsObj));
@@ -273,6 +539,7 @@ metadataParamsObj *msMetadataCreateParamsObj()
   paramsObj->pszLayer = NULL;
   return paramsObj;
 }
+
 
 /************************************************************************/
 /*                            msMetadataFreeParmsObj                    */
@@ -287,11 +554,13 @@ void msMetadataFreeParamsObj(metadataParamsObj *metadataparams)
   }
 }
 
+
 /************************************************************************/
 /*                            msMetadataParseRequest                    */
 /*                                                                      */
 /*      Parse request into the params object.                           */
 /************************************************************************/
+
 int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
                       metadataParamsObj *metadataparams)
 {
@@ -308,7 +577,6 @@ int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *o
       }
     }
   }
-
 
   return MS_SUCCESS;
 }
