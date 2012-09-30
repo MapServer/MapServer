@@ -1918,7 +1918,7 @@ static int processDateTag(char **line)
     msFreeHashTable(tagArgs); tagArgs=NULL;
 
     if((*line)[tagOffset] != '\0')
-      tagStart = findTag(*line+tagOffset+1, "shpxy");
+      tagStart = findTag(*line+tagOffset+1, "date");
     else
       tagStart = NULL;  
   }
