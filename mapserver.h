@@ -599,7 +599,7 @@ extern "C" {
 #endif
 
 #ifndef SWIG
-    struct map_obj *map;
+    struct mapObj *map;
 #endif
   } fontSetObj;
 
@@ -832,7 +832,7 @@ extern "C" {
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    struct map_obj *map;
+    struct mapObj *map;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1056,7 +1056,7 @@ extern "C" {
   /*      basic symbolization and classification information              */
   /************************************************************************/
 
-  typedef struct class_obj {
+  typedef struct classObj {
 #ifndef SWIG
     expressionObj expression; /* the expression to be matched */
 #endif
@@ -1112,7 +1112,7 @@ extern "C" {
     %immutable;
 #endif /* SWIG */
     int refcount;
-    struct layer_obj *layer;
+    struct layerObj *layer;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1255,7 +1255,7 @@ extern "C" {
 #ifndef SWIG
     int refcount;
     symbolObj** symbol;
-    struct map_obj *map;
+    struct mapObj *map;
     fontSetObj *fontset; /* a pointer to the main mapObj version */
     struct imageCacheObj *imagecache;
 #endif /* not SWIG */
@@ -1279,7 +1279,7 @@ extern "C" {
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    struct map_obj *map;
+    struct mapObj *map;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1340,7 +1340,7 @@ extern "C" {
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    struct map_obj *map;
+    struct mapObj *map;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1443,7 +1443,7 @@ extern "C" {
   /*      base unit of a map.                                             */
   /************************************************************************/
 
-  typedef struct layer_obj {
+  typedef struct layerObj {
 
     char *classitem; /* .DBF item to be used for symbol lookup */
 
@@ -1467,7 +1467,7 @@ extern "C" {
     int numclasses;
     int maxclasses;
     int index;
-    struct map_obj *map;
+    struct mapObj *map;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1615,7 +1615,7 @@ extern "C" {
   /************************************************************************/
 
   /* MAP OBJECT -  */
-  typedef struct map_obj { /* structure for a map */
+  typedef struct mapObj { /* structure for a map */
     char *name; /* small identifier for naming etc. */
     int status; /* is map creation on or off */
     int height, width;
