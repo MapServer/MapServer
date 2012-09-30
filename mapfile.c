@@ -171,6 +171,30 @@ int getSymbol(int n, ...)
 }
 
 /*
+** Same as getSymbol, except no error message is set on failure
+*/
+int getSymbol2(int n, ...)
+{
+  int symbol;
+  va_list argp;
+  int i=0;
+
+  symbol = msyylex();
+
+  va_start(argp, n);
+  while(i<n) { /* check each symbol in the list */
+    if(symbol == va_arg(argp, int)) {
+      va_end(argp);
+      return(symbol);
+    }
+    i++;
+  }
+
+  va_end(argp);
+  return(-1);
+}
+
+/*
 ** Get a string or symbol as a string.   Operates like getString(), but also
 ** supports symbols.
 */
@@ -2261,7 +2285,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); /* we're totally replacing the old expression so free (which re-inits) to start over */
 
   msyystring_icase = MS_TRUE;
-  if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
+  if((exp->type = getSymbol2(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
     exp->string = msStrdup(msyystring_buffer);
 
     if(exp->type == MS_ISTRING) {
@@ -2272,7 +2296,7 @@ int loadExpressionString(expressionObj *exp, char *value)
       exp->flags = exp->flags | MS_EXP_INSENSITIVE;
     }
   } else {
-    msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
+    /* failure above is not an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
     exp->type = MS_STRING;
     if((strlen(value) - strlen(msyystring_buffer)) == 2)
       exp->string = msStrdup(msyystring_buffer); /* value was quoted */
