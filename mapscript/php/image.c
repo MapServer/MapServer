@@ -333,7 +333,7 @@ PHP_METHOD(imageObj, saveImage)
         php_write(iptr, size TSRMLS_CC);
         status = MS_SUCCESS;
         /* status = size;  why should we return the size ?? */
-        gdFree(iptr);
+        msFree(iptr);
     }
 
     RETURN_LONG(status);
