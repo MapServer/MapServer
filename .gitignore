@@ -19,6 +19,12 @@ mapscript/python/build/
 mapscript/python/mapscript.py
 mapscript/python/mapscript_wrap.c
 mapscript/php/php_mapscript.la
+mapscript/java/edu
+mapscript/java/javamapscript_wrap.c
+mapscript/java/libjavamapscript.la
+mapscript/java/mapscript.jar
+mapscript/perl/MYMETA.yml
+mapscript/perl/Makefile.old
 mapscriptvars
 mapserv
 mapserver-config
