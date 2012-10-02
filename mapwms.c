@@ -857,10 +857,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
-        msFreeCharArray(layers,numlayers);
-        msFree(layerOrder);
         numlayers = 0;
         if (sld_url == NULL &&   sld_body == NULL) {
+          msFreeCharArray(layers,numlayers);
+          msFree(layerOrder);
           msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
                      "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, NULL, wms_exception_format);

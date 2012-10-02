@@ -2941,13 +2941,14 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   writeNumber(stream, indent, "INITIALGAP", -1, style->initialgap);
 
   if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 6,
+    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 7,
                  MS_GEOMTRANSFORM_BBOX, "\"bbox\"",
                  MS_GEOMTRANSFORM_END, "\"end\"",
                  MS_GEOMTRANSFORM_LABELPOINT, "\"labelpnt\"",
                  MS_GEOMTRANSFORM_LABELPOLY, "\"labelpoly\"",
                  MS_GEOMTRANSFORM_START, "\"start\"",
-                 MS_GEOMTRANSFORM_VERTICES, "\"vertices\""
+                 MS_GEOMTRANSFORM_VERTICES, "\"vertices\"",
+                 MS_GEOMTRANSFORM_CENTROID, "\"centroid\""
                 );
   }
 
