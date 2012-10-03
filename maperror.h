@@ -94,13 +94,13 @@ extern "C" {
 #define  MS_DLL_EXPORT
 #endif
 
-typedef struct error_obj {
+typedef struct errorObj {
   int code;
   char routine[ROUTINELENGTH];
   char message[MESSAGELENGTH];
   int isreported;
 #ifndef SWIG
-  struct error_obj *next;
+  struct errorObj *next;
 #endif
 } errorObj;
 
@@ -120,8 +120,8 @@ MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
 MS_DLL_EXPORT char *msGetErrorCodeString(int code);
 MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
 
-struct map_obj;
-MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
+struct mapObj;
+MS_DLL_EXPORT void msWriteErrorImage(struct mapObj *map, char *filename, int blank);
 
 #endif /* SWIG */
 

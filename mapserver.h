@@ -182,12 +182,13 @@ typedef ms_uint32 *     ms_bitarray;
 extern "C" {
 #endif
 
+// hide from swig or ruby will choke on the __FUNCTION__ name
+#ifndef SWIG
 /* Memory allocation check utility */
-
 #ifndef __FUNCTION__
 #   define __FUNCTION__ "MapServer"
 #endif
-
+#endif
 #define MS_CHECK_ALLOC(var, size, retval)     \
     if (!var) {   \
         msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", __FUNCTION__, \
@@ -583,7 +584,7 @@ typedef struct {
 #endif
 
 #ifndef SWIG
-    struct map_obj *map;
+    struct mapObj *map;
 #endif
 } fontSetObj;
 
@@ -813,7 +814,7 @@ typedef struct {
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
-  struct map_obj *map;
+  struct mapObj *map;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -988,7 +989,7 @@ typedef struct {
 /*      basic symbolization and classification information              */
 /************************************************************************/
 
-typedef struct class_obj{
+typedef struct classObj{
 #ifndef SWIG
   expressionObj expression; /* the expression to be matched */
 #endif
@@ -1039,7 +1040,7 @@ typedef struct class_obj{
 %immutable;
 #endif /* SWIG */
   int refcount;
-  struct layer_obj *layer;
+  struct layerObj *layer;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -1181,7 +1182,7 @@ typedef struct {
 #ifndef SWIG
   int refcount;
   symbolObj** symbol;
-  struct map_obj *map;
+  struct mapObj *map;
   fontSetObj *fontset; /* a pointer to the main mapObj version */
   struct imageCacheObj *imagecache;
 #endif /* not SWIG */
@@ -1205,7 +1206,7 @@ typedef struct {
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
-  struct map_obj *map;
+  struct mapObj *map;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -1266,7 +1267,7 @@ typedef struct {
 #ifdef SWIG
 %immutable;
 #endif /* SWIG */
-  struct map_obj *map;
+  struct mapObj *map;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -1330,7 +1331,7 @@ typedef struct layerVTable layerVTableObj;
 /*      base unit of a map.                                             */
 /************************************************************************/
 
-typedef struct layer_obj {
+typedef struct layerObj {
 
   char *classitem; /* .DBF item to be used for symbol lookup */
 
@@ -1354,7 +1355,7 @@ typedef struct layer_obj {
   int numclasses;
   int maxclasses;
   int index;
-  struct map_obj *map;
+  struct mapObj *map;
 #ifdef SWIG
 %mutable;
 #endif /* SWIG */
@@ -1496,7 +1497,7 @@ typedef struct layer_obj {
 /************************************************************************/
 
 /* MAP OBJECT -  */
-typedef struct map_obj{ /* structure for a map */
+typedef struct mapObj{ /* structure for a map */
   char *name; /* small identifier for naming etc. */
   int status; /* is map creation on or off */
   int height, width;
