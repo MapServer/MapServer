@@ -439,6 +439,7 @@ int msMetadataParseRequest(mapObj *map, cgiRequestObj *, owsRequestObj *ows_requ
                       metadataParamsObj *);
 int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
                       metadataParamsObj *metadataparams);
+int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request);
 
 
 /*====================================================================
