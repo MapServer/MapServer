@@ -10,6 +10,12 @@ legend
 libmapserver.a
 mapscript/csharp/Makefile
 mapscript/java/Makefile
+mapscript/java/edu
+mapscript/java/javamapscript_wrap.c
+mapscript/java/libjavamapscript.la
+mapscript/java/mapscript.jar
+mapscript/perl/MYMETA.yml
+mapscript/perl/Makefile.old
 mapscriptvars
 mapserv
 mapserver-config
