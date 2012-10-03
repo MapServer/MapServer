@@ -159,7 +159,7 @@ def draw_map_wms(name, save=0):
     lo.setProjection('+init=epsg:4326')
     lo.connectiontype = mapscript.MS_WMS
 #    lo.connection = 'http://wms.jpl.nasa.gov/wms.cgi?'
-    lo.connection = 'http://labs.metacarta.com/wms/vmap0?'
+    lo.connection = 'http://vmap0.tiles.osgeo.org/wms/vmap0?'
     lo.metadata.set('wms_service', 'WMS')
     lo.metadata.set('wms_server_version', '1.1.1')
     lo.metadata.set('wms_name', 'basic')
