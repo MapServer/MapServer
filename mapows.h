@@ -106,6 +106,7 @@ typedef  struct {
 typedef struct {
   char *pszRequest;
   char *pszLayer;
+  char *pszOutputSchema;
 } metadataParamsObj;
 
 /* owsRequestObj: Represent a OWS specific request with its enabled layers */
