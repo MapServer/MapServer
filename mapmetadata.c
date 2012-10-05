@@ -53,6 +53,7 @@ xmlNodePtr _msMetadataGetCharacterString(xmlNsPtr namespace, char *name, char *v
 
 }
 
+
 /************************************************************************/
 /*                   _msMetadataGetURL                                  */
 /*                                                                      */
@@ -73,6 +74,69 @@ xmlNodePtr _msMetadataGetURL(xmlNsPtr namespace, char *name, char *value) {
     xmlNewChild(psNode, namespace, BAD_CAST "URL", BAD_CAST value);
   return psNode;
 
+}
+
+/************************************************************************/
+/*                   _msMetadataGetOnline                               */
+/*                                                                      */
+/*               Create a gmd:onLine element pattern                    */
+/************************************************************************/
+
+xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *service) {
+
+  int status;
+  char buffer[32];
+  char *url = NULL;
+  char *desc = NULL;
+
+  xmlNodePtr psNode = NULL;
+  xmlNodePtr psORNode = NULL;
+
+  rectObj rect;
+
+  psNode = xmlNewNode(namespace, BAD_CAST "onLine");
+  psORNode = xmlNewChild(psNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
+
+  //url = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "MFCSGO", "onlineresource", cgi_request));
+  url = msEncodeHTMLEntities("http://kralidis.ca/cgi-bin/mapserv/mapserv?map=/home/tkralidi/work/foss4g/mapserver/git/msautotest/wxs/tomk_workshop.map&");
+
+  if (strcasecmp(service, "M") == 0) {
+    url = msStringConcatenate(url, msEncodeHTMLEntities("service=WMS&version=1.1.1&request=GetMap&width=500&height=300&format=image/png&styles=&layers="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities(layer->name));
+    url = msStringConcatenate(url, msEncodeHTMLEntities("&srs="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities(msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "MFCSGO", MS_TRUE)));
+
+    status = msLayerGetExtent(layer, &rect);
+
+    if (status == 0) {
+      url = msStringConcatenate(url, msEncodeHTMLEntities("&bbox="));
+      sprintf(buffer, "%f", rect.minx);
+      url = msStringConcatenate(url, buffer);
+      url = msStringConcatenate(url, ",");
+      sprintf(buffer, "%f", rect.miny);
+      url = msStringConcatenate(url, buffer);
+      url = msStringConcatenate(url, ",");
+      sprintf(buffer, "%f", rect.maxx);
+      url = msStringConcatenate(url, buffer);
+      url = msStringConcatenate(url, ",");
+      sprintf(buffer, "%f", rect.maxy);
+      url = msStringConcatenate(url, buffer);
+    }
+    desc = (char *)msOWSLookupMetadata(&(layer->metadata), "MFCSGO", "title");
+    desc = msStringConcatenate(desc, " (PNG Format)");
+
+    /* add layers=, bbox=, srs=, styles=, */
+  }
+
+  xmlAddChild(psORNode, _msMetadataGetURL(namespace, "linkage", url));
+
+  xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "protocol", "WWW:DOWNLOAD-1.0-http--download"));
+  xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "name", layer->name));
+
+  if (desc)
+    xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "description", desc));
+
+  return psNode;
 }
 
 
@@ -402,17 +466,10 @@ xmlNodePtr _msMetadataGetSpatialRepresentationInfo(xmlNsPtr namespace, layerObj 
 
 xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layerObj *layer, cgiRequestObj *cgi_request)
 {
-  int status = 0;
-  char buffer[32];
-  char *url = NULL;
-  char *desc = NULL;
   xmlNodePtr psNode = NULL;
   xmlNodePtr psMDNode = NULL;
   xmlNodePtr psTONode = NULL;
   xmlNodePtr psDTONode = NULL;
-  xmlNodePtr psOLNode = NULL;
-  xmlNodePtr psORNode = NULL;
-  rectObj rect;
 
   psNode = xmlNewNode(namespace, BAD_CAST "distributionInfo");
   psMDNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_Distribution", NULL);
@@ -425,47 +482,11 @@ xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layer
   xmlAddChild(psDTONode, _msMetadataGetCharacterString(namespace, "unitsOfDistribution", "KB"));
 
   /* links */
-
   /* WMS */
-  psOLNode = xmlNewChild(psDTONode, namespace, BAD_CAST "onLine", NULL);
-  psORNode = xmlNewChild(psOLNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
-
-  url = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "MFCSGO", "onlineresource", cgi_request));
-
-  url = msStringConcatenate(url, msEncodeHTMLEntities("service=WMS&version=1.1.1&request=GetMap&width=500&height=300&format=image/png&styles=&layers="));
-  url = msStringConcatenate(url, msEncodeHTMLEntities(layer->name));
-  url = msStringConcatenate(url, msEncodeHTMLEntities("&srs="));
-  url = msStringConcatenate(url, msEncodeHTMLEntities(msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "MFCSGO", MS_TRUE)));
-
-  status = msLayerGetExtent(layer, &rect);
-
-  if (status == 0) {
-      url = msStringConcatenate(url, msEncodeHTMLEntities("&bbox="));
-      sprintf(buffer, "%f", rect.minx);
-      url = msStringConcatenate(url, buffer);
-      url = msStringConcatenate(url, ",");
-      sprintf(buffer, "%f", rect.miny);
-      url = msStringConcatenate(url, buffer);
-      url = msStringConcatenate(url, ",");
-      sprintf(buffer, "%f", rect.maxx);
-      url = msStringConcatenate(url, buffer);
-      url = msStringConcatenate(url, ",");
-      sprintf(buffer, "%f", rect.maxy);
-      url = msStringConcatenate(url, buffer);
-  }
-
-  xmlAddChild(psORNode, _msMetadataGetURL(namespace, "linkage", url));
-
-  /* add layers=, bbox=, srs=, styles=, */
-
-  xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "protocol", "WWW:DOWNLOAD-1.0-http--download"));
-  xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "name", layer->name));
-
-  desc = (char *)msOWSLookupMetadata(&(layer->metadata), "MFCSGO", "title");
-  desc = msStringConcatenate(desc, " (PNG Format)");
-
-  if (desc)
-    xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "description", desc));
+  xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M"));
+  /* WFS */
+  /* WCS */
+  /* SOS */
 
   return psNode;
 }
