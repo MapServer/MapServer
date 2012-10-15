@@ -2022,7 +2022,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     bFeatureIdSet = 1;
   }
 
-
+  /* Apply the requested SRS */
+  if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
+    return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
 
 #ifdef USE_OGR
   if (bFilterSet && pszFilter && strlen(pszFilter) > 0) {
@@ -2117,7 +2119,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
 
       /*preparse the filter for gml aliases*/
       FLTPreParseFilterForAlias(psNode, map, iLayerIndex, "G");
-
+      
       /* run filter.  If no results are found, do not throw exception */
       /* this is a null result */
       if( FLTApplyFilterToLayer(psNode, map, iLayerIndex) != MS_SUCCESS ) {
@@ -2203,8 +2205,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
           lp->status = MS_ON;
         }
       }
-      if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
-        return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
     }
 
     for (j=0; j< iFIDLayers; j++) {
@@ -2262,10 +2262,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
 
   if(layers)
     msFreeCharArray(layers, numlayers);
-
-
-  if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
-    return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
 
   /*
   ** Perform Query (only BBOX for now)
