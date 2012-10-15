@@ -2204,6 +2204,8 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
             strcasecmp(lp->name, aFIDLayers[j]) == 0) {
           lp->status = MS_ON;
         }
+        if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
+          return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
       }
     }
 
