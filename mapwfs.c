@@ -2115,7 +2115,10 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
 
       /*preparse the filter for gml aliases*/
       FLTPreParseFilterForAlias(psNode, map, iLayerIndex, "G");
-      
+
+      if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
+        return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
+
       /* run filter.  If no results are found, do not throw exception */
       /* this is a null result */
       if( FLTApplyFilterToLayer(psNode, map, iLayerIndex) != MS_SUCCESS ) {
@@ -2217,9 +2220,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
             lp->template = msStrdup("ttt.html");
           }
           psNode = FLTCreateFeatureIdFilterEncoding(aFIDValues[j]);
-
-          if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, paramsObj->pszVersion) == MS_FAILURE)
-            return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
           
           if( FLTApplyFilterToLayer(psNode, map, lp->index) != MS_SUCCESS ) {
             msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature");
