@@ -1709,14 +1709,14 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
 
       if(anglemode != MS_NONE) {
         theta = atan2(p->line[i].point[j].x - p->line[i].point[j-1].x, p->line[i].point[j].y - p->line[i].point[j-1].y);
-        if(anglemode == MS_AUTO) {
+        if(anglemode == MS_AUTO2) {
+          *(*angles)[index] = (MS_RAD_TO_DEG*theta) - 90;
+        } else { /* AUTO, FOLLOW */
           if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
             *(*angles)[index] = (MS_RAD_TO_DEG*theta) - 90;
           } else {
             *(*angles)[index] = (MS_RAD_TO_DEG*theta) + 90;
           }
-        } else { /* AUTO2 */
-           *(*angles)[index] = (MS_RAD_TO_DEG*theta) - 90;
         }
       }
 

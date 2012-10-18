@@ -172,10 +172,12 @@ typedef ms_uint32 *     ms_bitarray;
 extern "C" {
 #endif
 
+// hide from swig or ruby will choke on the __FUNCTION__ name
+#ifndef SWIG
   /* Memory allocation check utility */
-
 #ifndef __FUNCTION__
 #   define __FUNCTION__ "MapServer"
+#endif
 #endif
 
 #define MS_CHECK_ALLOC(var, size, retval)     \
