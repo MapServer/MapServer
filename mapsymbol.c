@@ -44,6 +44,8 @@ extern char *msyystring_buffer;
 extern int msyylineno;
 extern FILE *msyyin;
 
+extern int msyystate;
+
 static const unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
 static const unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
 
@@ -548,6 +550,9 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   }
 
   pszSymbolPath = msGetPath(szPath);
+
+  msyystate = MS_TOKENIZE_FILE; /* restore lexer state to INITIAL, and do return comments */
+  msyylex(); /* sets things up, but doesn't process any tokens */
 
   msyylineno = 0; /* reset line counter */
   msyyrestart(msyyin); /* flush the scanner - there's a better way but this works for now */
