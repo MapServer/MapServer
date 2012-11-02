@@ -2274,7 +2274,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
 
   if(!string) return MS_SUCCESS; /* not an error, just don't need to do anything more */
   if(strlen(string) == 0) return MS_SUCCESS; /* not an error, just don't need to do anything more */
-
+  if(label->status == MS_OFF) return(MS_SUCCESS); /* not an error */
 
 
   if(label->type == MS_TRUETYPE) {
