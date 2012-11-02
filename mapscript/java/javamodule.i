@@ -211,12 +211,12 @@ RFC-24 implementation follows
         return clazz;
 }
                 
-%typemap(javacode) layerObj %{
+%typemap(javacode) struct layerObj %{
         /* parent reference, RFC-24 item 3.2 */
         mapObj map=null;
 %}
 
-%typemap(javacode) classObj %{
+%typemap(javacode) struct classObj %{
         /* parent reference, RFC-24 item 3.2 */
         layerObj layer=null;
 %}
