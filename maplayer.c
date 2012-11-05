@@ -482,6 +482,11 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   */
 
   /* layer level counts */
+  layer->classitemindex = -1;
+  layer->filteritemindex = -1;
+  layer->styleitemindex = -1;
+  layer->labelitemindex = -1;
+
   if(layer->classitem) nt++;
   if(layer->filteritem) nt++;
   if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") != 0) nt++;
