@@ -2148,9 +2148,6 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
   do {
     /* is buffer empty? */
     if (sthand->row >= sthand->rows_fetched) {
-      if (sthand->row_num >= sthand->rows_count)
-        return MS_DONE;
-
       /* fetch more */
       success = TRY( hand, OCIStmtFetch2( sthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub2)OCI_FETCH_NEXT, (sb4)0, (ub4)OCI_DEFAULT ) )
                 && TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) )
@@ -2159,6 +2156,8 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
       if(layer->debug >= 4 )
         msDebug("msOracleSpatialLayerNextShape on layer %p, Fetched %d more rows (%d total)\n", layer, sthand->rows_fetched, sthand->rows_count);
 
+      if (sthand->row_num >= sthand->rows_count)
+        return MS_DONE;
 
       if (!success || sthand->rows_fetched == 0)
         return MS_DONE;
