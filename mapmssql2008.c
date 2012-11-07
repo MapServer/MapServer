@@ -824,22 +824,22 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     char buffer[1000];
 
     if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
-      snprintf(buffer, sizeof(buffer), "%s,convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+      snprintf(buffer, sizeof(buffer), "[%s],convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
     else
-      snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+      snprintf(buffer, sizeof(buffer), "[%s].STAsBinary(),convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
 
     columns_wanted = msStrdup(buffer);
   } else {
     char buffer[10000] = "";
 
     for(t = 0; t < layer->numitems; t++) {
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), [%s]),", layer->items[t]);
     }
 
     if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s,convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "[%s],convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
     else
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "[%s].STAsBinary(),convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
 
     columns_wanted = msStrdup(buffer);
   }
