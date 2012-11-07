@@ -1820,9 +1820,8 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
 int msMSSQL2008LayerGetItems(layerObj *layer)
 {
   msMSSQL2008LayerInfo  *layerinfo;
-  char                *geom_column_name = 0;
-  char                sql[1000];
-  int                 t;
+  char                *sql = NULL;
+  int                 t, sqlSize;
   char                found_geom = 0;
   int                 item_num;
   SQLSMALLINT cols = 0;
@@ -1846,13 +1845,17 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
     return MS_FAILURE;
   }
 
-  snprintf(sql, sizeof(sql), "SELECT top 0 * FROM %s", layerinfo->geom_table);
+  sqlSize = strlen(layerinfo->geom_table) + 30;
+  sql = msSmallMalloc(sizeof(char *) * sqlSize);
+
+  snprintf(sql, sqlSize, "SELECT top 0 * FROM %s", layerinfo->geom_table);
 
   if (!executeSQL(layerinfo->conn, sql)) {
-    msFree(geom_column_name);
-
+    msFree(sql);
     return MS_FAILURE;
   }
+
+  msFree(sql);
 
   SQLNumResultCols (layerinfo->conn->hstmt, &cols);
 
