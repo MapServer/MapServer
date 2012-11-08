@@ -3710,6 +3710,10 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
     char **excitems=NULL;
     int numexcitems=0;
     const char *value;
+    size_t bufferSize=0;
+    size_t reqBuffSize;
+    char *tag=NULL;
+    const char *lineTemplate="    %s = '%s'\n";
 
     layerObj *lp;
     lp = (GET_LAYER(map, i));
@@ -3767,6 +3771,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
 
       msInitShape(&shape);
       if (msLayerGetShape(lp, &shape, &(lp->resultcache->results[j])) != MS_SUCCESS) {
+        if (tag != NULL) msFree(tag);
         msFree(itemvisible);
         return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
@@ -3774,14 +3779,30 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
       msIO_printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
 
       for(k=0; k<lp->numitems; k++) {
-        if (itemvisible[k])
-          msIO_printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
-      }
+        if (itemvisible[k]) {
+          reqBuffSize = strlen(lp->items[k]) + 7;
+          if (reqBuffSize > bufferSize) {
+            if (tag != NULL) msFree(tag);
+            /* allocate more buffer than we need to try and avoid need for
+               repeated reallocation */
+            bufferSize = reqBuffSize * 2;
+            tag = (char*)msSmallMalloc(bufferSize);
+          }
+          snprintf(tag, reqBuffSize, "%s_alias", lp->items[k]);
 
+          if((value = msOWSLookupMetadata(&(lp->metadata), "MO", tag)) != NULL)
+            msIO_printf(lineTemplate, value, shape.values[k]);
+          else
+            msIO_printf(lineTemplate, lp->items[k], shape.values[k]);
+
+        }
+      }
+ 
       msFreeShape(&shape);
       numresults++;
     }
 
+    if (tag != NULL) msFree(tag);
     msFree(itemvisible);
 
     /* msLayerClose(lp); */
