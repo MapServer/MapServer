@@ -3710,6 +3710,8 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
     char **excitems=NULL;
     int numexcitems=0;
     const char *value;
+    char tag[64];
+    const char *lineTemplate="    %s = '%s'\n";
 
     layerObj *lp;
     lp = (GET_LAYER(map, i));
@@ -3774,8 +3776,13 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
       msIO_printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
 
       for(k=0; k<lp->numitems; k++) {
-        if (itemvisible[k])
-          msIO_printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
+        if (itemvisible[k]) {
+          snprintf(tag, sizeof(tag), "%s_alias", lp->items[k]);
+          if((value = msOWSLookupMetadata(&(lp->metadata), "MO", tag)) != NULL)
+            msIO_printf(lineTemplate, value, shape.values[k]);
+          else
+            msIO_printf(lineTemplate, lp->items[k], shape.values[k]);
+        }
       }
 
       msFreeShape(&shape);
