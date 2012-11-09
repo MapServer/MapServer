@@ -3710,7 +3710,8 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
     char **excitems=NULL;
     int numexcitems=0;
     const char *value;
-    size_t bufferSize;
+    size_t bufferSize=0;
+	size_t reqBuffSize;
     char *tag;
     const char *lineTemplate="    %s = '%s'\n";
 
@@ -3778,18 +3779,24 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
 
       for(k=0; k<lp->numitems; k++) {
         if (itemvisible[k]) {
-          bufferSize = strlen(lp->items[k]) + 7;
-          tag = (char*)msSmallMalloc(bufferSize);
-          snprintf(tag, bufferSize, "%s_alias", lp->items[k]);
+          reqBuffSize = strlen(lp->items[k]) + 7;
+		  if (reqBuffSize > bufferSize) {
+		    if (tag) msFree(tag);
+		    /* allocate more buffer than we need to try and avoid need for
+			   repeated reallocation */
+		    bufferSize = reqBuffSize * 2;
+            tag = (char*)msSmallMalloc(bufferSize * 2);
+		  }
+          snprintf(tag, reqBuffSize, "%s_alias", lp->items[k]);
 
           if((value = msOWSLookupMetadata(&(lp->metadata), "MO", tag)) != NULL)
             msIO_printf(lineTemplate, value, shape.values[k]);
           else
             msIO_printf(lineTemplate, lp->items[k], shape.values[k]);
 
-          msFree(tag);
         }
       }
+	  if (tag) msFree(tag);
 
       msFreeShape(&shape);
       numresults++;
