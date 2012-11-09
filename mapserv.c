@@ -286,5 +286,11 @@ end_request:
             (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
   }
   msCleanup(0);
+
+#ifdef _WIN32
+  /* flush pending writes to stdout */
+  fflush(stdout);
+#endif
+
   exit( 0 );
 }
