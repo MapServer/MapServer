@@ -656,7 +656,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
         *width = MS_MAX(*width, symbol->pixmap_buffer->width);
         *height = MS_MAX(*height, symbol->pixmap_buffer->height);
       } else {
-        *width = MS_MAX(*width, ((size/symbol->pixmap_buffer->height) * symbol->pixmap_buffer->width));
+        *width = MS_MAX(*width, (((double)size/(double)symbol->pixmap_buffer->height) * symbol->pixmap_buffer->width));
         *height = MS_MAX(*height, size);
       }
       break;
