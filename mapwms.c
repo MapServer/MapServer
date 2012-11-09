@@ -3711,8 +3711,8 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
     int numexcitems=0;
     const char *value;
     size_t bufferSize=0;
-	size_t reqBuffSize;
-    char *tag;
+    size_t reqBuffSize;
+    char *tag=NULL;
     const char *lineTemplate="    %s = '%s'\n";
 
     layerObj *lp;
@@ -3771,7 +3771,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
 
       msInitShape(&shape);
       if (msLayerGetShape(lp, &shape, &(lp->resultcache->results[j])) != MS_SUCCESS) {
-	    if (tag) msFree(tag);
+        if (tag != NULL) msFree(tag);
         msFree(itemvisible);
         return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
@@ -3781,8 +3781,8 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
       for(k=0; k<lp->numitems; k++) {
         if (itemvisible[k]) {
           reqBuffSize = strlen(lp->items[k]) + 7;
-          if (reqBuffSize < bufferSize) {
-            if (tag) msFree(tag);
+          if (reqBuffSize > bufferSize) {
+            if (tag != NULL) msFree(tag);
             /* allocate more buffer than we need to try and avoid need for
                repeated reallocation */
             bufferSize = reqBuffSize * 2;
@@ -3802,7 +3802,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
       numresults++;
     }
 
-    if (tag) msFree(tag);
+    if (tag != NULL) msFree(tag);
     msFree(itemvisible);
 
     /* msLayerClose(lp); */
