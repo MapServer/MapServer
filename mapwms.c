@@ -3771,6 +3771,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
 
       msInitShape(&shape);
       if (msLayerGetShape(lp, &shape, &(lp->resultcache->results[j])) != MS_SUCCESS) {
+	    if (tag) msFree(tag);
         msFree(itemvisible);
         return msWMSException(map, nVersion, NULL, wms_exception_format);
       }
@@ -3780,13 +3781,13 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
       for(k=0; k<lp->numitems; k++) {
         if (itemvisible[k]) {
           reqBuffSize = strlen(lp->items[k]) + 7;
-            if (reqBuffSize > bufferSize) {
-              if (tag) msFree(tag);
-                /* allocate more buffer than we need to try and avoid need for
-                   repeated reallocation */
-                bufferSize = reqBuffSize * 2;
-                tag = (char*)msSmallMalloc(bufferSize * 2);
-              }
+          if (reqBuffSize < bufferSize) {
+            if (tag) msFree(tag);
+            /* allocate more buffer than we need to try and avoid need for
+               repeated reallocation */
+            bufferSize = reqBuffSize * 2;
+            tag = (char*)msSmallMalloc(bufferSize);
+          }
           snprintf(tag, reqBuffSize, "%s_alias", lp->items[k]);
 
           if((value = msOWSLookupMetadata(&(lp->metadata), "MO", tag)) != NULL)
@@ -3796,12 +3797,12 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, char *wms_exception
 
         }
       }
-      if (tag) msFree(tag);
-
+ 
       msFreeShape(&shape);
       numresults++;
     }
 
+    if (tag) msFree(tag);
     msFree(itemvisible);
 
     /* msLayerClose(lp); */
