@@ -2940,7 +2940,11 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   writeNumber(stream, indent, "GAP", 0, style->gap);
   writeNumber(stream, indent, "INITIALGAP", -1, style->initialgap);
 
-  if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
+  if(style->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) {
+    writeIndent(stream, indent + 1);
+    fprintf(stream, "GEOMTRANSFORM (%s)\n", style->_geomtransform.string);
+  }
+  else if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
     writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 7,
                  MS_GEOMTRANSFORM_BBOX, "\"bbox\"",
                  MS_GEOMTRANSFORM_END, "\"end\"",
