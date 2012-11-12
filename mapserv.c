@@ -140,10 +140,12 @@ int main(int argc, char *argv[])
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
   mapservObj* mapserv = NULL;
-  msSetup();
 
-  /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
-  if( msDebugInitFromEnv() != MS_SUCCESS ) {
+  /* -------------------------------------------------------------------- */
+  /*      Initialize mapserver.  This sets up threads, GD and GEOS as     */
+  /*      well as using MS_ERRORFILE and MS_DEBUGLEVEL env vars if set.   */
+  /* -------------------------------------------------------------------- */
+  if( msSetup() != MS_SUCCESS ) {
     msCGIWriteError(mapserv);
     msCleanup(0);
     exit(0);
