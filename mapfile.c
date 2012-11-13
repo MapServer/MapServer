@@ -5934,6 +5934,10 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
     if(mappath != NULL) free(mappath);
     return NULL;
   }
+
+  if (mappath != NULL) free(mappath);
+  msyylex_destroy();
+
   msReleaseLock( TLOCK_PARSER );
 
   if (debuglevel >= MS_DEBUGLEVEL_TUNING) {
@@ -5943,9 +5947,6 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
             (endtime.tv_sec+endtime.tv_usec/1.0e6)-
             (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
-
-  if (mappath != NULL) free(mappath);
-  msyylex_destroy();
 
   if (resolveSymbolNames(map) == MS_FAILURE) return NULL;
 
