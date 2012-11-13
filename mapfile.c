@@ -3003,6 +3003,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     int i;
     indent++;
     writeBlockBegin(stream,indent,"PATTERN");
+    writeIndent(stream, indent);
     for(i=0; i<style->patternlength; i++)
       fprintf(stream, " %.2f", style->pattern[i]);
     fprintf(stream,"\n");
