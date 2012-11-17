@@ -404,7 +404,7 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
       $excode
     }
     %}
-%typemap(csvarin, excode=SWIGEXCODE2) (double pattern[ANY]) %{%}
+%typemap(csvarin, excode="") (double pattern[ANY]) %{$excode%}
 
 /* Typemaps for device handle */
 %typemap(imtype) (void* device)  %{IntPtr%}
