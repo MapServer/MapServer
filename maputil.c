@@ -1714,6 +1714,8 @@ static double point_cross(const pointObj a, const pointObj b)
 
 shapeObj *msOffsetCurve(shapeObj *p, double offset)
 {
+  shapeObj *ret;
+  int i, j, first,idx,ok=0;
 #if defined HAVE_GEOS_OFFSET_CURVE
   ret = msGEOSOffsetCurve(p,offset);
   /* GEOS curve offsetting can fail sometimes, we continue with our own implementation
@@ -1727,8 +1729,7 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset)
   ** limit for sin().
   */
 #define CURVE_SIN_LIMIT 0.3
-  int i, j, first,idx,ok=0;
-  shapeObj *ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
   msInitShape(ret);
   ret->numlines = p->numlines;
   ret->line=(lineObj*)msSmallMalloc(sizeof(lineObj)*ret->numlines);
