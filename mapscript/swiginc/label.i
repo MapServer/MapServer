@@ -93,6 +93,33 @@
 
     return MS_SUCCESS;
   }
+  
+  int setExpression(char *expression) 
+  {
+    if (!expression || strlen(expression) == 0) {
+       freeExpression(&self->expression);
+       return MS_SUCCESS;
+    }
+    else return msLoadExpressionString(&self->expression, expression);
+  }
+
+  %newobject getExpressionString;
+  char *getExpressionString() {
+    return msGetExpressionString(&(self->expression));
+  }
+
+  int setText(char *text) {
+    if (!text || strlen(text) == 0) {
+      freeExpression(&self->text);
+      return MS_SUCCESS;
+    }	
+    else return msLoadExpressionString(&self->text, text);
+  }
+
+  %newobject getTextString;
+  char *getTextString() {
+    return msGetExpressionString(&(self->text));
+  }
 
   %newobject getStyle;
   styleObj *getStyle(int i) {

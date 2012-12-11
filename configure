@@ -17836,7 +17836,7 @@ else
 int
 main ()
 {
-int x;__sync_fetch_and_add(&x,1);
+long x;long y=__sync_fetch_and_add(&x,1);
   ;
   return 0;
 }

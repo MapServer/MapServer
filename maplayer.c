@@ -204,7 +204,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 */
 void msLayerClose(layerObj *layer)
 {
-  int i,j;
+  int i,j,k;
 
   /* no need for items once the layer is closed */
   msLayerFreeItemInfo(layer);
@@ -223,6 +223,10 @@ void msLayerClose(layerObj *layer)
     freeExpressionTokens(&(layer->class[i]->text));
     for(j=0; j<layer->class[i]->numstyles; j++)
       freeExpressionTokens(&(layer->class[i]->styles[j]->_geomtransform));
+    for(k=0; k<layer->class[i]->numlabels; k++) {
+      freeExpressionTokens(&(layer->class[i]->labels[k]->expression));
+      freeExpressionTokens(&(layer->class[i]->labels[k]->text));
+    }
   }
 
   if (layer->vtable) {
@@ -478,6 +482,11 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   */
 
   /* layer level counts */
+  layer->classitemindex = -1;
+  layer->filteritemindex = -1;
+  layer->styleitemindex = -1;
+  layer->labelitemindex = -1;
+
   if(layer->classitem) nt++;
   if(layer->filteritem) nt++;
   if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") != 0) nt++;
@@ -693,11 +702,24 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
     /* try to find out the current style format */
     if (strncasecmp(stylestring,"style",5) == 0) {
       resetClassStyle(c);
+      c->layer = layer;
       if (msMaybeAllocateClassStyle(c, 0))
         return(MS_FAILURE);
 
       msUpdateStyleFromString(c->styles[0], stylestring, MS_FALSE);
+      if(c->styles[0]->symbolname) {
+        if((c->styles[0]->symbol =  msGetSymbolIndex(&(map->symbolset), c->styles[0]->symbolname, MS_TRUE)) == -1) {
+          msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class of layer %s.", "msLayerGetFeatureStyle()", 
+              c->styles[0]->symbolname, layer->name);
+          return MS_FAILURE;
+        }
+      }
     } else if (strncasecmp(stylestring,"class",5) == 0) {
+      if (strcasestr(stylestring, " style ") != NULL) {
+        /* reset style if stylestring contains style definitions */
+        resetClassStyle(c);
+        c->layer = layer;
+      }
       msUpdateClassFromString(c, stylestring, MS_FALSE);
     } else if (strncasecmp(stylestring,"pen",3) == 0 || strncasecmp(stylestring,"brush",5) == 0 ||
                strncasecmp(stylestring,"symbol",6) == 0 || strncasecmp(stylestring,"label",5) == 0) {

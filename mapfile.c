@@ -2940,7 +2940,11 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   writeNumber(stream, indent, "GAP", 0, style->gap);
   writeNumber(stream, indent, "INITIALGAP", -1, style->initialgap);
 
-  if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
+  if(style->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) {
+    writeIndent(stream, indent + 1);
+    fprintf(stream, "GEOMTRANSFORM (%s)\n", style->_geomtransform.string);
+  }
+  else if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
     writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 7,
                  MS_GEOMTRANSFORM_BBOX, "\"bbox\"",
                  MS_GEOMTRANSFORM_END, "\"end\"",
@@ -2999,6 +3003,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     int i;
     indent++;
     writeBlockBegin(stream,indent,"PATTERN");
+    writeIndent(stream, indent);
     for(i=0; i<style->patternlength; i++)
       fprintf(stream, " %.2f", style->pattern[i]);
     fprintf(stream,"\n");
@@ -5934,6 +5939,10 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
     if(mappath != NULL) free(mappath);
     return NULL;
   }
+
+  if (mappath != NULL) free(mappath);
+  msyylex_destroy();
+
   msReleaseLock( TLOCK_PARSER );
 
   if (debuglevel >= MS_DEBUGLEVEL_TUNING) {
@@ -5943,9 +5952,6 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
             (endtime.tv_sec+endtime.tv_usec/1.0e6)-
             (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
-
-  if (mappath != NULL) free(mappath);
-  msyylex_destroy();
 
   if (resolveSymbolNames(map) == MS_FAILURE) return NULL;
 

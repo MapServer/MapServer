@@ -91,6 +91,8 @@ OBJ_SUFFIX=lo
 LINK=$(LTLD) $(LD) $(LT_LDFLAGS)
 MS_LIBS =   ../../libmapserver.la
 
+MS_VERSION = @MS_VERSION@
+
 #
 # The rest of the file should not have to be edited...
 #
@@ -114,10 +116,10 @@ PHPPROJ_OBJS = php_mapscript_util.$(OBJ_SUFFIX) php_proj.$(OBJ_SUFFIX) $(PHP_REG
 
 
 php_mapscript.la: $(PHPMS_OBJS) ../../libmapserver.la
-	$(LINK) -o $@ $(PHPMS_OBJS) $(MS_LIBS)
+	$(LINK) -release $(MS_VERSION) -o $@ $(PHPMS_OBJS) $(MS_LIBS)
 
 php_proj.la:  $(PHPPROJ_OBJS) ../libmapserver.la
-	$(LINK) -o $@ $(PHPPROJ_OBJS) $(MS_LIBS)
+	$(LINK) -release $(MS_VERSION) -o $@ $(PHPPROJ_OBJS) $(MS_LIBS)
 
 %.lo: %.c php_mapscript_util.h php_mapscript.h
 	$(LTCC) $(CC) $(CFLAGS112) -c -o $@ $<
