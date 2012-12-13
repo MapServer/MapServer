@@ -943,18 +943,18 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   /* identify target shapes */
-  if(layer->transform == MS_TRUE)
+  if(layer->transform == MS_TRUE) {
     searchrect = map->extent;
+#ifdef USE_PROJ
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+      msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
+#endif
+  }
   else {
     searchrect.minx = searchrect.miny = 0;
     searchrect.maxx = map->width-1;
     searchrect.maxy = map->height-1;
   }
-
-#ifdef USE_PROJ
-  if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-    msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
   if(status == MS_DONE) { /* no overlap */
