@@ -1445,6 +1445,18 @@ extern "C" {
   /*      base unit of a map.                                             */
   /************************************************************************/
 
+  typedef struct {
+    double minscale;
+    double maxscale;
+    char *value;
+  } scaleTokenEntryObj;
+  
+  typedef struct {
+     char *name;
+     int n_entries;
+     scaleTokenEntryObj *tokens;
+  } scaleTokenObj;
+  
   typedef struct layerObj {
 
     char *classitem; /* .DBF item to be used for symbol lookup */
@@ -1486,6 +1498,20 @@ extern "C" {
     char *group; /* shouldn't be unique it's supposed to be a group right? */
 
     int status; /* on or off */
+
+#ifndef SWIG
+    /* RFC86 Scale-dependent token replacements */
+    scaleTokenObj *scaletokens;
+    int numscaletokens;
+    
+    /* The following store original members if they have been modified at runtime by a rfc86 scaletoken */
+    char *orig_data;
+    char *orig_tileitem;
+    char *orig_tileindex;
+    char *orig_filteritem;
+    char *orig_filter; 
+#endif
+
     char *data; /* filename, can be relative or full path */
 
     enum MS_LAYER_TYPE type;
@@ -1789,6 +1815,8 @@ extern "C" {
   MS_DLL_EXPORT int initLayer(layerObj *layer, mapObj *map);
   MS_DLL_EXPORT int freeLayer( layerObj * );
   MS_DLL_EXPORT classObj *msGrowLayerClasses( layerObj *layer );
+  MS_DLL_EXPORT scaleTokenObj *msGrowLayerScaletokens( layerObj *layer );
+  MS_DLL_EXPORT int initScaleToken(scaleTokenObj *scaleToken);
   MS_DLL_EXPORT int initClass(classObj *_class);
   MS_DLL_EXPORT int freeClass( classObj * );
   MS_DLL_EXPORT styleObj *msGrowClassStyles( classObj *_class );
