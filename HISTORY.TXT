@@ -15,7 +15,11 @@ For a complete change history, please see the Git log comments.
 Current Version (git master, 6.3-dev, future 6.4):
 --------------------------------------------------
 
-- implementation of offsets on follow labels (#4399)
+- Fix symbol scaling for vector symbols with no height (#4497,#3511)
+
+- Implementation of layer masking for WCS coverages
+
+- Implementation of offsets on follow labels (#4399)
 
 6.2.0 release (git branch-6-2) 2012/11/14:
 --------------------------------------------------
