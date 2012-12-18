@@ -2912,7 +2912,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 #endif
                            "<SVG />"
                            , NULL);
-    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_FALSE))
+    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE))
       msWMSPrintRequestCap(nVersion, "Capabilities", script_url_encoded, "<WMS_XML />", NULL);
     if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_FALSE))
       msWMSPrintRequestCap(nVersion, "FeatureInfo", script_url_encoded, "<MIME /><GML.1 />", NULL);
@@ -2923,7 +2923,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     /* WMS 1.1.0 and later */
     /* Note changes to the request names, their ordering, and to the formats */
 
-    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_FALSE)) {
+    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE)) {
       if (nVersion >= OWS_1_3_0)
         msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
                              "text/xml",
