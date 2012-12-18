@@ -1865,7 +1865,7 @@ void msCleanup(int signal)
   msGDALCleanup();
 #endif
 #ifdef USE_PROJ
-#  if PJ_VERSION >= 470
+#  if PJ_VERSION >= 480
   pj_clear_initcache();
 #  endif
   pj_deallocate_grids();

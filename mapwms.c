@@ -2275,6 +2275,13 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                       "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
                       MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                       NULL, NULL, NULL, NULL, NULL, "        ");
+  
+  /* print Min/Max ScaleDenominator */
+  if (nVersion <  OWS_1_3_0)
+    msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
+  else
+    msWMSPrintScaleDenominator("        ", lp->minscaledenom, lp->maxscaledenom);
+
 
   /* The LegendURL reside in a style. The Web Map Context spec already  */
   /* included the support on this in mapserver. However, it is not in the  */
@@ -2550,11 +2557,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
   }
 
   msFree(pszMetadataName);
-
-  if (nVersion <  OWS_1_3_0)
-    msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
-  else
-    msWMSPrintScaleDenominator("        ", lp->minscaledenom, lp->maxscaledenom);
 
   if ( grouplayer == MS_FALSE )
     msIO_printf("%s    </Layer>\n", indent);
