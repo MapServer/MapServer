@@ -3303,13 +3303,14 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msFree(pszEncodedName);
       msFree(pszEncodedStyleName);
 
+    }
+
       /* Prints ScaleDenominator */
       if (nVersion <  OWS_1_3_0)
         msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
                           map->resolution);
       else
         msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
-    }
 
     /*  */
     /* Dump list of layers organized by groups.  Layers with no group are listed */
