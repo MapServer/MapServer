@@ -326,7 +326,7 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
     if (disabled) return MS_FALSE;
   }
 
-  if (map && (map->numlayers > 0) && check_all_layers == MS_TRUE) {
+  if (map && check_all_layers == MS_TRUE) {
     int i, globally_enabled = MS_FALSE;
     enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
     globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
@@ -354,9 +354,12 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
         if (!result && disabled) continue;
       }
 
-      if (result || (!disabled && globally_enabled))
+      if (result)
         return MS_TRUE;
     }
+
+    if (!disabled && globally_enabled)
+        return MS_TRUE;
   }
 
   return MS_FALSE;
