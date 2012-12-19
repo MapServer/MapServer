@@ -3203,12 +3203,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                         MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                         NULL, NULL, NULL, NULL, NULL, "    ");
 
-    if (nVersion <  OWS_1_3_0)
-      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
-                          map->resolution);
-    else
-      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
-
     if (map->name && strlen(map->name) > 0 && msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
       char *pszEncodedName = NULL;
       const char *styleName = NULL;
@@ -3308,7 +3302,15 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msIO_fprintf(stdout, "    </Style>\n");
       msFree(pszEncodedName);
       msFree(pszEncodedStyleName);
+
     }
+
+      /* Prints ScaleDenominator */
+      if (nVersion <  OWS_1_3_0)
+        msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
+                          map->resolution);
+      else
+        msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
 
     /*  */
     /* Dump list of layers organized by groups.  Layers with no group are listed */
