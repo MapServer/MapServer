@@ -32,7 +32,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-
+#include "mapthread.h"
 
 
 #include <ctype.h>
