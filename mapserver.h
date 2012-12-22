@@ -2892,8 +2892,6 @@ extern "C" {
   } ;
   MS_DLL_EXPORT int msRenderRasterizedSVGSymbol(imageObj* img, double x, double y, symbolObj* symbol, symbolStyleObj* style);
 
-#endif /* SWIG */
-
 #define MS_IMAGE_RENDERER(im) ((im)->format->vtable)
 #define MS_RENDERER_CACHE(renderer) ((renderer)->renderer_data)
 #define MS_IMAGE_RENDERER_CACHE(im) MS_RENDERER_CACHE(MS_IMAGE_RENDERER((im)))
@@ -2903,6 +2901,8 @@ shapeObj *msOffsetCurve(shapeObj *p, double offset);
 #if defined HAVE_GEOS_OFFSET_CURVE
 shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
 #endif
+
+#endif /* SWIG */
 
 #ifdef __cplusplus
 }
