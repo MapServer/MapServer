@@ -5428,6 +5428,7 @@ int initMap(mapObj *map)
 
   msInitSymbolSet(&map->symbolset);
   map->symbolset.fontset =  &(map->fontset);
+  map->symbolset.map = map;
 
   initLegend(&map->legend);
   initScalebar(&map->scalebar);
