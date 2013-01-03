@@ -1289,6 +1289,7 @@ int main(int argc, char *argv[]) {
 
       msFreeMapServObj(mapserv);      
 #ifdef USE_FASTCGI
+      msResetErrorList();
       /* FCGI_ --- return to top of loop */
       continue;
 #else
