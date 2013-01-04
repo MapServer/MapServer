@@ -755,12 +755,12 @@
 				<xs:element name="QueryMap" type="ms:QueryMap" minOccurs="0"/>
 				<xs:element name="Reference" type="ms:Reference" minOccurs="0"/>
 				<xs:element name="resolution" type="xs:positiveInteger" default="72" minOccurs="0"/>
-				<xs:element name="scaleDenom" type="xs:double" minOccurs="0"/>
 				<xs:element name="ScaleBar" type="ms:ScaleBar"/>
+				<xs:element name="scaleDenom" type="xs:double" minOccurs="0"/>
 				<xs:element name="shapePath" type="xs:string" minOccurs="0"/>
 				<xs:element name="size" type="ms:sizeType" minOccurs="0"/>
-				<xs:element name="symbolSet" type="xs:string" minOccurs="0"/>
 				<xs:element name="Symbol" type="ms:Symbol" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="symbolSet" type="xs:string" minOccurs="0"/>
 				<xs:element name="templatePattern" type="xs:string" minOccurs="0"/>
 				<xs:element name="units" default="METERS" minOccurs="0">
 					<xs:simpleType>
