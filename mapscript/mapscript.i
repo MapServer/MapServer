@@ -41,6 +41,8 @@
 %ignore layerObj::extent;
 #endif
 
+%newobject msLoadMapFromString;
+
 %{
 #include "../../mapserver.h"
 #include "../../maptemplate.h"
