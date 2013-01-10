@@ -2275,12 +2275,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                       "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ",
                       MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                       NULL, NULL, NULL, NULL, NULL, "        ");
-  
-  /* print Min/Max ScaleDenominator */
-  if (nVersion <  OWS_1_3_0)
-    msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
-  else
-    msWMSPrintScaleDenominator("        ", lp->minscaledenom, lp->maxscaledenom);
 
 
   /* The LegendURL reside in a style. The Web Map Context spec already  */
@@ -2557,6 +2551,12 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
   }
 
   msFree(pszMetadataName);
+
+  /* print Min/Max ScaleDenominator */
+  if (nVersion <  OWS_1_3_0)
+    msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
+  else
+    msWMSPrintScaleDenominator("        ", lp->minscaledenom, lp->maxscaledenom);
 
   if ( grouplayer == MS_FALSE )
     msIO_printf("%s    </Layer>\n", indent);
@@ -3205,12 +3205,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                         MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                         NULL, NULL, NULL, NULL, NULL, "    ");
 
-    if (nVersion <  OWS_1_3_0)
-      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
-                          map->resolution);
-    else
-      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
-
     if (map->name && strlen(map->name) > 0 && msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
       char *pszEncodedName = NULL;
       const char *styleName = NULL;
@@ -3311,6 +3305,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msFree(pszEncodedName);
       msFree(pszEncodedStyleName);
     }
+
+    if (nVersion <  OWS_1_3_0)
+      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
+                          map->resolution);
+    else
+      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
 
     /*  */
     /* Dump list of layers organized by groups.  Layers with no group are listed */
