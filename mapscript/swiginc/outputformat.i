@@ -49,6 +49,7 @@
         
         msInitializeRendererVTable(format);
 
+        MS_REFCNT_INIT(format);
 	format->inmapfile = MS_TRUE;
 
         return format;
