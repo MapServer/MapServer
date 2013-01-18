@@ -752,6 +752,13 @@ extern "C" {
   /************************************************************************/
 
   typedef struct {
+#ifdef SWIG
+    %immutable;
+#endif /* SWIG */
+    int refcount;
+#ifdef SWIG
+    %mutable;
+#endif /* SWIG */
     char *name;
     char *mimetype;
     char *driver;
@@ -762,7 +769,6 @@ extern "C" {
     int  bands;
     int  numformatoptions;
     char **formatoptions;
-    int  refcount;
     int inmapfile; /* boolean value for writing */
 #ifndef SWIG
     rendererVTableObj *vtable;

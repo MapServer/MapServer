@@ -188,6 +188,7 @@
   %newobject getOutputFormat;
   outputFormatObj *getOutputFormat(int i) {
     if(i >= 0 && i < self->numoutputformats) {
+    	MS_REFCNT_INCR(self->outputformatlist[i]);
         return (self->outputformatlist[i]); 
     } else {
       return NULL;
