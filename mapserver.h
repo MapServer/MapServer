@@ -1699,7 +1699,9 @@ extern "C" {
     %immutable;
 #endif /* SWIG */
     int numoutputformats;
+#ifndef SWIG
     outputFormatObj **outputformatlist;
+#endif /*SWIG*/
     outputFormatObj *outputformat;
 
     char *imagetype; /* name of current outputformat */

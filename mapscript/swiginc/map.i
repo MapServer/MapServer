@@ -184,6 +184,16 @@
                                  MS_NOOVERRIDE, MS_NOOVERRIDE );
         }
     }
+
+  %newobject getOutputFormat;
+  outputFormatObj *getOutputFormat(int i) {
+    if(i >= 0 && i < self->numoutputformats) {
+        return (self->outputformatlist[i]); 
+    } else {
+      return NULL;
+    }
+  }
+
         
   void setOutputFormat( outputFormatObj *format ) {
       msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
