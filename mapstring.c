@@ -32,7 +32,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-
+#include "mapthread.h"
 
 
 #include <ctype.h>
@@ -1608,8 +1608,13 @@ char *msGetEncodedString(const char *string, const char *encoding)
   size_t len, bufsize, bufleft, iconv_status;
 
 #ifdef USE_FRIBIDI
-  if(fribidi_parse_charset ((char*)encoding))
-    return msGetFriBidiEncodedString(string, encoding);
+  msAcquireLock(TLOCK_FRIBIDI);
+  if(fribidi_parse_charset ((char*)encoding)) {
+    int ret = msGetFriBidiEncodedString(string, encoding);
+    msReleaseLock(TLOCK_FRIBIDI);
+    return ret;
+  }
+  msReleaseLock(TLOCK_FRIBIDI);
 #endif
   len = strlen(string);
 

@@ -380,6 +380,32 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
 #endif
 %}
 
+/* Typemaps for pattern array */
+%typemap(imtype) (double pattern[ANY]) "IntPtr"
+%typemap(cstype) (double pattern[ANY]) "double[]"
+%typemap(in) (double pattern[ANY]) %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) (double pattern[ANY]) "$csinput"
+%typemap(csvarout, excode=SWIGEXCODE2) (double pattern[ANY]) %{
+    get {
+      IntPtr cPtr = $imcall;
+      double[] ret = new double[patternlength];
+      if (patternlength > 0) {       
+	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, patternlength);
+      }
+      $excode
+      return ret;
+    } 
+    set {
+      IntPtr cPtr = $imcall;
+      if (value.Length > 0) {       
+	        System.Runtime.InteropServices.Marshal.Copy(value, 0, cPtr, value.Length);
+      }
+      patternlength = value.Length;
+      $excode
+    }
+    %}
+%typemap(csvarin, excode="") (double pattern[ANY]) %{$excode%}
+
 /* Typemaps for device handle */
 %typemap(imtype) (void* device)  %{IntPtr%}
 %typemap(cstype) (void* device) %{IntPtr%}

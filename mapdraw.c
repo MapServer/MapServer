@@ -776,8 +776,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     renderer->startLayer(image_draw,map,layer);
   } else if (MS_RENDERER_PLUGIN(image_draw->format)) {
     rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
-    if (layer->mask || (layer->opacity > 0 && layer->opacity < 100)) {
-      if (!renderer->supports_transparent_layers) {
+    if ((layer->mask && layer->connectiontype!=MS_WMS && layer->type != MS_LAYER_RASTER) || (layer->opacity > 0 && layer->opacity < 100)) {
+      /* masking occurs at the pixel/layer level for raster images, so we don't need to create a temporary image
+       in these cases
+       */
+      if (layer->mask || !renderer->supports_transparent_layers) {
         image_draw = msImageCreate(image->width, image->height,
                                    image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
         if (!image_draw) {
@@ -943,18 +946,18 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   /* identify target shapes */
-  if(layer->transform == MS_TRUE)
+  if(layer->transform == MS_TRUE) {
     searchrect = map->extent;
+#ifdef USE_PROJ
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+      msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
+#endif
+  }
   else {
     searchrect.minx = searchrect.miny = 0;
     searchrect.maxx = map->width-1;
     searchrect.maxy = map->height-1;
   }
-
-#ifdef USE_PROJ
-  if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-    msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
   if(status == MS_DONE) { /* no overlap */
@@ -2274,7 +2277,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
 
   if(!string) return MS_SUCCESS; /* not an error, just don't need to do anything more */
   if(strlen(string) == 0) return MS_SUCCESS; /* not an error, just don't need to do anything more */
-
+  if(label->status == MS_OFF) return(MS_SUCCESS); /* not an error */
 
 
   if(label->type == MS_TRUETYPE) {
@@ -2947,12 +2950,17 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   /* TODO: treat the case with multiple labels and/or leader lines */
                 }
 
-                /* apply offset and buffer settings */
-                label_offset_x = labelPtr->offsetx*scalefactor;
-                label_offset_y = labelPtr->offsety*scalefactor;
-                label_buffer = (labelPtr->buffer*image->resolutionfactor);
-                label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
-
+                 /* apply offset and buffer settings */
+                 if(labelPtr->anglemode != MS_FOLLOW) {
+                   label_offset_x = labelPtr->offsetx*scalefactor;
+                   label_offset_y = labelPtr->offsety*scalefactor;
+                 } else {
+                   label_offset_x = 0;
+                   label_offset_y = 0;
+                 }
+                 label_buffer = (labelPtr->buffer*image->resolutionfactor);
+                 label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
+                 
 #ifdef oldcode
                 /* adjust the baseline (see #1449) */
                 if(labelPtr->type == MS_TRUETYPE) {

@@ -1897,7 +1897,7 @@ static int processDateTag(char **line)
     tagArgs=NULL;
 
     if((*line)[tagOffset] != '\0')
-      tagStart = findTag(*line+tagOffset+1, "shpxy");
+      tagStart = findTag(*line+tagOffset+1, "date");
     else
       tagStart = NULL;
   }
@@ -4002,16 +4002,18 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   for(i=0; i<mapserv->request->NumParams; i++) {
     /* Replace [variable] tags using values from URL. We cannot offer a
-     * [variable_raw] option here due to the risk of XSS
+     * [variable_raw] option here due to the risk of XSS.
+     *
+     * Replacement is case-insensitive. (#4511)
      */
     snprintf(substr, PROCESSLINE_BUFLEN, "[%s]", mapserv->request->ParamNames[i]);
     encodedstr = msEncodeHTMLEntities(mapserv->request->ParamValues[i]);
-    outstr = msReplaceSubstring(outstr, substr, encodedstr);
+    outstr = msCaseReplaceSubstring(outstr, substr, encodedstr);
     free(encodedstr);
 
     snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", mapserv->request->ParamNames[i]);
     encodedstr = msEncodeUrl(mapserv->request->ParamValues[i]);
-    outstr = msReplaceSubstring(outstr, substr, encodedstr);
+    outstr = msCaseReplaceSubstring(outstr, substr, encodedstr);
     free(encodedstr);
   }
 

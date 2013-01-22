@@ -68,11 +68,121 @@ void msLayerFreeItemInfo(layerObj *layer)
   layer->vtable->LayerFreeItemInfo(layer);
 }
 
+int msLayerRestoreFromScaletokens(layerObj *layer)
+{
+  if(!layer->scaletokens) {
+    return MS_SUCCESS;
+  }
+  if(layer->orig_data) {
+    msFree(layer->data);
+    layer->data = layer->orig_data;
+    layer->orig_data = NULL;
+  }
+  if(layer->orig_tileindex) {
+    msFree(layer->tileindex);
+    layer->tileindex = layer->orig_tileindex;
+    layer->orig_tileindex = NULL;
+  }
+  if(layer->orig_tileitem) {
+    msFree(layer->tileitem);
+    layer->tileitem = layer->orig_tileitem;
+    layer->orig_tileitem = NULL;
+  }
+  if(layer->orig_filter) {
+    msLoadExpressionString(&(layer->filter),layer->orig_filter);
+    msFree(layer->orig_filter);
+    layer->orig_filter = NULL;
+  }
+  if(layer->orig_filteritem) {
+    msFree(layer->filteritem);
+    layer->filteritem = layer->orig_filteritem;
+    layer->orig_filteritem = NULL;
+  }
+  return MS_SUCCESS; 
+}
+
+int msLayerApplyScaletokens(layerObj *layer, double scale)
+{
+  int i;
+  if(!layer->scaletokens) {
+    return MS_SUCCESS;
+  }
+  msLayerRestoreFromScaletokens(layer);
+  for(i=0;i<layer->numscaletokens;i++) {
+    int tokenindex=0;
+    scaleTokenObj *st = &layer->scaletokens[i];
+    scaleTokenEntryObj *ste = NULL;
+    while(tokenindex<st->n_entries) {
+      ste = &(st->tokens[tokenindex]);
+      if(scale < ste->maxscale && scale >= ste->minscale) break; /* current token is the correct one */
+      tokenindex++;
+      ste = NULL;
+    }
+    assert(ste);
+    if(layer->data && strstr(layer->data,st->name)) {
+      if(layer->debug >= MS_DEBUGLEVEL_DEBUG) {
+        msDebug("replacing scaletoken (%s) with (%s) in layer->data (%s) for scale=%f\n",
+                st->name,ste->value,layer->name,scale);
+      }
+      layer->orig_data = layer->data;
+      layer->data = msStrdup(layer->data);
+      layer->data = msReplaceSubstring(layer->data,st->name,ste->value);
+    }
+    if(layer->tileindex && strstr(layer->tileindex,st->name)) {
+      if(layer->debug >= MS_DEBUGLEVEL_DEBUG) {
+        msDebug("replacing scaletoken (%s) with (%s) in layer->tileindex (%s) for scale=%f\n",
+                st->name,ste->value,layer->name,scale);
+      }
+      layer->orig_tileindex = layer->tileindex;
+      layer->tileindex = msStrdup(layer->tileindex);
+      layer->tileindex = msReplaceSubstring(layer->tileindex,st->name,ste->value);
+    }
+    if(layer->tileitem && strstr(layer->tileitem,st->name)) {
+      if(layer->debug >= MS_DEBUGLEVEL_DEBUG) {
+        msDebug("replacing scaletoken (%s) with (%s) in layer->tileitem (%s) for scale=%f\n",
+                st->name,ste->value,layer->name,scale);
+      }
+      layer->orig_tileitem = layer->tileitem;
+      layer->tileitem = msStrdup(layer->tileitem);
+      layer->tileitem = msReplaceSubstring(layer->tileitem,st->name,ste->value);
+    }
+    if(layer->filteritem && strstr(layer->filteritem,st->name)) {
+      if(layer->debug >= MS_DEBUGLEVEL_DEBUG) {
+        msDebug("replacing scaletoken (%s) with (%s) in layer->filteritem (%s) for scale=%f\n",
+                st->name,ste->value,layer->name,scale);
+      }
+      layer->orig_filteritem = layer->filteritem;
+      layer->filteritem = msStrdup(layer->filteritem);
+      layer->filteritem = msReplaceSubstring(layer->filteritem,st->name,ste->value);
+    }
+    if(layer->filter.string && strstr(layer->filter.string,st->name)) {
+      char *tmpval;
+      if(layer->debug >= MS_DEBUGLEVEL_DEBUG) {
+        msDebug("replacing scaletoken (%s) with (%s) in layer->filter (%s) for scale=%f\n",
+                st->name,ste->value,layer->name,scale);
+      }
+      layer->orig_filter = msStrdup(layer->filter.string);
+      tmpval = msStrdup(layer->filter.string);
+      tmpval = msReplaceSubstring(tmpval,st->name,ste->value);
+      if(msLoadExpressionString(&(layer->filter),tmpval) == -1) return(MS_FAILURE); /* loadExpression() cleans up previously allocated expression */
+      msFree(tmpval);
+    }
+  }
+  return MS_SUCCESS;
+}
+
+
 /*
 ** Does exactly what it implies, readies a layer for processing.
 */
 int msLayerOpen(layerObj *layer)
 {
+  int rv;
+
+  /* RFC-86 Scale dependant token replacements*/
+  rv = msLayerApplyScaletokens(layer,(layer->map)?layer->map->scaledenom:-1);
+  if (rv != MS_SUCCESS) return rv;
+
   /* RFC-69 clustering support */
   if (layer->cluster.region)
     return msClusterLayerOpen(layer);
@@ -87,7 +197,7 @@ int msLayerOpen(layerObj *layer)
     layer->connectiontype = MS_RASTER;
 
   if ( ! layer->vtable) {
-    int rv =  msInitializeVirtualTable(layer);
+    rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS)
       return rv;
   }
@@ -204,7 +314,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 */
 void msLayerClose(layerObj *layer)
 {
-  int i,j;
+  int i,j,k;
 
   /* no need for items once the layer is closed */
   msLayerFreeItemInfo(layer);
@@ -223,11 +333,16 @@ void msLayerClose(layerObj *layer)
     freeExpressionTokens(&(layer->class[i]->text));
     for(j=0; j<layer->class[i]->numstyles; j++)
       freeExpressionTokens(&(layer->class[i]->styles[j]->_geomtransform));
+    for(k=0; k<layer->class[i]->numlabels; k++) {
+      freeExpressionTokens(&(layer->class[i]->labels[k]->expression));
+      freeExpressionTokens(&(layer->class[i]->labels[k]->text));
+    }
   }
 
   if (layer->vtable) {
     layer->vtable->LayerClose(layer);
   }
+  msLayerRestoreFromScaletokens(layer);
 }
 
 /*
@@ -478,6 +593,11 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   */
 
   /* layer level counts */
+  layer->classitemindex = -1;
+  layer->filteritemindex = -1;
+  layer->styleitemindex = -1;
+  layer->labelitemindex = -1;
+
   if(layer->classitem) nt++;
   if(layer->filteritem) nt++;
   if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") != 0) nt++;
@@ -693,11 +813,24 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
     /* try to find out the current style format */
     if (strncasecmp(stylestring,"style",5) == 0) {
       resetClassStyle(c);
+      c->layer = layer;
       if (msMaybeAllocateClassStyle(c, 0))
         return(MS_FAILURE);
 
       msUpdateStyleFromString(c->styles[0], stylestring, MS_FALSE);
+      if(c->styles[0]->symbolname) {
+        if((c->styles[0]->symbol =  msGetSymbolIndex(&(map->symbolset), c->styles[0]->symbolname, MS_TRUE)) == -1) {
+          msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class of layer %s.", "msLayerGetFeatureStyle()", 
+              c->styles[0]->symbolname, layer->name);
+          return MS_FAILURE;
+        }
+      }
     } else if (strncasecmp(stylestring,"class",5) == 0) {
+      if (strcasestr(stylestring, " style ") != NULL) {
+        /* reset style if stylestring contains style definitions */
+        resetClassStyle(c);
+        c->layer = layer;
+      }
       msUpdateClassFromString(c, stylestring, MS_FALSE);
     } else if (strncasecmp(stylestring,"pen",3) == 0 || strncasecmp(stylestring,"brush",5) == 0 ||
                strncasecmp(stylestring,"symbol",6) == 0 || strncasecmp(stylestring,"label",5) == 0) {

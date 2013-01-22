@@ -38,8 +38,10 @@
 #endif
 
 #ifdef SWIGJAVA
-%ignore layer_obj::extent;
+%ignore layerObj::extent;
 #endif
+
+%newobject msLoadMapFromString;
 
 %{
 #include "../../mapserver.h"

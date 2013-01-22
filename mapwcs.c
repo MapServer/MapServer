@@ -1936,6 +1936,69 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
     return msWCSException(map, NULL, NULL, params->version );
   }
+  
+  if(lp->mask) {
+    int maskLayerIdx = msGetLayerIndex(map,lp->mask);
+    layerObj *maskLayer;
+    outputFormatObj *altFormat;
+    if(maskLayerIdx == -1) {
+      msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
+                 lp->name,lp->mask);
+      return (MS_FAILURE);
+    }
+    maskLayer = GET_LAYER(map, maskLayerIdx);
+    if(!maskLayer->maskimage) {
+      int i,retcode;
+      int origstatus, origlabelcache;
+      char *origImageType = msStrdup(map->imagetype);
+      altFormat =  msSelectOutputFormat(map, "png24");
+      msInitializeRendererVTable(altFormat);
+      /* TODO: check the png24 format hasn't been tampered with, i.e. it's agg */
+      maskLayer->maskimage= msImageCreate(image->width, image->height,altFormat,
+                                          image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
+      if (!maskLayer->maskimage) {
+        msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
+        return (MS_FAILURE);
+      }
+
+      /*
+       * force the masked layer to status on, and turn off the labelcache so that
+       * eventual labels are added to the temporary image instead of being added
+       * to the labelcache
+       */
+      origstatus = maskLayer->status;
+      origlabelcache = maskLayer->labelcache;
+      maskLayer->status = MS_ON;
+      maskLayer->labelcache = MS_OFF;
+
+      /* draw the mask layer in the temporary image */
+      retcode = msDrawLayer(map, maskLayer, maskLayer->maskimage);
+      maskLayer->status = origstatus;
+      maskLayer->labelcache = origlabelcache;
+      if(retcode != MS_SUCCESS) {
+        return MS_FAILURE;
+      }
+      /*
+       * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain
+       * symbols that reference it. We want to remove those references before the altFormat is destroyed
+       * to avoid a segfault and/or a leak, and so the the main renderer doesn't pick the cache up thinking
+       * it's for him.
+       */
+      for(i=0; i<map->symbolset.numsymbols; i++) {
+        if (map->symbolset.symbol[i]!=NULL) {
+          symbolObj *s = map->symbolset.symbol[i];
+          if(s->renderer == MS_IMAGE_RENDERER(maskLayer->maskimage)) {
+            MS_IMAGE_RENDERER(maskLayer->maskimage)->freeSymbol(s);
+            s->renderer = NULL;
+          }
+        }
+      }
+      /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
+      msFree(map->imagetype);
+      map->imagetype = origImageType;
+      
+    }
+  }
 
   if( image == NULL )
     return msWCSException(map, NULL, NULL, params->version );
@@ -2060,7 +2123,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       if (status == MS_FAILURE) {
         msWCSFreeParamsObj20(params);
         return msWCSException(map, "InvalidParameterValue",
-                              "request", "2.0");
+                              "request", "2.0.1");
       }
 
       /* VERSION negotiation */
@@ -2160,7 +2223,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       if (status == MS_FAILURE) {
         msWCSFreeParamsObj20(params);
         return msWCSException(map, "InvalidParameterValue",
-                              "request", "2.0");
+                              "request", "2.0.1");
       }
     }
 
@@ -2174,7 +2237,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
         msSetError(MS_WCSERR, "Layer name '%s' is not a valid NCName.",
                    "msWCSDispatch()", map->layers[i]->name);
         msWCSFreeParamsObj20(params);
-        return msWCSException(map, "mapserv", "Internal", "2.0");
+        return msWCSException(map, "mapserv", "Internal", "2.0.1");
       }
     }
 
@@ -2189,7 +2252,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       msSetError(MS_WCSERR, "Invalid request '%s'.",
                  "msWCSDispatch20()", ows_request->request);
       retVal = msWCSException20(map, "InvalidParameterValue",
-                                "request", "2.0");
+                                "request", "2.0.1");
     }
     /* clean up */
     msWCSFreeParamsObj20(params);
@@ -2197,7 +2260,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
 #else /* def USE_LIBXML2 */
     msSetError(MS_WCSERR, "WCS 2.0 needs mapserver to be compiled with libxml2.",
                "msWCSDispatch()");
-    return msWCSException(map, "mapserv", "NoApplicableCode", "1.0.0");
+    return msWCSException(map, "mapserv", "NoApplicableCode", "2.0.1");
 #endif /* def USE_LIBXML2 */
   } else { /* unsupported version */
     msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.",

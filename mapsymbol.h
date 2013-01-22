@@ -163,7 +163,7 @@ typedef struct {
   /*
   ** Pointer to his map
   */
-  struct map_obj *map;
+  struct mapObj *map;
 #endif /* SWIG */
   /*
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options

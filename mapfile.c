@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
+#include <float.h>
 
 #include "mapserver.h"
 #include "mapfile.h"
@@ -766,6 +767,23 @@ int loadJoin(joinObj *join)
         return(-1);
     }
   } /* next token */
+}
+
+static void writeScaleToken(FILE *stream, int indent, scaleTokenObj *token) {
+  int i;
+  indent++;
+  writeBlockBegin(stream,indent,"SCALETOKEN");
+  writeString(stream, indent, "NAME", NULL, token->name);
+  indent++;
+  writeBlockBegin(stream,indent,"VALUES");
+  for(i=0;i<token->n_entries;i++) {
+    char minscale[32];
+    sprintf(minscale,"%g",token->tokens[i].minscale);
+    writeNameValuePair(stream, indent, minscale, token->tokens[i].value);
+  }
+  writeBlockEnd(stream,indent,"VALUES");
+  indent--;
+  writeBlockEnd(stream,indent,"SCALETOKEN");
 }
 
 static void writeJoin(FILE *stream, int indent, joinObj *join)
@@ -2940,14 +2958,19 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   writeNumber(stream, indent, "GAP", 0, style->gap);
   writeNumber(stream, indent, "INITIALGAP", -1, style->initialgap);
 
-  if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 6,
+  if(style->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) {
+    writeIndent(stream, indent + 1);
+    fprintf(stream, "GEOMTRANSFORM (%s)\n", style->_geomtransform.string);
+  }
+  else if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
+    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 7,
                  MS_GEOMTRANSFORM_BBOX, "\"bbox\"",
                  MS_GEOMTRANSFORM_END, "\"end\"",
                  MS_GEOMTRANSFORM_LABELPOINT, "\"labelpnt\"",
                  MS_GEOMTRANSFORM_LABELPOLY, "\"labelpoly\"",
                  MS_GEOMTRANSFORM_START, "\"start\"",
-                 MS_GEOMTRANSFORM_VERTICES, "\"vertices\""
+                 MS_GEOMTRANSFORM_VERTICES, "\"vertices\"",
+                 MS_GEOMTRANSFORM_CENTROID, "\"centroid\""
                 );
   }
 
@@ -2998,6 +3021,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     int i;
     indent++;
     writeBlockBegin(stream,indent,"PATTERN");
+    writeIndent(stream, indent);
     for(i=0; i<style->patternlength; i++)
       fprintf(stream, " %.2f", style->pattern[i]);
     fprintf(stream,"\n");
@@ -3681,6 +3705,9 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->maxfeatures = -1; /* no quota */
   layer->startindex = -1; /*used for pagination*/
 
+  layer->scaletokens = NULL;
+  layer->numscaletokens = 0;
+
   layer->template = layer->header = layer->footer = NULL;
 
   layer->transform = MS_TRUE;
@@ -3764,6 +3791,28 @@ int initLayer(layerObj *layer, mapObj *map)
   return(0);
 }
 
+int initScaleToken(scaleTokenObj* token) {
+  token->n_entries = 0;
+  token->name = NULL;
+  token->tokens = NULL;
+  return MS_SUCCESS;
+}
+
+int freeScaleTokenEntry( scaleTokenEntryObj *token) {
+  msFree(token->value);
+  return MS_SUCCESS;
+}
+
+int freeScaleToken(scaleTokenObj *scaletoken) {
+  int i;
+  msFree(scaletoken->name);
+  for(i=0;i<scaletoken->n_entries;i++) {
+    freeScaleTokenEntry(&scaletoken->tokens[i]);
+  }
+  msFree(scaletoken->tokens);
+  return MS_SUCCESS;
+}
+
 int freeLayer(layerObj *layer)
 {
   int i;
@@ -3808,6 +3857,13 @@ int freeLayer(layerObj *layer)
     }
   }
   msFree(layer->class);
+
+  if(layer->numscaletokens>0) {
+    for(i=0;i<layer->numscaletokens;i++) {
+      freeScaleToken(&layer->scaletokens[i]);
+    }
+    msFree(layer->scaletokens);
+  }
 
   if(layer->features)
     freeFeatureList(layer->features);
@@ -3887,6 +3943,85 @@ classObj *msGrowLayerClasses( layerObj *layer )
   }
 
   return layer->class[layer->numclasses];
+}
+
+scaleTokenObj *msGrowLayerScaletokens( layerObj *layer )
+{
+  layer->scaletokens = msSmallRealloc(layer->scaletokens,(layer->numscaletokens+1)*sizeof(scaleTokenObj));
+  memset(&layer->scaletokens[layer->numscaletokens],0,sizeof(scaleTokenObj));
+  return &layer->scaletokens[layer->numscaletokens];
+}
+
+int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
+  for(;;) {
+    int stop = 0;
+    switch(msyylex()) {
+      case(EOF):
+        msSetError(MS_EOFERR, NULL, "loadScaletoken()");
+        return(MS_FAILURE);
+      case(NAME):
+        if(getString(&token->name) == MS_FAILURE) return(MS_FAILURE);
+        break;
+      case(VALUES):
+         for(;;) {
+           if(stop) break;
+           switch(msyylex()) {
+             case(EOF):
+               msSetError(MS_EOFERR, NULL, "loadScaletoken()");
+               return(MS_FAILURE);
+             case(END): 
+               stop = 1;
+               if(token->n_entries == 0) {
+                 msSetError(MS_PARSEERR,"Scaletoken (line:%d) has no VALUES defined","loadScaleToken()",msyylineno);
+                 return(MS_FAILURE);
+               }
+               token->tokens[token->n_entries-1].maxscale = DBL_MAX;
+               break;
+             case(MS_STRING):
+               /* we have a key */
+               token->tokens = msSmallRealloc(token->tokens,(token->n_entries+1)*sizeof(scaleTokenEntryObj));
+               
+               if(1 != sscanf(msyystring_buffer,"%lf",&token->tokens[token->n_entries].minscale)) {
+                 msSetError(MS_PARSEERR, "failed to parse SCALETOKEN VALUE (%s):(line %d), expecting \"minscale\"", "loadScaletoken()",
+                         msyystring_buffer,msyylineno);
+                 return(MS_FAILURE);
+               }
+               if(token->n_entries == 0) {
+                 /* check supplied value was 0*/
+                 if(token->tokens[0].minscale != 0) {
+                  msSetError(MS_PARSEERR, "First SCALETOKEN VALUE (%s):(line %d) must be zero, expecting \"0\"", "loadScaletoken()",
+                         msyystring_buffer,msyylineno);
+                  return(MS_FAILURE);
+                 }
+               } else {
+                 /* set max scale of previous token */
+                 token->tokens[token->n_entries-1].maxscale = token->tokens[token->n_entries].minscale;
+               }
+               token->tokens[token->n_entries].value = NULL;
+               if(getString(&(token->tokens[token->n_entries].value)) == MS_FAILURE) return(MS_FAILURE);
+               token->n_entries++;
+               break;
+             default:
+               msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadScaletoken()",  msyystring_buffer, msyylineno );
+               return(MS_FAILURE);
+           }
+         }
+         break;
+      case(END):
+        if(!token->name || !*(token->name)) {
+          msSetError(MS_PARSEERR,"ScaleToken missing mandatory NAME entry (line %d)","loadScaleToken()",msyylineno);
+          return MS_FAILURE;
+        }
+        if(token->n_entries == 0) {
+          msSetError(MS_PARSEERR,"ScaleToken missing at least one VALUES entry (line %d)","loadScaleToken()",msyylineno);
+          return MS_FAILURE;
+        }
+        return MS_SUCCESS;
+      default:
+        msSetError(MS_IDENTERR, "Parsing error 2 near (%s):(line %d)", "loadScaletoken()",  msyystring_buffer, msyylineno );
+        return(MS_FAILURE);
+    }
+  } /* next token*/
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -4205,6 +4340,13 @@ int loadLayer(layerObj *layer, mapObj *map)
           }
         }
         break;
+      case(SCALETOKEN):
+        if (msGrowLayerScaletokens(layer) == NULL)
+          return(-1);
+        initScaleToken(&layer->scaletokens[layer->numscaletokens]);
+        if(loadScaletoken(&layer->scaletokens[layer->numscaletokens], layer) == -1) return(-1);
+        layer->numscaletokens++;
+        break;
       case(SIZEUNITS):
         if((layer->sizeunits = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS)) == -1) return(-1);
         break;
@@ -4385,6 +4527,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
   /* write potentially multiply occuring objects last */
+  for(i=0; i<layer->numscaletokens; i++)  writeScaleToken(stream, indent, &(layer->scaletokens[i]));
   for(i=0; i<layer->numjoins; i++)  writeJoin(stream, indent, &(layer->joins[i]));
   for(i=0; i<layer->numclasses; i++) writeClass(stream, indent, layer->class[i]);
 
@@ -5422,6 +5565,7 @@ int initMap(mapObj *map)
 
   msInitSymbolSet(&map->symbolset);
   map->symbolset.fontset =  &(map->fontset);
+  map->symbolset.map = map;
 
   initLegend(&map->legend);
   initScalebar(&map->scalebar);
@@ -5933,6 +6077,10 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
     if(mappath != NULL) free(mappath);
     return NULL;
   }
+
+  if (mappath != NULL) free(mappath);
+  msyylex_destroy();
+
   msReleaseLock( TLOCK_PARSER );
 
   if (debuglevel >= MS_DEBUGLEVEL_TUNING) {
@@ -5942,9 +6090,6 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
             (endtime.tv_sec+endtime.tv_usec/1.0e6)-
             (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
-
-  if (mappath != NULL) free(mappath);
-  msyylex_destroy();
 
   if (resolveSymbolNames(map) == MS_FAILURE) return NULL;
 
@@ -6392,8 +6537,10 @@ void msApplyDefaultSubstitutions(mapObj *map)
 
   for(i=0; i<map->numlayers; i++) {
     layerObj *layer = GET_LAYER(map, i);
-    applyLayerDefaultSubstitutions(layer, &(layer->validation));
+    applyLayerDefaultSubstitutions(layer, &(layer->validation)); /* layer settings take precedence */
     applyLayerDefaultSubstitutions(layer, &(layer->metadata));
+    applyLayerDefaultSubstitutions(layer, &(map->web.validation));
+    applyLayerDefaultSubstitutions(layer, &(map->web.metadata));
   }
 }
 

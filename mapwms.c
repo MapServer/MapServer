@@ -857,10 +857,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       layers = msStringSplit(values[i], ',', &numlayers);
       if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
-        msFreeCharArray(layers,numlayers);
-        msFree(layerOrder);
         numlayers = 0;
         if (sld_url == NULL &&   sld_body == NULL) {
+          msFreeCharArray(layers,numlayers);
+          msFree(layerOrder);
           msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
                      "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -2912,7 +2912,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 #endif
                            "<SVG />"
                            , NULL);
-    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_FALSE))
+    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE))
       msWMSPrintRequestCap(nVersion, "Capabilities", script_url_encoded, "<WMS_XML />", NULL);
     if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_FALSE))
       msWMSPrintRequestCap(nVersion, "FeatureInfo", script_url_encoded, "<MIME /><GML.1 />", NULL);
@@ -2923,7 +2923,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     /* WMS 1.1.0 and later */
     /* Note changes to the request names, their ordering, and to the formats */
 
-    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_FALSE)) {
+    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE)) {
       if (nVersion >= OWS_1_3_0)
         msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
                              "text/xml",
@@ -3203,12 +3203,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                         MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                         NULL, NULL, NULL, NULL, NULL, "    ");
 
-    if (nVersion <  OWS_1_3_0)
-      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
-                          map->resolution);
-    else
-      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
-
     if (map->name && strlen(map->name) > 0 && msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
       char *pszEncodedName = NULL;
       const char *styleName = NULL;
@@ -3308,7 +3302,15 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       msIO_fprintf(stdout, "    </Style>\n");
       msFree(pszEncodedName);
       msFree(pszEncodedStyleName);
+
     }
+
+      /* Prints ScaleDenominator */
+      if (nVersion <  OWS_1_3_0)
+        msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
+                          map->resolution);
+      else
+        msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
 
     /*  */
     /* Dump list of layers organized by groups.  Layers with no group are listed */
