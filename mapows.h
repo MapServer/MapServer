@@ -436,8 +436,8 @@ int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClic
  *====================================================================*/
 metadataParamsObj *msMetadataCreateParamsObj(void);
 void msMetadataFreeParamsObj(metadataParamsObj *metadataparams);
-int msMetadataParseRequest(mapObj *map, cgiRequestObj *, owsRequestObj *ows_request,
-                      metadataParamsObj *);
+int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
+                      metadataParamsObj *metadataparams);
 int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
                       metadataParamsObj *metadataparams);
 int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request);
