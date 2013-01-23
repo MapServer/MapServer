@@ -102,6 +102,13 @@ typedef  struct {
   char         *httpcookiedata;
 } wmsParamsObj;
 
+/* metadataParamsObj: Represent a metadata specific request with its enabled layers */
+typedef struct {
+  char *pszRequest;
+  char *pszLayer;
+  char *pszOutputSchema;
+} metadataParamsObj;
+
 /* owsRequestObj: Represent a OWS specific request with its enabled layers */
 typedef struct {
   int numlayers;
@@ -423,6 +430,18 @@ MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
     const char *pszInfoFormat);
 int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClickY,
                              int nFeatureCount, const char *pszInfoFormat, int type);
+
+/*====================================================================
+ *   mapmetadata.c
+ *====================================================================*/
+metadataParamsObj *msMetadataCreateParamsObj(void);
+void msMetadataFreeParamsObj(metadataParamsObj *metadataparams);
+int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
+                      metadataParamsObj *metadataparams);
+int msMetadataParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_request,
+                      metadataParamsObj *metadataparams);
+int msMetadataDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request);
+
 
 /*====================================================================
  *   mapwfs.c

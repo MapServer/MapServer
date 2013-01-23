@@ -229,8 +229,9 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
   }
 
   if (ows_request.service == NULL) {
-    /* exit if service is not set */
-    if(force_ows_mode) {
+    if (EQUAL(ows_request.request, "GetMetadata")) {
+      status = msMetadataDispatch(map, request, &ows_request);
+    } else if(force_ows_mode) { /* exit if service is not set */
       msSetError( MS_MISCERR,
                   "OWS Common exception: exceptionCode=MissingParameterValue, locator=SERVICE, ExceptionText=SERVICE parameter missing.",
                   "msOWSDispatch()");
