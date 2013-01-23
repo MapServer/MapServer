@@ -82,12 +82,11 @@ xmlNodePtr _msMetadataGetURL(xmlNsPtr namespace, char *name, char *value) {
 /*               Create a gmd:onLine element pattern                    */
 /************************************************************************/
 
-xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *service) {
+xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *service, char *format, char *desc, char *url_in) {
 
   int status;
-  char buffer[32];
   char *url = NULL;
-  char *desc = NULL;
+  char buffer[32];
 
   xmlNodePtr psNode = NULL;
   xmlNodePtr psORNode = NULL;
@@ -97,35 +96,44 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *servi
   psNode = xmlNewNode(namespace, BAD_CAST "onLine");
   psORNode = xmlNewChild(psNode, namespace, BAD_CAST "CI_OnlineResource", NULL);
 
-  //url = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "MFCSGO", "onlineresource", cgi_request));
-  url = msEncodeHTMLEntities("http://kralidis.ca/cgi-bin/mapserv/mapserv?map=/home/tkralidi/work/foss4g/mapserver/git/msautotest/wxs/tomk_workshop.map&");
+  url = msStrdup(url_in);
 
   if (strcasecmp(service, "M") == 0) {
-    url = msStringConcatenate(url, msEncodeHTMLEntities("service=WMS&version=1.1.1&request=GetMap&width=500&height=300&format=image/png&styles=&layers="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities("service=WMS&version=1.3.0&request=GetMap&width=500&height=300&styles=&layers="));
     url = msStringConcatenate(url, msEncodeHTMLEntities(layer->name));
-    url = msStringConcatenate(url, msEncodeHTMLEntities("&srs="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities("&format="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities(format));
+    url = msStringConcatenate(url, msEncodeHTMLEntities("&crs="));
     url = msStringConcatenate(url, msEncodeHTMLEntities(msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "MFCSGO", MS_TRUE)));
 
     status = msLayerGetExtent(layer, &rect);
 
     if (status == 0) {
       url = msStringConcatenate(url, msEncodeHTMLEntities("&bbox="));
-      sprintf(buffer, "%f", rect.minx);
-      url = msStringConcatenate(url, buffer);
-      url = msStringConcatenate(url, ",");
       sprintf(buffer, "%f", rect.miny);
       url = msStringConcatenate(url, buffer);
       url = msStringConcatenate(url, ",");
-      sprintf(buffer, "%f", rect.maxx);
+      sprintf(buffer, "%f", rect.minx);
       url = msStringConcatenate(url, buffer);
       url = msStringConcatenate(url, ",");
       sprintf(buffer, "%f", rect.maxy);
       url = msStringConcatenate(url, buffer);
+      url = msStringConcatenate(url, ",");
+      sprintf(buffer, "%f", rect.maxx);
+      url = msStringConcatenate(url, buffer);
     }
-    desc = (char *)msOWSLookupMetadata(&(layer->metadata), "MFCSGO", "title");
-    desc = msStringConcatenate(desc, " (PNG Format)");
-
-    /* add layers=, bbox=, srs=, styles=, */
+  }
+  else if (strcasecmp(service, "F") == 0) {
+    url = msStringConcatenate(url, msEncodeHTMLEntities("service=WFS&version=1.1.0&request=GetFeature&typename="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities(layer->name));
+    url = msStringConcatenate(url, msEncodeHTMLEntities("&outputformat="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities(format));
+  }
+  else if (strcasecmp(service, "C") == 0) {
+    url = msStringConcatenate(url, msEncodeHTMLEntities("service=WCS&version=2.0.1&request=GetCoverage&coverageid="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities(layer->name));
+    url = msStringConcatenate(url, msEncodeHTMLEntities("&format="));
+    url = msStringConcatenate(url, msEncodeHTMLEntities(format));
   }
 
   xmlAddChild(psORNode, _msMetadataGetURL(namespace, "linkage", url));
@@ -133,8 +141,7 @@ xmlNodePtr _msMetadataGetOnline(xmlNsPtr namespace, layerObj *layer, char *servi
   xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "protocol", "WWW:DOWNLOAD-1.0-http--download"));
   xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "name", layer->name));
 
-  if (desc)
-    xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "description", desc));
+  xmlAddChild(psORNode, _msMetadataGetCharacterString(namespace, "description", desc));
 
   return psNode;
 }
@@ -314,6 +321,9 @@ xmlNodePtr _msMetadataGetExtent(xmlNsPtr namespace, layerObj *layer)
       temporal = msStringSplit(value, ',', &n);
     }
   }
+  if (!value) /* SOS */
+      value = (char *)msOWSLookupMetadata(&(layer->metadata), "SO", "offering_timeextent");
+      temporal = msStringSplit(value, '/', &n);
   if (value) { 
     if (temporal && n > 0) {
       psTNode = xmlNewChild(psEXNode, namespace, BAD_CAST "temporalElement", NULL);
@@ -384,14 +394,18 @@ xmlNodePtr _msMetadataGetIdentificationInfo(xmlNsPtr namespace, mapObj *map, lay
   psCNode = xmlNewChild(psDINode, namespace, BAD_CAST "citation", NULL);
   psCINode = xmlNewChild(psCNode, namespace, BAD_CAST "CI_Citation", NULL);
 
-  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFSGO", "title");
+  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "title");
+  if (!value)
+      value = (char *)msOWSLookupMetadata(&(layer->metadata), "S", "offering_name");
   xmlAddChild(psCINode, _msMetadataGetCharacterString(namespace, "title", value));
 
   psDNode = xmlNewChild(psCINode, namespace, BAD_CAST "date", NULL);
 
   xmlAddChild(psDNode, _msMetadataGetDate(namespace, "CI_Date", "publication", "2011"));
 
-  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFSGO", "abstract");
+  value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFGO", "abstract");
+  if (!value)
+      value = (char *)msOWSLookupMetadata(&(layer->metadata), "S", "offering_description");
   xmlAddChild(psDINode, _msMetadataGetCharacterString(namespace, "abstract", value));
 
   value = (char *)msOWSLookupMetadata(&(layer->metadata), "MCFSGO", "keywordlist");
@@ -451,7 +465,8 @@ xmlNodePtr _msMetadataGetSpatialRepresentationInfo(xmlNsPtr namespace, layerObj 
     else
       value = "complex";
     xmlAddChild(psGONode2, _msMetadataGetCodeList(namespace, "geometricObjectType", "MD_GeometricObjectTypeCode", value));
-    xmlAddChild(psGONode2, _msMetadataGetInteger(namespace, "geometricObjectCount", msLayerGetNumFeatures(layer)));
+    // TODO: find way to get feature count in a fast way
+    /* xmlAddChild(psGONode2, _msMetadataGetInteger(namespace, "geometricObjectCount", msLayerGetNumFeatures(layer))); */
   }
 
   return psNode;
@@ -466,6 +481,8 @@ xmlNodePtr _msMetadataGetSpatialRepresentationInfo(xmlNsPtr namespace, layerObj 
 
 xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layerObj *layer, cgiRequestObj *cgi_request)
 {
+  char *value = NULL;
+  char *url = NULL;
   xmlNodePtr psNode = NULL;
   xmlNodePtr psMDNode = NULL;
   xmlNodePtr psTONode = NULL;
@@ -473,6 +490,8 @@ xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layer
 
   psNode = xmlNewNode(namespace, BAD_CAST "distributionInfo");
   psMDNode = xmlNewChild(psNode, namespace, BAD_CAST "MD_Distribution", NULL);
+
+  url = msEncodeHTMLEntities(msOWSGetOnlineResource(map, "MFCSGO", "onlineresource", cgi_request));
 
   /* TODO gmd:distributor */
 
@@ -482,11 +501,24 @@ xmlNodePtr _msMetadataGetDistributionInfo(xmlNsPtr namespace, mapObj *map, layer
   xmlAddChild(psDTONode, _msMetadataGetCharacterString(namespace, "unitsOfDistribution", "KB"));
 
   /* links */
+
   /* WMS */
-  xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M"));
-  /* WFS */
+  xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/png", "PNG Format", url));
+
+  value = NULL;
+
+  xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/jpeg", "JPEG Format", url));
+  xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "M", "image/gif", "GIF Format", url));
+
   /* WCS */
-  /* SOS */
+  if (layer->type == MS_LAYER_RASTER) {
+    xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "C", "image/tiff", "GeoTIFF Format", url));
+  }
+  /* WFS */
+  else {
+    xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "F", "GML2", "GML2 Format", url));
+    xmlAddChild(psDTONode, _msMetadataGetOnline(namespace, layer, "F", "GML3", "GML3 Format", url));
+  }
 
   return psNode;
 }
