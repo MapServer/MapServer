@@ -82,13 +82,14 @@ clean:
 ifneq ($(findstring PROJ, $(DEFINES)),)
 ifneq ($(findstring GDAL, $(DEFINES)),)
 test:
-	$(JAVAC) -classpath ./:examples/:./mapscript.jar -d examples/ examples/RFC24.java examples/ConnPool.java examples/DrawMap.java examples/DumpShp.java examples/MakePoint.java examples/QueryByAttribute.java examples/ShapeInfo.java examples/WxSTest.java examples/Metadata.java examples/RunTimeBuiltWMSClient.java
+	$(JAVAC) -classpath ./:examples/:./mapscript.jar -d examples/ examples/RFC24.java examples/ConnPool.java examples/DrawMap.java examples/DumpShp.java examples/MakePoint.java examples/QueryByAttribute.java examples/ShapeInfo.java examples/WxSTest.java examples/Metadata.java examples/RunTimeBuiltWMSClient.java examples/OutputFormatList.java
 	$(JAVAC) -encoding utf8 -classpath ./:examples/:./mapscript.jar -d examples/ examples/QueryByAttributeUnicode.java 
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ DumpShp ../../tests/point.shp
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ ShapeInfo ../../tests/point.shp ../../tests/point.dbf
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ DrawMap ../../tests/test.map ./map.png
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ ConnPool
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ QueryByAttribute ../../tests/test.map
+	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ OutputFormatList ../../tests/test.map
 ifneq ($(findstring USE_WCS_SVR, $(DEFINES)),)
 	$(JAVA) -classpath ./:examples/:./mapscript.jar -Djava.library.path=.libs/ WxSTest ../../tests/test.map
 else
