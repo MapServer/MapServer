@@ -509,8 +509,8 @@ int msRemoveOutputFormat(mapObj *map, const char *name)
       i = msGetOutputFormatIndex(map, name);
       if (i >= 0) {
         map->numoutputformats--;
-        MS_REFCNT_DECR(map->outputformatlist[i]);
-        msFreeOutputFormat( map->outputformatlist[i] );
+	if(MS_REFCNT_DECR_IS_ZERO(map->outputformatlist[i]))
+           msFreeOutputFormat( map->outputformatlist[i] );
 
         for (j=i; j<map->numoutputformats-1; j++) {
           map->outputformatlist[j] = map->outputformatlist[j+1];
