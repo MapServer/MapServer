@@ -6537,8 +6537,10 @@ void msApplyDefaultSubstitutions(mapObj *map)
 
   for(i=0; i<map->numlayers; i++) {
     layerObj *layer = GET_LAYER(map, i);
-    applyLayerDefaultSubstitutions(layer, &(layer->validation));
+    applyLayerDefaultSubstitutions(layer, &(layer->validation)); /* layer settings take precedence */
     applyLayerDefaultSubstitutions(layer, &(layer->metadata));
+    applyLayerDefaultSubstitutions(layer, &(map->web.validation));
+    applyLayerDefaultSubstitutions(layer, &(map->web.metadata));
   }
 }
 
