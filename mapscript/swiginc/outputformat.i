@@ -49,8 +49,7 @@
         
         msInitializeRendererVTable(format);
 
-        /* Else, continue */
-        format->refcount++;
+        MS_REFCNT_INIT(format);
 	format->inmapfile = MS_TRUE;
 
         return format;
@@ -58,8 +57,7 @@
 
     ~outputFormatObj() 
     {
-        if ( --self->refcount < 1 )
-            msFreeOutputFormat( self );
+        msFreeOutputFormat( self );
     }
 
 #ifndef SWIGJAVA
