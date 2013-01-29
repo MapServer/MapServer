@@ -89,7 +89,15 @@
     {
         const char *retval;
         retval = msGetOutputFormatOption(self, key, value);
-        return strdup(retval);
+        return retval;
+    }
+
+    %newobject getOptionAt;
+    char* getOptionAt(int i) {
+       if( i > 0 && i < self->numformatoptions ) {
+          return self->formatoptions[i];
+       }
+       return NULL;
     }
     
     void attachDevice( void *device ) 
