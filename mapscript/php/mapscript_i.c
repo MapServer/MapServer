@@ -1479,7 +1479,7 @@ int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
   shape.classindex = classindex;
   shape.text = strdup(text);
 
-  msDrawShape(map, layer, &shape, img, -1, MS_FALSE);
+  msDrawShape(map, layer, &shape, img, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
 
   msFreeShape(&shape);
 
