@@ -202,3 +202,17 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
   }
   return MS_SUCCESS;
 }
+
+void msLayerSetGeomTransform(layerObj *layer, char *transform)
+{
+  msFree(layer->_geomtransform.string);
+  layer->_geomtransform.string = msStrdup(transform);
+  if(!strncasecmp("simplify",transform,8)) {
+    layer->_geomtransform.type = MS_LAYER_GEOMTRANSFORM_SIMPLIFY;
+  } else {
+    layer->_geomtransform.type = MS_LAYER_GEOMTRANSFORM_NONE;
+    msSetError(MS_MISCERR,"unknown transform expression","msLayerSetGeomTransform()");
+    msFree(layer->_geomtransform.string);
+    layer->_geomtransform.string = NULL;
+  }
+}

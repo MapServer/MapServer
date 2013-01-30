@@ -1639,6 +1639,9 @@ extern "C" {
 #endif
     char *mask;
 
+#ifndef SWIG    
+    expressionObj _geomtransform;
+#endif    
   } layerObj;
 
   /************************************************************************/
@@ -2653,9 +2656,16 @@ extern "C" {
     MS_GEOMTRANSFORM_LABELPOLY
   };
 
+  enum MS_LAYER_GEOMTRANSFORM_TYPE {
+    MS_LAYER_GEOMTRANSFORM_NONE,
+    MS_LAYER_GEOMTRANSFORM_SIMPLIFY,
+  };
+  
   MS_DLL_EXPORT int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor);
   MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *style, char *transform);
   MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
+
+  MS_DLL_EXPORT void msLayerSetGeomTransform(layerObj *layer, char *transform);  
   /* ==================================================================== */
   /*      end of prototypes for functions in mapgeomtransform.c                 */
   /* ==================================================================== */
