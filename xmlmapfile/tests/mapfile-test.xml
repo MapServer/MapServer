@@ -94,7 +94,6 @@
 		<size x="6" y="4"/>
 	</Reference>
 	<resolution>72</resolution>
-	<scaleDenom>24000</scaleDenom>
 	<ScaleBar status="EMBED">
 		<align>CENTER</align>
 		<backgroundColor red="244" green="43" blue="22"/>
@@ -142,9 +141,9 @@
                 <transparent>ON</transparent>
 		<units>NAUTICALMILES</units>
 	</ScaleBar>
+	<scaleDenom>24000</scaleDenom>
 	<shapePath>../data</shapePath>
 	<size x="600" y="400"/>
-	<symbolSet>/tmp/mySymbolSet.sym</symbolSet>
 	<Symbol name="mySymbol2-test2" type="SIMPLE">
 		<antialias>FALSE</antialias>
 		<character>C</character>
@@ -167,6 +166,7 @@
           </Points>
           <transparent>123</transparent>
         </Symbol>
+	<symbolSet>/tmp/mySymbolSet.sym</symbolSet>
 	<templatePattern>[$ir-wz]*.html</templatePattern>
 	<units>MILES</units>
         <Web>
