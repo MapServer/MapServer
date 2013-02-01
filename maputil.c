@@ -2390,3 +2390,61 @@ int msMapSetLayerProjections(mapObj* map)
   msFree(mapProjStr);
   return(MS_SUCCESS);
 }
+
+/* Generalize a shape based of the tolerance. The function modify the shape
+   directly. Ref: http://trac.osgeo.org/gdal/ticket/966 */
+shapeObj* msGeneralize(shapeObj *shape, double tolerance)
+{
+  shapeObj *newShape;
+  lineObj newLine = {0,NULL};
+  double sqTolerance = tolerance*tolerance;
+  
+  double dX0, dY0, dX1, dY1, dX, dY, dSqDist;
+  int i;
+
+  newShape = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  msInitShape(newShape);
+  msCopyShape(shape, newShape);
+
+  if (shape->numlines<1)
+    return newShape;
+  
+  /* Clean shape */
+  for (i=0; i < newShape->numlines; i++)
+    free(newShape->line[i].point);
+  newShape->numlines = 0;
+  if (newShape->line) free(newShape->line);
+    
+  msAddLine(newShape, &newLine);
+  
+  if (shape->line[0].numpoints>0) {
+    msAddPointToLine(&newShape->line[0],
+                     &shape->line[0].point[0]);              
+    dX0 = shape->line[0].point[0].x;
+    dY0 = shape->line[0].point[0].y;    
+  }
+  
+  for(i=1; i<shape->line[0].numpoints; i++)
+  {
+      dX1 = shape->line[0].point[i].x;
+      dY1 = shape->line[0].point[i].y;
+     
+      dX = dX1-dX0;
+      dY = dY1-dY0;
+      dSqDist = dX*dX + dY*dY;
+      if (i == shape->line[0].numpoints-1 || dSqDist >= sqTolerance)
+      {
+          pointObj p;
+          p.x = dX1;
+          p.y = dY1;
+          
+          /* Keep this point (always keep the last point) */
+          msAddPointToLine(&newShape->line[0],
+                           &p);          
+          dX0 = dX1;
+          dY0 = dY1;
+        }
+    }
+   
+  return newShape;
+}

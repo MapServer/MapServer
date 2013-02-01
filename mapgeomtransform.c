@@ -177,17 +177,24 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
       p.expr = &(style->_geomtransform);
       p.expr->curtoken = p.expr->tokens; /* reset */
       p.type = MS_PARSE_TYPE_SHAPE;
+      p.dblval = map->cellsize/MS_MAX(image->width, image->height);
 
       status = yyparse(&p);
       if (status != 0) {
         msSetError(MS_PARSEERR, "Failed to process shape expression: %s", "msDrawTransformedShape", style->_geomtransform.string);
         return MS_FAILURE;
       }
-
       tmpshp = p.result.shpval;
 
-      /* TODO: check resulting shape type and draw accordingly */
-      msDrawShadeSymbol(symbolset, image, tmpshp, style, scalefactor);
+      switch (tmpshp->type) {
+        case MS_SHAPE_POINT:
+        case MS_SHAPE_POLYGON:        
+          msDrawShadeSymbol(symbolset, image, tmpshp, style, scalefactor);
+          break;
+        case MS_SHAPE_LINE:
+          msDrawLineSymbol(symbolset, image, tmpshp, style, scalefactor);        
+          break;
+      }
 
       msFreeShape(tmpshp);
       msFree(tmpshp);

@@ -46,7 +46,7 @@ int yyerror(parseObj *, const char *);
 %left INTERSECTS DISJOINT TOUCHES OVERLAPS CROSSES WITHIN CONTAINS BEYOND DWITHIN
 %left AREA LENGTH COMMIFY ROUND
 %left TOSTRING
-%left YYBUFFER DIFFERENCE
+%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE
 %left '+' '-'
 %left '*' '/' '%'
 %left NEG
@@ -558,6 +558,36 @@ shape_exp: SHAPE
       s->scratch = MS_TRUE;
       $$ = s;
     }
+  | SIMPLIFY '(' shape_exp ',' math_exp ')' {
+      shapeObj *s;
+      s = msGEOSSimplify($3, $5);
+      if(!s) {
+        yyerror(p, "Executing simplify failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
+  | SIMPLIFYPT '(' shape_exp ',' math_exp ')' {
+      shapeObj *s;
+      s = msGEOSTopologyPreservingSimplify($3, $5);
+      if(!s) {
+        yyerror(p, "Executing simplifypt failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
+  | GENERALIZE '(' shape_exp ',' math_exp ')' {
+      shapeObj *s;
+      s = msGeneralize($3, $5);
+      if(!s) {
+        yyerror(p, "Executing generalize failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
 ;
 
 string_exp: STRING
@@ -653,6 +683,10 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
     // fprintf(stderr, "token value = %s\n", msShapeToWKT(p->shape));
     (*lvalp).shpval = p->shape;
     break;
+  case MS_TOKEN_BINDING_MAP_CELLSIZE:
+    token = NUMBER;
+    (*lvalp).dblval = p->dblval;
+    break;    
   case MS_TOKEN_BINDING_TIME:
     token = TIME;
     msTimeInit(&((*lvalp).tmval));
@@ -670,6 +704,9 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
 
   case MS_TOKEN_FUNCTION_BUFFER: token = YYBUFFER; break;
   case MS_TOKEN_FUNCTION_DIFFERENCE: token = DIFFERENCE; break;
+  case MS_TOKEN_FUNCTION_SIMPLIFY: token = SIMPLIFY; break;
+  case MS_TOKEN_FUNCTION_SIMPLIFYPT: token = SIMPLIFYPT; break;
+  case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;        
 
   default:
     break;

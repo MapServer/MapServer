@@ -510,6 +510,9 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
       case MS_TOKEN_BINDING_SHAPE:
         node->token = token;
         break;
+      case MS_TOKEN_BINDING_MAP_CELLSIZE:
+        node->token = token;
+        break;        
       case MS_TOKEN_FUNCTION_FROMTEXT: /* we want to process a shape from WKT once and not for every feature being evaluated */
         if((token = msyylex()) != 40) { /* ( */
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
