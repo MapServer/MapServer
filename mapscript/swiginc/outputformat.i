@@ -94,7 +94,7 @@
 
     %newobject getOptionAt;
     char* getOptionAt(int i) {
-       if( i > 0 && i < self->numformatoptions ) {
+       if( i >= 0 && i < self->numformatoptions ) {
           return self->formatoptions[i];
        }
        return NULL;
