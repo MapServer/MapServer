@@ -20,6 +20,10 @@ public class OutputFormatList {
     for (int i=0; i<map.getNumoutputformats(); i++) {
 	outputFormatObj format = map.getOutputFormat(i);
 	System.out.println("["+i+"] Format name: "+format.getName());
+	System.out.println("\toption count: "+format.getNumformatoptions());
+	for(int j=0;j<format.getNumformatoptions();i++) {
+	    System.out.println("\t["+j+"] option: "+format.getOptionAt(j));
+	}
     }
   }
 }
