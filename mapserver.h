@@ -752,10 +752,14 @@ extern "C" {
   /************************************************************************/
 
   typedef struct {
+#ifndef SWIG
+    int refcount;
+    char **formatoptions;
+#endif /* SWIG */
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    int refcount;
+    int  numformatoptions;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -767,8 +771,6 @@ extern "C" {
     int  imagemode; /* MS_IMAGEMODE_* value. */
     int  transparent;
     int  bands;
-    int  numformatoptions;
-    char **formatoptions;
     int inmapfile; /* boolean value for writing */
 #ifndef SWIG
     rendererVTableObj *vtable;
