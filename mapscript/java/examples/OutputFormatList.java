@@ -21,7 +21,7 @@ public class OutputFormatList {
 	outputFormatObj format = map.getOutputFormat(i);
 	System.out.println("["+i+"] Format name: "+format.getName());
 	System.out.println("\toption count: "+format.getNumformatoptions());
-	for(int j=0;j<format.getNumformatoptions();i++) {
+	for(int j=0;j<format.getNumformatoptions();j++) {
 	    System.out.println("\t["+j+"] option: "+format.getOptionAt(j));
 	}
     }
