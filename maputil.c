@@ -2391,8 +2391,8 @@ int msMapSetLayerProjections(mapObj* map)
   return(MS_SUCCESS);
 }
 
-/* Generalize a shape based of the tolerance. The function modify the shape
-   directly. Ref: http://trac.osgeo.org/gdal/ticket/966 */
+/* Generalize a shape based of the tolerance.
+   Ref: http://trac.osgeo.org/gdal/ticket/966 */
 shapeObj* msGeneralize(shapeObj *shape, double tolerance)
 {
   shapeObj *newShape;

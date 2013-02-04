@@ -2656,20 +2656,15 @@ extern "C" {
     MS_GEOMTRANSFORM_BUFFER,
     MS_GEOMTRANSFORM_CONVEXHULL,
     MS_GEOMTRANSFORM_LABELPOINT,
-    MS_GEOMTRANSFORM_LABELPOLY,
-    MS_GEOMTRANSFORM_SIMPLIFY    
+    MS_GEOMTRANSFORM_LABELPOLY
   };
 
-  enum MS_LAYER_GEOMTRANSFORM_TYPE {
-    MS_LAYER_GEOMTRANSFORM_NONE,
-    MS_LAYER_GEOMTRANSFORM_SIMPLIFY,
-  };
-  
   MS_DLL_EXPORT int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor);
-  MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *style, char *transform);
+  MS_DLL_EXPORT void msSetGeomTransform(expressionObj *e, char *transform);
   MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
 
-  MS_DLL_EXPORT void msLayerSetGeomTransform(layerObj *layer, char *transform);  
+  MS_DLL_EXPORT int msGeomTransformShape(shapeObj *shape, expressionObj *e);  
+  
   /* ==================================================================== */
   /*      end of prototypes for functions in mapgeomtransform.c                 */
   /* ==================================================================== */

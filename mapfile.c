@@ -2705,7 +2705,7 @@ int loadStyle(styleObj *style)
         int s;
         if((s = getSymbol(2, MS_STRING, MS_EXPRESSION)) == -1) return(MS_FAILURE);
         if(s == MS_STRING)
-          msStyleSetGeomTransform(style, msyystring_buffer);
+          msSetGeomTransform(&style->_geomtransform, msyystring_buffer);
         else {
           /* handle expression case here for the moment */
           msFree(style->_geomtransform.string);
@@ -4196,10 +4196,13 @@ int loadLayer(layerObj *layer, mapObj *map)
           }
         }
         break;
-      case(GEOMTRANSFORM): { 
+      case(GEOMTRANSFORM): {
         int s;
-        if((s = getSymbol(1, MS_STRING)) == -1) return(MS_FAILURE);
-        msLayerSetGeomTransform(layer, msyystring_buffer);
+        if((s = getSymbol(1, MS_EXPRESSION)) == -1) return(MS_FAILURE);
+        /* handle expression case here for the moment */
+        msFree(layer->_geomtransform.string);
+        layer->_geomtransform.string = msStrdup(msyystring_buffer);
+        layer->_geomtransform.type = MS_GEOMTRANSFORM_EXPRESSION;
       }
       break;
       case(HEADER):
@@ -4498,11 +4501,12 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "FILTERITEM", NULL, layer->filteritem);
   writeString(stream, indent, "FOOTER", NULL, layer->footer);
   writeString(stream, indent, "GROUP", NULL, layer->group);
-  if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-    writeKeyword(stream, indent, "GEOMTRANSFORM", layer->_geomtransform.type, 1,
-                 MS_LAYER_GEOMTRANSFORM_SIMPLIFY, "\"simplify\""
-                 );
-  }  
+
+  if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) {
+    writeIndent(stream, indent + 1);
+    fprintf(stream, "GEOMTRANSFORM (%s)\n", layer->_geomtransform.string);
+  }
+  
   writeString(stream, indent, "HEADER", NULL, layer->header);
   /* join - see below */
   writeKeyword(stream, indent, "LABELCACHE", layer->labelcache, 1, MS_OFF, "OFF");

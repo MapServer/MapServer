@@ -32,29 +32,29 @@
 
 extern int yyparse(parseObj *p);
 
-void msStyleSetGeomTransform(styleObj *s, char *transform)
+void msSetGeomTransform(expressionObj *g, char *transform)
 {
-  msFree(s->_geomtransform.string);
-  s->_geomtransform.string = msStrdup(transform);
+  msFree(g->string);
+  g->string = msStrdup(transform);
   if(!strncasecmp("start",transform,5)) {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_START;
+    g->type = MS_GEOMTRANSFORM_START;
   } else if(!strncasecmp("end",transform,3)) {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_END;
+    g->type = MS_GEOMTRANSFORM_END;
   } else if(!strncasecmp("vertices",transform,8)) {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_VERTICES;
+    g->type = MS_GEOMTRANSFORM_VERTICES;
   } else if(!strncasecmp("bbox",transform,4)) {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_BBOX;
+    g->type = MS_GEOMTRANSFORM_BBOX;
   } else if(!strncasecmp("labelpnt",transform,8)) {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT;
+    g->type = MS_GEOMTRANSFORM_LABELPOINT;
   } else if(!strncasecmp("labelpoly",transform,9)) {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOLY;
+    g->type = MS_GEOMTRANSFORM_LABELPOLY;
   } else if(!strncasecmp("centroid",transform,8)) {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_CENTROID;
+    g->type = MS_GEOMTRANSFORM_CENTROID;
   } else {
-    s->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
-    msSetError(MS_MISCERR,"unknown transform expression","msStyleSetGeomTransform()");
-    msFree(s->_geomtransform.string);
-    s->_geomtransform.string = NULL;
+    g->type = MS_GEOMTRANSFORM_NONE;
+    msSetError(MS_MISCERR,"unknown transform expression","msSetGeomTransform()");
+    msFree(g->string);
+    g->string = NULL;
   }
 }
 
@@ -210,16 +210,51 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
   return MS_SUCCESS;
 }
 
-void msLayerSetGeomTransform(layerObj *layer, char *transform)
+/*
+ * RFCXX implementation:
+ *  - transform directly the shapeobj
+ *  - Only shape depression supported for layers
+ */
+int msGeomTransformShape(shapeObj *shape, expressionObj *e)
 {
-  msFree(layer->_geomtransform.string);
-  layer->_geomtransform.string = msStrdup(transform);
-  if(!strncasecmp("simplify",transform,8)) {
-    layer->_geomtransform.type = MS_LAYER_GEOMTRANSFORM_SIMPLIFY;
-  } else {
-    layer->_geomtransform.type = MS_LAYER_GEOMTRANSFORM_NONE;
-    msSetError(MS_MISCERR,"unknown transform expression","msLayerSetGeomTransform()");
-    msFree(layer->_geomtransform.string);
-    layer->_geomtransform.string = NULL;
+  int i;
+
+  switch(e->type) {
+    case MS_GEOMTRANSFORM_EXPRESSION: {
+      int status;
+      shapeObj *tmpshp;
+      parseObj p;
+
+      p.shape = shape; /* set a few parser globals (hence the lock) */
+      p.expr = e;
+      p.expr->curtoken = p.expr->tokens; /* reset */
+      p.type = MS_PARSE_TYPE_SHAPE;
+      //p.dblval = map->cellsize/MS_MAX(image->width, image->height);
+
+      status = yyparse(&p);
+      if (status != 0) {
+        msSetError(MS_PARSEERR, "Failed to process shape expression: %s", "msGeomTransformShape()", e->string);
+        return MS_FAILURE;
+      }
+      
+      tmpshp = p.result.shpval;
+
+      for (i= 0; i < shape->numlines; i++)
+        free(shape->line[i].point);
+      shape->numlines = 0;
+      if (shape->line) free(shape->line);
+      
+      for(i=0; i<tmpshp->numlines; i++)
+        msAddLine(shape, &(tmpshp->line[i])); /* copy each line */
+
+      msFreeShape(tmpshp);
+      msFree(tmpshp);
+    }
+    break;
+    default:
+      msSetError(MS_MISCERR, "unknown geomtransform", "msGeomTransformShape()");
+      return MS_FAILURE;
   }
+  
+  return MS_SUCCESS;
 }

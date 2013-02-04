@@ -616,6 +616,9 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 
   if(layer->labelitem) nt++;
 
+  if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
+    msTokenizeExpression(&layer->_geomtransform, layer->items, &(layer->numitems));
+  
   /* class level counts */
   for(i=0; i<layer->numclasses; i++) {
 
