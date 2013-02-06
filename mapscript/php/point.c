@@ -354,7 +354,7 @@ PHP_METHOD(pointObj, draw)
 {
   zval *zobj =  getThis();
   zval *zmap, *zlayer, *zimage;
-  char *text;
+  char *text = NULL;
   long text_len;
   long classIndex;
   int status = MS_FAILURE;
@@ -364,7 +364,7 @@ PHP_METHOD(pointObj, draw)
   php_image_object *php_image;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "OOOls",
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "OOOl|s",
                             &zmap, mapscript_ce_map,
                             &zlayer, mapscript_ce_layer,
                             &zimage, mapscript_ce_image,
