@@ -1477,8 +1477,12 @@ int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
   msInitShape(&shape);
   msRectToPolygon(*self, &shape);
   shape.classindex = classindex;
-  shape.text = strdup(text);
 
+  if (text) {
+    shape.text = strdup(text);
+    msShapeGetAnnotation(layer, &shape);
+  }
+  
   msDrawShape(map, layer, &shape, img, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
 
   msFreeShape(&shape);
