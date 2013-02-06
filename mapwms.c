@@ -2551,6 +2551,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
   msFree(pszMetadataName);
 
+  /* print Min/Max ScaleDenominator */
   if (nVersion <  OWS_1_3_0)
     msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
   else
@@ -3305,12 +3306,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 
     }
 
-      /* Prints ScaleDenominator */
-      if (nVersion <  OWS_1_3_0)
-        msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
+    if (nVersion <  OWS_1_3_0)
+      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
                           map->resolution);
-      else
-        msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
+    else
+      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
 
     /*  */
     /* Dump list of layers organized by groups.  Layers with no group are listed */
