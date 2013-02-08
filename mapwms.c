@@ -204,54 +204,57 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
 
-void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
+int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int checkonly)
 {
-  char *time = NULL;
-  char **atimes, **tokens = NULL;
-  int numtimes, ntmp, i = 0;
+  char **atimes, **ranges, **patterns;
+  int numtimes, numpatterns, numranges, i, j, k;
   char *tmpstr = NULL;
+  int ret = MS_SUCCESS;
 
   if (timepatternstring && timestring) {
     /* parse the time parameter to extract a distinct time. */
     /* time value can be dicrete times (eg 2004-09-21), */
     /* multiple times (2004-09-21, 2004-09-22, ...) */
     /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
-    if (strstr(timestring, ",") == NULL &&
-        strstr(timestring, "/") == NULL) { /* discrete time */
-      time = msStrdup(timestring);
-    } else {
-      atimes = msStringSplit (timestring, ',', &numtimes);
-      if (numtimes >=1 && atimes) {
-        tokens = msStringSplit(atimes[0],  '/', &ntmp);
-        if (ntmp == 2 && tokens) { /* range */
-          time = msStrdup(tokens[0]);
-        } else { /* multiple times */
-          time = msStrdup(atimes[0]);
-        }
-        msFreeCharArray(tokens, ntmp);
-        msFreeCharArray(atimes, numtimes);
-      }
-    }
+    atimes = msStringSplit(timestring, ',', &numtimes);
+    
     /* get the pattern to use */
-    if (time) {
-      tokens = msStringSplit(timepatternstring, ',', &ntmp);
-      if (tokens && ntmp >= 1) {
-        for (i=0; i<ntmp; i++) {
-          if (tokens[i] && strlen(tokens[i]) > 0) {
-            msStringTrimBlanks(tokens[i]);
-            tmpstr = msStringTrimLeft(tokens[i]);
-            if (msTimeMatchPattern(time, tmpstr) == MS_TRUE) {
-              msSetLimitedPattersToUse(tmpstr);
-              break;
+    if (numtimes>0) {      
+      patterns = msStringSplit(timepatternstring, ',', &numpatterns);      
+      for (j=0; j<numtimes;++j) {
+        ranges = msStringSplit(atimes[j],  '/', &numranges);
+        for (k=0; k<numranges;++k) {
+          int match = MS_FALSE;
+          for (i=0; i<numpatterns; ++i) {
+            if (patterns[i] && strlen(patterns[i]) > 0) {
+              msStringTrimBlanks(patterns[i]);
+              tmpstr = msStringTrimLeft(patterns[i]);
+              if (msTimeMatchPattern(ranges[k], tmpstr) == MS_TRUE) {
+                if (!checkonly) msSetLimitedPattersToUse(tmpstr);
+                match = MS_TRUE;
+                break;
+              }
             }
           }
+          if (match == MS_FALSE) {
+            msSetError(MS_WMSERR, "Time value %s given does not match the time format pattern.",
+                   "msWMSSetTimePattern", ranges[k]);            
+            ret = MS_FAILURE;
+            break;
+          }
         }
-        msFreeCharArray(tokens, ntmp);
+         msFreeCharArray(ranges, numranges);
+         if (ret == MS_FAILURE)
+           break;
       }
-      free(time);
-    }
 
+      msFreeCharArray(patterns, numpatterns);
+      msFreeCharArray(atimes, numtimes);              
+
+    }
   }
+
+  return ret;
 }
 
 /*
@@ -262,8 +265,12 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
   int i=0;
   layerObj *lp = NULL;
   const char *timeextent, *timefield, *timedefault, *timpattern = NULL;
-
+    
   if (map) {
+
+    timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",
+                                     "timeformat");
+    
     for (i=0; i<map->numlayers; i++) {
       lp = (GET_LAYER(map, i));
       if (lp->status != MS_ON && lp->status != MS_DEFAULT)
@@ -293,6 +300,17 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
             msLayerSetTimeFilter(lp, timedefault, timefield);
           }
         } else {
+          /* check to see if there is a list of possible patterns defined */
+          /* if it is the case, use it to set the time pattern to use */
+          /* for the request.
+
+             Last argument is set to TRUE (checkonly) to not trigger the
+             patterns info setting.. to only apply the wms_timeformats on the
+             user request values, not the mapfile values. */
+          if (timpattern && time && strlen(time) > 0) 
+            if (msWMSSetTimePattern(timpattern, time, MS_TRUE) == MS_FAILURE) 
+              return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
+          
           /* check if given time is in the range */
           if (msValidateTimeValue(time, timeextent) == MS_FALSE) {
             if (timedefault == NULL) {
@@ -318,14 +336,13 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
         }
       }
     }
-    /* check to see if there is a list of possible patterns defined */
-    /* if it is the case, use it to set the time pattern to use */
-    /* for the request */
 
-    timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",
-                                     "timeformat");
+    /* last argument is MS_FALSE to trigger a method call that set the patterns
+       info. some drivers use it */
     if (timpattern && time && strlen(time) > 0)
-      msWMSSetTimePattern(timpattern, time);
+      if (msWMSSetTimePattern(timpattern, time, MS_FALSE) == MS_FAILURE)
+        return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
+    
   }
 
   return MS_SUCCESS;
