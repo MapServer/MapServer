@@ -177,7 +177,6 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
       p.expr = &(style->_geomtransform);
       p.expr->curtoken = p.expr->tokens; /* reset */
       p.type = MS_PARSE_TYPE_SHAPE;
-      p.dblval = map->cellsize/MS_MAX(image->width, image->height);
 
       status = yyparse(&p);
       if (status != 0) {
@@ -215,10 +214,11 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
  *  - transform directly the shapeobj
  *  - Only shape depression supported for layers
  */
-int msGeomTransformShape(shapeObj *shape, expressionObj *e)
+int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
 {
   int i;
-
+  expressionObj *e =  &layer->_geomtransform;
+  
   switch(e->type) {
     case MS_GEOMTRANSFORM_EXPRESSION: {
       int status;
@@ -229,7 +229,7 @@ int msGeomTransformShape(shapeObj *shape, expressionObj *e)
       p.expr = e;
       p.expr->curtoken = p.expr->tokens; /* reset */
       p.type = MS_PARSE_TYPE_SHAPE;
-      //p.dblval = map->cellsize/MS_MAX(image->width, image->height);
+      p.dblval = map->cellsize * (msInchesPerUnit(map->units,0)/msInchesPerUnit(layer->units,0));
 
       status = yyparse(&p);
       if (status != 0) {

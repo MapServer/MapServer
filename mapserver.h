@@ -2663,7 +2663,7 @@ extern "C" {
   MS_DLL_EXPORT void msSetGeomTransform(expressionObj *e, char *transform);
   MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
 
-  MS_DLL_EXPORT int msGeomTransformShape(shapeObj *shape, expressionObj *e);  
+  MS_DLL_EXPORT int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape);  
   
   /* ==================================================================== */
   /*      end of prototypes for functions in mapgeomtransform.c                 */

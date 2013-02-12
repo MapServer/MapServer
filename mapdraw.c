@@ -1047,7 +1047,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     /* Apply GeomTransform */
     if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-      msGeomTransformShape(&shape, &layer->_geomtransform);      
+      msGeomTransformShape(map, layer, &shape);      
     }
   
     if (cache) {
