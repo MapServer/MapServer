@@ -1970,6 +1970,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   msDrawStartShape(map, layer, image, shape);
   c = shape->classindex;
 
+  /* When creating a shape in mapscript and setting the shape.text directly, the
+     text rendering fails without this #4577. If annotext of the first label is
+     not null, msShapeGetAnnotation has already been called: do nothing */
+  if(layer->class[c]->numlabels > 0 && shape->text &&
+     (layer->class[c]->labels[0] && layer->class[c]->labels[0]->annotext==NULL)) {
+    msShapeGetAnnotation(layer, shape);
+  }
+    
   /* Before we do anything else, we will check for a rangeitem.
      If its there, we need to change the style's color to map
      the range to the shape */
@@ -2243,7 +2251,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
         if(msScaleInBounds(map->scaledenom, theclass->styles[s]->minscaledenom, theclass->styles[s]->maxscaledenom))
           msDrawMarkerSymbol(&map->symbolset, image, point, theclass->styles[s], layer->scalefactor);
       }
-      if(labeltext) {
+      if(labeltext && (strlen(labeltext)>0)) {
         if(layer->labelcache) {
           if(msAddLabel(map, label, layer->index, classindex, NULL, point, NULL, -1) != MS_SUCCESS) return(MS_FAILURE);
         } else
