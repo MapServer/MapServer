@@ -99,7 +99,7 @@ PHP_METHOD(lineObj, __construct)
 PHP_METHOD(lineObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_line_object *php_line;
 
@@ -122,7 +122,7 @@ PHP_METHOD(lineObj, __get)
 PHP_METHOD(lineObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_line_object *php_line;

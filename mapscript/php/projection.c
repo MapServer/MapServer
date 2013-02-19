@@ -47,7 +47,7 @@ ZEND_END_ARG_INFO()
 PHP_METHOD(projectionObj, __construct)
 {
   char *projString;
-  long projString_len;
+  long projString_len = 0;
   php_projection_object *php_projection;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -71,7 +71,7 @@ PHP_METHOD(projectionObj, __construct)
 PHP_METHOD(projectionObj, setWKTProjection)
 {
   char *wkt;
-  long wkt_len;
+  long wkt_len = 0;
   php_projection_object *php_projection;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

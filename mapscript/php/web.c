@@ -57,7 +57,7 @@ PHP_METHOD(webObj, __construct)
 PHP_METHOD(webObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_web_object *php_web;
 
@@ -98,7 +98,7 @@ PHP_METHOD(webObj, __get)
 PHP_METHOD(webObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_web_object *php_web;
@@ -144,7 +144,7 @@ PHP_METHOD(webObj, __set)
 PHP_METHOD(webObj, updateFromString)
 {
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   zval *zobj = getThis();
   php_web_object *php_web;
   int status = MS_FAILURE;

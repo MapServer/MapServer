@@ -646,4 +646,21 @@
         return msShapeGetClass(self, map, shape, classgroup, numclasses);
     }
 
+    char *getGeomTransform() 
+    {
+      return self->_geomtransform.string;
+    }
+    
+    void setGeomTransform(char *transform) 
+    {
+      msFree(self->_geomtransform.string);
+      if (!transform || strlen(transform) > 0) {
+        self->_geomtransform.string = msStrdup(transform);
+        self->_geomtransform.type = MS_GEOMTRANSFORM_EXPRESSION;
+      }
+      else {
+        self->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+        self->_geomtransform.string = NULL;
+      }
+    }    
 }

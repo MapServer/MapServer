@@ -32,7 +32,7 @@
 
 extern int yyparse(parseObj *p);
 
-void msSetGeomTransform(expressionObj *g, char *transform)
+void msStyleSetGeomTransform(expressionObj *g, char *transform)
 {
   msFree(g->string);
   g->string = msStrdup(transform);
@@ -210,7 +210,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
 }
 
 /*
- * RFCXX implementation:
+ * RFC89 implementation:
  *  - transform directly the shapeobj
  *  - Only shape depression supported for layers
  */

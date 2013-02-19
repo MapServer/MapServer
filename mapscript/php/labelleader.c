@@ -51,7 +51,7 @@ PHP_METHOD(labelLeaderObj, __construct)
 PHP_METHOD(labelLeaderObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_labelleader_object *php_labelleader;
 
@@ -75,7 +75,7 @@ PHP_METHOD(labelLeaderObj, __get)
 PHP_METHOD(labelLeaderObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

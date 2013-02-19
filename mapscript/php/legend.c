@@ -57,7 +57,7 @@ PHP_METHOD(legendObj, __construct)
 PHP_METHOD(legendObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_legend_object *php_legend;
 
@@ -92,7 +92,7 @@ PHP_METHOD(legendObj, __get)
 PHP_METHOD(legendObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_legend_object *php_legend;
@@ -131,7 +131,7 @@ PHP_METHOD(legendObj, __set)
 PHP_METHOD(legendObj, updateFromString)
 {
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   zval *zobj = getThis();
   php_legend_object *php_legend;
   int status = MS_FAILURE;
