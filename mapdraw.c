@@ -1044,11 +1044,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
       drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
     }
-
-    /* Apply GeomTransform */
-    if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-      msGeomTransformShape(map, layer, &shape);      
-    }
   
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
