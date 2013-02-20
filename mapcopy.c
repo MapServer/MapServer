@@ -346,6 +346,16 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTELEM(outlinewidth);
   MS_COPYSTELEM(space_size_10);
 
+  if (msCopyExpression(&(dst->expression), &(src->expression)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy expression.", "msCopyLabel()");
+    return MS_FAILURE;
+  }
+
+  if (msCopyExpression(&(dst->text), &(src->text)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy text.", "msCopyLabel()");
+    return MS_FAILURE;
+  }
+
   /*
   ** now the styles
   */
