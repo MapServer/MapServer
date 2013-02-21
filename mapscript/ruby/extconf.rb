@@ -26,6 +26,8 @@ if !FileTest.exist?("mapscript_wrap.c")
 	$objs.push("mapscript_wrap.o")
 end
 
+#CONFIG['LDSHARED'] = "LD_RUN_PATH=#{MAPSERVER_LOCAL_LIBS} " + CONFIG['LDSHARED']
+
 create_makefile("mapscript")
 
 make_file = File.open("Makefile", "a")
