@@ -569,11 +569,38 @@ shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
     case GEOS_MULTIPOLYGON:
       return msGEOSGeometry2Shape_multipolygon(g);
       break;
-    default:
+    case GEOS_GEOMETRYCOLLECTION:
       if (!GEOSisEmpty(g))
-        msSetError(MS_GEOSERR, "Unsupported GEOS geometry type (%d).", "msGEOSGeometry2Shape()", type);
-      return NULL;
+      {
+        int i, j, numGeoms;
+        shapeObj* shape;
+
+        numGeoms = GEOSGetNumGeometries(g);
+
+        shape = (shapeObj *) malloc(sizeof(shapeObj));
+        msInitShape(shape);
+        shape->type = MS_SHAPE_LINE;
+        shape->geometry = (GEOSGeom) g;
+        
+        numGeoms = GEOSGetNumGeometries(g);
+        for(i = 0; i < numGeoms; i++) { /* for each geometry */
+           shapeObj* shape2 = msGEOSGeometry2Shape((GEOSGeom)GEOSGetGeometryN(g, i));
+           if (shape2) {
+              for (j = 0; j < shape2->numlines; j++)
+                 msAddLineDirectly(shape, &shape2->line[j]);
+              shape2->numlines = 0;
+              shape2->geometry = NULL; /* not owned */
+              msFreeShape(shape2);
+           }
+        }
+        msComputeBounds(shape);
+        return shape;
+      }
+      break;
+    default:
+      msSetError(MS_GEOSERR, "Unsupported GEOS geometry type (%d).", "msGEOSGeometry2Shape()", type);
   }
+  return NULL;
 }
 #endif
 
