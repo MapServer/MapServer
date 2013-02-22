@@ -97,9 +97,11 @@ void msTimeCleanup() {
       if(ms_timeFormats[i].regex) {
         ms_regfree(ms_timeFormats[i].regex);
         msFree(ms_timeFormats[i].regex);
+        ms_timeFormats[i].regex = NULL;
       }
     }
     msFree(ms_limited_pattern);
+    ms_time_inited = 0;
   }
 }
 
