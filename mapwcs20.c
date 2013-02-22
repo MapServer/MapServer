@@ -844,6 +844,8 @@ static int msWCSParseRequest20_XMLGetCoverage(
           CSLAddString(params->range_subset, content);
         xmlFree(content);
       }
+    } else if (EQUAL((char *)child->name, "Extension")) {
+      continue;
     } else {
       XML_UNKNOWN_NODE_ERROR(child);
     }
