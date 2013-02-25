@@ -1470,14 +1470,21 @@ msDrawRasterLayerPlugin( mapObj *map, layerObj *layer, imageObj *image)
  */
 int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
-  if (image && map && layer) {
-    if( MS_RENDERER_PLUGIN(image->format) ) {
-      return msDrawRasterLayerPlugin(map, layer, image);
-    } else if( MS_RENDERER_RAWDATA(image->format) )
-      return msDrawRasterLayerLow(map, layer, image, NULL);
+  
+  int rv = MS_FAILURE;
+  if (!image || !map || !layer) {
+    return rv;
   }
 
-  return MS_FAILURE;
+  /* RFC-86 Scale dependant token replacements*/
+  rv = msLayerApplyScaletokens(layer,(layer->map)?layer->map->scaledenom:-1);
+  if (rv != MS_SUCCESS) return rv;
+  if( MS_RENDERER_PLUGIN(image->format) )
+    rv = msDrawRasterLayerPlugin(map, layer, image);
+  else if( MS_RENDERER_RAWDATA(image->format) )
+    rv = msDrawRasterLayerLow(map, layer, image, NULL);
+  msLayerRestoreFromScaletokens(layer);
+  return rv;
 }
 
 /**
