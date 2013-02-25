@@ -165,7 +165,7 @@ PHP_METHOD(classObj, __construct)
 PHP_METHOD(classObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_class_object *php_class;
 
@@ -201,7 +201,7 @@ PHP_METHOD(classObj, __get)
 PHP_METHOD(classObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_class_object *php_class;
@@ -338,7 +338,7 @@ PHP_METHOD(classObj, getLabel)
 PHP_METHOD(classObj, updateFromString)
 {
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   zval *zobj = getThis();
   php_class_object *php_class;
   int status = MS_FAILURE;
@@ -370,7 +370,7 @@ PHP_METHOD(classObj, updateFromString)
 PHP_METHOD(classObj, setExpression)
 {
   char *expression;
-  long expression_len;
+  long expression_len = 0;
   zval *zobj = getThis();
   php_class_object *php_class;
   int status = MS_FAILURE;
@@ -429,7 +429,7 @@ PHP_METHOD(classObj, getExpressionString)
 PHP_METHOD(classObj, setText)
 {
   char *text;
-  long text_len;
+  long text_len = 0;
   zval *zobj = getThis();
   php_class_object *php_class;
   php_layer_object *php_layer;

@@ -1044,7 +1044,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
       drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
     }
-    
+  
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
