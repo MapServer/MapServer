@@ -2192,6 +2192,8 @@ extern "C" {
   MS_DLL_EXPORT void msLayerFreeItemInfo(layerObj *layer);
 
   MS_DLL_EXPORT int msLayerOpen(layerObj *layer); /* in maplayer.c */
+  MS_DLL_EXPORT int msLayerApplyScaletokens(layerObj *layer, double scale);
+  MS_DLL_EXPORT int msLayerRestoreFromScaletokens(layerObj *layer);
   MS_DLL_EXPORT int msClusterLayerOpen(layerObj *layer); /* in mapcluster.c */
   MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
   MS_DLL_EXPORT void msLayerClose(layerObj *layer);
