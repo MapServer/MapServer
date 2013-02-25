@@ -52,7 +52,7 @@ void msStyleSetGeomTransform(styleObj *s, char *transform)
     s->_geomtransform.type = MS_GEOMTRANSFORM_CENTROID;
   } else {
     s->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
-    msSetError(MS_MISCERR,"unknown transform expression","msSetGeomTransform()");
+    msSetError(MS_MISCERR,"unknown transform expression","msStyleSetGeomTransform()");
     msFree(s->_geomtransform.string);
     s->_geomtransform.string = NULL;
   }
@@ -212,7 +212,6 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
 /*
  * RFC89 implementation:
  *  - transform directly the shapeobj
- *  - Only shape depression supported for layers
  */
 int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
 {
