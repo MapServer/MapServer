@@ -32,29 +32,29 @@
 
 extern int yyparse(parseObj *p);
 
-void msStyleSetGeomTransform(expressionObj *g, char *transform)
+void msStyleSetGeomTransform(styleObj *s, char *transform)
 {
-  msFree(g->string);
-  g->string = msStrdup(transform);
+  msFree(s->_geomtransform.string);
+  s->_geomtransform.string = msStrdup(transform);
   if(!strncasecmp("start",transform,5)) {
-    g->type = MS_GEOMTRANSFORM_START;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_START;
   } else if(!strncasecmp("end",transform,3)) {
-    g->type = MS_GEOMTRANSFORM_END;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_END;
   } else if(!strncasecmp("vertices",transform,8)) {
-    g->type = MS_GEOMTRANSFORM_VERTICES;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_VERTICES;
   } else if(!strncasecmp("bbox",transform,4)) {
-    g->type = MS_GEOMTRANSFORM_BBOX;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_BBOX;
   } else if(!strncasecmp("labelpnt",transform,8)) {
-    g->type = MS_GEOMTRANSFORM_LABELPOINT;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOINT;
   } else if(!strncasecmp("labelpoly",transform,9)) {
-    g->type = MS_GEOMTRANSFORM_LABELPOLY;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_LABELPOLY;
   } else if(!strncasecmp("centroid",transform,8)) {
-    g->type = MS_GEOMTRANSFORM_CENTROID;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_CENTROID;
   } else {
-    g->type = MS_GEOMTRANSFORM_NONE;
+    s->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
     msSetError(MS_MISCERR,"unknown transform expression","msSetGeomTransform()");
-    msFree(g->string);
-    g->string = NULL;
+    msFree(s->_geomtransform.string);
+    s->_geomtransform.string = NULL;
   }
 }
 

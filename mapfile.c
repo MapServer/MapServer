@@ -2705,7 +2705,7 @@ int loadStyle(styleObj *style)
         int s;
         if((s = getSymbol(2, MS_STRING, MS_EXPRESSION)) == -1) return(MS_FAILURE);
         if(s == MS_STRING)
-          msStyleSetGeomTransform(&style->_geomtransform, msyystring_buffer);
+          msStyleSetGeomTransform(style, msyystring_buffer);
         else {
           /* handle expression case here for the moment */
           msFree(style->_geomtransform.string);
