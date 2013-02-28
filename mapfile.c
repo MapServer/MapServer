@@ -4344,7 +4344,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
   writeCluster(stream, indent, &(layer->cluster));
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 10, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 9, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER");
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */
   writeExtent(stream, indent, "EXTENT", layer->extent);
