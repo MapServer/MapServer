@@ -3788,6 +3788,9 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->mask = NULL;
   layer->maskimage = NULL;
 
+  initExpression(&(layer->_geomtransform));
+  layer->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+  
   return(0);
 }
 
@@ -3845,7 +3848,8 @@ int freeLayer(layerObj *layer)
   msFree(layer->classgroup);
 
   msFreeProjection(&(layer->projection));
-
+  freeExpression(&layer->_geomtransform);
+  
   freeCluster(&layer->cluster);
 
   for(i=0; i<layer->maxclasses; i++) {
@@ -4192,6 +4196,15 @@ int loadLayer(layerObj *layer, mapObj *map)
           }
         }
         break;
+      case(GEOMTRANSFORM): {
+        int s;
+        if((s = getSymbol(1, MS_EXPRESSION)) == -1) return(MS_FAILURE);
+        /* handle expression case here for the moment */
+        msFree(layer->_geomtransform.string);
+        layer->_geomtransform.string = msStrdup(msyystring_buffer);
+        layer->_geomtransform.type = MS_GEOMTRANSFORM_EXPRESSION;
+      }
+      break;
       case(HEADER):
         if(getString(&layer->header) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
         if(msyysource == MS_URL_TOKENS) {
@@ -4488,6 +4501,12 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "FILTERITEM", NULL, layer->filteritem);
   writeString(stream, indent, "FOOTER", NULL, layer->footer);
   writeString(stream, indent, "GROUP", NULL, layer->group);
+
+  if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) {
+    writeIndent(stream, indent + 1);
+    fprintf(stream, "GEOMTRANSFORM (%s)\n", layer->_geomtransform.string);
+  }
+  
   writeString(stream, indent, "HEADER", NULL, layer->header);
   /* join - see below */
   writeKeyword(stream, indent, "LABELCACHE", layer->labelcache, 1, MS_OFF, "OFF");

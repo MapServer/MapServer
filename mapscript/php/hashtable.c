@@ -70,7 +70,7 @@ PHP_METHOD(hashtableObj, __construct)
 PHP_METHOD(hashtableObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_hashtable_object *php_hashtable;
 
@@ -93,7 +93,7 @@ PHP_METHOD(hashtableObj, __get)
 PHP_METHOD(hashtableObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -116,7 +116,7 @@ PHP_METHOD(hashtableObj, __set)
 PHP_METHOD(hashtableObj, get)
 {
   char *key;
-  long key_len;
+  long key_len = 0;
   zval *zobj = getThis();
   const char *value = NULL;
   php_hashtable_object *php_hashtable;
@@ -145,7 +145,7 @@ PHP_METHOD(hashtableObj, get)
 PHP_METHOD(hashtableObj, set)
 {
   char *key, *value;
-  long key_len, value_len;
+  long key_len, value_len = 0;
   zval *zobj = getThis();
   int status = MS_FAILURE;
   php_hashtable_object *php_hashtable;
@@ -174,7 +174,7 @@ PHP_METHOD(hashtableObj, set)
 PHP_METHOD(hashtableObj, remove)
 {
   char *key;
-  long key_len;
+  long key_len = 0;
   zval *zobj = getThis();
   int status = MS_FAILURE;
   php_hashtable_object *php_hashtable;
@@ -224,7 +224,7 @@ PHP_METHOD(hashtableObj, clear)
 PHP_METHOD(hashtableObj, nextKey)
 {
   char *key;
-  long key_len;
+  long key_len = 0;
   zval *zobj = getThis();
   const char *value = NULL;
   php_hashtable_object *php_hashtable;

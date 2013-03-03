@@ -76,7 +76,7 @@ PHP_METHOD(resultObj, __construct)
 PHP_METHOD(resultObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_result_object *php_result;
 
@@ -102,7 +102,7 @@ PHP_METHOD(resultObj, __get)
 PHP_METHOD(resultObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_result_object *php_result;
