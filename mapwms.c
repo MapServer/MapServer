@@ -3344,6 +3344,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       /* processed already */
       pabLayerProcessed = (char *)msSmallCalloc(map->numlayers, sizeof(char*));
 
+      /* Mark disabled layers as processed to prevent from being displayed in nested groups (#4533)*/
+      for(i=0; i<map->numlayers; i++) {
+        if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
+          pabLayerProcessed[i] = 1;
+      }
+
       nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
       numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
       isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
@@ -3353,8 +3359,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
         layerObj *lp;
         lp = (GET_LAYER(map, i));
 
-        if (pabLayerProcessed[i] || (lp->status == MS_DELETE) ||
-            (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)))
+        if (pabLayerProcessed[i] || (lp->status == MS_DELETE))
           continue;  /* Layer is hidden or has already been handled */
 
         if (numNestedGroups[i] > 0) {
