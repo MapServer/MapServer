@@ -34,7 +34,7 @@ LT_LDFLAGS= $(RUNPATH) -module
 OBJ_SUFFIX=lo
 LINK=$(LTLD) $(LD) $(LT_LDFLAGS)
 MS_LIB =   $(top_builddir)/libmapserver.la
-
+MS_VERSION = @MS_VERSION@
 
 .SUFFIXES:
 .SUFFIXES: .cpp .c .$(OBJ_SUFFIX)
@@ -42,7 +42,7 @@ MS_LIB =   $(top_builddir)/libmapserver.la
 all: _mapscript.la
 
 _mapscript.la: mapscript_wrap.lo pygdioctx/pygdioctx.lo $(MS_LIB)
-	$(LINK) -o $@ mapscript_wrap.lo pygdioctx/pygdioctx.lo $(MS_LIB)
+	$(LINK) -release $(MS_VERSION) -o $@ mapscript_wrap.lo pygdioctx/pygdioctx.lo $(MS_LIB)
 
 %.lo: %.c
 	$(LTCC) $(CC) $(CFLAGS) -c -o $@ $<

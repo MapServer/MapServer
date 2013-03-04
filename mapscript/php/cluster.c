@@ -66,7 +66,7 @@ PHP_METHOD(clusterObj, __construct)
 PHP_METHOD(clusterObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_cluster_object *php_cluster;
 
@@ -91,7 +91,7 @@ PHP_METHOD(clusterObj, __get)
 PHP_METHOD(clusterObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_cluster_object *php_cluster;
@@ -119,7 +119,7 @@ PHP_METHOD(clusterObj, __set)
 PHP_METHOD(clusterObj, updateFromString)
 {
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   zval *zobj = getThis();
   php_cluster_object *php_cluster;
   int status = MS_FAILURE;
@@ -151,7 +151,7 @@ PHP_METHOD(clusterObj, updateFromString)
 PHP_METHOD(clusterObj, setGroup)
 {
   char *group = NULL;
-  long group_len;
+  long group_len = 0;
   zval *zobj = getThis();
   php_cluster_object *php_cluster;
   int status = MS_FAILURE;
@@ -207,7 +207,7 @@ PHP_METHOD(clusterObj, getGroupString)
 PHP_METHOD(clusterObj, setFilter)
 {
   char *filter = NULL;
-  long filter_len;
+  long filter_len = 0;
   zval *zobj = getThis();
   php_cluster_object *php_cluster;
   int status = MS_FAILURE;

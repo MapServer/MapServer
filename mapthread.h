@@ -66,6 +66,7 @@ extern "C" {
 #define TLOCK_DEBUGOBJ  13
 #define TLOCK_OGR       14
 #define TLOCK_TIME      15
+#define TLOCK_FRIBIDI   16
 
 #define TLOCK_STATIC_MAX 20
 #define TLOCK_MAX       100

@@ -282,6 +282,243 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 }
 
 /*
+** msOWSIpParse()
+**
+** Parse the IP address or range into a binary array.
+** Supports ipv4 and ipv6 addresses
+** Ranges can be specified using the CIDR notation (ie: 192.100.100.0/24)
+**
+** Returns the parsed of the IP (4 or 16).
+*/
+int msOWSIpParse(const char* ip, unsigned char* ip1, unsigned char* mask)
+{
+  int len = 0, masklen, seps;
+  
+  if (msCountChars((char*)ip, '.') == 3) {
+    /* ipv4 */
+    unsigned char* val = ip1;
+    len = 1;
+    masklen = 32;
+    *val = 0;
+    while (*ip) {
+      if (*ip >= '0' && *ip <= '9')
+        (*val) = 10 * (*val) + (*ip - '0');
+      else if (*ip == '.') {
+        ++val;
+        *val = 0;
+        ++len;
+      }
+      else if (*ip == '/')
+      {
+        masklen = atoi(ip+1);
+        if (masklen > 32)
+          masklen = 32;
+        break;
+      }
+      else 
+        break;
+      ++ip;
+    }
+    if (len != 4)
+      return 0;
+    /* write mask */
+    if (mask) {
+      memset(mask, 0, len);
+      val = mask;
+      while (masklen) {
+        if (masklen >= 8) {
+          *val = 0xff;
+          masklen -= 8;
+        }
+        else {
+          *val = - ((unsigned char)pow(2, 8 - masklen));
+          break;
+        }
+        ++val;
+      }
+    }
+  }
+  else if ((seps = msCountChars((char*)ip, ':')) > 1 && seps < 8) {
+    /* ipv6 */
+    unsigned short* val = (unsigned short*)ip1;
+    len = 2;
+    masklen = 128;
+    *val = 0;
+    while (*ip) {
+      if (*ip >= '0' && *ip <= '9')
+        (*val) = 16 * (*val) + (*ip - '0');
+      else if (*ip >= 'a' && *ip <= 'f')
+        (*val) = 16 * (*val) + (*ip - 'a' + 10);
+      else if (*ip >= 'A' && *ip <= 'F')
+        (*val) = 16 * (*val) + (*ip - 'A' + 10);
+      else if (*ip == ':') {
+        ++ip;
+        ++val;
+        len += 2;
+        *val = 0;
+        if (*ip == ':') {
+          /* insert 0 values */
+          while (seps <= 7) {
+            ++val;
+            len += 2;
+            *val = 0;
+            ++seps;
+          }
+        }
+        else
+          continue;
+      }
+      else if (*ip == '/')
+      {
+        masklen = atoi(ip+1);
+        if (masklen > 128)
+          masklen = 128;
+        break;
+      }
+      else
+        break;
+      ++ip;
+    }
+    if (len != 16)
+      return 0;
+    /* write mask */
+    if (mask) {
+      memset(mask, 0, len);
+      val = (unsigned short*)mask;
+      while (masklen) {
+        if (masklen >= 16) {
+          *val = 0xffff;
+          masklen -= 16;
+        }
+        else {
+          *val = - ((unsigned short)pow(2, 16 - masklen));
+          break;
+        }
+        ++val;
+      }
+    }
+  }
+
+  return len;
+}
+
+/*
+** msOWSIpInList()
+**
+** Check if an ip is in a space separated list of IP addresses/ranges.
+** Supports ipv4 and ipv6 addresses
+** Ranges can be specified using the CIDR notation (ie: 192.100.100.0/24)
+**
+** Returns MS_TRUE if the IP is found.
+*/
+int msOWSIpInList(const char *ip_list, const char* ip)
+{
+  int i, j, numips, iplen;
+  unsigned char ip1[16];
+  unsigned char ip2[16];
+  unsigned char mask[16];
+  char** ips;
+
+  /* Parse input IP */
+  iplen = msOWSIpParse(ip, (unsigned char*)&ip1, NULL);
+  if (iplen != 4 && iplen != 16) /* ipv4 or ipv6 */
+    return MS_FALSE;
+
+  ips = msStringSplit(ip_list, ' ', &numips);
+  if (ips) {
+    for (i = 0; i < numips; i++) {
+      if (msOWSIpParse(ips[i], (unsigned char*)&ip2, (unsigned char*)&mask) == iplen)
+      {
+        for (j = 0; j < iplen; j++) {
+          if ((ip1[j] & mask[j]) != (ip2[j] & mask[j]))
+            break;
+        }
+        if (j == iplen) {
+          msFreeCharArray(ips, numips);
+          return MS_TRUE; /* match found */
+        }
+      }
+    }
+    msFreeCharArray(ips, numips);
+  }
+
+  return MS_FALSE;
+}
+
+/*
+** msOWSIpDisabled()
+**
+** Check if an ip is in a list specified in the metadata section.
+**
+** Returns MS_TRUE if the IP is found.
+*/
+int msOWSIpInMetadata(const char *ip_list, const char* ip)
+{
+  FILE *stream;
+  char buffer[MS_BUFFER_LENGTH];
+  int found = MS_FALSE;
+  
+  if (strncasecmp(ip_list, "file:", 5) == 0) {
+    stream = fopen(ip_list + 5, "r");
+    if(stream) {
+      found = MS_FALSE;
+      while(fgets(buffer, MS_BUFFER_LENGTH, stream)) {
+        if(msOWSIpInList(buffer, ip)) {
+          found = MS_TRUE;
+          break;
+        }
+      }
+      fclose(stream);
+    }  
+  }
+  else {
+    if(msOWSIpInList(ip_list, ip))
+      found = MS_TRUE;
+  }  
+  return found;
+}
+
+/*
+** msOWSIpDisabled()
+**
+** Check if the layers are enabled or disabled by IP list.
+**
+** 'namespaces' is a string with a letter for each namespace to lookup
+** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
+** If namespaces is NULL then this function just does a regular metadata
+** lookup.
+**
+** Returns the disabled flag.
+*/
+int msOWSIpDisabled(hashTableObj *metadata, const char *namespaces, const char* ip)
+{
+  const char *ip_list;
+  int disabled = MS_FALSE;
+
+  if (!ip)
+    return MS_FALSE; /* no endpoint ip */
+
+  ip_list = msOWSLookupMetadata(metadata, namespaces, "allowed_ip_list");
+  if (!ip_list)
+    ip_list = msOWSLookupMetadata(metadata, "O", "allowed_ip_list");
+
+  if (ip_list) {
+    disabled = MS_TRUE;
+    if (msOWSIpInMetadata(ip_list, ip))
+      disabled = MS_FALSE;
+  }
+
+  ip_list = msOWSLookupMetadata(metadata, namespaces, "denied_ip_list");
+  if (!ip_list)
+    ip_list = msOWSLookupMetadata(metadata, "O", "denied_ip_list");
+
+  if (ip_list && msOWSIpInMetadata(ip_list, ip))
+    disabled = MS_TRUE;
+
+  return disabled;
+}
+
+/*
 ** msOWSRequestIsEnabled()
 **
 ** Check if a layer is visible for a specific OWS request.
@@ -296,9 +533,12 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
 {
   int disabled = MS_FALSE; /* explicitly disabled flag */
   const char *enable_request;
+  const char *remote_ip;
 
   if (request == NULL)
     return MS_FALSE;
+
+  remote_ip = getenv("REMOTE_ADDR");
 
   /* First, we check in the layer metadata */
   if (layer && check_all_layers == MS_FALSE) {
@@ -311,6 +551,9 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
     if (msOWSParseRequestMetadata(enable_request, request, &disabled))
       return MS_TRUE;
     if (disabled) return MS_FALSE;
+
+    if (msOWSIpDisabled(&layer->metadata, namespaces, remote_ip))
+      return MS_FALSE;
   }
 
   if (map && check_all_layers == MS_FALSE) {
@@ -324,9 +567,12 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
     if (msOWSParseRequestMetadata(enable_request, request, &disabled))
       return MS_TRUE;
     if (disabled) return MS_FALSE;
+
+    if (msOWSIpDisabled(&map->web.metadata, namespaces, remote_ip))
+      return MS_FALSE;
   }
 
-  if (map && (map->numlayers > 0) && check_all_layers == MS_TRUE) {
+  if (map && check_all_layers == MS_TRUE) {
     int i, globally_enabled = MS_FALSE;
     enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
     globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
@@ -335,6 +581,9 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
       enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
       globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
     }
+
+    if (globally_enabled && msOWSIpDisabled(&map->web.metadata, namespaces, remote_ip))
+      globally_enabled = MS_FALSE;
 
     /* Check all layers */
     for(i=0; i<map->numlayers; i++) {
@@ -354,9 +603,15 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
         if (!result && disabled) continue;
       }
 
+      if (msOWSIpDisabled(&lp->metadata, namespaces, remote_ip))
+        continue;
+
       if (result || (!disabled && globally_enabled))
         return MS_TRUE;
     }
+
+    if (!disabled && globally_enabled)
+        return MS_TRUE;
   }
 
   return MS_FALSE;
@@ -380,6 +635,7 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
   int disabled = MS_FALSE; /* explicitly disabled flag */
   int globally_enabled = MS_FALSE;
   const char *enable_request;
+  const char *remote_ip;
 
   if (ows_request->numlayers > 0)
     msFree(ows_request->enabled_layers);
@@ -390,6 +646,8 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
   if (request == NULL || (map == NULL) || (map->numlayers <= 0))
     return;
 
+  remote_ip = getenv("REMOTE_ADDR");
+
   enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
   globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
 
@@ -397,6 +655,9 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
     enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
     globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
   }
+
+  if (globally_enabled && msOWSIpDisabled(&map->web.metadata, namespaces, remote_ip))
+      globally_enabled = MS_FALSE;
 
   if (map->numlayers) {
     int i, layers_size = map->numlayers; /* for most of cases, this will be relatively small */
@@ -419,6 +680,9 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
         result = msOWSParseRequestMetadata(enable_request, request, &disabled);
         if (!result && disabled) continue;
       }
+
+      if (msOWSIpDisabled(&lp->metadata, namespaces, remote_ip))
+          continue;
 
       if (result || (!disabled && globally_enabled)) {
         ows_request->enabled_layers[ows_request->numlayers] = lp->index;

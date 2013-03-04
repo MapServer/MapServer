@@ -569,11 +569,38 @@ shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
     case GEOS_MULTIPOLYGON:
       return msGEOSGeometry2Shape_multipolygon(g);
       break;
-    default:
+    case GEOS_GEOMETRYCOLLECTION:
       if (!GEOSisEmpty(g))
-        msSetError(MS_GEOSERR, "Unsupported GEOS geometry type (%d).", "msGEOSGeometry2Shape()", type);
-      return NULL;
+      {
+        int i, j, numGeoms;
+        shapeObj* shape;
+
+        numGeoms = GEOSGetNumGeometries(g);
+
+        shape = (shapeObj *) malloc(sizeof(shapeObj));
+        msInitShape(shape);
+        shape->type = MS_SHAPE_LINE;
+        shape->geometry = (GEOSGeom) g;
+        
+        numGeoms = GEOSGetNumGeometries(g);
+        for(i = 0; i < numGeoms; i++) { /* for each geometry */
+           shapeObj* shape2 = msGEOSGeometry2Shape((GEOSGeom)GEOSGetGeometryN(g, i));
+           if (shape2) {
+              for (j = 0; j < shape2->numlines; j++)
+                 msAddLineDirectly(shape, &shape2->line[j]);
+              shape2->numlines = 0;
+              shape2->geometry = NULL; /* not owned */
+              msFreeShape(shape2);
+           }
+        }
+        msComputeBounds(shape);
+        return shape;
+      }
+      break;
+    default:
+      msSetError(MS_GEOSERR, "Unsupported GEOS geometry type (%d).", "msGEOSGeometry2Shape()", type);
   }
+  return NULL;
 }
 #endif
 
@@ -653,6 +680,27 @@ void msGEOSFreeWKT(char* pszGEOSWKT)
 #endif
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSFreeWKT()");
+#endif
+}
+
+shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
+#if defined USE_GEOS && defined HAVE_GEOS_OFFSET_CURVE
+   GEOSGeom g1, g2; 
+
+  if(!p) 
+    return NULL;
+
+  if(!p->geometry) /* if no geometry for the shape then build one */
+    p->geometry = (GEOSGeom) msGEOSShape2Geometry(p);
+
+  g1 = (GEOSGeom) p->geometry;
+  if(!g1) return NULL;
+  
+  g2 = GEOSOffsetCurve(g1, offset, 4, GEOSBUF_JOIN_MITRE, fabs(offset*1.5));
+  return msGEOSGeometry2Shape(g2);
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSingleSidedBuffer()");
+  return NULL;
 #endif
 }
 

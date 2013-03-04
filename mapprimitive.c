@@ -1748,11 +1748,33 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   segment_index = max_line_index = 0;
   total_length = max_line_length = 0.0;
 
-  if(!string) return NULL;
 
+  if(!string) return NULL;
 
   labelpaths = (labelPathObj **) msSmallMalloc(sizeof(labelPathObj *) * labelpaths_size);
   (*regular_lines) = (int *) msSmallMalloc(sizeof(int) * regular_lines_size);
+
+  if(label->offsetx != 0 && (label->offsety == -99 || label->offsety == 99)) {
+    double offset;
+    if(label->offsetx > 0) {
+      offset = label->offsetx + label->size/2;
+    } else {
+      offset = label->offsetx - label->size/2;
+    }
+    if(label->offsety == 99 && p->numlines>0 && p->line[0].numpoints > 0) {
+      /* is the line mostly left-to-right or right-to-left ?
+       * FIXME this should be done line by line, by stepping through shape->lines, however
+       * the OffsetPolyline function works on shapeObjs, not lineObjs
+       * we only check the first line
+       */
+      if(p->line[0].point[0].x < p->line[0].point[p->line[0].numpoints-1].x) {
+        /* line is left to right */
+          offset = -offset;
+      }
+    }
+    p = msOffsetPolyline(p,offset, -99);
+    if(!p) return NULL;
+  }
 
   msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
 
@@ -1777,6 +1799,10 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   /* set the number of paths in the array */
   *numpaths = labelpaths_index;
   *num_regular_lines = regular_lines_index;
+  if(label->offsety == -99 && label->offsetx != 0) {
+     msFreeShape(p);
+     msFree(p);
+  }
   return labelpaths;
 }
 
@@ -1810,7 +1836,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
   labelPathObj *labelpath = NULL;
 
   /* Line smoothing kernel */
-  double kernel[] = {0.1, 0.2, 2, 0.2, 0.1}; /* {1.5, 2, 15, 2, 1.5}; */
+  double kernel[] = {0.1,0.2,2,0.2,0.1}; /* {1.5, 2, 15, 2, 1.5}; */
   double kernel_normal = 2.6; /* Must be sum of kernel elements */
   int kernel_size = 5;
 

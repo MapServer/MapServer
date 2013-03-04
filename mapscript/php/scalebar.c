@@ -63,7 +63,7 @@ PHP_METHOD(scalebarObj, __construct)
 PHP_METHOD(scalebarObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_scalebar_object *php_scalebar;
 
@@ -99,7 +99,7 @@ PHP_METHOD(scalebarObj, __get)
 PHP_METHOD(scalebarObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_scalebar_object *php_scalebar;
@@ -139,7 +139,7 @@ PHP_METHOD(scalebarObj, __set)
 PHP_METHOD(scalebarObj, updateFromString)
 {
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   zval *zobj = getThis();
   php_scalebar_object *php_scalebar;
   int status = MS_FAILURE;

@@ -69,7 +69,7 @@ PHP_METHOD(imageObj, __construct)
 PHP_METHOD(imageObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_image_object *php_image;
 
@@ -98,7 +98,7 @@ PHP_METHOD(imageObj, __get)
 PHP_METHOD(imageObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_image_object *php_image;

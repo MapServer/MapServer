@@ -69,7 +69,7 @@ PHP_METHOD(symbolObj, __construct)
 {
   zval *zmap;
   char *symbolName;
-  long symbolName_len;
+  long symbolName_len = 0;
   int symbolId = -1;
   php_symbol_object *php_symbol;
   php_map_object *php_map;
@@ -105,7 +105,7 @@ PHP_METHOD(symbolObj, __construct)
 PHP_METHOD(symbolObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_symbol_object *php_symbol;
 
@@ -147,7 +147,7 @@ PHP_METHOD(symbolObj, __get)
 PHP_METHOD(symbolObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_symbol_object *php_symbol;
@@ -280,7 +280,7 @@ PHP_METHOD(symbolObj, setImagePath)
   zval *zobj = getThis();
   php_symbol_object *php_symbol;
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   int status = MS_FAILURE;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

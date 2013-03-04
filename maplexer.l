@@ -185,6 +185,9 @@ char path[MS_MAXPATHLEN];
 
 <EXPRESSION_STRING>buffer                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_BUFFER); }
 <EXPRESSION_STRING>difference                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_DIFFERENCE); }
+<EXPRESSION_STRING>simplify                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFY); }
+<EXPRESSION_STRING>simplifypt                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFYPT); }
+<EXPRESSION_STRING>generalize                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_GENERALIZE); }
 
 <EXPRESSION_STRING>intersects                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_INTERSECTS); }
 <EXPRESSION_STRING>disjoint                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_DISJOINT); }
@@ -352,6 +355,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>scale                                 { MS_LEXER_RETURN_TOKEN(SCALE); }
 <INITIAL>scaledenom                            { MS_LEXER_RETURN_TOKEN(SCALEDENOM); }
 <INITIAL,URL_VARIABLE>scalebar                 { MS_LEXER_RETURN_TOKEN(SCALEBAR); }
+<INITIAL>scaletoken                            { MS_LEXER_RETURN_TOKEN(SCALETOKEN); }
 <INITIAL,URL_STRING>shadowcolor                { MS_LEXER_RETURN_TOKEN(SHADOWCOLOR); }
 <INITIAL,URL_STRING>shadowsize                 { MS_LEXER_RETURN_TOKEN(SHADOWSIZE); }
 <INITIAL>shapepath                             { MS_LEXER_RETURN_TOKEN(SHAPEPATH); }
@@ -380,6 +384,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }
 <INITIAL,URL_VARIABLE,URL_STRING>units         { MS_LEXER_RETURN_TOKEN(UNITS); }
 <INITIAL>validation                            { MS_LEXER_RETURN_TOKEN(VALIDATION); }
+<INITIAL>values                                { MS_LEXER_RETURN_TOKEN(VALUES); }
 <INITIAL,URL_VARIABLE>web                      { MS_LEXER_RETURN_TOKEN(WEB); }
 <INITIAL,URL_STRING>width                      { MS_LEXER_RETURN_TOKEN(WIDTH); }
 <INITIAL,URL_STRING>wkt                        { MS_LEXER_RETURN_TOKEN(WKT); }
@@ -495,6 +500,10 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>\[shape\] { 
   /* attribute binding - shape (fixed value) */
   return(MS_TOKEN_BINDING_SHAPE);
+}
+<EXPRESSION_STRING>\[map_cellsize\] { 
+  /* attribute binding - cellsize */
+  return(MS_TOKEN_BINDING_MAP_CELLSIZE);
 }
 <EXPRESSION_STRING>\[[^\]]*\] {
   /* attribute binding - numeric (no quotes) */

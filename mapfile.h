@@ -308,6 +308,10 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define LEADER 1260
 #define GRIDSTEP 1261
 
+/* rfc 86 scale-dependant token substitutions */
+#define SCALETOKEN 1270
+#define VALUES 1271
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 

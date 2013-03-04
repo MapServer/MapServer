@@ -53,7 +53,7 @@ PHP_METHOD(errorObj, __construct)
 PHP_METHOD(errorObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_error_object *php_error;
 
@@ -79,7 +79,7 @@ PHP_METHOD(errorObj, __get)
 PHP_METHOD(errorObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_error_object *php_error;

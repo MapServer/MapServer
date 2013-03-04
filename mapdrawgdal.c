@@ -39,6 +39,7 @@ extern int InvGeoTransform( double *gt_in, double *gt_out );
 
 #define MAXCOLORS 256
 #define GEO_TRANS(tr,x,y)  ((tr)[0]+(tr)[1]*(x)+(tr)[2]*(y))
+#define SKIP_MASK(x,y) (mask_rb && !*(mask_rb->data.rgba.a+(y)*mask_rb->data.rgba.row_step+(x)*mask_rb->data.rgba.pixel_step))
 
 #if defined(USE_GDAL)
 
@@ -129,12 +130,21 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   GDALRasterBandH hBand1=NULL, hBand2=NULL, hBand3=NULL, hBandAlpha=NULL;
   int bHaveRGBNoData = FALSE;
   int nNoData1=-1,nNoData2=-1,nNoData3=-1;
+  rasterBufferObj *mask_rb = NULL;
 #ifdef USE_GD
   int   anColorCube[256];
   int cmt=0;
   /*make sure we don't have a truecolor gd image*/
   assert(!rb || rb->type != MS_BUFFER_GD || !gdImageTrueColor(rb->data.gd_img));
 #endif
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
   /*only support rawdata and pluggable renderers*/
   assert(MS_RENDERER_RAWDATA(image->format) || (MS_RENDERER_PLUGIN(image->format) && rb));
@@ -808,6 +818,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         alpha = pabyRawAlpha[k];
 
         result = cmap[pabyRaw1[k++]];
+        if(SKIP_MASK(j,i)) {
+          continue;
+        }
 
         /*
         ** We don't do alpha blending in non-truecolor mode, just
@@ -834,6 +847,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
       for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
         result = cmap[pabyRaw1[k++]];
+        if(SKIP_MASK(j,i)) {
+          continue;
+        }
         if( result != -1 ) {
           rb->data.gd_img->pixels[i][j] = result;
         }
@@ -854,6 +870,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
         for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
           int src_pixel, src_alpha, cmap_alpha, merged_alpha;
+          if(SKIP_MASK(j,i)) {
+            k++;
+            continue;
+          }
 
           src_pixel = pabyRaw1[k];
           src_alpha = pabyRawAlpha[k];
@@ -891,6 +911,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
         for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
           int src_pixel = pabyRaw1[k++];
+          if(SKIP_MASK(j,i)) {
+            continue;
+          }
 
           if( rb_cmap[3][src_pixel] > 253 ) {
             RB_SET_PIXEL( rb, j, i,
@@ -918,6 +941,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       k = 0;
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
         for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ ) {
+          if(SKIP_MASK(j,i)) {
+            continue;
+          }
           if( MS_VALID_COLOR( layer->offsite )
               && pabyRaw1[k] == layer->offsite.red
               && pabyRaw2[k] == layer->offsite.green
@@ -972,6 +998,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         k = 0;
         for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
           for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ ) {
+            if(SKIP_MASK(j,i)) {
+              continue;
+            }
             if( MS_VALID_COLOR( layer->offsite )
                 && pabyRaw1[k] == layer->offsite.red
                 && pabyRaw2[k] == layer->offsite.green
@@ -1000,6 +1029,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
           for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ ) {
             int cc_index;
+            if(SKIP_MASK(j,i)) {
+              continue;
+            }
 
             if( MS_VALID_COLOR( layer->offsite )
                 && pabyRaw1[k] == layer->offsite.red
@@ -1031,6 +1063,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   ** Cleanup
   */
 
+  msFree( mask_rb );
   free( pabyRaw1 );
 
   if( hColorMap != NULL )
@@ -1879,6 +1912,15 @@ msDrawRasterLayerGDAL_RawMode(
   unsigned char *b_nodatas = NULL;
   GInt16 *i_nodatas = NULL;
   int got_nodata=FALSE;
+  rasterBufferObj *mask_rb = NULL;
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
   if( image->format->bands > 256 ) {
     msSetError( MS_IMGERR, "Too many bands (more than 256).",
@@ -1998,8 +2040,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( i_nodatas
-              && ((GInt16 *) pBuffer)[k] == i_nodatas[band] ) {
+          if( ( i_nodatas && ((GInt16 *) pBuffer)[k] == i_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2013,8 +2055,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( f_nodatas
-              && ((float *) pBuffer)[k] == f_nodatas[band] ) {
+          if( ( f_nodatas && ((float *) pBuffer)[k] == f_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2028,8 +2070,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( b_nodatas
-              && ((unsigned char *) pBuffer)[k] == b_nodatas[band] ) {
+          if( ( b_nodatas && ((unsigned char *) pBuffer)[k] == b_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2041,6 +2083,7 @@ msDrawRasterLayerGDAL_RawMode(
     }
   }
 
+  msFree( mask_rb );
   free( pBuffer );
   free( f_nodatas );
 
@@ -2077,6 +2120,15 @@ msDrawRasterLayerGDAL_16BitClassification(
   int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
   unsigned char *rb_cmap[4];
   CPLErr eErr;
+  rasterBufferObj *mask_rb = NULL;
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
   assert( rb->type == MS_BUFFER_GD || rb->type == MS_BUFFER_BYTE_RGBA );
 
@@ -2283,6 +2335,9 @@ msDrawRasterLayerGDAL_16BitClassification(
         continue;
       }
 
+      if(SKIP_MASK(j,i))
+        continue;
+
       /*
        * The funny +1/-1 is to avoid odd rounding around zero.
        * We could use floor() but sometimes it is expensive.
@@ -2322,6 +2377,7 @@ msDrawRasterLayerGDAL_16BitClassification(
   free( rb_cmap[1] );
   free( rb_cmap[2] );
   free( rb_cmap[3] );
+  msFree( mask_rb );
 
   assert( k == dst_xsize * dst_ysize );
 

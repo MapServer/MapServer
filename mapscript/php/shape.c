@@ -181,7 +181,7 @@ PHP_METHOD(shapeObj, __construct)
 PHP_METHOD(shapeObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_shape_object *php_shape;
 
@@ -213,7 +213,7 @@ PHP_METHOD(shapeObj, __get)
 PHP_METHOD(shapeObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_shape_object *php_shape;
@@ -456,7 +456,7 @@ PHP_METHOD(shapeObj, getValue)
   zval *zobj =  getThis();
   zval *zlayer;
   char *fieldName;
-  long fieldName_len;
+  long fieldName_len = 0;
   int i;
   php_layer_object *php_layer;
   php_shape_object *php_shape;

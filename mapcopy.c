@@ -346,6 +346,16 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTELEM(outlinewidth);
   MS_COPYSTELEM(space_size_10);
 
+  if (msCopyExpression(&(dst->expression), &(src->expression)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy expression.", "msCopyLabel()");
+    return MS_FAILURE;
+  }
+
+  if (msCopyExpression(&(dst->text), &(src->text)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy text.", "msCopyLabel()");
+    return MS_FAILURE;
+  }
+
   /*
   ** now the styles
   */
@@ -420,6 +430,7 @@ int msCopyWeb(webObj *dst, webObj *src, mapObj *map)
     if (msCopyHashTable(&(dst->metadata), &(src->metadata)) != MS_SUCCESS)
       return MS_FAILURE;
   }
+  msCopyHashTable(&dst->validation,&src->validation);
 
   MS_COPYSTRING(dst->queryformat, src->queryformat);
   MS_COPYSTRING(dst->legendformat, src->legendformat);
@@ -567,6 +578,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     /* dst->metadata = msCreateHashTable(); */
     msCopyHashTable(&(dst->metadata), &(src->metadata));
   }
+  msCopyHashTable(&dst->validation,&src->validation);
 
   MS_COPYSTELEM(minscaledenom);
   MS_COPYSTELEM(maxscaledenom);
@@ -840,6 +852,24 @@ int msCopyLegend(legendObj *dst, legendObj *src, mapObj *map)
   return MS_SUCCESS;
 }
 
+int msCopyScaleTokenEntry(scaleTokenEntryObj *src, scaleTokenEntryObj *dst) {
+  MS_COPYSTRING(dst->value,src->value);
+  MS_COPYSTELEM(minscale);
+  MS_COPYSTELEM(maxscale);
+  return MS_SUCCESS;
+}
+
+int msCopyScaleToken(scaleTokenObj *src, scaleTokenObj *dst) {
+  int i;
+  MS_COPYSTRING(dst->name,src->name);
+  MS_COPYSTELEM(n_entries);
+  dst->tokens = (scaleTokenEntryObj*)msSmallCalloc(src->n_entries,sizeof(scaleTokenEntryObj));
+  for(i=0;i<src->n_entries;i++) {
+    msCopyScaleTokenEntry(&src->tokens[i],&dst->tokens[i]);
+  }
+  return MS_SUCCESS;
+}
+
 /***********************************************************************
  * msCopyLayer()                                                       *
  *                                                                     *
@@ -859,6 +889,14 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   MS_COPYSTRING(dst->classitem, src->classitem);
 
   MS_COPYSTELEM(classitemindex);
+
+  for(i = 0; i < src->numscaletokens; i++) {
+    if(msGrowLayerScaletokens(dst) == NULL)
+      return MS_FAILURE;
+    initScaleToken(&dst->scaletokens[i]);
+    msCopyScaleToken(&src->scaletokens[i],&dst->scaletokens[i]);
+    dst->numscaletokens++;
+  }
 
   for (i = 0; i < src->numclasses; i++) {
     if (msGrowLayerClasses(dst) == NULL)
@@ -967,6 +1005,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   if (&(src->metadata)) {
     msCopyHashTable(&(dst->metadata), &(src->metadata));
   }
+  msCopyHashTable(&dst->validation,&src->validation);
 
   MS_COPYSTELEM(opacity);
   MS_COPYSTELEM(dump);

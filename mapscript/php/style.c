@@ -131,7 +131,7 @@ PHP_METHOD(styleObj, __construct)
 PHP_METHOD(styleObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_style_object *php_style;
 
@@ -189,7 +189,7 @@ PHP_METHOD(styleObj, __get)
 PHP_METHOD(styleObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_style_object *php_style;
@@ -304,7 +304,7 @@ PHP_METHOD(styleObj, updateFromString)
 {
   zval *zobj = getThis();
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   int status = MS_FAILURE;
   zval *retval;
   zval property_name, value;
@@ -344,7 +344,7 @@ PHP_METHOD(styleObj, setBinding)
 {
   zval *zobj = getThis();
   char *value;
-  long value_len;
+  long value_len = 0;
   long bindingId;
   php_style_object *php_style;
 
@@ -503,7 +503,7 @@ PHP_METHOD(styleObj, setGeomTransform)
 {
   zval *zobj = getThis();
   char *transform;
-  long transform_len;
+  long transform_len = 0;
   php_style_object *php_style;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);

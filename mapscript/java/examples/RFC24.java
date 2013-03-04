@@ -26,6 +26,9 @@ public class RFC24 {
 		testGetLayerObj();
 		testGetLayerObjByName();
 		testGetClassObj();
+		testGetOutputformatObj();
+		testInsertOutputformatObj();
+
 		System.out.println("Finished "+getClass().getName());
 	}
 	
@@ -96,6 +99,39 @@ public class RFC24 {
 		gc();
 		assertNotNull(newClass.getLayer(), "testGetClassObj");
 	}
+
+        public void testGetOutputformatObj() {
+                mapObj map=new mapObj(mapfile);
+                outputFormatObj format=null;
+                for (int i=0; i<map.getNumoutputformats(); i++) {
+                    format = map.getOutputFormat(i);
+                    //System.out.println("["+i+"] Format name: "+format.getName());
+                } 
+                map=null;
+                gc();
+                assertNotNull(format.getDriver(), "testGetOutputformatObj");
+        }
+
+        public void testInsertOutputformatObj() {
+                mapObj map=new mapObj(mapfile);
+                outputFormatObj format=null;
+                for (int i=0; i<map.getNumoutputformats(); i++) {
+                    format = map.getOutputFormat(i);
+		    // uncomment to see output
+                    //System.out.println("["+i+"] Format name: "+format.getName() + " driver="+format.getDriver());
+                } 
+                outputFormatObj newFormat=new outputFormatObj("AGG/PNG","test/rfc24");
+		map.appendOutputFormat(newFormat);
+                for (int i=0; i<map.getNumoutputformats(); i++) {
+                    format = map.getOutputFormat(i);
+		    // uncomment to see output
+                    //System.out.println("["+i+"] Format name: "+format.getName());
+                } 
+		map.draw();
+                map=null; format=null;
+                gc();
+                assertNotNull(newFormat.getDriver(), "testInsertOutputformatObj");
+        }
 
 	public void gc() {
 		for (int i=0; i<10; i++)

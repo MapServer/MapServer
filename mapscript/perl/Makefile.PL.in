@@ -18,7 +18,7 @@ $inc =~ s/\-I\./\-I$home/g;
 
 $libs = <STREAM>;
 chomp $libs;
-$libs = "-L$libdir -lmapserver";
+$libs = "-L$libdir -L$home/.libs -lmapserver";
 
 $static_libs = <STREAM>;
 chomp $static_libs;

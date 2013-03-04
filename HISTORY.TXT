@@ -15,6 +15,15 @@ For a complete change history, please see the Git log comments.
 Current Version (git master, 6.3-dev, future 6.4):
 --------------------------------------------------
 
+- Fix symbol scaling for vector symbols with no height (#4497,#3511)
+
+- Implementation of layer masking for WCS coverages
+
+- Implementation of offsets on follow labels (#4399)
+
+6.2.0 release (git branch-6-2) 2012/11/14:
+--------------------------------------------------
+
 - Fix WFS GetFeature result bounds are not written in requested projection (#4494)
 
 - Fixed wrong size in LegendURL of root layer (#4441)
@@ -39,6 +48,11 @@ Current Version (git master, 6.3-dev, future 6.4):
   commit message and not appear here.
   
 - Fixed the OGR driver to use point or line spatial filter geometries in degenerated cases (#4420)
+
+- implement OFFSET x -99 on ANGLE FOLLOW labels (#4399)
+
+Version 6.2 (beta1: 20120629): 
+-------------------------------------------------
 
 - Fix WFS filter is produced as non-standard XML (#4171)
 

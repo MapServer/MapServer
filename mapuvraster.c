@@ -391,6 +391,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   map_tmp.outputformat->renderer = MS_RENDER_WITH_RAWDATA;
   map_tmp.outputformat->imagemode = MS_IMAGEMODE_FLOAT32;
 
+  map_tmp.configoptions = layer->map->configoptions;
   map_tmp.mappath = layer->map->mappath;
   map_tmp.shapepath = layer->map->shapepath;
   map_tmp.extent.minx = rect.minx-(0.5*map_cellsize)+(0.5*map_tmp.cellsize);

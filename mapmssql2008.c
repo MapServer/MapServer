@@ -824,22 +824,22 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     char buffer[1000];
 
     if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
-      snprintf(buffer, sizeof(buffer), "%s,convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+      snprintf(buffer, sizeof(buffer), "[%s],convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
     else
-      snprintf(buffer, sizeof(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+      snprintf(buffer, sizeof(buffer), "[%s].STAsBinary(),convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
 
     columns_wanted = msStrdup(buffer);
   } else {
     char buffer[10000] = "";
 
     for(t = 0; t < layer->numitems; t++) {
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), %s),", layer->items[t]);
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), [%s]),", layer->items[t]);
     }
 
     if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s,convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "[%s],convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
     else
-      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "%s.STAsBinary(),convert(varchar(36), %s)", layerinfo->geom_column, layerinfo->urid_name);
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "[%s].STAsBinary(),convert(varchar(36), [%s])", layerinfo->geom_column, layerinfo->urid_name);
 
     columns_wanted = msStrdup(buffer);
   }
@@ -1820,9 +1820,8 @@ int msMSSQL2008LayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
 int msMSSQL2008LayerGetItems(layerObj *layer)
 {
   msMSSQL2008LayerInfo  *layerinfo;
-  char                *geom_column_name = 0;
-  char                sql[1000];
-  int                 t;
+  char                *sql = NULL;
+  int                 t, sqlSize;
   char                found_geom = 0;
   int                 item_num;
   SQLSMALLINT cols = 0;
@@ -1846,13 +1845,17 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
     return MS_FAILURE;
   }
 
-  snprintf(sql, sizeof(sql), "SELECT top 0 * FROM %s", layerinfo->geom_table);
+  sqlSize = strlen(layerinfo->geom_table) + 30;
+  sql = msSmallMalloc(sizeof(char *) * sqlSize);
+
+  snprintf(sql, sqlSize, "SELECT top 0 * FROM %s", layerinfo->geom_table);
 
   if (!executeSQL(layerinfo->conn, sql)) {
-    msFree(geom_column_name);
-
+    msFree(sql);
     return MS_FAILURE;
   }
+
+  msFree(sql);
 
   SQLNumResultCols (layerinfo->conn->hstmt, &cols);
 
@@ -1998,7 +2001,9 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
   char    *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_urid, *pos_geomtype, *pos_geomtype2, *pos_indexHint, *data;
   int     slength;
 
-  data = layer->data;
+  data = msStrdup(layer->data);
+  /* replace tabs with spaces */
+  msReplaceChar(data, '\t', ' ');
 
   /* given a string of the from 'geom from ctivalues' or 'geom from () as foo'
    * return geom_column_name as 'geom'
@@ -2029,6 +2034,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
     if(!slength) {
       msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable: You specified 'using SRID=#' but didnt have any numbers!<br><br>\n\nMore Help:<br><br>\n\n", data);
 
+      msFree(data);
       return MS_FAILURE;
     } else {
       *user_srid = (char *) msSmallMalloc(slength + 1);
@@ -2059,6 +2065,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
   if(!pos_scn) {
     msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldn't find ' from ').  More help: <br><br>\n\n", data);
 
+    msFree(data);
     return MS_FAILURE;
   }
 
@@ -2073,6 +2080,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
       ++pos_geomtype2;
     if (*pos_geomtype2 != ')' || pos_geomtype2 == pos_geomtype) {
       msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable.  Invalid syntax near geometry column type.", data);
+      msFree(data);
       return MS_FAILURE;
     }
 
@@ -2095,6 +2103,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
   if(strlen(*table_name) < 1 || strlen(*geom_column_name) < 1) {
     msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find a geometry_column or table/subselect).  More help: <br><br>\n\n", data);
 
+    msFree(data);
     return MS_FAILURE;
   }
 
@@ -2103,6 +2112,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
       msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "No primary key defined for table, or primary key contains more that one column\n\n",
                  *table_name);
 
+      msFree(data);
       return MS_FAILURE;
     }
   }
@@ -2111,6 +2121,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
     msDebug("msMSSQL2008LayerParseData: unique column = %s, srid='%s', geom_column_name = %s, table_name=%s\n", *urid_name, *user_srid, *geom_column_name, *table_name);
   }
 
+  msFree(data);
   return MS_SUCCESS;
 }
 

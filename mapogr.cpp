@@ -2553,21 +2553,28 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       const char *pszFontName = OGR_ST_GetParamStr(hLabelStyle,
                                 OGRSTLabelFontName,
                                 &bIsNull);
-      const char *pszName = CPLSPrintf("%s%s%s", pszFontName, pszBold, pszItalic);
+      /* replace spaces with hyphens to allow mapping to a valid hashtable entry*/
+      char* pszFontNameEscaped = NULL;
+      if (pszFontName != NULL) {
+          pszFontNameEscaped = strdup(pszFontName);
+          msReplaceChar(pszFontNameEscaped, ' ', '-');
+      }
+
+      const char *pszName = CPLSPrintf("%s%s%s", pszFontNameEscaped, pszBold, pszItalic);
       bool bFont = true;
 
-      if (pszFontName != NULL && !bIsNull && pszFontName[0] != '\0') {
+      if (pszFontNameEscaped != NULL && !bIsNull && pszFontNameEscaped[0] != '\0') {
         if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL) {
           c->labels[0]->type = MS_TRUETYPE;
           c->labels[0]->font = msStrdup(pszName);
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** Using '%s' TTF font **\n", pszName);
-        } else if ( (strcmp(pszFontName,pszName) != 0) &&
-                    msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL) {
+        } else if ( (strcmp(pszFontNameEscaped,pszName) != 0) &&
+                    msLookupHashTable(&(map->fontset.fonts), (char*)pszFontNameEscaped) != NULL) {
           c->labels[0]->type = MS_TRUETYPE;
-          c->labels[0]->font = msStrdup(pszFontName);
+          c->labels[0]->font = msStrdup(pszFontNameEscaped);
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
-            msDebug("** Using '%s' TTF font **\n", pszFontName);
+            msDebug("** Using '%s' TTF font **\n", pszFontNameEscaped);
         } else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL) {
           c->labels[0]->type = MS_TRUETYPE;
           c->labels[0]->font = msStrdup("default");
@@ -2576,6 +2583,8 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         } else
           bFont = false;
       }
+
+      msFree(pszFontNameEscaped);
 
       if (!bFont) {
         c->labels[0]->type = MS_BITMAP;
