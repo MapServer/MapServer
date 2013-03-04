@@ -2394,6 +2394,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
             group_layers[0] = lp->index;
             if (isUsedInNestedGroup[lp->index]) {
               for (j=0; j < map->numlayers; j++) {
+                if (j == lp->index)
+                    continue;
                 for(k = 0; k < numNestedGroups[j]; k++) {
                   if (strcasecmp(lp->name, nestedGroups[j][k]) == 0) {
                     group_layers[num_layers++] = j;
@@ -2619,6 +2621,7 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
                             int index, int level, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup, const char *script_url_encoded, const char *validated_language)
 {
   int i, j;
+  int groupAdded = 0;
   char *indent = NULL;
   indent = msStrdup("");
 
@@ -2644,10 +2647,12 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
       if (!pabLayerProcessed[j]) {
         msDumpLayer(map, GET_LAYER(map, j), nVersion, script_url_encoded, indent, validated_language, MS_TRUE);
         pabLayerProcessed[j] = 1; /* done */
+        groupAdded = 1;
       }
     } else {
       msIO_printf("%s    <Layer>\n", indent);
       msIO_printf("%s      <Title>%s</Title>\n", indent, nestedGroups[index][level]);
+      groupAdded = 1;
     }
 
     /* Look for one group deeper in the current layer */
@@ -2674,7 +2679,8 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
       }
     }
     /* Close group layer block */
-    msIO_printf("%s    </Layer>\n", indent);
+    if (groupAdded)
+      msIO_printf("%s    </Layer>\n", indent);
   }
 
   msFree(indent);

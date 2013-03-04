@@ -3656,6 +3656,7 @@ static void writeClass(FILE *stream, int indent, classObj *class)
   writeString(stream, indent, "TEMPLATE", NULL, class->template);
   writeExpression(stream, indent, "TEXT", &(class->text));
   writeString(stream, indent, "TITLE", NULL, class->title);
+  writeHashTable(stream, indent, "VALIDATION", &(class->validation));
   writeBlockEnd(stream, indent, "CLASS");
 }
 
