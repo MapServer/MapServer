@@ -6632,31 +6632,37 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
       for(k=0; k<layer->numclasses; k++) {
         classObj *class = GET_CLASS(map, j, k);
 
-       if(!classNeedsSubstitutions(class, tag)) continue;
+        if(!classNeedsSubstitutions(class, tag)) continue;
 
         if(layer->debug >= MS_DEBUGLEVEL_V)
           msDebug( "  runtime substitution - Layer %s, Class %s, tag %s...\n", layer->name, class->name, tag);
 
-        if (msLookupHashTable(&(class->validation), names[i]) &&
-            msValidateParameter(values[i],
-                                msLookupHashTable(&(class->validation), names[i]),
-                                msLookupHashTable(&(class->metadata), validation_pattern_key),
-                                NULL, NULL) != MS_SUCCESS) {
-          /* skip as the name exists in the class validation but does not validate */
-          continue;
-        } else if (msLookupHashTable(&(layer->validation), names[i]) &&
-                   msValidateParameter(values[i],
-                                       msLookupHashTable(&(layer->validation), names[i]),
-                                       msLookupHashTable(&(layer->metadata), validation_pattern_key),
-                                       NULL, NULL) != MS_SUCCESS) {
-          /* skip as the name exists in the layer validation but does not validate */
-          continue;
-        } else if (msLookupHashTable(&(map->web.validation), names[i]) &&
-                   msValidateParameter(values[i],
-                                       msLookupHashTable(&(map->web.validation), names[i]),
-                                       msLookupHashTable(&(map->web.metadata), validation_pattern_key),
-                                       NULL, NULL) != MS_SUCCESS) {
-          /* skip as the name exists in the web validation but does not validate */
+        if (msLookupHashTable(&(class->validation), names[i])) {
+          if (msValidateParameter(values[i],
+                                  msLookupHashTable(&(class->validation), names[i]),
+                                  msLookupHashTable(&(class->metadata), validation_pattern_key),
+                                  NULL, NULL) != MS_SUCCESS) {
+            /* skip as the name exists in the class validation but does not validate */
+            continue;
+          }
+        } else if (msLookupHashTable(&(layer->validation), names[i])) {
+          if (msValidateParameter(values[i],
+                                  msLookupHashTable(&(layer->validation), names[i]),
+                                  msLookupHashTable(&(layer->metadata), validation_pattern_key),
+                                  NULL, NULL) != MS_SUCCESS) {
+            /* skip as the name exists in the layer validation but does not validate */
+            continue;
+          }
+        } else if (msLookupHashTable(&(map->web.validation), names[i])) {
+          if (msValidateParameter(values[i],
+                                  msLookupHashTable(&(map->web.validation), names[i]),
+                                  msLookupHashTable(&(map->web.metadata), validation_pattern_key),
+                                  NULL, NULL) != MS_SUCCESS) {
+            /* skip as the name exists in the web validation but does not validate */
+            continue;
+          }
+        } else {
+          /* skip as there are no validations */
           continue;
         }
 
@@ -6669,19 +6675,24 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
       if(layer->debug >= MS_DEBUGLEVEL_V)
         msDebug( "  runtime substitution - Layer %s, tag %s...\n", layer->name, tag);
 
-      if (msLookupHashTable(&(layer->validation), names[i]) &&
-          msValidateParameter(values[i],
-                              msLookupHashTable(&(layer->validation), names[i]),
-                              msLookupHashTable(&(layer->metadata), validation_pattern_key),
-                              NULL, NULL) != MS_SUCCESS) {
-        /* skip as the name exists in the layer validation but does not validate */
-        continue;
-      } else if (msLookupHashTable(&(map->web.validation), names[i]) &&
-                 msValidateParameter(values[i],
-                                     msLookupHashTable(&(map->web.validation), names[i]),
-                                     msLookupHashTable(&(map->web.metadata), validation_pattern_key),
-                                     NULL, NULL) != MS_SUCCESS) {
-        /* skip as the name exists in the web validation but does not validate */
+      if (msLookupHashTable(&(layer->validation), names[i])) {
+        if (msValidateParameter(values[i],
+                                msLookupHashTable(&(layer->validation), names[i]),
+                                msLookupHashTable(&(layer->metadata), validation_pattern_key),
+                                NULL, NULL) != MS_SUCCESS) {
+          /* skip as the name exists in the layer validation but does not validate */
+          continue;
+        }
+      } else if (msLookupHashTable(&(map->web.validation), names[i])) {
+        if (msValidateParameter(values[i],
+                                msLookupHashTable(&(map->web.validation), names[i]),
+                                msLookupHashTable(&(map->web.metadata), validation_pattern_key),
+                                NULL, NULL) != MS_SUCCESS) {
+          /* skip as the name exists in the web validation but does not validate */
+          continue;
+        }
+      } else {
+        /* skip as there are no validations */
         continue;
       }
 
