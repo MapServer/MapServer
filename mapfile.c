@@ -6450,6 +6450,14 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
   return(MS_SUCCESS);
 }
 
+static int classNeedsSubstitutions(classObj *class, char *from) {
+  if(class->expression.string && (strcasestr(class->expression.string, from) != NULL)) return MS_TRUE;
+  if(class->text.string && (strcasestr(class->text.string, from) != NULL)) return MS_TRUE;
+  if(class->title && (strcasestr(class->title, from) != NULL)) return MS_TRUE;
+
+  return MS_FALSE;
+}
+
 static int layerNeedsSubstitutions(layerObj *layer, char *from)
 {
   int i;
@@ -6459,32 +6467,25 @@ static int layerNeedsSubstitutions(layerObj *layer, char *from)
   if(layer->connection && (strcasestr(layer->connection, from) != NULL)) return MS_TRUE;
   if(layer->filter.string && (strcasestr(layer->filter.string, from) != NULL)) return MS_TRUE;
 
-  for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i]->expression.string && (strcasestr(layer->class[i]->expression.string, from) != NULL)) return MS_TRUE;
-    if(layer->class[i]->text.string && (strcasestr(layer->class[i]->text.string, from) != NULL)) return MS_TRUE;
-    if(layer->class[i]->title && (strcasestr(layer->class[i]->title, from) != NULL)) return MS_TRUE;
-  }
-
   if(!msHashIsEmpty(&layer->bindvals)) return MS_TRUE;
 
   return MS_FALSE;
 }
 
+static void classSubstituteString(classObj *class, char *from, char *to) {
+  if(class->expression.string) class->expression.string = msCaseReplaceSubstring(class->expression.string, from, to);
+  if(class->text.string) class->text.string = msCaseReplaceSubstring(class->text.string, from, to);
+  if(class->title) class->title = msCaseReplaceSubstring(class->title, from, to);
+}
+
 static void layerSubstituteString(layerObj *layer, char *from, char *to)
 {
-  int i;
   char *bindvals_key, *bindvals_val;
 
   if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, from, to);
   if(layer->tileindex) layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
   if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
   if(layer->filter.string) layer->filter.string = msCaseReplaceSubstring(layer->filter.string, from, to);
-
-  for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i]->expression.string) layer->class[i]->expression.string = msCaseReplaceSubstring(layer->class[i]->expression.string, from, to);
-    if(layer->class[i]->text.string) layer->class[i]->text.string = msCaseReplaceSubstring(layer->class[i]->text.string, from, to);
-    if(layer->class[i]->title) layer->class[i]->title = msCaseReplaceSubstring(layer->class[i]->title, from, to);
-  }
 
   /* The bindvalues are most useful when able to substitute values from the URL */
   bindvals_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
@@ -6524,7 +6525,7 @@ static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const
   return;
 }
 
-static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
+static void applyClassDefaultSubstitutions(classObj *class, hashTableObj *table)
 {
   const char *default_key = msFirstKeyFromHashTable(table);
   while(default_key) {
@@ -6533,7 +6534,30 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
       char *tag = (char *)msSmallMalloc(buffer_size);
       snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
-      layerSubstituteString(layer, tag, msLookupHashTable(table, default_key));
+
+      classSubstituteString(class, tag, msLookupHashTable(table, default_key));
+      free(tag);
+    }
+    default_key = msNextKeyFromHashTable(table, default_key);
+  }
+  return;
+}
+
+static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
+{
+  int i;
+  const char *default_key = msFirstKeyFromHashTable(table);
+  while(default_key) {
+    if(!strncmp(default_key,"default_",8)) {
+      size_t buffer_size = (strlen(default_key)-5);
+      char *to = msLookupHashTable(table, default_key);
+      char *tag = (char *)msSmallMalloc(buffer_size);
+      snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
+
+      for(i=0; i<layer->numclasses; i++) {
+        classSubstituteString(layer->class[i], tag, to);
+      }
+      layerSubstituteString(layer, tag, to);
       free(tag);
     }
     default_key = msNextKeyFromHashTable(table, default_key);
@@ -6547,7 +6571,7 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
 */
 void msApplyDefaultSubstitutions(mapObj *map)
 {
-  int i;
+  int i,j;
 
   /* output formats (#3751) */
   for(i=0; i<map->numoutputformats; i++) {
@@ -6557,16 +6581,23 @@ void msApplyDefaultSubstitutions(mapObj *map)
 
   for(i=0; i<map->numlayers; i++) {
     layerObj *layer = GET_LAYER(map, i);
-    applyLayerDefaultSubstitutions(layer, &(layer->validation)); /* layer settings take precedence */
+
+    for(j=0; j<layer->numclasses; j++) {    /* class settings take precedence...  */
+      classObj *class = GET_CLASS(map, i, j);
+      applyClassDefaultSubstitutions(class, &(class->validation));
+      applyClassDefaultSubstitutions(class, &(class->metadata));
+    }
+
+    applyLayerDefaultSubstitutions(layer, &(layer->validation)); /* ...then layer settings... */
     applyLayerDefaultSubstitutions(layer, &(layer->metadata));
-    applyLayerDefaultSubstitutions(layer, &(map->web.validation));
+    applyLayerDefaultSubstitutions(layer, &(map->web.validation)); /* ...and finally web settings */
     applyLayerDefaultSubstitutions(layer, &(map->web.metadata));
   }
 }
 
 void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
 {
-  int i,j;
+  int i,j,k;
 
   char *tag=NULL;
   char *validation_pattern_key=NULL;
@@ -6577,7 +6608,7 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
     tag = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 3);
     sprintf(tag, "%%%s%%", names[i]);
 
-    /* validation pattern key - depricated */
+    /* validation pattern key - deprecated */
     validation_pattern_key = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 20);
     sprintf(validation_pattern_key,"%s_validation_pattern", names[i]);
 
@@ -6597,15 +6628,65 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
     for(j=0; j<map->numlayers; j++) {
       layerObj *layer = GET_LAYER(map, j);
 
+      /* perform class level substitutions (#4596) */
+      for(k=0; k<layer->numclasses; k++) {
+        classObj *class = GET_CLASS(map, j, k);
+
+       if(!classNeedsSubstitutions(class, tag)) continue;
+
+        if(layer->debug >= MS_DEBUGLEVEL_V)
+          msDebug( "  runtime substitution - Layer %s, Class %s, tag %s...\n", layer->name, class->name, tag);
+
+        if (msLookupHashTable(&(class->validation), names[i]) &&
+            msValidateParameter(values[i],
+                                msLookupHashTable(&(class->validation), names[i]),
+                                msLookupHashTable(&(class->metadata), validation_pattern_key),
+                                NULL, NULL) != MS_SUCCESS) {
+          /* skip as the name exists in the class validation but does not validate */
+          continue;
+        } else if (msLookupHashTable(&(layer->validation), names[i]) &&
+                   msValidateParameter(values[i],
+                                       msLookupHashTable(&(layer->validation), names[i]),
+                                       msLookupHashTable(&(layer->metadata), validation_pattern_key),
+                                       NULL, NULL) != MS_SUCCESS) {
+          /* skip as the name exists in the layer validation but does not validate */
+          continue;
+        } else if (msLookupHashTable(&(map->web.validation), names[i]) &&
+                   msValidateParameter(values[i],
+                                       msLookupHashTable(&(map->web.validation), names[i]),
+                                       msLookupHashTable(&(map->web.metadata), validation_pattern_key),
+                                       NULL, NULL) != MS_SUCCESS) {
+          /* skip as the name exists in the web validation but does not validate */
+          continue;
+        }
+
+        /* validation has succeeded in either class, layer or web */
+        classSubstituteString(class, tag, values[i]);
+      }
+
       if(!layerNeedsSubstitutions(layer, tag)) continue;
 
       if(layer->debug >= MS_DEBUGLEVEL_V)
         msDebug( "  runtime substitution - Layer %s, tag %s...\n", layer->name, tag);
 
-      if(msValidateParameter(values[i], msLookupHashTable(&(layer->validation), names[i]),  msLookupHashTable(&(map->web.validation), names[i]),
-                             msLookupHashTable(&(layer->metadata), validation_pattern_key), msLookupHashTable(&(map->web.metadata), validation_pattern_key)) == MS_SUCCESS) {
-        layerSubstituteString(layer, tag, values[i]);
+      if (msLookupHashTable(&(layer->validation), names[i]) &&
+          msValidateParameter(values[i],
+                              msLookupHashTable(&(layer->validation), names[i]),
+                              msLookupHashTable(&(layer->metadata), validation_pattern_key),
+                              NULL, NULL) != MS_SUCCESS) {
+        /* skip as the name exists in the layer validation but does not validate */
+        continue;
+      } else if (msLookupHashTable(&(map->web.validation), names[i]) &&
+                 msValidateParameter(values[i],
+                                     msLookupHashTable(&(map->web.validation), names[i]),
+                                     msLookupHashTable(&(map->web.metadata), validation_pattern_key),
+                                     NULL, NULL) != MS_SUCCESS) {
+        /* skip as the name exists in the web validation but does not validate */
+        continue;
       }
+
+      /* validation has succeeded in either layer or web */
+      layerSubstituteString(layer, tag, values[i]);
     }
 
     msFree(tag);
