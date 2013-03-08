@@ -352,7 +352,7 @@ logical_exp:
 					   bufferp=delim+1;
 					 }
 
-					 if(strcmp($1,bufferp) == 0) // is this test necessary?
+					 if($$==MS_FALSE && strcmp($1,bufferp) == 0) // test for last (or only) item
 					   $$ = MS_TRUE;
 					 free($1);
 					 free($3);

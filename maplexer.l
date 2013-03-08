@@ -586,6 +586,15 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_EXPRESSION);
                                                }
 
+<INITIAL,URL_STRING>\{.*\}                     {
+                                                 msyytext++;
+                                                 msyytext[strlen(msyytext)-1] = '\0';
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                 strcpy(msyystring_buffer, msyytext);
+                                                 return(MS_LIST);
+                                               }
+
 <INITIAL,URL_STRING>\'|\"                     {
                                                  msyystring_return_state = MS_STRING;
                                                  msyystring_begin = msyytext[0]; 

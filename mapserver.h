@@ -286,6 +286,7 @@ extern "C" {
 #define MS_IREGEX 2005
 #define MS_ISTRING 2006
 #define MS_BINDING 2007
+#define MS_LIST 2008
 
   /* string split flags */
 #define MS_HONOURSTRINGS      0x0001

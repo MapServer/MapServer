@@ -2282,7 +2282,7 @@ int loadExpression(expressionObj *exp)
   /* TODO: should we fall freeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */
 
   msyystring_icase = MS_TRUE;
-  if((exp->type = getSymbol(5, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX)) == -1) return(-1);
+  if((exp->type = getSymbol(6, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX,MS_LIST)) == -1) return(-1);
   if (exp->string != NULL)
     msFree(exp->string);
   exp->string = msStrdup(msyystring_buffer);
@@ -2330,7 +2330,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); /* we're totally replacing the old expression so free (which re-inits) to start over */
 
   msyystring_icase = MS_TRUE;
-  if((exp->type = getSymbol2(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
+  if((exp->type = getSymbol2(5, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING,MS_LIST)) != -1) {
     exp->string = msStrdup(msyystring_buffer);
 
     if(exp->type == MS_ISTRING) {
@@ -2383,6 +2383,9 @@ char *msGetExpressionString(expressionObj *exp)
       case(MS_EXPRESSION):
         snprintf(exprstring, buffer_size, "(%s)", exp->string);
         return exprstring;
+      case(MS_LIST):
+        snprintf(exprstring, buffer_size, "{%s}", exp->string);
+        return exprstring;
       default:
         /* We should never get to here really! */
         free(exprstring);
@@ -2399,6 +2402,9 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
 
   writeIndent(stream, ++indent);
   switch(exp->type) {
+    case(MS_LIST):
+      fprintf(stream, "%s {%s}", name, exp->string);
+      break;
     case(MS_REGEX):
       msIO_fprintf(stream, "%s /%s/", name, exp->string);
       break;

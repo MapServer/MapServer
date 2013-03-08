@@ -466,6 +466,25 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
         if(strcmp(expression->string, shape->values[itemindex]) == 0) return MS_TRUE; /* got a match */
       }
       break;
+    case(MS_LIST):
+      if(itemindex == -1) {
+        msSetError(MS_MISCERR, "Cannot evaluate expression, no item index defined.", "msEvalExpression()");
+        return MS_FALSE;
+      }
+      if(itemindex >= layer->numitems || itemindex >= shape->numvalues) {
+        msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
+        return MS_FALSE;
+      }
+      {
+        char *start,*end;
+        start = expression->string;
+        while((end = strchr(start,',')) != NULL) {
+          if(!strncmp(start,shape->values[itemindex],end-start)) return MS_TRUE;
+          start = end+1;
+        }
+        if(!strcmp(start,shape->values[itemindex])) return MS_TRUE;
+      }
+      break;
     case(MS_EXPRESSION): {
       int status;
       parseObj p;
