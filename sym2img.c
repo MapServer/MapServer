@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Unable to open output file: %s\n", argv[2]);
     exit(1);
   }
-#ifndef USE_GD_1_6
+#ifndef USE_GD_GIF
   gdImageGif(img, stream);
 #else
   gdImagePng(img, stream);

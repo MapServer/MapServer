@@ -12,9 +12,9 @@
 #include "apr_tables.h"
 #include "apr_file_info.h"
 
-#include "mapserver.h"  /* for mapObj */
-#include "cgiutil.h"
-#include "mapserv.h"
+#include "../mapserver.h"  /* for mapObj */
+#include "../cgiutil.h"
+#include "../mapserv.h"
 
 module AP_MODULE_DECLARE_DATA mapserver_module;
 

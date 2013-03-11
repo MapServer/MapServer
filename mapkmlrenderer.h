@@ -31,6 +31,7 @@
 #ifndef MAPKMLRENDERER_H
 #define MAPKMLRENDERER_H
 
+#include "mapserver-config.h"
 #if defined(USE_KML)
 
 #include "mapserver.h"

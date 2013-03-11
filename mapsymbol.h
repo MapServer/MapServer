@@ -34,6 +34,7 @@
 #include <gd.h>
 #endif
 
+#include "mapserver-api.h"
 #include <assert.h>
 
 enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_HATCH, MS_SYMBOL_SVG};
@@ -154,7 +155,7 @@ struct imageCacheObj {
 #endif /* SWIG */
 
 
-typedef struct {
+struct symbolObj{
   char *name;
   int type;
   int inmapfile; /* boolean value for writing */
@@ -218,6 +219,6 @@ typedef struct {
 
   char* svg_text;
 
-} symbolObj;
+} ;
 
 #endif /* MAPSYMBOL_H */

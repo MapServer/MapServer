@@ -29,23 +29,15 @@
 #ifndef MAP_H
 #define MAP_H
 
-/*
-** MapServer version - to be updated for every release
-*/
-#define MS_VERSION "6.3-dev"
+#include "mapserver-config.h"
 
-#define MS_VERSION_MAJOR    6
-#define MS_VERSION_MINOR    3
-#define MS_VERSION_REV      0
-
-#define MS_VERSION_NUM (MS_VERSION_MAJOR*10000+MS_VERSION_MINOR*100+MS_VERSION_REV)
 
 
 /*
 ** Main includes. If a particular header was needed by several .c files then
 ** I just put it here. What the hell, it works and it's all right here. -SDL-
 */
-#if !defined(NEED_STRCASESTR) && !defined(_GNU_SOURCE)
+#if defined(HAVE_STRCASESTR) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE /* Required for <string.h> strcasestr() defn */
 #endif
 
@@ -104,6 +96,8 @@ typedef uint32_t        ms_uint32;
 #define vsnprintf _vsnprintf
 #endif
 
+#include "mapserver-api.h"
+
 /*forward declaration of rendering object*/
 typedef struct rendererVTableObj rendererVTableObj;
 typedef struct tileCacheObj tileCacheObj;
@@ -125,10 +119,6 @@ typedef ms_uint32 *     ms_bitarray;
 
 #ifdef USE_GD
 #include <gd.h>
-#endif
-
-#if defined USE_PDF
-#include <pdflib.h>
 #endif
 
 
@@ -326,7 +316,7 @@ extern "C" {
      conversion to nearest int.  We avoid lrint() for now because it
      would be hard to include math.h "properly". */
 
-#if defined(WE_HAVE_THE_C99_LRINT) && !defined(USE_GENERIC_MS_NINT)
+#if defined(HAVE_LRINT) && !defined(USE_GENERIC_MS_NINT)
 #   define MS_NINT(x) lrint(x)
   /*#   define MS_NINT(x) lround(x) */
 #elif defined(_MSC_VER) && defined(_WIN32) && !defined(USE_GENERIC_MS_NINT)
@@ -884,7 +874,7 @@ extern "C" {
   /*      applied within a classObj                                       */
   /************************************************************************/
 
-  typedef struct {
+  struct styleObj{
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
@@ -948,7 +938,7 @@ extern "C" {
     attributeBindingObj bindings[MS_STYLE_BINDING_LENGTH];
     int numbindings;
 #endif
-  } styleObj;
+  };
 
 
 
@@ -984,7 +974,7 @@ extern "C" {
   /*      parameters needed to annotate a layer, legend or scalebar       */
   /************************************************************************/
 
-  typedef struct {
+  struct labelObj{
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
@@ -1061,15 +1051,15 @@ extern "C" {
     shapeObj *annopoly;
 
     labelLeaderObj leader;
-  } labelObj;
+  };
 
   /************************************************************************/
   /*                               classObj                               */
   /*                                                                      */
   /*      basic symbolization and classification information              */
   /************************************************************************/
-
-  typedef struct classObj {
+  
+  struct classObj {
 #ifndef SWIG
     expressionObj expression; /* the expression to be matched */
 #endif
@@ -1135,7 +1125,7 @@ extern "C" {
 
     char *group;
     labelLeaderObj leader;
-  } classObj;
+  };
 
   /************************************************************************/
   /*                         labelCacheMemberObj                          */
@@ -1414,7 +1404,7 @@ extern "C" {
   /*                                                                      */
   /*      A wrapper for GD and other images.                              */
   /************************************************************************/
-  typedef struct {
+  struct imageObj{
 #ifdef SWIG
     %immutable;
 #endif
@@ -1448,7 +1438,7 @@ extern "C" {
     ms_bitarray  img_mask;
     pointObj refpt;
 #endif
-  } imageObj;
+  };
 
   /************************************************************************/
   /*                               layerObj                               */
@@ -1468,7 +1458,7 @@ extern "C" {
      scaleTokenEntryObj *tokens;
   } scaleTokenObj;
   
-  typedef struct layerObj {
+  struct layerObj {
 
     char *classitem; /* .DBF item to be used for symbol lookup */
 
@@ -1647,7 +1637,7 @@ extern "C" {
 #ifndef SWIG    
     expressionObj _geomtransform;
 #endif    
-  } layerObj;
+  };
 
   /************************************************************************/
   /*                                mapObj                                */
@@ -1657,7 +1647,7 @@ extern "C" {
   /************************************************************************/
 
   /* MAP OBJECT -  */
-  typedef struct mapObj { /* structure for a map */
+  struct mapObj { /* structure for a map */
     char *name; /* small identifier for naming etc. */
     int status; /* is map creation on or off */
     int height, width;
@@ -1763,7 +1753,7 @@ extern "C" {
 
     queryObj query;
 #endif
-  } mapObj;
+  };
 
   /************************************************************************/
   /*                             layerVTable                              */
@@ -2059,31 +2049,31 @@ extern "C" {
   MS_DLL_EXPORT char* msStringEscape( const char * pszString );
   MS_DLL_EXPORT int msStringInArray( const char * pszString, char **array, int numelements);
 
-#ifdef NEED_STRDUP
+#ifndef HAVE_STRDUP
   MS_DLL_EXPORT char *strdup(char *s);
 #endif /* NEED_STRDUP */
 
-#ifdef NEED_STRRSTR
+#ifndef HAVE_STRRSTR
   MS_DLL_EXPORT char *strrstr(char *string, char *find);
 #endif /* NEED_STRRSTR */
 
-#ifdef NEED_STRCASESTR
+#ifndef HAVE_STRCASESTR
   MS_DLL_EXPORT char *strcasestr(const char *s, const char *find);
 #endif /* NEED_STRCASESTR */
 
-#ifdef NEED_STRNCASECMP
+#ifndef HAVE_STRNCASECMP
   MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, int len);
 #endif /* NEED_STRNCASECMP */
 
-#ifdef NEED_STRCASECMP
+#ifndef HAVE_STRCASECMP
   MS_DLL_EXPORT int strcasecmp(const char *s1, const char *s2);
 #endif /* NEED_STRCASECMP */
 
-#ifdef NEED_STRLCAT
+#ifndef HAVE_STRLCAT
   MS_DLL_EXPORT size_t strlcat(char *dst, const char *src, size_t siz);
 #endif /* NEED_STRLCAT */
 
-#ifdef NEED_STRLCPY
+#ifndef HAVE_STRLCPY
   MS_DLL_EXPORT size_t strlcpy(char *dst, const char *src, size_t siz);
 #endif /* NEED_STRLCAT */
 
@@ -2933,7 +2923,7 @@ extern "C" {
 #define MS_MAP_RENDERER(map) ((map)->outputformat->vtable)
 
 shapeObj *msOffsetCurve(shapeObj *p, double offset);
-#if defined HAVE_GEOS_OFFSET_CURVE
+#if defined USE_GEOS && (GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 3))
 shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
 #endif
 

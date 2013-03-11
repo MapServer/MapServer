@@ -1,0 +1,11 @@
+#ifndef _MAPSERVER_VERSION_H
+#define _MAPSERVER_VERSION_H
+
+#define MS_VERSION_MAJOR @MapServer_VERSION_MAJOR@
+#define MS_VERSION_MINOR @MapServer_VERSION_MINOR@
+#define MS_VERSION_REV @MapServer_VERSION_REVISION@
+#define MS_VERSION "@MapServer_VERSION_STRING@"
+#define MS_VERSION_NUM  @MapServer_VERSION_NUM@ 
+
+#endif
+

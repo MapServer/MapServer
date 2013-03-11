@@ -1308,7 +1308,7 @@ int
 msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                  int iLayerIndex)
 {
-#if USE_OGR
+#ifdef USE_OGR
   return FLTLayerApplyCondSQLFilterToLayer(psNode, map, iLayerIndex);
 
 #else
@@ -1330,7 +1330,7 @@ int
 msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                int iLayerIndex)
 {
-#if USE_OGR
+#ifdef USE_OGR
   return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
 #else
   return MS_FAILURE;

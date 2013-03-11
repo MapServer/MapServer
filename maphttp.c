@@ -30,6 +30,7 @@
  * This should be changed to a test on the presence of libcurl which
  * is really what the real dependency is.
  */
+#include "mapserver-config.h"
 #if defined(USE_CURL)
 
 #include "mapserver.h"
@@ -458,7 +459,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
           && strlen(pasReqInfo[i].pszProxyUsername) > 0
           && strlen(pasReqInfo[i].pszProxyPassword) > 0) {
         char    szUsernamePasswd[128];
-#ifdef USE_CURLOPT_PROXYAUTH
+#if LIBCURL_VERSION_NUM >= 0x070a07
         long    nProxyAuthType = CURLAUTH_BASIC;
         /* CURLOPT_PROXYAUTH available only in Curl 7.10.7 and up */
         nProxyAuthType = msGetCURLAuthType(pasReqInfo[i].eProxyAuthType);
@@ -467,7 +468,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         /* We log an error but don't abort processing */
         msSetError(MS_HTTPERR, "CURLOPT_PROXYAUTH not supported. Requires Curl 7.10.7 and up. *_proxy_auth_type setting ignored.",
                    "msHTTPExecuteRequests()");
-#endif /* CURLOPT_PROXYAUTH */
+#endif /* LIBCURL_VERSION_NUM */
 
         snprintf(szUsernamePasswd, 127, "%s:%s",
                  pasReqInfo[i].pszProxyUsername,

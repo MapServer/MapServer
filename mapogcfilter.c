@@ -28,6 +28,7 @@
 
 
 #define _GNU_SOURCE
+#include "mapserver-config.h"
 
 #ifdef USE_OGR
 #include "cpl_minixml.h"

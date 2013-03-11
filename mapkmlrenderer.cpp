@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "mapserver-config.h"
 #ifdef USE_KML
 
 #include "mapserver.h"

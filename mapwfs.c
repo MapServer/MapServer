@@ -3352,7 +3352,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
 
       }/* end of DescibeFeatureType */
     }
-#endif /*USE_LIBXML2_WFS*/
+#endif /*WFS_USE_LIBXML2*/
 
   }
 #endif

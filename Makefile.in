@@ -6,6 +6,7 @@ prefix		=	@prefix@
 exec_prefix	=	@exec_prefix@
 libdir	=	@libdir@
 bindir	=	@bindir@
+includedir	=	@includedir@
 srcdir	=	@srcdir@
 top_builddir = @top_builddir@
 SHELL = @SHELL@
@@ -290,7 +291,7 @@ OBJS= $(AGG_OBJ) mapgeomutil.$(OBJ_SUFFIX) mapdummyrenderer.$(OBJ_SUFFIX) mapogl
 				mapregex.$(OBJ_SUFFIX) mappluginlayer.$(OBJ_SUFFIX) mapogcsos.$(OBJ_SUFFIX) mappostgresql.$(OBJ_SUFFIX) mapcrypto.$(OBJ_SUFFIX) mapowscommon.$(OBJ_SUFFIX) \
 				maplibxml2.$(OBJ_SUFFIX) mapdebug.$(OBJ_SUFFIX) mapchart.$(OBJ_SUFFIX) maptclutf.$(OBJ_SUFFIX) mapxml.$(OBJ_SUFFIX) mapkml.$(OBJ_SUFFIX) mapkmlrenderer.$(OBJ_SUFFIX) \
 				mapogroutput.$(OBJ_SUFFIX) mapwcs20.$(OBJ_SUFFIX)  mapogcfiltercommon.$(OBJ_SUFFIX) mapunion.$(OBJ_SUFFIX) mapcluster.$(OBJ_SUFFIX) mapxmp.$(OBJ_SUFFIX) \
-				mapuvraster.$(OBJ_SUFFIX) mapcontour.$(OBJ_SUFFIX) mapservutil.$(OBJ_SUFFIX) maptile.$(OBJ_SUFFIX)
+				mapuvraster.$(OBJ_SUFFIX) mapcontour.$(OBJ_SUFFIX) mapservutil.$(OBJ_SUFFIX) maptile.$(OBJ_SUFFIX) mapserver-api.$(OBJ_SUFFIX)
 
 HEADERS=	cgiutil.h mapgml.h mapoglcontext.h mapregex.h\
 			maptile.h dxfcolor.h maphash.h mapoglrenderer.h mapresample.h\
@@ -448,7 +449,7 @@ python_mapscript_clean:
 python_mapscript_install:
 	test -z "$(PYTHON_MAPSCRIPT)" || (cd mapscript/python; $(MAKE) install DESTDIR=$(DESTDIR);)
 
-install: install-lib install-bin install-cgibin php_mapscript_install python_mapscript_install
+install: install-headers install-lib install-bin install-cgibin php_mapscript_install python_mapscript_install
 
 install-cgibin: install-lib mapserv
 	$(LTINSTALL) $(INSTALL) mapserv $(DESTDIR)$(bindir)/mapserv
@@ -461,7 +462,7 @@ install-cgibin: install-lib mapserv
 	@echo ""
 
 install-dirs:
-	$(INSTALL) -d $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)
+	$(INSTALL) -d $(DESTDIR)$(bindir) $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)
 
 install-bin: install-dirs install-lib $(EXE_LIST)
 	@list='$(EXE_LIST)'; for p in $$list; do \
@@ -470,6 +471,9 @@ install-bin: install-dirs install-lib $(EXE_LIST)
 	  else :; fi; \
 	done
 
+install-headers: install-dirs mapserver-api.h
+	$(INSTALL) mapserver-api.h $(DESTDIR)$(includedir)/mapserver-api.h; \
+        
 install-lib: install-dirs $(LIBMAP)
 	$(LTINSTALL) $(INSTALL) $(LIBMAP) $(DESTDIR)$(libdir)/$(LIBMAP); \
 

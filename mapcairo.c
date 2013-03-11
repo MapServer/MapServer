@@ -1270,7 +1270,7 @@ int msPopulateRendererVTableCairoRaster( rendererVTableObj *renderer )
 #endif
 }
 
-inline int populateRendererVTableCairoVector( rendererVTableObj *renderer )
+int populateRendererVTableCairoVector( rendererVTableObj *renderer )
 {
 #ifdef USE_CAIRO
   renderer->use_imagecache=0;

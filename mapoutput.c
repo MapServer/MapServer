@@ -1057,18 +1057,26 @@ int msInitializeRendererVTable(outputFormatObj *format)
     case MS_RENDER_WITH_GD:
       return msPopulateRendererVTableGD(format->vtable);
 #endif
+#ifdef USE_CAIRO
     case MS_RENDER_WITH_CAIRO_RASTER:
       return msPopulateRendererVTableCairoRaster(format->vtable);
     case MS_RENDER_WITH_CAIRO_PDF:
       return msPopulateRendererVTableCairoPDF(format->vtable);
     case MS_RENDER_WITH_CAIRO_SVG:
       return msPopulateRendererVTableCairoSVG(format->vtable);
+#endif
+#ifdef USE_OGL
     case MS_RENDER_WITH_OGL:
       return msPopulateRendererVTableOGL(format->vtable);
+#endif
+#ifdef USE_KML
     case MS_RENDER_WITH_KML:
       return msPopulateRendererVTableKML(format->vtable);
+#endif
+#ifdef USE_OGR
     case MS_RENDER_WITH_OGR:
       return msPopulateRendererVTableOGR(format->vtable);
+#endif
     default:
       msSetError(MS_MISCERR, "unsupported RendererVtable renderer %d",
                  "msInitializeRendererVTable()",format->renderer);

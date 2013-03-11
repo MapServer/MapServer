@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "mapserver-config.h"
 #if defined(USE_WCS_SVR)
 
 #include <assert.h>

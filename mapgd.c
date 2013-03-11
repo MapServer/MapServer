@@ -26,9 +26,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
-#include "mapserver.h"
+#include "mapserver-config.h"
 #ifdef USE_GD
 
+#include "mapserver.h"
 #include "mapthread.h"
 #include <time.h>
 #include <gdfonts.h>
@@ -44,20 +45,24 @@
 
 int msGDSetup()
 {
+#ifdef USE_GD_FREETYPE
   if (gdFontCacheSetup() != 0) {
     return MS_FAILURE;
   }
+#endif
   return MS_SUCCESS;
 }
 
 void msGDCleanup(int signal)
 {
+#ifdef USE_GD_FREETYPE
   if(!signal) {
     /* there's a potential deadlock if we're killed by a signal and the font
      cache is already locked. We don't tear down the fontcache in this case
      to avoid it (issue 4093)*/
     gdFontCacheShutdown();
   }
+#endif
 }
 
 #define MS_IMAGE_GET_GDIMAGEPTR(image) ((gdImagePtr) image->img.plugin)
@@ -436,6 +441,7 @@ int renderGlyphsLineGD(imageObj *img, labelPathObj *labelpath, labelStyleObj *st
 
 int renderGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char *text)
 {
+#ifdef USE_GD_FREETYPE
   gdImagePtr ip;
   char *error=NULL;
   int bbox[8];
@@ -479,6 +485,10 @@ int renderGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char
   if(style->color)
     gdImageStringFT(ip, bbox, c, style->fonts[0], style->size, style->rotation, x, y, text);
   return MS_SUCCESS;
+#else
+  msSetError(MS_TTFERR, "Freetype support not enabled in this GD build", "renderGlyphsGD()");
+  return MS_FAILURE;
+#endif
 }
 
 int renderEllipseSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style)
@@ -696,6 +706,7 @@ int renderVectorSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, s
 
 int renderTruetypeSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *s)
 {
+#ifdef USE_GD_FREETYPE
   int bbox[8];
   char *error;
   int c,oc = 0;
@@ -721,7 +732,7 @@ int renderTruetypeSymbolGD(imageObj *img, double x, double y, symbolObj *symbol,
   if( s->outlinecolor ) {
     error = gdImageStringFT(ip, bbox, oc, symbol->full_font_path, s->scale, s->rotation, x, y-1, symbol->character);
     if(error) {
-      msSetError(MS_TTFERR, error, "msDrawMarkerSymbolGD()");
+      msSetError(MS_TTFERR, error, "renderTruetypeSymbolGD()");
       return MS_FAILURE;
     }
 
@@ -736,6 +747,10 @@ int renderTruetypeSymbolGD(imageObj *img, double x, double y, symbolObj *symbol,
   if(s->color)
     gdImageStringFT(ip, bbox, c, symbol->full_font_path, s->scale, s->rotation, x, y, symbol->character);
   return MS_SUCCESS;
+#else
+  msSetError(MS_TTFERR, "Freetype support not enabled in this GD build", "renderTruetypeSymbolGD()");
+  return MS_FAILURE;
+#endif
 }
 
 gdImagePtr rotatePixmapGD(gdImagePtr img, double angle_rad)
@@ -898,6 +913,7 @@ int mergeRasterBufferGD(imageObj *dest, rasterBufferObj *overlay, double opacity
 
 int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances, int bAdjustBaseline)
 {
+#ifdef USE_GD_FREETYPE
   int bbox[8];
   char *error;
   if(advances) {
@@ -934,7 +950,7 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfont
   } else {
     error = gdImageStringFT(NULL, bbox, 0, fonts[0], size, 0, 0, 0, string);
     if(error) {
-      msSetError(MS_TTFERR, error, "msGetTruetypeTextBBox()");
+      msSetError(MS_TTFERR, error, "msGetTruetypeTextBBoxGD()");
       return(MS_FAILURE);
     }
 
@@ -944,6 +960,10 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfont
     rect->maxy = bbox[1];
     return MS_SUCCESS;
   }
+#else
+  msSetError(MS_TTFERR, "Freetype support not enabled in this GD build", "getTruetypeTextBBoxGD()");
+  return MS_FAILURE;
+#endif
 }
 
 int renderBitmapGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char *text)
@@ -1003,11 +1023,9 @@ int freeSymbolGD(symbolObj *s)
 {
   return MS_SUCCESS;
 }
-#endif
 
 int msPopulateRendererVTableGD( rendererVTableObj *renderer )
 {
-#ifdef USE_GD
   int i;
   renderer->use_imagecache=0;
   renderer->supports_pixel_buffer=1;
@@ -1047,9 +1065,6 @@ int msPopulateRendererVTableGD( rendererVTableObj *renderer )
   renderer->renderPolygonTiled = &renderPolygonTiledGD;
   renderer->freeSymbol = &freeSymbolGD;
   return MS_SUCCESS;
-#else
-  msSetError(MS_MISCERR,"GD renderer requested but it is not configured in this build","msPopulateRendererVtableGD()");
-  return MS_FAILURE;
-#endif
 }
 
+#endif

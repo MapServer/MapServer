@@ -515,9 +515,6 @@ char *msGetVersion()
 #if (defined USE_GD_JPEG || defined USE_JPEG)
   strcat(version, " OUTPUT=JPEG");
 #endif
-#ifdef USE_PDF
-  strcat(version, " OUTPUT=PDF");
-#endif
 #ifdef USE_KML
   strcat(version, " OUTPUT=KML");
 #endif
@@ -576,12 +573,6 @@ char *msGetVersion()
 #endif
 #ifdef USE_POINT_Z_M
   strcat(version, " SUPPORTS=POINT_Z_M");
-#endif
-#ifdef USE_TIFF
-  strcat(version, " INPUT=TIFF");
-#endif
-#ifdef USE_EPPL
-  strcat(version, " INPUT=EPPL7");
 #endif
 #ifdef USE_JPEG
   strcat(version, " INPUT=JPEG");
