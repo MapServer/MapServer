@@ -6653,16 +6653,11 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
             /* skip as the name exists in the layer validation but does not validate */
             continue;
           }
-        } else if (msLookupHashTable(&(map->web.validation), names[i])) {
-          if (msValidateParameter(values[i],
-                                  msLookupHashTable(&(map->web.validation), names[i]),
-                                  msLookupHashTable(&(map->web.metadata), validation_pattern_key),
-                                  NULL, NULL) != MS_SUCCESS) {
-            /* skip as the name exists in the web validation but does not validate */
-            continue;
-          }
-        } else {
-          /* skip as there are no validations */
+        } else if (msValidateParameter(values[i],
+                                       msLookupHashTable(&(map->web.validation), names[i]),
+                                       msLookupHashTable(&(map->web.metadata), validation_pattern_key),
+                                       NULL, NULL) != MS_SUCCESS) {
+          /* skip as the web validation fails */
           continue;
         }
 
@@ -6684,16 +6679,11 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
           /* skip as the name exists in the layer validation but does not validate */
           continue;
         }
-      } else if (msLookupHashTable(&(map->web.validation), names[i])) {
-        if (msValidateParameter(values[i],
-                                msLookupHashTable(&(map->web.validation), names[i]),
-                                msLookupHashTable(&(map->web.metadata), validation_pattern_key),
-                                NULL, NULL) != MS_SUCCESS) {
-          /* skip as the name exists in the web validation but does not validate */
-          continue;
-        }
-      } else {
-        /* skip as there are no validations */
+      } else if (msValidateParameter(values[i],
+                                     msLookupHashTable(&(map->web.validation), names[i]),
+                                     msLookupHashTable(&(map->web.metadata), validation_pattern_key),
+                                     NULL, NULL) != MS_SUCCESS) {
+        /* skip as the web validation fails */
         continue;
       }
 
