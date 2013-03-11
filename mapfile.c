@@ -6460,8 +6460,6 @@ static int classNeedsSubstitutions(classObj *class, char *from) {
 
 static int layerNeedsSubstitutions(layerObj *layer, char *from)
 {
-  int i;
-
   if(layer->data && (strcasestr(layer->data, from) != NULL)) return MS_TRUE;
   if(layer->tileindex && (strcasestr(layer->tileindex, from) != NULL)) return MS_TRUE;
   if(layer->connection && (strcasestr(layer->connection, from) != NULL)) return MS_TRUE;
@@ -6637,7 +6635,8 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
         if(layer->debug >= MS_DEBUGLEVEL_V)
           msDebug( "  runtime substitution - Layer %s, Class %s, tag %s...\n", layer->name, class->name, tag);
 
-        if (msLookupHashTable(&(class->validation), names[i])) {
+        if (msLookupHashTable(&(class->validation), names[i]) ||
+            msLookupHashTable(&(class->metadata), validation_pattern_key)) {
           if (msValidateParameter(values[i],
                                   msLookupHashTable(&(class->validation), names[i]),
                                   msLookupHashTable(&(class->metadata), validation_pattern_key),
@@ -6645,7 +6644,8 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
             /* skip as the name exists in the class validation but does not validate */
             continue;
           }
-        } else if (msLookupHashTable(&(layer->validation), names[i])) {
+        } else if (msLookupHashTable(&(layer->validation), names[i]) ||
+                   msLookupHashTable(&(layer->metadata), validation_pattern_key)) {
           if (msValidateParameter(values[i],
                                   msLookupHashTable(&(layer->validation), names[i]),
                                   msLookupHashTable(&(layer->metadata), validation_pattern_key),
@@ -6675,7 +6675,8 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
       if(layer->debug >= MS_DEBUGLEVEL_V)
         msDebug( "  runtime substitution - Layer %s, tag %s...\n", layer->name, tag);
 
-      if (msLookupHashTable(&(layer->validation), names[i])) {
+      if (msLookupHashTable(&(layer->validation), names[i]) ||
+          msLookupHashTable(&(layer->metadata), validation_pattern_key)) {
         if (msValidateParameter(values[i],
                                 msLookupHashTable(&(layer->validation), names[i]),
                                 msLookupHashTable(&(layer->metadata), validation_pattern_key),
