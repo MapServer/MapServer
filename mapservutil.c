@@ -1184,7 +1184,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
         /* validate the qstring parameter */
         if(msValidateParameter(mapserv->QueryString, msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->SelectLayerIndex)->validation), "qstring"),
                                msLookupHashTable(&(mapserv->map->web.validation), "qstring"),
-                               msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->SelectLayerIndex)->metadata), "qstring_validation_pattern"), NULL) != MS_SUCCESS) {
+                               NULL, NULL) != MS_SUCCESS) {
           msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
           return MS_FAILURE;
         }
@@ -1276,7 +1276,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
         /* validate the qstring parameter */
         if(msValidateParameter(mapserv->QueryString, msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->QueryLayerIndex)->validation), "qstring"),
                                msLookupHashTable(&(mapserv->map->web.validation), "qstring"),
-                               msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->QueryLayerIndex)->metadata), "qstring_validation_pattern"), NULL) != MS_SUCCESS) {
+                               NULL, NULL) != MS_SUCCESS) {
           msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
           return MS_FAILURE;
         }
