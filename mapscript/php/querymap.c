@@ -141,6 +141,33 @@ PHP_METHOD(queryMapObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the querymap object to string. */
+PHP_METHOD(queryMapObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_querymap_object *php_querymap;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_querymap = (php_querymap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  queryMapObj_convertToString(php_querymap->querymap);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int querymap.free()
    Free the object */
 PHP_METHOD(queryMapObj, free)
@@ -167,6 +194,7 @@ zend_function_entry querymap_functions[] = {
   PHP_ME(queryMapObj, __set, querymap___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(queryMapObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(queryMapObj, updateFromString, querymap_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(queryMapObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(queryMapObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }

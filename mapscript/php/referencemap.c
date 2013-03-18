@@ -155,6 +155,33 @@ PHP_METHOD(referenceMapObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the referencemap object to string. */
+PHP_METHOD(referenceMapObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_referencemap_object *php_referencemap;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_referencemap = (php_referencemap_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  referenceMapObj_convertToString(php_referencemap->referencemap);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int referencemap.free()
    Free the object. */
 PHP_METHOD(referenceMapObj, free)
@@ -183,6 +210,7 @@ zend_function_entry referencemap_functions[] = {
   PHP_ME(referenceMapObj, __set, referenceMap___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(referenceMapObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(referenceMapObj, updateFromString, referenceMap_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(referenceMapObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(referenceMapObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }

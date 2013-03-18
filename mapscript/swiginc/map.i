@@ -502,5 +502,11 @@
     {
 	return msOWSDispatch( self, req, MS_TRUE );
     }
+    
+    %newobject convertToString;
+    char* convertToString()
+    {
+        return msWriteMapToString(self);
+    }
 
 }

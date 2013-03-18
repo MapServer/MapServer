@@ -146,6 +146,33 @@ PHP_METHOD(clusterObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the cluster object to string. */
+PHP_METHOD(clusterObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_cluster_object *php_cluster;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  classObj_convertToString(php_cluster->cluster);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int setGroup(string group)
    Set the group expression string.  Returns MS_SUCCESS/MS_FAILURE */
 PHP_METHOD(clusterObj, setGroup)
@@ -263,6 +290,7 @@ zend_function_entry cluster_functions[] = {
   PHP_ME(clusterObj, __get, cluster___get_args, ZEND_ACC_PUBLIC)
   PHP_ME(clusterObj, __set, cluster___set_args, ZEND_ACC_PUBLIC)
   PHP_ME(clusterObj, updateFromString, cluster_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(clusterObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(clusterObj, setGroup, cluster_setGroup_args, ZEND_ACC_PUBLIC)
   PHP_ME(clusterObj, getGroupString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(clusterObj, setFilter, cluster_setFilter_args, ZEND_ACC_PUBLIC)

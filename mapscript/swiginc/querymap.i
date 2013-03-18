@@ -34,4 +34,10 @@
   {
     return msUpdateQueryMapFromString(self, snippet, MS_FALSE);
   }
+  
+  %newobject convertToString;
+  char* convertToString()
+  {
+    return msWriteQueryMapToString(self);
+  }
 }

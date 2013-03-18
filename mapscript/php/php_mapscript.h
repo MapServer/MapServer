@@ -578,10 +578,12 @@ int             mapObj_setCenter(mapObj *self, pointObj *center);
 int             mapObj_offsetExtent(mapObj *self, double x, double y);
 int             mapObj_scaleExtent(mapObj *self, double zoomfactor, double minscaledenom,
                                    double maxscaledenom);
+char           *mapObj_convertToString(mapObj *self);
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 int             layerObj_updateFromString(layerObj *self, char *snippet);
+char           *layerObj_convertToString(layerObj *self);
 int             layerObj_open(layerObj *self);
 int             layerObj_whichShapes(layerObj *self, rectObj *poRect);
 shapeObj        *layerObj_nextShape(layerObj *self);
@@ -633,6 +635,7 @@ layerObj        *layerObj_clone(layerObj *layer);
 
 labelObj        *labelObj_new();
 int             labelObj_updateFromString(labelObj *self, char *snippet);
+char           *labelObj_convertToString(labelObj *self);
 void            labelObj_destroy(labelObj *self);
 int             labelObj_moveStyleUp(labelObj *self, int index);
 int             labelObj_moveStyleDown(labelObj *self, int index);
@@ -640,20 +643,26 @@ int             labelObj_deleteStyle(labelObj *self, int index);
 labelObj        *labelObj_clone(labelObj *label);
 
 int             legendObj_updateFromString(legendObj *self, char *snippet);
+char           *legendObj_convertToString(legendObj *self);
 
 int             queryMapObj_updateFromString(queryMapObj *self, char *snippet);
+char           *queryMapObj_convertToString(queryMapObj *self);
 
 int             referenceMapObj_updateFromString(referenceMapObj *self, char *snippet);
+char           *referenceMapObj_convertToString(referenceMapObj *self);
 
 int             scalebarObj_updateFromString(scalebarObj *self, char *snippet);
+char           *scalebarObj_convertToString(scalebarObj *self);
 
 int             webObj_updateFromString(webObj *self, char *snippet);
+char           *webObj_convertToString(webObj *self);
 
 classObj       *classObj_new(layerObj *layer, classObj *class);
 labelObj       *classObj_getLabel(classObj *self, int i);
 int             classObj_addLabel(classObj *self, labelObj *label);
 labelObj       *classObj_removeLabel(classObj *self, int index);
 int             classObj_updateFromString(classObj *self, char *snippet);
+char           *classObj_convertToString(classObj *self);
 void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);
 char            *classObj_getExpressionString(classObj *self);
@@ -776,6 +785,7 @@ DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 styleObj       *styleObj_new(classObj *class, styleObj *style);
 styleObj       *styleObj_label_new(labelObj *label, styleObj *style);
 int             styleObj_updateFromString(styleObj *self, char *snippet);
+char           *styleObj_convertToString(styleObj *self);
 int             styleObj_setSymbolByName(styleObj *self, mapObj *map,
     char* pszSymbolName);
 styleObj       *styleObj_clone(styleObj *style);
@@ -806,6 +816,7 @@ void cgirequestObj_destroy(cgiRequestObj *self);
 resultObj *resultObj_new();
 
 int clusterObj_updateFromString(clusterObj *self, char *snippet);
+char *clusterObj_convertToString(clusterObj *self);
 int clusterObj_setGroup(clusterObj *self, char *string);
 char *clusterObj_getGroupString(clusterObj *self);
 int clusterObj_setFilter(clusterObj *self, char *string);

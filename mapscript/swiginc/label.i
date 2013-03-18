@@ -54,6 +54,12 @@
   {
     return msUpdateLabelFromString(self, snippet);
   }
+  
+  %newobject convertToString;
+  char* convertToString()
+  {
+    return msWriteLabelToString(self);
+  }
 
   int removeBinding(int binding) 
   {

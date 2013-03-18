@@ -157,6 +157,33 @@ PHP_METHOD(legendObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the legend object to string. */
+PHP_METHOD(legendObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_legend_object *php_legend;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_legend = (php_legend_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  legendObj_convertToString(php_legend->legend);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int legend.free()
    Free the object */
 PHP_METHOD(legendObj, free)
@@ -184,6 +211,7 @@ zend_function_entry legend_functions[] = {
   PHP_ME(legendObj, __get, legend___get_args, ZEND_ACC_PUBLIC)
   PHP_ME(legendObj, __set, legend___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(legendObj, set, __set, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(legendObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(legendObj, updateFromString, legend_updateFromString_args, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }

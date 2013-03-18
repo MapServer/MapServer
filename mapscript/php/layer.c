@@ -773,6 +773,33 @@ PHP_METHOD(layerObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the layer object to string. */
+PHP_METHOD(layerObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_layer_object *php_layer;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  layerObj_convertToString(php_layer->layer);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int layer.getClass(int i)
    Returns a classObj from the layer given an index value (0=first class) */
 PHP_METHOD(layerObj, getClass)
@@ -2110,6 +2137,7 @@ zend_function_entry layer_functions[] = {
   PHP_ME(layerObj, draw, layer_draw_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, drawQuery, layer_drawQuery_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, updateFromString, layer_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(layerObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, getClass, layer_getClass_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, getClassIndex, layer_getClassIndex_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, queryByPoint, layer_queryByPoint_args, ZEND_ACC_PUBLIC)

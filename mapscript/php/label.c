@@ -254,6 +254,33 @@ PHP_METHOD(labelObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the label object to string. */
+PHP_METHOD(labelObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  labelObj_convertToString(php_label->label);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int label.setbinding(const bindingid, string value)
    Set the attribute binding for a specfiled label property. Returns MS_SUCCESS on success. */
 PHP_METHOD(labelObj, setBinding)
@@ -552,6 +579,7 @@ zend_function_entry label_functions[] = {
   PHP_ME(labelObj, __set, label___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(labelObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, updateFromString, label_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, setBinding, label_setBinding_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, getBinding, label_getBinding_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, removeBinding, label_removeBinding_args, ZEND_ACC_PUBLIC)

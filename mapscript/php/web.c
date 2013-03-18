@@ -170,6 +170,33 @@ PHP_METHOD(webObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the web object to string. */
+PHP_METHOD(webObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_web_object *php_web;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_web = (php_web_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  webObj_convertToString(php_web->web);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int web.free()
    Free the object. */
 PHP_METHOD(webObj, free)
@@ -198,6 +225,7 @@ zend_function_entry web_functions[] = {
   PHP_ME(webObj, __set, web___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(webObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(webObj, updateFromString, web_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(webObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(webObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }

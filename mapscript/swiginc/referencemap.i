@@ -34,4 +34,10 @@
   {
     return msUpdateReferenceMapFromString(self, snippet, MS_FALSE);
   }
+  
+  %newobject convertToString;
+  char* convertToString()
+  {
+    return msWriteReferenceMapToString(self);
+  }
 }

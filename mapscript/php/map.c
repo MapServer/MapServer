@@ -3295,6 +3295,33 @@ PHP_METHOD(mapObj, getLabel)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the map object to string. */
+PHP_METHOD(mapObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_map_object *php_map;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  mapObj_convertToString(php_map->map);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /************************************************************************/
 /*                    php3_ms_map_getLatLongExtent()                    */
 /*                                                                      */
@@ -3448,6 +3475,7 @@ zend_function_entry map_functions[] = {
   PHP_ME(mapObj, insertLayer, map_insertLayer_args, ZEND_ACC_PUBLIC)
   PHP_ME(mapObj, removeLayer, map_removeLayer_args, ZEND_ACC_PUBLIC)
   PHP_ME(mapObj, getLabel, map_getLabel_args, ZEND_ACC_PUBLIC)
+  PHP_ME(mapObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(mapObj, getLatLongExtent, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(mapObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL

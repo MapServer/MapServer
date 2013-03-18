@@ -35,6 +35,12 @@
     return msUpdateClusterFromString(self, snippet);
   }
   
+  %newobject convertToString;
+  char* convertToString()
+  {
+    return msWriteClusterToString(self);
+  }
+  
   int setGroup(char *group) 
   {
     if (!group || strlen(group) == 0) {

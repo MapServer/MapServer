@@ -1926,6 +1926,17 @@ extern "C" {
   MS_DLL_EXPORT int msUpdateClassFromString(classObj *_class, char *string, int url_string);
   MS_DLL_EXPORT int msUpdateLayerFromString(layerObj *layer, char *string, int url_string);
   MS_DLL_EXPORT int msUpdateMapFromURL(mapObj *map, char *variable, char *string);
+  MS_DLL_EXPORT char *msWriteLayerToString(layerObj *layer);
+  MS_DLL_EXPORT char *msWriteMapToString(mapObj *map);
+  MS_DLL_EXPORT char *msWriteClassToString(classObj *_class);
+  MS_DLL_EXPORT char *msWriteStyleToString(styleObj *style);
+  MS_DLL_EXPORT char *msWriteLabelToString(labelObj *label);
+  MS_DLL_EXPORT char *msWriteWebToString(webObj *web);
+  MS_DLL_EXPORT char *msWriteScalebarToString(scalebarObj *scalebar);
+  MS_DLL_EXPORT char *msWriteQueryMapToString(queryMapObj *querymap);
+  MS_DLL_EXPORT char *msWriteReferenceMapToString(referenceMapObj *ref);
+  MS_DLL_EXPORT char *msWriteLegendToString(legendObj *legend);
+  MS_DLL_EXPORT char *msWriteClusterToString(clusterObj *cluster);
   MS_DLL_EXPORT int msEvalRegex(char *e, char *s);
 #ifdef USE_MSFREE
   MS_DLL_EXPORT void msFree(void *p);

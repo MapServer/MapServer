@@ -365,6 +365,33 @@ PHP_METHOD(classObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the class object to string. */
+PHP_METHOD(classObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_class_object *php_class;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  classObj_convertToString(php_class->class);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int setExpression(string exression)
    Set the expression string for a class object. */
 PHP_METHOD(classObj, setExpression)
@@ -855,6 +882,7 @@ zend_function_entry class_functions[] = {
   PHP_ME(classObj, removeLabel, class_removeLabel_args, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, getLabel, class_getLabel_args, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, updateFromString, class_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(classObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, setExpression, class_setExpression_args, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, getExpressionString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, setText, class_setText_args, ZEND_ACC_PUBLIC)

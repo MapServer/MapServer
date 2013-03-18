@@ -338,6 +338,33 @@ PHP_METHOD(styleObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the style object to string. */
+PHP_METHOD(styleObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_style_object *php_style;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  styleObj_convertToString(php_style->style);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int style.setbinding(const bindingid, string value)
    Set the attribute binding for a specfiled style property. Returns MS_SUCCESS on success. */
 PHP_METHOD(styleObj, setBinding)
@@ -599,6 +626,7 @@ zend_function_entry style_functions[] = {
   PHP_ME(styleObj, __set, style___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(styleObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(styleObj, updateFromString, style_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(styleObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(styleObj, setBinding, style_setBinding_args, ZEND_ACC_PUBLIC)
   PHP_ME(styleObj, getBinding, style_getBinding_args, ZEND_ACC_PUBLIC)
   PHP_ME(styleObj, removeBinding, style_removeBinding_args, ZEND_ACC_PUBLIC)
