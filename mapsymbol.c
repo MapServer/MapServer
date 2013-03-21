@@ -314,10 +314,13 @@ void writeSymbol(symbolObj *s, FILE *stream)
         fprintf(stream, "    TYPE ELLIPSE\n");
       else if(s->type == MS_SYMBOL_VECTOR)
         fprintf(stream, "    TYPE VECTOR\n");
+      else if(s->type == MS_SYMBOL_SVG)
+        fprintf(stream, "    TYPE SVG\n");
       else
         fprintf(stream, "    TYPE SIMPLE\n");
 
       if(s->filled == MS_TRUE) fprintf(stream, "    FILLED TRUE\n");
+      if(s->imagepath != NULL) fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
 
       /* POINTS */
       if(s->numpoints != 0) {
