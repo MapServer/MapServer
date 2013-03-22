@@ -246,6 +246,7 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
                               char delimiter, const char *startTag,
                               const char *endTag, const char *format,
                               const char *default_value);
+void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
                                  rectObj *extent, projectionObj *srcproj,
                                  projectionObj *wfsproj, int nService);

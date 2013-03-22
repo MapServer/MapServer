@@ -209,11 +209,10 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   /*bbox*/
   if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
     /*convert to latlong*/
-    if (lp->projection.numargs > 0) {
-      if (!pj_is_latlong(&lp->projection.proj))
-        msProjectRect(&lp->projection, NULL, &ext);
-    } else if (map->projection.numargs > 0 && !pj_is_latlong(&map->projection.proj))
-      msProjectRect(&map->projection, NULL, &ext);
+    if (lp->projection.numargs > 0)
+      msOWSProjectToWGS84(&lp->projection, &ext);
+    else
+      msOWSProjectToWGS84(&map->projection, &ext);
 
     xmlAddChild(psRootNode,
                 msOWSCommonWGS84BoundingBox( psNsOws, 2,
