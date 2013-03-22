@@ -1968,6 +1968,23 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
 
 
 /*
+** msOWSProjectToWGS84()
+**
+** Reprojects the extent to WGS84.
+**
+*/
+void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext)
+{
+  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
+    projectionObj wgs84;
+    msInitProjection(&wgs84);
+    msLoadProjectionString(&wgs84, "+proj=longlat +ellps=WGS84 +datum=WGS84");
+    msProjectRect(srcproj, &wgs84, ext);
+    msFreeProjection(&wgs84);
+  }
+}
+
+/*
 ** msOWSPrintEX_GeographicBoundingBox()
 **
 ** Print a EX_GeographicBoundingBox tag for WMS1.3.0
@@ -1983,14 +2000,7 @@ void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
   ext = *extent;
 
   /* always project to lat long */
-  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
-    projectionObj wgs84;
-    msInitProjection(&wgs84);
-    msLoadProjectionString(&wgs84, "+proj=longlat +datum=WGS84");
-    msProjectRect(srcproj, &wgs84, &ext);
-    msFreeProjection(&wgs84);
-  }
-
+  msOWSProjectToWGS84(srcproj, &ext);
 
   msIO_fprintf(stream, "%s<%s>\n", tabspace, pszTag);
   msIO_fprintf(stream, "%s    <westBoundLongitude>%g</westBoundLongitude>\n", tabspace, ext.minx);
@@ -2020,16 +2030,8 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
   ext = *extent;
 
   if (nService == OWS_WMS) { /* always project to lat long */
-    if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
-      projectionObj wgs84;
-      msInitProjection(&wgs84);
-      msLoadProjectionString(&wgs84, "+proj=longlat +datum=WGS84");
-      msProjectRect(srcproj, &wgs84, &ext);
-      msFreeProjection(&wgs84);
-    }
-  }
-
-  if (nService == OWS_WFS) {
+    msOWSProjectToWGS84(srcproj, &ext);
+  } else if (nService == OWS_WFS) { /* called from wfs 1.0.0 only: project to map srs, if set */
     pszTag = "LatLongBoundingBox";
     if (wfsproj) {
       if (msProjectionsDiffer(srcproj, wfsproj) == MS_TRUE)
