@@ -844,6 +844,8 @@ static int msWCSParseRequest20_XMLGetCoverage(
           CSLAddString(params->range_subset, content);
         xmlFree(content);
       }
+    } else if (EQUAL((char *)child->name, "Extension")) {
+      continue;
     } else {
       XML_UNKNOWN_NODE_ERROR(child);
     }
@@ -1202,7 +1204,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
   char *format_list = msStrdup("");
   char **tokens = NULL, **formats = NULL;
   int  i, numtokens = 0, numformats;
-  const char *value;
+  char *value;
 
   /* -------------------------------------------------------------------- */
   /*      Parse from layer metadata.                                      */
@@ -1211,6 +1213,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
       && (value = msOWSGetEncodeMetadata( &(layer->metadata),"CO","formats",
                                           NULL )) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
+    msFree(value);
   }
 
   /* -------------------------------------------------------------------- */
@@ -1219,6 +1222,7 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
   else if((value = msOWSGetEncodeMetadata( &(map->web.metadata), "CO", "formats",
                                            NULL)) != NULL ) {
     tokens = msStringSplit(value, ' ', &numtokens);
+    msFree(value);
   }
 
   /* -------------------------------------------------------------------- */
@@ -1556,6 +1560,7 @@ static void msWCSCommon20_CreateRangeType(layerObj* layer, wcs20coverageMetadata
       xmlNewChild(psAllowedValues, psSweNs, BAD_CAST "significantFigures", BAD_CAST significant_figures);
     }
   }
+  msFreeCharArray(arr,num);
 }
 
 /************************************************************************/
@@ -1569,6 +1574,7 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   xmlChar *buffer = NULL;
   int size = 0;
   msIOContext *context = NULL;
+  const char *contenttype = NULL;
 
   const char *encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
@@ -1576,10 +1582,15 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
     return MS_FAILURE;
   }
 
-  if (encoding)
-    msIO_setHeader("Content-type","application/gml+xml; charset=%s", encoding);
+  if( EQUAL((char *)xmlDocGetRootElement(psDoc)->name, "RectifiedGridCoverage") )
+    contenttype = msStrdup("application/gml+xml");
   else
-    msIO_setHeader("Content-type","application/gml+xml");
+    contenttype = msStrdup("text/xml");
+
+  if (encoding)
+    msIO_setHeader("Content-Type","%s; charset=%s", contenttype, encoding);
+  else
+    msIO_setHeader("Content-Type","%s", contenttype);
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
@@ -1661,27 +1672,25 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
   /* -------------------------------------------------------------------- */
   if( filename == NULL ) {
     if(multipart) {
-      msIO_fprintf( stdout, "--wcs\n" );
+      msIO_fprintf( stdout, "\r\n--wcs\r\n" );
       msIO_fprintf(
         stdout,
-        "Content-Type: %s\n"
-        "Content-Description: coverage data\n"
-        "Content-Transfer-Encoding: binary\n",
+        "Content-Type: %s\r\n"
+        "Content-Description: coverage data\r\n"
+        "Content-Transfer-Encoding: binary\r\n",
         MS_IMAGE_MIME_TYPE(map->outputformat));
 
       if( fo_filename != NULL )
         msIO_fprintf( stdout,
-                      "Content-ID: coverage/%s\n"
-                      "Content-Disposition: INLINE; filename=%s%c%c",
+                      "Content-ID: coverage/%s\r\n"
+                      "Content-Disposition: INLINE; filename=%s\r\n\r\n",
                       fo_filename,
-                      fo_filename,
-                      10, 10 );
+                      fo_filename);
       else
         msIO_fprintf( stdout,
-                      "Content-ID: coverage/wcs.%s\n"
-                      "Content-Disposition: INLINE%c%c",
-                      MS_IMAGE_EXTENSION(map->outputformat),
-                      10, 10 );
+                      "Content-ID: coverage/wcs.%s\r\n"
+                      "Content-Disposition: INLINE\r\n\r\n",
+                      MS_IMAGE_EXTENSION(map->outputformat));
     } else {
       msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(map->outputformat));
       msIO_setHeader("Content-Description","coverage data");
@@ -1703,7 +1712,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
       return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
     }
     if(multipart)
-      msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
+      msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
     return MS_SUCCESS;
   }
 
@@ -1761,18 +1770,17 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
       if( mimetype == NULL )
         mimetype = "application/octet-stream";
       if(multipart) {
-        msIO_fprintf( stdout, "--wcs\n" );
+        msIO_fprintf( stdout, "\r\n--wcs\r\n" );
         msIO_fprintf(
           stdout,
-          "Content-Type: %s\n"
-          "Content-Description: coverage data\n"
-          "Content-Transfer-Encoding: binary\n"
-          "Content-ID: coverage/%s\n"
-          "Content-Disposition: INLINE; filename=%s%c%c",
+          "Content-Type: %s\r\n"
+          "Content-Description: coverage data\r\n"
+          "Content-Transfer-Encoding: binary\r\n"
+          "Content-ID: coverage/%s\r\n"
+          "Content-Disposition: INLINE; filename=%s\r\n\r\n",
           mimetype,
           all_files[i],
-          all_files[i],
-          10, 10 );
+          all_files[i]);
       } else {
         msIO_setHeader("Content-Type",mimetype);
         msIO_setHeader("Content-Description","coverage data");
@@ -1807,7 +1815,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     CSLDestroy( all_files );
     msReleaseLock( TLOCK_GDAL );
     if(multipart)
-      msIO_fprintf( stdout, "\n--wcs--%c%c", 10, 10 );
+      msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
     return MS_SUCCESS;
   }
 
@@ -2412,9 +2420,9 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   xmlDocSetRootElement(psDoc, psRootNode);
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding
@@ -2593,12 +2601,14 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     if (i == 0) { /* current */
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)",
                  "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
+      xmlFreeDoc(psDoc);
       return msWCSException(map, "updatesequence",
                             "CurrentUpdateSequence", params->version);
     }
     if (i > 0) { /* invalid */
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)",
                  "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
+      xmlFreeDoc(psDoc);
       return msWCSException(map, "updatesequence",
                             "InvalidUpdateSequence", params->version);
     }
@@ -2628,6 +2638,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "OperationsMetadata") ) {
     if ((script_url = msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL
         || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
+      xmlFreeDoc(psDoc);
       msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities20()");
       return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
     }
@@ -3165,7 +3176,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
   /* retrieve coverage metadata  */
   status = msWCSGetCoverageMetadata20(layer, &cm);
-  if (status != MS_SUCCESS) return MS_FAILURE;
+  if (status != MS_SUCCESS) {
+    msWCSClearCoverageMetadata20(&cm);
+    return MS_FAILURE;
+  }
 
   /* fill in bands rangeset info, if required.  */
   /* msWCSSetDefaultBandsRangeSetInfo(NULL, &cm, layer ); */
@@ -3183,6 +3197,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   msInitProjection(&imageProj);
   if (msLoadProjectionString(&imageProj, cm.srs) == -1) {
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR,
                "Error loading CRS %s.",
                "msWCSGetCoverage20()", params->subsetcrs);
@@ -3191,6 +3206,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   if(msWCSGetCoverage20_FinalizeParamsObj(params) == MS_FAILURE) {
+    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "InvalidParameterValue", "extent", params->version);
   }
 
@@ -3232,6 +3248,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     /* if the subsets have a crs given, project the image extent to it */
     msInitProjection(&subsetProj);
     if(msLoadProjectionString(&subsetProj, params->subsetcrs) != MS_SUCCESS) {
+      msWCSClearCoverageMetadata20(&cm);
       msSetError(MS_WCSERR,
                  "Error loading CRS %s.",
                  "msWCSGetCoverage20()", params->subsetcrs);
@@ -3255,6 +3272,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /* create boundings of params subsets and image extent */
   if(msRectOverlap(&subsets, &(layer->extent)) == MS_FALSE) {
     /* extent and bbox do not overlap -> exit */
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Image extent does not intersect with desired region.",
                "msWCSGetCoverage20()");
     return msWCSException(map, "ExtentError", "extent", params->version);
@@ -3269,6 +3287,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /* check if we are overspecified  */
   if((params->width != 0 &&  params->resolutionX != MS_WCS20_UNBOUNDED)
       || (params->height != 0 && params->resolutionY != MS_WCS20_UNBOUNDED)) {
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "GetCoverage operation supports only one of SIZE or RESOLUTION per axis.",
                "msWCSGetCoverage20()");
     return msWCSException(map, "TooManyParameterValues", "coverage",
@@ -3329,6 +3348,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msInitProjection(&outputProj);
     if(msLoadProjectionString(&outputProj, params->outputcrs) == -1) {
       msFreeProjection(&outputProj);
+      msWCSClearCoverageMetadata20(&cm);
       return msWCSException(map, "InvalidParameterValue", "coverage",
                             params->version);
     }
@@ -3353,6 +3373,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* Are we exceeding the MAXSIZE limit on result size? */
   if(map->width > map->maxsize || map->height > map->maxsize ) {
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Raster size out of range, width and height of "
                "resulting coverage must be no more than MAXSIZE=%d.",
                "msWCSGetCoverage20()", map->maxsize);
@@ -3390,6 +3411,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msSetError(MS_WCSERR, "Output format could not be automatically determined. "
                "Use the FORMAT parameter to specify a format.",
                "msWCSGetCoverage20()");
+    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "MissingParameterValue", "format",
                           params->version);
   }
@@ -3408,6 +3430,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   if (msGetOutputFormatIndex(map, params->format) == -1) {
     msSetError(MS_WCSERR, "Unrecognized value '%s' for the FORMAT parameter.",
                "msWCSGetCoverage20()", params->format);
+    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "InvalidParameterValue", "format",
                           params->version);
   }
@@ -3418,6 +3441,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                       MS_NOOVERRIDE, MS_NOOVERRIDE);
 
   if(msWCSGetCoverage20_GetBands(map, layer, params, &cm, &bandlist) != MS_SUCCESS) {
+    msFree(bandlist);
+    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, "InvalidParameterValue", "rangesubset",
                           params->version);
   }
@@ -3435,8 +3460,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     } else if(EQUAL(params->interpolation,"AVERAGE")) {
       msLayerSetProcessingKey(layer, "RESAMPLE", "AVERAGE");
     } else {
+      msFree(bandlist);
       msSetError( MS_WCSERR, "'%s' specifies an unsupported interpolation method.",
                   "msWCSGetCoverage20()", params->interpolation );
+      msWCSClearCoverageMetadata20(&cm);
       return msWCSException(map, "InvalidParameterValue", "interpolation", params->version);
     }
   } else {
@@ -3453,6 +3480,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   /* create the image object  */
   if (!map->outputformat) {
+    msWCSClearCoverageMetadata20(&cm);
+    msFree(bandlist);
     msSetError(MS_WCSERR, "The map outputformat is missing!",
                "msWCSGetCoverage20()");
     return msWCSException(map, NULL, NULL, params->version);
@@ -3466,6 +3495,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                           map->defresolution, &map->imagecolor);
   } else {
     msFree(bandlist);
+    msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "Map outputformat not supported for WCS!",
                "msWCSGetCoverage20()");
     return msWCSException(map, NULL, NULL, params->version);
@@ -3473,7 +3503,71 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   if (image == NULL) {
     msFree(bandlist);
+    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, NULL, NULL, params->version);
+  }
+
+  if(layer->mask) {
+    int maskLayerIdx = msGetLayerIndex(map,layer->mask);
+    layerObj *maskLayer;
+    outputFormatObj *altFormat;
+    if(maskLayerIdx == -1) {
+      msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
+                 layer->name,layer->mask);
+      return (MS_FAILURE);
+    }
+    maskLayer = GET_LAYER(map, maskLayerIdx);
+    if(!maskLayer->maskimage) {
+      int i,retcode;
+      int origstatus, origlabelcache;
+      char *origImageType = msStrdup(map->imagetype);
+      altFormat =  msSelectOutputFormat(map, "png24");
+      msInitializeRendererVTable(altFormat);
+      /* TODO: check the png24 format hasn't been tampered with, i.e. it's agg */
+      maskLayer->maskimage= msImageCreate(image->width, image->height,altFormat,
+                                          image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
+      if (!maskLayer->maskimage) {
+        msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
+        return (MS_FAILURE);
+      }
+
+      /*
+       * force the masked layer to status on, and turn off the labelcache so that
+       * eventual labels are added to the temporary image instead of being added
+       * to the labelcache
+       */
+      origstatus = maskLayer->status;
+      origlabelcache = maskLayer->labelcache;
+      maskLayer->status = MS_ON;
+      maskLayer->labelcache = MS_OFF;
+
+      /* draw the mask layer in the temporary image */
+      retcode = msDrawLayer(map, maskLayer, maskLayer->maskimage);
+      maskLayer->status = origstatus;
+      maskLayer->labelcache = origlabelcache;
+      if(retcode != MS_SUCCESS) {
+        return MS_FAILURE;
+      }
+      /*
+       * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain
+       * symbols that reference it. We want to remove those references before the altFormat is destroyed
+       * to avoid a segfault and/or a leak, and so the the main renderer doesn't pick the cache up thinking
+       * it's for him.
+       */
+      for(i=0; i<map->symbolset.numsymbols; i++) {
+        if (map->symbolset.symbol[i]!=NULL) {
+          symbolObj *s = map->symbolset.symbol[i];
+          if(s->renderer == MS_IMAGE_RENDERER(maskLayer->maskimage)) {
+            MS_IMAGE_RENDERER(maskLayer->maskimage)->freeSymbol(s);
+            s->renderer = NULL;
+          }
+        }
+      }
+      /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
+      msFree(map->imagetype);
+      map->imagetype = origImageType;
+      
+    }
   }
 
   /* Actually produce the "grid". */
@@ -3488,6 +3582,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   if( status != MS_SUCCESS ) {
     msFree(bandlist);
     msFreeImage(image);
+    msWCSClearCoverageMetadata20(&cm);
     return msWCSException(map, NULL, NULL, params->version );
   }
 
@@ -3560,6 +3655,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     file_ref = msSmallMalloc(length);
     strlcpy(file_ref, "cid:coverage/", length);
     strlcat(file_ref, filename, length);
+    msFree(default_filename);
 
     if(EQUAL(MS_IMAGE_MIME_TYPE(map->outputformat), "image/tiff")) {
       length = strlen(MS_WCS_20_PROFILE_GML_GEOTIFF) + 1;
@@ -3583,7 +3679,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
     msIO_setHeader("Content-Type","multipart/related; boundary=wcs");
     msIO_sendHeaders();
-    msIO_printf("--wcs\n");
+    msIO_printf("\r\n--wcs\r\n");
 
     msWCSWriteDocument20(map, psDoc);
     msWCSWriteFile20(map, image, params, 1);

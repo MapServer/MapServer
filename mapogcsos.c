@@ -102,12 +102,12 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
 
   xmlDocSetRootElement(psDoc, psRootNode);
 
-  psNsOws = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
+  xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
@@ -120,6 +120,7 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
   free(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
+  xmlFreeNs(psNsOws);
 
   /*
   ** The typical pattern is to call msSOSException() right after
@@ -932,6 +933,7 @@ char* msSOSReturnMemberResult(layerObj *lp, int iFeatureId, char **ppszProcedure
       }
     }
   }
+  msFreeShape(&sShape);
   return pszFinalValue;
 }
 
@@ -1604,9 +1606,9 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
     return MS_FAILURE;
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   /*TODO* : check the encoding validity. Internally libxml2 uses UTF-8
@@ -2456,9 +2458,9 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
 
   /* output results */
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
@@ -2538,11 +2540,12 @@ int msSOSDescribeSensor(mapObj *map, sosParamsObj *sosparams, owsRequestObj *ows
             bFound = 1;
             pszProcedureId = msStrdup(tokens[k]);
             msFree(pszProcedureURI);
-            msFreeCharArray(tokens, n);
             break;
           }
+          msFree(pszProcedureURI);
         }
       }
+      msFreeCharArray(tokens, n);
       if (bFound) {
         pszUrl = msOWSLookupMetadata(&(lp->metadata), "S", "describesensor_url");
         if (pszUrl) {

@@ -59,7 +59,7 @@ PHP_METHOD(colorObj, __construct)
 PHP_METHOD(colorObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_color_object *php_color;
 
@@ -85,7 +85,7 @@ PHP_METHOD(colorObj, __get)
 PHP_METHOD(colorObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_color_object *php_color;

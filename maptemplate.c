@@ -99,7 +99,7 @@ int msRedirect(char *url)
   msIO_setHeader("Status","302 Found");
   msIO_setHeader("Uri",url);
   msIO_setHeader("Location",url);
-  msIO_setHeader("Content-type","text/html");
+  msIO_setHeader("Content-Type","text/html");
   msIO_sendHeaders();
   return MS_SUCCESS;
 }
@@ -274,7 +274,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       map->outputformat = tempOutputFormat; /* restore format */
 
       if(mapserv == NULL || mapserv->sendheaders) {
-        msIO_setHeader("Content-type", MS_IMAGE_MIME_TYPE(outputFormat));
+        msIO_setHeader("Content-Type", MS_IMAGE_MIME_TYPE(outputFormat));
         msIO_sendHeaders();
       }
       status = msSaveImage(map, img, NULL);
@@ -306,7 +306,7 @@ int msReturnTemplateQuery(mapservObj *mapserv, char *queryFormat, char **papszBu
       const char *attachment = msGetOutputFormatOption( outputFormat, "ATTACHMENT", NULL );
       if(attachment)
         msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
-      msIO_setHeader("Content-type", outputFormat->mimetype);
+      msIO_setHeader("Content-Type", outputFormat->mimetype);
       msIO_sendHeaders();
     }
     if((status = msReturnPage(mapserv, (char *) file, BROWSE, papszBuffer)) != MS_SUCCESS)
@@ -561,7 +561,10 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
 
         /* msReturnTemplateQuerycheck all argument if they have values */
         for (i=0; i<nArgs; i++) {
-          if(strlen(papszArgs[i]) == 0) continue;
+          if(strlen(papszArgs[i]) == 0) {
+            free(papszArgs[i]);
+            continue;
+          }
 
           if(strchr(papszArgs[i], '=')) {
             papszVarVal = msStringTokenize(papszArgs[i], "=", &nDummy, MS_FALSE);
@@ -873,11 +876,13 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
   if(strstr(*line, "[/feature]") == NULL) { /* we know the closing tag must be here, if not throw an error */
     msSetError(MS_WEBERR, "[feature] tag found without closing [/feature].", "processFeatureTag()");
+    msFreeHashTable(tagArgs);
     return(MS_FAILURE);
   }
 
   if(getInlineTag("feature", *line, &tag) != MS_SUCCESS) {
     msSetError(MS_WEBERR, "Malformed feature tag.", "processFeatureTag()");
+    msFreeHashTable(tagArgs);
     return MS_FAILURE;
   }
 
@@ -900,7 +905,10 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   if(layer->numjoins > 0) { /* initialize necessary JOINs here */
     for(j=0; j<layer->numjoins; j++) {
       status = msJoinConnect(layer, &(layer->joins[j]));
-      if(status != MS_SUCCESS) return status;
+      if(status != MS_SUCCESS) {
+        msFreeHashTable(tagArgs);
+        return status;
+      }
     }
   }
 
@@ -915,7 +923,10 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
 
   for(i=0; i<limit; i++) {
     status = msLayerGetShape(layer, &(mapserv->resultshape), &(layer->resultcache->results[i]));
-    if(status != MS_SUCCESS) return status;
+    if(status != MS_SUCCESS) {
+      msFreeHashTable(tagArgs);
+      return status;
+    }
 
     mapserv->resultshape.classindex = msShapeGetClass(layer, layer->map, &mapserv->resultshape,  NULL, -1);
 
@@ -963,6 +974,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   */
   free(postTag);
   free(tag);
+  msFreeHashTable(tagArgs);
 
   return(MS_SUCCESS);
 }
@@ -1008,12 +1020,14 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
     if(!layerName) {
       msSetError(MS_WEBERR, "[resultset] tag missing required 'layer' argument.", "processResultSetTag()");
+      msFreeHashTable(tagArgs);
       return(MS_FAILURE);
     }
 
     layerIndex = msGetLayerIndex(mapserv->map, layerName);
     if(layerIndex>=mapserv->map->numlayers || layerIndex<0) {
       msSetError(MS_MISCERR, "Layer named '%s' does not exist.", "processResultSetTag()", layerName);
+      msFreeHashTable(tagArgs);
       return MS_FAILURE;
     }
     lp = GET_LAYER(mapserv->map, layerIndex);
@@ -1021,6 +1035,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     if(strstr(*line, "[/resultset]") == NULL) { /* read ahead */
       if(!stream) {
         msSetError(MS_WEBERR, "Invalid file pointer.", "processResultSetTag()");
+        msFreeHashTable(tagArgs);
         return(MS_FAILURE);
       }
 
@@ -1035,12 +1050,14 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
       }
       if(foundTagEnd == MS_FALSE) {
         msSetError(MS_WEBERR, "[resultset] tag found without closing [/resultset].", "processResultSetTag()");
+        msFreeHashTable(tagArgs);
         return(MS_FAILURE);
       }
     }
 
     if(getInlineTag("resultset", *line, &tag) != MS_SUCCESS) {
       msSetError(MS_WEBERR, "Malformed resultset tag.", "processResultSetTag()");
+      msFreeHashTable(tagArgs);
       return MS_FAILURE;
     }
 
@@ -1053,8 +1070,10 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
 
     if(lp->resultcache && lp->resultcache->numresults > 0) {
       /* probably will need a while-loop here to handle multiple instances of [feature ...] tags */
-      if(processFeatureTag(mapserv, &tag, lp) != MS_SUCCESS)
+      if(processFeatureTag(mapserv, &tag, lp) != MS_SUCCESS) {
+        msFreeHashTable(tagArgs);
         return(MS_FAILURE); /* TODO: how to handle */
+      }
       *line = msStringConcatenate(*line, tag);
     } else if(nodata) {
       *line = msStringConcatenate(*line, nodata);
@@ -1063,13 +1082,12 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     *line = msStringConcatenate(*line, postTag);
 
     /* clean up */
-    msFreeHashTable(tagArgs);
-    tagArgs=NULL;
     free(postTag);
     free(tag);
 
     tagStart = findTag(*line, "resultset");
   }
+  msFreeHashTable(tagArgs);
 
   return(MS_SUCCESS);
 }
@@ -1879,7 +1897,7 @@ static int processDateTag(char **line)
     tagArgs=NULL;
 
     if((*line)[tagOffset] != '\0')
-      tagStart = findTag(*line+tagOffset+1, "shpxy");
+      tagStart = findTag(*line+tagOffset+1, "date");
     else
       tagStart = NULL;
   }
@@ -3552,13 +3570,16 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[map]", repstr);
   }
 
+  if(strstr(outstr,"[mapserv_onlineresource]")) {
+    char *ol;
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-  outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",
-                              msOWSGetOnlineResource(mapserv->map, "O", "onlineresource", mapserv->request));
+    ol = msOWSGetOnlineResource(mapserv->map, "O", "onlineresource", mapserv->request);
 #else
-  outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",
-                              msBuildOnlineResource(mapserv->map, mapserv->request));
+    ol = msBuildOnlineResource(mapserv->map, mapserv->request);
 #endif
+    outstr = msReplaceSubstring(outstr, "[mapserv_onlineresource]",ol);
+    msFree(ol);
+  }
 
   if(getenv("HTTP_HOST")) {
     snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("HTTP_HOST"));
@@ -3981,16 +4002,18 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   for(i=0; i<mapserv->request->NumParams; i++) {
     /* Replace [variable] tags using values from URL. We cannot offer a
-     * [variable_raw] option here due to the risk of XSS
+     * [variable_raw] option here due to the risk of XSS.
+     *
+     * Replacement is case-insensitive. (#4511)
      */
     snprintf(substr, PROCESSLINE_BUFLEN, "[%s]", mapserv->request->ParamNames[i]);
     encodedstr = msEncodeHTMLEntities(mapserv->request->ParamValues[i]);
-    outstr = msReplaceSubstring(outstr, substr, encodedstr);
+    outstr = msCaseReplaceSubstring(outstr, substr, encodedstr);
     free(encodedstr);
 
     snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", mapserv->request->ParamNames[i]);
     encodedstr = msEncodeUrl(mapserv->request->ParamValues[i]);
-    outstr = msReplaceSubstring(outstr, substr, encodedstr);
+    outstr = msCaseReplaceSubstring(outstr, substr, encodedstr);
     free(encodedstr);
   }
 
@@ -4215,7 +4238,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
   ** so why should this. Note that new-style templates don't buffer the mime-type either.
   */
   if(papszBuffer && mapserv->sendheaders) {
-    snprintf(buffer, sizeof(buffer), "Content-type: %s%c%c", pszMimeType, 10, 10);
+    snprintf(buffer, sizeof(buffer), "Content-Type: %s%c%c", pszMimeType, 10, 10);
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
       (*papszBuffer) = (char *)msSmallRealloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);
@@ -4224,7 +4247,7 @@ int msReturnNestedTemplateQuery(mapservObj* mapserv, char* pszMimeType, char **p
     strcat((*papszBuffer), buffer);
     nCurrentSize += strlen(buffer);
   } else if(mapserv->sendheaders) {
-    msIO_setHeader("Content-type",pszMimeType);
+    msIO_setHeader("Content-Type",pszMimeType);
     msIO_sendHeaders();
   }
 

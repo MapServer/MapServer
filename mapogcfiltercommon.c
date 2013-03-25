@@ -187,7 +187,7 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   char **aszBounds = NULL;
   int nBounds = 0;
   int bString=0;
-  char *pszExpression=NULL;
+  char *pszExpression=NULL, *pszTmpEscaped;
 
   if (!psFilterNode ||
       !(strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0))
@@ -235,6 +235,7 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   else
     sprintf(szBuffer, "%s", " ([");
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
+  
   pszExpression = msStringConcatenate(pszExpression, psFilterNode->psLeftNode->pszValue);
 
   if (bString)
@@ -251,7 +252,9 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
   }
 
-  snprintf(szBuffer, bufferSize, "%s", aszBounds[0]);
+  pszTmpEscaped = msStringEscape(aszBounds[0]);
+  snprintf(szBuffer, bufferSize, "%s", pszTmpEscaped);
+  if(pszTmpEscaped != aszBounds[0] ) msFree(pszTmpEscaped);
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
   if (bString) {
     sprintf(szBuffer, "%s", "\"");
@@ -282,7 +285,9 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
     sprintf(szBuffer,"%s", "\"");
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
   }
-  snprintf(szBuffer, bufferSize, "%s", aszBounds[1]);
+  pszTmpEscaped = msStringEscape(aszBounds[1]);
+  snprintf(szBuffer, bufferSize, "%s", pszTmpEscaped);
+  if(pszTmpEscaped != aszBounds[1] ) msFree(pszTmpEscaped);
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
   if (bString) {
@@ -301,7 +306,7 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
 char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
   char szTmp[1024];
-  char *pszExpression = NULL;
+  char *pszExpression = NULL, *pszTmpEscaped;
   int bString;
 
   if (psFilterNode == NULL)
@@ -336,6 +341,7 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
     sprintf(szTmp,  "%s"," ([");
   pszExpression = msStringConcatenate(pszExpression, szTmp);
   pszExpression = msStringConcatenate(pszExpression, psFilterNode->psLeftNode->pszValue);
+  
   if (bString)
     sprintf(szTmp,  "%s","]\" ");
   else
@@ -378,8 +384,11 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
     pszExpression = msStringConcatenate(pszExpression, szTmp);
   }
 
-  if (psFilterNode->psRightNode->pszValue)
-    pszExpression = msStringConcatenate(pszExpression, psFilterNode->psRightNode->pszValue);
+  if (psFilterNode->psRightNode->pszValue) {
+    pszTmpEscaped = msStringEscape(psFilterNode->psRightNode->pszValue);
+    pszExpression = msStringConcatenate(pszExpression, pszTmpEscaped);
+    if(pszTmpEscaped != psFilterNode->psRightNode->pszValue ) msFree(pszTmpEscaped);
+  }
 
   if (bString) {
     sprintf(szTmp,  "%s", "\"");
@@ -536,21 +545,22 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
 
-    if (strncasecmp(psNode->pszValue, "intersect", 9) == 0)
-      pszTmp = msStrdup("intersects");
-    if (strncasecmp(psNode->pszValue, "equals", 9) == 0)
-      pszTmp = msStrdup("eq");
-    else
-      pszTmp = msStrdup(psNode->pszValue);
-    msStringToLower(pszTmp);
-    if (bBBoxQuery)
+    if (bBBoxQuery) {
       sprintf(szBuffer, " %s ", "intersects");
-    /* sprintf(szBuffer, " %s ", "disjoint"); */
-    else
-      sprintf(szBuffer, " %s ", pszTmp);
+    } else {
+      if (strncasecmp(psNode->pszValue, "intersect", 9) == 0)
+        sprintf(szBuffer, " %s ", "intersects");
+      else if (strncasecmp(psNode->pszValue, "equals", 6) == 0)
+        sprintf(szBuffer, " %s ", "eq");
+      else {
+        pszTmp = msStrdup(psNode->pszValue);
+        msStringToLower(pszTmp);
+        sprintf(szBuffer, " %s ", pszTmp);
+        msFree(pszTmp);
+      }
+    }
 
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
-    msFree(pszTmp);
 
     pszWktText = msGEOSShapeToWKT(psTmpShape);
     sprintf(szBuffer, "%s", " fromText('");
@@ -560,8 +570,14 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
     msGEOSFreeWKT(pszWktText);
   }
-  if (psBufferShape)
+  if (psBufferShape) {
     msFreeShape(psBufferShape);
+    msFree(psBufferShape);
+  }
+  if(bBBoxQuery) {
+     msFreeShape(psTmpShape);
+     msFree(psTmpShape);
+  }
 
 
   sprintf(szBuffer, "%s", ")");

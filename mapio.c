@@ -183,7 +183,7 @@ void msIO_setHeader (const char *header, const char* value, ...)
 
     request_rec *r = (request_rec*) (ioctx->cbData);
     char *fullvalue = apr_pvsprintf(r->pool, value,args);
-    if (strcasecmp (header, "Content-type") == 0) {
+    if (strcasecmp (header, "Content-Type") == 0) {
       r->content_type = fullvalue;
     } else if (strcasecmp (header, "Status") == 0) {
       r->status = atoi (fullvalue);
@@ -746,10 +746,10 @@ void msIO_installStdinFromBuffer()
 /************************************************************************/
 /*                 msIO_stripStdoutBufferContentType()                  */
 /*                                                                      */
-/*      Strip off content-type header from buffer, and return to        */
+/*      Strip off Content-Type header from buffer, and return to        */
 /*      caller.  Returned string is the callers responsibility to       */
 /*      call msFree() on to deallocate.  This function will return      */
-/*      NULL if there is no content-type header.                        */
+/*      NULL if there is no Content-Type header.                        */
 /************************************************************************/
 
 char *msIO_stripStdoutBufferContentType()
@@ -773,10 +773,10 @@ char *msIO_stripStdoutBufferContentType()
   buf = (msIOBuffer *) ctx->cbData;
 
   /* -------------------------------------------------------------------- */
-  /*      Return NULL if we don't have a content-type header.             */
+  /*      Return NULL if we don't have a Content-Type header.             */
   /* -------------------------------------------------------------------- */
   if( buf->data_offset < 14
-      || strncasecmp((const char*) buf->data,"Content-type: ",14) != 0 )
+      || strncasecmp((const char*) buf->data,"Content-Type: ",14) != 0 )
     return NULL;
 
   /* -------------------------------------------------------------------- */
@@ -784,31 +784,29 @@ char *msIO_stripStdoutBufferContentType()
   /* -------------------------------------------------------------------- */
   end_of_ct = 13;
   while( end_of_ct+1 < buf->data_offset
-         && buf->data[end_of_ct+1] != 10 )
+         && buf->data[end_of_ct+1] != '\r' )
     end_of_ct++;
 
   if( end_of_ct+1 == buf->data_offset ) {
-    msSetError( MS_MISCERR, "Corrupt Content-type header.",
+    msSetError( MS_MISCERR, "Corrupt Content-Type header.",
                 "msIO_stripStdoutBufferContentType" );
     return NULL;
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Continue on to the start of data ... skipping two newline       */
-  /*      markers.                                                        */
+  /*      Continue on to the start of data ...                            */
+  /*      Go to next line and skip if empty.                              */
   /* -------------------------------------------------------------------- */
-  start_of_data = end_of_ct+2;
-  while( start_of_data  < buf->data_offset
-         && buf->data[start_of_data] != 10 )
-    start_of_data++;
-
+  start_of_data = end_of_ct+3;
+  if( start_of_data  < buf->data_offset
+      && buf->data[start_of_data] == '\r' )
+    start_of_data +=2;
+  
   if( start_of_data == buf->data_offset ) {
-    msSetError( MS_MISCERR, "Corrupt Content-type header.",
+    msSetError( MS_MISCERR, "Corrupt Content-Type header.",
                 "msIO_stripStdoutBufferContentType" );
     return NULL;
   }
-
-  start_of_data++;
 
   /* -------------------------------------------------------------------- */
   /*      Copy out content type.                                          */
@@ -870,7 +868,7 @@ void msIO_stripStdoutBufferContentHeaders()
     /* -------------------------------------------------------------------- */
     start_of_data +=7;
     while( start_of_data+1 < buf->data_offset
-           && buf->data[start_of_data+1] != 10 )
+           && buf->data[start_of_data+1] != '\r' )
       start_of_data++;
 
     if( start_of_data+1 == buf->data_offset ) {
@@ -878,24 +876,25 @@ void msIO_stripStdoutBufferContentHeaders()
                   "msIO_stripStdoutBufferContentHeaders" );
       return;
     }
-    start_of_data +=2;
+    /* -------------------------------------------------------------------- */
+    /*      Go to next line.                                                */
+    /* -------------------------------------------------------------------- */
+    start_of_data +=3;
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Continue on to the start of data ... skipping two newline       */
-  /*      markers.                                                        */
+  /*      Continue on to the start of data ...                            */
+  /*      Skip next line if empty.                                        */
   /* -------------------------------------------------------------------- */
-  while( start_of_data  < buf->data_offset
-         && buf->data[start_of_data] != 10 )
-    start_of_data++;
+  if( start_of_data  < buf->data_offset
+      && buf->data[start_of_data] == '\r' )
+    start_of_data +=2;
 
   if( start_of_data == buf->data_offset ) {
     msSetError( MS_MISCERR, "Corrupt Content-* header.",
                 "msIO_stripStdoutBufferContentHeaders" );
     return;
   }
-
-  start_of_data++;
 
   /* -------------------------------------------------------------------- */
   /*      Move data to front of buffer, and reset length.                 */

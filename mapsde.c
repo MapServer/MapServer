@@ -777,6 +777,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape)
 #ifdef SE_CLOB_TYPE
 
       case SE_CLOB_TYPE:
+        memset(&clobval, 0, sizeof(clobval)); /* to prevent from the crash in SE_stream_get_clob */
         status = SE_stream_get_clob(sde->connPoolInfo->stream, (short) (i+1), &clobval);
         if(status == SE_SUCCESS) {
           shape->values[i] = (char *)msSmallMalloc(sizeof(char)*clobval.clob_length);

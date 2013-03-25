@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <ctype.h>
+#include <float.h>
 
 #include "mapserver.h"
 #include "mapfile.h"
@@ -167,6 +168,30 @@ int getSymbol(int n, ...)
   va_end(argp);
 
   msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)", "getSymbol()", msyystring_buffer, msyylineno);
+  return(-1);
+}
+
+/*
+** Same as getSymbol, except no error message is set on failure
+*/
+int getSymbol2(int n, ...)
+{
+  int symbol;
+  va_list argp;
+  int i=0;
+
+  symbol = msyylex();
+
+  va_start(argp, n);
+  while(i<n) { /* check each symbol in the list */
+    if(symbol == va_arg(argp, int)) {
+      va_end(argp);
+      return(symbol);
+    }
+    i++;
+  }
+
+  va_end(argp);
   return(-1);
 }
 
@@ -454,26 +479,26 @@ int loadColorWithAlpha(colorObj *color)
 */
 static void writeLineFeed(FILE *stream)
 {
-  fprintf(stream, "\n");
+  msIO_fprintf(stream, "\n");
 }
 
 static void writeIndent(FILE *stream, int indent)
 {
   const char *str="  "; /* change this string to define the indent */
   int i;
-  for(i=0; i<indent; i++) fprintf(stream, "%s", str);
+  for(i=0; i<indent; i++) msIO_fprintf(stream, "%s", str);
 }
 
 static void writeBlockBegin(FILE *stream, int indent, const char *name)
 {
   writeIndent(stream, indent);
-  fprintf(stream, "%s\n", name);
+  msIO_fprintf(stream, "%s\n", name);
 }
 
 static void writeBlockEnd(FILE *stream, int indent, const char *name)
 {
   writeIndent(stream, indent);
-  fprintf(stream, "END # %s\n", name);
+  msIO_fprintf(stream, "END # %s\n", name);
 }
 
 static void writeKeyword(FILE *stream, int indent, const char *name, int value, int size, ...)
@@ -488,7 +513,7 @@ static void writeKeyword(FILE *stream, int indent, const char *name, int value, 
     s = va_arg(argp, const char *);
     if(value == i) {
       writeIndent(stream, ++indent);
-      fprintf(stream, "%s %s\n", name, s);
+      msIO_fprintf(stream, "%s %s\n", name, s);
       va_end(argp);
       return;
     }
@@ -500,31 +525,31 @@ static void writeKeyword(FILE *stream, int indent, const char *name, int value, 
 static void writeDimension(FILE *stream, int indent, const char *name, int x, int y, char *bind_x, char *bind_y)
 {
   writeIndent(stream, ++indent);
-  if(bind_x) fprintf(stream, "%s [%s] ", name, bind_x);
-  else fprintf(stream, "%s %d ", name, x);
-  if(bind_y) fprintf(stream, "[%s]\n", bind_y);
-  else fprintf(stream, "%d\n", y);
+  if(bind_x) msIO_fprintf(stream, "%s [%s] ", name, bind_x);
+  else msIO_fprintf(stream, "%s %d ", name, x);
+  if(bind_y) msIO_fprintf(stream, "[%s]\n", bind_y);
+  else msIO_fprintf(stream, "%d\n", y);
 }
 
 static void writeExtent(FILE *stream, int indent, const char *name, rectObj extent)
 {
   if(!MS_VALID_EXTENT(extent)) return;
   writeIndent(stream, ++indent);
-  fprintf(stream, "%s %.15g %.15g %.15g %.15g\n", name, extent.minx, extent.miny, extent.maxx, extent.maxy);
+  msIO_fprintf(stream, "%s %.15g %.15g %.15g %.15g\n", name, extent.minx, extent.miny, extent.maxx, extent.maxy);
 }
 
 static void writeNumber(FILE *stream, int indent, const char *name, double defaultNumber, double number)
 {
   if(number == defaultNumber) return; /* don't output default */
   writeIndent(stream, ++indent);
-  fprintf(stream, "%s %g\n", name, number);
+  msIO_fprintf(stream, "%s %g\n", name, number);
 }
 
 static void writeCharacter(FILE *stream, int indent, const char *name, const char defaultCharacter, char character)
 {
   if(defaultCharacter == character) return;
   writeIndent(stream, ++indent);
-  fprintf(stream, "%s '%c'\n", name, character);
+  msIO_fprintf(stream, "%s '%c'\n", name, character);
 }
 
 static void writeString(FILE *stream, int indent, const char *name, const char *defaultString, char *string)
@@ -534,17 +559,17 @@ static void writeString(FILE *stream, int indent, const char *name, const char *
   if(!string) return;
   if(defaultString && strcmp(string, defaultString) == 0) return;
   writeIndent(stream, ++indent);
-  if(name) fprintf(stream, "%s ", name);
+  if(name) msIO_fprintf(stream, "%s ", name);
   if ( (strchr(string, '\'') == NULL) && (strchr(string, '\"') == NULL))
-    fprintf(stream, "\"%s\"\n", string);
+    msIO_fprintf(stream, "\"%s\"\n", string);
   else if ( (strchr(string, '\"') != NULL) && (strchr(string, '\'') == NULL))
-    fprintf(stream, "'%s'\n", string);
+    msIO_fprintf(stream, "'%s'\n", string);
   else if ( (strchr(string, '\'') != NULL) && (strchr(string, '\"') == NULL))
-    fprintf(stream, "\"%s\"\n", string);
+    msIO_fprintf(stream, "\"%s\"\n", string);
   else {
     string_tmp = msStringEscape(string);
-    fprintf(stream, "\"%s\"\n", string_tmp);
-    free(string_tmp);
+    msIO_fprintf(stream, "\"%s\"\n", string_tmp);
+    if(string!=string_tmp) free(string_tmp);
   }
 }
 
@@ -568,7 +593,7 @@ static void writeNumberOrKeyword(FILE *stream, int indent, const char *name, dou
     s = va_arg(argp, const char *);
     if(value == i) {
       writeIndent(stream, ++indent);
-      fprintf(stream, "%s %s\n", name, s);
+      msIO_fprintf(stream, "%s %s\n", name, s);
       va_end(argp);
       return;
     }
@@ -586,27 +611,27 @@ static void writeNameValuePair(FILE *stream, int indent, const char *name, const
   writeIndent(stream, ++indent);
 
   if ( (strchr(name, '\'') == NULL) && (strchr(name, '\"') == NULL))
-    fprintf(stream, "\"%s\"\t", name);
+    msIO_fprintf(stream, "\"%s\"\t", name);
   else if ( (strchr(name, '\"') != NULL) && (strchr(name, '\'') == NULL))
-    fprintf(stream, "'%s'\t", name);
+    msIO_fprintf(stream, "'%s'\t", name);
   else if ( (strchr(name, '\'') != NULL) && (strchr(name, '\"') == NULL))
-    fprintf(stream, "\"%s\"\t", name);
+    msIO_fprintf(stream, "\"%s\"\t", name);
   else {
     string_tmp = msStringEscape(name);
-    fprintf(stream, "\"%s\"\t", string_tmp);
-    free(string_tmp);
+    msIO_fprintf(stream, "\"%s\"\t", string_tmp);
+    if(name!=string_tmp) free(string_tmp);
   }
 
   if ( (strchr(value, '\'') == NULL) && (strchr(value, '\"') == NULL))
-    fprintf(stream, "\"%s\"\n", value);
+    msIO_fprintf(stream, "\"%s\"\n", value);
   else if ( (strchr(value, '\"') != NULL) && (strchr(value, '\'') == NULL))
-    fprintf(stream, "'%s'\n", value);
+    msIO_fprintf(stream, "'%s'\n", value);
   else if ( (strchr(value, '\'') != NULL) && (strchr(value, '\"') == NULL))
-    fprintf(stream, "\"%s\"\n", value);
+    msIO_fprintf(stream, "\"%s\"\n", value);
   else {
     string_tmp = msStringEscape(value);
-    fprintf(stream, "\"%s\"\n", string_tmp);
-    free(string_tmp);
+    msIO_fprintf(stream, "\"%s\"\n", string_tmp);
+    if(value!=string_tmp) free(string_tmp);
   }
 }
 
@@ -614,7 +639,7 @@ static void writeAttributeBinding(FILE *stream, int indent, const char *name, at
 {
   if(!binding || !binding->item) return;
   writeIndent(stream, ++indent);
-  fprintf(stream, "%s [%s]\n", name, binding->item);
+  msIO_fprintf(stream, "%s [%s]\n", name, binding->item);
 }
 
 static void writeColor(FILE *stream, int indent, const char *name, colorObj *defaultColor, colorObj *color)
@@ -624,9 +649,9 @@ static void writeColor(FILE *stream, int indent, const char *name, colorObj *def
 
   writeIndent(stream, ++indent);
 #if ALPHACOLOR_ENABLED
-  fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue, color->alpha);
+  msIO_fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue, color->alpha);
 #else
-  fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
+  msIO_fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
 #endif
 }
 
@@ -635,7 +660,7 @@ static void writeColorRange(FILE *stream, int indent, const char *name, colorObj
 {
   if(!MS_VALID_COLOR(*mincolor) || !MS_VALID_COLOR(*maxcolor)) return;
   writeIndent(stream, ++indent);
-  fprintf(stream, "%s %d %d %d  %d %d %d\n", name, mincolor->red, mincolor->green, mincolor->blue, maxcolor->red, maxcolor->green, maxcolor->blue);
+  msIO_fprintf(stream, "%s %d %d %d  %d %d %d\n", name, mincolor->red, mincolor->green, mincolor->blue, maxcolor->red, maxcolor->green, maxcolor->blue);
 }
 
 /*
@@ -742,6 +767,23 @@ int loadJoin(joinObj *join)
         return(-1);
     }
   } /* next token */
+}
+
+static void writeScaleToken(FILE *stream, int indent, scaleTokenObj *token) {
+  int i;
+  indent++;
+  writeBlockBegin(stream,indent,"SCALETOKEN");
+  writeString(stream, indent, "NAME", NULL, token->name);
+  indent++;
+  writeBlockBegin(stream,indent,"VALUES");
+  for(i=0;i<token->n_entries;i++) {
+    char minscale[32];
+    sprintf(minscale,"%g",token->tokens[i].minscale);
+    writeNameValuePair(stream, indent, minscale, token->tokens[i].value);
+  }
+  writeBlockEnd(stream,indent,"VALUES");
+  indent--;
+  writeBlockEnd(stream,indent,"SCALETOKEN");
 }
 
 static void writeJoin(FILE *stream, int indent, joinObj *join)
@@ -901,6 +943,8 @@ static int loadFeature(layerObj *player, int type)
         /* todo, what do we do with multiple WKT property occurances? */
 
         if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
+        msFreeShape(shape);
+        msFree(shape);
         if((shape = msShapeFromWKT(string)) == NULL)
           status = MS_FAILURE;
 
@@ -928,7 +972,7 @@ static void writeFeature(FILE *stream, int indent, shapeObj *feature)
     writeBlockBegin(stream, indent, "POINTS");
     for(j=0; j<feature->line[i].numpoints; j++) {
       writeIndent(stream, indent);
-      fprintf(stream, "%.15g %.15g\n", feature->line[i].point[j].x, feature->line[i].point[j].y);
+      msIO_fprintf(stream, "%.15g %.15g\n", feature->line[i].point[j].x, feature->line[i].point[j].y);
     }
     writeBlockEnd(stream, indent, "POINTS");
   }
@@ -936,14 +980,14 @@ static void writeFeature(FILE *stream, int indent, shapeObj *feature)
 
   if (feature->numvalues) {
     writeIndent(stream, indent);
-    fprintf(stream, "ITEMS \"");
+    msIO_fprintf(stream, "ITEMS \"");
     for (i=0; i<feature->numvalues; i++) {
       if (i == 0)
-        fprintf(stream, "%s", feature->values[i]);
+        msIO_fprintf(stream, "%s", feature->values[i]);
       else
-        fprintf(stream, ";%s", feature->values[i]);
+        msIO_fprintf(stream, ";%s", feature->values[i]);
     }
-    fprintf(stream, "\"\n");
+    msIO_fprintf(stream, "\"\n");
   }
 
   writeString(stream, indent, "TEXT", NULL, feature->text);
@@ -2150,6 +2194,29 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   writeBlockEnd(stream, indent, "LABEL");
 }
 
+char* msWriteLabelToString(labelObj *label)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeLabel(stdout, -1, label);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
+}
+
 void initExpression(expressionObj *exp)
 {
   exp->type = MS_STRING;
@@ -2259,7 +2326,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); /* we're totally replacing the old expression so free (which re-inits) to start over */
 
   msyystring_icase = MS_TRUE;
-  if((exp->type = getSymbol(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
+  if((exp->type = getSymbol2(4, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING)) != -1) {
     exp->string = msStrdup(msyystring_buffer);
 
     if(exp->type == MS_ISTRING) {
@@ -2270,9 +2337,12 @@ int loadExpressionString(expressionObj *exp, char *value)
       exp->flags = exp->flags | MS_EXP_INSENSITIVE;
     }
   } else {
-    msResetErrorList(); /* failure above is not really an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
+    /* failure above is not an error since we'll consider anything not matching (like an unquoted number) as a STRING) */
     exp->type = MS_STRING;
-    exp->string = msStrdup(msyystring_buffer);
+    if((strlen(value) - strlen(msyystring_buffer)) == 2)
+      exp->string = msStrdup(msyystring_buffer); /* value was quoted */
+    else
+      exp->string = msStrdup(value); /* use the whole value */
   }
 
   return(0);
@@ -2326,27 +2396,27 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
   writeIndent(stream, ++indent);
   switch(exp->type) {
     case(MS_REGEX):
-      fprintf(stream, "%s /%s/", name, exp->string);
+      msIO_fprintf(stream, "%s /%s/", name, exp->string);
       break;
     case(MS_STRING):
       if ( (strchr(exp->string, '\'') == NULL) && (strchr(exp->string, '\"') == NULL))
-        fprintf(stream, "%s \"%s\"", name, exp->string);
+        msIO_fprintf(stream, "%s \"%s\"", name, exp->string);
       else if ( (strchr(exp->string, '\"') != NULL) && (strchr(exp->string, '\'') == NULL))
-        fprintf(stream, "%s \'%s\'", name, exp->string);
+        msIO_fprintf(stream, "%s \'%s\'", name, exp->string);
       else if ( (strchr(exp->string, '\'') != NULL) && (strchr(exp->string, '\"') == NULL))
-        fprintf(stream, "%s \"%s\"", name, exp->string);
+        msIO_fprintf(stream, "%s \"%s\"", name, exp->string);
       else {
         string_tmp = msStringEscape(exp->string);
-        fprintf(stream, "%s \"%s\"", name, string_tmp);
-        free(string_tmp);
+        msIO_fprintf(stream, "%s \"%s\"", name, string_tmp);
+        if(exp->string!=string_tmp) free(string_tmp);
       }
       break;
     case(MS_EXPRESSION):
-      fprintf(stream, "%s (%s)", name, exp->string);
+      msIO_fprintf(stream, "%s (%s)", name, exp->string);
       break;
   }
   if((exp->type == MS_STRING || exp->type == MS_REGEX) && (exp->flags & MS_EXP_INSENSITIVE))
-    fprintf(stream, "i");
+    msIO_fprintf(stream, "i");
   writeLineFeed(stream);
 }
 
@@ -2413,7 +2483,7 @@ static void writeHashTableInline(FILE *stream, int indent, char *name, hashTable
     if (table->items[i] != NULL) {
       for (tp=table->items[i]; tp!=NULL; tp=tp->next) {
         writeIndent(stream, indent);
-        fprintf(stream, "%s \"%s\" \"%s\"\n", name, tp->key, tp->data);
+        msIO_fprintf(stream, "%s \"%s\" \"%s\"\n", name, tp->key, tp->data);
       }
     }
   }
@@ -2515,6 +2585,29 @@ static void writeCluster(FILE *stream, int indent, clusterObj *cluster)
   writeExpression(stream, indent, "GROUP", &(cluster->group));
   writeExpression(stream, indent, "FILTER", &(cluster->filter));
   writeBlockEnd(stream, indent, "CLUSTER");
+}
+
+char* msWriteClusterToString(clusterObj *cluster)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeCluster(stdout, -1, cluster);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
 }
 
 /*
@@ -2911,14 +3004,19 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   writeNumber(stream, indent, "GAP", 0, style->gap);
   writeNumber(stream, indent, "INITIALGAP", -1, style->initialgap);
 
-  if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
-    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 6,
+  if(style->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) {
+    writeIndent(stream, indent + 1);
+    msIO_fprintf(stream, "GEOMTRANSFORM (%s)\n", style->_geomtransform.string);
+  }
+  else if(style->_geomtransform.type != MS_GEOMTRANSFORM_NONE) {
+    writeKeyword(stream, indent, "GEOMTRANSFORM", style->_geomtransform.type, 7,
                  MS_GEOMTRANSFORM_BBOX, "\"bbox\"",
                  MS_GEOMTRANSFORM_END, "\"end\"",
                  MS_GEOMTRANSFORM_LABELPOINT, "\"labelpnt\"",
                  MS_GEOMTRANSFORM_LABELPOLY, "\"labelpoly\"",
                  MS_GEOMTRANSFORM_START, "\"start\"",
-                 MS_GEOMTRANSFORM_VERTICES, "\"vertices\""
+                 MS_GEOMTRANSFORM_VERTICES, "\"vertices\"",
+                 MS_GEOMTRANSFORM_CENTROID, "\"centroid\""
                 );
   }
 
@@ -2969,9 +3067,10 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     int i;
     indent++;
     writeBlockBegin(stream,indent,"PATTERN");
+    writeIndent(stream, indent);
     for(i=0; i<style->patternlength; i++)
-      fprintf(stream, " %.2f", style->pattern[i]);
-    fprintf(stream,"\n");
+      msIO_fprintf(stream, " %.2f", style->pattern[i]);
+    msIO_fprintf(stream,"\n");
     writeBlockEnd(stream,indent,"PATTERN");
     indent--;
   }
@@ -3002,6 +3101,29 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   }
 
   writeBlockEnd(stream, indent, "STYLE");
+}
+
+char* msWriteStyleToString(styleObj *style)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeStyle(stdout, -1, style);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
 }
 
 /*
@@ -3603,7 +3725,31 @@ static void writeClass(FILE *stream, int indent, classObj *class)
   writeString(stream, indent, "TEMPLATE", NULL, class->template);
   writeExpression(stream, indent, "TEXT", &(class->text));
   writeString(stream, indent, "TITLE", NULL, class->title);
+  writeHashTable(stream, indent, "VALIDATION", &(class->validation));
   writeBlockEnd(stream, indent, "CLASS");
+}
+
+char* msWriteClassToString(classObj *class)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeClass(stdout, -1, class);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
 }
 
 /*
@@ -3651,6 +3797,9 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->maxfeatures = -1; /* no quota */
   layer->startindex = -1; /*used for pagination*/
+
+  layer->scaletokens = NULL;
+  layer->numscaletokens = 0;
 
   layer->template = layer->header = layer->footer = NULL;
 
@@ -3732,7 +3881,32 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->mask = NULL;
   layer->maskimage = NULL;
 
+  initExpression(&(layer->_geomtransform));
+  layer->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+  
   return(0);
+}
+
+int initScaleToken(scaleTokenObj* token) {
+  token->n_entries = 0;
+  token->name = NULL;
+  token->tokens = NULL;
+  return MS_SUCCESS;
+}
+
+int freeScaleTokenEntry( scaleTokenEntryObj *token) {
+  msFree(token->value);
+  return MS_SUCCESS;
+}
+
+int freeScaleToken(scaleTokenObj *scaletoken) {
+  int i;
+  msFree(scaletoken->name);
+  for(i=0;i<scaletoken->n_entries;i++) {
+    freeScaleTokenEntry(&scaletoken->tokens[i]);
+  }
+  msFree(scaletoken->tokens);
+  return MS_SUCCESS;
 }
 
 int freeLayer(layerObj *layer)
@@ -3767,7 +3941,8 @@ int freeLayer(layerObj *layer)
   msFree(layer->classgroup);
 
   msFreeProjection(&(layer->projection));
-
+  freeExpression(&layer->_geomtransform);
+  
   freeCluster(&layer->cluster);
 
   for(i=0; i<layer->maxclasses; i++) {
@@ -3779,6 +3954,13 @@ int freeLayer(layerObj *layer)
     }
   }
   msFree(layer->class);
+
+  if(layer->numscaletokens>0) {
+    for(i=0;i<layer->numscaletokens;i++) {
+      freeScaleToken(&layer->scaletokens[i]);
+    }
+    msFree(layer->scaletokens);
+  }
 
   if(layer->features)
     freeFeatureList(layer->features);
@@ -3858,6 +4040,85 @@ classObj *msGrowLayerClasses( layerObj *layer )
   }
 
   return layer->class[layer->numclasses];
+}
+
+scaleTokenObj *msGrowLayerScaletokens( layerObj *layer )
+{
+  layer->scaletokens = msSmallRealloc(layer->scaletokens,(layer->numscaletokens+1)*sizeof(scaleTokenObj));
+  memset(&layer->scaletokens[layer->numscaletokens],0,sizeof(scaleTokenObj));
+  return &layer->scaletokens[layer->numscaletokens];
+}
+
+int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
+  for(;;) {
+    int stop = 0;
+    switch(msyylex()) {
+      case(EOF):
+        msSetError(MS_EOFERR, NULL, "loadScaletoken()");
+        return(MS_FAILURE);
+      case(NAME):
+        if(getString(&token->name) == MS_FAILURE) return(MS_FAILURE);
+        break;
+      case(VALUES):
+         for(;;) {
+           if(stop) break;
+           switch(msyylex()) {
+             case(EOF):
+               msSetError(MS_EOFERR, NULL, "loadScaletoken()");
+               return(MS_FAILURE);
+             case(END): 
+               stop = 1;
+               if(token->n_entries == 0) {
+                 msSetError(MS_PARSEERR,"Scaletoken (line:%d) has no VALUES defined","loadScaleToken()",msyylineno);
+                 return(MS_FAILURE);
+               }
+               token->tokens[token->n_entries-1].maxscale = DBL_MAX;
+               break;
+             case(MS_STRING):
+               /* we have a key */
+               token->tokens = msSmallRealloc(token->tokens,(token->n_entries+1)*sizeof(scaleTokenEntryObj));
+               
+               if(1 != sscanf(msyystring_buffer,"%lf",&token->tokens[token->n_entries].minscale)) {
+                 msSetError(MS_PARSEERR, "failed to parse SCALETOKEN VALUE (%s):(line %d), expecting \"minscale\"", "loadScaletoken()",
+                         msyystring_buffer,msyylineno);
+                 return(MS_FAILURE);
+               }
+               if(token->n_entries == 0) {
+                 /* check supplied value was 0*/
+                 if(token->tokens[0].minscale != 0) {
+                  msSetError(MS_PARSEERR, "First SCALETOKEN VALUE (%s):(line %d) must be zero, expecting \"0\"", "loadScaletoken()",
+                         msyystring_buffer,msyylineno);
+                  return(MS_FAILURE);
+                 }
+               } else {
+                 /* set max scale of previous token */
+                 token->tokens[token->n_entries-1].maxscale = token->tokens[token->n_entries].minscale;
+               }
+               token->tokens[token->n_entries].value = NULL;
+               if(getString(&(token->tokens[token->n_entries].value)) == MS_FAILURE) return(MS_FAILURE);
+               token->n_entries++;
+               break;
+             default:
+               msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadScaletoken()",  msyystring_buffer, msyylineno );
+               return(MS_FAILURE);
+           }
+         }
+         break;
+      case(END):
+        if(!token->name || !*(token->name)) {
+          msSetError(MS_PARSEERR,"ScaleToken missing mandatory NAME entry (line %d)","loadScaleToken()",msyylineno);
+          return MS_FAILURE;
+        }
+        if(token->n_entries == 0) {
+          msSetError(MS_PARSEERR,"ScaleToken missing at least one VALUES entry (line %d)","loadScaleToken()",msyylineno);
+          return MS_FAILURE;
+        }
+        return MS_SUCCESS;
+      default:
+        msSetError(MS_IDENTERR, "Parsing error 2 near (%s):(line %d)", "loadScaletoken()",  msyystring_buffer, msyylineno );
+        return(MS_FAILURE);
+    }
+  } /* next token*/
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -4028,6 +4289,15 @@ int loadLayer(layerObj *layer, mapObj *map)
           }
         }
         break;
+      case(GEOMTRANSFORM): {
+        int s;
+        if((s = getSymbol(1, MS_EXPRESSION)) == -1) return(MS_FAILURE);
+        /* handle expression case here for the moment */
+        msFree(layer->_geomtransform.string);
+        layer->_geomtransform.string = msStrdup(msyystring_buffer);
+        layer->_geomtransform.type = MS_GEOMTRANSFORM_EXPRESSION;
+      }
+      break;
       case(HEADER):
         if(getString(&layer->header) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
         if(msyysource == MS_URL_TOKENS) {
@@ -4176,6 +4446,13 @@ int loadLayer(layerObj *layer, mapObj *map)
           }
         }
         break;
+      case(SCALETOKEN):
+        if (msGrowLayerScaletokens(layer) == NULL)
+          return(-1);
+        initScaleToken(&layer->scaletokens[layer->numscaletokens]);
+        if(loadScaletoken(&layer->scaletokens[layer->numscaletokens], layer) == -1) return(-1);
+        layer->numscaletokens++;
+        break;
       case(SIZEUNITS):
         if((layer->sizeunits = getSymbol(8, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS)) == -1) return(-1);
         break;
@@ -4309,7 +4586,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
   writeCluster(stream, indent, &(layer->cluster));
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 11, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_GRATICULE, "GRATICULE", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 11, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR");
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */
   writeExtent(stream, indent, "EXTENT", layer->extent);
@@ -4317,6 +4594,12 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "FILTERITEM", NULL, layer->filteritem);
   writeString(stream, indent, "FOOTER", NULL, layer->footer);
   writeString(stream, indent, "GROUP", NULL, layer->group);
+
+  if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) {
+    writeIndent(stream, indent + 1);
+    fprintf(stream, "GEOMTRANSFORM (%s)\n", layer->_geomtransform.string);
+  }
+  
   writeString(stream, indent, "HEADER", NULL, layer->header);
   /* join - see below */
   writeKeyword(stream, indent, "LABELCACHE", layer->labelcache, 1, MS_OFF, "OFF");
@@ -4356,6 +4639,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
   /* write potentially multiply occuring objects last */
+  for(i=0; i<layer->numscaletokens; i++)  writeScaleToken(stream, indent, &(layer->scaletokens[i]));
   for(i=0; i<layer->numjoins; i++)  writeJoin(stream, indent, &(layer->joins[i]));
   for(i=0; i<layer->numclasses; i++) writeClass(stream, indent, layer->class[i]);
 
@@ -4371,6 +4655,29 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
 
   writeBlockEnd(stream, indent, "LAYER");
   writeLineFeed(stream);
+}
+
+char* msWriteLayerToString(layerObj *layer)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeLayer(stdout, -1, layer);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
 }
 
 /*
@@ -4527,6 +4834,29 @@ static void writeReferenceMap(FILE *stream, int indent, referenceMapObj *ref)
   writeNumber(stream, indent, "MINBOXSIZE", -1, ref->minboxsize);
   writeBlockEnd(stream, indent, "REFERENCE");
   writeLineFeed(stream);
+}
+
+char* msWriteReferenceMapToString(referenceMapObj *ref)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeReferenceMap(stdout, -1, ref);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
 }
 
 #define MAX_FORMATOPTIONS 100
@@ -4861,6 +5191,29 @@ static void writeLegend(FILE *stream, int indent, legendObj *legend)
   writeLineFeed(stream);
 }
 
+char* msWriteLegendToString(legendObj *legend)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeLegend(stdout, -1, legend);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
+}
+
 /*
 ** Initialize, load and free a scalebarObj structure
 */
@@ -5012,6 +5365,29 @@ static void writeScalebar(FILE *stream, int indent, scalebarObj *scalebar)
   writeLineFeed(stream);
 }
 
+char* msWriteScalebarToString(scalebarObj *scalebar)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeScalebar(stdout, -1, scalebar);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
+}
+
 /*
 ** Initialize a queryMapObj structure
 */
@@ -5100,6 +5476,29 @@ static void writeQueryMap(FILE *stream, int indent, queryMapObj *querymap)
   writeLineFeed(stream);
 }
 
+char* msWriteQueryMapToString(queryMapObj *querymap)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeQueryMap(stdout, -1, querymap);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
+}
+
 /*
 ** Initialize a webObj structure
 */
@@ -5170,6 +5569,29 @@ static void writeWeb(FILE *stream, int indent, webObj *web)
   writeHashTable(stream, indent, "VALIDATION", &(web->validation));
   writeBlockEnd(stream, indent, "WEB");
   writeLineFeed(stream);
+}
+
+char* msWriteWebToString(webObj *web)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeWeb(stdout, -1, web);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
 }
 
 int loadWeb(webObj *web, mapObj *map)
@@ -5393,6 +5815,7 @@ int initMap(mapObj *map)
 
   msInitSymbolSet(&map->symbolset);
   map->symbolset.fontset =  &(map->fontset);
+  map->symbolset.map = map;
 
   initLegend(&map->legend);
   initScalebar(&map->scalebar);
@@ -5573,29 +5996,10 @@ int msInitLabelCache(labelCacheObj *cache)
   return MS_SUCCESS;
 }
 
-
-int msSaveMap(mapObj *map, char *filename)
+static void writeMap(FILE *stream, int indent, mapObj *map)
 {
-  int i, indent=0;
-  FILE *stream;
-  char szPath[MS_MAXPATHLEN];
+  int i;
   colorObj c;
-
-  if(!map) {
-    msSetError(MS_MISCERR, "Map is undefined.", "msSaveMap()");
-    return(-1);
-  }
-
-  if(!filename) {
-    msSetError(MS_MISCERR, "Filename is undefined.", "msSaveMap()");
-    return(-1);
-  }
-
-  stream = fopen(msBuildPath(szPath, map->mappath, filename), "w");
-  if(!stream) {
-    msSetError(MS_IOERR, "(%s)", "msSaveMap()", filename);
-    return(-1);
-  }
 
   writeBlockBegin(stream, indent, "MAP");
   writeHashTableInline(stream, indent, "CONFIG", &(map->configoptions));
@@ -5639,6 +6043,53 @@ int msSaveMap(mapObj *map, char *filename)
     writeLayer(stream, indent, GET_LAYER(map, map->layerorder[i]));
 
   writeBlockEnd(stream, indent, "MAP");
+}
+
+char* msWriteMapToString(mapObj *map)
+{
+  msIOContext  context;
+  msIOBuffer buffer;
+
+  context.label = NULL;
+  context.write_channel = MS_TRUE;
+  context.readWriteFunc = msIO_bufferWrite;
+  context.cbData = &buffer;
+  buffer.data = NULL;
+  buffer.data_len = 0;
+  buffer.data_offset = 0;
+
+  msIO_installHandlers( NULL, &context, NULL );
+
+  writeMap(stdout, 0, map);
+  msIO_bufferWrite( &buffer, "", 1 );
+
+  msIO_installHandlers( NULL, NULL, NULL );
+
+  return buffer.data;
+}
+
+int msSaveMap(mapObj *map, char *filename)
+{
+  FILE *stream;
+  char szPath[MS_MAXPATHLEN];
+  
+  if(!map) {
+    msSetError(MS_MISCERR, "Map is undefined.", "msSaveMap()");
+    return(-1);
+  }
+
+  if(!filename) {
+    msSetError(MS_MISCERR, "Filename is undefined.", "msSaveMap()");
+    return(-1);
+  }
+
+  stream = fopen(msBuildPath(szPath, map->mappath, filename), "w");
+  if(!stream) {
+    msSetError(MS_IOERR, "(%s)", "msSaveMap()", filename);
+    return(-1);
+  }
+
+  writeMap(stream, 0, map);
   fclose(stream);
 
   return(0);
@@ -5904,6 +6355,10 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
     if(mappath != NULL) free(mappath);
     return NULL;
   }
+
+  if (mappath != NULL) free(mappath);
+  msyylex_destroy();
+
   msReleaseLock( TLOCK_PARSER );
 
   if (debuglevel >= MS_DEBUGLEVEL_TUNING) {
@@ -5913,9 +6368,6 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
             (endtime.tv_sec+endtime.tv_usec/1.0e6)-
             (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
-
-  if (mappath != NULL) free(mappath);
-  msyylex_destroy();
 
   if (resolveSymbolNames(map) == MS_FAILURE) return NULL;
 
@@ -6256,41 +6708,40 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
   return(MS_SUCCESS);
 }
 
+static int classNeedsSubstitutions(classObj *class, char *from) {
+  if(class->expression.string && (strcasestr(class->expression.string, from) != NULL)) return MS_TRUE;
+  if(class->text.string && (strcasestr(class->text.string, from) != NULL)) return MS_TRUE;
+  if(class->title && (strcasestr(class->title, from) != NULL)) return MS_TRUE;
+
+  return MS_FALSE;
+}
+
 static int layerNeedsSubstitutions(layerObj *layer, char *from)
 {
-  int i;
-
   if(layer->data && (strcasestr(layer->data, from) != NULL)) return MS_TRUE;
   if(layer->tileindex && (strcasestr(layer->tileindex, from) != NULL)) return MS_TRUE;
   if(layer->connection && (strcasestr(layer->connection, from) != NULL)) return MS_TRUE;
   if(layer->filter.string && (strcasestr(layer->filter.string, from) != NULL)) return MS_TRUE;
-
-  for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i]->expression.string && (strcasestr(layer->class[i]->expression.string, from) != NULL)) return MS_TRUE;
-    if(layer->class[i]->text.string && (strcasestr(layer->class[i]->text.string, from) != NULL)) return MS_TRUE;
-    if(layer->class[i]->title && (strcasestr(layer->class[i]->title, from) != NULL)) return MS_TRUE;
-  }
 
   if(!msHashIsEmpty(&layer->bindvals)) return MS_TRUE;
 
   return MS_FALSE;
 }
 
+static void classSubstituteString(classObj *class, char *from, char *to) {
+  if(class->expression.string) class->expression.string = msCaseReplaceSubstring(class->expression.string, from, to);
+  if(class->text.string) class->text.string = msCaseReplaceSubstring(class->text.string, from, to);
+  if(class->title) class->title = msCaseReplaceSubstring(class->title, from, to);
+}
+
 static void layerSubstituteString(layerObj *layer, char *from, char *to)
 {
-  int i;
   char *bindvals_key, *bindvals_val;
 
   if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, from, to);
   if(layer->tileindex) layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
   if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
   if(layer->filter.string) layer->filter.string = msCaseReplaceSubstring(layer->filter.string, from, to);
-
-  for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i]->expression.string) layer->class[i]->expression.string = msCaseReplaceSubstring(layer->class[i]->expression.string, from, to);
-    if(layer->class[i]->text.string) layer->class[i]->text.string = msCaseReplaceSubstring(layer->class[i]->text.string, from, to);
-    if(layer->class[i]->title) layer->class[i]->title = msCaseReplaceSubstring(layer->class[i]->title, from, to);
-  }
 
   /* The bindvalues are most useful when able to substitute values from the URL */
   bindvals_key = (char*)msFirstKeyFromHashTable(&layer->bindvals);
@@ -6330,7 +6781,7 @@ static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const
   return;
 }
 
-static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
+static void applyClassDefaultSubstitutions(classObj *class, hashTableObj *table)
 {
   const char *default_key = msFirstKeyFromHashTable(table);
   while(default_key) {
@@ -6339,7 +6790,30 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
       char *tag = (char *)msSmallMalloc(buffer_size);
       snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
 
-      layerSubstituteString(layer, tag, msLookupHashTable(table, default_key));
+
+      classSubstituteString(class, tag, msLookupHashTable(table, default_key));
+      free(tag);
+    }
+    default_key = msNextKeyFromHashTable(table, default_key);
+  }
+  return;
+}
+
+static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
+{
+  int i;
+  const char *default_key = msFirstKeyFromHashTable(table);
+  while(default_key) {
+    if(!strncmp(default_key,"default_",8)) {
+      size_t buffer_size = (strlen(default_key)-5);
+      char *to = msLookupHashTable(table, default_key);
+      char *tag = (char *)msSmallMalloc(buffer_size);
+      snprintf(tag, buffer_size, "%%%s%%", &(default_key[8]));
+
+      for(i=0; i<layer->numclasses; i++) {
+        classSubstituteString(layer->class[i], tag, to);
+      }
+      layerSubstituteString(layer, tag, to);
       free(tag);
     }
     default_key = msNextKeyFromHashTable(table, default_key);
@@ -6353,7 +6827,7 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
 */
 void msApplyDefaultSubstitutions(mapObj *map)
 {
-  int i;
+  int i,j;
 
   /* output formats (#3751) */
   for(i=0; i<map->numoutputformats; i++) {
@@ -6363,14 +6837,23 @@ void msApplyDefaultSubstitutions(mapObj *map)
 
   for(i=0; i<map->numlayers; i++) {
     layerObj *layer = GET_LAYER(map, i);
-    applyLayerDefaultSubstitutions(layer, &(layer->validation));
+
+    for(j=0; j<layer->numclasses; j++) {    /* class settings take precedence...  */
+      classObj *class = GET_CLASS(map, i, j);
+      applyClassDefaultSubstitutions(class, &(class->validation));
+      applyClassDefaultSubstitutions(class, &(class->metadata));
+    }
+
+    applyLayerDefaultSubstitutions(layer, &(layer->validation)); /* ...then layer settings... */
     applyLayerDefaultSubstitutions(layer, &(layer->metadata));
+    applyLayerDefaultSubstitutions(layer, &(map->web.validation)); /* ...and finally web settings */
+    applyLayerDefaultSubstitutions(layer, &(map->web.metadata));
   }
 }
 
 void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
 {
-  int i,j;
+  int i,j,k;
 
   char *tag=NULL;
   char *validation_pattern_key=NULL;
@@ -6381,7 +6864,7 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
     tag = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 3);
     sprintf(tag, "%%%s%%", names[i]);
 
-    /* validation pattern key - depricated */
+    /* validation pattern key - deprecated */
     validation_pattern_key = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 20);
     sprintf(validation_pattern_key,"%s_validation_pattern", names[i]);
 
@@ -6401,15 +6884,69 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
     for(j=0; j<map->numlayers; j++) {
       layerObj *layer = GET_LAYER(map, j);
 
+      /* perform class level substitutions (#4596) */
+      for(k=0; k<layer->numclasses; k++) {
+        classObj *class = GET_CLASS(map, j, k);
+
+        if(!classNeedsSubstitutions(class, tag)) continue;
+
+        if(layer->debug >= MS_DEBUGLEVEL_V)
+          msDebug( "  runtime substitution - Layer %s, Class %s, tag %s...\n", layer->name, class->name, tag);
+
+        if (msLookupHashTable(&(class->validation), names[i]) ||
+            msLookupHashTable(&(class->metadata), validation_pattern_key)) {
+          if (msValidateParameter(values[i],
+                                  msLookupHashTable(&(class->validation), names[i]),
+                                  msLookupHashTable(&(class->metadata), validation_pattern_key),
+                                  NULL, NULL) != MS_SUCCESS) {
+            /* skip as the name exists in the class validation but does not validate */
+            continue;
+          }
+        } else if (msLookupHashTable(&(layer->validation), names[i]) ||
+                   msLookupHashTable(&(layer->metadata), validation_pattern_key)) {
+          if (msValidateParameter(values[i],
+                                  msLookupHashTable(&(layer->validation), names[i]),
+                                  msLookupHashTable(&(layer->metadata), validation_pattern_key),
+                                  NULL, NULL) != MS_SUCCESS) {
+            /* skip as the name exists in the layer validation but does not validate */
+            continue;
+          }
+        } else if (msValidateParameter(values[i],
+                                       msLookupHashTable(&(map->web.validation), names[i]),
+                                       msLookupHashTable(&(map->web.metadata), validation_pattern_key),
+                                       NULL, NULL) != MS_SUCCESS) {
+          /* skip as the web validation fails */
+          continue;
+        }
+
+        /* validation has succeeded in either class, layer or web */
+        classSubstituteString(class, tag, values[i]);
+      }
+
       if(!layerNeedsSubstitutions(layer, tag)) continue;
 
       if(layer->debug >= MS_DEBUGLEVEL_V)
         msDebug( "  runtime substitution - Layer %s, tag %s...\n", layer->name, tag);
 
-      if(msValidateParameter(values[i], msLookupHashTable(&(layer->validation), names[i]),  msLookupHashTable(&(map->web.validation), names[i]),
-                             msLookupHashTable(&(layer->metadata), validation_pattern_key), msLookupHashTable(&(map->web.metadata), validation_pattern_key)) == MS_SUCCESS) {
-        layerSubstituteString(layer, tag, values[i]);
+      if (msLookupHashTable(&(layer->validation), names[i]) ||
+          msLookupHashTable(&(layer->metadata), validation_pattern_key)) {
+        if (msValidateParameter(values[i],
+                                msLookupHashTable(&(layer->validation), names[i]),
+                                msLookupHashTable(&(layer->metadata), validation_pattern_key),
+                                NULL, NULL) != MS_SUCCESS) {
+          /* skip as the name exists in the layer validation but does not validate */
+          continue;
+        }
+      } else if (msValidateParameter(values[i],
+                                     msLookupHashTable(&(map->web.validation), names[i]),
+                                     msLookupHashTable(&(map->web.metadata), validation_pattern_key),
+                                     NULL, NULL) != MS_SUCCESS) {
+        /* skip as the web validation fails */
+        continue;
       }
+
+      /* validation has succeeded in either layer or web */
+      layerSubstituteString(layer, tag, values[i]);
     }
 
     msFree(tag);

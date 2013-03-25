@@ -66,8 +66,6 @@ typedef struct {
 
   int refcount;
 
-  rectObj which_rect;
-
   /* query bound in force
      shapeObj *searchshape;*/
 
@@ -332,11 +330,11 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
 }
 
 int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
-
 {
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   imageObj *image_tmp;
   mapObj   map_tmp;
+  double map_cellsize;
   unsigned int spacing;
   int width, height, u_src_off, v_src_off, i, x, y;
   char   **alteredProcessing = NULL;
@@ -361,9 +359,9 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     return MS_FAILURE;
   }
   /* -------------------------------------------------------------------- */
-  /*      Determine desired spacing.  Default to 30 if not otherwise set  */
+  /*      Determine desired spacing.  Default to 32 if not otherwise set  */
   /* -------------------------------------------------------------------- */
-  spacing = 30;
+  spacing = 32;
   if( CSLFetchNameValue( layer->processing, "UV_SPACING" ) != NULL ) {
     spacing =
       atoi(CSLFetchNameValue( layer->processing, "UV_SPACING" ));
@@ -371,8 +369,10 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   width = (int)ceil(layer->map->width/spacing);
   height = (int)ceil(layer->map->height/spacing);
-  map_tmp.cellsize = layer->map->cellsize*spacing;
-
+  map_cellsize = MS_MAX(MS_CELLSIZE(rect.minx, rect.maxx,layer->map->width),
+                        MS_CELLSIZE(rect.miny,rect.maxy,layer->map->height));
+  map_tmp.cellsize = map_cellsize*spacing;
+  
   if (layer->debug)
     msDebug("msUVRASTERLayerWhichShapes(): width: %d, height: %d, cellsize: %g\n",
             width, height, map_tmp.cellsize);
@@ -391,16 +391,17 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   map_tmp.outputformat->renderer = MS_RENDER_WITH_RAWDATA;
   map_tmp.outputformat->imagemode = MS_IMAGEMODE_FLOAT32;
 
+  map_tmp.configoptions = layer->map->configoptions;
   map_tmp.mappath = layer->map->mappath;
   map_tmp.shapepath = layer->map->shapepath;
-  map_tmp.extent.minx = layer->map->extent.minx-(0.5*layer->map->cellsize)+(0.5*map_tmp.cellsize);
-  map_tmp.extent.miny = layer->map->extent.miny-(0.5*layer->map->cellsize)+(0.5*map_tmp.cellsize);
+  map_tmp.extent.minx = rect.minx-(0.5*map_cellsize)+(0.5*map_tmp.cellsize);
+  map_tmp.extent.miny = rect.miny-(0.5*map_cellsize)+(0.5*map_tmp.cellsize);
   map_tmp.extent.maxx = map_tmp.extent.minx+((width-1)*map_tmp.cellsize);
   map_tmp.extent.maxy = map_tmp.extent.miny+((height-1)*map_tmp.cellsize);
   map_tmp.gt.rotation_angle = 0.0;
 
   msInitProjection(&map_tmp.projection);
-  msCopyProjection(&map_tmp.projection, &layer->map->projection);
+  msCopyProjection(&map_tmp.projection, &layer->projection);
 
   if (layer->debug == 5)
     msDebug("msUVRASTERLayerWhichShapes(): extent: %g %d %g %g\n",
@@ -484,7 +485,6 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   msFreeImage(image_tmp); /* we do not need the imageObj anymore */
 
-  uvlinfo->which_rect = map_tmp.extent;
   uvlinfo->next_shape = 0;
 
   return MS_SUCCESS;
@@ -727,7 +727,7 @@ msUVRASTERLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerGetExtent = msUVRASTERLayerGetExtent;
   /* layer->vtable->LayerGetAutoStyle, use default */
   /* layer->vtable->LayerApplyFilterToLayer, use default */
-  layer->vtable->LayerCloseConnection = msUVRASTERLayerClose;
+  /* layer->vtable->LayerCloseConnection = msUVRASTERLayerClose; */
   /* we use backtics for proper tileindex shapefile functioning */
   layer->vtable->LayerSetTimeFilter = msUVRASTERLayerSetTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */

@@ -776,8 +776,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     renderer->startLayer(image_draw,map,layer);
   } else if (MS_RENDERER_PLUGIN(image_draw->format)) {
     rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
-    if (layer->mask || (layer->opacity > 0 && layer->opacity < 100)) {
-      if (!renderer->supports_transparent_layers) {
+    if ((layer->mask && layer->connectiontype!=MS_WMS && layer->type != MS_LAYER_RASTER) || (layer->opacity > 0 && layer->opacity < 100)) {
+      /* masking occurs at the pixel/layer level for raster images, so we don't need to create a temporary image
+       in these cases
+       */
+      if (layer->mask || !renderer->supports_transparent_layers) {
         image_draw = msImageCreate(image->width, image->height,
                                    image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
         if (!image_draw) {
@@ -943,18 +946,18 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   /* identify target shapes */
-  if(layer->transform == MS_TRUE)
+  if(layer->transform == MS_TRUE) {
     searchrect = map->extent;
+#ifdef USE_PROJ
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+      msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
+#endif
+  }
   else {
     searchrect.minx = searchrect.miny = 0;
     searchrect.maxx = map->width-1;
     searchrect.maxy = map->height-1;
   }
-
-#ifdef USE_PROJ
-  if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-    msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
-#endif
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
   if(status == MS_DONE) { /* no overlap */
@@ -1041,7 +1044,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
       drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
     }
-    
+  
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
@@ -1467,14 +1470,21 @@ msDrawRasterLayerPlugin( mapObj *map, layerObj *layer, imageObj *image)
  */
 int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
-  if (image && map && layer) {
-    if( MS_RENDERER_PLUGIN(image->format) ) {
-      return msDrawRasterLayerPlugin(map, layer, image);
-    } else if( MS_RENDERER_RAWDATA(image->format) )
-      return msDrawRasterLayerLow(map, layer, image, NULL);
+  
+  int rv = MS_FAILURE;
+  if (!image || !map || !layer) {
+    return rv;
   }
 
-  return MS_FAILURE;
+  /* RFC-86 Scale dependant token replacements*/
+  rv = msLayerApplyScaletokens(layer,(layer->map)?layer->map->scaledenom:-1);
+  if (rv != MS_SUCCESS) return rv;
+  if( MS_RENDERER_PLUGIN(image->format) )
+    rv = msDrawRasterLayerPlugin(map, layer, image);
+  else if( MS_RENDERER_RAWDATA(image->format) )
+    rv = msDrawRasterLayerLow(map, layer, image, NULL);
+  msLayerRestoreFromScaletokens(layer);
+  return rv;
 }
 
 /**
@@ -1970,6 +1980,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   msDrawStartShape(map, layer, image, shape);
   c = shape->classindex;
 
+  /* When creating a shape in mapscript and setting the shape.text directly, the
+     text rendering fails without this #4577. If annotext of the first label is
+     not null, msShapeGetAnnotation has already been called: do nothing */
+  if(layer->class[c]->numlabels > 0 && shape->text &&
+     (layer->class[c]->labels[0] && layer->class[c]->labels[0]->annotext==NULL)) {
+    msShapeGetAnnotation(layer, shape);
+  }
+    
   /* Before we do anything else, we will check for a rangeitem.
      If its there, we need to change the style's color to map
      the range to the shape */
@@ -2243,7 +2261,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
         if(msScaleInBounds(map->scaledenom, theclass->styles[s]->minscaledenom, theclass->styles[s]->maxscaledenom))
           msDrawMarkerSymbol(&map->symbolset, image, point, theclass->styles[s], layer->scalefactor);
       }
-      if(labeltext) {
+      if(labeltext && (strlen(labeltext)>0)) {
         if(layer->labelcache) {
           if(msAddLabel(map, label, layer->index, classindex, NULL, point, NULL, -1) != MS_SUCCESS) return(MS_FAILURE);
         } else
@@ -2274,7 +2292,7 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
 
   if(!string) return MS_SUCCESS; /* not an error, just don't need to do anything more */
   if(strlen(string) == 0) return MS_SUCCESS; /* not an error, just don't need to do anything more */
-
+  if(label->status == MS_OFF) return(MS_SUCCESS); /* not an error */
 
 
   if(label->type == MS_TRUETYPE) {
@@ -2947,12 +2965,17 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   /* TODO: treat the case with multiple labels and/or leader lines */
                 }
 
-                /* apply offset and buffer settings */
-                label_offset_x = labelPtr->offsetx*scalefactor;
-                label_offset_y = labelPtr->offsety*scalefactor;
-                label_buffer = (labelPtr->buffer*image->resolutionfactor);
-                label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
-
+                 /* apply offset and buffer settings */
+                 if(labelPtr->anglemode != MS_FOLLOW) {
+                   label_offset_x = labelPtr->offsetx*scalefactor;
+                   label_offset_y = labelPtr->offsety*scalefactor;
+                 } else {
+                   label_offset_x = 0;
+                   label_offset_y = 0;
+                 }
+                 label_buffer = (labelPtr->buffer*image->resolutionfactor);
+                 label_mindistance = (labelPtr->mindistance*image->resolutionfactor);
+                 
 #ifdef oldcode
                 /* adjust the baseline (see #1449) */
                 if(labelPtr->type == MS_TRUETYPE) {
@@ -3007,14 +3030,14 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
                   positions[2]=MS_CC;
                   npositions = 3;
                 } else {
-                  positions[0]=MS_UC;
-                  positions[1]=MS_LC;
-                  positions[2]=MS_CR;
-                  positions[3]=MS_CL;
-                  positions[4]=MS_UR;
-                  positions[5]=MS_UL;
-                  positions[6]=MS_LR;
-                  positions[7]=MS_LL;
+                  positions[0]=MS_UL;
+                  positions[1]=MS_LR;
+                  positions[2]=MS_UR;
+                  positions[3]=MS_LL;
+                  positions[4]=MS_CR;
+                  positions[5]=MS_CL;
+                  positions[6]=MS_UC;
+                  positions[7]=MS_LC;
                   npositions = 8;
                 }
 
@@ -3094,9 +3117,9 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
               } /* end POSITION AUTO vs Fixed POSITION */
 
               if((!labelPtr->status || !label_marker_status) && classPtr->leader.maxdistance == 0) {
+                labelPtr->status = MS_OFF;
                 break; /* no point looking at more labels, unless their is a leader defined, in which
                 case we still want to compute the full cachePtr->poly to be used for offset tests */
-                labelPtr->status = MS_OFF;
               } else {
                 if(!cachePtr->poly) {
                   cachePtr->poly = (shapeObj*)msSmallMalloc(sizeof(shapeObj));

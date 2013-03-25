@@ -68,9 +68,12 @@
      LENGTH = 286,
      AREA = 287,
      TOSTRING = 288,
-     DIFFERENCE = 289,
-     YYBUFFER = 290,
-     NEG = 291
+     GENERALIZE = 289,
+     SIMPLIFYPT = 290,
+     SIMPLIFY = 291,
+     DIFFERENCE = 292,
+     YYBUFFER = 293,
+     NEG = 294
    };
 #endif
 /* Tokens.  */
@@ -105,9 +108,12 @@
 #define LENGTH 286
 #define AREA 287
 #define TOSTRING 288
-#define DIFFERENCE 289
-#define YYBUFFER 290
-#define NEG 291
+#define GENERALIZE 289
+#define SIMPLIFYPT 290
+#define SIMPLIFY 291
+#define DIFFERENCE 292
+#define YYBUFFER 293
+#define NEG 294
 
 
 
@@ -128,7 +134,7 @@ typedef union YYSTYPE
 
 
 /* Line 2068 of yacc.c  */
-#line 132 "mapparser.h"
+#line 138 "mapparser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

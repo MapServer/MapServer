@@ -44,6 +44,8 @@ extern char *msyystring_buffer;
 extern int msyylineno;
 extern FILE *msyyin;
 
+extern int msyystate;
+
 static const unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
 static const unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
 
@@ -89,7 +91,7 @@ double msSymbolGetDefaultSize(symbolObj *s)
 #endif
       break;
     default: /* vector and ellipses, scalable */
-      size = s->sizey;
+      size = (s->sizey<=0)?s->sizex:s->sizey;
       break;
   }
 
@@ -289,46 +291,49 @@ void writeSymbol(symbolObj *s, FILE *stream)
 {
   int i;
 
-  fprintf(stream, "  SYMBOL\n");
-  if(s->name != NULL) fprintf(stream, "    NAME \"%s\"\n", s->name);
+  msIO_fprintf(stream, "  SYMBOL\n");
+  if(s->name != NULL) msIO_fprintf(stream, "    NAME \"%s\"\n", s->name);
 
   switch (s->type) {
     case(MS_SYMBOL_HATCH):
-      fprintf(stream, "    TYPE HATCH\n");
+      msIO_fprintf(stream, "    TYPE HATCH\n");
       break;
     case(MS_SYMBOL_PIXMAP):
-      fprintf(stream, "    TYPE PIXMAP\n");
-      if(s->imagepath != NULL) fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
-      fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
+      msIO_fprintf(stream, "    TYPE PIXMAP\n");
+      if(s->imagepath != NULL) msIO_fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
+      msIO_fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
       break;
     case(MS_SYMBOL_TRUETYPE):
-      fprintf(stream, "    TYPE TRUETYPE\n");
-      if(s->antialias == MS_TRUE) fprintf(stream, "    ANTIALIAS TRUE\n");
-      if (s->character != NULL) fprintf(stream, "    CHARACTER \"%s\"\n", s->character);
-      if (s->font != NULL) fprintf(stream, "    FONT \"%s\"\n", s->font);
+      msIO_fprintf(stream, "    TYPE TRUETYPE\n");
+      if(s->antialias == MS_TRUE) msIO_fprintf(stream, "    ANTIALIAS TRUE\n");
+      if (s->character != NULL) msIO_fprintf(stream, "    CHARACTER \"%s\"\n", s->character);
+      if (s->font != NULL) msIO_fprintf(stream, "    FONT \"%s\"\n", s->font);
       break;
     default:
       if(s->type == MS_SYMBOL_ELLIPSE)
-        fprintf(stream, "    TYPE ELLIPSE\n");
+        msIO_fprintf(stream, "    TYPE ELLIPSE\n");
       else if(s->type == MS_SYMBOL_VECTOR)
-        fprintf(stream, "    TYPE VECTOR\n");
+        msIO_fprintf(stream, "    TYPE VECTOR\n");
+      else if(s->type == MS_SYMBOL_SVG)
+        msIO_fprintf(stream, "    TYPE SVG\n");
       else
-        fprintf(stream, "    TYPE SIMPLE\n");
+        msIO_fprintf(stream, "    TYPE SIMPLE\n");
 
-      if(s->filled == MS_TRUE) fprintf(stream, "    FILLED TRUE\n");
+      if(s->filled == MS_TRUE) msIO_fprintf(stream, "    FILLED TRUE\n");
+      if(s->imagepath != NULL) msIO_fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
 
       /* POINTS */
       if(s->numpoints != 0) {
-        fprintf(stream, "    POINTS\n");
+        msIO_fprintf(stream, "    POINTS\n");
         for(i=0; i<s->numpoints; i++) {
-          fprintf(stream, "      %g %g\n", s->points[i].x, s->points[i].y);
+          msIO_fprintf(stream, "      %g %g\n", s->points[i].x, s->points[i].y);
         }
-        fprintf(stream, "    END\n");
+        msIO_fprintf(stream, "    END\n");
       }
       break;
   }
 
-  fprintf(stream, "  END\n\n");
+  msIO_fprintf(stream, "  END\n\n");
 }
 
 
@@ -549,6 +554,9 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 
   pszSymbolPath = msGetPath(szPath);
 
+  msyystate = MS_TOKENIZE_FILE; /* restore lexer state to INITIAL, and do return comments */
+  msyylex(); /* sets things up, but doesn't process any tokens */
+
   msyylineno = 0; /* reset line counter */
   msyyrestart(msyyin); /* flush the scanner - there's a better way but this works for now */
 
@@ -651,7 +659,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
         *width = MS_MAX(*width, symbol->pixmap_buffer->width);
         *height = MS_MAX(*height, symbol->pixmap_buffer->height);
       } else {
-        *width = MS_MAX(*width, ((size/symbol->pixmap_buffer->height) * symbol->pixmap_buffer->width));
+        *width = MS_MAX(*width, (((double)size/(double)symbol->pixmap_buffer->height) * symbol->pixmap_buffer->width));
         *height = MS_MAX(*height, size);
       }
       break;

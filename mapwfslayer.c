@@ -68,7 +68,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   rectObj bbox;
   const char *pszTmp;
   int nLength, i = 0;
-  char *pszVersion, *pszTypeName = NULL;
+  char *pszVersion, *pszTypeName, *pszGeometryName = NULL;
 
   if (!map || !lp || !bbox_ret)
     return NULL;
@@ -114,6 +114,10 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   }
   */
 
+  pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "geometryname");
+  if (pszTmp)
+    psParams->pszGeometryName = msStrdup(pszTmp);
+
   pszTmp = msOWSLookupMetadata(&(lp->metadata), "FO", "typename");
   if (pszTmp)
     psParams->pszTypeName = msStrdup(pszTmp);
@@ -149,7 +153,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     if (strstr(pszTmp, "<Filter>") !=NULL || strstr(pszTmp, "<ogc:Filter") != NULL)
       psParams->pszFilter = msStrdup(pszTmp);
     else {
-      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter>");
+      psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">");
       psParams->pszFilter = msStringConcatenate(psParams->pszFilter, (char*)pszTmp);
       psParams->pszFilter = msStringConcatenate(psParams->pszFilter, "</ogc:Filter>");
     }
@@ -214,6 +218,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 {
   char *pszPostReq = NULL;
   char *pszFilter = NULL;
+  char *pszGeometryName = "Geometry";
   size_t bufferSize = 0;
 
   if (psParams->pszVersion == NULL ||
@@ -231,6 +236,9 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
   }
 
 
+  if (psParams->pszGeometryName) {
+    pszGeometryName = psParams->pszGeometryName;
+  }
 
   if (psParams->pszFilter)
     pszFilter = psParams->pszFilter;
@@ -239,12 +247,12 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
     pszFilter = (char *)msSmallMalloc(bufferSize);
     snprintf(pszFilter, bufferSize, "<ogc:Filter>\n"
              "<ogc:BBOX>\n"
-             "<ogc:PropertyName>Geometry</ogc:PropertyName>\n"
+             "<ogc:PropertyName>%s</ogc:PropertyName>\n"
              "<gml:Box>\n"
              "<gml:coordinates>%f,%f %f,%f</gml:coordinates>\n"
              "</gml:Box>\n"
              "</ogc:BBOX>\n"
-             "</ogc:Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+             "</ogc:Filter>", pszGeometryName, bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
   }
 
   bufferSize = strlen(pszFilter)+500;
@@ -255,7 +263,8 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
              "service=\"WFS\"\n"
              "version=\"1.0.0\"\n"
              "maxFeatures=\"%d\"\n"
-             "outputFormat=\"GML2\">\n"
+             "outputFormat=\"GML2\"\n"
+			 "xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:ogc=\"http://www.opengis.net/ogc\" xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/wfs.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml\">\n"
              "<wfs:Query typeName=\"%s\">\n"
              "%s"
              "</wfs:Query>\n"
@@ -265,7 +274,8 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
              "<wfs:GetFeature\n"
              "service=\"WFS\"\n"
              "version=\"1.0.0\"\n"
-             "outputFormat=\"GML2\">\n"
+             "outputFormat=\"GML2\"\n"
+             "xmlns:wfs=\"http://www.opengis.net/wfs\" xmlns:ogc=\"http://www.opengis.net/ogc\" xsi:schemaLocation=\"http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/wfs.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:gml=\"http://www.opengis.net/gml\">\n"
              "<wfs:Query typeName=\"%s\">\n"
              "%s"
              "</wfs:Query>\n"

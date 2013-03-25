@@ -840,6 +840,18 @@ int saveImageCairo(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format
   return MS_SUCCESS;
 }
 
+unsigned char* saveImageBufferCairo(imageObj *img, int *size_ptr, outputFormatObj *format)
+{
+  cairo_renderer *r = CAIRO_RENDERER(img);
+  unsigned char *data;
+  assert(!strcasecmp(img->format->driver,"cairo/pdf") || !strcasecmp(img->format->driver,"cairo/svg"));
+  cairo_surface_finish (r->surface);
+  data = msSmallMalloc(r->outputStream->size);
+  memcpy(data,r->outputStream->data,r->outputStream->size);
+  *size_ptr = (int)r->outputStream->size;
+  return data;
+}
+
 void *msCreateTileEllipseCairo(double width, double height, double angle,
                                colorObj *c, colorObj *bc, colorObj *oc, double ow)
 {
@@ -1191,6 +1203,10 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
 #endif
 }
 
+void msCairoCleanup() {
+   cairo_debug_reset_static_data();
+}
+
 #endif /*USE_CAIRO*/
 
 
@@ -1248,6 +1264,7 @@ inline int populateRendererVTableCairoVector( rendererVTableObj *renderer )
   renderer->renderLineTiled = NULL;
   renderer->createImage=&createImageCairo;
   renderer->saveImage=&saveImageCairo;
+  renderer->saveImageBuffer = &saveImageBufferCairo;
   renderer->getRasterBufferHandle=&getRasterBufferHandleCairo;
   renderer->renderPolygon=&renderPolygonCairo;
   renderer->renderGlyphs=&renderGlyphsCairo;

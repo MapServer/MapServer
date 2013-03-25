@@ -32,7 +32,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-
+#include "mapthread.h"
 
 
 #include <ctype.h>
@@ -1608,8 +1608,13 @@ char *msGetEncodedString(const char *string, const char *encoding)
   size_t len, bufsize, bufleft, iconv_status;
 
 #ifdef USE_FRIBIDI
-  if(fribidi_parse_charset ((char*)encoding))
-    return msGetFriBidiEncodedString(string, encoding);
+  msAcquireLock(TLOCK_FRIBIDI);
+  if(fribidi_parse_charset ((char*)encoding)) {
+    int ret = msGetFriBidiEncodedString(string, encoding);
+    msReleaseLock(TLOCK_FRIBIDI);
+    return ret;
+  }
+  msReleaseLock(TLOCK_FRIBIDI);
 #endif
   len = strlen(string);
 
@@ -2023,17 +2028,25 @@ char *msStrdup( const char * pszString )
 /************************************************************************/
 
 /* Checks if a string contains single or double quotes and escape them.
-   NOTE: the user have to free the returned char */
+   NOTE: the user must free the returned char* if it is different than the
+   one passed in */
 
 char* msStringEscape( const char * pszString )
 {
   char *string_tmp, *string_ptr;
-  int i;
+  int i,ncharstoescape=0;
 
   if (pszString ==  NULL || strlen(pszString) == 0)
     return msStrdup("");
 
-  string_tmp = (char*)msSmallMalloc((strlen(pszString)*2)+1);
+  for (i=0; pszString[i]; i++)
+    ncharstoescape += ((pszString[i] == '\"')||(pszString[i] == '\''));
+  
+  if(!ncharstoescape) {
+    return (char*)pszString;
+  }
+
+  string_tmp = (char*)msSmallMalloc(strlen(pszString)+ncharstoescape+1);
   for (string_ptr=(char*)pszString,i=0; *string_ptr!='\0'; ++string_ptr,++i) {
     if ( (*string_ptr == '\"') || (*string_ptr == '\'') ) {
       string_tmp[i] = '\\';

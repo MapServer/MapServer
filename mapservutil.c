@@ -31,7 +31,6 @@
 #include "mapserver.h"
 #include "mapserv.h"
 #include "maptime.h"
-#include <sys/stat.h>
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
@@ -105,7 +104,7 @@ void msCGIWriteError(mapservObj *mapserv)
   msCGIWriteLog(mapserv,MS_TRUE);
 
   if(!mapserv || !mapserv->map) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("<HTML>\n");
     msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -119,7 +118,7 @@ void msCGIWriteError(mapservObj *mapserv)
   if((ms_error->code == MS_NOTFOUND) && (mapserv->map->web.empty)) {
     /* msRedirect(mapserv->map->web.empty); */
     if(msReturnURL(mapserv, mapserv->map->web.empty, BROWSE) != MS_SUCCESS) {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -132,7 +131,7 @@ void msCGIWriteError(mapservObj *mapserv)
     if(mapserv->map->web.error) {
       /* msRedirect(mapserv->map->web.error); */
       if(msReturnURL(mapserv, mapserv->map->web.error, BROWSE) != MS_SUCCESS) {
-        msIO_setHeader("Content-type","text/html");
+        msIO_setHeader("Content-Type","text/html");
         msIO_sendHeaders();
         msIO_printf("<HTML>\n");
         msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -142,7 +141,7 @@ void msCGIWriteError(mapservObj *mapserv)
         msIO_printf("</BODY></HTML>");
       }
     } else {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -190,60 +189,38 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
 {
   int i, j;
   mapObj *map = NULL;
-  static mapObj *preloadedmap = NULL;
-  static time_t preloadedmap_mtime;
-  static char *ms_mapfile = NULL;
-  struct stat mapfile_stat;
 
-  /* check if we should use and/or create a pre-parsed mapfile */
-  ms_mapfile = getenv("MS_MAPFILE");
-  if(preloadedmap || ms_mapfile) {
-    if(preloadedmap) {
-      /* we already have a preloaded mapfile, check if the mapfile itself hasn't changed */
-      stat(ms_mapfile,&mapfile_stat);
-      if(mapfile_stat.st_mtime > preloadedmap_mtime) {
-        /* the mapfile has been updated on disk, discard the cached mapObj */
-        msFreeMap(preloadedmap);
-        preloadedmap = NULL;
-        msDebug("reloading mapfile %s as it has been changed on disk",ms_mapfile);
-      }
-    }
-    if(!preloadedmap) {
-      /* either the mapfile has never been loaded, or it has been destroyed because it was outdated */
-      preloadedmap = msLoadMap(ms_mapfile,NULL);
-      if(!preloadedmap) return NULL;
-      stat(ms_mapfile,&mapfile_stat);
-      preloadedmap_mtime = mapfile_stat.st_mtime;
-    }
-    map = msNewMapObj();
-    msCopyMap(map,preloadedmap);
-  } else {
-    for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
-      if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
+  for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
+    if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
-    if(i == mapserv->request->NumParams) {
+  if(i == mapserv->request->NumParams) {
+    char *ms_mapfile = getenv("MS_MAPFILE");
+    if(ms_mapfile) {
+      map = msLoadMap(ms_mapfile,NULL);
+    } else {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
       return NULL;
-    } else {
-      if(getenv(mapserv->request->ParamValues[i])) /* an environment variable references the actual file to use */
-        map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
-      else {
-        /* by here we know the request isn't for something in an environment variable */
-        if(getenv("MS_MAP_NO_PATH")) {
-          msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
-          return NULL;
-        }
-
-        if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
-          msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
-          return NULL;
-        }
-
-        /* ok to try to load now */
-        map = msLoadMap(mapserv->request->ParamValues[i], NULL);
+    }
+  } else {
+    if(getenv(mapserv->request->ParamValues[i])) /* an environment variable references the actual file to use */
+      map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
+    else {
+      /* by here we know the request isn't for something in an environment variable */
+      if(getenv("MS_MAP_NO_PATH")) {
+        msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
+        return NULL;
       }
+
+      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
+        msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
+        return NULL;
+      }
+
+      /* ok to try to load now */
+      map = msLoadMap(mapserv->request->ParamValues[i], NULL);
     }
   }
+  
 
   if(!map) return NULL;
 
@@ -341,6 +318,18 @@ int msCGISetMode(mapservObj *mapserv)
 
     if(j == numModes) {
       msSetError(MS_WEBERR, "Invalid mode.", "msCGISetMode()");
+      return MS_FAILURE;
+    }
+  }
+
+  if (mapserv->Mode >= 0)
+  {
+    int disabled = MS_FALSE;
+    const char* enable_modes = msLookupHashTable(&mapserv->map->web.metadata, "ms_enable_modes");
+
+    if (!msOWSParseRequestMetadata(enable_modes, mode, &disabled) && disabled) {
+      /* the current mode is disabled */
+      msSetError(MS_WEBERR, "The specified mode '%s' is not supported by the current map configuration", "msCGISetMode()", mode);
       return MS_FAILURE;
     }
   }
@@ -1131,7 +1120,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv)
     return MS_FAILURE;
 
   if ( (template != NULL) && (strcasecmp(template, "openlayers")==0) ) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     if (msReturnOpenLayersPage(mapserv) != MS_SUCCESS)
       return MS_FAILURE;
@@ -1141,7 +1130,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv)
   } else {
     if(TEMPLATE_TYPE(mapserv->map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
       if(mapserv->sendheaders) {
-        msIO_setHeader("Content-type",mapserv->map->web.browseformat); /* write MIME header */
+        msIO_setHeader("Content-Type",mapserv->map->web.browseformat); /* write MIME header */
         msIO_sendHeaders();
       }
       if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, NULL) != MS_SUCCESS)
@@ -1499,7 +1488,7 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
     const char *attachment = msGetOutputFormatOption(mapserv->map->outputformat, "ATTACHMENT", NULL );
     if(attachment)
       msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
-    msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+    msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
     msIO_sendHeaders();
   }
 
@@ -1522,7 +1511,7 @@ int msCGIDispatchLegendRequest(mapservObj *mapserv)
     legendTemplate = generateLegendTemplate(mapserv);
     if(legendTemplate) {
       if(mapserv->sendheaders) {
-        msIO_setHeader("Content-type",mapserv->map->web.legendformat);
+        msIO_setHeader("Content-Type",mapserv->map->web.legendformat);
         msIO_sendHeaders();
       }
       msIO_fwrite(legendTemplate, strlen(legendTemplate), 1, stdout);
@@ -1593,7 +1582,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
     return MS_FAILURE;
 
   if(mapserv->sendheaders) {
-    msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+    msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
     msIO_sendHeaders();
   }
   /*
@@ -1648,7 +1637,7 @@ int msCGIDispatchRequest(mapservObj *mapserv)
       }
       if (service && strcasecmp(service,"WMS")==0) {
         if(mapserv->sendheaders) {
-          msIO_setHeader("Content-type","text/html");
+          msIO_setHeader("Content-Type","text/html");
           msIO_sendHeaders();
         }
 
@@ -1750,7 +1739,7 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   mapserv->request->type = MS_GET_REQUEST;
 
   if(!query_string || !*query_string) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("No query information to decode. QUERY_STRING not set.\n");
     goto end_request;

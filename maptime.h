@@ -68,6 +68,7 @@ int msTimeMatchPattern(char *timestring, char *pattern);
 void msSetLimitedPattersToUse(char *patternstring);
 void msUnsetLimitedPatternToUse(void);
 int msTimeGetResolution(const char *timestring);
+void msTimeCleanup();
 
 int msValidateTimeValue(char *timestring, const char *timeextent);
 

@@ -60,6 +60,8 @@ typedef struct {
 
   double *qc_x;
   double *qc_y;
+  double *qc_x_reproj;
+  double *qc_y_reproj;
   float *qc_values;
   int    *qc_class;
   int    *qc_red;
@@ -139,6 +141,8 @@ static void msRasterLayerInfoFree( layerObj *layer )
   if( rlinfo->qc_x != NULL ) {
     free( rlinfo->qc_x );
     free( rlinfo->qc_y );
+    free( rlinfo->qc_x_reproj );
+    free( rlinfo->qc_y_reproj );
   }
 
   if( rlinfo->qc_values )
@@ -206,6 +210,7 @@ static void msRasterLayerInfoInitialize( layerObj *layer )
 /************************************************************************/
 
 static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
+                                   pointObj *reprojectedLocation,
                                    float *values )
 
 {
@@ -228,6 +233,10 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         rlinfo->qc_x = (double *)
                        msSmallCalloc(sizeof(double),rlinfo->query_alloc_max);
         rlinfo->qc_y = (double *)
+                       msSmallCalloc(sizeof(double),rlinfo->query_alloc_max);
+        rlinfo->qc_x_reproj = (double *)
+                       msSmallCalloc(sizeof(double),rlinfo->query_alloc_max);
+        rlinfo->qc_y_reproj = (double *)
                        msSmallCalloc(sizeof(double),rlinfo->query_alloc_max);
         rlinfo->qc_values = (float *)
                             msSmallCalloc(sizeof(float),
@@ -266,6 +275,12 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
                                     sizeof(double) * rlinfo->query_alloc_max);
     if( rlinfo->qc_y != NULL )
       rlinfo->qc_y = msSmallRealloc(rlinfo->qc_y,
+                                    sizeof(double) * rlinfo->query_alloc_max);
+    if( rlinfo->qc_x_reproj != NULL )
+      rlinfo->qc_x_reproj = msSmallRealloc(rlinfo->qc_x_reproj,
+                                    sizeof(double) * rlinfo->query_alloc_max);
+    if( rlinfo->qc_y_reproj != NULL )
+      rlinfo->qc_y_reproj = msSmallRealloc(rlinfo->qc_y_reproj,
                                     sizeof(double) * rlinfo->query_alloc_max);
     if( rlinfo->qc_values != NULL )
       rlinfo->qc_values =
@@ -363,6 +378,8 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
   if( rlinfo->qc_x != NULL ) {
     rlinfo->qc_x[rlinfo->query_results] = location->x;
     rlinfo->qc_y[rlinfo->query_results] = location->y;
+    rlinfo->qc_x_reproj[rlinfo->query_results] = reprojectedLocation->x;
+    rlinfo->qc_y_reproj[rlinfo->query_results] = reprojectedLocation->y;
   }
 
   /* -------------------------------------------------------------------- */
@@ -546,7 +563,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /* -------------------------------------------------------------------- */
   for( iLine = 0; iLine < nWinYSize; iLine++ ) {
     for( iPixel = 0; iPixel < nWinXSize; iPixel++ ) {
-      pointObj  sPixelLocation;
+      pointObj  sPixelLocation,sReprojectedPixelLocation;
 
       if( rlinfo->query_results == rlinfo->query_result_hard_max )
         break;
@@ -561,17 +578,20 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 
       /* If projections differ, convert this back into the map  */
       /* projection for distance testing, and comprison to the  */
-      /* search shape.  */
+      /* search shape.  Save the original pixel location coordinates */
+      /* in sPixelLocationInLayerSRS, so that we can return those */
+      /* coordinates if we have a hit */
+      sReprojectedPixelLocation = sPixelLocation;
       if( needReproject )
         msProjectPoint( &(layer->projection), &(map->projection),
-                        &sPixelLocation );
+                        &sReprojectedPixelLocation);
 
       /* If we are doing QueryByShape, check against the shape now */
       if( rlinfo->searchshape != NULL ) {
         if( rlinfo->shape_tolerance == 0.0
             && rlinfo->searchshape->type == MS_SHAPE_POLYGON ) {
           if( msIntersectPointPolygon(
-                &sPixelLocation, rlinfo->searchshape ) == MS_FALSE )
+                &sReprojectedPixelLocation, rlinfo->searchshape ) == MS_FALSE )
             continue;
         } else {
           shapeObj  tempShape;
@@ -582,7 +602,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
           tempShape.numlines = 1;
           tempShape.line = &tempLine;
           tempLine.numpoints = 1;
-          tempLine.point = &sPixelLocation;
+          tempLine.point = &sReprojectedPixelLocation;
 
           if( msDistanceShapeToShape(rlinfo->searchshape, &tempShape)
               > rlinfo->shape_tolerance )
@@ -593,10 +613,10 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
       if( rlinfo->range_mode >= 0 ) {
         double dist;
 
-        dist = (rlinfo->target_point.x - sPixelLocation.x)
-               * (rlinfo->target_point.x - sPixelLocation.x)
-               + (rlinfo->target_point.y - sPixelLocation.y)
-               * (rlinfo->target_point.y - sPixelLocation.y);
+        dist = (rlinfo->target_point.x - sReprojectedPixelLocation.x)
+               * (rlinfo->target_point.x - sReprojectedPixelLocation.x)
+               + (rlinfo->target_point.y - sReprojectedPixelLocation.y)
+               * (rlinfo->target_point.y - sReprojectedPixelLocation.y);
 
         if( dist >= dfAdjustedRange )
           continue;
@@ -609,7 +629,9 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
         }
       }
 
-      msRasterQueryAddPixel( layer, &sPixelLocation,
+      msRasterQueryAddPixel( layer,
+			                       &sPixelLocation, // return coords in layer SRS
+                             &sReprojectedPixelLocation,
                              pafRaster
                              + (iLine*nWinXSize + iPixel) * nBandCount );
     }
@@ -1307,10 +1329,10 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
       char szWork[1000];
 
       szWork[0] = '\0';
-      if( EQUAL(layer->items[i],"x") && rlinfo->qc_x )
-        snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_x[shapeindex] );
-      else if( EQUAL(layer->items[i],"y") && rlinfo->qc_y )
-        snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_y[shapeindex] );
+      if( EQUAL(layer->items[i],"x") && rlinfo->qc_x_reproj )
+        snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_x_reproj[shapeindex] );
+      else if( EQUAL(layer->items[i],"y") && rlinfo->qc_y_reproj )
+        snprintf( szWork, bufferSize, "%.8g", rlinfo->qc_y_reproj[shapeindex] );
 
       else if( EQUAL(layer->items[i],"value_list") && rlinfo->qc_values ) {
         int iValue;
@@ -1372,9 +1394,9 @@ int msRASTERLayerGetItems(layerObj *layer)
   layer->items = (char **) msSmallCalloc(sizeof(char *),10);
 
   layer->numitems = 0;
-  if( rlinfo->qc_x )
+  if( rlinfo->qc_x_reproj )
     layer->items[layer->numitems++] = msStrdup("x");
-  if( rlinfo->qc_y )
+  if( rlinfo->qc_y_reproj )
     layer->items[layer->numitems++] = msStrdup("y");
   if( rlinfo->qc_values ) {
     int i;
@@ -1565,7 +1587,7 @@ msRASTERLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerGetExtent = msRASTERLayerGetExtent;
   /* layer->vtable->LayerGetAutoStyle, use default */
   /* layer->vtable->LayerApplyFilterToLayer, use default */
-  layer->vtable->LayerCloseConnection = msRASTERLayerClose;
+  /* layer->vtable->LayerCloseConnection = msRASTERLayerClose; */
   /* we use backtics for proper tileindex shapefile functioning */
   layer->vtable->LayerSetTimeFilter = msRASTERLayerSetTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */

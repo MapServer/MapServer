@@ -290,7 +290,7 @@ mapserver_handler (request_rec *r)
                                   &ParamNames, &ParamValues);
     szMethod = MS_GET_REQUEST;
   } else if (r->method_number == M_POST) {
-    szContentType = (char*) apr_table_get (r->headers_in, "Content-type");
+    szContentType = (char*) apr_table_get (r->headers_in, "Content-Type");
     post_data = mapserver_read_post_data (r);
     szMethod  = MS_POST_REQUEST;
     if (strcmp (szContentType, "application/x-www-form-urlencoded") == 0) {

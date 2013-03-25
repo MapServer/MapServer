@@ -172,10 +172,12 @@ typedef ms_uint32 *     ms_bitarray;
 extern "C" {
 #endif
 
+// hide from swig or ruby will choke on the __FUNCTION__ name
+#ifndef SWIG
   /* Memory allocation check utility */
-
 #ifndef __FUNCTION__
 #   define __FUNCTION__ "MapServer"
+#endif
 #endif
 
 #define MS_CHECK_ALLOC(var, size, retval)     \
@@ -601,7 +603,7 @@ extern "C" {
 #endif
 
 #ifndef SWIG
-    struct map_obj *map;
+    struct mapObj *map;
 #endif
   } fontSetObj;
 
@@ -648,9 +650,9 @@ extern "C" {
   };
   enum MS_TOKEN_FUNCTION_ENUM {
     MS_TOKEN_FUNCTION_LENGTH=340, MS_TOKEN_FUNCTION_TOSTRING, MS_TOKEN_FUNCTION_COMMIFY, MS_TOKEN_FUNCTION_AREA, MS_TOKEN_FUNCTION_ROUND, MS_TOKEN_FUNCTION_FROMTEXT,
-    MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE
+    MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE, MS_TOKEN_FUNCTION_SIMPLIFY, MS_TOKEN_FUNCTION_SIMPLIFYPT, MS_TOKEN_FUNCTION_GENERALIZE
   };
-  enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=350, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE };
+  enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=360, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE, MS_TOKEN_BINDING_MAP_CELLSIZE };
   enum MS_PARSE_TYPE_ENUM { MS_PARSE_TYPE_BOOLEAN, MS_PARSE_TYPE_STRING, MS_PARSE_TYPE_SHAPE };
 
 #ifndef SWIG
@@ -697,6 +699,7 @@ extern "C" {
   typedef struct {
     colorObj *pixel; /* for raster layers */
     shapeObj *shape; /* for vector layers */
+    double dblval; /* for cellsize used by simplify */    
     expressionObj *expr; /* expression to be evaluated (contains tokens) */
     int type; /* type of parse: boolean, string/text or shape/geometry */
     parseResultObj result; /* parse result */
@@ -752,6 +755,17 @@ extern "C" {
   /************************************************************************/
 
   typedef struct {
+#ifndef SWIG
+    int refcount;
+    char **formatoptions;
+#endif /* SWIG */
+#ifdef SWIG
+    %immutable;
+#endif /* SWIG */
+    int  numformatoptions;
+#ifdef SWIG
+    %mutable;
+#endif /* SWIG */
     char *name;
     char *mimetype;
     char *driver;
@@ -760,9 +774,6 @@ extern "C" {
     int  imagemode; /* MS_IMAGEMODE_* value. */
     int  transparent;
     int  bands;
-    int  numformatoptions;
-    char **formatoptions;
-    int  refcount;
     int inmapfile; /* boolean value for writing */
 #ifndef SWIG
     rendererVTableObj *vtable;
@@ -834,7 +845,7 @@ extern "C" {
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    struct map_obj *map;
+    struct mapObj *map;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1058,7 +1069,7 @@ extern "C" {
   /*      basic symbolization and classification information              */
   /************************************************************************/
 
-  typedef struct class_obj {
+  typedef struct classObj {
 #ifndef SWIG
     expressionObj expression; /* the expression to be matched */
 #endif
@@ -1114,7 +1125,7 @@ extern "C" {
     %immutable;
 #endif /* SWIG */
     int refcount;
-    struct layer_obj *layer;
+    struct layerObj *layer;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1257,7 +1268,7 @@ extern "C" {
 #ifndef SWIG
     int refcount;
     symbolObj** symbol;
-    struct map_obj *map;
+    struct mapObj *map;
     fontSetObj *fontset; /* a pointer to the main mapObj version */
     struct imageCacheObj *imagecache;
 #endif /* not SWIG */
@@ -1281,7 +1292,7 @@ extern "C" {
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    struct map_obj *map;
+    struct mapObj *map;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1342,7 +1353,7 @@ extern "C" {
 #ifdef SWIG
     %immutable;
 #endif /* SWIG */
-    struct map_obj *map;
+    struct mapObj *map;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1445,7 +1456,19 @@ extern "C" {
   /*      base unit of a map.                                             */
   /************************************************************************/
 
-  typedef struct layer_obj {
+  typedef struct {
+    double minscale;
+    double maxscale;
+    char *value;
+  } scaleTokenEntryObj;
+  
+  typedef struct {
+     char *name;
+     int n_entries;
+     scaleTokenEntryObj *tokens;
+  } scaleTokenObj;
+  
+  typedef struct layerObj {
 
     char *classitem; /* .DBF item to be used for symbol lookup */
 
@@ -1469,7 +1492,7 @@ extern "C" {
     int numclasses;
     int maxclasses;
     int index;
-    struct map_obj *map;
+    struct mapObj *map;
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1486,6 +1509,20 @@ extern "C" {
     char *group; /* shouldn't be unique it's supposed to be a group right? */
 
     int status; /* on or off */
+
+#ifndef SWIG
+    /* RFC86 Scale-dependent token replacements */
+    scaleTokenObj *scaletokens;
+    int numscaletokens;
+    
+    /* The following store original members if they have been modified at runtime by a rfc86 scaletoken */
+    char *orig_data;
+    char *orig_tileitem;
+    char *orig_tileindex;
+    char *orig_filteritem;
+    char *orig_filter; 
+#endif
+
     char *data; /* filename, can be relative or full path */
 
     enum MS_LAYER_TYPE type;
@@ -1607,6 +1644,9 @@ extern "C" {
 #endif
     char *mask;
 
+#ifndef SWIG    
+    expressionObj _geomtransform;
+#endif    
   } layerObj;
 
   /************************************************************************/
@@ -1617,7 +1657,7 @@ extern "C" {
   /************************************************************************/
 
   /* MAP OBJECT -  */
-  typedef struct map_obj { /* structure for a map */
+  typedef struct mapObj { /* structure for a map */
     char *name; /* small identifier for naming etc. */
     int status; /* is map creation on or off */
     int height, width;
@@ -1673,7 +1713,9 @@ extern "C" {
     %immutable;
 #endif /* SWIG */
     int numoutputformats;
+#ifndef SWIG
     outputFormatObj **outputformatlist;
+#endif /*SWIG*/
     outputFormatObj *outputformat;
 
     char *imagetype; /* name of current outputformat */
@@ -1789,6 +1831,8 @@ extern "C" {
   MS_DLL_EXPORT int initLayer(layerObj *layer, mapObj *map);
   MS_DLL_EXPORT int freeLayer( layerObj * );
   MS_DLL_EXPORT classObj *msGrowLayerClasses( layerObj *layer );
+  MS_DLL_EXPORT scaleTokenObj *msGrowLayerScaletokens( layerObj *layer );
+  MS_DLL_EXPORT int initScaleToken(scaleTokenObj *scaleToken);
   MS_DLL_EXPORT int initClass(classObj *_class);
   MS_DLL_EXPORT int freeClass( classObj * );
   MS_DLL_EXPORT styleObj *msGrowClassStyles( classObj *_class );
@@ -1884,6 +1928,17 @@ extern "C" {
   MS_DLL_EXPORT int msUpdateClassFromString(classObj *_class, char *string, int url_string);
   MS_DLL_EXPORT int msUpdateLayerFromString(layerObj *layer, char *string, int url_string);
   MS_DLL_EXPORT int msUpdateMapFromURL(mapObj *map, char *variable, char *string);
+  MS_DLL_EXPORT char *msWriteLayerToString(layerObj *layer);
+  MS_DLL_EXPORT char *msWriteMapToString(mapObj *map);
+  MS_DLL_EXPORT char *msWriteClassToString(classObj *_class);
+  MS_DLL_EXPORT char *msWriteStyleToString(styleObj *style);
+  MS_DLL_EXPORT char *msWriteLabelToString(labelObj *label);
+  MS_DLL_EXPORT char *msWriteWebToString(webObj *web);
+  MS_DLL_EXPORT char *msWriteScalebarToString(scalebarObj *scalebar);
+  MS_DLL_EXPORT char *msWriteQueryMapToString(queryMapObj *querymap);
+  MS_DLL_EXPORT char *msWriteReferenceMapToString(referenceMapObj *ref);
+  MS_DLL_EXPORT char *msWriteLegendToString(legendObj *legend);
+  MS_DLL_EXPORT char *msWriteClusterToString(clusterObj *cluster);
   MS_DLL_EXPORT int msEvalRegex(char *e, char *s);
 #ifdef USE_MSFREE
   MS_DLL_EXPORT void msFree(void *p);
@@ -2150,6 +2205,8 @@ extern "C" {
   MS_DLL_EXPORT void msLayerFreeItemInfo(layerObj *layer);
 
   MS_DLL_EXPORT int msLayerOpen(layerObj *layer); /* in maplayer.c */
+  MS_DLL_EXPORT int msLayerApplyScaletokens(layerObj *layer, double scale);
+  MS_DLL_EXPORT int msLayerRestoreFromScaletokens(layerObj *layer);
   MS_DLL_EXPORT int msClusterLayerOpen(layerObj *layer); /* in mapcluster.c */
   MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
   MS_DLL_EXPORT void msLayerClose(layerObj *layer);
@@ -2388,7 +2445,7 @@ extern "C" {
   MS_DLL_EXPORT unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format);
   MS_DLL_EXPORT shapeObj* msOffsetPolyline(shapeObj* shape, double offsetx, double offsety);
   MS_DLL_EXPORT int msMapSetLayerProjections(mapObj* map);
-
+  
   /* Functions to chnage the drawing order of the layers. */
   /* Defined in mapobject.c */
   MS_DLL_EXPORT int msMoveLayerUp(mapObj *map, int nLayerIndex);
@@ -2449,6 +2506,8 @@ extern "C" {
   MS_DLL_EXPORT int *msAllocateValidClassGroups(layerObj *lp, int *nclasses);
 
   MS_DLL_EXPORT void msFreeRasterBuffer(rasterBufferObj *b);
+
+  MS_DLL_EXPORT shapeObj* msGeneralize(shapeObj * shape, double tolerance);
   /* ==================================================================== */
   /*      End of prototypes for functions in maputil.c                    */
   /* ==================================================================== */
@@ -2619,8 +2678,11 @@ extern "C" {
   };
 
   MS_DLL_EXPORT int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor);
-  MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *style, char *transform);
+  MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *s, char *transform);
   MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
+
+  MS_DLL_EXPORT int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape);  
+  
   /* ==================================================================== */
   /*      end of prototypes for functions in mapgeomtransform.c                 */
   /* ==================================================================== */
@@ -2732,6 +2794,9 @@ extern "C" {
   MS_DLL_EXPORT int msPopulateRendererVTableGD( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableKML( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
+#ifdef USE_CAIRO
+  MS_DLL_EXPORT void msCairoCleanup(void);
+#endif
 
   /* allocate 50k for starters */
 #define MS_DEFAULT_BUFFER_ALLOC 50000
@@ -2862,12 +2927,17 @@ extern "C" {
   } ;
   MS_DLL_EXPORT int msRenderRasterizedSVGSymbol(imageObj* img, double x, double y, symbolObj* symbol, symbolStyleObj* style);
 
-#endif /* SWIG */
-
 #define MS_IMAGE_RENDERER(im) ((im)->format->vtable)
 #define MS_RENDERER_CACHE(renderer) ((renderer)->renderer_data)
 #define MS_IMAGE_RENDERER_CACHE(im) MS_RENDERER_CACHE(MS_IMAGE_RENDERER((im)))
 #define MS_MAP_RENDERER(map) ((map)->outputformat->vtable)
+
+shapeObj *msOffsetCurve(shapeObj *p, double offset);
+#if defined HAVE_GEOS_OFFSET_CURVE
+shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
+#endif
+
+#endif /* SWIG */
 
 #ifdef __cplusplus
 }

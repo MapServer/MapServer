@@ -79,7 +79,7 @@ PHP_METHOD(shapeFileObj, __construct)
   zval *zobj = getThis();
   php_shapefile_object *php_shapefile;
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   long type;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -104,7 +104,7 @@ PHP_METHOD(shapeFileObj, __construct)
 PHP_METHOD(shapeFileObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_shapefile_object *php_shapefile;
 
@@ -132,7 +132,7 @@ PHP_METHOD(shapeFileObj, __get)
 PHP_METHOD(shapeFileObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_shapefile_object *php_shapefile;

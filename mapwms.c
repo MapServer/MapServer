@@ -110,9 +110,9 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
 
   } else if (strcasecmp(wms_exception_format, "WMS_XML") == 0) { /* Only in V1.0.0 */
     if (encoding)
-      msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+      msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","text/xml");
+      msIO_setHeader("Content-Type","text/xml");
     msIO_sendHeaders();
 
     msIO_printf("<WMTException version=\"1.0.0\">\n");
@@ -124,9 +124,9 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
     if (nVersion <= OWS_1_0_7) {
       /* In V1.0.1 to 1.0.7, the MIME type was text/xml */
       if (encoding)
-        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+        msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
       else
-        msIO_setHeader("Content-type","text/xml");
+        msIO_setHeader("Content-Type","text/xml");
       msIO_sendHeaders();
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -140,9 +140,9 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
       /* In V1.1.0 and later, we have OGC-specific MIME types */
       /* we cannot return anything else than application/vnd.ogc.se_xml here. */
       if (encoding)
-        msIO_setHeader("Content-type","application/vnd.ogc.se_xml; charset=%s", encoding);
+        msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=%s", encoding);
       else
-        msIO_setHeader("Content-type","application/vnd.ogc.se_xml");
+        msIO_setHeader("Content-Type","application/vnd.ogc.se_xml");
       msIO_sendHeaders();
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -156,9 +156,9 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
       msIO_printf("<ServiceExceptionReport version=\"1.1.0\">\n");
     } else if (nVersion <= OWS_1_1_1) { /* 1.1.1 */
       if (encoding)
-        msIO_setHeader("Content-type","application/vnd.ogc.se_xml; charset=%s", encoding);
+        msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=%s", encoding);
       else
-        msIO_setHeader("Content-type","application/vnd.ogc.se_xml");
+        msIO_setHeader("Content-Type","application/vnd.ogc.se_xml");
       msIO_sendHeaders();
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -170,14 +170,14 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
     } else { /*1.3.0*/
       if (strcasecmp(wms_exception_format, "application/vnd.ogc.se_xml") == 0) {
         if (encoding)
-          msIO_setHeader("Content-type","application/vnd.ogc.se_xml; charset=%s", encoding);
+          msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=%s", encoding);
         else
-          msIO_setHeader("Content-type","application/vnd.ogc.se_xml");
+          msIO_setHeader("Content-Type","application/vnd.ogc.se_xml");
       } else {
         if (encoding)
-          msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+          msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
         else
-          msIO_setHeader("Content-type","text/xml");
+          msIO_setHeader("Content-Type","text/xml");
       }
       msIO_sendHeaders();
 
@@ -198,61 +198,63 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
     msIO_printf("</ServiceException>\n");
     msIO_printf("</ServiceExceptionReport>\n");
 
-    free(schemalocation);
-
   }
+  free(schemalocation);
 
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
 
-void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
+int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int checkonly)
 {
-  char *time = NULL;
-  char **atimes, **tokens = NULL;
-  int numtimes, ntmp, i = 0;
+  char **atimes, **ranges, **patterns;
+  int numtimes, numpatterns, numranges, i, j, k;
   char *tmpstr = NULL;
+  int ret = MS_SUCCESS;
 
   if (timepatternstring && timestring) {
     /* parse the time parameter to extract a distinct time. */
     /* time value can be dicrete times (eg 2004-09-21), */
     /* multiple times (2004-09-21, 2004-09-22, ...) */
     /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
-    if (strstr(timestring, ",") == NULL &&
-        strstr(timestring, "/") == NULL) { /* discrete time */
-      time = msStrdup(timestring);
-    } else {
-      atimes = msStringSplit (timestring, ',', &numtimes);
-      if (numtimes >=1 && atimes) {
-        tokens = msStringSplit(atimes[0],  '/', &ntmp);
-        if (ntmp == 2 && tokens) { /* range */
-          time = msStrdup(tokens[0]);
-        } else { /* multiple times */
-          time = msStrdup(atimes[0]);
-        }
-        msFreeCharArray(tokens, ntmp);
-        msFreeCharArray(atimes, numtimes);
-      }
-    }
+    atimes = msStringSplit(timestring, ',', &numtimes);
+    
     /* get the pattern to use */
-    if (time) {
-      tokens = msStringSplit(timepatternstring, ',', &ntmp);
-      if (tokens && ntmp >= 1) {
-        for (i=0; i<ntmp; i++) {
-          if (tokens[i] && strlen(tokens[i]) > 0) {
-            msStringTrimBlanks(tokens[i]);
-            tmpstr = msStringTrimLeft(tokens[i]);
-            if (msTimeMatchPattern(time, tmpstr) == MS_TRUE) {
-              msSetLimitedPattersToUse(tmpstr);
-              break;
+    if (numtimes>0) {      
+      patterns = msStringSplit(timepatternstring, ',', &numpatterns);      
+      for (j=0; j<numtimes;++j) {
+        ranges = msStringSplit(atimes[j],  '/', &numranges);
+        for (k=0; k<numranges;++k) {
+          int match = MS_FALSE;
+          for (i=0; i<numpatterns; ++i) {
+            if (patterns[i] && strlen(patterns[i]) > 0) {
+              msStringTrimBlanks(patterns[i]);
+              tmpstr = msStringTrimLeft(patterns[i]);
+              if (msTimeMatchPattern(ranges[k], tmpstr) == MS_TRUE) {
+                if (!checkonly) msSetLimitedPattersToUse(tmpstr);
+                match = MS_TRUE;
+                break;
+              }
             }
           }
+          if (match == MS_FALSE) {
+            msSetError(MS_WMSERR, "Time value %s given does not match the time format pattern.",
+                   "msWMSSetTimePattern", ranges[k]);            
+            ret = MS_FAILURE;
+            break;
+          }
         }
-        msFreeCharArray(tokens, ntmp);
+         msFreeCharArray(ranges, numranges);
+         if (ret == MS_FAILURE)
+           break;
       }
-      free(time);
-    }
 
+      msFreeCharArray(patterns, numpatterns);
+      msFreeCharArray(atimes, numtimes);              
+
+    }
   }
+
+  return ret;
 }
 
 /*
@@ -263,8 +265,12 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
   int i=0;
   layerObj *lp = NULL;
   const char *timeextent, *timefield, *timedefault, *timpattern = NULL;
-
+    
   if (map) {
+
+    timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",
+                                     "timeformat");
+    
     for (i=0; i<map->numlayers; i++) {
       lp = (GET_LAYER(map, i));
       if (lp->status != MS_ON && lp->status != MS_DEFAULT)
@@ -294,6 +300,17 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
             msLayerSetTimeFilter(lp, timedefault, timefield);
           }
         } else {
+          /* check to see if there is a list of possible patterns defined */
+          /* if it is the case, use it to set the time pattern to use */
+          /* for the request.
+
+             Last argument is set to TRUE (checkonly) to not trigger the
+             patterns info setting.. to only apply the wms_timeformats on the
+             user request values, not the mapfile values. */
+          if (timpattern && time && strlen(time) > 0) 
+            if (msWMSSetTimePattern(timpattern, time, MS_TRUE) == MS_FAILURE) 
+              return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
+          
           /* check if given time is in the range */
           if (msValidateTimeValue(time, timeextent) == MS_FALSE) {
             if (timedefault == NULL) {
@@ -319,14 +336,13 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
         }
       }
     }
-    /* check to see if there is a list of possible patterns defined */
-    /* if it is the case, use it to set the time pattern to use */
-    /* for the request */
 
-    timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",
-                                     "timeformat");
+    /* last argument is MS_FALSE to trigger a method call that set the patterns
+       info. some drivers use it */
     if (timpattern && time && strlen(time) > 0)
-      msWMSSetTimePattern(timpattern, time);
+      if (msWMSSetTimePattern(timpattern, time, MS_FALSE) == MS_FAILURE)
+        return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
+    
   }
 
   return MS_SUCCESS;
@@ -637,14 +653,14 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
             }
             if (j == nextentranges) {
               valueisvalid = MS_FALSE;
+              msFreeCharArray(onerange, ntmp);
               break;
             }
           }
         } else {
           valueisvalid = MS_FALSE;
         }
-        if (onerange && ntmp > 0)
-          msFreeCharArray(onerange, ntmp);
+        msFreeCharArray(onerange, ntmp);
       }
       uservaluevalid = valueisvalid;
     }
@@ -860,6 +876,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       if (layers==NULL || strlen(values[i]) <=0 ||   numlayers < 1) {
         numlayers = 0;
         if (sld_url == NULL &&   sld_body == NULL) {
+          msFreeCharArray(layers,numlayers);
+          msFree(layerOrder);
           msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
                      "msWMSLoadGetMapParams()");
           return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -870,6 +888,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
         layerlimit = msOWSLookupMetadata(&(map->web.metadata), "MO", "layerlimit");
         if(layerlimit) {
           if (numlayers > atoi(layerlimit)) {
+            msFreeCharArray(layers,numlayers);
+            msFree(layerOrder);
             msSetError(MS_WMSERR, "Number of layers requested exceeds LayerLimit.",
                        "msWMSLoadGetMapParams()");
             return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -1244,12 +1264,16 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                                        wms_exception_format)) {
                 msFreeCharArray(tokens, ntokens);
                 msFree(dimensionname);
+                msFree(stmp);
 
                 return msWMSException(lp->map, nVersion, "InvalidDimensionValue",  wms_exception_format);
               }
+              msFree(dimensionname);
+              msFree(stmp);
               break;
             }
             msFree(dimensionname);
+            msFree(stmp);
           }
         }
         msFreeCharArray(tokens, ntokens);
@@ -1583,6 +1607,8 @@ this request. Check wms/ows_enable_request settings.",
                   layers[l] = strdup(tmpId);
                   msInsertLayer(map, psTmpLayer, -1);
                   bLayerInserted =MS_TRUE;
+                  /* layer was copied, we need to decrement its refcount */
+                  MS_REFCNT_DECR(psTmpLayer);
                 }
               }
             }
@@ -1602,8 +1628,7 @@ this request. Check wms/ows_enable_request settings.",
               lp =   GET_LAYER(map, j);
               for (k=0; k<lp->numclasses; k++) {
                 if (lp->class[k]->group && strcasecmp(lp->class[k]->group, tokens[i]) == 0) {
-                  if (lp->classgroup)
-                    msFree(lp->classgroup);
+                  msFree(lp->classgroup);
                   lp->classgroup = msStrdup( tokens[i]);
                   break;
                 }
@@ -1640,16 +1665,14 @@ this request. Check wms/ows_enable_request settings.",
         } else {
           msSetError(MS_WMSERR, "Invalid style (%s). Mapserver is expecting an empty string for the STYLES : STYLES= or STYLES=,,, or using keyword default  STYLES=default,default, ...",
                      "msWMSLoadGetMapParams()", styles);
-          if (tokens && n > 0)
-            msFreeCharArray(tokens, n);
-          if (layers && numlayers > 0)
-            msFreeCharArray(layers, numlayers);
+          msFreeCharArray(tokens, n);
+          msFreeCharArray(layers, numlayers);
           return msWMSException(map, nVersion, "StyleNotDefined", wms_exception_format);
         }
       }
     }
-    if (tokens && n > 0)
-      msFreeCharArray(tokens, n);
+    msFreeCharArray(tokens, n);
+    msFreeCharArray(layers, numlayers);
   }
 
   /*
@@ -2227,6 +2250,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
         msFree(pszDimension);
         msFree(pszDimensionItemName);
         msFree(pszDimensionUnitName);
+        msFree(pszDimensionExtentName);
         msFree(pszDimensionDefaultName);
 
       }
@@ -2370,6 +2394,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
             group_layers[0] = lp->index;
             if (isUsedInNestedGroup[lp->index]) {
               for (j=0; j < map->numlayers; j++) {
+                if (j == lp->index)
+                    continue;
                 for(k = 0; k < numNestedGroups[j]; k++) {
                   if (strcasecmp(lp->name, nestedGroups[j][k]) == 0) {
                     group_layers[num_layers++] = j;
@@ -2535,6 +2561,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
             free(nestedGroups);
             free(numNestedGroups);
             free(isUsedInNestedGroup);
+            free(group_layers);
           }
         }
       }
@@ -2543,6 +2570,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
   msFree(pszMetadataName);
 
+  /* print Min/Max ScaleDenominator */
   if (nVersion <  OWS_1_3_0)
     msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
   else
@@ -2593,6 +2621,7 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
                             int index, int level, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup, const char *script_url_encoded, const char *validated_language)
 {
   int i, j;
+  int groupAdded = 0;
   char *indent = NULL;
   indent = msStrdup("");
 
@@ -2618,10 +2647,12 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
       if (!pabLayerProcessed[j]) {
         msDumpLayer(map, GET_LAYER(map, j), nVersion, script_url_encoded, indent, validated_language, MS_TRUE);
         pabLayerProcessed[j] = 1; /* done */
+        groupAdded = 1;
       }
     } else {
       msIO_printf("%s    <Layer>\n", indent);
       msIO_printf("%s      <Title>%s</Title>\n", indent, nestedGroups[index][level]);
+      groupAdded = 1;
     }
 
     /* Look for one group deeper in the current layer */
@@ -2648,7 +2679,8 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
       }
     }
     /* Close group layer block */
-    msIO_printf("%s    </Layer>\n", indent);
+    if (groupAdded)
+      msIO_printf("%s    </Layer>\n", indent);
   }
 
   msFree(indent);
@@ -2751,14 +2783,14 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 
   if (nVersion <= OWS_1_0_7 || nVersion >= OWS_1_3_0)   /* 1.0.0 to 1.0.7 and >=1.3.0*/
     if (encoding)
-      msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+      msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","text/xml");
+      msIO_setHeader("Content-Type","text/xml");
   else /* 1.1.0 and later */
     if (encoding)
-      msIO_setHeader("Content-type","application/vnd.ogc.wms_xml; charset=%s", encoding);
+      msIO_setHeader("Content-Type","application/vnd.ogc.wms_xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","application/vnd.ogc.wms_xml");
+      msIO_setHeader("Content-Type","application/vnd.ogc.wms_xml");
   msIO_sendHeaders();
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -2904,7 +2936,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 #endif
                            "<SVG />"
                            , NULL);
-    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_FALSE))
+    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE))
       msWMSPrintRequestCap(nVersion, "Capabilities", script_url_encoded, "<WMS_XML />", NULL);
     if (msOWSRequestIsEnabled(map, NULL, "M", "GetFeatureInfo", MS_FALSE))
       msWMSPrintRequestCap(nVersion, "FeatureInfo", script_url_encoded, "<MIME /><GML.1 />", NULL);
@@ -2915,7 +2947,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     /* WMS 1.1.0 and later */
     /* Note changes to the request names, their ordering, and to the formats */
 
-    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_FALSE)) {
+    if (msOWSRequestIsEnabled(map, NULL, "M", "GetCapabilities", MS_TRUE)) {
       if (nVersion >= OWS_1_3_0)
         msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
                              "text/xml",
@@ -3195,12 +3227,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                         MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE,
                         NULL, NULL, NULL, NULL, NULL, "    ");
 
-    if (nVersion <  OWS_1_3_0)
-      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
-                          map->resolution);
-    else
-      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
-
     if (map->name && strlen(map->name) > 0 && msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
       char *pszEncodedName = NULL;
       const char *styleName = NULL;
@@ -3295,11 +3321,19 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
           msFree(pszLegendURL);
           msFree(pszMimetype);
         }
+        msFree(group_layers);
       }
       msIO_fprintf(stdout, "    </Style>\n");
       msFree(pszEncodedName);
       msFree(pszEncodedStyleName);
+
     }
+
+    if (nVersion <  OWS_1_3_0)
+      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
+                          map->resolution);
+    else
+      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
 
     /*  */
     /* Dump list of layers organized by groups.  Layers with no group are listed */
@@ -3316,6 +3350,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       /* processed already */
       pabLayerProcessed = (char *)msSmallCalloc(map->numlayers, sizeof(char*));
 
+      /* Mark disabled layers as processed to prevent from being displayed in nested groups (#4533)*/
+      for(i=0; i<map->numlayers; i++) {
+        if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
+          pabLayerProcessed[i] = 1;
+      }
+
       nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
       numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
       isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
@@ -3325,8 +3365,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
         layerObj *lp;
         lp = (GET_LAYER(map, i));
 
-        if (pabLayerProcessed[i] || (lp->status == MS_DELETE) ||
-            (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)))
+        if (pabLayerProcessed[i] || (lp->status == MS_DELETE))
           continue;  /* Layer is hidden or has already been handled */
 
         if (numNestedGroups[i] > 0) {
@@ -3677,7 +3716,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   }
 
   if (strcasecmp(map->imagetype, "application/openlayers")!=0) {
-    msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(map->outputformat));
+    msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(map->outputformat));
     msIO_sendHeaders();
     if (msSaveImage(map, img, NULL) != MS_SUCCESS) {
       msFreeImage(img);
@@ -4031,9 +4070,9 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     int numresults = 0;
 
     if (encoding)
-      msIO_setHeader("Content-type","text/plain; charset=%s", encoding);
+      msIO_setHeader("Content-Type","text/plain; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","text/plain");
+      msIO_setHeader("Content-Type","text/plain");
     msIO_sendHeaders();
     msIO_printf("GetFeatureInfo results:\n");
 
@@ -4046,14 +4085,14 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
     if (nVersion <= OWS_1_0_7)   /* 1.0.0 to 1.0.7 */
       if (encoding)
-        msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+        msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
       else
-        msIO_setHeader("Content-type","text/xml");
+        msIO_setHeader("Content-Type","text/xml");
     else /* 1.1.0 and later */
       if (encoding)
-        msIO_setHeader("Content-type","application/vnd.ogc.gml; charset=%s", encoding);
+        msIO_setHeader("Content-Type","application/vnd.ogc.gml; charset=%s", encoding);
       else
-        msIO_setHeader("Content-type","application/vnd.ogc.gml");
+        msIO_setHeader("Content-Type","application/vnd.ogc.gml");
     msIO_sendHeaders();
     msGMLWriteQuery(map, NULL, "MGO"); /* default is stdout */
 
@@ -4140,9 +4179,9 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   }
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -4504,8 +4543,7 @@ this request. Check wms/ows_enable_request settings.",
                  "msWMSGetLegendGraphic()");
       return msWMSException(map, nVersion, "StyleNotDefined", wms_exception_format);
     } else {
-      if (GET_LAYER(map, iLayerIndex)->classgroup)
-        msFree(GET_LAYER(map, iLayerIndex)->classgroup);
+      msFree(GET_LAYER(map, iLayerIndex)->classgroup);
       GET_LAYER(map, iLayerIndex)->classgroup = msStrdup(pszStyle);
 
     }
@@ -4568,7 +4606,7 @@ this request. Check wms/ows_enable_request settings.",
   if (img == NULL)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
 
-  msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(map->outputformat));
+  msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(map->outputformat));
   msIO_sendHeaders();
   if (msSaveImage(map, img, NULL) != MS_SUCCESS)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
@@ -4657,17 +4695,17 @@ this request. Check wms/ows_enable_request settings.",
 
   if (nVersion <= OWS_1_1_1) {
     if (encoding)
-      msIO_setHeader("Content-type","application/vnd.ogc.sld+xml; charset=%s", encoding);
+      msIO_setHeader("Content-Type","application/vnd.ogc.sld+xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","application/vnd.ogc.sld+xml");
+      msIO_setHeader("Content-Type","application/vnd.ogc.sld+xml");
     msIO_sendHeaders();
     sld = msSLDGenerateSLD(map, -1, "1.0.0");
   } else {
     /*for wms 1.3.0 generate a 1.1 sld*/
     if (encoding)
-      msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+      msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","text/xml");
+      msIO_setHeader("Content-Type","text/xml");
     msIO_sendHeaders();
     sld = msSLDGenerateSLD(map, -1, "1.1.0");
   }
@@ -4689,9 +4727,9 @@ int msWMSGetSchemaExtension(mapObj *map)
   encoding = msOWSLookupMetadata(&(map->web.metadata), "MO", "encoding");
 
   if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
-    msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml");
   msIO_sendHeaders();
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -4841,9 +4879,9 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
       return msWMSException(map, nVersion, NULL, wms_exception_format);
 
     if (encoding)
-      msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
+      msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","text/xml");
+      msIO_setHeader("Content-Type","text/xml");
     msIO_sendHeaders();
 
     if ( msWriteMapContext(map, stdout) != MS_SUCCESS )
@@ -4854,9 +4892,9 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
              format && strcasecmp(format,  "image/txt") == 0) {
     /* Until someone adds full support for ASCII graphics this should do. ;) */
     if (encoding)
-      msIO_setHeader("Content-type","text/plain; charset=%s", encoding);
+      msIO_setHeader("Content-Type","text/plain; charset=%s", encoding);
     else
-      msIO_setHeader("Content-type","text/plain");
+      msIO_setHeader("Content-Type","text/plain");
     msIO_sendHeaders();
     msIO_printf(".\n               ,,ggddY\"\"\"Ybbgg,,\n          ,agd888b,_ "
                 "\"Y8, ___'\"\"Ybga,\n       ,gdP\"\"88888888baa,.\"\"8b    \""
