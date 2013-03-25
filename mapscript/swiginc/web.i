@@ -57,6 +57,12 @@
     {
         return msUpdateWebFromString(self, snippet, MS_FALSE);
     }
+    
+    %newobject convertToString;
+    char* convertToString()
+    {
+        return msWriteWebToString(self);
+    }
 }
 
 

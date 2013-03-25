@@ -113,7 +113,7 @@ PHP_METHOD(pointObj, __construct)
 PHP_METHOD(pointObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_point_object *php_point;
 
@@ -141,7 +141,7 @@ PHP_METHOD(pointObj, __get)
 PHP_METHOD(pointObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_point_object *php_point;
@@ -354,8 +354,8 @@ PHP_METHOD(pointObj, draw)
 {
   zval *zobj =  getThis();
   zval *zmap, *zlayer, *zimage;
-  char *text;
-  long text_len;
+  char *text = NULL;
+  long text_len = 0;
   long classIndex;
   int status = MS_FAILURE;
   php_point_object *php_point;
@@ -364,7 +364,7 @@ PHP_METHOD(pointObj, draw)
   php_image_object *php_image;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "OOOls",
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "OOOl|s",
                             &zmap, mapscript_ce_map,
                             &zlayer, mapscript_ce_layer,
                             &zimage, mapscript_ce_image,

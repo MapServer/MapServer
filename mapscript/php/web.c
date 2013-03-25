@@ -57,7 +57,7 @@ PHP_METHOD(webObj, __construct)
 PHP_METHOD(webObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_web_object *php_web;
 
@@ -98,7 +98,7 @@ PHP_METHOD(webObj, __get)
 PHP_METHOD(webObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_web_object *php_web;
@@ -144,7 +144,7 @@ PHP_METHOD(webObj, __set)
 PHP_METHOD(webObj, updateFromString)
 {
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   zval *zobj = getThis();
   php_web_object *php_web;
   int status = MS_FAILURE;
@@ -167,6 +167,33 @@ PHP_METHOD(webObj, updateFromString)
   }
 
   RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto string convertToString()
+   Convert the web object to string. */
+PHP_METHOD(webObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_web_object *php_web;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_web = (php_web_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  webObj_convertToString(php_web->web);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
 }
 /* }}} */
 
@@ -198,6 +225,7 @@ zend_function_entry web_functions[] = {
   PHP_ME(webObj, __set, web___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(webObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(webObj, updateFromString, web_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(webObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(webObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }

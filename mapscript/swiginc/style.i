@@ -80,6 +80,12 @@
     {
         return msUpdateStyleFromString(self, snippet, MS_FALSE);
     }
+    
+    %newobject convertToString;
+    char* convertToString()
+    {
+        return msWriteStyleToString(self);
+    }
 
 #ifdef SWIGJAVA
     %newobject cloneStyle;

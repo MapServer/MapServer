@@ -67,9 +67,9 @@ PHP_METHOD(outputFormatObj, __construct)
   zval *zobj = getThis();
   php_outputformat_object *php_outputformat;
   char *driver;
-  long driver_len;
+  long driver_len = 0;
   char *name = NULL;
-  long name_len;
+  long name_len = 0;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s",
@@ -91,7 +91,7 @@ PHP_METHOD(outputFormatObj, __construct)
 PHP_METHOD(outputFormatObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_outputformat_object *php_outputformat;
 
@@ -123,7 +123,7 @@ PHP_METHOD(outputFormatObj, __get)
 PHP_METHOD(outputFormatObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_outputformat_object *php_outputformat;
@@ -160,9 +160,9 @@ PHP_METHOD(outputFormatObj, __set)
 PHP_METHOD(outputFormatObj, setOption)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   char *value;
-  long value_len;
+  long value_len = 0;
   zval *zobj = getThis();
   php_outputformat_object *php_outputformat;
 
@@ -188,7 +188,7 @@ PHP_METHOD(outputFormatObj, setOption)
 PHP_METHOD(outputFormatObj, getOption)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   const char *value = NULL;
   php_outputformat_object *php_outputformat;

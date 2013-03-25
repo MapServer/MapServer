@@ -346,6 +346,16 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTELEM(outlinewidth);
   MS_COPYSTELEM(space_size_10);
 
+  if (msCopyExpression(&(dst->expression), &(src->expression)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy expression.", "msCopyLabel()");
+    return MS_FAILURE;
+  }
+
+  if (msCopyExpression(&(dst->text), &(src->text)) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy text.", "msCopyLabel()");
+    return MS_FAILURE;
+  }
+
   /*
   ** now the styles
   */
@@ -420,6 +430,7 @@ int msCopyWeb(webObj *dst, webObj *src, mapObj *map)
     if (msCopyHashTable(&(dst->metadata), &(src->metadata)) != MS_SUCCESS)
       return MS_FAILURE;
   }
+  msCopyHashTable(&dst->validation,&src->validation);
 
   MS_COPYSTRING(dst->queryformat, src->queryformat);
   MS_COPYSTRING(dst->legendformat, src->legendformat);
@@ -567,6 +578,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     /* dst->metadata = msCreateHashTable(); */
     msCopyHashTable(&(dst->metadata), &(src->metadata));
   }
+  msCopyHashTable(&dst->validation,&src->validation);
 
   MS_COPYSTELEM(minscaledenom);
   MS_COPYSTELEM(maxscaledenom);
@@ -993,6 +1005,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   if (&(src->metadata)) {
     msCopyHashTable(&(dst->metadata), &(src->metadata));
   }
+  msCopyHashTable(&dst->validation,&src->validation);
 
   MS_COPYSTELEM(opacity);
   MS_COPYSTELEM(dump);

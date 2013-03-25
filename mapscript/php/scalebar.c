@@ -63,7 +63,7 @@ PHP_METHOD(scalebarObj, __construct)
 PHP_METHOD(scalebarObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_scalebar_object *php_scalebar;
 
@@ -99,7 +99,7 @@ PHP_METHOD(scalebarObj, __get)
 PHP_METHOD(scalebarObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_scalebar_object *php_scalebar;
@@ -139,7 +139,7 @@ PHP_METHOD(scalebarObj, __set)
 PHP_METHOD(scalebarObj, updateFromString)
 {
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   zval *zobj = getThis();
   php_scalebar_object *php_scalebar;
   int status = MS_FAILURE;
@@ -162,6 +162,33 @@ PHP_METHOD(scalebarObj, updateFromString)
   }
 
   RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto string convertToString()
+   Convert the scalebar object to string. */
+PHP_METHOD(scalebarObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_scalebar_object *php_scalebar;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_scalebar = (php_scalebar_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  scalebarObj_convertToString(php_scalebar->scalebar);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
 }
 /* }}} */
 
@@ -224,6 +251,7 @@ zend_function_entry scalebar_functions[] = {
   PHP_ME(scalebarObj, __set, scalebar___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(scalebarObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(scalebarObj, updateFromString, scalebar_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(scalebarObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(scalebarObj, setImageColor, scalebar_setImageColor_args, ZEND_ACC_PUBLIC)
   PHP_ME(scalebarObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL

@@ -208,7 +208,11 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
       offset = 1;
       /* To set the offset, we only check the size/width parameter of the first style */
       if (theclass->numstyles > 0) {
-        offset = (theclass->styles[0]->size != -1) ? theclass->styles[0]->size/2 : theclass->styles[0]->width/2;
+        if (theclass->styles[0]->symbol > 0 && theclass->styles[0]->symbol < map->symbolset.numsymbols && 
+              map->symbolset.symbol[theclass->styles[0]->symbol]->type != MS_SYMBOL_SIMPLE)
+            offset = theclass->styles[0]->size/2;
+        else
+            offset = theclass->styles[0]->width/2;
       }
       zigzag.line = (lineObj *)msSmallMalloc(sizeof(lineObj));
       zigzag.numlines = 1;

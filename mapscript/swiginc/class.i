@@ -80,6 +80,12 @@
     {
         return msUpdateClassFromString(self, snippet, MS_FALSE);
     }
+    
+    %newobject convertToString;
+    char* convertToString()
+    {
+        return msWriteClassToString(self);
+    }
 
 #ifdef SWIGJAVA
     %newobject cloneClass;

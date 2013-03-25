@@ -258,8 +258,10 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 */
 int msLayerNextShape(layerObj *layer, shapeObj *shape)
 {
+  int rv;
+  
   if ( ! layer->vtable) {
-    int rv =  msInitializeVirtualTable(layer);
+    rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS)
       return rv;
   }
@@ -271,7 +273,14 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   /* tagged on to the main attributes with the naming scheme [join name].[item name]. */
   /* We need to leverage the iteminfo (I think) at this point */
 
-  return layer->vtable->LayerNextShape(layer, shape);
+  rv = layer->vtable->LayerNextShape(layer, shape);
+
+  /* RFC89 Apply Layer GeomTransform */
+  if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE && rv == MS_SUCCESS) {
+    rv = msGeomTransformShape(layer->map, layer, shape);      
+  }
+  
+  return rv;
 }
 
 /*
@@ -295,8 +304,10 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 */
 int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 {
+  int rv;
+  
   if( ! layer->vtable) {
-    int rv =  msInitializeVirtualTable(layer);
+    rv =  msInitializeVirtualTable(layer);
     if(rv != MS_SUCCESS)
       return rv;
   }
@@ -306,7 +317,14 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   ** tagged on to the main attributes with the naming scheme [join name].[item name].
   */
 
-  return layer->vtable->LayerGetShape(layer, shape, record);
+  rv = layer->vtable->LayerGetShape(layer, shape, record);
+  
+  /* RFC89 Apply Layer GeomTransform */
+  if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE && rv == MS_SUCCESS) {
+    rv = msGeomTransformShape(layer->map, layer, shape); 
+  }
+
+  return rv;
 }
 
 /*
@@ -510,6 +528,9 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
       case MS_TOKEN_BINDING_SHAPE:
         node->token = token;
         break;
+      case MS_TOKEN_BINDING_MAP_CELLSIZE:
+        node->token = token;
+        break;        
       case MS_TOKEN_FUNCTION_FROMTEXT: /* we want to process a shape from WKT once and not for every feature being evaluated */
         if((token = msyylex()) != 40) { /* ( */
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
@@ -613,6 +634,9 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
 
   if(layer->labelitem) nt++;
 
+  if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
+    msTokenizeExpression(&layer->_geomtransform, layer->items, &(layer->numitems));
+  
   /* class level counts */
   for(i=0; i<layer->numclasses; i++) {
 
@@ -1004,7 +1028,7 @@ makeTimeFilter(layerObj *lp,
     if (&lp->filter) {
       /* if the filter is set and it's a sting type, concatenate it with
          the time. If not just free it */
-      if (lp->filter.type == MS_EXPRESSION) {
+      if (lp->filter.string && lp->filter.type == MS_STRING) {
         pszBuffer = msStringConcatenate(pszBuffer, "((");
         pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
         pszBuffer = msStringConcatenate(pszBuffer, ") and ");
@@ -1041,7 +1065,7 @@ makeTimeFilter(layerObj *lp,
     pszBuffer = msStringConcatenate(pszBuffer, ")");
 
     /* if there was a filter, It was concatenate with an And ans should be closed*/
-    if(&lp->filter && lp->filter.type == MS_EXPRESSION) {
+    if(&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
       pszBuffer = msStringConcatenate(pszBuffer, ")");
     }
 
@@ -1058,7 +1082,7 @@ makeTimeFilter(layerObj *lp,
     return MS_FALSE;
 
   if (numtimes >= 1) {
-    if (&lp->filter && lp->filter.type == MS_EXPRESSION) {
+    if (&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
       pszBuffer = msStringConcatenate(pszBuffer, "((");
       pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
       pszBuffer = msStringConcatenate(pszBuffer, ") and ");
@@ -1181,7 +1205,7 @@ makeTimeFilter(layerObj *lp,
 
     /* load the string to the filter */
     if (pszBuffer && strlen(pszBuffer) > 0) {
-      if(&lp->filter && lp->filter.type == MS_EXPRESSION)
+      if(&lp->filter && lp->filter.string && lp->filter.type == MS_STRING)
         pszBuffer = msStringConcatenate(pszBuffer, ")");
       /*
       if(lp->filteritem)

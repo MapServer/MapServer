@@ -291,46 +291,49 @@ void writeSymbol(symbolObj *s, FILE *stream)
 {
   int i;
 
-  fprintf(stream, "  SYMBOL\n");
-  if(s->name != NULL) fprintf(stream, "    NAME \"%s\"\n", s->name);
+  msIO_fprintf(stream, "  SYMBOL\n");
+  if(s->name != NULL) msIO_fprintf(stream, "    NAME \"%s\"\n", s->name);
 
   switch (s->type) {
     case(MS_SYMBOL_HATCH):
-      fprintf(stream, "    TYPE HATCH\n");
+      msIO_fprintf(stream, "    TYPE HATCH\n");
       break;
     case(MS_SYMBOL_PIXMAP):
-      fprintf(stream, "    TYPE PIXMAP\n");
-      if(s->imagepath != NULL) fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
-      fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
+      msIO_fprintf(stream, "    TYPE PIXMAP\n");
+      if(s->imagepath != NULL) msIO_fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
+      msIO_fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
       break;
     case(MS_SYMBOL_TRUETYPE):
-      fprintf(stream, "    TYPE TRUETYPE\n");
-      if(s->antialias == MS_TRUE) fprintf(stream, "    ANTIALIAS TRUE\n");
-      if (s->character != NULL) fprintf(stream, "    CHARACTER \"%s\"\n", s->character);
-      if (s->font != NULL) fprintf(stream, "    FONT \"%s\"\n", s->font);
+      msIO_fprintf(stream, "    TYPE TRUETYPE\n");
+      if(s->antialias == MS_TRUE) msIO_fprintf(stream, "    ANTIALIAS TRUE\n");
+      if (s->character != NULL) msIO_fprintf(stream, "    CHARACTER \"%s\"\n", s->character);
+      if (s->font != NULL) msIO_fprintf(stream, "    FONT \"%s\"\n", s->font);
       break;
     default:
       if(s->type == MS_SYMBOL_ELLIPSE)
-        fprintf(stream, "    TYPE ELLIPSE\n");
+        msIO_fprintf(stream, "    TYPE ELLIPSE\n");
       else if(s->type == MS_SYMBOL_VECTOR)
-        fprintf(stream, "    TYPE VECTOR\n");
+        msIO_fprintf(stream, "    TYPE VECTOR\n");
+      else if(s->type == MS_SYMBOL_SVG)
+        msIO_fprintf(stream, "    TYPE SVG\n");
       else
-        fprintf(stream, "    TYPE SIMPLE\n");
+        msIO_fprintf(stream, "    TYPE SIMPLE\n");
 
-      if(s->filled == MS_TRUE) fprintf(stream, "    FILLED TRUE\n");
+      if(s->filled == MS_TRUE) msIO_fprintf(stream, "    FILLED TRUE\n");
+      if(s->imagepath != NULL) msIO_fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
 
       /* POINTS */
       if(s->numpoints != 0) {
-        fprintf(stream, "    POINTS\n");
+        msIO_fprintf(stream, "    POINTS\n");
         for(i=0; i<s->numpoints; i++) {
-          fprintf(stream, "      %g %g\n", s->points[i].x, s->points[i].y);
+          msIO_fprintf(stream, "      %g %g\n", s->points[i].x, s->points[i].y);
         }
-        fprintf(stream, "    END\n");
+        msIO_fprintf(stream, "    END\n");
       }
       break;
   }
 
-  fprintf(stream, "  END\n\n");
+  msIO_fprintf(stream, "  END\n\n");
 }
 
 

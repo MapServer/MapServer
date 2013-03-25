@@ -204,54 +204,57 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
 
-void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
+int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int checkonly)
 {
-  char *time = NULL;
-  char **atimes, **tokens = NULL;
-  int numtimes, ntmp, i = 0;
+  char **atimes, **ranges, **patterns;
+  int numtimes, numpatterns, numranges, i, j, k;
   char *tmpstr = NULL;
+  int ret = MS_SUCCESS;
 
   if (timepatternstring && timestring) {
     /* parse the time parameter to extract a distinct time. */
     /* time value can be dicrete times (eg 2004-09-21), */
     /* multiple times (2004-09-21, 2004-09-22, ...) */
     /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
-    if (strstr(timestring, ",") == NULL &&
-        strstr(timestring, "/") == NULL) { /* discrete time */
-      time = msStrdup(timestring);
-    } else {
-      atimes = msStringSplit (timestring, ',', &numtimes);
-      if (numtimes >=1 && atimes) {
-        tokens = msStringSplit(atimes[0],  '/', &ntmp);
-        if (ntmp == 2 && tokens) { /* range */
-          time = msStrdup(tokens[0]);
-        } else { /* multiple times */
-          time = msStrdup(atimes[0]);
-        }
-        msFreeCharArray(tokens, ntmp);
-        msFreeCharArray(atimes, numtimes);
-      }
-    }
+    atimes = msStringSplit(timestring, ',', &numtimes);
+    
     /* get the pattern to use */
-    if (time) {
-      tokens = msStringSplit(timepatternstring, ',', &ntmp);
-      if (tokens && ntmp >= 1) {
-        for (i=0; i<ntmp; i++) {
-          if (tokens[i] && strlen(tokens[i]) > 0) {
-            msStringTrimBlanks(tokens[i]);
-            tmpstr = msStringTrimLeft(tokens[i]);
-            if (msTimeMatchPattern(time, tmpstr) == MS_TRUE) {
-              msSetLimitedPattersToUse(tmpstr);
-              break;
+    if (numtimes>0) {      
+      patterns = msStringSplit(timepatternstring, ',', &numpatterns);      
+      for (j=0; j<numtimes;++j) {
+        ranges = msStringSplit(atimes[j],  '/', &numranges);
+        for (k=0; k<numranges;++k) {
+          int match = MS_FALSE;
+          for (i=0; i<numpatterns; ++i) {
+            if (patterns[i] && strlen(patterns[i]) > 0) {
+              msStringTrimBlanks(patterns[i]);
+              tmpstr = msStringTrimLeft(patterns[i]);
+              if (msTimeMatchPattern(ranges[k], tmpstr) == MS_TRUE) {
+                if (!checkonly) msSetLimitedPattersToUse(tmpstr);
+                match = MS_TRUE;
+                break;
+              }
             }
           }
+          if (match == MS_FALSE) {
+            msSetError(MS_WMSERR, "Time value %s given does not match the time format pattern.",
+                   "msWMSSetTimePattern", ranges[k]);            
+            ret = MS_FAILURE;
+            break;
+          }
         }
-        msFreeCharArray(tokens, ntmp);
+         msFreeCharArray(ranges, numranges);
+         if (ret == MS_FAILURE)
+           break;
       }
-      free(time);
-    }
 
+      msFreeCharArray(patterns, numpatterns);
+      msFreeCharArray(atimes, numtimes);              
+
+    }
   }
+
+  return ret;
 }
 
 /*
@@ -262,8 +265,12 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
   int i=0;
   layerObj *lp = NULL;
   const char *timeextent, *timefield, *timedefault, *timpattern = NULL;
-
+    
   if (map) {
+
+    timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",
+                                     "timeformat");
+    
     for (i=0; i<map->numlayers; i++) {
       lp = (GET_LAYER(map, i));
       if (lp->status != MS_ON && lp->status != MS_DEFAULT)
@@ -293,6 +300,17 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
             msLayerSetTimeFilter(lp, timedefault, timefield);
           }
         } else {
+          /* check to see if there is a list of possible patterns defined */
+          /* if it is the case, use it to set the time pattern to use */
+          /* for the request.
+
+             Last argument is set to TRUE (checkonly) to not trigger the
+             patterns info setting.. to only apply the wms_timeformats on the
+             user request values, not the mapfile values. */
+          if (timpattern && time && strlen(time) > 0) 
+            if (msWMSSetTimePattern(timpattern, time, MS_TRUE) == MS_FAILURE) 
+              return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
+          
           /* check if given time is in the range */
           if (msValidateTimeValue(time, timeextent) == MS_FALSE) {
             if (timedefault == NULL) {
@@ -318,14 +336,13 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
         }
       }
     }
-    /* check to see if there is a list of possible patterns defined */
-    /* if it is the case, use it to set the time pattern to use */
-    /* for the request */
 
-    timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",
-                                     "timeformat");
+    /* last argument is MS_FALSE to trigger a method call that set the patterns
+       info. some drivers use it */
     if (timpattern && time && strlen(time) > 0)
-      msWMSSetTimePattern(timpattern, time);
+      if (msWMSSetTimePattern(timpattern, time, MS_FALSE) == MS_FAILURE)
+        return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
+    
   }
 
   return MS_SUCCESS;
@@ -2377,6 +2394,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
             group_layers[0] = lp->index;
             if (isUsedInNestedGroup[lp->index]) {
               for (j=0; j < map->numlayers; j++) {
+                if (j == lp->index)
+                    continue;
                 for(k = 0; k < numNestedGroups[j]; k++) {
                   if (strcasecmp(lp->name, nestedGroups[j][k]) == 0) {
                     group_layers[num_layers++] = j;
@@ -2551,6 +2570,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
   msFree(pszMetadataName);
 
+  /* print Min/Max ScaleDenominator */
   if (nVersion <  OWS_1_3_0)
     msWMSPrintScaleHint("        ", lp->minscaledenom, lp->maxscaledenom, map->resolution);
   else
@@ -2601,6 +2621,7 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
                             int index, int level, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup, const char *script_url_encoded, const char *validated_language)
 {
   int i, j;
+  int groupAdded = 0;
   char *indent = NULL;
   indent = msStrdup("");
 
@@ -2626,10 +2647,12 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
       if (!pabLayerProcessed[j]) {
         msDumpLayer(map, GET_LAYER(map, j), nVersion, script_url_encoded, indent, validated_language, MS_TRUE);
         pabLayerProcessed[j] = 1; /* done */
+        groupAdded = 1;
       }
     } else {
       msIO_printf("%s    <Layer>\n", indent);
       msIO_printf("%s      <Title>%s</Title>\n", indent, nestedGroups[index][level]);
+      groupAdded = 1;
     }
 
     /* Look for one group deeper in the current layer */
@@ -2656,7 +2679,8 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
       }
     }
     /* Close group layer block */
-    msIO_printf("%s    </Layer>\n", indent);
+    if (groupAdded)
+      msIO_printf("%s    </Layer>\n", indent);
   }
 
   msFree(indent);
@@ -3305,12 +3329,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 
     }
 
-      /* Prints ScaleDenominator */
-      if (nVersion <  OWS_1_3_0)
-        msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
+    if (nVersion <  OWS_1_3_0)
+      msWMSPrintScaleHint("    ", map->web.minscaledenom, map->web.maxscaledenom,
                           map->resolution);
-      else
-        msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
+    else
+      msWMSPrintScaleDenominator("    ", map->web.minscaledenom, map->web.maxscaledenom);
 
     /*  */
     /* Dump list of layers organized by groups.  Layers with no group are listed */
@@ -3327,6 +3350,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       /* processed already */
       pabLayerProcessed = (char *)msSmallCalloc(map->numlayers, sizeof(char*));
 
+      /* Mark disabled layers as processed to prevent from being displayed in nested groups (#4533)*/
+      for(i=0; i<map->numlayers; i++) {
+        if (!msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers))
+          pabLayerProcessed[i] = 1;
+      }
+
       nestedGroups = (char***)msSmallCalloc(map->numlayers, sizeof(char**));
       numNestedGroups = (int*)msSmallCalloc(map->numlayers, sizeof(int));
       isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
@@ -3336,8 +3365,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
         layerObj *lp;
         lp = (GET_LAYER(map, i));
 
-        if (pabLayerProcessed[i] || (lp->status == MS_DELETE) ||
-            (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)))
+        if (pabLayerProcessed[i] || (lp->status == MS_DELETE))
           continue;  /* Layer is hidden or has already been handled */
 
         if (numNestedGroups[i] > 0) {

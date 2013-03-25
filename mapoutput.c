@@ -397,6 +397,10 @@ void msFreeOutputFormat( outputFormatObj *format )
 {
   if( format == NULL )
     return;
+  if( MS_REFCNT_DECR_IS_NOT_ZERO(format) ) {
+    return;
+  }
+
   if(MS_RENDERER_PLUGIN(format) && format->vtable) {
     format->vtable->cleanup(MS_RENDERER_CACHE(format->vtable));
     free( format->vtable );
@@ -479,7 +483,7 @@ int msAppendOutputFormat(mapObj *map, outputFormatObj *format)
                                       sizeof(void*) * map->numoutputformats );
 
     map->outputformatlist[map->numoutputformats-1] = format;
-    format->refcount++;
+    MS_REFCNT_INCR(format);
   }
 
   return map->numoutputformats;
@@ -505,8 +509,8 @@ int msRemoveOutputFormat(mapObj *map, const char *name)
       i = msGetOutputFormatIndex(map, name);
       if (i >= 0) {
         map->numoutputformats--;
-        if( map->outputformatlist[i]->refcount-- < 1 )
-          msFreeOutputFormat( map->outputformatlist[i] );
+	if(MS_REFCNT_DECR_IS_ZERO(map->outputformatlist[i]))
+           msFreeOutputFormat( map->outputformatlist[i] );
 
         for (j=i; j<map->numoutputformats-1; j++) {
           map->outputformatlist[j] = map->outputformatlist[j+1];
@@ -613,7 +617,7 @@ void msApplyOutputFormat( outputFormatObj **target,
 
   assert( target != NULL );
 
-  if( *target != NULL && --((*target)->refcount) < 1 ) {
+  if( *target != NULL && MS_REFCNT_DECR_IS_ZERO( (*target) ) ) {
     formatToFree = *target;
     *target = NULL;
   }

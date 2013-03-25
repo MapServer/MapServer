@@ -1044,7 +1044,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
       drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
     }
-    
+  
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
       colorObj tmp;
@@ -1470,14 +1470,21 @@ msDrawRasterLayerPlugin( mapObj *map, layerObj *layer, imageObj *image)
  */
 int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
-  if (image && map && layer) {
-    if( MS_RENDERER_PLUGIN(image->format) ) {
-      return msDrawRasterLayerPlugin(map, layer, image);
-    } else if( MS_RENDERER_RAWDATA(image->format) )
-      return msDrawRasterLayerLow(map, layer, image, NULL);
+  
+  int rv = MS_FAILURE;
+  if (!image || !map || !layer) {
+    return rv;
   }
 
-  return MS_FAILURE;
+  /* RFC-86 Scale dependant token replacements*/
+  rv = msLayerApplyScaletokens(layer,(layer->map)?layer->map->scaledenom:-1);
+  if (rv != MS_SUCCESS) return rv;
+  if( MS_RENDERER_PLUGIN(image->format) )
+    rv = msDrawRasterLayerPlugin(map, layer, image);
+  else if( MS_RENDERER_RAWDATA(image->format) )
+    rv = msDrawRasterLayerLow(map, layer, image, NULL);
+  msLayerRestoreFromScaletokens(layer);
+  return rv;
 }
 
 /**
@@ -1973,6 +1980,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   msDrawStartShape(map, layer, image, shape);
   c = shape->classindex;
 
+  /* When creating a shape in mapscript and setting the shape.text directly, the
+     text rendering fails without this #4577. If annotext of the first label is
+     not null, msShapeGetAnnotation has already been called: do nothing */
+  if(layer->class[c]->numlabels > 0 && shape->text &&
+     (layer->class[c]->labels[0] && layer->class[c]->labels[0]->annotext==NULL)) {
+    msShapeGetAnnotation(layer, shape);
+  }
+    
   /* Before we do anything else, we will check for a rangeitem.
      If its there, we need to change the style's color to map
      the range to the shape */
@@ -2246,7 +2261,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
         if(msScaleInBounds(map->scaledenom, theclass->styles[s]->minscaledenom, theclass->styles[s]->maxscaledenom))
           msDrawMarkerSymbol(&map->symbolset, image, point, theclass->styles[s], layer->scalefactor);
       }
-      if(labeltext) {
+      if(labeltext && (strlen(labeltext)>0)) {
         if(layer->labelcache) {
           if(msAddLabel(map, label, layer->index, classindex, NULL, point, NULL, -1) != MS_SUCCESS) return(MS_FAILURE);
         } else
