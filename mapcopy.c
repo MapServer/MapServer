@@ -925,6 +925,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   MS_COPYSTRING(dst->name, src->name);
   MS_COPYSTRING(dst->group, src->group);
   MS_COPYSTRING(dst->data, src->data);
+  MS_COPYSTRING(dst->encoding, src->encoding);
 
   MS_COPYSTELEM(status);
   MS_COPYSTELEM(type);

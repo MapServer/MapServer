@@ -3773,6 +3773,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->name = NULL;
   layer->group = NULL;
+  layer->encoding = NULL;
   layer->status = MS_OFF;
   layer->data = NULL;
 
@@ -4278,6 +4279,16 @@ int loadLayer(layerObj *layer, mapObj *map)
         initGrid((graticuleObj *) layer->layerinfo);
         loadGrid(layer);
         break;
+    case(ENCODING):
+      if((getString(&layer->encoding)) == MS_FAILURE) return(-1);
+      if(msyysource == MS_URL_TOKENS) {
+        if(msValidateParameter(layer->encoding, msLookupHashTable(&(layer->validation), "encoding"), msLookupHashTable(&(map->web.validation), "encoding"), NULL, NULL) != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "URL-based ENCODING configuration failed pattern validation." , "loadLayer()");
+          msFree(layer->encoding); layer->encoding=NULL;
+          return(-1);
+        }
+      }
+      break;
       case(GROUP):
         if(getString(&layer->group) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
         if(msyysource == MS_URL_TOKENS) {
@@ -4594,6 +4605,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "FILTERITEM", NULL, layer->filteritem);
   writeString(stream, indent, "FOOTER", NULL, layer->footer);
   writeString(stream, indent, "GROUP", NULL, layer->group);
+  writeString(stream, indent, "ENCODING", NULL, layer->encoding);
 
   if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION) {
     writeIndent(stream, indent + 1);

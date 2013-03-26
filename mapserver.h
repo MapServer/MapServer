@@ -1505,6 +1505,7 @@ extern "C" {
 
     char *name; /* should be unique */
     char *group; /* shouldn't be unique it's supposed to be a group right? */
+    char *encoding; /* layer encoding */
 
     int status; /* on or off */
 

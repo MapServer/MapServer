@@ -30,7 +30,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapgml.h"
-
+#include "iconv.h"
 
 
 /* Use only mapgml.c if WMS or WFS is available (with minor exceptions at end)*/
@@ -1462,13 +1462,17 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, char *default_namespace_prefix
         if(msIsXMLTagValid(layerName) == MS_FALSE)
           msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
         if(featureIdIndex != -1) {
-          if(outputformat == OWS_GML2)
-            msIO_fprintf(stream, "      <%s fid=\"%s.%s\">\n", layerName, lp->name, shape.values[featureIdIndex]);
-          else  /* OWS_GML3 */
-            msIO_fprintf(stream, "      <%s gml:id=\"%s.%s\">\n", layerName, lp->name, shape.values[featureIdIndex]);
-        } else
-          msIO_fprintf(stream, "      <%s>\n", layerName);
-
+	  if(lp->encoding!=NULL && strncasecmp("utf-8",lp->encoding,5)!=0){
+	    char* tmp=msGetEncodedString(shape.values[featureIdIndex],lp->encoding);
+	    if(outputformat == OWS_GML2)
+	      msIO_fprintf(stream, "      <%s fid=\"%s.%s\">\n", layerName, lp->name, tmp);
+	    else  /* OWS_GML3 */
+	      msIO_fprintf(stream, "      <%s gml:id=\"%s.%s\">\n", layerName, lp->name, tmp);
+	    free(tmp);
+	  } else
+	    msIO_fprintf(stream, "      <%s gml:id=\"%s.%s\">\n", layerName, lp->name, shape.values[featureIdIndex]);
+	}else
+	  msIO_fprintf(stream, "      <%s>\n", layerName);
         if (bSwapAxis)
           msAxisSwapShape(&shape);
 
@@ -1494,8 +1498,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, char *default_namespace_prefix
         /* write any item/values */
         for(k=0; k<itemList->numitems; k++) {
           item = &(itemList->items[k]);
-          if(msItemInGroups(item->name, groupList) == MS_FALSE)
-            msGMLWriteItem(stream, item, shape.values[k], namespace_prefix, "        ");
+          if(msItemInGroups(item->name, groupList) == MS_FALSE){
+	    if(lp->encoding!=NULL && strncasecmp("utf-8",lp->encoding,5)!=0){
+	      char* tmp=msGetEncodedString(shape.values[k],lp->encoding);
+	      msGMLWriteItem(stream, item, tmp, namespace_prefix, "        ");
+	      free(tmp);
+	    }else
+	      msGMLWriteItem(stream, item, shape.values[k], namespace_prefix, "        ");
+	  }
         }
 
         /* write any constants */

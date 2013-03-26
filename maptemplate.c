@@ -1282,9 +1282,14 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
         itemValue = (char *) msSmallMalloc(64); /* plenty big */
         snprintf(numberFormat, sizeof(numberFormat), "%%.%dlf", precision);
         snprintf(itemValue, 64, numberFormat, atof(shape->values[i]));
-      } else
+      } else{
+	if(layer->encoding!=NULL && strncasecmp("utf-8",layer->encoding,5)!=0){
+	  char* tmp=msGetEncodedString(shape->values[i],layer->encoding);
+	  itemValue = msStrdup(tmp);
+	  free(tmp);
+	}
         itemValue = msStrdup(shape->values[i]);
-
+      }
       if(commify == MS_TRUE)
         itemValue = msCommifyString(itemValue);
 
