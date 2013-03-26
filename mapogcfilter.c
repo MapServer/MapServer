@@ -775,6 +775,8 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
   int status =MS_FALSE;
 
   pszExpression = FLTGetCommonExpression(psNode,  GET_LAYER(map, iLayerIndex));
+  if(map->debug == MS_DEBUGLEVEL_VVV)
+    msDebug("FLTLayerApplyPlainFilterToLayer(): %s\n", pszExpression);
   if (pszExpression) {
     status = FLTApplyFilterToLayerCommonExpression(map, iLayerIndex, pszExpression);
     msFree(pszExpression);
@@ -1206,11 +1208,10 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             bPolygon = 1;
           else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
             bPolygon = 1;
-          else {
-            psGMLElement= CPLGetXMLNode(psXMLNode, "LineString");
-            if (psGMLElement)
-              bLine = 1;
-          }
+          else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
+            bLine = 1;
+          else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPoint")))
+            bPoint = 1;
         }
 
         psDistance = CPLGetXMLNode(psXMLNode, "Distance");
@@ -1277,18 +1278,14 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           bPolygon = 1;
         else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
           bPolygon = 1;
-        else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString"))) {
-          if (psGMLElement)
-            bLine = 1;
-        }
-
-        else {
-          psGMLElement = CPLGetXMLNode(psXMLNode, "Point");
-          if (!psGMLElement)
-            psGMLElement =  CPLGetXMLNode(psXMLNode, "PointType");
-          if (psGMLElement)
-            bPoint =1;
-        }
+        else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
+          bLine = 1;
+        else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPoint")))
+          bPoint = 1;
+        else if ((psGMLElement = CPLGetXMLNode(psXMLNode, "Point")))
+          bPoint = 1;
+        else if ((psGMLElement = CPLGetXMLNode(psXMLNode, "PointType")))
+          bPoint = 1;
 
         if (psGMLElement) {
           psShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
