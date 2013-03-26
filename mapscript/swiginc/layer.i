@@ -671,17 +671,17 @@
     }    
     char *getEncoding() 
     {
-      return self->_encoding.string;
+      return self->encoding;
     }
     
     void setEncoding(char *enc) 
     {
-      msFree(self->_encoding.string);
+      msFree(self->encoding);
       if (!enc || strlen(enc) > 0) {
-        self->_encoding.string = msStrdup(enc);
+        self->encoding = msStrdup(enc);
       }
       else {
-        self->_encoding.string = NULL;
+        self->encoding = NULL;
       }
     }
 }
