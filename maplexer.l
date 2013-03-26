@@ -465,6 +465,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>ur                         { MS_LEXER_RETURN_TOKEN(MS_UR); }
 <INITIAL>union                                 { MS_LEXER_RETURN_TOKEN(MS_UNION); }
 <INITIAL>uvraster                              { MS_LEXER_RETURN_TOKEN(MS_UVRASTER); }
+<INITIAL>contour                               { MS_LEXER_RETURN_TOKEN(MS_CONTOUR); }
 <INITIAL>vector                                { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_VECTOR); }
 <INITIAL>wfs                                   { MS_LEXER_RETURN_TOKEN(MS_WFS); }
 <INITIAL>wms                                   { MS_LEXER_RETURN_TOKEN(MS_WMS); }
