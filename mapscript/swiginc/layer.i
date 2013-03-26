@@ -669,4 +669,19 @@
         self->_geomtransform.string = NULL;
       }
     }    
+    char *getEncoding() 
+    {
+      return self->_encoding.string;
+    }
+    
+    void setEncoding(char *enc) 
+    {
+      msFree(self->_encoding.string);
+      if (!enc || strlen(enc) > 0) {
+        self->_encoding.string = msStrdup(enc);
+      }
+      else {
+        self->_encoding.string = NULL;
+      }
+    }
 }
