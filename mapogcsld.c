@@ -3158,7 +3158,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
   char *pszURL = NULL;
   char szFormat[4];
   int i = 0, nLength = 0;
-  int bFillColor = 0, bColorAvailable=0;
+  int bFillColor = 0, bStrokeColor = 0, bColorAvailable=0;
   int bGenerateDefaultSymbol = 0;
   char *pszSymbolName= NULL;
   char sNameSpace[10];
@@ -3226,6 +3226,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 
           if (pszSymbolName) {
             colorObj sTmpColor;
+            colorObj sTmpStrokeColor;
 
             snprintf(szTmp, sizeof(szTmp), "<%sGraphic>\n", sNameSpace);
             pszSLD = msStringConcatenate(pszSLD, szTmp);
@@ -3250,17 +3251,24 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
             } else if (psStyle->outlinecolor.red != -1 &&
                        psStyle->outlinecolor.green != -1 &&
                        psStyle->outlinecolor.blue != -1) {
-              sTmpColor.red = psStyle->outlinecolor.red;
-              sTmpColor.green = psStyle->outlinecolor.green;
-              sTmpColor.blue = psStyle->outlinecolor.blue;
-              bFillColor = 0;
+              sTmpStrokeColor.red = psStyle->outlinecolor.red;
+              sTmpStrokeColor.green = psStyle->outlinecolor.green;
+              sTmpStrokeColor.blue = psStyle->outlinecolor.blue;
+              bFillColor++;
             } else {
               sTmpColor.red = 128;
               sTmpColor.green = 128;
               sTmpColor.blue = 128;
               bFillColor =1;
             }
-
+	    if (psStyle->outlinecolor.red != -1 &&
+		psStyle->outlinecolor.green != -1 &&
+		psStyle->outlinecolor.blue != -1) {
+              sTmpStrokeColor.red = psStyle->outlinecolor.red;
+              sTmpStrokeColor.green = psStyle->outlinecolor.green;
+              sTmpStrokeColor.blue = psStyle->outlinecolor.blue;
+              bFillColor++;
+            }
 
             if (psLayer->type == MS_LAYER_POINT) {
               if (psSymbol->filled || bFillColor) {
@@ -3281,6 +3289,21 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                          sTmpColor.blue,
                          sCssParam);
               }
+	      if(bFillColor>=2){
+		pszSLD = msStringConcatenate(pszSLD, szTmp);
+		snprintf(szTmp, sizeof(szTmp), "</%sFill>\n", sNameSpace);
+		pszSLD = msStringConcatenate(pszSLD, szTmp);
+		snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n", sNameSpace);
+		pszSLD = msStringConcatenate(pszSLD, szTmp);
+		snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke\">#%02x%02x%02x</%s>\n",
+			 sCssParam,sTmpStrokeColor.red,
+			 sTmpStrokeColor.green,
+			 sTmpStrokeColor.blue,
+			 sCssParam);
+		pszSLD = msStringConcatenate(pszSLD, szTmp);
+		snprintf(szTmp, sizeof(szTmp), "<%s name=\"stroke-width\">%.2f</%s>\n",
+			 sCssParam,psStyle->width,sCssParam);
+	      }
             } else {
               if (bFillColor) {
                 snprintf(szTmp, sizeof(szTmp), "<%sFill>\n", sNameSpace);
@@ -3305,7 +3328,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
             pszSLD = msStringConcatenate(pszSLD, szTmp);
 
             if ((psLayer->type == MS_LAYER_POINT && psSymbol->filled) ||
-                bFillColor)
+                (bFillColor && bFillColor<2))
               snprintf(szTmp, sizeof(szTmp), "</%sFill>\n", sNameSpace);
             else
               snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n", sNameSpace);
