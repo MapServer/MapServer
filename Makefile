@@ -2,19 +2,19 @@ AUTOTEST_OPTS=-strict
 PHP_MAPSCRIPT=build/mapscript/php/php_mapscript.so
 
 wxs-testcase:
-	cd msautotest/wxs && export PATH=../..:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/wxs && export PATH=../../build:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 renderers-testcase:
-	cd msautotest/renderers && export PATH=../..:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/renderers && export PATH=../../build:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 misc-testcase:
-	cd msautotest/misc && export PATH=../..:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/misc && export PATH=../../build:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 gdal-testcase:
-	cd msautotest/gdal && export PATH=../..:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/gdal && export PATH=../../build:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 query-testcase:
-	cd msautotest/query && export PATH=../..:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/query && export PATH=../../build:$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 autotest-install:
 	test -d "msautotest/wxs" ||  ( git submodule init && git submodule update )
@@ -25,7 +25,7 @@ php-testcase:
 print-test-results:
 	@./print-test-results.sh
 
-test:
+test: autotest-install
 	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
 	@$(MAKE) print-test-results
 	@$(MAKE) php-testcase
