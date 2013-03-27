@@ -172,7 +172,7 @@ mapogcfiltercommon.c maprendering.c mapwcs20.c mapgd.c mapogcsld.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c
 mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp
-mapogr.cpp mapserver-api.c )
+mapogr.cpp mapcontour.c )
 
 add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES})
 set_target_properties( mapserver  PROPERTIES
@@ -695,7 +695,7 @@ set(REGEX_MALLOC 1)
 set(USE_GENERIC_MS_NINT 1)
 endif(WIN32)
 
-INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
+#INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 INSTALL(TARGETS shp2img mapserv mapserver RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
 if(BUILD_STATIC)
    INSTALL(TARGETS mapserver_static DESTINATION lib)
