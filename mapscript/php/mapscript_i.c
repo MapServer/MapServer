@@ -1033,7 +1033,9 @@ char *classObj_getTextString(classObj *self)
 
 int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height, imageObj *dstImg, int dstX, int dstY)
 {
+#ifdef USE_GD
   msClearLayerPenValues(layer); // just in case the mapfile has already been processed
+#endif
   return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY);
 }
 
