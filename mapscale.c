@@ -339,13 +339,10 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
   int l,index,s;
   pointObj point;
   imageObj *image = NULL;
-  rendererVTableObj *renderer = MS_MAP_RENDERER(map);
+  rendererVTableObj *renderer;
   symbolObj *embededSymbol;
+  char* imageType = NULL;
 
-  if( ! renderer ) {
-    msSetError(MS_MISCERR,"unsupported outputformat","msEmbedScalebar()");
-    return MS_FAILURE;
-  }
   index = msGetSymbolIndex(&(map->symbolset), "scalebar", MS_FALSE);
   if(index != -1)
     msRemoveSymbol(&(map->symbolset), index); /* remove cached symbol in case the function is called multiple
@@ -353,10 +350,28 @@ int msEmbedScalebar(mapObj *map, imageObj *img)
 
   if((embededSymbol=msGrowSymbolSet(&map->symbolset)) == NULL)
     return MS_FAILURE;
+
   s = map->symbolset.numsymbols;
   map->symbolset.numsymbols++;
 
+  if(!MS_RENDERER_PLUGIN(map->outputformat) || !MS_MAP_RENDERER(map)->supports_pixel_buffer) {
+    imageType = msStrdup(map->imagetype); /* save format */
+    if MS_DRIVER_CAIRO(map->outputformat)
+      map->outputformat = msSelectOutputFormat( map, "cairopng" );
+    else
+      map->outputformat = msSelectOutputFormat( map, "png" );
+    
+    msInitializeRendererVTable(map->outputformat);
+  }
+  renderer = MS_MAP_RENDERER(map);
+
   image = msDrawScalebar(map);
+
+  if (imageType) {
+    map->outputformat = msSelectOutputFormat( map, imageType ); /* restore format */
+    msFree(imageType);
+  }
+
   if(!image) {
     return MS_FAILURE;
   }

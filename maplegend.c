@@ -632,14 +632,9 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   pointObj point;
   imageObj *image = NULL;
   symbolObj *legendSymbol;
+  char* imageType = NULL;
 
   rendererVTableObj *renderer;
-
-  if(!MS_RENDERER_PLUGIN(map->outputformat) || !MS_MAP_RENDERER(map)->supports_pixel_buffer) {
-    msSetError(MS_MISCERR, "unsupported output format", "msEmbedLegend()");
-    return MS_FAILURE;
-  }
-  renderer = MS_MAP_RENDERER(map);
 
   s = msGetSymbolIndex(&(map->symbolset), "legend", MS_FALSE);
   if(s != -1)
@@ -652,9 +647,25 @@ int msEmbedLegend(mapObj *map, imageObj *img)
   map->symbolset.numsymbols++;
   initSymbol(legendSymbol);
 
+  if(!MS_RENDERER_PLUGIN(map->outputformat) || !MS_MAP_RENDERER(map)->supports_pixel_buffer) {
+    imageType = msStrdup(map->imagetype); /* save format */
+    if MS_DRIVER_CAIRO(map->outputformat)
+      map->outputformat = msSelectOutputFormat( map, "cairopng" );
+    else
+      map->outputformat = msSelectOutputFormat( map, "png" );
+    
+    msInitializeRendererVTable(map->outputformat);
+  }
+  renderer = MS_MAP_RENDERER(map);
+
   /* render the legend. */
   image = msDrawLegend(map, MS_FALSE);
   if( image == NULL ) return -1;
+
+  if (imageType) {
+    map->outputformat = msSelectOutputFormat( map, imageType ); /* restore format */
+    msFree(imageType);
+  }
 
   /* copy renderered legend image into symbol */
   legendSymbol->pixmap_buffer = calloc(1,sizeof(rasterBufferObj));
