@@ -63,8 +63,8 @@ check_function_exists("strlcpy"  HAVE_STRLCPY)
 check_function_exists("strlen"  HAVE_STRLEN)
 check_function_exists("strncasecmp"  HAVE_STRNCASECMP)
 check_function_exists("vsnprintf"  HAVE_VSNPRINTF)
-#check_function_exists("lrintf" HAVE_LRINTF)
-#check_function_exists("lrint" HAVE_LRINT)
+check_function_exists("lrintf" HAVE_LRINTF)
+check_function_exists("lrint" HAVE_LRINT)
 
 check_include_file(dlfcn.h HAVE_DLFCN_H)
 
