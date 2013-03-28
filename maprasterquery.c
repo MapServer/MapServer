@@ -740,6 +740,16 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
       tlp->name = msStrdup("TILE");
       tlp->type = MS_LAYER_TILEINDEX;
       tlp->data = msStrdup(layer->tileindex);
+      tlp->map = map;  /*needed when scaletokens are applied, to extract current map scale */
+      for(i = 0; i < layer->numscaletokens; i++) {
+        if(msGrowLayerScaletokens(tlp) == NULL) {
+          status = MS_FAILURE;
+          goto cleanup;
+        }
+        initScaleToken(&tlp->scaletokens[i]);
+        msCopyScaleToken(&layer->scaletokens[i],&tlp->scaletokens[i]);
+        tlp->numscaletokens++;
+      }
       if (layer->filteritem)
         tlp->filteritem = msStrdup(layer->filteritem);
       if (layer->filter.string) {
@@ -803,6 +813,12 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     if (status != MS_SUCCESS) {
       goto cleanup;
     }
+  } else {
+    /* we have to manually apply to scaletoken logic as we're not going through msLayerOpen() */
+    status = msLayerApplyScaletokens(layer,map->scaledenom);
+    if (status != MS_SUCCESS) {
+      goto cleanup;
+    }
   }
 
   /* -------------------------------------------------------------------- */
@@ -856,8 +872,10 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     }
 
     decrypted_path = msDecryptStringTokens( map, szPath );
-    if( !decrypted_path )
-      return MS_FAILURE;
+    if( !decrypted_path ) {
+      status = MS_FAILURE;
+      goto cleanup;
+    }
 
     msAcquireLock( TLOCK_GDAL );
     hDS = GDALOpen(decrypted_path, GA_ReadOnly );
@@ -885,7 +903,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
                       "Unable to open file %s for layer %s ... fatal error.\n%s",
                       "msRasterQueryByRect()",
                       szPath, layer->name, cpl_error_msg);
-        return(MS_FAILURE);
+        status = MS_FAILURE;
+        goto cleanup;
       }
       if( ignore_missing == MS_MISSING_DATA_LOG ) {
         if( layer->debug || map->debug )
@@ -924,7 +943,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
                      szLongMsg);
 
           msReleaseLock( TLOCK_GDAL );
-          return(MS_FAILURE);
+          status = MS_FAILURE;
+          goto cleanup;
         }
       }
     }
@@ -950,6 +970,8 @@ cleanup:
       freeLayer(tlp);
       free(tlp);
     }
+  } else {
+    msLayerRestoreFromScaletokens(layer);
   }
 
   /* -------------------------------------------------------------------- */

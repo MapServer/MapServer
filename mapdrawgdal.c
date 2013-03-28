@@ -1846,36 +1846,6 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Try OWS extent metadata.  We only try this if we know there     */
-  /*      is metadata so that we don't end up going into the layer        */
-  /*      getextent function which will in turn reopen the file with      */
-  /*      potential performance and locking problems.                     */
-  /* -------------------------------------------------------------------- */
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
-  if ((value = msOWSLookupMetadata(&(layer->metadata), "MFCO", "extent"))
-      != NULL) {
-    int success;
-
-    msReleaseLock( TLOCK_GDAL );
-    success = msOWSGetLayerExtent( map, layer, "MFCO", &rect );
-    msAcquireLock( TLOCK_GDAL );
-
-    if( success == MS_SUCCESS ) {
-      padfGeoTransform[0] = rect.minx;
-      padfGeoTransform[1] = (rect.maxx - rect.minx) /
-                            (double) GDALGetRasterXSize( hDS );
-      padfGeoTransform[2] = 0;
-      padfGeoTransform[3] = rect.maxy;
-      padfGeoTransform[4] = 0;
-      padfGeoTransform[5] = (rect.miny - rect.maxy) /
-                            (double) GDALGetRasterYSize( hDS );
-
-      return MS_SUCCESS;
-    }
-  }
-#endif
-
-  /* -------------------------------------------------------------------- */
   /*      We didn't find any info ... use the default.                    */
   /*      Reset our default geotransform.  GDALGetGeoTransform() may      */
   /*      have altered it even if GDALGetGeoTransform() failed.           */

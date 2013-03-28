@@ -90,7 +90,7 @@ char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL"
 
 /*
 ** Validates a string (value) against a series of patterns. We support up to four to allow cascading from classObj to
-** layerObj to webObj plus a legacy pattern like TEMPLATEPATTERN or qstring_validation_pattern.
+** layerObj to webObj plus a legacy pattern like TEMPLATEPATTERN.
 */
 int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4)
 {
@@ -6832,7 +6832,6 @@ void msApplyDefaultSubstitutions(mapObj *map)
   /* output formats (#3751) */
   for(i=0; i<map->numoutputformats; i++) {
     applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "filename", &(map->web.validation));
-    applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "filename", &(map->web.metadata));
   }
 
   for(i=0; i<map->numlayers; i++) {
@@ -6841,13 +6840,10 @@ void msApplyDefaultSubstitutions(mapObj *map)
     for(j=0; j<layer->numclasses; j++) {    /* class settings take precedence...  */
       classObj *class = GET_CLASS(map, i, j);
       applyClassDefaultSubstitutions(class, &(class->validation));
-      applyClassDefaultSubstitutions(class, &(class->metadata));
     }
 
     applyLayerDefaultSubstitutions(layer, &(layer->validation)); /* ...then layer settings... */
-    applyLayerDefaultSubstitutions(layer, &(layer->metadata));
     applyLayerDefaultSubstitutions(layer, &(map->web.validation)); /* ...and finally web settings */
-    applyLayerDefaultSubstitutions(layer, &(map->web.metadata));
   }
 }
 
@@ -6856,7 +6852,6 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
   int i,j,k;
 
   char *tag=NULL;
-  char *validation_pattern_key=NULL;
 
   for(i=0; i<npairs; i++) {
 
@@ -6864,15 +6859,11 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
     tag = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 3);
     sprintf(tag, "%%%s%%", names[i]);
 
-    /* validation pattern key - deprecated */
-    validation_pattern_key = (char *) msSmallMalloc(sizeof(char)*strlen(names[i]) + 20);
-    sprintf(validation_pattern_key,"%s_validation_pattern", names[i]);
-
     /* output formats (#3751) */
     for(j=0; j<map->numoutputformats; j++) {
       const char *filename = msGetOutputFormatOption(map->outputformatlist[j], "FILENAME", NULL);
       if(filename && (strcasestr(filename, tag) != NULL)) {
-        if(msValidateParameter(values[i], msLookupHashTable(&(map->web.validation), names[i]), msLookupHashTable(&(map->web.metadata), validation_pattern_key), NULL, NULL) == MS_SUCCESS) {
+        if(msValidateParameter(values[i], msLookupHashTable(&(map->web.validation), names[i]), NULL, NULL, NULL) == MS_SUCCESS) {
           char *new_filename = msStrdup(filename);
           new_filename = msCaseReplaceSubstring(new_filename, tag, values[i]);
           msSetOutputFormatOption(map->outputformatlist[j], "FILENAME", new_filename);
@@ -6893,28 +6884,23 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
         if(layer->debug >= MS_DEBUGLEVEL_V)
           msDebug( "  runtime substitution - Layer %s, Class %s, tag %s...\n", layer->name, class->name, tag);
 
-        if (msLookupHashTable(&(class->validation), names[i]) ||
-            msLookupHashTable(&(class->metadata), validation_pattern_key)) {
+        if (msLookupHashTable(&(class->validation), names[i])) {
           if (msValidateParameter(values[i],
                                   msLookupHashTable(&(class->validation), names[i]),
-                                  msLookupHashTable(&(class->metadata), validation_pattern_key),
-                                  NULL, NULL) != MS_SUCCESS) {
+                                  NULL, NULL, NULL) != MS_SUCCESS) {
             /* skip as the name exists in the class validation but does not validate */
             continue;
           }
-        } else if (msLookupHashTable(&(layer->validation), names[i]) ||
-                   msLookupHashTable(&(layer->metadata), validation_pattern_key)) {
+        } else if (msLookupHashTable(&(layer->validation), names[i])) {
           if (msValidateParameter(values[i],
                                   msLookupHashTable(&(layer->validation), names[i]),
-                                  msLookupHashTable(&(layer->metadata), validation_pattern_key),
-                                  NULL, NULL) != MS_SUCCESS) {
+                                  NULL, NULL, NULL) != MS_SUCCESS) {
             /* skip as the name exists in the layer validation but does not validate */
             continue;
           }
         } else if (msValidateParameter(values[i],
                                        msLookupHashTable(&(map->web.validation), names[i]),
-                                       msLookupHashTable(&(map->web.metadata), validation_pattern_key),
-                                       NULL, NULL) != MS_SUCCESS) {
+                                       NULL, NULL, NULL) != MS_SUCCESS) {
           /* skip as the web validation fails */
           continue;
         }
@@ -6928,19 +6914,16 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
       if(layer->debug >= MS_DEBUGLEVEL_V)
         msDebug( "  runtime substitution - Layer %s, tag %s...\n", layer->name, tag);
 
-      if (msLookupHashTable(&(layer->validation), names[i]) ||
-          msLookupHashTable(&(layer->metadata), validation_pattern_key)) {
+      if (msLookupHashTable(&(layer->validation), names[i])) {
         if (msValidateParameter(values[i],
                                 msLookupHashTable(&(layer->validation), names[i]),
-                                msLookupHashTable(&(layer->metadata), validation_pattern_key),
-                                NULL, NULL) != MS_SUCCESS) {
+                                NULL, NULL, NULL) != MS_SUCCESS) {
           /* skip as the name exists in the layer validation but does not validate */
           continue;
         }
       } else if (msValidateParameter(values[i],
                                      msLookupHashTable(&(map->web.validation), names[i]),
-                                     msLookupHashTable(&(map->web.metadata), validation_pattern_key),
-                                     NULL, NULL) != MS_SUCCESS) {
+                                     NULL, NULL, NULL) != MS_SUCCESS) {
         /* skip as the web validation fails */
         continue;
       }
@@ -6950,7 +6933,6 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
     }
 
     msFree(tag);
-    msFree(validation_pattern_key);
   } /* next name/value pair */
 }
 

@@ -109,14 +109,19 @@ int msLayerApplyScaletokens(layerObj *layer, double scale)
   }
   msLayerRestoreFromScaletokens(layer);
   for(i=0;i<layer->numscaletokens;i++) {
-    int tokenindex=0;
     scaleTokenObj *st = &layer->scaletokens[i];
     scaleTokenEntryObj *ste = NULL;
-    while(tokenindex<st->n_entries) {
-      ste = &(st->tokens[tokenindex]);
-      if(scale < ste->maxscale && scale >= ste->minscale) break; /* current token is the correct one */
-      tokenindex++;
-      ste = NULL;
+    if(scale<=0) {
+       ste = &(st->tokens[0]);
+      /* no scale defined, use first entry */
+    } else {
+      int tokenindex=0;
+      while(tokenindex<st->n_entries) {
+        ste = &(st->tokens[tokenindex]);
+        if(scale < ste->maxscale && scale >= ste->minscale) break; /* current token is the correct one */
+        tokenindex++;
+        ste = NULL;
+      }
     }
     assert(ste);
     if(layer->data && strstr(layer->data,st->name)) {

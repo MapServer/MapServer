@@ -130,7 +130,23 @@ public:
     m_renderer_primitives(m_renderer_base),
     m_rasterizer_primitives(m_renderer_primitives)
 #endif
-  {}
+  {
+    stroke = NULL;
+    dash = NULL;
+    stroke_dash = NULL;
+  }
+
+  ~AGG2Renderer() {
+    if(stroke) {
+      delete stroke;
+    }
+    if(dash) {
+      delete dash;
+    }
+    if(stroke_dash) {
+      delete stroke_dash;
+    }
+  }
 
   band_type* buffer;
   rendering_buffer m_rendering_buffer;
@@ -148,6 +164,9 @@ public:
   mapserver::scanline_u8 sl_line; /*unpacked scanlines, works faster if the area is roughly
     equal to the perimeter, in number of pixels*/
   bool use_alpha;
+  mapserver::conv_stroke<line_adaptor> *stroke;
+  mapserver::conv_dash<line_adaptor> *dash;
+  mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > *stroke_dash;
 };
 
 #define AGG_RENDERER(image) ((AGG2Renderer*) (image)->img.plugin)
@@ -220,22 +239,36 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
   r->m_renderer_scanline.color(aggColor(style->color));
 
   if (style->patternlength <= 0) {
-    mapserver::conv_stroke<line_adaptor> stroke(lines);
-    stroke.width(style->width);
-    if(style->width>1) {
-      applyCJC(stroke, style->linecap, style->linejoin);
+    if(!r->stroke) {
+      r->stroke = new mapserver::conv_stroke<line_adaptor>(lines);
     } else {
-      stroke.inner_join(mapserver::inner_bevel);
-      stroke.line_join(mapserver::bevel_join);
+      r->stroke->attach(lines);
     }
-    r->m_rasterizer_aa.add_path(stroke);
+    r->stroke->width(style->width);
+    if(style->width>1) {
+      applyCJC(*r->stroke, style->linecap, style->linejoin);
+    } else {
+      r->stroke->inner_join(mapserver::inner_bevel);
+      r->stroke->line_join(mapserver::bevel_join);
+    }
+    r->m_rasterizer_aa.add_path(*r->stroke);
   } else {
-    mapserver::conv_dash<line_adaptor> dash(lines);
-    mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > stroke_dash(dash);
+    if(!r->dash) {
+      r->dash = new mapserver::conv_dash<line_adaptor>(lines);
+    } else {
+      r->dash->remove_all_dashes();
+      r->dash->dash_start(0.0);
+      r->dash->attach(lines);
+    }
+    if(!r->stroke_dash) {
+      r->stroke_dash = new mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > (*r->dash);
+    } else {
+      r->stroke_dash->attach(*r->dash);
+    }
     int patt_length = 0;
     for (int i = 0; i < style->patternlength; i += 2) {
       if (i < style->patternlength - 1) {
-        dash.add_dash(MS_MAX(1,MS_NINT(style->pattern[i])),
+        r->dash->add_dash(MS_MAX(1,MS_NINT(style->pattern[i])),
                       MS_MAX(1,MS_NINT(style->pattern[i + 1])));
         if(style->patternoffset) {
           patt_length += MS_MAX(1,MS_NINT(style->pattern[i])) +
@@ -244,16 +277,16 @@ int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
       }
     }
     if(style->patternoffset > 0) {
-      dash.dash_start(patt_length - style->patternoffset);
+      r->dash->dash_start(patt_length - style->patternoffset);
     }
-    stroke_dash.width(style->width);
+    r->stroke_dash->width(style->width);
     if(style->width>1) {
-      applyCJC(stroke_dash, style->linecap, style->linejoin);
+      applyCJC(*r->stroke_dash, style->linecap, style->linejoin);
     } else {
-      stroke_dash.inner_join(mapserver::inner_bevel);
-      stroke_dash.line_join(mapserver::bevel_join);
+      r->stroke_dash->inner_join(mapserver::inner_bevel);
+      r->stroke_dash->line_join(mapserver::bevel_join);
     }
-    r->m_rasterizer_aa.add_path(stroke_dash);
+    r->m_rasterizer_aa.add_path(*r->stroke_dash);
   }
   mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
   return MS_SUCCESS;
