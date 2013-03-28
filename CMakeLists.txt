@@ -677,7 +677,7 @@ status_optional_feature("KML output" "${USE_KML}")
 status_optional_feature("Z+M point coordinate support" "${USE_POINT_Z_M}")
 status_optional_feature("XML Mapfile support" "${USE_XMLMAPFILE}")
 if(WIN32)
-status_optional_component("Oracle Spatial as Plugin" "${USE_ORACLE_PLUGIN}")
+status_optional_feature("Oracle Spatial as Plugin" "${USE_ORACLE_PLUGIN}")
 endif(WIN32)
 
 message(STATUS " * Mapscripts")

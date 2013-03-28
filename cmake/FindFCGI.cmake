@@ -2,7 +2,7 @@
 find_path(FCGI_INCLUDE_DIR NAMES fastcgi.h)
 
 # Look for the library.
-find_library(FCGI_LIBRARY NAMES fcgi)
+find_library(FCGI_LIBRARY NAMES fcgi libfcgi)
 
 set(FCGI_INCLUDE_DIRS ${FCGI_INCLUDE_DIR})
 set(FCGI_LIBRARIES ${FCGI_LIBRARY})

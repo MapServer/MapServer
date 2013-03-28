@@ -18,7 +18,7 @@ find_path( GEOS_INCLUDE_DIR geos_c.h
            SUFFIXES geos)
 
 # Find GEOS C library:
-find_library( GEOS_LIBRARY NAMES geos_c 
+find_library( GEOS_LIBRARY NAMES geos_c geos_c_i
               PATHS 
               /usr/lib64 
               /usr/lib 
