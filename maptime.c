@@ -263,6 +263,8 @@ int msParseTime(const char *string, struct tm *tm)
   int i, indice = 0;
   int num_patterns = 0;
   
+  if(MS_STRING_IS_NULL_OR_EMPTY(string)) return MS_FALSE; /* nothing to parse so bail */
+
   if(msTimeSetup() != MS_SUCCESS) {
     return MS_FALSE;
   }

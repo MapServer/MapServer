@@ -286,22 +286,19 @@
         msInitQuery(&(map->query));
 
         map->query.type = MS_QUERY_BY_FILTER;
+        map->query.mode = MS_QUERY_MULTIPLE;
 
-        map->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
-        map->query.filter->string = strdup(string);
-	map->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
-        map->query.filter->compiled = MS_FALSE;
-        map->query.filter->flags = 0;
-        map->query.filter->tokens = map->query.filter->curtoken = NULL;
+        map->query.filter.string = strdup(string);
+        map->query.filter.type = MS_EXPRESSION;
         
         map->query.layer = self->index;
-     	map->query.rect = map->extent;
+     	  map->query.rect = map->extent;
 
-	status = self->status;
-	self->status = MS_ON;
+	      status = self->status;
+	      self->status = MS_ON;
         retval = msQueryByFilter(map);
         self->status = status;
-	return retval;
+	      return retval;
     }
 
     int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) 
@@ -311,16 +308,21 @@
 
         msInitQuery(&(map->query));
         
-        map->query.type = MS_QUERY_BY_ATTRIBUTE;
+        map->query.type = MS_QUERY_BY_FILTER;
         map->query.mode = mode;
-        if(qitem) map->query.item = strdup(qitem);
-        if(qstring) map->query.str = strdup(qstring);
+
+        if(qitem) map->query.filteritem = msStrdup(qitem);
+        if(qstring) {
+          msInitExpression(&map->query.filter);
+          msLoadExpressionString(&map->query.filter, qstring);
+        }
+
         map->query.layer = self->index;
         map->query.rect = map->extent;
 
         status = self->status;
         self->status = MS_ON;
-        retval = msQueryByAttributes(map);
+        retval = msQueryByFilter(map);
         self->status = status;
 
         return retval;
@@ -432,7 +434,7 @@
     int setFilter(char *filter) 
     {
         if (!filter || strlen(filter) == 0) {
-            freeExpression(&self->filter);
+            msFreeExpression(&self->filter);
             return MS_SUCCESS;
         }
         else return msLoadExpressionString(&self->filter, filter);

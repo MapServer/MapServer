@@ -403,7 +403,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
   if(!context) return(MS_TRUE);
 
   /* initialize a temporary expression (e) */
-  initExpression(&e);
+  msInitExpression(&e);
 
   e.string = msStrdup(context);
   e.type = MS_EXPRESSION; /* todo */
@@ -434,7 +434,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 
   status = yyparse(&p);
 
-  freeExpression(&e);
+  msFreeExpression(&e);
 
   if (status != 0) {
     msSetError(MS_PARSEERR, "Failed to parse context", "msEvalContext");
@@ -454,7 +454,8 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
  */
 int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex)
 {
-  if(!expression->string) return MS_TRUE; /* empty expressions are ALWAYS true */
+  if(MS_STRING_IS_NULL_OR_EMPTY(expression->string)) return MS_TRUE; /* NULL or empty expressions are ALWAYS true */
+  if(expression->native_string != NULL) return MS_TRUE; /* expressions that are evaluated natively are ALWAYS true */
 
   switch(expression->type) {
     case(MS_STRING):
@@ -519,6 +520,8 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
         msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
         return MS_FALSE;
       }
+
+      if(MS_STRING_IS_NULL_OR_EMPTY(shape->values[itemindex]) == MS_TRUE) return MS_FALSE;
 
       if(!expression->compiled) {
         if(expression->flags & MS_EXP_INSENSITIVE) {

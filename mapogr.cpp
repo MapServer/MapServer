@@ -40,8 +40,6 @@
 #  include "ogr_srs_api.h"
 #endif
 
-
-
 #define ACQUIRE_OGR_LOCK       msAcquireLock( TLOCK_OGR )
 #define RELEASE_OGR_LOCK       msReleaseLock( TLOCK_OGR )
 
@@ -2737,7 +2735,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         c->numlabels++;
         initLabel(c->labels[0]);
       }
-      freeExpression(&c->labels[0]->text);
+      msFreeExpression(&c->labels[0]->text);
       c->labels[0]->text.type = MS_STRING;
       c->labels[0]->text.string = msStrdup(labelTextString);
 
@@ -3257,14 +3255,16 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 
 #endif /* USE_OGR */
 }
+
 /************************************************************************/
 /*                  msOGRLayerInitializeVirtualTable()                  */
 /************************************************************************/
-int
-msOGRLayerInitializeVirtualTable(layerObj *layer)
+int msOGRLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
+
+  /* layer->vtable->LayerTranslateFilter, use default */
 
   layer->vtable->LayerInitItemInfo = msOGRLayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msOGRLayerFreeItemInfo;

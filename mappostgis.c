@@ -2047,10 +2047,10 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
   }
 
   /* Populate strFilter, if necessary. */
-  if ( layer->filter.string ) {
+  if ( layer->filter.native_string ) { 
     static char *strFilterTemplate = "(%s)";
-    strFilter = (char*)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.string)+1);
-    sprintf(strFilter, strFilterTemplate, layer->filter.string);
+    strFilter = (char*)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.native_string)+1);
+    sprintf(strFilter, strFilterTemplate, layer->filter.native_string);
     strFilterLength = strlen(strFilter);
   }
 
@@ -2175,7 +2175,6 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
   free(strWhere);
 
   return strSQL;
-
 }
 
 #define wkbstaticsize 4096
@@ -3250,7 +3249,6 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
 #endif
 }
 
-
 /*
  * make sure that the timestring is complete and acceptable
  * to the date_trunc function :
@@ -3266,7 +3264,7 @@ int postgresTimeStampForTimeString(const char *timestring, char *dest, size_t de
   int bNoDate = (*timestring == 'T');
   if (timeresolution < 0)
     return MS_FALSE;
-
+ 
   switch(timeresolution) {
     case TIME_RESOLUTION_YEAR:
       if (timestring[nlength-1] != '-') {
@@ -3323,7 +3321,6 @@ int postgresTimeStampForTimeString(const char *timestring, char *dest, size_t de
   return MS_SUCCESS;
 
 }
-
 
 /*
  * create a postgresql where clause for the given timestring, taking into account
@@ -3530,19 +3527,19 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
     return MS_FALSE;
   }
 
-  if(lp->filteritem) free(lp->filteritem);
-  lp->filteritem = msStrdup(timefield);
-
-  /* if the filter is set and it's a string type, concatenate it with
-     the time. If not just free it */
-  if (lp->filter.type == MS_EXPRESSION) {
+  /* if the filter is set and it's a string type, concatenate it with the time. If not just free it */
+  if (lp->filter.type == MS_STRING && !lp->filteritem && lp->filter.string) {
     snprintf(bufferTmp, buffer_size, "(%s) and %s", lp->filter.string, buffer);
-    loadExpressionString(&lp->filter, bufferTmp);
+    msLoadExpressionString(&lp->filter, bufferTmp);
   } else {
-    freeExpression(&lp->filter);
-    loadExpressionString(&lp->filter, buffer);
+    msFreeExpression(&lp->filter);
+    msLoadExpressionString(&lp->filter, buffer);
   }
 
+  if(lp->filteritem) free(lp->filteritem);
+  /* lp->filteritem = msStrdup(timefield); - we're building SQL, filteritem should not be set */
+
+  lp->filter.type = MS_STRING; /* force expression to string type so it's interpreted as native SQL */ 
 
   return MS_TRUE;
 }
@@ -3628,10 +3625,242 @@ int msPostGISGetPaging(layerObj *layer)
 #endif
 }
 
+/*
+** msPostGISLayerTranslateFilter()
+**
+** Registered vtable->LayerTranslateFilter function.
+*/
+int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem)
+{
+#ifdef USE_POSTGIS
+  tokenListNodeObjPtr node = NULL;
+
+  char *snippet = NULL;
+  char *native_string = NULL;
+  char *strtmpl = NULL;
+  char *stresc = NULL;
+
+  msPostGISLayerInfo *layerinfo = layer->layerinfo;
+
+  if(!filter->string) return MS_SUCCESS; /* not an error, just nothing to do */
+
+  // fprintf(stderr, "%s, %s, %d\n", filter->string, filteritem, filter->type);
+
+  if(filter->type == MS_STRING && filter->string && !filteritem) { /* native sql */
+    filter->native_string = msStrdup(filter->string);
+    return MS_SUCCESS;
+  } else if(filter->type == MS_STRING && filter->string && filteritem) { /* item/value pair - add escaping */
+
+    stresc = msLayerEscapePropertyName(layer, filteritem);
+    if(filter->flags & MS_EXP_INSENSITIVE) {
+      native_string = msStringConcatenate(native_string, "upper(");
+      native_string = msStringConcatenate(native_string, stresc);
+      native_string = msStringConcatenate(native_string, "::text) = upper(");
+    } else {
+      native_string = msStringConcatenate(native_string, stresc);
+      native_string = msStringConcatenate(native_string, "::text = ");
+    }
+    msFree(stresc);
+
+    strtmpl = "'%s'";  /* don't have a type for the righthand literal so assume it's a string and we quote */
+    stresc = msPostGISEscapeSQLParam(layer, filter->string);    
+    snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+    sprintf(snippet, strtmpl, stresc);
+    native_string = msStringConcatenate(native_string, snippet);
+    msFree(snippet);
+    msFree(stresc);
+
+    if(filter->flags & MS_EXP_INSENSITIVE) native_string = msStringConcatenate(native_string, ")");
+  } else if(filter->type == MS_REGEX && filter->string && filteritem) { /* item/regex pair  - add escaping */
+
+    stresc = msLayerEscapePropertyName(layer, filteritem);
+    native_string = msStringConcatenate(native_string, stresc);
+    if(filter->flags & MS_EXP_INSENSITIVE) {
+      native_string = msStringConcatenate(native_string, "::text ~* ");
+    } else {
+      native_string = msStringConcatenate(native_string, "::text ~ ");
+    }
+    msFree(stresc);
+
+    strtmpl = "'%s'";
+    stresc = msPostGISEscapeSQLParam(layer, filter->string);
+    snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+    sprintf(snippet, strtmpl, stresc);
+    native_string = msStringConcatenate(native_string, snippet);
+    msFree(snippet);
+    msFree(stresc);
+  } else if(filter->type == MS_EXPRESSION) {
+    if(msPostGISParseData(layer) != MS_SUCCESS) return MS_FAILURE;
+
+    if(layer->debug >= 2) msDebug("msPostGISLayerTranslateFilter. String: %s.\n", filter->string);
+    if(!filter->tokens) return MS_SUCCESS;
+    if(layer->debug >= 2) msDebug("msPostGISLayerTranslateFilter. There are tokens to process... \n");
+
+    node = filter->tokens;
+    while (node != NULL) {      
+      switch(node->token) {
+
+        /* literal tokens */
+        case MS_TOKEN_LITERAL_BOOLEAN:
+          if(node->tokenval.dblval == MS_TRUE)
+            native_string = msStringConcatenate(native_string, "TRUE");
+          else
+            native_string = msStringConcatenate(native_string, "FALSE");
+          break;
+        case MS_TOKEN_LITERAL_NUMBER:
+	  strtmpl = "%lf";
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+          sprintf(snippet, strtmpl, node->tokenval.dblval);
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+          break;
+        case MS_TOKEN_LITERAL_STRING:
+          strtmpl = "'%s'";
+          stresc = msPostGISEscapeSQLParam(layer, node->tokenval.strval);
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+          sprintf(snippet, strtmpl, stresc);
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+          msFree(stresc);
+          break;
+        case MS_TOKEN_LITERAL_TIME:
+        {
+          int resolution = msTimeGetResolution(node->tokensrc);
+          
+          snippet = (char *) msSmallMalloc(128);
+          switch(resolution) {
+            case TIME_RESOLUTION_YEAR:
+              strtmpl = "to_date('%d','YYYY')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900));
+              break;
+            case TIME_RESOLUTION_MONTH:
+              strtmpl = "to_date('%d-%02d','YYYY-MM')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1));
+              break;
+            case TIME_RESOLUTION_DAY:
+      	      strtmpl = "to_date('%d-%02d-%02d','YYYY-MM-DD')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday);
+              break;
+            case TIME_RESOLUTION_HOUR:
+              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d:%02d','YYYY-MM-DD hh24')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour);
+              break;
+            case TIME_RESOLUTION_MINUTE:
+              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d:%02d','YYYY-MM-DD hh24:mi')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min);
+              break;
+            case TIME_RESOLUTION_SECOND:
+              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d:%02d','YYYY-MM-DD hh24:mi:ss')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min, node->tokenval.tmval.tm_sec);
+              break;
+          }
+
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+          break;
+  	}
+        case MS_TOKEN_LITERAL_SHAPE:
+          native_string = msStringConcatenate(native_string, "ST_GeomFromText('");
+          native_string = msStringConcatenate(native_string, msShapeToWKT(node->tokenval.shpval));
+          native_string = msStringConcatenate(native_string, "'");
+          if(layerinfo->srid && strcmp(layerinfo->srid, "") != 0) {
+            native_string = msStringConcatenate(native_string, ",");
+            native_string = msStringConcatenate(native_string, layerinfo->srid);
+          }
+          native_string = msStringConcatenate(native_string, ")");
+          break;
+
+	/* data binding tokens */
+        case MS_TOKEN_BINDING_DOUBLE:
+        case MS_TOKEN_BINDING_INTEGER:
+        case MS_TOKEN_BINDING_STRING:
+        case MS_TOKEN_BINDING_TIME:        
+          if(node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
+            strtmpl = "%s::text"; /* explicit cast necessary for certain operators */
+          else
+            strtmpl = "%s";
+          stresc = msLayerEscapePropertyName(layer, node->tokenval.bindval.item);
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+          sprintf(snippet, strtmpl, stresc);
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+          msFree(stresc);
+          break;
+        case MS_TOKEN_BINDING_SHAPE:
+          native_string = msStringConcatenate(native_string, layerinfo->geomcolumn);
+          break;
+        case MS_TOKEN_BINDING_MAP_CELLSIZE:
+          strtmpl = "%lf";
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+          sprintf(snippet, strtmpl, layer->map->cellsize);
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+	  break;
+
+	/* spatial comparison tokens */
+        case MS_TOKEN_COMPARISON_INTERSECTS:
+        case MS_TOKEN_COMPARISON_DISJOINT:
+        case MS_TOKEN_COMPARISON_TOUCHES:
+        case MS_TOKEN_COMPARISON_OVERLAPS:
+        case MS_TOKEN_COMPARISON_CROSSES:
+        case MS_TOKEN_COMPARISON_WITHIN:
+        case MS_TOKEN_COMPARISON_CONTAINS:
+        case MS_TOKEN_COMPARISON_EQUALS:
+        case MS_TOKEN_COMPARISON_DWITHIN:
+          if(node->next->token != '(') goto cleanup;
+          native_string = msStringConcatenate(native_string, "st_");
+          native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
+          break;
+
+	/* functions */
+        case MS_TOKEN_FUNCTION_LENGTH:
+        case MS_TOKEN_FUNCTION_AREA:
+        case MS_TOKEN_FUNCTION_BUFFER:
+        case MS_TOKEN_FUNCTION_DIFFERENCE:
+          native_string = msStringConcatenate(native_string, "st_");
+          native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
+          break;
+
+	/* unsupported tokens */ 
+	case MS_TOKEN_COMPARISON_IEQ:
+        case MS_TOKEN_COMPARISON_BEYOND:
+	case MS_TOKEN_FUNCTION_TOSTRING:
+	case MS_TOKEN_FUNCTION_ROUND:
+	case MS_TOKEN_FUNCTION_SIMPLIFY:
+        case MS_TOKEN_FUNCTION_SIMPLIFYPT:        
+        case MS_TOKEN_FUNCTION_GENERALIZE:
+          goto cleanup;
+          break;
+
+        default:
+          /* by default accept the general token to string conversion */
+          native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
+        }
+      node = node->next;
+    }
+  }
+
+  filter->native_string = msStrdup(native_string);    
+  msFree(native_string);
+
+  return MS_SUCCESS;
+
+cleanup:
+  msSetError(MS_MISCERR, "Translation to native SQL failed.", "msPostGISLayerTranslateFilter()");
+  msFree(native_string);
+  return MS_FAILURE;
+#else
+  msSetError(MS_MISCERR, "PostGIS support is not available.", "msPostGISLayerTranslateFilter()");
+  return MS_FAILURE;
+#endif
+}
+
 int msPostGISLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
+
+  layer->vtable->LayerTranslateFilter = msPostGISLayerTranslateFilter;
 
   layer->vtable->LayerInitItemInfo = msPostGISLayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msPostGISLayerFreeItemInfo;
@@ -3646,7 +3875,8 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
   /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
   /* layer->vtable->LayerCloseConnection = msPostGISLayerClose; */
-  layer->vtable->LayerSetTimeFilter = msPostGISLayerSetTimeFilter;
+  // layer->vtable->LayerSetTimeFilter = msPostGISLayerSetTimeFilter;
+  layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
 

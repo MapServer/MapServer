@@ -39,102 +39,106 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     NUMBER = 258,
-     STRING = 259,
-     TIME = 260,
-     SHAPE = 261,
-     OR = 262,
-     AND = 263,
-     NOT = 264,
-     IRE = 265,
-     IEQ = 266,
-     IN = 267,
-     GE = 268,
-     LE = 269,
-     GT = 270,
-     LT = 271,
-     NE = 272,
-     EQ = 273,
-     RE = 274,
-     DWITHIN = 275,
-     BEYOND = 276,
-     CONTAINS = 277,
-     WITHIN = 278,
-     CROSSES = 279,
-     OVERLAPS = 280,
-     TOUCHES = 281,
-     DISJOINT = 282,
-     INTERSECTS = 283,
-     ROUND = 284,
-     COMMIFY = 285,
-     LENGTH = 286,
-     AREA = 287,
-     FIRSTCAP = 288,
-     INITCAP = 289,
-     LOWER = 290,
-     UPPER = 291,
-     TOSTRING = 292,
-     JAVASCRIPT = 293,
-     SMOOTHSIA = 294,
-     GENERALIZE = 295,
-     SIMPLIFYPT = 296,
-     SIMPLIFY = 297,
-     DIFFERENCE = 298,
-     YYBUFFER = 299,
-     NEG = 300
+     BOOLEAN = 258,
+     NUMBER = 259,
+     STRING = 260,
+     TIME = 261,
+     SHAPE = 262,
+     OR = 263,
+     AND = 264,
+     NOT = 265,
+     IRE = 266,
+     IEQ = 267,
+     IN = 268,
+     GE = 269,
+     LE = 270,
+     GT = 271,
+     LT = 272,
+     NE = 273,
+     EQ = 274,
+     RE = 275,
+     DWITHIN = 276,
+     BEYOND = 277,
+     EQUALS = 278,
+     CONTAINS = 279,
+     WITHIN = 280,
+     CROSSES = 281,
+     OVERLAPS = 282,
+     TOUCHES = 283,
+     DISJOINT = 284,
+     INTERSECTS = 285,
+     ROUND = 286,
+     COMMIFY = 287,
+     LENGTH = 288,
+     AREA = 289,
+     FIRSTCAP = 290,
+     INITCAP = 291,
+     LOWER = 292,
+     UPPER = 293,
+     TOSTRING = 294,
+     JAVASCRIPT = 295,
+     SMOOTHSIA = 296,
+     GENERALIZE = 297,
+     SIMPLIFYPT = 298,
+     SIMPLIFY = 299,
+     DIFFERENCE = 300,
+     YYBUFFER = 301,
+     NEG = 302
    };
 #endif
 /* Tokens.  */
-#define NUMBER 258
-#define STRING 259
-#define TIME 260
-#define SHAPE 261
-#define OR 262
-#define AND 263
-#define NOT 264
-#define IRE 265
-#define IEQ 266
-#define IN 267
-#define GE 268
-#define LE 269
-#define GT 270
-#define LT 271
-#define NE 272
-#define EQ 273
-#define RE 274
-#define DWITHIN 275
-#define BEYOND 276
-#define CONTAINS 277
-#define WITHIN 278
-#define CROSSES 279
-#define OVERLAPS 280
-#define TOUCHES 281
-#define DISJOINT 282
-#define INTERSECTS 283
-#define ROUND 284
-#define COMMIFY 285
-#define LENGTH 286
-#define AREA 287
-#define FIRSTCAP 288
-#define INITCAP 289
-#define LOWER 290
-#define UPPER 291
-#define TOSTRING 292
-#define JAVASCRIPT 293
-#define SMOOTHSIA 294
-#define GENERALIZE 295
-#define SIMPLIFYPT 296
-#define SIMPLIFY 297
-#define DIFFERENCE 298
-#define YYBUFFER 299
-#define NEG 300
+#define BOOLEAN 258
+#define NUMBER 259
+#define STRING 260
+#define TIME 261
+#define SHAPE 262
+#define OR 263
+#define AND 264
+#define NOT 265
+#define IRE 266
+#define IEQ 267
+#define IN 268
+#define GE 269
+#define LE 270
+#define GT 271
+#define LT 272
+#define NE 273
+#define EQ 274
+#define RE 275
+#define DWITHIN 276
+#define BEYOND 277
+#define EQUALS 278
+#define CONTAINS 279
+#define WITHIN 280
+#define CROSSES 281
+#define OVERLAPS 282
+#define TOUCHES 283
+#define DISJOINT 284
+#define INTERSECTS 285
+#define ROUND 286
+#define COMMIFY 287
+#define LENGTH 288
+#define AREA 289
+#define FIRSTCAP 290
+#define INITCAP 291
+#define LOWER 292
+#define UPPER 293
+#define TOSTRING 294
+#define JAVASCRIPT 295
+#define SMOOTHSIA 296
+#define GENERALIZE 297
+#define SIMPLIFYPT 298
+#define SIMPLIFY 299
+#define DIFFERENCE 300
+#define YYBUFFER 301
+#define NEG 302
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 30 "/Users/tbonfort/dev/mapserver/mapparser.y"
+#line 30 "/Users/sdlime/mapserver/mapserver/mapparser.y"
 {
   double dblval;
   int intval;  
@@ -143,7 +147,7 @@ typedef union YYSTYPE
   shapeObj *shpval;
 }
 /* Line 1529 of yacc.c.  */
-#line 147 "/Users/tbonfort/dev/mapserver/mapparser.h"
+#line 151 "/Users/sdlime/mapserver/mapserver/mapparser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
