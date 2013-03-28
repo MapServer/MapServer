@@ -172,6 +172,13 @@ faceCacheObj *getFontFace(cairoCacheData *cache, const char *font)
     free(newface);
     return NULL;
   }
+
+  /* Try to select charmap */
+  if (!newface->ftface->charmap) {
+    if( FT_Select_Charmap(newface->ftface, FT_ENCODING_MS_SYMBOL) )
+       FT_Select_Charmap(newface->ftface, FT_ENCODING_APPLE_ROMAN );
+  }
+
   newface->next = cache->facecache;
   cache->facecache = newface;
   newface->face = cairo_ft_font_face_create_for_ft_face(newface->ftface, 0);
@@ -403,6 +410,11 @@ int renderTruetypeSymbolCairo(imageObj *img, double x, double y, symbolObj *symb
 
 
   msUTF8ToUniChar(symbol->character, &unicode);
+
+  if (face->ftface->charmap &&
+    face->ftface->charmap->encoding == FT_ENCODING_MS_SYMBOL)
+    unicode |= 0xf000;
+
   glyph.index = FT_Get_Char_Index(face->ftface, unicode);
   glyph.x=0;
   glyph.y=0;
@@ -497,6 +509,10 @@ int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numf
       curfontidx = 0;
     }
 
+    if (face->ftface->charmap &&
+      face->ftface->charmap->encoding == FT_ENCODING_MS_SYMBOL)
+      unicode |= 0xf000;
+
     glyph.index = FT_Get_Char_Index(face->ftface, unicode);
 
     if (glyph.index == 0) {
@@ -582,6 +598,11 @@ int renderGlyphsCairo(imageObj *img,double x, double y, labelStyleObj *style, ch
       cairo_set_font_face(r->cr,face->face);
       curfontidx = 0;
     }
+
+    if (face->ftface->charmap &&
+      face->ftface->charmap->encoding == FT_ENCODING_MS_SYMBOL)
+      unicode |= 0xf000;
+
     glyph.index = FT_Get_Char_Index(face->ftface, unicode);
     if(glyph.index == 0) {
       int j;
