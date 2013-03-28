@@ -130,6 +130,7 @@ option(BUILD_STATIC "Also build a static version of mapserver" OFF)
 option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
 option(WITH_FLEX_BISON "Regenerate parser" OFF)
 option(WITH_APACHE_MODULE "include (experimental) support for apache module" OFF)
+option(WITH_GENERIC_NINT "generic rounding" OFF)
 
 #TODO: USE_OGL? , USE_SDE, USE_CLUSTER_EXTERNAL USE_CLUSTER_PLUGIN, USE_MSSQL2008, USE_MSSQL2008_PLUGIN
 # SIGNORE_MISSING_DATA, CGI_CL_DEBUG_ARGS, EXTRA DEBUG FLAGS?,
@@ -294,6 +295,10 @@ if(WITH_ICONV)
     report_optional_not_found(ICONV)
   endif(ICONV_FOUND)
 endif (WITH_ICONV)
+
+if(WITH_GENERIC_NINT)
+   set(USE_GENERIC_MS_NINT 1)
+endif(WITH_GENERIC_NINT)
 
 
 if(WITH_CAIRO)
