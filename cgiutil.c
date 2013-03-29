@@ -159,7 +159,7 @@ int loadParams(cgiRequestObj *request,
 
     /* if the content_type is application/x-www-form-urlencoded,
        we have to parse it like the QUERY_STRING variable */
-    if(strcmp(request->contenttype, "application/x-www-form-urlencoded") == 0) {
+    if(strncmp(request->contenttype, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded")) == 0) {
       while( data_len > 0 && isspace(post_data[data_len-1]) )
         post_data[--data_len] = '\0';
 
