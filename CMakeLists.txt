@@ -202,6 +202,15 @@ target_link_libraries(shp2img ${MAPSERVER_LIBMAPSERVER})
 
 
 
+find_package(ZLIB)
+if(ZLIB_FOUND)
+  include_directories(${ZLIB_INCLUDE_DIR})
+  ms_link_libraries( ${ZLIB_LIBRARY})
+  set(USE_ZLIB 1)
+else(ZLIB_FOUND)
+  report_mandatory_not_found(ZLIB)
+endif(ZLIB_FOUND)
+
 find_package(PNG)
 if(PNG_FOUND)
   include_directories(${PNG_INCLUDE_DIR})
@@ -649,6 +658,7 @@ endmacro()
 
 message(STATUS "* Summary of configured options for this build")
 message(STATUS " * Mandatory components")
+message(STATUS "  * zlib: ${ZLIB_LIBRARY}")
 message(STATUS "  * png: ${PNG_LIBRARY}")
 message(STATUS "  * jpeg: ${JPEG_LIBRARY}")
 message(STATUS "  * freetype: ${FREETYPE_LIBRARY}")
