@@ -3170,7 +3170,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
           while (psQuery &&  psQuery->pszValue &&
                  strcasecmp(psQuery->pszValue, "Query") == 0) {
             /* get SRS */
-            pszValue = CPLGetXMLValue(psGetFeature,  "srsName",
+            pszValue = CPLGetXMLValue(psQuery,  "srsName",
                                       NULL);
             if (pszValue)
               wfsparams->pszSrs = msStrdup(pszValue);
