@@ -118,6 +118,7 @@ option(WITH_PHP "Enable Python mapscript support" OFF)
 option(WITH_PERL "Enable Perl mapscript support" OFF)
 option(WITH_RUBY "Enable Ruby mapscript support" OFF)
 option(WITH_JAVA "Enable Java mapscript support" OFF)
+option(WITH_CSHARP "Enable C# mapscript support" OFF)
 option(WITH_POINT_Z_M "include Z and M coordinates in point structure (advanced, not recommended)" OFF)
 option(WITH_ORACLESPATIAL "include oracle spatial database input support" OFF)
 if(WIN32)
@@ -156,6 +157,18 @@ renderers/agg/src/clipper.cpp
 )
 include_directories(renderers/agg/include)
 
+if(WIN32)
+  set(REGEX_SOURCES ${REGEX_DIR}/regex.c)
+  include_directories(${REGEX_DIR})
+  add_definitions(-DREGEX_MALLOC -DUSE_GENERIC_MS_NINT -DHAVE_STRING_H)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
+  set(REGEX_MALLOC 1)
+  set(USE_GENERIC_MS_NINT 1)
+  set(HAVE_STRING_H 0)
+else(WIN32)
+  set(REGEX_SOURCES "")
+endif(WIN32)
+
 set(mapserver_SOURCES
 cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.c classobject.c
 mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c
@@ -173,7 +186,7 @@ mapogcfiltercommon.c maprendering.c mapwcs20.c mapgd.c mapogcsld.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c
 mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp
-mapogr.cpp mapcontour.c )
+mapogr.cpp mapcontour.c ${REGEX_SOURCES})
 
 add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES})
 set_target_properties( mapserver  PROPERTIES
@@ -200,16 +213,6 @@ target_link_libraries(mapserv ${MAPSERVER_LIBMAPSERVER})
 add_executable(shp2img shp2img.c)
 target_link_libraries(shp2img ${MAPSERVER_LIBMAPSERVER})
 
-
-
-find_package(ZLIB)
-if(ZLIB_FOUND)
-  include_directories(${ZLIB_INCLUDE_DIR})
-  ms_link_libraries( ${ZLIB_LIBRARY})
-  set(USE_ZLIB 1)
-else(ZLIB_FOUND)
-  report_mandatory_not_found(ZLIB)
-endif(ZLIB_FOUND)
 
 find_package(PNG)
 if(PNG_FOUND)
@@ -625,9 +628,18 @@ if(WITH_JAVA)
    set(USE_JAVA_MAPSCRIPT 1)
 endif(WITH_JAVA)
 
+if(WITH_CSHARP)
+   add_subdirectory("mapscript/csharp")
+   set(USE_CSHARP_MAPSCRIPT 1)
+endif(WITH_CSHARP)
+
 if(UNIX)
 ms_link_libraries( ${CMAKE_DL_LIBS} m )
 endif(UNIX)
+
+if (WIN32)
+ms_link_libraries( ${MS_EXTERNAL_LIBS})
+endif (WIN32)
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/mapserver-config.h.in"
@@ -658,7 +670,6 @@ endmacro()
 
 message(STATUS "* Summary of configured options for this build")
 message(STATUS " * Mandatory components")
-message(STATUS "  * zlib: ${ZLIB_LIBRARY}")
 message(STATUS "  * png: ${PNG_LIBRARY}")
 message(STATUS "  * jpeg: ${JPEG_LIBRARY}")
 message(STATUS "  * freetype: ${FREETYPE_LIBRARY}")
@@ -701,6 +712,7 @@ status_optional_feature("PHP" "${USE_PHP_MAPSCRIPT}")
 status_optional_feature("PERL" "${USE_PERL_MAPSCRIPT}")
 status_optional_feature("RUBY" "${USE_RUBY_MAPSCRIPT}")
 status_optional_feature("JAVA" "${USE_JAVA_MAPSCRIPT}")
+status_optional_feature("C#" "${USE_CSHARP_MAPSCRIPT}")
 status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
 include_directories("${PROJECT_BINARY_DIR}")

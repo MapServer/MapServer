@@ -264,7 +264,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 
 %ignore imageObj::write;
 
-%typemap(cscode) imageObj %{
+%typemap(cscode) imageObj, struct imageObj %{
   private byte[] gdbuffer;
   private void CreateByteArray(IntPtr data, int size)
   {
@@ -290,7 +290,7 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %csmethodmodifiers processLegendTemplate "private";
 %csmethodmodifiers processQueryTemplate "private";
 
-%typemap(cscode) mapObj %{
+%typemap(cscode) mapObj, struct mapObj %{
   public string processTemplate(int bGenerateImages, string[] names, string[] values)
   {
 	if (names.Length != values.Length)

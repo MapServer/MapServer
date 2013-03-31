@@ -36,37 +36,50 @@
 %}
 
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE {
+    /* %typemap(csout, excode=SWIGEXCODE) SWIGTYPE */
     $&csclassname ret = new $&csclassname($imcall, true, null);$excode
     return ret;
   }
 
 %typemap(csout, excode=SWIGEXCODE, new="1") SWIGTYPE & {
+    /* typemap(csout, excode=SWIGEXCODE, new="1") SWIGTYPE & */
     $csclassname ret = new $csclassname($imcall, $owner, ThisOwn_$owner());$excode
     return ret;
   }
 %typemap(csout, excode=SWIGEXCODE, new="1") SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) {
+    /* %typemap(csout, excode=SWIGEXCODE, new="1") SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) */
     IntPtr cPtr = $imcall;
     $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_$owner());$excode
     return ret;
   }
+%typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE %{
+    /* %typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE */
+    get {
+      $&csclassname ret = new $&csclassname($imcall, $owner, ThisOwn_$owner());$excode
+      return ret;
+    } %}
 %typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE & %{
+    /* %typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE & */
     get {
       $csclassname ret = new $csclassname($imcall, $owner, ThisOwn_$owner());$excode
       return ret;
     } %}
-%typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) %{
+%typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE *, struct SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) %{
+    /* %typemap(csvarout, excode=SWIGEXCODE2) SWIGTYPE *, SWIGTYPE [], SWIGTYPE (CLASS::*) */
     get {
       IntPtr cPtr = $imcall;
       $csclassname ret = (cPtr == IntPtr.Zero) ? null : new $csclassname(cPtr, $owner, ThisOwn_$owner());$excode
       return ret;
     } %}
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE *& {
+    /* %typemap(csout, excode=SWIGEXCODE) SWIGTYPE *& */
     IntPtr cPtr = $imcall;
     $*csclassname ret = (cPtr == IntPtr.Zero) ? null : new $*csclassname(cPtr, $owner, ThisOwn_$owner());$excode
     return ret;
   }
 // Proxy classes (base classes, ie, not derived classes)
 %typemap(csbody) SWIGTYPE %{
+  /* %typemap(csbody) SWIGTYPE */
   private HandleRef swigCPtr;
   protected bool swigCMemOwn;
   protected object swigParentRef;
@@ -110,6 +123,7 @@
 
 // Derived proxy classes
 %typemap(csbody_derived) SWIGTYPE %{
+  /* %typemap(csbody_derived) SWIGTYPE */
   private HandleRef swigCPtr;
 
   internal $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwn, parent) {
@@ -146,6 +160,7 @@
 
 // Typewrapper classes
 %typemap(csbody) SWIGTYPE *, SWIGTYPE &, SWIGTYPE [], SWIGTYPE (CLASS::*) %{
+  /* %typemap(csbody) SWIGTYPE *, SWIGTYPE &, SWIGTYPE [], SWIGTYPE (CLASS::*) */
   private HandleRef swigCPtr;
 
   internal $csclassname(IntPtr cPtr, bool futureUse, object parent) {
@@ -162,6 +177,7 @@
 %}
 
 %typemap(csfinalize) SWIGTYPE %{
+  /* %typemap(csfinalize) SWIGTYPE */
   ~$csclassname() {
     Dispose();
   }
@@ -200,6 +216,7 @@
 %typemap(csin) SWIGTYPE *SETREFERENCE "$csclassname.getCPtrAndSetReference($csinput, ThisOwn_false())"
 
 %pragma(csharp) modulecode=%{
+  /* %pragma(csharp) modulecode */
   internal class $moduleObject : IDisposable {
 	public virtual void Dispose() {
       
