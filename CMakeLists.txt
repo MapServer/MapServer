@@ -357,7 +357,7 @@ if(ORACLE_FOUND AND WITH_ORACLESPATIAL)
 endif(ORACLE_FOUND AND WITH_ORACLESPATIAL)
 
 if(ORACLE_FOUND AND WITH_ORACLE_PLUGIN)
-    add_library(maporacleplugin MODULE maporaclespatial.c mapstring.c)
+    add_library(maporacleplugin MODULE maporaclespatial.c)
     target_link_libraries(maporacleplugin ${ORACLE_LIBRARY} ${MAPSERVER_LIBMAPSERVER})
     set_target_properties(maporacleplugin PROPERTIES COMPILE_FLAGS -DUSE_ORACLE_PLUGIN)
     set (USE_ORACLE_PLUGIN 1)
