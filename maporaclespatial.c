@@ -41,7 +41,7 @@
 
 
 
-#ifdef USE_ORACLESPATIAL
+#if defined(USE_ORACLESPATIAL) || defined(USE_ORACLE_PLUGIN)
 
 #include <oci.h>
 #include <ctype.h>
@@ -3384,8 +3384,7 @@ int msOracleSpatialGetPaging(layerObj *layer)
 
 #endif
 
-#ifdef USE_ORACLE_PLUGIN
-#ifdef USE_ORACLESPATIAL
+#if defined USE_ORACLE_PLUGIN
 MS_DLL_EXPORT  int
 PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
 {
@@ -3415,9 +3414,9 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
 
   return MS_SUCCESS;
 }
-#endif
-#endif
 
+#else /*if ORACLE_PLUGIN is defined, then this file is not used by libmapserver
+        and therefre there is no need to include this function */
 int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
@@ -3445,4 +3444,4 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
 
   return MS_SUCCESS;
 }
-
+#endif
