@@ -15,6 +15,9 @@ if (WIN32)
   else(CMAKE_CL_64)
       set(PLATFORM_TARGET /platform:x86)
   endif(CMAKE_CL_64)
+  if (MSVC10)
+      set(PLATFORM_TARGET ${PLATFORM_TARGET} /define:CLR4)
+  endif (MSVC10)
 endif(WIN32)
 
 MARK_AS_ADVANCED(CSHARP_COMPILER)
@@ -25,6 +28,8 @@ include_directories(${PROJECT_SOURCE_DIR}/mapscript/csharp)
 SET (CMAKE_SWIG_OUTDIR "${CMAKE_CURRENT_BINARY_DIR}")
 SET( CMAKE_SWIG_FLAGS -namespace OSGeo.MapServer ${MAPSERVER_COMPILE_DEFINITIONS} -DWIN32)
 SWIG_ADD_MODULE(csharpmapscript csharp ../mapscript.i)
+
+set_target_properties(csharpmapscript PROPERTIES OUTPUT_NAME "mapscript")
 
 SWIG_LINK_LIBRARIES(csharpmapscript ${MAPSERVER_LIBMAPSERVER})
 
@@ -44,6 +49,6 @@ ADD_CUSTOM_COMMAND(TARGET csharpmapscript
                       COMMENT "Compiling c# source files"
                       )
 
-get_target_property(LOC_MAPSCRIPT_LIB ${SWIG_MODULE_csharpmapscript_REAL_NAME} LOCATION)
-install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION lib)
+#get_target_property(LOC_MAPSCRIPT_LIB ${SWIG_MODULE_csharpmapscript_REAL_NAME} LOCATION)
+#install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION lib)
 
