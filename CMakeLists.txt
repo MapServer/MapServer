@@ -82,8 +82,8 @@ if(WITH_FLEX_BISON)
    find_package(BISON)
    find_package(FLEX)
 
-   BISON_TARGET(MapfileParser mapparser.y ${CMAKE_CURRENT_BUILD_DIR}/mapparser.c)
-   FLEX_TARGET(MapfileScanner maplexer.l ${CMAKE_CURRENT_BUILD_DIR}/maplexer.c COMPILE_FLAGS "--nounistd -Pmsyy -i")
+   BISON_TARGET(MapfileParser mapparser.y ${PROJECT_SOURCE_DIR}/mapparser.c)
+   FLEX_TARGET(MapfileScanner maplexer.l ${PROJECT_SOURCE_DIR}/maplexer.c COMPILE_FLAGS "--nounistd -Pmsyy -i")
    ADD_FLEX_BISON_DEPENDENCY(MapfileScanner MapfileParser)
 endif(WITH_FLEX_BISON)
 

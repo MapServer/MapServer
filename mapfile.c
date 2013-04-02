@@ -2069,13 +2069,17 @@ static int loadLabel(labelObj *label)
   } /* next token */
 }
 
-int msUpdateLabelFromString(labelObj *label, char *string)
+int msUpdateLabelFromString(labelObj *label, char *string, int url_string)
 {
   if(!label || !string) return MS_FAILURE;
 
   msAcquireLock( TLOCK_PARSER );
+  
+  if(url_string)
+    msyystate = MS_TOKENIZE_URL_STRING;
+  else
+    msyystate = MS_TOKENIZE_STRING;
 
-  msyystate = MS_TOKENIZE_STRING;
   msyystring = string;
   msyylex(); /* sets things up, but doesn't process any tokens */
 
@@ -6603,17 +6607,25 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
             if(msLookupHashTable(&(GET_LAYER(map, i)->class[j]->validation), "immutable"))
               return(MS_SUCCESS); /* fail silently */
 
-            if(msyylex() == STYLE) {
-              if(getInteger(&k) == -1) return MS_FAILURE;
-
-              if(k>=GET_LAYER(map, i)->class[j]->numstyles || k<0) {
-                msSetError(MS_MISCERR, "Style to be modified not valid.", "msUpdateMapFromURL()");
-                return MS_FAILURE;
-              }
-
-              if(msUpdateStyleFromString((GET_LAYER(map, i))->class[j]->styles[k], string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
-            } else {
-              if(msUpdateClassFromString((GET_LAYER(map, i))->class[j], string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
+            switch(msyylex()) {
+              case STYLE:
+                if(getInteger(&k) == -1) return MS_FAILURE;
+                if(k>=GET_LAYER(map, i)->class[j]->numstyles || k<0) {
+                  msSetError(MS_MISCERR, "Style to be modified not valid.", "msUpdateMapFromURL()");
+                  return MS_FAILURE;
+                }
+                if(msUpdateStyleFromString((GET_LAYER(map, i))->class[j]->styles[k], string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
+                break;
+              case LABEL:
+                if(getInteger(&k) == -1) return MS_FAILURE;
+                if(k>=GET_LAYER(map, i)->class[j]->numlabels || k<0) {
+                  msSetError(MS_MISCERR, "Label to be modified not valid.", "msUpdateMapFromURL()");
+                  return MS_FAILURE;
+                }
+                if(msUpdateLabelFromString((GET_LAYER(map, i))->class[j]->labels[k], string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
+                break;
+              default:
+                if(msUpdateClassFromString((GET_LAYER(map, i))->class[j], string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
             }
           } else {
             if(msUpdateLayerFromString((GET_LAYER(map, i)), string, MS_TRUE) != MS_SUCCESS) return MS_FAILURE;
