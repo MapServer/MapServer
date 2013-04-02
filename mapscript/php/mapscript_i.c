@@ -901,7 +901,7 @@ labelObj *labelObj_clone(labelObj *label)
 
 int labelObj_updateFromString(labelObj *self, char *snippet)
 {
-  return msUpdateLabelFromString(self, snippet);
+  return msUpdateLabelFromString(self, snippet, MS_FALSE);
 }
 
 char *labelObj_convertToString(labelObj *self)
