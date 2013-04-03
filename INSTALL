@@ -4,7 +4,7 @@ instructions.
 Unix compilation instructions
 -----------------------------
 
-See README.CONFIGURE or the document on the MapServer website at 
+See INSTALL.CMAKE or the document on the MapServer website at 
 <http://www.mapserver.org/installation/unix.html>
 
 Win32 compilation instructions
