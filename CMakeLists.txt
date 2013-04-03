@@ -82,9 +82,20 @@ if(WITH_FLEX_BISON)
    find_package(BISON)
    find_package(FLEX)
 
-   BISON_TARGET(MapfileParser mapparser.y ${CMAKE_CURRENT_BUILD_DIR}/mapparser.c)
-   FLEX_TARGET(MapfileScanner maplexer.l ${CMAKE_CURRENT_BUILD_DIR}/maplexer.c COMPILE_FLAGS "--nounistd -Pmsyy -i")
-   ADD_FLEX_BISON_DEPENDENCY(MapfileScanner MapfileParser)
+   add_custom_command(
+      OUTPUT ${PROJECT_SOURCE_DIR}/maplexer.c
+      COMMAND ${FLEX_EXECUTABLE} --nounistd -Pmsyy -i -o ${PROJECT_SOURCE_DIR}/maplexer.c ${PROJECT_SOURCE_DIR}/maplexer.l
+      DEPENDS ${PROJECT_SOURCE_DIR}/maplexer.l
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+   )
+
+   add_custom_command(
+      OUTPUT ${PROJECT_SOURCE_DIR}/mapparser.c ${PROJECT_SOURCE_DIR}/mapparser.h
+      DEPENDS ${PROJECT_SOURCE_DIR}/mapparser.y
+      COMMAND ${BISON_EXECUTABLE} -d -o${PROJECT_SOURCE_DIR}/mapparser.c ${PROJECT_SOURCE_DIR}/mapparser.y 
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+   )
+set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM 1)
 endif(WITH_FLEX_BISON)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
