@@ -33,6 +33,11 @@ CGI Changes
 -----------
 
 * Changing MIN/MAXSCALE or MIN/MAXSCALEDENOM via URL is no longer supported.
+* The syntax for changing a LABEL with CGI commands has changed along with the
+  ability to support multiple labels
+  The previous syntax ...&map.layer[0].class[0]=label+color+255+0+0+end&... is
+  replaced with ...&map.layer[0].class[0].label[0]=color+255+0+0&...
+  Note that cgi label modifications are/were broken in 6.2.0 and fixed in 6.2.1
 
 -----------------
 Rendering changes

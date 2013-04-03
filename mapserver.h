@@ -1875,7 +1875,7 @@ extern "C" {
   MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
   MS_DLL_EXPORT int msUpdateScalebarFromString(scalebarObj *scalebar, char *string, int url_string);
   MS_DLL_EXPORT int msUpdateQueryMapFromString(queryMapObj *querymap, char *string, int url_string);
-  MS_DLL_EXPORT int msUpdateLabelFromString(labelObj *label, char *string);
+  MS_DLL_EXPORT int msUpdateLabelFromString(labelObj *label, char *string, int url_string);
   MS_DLL_EXPORT int msUpdateClusterFromString(clusterObj *cluster, char *string);
   MS_DLL_EXPORT int msUpdateReferenceMapFromString(referenceMapObj *ref, char *string, int url_string);
   MS_DLL_EXPORT int msUpdateLegendFromString(legendObj *legend, char *string, int url_string);

@@ -52,7 +52,7 @@
     
   int updateFromString(char *snippet)
   {
-    return msUpdateLabelFromString(self, snippet);
+    return msUpdateLabelFromString(self, snippet,MS_FALSE);
   }
 
   int removeBinding(int binding) 

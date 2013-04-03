@@ -266,7 +266,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>keyimage                   { MS_LEXER_RETURN_TOKEN(KEYIMAGE); }
 <INITIAL,URL_STRING>keysize                    { MS_LEXER_RETURN_TOKEN(KEYSIZE); }
 <INITIAL>keyspacing                            { MS_LEXER_RETURN_TOKEN(KEYSPACING); }
-<INITIAL,URL_STRING>label                      { MS_LEXER_RETURN_TOKEN(LABEL); }
+<INITIAL,URL_VARIABLE>label                      { MS_LEXER_RETURN_TOKEN(LABEL); }
 <INITIAL>labelcache                            { MS_LEXER_RETURN_TOKEN(LABELCACHE); }
 <INITIAL>labelformat                           { MS_LEXER_RETURN_TOKEN(LABELFORMAT); }
 <INITIAL,URL_STRING>labelitem                  { MS_LEXER_RETURN_TOKEN(LABELITEM); }
