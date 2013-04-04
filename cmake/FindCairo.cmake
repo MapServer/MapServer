@@ -34,9 +34,18 @@ PKG_CHECK_MODULES(PC_CAIRO cairo) # FIXME: After we require CMake 2.8.2 we can p
 FIND_PATH(CAIRO_INCLUDE_DIR
     NAMES cairo.h
     HINTS ${PC_CAIRO_INCLUDEDIR}
-          ${PC_CAIRO_INCLUDE_DIR}
+          ${PC_CAIRO_INCLUDE_DIRS}
     PATH_SUFFIXES cairo
 )
+
+IF(APPLE)
+   #On Mountain Lion we need this for the XQuartz supplied version of cairo
+    PKG_CHECK_MODULES(PC_FONTCONFIG fontconfig) # FIXME: After we require CMake 2.8.2 we can pass QUIET to this call.
+    FIND_PATH(FC_INCLUDE_DIR
+       NAMES fontconfig/fontconfig.h
+       HINTS ${PC_FONTCONFIG_INCLUDEDIR}
+    )
+ENDIF(APPLE)
 
 FIND_LIBRARY(CAIRO_LIBRARY
     NAMES cairo
@@ -61,7 +70,7 @@ IF (CAIRO_INCLUDE_DIR)
     ENDIF ()
 ENDIF ()
 
-set(CAIRO_INCLUDE_DIRS ${CAIRO_INCLUDE_DIR})
+set(CAIRO_INCLUDE_DIRS ${CAIRO_INCLUDE_DIR} ${FC_INCLUDE_DIR})
 set(CAIRO_LIBRARIES ${CAIRO_LIBRARY})
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CAIRO DEFAULT_MSG CAIRO_LIBRARY CAIRO_INCLUDE_DIR)
