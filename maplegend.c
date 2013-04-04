@@ -45,6 +45,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
 {
   int i, type, hasmarkersymbol;
   double offset;
+  double polygon_contraction = 0.5; /* used to account for the width of a polygon's outline */
   shapeObj box, zigzag;
   pointObj marker;
   char szPath[MS_MAXPATHLEN];
@@ -95,25 +96,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     clip.miny = dstY;
     renderer->setClip(image_draw,clip);
   }
-
-  /* initialize the box used for polygons and for outlines */
-  box.line = (lineObj *)msSmallMalloc(sizeof(lineObj));
-  box.numlines = 1;
-  box.line[0].point = (pointObj *)msSmallMalloc(sizeof(pointObj)*5);
-  box.line[0].numpoints = 5;
-
-  box.line[0].point[0].x = dstX + 0.5;
-  box.line[0].point[0].y = dstY + 0.5;
-  box.line[0].point[1].x = dstX + width - 0.5;
-  box.line[0].point[1].y = dstY + 0.5;
-  box.line[0].point[2].x = dstX + width - 0.5;
-  box.line[0].point[2].y = dstY + height - 0.5;
-  box.line[0].point[3].x = dstX + 0.5;
-  box.line[0].point[3].y = dstY + height - 0.5;
-  box.line[0].point[4].x = box.line[0].point[0].x;
-  box.line[0].point[4].y = box.line[0].point[0].y;
-  box.line[0].numpoints = 5;
-
+  
   /* if the class has a keyimage, treat it as a point layer
    * (the keyimage will be treated there) */
   if(theclass->keyimage != NULL) {
@@ -126,11 +109,32 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
       for(i=0; i<theclass->numstyles; i++) {
         if(MS_VALID_COLOR(theclass->styles[i]->color)) { /* there is a fill */
           type = MS_LAYER_POLYGON;
-          break;
+        }
+        if(MS_VALID_COLOR(theclass->styles[i]->outlinecolor)) { /* there is an outline */
+          polygon_contraction = MS_MAX(polygon_contraction, theclass->styles[i]->width / 2.0);
         }
       }
     }
   }
+
+  /* initialize the box used for polygons and for outlines */
+  box.line = (lineObj *)msSmallMalloc(sizeof(lineObj));
+  box.numlines = 1;
+  box.line[0].point = (pointObj *)msSmallMalloc(sizeof(pointObj)*5);
+  box.line[0].numpoints = 5;
+
+  box.line[0].point[0].x = dstX + polygon_contraction;
+  box.line[0].point[0].y = dstY + polygon_contraction;
+  box.line[0].point[1].x = dstX + width - polygon_contraction;
+  box.line[0].point[1].y = dstY + polygon_contraction;
+  box.line[0].point[2].x = dstX + width - polygon_contraction;
+  box.line[0].point[2].y = dstY + height - polygon_contraction;
+  box.line[0].point[3].x = dstX + polygon_contraction;
+  box.line[0].point[3].y = dstY + height - polygon_contraction;
+  box.line[0].point[4].x = box.line[0].point[0].x;
+  box.line[0].point[4].y = box.line[0].point[0].y;
+  box.line[0].numpoints = 5;
+
 
   /*
   ** now draw the appropriate color/symbol/size combination
