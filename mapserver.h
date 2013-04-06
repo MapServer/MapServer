@@ -2559,6 +2559,7 @@ extern "C" {
   /* ==================================================================== */
   MS_DLL_EXPORT int msCopyMap(mapObj *dst, mapObj *src);
   MS_DLL_EXPORT int msCopyLayer(layerObj *dst, layerObj *src);
+  MS_DLL_EXPORT int msCopyScaleToken(scaleTokenObj *src, scaleTokenObj *dst);
   MS_DLL_EXPORT int msCopyPoint(pointObj *dst, pointObj *src);
   MS_DLL_EXPORT int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map);
   MS_DLL_EXPORT void copyProperty(void *dst, void *src, int size);

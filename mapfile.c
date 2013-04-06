@@ -2218,7 +2218,7 @@ char* msWriteLabelToString(labelObj *label)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 void initExpression(expressionObj *exp)
@@ -2611,7 +2611,7 @@ char* msWriteClusterToString(clusterObj *cluster)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 /*
@@ -3127,7 +3127,7 @@ char* msWriteStyleToString(styleObj *style)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 /*
@@ -3753,7 +3753,7 @@ char* msWriteClassToString(classObj *class)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 /*
@@ -4681,7 +4681,7 @@ char* msWriteLayerToString(layerObj *layer)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 /*
@@ -4860,7 +4860,7 @@ char* msWriteReferenceMapToString(referenceMapObj *ref)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 #define MAX_FORMATOPTIONS 100
@@ -5215,7 +5215,7 @@ char* msWriteLegendToString(legendObj *legend)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 /*
@@ -5389,7 +5389,7 @@ char* msWriteScalebarToString(scalebarObj *scalebar)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 /*
@@ -5500,7 +5500,7 @@ char* msWriteQueryMapToString(queryMapObj *querymap)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 /*
@@ -5595,7 +5595,7 @@ char* msWriteWebToString(webObj *web)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 int loadWeb(webObj *web, mapObj *map)
@@ -6069,7 +6069,7 @@ char* msWriteMapToString(mapObj *map)
 
   msIO_installHandlers( NULL, NULL, NULL );
 
-  return buffer.data;
+  return (char*)buffer.data;
 }
 
 int msSaveMap(mapObj *map, char *filename)
