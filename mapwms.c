@@ -2824,8 +2824,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     }
 
     msIO_printf("   xsi:schemaLocation=\"http://www.opengis.net/wms %s/wms/%s/capabilities_1_3_0.xsd "
-                " http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/sld_capabilities.xsd ",
-                msOWSGetSchemasLocation(map), msOWSGetVersionString(nVersion, szVersionBuf));
+                " http://www.opengis.net/sld %s/sld/1.1.0/sld_capabilities.xsd ",
+                msOWSGetSchemasLocation(map), msOWSGetVersionString(nVersion, szVersionBuf), msOWSGetSchemasLocation(map));
 
     if ( msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
       msIO_printf(" http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 "
