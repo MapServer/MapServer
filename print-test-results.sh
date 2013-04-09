@@ -44,7 +44,7 @@ for testcase in "${tests[@]}"; do
       fi
       if echo "$failedtest" | egrep -q "(png|gif|tif)$"; then
         if echo "$failedtest" | egrep -v -q "\\.diff\\.png$"; then
-           if [ -n $COMPARE ]; then
+           if [ -n "$COMPARE" ]; then
               $COMPARE ../expected/$failedtest $failedtest -compose Src $failedtest.diff.png
            fi
         fi
