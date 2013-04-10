@@ -2407,10 +2407,10 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
 
       if(thisClass == NULL) {
         /* Nonexistent class.  Create an empty image */
-        img = msCreateLegendIcon(map, NULL, NULL, nWidth, nHeight);
+        img = msCreateLegendIcon(map, NULL, NULL, nWidth, nHeight, MS_TRUE);
       } else {
         img = msCreateLegendIcon(map, GET_LAYER(map, nIdxLayer),
-                                 thisClass, nWidth, nHeight);
+                                 thisClass, nWidth, nHeight, MS_TRUE);
       }
 
       if(!img) {
