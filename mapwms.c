@@ -2754,9 +2754,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     dtd_url = msStrdup(schemalocation);
     /* this exception was added to accomadote the OGC test suite (Bug 1576)*/
     if (strcasecmp(schemalocation, OWS_DEFAULT_SCHEMAS_LOCATION) == 0)
-      dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
+      dtd_url = msStringConcatenate(dtd_url, "/foobar/wms/1.1.1/WMS_MS_Capabilities.dtd");
     else
-      dtd_url = msStringConcatenate(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
+      dtd_url = msStringConcatenate(dtd_url, "/foobar/wms/1.1.1/capabilities_1_1_1.dtd");
   } else
     nVersion = OWS_1_3_0;
 
