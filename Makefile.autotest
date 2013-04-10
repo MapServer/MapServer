@@ -29,11 +29,8 @@ autotest-install:
 php-testcase:
 	test -f "$(PHP_MAPSCRIPT)" && (export PHP_MAPSCRIPT_SO="../../$(PHP_MAPSCRIPT)" && cd msautotest/php && ./run_test.sh)
 
-print-test-results:
-	@./print-test-results.sh
-
 test: autotest-install
 	@$(MAKE) -f $(MAKEFILE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
-	@$(MAKE) -f $(MAKEFILE) $(MFLAGS)	print-test-results
+	@./print-test-results.sh
 	@$(MAKE) -f $(MAKEFILE) $(MFLAGS)	php-testcase
 
