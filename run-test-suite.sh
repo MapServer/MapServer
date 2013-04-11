@@ -21,8 +21,9 @@ if [ -f CMakeLists.txt ]; then
    cd ..
    make -f Makefile.autotest -j4 test
 else
+   #autoconf build
    ./configure --with-gd --with-postgis --with-wmsclient --with-proj --with-wfsclient --with-kml --with-cairo --with-wcs --with-sos --with-geos --with-gdal --with-ogr --with-wfs
+   make clean
    make -j4
    make -j4 test
 fi
-rm -f msautotest/*/result/*.aux.xml
