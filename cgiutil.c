@@ -104,7 +104,7 @@ int readPostBody( cgiRequestObj *request, char **data )
     }
   }
 
-  *data[data_len] = '\0';
+  (*data)[data_len] = '\0';
   return MS_SUCCESS;
 }
 
