@@ -738,15 +738,23 @@ int msAdjustImage(rectObj rect, int *width, int *height)
 */
 double msAdjustExtent(rectObj *rect, int width, int height)
 {
-  double cellsize, ox, oy;
+  double cellsize, ox, oy, w, h;
 
-  cellsize = MS_MAX(MS_CELLSIZE(rect->minx, rect->maxx, width), MS_CELLSIZE(rect->miny, rect->maxy, height));
+  /*
+   * MapServer measures cellsize from center of a pixel to the center of the next pixel,
+   * resulting in division by null if width or height is one. For this calculation we can
+   * use a distance of 0.5 to the pixel border.
+   */
+  w = (width==1 ? 1.5 : width);
+  h = (height==1 ? 1.5 : height);
+
+  cellsize = MS_MAX(MS_CELLSIZE(rect->minx, rect->maxx, w), MS_CELLSIZE(rect->miny, rect->maxy, h));
 
   if(cellsize <= 0) /* avoid division by zero errors */
     return(0);
 
-  ox = MS_MAX(((width-1) - (rect->maxx - rect->minx)/cellsize)/2,0); /* these were width-1 and height-1 */
-  oy = MS_MAX(((height-1) - (rect->maxy - rect->miny)/cellsize)/2,0);
+  ox = MS_MAX(((w-1) - (rect->maxx - rect->minx)/cellsize)/2,0); /* these were width-1 and height-1 */
+  oy = MS_MAX(((h-1) - (rect->maxy - rect->miny)/cellsize)/2,0);
 
   rect->minx = rect->minx - ox*cellsize;
   rect->miny = rect->miny - oy*cellsize;
