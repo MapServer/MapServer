@@ -4611,9 +4611,19 @@ this request. Check wms/ows_enable_request settings.",
           nHeight = 20;
       }
 
-      img = msCreateLegendIcon(map, GET_LAYER(map, iLayerIndex),
-                               GET_LAYER(map, iLayerIndex)->class[i],
-                               nWidth, nHeight);
+      if ( psScale != NULL ) {
+        /* Scale-dependent legend. calculate map->scaledenom */
+        map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+        msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scaledenom);
+        img = msCreateLegendIcon(map, GET_LAYER(map, iLayerIndex),
+                                 GET_LAYER(map, iLayerIndex)->class[i],
+                                 nWidth, nHeight, MS_FALSE);
+      } else {
+        /* Scale-independent legend */
+        img = msCreateLegendIcon(map, GET_LAYER(map, iLayerIndex),
+                                 GET_LAYER(map, iLayerIndex)->class[i],
+                                 nWidth, nHeight, MS_TRUE);
+      }
     }
     if (img == NULL) {
       msSetError(MS_IMGERR,

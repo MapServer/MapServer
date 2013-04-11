@@ -178,12 +178,12 @@
   }
   
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
-    return msDrawLegendIcon(map, layer, self, width, height, dstImage, dstX, dstY);
+    return msDrawLegendIcon(map, layer, self, width, height, dstImage, dstX, dstY, MS_TRUE);
   }
  
   %newobject createLegendIcon;
   imageObj *createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
-    return msCreateLegendIcon(map, layer, self, width, height);
+    return msCreateLegendIcon(map, layer, self, width, height, MS_TRUE);
   } 
 
   %newobject getLabel;
