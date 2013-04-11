@@ -205,8 +205,10 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   OGRErr eErr;
   int i, out_field;
   OGRwkbGeometryType eLayerGType, eFeatureGType = wkbUnknown;
+  OGRFeatureDefnH hLayerDefn;
 
-  eLayerGType = OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hOGRLayer));
+  hLayerDefn = OGR_L_GetLayerDefn( hOGRLayer );
+  eLayerGType = OGR_FD_GetGeomType(hLayerDefn);
 
   /* -------------------------------------------------------------------- */
   /*      Transform point geometry.                                       */
@@ -380,7 +382,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   /*      doesn't match the layer.                                        */
   /* -------------------------------------------------------------------- */
   eLayerGType =
-    wkbFlatten(OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hOGRLayer)));
+    wkbFlatten(OGR_FD_GetGeomType(hLayerDefn));
 
   if( hGeom != NULL )
     eFeatureGType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
@@ -413,7 +415,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   /*      Consider flattening the geometry to 2D if we want 2D            */
   /*      output.                                                         */
   /* -------------------------------------------------------------------- */
-  eLayerGType = OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hOGRLayer));
+  eLayerGType = OGR_FD_GetGeomType(hLayerDefn);
 
   if( hGeom != NULL )
     eFeatureGType = OGR_G_GetGeometryType( hGeom );
@@ -426,7 +428,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   /* -------------------------------------------------------------------- */
   /*      Create the feature, and attach the geometry.                    */
   /* -------------------------------------------------------------------- */
-  hFeat = OGR_F_Create( OGR_L_GetLayerDefn( hOGRLayer ) );
+  hFeat = OGR_F_Create( hLayerDefn );
 
   OGR_F_SetGeometryDirectly( hFeat, hGeom );
 
@@ -439,6 +441,18 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 
     if( !item->visible )
       continue;
+
+    /* Avoid setting empty strings for numeric fields, so that OGR */
+    /* doesn't take them as 0. (#4633) */
+    if( shape->values[i][0] == '\0' ) {
+      OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hLayerDefn, out_field);
+      OGRFieldType eFieldType = OGR_Fld_GetType(hFieldDefn);
+      if( eFieldType == OFTInteger || eFieldType == OFTReal )
+      {
+        out_field++;
+        continue;
+      }
+    }
 
     OGR_F_SetFieldString( hFeat, out_field++, shape->values[i] );
   }
