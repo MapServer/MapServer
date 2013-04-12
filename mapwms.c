@@ -1681,7 +1681,7 @@ this request. Check wms/ows_enable_request settings.",
   ** in by half a pixel.  We wait till here because we want to ensure we
   ** are doing this in terms of the correct WIDTH and HEIGHT.
   */
-  if( adjust_extent ) {
+  if( adjust_extent && map->width>1 && map->height>1 ) {
     double  dx, dy;
 
     dx = (map->extent.maxx - map->extent.minx) / map->width;
