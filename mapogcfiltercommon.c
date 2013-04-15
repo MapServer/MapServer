@@ -482,11 +482,14 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
 
   if (psTmpShape) {
     if( lp->projection.numargs > 0) {
+      if (psNode->pszSRS)
+        msInitProjection(&sProjTmp);
       if (psNode->pszSRS && FLTParseEpsgString(psNode->pszSRS, &sProjTmp)) {
         msProjectShape(&sProjTmp, &lp->projection, psTmpShape);
-        msFreeProjection(&sProjTmp);
       } else if (lp->map->projection.numargs > 0)
         msProjectShape(&lp->map->projection, &lp->projection, psTmpShape);
+      if (psNode->pszSRS)
+        msFreeProjection(&sProjTmp);
     }
     /* ==================================================================== */
     /*      use within for bbox. Not Disjoint does not work.                */
