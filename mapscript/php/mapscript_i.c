@@ -924,6 +924,33 @@ int labelObj_deleteStyle(labelObj *self, int index)
   return msDeleteLabelStyle(self, index);
 }
 
+int labelObj_setExpression(labelObj *self, char *string)
+{
+  if (!string || strlen(string) == 0) {
+    freeExpression(&self->expression);
+    return MS_SUCCESS;
+  } else return msLoadExpressionString(&self->expression, string);
+}
+
+char *labelObj_getExpressionString(labelObj *self)
+{
+  return msGetExpressionString(&(self->expression));
+}
+
+int labelObj_setText(labelObj *self, layerObj *layer, char *string)
+{
+  if (!string || strlen(string) == 0) {
+    freeExpression(&self->text);
+    return MS_SUCCESS;
+  }
+  return msLoadExpressionString(&self->text, string);
+}
+
+char *labelObj_getTextString(labelObj *self)
+{
+  return msGetExpressionString(&(self->text));
+}
+
 /**********************************************************************
  * class extensions for legendObj
  **********************************************************************/
