@@ -85,6 +85,14 @@ ZEND_BEGIN_ARG_INFO_EX(label_deleteStyle_args, 0, 0, 1)
 ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(label_setExpression_args, 0, 0, 1)
+ZEND_ARG_INFO(0, expression)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(label_setText_args, 0, 0, 1)
+ZEND_ARG_INFO(0, text)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto void __construct()
    Create a new label instance. */
 PHP_METHOD(labelObj, __construct)
@@ -546,6 +554,126 @@ PHP_METHOD(labelObj, free)
 }
 /* }}} */
 
+/* {{{ proto int setExpression(string exression)
+   Set the expression string for a label object. */
+PHP_METHOD(labelObj, setExpression)
+{
+  char *expression;
+  long expression_len;
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  int status = MS_FAILURE;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                            &expression, &expression_len) == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  status = labelObj_setExpression(php_label->label, expression);
+
+  if (status != MS_SUCCESS) {
+    mapscript_throw_mapserver_exception("" TSRMLS_CC);
+    return;
+  }
+
+
+  RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto string getExpressionString()
+   Get the expression string for a label object. */
+PHP_METHOD(labelObj, getExpressionString)
+{
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value = labelObj_getExpressionString(php_label->label);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
+/* {{{ proto int setText(string text)
+   Set the text string for a label object. */
+PHP_METHOD(labelObj, setText)
+{
+  char *text;
+  long text_len;
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  php_layer_object *php_layer;
+  int status = MS_FAILURE;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                            &text, &text_len) == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_layer = (php_layer_object *) zend_object_store_get_object(php_label->parent.val TSRMLS_CC);
+
+  status = labelObj_setText(php_label->label, php_layer->layer, text);
+
+  if (status != MS_SUCCESS) {
+    mapscript_throw_mapserver_exception("" TSRMLS_CC);
+    return;
+  }
+
+
+  RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto string getTextString()
+   Get the text string for a label object. */
+PHP_METHOD(labelObj, getTextString)
+{
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  labelObj_getTextString(php_label->label);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 zend_function_entry label_functions[] = {
   PHP_ME(labelObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
   PHP_ME(labelObj, __get, label___get_args, ZEND_ACC_PUBLIC)
@@ -561,6 +689,10 @@ zend_function_entry label_functions[] = {
   PHP_ME(labelObj, moveStyleUp, label_moveStyleUp_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, moveStyleDown, label_moveStyleDown_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, deleteStyle, label_deleteStyle_args, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, setExpression, label_setExpression_args, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, getExpressionString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, setText, label_setText_args, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, getTextString, NULL, ZEND_ACC_PUBLIC)  
   PHP_ME(labelObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }

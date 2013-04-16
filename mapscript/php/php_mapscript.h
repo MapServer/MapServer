@@ -638,6 +638,10 @@ int             labelObj_moveStyleUp(labelObj *self, int index);
 int             labelObj_moveStyleDown(labelObj *self, int index);
 int             labelObj_deleteStyle(labelObj *self, int index);
 labelObj        *labelObj_clone(labelObj *label);
+int             labelObj_setExpression(labelObj *self, char *string);
+char            *labelObj_getExpressionString(labelObj *self);
+int             labelObj_setText(labelObj *self,layerObj *layer,char *string);
+char           *labelObj_getTextString(labelObj *self);
 
 int             legendObj_updateFromString(legendObj *self, char *snippet);
 
