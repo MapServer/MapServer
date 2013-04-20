@@ -12,8 +12,8 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-Current Version (git master, 6.3-dev, future 6.4):
---------------------------------------------------
+Version 6.2.1 (2013-04-19):
+---------------------------
 
 - Fix WFS GetFeature result bounds are not written in requested projection (#4494)
 
