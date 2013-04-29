@@ -2243,7 +2243,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
         if(msScaleInBounds(map->scaledenom, theclass->styles[s]->minscaledenom, theclass->styles[s]->maxscaledenom))
           msDrawMarkerSymbol(&map->symbolset, image, point, theclass->styles[s], layer->scalefactor);
       }
-      if(labeltext && (strlen(labeltext)>0)) {
+      if(labeltext) {
         if(layer->labelcache) {
           if(msAddLabel(map, label, layer->index, classindex, NULL, point, NULL, -1) != MS_SUCCESS) return(MS_FAILURE);
         } else
