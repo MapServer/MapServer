@@ -32,6 +32,7 @@
         <shadowColor red="244" green="43" blue="22"/>
         <shadowSize x="15" y="14"/>
         <size>TINY</size>
+        <text>Test</text>
         <wrap>\n</wrap>
       </Label>
       <LabelLeader>

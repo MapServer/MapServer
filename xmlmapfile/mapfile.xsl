@@ -682,6 +682,11 @@
     </xsl:apply-templates>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:text'"/>
+      <xsl:with-param name="quote" select="1"/>
+    </xsl:call-template>    
+    <xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:wrap'"/>
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>

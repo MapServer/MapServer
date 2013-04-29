@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ms="http://www.mapserver.org/mapserver" targetNamespace="http://www.mapserver.org/mapserver" elementFormDefault="qualified" attributeFormDefault="unqualified" version="6.0.1">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ms="http://www.mapserver.org/mapserver" targetNamespace="http://www.mapserver.org/mapserver" elementFormDefault="qualified" attributeFormDefault="unqualified" version="6.2.1">
 	<!-- Definition of types -->
 	<xs:simpleType name="rgbColorValueType">
 		<xs:restriction base="xs:integer">
@@ -347,7 +347,8 @@
 				</xs:simpleType>
 			</xs:element>
 			<xs:element name="Style" type="ms:Style" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="wrap" type="xs:string" minOccurs="0"/>
+		        <xs:element name="text" type="xs:string" minOccurs="0"/>                
+		        <xs:element name="wrap" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="type" use="required">
 			<xs:simpleType>
