@@ -109,7 +109,7 @@ int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj
   }
 }
 
-void drawRectangle(mapObj *map, imageObj *image, float mx, float my, float Mx, float My,
+void drawRectangle(mapObj *map, imageObj *image, double mx, double my, double Mx, double My,
                    styleObj *style)
 {
   shapeObj shape;
@@ -129,13 +129,13 @@ void drawRectangle(mapObj *map, imageObj *image, float mx, float my, float Mx, f
 }
 
 int msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
-                    float *values, styleObj **styles, int numvalues,
-                    float barWidth)
+                    double *values, styleObj **styles, int numvalues,
+                    double barWidth)
 {
 
   int c;
-  float left,bottom,cur; /*shortcut to pixel boundaries of the chart*/
-  float height = 0;
+  double left,bottom,cur; /*shortcut to pixel boundaries of the chart*/
+  double height = 0;
 
   for(c=0; c<numvalues; c++) {
     height += values[c];
@@ -153,15 +153,15 @@ int msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
 
 
 int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
-                   float *values, styleObj **styles, int numvalues,
-                   float width, float height, float *maxVal, float *minVal, float barWidth)
+                   double *values, styleObj **styles, int numvalues,
+                   double width, double height, double *maxVal, double *minVal, double barWidth)
 {
 
-  float upperLimit,lowerLimit;
-  float shapeMaxVal,shapeMinVal,pixperval;
+  double upperLimit,lowerLimit;
+  double shapeMaxVal,shapeMinVal,pixperval;
   int c;
-  float vertOrigin,vertOriginClipped,horizStart,y;
-  float left,top,bottom; /*shortcut to pixel boundaries of the chart*/
+  double vertOrigin,vertOriginClipped,horizStart,y;
+  double left,top,bottom; /*shortcut to pixel boundaries of the chart*/
 
   top=center->y-height/2.;
   bottom=center->y+height/2.;
@@ -189,7 +189,7 @@ int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
     lowerLimit-=0.5;
   }
 
-  pixperval=(float)height/(upperLimit-lowerLimit);
+  pixperval=height/(upperLimit-lowerLimit);
   vertOrigin=bottom+lowerLimit*pixperval;
   vertOriginClipped=(vertOrigin<top) ? top :
                     (vertOrigin>bottom) ? bottom : vertOrigin;
@@ -199,7 +199,7 @@ int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
   gdImageRectangle(image->img.gd, left-1,top-1, center.x+width/2.+1,bottom+1,color);
   */
   for(c=0; c<numvalues; c++) {
-    int barHeight=values[c]*pixperval;
+    double barHeight=values[c]*pixperval;
     /*clip bars*/
     y=((vertOrigin-barHeight)<top) ? top :
       (vertOrigin-barHeight>bottom) ? bottom : vertOrigin-barHeight;
@@ -215,8 +215,8 @@ int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
 }
 
 int msDrawPieChart(mapObj *map, imageObj *image,
-                   pointObj *center, float diameter,
-                   float *values, styleObj **styles, int numvalues)
+                   pointObj *center, double diameter,
+                   double *values, styleObj **styles, int numvalues)
 {
   int i;
   double dTotal=0.,start=0;
@@ -230,7 +230,7 @@ int msDrawPieChart(mapObj *map, imageObj *image,
   }
 
   for(i=0; i < numvalues; i++) {
-    float angle = values[i];
+    double angle = values[i];
     if(angle==0) continue; /*no need to draw. causes artifacts with outlines*/
     angle*=360.0/dTotal;
     msDrawPieSlice(&map->symbolset,image, center, styles[i], diameter/2., start, start+angle);
@@ -240,7 +240,7 @@ int msDrawPieChart(mapObj *map, imageObj *image,
   return MS_SUCCESS;
 }
 
-int getNextShape(mapObj *map, layerObj *layer, float *values, int *nvalues, styleObj **styles, shapeObj *shape)
+int getNextShape(mapObj *map, layerObj *layer, double *values, int *nvalues, styleObj **styles, shapeObj *shape)
 {
   int status;
   int c;
@@ -273,7 +273,7 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
 {
   const char *chartRangeProcessingKey=NULL;
   char *attrib;
-  float mindiameter=-1, maxdiameter, minvalue, maxvalue;
+  double mindiameter=-1, maxdiameter, minvalue, maxvalue;
   classObj *newclass;
   styleObj *newstyle;
   const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
@@ -283,7 +283,7 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
   if(chartRangeProcessingKey==NULL)
     return MS_FALSE;
   attrib = msSmallMalloc(strlen(chartRangeProcessingKey)+1);
-  switch(sscanf(chartRangeProcessingKey,"%s %f %f %f %f",attrib,
+  switch(sscanf(chartRangeProcessingKey,"%s %lf %lf %lf %lf",attrib,
                 &mindiameter,&maxdiameter,&minvalue,&maxvalue)) {
     case 1: /*we only have the attribute*/
     case 5: /*we have the attribute and the four range values*/
@@ -329,8 +329,8 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   int         status=MS_SUCCESS;
   const char *chartRangeProcessingKey=NULL;
   const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
-  float diameter, mindiameter=-1, maxdiameter, minvalue, maxvalue, exponent=0;
-  float *values;
+  double diameter, mindiameter=-1, maxdiameter, minvalue, maxvalue, exponent=0;
+  double *values;
   styleObj **styles;
   pointObj center;
   int numvalues = layer->numclasses; /* the number of classes to represent in the graph */
@@ -341,11 +341,11 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(chartRangeProcessingKey==NULL)
       diameter=20;
     else {
-      sscanf(chartRangeProcessingKey,"%*s %f %f %f %f %f",
+      sscanf(chartRangeProcessingKey,"%*s %lf %lf %lf %lf %lf",
              &mindiameter,&maxdiameter,&minvalue,&maxvalue,&exponent);
     }
   } else {
-    if(sscanf(chartSizeProcessingKey ,"%f",&diameter)!=1) {
+    if(sscanf(chartSizeProcessingKey ,"%lf",&diameter)!=1) {
       msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawPieChartLayer()");
       return MS_FAILURE;
     }
@@ -353,8 +353,8 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* step through the target shapes */
   msInitShape(&shape);
 
-  values=(float*)calloc(numvalues,sizeof(float));
-  MS_CHECK_ALLOC(values, numvalues*sizeof(float), MS_FAILURE);
+  values=(double*)calloc(numvalues,sizeof(double));
+  MS_CHECK_ALLOC(values, numvalues*sizeof(double), MS_FAILURE);
   styles = (styleObj**)malloc((numvalues)*sizeof(styleObj*));
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawPieChartLayer()",
@@ -412,8 +412,8 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   int         status=MS_SUCCESS;
   const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
   const char *chartScaleProcessingKey=msLayerGetProcessingKey( layer,"CHART_SCALE" );
-  float barWidth,scale=1.0;
-  float *values;
+  double barWidth,scale=1.0;
+  double *values;
   styleObj **styles;
   pointObj center;
   int numvalues = layer->numclasses;
@@ -421,22 +421,22 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(chartSizeProcessingKey==NULL) {
     barWidth=20;
   } else {
-    if(sscanf(chartSizeProcessingKey ,"%f",&barWidth) != 1) {
+    if(sscanf(chartSizeProcessingKey ,"%lf",&barWidth) != 1) {
       msSetError(MS_MISCERR, "msDrawChart format error for processing key \"CHART_SIZE\"", "msDrawVBarChartLayer()");
       return MS_FAILURE;
     }
   }
 
   if(chartScaleProcessingKey) {
-    if(sscanf(chartScaleProcessingKey,"%f",&scale)!=1) {
+    if(sscanf(chartScaleProcessingKey,"%lf",&scale)!=1) {
       msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_SCALE\"", "msDrawVBarChartLayer()");
       return MS_FAILURE;
     }
   }
   msInitShape(&shape);
 
-  values=(float*)calloc(numvalues,sizeof(float));
-  MS_CHECK_ALLOC(values, numvalues*sizeof(float), MS_FAILURE);
+  values=(double*)calloc(numvalues,sizeof(double));
+  MS_CHECK_ALLOC(values, numvalues*sizeof(double), MS_FAILURE);
   styles = (styleObj**)malloc(numvalues*sizeof(styleObj*));
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawVBarChartLayer()",
@@ -478,18 +478,18 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   const char *chartSizeProcessingKey=msLayerGetProcessingKey( layer,"CHART_SIZE" );
   const char *barMax=msLayerGetProcessingKey( layer,"CHART_BAR_MAXVAL" );
   const char *barMin=msLayerGetProcessingKey( layer,"CHART_BAR_MINVAL" );
-  float width,height;
-  float barWidth;
-  float *values;
+  double width,height;
+  double barWidth;
+  double *values;
   styleObj **styles;
   pointObj center;
-  float barMaxVal,barMinVal;
+  double barMaxVal,barMinVal;
   int numvalues = layer->numclasses;
   int numvalues_for_shape;
   if(chartSizeProcessingKey==NULL) {
     width=height=20;
   } else {
-    switch(sscanf(chartSizeProcessingKey ,"%f %f",&width,&height)) {
+    switch(sscanf(chartSizeProcessingKey ,"%lf %lf",&width,&height)) {
       case 2:
         break;
       case 1:
@@ -502,13 +502,13 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   if(barMax) {
-    if(sscanf(barMax,"%f",&barMaxVal)!=1) {
+    if(sscanf(barMax,"%lf",&barMaxVal)!=1) {
       msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_BAR_MAXVAL\"", "msDrawBarChartLayer()");
       return MS_FAILURE;
     }
   }
   if(barMin) {
-    if(sscanf(barMin,"%f",&barMinVal)!=1) {
+    if(sscanf(barMin,"%lf",&barMinVal)!=1) {
       msSetError(MS_MISCERR, "Error reading value for processing key \"CHART_BAR_MINVAL\"", "msDrawBarChartLayer()");
       return MS_FAILURE;
     }
@@ -517,7 +517,7 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     msSetError(MS_MISCERR, "\"CHART_BAR_MINVAL\" must be less than \"CHART_BAR_MAXVAL\"", "msDrawBarChartLayer()");
     return MS_FAILURE;
   }
-  barWidth=(float)width/(float)layer->numclasses;
+  barWidth=(double)width/(double)layer->numclasses;
   if(!barWidth) {
     msSetError(MS_MISCERR, "Specified width of chart too small to fit given number of classes", "msDrawBarChartLayer()");
     return MS_FAILURE;
@@ -525,8 +525,8 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   msInitShape(&shape);
 
-  values=(float*)calloc(numvalues,sizeof(float));
-  MS_CHECK_ALLOC(values, numvalues*sizeof(float), MS_FAILURE);
+  values=(double*)calloc(numvalues,sizeof(double));
+  MS_CHECK_ALLOC(values, numvalues*sizeof(double), MS_FAILURE);
   styles = (styleObj**)malloc(numvalues*sizeof(styleObj*));
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawBarChartLayer()",
