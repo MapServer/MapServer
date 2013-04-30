@@ -32,5 +32,5 @@ php-testcase:
 test: autotest-install
 	@$(MAKE) -f $(MAKEFILE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
 	@./print-test-results.sh
-	@$(MAKE) -f $(MAKEFILE) $(MFLAGS)	php-testcase
+	#@$(MAKE) -f $(MAKEFILE) $(MFLAGS)	php-testcase
 

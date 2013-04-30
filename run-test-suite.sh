@@ -13,7 +13,9 @@ git submodule update
 
 if [ -f CMakeLists.txt ]; then
    #cmake build
-   rm -rf build
+   if [ -d build ]; then
+      rm -rf build
+   fi
    mkdir -p build
    cd build
    cmake .. -DWITH_GD=1 -DWITH_CLIENT_WMS=1 -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_PHP=1 -DWITH_PYTHON=1 -DWITH_FRIBIDI=0 -DWITH_FCGI=0 -DCMAKE_BUILD_TYPE=Release
