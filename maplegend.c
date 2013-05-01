@@ -258,7 +258,11 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
           if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
           if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
         }
-        msDrawLineSymbol(&map->symbolset, image_draw, &zigzag, theclass->styles[i], lp->scalefactor);
+        if (theclass->styles[i]->_geomtransform.type != MS_GEOMTRANSFORM_NONE)
+          msDrawTransformedShape(map, &map->symbolset, image_draw, &zigzag, 
+                                        theclass->styles[i], lp->scalefactor);
+        else
+          msDrawLineSymbol(&map->symbolset, image_draw, &zigzag, theclass->styles[i], lp->scalefactor);
       }
 
       free(zigzag.line[0].point);
@@ -274,7 +278,11 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
           if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
           if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
         }
-        msDrawShadeSymbol(&map->symbolset, image_draw, &box, theclass->styles[i], lp->scalefactor);
+        if (theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE)
+          msDrawShadeSymbol(&map->symbolset, image_draw, &box, theclass->styles[i], lp->scalefactor);
+        else
+          msDrawTransformedShape(map, &map->symbolset, image_draw, &box,
+                                 theclass->styles[i], lp->scalefactor);
       }
       break;
     default:
