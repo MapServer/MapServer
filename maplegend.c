@@ -231,8 +231,13 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
       zigzag.line[0].point[3].x = dstX + width - offset;
       zigzag.line[0].point[3].y = dstY + offset;
 
-      for(i=0; i<theclass->numstyles; i++)
-        msDrawLineSymbol(&map->symbolset, image_draw, &zigzag, theclass->styles[i], lp->scalefactor);
+      for(i=0; i<theclass->numstyles; i++) {
+        if (theclass->styles[i]->_geomtransform.type != MS_GEOMTRANSFORM_NONE)
+          msDrawTransformedShape(map, &map->symbolset, image_draw, &zigzag, 
+                                        theclass->styles[i], lp->scalefactor);
+        else
+          msDrawLineSymbol(&map->symbolset, image_draw, &zigzag, theclass->styles[i], lp->scalefactor);
+      }
 
       free(zigzag.line[0].point);
       free(zigzag.line);
@@ -242,7 +247,11 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     case MS_LAYER_CHART:
     case MS_LAYER_POLYGON:
       for(i=0; i<theclass->numstyles; i++)
-        msDrawShadeSymbol(&map->symbolset, image_draw, &box, theclass->styles[i], lp->scalefactor);
+        if (theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE)
+          msDrawShadeSymbol(&map->symbolset, image_draw, &box, theclass->styles[i], lp->scalefactor);
+        else
+          msDrawTransformedShape(map, &map->symbolset, image_draw, &box,
+                                 theclass->styles[i], lp->scalefactor);
       break;
     default:
       return MS_FAILURE;
