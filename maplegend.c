@@ -278,12 +278,13 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
           if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
           if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
         }
+      }
+      for(i=0; i<theclass->numstyles; i++)
         if (theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE)
           msDrawShadeSymbol(&map->symbolset, image_draw, &box, theclass->styles[i], lp->scalefactor);
         else
           msDrawTransformedShape(map, &map->symbolset, image_draw, &box,
                                  theclass->styles[i], lp->scalefactor);
-      }
       break;
     default:
       return MS_FAILURE;
