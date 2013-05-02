@@ -322,6 +322,16 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
 
 }
 
+/* clean up the class added temporarily */
+int pieLayerCleanupDynamicDiameter(layerObj *layer)
+{
+  if( layer->numclasses > 0 && EQUALN(layer->class[layer->numclasses - 1]->name, "__MS_SIZE_ATTRIBUTE_", 20) ) {
+    classObj *c=msRemoveClass(layer, layer->numclasses - 1);
+    freeClass(c);
+    msFree(c);
+  }
+}
+
 
 int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
@@ -614,9 +624,13 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(layer);
+      if(chartType == MS_CHART_TYPE_PIE)
+        pieLayerCleanupDynamicDiameter(layer);
       return MS_SUCCESS;
     } else if(status != MS_SUCCESS) {
       msLayerClose(layer);
+      if(chartType == MS_CHART_TYPE_PIE)
+        pieLayerCleanupDynamicDiameter(layer);
       return MS_FAILURE;
     }
     switch(chartType) {
@@ -634,6 +648,9 @@ int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     msLayerClose(layer);
+
+    if(chartType == MS_CHART_TYPE_PIE)
+      pieLayerCleanupDynamicDiameter(layer);
   }
   return status;
 }
