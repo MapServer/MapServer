@@ -1610,13 +1610,20 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 void  msTransformPoint(pointObj *point, rectObj *extent, double cellsize,
                        imageObj *image)
 {
+  double invcellsize;
   /*We should probabaly have a function defined at all the renders*/
-  if (image != NULL && MS_RENDERER_PLUGIN(image->format) &&
-      image->format->renderer == MS_RENDER_WITH_KML)
-    return;
-
-  point->x = MS_MAP2IMAGE_X(point->x, extent->minx, cellsize);
-  point->y = MS_MAP2IMAGE_Y(point->y, extent->maxy, cellsize);
+  if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
+    if(image->format->renderer == MS_RENDER_WITH_KML) {
+      return;
+    } else if(image->format->renderer == MS_RENDER_WITH_GD) {
+      point->x = MS_MAP2IMAGE_X(point->x, extent->minx, cellsize);
+      point->y = MS_MAP2IMAGE_Y(point->y, extent->maxy, cellsize);
+      return;
+    }
+  }
+  invcellsize = 1.0/cellsize;
+  point->x = MS_MAP2IMAGE_X_IC_DBL(point->x, extent->minx, invcellsize);
+  point->y = MS_MAP2IMAGE_Y_IC_DBL(point->y, extent->maxy, invcellsize);
 }
 
 
