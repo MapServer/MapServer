@@ -32,7 +32,6 @@
 #include "mapserver-config.h"
 
 
-
 /*
 ** Main includes. If a particular header was needed by several .c files then
 ** I just put it here. What the hell, it works and it's all right here. -SDL-
