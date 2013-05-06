@@ -30,7 +30,6 @@
 #define MAP_H
 
 #include "mapserver-config.h"
- BREAK!
 
 
 /*
