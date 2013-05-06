@@ -530,4 +530,4 @@ print-test-results:
 test: shp2img mapserv autotest-install $(PHP_MAPSCRIPT) $(PYTHON_MAPSCRIPT)
 	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase
 	@$(MAKE) print-test-results
-	@$(MAKE) php-testcase
+	#@$(MAKE) php-testcase
