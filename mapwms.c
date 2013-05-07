@@ -2462,7 +2462,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                           break;
                         }
                       }
-                      if (l < lp2->numclasses)
+                      if (lp2 && l < lp2->numclasses)
                         break;
                     }
                     if (j < numNestedGroups[lp->index])
