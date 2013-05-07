@@ -258,11 +258,13 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
           if((lp->maxscaledenom > 0) && (map->scaledenom > lp->maxscaledenom)) continue;
           if((lp->minscaledenom > 0) && (map->scaledenom <= lp->minscaledenom)) continue;
         }
-        if (theclass->styles[i]->_geomtransform.type != MS_GEOMTRANSFORM_NONE)
+        if (theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE ||
+            theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
+            theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY)
+          msDrawLineSymbol(&map->symbolset, image_draw, &zigzag, theclass->styles[i], lp->scalefactor);
+        else
           msDrawTransformedShape(map, &map->symbolset, image_draw, &zigzag, 
                                         theclass->styles[i], lp->scalefactor);
-        else
-          msDrawLineSymbol(&map->symbolset, image_draw, &zigzag, theclass->styles[i], lp->scalefactor);
       }
 
       free(zigzag.line[0].point);
@@ -280,7 +282,9 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
         }
       }
       for(i=0; i<theclass->numstyles; i++)
-        if (theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE)
+        if (theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE ||
+            theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
+            theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY)
           msDrawShadeSymbol(&map->symbolset, image_draw, &box, theclass->styles[i], lp->scalefactor);
         else
           msDrawTransformedShape(map, &map->symbolset, image_draw, &box,
