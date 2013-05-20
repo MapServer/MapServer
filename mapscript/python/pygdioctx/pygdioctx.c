@@ -51,7 +51,7 @@
 
 #include "pygdioctx.h"
 
-int PyFileIfaceObj_IOCtx_GetC(gdIOCtx *ctx)
+int PyFileIfaceObj_IOCtx_GetC(msIOCtx *ctx)
 {
   struct PyFileIfaceObj_gdIOCtx *pctx = (struct PyFileIfaceObj_gdIOCtx *)ctx;
   if (pctx->strObj) {
@@ -68,7 +68,7 @@ int PyFileIfaceObj_IOCtx_GetC(gdIOCtx *ctx)
   return EOF;
 }
 
-int PyFileIfaceObj_IOCtx_GetBuf(gdIOCtx *ctx, void *data, int size)
+int PyFileIfaceObj_IOCtx_GetBuf(msIOCtx *ctx, void *data, int size)
 {
   int err;
   char *value;
@@ -93,7 +93,7 @@ int PyFileIfaceObj_IOCtx_GetBuf(gdIOCtx *ctx, void *data, int size)
   return size;
 }
 
-void PyFileIfaceObj_IOCtx_Free(gdIOCtx *ctx)
+void PyFileIfaceObj_IOCtx_Free(msIOCtx *ctx)
 {
   struct PyFileIfaceObj_gdIOCtx *pctx = (struct PyFileIfaceObj_gdIOCtx *)ctx;
   if (pctx->strObj) {

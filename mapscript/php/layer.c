@@ -297,7 +297,6 @@ PHP_METHOD(layerObj, __get)
                                                 else IF_GET_LONG("minfeaturesize", php_layer->layer->minfeaturesize)
                                                   else IF_GET_LONG("maxfeatures", php_layer->layer->maxfeatures)
                                                     else IF_GET_LONG("startindex", php_layer->layer->startindex)
-                                                      else IF_GET_LONG("annotate", php_layer->layer->annotate)
                                                         else IF_GET_LONG("transform", php_layer->layer->transform)
                                                           else IF_GET_LONG("labelcache", php_layer->layer->labelcache)
                                                             else IF_GET_LONG("postlabelcache", php_layer->layer->postlabelcache)
@@ -376,7 +375,6 @@ PHP_METHOD(layerObj, __set)
                                           else IF_SET_STRING("mask", php_layer->layer->mask, value)
                                             else IF_SET_LONG("maxfeatures", php_layer->layer->maxfeatures, value)
                                               else IF_SET_LONG("startindex", php_layer->layer->startindex, value)
-                                                else IF_SET_LONG("annotate", php_layer->layer->annotate, value)
                                                   else IF_SET_LONG("transform", php_layer->layer->transform, value)
                                                     else IF_SET_LONG("labelcache", php_layer->layer->labelcache, value)
                                                       else IF_SET_LONG("postlabelcache", php_layer->layer->postlabelcache, value)
@@ -1619,7 +1617,7 @@ PHP_METHOD(layerObj, executeWFSGetFeature)
 
 /* {{{ proto int applySLD(string sldxml, string namedlayer)
    Apply the SLD document to the layer object. The matching between the sld
-   document and the layer will be done using the layer’s name. If a
+   document and the layer will be done using the layer's name. If a
    namedlayer argument is passed (argument is optional), the NamedLayer in
    the sld that matchs it will be used to style the layer. */
 PHP_METHOD(layerObj, applySLD)
@@ -1652,7 +1650,7 @@ PHP_METHOD(layerObj, applySLD)
 /* {{{ proto int applySLDURL(string sldurl, string namedlayer)
    Apply the SLD document pointed by the URL to the layer object. The
    matching between the sld document and the layer will be done using the
-   layer’s name. If a namedlayer argument is passed (argument is optional),
+   layer's name. If a namedlayer argument is passed (argument is optional),
    the NamedLayer in the sld that matchs it will be used to style the
    layer. */
 PHP_METHOD(layerObj, applySLDURL)

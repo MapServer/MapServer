@@ -31,7 +31,7 @@
 #include "mapprimitive.h"
 #include <assert.h>
 #include <locale.h>
-
+#include "fontcache.h"
 
 
 typedef enum {CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT} CLIP_STATE;
@@ -1521,47 +1521,44 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
 
 /* Compute all the lineString/segment lengths and determine the longest lineString of a multiLineString
  * shape: in paramater, the multiLineString to compute.
- * segment_lengths: out parameter, the segment lengths of all lineString.
- * line_lengths: out parameter, the lineString lengths of the multiLineString.
- * max_line_index: out parameter, the index of the longest lineString of the multiLineString.
- * max_line_length: out parameter, the length of the longest lineString of the multiLineString.
- * total_length: out parameter, the total length of the MultiLineString
- * segment_index: out parameter, the index of the longest lineString of the multiLineString.
+ * struct polyline_lengths pll: out parameter, all line and segment lengths
 */
-void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, double **line_lengths, int *max_line_index, double *max_line_length, int *segment_index, double *total_length)
+void msPolylineComputeLineSegments(shapeObj *shape, struct polyline_lengths *pll)
 {
-  int i, j, temp_segment_index;
-  double segment_length, max_segment_length;
+  int i, j;
+  double max_line_length=0, max_segment_length=0, segment_length;
 
-  (*segment_lengths) = (double **) msSmallMalloc(sizeof(double *) * shape->numlines);
-  (*line_lengths) = (double *) msSmallMalloc(sizeof(double) * shape->numlines);
+  pll->ll = msSmallMalloc(shape->numlines * sizeof(struct line_lengths));
+  pll->total_length = 0;
+  
 
-  temp_segment_index = *segment_index = *max_line_index = 0;
 
-  *total_length = 0;
-  *max_line_length = 0;
   for(i=0; i<shape->numlines; i++) {
-
-    (*segment_lengths)[i] = (double*) msSmallMalloc(sizeof(double) * shape->line[i].numpoints);
-
-    (*line_lengths)[i] = 0;
-    max_segment_length = 0;
+    struct line_lengths *ll = &pll->ll[i];
+    double max_subline_segment_length = 0;
+    
+    ll->segment_lengths = (double*) msSmallMalloc(sizeof(double) * (shape->line[i].numpoints - 1));
+    ll->total_length = 0;
+    
     for(j=1; j<shape->line[i].numpoints; j++) {
       segment_length = sqrt((((shape->line[i].point[j].x-shape->line[i].point[j-1].x)*(shape->line[i].point[j].x-shape->line[i].point[j-1].x)) + ((shape->line[i].point[j].y-shape->line[i].point[j-1].y)*(shape->line[i].point[j].y-shape->line[i].point[j-1].y))));
-      (*line_lengths)[i] += segment_length;
-      (*segment_lengths)[i][j-1] = segment_length;
+      ll->total_length += segment_length;
+      ll->segment_lengths[j-1] = segment_length;
+      if(segment_length > max_subline_segment_length) {
+        max_subline_segment_length = segment_length;
+        ll->longest_segment_index = j;
+      }
       if(segment_length > max_segment_length) {
         max_segment_length = segment_length;
-        temp_segment_index = j;
+        pll->longest_segment_line_index = i;
+        pll->longest_segment_point_index = j;
       }
     }
+    pll->total_length += ll->total_length;
 
-    *total_length += (*line_lengths)[i];
-
-    if((*line_lengths)[i] > *max_line_length) {
-      *max_line_length = (*line_lengths)[i];
-      *max_line_index = i;
-      *segment_index = temp_segment_index;
+    if(ll->total_length > max_line_length) {
+      max_line_length = ll->total_length;
+      pll->longest_line_index = i;
     }
   }
 }
@@ -1570,86 +1567,78 @@ void msPolylineComputeLineSegments(shapeObj *shape, double ***segment_lengths, d
 ** If no repeatdistance, find center of longest segment in polyline p. The polyline must have been converted
 ** to image coordinates before calling this function.
 */
-pointObj** msPolylineLabelPoint(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints, int anglemode)
+int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *label, struct label_auto_result *lar, double resolutionfactor)
 {
-  return msPolylineLabelPointExtended(p, min_length, repeat_distance, angles, lengths, numpoints, NULL, 0, anglemode);
-}
+  struct polyline_lengths pll;
+  int i, ret = MS_SUCCESS;
+  double minfeaturesize = -1;
+  assert(ts->annotext);
 
-pointObj** msPolylineLabelPointExtended(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, int *numpoints, int *regularLines, int numlines, int anglemode)
-{
-  double total_length, max_line_length;
-  int i,j, max_line_index, segment_index, labelpoints_index, labelpoints_size;
-  double** segment_lengths;
-  double* line_lengths;
-  pointObj** labelpoints;
 
-  labelpoints_index = 0;
-  labelpoints_size = p->numlines; /* minimal array size */
-  *numpoints = 0;
-
-  labelpoints = (pointObj **) msSmallMalloc(sizeof(pointObj *) * labelpoints_size);
-  (*angles) = (double **) msSmallMalloc(sizeof(double *) * labelpoints_size);
-  (*lengths) = (double **) msSmallMalloc(sizeof(double *) * labelpoints_size);
-
-  msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
-
-  if (repeat_distance > 0) {
-    for(i=0; i<p->numlines; i++)
-      if (numlines > 0) {
-        for (j=0; j<numlines; j++)
-          if (regularLines[j] == i) {
-            msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, i, line_lengths[i], total_length, segment_index, &labelpoints_index, &labelpoints_size, &labelpoints, anglemode);
-            break;
-          }
-      } else {
-        msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, i, line_lengths[i], total_length, segment_index, &labelpoints_index, &labelpoints_size, &labelpoints, anglemode);
+  if(label && ts) {
+    if(label->autominfeaturesize) {
+      if(!ts->textpath) {
+        if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
+          return MS_FAILURE;
       }
-  } else
-    msPolylineLabelPointLineString(p, min_length, repeat_distance, angles, lengths, segment_lengths, max_line_index, max_line_length, total_length, segment_index, &labelpoints_index, &labelpoints_size, &labelpoints, anglemode);
-
-  *numpoints = labelpoints_index;
-
-  /* freeing memory: allocated by msPolylineComputeLineSegments */
-  if ( segment_lengths ) {
-    for ( i = 0; i < p->numlines; i++ )
-      free(segment_lengths[i]);
-    free(segment_lengths);
+      minfeaturesize = ts->textpath->bounds.bbox.maxx;
+    } else if(label->minfeaturesize) {
+      minfeaturesize = label->minfeaturesize * resolutionfactor;
+    }
   }
 
-  free(line_lengths);
+  /* compute line lengths, in order to:
+    - extract the longest line if we're not repeating
+    - check that each line is longer than the text length if using minfeaturesize auto
+    - check that each line is long enough if using minfeaturesize
+   */
+  msPolylineComputeLineSegments(p, &pll);
 
-  return labelpoints;
+  if(label && label->repeatdistance > 0) {
+    for(i=0; i<p->numlines; i++) {
+      if(pll.ll[i].total_length > minfeaturesize) {
+        ret = msLineLabelPoint(map,&p->line[i], ts, &pll.ll[i],lar, label, resolutionfactor);
+      }
+    }
+  } else {
+    i = pll.longest_line_index;
+    if(pll.ll[i].total_length > minfeaturesize) {
+      ret = msLineLabelPoint(map,&p->line[i], ts, &pll.ll[i],lar, label, resolutionfactor);
+    }
+  }
+
+  /* freeing memory: allocated by msPolylineComputeLineSegments */
+  for ( i = 0; i < p->numlines; i++ ) {
+    free(pll.ll[i].segment_lengths);
+  }
+  free(pll.ll);
+  
+  return ret;
 }
 
-void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_distance, double ***angles, double ***lengths, double** segment_lengths,
-                                    int line_index, double line_length, double total_length, int segment_index, int* labelpoints_index, int* labelpoints_size, pointObj ***labelpoints, int anglemode)
+int msLineLabelPoint(mapObj *map, lineObj *p, textSymbolObj *ts, struct line_lengths *ll, struct label_auto_result *lar, labelObj *label, double resolutionfactor)
 {
-  int i, j, k, l, n, index, point_repeat;
-  double t, tmp_length, theta, fwd_length, point_distance;
+  int j, l, n, point_repeat;
+  double t, theta, fwd_length, point_distance;
   double center_point_position, left_point_position, right_point_position, point_position;
+  double repeat_distance = -1;
+  if(label) {
+    repeat_distance = label->repeatdistance * resolutionfactor;
+  }
 
-  tmp_length = total_length;
-  if (repeat_distance > 0)
-    tmp_length = line_length;
-
-  if((min_length != -1) && (tmp_length < min_length)) /* too short to label */
-    return;
-
-  i = line_index;
-
-  if(p->line[i].numpoints < 2)
-    return;
+  if(UNLIKELY(p->numpoints < 2))
+    return MS_FAILURE;
   point_distance = 0;
   point_repeat = 1;
-  left_point_position = right_point_position = center_point_position = line_length / 2.0;
+  left_point_position = right_point_position = center_point_position = ll->total_length / 2.0;
 
   if (repeat_distance > 0) {
-    point_repeat = line_length / repeat_distance;
+    point_repeat = ll->total_length / repeat_distance;
 
     if (point_repeat > 1) {
       if (point_repeat % 2 == 0)
         point_repeat -= 1;
-      point_distance = (line_length / point_repeat); /* buffer allowed per point */
+      point_distance = (ll->total_length / point_repeat); /* buffer allowed per point */
 
       /* initial point position */
       left_point_position -= ((point_repeat-1)/2 * point_distance);
@@ -1670,55 +1659,47 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
     }
 
     do {
-      if (*labelpoints_index == *labelpoints_size) {
-        *labelpoints_size *= 2;
-        (*labelpoints) = (pointObj **) msSmallRealloc(*labelpoints,sizeof(pointObj *) * (*labelpoints_size));
-        (*angles) = (double **) msSmallRealloc(*angles,sizeof(double *) * (*labelpoints_size));
-        (*lengths) = (double **) msSmallRealloc(*lengths,sizeof(double *) * (*labelpoints_size));
-      }
-
-      index = (*labelpoints_index)++;
-      (*labelpoints)[index] = (pointObj *) msSmallMalloc(sizeof(pointObj));
-      (*angles)[index] = (double *) msSmallMalloc(sizeof(double));
-      (*lengths)[index] = (double *) msSmallMalloc(sizeof(double));
-
-      if (repeat_distance > 0)
-        *(*lengths)[index] = line_length;
-      else
-        *(*lengths)[index] = total_length;
+      lar->angles = msSmallRealloc(lar->angles, (lar->num_label_points+1)*sizeof(double));
+      lar->label_points = msSmallRealloc(lar->label_points, (lar->num_label_points+1)*sizeof(pointObj));
 
       /* if there is only 1 label to place... put it in the middle of the current segment (as old behavior) */
-      if ( ((anglemode == MS_AUTO) || (anglemode == MS_AUTO2)) &&
-           (point_repeat == 1) ) {
-        j = segment_index;
-        (*labelpoints)[index]->x = (p->line[i].point[j].x + p->line[i].point[j-1].x)/2.0;
-        (*labelpoints)[index]->y = (p->line[i].point[j].y + p->line[i].point[j-1].y)/2.0;
+      if ( point_repeat == 1 ) {
+        j = ll->longest_segment_index;
+        lar->label_points[lar->num_label_points].x = (p->point[j-1].x + p->point[j].x)/2.0;
+        lar->label_points[lar->num_label_points].y = (p->point[j-1].y + p->point[j].y)/2.0;
       } else {
         j=0;
         fwd_length = 0;
         while (fwd_length < point_position) {
-          fwd_length += segment_lengths[i][j++];
+          fwd_length += ll->segment_lengths[j++];
         }
+        assert(j>0);
 
-        k = j-1;
-
-        t = 1 - (fwd_length - point_position) / segment_lengths[i][j-1];
-        (*labelpoints)[index]->x = t * (p->line[i].point[k+1].x - p->line[i].point[k].x) + p->line[i].point[k].x;
-        (*labelpoints)[index]->y = t * (p->line[i].point[k+1].y - p->line[i].point[k].y) + p->line[i].point[k].y;
+        t = 1 - (fwd_length - point_position) / ll->segment_lengths[j-1];
+        lar->label_points[lar->num_label_points].x = t * (p->point[j].x - p->point[j-1].x) + p->point[j-1].x;
+        lar->label_points[lar->num_label_points].y = t * (p->point[j].y - p->point[j-1].y) + p->point[j-1].y;
       }
 
-      if(anglemode != MS_NONE) {
-        theta = atan2(p->line[i].point[j].x - p->line[i].point[j-1].x, p->line[i].point[j].y - p->line[i].point[j-1].y);
-        if(anglemode == MS_AUTO2) {
-          *(*angles)[index] = (MS_RAD_TO_DEG*theta) - 90;
-        } else { /* AUTO, FOLLOW */
-          if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
-            *(*angles)[index] = (MS_RAD_TO_DEG*theta) - 90;
-          } else {
-            *(*angles)[index] = (MS_RAD_TO_DEG*theta) + 90;
+      if(label && ts) {
+        if(label->anglemode != MS_ANGLEMODE_NONE) {
+          theta = atan2(p->point[j].x - p->point[j-1].x, p->point[j].y - p->point[j-1].y);
+          if(label->anglemode == MS_ANGLEMODE_AUTO2) {
+            theta -= MS_PI2;
+          } else { /* AUTO, FOLLOW */
+            if(p->point[j-1].x < p->point[j].x) { /* i.e. to the left */
+              theta -= MS_PI2;
+            } else {
+              theta += MS_PI2;
+            }
           }
+          lar->angles[lar->num_label_points] = theta;
+        } else {
+          lar->angles[lar->num_label_points] = MS_DEG_TO_RAD * ts->label->angle;
         }
+      } else {
+        lar->angles[lar->num_label_points] = 0;
       }
+      lar->num_label_points++;
 
       point_position = left_point_position;
       n++;
@@ -1728,32 +1709,20 @@ void msPolylineLabelPointLineString(shapeObj *p, int min_length, int repeat_dist
     left_point_position += point_distance;
   }
 
-  return;
+  return MS_SUCCESS;
 }
 
+
 /* Calculate the labelpath for each line if repeatdistance is enabled, else the labelpath of the longest line segment */
-labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int *numpaths,
-                                   int** regular_lines, int* num_regular_lines)
+int msPolylineLabelPath(mapObj *map, imageObj *image, shapeObj *p, textSymbolObj *ts, labelObj *label, struct label_follow_result *lfr)
 {
-  double max_line_length, total_length;
-  double **segment_lengths, *line_lengths;
-  int i, segment_index, max_line_index, labelpaths_index, labelpaths_size, regular_lines_index, regular_lines_size;
-  labelPathObj** labelpaths;
+  struct polyline_lengths pll;
+  int i,ret = MS_SUCCESS;
+  double minfeaturesize = -1;
+  assert(ts->annotext);
+  lfr->num_follow_labels = lfr->lar.num_label_points = 0;
 
-  labelpaths_index = 0;
-  labelpaths_size = p->numlines; /* minimal array size */
-  regular_lines_index = 0;
-  regular_lines_size = 1;
-  *numpaths = 0;
-  segment_index = max_line_index = 0;
-  total_length = max_line_length = 0.0;
-
-
-  if(!string) return NULL;
-
-  labelpaths = (labelPathObj **) msSmallMalloc(sizeof(labelPathObj *) * labelpaths_size);
-  (*regular_lines) = (int *) msSmallMalloc(sizeof(int) * regular_lines_size);
-
+  /* we first offset the line if we want an offsetted label */
   if(label->offsetx != 0 && (label->offsety == -99 || label->offsety == 99)) {
     double offset;
     if(label->offsetx > 0) {
@@ -1773,134 +1742,117 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
       }
     }
     p = msOffsetPolyline(p,offset, MS_STYLE_SINGLE_SIDED_OFFSET);
-    if(!p) return NULL;
+    if(!p) return MS_FAILURE;
   }
 
-  msPolylineComputeLineSegments(p, &segment_lengths, &line_lengths, &max_line_index, &max_line_length, &segment_index, &total_length);
-
-  if(label->repeatdistance > 0)
-    for(i=0; i<p->numlines; i++) {
-      msPolylineLabelPathLineString(map,img, p,min_length, fontset, string, label, scalefactor, i, segment_lengths, line_lengths[i], total_length,
-                                    &labelpaths_index, &labelpaths_size, &labelpaths, regular_lines, &regular_lines_index, &regular_lines_size);
+  /* compute line lengths, in order to:
+    - extract the longest line if we're not repeating
+    - check that each line is longer than the text length if using minfeaturesize auto
+    - check that each line is long enough if using minfeaturesize
+   */
+  msPolylineComputeLineSegments(p, &pll);
+ 
+  if(label->autominfeaturesize) {
+    if(!ts->textpath) {
+      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
+        return MS_FAILURE;
+      }
     }
-  else
-    msPolylineLabelPathLineString(map, img, p,min_length, fontset, string, label, scalefactor, max_line_index, segment_lengths, line_lengths[max_line_index], total_length,
-                                  &labelpaths_index, &labelpaths_size, &labelpaths, regular_lines, &regular_lines_index, &regular_lines_size);
+    minfeaturesize = ts->textpath->bounds.bbox.maxx;
+  } else if(label->minfeaturesize) {
+    minfeaturesize = label->minfeaturesize * image->resolutionfactor;
+  }
+
+  if(label->repeatdistance > 0) {
+    for(i=0; i<p->numlines; i++) {
+      if(pll.ll[i].total_length > minfeaturesize) {
+        ret = msLineLabelPath(map,image,&p->line[i], ts, &pll.ll[i],lfr, label);
+      }
+    }
+  } else {
+    i = pll.longest_line_index;
+    if(pll.ll[i].total_length > minfeaturesize) {
+      ret = msLineLabelPath(map,image,&p->line[i], ts, &pll.ll[i],lfr, label);
+    }
+  }
 
   /* freeing memory: allocated by msPolylineComputeLineSegments */
-  if ( segment_lengths ) {
-    for ( i = 0; i < p->numlines; i++ )
-      free(segment_lengths[i]);
-    free(segment_lengths);
+  for ( i = 0; i < p->numlines; i++ ) {
+    free(pll.ll[i].segment_lengths);
   }
-
-  free(line_lengths);
-
-  /* set the number of paths in the array */
-  *numpaths = labelpaths_index;
-  *num_regular_lines = regular_lines_index;
+  free(pll.ll);
+  
   if(label->offsety == -99 && label->offsetx != 0) {
      msFreeShape(p);
      msFree(p);
   }
-  return labelpaths;
+  return ret;
 }
 
 /*
  * Calculate a series of label points for each character in the label for a
- * given polyline. The resultant series of points is stored in *labelpath,
+ * given line. The resultant series of points is stored in *labelpath,
  * which is added to the labelpaths array. Note that the points and bounds
  * are allocated in this function.  The polyline must be converted to image
  * coordinates before calling this function.
  */
-void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int min_length, fontSetObj *fontset, char *string, labelObj *label, double scalefactor, int line_index,
-                                   double** segment_lengths, double line_length, double total_length, int* labelpaths_index, int* labelpaths_size, labelPathObj*** labelpaths,
-                                   int** regular_lines, int *regular_lines_index, int* regular_lines_size)
+int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, struct line_lengths *ll, struct label_follow_result *lfr, labelObj *label)
 {
   double distance_along_segment;
+  double repeat_distance = label->repeatdistance * ts->resolutionfactor;
   double segment_length, fwd_line_length, rev_line_length, text_length, text_start_length, label_buffer, text_end_length;
   double right_label_position, left_label_position, center_label_position;
-  int numchars;
 
-  int i,j,k,l,n, inc, final_j, label_repeat;
+  int j,k,l,n, inc, final_j, label_repeat;
   double direction;
   rectObj bbox;
-  lineObj bounds;
-  double *offsets;
-  double size, t, tmp_length;
+  lineObj *bounds;
+  double t;
   double cx, cy; /* centre of a character, x & y values. */
 
   double theta;
   double dx, dy, w, cos_t, sin_t;
 
-  labelPathObj *labelpath = NULL;
-
-  /* Line smoothing kernel */
-  double kernel[] = {0.1,0.2,2,0.2,0.1}; /* {1.5, 2, 15, 2, 1.5}; */
-  double kernel_normal = 2.6; /* Must be sum of kernel elements */
-  int kernel_size = 5;
-
-  double letterspacing = 1.05;
+  const double letterspacing = 1.00;
   /* As per RFC 60, if label->maxoverlapangle == 0 then fall back on pre-6.0 behavior
      which was to use maxoverlapangle = 0.4*MS_PI ( 40% of 180 degrees ) */
   double maxoverlapangle = 0.4 * MS_PI;
 
-  offsets = NULL;
-
-  tmp_length = total_length;
-  if (label->repeatdistance > 0)
-    tmp_length = line_length;
-
-  numchars = msGetNumGlyphs(string);
-
+  if(p->numpoints < 2) { /* degenerate */
+    return MS_FAILURE;
+  }
+  if(p->numpoints == 2) /* use the regular angled text algorithm */
+    goto ANGLEFOLLOW_FAILURE;
+  
+  if(!ts->textpath) {
+    if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
+      return MS_FAILURE;
+    }
+  }
+  
   /* skip the label and use the normal algorithm if it has fewer than 2 characters */
-  if(numchars < 2)
+  if(ts->textpath->numglyphs < 2)
     goto ANGLEFOLLOW_FAILURE;
 
-  i = line_index;
 
-  if (((min_length != -1) && (tmp_length < min_length))) { /* too short */
-    goto FAILURE;
-  }
-
-  if(p->line[i].numpoints < 2) { /* degenerate */
-    goto FAILURE;
-  }
-
-  if(p->line[i].numpoints == 2) /* use the regular angled text algorithm */
-    goto ANGLEFOLLOW_FAILURE;
-
-  size = label->size*scalefactor;
-  size = MS_MAX(size, label->minsize*img->resolutionfactor);
-  size = MS_MIN(size, label->maxsize*img->resolutionfactor);
-
-  /* determine the total length of the text */
-  if (msGetLabelSize(map,label,string,size,&bbox,&offsets) != MS_SUCCESS) {
-    goto FAILURE;
-  }
-
-
-  scalefactor = size / label->size;
-
-  text_length = letterspacing * (bbox.maxx - bbox.minx);
+  text_length = letterspacing * ts->textpath->bounds.bbox.maxx;
 
   /*
   ** if the text length is way longer than the line, skip adding the
   ** label if it isn't forced (long extrapolated labels tend to be ugly)
   */
-  if ( text_length > 1.5 * line_length && label->force == MS_FALSE ) {
-    goto FAILURE;
+  if ( text_length > 1.5 * ll->total_length && ts->label->force == MS_FALSE ) {
+    return MS_SUCCESS;
   }
 
   /* We compute the number of labels we can repeat in the line */
   text_end_length = 0;
-  left_label_position = right_label_position = center_label_position = (line_length - text_length) / 2.0;
-  label_repeat = (line_length / (text_length + label->repeatdistance));
-  label_buffer = (line_length / label_repeat); /* buffer allowed per label */
-  if (label->repeatdistance > 0 && label_repeat > 1) {
+  left_label_position = right_label_position = center_label_position = (ll->total_length - text_length) / 2.0;
+  label_repeat = (ll->total_length / (text_length + repeat_distance));
+  label_buffer = (ll->total_length / label_repeat);
+  if (repeat_distance > 0 && label_repeat > 1) {
     if (label_repeat % 2 == 0) {
       label_repeat -= 1;
-      label_buffer = (line_length / label_repeat);
     }
     /* text_start_length = (label_buffer / 2) - (text_length / 2); */
 
@@ -1911,12 +1863,12 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
     label_repeat = (label_repeat-1)/2+1;
   } else {
     label_repeat = 1;
-    center_label_position = (line_length - text_length) / 2.0;
+    center_label_position = (ll->total_length - text_length) / 2.0;
   }
-
-  if(label->maxoverlapangle >=0)
+  
+  if(label->maxoverlapangle > 0)
     maxoverlapangle = label->maxoverlapangle * MS_DEG_TO_RAD; /* radian */
-
+  
   for (l=0; l < label_repeat; l++) {
     if (l == label_repeat-1) { /* last label to place is always the center label */
       text_start_length = center_label_position;
@@ -1927,12 +1879,15 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
     }
 
     do {
-      /* allocate the labelpath */
-      labelpath = (labelPathObj *) msSmallMalloc(sizeof(labelPathObj));
-      labelpath->path.numpoints = numchars;
-      labelpath->path.point = (pointObj *) msSmallCalloc(labelpath->path.numpoints, sizeof(pointObj));
-      labelpath->angles = (double *) msSmallMalloc(sizeof(double) * (labelpath->path.numpoints));
-      msInitShape(&(labelpath->bounds));
+      textPathObj *tp = msSmallCalloc(1,sizeof(textPathObj));
+      /* copy the textPath, we will be overriding the copy's positions and angles */
+      msCopyTextPath(tp,ts->textpath);
+      tp->bounds.poly = msSmallMalloc(sizeof(lineObj));
+      for(k=0;k<tp->numglyphs;k++) {
+        tp->glyphs[k].pnt.x = 0;
+        tp->glyphs[k].pnt.y = 0;
+      }
+      bounds = tp->bounds.poly;
 
 
       /*
@@ -1940,8 +1895,8 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
       ** the UL corners of each bbox will be tied together and the LL corners
       ** will be tied together.
       */
-      bounds.numpoints = 2*numchars + 1;
-      bounds.point = (pointObj *) msSmallMalloc(sizeof(pointObj) * bounds.numpoints);
+      bounds->numpoints = 2*tp->numglyphs + 1;
+      bounds->point = (pointObj *) msSmallMalloc(sizeof(pointObj) * bounds->numpoints);
 
       /* the points start at (line_length - text_length) / 2 in order to be centred */
       /* text_start_length = (line_length - text_length) / 2.0; */
@@ -1949,24 +1904,24 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
       /* the text is longer than the line: extrapolate the first and last segments */
       if(text_start_length < 0.0) {
         j = 0;
-        final_j = p->line[i].numpoints - 1;
+        final_j = p->numpoints - 1;
         fwd_line_length = rev_line_length = 0;
       } else {
         /* proceed until we've traversed text_start_length in distance */
         fwd_line_length = 0;
         j = 0;
         while ( fwd_line_length < text_start_length )
-          fwd_line_length += segment_lengths[i][j++];
+          fwd_line_length += ll->segment_lengths[j++];
 
         j--;
 
         /* determine the last segment */
         rev_line_length = 0;
-        final_j = p->line[i].numpoints - 1;
+        final_j = p->numpoints - 1;
 
-        text_end_length = line_length - (text_start_length + text_length);
+        text_end_length = ll->total_length - (text_start_length + text_length);
         while(rev_line_length < text_end_length) {
-          rev_line_length += segment_lengths[i][final_j - 1];
+          rev_line_length += ll->segment_lengths[final_j - 1];
           final_j--;
         }
         final_j++;
@@ -1977,18 +1932,13 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
 
       /* determine if the line is mostly left to right or right to left,
          see bug 1620 discussion by Steve Woodbridge */
-      direction = 0;
-      k = j;
-      while (k < final_j) {
-        direction += p->line[i].point[k+1].x - p->line[i].point[k].x;
-        k++;
-      }
+      direction = p->point[final_j].x - p->point[j].x;
 
       if(direction > 0) {
         inc = 1; /* j is already correct */
 
         /* length of the segment containing the starting point */
-        segment_length = segment_lengths[i][j];
+        segment_length = ll->segment_lengths[j];
 
         /* determine how far along the segment we need to go */
         if(text_start_length < 0.0)
@@ -2000,7 +1950,7 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
         inc = -1;
 
         /* length of the segment containing the starting point */
-        segment_length = segment_lengths[i][j-1];
+        segment_length = ll->segment_lengths[j-1];
         if(text_start_length < 0.0)
           t = text_start_length / segment_length;
         else
@@ -2012,66 +1962,38 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
       theta = 0;
       k = 0;
       w = 0;
-      while ( k < labelpath->path.numpoints ) {
-        int m;
+      while ( k < tp->numglyphs ) {
         double x,y;
 
-        x = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x;
-        y = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y;
+        x = t * (p->point[j+inc].x - p->point[j].x) + p->point[j].x;
+        y = t * (p->point[j+inc].y - p->point[j].y) + p->point[j].y;
+        tp->glyphs[k].pnt.x = x;
+        tp->glyphs[k].pnt.y = y;
 
-        /*
-        ** This used to be a series of if-then-else's, but that fails for short (length < 4)
-        ** labels. There may be small speed-ups possible here. (bug 1921)
-        **
-        ** average this label point with its neighbors according to the smoothing kernel
-        */
-        if ( k == 0) {
-          labelpath->path.point[k].x += (kernel[0] + kernel[1]) * x;
-          labelpath->path.point[k].y += (kernel[0] + kernel[1]) * y;
-        }
-        if ( k == 1) {
-          labelpath->path.point[k].x += kernel[0] * x;
-          labelpath->path.point[k].y += kernel[0] * y;
-        }
-        if ( k == labelpath->path.numpoints - 2) {
-          labelpath->path.point[k].x += kernel[4] * x;
-          labelpath->path.point[k].y += kernel[4] * y;
-        }
-        if ( k == labelpath->path.numpoints - 1) {
-          labelpath->path.point[k].x += (kernel[3] + kernel[4]) * x;
-          labelpath->path.point[k].y += (kernel[3] + kernel[4]) * y;
-        }
 
-        for(m = 0; m < kernel_size; m++) {
-          if(m + k - 2 < 0 || m + k - 2 > labelpath->path.numpoints - 1)
-            continue;
-          labelpath->path.point[k+m-2].x += kernel[m]*x;
-          labelpath->path.point[k+m-2].y += kernel[m]*y;
-        }
-
-        w = letterspacing*offsets[k];
+        w = letterspacing*tp->glyphs[k].glyph->metrics.advance;
 
         /* add the character's width to the distance along the line */
         distance_along_segment += w;
 
         /* if we still have segments left and we've past the current segment, move to the next one */
-        if(inc == 1 && j < p->line[i].numpoints - 2) {
+        if(inc == 1 && j < p->numpoints - 2) {
 
-          while ( j < p->line[i].numpoints - 2 && distance_along_segment > segment_lengths[i][j] ) {
-            distance_along_segment -= segment_lengths[i][j];
+          while ( j < p->numpoints - 2 && distance_along_segment > ll->segment_lengths[j] ) {
+            distance_along_segment -= ll->segment_lengths[j];
             j += inc; /* move to next segment */
           }
 
-          segment_length = segment_lengths[i][j];
+          segment_length = ll->segment_lengths[j];
 
         } else if( inc == -1 && j > 1 ) {
 
-          while ( j > 1 && distance_along_segment > segment_lengths[i][j-1] ) {
-            distance_along_segment -= segment_lengths[i][j-1];
+          while ( j > 1 && distance_along_segment > ll->segment_lengths[j-1] ) {
+            distance_along_segment -= ll->segment_lengths[j-1];
             j += inc; /* move to next segment */
           }
 
-          segment_length = segment_lengths[i][j-1];
+          segment_length = ll->segment_lengths[j-1];
         }
 
         /* Recalculate interpolation parameter */
@@ -2081,41 +2003,52 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
       }
 
       /* pre-calc the character's centre y value.  Used for rotation adjustment. */
-      cy = -size / 2.0;
-
-      labelpath->path.point[0].x /= kernel_normal;
-      labelpath->path.point[0].y /= kernel_normal;
+      cy = -ts->textpath->glyph_size / 2.0;
+#ifdef USE_KERNEL
+      tp->glyphs[0].pnt.x /= kernel_normal;
+      tp->glyphs[0].pnt.y /= kernel_normal;
+#endif
 
       /* Average the points and calculate each angle */
-      for (k = 1; k <= labelpath->path.numpoints; k++) {
+      for (k = 1; k <= tp->numglyphs; k++) {
         double anglediff;
-        if ( k < labelpath->path.numpoints ) {
-          labelpath->path.point[k].x /= kernel_normal;
-          labelpath->path.point[k].y /= kernel_normal;
-          dx = labelpath->path.point[k].x - labelpath->path.point[k-1].x;
-          dy = labelpath->path.point[k].y - labelpath->path.point[k-1].y;
+        if ( k < tp->numglyphs ) {
+#ifdef USE_KERNEL
+          tp->glyphs[k].pnt.x /= kernel_normal;
+          tp->glyphs[k].pnt.y /= kernel_normal;
+#endif
+          dx = tp->glyphs[k].pnt.x - tp->glyphs[k-1].pnt.x;
+          dy = tp->glyphs[k].pnt.y - tp->glyphs[k-1].pnt.y;
         } else {
           /* Handle the last character */
-          dx = t * (p->line[i].point[j+inc].x - p->line[i].point[j].x) + p->line[i].point[j].x - labelpath->path.point[k-1].x;
-          dy = t * (p->line[i].point[j+inc].y - p->line[i].point[j].y) + p->line[i].point[j].y - labelpath->path.point[k-1].y;
+          dx = t * (p->point[j+inc].x - p->point[j].x) + p->point[j].x - tp->glyphs[k-1].pnt.x;
+          dy = t * (p->point[j+inc].y - p->point[j].y) + p->point[j].y - tp->glyphs[k-1].pnt.y;
         }
 
-        theta = -atan2(dy,dx);
+        if(dx && dy) {
+          theta = -atan2(dy,dx);
 
-        if ( maxoverlapangle > 0 && k > 1) {
-          /* If the difference between the last char angle and the current one
+          if (maxoverlapangle > 0 && k > 1) {
+            /* If the difference between the last char angle and the current one
              is greater than the MAXOVERLAPANGLE value (set at 80% of 180deg by default)
              , bail the label */
-          anglediff = fabs(theta - labelpath->angles[k-2]);
-          anglediff = MS_MIN(anglediff, MS_2PI - anglediff);
-          if(anglediff > maxoverlapangle ) {
-            goto LABEL_FAILURE;
+            anglediff = fabs(theta - tp->glyphs[k-2].rot);
+            anglediff = MS_MIN(anglediff, MS_2PI - anglediff);
+            if(anglediff > maxoverlapangle ) {
+              goto LABEL_FAILURE;
+            }
           }
+        } else {
+          /*
+           * handle the 0-advance case, as the complex text shaping may have placed multiple
+           * glyphs at the same position
+           */
+          theta = tp->glyphs[k-2].rot;
         }
 
         /* msDebug("s: %c (x,y): (%0.2f,%0.2f) t: %0.2f\n", string[k-1], labelpath->path.point[k-1].x, labelpath->path.point[k-1].y, theta); */
 
-        labelpath->angles[k-1] = theta;
+        tp->glyphs[k-1].rot = theta;
 
 
         /* Move the previous point so that when the character is rotated and
@@ -2123,85 +2056,83 @@ void msPolylineLabelPathLineString(mapObj *map, imageObj *img, shapeObj *p, int 
         cos_t = cos(theta);
         sin_t = sin(theta);
 
-        w = letterspacing*offsets[k-1];
+        w = letterspacing*tp->glyphs[k-1].glyph->metrics.advance;
 
         cx = 0; /* Center the character vertically only */
 
         dx = - (cx * cos_t + cy * sin_t);
         dy = - (cy * cos_t - cx * sin_t);
 
-        labelpath->path.point[k-1].x += dx;
-        labelpath->path.point[k-1].y += dy;
+        tp->glyphs[k-1].pnt.x += dx;
+        tp->glyphs[k-1].pnt.y += dy;
 
         /* Calculate the bounds */
         bbox.minx = 0;
         bbox.maxx = w;
         bbox.maxy = 0;
-        bbox.miny = -size;
+        bbox.miny = -ts->textpath->glyph_size;
 
         /* Add the label buffer to the bounds */
-        bbox.maxx += label->buffer;
-        bbox.maxy += label->buffer;
-        bbox.minx -= label->buffer;
-        bbox.miny -= label->buffer;
+        bbox.maxx += ts->label->buffer * ts->resolutionfactor;
+        bbox.maxy += ts->label->buffer * ts->resolutionfactor;
+        bbox.minx -= ts->label->buffer * ts->resolutionfactor;
+        bbox.miny -= ts->label->buffer * ts->resolutionfactor;
 
-        if ( k < labelpath->path.numpoints ) {
+        if ( k < tp->numglyphs ) {
           /* Transform the bbox too.  We take the UL and LL corners and rotate
              then translate them. */
-          bounds.point[k-1].x = (bbox.minx * cos_t + bbox.maxy * sin_t) + labelpath->path.point[k-1].x;
-          bounds.point[k-1].y = (bbox.maxy * cos_t - bbox.minx * sin_t) + labelpath->path.point[k-1].y;
+          bounds->point[k-1].x = (bbox.minx * cos_t + bbox.maxy * sin_t) + tp->glyphs[k-1].pnt.x;
+          bounds->point[k-1].y = (bbox.maxy * cos_t - bbox.minx * sin_t) + tp->glyphs[k-1].pnt.y;
 
           /* Start at end and work towards the half way point */
-          bounds.point[bounds.numpoints - k - 1].x = (bbox.minx * cos_t + bbox.miny * sin_t) + labelpath->path.point[k-1].x;
-          bounds.point[bounds.numpoints - k - 1].y = (bbox.miny * cos_t - bbox.minx * sin_t) + labelpath->path.point[k-1].y;
+          bounds->point[bounds->numpoints - k - 1].x = (bbox.minx * cos_t + bbox.miny * sin_t) + tp->glyphs[k-1].pnt.x;
+          bounds->point[bounds->numpoints - k - 1].y = (bbox.miny * cos_t - bbox.minx * sin_t) + tp->glyphs[k-1].pnt.y;
 
         } else {
 
           /* This is the last character in the string so we take the UR and LR
              corners of the bbox */
-          bounds.point[k-1].x = (bbox.maxx * cos_t + bbox.maxy * sin_t) + labelpath->path.point[k-1].x;
-          bounds.point[k-1].y = (bbox.maxy * cos_t - bbox.maxx * sin_t) + labelpath->path.point[k-1].y;
+          bounds->point[k-1].x = (bbox.maxx * cos_t + bbox.maxy * sin_t) + tp->glyphs[k-1].pnt.x;
+          bounds->point[k-1].y = (bbox.maxy * cos_t - bbox.maxx * sin_t) + tp->glyphs[k-1].pnt.y;
 
-          bounds.point[bounds.numpoints - k - 1].x = (bbox.maxx * cos_t + bbox.miny * sin_t) + labelpath->path.point[k-1].x;
-          bounds.point[bounds.numpoints - k - 1].y = (bbox.miny * cos_t - bbox.maxx * sin_t) + labelpath->path.point[k-1].y;
+          bounds->point[bounds->numpoints - k - 1].x = (bbox.maxx * cos_t + bbox.miny * sin_t) + tp->glyphs[k-1].pnt.x;
+          bounds->point[bounds->numpoints - k - 1].y = (bbox.miny * cos_t - bbox.maxx * sin_t) + tp->glyphs[k-1].pnt.y;
         }
 
       }
 
       /* Close the bounds */
-      bounds.point[bounds.numpoints - 1].x = bounds.point[0].x;
-      bounds.point[bounds.numpoints - 1].y = bounds.point[0].y;
+      bounds->point[bounds->numpoints - 1].x = bounds->point[0].x;
+      bounds->point[bounds->numpoints - 1].y = bounds->point[0].y;
 
-      /* Convert the bounds to a shape and store them in the labelpath */
-      if ( msAddLineDirectly(&(labelpath->bounds), &bounds) == MS_FAILURE ) {
-        goto LABEL_FAILURE;
-      }
-
-      msComputeBounds(&(labelpath->bounds));
+      /* compute the bounds */
+      fastComputeBounds(bounds,&tp->bounds.bbox);
 
       goto LABEL_END;
 
 LABEL_FAILURE:
 
-      if (bounds.point)
-        free(bounds.point);
-      bounds.point = NULL;
-      bounds.numpoints = 0;
-
-      if ( labelpath ) {
-        msFreeLabelPathObj(labelpath);
-        labelpath = NULL;
-      }
+      
+      freeTextPath(tp);
+      free(tp);
+      goto END;
 
 LABEL_END:
-      if (labelpath) {
-        if (*labelpaths_index == *labelpaths_size) {
-          *labelpaths_size *= 2;
-          (*labelpaths) = (labelPathObj **) msSmallRealloc(*labelpaths,sizeof(labelPathObj *) * (*labelpaths_size));
-        }
-        (*labelpaths)[(*labelpaths_index)++] = labelpath;
+      {
+        textPathObj *tmptp;
+        textSymbolObj *tsnew;
+        lfr->num_follow_labels++;
+        lfr->follow_labels = msSmallRealloc(lfr->follow_labels,lfr->num_follow_labels * sizeof(textSymbolObj*));
+        tmptp = ts->textpath;
+        ts->textpath = NULL;
+        lfr->follow_labels[lfr->num_follow_labels - 1] = msSmallMalloc(sizeof(textSymbolObj));
+        tsnew = lfr->follow_labels[lfr->num_follow_labels - 1];
+        initTextSymbol(tsnew);
+        msCopyTextSymbol(tsnew,ts);
+        ts->textpath = tmptp;
+        tsnew->textpath = tp;
+        tsnew->textpath->absolute = 1;
       }
-
       text_start_length = left_label_position;
       n++;
     } while (n<2);
@@ -2213,20 +2144,11 @@ LABEL_END:
 
   goto END; /* normal exit */
 
-ANGLEFOLLOW_FAILURE: /* Angle follow failure: add the line index in the arrays */
-  if (*regular_lines_index == *regular_lines_size) {
-    *regular_lines_size *= 2;
-    (*regular_lines) = (int*) msSmallRealloc(*regular_lines,sizeof(int) * (*regular_lines_size));
-  }
-  (*regular_lines)[(*regular_lines_index)++] = line_index;
-
-FAILURE: /* Global failure */
+ANGLEFOLLOW_FAILURE: /* Angle follow failure: compute angle auto labels */
+  return msLineLabelPoint(map,p,ts,ll,&lfr->lar,label, img->resolutionfactor);
 
 END:
-  if ( offsets )
-    free(offsets);
-
-  return;
+  return MS_SUCCESS;
 }
 
 /* ===========================================================================

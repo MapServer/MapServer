@@ -259,11 +259,13 @@ typedef struct _php_shapefile_object {
   shapefileObj *shapefile;
 } php_shapefile_object;
 
+#ifdef disabled
 typedef struct _php_labelcache_object {
   zend_object std;
   parent_object parent;
   labelCacheObj *labelcache;
 } php_labelcache_object;
+#endif
 
 typedef struct _php_labelleader_object {
   zend_object std;
@@ -271,6 +273,7 @@ typedef struct _php_labelleader_object {
   labelLeaderObj *labelleader;
 } php_labelleader_object;
 
+#ifdef disabled
 typedef struct _php_labelcachemember_object {
   zend_object std;
   parent_object parent;
@@ -280,6 +283,7 @@ typedef struct _php_labelcachemember_object {
   zval *poly; /* should be immutable */
   labelCacheMemberObj *labelcachemember;
 } php_labelcachemember_object;
+#endif
 
 typedef struct _php_result_object {
   zend_object std;
@@ -327,7 +331,9 @@ typedef struct _php_map_object {
   zval *scalebar;
   zval *legend;
   zval *querymap;
+#ifdef disabled
   zval *labelcache;
+#endif
   zval *projection;
   zval *metadata;
   zval *configoptions;
@@ -363,8 +369,10 @@ PHP_MINIT_FUNCTION(error);
 PHP_MINIT_FUNCTION(referencemap);
 PHP_MINIT_FUNCTION(class);
 PHP_MINIT_FUNCTION(projection);
+#ifdef disabled
 PHP_MINIT_FUNCTION(labelcachemember);
 PHP_MINIT_FUNCTION(labelcache);
+#endif
 PHP_MINIT_FUNCTION(labelleader);
 PHP_MINIT_FUNCTION(result);
 PHP_MINIT_FUNCTION(scalebar);
@@ -436,8 +444,10 @@ extern zend_class_entry *mapscript_ce_referencemap;
 extern zend_class_entry *mapscript_ce_line;
 extern zend_class_entry *mapscript_ce_shape;
 extern zend_class_entry *mapscript_ce_shapefile;
+#ifdef disabled
 extern zend_class_entry *mapscript_ce_labelcachemember;
 extern zend_class_entry *mapscript_ce_labelcache;
+#endif
 extern zend_class_entry *mapscript_ce_labelleader;
 extern zend_class_entry *mapscript_ce_result;
 extern zend_class_entry *mapscript_ce_scalebar;
@@ -461,10 +471,12 @@ extern void mapscript_create_label(labelObj *label, parent_object parent, zval *
 extern void mapscript_create_style(styleObj *style, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_symbol(symbolObj *symbol, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_class(classObj *class, parent_object parent, zval *return_value TSRMLS_DC);
+#ifdef disabled
 extern void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember,
     parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_labelcache(labelCacheObj *labelcache,
                                         parent_object parent, zval *return_value TSRMLS_DC);
+#endif
 extern void mapscript_create_labelleader(labelLeaderObj *labelleader,
     parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_result(resultObj *result,
@@ -521,7 +533,9 @@ imageObj        *mapObj_drawReferenceMap(mapObj* self);
 int             mapObj_embedScalebar(mapObj* self, imageObj *img);
 int             mapObj_embedLegend(mapObj* self, imageObj *img);
 int             mapObj_drawLabelCache(mapObj* self, imageObj *img);
+#ifdef disabled
 labelCacheMemberObj *mapObj_getLabel(mapObj* self, int i);
+#endif
 int             mapObj_queryByPoint(mapObj* self, pointObj *point,
                                     int mode, double buffer);
 int             mapObj_queryByRect(mapObj* self, rectObj rect);
@@ -779,7 +793,9 @@ projectionObj   *projectionObj_clone(projectionObj *projection);
 int             projectionObj_getUnits(projectionObj *self);
 void            projectionObj_destroy(projectionObj *self);
 
+#ifdef disabled
 void            labelCacheObj_freeCache(labelCacheObj *self);
+#endif
 
 char           *DBFInfo_getFieldName(DBFInfo *self, int iField);
 int             DBFInfo_getFieldWidth(DBFInfo *self, int iField);

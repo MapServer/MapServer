@@ -92,7 +92,6 @@
         shape.classindex = classindex;
         if(text && layer->class[classindex]->numlabels > 0) {
           shape.text = strdup(text);
-          msShapeGetAnnotation(layer,&shape);
         }
         
         msDrawShape(map, layer, &shape, image, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);

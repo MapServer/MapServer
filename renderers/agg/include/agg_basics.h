@@ -171,7 +171,11 @@ namespace mapserver
 #else
     AGG_INLINE int iround(double v)
     {
+#ifdef HAVE_LRINT
+        return lrint(v);
+#else
         return int((v < 0.0) ? v - 0.5 : v + 0.5);
+#endif
     }
     AGG_INLINE int uround(double v)
     {

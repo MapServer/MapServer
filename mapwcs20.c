@@ -1240,9 +1240,6 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
     for( i = 0; i < map->numoutputformats; i++ ) {
       switch( map->outputformatlist[i]->renderer ) {
           /* seemingly normal raster format */
-#ifdef USE_GD
-        case MS_RENDER_WITH_GD:
-#endif
         case MS_RENDER_WITH_AGG:
         case MS_RENDER_WITH_RAWDATA:
           tokens[numtokens++] = msStrdup(map->outputformatlist[i]->name);
@@ -3599,8 +3596,9 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     status = msDrawRasterLayerLow( map, layer, image, NULL );
   } else {
     rasterBufferObj rb;
-    MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    status = msDrawRasterLayerLow( map, layer, image, &rb );
+    status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+    if(LIKELY(status == MS_SUCCESS))
+      status = msDrawRasterLayerLow( map, layer, image, &rb );
   }
 
   if( status != MS_SUCCESS ) {

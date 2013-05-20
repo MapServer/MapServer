@@ -119,6 +119,9 @@ default (in which case the cmake step will fail if the dependency cannot be foun
 of these can be enabled or disabled by passing "-DWITH_XXX=0" or "-DWITH_XXX=1" to the
 "cmake .." invocation in order to override a default selection.
 
+This Readme file may be out of sync with the actual CMakeLists files shipped.
+Refer to the CMakeLists.txt file for up-to-date options.
+
  - option(WITH_PROJ "Choose if reprojection support should be built in" ON)
  - option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
  - option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)

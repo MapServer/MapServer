@@ -60,16 +60,6 @@
     MS_MACROEND
 #endif
 
-#ifdef USE_GD
-#define MS_COPYCOLOR(_dst, _src)      \
-    MS_MACROBEGIN                     \
-        (_dst)->pen   = (_src)->pen;  \
-        (_dst)->red   = (_src)->red;  \
-        (_dst)->green = (_src)->green;\
-        (_dst)->blue  = (_src)->blue; \
-        (_dst)->alpha  = (_src)->alpha; \
-    MS_MACROEND
-#else
 #define MS_COPYCOLOR(_dst, _src)      \
     MS_MACROBEGIN                     \
         (_dst)->red   = (_src)->red;  \
@@ -77,7 +67,6 @@
         (_dst)->blue  = (_src)->blue; \
         (_dst)->alpha  = (_src)->alpha; \
     MS_MACROEND
-#endif
 
 #define MS_COPYSTRING(_dst, _src)     \
     MS_MACROBEGIN                     \

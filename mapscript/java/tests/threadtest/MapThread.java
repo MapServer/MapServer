@@ -73,7 +73,7 @@ public class MapThread extends Thread {
 				classObj clazz=new classObj(bufferLayer);
 				clazz.setName("Buffer class");
 				styleObj style=new styleObj(clazz);
-				colorObj green=new colorObj(0,254,0,-4);
+				colorObj green=new colorObj(0,254,0,255);
 				//green.setRGB(0,254,0);
 				style.setColor(green);
 				bufferLayer.addFeature(buffer);

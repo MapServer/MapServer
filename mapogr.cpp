@@ -390,9 +390,8 @@ static int ogrConvertGeometry(OGRGeometryH hGeom, shapeObj *outshp,
         outshp->type = MS_SHAPE_NULL;  // Incompatible type for this layer
       break;
       /* ------------------------------------------------------------------
-       *      MS_ANNOTATION layer - return real feature type
+       *      Chart or Query layers - return real feature type
        * ------------------------------------------------------------------ */
-    case MS_LAYER_ANNOTATION:
     case MS_LAYER_CHART:
     case MS_LAYER_QUERY:
       switch( OGR_G_GetGeometryType( hGeom ) ) {
@@ -1674,7 +1673,7 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
   /*      Support reading shape by offset within the current              */
   /*      resultset.                                                      */
   /* -------------------------------------------------------------------- */
-  else if( !record_is_fid ) {
+  else {
     ACQUIRE_OGR_LOCK;
     if( record <= psInfo->last_record_index_read
         || psInfo->last_record_index_read == -1 ) {

@@ -86,11 +86,10 @@ extern "C" {
     return MS_SUCCESS;
   }
 
-  int msRenderGlyphsKml(imageObj *img, double x, double y,
-                        labelStyleObj *style, char *text)
+  int msRenderGlyphsKml(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth)
   {
     KmlRenderer* renderer = getKmlRenderer(img);
-    renderer->renderGlyphs(img, x, y, style, text);
+    renderer->renderGlyphs(img, labelpnt, text, angle, clr, olcolor, olwidth);
     return MS_SUCCESS;
   }
 
@@ -229,15 +228,13 @@ int msPopulateRendererVTableKML( rendererVTableObj *renderer )
   renderer->createImage=&msCreateImageKml;
   renderer->saveImage=&msSaveImageKml;
   renderer->renderPolygon=&msRenderPolygonKml;
-  renderer->renderGlyphs=&msRenderGlyphsKml;
+  renderer->renderText=&msRenderGlyphsKml;
   renderer->renderEllipseSymbol = &msRenderEllipseSymbolKml;
   renderer->renderVectorSymbol = &msRenderVectorSymbolKml;
   renderer->renderPixmapSymbol = &msRenderPixmapSymbolKml;
-  renderer->renderTruetypeSymbol = &msRenderTruetypeSymbolKml;
   renderer->mergeRasterBuffer = &msMergeRasterBufferKml;
   renderer->loadImageFromFile = msLoadMSRasterBufferFromFile;
   renderer->initializeRasterBuffer = aggInitializeRasterBuffer;
-  renderer->getTruetypeTextBBox = &msGetTruetypeTextBBoxKml;
   renderer->renderTile = &msRenderTileKml;
   renderer->renderPolygonTiled = &msRenderPolygonTiledKml;
   renderer->renderLineTiled = NULL;

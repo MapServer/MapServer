@@ -2006,7 +2006,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   if( MS_RENDERER_RAWDATA(map->outputformat) ) {
     status = msDrawRasterLayerLow( map, lp, image, NULL );
   } else {
-    MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+    status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+    if(UNLIKELY(status == MS_FAILURE)) {
+      return MS_FAILURE;
+    }
 
     /* Actually produce the "grid". */
     status = msDrawRasterLayerLow( map, lp, image, &rb );
@@ -2203,6 +2206,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
                             "request", "2.0");
     }
 
+    retVal = MS_FAILURE;
     if (operation == MS_WCS_GET_CAPABILITIES) {
       retVal = msWCSGetCapabilities(map, params, request, ows_request);
     } else if (operation == MS_WCS_DESCRIBE_COVERAGE) {

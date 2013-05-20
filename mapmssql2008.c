@@ -1640,7 +1640,6 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
               result = force_to_polygons(wkbBuffer, shape);
               break;
 
-            case MS_LAYER_ANNOTATION:
             case MS_LAYER_QUERY:
             case MS_LAYER_CHART:
               result = dont_force(wkbBuffer, shape);

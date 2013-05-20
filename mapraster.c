@@ -203,116 +203,6 @@ int msGetClass_FloatRGB(layerObj *layer, float fValue, int red, int green, int b
   return msGetClass_String( layer, &color, pixel_value );
 }
 
-#ifdef USE_GD
-/************************************************************************/
-/*                            msAddColorGD()                            */
-/*                                                                      */
-/*      Function to add a color to an existing color map.  It first     */
-/*      looks for an exact match, then tries to add it to the end of    */
-/*      the existing color map, and if all else fails it finds the      */
-/*      closest color.                                                  */
-/************************************************************************/
-
-int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
-{
-  int c;
-  int ct = -1;
-  int op = -1;
-  long rd, gd, bd, dist;
-  long mindist = 3*255*255;  /* init to max poss dist */
-
-  if( gdImageTrueColor( img ) )
-    return gdTrueColor( r, g, b );
-
-  /*
-  ** We want to avoid using a color that matches a transparent background
-  ** color exactly.  If this is the case, we will permute the value slightly.
-  ** When perterbing greyscale images we try to keep them greyscale, otherwise
-  ** we just perterb the red component.
-  */
-  if( map->outputformat && map->outputformat->transparent
-      && map->imagecolor.red == r
-      && map->imagecolor.green == g
-      && map->imagecolor.blue == b ) {
-    if( r == 0 && g == 0 && b == 0 ) {
-      r = g = b = 1;
-    } else if( r == g && r == b ) {
-      r = g = b = r-1;
-    } else if( r == 0 ) {
-      r = 1;
-    } else {
-      r = r-1;
-    }
-  }
-
-  /*
-  ** Find the nearest color in the color table.  If we get an exact match
-  ** return it right away.
-  */
-  for (c = 0; c < img->colorsTotal; c++) {
-
-    if (img->open[c]) {
-      op = c; /* Save open slot */
-      continue; /* Color not in use */
-    }
-
-    /* don't try to use the transparent color */
-    if (map->outputformat && map->outputformat->transparent
-        && img->red  [c] == map->imagecolor.red
-        && img->green[c] == map->imagecolor.green
-        && img->blue [c] == map->imagecolor.blue )
-      continue;
-
-    rd = (long)(img->red  [c] - r);
-    gd = (long)(img->green[c] - g);
-    bd = (long)(img->blue [c] - b);
-    /* -------------------------------------------------------------------- */
-    /*      special case for grey colors (r=g=b). we will try to find       */
-    /*      either the nearest grey or a color that is almost grey.         */
-    /* -------------------------------------------------------------------- */
-    if (r == g && r == b) {
-      if (img->red == img->green && img->red ==  img->blue)
-        dist = rd*rd;
-      else
-        dist = rd * rd + gd * gd + bd * bd;
-    } else
-      dist = rd * rd + gd * gd + bd * bd;
-
-    if (dist < mindist) {
-      if (dist == 0) {
-        return c; /* Return exact match color */
-      }
-      mindist = dist;
-      ct = c;
-    }
-  }
-
-  /* no exact match, is the closest within our "color match threshold"? */
-  if( mindist <= cmt*cmt )
-    return ct;
-
-  /* no exact match.  If there are no open colors we return the closest
-     color found.  */
-  if (op == -1) {
-    op = img->colorsTotal;
-    if (op == gdMaxColors) { /* No room for more colors */
-      return ct; /* Return closest available color */
-    }
-    img->colorsTotal++;
-  }
-
-  /* allocate a new exact match */
-  img->red  [op] = r;
-  img->green[op] = g;
-  img->blue [op] = b;
-  img->open [op] = 0;
-
-  return op; /* Return newly allocated color */
-}
-
-#endif
-
-
 #if defined(USE_GDAL)
 
 /************************************************************************/
@@ -674,7 +564,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
   return MS_FAILURE;
 
 #else /* defined(USE_GDAL) */
-  int status, i, done;
+  int status, done;
   char *filename=NULL, tilename[MS_MAXPATHLEN], tilesrsname[1024];
 
   layerObj *tlp=NULL; /* pointer to the tile layer either real or temporary */
@@ -915,6 +805,7 @@ imageObj *msDrawReferenceMap(mapObj *map)
   double cellsize;
   int x1,y1,x2,y2;
   char szPath[MS_MAXPATHLEN];
+  int status = MS_SUCCESS;
 
   imageObj   *image = NULL;
   styleObj style;
@@ -931,11 +822,13 @@ imageObj *msDrawReferenceMap(mapObj *map)
 
   image = msImageCreate(refImage->width, refImage->height, map->outputformat,
                         map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &(map->reference.color));
+  if(!image) return NULL;
 
-  renderer->mergeRasterBuffer(image,refImage,1.0,0,0,0,0,refImage->width, refImage->height);
-
+  status = renderer->mergeRasterBuffer(image,refImage,1.0,0,0,0,0,refImage->width, refImage->height);
   msFreeRasterBuffer(refImage);
   free(refImage);
+  if(UNLIKELY(status == MS_FAILURE))
+    return NULL;
 
   /* make sure the extent given in mapfile fits the image */
   cellsize = msAdjustExtent(&(map->reference.extent),
@@ -982,7 +875,10 @@ imageObj *msDrawReferenceMap(mapObj *map)
     if( map->reference.maxboxsize == 0 ||
         ((abs(x2 - x1) < map->reference.maxboxsize) &&
          (abs(y2 - y1) < map->reference.maxboxsize)) ) {
-      msDrawShadeSymbol(&(map->symbolset), image, &rect, &style, 1.0);
+      if(UNLIKELY(MS_FAILURE == msDrawShadeSymbol(map, image, &rect, &style, 1.0))) {
+        msFreeImage(image);
+        return NULL;
+      }
     }
 
   } else { /* else draw the marker symbol */
@@ -992,28 +888,21 @@ imageObj *msDrawReferenceMap(mapObj *map)
       style.size = map->reference.markersize;
 
       /* if the marker symbol is specify draw this symbol else draw a cross */
-      if(map->reference.marker != 0) {
-        pointObj *point = NULL;
+      if(map->reference.marker || map->reference.markername) {
+        pointObj point;
+        point.x = (double)(x1 + x2)/2;
+        point.y = (double)(y1 + y2)/2;
 
-        point = msSmallMalloc(sizeof(pointObj));
-        point->x = (double)(x1 + x2)/2;
-        point->y = (double)(y1 + y2)/2;
+        if(map->reference.marker) {
+          style.symbol = map->reference.marker;
+        } else {
+          style.symbol = msGetSymbolIndex(&map->symbolset,  map->reference.markername, MS_TRUE);
+        }
 
-        style.symbol = map->reference.marker;
-
-        msDrawMarkerSymbol(&map->symbolset, image, point, &style, 1.0);
-        free(point);
-      } else if(map->reference.markername != NULL) {
-        pointObj *point = NULL;
-
-        point = msSmallMalloc(sizeof(pointObj));
-        point->x = (double)(x1 + x2)/2;
-        point->y = (double)(y1 + y2)/2;
-
-        style.symbol = msGetSymbolIndex(&map->symbolset,  map->reference.markername, MS_TRUE);
-
-        msDrawMarkerSymbol(&map->symbolset, image, point, &style, 1.0);
-        free(point);
+        if(UNLIKELY(MS_FAILURE == msDrawMarkerSymbol(map, image, &point, &style, 1.0))) {
+          msFreeImage(image);
+          return NULL;
+        }
       } else {
         int x21, y21;
         shapeObj cross;
@@ -1049,7 +938,10 @@ imageObj *msDrawReferenceMap(mapObj *map)
         cross.line[3].point[1].x = x21+8;
         cross.line[3].point[1].y = y21;
 
-        msDrawLineSymbol(&(map->symbolset),image,&cross,&style,1.0);
+        if(UNLIKELY(MS_FAILURE == msDrawLineSymbol(map,image,&cross,&style,1.0))) {
+          msFreeImage(image);
+          return NULL;
+        }
       }
     }
   }

@@ -839,8 +839,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
               || layer->labelitem)
           && layer->class[resultshape.classindex]->numlabels > 0
           && layer->class[resultshape.classindex]->labels[0]->size != -1 ) {
-        msShapeGetAnnotation(layer, &resultshape); /* TODO RFC77: check return value */
-        resultshape.text = msStrdup(layer->class[resultshape.classindex]->labels[0]->annotext);
+        resultshape.text = msShapeGetLabelAnnotation(layer,&resultshape,layer->class[resultshape.classindex]->labels[0]);
       }
 
       /*

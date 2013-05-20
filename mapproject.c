@@ -115,7 +115,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 #endif
 
     if( error || point->x == HUGE_VAL || point->y == HUGE_VAL ) {
-      msSetError(MS_PROJERR,"proj says: %s","msProjectPoint()",pj_strerrno(error));
+//      msSetError(MS_PROJERR,"proj says: %s","msProjectPoint()",pj_strerrno(error));
       return MS_FAILURE;
     }
 

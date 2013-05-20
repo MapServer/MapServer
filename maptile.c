@@ -217,7 +217,10 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
 
 
 
-  renderer->mergeRasterBuffer(imgOut,&imgBuffer,1.0,mini, minj,0, 0,params.tile_size, params.tile_size);
+  if(UNLIKELY(MS_FAILURE == renderer->mergeRasterBuffer(imgOut,&imgBuffer,1.0,mini, minj,0, 0,params.tile_size, params.tile_size))) {
+    msFreeImage(imgOut);
+    return NULL;
+  }
 
   return imgOut;
 }

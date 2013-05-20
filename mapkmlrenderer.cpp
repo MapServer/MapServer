@@ -687,7 +687,7 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
   xmlNodeAddContent(coordsNode, BAD_CAST "\t");
 }
 
-void KmlRenderer::renderGlyphs(imageObj*, double x, double y, labelStyleObj *style, char *text)
+void KmlRenderer::renderGlyphs(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth)
 {
   xmlNodePtr node;
 
@@ -697,7 +697,7 @@ void KmlRenderer::renderGlyphs(imageObj*, double x, double y, labelStyleObj *sty
   if (!PlacemarkNode)
     return;
 
-  memcpy(&LabelStyle, style, sizeof(labelStyleObj));
+  memcpy(&LabelColor, clr, sizeof(colorObj));
   SymbologyFlag[Label] = 1;
 
   /*there is alaws a default name (layer.shapeid). Replace it*/
@@ -717,8 +717,8 @@ void KmlRenderer::renderGlyphs(imageObj*, double x, double y, labelStyleObj *sty
   addAddRenderingSpecifications(geomNode);
 
   pointObj pt;
-  pt.x = x;
-  pt.y = y;
+  pt.x = labelpnt->x;
+  pt.y = labelpnt->y;
   addCoordsNode(geomNode, &pt, 1);
 }
 
@@ -766,7 +766,7 @@ int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleO
   p.z = 0.0;
 #endif
 
-  msDrawMarkerSymbol(&map->symbolset,tmpImg, &p, symstyle->style, 1);
+  msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1);
 
   return msSaveImage(map, tmpImg, fileName);
 }
@@ -1071,9 +1071,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
     */
 
     if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
-        LabelStyle.color->alpha == 255)
-      LabelStyle.color->alpha = MS_NINT(currentLayer->opacity*2.55);
-    sprintf(labelHexColor,"%02x%02x%02x%02x", LabelStyle.color->alpha, LabelStyle.color->blue, LabelStyle.color->green, LabelStyle.color->red);
+        LabelColor.alpha == 255)
+      LabelColor.alpha = MS_NINT(currentLayer->opacity*2.55);
+    sprintf(labelHexColor,"%02x%02x%02x%02x", LabelColor.alpha, LabelColor.blue, LabelColor.green, LabelColor.red);
 
     // __TODO__ add label scale
 

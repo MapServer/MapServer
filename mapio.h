@@ -57,10 +57,6 @@ extern "C" {
   int MS_DLL_EXPORT msIO_fread( void *ptr, size_t size, size_t nmemb, FILE *stream );
   int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap );
 
-#ifdef USE_GD
-  gdIOCtx MS_DLL_EXPORT *msIO_getGDIOCtx( FILE *fp );
-#endif
-
   /*
   ** Definitions for the callback function and the details of the IO
   ** channel contexts.

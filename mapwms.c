@@ -2423,15 +2423,11 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
               bufferSize = strlen(script_url_encoded)+300;
               legendurl = (char*)msSmallMalloc(bufferSize);
 
-#if defined USE_GD_PNG || defined USE_PNG
+#if defined USE_PNG
               mimetype = msEncodeHTMLEntities("image/png");
 #endif
-#if defined USE_GD_GIF
-              if (!mimetype)
-                mimetype = msEncodeHTMLEntities("image/gif");
-#endif
 
-#if defined USE_GD_JPEG || defined USE_JPEG
+#if defined USE_JPEG
               if (!mimetype)
                 mimetype = msEncodeHTMLEntities("image/jpeg");
 #endif
@@ -2931,13 +2927,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     if (msOWSRequestIsEnabled(map, NULL, "M", "GetMap", MS_FALSE))
       msWMSPrintRequestCap(nVersion, "Map", script_url_encoded, ""
 
-#ifdef USE_GD_GIF
-                           "<GIF />"
-#endif
-#if defined USE_GD_PNG || defined USE_PNG
+#if defined USE_PNG
                            "<PNG />"
 #endif
-#if defined USE_GD_JPEG || defined USE_JPEG
+#if defined USE_JPEG
                            "<JPEG />"
 #endif
                            "<SVG />"
@@ -3701,7 +3694,6 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
           (GET_LAYER(map, i)->type == MS_LAYER_POINT ||
            GET_LAYER(map, i)->type == MS_LAYER_LINE ||
            GET_LAYER(map, i)->type == MS_LAYER_POLYGON ||
-           GET_LAYER(map, i)->type == MS_LAYER_ANNOTATION ||
            GET_LAYER(map, i)->type == MS_LAYER_TILEINDEX))
 
       {

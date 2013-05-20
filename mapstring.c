@@ -1778,7 +1778,8 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
 int msGetNextGlyph(const char **in_ptr, char *out_string)
 {
   unsigned char in;
-  int numbytes=0,unicode;
+  int numbytes=0;
+  unsigned int unicode;
   int i;
 
   in = (unsigned char)**in_ptr;
@@ -1905,7 +1906,7 @@ static int cmp_entities(const void *e1, const void *e2)
  * - if the string does start with such entity,it returns the number of
  * bytes occupied by said entity, and stores the unicode value in *unicode
  */
-int msGetUnicodeEntity(const char *inptr, int *unicode)
+int msGetUnicodeEntity(const char *inptr, unsigned int *unicode)
 {
   unsigned char *in = (unsigned char*)inptr;
   int l,val=0;

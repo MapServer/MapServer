@@ -1702,8 +1702,7 @@ void initLabel(labelObj *label)
 
   MS_REFCNT_INIT(label);
 
-  label->antialias = -1; /* off  */
-  label->align = MS_ALIGN_LEFT;
+  label->align = MS_ALIGN_DEFAULT;
   MS_INIT_COLOR(label->color, 0,0,0,255);
   MS_INIT_COLOR(label->outlinecolor, -1,-1,-1,255); /* don't use it */
   label->outlinewidth=1;
@@ -1717,7 +1716,7 @@ void initLabel(labelObj *label)
 
   label->position = MS_CC;
   label->angle = 0;
-  label->anglemode = MS_NONE;
+  label->anglemode = MS_ANGLEMODE_NONE;
   label->minsize = MS_MINFONTSIZE;
   label->maxsize = MS_MAXFONTSIZE;
   label->buffer = 0;
@@ -1752,19 +1751,15 @@ void initLabel(labelObj *label)
     label->bindings[i].index = -1;
   }
 
-  label->status = MS_ON;
   initExpression(&(label->expression));
   initExpression(&(label->text));
 
-  label->annotext = NULL;
-  label->annopoly = NULL;
-
-  initLeader(&(label->leader));
+  label->leader = NULL;
 
   return;
 }
 
-static int freeLabelLeader(labelLeaderObj *leader)
+int freeLabelLeader(labelLeaderObj *leader)
 {
   int i;
   for(i=0; i<leader->numstyles; i++) {
@@ -1800,14 +1795,11 @@ int freeLabel(labelObj *label)
   freeExpression(&(label->expression));
   freeExpression(&(label->text));
 
-  /* free book keeping vars associated with the label cache */
-  msFree(label->annotext);
-  if(label->annopoly) {
-    msFreeShape(label->annopoly);
-    msFree(label->annopoly);
+  if(label->leader) {
+    freeLabelLeader(label->leader);
+    msFree(label->leader);
+    label->leader = NULL;
   }
-
-  freeLabelLeader(&(label->leader));
 
   return MS_SUCCESS;
 }
@@ -1853,7 +1845,7 @@ static int loadLabel(labelObj *label)
   for(;;) {
     switch(msyylex()) {
       case(ANGLE):
-        if((symbol = getSymbol(5, MS_NUMBER,MS_AUTO,MS_AUTO2,MS_FOLLOW,MS_BINDING)) == -1)
+        if((symbol = getSymbol(5, MS_NUMBER,MS_AUTO,MS_ANGLEMODE_AUTO2,MS_ANGLEMODE_FOLLOW,MS_BINDING)) == -1)
           return(-1);
 
         if(symbol == MS_NUMBER)
@@ -1863,19 +1855,17 @@ static int loadLabel(labelObj *label)
             msFree(label->bindings[MS_LABEL_BINDING_ANGLE].item);
           label->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(msyystring_buffer);
           label->numbindings++;
-        } else if ( symbol == MS_FOLLOW ) {
-          label->anglemode = MS_FOLLOW;
-        } else if ( symbol == MS_AUTO2 ) {
-          label->anglemode = MS_AUTO2;
-        } else
-          label->anglemode = MS_AUTO;
+        } else if ( symbol == MS_AUTO ) {
+          label->anglemode = MS_ANGLEMODE_AUTO;
+        } else {
+          label->anglemode = symbol;
+        }
         break;
       case(ALIGN):
         if((label->align = getSymbol(3, MS_ALIGN_LEFT,MS_ALIGN_CENTER,MS_ALIGN_RIGHT)) == -1) return(-1);
         break;
-      case(ANTIALIAS):
-        if((label->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1)
-          return(-1);
+      case(ANTIALIAS): /*ignore*/
+        msyylex();
         break;
       case(BUFFER):
         if(getInteger(&(label->buffer)) == -1) return(-1);
@@ -1889,8 +1879,8 @@ static int loadLabel(labelObj *label)
         break;
       case(END):
         /* sanity check */
-        if(label->anglemode == MS_FOLLOW && label->type == MS_BITMAP) {
-          msSetError(MS_MISCERR,"Follow labels not supported with bitmap fonts.", "loadLabel()");
+        if((label->anglemode != MS_ANGLEMODE_NONE || label->angle != 0 || label->bindings[MS_LABEL_BINDING_ANGLE].item) && label->type == MS_BITMAP) {
+          msSetError(MS_MISCERR,"Rotated labels not supported with bitmap fonts.", "loadLabel()");
           return -1;
         }
         return(0);
@@ -1943,10 +1933,11 @@ static int loadLabel(labelObj *label)
       case(LEADER):
         msSetError(MS_MISCERR, "LABEL LEADER not implemented. LEADER goes at the CLASS level." , "loadLabel()");
         return(-1);
-        if(loadLeader(&(label->leader)) == -1) return(-1);
+        label->leader = msSmallMalloc(sizeof(labelLeaderObj));
+        if(loadLeader(label->leader) == -1) return(-1);
         break;
       case(MAXSIZE):
-        if(getDouble(&(label->maxsize)) == -1) return(-1);
+        if(getInteger(&(label->maxsize)) == -1) return(-1);
         break;
       case(MAXSCALEDENOM):
         if(getDouble(&(label->maxscaledenom)) == -1) return(-1);
@@ -1977,7 +1968,7 @@ static int loadLabel(labelObj *label)
         if(getDouble(&(label->minscaledenom)) == -1) return(-1);
         break;
       case(MINSIZE):
-        if(getDouble(&(label->minsize)) == -1) return(-1);
+        if(getInteger(&(label->minsize)) == -1) return(-1);
         break;
       case(OFFSET):
         if(getInteger(&(label->offsetx)) == -1) return(-1);
@@ -2160,9 +2151,7 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   } else {
     if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
       writeAttributeBinding(stream, indent, "ANGLE", &(label->bindings[MS_LABEL_BINDING_ANGLE]));
-    else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_FOLLOW, "FOLLOW", MS_AUTO, "AUTO", MS_AUTO2, "AUTO2");
-
-    writeKeyword(stream, indent, "ANTIALIAS", label->antialias, 1, MS_TRUE, "TRUE");
+    else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_ANGLEMODE_FOLLOW, "FOLLOW", MS_ANGLEMODE_AUTO, "AUTO", MS_ANGLEMODE_AUTO2, "AUTO2");
 
     writeExpression(stream, indent, "EXPRESSION", &(label->expression));
 
@@ -2178,7 +2167,7 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
     else writeNumber(stream, indent, "SIZE", -1, label->size);
   }
 
-  writeKeyword(stream, indent, "ALIGN", label->align, 2, MS_ALIGN_CENTER, "CENTER", MS_ALIGN_RIGHT, "RIGHT");
+  writeKeyword(stream, indent, "ALIGN", label->align, 3, MS_ALIGN_LEFT, "LEFT", MS_ALIGN_CENTER, "CENTER", MS_ALIGN_RIGHT, "RIGHT");
   writeNumber(stream, indent, "BUFFER", 0, label->buffer);
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_COLOR].item)
@@ -2189,7 +2178,8 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   }
 
   writeString(stream, indent, "ENCODING", NULL, label->encoding);
-  writeLeader(stream,indent,&(label->leader));
+  if(label->leader)
+    writeLeader(stream,indent,label->leader);
   writeKeyword(stream, indent, "FORCE", label->force, 2, MS_TRUE, "TRUE", MS_LABEL_FORCE_GROUP, "GROUP");
   writeNumber(stream, indent, "MAXLENGTH", 0, label->maxlength);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, label->maxscaledenom);
@@ -2680,7 +2670,6 @@ int initStyle(styleObj *style)
   style->minscaledenom=style->maxscaledenom = -1.0;
   style->offsetx = style->offsety = 0; /* no offset */
   style->polaroffsetpixel = style->polaroffsetangle = 0; /* no polar offset */
-  style->antialias = MS_FALSE;
   style->angle = 0;
   style->autoangle= MS_FALSE;
   style->opacity = 100; /* fully opaque */
@@ -2740,9 +2729,8 @@ int loadStyle(styleObj *style)
           style->autoangle=MS_TRUE;
         }
         break;
-      case(ANTIALIAS):
-        if((style->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1)
-          return(MS_FAILURE);
+      case(ANTIALIAS): /*ignore*/
+        msyylex();
         break;
       case(BACKGROUNDCOLOR):
         if(loadColor(&(style->backgroundcolor), NULL) != MS_SUCCESS) return(MS_FAILURE);
@@ -3035,7 +3023,6 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
     writeAttributeBinding(stream, indent, "ANGLE", &(style->bindings[MS_STYLE_BINDING_ANGLE]));
   else writeNumberOrKeyword(stream, indent, "ANGLE", 0, style->angle, style->autoangle, 1, MS_TRUE, "AUTO");
 
-  writeKeyword(stream, indent, "ANTIALIAS", style->antialias, 1, MS_TRUE, "TRUE");
   writeColor(stream, indent, "BACKGROUNDCOLOR", NULL, &(style->backgroundcolor));
 
   if(style->numbindings > 0 && style->bindings[MS_STYLE_BINDING_COLOR].item)
@@ -3183,8 +3170,6 @@ int initClass(classObj *class)
 
   class->template = NULL;
 
-  class->type = -1;
-
   initHashTable(&(class->metadata));
   initHashTable(&(class->validation));
 
@@ -3204,7 +3189,7 @@ int initClass(classObj *class)
 
   class->group = NULL;
 
-  initLeader(&(class->leader));
+  class->leader = NULL;
 
   return(0);
 }
@@ -3246,7 +3231,12 @@ int freeClass(classObj *class)
   msFree(class->labels);
 
   msFree(class->keyimage);
-  freeLabelLeader(&(class->leader));
+
+  if(class->leader) {
+    freeLabelLeader(class->leader);
+    msFree(class->leader);
+    class->leader = NULL;
+  }
 
   return MS_SUCCESS;
 }
@@ -3421,7 +3411,6 @@ void resetClassStyle(classObj *class)
   }
   class->numstyles = 0;
 
-  class->type = -1;
   class->layer = NULL;
 }
 
@@ -3520,7 +3509,11 @@ int loadClass(classObj *class, layerObj *layer)
         class->numlabels++;
         break;
       case(LEADER):
-        if(loadLeader(&(class->leader)) == -1) return(-1);
+        if(!class->leader) {
+          class->leader = msSmallMalloc(sizeof(labelLeaderObj));
+          initLeader(class->leader);
+        }
+        if(loadLeader(class->leader) == -1) return(-1);
         break;
       case(MAXSCALE):
       case(MAXSCALEDENOM):
@@ -3584,9 +3577,6 @@ int loadClass(classObj *class, layerObj *layer)
             return(-1);
           }
         }
-        break;
-      case(TYPE):
-        if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return(-1);
         break;
 
         /*
@@ -3759,7 +3749,8 @@ static void writeClass(FILE *stream, int indent, classObj *class)
   writeExpression(stream, indent, "EXPRESSION", &(class->expression));
   writeString(stream, indent, "KEYIMAGE", NULL, class->keyimage);
   for(i=0; i<class->numlabels; i++) writeLabel(stream, indent, class->labels[i]);
-  writeLeader(stream,indent,&(class->leader));
+  if(class->leader)
+    writeLeader(stream,indent,class->leader);
   writeNumber(stream, indent, "MAXSCALEDENOM", -1, class->maxscaledenom);
   writeHashTable(stream, indent, "METADATA", &(class->metadata));
   writeNumber(stream, indent, "MINSCALEDENOM", -1, class->minscaledenom);
@@ -3823,8 +3814,6 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->map = map; /* point back to the encompassing structure */
 
   layer->type = -1;
-
-  layer->annotate = MS_FALSE;
 
   layer->toleranceunits = MS_PIXELS;
   layer->tolerance = -1; /* perhaps this should have a different value based on type */
@@ -4183,7 +4172,6 @@ int loadLayer(layerObj *layer, mapObj *map)
           return(-1);
         initClass(layer->class[layer->numclasses]);
         if(loadClass(layer->class[layer->numclasses], layer) == -1) return(-1);
-        if(layer->class[layer->numclasses]->type == -1) layer->class[layer->numclasses]->type = layer->type;
         layer->numclasses++;
         break;
       case(CLUSTER):
@@ -4441,7 +4429,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(OPACITY):
       case(TRANSPARENCY): /* keyword supported for mapfile backwards compatability */
-        if (getIntegerOrSymbol(&(layer->opacity), 1, MS_GD_ALPHA) == -1)
+        if (getInteger(&(layer->opacity)) == -1)
           return(-1);
         break;
       case(MS_PLUGIN): {
@@ -4576,6 +4564,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(TYPE):
         if((layer->type = getSymbol(9, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE,MS_LAYER_CHART,TILEINDEX)) == -1) return(-1);
         if(layer->type == TILEINDEX) layer->type = MS_LAYER_TILEINDEX; /* TILEINDEX is also a parameter */
+        if(layer->type == MS_LAYER_ANNOTATION) {
+          msSetError(MS_IDENTERR, "Annotation Layers have been removed. To obtain same functionality, use a layer with label->styles and no class->styles", "loadLayer()");
+          return -1;
+        }
         break;
       case(UNITS):
         if((layer->units = getSymbol(9, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return(-1);
@@ -4691,8 +4683,8 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeNumber(stream, indent, "TOLERANCE", -1, layer->tolerance);
   writeKeyword(stream, indent, "TOLERANCEUNITS", layer->toleranceunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");
-  writeNumberOrKeyword(stream, indent, "OPACITY", 100, layer->opacity, (int)layer->opacity, 1, MS_GD_ALPHA, "ALPHA");
-  writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_ANNOTATION, "ANNOTATION", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
+  writeNumber(stream, indent, "OPACITY", 100, layer->opacity);
+  writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
   writeKeyword(stream, indent, "UNITS", layer->units, 9, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD", MS_PIXELS, "PIXELS", MS_PERCENTAGES, "PERCENTATGES");
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
@@ -4970,11 +4962,12 @@ static int loadOutputFormat(mapObj *map)
           format->mimetype = mimetype;
         }
         if( imagemode != MS_NOOVERRIDE ) {
-#ifndef USE_GD
-          /* don't override a GD format if GD isn't configured in */
-          if(imagemode != MS_IMAGEMODE_PC256)
-#endif
+          if(format->renderer != MS_RENDER_WITH_AGG || imagemode != MS_IMAGEMODE_PC256) {
+            /* don't force to PC256 with agg, this can happen when using mapfile defined GD
+             * ouputformats that are now falling back to agg/png8
+             */
             format->imagemode = imagemode;
+          }
 
           if( transparent == MS_NOOVERRIDE ) {
             if( imagemode == MS_IMAGEMODE_RGB  )
@@ -4986,10 +4979,6 @@ static int loadOutputFormat(mapObj *map)
               || format->imagemode == MS_IMAGEMODE_FLOAT32
               || format->imagemode == MS_IMAGEMODE_BYTE )
             format->renderer = MS_RENDER_WITH_RAWDATA;
-#ifdef USE_GD
-          if( format->imagemode == MS_IMAGEMODE_PC256 )
-            format->renderer = MS_RENDER_WITH_GD;
-#endif
         }
 
         format->numformatoptions = numformatoptions;
@@ -5863,7 +5852,6 @@ int initMap(mapObj *map)
     map->labelcache.slots[i].markercachesize = 0;
     map->labelcache.slots[i].nummarkers = 0;
   }
-  map->labelcache.numlabels = 0;
 
   map->fontset.filename = NULL;
   map->fontset.numfonts = 0;
@@ -5965,19 +5953,17 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot)
   /* free the labels */
   if (cacheslot->labels) {
     for(i=0; i<cacheslot->numlabels; i++) {
-      if (cacheslot->labels[i].labelpath)
-        msFreeLabelPathObj(cacheslot->labels[i].labelpath);
 
-      for(j=0; j<cacheslot->labels[i].numlabels; j++) freeLabel(&(cacheslot->labels[i].labels[j]));
-      msFree(cacheslot->labels[i].labels);
-
-      if(cacheslot->labels[i].poly) {
-        msFreeShape(cacheslot->labels[i].poly); /* empties the shape */
-        msFree(cacheslot->labels[i].poly); /* free's the pointer */
+      for(j=0; j<cacheslot->labels[i].numtextsymbols; j++) {
+        freeTextSymbol(cacheslot->labels[i].textsymbols[j]);
+        free(cacheslot->labels[i].textsymbols[j]);
       }
+      msFree(cacheslot->labels[i].textsymbols);
 
+#ifdef include_deprecated
       for(j=0; j<cacheslot->labels[i].numstyles; j++) freeStyle(&(cacheslot->labels[i].styles[j]));
       msFree(cacheslot->labels[i].styles);
+#endif
       if(cacheslot->labels[i].leaderline) {
         msFree(cacheslot->labels[i].leaderline->point);
         msFree(cacheslot->labels[i].leaderline);
@@ -5990,13 +5976,6 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot)
   cacheslot->cachesize = 0;
   cacheslot->numlabels = 0;
 
-  /* free the markers */
-  if (cacheslot->markers) {
-    for(i=0; i<cacheslot->nummarkers; i++) {
-      msFreeShape(cacheslot->markers[i].poly);
-      msFree(cacheslot->markers[i].poly);
-    }
-  }
   msFree(cacheslot->markers);
   cacheslot->markers = NULL;
   cacheslot->markercachesize = 0;
@@ -6014,7 +5993,8 @@ int msFreeLabelCache(labelCacheObj *cache)
       return MS_FAILURE;
   }
 
-  cache->numlabels = 0;
+  cache->num_allocated_rendered_members = cache->num_rendered_members = 0;
+  msFree(cache->rendered_text_symbols);
 
   return MS_SUCCESS;
 }
@@ -6048,8 +6028,9 @@ int msInitLabelCache(labelCacheObj *cache)
     if (msInitLabelCacheSlot(&(cache->slots[p])) != MS_SUCCESS)
       return MS_FAILURE;
   }
-  cache->numlabels = 0;
   cache->gutter = 0;
+  cache->num_allocated_rendered_members = cache->num_rendered_members = 0;
+  cache->rendered_text_symbols = NULL;
 
   return MS_SUCCESS;
 }

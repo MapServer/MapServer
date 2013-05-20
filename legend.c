@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
   mapObj *map=NULL;
   imageObj *img=NULL;
 
+  msSetup();
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
     exit(0);

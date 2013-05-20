@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
           p.line[0].point[3].x = j + (CELLSIZE-LBUF) - 1;
           p.line[0].point[3].y = i;
           p.line[0].numpoints = 4;
-          msDrawLineSymbol(&(symbolSet), img, &p, &(class));
+          msDrawLineSymbol(map, img, &p, &(class));
           break;
 
         case(MS_SHADESET):

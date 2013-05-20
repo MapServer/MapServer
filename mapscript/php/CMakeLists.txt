@@ -20,7 +20,7 @@ add_library(php_mapscript MODULE
    mapscript_error.c color.c rect.c hashtable.c web.c grid.c error.c
    referencemap.c querymap.c outputformat.c scalebar.c label.c legend.c
    symbol.c style.c image.c class.c projection.c line.c shape.c shapefile.c
-   point.c labelcache.c labelleader.c labelcachemember.c result.c owsrequest.c cluster.c
+   point.c labelleader.c result.c owsrequest.c cluster.c
    layer.c map.c php_mapscript_util.c php_mapscript.c mapscript_i.c
 )
 

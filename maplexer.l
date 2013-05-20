@@ -394,7 +394,7 @@ char path[MS_MAXPATHLEN];
 
 <INITIAL,URL_STRING>annotation                 { MS_LEXER_RETURN_TOKEN(MS_LAYER_ANNOTATION); }
 <INITIAL,URL_STRING>auto                       { MS_LEXER_RETURN_TOKEN(MS_AUTO); }
-<INITIAL,URL_STRING>auto2                      { MS_LEXER_RETURN_TOKEN(MS_AUTO2); }
+<INITIAL,URL_STRING>auto2                      { MS_LEXER_RETURN_TOKEN(MS_ANGLEMODE_AUTO2); }
 <INITIAL>bevel                                 { MS_LEXER_RETURN_TOKEN(MS_CJC_BEVEL); }
 <INITIAL>bitmap                                { MS_LEXER_RETURN_TOKEN(MS_BITMAP); }
 <INITIAL>butt                                  { MS_LEXER_RETURN_TOKEN(MS_CJC_BUTT); }
@@ -413,7 +413,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>embed                      { MS_LEXER_RETURN_TOKEN(MS_EMBED); }
 <INITIAL,URL_STRING>false                      { MS_LEXER_RETURN_TOKEN(MS_FALSE); }
 <INITIAL,URL_STRING>feet                       { MS_LEXER_RETURN_TOKEN(MS_FEET); }
-<INITIAL,URL_STRING>follow                     { MS_LEXER_RETURN_TOKEN(MS_FOLLOW); }
+<INITIAL,URL_STRING>follow                     { MS_LEXER_RETURN_TOKEN(MS_ANGLEMODE_FOLLOW); }
 <INITIAL>giant                                 { MS_LEXER_RETURN_TOKEN(MS_GIANT); }
 <INITIAL>hatch                                 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_HATCH); }
 <INITIAL>hilite                                { MS_LEXER_RETURN_TOKEN(MS_HILITE); }
@@ -471,7 +471,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>vector                                { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_VECTOR); }
 <INITIAL>wfs                                   { MS_LEXER_RETURN_TOKEN(MS_WFS); }
 <INITIAL>wms                                   { MS_LEXER_RETURN_TOKEN(MS_WMS); }
-<INITIAL>alpha                                 { MS_LEXER_RETURN_TOKEN(MS_GD_ALPHA); }
 
 <URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=_ ]*\]   {
                                                  msyytext++;

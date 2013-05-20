@@ -264,7 +264,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
               msCopyClass(GET_LAYER(map, i)->class[iClass],
                           pasLayers[j].class[k], NULL);
               GET_LAYER(map, i)->class[iClass]->layer = GET_LAYER(map, i);
-              GET_LAYER(map, i)->class[iClass]->type = GET_LAYER(map, i)->type;
               GET_LAYER(map, i)->numclasses++;
 
               /*aliases may have been used as part of the sld text symbolizer for
@@ -343,7 +342,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
               (GET_LAYER(map, i)->type ==  MS_LAYER_POINT ||
                GET_LAYER(map, i)->type == MS_LAYER_LINE ||
                GET_LAYER(map, i)->type == MS_LAYER_POLYGON ||
-               GET_LAYER(map, i)->type == MS_LAYER_ANNOTATION ||
                GET_LAYER(map, i)->type == MS_LAYER_TILEINDEX)) {
             FilterEncodingNode *psNode = NULL;
 
@@ -1027,7 +1025,7 @@ int msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
       continue;
     }
     if (nSymbolizer == 0)
-      psLayer->type = MS_LAYER_ANNOTATION;
+      psLayer->type = MS_LAYER_POINT;
     msSLDParseTextSymbolizer(psTextSymbolizer, psLayer, bSymbolizer);
     psTextSymbolizer = psTextSymbolizer->psNext;
   }
@@ -2671,7 +2669,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 
   /*set the angle by default to auto. the angle can be
     modified Label Placement #2806*/
-  psLabelObj->anglemode = MS_AUTO;
+  psLabelObj->anglemode = MS_ANGLEMODE_AUTO;
 
 
   /* label  */
@@ -2760,6 +2758,22 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
           psCssParam = psCssParam->psNext;
         }
       }
+
+      /* -------------------------------------------------------------------- */
+      /*      parse the label placement.                                      */
+      /* -------------------------------------------------------------------- */
+      psLabelPlacement = CPLGetXMLNode(psRoot, "LabelPlacement");
+      if (psLabelPlacement) {
+        psPointPlacement = CPLGetXMLNode(psLabelPlacement,
+                                         "PointPlacement");
+        psLinePlacement = CPLGetXMLNode(psLabelPlacement,
+                                        "LinePlacement");
+        if (psPointPlacement)
+          ParseTextPointPlacement(psPointPlacement, psClass);
+        if (psLinePlacement)
+          ParseTextLinePlacement(psLinePlacement, psClass);
+      }
+
       /* -------------------------------------------------------------------- */
       /*      build the font name using the font font-family, font-style      */
       /*      and font-weight. The name building uses a - between these       */
@@ -2788,20 +2802,14 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
       if (!bFontSet) {
         psLabelObj->type = MS_BITMAP;
         psLabelObj->size = MS_MEDIUM;
-      }
-      /* -------------------------------------------------------------------- */
-      /*      parse the label placement.                                      */
-      /* -------------------------------------------------------------------- */
-      psLabelPlacement = CPLGetXMLNode(psRoot, "LabelPlacement");
-      if (psLabelPlacement) {
-        psPointPlacement = CPLGetXMLNode(psLabelPlacement,
-                                         "PointPlacement");
-        psLinePlacement = CPLGetXMLNode(psLabelPlacement,
-                                        "LinePlacement");
-        if (psPointPlacement)
-          ParseTextPointPlacement(psPointPlacement, psClass);
-        if (psLinePlacement)
-          ParseTextLinePlacement(psLinePlacement, psClass);
+        /* bitmap fonts don't support rotation */
+        psLabelObj->angle = 0;
+        psLabelObj->anglemode = MS_ANGLEMODE_NONE;
+        if(psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item) {
+          free(psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item);
+          psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item = NULL;
+          psLabelObj->numbindings--;
+        }
       }
 
       /* -------------------------------------------------------------------- */
@@ -3019,13 +3027,13 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
   /*if there is a line placement, we will assume that the
     best setting for mapserver would be for the text to follow
     the line #2806*/
-  psLabelObj->anglemode = MS_FOLLOW;
+  psLabelObj->anglemode = MS_ANGLEMODE_FOLLOW;
 
   /*sld 1.1.0 has a parameter IsAligned. default value is true*/
   psAligned = CPLGetXMLNode(psRoot, "IsAligned");
   if (psAligned && psAligned->psChild && psAligned->psChild->pszValue &&
       strcasecmp(psAligned->psChild->pszValue, "false") == 0) {
-    psLabelObj->anglemode = MS_NONE;
+    psLabelObj->anglemode = MS_ANGLEMODE_NONE;
   }
   psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
   if (psOffset && psOffset->psChild && psOffset->psChild->pszValue) {
@@ -3038,7 +3046,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
     /* since sld 1.1.0 introduces the IsAligned parameter, only
        set the angles if the parameter is not set*/
     if (!psAligned) {
-      psLabelObj->anglemode = MS_NONE;
+      psLabelObj->anglemode = MS_ANGLEMODE_NONE;
     }
   }
 
@@ -3874,7 +3882,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
         /* size */
         if (psLabelObj->size > 0) {
           snprintf(szTmp, sizeof(szTmp),
-                   "<%s name=\"font-size\">%.2f</%s>\n",
+                   "<%s name=\"font-size\">%d</%s>\n",
                    sCssParam, psLabelObj->size, sCssParam);
           pszSLD = msStringConcatenate(pszSLD, szTmp);
         }
@@ -4036,8 +4044,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
       (psLayer->status == MS_ON || psLayer->status == MS_DEFAULT) &&
       (psLayer->type == MS_LAYER_POINT ||
        psLayer->type == MS_LAYER_LINE ||
-       psLayer->type == MS_LAYER_POLYGON ||
-       psLayer->type == MS_LAYER_ANNOTATION)) {
+       psLayer->type == MS_LAYER_POLYGON )) {
     snprintf(szTmp, sizeof(szTmp), "%s\n",  "<NamedLayer>");
     pszFinalSLD = msStringConcatenate(pszFinalSLD, szTmp);
 
@@ -4190,16 +4197,6 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion)
           }
 
         } else if (psLayer->type == MS_LAYER_POINT) {
-          for (j=0; j<psLayer->class[i]->numstyles; j++) {
-            psStyle = psLayer->class[i]->styles[j];
-            pszSLD = msSLDGeneratePointSLD(psStyle, psLayer, nVersion);
-            if (pszSLD) {
-              pszFinalSLD = msStringConcatenate(pszFinalSLD, pszSLD);
-              free(pszSLD);
-            }
-          }
-
-        } else if (psLayer->type == MS_LAYER_ANNOTATION) {
           for (j=0; j<psLayer->class[i]->numstyles; j++) {
             psStyle = psLayer->class[i]->styles[j];
             pszSLD = msSLDGeneratePointSLD(psStyle, psLayer, nVersion);

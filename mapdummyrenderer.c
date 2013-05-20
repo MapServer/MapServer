@@ -60,13 +60,6 @@ int renderRasterGlyphsDummy(imageObj *img, double x, double y, int fontIndex,
   return MS_FAILURE;
 }
 
-int renderGlyphsDummy(imageObj *img, double x, double y,
-                      labelStyleObj *style, char *text)
-{
-  msSetError(MS_RENDERERERR,"renderGlyphs not implemented","renderGlyphs()");
-  return MS_FAILURE;
-}
-
 int renderGlyphsLineDummy(imageObj *img,labelPathObj *labelpath,
                           labelStyleObj *style, char *text)
 {
@@ -276,22 +269,20 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer)
   renderer->getRasterBufferCopy=getRasterBufferCopyDummy;
   renderer->initializeRasterBuffer=initializeRasterBufferDummy;
   renderer->renderPolygon=&renderPolygonDummy;
-  renderer->renderGlyphs=&renderGlyphsDummy;
-  renderer->renderGlyphsLine = NULL;
-  renderer->renderBitmapGlyphs = &renderGlyphsDummy;
+  renderer->renderBitmapGlyphs = NULL;
+  renderer->renderText = NULL;
   renderer->freeImage=&freeImageDummy;
   renderer->renderEllipseSymbol = &renderEllipseSymbolDummy;
   renderer->renderVectorSymbol = &renderVectorSymbolDummy;
-  renderer->renderTruetypeSymbol = &renderTruetypeSymbolDummy;
   renderer->renderPixmapSymbol = &renderPixmapSymbolDummy;
   renderer->mergeRasterBuffer = &mergeRasterBufferDummy;
-  renderer->getTruetypeTextBBox = &getTruetypeTextBBoxDummy;
   renderer->renderTile = &renderTileDummy;
   renderer->renderPolygonTiled = &renderPolygonTiledDummy;
   renderer->freeSymbol = &freeSymbolDummy;
   renderer->cleanup = &cleanupDummy;
   renderer->startShape = NULL;
   renderer->endShape = NULL;
+  renderer->renderGlyphs = NULL;
   return MS_SUCCESS;
 }
 

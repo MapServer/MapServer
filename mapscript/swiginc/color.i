@@ -36,13 +36,14 @@
 %extend colorObj 
 {
   
-    colorObj(int red=0, int green=0, int blue=0, int pen=MS_PEN_UNSET) 
+    colorObj(int red=0, int green=0, int blue=0, int alpha=255) 
     {
         colorObj *color;
         
         /* Check colors */
-        if (red > 255 || green > 255 || blue > 255) {
-            msSetError(MS_MISCERR, "Invalid color index.", "colorObj()");
+        if (red > 255 || green > 255 || blue > 255 || alpha>255 ||
+            red<0 || green<0 || blue<0 || alpha<0 ) {
+            msSetError(MS_MISCERR, "Invalid color", "colorObj()");
             return NULL;
         }
     
@@ -50,7 +51,7 @@
         if (!color)
             return(NULL);
     
-        MS_INIT_COLOR(*color, red, green, blue, 255);
+        MS_INIT_COLOR(*color, red, green, blue, alpha);
 
         return(color);    	
     }

@@ -181,7 +181,6 @@ PHP_METHOD(classObj, __get)
 
   IF_GET_STRING("name", php_class->class->name)
   else IF_GET_STRING("title", php_class->class->title)
-    else IF_GET_LONG("type", php_class->class->type)
       else IF_GET_LONG("status", php_class->class->status)
         else IF_GET_DOUBLE("minscaledenom", php_class->class->minscaledenom)
           else IF_GET_DOUBLE("maxscaledenom", php_class->class->maxscaledenom)
@@ -192,7 +191,7 @@ PHP_METHOD(classObj, __get)
                     else IF_GET_STRING("group", php_class->class->group)
                       else IF_GET_LONG("numstyles", php_class->class->numstyles)
                         else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_class->metadata, &php_class->class->metadata)
-                          else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_class->leader, &php_class->class->leader)
+                          else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_class->leader, php_class->class->leader)
                             else {
                               mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
                             }
@@ -223,7 +222,6 @@ PHP_METHOD(classObj, __set)
   } else
   IF_SET_STRING("name", php_class->class->name, value)
   else IF_SET_STRING("title", php_class->class->title, value)
-    else IF_SET_LONG("type", php_class->class->type, value)
       else IF_SET_LONG("status", php_class->class->status, value)
         else IF_SET_DOUBLE("minscaledenom", php_class->class->minscaledenom, value)
           else IF_SET_DOUBLE("maxscaledenom", php_class->class->maxscaledenom, value)

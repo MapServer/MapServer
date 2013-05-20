@@ -33,7 +33,9 @@ endif (APPLE)
 
 
 macro (ms_link_libraries)
-  target_link_libraries(mapserver ${ARGV})
+  if(BUILD_DYNAMIC)
+    target_link_libraries(mapserver ${ARGV})
+  endif(BUILD_DYNAMIC)
   if(BUILD_STATIC)
     target_link_libraries(mapserver_static ${ARGV})
   endif(BUILD_STATIC)
@@ -59,9 +61,10 @@ macro( report_dependency_error component dependency)
 endmacro()
 
 SET(CMAKE_REQUIRED_INCLUDES "math.h")
-if(CMAKE_COMPILER_IS_GNUCXX)
-   SET(CMAKE_REQUIRED_LIBRARIES "m")
-endif(CMAKE_COMPILER_IS_GNUCXX)
+if(NOT(WIN32))
+SET(CMAKE_REQUIRED_LIBRARIES "m")
+endif(NOT(WIN32))
+
 check_function_exists("strrstr"          HAVE_STRRSTR)
 check_function_exists("strcasecmp"  HAVE_STRCASECMP)
 check_function_exists("strcasestr"  HAVE_STRCASESTR)
@@ -93,8 +96,8 @@ option(WITH_PROJ "Choose if reprojection support should be built in" ON)
 option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
 option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)
 option(WITH_WMS "Enable WMS Server support (requires proj support)" ON)
-option(WITH_GD "Choose if (old) GD support should be built in" OFF)
-option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (usefull for left-to-right languages)" ON)
+option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (usefull for left-to-right languages) (requires HARFBUZZ)" ON)
+option(WITH_HARFBUZZ "Choose if Harfbuzz complex text layout should be included (needed for e.g. arabic and hindi) (requires FRIBIDI)" ON)
 option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
 option(WITH_CAIRO "Choose if CAIRO  rendering support should be built in (required for SVG and PDF output)" ON)
 option(WITH_SVGCAIRO "Choose if SVG symbology support (via libsvgcairo) should be built in (requires cairo, libsvg, libsvg-cairo. Incompatible with librsvg)" OFF)
@@ -138,7 +141,7 @@ option(WITH_GENERIC_NINT "generic rounding" OFF)
 # PERLV_ld_DETECT?
 
 # Add compiler flags for warnings
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wdeclaration-after-statement")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
@@ -148,8 +151,10 @@ SET(CMAKE_MACOSX_RPATH ON)
 
 if(LINK_STATIC_LIBMAPSERVER)
   set(BUILD_STATIC 1)
+  set(BUILD_DYNAMIC 0)
   set(MAPSERVER_LIBMAPSERVER mapserver_static)
 else(LINK_STATIC_LIBMAPSERVER)
+  set(BUILD_DYNAMIC 1)
   set(MAPSERVER_LIBMAPSERVER mapserver)
 endif(LINK_STATIC_LIBMAPSERVER)
 
@@ -166,7 +171,7 @@ renderers/agg/src/agg_line_aa_basics.cpp
 renderers/agg/src/clipper.cpp
 )
 include_directories(renderers/agg/include)
-
+#add_definitions(-DHASH_DEBUG=1)
 if(WIN32)
   set(REGEX_SOURCES ${REGEX_DIR}/regex.c)
   include_directories(${REGEX_DIR})
@@ -179,7 +184,7 @@ else(WIN32)
   set(REGEX_SOURCES "")
 endif(WIN32)
 
-set(mapserver_SOURCES
+set(mapserver_SOURCES fontcache.c 
 cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.c classobject.c
 mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c
 mapservutil.c mapxbase.c maphash.c mapowscommon.c mapshape.c mapxml.c mapbits.c
@@ -192,17 +197,20 @@ mapprojhack.c maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
-mapogcfiltercommon.c maprendering.c mapwcs20.c mapgd.c mapogcsld.c
+mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c
 mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
-mapgeomutil.cpp mapkmlrenderer.cpp
+mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c
 mapogr.cpp mapcontour.c mapsmoothing.c ${REGEX_SOURCES})
 
-add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES})
-set_target_properties( mapserver  PROPERTIES
-  VERSION ${MapServer_VERSION_STRING}
-  SOVERSION 1
+if(BUILD_DYNAMIC)
+  add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES})
+  set_target_properties( mapserver  PROPERTIES
+    VERSION ${MapServer_VERSION_STRING}
+    SOVERSION 1
 ) 
+endif(BUILD_DYNAMIC)
+
 if(BUILD_STATIC)
   add_library(mapserver_static STATIC ${mapserver_SOURCES} ${agg_SOURCES})
   set_target_properties( mapserver_static PROPERTIES
@@ -239,6 +247,10 @@ target_link_libraries(tile4ms ${MAPSERVER_LIBMAPSERVER})
 add_executable(shptreetst shptreetst.c)
 target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
 
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+  set(USE_EXTENDED_DEBUG 1)
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug") 
 
 find_package(PNG)
 if(PNG_FOUND)
@@ -285,30 +297,6 @@ if(WITH_WMS)
   endif(USE_PROJ)
 endif(WITH_WMS)
 
-
-if(WITH_GD)
-  find_package(GD)
-  if(NOT GD_FOUND)
-    report_optional_not_found(GD)
- else(NOT GD_FOUND)
-    include_directories(${GD_INCLUDE_DIR})
-    ms_link_libraries( ${GD_LIBRARY})
-    set (USE_GD 1)
-    if(GD_SUPPORTS_PNG)
-      set(USE_GD_PNG 1)
-    endif(GD_SUPPORTS_PNG)
-    if(GD_SUPPORTS_GIF)
-      set(USE_GD_GIF 1)
-    endif(GD_SUPPORTS_GIF)
-    if(GD_SUPPORTS_JPEG)
-      set(USE_GD_JPEG 1)
-    endif(GD_SUPPORTS_JPEG)
-    if(GD_SUPPORTS_FREETYPE)
-      set(USE_GD_FREETYPE 1)
-    endif(GD_SUPPORTS_FREETYPE)
- endif(NOT GD_FOUND)
-endif (WITH_GD)
-
 if(WITH_FRIBIDI)
   find_package(FriBiDi)
   if(NOT FRIBIDI_FOUND)
@@ -322,6 +310,25 @@ if(WITH_FRIBIDI)
     endif(FRIBIDI_LEGACY)
  endif(NOT FRIBIDI_FOUND)
 endif (WITH_FRIBIDI)
+
+if(WITH_HARFBUZZ)
+  find_package(HarfBuzz)
+  if(NOT HARFBUZZ_FOUND)
+    report_optional_not_found(HARFBUZZ)
+ else(NOT HARFBUZZ_FOUND)
+    include_directories(${HARFBUZZ_INCLUDE_DIR})
+    ms_link_libraries( ${HARFBUZZ_LIBRARY})
+    set (USE_HARFBUZZ 1)
+ endif(NOT HARFBUZZ_FOUND)
+endif (WITH_HARFBUZZ)
+
+if( USE_HARFBUZZ AND NOT(USE_FRIBIDI) )
+  report_dependency_error(HARFBUZZ FRIBIDI)
+endif( USE_HARFBUZZ AND NOT(USE_FRIBIDI) )
+if( USE_FRIBIDI AND NOT(USE_HARFBUZZ) )
+  report_dependency_error(FRIBIDI HARFBUZZ)
+endif( USE_FRIBIDI AND NOT(USE_HARFBUZZ) )
+
 
 if(WITH_ICONV)
   find_package(ICONV)
@@ -719,6 +726,8 @@ if(WITH_EXEMPI)
   endif(LIBEXEMPI_FOUND)
 endif(WITH_EXEMPI)
 
+ms_link_libraries(harfbuzz)
+
 if(WITH_PYTHON)
    add_subdirectory("mapscript/python")
    set(USE_PYTHON_MAPSCRIPT 1)
@@ -798,7 +807,6 @@ message(STATUS "  * freetype: ${FREETYPE_LIBRARY}")
 message(STATUS " * Optional components")
 status_optional_component("GDAL" "${USE_GDAL}" "${GDAL_LIBRARY}")
 status_optional_component("OGR" "${USE_OGR}" "${GDAL_LIBRARY}")
-status_optional_component("GD" "${USE_GD}" "${GD_LIBRARY}")
 status_optional_component("GIF" "${USE_GIF}" "${GIF_LIBRARY}")
 status_optional_component("MYSQL" "${USE_MYSQL}" "${MYSQL_LIBRARY}")
 status_optional_component("FRIBIDI" "${USE_FRIBIDI}" "${FRIBIDI_LIBRARY}")
@@ -885,8 +893,11 @@ if(USE_SDE92)
    INSTALL(TARGETS msplugin_sde92 DESTINATION lib)
 endif(USE_SDE92)
 
-INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv mapserver RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
+INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
 if(BUILD_STATIC)
    INSTALL(TARGETS mapserver_static DESTINATION lib)
 endif(BUILD_STATIC)
+if(BUILD_DYNAMIC)
+   INSTALL(TARGETS mapserver DESTINATION lib)
+endif(BUILD_DYNAMIC)
 
