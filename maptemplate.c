@@ -2058,7 +2058,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     }
 
     /* build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't) */
-    pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + strlen("cs") + 10 + 1;
+    pointFormatLength = strlen(xh) + strlen(xf) + strlen(yh) + strlen(yf) + strlen(cs) + 12 + 1;
     pointFormat1 = (char *) msSmallMalloc(pointFormatLength);
     snprintf(pointFormat1, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s%s", xh, precision, xf, yh, precision, yf, cs);
     pointFormat2 = (char *) msSmallMalloc(pointFormatLength);
