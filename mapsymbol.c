@@ -748,6 +748,33 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex)
     symbolset->symbol[i-1]=NULL;
     symbolset->numsymbols--;
     MS_REFCNT_DECR(symbol);
+    /* update symbol references in the map */
+    if (symbolset->map) {
+        int l,c,s,lb;
+        layerObj *layer;
+        classObj *cl;
+        styleObj *style;
+        labelObj *label;
+        for (l = 0; l < symbolset->map->numlayers; l++) {
+            layer = GET_LAYER(symbolset->map, l);
+            for (c = 0; c < layer->numclasses; c++) {
+                cl = layer->class[c];
+                for (s = 0; s < cl->numstyles; s++) {
+                    style = cl->styles[s];
+                    if (style->symbol >= nSymbolIndex)
+                        --style->symbol;
+                }
+                for (lb = 0; lb < cl->numlabels; lb++) {
+                    label = cl->labels[lb];
+                    for (s = 0; s < label->numstyles; s++) {
+                        style = label->styles[s];
+                        if (style->symbol >= nSymbolIndex)
+                            --style->symbol;
+                    }
+                }
+            }
+        }
+    }
     return symbol;
   }
 }
