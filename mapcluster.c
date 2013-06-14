@@ -541,12 +541,20 @@ static void UpdateShapeAttributes(layerObj* layer, clusterInfo* base, clusterInf
         int count = atoi(base->shape.values[i]) + 1;
         msFree(base->shape.values[i]);
         base->shape.values[i] = msIntToString(count);
-      } else if (!EQUAL(base->shape.values[i], current->shape.values[i])
-                 && !EQUAL(base->shape.values[i], "")) {
-        /* clear the value if that doesn't match */
+      }
+      /* clear the value if that doesn't match */
+			/*   NOTE:
+			 * !EQUAL(base->shape.values[i], "")
+			 *   should change to
+			 * EQUAL(base->shape.values[i], "")
+			 *   but becomes a noop!
+			else if (!EQUAL(base->shape.values[i], current->shape.values[i])
+                && !EQUAL(base->shape.values[i], "")) {
+fprintf(stderr, "delete UpdateShapeAttributes: '%s'|'%s'\n", base->shape.values[i], current->shape.values[i]);
         msFree(base->shape.values[i]);
         base->shape.values[i] = msStrdup("");
       }
+			*/
     }
   }
 }
