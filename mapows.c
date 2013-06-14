@@ -95,7 +95,8 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
                                 owsRequestObj *ows_request)
 {
   /* decide if KVP or XML */
-  if (request->type == MS_GET_REQUEST || (request->type == MS_POST_REQUEST && strncmp(request->contenttype, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded")) == 0)) {
+  if (request->type == MS_GET_REQUEST || (request->type == MS_POST_REQUEST 
+    && request->contenttype && strncmp(request->contenttype, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded")) == 0)) {
     int i;
     /* parse KVP parameters service, version and request */
     for (i = 0; i < request->NumParams; ++i) {
