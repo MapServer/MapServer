@@ -169,7 +169,7 @@ PHP_FUNCTION(ms_newMapObjFromString)
   map = mapObj_newFromString(string, path);
 
   if (map == NULL) {
-    mapscript_throw_mapserver_exception("Failed to open map file \"%s\", or map file error." TSRMLS_CC,  string);
+    mapscript_throw_mapserver_exception("Error while loading map file from string." TSRMLS_CC);
     return;
   }
 
