@@ -789,6 +789,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int iUnits = -1;
   int nLayerOrder = 0;
   int transparent = MS_NOOVERRIDE;
+  int bbox_pixel_is_point = MS_FALSE;
   outputFormatObj *format = NULL;
   int validlayers = 0;
   char *styles = NULL;
@@ -1124,6 +1125,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
      */
     else if (strcasecmp(names[i], "ANGLE") == 0) {
       msMapSetRotation(map, atof(values[i]));
+    }
+    /* Vendor-specific bbox_pixel_is_point, added in ticket #4652 */
+    else if (strcasecmp(names[i], "BBOX_PIXEL_IS_POINT") == 0) {
+      bbox_pixel_is_point = (strcasecmp(values[i], "TRUE") == 0);
     }
   }
 
@@ -1681,7 +1686,7 @@ this request. Check wms/ows_enable_request settings.",
   ** in by half a pixel.  We wait till here because we want to ensure we
   ** are doing this in terms of the correct WIDTH and HEIGHT.
   */
-  if( adjust_extent && map->width>1 && map->height>1 ) {
+  if( adjust_extent && map->width>1 && map->height>1 && !bbox_pixel_is_point) {
     double  dx, dy;
 
     dx = (map->extent.maxx - map->extent.minx) / map->width;
