@@ -1957,8 +1957,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     }
   }
 
-  if (paramsObj->nStartIndex > 0) {
-    startindex = paramsObj->nStartIndex;
+  if (paramsObj->nStartIndex > -1) {
+    startindex = 1 + paramsObj->nStartIndex;
     map->query.startindex = startindex;    
   } 
 
