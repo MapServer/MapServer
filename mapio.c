@@ -809,7 +809,10 @@ char *msIO_stripStdoutBufferContentType()
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Copy out content type.                                          */
+  /*      Copy out content type. Note we go against the coding guidelines */
+  /*      here and use strncpy() instead of strlcpy() as the source       */
+  /*      buffer may not be NULL terminated - strlcpy() requires NULL     */
+  /*      terminated sources (see issue #4672).                           */
   /* -------------------------------------------------------------------- */
   content_type = (char *) malloc(end_of_ct-14+2);
   strncpy( content_type, (const char *) buf->data + 14, end_of_ct - 14 + 2);
