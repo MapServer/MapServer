@@ -38,7 +38,10 @@
 #include <assert.h>
 #include "mapserver.h"
 
-
+#ifdef USE_GDAL
+#include <cpl_conv.h>
+#include <ogr_srs_api.h>
+#endif
 
 /* Only use this macro on 32-bit integers! */
 #define SWAP_FOUR_BYTES(data) \
@@ -2506,6 +2509,55 @@ int msSHPLayerOpen(layerObj *layer)
       free(shpfile);
       return MS_FAILURE;
     }
+  }
+  
+  if (layer->projection.numargs > 0 &&
+      EQUAL(layer->projection.args[0], "auto"))
+  {
+#ifdef USE_GDAL
+    const char* pszPRJFilename = CPLResetExtension(szPath, "prj");
+    int bOK = MS_FALSE;
+    FILE* fp = fopen(pszPRJFilename, "rb");
+    if( fp != NULL )
+    {
+        char szPRJ[2048];
+        OGRSpatialReferenceH hSRS;
+        int nRead;
+
+        nRead = (int)fread(szPRJ, 1, sizeof(szPRJ) - 1, fp);
+        szPRJ[nRead] = '\0';
+        hSRS = OSRNewSpatialReference(szPRJ);
+        if( hSRS != NULL )
+        {
+            if( OSRMorphFromESRI( hSRS ) == OGRERR_NONE )
+            {
+                char* pszWKT = NULL;
+                if( OSRExportToWkt( hSRS, &pszWKT ) == OGRERR_NONE )
+                {
+                    if( msOGCWKT2ProjectionObj(pszWKT, &(layer->projection),
+                                               layer->debug ) == MS_SUCCESS )
+                    {
+                        bOK = MS_TRUE;
+                    }
+                }
+                CPLFree(pszWKT);
+            }
+            OSRDestroySpatialReference(hSRS);
+        }
+    }
+    fclose(fp);
+
+    if( bOK != MS_TRUE )
+    {
+        if( layer->debug || (layer->map && layer->map->debug) ) {
+            msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'.\n", szPath, layer->name );
+        }
+    }
+#else
+    if( layer->debug || (layer->map && layer->map->debug) ) {
+        msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'. GDAL support needed\n", szPath, layer->name );
+    }
+#endif
   }
 
   return MS_SUCCESS;

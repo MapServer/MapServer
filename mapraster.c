@@ -362,6 +362,13 @@ int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
         }
       }
 
+      if (layer->projection.numargs > 0 &&
+        EQUAL(layer->projection.args[0], "auto"))
+      {
+          tlp->projection.numargs = 1;
+          tlp->projection.args[0] = msStrdup("auto");
+      }
+
       if (layer->filteritem)
         tlp->filteritem = msStrdup(layer->filteritem);
       if (layer->filter.string) {
