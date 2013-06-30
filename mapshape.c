@@ -1912,6 +1912,13 @@ int msTiledSHPOpenFile(layerObj *layer)
 
   if((layer->tileitemindex = msDBFGetItemIndex(tSHP->tileshpfile->hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
 
+  if( layer->tilesrs != NULL ) {
+    msSetError(MS_OGRERR,
+                "TILESRS not supported in vector layers.",
+                "msTiledSHPOpenFile()");
+    return MS_FAILURE;
+  }
+
   msTileIndexAbsoluteDir(tiFileAbsDir, layer);
 
   /* position the source at the FIRST tile to use as a template, this is so the functions that fill the iteminfo array have something to work from */

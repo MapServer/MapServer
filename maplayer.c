@@ -88,6 +88,11 @@ int msLayerRestoreFromScaletokens(layerObj *layer)
     layer->tileitem = layer->orig_tileitem;
     layer->orig_tileitem = NULL;
   }
+  if(layer->orig_tilesrs) {
+    msFree(layer->tilesrs);
+    layer->tilesrs = layer->orig_tilesrs;
+    layer->orig_tilesrs = NULL;
+  }
   if(layer->orig_filter) {
     msLoadExpressionString(&(layer->filter),layer->orig_filter);
     msFree(layer->orig_filter);
@@ -150,6 +155,15 @@ int msLayerApplyScaletokens(layerObj *layer, double scale)
       layer->orig_tileitem = layer->tileitem;
       layer->tileitem = msStrdup(layer->tileitem);
       layer->tileitem = msReplaceSubstring(layer->tileitem,st->name,ste->value);
+    }
+    if(layer->tilesrs && strstr(layer->tilesrs,st->name)) {
+      if(layer->debug >= MS_DEBUGLEVEL_DEBUG) {
+        msDebug("replacing scaletoken (%s) with (%s) in layer->tilesrs (%s) for scale=%f\n",
+                st->name,ste->value,layer->name,scale);
+      }
+      layer->orig_tilesrs = layer->tilesrs;
+      layer->tilesrs = msStrdup(layer->tilesrs);
+      layer->tilesrs = msReplaceSubstring(layer->tilesrs,st->name,ste->value);
     }
     if(layer->filteritem && strstr(layer->filteritem,st->name)) {
       if(layer->debug >= MS_DEBUGLEVEL_DEBUG) {

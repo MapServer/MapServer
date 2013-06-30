@@ -1843,6 +1843,13 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
     if( layer->layerinfo == NULL )
       return MS_FAILURE;
 
+    if( layer->tilesrs != NULL ) {
+      msSetError(MS_OGRERR,
+                 "TILESRS not supported in vector layers.",
+                 "msOGRLayerOpen()");
+      return MS_FAILURE;
+    }
+
     // Identify TILEITEM
 
     OGRFeatureDefnH hDefn = OGR_L_GetLayerDefn( psInfo->hLayer );
