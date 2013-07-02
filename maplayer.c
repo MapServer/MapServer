@@ -1655,6 +1655,7 @@ int msInitializeVirtualTable(layerObj *layer)
 
 typedef struct {
   rectObj searchrect;
+  int is_relative; /* relative coordinates? */
 }
 msINLINELayerInfo;
 
@@ -1670,6 +1671,7 @@ msINLINELayerInfo *msINLINECreateLayerInfo(void)
 {
   msINLINELayerInfo *layerinfo = msSmallMalloc(sizeof(msINLINELayerInfo));
   layerinfo->searchrect = (rectObj){-1.0,-1.0,-1.0,-1.0};
+  layerinfo->is_relative = MS_FALSE;
   return layerinfo;  
 }
 
@@ -1712,6 +1714,7 @@ int msINLINELayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   layerinfo = (msINLINELayerInfo*) layer->layerinfo;
 
   layerinfo->searchrect = rect;
+  layerinfo->is_relative = (layer->transform != MS_FALSE && layer->transform != MS_TRUE);
   
   return MS_SUCCESS;
 }
@@ -1766,7 +1769,7 @@ int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
     layer->currentfeature = layer->currentfeature->next;
     msComputeBounds(s);
 
-    if (msRectOverlap(&s->bounds, &layerinfo->searchrect)) {
+    if (layerinfo->is_relative || msRectOverlap(&s->bounds, &layerinfo->searchrect)) {
    
       msCopyShape(s, shape);
 
