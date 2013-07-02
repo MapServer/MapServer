@@ -1653,6 +1653,11 @@ int msInitializeVirtualTable(layerObj *layer)
  * INLINE: Virtual table functions
  */
 
+typedef struct {
+  rectObj searchrect;
+}
+msINLINELayerInfo;
+
 int msINLINELayerIsOpen(layerObj *layer)
 {
   if (layer->currentfeature)
@@ -1661,11 +1666,54 @@ int msINLINELayerIsOpen(layerObj *layer)
     return(MS_FALSE);
 }
 
+msINLINELayerInfo *msINLINECreateLayerInfo(void)
+{
+  msINLINELayerInfo *layerinfo = msSmallMalloc(sizeof(msINLINELayerInfo));
+  layerinfo->searchrect = (rectObj){-1.0,-1.0,-1.0,-1.0};
+  return layerinfo;  
+}
 
 int msINLINELayerOpen(layerObj *layer)
 {
+  msINLINELayerInfo  *layerinfo;
+
+  if (layer->layerinfo) {
+    if (layer->debug) {
+      msDebug("msINLINELayerOpen: Layer is already open!\n");
+    }
+    return MS_SUCCESS;  /* already open */
+  }
+  
+  /*
+  ** Initialize the layerinfo
+  **/
+  layerinfo = msINLINECreateLayerInfo();
+  
   layer->currentfeature = layer->features; /* point to the begining of the feature list */
+
+  layer->layerinfo = (void*)layerinfo;
+  
   return(MS_SUCCESS);
+}
+
+int msINLINELayerClose(layerObj *layer)
+{
+  if (layer->layerinfo) {
+    free(layer->layerinfo);
+    layer->layerinfo = NULL;
+  }
+
+  return MS_SUCCESS;
+}
+
+int msINLINELayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
+{
+  msINLINELayerInfo *layerinfo = NULL;  
+  layerinfo = (msINLINELayerInfo*) layer->layerinfo;
+
+  layerinfo->searchrect = rect;
+  
+  return MS_SUCCESS;
 }
 
 /* Author: Cristoph Spoerri and Sean Gillies */
@@ -1702,23 +1750,38 @@ int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
 int msINLINELayerNextShape(layerObj *layer, shapeObj *shape)
 {
-  if( ! (layer->currentfeature)) {
-    /* out of features */
-    return(MS_DONE);
+  msINLINELayerInfo *layerinfo = NULL;  
+  shapeObj * s;
+  
+  layerinfo = (msINLINELayerInfo*) layer->layerinfo;
+  
+  while (1) {
+
+    if( ! (layer->currentfeature)) {
+      /* out of features */
+      return(MS_DONE);
+    }
+
+    s = &(layer->currentfeature->shape);
+    layer->currentfeature = layer->currentfeature->next;
+    msComputeBounds(s);
+
+    if (msRectOverlap(&s->bounds, &layerinfo->searchrect)) {
+   
+      msCopyShape(s, shape);
+
+      /* check for the expected size of the values array */
+      if (layer->numitems > shape->numvalues) {
+        int i;
+        shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
+        for (i = shape->numvalues; i < layer->numitems; i++)
+          shape->values[i] = msStrdup("");
+      }
+
+      break;
+    }
+    
   }
-
-  msCopyShape(&(layer->currentfeature->shape), shape);
-
-  layer->currentfeature = layer->currentfeature->next;
-
-  /* check for the expected size of the values array */
-  if (layer->numitems > shape->numvalues) {
-    int i;
-    shape->values = (char **)msSmallRealloc(shape->values, sizeof(char *)*(layer->numitems));
-    for (i = shape->numvalues; i < layer->numitems; i++)
-      shape->values[i] = msStrdup("");
-  }
-  msComputeBounds(shape);
 
   return(MS_SUCCESS);
 }
@@ -1772,10 +1835,10 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
   /* layer->vtable->LayerFreeItemInfo, use default */
   layer->vtable->LayerOpen = msINLINELayerOpen;
   layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
-  /* layer->vtable->LayerWhichShapes, use default */
+  layer->vtable->LayerWhichShapes = msINLINELayerWhichShapes;
   layer->vtable->LayerNextShape = msINLINELayerNextShape;
   layer->vtable->LayerGetShape = msINLINELayerGetShape;
-  /* layer->vtable->LayerClose, use default */
+  layer->vtable->LayerClose = msINLINELayerClose;
   /* layer->vtable->LayerGetItems, use default */
 
   /*
