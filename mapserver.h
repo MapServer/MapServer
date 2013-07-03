@@ -1511,7 +1511,6 @@ extern "C" {
     char *orig_data;
     char *orig_tileitem;
     char *orig_tileindex;
-    char *orig_tilesrs;
     char *orig_filteritem;
     char *orig_filter; 
 #endif
