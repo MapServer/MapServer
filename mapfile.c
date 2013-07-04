@@ -3205,7 +3205,7 @@ int freeClass(classObj *class)
   }
   msFree(class->styles);
 
-  for(i=0; i<class->numlabels; i++) { /* each label */
+  for(i=0; i<=class->numlabels; i++) { /* each label */
     if(class->labels[i]!=NULL) {
       if(freeLabel(class->labels[i]) == MS_SUCCESS) {
         msFree(class->labels[i]);
