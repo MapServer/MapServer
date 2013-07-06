@@ -38,7 +38,7 @@
 #include <assert.h>
 #include "mapserver.h"
 
-#ifdef USE_GDAL
+#if defined(USE_GDAL) || defined(USE_OGR)
 #include <cpl_conv.h>
 #include <ogr_srs_api.h>
 #endif
@@ -2514,7 +2514,7 @@ int msSHPLayerOpen(layerObj *layer)
   if (layer->projection.numargs > 0 &&
       EQUAL(layer->projection.args[0], "auto"))
   {
-#ifdef USE_GDAL
+#if defined(USE_GDAL) || defined(USE_OGR)
     const char* pszPRJFilename = CPLResetExtension(szPath, "prj");
     int bOK = MS_FALSE;
     FILE* fp = fopen(pszPRJFilename, "rb");
@@ -2553,11 +2553,11 @@ int msSHPLayerOpen(layerObj *layer)
             msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'.\n", szPath, layer->name );
         }
     }
-#else
+#else /* !(defined(USE_GDAL) || defined(USE_OGR)) */
     if( layer->debug || (layer->map && layer->map->debug) ) {
-        msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'. GDAL support needed\n", szPath, layer->name );
+        msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'. GDAL or OGR support needed\n", szPath, layer->name );
     }
-#endif
+#endif /* defined(USE_GDAL) || defined(USE_OGR) */
   }
 
   return MS_SUCCESS;
