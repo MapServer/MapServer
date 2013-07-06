@@ -2463,7 +2463,7 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
                     "msGetGDALBandList()",
                     papszItems[i], GDALGetRasterCount(hDS) );
         CSLDestroy( papszItems );
-        CPLFree( band_list );
+        free( band_list );
         return NULL;
       }
     }
