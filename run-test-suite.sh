@@ -18,7 +18,7 @@ if [ -f CMakeLists.txt ]; then
    fi
    mkdir -p build
    cd build
-   CFLAGS="--coverage" LDFLAGS="-lgcov" cmake .. -DWITH_GD=1 -DWITH_CLIENT_WMS=1 -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_PHP=1 -DWITH_PYTHON=1 -DWITH_FRIBIDI=0 -DWITH_FCGI=0 -DCMAKE_BUILD_TYPE=Debug
+   cmake .. -DCMAKE_C_FLAGS="--coverage" -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_SHARED_LINKER_FLAGS="-lgcov" -DWITH_GD=1 -DWITH_CLIENT_WMS=1 -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_PHP=1 -DWITH_PYTHON=1 -DWITH_FRIBIDI=0 -DWITH_FCGI=0 -DCMAKE_BUILD_TYPE=Debug
    make -j4
    cd ..
    make -f Makefile.autotest -j4 test
