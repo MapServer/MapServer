@@ -763,6 +763,6 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
 }
 
 int yyerror(parseObj *p, const char *s) {
-  msSetError(MS_PARSEERR, s, "yyparse()");
+  msSetError(MS_PARSEERR, "%s", "yyparse()", s);
   return(0);
 }

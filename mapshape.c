@@ -1268,7 +1268,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 
         shape->type = MS_SHAPE_NULL;
         msSetError(MS_MEMERR, "Out of memory. Cannot allocate %d bytes. Probably broken shapefile at feature %d",
-                   "msSHPReadShape()", nParts * sizeof(int), hEntity);
+                   "msSHPReadShape()", (int)(nParts * sizeof(int)), hEntity);
         return;
       }
       psSHP->nPartMax = nParts;
@@ -1861,7 +1861,7 @@ int msTiledSHPOpenFile(layerObj *layer)
   tSHP->shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
   if (tSHP->shpfile == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msTiledSHPOpenFile()",
-               __FILE__, __LINE__, sizeof(shapefileObj));
+               __FILE__, __LINE__, (unsigned int)sizeof(shapefileObj));
     free(tSHP);
     return MS_FAILURE;
   }
@@ -1897,7 +1897,7 @@ int msTiledSHPOpenFile(layerObj *layer)
     tSHP->tileshpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
     if (tSHP->tileshpfile == NULL) {
       msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msTiledSHPOpenFile()",
-                 __FILE__, __LINE__, sizeof(shapefileObj));
+                 __FILE__, __LINE__, (unsigned int)sizeof(shapefileObj));
       free(tSHP->shpfile);
       free(tSHP);
       layer->layerinfo = NULL;

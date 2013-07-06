@@ -737,7 +737,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_nam
     geometryList->geometries = (gmlGeometryObj *) malloc(sizeof(gmlGeometryObj)*geometryList->numgeometries);
     if (geometryList->geometries ==  NULL) {
       msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGMLGetGeometries()",
-                 sizeof(gmlGeometryObj)*geometryList->numgeometries);
+                 (unsigned int)(sizeof(gmlGeometryObj)*geometryList->numgeometries));
       free(geometryList);
       return NULL;
     }
@@ -864,7 +864,7 @@ gmlNamespaceListObj *msGMLGetNamespaces(webObj *web, const char *metadata_namesp
     namespaceList->namespaces = (gmlNamespaceObj *) malloc(sizeof(gmlNamespaceObj)*namespaceList->numnamespaces);
     if (namespaceList->namespaces == NULL) {
       msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGMLGetNamespaces()",
-                 sizeof(gmlNamespaceObj)*namespaceList->numnamespaces);
+                 (unsigned int)(sizeof(gmlNamespaceObj)*namespaceList->numnamespaces));
       free(namespaceList);
       return NULL;
     }
@@ -933,7 +933,7 @@ gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char *metadata_name
     constantList->constants = (gmlConstantObj *) malloc(sizeof(gmlConstantObj)*constantList->numconstants);
     if (constantList->constants == NULL) {
       msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGMLGetConstants()",
-                 sizeof(gmlConstantObj)*constantList->numconstants);
+                 (unsigned int)(sizeof(gmlConstantObj)*constantList->numconstants));
       free(constantList);
       return NULL;
     }
@@ -1024,7 +1024,7 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces
     groupList->groups = (gmlGroupObj *) malloc(sizeof(gmlGroupObj)*groupList->numgroups);
     if (groupList->groups == NULL) {
       msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGMLGetGroups()",
-                 sizeof(gmlGroupObj)*groupList->numgroups);
+                 (unsigned int)(sizeof(gmlGroupObj)*groupList->numgroups));
       free(groupList);
       return NULL;
     }
