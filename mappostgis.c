@@ -1202,7 +1202,7 @@ msPostGISRetrievePK(layerObj *layer)
     tmp2 = (char*)msSmallMalloc(size2);
     strlcpy(tmp2, tmp1, size2);
     strlcat(tmp2, sql, size2);
-    msSetError(MS_QUERYERR, tmp2, "msPostGISRetrievePK()");
+    msSetError(MS_QUERYERR, "%s", "msPostGISRetrievePK()", tmp2);
     free(tmp2);
     free(sql);
     return MS_FAILURE;
@@ -2183,14 +2183,14 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
       uid = 0;
     }
     if( layer->debug > 4 ) {
-      msDebug("msPostGISReadShape: Setting shape->index = %d\n", uid);
-      msDebug("msPostGISReadShape: Setting shape->resultindex = %d\n", layerinfo->rownum);
+      msDebug("msPostGISReadShape: Setting shape->index = %ld\n", uid);
+      msDebug("msPostGISReadShape: Setting shape->resultindex = %ld\n", layerinfo->rownum);
     }
     shape->index = uid;
     shape->resultindex = layerinfo->rownum;
 
     if( layer->debug > 2 ) {
-      msDebug("msPostGISReadShape: [index] %d\n",  shape->index);
+      msDebug("msPostGISReadShape: [index] %ld\n",  shape->index);
     }
 
     shape->numvalues = layer->numitems;

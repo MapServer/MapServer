@@ -1310,7 +1310,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   /* -------------------------------------------------------------------- */
   if( shapeindex < 0 || shapeindex >= rlinfo->query_results ) {
     msSetError(MS_MISCERR,
-               "Out of range shape index requested.  Requested %d\n"
+               "Out of range shape index requested.  Requested %ld\n"
                "but only %d shapes available.",
                "msRASTERLayerGetShape()",
                shapeindex, rlinfo->query_results );

@@ -239,13 +239,9 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   /*      Some debugging output.                                          */
   /* -------------------------------------------------------------------- */
   if( nFailedPoints > 0 && debug ) {
-    char  szMsg[256];
-
-    sprintf( szMsg,
-             "msNearestRasterResampler: "
+    msDebug( "msNearestRasterResampler: "
              "%d failed to transform, %d actually set.\n",
              nFailedPoints, nSetPoints );
-    msDebug( szMsg );
   }
 
   return 0;
@@ -502,13 +498,9 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   /* -------------------------------------------------------------------- */
   if( nFailedPoints > 0 && debug )
   {
-    char  szMsg[256];
-
-    sprintf( szMsg,
-             "msBilinearRasterResampler: "
+    msDebug( "msBilinearRasterResampler: "
              "%d failed to transform, %d actually set.\n",
              nFailedPoints, nSetPoints );
-    msDebug( szMsg );
   }
 
   return 0;
@@ -723,13 +715,9 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   /* -------------------------------------------------------------------- */
   if( nFailedPoints > 0 && debug )
   {
-    char  szMsg[256];
-
-    sprintf( szMsg,
-             "msAverageRasterResampler: "
+    msDebug( "msAverageRasterResampler: "
              "%d failed to transform, %d actually set.\n",
              nFailedPoints, nSetPoints );
-    msDebug( szMsg );
   }
 
   return 0;

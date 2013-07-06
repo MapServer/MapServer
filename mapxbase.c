@@ -330,7 +330,7 @@ DBFHandle msDBFCreate( const char * pszFilename )
   psDBF = (DBFHandle) malloc(sizeof(DBFInfo));
   if (psDBF == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDBFCreate()",
-               __FILE__, __LINE__, sizeof(DBFInfo));
+               __FILE__, __LINE__, (unsigned int)sizeof(DBFInfo));
     fclose(fp);
     return NULL;
   }

@@ -220,7 +220,7 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
 
   if (psReq->debug) {
     msDebug("msHTTPWriteFct(id=%d, %d bytes)\n",
-            psReq->nLayerId, size*nmemb);
+            psReq->nLayerId, (int)(size*nmemb));
   }
 
   /* Case where we are writing to a disk file. */

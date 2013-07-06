@@ -605,7 +605,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   if( EQUAL(storage,"stream") ) {
     if( sendheaders && format->mimetype ) {
-      msIO_setHeader("Content-Type",format->mimetype);
+      msIO_setHeader("Content-Type","%s",format->mimetype);
       msIO_sendHeaders();
     } else
       msIO_fprintf( stdout, "%c", 10 );
@@ -925,7 +925,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       msIO_setHeader("Content-Disposition","attachment; filename=%s",
                      CPLGetFilename( file_list[0] ) );
       if( format->mimetype )
-        msIO_setHeader("Content-Type",format->mimetype);
+        msIO_setHeader("Content-Type","%s",format->mimetype);
       msIO_sendHeaders();
     } else
       msIO_fprintf( stdout, "%c", 10 );

@@ -42,9 +42,17 @@
 extern "C" {
 #endif
 
+#ifndef MS_PRINT_FUNC_FORMAT
+#if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
+#define MS_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#else
+#define MS_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#endif
+#endif
+
   /* stdio analogs */
-  int MS_DLL_EXPORT msIO_printf( const char *format, ... );
-  int MS_DLL_EXPORT msIO_fprintf( FILE *stream, const char *format, ... );
+  int MS_DLL_EXPORT msIO_printf( const char *format, ... ) MS_PRINT_FUNC_FORMAT(1,2);
+  int MS_DLL_EXPORT msIO_fprintf( FILE *stream, const char *format, ... ) MS_PRINT_FUNC_FORMAT(2,3);
   int MS_DLL_EXPORT msIO_fwrite( const void *ptr, size_t size, size_t nmemb, FILE *stream );
   int MS_DLL_EXPORT msIO_fread( void *ptr, size_t size, size_t nmemb, FILE *stream );
   int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap );
@@ -71,7 +79,7 @@ extern "C" {
                                           msIOContext *stdout_context,
                                           msIOContext *stderr_context );
   msIOContext MS_DLL_EXPORT *msIO_getHandler( FILE * );
-  void msIO_setHeader (const char *header, const char* value, ...);
+  void msIO_setHeader (const char *header, const char* value, ...) MS_PRINT_FUNC_FORMAT(2,3);
   void msIO_sendHeaders(void);
 
   /*

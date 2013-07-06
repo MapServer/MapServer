@@ -1118,7 +1118,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
   if (value)
     msIO_setHeader("Content-Type","%s; charset=%s",mimetype, value);
   else
-    msIO_setHeader("Content-Type",mimetype);
+    msIO_setHeader("Content-Type","%s",mimetype);
   msIO_sendHeaders();
 
   if (mimetype)
@@ -2398,7 +2398,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
     if (value)
       msIO_setHeader("Content-Type","%s; charset=%s", output_mime_type,value);
     else
-      msIO_setHeader("Content-Type",output_mime_type);
+      msIO_setHeader("Content-Type","%s",output_mime_type);
     msIO_sendHeaders();
 
     status = msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj,

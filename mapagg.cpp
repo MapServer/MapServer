@@ -826,7 +826,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   r->buffer = (band_type*)malloc(width * height * 4 * sizeof(band_type));
   if (r->buffer == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "agg2CreateImage()",
-               __FILE__, __LINE__, width * height * 4 * sizeof(band_type));
+               __FILE__, __LINE__, (unsigned int)(width * height * 4 * sizeof(band_type)));
     free(image);
     return NULL;
   }
