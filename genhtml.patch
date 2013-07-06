@@ -1,0 +1,12 @@
+--- genhtml_ori	2013-07-06 20:45:58.973043561 +0200
++++ genhtml	2013-07-06 20:46:22.473043550 +0200
+@@ -2351,7 +2351,8 @@
+ 
+ 	($year, $month, $day) = (localtime())[5, 4, 3];
+ 
+-	return sprintf("%d-%02d-%02d", $year+1900, $month+1, $day);
++	#return sprintf("%d-%02d-%02d", $year+1900, $month+1, $day);
++    return "XXXX-XX-XX";
+ }
+ 
+ 
