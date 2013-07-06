@@ -29,7 +29,7 @@ for line in local_file_lines:
     if not (filename in remote_dict and remote_dict[filename] == md5):
         lst_dirs = []
         dirname = os.path.dirname(filename)
-        while not (dirname != '' and dirname in remote_paths_dict):
+        while dirname != '' and not dirname in remote_paths_dict:
             lst_dirs.insert(0, dirname)
             dirname = os.path.dirname(dirname)
         for dirname in lst_dirs:
