@@ -19,3 +19,4 @@ cp local_mapserver_coverage_html.txt mapserver_coverage_html.txt
 
 # upload files
 lftp -c "set ftp:list-options -a; open $MY_FTP_REPO; $PUT_AND_RM; put mapserver_coverage_html.txt;"
+
