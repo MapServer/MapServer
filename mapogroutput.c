@@ -46,7 +46,7 @@
 #ifdef USE_OGR
 
 /************************************************************************/
-/*                       msInitOGROutputFormat()                        */
+/*                   msInitDefaultOGROutputFormat()                     */
 /************************************************************************/
 
 int msInitDefaultOGROutputFormat( outputFormatObj *format )
@@ -64,13 +64,13 @@ int msInitDefaultOGROutputFormat( outputFormatObj *format )
   hDriver = OGRGetDriverByName( format->driver+4 );
   if( hDriver == NULL ) {
     msSetError( MS_MISCERR, "No OGR driver named `%s' available.",
-                "msInitOGROutputFormat()", format->driver+4 );
+                "msInitDefaultOGROutputFormat()", format->driver+4 );
     return MS_FAILURE;
   }
 
   if( !OGR_Dr_TestCapability( hDriver, ODrCCreateDataSource ) ) {
     msSetError( MS_MISCERR, "OGR `%s' driver does not support output.",
-                "msInitOGROutputFormat()", format->driver+4 );
+                "msInitDefaultOGROutputFormat()", format->driver+4 );
     return MS_FAILURE;
   }
 
