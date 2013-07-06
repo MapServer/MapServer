@@ -1693,7 +1693,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
                       "Content-Disposition: INLINE\r\n\r\n",
                       MS_IMAGE_EXTENSION(map->outputformat));
     } else {
-      msIO_setHeader("Content-Type","%s","%s",MS_IMAGE_MIME_TYPE(map->outputformat));
+      msIO_setHeader("Content-Type","%s",MS_IMAGE_MIME_TYPE(map->outputformat));
       msIO_setHeader("Content-Description","coverage data");
       msIO_setHeader("Content-Transfer-Encoding","binary");
 
