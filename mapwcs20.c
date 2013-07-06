@@ -141,7 +141,7 @@ static int msWCSParseTimeOrScalar20(timeScalarUnion *u, const char *string)
   else {
     msSetError(MS_WCSERR,
                "String %s could not be parsed to a time or scalar value",
-               "msWCSParseTimeOrScalar20()");
+               "msWCSParseTimeOrScalar20()",string);
     return MS_WCS20_ERROR_VALUE;
   }
 }
@@ -1693,7 +1693,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
                       "Content-Disposition: INLINE\r\n\r\n",
                       MS_IMAGE_EXTENSION(map->outputformat));
     } else {
-      msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(map->outputformat));
+      msIO_setHeader("Content-Type","%s","%s",MS_IMAGE_MIME_TYPE(map->outputformat));
       msIO_setHeader("Content-Description","coverage data");
       msIO_setHeader("Content-Transfer-Encoding","binary");
 
@@ -1783,7 +1783,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
           all_files[i],
           all_files[i]);
       } else {
-        msIO_setHeader("Content-Type",mimetype);
+        msIO_setHeader("Content-Type","%s",mimetype);
         msIO_setHeader("Content-Description","coverage data");
         msIO_setHeader("Content-Transfer-Encoding","binary");
         msIO_setHeader("Content-ID","coverage/%s",all_files[i]);
@@ -2083,7 +2083,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
         msSetError( MS_WCSERR,
                     "Wrong number of band names given in layer '%s'. "
                     "Expected %d, got %d.", "msWCSGetCoverageMetadata20()",
-                    layer->name, cm->numbands, num_band_names );
+                    layer->name, (int)cm->numbands, num_band_names );
         return MS_FAILURE;
       }
 

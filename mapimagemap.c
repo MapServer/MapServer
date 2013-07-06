@@ -698,7 +698,7 @@ int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format )
       }
       if (iIndice < size) {
         sprintf(workbuffer, "%s", img->img.imagemap+iIndice );
-        msIO_fprintf(stream, workbuffer);
+        msIO_fprintf(stream, "%s", workbuffer);
       }
     } else
       msIO_fwrite(img->img.imagemap, size, 1, stream);

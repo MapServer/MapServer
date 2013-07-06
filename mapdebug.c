@@ -99,7 +99,7 @@ debugInfoObj *msGetDebugInfoObj()
       new_link->errorfile = NULL;
       new_link->fp = NULL;
     } else
-      msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGetDebugInfoObj()", sizeof(debugInfoObj));
+      msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGetDebugInfoObj()", (unsigned int)sizeof(debugInfoObj));
 
     debuginfo_list = new_link;
   }

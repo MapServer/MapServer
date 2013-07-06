@@ -57,7 +57,7 @@ int msCGIWriteLog(mapservObj *mapserv, int show_error)
 
   if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath,
                                  mapserv->map->web.log),"a")) == NULL) {
-    msSetError(MS_IOERR, mapserv->map->web.log, "msCGIWriteLog()");
+    msSetError(MS_IOERR, "%s", "msCGIWriteLog()", mapserv->map->web.log);
     return(MS_FAILURE);
   }
 
@@ -1130,7 +1130,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv)
   } else {
     if(TEMPLATE_TYPE(mapserv->map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
       if(mapserv->sendheaders) {
-        msIO_setHeader("Content-Type",mapserv->map->web.browseformat); /* write MIME header */
+        msIO_setHeader("Content-Type","%s", mapserv->map->web.browseformat); /* write MIME header */
         msIO_sendHeaders();
       }
       if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, NULL) != MS_SUCCESS)
@@ -1488,7 +1488,7 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
     const char *attachment = msGetOutputFormatOption(mapserv->map->outputformat, "ATTACHMENT", NULL );
     if(attachment)
       msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
-    msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+    msIO_setHeader("Content-Type","%s", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
     msIO_sendHeaders();
   }
 
@@ -1511,7 +1511,7 @@ int msCGIDispatchLegendRequest(mapservObj *mapserv)
     legendTemplate = generateLegendTemplate(mapserv);
     if(legendTemplate) {
       if(mapserv->sendheaders) {
-        msIO_setHeader("Content-Type",mapserv->map->web.legendformat);
+        msIO_setHeader("Content-Type","%s",mapserv->map->web.legendformat);
         msIO_sendHeaders();
       }
       msIO_fwrite(legendTemplate, strlen(legendTemplate), 1, stdout);
@@ -1582,7 +1582,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
     return MS_FAILURE;
 
   if(mapserv->sendheaders) {
-    msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+    msIO_setHeader("Content-Type","%s",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
     msIO_sendHeaders();
   }
   /*

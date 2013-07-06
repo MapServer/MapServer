@@ -984,9 +984,7 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
     }
 
     if (createIconImage(iconFileName, symbol, symstyle) != MS_SUCCESS) {
-      char errMsg[512];
-      sprintf(errMsg, "Error creating icon file '%s'", iconFileName);
-      msSetError(MS_IOERR, errMsg, "KmlRenderer::lookupSymbolStyle()" );
+      msSetError(MS_IOERR, "Error creating icon file '%s'", "KmlRenderer::lookupSymbolStyle()", iconFileName);
       return NULL;
     }
 

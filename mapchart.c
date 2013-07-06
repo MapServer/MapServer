@@ -368,7 +368,7 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   styles = (styleObj**)malloc((numvalues)*sizeof(styleObj*));
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawPieChartLayer()",
-               __FILE__, __LINE__, numvalues*sizeof(styleObj*));
+               __FILE__, __LINE__, (unsigned int)(numvalues*sizeof(styleObj*)));
     free(values);
     return MS_FAILURE;
   }
@@ -450,7 +450,7 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   styles = (styleObj**)malloc(numvalues*sizeof(styleObj*));
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawVBarChartLayer()",
-               __FILE__, __LINE__, numvalues*sizeof(styleObj*));
+               __FILE__, __LINE__, (unsigned int)(numvalues*sizeof(styleObj*)));
     free(values);
     return MS_FAILURE;
   }
@@ -540,7 +540,7 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   styles = (styleObj**)malloc(numvalues*sizeof(styleObj*));
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawBarChartLayer()",
-               __FILE__, __LINE__, numvalues*sizeof(styleObj*));
+               __FILE__, __LINE__, (unsigned int)(numvalues*sizeof(styleObj*)));
     free(values);
     return MS_FAILURE;
   }
