@@ -1670,7 +1670,10 @@ int msINLINELayerIsOpen(layerObj *layer)
 msINLINELayerInfo *msINLINECreateLayerInfo(void)
 {
   msINLINELayerInfo *layerinfo = msSmallMalloc(sizeof(msINLINELayerInfo));
-  layerinfo->searchrect = (rectObj){-1.0,-1.0,-1.0,-1.0};
+  layerinfo->searchrect.minx = -1.0;
+  layerinfo->searchrect.miny = -1.0;
+  layerinfo->searchrect.maxx = -1.0;
+  layerinfo->searchrect.maxy = -1.0;
   layerinfo->is_relative = MS_FALSE;
   return layerinfo;  
 }
