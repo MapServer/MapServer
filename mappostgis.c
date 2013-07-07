@@ -1729,7 +1729,7 @@ char *msPostGISBuildSQLSRID(layerObj *layer)
     char *strSRIDTemplate = "find_srid('','%s','%s')";
     char *pos = strstr(layerinfo->fromsource, " ");
     if( layer->debug > 1 ) {
-      msDebug("msPostGISBuildSQLSRID: Building find_srid line.\n", strSRID);
+      msDebug("msPostGISBuildSQLSRID: Building find_srid line.\n");
     }
 
     if ( ! pos ) {
@@ -2532,7 +2532,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   /* Something went wrong. */
   if (!pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
     if ( layer->debug ) {
-      msDebug("Error (%s) executing query: %s", "msPostGISLayerWhichShapes()\n", PQerrorMessage(layerinfo->pgconn), strSQL);
+      msDebug("msPostGISLayerWhichShapes(): Error (%s) executing query: %s\n", PQerrorMessage(layerinfo->pgconn), strSQL);
     }
     msSetError(MS_QUERYERR, "Error executing query: %s ", "msPostGISLayerWhichShapes()", PQerrorMessage(layerinfo->pgconn));
     free(strSQL);
@@ -2713,7 +2713,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     /* Something went wrong. */
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
       if ( layer->debug ) {
-        msDebug("Error (%s) executing SQL: %s", "msPostGISLayerGetShape()\n", PQerrorMessage(layerinfo->pgconn), strSQL );
+        msDebug("msPostGISLayerGetShape(): Error (%s) executing SQL: %s\n", PQerrorMessage(layerinfo->pgconn), strSQL );
       }
       msSetError(MS_QUERYERR, "Error executing SQL: %s", "msPostGISLayerGetShape()", PQerrorMessage(layerinfo->pgconn));
 
@@ -2939,7 +2939,7 @@ int msPostGISLayerGetItems(layerObj *layer)
 
   if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
     if ( layer->debug ) {
-      msDebug("Error (%s) executing SQL: %s", "msPostGISLayerGetItems()\n", PQerrorMessage(layerinfo->pgconn), sql);
+      msDebug("msPostGISLayerGetItems(): Error (%s) executing SQL: %s\n", PQerrorMessage(layerinfo->pgconn), sql);
     }
     msSetError(MS_QUERYERR, "Error executing SQL: %s", "msPostGISLayerGetItems()", PQerrorMessage(layerinfo->pgconn));
     if (pgresult) {

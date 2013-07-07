@@ -616,7 +616,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
       iVersion = msOWSParseVersionString(tokens[i]);
 
       if (iVersion == -1) {
-        msSetError(MS_WFSERR, "Invalid version format.", "msWFSGetCapabilities()", tokens[i]);
+        msSetError(MS_WFSERR, "Invalid version format : %s.", "msWFSGetCapabilities()", tokens[i]);
         msFreeCharArray(tokens, j);
         return msWFSException(map, "acceptversions", "VersionNegotiationFailed",wmtver);
       }
@@ -1541,7 +1541,7 @@ static int msWFSGetFeature_GMLPostfix( mapObj *map,
     msIO_printf("</wfs:FeatureCollection>\n\n");
   else {
     if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.1",3) == 0)
-      msIO_printf("</wfs:FeatureCollection>\n\n", gmlinfo->user_namespace_prefix, gmlinfo->collection_name);
+      msIO_printf("</wfs:FeatureCollection>\n\n");
     else
       msIO_printf("</%s:%s>\n\n", gmlinfo->user_namespace_prefix, gmlinfo->collection_name);
   }
@@ -2126,7 +2126,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
         ms_error = msGetErrorObj();
 
         if(ms_error->code != MS_NOTFOUND) {
-          msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()", pszFilter);
+          msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()");
           return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
         }
       }

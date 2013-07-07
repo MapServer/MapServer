@@ -196,7 +196,7 @@ static void msOGRCleanupDS( const char *datasource_name )
 /*                          msOGRSetPoints()                            */
 /************************************************************************/
 
-static int msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput)
+static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput)
 {
     int i;
     if( bWant2DOutput )
