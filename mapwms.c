@@ -766,7 +766,7 @@ int msWMSApplyDimension(layerObj *lp, int version, char *dimensionname, char *va
       }
     } else
       msSetError(MS_WMSERR, "Dimension %s : invalid settings. Make sure that item, units and extent are set.", "msWMSApplyDimension",
-                 dimension, currentvalue);
+                 dimension);
 
     msFree(dimensionitemname);
     msFree(dimensionextentname);

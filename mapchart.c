@@ -323,7 +323,7 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
 }
 
 /* clean up the class added temporarily */
-int pieLayerCleanupDynamicDiameter(layerObj *layer)
+static void pieLayerCleanupDynamicDiameter(layerObj *layer)
 {
   if( layer->numclasses > 0 && EQUALN(layer->class[layer->numclasses - 1]->name, "__MS_SIZE_ATTRIBUTE_", 20) ) {
     classObj *c=msRemoveClass(layer, layer->numclasses - 1);

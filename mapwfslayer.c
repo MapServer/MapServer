@@ -68,7 +68,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   rectObj bbox;
   const char *pszTmp;
   int nLength, i = 0;
-  char *pszVersion, *pszTypeName, *pszGeometryName = NULL;
+  char *pszVersion, *pszTypeName;
 
   if (!map || !lp || !bbox_ret)
     return NULL;

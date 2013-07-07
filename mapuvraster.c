@@ -435,7 +435,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   if (msDrawRasterLayerLow(&map_tmp, layer, image_tmp, NULL ) == MS_FAILURE) {
-    msSetError(MS_MISCERR, "Unable to draw raster data.", NULL, "msUVRASTERLayerWhichShapes()" );
+    msSetError(MS_MISCERR, "Unable to draw raster data.", "msUVRASTERLayerWhichShapes()" );
     return MS_FAILURE;
   }
 

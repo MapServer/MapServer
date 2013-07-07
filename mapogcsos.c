@@ -1164,7 +1164,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
       iVersion = msOWSParseVersionString(tokens[i]);
 
       if (iVersion == -1) {
-        msSetError(MS_SOSERR, "Invalid version format.", "msSOSGetCapabilities()", tokens[i]);
+        msSetError(MS_SOSERR, "Invalid version format : %s.", "msSOSGetCapabilities()", tokens[i]);
         msFreeCharArray(tokens, j);
         return msSOSException(map, "acceptversions", "VersionNegotiationFailed");
       }

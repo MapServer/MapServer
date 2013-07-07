@@ -546,7 +546,7 @@ static int msWCSParseResolutionString20(char *string,
   number = strchr(string, '(');
 
   if(NULL == number) {
-    msSetError(MS_WCSERR, "Invalid resolution parameter value.",
+    msSetError(MS_WCSERR, "Invalid resolution parameter value : %s.",
                "msWCSParseSize20()", string);
     return MS_FAILURE;
   }
@@ -567,8 +567,8 @@ static int msWCSParseResolutionString20(char *string,
 
   if(msStringParseDouble(number, outResolution) != MS_SUCCESS) {
     *outResolution = MS_WCS20_UNBOUNDED;
-    msSetError(MS_WCSERR, "Invalid resolution parameter value.",
-               "msWCSParseSize20()", string);
+    msSetError(MS_WCSERR, "Invalid resolution parameter value : %s.",
+               "msWCSParseSize20()", number);
     return MS_FAILURE;
   }
 
@@ -807,7 +807,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
       if(NULL == (axisName = (char *) xmlGetProp(child, BAD_CAST "dimension"))) {
         msSetError(MS_WCSERR, "Attribute 'dimension' is missing "
                    "in element 'Resolution'.",
-                   "msWCSParseRequest20_XMLGetCoverage()", (char *)child->name);
+                   "msWCSParseRequest20_XMLGetCoverage()");
         return MS_FAILURE;
       }
 
