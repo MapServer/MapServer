@@ -627,34 +627,43 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
 #else /* defined USE_GDAL or USE_OGR */
 
   OGRSpatialReferenceH hSRS;
-  char *pszWKT=NULL, *pszProj4;
-  int  nLength = 0, i;
+  char *pszWKT=NULL, *pszProj4, *pszInitEpsg=NULL;
+  int  nLength = 0, i, nEpsgCode=-1;
   OGRErr eErr;
 
   if( projection->proj == NULL )
     return NULL;
 
-  /* -------------------------------------------------------------------- */
-  /*      Form arguments into a full Proj.4 definition string.            */
-  /* -------------------------------------------------------------------- */
-  for( i = 0; i < projection->numargs; i++ )
-    nLength += strlen(projection->args[i]) + 2;
-
-  pszProj4 = (char *) CPLMalloc(nLength+2);
-  pszProj4[0] = '\0';
-
-  for( i = 0; i < projection->numargs; i++ ) {
-    strcat( pszProj4, "+" );
-    strcat( pszProj4, projection->args[i] );
-    strcat( pszProj4, " " );
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      Ingest the string into OGRSpatialReference.                     */
-  /* -------------------------------------------------------------------- */
   hSRS = OSRNewSpatialReference( NULL );
-  eErr =  OSRImportFromProj4( hSRS, pszProj4 );
-  CPLFree( pszProj4 );
+  /* -------------------------------------------------------------------- */
+  /*      Look for an EPSG-like projection argument                       */
+  /* -------------------------------------------------------------------- */
+  if( projection->numargs == 1 &&
+        (pszInitEpsg = strcasestr(projection->args[0],"init=epsg:"))) {
+     int nEpsgCode = atoi(pszInitEpsg + strlen("init=epsg:"));
+     eErr = OSRImportFromEPSG(hSRS, nEpsgCode);
+  } else {
+    /* -------------------------------------------------------------------- */
+    /*      Form arguments into a full Proj.4 definition string.            */
+    /* -------------------------------------------------------------------- */
+    for( i = 0; i < projection->numargs; i++ )
+      nLength += strlen(projection->args[i]) + 2;
+
+    pszProj4 = (char *) CPLMalloc(nLength+2);
+    pszProj4[0] = '\0';
+
+    for( i = 0; i < projection->numargs; i++ ) {
+      strcat( pszProj4, "+" );
+      strcat( pszProj4, projection->args[i] );
+      strcat( pszProj4, " " );
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Ingest the string into OGRSpatialReference.                     */
+    /* -------------------------------------------------------------------- */
+    eErr =  OSRImportFromProj4( hSRS, pszProj4 );
+    CPLFree( pszProj4 );
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Export as a WKT string.                                         */
