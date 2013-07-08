@@ -653,7 +653,10 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
   /*      Ingest the string into OGRSpatialReference.                     */
   /* -------------------------------------------------------------------- */
   hSRS = OSRNewSpatialReference( NULL );
-  eErr =  OSRImportFromProj4( hSRS, pszProj4 );
+  if( EQUALN(pszProj4, "+init=EPSG:", 11) )
+    eErr =  OSRImportFromEPSG( hSRS, atoi(pszProj4 + 11) );
+  else
+    eErr =  OSRImportFromProj4( hSRS, pszProj4 );
   CPLFree( pszProj4 );
 
   /* -------------------------------------------------------------------- */
