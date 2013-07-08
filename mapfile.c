@@ -3838,6 +3838,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->tileitem = msStrdup("location");
   layer->tileitemindex = -1;
   layer->tileindex = NULL;
+  layer->tilesrs = NULL;
 
   layer->bandsitem = NULL;
   layer->bandsitemindex = -1;
@@ -3943,6 +3944,7 @@ int freeLayer(layerObj *layer)
   msFree(layer->template);
   msFree(layer->tileindex);
   msFree(layer->tileitem);
+  msFree(layer->tilesrs);
   msFree(layer->bandsitem);
   msFree(layer->plugin_library);
   msFree(layer->plugin_library_original);
@@ -4517,6 +4519,17 @@ int loadLayer(layerObj *layer, mapObj *map)
           }
         }
         break;
+      case(TILESRS):
+        if(getString(&layer->tilesrs) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
+        if(msyysource == MS_URL_TOKENS) {
+          if(msValidateParameter(layer->tilesrs, msLookupHashTable(&(layer->validation), "tilesrs"), msLookupHashTable(&(map->web.validation), "tilesrs"), NULL, NULL) != MS_SUCCESS) {
+            msSetError(MS_MISCERR, "URL-based TILESRS configuration failed pattern validation." , "loadLayer()");
+            msFree(layer->tilesrs);
+            layer->tilesrs=NULL;
+            return(-1);
+          }
+        }
+        break;
       case(TOLERANCE):
         if(getDouble(&(layer->tolerance)) == -1) return(-1);
         break;
@@ -4640,6 +4653,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "TEMPLATE", NULL, layer->template);
   writeString(stream, indent, "TILEINDEX", NULL, layer->tileindex);
   writeString(stream, indent, "TILEITEM", NULL, layer->tileitem);
+  writeString(stream, indent, "TILESRS", NULL, layer->tilesrs);
   writeNumber(stream, indent, "TOLERANCE", -1, layer->tolerance);
   writeKeyword(stream, indent, "TOLERANCEUNITS", layer->toleranceunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");

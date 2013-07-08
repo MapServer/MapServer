@@ -1546,6 +1546,7 @@ extern "C" {
 
     char *tileitem;
     char *tileindex; /* layer index file for tiling support */
+    char *tilesrs;
 
 #ifndef SWIG
     int tileitemindex;
