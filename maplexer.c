@@ -5428,7 +5428,7 @@ int msyywrap() /* override */
 }
 
 int msyyerror(char *s) {
-  msSetError(MS_PARSEERR, s, "msyyparse()");
+  msSetError(MS_PARSEERR, "%s", "msyyparse()", s);
   return(0);
 }
 
