@@ -315,5 +315,6 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 
+#define TILESRS 1272
 
 #endif /* MAPFILE_H */

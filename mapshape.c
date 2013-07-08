@@ -38,7 +38,10 @@
 #include <assert.h>
 #include "mapserver.h"
 
-
+#if defined(USE_GDAL) || defined(USE_OGR)
+#include <cpl_conv.h>
+#include <ogr_srs_api.h>
+#endif
 
 /* Only use this macro on 32-bit integers! */
 #define SWAP_FOUR_BYTES(data) \
@@ -1912,6 +1915,13 @@ int msTiledSHPOpenFile(layerObj *layer)
 
   if((layer->tileitemindex = msDBFGetItemIndex(tSHP->tileshpfile->hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
 
+  if( layer->tilesrs != NULL ) {
+    msSetError(MS_OGRERR,
+                "TILESRS not supported in vector layers.",
+                "msTiledSHPOpenFile()");
+    return MS_FAILURE;
+  }
+
   msTileIndexAbsoluteDir(tiFileAbsDir, layer);
 
   /* position the source at the FIRST tile to use as a template, this is so the functions that fill the iteminfo array have something to work from */
@@ -2499,6 +2509,55 @@ int msSHPLayerOpen(layerObj *layer)
       free(shpfile);
       return MS_FAILURE;
     }
+  }
+  
+  if (layer->projection.numargs > 0 &&
+      EQUAL(layer->projection.args[0], "auto"))
+  {
+#if defined(USE_GDAL) || defined(USE_OGR)
+    const char* pszPRJFilename = CPLResetExtension(szPath, "prj");
+    int bOK = MS_FALSE;
+    FILE* fp = fopen(pszPRJFilename, "rb");
+    if( fp != NULL )
+    {
+        char szPRJ[2048];
+        OGRSpatialReferenceH hSRS;
+        int nRead;
+
+        nRead = (int)fread(szPRJ, 1, sizeof(szPRJ) - 1, fp);
+        szPRJ[nRead] = '\0';
+        hSRS = OSRNewSpatialReference(szPRJ);
+        if( hSRS != NULL )
+        {
+            if( OSRMorphFromESRI( hSRS ) == OGRERR_NONE )
+            {
+                char* pszWKT = NULL;
+                if( OSRExportToWkt( hSRS, &pszWKT ) == OGRERR_NONE )
+                {
+                    if( msOGCWKT2ProjectionObj(pszWKT, &(layer->projection),
+                                               layer->debug ) == MS_SUCCESS )
+                    {
+                        bOK = MS_TRUE;
+                    }
+                }
+                CPLFree(pszWKT);
+            }
+            OSRDestroySpatialReference(hSRS);
+        }
+    }
+    fclose(fp);
+
+    if( bOK != MS_TRUE )
+    {
+        if( layer->debug || (layer->map && layer->map->debug) ) {
+            msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'.\n", szPath, layer->name );
+        }
+    }
+#else /* !(defined(USE_GDAL) || defined(USE_OGR)) */
+    if( layer->debug || (layer->map && layer->map->debug) ) {
+        msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'. GDAL or OGR support needed\n", szPath, layer->name );
+    }
+#endif /* defined(USE_GDAL) || defined(USE_OGR) */
   }
 
   return MS_SUCCESS;
