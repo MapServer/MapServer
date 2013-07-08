@@ -173,14 +173,14 @@ extern "C" {
 #define MS_CHECK_ALLOC(var, size, retval)     \
     if (!var) {   \
         msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", __FUNCTION__, \
-                   __FILE__, __LINE__, size);  \
+                   __FILE__, __LINE__, (unsigned int)(size));  \
         return retval;                         \
     }
 
 #define MS_CHECK_ALLOC_NO_RET(var, size)                                   \
     if (!var) {                                                       \
         msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", __FUNCTION__, \
-                   __FILE__, __LINE__, size);                           \
+                   __FILE__, __LINE__, (unsigned int)(size));                           \
         return;                                                         \
     }
 

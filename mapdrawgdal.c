@@ -1284,7 +1284,7 @@ static int ApplyLUT( int iColorIndex, layerObj *layer,
       msSetError(MS_IOERR,
                  "LUT definition from file %s longer than maximum buffer size (%d bytes).",
                  "drawGDAL()",
-                 path, sizeof(lut_def_fromfile) );
+                 path, (int)sizeof(lut_def_fromfile) );
       return -1;
     }
 
@@ -1932,7 +1932,7 @@ msDrawRasterLayerGDAL_RawMode(
   f_nodatas = (float *) calloc(sizeof(float),band_count);
   if (f_nodatas == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawRasterLayerGDAL_RawMode()",
-               __FILE__, __LINE__, sizeof(float)*band_count);
+               __FILE__, __LINE__, (unsigned int)(sizeof(float)*band_count));
     free( band_list );
     return -1;
   }
@@ -2463,7 +2463,7 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
                     "msGetGDALBandList()",
                     papszItems[i], GDALGetRasterCount(hDS) );
         CSLDestroy( papszItems );
-        CPLFree( band_list );
+        free( band_list );
         return NULL;
       }
     }

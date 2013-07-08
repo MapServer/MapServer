@@ -46,7 +46,7 @@
 #ifdef USE_OGR
 
 /************************************************************************/
-/*                       msInitOGROutputFormat()                        */
+/*                   msInitDefaultOGROutputFormat()                     */
 /************************************************************************/
 
 int msInitDefaultOGROutputFormat( outputFormatObj *format )
@@ -64,13 +64,13 @@ int msInitDefaultOGROutputFormat( outputFormatObj *format )
   hDriver = OGRGetDriverByName( format->driver+4 );
   if( hDriver == NULL ) {
     msSetError( MS_MISCERR, "No OGR driver named `%s' available.",
-                "msInitOGROutputFormat()", format->driver+4 );
+                "msInitDefaultOGROutputFormat()", format->driver+4 );
     return MS_FAILURE;
   }
 
   if( !OGR_Dr_TestCapability( hDriver, ODrCCreateDataSource ) ) {
     msSetError( MS_MISCERR, "OGR `%s' driver does not support output.",
-                "msInitOGROutputFormat()", format->driver+4 );
+                "msInitDefaultOGROutputFormat()", format->driver+4 );
     return MS_FAILURE;
   }
 
@@ -193,6 +193,36 @@ static void msOGRCleanupDS( const char *datasource_name )
 }
 
 /************************************************************************/
+/*                          msOGRSetPoints()                            */
+/************************************************************************/
+
+static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput)
+{
+    int i;
+    if( bWant2DOutput )
+    {
+      for( i = 0; i < line->numpoints; i++ ) {
+        OGR_G_SetPoint_2D( hGeom, i,
+                           line->point[i].x,
+                           line->point[i].y );
+      }
+    }
+    else {
+      for( i = 0; i < line->numpoints; i++ ) {
+        OGR_G_SetPoint( hGeom, i,
+                        line->point[i].x,
+                        line->point[i].y,
+#ifdef USE_POINT_Z_M
+                        line->point[i].z
+#else
+                        0.0
+#endif
+                      );
+      }
+    }
+}
+
+/************************************************************************/
 /*                          msOGRWriteShape()                           */
 /************************************************************************/
 
@@ -204,11 +234,14 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   OGRFeatureH hFeat;
   OGRErr eErr;
   int i, out_field;
-  OGRwkbGeometryType eLayerGType, eFeatureGType = wkbUnknown;
+  OGRwkbGeometryType eLayerGType, eFlattenLayerGType;
   OGRFeatureDefnH hLayerDefn;
+  int bWant2DOutput;
 
   hLayerDefn = OGR_L_GetLayerDefn( hOGRLayer );
   eLayerGType = OGR_FD_GetGeomType(hLayerDefn);
+  eFlattenLayerGType = wkbFlatten(eLayerGType);
+  bWant2DOutput = (eLayerGType == eFlattenLayerGType);
 
   /* -------------------------------------------------------------------- */
   /*      Transform point geometry.                                       */
@@ -236,15 +269,22 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
       }
 
       hGeom = OGR_G_CreateGeometry( wkbPoint );
-      OGR_G_SetPoint( hGeom, 0,
-                      shape->line[j].point[0].x,
-                      shape->line[j].point[0].y,
+      if( bWant2DOutput ) {
+        OGR_G_SetPoint_2D( hGeom, 0,
+                           shape->line[j].point[0].x,
+                           shape->line[j].point[0].y );
+      }
+      else {
+        OGR_G_SetPoint( hGeom, 0,
+                        shape->line[j].point[0].x,
+                        shape->line[j].point[0].y,
 #ifdef USE_POINT_Z_M
-                      shape->line[j].point[0].z
+                        shape->line[j].point[0].z
 #else
-                      0.0
+                        0.0
 #endif
-                    );
+                        );
+      }
 
       if( hMP != NULL ) {
         OGR_G_AddGeometryDirectly( hMP, hGeom );
@@ -273,17 +313,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     for( j = 0; j < shape->numlines; j++ ) {
       hGeom = OGR_G_CreateGeometry( wkbLineString );
 
-      for( i = 0; i < shape->line[j].numpoints; i++ ) {
-        OGR_G_SetPoint( hGeom, i,
-                        shape->line[j].point[i].x,
-                        shape->line[j].point[i].y,
-#ifdef USE_POINT_Z_M
-                        shape->line[j].point[i].z
-#else
-                        0.0
-#endif
-                      );
-      }
+      msOGRSetPoints( hGeom, &(shape->line[j]), bWant2DOutput);
 
       if( hML != NULL ) {
         OGR_G_AddGeometryDirectly( hML, hGeom );
@@ -323,17 +353,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 
       hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
-      for( i = 0; i < shape->line[iOuter].numpoints; i++ ) {
-        OGR_G_SetPoint( hRing, i,
-                        shape->line[iOuter].point[i].x,
-                        shape->line[iOuter].point[i].y,
-#ifdef USE_POINT_Z_M
-                        shape->line[iOuter].point[i].z
-#else
-                        0.0
-#endif
-                      );
-      }
+      msOGRSetPoints( hRing, &(shape->line[iOuter]), bWant2DOutput);
 
       OGR_G_AddGeometryDirectly( hGeom, hRing );
 
@@ -347,17 +367,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 
         hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
-        for( i = 0; i < shape->line[iRing].numpoints; i++ ) {
-          OGR_G_SetPoint( hRing, i,
-                          shape->line[iRing].point[i].x,
-                          shape->line[iRing].point[i].y,
-#ifdef USE_POINT_Z_M
-                          shape->line[iRing].point[i].z
-#else
-                          0.0
-#endif
-                        );
-        }
+        msOGRSetPoints( hRing, &(shape->line[iRing]), bWant2DOutput);
 
         OGR_G_AddGeometryDirectly( hGeom, hRing );
       }
@@ -381,49 +391,39 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   /*      Consider trying to force the geometry to a new type if it       */
   /*      doesn't match the layer.                                        */
   /* -------------------------------------------------------------------- */
-  eLayerGType =
-    wkbFlatten(OGR_FD_GetGeomType(hLayerDefn));
-
-  if( hGeom != NULL )
-    eFeatureGType = wkbFlatten(OGR_G_GetGeometryType( hGeom ));
-
 #if defined(GDAL_VERSION_NUM) && (GDAL_VERSION_NUM >= 1800)
+  if( hGeom != NULL ) {
+    OGRwkbGeometryType eFlattenFeatureGType =
+        wkbFlatten(OGR_G_GetGeometryType( hGeom ));
 
-  if( hGeom != NULL
-      && eLayerGType == wkbPolygon
-      && eFeatureGType != eLayerGType )
-    hGeom = OGR_G_ForceToPolygon( hGeom );
+    if( eFlattenFeatureGType != eFlattenLayerGType ) {
+      if( eFlattenLayerGType == wkbPolygon )
+        hGeom = OGR_G_ForceToPolygon( hGeom );
 
-  else if( hGeom != NULL
-           && eLayerGType == wkbMultiPolygon
-           && eFeatureGType != eLayerGType )
-    hGeom = OGR_G_ForceToMultiPolygon( hGeom );
+      else if( eFlattenLayerGType == wkbMultiPolygon )
+        hGeom = OGR_G_ForceToMultiPolygon( hGeom );
 
-  else if( hGeom != NULL
-           && eLayerGType == wkbMultiPoint
-           && eFeatureGType != eLayerGType )
-    hGeom = OGR_G_ForceToMultiPoint( hGeom );
+      else if( eFlattenLayerGType == wkbMultiPoint )
+        hGeom = OGR_G_ForceToMultiPoint( hGeom );
 
-  else if( hGeom != NULL
-           && eLayerGType == wkbMultiLineString
-           && eFeatureGType != eLayerGType )
-    hGeom = OGR_G_ForceToMultiLineString( hGeom );
-
+      else if( eFlattenLayerGType == wkbMultiLineString )
+        hGeom = OGR_G_ForceToMultiLineString( hGeom );
+    }
+  }
 #endif /* GDAL/OGR 1.8 or later */
 
   /* -------------------------------------------------------------------- */
   /*      Consider flattening the geometry to 2D if we want 2D            */
   /*      output.                                                         */
+  /*      Note: this shouldn't be called in recent OGR versions where     */
+  /*      OGR_G_SetPoint_2D is properly honoured.                         */
   /* -------------------------------------------------------------------- */
-  eLayerGType = OGR_FD_GetGeomType(hLayerDefn);
 
-  if( hGeom != NULL )
-    eFeatureGType = OGR_G_GetGeometryType( hGeom );
-
-  if( eLayerGType == wkbFlatten(eLayerGType)
-      && hGeom != NULL
-      && eFeatureGType != wkbFlatten(eFeatureGType) )
-    OGR_G_FlattenTo2D( hGeom );
+  if( bWant2DOutput && hGeom != NULL ) {
+    OGRwkbGeometryType eFeatureGType = OGR_G_GetGeometryType( hGeom );
+    if( eFeatureGType != wkbFlatten(eFeatureGType) )
+      OGR_G_FlattenTo2D( hGeom );
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Create the feature, and attach the geometry.                    */
@@ -605,7 +605,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   if( EQUAL(storage,"stream") ) {
     if( sendheaders && format->mimetype ) {
-      msIO_setHeader("Content-Type",format->mimetype);
+      msIO_setHeader("Content-Type","%s",format->mimetype);
       msIO_sendHeaders();
     } else
       msIO_fprintf( stdout, "%c", 10 );
@@ -925,7 +925,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       msIO_setHeader("Content-Disposition","attachment; filename=%s",
                      CPLGetFilename( file_list[0] ) );
       if( format->mimetype )
-        msIO_setHeader("Content-Type",format->mimetype);
+        msIO_setHeader("Content-Type","%s",format->mimetype);
       msIO_sendHeaders();
     } else
       msIO_fprintf( stdout, "%c", 10 );

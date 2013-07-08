@@ -468,7 +468,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   if (papszOptions == NULL) {
     msReleaseLock( TLOCK_GDAL );
     msSetError( MS_MEMERR, "Out of memory allocating %u bytes.\n", "msSaveImageGDAL()",
-                sizeof(char *)*(format->numformatoptions+1));
+                (unsigned int)(sizeof(char *)*(format->numformatoptions+1)));
     return MS_FAILURE;
   }
 
@@ -504,7 +504,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   if ( bUseXmp == MS_TRUE ) {
     if( msXmpWrite(map, filename) == MS_FAILURE ) {
       /* Something bad happened. */
-      msSetError( MS_MISCERR, "XMP write to %s failed.\n%s",
+      msSetError( MS_MISCERR, "XMP write to %s failed.\n",
                   "msSaveImageGDAL()", filename);
       return MS_FAILURE;
     }

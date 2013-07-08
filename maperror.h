@@ -94,6 +94,14 @@ extern "C" {
 #define  MS_DLL_EXPORT
 #endif
 
+#ifndef MS_PRINT_FUNC_FORMAT
+#if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
+#define MS_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#else
+#define MS_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#endif
+#endif
+
   typedef struct errorObj {
     int code;
     char routine[ROUTINELENGTH];
@@ -114,7 +122,7 @@ extern "C" {
   MS_DLL_EXPORT char *msGetErrorString(char *delimiter);
 
 #ifndef SWIG
-  MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...);
+  MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...) MS_PRINT_FUNC_FORMAT(2,4) ;
   MS_DLL_EXPORT void msWriteError(FILE *stream);
   MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
   MS_DLL_EXPORT char *msGetErrorCodeString(int code);
@@ -157,7 +165,7 @@ extern "C" {
   } debugInfoObj;
 
 
-  MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
+  MS_DLL_EXPORT void msDebug( const char * pszFormat, ... ) MS_PRINT_FUNC_FORMAT(1,2) ;
   MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath);
   MS_DLL_EXPORT void msCloseErrorFile( void );
   MS_DLL_EXPORT const char *msGetErrorFile( void );

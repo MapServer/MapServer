@@ -2108,7 +2108,7 @@ int msCheckParentPointer(void* p, char *objname)
     } else {
       msg="A required parent object is null";
     }
-    msSetError(MS_NULLPARENTERR, msg, "");
+    msSetError(MS_NULLPARENTERR, "%s", "", msg);
     return MS_FAILURE;
   }
   return MS_SUCCESS;

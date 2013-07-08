@@ -47,7 +47,7 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
   lineObj *line = (lineObj*)calloc(1,sizeof(lineObj));
   if (!line) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
-               __FILE__, __LINE__, sizeof(lineObj));
+               __FILE__, __LINE__, (unsigned int)sizeof(lineObj));
     free(shape);
     return NULL;
   }
@@ -56,7 +56,7 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
   line->point = (pointObj*)calloc(allocated_size,sizeof(pointObj));
   if (!line->point) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
-               __FILE__, __LINE__, allocated_size*sizeof(pointObj));
+               __FILE__, __LINE__, (unsigned int)(allocated_size*sizeof(pointObj)));
     free(line);
     free(shape);
     return NULL;
@@ -78,7 +78,7 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
       line->point = (pointObj*)realloc(line->point, allocated_size * sizeof(pointObj));
       if (!line->point) {
         msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
-                   __FILE__, __LINE__, allocated_size * sizeof(pointObj));
+                   __FILE__, __LINE__, (unsigned int)(allocated_size * sizeof(pointObj)));
         free(line);
         free(shape);
         return NULL;
@@ -98,7 +98,7 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
         line->point = (pointObj*)realloc(line->point, allocated_size * sizeof(pointObj));
         if (!line->point) {
           msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
-                     __FILE__, __LINE__, allocated_size * sizeof(pointObj));
+                     __FILE__, __LINE__, (unsigned int)(allocated_size * sizeof(pointObj)));
           free(line);
           free(shape);
           return NULL;
@@ -116,7 +116,7 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
       line->point = (pointObj*)realloc(line->point, allocated_size * sizeof(pointObj));
       if (!line->point) {
         msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
-                   __FILE__, __LINE__, allocated_size * sizeof(pointObj));
+                   __FILE__, __LINE__, (unsigned int)(allocated_size * sizeof(pointObj)));
         free(line);
         free(shape);
         return NULL;

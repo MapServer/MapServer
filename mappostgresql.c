@@ -366,7 +366,7 @@ int msPOSTGRESQLJoinNext(joinObj *join)
     return(MS_DONE);
   }
   if(joininfo->layer_debug) {
-    msDebug("msPOSTGRESQLJoinNext(): fetching row %d.\n",
+    msDebug("msPOSTGRESQLJoinNext(): fetching row %ld.\n",
             joininfo->row_num);
   }
 

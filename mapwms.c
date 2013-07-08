@@ -766,7 +766,7 @@ int msWMSApplyDimension(layerObj *lp, int version, char *dimensionname, char *va
       }
     } else
       msSetError(MS_WMSERR, "Dimension %s : invalid settings. Make sure that item, units and extent are set.", "msWMSApplyDimension",
-                 dimension, currentvalue);
+                 dimension);
 
     msFree(dimensionitemname);
     msFree(dimensionextentname);
@@ -3721,7 +3721,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   }
 
   if (strcasecmp(map->imagetype, "application/openlayers")!=0) {
-    msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(map->outputformat));
+    msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(map->outputformat));
     msIO_sendHeaders();
     if (msSaveImage(map, img, NULL) != MS_SUCCESS) {
       msFreeImage(img);
@@ -4642,7 +4642,7 @@ this request. Check wms/ows_enable_request settings.",
   if (img == NULL)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
 
-  msIO_setHeader("Content-Type",MS_IMAGE_MIME_TYPE(map->outputformat));
+  msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(map->outputformat));
   msIO_sendHeaders();
   if (msSaveImage(map, img, NULL) != MS_SUCCESS)
     return msWMSException(map, nVersion, NULL, wms_exception_format);

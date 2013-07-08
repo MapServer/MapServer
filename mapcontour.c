@@ -415,7 +415,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
   CPLPrintPointer(pointer, clinfo->buffer, sizeof(pointer));
   sprintf(memDSPointer,"MEM:::DATAPOINTER=%s,PIXELS=%d,LINES=%d,BANDS=1,DATATYPE=Float64",
           pointer, dst_xsize, dst_ysize);
-  clinfo->hDS = GDALOpen(memDSPointer, GF_Read);
+  clinfo->hDS = GDALOpen(memDSPointer,  GA_ReadOnly);
   if (clinfo->hDS == NULL) {
     msSetError(MS_IMGERR,
                "Unable to open GDAL Memory dataset.",
@@ -584,6 +584,12 @@ static int msContourLayerGenerateContour(layerObj *layer)
                                                     elevItem ),
                               NULL, NULL );
 
+  if (eErr != CE_None) {
+    msSetError( MS_IOERR, "GDALContourGenerate() failed: %s",
+                "msContourLayerGenerateContour()", CPLGetLastErrorMsg() );
+    return MS_FAILURE;
+  }
+  
   msConnPoolRegister(&clinfo->ogrLayer, clinfo->hOGRDS, msContourOGRCloseConnection);
 
   return MS_SUCCESS;
