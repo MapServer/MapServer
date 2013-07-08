@@ -956,6 +956,8 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   MS_COPYSTRING(dst->tileitem, src->tileitem);
   MS_COPYSTELEM(tileitemindex);
 
+  MS_COPYSTRING(dst->tilesrs, src->tilesrs);
+
   MS_COPYSTRING(dst->tileindex, src->tileindex);
 
   return_value = msCopyProjection(&(dst->projection),&(src->projection));

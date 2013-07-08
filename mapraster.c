@@ -46,6 +46,7 @@ extern parseResultObj yypresult; /* result of parsing, true/false */
 #include "gdal.h"
 #include "cpl_string.h"
 #endif
+#include "mapraster.h"
 
 #define MAXCOLORS 256
 #define BUFLEN 1024
@@ -311,6 +312,346 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
 
 #endif
 
+
+#if defined(USE_GDAL)
+
+/************************************************************************/
+/*                      msRasterSetupTileLayer()                        */
+/*                                                                      */
+/*      Setup the tile layer.                                           */
+/************************************************************************/
+
+int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
+                               rectObj* psearchrect,
+                               int is_query,
+                               int* ptilelayerindex, /* output */
+                               int* ptileitemindex, /* output */
+                               int* ptilesrsindex, /* output */
+                               layerObj **ptlp  /* output */ )
+{
+    int i;
+    char* requested_fields;
+    int status;
+    layerObj* tlp = NULL;
+
+    *ptilelayerindex = msGetLayerIndex(layer->map, layer->tileindex);
+    if(*ptilelayerindex == -1) { /* the tileindex references a file, not a layer */
+
+      /* so we create a temporary layer */
+      tlp = (layerObj *) malloc(sizeof(layerObj));
+      MS_CHECK_ALLOC(tlp, sizeof(layerObj), MS_FAILURE);
+
+      initLayer(tlp, map);
+      *ptlp = tlp;
+
+      /* set a few parameters for a very basic shapefile-based layer */
+      tlp->name = msStrdup("TILE");
+      tlp->type = MS_LAYER_TILEINDEX;
+      tlp->data = msStrdup(layer->tileindex);
+
+      if( is_query )
+      {
+        tlp->map = map;  /*needed when scaletokens are applied, to extract current map scale */
+        for(i = 0; i < layer->numscaletokens; i++) {
+          if(msGrowLayerScaletokens(tlp) == NULL) {
+            return MS_FAILURE;
+          }
+          initScaleToken(&tlp->scaletokens[i]);
+          msCopyScaleToken(&layer->scaletokens[i],&tlp->scaletokens[i]);
+          tlp->numscaletokens++;
+        }
+      }
+
+      if (layer->projection.numargs > 0 &&
+        EQUAL(layer->projection.args[0], "auto"))
+      {
+          tlp->projection.numargs = 1;
+          tlp->projection.args[0] = msStrdup("auto");
+      }
+
+      if (layer->filteritem)
+        tlp->filteritem = msStrdup(layer->filteritem);
+      if (layer->filter.string) {
+        if (layer->filter.type == MS_EXPRESSION) {
+          char* pszTmp =
+            (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
+          sprintf(pszTmp,"(%s)",layer->filter.string);
+          msLoadExpressionString(&tlp->filter, pszTmp);
+          free(pszTmp);
+        } else if (layer->filter.type == MS_REGEX ||
+                   layer->filter.type == MS_IREGEX) {
+          char* pszTmp =
+            (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
+          sprintf(pszTmp,"/%s/",layer->filter.string);
+          msLoadExpressionString(&tlp->filter, pszTmp);
+          free(pszTmp);
+        } else
+          msLoadExpressionString(&tlp->filter, layer->filter.string);
+
+        tlp->filter.type = layer->filter.type;
+      }
+
+    } else {
+      if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+        return MS_FAILURE;
+      tlp = (GET_LAYER(layer->map, *ptilelayerindex));
+      *ptlp = tlp;
+    }
+    status = msLayerOpen(tlp);
+    if(status != MS_SUCCESS) {
+      return status;
+    }
+
+    /* fetch tileitem and tilesrs fields */
+    requested_fields = (char*) msSmallMalloc(sizeof(char)*(strlen(layer->tileitem)+1+
+                                    (layer->tilesrs ? strlen(layer->tilesrs) : 0) + 1));
+    if( layer->tilesrs != NULL )
+        sprintf(requested_fields, "%s,%s", layer->tileitem, layer->tilesrs);
+    else
+        strcpy(requested_fields, layer->tileitem);
+    status = msLayerWhichItems(tlp, MS_FALSE, requested_fields);
+    msFree(requested_fields);
+    if(status != MS_SUCCESS) {
+      return status;
+    }
+
+    /* get the tileitem and tilesrs index */
+    for(i=0; i<tlp->numitems; i++) {
+      if(strcasecmp(tlp->items[i], layer->tileitem) == 0) {
+        *ptileitemindex = i;
+      }
+      if(layer->tilesrs != NULL &&
+         strcasecmp(tlp->items[i], layer->tilesrs) == 0) {
+        *ptilesrsindex = i;
+      }
+    }
+    if(*ptileitemindex < 0) { /* didn't find it */
+      msSetError(MS_MEMERR,
+                 "Could not find attribute %s in tileindex.",
+                 "msDrawRasterLayerLow()",
+                 layer->tileitem);
+      return MS_FAILURE;
+    }
+    if(layer->tilesrs != NULL && *ptilesrsindex < 0) { /* didn't find it */
+      msSetError(MS_MEMERR,
+                 "Could not find attribute %s in tileindex.",
+                 "msDrawRasterLayerLow()",
+                 layer->tilesrs);
+      return MS_FAILURE;
+    }
+
+#ifdef USE_PROJ
+    /* if necessary, project the searchrect to source coords */
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0) &&
+        !EQUAL(layer->projection.args[0], "auto")) {
+      if( msProjectRect(&map->projection, &layer->projection, psearchrect)
+          != MS_SUCCESS ) {
+        msDebug( "msDrawRasterLayerLow(%s): unable to reproject map request rectangle into layer projection, canceling.\n", layer->name );
+        return MS_FAILURE;
+      }
+    }
+    else if((map->projection.numargs > 0) && (tlp->projection.numargs > 0) &&
+        !EQUAL(tlp->projection.args[0], "auto")) {
+      if( msProjectRect(&map->projection, &tlp->projection, psearchrect)
+          != MS_SUCCESS ) {
+        msDebug( "msDrawRasterLayerLow(%s): unable to reproject map request rectangle into layer projection, canceling.\n", layer->name );
+        return MS_FAILURE;
+      }
+    }
+#endif
+    return msLayerWhichShapes(tlp, *psearchrect, MS_FALSE);
+}
+
+/************************************************************************/
+/*                msDrawRasterCleanupTileLayer()                        */
+/*                                                                      */
+/*      Cleanup the tile layer.                                         */
+/************************************************************************/
+
+void msDrawRasterCleanupTileLayer(layerObj* tlp,
+                                  int tilelayerindex)
+{
+    msLayerClose(tlp);
+    if(tilelayerindex == -1) {
+      freeLayer(tlp);
+      free(tlp);
+    }
+}
+
+/************************************************************************/
+/*                   msDrawRasterIterateTileIndex()                     */
+/*                                                                      */
+/*      Iterate over the tile layer.                                    */
+/************************************************************************/
+
+int msDrawRasterIterateTileIndex(layerObj *layer,
+                                 layerObj* tlp,
+                                 shapeObj* ptshp, /* input-output */
+                                 int tileitemindex,
+                                 int tilesrsindex,
+                                 char* tilename, /* output */
+                                 size_t sizeof_tilename,
+                                 char* tilesrsname, /* output */
+                                 size_t sizeof_tilesrsname)
+{
+      int status;
+
+      status = msLayerNextShape(tlp, ptshp);
+      if( status == MS_FAILURE || status == MS_DONE ) {
+        return status;
+      }
+
+      if(layer->data == NULL || strlen(layer->data) == 0 ) { /* assume whole filename is in attribute field */
+        strlcpy( tilename, ptshp->values[tileitemindex], sizeof_tilename);
+      } else
+        snprintf(tilename, sizeof_tilename, "%s/%s", ptshp->values[tileitemindex], layer->data);
+
+      tilesrsname[0] = '\0';
+
+      if( tilesrsindex >= 0 )
+      {
+        if(ptshp->values[tilesrsindex] != NULL )
+          strlcpy( tilesrsname, ptshp->values[tilesrsindex], sizeof_tilesrsname );
+      }
+
+      msFreeShape(ptshp); /* done with the shape */
+
+      return status;
+}
+
+/************************************************************************/
+/*                   msDrawRasterBuildRasterPath()                      */
+/*                                                                      */
+/*      Build the path of the raster to open.                           */
+/************************************************************************/
+
+int msDrawRasterBuildRasterPath(mapObj *map, layerObj *layer,
+                                const char* filename,
+                                char szPath[MS_MAXPATHLEN] /* output */)
+{
+    /*
+    ** If using a tileindex then build the path relative to that file if SHAPEPATH is not set.
+    */
+    if(layer->tileindex && !map->shapepath) {
+      char tiAbsFilePath[MS_MAXPATHLEN];
+      char *tiAbsDirPath = NULL;
+
+      msTryBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
+      tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
+      msBuildPath(szPath, tiAbsDirPath, filename);
+      free(tiAbsDirPath);
+    } else {
+      msTryBuildPath3(szPath, map->mappath, map->shapepath, filename);
+    }
+
+    return MS_SUCCESS;
+}
+
+/************************************************************************/
+/*                   msDrawRasterGetCPLErrorMsg()                       */
+/*                                                                      */
+/*      Return the CPL error message, and filter out sensitive info.    */
+/************************************************************************/
+
+const char* msDrawRasterGetCPLErrorMsg(const char* decrypted_path,
+                                       const char* szPath)
+{
+      const char *cpl_error_msg = CPLGetLastErrorMsg();
+
+      /* we wish to avoid reporting decrypted paths */
+      if( cpl_error_msg != NULL
+          && strstr(cpl_error_msg,decrypted_path) != NULL
+          && strcmp(decrypted_path,szPath) != 0 )
+        cpl_error_msg = NULL;
+
+      /* we wish to avoid reporting the stock GDALOpen error messages */
+      if( cpl_error_msg != NULL
+          && (strstr(cpl_error_msg,"not recognised as a supported") != NULL
+              || strstr(cpl_error_msg,"does not exist") != NULL) )
+        cpl_error_msg = NULL;
+
+      if( cpl_error_msg == NULL )
+        cpl_error_msg = "";
+
+      return cpl_error_msg;
+}
+
+/************************************************************************/
+/*                   msDrawRasterLoadProjection()                       */
+/*                                                                      */
+/*      Handle TILESRS or PROJECTION AUTO for each tile.                */
+/************************************************************************/
+
+int msDrawRasterLoadProjection(layerObj *layer,
+                               GDALDatasetH hDS,
+                               const char* filename,
+                               int tilesrsindex,
+                               const char* tilesrsname)
+{
+    /*
+    ** Generate the projection information if using TILESRS.
+    */
+    if( tilesrsindex >= 0 )
+    {
+        const char *pszWKT;
+        if( tilesrsname[0] != '\0' )
+            pszWKT = tilesrsname;
+        else
+            pszWKT = GDALGetProjectionRef( hDS );
+        if( pszWKT != NULL && strlen(pszWKT) > 0 ) {
+          if( msOGCWKT2ProjectionObj(pszWKT, &(layer->projection),
+                                    layer->debug ) != MS_SUCCESS ) {
+          char  szLongMsg[MESSAGELENGTH*2];
+          errorObj *ms_error = msGetErrorObj();
+
+          snprintf( szLongMsg, sizeof(szLongMsg),
+                    "%s\n"
+                    "PROJECTION '%s' cannot be used for this "
+                    "GDAL raster (`%s').",
+                    ms_error->message, pszWKT, filename);
+          szLongMsg[MESSAGELENGTH-1] = '\0';
+
+          msSetError(MS_OGRERR, "%s","msDrawRasterLayer()",
+                     szLongMsg);
+
+          return MS_FAILURE;
+        }
+      }
+    }
+    /*
+    ** Generate the projection information if using AUTO.
+    */
+    else if (layer->projection.numargs > 0 &&
+        EQUAL(layer->projection.args[0], "auto")) {
+      const char *pszWKT;
+
+      pszWKT = GDALGetProjectionRef( hDS );
+
+      if( pszWKT != NULL && strlen(pszWKT) > 0 ) {
+        if( msOGCWKT2ProjectionObj(pszWKT, &(layer->projection),
+                                   layer->debug ) != MS_SUCCESS ) {
+          char  szLongMsg[MESSAGELENGTH*2];
+          errorObj *ms_error = msGetErrorObj();
+
+          snprintf( szLongMsg, sizeof(szLongMsg),
+                    "%s\n"
+                    "PROJECTION AUTO cannot be used for this "
+                    "GDAL raster (`%s').",
+                    ms_error->message, filename);
+          szLongMsg[MESSAGELENGTH-1] = '\0';
+
+          msSetError(MS_OGRERR, "%s","msDrawRasterLayer()",
+                     szLongMsg);
+
+          return MS_FAILURE;
+        }
+      }
+    }
+
+    return MS_SUCCESS;
+}
+#endif // defined(USE_GDAL)
+
 /************************************************************************/
 /*                        msDrawRasterLayerLow()                        */
 /*                                                                      */
@@ -334,10 +675,10 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
 
 #else /* defined(USE_GDAL) */
   int status, i, done;
-  char *filename=NULL, tilename[MS_MAXPATHLEN];
+  char *filename=NULL, tilename[MS_MAXPATHLEN], tilesrsname[1024];
 
   layerObj *tlp=NULL; /* pointer to the tile layer either real or temporary */
-  int tileitemindex=-1, tilelayerindex=-1;
+  int tileitemindex=-1, tilelayerindex=-1, tilesrsindex=-1;
   shapeObj tshp;
 
   char szPath[MS_MAXPATHLEN];
@@ -345,9 +686,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
   int final_status = MS_SUCCESS;
 
   rectObj searchrect;
-  char *pszTmp = NULL;
-  char tiAbsFilePath[MS_MAXPATHLEN];
-  char *tiAbsDirPath = NULL;
   GDALDatasetH  hDS;
   double  adfGeoTransform[6];
   const char *close_connection;
@@ -400,117 +738,38 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
   }
 
   if(layer->tileindex) { /* we have an index file */
-
     msInitShape(&tshp);
-
-    tilelayerindex = msGetLayerIndex(layer->map, layer->tileindex);
-    if(tilelayerindex == -1) { /* the tileindex references a file, not a layer */
-
-      /* so we create a temporary layer */
-      tlp = (layerObj *) malloc(sizeof(layerObj));
-      MS_CHECK_ALLOC(tlp, sizeof(layerObj), MS_FAILURE);
-
-      initLayer(tlp, map);
-
-      /* set a few parameters for a very basic shapefile-based layer */
-      tlp->name = msStrdup("TILE");
-      tlp->type = MS_LAYER_TILEINDEX;
-      tlp->data = msStrdup(layer->tileindex);
-      if (layer->filteritem)
-        tlp->filteritem = msStrdup(layer->filteritem);
-      if (layer->filter.string) {
-        if (layer->filter.type == MS_EXPRESSION) {
-          pszTmp =
-            (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
-          sprintf(pszTmp,"(%s)",layer->filter.string);
-          msLoadExpressionString(&tlp->filter, pszTmp);
-          free(pszTmp);
-        } else if (layer->filter.type == MS_REGEX ||
-                   layer->filter.type == MS_IREGEX) {
-          pszTmp =
-            (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
-          sprintf(pszTmp,"/%s/",layer->filter.string);
-          msLoadExpressionString(&tlp->filter, pszTmp);
-          free(pszTmp);
-        } else
-          msLoadExpressionString(&tlp->filter, layer->filter.string);
-
-        tlp->filter.type = layer->filter.type;
-      }
-
-    } else {
-      if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
-        return MS_FAILURE;
-      tlp = (GET_LAYER(layer->map, tilelayerindex));
-    }
-    status = msLayerOpen(tlp);
-    if(status != MS_SUCCESS) {
-      final_status = status;
-      goto cleanup;
-    }
-
-    status = msLayerWhichItems(tlp, MS_FALSE, layer->tileitem);
-    if(status != MS_SUCCESS) {
-      final_status = status;
-      goto cleanup;
-    }
-
-    /* get the tileitem index */
-    for(i=0; i<tlp->numitems; i++) {
-      if(strcasecmp(tlp->items[i], layer->tileitem) == 0) {
-        tileitemindex = i;
-        break;
-      }
-    }
-    if(i == tlp->numitems) { /* didn't find it */
-      msSetError(MS_MEMERR,
-                 "Could not find attribute %s in tileindex.",
-                 "msDrawRasterLayerLow()",
-                 layer->tileitem);
-      final_status = MS_FAILURE;
-      goto cleanup;
-    }
-
     searchrect = map->extent;
-#ifdef USE_PROJ
-    /* if necessary, project the searchrect to source coords */
-    if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) {
-      if( msProjectRect(&map->projection, &layer->projection, &searchrect)
-          != MS_SUCCESS ) {
-        msDebug( "msDrawRasterLayerLow(%s): unable to reproject map request rectangle into layer projection, canceling.\n", layer->name );
-        final_status = MS_FAILURE;
-        goto cleanup;
-      }
-    }
-#endif
-    status = msLayerWhichShapes(tlp, searchrect, MS_FALSE);
-    if (status != MS_SUCCESS) {
-      /* Can be either MS_DONE or MS_FAILURE */
+
+    status = msDrawRasterSetupTileLayer(map, layer,
+                           &searchrect,
+                           MS_FALSE,
+                           &tilelayerindex,
+                           &tileitemindex,
+                           &tilesrsindex,
+                           &tlp);
+    if(status != MS_SUCCESS) {
       if (status != MS_DONE)
         final_status = status;
-
       goto cleanup;
     }
   }
 
   done = MS_FALSE;
   while(done != MS_TRUE) {
+
     if(layer->tileindex) {
-      status = msLayerNextShape(tlp, &tshp);
+      status = msDrawRasterIterateTileIndex(layer, tlp, &tshp,
+                                            tileitemindex, tilesrsindex,
+                                            tilename, sizeof(tilename),
+                                            tilesrsname, sizeof(tilesrsname));
       if( status == MS_FAILURE) {
         final_status = MS_FAILURE;
         break;
       }
 
       if(status == MS_DONE) break; /* no more tiles/images */
-
-      if(layer->data == NULL || strlen(layer->data) == 0 ) { /* assume whole filename is in attribute field */
-        strlcpy( tilename, tshp.values[tileitemindex], sizeof(tilename));
-      } else
-        snprintf(tilename, sizeof(tilename), "%s/%s", tshp.values[tileitemindex], layer->data);
       filename = tilename;
-
-      msFreeShape(&tshp); /* done with the shape */
     } else {
       filename = layer->data;
       done = MS_TRUE; /* only one image so we're done after this */
@@ -521,17 +780,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     if(layer->debug == MS_TRUE)
       msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
 
-    /*
-    ** If using a tileindex then build the path relative to that file if SHAPEPATH is not set.
-    */
-    if(layer->tileindex && !map->shapepath) {
-      msTryBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
-      tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
-      msBuildPath(szPath, tiAbsDirPath, filename);
-      free(tiAbsDirPath);
-    } else {
-      msTryBuildPath3(szPath, map->mappath, map->shapepath, filename);
-    }
+    msDrawRasterBuildRasterPath(map, layer, filename, szPath);
     if(layer->debug == MS_TRUE)
       msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, szPath);
 
@@ -555,22 +804,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     */
     if(hDS == NULL) {
       int ignore_missing = msMapIgnoreMissingData(map);
-      const char *cpl_error_msg = CPLGetLastErrorMsg();
-
-      /* we wish to avoid reporting decrypted paths */
-      if( cpl_error_msg != NULL
-          && strstr(cpl_error_msg,decrypted_path) != NULL
-          && strcmp(decrypted_path,szPath) != 0 )
-        cpl_error_msg = NULL;
-
-      /* we wish to avoid reporting the stock GDALOpen error messages */
-      if( cpl_error_msg != NULL
-          && (strstr(cpl_error_msg,"not recognised as a supported") != NULL
-              || strstr(cpl_error_msg,"does not exist") != NULL) )
-        cpl_error_msg = NULL;
-
-      if( cpl_error_msg == NULL )
-        cpl_error_msg = "";
+      const char *cpl_error_msg = msDrawRasterGetCPLErrorMsg(decrypted_path, szPath);
 
       msFree( decrypted_path );
       decrypted_path = NULL;
@@ -597,36 +831,11 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     msFree( decrypted_path );
     decrypted_path = NULL;
 
-    /*
-    ** Generate the projection information if using AUTO.
-    */
-    if (layer->projection.numargs > 0 &&
-        EQUAL(layer->projection.args[0], "auto")) {
-      const char *pszWKT;
-
-      pszWKT = GDALGetProjectionRef( hDS );
-
-      if( pszWKT != NULL && strlen(pszWKT) > 0 ) {
-        if( msOGCWKT2ProjectionObj(pszWKT, &(layer->projection),
-                                   layer->debug ) != MS_SUCCESS ) {
-          char  szLongMsg[MESSAGELENGTH*2];
-          errorObj *ms_error = msGetErrorObj();
-
-          snprintf( szLongMsg, sizeof(szLongMsg),
-                    "%s\n"
-                    "PROJECTION AUTO cannot be used for this "
-                    "GDAL raster (`%s').",
-                    ms_error->message, filename);
-          szLongMsg[MESSAGELENGTH-1] = '\0';
-
-          msSetError(MS_OGRERR, "%s","msDrawRasterLayer()",
-                     szLongMsg);
-
-          msReleaseLock( TLOCK_GDAL );
-          final_status = MS_FAILURE;
-          break;
-        }
-      }
+    if( msDrawRasterLoadProjection(layer, hDS, filename, tilesrsindex, tilesrsname) != MS_SUCCESS )
+    {
+        msReleaseLock( TLOCK_GDAL );
+        final_status = MS_FAILURE;
+        break;
     }
 
     msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
@@ -689,11 +898,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
 
 cleanup:
   if(layer->tileindex) { /* tiling clean-up */
-    msLayerClose(tlp);
-    if(tilelayerindex == -1) {
-      freeLayer(tlp);
-      free(tlp);
-    }
+    msDrawRasterCleanupTileLayer(tlp, tilelayerindex);
   }
 
   return final_status;
