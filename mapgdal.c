@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <assert.h>
 #include "mapserver.h"
 #include "mapthread.h"
+#include <assert.h>
 
 
 
@@ -628,7 +628,7 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
 
   OGRSpatialReferenceH hSRS;
   char *pszWKT=NULL, *pszProj4, *pszInitEpsg=NULL;
-  int  nLength = 0, i, nEpsgCode=-1;
+  int  nLength = 0, i;
   OGRErr eErr;
 
   if( projection->proj == NULL )
