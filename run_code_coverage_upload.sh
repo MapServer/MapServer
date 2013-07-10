@@ -5,7 +5,7 @@ cp /usr/bin/genhtml .
 # to remove date, so that only real differences show up
 patch -p0 < genhtml.patch
 
-genhtml -o ./mapserver_coverage_html --num-spaces 2 mapserver.info  
+./genhtml -o ./mapserver_coverage_html --num-spaces 2 mapserver.info  
 
 #echo "$SSH_DEPLOY_KEY" > ~/.ssh/id_rsa-msautotest-coverage-result
 
@@ -33,9 +33,9 @@ git pull origin master
 rm -rf *
 cp -r ../mapserver_coverage_html .
 echo "Results of coverage of MapServer msautotest" > README.md
-echo "See http://rawgithub.com/rouault/msautotest-coverage-results/master/home/travis/build/rouault/mapserver/index.html" >> README.md
+echo "See http://rawgithub.com/rouault/msautotest-coverage-results/master/mapserver_coverage_html/home/travis/build/rouault/mapserver/index.html" >> README.md
 git add -A
-git commit -m "update with results of commit $TRAVIS_COMMIT"
+git commit -m "update with results of commit https://github.com/rouault/mapserver/commit/$TRAVIS_COMMIT"
 git push origin master
 
 
