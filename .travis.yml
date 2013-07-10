@@ -2,7 +2,30 @@ language: c
 
 env:
   global:
-    - secure: "fKtWSvdzPU1u0kL9SmwXpDnmLLEdjYA/1vMlg0B3HqiVisgw+ecqAW1sMrzf\narhmygGGNivigyJ4/pV7AtEG7nXFzjUHqjMwsbvBW0Im1uUoQ8pKGrQCdE8B\nBHNApZNXPaZe7c/N8vR3+6wEW1SG25plnJ//x/4iudDoFV5AXEU="
+#    - secure: "fKtWSvdzPU1u0kL9SmwXpDnmLLEdjYA/1vMlg0B3HqiVisgw+ecqAW1sMrzf\narhmygGGNivigyJ4/pV7AtEG7nXFzjUHqjMwsbvBW0Im1uUoQ8pKGrQCdE8B\nBHNApZNXPaZe7c/N8vR3+6wEW1SG25plnJ//x/4iudDoFV5AXEU="
+     - secure: "Rb2177mivskKAITq9BkC/qyKvRbMpTDcULA8O0hTKB+Zu257mpdvrGdh+PsE\n9HW5tKfGSVcTTL5yF6FdziPhtXhZbsPYwnvIJZpXnLHwF7evLazKX3Dsi227\nEqUEtHya4hOQLvf0EsXwuwuv0F3z9XUY9uG00FG81mHXB4IGzCE="
+     - secure: "XjuxdsRraege3A2OxbMDtthrwxfi4Sf1pYvyty2b1V+iJrAoxWlwl+yiezxn\nWhLbkocxGyjTe7y6g9rglGoGMOxCXFjp4mT4WOxCnHnk667p/GvKX1C3Z+Qf\nyy0Nicu45C57Es9B7IkJe2CkDPGfdNMsvcPTJ8ViMkZxgW9gw68="
+     - secure: "n1mJsDrruE2CbKFLd1NMLeRHAWbtxKBEzVOECHFUGnFc2g/uIZ1Pi3Qlyts/\nN+FDMzfpda5mGs0zlBb0C59Pm+AtAJIV/N1nd2Pi+AAE6QzOqu5djw0BWWUo\nUHKIstaE1SoVFid81oWHSbrSxA89mH5i7jkUEj7WAkTqxyqVlb4="
+     - secure: "h2vRjOnW1bQ/Ml1ADZrvODcz6xGacuO4qrheDvqE2oscTZ+0PZna42HLI9cd\nWGpE7dyNENdIBLxb8ssqeijpBLuXuzpMnXbXjpveM++bp6AqtU+B13+8OQXd\nuRAkJFXT9ElptMSu0kQqSTKNx3Ih7f/Drnl/OL+6ZZF7JkG3OmY="
+     - secure: "kEuaFKf1LbRQLTP5gKQ5lEN7XYMjfSkoyGpoaz6vmSOkimoqEPhkh6SjSgN8\nOf7o4zOA3t0U2nWSWST/B3/2/lPspbDv3mz2BGbecjis5Fi6S6ViBeTvGCEP\nlU4pWh5BVCNeYP570asfZeuf6K+dnQ4o52nPhhf7SrKyySJ8wzw="
+     - secure: "QndQRKHMWJz9KmTenJqMhbTqpgXN3SavRab7F7UsNMGnV67y3xomOdbciWLC\nDqNmyV4K+1XtZfLE/0NW8C21WWFdw7oe1jN2l3d8uMXY385VFpZezZcZ1yct\nEA3CjiHBcuaO8VEZKT3olzy1jh6+y3NHWEbTr1aYkFTGQ/GRViA="
+     - secure: "Flgnd1KgRIOM/bu21apf2aw3t4vOGPniuowD0aZKkzGZ8yB5koXUuU3mbQ7Q\nyIaMvwOdAjpebi8nBepVN6EhKhMF5fxhbEFFvQWLkm0rLN5Hxwu6A3yVr98G\nDxmgr0z1bMtJRM1elndjqHWtvq1ganQDXUBlW51yoEpt0EMWnME="
+     - secure: "YyT6rnFkV5Js/ckJF5j2dz8Y3I1YlF7jRA6ISEkOcO9Xzy+TWTyauJqiIHeW\n+y/wc75oa3x8rsJ6MvnU/iCK1cNdzkmd/XWoFJraFrJuWhjOI5npO7SU+Yab\n8siXTID06HgiJMyl+g0OBvWWspltX4sYoMVWD2iIigO0+uPoHYw="
+     - secure: "auE3K1Fy2RxatR1xTsBlZ2u5qHMB4I+mTP/b4l45O1qHFSocYT98RdnxViQE\n1xk8pgHOXQOvEaaAbtIm8wuZuNPgkpHgBiaEGTSFkK0y+RyeX/VTQcTUVZCu\nnzLLgteboLdmLdRiL9G1a/mXs5juC7aoU1d8QIlBJ7tp8N8P4x8="
+     - secure: "bJM7JesVTNNQyxUtmr3Y8xHGXVug1jCBD3iZBWcOZc2jcmnb5khTPouODUzi\nSiAsGRAaU18pTc9jQM1tyi0bX3OulToIBwtpH1MyTqx51T6m66N95osfDUxe\noEIc34FXLk84HHnpyToHez/rKUgQk6TuIsfPL9XDID8JDEDzwhE="
+     - secure: "IfqE926YDLxzWQISQd21m62QulETi9Ae5YBd3doDdpFt4mUApaBQbbH/L/zf\ndER88iaKlyp6YTi7wz0z3Z83OXgwgpEnGAYDtXfsv55q+7DUjXWAxPhCBTsx\nUN7HlMbliWpMCmoJZ6Bs3x3GfvBBiiWHGxzfeQK8QSlm0/YGbyI="
+     - secure: "tRaHmOXn/2YRZZliDFomfdEDbPsjY6Dr59BpA1zP2LJnaH/GCrvnzLAJCSsW\nb7RZqXWmSOlIDFOLIoGfIHS0esHghgQQZQlb7UXLg4PXy6cPENZER3aNMy9N\nITzfnBDWqPfGMgpo6BdYWyqqPD0ujFVq2U277htobKim+M780vM="
+     - secure: "DUQExEsZnxm06lMiZz+wzzZCNRmxGmwvwvZ6N7mpNsy0FJSVYeJSxoCjApl2\nRDxD1hqC/YAD6RDZ7BJNMjq7IeSNibxcUc8/VFC9rLCl52lSbqFltljiIAPA\nozH3rpV90j7hxBNhEQTWftfsdmiK3Xs4DO2mGcVCggQwh19pWrs="
+     - secure: "v9pknDUae5nASHAcZWb+fP6v64x44ikIVMBfT7i1oIlvkQ28/vKo/30gPnb4\nE3tFv0KIm3PvQtKtWGdgYNWBkAPQ6/GXe+s0sFJx5BBCo7zTjt2gjdDuorzV\nRkcmd3fBC50soYIDD7bs4yx4AjkxZfT/oVau321C35efdJIScqU="
+     - secure: "h8Znni3MJpTHIRk0W8y+vZKDBoP1SiHxFY+r/+ZMNTcw7sEDLNShLTK5lrbU\nDLXCLfKSw7b9S+dNKljeK2KS8fEYfXAqRUNYwAoS9CetL9byLiTOH+ow+ZjV\nIUOqBjzf7b7R1npJIDJHEJ/NNP31sOFl7s4XNXTLHLpbFTeCDRg="
+     - secure: "JzNYRP5XlkofjwHmlvM79K/Sp5BIrhuhfo1w1IcDk9HzXP0E93p1QLfGBjzS\ncj4w3NflB9aGDR/ZxjKSjvGnjOzM2xItKVYLuRl9IFSzoe0fvnx6EuH3fMkZ\nv0/I4uP5XvwDhC1poSrecX6zEoNz72b7ENw87pqf5Qt9wRV39xM="
+     - secure: "MARndkeIk+cv9Q6gACy0JoHv0BosoTEw161B4fPrVZa7v9HZ6fMVEipAAKCS\nvvU2NhgqIWPiHoTf6h0ptj1zsX7UkqrfoBtetOcMko+1DEtosLVSCL9GPIRJ\n7DNx4oV4aTfIf0lVZkHTQ/MN0zN1VGgjUAoh8EUX6Tfqlb0fUU8="
+     - secure: "ZhFibgiKu7wZSl65QQpiBqNNXZ5UJgrDir7uOcOqsDHgVt6Y2D4JaQJ/92j0\nzXCvOfIwTF9NrXePiyWPOKsjhZnzO0r9XkUtaSzL1CveibX2liXe6Xz58ZRz\nANy/UgaGvsBjsYkxqE7ia87N5+u+3/6VkI9QlBqHGktJ3dNJ7eg="
+     - secure: "Y+va3DppNZVfTJ8dDHymGA37HNyCVgrIRGWYnGx2YsDZz0U6IqAMMVd+KWX+\no8cr1+i7ixQS2bLl6PfEW0/ygoLvpgOGv8p1Jyj0PZryMWm2uvLiNzZbvI0T\nZUqY7+z3ISlnPGupT/udQ8sqeeXet1wRQE+ovWhjR0phhs0hdQk="
+     - secure: "tdeZkmGqjqjvNNtcMztIELNEmzZTNuox7h+5XW+KVGdUIlJjyHNcEWg0O/Ea\nUgd3DaiOtsrZeu87fH0zNtSReNXv4drJune8NbQCxu1GU57l9JDBpXFuEJfj\nUSZOOdfqjime6sWwSap/OYvcVpnoCHTNOVWffA8lGn8nIku//FQ="
+     - secure: "X6s9aXHhK5P4JxwYJZFutAyMedt0AaxXaFlvRh7MwkAS2y+/7bpEBNJSjV81\nG8L3gkf0igwHCqDv8V//QUmIpI7EdWgcNNEOenUV5d1NIe7bBRPBqZwNZlyx\nM5/29DfEyUc4CS/uDbKc14V2btfLDmFdOoyzluNOPhjr0LI6bEw="
+     - secure: "FLpbaUv2Tve+fTOSweAgss6GQlrSuH7EQeT3zGikkMdcBjhg6iAeJqvtK6J9\n4o7S7+sUPSKzYthBGQInFbJCdbxJM5Lfuc5eiyS4j3uyL2AvfCPZDg1d2cfJ\n4ZBJcVuiKf0mUiAsXZ+G2hM0y1PsczT24007QMG6en7OCKUKDZk="
+     - secure: "aAT7284XNRRmmcoZ3z+cNYts5TKRe8/yS9ngLH4OJcACSv0dT7lw48f/nDUo\nXs737pd8hzWOOA8pI8NYpqt0I4LYxoeV1sWkkXc+93zUp4xwmrFh/FYe3cv0\nifdOMa72jB4vzCK3MoxntmRc1JaEUdGBARHV0GlO9TlsbISI+sY="
 
 compiler:
   - gcc
