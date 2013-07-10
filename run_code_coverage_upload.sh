@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #lcov --directory . --capture --output-file mapserver.info 
 
 #cp /usr/bin/genhtml .
@@ -13,6 +13,7 @@
 
 echo $id_rsa_00 | base64 --decode | head -n1
 
+# This is a bashism !
 echo -n $id_rsa_{00..30} >> ~/.ssh/id_rsa-msautotest-coverage-results_base64
 base64 --decode --ignore-garbage ~/.ssh/id_rsa-msautotest-coverage-results_base64 > ~/.ssh/id_rsa-msautotest-coverage-results
 chmod 600 ~/.ssh/id_rsa-msautotest-coverage-results
