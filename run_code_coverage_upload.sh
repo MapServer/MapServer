@@ -14,6 +14,10 @@ echo -n $id_rsa_{00..30} >> ~/.ssh/id_rsa-msautotest-coverage-results_base64
 base64 --decode --ignore-garbage ~/.ssh/id_rsa-msautotest-coverage-results_base64 > ~/.ssh/id_rsa-msautotest-coverage-results
 chmod 600 ~/.ssh/id_rsa-msautotest-coverage-results
 
+# debug
+head -n1 ~/.ssh/id_rsa-msautotest-coverage-results
+tail -n1 ~/.ssh/id_rsa-msautotest-coverage-results
+
 echo "Host foo.github.com" >> ~/.ssh/config
 echo "    StrictHostKeyChecking no" >> ~/.ssh/config
 echo "    Hostname github.com" >> ~/.ssh/config
