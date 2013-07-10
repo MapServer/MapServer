@@ -22,15 +22,17 @@ mkdir msautotest-coverage-results
 git init
 git config user.email "mapserverbot@mapserver.bot"
 git config user.name "MapServer coveragebot"
+git config push.default matching
 git remote add origin git@foo.github.com:rouault/msautotest-coverage-results.git
 git fetch
 git pull origin master
 rm -rf *
-cp -r ../
+cp -r ../mapserver_coverage_html .
 echo "Results of coverage of MapServer msautotest" > README.md
+echo "See http://rawgithub.com/rouault/msautotest-coverage-results/master/home/travis/build/rouault/mapserver/index.html" >> README.md
 git add -A
 git commit -m "update"
-git push
+git push origin master
 
 
 # download last updated filelist
