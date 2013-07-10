@@ -19,6 +19,7 @@ echo "    Hostname github.com" >> ~/.ssh/config
 echo "    IdentityFile ~/.ssh/id_rsa-msautotest-coverage-results" >> ~/.ssh/config
 
 mkdir msautotest-coverage-results
+cd msautotest-coverage-results
 git init
 git config user.email "mapserverbot@mapserver.bot"
 git config user.name "MapServer coveragebot"
@@ -31,7 +32,7 @@ cp -r ../mapserver_coverage_html .
 echo "Results of coverage of MapServer msautotest" > README.md
 echo "See http://rawgithub.com/rouault/msautotest-coverage-results/master/home/travis/build/rouault/mapserver/index.html" >> README.md
 git add -A
-git commit -m "update"
+git commit -m "update with results of commit $TRAVIS_COMMIT"
 git push origin master
 
 
