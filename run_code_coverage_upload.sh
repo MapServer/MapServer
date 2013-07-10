@@ -10,6 +10,9 @@
 #echo "$SSH_DEPLOY_KEY" > ~/.ssh/id_rsa-msautotest-coverage-result
 
 # build the chunks of the private key together
+
+echo $id_rsa_00 | base64 --decode | head -n1
+
 echo -n $id_rsa_{00..30} >> ~/.ssh/id_rsa-msautotest-coverage-results_base64
 base64 --decode --ignore-garbage ~/.ssh/id_rsa-msautotest-coverage-results_base64 > ~/.ssh/id_rsa-msautotest-coverage-results
 chmod 600 ~/.ssh/id_rsa-msautotest-coverage-results
@@ -17,6 +20,8 @@ chmod 600 ~/.ssh/id_rsa-msautotest-coverage-results
 # debug
 head -n1 ~/.ssh/id_rsa-msautotest-coverage-results
 tail -n1 ~/.ssh/id_rsa-msautotest-coverage-results
+
+exit 0
 
 echo "Host foo.github.com" >> ~/.ssh/config
 echo "    StrictHostKeyChecking no" >> ~/.ssh/config
