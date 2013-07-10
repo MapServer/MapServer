@@ -5,7 +5,7 @@ lcov --directory . --capture --output-file mapserver.info
 # to remove date, so that only real differences show up
 #patch -p0 < genhtml.patch
 
-./genhtml -o ./mapserver_coverage_html --num-spaces 2 mapserver.info  
+genhtml -o ./mapserver_coverage_html --num-spaces 2 mapserver.info  
 
 #echo "$SSH_DEPLOY_KEY" > ~/.ssh/id_rsa-msautotest-coverage-result
 
@@ -20,6 +20,8 @@ echo "    IdentityFile ~/.ssh/id_rsa-msautotest-coverage-results" >> ~/.ssh/conf
 
 mkdir msautotest-coverage-results
 git init
+git config user.email "mapserverbot@mapserver.bot"
+git config user.name "MapServer coveragebot"
 git remote add origin git@foo.github.com:rouault/msautotest-coverage-results.git
 git fetch
 git pull origin master
