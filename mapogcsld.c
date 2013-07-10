@@ -613,20 +613,20 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 }
 
 
-int _msSLDParseSizeParameter(CPLXMLNode *psSize)
+double _msSLDParseSizeParameter(CPLXMLNode *psSize)
 {
-  int nSize = 0;
+  double dSize = 0;
   CPLXMLNode *psLiteral = NULL;
 
   if (psSize) {
     psLiteral = CPLGetXMLNode(psSize, "Literal");
     if (psLiteral && psLiteral->psChild && psLiteral->psChild->pszValue)
-      nSize = atof(psLiteral->psChild->pszValue);
+      dSize = atof(psLiteral->psChild->pszValue);
     else if (psSize->psChild && psSize->psChild->pszValue)
-      nSize = atof(psSize->psChild->pszValue);
+      dSize = atof(psSize->psChild->pszValue);
   }
 
-  return nSize;
+  return dSize;
 }
 
 /************************************************************************/
