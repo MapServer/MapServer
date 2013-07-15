@@ -650,7 +650,17 @@ static void writeColor(FILE *stream, int indent, const char *name, colorObj *def
 #if ALPHACOLOR_ENABLED
   fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue, color->alpha);
 #else
-  fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
+  if(color->alpha != 255) {
+    char buffer[9];
+    sprintf(buffer, "%02x", color->red);
+    sprintf(buffer+2, "%02x", color->green);
+    sprintf(buffer+4, "%02x", color->blue);
+    sprintf(buffer+6, "%02x", color->alpha);
+    *(buffer+8) = 0;
+    fprintf(stream, "%s \"#%s\"\n", name, buffer);
+  } else {
+    fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
+  }
 #endif
 }
 
