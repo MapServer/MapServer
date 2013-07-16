@@ -1953,6 +1953,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     layerObj *lp;
     lp = GET_LAYER(map, j);
     if (lp->status == MS_ON) {
+      /* No reason to handle tolerances for WFS GetFeature */
+      lp->tolerance = 0;
       lpQueried = GET_LAYER(map, j);
       nQueriedLayers++;
     }
