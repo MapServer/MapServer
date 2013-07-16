@@ -162,7 +162,9 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   memset(&rb,0,sizeof(rasterBufferObj));
 
 #ifdef USE_EXEMPI
-  bUseXmp = msXmpPresent(map);
+  if( map != NULL ) {
+    bUseXmp = msXmpPresent(map);
+  }
 #endif
 
 
