@@ -162,11 +162,11 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   pszDBFFilename = (char *) msSmallMalloc(strlen(pszFilename)+1);
   strcpy( pszDBFFilename, pszFilename );
 
-  if( strcmp(pszFilename+strlen(pszFilename)-4,".shp")
-      || strcmp(pszFilename+strlen(pszFilename)-4,".shx") ) {
+  if( strcmp(pszFilename+strlen(pszFilename)-4,".shp") == 0
+      || strcmp(pszFilename+strlen(pszFilename)-4,".shx") == 0 ) {
     strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".dbf");
-  } else if( strcmp(pszFilename+strlen(pszFilename)-4,".SHP")
-             || strcmp(pszFilename+strlen(pszFilename)-4,".SHX") ) {
+  } else if( strcmp(pszFilename+strlen(pszFilename)-4,".SHP") == 0
+             || strcmp(pszFilename+strlen(pszFilename)-4,".SHX") == 0 ) {
     strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".DBF");
   }
 
@@ -176,6 +176,13 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   psDBF = (DBFHandle) calloc( 1, sizeof(DBFInfo) );
   MS_CHECK_ALLOC(psDBF, sizeof(DBFInfo), NULL);
   psDBF->fp = fopen( pszDBFFilename, pszAccess );
+  if( psDBF->fp == NULL )
+  {
+    if( strcmp(pszDBFFilename+strlen(pszDBFFilename)-4,".dbf") == 0 ) {
+      strcpy( pszDBFFilename+strlen(pszDBFFilename)-4, ".DBF");
+      psDBF->fp = fopen( pszDBFFilename, pszAccess );
+    }
+  }
   if( psDBF->fp == NULL )
     return( NULL );
 
