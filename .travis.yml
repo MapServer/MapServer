@@ -52,8 +52,10 @@ script:
   - ./run-test-suite.sh
 
 after_success: 
+# Only run coverage when it is safe to do so (not on pull requests), and only on master branch
   - echo "$TRAVIS_SECURE_ENV_VARS"
-  - sh -c 'if test "$TRAVIS_SECURE_ENV_VARS" = "true"; then echo "run coverage"; ./run_code_coverage_upload.sh; fi'
+  - echo "$TRAVIS_BRANCH"
+  - sh -c 'if test "$TRAVIS_SECURE_ENV_VARS" = "true" -a "$TRAVIS_BRANCH" = "master"; then echo "run coverage"; ./run_code_coverage_upload.sh; fi'
 
 notifications:
   email:
