@@ -126,6 +126,10 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION);
   psTree->fp = fopen(pszFullname, "rb" );
+  if( psTree->fp == NULL ) {
+      sprintf( pszFullname, "%s.QIX", pszBasename);
+      psTree->fp = fopen(pszFullname, "rb" );
+  }
 
   msFree(pszBasename); /* don't need these any more */
   msFree(pszFullname);

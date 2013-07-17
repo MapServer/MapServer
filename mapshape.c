@@ -250,6 +250,10 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   sprintf( pszFullname, "%s.shp", pszBasename );
   psSHP->fpSHP = fopen(pszFullname, pszAccess );
   if( psSHP->fpSHP == NULL ) {
+    sprintf( pszFullname, "%s.SHP", pszBasename );
+    psSHP->fpSHP = fopen(pszFullname, pszAccess );
+  }
+  if( psSHP->fpSHP == NULL ) {
     msFree(pszBasename);
     msFree(pszFullname);
     msFree(psSHP);
@@ -258,6 +262,10 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
 
   sprintf( pszFullname, "%s.shx", pszBasename );
   psSHP->fpSHX = fopen(pszFullname, pszAccess );
+  if( psSHP->fpSHX == NULL ) {
+    sprintf( pszFullname, "%s.SHX", pszBasename );
+    psSHP->fpSHX = fopen(pszFullname, pszAccess );
+  }
   if( psSHP->fpSHX == NULL ) {
     msFree(pszBasename);
     msFree(pszFullname);
@@ -1753,9 +1761,14 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
 
     /* deal with case where sourcename is of the form 'file.shp' */
     sourcename = msStrdup(shpfile->source);
-    /* TODO: need to add case-insensitive handling! */
     s = strstr(sourcename, ".shp");
-    if( s ) *s = '\0';
+    if( s )
+      *s = '\0';
+    else {
+      s = strstr(sourcename, ".SHP");
+      if( s )
+        *s = '\0';
+    }
 
     filename = (char *)malloc(strlen(sourcename)+strlen(MS_INDEX_EXTENSION)+1);
     MS_CHECK_ALLOC(filename, strlen(sourcename)+strlen(MS_INDEX_EXTENSION)+1, MS_FAILURE);
