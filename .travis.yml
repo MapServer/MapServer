@@ -1,4 +1,6 @@
-language: c
+language: php
+php:
+  - 5.5
 
 compiler:
   - gcc
@@ -19,7 +21,6 @@ notifications:
   email:
     recipients:
       - thomas.bonfort@gmail.com
-
   irc:
     channels:
       - "irc.freenode.org#mapserver"
