@@ -1,4 +1,6 @@
-language: c
+language: php
+php:
+  - 5.5
 
 env:
   global:
@@ -57,7 +59,6 @@ notifications:
   email:
     recipients:
       - thomas.bonfort@gmail.com
-
   irc:
     channels:
       - "irc.freenode.org#mapserver"
