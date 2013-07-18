@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  img = msDrawLegend(map, MS_FALSE);
+  img = msDrawLegend(map, MS_FALSE, NULL);
   if(!img) {
     msWriteError(stderr);
     exit(0);

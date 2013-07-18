@@ -1471,7 +1471,7 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
       img = msTileDraw(mapserv);
       break;
     case LEGEND:
-      img = msDrawLegend(mapserv->map, MS_FALSE);
+      img = msDrawLegend(mapserv->map, MS_FALSE, NULL);
       break;
   }
 
@@ -1578,7 +1578,7 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
-  if(msDrawLegendIcon(mapserv->map, GET_LAYER(mapserv->map, layerindex), GET_LAYER(mapserv->map, layerindex)->class[classindex], mapserv->map->legend.keysizex,  mapserv->map->legend.keysizey, img, 0, 0, MS_TRUE) != MS_SUCCESS)
+  if(msDrawLegendIcon(mapserv->map, GET_LAYER(mapserv->map, layerindex), GET_LAYER(mapserv->map, layerindex)->class[classindex], mapserv->map->legend.keysizex,  mapserv->map->legend.keysizey, img, 0, 0, MS_TRUE, NULL) != MS_SUCCESS)
     return MS_FAILURE;
 
   if(mapserv->sendheaders) {
