@@ -141,7 +141,7 @@ imageObj *mapObj_drawQuery(mapObj* self)
 
 imageObj *mapObj_drawLegend(mapObj* self)
 {
-  return msDrawLegend(self, MS_FALSE);
+  return msDrawLegend(self, MS_FALSE, NULL);
 }
 
 
@@ -1108,7 +1108,7 @@ int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int wi
 #ifdef USE_GD
   msClearLayerPenValues(layer); // just in case the mapfile has already been processed
 #endif
-  return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY, MS_TRUE);
+  return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY, MS_TRUE, NULL);
 }
 
 imageObj *classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height)

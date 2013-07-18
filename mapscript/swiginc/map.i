@@ -213,7 +213,7 @@
 
   %newobject drawLegend;
   imageObj *drawLegend() {
-    return msDrawLegend(self, MS_FALSE);
+    return msDrawLegend(self, MS_FALSE, NULL);
   }
 
   %newobject drawScalebar;
