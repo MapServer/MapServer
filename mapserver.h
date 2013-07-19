@@ -103,8 +103,6 @@ typedef uint32_t        ms_uint32;
 typedef struct rendererVTableObj rendererVTableObj;
 typedef struct tileCacheObj tileCacheObj;
 #ifndef SWIG
-typedef struct map_hittest map_hittest;
-typedef struct class_hittest class_hittest;
 #endif
 
 /* ms_bitarray is used by the bit mask in mapbit.c */
@@ -2086,6 +2084,8 @@ extern "C" {
 
   MS_DLL_EXPORT char *msStrdup( const char * pszString );
 
+#include "hittest.h"
+
   /* in mapsymbol.c */
   /* Use this function *only* with mapfile loading phase */
   MS_DLL_EXPORT int loadSymbolSet(symbolSetObj *symbolset, mapObj *map);
@@ -2605,6 +2605,7 @@ extern "C" {
   /*      include definitions from mapows.h                               */
   /* ==================================================================== */
 #include "mapows.h"
+
 
   /* ==================================================================== */
   /*      prototypes for functions in mapgeos.c                         */

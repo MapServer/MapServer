@@ -4666,60 +4666,6 @@ this request. Check wms/ows_enable_request settings.",
   return(MS_SUCCESS);
 }
 
-void initLabelHitTests(labelObj *l, label_hittest *lh) {
-  int i;
-  lh->stylehits = msSmallCalloc(l->numstyles,sizeof(style_hittest));
-}
-
-void initClassHitTests(classObj *c, class_hittest *ch) {
-  int i;
-  ch->stylehits = msSmallCalloc(c->numstyles,sizeof(style_hittest));
-  ch->labelhits = msSmallCalloc(c->numlabels,sizeof(label_hittest));
-  for(i=0; i<c->numlabels; i++) {
-    initLabelHitTests(c->labels[i],&ch->labelhits[i]);
-  }
-}
-void initLayerHitTests(layerObj *l, layer_hittest *lh) {
-  int i;
-  lh->classhits = msSmallCalloc(l->numclasses,sizeof(class_hittest));
-  for(i=0; i<l->numclasses; i++) {
-    initClassHitTests(l->class[i],&lh->classhits[i]);
-  }
-}
-void initMapHitTests(mapObj *map, map_hittest *mh) {
-  int i;
-  mh->layerhits = msSmallCalloc(map->numlayers,sizeof(layer_hittest));
-  for(i=0; i<map->numlayers; i++) {
-    initLayerHitTests(GET_LAYER(map,i),&mh->layerhits[i]);
-  }
-}
-
-void freeLabelHitTests(labelObj *l, label_hittest *lh) {
-  free(lh->stylehits);
-}
-
-void freeClassHitTests(classObj *c, class_hittest *ch) {
-  int i;
-  for(i=0; i<c->numlabels; i++) {
-    freeLabelHitTests(c->labels[i],&ch->labelhits[i]);
-  }
-  free(ch->stylehits);
-  free(ch->labelhits);
-}
-void freeLayerHitTests(layerObj *l, layer_hittest *lh) {
-  int i;
-  for(i=0; i<l->numclasses; i++) {
-    freeClassHitTests(l->class[i],&lh->classhits[i]);
-  }
-  free(lh->classhits);
-}
-void freeMapHitTests(mapObj *map, map_hittest *mh) {
-  int i;
-  for(i=0; i<map->numlayers; i++) {
-    freeLayerHitTests(GET_LAYER(map,i),&mh->layerhits[i]);
-  }
-  free(mh->layerhits);
-}
 /*
 ** msWMSGetContentDependantLegend()
 */

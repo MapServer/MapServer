@@ -35,11 +35,11 @@
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
 */
-static int numModes = 21;
-static char *modeStrings[21] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
+static int numModes = 22;
+static char *modeStrings[22] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
                                 "QUERY","NQUERY","ITEMQUERY","ITEMNQUERY",
                                 "FEATUREQUERY","FEATURENQUERY","ITEMFEATUREQUERY","ITEMFEATURENQUERY",
-                                "INDEXQUERY","TILE","OWS", "WFS"
+                                "INDEXQUERY","TILE","OWS", "WFS", "MAPLEGEND"
                                };
 
 
@@ -1473,6 +1473,15 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
     case LEGEND:
       img = msDrawLegend(mapserv->map, MS_FALSE, NULL);
       break;
+    case MAPLEGEND: {
+      map_hittest hittest;
+      initMapHitTests(mapserv->map,&hittest);
+      status = msHitTestMap(mapserv->map, &hittest);
+      if(status == MS_SUCCESS) {
+        img = msDrawLegend(mapserv->map, MS_FALSE, &hittest);
+      }
+      freeMapHitTests(mapserv->map,&hittest);
+    }
   }
 
   if(!img) return MS_FAILURE;
@@ -1695,7 +1704,7 @@ int msCGIDispatchRequest(mapservObj *mapserv)
   }
   if(mapserv->Mode == BROWSE) {
     return msCGIDispatchBrowseRequest(mapserv);
-  } else if(mapserv->Mode == MAP || mapserv->Mode == SCALEBAR || mapserv->Mode == REFERENCE || mapserv->Mode == TILE) { /* "image" only modes */
+  } else if(mapserv->Mode == MAP || mapserv->Mode == SCALEBAR || mapserv->Mode == REFERENCE || mapserv->Mode == TILE || mapserv->Mode == MAPLEGEND) { /* "image" only modes */
     /* tile, map, scalebar and reference all need the extent to be set up correctly */
     if(setExtent(mapserv) != MS_SUCCESS) return MS_FAILURE;
     if(checkWebScale(mapserv) != MS_SUCCESS) return MS_FAILURE;

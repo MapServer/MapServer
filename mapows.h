@@ -367,32 +367,6 @@ typedef struct {
   int numnamespaces;
 } gmlNamespaceListObj;
 
-typedef struct {
-  int status;
-} style_hittest;
-
-typedef struct {
-  style_hittest *stylehits;
-  int status;
-} label_hittest;
-
-struct class_hittest{
-  style_hittest *stylehits;
-  label_hittest *labelhits;
-  int status;
-};
-
-typedef struct {
-  class_hittest *classhits;
-  int status;
-} layer_hittest;
-
-struct map_hittest{
-  layer_hittest *layerhits;
-};
-
-int msHitTestMap(mapObj *map, map_hittest *hittest);
-int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest);
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
