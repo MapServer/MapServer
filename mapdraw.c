@@ -301,7 +301,7 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
     int nclasses,featuresdrawn = 0;
     int *classgroup;
     rectObj searchrect;
-    int minfeaturesize;
+    int minfeaturesize=-1;
     if(map->scaledenom > 0) {
       if((layer->labelmaxscaledenom != -1) && (map->scaledenom >= layer->labelmaxscaledenom)) annotate = MS_FALSE;
       if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
@@ -355,10 +355,23 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
 
     while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
       int drawmode = MS_DRAWMODE_FEATURES;
-      /* Check if the shape size is ok to be drawn */
-      if((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) && (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)) {
+      if(shape.type == MS_SHAPE_POLYGON) {
+        msClipPolygonRect(&shape, map->extent);
+      } else {
+        msClipPolylineRect(&shape, map->extent);
+      }
+      if(shape.numlines == 0) {
         msFreeShape(&shape);
         continue;
+      }
+      /* Check if the shape size is ok to be drawn, we need to clip */
+      if((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0)) {
+        msTransformShape(&shape, map->extent, map->cellsize, NULL);
+        msComputeBounds(&shape);
+        if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
+          msFreeShape(&shape);
+          continue;
+        }
       }
 
       shape.classindex = msShapeGetClass(layer, map, &shape, classgroup, nclasses);

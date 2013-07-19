@@ -4693,6 +4693,33 @@ void initMapHitTests(mapObj *map, map_hittest *mh) {
     initLayerHitTests(GET_LAYER(map,i),&mh->layerhits[i]);
   }
 }
+
+void freeLabelHitTests(labelObj *l, label_hittest *lh) {
+  free(lh->stylehits);
+}
+
+void freeClassHitTests(classObj *c, class_hittest *ch) {
+  int i;
+  for(i=0; i<c->numlabels; i++) {
+    freeLabelHitTests(c->labels[i],&ch->labelhits[i]);
+  }
+  free(ch->stylehits);
+  free(ch->labelhits);
+}
+void freeLayerHitTests(layerObj *l, layer_hittest *lh) {
+  int i;
+  for(i=0; i<l->numclasses; i++) {
+    freeClassHitTests(l->class[i],&lh->classhits[i]);
+  }
+  free(lh->classhits);
+}
+void freeMapHitTests(mapObj *map, map_hittest *mh) {
+  int i;
+  for(i=0; i<map->numlayers; i++) {
+    freeLayerHitTests(GET_LAYER(map,i),&mh->layerhits[i]);
+  }
+  free(mh->layerhits);
+}
 /*
 ** msWMSGetContentDependantLegend()
 */
@@ -4708,9 +4735,15 @@ int msWMSGetContentDependantLegend(mapObj *map, int nVersion, char **names, char
 
   initMapHitTests(map,&hittest);
   status = msHitTestMap(map,&hittest);
-  if(status == MS_FAILURE)
+  if(status == MS_SUCCESS) {
+    status = msWMSLegendGraphic(map,nVersion,names,values,numentries,wms_exception_format,ows_request,&hittest);
+  }
+  freeMapHitTests(map,&hittest);
+  if(status != MS_SUCCESS) {
     return msWMSException(map, nVersion, NULL, wms_exception_format);
-  return msWMSLegendGraphic(map,nVersion,names,values,numentries,wms_exception_format,ows_request,&hittest);
+  } else {
+    return MS_SUCCESS;
+  }
 }
 
 /*
@@ -5081,7 +5114,18 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
       }
     }
     if(i != req->NumParams) {
+      char *pszLayer;
       isContentDependantLegend = 1;
+      /* getLegendGraphic uses LAYER= , we need to create a LAYERS= value that is identical
+       * we'll suppose that the client is conformat and hasn't included a LAYERS= parameter
+       * in its request */
+      for(i=0; i<req->NumParams; i++) {
+        if(strcasecmp(req->ParamNames[i], "LAYER") == 0) {
+          req->ParamNames[req->NumParams] = msStrdup("LAYERS");
+          req->ParamValues[req->NumParams] = msStrdup(req->ParamValues[i]);
+          req->NumParams++;
+        }
+      }
     } else {
       return msWMSLegendGraphic(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams,
                               wms_exception_format, ows_request, NULL);
