@@ -3563,69 +3563,75 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
  * This function look for params that can be used
  * by mapserv when generating template.
 */
-int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
+int msTranslateWMS2Mapserv(const char **names, const char **values, int numentries, char ***translated_names, char ***translated_values, int *translated_numentries)
 {
-  int i=0;
-  int tmpNumentries = *numentries;;
-
-  for (i=0; i<*numentries; i++) {
+  int i=0, num_allocated = numentries;
+  *translated_names = (char**)msSmallMalloc(num_allocated * sizeof(char*));
+  *translated_values = (char**)msSmallMalloc(num_allocated * sizeof(char*));
+  *translated_numentries = 0;
+  for (i=0; i<numentries; i++) {
+    (*translated_values)[*translated_numentries] = msStrdup(values[i]);
+    (*translated_names)[*translated_numentries] = msStrdup(names[i]);
+    (*translated_numentries)++;
     if (strcasecmp("X", names[i]) == 0) {
-      values[tmpNumentries] = msStrdup(values[i]);
-      names[tmpNumentries] = msStrdup("img.x");
-
-      tmpNumentries++;
+      num_allocated++;
+      *translated_names = (char**)msSmallRealloc(*translated_names, num_allocated * sizeof(char*));
+      *translated_values = (char**)msSmallRealloc(*translated_values, num_allocated * sizeof(char*));
+      (*translated_values)[*translated_numentries] = msStrdup(values[i]);
+      (*translated_names)[*translated_numentries] = msStrdup("img.x");
+      (*translated_numentries)++;
     } else if (strcasecmp("Y", names[i]) == 0) {
-      values[tmpNumentries] = msStrdup(values[i]);
-      names[tmpNumentries] = msStrdup("img.y");
-
-      tmpNumentries++;
+      num_allocated++;
+      *translated_names = (char**)msSmallRealloc(*translated_names, num_allocated * sizeof(char*));
+      *translated_values = (char**)msSmallRealloc(*translated_values, num_allocated * sizeof(char*));
+      (*translated_values)[*translated_numentries] = msStrdup(values[i]);
+      (*translated_names)[*translated_numentries] = msStrdup("img.y");
+      (*translated_numentries)++;
     } else if (strcasecmp("LAYERS", names[i]) == 0) {
       char **layers;
       int tok;
       int j;
-
       layers = msStringSplit(values[i], ',', &tok);
-
+      num_allocated += tok;
+      *translated_names = (char**)msSmallRealloc(*translated_names, num_allocated * sizeof(char*));
+      *translated_values = (char**)msSmallRealloc(*translated_values, num_allocated * sizeof(char*));
       for (j=0; j<tok; j++) {
-        values[tmpNumentries] = layers[j];
+        (*translated_values)[*translated_numentries] = layers[j];
+        (*translated_names)[*translated_numentries] = msStrdup("layer");
+        (*translated_numentries)++;
         layers[j] = NULL;
-        names[tmpNumentries] = msStrdup("layer");
-
-        tmpNumentries++;
       }
-
       free(layers);
     } else if (strcasecmp("QUERY_LAYERS", names[i]) == 0) {
       char **layers;
       int tok;
       int j;
-
       layers = msStringSplit(values[i], ',', &tok);
-
+      num_allocated += tok;
+      *translated_names = (char**)msSmallRealloc(*translated_names, num_allocated * sizeof(char*));
+      *translated_values = (char**)msSmallRealloc(*translated_values, num_allocated * sizeof(char*));
       for (j=0; j<tok; j++) {
-        values[tmpNumentries] = layers[j];
+        (*translated_values)[*translated_numentries] = layers[j];
+        (*translated_names)[*translated_numentries] = msStrdup("qlayer");
+        (*translated_numentries)++;
         layers[j] = NULL;
-        names[tmpNumentries] = msStrdup("qlayer");
-
-        tmpNumentries++;
       }
-
       free(layers);
     } else if (strcasecmp("BBOX", names[i]) == 0) {
+      num_allocated++;
+      *translated_names = (char**)msSmallRealloc(*translated_names, num_allocated * sizeof(char*));
+      *translated_values = (char**)msSmallRealloc(*translated_values, num_allocated * sizeof(char*));
       char *imgext;
 
       /* Note msReplaceSubstring() works on the string itself, so we need to make a copy */
       imgext = msStrdup(values[i]);
       imgext = msReplaceSubstring(imgext, ",", " ");
-
-      values[tmpNumentries] = imgext;
-      names[tmpNumentries] = msStrdup("imgext");
-
-      tmpNumentries++;
+      (*translated_values)[*translated_numentries] = imgext;
+      (*translated_names)[*translated_numentries] = msStrdup("imgext");
+      (*translated_numentries)++;
     }
   }
 
-  *numentries = tmpNumentries;
 
   return MS_SUCCESS;
 }
@@ -4125,18 +4131,20 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   } else {
     mapservObj *msObj;
 
+    char **translated_names, **translated_values;
+    int translated_numentries;
     msObj = msAllocMapServObj();
 
     /* Translate some vars from WMS to mapserv */
-    msTranslateWMS2Mapserv(names, values, &numentries);
+    msTranslateWMS2Mapserv((const char**)names, (const char**)values, numentries, &translated_names, &translated_values, &translated_numentries);
 
     msObj->map = map;
     msFreeCharArray(msObj->request->ParamNames, msObj->request->NumParams);
     msFreeCharArray(msObj->request->ParamValues, msObj->request->NumParams);
-    msObj->request->ParamNames = names;
-    msObj->request->ParamValues = values;
+    msObj->request->ParamNames = translated_names;
+    msObj->request->ParamValues = translated_values;
     msObj->Mode = QUERY;
-    msObj->request->NumParams = numentries;
+    msObj->request->NumParams = translated_numentries;
     msObj->mappnt.x = point.x;
     msObj->mappnt.y = point.y;
 
@@ -4146,12 +4154,9 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     } else if (msReturnTemplateQuery(msObj, (char *)info_format, NULL) != MS_SUCCESS)
       return msWMSException(map, nVersion, NULL, wms_exception_format);
 
-    /* We don't want to free the map, and param names/values since they */
-    /* belong to the caller, set them to NULL before freeing the mapservObj */
+    /* We don't want to free the map since it */
+    /* belongs to the caller, set it to NULL before freeing the mapservObj */
     msObj->map = NULL;
-    msObj->request->ParamNames = NULL;
-    msObj->request->ParamValues = NULL;
-    msObj->request->NumParams = 0;
 
     msFreeMapServObj(msObj);
   }
