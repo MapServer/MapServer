@@ -3618,10 +3618,10 @@ int msTranslateWMS2Mapserv(const char **names, const char **values, int numentri
       }
       free(layers);
     } else if (strcasecmp("BBOX", names[i]) == 0) {
+      char *imgext;
       num_allocated++;
       *translated_names = (char**)msSmallRealloc(*translated_names, num_allocated * sizeof(char*));
       *translated_values = (char**)msSmallRealloc(*translated_values, num_allocated * sizeof(char*));
-      char *imgext;
 
       /* Note msReplaceSubstring() works on the string itself, so we need to make a copy */
       imgext = msStrdup(values[i]);
