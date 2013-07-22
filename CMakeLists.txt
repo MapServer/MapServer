@@ -494,7 +494,7 @@ if(WITH_GDAL)
 endif (WITH_GDAL)
 
 if(WITH_SVGCAIRO)
-  find_package(SVGCAIRO)
+  find_package(SVGCairo)
   if(SVGCAIRO_FOUND)
     include_directories(${SVGCAIRO_INCLUDE_DIR})
     ms_link_libraries( ${SVG_LIBRARY} ${SVGCAIRO_LIBRARY})

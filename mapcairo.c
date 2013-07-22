@@ -1155,6 +1155,11 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
   symbolStyleObj pixstyle;
   symbolObj pixsymbol;
 
+  if(img->format->renderer == MS_RENDER_WITH_GD) {
+    msSetError(MS_MISCERR, "GD renderer does not support SVG symbols", "msRenderRasterizedSVGSymbol()");
+    return MS_FAILURE;
+  }
+
   //already rendered at the right size and scale? return
   if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
     return MS_FAILURE;
