@@ -1170,7 +1170,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].debug = lp->debug;
 
     if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata),
-                                    pasReqInfo, *numRequests, map, "MO"))
+                             pasReqInfo, *numRequests, map, "MO") != MS_SUCCESS)
       return MS_FAILURE;
 
     (*numRequests)++;
