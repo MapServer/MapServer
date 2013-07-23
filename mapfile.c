@@ -1877,6 +1877,7 @@ static int loadLabel(labelObj *label)
         break;
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadLabel()");
+        freeLabel(label);       /* free any structures allocated before EOF */
         return(-1);
       case(EXPRESSION):
         if(loadExpression(&(label->expression)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
@@ -3492,7 +3493,10 @@ int loadClass(classObj *class, layerObj *layer)
         if(msGrowClassLabels(class) == NULL) return(-1);
         initLabel(class->labels[class->numlabels]);
         class->labels[class->numlabels]->size = MS_MEDIUM; /* only set a default if the LABEL section is present */
-        if(loadLabel(class->labels[class->numlabels]) == -1) return(-1);
+        if(loadLabel(class->labels[class->numlabels]) == -1) {
+          msFree(class->labels[class->numlabels]);
+          return(-1);
+        }
         class->numlabels++;
         break;
       case(LEADER):

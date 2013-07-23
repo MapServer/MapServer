@@ -380,7 +380,10 @@ int renderSVGSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
 
   status = svg_cairo_render(cache->svgc, r->cr);
   cairo_restore(r->cr);
-  return MS_SUCCESS;
+  if(status == SVG_CAIRO_STATUS_SUCCESS)
+    return MS_SUCCESS;
+  else
+    return MS_FAILURE;
 
 #else
   msSetError(MS_MISCERR, "SVG Symbols requested but is not built with libsvgcairo",
@@ -1108,7 +1111,7 @@ int msPreloadSVGSymbol(symbolObj *symbol)
     rewind(stream);
     symbol->svg_text = (char*) msSmallMalloc(sizeof (char) * file_len);
     if (1 != fread(symbol->svg_text, file_len, 1, stream)) {
-      msSetError(MS_IOERR, "failed to read %d bytes from svg file %s", "loadSymbol()", file_len, symbol->full_pixmap_path);
+      msSetError(MS_IOERR, "failed to read %lu bytes from svg file %s", "loadSymbol()", file_len, symbol->full_pixmap_path);
       free(symbol->svg_text);
       return MS_FAILURE;
     }
@@ -1154,6 +1157,11 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
   struct svg_symbol_cache *svg_cache;
   symbolStyleObj pixstyle;
   symbolObj pixsymbol;
+
+  if(img->format->renderer == MS_RENDER_WITH_GD) {
+    msSetError(MS_MISCERR, "GD renderer does not support SVG symbols", "msRenderRasterizedSVGSymbol()");
+    return MS_FAILURE;
+  }
 
   //already rendered at the right size and scale? return
   if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
