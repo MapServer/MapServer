@@ -833,12 +833,14 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
         break;
       }
 
-      s.style = style;
       computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
       s.style = style;
       if (!s.color && !s.outlinecolor && symbol->type != MS_SYMBOL_PIXMAP &&
           symbol->type != MS_SYMBOL_SVG) {
         return MS_SUCCESS; // nothing to do if no color, except for pixmap symbols
+      }
+      if(s.scale == 0) {
+        return MS_SUCCESS;
       }
 
 
