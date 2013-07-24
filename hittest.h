@@ -1,12 +1,11 @@
 /*****************************************************************************
- * $Id$
  *
  * Project:  MapServer
- * Purpose:  OGC Web Services (WMS, WFS, WCS) support function definitions
- * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
+ * Purpose:  Content Dependant Legend rendering support
+ * Author:   Thomas Bonfort (tbonfort@terriscope.fr)
  *
  ******************************************************************************
- * Copyright (c) 1996-2005 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2013 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
