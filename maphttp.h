@@ -108,6 +108,9 @@ extern "C" {
                      int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
                      int bDebug);
 
+  int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
+                           httpRequestObj *pasReqInfo, int numRequests,
+                           mapObj *map, const char* namespaces);
 #endif /*USE_CURL*/
 
 #ifdef __cplusplus
