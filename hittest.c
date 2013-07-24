@@ -1,23 +1,50 @@
 #include "mapserver.h"
 
-void initLabelHitTests(labelObj *l, label_hittest *lh) {
-  int i;
-  lh->stylehits = msSmallCalloc(l->numstyles,sizeof(style_hittest));
+
+void initStyleHitTests(styleObj *s, style_hittest *sh, int default_status) {
+  sh->status = default_status;
 }
 
-void initClassHitTests(classObj *c, class_hittest *ch) {
+void initLabelHitTests(labelObj *l, label_hittest *lh, int default_status) {
+  int i;
+  lh->stylehits = msSmallCalloc(l->numstyles,sizeof(style_hittest));
+  lh->status = default_status;
+  for(i=0; i<l->numstyles; i++) {
+    initStyleHitTests(l->styles[i],&lh->stylehits[i],default_status);
+  }
+}
+
+void initClassHitTests(classObj *c, class_hittest *ch, int default_status) {
   int i;
   ch->stylehits = msSmallCalloc(c->numstyles,sizeof(style_hittest));
   ch->labelhits = msSmallCalloc(c->numlabels,sizeof(label_hittest));
+  ch->status = default_status;
+  for(i=0; i<c->numstyles; i++) {
+    initStyleHitTests(c->styles[i],&ch->stylehits[i],default_status);
+  }
   for(i=0; i<c->numlabels; i++) {
-    initLabelHitTests(c->labels[i],&ch->labelhits[i]);
+    initLabelHitTests(c->labels[i],&ch->labelhits[i],default_status);
   }
 }
+
 void initLayerHitTests(layerObj *l, layer_hittest *lh) {
-  int i;
+  int i,default_status;
   lh->classhits = msSmallCalloc(l->numclasses,sizeof(class_hittest));
+  lh->status = default_status;
+
+  switch(l->type) {
+    case MS_LAYER_POLYGON:
+    case MS_LAYER_POINT:
+    case MS_LAYER_LINE:
+    case MS_LAYER_ANNOTATION:
+      default_status = 0; /* needs testing */
+      break;
+    default:
+      default_status = 1; /* no hittesting needed, use traditional mode */
+      break;
+  }
   for(i=0; i<l->numclasses; i++) {
-    initClassHitTests(l->class[i],&lh->classhits[i]);
+    initClassHitTests(l->class[i],&lh->classhits[i], default_status);
   }
 }
 void initMapHitTests(mapObj *map, map_hittest *mh) {
@@ -56,12 +83,12 @@ void freeMapHitTests(mapObj *map, map_hittest *mh) {
 }
 
 int msHitTestShape(mapObj *map, layerObj *layer, shapeObj *shape, int drawmode, class_hittest *hittest) {
-  int i,status;
+  int i;
   classObj *cp = layer->class[shape->classindex];
   if(MS_DRAW_FEATURES(drawmode)) {
     for(i=0;i<cp->numstyles;i++) {
       styleObj *sp = cp->styles[i];
-      if(msScaleInBounds(map->scaledenom,cp->minscaledenom,cp->maxscaledenom)) {
+      if(msScaleInBounds(map->scaledenom,sp->minscaledenom,sp->maxscaledenom)) {
         hittest->stylehits[i].status = 1;
       }
     }
@@ -82,7 +109,7 @@ int msHitTestShape(mapObj *map, layerObj *layer, shapeObj *shape, int drawmode, 
 }
 
 int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
-  int i,status;
+  int status;
   if(!msLayerIsVisible(map,layer)) {
     hittest->status = 0;
     return MS_SUCCESS;
@@ -201,23 +228,7 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
     return MS_SUCCESS;
 
   } else {
-    /* we don't hittest these layers, mark all as hit */
-    int c;
-    for(c=0; c<layer->numclasses; c++) {
-      class_hittest *ch = hittest->classhits + c;
-      int s,l;
-      ch->status = 1;
-      classObj *cp = layer->class[c];
-      for(s=0;s<cp->numstyles;s++) {
-        ch->stylehits[s].status = 1;
-      }
-      for(l=0;l<cp->numlabels;l++) {
-        ch->labelhits[s].status = 1;
-        for(s=0; s<cp->labels[l]->numstyles;s++) {
-          ch->labelhits[l].stylehits[s].status = 1;
-        }
-      }
-    }
+    /* we don't hittest these layers, skip as they already have been initialised */
     return MS_SUCCESS;
   }
 }

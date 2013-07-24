@@ -5060,7 +5060,6 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
       }
     }
     if(i != req->NumParams) {
-      char *pszLayer;
       isContentDependantLegend = 1;
       /* getLegendGraphic uses LAYER= , we need to create a LAYERS= value that is identical
        * we'll suppose that the client is conformat and hasn't included a LAYERS= parameter

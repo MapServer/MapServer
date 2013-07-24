@@ -57,8 +57,9 @@ typedef struct map_hittest{
 
 int msHitTestMap(mapObj *map, map_hittest *hittest);
 int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest);
-void initLabelHitTests(labelObj *l, label_hittest *lh);
-void initClassHitTests(classObj *c, class_hittest *ch);
+void initStyleHitTests(styleObj *s, style_hittest *sh, int default_status);
+void initLabelHitTests(labelObj *l, label_hittest *lh, int default_status);
+void initClassHitTests(classObj *c, class_hittest *ch, int default_status);
 void initLayerHitTests(layerObj *l, layer_hittest *lh);
 void initMapHitTests(mapObj *map, map_hittest *mh);
 void freeLabelHitTests(labelObj *l, label_hittest *lh);
