@@ -193,6 +193,7 @@ struct symbolObj{
   */
 #ifndef SWIG
   rendererVTableObj *renderer;
+  void (*renderer_free_func)(symbolObj *self);
   rasterBufferObj *pixmap_buffer;
   void *renderer_cache;
   char *full_font_path;

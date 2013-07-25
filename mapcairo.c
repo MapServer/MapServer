@@ -359,7 +359,7 @@ int renderVectorSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol
 
 #if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
 struct svg_symbol_cache {
-  rasterBufferObj pixmap_buffer;
+  rasterBufferObj *pixmap_buffer;
 #ifdef USE_RSVG
   RsvgHandle *svgc;
 #else
@@ -1067,6 +1067,26 @@ int mergeRasterBufferCairo(imageObj *img, rasterBufferObj *rb, double opacity,
   return MS_SUCCESS;
 }
 
+
+void freeSVGCache(symbolObj *s) {
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
+      struct svg_symbol_cache *cache = s->renderer_cache;
+      assert(cache->svgc);
+#ifdef USE_SVG_CAIRO
+      svg_cairo_destroy(cache->svgc);
+#else
+      rsvg_handle_close(cache->svgc, NULL);
+      g_object_unref(cache->svgc);
+      //rsvg_handle_free(cache->svgc);
+#endif
+      if(cache->pixmap_buffer) {
+        msFreeRasterBuffer(cache->pixmap_buffer);
+        free(cache->pixmap_buffer);
+      }
+      msFree(s->renderer_cache);
+#endif
+}
+
 int freeSymbolCairo(symbolObj *s)
 {
   if(!s->renderer_cache)
@@ -1078,22 +1098,9 @@ int freeSymbolCairo(symbolObj *s)
     case MS_SYMBOL_PIXMAP:
       cairo_surface_destroy(s->renderer_cache);
       break;
-    case MS_SYMBOL_SVG: {
-#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
-      struct svg_symbol_cache *cache = s->renderer_cache;
-      assert(cache->svgc);
-#ifdef USE_SVG_CAIRO
-      svg_cairo_destroy(cache->svgc);
-#else
-      rsvg_handle_close(cache->svgc, NULL);
-      g_object_unref(cache->svgc);
-      //rsvg_handle_free(cache->svgc);
-#endif
-      msFreeRasterBuffer(&cache->pixmap_buffer);
-      msFree(s->renderer_cache);
-#endif
-    }
-    break;
+    case MS_SYMBOL_SVG:
+      freeSVGCache(s);
+      break;
   }
   s->renderer_cache=NULL;
   return MS_SUCCESS;
@@ -1122,6 +1129,7 @@ int msPreloadSVGSymbol(symbolObj *symbol)
 
   if(!symbol->renderer_cache) {
     cache = msSmallCalloc(1,sizeof(struct svg_symbol_cache));
+    symbol->renderer_free_func = &freeSVGCache;
   } else {
     cache = symbol->renderer_cache;
   }
@@ -1190,18 +1198,22 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
     return MS_FAILURE;
   }
 
-  //already rendered at the right size and scale? return
   if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
     return MS_FAILURE;
   svg_cache = (struct svg_symbol_cache*) symbol->renderer_cache;
 
+  //already rendered at the right size and scale? return
   if(svg_cache->scale != style->scale || svg_cache->rotation != style->rotation) {
     cairo_t *cr;
     cairo_surface_t *surface;
     unsigned char *pb;
     int width, height, surface_w, surface_h;
     /* need to recompute the pixmap */
-    msFreeRasterBuffer(&svg_cache->pixmap_buffer);
+    if(svg_cache->pixmap_buffer) {
+      msFreeRasterBuffer(svg_cache->pixmap_buffer);
+    } else {
+      svg_cache->pixmap_buffer = msSmallCalloc(1,sizeof(rasterBufferObj));
+    }
 
     //increase pixmap size to accomodate scaling/rotation
     if (style->scale != 1.0) {
@@ -1237,20 +1249,20 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
     pb = cairo_image_surface_get_data(surface);
 
     //set up raster
-    initializeRasterBufferCairo(&svg_cache->pixmap_buffer, surface_w, surface_h, 0);
-    memcpy(svg_cache->pixmap_buffer.data.rgba.pixels, pb, surface_w * surface_h * 4 * sizeof (unsigned char));
+    initializeRasterBufferCairo(svg_cache->pixmap_buffer, surface_w, surface_h, 0);
+    memcpy(svg_cache->pixmap_buffer->data.rgba.pixels, pb, surface_w * surface_h * 4 * sizeof (unsigned char));
     svg_cache->scale = style->scale;
     svg_cache->rotation = style->rotation;
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
   }
-  assert(svg_cache->pixmap_buffer.height && svg_cache->pixmap_buffer.width);
+  assert(svg_cache->pixmap_buffer->height && svg_cache->pixmap_buffer->width);
 
   pixstyle = *style;
   pixstyle.rotation = 0.0;
   pixstyle.scale = 1.0;
 
-  pixsymbol.pixmap_buffer = &svg_cache->pixmap_buffer;
+  pixsymbol.pixmap_buffer = svg_cache->pixmap_buffer;
   pixsymbol.type = MS_SYMBOL_PIXMAP;
 
   MS_IMAGE_RENDERER(img)->renderPixmapSymbol(img,x,y,&pixsymbol,&pixstyle);
