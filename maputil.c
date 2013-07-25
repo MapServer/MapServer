@@ -46,6 +46,10 @@
 #include <process.h>
 #endif
 
+#ifdef USE_RSVG
+#include <glib-object.h>
+#endif
+
 
 
 extern char *msyystring_buffer;
@@ -1888,6 +1892,10 @@ int msSetup()
 
 #ifdef USE_GEOS
   msGEOSSetup();
+#endif
+
+#ifdef USE_RSVG
+  g_type_init();
 #endif
 
   return MS_SUCCESS;

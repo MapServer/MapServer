@@ -44,6 +44,7 @@
 #else
 #ifdef USE_RSVG
 #include <librsvg/rsvg.h>
+#include <glib-object.h>
 #endif
 #endif
 
@@ -1079,8 +1080,8 @@ int freeSymbolCairo(symbolObj *s)
       svg_cairo_destroy(cache->svgc);
 #else
       rsvg_handle_close(cache->svgc, NULL);
-      //g_object_unref(cache->svgc);
-      rsvg_handle_free(cache->svgc);
+      g_object_unref(cache->svgc);
+      //rsvg_handle_free(cache->svgc);
 #endif
       msFreeRasterBuffer(&cache->pixmap_buffer);
       msFree(s->renderer_cache);
