@@ -48,7 +48,7 @@
     #include <librsvg/librsvg-features.h>
   #endif
   #if !LIBRSVG_CHECK_VERSION(2,36,1)
-    #include <librsvg-rsvg-cairo.h>
+    #include <librsvg/rsvg-cairo.h>
   #endif
   #include <glib-object.h>
 #endif
