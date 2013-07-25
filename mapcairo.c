@@ -44,6 +44,9 @@
 #else
 #ifdef USE_RSVG
 #include <librsvg/rsvg.h>
+  #if !LIBRSVG_CHECK_VERSION(2,36,1)
+  #include <librsvg-rsvg-cairo.h>
+  #endif
 #include <glib-object.h>
 #endif
 #endif
