@@ -1076,8 +1076,11 @@ void freeSVGCache(symbolObj *s) {
       svg_cairo_destroy(cache->svgc);
 #else
       rsvg_handle_close(cache->svgc, NULL);
+  #if LIBRSVG_CHECK_VERSION(2,36,2)
       g_object_unref(cache->svgc);
-      //rsvg_handle_free(cache->svgc);
+  #else
+      svg_handle_free(cache->svgc);
+  #endif
 #endif
       if(cache->pixmap_buffer) {
         msFreeRasterBuffer(cache->pixmap_buffer);
