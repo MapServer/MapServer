@@ -85,7 +85,7 @@ double msSymbolGetDefaultSize(symbolObj *s)
       break;
     case(MS_SYMBOL_SVG):
       size = 1;
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined (USE_RSVG)
       assert(s->renderer_cache != NULL);
       size = s->sizey;
 #endif
@@ -124,8 +124,6 @@ void initSymbol(symbolObj *s)
   s->character = NULL;
   s->anchorpoint_x = s->anchorpoint_y = 0.5;
 
-  s->svg_text = NULL;
-
 }
 
 int msFreeSymbol(symbolObj *s)
@@ -150,9 +148,6 @@ int msFreeSymbol(symbolObj *s)
   msFree(s->full_pixmap_path);
   if(s->imagepath) free(s->imagepath);
   if(s->character) free(s->character);
-
-  if (s->svg_text)
-    msFree(s->svg_text);
 
   return MS_SUCCESS;
 }
@@ -628,7 +623,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
       return MS_FAILURE;
   }
   if(symbol->type == MS_SYMBOL_SVG && !symbol->renderer_cache) {
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined (USE_RSVG)
     if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
       return MS_FAILURE;
 #else

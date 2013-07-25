@@ -41,6 +41,10 @@
 
 #ifdef USE_SVG_CAIRO
 #include <svg-cairo.h>
+#else
+#ifdef USE_RSVG
+#include <librsvg/rsvg.h>
+#endif
 #endif
 
 #ifdef USE_GDAL
@@ -346,10 +350,14 @@ int renderVectorSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol
   return MS_SUCCESS;
 }
 
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
 struct svg_symbol_cache {
   rasterBufferObj pixmap_buffer;
+#ifdef USE_RSVG
+  RsvgHandle *svgc;
+#else
   svg_cairo_t *svgc;
+#endif
   double scale,rotation;
 } ;
 #endif
@@ -357,12 +365,11 @@ struct svg_symbol_cache {
 int renderSVGSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
                          symbolStyleObj *style)
 {
-#ifdef USE_SVG_CAIRO
-  cairo_renderer *r = CAIRO_RENDERER(img);
-  //double ox=symbol->sizex*0.5,oy=symbol->sizey*0.5;
-
-  svg_cairo_status_t status;
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
   struct svg_symbol_cache *cache;
+  cairo_renderer *r = CAIRO_RENDERER(img);
+
+
 
   msPreloadSVGSymbol(symbol);
   assert(symbol->renderer_cache);
@@ -378,12 +385,23 @@ int renderSVGSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
   } else
     cairo_translate (r->cr, -(int)(symbol->sizex/2), -(int)(symbol->sizey/2));
 
-  status = svg_cairo_render(cache->svgc, r->cr);
+#ifdef USE_SVG_CAIRO
+  {
+    svg_cairo_status_t status;
+    status = svg_cairo_render(cache->svgc, r->cr);
+    if(status != SVG_CAIRO_STATUS_SUCCESS) {
+      cairo_restore(r->cr);
+      return MS_FAILURE;
+    }
+  }
+#else
+  rsvg_handle_render_cairo(cache->svgc, r->cr);
+#endif
+
   cairo_restore(r->cr);
-  if(status == SVG_CAIRO_STATUS_SUCCESS)
-    return MS_SUCCESS;
-  else
-    return MS_FAILURE;
+
+  return MS_SUCCESS;
+
 
 #else
   msSetError(MS_MISCERR, "SVG Symbols requested but is not built with libsvgcairo",
@@ -1054,10 +1072,17 @@ int freeSymbolCairo(symbolObj *s)
       cairo_surface_destroy(s->renderer_cache);
       break;
     case MS_SYMBOL_SVG: {
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
       struct svg_symbol_cache *cache = s->renderer_cache;
       assert(cache->svgc);
+#ifdef USE_SVG_CAIRO
       svg_cairo_destroy(cache->svgc);
+#else
+      rsvg_handle_close(cache->svgc, NULL);
+      //g_object_unref(cache->svgc);
+      rsvg_handle_free(cache->svgc);
+#endif
+      msFreeRasterBuffer(&cache->pixmap_buffer);
       msFree(s->renderer_cache);
 #endif
     }
@@ -1085,9 +1110,7 @@ int initializeRasterBufferCairo(rasterBufferObj *rb, int width, int height, int 
 
 int msPreloadSVGSymbol(symbolObj *symbol)
 {
-#ifdef USE_SVG_CAIRO
-  int status;
-  unsigned int svg_width, svg_height;
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
   struct svg_symbol_cache *cache;
 
   if(!symbol->renderer_cache) {
@@ -1098,45 +1121,42 @@ int msPreloadSVGSymbol(symbolObj *symbol)
   if(cache->svgc)
     return MS_SUCCESS;
 
-  if (!symbol->svg_text) {
-    FILE *stream;
-    long int file_len;
-
-    if ((stream = fopen(symbol->full_pixmap_path, "rb")) == NULL) {
-      msSetError(MS_IOERR, "Could not open svg file %s", "msPreloadSVGSymbol()",symbol->full_pixmap_path);
-      return (MS_FAILURE);
-    }
-    fseek(stream, 0, SEEK_END);
-    file_len = ftell(stream);
-    rewind(stream);
-    symbol->svg_text = (char*) msSmallMalloc(sizeof (char) * file_len);
-    if (1 != fread(symbol->svg_text, file_len, 1, stream)) {
-      msSetError(MS_IOERR, "failed to read %lu bytes from svg file %s", "loadSymbol()", file_len, symbol->full_pixmap_path);
-      free(symbol->svg_text);
+#ifdef USE_SVG_CAIRO
+  {
+    unsigned int svg_width, svg_height;
+    int status;
+    status = svg_cairo_create(&cache->svgc);
+    if (status) {
+      msSetError(MS_RENDERERERR, "problem creating cairo svg", "msPreloadSVGSymbol()");
       return MS_FAILURE;
     }
-    symbol->svg_text[file_len - 1] = '\0';
-    fclose(stream);
-  }
+    status = svg_cairo_parse(cache->svgc, symbol->full_pixmap_path);
+    if (status) {
+      msSetError(MS_RENDERERERR, "problem parsing svg symbol", "msPreloadSVGSymbol()");
+      return MS_FAILURE;
+    }
+    svg_cairo_get_size (cache->svgc, &svg_width, &svg_height);
+    if (svg_width == 0 || svg_height == 0) {
+      msSetError(MS_RENDERERERR, "problem parsing svg symbol", "msPreloadSVGSymbol()");
+      return MS_FAILURE;
+    }
 
-  status = svg_cairo_create(&cache->svgc);
-  if (status) {
-    msSetError(MS_RENDERERERR, "problem creating cairo svg", "msPreloadSVGSymbol()");
-    return MS_FAILURE;
+    symbol->sizex = svg_width;
+    symbol->sizey = svg_height;
   }
-  status = svg_cairo_parse_buffer(cache->svgc, symbol->svg_text, strlen(symbol->svg_text));
-  if (status) {
-    msSetError(MS_RENDERERERR, "problem parsing svg symbol", "msPreloadSVGSymbol()");
-    return MS_FAILURE;
+#else
+  {
+    RsvgDimensionData dim;
+    cache->svgc = rsvg_handle_new_from_file(symbol->full_pixmap_path,NULL);
+    if(!cache->svgc) {
+      msSetError(MS_RENDERERERR,"failed to load svg file %s", "msPreloadSVGSymbol()", symbol->full_pixmap_path);
+    }
+    rsvg_handle_get_dimensions_sub (cache->svgc, &dim, NULL);
+    symbol->sizex = dim.width;
+    symbol->sizey = dim.height;
   }
-  svg_cairo_get_size (cache->svgc, &svg_width, &svg_height);
-  if (svg_width == 0 || svg_height == 0) {
-    msSetError(MS_RENDERERERR, "problem parsing svg symbol", "msPreloadSVGSymbol()");
-    return MS_FAILURE;
-  }
+#endif
 
-  symbol->sizex = svg_width;
-  symbol->sizey = svg_height;
   symbol->renderer_cache = cache;
 
   return MS_SUCCESS;
@@ -1153,7 +1173,7 @@ int msPreloadSVGSymbol(symbolObj *symbol)
 int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style)
 {
 
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
   struct svg_symbol_cache *svg_cache;
   symbolStyleObj pixstyle;
   symbolObj pixsymbol;
@@ -1200,9 +1220,13 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
     if (style->scale != 1.0) {
       cairo_scale(cr, style->scale, style->scale);
     }
+#ifdef USE_SVG_CAIRO
     if(svg_cairo_render(svg_cache->svgc, cr) != SVG_CAIRO_STATUS_SUCCESS) {
       return MS_FAILURE;
     }
+#else
+  rsvg_handle_render_cairo(svg_cache->svgc, cr);
+#endif
     pb = cairo_image_surface_get_data(surface);
 
     //set up raster

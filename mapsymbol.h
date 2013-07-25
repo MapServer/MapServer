@@ -216,9 +216,6 @@ struct symbolObj{
   char *character;
   int antialias;
   char *font;
-
-  char* svg_text;
-
 } ;
 
 #endif /* MAPSYMBOL_H */
