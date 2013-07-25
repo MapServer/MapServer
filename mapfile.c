@@ -6669,7 +6669,11 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 
           break;
         case(LEGEND):
-          return msUpdateLegendFromString(&(map->legend), string, MS_TRUE);
+          if(msyylex() == LABEL) {
+            return msUpdateLabelFromString(&map->legend.label, string, MS_TRUE);
+          } else {
+            return msUpdateLegendFromString(&(map->legend), string, MS_TRUE);
+          }
         case(PROJECTION):
           msLoadProjectionString(&(map->projection), string);
           break;
