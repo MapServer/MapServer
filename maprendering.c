@@ -217,7 +217,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
           break;
 
         case (MS_SYMBOL_SVG):
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
           if(msPreloadSVGSymbol(symbol) != MS_SUCCESS) {
             return NULL; //failed to load image, renderer should have set the error message
           }
@@ -270,7 +270,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
               /*we should never get into these cases since the seamlessmode mode seems to
                 only be for vector symbols. But if that changes ...*/
             case (MS_SYMBOL_SVG):
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
               if(msPreloadSVGSymbol(symbol) != MS_SUCCESS) {
                 return NULL; //failed to load image, renderer should have set the error message
               }
@@ -705,7 +705,7 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
             }
             break;
           case MS_SYMBOL_SVG:
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
             if(MS_SUCCESS != msPreloadSVGSymbol(symbol)) {
               ret = MS_FAILURE;
               goto cleanup;
@@ -820,7 +820,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
         break;
 
         case (MS_SYMBOL_SVG): {
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
           if (!symbol->renderer_cache) {
             if (MS_SUCCESS != msPreloadSVGSymbol(symbol))
               return MS_FAILURE;
@@ -917,7 +917,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
           if (renderer->supports_svg) {
             ret = renderer->renderSVGSymbol(image, p_x, p_y, symbol, &s);
           } else {
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
             ret = msRenderRasterizedSVGSymbol(image, p_x,p_y, symbol, &s);
 #else
             msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawMarkerSymbol()");
