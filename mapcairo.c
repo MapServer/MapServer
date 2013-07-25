@@ -1079,7 +1079,7 @@ void freeSVGCache(symbolObj *s) {
   #if LIBRSVG_CHECK_VERSION(2,36,2)
       g_object_unref(cache->svgc);
   #else
-      svg_handle_free(cache->svgc);
+      rsvg_handle_free(cache->svgc);
   #endif
 #endif
       if(cache->pixmap_buffer) {
