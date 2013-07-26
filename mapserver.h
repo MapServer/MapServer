@@ -98,10 +98,12 @@ typedef uint32_t        ms_uint32;
 
 #include "mapserver-api.h"
 
+
 /*forward declaration of rendering object*/
 typedef struct rendererVTableObj rendererVTableObj;
 typedef struct tileCacheObj tileCacheObj;
-
+#ifndef SWIG
+#endif
 
 /* ms_bitarray is used by the bit mask in mapbit.c */
 typedef ms_uint32 *     ms_bitarray;
@@ -2082,6 +2084,8 @@ extern "C" {
 
   MS_DLL_EXPORT char *msStrdup( const char * pszString );
 
+#include "hittest.h"
+
   /* in mapsymbol.c */
   /* Use this function *only* with mapfile loading phase */
   MS_DLL_EXPORT int loadSymbolSet(symbolSetObj *symbolset, mapObj *map);
@@ -2108,11 +2112,11 @@ extern "C" {
   MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
   MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
 
-  MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map, int scale_independent); /* in maplegend.c */
+  MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest); /* in maplegend.c */
   MS_DLL_EXPORT int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_y,
-                                     int *alayers, int numl_ayer);
+                                     int *alayers, int numl_ayer, map_hittest *hittest);
   MS_DLL_EXPORT int msEmbedLegend(mapObj *map, imageObj *img);
-  MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, imageObj *img, int dstX, int dstY, int scale_independant);
+  MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, imageObj *img, int dstX, int dstY, int scale_independant, class_hittest *hittest);
   MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, int scale_independant);
 
   MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabel.c */
@@ -2601,6 +2605,7 @@ extern "C" {
   /*      include definitions from mapows.h                               */
   /* ==================================================================== */
 #include "mapows.h"
+
 
   /* ==================================================================== */
   /*      prototypes for functions in mapgeos.c                         */

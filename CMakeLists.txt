@@ -203,7 +203,7 @@ maphttp.c mapparser.c mapstring.c mapxmp.c mapcairo.c mapimageio.c
 mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
 mapcluster.c mapio.c mappostgis.c maptemplate.c mapcontext.c mapjoin.c
 mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
-mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c
+mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
 mapprojhack.c maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c

@@ -45,7 +45,7 @@ enum coordSources {NONE, FROMIMGPNT, FROMIMGBOX, FROMIMGSHAPE, FROMREFPNT, FROMU
 enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, LEGENDICON, REFERENCE, SCALEBAR, COORDINATE,
             QUERY, NQUERY, ITEMQUERY, ITEMNQUERY,
             FEATUREQUERY, FEATURENQUERY, ITEMFEATUREQUERY, ITEMFEATURENQUERY,
-            INDEXQUERY, TILE, OWS, WFS
+            INDEXQUERY, TILE, OWS, WFS, MAPLEGEND, MAPLEGENDICON
            };
 
 
@@ -132,6 +132,8 @@ typedef struct {
   int NL; /* total number of layers with results */
   int NR; /* total number or results */
   int NLR; /* number of results in a layer */
+
+  map_hittest *hittest;
 } mapservObj;
 
 

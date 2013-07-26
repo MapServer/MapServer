@@ -3172,6 +3172,9 @@ char *generateLegendTemplate(mapservObj *mapserv)
                 continue;
             }
           }
+          if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].status == 0) {
+            continue;
+          }
 
           if(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group && strcmp(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group, papszGroups[i]) == 0) {
             /* process all layer tags */
@@ -3198,6 +3201,9 @@ char *generateLegendTemplate(mapservObj *mapserv)
                 /* process all class tags */
                 if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
                   continue;
+                if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].classhits[k].status == 0) {
+                  continue;
+                }
 
                 if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS) {
                   if(pszResult)
@@ -3233,6 +3239,9 @@ char *generateLegendTemplate(mapservObj *mapserv)
                 continue;
             }
           }
+          if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].status == 0) {
+            continue;
+          }
 
           if(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group && strcmp(GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->group, papszGroups[i]) == 0) {
             /* for all classes in layer */
@@ -3241,6 +3250,9 @@ char *generateLegendTemplate(mapservObj *mapserv)
                 /* process all class tags */
                 if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
                   continue;
+                if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].classhits[k].status == 0) {
+                  continue;
+                }
 
                 if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS) {
                   if(pszResult)
@@ -3281,6 +3293,9 @@ char *generateLegendTemplate(mapservObj *mapserv)
           } else
             nLegendOrder=0;
         }
+        if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].status == 0) {
+          continue;
+        }
 
         /* process a layer tags */
         if(generateLayerTemplate(legLayerHtml, mapserv->map, mapserv->map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS) {
@@ -3304,6 +3319,9 @@ char *generateLegendTemplate(mapservObj *mapserv)
             /* process all class tags */
             if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
               continue;
+            if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].classhits[k].status == 0) {
+              continue;
+            }
 
             if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS) {
               if(pszResult)
@@ -3339,10 +3357,16 @@ char *generateLegendTemplate(mapservObj *mapserv)
                 continue;
             }
           }
+          if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].status == 0) {
+            continue;
+          }
 
           for (k=0; k<GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->numclasses; k++) {
             if(!GET_LAYER(mapserv->map, mapserv->map->layerorder[j])->class[k]->name)
               continue;
+            if(mapserv->hittest && mapserv->hittest->layerhits[mapserv->map->layerorder[j]].classhits[k].status == 0) {
+              continue;
+            }
 
             if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS) {
               if(pszResult)
@@ -4473,6 +4497,8 @@ mapservObj *msAllocMapServObj()
   mapserv->QueryCoordSource=NONE;
   mapserv->ZoomSize=0; /* zoom absolute magnitude (i.e. > 0) */
 
+  mapserv->hittest = NULL;
+
   return mapserv;
 }
 
@@ -4482,6 +4508,10 @@ void msFreeMapServObj(mapservObj* mapserv)
 
   if(mapserv) {
     if( mapserv->map ) {
+      if(mapserv->hittest) {
+        freeMapHitTests(mapserv->map,mapserv->hittest);
+        free(mapserv->hittest);
+      }
       msFreeMap(mapserv->map);
       mapserv->map = NULL;
     }
@@ -4579,7 +4609,7 @@ int msGenerateImages(mapservObj *mapserv, int bQueryMap, int bReturnOnError)
     /* render the legend */
     if(mapserv->map->legend.status == MS_ON) {
       imageObj *image = NULL;
-      image = msDrawLegend(mapserv->map, MS_FALSE);
+      image = msDrawLegend(mapserv->map, MS_FALSE, NULL);
       if(image) {
         snprintf(buffer, sizeof(buffer), "%s%sleg%s.%s", mapserv->map->web.imagepath, mapserv->map->name, mapserv->Id, MS_IMAGE_EXTENSION(mapserv->map->outputformat));
 
