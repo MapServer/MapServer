@@ -285,34 +285,12 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
         for(j=1; j<=3; j++) {
           p_y = (j+0.5) * height;
           switch(symbol->type) {
-            case (MS_SYMBOL_TRUETYPE):
-              renderer->renderTruetypeSymbol(tile3img, p_x, p_y, symbol, s);
-              break;
-            case (MS_SYMBOL_PIXMAP):
-              renderer->renderPixmapSymbol(tile3img, p_x, p_y, symbol, s);
-              break;
-            case (MS_SYMBOL_ELLIPSE):
-              renderer->renderEllipseSymbol(tile3img, p_x, p_y,symbol, s);
-              break;
             case (MS_SYMBOL_VECTOR):
               renderer->renderVectorSymbol(tile3img, p_x, p_y, symbol, s);
               break;
-              /*we should never get into these cases since the seamlessmode mode seems to
-                only be for vector symbols. But if that changes ...*/
-            case (MS_SYMBOL_SVG):
-#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
-              if (renderer->supports_svg) {
-                renderer->renderSVGSymbol(tile3img, p_x, p_y, symbol, s);
-              } else {
-                msRenderRasterizedSVGSymbol(tile3img,p_x,p_y,symbol, s);
-              }
-#else
-              msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "getTile()");
-              return NULL;
-#endif
-              break;
             default:
-              break;
+              msSetError(MS_SYMERR, "BUG: Seamless mode is only for vector symbols", "getTile()");
+              return NULL;
           }
         }
       }
