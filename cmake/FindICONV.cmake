@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2006, Peter Kümmel, <syntheticpp@gmx.net>
+#  Copyright (c) 2006, Peter KÃ¼mmel, <syntheticpp@gmx.net>
 #
 #  Redistribution and use in source and binary forms, with or without
 #  modification, are permitted provided that the following conditions
