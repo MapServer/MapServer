@@ -28,7 +28,6 @@
  *****************************************************************************/
 
 #include "mapserver.h"
-#include "mapagg.h"
 #include "renderers/agg/include/agg_arc.h"
 #include "renderers/agg/include/agg_basics.h"
 
