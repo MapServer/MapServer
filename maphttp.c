@@ -529,6 +529,8 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     /* set URL, note that curl keeps only a ref to our string buffer */
     curl_easy_setopt(http_handle, CURLOPT_URL, pasReqInfo[i].pszGetUrl );
 
+    curl_easy_setopt(http_handle, CURLOPT_PROTOCOLS, CURLPROTO_HTTP|CURLPROTO_HTTPS );
+
     /* Set User-Agent (auto-generate if not set by caller */
     if (pasReqInfo[i].pszUserAgent == NULL) {
       curl_version_info_data *psCurlVInfo;
