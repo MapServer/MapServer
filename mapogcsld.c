@@ -161,11 +161,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
       layerObj *psTmpLayer=NULL;
       int nIndex;
       char tmpId[128];
+      nIndex = msGetLayerIndex(map, pasLayers[m].name);
+      if(pasLayers[m].name == NULL) continue;
       for (l=0; l<nLayers; l++) {
-        if(pasLayers[m].name == NULL || pasLayers[l].name == NULL)
+        if(pasLayers[l].name == NULL)
           continue;
 
-        nIndex = msGetLayerIndex(map, pasLayers[m].name);
 
         if (m !=l && strcasecmp(pasLayers[m].name, pasLayers[l].name)== 0 &&
             nIndex != -1) {
