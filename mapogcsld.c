@@ -80,7 +80,14 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     if (pszSLDTmpFile == NULL) {
       msSetError(MS_WMSERR, "Could not determine temporary file %s. Please make sure that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL()", pszSLDTmpFile);
     } else {
-      if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS) {
+      int nMaxRemoteSLDBytes;
+      const char *pszMaxRemoteSLDBytes = msOWSLookupMetadata(&(map->web.metadata), "MO", "remote_sld_max_bytes");
+      if(!pszMaxRemoteSLDBytes) {
+    	  nMaxRemoteSLDBytes = 1024*1024; /* 1 megaByte */
+      } else {
+    	  nMaxRemoteSLDBytes = atoi(pszMaxRemoteSLDBytes);
+      }
+      if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0, nMaxRemoteSLDBytes) ==  MS_SUCCESS) {
         if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL) {
           int   nBufsize=0;
           fseek(fp, 0, SEEK_END);

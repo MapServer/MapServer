@@ -375,7 +375,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
       tmpfullfilename = msBuildPath(szPath, tmppath, tmpfilename);
       if (tmpfullfilename) {
         /*use the url for now as a caching mechanism*/
-        if (msHTTPGetFile(filename, tmpfullfilename, &status, -1, bCheckLocalCache, 0) == MS_SUCCESS) {
+        if (msHTTPGetFile(filename, tmpfullfilename, &status, -1, bCheckLocalCache, 0, 1024*1024 /* 1 MegaByte */) == MS_SUCCESS) {
           symbol->imagepath = msStrdup(tmpfullfilename);
           symbol->full_pixmap_path = msStrdup(tmpfullfilename);
         }
