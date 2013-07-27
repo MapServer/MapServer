@@ -130,6 +130,7 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
     pasReqInfo[i].pszOutputFile = NULL;
     pasReqInfo[i].nLayerId = 0;
     pasReqInfo[i].nTimeout = 0;
+    pasReqInfo[i].nMaxBytes = 0;
     pasReqInfo[i].nStatus = 0;
     pasReqInfo[i].pszContentType = NULL;
     pasReqInfo[i].pszErrBuf = NULL;
@@ -224,8 +225,15 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
             psReq->nLayerId, (int)(size*nmemb));
   }
 
+  if(psReq->nMaxBytes > 0 && (psReq->result_size + size*nmemb) > psReq->nMaxBytes) {
+      msSetError(MS_HTTPERR, "Requested transfer larger than configured maximum %d.",
+                 "msHTTPWriteFct()",
+                 psReq->nMaxBytes );
+      return -1;
+  }
   /* Case where we are writing to a disk file. */
   if( psReq->fp != NULL ) {
+    psReq->result_size += size*nmemb;
     return fwrite(buffer, size, nmemb, psReq->fp);
   }
 
@@ -528,6 +536,8 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
     /* set URL, note that curl keeps only a ref to our string buffer */
     curl_easy_setopt(http_handle, CURLOPT_URL, pasReqInfo[i].pszGetUrl );
+
+    curl_easy_setopt(http_handle, CURLOPT_PROTOCOLS, CURLPROTO_HTTP|CURLPROTO_HTTPS );
 
     /* Set User-Agent (auto-generate if not set by caller */
     if (pasReqInfo[i].pszUserAgent == NULL) {
@@ -914,7 +924,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
  **********************************************************************/
 int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
                   int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
-                  int bDebug)
+                  int bDebug, int nMaxBytes)
 {
   httpRequestObj *pasReqInfo;
 
@@ -931,6 +941,8 @@ int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
   pasReqInfo[0].pszGetUrl = msStrdup(pszGetUrl);
   pasReqInfo[0].pszOutputFile = msStrdup(pszOutputFile);
   pasReqInfo[0].debug = (char)bDebug;
+  pasReqInfo[0].nTimeout = nTimeout;
+  pasReqInfo[0].nMaxBytes = nMaxBytes;
 
   if (msHTTPExecuteRequests(pasReqInfo, 1, bCheckLocalCache) != MS_SUCCESS) {
     *pnHTTPStatus = pasReqInfo[0].nStatus;
