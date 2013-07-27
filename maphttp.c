@@ -225,7 +225,7 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
             psReq->nLayerId, (int)(size*nmemb));
   }
 
-  if(psReq->nMaxBytes > 0 && (psReq->result_size = size*nmemb) > psReq->nMaxBytes) {
+  if(psReq->nMaxBytes > 0 && (psReq->result_size + size*nmemb) > psReq->nMaxBytes) {
       msSetError(MS_HTTPERR, "Requested transfer larger than configured maximum %d.",
                  "msHTTPWriteFct()",
                  psReq->nMaxBytes );
