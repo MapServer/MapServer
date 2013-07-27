@@ -77,23 +77,28 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     if (pszSLDTmpFile == NULL) {
       pszSLDTmpFile = msTmpFile(map, NULL, NULL, "sld.xml" );
     }
-    if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS) {
-      if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL) {
-        int   nBufsize=0;
-        fseek(fp, 0, SEEK_END);
-        nBufsize = ftell(fp);
-        rewind(fp);
-        pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
-        fread(pszSLDbuf, 1, nBufsize, fp);
-        fclose(fp);
-        pszSLDbuf[nBufsize] = '\0';
-        unlink(pszSLDTmpFile);
-      }
+    if (pszSLDTmpFile == NULL) {
+      msSetError(MS_WMSERR, "Could not determine temporary file %s. Please make sure that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL()", pszSLDTmpFile);
     } else {
-      msSetError(MS_WMSERR, "Could not open SLD %s and save it in temporary file %s. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL, pszSLDTmpFile);
+      if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS) {
+        if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL) {
+          int   nBufsize=0;
+          fseek(fp, 0, SEEK_END);
+          nBufsize = ftell(fp);
+          rewind(fp);
+          pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
+          fread(pszSLDbuf, 1, nBufsize, fp);
+          fclose(fp);
+          pszSLDbuf[nBufsize] = '\0';
+          unlink(pszSLDTmpFile);
+        }
+      } else {
+        unlink(pszSLDTmpFile);
+        msSetError(MS_WMSERR, "Could not open SLD %s and save it in temporary file %s. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL, pszSLDTmpFile);
+      }
+      if (pszSLDbuf)
+        nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
     }
-    if (pszSLDbuf)
-      nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
   }
 
   return nStatus;
