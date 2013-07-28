@@ -47,7 +47,7 @@ before_install:
   - sudo pip install cpp-coveralls --use-mirrors
   - cd msautotest
   - ./create_postgis_test_data.sh
-  - python -m SimpleHTTPServer &
+  - python -m SimpleHTTPServer &> /dev/null &
   - cd ..
 
 script:

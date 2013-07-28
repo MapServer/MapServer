@@ -1,4 +1,4 @@
-AUTOTEST_OPTS=-strict
+AUTOTEST_OPTS=-strict -q
 MAKEFILE=Makefile.autotest
 PHP_MAPSCRIPT=build/mapscript/php/php_mapscript.so
 PYTHON_MAPSCRIPT_PATH=build/mapscript/python
