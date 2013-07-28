@@ -1,10 +1,19 @@
 AUTOTEST_OPTS=-strict -q
-MAKEFILE=Makefile.autotest
 PHP_MAPSCRIPT=build/mapscript/php/php_mapscript.so
 PYTHON_MAPSCRIPT_PATH=build/mapscript/python
 BUILDPATH=../../build
+FLEX=flex
+CMAKEFLAGS=-DCMAKE_C_FLAGS="--coverage" -DCMAKE_CXX_FLAGS="--coverage" \
+			  -DCMAKE_SHARED_LINKER_FLAGS="-lgcov" -DWITH_GD=1 -DWITH_CLIENT_WMS=1 \
+			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_PHP=1 \
+			  -DWITH_PYTHON=1 -DWITH_FRIBIDI=0 -DWITH_FCGI=0 -DWITH_EXEMPI=1 \
+			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1
 
-all:warning
+all: cmakebuild
+
+cmakebuild: lexer
+	if test ! -s build/Makefile; then  mkdir -p build ; cd build ; cmake .. $(CMAKEFLAGS); fi
+	cd build && $(MAKE) $(MFLAGS)
 
 warning:
 	$(error "This Makefile is used to run the \"test\" target")
@@ -33,8 +42,14 @@ mspython-testcase:
 php-testcase:
 	test -f "$(PHP_MAPSCRIPT)" && (export PHP_MAPSCRIPT_SO="../../$(PHP_MAPSCRIPT)" && cd msautotest/php && ./run_test.sh)
 
-test: autotest-install
-	@$(MAKE) -f $(MAKEFILE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase mspython-testcase
+test: autotest-install cmakebuild
+	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase mspython-testcase
 	@./print-test-results.sh
-	@$(MAKE) -f $(MAKEFILE) $(MFLAGS)	php-testcase
+	@$(MAKE) $(MFLAGS)	php-testcase
+
+
+lexer: maplexer.c
+
+maplexer.c: maplexer.l
+	$(FLEX) --nounistd -Pmsyy -i -omaplexer.c maplexer.l
 
