@@ -9,7 +9,6 @@ CMAKEFLAGS=-DCMAKE_C_FLAGS="--coverage" -DCMAKE_CXX_FLAGS="--coverage" \
 			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_PHP=1 \
 			  -DWITH_PYTHON=1 -DWITH_FRIBIDI=0 -DWITH_FCGI=0 -DWITH_EXEMPI=1 \
 			  -DCMAKE_BUILD_TYPE=Release -DWITH_RSVG=1 -DWITH_CURL=1
-
 all: cmakebuild
 
 cmakebuild: lexer parser
@@ -53,7 +52,7 @@ lexer: maplexer.c
 parser: mapparser.c
 
 maplexer.c: maplexer.l
-	$(FLEX) --nounistd -Pmsyy -i -omaplexer.c maplexer.l
+	$(FLEX) --nounistd -Pmsyy -i -omaplexer.c $(CURDIR)/maplexer.l
 
 mapparser.c: mapparser.y
-	$(YACC) -d -omapparser.c mapparser.y
+	$(YACC) -d -omapparser.c $(CURDIR)/mapparser.y
