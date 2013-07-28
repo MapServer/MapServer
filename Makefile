@@ -3,6 +3,7 @@ PHP_MAPSCRIPT=build/mapscript/php/php_mapscript.so
 PYTHON_MAPSCRIPT_PATH=build/mapscript/python
 BUILDPATH=../../build
 FLEX=flex
+YACC=yacc
 CMAKEFLAGS=-DCMAKE_C_FLAGS="--coverage" -DCMAKE_CXX_FLAGS="--coverage" \
 			  -DCMAKE_SHARED_LINKER_FLAGS="-lgcov" -DWITH_GD=1 -DWITH_CLIENT_WMS=1 \
 			  -DWITH_CLIENT_WFS=1 -DWITH_KML=1 -DWITH_SOS=1 -DWITH_PHP=1 \
@@ -11,7 +12,7 @@ CMAKEFLAGS=-DCMAKE_C_FLAGS="--coverage" -DCMAKE_CXX_FLAGS="--coverage" \
 
 all: cmakebuild
 
-cmakebuild: lexer
+cmakebuild: lexer parser
 	if test ! -s build/Makefile; then  mkdir -p build ; cd build ; cmake .. $(CMAKEFLAGS); fi
 	cd build && $(MAKE) $(MFLAGS)
 
@@ -49,7 +50,10 @@ test: autotest-install cmakebuild
 
 
 lexer: maplexer.c
+parser: mapparser.c
 
 maplexer.c: maplexer.l
 	$(FLEX) --nounistd -Pmsyy -i -omaplexer.c maplexer.l
 
+mapparser.c: mapparser.y
+	$(YACC) -d -omapparser.c mapparser.y
