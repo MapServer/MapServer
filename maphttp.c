@@ -868,13 +868,15 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       } else {
         /* Got a curl error */
 
+        errorObj *error = msGetErrorObj();
         if (psReq->debug)
           msDebug("HTTP: request failed with curl error "
                   "code %d (%s) for %s",
                   -psReq->nStatus, psReq->pszErrBuf,
                   psReq->pszGetUrl);
 
-        msSetError(MS_HTTPERR,
+        if(!error || error->code == MS_NOERR) /* only set error if one hasn't already been set */
+          msSetError(MS_HTTPERR,
                    "HTTP: request failed with curl error "
                    "code %d (%s) for %s",
                    "msHTTPExecuteRequests()",
