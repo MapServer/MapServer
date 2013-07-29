@@ -29,6 +29,7 @@ if (APPLE)
   set(CMAKE_FIND_FRAMEWORK "LAST")
 endif (APPLE)
 
+
 macro (ms_link_libraries)
   target_link_libraries(mapserver ${ARGV})
   if(BUILD_STATIC)
@@ -83,29 +84,7 @@ int main(int argc, char **argv) {
    }
 }" HAVE_SYNC_FETCH_AND_ADD)
 
-if(WITH_FLEX_BISON)
-   find_package(BISON)
-   find_package(FLEX)
-
-   add_custom_command(
-      OUTPUT ${PROJECT_SOURCE_DIR}/maplexer.c
-      COMMAND ${FLEX_EXECUTABLE} --nounistd -Pmsyy -i -o ${PROJECT_SOURCE_DIR}/maplexer.c ${PROJECT_SOURCE_DIR}/maplexer.l
-      DEPENDS ${PROJECT_SOURCE_DIR}/maplexer.l
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-   )
-
-   add_custom_command(
-      OUTPUT ${PROJECT_SOURCE_DIR}/mapparser.c ${PROJECT_SOURCE_DIR}/mapparser.h
-      DEPENDS ${PROJECT_SOURCE_DIR}/mapparser.y
-      COMMAND ${BISON_EXECUTABLE} -d -o${PROJECT_SOURCE_DIR}/mapparser.c ${PROJECT_SOURCE_DIR}/mapparser.y 
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-   )
-set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM 1)
-endif(WITH_FLEX_BISON)
-
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-set(CMAKE_LINK_INTERFACE_LIBRARY "")
 
 #options suported by the cmake builder
 option(WITH_PROJ "Choose if reprojection support should be built in" ON)
@@ -162,6 +141,9 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wdeclaration-after-statement")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+SET(CMAKE_MACOSX_RPATH ON)
 
 if(LINK_STATIC_LIBMAPSERVER)
   set(BUILD_STATIC 1)
@@ -862,6 +844,7 @@ if(WIN32)
 set(REGEX_MALLOC 1)
 set(USE_GENERIC_MS_NINT 1)
 endif(WIN32)
+
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)
