@@ -49,7 +49,9 @@
 #ifdef USE_RSVG
 #include <glib-object.h>
 #endif
-
+#ifdef USE_GEOS
+#include <geos_c.h>
+#endif
 
 
 extern char *msyystring_buffer;
@@ -1845,6 +1847,16 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
   shapeObj *ret;
   if(offsety == -99) { /* complex calculations */
     return msOffsetCurve(p,offsetx);
+  } else if(offsety == -999) {
+    shapeObj *tmp1;
+    ret = msOffsetCurve(p,offsetx/2.0);
+    tmp1 = msOffsetCurve(p, -offsetx/2.0);
+    for(i=0;i<tmp1->numlines; i++) {
+      msAddLineDirectly(ret,tmp1->line + i);
+    }
+    msFreeShape(tmp1);
+    free(tmp1);
+    return ret;
   }
 
   ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
