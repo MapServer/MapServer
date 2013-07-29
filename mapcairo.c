@@ -212,6 +212,7 @@ int renderLineCairo(imageObj *img, shapeObj *p, strokeStyleObj *stroke)
   msCairoSetSourceColor(r->cr,stroke->color);
   for(i=0; i<p->numlines; i++) {
     lineObj *l = &(p->line[i]);
+    if(l->numpoints == 0) continue;
     cairo_move_to(r->cr,l->point[0].x,l->point[0].y);
     for(j=1; j<l->numpoints; j++) {
       cairo_line_to(r->cr,l->point[j].x,l->point[j].y);

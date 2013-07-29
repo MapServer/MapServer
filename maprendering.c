@@ -522,6 +522,8 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
       if(style->offsety==-99) {
         offsetLine = msOffsetPolyline(p,style->offsetx * finalscalefactor ,-99);
+      } else if(style->offsety==-999) {
+        offsetLine = msOffsetPolyline(p,style->offsetx * finalscalefactor ,-999);
       } else if(style->offsetx!=0 || style->offsety!=0) {
         offsetLine = msOffsetPolyline(p, style->offsetx * finalscalefactor,
                                       style->offsety * finalscalefactor);
@@ -641,10 +643,13 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         symbol->renderer = renderer;
 
       if (style->offsetx != 0 || style->offsety != 0) {
-        if(style->offsety==-99)
+        if(style->offsety==-99) {
           offsetPolygon = msOffsetPolyline(p, style->offsetx*scalefactor, -99);
-        else
+        } else if(style->offsety==-999) {
+          offsetPolygon = msOffsetPolyline(p,style->offsetx * scalefactor ,-999);
+        } else {
           offsetPolygon = msOffsetPolyline(p, style->offsetx*scalefactor,style->offsety*scalefactor);
+        }
       } else {
         offsetPolygon=p;
       }

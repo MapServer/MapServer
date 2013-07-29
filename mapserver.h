@@ -2627,6 +2627,7 @@ extern "C" {
   MS_DLL_EXPORT shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT shapeObj *msGEOSSymDifference(shapeObj *shape1, shapeObj *shape2);
+  MS_DLL_EXPORT shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
 
   MS_DLL_EXPORT int msGEOSContains(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT int msGEOSOverlaps(shapeObj *shape1, shapeObj *shape2);
