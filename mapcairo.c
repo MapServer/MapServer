@@ -47,7 +47,7 @@
   #ifndef LIBRSVG_CHECK_VERSION
     #include <librsvg/librsvg-features.h>
   #endif
-  #if !LIBRSVG_CHECK_VERSION(2,36,2)
+  #ifndef RSVG_CAIRO_H
     #include <librsvg/rsvg-cairo.h>
   #endif
   #include <glib-object.h>
@@ -882,7 +882,7 @@ int saveImageCairo(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *format
     if (map != NULL && !strcasecmp(img->format->driver,"cairo/pdf"))
       msTransformToGeospatialPDF(img, map, r);
 
-    fwrite(r->outputStream->data,r->outputStream->size,1,fp);
+    msIO_fwrite(r->outputStream->data,r->outputStream->size,1,fp);
   } else {
     /* not supported */
   }
@@ -1076,7 +1076,7 @@ void freeSVGCache(symbolObj *s) {
       svg_cairo_destroy(cache->svgc);
 #else
       rsvg_handle_close(cache->svgc, NULL);
-  #if LIBRSVG_CHECK_VERSION(2,36,2)
+  #if LIBRSVG_CHECK_VERSION(2,35,0)
       g_object_unref(cache->svgc);
   #else
       rsvg_handle_free(cache->svgc);
