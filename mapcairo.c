@@ -901,40 +901,6 @@ unsigned char* saveImageBufferCairo(imageObj *img, int *size_ptr, outputFormatOb
   return data;
 }
 
-void *msCreateTileEllipseCairo(double width, double height, double angle,
-                               colorObj *c, colorObj *bc, colorObj *oc, double ow)
-{
-  double s = (MS_MAX(width,height)+ow)*1.5;
-  cairo_surface_t *surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                             s,s);
-  cairo_t *cr = cairo_create(surface);
-  /* cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND); */
-  /* cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND); */
-  if (bc && MS_VALID_COLOR(*bc)) {
-    msCairoSetSourceColor(cr, bc);
-    cairo_paint(cr);
-  }
-  cairo_save(cr);
-  cairo_translate(cr,s/2,s/2);
-  cairo_rotate(cr, -angle);
-  cairo_scale(cr, width/2,height/2);
-  cairo_arc(cr, 0, 0, 1, 0, 2 * MS_PI);
-  cairo_restore(cr);
-  if (c != NULL && MS_VALID_COLOR(*c)) {
-    msCairoSetSourceColor(cr, c);
-    cairo_fill_preserve(cr);
-  }
-  if (oc != NULL && MS_VALID_COLOR(*oc)) {
-    cairo_set_line_width(cr, ow);
-    msCairoSetSourceColor(cr, oc);
-    cairo_stroke_preserve(cr);
-  }
-  cairo_new_path(cr);
-  cairo_destroy(cr);
-  return surface;
-
-}
-
 int renderEllipseSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
                              symbolStyleObj *style)
 {
