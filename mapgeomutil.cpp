@@ -88,43 +88,18 @@ shapeObj *msRasterizeArc(double x0, double y0, double radius, double startAngle,
     line->numpoints++;
   }
 
-  //make sure the shape is closed if we're doing a full circle
-  if(!isSlice && !(endAngle-startAngle)%360) {
-    if(line->point[line->numpoints-1].x != line->point[0].x ||
-        line->point[line->numpoints-1].y != line->point[0].y) {
-      if(line->numpoints == allocated_size) {
-        allocated_size *= 2;
-        line->point = (pointObj*)realloc(line->point, allocated_size * sizeof(pointObj));
-        if (!line->point) {
-          msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
-                     __FILE__, __LINE__, (unsigned int)(allocated_size * sizeof(pointObj)));
-          free(line);
-          free(shape);
-          return NULL;
-        }
-      }
-      line->point[line->numpoints].x = line->point[0].x;
-      line->point[line->numpoints].y = line->point[0].y;
-      line->numpoints++;
-    }
-
-  }
-  if(isSlice) {
+  //make sure the shape is closed
+  if(line->point[line->numpoints-1].x != line->point[0].x ||
+      line->point[line->numpoints-1].y != line->point[0].y) {
     if(line->numpoints == allocated_size) {
       allocated_size *= 2;
-      line->point = (pointObj*)realloc(line->point, allocated_size * sizeof(pointObj));
-      if (!line->point) {
-        msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msRasterizeArc()" ,
-                   __FILE__, __LINE__, (unsigned int)(allocated_size * sizeof(pointObj)));
-        free(line);
-        free(shape);
-        return NULL;
-      }
+      line->point = (pointObj*)msSmallRealloc(line->point, allocated_size * sizeof(pointObj));
     }
-    line->point[line->numpoints].x = x0;
-    line->point[line->numpoints].y = y0;
+    line->point[line->numpoints].x = line->point[0].x;
+    line->point[line->numpoints].y = line->point[0].y;
     line->numpoints++;
   }
+
   return shape;
 }
 
