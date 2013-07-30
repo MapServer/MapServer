@@ -1018,23 +1018,6 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
   return nReturnVal;
 }
 
-
-/************************************************************************/
-/*                          msCircleDrawLineSymbol                      */
-/*                                                                      */
-/************************************************************************/
-int msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
-{
-  shapeObj *circle;
-  if (!image) return MS_FAILURE;
-  circle = msRasterizeArc(p->x, p->y, r, 0, 360, 0);
-  if (!circle) return MS_FAILURE;
-  msDrawLineSymbol(symbolset, image, circle, style, scalefactor);
-  msFreeShape(circle);
-  msFree(circle);
-  return MS_SUCCESS;
-}
-
 int msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
 {
   shapeObj *circle;
