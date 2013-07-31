@@ -378,6 +378,11 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
         if (msHTTPGetFile(filename, tmpfullfilename, &status, -1, bCheckLocalCache, 0, 1024*1024 /* 1 MegaByte */) == MS_SUCCESS) {
           symbol->imagepath = msStrdup(tmpfullfilename);
           symbol->full_pixmap_path = msStrdup(tmpfullfilename);
+        } else {
+          unlink(tmpfullfilename); 
+          msFree(tmpfilename);
+          msFree(tmppath);
+          return MS_FAILURE;
         }
       }
       msFree(tmpfilename);
