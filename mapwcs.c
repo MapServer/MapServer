@@ -139,17 +139,18 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
 {
   char *pszEncodedVal = NULL;
   const char *encoding;
+  char version_string[OWS_VERSION_MAXLEN];
 
   if( version == NULL )
     version = "1.0.0";
 
 #if defined(USE_LIBXML2)
   if( msOWSParseVersionString(version) >= OWS_2_0_0 )
-    return msWCSException20( map, code, locator, version );
+    return msWCSException20( map, code, locator, msOWSGetVersionString(msOWSParseVersionString(version), version_string) );
 #endif
 
   if( msOWSParseVersionString(version) >= OWS_1_1_0 )
-    return msWCSException11( map, code, locator, version );
+    return msWCSException11( map, code, locator, msOWSGetVersionString(msOWSParseVersionString(version), version_string) );
 
   encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   if (encoding)

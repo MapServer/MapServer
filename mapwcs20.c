@@ -1858,6 +1858,7 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
 {
   char  *srs_uri = NULL;
   int i = 0;
+  memset(cm,0,sizeof(wcs20coverageMetadataObj));
   if ( msCheckParentPointer(layer->map,"map") == MS_FAILURE )
     return MS_FAILURE;
 
