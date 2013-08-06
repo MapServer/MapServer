@@ -68,7 +68,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
   rectObj bbox;
   const char *pszTmp;
   int nLength, i = 0;
-  char *pszVersion, *pszTypeName, *pszGeometryName = NULL;
+  char *pszVersion, *pszTypeName;
 
   if (!map || !lp || !bbox_ret)
     return NULL;
@@ -540,18 +540,14 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pszURL = msStrdup(lp->connection);
   }
 
-
   /* ------------------------------------------------------------------
    * check to see if a the metadata wfs_connectiontimeout is set. If it is
    * the case we will use it, else we use the default which is 30 seconds.
    * First check the metadata in the layer object and then in the map object.
    * ------------------------------------------------------------------ */
   nTimeout = 30;  /* Default is 30 seconds  */
-  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
+  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
                                     "FO", "connectiontimeout")) != NULL) {
-    nTimeout = atoi(pszTmp);
-  } else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata),
-                       "FO", "connectiontimeout")) != NULL) {
     nTimeout = atoi(pszTmp);
   }
 
@@ -561,7 +557,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * the connection
    * ------------------------------------------------------------------ */
   if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
-                                    "MO", "http_cookie")) != NULL) {
+                                    "FO", "http_cookie")) != NULL) {
     if(strcasecmp(pszTmp, "forward") == 0) {
       pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
       if(pszTmp != NULL) {
@@ -571,7 +567,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
       pszHTTPCookieData = msStrdup(pszTmp);
     }
   } else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata),
-                       "MO", "http_cookie")) != NULL) {
+                       "FO", "http_cookie")) != NULL) {
     if(strcasecmp(pszTmp, "forward") == 0) {
       pszTmp= msLookupHashTable(&(map->web.metadata),"http_cookie_data");
       if(pszTmp != NULL) {
@@ -623,6 +619,10 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   pasReqInfo[(*numRequests)].bbox = bbox;
   pasReqInfo[(*numRequests)].debug = lp->debug;
 
+  if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata),
+                           pasReqInfo, *numRequests, map, "FO") != MS_SUCCESS)
+    return MS_FAILURE;
+  
   /* ------------------------------------------------------------------
    * Pre-Open the layer now, (i.e. alloc and fill msWFSLayerInfo inside
    * layer obj).  Layer will be ready for use when the main mapserver

@@ -375,6 +375,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>text                       { MS_LEXER_RETURN_TOKEN(TEXT); }
 <INITIAL,URL_STRING>tileindex                  { MS_LEXER_RETURN_TOKEN(TILEINDEX); }
 <INITIAL,URL_STRING>tileitem                   { MS_LEXER_RETURN_TOKEN(TILEITEM); }
+<INITIAL,URL_STRING>tilesrs                    { MS_LEXER_RETURN_TOKEN(TILESRS); }
 <INITIAL,URL_STRING>title                      { MS_LEXER_RETURN_TOKEN(TITLE); }
 <INITIAL>to                                    { MS_LEXER_RETURN_TOKEN(TO); }
 <INITIAL,URL_STRING>tolerance                  { MS_LEXER_RETURN_TOKEN(TOLERANCE); }
@@ -735,6 +736,6 @@ int msyywrap() /* override */
 }
 
 int msyyerror(char *s) {
-  msSetError(MS_PARSEERR, s, "msyyparse()");
+  msSetError(MS_PARSEERR, "%s", "msyyparse()", s);
   return(0);
 }

@@ -85,7 +85,7 @@ double msSymbolGetDefaultSize(symbolObj *s)
       break;
     case(MS_SYMBOL_SVG):
       size = 1;
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined (USE_RSVG)
       assert(s->renderer_cache != NULL);
       size = s->sizey;
 #endif
@@ -112,6 +112,7 @@ void initSymbol(symbolObj *s)
   s->filled = MS_FALSE;
   s->numpoints=0;
   s->renderer=NULL;
+  s->renderer_free_func = NULL;
   s->renderer_cache = NULL;
   s->pixmap_buffer=NULL;
   s->imagepath = NULL;
@@ -124,8 +125,6 @@ void initSymbol(symbolObj *s)
   s->character = NULL;
   s->anchorpoint_x = s->anchorpoint_y = 0.5;
 
-  s->svg_text = NULL;
-
 }
 
 int msFreeSymbol(symbolObj *s)
@@ -136,8 +135,12 @@ int msFreeSymbol(symbolObj *s)
   }
 
   if(s->name) free(s->name);
-  if(s->renderer!=NULL) {
-    s->renderer->freeSymbol(s);
+  if(s->renderer_free_func) {
+    s->renderer_free_func(s);
+  } else {
+    if(s->renderer!=NULL) {
+      s->renderer->freeSymbol(s);
+    }
   }
   if(s->pixmap_buffer) {
     msFreeRasterBuffer(s->pixmap_buffer);
@@ -150,9 +153,6 @@ int msFreeSymbol(symbolObj *s)
   msFree(s->full_pixmap_path);
   if(s->imagepath) free(s->imagepath);
   if(s->character) free(s->character);
-
-  if (s->svg_text)
-    msFree(s->svg_text);
 
   return MS_SUCCESS;
 }
@@ -375,9 +375,14 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
       tmpfullfilename = msBuildPath(szPath, tmppath, tmpfilename);
       if (tmpfullfilename) {
         /*use the url for now as a caching mechanism*/
-        if (msHTTPGetFile(filename, tmpfullfilename, &status, -1, bCheckLocalCache, 0) == MS_SUCCESS) {
+        if (msHTTPGetFile(filename, tmpfullfilename, &status, -1, bCheckLocalCache, 0, 1024*1024 /* 1 MegaByte */) == MS_SUCCESS) {
           symbol->imagepath = msStrdup(tmpfullfilename);
           symbol->full_pixmap_path = msStrdup(tmpfullfilename);
+        } else {
+          unlink(tmpfullfilename); 
+          msFree(tmpfilename);
+          msFree(tmppath);
+          return MS_FAILURE;
         }
       }
       msFree(tmpfilename);
@@ -628,7 +633,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, double *width, dou
       return MS_FAILURE;
   }
   if(symbol->type == MS_SYMBOL_SVG && !symbol->renderer_cache) {
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined (USE_RSVG)
     if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
       return MS_FAILURE;
 #else

@@ -98,10 +98,12 @@ typedef uint32_t        ms_uint32;
 
 #include "mapserver-api.h"
 
+
 /*forward declaration of rendering object*/
 typedef struct rendererVTableObj rendererVTableObj;
 typedef struct tileCacheObj tileCacheObj;
-
+#ifndef SWIG
+#endif
 
 /* ms_bitarray is used by the bit mask in mapbit.c */
 typedef ms_uint32 *     ms_bitarray;
@@ -173,14 +175,14 @@ extern "C" {
 #define MS_CHECK_ALLOC(var, size, retval)     \
     if (!var) {   \
         msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", __FUNCTION__, \
-                   __FILE__, __LINE__, size);  \
+                   __FILE__, __LINE__, (unsigned int)(size));  \
         return retval;                         \
     }
 
 #define MS_CHECK_ALLOC_NO_RET(var, size)                                   \
     if (!var) {                                                       \
         msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", __FUNCTION__, \
-                   __FILE__, __LINE__, size);                           \
+                   __FILE__, __LINE__, (unsigned int)(size));                           \
         return;                                                         \
     }
 
@@ -1546,6 +1548,7 @@ extern "C" {
 
     char *tileitem;
     char *tileindex; /* layer index file for tiling support */
+    char *tilesrs;
 
 #ifndef SWIG
     int tileitemindex;
@@ -2081,6 +2084,8 @@ extern "C" {
 
   MS_DLL_EXPORT char *msStrdup( const char * pszString );
 
+#include "hittest.h"
+
   /* in mapsymbol.c */
   /* Use this function *only* with mapfile loading phase */
   MS_DLL_EXPORT int loadSymbolSet(symbolSetObj *symbolset, mapObj *map);
@@ -2107,11 +2112,11 @@ extern "C" {
   MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
   MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
 
-  MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map, int scale_independent); /* in maplegend.c */
+  MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest); /* in maplegend.c */
   MS_DLL_EXPORT int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_y,
-                                     int *alayers, int numl_ayer);
+                                     int *alayers, int numl_ayer, map_hittest *hittest);
   MS_DLL_EXPORT int msEmbedLegend(mapObj *map, imageObj *img);
-  MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, imageObj *img, int dstX, int dstY, int scale_independant);
+  MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, imageObj *img, int dstX, int dstY, int scale_independant, class_hittest *hittest);
   MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, int scale_independant);
 
   MS_DLL_EXPORT int msLoadFontSet(fontSetObj *fontSet, mapObj *map); /* in maplabel.c */
@@ -2327,7 +2332,6 @@ extern "C" {
   MS_DLL_EXPORT int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, styleObj *style, double scalefactor);
   MS_DLL_EXPORT int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
   MS_DLL_EXPORT int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
-  MS_DLL_EXPORT int msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
   MS_DLL_EXPORT int msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
   MS_DLL_EXPORT int msDrawPieSlice(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double radius, double start, double end);
 
@@ -2601,6 +2605,7 @@ extern "C" {
   /* ==================================================================== */
 #include "mapows.h"
 
+
   /* ==================================================================== */
   /*      prototypes for functions in mapgeos.c                         */
   /* ==================================================================== */
@@ -2622,6 +2627,7 @@ extern "C" {
   MS_DLL_EXPORT shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT shapeObj *msGEOSSymDifference(shapeObj *shape1, shapeObj *shape2);
+  MS_DLL_EXPORT shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset);
 
   MS_DLL_EXPORT int msGEOSContains(shapeObj *shape1, shapeObj *shape2);
   MS_DLL_EXPORT int msGEOSOverlaps(shapeObj *shape1, shapeObj *shape2);

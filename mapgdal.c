@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <assert.h>
 #include "mapserver.h"
 #include "mapthread.h"
+#include <assert.h>
 
 
 
@@ -162,7 +162,9 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   memset(&rb,0,sizeof(rasterBufferObj));
 
 #ifdef USE_EXEMPI
-  bUseXmp = msXmpPresent(map);
+  if( map != NULL ) {
+    bUseXmp = msXmpPresent(map);
+  }
 #endif
 
 
@@ -468,7 +470,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   if (papszOptions == NULL) {
     msReleaseLock( TLOCK_GDAL );
     msSetError( MS_MEMERR, "Out of memory allocating %u bytes.\n", "msSaveImageGDAL()",
-                sizeof(char *)*(format->numformatoptions+1));
+                (unsigned int)(sizeof(char *)*(format->numformatoptions+1)));
     return MS_FAILURE;
   }
 
@@ -504,7 +506,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   if ( bUseXmp == MS_TRUE ) {
     if( msXmpWrite(map, filename) == MS_FAILURE ) {
       /* Something bad happened. */
-      msSetError( MS_MISCERR, "XMP write to %s failed.\n%s",
+      msSetError( MS_MISCERR, "XMP write to %s failed.\n",
                   "msSaveImageGDAL()", filename);
       return MS_FAILURE;
     }
@@ -627,34 +629,43 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
 #else /* defined USE_GDAL or USE_OGR */
 
   OGRSpatialReferenceH hSRS;
-  char *pszWKT=NULL, *pszProj4;
+  char *pszWKT=NULL, *pszProj4, *pszInitEpsg=NULL;
   int  nLength = 0, i;
   OGRErr eErr;
 
   if( projection->proj == NULL )
     return NULL;
 
-  /* -------------------------------------------------------------------- */
-  /*      Form arguments into a full Proj.4 definition string.            */
-  /* -------------------------------------------------------------------- */
-  for( i = 0; i < projection->numargs; i++ )
-    nLength += strlen(projection->args[i]) + 2;
-
-  pszProj4 = (char *) CPLMalloc(nLength+2);
-  pszProj4[0] = '\0';
-
-  for( i = 0; i < projection->numargs; i++ ) {
-    strcat( pszProj4, "+" );
-    strcat( pszProj4, projection->args[i] );
-    strcat( pszProj4, " " );
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      Ingest the string into OGRSpatialReference.                     */
-  /* -------------------------------------------------------------------- */
   hSRS = OSRNewSpatialReference( NULL );
-  eErr =  OSRImportFromProj4( hSRS, pszProj4 );
-  CPLFree( pszProj4 );
+  /* -------------------------------------------------------------------- */
+  /*      Look for an EPSG-like projection argument                       */
+  /* -------------------------------------------------------------------- */
+  if( projection->numargs == 1 &&
+        (pszInitEpsg = strcasestr(projection->args[0],"init=epsg:"))) {
+     int nEpsgCode = atoi(pszInitEpsg + strlen("init=epsg:"));
+     eErr = OSRImportFromEPSG(hSRS, nEpsgCode);
+  } else {
+    /* -------------------------------------------------------------------- */
+    /*      Form arguments into a full Proj.4 definition string.            */
+    /* -------------------------------------------------------------------- */
+    for( i = 0; i < projection->numargs; i++ )
+      nLength += strlen(projection->args[i]) + 2;
+
+    pszProj4 = (char *) CPLMalloc(nLength+2);
+    pszProj4[0] = '\0';
+
+    for( i = 0; i < projection->numargs; i++ ) {
+      strcat( pszProj4, "+" );
+      strcat( pszProj4, projection->args[i] );
+      strcat( pszProj4, " " );
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Ingest the string into OGRSpatialReference.                     */
+    /* -------------------------------------------------------------------- */
+    eErr =  OSRImportFromProj4( hSRS, pszProj4 );
+    CPLFree( pszProj4 );
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Export as a WKT string.                                         */

@@ -367,6 +367,7 @@ typedef struct {
   int numnamespaces;
 } gmlNamespaceListObj;
 
+
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
 MS_DLL_EXPORT int msItemInGroups(char *name, gmlGroupListObj *groupList);

@@ -1522,7 +1522,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
           break; // Shape is ready to be returned!
 
         if (layer->debug >= MS_DEBUGLEVEL_VVV)
-          msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %d, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
+          msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %ld, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
                   OGR_F_GetFID( hFeature ), psInfo->nTileId,
                   OGR_F_GetGeometryRef( hFeature )==NULL ? wkbFlatten(wkbUnknown):wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ),
                   layer->type);
@@ -1545,7 +1545,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
   shape->tileindex = psInfo->nTileId;
 
   if (layer->debug >= MS_DEBUGLEVEL_VVV)
-    msDebug("msOGRFileNextShape: Returning shape=%d, tile=%d\n",
+    msDebug("msOGRFileNextShape: Returning shape=%ld, tile=%d\n",
             shape->index, shape->tileindex );
 
   // Keep ref. to last feature read in case we need style info.
@@ -1842,6 +1842,13 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
 
     if( layer->layerinfo == NULL )
       return MS_FAILURE;
+
+    if( layer->tilesrs != NULL ) {
+      msSetError(MS_OGRERR,
+                 "TILESRS not supported in vector layers.",
+                 "msOGRLayerOpen()");
+      return MS_FAILURE;
+    }
 
     // Identify TILEITEM
 
@@ -2152,9 +2159,9 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
       itemindexes[i] = OGR_FD_GetFieldIndex( hDefn, layer->items[i] );
     if(itemindexes[i] == -1) {
       msSetError(MS_OGRERR,
-                 (char*)CPLSPrintf("Invalid Field name: %s",
-                                   layer->items[i]),
-                 "msOGRLayerInitItemInfo()");
+                 "Invalid Field name: %s",
+                 "msOGRLayerInitItemInfo()",
+                 layer->items[i]);
       return(MS_FAILURE);
     }
   }

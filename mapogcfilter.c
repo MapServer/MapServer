@@ -385,34 +385,27 @@ int FLTParseEpsgString(char *pszEpsg, projectionObj *psProj)
   int nTokens = 0;
   char **tokens = NULL;
   int nEpsgTmp=0;
-  size_t bufferSize = 0;
 
 #ifdef USE_PROJ
   if (pszEpsg && psProj) {
     nTokens = 0;
+
+    /* There are several forms an epsg code may be given. In any case the */
+    /* epsg code is the last token.                                       */
+    /* TODO: To make sure it is an epsg code check the string, too.       */
+    /*  - urn:ogc:def:crs:EPSG:6.5:4326                                   */
+    /*  - urn:ogc:def:crs:EPSG::4326                                      */
+    /*  - http://www.opengis.net/gml/srs/epsg.xml#4326                    */
+    /*  - epsg:4326                                                       */
     tokens = msStringSplit(pszEpsg,'#', &nTokens);
-    if (tokens && nTokens == 2) {
-      char *szTmp;
-      bufferSize = 10+strlen(tokens[1])+1;
-      szTmp = (char *)malloc(bufferSize);
-      snprintf(szTmp, bufferSize, "init=epsg:%s", tokens[1]);
-      msInitProjection(psProj);
-      if (msLoadProjectionString(psProj, szTmp) == 0)
-        nStatus = MS_TRUE;
-      free(szTmp);
-    } else if (tokens &&  nTokens == 1) {
-      if (tokens)
-        msFreeCharArray(tokens, nTokens);
-      nTokens = 0;
-
+    if( tokens && nTokens == 1 ) {
+      msFreeCharArray(tokens, nTokens);
       tokens = msStringSplit(pszEpsg,':', &nTokens);
-      nEpsgTmp = -1;
-      if (tokens &&  nTokens == 1) {
-        nEpsgTmp = atoi(tokens[0]);
+    }
 
-      } else if (tokens &&  nTokens == 2) {
-        nEpsgTmp = atoi(tokens[1]);
-      }
+    if (tokens && nTokens > 1) {
+      nEpsgTmp = atoi(tokens[nTokens-1]);
+
       if (nEpsgTmp > 0) {
         char szTmp[32];
         snprintf(szTmp, sizeof(szTmp), "init=epsg:%d",nEpsgTmp);
@@ -421,6 +414,7 @@ int FLTParseEpsgString(char *pszEpsg, projectionObj *psProj)
           nStatus = MS_TRUE;
       }
     }
+
     if (tokens)
       msFreeCharArray(tokens, nTokens);
   }
@@ -504,14 +498,11 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
   char *szExpression = NULL;
   rectObj sQueryRect = map->extent;
   char *szEPSG = NULL;
-  char **tokens = NULL;
-  int nTokens = 0, nEpsgTmp = 0;
   projectionObj sProjTmp;
   char *pszBuffer = NULL;
   int bConcatWhere = 0;
   int bHasAWhere =0;
   char *pszTmp = NULL, *pszTmp2 = NULL;
-  size_t bufferSize = 0;
   char *tmpfilename = NULL;
 
   lp = (GET_LAYER(map, iLayerIndex));
@@ -519,43 +510,10 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
   /* if there is a bbox use it */
   szEPSG = FLTGetBBOX(psNode, &sQueryRect);
   if(szEPSG && map->projection.numargs > 0) {
-#ifdef USE_PROJ
-    nTokens = 0;
-    tokens = msStringSplit(szEPSG,'#', &nTokens);
-    if (tokens && nTokens == 2) {
-      char *szTmp;
-      bufferSize = 10+strlen(tokens[1])+1;
-      szTmp = (char *)malloc(bufferSize);
-      snprintf(szTmp, bufferSize, "init=epsg:%s",tokens[1]);
-      msInitProjection(&sProjTmp);
-      if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
-        msProjectRect(&sProjTmp, &map->projection,  &sQueryRect);
-      free(szTmp);
-    } else if (tokens &&  nTokens == 1) {
-      if (tokens)
-        msFreeCharArray(tokens, nTokens);
-      nTokens = 0;
-
-      tokens = msStringSplit(szEPSG,':', &nTokens);
-      nEpsgTmp = -1;
-      if (tokens &&  nTokens == 1) {
-        nEpsgTmp = atoi(tokens[0]);
-
-      } else if (tokens &&  nTokens == 2) {
-        nEpsgTmp = atoi(tokens[1]);
-      }
-      if (nEpsgTmp > 0) {
-        char szTmp[32];
-        snprintf(szTmp, sizeof(szTmp), "init=epsg:%d",nEpsgTmp);
-        msInitProjection(&sProjTmp);
-        if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
-          msProjectRect(&sProjTmp, &map->projection,  &sQueryRect);
-        msFreeProjection(&sProjTmp);
-      }
+    if (FLTParseEpsgString(szEPSG, &sProjTmp)) {
+      msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
+      msFreeProjection(&sProjTmp);
     }
-    if (tokens)
-      msFreeCharArray(tokens, nTokens);
-#endif
   }
 
   /* make sure that the layer can be queried*/
@@ -649,7 +607,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     }
     if (tmpfilename) {
       msSaveMap(map,tmpfilename);
-      msDebug("FLTApplySimpleSQLFilter(): Map file after Filter was applied %s", tmpfilename);
+      msDebug("FLTApplySimpleSQLFilter(): Map file after Filter was applied %s\n", tmpfilename);
       msFree(tmpfilename);
     }
   }

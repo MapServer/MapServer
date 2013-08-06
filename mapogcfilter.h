@@ -122,6 +122,7 @@ MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
 
+MS_DLL_EXPORT int FLTParseEpsgString(char *pszEpsg, projectionObj *psProj);
 MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS);
 MS_DLL_EXPORT  int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
 

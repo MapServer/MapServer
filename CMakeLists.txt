@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 
 project (MapServer)
 
+include(CheckLibraryExists)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
@@ -27,6 +28,7 @@ SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 if (APPLE)
   set(CMAKE_FIND_FRAMEWORK "LAST")
 endif (APPLE)
+
 
 macro (ms_link_libraries)
   target_link_libraries(mapserver ${ARGV})
@@ -82,29 +84,7 @@ int main(int argc, char **argv) {
    }
 }" HAVE_SYNC_FETCH_AND_ADD)
 
-if(WITH_FLEX_BISON)
-   find_package(BISON)
-   find_package(FLEX)
-
-   add_custom_command(
-      OUTPUT ${PROJECT_SOURCE_DIR}/maplexer.c
-      COMMAND ${FLEX_EXECUTABLE} --nounistd -Pmsyy -i -o ${PROJECT_SOURCE_DIR}/maplexer.c ${PROJECT_SOURCE_DIR}/maplexer.l
-      DEPENDS ${PROJECT_SOURCE_DIR}/maplexer.l
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-   )
-
-   add_custom_command(
-      OUTPUT ${PROJECT_SOURCE_DIR}/mapparser.c ${PROJECT_SOURCE_DIR}/mapparser.h
-      DEPENDS ${PROJECT_SOURCE_DIR}/mapparser.y
-      COMMAND ${BISON_EXECUTABLE} -d -o${PROJECT_SOURCE_DIR}/mapparser.c ${PROJECT_SOURCE_DIR}/mapparser.y 
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-   )
-set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM 1)
-endif(WITH_FLEX_BISON)
-
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-set(CMAKE_LINK_INTERFACE_LIBRARY "")
 
 #options suported by the cmake builder
 option(WITH_PROJ "Choose if reprojection support should be built in" ON)
@@ -115,6 +95,8 @@ option(WITH_GD "Choose if (old) GD support should be built in" OFF)
 option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (usefull for left-to-right languages)" ON)
 option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
 option(WITH_CAIRO "Choose if CAIRO  rendering support should be built in (required for SVG and PDF output)" ON)
+option(WITH_SVGCAIRO "Choose if SVG symbology support (via libsvgcairo) should be built in (requires cairo, libsvg, libsvg-cairo. Incompatible with librsvg)" OFF)
+option(WITH_RSVG "Choose if SVG symbology support (via librsvg) should be built in (requires cairo, librsvg. Incompatible with libsvg-cairo)" OFF)
 option(WITH_MYSQL "Choose if MYSQL joining support should be built in" OFF)
 option(WITH_FCGI "Choose if FastCGI support should be built in" ON)
 option(WITH_GEOS "Choose if GEOS geometry operations support should be built in" ON)
@@ -123,6 +105,7 @@ option(WITH_GDAL "Choose if GDAL input raster support should be built in" ON)
 option(WITH_OGR "Choose if OGR/GDAL input vector support should be built in" ON)
 option(WITH_CLIENT_WMS "Enable Client WMS Layer support (requires CURL and GDAL support)" OFF)
 option(WITH_CLIENT_WFS "Enable Client WMS Layer support (requires CURL and OGR support)" OFF)
+option(WITH_CURL "Enable Curl HTTP support (required for wms/wfs client, and remote SLD)" OFF)
 option(WITH_WFS "Enable WFS Server support (requires PROJ and OGR support)" ON)
 option(WITH_WCS "Enable WCS Server support (requires PROJ and GDAL support)" ON)
 option(WITH_LIBXML2 "Choose if libxml2 support should be built in (used for sos, wcs 1.1,2.0 and wfs 1.1)" ON)
@@ -152,6 +135,16 @@ option(WITH_GENERIC_NINT "generic rounding" OFF)
 #TODO: USE_OGL? , USE_SDE, USE_CLUSTER_EXTERNAL USE_CLUSTER_PLUGIN, USE_MSSQL2008, USE_MSSQL2008_PLUGIN
 # SIGNORE_MISSING_DATA, CGI_CL_DEBUG_ARGS, EXTRA DEBUG FLAGS?,
 # PERLV_ld_DETECT?
+
+# Add compiler flags for warnings
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wdeclaration-after-statement")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+endif()
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+SET(CMAKE_MACOSX_RPATH ON)
+
 if(LINK_STATIC_LIBMAPSERVER)
   set(BUILD_STATIC 1)
   set(MAPSERVER_LIBMAPSERVER mapserver_static)
@@ -193,7 +186,7 @@ maphttp.c mapparser.c mapstring.c mapxmp.c mapcairo.c mapimageio.c
 mappluginlayer.c mapsymbol.c mapchart.c mapimagemap.c mappool.c maptclutf.c
 mapcluster.c mapio.c mappostgis.c maptemplate.c mapcontext.c mapjoin.c
 mappostgresql.c mapthread.c mapcopy.c maplabel.c mapprimitive.c maptile.c
-mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c
+mapcpl.c maplayer.c mapproject.c maptime.c mapcrypto.c maplegend.c hittest.c
 mapprojhack.c maptree.c mapdebug.c maplexer.c mapquantization.c mapunion.c
 mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
@@ -458,14 +451,15 @@ if(WITH_POSTGIS)
   find_package(PostgreSQL)
   if(POSTGRESQL_FOUND)
     #uppercase our variables
-    if ( NOT DEFINED(POSTGRESQL_LIBRARY) )
+    if ( NOT DEFINED POSTGRESQL_LIBRARY )
       set( POSTGRESQL_LIBRARY ${PostgreSQL_LIBRARY})
     endif()
-    if ( NOT DEFINED(POSTGRESQL_INCLUDE_DIR) )
+    if ( NOT DEFINED POSTGRESQL_INCLUDE_DIR )
       set( POSTGRESQL_INCLUDE_DIR ${PostgreSQL_INCLUDE_DIR})
     endif()
     include_directories(${POSTGRESQL_INCLUDE_DIR})
     ms_link_libraries( ${POSTGRESQL_LIBRARY})
+    CHECK_LIBRARY_EXISTS(pq "PQserverVersion" POSTGRESQL_LIBRARY POSTGIS_HAS_SERVER_VERSION)
     set (USE_POSTGIS 1)
   else(POSTGRESQL_FOUND)
     report_optional_not_found(POSTGIS)
@@ -482,6 +476,36 @@ if(WITH_GDAL)
     report_optional_not_found(GDAL)
   endif(GDAL_FOUND)
 endif (WITH_GDAL)
+
+if(WITH_SVGCAIRO)
+  if(WITH_RSVG)
+    message(SEND_ERROR "WITH_SVGCAIRO cannot be enabled with WITH_RSVG")
+  endif(WITH_RSVG)
+  find_package(SVGCairo)
+  if(SVGCAIRO_FOUND)
+    include_directories(${SVGCAIRO_INCLUDE_DIR})
+    ms_link_libraries( ${SVG_LIBRARY} ${SVGCAIRO_LIBRARY})
+    set (USE_SVG_CAIRO 1)
+  else(SVGCAIRO_FOUND)
+    report_optional_not_found(SVGCAIRO)
+  endif(SVGCAIRO_FOUND)
+endif (WITH_SVGCAIRO)
+
+if(WITH_RSVG)
+  if(WITH_SVGCAIRO)
+    message(SEND_ERROR "WITH_RSVG cannot be enabled with WITH_CAIROSVG")
+  endif(WITH_SVGCAIRO)
+  find_package(RSVG)
+  if(RSVG_FOUND AND GOBJECT_FOUND)
+    include_directories(${RSVG_INCLUDE_DIRS})
+    ms_link_libraries( ${RSVG_LIBRARY} )
+    include_directories(${GOBJECT_INCLUDE_DIRS})
+    ms_link_libraries( ${GOBJECT_LIBRARY} )
+    set (USE_RSVG 1)
+  else(RSVG_FOUND AND GOBJECT_FOUND)
+    report_optional_not_found(RSVG)
+  endif(RSVG_FOUND AND GOBJECT_FOUND)
+endif (WITH_RSVG)
 
 if(WITH_OGR)
   if(GDAL_FOUND)
@@ -501,21 +525,31 @@ if(WITH_OGR)
   endif(GDAL_FOUND)
 endif(WITH_OGR)
 
-if((WITH_CLIENT_WMS) OR (WITH_CLIENT_WFS))
+if(WITH_CLIENT_WMS OR WITH_CLIENT_WFS)
+   set(WITH_CURL ON)
+endif(WITH_CLIENT_WMS OR WITH_CLIENT_WFS)
+
+if(WITH_CURL)
    find_package(CURL)
    if(CURL_FOUND)
      include_directories(${CURL_INCLUDE_DIR})
      ms_link_libraries( ${CURL_LIBRARY})
      set(USE_CURL 1)
    else(CURL_FOUND)
+     report_optional_not_found(CURL)
+   endif(CURL_FOUND)
+endif(WITH_CURL)
+
+if(WITH_CLIENT_WMS OR WITH_CLIENT_WFS)
+   if(NOT USE_CURL)
       if(WITH_CLIENT_WFS)
         report_dependency_error(CLIENT_WFS CURL)
       endif(WITH_CLIENT_WFS)
       if(WITH_CLIENT_WMS)
         report_dependency_error(CLIENT_WMS CURL)
       endif(WITH_CLIENT_WMS)
-   endif(CURL_FOUND)
-endif((WITH_CLIENT_WMS) OR (WITH_CLIENT_WFS))
+   endif(NOT USE_CURL)
+endif(WITH_CLIENT_WMS OR WITH_CLIENT_WFS)
 
 if(WITH_CLIENT_WMS)
   if(USE_GDAL AND USE_PROJ)
@@ -574,7 +608,7 @@ if(WITH_LIBXML2)
   find_package(LibXml2)
   if(LIBXML2_FOUND)
     include_directories(${LIBXML2_INCLUDE_DIR})
-    if(NOT DEFINED(LIBXML2_LIBRARY))
+    if(NOT DEFINED LIBXML2_LIBRARY)
       set(LIBXML2_LIBRARY ${LIBXML2_LIBRARIES})
     endif()
     ms_link_libraries( ${LIBXML2_LIBRARY})
@@ -633,7 +667,7 @@ if(WITH_XMLMAPFILE)
   #check for xslt and exslt
   find_package(LibXslt)
   if(LIBXSLT_FOUND)
-    if(NOT DEFINED(LIBXSLT_LIBRARY))
+    if(NOT DEFINED LIBXSLT_LIBRARY)
       set(LIBXSLT_LIBRARY ${LIBXSLT_LIBRARIES})
     endif()
     include_directories(${LIBXSLT_INCLUDE_DIR})
@@ -755,6 +789,8 @@ status_optional_component("MYSQL" "${USE_MYSQL}" "${MYSQL_LIBRARY}")
 status_optional_component("FRIBIDI" "${USE_FRIBIDI}" "${FRIBIDI_LIBRARY}")
 status_optional_component("GIF" "${USE_GIF}" "${GIF_LIBRARY}")
 status_optional_component("CAIRO" "${USE_CAIRO}" "${CAIRO_LIBRARY}")
+status_optional_component("SVGCAIRO" "${USE_SVG_CAIRO}" "${SVGCAIRO_LIBRARY}")
+status_optional_component("RSVG" "${USE_RSVG}" "${RSVG_LIBRARY}")
 status_optional_component("CURL" "${USE_CURL}" "${CURL_LIBRARY}")
 status_optional_component("PROJ" "${USE_PROJ}" "${PROJ_LIBRARY}")
 status_optional_component("LIBXML2" "${USE_LIBXML2}" "${LIBXML2_LIBRARY}")
@@ -808,6 +844,7 @@ if(WIN32)
 set(REGEX_MALLOC 1)
 set(USE_GENERIC_MS_NINT 1)
 endif(WIN32)
+
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)

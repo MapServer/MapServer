@@ -908,14 +908,6 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   int nTimeout, bOkToMerge, bForceSeparateRequest, bCacheToDisk;
   wmsParamsObj sThisWMSParams;
 
-  char    *pszProxyHost=NULL;
-  long     nProxyPort=0;
-  char    *pszProxyUsername=NULL, *pszProxyPassword=NULL;
-  char    *pszHttpAuthUsername=NULL, *pszHttpAuthPassword=NULL;
-  enum MS_HTTP_AUTH_TYPE eHttpAuthType = MS_BASIC;
-  enum MS_HTTP_AUTH_TYPE eProxyAuthType = MS_BASIC;
-  enum MS_HTTP_PROXY_TYPE eProxyType = MS_HTTP;
-
   if (lp->connectiontype != MS_WMS)
     return MS_FAILURE;
 
@@ -1006,105 +998,9 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * First check the metadata in the layer object and then in the map object.
    * ------------------------------------------------------------------ */
   nTimeout = 30;  /* Default is 30 seconds  */
-  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
+  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
                                     "MO", "connectiontimeout")) != NULL) {
     nTimeout = atoi(pszTmp);
-  } else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata),
-                       "MO", "connectiontimeout")) != NULL) {
-    nTimeout = atoi(pszTmp);
-  }
-
-  /* ------------------------------------------------------------------
-   * Check for authentication and proxying metadata. If the metadata is not found
-   * in the layer metadata, check the map-level metadata.
-   * ------------------------------------------------------------------ */
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_host")) != NULL) {
-    pszProxyHost = msStrdup(pszTmp);
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_port")) != NULL) {
-    nProxyPort = atol(pszTmp);
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_type")) != NULL) {
-
-    if (strcasecmp(pszTmp, "HTTP") == 0)
-      eProxyType = MS_HTTP;
-    else if (strcasecmp(pszTmp, "SOCKS5") == 0)
-      eProxyType = MS_SOCKS5;
-    else {
-      msSetError(MS_WMSERR, "Invalid proxy_type metadata '%s' specified",
-                 "msPrepareWMSLayerRequest()", pszTmp);
-      return MS_FAILURE;
-    }
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_auth_type")) != NULL) {
-    if (strcasecmp(pszTmp, "BASIC") == 0)
-      eProxyAuthType = MS_BASIC;
-    else if (strcasecmp(pszTmp, "DIGEST") == 0)
-      eProxyAuthType = MS_DIGEST;
-    else if (strcasecmp(pszTmp, "NTLM") == 0)
-      eProxyAuthType = MS_NTLM;
-    else if (strcasecmp(pszTmp, "ANY") == 0)
-      eProxyAuthType = MS_ANY;
-    else if (strcasecmp(pszTmp, "ANYSAFE") == 0)
-      eProxyAuthType = MS_ANYSAFE;
-    else {
-      msSetError(MS_WMSERR, "Invalid proxy_auth_type metadata '%s' specified",
-                 "msPrepareWMSLayerRequest()", pszTmp);
-      return MS_FAILURE;
-    }
-  }
-
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_username")) != NULL) {
-    pszProxyUsername = msStrdup(pszTmp);
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_password")) != NULL) {
-    pszProxyPassword = msDecryptStringTokens(map, pszTmp);
-    if (pszProxyPassword == NULL) {
-      return(MS_FAILURE);  /* An error should already have been produced */
-    }
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "auth_type")) != NULL) {
-    if (strcasecmp(pszTmp, "BASIC") == 0)
-      eHttpAuthType = MS_BASIC;
-    else if (strcasecmp(pszTmp, "DIGEST") == 0)
-      eHttpAuthType = MS_DIGEST;
-    else if (strcasecmp(pszTmp, "NTLM") == 0)
-      eHttpAuthType = MS_NTLM;
-    else if (strcasecmp(pszTmp, "ANY") == 0)
-      eHttpAuthType = MS_ANY;
-    else if (strcasecmp(pszTmp, "ANYSAFE") == 0)
-      eHttpAuthType = MS_ANYSAFE;
-    else {
-      msSetError(MS_WMSERR, "Invalid auth_type metadata '%s' specified",
-                 "msPrepareWMSLayerRequest()", pszTmp);
-      return MS_FAILURE;
-    }
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "auth_username")) != NULL) {
-    pszHttpAuthUsername = msStrdup(pszTmp);
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "auth_password")) != NULL) {
-    pszHttpAuthPassword = msDecryptStringTokens(map, pszTmp);
-    if (pszHttpAuthPassword == NULL) {
-      return(MS_FAILURE);  /* An error should already have been produced */
-    }
   }
 
   /* ------------------------------------------------------------------
@@ -1273,15 +1169,9 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].height = bbox_height;
     pasReqInfo[(*numRequests)].debug = lp->debug;
 
-    pasReqInfo[(*numRequests)].pszProxyAddress  = pszProxyHost;
-    pasReqInfo[(*numRequests)].nProxyPort       = nProxyPort;
-    pasReqInfo[(*numRequests)].eProxyType       = eProxyType;
-    pasReqInfo[(*numRequests)].eProxyAuthType   = eProxyAuthType;
-    pasReqInfo[(*numRequests)].pszProxyUsername = pszProxyUsername;
-    pasReqInfo[(*numRequests)].pszProxyPassword = pszProxyPassword;
-    pasReqInfo[(*numRequests)].eHttpAuthType    = eHttpAuthType;
-    pasReqInfo[(*numRequests)].pszHttpUsername  = pszHttpAuthUsername;
-    pasReqInfo[(*numRequests)].pszHttpPassword  = pszHttpAuthPassword;
+    if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata),
+                             pasReqInfo, *numRequests, map, "MO") != MS_SUCCESS)
+      return MS_FAILURE;
 
     (*numRequests)++;
   }

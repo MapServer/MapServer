@@ -12,12 +12,29 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-Version 6.2.1 (2013-04-19):
+6.4 release (2013/09/xx)
 ---------------------------
+
+- RFC100: Add support for raster tile index with tiles of mixed SRS (TILESRS keyword)
+
+- RFC94: Shape Smoothing
+
+- RFC95 : add EXPRESSION {value1,value2,...} support to parser (#4648)
+
+- RFC92: Migration from autotools to cmake (#4617)
+
+- RFC88: Saving MapServer Objects to Strings (#4563)
+
+- RFC90: Enable/Disable Layers in OGC Web Services by IP Lists
+
+- RFC85,89 Added Simplify,SimplityPT and Generalize geomtransform, implementation of
+  geomtransform at the layer level
+
+- RFC86: Scale-dependant token replacements (#4538)
 
 - Fix symbol scaling for vector symbols with no height (#4497,#3511)
 
-- Implementation of layer masking for WCS coverages
+- Implementation of layer masking for WCS coverages (#4469)
 
 - Implementation of offsets on follow labels (#4399)
 

@@ -248,12 +248,12 @@ msXmpWrite( mapObj *map, const char *filename )
       }
       /* Or perhaps we're screwed. */
       else {
-        msFreeHashItems(&hash_ns);
-        msFree(ns_name);
-        msFree(ns_tag);
         msSetError( MS_MISCERR,
                     "Unable to identify XMP namespace '%s' in metadata key '%s'",
                     "msXmpWrite()", ns_name, key );
+        msFreeHashItems(&hash_ns);
+        msFree(ns_name);
+        msFree(ns_tag);
         return MS_FAILURE;
       }
       msFree(ns_name);

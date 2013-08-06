@@ -1164,7 +1164,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
       iVersion = msOWSParseVersionString(tokens[i]);
 
       if (iVersion == -1) {
-        msSetError(MS_SOSERR, "Invalid version format.", "msSOSGetCapabilities()", tokens[i]);
+        msSetError(MS_SOSERR, "Invalid version format : %s.", "msSOSGetCapabilities()", tokens[i]);
         msFreeCharArray(tokens, j);
         return msSOSException(map, "acceptversions", "VersionNegotiationFailed");
       }
@@ -2127,13 +2127,14 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
 
       if (tokens && n > 0) {
         for (k=0; k<n; k++) {
-          if (strcasecmp(sosparams->pszSrsName, tokens[k]) == 0) { /* match */
+          if (strncasecmp(tokens[k], "EPSG:", strlen("EPSG:")) == 0 &&
+              strcasecmp(sosparams->pszSrsName, tokens[k]) == 0) { /* match */
             bFound = 1;
 
             /* project MAP.EXTENT to this SRS */
             msInitProjection(&po);
 
-            snprintf(srsbuffer, sizeof(srsbuffer), "+init=epsg:%.20s", sosparams->pszSrsName+5);
+            snprintf(srsbuffer, sizeof(srsbuffer), "+init=epsg:%.20s", sosparams->pszSrsName+strlen("EPSG:"));
 
             if (msLoadProjectionString(&po, srsbuffer) != 0) {
               msSetError(MS_SOSERR, "Could not set output projection to \"%s\"", "msSOSGetObservation()", sosparams->pszSrsName);

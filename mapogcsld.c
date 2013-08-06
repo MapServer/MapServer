@@ -77,23 +77,35 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     if (pszSLDTmpFile == NULL) {
       pszSLDTmpFile = msTmpFile(map, NULL, NULL, "sld.xml" );
     }
-    if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS) {
-      if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL) {
-        int   nBufsize=0;
-        fseek(fp, 0, SEEK_END);
-        nBufsize = ftell(fp);
-        rewind(fp);
-        pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
-        fread(pszSLDbuf, 1, nBufsize, fp);
-        fclose(fp);
-        pszSLDbuf[nBufsize] = '\0';
-        unlink(pszSLDTmpFile);
-      }
+    if (pszSLDTmpFile == NULL) {
+      msSetError(MS_WMSERR, "Could not determine temporary file %s. Please make sure that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL()", pszSLDTmpFile);
     } else {
-      msSetError(MS_WMSERR, "Could not open SLD %s and save it in temporary file %s. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL, pszSLDTmpFile);
+      int nMaxRemoteSLDBytes;
+      const char *pszMaxRemoteSLDBytes = msOWSLookupMetadata(&(map->web.metadata), "MO", "remote_sld_max_bytes");
+      if(!pszMaxRemoteSLDBytes) {
+    	  nMaxRemoteSLDBytes = 1024*1024; /* 1 megaByte */
+      } else {
+    	  nMaxRemoteSLDBytes = atoi(pszMaxRemoteSLDBytes);
+      }
+      if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0, nMaxRemoteSLDBytes) ==  MS_SUCCESS) {
+        if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL) {
+          int   nBufsize=0;
+          fseek(fp, 0, SEEK_END);
+          nBufsize = ftell(fp);
+          rewind(fp);
+          pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
+          fread(pszSLDbuf, 1, nBufsize, fp);
+          fclose(fp);
+          pszSLDbuf[nBufsize] = '\0';
+          unlink(pszSLDTmpFile);
+        }
+      } else {
+        unlink(pszSLDTmpFile);
+        msSetError(MS_WMSERR, "Could not open SLD %s and save it in a temporary file. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL);
+      }
+      if (pszSLDbuf)
+        nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
     }
-    if (pszSLDbuf)
-      nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
   }
 
   return nStatus;
@@ -161,11 +173,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
       layerObj *psTmpLayer=NULL;
       int nIndex;
       char tmpId[128];
+      nIndex = msGetLayerIndex(map, pasLayers[m].name);
+      if(pasLayers[m].name == NULL) continue;
       for (l=0; l<nLayers; l++) {
-        if(pasLayers[m].name == NULL || pasLayers[l].name == NULL)
+        if(pasLayers[l].name == NULL)
           continue;
 
-        nIndex = msGetLayerIndex(map, pasLayers[m].name);
 
         if (m !=l && strcasecmp(pasLayers[m].name, pasLayers[l].name)== 0 &&
             nIndex != -1) {
@@ -613,20 +626,20 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 }
 
 
-int _msSLDParseSizeParameter(CPLXMLNode *psSize)
+double _msSLDParseSizeParameter(CPLXMLNode *psSize)
 {
-  int nSize = 0;
+  double dSize = 0;
   CPLXMLNode *psLiteral = NULL;
 
   if (psSize) {
     psLiteral = CPLGetXMLNode(psSize, "Literal");
     if (psLiteral && psLiteral->psChild && psLiteral->psChild->pszValue)
-      nSize = atof(psLiteral->psChild->pszValue);
+      dSize = atof(psLiteral->psChild->pszValue);
     else if (psSize->psChild && psSize->psChild->pszValue)
-      nSize = atof(psSize->psChild->pszValue);
+      dSize = atof(psSize->psChild->pszValue);
   }
 
-  return nSize;
+  return dSize;
 }
 
 /************************************************************************/

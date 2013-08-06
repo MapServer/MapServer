@@ -257,7 +257,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
     GET_LAYER(map, j)->resultcache->results = (resultObj *) malloc(sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);
     if (GET_LAYER(map, j)->resultcache->results == NULL) {
       msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "loadQueryResults()",
-                 __FILE__, __LINE__, sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);
+                 __FILE__, __LINE__, (unsigned int)(sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults));
       free(GET_LAYER(map, j)->resultcache);
       GET_LAYER(map, j)->resultcache = NULL;
       return MS_FAILURE;
@@ -720,7 +720,7 @@ int msQueryByAttributes(mapObj *map)
     if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
       if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
         if( lp->debug >= MS_DEBUGLEVEL_V )
-          msDebug("msQueryByAttributes(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+          msDebug("msQueryByAttributes(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
         msFreeShape(&shape);
         continue;
       }
@@ -920,7 +920,7 @@ int msQueryByFilter(mapObj *map)
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
-            msDebug("msQueryByFilter(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msDebug("msQueryByFilter(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
           msFreeShape(&shape);
           continue;
         }
@@ -1122,7 +1122,7 @@ int msQueryByRect(mapObj *map)
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
-            msDebug("msQueryByRect(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msDebug("msQueryByRect(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
           msFreeShape(&shape);
           continue;
         }
@@ -1393,7 +1393,7 @@ int msQueryByFeatures(mapObj *map)
         if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
           if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
             if( lp->debug >= MS_DEBUGLEVEL_V )
-              msDebug("msQueryByFeature(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+              msDebug("msQueryByFeature(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
             msFreeShape(&shape);
             continue;
           }
@@ -1679,7 +1679,7 @@ int msQueryByPoint(mapObj *map)
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
-            msDebug("msQueryByPoint(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msDebug("msQueryByPoint(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
           msFreeShape(&shape);
           continue;
         }
@@ -1902,7 +1902,7 @@ int msQueryByShape(mapObj *map)
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
-            msDebug("msQueryByShape(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msDebug("msQueryByShape(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
           msFreeShape(&shape);
           continue;
         }

@@ -38,51 +38,6 @@
 
 #ifdef USE_OGR
 
-static int FTLParseEpsgString(char *pszEpsg, projectionObj *psProj)
-{
-  int nStatus = MS_FALSE;
-  int nTokens = 0;
-  char **tokens = NULL;
-  int nEpsgTmp=0;
-
-#ifdef USE_PROJ
-  if (pszEpsg && psProj) {
-    nTokens = 0;
-    tokens = msStringSplit(pszEpsg,'#', &nTokens);
-    if (tokens && nTokens == 2) {
-      char szTmp[32];
-      sprintf(szTmp, "init=epsg:%s",tokens[1]);
-      msInitProjection(psProj);
-      if (msLoadProjectionString(psProj, szTmp) == 0)
-        nStatus = MS_TRUE;
-    } else if (tokens &&  nTokens == 1) {
-      if (tokens)
-        msFreeCharArray(tokens, nTokens);
-      nTokens = 0;
-
-      tokens = msStringSplit(pszEpsg,':', &nTokens);
-      nEpsgTmp = -1;
-      if (tokens &&  nTokens == 1) {
-        nEpsgTmp = atoi(tokens[0]);
-
-      } else if (tokens &&  nTokens == 2) {
-        nEpsgTmp = atoi(tokens[1]);
-      }
-      if (nEpsgTmp > 0) {
-        char szTmp[32];
-        sprintf(szTmp, "init=epsg:%d",nEpsgTmp);
-        msInitProjection(psProj);
-        if (msLoadProjectionString(psProj, szTmp) == 0)
-          nStatus = MS_TRUE;
-      }
-    }
-    if (tokens)
-      msFreeCharArray(tokens, nTokens);
-  }
-#endif
-  return nStatus;
-}
-
 char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
 {
   const size_t bufferSize = 1024;
@@ -527,11 +482,14 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
 
   if (psTmpShape) {
     if( lp->projection.numargs > 0) {
-      if (psNode->pszSRS && FTLParseEpsgString(psNode->pszSRS, &sProjTmp)) {
+      if (psNode->pszSRS)
+        msInitProjection(&sProjTmp);
+      if (psNode->pszSRS && FLTParseEpsgString(psNode->pszSRS, &sProjTmp)) {
         msProjectShape(&sProjTmp, &lp->projection, psTmpShape);
-        msFreeProjection(&sProjTmp);
       } else if (lp->map->projection.numargs > 0)
         msProjectShape(&lp->map->projection, &lp->projection, psTmpShape);
+      if (psNode->pszSRS)
+        msFreeProjection(&sProjTmp);
     }
     /* ==================================================================== */
     /*      use within for bbox. Not Disjoint does not work.                */

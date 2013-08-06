@@ -136,6 +136,44 @@ tileCacheObj *searchTileCache(imageObj *img, symbolObj *symbol, symbolStyleObj *
   return NULL;
 }
 
+int preloadSymbol(symbolSetObj *symbolset, symbolObj *symbol, rendererVTableObj *renderer) {
+  switch(symbol->type) {
+  case MS_SYMBOL_VECTOR:
+  case MS_SYMBOL_ELLIPSE:
+  case MS_SYMBOL_SIMPLE:
+    break;
+  case (MS_SYMBOL_SVG):
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
+      return msPreloadSVGSymbol(symbol);
+#else
+      msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "preloadSymbol()");
+      return MS_FAILURE;
+#endif
+      break;
+  case (MS_SYMBOL_TRUETYPE): {
+    if(!symbol->full_font_path)
+      symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
+          symbol->font));
+    if(!symbol->full_font_path) {
+      msSetError(MS_MEMERR,"allocation error", "preloadSymbol()");
+      return MS_FAILURE;
+    }
+  }
+  break;
+  case (MS_SYMBOL_PIXMAP): {
+    if(!symbol->pixmap_buffer) {
+      if(MS_SUCCESS != msPreloadImageSymbol(renderer,symbol))
+        return MS_FAILURE;
+    }
+  }
+  break;
+  default:
+    msSetError(MS_MISCERR,"unsupported symbol type %d", "preloadSymbol()", symbol->type);
+    return MS_FAILURE;
+  }
+  return MS_SUCCESS;
+}
+
 /* add a cached tile to the current image's cache */
 tileCacheObj *addTileCache(imageObj *img,
                            imageObj *tile, symbolObj *symbol, symbolStyleObj *style, int width, int height)
@@ -192,6 +230,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
     width=height=MS_MAX(symbol->sizex,symbol->sizey);
   }
   tile = searchTileCache(img,symbol,s,width,height);
+
   if(tile==NULL) {
     imageObj *tileimg;
     double p_x,p_y;
@@ -204,9 +243,6 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
           renderer->renderTruetypeSymbol(tileimg, p_x, p_y, symbol, s);
           break;
         case (MS_SYMBOL_PIXMAP):
-          if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
-            return NULL; /* failed to load image, renderer should have set the error message */
-          }
           renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
           break;
         case (MS_SYMBOL_ELLIPSE):
@@ -217,10 +253,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
           break;
 
         case (MS_SYMBOL_SVG):
-#ifdef USE_SVG_CAIRO
-          if(msPreloadSVGSymbol(symbol) != MS_SUCCESS) {
-            return NULL; //failed to load image, renderer should have set the error message
-          }
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
           if (renderer->supports_svg) {
             if(renderer->renderSVGSymbol(tileimg, p_x, p_y, symbol, s) != MS_SUCCESS) {
               return NULL;
@@ -252,40 +285,12 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
         for(j=1; j<=3; j++) {
           p_y = (j+0.5) * height;
           switch(symbol->type) {
-            case (MS_SYMBOL_TRUETYPE):
-              renderer->renderTruetypeSymbol(tile3img, p_x, p_y, symbol, s);
-              break;
-            case (MS_SYMBOL_PIXMAP):
-              if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
-                return NULL; /* failed to load image, renderer should have set the error message */
-              }
-              renderer->renderPixmapSymbol(tile3img, p_x, p_y, symbol, s);
-              break;
-            case (MS_SYMBOL_ELLIPSE):
-              renderer->renderEllipseSymbol(tile3img, p_x, p_y,symbol, s);
-              break;
             case (MS_SYMBOL_VECTOR):
               renderer->renderVectorSymbol(tile3img, p_x, p_y, symbol, s);
               break;
-              /*we should never get into these cases since the seamlessmode mode seems to
-                only be for vector symbols. But if that changes ...*/
-            case (MS_SYMBOL_SVG):
-#ifdef USE_SVG_CAIRO
-              if(msPreloadSVGSymbol(symbol) != MS_SUCCESS) {
-                return NULL; //failed to load image, renderer should have set the error message
-              }
-              if (renderer->supports_svg) {
-                renderer->renderSVGSymbol(tile3img, p_x, p_y, symbol, s);
-              } else {
-                msRenderRasterizedSVGSymbol(tile3img,p_x,p_y,symbol, s);
-              }
-#else
-              msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "getTile()");
-              return NULL;
-#endif
-              break;
             default:
-              break;
+              msSetError(MS_SYMERR, "BUG: Seamless mode is only for vector symbols", "getTile()");
+              return NULL;
           }
         }
       }
@@ -391,6 +396,18 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
           case MS_SYMBOL_TRUETYPE:
             ret = renderer->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
             break;
+          case (MS_SYMBOL_SVG):
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
+              if (renderer->supports_svg) {
+                ret = renderer->renderSVGSymbol(image, point.x, point.y, symbol, style);
+              } else {
+                ret = msRenderRasterizedSVGSymbol(image,point.x,point.y,symbol, style);
+              }
+#else
+              msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msImagePolylineMarkers()()");
+              ret = MS_FAILURE;
+#endif
+              break;
         }
         if( ret != MS_SUCCESS)
           return ret;
@@ -449,6 +466,18 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
             case MS_SYMBOL_TRUETYPE:
               ret = renderer->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
               break;
+            case (MS_SYMBOL_SVG):
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
+              if (renderer->supports_svg) {
+                ret = renderer->renderSVGSymbol(image, point.x, point.y, symbol, style);
+              } else {
+                ret = msRenderRasterizedSVGSymbol(image,point.x,point.y,symbol, style);
+              }
+#else
+              msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msImagePolylineMarkers()()");
+              ret = MS_FAILURE;
+#endif
+              break;
           }
           break; /* we have rendered the single marker for this line */
         }
@@ -493,6 +522,8 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
       if(style->offsety==-99) {
         offsetLine = msOffsetPolyline(p,style->offsetx * finalscalefactor ,-99);
+      } else if(style->offsety==-999) {
+        offsetLine = msOffsetPolyline(p,style->offsetx * finalscalefactor ,-999);
       } else if(style->offsetx!=0 || style->offsety!=0) {
         offsetLine = msOffsetPolyline(p, style->offsetx * finalscalefactor,
                                       style->offsety * finalscalefactor);
@@ -520,35 +551,13 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         renderer->renderLine(image,offsetLine,&s);
       } else {
         symbolStyleObj s;
-        switch (symbol->type) {
-          case (MS_SYMBOL_TRUETYPE): {
-            if(!symbol->full_font_path)
-              symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
-                                                 symbol->font));
-            if(!symbol->full_font_path) {
-              msSetError(MS_MEMERR,"allocation error", "msDrawMArkerSymbol()");
-              return MS_FAILURE;
-            }
-          }
-          break;
-          case (MS_SYMBOL_PIXMAP): {
-            if(!symbol->pixmap_buffer) {
-              if(MS_SUCCESS != msPreloadImageSymbol(renderer,symbol))
-                return MS_FAILURE;
-            }
-          }
-          break;
+        if(preloadSymbol(symbolset, symbol, renderer) != MS_SUCCESS) {
+          return MS_FAILURE;
         }
 
         INIT_SYMBOL_STYLE(s);
         computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
         s.style = style;
-        if(symbol->type == MS_SYMBOL_TRUETYPE) {
-          if(!symbol->full_font_path)
-            symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
-                                               symbol->font));
-          assert(symbol->full_font_path);
-        }
 
         /* compute a markerStyle and use it on the line */
         if(style->gap<0) {
@@ -634,10 +643,13 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         symbol->renderer = renderer;
 
       if (style->offsetx != 0 || style->offsety != 0) {
-        if(style->offsety==-99)
+        if(style->offsety==-99) {
           offsetPolygon = msOffsetPolyline(p, style->offsetx*scalefactor, -99);
-        else
+        } else if(style->offsety==-999) {
+          offsetPolygon = msOffsetPolyline(p,style->offsetx * scalefactor ,-999);
+        } else {
           offsetPolygon = msOffsetPolyline(p, style->offsetx*scalefactor,style->offsety*scalefactor);
+        }
       } else {
         offsetPolygon=p;
       }
@@ -686,42 +698,8 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         imageObj *tile;
         int seamless = 0;
 
-
-        switch(symbol->type) {
-          case MS_SYMBOL_PIXMAP:
-            if(MS_SUCCESS != msPreloadImageSymbol(renderer,symbol)) {
-              ret = MS_FAILURE;
-              goto cleanup;
-            }
-            break;
-          case MS_SYMBOL_TRUETYPE:
-            if(!symbol->full_font_path)
-              symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
-                                                 symbol->font));
-            if(!symbol->full_font_path) {
-              msSetError(MS_MEMERR,"allocation error", "msDrawMarkerSymbol()");
-              ret = MS_FAILURE;
-              goto cleanup;
-            }
-            break;
-          case MS_SYMBOL_SVG:
-#ifdef USE_SVG_CAIRO
-            if(MS_SUCCESS != msPreloadSVGSymbol(symbol)) {
-              ret = MS_FAILURE;
-              goto cleanup;
-            }
-#else
-            msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawMarkerSymbol()");
-            return MS_FAILURE;
-#endif
-            break;
-          case MS_SYMBOL_VECTOR:
-          case MS_SYMBOL_ELLIPSE:
-            break;
-          default:
-            msSetError(MS_MISCERR,"unsupported symbol type %d", "msDrawShadeSymbol()", symbol->type);
-            ret = MS_FAILURE;
-            goto cleanup;
+        if(preloadSymbol(symbolset,symbol,renderer) != MS_SUCCESS) {
+          return MS_FAILURE;
         }
 
         INIT_SYMBOL_STYLE(s);
@@ -800,45 +778,18 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
       symbolObj *symbol = symbolset->symbol[style->symbol];
       /* store a reference to the renderer to be used for freeing */
       symbol->renderer = renderer;
-      switch (symbol->type) {
-        case (MS_SYMBOL_TRUETYPE): {
-          if (!symbol->full_font_path)
-            symbol->full_font_path = msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
-                                              symbol->font));
-          if (!symbol->full_font_path) {
-            msSetError(MS_MEMERR, "allocation error", "msDrawMarkerSymbol()");
-            return MS_FAILURE;
-          }
-        }
-        break;
-        case (MS_SYMBOL_PIXMAP): {
-          if (!symbol->pixmap_buffer) {
-            if (MS_SUCCESS != msPreloadImageSymbol(renderer, symbol))
-              return MS_FAILURE;
-          }
-        }
-        break;
-
-        case (MS_SYMBOL_SVG): {
-#ifdef USE_SVG_CAIRO
-          if (!symbol->renderer_cache) {
-            if (MS_SUCCESS != msPreloadSVGSymbol(symbol))
-              return MS_FAILURE;
-          }
-#else
-          msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawMarkerSymbol()");
-          return MS_FAILURE;
-#endif
-        }
-        break;
+      if(preloadSymbol(symbolset,symbol,renderer) != MS_SUCCESS) {
+        return MS_FAILURE;
       }
 
-      s.style = style;
       computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
       s.style = style;
       if (!s.color && !s.outlinecolor && symbol->type != MS_SYMBOL_PIXMAP &&
           symbol->type != MS_SYMBOL_SVG) {
         return MS_SUCCESS; // nothing to do if no color, except for pixmap symbols
+      }
+      if(s.scale == 0) {
+        return MS_SUCCESS;
       }
 
 
@@ -915,7 +866,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
           if (renderer->supports_svg) {
             ret = renderer->renderSVGSymbol(image, p_x, p_y, symbol, &s);
           } else {
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
             ret = msRenderRasterizedSVGSymbol(image, p_x,p_y, symbol, &s);
 #else
             msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawMarkerSymbol()");
@@ -1070,23 +1021,6 @@ int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj 
   }
 
   return nReturnVal;
-}
-
-
-/************************************************************************/
-/*                          msCircleDrawLineSymbol                      */
-/*                                                                      */
-/************************************************************************/
-int msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
-{
-  shapeObj *circle;
-  if (!image) return MS_FAILURE;
-  circle = msRasterizeArc(p->x, p->y, r, 0, 360, 0);
-  if (!circle) return MS_FAILURE;
-  msDrawLineSymbol(symbolset, image, circle, style, scalefactor);
-  msFreeShape(circle);
-  msFree(circle);
-  return MS_SUCCESS;
 }
 
 int msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)

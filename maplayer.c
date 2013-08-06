@@ -978,7 +978,7 @@ int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format)
 {
   int nMaxFeatures = -1;
   const char *pszTmp = NULL;
-  if (layer && format) {
+  if (layer) {
     pszTmp = msLookupHashTable(&layer->metadata, "maxfeaturestodraw");
     if (pszTmp)
       nMaxFeatures = atoi(pszTmp);
@@ -987,6 +987,8 @@ int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format)
       if (pszTmp)
         nMaxFeatures = atoi(pszTmp);
     }
+  }
+  if(format) {
     if (nMaxFeatures < 0)
       nMaxFeatures = atoi(msGetOutputFormatOption( format, "maxfeaturestodraw", "-1"));
   }
@@ -1670,7 +1672,10 @@ int msINLINELayerIsOpen(layerObj *layer)
 msINLINELayerInfo *msINLINECreateLayerInfo(void)
 {
   msINLINELayerInfo *layerinfo = msSmallMalloc(sizeof(msINLINELayerInfo));
-  layerinfo->searchrect = (rectObj){-1.0,-1.0,-1.0,-1.0};
+  layerinfo->searchrect.minx = -1.0;
+  layerinfo->searchrect.miny = -1.0;
+  layerinfo->searchrect.maxx = -1.0;
+  layerinfo->searchrect.maxy = -1.0;
   layerinfo->is_relative = MS_FALSE;
   return layerinfo;  
 }

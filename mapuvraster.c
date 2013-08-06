@@ -128,9 +128,9 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
 
     if(itemindexes[i] == -1) {
       msSetError(MS_OGRERR,
-                 (char*)CPLSPrintf("Invalid Field name: %s",
-                                   layer->items[i]),
-                 "msUVRASTERLayerInitItemInfo()");
+                 "Invalid Field name: %s",
+                 "msUVRASTERLayerInitItemInfo()",
+                 layer->items[i]);
       return(MS_FAILURE);
     }
   }
@@ -518,7 +518,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
   if( shapeindex < 0 || shapeindex >= uvlinfo->query_results ) {
     msSetError(MS_MISCERR,
-               "Out of range shape index requested.  Requested %d\n"
+               "Out of range shape index requested.  Requested %ld\n"
                "but only %d shapes available.",
                "msUVRASTERLayerGetShape()",
                shapeindex, uvlinfo->query_results );
@@ -539,7 +539,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   point.y = Pix2Georef(y, 0, uvlinfo->height-1,
                        uvlinfo->extent.miny, uvlinfo->extent.maxy, MS_TRUE);
   if (layer->debug == 5)
-    msDebug("msUVRASTERLayerWhichShapes(): shapeindex: %d, x: %g, y: %g\n",
+    msDebug("msUVRASTERLayerWhichShapes(): shapeindex: %ld, x: %g, y: %g\n",
             shapeindex, point.x, point.y);
 
 #ifdef USE_POINT_Z_M

@@ -469,7 +469,7 @@ int renderGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style, char
   if(style->outlinewidth > 0) { /* handle the outline color */
     error = gdImageStringFT(ip, bbox, oc, style->fonts[0], style->size, style->rotation, x, y-1, text);
     if(error) {
-      msSetError(MS_TTFERR, error, "msDrawTextGD()");
+      msSetError(MS_TTFERR, "%s", "msDrawTextGD()", error);
       return(MS_FAILURE);
     }
 
@@ -732,7 +732,7 @@ int renderTruetypeSymbolGD(imageObj *img, double x, double y, symbolObj *symbol,
   if( s->outlinecolor ) {
     error = gdImageStringFT(ip, bbox, oc, symbol->full_font_path, s->scale, s->rotation, x, y-1, symbol->character);
     if(error) {
-      msSetError(MS_TTFERR, error, "renderTruetypeSymbolGD()");
+      msSetError(MS_TTFERR, "%s", "renderTruetypeSymbolGD()", error);
       return MS_FAILURE;
     }
 
@@ -923,7 +923,7 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfont
     strex.flags = gdFTEX_XSHOW;
     error = gdImageStringFTEx(NULL, bbox, 0, fonts[0], size, 0, 0, 0, string, &strex);
     if(error) {
-      msSetError(MS_TTFERR, error, "gdImageStringFTEx()");
+      msSetError(MS_TTFERR, "%s", "gdImageStringFTEx()", error);
       return(MS_FAILURE);
     }
 
@@ -950,7 +950,7 @@ int getTruetypeTextBBoxGD(rendererVTableObj *renderer, char **fonts, int numfont
   } else {
     error = gdImageStringFT(NULL, bbox, 0, fonts[0], size, 0, 0, 0, string);
     if(error) {
-      msSetError(MS_TTFERR, error, "msGetTruetypeTextBBoxGD()");
+      msSetError(MS_TTFERR, "%s", "msGetTruetypeTextBBoxGD()", error);
       return(MS_FAILURE);
     }
 
