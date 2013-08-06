@@ -37,6 +37,8 @@
 #cmakedefine POSTGIS_HAS_SERVER_VERSION 1
 #cmakedefine USE_SVG_CAIRO 1
 #cmakedefine USE_RSVG 1
+#cmakedefine USE_SDE 1
+#cmakedefine SDE64 1
 
 /*windows specific hacks*/
 #if defined(_WIN32)
