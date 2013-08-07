@@ -668,7 +668,7 @@ static int msWCSParseRequest20_XMLDescribeCoverage(
 /************************************************************************/
 #if defined(USE_LIBXML2)
 static int msWCSParseRequest20_XMLGetCoverage(
-  xmlNodePtr root, wcs20ParamsObjPtr params)
+  mapObj* map, xmlNodePtr root, wcs20ParamsObjPtr params)
 {
   xmlNodePtr child;
   int numIds = 0;
@@ -696,6 +696,12 @@ static int msWCSParseRequest20_XMLGetCoverage(
       if(content != NULL && (EQUAL(content, "multipart/mixed")
                           || EQUAL(content, "multipart/related"))) {
         params->multipart = MS_TRUE;
+      }
+      else {
+        msSetError(MS_WCSERR, "Invalid value '%s' for parameter 'Mediatype'.",
+                  "msWCSParseRequest20()", content);
+        xmlFree(content);
+        return MS_FAILURE;
       }
       xmlFree(content);
     } else if (EQUAL((char *) child->name, "DimensionTrim")) {
@@ -746,7 +752,8 @@ static int msWCSParseRequest20_XMLGetCoverage(
       if (msWCSParseSubset20(subset, axisName, crs, min, max)
           == MS_FAILURE) {
         msWCSFreeSubsetObj20(subset);
-        return MS_FAILURE;
+        msWCSException(map, "InvalidSubsetting", "subset", "2.0.1");
+        return MS_DONE;
       }
 
       if(NULL == (axis = msWCSFindAxis20(params, subset->axis))) {
@@ -926,14 +933,14 @@ int msWCSParseRequest20(mapObj *map,
       if(EQUAL(params->request, "DescribeCoverage")) {
         ret = msWCSParseRequest20_XMLDescribeCoverage(root, params);
       } else if(EQUAL(params->request, "GetCoverage")) {
-        ret = msWCSParseRequest20_XMLGetCoverage(root, params);
+        ret = msWCSParseRequest20_XMLGetCoverage(map, root, params);
       }
     }
     return ret;
 
 #else /* defined(USE_LIBXML2) */
     /* TODO: maybe with CPLXML? */
-    return MS_DONE;
+    return MS_FAILURE;
 #endif /* defined(USE_LIBXML2) */
   }
 
@@ -984,6 +991,11 @@ int msWCSParseRequest20(mapObj *map,
     } else if (EQUAL(key, "MEDIATYPE")) {
       if(EQUAL(value, "multipart/mixed") || EQUAL(value, "multipart/related")) {
         params->multipart = MS_TRUE;
+      }
+      else {
+         msSetError(MS_WCSERR, "Invalid value '%s' for parameter 'Mediatype'.",
+                    "msWCSParseRequest20()", value);
+         return MS_FAILURE;
       }
     } else if (EQUAL(key, "INTERPOLATION")) {
       params->interpolation = msStrdup(value);
@@ -1046,7 +1058,8 @@ int msWCSParseRequest20(mapObj *map,
       }
       if (msWCSParseSubsetKVPString20(subset, value) == MS_FAILURE) {
         msWCSFreeSubsetObj20(subset);
-        return MS_FAILURE;
+        msWCSException(map, "InvalidSubsetting", "subset", ows_request->version);
+        return MS_DONE;
       }
 
       if(NULL == (axis = msWCSFindAxis20(params, subset->axis))) {
@@ -1061,7 +1074,8 @@ int msWCSParseRequest20(mapObj *map,
         msSetError(MS_WCSERR, "The axis '%s' is already subsetted.",
                    "msWCSParseRequest20()", axis->name);
         msWCSFreeSubsetObj20(subset);
-        return MS_FAILURE;
+        msWCSException(map, "InvalidAxisLabel", "subset", ows_request->version);
+        return MS_DONE;
       }
       axis->subset = subset;
     } else if(EQUAL(key, "RANGESUBSET")) {
@@ -1090,11 +1104,16 @@ int msWCSParseRequest20(mapObj *map,
 /************************************************************************/
 static int msWCSValidateAndFindAxes20(
   wcs20ParamsObjPtr params,
-  char*** validAxisNames,
-  int numAxis,
   wcs20AxisObjPtr outAxes[])
 {
+  static const int numAxis = 2;
+  char *validXAxisNames[] = {"x", "xaxis", "x-axis", "x_axis", "long", "long_axis", "long-axis", "lon", "lon_axis", "lon-axis", NULL};
+  char *validYAxisNames[] = {"y", "yaxis", "y-axis", "y_axis", "lat", "lat_axis", "lat-axis", NULL};
+  char **validAxisNames[2]; 
   int iParamAxis, iAcceptedAxis, iName, i;
+
+  validAxisNames[0] = validXAxisNames;
+  validAxisNames[1] = validYAxisNames;
 
   for(i = 0; i < numAxis; ++i) {
     outAxes[i] = NULL;
@@ -1108,12 +1127,12 @@ static int msWCSValidateAndFindAxes20(
     if(params->axes[iParamAxis]->subset != NULL) {
       if(params->axes[iParamAxis]->subset->timeOrScalar == MS_WCS20_TIME_VALUE) {
         msSetError(MS_WCSERR, "Time values for subsets are not supported. ",
-                   "msWCSCreateBoundingBox20()");
+                   "msWCSValidateAndFindAxes20()");
         return MS_FAILURE;
       }
       if(params->axes[iParamAxis]->subset->operation == MS_WCS20_SLICE) {
         msSetError(MS_WCSERR, "Subset operation 'slice' is not supported.",
-                   "msWCSCreateBoundingBox20()");
+                   "msWCSValidateAndFindAxes20()");
         return MS_FAILURE;
       }
     }
@@ -1128,7 +1147,7 @@ static int msWCSValidateAndFindAxes20(
           if(outAxes[iAcceptedAxis] != NULL) {
             msSetError(MS_WCSERR, "The axis with the name '%s' corresponds "
                        "to the same axis as the subset with the name '%s'.",
-                       "msWCSValidateAndFindSubsets20()",
+                       "msWCSValidateAndFindAxes20()",
                        outAxes[iAcceptedAxis]->name, params->axes[iParamAxis]->name);
             return MS_FAILURE;
           }
@@ -1148,7 +1167,7 @@ static int msWCSValidateAndFindAxes20(
     /* exit and throw error                             */
     if(found == 0) {
       msSetError(MS_WCSERR, "Invalid subset axis '%s'.",
-                 "msWCSValidateAndFindSubsets20()", params->axes[iParamAxis]->name);
+                 "msWCSValidateAndFindAxes20()", params->axes[iParamAxis]->name);
       return MS_FAILURE;
     }
   }
@@ -2355,6 +2374,7 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
                      const char *locator, const char *version)
 {
   int size = 0;
+  char *status = "400 Bad Request";
   char *errorString = NULL;
   char *errorMessage = NULL;
   char *schemasLocation = NULL;
@@ -2421,6 +2441,18 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
 
   xmlDocSetRootElement(psDoc, psRootNode);
 
+  if(EQUAL(exceptionCode, "OperationNotSupported")
+     || EQUAL(exceptionCode, "OptionNotSupported")) {
+    status = "501 Not Implemented";
+  }
+  else if (EQUAL(exceptionCode, "NoSuchCoverage")
+           || EQUAL(exceptionCode, "emptyCoverageIdList")
+           || EQUAL(exceptionCode, "InvalidAxisLabel")
+           || EQUAL(exceptionCode, "InvalidSubsetting")) {
+    status = "404 Not Found";
+  }
+
+  msIO_setHeader("Status", status);
   if (encoding)
     msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
@@ -2961,29 +2993,10 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj
 /*      is found out.                                                   */
 /************************************************************************/
 
-static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params)
+static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20AxisObjPtr *axes)
 {
-  int returnValue;
-  static const int numAxis = 2;
-  char *validXAxisNames[] = {"x", "xaxis", "x-axis", "x_axis", "long", "long_axis", "long-axis", "lon", "lon_axis", "lon-axis", NULL};
-  char *validYAxisNames[] = {"y", "yaxis", "y-axis", "y_axis", "lat", "lat_axis", "lat-axis", NULL};
-  char ***validAxisNames;
   char *crs = NULL;
-  wcs20AxisObjPtr *axes;
-
-  axes = (wcs20AxisObjPtr*)msSmallMalloc(sizeof(wcs20AxisObjPtr) * numAxis);
-
-  validAxisNames = msSmallCalloc(sizeof(char**), numAxis);
-  validAxisNames[0] = validXAxisNames;
-  validAxisNames[1] = validYAxisNames;
-
-  returnValue = msWCSValidateAndFindAxes20(params, validAxisNames, numAxis, axes);
-  msFree(validAxisNames);
-  if(returnValue != MS_SUCCESS) {
-    msFree(axes);
-    return MS_FAILURE;
-  }
-
+  
   if (axes[0] != NULL) {
     if(axes[0]->subset != NULL) {
       msDebug("Subset for X-axis found: %s\n", axes[0]->subset->axis);
@@ -3011,7 +3024,6 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params)
         if(!EQUAL(crs, axes[1]->subset->crs)) {
           msSetError(MS_WCSERR, "CRS for axis %s and axis %s are not the same.",
                      "msWCSCreateBoundingBox20()", axes[0]->name, axes[1]->name);
-          msFree(axes);
           return MS_FAILURE;
         }
       } else {
@@ -3028,12 +3040,9 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params)
       msSetError(MS_WCSERR, "The units of measure of the resolution for"
                  "axis %s and axis %s are not the same.",
                  "msWCSCreateBoundingBox20()", axes[0]->name, axes[1]->name);
-      msFree(axes);
       return MS_FAILURE;
     }
   }
-
-  msFree(axes);
 
   /* check if projections are equal */
   if(crs != NULL) {
@@ -3171,9 +3180,9 @@ int msWCSGetCoverage20(mapObj *map, cgiRequestObj *request,
   /* throw exception if no Layer was found */
   if (layer == NULL) {
     msSetError(MS_WCSERR,
-               "COVERAGE=%s not found, not in supported layer list. A layer might be disabled for \
+               "COVERAGEID=%s not found, not in supported layer list. A layer might be disabled for \
 this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", params->ids[0]);
-    return msWCSException(map, "InvalidParameterValue", "coverage",
+    return msWCSException(map, "NoSuchCoverage", "coverageid",
                           params->version);
   }
   /* retrieve coverage metadata  */
@@ -3207,9 +3216,20 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                           "projection", params->version);
   }
 
-  if(msWCSGetCoverage20_FinalizeParamsObj(params) == MS_FAILURE) {
-    msWCSClearCoverageMetadata20(&cm);
-    return msWCSException(map, "InvalidParameterValue", "extent", params->version);
+  {
+    wcs20AxisObjPtr *axes;
+    axes = msSmallMalloc(sizeof(wcs20AxisObjPtr) * 2);
+    if(msWCSValidateAndFindAxes20(params, axes) == MS_FAILURE) {
+      msWCSClearCoverageMetadata20(&cm);
+      msFree(axes);
+      return msWCSException(map, "InvalidAxisLabel", "subset", params->version);
+    }
+    if(msWCSGetCoverage20_FinalizeParamsObj(params, axes) == MS_FAILURE) {
+      msWCSClearCoverageMetadata20(&cm);
+      msFree(axes);
+      return msWCSException(map, "InvalidParameterValue", "extent", params->version);
+    }
+    msFree(axes);
   }
 
   subsets = params->bbox;
