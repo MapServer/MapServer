@@ -1071,7 +1071,7 @@ int msWCSParseRequest20(mapObj *map,
         msSetError(MS_WCSERR, "The axis '%s' is already subsetted.",
                    "msWCSParseRequest20()", axis->name);
         msWCSFreeSubsetObj20(subset);
-        msWCSException(map, "InvalidSubsetting", "subset", ows_request->version);
+        msWCSException(map, "InvalidAxisLabel", "subset", ows_request->version);
         return MS_DONE;
       }
       axis->subset = subset;
