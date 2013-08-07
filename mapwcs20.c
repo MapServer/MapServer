@@ -697,7 +697,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
         params->multipart = MS_TRUE;
       }
       else {
-        msSetError(MS_WCSERR, "Invalid value '%s' for parameter 'Mediatype'."
+        msSetError(MS_WCSERR, "Invalid value '%s' for parameter 'Mediatype'.",
                   "msWCSParseRequest20()", content);
         xmlFree(content);
         return MS_FAILURE;
@@ -990,7 +990,7 @@ int msWCSParseRequest20(mapObj *map,
         params->multipart = MS_TRUE;
       }
       else {
-         msSetError(MS_WCSERR, "Invalid value '%s' for parameter 'Mediatype'."
+         msSetError(MS_WCSERR, "Invalid value '%s' for parameter 'Mediatype'.",
                     "msWCSParseRequest20()", value);
          return MS_FAILURE;
       }
