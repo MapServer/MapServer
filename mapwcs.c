@@ -2163,6 +2163,13 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
         return msWCSException(map, "InvalidParameterValue",
                               "request", "2.0.1");
       }
+      else if (status == MS_DONE) {
+        /* MS_DONE means, that the exception has already been written to the IO 
+          buffer. 
+        */
+        msWCSFreeParamsObj20(params);
+        return MS_FAILURE;
+      }
     }
 
     /* check if all layer names are valid NCNames */
