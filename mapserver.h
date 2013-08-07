@@ -2041,6 +2041,7 @@ extern "C" {
   MS_DLL_EXPORT int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map);
   MS_DLL_EXPORT int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map);
   MS_DLL_EXPORT int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map);
+  MS_DLL_EXPORT int msCopyHashTable(hashTableObj *dst, hashTableObj *src);
   MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);
   MS_DLL_EXPORT symbolObj *msGrowSymbolSet( symbolSetObj *symbolset );
   MS_DLL_EXPORT int msAddImageSymbol(symbolSetObj *symbolset, char *filename);

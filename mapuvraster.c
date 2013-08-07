@@ -404,7 +404,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   outputformat->imagemode = MS_IMAGEMODE_FLOAT32;
   msAppendOutputFormat(map_tmp, outputformat);
   
-  msCopyHashTable(map_tmp->configoptions, layer->map->configoptions);
+  msCopyHashTable(&map_tmp->configoptions, &layer->map->configoptions);
   map_tmp->mappath = msStrdup(layer->map->mappath);
   map_tmp->shapepath = msStrdup(layer->map->shapepath);
   map_tmp->extent.minx = rect.minx-(0.5*map_cellsize)+(0.5*map_tmp->cellsize);
@@ -416,7 +416,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
    msCopyProjection(&map_tmp->projection, &layer->projection);
 
   if (layer->debug == 5)
-    msDebug("msUVRASTERLayerWhichShapes(): extent: %g %d %g %g\n",
+    msDebug("msUVRASTERLayerWhichShapes(): extent: %g %g %g %g\n",
             map_tmp->extent.minx, map_tmp->extent.miny,
             map_tmp->extent.maxx, map_tmp->extent.maxy);
 
@@ -447,7 +447,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   if (msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL ) == MS_FAILURE) {
-    msSetError(MS_MISCERR, "Unable to draw raster data.", NULL, "msUVRASTERLayerWhichShapes()" );
+    msSetError(MS_MISCERR, "Unable to draw raster data.", "msUVRASTERLayerWhichShapes()");
     return MS_FAILURE;
   }
 
