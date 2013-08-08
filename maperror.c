@@ -83,7 +83,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
     "AGG library error.",
     "OWS error.",
     "OpenGL renderer error.",
-    "Renderer error."
+    "Renderer error.",
+    "V8 engine error."                                                
                                                };
 #ifndef USE_THREAD
 
@@ -570,6 +571,9 @@ char *msGetVersion()
 #endif
 #ifdef USE_POINT_Z_M
   strcat(version, " SUPPORTS=POINT_Z_M");
+#endif
+#ifdef USE_V8
+  strcat(version, " SUPPORTS=V8");
 #endif
 #ifdef USE_JPEG
   strcat(version, " INPUT=JPEG");

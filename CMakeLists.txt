@@ -201,7 +201,7 @@ mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c
 mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c
-mapogr.cpp mapcontour.c mapsmoothing.c ${REGEX_SOURCES})
+mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES})
 
 if(BUILD_DYNAMIC)
   add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES})
@@ -731,6 +731,20 @@ if(WITH_PYTHON)
    set(USE_PYTHON_MAPSCRIPT 1)
 endif(WITH_PYTHON)
 
+if(WITH_V8)
+    find_package(V8)
+  if(V8_FOUND EQUAL 1)  
+    set(USE_V8 1)
+    include_directories(${V8_INCLUDE})
+    ms_link_libraries( ${V8_LIBS})
+  else(V8_FOUND)
+    message(SEND_ERROR "V8 JavaScript support requested but not found.
+      HINTS:
+      - set V8_ROOT environment variable to the installation path of V8.
+      - add the V8 install directory to the CMAKE_PREFIX_PATH variable (-DCMAKE_PREFIX_PATH=\"/path/to/${component}-install-dir;/path/to/other/dirs\") ")
+  endif()
+endif(WITH_V8)
+
 if(WITH_PHP)
    add_subdirectory("mapscript/php")
    set(USE_PHP_MAPSCRIPT 1)
@@ -853,6 +867,7 @@ status_optional_feature("Thread-safety support" "${USE_THREAD}")
 status_optional_feature("KML output" "${USE_KML}")
 status_optional_feature("Z+M point coordinate support" "${USE_POINT_Z_M}")
 status_optional_feature("XML Mapfile support" "${USE_XMLMAPFILE}")
+status_optional_feature("V8 JavaScript" "${USE_V8}")
 
 message(STATUS " * Mapscripts")
 status_optional_feature("Python" "${USE_PYTHON_MAPSCRIPT}")

@@ -134,7 +134,6 @@ typedef ms_uint32 *     ms_bitarray;
 #include "cgiutil.h"
 
 
-
 #include <sys/types.h> /* regular expression support */
 
 /* The regex lib from the system and the regex lib from PHP needs to
@@ -1825,6 +1824,10 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
     queryObj query;
 #endif
+
+#ifdef USE_V8
+    void *v8context;
+#endif
   };
 
   /************************************************************************/
@@ -2785,6 +2788,20 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   /*      end of prototypes for functions in mapsmoothing.c               */
   /* ==================================================================== */
+
+  /* ==================================================================== */
+  /*      prototypes for functions in mapv8.cpp                           */
+  /* ==================================================================== */
+#ifdef USE_V8
+  MS_DLL_EXPORT char* msV8GetFeatureStyle(mapObj *map, const char *filename,
+                                          layerObj *layer, shapeObj *shape);
+  MS_DLL_EXPORT void msV8CreateContext(mapObj *map);
+  MS_DLL_EXPORT void msV8FreeContext(mapObj *map);
+#endif
+  /* ==================================================================== */
+  /*      end of prototypes for functions in mapv8.cpp                    */
+  /* ==================================================================== */
+
 #endif
 
 

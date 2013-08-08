@@ -5896,6 +5896,8 @@ int initMap(mapObj *map)
 
   msInitQuery(&(map->query));
 
+  map->v8context = NULL;
+
   return(0);
 }
 

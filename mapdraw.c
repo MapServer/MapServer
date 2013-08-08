@@ -548,7 +548,7 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
       }
       return(MS_FALSE);
     }
-
+  
     /* now check class scale boundaries (all layers *must* pass these tests) */
     if(layer->numclasses > 0) {
       for(i=0; i<layer->numclasses; i++) {
@@ -852,8 +852,13 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   status = msLayerOpen(layer);
   if(status != MS_SUCCESS) return MS_FAILURE;
 
-  /* build item list */
-  status = msLayerWhichItems(layer, MS_FALSE, NULL);
+  /* build item list. STYLEITEM javascript needs the shape attributes */
+  if (layer->styleitem &&
+     (strncasecmp(layer->styleitem, "javascript://", 13) == 0)) {  
+    status = msLayerWhichItems(layer, MS_TRUE, NULL);
+  }
+  else 
+    status = msLayerWhichItems(layer, MS_FALSE, NULL);
 
   if(status != MS_SUCCESS) {
     msLayerClose(layer);
