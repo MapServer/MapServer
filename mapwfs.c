@@ -2013,8 +2013,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     bbox.maxx = atof(tokens[2]);
     bbox.maxy = atof(tokens[3]);
     /*5th aregument is assumed to be projection*/
-    if (n == 5)
+    if (n == 5) {
       sBBoxSrs = msStrdup(tokens[4]);
+    }
+    else  {
+      sBBoxSrs = msStrdup(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE));
+    }
 
     msFreeCharArray(tokens, n);
     bBBOXSet = 1;
