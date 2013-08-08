@@ -455,9 +455,6 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 
 	  msFree(projUrn);
   }
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),
-             "&BBOX=%.15g,%.15g,%.15g,%.15g",
-             bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
 
   if (psParams->nMaxFeatures > 0)
     snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),
