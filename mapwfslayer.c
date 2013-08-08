@@ -29,6 +29,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapows.h"
+#include "mapproject.h"
 
 #include <time.h>
 #include <assert.h>
@@ -417,10 +418,43 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
   if (psParams->pszFilter) {
     snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL), "&FILTER=%s",
              msEncodeUrl(psParams->pszFilter));
-  } else
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),
-             "&BBOX=%.15g,%.15g,%.15g,%.15g",
-             bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+  } else {
+	  /*
+	   * take care about the axis order for WFS 1.1
+	   */
+	  char *projUrn;
+	  char *projEpsg;
+	  projUrn = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", 1);
+	  projEpsg = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", 1);
+
+	  /*
+	   * WFS 1.1 supports including the SRS in the BBOX parameter, should
+	   * respect axis order in the BBOX and has a separate SRSNAME parameter for
+	   * the desired result SRS.
+	   * WFS 1.0 is always easting, northing, doesn't include the SRS as part of
+	   * the BBOX parameter and has no SRSNAME parameter: if we don't have a
+	   * URN then fallback to WFS 1.0 style */
+	  if ((strncmp(pszVersion, "1.1", 3) == 0) && projUrn) {
+		 if (projEpsg && (strncmp(projEpsg, "EPSG:", 5) == 0) &&
+				 msIsAxisInverted(atoi(projEpsg + 5))) {
+			 snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+					 "&BBOX=%.15g,%.15g,%.15g,%.15g,%s&SRSNAME=%s",
+					 bbox->miny, bbox->minx, bbox->maxy, bbox->maxx,
+					 projUrn, projUrn);
+		 } else {
+			 snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+					 "&BBOX=%.15g,%.15g,%.15g,%.15g,%s&SRSNAME=%s",
+					 bbox->minx, bbox->miny, bbox->maxy, bbox->maxy,
+					 projUrn, projUrn);
+		 }
+	  } else {
+		  snprintf(pszURL + strlen(pszURL), bufferSize - strlen(pszURL),
+				  "&BBOX=%.15g,%.15g,%.15g,%.15g",
+				  bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+	  }
+
+	  msFree(projUrn);
+  }
 
   if (psParams->nMaxFeatures > 0)
     snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL),
