@@ -2449,7 +2449,7 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
     status = "404 Not Found";
   }
 
-  msIO_setHeader("Status", status);
+  msIO_setHeader("Status", "%s", status);
   if (encoding)
     msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
   else
