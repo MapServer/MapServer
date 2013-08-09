@@ -2115,7 +2115,7 @@ extern "C" {
 
   MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest); /* in maplegend.c */
   MS_DLL_EXPORT int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_y,
-                                     int *alayers, int numl_ayer, map_hittest *hittest);
+                                     int *alayers, int numl_ayer, map_hittest *hittest, int resolutionfactor);
   MS_DLL_EXPORT int msEmbedLegend(mapObj *map, imageObj *img);
   MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, imageObj *img, int dstX, int dstY, int scale_independant, class_hittest *hittest);
   MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, int scale_independant);
