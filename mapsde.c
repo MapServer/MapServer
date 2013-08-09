@@ -59,7 +59,7 @@ typedef struct {
   SE_LAYERINFO layerinfo;
   SE_COORDREF coordref;
   SE_STREAM stream;
-  long state_id;
+  SE_INT32 state_id;
   char *table;
   char *column;
   char *row_id_column;
@@ -73,7 +73,7 @@ typedef struct {
 } msSDELayerInfo;
 
 typedef struct {
-  long layerId;
+  SE_INT32 layerId;
   char *table;
   char *column;
   char *connection;
@@ -179,7 +179,7 @@ static void sde_error(long error_code, char *routine, char *sde_routine)
 char *msSDELayerGetRowIDColumn(layerObj *layer)
 {
 #ifdef USE_SDE
-  long status, column_type;
+  SE_INT32 status, column_type;
   char* column_name;
   char* full_column_name;
   char* proc_key;
@@ -317,7 +317,7 @@ long msSDELCacheAdd( layerObj *layer,
 {
 
   layerId *lid = NULL;
-  long status = 0;
+  SE_INT32 status = 0;
 
   msAcquireLock( TLOCK_SDE );
 
@@ -450,12 +450,12 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp)
 
   SE_POINT *points=NULL;
   SE_ENVELOPE envelope;
-  long type, status;
-  long *part_offsets = NULL;
-  long *subpart_offsets = NULL;
-  long num_parts = -1;
-  long num_subparts = -1;
-  long num_points = -1;
+  SE_INT32 type, status;
+  SE_INT32 *part_offsets = NULL;
+  SE_INT32 *subpart_offsets = NULL;
+  SE_INT32 num_parts = -1;
+  SE_INT32 num_subparts = -1;
+  SE_INT32 num_points = -1;
 
   lineObj line= {0,NULL};
 
@@ -463,9 +463,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp)
 
   status = SE_shape_get_type(inshp, &type);
   if(status != SE_SUCCESS) {
-    sde_error(status,
-              "sdeCopyShape()",
-              "SE_shape_get_type()");
+    sde_error(status, "sdeShapeCopy()", "SE_shape_get_type()");
     return(MS_FAILURE);
   }
 
@@ -488,10 +486,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp)
       outshp->type = MS_SHAPE_POLYGON;
       break;
     default:
-      msSetError( MS_SDEERR,
-                  "Unsupported SDE shape type (%ld).",
-                  "sdeCopyShape()",
-                  type);
+      msSetError( MS_SDEERR, "Unsupported SDE shape type.", "sdeShapeCopy()");
       return(MS_FAILURE);
   }
 
@@ -507,26 +502,18 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp)
     return(MS_FAILURE);
   }
 
-  part_offsets = (long *) msSmallMalloc( (num_parts + 1) * sizeof(long));
-  subpart_offsets = (long *) msSmallMalloc( (num_subparts + 1)  * sizeof(long));
+  part_offsets = (SE_INT32 *) msSmallMalloc( (num_parts + 1) * sizeof(SE_INT32));
+  subpart_offsets = (SE_INT32 *) msSmallMalloc( (num_subparts + 1)  * sizeof(SE_INT32));
   part_offsets[num_parts] = num_subparts;
   subpart_offsets[num_subparts] = num_points;
 
   points = (SE_POINT *) msSmallMalloc (num_points*sizeof(SE_POINT));
   if(!points) {
-    msSetError( MS_MEMERR,
-                "Unable to allocate points array.",
-                "sdeCopyShape()");
+    msSetError( MS_MEMERR, "Unable to allocate points array.", "sdeShapeCopy()");
     return(MS_FAILURE);
   }
 
-  status = SE_shape_get_all_points(   inshp,
-                                      SE_DEFAULT_ROTATION,
-                                      part_offsets,
-                                      subpart_offsets,
-                                      points,
-                                      NULL,
-                                      NULL);
+  status = SE_shape_get_all_points(inshp, SE_DEFAULT_ROTATION, part_offsets, subpart_offsets, points, NULL, NULL);
   if(status != SE_SUCCESS) {
     sde_error(status, "sdeCopyShape()", "SE_shape_get_all_points()");
     return(MS_FAILURE);
@@ -560,7 +547,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp)
   /* finally copy the bounding box for the entire shape */
   status = SE_shape_get_extent(inshp, 0, &envelope);
   if(status != SE_SUCCESS) {
-    sde_error(status, "sdeCopyShape()", "SE_shape_get_extent()");
+    sde_error(status, "sdeShapeCopy()", "SE_shape_get_extent()");
     return(MS_FAILURE);
   }
   outshp->bounds.minx = envelope.minx;
@@ -580,10 +567,10 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp)
 static int sdeGetRecord(layerObj *layer, shapeObj *shape)
 {
   int i;
-  long status;
+  SE_INT32 status;
 
   double doubleval;
-  long longval;
+  SE_INT32 longval;
   struct tm dateval;
 
   short shortval; /* new gdv */
@@ -635,11 +622,14 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape)
 
     /* do something special */
     if(strcmp(layer->items[i],sde->row_id_column) == 0) {
-      status = SE_stream_get_integer(sde->connPoolInfo->stream, (short)(i+1), &shape->index);
+      SE_INT32 shape_index;      
+
+      status = SE_stream_get_integer(sde->connPoolInfo->stream, (short)(i+1), &shape_index);
       if(status != SE_SUCCESS) {
         sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
         return(MS_FAILURE);
       }
+      shape->index = shape_index;
 
       shape->values[i] = (char *)msSmallMalloc(64); /* should be enough */
       sprintf(shape->values[i], "%ld", shape->index);
@@ -649,62 +639,46 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape)
     switch(itemdefs[i].sde_type) {
       case SE_SMALLINT_TYPE:
         /* changed by gdv */
-        status = SE_stream_get_smallint(sde->connPoolInfo->stream,
-                                        (short)(i+1),
-                                        &shortval);
+        status = SE_stream_get_smallint(sde->connPoolInfo->stream, (short)(i+1), &shortval);
         if(status == SE_SUCCESS)
           shape->values[i] = msLongToString(shortval);
         else if(status == SE_NULL_VALUE)
           shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
         else {
-          sde_error(  status,
-                      "sdeGetRecord()",
-                      "SE_stream_get_smallint()");
+          sde_error(status, "sdeGetRecord()", "SE_stream_get_smallint()");
           return(MS_FAILURE);
         }
         break;
       case SE_INTEGER_TYPE:
-        status = SE_stream_get_integer( sde->connPoolInfo->stream,
-                                        (short)(i+1),
-                                        &longval);
+        status = SE_stream_get_integer(sde->connPoolInfo->stream, (short)(i+1), &longval);
         if(status == SE_SUCCESS)
           shape->values[i] = msLongToString(longval);
         else if(status == SE_NULL_VALUE)
           shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
         else {
-          sde_error(  status,
-                      "sdeGetRecord()",
-                      "SE_stream_get_integer()");
+          sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
           return(MS_FAILURE);
         }
         break;
       case SE_FLOAT_TYPE:
-        status = SE_stream_get_float(   sde->connPoolInfo->stream,
-                                        (short)(i+1),
-                                        &floatval);
+        status = SE_stream_get_float(sde->connPoolInfo->stream, (short)(i+1), &floatval);
         if(status == SE_SUCCESS)
           shape->values[i] = msDoubleToString(floatval, MS_FALSE);
         else if(status == SE_NULL_VALUE)
           shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
         else {
-          sde_error(  status,
-                      "sdeGetRecord()",
-                      "SE_stream_get_float()");
+          sde_error( status, "sdeGetRecord()", "SE_stream_get_float()");
           return(MS_FAILURE);
         }
         break;
       case SE_DOUBLE_TYPE:
-        status = SE_stream_get_double(  sde->connPoolInfo->stream,
-                                        (short) (i+1),
-                                        &doubleval);
+        status = SE_stream_get_double(sde->connPoolInfo->stream, (short) (i+1), &doubleval);
         if(status == SE_SUCCESS)
           shape->values[i] = msDoubleToString(doubleval, MS_FALSE);
         else if(status == SE_NULL_VALUE)
           shape->values[i] = msStrdup(MS_SDE_NULLSTRING);
         else {
-          sde_error(  status,
-                      "sdeGetRecord()",
-                      "SE_stream_get_double()");
+          sde_error(status, "sdeGetRecord()", "SE_stream_get_double()");
           return(MS_FAILURE);
         }
         break;
