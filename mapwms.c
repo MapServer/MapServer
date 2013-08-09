@@ -2411,7 +2411,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
             }
             group_layers =(int *)msSmallRealloc(group_layers, sizeof(int)*num_layers);
             
-            if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers, num_layers, NULL) == MS_SUCCESS) {
+            if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers, num_layers, NULL, 1) == MS_SUCCESS) {
               const char *styleName = NULL;
               char *pszEncodedStyleName = NULL;
               layerObj *lp2 = NULL;
@@ -3286,7 +3286,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
           char width[10], height[10];
 
           group_layers =(int *)msSmallRealloc(group_layers, sizeof(int)*num_layers);
-          if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers, NULL) == MS_SUCCESS) {
+          if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers, NULL, 1) == MS_SUCCESS) {
             bufferSize = strlen(script_url_encoded)+300;
             pszLegendURL = (char*)msSmallMalloc(bufferSize);
             snprintf(width, sizeof(width), "%d", size_x);
@@ -3463,7 +3463,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                   char width[10], height[10];
 
                   group_layers =(int *)msSmallRealloc(group_layers,  sizeof(int)*num_layers);
-                  if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers, NULL) == MS_SUCCESS) {
+                  if (msLegendCalcSize(map, 1, &size_x, &size_y,  group_layers , num_layers, NULL, 1) == MS_SUCCESS) {
                     bufferSize = strlen(script_url_encoded)+300;
                     pszLegendURL = (char*)msSmallMalloc(bufferSize);
                     snprintf(width, sizeof(width), "%d", size_x);
