@@ -852,6 +852,10 @@ status_optional_feature("JAVA" "${USE_JAVA_MAPSCRIPT}")
 status_optional_feature("C#" "${USE_CSHARP_MAPSCRIPT}")
 status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
+message(STATUS "")
+message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
+
+
 include_directories("${PROJECT_BINARY_DIR}")
 
 if(WIN32)
