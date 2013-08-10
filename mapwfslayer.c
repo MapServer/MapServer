@@ -423,7 +423,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 	   * take care about the axis order for WFS 1.1
 	   */
 	  char *projUrn;
-	  char *projEpsg;
+	  const char *projEpsg;
 	  projUrn = msOWSGetProjURN(&(lp->projection), &(lp->metadata), "FO", 1);
 	  projEpsg = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", 1);
 
