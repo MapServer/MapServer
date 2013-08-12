@@ -462,6 +462,9 @@ static char* msContourGetOption(layerObj *layer, const char *name)
   
   options = CSLFetchNameValueMultiple(layer->processing, name);
   c = CSLCount(options);
+
+  /* First pass to find the value among options that have min/maxscaledenom */
+  /* specified */
   for (i=0; i<c && found == MS_FALSE; ++i) {
     values = CSLTokenizeStringComplex(options[i], ":", FALSE, FALSE);
     if (CSLCount(values) == 2) {
@@ -477,6 +480,17 @@ static char* msContourGetOption(layerObj *layer, const char *name)
         }
       }
       CSLDestroy(tmp);
+    }
+    CSLDestroy(values);
+  }
+  
+  /* Second pass to find the value among options that do NOT have */
+  /* min/maxscaledenom specified */
+  for (i=0; i<c && found == MS_FALSE; ++i) {
+    values = CSLTokenizeStringComplex(options[i], ":", FALSE, FALSE);
+    if (CSLCount(values) == 1) {
+      value = msStrdup(values[0]);
+      found = MS_TRUE;
     }
     CSLDestroy(values);
   }
