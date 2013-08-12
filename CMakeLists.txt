@@ -121,8 +121,8 @@ option(WITH_POINT_Z_M "include Z and M coordinates in point structure (advanced,
 option(WITH_ORACLESPATIAL "include oracle spatial database input support" OFF)
 option(WITH_ORACLE_PLUGIN "include oracle spatial database input support as plugin" OFF)
 option(WITH_MSSQL2008 "include mssql 2008 database input support as plugin" OFF)
-option(WITH_SDE91 "include ArcSDE version 9.1 support (must specify SDE_INCLUDE_DIR and SDE_LIBRARY_DIR)" OFF)
-option(WITH_SDE92 "include ArcSDE version 9.2 support (must specify SDE_INCLUDE_DIR and SDE_LIBRARY_DIR)" OFF)
+option(WITH_SDE_PLUGIN "include ArcSDE support as a plugin (must specify SDE_INCLUDE_DIR and SDE_LIBRARY_DIR)." OFF)
+option(WITH_SDE "include ArcSDE support. Add -DSDE_VERSION=91 to use 9.1 arcSDE version" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
 
