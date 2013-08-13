@@ -494,7 +494,19 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
 #define MSOGR_LABELHCOLORINDEX     -119
 #define MSOGR_LABELOCOLORNAME      "OGR:LabelOColor"
 #define MSOGR_LABELOCOLORINDEX     -120
-
+// Special codes for the OGR style parameters
+#define MSOGR_LABELPARAMNAME       "OGR:LabelParam"
+#define MSOGR_LABELPARAMNAMELEN    14
+#define MSOGR_LABELPARAMINDEX      -500
+#define MSOGR_BRUSHPARAMNAME       "OGR:BrushParam"
+#define MSOGR_BRUSHPARAMNAMELEN    14
+#define MSOGR_BRUSHPARAMINDEX      -600
+#define MSOGR_PENPARAMNAME         "OGR:PenParam"
+#define MSOGR_PENPARAMNAMELEN      12
+#define MSOGR_PENPARAMINDEX        -700
+#define MSOGR_SYMBOLPARAMNAME      "OGR:SymbolParam"
+#define MSOGR_SYMBOLPARAMNAMELEN   15
+#define MSOGR_SYMBOLPARAMINDEX     -800
 
 /**********************************************************************
  *                     msOGRGetValues()
@@ -527,6 +539,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 
   OGRStyleMgrH  hStyleMgr = NULL;
   OGRStyleToolH hLabelStyle = NULL;
+  OGRStyleToolH hPenStyle = NULL;
+  OGRStyleToolH hBrushStyle = NULL;
+  OGRStyleToolH hSymbolStyle = NULL;
 
   int *itemindexes = (int*)layer->iteminfo;
 
@@ -539,17 +554,27 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
       if (!hStyleMgr) {
         hStyleMgr = OGR_SM_Create(NULL);
         OGR_SM_InitFromFeature(hStyleMgr, hFeature);
-        OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, 0, NULL);
-        if (hStylePart && OGR_ST_GetType(hStylePart) == OGRSTCLabel)
-          hLabelStyle = hStylePart;
-        else if (hStylePart) {
-          OGR_ST_Destroy(hStylePart);
-          hStylePart =  NULL;
+        int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+        for(int i=0; i<numParts; i++) {
+          OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
+          if (hStylePart) {
+            if (OGR_ST_GetType(hStylePart) == OGRSTCLabel && !hLabelStyle)
+              hLabelStyle = hStylePart;
+            else if (OGR_ST_GetType(hStylePart) == OGRSTCPen && !hPenStyle)
+              hPenStyle = hStylePart;
+            else if (OGR_ST_GetType(hStylePart) == OGRSTCBrush && !hBrushStyle)
+              hBrushStyle = hStylePart;
+            else if (OGR_ST_GetType(hStylePart) == OGRSTCSymbol && !hSymbolStyle)
+              hSymbolStyle = hStylePart;
+            else {
+              OGR_ST_Destroy(hStylePart);
+              hStylePart =  NULL;
+            }
+          }
+          /* Setting up the size units according to msOGRLayerGetAutoStyle*/
+          if (hStylePart && layer->map)
+            OGR_ST_SetUnit(hStylePart, OGRSTUPixel, layer->map->cellsize*72.0*39.37);
         }
-
-        /* Setting up the size units according to msOGRLayerGetAutoStyle*/
-        if (hStylePart && layer->map)
-          OGR_ST_SetUnit(hStylePart, OGRSTUPixel, layer->map->cellsize*72.0*39.37);
       }
       int bDefault;
       if (itemindexes[i] == MSOGR_LABELTEXTINDEX) {
@@ -787,6 +812,54 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
           msDebug(MSOGR_LABELOCOLORNAME " = \"%s\"\n", values[i]);
       }
 #endif /* GDAL_VERSION_NUM >= 1600 */
+      else if (itemindexes[i] >= MSOGR_LABELPARAMINDEX) {
+        if (hLabelStyle == NULL
+            || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
+                                               itemindexes[i] - MSOGR_LABELPARAMINDEX,
+                                               &bDefault)) == NULL))
+          values[i] = msStrdup("");
+        else
+          values[i] = msStrdup(pszValue);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug(MSOGR_LABELPARAMNAME " = \"%s\"\n", values[i]);
+      }
+      else if (itemindexes[i] >= MSOGR_BRUSHPARAMINDEX) {
+        if (hBrushStyle == NULL
+            || ((pszValue = OGR_ST_GetParamStr(hBrushStyle,
+                                               itemindexes[i] - MSOGR_BRUSHPARAMINDEX,
+                                               &bDefault)) == NULL))
+          values[i] = msStrdup("");
+        else
+          values[i] = msStrdup(pszValue);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug(MSOGR_BRUSHPARAMNAME " = \"%s\"\n", values[i]);
+      }
+      else if (itemindexes[i] >= MSOGR_PENPARAMINDEX) {
+        if (hPenStyle == NULL
+            || ((pszValue = OGR_ST_GetParamStr(hPenStyle,
+                                               itemindexes[i] - MSOGR_PENPARAMINDEX,
+                                               &bDefault)) == NULL))
+          values[i] = msStrdup("");
+        else
+          values[i] = msStrdup(pszValue);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug(MSOGR_PENPARAMNAME " = \"%s\"\n", values[i]);
+      }
+      else if (itemindexes[i] >= MSOGR_SYMBOLPARAMINDEX) {
+        if (hSymbolStyle == NULL
+            || ((pszValue = OGR_ST_GetParamStr(hSymbolStyle,
+                                               itemindexes[i] - MSOGR_SYMBOLPARAMINDEX,
+                                               &bDefault)) == NULL))
+          values[i] = msStrdup("");
+        else
+          values[i] = msStrdup(pszValue);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug(MSOGR_SYMBOLPARAMNAME " = \"%s\"\n", values[i]);
+      }
       else {
         msSetError(MS_OGRERR,"Invalid field index!?!","msOGRGetValues()");
         return(NULL);
@@ -796,6 +869,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 
   OGR_SM_Destroy(hStyleMgr);
   OGR_ST_Destroy(hLabelStyle);
+  OGR_ST_Destroy(hPenStyle);
+  OGR_ST_Destroy(hBrushStyle);
+  OGR_ST_Destroy(hSymbolStyle);
 
   return(values);
 }
@@ -2155,6 +2231,18 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
     else if (EQUAL(layer->items[i], MSOGR_LABELOCOLORNAME))
       itemindexes[i] = MSOGR_LABELOCOLORINDEX;
 #endif /* GDAL_VERSION_NUM >= 1600 */
+    else if (EQUALN(layer->items[i], MSOGR_LABELPARAMNAME, MSOGR_LABELPARAMNAMELEN))
+        itemindexes[i] = MSOGR_LABELPARAMINDEX 
+                          + atoi(layer->items[i] + MSOGR_LABELPARAMNAMELEN);
+    else if (EQUALN(layer->items[i], MSOGR_BRUSHPARAMNAME, MSOGR_BRUSHPARAMNAMELEN))
+        itemindexes[i] = MSOGR_BRUSHPARAMINDEX 
+                          + atoi(layer->items[i] + MSOGR_BRUSHPARAMNAMELEN);
+    else if (EQUALN(layer->items[i], MSOGR_PENPARAMNAME, MSOGR_PENPARAMNAMELEN))
+        itemindexes[i] = MSOGR_PENPARAMINDEX 
+                          + atoi(layer->items[i] + MSOGR_PENPARAMNAMELEN);
+    else if (EQUALN(layer->items[i], MSOGR_SYMBOLPARAMNAME, MSOGR_SYMBOLPARAMNAMELEN))
+        itemindexes[i] = MSOGR_SYMBOLPARAMINDEX 
+                          + atoi(layer->items[i] + MSOGR_SYMBOLPARAMNAMELEN);
     else
       itemindexes[i] = OGR_FD_GetFieldIndex( hDefn, layer->items[i] );
     if(itemindexes[i] == -1) {
