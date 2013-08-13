@@ -213,6 +213,7 @@ int process_shapefiles(char *metaFileNameP, char *tileFileNameP,
     /* create and add shape object.  Returns link to entry in DBF file */
     /* --------------------------------------------------------------- */
 
+    shapeRect.type = MS_SHAPE_POLYGON;
     msAddLine(&shapeRect, &line);
     entityNum = msSHPWriteShape( tileSHP, &shapeRect );
 
