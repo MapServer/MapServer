@@ -3,7 +3,7 @@ import edu.umn.gis.mapscript.OWSRequest;
 import edu.umn.gis.mapscript.mapscript;
 import java.io.*;
 
-class WxSTest_thread extends Thread {
+class WxSTest_nothread {
 
     public String	mapName;
     public byte[]       resultBytes;
@@ -34,25 +34,24 @@ class WxSTest_thread extends Thread {
     }
 }
 
-public class WxSTest {
+public class WxSTestNoThread {
     public static void main(String[] args)  {
         try {
-            WxSTest_thread tt[] = new WxSTest_thread[100];
+            WxSTest_nothread tt[] = new WxSTest_nothread[1];
             int i;
             int expectedLength=0, success = 0, failure=0;
 
             for( i = 0; i < tt.length; i++ )
             {
-                tt[i] = new WxSTest_thread();
+                tt[i] = new WxSTest_nothread();
                 tt[i].mapName = args[0];
             }
             
             for( i = 0; i < tt.length; i++ )
-                tt[i].start();
+                tt[i].run();
 
             for( i = 0; i < tt.length; i++ )
             {
-                tt[i].join();
                 if( i == 0 )
                 {
                     expectedLength = tt[i].resultBytes.length;

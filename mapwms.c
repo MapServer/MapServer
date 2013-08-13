@@ -31,6 +31,7 @@
 
 #include "mapserver.h"
 #include "maperror.h"
+#include "mapthread.h"
 #include "mapgml.h"
 #include <ctype.h>
 #include "maptemplate.h"
@@ -4927,7 +4928,10 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
       msSetError(MS_WMSERR, "WMS request not enabled. Check wms/ows_enable_request settings.", "msWMSGetCapabilities()");
       return msWMSException(map, nVersion, NULL, wms_exception_format);
     }
-    return msWMSGetCapabilities(map, nVersion, req, ows_request, updatesequence, wms_exception_format, language);
+    msAcquireLock(TLOCK_WxS);
+    status=msWMSGetCapabilities(map, nVersion, req, ows_request, updatesequence, wms_exception_format, language);
+    msReleaseLock(TLOCK_WxS);
+    return status;
   } else if (request && (strcasecmp(request, "context") == 0 ||
                          strcasecmp(request, "GetContext") == 0) ) {
     /* Return a context document with all layers in this mapfile
