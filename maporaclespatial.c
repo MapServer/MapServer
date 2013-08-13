@@ -164,8 +164,6 @@ struct {
 
 } msOracleSpatialLayerInfo;
 
-static OCIType  *ordinates_tdo = NULL;
-static OCIArray *ordinates;
 
 
 
@@ -1815,6 +1813,8 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   OCIDefine **items = NULL;
   OCINumber oci_number;
   OCIBind *bnd1p = NULL,  *bnd2p = NULL;
+  OCIType  *ordinates_tdo = NULL;
+  OCIArray *ordinates = NULL;
 
   int existunique = MS_FALSE;
   int rownumisuniquekey = MS_FALSE;
