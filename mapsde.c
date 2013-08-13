@@ -2090,16 +2090,14 @@ void msSDELayerFreeItemInfo(layerObj *layer)
   msSDELayerInfo *sde = NULL;
   int i;
   if (!msSDELayerIsOpen(layer)) {
-    msSetError( MS_SDEERR,
-                "SDE layer has not been opened.",
-                "msSDELayerFreeItemInfo()");
+    msSetError( MS_SDEERR, "SDE layer has not been opened.", "msSDELayerFreeItemInfo()");
   }
   sde = layer->layerinfo;
-  if (sde->basedefs) {
+  if (sde != NULL && sde->basedefs) {
     SE_table_free_descriptions(sde->basedefs);
     sde->basedefs = NULL;
   }
-  if (sde->joindefs) {
+  if (sde != NULL && sde->joindefs) {
     SE_table_free_descriptions(sde->joindefs);
     sde->joindefs = NULL;
   }
