@@ -45,7 +45,6 @@
 
 %{
 #include "../../mapserver.h"
-#include "../../mapserver-version.h"
 #include "../../maptemplate.h"
 #include "../../mapogcsld.h"
 #include "../../mapows.h"
@@ -234,7 +233,6 @@ typedef struct {
 */
 
 %include "../../mapserver.h"
-%include "../../mapserver-version.h"
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
 %include "../../mapproject.h"
