@@ -233,6 +233,7 @@ typedef struct {
 */
 
 %include "../../mapserver.h"
+%include "../../mapserver-version.h"
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
 %include "../../mapproject.h"
