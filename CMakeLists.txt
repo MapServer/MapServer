@@ -10,17 +10,19 @@ include(CheckCSourceCompiles)
 
 
 set (MapServer_VERSION_MAJOR 6)
-set (MapServer_VERSION_MINOR 3)
+set (MapServer_VERSION_MINOR 4)
 set (MapServer_VERSION_REVISION 0)
+set (MapServer_VERSION_SUFFIX "-beta1")
 
 set(TARGET_VERSION_MAJOR ${MapServer_VERSION_MAJOR})
 set(TARGET_VERSION_MINOR ${MapServer_VERSION_MINOR})
 
-MATH(EXPR MapServer_IS_DEV_VERSION "1-${MapServer_VERSION_MINOR}%2")
+MATH(EXPR MapServer_IS_DEV_VERSION "${MapServer_VERSION_MINOR}%2")
 if(MapServer_IS_DEV_VERSION)
-  set (MapServer_VERSION_STRING "${MapServer_VERSION_MAJOR}.${MapServer_VERSION_MINOR}.${MapServer_VERSION_REVISION}")
-else(MapServer_IS_DEV_VERSION)
   set (MapServer_VERSION_STRING "${MapServer_VERSION_MAJOR}.${MapServer_VERSION_MINOR}-dev")
+else(MapServer_IS_DEV_VERSION)
+  set (MapServer_VERSION_STRING "${MapServer_VERSION_MAJOR}.${MapServer_VERSION_MINOR}.${MapServer_VERSION_REVISION}")
+  set (MapServer_VERSION_STRING "${MapServer_VERSION_STRING}${MapServer_VERSION_SUFFIX}")
 endif(MapServer_IS_DEV_VERSION)
 MATH(EXPR MapServer_VERSION_NUM "${MapServer_VERSION_MAJOR}*10000+${MapServer_VERSION_MINOR}*100+${MapServer_VERSION_REVISION}")
 
