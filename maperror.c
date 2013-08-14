@@ -85,7 +85,6 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
     "OpenGL renderer error.",
     "Renderer error."
                                                };
-
 #ifndef USE_THREAD
 
 errorObj *msGetErrorObj()
