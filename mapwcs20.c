@@ -1123,20 +1123,6 @@ static int msWCSValidateAndFindAxes20(
   for(iParamAxis = 0; iParamAxis < params->numaxes; ++iParamAxis) {
     int found = 0;
 
-    /* check if subset is valid */
-    if(params->axes[iParamAxis]->subset != NULL) {
-      if(params->axes[iParamAxis]->subset->timeOrScalar == MS_WCS20_TIME_VALUE) {
-        msSetError(MS_WCSERR, "Time values for subsets are not supported. ",
-                   "msWCSValidateAndFindAxes20()");
-        return MS_FAILURE;
-      }
-      if(params->axes[iParamAxis]->subset->operation == MS_WCS20_SLICE) {
-        msSetError(MS_WCSERR, "Subset operation 'slice' is not supported.",
-                   "msWCSValidateAndFindAxes20()");
-        return MS_FAILURE;
-      }
-    }
-
     /* iterate over all given axes */
     for(iAcceptedAxis = 0; iAcceptedAxis < numAxis; ++iAcceptedAxis ) {
       /* iterate over all possible names for the current axis */
@@ -3214,6 +3200,22 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                "msWCSGetCoverage20()", params->subsetcrs);
     return msWCSException(map, "InvalidParameterValue",
                           "projection", params->version);
+  }
+
+  /* iterate over all subsets and check if they are valid*/
+  for(i = 0; i < params->numaxes; ++i) {
+    if(params->axes[i]->subset != NULL) {
+      if(params->axes[i]->subset->timeOrScalar == MS_WCS20_TIME_VALUE) {
+        msSetError(MS_WCSERR, "Time values for subsets are not supported. ",
+                   "msWCSGetCoverage20()");
+        return msWCSException(map, "InvalidSubsetting", "subset", params->version);
+      }
+      if(params->axes[i]->subset->operation == MS_WCS20_SLICE) {
+        msSetError(MS_WCSERR, "Subset operation 'slice' is not supported.",
+                   "msWCSGetCoverage20()");
+        return msWCSException(map, "InvalidSubsetting", "subset", params->version);
+      }
+    }
   }
 
   {
