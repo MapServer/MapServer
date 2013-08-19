@@ -540,7 +540,7 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
   numRings = GEOSGetNumInteriorRings_r(handle,g);
   for(j=0; j<numRings; j++) {
     ring = (GEOSGeom) GEOSGetInteriorRingN_r(handle,g, j);
-    if(GEOSisRing(ring) != 1) continue; /* skip it */
+    if(GEOSisRing_r(handle,ring) != 1) continue; /* skip it */
 
     numPoints = GEOSGetNumCoordinates_r(handle,ring);
     coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,ring);
@@ -654,7 +654,7 @@ shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
       return msGEOSGeometry2Shape_multipolygon(g);
       break;
     case GEOS_GEOMETRYCOLLECTION:
-      if (!GEOSisEmpty(g))
+      if (!GEOSisEmpty_r(handle,g))
       {
         int i, j, numGeoms;
         shapeObj* shape;
