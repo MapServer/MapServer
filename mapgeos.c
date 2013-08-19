@@ -131,8 +131,20 @@ void msGEOSSetup()
 
 void msGEOSCleanup()
 {
-  GEOSContextHandle_t handle = msGetGeosContextHandle();
-  finishGEOS_r(handle);
+#ifndef USE_THREAD
+  finishGEOS_r(geos_handle);
+#else
+  geos_thread_info_t *link;
+  msAcquireLock( TLOCK_GEOS );
+  for( link = geos_list; link != NULL;) {
+    geos_thread_info_t *cur = link;
+    link = link->next;
+    finishGEOS_r(cur->geos_handle);
+    free(cur);
+  }
+  geos_list = NULL;
+  msReleaseLock( TLOCK_GEOS );
+#endif
 }
 
 /*
@@ -324,7 +336,6 @@ static GEOSGeom msGEOSShape2Geometry_polygon(shapeObj *shape)
 
 GEOSGeom msGEOSShape2Geometry(shapeObj *shape)
 {
-  GEOSContextHandle_t handle = msGetGeosContextHandle();
   if(!shape)
     return NULL; /* a NULL shape generates a NULL geometry */
 
