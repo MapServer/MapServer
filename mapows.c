@@ -557,7 +557,7 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
       return MS_FALSE;
   }
 
-  if (map && check_all_layers == MS_FALSE) {
+  if (map && (check_all_layers == MS_FALSE || map->numlayers == 0)) {
     /* then we check in the map metadata */
     enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
     if (msOWSParseRequestMetadata(enable_request, request, &disabled))
