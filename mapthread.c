@@ -144,7 +144,7 @@ static int thread_debug = 0;
 
 static char *lock_names[] = {
   NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", "SDE",
-  "ORACLE", "OWS", "LAYER_VTABLE", "IOCONTEXT", "TMPFILE", "DEBUGOBJ", NULL
+  "ORACLE", "OWS", "LAYER_VTABLE", "IOCONTEXT", "TMPFILE", "DEBUGOBJ", "OGR", "TIME", "FRIBIDI", "WXS", "GEOS", NULL
 };
 #endif
 
