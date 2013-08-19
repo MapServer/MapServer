@@ -149,8 +149,8 @@ static GEOSGeom msGEOSShape2Geometry_point(pointObj *point)
   coords = GEOSCoordSeq_create_r(handle,1, 2); /* todo handle z's */
   if(!coords) return NULL;
 
-  GEOSCoordSeq_setX(coords, 0, point->x);
-  GEOSCoordSeq_setY(coords, 0, point->y);
+  GEOSCoordSeq_setX_r(handle,coords, 0, point->x);
+  GEOSCoordSeq_setY_r(handle,coords, 0, point->y);
   /* GEOSCoordSeq_setY(coords, 0, point->z); */
 
   g = GEOSGeom_createPoint_r(handle,coords); /* g owns the coordinate in coords */
