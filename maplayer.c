@@ -979,6 +979,7 @@ int msLayerGetMaxFeaturesToDraw(layerObj *layer, outputFormatObj *format)
   int nMaxFeatures = -1;
   const char *pszTmp = NULL;
   if (layer) {
+    nMaxFeatures = layer->maxfeatures;
     pszTmp = msLookupHashTable(&layer->metadata, "maxfeaturestodraw");
     if (pszTmp)
       nMaxFeatures = atoi(pszTmp);
