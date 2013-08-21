@@ -394,7 +394,7 @@ xmlNodePtr msOWSCommonOperationsMetadataOperation(xmlNsPtr psNsOws, xmlNsPtr psX
  * @param version the integerized x.y.z version of OWS Common to use
  * @param elname name of the element (Parameter | Constraint)
  * @param name name of the Parameter
- * @param values list of values (comma seperated list) or NULL if none
+ * @param values list of values (comma separated list) or NULL if none
  *
  * @return psRootNode xmlNodePtr pointer of XML construct
  *
