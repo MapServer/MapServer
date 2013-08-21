@@ -236,6 +236,8 @@ add_executable(msencrypt msencrypt.c)
 target_link_libraries(msencrypt ${MAPSERVER_LIBMAPSERVER})
 add_executable(tile4ms tile4ms.c)
 target_link_libraries(tile4ms ${MAPSERVER_LIBMAPSERVER})
+add_executable(shptreetst shptreetst.c)
+target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
 
 
 find_package(PNG)
@@ -883,7 +885,7 @@ if(USE_SDE92)
    INSTALL(TARGETS msplugin_sde92 DESTINATION lib)
 endif(USE_SDE92)
 
-INSTALL(TARGETS sortshp shptree shptreevis msencrypt tile4ms shp2img mapserv mapserver RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
+INSTALL(TARGETS sortshp shptree shptreevis msencrypt tile4ms shptreetst shp2img mapserv mapserver RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
 if(BUILD_STATIC)
    INSTALL(TARGETS mapserver_static DESTINATION lib)
 endif(BUILD_STATIC)
