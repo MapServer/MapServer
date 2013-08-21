@@ -100,9 +100,9 @@ or not.
    Cmake expects these nonstandard prefixes to contain standard subdirectories, i.e.
    /opt/cairo-1.18.2/include/cairo.h and /opt/cairo-1.18.2/lib/libcairo.so.
    You can specify multiple prefixes on the cmake command line by separating them with
-   a semi-colon, e.g.
+   the platform specific separator (e.g. ":" on unixes), e.g.
 
-   $ cmake .. -DCMAKE_PREFIX_PATH=/opt/cairo-1.18.2;/opt/freeware
+   $ cmake .. -DCMAKE_PREFIX_PATH=/opt/cairo-1.18.2:/opt/freeware
 
  3 If you're certain that the packages development headers are installed, and/or that
    you pointed to a valid installation prefix, but cmake is still failing, then there's
@@ -170,8 +170,8 @@ The following are some common CMake options not specific to MapServer itself:
 
  - CMAKE_INSTALL_PREFIX : path where mapserver binaries and libraries should be installed. Defaults
    to /usr/local on unix.
- - CMAKE_PREFIX_PATH : semi-colon separted list of prefixes where dependencies will be looked for, e.g.
-   "-DCMAKE_PREFIX_PATH=/opt/freeware;/opt/jdk-1.5.6"
+ - CMAKE_PREFIX_PATH : platform-specific separator separated list of prefixes where dependencies will be looked for, e.g.
+   "-DCMAKE_PREFIX_PATH=/opt/freeware:/opt/jdk-1.5.6"
  - CMAKE_BUILD_TYPE : Specify the build type. Usually one of 'Debug' or 'Release', e.g.
    "-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_BUILD_TYPE=Debug"
 
