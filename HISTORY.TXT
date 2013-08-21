@@ -15,6 +15,10 @@ For a complete change history, please see the Git log comments.
 6.4 release (2013/09/xx)
 ---------------------------
 
+- RFC 101: Support for Content Dependant Legend Rendering
+
+- Add Support for librsvg as an alternative to libsvg-cairo
+
 - RFC100: Add support for raster tile index with tiles of mixed SRS (TILESRS keyword)
 
 - RFC94: Shape Smoothing
