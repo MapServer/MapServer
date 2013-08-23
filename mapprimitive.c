@@ -1772,7 +1772,7 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
           offset = -offset;
       }
     }
-    p = msOffsetPolyline(p,offset, -99);
+    p = msOffsetPolyline(p,offset, MS_STYLE_SINGLE_SIDED_OFFSET);
     if(!p) return NULL;
   }
 
