@@ -1658,7 +1658,9 @@ extern "C" {
 
 #ifndef SWIG    
     expressionObj _geomtransform;
-#endif    
+#endif
+
+    char *encoding; /* for iconving shape attributes. ignored if NULL or "utf-8" */
   };
 
 
@@ -2312,6 +2314,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
   MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
   MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
+  MS_DLL_EXPORT int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape);
 
   MS_DLL_EXPORT int msLayerSupportsCommonFilters(layerObj *layer);
   MS_DLL_EXPORT int msTokenizeExpression(expressionObj *expression, char **list, int *listsize);

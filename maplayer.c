@@ -279,10 +279,20 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   /* We need to leverage the iteminfo (I think) at this point */
 
   rv = layer->vtable->LayerNextShape(layer, shape);
+  if(rv != MS_SUCCESS)
+    return rv;
 
   /* RFC89 Apply Layer GeomTransform */
   if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE && rv == MS_SUCCESS) {
     rv = msGeomTransformShape(layer->map, layer, shape);      
+    if(rv != MS_SUCCESS)
+      return rv;
+  }
+
+  if(layer->encoding) {
+    rv = msLayerEncodeShapeAttributes(layer,shape);
+    if(rv != MS_SUCCESS)
+      return rv;
   }
   
   return rv;
@@ -323,10 +333,20 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   */
 
   rv = layer->vtable->LayerGetShape(layer, shape, record);
+  if(rv != MS_SUCCESS)
+    return rv;
   
   /* RFC89 Apply Layer GeomTransform */
   if(layer->_geomtransform.type != MS_GEOMTRANSFORM_NONE && rv == MS_SUCCESS) {
     rv = msGeomTransformShape(layer->map, layer, shape); 
+    if(rv != MS_SUCCESS)
+      return rv;
+  }
+
+  if(layer->encoding) {
+    rv = msLayerEncodeShapeAttributes(layer,shape);
+    if(rv != MS_SUCCESS)
+      return rv;
   }
 
   return rv;

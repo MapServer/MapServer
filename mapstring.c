@@ -2074,3 +2074,59 @@ int msStringInArray( const char * pszString, char **array, int numelements)
   }
   return MS_FALSE;
 }
+
+int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
+
+#ifdef USE_ICONV
+  iconv_t cd = NULL;
+  const char *inp;
+  char *outp, *out = NULL;
+  size_t len, bufsize, bufleft, iconv_status;
+  int i;
+#endif
+
+  if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
+    return MS_SUCCESS;
+
+  cd = iconv_open("UTF-8", layer->encoding);
+  if(cd == (iconv_t)-1) {
+    msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).",
+               "msGetEncodedString()", layer->encoding);
+    return MS_FAILURE;
+  }
+
+#ifdef USE_ICONV
+  for(i=0;i <shape->numvalues; i++) {
+    if(!shape->values[i] || (len = strlen(shape->values[i]))==0) {
+      continue;    /* Nothing to do */
+    }
+
+    bufsize = len * 6 + 1; /* Each UTF-8 char can be up to 6 bytes */
+    inp = shape->values[i];
+    out = (char*) msSmallMalloc(bufsize);
+
+    strlcpy(out, shape->values[i], bufsize);
+    outp = out;
+
+    bufleft = bufsize;
+    iconv_status = -1;
+
+    while (len > 0) {
+      iconv_status = iconv(cd, (char**)&inp, &len, &outp, &bufleft);
+      if(iconv_status == -1) {
+        msFree(out);
+        continue; /* silently ignore failed conversions */
+      }
+    }
+    out[bufsize - bufleft] = '\0';
+    msFree(shape->values[i]);
+    shape->values[i] = out;
+  }
+  iconv_close(cd);
+
+  return MS_SUCCESS;
+#else
+  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msGetEncodedString()");
+  return MS_FAILURE;
+#endif
+}

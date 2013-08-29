@@ -53,7 +53,6 @@
 int msWFSException(mapObj *map, const char *locator, const char *code,
                    const char *version )
 {
-  const char *encoding;
   char *schemalocation = NULL;
   /* In WFS, exceptions are always XML.
   */
@@ -64,15 +63,10 @@ int msWFSException(mapObj *map, const char *locator, const char *code,
   if( msOWSParseVersionString(version) >= OWS_1_1_0 )
     return msWFSException11( map, locator, code, version );
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-  if (encoding)
-    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-Type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
-                           "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
+  msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
   msIO_printf("<ServiceExceptionReport ");
   msIO_printf("version=\"1.2.0\" ");
@@ -596,7 +590,6 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   char *script_url=NULL, *script_url_encoded;
   const char *updatesequence=NULL;
   const char *wmtver=NULL;
-  const char *encoding;
   char *formats_list;
   char tmpString[OWS_VERSION_MAXLEN];
   int wfsSupportedVersions[] = {OWS_1_1_0, OWS_1_0_0};
@@ -675,16 +668,10 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
     }
   }
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-  if (encoding)
-    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-Type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
-                           "<?xml version='1.0' encoding=\"%s\" ?>\n",
-                           "ISO-8859-1");
+  msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
 
   msIO_printf("<WFS_Capabilities \n"
@@ -1113,20 +1100,14 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
   /*
   ** DescribeFeatureType response
   */
-  value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
 
-  if (value)
-    msIO_setHeader("Content-Type","%s; charset=%s",mimetype, value);
-  else
-    msIO_setHeader("Content-Type","%s",mimetype);
+  msIO_setHeader("Content-Type","%s; charset=UTF-8",mimetype);
   msIO_sendHeaders();
 
   if (mimetype)
     msFree(mimetype);
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
-                           "<?xml version='1.0' encoding=\"%s\" ?>\n",
-                           "ISO-8859-1");
+  msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
   if(value) user_namespace_uri = value;
@@ -1381,10 +1362,7 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
   /*
   ** Write encoding.
   */
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO",
-                           "encoding", OWS_NOERR,
-                           "<?xml version='1.0' encoding=\"%s\" ?>\n",
-                           "ISO-8859-1");
+  msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
   if(value) gmlinfo->user_namespace_uri = value;
@@ -2396,11 +2374,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
   status = MS_SUCCESS;
 
   if( psFormat == NULL ) {
-    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-    if (value)
-      msIO_setHeader("Content-Type","%s; charset=%s", output_mime_type,value);
-    else
-      msIO_setHeader("Content-Type","%s",output_mime_type);
+    msIO_setHeader("Content-Type","%s; charset=UTF-8", output_mime_type);
     msIO_sendHeaders();
 
     status = msWFSGetFeature_GMLPreamble( map, req, &gmlinfo, paramsObj,

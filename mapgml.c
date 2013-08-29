@@ -1151,9 +1151,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
     }
   }
 
-  /* charset encoding: lookup "gml_encoding" metadata first, then  */
-  /* "wms_encoding", and if not found then use "ISO-8859-1" as default. */
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "encoding", OWS_NOERR, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", "ISO-8859-1");
+  msIO_fprintf(stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n");
   msOWSPrintValidateMetadata(stream, &(map->web.metadata), namespaces, "rootname", OWS_NOERR, "<%s ", "msGMLOutput");
 
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "uri", OWS_NOERR, "xmlns=\"%s\"", NULL);

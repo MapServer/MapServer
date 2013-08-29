@@ -48,7 +48,6 @@ int msWFSException11(mapObj *map, const char *locator,
   char *errorString     = NULL;
   char *errorMessage    = NULL;
   char *schemasLocation = NULL;
-  const char *encoding;
 
   xmlDocPtr  psDoc      = NULL;
   xmlNodePtr psRootNode = NULL;
@@ -59,8 +58,6 @@ int msWFSException11(mapObj *map, const char *locator,
     version = "1.1.0";
 
   psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
-
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
 
   errorString = msGetErrorString("\n");
   errorMessage = msEncodeHTMLEntities(errorString);
@@ -74,13 +71,10 @@ int msWFSException11(mapObj *map, const char *locator,
 
   xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
-  if (encoding)
-    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-Type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, ("UTF-8"), 1);
 
   msIO_printf("%s", buffer);
 
@@ -108,15 +102,9 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
 
   xmlNodePtr psRootNode, psNode;
   const char *value    = NULL;
-  const char *encoding = NULL;
-  char *encoded=NULL;
   char *valueToFree;
   char **tokens;
   int n=0,i=0;
-
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-  if (!encoding)
-    encoding = "ISO-8859-1";
 
   psRootNode = xmlNewNode(NULL, BAD_CAST "FeatureType");
 
@@ -127,11 +115,10 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
     valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);
     snprintf(valueToFree, n, "%s%s%s", (value ? value : ""), (value ? ":" : ""), lp->name);
 
-    /*if there is an encoding using it on some of the items*/
-    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", valueToFree, encoding);
+    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST valueToFree);
     msFree(valueToFree);
   } else {
-    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", lp->name, encoding);
+    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST lp->name);
   }
 
   if (lp->name && strlen(lp->name) > 0 &&
@@ -144,28 +131,22 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   if (!value)
     value =(const char*)lp->name;
 
-  psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Title", value, encoding);
+  psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Title", BAD_CAST value);
 
 
   value = msOWSLookupMetadata(&(lp->metadata), "FO", "abstract");
   if (value)
-    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Abstract", value, encoding);
+    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Abstract", BAD_CAST value);
 
 
 
   value = msOWSLookupMetadata(&(lp->metadata), "FO", "keywordlist");
 
-  if (value) {
-    if (encoding)
-      encoded = msGetEncodedString(value, encoding);
-    else
-      encoded = msGetEncodedString(value, "ISO-8859-1");
-
+  if(value)
     msLibXml2GenerateList(
-      xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL),
-      NULL, "Keyword", encoded, ',' );
-    msFree(encoded);
-  }
+        xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL),
+        NULL, "Keyword", value, ',' );
+
   /*support DefaultSRS and OtherSRS*/
   valueToFree = msOWSGetProjURN(&(map->projection),&(map->web.metadata),"FO",MS_FALSE);
   if (!valueToFree)
@@ -267,7 +248,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
   char *script_url=NULL, *formats_list;
   const char *value = NULL;
-  const char *encoding;
 
   xmlChar *buffer = NULL;
   int size = 0, i;
@@ -280,8 +260,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   /* -------------------------------------------------------------------- */
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
-
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
 
   if (params->pszUpdateSequence != NULL) {
     i = msOWSNegotiateUpdateSequence(params->pszUpdateSequence, updatesequence);
@@ -477,15 +455,12 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   if( msIO_needBinaryStdout() == MS_FAILURE )
     return MS_FAILURE;
 
-  if (encoding)
-    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-Type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, ("UTF-8"), 1);
   msIO_contextWrite(context, buffer, size);
   xmlFree(buffer);
 

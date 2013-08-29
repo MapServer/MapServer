@@ -116,9 +116,6 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
 
 int _validateNamespace(xmlNsPtr psNsOws);
 
-xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, const char* name,
-    const char *content, const char *encoding);
-
 int msOWSSchemaValidation(const char* xml_schema, const char* xml);
 
 #endif /* defined(USE_LIBXML2) */

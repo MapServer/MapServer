@@ -3918,6 +3918,8 @@ int initLayer(layerObj *layer, mapObj *map)
   initExpression(&(layer->_geomtransform));
   layer->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
   
+  layer->encoding = NULL;
+
   return(0);
 }
 
@@ -3958,6 +3960,7 @@ int freeLayer(layerObj *layer)
     msLayerClose(layer);
 
   msFree(layer->name);
+  msFree(layer->encoding);
   msFree(layer->group);
   msFree(layer->data);
   msFree(layer->classitem);
@@ -4235,6 +4238,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadLayer()");
         return(-1);
+        break;
+      case(ENCODING):
+        if(getString(&layer->encoding) == MS_FAILURE) return(-1);
         break;
       case(END):
         if(layer->type == -1) {
@@ -4638,6 +4644,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 10, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR");
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */
+  writeString(stream, indent, "ENCODING", NULL, layer->encoding);
   writeExtent(stream, indent, "EXTENT", layer->extent);
   writeExpression(stream, indent, "FILTER", &(layer->filter));
   writeString(stream, indent, "FILTERITEM", NULL, layer->filteritem);

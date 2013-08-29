@@ -1579,8 +1579,6 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   msIOContext *context = NULL;
   const char *contenttype = NULL;
 
-  const char *encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
-
   if( msIO_needBinaryStdout() == MS_FAILURE ) {
     return MS_FAILURE;
   }
@@ -1590,15 +1588,12 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   else
     contenttype = msStrdup("text/xml");
 
-  if (encoding)
-    msIO_setHeader("Content-Type","%s; charset=%s", contenttype, encoding);
-  else
-    msIO_setHeader("Content-Type","%s", contenttype);
+  msIO_setHeader("Content-Type","%s; charset=UTF-8", contenttype);
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "UTF-8", 1);
   msIO_contextWrite(context, buffer, size);
   xmlFree(buffer);
 
@@ -2361,7 +2356,6 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   char *errorString = NULL;
   char *errorMessage = NULL;
   char *schemasLocation = NULL;
-  const char * encoding;
   char *xsi_schemaLocation = NULL;
   char version_string[OWS_VERSION_MAXLEN];
 
@@ -2372,7 +2366,6 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   xmlNsPtr psNsXsi = NULL;
   xmlChar *buffer = NULL;
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   errorString = msGetErrorString("\n");
   errorMessage = msEncodeHTMLEntities(errorString);
   schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
@@ -2436,14 +2429,10 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   }
 
   msIO_setHeader("Status", "%s", status);
-  if (encoding)
-    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-Type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding
-                            : "ISO-8859-1"), 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "UTF-8", 1);
 
   msIO_printf("%s", buffer);
 

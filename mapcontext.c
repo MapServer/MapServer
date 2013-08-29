@@ -1333,10 +1333,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   }
 
   /* file header */
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata),
-                           NULL, "wms_encoding", OWS_NOERR,
-                           "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
-                           "ISO-8859-1");
+  msIO_fprintf( stream, "<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
 
   /* set the WMS_Viewer_Context information */
   pszEncodedVal = msEncodeHTMLEntities(version);
