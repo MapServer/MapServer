@@ -161,134 +161,17 @@ static void msDebugTextPath(textSymbolObj *ts) {
 }
 #endif
 
-int msComputeBitmapTextPath(rendererVTableObj *renderer, textSymbolObj *ts, textPathObj *tgret) {
-  /* simple layout for bitmap labels */
-  char *string = ts->annotext, *string_iter; /* used to iterate through the characters */
-  int freestring=0, line = 0;
-  unsigned int unicode, glyphidx = 0;
-  double penx = 0, peny = 0;
-  double staticlinelengths[5] = {0,0,0,0,0} ,*linelengths = NULL;
-  glyph_element *tmpglyph;
-
-  assert(ts->label->type == MS_BITMAP);
-  tgret->glyph_size = MS_MAX(MS_MIN(MS_NINT(ts->label->size),MS_GIANT),MS_TINY);
-  tmpglyph = msGetBitmapGlyph(renderer,tgret->glyph_size,'M');
-  tgret->line_height = (tmpglyph->metrics.maxy) * 1.33;
-
-
-  if((ts->label->wrap != '\0' || ts->label->maxlength!=0)) {
-    /* duplicate the original string when going through wrapping, as the wrapping
-     code may reallocate the char* to insert newlines */
-    string_iter = strdup(string);
-    freestring = 1;
-    string = string_iter = msWrapText(string_iter, ts->label->wrap, ts->label->maxlength);
-  } else {
-    string_iter = string;
-  }
-  /* text marks the beginning of the string */
-  tgret->numlines = msCountChars(string,'\n') + 1;
-  tgret->numglyphs = msGetNumGlyphs(string);
-  tgret->bounds.bbox.minx = 0;
-  tgret->bounds.bbox.miny = FLT_MAX;
-  tgret->bounds.bbox.maxx = tgret->bounds.bbox.maxy = FLT_MIN;
-  tgret->glyphs = msSmallMalloc(tgret->numglyphs * sizeof(glyphObj));
-  if(tgret->numlines > 1) {
-    peny = (1 - tgret->numlines) * tgret->line_height; /*  move pen up by number of lines: 0 - (numlines-1) * lineheight */
-    if (ts->label->align != MS_ALIGN_LEFT && ts->label->align != MS_ALIGN_DEFAULT) {
-      /* init structure recording line lengths */
-      if(tgret->numlines > 5) {
-        linelengths = msSmallCalloc(tgret->numlines,sizeof(double));
-      } else {
-        linelengths = staticlinelengths;
-      }
-    }
-  }
-  while(*string_iter) {
-    if (*string_iter == '\r') { string_iter++; continue; }
-    if (*string_iter == '\n') {
-      if(penx > tgret->bounds.bbox.maxx)
-        tgret->bounds.bbox.maxx = penx;
-      if(linelengths && penx > linelengths[line])
-        linelengths[line] = penx;
-      penx = 0;
-      peny += tgret->line_height;
-      string_iter++;
-      line++;
-      continue;
-    }
-    string_iter += msUTF8ToUniChar(string_iter, &unicode);
-    tgret->glyphs[glyphidx].glyph = msGetBitmapGlyph(renderer,tgret->glyph_size,unicode);
-    if(tgret->glyphs[glyphidx].glyph) {
-      /* ignore missing glyphs for now */
-      tgret->glyphs[glyphidx].pnt.x = penx;
-      tgret->glyphs[glyphidx].pnt.y = peny;
-      tgret->glyphs[glyphidx].rot = 0.0;
-      penx += tgret->glyphs[glyphidx].glyph->metrics.advance;
-      if(! line && peny - tgret->glyphs[glyphidx].glyph->metrics.maxy < tgret->bounds.bbox.miny) /*compute minimal y, only for the first line */
-        tgret->bounds.bbox.miny = peny - tgret->glyphs[glyphidx].glyph->metrics.maxy;
-      if(peny - tgret->glyphs[glyphidx].glyph->metrics.miny > tgret->bounds.bbox.maxy)
-        tgret->bounds.bbox.maxy = peny - tgret->glyphs[glyphidx].glyph->metrics.miny;
-      glyphidx ++;
-    }
-  }
-  
-  /* populate last line length */
-  if(linelengths && penx > linelengths[line])
-    linelengths[line] = penx;
-  if(penx > tgret->bounds.bbox.maxx)
-    tgret->bounds.bbox.maxx = penx;
-  
-  tgret->numglyphs = glyphidx;
-  if(linelengths) { /* set to NULL if no alignment is needed */
-    double lasty = tgret->glyphs[glyphidx].pnt.y;
-    string_iter = string;
-    glyphidx = 0;
-    line = 0;
-    for(;;) {
-      double offset = 0.0;
-      if(ts->label->align == MS_ALIGN_CENTER ) {
-        offset = (tgret->bounds.bbox.maxx - linelengths[line]) / 2.0;
-      }
-      if(ts->label->align == MS_ALIGN_RIGHT ) {
-        offset = tgret->bounds.bbox.maxx - linelengths[line];
-      }
-      while(glyphidx < tgret->numglyphs) {
-        if(tgret->glyphs[glyphidx].pnt.y != lasty) {
-          lasty = tgret->glyphs[glyphidx].pnt.y;
-          break;
-        }
-        tgret->glyphs[glyphidx].pnt.x += offset;
-        glyphidx++;
-      }
-      line++;
-      if(glyphidx == tgret->numglyphs)
-        break;
-    }
-  }
-  if(linelengths && linelengths != staticlinelengths)
-    free(linelengths);
-  if(freestring) free(string);
-  return MS_SUCCESS;
-
-}
-
 int msComputeTextPath(mapObj *map, textSymbolObj *ts) {
   textPathObj *tgret = msSmallMalloc(sizeof(textPathObj));
   assert(ts->annotext && *ts->annotext);
   initTextPath(tgret);
   ts->textpath = tgret;
   tgret->absolute = 0;
-  if(ts->label->type == MS_TRUETYPE && ts->label->font) {
-    tgret->glyph_size = ts->label->size * ts->scalefactor;
-    tgret->glyph_size = MS_MAX(tgret->glyph_size, ts->label->minsize * ts->resolutionfactor);
-    tgret->glyph_size = MS_NINT(MS_MIN(tgret->glyph_size, ts->label->maxsize * ts->resolutionfactor));
-    tgret->line_height = ceil(tgret->glyph_size * 1.33);
-    return msLayoutTextSymbol(map,ts,tgret);
-  }
-
-  else {
-    return msComputeBitmapTextPath(MS_MAP_RENDERER(map),ts,tgret);
-  }
+  tgret->glyph_size = ts->label->size * ts->scalefactor;
+  tgret->glyph_size = MS_MAX(tgret->glyph_size, ts->label->minsize * ts->resolutionfactor);
+  tgret->glyph_size = MS_NINT(MS_MIN(tgret->glyph_size, ts->label->maxsize * ts->resolutionfactor));
+  tgret->line_height = ceil(tgret->glyph_size * 1.33);
+  return msLayoutTextSymbol(map,ts,tgret);
 }
  
 void initTextSymbol(textSymbolObj *ts) {

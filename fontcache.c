@@ -30,6 +30,7 @@
 #include "mapserver.h"
 #include "mapthread.h"
 #include "fontcache.h"
+#include "dejavu-sans-condensed.h"
 
 typedef struct {
   FT_Library library;
@@ -191,19 +192,30 @@ unsigned int msGetGlyphIndex(face_element *face, unsigned int unicode) {
   return ic->codepoint;
 }
 
+#define MS_DEFAULT_FONT_KEY "_ms_default_"
+
 face_element* msGetFontFace(char *key, fontSetObj *fontset) {
   face_element *fc;
   int error;
   ft_cache *cache = msGetFontCache();
+  if(!key) {
+    key = MS_DEFAULT_FONT_KEY;
+  }
   UT_HASH_FIND_STR(cache->face_cache,key,fc);
   if(!fc) {
-    char *fontfile = msLookupHashTable(&(fontset->fonts),key);
-    if(!fontfile) {
-      msSetError(MS_MISCERR, "Could not find font with key \"%s\" in fontset", "msGetFontFace()", key);
-      return NULL;
-    }
+    char *fontfile = NULL;
     fc = msSmallCalloc(1,sizeof(face_element));
-    error = FT_New_Face(cache->library,fontfile,0, &(fc->face));
+    if(fontset && strcmp(key,MS_DEFAULT_FONT_KEY)) {
+      fontfile = msLookupHashTable(&(fontset->fonts),key);
+      if(!fontfile) {
+        msSetError(MS_MISCERR, "Could not find font with key \"%s\" in fontset", "msGetFontFace()", key);
+        free(fc);
+        return NULL;
+      }
+      error = FT_New_Face(cache->library,fontfile,0, &(fc->face));
+    } else {
+      error = FT_New_Memory_Face(cache->library,dejavu_sans_condensed_ttf, dejavu_sans_condensed_ttf_len , 0, &(fc->face));
+    }
     if(error) {
       msSetError(MS_MISCERR, "Freetype was unable to load font file \"%s\" for key \"%s\"", "msGetFontFace()", fontfile, key);
       free(fc);
@@ -276,25 +288,4 @@ outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph) {
     UT_HASH_ADD(hh,face->outline_cache,key,sizeof(outline_element_key), oc);
   }
   return oc;
-}
-
-glyph_element* msGetBitmapGlyph(rendererVTableObj *renderer, unsigned int size, unsigned int unicode) {
-  glyph_element *gm;
-  glyph_element_key key;
-  ft_cache *cache = msGetFontCache();
-  assert(renderer->supports_bitmap_fonts && renderer->getBitmapGlyphMetrics);
-  key.codepoint = unicode;
-  key.size = size;
-  UT_HASH_FIND(hh,cache->bitmap_glyph_cache,&key,sizeof(glyph_element_key),gm);
-  if(!gm) {
-    /* query the renderer for the metrics and indice of this unicode glyph */
-    gm = msSmallMalloc(sizeof(glyph_element));
-    if(UNLIKELY(MS_FAILURE == renderer->getBitmapGlyphMetrics(size, unicode, &gm->metrics))) {
-      free(gm);
-      return NULL;
-    }
-    gm->key = key;
-    UT_HASH_ADD(hh,cache->bitmap_glyph_cache,key,sizeof(glyph_element_key), gm);
-  }
-  return gm;
 }
