@@ -998,7 +998,7 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
     double cosa,sina;
     double x = labelPnt.x;
     double y = labelPnt.y;
-    if(ts->label->type == MS_TRUETYPE && ts->rotation != 0) {
+    if(ts->rotation != 0) {
       cosa = cos(ts->rotation);
       sina = sin(ts->rotation);
       for(g=0;g<ts->textpath->numglyphs;g++) {
@@ -1020,13 +1020,8 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
   if(MS_VALID_COLOR(ts->label->outlinecolor))
     oc = &ts->label->outlinecolor;
   ow = ts->label->outlinewidth * ts->scalefactor;
-  if(ts->label->font) {
-    if(!renderer->renderGlyphs) return MS_FAILURE;
-    return renderer->renderGlyphs(image,ts->textpath,c,oc,ow);
-  } else {
-    if(!renderer->renderBitmapGlyphs) return MS_FAILURE;
-    return renderer->renderBitmapGlyphs(image,ts->textpath,c,oc,ow);
-  }
+  if(!renderer->renderGlyphs) return MS_FAILURE;
+  return renderer->renderGlyphs(image,ts->textpath,c,oc,ow);
   
 }
 

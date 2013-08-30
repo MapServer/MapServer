@@ -217,7 +217,6 @@ int msPopulateRendererVTableKML( rendererVTableObj *renderer )
 
   renderer->supports_transparent_layers = 1;
   renderer->supports_pixel_buffer = 0;
-  renderer->supports_bitmap_fonts = 0;
   renderer->supports_clipping = 0;
   renderer->use_imagecache = 0;
   renderer->default_transform_mode = MS_TRANSFORM_NONE;

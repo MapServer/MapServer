@@ -2659,18 +2659,15 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
 
       if (pszFontNameEscaped != NULL && !bIsNull && pszFontNameEscaped[0] != '\0') {
         if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL) {
-          c->labels[0]->type = MS_TRUETYPE;
           c->labels[0]->font = msStrdup(pszName);
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** Using '%s' TTF font **\n", pszName);
         } else if ( (strcmp(pszFontNameEscaped,pszName) != 0) &&
                     msLookupHashTable(&(map->fontset.fonts), (char*)pszFontNameEscaped) != NULL) {
-          c->labels[0]->type = MS_TRUETYPE;
           c->labels[0]->font = msStrdup(pszFontNameEscaped);
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** Using '%s' TTF font **\n", pszFontNameEscaped);
         } else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL) {
-          c->labels[0]->type = MS_TRUETYPE;
           c->labels[0]->font = msStrdup("default");
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** Using 'default' TTF font **\n");
@@ -2681,10 +2678,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       msFree(pszFontNameEscaped);
 
       if (!bFont) {
-        c->labels[0]->type = MS_BITMAP;
         c->labels[0]->size = MS_MEDIUM;
-        if (layer->debug >= MS_DEBUGLEVEL_VVV)
-          msDebug("** Using 'medium' BITMAP font **\n");
       }
     } else if (eStylePartType == OGRSTCPen) {
       OGRStyleToolH hPenStyle = hStylePart;

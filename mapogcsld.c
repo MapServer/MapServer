@@ -2795,22 +2795,9 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
         if ((msLookupHashTable(&(psLayer->map->fontset.fonts), szFontName) !=NULL)) {
           bFontSet = 1;
           psLabelObj->font = msStrdup(szFontName);
-          psLabelObj->type = MS_TRUETYPE;
-          psLabelObj->size = dfFontSize;
         }
       }
-      if (!bFontSet) {
-        psLabelObj->type = MS_BITMAP;
-        psLabelObj->size = MS_MEDIUM;
-        /* bitmap fonts don't support rotation */
-        psLabelObj->angle = 0;
-        psLabelObj->anglemode = MS_ANGLEMODE_NONE;
-        if(psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item) {
-          free(psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item);
-          psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item = NULL;
-          psLabelObj->numbindings--;
-        }
-      }
+      psLabelObj->size = dfFontSize;
 
       /* -------------------------------------------------------------------- */
       /*      parse the halo parameter.                                       */
@@ -3853,7 +3840,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     /*      font-weight (bold, normal). These 3 elements are separated      */
     /*      with -.                                                         */
     /* -------------------------------------------------------------------- */
-    if (psLabelObj->type == MS_TRUETYPE && psLabelObj->font) {
+    if (psLabelObj->font) {
       aszFontsParts = msStringSplit(psLabelObj->font, '-', &nFontParts);
       if (nFontParts > 0) {
         snprintf(szTmp, sizeof(szTmp), "<%sFont>\n",  sNameSpace);
