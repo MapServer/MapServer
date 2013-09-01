@@ -554,23 +554,30 @@ static void writeCharacter(FILE *stream, int indent, const char *name, const cha
 
 static void writeString(FILE *stream, int indent, const char *name, const char *defaultString, char *string)
 {
-  char *string_tmp;
+  char *string_escaped;
 
   if(!string) return;
   if(defaultString && strcmp(string, defaultString) == 0) return;
   writeIndent(stream, ++indent);
   if(name) msIO_fprintf(stream, "%s ", name);
-  if ( (strchr(string, '\'') == NULL) && (strchr(string, '\"') == NULL))
-    msIO_fprintf(stream, "\"%s\"\n", string);
-  else if ( (strchr(string, '\"') != NULL) && (strchr(string, '\'') == NULL))
-    msIO_fprintf(stream, "'%s'\n", string);
-  else if ( (strchr(string, '\'') != NULL) && (strchr(string, '\"') == NULL))
-    msIO_fprintf(stream, "\"%s\"\n", string);
-  else {
-    string_tmp = msStringEscape(string);
-    msIO_fprintf(stream, "\"%s\"\n", string_tmp);
-    if(string!=string_tmp) free(string_tmp);
+  if(strchr(string,'\\')) {
+    string_escaped = msStrdup(string);
+    string_escaped = msReplaceSubstring(string_escaped,"\\","\\\\");
+  } else {
+    string_escaped = string;
   }
+  if ( (strchr(string_escaped, '\'') == NULL) && (strchr(string_escaped, '\"') == NULL))
+    msIO_fprintf(stream, "\"%s\"\n", string_escaped);
+  else if ( (strchr(string_escaped, '\"') != NULL) && (strchr(string_escaped, '\'') == NULL))
+    msIO_fprintf(stream, "'%s'\n", string_escaped);
+  else if ( (strchr(string_escaped, '\'') != NULL) && (strchr(string_escaped, '\"') == NULL))
+    msIO_fprintf(stream, "\"%s\"\n", string_escaped);
+  else {
+    char *string_tmp = msStringEscape(string_escaped);
+    msIO_fprintf(stream, "\"%s\"\n", string_tmp);
+    if(string_escaped!=string_tmp) free(string_tmp);
+  }
+  if(string_escaped!=string) free(string_escaped);
 }
 
 static void writeNumberOrString(FILE *stream, int indent, const char *name, double defaultNumber, double number, char *string)
