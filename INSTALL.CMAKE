@@ -140,7 +140,7 @@ of these can be enabled or disabled by passing "-DWITH_XXX=0" or "-DWITH_XXX=1" 
  - option(WITH_WFS "Enable WFS Server support (requires PROJ and OGR support)" ON)
  - option(WITH_WCS "Enable WCS Server support (requires PROJ and GDAL support)" ON)
  - option(WITH_LIBXML2 "Choose if libxml2 support should be built in (used for sos, wcs 1.1,2.0 and wfs 1.1)" ON)
- - option(WITH_THREADS "Choose if a thread-safe version of libmapserver should be built (only recommended for some mapscripts)" OFF)
+ - option(WITH_THREAD_SAFETY "Choose if a thread-safe version of libmapserver should be built (only recommended for some mapscripts)" OFF)
  - option(WITH_GIF "Enable GIF support (for PIXMAP loading)" ON)
  - option(WITH_PYTHON "Enable Python mapscript support" OFF)
  - option(WITH_PHP "Enable Python mapscript support" OFF)
