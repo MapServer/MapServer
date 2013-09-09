@@ -108,7 +108,7 @@ static void msContourLayerInfoInitialize(layerObj *layer)
   clinfo->ogrLayer.debug = layer->debug;
   clinfo->ogrLayer.connectiontype = MS_OGR;
   clinfo->ogrLayer.name = msStrdup(layer->name);
-  clinfo->ogrLayer.connection = (char*)msSmallMalloc(strlen(layer->name)+13);
+  clinfo->ogrLayer.connection = (char*)msSmallMalloc(strlen(clinfo->ogrLayer.name)+13);
   sprintf(clinfo->ogrLayer.connection, "__%s_CONTOUR__", layer->name);
   clinfo->ogrLayer.units = layer->units;
 }
