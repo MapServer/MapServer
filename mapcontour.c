@@ -109,7 +109,7 @@ static void msContourLayerInfoInitialize(layerObj *layer)
   clinfo->ogrLayer.connectiontype = MS_OGR;
   clinfo->ogrLayer.name = msStrdup(layer->name);
   clinfo->ogrLayer.connection = (char*)msSmallMalloc(strlen(clinfo->ogrLayer.name)+13);
-  sprintf(clinfo->ogrLayer.connection, "__%s_CONTOUR__", layer->name);
+  sprintf(clinfo->ogrLayer.connection, "__%s_CONTOUR__", clinfo->ogrLayer.name);
   clinfo->ogrLayer.units = layer->units;
 }
 
@@ -322,8 +322,8 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
     
     if (copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy) {
       if (layer->debug)
-        msDebug("msContourLayerReadRaster(): Error in overlap calculation.\n");
-      return MS_FAILURE;
+        msDebug("msContourLayerReadRaster(): No overlap.\n");
+      return MS_SUCCESS;
     }
 
     /*
@@ -365,7 +365,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
     {
       if (layer->debug)
         msDebug("msContourLayerReadRaster(): input window too small, or no apparent overlap between map view and this window(1).\n");
-      return MS_FAILURE;
+      return MS_SUCCESS;
     }
 
     /* Target buffer size */
@@ -375,7 +375,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
     if (dst_xsize == 0 || dst_ysize == 0) {
       if (layer->debug)
         msDebug("msContourLayerReadRaster(): no apparent overlap between map view and this window(2).\n");
-      return MS_FAILURE;
+      return MS_SUCCESS;
     }
 
     if (layer->debug)
@@ -522,6 +522,10 @@ static int msContourLayerGenerateContour(layerObj *layer)
     return MS_FAILURE;
   }
 
+  if (!clinfo->hDS) { /* no overlap */
+    return MS_SUCCESS;
+  }
+  
   hBand = GDALGetRasterBand(clinfo->hDS, 1);
   if (hBand == NULL)
   {
@@ -655,12 +659,14 @@ int msContourLayerOpen(layerObj *layer)
   if (msContourLayerGenerateContour(layer) != MS_SUCCESS)
     return MS_FAILURE;
 
-  GDALClose(clinfo->hDS);
-  clinfo->hDS = NULL;  
-  free(clinfo->buffer);
+  if (clinfo->hDS) {
+    GDALClose(clinfo->hDS);
+    clinfo->hDS = NULL;  
+    free(clinfo->buffer);
+  }
 
   /* Open our virtual ogr layer */
-  if (msLayerOpen(&clinfo->ogrLayer) != MS_SUCCESS)
+  if (clinfo->hOGRDS && (msLayerOpen(&clinfo->ogrLayer) != MS_SUCCESS))
     return MS_FAILURE;
   
   return MS_SUCCESS;
@@ -681,7 +687,8 @@ int msContourLayerClose(layerObj *layer)
     msDebug("Entering msContourLayerClose().\n");
 
   if (clinfo) {
-    msConnPoolRelease(&clinfo->ogrLayer, clinfo->hOGRDS);
+    if (clinfo->hOGRDS)
+      msConnPoolRelease(&clinfo->ogrLayer, clinfo->hOGRDS);
 
     msLayerClose(&clinfo->ogrLayer);
     
@@ -718,6 +725,7 @@ int msContourLayerGetItems(layerObj *layer)
 
 int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  int i;
   rectObj newRect;
   contourLayerInfo *clinfo = (contourLayerInfo *) layer->layerinfo;
 
@@ -744,7 +752,9 @@ int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 #endif
 
   /* regenerate the raster io */
-  msConnPoolRelease(&clinfo->ogrLayer, clinfo->hOGRDS);
+  if (clinfo->hOGRDS)
+    msConnPoolRelease(&clinfo->ogrLayer, clinfo->hOGRDS);
+  
   msLayerClose(&clinfo->ogrLayer);
   
   /* Open the raster source */
@@ -755,16 +765,24 @@ int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   if (msContourLayerGenerateContour(layer) != MS_SUCCESS)
     return MS_FAILURE;
 
-  GDALClose(clinfo->hDS);
-  clinfo->hDS = NULL;
-  free(clinfo->buffer);  
+  if (clinfo->hDS) {
+    GDALClose(clinfo->hDS);
+    clinfo->hDS = NULL;
+    free(clinfo->buffer);
+  }
+  
+  if (!clinfo->hOGRDS) /* no overlap */
+    return MS_DONE;
   
   /* Open our virtual ogr layer */
   if (msLayerOpen(&clinfo->ogrLayer) != MS_SUCCESS)
     return MS_FAILURE;
 
   clinfo->ogrLayer.numitems = layer->numitems;
-  clinfo->ogrLayer.items = CSLDuplicate(layer->items); 
+  clinfo->ogrLayer.items = (char **) msSmallMalloc(sizeof(char *)*layer->numitems);
+  for (i=0; i<layer->numitems;++i) {
+    clinfo->ogrLayer.items[i] = msStrdup(layer->items[i]);
+  }
 
   return msLayerWhichShapes(&clinfo->ogrLayer, rect, isQuery);
 }
