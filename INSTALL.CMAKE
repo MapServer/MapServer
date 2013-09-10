@@ -64,7 +64,7 @@ are presented in a more user-friendly manner
 
 mkdir build
 cd build
-ccmake ..
+cmake ..
 ## follow instructions, fix dependency issues
 
 Options and Dependencies
