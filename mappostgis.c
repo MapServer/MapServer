@@ -587,7 +587,7 @@ wkbConvCollectionToShape(wkbObj *w, shapeObj *shape)
       failures++;
     }
   }
-  if ( failures == ncomponents )
+  if ( failures == ncomponents || ncomponents == 0)
     return MS_FAILURE;
   else
     return MS_SUCCESS;
@@ -2195,6 +2195,8 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
     shape->numvalues = layer->numitems;
 
     msComputeBounds(shape);
+  } else {
+     shape->type = MS_SHAPE_NULL;
   }
 
   if( layer->debug > 2 ) {
