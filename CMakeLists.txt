@@ -10,7 +10,7 @@ include(CheckCSourceCompiles)
 
 
 set (MapServer_VERSION_MAJOR 6)
-set (MapServer_VERSION_MINOR 4)
+set (MapServer_VERSION_MINOR 5)
 set (MapServer_VERSION_REVISION 0)
 set (MapServer_VERSION_SUFFIX "")
 
