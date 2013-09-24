@@ -726,8 +726,6 @@ if(WITH_EXEMPI)
   endif(LIBEXEMPI_FOUND)
 endif(WITH_EXEMPI)
 
-ms_link_libraries(harfbuzz)
-
 if(WITH_PYTHON)
    add_subdirectory("mapscript/python")
    set(USE_PYTHON_MAPSCRIPT 1)
