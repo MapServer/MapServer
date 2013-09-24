@@ -5,10 +5,24 @@
 #  POSTGRESQL_LIBRARY, the libraries needed to use POSTGRESQL.
 #  POSTGRESQL_FOUND, If false, do not try to use PostgreSQL.
 #
-# Copyright (c) 2013 Thomas Bonfort
+# Copyright (c) 2013 Thomas Bonfort, Andy Colson
 #
 
+find_program(PG_CONFIG NAMES pg_config
+   PATHS
+   $ENV{ProgramFiles}/PostgreSQL/*/bin
+   $ENV{SystemDrive}/PostgreSQL/*/bin
+)
+
+if (PG_CONFIG)
+   exec_program( ${PG_CONFIG} ARGS "--includedir" OUTPUT_VARIABLE PG_INC_PATH )
+   exec_program( ${PG_CONFIG} ARGS "--libdir" OUTPUT_VARIABLE PG_LIB_PATH )
+else()
+   message(WARNING "pg_config not found, will try some defaults")
+endif()
+
 find_path(POSTGRESQL_INCLUDE_DIR libpq-fe.h
+  ${PG_INC_PATH}
   /usr/include/server
   /usr/include/postgresql
   /usr/include/pgsql/server
@@ -23,6 +37,7 @@ find_path(POSTGRESQL_INCLUDE_DIR libpq-fe.h
 
 find_library(POSTGRESQL_LIBRARY NAMES pq libpq
   PATHS
+  ${PG_LIB_PATH}
   /usr/lib
   /usr/local/lib
   /usr/lib/postgresql
