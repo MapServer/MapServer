@@ -286,6 +286,8 @@ public:
   mapserver::conv_stroke<line_adaptor> *stroke;
   mapserver::conv_dash<line_adaptor> *dash;
   mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > *stroke_dash;
+  double default_gamma;
+  mapserver::gamma_linear gamma_function;
 };
 
 #define AGG_RENDERER(image) ((AGG2Renderer*) (image)->img.plugin)
@@ -1024,10 +1026,12 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   r->m_pixel_format.attach(r->m_rendering_buffer);
   r->m_renderer_base.attach(r->m_pixel_format);
   r->m_renderer_scanline.attach(r->m_renderer_base);
-  double gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
-  if(gamma > 0.0 && gamma < 1.0) {
-    r->m_rasterizer_aa_gamma.gamma(mapserver::gamma_linear(0.0,gamma));
+  r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
+  if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
+    r->default_gamma = 0.75;
   }
+  r->gamma_function.set(0,r->default_gamma);
+  r->m_rasterizer_aa_gamma.gamma(r->gamma_function);
   if( bg && !format->transparent )
     r->m_renderer_base.clear(aggColor(bg));
   else
@@ -1052,6 +1056,19 @@ int agg2SaveImage(imageObj *img, mapObj* map, FILE *fp, outputFormatObj * format
 
 int agg2StartNewLayer(imageObj *img, mapObj*map, layerObj *layer)
 {
+  AGG2Renderer *r = AGG_RENDERER(img);
+  char *sgamma = msLayerGetProcessingKey( layer, "GAMMA" );
+  double gamma;
+  if(sgamma) {
+    gamma = atof(sgamma);
+    if(gamma <= 0 || gamma >= 1) gamma = 0.75;
+  } else {
+    gamma = r->default_gamma;
+  }
+  if(r->gamma_function.end() != gamma) {
+    r->gamma_function.end(gamma);
+    r->m_rasterizer_aa_gamma.gamma(r->gamma_function);
+  }
   return MS_SUCCESS;
 }
 
