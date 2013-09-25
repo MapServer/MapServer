@@ -392,6 +392,7 @@ extern "C" {
 #define MS_RENDER_WITH_OGL      104
 #define MS_RENDER_WITH_AGG 105
 #define MS_RENDER_WITH_KML 106
+#define MS_RENDER_WITH_UTFGRID 107
 
 #ifndef SWIG
 
@@ -1664,6 +1665,11 @@ extern "C" {
 #endif
 
     char *encoding; /* for iconving shape attributes. ignored if NULL or "utf-8" */
+
+  /* RFC93 UTFGrid support */
+    char *utfitem;
+    int utfitemindex;
+    expressionObj utfdata;
   };
 
 
@@ -2517,6 +2523,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl);
   MS_DLL_EXPORT int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lbl);
   MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
+  MS_DLL_EXPORT char *msEvalTextExpression(expressionObj *expr, shapeObj *shape);
   MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
   MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);
   MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
@@ -2896,8 +2903,11 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msPopulateRendererVTableCairoPDF( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableOGL( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableAGG( rendererVTableObj *renderer );
+  MS_DLL_EXPORT int msPopulateRendererVTableUTFGrid( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableKML( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
+  MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
+
 #ifdef USE_CAIRO
   MS_DLL_EXPORT void msCairoCleanup(void);
 #endif
