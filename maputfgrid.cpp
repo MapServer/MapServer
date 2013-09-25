@@ -30,7 +30,7 @@
 
 #include "mapserver.h"
 #include "maputfgrid.h"
-#include "mapaggcommon.h"
+#include "mapagg.h"
 #include "renderers/agg/include/agg_rasterizer_scanline_aa.h"
 #include "renderers/agg/include/agg_basics.h"
 #include "renderers/agg/include/agg_renderer_scanline.h"
@@ -516,16 +516,6 @@ int utfgridEndShape(imageObj *img, shapeObj *shape)
   return MS_SUCCESS;
 }
 
-int utfgridGetTruetypeTextBBox(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string, rectObj *rect, double **advances,int bAdjustBaseline)
-{
-  return MS_SUCCESS;
-}
-
-int utfgridRenderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, char *text)
-{
-  return MS_SUCCESS;
-}
-
 /*
  * Function that render polygons into UTFGrid.
  */
@@ -664,9 +654,8 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
   return MS_SUCCESS;
 }
 
-int utfgridRenderTruetypeSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj * style) 
-{
-  return MS_SUCCESS;
+int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
+   return MS_SUCCESS;
 }
 
 int utfgridFreeSymbol(symbolObj * symbol)
@@ -691,15 +680,12 @@ int msPopulateRendererVTableUTFGrid( rendererVTableObj *renderer )
   renderer->startShape = &utfgridStartShape;
   renderer->endShape = &utfgridEndShape;
 
-  renderer->getTruetypeTextBBox = &utfgridGetTruetypeTextBBox;
-
-  renderer->renderGlyphs = &utfgridRenderGlyphs;
   renderer->renderPolygon = &utfgridRenderPolygon;
+  renderer->renderGlyphs = &utfgridRenderGlyphs;
   renderer->renderLine = &utfgridRenderLine;
   renderer->renderVectorSymbol = &utfgridRenderVectorSymbol;
   renderer->renderPixmapSymbol = &utfgridRenderPixmapSymbol;
   renderer->renderEllipseSymbol = &utfgridRenderEllipseSymbol;
-  renderer->renderTruetypeSymbol = &utfgridRenderTruetypeSymbol;
 
   renderer->freeSymbol = &utfgridFreeSymbol;
 

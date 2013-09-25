@@ -97,7 +97,6 @@ struct defaultOutputFormatEntry {
 } ;
 
 struct defaultOutputFormatEntry defaultoutputformats[] = {
-  {"json","UTFGrid","application/json"},
   {"png","AGG/PNG","image/png"},
   {"jpeg","AGG/JPEG","image/jpeg"},
   {"png8","AGG/PNG8","image/png; mode=8bit"},
@@ -114,6 +113,7 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"kml","KML","application/vnd.google-earth.kml+xml"},
   {"kmz","KMZ","application/vnd.google-earth.kmz"},
 #endif
+  {"json","UTFGrid","application/json"},
   {NULL,NULL,NULL}
 };
 
