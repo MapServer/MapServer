@@ -30,7 +30,6 @@
 #include "mapserver.h"
 #include "fontcache.h"
 #include "mapagg.h"
-#include "mapaggcommon.h"
 #include <assert.h>
 #include "renderers/agg/include/agg_color_rgba.h"
 #include "renderers/agg/include/agg_pixfmt_rgba.h"
