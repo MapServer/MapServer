@@ -511,10 +511,14 @@ extern "C" {
   enum MS_GEOS_OPERATOR {MS_GEOS_EQUALS, MS_GEOS_DISJOINT, MS_GEOS_TOUCHES, MS_GEOS_OVERLAPS, MS_GEOS_CROSSES, MS_GEOS_INTERSECTS, MS_GEOS_WITHIN, MS_GEOS_CONTAINS, MS_GEOS_BEYOND, MS_GEOS_DWITHIN};
 #define MS_FILE_DEFAULT MS_FILE_MAP
 
+#if defined(_MSC_VER) && (_MSC_VER <= 1310)
+#define MS_DEBUG msDebug2
+#else
 #ifdef USE_EXTENDED_DEBUG
 #define MS_DEBUG(level,elt,fmt, ...) if((elt)->debug >= (level)) msDebug(fmt,##__VA_ARGS__)
 #else
-  #define MS_DEBUG(level,elt,fmt, ...) /* no-op */
+#define MS_DEBUG(level,elt,fmt, ...) /* no-op */
+#endif
 #endif
 
   /* coordinate to pixel simplification modes, used in msTransformShape */

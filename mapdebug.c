@@ -370,3 +370,12 @@ void msDebug( const char * pszFormat, ... )
 
 }
 
+
+/* msDebug2()
+**
+** Variadic function with no operation
+**
+*/
+void msDebug2( int level, ... )
+{
+}
