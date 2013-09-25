@@ -420,11 +420,14 @@ int msAddLabelGroup(mapObj *map, imageObj *image, int layerindex, int classindex
       }
       x = MS_NINT(point->x);
       y = MS_NINT(point->y);
-      assert(rb.type == MS_BUFFER_BYTE_RGBA);
-      alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
-      if(!*alphapixptr) {
-        /* label point does not intersect mask */
-        return MS_SUCCESS;
+      /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
+      if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {      
+        assert(rb.type == MS_BUFFER_BYTE_RGBA);
+        alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+        if(!*alphapixptr) {
+          /* label point does not intersect mask */
+          return MS_SUCCESS;
+        }
       }
     } else {
       msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabelGroup()", layerPtr->name);
@@ -595,25 +598,30 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
       if (point) {
         int x = MS_NINT(point->x);
         int y = MS_NINT(point->y);
-        alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
-        if(!*alphapixptr) {
-          /* label point does not intersect mask */
-          if(ts) {
-            freeTextSymbol(ts);
-            free(ts);
+        /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
+        if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
+          alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
+          if(!*alphapixptr) {
+            /* label point does not intersect mask */
+            if(ts) {
+              freeTextSymbol(ts);
+              free(ts);
+            }
+            return MS_SUCCESS;
           }
-          return MS_SUCCESS;
         }
       } else if (ts && ts->textpath) {
         int i = 0;
         for (i = 0; i < ts->textpath->numglyphs; i++) {
           int x = MS_NINT(ts->textpath->glyphs[i].pnt.x);
           int y = MS_NINT(ts->textpath->glyphs[i].pnt.y);
-          alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
-          if (!*alphapixptr) {
-            freeTextSymbol(ts);
-            free(ts);
-            return MS_SUCCESS;
+          if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {          
+            alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
+            if (!*alphapixptr) {
+              freeTextSymbol(ts);
+              free(ts);
+              return MS_SUCCESS;
+            }
           }
         }
       }
