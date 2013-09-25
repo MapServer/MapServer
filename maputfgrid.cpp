@@ -654,6 +654,10 @@ int utfgridRenderEllipseSymbol(imageObj *img, double x, double y, symbolObj *sym
   return MS_SUCCESS;
 }
 
+int utfgridRenderGlyphs(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
+   return MS_SUCCESS;
+}
+
 int utfgridFreeSymbol(symbolObj * symbol)
 {
   return MS_SUCCESS;
@@ -677,6 +681,7 @@ int msPopulateRendererVTableUTFGrid( rendererVTableObj *renderer )
   renderer->endShape = &utfgridEndShape;
 
   renderer->renderPolygon = &utfgridRenderPolygon;
+  renderer->renderGlyphs = &utfgridRenderGlyphs;
   renderer->renderLine = &utfgridRenderLine;
   renderer->renderVectorSymbol = &utfgridRenderVectorSymbol;
   renderer->renderPixmapSymbol = &utfgridRenderPixmapSymbol;
