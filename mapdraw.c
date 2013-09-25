@@ -2590,11 +2590,13 @@ int msCheckLabelMinDistance(mapObj *map, labelCacheMemberObj *lc) {
   textSymbolObj *s; /* shortcut */
   if(lc->numtextsymbols == 0) return MS_FALSE; /* no label with text */
   s = lc->textsymbols[0];
-  if(s->label->mindistance <= 0.0 || s->label->force == MS_TRUE) return MS_FALSE; /*  min distance is not checked */
+  if(!s->annotext || s->label->mindistance <= 0.0 || s->label->force == MS_TRUE) return MS_FALSE; /*  min distance is not checked */
   sqmindistance = s->label->mindistance * s->label->mindistance * s->resolutionfactor * s->resolutionfactor;
   for(i=0;i<map->labelcache.num_rendered_members;i++) {
     labelCacheMemberObj *ilc = map->labelcache.rendered_text_symbols[i];
-    double sqdistance = (lc->point.x - ilc->point.x)*(lc->point.x - ilc->point.x)+
+    double sqdistance;
+    if(ilc->numtextsymbols == 0 || !ilc->textsymbols[0]->annotext) continue;
+    sqdistance = (lc->point.x - ilc->point.x)*(lc->point.x - ilc->point.x)+
                  (lc->point.y - ilc->point.y)*(lc->point.y - ilc->point.y);
     if(sqdistance < sqmindistance) {
       if(!strcmp(s->annotext,ilc->textsymbols[0]->annotext)) {
