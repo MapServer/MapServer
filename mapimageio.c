@@ -671,6 +671,7 @@ int msSaveRasterBuffer(mapObj *map, rasterBufferObj *rb, FILE *stream,
     streamInfo info;
     info.fp = stream;
     info.buffer=NULL;
+    
     return saveAsJPEG(map, rb,&info,format);
   } else {
     msSetError(MS_MISCERR,"unsupported image format\n", "msSaveRasterBuffer()");

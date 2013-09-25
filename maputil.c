@@ -611,7 +611,7 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
   return(-1); /* no match */
 }
 
-static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
+char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
 {
   char *result=NULL;
 
@@ -656,7 +656,7 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
       status = yyparse(&p);
 
       if (status != 0) {
-        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "evalTextExpression", expr->string);
+        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "msEvalTextExpression", expr->string);
         return NULL;
       }
 
@@ -676,9 +676,9 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
 char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {
   assert(shape && lbl);
   if(lbl->text.string) {
-    return evalTextExpression(&(lbl->text), shape);
+    return msEvalTextExpression(&(lbl->text), shape);
   } else if(layer->class[shape->classindex]->text.string) {
-    return evalTextExpression(&(layer->class[shape->classindex]->text), shape);
+    return msEvalTextExpression(&(layer->class[shape->classindex]->text), shape);
   } else {
     if (shape->values && layer->labelitemindex >= 0 && shape->values[layer->labelitemindex] && strlen(shape->values[layer->labelitemindex]) )
       return msStrdup(shape->values[layer->labelitemindex]);
@@ -825,6 +825,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         nReturnVal = msSaveImageGDAL(map, img, filename);
     } else
 #endif
+
       if (MS_RENDERER_PLUGIN(img->format)) {
         rendererVTableObj *renderer = img->format->vtable;
         FILE *stream = NULL;

@@ -130,6 +130,7 @@ option(WITH_SDE_PLUGIN "include ArcSDE support as a plugin (must specify SDE_INC
 option(WITH_SDE "include ArcSDE support. Add -DSDE_VERSION=91 to use 9.1 arcSDE version" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
+option(WITH_AGG_ALIASED "turn off antialising on AGG" OFF)
 
 option(BUILD_STATIC "Also build a static version of mapserver" OFF)
 option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
@@ -200,7 +201,7 @@ mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
 mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c
 mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
-mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c
+mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c ${REGEX_SOURCES})
 
 if(BUILD_DYNAMIC)
@@ -340,6 +341,10 @@ if(WITH_ICONV)
     report_optional_not_found(ICONV)
   endif(ICONV_FOUND)
 endif (WITH_ICONV)
+
+if(WITH_AGG_ALIASED)
+   set (AGG_ALIASED_ENABLED 1)
+endif(WITH_AGG_ALIASED)
 
 if(WITH_GENERIC_NINT)
    set(USE_GENERIC_MS_NINT 1)
@@ -848,6 +853,7 @@ status_optional_feature("WCS SERVER" "${USE_WCS_SVR}")
 status_optional_feature("SOS SERVER" "${USE_SOS_SVR}")
 status_optional_feature("WMS CLIENT" "${USE_WMS_LYR}")
 status_optional_feature("WFS CLIENT" "${USE_WFS_LYR}")
+status_optional_feature("AGG ALISING" "${AGG_ALIASED_ENABLED}")
 status_optional_feature("ICONV" "${USE_ICONV}")
 status_optional_feature("Thread-safety support" "${USE_THREAD}")
 status_optional_feature("KML output" "${USE_KML}")

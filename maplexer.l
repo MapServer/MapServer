@@ -385,6 +385,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>transform                             { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }
 <INITIAL,URL_VARIABLE,URL_STRING>units         { MS_LEXER_RETURN_TOKEN(UNITS); }
+<INITIAL>utfdata                               { MS_LEXER_RETURN_TOKEN(UTFDATA); }
+<INITIAL>utfitem                               { MS_LEXER_RETURN_TOKEN(UTFITEM); }
 <INITIAL>validation                            { MS_LEXER_RETURN_TOKEN(VALIDATION); }
 <INITIAL>values                                { MS_LEXER_RETURN_TOKEN(VALUES); }
 <INITIAL,URL_VARIABLE>web                      { MS_LEXER_RETURN_TOKEN(WEB); }
