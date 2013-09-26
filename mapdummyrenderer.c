@@ -84,48 +84,48 @@ void* createVectorSymbolTileDummy(int width, int height,
 int renderPixmapSymbolDummy(imageObj *img, double x, double y,
                             symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"renderPixmapSymbol not implemented","renderPixmapSymbol()");
   return MS_FAILURE;
 }
 
 void* createPixmapSymbolTileDummy(int width, int height,
                                   symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"createPixmapSymbolTile not implemented","createPixmapSymbolTile()");
   return NULL;
 }
 
 int renderEllipseSymbolDummy(imageObj *image, double x, double y,
                              symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"renderEllipseSymbol not implemented","renderEllipseSymbol()");
   return MS_FAILURE;
 }
 
 void* createEllipseSymbolTileDummy(int width, int height,
                                    symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"createEllipseSymbolTile not implemented","createEllipseSymbolTile()");
   return NULL;
 }
 
 int renderTruetypeSymbolDummy(imageObj *img, double x, double y,
                               symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"renderTruetypeSymbol not implemented","renderTruetypeSymbol()");
   return MS_FAILURE;
 }
 
 void* createTruetypeSymbolTileDummy(int width, int height,
                                     symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"createTruetypeSymbolTile not implemented","createTruetypeSymbolTile()");
   return NULL;
 }
 
 int renderTileDummy(imageObj *img, imageObj *tile, double x, double y)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"renderTile not implemented","renderTile()");
   return MS_FAILURE;
 }
 
@@ -138,7 +138,7 @@ rasterBufferObj* loadImageFromFileDummy(char *path)
 
 int getRasterBufferHandleDummy(imageObj *img, rasterBufferObj *rb)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"getRasterBufferHandle not implemented","getRasterBufferHandle()");
   return MS_FAILURE;
 }
 
@@ -216,7 +216,7 @@ int endShapeDummy(imageObj *img, shapeObj *shape)
 
 int setClipDummy(imageObj *img, rectObj clipRect)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"setClip not implemented","setClip()");
   return MS_FAILURE;
 }
 int resetClipDummy(imageObj *img)

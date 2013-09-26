@@ -77,7 +77,7 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
 ** Must be kept in sync with enumerations and defines found in mapserver.h.
 */
 /* static char *msUnits[9]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS", "PERCENTAGES", "NAUTICALMILES"}; */
-/* static char *msLayerTypes[9]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"}; */
+/* static char *msLayerTypes[10]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"}; */
 char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY", "FOLLOW"}; /* msLabelPositions[] also used in mapsymbols.c (not static) */
 /* static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"}; */
 /* static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"}; */
@@ -3917,6 +3917,10 @@ int initLayer(layerObj *layer, mapObj *map)
 
   initExpression(&(layer->_geomtransform));
   layer->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+
+  initExpression(&(layer->utfdata));
+  layer->utfitem = NULL;
+  layer->utfitemindex = -1;
   
   layer->encoding = NULL;
 
@@ -4034,6 +4038,9 @@ int freeLayer(layerObj *layer)
   if(layer->maskimage) {
     msFreeImage(layer->maskimage);
   }
+
+  freeExpression(&(layer->utfdata));
+  msFree(layer->utfitem);
 
   return MS_SUCCESS;
 }
@@ -4578,6 +4585,12 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(UNITS):
         if((layer->units = getSymbol(9, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return(-1);
         break;
+      case(UTFDATA):
+        if(loadExpression(&(layer->utfdata)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
+        break;
+      case(UTFITEM):
+        if(getString(&layer->utfitem) == MS_FAILURE) return(-1); /* loadExpression() cleans up previously allocated expression */
+        break;
       case(VALIDATION):
         if(loadHashTable(&(layer->validation)) != MS_SUCCESS) return(-1);
         break;
@@ -4691,7 +4704,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeKeyword(stream, indent, "TOLERANCEUNITS", layer->toleranceunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");
   writeNumber(stream, indent, "OPACITY", 100, layer->opacity);
-  writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
+  writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_ANNOTATION, "ANNOTATION", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
   writeKeyword(stream, indent, "UNITS", layer->units, 9, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD", MS_PIXELS, "PIXELS", MS_PERCENTAGES, "PERCENTATGES");
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 

@@ -312,6 +312,10 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define SCALETOKEN 1270
 #define VALUES 1271
 
+/* rfc 93 support for utfgrid */
+#define UTFDATA 1280
+#define UTFITEM 1281
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 

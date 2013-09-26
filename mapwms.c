@@ -1057,6 +1057,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
               (strncasecmp(format->driver, "GD/", 3) != 0 &&
                strncasecmp(format->driver, "GDAL/", 5) != 0 &&
                strncasecmp(format->driver, "AGG/", 4) != 0 &&
+               strncasecmp(format->driver, "UTFGRID", 7) != 0 &&
                strncasecmp(format->driver, "CAIRO/", 6) != 0 &&
                strncasecmp(format->driver, "OGL/", 4) != 0 &&
                strncasecmp(format->driver, "KML", 3) != 0 &&
@@ -3674,7 +3675,11 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   }
 
   if (strcasecmp(map->imagetype, "application/openlayers")!=0) {
-    msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(map->outputformat));
+    if(!strcmp(MS_IMAGE_MIME_TYPE(map->outputformat), "application/json")) {
+      msIO_setHeader("Content-Type","application/json; charset=utf-8");
+    } else {
+      msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(map->outputformat));
+    }
     msIO_sendHeaders();
     if (msSaveImage(map, img, NULL) != MS_SUCCESS) {
       msFreeImage(img);

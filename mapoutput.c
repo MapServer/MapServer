@@ -113,6 +113,7 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"kml","KML","application/vnd.google-earth.kml+xml"},
   {"kmz","KMZ","application/vnd.google-earth.kmz"},
 #endif
+  {"json","UTFGrid","application/json"},
   {NULL,NULL,NULL}
 };
 
@@ -157,9 +158,19 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     const char *name )
 
 {
+
   outputFormatObj *format = NULL;
   if( strncasecmp(driver,"GD/",3) == 0 ) {
     return msCreateDefaultOutputFormat( map, "AGG/PNG8", name );
+  }
+
+  if( strcasecmp(driver,"UTFGRID") == 0 ) {
+    if(!name) name="utfgrid";
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("application/json");
+    format->imagemode = MS_IMAGEMODE_RGB;
+    format->extension = msStrdup("json");
+    format->renderer = MS_RENDER_WITH_UTFGRID;
   }
 
   if( strcasecmp(driver,"AGG/PNG") == 0 ) {
@@ -1005,6 +1016,8 @@ int msInitializeRendererVTable(outputFormatObj *format)
   switch(format->renderer) {
     case MS_RENDER_WITH_AGG:
       return msPopulateRendererVTableAGG(format->vtable);
+    case MS_RENDER_WITH_UTFGRID:
+      return msPopulateRendererVTableUTFGrid(format->vtable);
 #ifdef USE_CAIRO
     case MS_RENDER_WITH_CAIRO_RASTER:
       return msPopulateRendererVTableCairoRaster(format->vtable);

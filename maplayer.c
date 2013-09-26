@@ -697,6 +697,10 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
       nt += msCountChars(layer->class[i]->text.string, '[');
   }
 
+  /* utfgrid count */
+  if(layer->utfdata.type == MS_EXPRESSION || (layer->utfdata.string && strchr(layer->utfdata.string,'[') != NULL && strchr(layer->utfdata.string,']') != NULL))
+    nt += msCountChars(layer->utfdata.string, '[');
+
   /*
   ** allocate space for the item list (worse case size)
   */
@@ -723,6 +727,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
     if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") != 0) layer->styleitemindex = string2list(layer->items, &(layer->numitems), layer->styleitem);
     if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
+    if(layer->utfitem) layer->utfitemindex = string2list(layer->items, &(layer->numitems), layer->utfitem);
 
     /* layer classes */
     for(i=0; i<layer->numclasses; i++) {
@@ -769,6 +774,11 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
     /* cluster expressions */
     if(layer->cluster.group.type == MS_EXPRESSION) msTokenizeExpression(&(layer->cluster.group), layer->items, &(layer->numitems));
     if(layer->cluster.filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->cluster.filter), layer->items, &(layer->numitems));
+
+    /* utfdata */
+    if(layer->utfdata.type == MS_EXPRESSION || (layer->utfdata.string && strchr(layer->utfdata.string,'[') != NULL && strchr(layer->utfdata.string,']') != NULL)) {
+        msTokenizeExpression(&(layer->utfdata), layer->items, &(layer->numitems));
+    }
   }
 
   if(metadata) {
