@@ -137,8 +137,10 @@ void msFreeMap(mapObj *map)
 
   msFreeQuery(&(map->query));
 
+#ifdef USE_V8
   if (map->v8context)
     msV8FreeContext(map);
+#endif
 
   msFree(map);
 }
