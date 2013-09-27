@@ -932,9 +932,11 @@
       <xsl:with-param name="node" select="'ms:keyImage'"/>
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
-    <xsl:apply-templates select="ms:Label">
-      <xsl:with-param name="indent" select="$indent + 1"/>
-    </xsl:apply-templates>
+    <xsl:for-each select="ms:Label">
+      <xsl:apply-templates select=".">
+        <xsl:with-param name="indent" select="$indent + 1"/>
+      </xsl:apply-templates>
+    </xsl:for-each>
     <xsl:apply-templates select="ms:LabelLeader">
       <xsl:with-param name="indent" select="$indent + 1"/>
     </xsl:apply-templates>
