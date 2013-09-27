@@ -280,6 +280,7 @@
 				<xs:element name="colorAttribute" type="ms:attributeType"/>
 			</xs:choice>
 			<xs:element name="encoding" minOccurs="0"/>
+			<xs:element name="expression" type="ms:expressionType" minOccurs="0"/>
 			<xs:element name="font" type="xs:string" minOccurs="0"/>
 			<xs:element name="force" type="ms:booleanEnum" default="FALSE" minOccurs="0"/>
 			<xs:element name="maxLength" type="xs:integer" default="0" minOccurs="0"/>

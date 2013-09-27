@@ -609,6 +609,10 @@
       <xsl:with-param name="node" select="'ms:encoding'"/>
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
+    <xsl:call-template name="printExpression">
+      <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:expression'"/>
+    </xsl:call-template>
     <xsl:call-template name="print">
       <xsl:with-param name="indent" select="$indent"/>
       <xsl:with-param name="node" select="'ms:font'"/>
