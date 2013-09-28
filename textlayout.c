@@ -217,9 +217,11 @@ static hb_position_t _ms_get_glyph_v_advance_func (hb_font_t *font, void *font_d
 int WARN_UNUSED check_single_font(fontSetObj *fontset, char *fontkey, text_run *run, TextInfo *glyphs, int ignore_missing) {
   int i;
   face_element *fcache = NULL;
-  char *fontkey2 = strchr(fontkey,':'); /* try skipping prefix */
-  if(fontkey2) {
-    fcache = msGetFontFace(fontkey2+1, fontset);
+  if(fontset && fontkey) {
+    char *fontkey2 = strchr(fontkey,':'); /* try skipping prefix */
+    if(fontkey2) {
+      fcache = msGetFontFace(fontkey2+1, fontset);
+    }
   }
   if(!fcache)
     fcache = msGetFontFace(fontkey, fontset);
@@ -235,11 +237,19 @@ int WARN_UNUSED check_single_font(fontSetObj *fontset, char *fontkey, text_run *
   return MS_SUCCESS;
 }
 
-int WARN_UNUSED get_face_for_run(fontSetObj*fontset, char *fontlist, text_run *run, TextInfo *glyphs) {
+int WARN_UNUSED get_face_for_run(fontSetObj *fontset, char *fontlist, text_run *run, TextInfo *glyphs) {
   char *startfont, *endfont;
   int ok;
 #if defined(USE_HARFBUZZ) && defined(USE_FRIBIDI)
   const char *prefix = NULL;
+#endif
+
+  if(!fontset || !fontlist) {
+    ok = check_single_font(fontset,fontlist,run,glyphs,0);
+    return MS_SUCCESS;
+  }
+
+#if defined(USE_HARFBUZZ) && defined(USE_FRIBIDI)
   if(run->rtl >= 0) {
     prefix = prefix_from_script(run->script);
   } else {
@@ -428,13 +438,14 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
   struct line_desc *line_descs;
   text_run *runs;
   double oldpeny=3455,peny,penx=0; /*oldpeny is set to an unreasonable default initial value */
-
+  fontSetObj *fontset = NULL;
 
   TextInfo glyphs;
   int num_glyphs = 0;
 
   assert(ts->annotext && *ts->annotext); /* ensure we have at least one character/glyph to treat */
 
+  if(map) fontset = &map->fontset;
   /* go through iconv beforehand, so we know we're handling utf8 */
 #ifdef USE_ICONV
   if(ts->label->encoding && strcasecmp(ts->label->encoding,"UTF-8")) {
@@ -667,7 +678,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 #endif
 
   for(i=0; i<nruns; i++) {
-    ret = get_face_for_run(&map->fontset, ts->label->font, runs+i, &glyphs);
+    ret = get_face_for_run(fontset, ts->label->font, runs+i, &glyphs);
     if(UNLIKELY(ret == MS_FAILURE))
       goto cleanup;
   }

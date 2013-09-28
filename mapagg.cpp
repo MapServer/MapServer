@@ -60,7 +60,6 @@
 #include "renderers/agg/include/agg_span_image_filter_rgba.h"
 #include "renderers/agg/include/agg_glyph_raster_bin.h"
 #include "renderers/agg/include/agg_renderer_raster_text.h"
-#include "renderers/agg/include/agg_embedded_raster_fonts.h"
 #include "renderers/agg/include/agg_path_storage_integer.h"
 
 #include "renderers/agg/include/agg_conv_clipper.h"
@@ -95,22 +94,6 @@ typedef mapserver::renderer_primitives<renderer_base> renderer_primitives;
 typedef mapserver::rasterizer_outline<renderer_primitives> rasterizer_outline;
 #endif
 static color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
-
-const mapserver::int8u* rasterfonts[]= {
-  mapserver::mcs5x10_mono, /*gd tiny. gse5x7 is a bit less high than gd tiny*/
-  mapserver::mcs5x11_mono, /*gd small*/
-  mapserver::mcs6x11_mono, /*gd medium*/
-  mapserver::mcs7x12_mono_low, /*gd large*/
-  mapserver::mcs7x12_mono_high /*gd huge*/
-};
-
-fontMetrics rasterfont_sizes[] = {
-  {5,mapserver::mcs5x10_mono[0]},
-  {5,mapserver::mcs5x11_mono[0]},
-  {6,mapserver::mcs6x11_mono[0]},
-  {7,mapserver::mcs7x12_mono_low[0]},
-  {7,mapserver::mcs7x12_mono_high[0]}
-};
 
 #define aggColor(c) mapserver::rgba8_pre((c)->red, (c)->green, (c)->blue, (c)->alpha)
 
@@ -602,80 +585,6 @@ int agg2RenderGlyphsPath(imageObj *img, textPathObj *tp, colorObj *c, colorObj *
     r->m_renderer_scanline.color(aggColor(c));
     mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
   }
-  return MS_SUCCESS;
-}
-
-int agg2RenderBitmapGlyphs2(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow)
-{
-  int size = tp->glyph_size;
-  size = MS_MAX(0,size);
-  size = MS_MIN(4,size);
-  AGG2Renderer *r = AGG_RENDERER(img);
-
-  glyph_gen glyph(0);
-  mapserver::renderer_raster_htext_solid<renderer_base, glyph_gen> rt(r->m_renderer_base, glyph);
-  glyph.font(rasterfonts[size]);
-  unsigned int cc_start = rasterfonts[size][2];
-  unsigned int cc_end = cc_start + rasterfonts[size][3];
-  unsigned int glyph_idx;
-  if(oc) {
-    rt.color(aggColor(oc));
-    for(int n=0; n<tp->numglyphs; n++) {
-      glyphObj *g = &tp->glyphs[n];
-      /* do some unicode mapping, for now we just replace unsupported characters with "." */
-      if(g->glyph->key.codepoint < cc_start || g->glyph->key.codepoint > cc_end) {
-        glyph_idx = '.';
-      } else {
-        glyph_idx = g->glyph->key.codepoint;
-      }
-      for(int i=-1; i<=1; i++) {
-        for(int j=-1; j<=1; j++) {
-          if(i||j) {
-            rt.render_glyph(g->pnt.x+i , g->pnt.y+j, glyph_idx, true);
-          }
-        }
-      }
-
-    }
-  }
-  if(c) {
-    rt.color(aggColor(c));
-    for(int n=0; n<tp->numglyphs; n++) {
-      glyphObj *g = &tp->glyphs[n];
-      /* do some unicode mapping, for now we just replace unsupported characters with "." */
-      if(g->glyph->key.codepoint < cc_start || g->glyph->key.codepoint > cc_end) {
-        glyph_idx = '.';
-      } else {
-        glyph_idx = g->glyph->key.codepoint;
-      }
-      rt.render_glyph(g->pnt.x , g->pnt.y, glyph_idx, true);
-    }
-  }
-  return MS_SUCCESS;
-}
-
-int getBitmapGlyphMetrics(int size, unsigned int unicode, glyph_metrics *bounds) {
-  size = MS_MAX(0,size);
-  size = MS_MIN(4,size);
-  unsigned int glyph_idx;
-
-  /* do some unicode mapping, for now we just replace unsupported characters with "." */
-  unsigned int cc_start = rasterfonts[size][2];
-  unsigned int cc_end = cc_start + rasterfonts[size][3];
-  if(unicode < cc_start || unicode > cc_end) {
-    glyph_idx = '.';
-  } else {
-    glyph_idx = unicode;
-  }
-
-  glyph_gen glyph(0);
-  glyph.font(rasterfonts[size]);
-
-  bounds->minx = 0;
-  bounds->miny = -glyph.base_line();
-  bounds->maxx = glyph.glyph_width(glyph_idx);
-  bounds->maxy = glyph.height() + bounds->miny;
-  bounds->advance = bounds->maxx;
   return MS_SUCCESS;
 }
 
@@ -1246,8 +1155,6 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer)
   renderer->renderLineTiled = &agg2RenderLineTiled;
 
   renderer->renderGlyphs = &agg2RenderGlyphsPath;
-  renderer->renderBitmapGlyphs = &agg2RenderBitmapGlyphs2;
-  renderer->getBitmapGlyphMetrics = &getBitmapGlyphMetrics;
 
   renderer->renderVectorSymbol = &agg2RenderVectorSymbol;
 
@@ -1272,8 +1179,6 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer)
   renderer->freeImage = &agg2FreeImage;
   renderer->freeSymbol = &agg2FreeSymbol;
   renderer->cleanup = agg2Cleanup;
-
-  renderer->supports_bitmap_fonts = 1;
 
   return MS_SUCCESS;
 }

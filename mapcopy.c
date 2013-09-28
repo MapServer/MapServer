@@ -308,7 +308,6 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTELEM(numbindings);
 
   MS_COPYSTRING(dst->font, src->font);
-  MS_COPYSTELEM(type);
 
   MS_COPYCOLOR(&(dst->color), &(src->color));
   MS_COPYCOLOR(&(dst->outlinecolor), &(src->outlinecolor));

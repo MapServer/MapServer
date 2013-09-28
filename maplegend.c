@@ -306,8 +306,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     marker.y = dstY + MS_NINT(height / 2.0);
     initTextSymbol(&ts);
     msPopulateTextSymbolForLabelAndString(&ts,theclass->labels[0],msStrdup("Az"),lp->scalefactor*image_draw->resolutionfactor,image_draw->resolutionfactor, duplicate_always);
-    if(theclass->labels[0]->type == MS_TRUETYPE)
-      ts.label->size = height - 1;
+    ts.label->size = height - 1;
     ret = msComputeTextPath(map,&ts);
     if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
     textstartpt = get_metrics(&marker,MS_CC,ts.textpath,0,0,0,0,NULL);

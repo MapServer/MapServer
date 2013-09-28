@@ -1607,8 +1607,8 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
       if (label->anglemode == MS_ANGLEMODE_FOLLOW) { /* bug #1620 implementation */
         struct label_follow_result lfr;
         
-        if (label->type != MS_TRUETYPE || !layer->labelcache) {
-          msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with truetype fonts and labelcache on", "msDrawShape()");
+        if (layer->labelcache) {
+          msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with labelcache on", "msDrawShape()");
           ret = MS_FAILURE;
           goto line_cleanup;
         }

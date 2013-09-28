@@ -1711,7 +1711,6 @@ void initLabel(labelObj *label)
   label->shadowsizex = label->shadowsizey = 1;
 
   label->font = NULL;
-  label->type = MS_BITMAP;
   label->size = MS_MEDIUM;
 
   label->position = MS_CC;
@@ -1878,11 +1877,6 @@ static int loadLabel(labelObj *label)
         if((getString(&label->encoding)) == MS_FAILURE) return(-1);
         break;
       case(END):
-        /* sanity check */
-        if((label->anglemode != MS_ANGLEMODE_NONE || label->angle != 0 || label->bindings[MS_LABEL_BINDING_ANGLE].item) && label->type == MS_BITMAP) {
-          msSetError(MS_MISCERR,"Rotated labels not supported with bitmap fonts.", "loadLabel()");
-          return -1;
-        }
         return(0);
         break;
       case(EOF):
@@ -2075,7 +2069,7 @@ static int loadLabel(labelObj *label)
         }
         break;
       case(TYPE):
-        if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return(-1);
+        if(getSymbol(2, MS_TRUETYPE,MS_BITMAP) == -1) return(-1); /* ignore TYPE */
         break;
       case(WRAP):
         if(getCharacter(&(label->wrap)) == -1) return(-1);
@@ -2143,29 +2137,22 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   indent++;
   writeBlockBegin(stream, indent, "LABEL");
 
-  /*
-  ** a few attributes are bitmap or truetype only
-  */
-  if(label->type == MS_BITMAP) {
-    writeKeyword(stream, indent, "SIZE", (int)label->size, 5, MS_TINY, "TINY", MS_SMALL, "SMALL", MS_MEDIUM, "MEDIUM", MS_LARGE, "LARGE", MS_GIANT, "GIANT");
-  } else {
-    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
-      writeAttributeBinding(stream, indent, "ANGLE", &(label->bindings[MS_LABEL_BINDING_ANGLE]));
-    else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_ANGLEMODE_FOLLOW, "FOLLOW", MS_ANGLEMODE_AUTO, "AUTO", MS_ANGLEMODE_AUTO2, "AUTO2");
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
+    writeAttributeBinding(stream, indent, "ANGLE", &(label->bindings[MS_LABEL_BINDING_ANGLE]));
+  else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_ANGLEMODE_FOLLOW, "FOLLOW", MS_ANGLEMODE_AUTO, "AUTO", MS_ANGLEMODE_AUTO2, "AUTO2");
 
-    writeExpression(stream, indent, "EXPRESSION", &(label->expression));
+  writeExpression(stream, indent, "EXPRESSION", &(label->expression));
 
-    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_FONT].item)
-      writeAttributeBinding(stream, indent, "FONT", &(label->bindings[MS_LABEL_BINDING_FONT]));
-    else writeString(stream, indent, "FONT", NULL, label->font);
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_FONT].item)
+    writeAttributeBinding(stream, indent, "FONT", &(label->bindings[MS_LABEL_BINDING_FONT]));
+  else writeString(stream, indent, "FONT", NULL, label->font);
 
-    writeNumber(stream, indent, "MAXSIZE",  MS_MAXFONTSIZE, label->maxsize);
-    writeNumber(stream, indent, "MINSIZE",  MS_MINFONTSIZE, label->minsize);
+  writeNumber(stream, indent, "MAXSIZE",  MS_MAXFONTSIZE, label->maxsize);
+  writeNumber(stream, indent, "MINSIZE",  MS_MINFONTSIZE, label->minsize);
 
-    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_SIZE].item)
-      writeAttributeBinding(stream, indent, "SIZE", &(label->bindings[MS_LABEL_BINDING_SIZE]));
-    else writeNumber(stream, indent, "SIZE", -1, label->size);
-  }
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_SIZE].item)
+    writeAttributeBinding(stream, indent, "SIZE", &(label->bindings[MS_LABEL_BINDING_SIZE]));
+  else writeNumber(stream, indent, "SIZE", -1, label->size);
 
   writeKeyword(stream, indent, "ALIGN", label->align, 3, MS_ALIGN_LEFT, "LEFT", MS_ALIGN_CENTER, "CENTER", MS_ALIGN_RIGHT, "RIGHT");
   writeNumber(stream, indent, "BUFFER", 0, label->buffer);
@@ -2214,7 +2201,6 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
 
   writeExpression(stream, indent, "TEXT", &(label->text));
 
-  writeKeyword(stream, indent, "TYPE", label->type, 2, MS_BITMAP, "BITMAP", MS_TRUETYPE, "TRUETYPE");
   writeCharacter(stream, indent, "WRAP", '\0', label->wrap);
   writeBlockEnd(stream, indent, "LABEL");
 }
@@ -4704,7 +4690,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeKeyword(stream, indent, "TOLERANCEUNITS", layer->toleranceunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");
   writeNumber(stream, indent, "OPACITY", 100, layer->opacity);
-  writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_ANNOTATION, "ANNOTATION", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
+  writeKeyword(stream, indent, "TYPE", layer->type, 8, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
   writeKeyword(stream, indent, "UNITS", layer->units, 9, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD", MS_PIXELS, "PIXELS", MS_PERCENTAGES, "PERCENTATGES");
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 

@@ -386,9 +386,8 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
   char *imagepath = NULL, *imageurl = NULL;
   colorObj imagecolor, *imagecolorptr=NULL;
   textSymbolObj ts;
-  textPathObj tp;
   labelObj label;
-  int charWidth = 5, charHeight = 10; /* hardcoded from agg bitmapfonts */
+  int charWidth = 6, charHeight = 10; /* hardcoded, should be looked up from ft face */
   if(!errormsg) {
     errormsg = msStrdup("No error found sorry. This is likely a bug");
   }
@@ -404,7 +403,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
   }
 
   /* Default to GIF if no suitable GD output format set */
-  if (format == NULL || !MS_RENDERER_PLUGIN(format) || !format->vtable->supports_bitmap_fonts)
+  if (format == NULL || !MS_RENDERER_PLUGIN(format))
     format = msCreateDefaultOutputFormat( NULL, "AGG/PNG8", "png" );
 
   if(!format->transparent) {
@@ -464,14 +463,10 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
       pnt.y = charHeight * ((i*2) +1);
       pnt.x = charWidth;
       initTextSymbol(&ts);
-      initTextPath(&tp);
       msPopulateTextSymbolForLabelAndString(&ts,&label,papszLines[i],1,1,0);
-      if(LIKELY(MS_SUCCESS == msComputeBitmapTextPath(renderer,&ts,&tp))) {
+      if(LIKELY(MS_SUCCESS == msComputeTextPath(map,&ts))) {
         int idontcare;
-        ts.textpath = &tp;
         idontcare = msDrawTextSymbol(NULL,img,pnt,&ts);
-        ts.textpath = NULL;
-        freeTextPath(&tp);
         freeTextSymbol(&ts);
       }
     }
