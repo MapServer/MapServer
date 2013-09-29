@@ -599,7 +599,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
 
     for(j=lp->numclasses-1; j>=0; j--) {
       text = lp->class[j]->title?lp->class[j]->title:lp->class[j]->name; /* point to the right legend text, title takes precedence */
-      if(!text) continue; /* skip it */
+      if(!text || !*text) continue; /* skip it */
 
       /* skip the class if the classgroup is defined */
       if(lp->classgroup && (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
