@@ -414,6 +414,43 @@ void msStringToLower(char *string)
   }
 }
 
+void msStringInitCap(char *string)
+{
+  int i;
+  int start = 1; 
+  if (string != NULL) {
+    for (i = 0; i < (int)strlen(string); i++) {
+      if (string[i] == ' ')
+        start = 1;
+      else if (start) {
+        string[i] = toupper(string[i]);
+        start = 0;
+      }
+      else {
+        string[i] = tolower(string[i]);
+      }
+    }
+  }
+}
+
+void msStringFirstCap(char *string)
+{
+  int i;
+  int start = 1; 
+  if (string != NULL) {
+    for (i = 0; i < (int)strlen(string); i++) {
+      if (string[i] != ' ') {
+        if (start) {
+          string[i] = toupper(string[i]);
+          start = 0;
+        }
+        else
+          string[i] = tolower(string[i]);
+      }
+    }
+  }
+}
+
 char *msStringChop(char *string)
 {
   int n;
