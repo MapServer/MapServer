@@ -3,7 +3,7 @@
  *
  * Project:  MapServer
  * Purpose:  libxml2 convenience wrapper functions
- * Author:   Tom Kralidis (tomkralidis@hotmail.com)
+ * Author:   Tom Kralidis (tomkralidis@gmail.com)
  *
  ******************************************************************************
  * Copyright (c) 2007, Tom Kralidis
