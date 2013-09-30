@@ -7,7 +7,7 @@
  *           1.0.0 (OGC Document 05-008c1)
  *           1.1.0 (OGC document 06-121r3)
  *
- * Author:   Tom Kralidis (tomkralidis@hotmail.com)
+ * Author:   Tom Kralidis (tomkralidis@gmail.com)
  *
  ******************************************************************************
  * Copyright (c) 2006, Tom Kralidis
