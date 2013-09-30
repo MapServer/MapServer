@@ -3,7 +3,7 @@
  *
  * Project:  MapServer
  * Purpose:  OGC OWS Common Implementation include file
- * Author:   Tom Kralidis (tomkralidis@hotmail.com)
+ * Author:   Tom Kralidis (tomkralidis@gmail.com)
  *
  ******************************************************************************
  * Copyright (c) 2006, Tom Kralidis
