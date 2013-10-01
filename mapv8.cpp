@@ -27,118 +27,13 @@
  **********************************************************************/
 
 #include "mapserver-config.h"
-#ifdef USE_V8
+#ifdef USE_V8_MAPSCRIPT
 
 #include "mapserver.h"
-#include <string>
-#include <stack>
-#include <streambuf>
-#include <v8.h>
+#include "v8_mapscript.h"
 
-using std::string;
-using std::stack;
-using v8::Isolate;
-using v8::Context;
-using v8::Persistent;
-using v8::HandleScope;
-using v8::Handle;
-using v8::Script;
-using v8::Local;
-using v8::Object;
-using v8::Value;
-using v8::String;
-using v8::Integer;
-using v8::Undefined;
-using v8::FunctionTemplate;
-using v8::ObjectTemplate;
-using v8::AccessorInfo;
-using v8::External;
-using v8::Arguments;
-using v8::TryCatch;
-using v8::Message;
-using v8::ThrowException;
-
-class V8Context
-{
-public:
-  V8Context(Isolate *isolate)
-    : isolate(isolate) {}
-  Isolate *isolate;
-  stack<string> paths; /* for relative paths and the require function */
-  Persistent<Context> context;
-};
-
-#define V8CONTEXT(map) ((V8Context*) (map)->v8context)
-
-/* MAPSERVER OBJECT WRAPPERS */
-
-/* This is currently only an example how to wrap a C object to expose it to
- * JavaScript. This needs to be investigated more if we decide to create a
- * complete MS object binding for v8. */
-
-static void msV8WeakShapeObjCallback(Isolate *isolate, Persistent<Object> *object, shapeObj *shape)
-{
-  msFreeShape(shape);
-  object->Dispose();
-  object->Clear();
-}
-
-static Handle<Value> msV8ShapeObjGetNumValues(Local<String> property,
-    const AccessorInfo &info)
-{
-  Local<Object> self = info.Holder();
-  Local<External> wrap = Local<External>::Cast(self->GetInternalField(0));
-  void *ptr = wrap->Value();
-  shapeObj *shape = static_cast<shapeObj*>(ptr);
-  return Integer::New(shape->numvalues);
-}
-
-/* Simple shape object wrapper. Maybe we could create a generic template class
- * that would handle that stuff */
-static Handle<Object> msV8WrapShapeObj(Isolate *isolate, layerObj *layer, shapeObj *shape, Persistent<Object> *po)
-{
-  Handle<ObjectTemplate> shape_templ = ObjectTemplate::New();
-  shape_templ->SetInternalFieldCount(1);
-
-  /* accessor example */
-  shape_templ->SetAccessor(String::New("numvalues"), msV8ShapeObjGetNumValues);
-
-  /* both accessor and direct object have their pros/cons for this
-   * case. Currently ok since it's read-only */
-  Handle<ObjectTemplate> attributes = ObjectTemplate::New();
-  for (int i=0; i<layer->numitems; ++i) {
-    attributes->Set(String::New(layer->items[i]),
-                    String::New(shape->values[i]));
-  }
-  shape_templ->Set(String::New("attributes"), attributes);
-
-  Handle<Object> obj = shape_templ->NewInstance();
-  obj->SetInternalField(0, External::New(shape));
-
-  if (po) { /* A Persistent object have to be passed if v8 have to free some memory */
-    po->Reset(isolate, obj);
-    po->MakeWeak(shape, msV8WeakShapeObjCallback);
-  }
-
-  return obj;
-}
-
-/* END OF MAPSERVER OBJECT WRAPPERS */
-
-/* INTERNAL JAVASCRIPT FUNCTIONS */
-
-/* Get C char from a v8 string. Caller has to free the returned value. */
-// static char *msV8GetCString(Local<Value> value, const char *fallback = "") {
-//   if (value->IsString()) {
-//     String::AsciiValue string(value);
-//     char *str = (char *) malloc(string.length() + 1);
-//     strcpy(str, *string);
-//     return str;
-//   }
-//   char *str = (char *) malloc(strlen(fallback) + 1);
-//   strcpy(str, fallback);
-//   return str;
-// }
+/* This file could be refactored in the future to encapsulate the global
+   functions and internal use functions in a class. */
 
 /* Handler for Javascript Exceptions. Not exposed to JavaScript, used internally.
    Most of the code from v8 shell example.
@@ -178,16 +73,8 @@ void msV8ReportException(TryCatch* try_catch, const char *msg = "")
 }
 
 /* This function load a javascript file in memory. */
-static Handle<Value> msV8ReadFile(V8Context *v8context, const char *name)
+static Handle<Value> msV8ReadFile(V8Context *v8context, const char *path)
 {
-  char path[MS_MAXPATHLEN];
-
-  /* construct the path */
-  msBuildPath(path, v8context->paths.top().c_str(), name);
-  char *filepath = msGetPath(path);
-  v8context->paths.push(filepath);
-  free(filepath);
-
   FILE* file = fopen(path, "rb");
   if (file == NULL) {
     char err[MS_MAXPATHLEN+21];
@@ -204,6 +91,10 @@ static Handle<Value> msV8ReadFile(V8Context *v8context, const char *name)
   chars[size] = '\0';
   for (int i = 0; i < size;) {
     int read = static_cast<int>(fread(&chars[i], 1, size - i, file));
+    if (read == 0) {
+      msDebug("msV8ReadFile: error while reading file '%s'\n", path);
+      return Undefined();
+    }
     i += read;
   }
 
@@ -252,17 +143,35 @@ static Handle<Value> msV8RunScript(Handle<Script> script)
 /* Execute a javascript file */
 static Handle<Value> msV8ExecuteScript(const char *path, int throw_exception = MS_FALSE)
 {
+  char fullpath[MS_MAXPATHLEN];
+  map<string, Persistent<Script> >::iterator it;
   Isolate *isolate = Isolate::GetCurrent();
   V8Context *v8context = (V8Context*)isolate->GetData();
 
-  Handle<Value> source = msV8ReadFile(v8context, path);
-  Handle<String> script_name = String::New(msStripPath((char*)path));
-  Handle<Script> script = msV8CompileScript(source->ToString(), script_name);
-  if (script.IsEmpty()) {
-    v8context->paths.pop();
-    if (throw_exception) {
-      return ThrowException(String::New("Error compiling script"));
+  /* construct the path */
+  msBuildPath(fullpath, v8context->paths.top().c_str(), path);
+  char *filepath = msGetPath((char*)fullpath);
+  v8context->paths.push(filepath);
+  free(filepath);
+
+  Handle<Script> script;
+  it = v8context->scripts.find(fullpath);
+  if (it == v8context->scripts.end()) {
+    Handle<Value> source = msV8ReadFile(v8context, fullpath);
+    Handle<String> script_name = String::New(msStripPath((char*)path));
+    script = msV8CompileScript(source->ToString(), script_name);
+    if (script.IsEmpty()) {
+      v8context->paths.pop();
+      if (throw_exception) {
+        return ThrowException(String::New("Error compiling script"));
+      }
     }
+    /* cache the compiled script */
+    Persistent<Script> pscript;
+    pscript.Reset(isolate, script);
+    v8context->scripts[fullpath] = pscript;
+  } else {
+    script = v8context->scripts[fullpath];
   }
 
   Handle<Value> result = msV8RunScript(script);
@@ -293,7 +202,6 @@ static Handle<Value> msV8Require(const Arguments& args)
   }
 
   return Undefined();
-
 }
 
 /* Javascript Function print: print to debug file.
@@ -313,29 +221,63 @@ static Handle<Value> msV8Print(const Arguments& args)
 /* Create and return a v8 context. Thread safe. */
 void msV8CreateContext(mapObj *map)
 {
-  Isolate *isolate = Isolate::GetCurrent();
-  V8Context *v8context = new V8Context(isolate);
 
+  Isolate *isolate = Isolate::GetCurrent();
+  Isolate::Scope isolate_scope(isolate);
   HandleScope handle_scope(isolate);
 
-  Handle<ObjectTemplate> global = ObjectTemplate::New();
-  global->Set(String::New("require"), FunctionTemplate::New(msV8Require));
-  global->Set(String::New("print"), FunctionTemplate::New(msV8Print));
-  global->Set(String::New("alert"), FunctionTemplate::New(msV8Print));
+  V8Context *v8context = new V8Context(isolate);
 
-  Handle<Context> context_ = Context::New(isolate, NULL, global);
-  v8context->context.Reset(isolate, context_);
+  Handle<ObjectTemplate> global_templ = ObjectTemplate::New();
+  global_templ->Set(String::New("require"), FunctionTemplate::New(msV8Require));
+  global_templ->Set(String::New("print"), FunctionTemplate::New(msV8Print));
+  global_templ->Set(String::New("alert"), FunctionTemplate::New(msV8Print));
+
+  Handle<Context> context_ = Context::New(v8context->isolate, NULL, global_templ);
+  v8context->context.Reset(v8context->isolate, context_);
+
+  /* we have to enter the context before getting global instance */
+  Context::Scope context_scope(context_);
+  Handle<Object> global = context_->Global();
+  Shape::Initialize(global);
+  Point::Initialize(global);
+  Line::Initialize(global);
 
   v8context->paths.push(map->mappath);
-  isolate->SetData(v8context);
+  v8context->isolate->SetData(v8context);
+  v8context->layer = NULL;
 
   map->v8context = (void*)v8context;
+}
+
+void msV8ContextSetLayer(mapObj *map, layerObj *layer)
+{
+  V8Context* v8context = V8CONTEXT(map);
+
+  if (!v8context) {
+    msSetError(MS_V8ERR, "V8 Persistent Context is not created.", "msV8ContextSetLayer()");
+    return;
+  }
+
+  v8context->layer = layer;
+}
+
+static void msV8FreeContextScripts(V8Context *v8context)
+{
+  map<string, Persistent<Script> >::iterator it;
+  for(it=v8context->scripts.begin(); it!=v8context->scripts.end(); ++it)
+  {
+    ((*it).second).Dispose();
+  }
 }
 
 void msV8FreeContext(mapObj *map)
 {
   V8Context* v8context = V8CONTEXT(map);
-
+  Shape::Dispose();
+  Point::Dispose();
+  Line::Dispose();
+  msV8FreeContextScripts(v8context);
   v8context->context.Dispose();
   delete v8context;
 }
@@ -345,32 +287,90 @@ void msV8FreeContext(mapObj *map)
 char* msV8GetFeatureStyle(mapObj *map, const char *filename, layerObj *layer, shapeObj *shape)
 {
   V8Context* v8context = V8CONTEXT(map);
-
+  char *ret = NULL;
+    
   if (!v8context) {
     msSetError(MS_V8ERR, "V8 Persistent Context is not created.", "msV8ReportException()");
     return NULL;
   }
 
+  Isolate::Scope isolate_scope(v8context->isolate);
   HandleScope handle_scope(v8context->isolate);
+
   /* execution context */
   Local<Context> context = Local<Context>::New(v8context->isolate, v8context->context);
   Context::Scope context_scope(context);
   Handle<Object> global = context->Global();
 
-  /* we don't need this, since the shape object will be free by MapServer */
-  /* Persistent<Object> persistent_shape; */
-
-  Handle<Object> shape_ = msV8WrapShapeObj(v8context->isolate, layer, shape, NULL);
-  global->Set(String::New("shape"), shape_);
-
-  Handle<Value> result = msV8ExecuteScript(filename);
+  Shape *shape_ = new Shape(shape);
+  shape_->setLayer(layer); // hack to set the attribute names, should change in future.
+  shape_->disableMemoryHandler(); /* the internal object should not be freed by the v8 GC */
+  Handle<Value> ext = External::New(shape_);
+  global->Set(String::New("shape"),
+              Shape::Constructor()->NewInstance(1, &ext));
+  
+  msV8ExecuteScript(filename);
+  Handle<Value> value = global->Get(String::New("styleitem"));
+  if (value->IsUndefined()) {
+    msDebug("msV8GetFeatureStyle: Function 'styleitem' is missing.\n");
+    return ret;
+  }
+  Handle<Function> func = Handle<Function>::Cast(value);
+  Handle<Value> result = func->Call(global, 0, 0);
   if (!result.IsEmpty() && !result->IsUndefined()) {
-    String::AsciiValue ascii(result);
-    return msStrdup(*ascii);
+     String::AsciiValue ascii(result);
+     ret = msStrdup(*ascii);
+  }
+
+  return ret;
+}
+
+/* for geomtransform, we don't have the mapObj */
+shapeObj *msV8TransformShape(shapeObj *shape, const char* filename)
+{
+  Isolate *isolate = Isolate::GetCurrent();
+  V8Context *v8context = (V8Context*)isolate->GetData();
+
+  HandleScope handle_scope(v8context->isolate);
+
+  /* execution context */
+  Local<Context> context = Local<Context>::New(v8context->isolate, v8context->context);
+  Context::Scope context_scope(context);
+  Handle<Object> global = context->Global();
+
+  Shape* shape_ = new Shape(shape);
+  shape_->setLayer(v8context->layer);
+  shape_->disableMemoryHandler();
+  Handle<Value> ext = External::New(shape_);
+  global->Set(String::New("shape"),
+              Shape::Constructor()->NewInstance(1, &ext));
+
+  msV8ExecuteScript(filename);
+  Handle<Value> value = global->Get(String::New("geomtransform"));
+  if (value->IsUndefined()) {
+    msDebug("msV8TransformShape: Function 'geomtransform' is missing.\n");
+    return NULL;
+  }
+  Handle<Function> func = Handle<Function>::Cast(value);
+  Handle<Value> result = func->Call(global, 0, 0);
+  if (!result.IsEmpty() && result->IsObject()) {
+    Handle<Object> obj = result->ToObject();
+    if (obj->GetConstructorName()->Equals(String::New("shapeObj"))) {
+      Shape* new_shape = ObjectWrap::Unwrap<Shape>(result->ToObject());
+      if (shape == new_shape->get()) {
+        shapeObj *new_shape_ = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
+        msInitShape(new_shape_);
+        msCopyShape(shape, new_shape_);
+        return new_shape_;
+      }
+      else {
+        new_shape->disableMemoryHandler();
+        return new_shape->get();
+      }
+    }
   }
 
   return NULL;
-
 }
 
-#endif /* USE_V8 */
+#endif /* USE_V8_MAPSCRIPT */

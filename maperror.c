@@ -572,7 +572,7 @@ char *msGetVersion()
 #ifdef USE_POINT_Z_M
   strcat(version, " SUPPORTS=POINT_Z_M");
 #endif
-#ifdef USE_V8
+#ifdef USE_V8_MAPSCRIPT
   strcat(version, " SUPPORTS=V8");
 #endif
 #ifdef USE_JPEG

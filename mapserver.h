@@ -656,7 +656,7 @@ extern "C" {
   };
   enum MS_TOKEN_FUNCTION_ENUM {
     MS_TOKEN_FUNCTION_LENGTH=340, MS_TOKEN_FUNCTION_TOSTRING, MS_TOKEN_FUNCTION_COMMIFY, MS_TOKEN_FUNCTION_AREA, MS_TOKEN_FUNCTION_ROUND, MS_TOKEN_FUNCTION_FROMTEXT,
-    MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE, MS_TOKEN_FUNCTION_SIMPLIFY, MS_TOKEN_FUNCTION_SIMPLIFYPT, MS_TOKEN_FUNCTION_GENERALIZE, MS_TOKEN_FUNCTION_SMOOTHSIA
+    MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE, MS_TOKEN_FUNCTION_SIMPLIFY, MS_TOKEN_FUNCTION_SIMPLIFYPT, MS_TOKEN_FUNCTION_GENERALIZE, MS_TOKEN_FUNCTION_SMOOTHSIA, MS_TOKEN_FUNCTION_JAVASCRIPT
   };
   enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=360, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE, MS_TOKEN_BINDING_MAP_CELLSIZE, MS_TOKEN_BINDING_DATA_CELLSIZE };
   enum MS_PARSE_TYPE_ENUM { MS_PARSE_TYPE_BOOLEAN, MS_PARSE_TYPE_STRING, MS_PARSE_TYPE_SHAPE };
@@ -1825,7 +1825,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     queryObj query;
 #endif
 
-#ifdef USE_V8
+#ifdef USE_V8_MAPSCRIPT
     void *v8context;
 #endif
   };
@@ -2792,11 +2792,14 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* ==================================================================== */
   /*      prototypes for functions in mapv8.cpp                           */
   /* ==================================================================== */
-#ifdef USE_V8
+#ifdef USE_V8_MAPSCRIPT
+  MS_DLL_EXPORT void msV8CreateContext(mapObj *map);
+  MS_DLL_EXPORT void msV8ContextSetLayer(mapObj *map, layerObj *layer);
+  MS_DLL_EXPORT void msV8FreeContext(mapObj *map);
   MS_DLL_EXPORT char* msV8GetFeatureStyle(mapObj *map, const char *filename,
                                           layerObj *layer, shapeObj *shape);
-  MS_DLL_EXPORT void msV8CreateContext(mapObj *map);
-  MS_DLL_EXPORT void msV8FreeContext(mapObj *map);
+  MS_DLL_EXPORT shapeObj *msV8TransformShape(shapeObj *shape,
+                                             const char* filename);  
 #endif
   /* ==================================================================== */
   /*      end of prototypes for functions in mapv8.cpp                    */
