@@ -2113,6 +2113,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char *msIntToString(int value);
   MS_DLL_EXPORT void msStringToUpper(char *string);
   MS_DLL_EXPORT void msStringToLower(char *string);
+  MS_DLL_EXPORT void msStringInitCap(char *string);
+  MS_DLL_EXPORT void msStringFirstCap(char *string);
   MS_DLL_EXPORT int msEncodeChar(const char);
   MS_DLL_EXPORT char *msEncodeUrlExcept(const char*, const char);
   MS_DLL_EXPORT char *msEncodeUrl(const char*);

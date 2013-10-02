@@ -414,6 +414,10 @@ void msStringToLower(char *string)
   }
 }
 
+/**
+ * Force the first character to uppercase and the rest of the characters to
+ * lower case for EACH word in the string.
+ */
 void msStringInitCap(char *string)
 {
   int i;
@@ -433,6 +437,10 @@ void msStringInitCap(char *string)
   }
 }
 
+/**
+ * Force the first character to uppercase for the FIRST word in the string
+ * and the rest of the characters to lower case.
+ */
 void msStringFirstCap(char *string)
 {
   int i;
