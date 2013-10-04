@@ -338,7 +338,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   double map_cellsize;
   unsigned int spacing;
   int width, height, u_src_off, v_src_off, i, x, y;
-  char   **alteredProcessing = NULL;
+  char   **alteredProcessing = NULL, *saved_layer_mask;
   char **savedProcessing = NULL;
 
   /*
@@ -446,10 +446,20 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     layer->processing = alteredProcessing;
   }
 
+  /* disable masking at this level: we don't want to apply the mask at the raster level,
+   * it will be applied with the correct cellsize and image size in the vector rendering
+   * phase.
+   */
+  saved_layer_mask = layer->mask;
+  layer->mask = NULL;
   if (msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL ) == MS_FAILURE) {
     msSetError(MS_MISCERR, "Unable to draw raster data.", "msUVRASTERLayerWhichShapes()");
+    layer->mask = saved_layer_mask;
     return MS_FAILURE;
   }
+
+  /* restore layer mask */
+  layer->mask = saved_layer_mask;
 
   /* restore the saved processing */
   if (alteredProcessing != NULL) {
