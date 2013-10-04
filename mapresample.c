@@ -1253,12 +1253,19 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     resampleMode = "NEAREST";
   
   if(layer->mask) {
-    int ret;
-    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    int ret, maskLayerIdx;
+    maskLayerIdx = msGetLayerIndex(map,layer->mask);
+    if(maskLayerIdx == -1) {
+      msSetError(MS_MISCERR, "Invalid mask layer specified", "msResampleGDALToMap()");
+      return -1;
+    }
+    layerObj *maskLayer = GET_LAYER(map, maskLayerIdx);
     mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
     ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
-    if(ret != MS_SUCCESS)
+    if(ret != MS_SUCCESS) {
+      free(mask_rb);
       return -1;
+    }
   }
 
   /* -------------------------------------------------------------------- */
