@@ -1593,16 +1593,15 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
       labelObj *label = layer->class[c]->labels[l];
       textSymbolObj ts;
       char *annotext;
+      if(!msGetLabelStatus(map,layer,shape,label)) {
+        continue;
+      }
+
       annotext = msShapeGetLabelAnnotation(layer,anno_shape,label);
       if(!annotext) continue;
       initTextSymbol(&ts);
       msPopulateTextSymbolForLabelAndString(&ts,label,annotext,layer->scalefactor,image->resolutionfactor, layer->labelcache);
       
-      if(!msGetLabelStatus(map,layer,shape,label)) {
-        freeTextSymbol(&ts);
-        free(annotext);
-        continue;
-      }
       
       if (label->anglemode == MS_ANGLEMODE_FOLLOW) { /* bug #1620 implementation */
         struct label_follow_result lfr;
