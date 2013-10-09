@@ -666,7 +666,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
   int tileitemindex=-1, tilelayerindex=-1;
   shapeObj tshp;
   char tilename[MS_PATH_LENGTH];
-  int  done;
+  int  done, destroy_on_failure;
 
   char szPath[MS_MAXPATHLEN];
   rectObj searchrect;
@@ -677,7 +677,12 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
   /* -------------------------------------------------------------------- */
   /*      Get the layer info.                                             */
   /* -------------------------------------------------------------------- */
-  msRasterLayerInfoInitialize( layer );
+  if(!layer->layerinfo) {
+    msRasterLayerInfoInitialize( layer );
+    destroy_on_failure = 1;
+  } else {
+    destroy_on_failure = 0;
+  }
   rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
   /* -------------------------------------------------------------------- */
@@ -956,12 +961,14 @@ cleanup:
   /*      On failure, or empty result set, cleanup the rlinfo since we    */
   /*      likely won't ever have it accessed or cleaned up later.         */
   /* -------------------------------------------------------------------- */
-  if( status == MS_FAILURE || rlinfo->query_results == 0 )
-    msRasterLayerInfoFree( layer );
-
-  /* populate the items/numitems layer-level values */
-  if( layer->layerinfo != NULL )
+  if( status == MS_FAILURE || rlinfo->query_results == 0 ) {
+    if(destroy_on_failure) {
+      msRasterLayerInfoFree( layer );
+    }
+  } else {
+    /* populate the items/numitems layer-level values */
     msRASTERLayerGetItems(layer);
+  }
 
   return status;
 #endif /* def USE_GDAL */
