@@ -892,26 +892,26 @@ endif(WIN32)
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)
-   INSTALL(TARGETS msplugin_oracle DESTINATION lib)
+   INSTALL(TARGETS msplugin_oracle DESTINATION ${LIB_INSTALL_DIR})
 endif(USE_ORACLE_PLUGIN)
 
 if(USE_MSSQL2008)
-   INSTALL(TARGETS msplugin_mssql2008 DESTINATION lib)
+   INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${LIB_INSTALL_DIR})
 endif(USE_MSSQL2008)
 
 if(USE_SDE91)
-   INSTALL(TARGETS msplugin_sde91 DESTINATION lib)
+   INSTALL(TARGETS msplugin_sde91 DESTINATION ${LIB_INSTALL_DIR})
 endif(USE_SDE91)
 
 if(USE_SDE92)
-   INSTALL(TARGETS msplugin_sde92 DESTINATION lib)
+   INSTALL(TARGETS msplugin_sde92 DESTINATION ${LIB_INSTALL_DIR})
 endif(USE_SDE92)
 
-INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
+INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv RUNTIME DESTINATION bin LIBRARY DESTINATION ${LIB_INSTALL_DIR})
 if(BUILD_STATIC)
-   INSTALL(TARGETS mapserver_static DESTINATION lib)
+   INSTALL(TARGETS mapserver_static DESTINATION ${LIB_INSTALL_DIR})
 endif(BUILD_STATIC)
 if(BUILD_DYNAMIC)
-   INSTALL(TARGETS mapserver DESTINATION lib)
+   INSTALL(TARGETS mapserver DESTINATION ${LIB_INSTALL_DIR})
 endif(BUILD_DYNAMIC)
 
