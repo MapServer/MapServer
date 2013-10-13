@@ -6,6 +6,8 @@ include(CheckLibraryExists)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
+include(GNUInstallDirs)
+
 
 
 
@@ -870,23 +872,23 @@ endif(WIN32)
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)
-   INSTALL(TARGETS msplugin_oracle DESTINATION lib)
+   INSTALL(TARGETS msplugin_oracle DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_ORACLE_PLUGIN)
 
 if(USE_MSSQL2008)
-   INSTALL(TARGETS msplugin_mssql2008 DESTINATION lib)
+   INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_MSSQL2008)
 
 if(USE_SDE91)
-   INSTALL(TARGETS msplugin_sde91 DESTINATION lib)
+   INSTALL(TARGETS msplugin_sde91 DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_SDE91)
 
 if(USE_SDE92)
-   INSTALL(TARGETS msplugin_sde92 DESTINATION lib)
+   INSTALL(TARGETS msplugin_sde92 DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_SDE92)
 
-INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv mapserver RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
+INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv mapserver RUNTIME DESTINATION bin LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 if(BUILD_STATIC)
-   INSTALL(TARGETS mapserver_static DESTINATION lib)
+   INSTALL(TARGETS mapserver_static DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(BUILD_STATIC)
 
