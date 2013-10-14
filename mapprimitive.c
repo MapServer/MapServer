@@ -1681,9 +1681,9 @@ int msLineLabelPoint(mapObj *map, lineObj *p, textSymbolObj *ts, struct line_len
       }
 
       if(label && ts) {
-        if(label->anglemode != MS_ANGLEMODE_NONE) {
+        if(label->anglemode != MS_NONE) {
           theta = atan2(p->point[j].x - p->point[j-1].x, p->point[j].y - p->point[j-1].y);
-          if(label->anglemode == MS_ANGLEMODE_AUTO2) {
+          if(label->anglemode == MS_AUTO2) {
             theta -= MS_PI2;
           } else { /* AUTO, FOLLOW */
             if(p->point[j-1].x < p->point[j].x) { /* i.e. to the left */

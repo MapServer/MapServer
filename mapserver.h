@@ -482,9 +482,7 @@ extern "C" {
   enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 
 #define MS_POSITIONS_LENGTH 14
-  enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* Added MS_FOLLOW for bug #1620 implementation. */
-
-  enum MS_LABEL_ANGLEMODE{MS_ANGLEMODE_NONE,MS_ANGLEMODE_AUTO,MS_ANGLEMODE_AUTO2,MS_ANGLEMODE_FOLLOW};
+  enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_NONE, MS_AUTO2,MS_FOLLOW};
 #define MS_TINY 5
 #define MS_SMALL 7
 #define MS_MEDIUM 10
@@ -1021,7 +1019,7 @@ extern "C" {
     int offsetx, offsety;
 
     double angle;
-    enum MS_LABEL_ANGLEMODE anglemode;
+    enum MS_POSITIONS_ENUM anglemode;
 
     int buffer; /* space to reserve around a label */
 

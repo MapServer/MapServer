@@ -1603,7 +1603,7 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
       msPopulateTextSymbolForLabelAndString(&ts,label,annotext,layer->scalefactor,image->resolutionfactor, layer->labelcache);
       
       
-      if (label->anglemode == MS_ANGLEMODE_FOLLOW) { /* bug #1620 implementation */
+      if (label->anglemode == MS_FOLLOW) { /* bug #1620 implementation */
         struct label_follow_result lfr;
         
         if (!layer->labelcache) {
@@ -2813,7 +2813,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
                 }
                 
                 /* apply offset and buffer settings */
-                if(textSymbolPtr->label->anglemode != MS_ANGLEMODE_FOLLOW) {
+                if(textSymbolPtr->label->anglemode != MS_FOLLOW) {
                   label_offset_x = textSymbolPtr->label->offsetx * textSymbolPtr->scalefactor;
                   label_offset_y = textSymbolPtr->label->offsety * textSymbolPtr-> scalefactor;
                 } else {
