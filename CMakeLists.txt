@@ -6,9 +6,6 @@ include(CheckLibraryExists)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
-include(GNUInstallDirs)
-
-
 
 
 set (MapServer_VERSION_MAJOR 6)
@@ -144,7 +141,33 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wdeclaration-after-statement")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+  set(_LIBDIR_DEFAULT "lib")
+  # Override this default 'lib' with 'lib64' iff:
+  #  - we are on Linux system but NOT cross-compiling
+  #  - we are NOT on debian
+  #  - we are on a 64 bits system
+  # reason is: amd64 ABI: http://www.x86-64.org/documentation/abi.pdf
+  # Note that the future of multi-arch handling may be even
+  # more complicated than that: http://wiki.debian.org/Multiarch
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux"
+      AND NOT CMAKE_CROSSCOMPILING
+      AND NOT EXISTS "/etc/debian_version")
+    if(NOT DEFINED CMAKE_SIZEOF_VOID_P)
+      message(AUTHOR_WARNING
+        "Unable to determine default CMAKE_INSTALL_LIBDIR directory because no target architecture is known. "
+        "Please enable at least one language before including GNUInstallDirs.")
+    else()
+      if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+        set(_LIBDIR_DEFAULT "lib64")
+      endif()
+    endif()
+  endif()
+  set(CMAKE_INSTALL_LIBDIR "${_LIBDIR_DEFAULT}" CACHE PATH "object code libraries (${_LIBDIR_DEFAULT})")
+endif()
+
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 SET(CMAKE_MACOSX_RPATH ON)
 
@@ -860,6 +883,7 @@ status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
 message(STATUS "")
 message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "Will install libraries to ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 
 include_directories("${PROJECT_BINARY_DIR}")
