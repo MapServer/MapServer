@@ -2,6 +2,13 @@ cmake_minimum_required (VERSION 2.6)
 
 project (MapServer)
 
+if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+      message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:
+   mkdir build; cd build; cmake ..
+Before that, remove the files created by this failed run:
+   rm -rf CMakeCache.txt CMakeFiles")
+endif("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+
 include(CheckLibraryExists)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
