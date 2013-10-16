@@ -121,6 +121,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   }
 
   /* initialize the box used for polygons and for outlines */
+  msInitShape(&box);
   box.line = &box_line;
   box.numlines = 1;
   box.line[0].point = box_point;
@@ -196,6 +197,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
         else
             offset = theclass->styles[0]->width/2;
       }
+      msInitShape(&zigzag);
       zigzag.line = &zigzag_line;
       zigzag.numlines = 1;
       zigzag.line[0].point = zigzag_point;
