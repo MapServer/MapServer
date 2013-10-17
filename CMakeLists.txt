@@ -136,6 +136,7 @@ option(WITH_SDE_PLUGIN "include ArcSDE support as a plugin (must specify SDE_INC
 option(WITH_SDE "include ArcSDE support. Add -DSDE_VERSION=91 to use 9.1 arcSDE version" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
+option(WITH_V8 "include javacript v8 scripting" OFF)
 
 option(BUILD_STATIC "Also build a static version of mapserver" OFF)
 option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
