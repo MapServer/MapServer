@@ -807,11 +807,20 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   image = (imageObj *) calloc(1, sizeof (imageObj));
   MS_CHECK_ALLOC(image, sizeof (imageObj), NULL);
   AGG2Renderer *r = new AGG2Renderer();
+  
+  /* Compute size on 64bit and check that it is compatible of the platform size_t */
+  AGG_INT64U bufSize64 = (AGG_INT64U)width * height * 4 * sizeof(band_type);
+  size_t bufSize = (size_t)bufSize64;
+  if( (AGG_INT64U)bufSize != bufSize64 ) {
+    msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
+               __FILE__, __LINE__, bufSize64);
+    return NULL;
+  }
 
-  r->buffer = (band_type*)malloc(width * height * 4 * sizeof(band_type));
+  r->buffer = (band_type*)malloc(bufSize);
   if (r->buffer == NULL) {
-    msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "agg2CreateImage()",
-               __FILE__, __LINE__, (unsigned int)(width * height * 4 * sizeof(band_type)));
+    msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
+               __FILE__, __LINE__, bufSize64);
     free(image);
     return NULL;
   }
