@@ -2669,7 +2669,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 
   /*set the angle by default to auto. the angle can be
     modified Label Placement #2806*/
-  psLabelObj->anglemode = MS_ANGLEMODE_AUTO;
+  psLabelObj->anglemode = MS_AUTO;
 
 
   /* label  */
@@ -3014,13 +3014,13 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
   /*if there is a line placement, we will assume that the
     best setting for mapserver would be for the text to follow
     the line #2806*/
-  psLabelObj->anglemode = MS_ANGLEMODE_FOLLOW;
+  psLabelObj->anglemode = MS_FOLLOW;
 
   /*sld 1.1.0 has a parameter IsAligned. default value is true*/
   psAligned = CPLGetXMLNode(psRoot, "IsAligned");
   if (psAligned && psAligned->psChild && psAligned->psChild->pszValue &&
       strcasecmp(psAligned->psChild->pszValue, "false") == 0) {
-    psLabelObj->anglemode = MS_ANGLEMODE_NONE;
+    psLabelObj->anglemode = MS_NONE;
   }
   psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
   if (psOffset && psOffset->psChild && psOffset->psChild->pszValue) {
@@ -3033,7 +3033,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
     /* since sld 1.1.0 introduces the IsAligned parameter, only
        set the angles if the parameter is not set*/
     if (!psAligned) {
-      psLabelObj->anglemode = MS_ANGLEMODE_NONE;
+      psLabelObj->anglemode = MS_NONE;
     }
   }
 

@@ -121,6 +121,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   }
 
   /* initialize the box used for polygons and for outlines */
+  msInitShape(&box);
   box.line = &box_line;
   box.numlines = 1;
   box.line[0].point = box_point;
@@ -196,6 +197,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
         else
             offset = theclass->styles[0]->width/2;
       }
+      msInitShape(&zigzag);
       zigzag.line = &zigzag_line;
       zigzag.numlines = 1;
       zigzag.line[0].point = zigzag_point;
@@ -491,7 +493,7 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
     for(j=lp->numclasses-1; j>=0; j--) {
       textSymbolObj ts;
       text = lp->class[j]->title?lp->class[j]->title:lp->class[j]->name; /* point to the right legend text, title takes precedence */
-      if(!text || !*text) continue; /* skip it */
+      if(!text) continue; /* skip it */
 
       /* skip the class if the classgroup is defined */
       if(lp->classgroup && (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
@@ -504,16 +506,20 @@ int msLegendCalcSize(mapObj *map, int scale_independent, int *size_x, int *size_
       }
       if(hittest && hittest->layerhits[layerindex].classhits[j].status == 0) continue;
 
-      initTextSymbol(&ts);
-      msPopulateTextSymbolForLabelAndString(&ts,&map->legend.label,msStrdup(text),lp->scalefactor*resolutionfactor,resolutionfactor, 0);
-      if(UNLIKELY(MS_FAILURE == msGetTextSymbolSize(map,&ts,&rect))) {
+      if(*text) {
+        initTextSymbol(&ts);
+        msPopulateTextSymbolForLabelAndString(&ts,&map->legend.label,msStrdup(text),lp->scalefactor*resolutionfactor,resolutionfactor, 0);
+        if(UNLIKELY(MS_FAILURE == msGetTextSymbolSize(map,&ts,&rect))) {
+          freeTextSymbol(&ts);
+          return MS_FAILURE;
+        }
         freeTextSymbol(&ts);
-        return MS_FAILURE;
-      }
-      freeTextSymbol(&ts);
 
-      maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
-      *size_y += MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
+        maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
+        *size_y += MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
+      } else {
+        *size_y += map->legend.keysizey;
+      }
       nLegendItems++;
     }
   }
@@ -594,12 +600,12 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     /* set the scale factor so that scale dependant symbols are drawn in the legend with their default size */
     if(lp->sizeunits != MS_PIXELS) {
       map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-      lp->scalefactor = (msInchesPerUnit(map->layers[cur->layerindex]->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
+      lp->scalefactor = (msInchesPerUnit(lp->sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
     }
 
     for(j=lp->numclasses-1; j>=0; j--) {
       text = lp->class[j]->title?lp->class[j]->title:lp->class[j]->name; /* point to the right legend text, title takes precedence */
-      if(!text || !*text) continue; /* skip it */
+      if(!text) continue; /* skip it */
 
       /* skip the class if the classgroup is defined */
       if(lp->classgroup && (lp->class[j]->group == NULL || strcasecmp(lp->class[j]->group, lp->classgroup) != 0))
@@ -616,20 +622,24 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
 
       cur = (legendlabel*) msSmallMalloc(sizeof(legendlabel));
       initTextSymbol(&cur->ts);
-      msPopulateTextSymbolForLabelAndString(&cur->ts,&map->legend.label,msStrdup(text),lp->scalefactor*map->resolution/map->defresolution,map->resolution/map->defresolution, 0);
-      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,&cur->ts))) {
-        ret = MS_FAILURE;
-        goto cleanup;
-      }
-      if(UNLIKELY(MS_FAILURE == msGetTextSymbolSize(map,&cur->ts,&rect))) {
-        ret = MS_FAILURE;
-        goto cleanup;
+      if(*text) {
+        msPopulateTextSymbolForLabelAndString(&cur->ts,&map->legend.label,msStrdup(text),lp->scalefactor*map->resolution/map->defresolution,map->resolution/map->defresolution, 0);
+        if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,&cur->ts))) {
+          ret = MS_FAILURE;
+          goto cleanup;
+        }
+        if(UNLIKELY(MS_FAILURE == msGetTextSymbolSize(map,&cur->ts,&rect))) {
+          ret = MS_FAILURE;
+          goto cleanup;
+        }
+        cur->height = MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
+      } else {
+        cur->height = map->legend.keysizey;
       }
 
       cur->classindex = j;
       cur->layerindex = i;
       cur->pred = head;
-      cur->height = MS_MAX(MS_NINT(rect.maxy - rect.miny), map->legend.keysizey);
       head = cur;
     }
   }
@@ -668,16 +678,20 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     if(msDrawLegendIcon(map, map->layers[cur->layerindex], map->layers[cur->layerindex]->class[cur->classindex],  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y, scale_independent, ch) != MS_SUCCESS)
       return NULL;
 
-    pnt.y += cur->height - cur->ts.textpath->bounds.bbox.maxy;
+    pnt.y += cur->height;
+
+    if(cur->ts.annotext) {
+      pnt.y -= cur->ts.textpath->bounds.bbox.maxy;
+      ret = msDrawTextSymbol(map,image,pnt,&cur->ts);
+      if(UNLIKELY(ret == MS_FAILURE))
+        goto cleanup;
+      pnt.y += cur->ts.textpath->bounds.bbox.maxy;
+      freeTextSymbol(&cur->ts);
+    }
     
-    ret = msDrawTextSymbol(map,image,pnt,&cur->ts);
-    if(UNLIKELY(ret == MS_FAILURE))
-      goto cleanup;
-    
-    pnt.y += map->legend.keyspacingy + cur->ts.textpath->bounds.bbox.maxy; /* bump y for next label */
+    pnt.y += map->legend.keyspacingy; /* bump y for next label */
 
     /* clean up */
-    freeTextSymbol(&cur->ts);
     head = cur;
     cur = cur->pred;
     free(head);

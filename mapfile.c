@@ -1715,7 +1715,7 @@ void initLabel(labelObj *label)
 
   label->position = MS_CC;
   label->angle = 0;
-  label->anglemode = MS_ANGLEMODE_NONE;
+  label->anglemode = MS_NONE;
   label->minsize = MS_MINFONTSIZE;
   label->maxsize = MS_MAXFONTSIZE;
   label->buffer = 0;
@@ -1844,7 +1844,7 @@ static int loadLabel(labelObj *label)
   for(;;) {
     switch(msyylex()) {
       case(ANGLE):
-        if((symbol = getSymbol(5, MS_NUMBER,MS_AUTO,MS_ANGLEMODE_AUTO2,MS_ANGLEMODE_FOLLOW,MS_BINDING)) == -1)
+        if((symbol = getSymbol(5, MS_NUMBER,MS_AUTO,MS_AUTO2,MS_FOLLOW,MS_BINDING)) == -1)
           return(-1);
 
         if(symbol == MS_NUMBER)
@@ -1854,8 +1854,6 @@ static int loadLabel(labelObj *label)
             msFree(label->bindings[MS_LABEL_BINDING_ANGLE].item);
           label->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(msyystring_buffer);
           label->numbindings++;
-        } else if ( symbol == MS_AUTO ) {
-          label->anglemode = MS_ANGLEMODE_AUTO;
         } else {
           label->anglemode = symbol;
         }
@@ -2139,7 +2137,7 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
     writeAttributeBinding(stream, indent, "ANGLE", &(label->bindings[MS_LABEL_BINDING_ANGLE]));
-  else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_ANGLEMODE_FOLLOW, "FOLLOW", MS_ANGLEMODE_AUTO, "AUTO", MS_ANGLEMODE_AUTO2, "AUTO2");
+  else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_FOLLOW, "FOLLOW", MS_AUTO, "AUTO", MS_AUTO2, "AUTO2");
 
   writeExpression(stream, indent, "EXPRESSION", &(label->expression));
 
