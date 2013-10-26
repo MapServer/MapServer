@@ -94,9 +94,10 @@ int msWFSException11(mapObj *map, const char *locator,
 
 
 /************************************************************************/
-/*                             msWFSDumpLayer11                         */
+/*                            msWFSDumpLayer11                          */
 /************************************************************************/
-static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
+xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
+                            int nWFSVersion)
 {
   rectObj ext;
 
@@ -155,9 +156,17 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   if (valueToFree) {
     tokens = msStringSplit(valueToFree, ' ', &n);
     if (tokens && n > 0) {
-      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
+      if( nWFSVersion == OWS_1_1_0 )
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
+      else
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultCRS", BAD_CAST tokens[0]);
       for (i=1; i<n; i++)
-        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]);
+      {
+        if( nWFSVersion == OWS_1_1_0 )
+          psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]);
+        else
+          psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherCRS", BAD_CAST tokens[i]);
+      }
 
       msFreeCharArray(tokens, n);
     }
@@ -173,7 +182,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   xmlAddChild(psRootNode, psNode);
 
   {
-    char *formats_list = msWFSGetOutputFormatList( map, lp, "1.1.0" );
+    char *formats_list = msWFSGetOutputFormatList( map, lp, nWFSVersion );
     int iformat, n;
     char **tokens;
 
@@ -254,24 +263,14 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   msIOContext *context = NULL;
 
   int ows_version = OWS_1_0_0;
+  int ret;
 
   /* -------------------------------------------------------------------- */
   /*      Handle updatesequence                                           */
   /* -------------------------------------------------------------------- */
-
-  updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
-
-  if (params->pszUpdateSequence != NULL) {
-    i = msOWSNegotiateUpdateSequence(params->pszUpdateSequence, updatesequence);
-    if (i == 0) { /* current */
-      msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWFSGetCapabilities11()", params->pszUpdateSequence, updatesequence);
-      return msWFSException11(map, "updatesequence", "CurrentUpdateSequence", params->pszVersion);
-    }
-    if (i > 0) { /* invalid */
-      msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWFSGetCapabilities11()", params->pszUpdateSequence, updatesequence);
-      return msWFSException11(map, "updatesequence", "InvalidUpdateSequence", params->pszVersion);
-    }
-  }
+  ret = msWFSHandleUpdateSequence(map, params, "msWFSGetCapabilities11()");
+  if( ret != MS_SUCCESS )
+      return ret;
 
   /* -------------------------------------------------------------------- */
   /*      Create document.                                                */
@@ -402,7 +401,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
                 "Parameter", "resultType",
                 "results,hits"));
 
-    formats_list = msWFSGetOutputFormatList( map, NULL, "1.1.0" );
+    formats_list = msWFSGetOutputFormatList( map, NULL, OWS_1_1_0 );
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
                 "Parameter", "outputFormat",
                 formats_list));
@@ -435,7 +434,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
     /* List only vector layers in which DUMP=TRUE */
     if (msWFSIsLayerSupported(lp))
-      xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws));
+      xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_1_1_0));
   }
 
 

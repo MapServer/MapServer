@@ -635,11 +635,65 @@ int msOWSSchemaValidation(const char* xml_schema, const char* xml)
   schema = NULL;
   ret = -1;
 
-  /* Open XML Schema File */
-  ctxt = xmlSchemaNewParserCtxt(xml_schema);
-  /*
-  else ctxt = xmlSchemaNewMemParserCtxt(xml_schema);
-  */
+  /* To valide WFS 2.0 requests, we might need to explicitely import */
+  /* GML and FES 2.0 */
+  if( strlen(xml_schema) > strlen(MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION) &&
+      strcmp(xml_schema + strlen(xml_schema) -
+            strlen(MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION), MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION) == 0 )
+  {
+    char szInMemSchema[2048];
+    char szBaseLocation[256];
+
+    strncpy(szBaseLocation, xml_schema, strlen(xml_schema) - strlen(MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION));
+    szBaseLocation[strlen(xml_schema) - strlen(MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION)] = '\0';
+
+    strcpy(szInMemSchema, "<schema elementFormDefault=\"qualified\" version=\"1.0.0\" "
+                          "xmlns=\"http://www.w3.org/2001/XMLSchema\">\n");
+
+    sprintf(szInMemSchema + strlen(szInMemSchema),
+            "<import namespace=\"%s\" schemaLocation=\"%s\" />\n",
+            MS_OWSCOMMON_WFS_20_NAMESPACE_URI, xml_schema);
+
+    if( strstr(xml, MS_OWSCOMMON_FES_20_NAMESPACE_URI) != NULL )
+    {
+        sprintf(szInMemSchema + strlen(szInMemSchema),
+                "<import namespace=\"%s\" schemaLocation=\"%s%s\" />\n",
+                MS_OWSCOMMON_FES_20_NAMESPACE_URI, szBaseLocation, MS_OWSCOMMON_FES_20_SCHEMA_LOCATION);
+    }
+
+    if( strstr(xml, MS_OWSCOMMON_GML_32_NAMESPACE_URI) != NULL )
+    {
+        sprintf(szInMemSchema + strlen(szInMemSchema),
+                "<import namespace=\"%s\" schemaLocation=\"%s%s\" />\n",
+                MS_OWSCOMMON_GML_32_NAMESPACE_URI, szBaseLocation, MS_OWSCOMMON_GML_321_SCHEMA_LOCATION);
+    }
+    else if( strstr(xml, MS_OWSCOMMON_GML_NAMESPACE_URI) != NULL )
+    {
+        if( strstr(xml, MS_OWSCOMMON_GML_212_SCHEMA_LOCATION) != NULL )
+        {
+            sprintf(szInMemSchema + strlen(szInMemSchema),
+                    "<import namespace=\"%s\" schemaLocation=\"%s%s\" />\n",
+                    MS_OWSCOMMON_GML_NAMESPACE_URI, szBaseLocation, MS_OWSCOMMON_GML_212_SCHEMA_LOCATION);
+        }
+        else if( strstr(xml, MS_OWSCOMMON_GML_311_SCHEMA_LOCATION) != NULL )
+        {
+            sprintf(szInMemSchema + strlen(szInMemSchema),
+                    "<import namespace=\"%s\" schemaLocation=\"%s%s\" />\n",
+                    MS_OWSCOMMON_GML_NAMESPACE_URI, szBaseLocation, MS_OWSCOMMON_GML_311_SCHEMA_LOCATION);
+        }
+    }
+
+    strcat(szInMemSchema, "</schema>\n");
+    /*fprintf(stderr, "%s\n", szInMemSchema);*/
+
+    ctxt = xmlSchemaNewMemParserCtxt(szInMemSchema, strlen(szInMemSchema));
+  }
+  else
+  {
+    /* Open XML Schema File */
+    ctxt = xmlSchemaNewParserCtxt(xml_schema);
+  }
+
   /*
   xmlSchemaSetParserErrors(ctxt,
                            (xmlSchemaValidityErrorFunc) libxml2_callback,
@@ -695,7 +749,7 @@ int msOWSSchemaValidation(const char* xml_schema, const char* xml)
  *
  */
 
-int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions)
+int msOWSCommonNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions)
 {
   int i;
 

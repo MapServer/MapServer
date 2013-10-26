@@ -931,6 +931,50 @@ FilterEncodingNode *FLTCreateBinaryCompFilterEncodingNode(void)
   return psFilterNode;
 }
 
+
+/************************************************************************/
+/*                           FLTFindGeometryNode                        */
+/*                                                                      */
+/************************************************************************/
+
+static CPLXMLNode* FLTFindGeometryNode(CPLXMLNode* psXMLNode,
+                                       int* pbPoint,
+                                       int* pbLine,
+                                       int* pbPolygon)
+{
+    CPLXMLNode *psGMLElement = NULL;
+
+    psGMLElement = CPLGetXMLNode(psXMLNode, "Point");
+    if (!psGMLElement)
+        psGMLElement =  CPLGetXMLNode(psXMLNode, "PointType");
+    if (psGMLElement)
+        *pbPoint =1;
+    else {
+      psGMLElement= CPLGetXMLNode(psXMLNode, "Polygon");
+      if (psGMLElement)
+        *pbPolygon = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPolygon")))
+        *pbPolygon = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Surface")))
+        *pbPolygon = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
+        *pbPolygon = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
+        *pbPolygon = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
+        *pbLine = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiLineString")))
+        *pbLine = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Curve")))
+        *pbLine = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiCurve")))
+        *pbLine = 1;
+      else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPoint")))
+        *pbPoint = 1;
+    }
+    return psGMLElement;
+}
+
 /************************************************************************/
 /*                           FLTInsertElementInNode                     */
 /*                                                                      */
@@ -1100,6 +1144,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         int bCoordinatesValid = 0;
 
         psPropertyName = CPLGetXMLNode(psXMLNode, "PropertyName");
+        if( psPropertyName == NULL )
+            psPropertyName = CPLGetXMLNode(psXMLNode, "ValueReference");
         psBox = CPLGetXMLNode(psXMLNode, "Box");
         if (!psBox)
           psBox = CPLGetXMLNode(psXMLNode, "BoxType");
@@ -1148,30 +1194,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         char *pszUnits = NULL;
         char *pszSRS = NULL;
 
-
         CPLXMLNode *psGMLElement = NULL, *psDistance=NULL;
 
-
-        psGMLElement = CPLGetXMLNode(psXMLNode, "Point");
-        if (!psGMLElement)
-          psGMLElement =  CPLGetXMLNode(psXMLNode, "PointType");
-        if (psGMLElement)
-          bPoint =1;
-        else {
-          psGMLElement= CPLGetXMLNode(psXMLNode, "Polygon");
-          if (psGMLElement)
-            bPolygon = 1;
-          else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPolygon")))
-            bPolygon = 1;
-          else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
-            bPolygon = 1;
-          else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
-            bPolygon = 1;
-          else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
-            bLine = 1;
-          else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPoint")))
-            bPoint = 1;
-        }
+        psGMLElement = FLTFindGeometryNode(psXMLNode, &bPoint, &bLine, &bPolygon);
 
         psDistance = CPLGetXMLNode(psXMLNode, "Distance");
         if (psGMLElement && psDistance && psDistance->psChild &&
@@ -1227,24 +1252,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
         CPLXMLNode *psGMLElement = NULL;
 
-
-        psGMLElement = CPLGetXMLNode(psXMLNode, "Polygon");
-        if (psGMLElement)
-          bPolygon = 1;
-        else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPolygon")))
-          bPolygon = 1;
-        else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiSurface")))
-          bPolygon = 1;
-        else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "Box")))
-          bPolygon = 1;
-        else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "LineString")))
-          bLine = 1;
-        else if ((psGMLElement= CPLGetXMLNode(psXMLNode, "MultiPoint")))
-          bPoint = 1;
-        else if ((psGMLElement = CPLGetXMLNode(psXMLNode, "Point")))
-          bPoint = 1;
-        else if ((psGMLElement = CPLGetXMLNode(psXMLNode, "PointType")))
-          bPoint = 1;
+        psGMLElement = FLTFindGeometryNode(psXMLNode, &bPoint, &bLine, &bPolygon);
 
         if (psGMLElement) {
           psShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
@@ -1542,6 +1550,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     /*      Note that for FES1.1.0 the featureid has been depricated in     */
     /*      favor of GmlObjectId                                            */
     /*      <GmlObjectId gml:id="TREESA_1M.1234"/>                          */
+    /*                                                                      */
+    /*      And in FES 2.0, in favor of <fes:ResourceId rid="foo.1234"/>    */
     /* -------------------------------------------------------------------- */
     else if (FLTIsFeatureIdFilterType(psXMLNode->pszValue)) {
       psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
@@ -1549,6 +1559,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       /*for FE 1.1.0 GmlObjectId */
       if (pszFeatureId == NULL)
         pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "id", NULL);
+      /*for FE 2.0 ResourceId */
+      if (pszFeatureId == NULL)
+        pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "rid", NULL);
       pszFeatureIdList = NULL;
 
       psFeatureIdNode = psXMLNode;
@@ -1556,6 +1569,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "fid", NULL);
         if (!pszFeatureId)
           pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "id", NULL);
+        if (!pszFeatureId)
+          pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "rid", NULL);
 
         if (pszFeatureId) {
           if (pszFeatureIdList)
@@ -1650,7 +1665,8 @@ int FLTIsComparisonFilterType(char *pszValue)
 int FLTIsFeatureIdFilterType(char *pszValue)
 {
   if (pszValue && (strcasecmp(pszValue, "FeatureId") == 0 ||
-                   strcasecmp(pszValue, "GmlObjectId") == 0))
+                   strcasecmp(pszValue, "GmlObjectId") == 0 ||
+                   strcasecmp(pszValue, "ResourceId") == 0))
 
     return MS_TRUE;
 

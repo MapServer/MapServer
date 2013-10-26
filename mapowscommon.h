@@ -79,8 +79,31 @@
 
 /* GML namespaces */
 
-#define MS_OWSCOMMON_GML_32_NAMESPACE_URI   "http://www.opengis.net/gml/3.2"
+#define MS_OWSCOMMON_GML_NAMESPACE_URI      "http://www.opengis.net/gml"
 #define MS_OWSCOMMON_GML_NAMESPACE_PREFIX   "gml"
+
+#define MS_OWSCOMMON_GML_32_NAMESPACE_URI   "http://www.opengis.net/gml/3.2"
+
+#define MS_OWSCOMMON_GML_212_SCHEMA_LOCATION       "/gml/2.1.2/feature.xsd"
+#define MS_OWSCOMMON_GML_311_SCHEMA_LOCATION       "/gml/3.1.1/base/gml.xsd"
+#define MS_OWSCOMMON_GML_321_SCHEMA_LOCATION       "/gml/3.2.1/gml.xsd"
+
+/* WFS namespaces */
+
+#define MS_OWSCOMMON_WFS_NAMESPACE_PREFIX          "wfs"
+#define MS_OWSCOMMON_WFS_NAMESPACE_URI             "http://www.opengis.net/wfs"
+#define MS_OWSCOMMON_WFS_20_NAMESPACE_URI          "http://www.opengis.net/wfs/2.0"
+
+#define MS_OWSCOMMON_WFS_10_SCHEMA_LOCATION        "/wfs/1.0.0/WFS-basic.xsd"
+#define MS_OWSCOMMON_WFS_11_SCHEMA_LOCATION        "/wfs/1.1.0/wfs.xsd"
+#define MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION        "/wfs/2.0/wfs.xsd"
+
+/* FES namespaces */
+
+#define MS_OWSCOMMON_FES_20_NAMESPACE_PREFIX       "fes"
+#define MS_OWSCOMMON_FES_20_NAMESPACE_URI          "http://www.opengis.net/fes/2.0"
+
+#define MS_OWSCOMMON_FES_20_SCHEMA_LOCATION        "/filter/2.0/filterAll.xsd"
 
 /* GMLCov namespaces */
 
@@ -120,6 +143,6 @@ int msOWSSchemaValidation(const char* xml_schema, const char* xml);
 
 #endif /* defined(USE_LIBXML2) */
 
-int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
+int msOWSCommonNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions);
 
 #endif /* MAPOWSCOMMON_H */

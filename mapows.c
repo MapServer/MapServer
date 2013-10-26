@@ -1016,7 +1016,7 @@ int msOWSMakeAllLayersUnique(mapObj *map)
 **
 */
 
-int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions)
+int msOWSNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions)
 {
   int i;
 

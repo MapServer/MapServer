@@ -823,6 +823,7 @@ extern "C" {
 
     int  maxfeatures; /* global maxfeatures */    
     int  startindex;
+    int  only_cache_result_count; /* set to 1 sometimes by WFS 2.0 GetFeature request */
     
     char *item; /* by attribute */
     char *str;
