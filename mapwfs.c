@@ -938,7 +938,20 @@ static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *ta
     element_name = item->name;
 
   if(item->type)
-    element_type = item->type;
+  {
+    /* Map from MapServer types to XSD types */
+    if( strcasecmp(item->type,"Integer") == 0 )
+      element_type = "integer";
+    else if( EQUAL(item->type,"Real") ||
+             EQUAL(item->type,"double") /* just in case someone provided the xsd type directly */ )
+      element_type = "double";
+    else if( EQUAL(item->type,"Character") )
+      element_type = "string";
+    else if( EQUAL(item->type,"Date") )
+      element_type = "date";
+    else if( EQUAL(item->type,"Boolean") )
+      element_type = "boolean";
+  }
 
   msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s\"/>\n", tab, element_name, element_type);
 
