@@ -1128,7 +1128,7 @@ int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
     psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
     if (psOffset && psOffset->psChild && psOffset->psChild->pszValue) {
       psLayer->class[nClassId]->styles[iStyle]->offsetx = atoi(psOffset->psChild->pszValue);
-      psLayer->class[nClassId]->styles[iStyle]->offsety = psLayer->class[nClassId]->styles[iStyle]->offsetx;
+      psLayer->class[nClassId]->styles[iStyle]->offsety = MS_STYLE_SINGLE_SIDED_OFFSET;
     }
   }
 
@@ -3030,7 +3030,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
   psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
   if (psOffset && psOffset->psChild && psOffset->psChild->pszValue) {
     psLabelObj->offsetx = atoi(psOffset->psChild->pszValue);
-    psLabelObj->offsety = atoi(psOffset->psChild->pszValue);
+    psLabelObj->offsety = MS_LABEL_PERPENDICULAR_OFFSET;
 
     /*if there is a PerpendicularOffset, we will assume that the
       best setting for mapserver would be to use angle=0 and the
@@ -3039,6 +3039,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
        set the angles if the parameter is not set*/
     if (!psAligned) {
       psLabelObj->anglemode = MS_NONE;
+      psLabelObj->offsety = psLabelObj->offsetx;
     }
   }
 
