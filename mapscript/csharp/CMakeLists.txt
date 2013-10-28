@@ -38,7 +38,11 @@ SWIG_LINK_LIBRARIES(csharpmapscript ${MAPSERVER_LIBMAPSERVER})
 ADD_CUSTOM_COMMAND(TARGET csharpmapscript
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                       POST_BUILD
+if (MSVC71)
+                      COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /t:library /out:mapscript_csharp.dll *.cs ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\config\\AssemblyInfo.cs
+else (MSVC71)
                       COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /t:library /out:mapscript_csharp.dll /keyfile:${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\mapscript.snk *.cs ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\config\\AssemblyInfo.cs
+endif (MSVC71)
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shpdump.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shpdump.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawmap.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmap.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shapeinfo.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shapeinfo.cs
