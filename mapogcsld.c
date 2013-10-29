@@ -3030,7 +3030,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
   psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
   if (psOffset && psOffset->psChild && psOffset->psChild->pszValue) {
     psLabelObj->offsetx = atoi(psOffset->psChild->pszValue);
-    psLabelObj->offsety = -99;
+    psLabelObj->offsety = MS_LABEL_PERPENDICULAR_OFFSET;
 
     /*if there is a PerpendicularOffset, we will assume that the
       best setting for mapserver would be to use angle=0 and the

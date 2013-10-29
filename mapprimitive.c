@@ -1754,14 +1754,14 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   labelpaths = (labelPathObj **) msSmallMalloc(sizeof(labelPathObj *) * labelpaths_size);
   (*regular_lines) = (int *) msSmallMalloc(sizeof(int) * regular_lines_size);
 
-  if(label->offsetx != 0 && (label->offsety == -99 || label->offsety == 99)) {
+  if(label->offsetx != 0 && IS_PERPENDICULAR_OFFSET(label->offsety)) {
     double offset;
     if(label->offsetx > 0) {
       offset = label->offsetx + label->size/2;
     } else {
       offset = label->offsetx - label->size/2;
     }
-    if(label->offsety == 99 && p->numlines>0 && p->line[0].numpoints > 0) {
+    if(label->offsety == MS_LABEL_PERPENDICULAR_TOP_OFFSET && p->numlines>0 && p->line[0].numpoints > 0) {
       /* is the line mostly left-to-right or right-to-left ?
        * FIXME this should be done line by line, by stepping through shape->lines, however
        * the OffsetPolyline function works on shapeObjs, not lineObjs
@@ -1799,7 +1799,7 @@ labelPathObj** msPolylineLabelPath(mapObj *map, imageObj *img,shapeObj *p, int m
   /* set the number of paths in the array */
   *numpaths = labelpaths_index;
   *num_regular_lines = regular_lines_index;
-  if(label->offsety == -99 && label->offsetx != 0) {
+  if(IS_PERPENDICULAR_OFFSET(label->offsety) && label->offsetx != 0) {
      msFreeShape(p);
      msFree(p);
   }
