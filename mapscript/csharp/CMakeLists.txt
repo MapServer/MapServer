@@ -16,6 +16,7 @@ if (WIN32)
     else(CMAKE_CL_64)
       set(PLATFORM_TARGET /platform:x86)
     endif(CMAKE_CL_64)
+	set (KEYFILE_SPEC /keyfile:${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\mapscript.snk)
   endif (NOT MSVC71)
   if (MSVC10)
       set(PLATFORM_TARGET ${PLATFORM_TARGET} /define:CLR4)
@@ -35,10 +36,12 @@ set_target_properties(csharpmapscript PROPERTIES OUTPUT_NAME "mapscript")
 
 SWIG_LINK_LIBRARIES(csharpmapscript ${MAPSERVER_LIBMAPSERVER})
 
+
 ADD_CUSTOM_COMMAND(TARGET csharpmapscript
                       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                       POST_BUILD
-                      COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /t:library /out:mapscript_csharp.dll /keyfile:${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\mapscript.snk *.cs ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\config\\AssemblyInfo.cs
+					  COMMAND copy /Y ..\\..\\..\\mapscript\\csharp\\mapscript.snk
+                      COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /t:library /out:mapscript_csharp.dll ${KEYFILE_SPEC} *.cs ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\config\\AssemblyInfo.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shpdump.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shpdump.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:drawmap.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmap.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:shapeinfo.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\shapeinfo.cs
