@@ -25,10 +25,10 @@ add_library(php_mapscript MODULE
 )
 
 if(NOT APPLE)
-set_target_properties( php_mapscript  PROPERTIES
-  VERSION ${MapServer_VERSION_STRING}
-  SOVERSION 1
-) 
+   set_target_properties( php_mapscript  PROPERTIES
+      VERSION ${MapServer_VERSION_STRING}
+      SOVERSION ${MapServer_SOVERSION}
+   ) 
 endif(NOT APPLE)
 
 target_link_libraries(php_mapscript ${MAPSERVER_LIBMAPSERVER})
