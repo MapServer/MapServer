@@ -2628,14 +2628,14 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /* -------------------------------------------------------------------- */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceIdentification") ) {
     psNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
-                           psOwsNs, map, "OGC WCS", params->version, "CO"));
+                           psOwsNs, map, "OGC WCS", params->version, "CO", NULL));
     msWCSGetCapabilities20_CreateProfiles(map, psNode, psOwsNs);
   }
 
   /* Service Provider */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceProvider") ) {
     xmlAddChild(psRootNode,
-                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO"));
+                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO", NULL));
   }
 
   /* -------------------------------------------------------------------- */

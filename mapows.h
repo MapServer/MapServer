@@ -55,7 +55,7 @@ typedef struct {
   char *pszGeometryName;
   int nMaxFeatures;
   char *pszBbox; /* only used with a Get Request */
-  char *pszOutputFormat; /* only used with DescibeFeatureType */
+  char *pszOutputFormat;
   char *pszFeatureId;
   char *pszSrs;
   char *pszResultType;
@@ -64,6 +64,7 @@ typedef struct {
   char *pszAcceptVersions;
   char *pszSections;
   char *pszSortBy; /* Not implemented yet */
+  char *pszLanguage;
 } wfsParamsObj;
 
 /*
@@ -164,6 +165,7 @@ MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT char *msOWSGetOnlineResource2(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req, const char *validated_language);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
+MS_DLL_EXPORT const char *msOWSGetInspireSchemasLocation(mapObj *map);
 MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 MS_DLL_EXPORT char **msOWSGetLanguageList(mapObj *map, const char *namespaces, int *numitems);
 MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *requested_language);
@@ -175,14 +177,17 @@ MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces
 
 /* OWS_WMS and OWS_WFS used for functions that differ in behavior between */
 /* WMS and WFS services (e.g. msOWSPrintLatLonBoundingBox()) */
-#define OWS_WMS     1
-#define OWS_WFS     2
+typedef enum
+{
+    OWS_WMS = 1,
+    OWS_WFS = 2
+} OWSServiceType;
 
 MS_DLL_EXPORT int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
-    const int action_if_not_found, const char *tag_name,
-    const char *validated_language, const int service);
+    const int action_if_not_found, const char *tag_name, const char* tag_ns,
+    const char *validated_language, const OWSServiceType service);
 int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
-                                    int action_if_not_found);
+                                    int action_if_not_found, const OWSServiceType service);
 int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *namespaces,
                                      int action_if_not_found, const char *validated_language);
 
@@ -252,7 +257,7 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
 void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
                                  rectObj *extent, projectionObj *srcproj,
-                                 projectionObj *wfsproj, int nService);
+                                 projectionObj *wfsproj, OWSServiceType nService);
 void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
                                         rectObj *extent, projectionObj *srcproj);
 
@@ -460,7 +465,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams,
 #ifdef USE_LIBXML2
 #include<libxml/tree.h>
 xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
-                          int nWFSVersion);
+                          int nWFSVersion, const char* validate_language);
 #endif
 char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer, int nWFSVersion);
 

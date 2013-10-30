@@ -47,8 +47,6 @@ int msWFSException20(mapObj *map, const char *locator,
 {
   int size = 0;
   char *errorString     = NULL;
-  char *errorMessage    = NULL;
-  char *schemasLocation = NULL;
 
   xmlDocPtr  psDoc      = NULL;
   xmlNodePtr psRootNode = NULL;
@@ -58,12 +56,10 @@ int msWFSException20(mapObj *map, const char *locator,
   psNsOws = xmlNewNs(NULL, BAD_CAST MS_OWS_11_NAMESPACE_URI, BAD_CAST MS_OWS_11_NAMESPACE_PREFIX);
 
   errorString = msGetErrorString("\n");
-  errorMessage = msEncodeHTMLEntities(errorString);
-  schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_1_0, schemasLocation, "2.0.0", msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
+  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_1_0, msOWSGetSchemasLocation(map), "2.0.0", msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorString);
 
   xmlDocSetRootElement(psDoc, psRootNode);
 
@@ -80,8 +76,6 @@ int msWFSException20(mapObj *map, const char *locator,
 
   /*free buffer and the document */
   free(errorString);
-  free(errorMessage);
-  free(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
   xmlFreeNs(psNsOws);
@@ -241,6 +235,82 @@ xmlNodePtr msWFS20FilterCapabilities(xmlNsPtr psNsFES, xmlNsPtr psNsOws)
 }
 
 /************************************************************************/
+/*                          msXMLStripIndentation                       */
+/************************************************************************/
+
+static void msXMLStripIndentation(char* ptr)
+{
+    /* Remove spaces between > and < to get properly indented result */
+    char* afterLastClosingBracket = NULL;
+    if( *ptr == ' ' )
+        afterLastClosingBracket = ptr;
+    while( *ptr != '\0' )
+    {
+        if( *ptr == '<' && afterLastClosingBracket != NULL )
+        {
+            memmove(afterLastClosingBracket, ptr, strlen(ptr) + 1);
+            ptr = afterLastClosingBracket;
+        }
+        else if( *ptr == '>' )
+        {
+            afterLastClosingBracket = ptr + 1;
+        }
+        else if( *ptr != ' ' &&  *ptr != '\n' )
+            afterLastClosingBracket = NULL;
+        ptr ++;
+    }
+}
+
+/************************************************************************/
+/*                          msWFSAddInspireDSID                         */
+/************************************************************************/
+
+static void msWFSAddInspireDSID(mapObj *map,
+                                xmlNsPtr psNsInspireDls,
+                                xmlNsPtr psNsInspireCommon,
+                                xmlNodePtr pDlsExtendedCapabilities)
+{
+    const char* dsid_code = msOWSLookupMetadata(&(map->web.metadata), "FO", "inspire_dsid_code");
+    const char* dsid_ns = msOWSLookupMetadata(&(map->web.metadata), "FO", "inspire_dsid_ns");
+    if( dsid_code == NULL )
+    {
+        xmlAddChild(pDlsExtendedCapabilities, xmlNewComment(BAD_CAST "WARNING: Required metadata \"inspire_dsid_code\" missing"));
+    }
+    else
+    {
+        int ntokensCode = 0, ntokensNS = 0;
+        char** tokensCode;
+        char** tokensNS = NULL;
+        int i;
+
+        tokensCode = msStringSplit(dsid_code, ',', &ntokensCode);
+        if( dsid_ns != NULL )
+            tokensNS = msStringSplitComplex( dsid_ns, ",", &ntokensNS, MS_ALLOWEMPTYTOKENS);
+        if( ntokensNS > 0 && ntokensNS != ntokensCode )
+        {
+            xmlAddChild(pDlsExtendedCapabilities,
+                        xmlNewComment(BAD_CAST "WARNING: \"inspire_dsid_code\" and \"inspire_dsid_ns\" have not the same number of elements. Ignoring inspire_dsid_ns"));
+            msFreeCharArray(tokensNS, ntokensNS);
+            tokensNS = NULL;
+            ntokensNS = 0;
+        }
+        for(i = 0; i<ntokensCode; i++ )
+        {
+            xmlNodePtr pSDSI = xmlNewNode(psNsInspireDls, BAD_CAST "SpatialDataSetIdentifier");
+            xmlAddChild(pDlsExtendedCapabilities, pSDSI);
+            xmlNewChild(pSDSI, psNsInspireCommon, BAD_CAST "Code", BAD_CAST tokensCode[i]);
+            if( ntokensNS > 0 && tokensNS[i][0] != '\0' )
+                xmlNewChild(pSDSI, psNsInspireCommon, BAD_CAST "Namespace", BAD_CAST tokensNS[i]);
+        }
+        msFreeCharArray(tokensCode, ntokensCode);
+        if( ntokensNS > 0 )
+            msFreeCharArray(tokensNS, ntokensNS);
+    }
+}
+
+
+
+/************************************************************************/
 /*                          msWFSGetCapabilities20                      */
 /*                                                                      */
 /*      Return the capabilities document for WFS 2.0.0                  */
@@ -253,7 +323,9 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   const char *updatesequence=NULL;
   xmlNsPtr psNsOws, psNsXLink;
   xmlNsPtr psNsFES = NULL;
-  char *schemalocation = NULL;
+  xmlNsPtr psNsInspireCommon = NULL;
+  xmlNsPtr psNsInspireDls = NULL;
+  xmlDocPtr pInspireTmpDoc = NULL;
   char *xsi_schemaLocation = NULL;
   const char *user_namespace_prefix = NULL;
   const char *user_namespace_uri = NULL;
@@ -269,12 +341,16 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   int ows_version = OWS_1_1_0;
   int ret;
 
+  char* validated_language;
+
   /* -------------------------------------------------------------------- */
   /*      Handle updatesequence                                           */
   /* -------------------------------------------------------------------- */
   ret = msWFSHandleUpdateSequence(map, params, "msWFSGetCapabilities20()");
   if( ret != MS_SUCCESS )
       return ret;
+
+  validated_language = msOWSGetLanguageFromList(map, "FO", params->pszLanguage);
 
   /* -------------------------------------------------------------------- */
   /*      Create document.                                                */
@@ -318,7 +394,11 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
     }
   }
   msGMLFreeNamespaces(namespaceList);
-  
+
+  if ( msOWSLookupMetadata(&(map->web.metadata), "FO", "inspire_capabilities") ) {
+      psNsInspireCommon = xmlNewNs(psRootNode, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_URI, BAD_CAST MS_INSPIRE_COMMON_NAMESPACE_PREFIX);
+      psNsInspireDls = xmlNewNs(psRootNode, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_URI, BAD_CAST MS_INSPIRE_DLS_NAMESPACE_PREFIX);
+  }
 
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->pszVersion );
 
@@ -328,12 +408,27 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
     xmlNewProp(psRootNode, BAD_CAST "updateSequence", BAD_CAST updatesequence);
 
   /*schema*/
-  schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
   xsi_schemaLocation = msStrdup(MS_OWSCOMMON_WFS_20_NAMESPACE_URI);
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
-  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, schemalocation);
-  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, "/wfs/2.0/wfs.xsd");
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, msOWSGetSchemasLocation(map));
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION);
+
+  if( psNsInspireDls != NULL )
+  {
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_INSPIRE_DLS_NAMESPACE_URI);
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, msOWSGetInspireSchemasLocation(map));
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_INSPIRE_DLS_SCHEMA_LOCATION);
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_INSPIRE_COMMON_NAMESPACE_URI);
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, msOWSGetInspireSchemasLocation(map));
+      xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_INSPIRE_COMMON_SCHEMA_LOCATION);
+  }
+
   xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
+  free(xsi_schemaLocation);
 
   /* -------------------------------------------------------------------- */
   /*      Service metadata.                                               */
@@ -346,23 +441,25 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   if( msWFSIncludeSection(params, "ServiceIdentification") )
   {
     xmlAddChild(psRootNode,
-                msOWSCommonServiceIdentification(psNsOws, map, "WFS", params->pszVersion, "FO"));
+                msOWSCommonServiceIdentification(psNsOws, map, "WFS",
+                                                 params->pszVersion, "FO", validated_language));
   }
 
   /*service provider*/
   if( msWFSIncludeSection(params, "ServiceProvider") )
   {
     xmlAddChild(psRootNode, msOWSCommonServiceProvider(
-                            psNsOws, psNsXLink, map, "FO"));
+                            psNsOws, psNsXLink, map, "FO", validated_language));
   }
 
   /*operation metadata */
   if( msWFSIncludeSection(params, "OperationsMetadata") )
   {
-    if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL) {
-        msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities11()");
+    if ((script_url=msOWSGetOnlineResource2(map, "FO", "onlineresource", req, validated_language)) == NULL) {
+        msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities20()");
         return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
     }
+    
 
     /* -------------------------------------------------------------------- */
     /*      Operations metadata.                                            */
@@ -497,6 +594,54 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
 
     xmlAddChild(psMainNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
                 "Constraint", "QueryExpressions","wfs:Query,wfs:StoredQuery"));
+
+    /* Add Inspire Download Services extended capabilities */
+    if( psNsInspireDls != NULL )
+    {
+        msIOContext* old_context;
+        msIOContext* new_context;
+        msIOBuffer* buffer;
+        xmlNodePtr pRoot;
+        xmlNodePtr pOWSExtendedCapabilities;
+        xmlNodePtr pDlsExtendedCapabilities;
+        xmlNodePtr pChild;
+
+        old_context = msIO_pushStdoutToBufferAndGetOldContext();
+        msOWSPrintInspireCommonExtendedCapabilities(stdout, map, "FO", OWS_WARN,
+                                                    "foo",
+                                                    "xmlns:" MS_INSPIRE_COMMON_NAMESPACE_PREFIX "=\"" MS_INSPIRE_COMMON_NAMESPACE_URI "\" "
+                                                    "xmlns:" MS_INSPIRE_DLS_NAMESPACE_PREFIX "=\"" MS_INSPIRE_DLS_NAMESPACE_URI "\" "
+                                                    "xmlns:xsi=\"" MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI "\"", validated_language, OWS_WFS);
+
+        new_context = msIO_getHandler(stdout);
+        buffer = (msIOBuffer *) new_context->cbData;
+
+        /* Remove spaces between > and < to get properly indented result */
+        msXMLStripIndentation( (char*) buffer->data );
+
+        pInspireTmpDoc = xmlParseDoc((const xmlChar *)buffer->data);
+        pRoot = xmlDocGetRootElement(pInspireTmpDoc);
+        xmlReconciliateNs(psDoc, pRoot);
+
+        pOWSExtendedCapabilities = xmlNewNode(psNsOws, BAD_CAST "ExtendedCapabilities");
+        xmlAddChild(psMainNode, pOWSExtendedCapabilities);
+
+        pDlsExtendedCapabilities = xmlNewNode(psNsInspireDls, BAD_CAST "ExtendedCapabilities");
+        xmlAddChild(pOWSExtendedCapabilities, pDlsExtendedCapabilities);
+
+        pChild = pRoot->children;
+        while(pChild != NULL)
+        {
+            xmlNodePtr pNext = pChild->next;
+            xmlUnlinkNode(pChild);
+            xmlAddChild(pDlsExtendedCapabilities, pChild);
+            pChild = pNext;
+        }
+
+        msWFSAddInspireDSID(map, psNsInspireDls, psNsInspireCommon, pDlsExtendedCapabilities);
+
+        msIO_restoreOldStdoutContext(old_context);
+    }
   }
 
   /* -------------------------------------------------------------------- */
@@ -516,7 +661,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
 
         /* List only vector layers in which DUMP=TRUE */
         if (msWFSIsLayerSupported(lp))
-          xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0));
+          xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0, validated_language));
     }
   }
 
@@ -550,10 +695,11 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   xmlFreeDoc(psDoc);
   if( psNsFES != NULL )
       xmlFreeNs(psNsFES);
+  if( pInspireTmpDoc != NULL )
+      xmlFreeDoc(pInspireTmpDoc);
 
   free(script_url);
-  free(xsi_schemaLocation);
-  free(schemalocation);
+  msFree(validated_language);
 
   xmlCleanupParser();
 
@@ -577,7 +723,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
 {
   msSetError( MS_WFSERR,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
-              "msWFSGetCapabilities11()", "NoApplicableCode" );
+              "msWFSGetCapabilities20()", "NoApplicableCode" );
 
   return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
 }

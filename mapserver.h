@@ -2595,6 +2595,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT void msFreeRasterBuffer(rasterBufferObj *b);
 
+  void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language);
   MS_DLL_EXPORT shapeObj* msGeneralize(shapeObj * shape, double tolerance);
   /* ==================================================================== */
   /*      End of prototypes for functions in maputil.c                    */

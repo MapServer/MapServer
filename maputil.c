@@ -2413,6 +2413,24 @@ int msMapSetLayerProjections(mapObj* map)
   return(MS_SUCCESS);
 }
 
+
+/************************************************************************
+ *                    msMapSetLanguageSpecificConnection                *
+ *                                                                      *
+ *   Override DATA and CONNECTION of each layer with their specific     *
+ *  variant for the specified language.                                 *
+ ************************************************************************/
+
+void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language)
+{
+    int i;
+    for(i=0; i<map->numlayers; i++) {
+      layerObj *layer = GET_LAYER(map, i);
+      if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, "%language%", validated_language);
+      if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, "%language%", validated_language);
+    }
+}
+
 /* Generalize a shape based of the tolerance.
    Ref: http://trac.osgeo.org/gdal/ticket/966 */
 shapeObj* msGeneralize(shapeObj *shape, double tolerance)

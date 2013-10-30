@@ -462,7 +462,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
       || strstr(params->section,"All") != NULL
       || strstr(params->section,"ServiceIdentification") != NULL ) {
     xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
-                              psOwsNs, map, "OGC WCS", params->version, "CO"));
+                              psOwsNs, map, "OGC WCS", params->version, "CO", NULL));
   }
 
   /*service provider*/
@@ -470,7 +470,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
       || strstr(params->section,"All") != NULL
       || strstr(params->section,"ServiceProvider") != NULL ) {
     xmlAddChild(psRootNode, msOWSCommonServiceProvider(
-                              psOwsNs, psXLinkNs, map, "CO"));
+                              psOwsNs, psXLinkNs, map, "CO", NULL));
   }
 
   /* -------------------------------------------------------------------- */

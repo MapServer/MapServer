@@ -114,12 +114,34 @@
 #define MS_OWSCOMMON_SWE_20_NAMESPACE_URI   "http://www.opengis.net/swe/2.0"
 #define MS_OWSCOMMON_SWE_NAMESPACE_PREFIX   "swe"
 
+/* Inspire namespaces */
+
+#define MS_INSPIRE_COMMON_NAMESPACE_URI     "http://inspire.ec.europa.eu/schemas/common/1.0"
+#define MS_INSPIRE_COMMON_NAMESPACE_PREFIX  "inspire_common"
+#define MS_INSPIRE_COMMON_SCHEMA_LOCATION   "/common/1.0/common.xsd"
+
+#define MS_INSPIRE_VS_NAMESPACE_URI         "http://inspire.ec.europa.eu/schemas/inspire_vs/1.0"
+#define MS_INSPIRE_VS_NAMESPACE_PREFIX      "inspire_vs"
+#define MS_INSPIRE_VS_SCHEMA_LOCATION       "/inspire_vs/1.0/inspire_vs.xsd"
+
+#define MS_INSPIRE_DLS_NAMESPACE_URI        "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0"
+#define MS_INSPIRE_DLS_NAMESPACE_PREFIX     "inspire_dls"
+#define MS_INSPIRE_DLS_SCHEMA_LOCATION      "/inspire_dls/1.0/inspire_dls.xsd"
+
 /* function prototypes */
 
 
-xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version, const char *namespaces);
+xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
+                                            const char *servicetype,
+                                            const char *version,
+                                            const char *namespaces,
+                                            const char *validated_language);
 
-xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, mapObj *map, const char *namespaces);
+xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws,
+                                      xmlNsPtr psXLinkNs,
+                                      mapObj *map,
+                                      const char *namespaces,
+                                      const char *validated_language);
 
 xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws);
 

@@ -97,7 +97,7 @@ int msWFSException11(mapObj *map, const char *locator,
 /*                            msWFSDumpLayer11                          */
 /************************************************************************/
 xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
-                            int nWFSVersion)
+                            int nWFSVersion, const char* validate_language)
 {
   rectObj ext;
 
@@ -128,20 +128,20 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
                   xmlNewComment(BAD_CAST "WARNING: The layer name '%s' might contain spaces or "
                                 "invalid characters or may start with a number. This could lead to potential problems"));
 
-  value = msOWSLookupMetadata(&(lp->metadata), "FO", "title");
+  value = msOWSLookupMetadataWithLanguage(&(lp->metadata), "FO", "title", validate_language);
   if (!value)
     value =(const char*)lp->name;
 
   psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Title", BAD_CAST value);
 
 
-  value = msOWSLookupMetadata(&(lp->metadata), "FO", "abstract");
+  value = msOWSLookupMetadataWithLanguage(&(lp->metadata), "FO", "abstract", validate_language);
   if (value)
     psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Abstract", BAD_CAST value);
 
 
 
-  value = msOWSLookupMetadata(&(lp->metadata), "FO", "keywordlist");
+  value = msOWSLookupMetadataWithLanguage(&(lp->metadata), "FO", "keywordlist", validate_language);
 
   if(value)
     msLibXml2GenerateList(
@@ -335,11 +335,11 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   /* -------------------------------------------------------------------- */
 
   xmlAddChild(psRootNode,
-                          msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion, "FO"));
+                          msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion, "FO", NULL));
 
   /*service provider*/
   xmlAddChild(psRootNode, msOWSCommonServiceProvider(
-                            psNsOws, psNsXLink, map, "FO"));
+                            psNsOws, psNsXLink, map, "FO", NULL));
 
   /*operation metadata */
   if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL) {
@@ -434,7 +434,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
     /* List only vector layers in which DUMP=TRUE */
     if (msWFSIsLayerSupported(lp))
-      xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_1_1_0));
+      xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_1_1_0, NULL));
   }
 
 

@@ -3060,6 +3060,7 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
   int status;
   int returnvalue = MS_DONE;
   int nWFSVersion;
+  char* validated_language;
 
   /* static char *wmtver = NULL, *request=NULL, *service=NULL; */
   wfsParamsObj *paramsObj;
@@ -3071,6 +3072,12 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
   /* into the paramsObj.  */
   if (msWFSParseRequest(map, requestobj, ows_request, paramsObj, force_wfs_mode) == MS_FAILURE)
     return msWFSException(map, "request", "InvalidRequest", NULL);
+
+  validated_language = msOWSGetLanguageFromList(map, "FO", paramsObj->pszLanguage);
+  if (validated_language != NULL) {
+    msMapSetLanguageSpecificConnection(map, validated_language);
+  }
+  msFree(validated_language);
 
   if (force_wfs_mode) {
     /*request is always required*/
@@ -3333,6 +3340,7 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
     free(wfsparams->pszAcceptVersions);
     free(wfsparams->pszSections);
     free(wfsparams->pszSortBy);
+    free(wfsparams->pszLanguage);
   }
 }
 
@@ -3361,6 +3369,9 @@ const char *msWFSGetDefaultVersion(mapObj *map)
   return WFS_LATEST_VERSION;
 }
 
+/************************************************************************/
+/*                             msWFSSetParam                            */
+/************************************************************************/
 static int msWFSSetParam(char** ppszOut, cgiRequestObj *request, int i,
                          const char* pszExpectedParamName)
 {
@@ -3455,6 +3466,9 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
             ;
 
         else if( msWFSSetParam(&(wfsparams->pszSortBy), request, i, "SORTBY") )
+            ;
+
+        else if( msWFSSetParam(&(wfsparams->pszLanguage), request, i, "LANGUAGE") )
             ;
       }
     }
