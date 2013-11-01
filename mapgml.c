@@ -1771,13 +1771,22 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
   char **excitems=NULL;
   int numexcitems=0;
 
+  char **optionalitems=NULL;
+  int numoptionalitems=0;
+
+  char **mandatoryitems=NULL;
+  int nummandatoryitems=0;
+
+  char **defaultitems=NULL;
+  int numdefaultitems=0;
+
   const char *value=NULL;
   char tag[64];
 
   gmlItemListObj *itemList=NULL;
   gmlItemObj *item=NULL;
 
-  /* get a list of items that should be included in output */
+  /* get a list of items that might be included in output */
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "include_items")) != NULL)
     incitems = msStringSplit(value, ',', &numincitems);
 
@@ -1785,9 +1794,21 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "exclude_items")) != NULL)
     excitems = msStringSplit(value, ',', &numexcitems);
 
-  /* get a list of items that need don't get encoded */
+  /* get a list of items that should not be XML encoded */
   if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "xml_items")) != NULL)
     xmlitems = msStringSplit(value, ',', &numxmlitems);
+
+  /* get a list of items that should be indicated as optional in DescribeFeatureType */
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "optional_items")) != NULL)
+    optionalitems = msStringSplit(value, ',', &numoptionalitems);
+
+  /* get a list of items that should be indicated as mandatory in DescribeFeatureType */
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "mandatory_items")) != NULL)
+    mandatoryitems = msStringSplit(value, ',', &nummandatoryitems);
+
+  /* get a list of items that should be presented by default in GetFeature */
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "default_items")) != NULL)
+    defaultitems = msStringSplit(value, ',', &numdefaultitems);
 
   /* allocate memory and iinitialize the item collection */
   itemList = (gmlItemListObj *) malloc(sizeof(gmlItemListObj));
@@ -1796,13 +1817,11 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
     return NULL;
   }
 
-  itemList->items = NULL;
-  itemList->numitems = 0;
-
   itemList->numitems = layer->numitems;
   itemList->items = (gmlItemObj *) malloc(sizeof(gmlItemObj)*itemList->numitems);
   if(!itemList->items) {
     msSetError(MS_MEMERR, "Error allocating a collection GML item structures.", "msGMLGetItems()");
+    free(itemList);
     return NULL;
   }
 
@@ -1817,6 +1836,8 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
     item->visible = MS_FALSE;
     item->width = 0;
     item->precision = 0;
+    item->outputByDefault = (numdefaultitems == 0);
+    item->minOccurs = 0;
 
     /* check visibility, included items first... */
     if(numincitems == 1 && strcasecmp("all", incitems[0]) == 0) {
@@ -1838,6 +1859,31 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
     for(j=0; j<numxmlitems; j++) {
       if(strcasecmp(layer->items[i], xmlitems[j]) == 0)
         item->encode = MS_FALSE;
+    }
+
+    /* check optional */
+    if(numoptionalitems == 1 && strcasecmp("all", optionalitems[0]) == 0) {
+      item->minOccurs = 0;
+    } else {
+      if(nummandatoryitems == 1 && strcasecmp("all", mandatoryitems[0]) == 0) {
+        item->minOccurs = 1;
+      }
+      for(j=0; j<numoptionalitems; j++) {
+        if(strcasecmp(layer->items[i], optionalitems[j]) == 0)
+          item->minOccurs = 0;
+      }
+    }
+
+    /* check mandatory */
+    for(j=0; j<nummandatoryitems; j++) {
+      if(strcasecmp(layer->items[i], mandatoryitems[j]) == 0)
+        item->minOccurs = 1;
+    }
+
+    /* check default */
+    for(j=0; j<numdefaultitems; j++) {
+      if(strcasecmp(layer->items[i], defaultitems[j]) == 0)
+        item->outputByDefault = 1;
     }
 
     snprintf(tag, sizeof(tag), "%s_alias", layer->items[i]);
@@ -1864,6 +1910,9 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
   msFreeCharArray(incitems, numincitems);
   msFreeCharArray(excitems, numexcitems);
   msFreeCharArray(xmlitems, numxmlitems);
+  msFreeCharArray(optionalitems, numoptionalitems);
+  msFreeCharArray(mandatoryitems, nummandatoryitems);
+  msFreeCharArray(defaultitems, numdefaultitems);
 
   return itemList;
 }

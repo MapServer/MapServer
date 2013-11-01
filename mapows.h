@@ -328,6 +328,8 @@ typedef struct {
   int visible;    /* should this item be output, default is MS_FALSE */
   int width;      /* field width, zero if unknown */
   int precision;  /* field precision (decimal places), zero if unknown or N/A */
+  int outputByDefault; /* whether this should be output in a GetFeature without PropertyName. MS_TRUE by default, unless gml_default_items is specified and the item name is not in it */
+  int minOccurs;  /* 0 by default. Can be set to 1 by specifying item name in gml_mandatory_items */
 } gmlItemObj;
 
 typedef struct {
