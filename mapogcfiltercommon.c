@@ -45,10 +45,11 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
   char szTmp[256];
   char *pszValue = NULL;
 
-  char *pszWild = NULL;
-  char *pszSingle = NULL;
-  char *pszEscape = NULL;
+  const char *pszWild = NULL;
+  const char *pszSingle = NULL;
+  const char *pszEscape = NULL;
   int  bCaseInsensitive = 0;
+  FEPropertyIsLike* propIsLike;
 
   int nLength=0, i=0, iTmp=0;
 
@@ -57,10 +58,11 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
       !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
     return NULL;
 
-  pszWild = ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard;
-  pszSingle = ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar;
-  pszEscape = ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar;
-  bCaseInsensitive = ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive;
+  propIsLike = (FEPropertyIsLike *)psFilterNode->pOther;
+  pszWild = propIsLike->pszWildCard;
+  pszSingle = propIsLike->pszSingleChar;
+  pszEscape = propIsLike->pszEscapeChar;
+  bCaseInsensitive = propIsLike->bCaseInsensitive;
 
   if (!pszWild || strlen(pszWild) == 0 ||
       !pszSingle || strlen(pszSingle) == 0 ||
@@ -433,7 +435,6 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
   char szBuffer[256];
   char *pszTmp=NULL;
   projectionObj sProjTmp;
-  char *pszEPSG= NULL;
   rectObj sQueryRect;
   shapeObj *psTmpShape=NULL, *psBufferShape=NULL;
   int bBBoxQuery = 0;
@@ -447,11 +448,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
   /* get the shape*/
   /*BBOX case: replace it with NOT DISJOINT.*/
   if(FLTIsBBoxFilter(psNode)) {
-    pszEPSG = FLTGetBBOX(psNode, &sQueryRect);
-    /*this should be removed and bbox should parse and strore the srs properly,
-      using now legacy code*/
-    if (pszEPSG)
-      psNode->pszSRS = msStrdup(pszEPSG);
+    FLTGetBBOX(psNode, &sQueryRect);
 
     psTmpShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
     msInitShape(psTmpShape);
@@ -484,8 +481,11 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     if( lp->projection.numargs > 0) {
       if (psNode->pszSRS)
         msInitProjection(&sProjTmp);
-      if (psNode->pszSRS && FLTParseEpsgString(psNode->pszSRS, &sProjTmp)) {
-        msProjectShape(&sProjTmp, &lp->projection, psTmpShape);
+      if (psNode->pszSRS) {
+        /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
+        if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
+          msProjectShape(&sProjTmp, &lp->projection, psTmpShape);
+        }
       } else if (lp->map->projection.numargs > 0)
         msProjectShape(&lp->map->projection, &lp->projection, psTmpShape);
       if (psNode->pszSRS)

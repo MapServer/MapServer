@@ -539,6 +539,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
         msTimeInit(&(node->tokenval.tmval));
         if(msParseTime(msyystring_buffer, &(node->tokenval.tmval)) != MS_TRUE) {
           msSetError(MS_PARSEERR, "Parsing time value failed.", "msTokenizeExpression()");
+          free(node);
           goto parse_error;
         }
         break;
@@ -562,11 +563,13 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
       case MS_TOKEN_FUNCTION_FROMTEXT: /* we want to process a shape from WKT once and not for every feature being evaluated */
         if((token = msyylex()) != 40) { /* ( */
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          free(node);
           goto parse_error;
         }
 
         if((token = msyylex()) != MS_TOKEN_LITERAL_STRING) {
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          free(node);
           goto parse_error;
         }
 
@@ -575,6 +578,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
 
         if(!node->tokenval.shpval) {
           msSetError(MS_PARSEERR, "Parsing fromText function failed, WKT processing failed.", "msTokenizeExpression()");
+          free(node);
           goto parse_error;
         }
 
@@ -582,6 +586,9 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
 
         if((token = msyylex()) != 41) { /* ) */
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          msFreeShape(node->tokenval.shpval);
+          free(node->tokenval.shpval);
+          free(node);
           goto parse_error;
         }
         break;

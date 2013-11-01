@@ -1349,37 +1349,6 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 #endif
 }
 
-
-/************************************************************************/
-/*                             msAxisSwapShape                          */
-/*                                                                      */
-/*      Utility function to swap x and y coordiatesn Use for now for    */
-/*      WFS 1.1.x                                                       */
-/************************************************************************/
-void msAxisSwapShape(shapeObj *shape)
-{
-  double tmp;
-  int i,j;
-
-  if (shape) {
-    for(i=0; i<shape->numlines; i++) {
-      for( j=0; j<shape->line[i].numpoints; j++ ) {
-        tmp = shape->line[i].point[j].x;
-        shape->line[i].point[j].x = shape->line[i].point[j].y;
-        shape->line[i].point[j].y = tmp;
-      }
-    }
-
-    /*swap bounds*/
-    tmp = shape->bounds.minx;
-    shape->bounds.minx = shape->bounds.miny;
-    shape->bounds.miny = tmp;
-
-    tmp = shape->bounds.maxx;
-    shape->bounds.maxx = shape->bounds.maxy;
-    shape->bounds.maxy = tmp;
-  }
-}
 /*
 ** msGMLWriteWFSQuery()
 **
@@ -1403,23 +1372,13 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
   gmlConstantObj *constant=NULL;
 
   const char *namespace_prefix=NULL;
-  const char *axis = NULL;
   int bSwapAxis = 0;
   double tmp;
 
   msInitShape(&shape);
 
   /*add a check to see if the map projection is set to be north-east*/
-  for( i = 0; i < map->projection.numargs; i++ ) {
-    if( strstr(map->projection.args[i],"epsgaxis=") != NULL ) {
-      axis = strstr(map->projection.args[i],"=") + 1;
-      break;
-    }
-  }
-
-  if (axis && strcasecmp(axis,"ne") == 0 )
-    bSwapAxis = 1;
-
+  bSwapAxis = msIsAxisInvertedProj(&(map->projection));
 
   /* Need to start with BBOX of the whole resultset */
   if (msGetQueryResultBounds(map, &resultBounds) > 0) {

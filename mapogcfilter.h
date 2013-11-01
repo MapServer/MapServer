@@ -95,7 +95,7 @@ MS_DLL_EXPORT int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode);
 
 MS_DLL_EXPORT char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
-MS_DLL_EXPORT char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
+MS_DLL_EXPORT const char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
 
 MS_DLL_EXPORT shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                                     int *pnUnit);
@@ -122,7 +122,6 @@ MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
 
-MS_DLL_EXPORT int FLTParseEpsgString(char *pszEpsg, projectionObj *psProj);
 MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS);
 MS_DLL_EXPORT  int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
 
@@ -136,6 +135,7 @@ MS_DLL_EXPORT int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerI
 MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal);
 #endif
 
+void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode, int bDefaultSRSNeedsAxisSwapping);
 
 void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
                                mapObj *map, int i, const char *namespaces);

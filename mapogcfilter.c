@@ -306,9 +306,10 @@ int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
   return msOGRGeometryToShape(hGeometry, psShape, nType);
 }
 
+static
 int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape , char **ppszSRS)
 {
-  char *pszSRS = NULL;
+  const char *pszSRS = NULL;
   if (psTree && psShape) {
     CPLXMLNode *psNext = psTree->psNext;
     OGRGeometryH hGeometry = NULL;
@@ -329,13 +330,13 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape , char **ppszSRS)
       FLTogrConvertGeometry(hGeometry, psShape, nType);
 
       OGR_G_DestroyGeometry(hGeometry);
+
+      pszSRS = CPLGetXMLValue(psTree, "srsName", NULL);
+      if (ppszSRS && pszSRS)
+        *ppszSRS = msStrdup(pszSRS);
+
+      return MS_TRUE;
     }
-
-    pszSRS = (char *)CPLGetXMLValue(psTree, "srsName", NULL);
-    if (ppszSRS && pszSRS)
-      *ppszSRS = msStrdup(pszSRS);
-
-    return MS_TRUE;
   }
 
   return MS_FALSE;
@@ -379,97 +380,6 @@ int FLTIsGeosNode(char *pszValue)
   return MS_TRUE;
 }
 
-int FLTParseEpsgString(char *pszEpsg, projectionObj *psProj)
-{
-  int nStatus = MS_FALSE;
-  int nTokens = 0;
-  char **tokens = NULL;
-  int nEpsgTmp=0;
-
-#ifdef USE_PROJ
-  if (pszEpsg && psProj) {
-    nTokens = 0;
-
-    /* There are several forms an epsg code may be given. In any case the */
-    /* epsg code is the last token.                                       */
-    /* TODO: To make sure it is an epsg code check the string, too.       */
-    /*  - urn:ogc:def:crs:EPSG:6.5:4326                                   */
-    /*  - urn:ogc:def:crs:EPSG::4326                                      */
-    /*  - http://www.opengis.net/gml/srs/epsg.xml#4326                    */
-    /*  - epsg:4326                                                       */
-    tokens = msStringSplit(pszEpsg,'#', &nTokens);
-    if( tokens && nTokens == 1 ) {
-      msFreeCharArray(tokens, nTokens);
-      tokens = msStringSplit(pszEpsg,':', &nTokens);
-    }
-
-    if (tokens && nTokens > 1) {
-      nEpsgTmp = atoi(tokens[nTokens-1]);
-
-      if (nEpsgTmp > 0) {
-        char szTmp[32];
-        snprintf(szTmp, sizeof(szTmp), "init=epsg:%d",nEpsgTmp);
-        msInitProjection(psProj);
-        if (msLoadProjectionString(psProj, szTmp) == 0)
-          nStatus = MS_TRUE;
-      }
-    }
-
-    if (tokens)
-      msFreeCharArray(tokens, nTokens);
-  }
-#endif
-  return nStatus;
-}
-
-
-
-int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
-{
-  lineObj line= {0,NULL};
-  CPLXMLNode *psCoordinates = NULL;
-  char *pszTmpCoord = NULL;
-  char **szCoords = NULL;
-  int nCoords = 0;
-
-
-  if (!psNode || !psShp)
-    return MS_FALSE;
-
-
-  if( strcasecmp(psNode->pszValue,"PointType") == 0
-      || strcasecmp(psNode->pszValue,"Point") == 0) {
-    psCoordinates = CPLGetXMLNode(psNode, "coordinates");
-
-    if (psCoordinates && psCoordinates->psChild &&
-        psCoordinates->psChild->pszValue) {
-      pszTmpCoord = psCoordinates->psChild->pszValue;
-      szCoords = msStringSplit(pszTmpCoord, ',', &nCoords);
-      if (szCoords && nCoords >= 2) {
-        line.numpoints = 1;
-        line.point = (pointObj *)malloc(sizeof(pointObj));
-        line.point[0].x = atof(szCoords[0]);
-        line.point[0].y =  atof(szCoords[1]);
-#ifdef USE_POINT_Z_M
-        line.point[0].m = 0;
-#endif
-
-        psShp->type = MS_SHAPE_POINT;
-
-        msAddLine(psShp, &line);
-        free(line.point);
-
-        return MS_TRUE;
-      }
-    }
-  }
-
-  return MS_FALSE;
-}
-
-
-
-
 /************************************************************************/
 /*                        FLTIsSimpleFilterNoSpatial                    */
 /*                                                                      */
@@ -484,9 +394,6 @@ int FLTIsSimpleFilterNoSpatial(FilterEncodingNode *psNode)
   return MS_FALSE;
 }
 
-
-
-
 /************************************************************************/
 /*                      FLTApplySimpleSQLFilter()                       */
 /************************************************************************/
@@ -497,7 +404,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
   layerObj *lp = NULL;
   char *szExpression = NULL;
   rectObj sQueryRect = map->extent;
-  char *szEPSG = NULL;
+  const char *szEPSG = NULL;
   projectionObj sProjTmp;
   char *pszBuffer = NULL;
   int bConcatWhere = 0;
@@ -510,10 +417,12 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
   /* if there is a bbox use it */
   szEPSG = FLTGetBBOX(psNode, &sQueryRect);
   if(szEPSG && map->projection.numargs > 0) {
-    if (FLTParseEpsgString(szEPSG, &sProjTmp)) {
+    msInitProjection(&sProjTmp);
+    /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
+    if (msLoadProjectionString(&sProjTmp, szEPSG) == 0) {
       msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
-      msFreeProjection(&sProjTmp);
     }
+    msFreeProjection(&sProjTmp);
   }
 
   /* make sure that the layer can be queried*/
@@ -759,7 +668,6 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
 {
   CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL;
-  CPLXMLNode  *psFilterStart = NULL;
   FilterEncodingNode *psFilterNode = NULL;
 
   if (szXMLString == NULL || strlen(szXMLString) <= 0 ||
@@ -777,35 +685,21 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
   /* -------------------------------------------------------------------- */
   /*      get the root element (Filter).                                  */
   /* -------------------------------------------------------------------- */
-  psChild = psRoot;
-  psFilter = NULL;
+  psFilter = CPLGetXMLNode(psRoot, "=Filter");
+  if (!psFilter)
+  {
+    CPLDestroyXMLNode( psRoot );
+    return NULL;
+  }
 
-  while( psChild != NULL ) {
-    if (psChild->eType == CXT_Element &&
-        EQUAL(psChild->pszValue,"Filter")) {
-      psFilter = psChild;
+  psChild = psFilter->psChild;
+  while (psChild) {
+    if (FLTIsSupportedFilterType(psChild)) {
+      psFilterNode = FLTCreateFilterEncodingNode();
+      FLTInsertElementInNode(psFilterNode, psChild);
       break;
     } else
       psChild = psChild->psNext;
-  }
-
-  if (!psFilter)
-    return NULL;
-
-  psChild = psFilter->psChild;
-  psFilterStart = NULL;
-  while (psChild) {
-    if (FLTIsSupportedFilterType(psChild)) {
-      psFilterStart = psChild;
-      psChild = NULL;
-    } else
-      psChild = psChild->psNext;
-  }
-
-  if (psFilterStart && FLTIsSupportedFilterType(psFilterStart)) {
-    psFilterNode = FLTCreateFilterEncodingNode();
-
-    FLTInsertElementInNode(psFilterNode, psFilterStart);
   }
 
   CPLDestroyXMLNode( psRoot );
@@ -814,7 +708,10 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
   /*      validate the node tree to make sure that all the nodes are valid.*/
   /* -------------------------------------------------------------------- */
   if (!FLTValidFilterNode(psFilterNode))
+  {
+    FLTFreeFilterEncodingNode(psFilterNode);
     return NULL;
+  }
 
 
   return psFilterNode;
@@ -849,6 +746,18 @@ int FLTValidFilterNode(FilterEncodingNode *psFilterNode)
 
   return 1;
 }
+
+/************************************************************************/
+/*                       FLTIsGeometryFilterNodeType                    */
+/************************************************************************/
+
+static int FLTIsGeometryFilterNodeType(int eType)
+{
+    return (eType == FILTER_NODE_TYPE_GEOMETRY_POINT ||
+            eType == FILTER_NODE_TYPE_GEOMETRY_LINE ||
+            eType == FILTER_NODE_TYPE_GEOMETRY_POLYGON);
+}
+
 /************************************************************************/
 /*                          FLTFreeFilterEncodingNode                   */
 /*                                                                      */
@@ -872,15 +781,14 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
     if( psFilterNode->pOther ) {
       if (psFilterNode->pszValue != NULL &&
           strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0) {
-        if( ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard )
-          free( ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard );
-        if( ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar )
-          free( ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar );
-        if( ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar )
-          free( ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar );
-      } else if (psFilterNode->eType == FILTER_NODE_TYPE_GEOMETRY_POINT ||
-                 psFilterNode->eType == FILTER_NODE_TYPE_GEOMETRY_LINE ||
-                 psFilterNode->eType == FILTER_NODE_TYPE_GEOMETRY_POLYGON) {
+        FEPropertyIsLike* propIsLike = (FEPropertyIsLike *)psFilterNode->pOther;
+        if( propIsLike->pszWildCard )
+          free( propIsLike->pszWildCard );
+        if( propIsLike->pszSingleChar )
+          free( propIsLike->pszSingleChar );
+        if( propIsLike->pszEscapeChar )
+          free( propIsLike->pszEscapeChar );
+      } else if (FLTIsGeometryFilterNodeType(psFilterNode->eType)) {
         msFreeShape((shapeObj *)(psFilterNode->pOther));
       }
       /* else */
@@ -924,7 +832,7 @@ FilterEncodingNode *FLTCreateBinaryCompFilterEncodingNode(void)
 
   psFilterNode = FLTCreateFilterEncodingNode();
   /* used to store case sensitivity flag. Default is 0 meaning the
-     comparing is case snetitive */
+     comparing is case sensititive */
   psFilterNode->pOther = (int *)malloc(sizeof(int));
   (*(int *)(psFilterNode->pOther)) = 0;
 
@@ -976,6 +884,53 @@ static CPLXMLNode* FLTFindGeometryNode(CPLXMLNode* psXMLNode,
 }
 
 /************************************************************************/
+/*                           FLTGetPropertyName                         */
+/************************************************************************/
+static const char* FLTGetPropertyName(CPLXMLNode* psXMLNode)
+{
+    const char* pszPropertyName;
+
+    pszPropertyName = CPLGetXMLValue(psXMLNode, "PropertyName", NULL);
+    if( pszPropertyName == NULL ) /* FE 2.0 ? */
+        pszPropertyName = CPLGetXMLValue(psXMLNode, "ValueReference", NULL);
+    return pszPropertyName;
+}
+
+/************************************************************************/
+/*                          FLTGetFirstChildNode                        */
+/************************************************************************/
+static CPLXMLNode* FLTGetFirstChildNode(CPLXMLNode* psXMLNode)
+{
+    if( psXMLNode == NULL )
+        return NULL;
+    psXMLNode = psXMLNode->psChild;
+    while( psXMLNode != NULL )
+    {
+        if( psXMLNode->eType == CXT_Element )
+            return psXMLNode;
+        psXMLNode = psXMLNode->psNext;
+    }
+    return NULL;
+}
+
+/************************************************************************/
+/*                        FLTGetNextSibblingNode                        */
+/************************************************************************/
+static CPLXMLNode* FLTGetNextSibblingNode(CPLXMLNode* psXMLNode)
+{
+    if( psXMLNode == NULL )
+        return NULL;
+    psXMLNode = psXMLNode->psNext;
+    while( psXMLNode != NULL )
+    {
+        if( psXMLNode->eType == CXT_Element )
+            return psXMLNode;
+        psXMLNode = psXMLNode->psNext;
+    }
+    return NULL;
+}
+
+/************************************************************************/
 /*                           FLTInsertElementInNode                     */
 /*                                                                      */
 /*      Utility function to parse an XML node and transfter the         */
@@ -990,7 +945,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
   CPLXMLNode *psCurXMLNode = NULL;
   CPLXMLNode *psTmpNode = NULL;
   CPLXMLNode *psFeatureIdNode = NULL;
-  char *pszFeatureId=NULL, *pszFeatureIdList=NULL;
+  const char *pszFeatureId=NULL;
+  char *pszFeatureIdList=NULL;
   char **tokens = NULL;
   int nTokens = 0;
 
@@ -1019,55 +975,52 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       psFilterNode->eType = FILTER_NODE_TYPE_LOGICAL;
       if (strcasecmp(psFilterNode->pszValue, "AND") == 0 ||
           strcasecmp(psFilterNode->pszValue, "OR") == 0) {
-        if (psXMLNode->psChild && psXMLNode->psChild->psNext) {
+        CPLXMLNode* psFirstNode = FLTGetFirstChildNode(psXMLNode);
+        CPLXMLNode* psSecondNode = FLTGetNextSibblingNode(psFirstNode);
+        if (psFirstNode && psSecondNode) {
           /*2 operators */
-          if (psXMLNode->psChild->psNext->psNext == NULL) {
+          CPLXMLNode* psNextNode = FLTGetNextSibblingNode(psSecondNode);
+          if (psNextNode == NULL) {
             psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
-            FLTInsertElementInNode(psFilterNode->psLeftNode,
-                                   psXMLNode->psChild);
+            FLTInsertElementInNode(psFilterNode->psLeftNode, psFirstNode);
             psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
-            FLTInsertElementInNode(psFilterNode->psRightNode,
-                                   psXMLNode->psChild->psNext);
+            FLTInsertElementInNode(psFilterNode->psRightNode, psSecondNode);
           } else {
-            psCurXMLNode =  psXMLNode->psChild;
+            psCurXMLNode = psFirstNode;
             psCurFilNode = psFilterNode;
             while(psCurXMLNode) {
-              if (psCurXMLNode->psNext && psCurXMLNode->psNext->psNext) {
-                psCurFilNode->psLeftNode =
-                FLTCreateFilterEncodingNode();
-                FLTInsertElementInNode(psCurFilNode->psLeftNode,
-                                       psCurXMLNode);
-                psCurFilNode->psRightNode =
-                FLTCreateFilterEncodingNode();
-                psCurFilNode->psRightNode->eType =
-                FILTER_NODE_TYPE_LOGICAL;
-                psCurFilNode->psRightNode->pszValue =
-                msStrdup(psFilterNode->pszValue);
+              psNextNode = FLTGetNextSibblingNode(psCurXMLNode);
+              if (FLTGetNextSibblingNode(psNextNode)) {
+                psCurFilNode->psLeftNode = FLTCreateFilterEncodingNode();
+                FLTInsertElementInNode(psCurFilNode->psLeftNode, psCurXMLNode);
+                psCurFilNode->psRightNode = FLTCreateFilterEncodingNode();
+                psCurFilNode->psRightNode->eType = FILTER_NODE_TYPE_LOGICAL;
+                psCurFilNode->psRightNode->pszValue = msStrdup(psFilterNode->pszValue);
 
                 psCurFilNode = psCurFilNode->psRightNode;
-                psCurXMLNode = psCurXMLNode->psNext;
-              } else if (psCurXMLNode->psNext) { /*last 2 operators*/
-                psCurFilNode->psLeftNode =
-                FLTCreateFilterEncodingNode();
-                FLTInsertElementInNode(psCurFilNode->psLeftNode,
-                                       psCurXMLNode);
+                psCurXMLNode = psNextNode;
+              } else { /*last 2 operators*/
+                psCurFilNode->psLeftNode = FLTCreateFilterEncodingNode();
+                FLTInsertElementInNode(psCurFilNode->psLeftNode, psCurXMLNode);
 
-                psCurFilNode->psRightNode =
-                FLTCreateFilterEncodingNode();
-                FLTInsertElementInNode(psCurFilNode->psRightNode,
-                                       psCurXMLNode->psNext);
-                psCurXMLNode = psCurXMLNode->psNext->psNext;
-
+                psCurFilNode->psRightNode = FLTCreateFilterEncodingNode();
+                FLTInsertElementInNode(psCurFilNode->psRightNode, psNextNode);
+                break;
               }
             }
           }
         }
+        else
+          psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
       } else if (strcasecmp(psFilterNode->pszValue, "NOT") == 0) {
-        if (psXMLNode->psChild) {
+        CPLXMLNode* psFirstNode = FLTGetFirstChildNode(psXMLNode);
+        if (psFirstNode) {
           psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
           FLTInsertElementInNode(psFilterNode->psLeftNode,
-                                 psXMLNode->psChild);
+                                 psFirstNode);
         }
+        else
+          psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
       } else
         psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
     }/* end if is logical */
@@ -1137,15 +1090,13 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
       if (strcasecmp(psXMLNode->pszValue, "BBOX") == 0) {
         char *pszSRS = NULL;
-        CPLXMLNode *psPropertyName = NULL;
+        const char* pszPropertyName = NULL;
         CPLXMLNode *psBox = NULL, *psEnvelope=NULL;
         rectObj sBox;
 
         int bCoordinatesValid = 0;
 
-        psPropertyName = CPLGetXMLNode(psXMLNode, "PropertyName");
-        if( psPropertyName == NULL )
-            psPropertyName = CPLGetXMLNode(psXMLNode, "ValueReference");
+        pszPropertyName = FLTGetPropertyName(psXMLNode);
         psBox = CPLGetXMLNode(psXMLNode, "Box");
         if (!psBox)
           psBox = CPLGetXMLNode(psXMLNode, "BoxType");
@@ -1156,28 +1107,18 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         else if ((psEnvelope = CPLGetXMLNode(psXMLNode, "Envelope")))
           bCoordinatesValid = FLTParseGMLEnvelope(psEnvelope, &sBox, &pszSRS);
 
-        if (psPropertyName == NULL || !bCoordinatesValid)
-          psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+        if (pszPropertyName && bCoordinatesValid) {
+          /*set the srs if available*/
+          if (pszSRS)
+            psFilterNode->pszSRS = pszSRS;
 
-        if (psPropertyName && bCoordinatesValid) {
           psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
-          /* not really using the property name anywhere ??  */
-          /* Is is always Geometry ?  */
-          if (psPropertyName->psChild &&
-              psPropertyName->psChild->pszValue) {
-            psFilterNode->psLeftNode->eType =
-            FILTER_NODE_TYPE_PROPERTYNAME;
-            psFilterNode->psLeftNode->pszValue =
-            msStrdup(psPropertyName->psChild->pszValue);
-          }
+          psFilterNode->psLeftNode->eType =  FILTER_NODE_TYPE_PROPERTYNAME;
+          psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
 
-          /* srs and coordinates */
+          /* coordinates */
           psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
           psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BBOX;
-          /* srs might be empty */
-          if (pszSRS)
-            psFilterNode->psRightNode->pszValue = pszSRS;
-
           psFilterNode->psRightNode->pOther =
           (rectObj *)msSmallMalloc(sizeof(rectObj));
           ((rectObj *)psFilterNode->psRightNode->pOther)->minx = sBox.minx;
@@ -1185,38 +1126,43 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = sBox.maxx;
           ((rectObj *)psFilterNode->psRightNode->pOther)->maxy =  sBox.maxy;
         }
+        else
+          psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
       } else if (strcasecmp(psXMLNode->pszValue, "DWithin") == 0 ||
                  strcasecmp(psXMLNode->pszValue, "Beyond") == 0)
 
       {
         shapeObj *psShape = NULL;
         int bPoint = 0, bLine = 0, bPolygon = 0;
-        char *pszUnits = NULL;
+        const char *pszUnits = NULL;
+        const char* pszDistance = NULL;
+        const char* pszPropertyName;
         char *pszSRS = NULL;
 
         CPLXMLNode *psGMLElement = NULL, *psDistance=NULL;
 
+        pszPropertyName = FLTGetPropertyName(psXMLNode);
+
         psGMLElement = FLTFindGeometryNode(psXMLNode, &bPoint, &bLine, &bPolygon);
 
         psDistance = CPLGetXMLNode(psXMLNode, "Distance");
-        if (psGMLElement && psDistance && psDistance->psChild &&
-            psDistance->psChild->psNext && psDistance->psChild->psNext->pszValue) {
-          pszUnits = (char *)CPLGetXMLValue(psDistance, "units", NULL);
+        if( psDistance != NULL )
+            pszDistance = CPLGetXMLValue(psDistance, NULL, NULL );
+        if (pszPropertyName != NULL && psGMLElement && psDistance != NULL ) {
+          pszUnits = CPLGetXMLValue(psDistance, "units", NULL);
+          if( pszUnits == NULL ) /* FE 2.0 */
+              pszUnits = CPLGetXMLValue(psDistance, "uom", NULL);
           psShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
           msInitShape(psShape);
           if (FLTShapeFromGMLTree(psGMLElement, psShape, &pszSRS))
-            /* if (FLTGML2Shape_XMLNode(psPoint, psShape)) */
           {
             /*set the srs if available*/
             if (pszSRS)
               psFilterNode->pszSRS = pszSRS;
 
             psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
-            /* not really using the property name anywhere ?? Is is always */
-            /* Geometry ?  */
-
             psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-            psFilterNode->psLeftNode->pszValue = msStrdup("Geometry");
+            psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
 
             psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
             if (bPoint)
@@ -1227,12 +1173,17 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
               psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POLYGON;
             psFilterNode->psRightNode->pOther = (shapeObj *)psShape;
             /*the value will be distance;units*/
-            psFilterNode->psRightNode->pszValue =
-            msStrdup(psDistance->psChild->psNext->pszValue);
+            psFilterNode->psRightNode->pszValue = msStrdup(pszDistance);
             if (pszUnits) {
               psFilterNode->psRightNode->pszValue= msStringConcatenate(psFilterNode->psRightNode->pszValue, ";");
               psFilterNode->psRightNode->pszValue= msStringConcatenate(psFilterNode->psRightNode->pszValue, pszUnits);
             }
+          }
+          else
+          {
+              free(psShape);
+              msFree(pszSRS);
+              psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
           }
         } else
           psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
@@ -1248,38 +1199,42 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         shapeObj *psShape = NULL;
         int  bLine = 0, bPolygon = 0, bPoint=0;
         char *pszSRS = NULL;
-
+        const char* pszPropertyName;
 
         CPLXMLNode *psGMLElement = NULL;
 
+        pszPropertyName = FLTGetPropertyName(psXMLNode);
+
         psGMLElement = FLTFindGeometryNode(psXMLNode, &bPoint, &bLine, &bPolygon);
 
-        if (psGMLElement) {
+        if (pszPropertyName != NULL && psGMLElement) {
           psShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
           msInitShape(psShape);
           if (FLTShapeFromGMLTree(psGMLElement, psShape, &pszSRS))
-            /* if (FLTGML2Shape_XMLNode(psPoint, psShape)) */
           {
             /*set the srs if available*/
             if (pszSRS)
               psFilterNode->pszSRS = pszSRS;
 
             psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
-            /* not really using the property name anywhere ?? Is is always */
-            /* Geometry ?  */
-
             psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-            psFilterNode->psLeftNode->pszValue = msStrdup("Geometry");
+            psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
 
             psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
             if (bPoint)
               psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POINT;
-            if (bLine)
+            else if (bLine)
               psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_LINE;
             else if (bPolygon)
               psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POLYGON;
             psFilterNode->psRightNode->pOther = (shapeObj *)psShape;
 
+          }
+          else
+          {
+              free(psShape);
+              msFree(pszSRS);
+              psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
           }
         } else
           psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
@@ -1305,36 +1260,29 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       /*      </Filter>                                                       */
       /* -------------------------------------------------------------------- */
       if (FLTIsBinaryComparisonFilterType(psXMLNode->pszValue)) {
-        psTmpNode = CPLSearchXMLNode(psXMLNode,  "PropertyName");
-        if (psTmpNode &&  psTmpNode->psChild &&
-            psTmpNode->psChild->pszValue &&
-            strlen(psTmpNode->psChild->pszValue) > 0) {
+        const char* pszPropertyName = FLTGetPropertyName(psXMLNode);
+        if (pszPropertyName != NULL ) {
+
           psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
           psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-          psFilterNode->psLeftNode->pszValue =
-            msStrdup(psTmpNode->psChild->pszValue);
+          psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
 
           psTmpNode = CPLSearchXMLNode(psXMLNode,  "Literal");
           if (psTmpNode) {
+            const char* pszLiteral = CPLGetXMLValue(psTmpNode, NULL, NULL);
+
             psFilterNode->psRightNode = FLTCreateBinaryCompFilterEncodingNode();
             psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
 
-            if (psTmpNode &&
-                psTmpNode->psChild &&
-                psTmpNode->psChild->pszValue &&
-                strlen(psTmpNode->psChild->pszValue) > 0) {
+            if (pszLiteral != NULL) {
+              const char* pszMatchCase;
 
-              psFilterNode->psRightNode->pszValue =
-                msStrdup(psTmpNode->psChild->pszValue);
+              psFilterNode->psRightNode->pszValue = msStrdup(pszLiteral);
+              
+              pszMatchCase = CPLGetXMLValue(psXMLNode, "matchCase", NULL);
 
               /*check if the matchCase attribute is set*/
-              if (psXMLNode->psChild &&
-                  psXMLNode->psChild->eType == CXT_Attribute  &&
-                  psXMLNode->psChild->pszValue &&
-                  strcasecmp(psXMLNode->psChild->pszValue, "matchCase") == 0 &&
-                  psXMLNode->psChild->psChild &&
-                  psXMLNode->psChild->psChild->pszValue &&
-                  strcasecmp( psXMLNode->psChild->psChild->pszValue, "false") == 0) {
+              if( pszMatchCase != NULL && strcasecmp( pszMatchCase, "false") == 0) {
                 (*(int *)psFilterNode->psRightNode->pOther) = 1;
               }
 
@@ -1369,56 +1317,43 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       /*      </PropertyIsBetween>                                            */
       /* -------------------------------------------------------------------- */
       else if (strcasecmp(psXMLNode->pszValue, "PropertyIsBetween") == 0) {
-        CPLXMLNode *psUpperNode = NULL, *psLowerNode = NULL;
-        if (psXMLNode->psChild &&
-            strcasecmp(psXMLNode->psChild->pszValue,
-                       "PropertyName") == 0 &&
-            psXMLNode->psChild->psNext &&
-            strcasecmp(psXMLNode->psChild->psNext->pszValue,
-                       "LowerBoundary") == 0 &&
-            psXMLNode->psChild->psNext->psNext &&
-            strcasecmp(psXMLNode->psChild->psNext->psNext->pszValue,
-                       "UpperBoundary") == 0) {
+        const char* pszPropertyName = FLTGetPropertyName(psXMLNode);
+        CPLXMLNode* psLowerBoundary = CPLGetXMLNode(psXMLNode, "LowerBoundary");
+        CPLXMLNode* psUpperBoundary = CPLGetXMLNode(psXMLNode, "UpperBoundary");
+        const char* pszLowerNode = NULL;
+        const char* pszUpperNode = NULL;
+        if( psLowerBoundary != NULL )
+        {
+          /* check if the <Literal> is there */
+          if (CPLGetXMLNode(psLowerBoundary, "Literal") != NULL)
+            pszLowerNode = CPLGetXMLValue(psLowerBoundary, "Literal", NULL);
+          else
+            pszLowerNode = CPLGetXMLValue(psLowerBoundary, NULL, NULL);
+        }
+        if( psUpperBoundary != NULL )
+        {
+           if (CPLGetXMLNode(psUpperBoundary, "Literal") != NULL)
+            pszUpperNode = CPLGetXMLValue(psUpperBoundary, "Literal", NULL);
+          else
+            pszUpperNode = CPLGetXMLValue(psUpperBoundary, NULL, NULL);
+        }
+        if (pszPropertyName != NULL && pszLowerNode != NULL && pszUpperNode != NULL) {
           psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
 
-          if (psXMLNode->psChild->psChild &&
-              psXMLNode->psChild->psChild->pszValue) {
-            psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-            psFilterNode->psLeftNode->pszValue =
-              msStrdup(psXMLNode->psChild->psChild->pszValue);
-          }
+          psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+          psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
 
           psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
-          if (psXMLNode->psChild->psNext->psChild &&
-              psXMLNode->psChild->psNext->psNext->psChild &&
-              psXMLNode->psChild->psNext->psChild->pszValue &&
-              psXMLNode->psChild->psNext->psNext->psChild->pszValue) {
-            /* check if the <Literals> is there */
-            psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BOUNDARY;
-            if (psXMLNode->psChild->psNext->psChild->psChild)
-              psLowerNode = psXMLNode->psChild->psNext->psChild->psChild;
-            else
-              psLowerNode = psXMLNode->psChild->psNext->psChild;
+          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BOUNDARY;
 
-            if (psXMLNode->psChild->psNext->psNext->psChild->psChild)
-              psUpperNode = psXMLNode->psChild->psNext->psNext->psChild->psChild;
-            else
-              psUpperNode = psXMLNode->psChild->psNext->psNext->psChild;
+          /* adding a ; between bounary values */
+          nStrLength = strlen(pszLowerNode) + strlen(pszUpperNode) + 2;
 
-            nStrLength =
-              strlen(psLowerNode->pszValue);
-            nStrLength +=
-              strlen(psUpperNode->pszValue);
-
-            nStrLength += 2; /* adding a ; between bounary values */
-            psFilterNode->psRightNode->pszValue =
+          psFilterNode->psRightNode->pszValue =
               (char *)malloc(sizeof(char)*(nStrLength));
-            strcpy( psFilterNode->psRightNode->pszValue,
-                    psLowerNode->pszValue);
-            strlcat(psFilterNode->psRightNode->pszValue, ";", nStrLength);
-            strlcat(psFilterNode->psRightNode->pszValue,
-                    psUpperNode->pszValue, nStrLength);
-          }
+          strcpy( psFilterNode->psRightNode->pszValue, pszLowerNode);
+          strlcat(psFilterNode->psRightNode->pszValue, ";", nStrLength);
+          strlcat(psFilterNode->psRightNode->pszValue, pszUpperNode, nStrLength);
 
 
         } else
@@ -1436,99 +1371,43 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       /*      </Filter>                                                       */
       /* -------------------------------------------------------------------- */
       else if (strcasecmp(psXMLNode->pszValue, "PropertyIsLike") == 0) {
-        if (CPLSearchXMLNode(psXMLNode,  "Literal") &&
-            CPLSearchXMLNode(psXMLNode,  "PropertyName") &&
-            CPLGetXMLValue(psXMLNode, "wildCard", "") &&
-            CPLGetXMLValue(psXMLNode, "singleChar", "") &&
-            (CPLGetXMLValue(psXMLNode, "escape", "") ||
-             CPLGetXMLValue(psXMLNode, "escapeChar", "")))
-          /*
-            psXMLNode->psChild &&
-            strcasecmp(psXMLNode->psChild->pszValue, "wildCard") == 0 &&
-            psXMLNode->psChild->psNext &&
-            strcasecmp(psXMLNode->psChild->psNext->pszValue, "singleChar") == 0 &&
-            psXMLNode->psChild->psNext->psNext &&
-            strcasecmp(psXMLNode->psChild->psNext->psNext->pszValue, "escape") == 0 &&
-            psXMLNode->psChild->psNext->psNext->psNext &&
-            strcasecmp(psXMLNode->psChild->psNext->psNext->psNext->pszValue, "PropertyName") == 0 &&
-            psXMLNode->psChild->psNext->psNext->psNext->psNext &&
-            strcasecmp(psXMLNode->psChild->psNext->psNext->psNext->psNext->pszValue, "Literal") == 0)
-          */
+        const char* pszPropertyName = FLTGetPropertyName(psXMLNode);
+        const char* pszLiteral = CPLGetXMLValue(psXMLNode, "Literal", NULL);
+        const char* pszWildCard = CPLGetXMLValue(psXMLNode, "wildCard", NULL);
+        const char* pszSingleChar = CPLGetXMLValue(psXMLNode, "singleChar", NULL);
+        const char* pszEscapeChar = CPLGetXMLValue(psXMLNode, "escape", NULL);
+        if( pszEscapeChar == NULL )
+            pszEscapeChar = CPLGetXMLValue(psXMLNode, "escapeChar", NULL);
+        if (pszPropertyName != NULL && pszLiteral != NULL &&
+            pszWildCard != NULL && pszSingleChar != NULL && pszEscapeChar != NULL)
         {
-          /* -------------------------------------------------------------------- */
-          /*      Get the wildCard, the singleChar and the escapeChar used.       */
-          /* -------------------------------------------------------------------- */
-          psFilterNode->pOther = (FEPropertyIsLike *)malloc(sizeof(FEPropertyIsLike));
-          /*default is case sensitive*/
-          ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive = 0;
+          FEPropertyIsLike* propIsLike;
 
-          pszTmp = (char *)CPLGetXMLValue(psXMLNode, "wildCard", "");
-          if (pszTmp)
-            ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard =
-              msStrdup(pszTmp);
-          pszTmp = (char *)CPLGetXMLValue(psXMLNode, "singleChar", "");
-          if (pszTmp)
-            ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar =
-              msStrdup(pszTmp);
-          pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escape", "");
-          if (pszTmp && strlen(pszTmp)>0)
-            ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar =
-              msStrdup(pszTmp);
-          else {
-            pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escapeChar", "");
-            if (pszTmp)
-              ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar =
-                msStrdup(pszTmp);
-          }
-          pszTmp = (char *)CPLGetXMLValue(psXMLNode, "matchCase", "");
-          if (pszTmp && strlen(pszTmp) > 0 &&
-              strcasecmp(pszTmp, "false") == 0) {
-            ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive =1;
+          propIsLike = (FEPropertyIsLike *)malloc(sizeof(FEPropertyIsLike));
+
+          psFilterNode->pOther = propIsLike;
+          propIsLike->bCaseInsensitive = 0;
+          propIsLike->pszWildCard = msStrdup(pszWildCard);
+          propIsLike->pszSingleChar = msStrdup(pszSingleChar);
+          propIsLike->pszEscapeChar = msStrdup(pszEscapeChar);
+
+          pszTmp = (char *)CPLGetXMLValue(psXMLNode, "matchCase", NULL);
+          if (pszTmp && strcasecmp(pszTmp, "false") == 0) {
+            propIsLike->bCaseInsensitive =1;
           }
           /* -------------------------------------------------------------------- */
           /*      Create left and right node for the attribute and the value.     */
           /* -------------------------------------------------------------------- */
           psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
 
-          psTmpNode = CPLSearchXMLNode(psXMLNode,  "PropertyName");
-          if (psTmpNode &&  psTmpNode->psChild &&
-              psTmpNode->psChild->pszValue &&
-              strlen(psTmpNode->psChild->pszValue) > 0)
-
-          {
-            /*
-            if (psXMLNode->psChild->psNext->psNext->psNext->psChild &&
-            psXMLNode->psChild->psNext->psNext->psNext->psChild->pszValue)
-            {
-            psFilterNode->psLeftNode->pszValue =
-              msStrdup(psXMLNode->psChild->psNext->psNext->psNext->psChild->pszValue);
-            */
-            psFilterNode->psLeftNode->pszValue =
-              msStrdup(psTmpNode->psChild->pszValue);
-            psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-
-          }
+          psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
+          psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
 
           psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
 
+          psFilterNode->psRightNode->pszValue = msStrdup(pszLiteral);
 
-          psTmpNode = CPLSearchXMLNode(psXMLNode,  "Literal");
-          if (psTmpNode &&  psTmpNode->psChild &&
-              psTmpNode->psChild->pszValue &&
-              strlen(psTmpNode->psChild->pszValue) > 0) {
-            /*
-            if (psXMLNode->psChild->psNext->psNext->psNext->psNext->psChild &&
-            psXMLNode->psChild->psNext->psNext->psNext->psNext->psChild->pszValue)
-            {
-
-            psFilterNode->psRightNode->pszValue =
-              msStrdup(psXMLNode->psChild->psNext->psNext->psNext->psNext->psChild->pszValue);
-            */
-            psFilterNode->psRightNode->pszValue =
-              msStrdup(psTmpNode->psChild->pszValue);
-
-            psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
-          }
+          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
         } else
           psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
 
@@ -1555,22 +1434,22 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     /* -------------------------------------------------------------------- */
     else if (FLTIsFeatureIdFilterType(psXMLNode->pszValue)) {
       psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
-      pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "fid", NULL);
+      pszFeatureId = CPLGetXMLValue(psXMLNode, "fid", NULL);
       /*for FE 1.1.0 GmlObjectId */
       if (pszFeatureId == NULL)
-        pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "id", NULL);
+        pszFeatureId = CPLGetXMLValue(psXMLNode, "id", NULL);
       /*for FE 2.0 ResourceId */
       if (pszFeatureId == NULL)
-        pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "rid", NULL);
+        pszFeatureId = CPLGetXMLValue(psXMLNode, "rid", NULL);
       pszFeatureIdList = NULL;
 
       psFeatureIdNode = psXMLNode;
       while (psFeatureIdNode) {
-        pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "fid", NULL);
+        pszFeatureId = CPLGetXMLValue(psFeatureIdNode, "fid", NULL);
         if (!pszFeatureId)
-          pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "id", NULL);
+          pszFeatureId = CPLGetXMLValue(psFeatureIdNode, "id", NULL);
         if (!pszFeatureId)
-          pszFeatureId = (char *)CPLGetXMLValue(psFeatureIdNode, "rid", NULL);
+          pszFeatureId = CPLGetXMLValue(psFeatureIdNode, "rid", NULL);
 
         if (pszFeatureId) {
           if (pszFeatureIdList)
@@ -1590,6 +1469,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       }
 
       if (pszFeatureIdList) {
+        msFree(psFilterNode->pszValue);
         psFilterNode->pszValue =  msStrdup(pszFeatureIdList);
         msFree(pszFeatureIdList);
       } else
@@ -1858,13 +1738,6 @@ int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode)
   if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
     return 1;
 
-  /*    if (strcasecmp(psFilterNode->pszValue, "AND") == 0)
-  {
-    if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0 ||
-        strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)
-      return 1;
-  }
-  */
   return 0;
 }
 
@@ -1881,9 +1754,7 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
     if (psNode->eType == FILTER_NODE_TYPE_SPATIAL && psNode->psRightNode)
       psNode = psNode->psRightNode;
 
-    if (psNode->eType == FILTER_NODE_TYPE_GEOMETRY_POINT ||
-        psNode->eType == FILTER_NODE_TYPE_GEOMETRY_LINE ||
-        psNode->eType == FILTER_NODE_TYPE_GEOMETRY_POLYGON) {
+    if (FLTIsGeometryFilterNodeType(psNode->eType)) {
 
       if (psNode->pszValue && pdfDistance) {
         /*
@@ -1951,21 +1822,22 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
 /*      first bbox node found. The retrun value is the epsg code of     */
 /*      the bbox.                                                       */
 /************************************************************************/
-char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect)
+const char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect)
 {
-  char *pszReturn = NULL;
+  const char *pszReturn = NULL;
 
   if (!psFilterNode || !psRect)
     return NULL;
 
   if (psFilterNode->pszValue && strcasecmp(psFilterNode->pszValue, "BBOX") == 0) {
     if (psFilterNode->psRightNode && psFilterNode->psRightNode->pOther) {
-      psRect->minx = ((rectObj *)psFilterNode->psRightNode->pOther)->minx;
-      psRect->miny = ((rectObj *)psFilterNode->psRightNode->pOther)->miny;
-      psRect->maxx = ((rectObj *)psFilterNode->psRightNode->pOther)->maxx;
-      psRect->maxy = ((rectObj *)psFilterNode->psRightNode->pOther)->maxy;
+      rectObj* pRect= (rectObj *)psFilterNode->psRightNode->pOther;
+      psRect->minx = pRect->minx;
+      psRect->miny = pRect->miny;
+      psRect->maxx = pRect->maxx;
+      psRect->maxy = pRect->maxy;
 
-      return psFilterNode->psRightNode->pszValue;
+      return psFilterNode->pszSRS;
 
     }
   } else {
@@ -2820,22 +2692,24 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
   char szTmp[256];
   char *pszValue = NULL;
 
-  char *pszWild = NULL;
-  char *pszSingle = NULL;
-  char *pszEscape = NULL;
+  const char *pszWild = NULL;
+  const char *pszSingle = NULL;
+  const char *pszEscape = NULL;
   int  bCaseInsensitive = 0;
 
   int nLength=0, i=0, iTmp=0;
+  FEPropertyIsLike* propIsLike;
 
 
   if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
       !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
     return NULL;
 
-  pszWild = ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard;
-  pszSingle = ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar;
-  pszEscape = ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar;
-  bCaseInsensitive = ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive;
+  propIsLike = (FEPropertyIsLike *)psFilterNode->pOther;
+  pszWild = propIsLike->pszWildCard;
+  pszSingle = propIsLike->pszSingleChar;
+  pszEscape = propIsLike->pszEscapeChar;
+  bCaseInsensitive = propIsLike->bCaseInsensitive;
 
   if (!pszWild || strlen(pszWild) == 0 ||
       !pszSingle || strlen(pszSingle) == 0 ||
@@ -2920,24 +2794,26 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
   char szBuffer[1024];
   char *pszValue = NULL;
 
-  char *pszWild = NULL;
-  char *pszSingle = NULL;
-  char *pszEscape = NULL;
+  const char *pszWild = NULL;
+  const char *pszSingle = NULL;
+  const char *pszEscape = NULL;
   char szTmp[4];
 
   int nLength=0, i=0, j=0;
   int  bCaseInsensitive = 0;
 
   char *pszEscapedStr = NULL;
+  FEPropertyIsLike* propIsLike;
 
   if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
       !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
     return NULL;
 
-  pszWild = ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard;
-  pszSingle = ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar;
-  pszEscape = ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar;
-  bCaseInsensitive = ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive;
+  propIsLike = (FEPropertyIsLike *)psFilterNode->pOther;
+  pszWild = propIsLike->pszWildCard;
+  pszSingle = propIsLike->pszSingleChar;
+  pszEscape = propIsLike->pszEscapeChar;
+  bCaseInsensitive = propIsLike->bCaseInsensitive;
 
   if (!pszWild || strlen(pszWild) == 0 ||
       !pszSingle || strlen(pszSingle) == 0 ||
@@ -3103,12 +2979,11 @@ FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
 int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
 {
   int bCoordinatesValid = 0;
-  CPLXMLNode *psCoordinates = NULL, *psCoordChild=NULL;
+  CPLXMLNode *psCoordinates = NULL;
   CPLXMLNode *psCoord1 = NULL, *psCoord2 = NULL;
-  CPLXMLNode *psX = NULL, *psY = NULL;
   char **papszCoords=NULL, **papszMin=NULL, **papszMax = NULL;
   int nCoords = 0, nCoordsMin = 0, nCoordsMax = 0;
-  char *pszTmpCoord = NULL;
+  const char *pszTmpCoord = NULL;
   const char *pszSRS = NULL;
   const char *pszTS = NULL;
   const char *pszCS = NULL;
@@ -3120,31 +2995,20 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
       *ppszSRS = msStrdup(pszSRS);
 
     psCoordinates = CPLGetXMLNode(psBox, "coordinates");
-    if (!psCoordinates)
-      return 0;
     pszTS = CPLGetXMLValue(psCoordinates, "ts", NULL);
+    if( pszTS == NULL )
+        pszTS = " ";
     pszCS = CPLGetXMLValue(psCoordinates, "cs", NULL);
+    if( pszCS == NULL )
+        pszCS = ",";
+    pszTmpCoord = CPLGetXMLValue(psCoordinates, NULL, NULL);
 
-    psCoordChild =  psCoordinates->psChild;
-    while (psCoordinates && psCoordChild && psCoordChild->eType != CXT_Text) {
-      psCoordChild = psCoordChild->psNext;
-    }
-    if (psCoordChild && psCoordChild->pszValue) {
-      pszTmpCoord = psCoordChild->pszValue;
-      if (pszTS)
-        papszCoords = msStringSplit(pszTmpCoord, pszTS[0], &nCoords);
-      else
-        papszCoords = msStringSplit(pszTmpCoord, ' ', &nCoords);
+    if (pszTmpCoord) {
+      papszCoords = msStringSplit(pszTmpCoord, pszTS[0], &nCoords);
       if (papszCoords && nCoords == 2) {
-        if (pszCS)
-          papszMin = msStringSplit(papszCoords[0], pszCS[0], &nCoordsMin);
-        else
-          papszMin = msStringSplit(papszCoords[0], ',', &nCoordsMin);
+        papszMin = msStringSplit(papszCoords[0], pszCS[0], &nCoordsMin);
         if (papszMin && nCoordsMin == 2) {
-          if (pszCS)
-            papszMax = msStringSplit(papszCoords[1], pszCS[0], &nCoordsMax);
-          else
-            papszMax = msStringSplit(papszCoords[1], ',', &nCoordsMax);
+          papszMax = msStringSplit(papszCoords[1], pszCS[0], &nCoordsMax);
         }
         if (papszMax && nCoordsMax == 2) {
           bCoordinatesValid =1;
@@ -3161,23 +3025,19 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
       msFreeCharArray(papszCoords, nCoords);
     } else {
       psCoord1 = CPLGetXMLNode(psBox, "coord");
-      if (psCoord1 && psCoord1->psNext &&
-          psCoord1->psNext->pszValue &&
-          strcmp(psCoord1->psNext->pszValue, "coord") ==0) {
-        psCoord2 = psCoord1->psNext;
-        psX =  CPLGetXMLNode(psCoord1, "X");
-        psY =  CPLGetXMLNode(psCoord1, "Y");
-        if (psX && psY && psX->psChild && psY->psChild &&
-            psX->psChild->pszValue && psY->psChild->pszValue) {
-          minx = atof(psX->psChild->pszValue);
-          miny = atof(psY->psChild->pszValue);
+      psCoord2 = FLTGetNextSibblingNode(psCoord1);
+      if (psCoord1 && psCoord2 && strcmp(psCoord2->pszValue, "coord") == 0) {
+        const char* pszX = CPLGetXMLValue(psCoord1, "X", NULL);
+        const char* pszY = CPLGetXMLValue(psCoord1, "Y", NULL);
+        if (pszX && pszY) {
+          minx = atof(pszX);
+          miny = atof(pszY);
 
-          psX =  CPLGetXMLNode(psCoord2, "X");
-          psY =  CPLGetXMLNode(psCoord2, "Y");
-          if (psX && psY && psX->psChild && psY->psChild &&
-              psX->psChild->pszValue && psY->psChild->pszValue) {
-            maxx = atof(psX->psChild->pszValue);
-            maxy = atof(psY->psChild->pszValue);
+          pszX = CPLGetXMLValue(psCoord2, "X", NULL);
+          pszY = CPLGetXMLValue(psCoord2, "Y", NULL);
+          if (pszX && pszY) {
+            maxx = atof(pszX);
+            maxy = atof(pszY);
             bCoordinatesValid = 1;
           }
         }
@@ -3199,13 +3059,12 @@ int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS)
 /************************************************************************/
 /*                           FLTParseGMLEnvelope                        */
 /*                                                                      */
-/*      Utility function to parse a gml:Enevelop (used for SOS and FE1.1)*/
+/*      Utility function to parse a gml:Envelope (used for SOS and FE1.1)*/
 /************************************************************************/
 int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
 {
-  CPLXMLNode *psChild=NULL;
   CPLXMLNode *psUpperCorner=NULL, *psLowerCorner=NULL;
-  char *pszLowerCorner=NULL, *pszUpperCorner=NULL;
+  const char *pszLowerCorner=NULL, *pszUpperCorner=NULL;
   int bValid = 0;
   char **tokens;
   int n;
@@ -3214,42 +3073,16 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
       EQUAL(psRoot->pszValue,"Envelope")) {
     /*Get the srs if available*/
     if (ppszSRS) {
-      psChild = psRoot->psChild;
-      while (psChild != NULL) {
-        if (psChild->eType == CXT_Attribute && psChild->pszValue &&
-            EQUAL(psChild->pszValue, "srsName") && psChild->psChild &&
-            psChild->psChild->pszValue) {
-          *ppszSRS = msStrdup(psChild->psChild->pszValue);
-          break;
-        }
-        psChild = psChild->psNext;
-      }
+      const char* pszSRS = CPLGetXMLValue(psRoot, "srsName", NULL);
+      if( pszSRS != NULL )
+          *ppszSRS = msStrdup(pszSRS);
     }
     psLowerCorner = CPLSearchXMLNode(psRoot, "lowerCorner");
     psUpperCorner = CPLSearchXMLNode(psRoot, "upperCorner");
 
-    if (psLowerCorner && psUpperCorner && EQUAL(psLowerCorner->pszValue,"lowerCorner") &&
-        EQUAL(psUpperCorner->pszValue,"upperCorner")) {
-      /*get the values*/
-      psChild = psLowerCorner->psChild;
-      while (psChild != NULL) {
-        if (psChild->eType != CXT_Text)
-          psChild = psChild->psNext;
-        else
-          break;
-      }
-      if (psChild && psChild->eType == CXT_Text)
-        pszLowerCorner = psChild->pszValue;
-
-      psChild = psUpperCorner->psChild;
-      while (psChild != NULL) {
-        if (psChild->eType != CXT_Text)
-          psChild = psChild->psNext;
-        else
-          break;
-      }
-      if (psChild && psChild->eType == CXT_Text)
-        pszUpperCorner = psChild->pszValue;
+    if (psLowerCorner && psUpperCorner) {
+      pszLowerCorner = CPLGetXMLValue(psLowerCorner, NULL, NULL);
+      pszUpperCorner = CPLGetXMLValue(psUpperCorner, NULL, NULL);
 
       if (pszLowerCorner && pszUpperCorner) {
         tokens = msStringSplit(pszLowerCorner, ' ', &n);
@@ -3271,15 +3104,76 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
       }
     }
   }
-  if (bValid && ppszSRS && *ppszSRS) {
+
+  return bValid;
+}
+
+/************************************************************************/
+/*                        FLTNeedSRSSwapping                            */
+/************************************************************************/
+
+static int FLTNeedSRSSwapping( const char* pszSRS )
+{
+    int bNeedSwapping = MS_FALSE;
     projectionObj sProjTmp;
     msInitProjection(&sProjTmp);
-    if (msLoadProjectionStringEPSG(&sProjTmp, *ppszSRS) == 0) {
-      msAxisNormalizePoints( &sProjTmp, 1, &psBbox->minx, &psBbox->miny);
-      msAxisNormalizePoints( &sProjTmp, 1, &psBbox->maxx, &psBbox->maxy);
+    if (msLoadProjectionStringEPSG(&sProjTmp, pszSRS) == 0) {
+        bNeedSwapping = msIsAxisInvertedProj(&sProjTmp);
     }
-  }
-  return bValid;
+    msFreeProjection(&sProjTmp);
+    return bNeedSwapping;
+}
+
+/************************************************************************/
+/*                      FLTDoAxisSwappingIfNecessary                    */
+/*                                                                      */
+/*      Explore all geometries and BBOX to do axis swapping when the    */
+/*      SRS requires it. If no explicit SRS is attached to the geometry */
+/*      the bDefaultSRSNeedsAxisSwapping is taken into account. The     */
+/*      caller will have to determine its value from a more general     */
+/*      context.                                                        */
+/************************************************************************/
+void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
+                                  int bDefaultSRSNeedsAxisSwapping)
+{
+    if( psFilterNode == NULL )
+        return;
+
+    if( psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL &&
+        psFilterNode->psRightNode->eType == FILTER_NODE_TYPE_BBOX )
+    {
+        rectObj* rect = (rectObj *)psFilterNode->psRightNode->pOther;
+        const char* pszSRS = psFilterNode->pszSRS;
+        if( (pszSRS != NULL && FLTNeedSRSSwapping(pszSRS)) ||
+            (pszSRS == NULL && bDefaultSRSNeedsAxisSwapping) )
+        {
+            double tmp;
+
+            tmp = rect->minx;
+            rect->minx = rect->miny;
+            rect->miny = tmp;
+
+            tmp = rect->maxx;
+            rect->maxx = rect->maxy;
+            rect->maxy = tmp;
+        }
+    }
+    else if( psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL &&
+             FLTIsGeometryFilterNodeType(psFilterNode->psRightNode->eType) )
+    {
+        shapeObj* shape = (shapeObj *)(psFilterNode->psRightNode->pOther);
+        const char* pszSRS = psFilterNode->pszSRS;
+        if( (pszSRS != NULL && FLTNeedSRSSwapping(pszSRS)) ||
+            (pszSRS == NULL && bDefaultSRSNeedsAxisSwapping) )
+        {
+            msAxisSwapShape(shape);
+        }
+    }
+    else
+    {
+        FLTDoAxisSwappingIfNecessary(psFilterNode->psLeftNode, bDefaultSRSNeedsAxisSwapping);
+        FLTDoAxisSwappingIfNecessary(psFilterNode->psRightNode, bDefaultSRSNeedsAxisSwapping);
+    }
 }
 
 

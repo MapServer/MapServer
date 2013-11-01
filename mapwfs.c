@@ -428,71 +428,34 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
     }
   }
 
-  if (pszOutputSRS && nWFSVersion >= OWS_1_1_0) {
+  if (pszOutputSRS) {
     projectionObj sProjTmp;
     int nTmp=0;
 
     msInitProjection(&sProjTmp);
-    nTmp = msLoadProjectionStringEPSG(&(sProjTmp), pszOutputSRS);
+    if( nWFSVersion >= OWS_1_1_0 ) {
+      nTmp = msLoadProjectionStringEPSG(&(sProjTmp), pszOutputSRS);
+    } else {
+      nTmp = msLoadProjectionString(&(sProjTmp), pszOutputSRS);
+    }
     if (nTmp == 0) {
       msProjectRect(&(map->projection), &(sProjTmp), &map->extent);
     }
     msFreeProjection(&(sProjTmp));
-    /*check if the srs passed is valid. Assuming that it is an EPSG:xxx format,
-      Or urn:ogc:def:crs:EPSG:xxx format. */
-    if (strncasecmp(pszOutputSRS, "EPSG:", 5) == 0 ||
-        strncasecmp(pszOutputSRS, "urn:ogc:def:crs:EPSG:",21) == 0) {
-      /*we load the projection sting in the map and possibly
-        set the axis order*/
-      msFreeProjection(&map->projection);
-      msLoadProjectionStringEPSG(&(map->projection), pszOutputSRS);
-    } else if (strncasecmp(pszOutputSRS, "urn:EPSG:geographicCRS:",23) == 0) {
-      char epsg_string[100];
-      const char *code;
-
-
-      code = pszOutputSRS + 23;
-
-      snprintf( epsg_string, sizeof(epsg_string), "EPSG:%s", code );
-
-      /*we load the projection sting in the map and possibly
-        set the axis order*/
-      /*reproject the map extent from current projection to output projection*/
-
-      msFreeProjection(&map->projection);
-      msLoadProjectionStringEPSG(&(map->projection), epsg_string);
-    }
-  }
-  /* Set map output projection to which output features should be reprojected */
-  else if (pszOutputSRS && strncasecmp(pszOutputSRS, "EPSG:", 5) == 0) {
-    int nTmp =0;
-    projectionObj sProjTmp;
-
-    /*reproject the map extent from current projection to output projection*/
-    msInitProjection(&sProjTmp);
-    if (nWFSVersion >= OWS_1_1_0)
-      nTmp = msLoadProjectionStringEPSG(&(sProjTmp), pszOutputSRS);
-    else
-      nTmp = msLoadProjectionString(&(sProjTmp), pszOutputSRS);
-
-    if (nTmp == 0)
-      msProjectRect(&(map->projection), &(sProjTmp), &map->extent);
-    msFreeProjection(&(sProjTmp));
-
-    msFreeProjection(&map->projection);
-    msInitProjection(&map->projection);
-
-    if (nWFSVersion >= OWS_1_1_0)
-      nTmp = msLoadProjectionStringEPSG(&(map->projection), pszOutputSRS);
-    else
-      nTmp = msLoadProjectionString(&(map->projection), pszOutputSRS);
 
     if (nTmp != 0) {
       msSetError(MS_WFSERR, "msLoadProjectionString() failed", "msWFSGetFeature()");
       return MS_FAILURE;
     }
-  }
 
+    /*we load the projection sting in the map and possibly
+    set the axis order*/
+    if( nWFSVersion >= OWS_1_1_0 ) {
+      msLoadProjectionStringEPSG(&(map->projection), pszOutputSRS);
+    } else {
+      msLoadProjectionString(&(map->projection), pszOutputSRS);
+    }
+  }
 
   if (pszOutputSRS)
     msFree(pszOutputSRS);
@@ -996,10 +959,28 @@ static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometry
   return;
 }
 
+static const char* msWFSMapServTypeToXMLType(const char* type)
+{
+    const char *element_type = "string";
+    /* Map from MapServer types to XSD types */
+    if( strcasecmp(type,"Integer") == 0 )
+      element_type = "integer";
+    else if( EQUAL(type,"Real") ||
+             EQUAL(type,"double") /* just in case someone provided the xsd type directly */ )
+      element_type = "double";
+    else if( EQUAL(type,"Character") )
+      element_type = "string";
+    else if( EQUAL(type,"Date") )
+      element_type = "date";
+    else if( EQUAL(type,"Boolean") )
+      element_type = "boolean";
+    return element_type;
+}
+
 static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *tab)
 {
-  char *element_name;
-  char *element_type = "string";
+  const char *element_name;
+  const char *element_type = "string";
 
   if(!stream || !item || !tab) return;
   if(!item->visible) return; /* not exposing this attribute */
@@ -1011,20 +992,7 @@ static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *ta
     element_name = item->name;
 
   if(item->type)
-  {
-    /* Map from MapServer types to XSD types */
-    if( strcasecmp(item->type,"Integer") == 0 )
-      element_type = "integer";
-    else if( EQUAL(item->type,"Real") ||
-             EQUAL(item->type,"double") /* just in case someone provided the xsd type directly */ )
-      element_type = "double";
-    else if( EQUAL(item->type,"Character") )
-      element_type = "string";
-    else if( EQUAL(item->type,"Date") )
-      element_type = "date";
-    else if( EQUAL(item->type,"Boolean") )
-      element_type = "boolean";
-  }
+    element_type = msWFSMapServTypeToXMLType(item->type);
 
   msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s\"/>\n", tab, element_name, element_type);
 
@@ -1033,12 +1001,12 @@ static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *ta
 
 static void msWFSWriteConstantElement(FILE *stream, gmlConstantObj *constant, const char *tab)
 {
-  char *element_type = "string";
+  const char *element_type = "string";
 
   if(!stream || !constant || !tab) return;
 
   if(constant->type)
-    element_type = constant->type;
+    element_type = msWFSMapServTypeToXMLType(constant->type);
 
   msIO_fprintf(stream, "%s<element name=\"%s\" type=\"%s\"/>\n", tab, constant->name, element_type);
 
@@ -1536,6 +1504,15 @@ typedef struct {
 } WFSGMLInfo;
 
 
+static void msWFSPrintURLAndXMLEncoded(const char* str)
+{
+    char* url_encoded = msEncodeUrl(str);
+    char* xml_encoded = msEncodeHTMLEntities(url_encoded);
+    msIO_printf("%s", xml_encoded);
+    msFree(xml_encoded);
+    msFree(url_encoded);
+}
+
 static void msWFSGetFeature_PrintBasePrevNextURI(WFSGMLInfo *gmlinfo,
                                                  wfsParamsObj *paramsObj,
                                                  const char* encoded_version,
@@ -1551,15 +1528,30 @@ static void msWFSGetFeature_PrintBasePrevNextURI(WFSGMLInfo *gmlinfo,
     msIO_printf("&amp;OUTPUTFORMAT=");
     msIO_printf("%s", encoded_mime_type);
     if( paramsObj->pszBbox != NULL )
-        msIO_printf("&amp;BBOX=%s", paramsObj->pszBbox);
+    {
+        msIO_printf("&amp;BBOX=");
+        msWFSPrintURLAndXMLEncoded(paramsObj->pszBbox);
+    }
     if( paramsObj->pszSrs != NULL )
-        msIO_printf("&amp;SRSNAME=%s", paramsObj->pszSrs);
+    {
+        msIO_printf("&amp;SRSNAME=");
+        msWFSPrintURLAndXMLEncoded(paramsObj->pszSrs);
+    }
     if( paramsObj->pszFilter != NULL )
-        msIO_printf("&amp;FILTER=%s", paramsObj->pszFilter);
+    {
+        msIO_printf("&amp;FILTER=");
+        msWFSPrintURLAndXMLEncoded(paramsObj->pszFilter);
+    }
     if( paramsObj->pszPropertyName != NULL)
-        msIO_printf("&amp;PROPERTYNAME=%s", paramsObj->pszPropertyName);
+    {
+        msIO_printf("&amp;PROPERTYNAME=");
+        msWFSPrintURLAndXMLEncoded(paramsObj->pszPropertyName);
+    }
     if( paramsObj->pszSortBy != NULL )
-        msIO_printf("&amp;SORTBY=%s", paramsObj->pszSortBy);
+    {
+        msIO_printf("&amp;SORTBY=");
+        msWFSPrintURLAndXMLEncoded(paramsObj->pszSortBy);
+    }
     if( paramsObj->nMaxFeatures >= 0 )
         msIO_printf("&amp;COUNT=%d", paramsObj->nMaxFeatures);
 }
@@ -2020,6 +2012,7 @@ static int msWFSRetrieveFeatures(mapObj* map,
       if (iLayerIndex < 0) {
         msSetError(MS_WFSERR, "Invalid Typename in GetFeature : %s. A layer might be disabled for \
 this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", layers[i]);
+        msFreeCharArray(paszFilter, nFilters);
         return msWFSException(map,
                               (nWFSVersion >= OWS_2_0_0 ) ? "typenames": "typename",
                               "InvalidParameterValue", paramsObj->pszVersion);
@@ -2030,14 +2023,36 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
         msSetError(MS_WFSERR,
                    "Invalid or Unsupported FILTER in GetFeature : %s",
                    "msWFSGetFeature()", pszFilter);
+        msFreeCharArray(paszFilter, nFilters);
         return msWFSException(map, "filter", "InvalidParameterValue", paramsObj->pszVersion);
+      }
+
+      /* Starting with WFS 1.1, we need to swap coordinates of BBOX or geometry */
+      /* parameters in some circumstances */
+      if( nWFSVersion >= OWS_1_1_0 )
+      {
+          int bDefaultSRSNeedsAxisSwapping = MS_FALSE;
+          const char* srs = msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),"FO",MS_TRUE);
+          if (!srs)
+          {
+              layerObj* lp = GET_LAYER(map, iLayerIndex);
+              srs = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
+          }
+          if ( srs && strncasecmp(srs, "EPSG:", 5) == 0 )
+          {
+              bDefaultSRSNeedsAxisSwapping = msIsAxisInverted(atoi(srs+5));
+          }
+          FLTDoAxisSwappingIfNecessary(psNode, bDefaultSRSNeedsAxisSwapping);
       }
 
       /*preparse the filter for gml aliases*/
       FLTPreParseFilterForAlias(psNode, map, iLayerIndex, "G");
 
       if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, nWFSVersion) == MS_FAILURE)
+      {
+        msFreeCharArray(paszFilter, nFilters);
         return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
+      }
 
       /* run filter.  If no results are found, do not throw exception */
       /* this is a null result */
@@ -2046,6 +2061,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
 
         if(ms_error->code != MS_NOTFOUND) {
           msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()");
+          msFreeCharArray(paszFilter, nFilters);
           return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
         }
       }
@@ -2234,7 +2250,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
 
             }
 
-            /*make sure that the layer projectsion is loaded.
+            /*make sure that the layer projection is loaded.
               It could come from a ows/wfs_srs metadata*/
             if (lp->projection.numargs == 0) {
               pszLayerSRS = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FO", MS_TRUE);
