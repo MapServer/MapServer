@@ -692,7 +692,7 @@ int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lb
   assert(layer && lbl);
   if(!msScaleInBounds(map->scaledenom,lbl->minscaledenom,lbl->maxscaledenom))
     return MS_OFF;
-  if(msEvalExpression(layer, shape, &(lbl->expression), -1) != MS_TRUE)
+  if(msEvalExpression(layer, shape, &(lbl->expression), layer->labelitemindex) != MS_TRUE)
     return MS_OFF;
   /* TODO: check for minfeaturesize here ? */
   return MS_ON;
