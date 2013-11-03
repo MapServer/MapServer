@@ -695,7 +695,7 @@ int msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
         continue; /* next label */
       }
     }
-    if(msEvalExpression(layer, shape, &(lbl->expression), -1) != MS_TRUE) {
+    if(msEvalExpression(layer, shape, &(lbl->expression), layer->labelitemindex) != MS_TRUE) {
       lbl->status = MS_OFF;
       continue; /* next label */
     }
