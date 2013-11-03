@@ -37,7 +37,7 @@
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
-static int msGMLGeometryLookup(gmlGeometryListObj *geometryList, char *type);
+static int msGMLGeometryLookup(gmlGeometryListObj *geometryList, const char *type);
 
 /*
 ** Functions that write the feature boundary geometry (i.e. a rectObj).
@@ -734,7 +734,7 @@ static int gmlWriteGeometry(FILE *stream, gmlGeometryListObj *geometryList,
 ** GML specific metadata handling functions.
 */
 
-int msItemInGroups(char *name, gmlGroupListObj *groupList)
+int msItemInGroups(const char *name, gmlGroupListObj *groupList)
 {
   int i, j;
   gmlGroupObj *group;
@@ -751,7 +751,7 @@ int msItemInGroups(char *name, gmlGroupListObj *groupList)
   return MS_FALSE;
 }
 
-static int msGMLGeometryLookup(gmlGeometryListObj *geometryList, char *type)
+static int msGMLGeometryLookup(gmlGeometryListObj *geometryList, const char *type)
 {
   int i;
 
@@ -761,10 +761,13 @@ static int msGMLGeometryLookup(gmlGeometryListObj *geometryList, char *type)
     if(geometryList->geometries[i].type && (strcasecmp(geometryList->geometries[i].type, type) == 0))
       return i;
 
+  if( geometryList->numgeometries == 1 && geometryList->geometries[0].type == NULL )
+    return 0;
+
   return -1; /* not found */
 }
 
-gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_namespaces)
+gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_namespaces, int bWithDefaultGeom)
 {
   int i;
 
@@ -825,6 +828,14 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_nam
     }
 
     msFreeCharArray(names, numnames);
+  }
+  else if( bWithDefaultGeom ) {
+    geometryList->numgeometries = 1;
+    geometryList->geometries = (gmlGeometryObj *) calloc(1, sizeof(gmlGeometryObj));
+    geometryList->geometries[0].name = msStrdup(OWS_GML_DEFAULT_GEOMETRY_NAME);
+    geometryList->geometries[0].type = NULL;
+    geometryList->geometries[0].occurmin = 0;
+    geometryList->geometries[0].occurmax = 1;
   }
 
   return geometryList;
@@ -1070,7 +1081,8 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces
   groupList->numgroups = 0;
 
   /* list of groups (TODO: make this automatic by parsing metadata) */
-  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "groups")) != NULL) {
+  if((value = msOWSLookupMetadata(&(layer->metadata), metadata_namespaces, "groups")) != NULL &&
+      value[0] != '\0' ) {
     names = msStringSplit(value, ',', &numnames);
 
     /* allocation an array of gmlGroupObj's */
@@ -1117,6 +1129,7 @@ void msGMLFreeGroups(gmlGroupListObj *groupList)
     msFreeCharArray(groupList->groups[i].items, groupList->groups[i].numitems);
     msFree(groupList->groups[i].type);
   }
+  msFree(groupList->groups);
 
   free(groupList);
 }
@@ -1255,7 +1268,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
       itemList = msGMLGetItems(lp, namespaces);
       constantList = msGMLGetConstants(lp, namespaces);
       groupList = msGMLGetGroups(lp, namespaces);
-      geometryList = msGMLGetGeometries(lp, namespaces);
+      geometryList = msGMLGetGeometries(lp, namespaces, MS_FALSE);
       if (itemList == NULL || constantList == NULL || groupList == NULL || geometryList == NULL) {
         msSetError(MS_MISCERR, "Unable to populate item and group metadata structures", "msGMLWriteQuery()");
         return MS_FAILURE;
@@ -1448,7 +1461,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
       itemList = msGMLGetItems(lp, "G");
       constantList = msGMLGetConstants(lp, "G");
       groupList = msGMLGetGroups(lp, "G");
-      geometryList = msGMLGetGeometries(lp, "GFO");
+      geometryList = msGMLGetGeometries(lp, "GFO", MS_FALSE);
       if (itemList == NULL || constantList == NULL || groupList == NULL || geometryList == NULL) {
         msSetError(MS_MISCERR, "Unable to populate item and group metadata structures", "msGMLWriteWFSQuery()");
         return MS_FAILURE;

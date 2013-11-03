@@ -3224,6 +3224,48 @@ static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
 
 }
 
+static void FLTRemoveGroupName(FilterEncodingNode *psFilterNode,
+                               gmlGroupListObj* groupList)
+{
+  int i;
+
+  if (psFilterNode) {
+    if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME) {
+      if( psFilterNode->pszValue != NULL )
+      {
+        const char* pszPropertyName = psFilterNode->pszValue;
+        const char* pszSlash = strchr(pszPropertyName, '/');
+        if( pszSlash != NULL ) {
+          const char* pszColon = strchr(pszPropertyName, ':');
+          if( pszColon != NULL && pszColon < pszSlash )
+              pszPropertyName = pszColon + 1;
+          for(i=0;i<groupList->numgroups;i++) {
+            const char* pszGroupName = groupList->groups[i].name;
+            size_t nGroupNameLen = strlen(pszGroupName);
+            if(strncasecmp(pszPropertyName, pszGroupName, nGroupNameLen) == 0 &&
+                            pszPropertyName[nGroupNameLen] == '/') {
+              char* pszTmp;
+              pszPropertyName = pszPropertyName + nGroupNameLen + 1;
+              pszColon = strchr(pszPropertyName, ':');
+              if( pszColon != NULL )
+                pszPropertyName = pszColon + 1;
+              pszTmp = msStrdup(pszPropertyName);
+              msFree(psFilterNode->pszValue);
+              psFilterNode->pszValue = pszTmp;
+              break;
+            }
+          }
+        }
+      }
+    }
+    if (psFilterNode->psLeftNode)
+      FLTRemoveGroupName(psFilterNode->psLeftNode, groupList);
+    if (psFilterNode->psRightNode)
+      FLTRemoveGroupName(psFilterNode->psRightNode, groupList);
+  }
+
+}
+
 /************************************************************************/
 /*                        FLTPreParseFilterForAlias                     */
 /*                                                                      */
@@ -3241,12 +3283,19 @@ void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
   if (psFilterNode && map && i>=0 && i<map->numlayers) {
-    /*strip name speces befor hand*/
+    /*strip name spaces before hand*/
     FLTStripNameSpacesFromPropertyName(psFilterNode);
 
     lp = GET_LAYER(map, i);
     layerWasOpened = msLayerIsOpen(lp);
     if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
+
+      /* Remove group names from property names if using groupname/itemname syntax */
+      gmlGroupListObj* groupList = msGMLGetGroups(lp, "G");
+      if( groupList && groupList->numgroups > 0 )
+        FLTRemoveGroupName(psFilterNode, groupList);
+      msGMLFreeGroups(groupList);
+
       for(i=0; i<lp->numitems; i++) {
         if (!lp->items[i] || strlen(lp->items[i]) <= 0)
           continue;

@@ -869,7 +869,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
 
 static const char *msWFSGetGeometryType(const char *type, OWSGMLVersion outputformat)
 {
-  if(!type) return "???undefined???";
+  if(!type) return "GeometryPropertyType";
 
   if(strcasecmp(type, "point") == 0) {
     switch(outputformat) {
@@ -930,30 +930,25 @@ static void msWFSWriteGeometryElement(FILE *stream, gmlGeometryListObj *geometry
   if(!stream || !tab) return;
   if(geometryList && geometryList->numgeometries == 1 && strcasecmp(geometryList->geometries[0].name, "none") == 0) return;
 
-  if(!geometryList || geometryList->numgeometries == 0) { /* write a default container */
-    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"gml:GeometryPropertyType\" minOccurs=\"0\" maxOccurs=\"1\"/>\n", tab, OWS_GML_DEFAULT_GEOMETRY_NAME);
-    return;
+  if(geometryList->numgeometries == 1) {
+    geometry = &(geometryList->geometries[0]);
+    msIO_fprintf(stream, "%s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
+    if(geometry->occurmax == OWS_GML_OCCUR_UNBOUNDED)
+      msIO_fprintf(stream, " maxOccurs=\"unbounded\"/>\n");
+    else
+      msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);
   } else {
-    if(geometryList->numgeometries == 1) {
-      geometry = &(geometryList->geometries[0]);
-      msIO_fprintf(stream, "%s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
+    msIO_fprintf(stream, "%s<choice>\n", tab);
+    for(i=0; i<geometryList->numgeometries; i++) {
+      geometry = &(geometryList->geometries[i]);
+
+      msIO_fprintf(stream, "  %s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
       if(geometry->occurmax == OWS_GML_OCCUR_UNBOUNDED)
         msIO_fprintf(stream, " maxOccurs=\"unbounded\"/>\n");
       else
         msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);
-    } else {
-      msIO_fprintf(stream, "%s<choice>\n", tab);
-      for(i=0; i<geometryList->numgeometries; i++) {
-        geometry = &(geometryList->geometries[i]);
-
-        msIO_fprintf(stream, "  %s<element name=\"%s\" type=\"gml:%s\" minOccurs=\"%d\"", tab, geometry->name, msWFSGetGeometryType(geometry->type, outputformat), geometry->occurmin);
-        if(geometry->occurmax == OWS_GML_OCCUR_UNBOUNDED)
-          msIO_fprintf(stream, " maxOccurs=\"unbounded\"/>\n");
-        else
-          msIO_fprintf(stream, " maxOccurs=\"%d\"/>\n", geometry->occurmax);
-      }
-      msIO_fprintf(stream, "%s</choice>\n", tab);
     }
+    msIO_fprintf(stream, "%s</choice>\n", tab);
   }
 
   return;
@@ -1377,7 +1372,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
           itemList = msGMLGetItems(lp, "G"); /* GML-related metadata */
           constantList = msGMLGetConstants(lp, "G");
           groupList = msGMLGetGroups(lp, "G");
-          geometryList = msGMLGetGeometries(lp, "GFO");
+          geometryList = msGMLGetGeometries(lp, "GFO", MS_TRUE);
           if (itemList == NULL || constantList == NULL || groupList == NULL || geometryList == NULL) {
             msSetError(MS_MISCERR, "Unable to populate item and group metadata structures", "msWFSDescribeFeatureType()");
             return MS_FAILURE;
@@ -2090,6 +2085,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()", laye
         if(ms_error->code != MS_NOTFOUND) {
           msSetError(MS_WFSERR, "FLTApplyFilterToLayer() failed", "msWFSGetFeature()");
           msFreeCharArray(paszFilter, nFilters);
+          FLTFreeFilterEncodingNode( psNode );
           return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
         }
       }
@@ -2905,6 +2901,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
             (msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
 
             gmlItemListObj *itemList=NULL;
+            gmlGeometryListObj *geometryList=NULL;
+            gmlGroupListObj* groupList=NULL;
 
             bLayerFound = MS_TRUE;
 
@@ -2932,6 +2930,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
             if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
 
               itemList = msGMLGetItems(lp, "G");
+              groupList = msGMLGetGroups(lp, "G");
+              geometryList=msGMLGetGeometries(lp, "GFO", MS_TRUE);
 
               for(z=0; z<lp->numitems; z++) {
                 if (!lp->items[z] || strlen(lp->items[z]) <= 0)
@@ -2946,32 +2946,88 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
               /*validate that the property names passed are part of the items list*/
               tokens = msStringSplit(papszPropertyName[k], ',', &n);
               for (y=0; y<n; y++) {
-                if (tokens[y] && strlen(tokens[y]) > 0) {
-                  if (strcasecmp(tokens[y], "*") == 0 ||
-                      strcasecmp(tokens[y], "!") == 0)
+                int bSkip = MS_FALSE;
+                const char* pszPropertyNameItem = tokens[y];
+
+                /* Remove namespace */
+                const char* pszColon = strchr(pszPropertyNameItem, ':');
+                const char* pszSlash = strchr(pszPropertyNameItem, '/');
+                if( pszColon && (pszSlash == NULL || pszColon < pszSlash) )
+                    pszPropertyNameItem = pszColon + 1;
+
+                if (pszPropertyNameItem && strlen(pszPropertyNameItem) > 0) {
+                  if (strcasecmp(pszPropertyNameItem, "*") == 0 ||
+                      strcasecmp(pszPropertyNameItem, "!") == 0)
                     continue;
+
+                  for(z=0; z<groupList->numgroups; z++) {
+                    const char* pszGroupName = groupList->groups[z].name;
+                    size_t nGroupNameLen = strlen(pszGroupName);
+
+                    /* Is it a group name ? */
+                    if(strcasecmp(pszPropertyNameItem, pszGroupName) == 0)
+                    {
+                      bSkip = MS_TRUE;
+                      break;
+                    }
+
+                    /* Is it an item of a group ? */
+                    if(strncasecmp(pszPropertyNameItem, pszGroupName, nGroupNameLen) == 0 &&
+                       pszPropertyNameItem[nGroupNameLen] == '/') {
+
+                      int w;
+                      const char* pszSubPropertyNameItem = pszPropertyNameItem+nGroupNameLen+1;
+                      pszColon = strchr(pszSubPropertyNameItem, ':');
+                      if( pszColon )
+                        pszSubPropertyNameItem = pszColon + 1;
+
+                      for(w=0;w<groupList->groups[z].numitems;w++)
+                      {
+                        if( strcasecmp(pszSubPropertyNameItem, groupList->groups[z].items[w]) == 0 )
+                        {
+                            pszPropertyNameItem = pszSubPropertyNameItem;
+                            break;
+                        }
+                      }
+                      if( w < groupList->groups[z].numitems )
+                          break;
+                    }
+                  }
+                  if( bSkip )
+                      continue;
 
                   /* Check that the property name is allowed (#3563) */
                   for(z=0; z<itemList->numitems; z++) {
                     if (itemList->items[z].visible &&
-                        strcasecmp(tokens[y], itemList->items[z].name) == 0)
+                        strcasecmp(pszPropertyNameItem, itemList->items[z].name) == 0)
                       break;
                   }
                   /*we need to check of the property name is the geometry name; In that case it
                     is a valid property name*/
-                  if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL)
-                    snprintf(szTmp, sizeof(szTmp), "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
+                  if (z == itemList->numitems) {
+                    for(z=0; z<geometryList->numgeometries; z++) {
+                      if (strcasecmp(pszPropertyNameItem, geometryList->geometries[z].name) == 0)
+                        break;
+                    }
+
+                    if (z == geometryList->numgeometries) {
+                      msSetError(MS_WFSERR,
+                                 "Invalid PROPERTYNAME %s",  "msWFSGetFeature()", tokens[y]);
+                      msFreeCharArray(tokens, n);
+                      msGMLFreeItems(itemList);
+                      msGMLFreeGroups(groupList);
+                      msGMLFreeGeometries(geometryList);
+                      msFree(pszPropertyName);
+                      msFreeCharArray(papszPropertyName, numlayers);
+                      msFreeCharArray(layers, numlayers);
+                      return msWFSException(map, "PROPERTYNAME", "InvalidParameterValue", paramsObj->pszVersion);
+                    }
+                  }
                   else
-                    snprintf(szTmp, sizeof(szTmp), OWS_GML_DEFAULT_GEOMETRY_NAME);
-                  if (z == itemList->numitems && strcasecmp(tokens[y], szTmp) != 0) {
-                    msSetError(MS_WFSERR,
-                               "Invalid PROPERTYNAME %s",  "msWFSGetFeature()", tokens[y]);
-                    msFreeCharArray(tokens, n);
-                    msGMLFreeItems(itemList);
-                    msFree(pszPropertyName);
-                    msFreeCharArray(papszPropertyName, numlayers);
-                    msFreeCharArray(layers, numlayers);
-                    return msWFSException(map, "PROPERTYNAME", "InvalidParameterValue", paramsObj->pszVersion);
+                  {
+                      char* pszTmp = msStrdup(pszPropertyNameItem);
+                      msFree(tokens[y]);
+                      tokens[y] = pszTmp;
                   }
                 }
               }
@@ -2996,13 +3052,27 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                     }
                     if( !bFound )
                     {
-                        papszPropertyName[k] = msStringConcatenate(
-                            papszPropertyName[k], ",");
-                        papszPropertyName[k] = msStringConcatenate(
-                            papszPropertyName[k], itemList->items[z].name);
+                        tokens = (char**) realloc(tokens, sizeof(char*) * (n+1));
+                        tokens[n] = msStrdup(itemList->items[z].name);
+                        n ++;
                     }
                 }
               }
+
+              /* Rebuild papszPropertyName[k] */
+              msFree(papszPropertyName[k]);
+              papszPropertyName[k] = NULL;
+              for (y=0; y<n; y++) {
+                if( y == 0 )
+                  papszPropertyName[k] = msStrdup(tokens[y]);
+                else {
+                  papszPropertyName[k] = msStringConcatenate(
+                            papszPropertyName[k], ",");
+                  papszPropertyName[k] = msStringConcatenate(
+                            papszPropertyName[k], tokens[y]);
+                }
+              }
+
 
               msFreeCharArray(tokens, n);
               msLayerClose(lp);
@@ -3050,22 +3120,53 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                     msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", "");
 
                 } else {
+                  char* pszGeometryList = NULL;
+
+                  for(z=0; z<groupList->numgroups; z++) {
+                    const char* pszNeedle = strstr(papszPropertyName[k], groupList->groups[z].name);
+                    char chAfterNeedle = 0;
+                    if( pszNeedle != NULL )
+                        chAfterNeedle = papszPropertyName[k][strlen(groupList->groups[z].name)];
+                    if(pszNeedle != NULL && (chAfterNeedle == '\0' || chAfterNeedle == ',') ) {
+                      int w;
+                      for(w=0;w<groupList->groups[z].numitems;w++)
+                      {
+                        if(strstr(papszPropertyName[k], groupList->groups[z].items[w]) == NULL) {
+                            papszPropertyName[k] = msStringConcatenate(
+                                papszPropertyName[k], ",");
+                            papszPropertyName[k] = msStringConcatenate(
+                                papszPropertyName[k], groupList->groups[z].items[w]);
+                        }
+                      }
+                    }
+                  }
+
                   msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", papszPropertyName[k]);
 
-                  /* exclude geometry if it was not asked for */
-                  if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL)
-                    snprintf(szTmp, sizeof(szTmp), "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
-                  else
-                    snprintf(szTmp, sizeof(szTmp), OWS_GML_DEFAULT_GEOMETRY_NAME);
+                  for(z=0; z<geometryList->numgeometries; z++) {
+                    if (strstr(papszPropertyName[k], geometryList->geometries[z].name) != NULL) {
+                        if( pszGeometryList != NULL )
+                            pszGeometryList = msStringConcatenate(
+                                pszGeometryList, ",");
+                        pszGeometryList = msStringConcatenate(
+                            pszGeometryList, geometryList->geometries[z].name);
+                    }
+                  }
 
-                  if (strstr(papszPropertyName[k], szTmp) == NULL)
+                  if( pszGeometryList != NULL ) {
+                      msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", pszGeometryList);
+                      msFree(pszGeometryList);
+                  } else {
                     msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+                  }
                 }
             } else {/*empty string*/
                 msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
             }
 
             msGMLFreeItems(itemList);
+            msGMLFreeGroups(groupList);
+            msGMLFreeGeometries(geometryList);
         }
       }
 
@@ -3289,6 +3390,8 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
         (msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
 
         gmlItemListObj *itemList=NULL;
+        gmlGeometryListObj *geometryList=NULL;
+        gmlGroupListObj* groupList=NULL;
 
         bLayerFound = MS_TRUE;
 
@@ -3304,10 +3407,20 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
             char szTmp[256];
             int z;
             const char *pszFullName = NULL;
+            const char *pszColon;
+            const char* pszSlash;
+            int bIsGroup = MS_FALSE;
 
             itemList = msGMLGetItems(lp, "G");
+            groupList = msGMLGetGroups(lp, "G");
+            geometryList=msGMLGetGeometries(lp, "GFO", MS_TRUE);
 
-            pszValueReference = msStrdup(paramsObj->pszValueReference);
+            pszColon = strchr(paramsObj->pszValueReference, ':');
+            pszSlash = strchr(paramsObj->pszValueReference, '/');
+            if( pszColon && (pszSlash == NULL || pszColon < pszSlash) )
+              pszValueReference = msStrdup(pszColon + 1);
+            else
+              pszValueReference = msStrdup(paramsObj->pszValueReference);
 
             for(z=0; z<lp->numitems; z++) {
                 if (!lp->items[z] || strlen(lp->items[z]) <= 0)
@@ -3318,43 +3431,99 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
                     pszValueReference = msReplaceSubstring(pszValueReference, pszFullName, lp->items[z]);
             }
 
-            /* Check that the property name is allowed (#3563) */
-            for(z=0; z<itemList->numitems; z++) {
+            for(z=0; z<groupList->numgroups; z++) {
+                const char* pszGroupName = groupList->groups[z].name;
+                size_t nGroupNameLen = strlen(pszGroupName);
+
+                /* Is it a group name ? */
+                if(strcasecmp(pszValueReference, pszGroupName) == 0)
+                {
+                    bIsGroup = MS_TRUE;
+                    break;
+                }
+
+                /* Is it an item of a group ? */
+                if(strncasecmp(pszValueReference, pszGroupName, nGroupNameLen) == 0 &&
+                               pszValueReference[nGroupNameLen] == '/') {
+
+                  int w;
+                  const char* pszSubPropertyNameItem = pszValueReference+nGroupNameLen+1;
+                  pszColon = strchr(pszSubPropertyNameItem, ':');
+                  if( pszColon )
+                    pszSubPropertyNameItem = pszColon + 1;
+
+                  for(w=0;w<groupList->groups[z].numitems;w++)
+                  {
+                    if( strcasecmp(pszSubPropertyNameItem, groupList->groups[z].items[w]) == 0 )
+                    {
+                        char* pszTmp = msStrdup(pszSubPropertyNameItem);
+                        msFree(pszValueReference);
+                        pszValueReference = pszTmp;
+                        break;
+                    }
+                  }
+                  if( w < groupList->groups[z].numitems )
+                      break;
+                }
+            }
+
+            if( bIsGroup ) {
+              int w;
+              char* pszItems = NULL;
+              for(w=0;w<groupList->groups[z].numitems;w++) {
+                if( w > 0 )
+                  pszItems = msStringConcatenate(pszItems, ",");
+                pszItems = msStringConcatenate(pszItems, groupList->groups[z].items[w]);
+              }
+              msInsertHashTable(&(lp->metadata), "GML_GROUPS", groupList->groups[z].name);
+              msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", pszItems);
+              msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+              msFree(pszItems);
+            }
+            else {
+              msInsertHashTable(&(lp->metadata), "GML_GROUPS", "");
+
+              /* Check that the property name is allowed (#3563) */
+              for(z=0; z<itemList->numitems; z++) {
                 if (itemList->items[z].visible &&
                     strcasecmp(pszValueReference, itemList->items[z].name) == 0)
                 {
                     break;
                 }
-            }
+              }
+              /*we need to check of the property name is the geometry name; In that case it
+                    is a valid property name*/
+              if (z == itemList->numitems) {
+                for(z=0; z<geometryList->numgeometries; z++) {
+                  if (strcasecmp(pszValueReference, geometryList->geometries[z].name) == 0)
+                    break;
+                }
 
-            /*we need to check of the property name is the geometry name; In that case it
-            is a valid property name*/
-            if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL)
-                snprintf(szTmp, sizeof(szTmp), "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
-            else
-                snprintf(szTmp, sizeof(szTmp), OWS_GML_DEFAULT_GEOMETRY_NAME);
-            if (z == itemList->numitems && strcasecmp(pszValueReference, szTmp) != 0) {
-                msSetError(MS_WFSERR,
-                            "Invalid PROPERTYNAME %s",  "msWFSGetPropertyValue()", pszValueReference);
-                msGMLFreeItems(itemList);
-                msFree(pszValueReference);
-                return msWFSException(map, "PROPERTYNAME", "InvalidParameterValue", paramsObj->pszVersion);
-            }
-
-            msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", pszValueReference);
-
-            /* exclude geometry if it was not asked for */
-            if (msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries") != NULL)
-                snprintf(szTmp, sizeof(szTmp), "%s", msOWSLookupMetadata(&(lp->metadata), "OFG", "geometries"));
-            else
-                snprintf(szTmp, sizeof(szTmp), OWS_GML_DEFAULT_GEOMETRY_NAME);
-
-            if (strcasecmp(pszValueReference, szTmp) != 0)
+                if (z == geometryList->numgeometries) {
+                  msSetError(MS_WFSERR,
+                            "Invalid VALUEREFERENCE %s",  "msWFSGetPropertyValue()", paramsObj->pszValueReference);
+                  msFree(pszValueReference);
+                  msGMLFreeItems(itemList);
+                  msGMLFreeGroups(groupList);
+                  msGMLFreeGeometries(geometryList);
+                  return msWFSException(map, "valuereference", "InvalidParameterValue", paramsObj->pszVersion);
+                }
+                else {
+                  msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", "");
+                  msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", pszValueReference);
+                }
+              }
+              else {
+                msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", pszValueReference);
                 msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+              }
+            }
 
             msLayerClose(lp);
 
             msGMLFreeItems(itemList);
+            msGMLFreeGroups(groupList);
+            msGMLFreeGeometries(geometryList);
             msFree(pszValueReference);
         }
 
