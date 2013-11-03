@@ -65,6 +65,7 @@ typedef struct {
   char *pszSections;
   char *pszSortBy; /* Not implemented yet */
   char *pszLanguage;
+  char *pszValueReference; /* For GetValueReference */
 } wfsParamsObj;
 
 /*
@@ -404,7 +405,8 @@ MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *names
 
 #ifdef USE_WFS_SVR
 MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *wfs_namespace,
-                                     OWSGMLVersion outputformat, int nWFSVersion, int bUseURN);
+                                     OWSGMLVersion outputformat, int nWFSVersion, int bUseURN,
+                                     int bGetPropertyValueRequest);
 #endif
 
 

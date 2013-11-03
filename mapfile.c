@@ -354,7 +354,7 @@ int msGetSymbolIndex(symbolSetObj *symbols, char *name, int try_addimage_if_notf
 /*
 ** Return the index number for a given layer based on its name.
 */
-int msGetLayerIndex(mapObj *map, char *name)
+int msGetLayerIndex(mapObj *map, const char *name)
 {
   int i;
 
@@ -369,7 +369,8 @@ int msGetLayerIndex(mapObj *map, char *name)
   return(-1);
 }
 
-int msGetClassIndex(layerObj *layer, char *name)
+static
+int msGetClassIndex(layerObj *layer, const char *name)
 {
   int i;
 

@@ -1355,7 +1355,8 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 ** Similar to msGMLWriteQuery() but tuned for use with WFS
 */
 int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_prefix,
-                       OWSGMLVersion outputformat, int nWFSVersion, int bUseURN)
+                       OWSGMLVersion outputformat, int nWFSVersion, int bUseURN,
+                       int bGetPropertyValueRequest)
 {
 #ifdef USE_WFS_SVR
   int status;
@@ -1381,7 +1382,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
   bSwapAxis = msIsAxisInvertedProj(&(map->projection));
 
   /* Need to start with BBOX of the whole resultset */
-  if (msGetQueryResultBounds(map, &resultBounds) > 0) {
+  if (!bGetPropertyValueRequest &&
+      msGetQueryResultBounds(map, &resultBounds) > 0) {
     char* srs = NULL;
     if (bSwapAxis) {
       tmp = resultBounds.minx;
@@ -1499,21 +1501,25 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         ** start this feature
         */
         if( nWFSVersion == OWS_2_0_0 )
-          msIO_fprintf(stream, "    <wfs:member>\n");
+            msIO_fprintf(stream, "    <wfs:member>\n");
         else
-          msIO_fprintf(stream, "    <gml:featureMember>\n");
+            msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layerName) == MS_FALSE)
-          msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
+            msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
         if(featureIdIndex != -1) {
-          pszFID = (char*) msSmallMalloc( strlen(lp->name) + 1 + strlen(shape.values[featureIdIndex]) + 1 );
-          sprintf(pszFID, "%s.%s", lp->name, shape.values[featureIdIndex]);
-          if(outputformat == OWS_GML2)
-            msIO_fprintf(stream, "      <%s fid=\"%s\">\n", layerName, pszFID);
-          else  /* OWS_GML3 or OWS_GML32 */
-            msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, pszFID);
+            pszFID = (char*) msSmallMalloc( strlen(lp->name) + 1 + strlen(shape.values[featureIdIndex]) + 1 );
+            sprintf(pszFID, "%s.%s", lp->name, shape.values[featureIdIndex]);
+            if( !bGetPropertyValueRequest )
+            {
+                if(outputformat == OWS_GML2)
+                    msIO_fprintf(stream, "      <%s fid=\"%s\">\n", layerName, pszFID);
+                else  /* OWS_GML3 or OWS_GML32 */
+                    msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, pszFID);
+            }
         } else {
-          pszFID = msStrdup("");
-          msIO_fprintf(stream, "      <%s>\n", layerName);
+            pszFID = msStrdup("");
+            if( !bGetPropertyValueRequest )
+                msIO_fprintf(stream, "      <%s>\n", layerName);
         }
 
         if (bSwapAxis)
@@ -1522,7 +1528,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         /* write the feature geometry and bounding box */
         if(!(geometryList && geometryList->numgeometries == 1 &&
             strcasecmp(geometryList->geometries[0].name, "none") == 0)) {
-          gmlWriteBounds(stream, outputformat, &(shape.bounds), srs, "        ", "gml");
+          if( !bGetPropertyValueRequest )
+            gmlWriteBounds(stream, outputformat, &(shape.bounds), srs, "        ", "gml");
           gmlWriteGeometry(stream, geometryList, outputformat, &(shape), srs, namespace_prefix, "        ", pszFID);
         }
 
@@ -1547,8 +1554,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         for(k=0; k<groupList->numgroups; k++)
           msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, namespace_prefix, "        ");
 
-        /* end this feature */
-        msIO_fprintf(stream, "      </%s>\n", layerName);
+        if( !bGetPropertyValueRequest )
+            /* end this feature */
+            msIO_fprintf(stream, "      </%s>\n", layerName);
+
         if( nWFSVersion == OWS_2_0_0 )
           msIO_fprintf(stream, "    </wfs:member>\n");
         else
@@ -1575,7 +1584,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
   return(MS_SUCCESS);
 
 #else /* Stub for mapscript */
-  msSetError(MS_MISCERR, "WMS server support not enabled", "msGMLWriteWFSQuery()");
+  msSetError(MS_MISCERR, "WFS server support not enabled", "msGMLWriteWFSQuery()");
   return MS_FAILURE;
 #endif /* USE_WFS_SVR */
 }

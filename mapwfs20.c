@@ -533,11 +533,14 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                                 OWS_METHOD_GETPOST, script_url));
         xmlAddChild(psMainNode, psNode);
 
-        formats_list = msWFSGetOutputFormatList( map, NULL, OWS_2_0_0 );
+        /* Only advertize built-in GML formats for GetPropertyValue. Not sure */
+        /* it makes sense to advertize OGR formats. */
         xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
                     "Parameter", "outputFormat",
-                    formats_list));
-        msFree( formats_list );
+                    "application/gml+xml; version=3.2,"
+                    "text/xml; subtype=gml/3.2.1,"
+                    "text/xml; subtype=gml/3.1.1,"
+                    "text/xml; subtype=gml/2.1.2"));
     }
 
     /* -------------------------------------------------------------------- */
