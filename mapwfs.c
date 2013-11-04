@@ -3178,7 +3178,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                    "TYPENAME '%s' doesn't exist in this server.  Please check the capabilities and reformulate your request.",
                    "msWFSGetFeature()", layers[k]);
         msFree(pszPropertyName);
-        msFreeCharArray(papszPropertyName, numlayers);
+        if( papszPropertyName )
+            msFreeCharArray(papszPropertyName, numlayers);
         msFreeCharArray(layers, numlayers);
         return msWFSException(map, "typename", "InvalidParameterValue", paramsObj->pszVersion);
       }
