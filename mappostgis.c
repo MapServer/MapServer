@@ -1652,9 +1652,9 @@ char *msPostGISBuildSQLItems(layerObj *layer)
     ** need, saving transfer and encode/decode time.
     */
 #if TRANSFER_ENCODING == 64
-    static char *strGeomTemplate = "encode(ST_AsBinary(ST_Force_2D(\"%s\"),'%s'),'base64') as geom,\"%s\"";
+    static char *strGeomTemplate = "encode(ST_AsBinary(ST_Force2D(\"%s\"),'%s'),'base64') as geom,\"%s\"";
 #else
-    static char *strGeomTemplate = "encode(ST_AsBinary(ST_Force_2D(\"%s\"),'%s'),'hex') as geom,\"%s\"";
+    static char *strGeomTemplate = "encode(ST_AsBinary(ST_Force2D(\"%s\"),'%s'),'hex') as geom,\"%s\"";
 #endif
     strGeom = (char*)msSmallMalloc(strlen(strGeomTemplate) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid));
     sprintf(strGeom, strGeomTemplate, layerinfo->geomcolumn, strEndian, layerinfo->uid);
