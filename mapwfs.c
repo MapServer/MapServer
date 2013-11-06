@@ -3188,9 +3188,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
 
               msFreeCharArray(tokens, n);
               msLayerClose(lp);
-            }
 
-            if (strlen(papszPropertyName[k]) > 0) {
+              if (strlen(papszPropertyName[k]) > 0) {
 
                 if (strcasecmp(papszPropertyName[k], "*") == 0) {
                   /* Add all non-excluded items, including optional ones */
@@ -3272,8 +3271,17 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                     msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
                   }
                 }
-            } else {/*empty string*/
+              } else {/*empty string*/
                 msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
+              }
+            }
+            else
+            {
+                msFree(pszPropertyName);
+                if( papszPropertyName )
+                    msFreeCharArray(papszPropertyName, numlayers);
+                msFreeCharArray(layers, numlayers);
+                return msWFSException(map, "mapserv", "NoApplicableCode", paramsObj->pszVersion);
             }
 
             msGMLFreeItems(itemList);
