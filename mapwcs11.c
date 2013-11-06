@@ -1349,7 +1349,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params,
 {
   msSetError( MS_WCSERR,
               "WCS 1.1 request made, but mapserver requires libxml2 for WCS 1.1 services and this is not configured.",
-              "msWCSDescribeCoverage11()", "NoApplicableCode" );
+              "msWCSDescribeCoverage11()" );
   return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
 }
 
@@ -1360,7 +1360,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 {
   msSetError( MS_WCSERR,
               "WCS 1.1 request made, but mapserver requires libxml2 for WCS 1.1 services and this is not configured.",
-              "msWCSGetCapabilities11()", "NoApplicableCode" );
+              "msWCSGetCapabilities11()" );
 
   return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
 }

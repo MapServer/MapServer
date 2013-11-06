@@ -1315,7 +1315,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
 {
   msSetError( MS_WFSERR,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
-              "msWFSGetCapabilities20()", "NoApplicableCode" );
+              "msWFSGetCapabilities20()" );
 
   return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
 }
@@ -1325,7 +1325,7 @@ int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
 {
   msSetError( MS_WFSERR,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
-              "msWFSListStoredQueries20()", "NoApplicableCode" );
+              "msWFSListStoredQueries20()");
 
   return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
 }
@@ -1335,19 +1335,19 @@ int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
 {
   msSetError( MS_WFSERR,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
-              "msWFSDescribeStoredQueries20()", "NoApplicableCode" );
+              "msWFSDescribeStoredQueries20()" );
 
   return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
 }
 
 char* msWFSGetResolvedStoredQuery20(mapObj *map,
-                                    wfsParamsObj *wfsparams,
+                                    wfsParamsObj *params,
                                     const char* id,
                                     hashTableObj* hashTable)
 {
   msSetError( MS_WFSERR,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
-              "msWFSGetResolvedStoredQuery20()", "NoApplicableCode" );
+              "msWFSGetResolvedStoredQuery20()" );
 
   msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
   return NULL;

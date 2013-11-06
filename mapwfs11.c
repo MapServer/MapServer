@@ -487,7 +487,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 {
   msSetError( MS_WFSERR,
               "WFS 1.1 request made, but mapserver requires libxml2 for WFS 1.1 services and this is not configured.",
-              "msWFSGetCapabilities11()", "NoApplicableCode" );
+              "msWFSGetCapabilities11()" );
 
   return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
 }

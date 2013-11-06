@@ -35,6 +35,8 @@
 #include<libxml/parser.h>
 #include<libxml/tree.h>
 
+#endif
+
 /* W3C namespaces */
 
 #define MS_OWSCOMMON_W3C_XLINK_NAMESPACE_URI      "http://www.w3.org/1999/xlink"
@@ -132,6 +134,9 @@
 /* MapServer namespaces */
 #define MS_DEFAULT_NAMESPACE_PREFIX         "ms"
 #define MS_DEFAULT_NAMESPACE_URI            "http://mapserver.gis.umn.edu/mapserver"
+
+
+#ifdef USE_LIBXML2
 
 /* function prototypes */
 

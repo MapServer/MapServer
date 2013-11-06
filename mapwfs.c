@@ -4139,6 +4139,7 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
   }
 }
 
+#ifdef USE_WFS_SVR
 /************************************************************************/
 /*                       msWFSGetDefaultVersion                         */
 /************************************************************************/
@@ -4440,6 +4441,9 @@ static void msWFSSimplifyPropertyNameAndFilter(wfsParamsObj *wfsparams)
         }
     }
 }
+
+#endif /* USE_WFS_SVR */
+
 
 /************************************************************************/
 /*                            msWFSParseRequest                         */
