@@ -1581,7 +1581,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         for( ; i > 0; )
           image->img.raw_16bit[--i] = nv;
       } else if( format->imagemode == MS_IMAGEMODE_FLOAT32 ) {
-        float nv = atoi(nullvalue);
+        float nv = atof(nullvalue);
         for( ; i > 0; )
           image->img.raw_float[--i] = nv;
       } else if( format->imagemode == MS_IMAGEMODE_BYTE ) {
