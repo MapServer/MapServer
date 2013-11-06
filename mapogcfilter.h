@@ -32,9 +32,9 @@
 #include "mapserver.h"
 
 /*dont need ogr for these functikons*/
-MS_DLL_EXPORT int FLTIsNumeric(char *pszValue);
-MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, char *pszExpression);
-MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  int forcecharcter);
+MS_DLL_EXPORT int FLTIsNumeric(const char *pszValue);
+MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression);
+MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter);
 
 #ifdef USE_OGR
 
@@ -58,7 +58,7 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-MS_DLL_EXPORT FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
+MS_DLL_EXPORT FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString);
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFilterEncodingNode(void);
 MS_DLL_EXPORT int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                         int iLayerIndex);
@@ -137,8 +137,10 @@ MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOg
 
 void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode, int bDefaultSRSNeedsAxisSwapping);
 
-void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
-                               mapObj *map, int i, const char *namespaces);
+void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
+                                       mapObj *map, int i, const char *namespaces);
+int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
+                             mapObj *map, int i);
 
 #endif
 

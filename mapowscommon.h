@@ -128,6 +128,11 @@
 #define MS_INSPIRE_DLS_NAMESPACE_PREFIX     "inspire_dls"
 #define MS_INSPIRE_DLS_SCHEMA_LOCATION      "/inspire_dls/1.0/inspire_dls.xsd"
 
+
+/* MapServer namespaces */
+#define MS_DEFAULT_NAMESPACE_PREFIX         "ms"
+#define MS_DEFAULT_NAMESPACE_URI            "http://mapserver.gis.umn.edu/mapserver"
+
 /* function prototypes */
 
 

@@ -46,7 +46,6 @@ int msWFSException11(mapObj *map, const char *locator,
 {
   int size = 0;
   char *errorString     = NULL;
-  char *errorMessage    = NULL;
   char *schemasLocation = NULL;
 
   xmlDocPtr  psDoc      = NULL;
@@ -60,12 +59,11 @@ int msWFSException11(mapObj *map, const char *locator,
   psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
   errorString = msGetErrorString("\n");
-  errorMessage = msEncodeHTMLEntities(errorString);
   schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_0_0, schemasLocation, version, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
+  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_0_0, schemasLocation, version, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorString);
 
   xmlDocSetRootElement(psDoc, psRootNode);
 
@@ -80,7 +78,6 @@ int msWFSException11(mapObj *map, const char *locator,
 
   /*free buffer and the document */
   free(errorString);
-  free(errorMessage);
   free(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);

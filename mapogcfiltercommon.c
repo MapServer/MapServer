@@ -565,21 +565,25 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
         for (i=0; i<nTokens; i++) {
           char *pszTmp = NULL;
           int bufferSize = 0;
+          const char* pszId = tokens[i];
+          const char* pszDot = strchr(pszId, '.');
+          if( pszDot )
+            pszId = pszDot + 1;
 
           if (i == 0) {
-            if(FLTIsNumeric(tokens[0]) == MS_FALSE)
+            if(FLTIsNumeric(pszId) == MS_FALSE)
               bString = 1;
           }
 
 
           if (bString) {
-            bufferSize = 11+strlen(tokens[i])+strlen(pszAttribute)+1;
+            bufferSize = 11+strlen(pszId)+strlen(pszAttribute)+1;
             pszTmp = (char *)msSmallMalloc(bufferSize);
-            snprintf(pszTmp, bufferSize, "(\"[%s]\" ==\"%s\")" , pszAttribute, tokens[i]);
+            snprintf(pszTmp, bufferSize, "(\"[%s]\" ==\"%s\")" , pszAttribute, pszId);
           } else {
-            bufferSize = 8+strlen(tokens[i])+strlen(pszAttribute)+1;
+            bufferSize = 8+strlen(pszId)+strlen(pszAttribute)+1;
             pszTmp = (char *)msSmallMalloc(bufferSize);
-            snprintf(pszTmp, bufferSize, "([%s] == %s)" , pszAttribute, tokens[i]);
+            snprintf(pszTmp, bufferSize, "([%s] == %s)" , pszAttribute, pszId);
           }
 
           if (pszExpression != NULL)
@@ -636,8 +640,17 @@ char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, char *pszExpression)
 {
   int retval;
+  int save_startindex;
+  int save_maxfeatures;
+  int save_only_cache_result_count;
 
+  save_startindex = map->query.startindex;
+  save_maxfeatures = map->query.maxfeatures;
+  save_only_cache_result_count = map->query.only_cache_result_count;
   msInitQuery(&(map->query));
+  map->query.startindex = save_startindex;
+  map->query.maxfeatures = save_maxfeatures;
+  map->query.only_cache_result_count = save_only_cache_result_count;
 
   map->query.type = MS_QUERY_BY_FILTER;
 

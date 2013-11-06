@@ -951,8 +951,11 @@ int msQueryByFilter(mapObj *map)
         msFreeShape(&shape);
         continue;
       }
-      
-      addResult(lp->resultcache, &shape);
+    
+      if( map->query.only_cache_result_count )
+        lp->resultcache->numresults ++;
+      else
+        addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
 
       /* check shape count */
@@ -968,7 +971,8 @@ int msQueryByFilter(mapObj *map)
     freeExpression(&old_filter);
 
     if(status != MS_DONE) goto query_error;
-    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+    if(!map->query.only_cache_result_count &&
+        lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
 
   } /* next layer */
 

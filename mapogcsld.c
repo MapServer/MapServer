@@ -837,7 +837,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                     msInsertHashTable(&psLayer->metadata, key,
                                       msLookupHashTable(&psCurrentLayer->metadata, key));
                 }
-                FLTPreParseFilterForAlias(psNode, psLayer->map, j, "G");
+                FLTPreParseFilterForAliasAndGroup(psNode, psLayer->map, j, "G");
               }
 
               pszExpression = FLTGetCommonExpression(psNode, psLayer);

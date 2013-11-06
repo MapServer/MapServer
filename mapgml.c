@@ -1184,6 +1184,8 @@ static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, g
   else
     msIO_fprintf(stream, "%s</%s>\n", tab, group->name);
 
+  msFree(itemtab);
+
   return;
 }
 #endif

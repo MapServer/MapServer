@@ -489,7 +489,9 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
   }
 
   if (ExceptionText != NULL) {
-    xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST ExceptionText);
+    char* errorMessage = msEncodeHTMLEntities(ExceptionText);
+    xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST errorMessage);
+    msFree(errorMessage);
   }
 
   free(xsi_schemaLocation);

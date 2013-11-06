@@ -42,7 +42,7 @@
 
 
 
-int FLTIsNumeric(char *pszValue)
+int FLTIsNumeric(const char *pszValue)
 {
   if (pszValue != NULL && *pszValue != '\0' && !isspace(*pszValue)) {
     /*the regex seems to have a problem on windows when mapserver is built using
@@ -78,7 +78,7 @@ int FLTIsNumeric(char *pszValue)
 ** Apply an expression to the layer's filter element.
 **
 */
-int FLTApplyExpressionToLayer(layerObj *lp, char *pszExpression)
+int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression)
 {
   char *pszFinalExpression=NULL, *pszBuffer = NULL;
   /*char *escapedTextString=NULL;*/
@@ -143,7 +143,7 @@ int FLTApplyExpressionToLayer(layerObj *lp, char *pszExpression)
   return MS_FALSE;
 }
 
-char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  int forcecharcter)
+char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter)
 {
   int bIscharacter, bSqlLayer;
   char *pszExpression = NULL, *pszEscapedStr=NULL, *pszTmpExpression=NULL;
@@ -665,7 +665,7 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 /*      Calling function should use FreeFilterEncodingNode function     */
 /*      to free memeory.                                                */
 /************************************************************************/
-FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
+FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString)
 {
   CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL;
   FilterEncodingNode *psFilterNode = NULL;
@@ -947,8 +947,6 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
   CPLXMLNode *psFeatureIdNode = NULL;
   const char *pszFeatureId=NULL;
   char *pszFeatureIdList=NULL;
-  char **tokens = NULL;
-  int nTokens = 0;
 
   if (psFilterNode && psXMLNode && psXMLNode->pszValue) {
     psFilterNode->pszValue = msStrdup(psXMLNode->pszValue);
@@ -1455,15 +1453,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           if (pszFeatureIdList)
             pszFeatureIdList = msStringConcatenate(pszFeatureIdList, ",");
 
-          /*typname could be part of the value : INWATERA_1M.1234*/
-          tokens = msStringSplit(pszFeatureId,'.', &nTokens);
-          if (tokens && nTokens == 2)
-            pszFeatureIdList = msStringConcatenate(pszFeatureIdList, tokens[1]);
-          else
-            pszFeatureIdList = msStringConcatenate(pszFeatureIdList, pszFeatureId);
-
-          if (tokens)
-            msFreeCharArray(tokens, nTokens);
+          pszFeatureIdList = msStringConcatenate(pszFeatureIdList, pszFeatureId);
         }
         psFeatureIdNode = psFeatureIdNode->psNext;
       }
@@ -1863,7 +1853,6 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
   char szTmp[256];
   char **tokens = NULL;
   int nTokens = 0, i=0,bString=0;
-  char *pszTmp;
 
   if (!psFilterNode)
     return NULL;
@@ -1897,15 +1886,18 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
         tokens = msStringSplit(psFilterNode->pszValue,',', &nTokens);
         if (tokens && nTokens > 0) {
           for (i=0; i<nTokens; i++) {
+            const char* pszId = tokens[i];
+            const char* pszDot = strchr(pszId, '.');
+            if( pszDot )
+                pszId = pszDot + 1;
             if (i == 0) {
-              pszTmp = tokens[0];
-              if(FLTIsNumeric(pszTmp) == MS_FALSE)
+              if(FLTIsNumeric(pszId) == MS_FALSE)
                 bString = 1;
             }
             if (bString)
-              snprintf(szTmp, sizeof(szTmp), "('[%s]' = '%s')" , pszAttribute, tokens[i]);
+              snprintf(szTmp, sizeof(szTmp), "('[%s]' = '%s')" , pszAttribute, pszId);
             else
-              snprintf(szTmp, sizeof(szTmp), "([%s] = %s)" , pszAttribute, tokens[i]);
+              snprintf(szTmp, sizeof(szTmp), "([%s] = %s)" , pszAttribute, pszId);
 
             if (pszExpression != NULL)
               pszExpression = msStringConcatenate(pszExpression, " OR ");
@@ -1989,13 +1981,18 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
         if (tokens && nTokens > 0) {
           for (i=0; i<nTokens; i++) {
             char *pszEscapedStr = NULL;
-            if (strlen(tokens[i]) <= 0)
+            const char* pszId = tokens[i];
+            const char* pszDot = strchr(pszId, '.');
+            if( pszDot )
+                pszId = pszDot + 1;
+
+            if (strlen(pszId) <= 0)
               continue;
 
-            if (FLTIsNumeric((tokens[i])) == MS_FALSE)
+            if (FLTIsNumeric(pszId) == MS_FALSE)
               bString = 1;
 
-            pszEscapedStr = msLayerEscapeSQLParam(lp, tokens[i]);
+            pszEscapedStr = msLayerEscapeSQLParam(lp, pszId);
             if (bString)
               snprintf(szTmp, sizeof(szTmp), "(%s = '%s')" , pszAttribute, pszEscapedStr);
             else
@@ -2950,21 +2947,11 @@ int FLTHasSpatialFilter(FilterEncodingNode *psNode)
 FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
 {
   FilterEncodingNode *psFilterNode = NULL;
-  char **tokens = NULL;
-  int nTokens = 0;
 
   if (pszString) {
     psFilterNode = FLTCreateFilterEncodingNode();
     psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
-    /*split if tyname is included in the string*/
-    tokens = msStringSplit(pszString,'.', &nTokens);
-    if (tokens && nTokens == 2)
-      psFilterNode->pszValue = msStrdup(tokens[1]);
-    else
-      psFilterNode->pszValue =  msStrdup(pszString);
-
-    if (tokens)
-      msFreeCharArray(tokens, nTokens);
+    psFilterNode->pszValue =  msStrdup(pszString);
     return psFilterNode;
   }
   return NULL;
@@ -3267,12 +3254,12 @@ static void FLTRemoveGroupName(FilterEncodingNode *psFilterNode,
 }
 
 /************************************************************************/
-/*                        FLTPreParseFilterForAlias                     */
+/*                    FLTPreParseFilterForAliasAndGroup                 */
 /*                                                                      */
-/*      Utility function to replace aliased' attributes with their      */
-/*      real name.                                                      */
+/*      Utility function to replace aliased' and grouped attributes     */
+/*      with their internal name.                                       */
 /************************************************************************/
-void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
+void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
                                mapObj *map, int i, const char *namespaces)
 {
   layerObj *lp=NULL;
@@ -3315,6 +3302,56 @@ void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
              "FLTPreParseFilterForAlias()");
 
 #endif
+}
+
+/************************************************************************/
+/*                        FLTCheckFeatureIdFilters                      */
+/*                                                                      */
+/*      Check that FeatureId filters match features in the active       */
+/*      layer.                                                          */
+/************************************************************************/
+int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
+                             mapObj *map, int i)
+{
+    int status = MS_SUCCESS;
+    
+    if (psFilterNode->eType ==  FILTER_NODE_TYPE_FEATUREID)
+    {
+        char** tokens;
+        int nTokens = 0;
+        layerObj* lp;
+        int j;
+
+        lp = GET_LAYER(map, i);
+        tokens = msStringSplit(psFilterNode->pszValue,',', &nTokens);
+        for (j=0; j<nTokens; j++) {
+            const char* pszId = tokens[j];
+            const char* pszDot = strchr(pszId, '.');
+            if( pszDot )
+            {
+                if( pszDot - pszId != strlen(lp->name) ||
+                    strncasecmp(pszId, lp->name, strlen(lp->name)) != 0 )
+                {
+                    msSetError(MS_MISCERR, "Feature id %s not consistant with feature type name %s.",
+                               "FLTPreParseFilterForAlias()", pszId, lp->name);
+                    status = MS_FAILURE;
+                    break;
+                }
+            }
+        }
+        msFreeCharArray(tokens, nTokens);
+    }
+
+    if (psFilterNode->psLeftNode)
+    {
+      status = FLTCheckFeatureIdFilters(psFilterNode->psLeftNode, map, i);
+      if( status == MS_SUCCESS )
+      {
+        if (psFilterNode->psRightNode)
+            status = FLTCheckFeatureIdFilters(psFilterNode->psRightNode, map, i);
+      }
+    }
+    return status;
 }
 
 

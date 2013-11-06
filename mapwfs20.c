@@ -38,6 +38,20 @@
 #define MS_OWS_11_NAMESPACE_PREFIX       MS_OWSCOMMON_OWS_NAMESPACE_PREFIX
 #define MS_OWS_11_NAMESPACE_URI          MS_OWSCOMMON_OWS_110_NAMESPACE_URI
 
+#define URN_GET_FEATURE_BY_ID "urn:ogc:def:query:OGC-WFS::GetFeatureById"
+
+#define GET_FEATURE_BY_ID \
+"<StoredQueryDescription id=\"" URN_GET_FEATURE_BY_ID "\">" \
+"<Title>Get feature by identifier</Title>" \
+"<Abstract>Returns the single feature whose value is equal to the specified value of the ID argument</Abstract>" \
+"<Parameter name=\"ID\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" type=\"xs:string\"/>" \
+"<QueryExpressionText isPrivate=\"true\" language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression\" returnFeatureTypes=\"\">" \
+"<Query xmlns:fes=\"http://www.opengis.net/fes/2.0\" typeNames=\"?\">" \
+"<fes:Filter><fes:ResourceId rid=\"${ID}\"/></fes:Filter>" \
+"</Query>" \
+"</QueryExpressionText>" \
+"</StoredQueryDescription>"
+
 /************************************************************************/
 /*                          msWFSException20()                          */
 /************************************************************************/
@@ -52,6 +66,7 @@ int msWFSException20(mapObj *map, const char *locator,
   xmlNodePtr psRootNode = NULL;
   xmlNsPtr   psNsOws    = NULL;
   xmlChar *buffer       = NULL;
+  const char* status    = NULL;
 
   psNsOws = xmlNewNs(NULL, BAD_CAST MS_OWS_11_NAMESPACE_URI, BAD_CAST MS_OWS_11_NAMESPACE_PREFIX);
 
@@ -65,8 +80,14 @@ int msWFSException20(mapObj *map, const char *locator,
 
   xmlNewNs(psRootNode, BAD_CAST MS_OWS_11_NAMESPACE_URI, BAD_CAST MS_OWS_11_NAMESPACE_PREFIX);
 
-  /* FIXME: should we emit a HTTP status code? */
-  /* msIO_setHeader("Status", "%s", "400 Bad request"); */
+  /* For CITE compliance */
+  if( EQUAL(exceptionCode, "OperationProcessingFailed") ) {
+    status = "404 Not Found";
+  }
+  if( status != NULL )
+  {
+    msIO_setHeader("Status", "%s", status);
+  }
   msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
@@ -709,6 +730,574 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   return(MS_SUCCESS);
 }
 
+/************************************************************************/
+/*                       msWFSGetStoredQueries                          */
+/*                                                                      */
+/* Result must be freed with msFreeCharArray()                          */
+/************************************************************************/
+
+static char** msWFSGetStoredQueries(mapObj *map, int* pn)
+{
+  const char* value;
+  char** tokens;
+  int i,n;
+  
+  value = msOWSLookupMetadata(&(map->web.metadata), "F", "storedqueries");
+  if( value != NULL )
+  {
+    tokens = msStringSplit(value, ',', &n);
+    for(i=0;i<n;i++)
+    {
+        if( strcasecmp(tokens[i], URN_GET_FEATURE_BY_ID) == 0 )
+            break;
+    }
+    /* Add mandatory GetFeatureById stored query if not found */
+    if(i == n)
+    {
+        tokens = (char**) realloc(tokens, (n+1) * sizeof(char*));
+        memmove(tokens + 1, tokens, n * sizeof(char**));
+        tokens[0] = msStrdup(URN_GET_FEATURE_BY_ID);
+        n ++;
+    }
+  }
+  else
+  {
+      tokens = (char**) malloc(sizeof(char**));
+      tokens[0] = msStrdup(URN_GET_FEATURE_BY_ID);
+      n = 1;
+  }
+  *pn = n;
+  return tokens;
+}
+
+/************************************************************************/
+/*                       msWFSGetStoredQuery                            */
+/*                                                                      */
+/* Result must be freed with msFree()                                   */
+/************************************************************************/
+
+static char* msWFSGetStoredQuery(mapObj *map, const char* pszURN)
+{
+    const char* value;
+    char szKey[256];
+    
+    snprintf(szKey, sizeof(szKey), "%s_inlinedef", pszURN);
+    value = msOWSLookupMetadata(&(map->web.metadata), "F", szKey);
+    if( value != NULL )
+        return msStrdup(value);
+    
+    snprintf(szKey, sizeof(szKey), "%s_filedef", pszURN);
+    value = msOWSLookupMetadata(&(map->web.metadata), "F", szKey);
+    if( value != NULL )
+    {
+        FILE* f = fopen(value, "rb");
+        if( f != NULL )
+        {
+            char* pszBuffer = (char*) msSmallMalloc(32000);
+            int nread = fread(pszBuffer, 1, 32000-1, f);
+            fclose(f);
+            if( nread > 0 )
+            {
+                pszBuffer[nread-1] = '\0';
+                return pszBuffer;
+            }
+            msFree(pszBuffer);
+        }
+        else
+        {
+            msSetError(MS_WFSERR, "Cannot open %s", "msWFSGetStoredQuery()", value);
+        }
+    }
+
+    if( strcasecmp(pszURN, URN_GET_FEATURE_BY_ID) == 0 )
+        return msStrdup(GET_FEATURE_BY_ID);
+    return NULL;
+}
+
+/************************************************************************/
+/*                     msWFSGetResolvedStoredQuery20                    */
+/*                                                                      */
+/* Result must be freed with msFree()                                   */
+/************************************************************************/
+
+char* msWFSGetResolvedStoredQuery20(mapObj *map,
+                                    wfsParamsObj *wfsparams,
+                                    const char* id,
+                                    hashTableObj* hashTable)
+{
+    char* storedQuery;
+    xmlDocPtr psStoredQueryDoc;
+    xmlNodePtr psStoredQueryRoot, pChild;
+
+    storedQuery = msWFSGetStoredQuery(map, id);
+    if( storedQuery == NULL )
+    {
+        msSetError(MS_WFSERR, "Cannot resolve stored query '%s'", "msWFSGetResolvedStoredQuery20()", id);
+        msWFSException(map, "mapserv", "NoApplicableCode", wfsparams->pszVersion);
+        return NULL;
+    }
+
+    psStoredQueryDoc = xmlParseDoc((const xmlChar*) storedQuery);
+    if( psStoredQueryDoc == NULL )
+    {
+        msSetError(MS_WFSERR, "Definition for stored query '%s' is invalid", "msWFSGetResolvedStoredQuery20()", id);
+        msWFSException(map, "mapserv", "NoApplicableCode", wfsparams->pszVersion);
+        msFree(storedQuery);
+        return NULL;
+    }
+
+    psStoredQueryRoot = xmlDocGetRootElement(psStoredQueryDoc);
+
+    /* Check that all parameters are provided */
+    pChild = psStoredQueryRoot->children;
+    while(pChild != NULL)
+    {
+        if( pChild->type == XML_ELEMENT_NODE &&
+            strcmp((const char*) pChild->name, "Parameter") == 0 )
+        {
+            xmlChar* parameterName = xmlGetProp(pChild, BAD_CAST "name");
+            if( parameterName != NULL )
+            {
+                char szTmp[256];
+                const char* value = msLookupHashTable(hashTable, (const char*)parameterName);
+                if( value == NULL )
+                {
+                    msSetError(MS_WFSERR, "Stored query '%s' requires parameter '%s'", "msWFSParseRequest()",
+                               id, (const char*)parameterName);
+                    msWFSException(map, (const char*)parameterName, "MissingParameterValue", wfsparams->pszVersion);
+                    msFree(storedQuery);
+                    xmlFree(parameterName);
+                    return NULL;
+                }
+
+                snprintf(szTmp, sizeof(szTmp), "${%s}", (const char*)parameterName);
+                storedQuery = msReplaceSubstring(storedQuery, szTmp, value);
+            }
+            xmlFree(parameterName);
+        }
+        pChild = pChild->next;
+    }
+
+    xmlFreeDoc(psStoredQueryDoc);
+
+    return storedQuery;
+}
+
+/************************************************************************/
+/*                       msWFSListStoredQueries20                       */
+/************************************************************************/
+
+int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
+                             cgiRequestObj *req, owsRequestObj *ows_request)
+{
+  xmlDocPtr psDoc;
+  xmlChar *buffer = NULL;
+  int size = 0;
+  msIOContext *context = NULL;
+  xmlNodePtr psRootNode;
+  char *xsi_schemaLocation = NULL;
+  int i, j;
+  int nStoredQueries = 0;
+  char** storedQueries = NULL;
+
+  xmlDocPtr psStoredQueryDoc;
+  xmlNodePtr psStoredQueryRoot;
+  
+  /* -------------------------------------------------------------------- */
+  /*      Create document.                                                */
+  /* -------------------------------------------------------------------- */
+  psDoc = xmlNewDoc(BAD_CAST "1.0");
+
+  psRootNode = xmlNewNode(NULL, BAD_CAST "ListStoredQueriesResponse");
+
+  xmlDocSetRootElement(psDoc, psRootNode);
+
+  /* -------------------------------------------------------------------- */
+  /*      Name spaces                                                     */
+  /* -------------------------------------------------------------------- */
+  
+  /*default name space*/
+  xmlNewProp(psRootNode, BAD_CAST "xmlns", BAD_CAST MS_OWSCOMMON_WFS_20_NAMESPACE_URI);
+
+  xmlSetNs(psRootNode, xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_WFS_20_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_WFS_NAMESPACE_PREFIX));
+
+  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
+
+  /*schema*/
+  xsi_schemaLocation = msStrdup(MS_OWSCOMMON_WFS_20_NAMESPACE_URI);
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, msOWSGetSchemasLocation(map));
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION);
+
+  xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
+  free(xsi_schemaLocation);
+
+  /* -------------------------------------------------------------------- */
+  /*      Add queries                                                     */
+  /* -------------------------------------------------------------------- */
+  
+  storedQueries = msWFSGetStoredQueries(map, &nStoredQueries);
+  for(i = 0; i < nStoredQueries; i++)
+  {
+    char* query = msWFSGetStoredQuery(map, storedQueries[i]);
+    if( query != NULL )
+    {
+      xmlNodePtr pChild;
+      xmlNodePtr psStoredQuery;
+
+      psStoredQueryDoc = xmlParseDoc((const xmlChar*) query);
+      if( psStoredQueryDoc == NULL )
+      {
+        char szMsg[256];
+        msFree(query);
+        snprintf(szMsg, sizeof(szMsg), "WARNING: Definition for stored query %s is invalid", storedQueries[i]);
+        xmlAddChild(psRootNode, xmlNewComment(BAD_CAST szMsg));
+        continue;
+      }
+
+      psStoredQueryRoot = xmlDocGetRootElement(psStoredQueryDoc);
+
+      psStoredQuery = xmlNewNode(NULL, BAD_CAST "StoredQuery" );
+      xmlNewProp(psStoredQuery, BAD_CAST "id", BAD_CAST storedQueries[i]);
+      xmlAddChild(psRootNode, psStoredQuery);
+
+      pChild = psStoredQueryRoot->children;
+      while(pChild != NULL)
+      {
+        xmlNodePtr pNext = pChild->next;
+        if( pChild->type == XML_ELEMENT_NODE &&
+            strcmp((const char*) pChild->name, "Title") == 0 )
+        {
+            xmlUnlinkNode(pChild);
+            xmlAddChild(psStoredQuery, pChild);
+        }
+        else if( pChild->type == XML_ELEMENT_NODE &&
+            strcmp((const char*) pChild->name, "QueryExpressionText") == 0 )
+        {
+            xmlNodePtr psReturnFeatureType;
+
+            if( strcasecmp( storedQueries[i], URN_GET_FEATURE_BY_ID ) == 0 )
+            {
+                for(j=0; j<map->numlayers; j++) {
+                    layerObj *lp;
+                    const char *user_namespace_prefix = MS_DEFAULT_NAMESPACE_PREFIX;
+                    const char *user_namespace_uri = MS_DEFAULT_NAMESPACE_URI;
+                    const char *value;
+                    char szValue[256];
+
+                    lp = GET_LAYER(map, j);
+
+                    if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers) ||
+                        !msWFSIsLayerSupported(lp))
+                    continue;
+
+
+                    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
+                    if(value) user_namespace_uri = value;
+
+                    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
+                    if(value) user_namespace_prefix = value;
+
+                    psReturnFeatureType = xmlNewNode(NULL, BAD_CAST "ReturnFeatureType" );
+                    xmlNewNs(psReturnFeatureType, BAD_CAST user_namespace_uri, BAD_CAST user_namespace_prefix);
+
+                    xmlAddChild(psStoredQuery, psReturnFeatureType);
+                    snprintf(szValue, sizeof(szValue), "%s:%s", user_namespace_prefix, lp->name);
+                    xmlAddChild(psReturnFeatureType, xmlNewText( BAD_CAST szValue ));
+                }
+            }
+            else
+            {
+                xmlChar* returnFeatureTypes = xmlGetProp(pChild, BAD_CAST "returnFeatureTypes");
+                if( returnFeatureTypes != NULL && strlen((const char*)returnFeatureTypes) > 0 )
+                {
+                    int ntypes;
+                    char** types = msStringSplit((const char*)returnFeatureTypes, ' ', &ntypes);
+                    for(j=0; j<ntypes; j++)
+                    {
+                        psReturnFeatureType = xmlNewNode(NULL, BAD_CAST "ReturnFeatureType" );
+                        xmlAddChild(psStoredQuery, psReturnFeatureType);
+                        xmlAddChild(psReturnFeatureType, xmlNewText( BAD_CAST types[j] ));
+                    }
+                    msFreeCharArray(types, ntypes);
+                }
+                else
+                {
+                    psReturnFeatureType = xmlNewNode(NULL, BAD_CAST "ReturnFeatureType" );
+                    xmlAddChild(psStoredQuery, psReturnFeatureType);
+                    xmlAddChild(psReturnFeatureType, xmlNewComment( BAD_CAST "WARNING: Missing return type" ));
+                }
+                xmlFree(returnFeatureTypes);
+            }
+        }
+        pChild = pNext;
+      }
+
+      xmlReconciliateNs(psDoc, psStoredQuery);
+      xmlFreeDoc(psStoredQueryDoc);
+      msFree(query);
+    }
+    else
+    {
+      char szMsg[256];
+      snprintf(szMsg, sizeof(szMsg), "WARNING: Definition for stored query %s missing", storedQueries[i]);
+      xmlAddChild(psRootNode, xmlNewComment(BAD_CAST szMsg));
+    }
+  }
+  msFreeCharArray(storedQueries, nStoredQueries);
+
+  /* -------------------------------------------------------------------- */
+  /*      Write out the document.                                         */
+  /* -------------------------------------------------------------------- */
+
+  if( msIO_needBinaryStdout() == MS_FAILURE )
+    return MS_FAILURE;
+
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
+  msIO_sendHeaders();
+
+  context = msIO_getHandler(stdout);
+
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, ("UTF-8"), 1);
+  msIO_contextWrite(context, buffer, size);
+  xmlFree(buffer);
+
+  /*free buffer and the document */
+  /*xmlFree(buffer);*/
+  xmlFreeDoc(psDoc);
+
+  xmlCleanupParser();
+
+  return(MS_SUCCESS);
+}
+
+
+/************************************************************************/
+/*                     msWFSDescribeStoredQueries20                     */
+/************************************************************************/
+
+int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
+                             cgiRequestObj *req, owsRequestObj *ows_request)
+{
+  xmlDocPtr psDoc;
+  xmlChar *buffer = NULL;
+  int size = 0;
+  msIOContext *context = NULL;
+  xmlNodePtr psRootNode;
+  char *xsi_schemaLocation = NULL;
+  int i, j;
+  int nStoredQueries = 0;
+  char** storedQueries = NULL;
+
+  xmlDocPtr psStoredQueryDoc;
+  xmlNodePtr psStoredQueryRoot;
+  
+  if( params->pszStoredQueryId != NULL ) {
+    storedQueries = msStringSplit(params->pszStoredQueryId,',',&nStoredQueries);
+    for(i = 0; i < nStoredQueries; i++)
+    {
+        char* query = msWFSGetStoredQuery(map, storedQueries[i]);
+        if( query == NULL )
+        {
+            msSetError(MS_WFSERR, "Unknown stored query id: %s", "msWFSDescribeStoredQueries20()",
+                       storedQueries[i]);
+            msFreeCharArray(storedQueries, nStoredQueries);
+            return msWFSException(map, "storedqueryid", "InvalidParameterValue", params->pszVersion);
+        }
+        msFree(query);
+    }
+  } else {
+    storedQueries = msWFSGetStoredQueries(map, &nStoredQueries);
+  }
+
+  /* -------------------------------------------------------------------- */
+  /*      Create document.                                                */
+  /* -------------------------------------------------------------------- */
+  psDoc = xmlNewDoc(BAD_CAST "1.0");
+
+  psRootNode = xmlNewNode(NULL, BAD_CAST "DescribeStoredQueriesResponse");
+
+  xmlDocSetRootElement(psDoc, psRootNode);
+
+  /* -------------------------------------------------------------------- */
+  /*      Name spaces                                                     */
+  /* -------------------------------------------------------------------- */
+  
+  /*default name space*/
+  xmlNewProp(psRootNode, BAD_CAST "xmlns", BAD_CAST MS_OWSCOMMON_WFS_20_NAMESPACE_URI);
+
+  xmlSetNs(psRootNode, xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_WFS_20_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_WFS_NAMESPACE_PREFIX));
+
+  xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_W3C_XSI_NAMESPACE_PREFIX);
+
+  /*schema*/
+  xsi_schemaLocation = msStrdup(MS_OWSCOMMON_WFS_20_NAMESPACE_URI);
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, " ");
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, msOWSGetSchemasLocation(map));
+  xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION);
+
+  xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
+  free(xsi_schemaLocation);
+
+  /* -------------------------------------------------------------------- */
+  /*      Add queries                                                     */
+  /* -------------------------------------------------------------------- */
+
+  for(i = 0; i < nStoredQueries; i++)
+  {
+    char* query = msWFSGetStoredQuery(map, storedQueries[i]);
+    if( query != NULL )
+    {
+      xmlNodePtr pChild;
+      xmlNs*  ns;
+      xmlNodePtr psStoredQuery;
+
+      psStoredQueryDoc = xmlParseDoc((const xmlChar*) query);
+      if( psStoredQueryDoc == NULL )
+      {
+        char szMsg[256];
+        msFree(query);
+        snprintf(szMsg, sizeof(szMsg), "WARNING: Definition for stored query %s is invalid", storedQueries[i]);
+        xmlAddChild(psRootNode, xmlNewComment(BAD_CAST szMsg));
+        continue;
+      }
+
+      psStoredQueryRoot = xmlDocGetRootElement(psStoredQueryDoc);
+
+      psStoredQuery = xmlNewNode(NULL, BAD_CAST "StoredQueryDescription" );
+      xmlNewProp(psStoredQuery, BAD_CAST "id", BAD_CAST storedQueries[i]);
+      xmlAddChild(psRootNode, psStoredQuery);
+
+      ns = psStoredQueryRoot->nsDef;
+      while( ns != NULL ) {
+        xmlNewNs(psStoredQuery, BAD_CAST ns->href, BAD_CAST ns->prefix);
+        ns = ns->next;
+      }
+
+      pChild = psStoredQueryRoot->children;
+      while(pChild != NULL)
+      {
+        xmlNodePtr pNext = pChild->next;
+
+        if( pChild->type == XML_ELEMENT_NODE &&
+            strcmp((const char*) pChild->name, "QueryExpressionText") == 0 )
+        {
+            if( strcasecmp( storedQueries[i], URN_GET_FEATURE_BY_ID ) == 0 )
+            {
+                char** arrayNsPrefix = (char**) malloc( sizeof(char*) * map->numlayers );
+                char** arrayNsUri = (char**) malloc( sizeof(char*) * map->numlayers );
+                int arraysize = 0;
+                int k;
+                char* returnFeatureTypes = NULL;
+                xmlNodePtr psQueryExpressionText;
+
+                psQueryExpressionText = xmlNewNode(NULL, BAD_CAST "QueryExpressionText" );
+                xmlAddChild(psStoredQuery, psQueryExpressionText);
+                xmlNewProp(psQueryExpressionText, BAD_CAST "isPrivate", BAD_CAST "true");
+                xmlNewProp(psQueryExpressionText, BAD_CAST "language", BAD_CAST "urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression");
+
+                for(j=0; j<map->numlayers; j++) {
+                    layerObj *lp;
+                    const char *user_namespace_prefix = MS_DEFAULT_NAMESPACE_PREFIX;
+                    const char *user_namespace_uri = MS_DEFAULT_NAMESPACE_URI;
+                    const char *value;
+                    char szValue[256];
+
+                    lp = GET_LAYER(map, j);
+
+                    if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers) ||
+                        !msWFSIsLayerSupported(lp))
+                    continue;
+
+                    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
+                    if(value) user_namespace_uri = value;
+
+                    value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
+                    if(value) user_namespace_prefix = value;
+
+                    for(k=0;k<arraysize;k++)
+                    {
+                        if( strcmp(arrayNsPrefix[k], user_namespace_prefix) == 0 )
+                            break;
+                    }
+                    if(k == arraysize) {
+                      arrayNsPrefix[arraysize] = msStrdup(user_namespace_prefix);
+                      arrayNsUri[arraysize] = msStrdup(user_namespace_uri);
+                      arraysize ++;
+
+                      xmlNewNs(psQueryExpressionText, BAD_CAST user_namespace_uri, BAD_CAST user_namespace_prefix);
+                    }
+
+                    if( returnFeatureTypes != NULL )
+                      returnFeatureTypes = msStringConcatenate(returnFeatureTypes, " ");
+                    snprintf(szValue, sizeof(szValue), "%s:%s", user_namespace_prefix, lp->name);
+                    returnFeatureTypes = msStringConcatenate(returnFeatureTypes, szValue);
+                }
+
+                xmlNewProp(psQueryExpressionText, BAD_CAST "returnFeatureTypes", BAD_CAST returnFeatureTypes);
+
+                msFree(returnFeatureTypes);
+                msFreeCharArray(arrayNsPrefix, arraysize);
+                msFreeCharArray(arrayNsUri, arraysize);
+            }
+            else
+            {
+                xmlChar* isPrivate = xmlGetProp(pChild, BAD_CAST "isPrivate");
+                if( isPrivate != NULL && strcmp((const char*)isPrivate, "true") == 0) {
+                    xmlNodePtr pSubChild = xmlFirstElementChild(pChild);
+                    xmlUnlinkNode(pSubChild);
+                    xmlFreeNode(pSubChild);
+                }
+                xmlUnlinkNode(pChild);
+                xmlAddChild(psStoredQuery, pChild);
+                msFree(isPrivate);
+            }
+        }
+        else {
+            xmlUnlinkNode(pChild);
+            xmlAddChild(psStoredQuery, pChild);
+        }
+        pChild = pNext;
+      }
+
+      xmlReconciliateNs(psDoc, psStoredQuery);
+      xmlFreeDoc(psStoredQueryDoc);
+      msFree(query);
+    }
+    else
+    {
+      char szMsg[256];
+      snprintf(szMsg, sizeof(szMsg), "WARNING: Definition for stored query %s missing", storedQueries[i]);
+      xmlAddChild(psRootNode, xmlNewComment(BAD_CAST szMsg));
+    }
+  }
+  msFreeCharArray(storedQueries, nStoredQueries);
+
+  /* -------------------------------------------------------------------- */
+  /*      Write out the document.                                         */
+  /* -------------------------------------------------------------------- */
+
+  if( msIO_needBinaryStdout() == MS_FAILURE )
+    return MS_FAILURE;
+
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
+  msIO_sendHeaders();
+
+  context = msIO_getHandler(stdout);
+
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, ("UTF-8"), 1);
+  msIO_contextWrite(context, buffer, size);
+  xmlFree(buffer);
+
+  /*free buffer and the document */
+  /*xmlFree(buffer);*/
+  xmlFreeDoc(psDoc);
+
+  xmlCleanupParser();
+
+  return(MS_SUCCESS);
+}
+
 #endif /* defined(USE_WFS_SVR) && defined(USE_LIBXML2) */
 
 #if defined(USE_WFS_SVR) && !defined(USE_LIBXML2)
@@ -731,5 +1320,37 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
 }
 
+int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
+                             cgiRequestObj *req, owsRequestObj *ows_request)
+{
+  msSetError( MS_WFSERR,
+              "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
+              "msWFSListStoredQueries20()", "NoApplicableCode" );
+
+  return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+}
+
+int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
+                             cgiRequestObj *req, owsRequestObj *ows_request)
+{
+  msSetError( MS_WFSERR,
+              "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
+              "msWFSDescribeStoredQueries20()", "NoApplicableCode" );
+
+  return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+}
+
+char* msWFSGetResolvedStoredQuery20(mapObj *map,
+                                    wfsParamsObj *wfsparams,
+                                    const char* id,
+                                    hashTableObj* hashTable)
+{
+  msSetError( MS_WFSERR,
+              "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
+              "msWFSGetResolvedStoredQuery20()", "NoApplicableCode" );
+
+  msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+  return NULL;
+}
 
 #endif /* defined(USE_WFS_SVR) && !defined(USE_LIBXML2) */

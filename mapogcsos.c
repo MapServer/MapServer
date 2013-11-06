@@ -80,7 +80,6 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
 {
   int size = 0;
   char *errorString     = NULL;
-  char *errorMessage    = NULL;
   char *schemasLocation = NULL;
 
   xmlDocPtr  psDoc      = NULL;
@@ -91,12 +90,11 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
   psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows/1.1", BAD_CAST "ows");
 
   errorString = msGetErrorString("\n");
-  errorMessage = msEncodeHTMLEntities(errorString);
   schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_1_0, schemasLocation, pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
+  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_1_0, schemasLocation, pszSOSVersion, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorString);
 
   xmlDocSetRootElement(psDoc, psRootNode);
 
@@ -111,7 +109,6 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
 
   /*free buffer and the document */
   free(errorString);
-  free(errorMessage);
   free(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
@@ -2173,7 +2170,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
       lp = GET_LAYER(map, i);
       if (lp->status == MS_ON) {
         /* preparse parser so that alias for fields can be used */
-        FLTPreParseFilterForAlias(psFilterNode, map, i, "S");
+        FLTPreParseFilterForAliasAndGroup(psFilterNode, map, i, "S");
         /* validate that the property names used are valid
           (there is a corresponding layer attribute) */
         if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {

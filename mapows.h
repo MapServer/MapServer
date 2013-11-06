@@ -64,8 +64,11 @@ typedef struct {
   char *pszAcceptVersions;
   char *pszSections;
   char *pszSortBy; /* Not implemented yet */
-  char *pszLanguage;
+  char *pszLanguage; /* Inspire extension */
   char *pszValueReference; /* For GetValueReference */
+  char *pszStoredQueryId; /* For DescribeStoredQueries */
+  int   countGetFeatureById; /* Number of urn:ogc:def:query:OGC-WFS::GetFeatureById GetFeature requests */
+  int   bHasPostStoredQuery; /* TRUE if a XML GetFeature StoredQuery is present */
 } wfsParamsObj;
 
 /*
@@ -477,6 +480,14 @@ int msWFSException20(mapObj *map, const char *locator,
                      const char *exceptionCode);
 int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                            cgiRequestObj *req, owsRequestObj *ows_request);
+int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
+                             cgiRequestObj *req, owsRequestObj *ows_request);
+int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
+                             cgiRequestObj *req, owsRequestObj *ows_request);
+char* msWFSGetResolvedStoredQuery20(mapObj *map,
+                                    wfsParamsObj *wfsparams,
+                                    const char* id,
+                                    hashTableObj* hashTable);
 
 #endif
 
