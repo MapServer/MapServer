@@ -1105,14 +1105,20 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
         else if ((psEnvelope = CPLGetXMLNode(psXMLNode, "Envelope")))
           bCoordinatesValid = FLTParseGMLEnvelope(psEnvelope, &sBox, &pszSRS);
 
-        if (pszPropertyName && bCoordinatesValid) {
+        if (bCoordinatesValid) {
           /*set the srs if available*/
           if (pszSRS)
             psFilterNode->pszSRS = pszSRS;
 
           psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
           psFilterNode->psLeftNode->eType =  FILTER_NODE_TYPE_PROPERTYNAME;
-          psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
+          /* PropertyName is optional since FE 1.1.0, in which case */
+          /* the BBOX must apply to all geometry fields. As we support */
+          /* currently only one geometry field, this doesn't make much */
+          /* difference to further processing. */
+          if( pszPropertyName != NULL ) {
+            psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
+          }
 
           /* coordinates */
           psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
