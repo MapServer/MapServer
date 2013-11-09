@@ -341,7 +341,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   /*operation metadata */
   if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL) {
     msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities11()");
-    return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+    return msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
   }
 
   /* -------------------------------------------------------------------- */
@@ -489,7 +489,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
               "WFS 1.1 request made, but mapserver requires libxml2 for WFS 1.1 services and this is not configured.",
               "msWFSGetCapabilities11()" );
 
-  return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+  return msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
 }
 
 int msWFSException11(mapObj *map, const char *locator, const char *exceptionCode, const char *version)

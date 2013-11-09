@@ -136,6 +136,19 @@
 #define MS_DEFAULT_NAMESPACE_URI            "http://mapserver.gis.umn.edu/mapserver"
 
 
+/* OWS errors */
+
+/* OWS 1.1.0 Table 25 */
+#define MS_OWS_ERROR_OPERATION_NOT_SUPPORTED    "OperationNotSupported"
+#define MS_OWS_ERROR_MISSING_PARAMETER_VALUE    "MissingParameterValue"
+#define MS_OWS_ERROR_INVALID_PARAMETER_VALUE    "InvalidParameterValue"
+#define MS_OWS_ERROR_VERSION_NEGOTIATION_FAILED "VersionNegotiationFailed"
+#define MS_OWS_ERROR_INVALID_UPDATE_SEQUENCE    "InvalidUpdateSequence"
+#define MS_OWS_ERROR_OPTION_NOT_SUPPORTED       "OptionNotSupported"
+#define MS_OWS_ERROR_NO_APPLICABLE_CODE         "NoApplicableCode"
+
+#define MS_WFS_ERROR_OPERATION_PROCESSING_FAILED "OperationProcessingFailed"
+
 #ifdef USE_LIBXML2
 
 /* function prototypes */

@@ -478,7 +478,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   {
     if ((script_url=msOWSGetOnlineResource2(map, "FO", "onlineresource", req, validated_language)) == NULL) {
         msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities20()");
-        return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+        return msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
     }
     
 
@@ -833,7 +833,7 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
     if( storedQuery == NULL )
     {
         msSetError(MS_WFSERR, "Cannot resolve stored query '%s'", "msWFSGetResolvedStoredQuery20()", id);
-        msWFSException(map, "mapserv", "NoApplicableCode", wfsparams->pszVersion);
+        msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, wfsparams->pszVersion);
         return NULL;
     }
 
@@ -841,7 +841,7 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
     if( psStoredQueryDoc == NULL )
     {
         msSetError(MS_WFSERR, "Definition for stored query '%s' is invalid", "msWFSGetResolvedStoredQuery20()", id);
-        msWFSException(map, "mapserv", "NoApplicableCode", wfsparams->pszVersion);
+        msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, wfsparams->pszVersion);
         msFree(storedQuery);
         return NULL;
     }
@@ -864,7 +864,7 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
                 {
                     msSetError(MS_WFSERR, "Stored query '%s' requires parameter '%s'", "msWFSParseRequest()",
                                id, (const char*)parameterName);
-                    msWFSException(map, (const char*)parameterName, "MissingParameterValue", wfsparams->pszVersion);
+                    msWFSException(map, (const char*)parameterName, MS_OWS_ERROR_MISSING_PARAMETER_VALUE, wfsparams->pszVersion);
                     msFree(storedQuery);
                     xmlFree(parameterName);
                     return NULL;
@@ -1102,7 +1102,7 @@ int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
             msSetError(MS_WFSERR, "Unknown stored query id: %s", "msWFSDescribeStoredQueries20()",
                        storedQueries[i]);
             msFreeCharArray(storedQueries, nStoredQueries);
-            return msWFSException(map, "storedqueryid", "InvalidParameterValue", params->pszVersion);
+            return msWFSException(map, "storedqueryid", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, params->pszVersion);
         }
         msFree(query);
     }
@@ -1317,7 +1317,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
               "msWFSGetCapabilities20()" );
 
-  return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+  return msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
 }
 
 int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
@@ -1327,7 +1327,7 @@ int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
               "msWFSListStoredQueries20()");
 
-  return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+  return msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
 }
 
 int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
@@ -1337,7 +1337,7 @@ int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
               "msWFSDescribeStoredQueries20()" );
 
-  return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+  return msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
 }
 
 char* msWFSGetResolvedStoredQuery20(mapObj *map,
@@ -1349,7 +1349,7 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
               "WFS 2.0 request made, but mapserver requires libxml2 for WFS 2.0 services and this is not configured.",
               "msWFSGetResolvedStoredQuery20()" );
 
-  msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+  msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
   return NULL;
 }
 
