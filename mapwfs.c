@@ -2176,7 +2176,7 @@ static int msWFSRetrieveFeatures(mapObj* map,
     }
 
     if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, nWFSVersion) == MS_FAILURE)
-        return msWFSException(map, "typename", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
+        return msWFSException(map, "srsname", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
 
     /* -------------------------------------------------------------------- */
     /*      Parse the Filter parameter. If there are several Filter         */
@@ -2337,7 +2337,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
         msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, NULL, NULL);
 
     if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, nWFSVersion) == MS_FAILURE)
-        return msWFSException(map, "typename", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
+        return msWFSException(map, "srsname", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
 
     for (j=0; j< iFIDLayers; j++) {
       layerObj *lp;
@@ -2382,7 +2382,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
 
     /* Apply the requested SRS */
     if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, nWFSVersion) == MS_FAILURE)
-        return msWFSException(map, "typename", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
+        return msWFSException(map, "srsname", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
 
     if (!bBBOXSet) {
       for(j=0; j<map->numlayers; j++) {
