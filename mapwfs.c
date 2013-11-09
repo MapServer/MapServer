@@ -4316,6 +4316,7 @@ static int msWFSAnalyzeStoredQuery(mapObj* map,
 {
     CPLXMLNode* psRoot;
     CPLXMLNode* psQuery;
+    CPLXMLNode* psIter;
 
     psRoot = CPLParseXMLString(pszResolvedQuery);
 
@@ -4336,7 +4337,14 @@ static int msWFSAnalyzeStoredQuery(mapObj* map,
         return MS_FAILURE;
     }
 
-    msWFSParseXMLQueryNode(psQuery, wfsparams);
+    psIter = psQuery;
+    while( psIter != NULL )
+    {
+        if( psIter->eType == CXT_Element && strcmp(psIter->pszValue, "Query") == 0 ) {
+            msWFSParseXMLQueryNode(psIter, wfsparams);
+        }
+        psIter = psIter->psNext;
+    }
 
     CPLDestroyXMLNode(psRoot);
 
