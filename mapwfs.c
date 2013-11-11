@@ -997,7 +997,8 @@ static const char* msWFSMapServTypeToXMLType(const char* type)
     return element_type;
 }
 
-static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *tab)
+static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *tab,
+                                  WFSSchemaVersion outputformat)
 {
   const char *element_name;
   const char *element_type = "string";
@@ -1013,7 +1014,12 @@ static void msWFSWriteItemElement(FILE *stream, gmlItemObj *item, const char *ta
     element_name = item->name;
 
   if(item->type)
-    element_type = msWFSMapServTypeToXMLType(item->type);
+  {
+    if( outputformat == OWS_GML32_SFE_SCHEMA && EQUAL(item->type,"Date") )
+      element_type = "gml:TimeInstantType";
+    else
+      element_type = msWFSMapServTypeToXMLType(item->type);
+  }
 
   if( item->minOccurs == 0 )
       pszMinOccurs = " minOccurs=\"0\"";
@@ -1047,7 +1053,11 @@ static void msWFSWriteGroupElement(FILE *stream, gmlGroupObj *group, const char 
   return;
 }
 
-static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group, gmlItemListObj *itemList, gmlConstantListObj *constantList, const char *tab)
+static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
+                                       gmlItemListObj *itemList,
+                                       gmlConstantListObj *constantList,
+                                       const char *tab,
+                                       WFSSchemaVersion outputformat)
 {
   int i, j;
   char *element_tab;
@@ -1080,7 +1090,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group, gmlItem
     for(j=0; j<itemList->numitems; j++) { /* find the right gmlItemObj */
       item = &(itemList->items[j]);
       if(strcasecmp(item->name, group->items[i]) == 0) {
-        msWFSWriteItemElement(stream, item, element_tab);
+        msWFSWriteItemElement(stream, item, element_tab, outputformat);
         break;
       }
     }
@@ -1463,7 +1473,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
           for(k=0; k<itemList->numitems; k++) {
             item = &(itemList->items[k]);
             if(msItemInGroups(item->name, groupList) == MS_FALSE)
-              msWFSWriteItemElement(stdout, item, "          ");
+              msWFSWriteItemElement(stdout, item, "          ", outputformat);
           }
 
           for(k=0; k<groupList->numgroups; k++)
@@ -1476,7 +1486,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
 
           /* any group types */
           for(k=0; k<groupList->numgroups; k++)
-            msWFSWriteGroupElementType(stdout, &(groupList->groups[k]), itemList, constantList, "  ");
+            msWFSWriteGroupElementType(stdout, &(groupList->groups[k]), itemList, constantList, "  ", outputformat);
 
           msGMLFreeItems(itemList);
           msGMLFreeConstants(constantList);

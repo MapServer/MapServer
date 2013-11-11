@@ -1088,12 +1088,18 @@ int msQueryByRect(mapObj *map)
     paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS) {
+        msFreeShape(&searchshape);
+        return(MS_FAILURE);
+    }
     msLayerEnablePaging(lp, paging);
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS) {
+        msFreeShape(&searchshape);
+        return(MS_FAILURE);
+    }
 
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
@@ -1107,6 +1113,7 @@ int msQueryByRect(mapObj *map)
       continue;
     } else if(status != MS_SUCCESS) {
       msLayerClose(lp);
+      msFreeShape(&searchshape);
       return(MS_FAILURE);
     }
 
@@ -1196,7 +1203,10 @@ int msQueryByRect(mapObj *map)
     if (classgroup)
       msFree(classgroup);
 
-    if(status != MS_DONE) return(MS_FAILURE);
+    if(status != MS_DONE) {
+        msFreeShape(&searchshape);
+        return(MS_FAILURE);
+    }
 
     if( !map->query.only_cache_result_count &&
         lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */

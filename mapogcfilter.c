@@ -38,9 +38,9 @@
 #include "mapogcfilter.h"
 #include "mapserver.h"
 #include "mapowscommon.h"
+#include "maptime.h"
 
-
-
+static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode);
 
 int FLTIsNumeric(const char *pszValue)
 {
@@ -411,6 +411,8 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
   int bHasAWhere =0;
   char *pszTmp = NULL, *pszTmp2 = NULL;
   char *tmpfilename = NULL;
+  const char* pszTimeField = NULL;
+  const char* pszTimeValue = NULL;
 
   lp = (GET_LAYER(map, iLayerIndex));
 
@@ -423,6 +425,11 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
       msProjectRect(&sProjTmp, &map->projection, &sQueryRect);
     }
     msFreeProjection(&sProjTmp);
+  }
+  
+  if( lp->connectiontype == MS_OGR )
+  {
+    pszTimeValue = FLTGetDuring(psNode, &pszTimeField);
   }
 
   /* make sure that the layer can be queried*/
@@ -500,6 +507,9 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     msLoadExpressionString(&lp->filter, pszBuffer);
     free(szExpression);
   }
+  
+  if (pszTimeField && pszTimeValue)
+      msLayerSetTimeFilter(lp, pszTimeValue, pszTimeField);
 
   if (pszBuffer)
     free(pszBuffer);
@@ -624,7 +634,9 @@ int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
   /*      the case, we are going to use the FILTER element on             */
   /*      the layer.                                                      */
   /* ==================================================================== */
-  if (FLTIsSimpleFilter(psNode)) {
+  layerObj* lp = GET_LAYER(map, iLayerIndex);
+  if (FLTIsSimpleFilter(psNode) &&
+      !(lp->connectiontype == MS_OGR && !FLTHasUniqueTopLevelDuringFilter(psNode)) ) {
     return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
   }
 
@@ -1471,6 +1483,67 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       } else
         psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
     }
+    
+    /* -------------------------------------------------------------------- */
+    /*      Temporal Filter.                                                */
+    /*
+    <fes:During>
+    <fes:ValueReference>gml:TimeInstant</fes:ValueReference>
+    <gml:TimePeriod gml:id="TP1">
+    <gml:begin>
+    <gml:TimeInstant gml:id="TI1">
+    <gml:timePosition>2005-05-17T00:00:00Z</gml:timePosition>
+    </gml:TimeInstant>
+    </gml:begin>
+    <gml:end>
+    <gml:TimeInstant gml:id="TI2">
+    <gml:timePosition>2005-05-23T00:00:00Z</gml:timePosition>
+    </gml:TimeInstant>
+    </gml:end>
+    </gml:TimePeriod>
+    </fes:During>
+    */
+    /* -------------------------------------------------------------------- */
+    else if (FLTIsTemporalFilterType(psXMLNode->pszValue)) {
+      psFilterNode->eType = FILTER_NODE_TYPE_TEMPORAL;
+
+      if (strcasecmp(psXMLNode->pszValue, "During") == 0) {
+        const char* pszPropertyName = NULL;
+        const char* pszBeginTime;
+        const char* pszEndTime;
+
+        pszPropertyName = FLTGetPropertyName(psXMLNode);
+        pszBeginTime = CPLGetXMLValue(psXMLNode, "TimePeriod.begin.TimeInstant.timePosition", NULL);
+        if( pszBeginTime == NULL )
+            pszBeginTime = CPLGetXMLValue(psXMLNode, "TimePeriod.beginPosition", NULL);
+        pszEndTime = CPLGetXMLValue(psXMLNode, "TimePeriod.end.TimeInstant.timePosition", NULL);
+        if( pszEndTime == NULL )
+            pszEndTime = CPLGetXMLValue(psXMLNode, "TimePeriod.endPosition", NULL);
+
+        if (pszPropertyName && pszBeginTime && pszEndTime &&
+            strchr(pszBeginTime, '\'') == NULL && strchr(pszBeginTime, '\\') == NULL &&
+            strchr(pszEndTime, '\'') == NULL && strchr(pszEndTime, '\\') == NULL &&
+            msTimeGetResolution(pszBeginTime) >= 0 &&
+            msTimeGetResolution(pszEndTime) >= 0) {
+
+          psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+          psFilterNode->psLeftNode->eType =  FILTER_NODE_TYPE_PROPERTYNAME;
+          psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
+
+          psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
+          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_TIME_PERIOD;
+          psFilterNode->psRightNode->pszValue = msSmallMalloc( strlen(pszBeginTime) + strlen(pszEndTime) + 2 );
+          sprintf(psFilterNode->psRightNode->pszValue, "%s/%s", pszBeginTime, pszEndTime);
+        }
+        else
+          psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+      } else {
+        psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+      }
+
+    }/* end of is temporal */
+
+
 
   }
 }
@@ -1482,7 +1555,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /*      return TRUE if the value of the node is of logical filter       */
 /*       encoding type.                                                 */
 /************************************************************************/
-int FLTIsLogicalFilterType(char *pszValue)
+int FLTIsLogicalFilterType(const char *pszValue)
 {
   if (pszValue) {
     if (strcasecmp(pszValue, "AND") == 0 ||
@@ -1499,7 +1572,7 @@ int FLTIsLogicalFilterType(char *pszValue)
 /*                                                                      */
 /*      Binary comparison filter type.                                  */
 /************************************************************************/
-int FLTIsBinaryComparisonFilterType(char *pszValue)
+int FLTIsBinaryComparisonFilterType(const char *pszValue)
 {
   if (pszValue) {
     if (strcasecmp(pszValue, "PropertyIsEqualTo") == 0 ||
@@ -1520,7 +1593,7 @@ int FLTIsBinaryComparisonFilterType(char *pszValue)
 /*      return TRUE if the value of the node is of comparison filter    */
 /*      encoding type.                                                  */
 /************************************************************************/
-int FLTIsComparisonFilterType(char *pszValue)
+int FLTIsComparisonFilterType(const char *pszValue)
 {
   if (pszValue) {
     if (FLTIsBinaryComparisonFilterType(pszValue) ||
@@ -1538,7 +1611,7 @@ int FLTIsComparisonFilterType(char *pszValue)
 /*      return TRUE if the value of the node is of featureid filter     */
 /*      encoding type.                                                  */
 /************************************************************************/
-int FLTIsFeatureIdFilterType(char *pszValue)
+int FLTIsFeatureIdFilterType(const char *pszValue)
 {
   if (pszValue && (strcasecmp(pszValue, "FeatureId") == 0 ||
                    strcasecmp(pszValue, "GmlObjectId") == 0 ||
@@ -1555,7 +1628,7 @@ int FLTIsFeatureIdFilterType(char *pszValue)
 /*      return TRUE if the value of the node is of spatial filter       */
 /*      encoding type.                                                  */
 /************************************************************************/
-int FLTIsSpatialFilterType(char *pszValue)
+int FLTIsSpatialFilterType(const char *pszValue)
 {
   if (pszValue) {
     if ( strcasecmp(pszValue, "BBOX") == 0 ||
@@ -1577,6 +1650,22 @@ int FLTIsSpatialFilterType(char *pszValue)
 }
 
 /************************************************************************/
+/*            int FLTIsTemportalFilterType(char *pszValue)              */
+/*                                                                      */
+/*      return TRUE if the value of the node is of temporal filter      */
+/*      encoding type.                                                  */
+/************************************************************************/
+int FLTIsTemporalFilterType(const char *pszValue)
+{
+  if (pszValue) {
+    if ( strcasecmp(pszValue, "During") == 0 )
+      return MS_TRUE;
+  }
+
+  return MS_FALSE;
+}
+
+/************************************************************************/
 /*           int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode)           */
 /*                                                                      */
 /*      Verfify if the value of the node is one of the supported        */
@@ -1588,7 +1677,8 @@ int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode)
     if (FLTIsLogicalFilterType(psXMLNode->pszValue) ||
         FLTIsSpatialFilterType(psXMLNode->pszValue) ||
         FLTIsComparisonFilterType(psXMLNode->pszValue) ||
-        FLTIsFeatureIdFilterType(psXMLNode->pszValue))
+        FLTIsFeatureIdFilterType(psXMLNode->pszValue) ||
+        FLTIsTemporalFilterType(psXMLNode->pszValue))
       return MS_TRUE;
   }
 
@@ -1679,13 +1769,39 @@ int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
     return 1;
 
   if (strcasecmp(psFilterNode->pszValue, "AND") == 0) {
-    if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0 ||
-        strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)
-      return 1;
+    return FLTValidForBBoxFilter(psFilterNode->psLeftNode) &&
+           FLTValidForBBoxFilter(psFilterNode->psRightNode);
   }
 
   return 0;
 }
+
+static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode)
+{
+  int nCount = 0;
+
+  if (!psFilterNode || !psFilterNode->pszValue)
+    return 1;
+
+  nCount = FLTNumberOfFilterType(psFilterNode, "During");
+
+  if (nCount > 1)
+    return 0;
+  else if (nCount == 0)
+    return 1;
+
+  /* nCount ==1  */
+  if (strcasecmp(psFilterNode->pszValue, "During") == 0)
+    return 1;
+
+  if (strcasecmp(psFilterNode->pszValue, "AND") == 0) {
+    return FLTHasUniqueTopLevelDuringFilter(psFilterNode->psLeftNode) &&
+           FLTHasUniqueTopLevelDuringFilter(psFilterNode->psRightNode);
+  }
+
+  return 0;
+}
+
 
 int FLTIsLineFilter(FilterEncodingNode *psFilterNode)
 {
@@ -1842,6 +1958,27 @@ const char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect)
       return pszReturn;
     else
       return  FLTGetBBOX(psFilterNode->psRightNode, psRect);
+  }
+
+  return pszReturn;
+}
+
+const char* FLTGetDuring(FilterEncodingNode *psFilterNode, const char** ppszTimeField)
+{
+  const char *pszReturn = NULL;
+
+  if (!psFilterNode || !ppszTimeField)
+    return NULL;
+
+  if (psFilterNode->pszValue && strcasecmp(psFilterNode->pszValue, "During") == 0) {
+    *ppszTimeField = psFilterNode->psLeftNode->pszValue;
+    return psFilterNode->psRightNode->pszValue;
+  } else {
+    pszReturn = FLTGetDuring(psFilterNode->psLeftNode, ppszTimeField);
+    if (pszReturn)
+      return pszReturn;
+    else
+      return  FLTGetDuring(psFilterNode->psRightNode, ppszTimeField);
   }
 
   return pszReturn;
@@ -2030,6 +2167,9 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 #endif
 
   }
+  else if ( lp->connectiontype != MS_OGR &&
+            psFilterNode->eType == FILTER_NODE_TYPE_TEMPORAL )
+    pszExpression = FLTGetTimeExpression(psFilterNode, lp);
 
   return pszExpression;
 }
@@ -2093,6 +2233,25 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     sprintf(pszBuffer, "%s", pszTmp);
   }
 
+  /* ==================================================================== */
+  /*      special case for temporal filter node (OGR layer only)          */
+  /* ==================================================================== */
+  else if (lp->connectiontype == MS_OGR &&
+      psFilterNode->psLeftNode && psFilterNode->psRightNode &&
+      (psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_TEMPORAL ||
+       psFilterNode->psRightNode->eType == FILTER_NODE_TYPE_TEMPORAL) ) {
+    if (psFilterNode->psLeftNode->eType != FILTER_NODE_TYPE_TEMPORAL)
+      pszTmp = FLTGetSQLExpression(psFilterNode->psLeftNode, lp);
+    else
+      pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, lp);
+
+    if (!pszTmp)
+      return NULL;
+
+    pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 1));
+    sprintf(pszBuffer, "%s", pszTmp);
+  }
+  
   /* -------------------------------------------------------------------- */
   /*      OR and AND                                                      */
   /* -------------------------------------------------------------------- */
@@ -2950,7 +3109,7 @@ int FLTHasSpatialFilter(FilterEncodingNode *psNode)
 /*                                                                      */
 /*      Utility function to create a filter node of FeatureId type.     */
 /************************************************************************/
-FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString)
+FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(const char *pszString)
 {
   FilterEncodingNode *psFilterNode = NULL;
 

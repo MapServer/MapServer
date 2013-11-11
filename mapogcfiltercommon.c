@@ -606,6 +606,35 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
   return pszExpression;
 }
 
+char* FLTGetTimeExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
+{
+  char* pszExpression = NULL;
+  const char* pszTimeField;
+  const char* pszTimeValue;
+
+  if (psFilterNode == NULL || lp == NULL)
+    return NULL;
+
+  if (psFilterNode->eType != FILTER_NODE_TYPE_TEMPORAL)
+    return NULL;
+
+  pszTimeValue = FLTGetDuring(psFilterNode, &pszTimeField);
+  if( pszTimeField && pszTimeValue )
+  {
+    expressionObj old_filter;
+    initExpression(&old_filter);
+    msCopyExpression(&old_filter, &lp->filter); /* save existing filter */
+    freeExpression(&lp->filter);
+    if( msLayerSetTimeFilter(lp, pszTimeValue, pszTimeField) == MS_TRUE ) {
+      pszExpression = msStrdup(lp->filter.string);
+    }
+    msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+    freeExpression(&old_filter);
+  }
+  return pszExpression;
+}
+
+
 char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
   char *pszExpression = NULL;
@@ -633,11 +662,14 @@ char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
   else if (psFilterNode->eType ==  FILTER_NODE_TYPE_FEATUREID)
     pszExpression = FLTGetFeatureIdCommonExpression(psFilterNode, lp);
 
+  else if (psFilterNode->eType == FILTER_NODE_TYPE_TEMPORAL)
+    pszExpression = FLTGetTimeExpression(psFilterNode, lp);
+
   return pszExpression;
 }
 
 
-int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, char *pszExpression)
+int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const char *pszExpression)
 {
   int retval;
   int save_startindex;

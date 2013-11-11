@@ -30,7 +30,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapgml.h"
-
+#include "maptime.h"
 
 
 /* Use only mapgml.c if WMS or WFS is available (with minor exceptions at end)*/
@@ -856,37 +856,74 @@ void msGMLFreeGeometries(gmlGeometryListObj *geometryList)
   free(geometryList);
 }
 
-static void msGMLWriteItem(FILE *stream, gmlItemObj *item, char *value, const char *namespace, const char *tab)
+static void msGMLWriteItem(FILE *stream, gmlItemObj *item,
+                           const char *value, const char *namespace,
+                           const char *tab,
+                           OWSGMLVersion outputformat,
+                           const char *pszFID)
 {
-  char *encoded_value, *tag_name;
+  char *encoded_value = NULL, *tag_name;
   int add_namespace = MS_TRUE;
+  char gmlid[256];
+  gmlid[0] = 0;
 
   if(!stream || !item) return;
   if(!item->visible) return;
 
   if(!namespace) add_namespace = MS_FALSE;
 
-  if(item->encode == MS_TRUE)
-    encoded_value = msEncodeHTMLEntities(value);
+  if(item->alias)
+    tag_name = item->alias;
   else
-    encoded_value = msStrdup(value);
+    tag_name = item->name;
+  if(strchr(tag_name, ':') != NULL) add_namespace = MS_FALSE;
+
+  if( item->type && EQUAL(item->type, "Date") ) {
+      struct tm tm;
+      if( msParseTime(value, &tm) == MS_TRUE ) {
+          const char* pszStartTag = "";
+          const char* pszEndTag = "";
+          int timeresolution;
+
+          timeresolution = msTimeGetResolution(value);
+          encoded_value = (char*) msSmallMalloc(256);
+          if( outputformat == OWS_GML32  ) {
+              if( pszFID != NULL )
+                snprintf(gmlid, 256, " gml:id=\"%s.%s\"", pszFID, tag_name);
+              pszStartTag = "<gml:timePosition>";
+              pszEndTag = "</gml:timePosition>";
+          }
+
+          if( timeresolution == TIME_RESOLUTION_DAY )
+              snprintf(encoded_value, 256, "%s%04d-%02d-%02d%s",
+                       pszStartTag,
+                       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                       pszEndTag);
+          else
+              snprintf(encoded_value, 256, "%s%04d-%02d-%02dT%02d:%02d:%02dZ%s",
+                       pszStartTag,
+                       tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                       tm.tm_hour, tm.tm_min, tm.tm_sec, pszEndTag);
+      }
+  }
+
+  if( encoded_value == NULL )
+  {
+    if(item->encode == MS_TRUE)
+      encoded_value = msEncodeHTMLEntities(value);
+    else
+      encoded_value = msStrdup(value);
+  }
 
   if(!item->template) { /* build the tag from pieces */
-    if(item->alias) {
-      tag_name = item->alias;
-      if(strchr(item->alias, ':') != NULL) add_namespace = MS_FALSE;
-    } else {
-      tag_name = item->name;
-      if(strchr(item->name, ':') != NULL) add_namespace = MS_FALSE;
-    }
 
     if(add_namespace == MS_TRUE && msIsXMLTagValid(tag_name) == MS_FALSE)
       msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", tag_name);
 
     if(add_namespace == MS_TRUE)
-      msIO_fprintf(stream, "%s<%s:%s>%s</%s:%s>\n", tab, namespace, tag_name, encoded_value, namespace, tag_name);
+      msIO_fprintf(stream, "%s<%s:%s%s>%s</%s:%s>\n", tab, namespace, tag_name, gmlid, encoded_value, namespace, tag_name);
     else
-      msIO_fprintf(stream, "%s<%s>%s</%s>\n", tab, tag_name, encoded_value, tag_name);
+      msIO_fprintf(stream, "%s<%s%s>%s</%s>\n", tab, tag_name, gmlid, encoded_value, tag_name);
   } else {
     char *tag = NULL;
 
@@ -1134,7 +1171,13 @@ void msGMLFreeGroups(gmlGroupListObj *groupList)
   free(groupList);
 }
 
-static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, gmlItemListObj *itemList, gmlConstantListObj *constantList, const char *namespace, const char *tab)
+static void msGMLWriteGroup(FILE *stream,
+                            gmlGroupObj *group, shapeObj *shape,
+                            gmlItemListObj *itemList,
+                            gmlConstantListObj *constantList,
+                            const char *namespace, const char *tab,
+                            OWSGMLVersion outputformat,
+                            const char *pszFID)
 {
   int i,j;
   int add_namespace = MS_TRUE;
@@ -1172,7 +1215,7 @@ static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, g
       item = &(itemList->items[j]);
       if(strcasecmp(item->name, group->items[i]) == 0) {
         /* the number of items matches the number of values exactly */
-        msGMLWriteItem(stream, item, shape->values[j], namespace, itemtab);
+        msGMLWriteItem(stream, item, shape->values[j], namespace, itemtab, outputformat, pszFID);
         break;
       }
     }
@@ -1310,7 +1353,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         for(k=0; k<itemList->numitems; k++) {
           item = &(itemList->items[k]);
           if(msItemInGroups(item->name, groupList) == MS_FALSE)
-            msGMLWriteItem(stream, item, shape.values[k], NULL, "\t\t\t");
+            msGMLWriteItem(stream, item, shape.values[k], NULL, "\t\t\t", OWS_GML2, NULL);
         }
 
         /* write any constants */
@@ -1322,7 +1365,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
         /* write any groups */
         for(k=0; k<groupList->numgroups; k++)
-          msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, NULL, "\t\t\t");
+          msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, NULL, "\t\t\t", OWS_GML2, NULL);
 
         /* end this feature */
         /* specify a feature name if nothing provided */
@@ -1458,6 +1501,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         if (featureIdIndex == -1)
           msIO_fprintf(stream, "<!-- WARNING: FeatureId item '%s' not found in typename '%s'. -->\n", value, lp->name);
       }
+      else if( outputformat == OWS_GML32 )
+          msIO_fprintf(stream, "<!-- WARNING: No featureid defined for typename '%s'. Output will not validate. -->\n", lp->name);
 
       /* populate item and group metadata structures */
       itemList = msGMLGetItems(lp, "G");
@@ -1545,17 +1590,16 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
             strcasecmp(geometryList->geometries[0].name, "none") == 0)) {
           if( !bGetPropertyValueRequest )
             gmlWriteBounds(stream, outputformat, &(shape.bounds), srs, "        ", "gml");
-          gmlWriteGeometry(stream, geometryList, outputformat, &(shape), srs, namespace_prefix, "        ", pszFID);
+          gmlWriteGeometry(stream, geometryList, outputformat, &(shape), srs,
+                           namespace_prefix, "        ", pszFID);
         }
-
-        msFree(pszFID);
-        pszFID = NULL;
 
         /* write any item/values */
         for(k=0; k<itemList->numitems; k++) {
           item = &(itemList->items[k]);
           if(msItemInGroups(item->name, groupList) == MS_FALSE)
-            msGMLWriteItem(stream, item, shape.values[k], namespace_prefix, "        ");
+            msGMLWriteItem(stream, item, shape.values[k], namespace_prefix,
+                           "        ", outputformat, pszFID);
         }
 
         /* write any constants */
@@ -1567,7 +1611,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
 
         /* write any groups */
         for(k=0; k<groupList->numgroups; k++)
-          msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList, constantList, namespace_prefix, "        ");
+          msGMLWriteGroup(stream, &(groupList->groups[k]), &shape, itemList,
+                          constantList, namespace_prefix, "        ", outputformat, pszFID);
 
         if( !bGetPropertyValueRequest )
             /* end this feature */
@@ -1578,6 +1623,9 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         else
           msIO_fprintf(stream, "    </gml:featureMember>\n");
 
+
+        msFree(pszFID);
+        pszFID = NULL;
         msFreeShape(&shape); /* init too */
       }
 

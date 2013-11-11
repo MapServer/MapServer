@@ -1274,6 +1274,77 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
 }
 
 /**********************************************************************
+ *                      msOGRSplitFilter()
+ *
+ * 
+ **********************************************************************/
+static void msOGRSplitFilter(layerObj *layer,
+                             char** pOGRFilter,
+                             char** pMapserverFilter)
+{
+    if( pOGRFilter )
+        *pOGRFilter = NULL;
+    if( pMapserverFilter )
+        *pMapserverFilter = NULL;
+
+    if( layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6) ) {
+        if( pOGRFilter )
+            *pOGRFilter = msStrdup(layer->filter.string + 6);
+    }
+    /* (WHERE some_ogr_expr) AND some_ms_expr */
+    else if( layer->filter.string && EQUALN(layer->filter.string,"(WHERE ",7) ) {
+        int nParenthesisLevel = 0;
+        const char* begin = layer->filter.string + 7;
+        const char* ptr = begin;
+        char chString = '\0';
+        char ch;
+
+        /* Find the end of the OGR expr */
+        while( (ch = *ptr) != '\0')
+        {
+            if( ch == '\\' && chString != '\0' && ptr[1] == chString )
+            {
+                /* Skip escaping of quoting character */
+                ptr ++;
+            }
+            else if( ch == chString )
+            {
+                /* End of quoted expression */
+                chString = '\0';
+            }
+            else if( (ch == '\'' || ch == '"') && chString == '\0' )
+            {
+                /* Beginning of quoted expression */
+                chString = ch;
+            }
+            else if( ch == '(' && chString == '\0' )
+                nParenthesisLevel ++;
+            else if( ch == ')' && chString == '\0' )
+            {
+                nParenthesisLevel --;
+                if( nParenthesisLevel < 0 )
+                    break;
+            }
+            ptr ++;
+        }
+        if( *ptr == ')' && strncasecmp(ptr+1, " AND ", 5) == 0 ) {
+            if( pOGRFilter )
+            {
+                *pOGRFilter = msStrdup(begin);
+                (*pOGRFilter)[ptr - begin] = '\0';
+            }
+            if( pMapserverFilter )
+                *pMapserverFilter = msStrdup(ptr+6);
+        }
+    }
+    else if( layer->filter.string )
+    {
+        if( pMapserverFilter )
+            *pMapserverFilter = msStrdup(layer->filter.string);
+    }
+}
+
+/**********************************************************************
  *                     msOGRFileWhichShapes()
  *
  * Init OGR layer structs ready for calls to msOGRFileNextShape().
@@ -1350,9 +1421,21 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
    * keyword in the filter string.  Otherwise, ensure the attribute
    * filter is clear.
    * ------------------------------------------------------------------ */
-  if( layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6) ) {
+  
+  char* pszOGRFilter = NULL;
+  char* pszMSFilter = NULL;
+  /* In case we have an odd filter combining both a OGR filter and MapServer */
+  /* filter, then separate things */
+  msOGRSplitFilter(layer, &pszOGRFilter, &pszMSFilter);
+  if( pszOGRFilter != NULL && pszMSFilter != NULL ) {
+    msLoadExpressionString(&layer->filter, pszMSFilter);
+    if(layer->filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
+  }
+  msFree(pszMSFilter);
+  
+  if( pszOGRFilter != NULL ) {
     CPLErrorReset();
-    if( OGR_L_SetAttributeFilter( psInfo->hLayer, layer->filter.string+6 )
+    if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter )
         != OGRERR_NONE ) {
       msSetError(MS_OGRERR,
                  "SetAttributeFilter(%s) failed on layer %s.\n%s",
@@ -1360,8 +1443,10 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
                  layer->filter.string+6, layer->name?layer->name:"(null)",
                  CPLGetLastErrorMsg() );
       RELEASE_OGR_LOCK;
+      msFree(pszOGRFilter);
       return MS_FAILURE;
     }
+    msFree(pszOGRFilter);
   } else
     OGR_L_SetAttributeFilter( psInfo->hLayer, NULL );
 
