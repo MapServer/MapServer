@@ -1487,7 +1487,24 @@ extern "C" {
      int n_entries;
      scaleTokenEntryObj *tokens;
   } scaleTokenObj;
-  
+
+#ifndef SWIG
+  typedef enum {
+      SORT_ASC,
+      SORT_DESC
+  } sortOrderEnum;
+
+  typedef struct {
+      char* item;
+      sortOrderEnum sortOrder;
+  } sortByProperties;
+
+  typedef struct {
+      int nProperties;
+      sortByProperties* properties;
+  } sortByClause;
+#endif
+
   struct layerObj {
 
     char *classitem; /* .DBF item to be used for symbol lookup */
@@ -1674,6 +1691,10 @@ extern "C" {
     char *utfitem;
     int utfitemindex;
     expressionObj utfdata;
+
+#ifndef SWIG
+    sortByClause sortBy;
+#endif
   };
 
 
@@ -2365,6 +2386,10 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT char *msLayerEscapeSQLParam(layerObj *layer, const char* pszString);
   MS_DLL_EXPORT char *msLayerEscapePropertyName(layerObj *layer, const char* pszString);
+
+  int msLayerSupportsSorting(layerObj *layer);
+  void msLayerSetSort(layerObj *layer, const sortByClause* sortBy);
+  char* msLayerBuildSQLOrderBy(layerObj *layer);
 
   /* These are special because SWF is using these */
   int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);

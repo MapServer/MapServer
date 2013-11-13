@@ -51,6 +51,7 @@
 
 typedef struct ms_ogr_file_info_t {
   char        *pszFname;
+  char        *pszLayerDef;
   int         nLayerIndex;
   OGRDataSourceH hDS;
   OGRLayerH   hLayer;
@@ -1196,14 +1197,13 @@ msOGRFileOpen(layerObj *layer, const char *connection )
     return NULL;
   }
 
-  CPLFree( pszLayerDef );
-
   /* ------------------------------------------------------------------
    * OK... open succeded... alloc and fill msOGRFileInfo inside layer obj
    * ------------------------------------------------------------------ */
   msOGRFileInfo *psInfo =(msOGRFileInfo*)CPLCalloc(1,sizeof(msOGRFileInfo));
 
   psInfo->pszFname = CPLStrdup(OGR_DS_GetName( hDS ));
+  psInfo->pszLayerDef = pszLayerDef;
   psInfo->nLayerIndex = nLayerIndex;
   psInfo->hDS = hDS;
   psInfo->hLayer = hLayer;
@@ -1247,6 +1247,7 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
             psInfo->pszFname, psInfo->nLayerIndex);
 
   CPLFree(psInfo->pszFname);
+  CPLFree(psInfo->pszLayerDef);
 
   ACQUIRE_OGR_LOCK;
   if (psInfo->hLastFeature)
@@ -1359,6 +1360,53 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
     msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!",
                "msOGRFileWhichShapes()");
     return(MS_FAILURE);
+  }
+
+  /* Apply sortBy */
+  if( layer->sortBy.nProperties > 0 ) {
+    char* strOrderBy;
+    char* pszLayerDef = NULL;
+
+    strOrderBy = msLayerBuildSQLOrderBy(layer);
+
+    if( psInfo->nLayerIndex == -1 )
+    {
+        pszLayerDef = msStrdup(psInfo->pszLayerDef);
+        if( strcasestr(psInfo->pszLayerDef, " ORDER BY ") == NULL )
+            pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
+        else
+            pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+    }
+    else
+    {
+        pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT * FROM \"");
+        pszLayerDef = msStringConcatenate(pszLayerDef, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\" ORDER BY ");
+    }
+
+    pszLayerDef = msStringConcatenate(pszLayerDef, strOrderBy);
+    msFree(strOrderBy);
+    strOrderBy = NULL;
+
+    if( layer->debug )
+      msDebug("msOGRFileWhichShapes: SQL = %s.\n", pszLayerDef);
+
+    /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
+    if( psInfo->nLayerIndex == -1 )
+        OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
+    psInfo->nLayerIndex = -1;
+
+    ACQUIRE_OGR_LOCK;
+    psInfo->hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszLayerDef, NULL, NULL );
+    msFree(pszLayerDef);
+    RELEASE_OGR_LOCK;
+    if( psInfo->hLayer == NULL ) {
+      msSetError(MS_OGRERR,
+                 "ExecuteSQL(%s) failed.\n%s",
+                 "msOGRFileWhichShapes()",
+                 pszLayerDef, CPLGetLastErrorMsg() );
+      return MS_FAILURE;
+    }
   }
 
   /* ------------------------------------------------------------------

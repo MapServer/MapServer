@@ -1181,6 +1181,15 @@ static void msWFSPrintAdditionalNamespaces(const gmlNamespaceListObj *namespaceL
     }
 }
 
+static const char* msWFSStripNS(const char* name)
+{
+    const char* pszColon = strchr(name, ':');
+    const char* pszSlash = strchr(name, '/');
+    if( pszColon && (pszSlash == NULL || pszColon < pszSlash) )
+      return pszColon + 1;
+    return name;
+}
+
 /*
 ** msWFSDescribeFeatureType()
 */
@@ -1190,8 +1199,6 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
 {
   int i, numlayers=0;
   char **layers = NULL;
-  char **tokens;
-  int n=0;
 
   const char *value;
   const char *user_namespace_prefix = MS_DEFAULT_NAMESPACE_PREFIX;
@@ -1207,29 +1214,14 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
 
   if(paramsObj->pszTypeName && numlayers == 0) {
     /* Parse comma-delimited list of type names (layers) */
-    /*  */
-    /* __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4" */
-    /*  */
     layers = msStringSplit(paramsObj->pszTypeName, ',', &numlayers);
     if (numlayers > 0) {
       /* strip namespace if there is one :ex TYPENAME=cdf:Other */
-      tokens = msStringSplit(layers[0], ':', &n);
-      if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0) {
-        msFreeCharArray(tokens, n);
-        tokens = NULL;
-        for (i=0; i<numlayers; i++) {
-          tokens = msStringSplit(layers[i], ':', &n);
-          if (tokens && n==2) {
-            free(layers[i]);
-            layers[i] = msStrdup(tokens[1]);
-          }
-          if (tokens)
-            msFreeCharArray(tokens, n);
-          tokens = NULL;
-        }
+      for (i=0; i<numlayers; i++) {
+        char* pszTmp = msStrdup(msWFSStripNS(layers[i]));
+        free(layers[i]);
+        layers[i] = pszTmp;
       }
-      if (tokens)
-        msFreeCharArray(tokens, n);
     }
   }
 
@@ -2477,15 +2469,24 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
 }
 
 /*
-** msWFSParsePropertyName()
+** msWFSParsePropertyNameOrSortBy()
 */
-static char** msWFSParsePropertyName(const char* pszPropertyName,
-                                     int numlayers)
+static char** msWFSParsePropertyNameOrSortBy(const char* pszPropertyName,
+                                             int numlayers)
 {
     char** tokens = NULL;
     int nPropertyNames = 0;
     char** papszPropertyName = NULL;
     int i;
+
+    if( pszPropertyName == NULL )
+    {
+        papszPropertyName = (char **)msSmallMalloc(sizeof(char *)*numlayers);
+        for (i=0; i<numlayers; i++) {
+            papszPropertyName[i] = msStrdup("!");
+        }
+        return papszPropertyName;
+    }
 
     if (!(pszPropertyName[0] == '(' || numlayers == 1))
     {
@@ -2910,6 +2911,158 @@ static int msWFSResolveStoredQuery(mapObj *map, wfsParamsObj *paramsObj, cgiRequ
 }
 
 /*
+** msWFSUnaliasItem()
+*/
+static
+const char* msWFSUnaliasItem(layerObj* lp, const char* name)
+{
+    const char* pszFullName;
+    char szTmp[256];
+    int z;
+    for(z=0; z<lp->numitems; z++) {
+        if (!lp->items[z] || strlen(lp->items[z]) <= 0)
+            continue;
+        snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[z]);
+        pszFullName = msOWSLookupMetadata(&(lp->metadata), "G", szTmp);
+        if (pszFullName && strcmp(name, pszFullName) == 0)
+            return lp->items[z];
+    }
+    return name;
+}
+
+/*
+** msWFSIsAllowedItem()
+*/
+static int msWFSIsAllowedItem(gmlItemListObj *itemList , const char* name)
+{
+    int z;
+    for(z=0; z<itemList->numitems; z++) {
+      if (itemList->items[z].visible &&
+          strcasecmp(name, itemList->items[z].name) == 0) {
+        return MS_TRUE;
+      }
+    }
+    return MS_FALSE;
+}
+
+/*
+** msWFSUngroupItem()
+*/
+static
+const char* msWFSUngroupItem(layerObj* lp, gmlGroupListObj* groupList,
+                             const char* name, int* pnGroupIndex)
+{
+    int z;
+
+    *pnGroupIndex = -1;
+    for(z=0; z<groupList->numgroups; z++) {
+        const char* pszGroupName = groupList->groups[z].name;
+        size_t nGroupNameLen = strlen(pszGroupName);
+
+        /* Is it a group name ? */
+        if(strcasecmp(name, pszGroupName) == 0)
+        {
+            *pnGroupIndex = z;
+            return NULL;
+        }
+
+        /* Is it an item of a group ? */
+        if(strncasecmp(name, pszGroupName, nGroupNameLen) == 0 &&
+                       name[nGroupNameLen] == '/') {
+
+            int w;
+            const char* pszSubName = msWFSStripNS(name+nGroupNameLen+1);
+            pszSubName = msWFSUnaliasItem(lp, pszSubName);
+            for(w=0;w<groupList->groups[z].numitems;w++)
+            {
+                if( strcasecmp(pszSubName, groupList->groups[z].items[w]) == 0 )
+                {
+                    return pszSubName;
+                }
+            }
+        }
+    }
+
+    return name;
+}
+
+/*
+** msWFSApplySortBy()
+*/
+static int msWFSApplySortBy(mapObj* map, wfsParamsObj *paramsObj, layerObj* lp,
+                            const char* pszSortBy,
+                            gmlItemListObj *itemList,
+                            gmlGroupListObj* groupList)
+{
+    int y, n;
+    char** tokens;
+    int invalidSortBy = MS_FALSE;
+    sortByClause sortBy;
+
+    if( !msLayerSupportsSorting(lp) )
+    {
+        msSetError(MS_WFSERR, "Layer %s does not support sorting", "msWFSGetFeature()", lp->name);
+        return msWFSException(map, "mapserv", MS_WFS_ERROR_OPERATION_PROCESSING_FAILED, paramsObj->pszVersion);
+    }
+
+    tokens = msStringSplit(pszSortBy, ',', &n);
+    sortBy.nProperties = n;
+    sortBy.properties = (sortByProperties* )msSmallMalloc(n * sizeof(sortByProperties));
+    for(y=0; y<n; y++) {
+        char* pszSpace;
+        int nGroupIndex = -1;
+        const char* pszSortProperty;
+        char* pszTmp;
+
+        sortBy.properties[y].item = msStrdup(tokens[y]);
+        sortBy.properties[y].sortOrder = SORT_ASC;
+        pszSpace = strchr(sortBy.properties[y].item, ' ');
+        if( pszSpace )
+        {
+            *pszSpace = '\0';
+            if( strcasecmp(pszSpace+1, "A") == 0 ||
+                strcasecmp(pszSpace+1, "ASC") == 0 )
+                ;
+            else if( strcasecmp(pszSpace+1, "D") == 0 ||
+                    strcasecmp(pszSpace+1, "DESC") == 0 )
+                sortBy.properties[y].sortOrder = SORT_DESC;
+            else
+                invalidSortBy = MS_TRUE;
+        }
+
+        pszSortProperty = msWFSStripNS(sortBy.properties[y].item);
+        pszSortProperty = msWFSUnaliasItem(lp, pszSortProperty);
+        pszSortProperty = msWFSUngroupItem(lp, groupList, pszSortProperty, &nGroupIndex);
+        if( nGroupIndex >= 0 )
+            invalidSortBy = MS_TRUE;
+
+        if( !msWFSIsAllowedItem(itemList, pszSortProperty) )
+            invalidSortBy = MS_TRUE;
+
+        pszTmp = msStrdup(pszSortProperty);
+        msFree(sortBy.properties[y].item);
+        sortBy.properties[y].item = pszTmp;
+    }
+    msFreeCharArray(tokens, n);
+
+    if( !invalidSortBy )
+        msLayerSetSort(lp, &sortBy);
+
+    for(y=0; y<n; y++) {
+        msFree(sortBy.properties[y].item);
+    }
+    msFree(sortBy.properties);
+
+    if( invalidSortBy )
+    {
+        msSetError(MS_WFSERR, "Invalid SORTBY clause", "msWFSGetFeature()");
+        return msWFSException(map, "sortby", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
+    }
+
+    return MS_SUCCESS;
+}
+
+/*
 ** msWFSGetFeature()
 */
 static
@@ -2964,10 +3117,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
 
     char **tokens;
     int n=0, i=0;
-    char szTmp[256];
-    const char *pszFullName = NULL;
-    char *pszPropertyName = NULL;
     char **papszPropertyName = NULL;
+    char **papszSortBy = NULL;
 
     /* keep a ref for layer use. */
     gmlinfo.typename = paramsObj->pszTypeName;
@@ -2990,34 +3141,33 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                             MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
 
-    tokens = msStringSplit(layers[0], ':', &n);
-    if (tokens && n==2 && msGetLayerIndex(map, layers[0]) < 0) {
-      msFreeCharArray(tokens, n);
-      for (i=0; i<numlayers; i++) {
-        tokens = msStringSplit(layers[i], ':', &n);
-        if (tokens && n==2) {
-          free(layers[i]);
-          layers[i] = msStrdup(tokens[1]);
-        }
-        if (tokens)
-          msFreeCharArray(tokens, n);
-      }
-    } else
-      msFreeCharArray(tokens, n);
-
+    /* strip namespace if there is one :ex TYPENAME=cdf:Other */
+    for (i=0; i<numlayers; i++) {
+      char* pszTmp = msStrdup(msWFSStripNS(layers[i]));
+      free(layers[i]);
+      layers[i] = pszTmp;
+    }
 
     /* Keep only selected layers, set to OFF by default. */
     msWFSTurnOffAllLayer(map);
 
-    if (paramsObj->pszPropertyName == NULL)
-    {
-        for (k=0; k<numlayers; k++) {
-            pszPropertyName = msStringConcatenate(pszPropertyName, "(!)");
-        }
+    papszPropertyName = msWFSParsePropertyNameOrSortBy(paramsObj->pszPropertyName, numlayers);
+    if( papszPropertyName == NULL ) {
+        msFreeCharArray(layers, numlayers);
+        msSetError(MS_WFSERR,
+                    "Optional PROPERTYNAME parameter. A list of properties may be specified for each type name. Example TYPENAME=name1,name2&PROPERTYNAME=(prop1,prop2)(prop1)",
+                    "msWFSGetFeature()");
+        return msWFSException(map, "PROPERTYNAME", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
-    else
-    {
-        pszPropertyName = msStrdup(paramsObj->pszPropertyName);
+    
+    papszSortBy = msWFSParsePropertyNameOrSortBy(paramsObj->pszSortBy, numlayers);
+    if( papszSortBy == NULL ) {
+        msFreeCharArray(layers, numlayers);
+        msFreeCharArray(papszPropertyName, numlayers);
+        msSetError(MS_WFSERR,
+                    "Optional SORTBY parameter. A list may be specified for each type name. Example TYPENAME=name1,name2&SORTBY=(prop1,prop2)(prop1)",
+                    "msWFSGetFeature()");
+        return msWFSException(map, "SORTBY", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
     }
 
     for (k=0; k<numlayers; k++) {
@@ -3035,122 +3185,72 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
               lp->template = msStrdup("ttt.html");
             }
 
-            /*we parse the propertyname parameter only once*/
-            if (papszPropertyName == NULL) {
-                papszPropertyName = msWFSParsePropertyName(pszPropertyName, numlayers);
-                if( papszPropertyName == NULL ) {
-                    msFree(pszPropertyName);
-                    msFreeCharArray(layers, numlayers);
-                    msSetError(MS_WFSERR,
-                                "Optional PROPERTYNAME parameter. A list of properties may be specified for each type name. Example TYPENAME=name1&name2&PROPERTYNAME=(prop1,prop2)(prop1)",
-                                "msWFSGetFeature()");
-                    return msWFSException(map, "PROPERTYNAME", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
-                }
-            }
-
             /*do an alias replace for the current layer*/
             if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
 
               itemList = msGMLGetItems(lp, "G");
               groupList = msGMLGetGroups(lp, "G");
-              geometryList=msGMLGetGeometries(lp, "GFO", MS_TRUE);
 
-              for(z=0; z<lp->numitems; z++) {
-                if (!lp->items[z] || strlen(lp->items[z]) <= 0)
-                  continue;
-                snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[z]);
-                pszFullName = msOWSLookupMetadata(&(lp->metadata), "G", szTmp);
-                if (pszFullName)
-                  papszPropertyName[k] = msReplaceSubstring(papszPropertyName[k], pszFullName, lp->items[z]);
-
+              if( strcmp(papszSortBy[k], "!") != 0 )
+              {
+                  status = msWFSApplySortBy(map, paramsObj, lp,
+                                            papszSortBy[k], itemList, groupList);
+                  if( status != MS_SUCCESS )
+                  {
+                    msFreeCharArray(papszPropertyName, numlayers);
+                    msFreeCharArray(papszSortBy, numlayers);
+                    msFreeCharArray(layers, numlayers);
+                    msGMLFreeItems(itemList);
+                    msGMLFreeGroups(groupList);
+                    return status;
+                  }
               }
 
-              /*validate that the property names passed are part of the items list*/
+              geometryList=msGMLGetGeometries(lp, "GFO", MS_TRUE);
+
+              /* unalias, ungroup and validate that the property names passed are part of the items list*/
               tokens = msStringSplit(papszPropertyName[k], ',', &n);
               for (y=0; y<n; y++) {
-                int bSkip = MS_FALSE;
                 const char* pszPropertyNameItem = tokens[y];
+                int nGroupIndex = -1;
 
-                /* Remove namespace */
-                const char* pszColon = strchr(pszPropertyNameItem, ':');
-                const char* pszSlash = strchr(pszPropertyNameItem, '/');
-                if( pszColon && (pszSlash == NULL || pszColon < pszSlash) )
-                    pszPropertyNameItem = pszColon + 1;
+                if (strcasecmp(pszPropertyNameItem, "*") == 0 ||
+                    strcasecmp(pszPropertyNameItem, "!") == 0)
+                  continue;
 
-                if (pszPropertyNameItem && strlen(pszPropertyNameItem) > 0) {
-                  if (strcasecmp(pszPropertyNameItem, "*") == 0 ||
-                      strcasecmp(pszPropertyNameItem, "!") == 0)
-                    continue;
+                pszPropertyNameItem = msWFSStripNS(pszPropertyNameItem);
+                pszPropertyNameItem = msWFSUnaliasItem(lp, pszPropertyNameItem);
+                pszPropertyNameItem = msWFSUngroupItem(lp, groupList, pszPropertyNameItem, &nGroupIndex);
+                if( nGroupIndex >= 0 )
+                  continue;
 
-                  for(z=0; z<groupList->numgroups; z++) {
-                    const char* pszGroupName = groupList->groups[z].name;
-                    size_t nGroupNameLen = strlen(pszGroupName);
-
-                    /* Is it a group name ? */
-                    if(strcasecmp(pszPropertyNameItem, pszGroupName) == 0)
-                    {
-                      bSkip = MS_TRUE;
-                      break;
-                    }
-
-                    /* Is it an item of a group ? */
-                    if(strncasecmp(pszPropertyNameItem, pszGroupName, nGroupNameLen) == 0 &&
-                       pszPropertyNameItem[nGroupNameLen] == '/') {
-
-                      int w;
-                      const char* pszSubPropertyNameItem = pszPropertyNameItem+nGroupNameLen+1;
-                      pszColon = strchr(pszSubPropertyNameItem, ':');
-                      if( pszColon )
-                        pszSubPropertyNameItem = pszColon + 1;
-
-                      for(w=0;w<groupList->groups[z].numitems;w++)
-                      {
-                        if( strcasecmp(pszSubPropertyNameItem, groupList->groups[z].items[w]) == 0 )
-                        {
-                            pszPropertyNameItem = pszSubPropertyNameItem;
-                            break;
-                        }
-                      }
-                      if( w < groupList->groups[z].numitems )
-                          break;
-                    }
-                  }
-                  if( bSkip )
-                      continue;
-
-                  /* Check that the property name is allowed (#3563) */
-                  for(z=0; z<itemList->numitems; z++) {
-                    if (itemList->items[z].visible &&
-                        strcasecmp(pszPropertyNameItem, itemList->items[z].name) == 0)
+                /* Check that the property name is allowed (#3563) */
+                /*we need to check of the property name is the geometry name; In that case it
+                  is a valid property name*/
+                if (!msWFSIsAllowedItem(itemList,pszPropertyNameItem)) {
+                  for(z=0; z<geometryList->numgeometries; z++) {
+                    if (strcasecmp(pszPropertyNameItem, geometryList->geometries[z].name) == 0)
                       break;
                   }
-                  /*we need to check of the property name is the geometry name; In that case it
-                    is a valid property name*/
-                  if (z == itemList->numitems) {
-                    for(z=0; z<geometryList->numgeometries; z++) {
-                      if (strcasecmp(pszPropertyNameItem, geometryList->geometries[z].name) == 0)
-                        break;
-                    }
 
-                    if (z == geometryList->numgeometries) {
-                      msSetError(MS_WFSERR,
-                                 "Invalid PROPERTYNAME %s",  "msWFSGetFeature()", tokens[y]);
-                      msFreeCharArray(tokens, n);
-                      msGMLFreeItems(itemList);
-                      msGMLFreeGroups(groupList);
-                      msGMLFreeGeometries(geometryList);
-                      msFree(pszPropertyName);
-                      msFreeCharArray(papszPropertyName, numlayers);
-                      msFreeCharArray(layers, numlayers);
-                      return msWFSException(map, "PROPERTYNAME", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
-                    }
+                  if (z == geometryList->numgeometries) {
+                    msSetError(MS_WFSERR,
+                               "Invalid PROPERTYNAME %s",  "msWFSGetFeature()", tokens[y]);
+                    msFreeCharArray(tokens, n);
+                    msGMLFreeItems(itemList);
+                    msGMLFreeGroups(groupList);
+                    msGMLFreeGeometries(geometryList);
+                    msFreeCharArray(papszPropertyName, numlayers);
+                    msFreeCharArray(papszSortBy, numlayers);
+                    msFreeCharArray(layers, numlayers);
+                    return msWFSException(map, "PROPERTYNAME", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
                   }
-                  else
-                  {
-                      char* pszTmp = msStrdup(pszPropertyNameItem);
-                      msFree(tokens[y]);
-                      tokens[y] = pszTmp;
-                  }
+                }
+                else
+                {
+                  char* pszTmp = msStrdup(pszPropertyNameItem);
+                  msFree(tokens[y]);
+                  tokens[y] = pszTmp;
                 }
               }
 
@@ -3287,10 +3387,12 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
             }
             else
             {
-                msFree(pszPropertyName);
-                if( papszPropertyName )
-                    msFreeCharArray(papszPropertyName, numlayers);
+                msFreeCharArray(papszPropertyName, numlayers);
+                msFreeCharArray(papszSortBy, numlayers);
                 msFreeCharArray(layers, numlayers);
+                msGMLFreeItems(itemList);
+                msGMLFreeGroups(groupList);
+                msGMLFreeGeometries(geometryList);
                 return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, paramsObj->pszVersion);
             }
 
@@ -3306,16 +3408,15 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
         msSetError(MS_WFSERR,
                    "TYPENAME '%s' doesn't exist in this server.  Please check the capabilities and reformulate your request.",
                    "msWFSGetFeature()", layers[k]);
-        msFree(pszPropertyName);
-        if( papszPropertyName )
-            msFreeCharArray(papszPropertyName, numlayers);
+        msFreeCharArray(papszPropertyName, numlayers);
+        msFreeCharArray(papszSortBy, numlayers);
         msFreeCharArray(layers, numlayers);
         return msWFSException(map, "typename", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
       }
     }
 
-    msFree(pszPropertyName);
     msFreeCharArray(papszPropertyName, numlayers);
+    msFreeCharArray(papszSortBy, numlayers);
   }
 
   /* Validate outputformat */
@@ -3585,9 +3686,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
   msWFSTurnOffAllLayer(map);
 
   /* Remove namespace prefix */
-  pszTypeName = paramsObj->pszTypeName;
-  if( strchr(pszTypeName, ':') )
-      pszTypeName = strchr(pszTypeName, ':') + 1;
+  pszTypeName = msWFSStripNS(paramsObj->pszTypeName);
 
   lp = msWFSGetLayerByName(map, ows_request, pszTypeName);
   if( lp != NULL ) {
@@ -3603,79 +3702,41 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
 
         /*do an alias replace for the current layer*/
         if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
-            char* pszValueReference;
-            char szTmp[256];
+            const char* pszValueReference;
             int z;
-            const char *pszFullName = NULL;
-            const char *pszColon;
-            const char* pszSlash;
-            int bIsGroup = MS_FALSE;
+            int nGroupIndex = -1;
 
             itemList = msGMLGetItems(lp, "G");
             groupList = msGMLGetGroups(lp, "G");
+
+            if( paramsObj->pszSortBy != NULL &&
+                strcmp(paramsObj->pszSortBy, "!") != 0 )
+            {
+              status = msWFSApplySortBy(map, paramsObj, lp,
+                                       paramsObj->pszSortBy, itemList, groupList);
+              if( status != MS_SUCCESS )
+              {
+                msGMLFreeItems(itemList);
+                msGMLFreeGroups(groupList);
+                return status;
+              }
+            }
+
             geometryList=msGMLGetGeometries(lp, "GFO", MS_TRUE);
 
-            pszColon = strchr(paramsObj->pszValueReference, ':');
-            pszSlash = strchr(paramsObj->pszValueReference, '/');
-            if( pszColon && (pszSlash == NULL || pszColon < pszSlash) )
-              pszValueReference = msStrdup(pszColon + 1);
-            else
-              pszValueReference = msStrdup(paramsObj->pszValueReference);
+            pszValueReference = msWFSStripNS(paramsObj->pszValueReference);
+            pszValueReference = msWFSUnaliasItem(lp, pszValueReference);
+            pszValueReference = msWFSUngroupItem(lp, groupList, pszValueReference, &nGroupIndex);
 
-            for(z=0; z<lp->numitems; z++) {
-                if (!lp->items[z] || strlen(lp->items[z]) <= 0)
-                    continue;
-                snprintf(szTmp, sizeof(szTmp), "%s_alias", lp->items[z]);
-                pszFullName = msOWSLookupMetadata(&(lp->metadata), "G", szTmp);
-                if (pszFullName)
-                    pszValueReference = msReplaceSubstring(pszValueReference, pszFullName, lp->items[z]);
-            }
-
-            for(z=0; z<groupList->numgroups; z++) {
-                const char* pszGroupName = groupList->groups[z].name;
-                size_t nGroupNameLen = strlen(pszGroupName);
-
-                /* Is it a group name ? */
-                if(strcasecmp(pszValueReference, pszGroupName) == 0)
-                {
-                    bIsGroup = MS_TRUE;
-                    break;
-                }
-
-                /* Is it an item of a group ? */
-                if(strncasecmp(pszValueReference, pszGroupName, nGroupNameLen) == 0 &&
-                               pszValueReference[nGroupNameLen] == '/') {
-
-                  int w;
-                  const char* pszSubPropertyNameItem = pszValueReference+nGroupNameLen+1;
-                  pszColon = strchr(pszSubPropertyNameItem, ':');
-                  if( pszColon )
-                    pszSubPropertyNameItem = pszColon + 1;
-
-                  for(w=0;w<groupList->groups[z].numitems;w++)
-                  {
-                    if( strcasecmp(pszSubPropertyNameItem, groupList->groups[z].items[w]) == 0 )
-                    {
-                        char* pszTmp = msStrdup(pszSubPropertyNameItem);
-                        msFree(pszValueReference);
-                        pszValueReference = pszTmp;
-                        break;
-                    }
-                  }
-                  if( w < groupList->groups[z].numitems )
-                      break;
-                }
-            }
-
-            if( bIsGroup ) {
+            if( nGroupIndex >= 0 ) {
               int w;
               char* pszItems = NULL;
-              for(w=0;w<groupList->groups[z].numitems;w++) {
+              for(w=0;w<groupList->groups[nGroupIndex].numitems;w++) {
                 if( w > 0 )
                   pszItems = msStringConcatenate(pszItems, ",");
-                pszItems = msStringConcatenate(pszItems, groupList->groups[z].items[w]);
+                pszItems = msStringConcatenate(pszItems, groupList->groups[nGroupIndex].items[w]);
               }
-              msInsertHashTable(&(lp->metadata), "GML_GROUPS", groupList->groups[z].name);
+              msInsertHashTable(&(lp->metadata), "GML_GROUPS", groupList->groups[nGroupIndex].name);
               msInsertHashTable(&(lp->metadata), "GML_INCLUDE_ITEMS", pszItems);
               msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", "none");
               msFree(pszItems);
@@ -3684,16 +3745,9 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
               msInsertHashTable(&(lp->metadata), "GML_GROUPS", "");
 
               /* Check that the property name is allowed (#3563) */
-              for(z=0; z<itemList->numitems; z++) {
-                if (itemList->items[z].visible &&
-                    strcasecmp(pszValueReference, itemList->items[z].name) == 0)
-                {
-                    break;
-                }
-              }
               /*we need to check of the property name is the geometry name; In that case it
                     is a valid property name*/
-              if (z == itemList->numitems) {
+              if (!msWFSIsAllowedItem(itemList, pszValueReference)) {
                 for(z=0; z<geometryList->numgeometries; z++) {
                   if (strcasecmp(pszValueReference, geometryList->geometries[z].name) == 0)
                     break;
@@ -3702,7 +3756,6 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
                 if (z == geometryList->numgeometries) {
                   msSetError(MS_WFSERR,
                             "Invalid VALUEREFERENCE %s",  "msWFSGetPropertyValue()", paramsObj->pszValueReference);
-                  msFree(pszValueReference);
                   msGMLFreeItems(itemList);
                   msGMLFreeGroups(groupList);
                   msGMLFreeGeometries(geometryList);
@@ -3724,7 +3777,6 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
             msGMLFreeItems(itemList);
             msGMLFreeGroups(groupList);
             msGMLFreeGeometries(geometryList);
-            msFree(pszValueReference);
         }
   }
   else {
@@ -4211,6 +4263,8 @@ static void msWFSParseXMLQueryNode(CPLXMLNode* psQuery, wfsParamsObj *wfsparams)
     char *pszSerializedFilter, *pszTmp, *pszTmp2;
     CPLXMLNode* psPropertyName;
     CPLXMLNode* psFilter;
+    CPLXMLNode* psSortBy;
+    char* pszSortBy = NULL;
 
     pszValue = CPLGetXMLValue(psQuery,  "srsName",
                                 NULL);
@@ -4279,6 +4333,51 @@ static void msWFSParseXMLQueryNode(CPLXMLNode* psQuery, wfsParamsObj *wfsparams)
 
     msWFSBuildParamList(&(wfsparams->pszFilter), pszSerializedFilter, "");
     free(pszSerializedFilter);
+
+    /* parse SortBy */
+    psSortBy = CPLGetXMLNode(psQuery, "SortBy");
+    if( psSortBy != NULL )
+    {
+        int bFirstProperty = MS_TRUE;
+        CPLXMLNode* psIter = psSortBy->psChild;
+
+        pszSortBy = msStringConcatenate(pszSortBy, "(");
+
+        while( psIter != NULL )
+        {
+            if( psIter->eType == CXT_Element &&
+                strcmp(psIter->pszValue, "SortProperty") == 0 )
+            {
+                const char* pszPropertyName = CPLGetXMLValue(psIter, "PropertyName", NULL);
+                if( pszPropertyName == NULL )
+                    pszPropertyName = CPLGetXMLValue(psIter, "ValueReference", NULL);
+                if( pszPropertyName != NULL )
+                {
+                    const char* pszSortOrder = CPLGetXMLValue(psIter, "SortOrder", NULL);
+                    if( !bFirstProperty )
+                        pszSortBy = msStringConcatenate(pszSortBy, ",");
+                    bFirstProperty = MS_FALSE;
+
+                    pszSortBy = msStringConcatenate(pszSortBy, pszPropertyName);
+                    if( pszSortOrder != NULL )
+                    {
+                        pszSortBy = msStringConcatenate(pszSortBy, " ");
+                        pszSortBy = msStringConcatenate(pszSortBy, pszSortOrder);
+                    }
+                }
+            }
+            psIter = psIter->psNext;
+        }
+
+        pszSortBy = msStringConcatenate(pszSortBy, ")");
+    }
+    else
+    {
+        pszSortBy = msStrdup("(!)");
+    }
+
+    msWFSBuildParamList(&(wfsparams->pszSortBy), pszSortBy, "");
+    free(pszSortBy);
 
     /* Special case for "urn:ogc:def:query:OGC-WFS::GetFeatureById" */
     /* Resolve the property typename */
@@ -4464,6 +4563,19 @@ static void msWFSSimplifyPropertyNameAndFilter(wfsParamsObj *wfsparams)
         {
             msFree(wfsparams->pszFilter);
             wfsparams->pszFilter = NULL;
+        }
+    }
+
+    /* Same with SortBy */
+    if( wfsparams->pszSortBy != NULL )
+    {
+        i = 0;
+        while( strncmp(wfsparams->pszSortBy + i, "(!)", 3) == 0 )
+            i += 3;
+        if( wfsparams->pszSortBy[i] == '\0' )
+        {
+            msFree(wfsparams->pszSortBy);
+            wfsparams->pszSortBy = NULL;
         }
     }
 }

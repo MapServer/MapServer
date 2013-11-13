@@ -171,7 +171,8 @@ xmlNodePtr msWFSOperator(xmlNsPtr psNsFES, const char* pszOperatorType, const ch
 /************************************************************************/
 
 static
-xmlNodePtr msWFS20FilterCapabilities(xmlNsPtr psNsFES, xmlNsPtr psNsOws)
+xmlNodePtr msWFS20FilterCapabilities(xmlNsPtr psNsFES, xmlNsPtr psNsOws,
+                                     int bImplementsSorting)
 {
   xmlNodePtr psRootNode = NULL, psNode = NULL, psSubNode = NULL;
 
@@ -190,7 +191,7 @@ xmlNodePtr msWFS20FilterCapabilities(xmlNsPtr psNsFES, xmlNsPtr psNsOws)
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsMinTemporalFilter", "TRUE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsTemporalFilter", "FALSE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsVersionNav", "FALSE"));
-    xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsSorting", "TRUE"));
+    xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsSorting", ( bImplementsSorting ) ? "TRUE" : "FALSE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsExtendedOperators", "FALSE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsMinimumXPath", "TRUE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsSchemaElementFunc", "FALSE"));
@@ -340,7 +341,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
                            cgiRequestObj *req, owsRequestObj *ows_request)
 {
   xmlDocPtr psDoc = NULL;       /* document pointer */
-  xmlNodePtr psRootNode, psMainNode, psNode, psFtNode;
+  xmlNodePtr psRootNode, psMainNode, psNode, psFtNode = NULL;
   const char *updatesequence=NULL;
   xmlNsPtr psNsOws, psNsXLink;
   xmlNsPtr psNsFES = NULL;
@@ -363,6 +364,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   int ret;
 
   char* validated_language;
+  int bImplementsSorting = MS_FALSE;
 
   /* -------------------------------------------------------------------- */
   /*      Handle updatesequence                                           */
@@ -675,18 +677,26 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   {
     psFtNode = xmlNewNode(NULL, BAD_CAST "FeatureTypeList");
     xmlAddChild(psRootNode, psFtNode);
+  }
 
-    for(i=0; i<map->numlayers; i++) {
+  for(i=0; i<map->numlayers; i++) {
         layerObj *lp;
         lp = GET_LAYER(map, i);
 
         if (!msIntegerInArray(lp->index, ows_request->enabled_layers, ows_request->numlayers))
-        continue;
+            continue;
 
         /* List only vector layers in which DUMP=TRUE */
         if (msWFSIsLayerSupported(lp))
-          xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0, validated_language));
-    }
+        {
+          if( psFtNode != NULL ) {
+            xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_2_0_0, validated_language));
+          }
+
+          /* As soon as at least one layer supports sorting, advertize sorting */
+          if( msLayerSupportsSorting(lp) )
+              bImplementsSorting = MS_TRUE;
+        }
   }
 
   /* -------------------------------------------------------------------- */
@@ -695,7 +705,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   if( msWFSIncludeSection(params, "Filter_Capabilities") )
   {
     psNsFES = xmlNewNs(NULL, BAD_CAST MS_OWSCOMMON_FES_20_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_FES_20_NAMESPACE_PREFIX);
-    xmlAddChild(psRootNode, msWFS20FilterCapabilities(psNsFES, psNsOws));
+    xmlAddChild(psRootNode, msWFS20FilterCapabilities(psNsFES, psNsOws, bImplementsSorting));
   }
 
   /* -------------------------------------------------------------------- */

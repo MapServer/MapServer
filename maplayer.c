@@ -1412,6 +1412,66 @@ int msLayerSupportsPaging(layerObj *layer)
   return MS_FALSE;
 }
 
+/*
+ * msLayerSupportsSorting()
+ *
+ * Returns MS_TRUE if the layer supports sorting/ordering.
+ */
+int msLayerSupportsSorting(layerObj *layer)
+{
+  if (layer &&
+      ((layer->connectiontype == MS_OGR) ||
+       (layer->connectiontype == MS_POSTGIS)) )
+    return MS_TRUE;
+
+  return MS_FALSE;
+}
+
+/*
+ * msLayerSetSort()
+ *
+ * Copy the sortBy clause passed as an argument into the layer sortBy member.
+ */
+void msLayerSetSort(layerObj *layer, const sortByClause* sortBy)
+{
+  int i;
+  for(i=0;i<layer->sortBy.nProperties;i++)
+      msFree(layer->sortBy.properties[i].item);
+  msFree(layer->sortBy.properties);
+
+  layer->sortBy.nProperties = sortBy->nProperties;
+  layer->sortBy.properties = (sortByProperties*) msSmallMalloc(
+                        sortBy->nProperties * sizeof(sortByProperties) );
+  for(i=0;i<layer->sortBy.nProperties;i++) {
+     layer->sortBy.properties[i].item = msStrdup(sortBy->properties[i].item);
+     layer->sortBy.properties[i].sortOrder = sortBy->properties[i].sortOrder;
+  }
+}
+
+/*
+ * msLayerBuildSQLOrderBy()
+ *
+ * Returns the content of a SQL ORDER BY clause from the sortBy member of
+ * the layer. The string does not contain the "ORDER BY" keywords itself.
+ */
+char* msLayerBuildSQLOrderBy(layerObj *layer)
+{
+  char* strOrderBy = NULL;
+  if( layer->sortBy.nProperties > 0 ) {
+    int i;
+    for(i=0;i<layer->sortBy.nProperties;i++) {
+      char* escaped = msLayerEscapePropertyName(layer, layer->sortBy.properties[i].item);
+      if( i > 0 )
+          strOrderBy = msStringConcatenate(strOrderBy, ", ");
+      strOrderBy = msStringConcatenate(strOrderBy, escaped);
+      if( layer->sortBy.properties[i].sortOrder == SORT_DESC )
+          strOrderBy = msStringConcatenate(strOrderBy, " DESC");
+      msFree(escaped);
+    }
+  }
+  return strOrderBy;
+}
+
 int
 msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                int iLayerIndex)

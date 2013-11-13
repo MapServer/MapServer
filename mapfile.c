@@ -3805,6 +3805,9 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->utfitemindex = -1;
   
   layer->encoding = NULL;
+  
+  layer->sortBy.nProperties = 0;
+  layer->sortBy.properties = NULL;
 
   return(0);
 }
@@ -3923,6 +3926,10 @@ int freeLayer(layerObj *layer)
 
   freeExpression(&(layer->utfdata));
   msFree(layer->utfitem);
+  
+  for(i=0;i<layer->sortBy.nProperties;i++)
+      msFree(layer->sortBy.properties[i].item);
+  msFree(layer->sortBy.properties);
 
   return MS_SUCCESS;
 }
