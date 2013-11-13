@@ -777,6 +777,16 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 
   double dx, dy;
 
+  /* If projecting from longlat to projected */
+  if( out && !pj_is_latlong(out->proj) && in && pj_is_latlong(in->proj) &&
+      fabs(rect->minx - -180.0) < 1e-5 && fabs(rect->miny - -90.0) < 1e-5 &&
+      fabs(rect->maxx - 180.0) < 1e-5 && fabs(rect->maxy - 90.0) < 1e-5) {
+    rect->minx = -1e15;
+    rect->miny = -1e15;
+    rect->maxx = 1e15;
+    rect->maxy = 1e15;
+    return MS_SUCCESS;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Build polygon as steps around the source rectangle.             */

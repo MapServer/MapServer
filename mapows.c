@@ -37,6 +37,7 @@
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 #endif
+#include "mapowscommon.h"
 
 #include <ctype.h> /* isalnum() */
 #include <stdarg.h>
@@ -100,12 +101,15 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
     int i;
     /* parse KVP parameters service, version and request */
     for (i = 0; i < request->NumParams; ++i) {
-      if (EQUAL(request->ParamNames[i], "SERVICE")) {
+      if (ows_request->service == NULL &&
+          EQUAL(request->ParamNames[i], "SERVICE")) {
         ows_request->service = msStrdup(request->ParamValues[i]);
-      } else if (EQUAL(request->ParamNames[i], "VERSION")
-                 || EQUAL(request->ParamNames[i], "WMTVER")) { /* for WMS */
+      } else if (ows_request->version == NULL &&
+                 (EQUAL(request->ParamNames[i], "VERSION")
+                 || EQUAL(request->ParamNames[i], "WMTVER"))) { /* for WMS */
         ows_request->version = msStrdup(request->ParamValues[i]);
-      } else if (EQUAL(request->ParamNames[i], "REQUEST")) {
+      } else if (ows_request->request == NULL &&
+                 EQUAL(request->ParamNames[i], "REQUEST")) {
         ows_request->request = msStrdup(request->ParamValues[i]);
       }
 
@@ -230,6 +234,14 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
   }
 
   if (ows_request.service == NULL) {
+
+#ifdef USE_WFS_SVR
+    if( msOWSLookupMetadata(&(map->web.metadata), "FO", "cite_wfs2") != NULL ) {
+      status = msWFSException(map, "service", MS_OWS_ERROR_MISSING_PARAMETER_VALUE, NULL );
+    }
+    else
+#endif
+
     /* exit if service is not set */
     if(force_ows_mode) {
       msSetError( MS_MISCERR,

@@ -108,6 +108,12 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
 
   /* add namespace to layer name */
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
+
+  /* FIXME? Should probably be applied to WFS 1.1 as well, but the addition */
+  /* of the prefix can be disruptive for clients */
+  if( value == NULL && nWFSVersion >= OWS_2_0_0 )
+      value = MS_DEFAULT_NAMESPACE_PREFIX;
+
   if(value) {
     n = strlen(value)+strlen(lp->name)+1+1;
     valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);

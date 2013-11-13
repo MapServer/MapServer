@@ -143,6 +143,11 @@ void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
                                        mapObj *map, int i, const char *namespaces);
 int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
                              mapObj *map, int i);
+int FLTCheckInvalidOperand(FilterEncodingNode *psFilterNode);
+int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
+                            mapObj *map, int i);
+FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
+                                int* pnEvaluation);
 
 #endif
 

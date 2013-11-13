@@ -1428,6 +1428,28 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
 
       }
+
+      else if (strcasecmp(psXMLNode->pszValue, "PropertyIsNull") == 0) {
+        const char* pszPropertyName = FLTGetPropertyName(psXMLNode);
+        if( pszPropertyName != NULL )
+        {
+            psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+            psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
+            psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+        }  else
+          psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+      }
+
+      else if (strcasecmp(psXMLNode->pszValue, "PropertyIsNil") == 0) {
+        const char* pszPropertyName = FLTGetPropertyName(psXMLNode);
+        if( pszPropertyName != NULL )
+        {
+            psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+            psFilterNode->psLeftNode->pszValue = msStrdup(pszPropertyName);
+            psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+        }  else
+          psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+      }
     }
     /* -------------------------------------------------------------------- */
     /*      FeatureId Filter                                                */
@@ -1598,7 +1620,9 @@ int FLTIsComparisonFilterType(const char *pszValue)
   if (pszValue) {
     if (FLTIsBinaryComparisonFilterType(pszValue) ||
         strcasecmp(pszValue, "PropertyIsLike") == 0 ||
-        strcasecmp(pszValue, "PropertyIsBetween") == 0)
+        strcasecmp(pszValue, "PropertyIsBetween") == 0 ||
+        strcasecmp(pszValue, "PropertyIsNull") == 0 ||
+        strcasecmp(pszValue, "PropertyIsNil") == 0)
       return MS_TRUE;
   }
 
@@ -2137,7 +2161,12 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 
             pszEscapedStr = msLayerEscapeSQLParam(lp, pszId);
             if (bString)
-              snprintf(szTmp, sizeof(szTmp), "(%s = '%s')" , pszAttribute, pszEscapedStr);
+            {
+              if( lp->connectiontype == MS_OGR || lp->connectiontype == MS_POSTGIS )
+                snprintf(szTmp, sizeof(szTmp), "(CAST(%s AS CHARACTER(255)) = '%s')" , pszAttribute, pszEscapedStr);
+              else
+                snprintf(szTmp, sizeof(szTmp), "(%s = '%s')" , pszAttribute, pszEscapedStr);
+            }
             else
               snprintf(szTmp, sizeof(szTmp), "(%s = %s)" , pszAttribute, pszEscapedStr);
 
@@ -3330,7 +3359,8 @@ void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode,
 
 
 static void FLTReplacePropertyName(FilterEncodingNode *psFilterNode,
-                                   const char *pszOldName, char *pszNewName)
+                                   const char *pszOldName,
+                                   const char *pszNewName)
 {
   if (psFilterNode && pszOldName && pszNewName) {
     if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME) {
@@ -3356,6 +3386,17 @@ static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
   int n=0;
 
   if (psFilterNode) {
+
+    if (psFilterNode->eType == FILTER_NODE_TYPE_COMPARISON &&
+        (strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 ||
+         strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0) && 
+         psFilterNode->psLeftNode != NULL &&
+         psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME &&
+         strcmp(psFilterNode->psLeftNode->pszValue, "gml:name") == 0 )
+    {
+        return;
+    }
+
     if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME) {
       if (psFilterNode->pszValue &&
           strstr(psFilterNode->pszValue, ":")) {
@@ -3382,6 +3423,7 @@ static void FLTRemoveGroupName(FilterEncodingNode *psFilterNode,
   int i;
 
   if (psFilterNode) {
+
     if (psFilterNode->eType == FILTER_NODE_TYPE_PROPERTYNAME) {
       if( psFilterNode->pszValue != NULL )
       {
@@ -3410,6 +3452,7 @@ static void FLTRemoveGroupName(FilterEncodingNode *psFilterNode,
         }
       }
     }
+
     if (psFilterNode->psLeftNode)
       FLTRemoveGroupName(psFilterNode->psLeftNode, groupList);
     if (psFilterNode->psRightNode)
@@ -3443,7 +3486,7 @@ void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
     if (msLayerOpen(lp) == MS_SUCCESS && msLayerGetItems(lp) == MS_SUCCESS) {
 
       /* Remove group names from property names if using groupname/itemname syntax */
-      gmlGroupListObj* groupList = msGMLGetGroups(lp, "G");
+      gmlGroupListObj* groupList = msGMLGetGroups(lp, namespaces);
       if( groupList && groupList->numgroups > 0 )
         FLTRemoveGroupName(psFilterNode, groupList);
       msGMLFreeGroups(groupList);
@@ -3517,6 +3560,198 @@ int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
       }
     }
     return status;
+}
+
+/************************************************************************/
+/*                        FLTCheckInvalidOperand                        */
+/*                                                                      */
+/*      Check that the operand of a comparison operator is valid        */
+/*      Currently only detects use of boundedBy in a binary comparison  */
+/************************************************************************/
+int FLTCheckInvalidOperand(FilterEncodingNode *psFilterNode)
+{
+    int status = MS_SUCCESS;
+
+    if (psFilterNode->eType ==  FILTER_NODE_TYPE_COMPARISON &&
+        psFilterNode->psLeftNode != NULL &&
+        psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME)
+    {
+        if( strcmp(psFilterNode->psLeftNode->pszValue, "boundedBy") == 0 )
+        {
+            msSetError(MS_MISCERR, "Operand '%s' is invalid in comparison.",
+                       "FLTCheckInvalidOperand()", psFilterNode->psLeftNode->pszValue);
+            return MS_FAILURE;
+        }
+    }
+    if (psFilterNode->psLeftNode)
+    {
+      status = FLTCheckInvalidOperand(psFilterNode->psLeftNode);
+      if( status == MS_SUCCESS )
+      {
+        if (psFilterNode->psRightNode)
+            status = FLTCheckInvalidOperand(psFilterNode->psRightNode);
+      }
+    }
+    return status;
+}
+
+/************************************************************************/
+/*                        FLTCheckInvalidProperty                       */
+/*                                                                      */
+/*      Check that property names are known                             */
+/************************************************************************/
+int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
+                            mapObj *map, int i)
+{
+    int status = MS_SUCCESS;
+
+    if (psFilterNode->eType ==  FILTER_NODE_TYPE_COMPARISON &&
+        psFilterNode->psLeftNode != NULL &&
+        psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME)
+    {
+        layerObj* lp;
+        int layerWasOpened;
+        int bFound = MS_FALSE;
+
+        if ((strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 ||
+             strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0) && 
+             strcmp(psFilterNode->psLeftNode->pszValue, "gml:name") == 0 )
+        {
+            return MS_SUCCESS;
+        }
+
+        lp = GET_LAYER(map, i);
+        layerWasOpened = msLayerIsOpen(lp);
+        if ((layerWasOpened || msLayerOpen(lp) == MS_SUCCESS) 
+             && msLayerGetItems(lp) == MS_SUCCESS) {
+          int i;
+          gmlItemListObj* items = msGMLGetItems(lp, "G");
+          for(i=0; i<items->numitems; i++) {
+            if (!items->items[i].name || strlen(items->items[i].name) <= 0 ||
+                !items->items[i].visible)
+              continue;
+            if (strcasecmp(items->items[i].name, psFilterNode->psLeftNode->pszValue) == 0) {
+                bFound = MS_TRUE;
+                break;
+            }
+          }
+          msGMLFreeItems(items);
+        }
+
+        if (!layerWasOpened) /* do not close the layer if it has been opened somewhere else (paging?) */
+          msLayerClose(lp);
+
+        if( !bFound )
+        {
+            msSetError(MS_MISCERR, "Property '%s' is unknown.",
+                       "FLTCheckInvalidProperty()", psFilterNode->psLeftNode->pszValue);
+            return MS_FAILURE;
+        }
+    }
+
+    if (psFilterNode->psLeftNode)
+    {
+      status = FLTCheckInvalidProperty(psFilterNode->psLeftNode, map, i);
+      if( status == MS_SUCCESS )
+      {
+        if (psFilterNode->psRightNode)
+            status = FLTCheckInvalidProperty(psFilterNode->psRightNode, map, i);
+      }
+    }
+    return status;
+}
+
+/************************************************************************/
+/*                           FLTSimplify                                */
+/*                                                                      */
+/*      Simplify the expression by removing parts that evaluate to      */
+/*      constants.                                                      */
+/*      The passed psFilterNode is potentially consumed by the function */
+/*      and replaced by the returned value.                             */
+/*      If the function returns NULL, *pnEvaluation = 0 means that      */
+/*      the filter evaluates to FALSE, or 1 that it evaluates to TRUE   */
+/************************************************************************/
+FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
+                                int* pnEvaluation)
+{
+    *pnEvaluation = -1;
+
+    /* There are no nullable or nillable property in WFS currently */
+    if( psFilterNode->eType ==  FILTER_NODE_TYPE_COMPARISON &&
+        (strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 ||
+         strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0 ) &&
+        psFilterNode->psLeftNode != NULL &&
+        psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME )
+    {
+        *pnEvaluation = 0;
+        FLTFreeFilterEncodingNode(psFilterNode);
+        return NULL;
+    }
+
+    if( psFilterNode->eType ==  FILTER_NODE_TYPE_LOGICAL &&
+        strcasecmp(psFilterNode->pszValue, "NOT") == 0 &&
+        psFilterNode->psLeftNode != NULL )
+    {
+        int nEvaluation;
+        psFilterNode->psLeftNode = FLTSimplify(psFilterNode->psLeftNode,
+                                               &nEvaluation);
+        if( psFilterNode->psLeftNode == NULL )
+        {
+            *pnEvaluation = 1 - nEvaluation;
+            FLTFreeFilterEncodingNode(psFilterNode);
+            return NULL;
+        }
+    }
+
+    if( psFilterNode->eType ==  FILTER_NODE_TYPE_LOGICAL &&
+        (strcasecmp(psFilterNode->pszValue, "AND") == 0 ||
+         strcasecmp(psFilterNode->pszValue, "OR") == 0) &&
+        psFilterNode->psLeftNode != NULL &&
+        psFilterNode->psRightNode != NULL )
+    {
+        FilterEncodingNode* psOtherNode;
+        int nEvaluation;
+        int nExpectedValForFastExit;
+        psFilterNode->psLeftNode = FLTSimplify(psFilterNode->psLeftNode,
+                                               &nEvaluation);
+
+        if( strcasecmp(psFilterNode->pszValue, "AND") == 0 )
+            nExpectedValForFastExit = 0;
+        else
+            nExpectedValForFastExit = 1;
+
+        if( psFilterNode->psLeftNode == NULL )
+        {
+            if( nEvaluation == nExpectedValForFastExit )
+            {
+                *pnEvaluation = nEvaluation;
+                FLTFreeFilterEncodingNode(psFilterNode);
+                return NULL;
+            }
+            psOtherNode = psFilterNode->psRightNode;
+            psFilterNode->psRightNode = NULL;
+            FLTFreeFilterEncodingNode(psFilterNode);
+            return FLTSimplify(psOtherNode, pnEvaluation);
+        }
+ 
+        psFilterNode->psRightNode = FLTSimplify(psFilterNode->psRightNode,
+                                                &nEvaluation);
+        if( psFilterNode->psRightNode == NULL )
+        {
+            if( nEvaluation == nExpectedValForFastExit )
+            {
+                *pnEvaluation = nEvaluation;
+                FLTFreeFilterEncodingNode(psFilterNode);
+                return NULL;
+            }
+            psOtherNode = psFilterNode->psLeftNode;
+            psFilterNode->psLeftNode = NULL;
+            FLTFreeFilterEncodingNode(psFilterNode);
+            return FLTSimplify(psOtherNode, pnEvaluation);
+        }
+    }
+
+    return psFilterNode;
 }
 
 

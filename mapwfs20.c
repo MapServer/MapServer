@@ -80,10 +80,24 @@ int msWFSException20(mapObj *map, const char *locator,
 
   xmlNewNs(psRootNode, BAD_CAST MS_OWS_11_NAMESPACE_URI, BAD_CAST MS_OWS_11_NAMESPACE_PREFIX);
 
-  /* For CITE compliance */
-  if( EQUAL(exceptionCode, "OperationProcessingFailed") ) {
-    status = "404 Not Found";
+  /* Table D.2 OGC 09-025r1 - For CITE compliance */
+  if( EQUAL(exceptionCode, MS_OWS_ERROR_OPERATION_NOT_SUPPORTED) ||
+      EQUAL(exceptionCode, MS_OWS_ERROR_OPTION_NOT_SUPPORTED) ) {
+    status = "400 Not Implemented";
   }
+  else if( EQUAL(exceptionCode, MS_OWS_ERROR_MISSING_PARAMETER_VALUE) ||
+           EQUAL(exceptionCode, MS_OWS_ERROR_INVALID_PARAMETER_VALUE) ||
+           EQUAL(exceptionCode, MS_OWS_ERROR_VERSION_NEGOTIATION_FAILED) ||
+           EQUAL(exceptionCode, MS_OWS_ERROR_INVALID_UPDATE_SEQUENCE) ) {
+    status = "400 Bad request";
+  }
+  else if( EQUAL(exceptionCode, MS_WFS_ERROR_OPERATION_PROCESSING_FAILED) ) {
+    status = "403 Server processing failed";
+  }
+  else if( EQUAL(exceptionCode, MS_OWS_ERROR_NO_APPLICABLE_CODE) ) {
+    status = "400 Internal Server Error";
+  }
+
   if( status != NULL )
   {
     msIO_setHeader("Status", "%s", status);
@@ -185,7 +199,7 @@ xmlNodePtr msWFS20FilterCapabilities(xmlNsPtr psNsFES, xmlNsPtr psNsOws,
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsFunctions", "FALSE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsResourceId", "TRUE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsMinStandardFilter", "TRUE"));
-    xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsStandardFilter", "FALSE"));
+    xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsStandardFilter", "TRUE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsMinSpatialFilter", "TRUE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsSpatialFilter", "FALSE"));
     xmlAddChild(psNode, msWFSConstraintDefaultValue(psNsFES, psNsOws, "ImplementsMinTemporalFilter", "TRUE"));
@@ -400,10 +414,17 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   xmlNewNs(psRootNode, BAD_CAST MS_OWSCOMMON_FES_20_NAMESPACE_URI, BAD_CAST MS_OWSCOMMON_FES_20_NAMESPACE_PREFIX );
 
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri");
-  if(value) user_namespace_uri = value;
+  if(value)
+      user_namespace_uri = value;
+  else
+      user_namespace_uri = MS_DEFAULT_NAMESPACE_URI;
 
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
-  if(value) user_namespace_prefix = value;
+  if(value)
+      user_namespace_prefix = value;
+  else
+      user_namespace_prefix = MS_DEFAULT_NAMESPACE_PREFIX;
+
   if(user_namespace_prefix != NULL && msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
     msIO_printf("<!-- WARNING: The value '%s' is not valid XML namespace. -->\n", user_namespace_prefix);
   else
@@ -842,8 +863,9 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
     storedQuery = msWFSGetStoredQuery(map, id);
     if( storedQuery == NULL )
     {
-        msSetError(MS_WFSERR, "Cannot resolve stored query '%s'", "msWFSGetResolvedStoredQuery20()", id);
-        msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, wfsparams->pszVersion);
+        msSetError(MS_WFSERR, "Unknown stored query id: %s", "msWFSGetResolvedStoredQuery20()",
+                   id);
+        msWFSException(map, "storedqueryid", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, wfsparams->pszVersion);
         return NULL;
     }
 
@@ -877,6 +899,7 @@ char* msWFSGetResolvedStoredQuery20(mapObj *map,
                     msWFSException(map, (const char*)parameterName, MS_OWS_ERROR_MISSING_PARAMETER_VALUE, wfsparams->pszVersion);
                     msFree(storedQuery);
                     xmlFree(parameterName);
+                    xmlFreeDoc(psStoredQueryDoc);
                     return NULL;
                 }
 

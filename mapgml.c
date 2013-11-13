@@ -1483,6 +1483,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
       const char *value;
       int featureIdIndex=-1; /* no feature id */
       char* srs = NULL;
+      int bOutputGMLIdOnly = MS_FALSE;
 
       /* setup namespace, a layer can override the default */
       namespace_prefix = msOWSLookupMetadata(&(lp->metadata), "OFG", "namespace_prefix");
@@ -1513,7 +1514,13 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         msSetError(MS_MISCERR, "Unable to populate item and group metadata structures", "msGMLWriteWFSQuery()");
         return MS_FAILURE;
       }
-
+      
+      if( bGetPropertyValueRequest )
+      {
+        const char* value = msOWSLookupMetadata(&(lp->metadata), "G", "include_items");
+        if( value != NULL && strcmp(value, "@gml:id") == 0 )
+            bOutputGMLIdOnly = MS_TRUE;
+      }
 
       if (namespace_prefix) {
         layerName = (char *) msSmallMalloc(strlen(namespace_prefix)+strlen(lp->name)+2);
@@ -1557,6 +1564,22 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
           msProjectShape(&lp->projection, &map->projection, &shape);
 #endif
 
+        if(featureIdIndex != -1) {
+            pszFID = (char*) msSmallMalloc( strlen(lp->name) + 1 + strlen(shape.values[featureIdIndex]) + 1 );
+            sprintf(pszFID, "%s.%s", lp->name, shape.values[featureIdIndex]);
+        }
+        else
+            pszFID = msStrdup("");
+
+
+        if( bOutputGMLIdOnly )
+        {
+            msIO_fprintf(stream, "    <wfs:member>%s</wfs:member>\n", pszFID);
+            msFree(pszFID);
+            msFreeShape(&shape); /* init too */
+            continue;
+        }
+
         /*
         ** start this feature
         */
@@ -1567,8 +1590,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         if(msIsXMLTagValid(layerName) == MS_FALSE)
             msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a XML tag context. -->\n", layerName);
         if(featureIdIndex != -1) {
-            pszFID = (char*) msSmallMalloc( strlen(lp->name) + 1 + strlen(shape.values[featureIdIndex]) + 1 );
-            sprintf(pszFID, "%s.%s", lp->name, shape.values[featureIdIndex]);
             if( !bGetPropertyValueRequest )
             {
                 if(outputformat == OWS_GML2)
@@ -1577,7 +1598,6 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
                     msIO_fprintf(stream, "      <%s gml:id=\"%s\">\n", layerName, pszFID);
             }
         } else {
-            pszFID = msStrdup("");
             if( !bGetPropertyValueRequest )
                 msIO_fprintf(stream, "      <%s>\n", layerName);
         }
