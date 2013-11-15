@@ -3380,6 +3380,13 @@ static void FLTReplacePropertyName(FilterEncodingNode *psFilterNode,
 }
 
 
+static int FLTIsGMLDefaultProperty(const char* pszName)
+{
+    return (strcmp(pszName, "gml:name") == 0 ||
+            strcmp(pszName, "gml:description") == 0 ||
+            strcmp(pszName, "@gml:id") == 0);
+}
+
 static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
 {
   char **tokens=NULL;
@@ -3392,7 +3399,7 @@ static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
          strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0) && 
          psFilterNode->psLeftNode != NULL &&
          psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME &&
-         strcmp(psFilterNode->psLeftNode->pszValue, "gml:name") == 0 )
+         FLTIsGMLDefaultProperty(psFilterNode->psLeftNode->pszValue) )
     {
         return;
     }
@@ -3615,7 +3622,7 @@ int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
 
         if ((strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 ||
              strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0) && 
-             strcmp(psFilterNode->psLeftNode->pszValue, "gml:name") == 0 )
+             FLTIsGMLDefaultProperty(psFilterNode->psLeftNode->pszValue) )
         {
             return MS_SUCCESS;
         }
@@ -3668,8 +3675,9 @@ int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
 /*      constants.                                                      */
 /*      The passed psFilterNode is potentially consumed by the function */
 /*      and replaced by the returned value.                             */
-/*      If the function returns NULL, *pnEvaluation = 0 means that      */
-/*      the filter evaluates to FALSE, or 1 that it evaluates to TRUE   */
+/*      If the function returns NULL, *pnEvaluation = MS_FALSE means    */
+/*      that  the filter evaluates to FALSE, or MS_TRUE that it         */
+/*      evaluates to TRUE                                               */
 /************************************************************************/
 FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
                                 int* pnEvaluation)
@@ -3677,13 +3685,19 @@ FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
     *pnEvaluation = -1;
 
     /* There are no nullable or nillable property in WFS currently */
+    /* except gml:name or gml:description that are null */
     if( psFilterNode->eType ==  FILTER_NODE_TYPE_COMPARISON &&
         (strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 ||
          strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0 ) &&
         psFilterNode->psLeftNode != NULL &&
         psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME )
     {
-        *pnEvaluation = 0;
+        if( strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 &&
+            FLTIsGMLDefaultProperty(psFilterNode->psLeftNode->pszValue) &&
+            strcmp(psFilterNode->psLeftNode->pszValue, "@gml:id") != 0 )
+            *pnEvaluation = MS_TRUE;
+        else
+            *pnEvaluation = MS_FALSE;
         FLTFreeFilterEncodingNode(psFilterNode);
         return NULL;
     }
@@ -3716,9 +3730,9 @@ FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
                                                &nEvaluation);
 
         if( strcasecmp(psFilterNode->pszValue, "AND") == 0 )
-            nExpectedValForFastExit = 0;
+            nExpectedValForFastExit = MS_FALSE;
         else
-            nExpectedValForFastExit = 1;
+            nExpectedValForFastExit = MS_TRUE;
 
         if( psFilterNode->psLeftNode == NULL )
         {
