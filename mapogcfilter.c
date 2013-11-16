@@ -3697,7 +3697,8 @@ FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
     {
         if( strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 &&
             FLTIsGMLDefaultProperty(psFilterNode->psLeftNode->pszValue) &&
-            strcmp(psFilterNode->psLeftNode->pszValue, "@gml:id") != 0 )
+            strcmp(psFilterNode->psLeftNode->pszValue, "@gml:id") != 0  &&
+            strcmp(psFilterNode->psLeftNode->pszValue, "gml:boundedBy") != 0)
             *pnEvaluation = MS_TRUE;
         else
             *pnEvaluation = MS_FALSE;
