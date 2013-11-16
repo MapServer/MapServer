@@ -3384,6 +3384,9 @@ static int FLTIsGMLDefaultProperty(const char* pszName)
 {
     return (strcmp(pszName, "gml:name") == 0 ||
             strcmp(pszName, "gml:description") == 0 ||
+            strcmp(pszName, "gml:descriptionReference") == 0 ||
+            strcmp(pszName, "gml:identifier") == 0 ||
+            strcmp(pszName, "gml:boundedBy") == 0 ||
             strcmp(pszName, "@gml:id") == 0);
 }
 
@@ -3395,11 +3398,9 @@ static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
   if (psFilterNode) {
 
     if (psFilterNode->eType == FILTER_NODE_TYPE_COMPARISON &&
-        (strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 ||
-         strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0) && 
-         psFilterNode->psLeftNode != NULL &&
-         psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME &&
-         FLTIsGMLDefaultProperty(psFilterNode->psLeftNode->pszValue) )
+        psFilterNode->psLeftNode != NULL &&
+        psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME &&
+        FLTIsGMLDefaultProperty(psFilterNode->psLeftNode->pszValue) )
     {
         return;
     }
@@ -3583,7 +3584,9 @@ int FLTCheckInvalidOperand(FilterEncodingNode *psFilterNode)
         psFilterNode->psLeftNode != NULL &&
         psFilterNode->psLeftNode->eType == FILTER_NODE_TYPE_PROPERTYNAME)
     {
-        if( strcmp(psFilterNode->psLeftNode->pszValue, "boundedBy") == 0 )
+        if( strcmp(psFilterNode->psLeftNode->pszValue, "gml:boundedBy") == 0 &&
+            strcmp(psFilterNode->pszValue, "PropertyIsNull") != 0 &&
+            strcmp(psFilterNode->pszValue, "PropertyIsNil") != 0 )
         {
             msSetError(MS_MISCERR, "Operand '%s' is invalid in comparison.",
                        "FLTCheckInvalidOperand()", psFilterNode->psLeftNode->pszValue);
