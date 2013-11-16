@@ -1275,6 +1275,11 @@ int msProcessProjection(projectionObj *p)
     /*WMS 1.3.0: AUTO2:auto_crs_id,factor,lon0,lat0*/
     return _msProcessAutoProjection(p);
   }
+  
+  if(strlen(p->args[0]) == 0){
+    return -1;  
+  }
+  
   msAcquireLock( TLOCK_PROJ );
 #if PJ_VERSION < 480
   if( !(p->proj = pj_init(p->numargs, p->args)) ) {
