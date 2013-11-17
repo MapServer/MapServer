@@ -166,6 +166,7 @@ static int addResult(resultCacheObj *cache, shapeObj *shape)
   cache->results[i].resultindex = shape->resultindex;
   cache->numresults++;
 
+  cache->previousBounds = cache->bounds;
   if(cache->numresults == 1)
     cache->bounds = shape->bounds;
   else

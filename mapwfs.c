@@ -1653,6 +1653,7 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
                                         int iNumberOfFeatures,
                                         int nMatchingFeatures,
                                         int maxfeatures,
+                                        int bHasNextFeatures,
                                         int nWFSVersion )
 
 {
@@ -1798,8 +1799,8 @@ static int msWFSGetFeature_GMLPreamble( mapObj *map,
             nNextStartIndex = paramsObj->nStartIndex;
         else
             nNextStartIndex = 0;
-        if( maxfeatures > 0 && nMatchingFeatures > 0 &&
-            (iResultTypeHits == 1 || iNumberOfFeatures + nNextStartIndex < nMatchingFeatures) )
+        if( maxfeatures > 0 && (bHasNextFeatures || (nMatchingFeatures > 0 &&
+            (iResultTypeHits == 1 || iNumberOfFeatures + nNextStartIndex < nMatchingFeatures))) )
         {
             msIO_printf("\n");
             msIO_printf("   next=\"");
@@ -2188,8 +2189,10 @@ static int msWFSRetrieveFeatures(mapObj* map,
                               const char* pszFeatureId,
                               char **layers,
                               int numlayers,
+                              int maxfeatures,
                               int nWFSVersion,
-                              int* pnOutTotalFeatures)
+                              int* pnOutTotalFeatures,
+                              int* pnHasNext)
 {
   int i, j;
   int iNumberOfFeatures = 0;
@@ -2535,8 +2538,29 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       iNumberOfFeatures += GET_LAYER(map, j)->resultcache->numresults;
     }
   }
-  *pnOutTotalFeatures = iNumberOfFeatures;
+
+  /* If maxfeatures is set, we have actually asked for 1 more feature than asked */
+  /* to be able to know if there are next features. So it is now time to */
+  /* remove this extra unasked feature from the result cache */
+  if( maxfeatures >= 0 && iNumberOfFeatures == maxfeatures + 1 )
+  {
+      int lastJ = -1;
+      for(j=0; j<map->numlayers; j++) {
+          if (GET_LAYER(map, j)->resultcache && GET_LAYER(map, j)->resultcache->numresults > 0) {
+              lastJ = j;
+          }
+      }
+      GET_LAYER(map, lastJ)->resultcache->numresults --;
+      GET_LAYER(map, lastJ)->resultcache->bounds = GET_LAYER(map, lastJ)->resultcache->previousBounds;
+      iNumberOfFeatures --;
+      if( pnHasNext )
+          *pnHasNext = MS_TRUE;
+  }
+  else if( pnHasNext )
+      *pnHasNext = MS_FALSE;
   
+  *pnOutTotalFeatures = iNumberOfFeatures;
+
   return MS_SUCCESS;
 }
 
@@ -2766,6 +2790,7 @@ static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsOb
 
   /* maxfeatures set */
   if (maxfeatures >= 0) {
+    int extrafeature = 1;
     for(j=0; j<map->numlayers; j++) {
       layerObj *lp;
       lp = GET_LAYER(map, j);
@@ -2773,10 +2798,30 @@ static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsOb
         /*over-ride the value only if it is unset or wfs maxfeatures is
           lower that what is currently set*/
         if (lp->maxfeatures <=0 || (lp->maxfeatures > 0 && maxfeatures < lp->maxfeatures))
-          lp->maxfeatures = maxfeatures;
+        {
+          /* TODO: We don't handle DESC sorting, as it would mean to be */
+          /* able to evict the first property, which mapquery cannot handle */
+          /* This would have impact on the resultcache.bounds */
+          if( lp->sortBy.nProperties > 0 )
+          {
+            int k;
+            int countDesc = 1;
+            for(k=0;k<lp->sortBy.nProperties;k++)
+            {
+                if( lp->sortBy.properties[k].sortOrder == SORT_DESC )
+                    countDesc ++;
+            }
+            if( countDesc > 0 )
+                extrafeature = 0;
+          }
+
+          /* + 1 to be able to detect if there are more features for a next request */
+          lp->maxfeatures = maxfeatures + extrafeature;
+        }
       }
     }
-    map->query.maxfeatures = maxfeatures;
+    /* + 1 to be able to detect if there are more features for a next request */
+    map->query.maxfeatures = maxfeatures + extrafeature;
   }
 
   /* startindex set */
@@ -2926,8 +2971,10 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
                                 paramsObj->pszFeatureId,
                                 layers,
                                 numlayers,
+                                -1,
                                 nWFSVersion,
-                                &nMatchingFeatures);
+                                &nMatchingFeatures,
+                                NULL);
 
             /* Restore the original result cache */
             for(j=0; j<map->numlayers; j++) {
@@ -3163,6 +3210,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
   int iNumberOfFeatures = 0;
   int iResultTypeHits = 0;
   int nMatchingFeatures = -1;
+  int bHasNextFeatures = MS_FALSE;
 
   char** papszGMLGroups = NULL;
   char** papszGMLIncludeItems = NULL;
@@ -3598,8 +3646,10 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                            paramsObj->pszFeatureId,
                            layers,
                            numlayers,
+                           maxfeatures,
                            nWFSVersion,
-                           &iNumberOfFeatures);
+                           &iNumberOfFeatures,
+                           &bHasNextFeatures);
   if( status != MS_SUCCESS )
   {
       msFreeCharArray(layers, numlayers);
@@ -3658,6 +3708,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
                                  iNumberOfFeatures,
                                  nMatchingFeatures,
                                  maxfeatures,
+                                 bHasNextFeatures,
                                  nWFSVersion );
     if(status != MS_SUCCESS) {
       if( old_context != NULL )
@@ -3824,6 +3875,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
   int iNumberOfFeatures = 0;
   int iResultTypeHits = 0;
   int nMatchingFeatures = -1;
+  int bHasNextFeatures = MS_FALSE;
 
   const char* pszTypeName;
   layerObj *lp;
@@ -4018,8 +4070,10 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
                            paramsObj->pszFeatureId,
                            (char**) &pszTypeName,
                            1,
+                           maxfeatures,
                            nWFSVersion,
-                           &iNumberOfFeatures);
+                           &iNumberOfFeatures,
+                           &bHasNextFeatures);
   if( status != MS_SUCCESS )
   {
       msFree(sBBoxSrs);
@@ -4058,6 +4112,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
                                  iNumberOfFeatures,
                                  nMatchingFeatures,
                                  maxfeatures,
+                                 bHasNextFeatures,
                                  nWFSVersion );
 
   if(status == MS_SUCCESS && maxfeatures != 0 && iResultTypeHits == 0)

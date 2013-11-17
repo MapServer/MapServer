@@ -1259,6 +1259,9 @@ extern "C" {
 #endif /* SWIG */
     int numresults;
     rectObj bounds;
+#ifndef SWIG
+    rectObj previousBounds; /* bounds at previous iteration */
+#endif
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
