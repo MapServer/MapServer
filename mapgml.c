@@ -1972,10 +1972,8 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
     /* check optional */
     if(numoptionalitems == 1 && strcasecmp("all", optionalitems[0]) == 0) {
       item->minOccurs = 0;
-    } else {
-      if(nummandatoryitems == 1 && strcasecmp("all", mandatoryitems[0]) == 0) {
-        item->minOccurs = 1;
-      }
+    } else if( numoptionalitems > 0) {
+      item->minOccurs = 1;
       for(j=0; j<numoptionalitems; j++) {
         if(strcasecmp(layer->items[i], optionalitems[j]) == 0)
           item->minOccurs = 0;
@@ -1983,9 +1981,14 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
     }
 
     /* check mandatory */
-    for(j=0; j<nummandatoryitems; j++) {
-      if(strcasecmp(layer->items[i], mandatoryitems[j]) == 0)
-        item->minOccurs = 1;
+    if(nummandatoryitems == 1 && strcasecmp("all", mandatoryitems[0]) == 0) {
+      item->minOccurs = 1;
+    } else if( nummandatoryitems > 0) {
+      item->minOccurs = 0;  
+      for(j=0; j<nummandatoryitems; j++) {
+        if(strcasecmp(layer->items[i], mandatoryitems[j]) == 0)
+          item->minOccurs = 1;
+      }
     }
 
     /* check default */
