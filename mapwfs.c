@@ -3726,7 +3726,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
   if( psFormat == NULL ) {
     if(maxfeatures != 0 && iResultTypeHits == 0)
     {
+      layerObj* lp;
       int i;
+      int bWFS2MultipleFeatureCollection = MS_FALSE;
 
       /* Would make sense for WFS 1.1.0 too ! See #3576 */
       int bUseURN = (nWFSVersion == OWS_2_0_0);
@@ -3738,7 +3740,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
 
       for(i=0;i<map->numlayers;i++)
       {
-        layerObj* lp = GET_LAYER(map, i);
+        lp = GET_LAYER(map, i);
         if( papszGMLGroups[i] )
             msInsertHashTable(&(lp->metadata), "GML_GROUPS", papszGMLGroups[i]);
         if( papszGMLIncludeItems[i] )
@@ -3747,12 +3749,86 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
             msInsertHashTable(&(lp->metadata), "GML_GEOMETRIES", papszGMLGeometries[i]);
       }
 
-      status = msGMLWriteWFSQuery(map, stdout,
-                                  gmlinfo.user_namespace_prefix,
-                                  outputformat,
-                                  nWFSVersion,
-                                  bUseURN,
-                                  MS_FALSE);
+      /* For WFS 2.0, when we request several types, we must present each type */
+      /* in its own FeatureCollection (§ 11.3.3.5 ) */
+      if( nWFSVersion >= OWS_2_0_0 && iResultTypeHits != 1 )
+      {
+          int nLayersWithFeatures = 0;
+          for(i=0; i<map->numlayers; i++) {
+              lp = GET_LAYER(map, i);
+              if(lp->resultcache && lp->resultcache->numresults > 0)
+                  nLayersWithFeatures ++;
+          }
+          if( nLayersWithFeatures > 1 )
+          {
+            char timestring[100];
+            resultCacheObj** saveResultCache = (resultCacheObj** )
+                    msSmallMalloc( map->numlayers * sizeof(resultCacheObj*));
+            int iLastNonEmptyLayer = -1;
+
+            msWFSGetFeature_GetTimeStamp(timestring, sizeof(timestring));
+
+            /* Emit global bounds */
+            msGMLWriteWFSBounds(map, stdout, "  ", outputformat, nWFSVersion, bUseURN);
+
+            /* Save the result cache that contains the features that we want to */
+            /* emit in the response */
+            for(i=0; i<map->numlayers; i++) {
+              lp = GET_LAYER(map, i);
+              saveResultCache[i] = lp->resultcache;
+              if( lp->resultcache  && lp->resultcache->numresults > 0) {
+                  iLastNonEmptyLayer = i;
+              }
+              lp->resultcache = NULL;
+            }
+
+            /* Just dump one layer at a time */
+            for(i=0;i<map->numlayers;i++) {
+              lp = GET_LAYER(map, i);
+              lp->resultcache = saveResultCache[i];
+              if( lp->resultcache  && lp->resultcache->numresults > 0) {
+                msIO_fprintf(stdout, "  <wfs:member>\n");
+                msIO_fprintf(stdout, "   <wfs:FeatureCollection timeStamp=\"%s\" numberMatched=\"", timestring);
+                if( i < iLastNonEmptyLayer || nMatchingFeatures >= 0 )
+                    msIO_fprintf(stdout, "%d", lp->resultcache->numresults );
+                else
+                    msIO_fprintf(stdout, "unknown" );
+                msIO_fprintf(stdout, "\" numberReturned=\"%d\">\n", lp->resultcache->numresults );
+
+                msGMLWriteWFSQuery(map, stdout,
+                                    gmlinfo.user_namespace_prefix,
+                                    outputformat,
+                                    nWFSVersion,
+                                    bUseURN,
+                                    MS_FALSE);
+                msIO_fprintf(stdout, "   </wfs:FeatureCollection>\n");
+                msIO_fprintf(stdout, "  </wfs:member>\n");
+              }
+              lp->resultcache = NULL;
+            }
+
+            /* Restore for later cleanup */
+            for(i=0; i<map->numlayers; i++) {
+              lp = GET_LAYER(map, i);
+              lp->resultcache = saveResultCache[i];
+            }
+            msFree(saveResultCache);
+
+            bWFS2MultipleFeatureCollection = MS_TRUE;
+         }
+      }
+
+      if( !bWFS2MultipleFeatureCollection )
+      {
+        msGMLWriteWFSQuery(map, stdout,
+                                    gmlinfo.user_namespace_prefix,
+                                    outputformat,
+                                    nWFSVersion,
+                                    bUseURN,
+                                    MS_FALSE);
+      }
+
+      status =  MS_SUCCESS;
     }
   } else {
     mapservObj *mapserv = msAllocMapServObj();

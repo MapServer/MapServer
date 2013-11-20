@@ -1407,43 +1407,21 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 #endif
 }
 
-/*
-** msGMLWriteWFSQuery()
-**
-** Similar to msGMLWriteQuery() but tuned for use with WFS
-*/
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_prefix,
-                       OWSGMLVersion outputformat, int nWFSVersion, int bUseURN,
-                       int bGetPropertyValueRequest)
-{
 #ifdef USE_WFS_SVR
-  int status;
-  int i,j,k;
-  layerObj *lp=NULL;
-  shapeObj shape;
+void msGMLWriteWFSBounds(mapObj *map, FILE *stream, const char *tab,
+                         OWSGMLVersion outputformat, int nWFSVersion, int bUseURN)
+{
   rectObj  resultBounds = {-1.0,-1.0,-1.0,-1.0};
 
-  gmlGroupListObj *groupList=NULL;
-  gmlItemListObj *itemList=NULL;
-  gmlConstantListObj *constantList=NULL;
-  gmlGeometryListObj *geometryList=NULL;
-  gmlItemObj *item=NULL;
-  gmlConstantObj *constant=NULL;
-
-  const char *namespace_prefix=NULL;
-  int bSwapAxis = 0;
-  double tmp;
-
-  msInitShape(&shape);
-
   /*add a check to see if the map projection is set to be north-east*/
-  bSwapAxis = msIsAxisInvertedProj(&(map->projection));
+  int bSwapAxis = msIsAxisInvertedProj(&(map->projection));
 
   /* Need to start with BBOX of the whole resultset */
-  if (!bGetPropertyValueRequest &&
-      msGetQueryResultBounds(map, &resultBounds) > 0) {
+  if (msGetQueryResultBounds(map, &resultBounds) > 0) {
     char* srs = NULL;
     if (bSwapAxis) {
+      double tmp;
+
       tmp = resultBounds.minx;
       resultBounds.minx =  resultBounds.miny;
       resultBounds.miny = tmp;
@@ -1469,9 +1447,47 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
             srs = msStrdup(constsrs);
     }
 
-    gmlWriteBounds(stream, outputformat, &resultBounds, srs, "      ",
+    gmlWriteBounds(stream, outputformat, &resultBounds, srs, tab,
                    (nWFSVersion == OWS_2_0_0) ? "wfs" : "gml");
     msFree(srs);
+  }
+}
+
+#endif
+
+/*
+** msGMLWriteWFSQuery()
+**
+** Similar to msGMLWriteQuery() but tuned for use with WFS
+*/
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_prefix,
+                       OWSGMLVersion outputformat, int nWFSVersion, int bUseURN,
+                       int bGetPropertyValueRequest)
+{
+#ifdef USE_WFS_SVR
+  int status;
+  int i,j,k;
+  layerObj *lp=NULL;
+  shapeObj shape;
+
+  gmlGroupListObj *groupList=NULL;
+  gmlItemListObj *itemList=NULL;
+  gmlConstantListObj *constantList=NULL;
+  gmlGeometryListObj *geometryList=NULL;
+  gmlItemObj *item=NULL;
+  gmlConstantObj *constant=NULL;
+
+  const char *namespace_prefix=NULL;
+  int bSwapAxis;
+
+  msInitShape(&shape);
+
+  /*add a check to see if the map projection is set to be north-east*/
+  bSwapAxis = msIsAxisInvertedProj(&(map->projection));
+
+  /* Need to start with BBOX of the whole resultset */
+  if (!bGetPropertyValueRequest) {
+    msGMLWriteWFSBounds(map, stream, "      ", outputformat, nWFSVersion, bUseURN);
   }
   /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {

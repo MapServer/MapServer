@@ -407,6 +407,10 @@ MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *names
 
 
 #ifdef USE_WFS_SVR
+
+void msGMLWriteWFSBounds(mapObj *map, FILE *stream, const char *tab,
+                         OWSGMLVersion outputformat, int nWFSVersion, int bUseURN);
+
 MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *wfs_namespace,
                                      OWSGMLVersion outputformat, int nWFSVersion, int bUseURN,
                                      int bGetPropertyValueRequest);
