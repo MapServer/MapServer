@@ -151,7 +151,6 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
         int symbolNum;
         styleObj imgStyle;
         symbolObj *symbol=NULL;
-        for(symbolNum=0; symbolNum<theclass->numstyles; symbolNum++)
         symbolNum = msAddImageSymbol(&(map->symbolset), msBuildPath(szPath, map->mappath, theclass->keyimage));
         if(symbolNum == -1) {
           msSetError(MS_IMGERR, "Failed to open legend key image", "msCreateLegendIcon()");
