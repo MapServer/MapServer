@@ -1260,7 +1260,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       nParts = SWAP_FOUR_BYTES(nParts);
     }
 
-    if (nPoints < 0 || nParts < 0 ||
+    if (nPoints < 0 || nParts <= 0 ||
         nPoints > 50 * 1000 * 1000 || nParts > 10 * 1000 * 1000) {
       shape->type = MS_SHAPE_NULL;
       msSetError(MS_SHPERR, "Corrupted feature encountered.  hEntity = %d, nPoints =%d, nParts = %d", "msSHPReadShape()",
