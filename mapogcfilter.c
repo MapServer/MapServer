@@ -3081,7 +3081,10 @@ char *FLTGetIsLikeComparisonSQLExpression(FilterEncodingNode *psFilterNode,
 
   strlcat(szBuffer, "'", bufferSize);
   if (lp->connectiontype != MS_OGR) {
-    strlcat(szBuffer, " escape '", bufferSize);
+    if (lp->connectiontype == MS_POSTGIS && pszEscape[0] == '\\')
+        strlcat(szBuffer, " escape E'", bufferSize);
+    else
+        strlcat(szBuffer, " escape '", bufferSize);
     szTmp[0] = pszEscape[0];
     if (pszEscape[0] == '\\') {
       szTmp[1] = '\\';
