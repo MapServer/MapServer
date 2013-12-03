@@ -106,6 +106,7 @@ msPostGISLayerInfo *msPostGISCreateLayerInfo(void)
   layerinfo->rownum = 0;
   layerinfo->version = 0;
   layerinfo->paging = MS_TRUE;
+  layerinfo->force2d = MS_TRUE;
   return layerinfo;
 }
 
@@ -1651,13 +1652,20 @@ char *msPostGISBuildSQLItems(layerObj *layer)
     ** which includes a 2D force in it) removes ordinates we don't
     ** need, saving transfer and encode/decode time.
     */
+    char *force2d = "";
 #if TRANSFER_ENCODING == 64
-    static char *strGeomTemplate = "encode(ST_AsBinary(ST_Force_2D(\"%s\"),'%s'),'base64') as geom,\"%s\"";
+    static char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
 #else
-    static char *strGeomTemplate = "encode(ST_AsBinary(ST_Force_2D(\"%s\"),'%s'),'hex') as geom,\"%s\"";
+    static char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
 #endif
-    strGeom = (char*)msSmallMalloc(strlen(strGeomTemplate) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid));
-    sprintf(strGeom, strGeomTemplate, layerinfo->geomcolumn, strEndian, layerinfo->uid);
+    if( layerinfo->force2d ) {
+      if( layerinfo->version >= 20100 )
+        force2d = "ST_Force2D";
+      else
+        force2d = "ST_Force_2D";
+    }
+    strGeom = (char*)msSmallMalloc(strlen(strGeomTemplate) + strlen(force2d) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid));
+    sprintf(strGeom, strGeomTemplate, force2d, layerinfo->geomcolumn, strEndian, layerinfo->uid);
   }
 
   if( layer->debug > 1 ) {
@@ -2220,6 +2228,7 @@ int msPostGISLayerOpen(layerObj *layer)
 #ifdef USE_POSTGIS
   msPostGISLayerInfo  *layerinfo;
   int order_test = 1;
+  const char* force2d_processing;
 
   assert(layer != NULL);
 
@@ -2327,6 +2336,13 @@ int msPostGISLayerOpen(layerObj *layer)
   if( layerinfo->version == MS_FAILURE ) return MS_FAILURE;
   if (layer->debug)
     msDebug("msPostGISLayerOpen: Got PostGIS version %d.\n", layerinfo->version);
+
+  force2d_processing = msLayerGetProcessingKey( layer, "FORCE2D" );
+  if(force2d_processing && !strcasecmp(force2d_processing,"no")) {
+    layerinfo->force2d = MS_FALSE;
+  }
+  if (layer->debug)
+    msDebug("msPostGISLayerOpen: Forcing 2D geometries: %s.\n", (layerinfo->force2d)?"yes":"no");
 
   /* Save the layerinfo in the layerObj. */
   layer->layerinfo = (void*)layerinfo;

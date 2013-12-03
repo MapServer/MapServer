@@ -64,6 +64,7 @@ typedef struct {
   int         endian;      /* Endianness of the mapserver host */
   int         version;     /* PostGIS version of the database */
   int         paging;      /* Driver handling of pagination, enabled by default */
+  int         force2d;     /* Pass geometry through ST_Force2D */
 }
 msPostGISLayerInfo;
 
