@@ -665,9 +665,9 @@ static void writeColor(FILE *stream, int indent, const char *name, colorObj *def
     sprintf(buffer+4, "%02x", color->blue);
     sprintf(buffer+6, "%02x", color->alpha);
     *(buffer+8) = 0;
-    fprintf(stream, "%s \"#%s\"\n", name, buffer);
+    msIO_fprintf(stream, "%s \"#%s\"\n", name, buffer);
   } else {
-    fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
+    msIO_fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
   }
 #endif
 }
