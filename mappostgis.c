@@ -1878,11 +1878,13 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
   char *strFilter = 0;
   char *strUid = 0;
   char *strWhere = 0;
+  char *strOrderBy = 0;
   char *strLimit = 0;
   char *strOffset = 0;
   size_t strRectLength = 0;
   size_t strFilterLength = 0;
   size_t strUidLength = 0;
+  size_t strOrderByLength = 0;
   size_t strLimitLength = 0;
   size_t strOffsetLength = 0;
   size_t bufferSize = 0;
@@ -1962,8 +1964,17 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     strUidLength = strlen(strUid);
   }
 
+  /* Populate strOrderBy, if necessary */
+  if( layer->sortBy.nProperties > 0 ) {
+    char* pszTmp = msLayerBuildSQLOrderBy(layer);
+    strOrderBy = msStringConcatenate(strOrderBy, " ORDER BY ");
+    strOrderBy = msStringConcatenate(strOrderBy, pszTmp);
+    msFree(pszTmp);
+    strOrderByLength = strlen(strOrderBy);
+  }
+
   bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength
-               + strLimitLength + strOffsetLength;
+               + strLimitLength + strOffsetLength + strOrderByLength;
   strWhere = (char*)msSmallMalloc(bufferSize);
   *strWhere = '\0';
   if ( strRect ) {
@@ -1987,6 +1998,12 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     free(strUid);
     insert_and++;
   }
+
+  if ( strOrderBy ) {
+    strlcat(strWhere, strOrderBy, bufferSize);
+    free(strOrderBy);
+  }
+
   if ( strLimit ) {
     strlcat(strWhere, strLimit, bufferSize);
     free(strLimit);
@@ -2054,6 +2071,7 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
 
   strSQL = msSmallMalloc(strlen(strSQLTemplate) + strlen(strFrom) + strlen(strItems) + strlen(strWhere));
   sprintf(strSQL, strSQLTemplate, strItems, strFrom, strWhere);
+
   if (strItems) free(strItems);
   if (strFrom) free(strFrom);
   if (strWhere) free(strWhere);

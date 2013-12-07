@@ -354,7 +354,7 @@ int msGetSymbolIndex(symbolSetObj *symbols, char *name, int try_addimage_if_notf
 /*
 ** Return the index number for a given layer based on its name.
 */
-int msGetLayerIndex(mapObj *map, char *name)
+int msGetLayerIndex(mapObj *map, const char *name)
 {
   int i;
 
@@ -369,7 +369,8 @@ int msGetLayerIndex(mapObj *map, char *name)
   return(-1);
 }
 
-int msGetClassIndex(layerObj *layer, char *name)
+static
+int msGetClassIndex(layerObj *layer, const char *name)
 {
   int i;
 
@@ -1374,16 +1375,101 @@ static int loadProjection(projectionObj *p)
 
 
 /************************************************************************/
+/*                     msLoadProjectionStringEPSGLike                   */
+/************************************************************************/
+
+static int msLoadProjectionStringEPSGLike(projectionObj *p, const char *value,
+                                          const char* pszPrefix,
+                                          int bFollowEPSGAxisOrder)
+{
+    size_t buffer_size = 0;
+    char *init_string =  NULL;
+    const char *code;
+    const char *next_sep;
+    size_t prefix_len;
+
+    prefix_len = strlen(pszPrefix);
+    if( strncasecmp(value, pszPrefix, prefix_len) != 0 )
+        return -1;
+
+    code = value + prefix_len;
+    next_sep = strchr(code, pszPrefix[prefix_len-1]);
+    if( next_sep != NULL )
+        code = next_sep + 1;
+
+    buffer_size = 10 + strlen(code) + 1;
+    init_string = (char*)msSmallMalloc(buffer_size);
+
+    /* translate into PROJ.4 format. */
+    snprintf( init_string, buffer_size, "init=epsg:%s", code );
+
+    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+    p->args[0] = init_string;
+    p->numargs = 1;
+
+    if( bFollowEPSGAxisOrder && msIsAxisInverted(atoi(code))) {
+      p->args[1] = msStrdup("+epsgaxis=ne");
+      p->numargs = 2;
+    }
+
+    return 0;
+}
+
+/************************************************************************/
+/*                     msLoadProjectionStringCRSLike                    */
+/************************************************************************/
+
+static int msLoadProjectionStringCRSLike(projectionObj *p, const char *value,
+                                         const char* pszPrefix)
+{
+    char init_string[100];
+    const char *id;
+    const char *next_sep;
+    size_t prefix_len;
+
+    prefix_len = strlen(pszPrefix);
+    if( strncasecmp(value, pszPrefix, prefix_len) != 0 )
+        return -1;
+
+    id = value + prefix_len;
+    next_sep = strchr(id, pszPrefix[prefix_len-1]);
+    if( next_sep != NULL )
+        id = next_sep + 1;
+
+    init_string[0] = '\0';
+
+    if( strcasecmp(id,"84") == 0 || strcasecmp(id,"CRS84") == 0 )
+      strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
+    else if( strcasecmp(id,"83") == 0 || strcasecmp(id,"CRS83") == 0 )
+      strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
+    else if( strcasecmp(id,"27") == 0 || strcasecmp(id,"CRS27") == 0 )
+      strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
+    else {
+      msSetError( MS_PROJERR,
+                  "Unrecognised OGC CRS def '%s'.",
+                  "msLoadProjectionString()",
+                  value );
+      return -1;
+    }
+
+    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+    p->args[0] = msStrdup(init_string);
+    p->numargs = 1;
+
+    return 0;
+}
+
+/************************************************************************/
 /*                         msLoadProjectionStringEPSG                   */
 /*                                                                      */
-/*      Checks fro EPSG type projection and set the axes for a          */
+/*      Checks for EPSG type projection and set the axes for a          */
 /*      certain code ranges.                                            */
-/*      Use for now in WMS 1.3.0                                        */
+/*      Use for now in WMS 1.3.0 and WFS >= 1.1.0                       */
 /************************************************************************/
 int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 {
 #ifdef USE_PROJ
-  if(p) msFreeProjection(p);
+  msFreeProjection(p);
 
   p->gt.need_geotransform = MS_FALSE;
 #ifdef USE_PROJ_FASTPATHS
@@ -1396,24 +1482,8 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
   }
 #endif
 
-
-  if (strncasecmp(value, "EPSG:", 5) == 0) {
-    size_t buffer_size = 10 + strlen(value+5) + 1;
-    char *init_string = (char*)msSmallMalloc(buffer_size);
-
-    /* translate into PROJ.4 format. */
-    snprintf(init_string, buffer_size, "init=epsg:%s", value+5 );
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = init_string;
-    p->numargs = 1;
-
-
-    if( msIsAxisInverted(atoi(value+5))) {
-      p->args[1] = msStrdup("+epsgaxis=ne");
-      p->numargs = 2;
-    }
-
+  if( msLoadProjectionStringEPSGLike(p, value, "EPSG:", MS_TRUE) == 0 )
+  {
     return msProcessProjection( p );
   }
 
@@ -1426,13 +1496,12 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 #endif
 }
 
-
 int msLoadProjectionString(projectionObj *p, const char *value)
 {
   p->gt.need_geotransform = MS_FALSE;
 
 #ifdef USE_PROJ
-  if(p) msFreeProjection(p);
+  msFreeProjection(p);
 
 
   /*
@@ -1463,194 +1532,23 @@ int msLoadProjectionString(projectionObj *p, const char *value)
     p->args = (char**)msSmallMalloc(sizeof(char*));
     p->args[0] = msStrdup(value);
     p->numargs = 1;
-  } else if (strncasecmp(value, "EPSG:", 5) == 0) {
-    size_t buffer_size = 10 + strlen(value+5) + 1;
-    char *init_string = (char*)msSmallMalloc(buffer_size);
-
-    /* translate into PROJ.4 format. */
-    snprintf( init_string, buffer_size, "init=epsg:%s", value+5);
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = init_string;
-    p->numargs = 1;
-  } else if (strncasecmp(value, "urn:ogc:def:crs:EPSG:",21) == 0) {
-    /* this is very preliminary urn support ... expand later */
-    size_t buffer_size = 0;
-    char *init_string =  NULL;
-    const char *code;
-
-    code = value + 21;
-
-    while( *code != ':' && *code != '\0' )
-      code++;
-    if( *code == ':' )
-      code++;
-
-    buffer_size = 10 + strlen(code) + 1;
-    init_string = (char*)msSmallMalloc(buffer_size);
-
-    /* translate into PROJ.4 format. */
-    snprintf( init_string, buffer_size, "init=epsg:%s", code );
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = init_string;
-    p->numargs = 1;
-
-    if( msIsAxisInverted(atoi(code))) {
-      p->args[1] = msStrdup("+epsgaxis=ne");
-      p->numargs = 2;
-    }
-  } else if (strncasecmp(value, "urn:x-ogc:def:crs:EPSG:",23) == 0) {
+  } else if (msLoadProjectionStringEPSGLike(p, value, "EPSG:", MS_FALSE) == 0 ) {
+   /* Assume lon/lat ordering. Use msLoadProjectionStringEPSG() if wanting to follow EPSG axis */
+  } else if (msLoadProjectionStringEPSGLike(p, value, "urn:ogc:def:crs:EPSG:", MS_TRUE) == 0 ) {
+  } else if (msLoadProjectionStringEPSGLike(p, value, "urn:EPSG:geographicCRS:", MS_TRUE) == 0 ) {
+  } else if (msLoadProjectionStringEPSGLike(p, value, "urn:x-ogc:def:crs:EPSG:", MS_TRUE) == 0 ) {
     /*this case is to account for OGC CITE tests where x-ogc was used
       before the ogc name became an official NID. Note also we also account
       for the fact that a space for the version of the espg is not used with CITE tests.
       (Syntax used could be urn:ogc:def:objectType:authority:code)*/
-
-    size_t buffer_size = 0;
-    char *init_string =  NULL;
-    const char *code;
-
-    if (value[23] == ':')
-      code = value + 23;
-    else
-      code = value + 22;
-
-    while( *code != ':' && *code != '\0' )
-      code++;
-    if( *code == ':' )
-      code++;
-
-    buffer_size = 10 + strlen(code) + 1;
-    init_string = (char*)msSmallMalloc(buffer_size);
-
-    /* translate into PROJ.4 format. */
-    snprintf( init_string, buffer_size, "init=epsg:%s", code );
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = init_string;
-    p->numargs = 1;
-
-    if( msIsAxisInverted(atoi(code))) {
-      p->args[1] = msStrdup("+epsgaxis=ne");
-      p->numargs = 2;
-    }
-
-  } else if (strncasecmp(value, "urn:ogc:def:crs:OGC:",20) == 0 ) {
-    /* this is very preliminary urn support ... expand later */
-    char init_string[100];
-    const char *id;
-
-    id = value + 20;
-    while( *id != ':' && *id == '\0' )
-      id++;
-
-    if( *id == ':' )
-      id++;
-
-    init_string[0] = '\0';
-
-    if( strcasecmp(id,"CRS84") == 0 )
-      strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
-    else if( strcasecmp(id,"CRS83") == 0 )
-      strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
-    else if( strcasecmp(id,"CRS27") == 0 )
-      strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
-    else {
-      msSetError( MS_PROJERR,
-                  "Unrecognised OGC CRS def '%s'.",
-                  "msLoadProjectionString()",
-                  value );
-      return -1;
-    }
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = msStrdup(init_string);
-    p->numargs = 1;
-  }
-  /* URI projection support */
-  else if (EQUALN("http://www.opengis.net/def/crs/EPSG/", value, 36)) {
-    /* this is very preliminary urn support ... expand later */
-    char init_string[100];
-    const char *code;
-
-    code = value + 36;
-    while( *code != '/' && *code != '\0' )
-      code++;
-    if( *code == '/' )
-      code++;
-
-    /* translate into PROJ.4 format. */
-    snprintf( init_string, sizeof(init_string), "init=epsg:%s", code );
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = msStrdup(init_string);
-    p->numargs = 1;
-
-    if( msIsAxisInverted(atoi(code))) {
-      p->args[1] = msStrdup("+epsgaxis=ne");
-      p->numargs = 2;
-    }
-  } else if (EQUALN("http://www.opengis.net/def/crs/OGC/", value, 35) ) {
-    char init_string[100];
-    const char *id;
-
-    id = value + 35;
-    while( *id != '/' && *id == '\0' )
-      id++;
-    if( *id == '/' )
-      id++;
-
-    init_string[0] = '\0';
-
-    if( strcasecmp(id,"CRS84") == 0 )
-      strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
-    else if( strcasecmp(id,"CRS83") == 0 )
-      strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
-    else if( strcasecmp(id,"CRS27") == 0 )
-      strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
-    else {
-      msSetError( MS_PROJERR,
-                  "Unrecognised OGC CRS def '%s'.",
-                  "msLoadProjectionString()",
-                  value );
-      return -1;
-    }
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = msStrdup(init_string);
-    p->numargs = 1;
-  /* Mandatory support for this URI format specified in WFS1.1 (also in 1.0?) */
-  } else if (EQUALN("http://www.opengis.net/gml/srs/epsg.xml#", value, 40)) {
-  	/* We assume always lon/lat ordering, as that is what GeoServer does... */
-  	const char *code;
-
-  	code = value + 40;
-
-  	p->args = (char **) msSmallMalloc(sizeof(char *));
-  	/* translate into PROJ.4 format as we go */
-  	p->args[0] = (char *) msSmallMalloc(11 + strlen(code));
-  	snprintf(p->args[0], 11 + strlen(code), "init=epsg:%s", code);
-  	p->numargs = 1;
-
-  } else if (strncasecmp(value, "CRS:",4) == 0 ) {
-    char init_string[100];
-    init_string[0] = '\0';
-    if (atoi(value+4) == 84)
-      strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
-    else if (atoi(value+4) == 83)
-      strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
-    else if (atoi(value+4) == 27)
-      strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
-    else {
-      msSetError( MS_PROJERR,
-                  "Unrecognised OGC CRS def '%s'.",
-                  "msLoadProjectionString()",
-                  value );
-      return -1;
-    }
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = msStrdup(init_string);
-    p->numargs = 1;
+  } else if (msLoadProjectionStringCRSLike(p, value, "urn:ogc:def:crs:OGC:") == 0 ) {
+  } else if (msLoadProjectionStringEPSGLike(p, value, "http://www.opengis.net/def/crs/EPSG/", MS_TRUE) == 0 ) {
+    /* URI projection support */
+  } else if (msLoadProjectionStringCRSLike(p, value, "http://www.opengis.net/def/crs/OGC/") == 0 ) {
+    /* Mandatory support for this URI format specified in WFS1.1 (also in 1.0?) */
+  } else if (msLoadProjectionStringEPSGLike(p, value, "http://www.opengis.net/gml/srs/epsg.xml#", MS_FALSE) == 0 ) {
+    /* We assume always lon/lat ordering, as that is what GeoServer does... */
+  } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0 ) {
   }
   /*
    * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
@@ -3907,6 +3805,9 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->utfitemindex = -1;
   
   layer->encoding = NULL;
+  
+  layer->sortBy.nProperties = 0;
+  layer->sortBy.properties = NULL;
 
   return(0);
 }
@@ -4025,6 +3926,10 @@ int freeLayer(layerObj *layer)
 
   freeExpression(&(layer->utfdata));
   msFree(layer->utfitem);
+  
+  for(i=0;i<layer->sortBy.nProperties;i++)
+      msFree(layer->sortBy.properties[i].item);
+  msFree(layer->sortBy.properties);
 
   return MS_SUCCESS;
 }
@@ -7137,6 +7042,7 @@ void initResultCache(resultCacheObj *resultcache)
     resultcache->numresults = 0;
     resultcache->cachesize = 0;
     resultcache->bounds.minx = resultcache->bounds.miny = resultcache->bounds.maxx = resultcache->bounds.maxy = -1;
+    resultcache->previousBounds = resultcache->bounds;
     resultcache->usegetshape = MS_FALSE;
   }
 }

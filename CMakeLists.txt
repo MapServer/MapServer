@@ -231,7 +231,7 @@ mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
 mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c
-mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c
+mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c mapwfs20.c
 mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES})
@@ -677,10 +677,14 @@ if( USE_WCS_SVR AND NOT USE_LIBXML2 )
    message(WARNING "WCS 1.1 and 2.0 require libxml2 support but it was not found. WCS 1.1 and 2.0 will not be supported by this build")
 endif( USE_WCS_SVR AND NOT USE_LIBXML2 )
 if( USE_WFS_SVR AND NOT USE_LIBXML2 )
-   message(WARNING "WFS 1.1 requires libxml2 support but it was not found. WFS 1.1 will not be supported by this build")
+   message(WARNING "WFS 1.1 and 2.0 require libxml2 support but it was not found. WFS 1.1 and 2.0 will not be supported by this build")
 endif( USE_WFS_SVR AND NOT USE_LIBXML2 )
 
 if(WITH_SOS)
+    if(NOT USE_OGR)
+      report_dependency_error(WITH_SOS OGR)
+    endif(NOT USE_OGR)
+
   if(USE_PROJ AND USE_LIBXML2)
     set(USE_SOS_SVR 1)
   else(USE_PROJ AND USE_LIBXML2)

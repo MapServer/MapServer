@@ -546,7 +546,9 @@ extern "C" {
     FILTER_NODE_TYPE_GEOMETRY_POINT = 7,
     FILTER_NODE_TYPE_GEOMETRY_LINE = 8,
     FILTER_NODE_TYPE_GEOMETRY_POLYGON = 9,
-    FILTER_NODE_TYPE_FEATUREID = 10
+    FILTER_NODE_TYPE_FEATUREID = 10,
+    FILTER_NODE_TYPE_TEMPORAL = 11,
+    FILTER_NODE_TYPE_TIME_PERIOD = 12
   } FilterNodeType;
 
 
@@ -821,6 +823,7 @@ extern "C" {
 
     int  maxfeatures; /* global maxfeatures */    
     int  startindex;
+    int  only_cache_result_count; /* set to 1 sometimes by WFS 2.0 GetFeature request */
     
     char *item; /* by attribute */
     char *str;
@@ -1261,6 +1264,9 @@ extern "C" {
 #endif /* SWIG */
     int numresults;
     rectObj bounds;
+#ifndef SWIG
+    rectObj previousBounds; /* bounds at previous iteration */
+#endif
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1489,7 +1495,24 @@ extern "C" {
      int n_entries;
      scaleTokenEntryObj *tokens;
   } scaleTokenObj;
-  
+
+#ifndef SWIG
+  typedef enum {
+      SORT_ASC,
+      SORT_DESC
+  } sortOrderEnum;
+
+  typedef struct {
+      char* item;
+      sortOrderEnum sortOrder;
+  } sortByProperties;
+
+  typedef struct {
+      int nProperties;
+      sortByProperties* properties;
+  } sortByClause;
+#endif
+
   struct layerObj {
 
     char *classitem; /* .DBF item to be used for symbol lookup */
@@ -1676,6 +1699,10 @@ extern "C" {
     char *utfitem;
     int utfitemindex;
     expressionObj utfdata;
+
+#ifndef SWIG
+    sortByClause sortBy;
+#endif
   };
 
 
@@ -1989,7 +2016,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* mapfile.c */
 
   MS_DLL_EXPORT int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4);
-  MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, char *name);
+  MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, const char *name);
   MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
   MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
   MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile);
@@ -2368,6 +2395,10 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char *msLayerEscapeSQLParam(layerObj *layer, const char* pszString);
   MS_DLL_EXPORT char *msLayerEscapePropertyName(layerObj *layer, const char* pszString);
 
+  int msLayerSupportsSorting(layerObj *layer);
+  void msLayerSetSort(layerObj *layer, const sortByClause* sortBy);
+  char* msLayerBuildSQLOrderBy(layerObj *layer);
+
   /* These are special because SWF is using these */
   int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
   int msOGRLayerGetItems(layerObj *layer);
@@ -2599,6 +2630,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT void msFreeRasterBuffer(rasterBufferObj *b);
 
+  void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language);
   MS_DLL_EXPORT shapeObj* msGeneralize(shapeObj * shape, double tolerance);
   /* ==================================================================== */
   /*      End of prototypes for functions in maputil.c                    */

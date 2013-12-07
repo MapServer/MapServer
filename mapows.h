@@ -51,16 +51,24 @@ typedef struct {
   char *pszService;
   char *pszTypeName;
   char *pszFilter;
+  char *pszFilterLanguage;
   char *pszGeometryName;
   int nMaxFeatures;
   char *pszBbox; /* only used with a Get Request */
-  char *pszOutputFormat; /* only used with DescibeFeatureType */
+  char *pszOutputFormat;
   char *pszFeatureId;
   char *pszSrs;
   char *pszResultType;
   char *pszPropertyName;
   int nStartIndex;
   char *pszAcceptVersions;
+  char *pszSections;
+  char *pszSortBy; /* Not implemented yet */
+  char *pszLanguage; /* Inspire extension */
+  char *pszValueReference; /* For GetValueReference */
+  char *pszStoredQueryId; /* For DescribeStoredQueries */
+  int   countGetFeatureById; /* Number of urn:ogc:def:query:OGC-WFS::GetFeatureById GetFeature requests */
+  int   bHasPostStoredQuery; /* TRUE if a XML GetFeature StoredQuery is present */
 } wfsParamsObj;
 
 /*
@@ -156,11 +164,12 @@ MS_DLL_EXPORT const char *msOWSGetVersionString(int nVersion, char *pszBuffer);
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
-MS_DLL_EXPORT int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
+MS_DLL_EXPORT int msOWSNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions);
 MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT char *msOWSGetOnlineResource2(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req, const char *validated_language);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
+MS_DLL_EXPORT const char *msOWSGetInspireSchemasLocation(mapObj *map);
 MS_DLL_EXPORT const char *msOWSGetLanguage(mapObj *map, const char *context);
 MS_DLL_EXPORT char **msOWSGetLanguageList(mapObj *map, const char *namespaces, int *numitems);
 MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *requested_language);
@@ -172,14 +181,17 @@ MS_DLL_EXPORT char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces
 
 /* OWS_WMS and OWS_WFS used for functions that differ in behavior between */
 /* WMS and WFS services (e.g. msOWSPrintLatLonBoundingBox()) */
-#define OWS_WMS     1
-#define OWS_WFS     2
+typedef enum
+{
+    OWS_WMS = 1,
+    OWS_WFS = 2
+} OWSServiceType;
 
 MS_DLL_EXPORT int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
-    const int action_if_not_found, const char *tag_name,
-    const char *validated_language, const int service);
+    const int action_if_not_found, const char *tag_name, const char* tag_ns,
+    const char *validated_language, const OWSServiceType service);
 int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
-                                    int action_if_not_found);
+                                    int action_if_not_found, const OWSServiceType service);
 int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *namespaces,
                                      int action_if_not_found, const char *validated_language);
 
@@ -249,7 +261,7 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
 void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
                                  rectObj *extent, projectionObj *srcproj,
-                                 projectionObj *wfsproj, int nService);
+                                 projectionObj *wfsproj, OWSServiceType nService);
 void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
                                         rectObj *extent, projectionObj *srcproj);
 
@@ -293,8 +305,13 @@ outputFormatObj *msOwsIsOutputFormatValid(mapObj *map, const char *format, hashT
 /*====================================================================
  *   mapgml.c
  *====================================================================*/
-#define OWS_GML2 0 /* Supported GML formats */
-#define OWS_GML3 1
+
+typedef enum
+{
+    OWS_GML2, /* 2.1.2 */
+    OWS_GML3, /* 3.1.1 */
+    OWS_GML32 /* 3.2.1 */
+} OWSGMLVersion;
 
 #define OWS_WFS_FEATURE_COLLECTION_NAME "msFeatureCollection"
 #define OWS_GML_DEFAULT_GEOMETRY_NAME "msGeometry"
@@ -315,6 +332,8 @@ typedef struct {
   int visible;    /* should this item be output, default is MS_FALSE */
   int width;      /* field width, zero if unknown */
   int precision;  /* field precision (decimal places), zero if unknown or N/A */
+  int outputByDefault; /* whether this should be output in a GetFeature without PropertyName. MS_TRUE by default, unless gml_default_items is specified and the item name is not in it */
+  int minOccurs;  /* 0 by default. Can be set to 1 by specifying item name in gml_mandatory_items */
 } gmlItemObj;
 
 typedef struct {
@@ -370,12 +389,12 @@ typedef struct {
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
-MS_DLL_EXPORT int msItemInGroups(char *name, gmlGroupListObj *groupList);
+MS_DLL_EXPORT int msItemInGroups(const char *name, gmlGroupListObj *groupList);
 MS_DLL_EXPORT gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeItems(gmlItemListObj *itemList);
 MS_DLL_EXPORT gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeConstants(gmlConstantListObj *constantList);
-MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_namespaces);
+MS_DLL_EXPORT gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_namespaces, int bWithDefaultGeom);
 MS_DLL_EXPORT void msGMLFreeGeometries(gmlGeometryListObj *geometryList);
 MS_DLL_EXPORT gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces);
 MS_DLL_EXPORT void msGMLFreeGroups(gmlGroupListObj *groupList);
@@ -388,7 +407,13 @@ MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *names
 
 
 #ifdef USE_WFS_SVR
-MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, char *wfs_namespace, int outputformat);
+
+void msGMLWriteWFSBounds(mapObj *map, FILE *stream, const char *tab,
+                         OWSGMLVersion outputformat, int nWFSVersion, int bUseURN);
+
+MS_DLL_EXPORT int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *wfs_namespace,
+                                     OWSGMLVersion outputformat, int nWFSVersion, int bUseURN,
+                                     int bGetPropertyValueRequest);
 #endif
 
 
@@ -430,15 +455,12 @@ int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClic
  *   mapwfs.c
  *====================================================================*/
 
-/* Supported DescribeFeature formats */
-#define OWS_DEFAULT_SCHEMA 0 /* basically a GML 2.1 schema */
-#define OWS_SFE_SCHEMA 1 /* GML for simple feature exchange (formerly GML3L0) */
-
 MS_DLL_EXPORT int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj,
                                 owsRequestObj *ows_request, int force_wfs_mode);
 int msWFSParseRequest(mapObj *map, cgiRequestObj *, owsRequestObj *ows_request,
                       wfsParamsObj *, int force_wfs_mode);
 wfsParamsObj *msWFSCreateParamsObj(void);
+int msWFSHandleUpdateSequence(mapObj *map, wfsParamsObj *wfsparams, const char* pszFunction);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
 int msWFSIsLayerSupported(layerObj *lp);
 int msWFSException(mapObj *map, const char *locator, const char *code,
@@ -451,7 +473,26 @@ int msWFSException11(mapObj *map, const char *locator,
                      const char *exceptionCode, const char *version);
 int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams,
                            cgiRequestObj *req, owsRequestObj *ows_request);
-char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer,const char*version);
+#ifdef USE_LIBXML2
+#include<libxml/tree.h>
+xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
+                          int nWFSVersion, const char* validate_language);
+#endif
+char *msWFSGetOutputFormatList(mapObj *map, layerObj *layer, int nWFSVersion);
+
+int msWFSException20(mapObj *map, const char *locator,
+                     const char *exceptionCode);
+int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
+                           cgiRequestObj *req, owsRequestObj *ows_request);
+int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
+                             cgiRequestObj *req, owsRequestObj *ows_request);
+int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
+                             cgiRequestObj *req, owsRequestObj *ows_request);
+char* msWFSGetResolvedStoredQuery20(mapObj *map,
+                                    wfsParamsObj *wfsparams,
+                                    const char* id,
+                                    hashTableObj* hashTable);
+
 #endif
 
 /*====================================================================

@@ -2354,7 +2354,6 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   int size = 0;
   char *status = "400 Bad Request";
   char *errorString = NULL;
-  char *errorMessage = NULL;
   char *schemasLocation = NULL;
   char *xsi_schemaLocation = NULL;
   char version_string[OWS_VERSION_MAXLEN];
@@ -2367,7 +2366,6 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   xmlChar *buffer = NULL;
 
   errorString = msGetErrorString("\n");
-  errorMessage = msEncodeHTMLEntities(errorString);
   schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   psDoc = xmlNewDoc(BAD_CAST "1.0");
@@ -2407,8 +2405,10 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
     xmlNewProp(psMainNode, BAD_CAST "locator", BAD_CAST locator);
   }
 
-  if (errorMessage != NULL) {
+  if (errorString != NULL) {
+    char* errorMessage = msEncodeHTMLEntities(errorString);
     xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST errorMessage);
+    msFree(errorMessage);
   }
 
   /*psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_2_0_0,
@@ -2438,7 +2438,6 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
 
   /* free buffer and the document */
   free(errorString);
-  free(errorMessage);
   free(schemasLocation);
   free(xsi_schemaLocation);
   xmlFree(buffer);
@@ -2628,14 +2627,14 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /* -------------------------------------------------------------------- */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceIdentification") ) {
     psNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
-                           psOwsNs, map, "OGC WCS", params->version, "CO"));
+                           psOwsNs, map, "OGC WCS", params->version, "CO", NULL));
     msWCSGetCapabilities20_CreateProfiles(map, psNode, psOwsNs);
   }
 
   /* Service Provider */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceProvider") ) {
     xmlAddChild(psRootNode,
-                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO"));
+                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO", NULL));
   }
 
   /* -------------------------------------------------------------------- */

@@ -45,10 +45,11 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
   char szTmp[256];
   char *pszValue = NULL;
 
-  char *pszWild = NULL;
-  char *pszSingle = NULL;
-  char *pszEscape = NULL;
+  const char *pszWild = NULL;
+  const char *pszSingle = NULL;
+  const char *pszEscape = NULL;
   int  bCaseInsensitive = 0;
+  FEPropertyIsLike* propIsLike;
 
   int nLength=0, i=0, iTmp=0;
 
@@ -57,10 +58,11 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
       !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
     return NULL;
 
-  pszWild = ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard;
-  pszSingle = ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar;
-  pszEscape = ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar;
-  bCaseInsensitive = ((FEPropertyIsLike *)psFilterNode->pOther)->bCaseInsensitive;
+  propIsLike = (FEPropertyIsLike *)psFilterNode->pOther;
+  pszWild = propIsLike->pszWildCard;
+  pszSingle = propIsLike->pszSingleChar;
+  pszEscape = propIsLike->pszEscapeChar;
+  bCaseInsensitive = propIsLike->bCaseInsensitive;
 
   if (!pszWild || strlen(pszWild) == 0 ||
       !pszSingle || strlen(pszSingle) == 0 ||
@@ -433,7 +435,6 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
   char szBuffer[256];
   char *pszTmp=NULL;
   projectionObj sProjTmp;
-  char *pszEPSG= NULL;
   rectObj sQueryRect;
   shapeObj *psTmpShape=NULL, *psBufferShape=NULL;
   int bBBoxQuery = 0;
@@ -447,11 +448,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
   /* get the shape*/
   /*BBOX case: replace it with NOT DISJOINT.*/
   if(FLTIsBBoxFilter(psNode)) {
-    pszEPSG = FLTGetBBOX(psNode, &sQueryRect);
-    /*this should be removed and bbox should parse and strore the srs properly,
-      using now legacy code*/
-    if (pszEPSG)
-      psNode->pszSRS = msStrdup(pszEPSG);
+    FLTGetBBOX(psNode, &sQueryRect);
 
     psTmpShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
     msInitShape(psTmpShape);
@@ -484,8 +481,11 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     if( lp->projection.numargs > 0) {
       if (psNode->pszSRS)
         msInitProjection(&sProjTmp);
-      if (psNode->pszSRS && FLTParseEpsgString(psNode->pszSRS, &sProjTmp)) {
-        msProjectShape(&sProjTmp, &lp->projection, psTmpShape);
+      if (psNode->pszSRS) {
+        /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
+        if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
+          msProjectShape(&sProjTmp, &lp->projection, psTmpShape);
+        }
       } else if (lp->map->projection.numargs > 0)
         msProjectShape(&lp->map->projection, &lp->projection, psTmpShape);
       if (psNode->pszSRS)
@@ -565,21 +565,25 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
         for (i=0; i<nTokens; i++) {
           char *pszTmp = NULL;
           int bufferSize = 0;
+          const char* pszId = tokens[i];
+          const char* pszDot = strchr(pszId, '.');
+          if( pszDot )
+            pszId = pszDot + 1;
 
           if (i == 0) {
-            if(FLTIsNumeric(tokens[0]) == MS_FALSE)
+            if(FLTIsNumeric(pszId) == MS_FALSE)
               bString = 1;
           }
 
 
           if (bString) {
-            bufferSize = 11+strlen(tokens[i])+strlen(pszAttribute)+1;
+            bufferSize = 11+strlen(pszId)+strlen(pszAttribute)+1;
             pszTmp = (char *)msSmallMalloc(bufferSize);
-            snprintf(pszTmp, bufferSize, "(\"[%s]\" ==\"%s\")" , pszAttribute, tokens[i]);
+            snprintf(pszTmp, bufferSize, "(\"[%s]\" ==\"%s\")" , pszAttribute, pszId);
           } else {
-            bufferSize = 8+strlen(tokens[i])+strlen(pszAttribute)+1;
+            bufferSize = 8+strlen(pszId)+strlen(pszAttribute)+1;
             pszTmp = (char *)msSmallMalloc(bufferSize);
-            snprintf(pszTmp, bufferSize, "([%s] == %s)" , pszAttribute, tokens[i]);
+            snprintf(pszTmp, bufferSize, "([%s] == %s)" , pszAttribute, pszId);
           }
 
           if (pszExpression != NULL)
@@ -601,6 +605,35 @@ char *FLTGetFeatureIdCommonExpression(FilterEncodingNode *psFilterNode, layerObj
 
   return pszExpression;
 }
+
+char* FLTGetTimeExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
+{
+  char* pszExpression = NULL;
+  const char* pszTimeField;
+  const char* pszTimeValue;
+
+  if (psFilterNode == NULL || lp == NULL)
+    return NULL;
+
+  if (psFilterNode->eType != FILTER_NODE_TYPE_TEMPORAL)
+    return NULL;
+
+  pszTimeValue = FLTGetDuring(psFilterNode, &pszTimeField);
+  if( pszTimeField && pszTimeValue )
+  {
+    expressionObj old_filter;
+    initExpression(&old_filter);
+    msCopyExpression(&old_filter, &lp->filter); /* save existing filter */
+    freeExpression(&lp->filter);
+    if( msLayerSetTimeFilter(lp, pszTimeValue, pszTimeField) == MS_TRUE ) {
+      pszExpression = msStrdup(lp->filter.string);
+    }
+    msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+    freeExpression(&old_filter);
+  }
+  return pszExpression;
+}
+
 
 char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
@@ -629,15 +662,27 @@ char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
   else if (psFilterNode->eType ==  FILTER_NODE_TYPE_FEATUREID)
     pszExpression = FLTGetFeatureIdCommonExpression(psFilterNode, lp);
 
+  else if (psFilterNode->eType == FILTER_NODE_TYPE_TEMPORAL)
+    pszExpression = FLTGetTimeExpression(psFilterNode, lp);
+
   return pszExpression;
 }
 
 
-int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, char *pszExpression)
+int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const char *pszExpression)
 {
   int retval;
+  int save_startindex;
+  int save_maxfeatures;
+  int save_only_cache_result_count;
 
+  save_startindex = map->query.startindex;
+  save_maxfeatures = map->query.maxfeatures;
+  save_only_cache_result_count = map->query.only_cache_result_count;
   msInitQuery(&(map->query));
+  map->query.startindex = save_startindex;
+  map->query.maxfeatures = save_maxfeatures;
+  map->query.only_cache_result_count = save_only_cache_result_count;
 
   map->query.type = MS_QUERY_BY_FILTER;
 

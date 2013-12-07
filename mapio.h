@@ -104,6 +104,9 @@ extern "C" {
   void MS_DLL_EXPORT msIO_Cleanup(void);
   char MS_DLL_EXPORT *msIO_stripStdoutBufferContentType(void);
   void MS_DLL_EXPORT msIO_stripStdoutBufferContentHeaders(void);
+  
+  msIOContext *msIO_pushStdoutToBufferAndGetOldContext(void);
+  void msIO_restoreOldStdoutContext(msIOContext *context_to_restore);
 
   /* this is just for setting normal stdout's to binary mode on windows */
 

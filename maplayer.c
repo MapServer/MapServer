@@ -539,6 +539,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
         msTimeInit(&(node->tokenval.tmval));
         if(msParseTime(msyystring_buffer, &(node->tokenval.tmval)) != MS_TRUE) {
           msSetError(MS_PARSEERR, "Parsing time value failed.", "msTokenizeExpression()");
+          free(node);
           goto parse_error;
         }
         break;
@@ -562,11 +563,13 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
       case MS_TOKEN_FUNCTION_FROMTEXT: /* we want to process a shape from WKT once and not for every feature being evaluated */
         if((token = msyylex()) != 40) { /* ( */
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          free(node);
           goto parse_error;
         }
 
         if((token = msyylex()) != MS_TOKEN_LITERAL_STRING) {
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          free(node);
           goto parse_error;
         }
 
@@ -575,6 +578,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
 
         if(!node->tokenval.shpval) {
           msSetError(MS_PARSEERR, "Parsing fromText function failed, WKT processing failed.", "msTokenizeExpression()");
+          free(node);
           goto parse_error;
         }
 
@@ -582,6 +586,9 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
 
         if((token = msyylex()) != 41) { /* ) */
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
+          msFreeShape(node->tokenval.shpval);
+          free(node->tokenval.shpval);
+          free(node);
           goto parse_error;
         }
         break;
@@ -1403,6 +1410,66 @@ int msLayerSupportsPaging(layerObj *layer)
     return MS_TRUE;
 
   return MS_FALSE;
+}
+
+/*
+ * msLayerSupportsSorting()
+ *
+ * Returns MS_TRUE if the layer supports sorting/ordering.
+ */
+int msLayerSupportsSorting(layerObj *layer)
+{
+  if (layer &&
+      ((layer->connectiontype == MS_OGR) ||
+       (layer->connectiontype == MS_POSTGIS)) )
+    return MS_TRUE;
+
+  return MS_FALSE;
+}
+
+/*
+ * msLayerSetSort()
+ *
+ * Copy the sortBy clause passed as an argument into the layer sortBy member.
+ */
+void msLayerSetSort(layerObj *layer, const sortByClause* sortBy)
+{
+  int i;
+  for(i=0;i<layer->sortBy.nProperties;i++)
+      msFree(layer->sortBy.properties[i].item);
+  msFree(layer->sortBy.properties);
+
+  layer->sortBy.nProperties = sortBy->nProperties;
+  layer->sortBy.properties = (sortByProperties*) msSmallMalloc(
+                        sortBy->nProperties * sizeof(sortByProperties) );
+  for(i=0;i<layer->sortBy.nProperties;i++) {
+     layer->sortBy.properties[i].item = msStrdup(sortBy->properties[i].item);
+     layer->sortBy.properties[i].sortOrder = sortBy->properties[i].sortOrder;
+  }
+}
+
+/*
+ * msLayerBuildSQLOrderBy()
+ *
+ * Returns the content of a SQL ORDER BY clause from the sortBy member of
+ * the layer. The string does not contain the "ORDER BY" keywords itself.
+ */
+char* msLayerBuildSQLOrderBy(layerObj *layer)
+{
+  char* strOrderBy = NULL;
+  if( layer->sortBy.nProperties > 0 ) {
+    int i;
+    for(i=0;i<layer->sortBy.nProperties;i++) {
+      char* escaped = msLayerEscapePropertyName(layer, layer->sortBy.properties[i].item);
+      if( i > 0 )
+          strOrderBy = msStringConcatenate(strOrderBy, ", ");
+      strOrderBy = msStringConcatenate(strOrderBy, escaped);
+      if( layer->sortBy.properties[i].sortOrder == SORT_DESC )
+          strOrderBy = msStringConcatenate(strOrderBy, " DESC");
+      msFree(escaped);
+    }
+  }
+  return strOrderBy;
 }
 
 int
