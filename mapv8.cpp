@@ -286,6 +286,7 @@ void msV8FreeContext(mapObj *map)
  * style. */
 char* msV8GetFeatureStyle(mapObj *map, const char *filename, layerObj *layer, shapeObj *shape)
 {
+  TryCatch try_catch;
   V8Context* v8context = V8CONTEXT(map);
   char *ret = NULL;
     
@@ -317,6 +318,10 @@ char* msV8GetFeatureStyle(mapObj *map, const char *filename, layerObj *layer, sh
   }
   Handle<Function> func = Handle<Function>::Cast(value);
   Handle<Value> result = func->Call(global, 0, 0);
+  if (result.IsEmpty() && try_catch.HasCaught()) {
+    msV8ReportException(&try_catch);
+  }
+
   if (!result.IsEmpty() && !result->IsUndefined()) {
      String::AsciiValue ascii(result);
      ret = msStrdup(*ascii);
@@ -328,6 +333,7 @@ char* msV8GetFeatureStyle(mapObj *map, const char *filename, layerObj *layer, sh
 /* for geomtransform, we don't have the mapObj */
 shapeObj *msV8TransformShape(shapeObj *shape, const char* filename)
 {
+  TryCatch try_catch;
   Isolate *isolate = Isolate::GetCurrent();
   V8Context *v8context = (V8Context*)isolate->GetData();
 
@@ -353,6 +359,10 @@ shapeObj *msV8TransformShape(shapeObj *shape, const char* filename)
   }
   Handle<Function> func = Handle<Function>::Cast(value);
   Handle<Value> result = func->Call(global, 0, 0);
+  if (result.IsEmpty() && try_catch.HasCaught()) {
+    msV8ReportException(&try_catch);
+  }
+
   if (!result.IsEmpty() && result->IsObject()) {
     Handle<Object> obj = result->ToObject();
     if (obj->GetConstructorName()->Equals(String::New("shapeObj"))) {
