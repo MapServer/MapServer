@@ -1,10 +1,8 @@
+/* A Bison parser, made by GNU Bison 2.5.  */
 
-/* A Bison parser, made by GNU Bison 2.4.1.  */
-
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989-1990, 2000-2011 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -70,15 +68,57 @@
      LENGTH = 286,
      AREA = 287,
      TOSTRING = 288,
-     SMOOTHSIA = 289,
-     GENERALIZE = 290,
-     SIMPLIFYPT = 291,
-     SIMPLIFY = 292,
-     DIFFERENCE = 293,
-     YYBUFFER = 294,
-     NEG = 295
+     JAVASCRIPT = 289,
+     SMOOTHSIA = 290,
+     GENERALIZE = 291,
+     SIMPLIFYPT = 292,
+     SIMPLIFY = 293,
+     DIFFERENCE = 294,
+     YYBUFFER = 295,
+     NEG = 296
    };
 #endif
+/* Tokens.  */
+#define NUMBER 258
+#define STRING 259
+#define TIME 260
+#define SHAPE 261
+#define OR 262
+#define AND 263
+#define NOT 264
+#define IRE 265
+#define IEQ 266
+#define IN 267
+#define GE 268
+#define LE 269
+#define GT 270
+#define LT 271
+#define NE 272
+#define EQ 273
+#define RE 274
+#define DWITHIN 275
+#define BEYOND 276
+#define CONTAINS 277
+#define WITHIN 278
+#define CROSSES 279
+#define OVERLAPS 280
+#define TOUCHES 281
+#define DISJOINT 282
+#define INTERSECTS 283
+#define ROUND 284
+#define COMMIFY 285
+#define LENGTH 286
+#define AREA 287
+#define TOSTRING 288
+#define JAVASCRIPT 289
+#define SMOOTHSIA 290
+#define GENERALIZE 291
+#define SIMPLIFYPT 292
+#define SIMPLIFY 293
+#define DIFFERENCE 294
+#define YYBUFFER 295
+#define NEG 296
+
 
 
 
@@ -86,8 +126,8 @@
 typedef union YYSTYPE
 {
 
-/* Line 1676 of yacc.c  */
-#line 30 "/home/even/mapserver/git/mapserver/mapparser.y"
+/* Line 2068 of yacc.c  */
+#line 30 "/usr/src/mapserver/mapserver-master/mapparser.y"
 
   double dblval;
   int intval;  
@@ -97,8 +137,8 @@ typedef union YYSTYPE
 
 
 
-/* Line 1676 of yacc.c  */
-#line 102 "/home/even/mapserver/git/mapserver/mapparser.h"
+/* Line 2068 of yacc.c  */
+#line 142 "/usr/src/mapserver/mapserver-master/mapparser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
