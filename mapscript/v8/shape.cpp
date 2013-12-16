@@ -59,6 +59,15 @@ void Shape::Initialize(Handle<Object> target)
   NODE_SET_PROTOTYPE_METHOD(c, "add", addLine);
   NODE_SET_PROTOTYPE_METHOD(c, "setGeometry", setGeometry);
 
+  NODE_DEFINE_CONSTANT(c->GetFunction(),
+                       "Point",MS_SHAPE_POINT);
+  NODE_DEFINE_CONSTANT(c->GetFunction(),
+                       "Line",MS_SHAPE_LINE);
+  NODE_DEFINE_CONSTANT(c->GetFunction(),
+                       "Polygon",MS_SHAPE_POLYGON);
+  NODE_DEFINE_CONSTANT(c->GetFunction(),
+                       "Null",MS_SHAPE_NULL);
+
   target->Set(String::NewSymbol("shapeObj"), c->GetFunction());
 
   constructor.Reset(Isolate::GetCurrent(), c);
