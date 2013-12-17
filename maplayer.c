@@ -271,6 +271,14 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
       return rv;
   }
 
+#ifdef USE_V8_MAPSCRIPT
+  /* we need to force the GetItems for the geomtransform attributes */
+  if(!layer->items &&
+     layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION &&
+     strstr(layer->_geomtransform.string, "javascript"))
+      msLayerGetItems(layer);
+#endif
+
   /* At the end of switch case (default -> break; -> return MS_FAILURE),
    * was following TODO ITEM:
    */
@@ -885,7 +893,7 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
     stylestring = msStrdup(shape->values[layer->styleitemindex]);
   }
   else if (strncasecmp(layer->styleitem,"javascript://",13) == 0) {
-#ifdef USE_V8
+#ifdef USE_V8_MAPSCRIPT
     char *filename = layer->styleitem+13;
 
     if (!map->v8context) {

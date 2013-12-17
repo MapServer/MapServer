@@ -47,7 +47,7 @@ int yyerror(parseObj *, const char *);
 %left AREA LENGTH COMMIFY ROUND
 %left UPPER LOWER INITCAP FIRSTCAP
 %left TOSTRING
-%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA
+%left YYBUFFER DIFFERENCE SIMPLIFY SIMPLIFYPT GENERALIZE SMOOTHSIA JAVASCRIPT
 %left '+' '-'
 %left '*' '/' '%'
 %left NEG
@@ -630,6 +630,17 @@ shape_exp: SHAPE
       s->scratch = MS_TRUE;
       $$ = s;
     }
+  | JAVASCRIPT '(' shape_exp ',' string_exp ')' {
+      shapeObj *s;
+      s = msV8TransformShape($3, $5);
+      free($5);
+      if(!s) {
+        yyerror(p, "Executing javascript failed.");
+        return(-1);
+      }
+      s->scratch = MS_TRUE;
+      $$ = s;
+    }
 ;
 
 string_exp: STRING
@@ -773,7 +784,8 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_FUNCTION_SIMPLIFY: token = SIMPLIFY; break;
   case MS_TOKEN_FUNCTION_SIMPLIFYPT: token = SIMPLIFYPT; break;
   case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;
-  case MS_TOKEN_FUNCTION_SMOOTHSIA: token = SMOOTHSIA; break;    
+  case MS_TOKEN_FUNCTION_SMOOTHSIA: token = SMOOTHSIA; break;
+  case MS_TOKEN_FUNCTION_JAVASCRIPT: token = JAVASCRIPT; break;        
 
   default:
     break;

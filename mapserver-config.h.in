@@ -36,7 +36,7 @@
 #cmakedefine USE_SDE 1
 #cmakedefine SDE64 1
 #cmakedefine USE_EXTENDED_DEBUG 1
-#cmakedefine USE_V8 1
+#cmakedefine USE_V8_MAPSCRIPT 1
 
 /*windows specific hacks*/
 #if defined(_WIN32)

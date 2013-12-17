@@ -204,6 +204,17 @@ renderers/agg/src/agg_line_aa_basics.cpp
 renderers/agg/src/clipper.cpp
 )
 include_directories(renderers/agg/include)
+
+set(v8_SOURCES
+  mapscript/v8/v8_object_wrap.hpp  
+  mapscript/v8/point.cpp
+  mapscript/v8/line.cpp
+  mapscript/v8/shape.cpp  
+  mapscript/v8/v8_mapscript.cpp
+  mapv8.cpp
+)
+include_directories(mapscript/v8/)
+
 #add_definitions(-DHASH_DEBUG=1)
 if(WIN32)
   set(REGEX_SOURCES ${REGEX_DIR}/regex.c)
@@ -237,7 +248,7 @@ mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES})
 
 if(BUILD_DYNAMIC)
-  add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES})
+  add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
   set_target_properties( mapserver  PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 1
@@ -245,7 +256,7 @@ if(BUILD_DYNAMIC)
 endif(BUILD_DYNAMIC)
 
 if(BUILD_STATIC)
-  add_library(mapserver_static STATIC ${mapserver_SOURCES} ${agg_SOURCES})
+  add_library(mapserver_static STATIC ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 1
@@ -769,18 +780,19 @@ if(WITH_PYTHON)
 endif(WITH_PYTHON)
 
 if(WITH_V8)
-    find_package(V8)
-  if(V8_FOUND EQUAL 1)  
-    set(USE_V8 1)
-    include_directories(${V8_INCLUDE})
-    ms_link_libraries( ${V8_LIBS})
-  else(V8_FOUND)
-    message(SEND_ERROR "V8 JavaScript support requested but not found.
+  FIND_PACKAGE(V8)
+  IF(V8_FOUND EQUAL 1)
+    SET(USE_V8_MAPSCRIPT 1)
+    INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+    INCLUDE_DIRECTORIES(${V8_INCLUDE})
+    MS_LINK_LIBRARIES( ${V8_LIBS})
+  ELSE(V8_FOUND)
+    MESSAGE(SEND_ERROR "V8 JavaScript support requested but not found.
       HINTS:
       - set V8_ROOT environment variable to the installation path of V8.
       - add the V8 install directory to the CMAKE_PREFIX_PATH variable (-DCMAKE_PREFIX_PATH=\"/path/to/${component}-install-dir;/path/to/other/dirs\") ")
-  endif()
-endif(WITH_V8)
+  ENDIF()
+ENDIF(WITH_V8)
 
 if(WITH_PHP)
    add_subdirectory("mapscript/php")
@@ -904,7 +916,6 @@ status_optional_feature("Thread-safety support" "${USE_THREAD}")
 status_optional_feature("KML output" "${USE_KML}")
 status_optional_feature("Z+M point coordinate support" "${USE_POINT_Z_M}")
 status_optional_feature("XML Mapfile support" "${USE_XMLMAPFILE}")
-status_optional_feature("V8 JavaScript" "${USE_V8}")
 
 message(STATUS " * Mapscripts")
 status_optional_feature("Python" "${USE_PYTHON_MAPSCRIPT}")
@@ -913,6 +924,7 @@ status_optional_feature("PERL" "${USE_PERL_MAPSCRIPT}")
 status_optional_feature("RUBY" "${USE_RUBY_MAPSCRIPT}")
 status_optional_feature("JAVA" "${USE_JAVA_MAPSCRIPT}")
 status_optional_feature("C#" "${USE_CSHARP_MAPSCRIPT}")
+status_optional_feature("V8 Javascript" "${USE_V8_MAPSCRIPT}")
 status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
 message(STATUS "")
