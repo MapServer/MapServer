@@ -38,6 +38,7 @@
 
 #include "mapogcsld.h"
 #include "mapogcfilter.h"
+#include "mapowscommon.h"
 
 #include "maptime.h"
 #include "mapproject.h"
@@ -1057,6 +1058,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
               (strncasecmp(format->driver, "GD/", 3) != 0 &&
                strncasecmp(format->driver, "GDAL/", 5) != 0 &&
                strncasecmp(format->driver, "AGG/", 4) != 0 &&
+               strncasecmp(format->driver, "UTFGRID", 7) != 0 &&
                strncasecmp(format->driver, "CAIRO/", 6) != 0 &&
                strncasecmp(format->driver, "OGL/", 4) != 0 &&
                strncasecmp(format->driver, "KML", 3) != 0 &&
@@ -2729,11 +2731,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   validated_language = msOWSGetLanguageFromList(map, "MO", requested_language);
 
   if (validated_language != NULL) {
-    for(i=0; i<map->numlayers; i++) {
-      layerObj *layer = GET_LAYER(map, i);
-      if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, "%language%", validated_language);
-      if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, "%language%", validated_language);
-    }
+    msMapSetLanguageSpecificConnection(map, validated_language);
   }
 
   /* We need this server's onlineresource. */
@@ -2791,8 +2789,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                 "   xmlns:ms=\"http://mapserver.gis.umn.edu/mapserver\"");
 
     if ( msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
-      msIO_printf("   xmlns:inspire_common=\"http://inspire.ec.europa.eu/schemas/common/1.0\""
-                  "   xmlns:inspire_vs=\"http://inspire.ec.europa.eu/schemas/inspire_vs/1.0\"" );
+      msIO_printf("   xmlns:" MS_INSPIRE_COMMON_NAMESPACE_PREFIX "=\"" MS_INSPIRE_COMMON_NAMESPACE_URI "\""
+                  "   xmlns:" MS_INSPIRE_VS_NAMESPACE_PREFIX "=\"" MS_INSPIRE_VS_NAMESPACE_URI "\"" );
     }
 
     msIO_printf("   xsi:schemaLocation=\"http://www.opengis.net/wms %s/wms/%s/capabilities_1_3_0.xsd "
@@ -2800,8 +2798,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                 msOWSGetSchemasLocation(map), msOWSGetVersionString(nVersion, szVersionBuf), msOWSGetSchemasLocation(map));
 
     if ( msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
-      msIO_printf(" http://inspire.ec.europa.eu/schemas/inspire_vs/1.0 "
-                  " http://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd");
+      char* inspireschemalocation = msEncodeHTMLEntities( msOWSGetInspireSchemasLocation(map) );
+      msIO_printf(" " MS_INSPIRE_VS_NAMESPACE_URI " "
+                  " %s%s", inspireschemalocation, MS_INSPIRE_VS_SCHEMA_LOCATION);
+      free(inspireschemalocation);
     }
 
     msIO_printf(" http://mapserver.gis.umn.edu/mapserver %sservice=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension\"",
@@ -3046,7 +3046,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     /* INSPIRE extended capabilities for WMS 1.1.1 */
     if (nVersion == OWS_1_1_1 && msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
       msIO_printf("  <VendorSpecificCapabilities>\n");
-      msOWSPrintInspireCommonExtendedCapabilities(stdout, map, "MO", OWS_WARN, "inspire_vs:ExtendedCapabilities", validated_language, OWS_WMS);
+      msOWSPrintInspireCommonExtendedCapabilities(stdout, map, "MO", OWS_WARN, "inspire_vs:ExtendedCapabilities", NULL, validated_language, OWS_WMS);
       msIO_printf("  </VendorSpecificCapabilities>\n");
     } else {
       msIO_printf("  <VendorSpecificCapabilities />\n"); /* nothing yet */
@@ -3065,7 +3065,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 
   /* INSPIRE extended capabilities for WMS 1.3.0 */
   if (nVersion >= OWS_1_3_0 && msOWSLookupMetadata(&(map->web.metadata), "MO", "inspire_capabilities") ) {
-    msOWSPrintInspireCommonExtendedCapabilities(stdout, map, "MO", OWS_WARN, "inspire_vs:ExtendedCapabilities", validated_language, OWS_WMS);
+    msOWSPrintInspireCommonExtendedCapabilities(stdout, map, "MO", OWS_WARN, "inspire_vs:ExtendedCapabilities", NULL, validated_language, OWS_WMS);
   }
 
   /* Top-level layer with map extents and SRS, encloses all map layers */
@@ -3674,7 +3674,11 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   }
 
   if (strcasecmp(map->imagetype, "application/openlayers")!=0) {
-    msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(map->outputformat));
+    if(!strcmp(MS_IMAGE_MIME_TYPE(map->outputformat), "application/json")) {
+      msIO_setHeader("Content-Type","application/json; charset=utf-8");
+    } else {
+      msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(map->outputformat));
+    }
     msIO_sendHeaders();
     if (msSaveImage(map, img, NULL) != MS_SUCCESS) {
       msFreeImage(img);
@@ -5003,11 +5007,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request, i
   /* This function owns validated_language, so remember to free it later*/
   validated_language = msOWSGetLanguageFromList(map, "MO", language);
   if (validated_language != NULL) {
-    for(i=0; i<map->numlayers; i++) {
-      layerObj *layer = GET_LAYER(map, i);
-      if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, "%language%", validated_language);
-      if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, "%language%", validated_language);
-    }
+    msMapSetLanguageSpecificConnection(map, validated_language);
   }
   msFree(validated_language);
 

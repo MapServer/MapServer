@@ -181,6 +181,7 @@ char *strptime( const char *buf, const char *format, struct tm *timeptr );
 
 char *msStrptime(const char *s, const char *format, struct tm *tm)
 {
+  memset(tm, 0, sizeof(struct tm));
   return strptime(s, format, tm);
 }
 
@@ -188,7 +189,7 @@ char *msStrptime(const char *s, const char *format, struct tm *tm)
    return MS_TRUE if the time string matchs the timeformat.
    else return MS_FALSE.
  */
-int msTimeMatchPattern(char *timestring, char *timeformat)
+int msTimeMatchPattern(const char *timestring, const char *timeformat)
 {
   int i =-1;
   if(msTimeSetup() != MS_SUCCESS) {
@@ -217,7 +218,7 @@ void msUnsetLimitedPatternToUse()
   ms_num_limited_pattern = 0;
 }
 
-void msSetLimitedPattersToUse(char *patternstring)
+void msSetLimitedPattersToUse(const char *patternstring)
 {
   int *limitedpatternindice = NULL;
   int numpatterns=0, i=0, j=0, ntmp=0;
@@ -327,7 +328,7 @@ int msTimeGetResolution(const char *timestring)
 }
 
 
-int _msValidateTime(char *timestring,  const char *timeextent)
+int _msValidateTime(const char *timestring,  const char *timeextent)
 {
   int numelements, numextents, i, numranges;
   struct tm  tmtimestart, tmtimeend, tmstart, tmend;
@@ -431,7 +432,7 @@ int _msValidateTime(char *timestring,  const char *timeextent)
 
 
 
-int msValidateTimeValue(char *timestring, const char *timeextent)
+int msValidateTimeValue(const char *timestring, const char *timeextent)
 {
   char **atimes =  NULL;
   int i, numtimes=0;

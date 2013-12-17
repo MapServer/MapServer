@@ -78,20 +78,21 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
       /* don't set the image color */
       bg = NULL;
     }
-    image = renderer->createImage(map->width, map->height, map->outputformat,bg);
-    if (image == NULL)
-      return(NULL);
-    image->format = map->outputformat;
-    image->format->refcount++;
-    image->width = map->width;
-    image->height = map->height;
 
-    image->resolution = map->resolution;
-    image->resolutionfactor = map->resolution/map->defresolution;
-    if (map->web.imagepath)
-      image->imagepath = msStrdup(map->web.imagepath);
-    if (map->web.imageurl)
-      image->imageurl = msStrdup(map->web.imageurl);
+  image = renderer->createImage(map->width, map->height, map->outputformat,bg);
+  if (image == NULL)
+    return(NULL);
+  image->format = map->outputformat;
+  image->format->refcount++;
+  image->width = map->width;
+  image->height = map->height;
+
+  image->resolution = map->resolution;
+  image->resolutionfactor = map->resolution/map->defresolution;
+  if (map->web.imagepath)
+    image->imagepath = msStrdup(map->web.imagepath);
+  if (map->web.imageurl)
+    image->imageurl = msStrdup(map->web.imageurl);
 
   } else if( MS_RENDERER_IMAGEMAP(map->outputformat) ) {
     image = msImageCreateIM(map->width, map->height, map->outputformat,
@@ -173,6 +174,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
   image->refpt.y = MS_MAP2IMAGE_Y_IC_DBL(0, map->extent.maxy, 1.0/map->cellsize);
 
   return image;
+  
 }
 
 
@@ -1591,22 +1593,21 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
       labelObj *label = layer->class[c]->labels[l];
       textSymbolObj ts;
       char *annotext;
+      if(!msGetLabelStatus(map,layer,shape,label)) {
+        continue;
+      }
+
       annotext = msShapeGetLabelAnnotation(layer,anno_shape,label);
       if(!annotext) continue;
       initTextSymbol(&ts);
       msPopulateTextSymbolForLabelAndString(&ts,label,annotext,layer->scalefactor,image->resolutionfactor, layer->labelcache);
       
-      if(!msGetLabelStatus(map,layer,shape,label)) {
-        freeTextSymbol(&ts);
-        free(annotext);
-        continue;
-      }
       
-      if (label->anglemode == MS_ANGLEMODE_FOLLOW) { /* bug #1620 implementation */
+      if (label->anglemode == MS_FOLLOW) { /* bug #1620 implementation */
         struct label_follow_result lfr;
         
-        if (label->type != MS_TRUETYPE || !layer->labelcache) {
-          msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with truetype fonts and labelcache on", "msDrawShape()");
+        if (!layer->labelcache) {
+          msSetError(MS_MISCERR, "Angle mode 'FOLLOW' is supported only with labelcache on", "msDrawShape()");
           ret = MS_FAILURE;
           goto line_cleanup;
         }
@@ -1767,7 +1768,6 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
   if(shape->numlines == 0 || shape->type == MS_SHAPE_NULL) return MS_SUCCESS;
 
-  msDrawStartShape(map, layer, image, shape);
   c = shape->classindex;
 
   /* Before we do anything else, we will check for a rangeitem.
@@ -1782,11 +1782,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   /* circle and point layers go through their own treatment */
   if(layer->type == MS_LAYER_CIRCLE) {
     if(msBindLayerToShape(layer, shape, drawmode) != MS_SUCCESS) return MS_FAILURE;
+    msDrawStartShape(map, layer, image, shape);
     ret = circleLayerDrawShape(map,image,layer,shape);
     msDrawEndShape(map,layer,image,shape);
     return ret;
   } else if(layer->type == MS_LAYER_POINT || layer->type == MS_LAYER_RASTER) {
     if(msBindLayerToShape(layer, shape, drawmode) != MS_SUCCESS) return MS_FAILURE;
+    msDrawStartShape(map, layer, image, shape);
     ret = pointLayerDrawShape(map,image,layer,shape,drawmode);
     msDrawEndShape(map,layer,image,shape);
     return ret;
@@ -1955,9 +1957,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
   switch(layer->type) {
     case MS_LAYER_LINE:
+      msDrawStartShape(map, layer, image, shape);
       ret = lineLayerDrawShape(map, image, layer, shape, anno_shape, unclipped_shape, style, drawmode);
       break;
     case MS_LAYER_POLYGON:
+      msDrawStartShape(map, layer, image, shape);
       ret = polygonLayerDrawShape(map, image, layer, shape, anno_shape, unclipped_shape, drawmode);
       break;
     case MS_LAYER_POINT:
@@ -2809,7 +2813,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
                 }
                 
                 /* apply offset and buffer settings */
-                if(textSymbolPtr->label->anglemode != MS_ANGLEMODE_FOLLOW) {
+                if(textSymbolPtr->label->anglemode != MS_FOLLOW) {
                   label_offset_x = textSymbolPtr->label->offsetx * textSymbolPtr->scalefactor;
                   label_offset_y = textSymbolPtr->label->offsety * textSymbolPtr-> scalefactor;
                 } else {
@@ -3144,7 +3148,7 @@ void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image)
 
 /**
  * Generic function to tell the underline device that shape
- * drawing is stating
+ * drawing is starting
  */
 
 void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,

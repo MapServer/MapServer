@@ -414,6 +414,51 @@ void msStringToLower(char *string)
   }
 }
 
+/**
+ * Force the first character to uppercase and the rest of the characters to
+ * lower case for EACH word in the string.
+ */
+void msStringInitCap(char *string)
+{
+  int i;
+  int start = 1; 
+  if (string != NULL) {
+    for (i = 0; i < (int)strlen(string); i++) {
+      if (string[i] == ' ')
+        start = 1;
+      else if (start) {
+        string[i] = toupper(string[i]);
+        start = 0;
+      }
+      else {
+        string[i] = tolower(string[i]);
+      }
+    }
+  }
+}
+
+/**
+ * Force the first character to uppercase for the FIRST word in the string
+ * and the rest of the characters to lower case.
+ */
+void msStringFirstCap(char *string)
+{
+  int i;
+  int start = 1; 
+  if (string != NULL) {
+    for (i = 0; i < (int)strlen(string); i++) {
+      if (string[i] != ' ') {
+        if (start) {
+          string[i] = toupper(string[i]);
+          start = 0;
+        }
+        else
+          string[i] = tolower(string[i]);
+      }
+    }
+  }
+}
+
 char *msStringChop(char *string)
 {
   int n;

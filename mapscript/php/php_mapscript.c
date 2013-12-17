@@ -1023,11 +1023,11 @@ PHP_MINIT_FUNCTION(mapscript)
   REGISTER_LONG_CONSTANT("MS_UC",         MS_UC,          const_flag);
   REGISTER_LONG_CONSTANT("MS_LC",         MS_LC,          const_flag);
   REGISTER_LONG_CONSTANT("MS_CC",         MS_CC,          const_flag);
-  REGISTER_LONG_CONSTANT("MS_AUTO",       MS_ANGLEMODE_AUTO,        const_flag);
+  REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
   REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
-  REGISTER_LONG_CONSTANT("MS_FOLLOW",     MS_ANGLEMODE_FOLLOW,      const_flag);
-  REGISTER_LONG_CONSTANT("MS_AUTO2",      MS_ANGLEMODE_AUTO2,       const_flag);
-  REGISTER_LONG_CONSTANT("MS_NONE",       MS_ANGLEMODE_NONE,        const_flag);
+  REGISTER_LONG_CONSTANT("MS_FOLLOW",     MS_FOLLOW,      const_flag);
+  REGISTER_LONG_CONSTANT("MS_AUTO2",      MS_AUTO2,       const_flag);
+  REGISTER_LONG_CONSTANT("MS_NONE",       MS_NONE,        const_flag);
 
   /* alignment constants*/
   REGISTER_LONG_CONSTANT("MS_ALIGN_LEFT",  MS_ALIGN_LEFT,  const_flag);

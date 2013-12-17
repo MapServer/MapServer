@@ -44,7 +44,7 @@ int msInitQuery(queryObj *query)
 
   query->point.x = query->point.y = -1;
   query->buffer = 0.0;
-  query->maxresults = 0;
+  query->maxresults = 0; /* only used by msQueryByPoint() apparently */
 
   query->rect.minx = query->rect.miny = query->rect.maxx = query->rect.maxy = -1;
   query->shape = NULL;
@@ -54,6 +54,7 @@ int msInitQuery(queryObj *query)
 
   query->maxfeatures = -1;
   query->startindex = -1;
+  query->only_cache_result_count = 0;
   
   query->item = query->str = NULL;
   query->filter = NULL;
@@ -165,6 +166,7 @@ static int addResult(resultCacheObj *cache, shapeObj *shape)
   cache->results[i].resultindex = shape->resultindex;
   cache->numresults++;
 
+  cache->previousBounds = cache->bounds;
   if(cache->numresults == 1)
     cache->bounds = shape->bounds;
   else
@@ -950,8 +952,11 @@ int msQueryByFilter(mapObj *map)
         msFreeShape(&shape);
         continue;
       }
-      
-      addResult(lp->resultcache, &shape);
+    
+      if( map->query.only_cache_result_count )
+        lp->resultcache->numresults ++;
+      else
+        addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
 
       /* check shape count */
@@ -967,7 +972,8 @@ int msQueryByFilter(mapObj *map)
     freeExpression(&old_filter);
 
     if(status != MS_DONE) goto query_error;
-    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+    if(!map->query.only_cache_result_count &&
+        lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
 
   } /* next layer */
 
@@ -996,7 +1002,7 @@ int msQueryByRect(mapObj *map)
 
   char status;
   shapeObj shape, searchshape;
-  rectObj searchrect;
+  rectObj searchrect, searchrectInMapProj;
   double layer_tolerance = 0, tolerance = 0;
 
   int paging;
@@ -1067,6 +1073,7 @@ int msQueryByRect(mapObj *map)
       searchrect.miny -= tolerance;
       searchrect.maxy += tolerance;
     }
+    searchrectInMapProj = searchrect;
 
     msRectToPolygon(searchrect, &searchshape);
 
@@ -1082,12 +1089,18 @@ int msQueryByRect(mapObj *map)
     paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS) {
+        msFreeShape(&searchshape);
+        return(MS_FAILURE);
+    }
     msLayerEnablePaging(lp, paging);
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS) {
+        msFreeShape(&searchshape);
+        return(MS_FAILURE);
+    }
 
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
@@ -1101,6 +1114,7 @@ int msQueryByRect(mapObj *map)
       continue;
     } else if(status != MS_SUCCESS) {
       msLayerClose(lp);
+      msFreeShape(&searchshape);
       return(MS_FAILURE);
     }
 
@@ -1146,7 +1160,7 @@ int msQueryByRect(mapObj *map)
         lp->project = MS_FALSE;
 #endif
 
-      if(msRectContained(&shape.bounds, &searchrect) == MS_TRUE) { /* if the whole shape is in, don't intersect */
+      if(msRectContained(&shape.bounds, &searchrectInMapProj) == MS_TRUE) { /* if the whole shape is in, don't intersect */
         status = MS_TRUE;
       } else {
         switch(shape.type) { /* make sure shape actually intersects the qrect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */
@@ -1171,7 +1185,10 @@ int msQueryByRect(mapObj *map)
           msFreeShape(&shape);
           continue;
         }
-        addResult(lp->resultcache, &shape);
+        if( map->query.only_cache_result_count )
+            lp->resultcache->numresults ++;
+        else
+            addResult(lp->resultcache, &shape);
         --map->query.maxfeatures;
       }
       msFreeShape(&shape);
@@ -1187,9 +1204,13 @@ int msQueryByRect(mapObj *map)
     if (classgroup)
       msFree(classgroup);
 
-    if(status != MS_DONE) return(MS_FAILURE);
+    if(status != MS_DONE) {
+        msFreeShape(&searchshape);
+        return(MS_FAILURE);
+    }
 
-    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+    if( !map->query.only_cache_result_count &&
+        lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
 
   msFreeShape(&searchshape);

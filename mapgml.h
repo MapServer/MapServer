@@ -36,9 +36,6 @@
 #include<libxml/parser.h>
 #include<libxml/tree.h>
 
-#define MS_GML_NAMESPACE_URI      "http://www.opengis.net/gml"
-#define MS_GML_NAMESPACE_PREFIX   "gml"
-
 xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx, double maxy, const char *psEpsg);
 xmlNodePtr msGML3TimePeriod(xmlNsPtr psNs, char *pszStart, char *pszEnd);
 xmlNodePtr msGML3TimeInstant(xmlNsPtr psNs, char *timeInstant);

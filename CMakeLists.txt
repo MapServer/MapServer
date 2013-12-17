@@ -2,11 +2,17 @@ cmake_minimum_required (VERSION 2.6)
 
 project (MapServer)
 
+if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+      message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:
+   mkdir build; cd build; cmake ..
+Before that, remove the files created by this failed run:
+   rm -rf CMakeCache.txt CMakeFiles")
+endif("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+
 include(CheckLibraryExists)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
-
 
 
 set (MapServer_VERSION_MAJOR 6)
@@ -130,6 +136,7 @@ option(WITH_SDE_PLUGIN "include ArcSDE support as a plugin (must specify SDE_INC
 option(WITH_SDE "include ArcSDE support. Add -DSDE_VERSION=91 to use 9.1 arcSDE version" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
+option(WITH_V8 "include javacript v8 scripting" OFF)
 
 option(BUILD_STATIC "Also build a static version of mapserver" OFF)
 option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
@@ -145,7 +152,33 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_GNUCC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wdeclaration-after-statement")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+if(NOT DEFINED CMAKE_INSTALL_LIBDIR)
+  set(_LIBDIR_DEFAULT "lib")
+  # Override this default 'lib' with 'lib64' iff:
+  #  - we are on Linux system but NOT cross-compiling
+  #  - we are NOT on debian
+  #  - we are on a 64 bits system
+  # reason is: amd64 ABI: http://www.x86-64.org/documentation/abi.pdf
+  # Note that the future of multi-arch handling may be even
+  # more complicated than that: http://wiki.debian.org/Multiarch
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux"
+      AND NOT CMAKE_CROSSCOMPILING
+      AND NOT EXISTS "/etc/debian_version")
+    if(NOT DEFINED CMAKE_SIZEOF_VOID_P)
+      message(AUTHOR_WARNING
+        "Unable to determine default CMAKE_INSTALL_LIBDIR directory because no target architecture is known. "
+        "Please enable at least one language before including GNUInstallDirs.")
+    else()
+      if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+        set(_LIBDIR_DEFAULT "lib64")
+      endif()
+    endif()
+  endif()
+  set(CMAKE_INSTALL_LIBDIR "${_LIBDIR_DEFAULT}" CACHE PATH "object code libraries (${_LIBDIR_DEFAULT})")
+endif()
+
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 SET(CMAKE_MACOSX_RPATH ON)
 
@@ -209,10 +242,10 @@ mapdraw.c maplibxml2.c mapquery.c maputil.c strptime.c mapdrawgdal.c
 mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
 mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c
-mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c
+mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c mapwfs20.c
 mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
-mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c
-mapogr.cpp mapcontour.c mapsmoothing.c ${REGEX_SOURCES})
+mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
+mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES})
 
 if(BUILD_DYNAMIC)
   add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
@@ -655,10 +688,14 @@ if( USE_WCS_SVR AND NOT USE_LIBXML2 )
    message(WARNING "WCS 1.1 and 2.0 require libxml2 support but it was not found. WCS 1.1 and 2.0 will not be supported by this build")
 endif( USE_WCS_SVR AND NOT USE_LIBXML2 )
 if( USE_WFS_SVR AND NOT USE_LIBXML2 )
-   message(WARNING "WFS 1.1 requires libxml2 support but it was not found. WFS 1.1 will not be supported by this build")
+   message(WARNING "WFS 1.1 and 2.0 require libxml2 support but it was not found. WFS 1.1 and 2.0 will not be supported by this build")
 endif( USE_WFS_SVR AND NOT USE_LIBXML2 )
 
 if(WITH_SOS)
+    if(NOT USE_OGR)
+      report_dependency_error(WITH_SOS OGR)
+    endif(NOT USE_OGR)
+
   if(USE_PROJ AND USE_LIBXML2)
     set(USE_SOS_SVR 1)
   else(USE_PROJ AND USE_LIBXML2)
@@ -892,6 +929,7 @@ status_optional_feature("Apache Module (Experimental)" "${USE_APACHE_MODULE}")
 
 message(STATUS "")
 message(STATUS "Will install files to ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "Will install libraries to ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 
 include_directories("${PROJECT_BINARY_DIR}")
@@ -904,26 +942,27 @@ endif(WIN32)
 
 #INSTALL(FILES mapserver-api.h ${PROJECT_BINARY_DIR}/mapserver-version.h DESTINATION include)
 if(USE_ORACLE_PLUGIN)
-   INSTALL(TARGETS msplugin_oracle DESTINATION lib)
+   INSTALL(TARGETS msplugin_oracle DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_ORACLE_PLUGIN)
 
 if(USE_MSSQL2008)
-   INSTALL(TARGETS msplugin_mssql2008 DESTINATION lib)
+   INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_MSSQL2008)
 
 if(USE_SDE91)
-   INSTALL(TARGETS msplugin_sde91 DESTINATION lib)
+   INSTALL(TARGETS msplugin_sde91 DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_SDE91)
 
 if(USE_SDE92)
-   INSTALL(TARGETS msplugin_sde92 DESTINATION lib)
+   INSTALL(TARGETS msplugin_sde92 DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_SDE92)
 
-INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
+INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv RUNTIME DESTINATION bin LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 if(BUILD_STATIC)
-   INSTALL(TARGETS mapserver_static DESTINATION lib)
+   INSTALL(TARGETS mapserver_static DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(BUILD_STATIC)
 if(BUILD_DYNAMIC)
-   INSTALL(TARGETS mapserver DESTINATION lib)
+   INSTALL(TARGETS mapserver DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(BUILD_DYNAMIC)
 

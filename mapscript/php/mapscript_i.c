@@ -174,7 +174,8 @@ int mapObj_drawLabelCache(mapObj* self, imageObj *img)
 
 labelCacheMemberObj* mapObj_getLabel(mapObj* self, int i)
 {
-  return msGetLabelCacheMember(&(self->labelcache), i);
+  msSetError(MS_MISCERR, "LabelCacheMember access is not available", "getLabel()");
+  return NULL;
 }
 
 int mapObj_queryByPoint(mapObj* self, pointObj *point, int mode, double buffer)

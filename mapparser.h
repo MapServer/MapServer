@@ -67,15 +67,19 @@
      COMMIFY = 285,
      LENGTH = 286,
      AREA = 287,
-     TOSTRING = 288,
-     JAVASCRIPT = 289,
-     SMOOTHSIA = 290,
-     GENERALIZE = 291,
-     SIMPLIFYPT = 292,
-     SIMPLIFY = 293,
-     DIFFERENCE = 294,
-     YYBUFFER = 295,
-     NEG = 296
+     FIRSTCAP = 288,
+     INITCAP = 289,
+     LOWER = 290,
+     UPPER = 291,
+     TOSTRING = 292,
+     JAVASCRIPT = 293,
+     SMOOTHSIA = 294,
+     GENERALIZE = 295,
+     SIMPLIFYPT = 296,
+     SIMPLIFY = 297,
+     DIFFERENCE = 298,
+     YYBUFFER = 299,
+     NEG = 300
    };
 #endif
 /* Tokens.  */
@@ -109,15 +113,19 @@
 #define COMMIFY 285
 #define LENGTH 286
 #define AREA 287
-#define TOSTRING 288
-#define JAVASCRIPT 289
-#define SMOOTHSIA 290
-#define GENERALIZE 291
-#define SIMPLIFYPT 292
-#define SIMPLIFY 293
-#define DIFFERENCE 294
-#define YYBUFFER 295
-#define NEG 296
+#define FIRSTCAP 288
+#define INITCAP 289
+#define LOWER 290
+#define UPPER 291
+#define TOSTRING 292
+#define JAVASCRIPT 293
+#define SMOOTHSIA 294
+#define GENERALIZE 295
+#define SIMPLIFYPT 296
+#define SIMPLIFY 297
+#define DIFFERENCE 298
+#define YYBUFFER 299
+#define NEG 300
 
 
 
@@ -138,7 +146,7 @@ typedef union YYSTYPE
 
 
 /* Line 2068 of yacc.c  */
-#line 142 "/usr/src/mapserver/mapserver-master/mapparser.h"
+#line 150 "/usr/src/mapserver/mapserver-master/mapparser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

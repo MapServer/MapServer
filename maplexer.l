@@ -182,6 +182,10 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>tostring                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_TOSTRING); }
 <EXPRESSION_STRING>commify                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_COMMIFY); }
 <EXPRESSION_STRING>round                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_ROUND); }
+<EXPRESSION_STRING>upper                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_UPPER); }
+<EXPRESSION_STRING>lower                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_LOWER); }
+<EXPRESSION_STRING>initcap                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_INITCAP); }
+<EXPRESSION_STRING>firstcap                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_FIRSTCAP); }
 
 <EXPRESSION_STRING>buffer                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_BUFFER); }
 <EXPRESSION_STRING>difference                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_DIFFERENCE); }
@@ -386,6 +390,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>transform                             { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }
 <INITIAL,URL_VARIABLE,URL_STRING>units         { MS_LEXER_RETURN_TOKEN(UNITS); }
+<INITIAL>utfdata                               { MS_LEXER_RETURN_TOKEN(UTFDATA); }
+<INITIAL>utfitem                               { MS_LEXER_RETURN_TOKEN(UTFITEM); }
 <INITIAL>validation                            { MS_LEXER_RETURN_TOKEN(VALIDATION); }
 <INITIAL>values                                { MS_LEXER_RETURN_TOKEN(VALUES); }
 <INITIAL,URL_VARIABLE>web                      { MS_LEXER_RETURN_TOKEN(WEB); }
@@ -395,7 +401,7 @@ char path[MS_MAXPATHLEN];
 
 <INITIAL,URL_STRING>annotation                 { MS_LEXER_RETURN_TOKEN(MS_LAYER_ANNOTATION); }
 <INITIAL,URL_STRING>auto                       { MS_LEXER_RETURN_TOKEN(MS_AUTO); }
-<INITIAL,URL_STRING>auto2                      { MS_LEXER_RETURN_TOKEN(MS_ANGLEMODE_AUTO2); }
+<INITIAL,URL_STRING>auto2                      { MS_LEXER_RETURN_TOKEN(MS_AUTO2); }
 <INITIAL>bevel                                 { MS_LEXER_RETURN_TOKEN(MS_CJC_BEVEL); }
 <INITIAL>bitmap                                { MS_LEXER_RETURN_TOKEN(MS_BITMAP); }
 <INITIAL>butt                                  { MS_LEXER_RETURN_TOKEN(MS_CJC_BUTT); }
@@ -414,7 +420,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>embed                      { MS_LEXER_RETURN_TOKEN(MS_EMBED); }
 <INITIAL,URL_STRING>false                      { MS_LEXER_RETURN_TOKEN(MS_FALSE); }
 <INITIAL,URL_STRING>feet                       { MS_LEXER_RETURN_TOKEN(MS_FEET); }
-<INITIAL,URL_STRING>follow                     { MS_LEXER_RETURN_TOKEN(MS_ANGLEMODE_FOLLOW); }
+<INITIAL,URL_STRING>follow                     { MS_LEXER_RETURN_TOKEN(MS_FOLLOW); }
 <INITIAL>giant                                 { MS_LEXER_RETURN_TOKEN(MS_GIANT); }
 <INITIAL>hatch                                 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_HATCH); }
 <INITIAL>hilite                                { MS_LEXER_RETURN_TOKEN(MS_HILITE); }

@@ -26,5 +26,5 @@ ADD_CUSTOM_COMMAND(TARGET javamapscript
                       )
 
 get_target_property(LOC_MAPSCRIPT_LIB ${SWIG_MODULE_javamapscript_REAL_NAME} LOCATION)
-install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION lib)
+install(FILES ${LOC_MAPSCRIPT_LIB} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

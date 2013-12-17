@@ -611,7 +611,7 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
   return(-1); /* no match */
 }
 
-static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
+char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
 {
   char *result=NULL;
 
@@ -656,7 +656,7 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
       status = yyparse(&p);
 
       if (status != 0) {
-        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "evalTextExpression", expr->string);
+        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "msEvalTextExpression", expr->string);
         return NULL;
       }
 
@@ -676,9 +676,9 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
 char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {
   assert(shape && lbl);
   if(lbl->text.string) {
-    return evalTextExpression(&(lbl->text), shape);
+    return msEvalTextExpression(&(lbl->text), shape);
   } else if(layer->class[shape->classindex]->text.string) {
-    return evalTextExpression(&(layer->class[shape->classindex]->text), shape);
+    return msEvalTextExpression(&(layer->class[shape->classindex]->text), shape);
   } else {
     if (shape->values && layer->labelitemindex >= 0 && shape->values[layer->labelitemindex] && strlen(shape->values[layer->labelitemindex]) )
       return msStrdup(shape->values[layer->labelitemindex]);
@@ -692,7 +692,7 @@ int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lb
   assert(layer && lbl);
   if(!msScaleInBounds(map->scaledenom,lbl->minscaledenom,lbl->maxscaledenom))
     return MS_OFF;
-  if(msEvalExpression(layer, shape, &(lbl->expression), -1) != MS_TRUE)
+  if(msEvalExpression(layer, shape, &(lbl->expression), layer->labelitemindex) != MS_TRUE)
     return MS_OFF;
   /* TODO: check for minfeaturesize here ? */
   return MS_ON;
@@ -825,6 +825,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         nReturnVal = msSaveImageGDAL(map, img, filename);
     } else
 #endif
+
       if (MS_RENDERER_PLUGIN(img->format)) {
         rendererVTableObj *renderer = img->format->vtable;
         FILE *stream = NULL;
@@ -1580,7 +1581,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         for( ; i > 0; )
           image->img.raw_16bit[--i] = nv;
       } else if( format->imagemode == MS_IMAGEMODE_FLOAT32 ) {
-        float nv = atoi(nullvalue);
+        float nv = atof(nullvalue);
         for( ; i > 0; )
           image->img.raw_float[--i] = nv;
       } else if( format->imagemode == MS_IMAGEMODE_BYTE ) {
@@ -2410,6 +2411,24 @@ int msMapSetLayerProjections(mapObj* map)
   }
   msFree(mapProjStr);
   return(MS_SUCCESS);
+}
+
+
+/************************************************************************
+ *                    msMapSetLanguageSpecificConnection                *
+ *                                                                      *
+ *   Override DATA and CONNECTION of each layer with their specific     *
+ *  variant for the specified language.                                 *
+ ************************************************************************/
+
+void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language)
+{
+    int i;
+    for(i=0; i<map->numlayers; i++) {
+      layerObj *layer = GET_LAYER(map, i);
+      if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, "%language%", validated_language);
+      if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, "%language%", validated_language);
+    }
 }
 
 /* Generalize a shape based of the tolerance.

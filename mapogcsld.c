@@ -837,7 +837,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                     msInsertHashTable(&psLayer->metadata, key,
                                       msLookupHashTable(&psCurrentLayer->metadata, key));
                 }
-                FLTPreParseFilterForAlias(psNode, psLayer->map, j, "G");
+                FLTPreParseFilterForAliasAndGroup(psNode, psLayer->map, j, "G");
               }
 
               pszExpression = FLTGetCommonExpression(psNode, psLayer);
@@ -1126,7 +1126,7 @@ int msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
     psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
     if (psOffset && psOffset->psChild && psOffset->psChild->pszValue) {
       psLayer->class[nClassId]->styles[iStyle]->offsetx = atoi(psOffset->psChild->pszValue);
-      psLayer->class[nClassId]->styles[iStyle]->offsety = psLayer->class[nClassId]->styles[iStyle]->offsetx;
+      psLayer->class[nClassId]->styles[iStyle]->offsety = MS_STYLE_SINGLE_SIDED_OFFSET;
     }
   }
 
@@ -2669,7 +2669,7 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 
   /*set the angle by default to auto. the angle can be
     modified Label Placement #2806*/
-  psLabelObj->anglemode = MS_ANGLEMODE_AUTO;
+  psLabelObj->anglemode = MS_AUTO;
 
 
   /* label  */
@@ -2795,22 +2795,9 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
         if ((msLookupHashTable(&(psLayer->map->fontset.fonts), szFontName) !=NULL)) {
           bFontSet = 1;
           psLabelObj->font = msStrdup(szFontName);
-          psLabelObj->type = MS_TRUETYPE;
-          psLabelObj->size = dfFontSize;
         }
       }
-      if (!bFontSet) {
-        psLabelObj->type = MS_BITMAP;
-        psLabelObj->size = MS_MEDIUM;
-        /* bitmap fonts don't support rotation */
-        psLabelObj->angle = 0;
-        psLabelObj->anglemode = MS_ANGLEMODE_NONE;
-        if(psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item) {
-          free(psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item);
-          psLabelObj->bindings[MS_LABEL_BINDING_ANGLE].item = NULL;
-          psLabelObj->numbindings--;
-        }
-      }
+      psLabelObj->size = dfFontSize;
 
       /* -------------------------------------------------------------------- */
       /*      parse the halo parameter.                                       */
@@ -3027,18 +3014,18 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
   /*if there is a line placement, we will assume that the
     best setting for mapserver would be for the text to follow
     the line #2806*/
-  psLabelObj->anglemode = MS_ANGLEMODE_FOLLOW;
+  psLabelObj->anglemode = MS_FOLLOW;
 
   /*sld 1.1.0 has a parameter IsAligned. default value is true*/
   psAligned = CPLGetXMLNode(psRoot, "IsAligned");
   if (psAligned && psAligned->psChild && psAligned->psChild->pszValue &&
       strcasecmp(psAligned->psChild->pszValue, "false") == 0) {
-    psLabelObj->anglemode = MS_ANGLEMODE_NONE;
+    psLabelObj->anglemode = MS_NONE;
   }
   psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
   if (psOffset && psOffset->psChild && psOffset->psChild->pszValue) {
     psLabelObj->offsetx = atoi(psOffset->psChild->pszValue);
-    psLabelObj->offsety = atoi(psOffset->psChild->pszValue);
+    psLabelObj->offsety = MS_LABEL_PERPENDICULAR_OFFSET;
 
     /*if there is a PerpendicularOffset, we will assume that the
       best setting for mapserver would be to use angle=0 and the
@@ -3046,7 +3033,8 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
     /* since sld 1.1.0 introduces the IsAligned parameter, only
        set the angles if the parameter is not set*/
     if (!psAligned) {
-      psLabelObj->anglemode = MS_ANGLEMODE_NONE;
+      psLabelObj->anglemode = MS_NONE;
+      psLabelObj->offsety = psLabelObj->offsetx;
     }
   }
 
@@ -3853,7 +3841,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     /*      font-weight (bold, normal). These 3 elements are separated      */
     /*      with -.                                                         */
     /* -------------------------------------------------------------------- */
-    if (psLabelObj->type == MS_TRUETYPE && psLabelObj->font) {
+    if (psLabelObj->font) {
       aszFontsParts = msStringSplit(psLabelObj->font, '-', &nFontParts);
       if (nFontParts > 0) {
         snprintf(szTmp, sizeof(szTmp), "<%sFont>\n",  sNameSpace);

@@ -392,6 +392,7 @@ extern "C" {
 #define MS_RENDER_WITH_OGL      104
 #define MS_RENDER_WITH_AGG 105
 #define MS_RENDER_WITH_KML 106
+#define MS_RENDER_WITH_UTFGRID 107
 
 #ifndef SWIG
 
@@ -481,10 +482,12 @@ extern "C" {
   enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 
 #define MS_POSITIONS_LENGTH 14
-  enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* Added MS_FOLLOW for bug #1620 implementation. */
-
-  enum MS_LABEL_ANGLEMODE{MS_ANGLEMODE_NONE,MS_ANGLEMODE_AUTO,MS_ANGLEMODE_AUTO2,MS_ANGLEMODE_FOLLOW};
-  enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
+  enum MS_POSITIONS_ENUM {MS_UL=101, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY, MS_NONE, MS_AUTO2,MS_FOLLOW};
+#define MS_TINY 5
+#define MS_SMALL 7
+#define MS_MEDIUM 10
+#define MS_LARGE 13
+#define MS_GIANT 16
   enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
   enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR };
   enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
@@ -543,7 +546,9 @@ extern "C" {
     FILTER_NODE_TYPE_GEOMETRY_POINT = 7,
     FILTER_NODE_TYPE_GEOMETRY_LINE = 8,
     FILTER_NODE_TYPE_GEOMETRY_POLYGON = 9,
-    FILTER_NODE_TYPE_FEATUREID = 10
+    FILTER_NODE_TYPE_FEATUREID = 10,
+    FILTER_NODE_TYPE_TEMPORAL = 11,
+    FILTER_NODE_TYPE_TIME_PERIOD = 12
   } FilterNodeType;
 
 
@@ -656,7 +661,8 @@ extern "C" {
   };
   enum MS_TOKEN_FUNCTION_ENUM {
     MS_TOKEN_FUNCTION_LENGTH=340, MS_TOKEN_FUNCTION_TOSTRING, MS_TOKEN_FUNCTION_COMMIFY, MS_TOKEN_FUNCTION_AREA, MS_TOKEN_FUNCTION_ROUND, MS_TOKEN_FUNCTION_FROMTEXT,
-    MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE, MS_TOKEN_FUNCTION_SIMPLIFY, MS_TOKEN_FUNCTION_SIMPLIFYPT, MS_TOKEN_FUNCTION_GENERALIZE, MS_TOKEN_FUNCTION_SMOOTHSIA, MS_TOKEN_FUNCTION_JAVASCRIPT
+    MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE, MS_TOKEN_FUNCTION_SIMPLIFY, MS_TOKEN_FUNCTION_SIMPLIFYPT, MS_TOKEN_FUNCTION_GENERALIZE, MS_TOKEN_FUNCTION_SMOOTHSIA, MS_TOKEN_FUNCTION_JAVASCRIPT,
+    MS_TOKEN_FUNCTION_UPPER, MS_TOKEN_FUNCTION_LOWER, MS_TOKEN_FUNCTION_INITCAP, MS_TOKEN_FUNCTION_FIRSTCAP
   };
   enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=360, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE, MS_TOKEN_BINDING_MAP_CELLSIZE, MS_TOKEN_BINDING_DATA_CELLSIZE };
   enum MS_PARSE_TYPE_ENUM { MS_PARSE_TYPE_BOOLEAN, MS_PARSE_TYPE_STRING, MS_PARSE_TYPE_SHAPE };
@@ -817,6 +823,7 @@ extern "C" {
 
     int  maxfeatures; /* global maxfeatures */    
     int  startindex;
+    int  only_cache_result_count; /* set to 1 sometimes by WFS 2.0 GetFeature request */
     
     char *item; /* by attribute */
     char *str;
@@ -957,7 +964,7 @@ extern "C" {
 
 #define MS_STYLE_SINGLE_SIDED_OFFSET -99
 #define MS_STYLE_DOUBLE_SIDED_OFFSET -999
-#define IS_PARALLEL_OFFSET(offsety) (offsety == MS_STYLE_SINGLE_SIDED_OFFSET || offsety == MS_STYLE_DOUBLE_SIDED_OFFSET)
+#define IS_PARALLEL_OFFSET(offsety) ((offsety) == MS_STYLE_SINGLE_SIDED_OFFSET || (offsety) == MS_STYLE_DOUBLE_SIDED_OFFSET)
 
   /********************************************************************/
   /*                          labelLeaderObj                          */
@@ -1001,8 +1008,6 @@ extern "C" {
 #endif /* SWIG */
 
     char *font;
-    enum MS_FONT_TYPE type;
-
     colorObj color;
     colorObj outlinecolor;
     int outlinewidth;
@@ -1017,7 +1022,7 @@ extern "C" {
     int offsetx, offsety;
 
     double angle;
-    enum MS_LABEL_ANGLEMODE anglemode;
+    enum MS_POSITIONS_ENUM anglemode;
 
     int buffer; /* space to reserve around a label */
 
@@ -1081,6 +1086,11 @@ extern "C" {
     label_bounds **style_bounds;
   } textSymbolObj;
 #endif
+
+#define MS_LABEL_PERPENDICULAR_OFFSET -99
+#define MS_LABEL_PERPENDICULAR_TOP_OFFSET 99
+#define IS_PERPENDICULAR_OFFSET(offsety) ((offsety) == MS_LABEL_PERPENDICULAR_OFFSET || (offsety) == MS_LABEL_PERPENDICULAR_TOP_OFFSET)
+
 
   /************************************************************************/
   /*                               classObj                               */
@@ -1254,6 +1264,9 @@ extern "C" {
 #endif /* SWIG */
     int numresults;
     rectObj bounds;
+#ifndef SWIG
+    rectObj previousBounds; /* bounds at previous iteration */
+#endif
 #ifdef SWIG
     %mutable;
 #endif /* SWIG */
@@ -1482,7 +1495,24 @@ extern "C" {
      int n_entries;
      scaleTokenEntryObj *tokens;
   } scaleTokenObj;
-  
+
+#ifndef SWIG
+  typedef enum {
+      SORT_ASC,
+      SORT_DESC
+  } sortOrderEnum;
+
+  typedef struct {
+      char* item;
+      sortOrderEnum sortOrder;
+  } sortByProperties;
+
+  typedef struct {
+      int nProperties;
+      sortByProperties* properties;
+  } sortByClause;
+#endif
+
   struct layerObj {
 
     char *classitem; /* .DBF item to be used for symbol lookup */
@@ -1664,6 +1694,15 @@ extern "C" {
 #endif
 
     char *encoding; /* for iconving shape attributes. ignored if NULL or "utf-8" */
+
+  /* RFC93 UTFGrid support */
+    char *utfitem;
+    int utfitemindex;
+    expressionObj utfdata;
+
+#ifndef SWIG
+    sortByClause sortBy;
+#endif
   };
 
 
@@ -1700,7 +1739,6 @@ typedef enum {
 
 void initTextPath(textPathObj *tp);
 int WARN_UNUSED msComputeTextPath(mapObj *map, textSymbolObj *ts);
-int WARN_UNUSED msComputeBitmapTextPath(rendererVTableObj *renderer, textSymbolObj *ts, textPathObj *tgret);
 void msCopyTextPath(textPathObj *dst, textPathObj *src);
 void freeTextPath(textPathObj *tp);
 void initTextSymbol(textSymbolObj *ts);
@@ -1978,7 +2016,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* mapfile.c */
 
   MS_DLL_EXPORT int msValidateParameter(char *value, char *pattern1, char *pattern2, char *pattern3, char *pattern4);
-  MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, char *name);
+  MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, const char *name);
   MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
   MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
   MS_DLL_EXPORT int msTransformXmlMapfile(const char *stylesheet, const char *xmlMapfile, FILE *tmpfile);
@@ -2105,6 +2143,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char *msIntToString(int value);
   MS_DLL_EXPORT void msStringToUpper(char *string);
   MS_DLL_EXPORT void msStringToLower(char *string);
+  MS_DLL_EXPORT void msStringInitCap(char *string);
+  MS_DLL_EXPORT void msStringFirstCap(char *string);
   MS_DLL_EXPORT int msEncodeChar(const char);
   MS_DLL_EXPORT char *msEncodeUrlExcept(const char*, const char);
   MS_DLL_EXPORT char *msEncodeUrl(const char*);
@@ -2355,6 +2395,10 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char *msLayerEscapeSQLParam(layerObj *layer, const char* pszString);
   MS_DLL_EXPORT char *msLayerEscapePropertyName(layerObj *layer, const char* pszString);
 
+  int msLayerSupportsSorting(layerObj *layer);
+  void msLayerSetSort(layerObj *layer, const sortByClause* sortBy);
+  char* msLayerBuildSQLOrderBy(layerObj *layer);
+
   /* These are special because SWF is using these */
   int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
   int msOGRLayerGetItems(layerObj *layer);
@@ -2517,6 +2561,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl);
   MS_DLL_EXPORT int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lbl);
   MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
+  MS_DLL_EXPORT char *msEvalTextExpression(expressionObj *expr, shapeObj *shape);
   MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
   MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);
   MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
@@ -2585,6 +2630,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT void msFreeRasterBuffer(rasterBufferObj *b);
 
+  void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language);
   MS_DLL_EXPORT shapeObj* msGeneralize(shapeObj * shape, double tolerance);
   /* ==================================================================== */
   /*      End of prototypes for functions in maputil.c                    */
@@ -2899,8 +2945,11 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msPopulateRendererVTableCairoPDF( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableOGL( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableAGG( rendererVTableObj *renderer );
+  MS_DLL_EXPORT int msPopulateRendererVTableUTFGrid( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableKML( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
+  MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
+
 #ifdef USE_CAIRO
   MS_DLL_EXPORT void msCairoCleanup(void);
 #endif
@@ -2938,7 +2987,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     int supports_transparent_layers;
     int supports_pixel_buffer;
     int supports_clipping;
-    int supports_bitmap_fonts;
     int supports_svg;
     int use_imagecache;
     enum MS_TRANSFORM_MODE default_transform_mode;
@@ -2952,9 +3000,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     int WARN_UNUSED (*renderPolygon)(imageObj *img, shapeObj *p, colorObj *color);
     int WARN_UNUSED (*renderPolygonTiled)(imageObj *img, shapeObj *p, imageObj *tile);
     int WARN_UNUSED (*renderLineTiled)(imageObj *img, shapeObj *p, imageObj *tile);
-
-    int WARN_UNUSED (*renderBitmapGlyphs)(imageObj *img, textPathObj *tp, colorObj *clr, colorObj *olcolor, int olwidth);
-    int WARN_UNUSED (*getBitmapGlyphMetrics)(int size, unsigned int unicode, glyph_metrics *bounds);
 
     int WARN_UNUSED (*renderGlyphs)(imageObj *img, textPathObj *tp, colorObj *clr, colorObj *olcolor, int olwidth);
     int WARN_UNUSED (*renderText)(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth);
@@ -2974,7 +3019,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     int WARN_UNUSED (*renderTile)(imageObj *img, imageObj *tile, double x, double y);
 
     int WARN_UNUSED (*loadImageFromFile)(char *path, rasterBufferObj *rb);
-
 
     int WARN_UNUSED (*getRasterBufferHandle)(imageObj *img, rasterBufferObj *rb);
     int WARN_UNUSED (*getRasterBufferCopy)(imageObj *img, rasterBufferObj *rb);

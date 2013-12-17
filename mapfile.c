@@ -77,7 +77,7 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
 ** Must be kept in sync with enumerations and defines found in mapserver.h.
 */
 /* static char *msUnits[9]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS", "PERCENTAGES", "NAUTICALMILES"}; */
-/* static char *msLayerTypes[9]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"}; */
+/* static char *msLayerTypes[10]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX","CHART"}; */
 char *msPositionsText[MS_POSITIONS_LENGTH] = {"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY", "FOLLOW"}; /* msLabelPositions[] also used in mapsymbols.c (not static) */
 /* static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"}; */
 /* static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"}; */
@@ -354,7 +354,7 @@ int msGetSymbolIndex(symbolSetObj *symbols, char *name, int try_addimage_if_notf
 /*
 ** Return the index number for a given layer based on its name.
 */
-int msGetLayerIndex(mapObj *map, char *name)
+int msGetLayerIndex(mapObj *map, const char *name)
 {
   int i;
 
@@ -369,7 +369,8 @@ int msGetLayerIndex(mapObj *map, char *name)
   return(-1);
 }
 
-int msGetClassIndex(layerObj *layer, char *name)
+static
+int msGetClassIndex(layerObj *layer, const char *name)
 {
   int i;
 
@@ -665,9 +666,9 @@ static void writeColor(FILE *stream, int indent, const char *name, colorObj *def
     sprintf(buffer+4, "%02x", color->blue);
     sprintf(buffer+6, "%02x", color->alpha);
     *(buffer+8) = 0;
-    fprintf(stream, "%s \"#%s\"\n", name, buffer);
+    msIO_fprintf(stream, "%s \"#%s\"\n", name, buffer);
   } else {
-    fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
+    msIO_fprintf(stream, "%s %d %d %d\n", name, color->red, color->green, color->blue);
   }
 #endif
 }
@@ -1374,16 +1375,101 @@ static int loadProjection(projectionObj *p)
 
 
 /************************************************************************/
+/*                     msLoadProjectionStringEPSGLike                   */
+/************************************************************************/
+
+static int msLoadProjectionStringEPSGLike(projectionObj *p, const char *value,
+                                          const char* pszPrefix,
+                                          int bFollowEPSGAxisOrder)
+{
+    size_t buffer_size = 0;
+    char *init_string =  NULL;
+    const char *code;
+    const char *next_sep;
+    size_t prefix_len;
+
+    prefix_len = strlen(pszPrefix);
+    if( strncasecmp(value, pszPrefix, prefix_len) != 0 )
+        return -1;
+
+    code = value + prefix_len;
+    next_sep = strchr(code, pszPrefix[prefix_len-1]);
+    if( next_sep != NULL )
+        code = next_sep + 1;
+
+    buffer_size = 10 + strlen(code) + 1;
+    init_string = (char*)msSmallMalloc(buffer_size);
+
+    /* translate into PROJ.4 format. */
+    snprintf( init_string, buffer_size, "init=epsg:%s", code );
+
+    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+    p->args[0] = init_string;
+    p->numargs = 1;
+
+    if( bFollowEPSGAxisOrder && msIsAxisInverted(atoi(code))) {
+      p->args[1] = msStrdup("+epsgaxis=ne");
+      p->numargs = 2;
+    }
+
+    return 0;
+}
+
+/************************************************************************/
+/*                     msLoadProjectionStringCRSLike                    */
+/************************************************************************/
+
+static int msLoadProjectionStringCRSLike(projectionObj *p, const char *value,
+                                         const char* pszPrefix)
+{
+    char init_string[100];
+    const char *id;
+    const char *next_sep;
+    size_t prefix_len;
+
+    prefix_len = strlen(pszPrefix);
+    if( strncasecmp(value, pszPrefix, prefix_len) != 0 )
+        return -1;
+
+    id = value + prefix_len;
+    next_sep = strchr(id, pszPrefix[prefix_len-1]);
+    if( next_sep != NULL )
+        id = next_sep + 1;
+
+    init_string[0] = '\0';
+
+    if( strcasecmp(id,"84") == 0 || strcasecmp(id,"CRS84") == 0 )
+      strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
+    else if( strcasecmp(id,"83") == 0 || strcasecmp(id,"CRS83") == 0 )
+      strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
+    else if( strcasecmp(id,"27") == 0 || strcasecmp(id,"CRS27") == 0 )
+      strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
+    else {
+      msSetError( MS_PROJERR,
+                  "Unrecognised OGC CRS def '%s'.",
+                  "msLoadProjectionString()",
+                  value );
+      return -1;
+    }
+
+    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
+    p->args[0] = msStrdup(init_string);
+    p->numargs = 1;
+
+    return 0;
+}
+
+/************************************************************************/
 /*                         msLoadProjectionStringEPSG                   */
 /*                                                                      */
-/*      Checks fro EPSG type projection and set the axes for a          */
+/*      Checks for EPSG type projection and set the axes for a          */
 /*      certain code ranges.                                            */
-/*      Use for now in WMS 1.3.0                                        */
+/*      Use for now in WMS 1.3.0 and WFS >= 1.1.0                       */
 /************************************************************************/
 int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 {
 #ifdef USE_PROJ
-  if(p) msFreeProjection(p);
+  msFreeProjection(p);
 
   p->gt.need_geotransform = MS_FALSE;
 #ifdef USE_PROJ_FASTPATHS
@@ -1396,24 +1482,8 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
   }
 #endif
 
-
-  if (strncasecmp(value, "EPSG:", 5) == 0) {
-    size_t buffer_size = 10 + strlen(value+5) + 1;
-    char *init_string = (char*)msSmallMalloc(buffer_size);
-
-    /* translate into PROJ.4 format. */
-    snprintf(init_string, buffer_size, "init=epsg:%s", value+5 );
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = init_string;
-    p->numargs = 1;
-
-
-    if( msIsAxisInverted(atoi(value+5))) {
-      p->args[1] = msStrdup("+epsgaxis=ne");
-      p->numargs = 2;
-    }
-
+  if( msLoadProjectionStringEPSGLike(p, value, "EPSG:", MS_TRUE) == 0 )
+  {
     return msProcessProjection( p );
   }
 
@@ -1426,13 +1496,12 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 #endif
 }
 
-
 int msLoadProjectionString(projectionObj *p, const char *value)
 {
   p->gt.need_geotransform = MS_FALSE;
 
 #ifdef USE_PROJ
-  if(p) msFreeProjection(p);
+  msFreeProjection(p);
 
 
   /*
@@ -1463,194 +1532,23 @@ int msLoadProjectionString(projectionObj *p, const char *value)
     p->args = (char**)msSmallMalloc(sizeof(char*));
     p->args[0] = msStrdup(value);
     p->numargs = 1;
-  } else if (strncasecmp(value, "EPSG:", 5) == 0) {
-    size_t buffer_size = 10 + strlen(value+5) + 1;
-    char *init_string = (char*)msSmallMalloc(buffer_size);
-
-    /* translate into PROJ.4 format. */
-    snprintf( init_string, buffer_size, "init=epsg:%s", value+5);
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = init_string;
-    p->numargs = 1;
-  } else if (strncasecmp(value, "urn:ogc:def:crs:EPSG:",21) == 0) {
-    /* this is very preliminary urn support ... expand later */
-    size_t buffer_size = 0;
-    char *init_string =  NULL;
-    const char *code;
-
-    code = value + 21;
-
-    while( *code != ':' && *code != '\0' )
-      code++;
-    if( *code == ':' )
-      code++;
-
-    buffer_size = 10 + strlen(code) + 1;
-    init_string = (char*)msSmallMalloc(buffer_size);
-
-    /* translate into PROJ.4 format. */
-    snprintf( init_string, buffer_size, "init=epsg:%s", code );
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = init_string;
-    p->numargs = 1;
-
-    if( msIsAxisInverted(atoi(code))) {
-      p->args[1] = msStrdup("+epsgaxis=ne");
-      p->numargs = 2;
-    }
-  } else if (strncasecmp(value, "urn:x-ogc:def:crs:EPSG:",23) == 0) {
+  } else if (msLoadProjectionStringEPSGLike(p, value, "EPSG:", MS_FALSE) == 0 ) {
+   /* Assume lon/lat ordering. Use msLoadProjectionStringEPSG() if wanting to follow EPSG axis */
+  } else if (msLoadProjectionStringEPSGLike(p, value, "urn:ogc:def:crs:EPSG:", MS_TRUE) == 0 ) {
+  } else if (msLoadProjectionStringEPSGLike(p, value, "urn:EPSG:geographicCRS:", MS_TRUE) == 0 ) {
+  } else if (msLoadProjectionStringEPSGLike(p, value, "urn:x-ogc:def:crs:EPSG:", MS_TRUE) == 0 ) {
     /*this case is to account for OGC CITE tests where x-ogc was used
       before the ogc name became an official NID. Note also we also account
       for the fact that a space for the version of the espg is not used with CITE tests.
       (Syntax used could be urn:ogc:def:objectType:authority:code)*/
-
-    size_t buffer_size = 0;
-    char *init_string =  NULL;
-    const char *code;
-
-    if (value[23] == ':')
-      code = value + 23;
-    else
-      code = value + 22;
-
-    while( *code != ':' && *code != '\0' )
-      code++;
-    if( *code == ':' )
-      code++;
-
-    buffer_size = 10 + strlen(code) + 1;
-    init_string = (char*)msSmallMalloc(buffer_size);
-
-    /* translate into PROJ.4 format. */
-    snprintf( init_string, buffer_size, "init=epsg:%s", code );
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = init_string;
-    p->numargs = 1;
-
-    if( msIsAxisInverted(atoi(code))) {
-      p->args[1] = msStrdup("+epsgaxis=ne");
-      p->numargs = 2;
-    }
-
-  } else if (strncasecmp(value, "urn:ogc:def:crs:OGC:",20) == 0 ) {
-    /* this is very preliminary urn support ... expand later */
-    char init_string[100];
-    const char *id;
-
-    id = value + 20;
-    while( *id != ':' && *id == '\0' )
-      id++;
-
-    if( *id == ':' )
-      id++;
-
-    init_string[0] = '\0';
-
-    if( strcasecmp(id,"CRS84") == 0 )
-      strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
-    else if( strcasecmp(id,"CRS83") == 0 )
-      strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
-    else if( strcasecmp(id,"CRS27") == 0 )
-      strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
-    else {
-      msSetError( MS_PROJERR,
-                  "Unrecognised OGC CRS def '%s'.",
-                  "msLoadProjectionString()",
-                  value );
-      return -1;
-    }
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = msStrdup(init_string);
-    p->numargs = 1;
-  }
-  /* URI projection support */
-  else if (EQUALN("http://www.opengis.net/def/crs/EPSG/", value, 36)) {
-    /* this is very preliminary urn support ... expand later */
-    char init_string[100];
-    const char *code;
-
-    code = value + 36;
-    while( *code != '/' && *code != '\0' )
-      code++;
-    if( *code == '/' )
-      code++;
-
-    /* translate into PROJ.4 format. */
-    snprintf( init_string, sizeof(init_string), "init=epsg:%s", code );
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = msStrdup(init_string);
-    p->numargs = 1;
-
-    if( msIsAxisInverted(atoi(code))) {
-      p->args[1] = msStrdup("+epsgaxis=ne");
-      p->numargs = 2;
-    }
-  } else if (EQUALN("http://www.opengis.net/def/crs/OGC/", value, 35) ) {
-    char init_string[100];
-    const char *id;
-
-    id = value + 35;
-    while( *id != '/' && *id == '\0' )
-      id++;
-    if( *id == '/' )
-      id++;
-
-    init_string[0] = '\0';
-
-    if( strcasecmp(id,"CRS84") == 0 )
-      strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
-    else if( strcasecmp(id,"CRS83") == 0 )
-      strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
-    else if( strcasecmp(id,"CRS27") == 0 )
-      strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
-    else {
-      msSetError( MS_PROJERR,
-                  "Unrecognised OGC CRS def '%s'.",
-                  "msLoadProjectionString()",
-                  value );
-      return -1;
-    }
-
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = msStrdup(init_string);
-    p->numargs = 1;
-  /* Mandatory support for this URI format specified in WFS1.1 (also in 1.0?) */
-  } else if (EQUALN("http://www.opengis.net/gml/srs/epsg.xml#", value, 40)) {
-  	/* We assume always lon/lat ordering, as that is what GeoServer does... */
-  	const char *code;
-
-  	code = value + 40;
-
-  	p->args = (char **) msSmallMalloc(sizeof(char *));
-  	/* translate into PROJ.4 format as we go */
-  	p->args[0] = (char *) msSmallMalloc(11 + strlen(code));
-  	snprintf(p->args[0], 11 + strlen(code), "init=epsg:%s", code);
-  	p->numargs = 1;
-
-  } else if (strncasecmp(value, "CRS:",4) == 0 ) {
-    char init_string[100];
-    init_string[0] = '\0';
-    if (atoi(value+4) == 84)
-      strncpy( init_string, "init=epsg:4326", sizeof(init_string) );
-    else if (atoi(value+4) == 83)
-      strncpy( init_string, "init=epsg:4269", sizeof(init_string) );
-    else if (atoi(value+4) == 27)
-      strncpy( init_string, "init=epsg:4267", sizeof(init_string) );
-    else {
-      msSetError( MS_PROJERR,
-                  "Unrecognised OGC CRS def '%s'.",
-                  "msLoadProjectionString()",
-                  value );
-      return -1;
-    }
-    p->args = (char**)msSmallMalloc(sizeof(char*) * 2);
-    p->args[0] = msStrdup(init_string);
-    p->numargs = 1;
+  } else if (msLoadProjectionStringCRSLike(p, value, "urn:ogc:def:crs:OGC:") == 0 ) {
+  } else if (msLoadProjectionStringEPSGLike(p, value, "http://www.opengis.net/def/crs/EPSG/", MS_TRUE) == 0 ) {
+    /* URI projection support */
+  } else if (msLoadProjectionStringCRSLike(p, value, "http://www.opengis.net/def/crs/OGC/") == 0 ) {
+    /* Mandatory support for this URI format specified in WFS1.1 (also in 1.0?) */
+  } else if (msLoadProjectionStringEPSGLike(p, value, "http://www.opengis.net/gml/srs/epsg.xml#", MS_FALSE) == 0 ) {
+    /* We assume always lon/lat ordering, as that is what GeoServer does... */
+  } else if (msLoadProjectionStringCRSLike(p, value, "CRS:") == 0 ) {
   }
   /*
    * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
@@ -1711,12 +1609,11 @@ void initLabel(labelObj *label)
   label->shadowsizex = label->shadowsizey = 1;
 
   label->font = NULL;
-  label->type = MS_BITMAP;
   label->size = MS_MEDIUM;
 
   label->position = MS_CC;
   label->angle = 0;
-  label->anglemode = MS_ANGLEMODE_NONE;
+  label->anglemode = MS_NONE;
   label->minsize = MS_MINFONTSIZE;
   label->maxsize = MS_MAXFONTSIZE;
   label->buffer = 0;
@@ -1845,7 +1742,7 @@ static int loadLabel(labelObj *label)
   for(;;) {
     switch(msyylex()) {
       case(ANGLE):
-        if((symbol = getSymbol(5, MS_NUMBER,MS_AUTO,MS_ANGLEMODE_AUTO2,MS_ANGLEMODE_FOLLOW,MS_BINDING)) == -1)
+        if((symbol = getSymbol(5, MS_NUMBER,MS_AUTO,MS_AUTO2,MS_FOLLOW,MS_BINDING)) == -1)
           return(-1);
 
         if(symbol == MS_NUMBER)
@@ -1855,8 +1752,6 @@ static int loadLabel(labelObj *label)
             msFree(label->bindings[MS_LABEL_BINDING_ANGLE].item);
           label->bindings[MS_LABEL_BINDING_ANGLE].item = msStrdup(msyystring_buffer);
           label->numbindings++;
-        } else if ( symbol == MS_AUTO ) {
-          label->anglemode = MS_ANGLEMODE_AUTO;
         } else {
           label->anglemode = symbol;
         }
@@ -1878,11 +1773,6 @@ static int loadLabel(labelObj *label)
         if((getString(&label->encoding)) == MS_FAILURE) return(-1);
         break;
       case(END):
-        /* sanity check */
-        if((label->anglemode != MS_ANGLEMODE_NONE || label->angle != 0 || label->bindings[MS_LABEL_BINDING_ANGLE].item) && label->type == MS_BITMAP) {
-          msSetError(MS_MISCERR,"Rotated labels not supported with bitmap fonts.", "loadLabel()");
-          return -1;
-        }
         return(0);
         break;
       case(EOF):
@@ -2075,7 +1965,7 @@ static int loadLabel(labelObj *label)
         }
         break;
       case(TYPE):
-        if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return(-1);
+        if(getSymbol(2, MS_TRUETYPE,MS_BITMAP) == -1) return(-1); /* ignore TYPE */
         break;
       case(WRAP):
         if(getCharacter(&(label->wrap)) == -1) return(-1);
@@ -2143,29 +2033,22 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   indent++;
   writeBlockBegin(stream, indent, "LABEL");
 
-  /*
-  ** a few attributes are bitmap or truetype only
-  */
-  if(label->type == MS_BITMAP) {
-    writeKeyword(stream, indent, "SIZE", (int)label->size, 5, MS_TINY, "TINY", MS_SMALL, "SMALL", MS_MEDIUM, "MEDIUM", MS_LARGE, "LARGE", MS_GIANT, "GIANT");
-  } else {
-    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
-      writeAttributeBinding(stream, indent, "ANGLE", &(label->bindings[MS_LABEL_BINDING_ANGLE]));
-    else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_ANGLEMODE_FOLLOW, "FOLLOW", MS_ANGLEMODE_AUTO, "AUTO", MS_ANGLEMODE_AUTO2, "AUTO2");
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_ANGLE].item)
+    writeAttributeBinding(stream, indent, "ANGLE", &(label->bindings[MS_LABEL_BINDING_ANGLE]));
+  else writeNumberOrKeyword(stream, indent, "ANGLE", 0, label->angle, label->anglemode, 3, MS_FOLLOW, "FOLLOW", MS_AUTO, "AUTO", MS_AUTO2, "AUTO2");
 
-    writeExpression(stream, indent, "EXPRESSION", &(label->expression));
+  writeExpression(stream, indent, "EXPRESSION", &(label->expression));
 
-    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_FONT].item)
-      writeAttributeBinding(stream, indent, "FONT", &(label->bindings[MS_LABEL_BINDING_FONT]));
-    else writeString(stream, indent, "FONT", NULL, label->font);
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_FONT].item)
+    writeAttributeBinding(stream, indent, "FONT", &(label->bindings[MS_LABEL_BINDING_FONT]));
+  else writeString(stream, indent, "FONT", NULL, label->font);
 
-    writeNumber(stream, indent, "MAXSIZE",  MS_MAXFONTSIZE, label->maxsize);
-    writeNumber(stream, indent, "MINSIZE",  MS_MINFONTSIZE, label->minsize);
+  writeNumber(stream, indent, "MAXSIZE",  MS_MAXFONTSIZE, label->maxsize);
+  writeNumber(stream, indent, "MINSIZE",  MS_MINFONTSIZE, label->minsize);
 
-    if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_SIZE].item)
-      writeAttributeBinding(stream, indent, "SIZE", &(label->bindings[MS_LABEL_BINDING_SIZE]));
-    else writeNumber(stream, indent, "SIZE", -1, label->size);
-  }
+  if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_SIZE].item)
+    writeAttributeBinding(stream, indent, "SIZE", &(label->bindings[MS_LABEL_BINDING_SIZE]));
+  else writeNumber(stream, indent, "SIZE", -1, label->size);
 
   writeKeyword(stream, indent, "ALIGN", label->align, 3, MS_ALIGN_LEFT, "LEFT", MS_ALIGN_CENTER, "CENTER", MS_ALIGN_RIGHT, "RIGHT");
   writeNumber(stream, indent, "BUFFER", 0, label->buffer);
@@ -2214,7 +2097,6 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
 
   writeExpression(stream, indent, "TEXT", &(label->text));
 
-  writeKeyword(stream, indent, "TYPE", label->type, 2, MS_BITMAP, "BITMAP", MS_TRUETYPE, "TRUETYPE");
   writeCharacter(stream, indent, "WRAP", '\0', label->wrap);
   writeBlockEnd(stream, indent, "LABEL");
 }
@@ -3917,8 +3799,15 @@ int initLayer(layerObj *layer, mapObj *map)
 
   initExpression(&(layer->_geomtransform));
   layer->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+
+  initExpression(&(layer->utfdata));
+  layer->utfitem = NULL;
+  layer->utfitemindex = -1;
   
   layer->encoding = NULL;
+  
+  layer->sortBy.nProperties = 0;
+  layer->sortBy.properties = NULL;
 
   return(0);
 }
@@ -4034,6 +3923,13 @@ int freeLayer(layerObj *layer)
   if(layer->maskimage) {
     msFreeImage(layer->maskimage);
   }
+
+  freeExpression(&(layer->utfdata));
+  msFree(layer->utfitem);
+  
+  for(i=0;i<layer->sortBy.nProperties;i++)
+      msFree(layer->sortBy.properties[i].item);
+  msFree(layer->sortBy.properties);
 
   return MS_SUCCESS;
 }
@@ -4578,6 +4474,12 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(UNITS):
         if((layer->units = getSymbol(9, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return(-1);
         break;
+      case(UTFDATA):
+        if(loadExpression(&(layer->utfdata)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
+        break;
+      case(UTFITEM):
+        if(getString(&layer->utfitem) == MS_FAILURE) return(-1); /* loadExpression() cleans up previously allocated expression */
+        break;
       case(VALIDATION):
         if(loadHashTable(&(layer->validation)) != MS_SUCCESS) return(-1);
         break;
@@ -4691,7 +4593,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeKeyword(stream, indent, "TOLERANCEUNITS", layer->toleranceunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");
   writeNumber(stream, indent, "OPACITY", 100, layer->opacity);
-  writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
+  writeKeyword(stream, indent, "TYPE", layer->type, 8, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
   writeKeyword(stream, indent, "UNITS", layer->units, 9, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD", MS_PIXELS, "PIXELS", MS_PERCENTAGES, "PERCENTATGES");
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
@@ -7140,6 +7042,7 @@ void initResultCache(resultCacheObj *resultcache)
     resultcache->numresults = 0;
     resultcache->cachesize = 0;
     resultcache->bounds.minx = resultcache->bounds.miny = resultcache->bounds.maxx = resultcache->bounds.maxy = -1;
+    resultcache->previousBounds = resultcache->bounds;
     resultcache->usegetshape = MS_FALSE;
   }
 }

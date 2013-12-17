@@ -32,9 +32,9 @@
 #include "mapserver.h"
 
 /*dont need ogr for these functikons*/
-MS_DLL_EXPORT int FLTIsNumeric(char *pszValue);
-MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, char *pszExpression);
-MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  int forcecharcter);
+MS_DLL_EXPORT int FLTIsNumeric(const char *pszValue);
+MS_DLL_EXPORT int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression);
+MS_DLL_EXPORT  char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter);
 
 #ifdef USE_OGR
 
@@ -58,7 +58,7 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-MS_DLL_EXPORT FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
+MS_DLL_EXPORT FilterEncodingNode *FLTParseFilterEncoding(const char *szXMLString);
 MS_DLL_EXPORT FilterEncodingNode *FLTCreateFilterEncodingNode(void);
 MS_DLL_EXPORT int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
                                         int iLayerIndex);
@@ -86,16 +86,18 @@ MS_DLL_EXPORT int FLTIsOnlyPropertyIsLike(FilterEncodingNode *psFilterNode);
 
 MS_DLL_EXPORT void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     CPLXMLNode *psXMLNode);
-MS_DLL_EXPORT int FLTIsLogicalFilterType(char *pszValue);
-MS_DLL_EXPORT int FLTIsBinaryComparisonFilterType(char *pszValue);
-MS_DLL_EXPORT int FLTIsComparisonFilterType(char *pszValue);
-MS_DLL_EXPORT int FLTIsFeatureIdFilterType(char *pszValue);
-MS_DLL_EXPORT int FLTIsSpatialFilterType(char *pszValue);
+MS_DLL_EXPORT int FLTIsLogicalFilterType(const char *pszValue);
+MS_DLL_EXPORT int FLTIsBinaryComparisonFilterType(const char *pszValue);
+MS_DLL_EXPORT int FLTIsComparisonFilterType(const char *pszValue);
+MS_DLL_EXPORT int FLTIsFeatureIdFilterType(const char *pszValue);
+MS_DLL_EXPORT int FLTIsSpatialFilterType(const char *pszValue);
+MS_DLL_EXPORT int FLTIsTemporalFilterType(const char *pszValue);
 MS_DLL_EXPORT int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode);
 
 MS_DLL_EXPORT char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
-MS_DLL_EXPORT char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
+MS_DLL_EXPORT const char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
+const char* FLTGetDuring(FilterEncodingNode *psFilterNode, const char** ppszTimeField);
 
 MS_DLL_EXPORT shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
                                     int *pnUnit);
@@ -120,25 +122,32 @@ MS_DLL_EXPORT char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *ps
     layerObj *lp);
 MS_DLL_EXPORT int FLTIsSimpleFilter(FilterEncodingNode *psFilterNode);
 
-MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(char *pszString);
+MS_DLL_EXPORT FilterEncodingNode *FLTCreateFeatureIdFilterEncoding(const char *pszString);
 
-MS_DLL_EXPORT int FLTParseEpsgString(char *pszEpsg, projectionObj *psProj);
 MS_DLL_EXPORT int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS);
 MS_DLL_EXPORT  int FLTParseGMLBox(CPLXMLNode *psBox, rectObj *psBbox, char **ppszSRS);
 
 /*common-expressions*/
 MS_DLL_EXPORT   char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
 MS_DLL_EXPORT  char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
-MS_DLL_EXPORT int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, char *pszExpression);
-
+char* FLTGetTimeExpression(FilterEncodingNode *psFilterNode, layerObj *lp);
+MS_DLL_EXPORT int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const char *pszExpression);
 
 #ifdef USE_LIBXML2
 MS_DLL_EXPORT xmlNodePtr FLTGetCapabilities(xmlNsPtr psNsParent, xmlNsPtr psNsOgc, int bTemporal);
 #endif
 
+void FLTDoAxisSwappingIfNecessary(FilterEncodingNode *psFilterNode, int bDefaultSRSNeedsAxisSwapping);
 
-void FLTPreParseFilterForAlias(FilterEncodingNode *psFilterNode,
-                               mapObj *map, int i, const char *namespaces);
+void FLTPreParseFilterForAliasAndGroup(FilterEncodingNode *psFilterNode,
+                                       mapObj *map, int i, const char *namespaces);
+int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
+                             mapObj *map, int i);
+int FLTCheckInvalidOperand(FilterEncodingNode *psFilterNode);
+int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
+                            mapObj *map, int i);
+FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
+                                int* pnEvaluation);
 
 #endif
 

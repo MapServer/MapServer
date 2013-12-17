@@ -29,6 +29,7 @@
 
 #include "mapserver.h"
 #include "fontcache.h"
+#include "mapagg.h"
 #include <assert.h>
 #include "renderers/agg/include/agg_color_rgba.h"
 #include "renderers/agg/include/agg_pixfmt_rgba.h"
@@ -47,7 +48,6 @@
 #include "renderers/agg/include/agg_image_accessors.h"
 #include "renderers/agg/include/agg_conv_stroke.h"
 #include "renderers/agg/include/agg_conv_dash.h"
-#include "renderers/agg/include/agg_path_storage.h"
 #include "renderers/agg/include/agg_font_freetype.h"
 #include "renderers/agg/include/agg_conv_contour.h"
 #include "renderers/agg/include/agg_ellipse.h"
@@ -60,7 +60,6 @@
 #include "renderers/agg/include/agg_span_image_filter_rgba.h"
 #include "renderers/agg/include/agg_glyph_raster_bin.h"
 #include "renderers/agg/include/agg_renderer_raster_text.h"
-#include "renderers/agg/include/agg_embedded_raster_fonts.h"
 #include "renderers/agg/include/agg_path_storage_integer.h"
 
 #include "renderers/agg/include/agg_conv_clipper.h"
@@ -95,139 +94,6 @@ typedef mapserver::renderer_primitives<renderer_base> renderer_primitives;
 typedef mapserver::rasterizer_outline<renderer_primitives> rasterizer_outline;
 #endif
 static color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
-
-const mapserver::int8u* rasterfonts[]= {
-  mapserver::mcs5x10_mono, /*gd tiny. gse5x7 is a bit less high than gd tiny*/
-  mapserver::mcs5x11_mono, /*gd small*/
-  mapserver::mcs6x11_mono, /*gd medium*/
-  mapserver::mcs7x12_mono_low, /*gd large*/
-  mapserver::mcs7x12_mono_high /*gd huge*/
-};
-
-fontMetrics rasterfont_sizes[] = {
-  {5,mapserver::mcs5x10_mono[0]},
-  {5,mapserver::mcs5x11_mono[0]},
-  {6,mapserver::mcs6x11_mono[0]},
-  {7,mapserver::mcs7x12_mono_low[0]},
-  {7,mapserver::mcs7x12_mono_high[0]}
-};
-
-/*
- * interface to a shapeObj representing lines, providing the functions
- * needed by the agg rasterizer. treats shapeObjs with multiple linestrings.
- */
-class line_adaptor
-{
-public:
-  line_adaptor(shapeObj *shape):s(shape) {
-    m_line=s->line; /*first line*/
-    m_point=m_line->point; /*current vertex is first vertex of first line*/
-    m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
-    m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
-  }
-
-  /* a class with virtual functions should also provide a virtual destructor */
-  virtual ~line_adaptor() {}
-
-  void rewind(unsigned) {
-    m_line=s->line; /*first line*/
-    m_point=m_line->point; /*current vertex is first vertex of first line*/
-    m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
-  }
-
-  virtual unsigned vertex(double* x, double* y) {
-    if(m_point < m_pend) {
-      /*here we treat the case where a real vertex is returned*/
-      bool first = m_point == m_line->point; /*is this the first vertex of a line*/
-      *x = m_point->x;
-      *y = m_point->y;
-      m_point++;
-      return first ? mapserver::path_cmd_move_to : mapserver::path_cmd_line_to;
-    }
-    /*if here, we're at the end of a line*/
-    m_line++;
-    *x = *y = 0.0;
-    if(m_line>=m_lend) /*is this the last line of the shapObj. normally,
-        (m_line==m_lend) should be a sufficient test, as the caller should not call
-        this function if a previous call returned path_cmd_stop.*/
-      return mapserver::path_cmd_stop; /*no more points to process*/
-
-    /*if here, there are more lines in the shapeObj, continue with next one*/
-    m_point=m_line->point; /*pointer to first point of next line*/
-    m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last point of next line*/
-
-    return vertex(x,y); /*this will return the first point of the next line*/
-  }
-private:
-  shapeObj *s;
-  lineObj *m_line, /*current line pointer*/
-          *m_lend; /*points to after the last line*/
-  pointObj *m_point, /*current point*/
-           *m_pend; /*points to after last point of current line*/
-};
-
-class polygon_adaptor
-{
-public:
-  polygon_adaptor(shapeObj *shape):s(shape),m_stop(false) {
-    m_line=s->line; /*first lines*/
-    m_point=m_line->point; /*first vertex of first line*/
-    m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
-    m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
-  }
-
-  /* a class with virtual functions should also provide a virtual destructor */
-  virtual ~polygon_adaptor() {}
-
-  void rewind(unsigned) {
-    /*reset pointers*/
-    m_stop=false;
-    m_line=s->line;
-    m_point=m_line->point;
-    m_pend=&(m_line->point[m_line->numpoints]);
-  }
-
-  virtual unsigned vertex(double* x, double* y) {
-    if(m_point < m_pend) {
-      /*if here, we have a real vertex*/
-      bool first = m_point == m_line->point;
-      *x = m_point->x;
-      *y = m_point->y;
-      m_point++;
-      return first ? mapserver::path_cmd_move_to : mapserver::path_cmd_line_to;
-    }
-    *x = *y = 0.0;
-    if(!m_stop) {
-      /*if here, we're after the last vertex of the current line
-       * we return the command to close the current polygon*/
-      m_line++;
-      if(m_line>=m_lend) {
-        /*if here, we've finished all the vertexes of the shape.
-         * we still return the command to close the current polygon,
-         * but set m_stop so the subsequent call to vertex() will return
-         * the stop command*/
-        m_stop=true;
-        return mapserver::path_cmd_end_poly;
-      }
-      /*if here, there's another line in the shape, so we set the pointers accordingly
-       * and return the command to close the current polygon*/
-      m_point=m_line->point; /*first vertex of next line*/
-      m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of next line*/
-      return mapserver::path_cmd_end_poly;
-    }
-    /*if here, a previous call to vertex informed us that we'd consumed all the vertexes
-     * of the shape. return the command to stop processing this shape*/
-    return mapserver::path_cmd_stop;
-  }
-private:
-  shapeObj *s;
-  double ox,oy;
-  lineObj *m_line, /*pointer to current line*/
-          *m_lend; /*pointer to after last line of the shape*/
-  pointObj *m_point, /*pointer to current vertex*/
-           *m_pend; /*pointer to after last vertex of current line*/
-  bool m_stop; /*should next call return stop command*/
-};
 
 #define aggColor(c) mapserver::rgba8_pre((c)->red, (c)->green, (c)->blue, (c)->alpha)
 
@@ -722,91 +588,19 @@ int agg2RenderGlyphsPath(imageObj *img, textPathObj *tp, colorObj *c, colorObj *
   return MS_SUCCESS;
 }
 
-int agg2RenderBitmapGlyphs2(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow)
-{
-  int size = tp->glyph_size;
-  size = MS_MAX(0,size);
-  size = MS_MIN(4,size);
-  AGG2Renderer *r = AGG_RENDERER(img);
-
-  glyph_gen glyph(0);
-  mapserver::renderer_raster_htext_solid<renderer_base, glyph_gen> rt(r->m_renderer_base, glyph);
-  glyph.font(rasterfonts[size]);
-  unsigned int cc_start = rasterfonts[size][2];
-  unsigned int cc_end = cc_start + rasterfonts[size][3];
-  unsigned int glyph_idx;
-  if(oc) {
-    rt.color(aggColor(oc));
-    for(int n=0; n<tp->numglyphs; n++) {
-      glyphObj *g = &tp->glyphs[n];
-      /* do some unicode mapping, for now we just replace unsupported characters with "." */
-      if(g->glyph->key.codepoint < cc_start || g->glyph->key.codepoint > cc_end) {
-        glyph_idx = '.';
-      } else {
-        glyph_idx = g->glyph->key.codepoint;
-      }
-      for(int i=-1; i<=1; i++) {
-        for(int j=-1; j<=1; j++) {
-          if(i||j) {
-            rt.render_glyph(g->pnt.x+i , g->pnt.y+j, glyph_idx, true);
-          }
-        }
-      }
-
-    }
-  }
-  if(c) {
-    rt.color(aggColor(c));
-    for(int n=0; n<tp->numglyphs; n++) {
-      glyphObj *g = &tp->glyphs[n];
-      /* do some unicode mapping, for now we just replace unsupported characters with "." */
-      if(g->glyph->key.codepoint < cc_start || g->glyph->key.codepoint > cc_end) {
-        glyph_idx = '.';
-      } else {
-        glyph_idx = g->glyph->key.codepoint;
-      }
-      rt.render_glyph(g->pnt.x , g->pnt.y, glyph_idx, true);
-    }
-  }
-  return MS_SUCCESS;
-}
-
-int getBitmapGlyphMetrics(int size, unsigned int unicode, glyph_metrics *bounds) {
-  size = MS_MAX(0,size);
-  size = MS_MIN(4,size);
-  unsigned int glyph_idx;
-
-  /* do some unicode mapping, for now we just replace unsupported characters with "." */
-  unsigned int cc_start = rasterfonts[size][2];
-  unsigned int cc_end = cc_start + rasterfonts[size][3];
-  if(unicode < cc_start || unicode > cc_end) {
-    glyph_idx = '.';
-  } else {
-    glyph_idx = unicode;
-  }
-
-  glyph_gen glyph(0);
-  glyph.font(rasterfonts[size]);
-
-  bounds->minx = 0;
-  bounds->miny = -glyph.base_line();
-  bounds->maxx = glyph.glyph_width(glyph_idx);
-  bounds->maxy = glyph.height() + bounds->miny;
-  bounds->advance = bounds->maxx;
-  return MS_SUCCESS;
-}
-
-static mapserver::path_storage imageVectorSymbolAGG(symbolObj *symbol)
+mapserver::path_storage imageVectorSymbol(symbolObj *symbol)
 {
   mapserver::path_storage path;
-  bool is_new=true;
+  int is_new=1;
+
   for(int i=0; i < symbol->numpoints; i++) {
-    if((symbol->points[i].x == -99) && (symbol->points[i].y == -99)) { // (PENUP)
-      is_new=true;
-    } else {
+    if((symbol->points[i].x == -99) && (symbol->points[i].y == -99))
+      is_new=1;
+
+    else {
       if(is_new) {
         path.move_to(symbol->points[i].x,symbol->points[i].y);
-        is_new=false;
+        is_new=0;
       } else {
         path.line_to(symbol->points[i].x,symbol->points[i].y);
       }
@@ -815,7 +609,6 @@ static mapserver::path_storage imageVectorSymbolAGG(symbolObj *symbol)
   return path;
 }
 
-
 int agg2RenderVectorSymbol(imageObj *img, double x, double y,
                            symbolObj *symbol, symbolStyleObj * style)
 {
@@ -823,7 +616,7 @@ int agg2RenderVectorSymbol(imageObj *img, double x, double y,
   double ox = symbol->sizex * 0.5;
   double oy = symbol->sizey * 0.5;
 
-  mapserver::path_storage path = imageVectorSymbolAGG(symbol);
+  mapserver::path_storage path = imageVectorSymbol(symbol);
   mapserver::trans_affine mtx;
   mtx *= mapserver::trans_affine_translation(-ox,-oy);
   mtx *= mapserver::trans_affine_scaling(style->scale);
@@ -1049,7 +842,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
 
 int agg2SaveImage(imageObj *img, mapObj* map, FILE *fp, outputFormatObj * format)
 {
-  msSetError(MS_MISCERR, "AGG2 does not support direct image saving", "agg2SaveImage()");
+  
 
   return MS_FAILURE;
 }
@@ -1362,8 +1155,6 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer)
   renderer->renderLineTiled = &agg2RenderLineTiled;
 
   renderer->renderGlyphs = &agg2RenderGlyphsPath;
-  renderer->renderBitmapGlyphs = &agg2RenderBitmapGlyphs2;
-  renderer->getBitmapGlyphMetrics = &getBitmapGlyphMetrics;
 
   renderer->renderVectorSymbol = &agg2RenderVectorSymbol;
 
@@ -1388,8 +1179,6 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer)
   renderer->freeImage = &agg2FreeImage;
   renderer->freeSymbol = &agg2FreeSymbol;
   renderer->cleanup = agg2Cleanup;
-
-  renderer->supports_bitmap_fonts = 1;
 
   return MS_SUCCESS;
 }
