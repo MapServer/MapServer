@@ -631,6 +631,7 @@ shape_exp: SHAPE
       $$ = s;
     }
   | JAVASCRIPT '(' shape_exp ',' string_exp ')' {
+#ifdef USE_V8_MAPSCRIPT
       shapeObj *s;
       s = msV8TransformShape($3, $5);
       free($5);
@@ -640,6 +641,10 @@ shape_exp: SHAPE
       }
       s->scratch = MS_TRUE;
       $$ = s;
+#else
+      yyerror(p, "Javascript support not compiled in");
+      return(-1);
+#endif
     }
 ;
 
