@@ -2417,7 +2417,10 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
 
   xmlDocSetRootElement(psDoc, psRootNode);
 
-  if(EQUAL(exceptionCode, "OperationNotSupported")
+  if (exceptionCode == NULL) {
+    /* Do nothing */
+  }
+  else if(EQUAL(exceptionCode, "OperationNotSupported")
      || EQUAL(exceptionCode, "OptionNotSupported")) {
     status = "501 Not Implemented";
   }
