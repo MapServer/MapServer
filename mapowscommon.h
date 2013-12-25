@@ -3,7 +3,7 @@
  *
  * Project:  MapServer
  * Purpose:  OGC OWS Common Implementation include file
- * Author:   Tom Kralidis (tomkralidis@hotmail.com)
+ * Author:   Tom Kralidis (tomkralidis@gmail.com)
  *
  ******************************************************************************
  * Copyright (c) 2006, Tom Kralidis
@@ -34,6 +34,8 @@
 
 #include<libxml/parser.h>
 #include<libxml/tree.h>
+
+#endif
 
 /* W3C namespaces */
 
@@ -79,8 +81,31 @@
 
 /* GML namespaces */
 
-#define MS_OWSCOMMON_GML_32_NAMESPACE_URI   "http://www.opengis.net/gml/3.2"
+#define MS_OWSCOMMON_GML_NAMESPACE_URI      "http://www.opengis.net/gml"
 #define MS_OWSCOMMON_GML_NAMESPACE_PREFIX   "gml"
+
+#define MS_OWSCOMMON_GML_32_NAMESPACE_URI   "http://www.opengis.net/gml/3.2"
+
+#define MS_OWSCOMMON_GML_212_SCHEMA_LOCATION       "/gml/2.1.2/feature.xsd"
+#define MS_OWSCOMMON_GML_311_SCHEMA_LOCATION       "/gml/3.1.1/base/gml.xsd"
+#define MS_OWSCOMMON_GML_321_SCHEMA_LOCATION       "/gml/3.2.1/gml.xsd"
+
+/* WFS namespaces */
+
+#define MS_OWSCOMMON_WFS_NAMESPACE_PREFIX          "wfs"
+#define MS_OWSCOMMON_WFS_NAMESPACE_URI             "http://www.opengis.net/wfs"
+#define MS_OWSCOMMON_WFS_20_NAMESPACE_URI          "http://www.opengis.net/wfs/2.0"
+
+#define MS_OWSCOMMON_WFS_10_SCHEMA_LOCATION        "/wfs/1.0.0/WFS-basic.xsd"
+#define MS_OWSCOMMON_WFS_11_SCHEMA_LOCATION        "/wfs/1.1.0/wfs.xsd"
+#define MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION        "/wfs/2.0/wfs.xsd"
+
+/* FES namespaces */
+
+#define MS_OWSCOMMON_FES_20_NAMESPACE_PREFIX       "fes"
+#define MS_OWSCOMMON_FES_20_NAMESPACE_URI          "http://www.opengis.net/fes/2.0"
+
+#define MS_OWSCOMMON_FES_20_SCHEMA_LOCATION        "/filter/2.0/filterAll.xsd"
 
 /* GMLCov namespaces */
 
@@ -91,12 +116,55 @@
 #define MS_OWSCOMMON_SWE_20_NAMESPACE_URI   "http://www.opengis.net/swe/2.0"
 #define MS_OWSCOMMON_SWE_NAMESPACE_PREFIX   "swe"
 
+/* Inspire namespaces */
+
+#define MS_INSPIRE_COMMON_NAMESPACE_URI     "http://inspire.ec.europa.eu/schemas/common/1.0"
+#define MS_INSPIRE_COMMON_NAMESPACE_PREFIX  "inspire_common"
+#define MS_INSPIRE_COMMON_SCHEMA_LOCATION   "/common/1.0/common.xsd"
+
+#define MS_INSPIRE_VS_NAMESPACE_URI         "http://inspire.ec.europa.eu/schemas/inspire_vs/1.0"
+#define MS_INSPIRE_VS_NAMESPACE_PREFIX      "inspire_vs"
+#define MS_INSPIRE_VS_SCHEMA_LOCATION       "/inspire_vs/1.0/inspire_vs.xsd"
+
+#define MS_INSPIRE_DLS_NAMESPACE_URI        "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0"
+#define MS_INSPIRE_DLS_NAMESPACE_PREFIX     "inspire_dls"
+#define MS_INSPIRE_DLS_SCHEMA_LOCATION      "/inspire_dls/1.0/inspire_dls.xsd"
+
+
+/* MapServer namespaces */
+#define MS_DEFAULT_NAMESPACE_PREFIX         "ms"
+#define MS_DEFAULT_NAMESPACE_URI            "http://mapserver.gis.umn.edu/mapserver"
+
+
+/* OWS errors */
+
+/* OWS 1.1.0 Table 25 */
+#define MS_OWS_ERROR_OPERATION_NOT_SUPPORTED    "OperationNotSupported"
+#define MS_OWS_ERROR_MISSING_PARAMETER_VALUE    "MissingParameterValue"
+#define MS_OWS_ERROR_INVALID_PARAMETER_VALUE    "InvalidParameterValue"
+#define MS_OWS_ERROR_VERSION_NEGOTIATION_FAILED "VersionNegotiationFailed"
+#define MS_OWS_ERROR_INVALID_UPDATE_SEQUENCE    "InvalidUpdateSequence"
+#define MS_OWS_ERROR_OPTION_NOT_SUPPORTED       "OptionNotSupported"
+#define MS_OWS_ERROR_NO_APPLICABLE_CODE         "NoApplicableCode"
+
+#define MS_WFS_ERROR_OPERATION_PROCESSING_FAILED "OperationProcessingFailed"
+
+#ifdef USE_LIBXML2
+
 /* function prototypes */
 
 
-xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map, const char *servicetype, const char *version, const char *namespaces);
+xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
+                                            const char *servicetype,
+                                            const char *version,
+                                            const char *namespaces,
+                                            const char *validated_language);
 
-xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psXLinkNs, mapObj *map, const char *namespaces);
+xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws,
+                                      xmlNsPtr psXLinkNs,
+                                      mapObj *map,
+                                      const char *namespaces,
+                                      const char *validated_language);
 
 xmlNodePtr msOWSCommonOperationsMetadata(xmlNsPtr psNsOws);
 
@@ -116,13 +184,10 @@ xmlNodePtr msOWSCommonWGS84BoundingBox(xmlNsPtr psNsOws, int dimensions, double 
 
 int _validateNamespace(xmlNsPtr psNsOws);
 
-xmlNodePtr msOWSCommonxmlNewChildEncoded( xmlNodePtr psParent, xmlNsPtr psNs, const char* name,
-    const char *content, const char *encoding);
-
 int msOWSSchemaValidation(const char* xml_schema, const char* xml);
 
 #endif /* defined(USE_LIBXML2) */
 
-int msOWSCommonNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions);
+int msOWSCommonNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions);
 
 #endif /* MAPOWSCOMMON_H */

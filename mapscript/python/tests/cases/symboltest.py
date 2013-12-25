@@ -98,7 +98,6 @@ class DynamicGraphicSymbolTestCase(MapTestCase):
         s = inline_layer.getClass(0).getStyle(0)
         s.symbol = symbol_index
         s.size = -1 # pixmap's own size 
-        inline_layer.transparency = mapscript.MS_GD_ALPHA
         img = self.map.draw()
         img.save('testDrawSetPCTImage.%s' % (img.format.extension))
 
@@ -117,7 +116,6 @@ class DynamicGraphicSymbolTestCase(MapTestCase):
         s = inline_layer.getClass(0).getStyle(0)
         s.symbol = symbol_index
         s.size = -1 # pixmap's own size
-        inline_layer.transparency = mapscript.MS_GD_ALPHA
         self.map.selectOutputFormat('PNG24')
         img = self.map.draw()
         img.save('testDrawSetRGBAImage.%s' % (img.format.extension))

@@ -197,7 +197,6 @@ MAP
   LAYER
     NAME "INLINE-PIXMAP-RGBA"
     TYPE POINT
-    TRANSPARENCY ALPHA
     DEBUG ON
     PROJECTION
       "init=epsg:4326"
@@ -219,9 +218,8 @@ MAP
 
 LAYER
     NAME "INLINE-PIXMAP-PCT"
-    TYPE ANNOTATION
+    TYPE POINT
     DEBUG ON
-    TRANSPARENCY ALPHA
     PROJECTION
       "init=epsg:4326"
     END
@@ -231,12 +229,13 @@ LAYER
     END
     CLASS
       NAME "0"
-      STYLE
-        SYMBOL 'home-png'
-      END
       TEXT "."
       LABEL
         COLOR 0 0 0
+        STYLE
+          SYMBOL 'home-png'
+          GEOMTRANSFORM "labelpnt"
+        END
       END
     END
   END

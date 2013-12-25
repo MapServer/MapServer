@@ -227,7 +227,8 @@ static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput
 /************************************************************************/
 
 static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
-                            shapeObj *shape, gmlItemListObj *item_list )
+                            shapeObj *shape, gmlItemListObj *item_list,
+                            int nFirstOGRFieldIndex )
 
 {
   OGRGeometryH hGeom = NULL;
@@ -435,7 +436,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   /* -------------------------------------------------------------------- */
   /*      Set attributes.                                                 */
   /* -------------------------------------------------------------------- */
-  out_field = 0;
+  out_field = nFirstOGRFieldIndex;
   for( i = 0; i < item_list->numitems; i++ ) {
     gmlItemObj *item = item_list->items + i;
 
@@ -641,6 +642,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     const char *value;
     char *pszWKT;
     int  reproject = MS_FALSE;
+    int  nFirstOGRFieldIndex = -1;
 
     if( !layer->resultcache || layer->resultcache->numresults == 0 )
       continue;
@@ -792,6 +794,11 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         msOGRCleanupDS( datasource_name );
         return MS_FAILURE;
       }
+
+      /* The index of the first field we create is not necessarily 0 */
+      if( nFirstOGRFieldIndex < 0 )
+          nFirstOGRFieldIndex = OGR_FD_GetFieldCount(
+                                        OGR_L_GetLayerDefn( hOGRLayer ) ) - 1;
     }
 
     /* -------------------------------------------------------------------- */
@@ -839,8 +846,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
               || layer->labelitem)
           && layer->class[resultshape.classindex]->numlabels > 0
           && layer->class[resultshape.classindex]->labels[0]->size != -1 ) {
-        msShapeGetAnnotation(layer, &resultshape); /* TODO RFC77: check return value */
-        resultshape.text = msStrdup(layer->class[resultshape.classindex]->labels[0]->annotext);
+        resultshape.text = msShapeGetLabelAnnotation(layer,&resultshape,layer->class[resultshape.classindex]->labels[0]);
       }
 
       /*
@@ -869,7 +875,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
       if( status == MS_SUCCESS )
         status = msOGRWriteShape( layer, hOGRLayer, &resultshape,
-                                  item_list );
+                                  item_list, nFirstOGRFieldIndex );
 
       if(status != MS_SUCCESS) {
         OGR_DS_Destroy( hDS );

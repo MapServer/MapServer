@@ -46,7 +46,6 @@ extern "C" {
 #define MS_REGEXERR 5
 #define MS_TTFERR 6
 #define MS_DBFERR 7
-#define MS_GDERR 8
 #define MS_IDENTERR 9
 #define MS_EOFERR 10
 #define MS_PROJERR 11
@@ -79,8 +78,9 @@ extern "C" {
 #define MS_NULLPARENTERR 38
 #define MS_AGGERR 39
 #define MS_OWSERR 40
-#define MS_OGLERR 42
-#define MS_RENDERERERR 43
+#define MS_OGLERR 41
+#define MS_RENDERERERR 42
+#define MS_V8ERR 43  
 #define MS_NUMERRORCODES 44
 
 #define MESSAGELENGTH 2048
@@ -142,7 +142,8 @@ extern "C" {
                  MS_DEBUGLEVEL_TUNING     = 2,  /* Reports timing info */
                  MS_DEBUGLEVEL_V          = 3,  /* Verbose */
                  MS_DEBUGLEVEL_VV         = 4,  /* Very verbose */
-                 MS_DEBUGLEVEL_VVV        = 5   /* Very very verbose */
+                 MS_DEBUGLEVEL_VVV        = 5,  /* Very very verbose */
+                 MS_DEBUGLEVEL_DEVDEBUG   = 20, /* Undocumented, will trigger debug messages only useful for developers */
                } debugLevel;
 
 #ifndef SWIG

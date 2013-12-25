@@ -159,7 +159,6 @@ PHP_METHOD(styleObj, __get)
                       else IF_GET_LONG("polaroffsetpixel", php_style->style->polaroffsetpixel)
                         else IF_GET_LONG("polaroffsetangle", php_style->style->polaroffsetangle)
                           else IF_GET_DOUBLE("angle", php_style->style->angle)
-                            else IF_GET_LONG("antialias", php_style->style->antialias)
                               else IF_GET_DOUBLE("minvalue", php_style->style->minvalue)
                                 else IF_GET_DOUBLE("maxvalue", php_style->style->maxvalue)
                                   else IF_GET_STRING("rangeitem", php_style->style->rangeitem)
@@ -196,7 +195,9 @@ PHP_METHOD(styleObj, __set)
   php_map_object *php_map = NULL;
   php_class_object *php_class;
   php_layer_object *php_layer;
+#ifdef disabled
   php_labelcachemember_object *php_labelcachemember;
+#endif
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -221,7 +222,6 @@ PHP_METHOD(styleObj, __set)
                     else IF_SET_LONG("polaroffsetpixel", php_style->style->polaroffsetpixel, value)
                       else IF_SET_LONG("polaroffsetangle", php_style->style->polaroffsetangle, value)
                         else IF_SET_DOUBLE("angle", php_style->style->angle, value)
-                          else IF_SET_LONG("antialias", php_style->style->antialias, value)
                             else IF_SET_DOUBLE("minvalue", php_style->style->minvalue, value)
                               else IF_SET_DOUBLE("maxvalue", php_style->style->maxvalue, value)
                                 else IF_SET_DOUBLE("minscaledenom", php_style->style->minscaledenom, value)
@@ -268,6 +268,7 @@ PHP_METHOD(styleObj, __set)
                                                               return;
                                                             }
                                                             php_map = (php_map_object *) zend_object_store_get_object(php_layer->parent.val TSRMLS_CC);
+#ifdef disabled
                                                           } else if (Z_OBJCE_P(php_style->parent.val) == mapscript_ce_labelcachemember) {
                                                             /* The parent is always a map */
                                                             php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(php_style->parent.val TSRMLS_CC);
@@ -276,6 +277,7 @@ PHP_METHOD(styleObj, __set)
                                                               return;
                                                             }
                                                             php_map = (php_map_object *) zend_object_store_get_object(php_labelcachemember->parent.val TSRMLS_CC);
+#endif
                                                           }
 
                                                           if (styleObj_setSymbolByName(php_style->style,

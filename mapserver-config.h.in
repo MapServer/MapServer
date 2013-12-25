@@ -2,11 +2,6 @@
 #define _MAPSERVER_CONFIG_H
 
 #cmakedefine USE_PROJ 1
-#cmakedefine USE_GD 1
-#cmakedefine USE_GD_GIF 1
-#cmakedefine USE_GD_PNG 1
-#cmakedefine USE_GD_JPEG 1
-#cmakedefine USE_GD_FREETYPE 1
 #cmakedefine USE_POSTGIS 1
 #cmakedefine USE_GDAL 1
 #cmakedefine USE_OGR 1
@@ -24,6 +19,7 @@
 #cmakedefine USE_PNG 1
 #cmakedefine USE_ICONV 1
 #cmakedefine USE_FRIBIDI 1
+#cmakedefine USE_HARFBUZZ 1
 #cmakedefine USE_LIBXML2 1
 #cmakedefine USE_FASTCGI 1
 #cmakedefine USE_MYSQL 1
@@ -39,6 +35,8 @@
 #cmakedefine USE_RSVG 1
 #cmakedefine USE_SDE 1
 #cmakedefine SDE64 1
+#cmakedefine USE_EXTENDED_DEBUG 1
+#cmakedefine USE_V8_MAPSCRIPT 1
 
 /*windows specific hacks*/
 #if defined(_WIN32)

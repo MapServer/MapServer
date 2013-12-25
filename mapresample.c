@@ -99,9 +99,7 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   int   nSrcXSize = psSrcImage->width;
   int   nSrcYSize = psSrcImage->height;
   int   nFailedPoints = 0, nSetPoints = 0;
-#ifndef USE_GD
-  assert(!MS_RENDERER_PLUGIN(psSrcImage->format) || src_rb->type != MS_BUFFER_GD);
-#endif
+  assert(!MS_RENDERER_PLUGIN(psSrcImage->format) || src_rb->type == MS_BUFFER_BYTE_RGBA);
 
 
   x = (double *) msSmallMalloc( sizeof(double) * nDstXSize );
@@ -141,60 +139,47 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       }
 
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
-#ifdef USE_GD
-        if(src_rb->type == MS_BUFFER_GD) {
-          int   nValue = 0;
-          assert(!gdImageTrueColor(src_rb->data.gd_img));
-          nValue = panCMap[src_rb->data.gd_img->pixels[nSrcY][nSrcX]];
+        int src_rb_off;
+        rgbaArrayObj *src,*dst;
+        assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
+        src = &src_rb->data.rgba;
+        dst = &dst_rb->data.rgba;
+        assert( src_rb && dst_rb );
+        src_rb_off = nSrcX * src->pixel_step
+                      + nSrcY * src->row_step;
 
-          if( nValue == -1 )
-            continue;
+        if( src->a == NULL || src->a[src_rb_off] == 255 ) {
+          int dst_rb_off;
+
+          dst_rb_off = nDstX * dst->pixel_step
+                        + nDstY * dst->row_step;
 
           nSetPoints++;
-          dst_rb->data.gd_img->pixels[nDstY][nDstX] = nValue;
 
-        } else
-#endif
-          if( src_rb->type == MS_BUFFER_BYTE_RGBA ) {
-            int src_rb_off;
-            rgbaArrayObj *src = &src_rb->data.rgba, *dst = &dst_rb->data.rgba;
-            assert( src_rb && dst_rb );
-            src_rb_off = nSrcX * src->pixel_step
-                         + nSrcY * src->row_step;
+          dst->r[dst_rb_off] = src->r[src_rb_off];
+          dst->g[dst_rb_off] = src->g[src_rb_off];
+          dst->b[dst_rb_off] = src->b[src_rb_off];
+          if( dst->a )
+            dst->a[dst_rb_off] = 255;
+        } else if( src->a[src_rb_off] != 0 ) {
+          int dst_rb_off;
 
-            if( src->a == NULL || src->a[src_rb_off] == 255 ) {
-              int dst_rb_off;
+          dst_rb_off = nDstX * dst->pixel_step
+                        + nDstY * dst->row_step;
 
-              dst_rb_off = nDstX * dst->pixel_step
-                           + nDstY * dst->row_step;
+          nSetPoints++;
 
-              nSetPoints++;
+          /* actual alpha blending is required */
+          msAlphaBlendPM( src->r[src_rb_off],
+                          src->g[src_rb_off],
+                          src->b[src_rb_off],
+                          src->a[src_rb_off],
+                          dst->r + dst_rb_off,
+                          dst->g + dst_rb_off,
+                          dst->b + dst_rb_off,
+                          dst->a ? dst->a + dst_rb_off : NULL  );
 
-              dst->r[dst_rb_off] = src->r[src_rb_off];
-              dst->g[dst_rb_off] = src->g[src_rb_off];
-              dst->b[dst_rb_off] = src->b[src_rb_off];
-              if( dst->a )
-                dst->a[dst_rb_off] = 255;
-            } else if( src->a[src_rb_off] != 0 ) {
-              int dst_rb_off;
-
-              dst_rb_off = nDstX * dst->pixel_step
-                           + nDstY * dst->row_step;
-
-              nSetPoints++;
-
-              /* actual alpha blending is required */
-              msAlphaBlendPM( src->r[src_rb_off],
-                              src->g[src_rb_off],
-                              src->b[src_rb_off],
-                              src->a[src_rb_off],
-                              dst->r + dst_rb_off,
-                              dst->g + dst_rb_off,
-                              dst->b + dst_rb_off,
-                              dst->a ? dst->a + dst_rb_off : NULL  );
-
-            }
-          }
+        }
       } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
         int band, src_off, dst_off;
 
@@ -259,16 +244,7 @@ static void msSourceSample( imageObj *psSrcImage, rasterBufferObj *rb,
   if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
     rgbaArrayObj *rgba;
     int rb_off;
-    assert(rb);
-#ifdef USE_GD
-    if(rb->type == MS_BUFFER_GD) {
-      assert(!gdImageTrueColor(rb->data.gd_img) );
-      padfPixelSum[0] += (dfWeight * rb->data.gd_img->pixels[iSrcY][iSrcX]);
-      *pdfWeightSum += dfWeight;
-      return;
-    }
-#endif
-    assert(rb->type == MS_BUFFER_BYTE_RGBA);
+    assert(rb && rb->type == MS_BUFFER_BYTE_RGBA);
     rgba = &(rb->data.rgba);
     rb_off = iSrcX * rgba->pixel_step + iSrcY * rgba->row_step;
 
@@ -424,45 +400,27 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
         assert(src_rb && dst_rb);
-#ifdef USE_GD
-        if(src_rb->type == MS_BUFFER_GD) {
-          int nResult;
-          assert( !gdImageTrueColor(src_rb->data.gd_img) &&  !gdImageTrueColor(dst_rb->data.gd_img));
-          nResult = panCMap[(int) padfPixelSum[0]];
-          if( nResult != -1 ) {
-            nSetPoints++;
-            dst_rb->data.gd_img->pixels[nDstY][nDstX] = nResult;
-          }
-        } else
-#endif
-#ifdef USE_GD
-          if( src_rb->type == MS_BUFFER_BYTE_RGBA ) {
-#else
-          assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
-#endif
-            assert( src_rb->type == dst_rb->type );
+        assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
+        assert( src_rb->type == dst_rb->type );
 
 
-            nSetPoints++;
+        nSetPoints++;
 
-            if( dfWeightSum > 0.001 ) {
-              int dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
-              unsigned char red, green, blue, alpha;
+        if( dfWeightSum > 0.001 ) {
+          int dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
+          unsigned char red, green, blue, alpha;
 
-              red   = (unsigned char) MAX(0,MIN(255,padfPixelSum[0]));
-              green = (unsigned char) MAX(0,MIN(255,padfPixelSum[1]));
-              blue  = (unsigned char) MAX(0,MIN(255,padfPixelSum[2]));
-              alpha = (unsigned char)MAX(0,MIN(255,255.5*dfWeightSum));
+          red   = (unsigned char) MAX(0,MIN(255,padfPixelSum[0]));
+          green = (unsigned char) MAX(0,MIN(255,padfPixelSum[1]));
+          blue  = (unsigned char) MAX(0,MIN(255,padfPixelSum[2]));
+          alpha = (unsigned char)MAX(0,MIN(255,255.5*dfWeightSum));
 
-              msAlphaBlendPM( red, green, blue, alpha,
-                              dst_rb->data.rgba.r + dst_rb_off,
-                              dst_rb->data.rgba.g + dst_rb_off,
-                              dst_rb->data.rgba.b + dst_rb_off,
-                              (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
-            }
-#ifdef USE_GD
-          }
-#endif
+          msAlphaBlendPM( red, green, blue, alpha,
+                          dst_rb->data.rgba.r + dst_rb_off,
+                          dst_rb->data.rgba.g + dst_rb_off,
+                          dst_rb->data.rgba.b + dst_rb_off,
+                          (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
+        }
       } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
         int band;
         int dst_off = nDstX + nDstY * psDstImage->width;
@@ -638,45 +596,26 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
         assert(dst_rb && src_rb);
-#ifdef USE_GD
-        if(dst_rb->type == MS_BUFFER_GD) {
-          int nResult = panCMap[(int) padfPixelSum[0]];
-          assert( !gdImageTrueColor(dst_rb->data.gd_img) );
-          if( nResult != -1 ) {
-            nSetPoints++;
-            dst_rb->data.gd_img->pixels[nDstY][nDstX] = nResult;
-          }
-        } else
-#endif
-#ifdef USE_GD
-          if( dst_rb->type == MS_BUFFER_BYTE_RGBA ) {
-#else
-          assert( dst_rb->type == MS_BUFFER_BYTE_RGBA );
-#endif
+        assert( dst_rb->type == MS_BUFFER_BYTE_RGBA );
+        assert( src_rb->type == dst_rb ->type );
 
+        nSetPoints++;
 
-            assert( src_rb->type == dst_rb ->type );
+        if( dfAlpha01 > 0 ) {
+          unsigned char red, green, blue, alpha;
 
-            nSetPoints++;
+          red   = (unsigned char)
+                  MAX(0,MIN(255,padfPixelSum[0]+0.5));
+          green = (unsigned char)
+                  MAX(0,MIN(255,padfPixelSum[1]+0.5));
+          blue  = (unsigned char)
+                  MAX(0,MIN(255,padfPixelSum[2]+0.5));
+          alpha = (unsigned char)
+                  MAX(0,MIN(255,255*dfAlpha01+0.5));
 
-            if( dfAlpha01 > 0 ) {
-              unsigned char red, green, blue, alpha;
-
-              red   = (unsigned char)
-                      MAX(0,MIN(255,padfPixelSum[0]+0.5));
-              green = (unsigned char)
-                      MAX(0,MIN(255,padfPixelSum[1]+0.5));
-              blue  = (unsigned char)
-                      MAX(0,MIN(255,padfPixelSum[2]+0.5));
-              alpha = (unsigned char)
-                      MAX(0,MIN(255,255*dfAlpha01+0.5));
-
-              RB_SET_PIXEL(dst_rb,nDstX,nDstY,
-                           red, green, blue, alpha );
-            }
-#ifdef USE_GD
-          }
-#endif
+          RB_SET_PIXEL(dst_rb,nDstX,nDstY,
+                       red, green, blue, alpha );
+        }
       } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
         int band;
         int dst_off = nDstX + nDstY * psDstImage->width;
@@ -1253,12 +1192,20 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     resampleMode = "NEAREST";
   
   if(layer->mask) {
-    int ret;
-    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    int ret, maskLayerIdx;
+    layerObj *maskLayer;
+    maskLayerIdx = msGetLayerIndex(map,layer->mask);
+    if(maskLayerIdx == -1) {
+      msSetError(MS_MISCERR, "Invalid mask layer specified", "msResampleGDALToMap()");
+      return -1;
+    }
+    maskLayer = GET_LAYER(map, maskLayerIdx);
     mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
     ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
-    if(ret != MS_SUCCESS)
+    if(ret != MS_SUCCESS) {
+      free(mask_rb);
       return -1;
+    }
   }
 
   /* -------------------------------------------------------------------- */
@@ -1445,28 +1392,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   if( MS_RENDERER_PLUGIN(sDummyMap.outputformat) ) {
     assert(rb);
     msInitializeRendererVTable(sDummyMap.outputformat);
-#ifdef USE_GD
-    if( rb->type == MS_BUFFER_GD ) {
-      assert( !gdImageTrueColor( rb->data.gd_img ) );
-      sDummyMap.outputformat->transparent = MS_TRUE;
-      sDummyMap.imagecolor.red = 117;
-      sDummyMap.imagecolor.green = 17;
-      sDummyMap.imagecolor.blue = 191;
-    }
-    /* -------------------------------------------------------------------- */
-    /*      If we are working in RGB mode ensure we produce an RGBA         */
-    /*      image so the transparency can be preserved.                     */
-    /* -------------------------------------------------------------------- */
-    else
-#endif
-    {
-      assert( sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGB
-              || sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGBA );
+    assert( sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGB
+            || sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGBA );
 
-      sDummyMap.outputformat->transparent = MS_TRUE;
-      sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
-      MS_INIT_COLOR(sDummyMap.imagecolor,-1,-1,-1,255);
-    }
+    sDummyMap.outputformat->transparent = MS_TRUE;
+    sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
+    MS_INIT_COLOR(sDummyMap.imagecolor,-1,-1,-1,255);
   }
 
   /* -------------------------------------------------------------------- */
@@ -1484,9 +1415,13 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     psrc_rb = &src_rb;
     memset( psrc_rb, 0, sizeof(rasterBufferObj) );
     if( srcImage->format->vtable->supports_pixel_buffer ) {
-      srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb );
+      if(UNLIKELY(MS_FAILURE == srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb ))) {
+        return -1;
+      }
     } else {
-      srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA);
+      if(UNLIKELY(MS_FAILURE == srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA))) {
+        return -1;
+      }
     }
   }
 
@@ -1516,29 +1451,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
       return result;
     }
   }
-
-#ifdef USE_GD
-  /* -------------------------------------------------------------------- */
-  /*      Do we need to generate a colormap remapping, potentially        */
-  /*      allocating new colors on the destination color map?             */
-  /* -------------------------------------------------------------------- */
-  if( psrc_rb && psrc_rb->type == MS_BUFFER_GD ) {
-    int  iColor, nColorCount;
-
-    anCMap[0] = -1; /* color zero is always transparent */
-
-    nColorCount = gdImageColorsTotal( psrc_rb->data.gd_img );
-    for( iColor = 1; iColor < nColorCount; iColor++ ) {
-      anCMap[iColor] =
-        msAddColorGD( map, rb->data.gd_img, 0,
-                      gdImageRed( psrc_rb->data.gd_img, iColor ),
-                      gdImageGreen( psrc_rb->data.gd_img, iColor ),
-                      gdImageBlue( psrc_rb->data.gd_img, iColor ) );
-    }
-    for( iColor = nColorCount; iColor < 256; iColor++ )
-      anCMap[iColor] = -1;
-  }
-#endif
 
   /* -------------------------------------------------------------------- */
   /*      Setup transformations between our source image, and the         */

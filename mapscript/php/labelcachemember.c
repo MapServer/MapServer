@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#ifdef what_the_fxxx_is_this_for
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_labelcachemember;
@@ -218,4 +219,5 @@ PHP_MINIT_FUNCTION(labelcachemember)
 
   return SUCCESS;
 }
+#endif
 

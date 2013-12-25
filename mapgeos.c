@@ -52,17 +52,99 @@ static void msGEOSNotice(const char *fmt, ...)
   return; /* do nothing with notices at this point */
 }
 
+#ifndef USE_THREAD
+static GEOSContextHandle_t geos_handle;
+
+static inline GEOSContextHandle_t msGetGeosContextHandle()
+{
+  return geos_handle;
+}
+
+#else
+#include "mapthread.h"
+typedef struct geos_thread_info {
+  struct geos_thread_info *next;
+  int             thread_id;
+  GEOSContextHandle_t        geos_handle;
+} geos_thread_info_t;
+
+static geos_thread_info_t *geos_list = NULL;
+
+static GEOSContextHandle_t msGetGeosContextHandle()
+{
+  geos_thread_info_t *link;
+  GEOSContextHandle_t ret_obj;
+  int        thread_id;
+
+  msAcquireLock( TLOCK_GEOS );
+
+  thread_id = msGetThreadId();
+
+  /* find link for this thread */
+
+  for( link = geos_list;
+       link != NULL && link->thread_id != thread_id
+       && link->next != NULL && link->next->thread_id != thread_id;
+       link = link->next ) {}
+
+  /* If the target thread link is already at the head of the list were ok */
+  if( geos_list != NULL && geos_list->thread_id == thread_id ) {
+  }
+
+  /* We don't have one ... initialize one. */
+  else if( link == NULL || link->next == NULL ) {
+    geos_thread_info_t *new_link;
+    new_link = (geos_thread_info_t *) malloc(sizeof(geos_thread_info_t));
+    new_link->next = geos_list;
+    new_link->thread_id = thread_id;
+    new_link->geos_handle = initGEOS_r(msGEOSNotice, msGEOSError);
+
+    geos_list = new_link;
+  }
+
+  /* If the link is not already at the head of the list, promote it */
+  else if( link != NULL && link->next != NULL ) {
+    geos_thread_info_t *target = link->next;
+
+    link->next = link->next->next;
+    target->next = geos_list;
+    geos_list = target;
+  }
+
+  ret_obj = geos_list->geos_handle;
+
+  msReleaseLock( TLOCK_GEOS );
+
+  return ret_obj;
+}
+#endif
+
 /*
 ** Setup/Cleanup wrappers
 */
 void msGEOSSetup()
 {
-  initGEOS(msGEOSNotice, msGEOSError);
+#ifndef USE_THREAD
+  geos_handle = initGEOS_r(msGEOSNotice, msGEOSError);
+#endif
 }
 
 void msGEOSCleanup()
 {
-  finishGEOS();
+#ifndef USE_THREAD
+  finishGEOS_r(geos_handle);
+#else
+  geos_thread_info_t *link;
+  msAcquireLock( TLOCK_GEOS );
+  for( link = geos_list; link != NULL;) {
+    geos_thread_info_t *cur = link;
+    link = link->next;
+    finishGEOS_r(cur->geos_handle);
+    free(cur);
+  }
+  geos_list = NULL;
+  msReleaseLock( TLOCK_GEOS );
+#endif
 }
 
 /*
@@ -72,17 +154,18 @@ static GEOSGeom msGEOSShape2Geometry_point(pointObj *point)
 {
   GEOSCoordSeq coords;
   GEOSGeom g;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!point) return NULL;
 
-  coords = GEOSCoordSeq_create(1, 2); /* todo handle z's */
+  coords = GEOSCoordSeq_create_r(handle,1, 2); /* todo handle z's */
   if(!coords) return NULL;
 
-  GEOSCoordSeq_setX(coords, 0, point->x);
-  GEOSCoordSeq_setY(coords, 0, point->y);
+  GEOSCoordSeq_setX_r(handle,coords, 0, point->x);
+  GEOSCoordSeq_setY_r(handle,coords, 0, point->y);
   /* GEOSCoordSeq_setY(coords, 0, point->z); */
 
-  g = GEOSGeom_createPoint(coords); /* g owns the coordinate in coords */
+  g = GEOSGeom_createPoint_r(handle,coords); /* g owns the coordinate in coords */
 
   return g;
 }
@@ -92,6 +175,7 @@ static GEOSGeom msGEOSShape2Geometry_multipoint(lineObj *multipoint)
   int i;
   GEOSGeom g;
   GEOSGeom *points;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!multipoint) return NULL;
 
@@ -101,7 +185,7 @@ static GEOSGeom msGEOSShape2Geometry_multipoint(lineObj *multipoint)
   for(i=0; i<multipoint->numpoints; i++)
     points[i] = msGEOSShape2Geometry_point(&(multipoint->point[i]));
 
-  g = GEOSGeom_createCollection(GEOS_MULTIPOINT, points, multipoint->numpoints);
+  g = GEOSGeom_createCollection_r(handle,GEOS_MULTIPOINT, points, multipoint->numpoints);
 
   free(points);
 
@@ -113,19 +197,20 @@ static GEOSGeom msGEOSShape2Geometry_line(lineObj *line)
   int i;
   GEOSGeom g;
   GEOSCoordSeq coords;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!line) return NULL;
 
-  coords = GEOSCoordSeq_create(line->numpoints, 2); /* todo handle z's */
+  coords = GEOSCoordSeq_create_r(handle,line->numpoints, 2); /* todo handle z's */
   if(!coords) return NULL;
 
   for(i=0; i<line->numpoints; i++) {
-    GEOSCoordSeq_setX(coords, i, line->point[i].x);
-    GEOSCoordSeq_setY(coords, i, line->point[i].y);
+    GEOSCoordSeq_setX_r(handle,coords, i, line->point[i].x);
+    GEOSCoordSeq_setY_r(handle,coords, i, line->point[i].y);
     /* GEOSCoordSeq_setZ(coords, i, line->point[i].z); */
   }
 
-  g = GEOSGeom_createLineString(coords); /* g owns the coordinates in coords */
+  g = GEOSGeom_createLineString_r(handle,coords); /* g owns the coordinates in coords */
 
   return g;
 }
@@ -135,6 +220,7 @@ static GEOSGeom msGEOSShape2Geometry_multiline(shapeObj *multiline)
   int i;
   GEOSGeom g;
   GEOSGeom *lines;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!multiline) return NULL;
 
@@ -144,7 +230,7 @@ static GEOSGeom msGEOSShape2Geometry_multiline(shapeObj *multiline)
   for(i=0; i<multiline->numlines; i++)
     lines[i] = msGEOSShape2Geometry_line(&(multiline->line[i]));
 
-  g = GEOSGeom_createCollection(GEOS_MULTILINESTRING, lines, multiline->numlines);
+  g = GEOSGeom_createCollection_r(handle,GEOS_MULTILINESTRING, lines, multiline->numlines);
 
   free(lines);
 
@@ -159,20 +245,21 @@ static GEOSGeom msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *
   GEOSGeom outerRing;
   GEOSGeom *innerRings=NULL;
   int numInnerRings=0, *innerList;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape || !outerList) return NULL;
 
   /* build the outer shell */
-  coords = GEOSCoordSeq_create(shape->line[r].numpoints, 2); /* todo handle z's */
+  coords = GEOSCoordSeq_create_r(handle,shape->line[r].numpoints, 2); /* todo handle z's */
   if(!coords) return NULL;
 
   for(i=0; i<shape->line[r].numpoints; i++) {
-    GEOSCoordSeq_setX(coords, i, shape->line[r].point[i].x);
-    GEOSCoordSeq_setY(coords, i, shape->line[r].point[i].y);
+    GEOSCoordSeq_setX_r(handle,coords, i, shape->line[r].point[i].x);
+    GEOSCoordSeq_setY_r(handle,coords, i, shape->line[r].point[i].y);
     /* GEOSCoordSeq_setZ(coords, i, shape->line[r].point[i].z); */
   }
 
-  outerRing = GEOSGeom_createLinearRing(coords); /* outerRing owns the coordinates in coords */
+  outerRing = GEOSGeom_createLinearRing_r(handle,coords); /* outerRing owns the coordinates in coords */
 
   /* build the holes */
   innerList = msGetInnerList(shape, r, outerList);
@@ -188,21 +275,21 @@ static GEOSGeom msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *
     for(j=0; j<shape->numlines; j++) {
       if(innerList[j] == MS_FALSE) continue;
 
-      coords = GEOSCoordSeq_create(shape->line[j].numpoints, 2); /* todo handle z's */
+      coords = GEOSCoordSeq_create_r(handle,shape->line[j].numpoints, 2); /* todo handle z's */
       if(!coords) return NULL; /* todo, this will leak memory (shell + allocated holes) */
 
       for(i=0; i<shape->line[j].numpoints; i++) {
-        GEOSCoordSeq_setX(coords, i, shape->line[j].point[i].x);
-        GEOSCoordSeq_setY(coords, i, shape->line[j].point[i].y);
+        GEOSCoordSeq_setX_r(handle,coords, i, shape->line[j].point[i].x);
+        GEOSCoordSeq_setY_r(handle,coords, i, shape->line[j].point[i].y);
         /* GEOSCoordSeq_setZ(coords, i, shape->line[j].point[i].z); */
       }
 
-      innerRings[k] = GEOSGeom_createLinearRing(coords); /* innerRings[k] owns the coordinates in coords */
+      innerRings[k] = GEOSGeom_createLinearRing_r(handle,coords); /* innerRings[k] owns the coordinates in coords */
       k++;
     }
   }
 
-  g = GEOSGeom_createPolygon(outerRing, innerRings, numInnerRings);
+  g = GEOSGeom_createPolygon_r(handle,outerRing, innerRings, numInnerRings);
 
   free(innerList); /* clean up */
   free(innerRings); /* clean up */
@@ -216,6 +303,7 @@ static GEOSGeom msGEOSShape2Geometry_polygon(shapeObj *shape)
   GEOSGeom *polygons;
   int *outerList, numOuterRings=0, lastOuterRing=0;
   GEOSGeom g;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   outerList = msGetOuterList(shape);
   for(i=0; i<shape->numlines; i++) {
@@ -238,7 +326,7 @@ static GEOSGeom msGEOSShape2Geometry_polygon(shapeObj *shape)
       j++;
     }
 
-    g = GEOSGeom_createCollection(GEOS_MULTIPOLYGON, polygons, numOuterRings);
+    g = GEOSGeom_createCollection_r(handle,GEOS_MULTIPOLYGON, polygons, numOuterRings);
     free(polygons);
   }
 
@@ -287,6 +375,7 @@ static shapeObj *msGEOSGeometry2Shape_point(GEOSGeom g)
 {
   GEOSCoordSeq coords;
   shapeObj *shape=NULL;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!g) return NULL;
 
@@ -300,10 +389,10 @@ static shapeObj *msGEOSGeometry2Shape_point(GEOSGeom g)
   shape->line[0].numpoints = 1;
   shape->geometry = (GEOSGeom) g;
 
-  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(g);
+  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,g);
 
-  GEOSCoordSeq_getX(coords, 0, &(shape->line[0].point[0].x));
-  GEOSCoordSeq_getY(coords, 0, &(shape->line[0].point[0].y));
+  GEOSCoordSeq_getX_r(handle,coords, 0, &(shape->line[0].point[0].x));
+  GEOSCoordSeq_getY_r(handle,coords, 0, &(shape->line[0].point[0].y));
   /* GEOSCoordSeq_getZ(coords, 0, &(shape->line[0].point[0].z)); */
 
   shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;
@@ -320,9 +409,10 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(GEOSGeom g)
   GEOSGeom point;
 
   shapeObj *shape=NULL;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!g) return NULL;
-  numPoints = GEOSGetNumGeometries(g); /* each geometry has 1 point */
+  numPoints = GEOSGetNumGeometries_r(handle,g); /* each geometry has 1 point */
 
   shape = (shapeObj *) malloc(sizeof(shapeObj));
   msInitShape(shape);
@@ -335,11 +425,11 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   for(i=0; i<numPoints; i++) {
-    point = (GEOSGeom) GEOSGetGeometryN(g, i);
-    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(point);
+    point = (GEOSGeom) GEOSGetGeometryN_r(handle,g, i);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,point);
 
-    GEOSCoordSeq_getX(coords, 0, &(shape->line[0].point[i].x));
-    GEOSCoordSeq_getY(coords, 0, &(shape->line[0].point[i].y));
+    GEOSCoordSeq_getX_r(handle,coords, 0, &(shape->line[0].point[i].x));
+    GEOSCoordSeq_getY_r(handle,coords, 0, &(shape->line[0].point[i].y));
     /* GEOSCoordSeq_getZ(coords, 0, &(shape->line[0].point[i].z)); */
   }
 
@@ -351,14 +441,15 @@ static shapeObj *msGEOSGeometry2Shape_multipoint(GEOSGeom g)
 static shapeObj *msGEOSGeometry2Shape_line(GEOSGeom g)
 {
   shapeObj *shape=NULL;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   int i;
   int numPoints;
   GEOSCoordSeq coords;
 
   if(!g) return NULL;
-  numPoints = GEOSGetNumCoordinates(g);
-  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(g);
+  numPoints = GEOSGetNumCoordinates_r(handle,g);
+  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,g);
 
   shape = (shapeObj *) malloc(sizeof(shapeObj));
   msInitShape(shape);
@@ -371,8 +462,8 @@ static shapeObj *msGEOSGeometry2Shape_line(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   for(i=0; i<numPoints; i++) {
-    GEOSCoordSeq_getX(coords, i, &(shape->line[0].point[i].x));
-    GEOSCoordSeq_getY(coords, i, &(shape->line[0].point[i].y));
+    GEOSCoordSeq_getX_r(handle,coords, i, &(shape->line[0].point[i].x));
+    GEOSCoordSeq_getY_r(handle,coords, i, &(shape->line[0].point[i].y));
     /* GEOSCoordSeq_getZ(coords, i, &(shape->line[0].point[i].z)); */
   }
 
@@ -390,9 +481,10 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
 
   shapeObj *shape=NULL;
   lineObj line;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!g) return NULL;
-  numLines = GEOSGetNumGeometries(g);
+  numLines = GEOSGetNumGeometries_r(handle,g);
 
   shape = (shapeObj *) malloc(sizeof(shapeObj));
   msInitShape(shape);
@@ -401,16 +493,16 @@ static shapeObj *msGEOSGeometry2Shape_multiline(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   for(j=0; j<numLines; j++) {
-    lineString = (GEOSGeom) GEOSGetGeometryN(g, j);
-    numPoints = GEOSGetNumCoordinates(lineString);
-    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(lineString);
+    lineString = (GEOSGeom) GEOSGetGeometryN_r(handle,g, j);
+    numPoints = GEOSGetNumCoordinates_r(handle,lineString);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,lineString);
 
     line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     line.numpoints = numPoints;
 
     for(i=0; i<numPoints; i++) {
-      GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
-      GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
+      GEOSCoordSeq_getX_r(handle,coords, i, &(line.point[i].x));
+      GEOSCoordSeq_getY_r(handle,coords, i, &(line.point[i].y));
       /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
     }
 
@@ -431,6 +523,7 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
 
   GEOSCoordSeq coords;
   GEOSGeom ring;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!g) return NULL;
 
@@ -440,35 +533,35 @@ static shapeObj *msGEOSGeometry2Shape_polygon(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   /* exterior ring */
-  ring = (GEOSGeom) GEOSGetExteriorRing(g);
-  numPoints = GEOSGetNumCoordinates(ring);
-  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
+  ring = (GEOSGeom) GEOSGetExteriorRing_r(handle,g);
+  numPoints = GEOSGetNumCoordinates_r(handle,ring);
+  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,ring);
 
   line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
   line.numpoints = numPoints;
 
   for(i=0; i<numPoints; i++) {
-    GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
-    GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
+    GEOSCoordSeq_getX_r(handle,coords, i, &(line.point[i].x));
+    GEOSCoordSeq_getY_r(handle,coords, i, &(line.point[i].y));
     /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
   }
   msAddLineDirectly(shape, &line);
 
   /* interior rings */
-  numRings = GEOSGetNumInteriorRings(g);
+  numRings = GEOSGetNumInteriorRings_r(handle,g);
   for(j=0; j<numRings; j++) {
-    ring = (GEOSGeom) GEOSGetInteriorRingN(g, j);
-    if(GEOSisRing(ring) != 1) continue; /* skip it */
+    ring = (GEOSGeom) GEOSGetInteriorRingN_r(handle,g, j);
+    if(GEOSisRing_r(handle,ring) != 1) continue; /* skip it */
 
-    numPoints = GEOSGetNumCoordinates(ring);
-    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
+    numPoints = GEOSGetNumCoordinates_r(handle,ring);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,ring);
 
     line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     line.numpoints = numPoints;
 
     for(i=0; i<numPoints; i++) {
-      GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
-      GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
+      GEOSCoordSeq_getX_r(handle,coords, i, &(line.point[i].x));
+      GEOSCoordSeq_getY_r(handle,coords, i, &(line.point[i].y));
       /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
     }
     msAddLineDirectly(shape, &line);
@@ -488,9 +581,10 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
 
   GEOSCoordSeq coords;
   GEOSGeom polygon, ring;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!g) return NULL;
-  numPolygons = GEOSGetNumGeometries(g);
+  numPolygons = GEOSGetNumGeometries_r(handle,g);
 
   shape = (shapeObj *) malloc(sizeof(shapeObj));
   msInitShape(shape);
@@ -498,39 +592,39 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
   shape->geometry = (GEOSGeom) g;
 
   for(k=0; k<numPolygons; k++) { /* for each polygon */
-    polygon = (GEOSGeom) GEOSGetGeometryN(g, k);
+    polygon = (GEOSGeom) GEOSGetGeometryN_r(handle,g, k);
 
     /* exterior ring */
-    ring = (GEOSGeom) GEOSGetExteriorRing(polygon);
-    numPoints = GEOSGetNumCoordinates(ring);
-    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
+    ring = (GEOSGeom) GEOSGetExteriorRing_r(handle,polygon);
+    numPoints = GEOSGetNumCoordinates_r(handle,ring);
+    coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,ring);
 
     line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
     line.numpoints = numPoints;
 
     for(i=0; i<numPoints; i++) {
-      GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
-      GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
+      GEOSCoordSeq_getX_r(handle,coords, i, &(line.point[i].x));
+      GEOSCoordSeq_getY_r(handle,coords, i, &(line.point[i].y));
       /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
     }
     msAddLineDirectly(shape, &line);
 
     /* interior rings */
-    numRings = GEOSGetNumInteriorRings(polygon);
+    numRings = GEOSGetNumInteriorRings_r(handle,polygon);
 
     for(j=0; j<numRings; j++) {
-      ring = (GEOSGeom) GEOSGetInteriorRingN(polygon, j);
-      if(GEOSisRing(ring) != 1) continue; /* skip it */
+      ring = (GEOSGeom) GEOSGetInteriorRingN_r(handle,polygon, j);
+      if(GEOSisRing_r(handle,ring) != 1) continue; /* skip it */
 
-      numPoints = GEOSGetNumCoordinates(ring);
-      coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(ring);
+      numPoints = GEOSGetNumCoordinates_r(handle,ring);
+      coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,ring);
 
       line.point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
       line.numpoints = numPoints;
 
       for(i=0; i<numPoints; i++) {
-        GEOSCoordSeq_getX(coords, i, &(line.point[i].x));
-        GEOSCoordSeq_getY(coords, i, &(line.point[i].y));
+        GEOSCoordSeq_getX_r(handle,coords, i, &(line.point[i].x));
+        GEOSCoordSeq_getY_r(handle,coords, i, &(line.point[i].y));
         /* GEOSCoordSeq_getZ(coords, i, &(line.point[i].z)); */
       }
       msAddLineDirectly(shape, &line);
@@ -545,11 +639,12 @@ static shapeObj *msGEOSGeometry2Shape_multipolygon(GEOSGeom g)
 shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
 {
   int type;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!g)
     return NULL; /* a NULL geometry generates a NULL shape */
 
-  type = GEOSGeomTypeId(g);
+  type = GEOSGeomTypeId_r(handle,g);
   switch(type) {
     case GEOS_POINT:
       return msGEOSGeometry2Shape_point(g);
@@ -570,21 +665,21 @@ shapeObj *msGEOSGeometry2Shape(GEOSGeom g)
       return msGEOSGeometry2Shape_multipolygon(g);
       break;
     case GEOS_GEOMETRYCOLLECTION:
-      if (!GEOSisEmpty(g))
+      if (!GEOSisEmpty_r(handle,g))
       {
         int i, j, numGeoms;
         shapeObj* shape;
 
-        numGeoms = GEOSGetNumGeometries(g);
+        numGeoms = GEOSGetNumGeometries_r(handle,g);
 
         shape = (shapeObj *) malloc(sizeof(shapeObj));
         msInitShape(shape);
         shape->type = MS_SHAPE_LINE;
         shape->geometry = (GEOSGeom) g;
         
-        numGeoms = GEOSGetNumGeometries(g);
+        numGeoms = GEOSGetNumGeometries_r(handle,g);
         for(i = 0; i < numGeoms; i++) { /* for each geometry */
-           shapeObj* shape2 = msGEOSGeometry2Shape((GEOSGeom)GEOSGetGeometryN(g, i));
+           shapeObj* shape2 = msGEOSGeometry2Shape((GEOSGeom)GEOSGetGeometryN_r(handle,g, i));
            if (shape2) {
               for (j = 0; j < shape2->numlines; j++)
                  msAddLineDirectly(shape, &shape2->line[j]);
@@ -612,12 +707,13 @@ void msGEOSFreeGeometry(shapeObj *shape)
 {
 #ifdef USE_GEOS
   GEOSGeom g=NULL;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape || !shape->geometry)
     return;
 
   g = (GEOSGeom) shape->geometry;
-  GEOSGeom_destroy(g);
+  GEOSGeom_destroy_r(handle,g);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSFreeGEOSGeom()");
   return;
@@ -631,11 +727,12 @@ shapeObj *msGEOSShapeFromWKT(const char *wkt)
 {
 #ifdef USE_GEOS
   GEOSGeom g;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!wkt)
     return NULL;
 
-  g = GEOSGeomFromWKT(wkt);
+  g = GEOSGeomFromWKT_r(handle,wkt);
   if(!g) {
     msSetError(MS_GEOSERR, "Error reading WKT geometry \"%s\".", "msGEOSShapeFromWKT()", wkt);
     return NULL;
@@ -654,6 +751,7 @@ char *msGEOSShapeToWKT(shapeObj *shape)
 {
 #ifdef USE_GEOS
   GEOSGeom g;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape)
     return NULL;
@@ -665,7 +763,7 @@ char *msGEOSShapeToWKT(shapeObj *shape)
   g = (GEOSGeom) shape->geometry;
   if(!g) return NULL;
 
-  return GEOSGeomToWKT(g);
+  return GEOSGeomToWKT_r(handle,g);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSShapeToWKT()");
   return NULL;
@@ -675,8 +773,9 @@ char *msGEOSShapeToWKT(shapeObj *shape)
 void msGEOSFreeWKT(char* pszGEOSWKT)
 {
 #ifdef USE_GEOS
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 #if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
-  GEOSFree(pszGEOSWKT);
+  GEOSFree_r(handle,pszGEOSWKT);
 #endif
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSFreeWKT()");
@@ -685,7 +784,8 @@ void msGEOSFreeWKT(char* pszGEOSWKT)
 
 shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
 #if defined USE_GEOS && (GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 3))
-   GEOSGeom g1, g2; 
+  GEOSGeom g1, g2;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!p) 
     return NULL;
@@ -696,7 +796,7 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
   g1 = (GEOSGeom) p->geometry;
   if(!g1) return NULL;
   
-  g2 = GEOSOffsetCurve(g1, offset, 4, GEOSBUF_JOIN_MITRE, fabs(offset*1.5));
+  g2 = GEOSOffsetCurve_r(handle,g1, offset, 4, GEOSBUF_JOIN_MITRE, fabs(offset*1.5));
   return msGEOSGeometry2Shape(g2);
 #else
   msSetError(MS_GEOSERR, "GEOS Offset Curve support is not available.", "msGEOSingleSidedBuffer()");
@@ -712,6 +812,7 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape)
     return NULL;
@@ -722,7 +823,7 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
 
-  g2 = GEOSBuffer(g1, width, 30);
+  g2 = GEOSBuffer_r(handle,g1, width, 30);
   return msGEOSGeometry2Shape(g2);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSBuffer()");
@@ -734,6 +835,7 @@ shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape)
     return NULL;
@@ -744,7 +846,7 @@ shapeObj *msGEOSSimplify(shapeObj *shape, double tolerance)
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
 
-  g2 = GEOSSimplify(g1, tolerance);
+  g2 = GEOSSimplify_r(handle,g1, tolerance);
   return msGEOSGeometry2Shape(g2);
 #else
   msSetError(MS_GEOSERR, "GEOS Simplify support is not available.", "msGEOSSimplify()");
@@ -756,6 +858,7 @@ shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape)
     return NULL;
@@ -766,7 +869,7 @@ shapeObj *msGEOSTopologyPreservingSimplify(shapeObj *shape, double tolerance)
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
 
-  g2 = GEOSTopologyPreserveSimplify(g1, tolerance);
+  g2 = GEOSTopologyPreserveSimplify_r(handle,g1, tolerance);
   return msGEOSGeometry2Shape(g2);
 #else
   msSetError(MS_GEOSERR, "GEOS Simplify support is not available.", "msGEOSTopologyPreservingSimplify()");
@@ -778,6 +881,7 @@ shapeObj *msGEOSConvexHull(shapeObj *shape)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape) return NULL;
 
@@ -786,7 +890,7 @@ shapeObj *msGEOSConvexHull(shapeObj *shape)
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
 
-  g2 = GEOSConvexHull(g1);
+  g2 = GEOSConvexHull_r(handle,g1);
   return msGEOSGeometry2Shape(g2);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSConvexHull()");
@@ -798,6 +902,7 @@ shapeObj *msGEOSBoundary(shapeObj *shape)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape) return NULL;
 
@@ -806,7 +911,7 @@ shapeObj *msGEOSBoundary(shapeObj *shape)
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
 
-  g2 = GEOSBoundary(g1);
+  g2 = GEOSBoundary_r(handle,g1);
   return msGEOSGeometry2Shape(g2);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSBoundary()");
@@ -820,6 +925,7 @@ pointObj *msGEOSGetCentroid(shapeObj *shape)
   GEOSGeom g1, g2;
   GEOSCoordSeq coords;
   pointObj *point;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape) return NULL;
 
@@ -828,17 +934,17 @@ pointObj *msGEOSGetCentroid(shapeObj *shape)
   g1 = (GEOSGeom) shape->geometry;
   if(!g1) return NULL;
 
-  g2 = GEOSGetCentroid(g1);
+  g2 = GEOSGetCentroid_r(handle,g1);
 
   point = (pointObj *) malloc(sizeof(pointObj));
 
-  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq(g2);
+  coords = (GEOSCoordSeq) GEOSGeom_getCoordSeq_r(handle,g2);
 
-  GEOSCoordSeq_getX(coords, 0, &(point->x));
-  GEOSCoordSeq_getY(coords, 0, &(point->y));
+  GEOSCoordSeq_getX_r(handle,coords, 0, &(point->x));
+  GEOSCoordSeq_getY_r(handle,coords, 0, &(point->y));
   /* GEOSCoordSeq_getZ(coords, 0, &(point->z)); */
 
-  GEOSCoordSeq_destroy(coords);
+  GEOSCoordSeq_destroy_r(handle,coords);
 
   return point;
 #else
@@ -851,6 +957,7 @@ shapeObj *msGEOSUnion(shapeObj *shape1, shapeObj *shape2)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2, g3;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return NULL;
@@ -865,7 +972,7 @@ shapeObj *msGEOSUnion(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return NULL;
 
-  g3 = GEOSUnion(g1, g2);
+  g3 = GEOSUnion_r(handle,g1, g2);
   return msGEOSGeometry2Shape(g3);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSUnion()");
@@ -877,6 +984,7 @@ shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2, g3;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return NULL;
@@ -891,7 +999,7 @@ shapeObj *msGEOSIntersection(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return NULL;
 
-  g3 = GEOSIntersection(g1, g2);
+  g3 = GEOSIntersection_r(handle,g1, g2);
   return msGEOSGeometry2Shape(g3);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSIntersection()");
@@ -903,6 +1011,7 @@ shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2, g3;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return NULL;
@@ -917,7 +1026,7 @@ shapeObj *msGEOSDifference(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return NULL;
 
-  g3 = GEOSDifference(g1, g2);
+  g3 = GEOSDifference_r(handle,g1, g2);
   return msGEOSGeometry2Shape(g3);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSDifference()");
@@ -929,6 +1038,7 @@ shapeObj *msGEOSSymDifference(shapeObj *shape1, shapeObj *shape2)
 {
 #ifdef USE_GEOS
   GEOSGeom g1, g2, g3;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return NULL;
@@ -943,7 +1053,7 @@ shapeObj *msGEOSSymDifference(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return NULL;
 
-  g3 = GEOSSymDifference(g1, g2);
+  g3 = GEOSSymDifference_r(handle,g1, g2);
   return msGEOSGeometry2Shape(g3);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSSymDifference()");
@@ -963,6 +1073,7 @@ int msGEOSContains(shapeObj *shape1, shapeObj *shape2)
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -977,7 +1088,7 @@ int msGEOSContains(shapeObj *shape1, shapeObj *shape2)
   g2 = shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSContains(g1, g2);
+  result = GEOSContains_r(handle,g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSContains()");
@@ -993,6 +1104,7 @@ int msGEOSOverlaps(shapeObj *shape1, shapeObj *shape2)
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -1007,7 +1119,7 @@ int msGEOSOverlaps(shapeObj *shape1, shapeObj *shape2)
   g2 = shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSOverlaps(g1, g2);
+  result = GEOSOverlaps_r(handle,g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSOverlaps()");
@@ -1023,6 +1135,7 @@ int msGEOSWithin(shapeObj *shape1, shapeObj *shape2)
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -1037,7 +1150,7 @@ int msGEOSWithin(shapeObj *shape1, shapeObj *shape2)
   g2 = shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSWithin(g1, g2);
+  result = GEOSWithin_r(handle,g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSWithin()");
@@ -1053,6 +1166,7 @@ int msGEOSCrosses(shapeObj *shape1, shapeObj *shape2)
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -1067,7 +1181,7 @@ int msGEOSCrosses(shapeObj *shape1, shapeObj *shape2)
   g2 = shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSCrosses(g1, g2);
+  result = GEOSCrosses_r(handle,g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSCrosses()");
@@ -1083,6 +1197,7 @@ int msGEOSIntersects(shapeObj *shape1, shapeObj *shape2)
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -1097,7 +1212,7 @@ int msGEOSIntersects(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSIntersects(g1, g2);
+  result = GEOSIntersects_r(handle,g1, g2);
   return ((result==2) ? -1 : result);
 #else
   if(!shape1 || !shape2)
@@ -1134,6 +1249,7 @@ int msGEOSTouches(shapeObj *shape1, shapeObj *shape2)
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -1148,7 +1264,7 @@ int msGEOSTouches(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSTouches(g1, g2);
+  result = GEOSTouches_r(handle,g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSTouches()");
@@ -1164,6 +1280,7 @@ int msGEOSEquals(shapeObj *shape1, shapeObj *shape2)
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -1178,7 +1295,7 @@ int msGEOSEquals(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSEquals(g1, g2);
+  result = GEOSEquals_r(handle,g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSEquals()");
@@ -1194,6 +1311,7 @@ int msGEOSDisjoint(shapeObj *shape1, shapeObj *shape2)
 #ifdef USE_GEOS
   GEOSGeom g1, g2;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -1208,7 +1326,7 @@ int msGEOSDisjoint(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSDisjoint(g1, g2);
+  result = GEOSDisjoint_r(handle,g1, g2);
   return ((result==2) ? -1 : result);
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSDisjoint()");
@@ -1225,6 +1343,7 @@ double msGEOSArea(shapeObj *shape)
   GEOSGeom g;
   double area;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape) return -1;
 
@@ -1233,7 +1352,7 @@ double msGEOSArea(shapeObj *shape)
   g = (GEOSGeom) shape->geometry;
   if(!g) return -1;
 
-  result = GEOSArea(g, &area);
+  result = GEOSArea_r(handle,g, &area);
   return  ((result==0) ? -1 : area);
 #elif defined(USE_GEOS)
   msSetError(MS_GEOSERR, "GEOS support enabled, but old version lacks GEOSArea().", "msGEOSArea()");
@@ -1251,6 +1370,7 @@ double msGEOSLength(shapeObj *shape)
   GEOSGeom g;
   double length;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape) return -1;
 
@@ -1259,7 +1379,7 @@ double msGEOSLength(shapeObj *shape)
   g = (GEOSGeom) shape->geometry;
   if(!g) return -1;
 
-  result = GEOSLength(g, &length);
+  result = GEOSLength_r(handle,g, &length);
   return  ((result==0) ? -1 : length);
 #elif defined(USE_GEOS)
   msSetError(MS_GEOSERR, "GEOS support enabled, but old version lacks GEOSLength().", "msGEOSLength()");
@@ -1276,6 +1396,7 @@ double msGEOSDistance(shapeObj *shape1, shapeObj *shape2)
   GEOSGeom g1, g2;
   double distance;
   int result;
+  GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!shape1 || !shape2)
     return -1;
@@ -1290,7 +1411,7 @@ double msGEOSDistance(shapeObj *shape1, shapeObj *shape2)
   g2 = (GEOSGeom) shape2->geometry;
   if(!g2) return -1;
 
-  result = GEOSDistance(g1, g2, &distance);
+  result = GEOSDistance_r(handle,g1, g2, &distance);
   return ((result==0) ? -1 : distance);
 #else
   return msDistanceShapeToShape(shape1, shape2); /* fall back on brute force method (for MapScript) */

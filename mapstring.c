@@ -414,6 +414,51 @@ void msStringToLower(char *string)
   }
 }
 
+/**
+ * Force the first character to uppercase and the rest of the characters to
+ * lower case for EACH word in the string.
+ */
+void msStringInitCap(char *string)
+{
+  int i;
+  int start = 1; 
+  if (string != NULL) {
+    for (i = 0; i < (int)strlen(string); i++) {
+      if (string[i] == ' ')
+        start = 1;
+      else if (start) {
+        string[i] = toupper(string[i]);
+        start = 0;
+      }
+      else {
+        string[i] = tolower(string[i]);
+      }
+    }
+  }
+}
+
+/**
+ * Force the first character to uppercase for the FIRST word in the string
+ * and the rest of the characters to lower case.
+ */
+void msStringFirstCap(char *string)
+{
+  int i;
+  int start = 1; 
+  if (string != NULL) {
+    for (i = 0; i < (int)strlen(string); i++) {
+      if (string[i] != ' ') {
+        if (start) {
+          string[i] = toupper(string[i]);
+          start = 0;
+        }
+        else
+          string[i] = tolower(string[i]);
+      }
+    }
+  }
+}
+
 char *msStringChop(char *string)
 {
   int n;
@@ -1778,7 +1823,8 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding)
 int msGetNextGlyph(const char **in_ptr, char *out_string)
 {
   unsigned char in;
-  int numbytes=0,unicode;
+  int numbytes=0;
+  unsigned int unicode;
   int i;
 
   in = (unsigned char)**in_ptr;
@@ -1905,7 +1951,7 @@ static int cmp_entities(const void *e1, const void *e2)
  * - if the string does start with such entity,it returns the number of
  * bytes occupied by said entity, and stores the unicode value in *unicode
  */
-int msGetUnicodeEntity(const char *inptr, int *unicode)
+int msGetUnicodeEntity(const char *inptr, unsigned int *unicode)
 {
   unsigned char *in = (unsigned char*)inptr;
   int l,val=0;
@@ -2072,4 +2118,60 @@ int msStringInArray( const char * pszString, char **array, int numelements)
       return MS_TRUE;
   }
   return MS_FALSE;
+}
+
+int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
+
+#ifdef USE_ICONV
+  iconv_t cd = NULL;
+  const char *inp;
+  char *outp, *out = NULL;
+  size_t len, bufsize, bufleft, iconv_status;
+  int i;
+#endif
+
+  if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
+    return MS_SUCCESS;
+
+  cd = iconv_open("UTF-8", layer->encoding);
+  if(cd == (iconv_t)-1) {
+    msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).",
+               "msGetEncodedString()", layer->encoding);
+    return MS_FAILURE;
+  }
+
+#ifdef USE_ICONV
+  for(i=0;i <shape->numvalues; i++) {
+    if(!shape->values[i] || (len = strlen(shape->values[i]))==0) {
+      continue;    /* Nothing to do */
+    }
+
+    bufsize = len * 6 + 1; /* Each UTF-8 char can be up to 6 bytes */
+    inp = shape->values[i];
+    out = (char*) msSmallMalloc(bufsize);
+
+    strlcpy(out, shape->values[i], bufsize);
+    outp = out;
+
+    bufleft = bufsize;
+    iconv_status = -1;
+
+    while (len > 0) {
+      iconv_status = iconv(cd, (char**)&inp, &len, &outp, &bufleft);
+      if(iconv_status == -1) {
+        msFree(out);
+        continue; /* silently ignore failed conversions */
+      }
+    }
+    out[bufsize - bufleft] = '\0';
+    msFree(shape->values[i]);
+    shape->values[i] = out;
+  }
+  iconv_close(cd);
+
+  return MS_SUCCESS;
+#else
+  msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msGetEncodedString()");
+  return MS_FAILURE;
+#endif
 }

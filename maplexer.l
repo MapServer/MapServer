@@ -182,6 +182,10 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>tostring                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_TOSTRING); }
 <EXPRESSION_STRING>commify                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_COMMIFY); }
 <EXPRESSION_STRING>round                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_ROUND); }
+<EXPRESSION_STRING>upper                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_UPPER); }
+<EXPRESSION_STRING>lower                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_LOWER); }
+<EXPRESSION_STRING>initcap                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_INITCAP); }
+<EXPRESSION_STRING>firstcap                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_FIRSTCAP); }
 
 <EXPRESSION_STRING>buffer                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_BUFFER); }
 <EXPRESSION_STRING>difference                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_DIFFERENCE); }
@@ -189,6 +193,7 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>simplifypt                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFYPT); }
 <EXPRESSION_STRING>generalize                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_GENERALIZE); }
 <EXPRESSION_STRING>smoothsia                   { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SMOOTHSIA); }
+<EXPRESSION_STRING>javascript                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_JAVASCRIPT); }
 
 <EXPRESSION_STRING>intersects                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_INTERSECTS); }
 <EXPRESSION_STRING>disjoint                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_DISJOINT); }
@@ -385,6 +390,8 @@ char path[MS_MAXPATHLEN];
 <INITIAL>transform                             { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }
 <INITIAL,URL_VARIABLE,URL_STRING>units         { MS_LEXER_RETURN_TOKEN(UNITS); }
+<INITIAL>utfdata                               { MS_LEXER_RETURN_TOKEN(UTFDATA); }
+<INITIAL>utfitem                               { MS_LEXER_RETURN_TOKEN(UTFITEM); }
 <INITIAL>validation                            { MS_LEXER_RETURN_TOKEN(VALIDATION); }
 <INITIAL>values                                { MS_LEXER_RETURN_TOKEN(VALUES); }
 <INITIAL,URL_VARIABLE>web                      { MS_LEXER_RETURN_TOKEN(WEB); }
@@ -471,7 +478,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>vector                                { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_VECTOR); }
 <INITIAL>wfs                                   { MS_LEXER_RETURN_TOKEN(MS_WFS); }
 <INITIAL>wms                                   { MS_LEXER_RETURN_TOKEN(MS_WMS); }
-<INITIAL>alpha                                 { MS_LEXER_RETURN_TOKEN(MS_GD_ALPHA); }
 
 <URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=_ ]*\]   {
                                                  msyytext++;

@@ -31,7 +31,10 @@
 ** maplabel.c: Routines to enable text drawing, BITMAP or TRUETYPE.
 */
 
+#include <float.h>
+
 #include "mapserver.h"
+#include "fontcache.h"
 
 
 
@@ -51,14 +54,10 @@
  * for a summary of how wrap/maxlength interact on the result
  * of the text transformation
  */
-char *msWrapText(labelObj *label, char *text)
+char *msWrapText(char *text, char wrap, int maxlength)
 {
-  char wrap;
-  int maxlength;
   if(!text) /*not an error if no text*/
     return text;
-  wrap = label->wrap;
-  maxlength = label->maxlength;
   if(maxlength == 0) {
     if(wrap!='\0') {
       /* if maxlength = 0 *and* a wrap character was specified,
@@ -81,33 +80,17 @@ char *msWrapText(labelObj *label, char *text)
       int numwrapchars = msCountChars(text,wrap);
 
       if(numwrapchars > 0) {
-        if(label->encoding) {
-          /* we have to use utf decoding functions here, so as not to
-           * split a text line on a multibyte character */
-
-          int num_cur_glyph_on_line = 0; /*count for the number of glyphs
-                                                     on the current line*/
-          char *textptr = text;
-          char glyph[11]; /*storage for unicode fetching function*/
-          int glyphlen = 0; /*size of current glyph in bytes*/
-          while((glyphlen = msGetNextGlyph((const char**)&textptr,glyph))>0) {
-            num_cur_glyph_on_line++;
-            if(*glyph == wrap && num_cur_glyph_on_line>=(maxlength)) {
-              /*FIXME (if wrap becomes something other than char):*/
-              *(textptr-1)='\n'; /*replace wrap char with a \n*/
-              num_cur_glyph_on_line=0; /*reset count*/
-            }
-          }
-        } else {
-          int cur_char_on_line = 0;
-          char *textptr = text;
-          while(*textptr != 0) {
-            cur_char_on_line++;
-            if(*textptr == wrap && cur_char_on_line>=maxlength) {
-              *textptr='\n'; /*replace wrap char with a \n*/
-              cur_char_on_line=0; /*reset count*/
-            }
-            textptr++;
+        int num_cur_glyph_on_line = 0; /*count for the number of glyphs
+                                                   on the current line*/
+        char *textptr = text;
+        char glyph[11]; /*storage for unicode fetching function*/
+        int glyphlen = 0; /*size of current glyph in bytes*/
+        while((glyphlen = msGetNextGlyph((const char**)&textptr,glyph))>0) {
+          num_cur_glyph_on_line++;
+          if(*glyph == wrap && num_cur_glyph_on_line>=(maxlength)) {
+            /*FIXME (if wrap becomes something other than char):*/
+            *(textptr-1)='\n'; /*replace wrap char with a \n*/
+            num_cur_glyph_on_line=0; /*reset count*/
           }
         }
         return text;
@@ -156,189 +139,156 @@ char *msWrapText(labelObj *label, char *text)
   }
 }
 
-char *msAlignText(mapObj *map, labelObj *label, char *text)
-{
-  double spacewidth=0.0; /*size of a single space, in fractional pixels*/
-  int numlines;
-  char **textlines,*newtext,*newtextptr;
-  int *textlinelengths,*numspacesforpadding;
-  int numspacestoadd,maxlinelength,i;
-  rectObj label_rect;
-  if(!msCountChars(text,'\n'))
-    return text; /*only one line*/
+void initTextPath(textPathObj *ts) {
+  memset(ts,0,sizeof(*ts));
+}
 
-  /*split text into individual lines
-   * TODO: check if splitting on \n is utf8 safe*/
-  textlines = msStringSplit(text,'\n',&numlines);
+int WARN_UNUSED msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret);
 
-  /*
-   * label->space_size_10 contains a cache for the horizontal size of a single
-   * 'space' character, at size 10 for the current label
-   * FIXME: in case of attribute binding for the FONT of the label, this cache will
-   * be wrong for labels where the attributed font is different than the first
-   * computed font. This shouldn't happen too often, and hopefully the size of a
-   * space character shouldn't vary too much between different fonts*/
-  if(label->space_size_10 == 0.0) {
-    /*if the cache hasn't been initialized yet, or with pixmap fonts*/
-
-    /* compute the size of 16 adjacent spaces. we can't do this for just one space,
-     * as the labelSize computing functions return integer bounding boxes. we assume
-     * that the integer rounding for such a number of spaces will be negligeable
-     * compared to the actual size of thoses spaces */
-    if(msGetLabelSize(map,label,".              .",10.0,&label_rect,NULL) != MS_SUCCESS) {
-      /*error computing label size, we can't continue*/
-
-      /*free the previously allocated split text*/
-      while(numlines--)
-        free(textlines[numlines]);
-      free(textlines);
-      return text;
-    }
-
-    /* this is the size of a single space character. for truetype fonts,
-     * it's the size of a 10pt space. For pixmap fonts, it's the size
-     * for the current label */
-    spacewidth = (label_rect.maxx-label_rect.minx)/16.0;
-    if(label->type == MS_TRUETYPE) {
-      label->space_size_10=spacewidth; /*cache the computed size*/
-
-      /*size of a space for current label size*/
-      spacewidth = spacewidth * (double)label->size/10.0;
+#if defined(USE_EXTENDED_DEBUG) && 0
+static void msDebugTextPath(textSymbolObj *ts) {
+  int i;
+  msDebug("text: %s\n",ts->annotext);
+  if(ts->textpath) {
+    for(i=0;i<ts->textpath->numglyphs; i++) {
+      glyphObj *g = &ts->textpath->glyphs[i];
+      msDebug("glyph %d: pos: %f %f\n",g->glyph->key.codepoint,g->pnt.x,g->pnt.y);
     }
   } else {
-    spacewidth = label->space_size_10 * (double)label->size/10.0;
+    msDebug("no glyphs\n");
   }
-  spacewidth = MS_MAX(1,spacewidth);
+  msDebug("\n=========================================\n");
+}
+#endif
 
+int msComputeTextPath(mapObj *map, textSymbolObj *ts) {
+  textPathObj *tgret = msSmallMalloc(sizeof(textPathObj));
+  assert(ts->annotext && *ts->annotext);
+  initTextPath(tgret);
+  ts->textpath = tgret;
+  tgret->absolute = 0;
+  tgret->glyph_size = ts->label->size * ts->scalefactor;
+  tgret->glyph_size = MS_MAX(tgret->glyph_size, ts->label->minsize * ts->resolutionfactor);
+  tgret->glyph_size = MS_NINT(MS_MIN(tgret->glyph_size, ts->label->maxsize * ts->resolutionfactor));
+  tgret->line_height = ceil(tgret->glyph_size * 1.33);
+  return msLayoutTextSymbol(map,ts,tgret);
+}
+ 
+void initTextSymbol(textSymbolObj *ts) {
+  memset(ts,0,sizeof(*ts));
+}
 
-  /*length in pixels of each line*/
-  textlinelengths = (int*)msSmallMalloc(numlines*sizeof(int));
-
-  /*number of spaces that need to be added to each line*/
-  numspacesforpadding = (int*)msSmallMalloc(numlines*sizeof(int));
-
-  /*total number of spaces that need to be added*/
-  numspacestoadd=0;
-
-  /*length in pixels of the longest line*/
-  maxlinelength=0;
-  for(i=0; i<numlines; i++) {
-    if(MS_SUCCESS != msGetLabelSize(map,label,textlines[i],label->size, &label_rect,NULL)) {
-      msFreeCharArray(textlines,numlines);
-      msFree(textlinelengths);
-      msFree(numspacesforpadding);
-      return text;
-    }
-    textlinelengths[i] = label_rect.maxx-label_rect.minx;
-    if(maxlinelength<textlinelengths[i])
-      maxlinelength=textlinelengths[i];
+void freeTextPath(textPathObj *tp) {
+  free(tp->glyphs);
+  if(tp->bounds.poly) {
+    free(tp->bounds.poly->point);
+    free(tp->bounds.poly);
   }
-  for(i=0; i<numlines; i++) {
-    /* number of spaces to add so the current line is
-     * as long as the longest line */
-    double nfracspaces = (maxlinelength - textlinelengths[i])/spacewidth;
-
-    if(label->align == MS_ALIGN_CENTER) {
-      numspacesforpadding[i]=MS_NINT(nfracspaces/2.0);
-    } else {
-      if(label->align == MS_ALIGN_RIGHT) {
-        numspacesforpadding[i]=MS_NINT(nfracspaces);
+}
+void freeTextSymbol(textSymbolObj *ts) {
+  if(ts->textpath) {
+    freeTextPath(ts->textpath);
+    free(ts->textpath);
+  }
+  if(ts->label->numstyles) {
+    if(ts->style_bounds) {
+      int i;
+      for(i=0;i<ts->label->numstyles; i++) {
+        if(ts->style_bounds[i]) {
+          if(ts->style_bounds[i]->poly) {
+            free(ts->style_bounds[i]->poly->point);
+            free(ts->style_bounds[i]->poly);
+          }
+          free(ts->style_bounds[i]);
+        }
       }
-    }
-    numspacestoadd+=numspacesforpadding[i];
-  }
-
-  /*allocate new text with room for the additional spaces needed*/
-  newtext = (char*)msSmallMalloc(strlen(text)+1+numspacestoadd);
-  newtextptr=newtext;
-  for(i=0; i<numlines; i++) {
-    int j;
-    /*padd beginning of line with needed spaces*/
-    for(j=0; j<numspacesforpadding[i]; j++) {
-      *(newtextptr++)=' ';
-    }
-    /*copy original line*/
-    strcpy(newtextptr,textlines[i]);
-    /*place pointer at the char right after the current line*/
-    newtextptr+=strlen(textlines[i])+1;
-    if(i!=numlines-1) {
-      /*put the \n back in (was taken away by msStringSplit)*/
-      *(newtextptr-1)='\n';
+      free(ts->style_bounds);
     }
   }
-  /*free the original text*/
-  free(text);
-  for(i=0; i<numlines; i++) {
-    free(textlines[i]);
+  free(ts->annotext);
+  if(freeLabel(ts->label) == MS_SUCCESS) {
+    free(ts->label);
   }
-  free(textlines);
-  free(textlinelengths);
-  free(numspacesforpadding);
-
-  /*return the aligned text. note that the terminating \0 was added by the last
-   * call to strcpy */
-  return newtext;
 }
 
-
-/*
- * this function applies the label encoding and wrap parameters
- * to the supplied text
- * Note: it is the caller's responsibility to free the returned
- * char array
- */
-char *msTransformLabelText(mapObj *map, labelObj *label, char *text)
-{
-  char *newtext = text;
-  if(label->encoding)
-    newtext = msGetEncodedString(text, label->encoding);
-  else
-    newtext=msStrdup(text);
-
-  if(newtext && (label->wrap!='\0' || label->maxlength!=0)) {
-    newtext = msWrapText(label, newtext);
+void msCopyTextPath(textPathObj *dst, textPathObj *src) {
+  int i;
+  *dst = *src;
+  if(src->bounds.poly) {
+    dst->bounds.poly = msSmallMalloc(sizeof(lineObj));
+    dst->bounds.poly->numpoints = src->bounds.poly->numpoints;
+    for(i=0; i<src->bounds.poly->numpoints; i++) {
+      dst->bounds.poly->point[i] = src->bounds.poly->point[i];
+    }
+  } else {
+    dst->bounds.poly = NULL;
   }
-
-  if(newtext && label->align!=MS_ALIGN_LEFT ) {
-    newtext = msAlignText(map, label, newtext);
+  if(dst->numglyphs > 0) {
+    dst->glyphs = msSmallMalloc(dst->numglyphs * sizeof(glyphObj));
+    for(i=0; i<dst->numglyphs; i++)
+      dst->glyphs[i] = src->glyphs[i];
   }
-
-  return newtext;
 }
 
-int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize)
+void msCopyTextSymbol(textSymbolObj *dst, textSymbolObj *src) {
+  *dst = *src;
+  MS_REFCNT_INCR(src->label);
+  dst->annotext = msStrdup(src->annotext);
+  if(dst->textpath) {
+    dst->textpath = msSmallMalloc(sizeof(textPathObj));
+    msCopyTextPath(dst->textpath,src->textpath);
+  }
+}
+
+static int labelNeedsDeepCopy(labelObj *label) {
+  int i;
+  if(label->numbindings > 0) return MS_TRUE;
+  for(i=0; i<label->numstyles; i++) {
+    if(label->styles[i]->numbindings>0) {
+      return MS_TRUE;
+    }
+  }
+  return MS_FALSE;
+}
+
+void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char *string, double scalefactor, double resolutionfactor, label_cache_mode cache) {
+  if(cache == duplicate_always) {
+    ts->label = msSmallMalloc(sizeof(labelObj));
+    initLabel(ts->label);
+    msCopyLabel(ts->label,l);
+  } else if(cache == duplicate_never) {
+    ts->label = l;
+    MS_REFCNT_INCR(l);
+  } else if(cache == duplicate_if_needed && labelNeedsDeepCopy(l)) {
+    ts->label = msSmallMalloc(sizeof(labelObj));
+    initLabel(ts->label);
+    msCopyLabel(ts->label,l);
+  } else {
+    ts->label = l;
+    MS_REFCNT_INCR(l);
+  }
+  ts->resolutionfactor = resolutionfactor;
+  ts->scalefactor = scalefactor;
+  ts->annotext = string; /* we take the ownership of the annotation text */
+  ts->rotation = l->angle * MS_DEG_TO_RAD;
+}
+
+int msAddLabelGroup(mapObj *map, imageObj *image, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize)
 {
-  int i, priority, numactivelabels=0;
+  int l,s, priority;
   labelCacheSlotObj *cacheslot;
 
   labelCacheMemberObj *cachePtr=NULL;
   layerObj *layerPtr=NULL;
   classObj *classPtr=NULL;
+  int numtextsymbols = 0;
+  textSymbolObj **textsymbols, *ts;
 
   layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
   classPtr = GET_LAYER(map, layerindex)->class[classindex];
 
   if(classPtr->numlabels == 0) return MS_SUCCESS; /* not an error just nothing to do */
-  for(i=0; i<classPtr->numlabels; i++) {
-    if(classPtr->labels[i]->status == MS_ON) {
-      numactivelabels++;
-    }
-  }
-  if(numactivelabels == 0) return MS_SUCCESS;
-
-  /* if the number of labels is 1 then call msAddLabel() accordingly */
-  if(numactivelabels == 1) {
-    for(i=0; i<classPtr->numlabels; i++) {
-      if(classPtr->labels[i]->status == MS_ON)
-        return msAddLabel(map, classPtr->labels[i], layerindex, classindex, shape, point, NULL, featuresize);
-    }
-  }
-
-  if (layerPtr->type == MS_LAYER_ANNOTATION && (cachePtr->numlabels > 1 || classPtr->leader.maxdistance)) {
-    msSetError(MS_MISCERR, "Multiple Labels and/or LEADERs are not supported with annotation layers", "msAddLabelGroup()");
-    return MS_FAILURE;
-  }
-
+  
   /* check that the label intersects the layer mask */
   if(layerPtr->mask) {
     int maskLayerIdx = msGetLayerIndex(map,layerPtr->mask);
@@ -348,36 +298,67 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
       rasterBufferObj rb;
       int x,y;
       memset(&rb,0,sizeof(rasterBufferObj));
-      MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&rb);
+      if(UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,&rb))) {
+        return MS_FAILURE;
+      }
       x = MS_NINT(point->x);
       y = MS_NINT(point->y);
-#ifdef USE_GD
-      if(rb.type == MS_BUFFER_BYTE_RGBA) {
+      /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
+      if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {      
+        assert(rb.type == MS_BUFFER_BYTE_RGBA);
         alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
         if(!*alphapixptr) {
           /* label point does not intersect mask */
           return MS_SUCCESS;
         }
-      } else {
-        if(!gdImageGetPixel(rb.data.gd_img,x,y))
-          return MS_SUCCESS;
       }
-#else
-      assert(rb.type == MS_BUFFER_BYTE_RGBA);
-      alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
-      if(!*alphapixptr) {
-        /* label point does not intersect mask */
-        return MS_SUCCESS;
-      }
-#endif
     } else {
       msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabelGroup()", layerPtr->name);
       return (MS_FAILURE);
     }
   }
-
-
-
+  
+  textsymbols = msSmallMalloc(classPtr->numlabels * sizeof(textSymbolObj*));
+  
+  for(l=0; l<classPtr->numlabels; l++) {
+    labelObj *lbl = classPtr->labels[l];
+    char *annotext;
+    if(msGetLabelStatus(map,layerPtr,shape,lbl) == MS_OFF) {
+      continue;
+    }
+    annotext = msShapeGetLabelAnnotation(layerPtr,shape,lbl);
+    if(!annotext) {
+      for(s=0;s<lbl->numstyles;l++) {
+        if(lbl->styles[s]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT)
+          break; /* we have a "symbol only label, so we shouldn't skip this label */
+      }
+      if(s == lbl->numstyles) {
+        continue; /* no anno text, and no label symbols */
+      }
+    }
+    ts = msSmallMalloc(sizeof(textSymbolObj));
+    initTextSymbol(ts);
+    msPopulateTextSymbolForLabelAndString(ts,lbl,annotext,layerPtr->scalefactor,image->resolutionfactor, 1);
+  
+    if(annotext && *annotext && lbl->autominfeaturesize && featuresize > 0) {
+      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
+        return MS_FAILURE;
+      if(featuresize < (ts->textpath->bounds.bbox.maxx - ts->textpath->bounds.bbox.minx)) {
+        /* feature is too big to be drawn, skip it */
+        freeTextSymbol(ts);
+        free(ts);
+        continue;
+      }
+    }
+    textsymbols[numtextsymbols] = ts;
+    numtextsymbols++;
+  }
+  
+  if(numtextsymbols == 0) {
+    free(textsymbols);
+    return MS_SUCCESS;
+  }
+  
   /* Validate label priority value and get ref on label cache for it */
   priority = classPtr->labels[0]->priority; /* take priority from the first label */
   if (priority < 1)
@@ -396,61 +377,15 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
   cachePtr = &(cacheslot->labels[cacheslot->numlabels]);
 
   cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
+
   cachePtr->classindex = classindex;
-  if(shape) {
-    cachePtr->shapetype = shape->type;
-  } else {
-    cachePtr->shapetype = MS_SHAPE_POINT;
-  }
 
   cachePtr->point = *point; /* the actual label point */
-  cachePtr->labelpath = NULL;
 
   cachePtr->leaderline = NULL;
   cachePtr->leaderbbox = NULL;
 
-  // cachePtr->text = msStrdup(string); /* the actual text */
-
-  /* TODO: perhaps we can get rid of this next section and just store a marker size? Why do we cache the styles for a point layer? */
-
-  /* copy the styles (only if there is an accompanying marker)
-   * We cannot simply keep refs because the rendering code  might alters some members of the style objects
-   */
-  cachePtr->styles = NULL;
-  cachePtr->numstyles = 0;
-  if(layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) {
-    cachePtr->numstyles = classPtr->numstyles;
-    cachePtr->styles = (styleObj *) msSmallMalloc(sizeof(styleObj)*classPtr->numstyles);
-    if (classPtr->numstyles > 0) {
-      for(i=0; i<classPtr->numstyles; i++) {
-        initStyle(&(cachePtr->styles[i]));
-        msCopyStyle(&(cachePtr->styles[i]), classPtr->styles[i]);
-      }
-    }
-  }
-
-  /*
-  ** copy the labels (we are guaranteed to have more than one):
-  **   we cannot simply keep refs because the rendering code alters some members of the style objects
-  */
-
-  cachePtr->numlabels = 0;
-  cachePtr->labels = (labelObj *) msSmallMalloc(sizeof(labelObj)*numactivelabels);
-  for(i=0; i<classPtr->numlabels; i++) {
-    if(classPtr->labels[i]->status == MS_OFF) continue;
-    initLabel(&(cachePtr->labels[cachePtr->numlabels]));
-    msCopyLabel(&(cachePtr->labels[cachePtr->numlabels]), classPtr->labels[i]);
-    cachePtr->numlabels++;
-  }
-  assert(cachePtr->numlabels == numactivelabels);
-
   cachePtr->markerid = -1;
-
-  cachePtr->featuresize = featuresize;
-
-  //cachePtr->poly = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
-  //msInitShape(cachePtr->poly);
-  cachePtr->poly = NULL;
 
   cachePtr->status = MS_FALSE;
 
@@ -458,9 +393,8 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
     /* cache the marker placement, it's already on the map */
     /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
     /* #2347: after RFC-24 classPtr->styles could be NULL so we check it */
-    rectObj rect;
     double w, h;
-    if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
+    if(msGetMarkerSize(map, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
       return(MS_FAILURE);
 
     if(cacheslot->nummarkers == cacheslot->markercachesize) { /* just add it to the end */
@@ -469,43 +403,47 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
       cacheslot->markercachesize+=MS_LABELCACHEINCREMENT;
     }
 
-    i = cacheslot->nummarkers;
+    cacheslot->markers[cacheslot->nummarkers].bounds.minx = (point->x - .5 * w);
+    cacheslot->markers[cacheslot->nummarkers].bounds.miny = (point->y - .5 * h);
+    cacheslot->markers[cacheslot->nummarkers].bounds.maxx = cacheslot->markers[cacheslot->nummarkers].bounds.minx + (w-1);
+    cacheslot->markers[cacheslot->nummarkers].bounds.maxy = cacheslot->markers[cacheslot->nummarkers].bounds.miny + (h-1);
+    cacheslot->markers[cacheslot->nummarkers].id = cacheslot->numlabels;
 
-    cacheslot->markers[i].poly = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
-    msInitShape(cacheslot->markers[i].poly);
-
-    rect.minx = (point->x - .5 * w);
-    rect.miny = (point->y - .5 * h);
-    rect.maxx = rect.minx + (w-1);
-    rect.maxy = rect.miny + (h-1);
-    msRectToPolygon(rect, cacheslot->markers[i].poly);
-    cacheslot->markers[i].id = cacheslot->numlabels;
-
-    cachePtr->markerid = i;
-
+    cachePtr->markerid = cacheslot->nummarkers;
     cacheslot->nummarkers++;
   }
+  cachePtr->textsymbols = textsymbols;
+  cachePtr->numtextsymbols = numtextsymbols;
 
   cacheslot->numlabels++;
-
-  /* Maintain main labelCacheObj.numlabels only for backwards compatibility */
-  map->labelcache.numlabels++;
 
   return(MS_SUCCESS);
 }
 
-int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, shapeObj *shape, pointObj *point, labelPathObj *labelpath, double featuresize)
+int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, int classindex,
+    shapeObj *shape, pointObj *point, double featuresize, textSymbolObj *ts)
 {
   int i;
   labelCacheSlotObj *cacheslot;
-
   labelCacheMemberObj *cachePtr=NULL;
-  layerObj *layerPtr=NULL;
-  classObj *classPtr=NULL;
+  char *annotext = NULL;
+  layerObj *layerPtr;
+  classObj *classPtr;
 
-  if(!label) return(MS_FAILURE); // RFC 77 TODO: set a proper message
-  if(label->status == MS_OFF) return(MS_SUCCESS); /* not an error */
-  if(!label->annotext) {
+  layerPtr=GET_LAYER(map,layerindex);
+  assert(layerPtr);
+  
+  assert(classindex < layerPtr->numclasses);
+  classPtr = layerPtr->class[classindex];
+  
+  assert(label);
+
+  if(ts)
+    annotext = ts->annotext;
+  else if(shape)
+    annotext = msShapeGetLabelAnnotation(layerPtr,shape,label);
+
+  if(!annotext) {
     /* check if we have a labelpnt style */
     for(i=0; i<label->numstyles; i++) {
       if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT)
@@ -513,19 +451,16 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
     }
     if(i==label->numstyles) {
       /* label has no text or marker symbols */
+      if(ts) {
+        freeTextSymbol(ts);
+        free(ts);
+      }
       return MS_SUCCESS;
     }
   }
 
-  layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
-  classPtr = GET_LAYER(map, layerindex)->class[classindex];
-
-  if(classPtr->leader.maxdistance) {
-    if (layerPtr->type == MS_LAYER_ANNOTATION) {
-      msSetError(MS_MISCERR, "LEADERs are not supported on annotation layers", "msAddLabel()");
-      return MS_FAILURE;
-    }
-    if(labelpath) {
+  if(classPtr->leader) {
+    if(ts && ts->textpath && ts->textpath->absolute) {
       msSetError(MS_MISCERR, "LEADERs are not supported on ANGLE FOLLOW labels", "msAddLabel()");
       return MS_FAILURE;
     }
@@ -539,63 +474,62 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
     if (maskLayer->maskimage && MS_IMAGE_RENDERER(maskLayer->maskimage)->supports_pixel_buffer) {
       rasterBufferObj rb;
       memset(&rb, 0, sizeof (rasterBufferObj));
-      MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage, &rb);
+      if(UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage, &rb))) {
+        return MS_FAILURE;
+      }
+      assert(rb.type == MS_BUFFER_BYTE_RGBA);
       if (point) {
         int x = MS_NINT(point->x);
         int y = MS_NINT(point->y);
-#ifdef USE_GD
-        if(rb.type == MS_BUFFER_BYTE_RGBA) {
+        /* Using label repeatdistance, we might have a point with x/y below 0. See #4764 */
+        if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {
           alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
           if(!*alphapixptr) {
             /* label point does not intersect mask */
-            return MS_SUCCESS;
-          }
-        } else {
-          if(!gdImageGetPixel(rb.data.gd_img,x,y)) {
+            if(ts) {
+              freeTextSymbol(ts);
+              free(ts);
+            }
             return MS_SUCCESS;
           }
         }
-#else
-        assert(rb.type == MS_BUFFER_BYTE_RGBA);
-        alphapixptr = rb.data.rgba.a+rb.data.rgba.row_step*y + rb.data.rgba.pixel_step*x;
-        if(!*alphapixptr) {
-          /* label point does not intersect mask */
-          return MS_SUCCESS;
-        }
-#endif
-      } else if (labelpath) {
+      } else if (ts && ts->textpath) {
         int i = 0;
-        for (i = 0; i < labelpath->path.numpoints; i++) {
-          int x = MS_NINT(labelpath->path.point[i].x);
-          int y = MS_NINT(labelpath->path.point[i].y);
-#ifdef USE_GD
-          if (rb.type == MS_BUFFER_BYTE_RGBA) {
+        for (i = 0; i < ts->textpath->numglyphs; i++) {
+          int x = MS_NINT(ts->textpath->glyphs[i].pnt.x);
+          int y = MS_NINT(ts->textpath->glyphs[i].pnt.y);
+          if (x >= 0 && x < rb.width && y >= 0 && y < rb.height) {          
             alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
             if (!*alphapixptr) {
-              /* label point does not intersect mask */
-              msFreeLabelPathObj(labelpath);
-              return MS_SUCCESS;
-            }
-          } else {
-            if (!gdImageGetPixel(rb.data.gd_img, x, y)) {
-              msFreeLabelPathObj(labelpath);
+              freeTextSymbol(ts);
+              free(ts);
               return MS_SUCCESS;
             }
           }
-#else
-          assert(rb.type == MS_BUFFER_BYTE_RGBA);
-          alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
-          if (!*alphapixptr) {
-            /* label point does not intersect mask */
-            msFreeLabelPathObj(labelpath);
-            return MS_SUCCESS;
-          }
-#endif
         }
       }
     } else {
       msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabel()", layerPtr->name);
       return (MS_FAILURE);
+    }
+  }
+
+  if(!ts) {
+    ts = msSmallMalloc(sizeof(textSymbolObj));
+    initTextSymbol(ts);
+    msPopulateTextSymbolForLabelAndString(ts,label,annotext,layerPtr->scalefactor,image->resolutionfactor, 1);
+  }
+  
+  if(annotext && label->autominfeaturesize && featuresize > 0) {
+    if(!ts->textpath) {
+      if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
+        return MS_FAILURE;
+    }
+    if(featuresize > (ts->textpath->bounds.bbox.maxx - ts->textpath->bounds.bbox.minx)) {
+      /* feature is too big to be drawn, skip it */
+      freeTextSymbol(ts);
+      free(ts);
+      return MS_SUCCESS;
     }
   }
 
@@ -619,61 +553,35 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
 
   cachePtr->layerindex = layerindex; /* so we can get back to this *raw* data if necessary */
   cachePtr->classindex = classindex;
+#ifdef include_deprecated
   if(shape) {
     cachePtr->shapetype = shape->type;
   } else {
     cachePtr->shapetype = MS_SHAPE_POINT;
   }
+#endif
+
   cachePtr->leaderline = NULL;
   cachePtr->leaderbbox = NULL;
 
   /* Store the label point or the label path (Bug #1620) */
   if ( point ) {
     cachePtr->point = *point; /* the actual label point */
-    cachePtr->labelpath = NULL;
   } else {
-    assert(labelpath);
-    cachePtr->labelpath = labelpath;
+    assert(ts && ts->textpath && ts->textpath->absolute && ts->textpath->numglyphs>0);
     /* Use the middle point of the labelpath for mindistance calculations */
-    cachePtr->point = labelpath->path.point[labelpath->path.numpoints / 2];
-  }
-
-  /* TODO: perhaps we can get rid of this next section and just store a marker size? Why do we cache the styles for a point layer? */
-
-  /* copy the styles (only if there is an accompanying marker)
-   * We cannot simply keeep refs because the rendering code alters some members of the style objects
-   */
-  cachePtr->styles = NULL;
-  cachePtr->numstyles = 0;
-  if(layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) {
-    cachePtr->numstyles = classPtr->numstyles;
-    cachePtr->styles = (styleObj *) msSmallMalloc(sizeof(styleObj)*classPtr->numstyles);
-    if (classPtr->numstyles > 0) {
-      for(i=0; i<classPtr->numstyles; i++) {
-        initStyle(&(cachePtr->styles[i]));
-        msCopyStyle(&(cachePtr->styles[i]), classPtr->styles[i]);
-      }
-    }
+    cachePtr->point = ts->textpath->glyphs[ts->textpath->numglyphs/2].pnt;
   }
 
   /* copy the label */
-  cachePtr->numlabels = 1;
-  cachePtr->labels = (labelObj *) msSmallMalloc(sizeof(labelObj));
-  initLabel(cachePtr->labels);
-  msCopyLabel(cachePtr->labels, label);
-
+  cachePtr->numtextsymbols = 1;
+  cachePtr->textsymbols = (textSymbolObj **) msSmallMalloc(sizeof(textSymbolObj*));
+  cachePtr->textsymbols[0] = ts;
   cachePtr->markerid = -1;
-
-  cachePtr->featuresize = featuresize;
-
-  //cachePtr->poly = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
-  //msInitShape(cachePtr->poly);
-  cachePtr->poly = NULL;
 
   cachePtr->status = MS_FALSE;
 
   if(layerPtr->type == MS_LAYER_POINT && classPtr->numstyles > 0) { /* cache the marker placement, it's already on the map */
-    rectObj rect;
     double w, h;
 
     if(cacheslot->nummarkers == cacheslot->markercachesize) { /* just add it to the end */
@@ -684,19 +592,15 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
 
     i = cacheslot->nummarkers;
 
-    cacheslot->markers[i].poly = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
-    msInitShape(cacheslot->markers[i].poly);
-
     /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
     /* #2347: after RFC-24 classPtr->styles could be NULL so we check it */
     if(classPtr->styles != NULL) {
-      if(msGetMarkerSize(&map->symbolset, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
+      if(msGetMarkerSize(map, classPtr->styles[0], &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
         return(MS_FAILURE);
-      rect.minx = point->x - .5 * w;
-      rect.miny = point->y - .5 * h;
-      rect.maxx = rect.minx + (w-1);
-      rect.maxy = rect.miny + (h-1);
-      msRectToPolygon(rect, cacheslot->markers[i].poly);
+      cacheslot->markers[cacheslot->nummarkers].bounds.minx = (point->x - .5 * w);
+      cacheslot->markers[cacheslot->nummarkers].bounds.miny = (point->y - .5 * h);
+      cacheslot->markers[cacheslot->nummarkers].bounds.maxx = cacheslot->markers[cacheslot->nummarkers].bounds.minx + (w-1);
+      cacheslot->markers[cacheslot->nummarkers].bounds.maxy = cacheslot->markers[cacheslot->nummarkers].bounds.miny + (h-1);
       cacheslot->markers[i].id = cacheslot->numlabels;
 
       cachePtr->markerid = i;
@@ -707,9 +611,6 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
 
   cacheslot->numlabels++;
 
-  /* Maintain main labelCacheObj.numlabels only for backwards compatibility */
-  map->labelcache.numlabels++;
-
   return(MS_SUCCESS);
 }
 
@@ -718,67 +619,149 @@ int msAddLabel(mapObj *map, labelObj *label, int layerindex, int classindex, sha
 ** image for no labels (effectively making image larger. The gutter can be
 ** negative in cases where a label has a buffer around it.
 */
-static int labelInImage(int width, int height, shapeObj *lpoly, int gutter)
+static int labelInImage(int width, int height, lineObj *lpoly, rectObj *bounds, int gutter)
 {
-  int i,j;
+  int j;
 
   /* do a bbox test first */
-  if(lpoly->bounds.minx >= gutter &&
-      lpoly->bounds.miny >= gutter &&
-      lpoly->bounds.maxx < width-gutter &&
-      lpoly->bounds.maxy < height-gutter) {
+  if(bounds->minx >= gutter &&
+      bounds->miny >= gutter &&
+      bounds->maxx < width-gutter &&
+      bounds->maxy < height-gutter) {
     return MS_TRUE;
   }
 
-  for(i=0; i<lpoly->numlines; i++) {
-    for(j=1; j<lpoly->line[i].numpoints; j++) {
-      if(lpoly->line[i].point[j].x < gutter) return(MS_FALSE);
-      if(lpoly->line[i].point[j].x >= width-gutter) return(MS_FALSE);
-      if(lpoly->line[i].point[j].y < gutter) return(MS_FALSE);
-      if(lpoly->line[i].point[j].y >= height-gutter) return(MS_FALSE);
+  if(lpoly) {
+    for(j=1; j<lpoly->numpoints; j++) {
+      if(lpoly->point[j].x < gutter) return(MS_FALSE);
+      if(lpoly->point[j].x >= width-gutter) return(MS_FALSE);
+      if(lpoly->point[j].y < gutter) return(MS_FALSE);
+      if(lpoly->point[j].y >= height-gutter) return(MS_FALSE);
     }
+  } else {
+    /* if no poly, then return false as the boundong box intersected */
+    return MS_FALSE;
   }
 
   return(MS_TRUE);
 }
 
+void insertRenderedLabelMember(mapObj *map, labelCacheMemberObj *cachePtr) {
+  if(map->labelcache.num_rendered_members == map->labelcache.num_allocated_rendered_members) {
+    if(map->labelcache.num_rendered_members == 0) {
+      map->labelcache.num_allocated_rendered_members = 50;
+    } else {
+      map->labelcache.num_allocated_rendered_members *= 2;
+    }
+    map->labelcache.rendered_text_symbols = msSmallRealloc(map->labelcache.rendered_text_symbols,
+            map->labelcache.num_allocated_rendered_members * sizeof(labelCacheMemberObj*));
+  }
+  map->labelcache.rendered_text_symbols[map->labelcache.num_rendered_members++] = cachePtr;
+}
+
+static inline int testSegmentLabelBBoxIntersection(const rectObj *leaderbbox, const pointObj *lp1,
+    const pointObj *lp2, const label_bounds *test) {
+  if(msRectOverlap(leaderbbox, &test->bbox)) {
+    if(test->poly) {
+      int pp;
+      for(pp=1; pp<test->poly->numpoints; pp++) {
+        if(msIntersectSegments(
+            &(test->poly->point[pp-1]),
+            &(test->poly->point[pp]),
+            lp1,lp2) ==  MS_TRUE) {
+          return(MS_FALSE);
+        }
+      }
+    } else {
+      pointObj tp1,tp2;
+      tp1.x = test->bbox.minx;
+      tp1.y = test->bbox.miny;
+      tp2.x = test->bbox.minx;
+      tp2.y = test->bbox.maxy;
+      if(msIntersectSegments(lp1,lp2,&tp1,&tp2))
+        return MS_FALSE;
+      tp2.x = test->bbox.maxx;
+      tp2.y = test->bbox.miny;
+      if(msIntersectSegments(lp1,lp2,&tp1,&tp2))
+        return MS_FALSE;
+      tp1.x = test->bbox.maxx;
+      tp1.y = test->bbox.maxy;
+      tp2.x = test->bbox.minx;
+      tp2.y = test->bbox.maxy;
+      if(msIntersectSegments(lp1,lp2,&tp1,&tp2))
+        return MS_FALSE;
+      tp2.x = test->bbox.maxx;
+      tp2.y = test->bbox.miny;
+      if(msIntersectSegments(lp1,lp2,&tp1,&tp2))
+        return MS_FALSE;
+    }
+  }
+  return MS_TRUE;
+}
+
+int msTestLabelCacheLeaderCollision(mapObj *map, pointObj *lp1, pointObj *lp2) {
+  int p;
+  rectObj leaderbbox;
+  leaderbbox.minx = MS_MIN(lp1->x,lp2->x);
+  leaderbbox.maxx = MS_MAX(lp1->x,lp2->x);
+  leaderbbox.miny = MS_MIN(lp1->y,lp2->y);
+  leaderbbox.maxy = MS_MAX(lp1->y,lp2->y);
+  for(p=0; p<map->labelcache.num_rendered_members; p++) {
+    labelCacheMemberObj *curCachePtr= map->labelcache.rendered_text_symbols[p];
+    if(msRectOverlap(&leaderbbox, &(curCachePtr->bbox))) {
+    /* leaderbbox interesects with the curCachePtr's global bbox */
+      int t;
+      for(t=0; t<curCachePtr->numtextsymbols; t++) {
+        int s;
+        textSymbolObj *ts = curCachePtr->textsymbols[t];
+        /* check for intersect with textpath */
+        if(ts->textpath && testSegmentLabelBBoxIntersection(&leaderbbox, lp1, lp2, &ts->textpath->bounds) == MS_FALSE) {
+          return MS_FALSE;
+        }
+        /* check for intersect with label's labelpnt styles */
+        if(ts->style_bounds) {
+          for(s=0; s<ts->label->numstyles; s++) {
+            if(ts->label->styles[s]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
+              if(testSegmentLabelBBoxIntersection(&leaderbbox, lp1,lp2, ts->style_bounds[s]) == MS_FALSE) {
+                return MS_FALSE;
+              }
+            }
+          }
+        }
+      }
+      if(curCachePtr->leaderbbox) {
+        if(msIntersectSegments(lp1,lp2,&(curCachePtr->leaderline->point[0]), &(curCachePtr->leaderline->point[1])) ==  MS_TRUE) {
+          return MS_FALSE;
+        }
+      }
+    }
+  }
+  return MS_TRUE;
+}
+
 /* msTestLabelCacheCollisions()
 **
-** Compares current label against labels already drawn and markers from cache and discards it
-** by setting cachePtr->status=MS_FALSE if it is a duplicate, collides with another label,
-** or collides with a marker.
+** Compares label bounds (in *bounds) against labels already drawn and markers from cache and
+** returns MS_FALSE if it collides with another label, or collides with a marker.
 **
 ** This function is used by the various msDrawLabelCacheXX() implementations.
 
-int msTestLabelCacheCollisions(labelCacheObj *labelcache, labelObj *labelPtr,
-                                int mapwidth, int mapheight, int buffer,
-                                labelCacheMemberObj *cachePtr, int current_priority,
-                                int current_label, int mindistance, double label_size);
+int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, label_bounds *bounds,
+              int current_priority, int current_label);
 */
-
-int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, shapeObj *poly,
-                               int mindistance, int current_priority, int current_label)
+int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, label_bounds *lb,
+        int current_priority, int current_label)
 {
   labelCacheObj *labelcache = &(map->labelcache);
-  int i, p, ll, pp;
-  double label_width = 0;
-  labelCacheMemberObj *curCachePtr=NULL;
+  int i, p, ll;
 
   /*
    * Check against image bounds first
    */
-  if(!cachePtr->labels[0].partials) {
-    if(labelInImage(map->width, map->height, poly, labelcache->gutter) == MS_FALSE) {
+  if(!cachePtr->textsymbols[0]->label->partials) {
+    if(labelInImage(map->width, map->height, lb->poly, &lb->bbox, labelcache->gutter) == MS_FALSE) {
       return MS_FALSE;
     }
-  }
-
-  /* compute start index of first label to test: only test against rendered labels */
-  if(current_label>=0) {
-    i = current_label+1;
-  } else {
-    i = 0;
-    current_label = -current_label;
   }
 
   /* Compare against all rendered markers from this priority level and higher.
@@ -790,119 +773,58 @@ int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, shape
 
     for ( ll = 0; ll < markerslot->nummarkers; ll++ ) {
       if ( !(p == current_priority && current_label == markerslot->markers[ll].id ) ) {  /* labels can overlap their own marker */
-        if ( intersectLabelPolygons(markerslot->markers[ll].poly, poly ) == MS_TRUE ) {
+        if ( intersectLabelPolygons(NULL, &markerslot->markers[ll].bounds, lb->poly, &lb->bbox ) == MS_TRUE ) {
           return MS_FALSE;
         }
       }
     }
   }
 
-  if(mindistance > 0)
-    label_width = poly->bounds.maxx - poly->bounds.minx;
-
-  for(p=current_priority; p<MS_MAX_LABEL_PRIORITY; p++) {
-    labelCacheSlotObj *cacheslot;
-    cacheslot = &(labelcache->slots[p]);
-
-    for(  ; i < cacheslot->numlabels; i++) {
-      curCachePtr = &(cacheslot->labels[i]);
-
-      if(curCachePtr->status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-
-        /* skip testing against ourself */
-        assert(p!=current_priority || i != current_label);
-
-        /*
-        ** Note 1: We add the label_size to the mindistance value when comparing because we do want the mindistance
-        ** value between the labels and not only from point to point.
-        **
-        ** Note 2: We only check the first label (could be multiples (RFC 77)) since that is *by far* the most common
-        ** use case. Could change in the future but it's not worth the overhead at this point.
-        */
-        if(mindistance >0  &&
-            (cachePtr->layerindex == curCachePtr->layerindex) &&
-            (cachePtr->classindex == curCachePtr->classindex) &&
-            (cachePtr->labels[0].annotext && curCachePtr->labels[0].annotext &&
-             strcmp(cachePtr->labels[0].annotext, curCachePtr->labels[0].annotext) == 0) &&
-            (msDistancePointToPoint(&(cachePtr->point), &(curCachePtr->point)) <= (mindistance + label_width))) { /* label is a duplicate */
+  for(p=0; p<labelcache->num_rendered_members; p++) {
+    labelCacheMemberObj *curCachePtr= labelcache->rendered_text_symbols[p];
+    if(msRectOverlap(&curCachePtr->bbox,&lb->bbox)) {
+      for(i=0; i<curCachePtr->numtextsymbols; i++) {
+        int j;
+        textSymbolObj *ts = curCachePtr->textsymbols[i];
+        if(ts->textpath && intersectLabelPolygons(ts->textpath->bounds.poly, &ts->textpath->bounds.bbox, lb->poly, &lb->bbox) == MS_TRUE ) {
           return MS_FALSE;
         }
-
-        if(intersectLabelPolygons(curCachePtr->poly, poly) == MS_TRUE) { /* polys intersect */
-          return MS_FALSE;
-        }
-        if(curCachePtr->leaderline) {
-          /* our poly against rendered leader lines */
-          /* first do a bbox check */
-          if(msRectOverlap(curCachePtr->leaderbbox, &(poly->bounds))) {
-            /* look for intersecting line segments */
-            for(ll=0; ll<poly->numlines; ll++)
-              for(pp=1; pp<poly->line[ll].numpoints; pp++)
-                if(msIntersectSegments(
-                      &(poly->line[ll].point[pp-1]),
-                      &(poly->line[ll].point[pp]),
-                      &(curCachePtr->leaderline->point[0]),
-                      &(curCachePtr->leaderline->point[1])) ==  MS_TRUE) {
-                  return(MS_FALSE);
-                }
-          }
-
-        }
-        if(cachePtr->leaderline) {
-          /* does our leader intersect current label */
-          /* first do a bbox check */
-          if(msRectOverlap(cachePtr->leaderbbox, &(curCachePtr->poly->bounds))) {
-            /* look for intersecting line segments */
-            for(ll=0; ll<curCachePtr->poly->numlines; ll++)
-              for(pp=1; pp<curCachePtr->poly->line[ll].numpoints; pp++)
-                if(msIntersectSegments(
-                      &(curCachePtr->poly->line[ll].point[pp-1]),
-                      &(curCachePtr->poly->line[ll].point[pp]),
-                      &(cachePtr->leaderline->point[0]),
-                      &(cachePtr->leaderline->point[1])) ==  MS_TRUE) {
-                  return(MS_FALSE);
-                }
-
-          }
-          if(curCachePtr->leaderline) {
-            /* TODO: check intersection of leader lines, not only bbox test ? */
-            if(msRectOverlap(curCachePtr->leaderbbox, cachePtr->leaderbbox)) {
-              return MS_FALSE;
+        if(ts->style_bounds) {
+          for(j=0;j<ts->label->numstyles;j++) {
+            if(ts->style_bounds[j] && ts->label->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
+              if(intersectLabelPolygons(ts->style_bounds[j]->poly, &ts->style_bounds[j]->bbox,
+                  lb->poly, &lb->bbox)) {
+                return MS_FALSE;
+              }
             }
-
           }
         }
       }
-    } /* i */
-
-    i = 0; /* Start over with 1st label of next slot */
-  } /* p */
+    }
+    if(curCachePtr->leaderline) {
+      if(testSegmentLabelBBoxIntersection(curCachePtr->leaderbbox, &curCachePtr->leaderline->point[0],
+          &curCachePtr->leaderline->point[1], lb) == MS_FALSE) {
+        return MS_FALSE;
+      }
+    }
+  }
   return MS_TRUE;
 }
 
-/* msGetLabelCacheMember()
-**
-** Returns label cache members by index, making all members of the cache
-** appear as if they were stored in a single array indexed from 0 to numlabels.
-**
-** Returns NULL if requested index is out of range.
-*/
-labelCacheMemberObj *msGetLabelCacheMember(labelCacheObj *labelcache, int i)
-{
-  if(i >= 0 && i < labelcache->numlabels) {
-    int p;
-    for(p=0; p<MS_MAX_LABEL_PRIORITY; p++) {
-      if (i < labelcache->slots[p].numlabels )
-        return &(labelcache->slots[p].labels[i]); /* Found it */
-      else
-        i -= labelcache->slots[p].numlabels; /* Check next slots */
-    }
-  }
-
-  /* Out of range / not found */
-  return NULL;
+/* utility function to get the rect of a string outside of a rendering loop, i.e.
+ without going through textpath layouts */
+int msGetStringSize(mapObj *map, labelObj *label, int size, char *string, rectObj *r) {
+  textSymbolObj ts;
+  double lsize = label->size;
+  initTextSymbol(&ts);
+  label->size = size;
+  msPopulateTextSymbolForLabelAndString(&ts,label,msStrdup(string),1,1,0);
+  if(UNLIKELY(MS_FAILURE == msGetTextSymbolSize(map,&ts,r)))
+    return MS_FAILURE;
+  label->size = lsize;
+  freeTextSymbol(&ts);
+  return MS_SUCCESS;
 }
-
 
 int msInitFontSet(fontSetObj *fontset)
 {
@@ -1008,181 +930,32 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
   return(0);
 }
 
-int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSetObj *fontset,
-                          double size, char *string, rectObj *rect, double **advances, int bAdjustbaseline)
-{
-  outputFormatObj *format = NULL;
-  int ret = MS_FAILURE;
-  char *lookedUpFonts[MS_MAX_LABEL_FONTS];
-  int numfonts;
-  if(!renderer) {
-    outputFormatObj *format = msCreateDefaultOutputFormat(NULL,"AGG/PNG","tmp");
-    if(!format) {
-      goto tt_cleanup;
-    }
-    msInitializeRendererVTable(format);
-    renderer = format->vtable;
-  }
-  if(MS_FAILURE == msFontsetLookupFonts(fontstring, &numfonts, fontset, lookedUpFonts))
-    goto tt_cleanup;
-  ret = renderer->getTruetypeTextBBox(renderer,lookedUpFonts,numfonts,size,string,rect,advances,bAdjustbaseline);
-tt_cleanup:
-  if(format) {
-    msFreeOutputFormat(format);
-  }
-  return ret;
-}
 
-int msGetRasterTextBBox(rendererVTableObj *renderer, int size, char *string, rectObj *rect)
-{
-  if(renderer && renderer->supports_bitmap_fonts) {
-    int num_lines=1, cur_line_length=0, max_line_length=0;
-    char *stringPtr = string;
-    fontMetrics *fontPtr;
-    if((fontPtr=renderer->bitmapFontMetrics[size]) == NULL) {
-      msSetError(MS_MISCERR, "selected renderer does not support bitmap font size %d", "msGetRasterTextBBox()",size);
+int msGetTextSymbolSize(mapObj *map, textSymbolObj *ts, rectObj *r) {
+  if(!ts->textpath) {
+    if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts)))
       return MS_FAILURE;
-    }
-    while(*stringPtr) {
-      if(*stringPtr=='\n') {
-        max_line_length = MS_MAX(cur_line_length,max_line_length);
-        num_lines++;
-        cur_line_length=0;
-      } else {
-        if(*stringPtr!='\r')
-          cur_line_length++;
-      }
-      stringPtr++;
-    }
-    max_line_length = MS_MAX(cur_line_length,max_line_length);
-    rect->minx = 0;
-    rect->miny = -fontPtr->charHeight;
-    rect->maxx = fontPtr->charWidth * max_line_length;
-    rect->maxy = fontPtr->charHeight * (num_lines-1);
-    return MS_SUCCESS;
-  } else if(!renderer) {
-    int ret = MS_FAILURE;
-    outputFormatObj *format = msCreateDefaultOutputFormat(NULL,"AGG/PNG","tmp");
-    if(!format) {
-      msSetError(MS_MISCERR, "failed to create default format", "msGetRasterTextBBox()");
-      return MS_FAILURE;
-    }
-    msInitializeRendererVTable(format);
-    renderer = format->vtable;
-    ret = msGetRasterTextBBox(renderer,size,string,rect);
-    msFreeOutputFormat(format);
-    return ret;
-  } else {
-    msSetError(MS_MISCERR, "selected renderer does not support raster fonts", "msGetRasterTextBBox()");
-    return MS_FAILURE;
   }
+  *r = ts->textpath->bounds.bbox;
+  return MS_SUCCESS;
 }
-
-
-char *msFontsetLookupFont(fontSetObj *fontset, char *fontKey)
-{
-  char *font;
-  if(!fontKey) {
-    msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msFontsetLookupFont()");
-    return NULL;
-  }
-  font = msLookupHashTable(&(fontset->fonts), fontKey);
-  if(!font) {
-    msSetError(MS_TTFERR, "Requested font (%s) not found.", "msFontsetLookupFont()", fontKey);
-    return NULL;
-  }
-  return font;
-}
-
-int msFontsetLookupFonts(char* fontstring, int *numfonts, fontSetObj *fontset, char **lookedUpFonts)
-{
-  char *start,*ptr;
-  *numfonts = 0;
-  start = ptr = fontstring;
-  while(*numfonts<MS_MAX_LABEL_FONTS) {
-    if(*ptr==',') {
-      if(start==ptr) { /*first char is a comma, or two successive commas*/
-        start = ++ptr;
-        continue;
-      }
-      *ptr = 0;
-      lookedUpFonts[*numfonts] = msLookupHashTable(&(fontset->fonts), start);
-      *ptr = ',';
-      if (!lookedUpFonts[*numfonts]) {
-        msSetError(MS_TTFERR, "Requested font (%s) not found.","msFontsetLookupFonts()", fontstring);
-        return MS_FAILURE;
-      }
-      start = ++ptr;
-      (*numfonts)++;
-    } else if(*ptr==0) {
-      if(start==ptr) { /* last char of string was a comma */
-        return MS_SUCCESS;
-      }
-      lookedUpFonts[*numfonts] = msLookupHashTable(&(fontset->fonts), start);
-      if (!lookedUpFonts[*numfonts]) {
-        msSetError(MS_TTFERR, "Requested font (%s) not found.","msFontsetLookupFonts()", fontstring);
-        return (MS_FAILURE);
-      }
-      (*numfonts)++;
-      return MS_SUCCESS;
-    } else {
-      ptr++;
-    }
-  }
-  msSetError(MS_TTFERR, "Requested font (%s) not has too many members (max is %d)",
-             "msFontsetLookupFonts()", fontstring, MS_MAX_LABEL_FONTS);
-  return MS_FAILURE;
-}
-
-
 /*
 ** Note: All these routines assume a reference point at the LL corner of the text. GD's
 ** bitmapped fonts use UL and this is compensated for. Note the rect is relative to the
 ** LL corner of the text to be rendered, this is first line for TrueType fonts.
 */
 
-/* assumes an angle of 0 regardless of what's in the label object */
-int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rectObj *rect, double **advances)
-{
-  rendererVTableObj *renderer = NULL;
-
-  if (map)
-    renderer =MS_MAP_RENDERER(map);
-
-  if(label->type == MS_TRUETYPE) {
-    if(!label->font) {
-      msSetError(MS_MISCERR, "label has no true type font", "msGetLabelSize()");
-      return MS_FAILURE;
-    }
-    return msGetTruetypeTextBBox(renderer,label->font,&(map->fontset),size,string,rect,advances,1);
-  } else if(label->type == MS_BITMAP) {
-    if(renderer->supports_bitmap_fonts)
-      return msGetRasterTextBBox(renderer,MS_NINT(label->size),string,rect);
-    else {
-      msSetError(MS_MISCERR, "renderer does not support bitmap fonts", "msGetLabelSize()");
-      return MS_FAILURE;
-    }
-  } else {
-    msSetError(MS_MISCERR, "unknown label type", "msGetLabelSize()");
-    return MS_FAILURE;
-  }
-}
-
 #define MARKER_SLOP 2
 
-/*pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, lineObj *poly)
- * called by get_metrics and drawLabelCache
- * the poly lineObj MUST have at least 5 points allocated in poly->point
- * it should also probably have poly->numpoints set to 5 */
-pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, lineObj *poly)
+pointObj get_metrics(pointObj *p, int position, textPathObj *tp, int ox, int oy, double rotation, int buffer, label_bounds *bounds)
 {
   pointObj q;
   double x1=0, y1=0, x2=0, y2=0;
   double sin_a,cos_a;
   double w, h, x, y;
 
-  w = rect.maxx - rect.minx;
-  h = rect.maxy - rect.miny;
+  w = tp->bounds.bbox.maxx - tp->bounds.bbox.minx;
+  h = tp->bounds.bbox.maxy - tp->bounds.bbox.miny;
 
   switch(position) {
     case MS_UL:
@@ -1199,7 +972,10 @@ pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int o
       break;
     case MS_CL:
       x1 = -w - ox - MARKER_SLOP;
-      y1 = (h/2.0);
+      if(oy > 0 && tp->numlines == 1)
+        y1 = oy;
+      else
+        y1 = (h/2.0);
       break;
     case MS_CC:
       x1 = -(w/2.0) + ox;
@@ -1207,7 +983,10 @@ pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int o
       break;
     case MS_CR:
       x1 = ox + MARKER_SLOP;
-      y1 = (h/2.0);
+      if(oy > 0 && tp->numlines == 1)
+        y1 = oy;
+      else
+        y1 = (h/2.0);
       break;
     case MS_LL:
       x1 = -w - ox;
@@ -1223,106 +1002,133 @@ pointObj get_metrics_line(pointObj *p, int position, rectObj rect, int ox, int o
       break;
   }
 
-  sin_a = sin(MS_DEG_TO_RAD*angle);
-  cos_a = cos(MS_DEG_TO_RAD*angle);
+  if(rotation) {
+    sin_a = sin(rotation);
+    cos_a = cos(rotation);
 
-  x = x1 - rect.minx;
-  y = rect.maxy - y1;
-  q.x = p->x + (x * cos_a - (y) * sin_a);
-  q.y = p->y - (x * sin_a + (y) * cos_a);
+    x = x1 - tp->bounds.bbox.minx;
+    y = tp->bounds.bbox.maxy - y1;
+    q.x = p->x + (x * cos_a - (y) * sin_a);
+    q.y = p->y - (x * sin_a + (y) * cos_a);
 
-  if(poly) {
-    /*
-     * here we should/could have a test asserting that the poly lineObj
-     * has at least 5 points available.
-     */
+    if(bounds) {
+      x2 = x1 - buffer; /* ll */
+      y2 = y1 + buffer;
+      bounds->poly->point[0].x = p->x + (x2 * cos_a - (-y2) * sin_a);
+      bounds->poly->point[0].y = p->y - (x2 * sin_a + (-y2) * cos_a);
 
-    x2 = x1 - buffer; /* ll */
-    y2 = y1 + buffer;
-    poly->point[0].x = p->x + (x2 * cos_a - (-y2) * sin_a);
-    poly->point[0].y = p->y - (x2 * sin_a + (-y2) * cos_a);
+      x2 = x1 - buffer; /* ul */
+      y2 = y1 - h - buffer;
+      bounds->poly->point[1].x = p->x + (x2 * cos_a - (-y2) * sin_a);
+      bounds->poly->point[1].y = p->y - (x2 * sin_a + (-y2) * cos_a);
 
-    x2 = x1 - buffer; /* ul */
-    y2 = y1 - h - buffer;
-    poly->point[1].x = p->x + (x2 * cos_a - (-y2) * sin_a);
-    poly->point[1].y = p->y - (x2 * sin_a + (-y2) * cos_a);
+      x2 = x1 + w + buffer; /* ur */
+      y2 = y1 - h - buffer;
+      bounds->poly->point[2].x = p->x + (x2 * cos_a - (-y2) * sin_a);
+      bounds->poly->point[2].y = p->y - (x2 * sin_a + (-y2) * cos_a);
 
-    x2 = x1 + w + buffer; /* ur */
-    y2 = y1 - h - buffer;
-    poly->point[2].x = p->x + (x2 * cos_a - (-y2) * sin_a);
-    poly->point[2].y = p->y - (x2 * sin_a + (-y2) * cos_a);
+      x2 = x1 + w + buffer; /* lr */
+      y2 = y1 + buffer;
+      bounds->poly->point[3].x = p->x + (x2 * cos_a - (-y2) * sin_a);
+      bounds->poly->point[3].y = p->y - (x2 * sin_a + (-y2) * cos_a);
 
-    x2 = x1 + w + buffer; /* lr */
-    y2 = y1 + buffer;
-    poly->point[3].x = p->x + (x2 * cos_a - (-y2) * sin_a);
-    poly->point[3].y = p->y - (x2 * sin_a + (-y2) * cos_a);
-
-    poly->point[4].x = poly->point[0].x;
-    poly->point[4].y = poly->point[0].y;
+      bounds->poly->point[4].x = bounds->poly->point[0].x;
+      bounds->poly->point[4].y = bounds->poly->point[0].y;
+      fastComputeBounds(bounds->poly,&bounds->bbox);
+    }
   }
+  else {
+    q.x = p->x + x1 - tp->bounds.bbox.minx;
+    q.y = p->y + y1 ;
 
+    if(bounds) {
+      /* no rotation, we only need to return a bbox */
+      bounds->poly = NULL;
+
+
+      bounds->bbox.minx = q.x - buffer;
+      bounds->bbox.maxy = q.y + buffer + tp->bounds.bbox.maxy;
+      bounds->bbox.maxx = q.x + w + buffer;
+      bounds->bbox.miny = bounds->bbox.maxy - h - buffer*2;
+    }
+  }
   return(q);
 }
 
-
-/* static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly) */
-pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly)
-{
-  lineObj newline;
-  pointObj newpoints[5];
-  pointObj rp;
-  newline.numpoints=5;
-  newline.point=newpoints;
-  rp = get_metrics_line(p, position, rect, ox,oy, angle, buffer, &newline);
-  if(poly) {
-    msAddLine(poly,&newline);
-    msComputeBounds(poly);
+int intersectTextSymbol(textSymbolObj *ts, label_bounds *lb) {
+  if(ts->textpath && ts->textpath->absolute) {
+    if(intersectLabelPolygons(lb->poly,&lb->bbox,ts->textpath->bounds.poly,&ts->textpath->bounds.bbox))
+      return MS_TRUE;
   }
-  return rp;
+  if(ts->style_bounds) {
+    int s;
+    for(s=0; s<ts->label->numstyles; s++) {
+      if(ts->style_bounds[s] && ts->label->styles[s]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT &&
+          intersectLabelPolygons(lb->poly,&lb->bbox,ts->style_bounds[s]->poly, &ts->style_bounds[s]->bbox))
+        return MS_TRUE;
+    }
+  }
+  return MS_FALSE;
 }
 
 /*
 ** Variation on msIntersectPolygons. Label polygons aren't like shapefile polygons. They
 ** have no holes, and often do have overlapping parts (i.e. road symbols).
 */
-
-/* static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) { */
-int intersectLabelPolygons(shapeObj *p1, shapeObj *p2)
+int intersectLabelPolygons(lineObj *l1, rectObj *r1, lineObj *l2, rectObj *r2)
 {
-  int c1,v1,c2,v2;
+  int v1,v2;
   pointObj *point;
+  lineObj *p1,*p2,sp1,sp2;
+  pointObj pnts1[5],pnts2[5];
+  
 
   /* STEP 0: check bounding boxes */
-  if(!msRectOverlap(&p1->bounds, &p2->bounds)) { /* from alans@wunderground.com */
+  if(!msRectOverlap(r1,r2)) { /* from alans@wunderground.com */
     return(MS_FALSE);
+  }
+  if(!l1 && !l2)
+    return MS_TRUE;
+
+  if(!l1) {
+    p1 = &sp1;
+    p1->numpoints = 5;
+    p1->point = pnts1;
+    pnts1[0].x = pnts1[1].x = pnts1[4].x = r1->minx;
+    pnts1[2].x = pnts1[3].x = r1->maxx;
+    pnts1[0].y = pnts1[3].y = pnts1[4].y = r1->miny;
+    pnts1[1].y = pnts1[2].y = r1->maxy;
+  } else {
+    p1 = l1;
+  }
+  if(!l2) {
+    p2 = &sp2;
+    p2->numpoints = 5;
+    p2->point = pnts2;
+    pnts2[0].x = pnts2[1].x = pnts2[4].x = r2->minx;
+    pnts2[2].x = pnts2[3].x = r2->maxx;
+    pnts2[0].y = pnts2[3].y = pnts2[4].y = r2->miny;
+    pnts2[1].y = pnts2[2].y = r2->maxy;
+  } else {
+    p2 = l2;
   }
 
   /* STEP 1: look for intersecting line segments */
-  for(c1=0; c1<p1->numlines; c1++)
-    for(v1=1; v1<p1->line[c1].numpoints; v1++)
-      for(c2=0; c2<p2->numlines; c2++)
-        for(v2=1; v2<p2->line[c2].numpoints; v2++)
-          if(msIntersectSegments(&(p1->line[c1].point[v1-1]), &(p1->line[c1].point[v1]), &(p2->line[c2].point[v2-1]), &(p2->line[c2].point[v2])) ==  MS_TRUE) {
-            return(MS_TRUE);
-          }
+  for(v1=1; v1<p1->numpoints; v1++)
+    for(v2=1; v2<p2->numpoints; v2++)
+      if(msIntersectSegments(&(p1->point[v1-1]), &(p1->point[v1]), &(p2->point[v2-1]), &(p2->point[v2])) ==  MS_TRUE) {
+        return(MS_TRUE);
+    }
 
   /* STEP 2: polygon one completely contains two (only need to check one point from each part) */
-  for(c2=0; c2<p2->numlines; c2++) {
-    point = &(p2->line[c2].point[0]);
-    for(c1=0; c1<p1->numlines; c1++) {
-      if(msPointInPolygon(point, &p1->line[c1]) == MS_TRUE) /* ok, the point is in a polygon */
-        return(MS_TRUE);
-    }
-  }
+  point = &(p2->point[0]);
+  if(msPointInPolygon(point, p1) == MS_TRUE) /* ok, the point is in a polygon */
+    return(MS_TRUE);
 
   /* STEP 3: polygon two completely contains one (only need to check one point from each part) */
-  for(c1=0; c1<p1->numlines; c1++) {
-    point = &(p1->line[c1].point[0]);
-    for(c2=0; c2<p2->numlines; c2++) {
-      if(msPointInPolygon(point, &p2->line[c2]) == MS_TRUE) /* ok, the point is in a polygon */
-        return(MS_TRUE);
-    }
-  }
+  point = &(p1->point[0]);
+  if(msPointInPolygon(point, p2) == MS_TRUE) /* ok, the point is in a polygon */
+    return(MS_TRUE);
 
   return(MS_FALSE);
 }

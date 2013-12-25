@@ -99,9 +99,6 @@ struct defaultOutputFormatEntry {
 struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"png","AGG/PNG","image/png"},
   {"jpeg","AGG/JPEG","image/jpeg"},
-#ifdef USE_GD
-  {"gif","GD/GIF","image/gif"},
-#endif
   {"png8","AGG/PNG8","image/png; mode=8bit"},
   {"png24","AGG/PNG","image/png; mode=24bit"},
 #ifdef USE_CAIRO
@@ -116,6 +113,7 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"kml","KML","application/vnd.google-earth.kml+xml"},
   {"kmz","KMZ","application/vnd.google-earth.kmz"},
 #endif
+  {"json","UTFGrid","application/json"},
   {NULL,NULL,NULL}
 };
 
@@ -160,35 +158,19 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     const char *name )
 
 {
+
   outputFormatObj *format = NULL;
-  if( strcasecmp(driver,"GD/PC256") == 0 ) {
-    return msCreateDefaultOutputFormat( map, "GD/PNG", "gdpng" );
+  if( strncasecmp(driver,"GD/",3) == 0 ) {
+    return msCreateDefaultOutputFormat( map, "AGG/PNG8", name );
   }
 
-  if( strcasecmp(driver,"GD/GIF") == 0 ) {
-    if(!name) name="gif";
-#ifdef USE_GD_GIF
+  if( strcasecmp(driver,"UTFGRID") == 0 ) {
+    if(!name) name="utfgrid";
     format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = msStrdup("image/gif");
-    format->imagemode = MS_IMAGEMODE_PC256;
-    format->extension = msStrdup("gif");
-    format->renderer = MS_RENDER_WITH_GD;
-#else
-    return msCreateDefaultOutputFormat( map, "AGG/PNG8", name );
-#endif
-  }
-
-  if( strcasecmp(driver,"GD/PNG") == 0 ) {
-    if(!name) name="gdpng";
-#ifdef USE_GD_PNG
-    format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = msStrdup("image/png");
-    format->imagemode = MS_IMAGEMODE_PC256;
-    format->extension = msStrdup("png");
-    format->renderer = MS_RENDER_WITH_GD;
-#else
-    return msCreateDefaultOutputFormat( map, "AGG/PNG8", name );
-#endif /* USE_GD_PNG */
+    format->mimetype = msStrdup("application/json");
+    format->imagemode = MS_IMAGEMODE_RGB;
+    format->extension = msStrdup("json");
+    format->renderer = MS_RENDER_WITH_UTFGRID;
   }
 
   if( strcasecmp(driver,"AGG/PNG") == 0 ) {
@@ -870,11 +852,7 @@ void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
       }
 
       if( j == mime_count && map->outputformatlist[i]->driver &&
-          (
-#ifdef USE_GD
-            strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
-#endif
-            strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0))
+          strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0)
         mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
     }
 
@@ -921,9 +899,6 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
 
       if( j == mime_count && map->outputformatlist[i]->driver &&
           (
-#ifdef USE_GD
-            strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
-#endif
             strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0 ||
             strncasecmp(map->outputformatlist[i]->driver, "AGG/", 4)==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "CAIRO/SVG")==0 ||
@@ -1020,18 +995,6 @@ int msOutputFormatValidate( outputFormatObj *format, int issue_error )
     if( format->renderer != MS_RENDER_WITH_RAWDATA ) /* see bug 724 */
       format->renderer = MS_RENDER_WITH_RAWDATA;
   }
-#ifdef USE_GD
-  if(format->renderer == MS_RENDER_WITH_GD && format->imagemode != MS_IMAGEMODE_PC256) {
-    if( issue_error )
-      msSetError( MS_MISCERR,
-                  "OUTPUTFORMAT %s has IMAGEMODE RGB/RGBA, which is not supported for GD drivers.",
-                  "msOutputFormatValidate()", format->name );
-    else
-      msDebug( "OUTPUTFORMAT %s has IMAGEMODE RGB/RGBA, which is not supported for GD drivers.",
-               format->name );
-    format->renderer = MS_RENDER_WITH_AGG;
-  }
-#endif
 
   return result;
 }
@@ -1053,10 +1016,8 @@ int msInitializeRendererVTable(outputFormatObj *format)
   switch(format->renderer) {
     case MS_RENDER_WITH_AGG:
       return msPopulateRendererVTableAGG(format->vtable);
-#ifdef USE_GD
-    case MS_RENDER_WITH_GD:
-      return msPopulateRendererVTableGD(format->vtable);
-#endif
+    case MS_RENDER_WITH_UTFGRID:
+      return msPopulateRendererVTableUTFGrid(format->vtable);
 #ifdef USE_CAIRO
     case MS_RENDER_WITH_CAIRO_RASTER:
       return msPopulateRendererVTableCairoRaster(format->vtable);

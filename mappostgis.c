@@ -106,6 +106,7 @@ msPostGISLayerInfo *msPostGISCreateLayerInfo(void)
   layerinfo->rownum = 0;
   layerinfo->version = 0;
   layerinfo->paging = MS_TRUE;
+  layerinfo->force2d = MS_TRUE;
   return layerinfo;
 }
 
@@ -587,7 +588,7 @@ wkbConvCollectionToShape(wkbObj *w, shapeObj *shape)
       failures++;
     }
   }
-  if ( failures == ncomponents )
+  if ( failures == ncomponents || ncomponents == 0)
     return MS_FAILURE;
   else
     return MS_SUCCESS;
@@ -1651,13 +1652,20 @@ char *msPostGISBuildSQLItems(layerObj *layer)
     ** which includes a 2D force in it) removes ordinates we don't
     ** need, saving transfer and encode/decode time.
     */
+    char *force2d = "";
 #if TRANSFER_ENCODING == 64
-    static char *strGeomTemplate = "encode(ST_AsBinary(ST_Force_2D(\"%s\"),'%s'),'base64') as geom,\"%s\"";
+    static char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
 #else
-    static char *strGeomTemplate = "encode(ST_AsBinary(ST_Force_2D(\"%s\"),'%s'),'hex') as geom,\"%s\"";
+    static char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
 #endif
-    strGeom = (char*)msSmallMalloc(strlen(strGeomTemplate) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid));
-    sprintf(strGeom, strGeomTemplate, layerinfo->geomcolumn, strEndian, layerinfo->uid);
+    if( layerinfo->force2d ) {
+      if( layerinfo->version >= 20100 )
+        force2d = "ST_Force2D";
+      else
+        force2d = "ST_Force_2D";
+    }
+    strGeom = (char*)msSmallMalloc(strlen(strGeomTemplate) + strlen(force2d) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid));
+    sprintf(strGeom, strGeomTemplate, force2d, layerinfo->geomcolumn, strEndian, layerinfo->uid);
   }
 
   if( layer->debug > 1 ) {
@@ -1870,11 +1878,13 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
   char *strFilter = 0;
   char *strUid = 0;
   char *strWhere = 0;
+  char *strOrderBy = 0;
   char *strLimit = 0;
   char *strOffset = 0;
   size_t strRectLength = 0;
   size_t strFilterLength = 0;
   size_t strUidLength = 0;
+  size_t strOrderByLength = 0;
   size_t strLimitLength = 0;
   size_t strOffsetLength = 0;
   size_t bufferSize = 0;
@@ -1954,8 +1964,17 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     strUidLength = strlen(strUid);
   }
 
+  /* Populate strOrderBy, if necessary */
+  if( layer->sortBy.nProperties > 0 ) {
+    char* pszTmp = msLayerBuildSQLOrderBy(layer);
+    strOrderBy = msStringConcatenate(strOrderBy, " ORDER BY ");
+    strOrderBy = msStringConcatenate(strOrderBy, pszTmp);
+    msFree(pszTmp);
+    strOrderByLength = strlen(strOrderBy);
+  }
+
   bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength
-               + strLimitLength + strOffsetLength;
+               + strLimitLength + strOffsetLength + strOrderByLength;
   strWhere = (char*)msSmallMalloc(bufferSize);
   *strWhere = '\0';
   if ( strRect ) {
@@ -1979,6 +1998,12 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     free(strUid);
     insert_and++;
   }
+
+  if ( strOrderBy ) {
+    strlcat(strWhere, strOrderBy, bufferSize);
+    free(strOrderBy);
+  }
+
   if ( strLimit ) {
     strlcat(strWhere, strLimit, bufferSize);
     free(strLimit);
@@ -2046,6 +2071,7 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
 
   strSQL = msSmallMalloc(strlen(strSQLTemplate) + strlen(strFrom) + strlen(strItems) + strlen(strWhere));
   sprintf(strSQL, strSQLTemplate, strItems, strFrom, strWhere);
+
   if (strItems) free(strItems);
   if (strFrom) free(strFrom);
   if (strWhere) free(strWhere);
@@ -2126,7 +2152,6 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
       result = wkbConvGeometryToShape(&w, shape);
       break;
 
-    case MS_LAYER_ANNOTATION:
     case MS_LAYER_QUERY:
     case MS_LAYER_CHART:
       result = msPostGISFindBestType(&w, shape);
@@ -2196,6 +2221,8 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
     shape->numvalues = layer->numitems;
 
     msComputeBounds(shape);
+  } else {
+     shape->type = MS_SHAPE_NULL;
   }
 
   if( layer->debug > 2 ) {
@@ -2220,6 +2247,7 @@ int msPostGISLayerOpen(layerObj *layer)
 #ifdef USE_POSTGIS
   msPostGISLayerInfo  *layerinfo;
   int order_test = 1;
+  const char* force2d_processing;
 
   assert(layer != NULL);
 
@@ -2327,6 +2355,13 @@ int msPostGISLayerOpen(layerObj *layer)
   if( layerinfo->version == MS_FAILURE ) return MS_FAILURE;
   if (layer->debug)
     msDebug("msPostGISLayerOpen: Got PostGIS version %d.\n", layerinfo->version);
+
+  force2d_processing = msLayerGetProcessingKey( layer, "FORCE2D" );
+  if(force2d_processing && !strcasecmp(force2d_processing,"no")) {
+    layerinfo->force2d = MS_FALSE;
+  }
+  if (layer->debug)
+    msDebug("msPostGISLayerOpen: Forcing 2D geometries: %s.\n", (layerinfo->force2d)?"yes":"no");
 
   /* Save the layerinfo in the layerObj. */
   layer->layerinfo = (void*)layerinfo;

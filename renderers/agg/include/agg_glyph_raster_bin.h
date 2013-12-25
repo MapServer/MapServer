@@ -72,6 +72,16 @@ namespace mapserver
             return w;
         }
 
+        int8u glyph_width(unsigned glyph) const
+        {
+            unsigned start_char = m_font[2];
+            unsigned num_chars = m_font[3];
+
+            const int8u* bits = m_font + 4 + num_chars * 2 +
+                                    value(m_font + 4 + (glyph - start_char) * 2);
+            return *bits;
+        }
+
         //--------------------------------------------------------------------
         void prepare(glyph_rect* r, double x, double y, unsigned glyph, bool flip)
         {

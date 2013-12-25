@@ -96,10 +96,10 @@ double calcMidAngle(pointObj *p1, pointObj *p2, pointObj *p3)
  *  - transform the original shapeobj
  *  - use the styleObj to render the transformed shapeobj
  */
-int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor)
+int msDrawTransformedShape(mapObj *map, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor)
 {
   int type = style->_geomtransform.type;
-  int i,j;
+  int i,j,status = MS_SUCCESS;
   switch(type) {
     case MS_GEOMTRANSFORM_END: /*render point on last vertex only*/
       for(j=0; j<shape->numlines; j++) {
@@ -110,7 +110,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
         if(style->autoangle==MS_TRUE && line->numpoints>1) {
           style->angle = calcOrientation(&(line->point[line->numpoints-2]),p);
         }
-        msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
+        status = msDrawMarkerSymbol(map,image,p,style,scalefactor);
       }
       break;
     case MS_GEOMTRANSFORM_START: /*render point on first vertex only*/
@@ -123,7 +123,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
         if(style->autoangle==MS_TRUE && line->numpoints>1) {
           style->angle = calcOrientation(p,&(line->point[1]));
         }
-        msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
+        status = msDrawMarkerSymbol(map,image,p,style,scalefactor);
       }
       break;
     case MS_GEOMTRANSFORM_VERTICES:
@@ -137,7 +137,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
           if(style->autoangle==MS_TRUE) {
             style->angle = calcMidAngle(&(line->point[i-1]),&(line->point[i]),&(line->point[i+1]));
           }
-          msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
+          status = msDrawMarkerSymbol(map,image,p,style,scalefactor);
         }
       }
       break;
@@ -162,14 +162,14 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
                                           (shape->bounds.miny < -padding) ? -padding : shape->bounds.miny;
       bbox_points[1].y=bbox_points[2].y =
                          (shape->bounds.maxy > image->height+padding) ? image->height+padding : shape->bounds.maxy;
-      msDrawShadeSymbol(symbolset, image, &bbox, style, scalefactor);
+      status = msDrawShadeSymbol(map, image, &bbox, style, scalefactor);
     }
     break;
     case MS_GEOMTRANSFORM_CENTROID: {
       double unused; /*used by centroid function*/
       pointObj centroid;
       if(MS_SUCCESS == msGetPolygonCentroid(shape,&centroid,&unused,&unused)) {
-        msDrawMarkerSymbol(symbolset,image,&centroid,style,scalefactor);
+        status = msDrawMarkerSymbol(map,image,&centroid,style,scalefactor);
       }
     }
     break;
@@ -193,10 +193,10 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
       switch (tmpshp->type) {
         case MS_SHAPE_POINT:
         case MS_SHAPE_POLYGON:        
-          msDrawShadeSymbol(symbolset, image, tmpshp, style, scalefactor);
+          status = msDrawShadeSymbol(map, image, tmpshp, style, scalefactor);
           break;
         case MS_SHAPE_LINE:
-          msDrawLineSymbol(symbolset, image, tmpshp, style, scalefactor);        
+          status = msDrawLineSymbol(map, image, tmpshp, style, scalefactor);
           break;
       }
 
@@ -211,7 +211,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
       msSetError(MS_MISCERR, "unknown geomtransform", "msDrawTransformedShape()");
       return MS_FAILURE;
   }
-  return MS_SUCCESS;
+  return status;
 }
 
 /*
@@ -221,8 +221,21 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
 int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
 {
   int i;
-  expressionObj *e =  &layer->_geomtransform;
-  
+  expressionObj *e =  &layer->_geomtransform;  
+
+#ifdef USE_V8_MAPSCRIPT
+  if (!map->v8context) {
+    msV8CreateContext(map);
+    if (!map->v8context)
+    {
+      msSetError(MS_V8ERR, "Unable to create v8 context.", "msGeomTransformShape()");
+      return MS_FAILURE;
+    }
+  }
+
+  msV8ContextSetLayer(map, layer);
+#endif
+ 
   switch(e->type) {
     case MS_GEOMTRANSFORM_EXPRESSION: {
       int status;

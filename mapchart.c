@@ -109,7 +109,7 @@ int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj
   }
 }
 
-void drawRectangle(mapObj *map, imageObj *image, double mx, double my, double Mx, double My,
+int WARN_UNUSED drawRectangle(mapObj *map, imageObj *image, double mx, double my, double Mx, double My,
                    styleObj *style)
 {
   shapeObj shape;
@@ -125,10 +125,10 @@ void drawRectangle(mapObj *map, imageObj *image, double mx, double my, double Mx
   point[1].x = point[2].x = Mx;
   point[2].y = point[3].y = My;
 
-  msDrawShadeSymbol(&map->symbolset,image,&shape,style,1.0);
+  return msDrawShadeSymbol(map,image,&shape,style,1.0);
 }
 
-int msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
+int WARN_UNUSED msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
                     double *values, styleObj **styles, int numvalues,
                     double barWidth)
 {
@@ -145,7 +145,8 @@ int msDrawVBarChart(mapObj *map, imageObj *image, pointObj *center,
   left = center->x-barWidth/2.;
 
   for(c=0; c<numvalues; c++) {
-    drawRectangle(map, image, left, cur, left+barWidth, cur-values[c], styles[c]);
+    if(UNLIKELY(MS_FAILURE == drawRectangle(map, image, left, cur, left+barWidth, cur-values[c], styles[c])))
+      return MS_FAILURE;
     cur -= values[c];
   }
   return MS_SUCCESS;
@@ -194,27 +195,28 @@ int msDrawBarChart(mapObj *map, imageObj *image, pointObj *center,
   vertOriginClipped=(vertOrigin<top) ? top :
                     (vertOrigin>bottom) ? bottom : vertOrigin;
   horizStart=left;
-  /*
-  color = gdImageColorAllocate(image->img.gd, 0,0,0);
-  gdImageRectangle(image->img.gd, left-1,top-1, center.x+width/2.+1,bottom+1,color);
-  */
+  
   for(c=0; c<numvalues; c++) {
     double barHeight=values[c]*pixperval;
     /*clip bars*/
     y=((vertOrigin-barHeight)<top) ? top :
       (vertOrigin-barHeight>bottom) ? bottom : vertOrigin-barHeight;
     if(y!=vertOriginClipped) { /*don't draw bars of height == 0 (i.e. either values==0, or clipped)*/
-      if(values[c]>0)
-        drawRectangle(map, image, horizStart, y, horizStart+barWidth-1, vertOriginClipped, styles[c]);
-      else
-        drawRectangle(map,image, horizStart, vertOriginClipped, horizStart+barWidth-1 , y, styles[c]);
+      if(values[c]>0) {
+        if(UNLIKELY(MS_FAILURE == drawRectangle(map, image, horizStart, y, horizStart+barWidth-1, vertOriginClipped, styles[c])))
+          return MS_FAILURE;
+      }
+      else {
+        if(UNLIKELY(MS_FAILURE == drawRectangle(map,image, horizStart, vertOriginClipped, horizStart+barWidth-1 , y, styles[c])))
+          return MS_FAILURE;
+      }
     }
     horizStart+=barWidth;
   }
   return MS_SUCCESS;
 }
 
-int msDrawPieChart(mapObj *map, imageObj *image,
+int WARN_UNUSED msDrawPieChart(mapObj *map, imageObj *image,
                    pointObj *center, double diameter,
                    double *values, styleObj **styles, int numvalues)
 {
@@ -233,7 +235,8 @@ int msDrawPieChart(mapObj *map, imageObj *image,
     double angle = values[i];
     if(angle==0) continue; /*no need to draw. causes artifacts with outlines*/
     angle*=360.0/dTotal;
-    msDrawPieSlice(&map->symbolset,image, center, styles[i], diameter/2., start, start+angle);
+    if(UNLIKELY(MS_FAILURE == msDrawPieSlice(map ,image, center, styles[i], diameter/2., start, start+angle)))
+      return MS_FAILURE;
 
     start+=angle;
   }

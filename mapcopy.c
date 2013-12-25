@@ -256,9 +256,10 @@ int msCopyQueryMap(queryMapObj *dst, queryMapObj *src)
  * Copy a labelLeaderObj, using msCopyStyle()                          *
  **********************************************************************/
 
-int msCopyLeader(labelLeaderObj *dst, labelLeaderObj *src)
+int msCopyLabelLeader(labelLeaderObj *dst, labelLeaderObj *src)
 {
   int i;
+  assert(dst && src);
   MS_COPYSTELEM(gridstep);
   MS_COPYSTELEM(maxdistance);
   /*
@@ -307,7 +308,6 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTELEM(numbindings);
 
   MS_COPYSTRING(dst->font, src->font);
-  MS_COPYSTELEM(type);
 
   MS_COPYCOLOR(&(dst->color), &(src->color));
   MS_COPYCOLOR(&(dst->outlinecolor), &(src->outlinecolor));
@@ -325,7 +325,6 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTELEM(angle);
   MS_COPYSTELEM(anglemode);
   MS_COPYSTELEM(buffer);
-  MS_COPYSTELEM(antialias);
   MS_COPYSTELEM(wrap);
   MS_COPYSTELEM(align);
   MS_COPYSTELEM(maxlength);
@@ -383,13 +382,16 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     dst->numstyles++;
   }
 
-  /*
-  ** other book keeping information (RFC77 TODO)
-  */
-  MS_COPYSTELEM(status);
-  MS_COPYSTRING(dst->annotext, src->annotext);
-
-  msCopyLeader(&(dst->leader),&(src->leader));
+  if(src->leader) {
+    dst->leader = msSmallMalloc(sizeof(labelLeaderObj));
+    msCopyLabelLeader(dst->leader,src->leader);
+  } else {
+    if(dst->leader) {
+      freeLabelLeader(dst->leader);
+      msFree(dst->leader);
+    }
+    dst->leader = NULL;
+  }
 
   return MS_SUCCESS;
 }
@@ -480,7 +482,6 @@ int msCopyStyle(styleObj *dst, styleObj *src)
   MS_COPYSTELEM(maxwidth);
   MS_COPYSTELEM(offsetx);
   MS_COPYSTELEM(offsety);
-  MS_COPYSTELEM(antialias);
   MS_COPYSTELEM(angle);
   MS_COPYSTELEM(minvalue);
   MS_COPYSTELEM(maxvalue);
@@ -555,7 +556,15 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
   }
   MS_COPYSTELEM(numlabels);
 
-  msCopyLeader(&(dst->leader),&(src->leader));
+  if(src->leader) {
+    if(dst->leader) {
+      freeLabelLeader(dst->leader);
+    }
+    if(!dst->leader) {
+      dst->leader = msSmallMalloc(sizeof(labelLeaderObj));
+    }
+    msCopyLabelLeader(dst->leader,src->leader);
+  }
 
   MS_COPYSTRING(dst->keyimage, src->keyimage);
   MS_COPYSTRING(dst->name, src->name);
@@ -572,7 +581,6 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
 #else
   MS_COPYSTRING(dst->_template, src->_template);
 #endif
-  MS_COPYSTELEM(type);
 
   if (&(src->metadata) != NULL) {
     /* dst->metadata = msCreateHashTable(); */
@@ -925,10 +933,10 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   MS_COPYSTRING(dst->name, src->name);
   MS_COPYSTRING(dst->group, src->group);
   MS_COPYSTRING(dst->data, src->data);
+  MS_COPYSTRING(dst->encoding, src->encoding);
 
   MS_COPYSTELEM(status);
   MS_COPYSTELEM(type);
-  MS_COPYSTELEM(annotate);
   MS_COPYSTELEM(tolerance);
   MS_COPYSTELEM(toleranceunits);
   MS_COPYSTELEM(symbolscaledenom);

@@ -37,6 +37,7 @@
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 #endif
+#include "mapowscommon.h"
 
 #include <ctype.h> /* isalnum() */
 #include <stdarg.h>
@@ -100,12 +101,15 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
     int i;
     /* parse KVP parameters service, version and request */
     for (i = 0; i < request->NumParams; ++i) {
-      if (EQUAL(request->ParamNames[i], "SERVICE")) {
+      if (ows_request->service == NULL &&
+          EQUAL(request->ParamNames[i], "SERVICE")) {
         ows_request->service = msStrdup(request->ParamValues[i]);
-      } else if (EQUAL(request->ParamNames[i], "VERSION")
-                 || EQUAL(request->ParamNames[i], "WMTVER")) { /* for WMS */
+      } else if (ows_request->version == NULL &&
+                 (EQUAL(request->ParamNames[i], "VERSION")
+                 || EQUAL(request->ParamNames[i], "WMTVER"))) { /* for WMS */
         ows_request->version = msStrdup(request->ParamValues[i]);
-      } else if (EQUAL(request->ParamNames[i], "REQUEST")) {
+      } else if (ows_request->request == NULL &&
+                 EQUAL(request->ParamNames[i], "REQUEST")) {
         ows_request->request = msStrdup(request->ParamValues[i]);
       }
 
@@ -230,6 +234,14 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
   }
 
   if (ows_request.service == NULL) {
+
+#ifdef USE_WFS_SVR
+    if( msOWSLookupMetadata(&(map->web.metadata), "FO", "cite_wfs2") != NULL ) {
+      status = msWFSException(map, "service", MS_OWS_ERROR_MISSING_PARAMETER_VALUE, NULL );
+    }
+    else
+#endif
+
     /* exit if service is not set */
     if(force_ows_mode) {
       msSetError( MS_MISCERR,
@@ -557,7 +569,7 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
       return MS_FALSE;
   }
 
-  if (map && check_all_layers == MS_FALSE) {
+  if (map && (check_all_layers == MS_FALSE || map->numlayers == 0)) {
     /* then we check in the map metadata */
     enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
     if (msOWSParseRequestMetadata(enable_request, request, &disabled))
@@ -1016,7 +1028,7 @@ int msOWSMakeAllLayersUnique(mapObj *map)
 **
 */
 
-int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions)
+int msOWSNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions)
 {
   int i;
 
@@ -1157,6 +1169,26 @@ const char *msOWSGetSchemasLocation(mapObj *map)
   return schemas_location;
 }
 
+/* msOWSGetInspireSchemasLocation()
+**
+** schemas location is the root of the web tree where all Inspire-related
+** schemas can be found on this server.  These URLs must exist in order
+** to validate xml.
+**
+** Use value of "inspire_schemas_location" metadata
+*/
+const char *msOWSGetInspireSchemasLocation(mapObj *map)
+{
+  const char *schemas_location;
+
+  schemas_location = msLookupHashTable(&(map->web.metadata),
+                                       "inspire_schemas_location");
+  if (schemas_location == NULL)
+    schemas_location = "http://inspire.ec.europa.eu/schemas";
+
+  return schemas_location;
+}
+
 /* msOWSGetLanguage()
 **
 ** returns the language via MAP/WEB/METADATA/ows_language
@@ -1252,16 +1284,19 @@ char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *
 ** Returns a status code; MS_NOERR if all ok, action_if_not_found otherwise
 */
 int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
-    int action_if_not_found, const char *tag_name,
-    const char *validated_language, const int service)
+    int action_if_not_found, const char *tag_name, const char* tag_ns,
+    const char *validated_language, const OWSServiceType service)
 {
 
   int metadataStatus = 0;
   int languageStatus = 0;
 
-  msIO_fprintf(stream, "  <%s>\n", tag_name);
+  if( tag_ns )
+    msIO_fprintf(stream, "  <%s %s>\n", tag_name, tag_ns);
+  else
+    msIO_fprintf(stream, "  <%s>\n", tag_name);
 
-  metadataStatus = msOWSPrintInspireCommonMetadata(stream, map, namespaces, action_if_not_found);
+  metadataStatus = msOWSPrintInspireCommonMetadata(stream, map, namespaces, action_if_not_found, service);
   languageStatus = msOWSPrintInspireCommonLanguages(stream, map, namespaces, action_if_not_found, validated_language);
 
   msIO_fprintf(stream, "  </%s>\n", tag_name);
@@ -1276,7 +1311,7 @@ int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const
 ** Returns a status code; MS_NOERR if all OK, action_if_not_found otherwise
 */
 int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
-                                    int action_if_not_found)
+                                    int action_if_not_found, const OWSServiceType service)
 {
 
   int status = MS_NOERR;
@@ -1303,7 +1338,7 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
       }
     }
   } else if (strcasecmp("embed",inspire_capabilities) == 0) {
-    msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_resourcelocator", OWS_NOERR, "    <inspire_common:ResourceLocator>\n      <inspire_common:URL>%s</inspire_common:URL>\n    </inspire_common:ResourceLocator>\n", NULL);
+    msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_resourcelocator", OWS_WARN, "    <inspire_common:ResourceLocator>\n      <inspire_common:URL>%s</inspire_common:URL>\n    </inspire_common:ResourceLocator>\n", NULL);
     msIO_fprintf(stream,"    <inspire_common:ResourceType>service</inspire_common:ResourceType>\n");
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_temporal_reference", OWS_WARN, "    <inspire_common:TemporalReference>\n      <inspire_common:DateOfLastRevision>%s</inspire_common:DateOfLastRevision>\n    </inspire_common:TemporalReference>\n", "");
     msIO_fprintf(stream, "    <inspire_common:Conformity>\n");
@@ -1318,7 +1353,10 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_mpoc_email", OWS_WARN, "      <inspire_common:EmailAddress>%s</inspire_common:EmailAddress>\n", "");
     msIO_fprintf(stream, "    </inspire_common:MetadataPointOfContact>\n");
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_metadatadate", OWS_WARN, "      <inspire_common:MetadataDate>%s</inspire_common:MetadataDate>\n", "");
-    msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n");
+    if( service == OWS_WFS )
+        msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>download</inspire_common:SpatialDataServiceType>\n");
+    else
+        msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n");
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_keyword", OWS_WARN, "    <inspire_common:MandatoryKeyword xsi:type='inspire_common:classificationOfSpatialDataService'>\n      <inspire_common:KeywordValue>%s</inspire_common:KeywordValue>\n    </inspire_common:MandatoryKeyword>\n", "");
   } else {
     status = action_if_not_found;
@@ -2023,7 +2061,7 @@ void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
 */
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
                                  rectObj *extent, projectionObj *srcproj,
-                                 projectionObj *wfsproj, int nService)
+                                 projectionObj *wfsproj, OWSServiceType nService)
 {
   const char *pszTag = "LatLonBoundingBox";  /* The default for WMS */
   rectObj ext;

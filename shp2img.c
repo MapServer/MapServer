@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
       fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
       fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
       fprintf(stdout,"  -s sizex sizey: output image size\n");
-      fprintf(stdout,"  -l layers: layers / groups to enable - make sure they are quoted and space seperated if more than one listed\n" );
+      fprintf(stdout,"  -l layers: layers / groups to enable - make sure they are quoted and space separated if more than one listed\n" );
       fprintf(stdout,"  -all_debug n: Set debug level for map and all layers\n" );
       fprintf(stdout,"  -map_debug n: Set map debug level\n" );
       fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level\n" );

@@ -134,7 +134,7 @@ PHP_METHOD(labelObj, __get)
 
   IF_GET_STRING("font",  php_label->label->font)
   else IF_GET_STRING("encoding", php_label->label->encoding)
-    else IF_GET_LONG("type", php_label->label->type)
+    else IF_GET_LONG("type", MS_TRUETYPE)
       else IF_GET_LONG("shadowsizex",  php_label->label->shadowsizex)
         else IF_GET_LONG("shadowsizey",  php_label->label->shadowsizey)
           else IF_GET_DOUBLE("size", php_label->label->size)
@@ -148,7 +148,6 @@ PHP_METHOD(labelObj, __get)
                           else IF_GET_DOUBLE("angle", php_label->label->angle)
                             else IF_GET_LONG("anglemode", php_label->label->anglemode)
                               else IF_GET_LONG("buffer", php_label->label->buffer)
-                                else IF_GET_LONG("antialias", php_label->label->antialias)
                                   else IF_GET_LONG("wrap", php_label->label->wrap)
                                     else IF_GET_LONG("minfeaturesize", php_label->label->minfeaturesize)
                                       else IF_GET_LONG("autominfeaturesize", php_label->label->autominfeaturesize)
@@ -164,7 +163,7 @@ PHP_METHOD(labelObj, __get)
                                                           else IF_GET_LONG("maxoverlapangle", php_label->label->maxoverlapangle)
                                                             else IF_GET_LONG("priority", php_label->label->priority)
                                                               else IF_GET_OBJECT("color", mapscript_ce_color, php_label->color, &php_label->label->color)
-                                                                else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_label->leader, &php_label->label->leader)
+                                                                else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_label->leader, php_label->label->leader)
                                                                   else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_label->outlinecolor, &php_label->label->outlinecolor)
                                                                     else IF_GET_OBJECT("shadowcolor", mapscript_ce_color, php_label->shadowcolor, &php_label->label->shadowcolor)
                                                                       else {
@@ -176,6 +175,7 @@ PHP_METHOD(labelObj, __set)
 {
   char *property;
   long property_len = 0;
+  long unused;
   zval *value;
   zval *zobj = getThis();
   php_label_object *php_label;
@@ -192,7 +192,7 @@ PHP_METHOD(labelObj, __set)
 
   IF_SET_STRING("font",  php_label->label->font, value)
   else IF_SET_STRING("encoding", php_label->label->encoding, value)
-    else IF_SET_LONG("type", php_label->label->type, value)
+    else IF_SET_LONG("type", unused, value)
       else IF_SET_LONG("shadowsizex",  php_label->label->shadowsizex, value)
         else IF_SET_LONG("shadowsizey",  php_label->label->shadowsizey, value)
           else IF_SET_DOUBLE("size", php_label->label->size, value)
@@ -204,7 +204,6 @@ PHP_METHOD(labelObj, __set)
                       else IF_SET_DOUBLE("angle", php_label->label->angle, value)
                         else IF_SET_LONG("anglemode", php_label->label->anglemode, value)
                           else IF_SET_LONG("buffer", php_label->label->buffer, value)
-                            else IF_SET_LONG("antialias", php_label->label->antialias, value)
                               else IF_SET_BYTE("wrap", php_label->label->wrap, value)
                                 else IF_SET_LONG("minfeaturesize", php_label->label->minfeaturesize, value)
                                   else IF_SET_LONG("autominfeaturesize", php_label->label->autominfeaturesize, value)

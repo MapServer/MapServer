@@ -1240,9 +1240,6 @@ static char *msWCSGetFormatsList20( mapObj *map, layerObj *layer )
     for( i = 0; i < map->numoutputformats; i++ ) {
       switch( map->outputformatlist[i]->renderer ) {
           /* seemingly normal raster format */
-#ifdef USE_GD
-        case MS_RENDER_WITH_GD:
-#endif
         case MS_RENDER_WITH_AGG:
         case MS_RENDER_WITH_RAWDATA:
           tokens[numtokens++] = msStrdup(map->outputformatlist[i]->name);
@@ -1582,8 +1579,6 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   msIOContext *context = NULL;
   const char *contenttype = NULL;
 
-  const char *encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
-
   if( msIO_needBinaryStdout() == MS_FAILURE ) {
     return MS_FAILURE;
   }
@@ -1593,15 +1588,12 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   else
     contenttype = msStrdup("text/xml");
 
-  if (encoding)
-    msIO_setHeader("Content-Type","%s; charset=%s", contenttype, encoding);
-  else
-    msIO_setHeader("Content-Type","%s", contenttype);
+  msIO_setHeader("Content-Type","%s; charset=UTF-8", contenttype);
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "UTF-8", 1);
   msIO_contextWrite(context, buffer, size);
   xmlFree(buffer);
 
@@ -2362,9 +2354,7 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   int size = 0;
   char *status = "400 Bad Request";
   char *errorString = NULL;
-  char *errorMessage = NULL;
   char *schemasLocation = NULL;
-  const char * encoding;
   char *xsi_schemaLocation = NULL;
   char version_string[OWS_VERSION_MAXLEN];
 
@@ -2375,9 +2365,7 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   xmlNsPtr psNsXsi = NULL;
   xmlChar *buffer = NULL;
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   errorString = msGetErrorString("\n");
-  errorMessage = msEncodeHTMLEntities(errorString);
   schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   psDoc = xmlNewDoc(BAD_CAST "1.0");
@@ -2417,8 +2405,10 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
     xmlNewProp(psMainNode, BAD_CAST "locator", BAD_CAST locator);
   }
 
-  if (errorMessage != NULL) {
+  if (errorString != NULL) {
+    char* errorMessage = msEncodeHTMLEntities(errorString);
     xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST errorMessage);
+    msFree(errorMessage);
   }
 
   /*psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_2_0_0,
@@ -2442,20 +2432,15 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   }
 
   msIO_setHeader("Status", "%s", status);
-  if (encoding)
-    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-Type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding
-                            : "ISO-8859-1"), 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, "UTF-8", 1);
 
   msIO_printf("%s", buffer);
 
   /* free buffer and the document */
   free(errorString);
-  free(errorMessage);
   free(schemasLocation);
   free(xsi_schemaLocation);
   xmlFree(buffer);
@@ -2645,14 +2630,14 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /* -------------------------------------------------------------------- */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceIdentification") ) {
     psNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
-                           psOwsNs, map, "OGC WCS", params->version, "CO"));
+                           psOwsNs, map, "OGC WCS", params->version, "CO", NULL));
     msWCSGetCapabilities20_CreateProfiles(map, psNode, psOwsNs);
   }
 
   /* Service Provider */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceProvider") ) {
     xmlAddChild(psRootNode,
-                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO"));
+                msOWSCommonServiceProvider(psOwsNs, psXLinkNs, map, "CO", NULL));
   }
 
   /* -------------------------------------------------------------------- */
@@ -3602,8 +3587,9 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     status = msDrawRasterLayerLow( map, layer, image, NULL );
   } else {
     rasterBufferObj rb;
-    MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
-    status = msDrawRasterLayerLow( map, layer, image, &rb );
+    status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+    if(LIKELY(status == MS_SUCCESS))
+      status = msDrawRasterLayerLow( map, layer, image, &rb );
   }
 
   if( status != MS_SUCCESS ) {

@@ -28,6 +28,8 @@
  *****************************************************************************/
 
 #include "mapserver.h"
+#include "fontcache.h"
+#include "mapagg.h"
 #include <assert.h>
 #include "renderers/agg/include/agg_color_rgba.h"
 #include "renderers/agg/include/agg_pixfmt_rgba.h"
@@ -46,7 +48,6 @@
 #include "renderers/agg/include/agg_image_accessors.h"
 #include "renderers/agg/include/agg_conv_stroke.h"
 #include "renderers/agg/include/agg_conv_dash.h"
-#include "renderers/agg/include/agg_path_storage.h"
 #include "renderers/agg/include/agg_font_freetype.h"
 #include "renderers/agg/include/agg_conv_contour.h"
 #include "renderers/agg/include/agg_ellipse.h"
@@ -59,7 +60,7 @@
 #include "renderers/agg/include/agg_span_image_filter_rgba.h"
 #include "renderers/agg/include/agg_glyph_raster_bin.h"
 #include "renderers/agg/include/agg_renderer_raster_text.h"
-#include "renderers/agg/include/agg_embedded_raster_fonts.h"
+#include "renderers/agg/include/agg_path_storage_integer.h"
 
 #include "renderers/agg/include/agg_conv_clipper.h"
 
@@ -86,6 +87,7 @@ typedef mapserver::rasterizer_scanline_aa<> rasterizer_scanline;
 typedef mapserver::font_engine_freetype_int16 font_engine_type;
 typedef mapserver::font_cache_manager<font_engine_type> font_manager_type;
 typedef mapserver::conv_curve<font_manager_type::path_adaptor_type> font_curve_type;
+typedef mapserver::glyph_raster_bin<color_type> glyph_gen;
 
 #ifdef AGG_ALIASED_ENABLED
 typedef mapserver::renderer_primitives<renderer_base> renderer_primitives;
@@ -93,140 +95,7 @@ typedef mapserver::rasterizer_outline<renderer_primitives> rasterizer_outline;
 #endif
 static color_type AGG_NO_COLOR = color_type(0, 0, 0, 0);
 
-const mapserver::int8u* rasterfonts[]= {
-  mapserver::mcs5x10_mono, /*gd tiny. gse5x7 is a bit less high than gd tiny*/
-  mapserver::mcs5x11_mono, /*gd small*/
-  mapserver::mcs6x11_mono, /*gd medium*/
-  mapserver::mcs7x12_mono_low, /*gd large*/
-  mapserver::mcs7x12_mono_high /*gd huge*/
-};
-
-fontMetrics rasterfont_sizes[] = {
-  {5,mapserver::mcs5x10_mono[0]},
-  {5,mapserver::mcs5x11_mono[0]},
-  {6,mapserver::mcs6x11_mono[0]},
-  {7,mapserver::mcs7x12_mono_low[0]},
-  {7,mapserver::mcs7x12_mono_high[0]}
-};
-
-/*
- * interface to a shapeObj representing lines, providing the functions
- * needed by the agg rasterizer. treats shapeObjs with multiple linestrings.
- */
-class line_adaptor
-{
-public:
-  line_adaptor(shapeObj *shape):s(shape) {
-    m_line=s->line; /*first line*/
-    m_point=m_line->point; /*current vertex is first vertex of first line*/
-    m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
-    m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
-  }
-
-  /* a class with virtual functions should also provide a virtual destructor */
-  virtual ~line_adaptor() {}
-
-  void rewind(unsigned) {
-    m_line=s->line; /*first line*/
-    m_point=m_line->point; /*current vertex is first vertex of first line*/
-    m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
-  }
-
-  virtual unsigned vertex(double* x, double* y) {
-    if(m_point < m_pend) {
-      /*here we treat the case where a real vertex is returned*/
-      bool first = m_point == m_line->point; /*is this the first vertex of a line*/
-      *x = m_point->x;
-      *y = m_point->y;
-      m_point++;
-      return first ? mapserver::path_cmd_move_to : mapserver::path_cmd_line_to;
-    }
-    /*if here, we're at the end of a line*/
-    m_line++;
-    *x = *y = 0.0;
-    if(m_line>=m_lend) /*is this the last line of the shapObj. normally,
-        (m_line==m_lend) should be a sufficient test, as the caller should not call
-        this function if a previous call returned path_cmd_stop.*/
-      return mapserver::path_cmd_stop; /*no more points to process*/
-
-    /*if here, there are more lines in the shapeObj, continue with next one*/
-    m_point=m_line->point; /*pointer to first point of next line*/
-    m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last point of next line*/
-
-    return vertex(x,y); /*this will return the first point of the next line*/
-  }
-private:
-  shapeObj *s;
-  lineObj *m_line, /*current line pointer*/
-          *m_lend; /*points to after the last line*/
-  pointObj *m_point, /*current point*/
-           *m_pend; /*points to after last point of current line*/
-};
-
-class polygon_adaptor
-{
-public:
-  polygon_adaptor(shapeObj *shape):s(shape),m_stop(false) {
-    m_line=s->line; /*first lines*/
-    m_point=m_line->point; /*first vertex of first line*/
-    m_lend=&(s->line[s->numlines]); /*pointer to after last line*/
-    m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of first line*/
-  }
-
-  /* a class with virtual functions should also provide a virtual destructor */
-  virtual ~polygon_adaptor() {}
-
-  void rewind(unsigned) {
-    /*reset pointers*/
-    m_stop=false;
-    m_line=s->line;
-    m_point=m_line->point;
-    m_pend=&(m_line->point[m_line->numpoints]);
-  }
-
-  virtual unsigned vertex(double* x, double* y) {
-    if(m_point < m_pend) {
-      /*if here, we have a real vertex*/
-      bool first = m_point == m_line->point;
-      *x = m_point->x;
-      *y = m_point->y;
-      m_point++;
-      return first ? mapserver::path_cmd_move_to : mapserver::path_cmd_line_to;
-    }
-    *x = *y = 0.0;
-    if(!m_stop) {
-      /*if here, we're after the last vertex of the current line
-       * we return the command to close the current polygon*/
-      m_line++;
-      if(m_line>=m_lend) {
-        /*if here, we've finished all the vertexes of the shape.
-         * we still return the command to close the current polygon,
-         * but set m_stop so the subsequent call to vertex() will return
-         * the stop command*/
-        m_stop=true;
-        return mapserver::path_cmd_end_poly;
-      }
-      /*if here, there's another line in the shape, so we set the pointers accordingly
-       * and return the command to close the current polygon*/
-      m_point=m_line->point; /*first vertex of next line*/
-      m_pend=&(m_line->point[m_line->numpoints]); /*pointer to after last vertex of next line*/
-      return mapserver::path_cmd_end_poly;
-    }
-    /*if here, a previous call to vertex informed us that we'd consumed all the vertexes
-     * of the shape. return the command to stop processing this shape*/
-    return mapserver::path_cmd_stop;
-  }
-private:
-  shapeObj *s;
-  double ox,oy;
-  lineObj *m_line, /*pointer to current line*/
-          *m_lend; /*pointer to after last line of the shape*/
-  pointObj *m_point, /*pointer to current vertex*/
-           *m_pend; /*pointer to after last vertex of current line*/
-  bool m_stop; /*should next call return stop command*/
-};
-
-#define aggColor(c) mapserver::rgba8_pre(c->red, c->green, c->blue, c->alpha)
+#define aggColor(c) mapserver::rgba8_pre((c)->red, (c)->green, (c)->blue, (c)->alpha)
 
 class aggRendererCache
 {
@@ -283,6 +152,8 @@ public:
   mapserver::conv_stroke<line_adaptor> *stroke;
   mapserver::conv_dash<line_adaptor> *dash;
   mapserver::conv_stroke<mapserver::conv_dash<line_adaptor> > *stroke_dash;
+  double default_gamma;
+  mapserver::gamma_linear gamma_function;
 };
 
 #define AGG_RENDERER(image) ((AGG2Renderer*) (image)->img.plugin)
@@ -314,27 +185,6 @@ static void applyCJC(VertexSource &stroke, int caps, int joins)
       stroke.line_cap(mapserver::square_cap);
       break;
   }
-}
-
-inline int aggLoadFont(aggRendererCache *cache, char *font, double size)
-{
-  if(!cache->m_feng.name() || strcmp(cache->m_feng.name(),font)) {
-    if (!cache->m_feng.load_font(font, 0, mapserver::glyph_ren_outline)) {
-      msSetError(MS_TTFERR, "AGG error loading font (%s)", "aggLoadFont()", font);
-      return MS_FAILURE;
-    }
-    if(!cache->m_feng.hinting())
-      cache->m_feng.hinting(true);
-    if(cache->m_feng.resolution() != 96)
-      cache->m_feng.resolution(96);
-    if(!cache->m_feng.flip_y())
-      cache->m_feng.flip_y(true);
-    cache->m_feng.height(size);
-  } else {
-    if(cache->m_feng.height()!=size)
-      cache->m_feng.height(size);
-  }
-  return MS_SUCCESS;
 }
 
 int agg2RenderLine(imageObj *img, shapeObj *p, strokeStyleObj *style)
@@ -441,6 +291,247 @@ int agg2RenderPolygon(imageObj *img, shapeObj *p, colorObj * color)
   return MS_SUCCESS;
 }
 
+static inline double int26p6_to_dbl(int p)
+    {
+        return double(p) / 64.0;
+    }
+
+template<class PathStorage>
+    bool decompose_ft_outline(const FT_Outline& outline,
+                              bool flip_y,
+                              const mapserver::trans_affine& mtx,
+                              PathStorage& path)
+    {
+        FT_Vector   v_last;
+        FT_Vector   v_control;
+        FT_Vector   v_start;
+        double x1, y1, x2, y2, x3, y3;
+
+        FT_Vector*  point;
+        FT_Vector*  limit;
+        char*       tags;
+
+        int   n;         // index of contour in outline
+        int   first;     // index of first point in contour
+        char  tag;       // current point's state
+
+        first = 0;
+
+        for(n = 0; n < outline.n_contours; n++)
+        {
+            int  last;  // index of last point in contour
+
+            last  = outline.contours[n];
+            limit = outline.points + last;
+
+            v_start = outline.points[first];
+            v_last  = outline.points[last];
+
+            v_control = v_start;
+
+            point = outline.points + first;
+            tags  = outline.tags  + first;
+            tag   = FT_CURVE_TAG(tags[0]);
+
+            // A contour cannot start with a cubic control point!
+            if(tag == FT_CURVE_TAG_CUBIC) return false;
+
+            // check first point to determine origin
+            if( tag == FT_CURVE_TAG_CONIC)
+            {
+                // first point is conic control.  Yes, this happens.
+                if(FT_CURVE_TAG(outline.tags[last]) == FT_CURVE_TAG_ON)
+                {
+                    // start at last point if it is on the curve
+                    v_start = v_last;
+                    limit--;
+                }
+                else
+                {
+                    // if both first and last points are conic,
+                    // start at their middle and record its position
+                    // for closure
+                    v_start.x = (v_start.x + v_last.x) / 2;
+                    v_start.y = (v_start.y + v_last.y) / 2;
+
+                    v_last = v_start;
+                }
+                point--;
+                tags--;
+            }
+
+            x1 = int26p6_to_dbl(v_start.x);
+            y1 = int26p6_to_dbl(v_start.y);
+            if(flip_y) y1 = -y1;
+            mtx.transform(&x1, &y1);
+            path.move_to(x1,y1);
+
+            while(point < limit)
+            {
+                point++;
+                tags++;
+
+                tag = FT_CURVE_TAG(tags[0]);
+                switch(tag)
+                {
+                    case FT_CURVE_TAG_ON:  // emit a single line_to
+                    {
+                        x1 = int26p6_to_dbl(point->x);
+                        y1 = int26p6_to_dbl(point->y);
+                        if(flip_y) y1 = -y1;
+                        mtx.transform(&x1, &y1);
+                        path.line_to(x1,y1);
+                        //path.line_to(conv(point->x), flip_y ? -conv(point->y) : conv(point->y));
+                        continue;
+                    }
+
+                    case FT_CURVE_TAG_CONIC:  // consume conic arcs
+                    {
+                        v_control.x = point->x;
+                        v_control.y = point->y;
+
+                    Do_Conic:
+                        if(point < limit)
+                        {
+                            FT_Vector vec;
+                            FT_Vector v_middle;
+
+                            point++;
+                            tags++;
+                            tag = FT_CURVE_TAG(tags[0]);
+
+                            vec.x = point->x;
+                            vec.y = point->y;
+
+                            if(tag == FT_CURVE_TAG_ON)
+                            {
+                                x1 = int26p6_to_dbl(v_control.x);
+                                y1 = int26p6_to_dbl(v_control.y);
+                                x2 = int26p6_to_dbl(vec.x);
+                                y2 = int26p6_to_dbl(vec.y);
+                                if(flip_y) { y1 = -y1; y2 = -y2; }
+                                mtx.transform(&x1, &y1);
+                                mtx.transform(&x2, &y2);
+                                path.curve3(x1,y1,x2,y2);
+                                continue;
+                            }
+
+                            if(tag != FT_CURVE_TAG_CONIC) return false;
+
+                            v_middle.x = (v_control.x + vec.x) / 2;
+                            v_middle.y = (v_control.y + vec.y) / 2;
+
+                            x1 = int26p6_to_dbl(v_control.x);
+                            y1 = int26p6_to_dbl(v_control.y);
+                            x2 = int26p6_to_dbl(v_middle.x);
+                            y2 = int26p6_to_dbl(v_middle.y);
+                            if(flip_y) { y1 = -y1; y2 = -y2; }
+                            mtx.transform(&x1, &y1);
+                            mtx.transform(&x2, &y2);
+                            path.curve3(x1,y1,x2,y2);
+
+                            //path.curve3(conv(v_control.x),
+                            //            flip_y ? -conv(v_control.y) : conv(v_control.y),
+                            //            conv(v_middle.x),
+                            //            flip_y ? -conv(v_middle.y) : conv(v_middle.y));
+
+                            v_control = vec;
+                            goto Do_Conic;
+                        }
+
+                        x1 = int26p6_to_dbl(v_control.x);
+                        y1 = int26p6_to_dbl(v_control.y);
+                        x2 = int26p6_to_dbl(v_start.x);
+                        y2 = int26p6_to_dbl(v_start.y);
+                        if(flip_y) { y1 = -y1; y2 = -y2; }
+                        mtx.transform(&x1, &y1);
+                        mtx.transform(&x2, &y2);
+                        path.curve3(x1,y1,x2,y2);
+
+                        //path.curve3(conv(v_control.x),
+                        //            flip_y ? -conv(v_control.y) : conv(v_control.y),
+                        //            conv(v_start.x),
+                        //            flip_y ? -conv(v_start.y) : conv(v_start.y));
+                        goto Close;
+                    }
+
+                    default:  // FT_CURVE_TAG_CUBIC
+                    {
+                        FT_Vector vec1, vec2;
+
+                        if(point + 1 > limit || FT_CURVE_TAG(tags[1]) != FT_CURVE_TAG_CUBIC)
+                        {
+                            return false;
+                        }
+
+                        vec1.x = point[0].x;
+                        vec1.y = point[0].y;
+                        vec2.x = point[1].x;
+                        vec2.y = point[1].y;
+
+                        point += 2;
+                        tags  += 2;
+
+                        if(point <= limit)
+                        {
+                            FT_Vector vec;
+
+                            vec.x = point->x;
+                            vec.y = point->y;
+
+                            x1 = int26p6_to_dbl(vec1.x);
+                            y1 = int26p6_to_dbl(vec1.y);
+                            x2 = int26p6_to_dbl(vec2.x);
+                            y2 = int26p6_to_dbl(vec2.y);
+                            x3 = int26p6_to_dbl(vec.x);
+                            y3 = int26p6_to_dbl(vec.y);
+                            if(flip_y) { y1 = -y1; y2 = -y2; y3 = -y3; }
+                            mtx.transform(&x1, &y1);
+                            mtx.transform(&x2, &y2);
+                            mtx.transform(&x3, &y3);
+                            path.curve4(x1,y1,x2,y2,x3,y3);
+
+                            //path.curve4(conv(vec1.x),
+                            //            flip_y ? -conv(vec1.y) : conv(vec1.y),
+                            //            conv(vec2.x),
+                            //            flip_y ? -conv(vec2.y) : conv(vec2.y),
+                            //            conv(vec.x),
+                            //            flip_y ? -conv(vec.y) : conv(vec.y));
+                            continue;
+                        }
+
+                        x1 = int26p6_to_dbl(vec1.x);
+                        y1 = int26p6_to_dbl(vec1.y);
+                        x2 = int26p6_to_dbl(vec2.x);
+                        y2 = int26p6_to_dbl(vec2.y);
+                        x3 = int26p6_to_dbl(v_start.x);
+                        y3 = int26p6_to_dbl(v_start.y);
+                        if(flip_y) { y1 = -y1; y2 = -y2; y3 = -y3; }
+                        mtx.transform(&x1, &y1);
+                        mtx.transform(&x2, &y2);
+                        mtx.transform(&x3, &y3);
+                        path.curve4(x1,y1,x2,y2,x3,y3);
+
+                        //path.curve4(conv(vec1.x),
+                        //            flip_y ? -conv(vec1.y) : conv(vec1.y),
+                        //            conv(vec2.x),
+                        //            flip_y ? -conv(vec2.y) : conv(vec2.y),
+                        //            conv(v_start.x),
+                        //            flip_y ? -conv(v_start.y) : conv(v_start.y));
+                        goto Close;
+                    }
+                }
+            }
+
+            path.close_polygon();
+
+       Close:
+            first = last + 1;
+        }
+
+        return true;
+    }
+
 int agg2RenderPolygonTiled(imageObj *img, shapeObj *p, imageObj * tile)
 {
   assert(img->format->renderer == tile->format->renderer);
@@ -461,228 +552,55 @@ int agg2RenderPolygonTiled(imageObj *img, shapeObj *p, imageObj * tile)
   return MS_SUCCESS;
 }
 
-int agg2RenderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, char *text)
-{
-  AGG2Renderer *r = AGG_RENDERER(img);
-  aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(MS_IMAGE_RENDERER(img));
-  if(aggLoadFont(cache,style->fonts[0],style->size) == MS_FAILURE)
-    return MS_FAILURE;
-  r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-
-  int curfontidx = 0;
-  const mapserver::glyph_cache* glyph;
-  int unicode;
-  font_curve_type m_curves(cache->m_fman.path_adaptor());
-  mapserver::trans_affine mtx;
-  mtx *= mapserver::trans_affine_translation(-x, -y);
-  /*agg angles are antitrigonometric*/
-  mtx *= mapserver::trans_affine_rotation(-style->rotation);
-  mtx *= mapserver::trans_affine_translation(x, y);
-
-  double fx = x, fy = y;
-  const char *utfptr = text;
+int agg2RenderGlyphsPath(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
   mapserver::path_storage glyphs;
-
-  //first render all the glyphs to a path
-  while (*utfptr) {
-    if (*utfptr == '\r') {
-      fx = x;
-      utfptr++;
-      continue;
-    }
-    if (*utfptr == '\n') {
-      fx = x;
-      fy += ceil(style->size * AGG_LINESPACE);
-      utfptr++;
-      continue;
-    }
-    utfptr += msUTF8ToUniChar(utfptr, &unicode);
-    if(curfontidx != 0) {
-      if(aggLoadFont(cache,style->fonts[0],style->size) == MS_FAILURE)
-        return MS_FAILURE;
-      curfontidx = 0;
-    }
-
-    glyph = cache->m_fman.glyph(unicode);
-
-    if(!glyph || glyph->glyph_index == 0) {
-      int i;
-      for(i=1; i<style->numfonts; i++) {
-        if(aggLoadFont(cache,style->fonts[i],style->size) == MS_FAILURE)
-          return MS_FAILURE;
-        curfontidx = i;
-        glyph = cache->m_fman.glyph(unicode);
-        if(glyph && glyph->glyph_index != 0) {
-          break;
-        }
-      }
-    }
-
-
-    if (glyph) {
-      //cache->m_fman.add_kerning(&fx, &fy);
-      cache->m_fman.init_embedded_adaptors(glyph, fx, fy);
-      mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, mtx);
-      glyphs.concat_path(trans_c);
-      fx += glyph->advance_x;
-      fy += glyph->advance_y;
-    }
-  }
-
-  if (style->outlinewidth) {
-    r->m_rasterizer_aa.reset();
-    r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-    mapserver::conv_contour<mapserver::path_storage> cc(glyphs);
-    cc.width(style->outlinewidth + 1);
-    r->m_rasterizer_aa.add_path(cc);
-    r->m_renderer_scanline.color(aggColor(style->outlinecolor));
-    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
-  }
-  if (style->color) {
-    r->m_rasterizer_aa.reset();
-    r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-    r->m_rasterizer_aa.add_path(glyphs);
-    r->m_renderer_scanline.color(aggColor(style->color));
-    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
-  }
-
-  return MS_SUCCESS;
-
-}
-
-int agg2RenderBitmapGlyphs(imageObj *img, double x, double y, labelStyleObj *style, char *text)
-{
-  typedef mapserver::glyph_raster_bin<color_type> glyph_gen;
-  int size = MS_NINT(style->size);
-  if(size<0 || size>4) {
-    msSetError(MS_RENDERERERR,"invalid bitmap font size", "agg2RenderBitmapGlyphs()");
-    return MS_FAILURE;
-  }
+  mapserver::trans_affine trans;
   AGG2Renderer *r = AGG_RENDERER(img);
-  glyph_gen glyph(0);
-  mapserver::renderer_raster_htext_solid<renderer_base, glyph_gen> rt(r->m_renderer_base, glyph);
-  glyph.font(rasterfonts[size]);
-  int numlines=0;
-  char **lines;
-  /*masking out the out-of-range character codes*/
-  int len;
-  int cc_start = rasterfonts[size][2];
-  int cc_end = cc_start + rasterfonts[size][3];
-  if(msCountChars(text,'\n')) {
-    if((lines = msStringSplit((const char*)text, '\n', &(numlines))) == NULL)
-      return(-1);
-  } else {
-    lines = &text;
-    numlines = 1;
-  }
-  y -= glyph.base_line();
-  for(int n=0; n<numlines; n++) {
-    len = strlen(lines[n]);
-    for (int i = 0; i < len; i++)
-      if (lines[n][i] < cc_start || lines[n][i] > cc_end)
-        lines[n][i] = '.';
-    if(style->outlinewidth > 0) {
-      rt.color(aggColor(style->outlinecolor));
-      for(int i=-1; i<=1; i++) {
-        for(int j=-1; j<=1; j++) {
-          if(i||j) {
-            rt.render_text(x+i, y+j, lines[n], true);
-          }
-        }
-      }
-    }
-    assert(style->color);
-    rt.color(aggColor(style->color));
-    rt.render_text(x, y, lines[n], true);
-    y += glyph.height();
-  }
-  if(*lines != text)
-    msFreeCharArray(lines, numlines);
-  return MS_SUCCESS;
-  return MS_SUCCESS;
-}
-
-int agg2RenderGlyphsLine(imageObj *img, labelPathObj *labelpath, labelStyleObj *style, char *text)
-{
-  AGG2Renderer *r = AGG_RENDERER(img);
-  aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(MS_IMAGE_RENDERER(img));
-  if(aggLoadFont(cache,style->fonts[0],style->size) == MS_FAILURE)
-    return MS_FAILURE;
   r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-
-  const mapserver::glyph_cache* glyph;
-  int unicode;
-  int curfontidx = 0;
-  font_curve_type m_curves(cache->m_fman.path_adaptor());
-
-  mapserver::path_storage glyphs;
-
-  for (int i = 0; i < labelpath->path.numpoints; i++) {
-    assert(text);
-    mapserver::trans_affine mtx;
-    mtx *= mapserver::trans_affine_translation(-labelpath->path.point[i].x,-labelpath->path.point[i].y);
-    mtx *= mapserver::trans_affine_rotation(-labelpath->angles[i]);
-    mtx *= mapserver::trans_affine_translation(labelpath->path.point[i].x,labelpath->path.point[i].y);
-    text += msUTF8ToUniChar(text, &unicode);
-
-    if(curfontidx != 0) {
-      if(aggLoadFont(cache,style->fonts[0],style->size) == MS_FAILURE)
-        return MS_FAILURE;
-      curfontidx = 0;
+  for(int i=0; i<tp->numglyphs; i++) {
+    glyphObj *gl  = tp->glyphs + i;
+    trans.reset();
+    trans.rotate(-gl->rot);
+    trans.translate(gl->pnt.x, gl->pnt.y);
+    outline_element *ol = msGetGlyphOutline(gl->face,gl->glyph);
+    if(!ol) {
+      return MS_FAILURE;
     }
-
-    glyph = cache->m_fman.glyph(unicode);
-
-    if(!glyph || glyph->glyph_index == 0) {
-      int i;
-      for(i=1; i<style->numfonts; i++) {
-        if(aggLoadFont(cache,style->fonts[i],style->size) == MS_FAILURE)
-          return MS_FAILURE;
-        curfontidx = i;
-        glyph = cache->m_fman.glyph(unicode);
-        if(glyph && glyph->glyph_index != 0) {
-          break;
-        }
-      }
-    }
-    if (glyph) {
-      cache->m_fman.init_embedded_adaptors(glyph, labelpath->path.point[i].x,labelpath->path.point[i].y);
-      mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, mtx);
-      glyphs.concat_path(trans_c);
-    }
+    decompose_ft_outline(ol->outline,true,trans,glyphs);
   }
-
-  if (style->outlinewidth) {
+  mapserver::conv_curve<mapserver::path_storage> m_curves(glyphs);
+  if (oc) {
     r->m_rasterizer_aa.reset();
     r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-    mapserver::conv_contour<mapserver::path_storage> cc(glyphs);
-    cc.width(style->outlinewidth + 1);
+    mapserver::conv_contour<mapserver::conv_curve<mapserver::path_storage> > cc(m_curves);
+    cc.width(ow + 1);
     r->m_rasterizer_aa.add_path(cc);
-    r->m_renderer_scanline.color(aggColor(style->outlinecolor));
+    r->m_renderer_scanline.color(aggColor(oc));
     mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
   }
-  if (style->color) {
+  if(c) {
     r->m_rasterizer_aa.reset();
     r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-    r->m_rasterizer_aa.add_path(glyphs);
-    r->m_renderer_scanline.color(aggColor(style->color));
+    r->m_rasterizer_aa.add_path(m_curves);
+    r->m_renderer_scanline.color(aggColor(c));
     mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
   }
-
   return MS_SUCCESS;
 }
 
-static mapserver::path_storage imageVectorSymbolAGG(symbolObj *symbol)
+mapserver::path_storage imageVectorSymbol(symbolObj *symbol)
 {
   mapserver::path_storage path;
-  bool is_new=true;
+  int is_new=1;
+
   for(int i=0; i < symbol->numpoints; i++) {
-    if((symbol->points[i].x == -99) && (symbol->points[i].y == -99)) { // (PENUP)
-      is_new=true;
-    } else {
+    if((symbol->points[i].x == -99) && (symbol->points[i].y == -99))
+      is_new=1;
+
+    else {
       if(is_new) {
         path.move_to(symbol->points[i].x,symbol->points[i].y);
-        is_new=false;
+        is_new=0;
       } else {
         path.line_to(symbol->points[i].x,symbol->points[i].y);
       }
@@ -691,7 +609,6 @@ static mapserver::path_storage imageVectorSymbolAGG(symbolObj *symbol)
   return path;
 }
 
-
 int agg2RenderVectorSymbol(imageObj *img, double x, double y,
                            symbolObj *symbol, symbolStyleObj * style)
 {
@@ -699,7 +616,7 @@ int agg2RenderVectorSymbol(imageObj *img, double x, double y,
   double ox = symbol->sizex * 0.5;
   double oy = symbol->sizey * 0.5;
 
-  mapserver::path_storage path = imageVectorSymbolAGG(symbol);
+  mapserver::path_storage path = imageVectorSymbol(symbol);
   mapserver::trans_affine mtx;
   mtx *= mapserver::trans_affine_translation(-ox,-oy);
   mtx *= mapserver::trans_affine_scaling(style->scale);
@@ -807,54 +724,6 @@ int agg2RenderEllipseSymbol(imageObj *image, double x, double y,
   return MS_SUCCESS;
 }
 
-int agg2RenderTruetypeSymbol(imageObj *img, double x, double y,
-                             symbolObj *symbol, symbolStyleObj * style)
-{
-  AGG2Renderer *r = AGG_RENDERER(img);
-  aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(MS_IMAGE_RENDERER(img));
-  if(aggLoadFont(cache,symbol->full_font_path,style->scale) == MS_FAILURE)
-    return MS_FAILURE;
-
-  int unicode;
-  font_curve_type m_curves(cache->m_fman.path_adaptor());
-
-  msUTF8ToUniChar(symbol->character, &unicode);
-  const mapserver::glyph_cache* glyph = cache->m_fman.glyph(unicode);
-  double ox = (glyph->bounds.x1 + glyph->bounds.x2) / 2.;
-  double oy = (glyph->bounds.y1 + glyph->bounds.y2) / 2.;
-
-  mapserver::trans_affine mtx = mapserver::trans_affine_translation(-ox, -oy);
-  if(style->rotation)
-    mtx *= mapserver::trans_affine_rotation(-style->rotation);
-  mtx *= mapserver::trans_affine_translation(x, y);
-
-  mapserver::path_storage glyphs;
-
-  cache->m_fman.init_embedded_adaptors(glyph, 0,0);
-  mapserver::conv_transform<font_curve_type, mapserver::trans_affine> trans_c(m_curves, mtx);
-  glyphs.concat_path(trans_c);
-  if (style->outlinecolor) {
-    r->m_rasterizer_aa.reset();
-    r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-    mapserver::conv_contour<mapserver::path_storage> cc(glyphs);
-    cc.auto_detect_orientation(true);
-    cc.width(style->outlinewidth + 1);
-    r->m_rasterizer_aa.add_path(cc);
-    r->m_renderer_scanline.color(aggColor(style->outlinecolor));
-    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
-  }
-
-  if (style->color) {
-    r->m_rasterizer_aa.reset();
-    r->m_rasterizer_aa.filling_rule(mapserver::fill_non_zero);
-    r->m_rasterizer_aa.add_path(glyphs);
-    r->m_renderer_scanline.color(aggColor(style->color));
-    mapserver::render_scanlines(r->m_rasterizer_aa, r->sl_line, r->m_renderer_scanline);
-  }
-  return MS_SUCCESS;
-
-}
-
 int agg2RenderTile(imageObj *img, imageObj *tile, double x, double y)
 {
   /*
@@ -950,10 +819,12 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   r->m_pixel_format.attach(r->m_rendering_buffer);
   r->m_renderer_base.attach(r->m_pixel_format);
   r->m_renderer_scanline.attach(r->m_renderer_base);
-  double gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
-  if(gamma > 0.0 && gamma < 1.0) {
-    r->m_rasterizer_aa_gamma.gamma(mapserver::gamma_linear(0.0,gamma));
+  r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
+  if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
+    r->default_gamma = 0.75;
   }
+  r->gamma_function.set(0,r->default_gamma);
+  r->m_rasterizer_aa_gamma.gamma(r->gamma_function);
   if( bg && !format->transparent )
     r->m_renderer_base.clear(aggColor(bg));
   else
@@ -971,113 +842,26 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
 
 int agg2SaveImage(imageObj *img, mapObj* map, FILE *fp, outputFormatObj * format)
 {
-  msSetError(MS_MISCERR, "AGG2 does not support direct image saving", "agg2SaveImage()");
+  
 
   return MS_FAILURE;
-}
-/*...*/
-
-/* helper functions */
-int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char **fonts, int numfonts, double size, char *string,
-                            rectObj *rect, double **advances,int bAdjustBaseline)
-{
-
-  aggRendererCache *cache = (aggRendererCache*)MS_RENDERER_CACHE(renderer);
-  if(aggLoadFont(cache,fonts[0],size) == MS_FAILURE)
-    return MS_FAILURE;
-  int curfontidx = 0;
-
-  int unicode, curGlyph = 1, numglyphs = 0;
-  if (advances) {
-    numglyphs = msGetNumGlyphs(string);
-  }
-  const mapserver::glyph_cache* glyph;
-  string += msUTF8ToUniChar(string, &unicode);
-
-  if(curfontidx != 0) {
-    if(aggLoadFont(cache,fonts[0],size) == MS_FAILURE)
-      return MS_FAILURE;
-    curfontidx = 0;
-  }
-  glyph = cache->m_fman.glyph(unicode);
-  if(!glyph || glyph->glyph_index == 0) {
-    int i;
-    for(i=1; i<numfonts; i++) {
-      if(aggLoadFont(cache,fonts[i],size) == MS_FAILURE)
-        return MS_FAILURE;
-      curfontidx = i;
-      glyph = cache->m_fman.glyph(unicode);
-      if(glyph && glyph->glyph_index != 0) {
-        break;
-      }
-    }
-  }
-  if (glyph) {
-    rect->minx = glyph->bounds.x1;
-    rect->maxx = glyph->bounds.x2;
-    rect->miny = glyph->bounds.y1;
-    rect->maxy = bAdjustBaseline?1:glyph->bounds.y2;
-  } else
-    return MS_FAILURE;
-  if (advances) {
-    *advances = (double*) malloc(numglyphs * sizeof (double));
-    MS_CHECK_ALLOC(*advances, numglyphs * sizeof (double), MS_FAILURE);
-    (*advances)[0] = glyph->advance_x;
-  }
-  double fx = glyph->advance_x, fy = glyph->advance_y;
-  while (*string) {
-    if (advances) {
-      if (*string == '\r' || *string == '\n')
-        (*advances)[curGlyph++] = -fx;
-    }
-    if (*string == '\r') {
-      fx = 0;
-      string++;
-      continue;
-    }
-    if (*string == '\n') {
-      fx = 0;
-      fy += ceil(size * AGG_LINESPACE);
-      string++;
-      continue;
-    }
-    string += msUTF8ToUniChar(string, &unicode);
-    if(curfontidx != 0) {
-      if(aggLoadFont(cache,fonts[0],size) == MS_FAILURE)
-        return MS_FAILURE;
-      curfontidx = 0;
-    }
-    glyph = cache->m_fman.glyph(unicode);
-    if(!glyph || glyph->glyph_index == 0) {
-      int i;
-      for(i=1; i<numfonts; i++) {
-        if(aggLoadFont(cache,fonts[i],size) == MS_FAILURE)
-          return MS_FAILURE;
-        curfontidx = i;
-        glyph = cache->m_fman.glyph(unicode);
-        if(glyph && glyph->glyph_index != 0) {
-          break;
-        }
-      }
-    }
-    if (glyph) {
-      rect->minx = MS_MIN(rect->minx, fx+glyph->bounds.x1);
-      rect->miny = MS_MIN(rect->miny, fy+glyph->bounds.y1);
-      rect->maxx = MS_MAX(rect->maxx, fx+glyph->bounds.x2);
-      rect->maxy = MS_MAX(rect->maxy, fy+(bAdjustBaseline?1:glyph->bounds.y2));
-
-      fx += glyph->advance_x;
-      fy += glyph->advance_y;
-      if (advances) {
-        (*advances)[curGlyph++] = glyph->advance_x;
-      }
-    }
-  }
-  return MS_SUCCESS;
 }
 
 int agg2StartNewLayer(imageObj *img, mapObj*map, layerObj *layer)
 {
+  AGG2Renderer *r = AGG_RENDERER(img);
+  char *sgamma = msLayerGetProcessingKey( layer, "GAMMA" );
+  double gamma;
+  if(sgamma) {
+    gamma = atof(sgamma);
+    if(gamma <= 0 || gamma >= 1) gamma = 0.75;
+  } else {
+    gamma = r->default_gamma;
+  }
+  if(r->gamma_function.end() != gamma) {
+    r->gamma_function.end(gamma);
+    r->m_rasterizer_aa_gamma.gamma(r->gamma_function);
+  }
   return MS_SUCCESS;
 }
 
@@ -1242,7 +1026,7 @@ certain hatch angles */
   return path;
 }
 
-template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSource &clipper, colorObj *color)
+template<class VertexSource> int renderPolygonHatches(imageObj *img,VertexSource &clipper, colorObj *color)
 {
   if(img->format->renderer == MS_RENDER_WITH_AGG) {
     AGG2Renderer *r = AGG_RENDERER(img);
@@ -1281,7 +1065,10 @@ template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSourc
           break;
         case mapserver::path_cmd_end_poly|mapserver::path_flags_close:
           if(shape.line[0].numpoints > 2) {
-            MS_IMAGE_RENDERER(img)->renderPolygon(img,&shape,color);
+            if(UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(img)->renderPolygon(img,&shape,color))) {
+              free(shape.line[0].point);
+              return MS_FAILURE;
+            }
           }
           break;
         default:
@@ -1290,6 +1077,7 @@ template<class VertexSource> void renderPolygonHatches(imageObj *img,VertexSourc
     }
     free(shape.line[0].point);
   }
+  return MS_SUCCESS;
 }
 
 int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, double *pattern, int patternlength, double angle, colorObj *color)
@@ -1366,17 +1154,13 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer)
   renderer->renderPolygonTiled = &agg2RenderPolygonTiled;
   renderer->renderLineTiled = &agg2RenderLineTiled;
 
-  renderer->renderGlyphs = &agg2RenderGlyphs;
-  renderer->renderGlyphsLine = &agg2RenderGlyphsLine;
-  renderer->renderBitmapGlyphs = &agg2RenderBitmapGlyphs;
+  renderer->renderGlyphs = &agg2RenderGlyphsPath;
 
   renderer->renderVectorSymbol = &agg2RenderVectorSymbol;
 
   renderer->renderPixmapSymbol = &agg2RenderPixmapSymbol;
 
   renderer->renderEllipseSymbol = &agg2RenderEllipseSymbol;
-
-  renderer->renderTruetypeSymbol = &agg2RenderTruetypeSymbol;
 
   renderer->renderTile = &agg2RenderTile;
 
@@ -1389,19 +1173,12 @@ int msPopulateRendererVTableAGG(rendererVTableObj * renderer)
   renderer->createImage = &agg2CreateImage;
   renderer->saveImage = &agg2SaveImage;
 
-  renderer->getTruetypeTextBBox = &agg2GetTruetypeTextBBox;
-
   renderer->startLayer = &agg2StartNewLayer;
   renderer->endLayer = &agg2CloseNewLayer;
 
   renderer->freeImage = &agg2FreeImage;
   renderer->freeSymbol = &agg2FreeSymbol;
   renderer->cleanup = agg2Cleanup;
-
-  renderer->supports_bitmap_fonts = 1;
-  for(int i=0; i<5; i++) {
-    renderer->bitmapFontMetrics[i] = &(rasterfont_sizes[i]);
-  }
 
   return MS_SUCCESS;
 }

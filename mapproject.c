@@ -115,7 +115,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 #endif
 
     if( error || point->x == HUGE_VAL || point->y == HUGE_VAL ) {
-      msSetError(MS_PROJERR,"proj says: %s","msProjectPoint()",pj_strerrno(error));
+//      msSetError(MS_PROJERR,"proj says: %s","msProjectPoint()",pj_strerrno(error));
       return MS_FAILURE;
     }
 
@@ -777,6 +777,16 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 
   double dx, dy;
 
+  /* If projecting from longlat to projected */
+  if( out && !pj_is_latlong(out->proj) && in && pj_is_latlong(in->proj) &&
+      fabs(rect->minx - -180.0) < 1e-5 && fabs(rect->miny - -90.0) < 1e-5 &&
+      fabs(rect->maxx - 180.0) < 1e-5 && fabs(rect->maxy - 90.0) < 1e-5) {
+    rect->minx = -1e15;
+    rect->miny = -1e15;
+    rect->maxx = 1e15;
+    rect->maxy = 1e15;
+    return MS_SUCCESS;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Build polygon as steps around the source rectangle.             */
@@ -1173,15 +1183,12 @@ char *msGetProjectionString(projectionObj *proj)
 }
 
 /************************************************************************/
-/*                       msAxisNormalizePoints()                        */
+/*                       msIsAxisInvertedProj()                         */
 /*                                                                      */
-/*      Convert the passed points to "easting, northing" axis           */
-/*      orientation if they are not already.                            */
+/*      Return MS_TRUE is the proj object has epgsaxis=ne               */
 /************************************************************************/
 
-void msAxisNormalizePoints( projectionObj *proj, int count,
-                            double *x, double *y )
-
+int msIsAxisInvertedProj( projectionObj *proj )
 {
   int i;
   const char *axis = NULL;
@@ -1194,16 +1201,34 @@ void msAxisNormalizePoints( projectionObj *proj, int count,
   }
 
   if( axis == NULL )
-    return;
+    return MS_FALSE;
 
   if( strcasecmp(axis,"en") == 0 )
-    return;
+    return MS_FALSE;
 
   if( strcasecmp(axis,"ne") != 0 ) {
-    msDebug( "msAxisNormalizePoints(): odd +epsgaxis= value: '%s'.",
+    msDebug( "msIsAxisInvertedProj(): odd +epsgaxis= value: '%s'.",
              axis );
-    return;
+    return MS_FALSE;
   }
+  
+  return MS_TRUE;
+}
+
+/************************************************************************/
+/*                       msAxisNormalizePoints()                        */
+/*                                                                      */
+/*      Convert the passed points to "easting, northing" axis           */
+/*      orientation if they are not already.                            */
+/************************************************************************/
+
+void msAxisNormalizePoints( projectionObj *proj, int count,
+                            double *x, double *y )
+
+{
+  int i;
+  if( !msIsAxisInvertedProj(proj ) )
+      return;
 
   /* Switch axes */
   for( i = 0; i < count; i++ ) {
@@ -1212,6 +1237,39 @@ void msAxisNormalizePoints( projectionObj *proj, int count,
     tmp = x[i];
     x[i] = y[i];
     y[i] = tmp;
+  }
+}
+
+
+
+/************************************************************************/
+/*                             msAxisSwapShape                          */
+/*                                                                      */
+/*      Utility function to swap x and y coordiatesn Use for now for    */
+/*      WFS 1.1.x                                                       */
+/************************************************************************/
+void msAxisSwapShape(shapeObj *shape)
+{
+  double tmp;
+  int i,j;
+
+  if (shape) {
+    for(i=0; i<shape->numlines; i++) {
+      for( j=0; j<shape->line[i].numpoints; j++ ) {
+        tmp = shape->line[i].point[j].x;
+        shape->line[i].point[j].x = shape->line[i].point[j].y;
+        shape->line[i].point[j].y = tmp;
+      }
+    }
+
+    /*swap bounds*/
+    tmp = shape->bounds.minx;
+    shape->bounds.minx = shape->bounds.miny;
+    shape->bounds.miny = tmp;
+
+    tmp = shape->bounds.maxx;
+    shape->bounds.maxx = shape->bounds.maxy;
+    shape->bounds.maxy = tmp;
   }
 }
 

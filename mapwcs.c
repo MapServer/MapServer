@@ -138,7 +138,6 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
                    const char *version )
 {
   char *pszEncodedVal = NULL;
-  const char *encoding;
   char version_string[OWS_VERSION_MAXLEN];
 
   if( version == NULL )
@@ -152,16 +151,12 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
   if( msOWSParseVersionString(version) >= OWS_1_1_0 )
     return msWCSException11( map, code, locator, msOWSGetVersionString(msOWSParseVersionString(version), version_string) );
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
-  if (encoding)
-    msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-Type","application/vnd.ogc.se_xml");
+  msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=UTF-8");
   msIO_sendHeaders();
 
   /* msIO_printf("Content-Type: text/xml%c%c",10,10); */
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
+  msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
   msIO_printf("<ServiceExceptionReport version=\"1.2.0\"\n");
   msIO_printf("xmlns=\"http://www.opengis.net/ogc\" ");
@@ -920,9 +915,6 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   int wcsSupportedVersions[] = {OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
   int wcsNumSupportedVersions = 4;
   const char *updatesequence=NULL;
-  const char *encoding;
-
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
   /* check version is valid */
   tmpInt = msOWSParseVersionString(params->version);
@@ -973,10 +965,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
       strcasecmp(params->section, "/WCS_Capabilities/Capability") != 0 &&
       strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata") != 0 &&
       strcasecmp(params->section, "/") != 0) {
-    if (encoding)
-      msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=%s", encoding);
-    else
-      msIO_setHeader("Content-Type","application/vnd.ogc.se_xml");
+    msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=UTF-8");
     msIO_sendHeaders();
     msSetError( MS_WCSERR,
                 "Invalid SECTION parameter \"%s\"",
@@ -986,10 +975,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   }
 
   else {
-    if (encoding)
-      msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
-    else
-      msIO_setHeader("Content-Type","text/xml");
+    msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
     msIO_sendHeaders();
 
     /* print common capability elements  */
@@ -998,7 +984,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
     if (!updatesequence)
       updatesequence = "0";
 
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n", "ISO-8859-1");
+    msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
 
     if(!params->section || (params->section && strcasecmp(params->section, "/")  == 0)) msIO_printf("<WCS_Capabilities\n"
           "   version=\"%s\" \n"
@@ -1313,11 +1299,9 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
   const char *updatesequence=NULL;
   char **coverages=NULL;
   int numcoverages=0;
-  const char *encoding;
 
   char *coverageName=NULL;
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   /* -------------------------------------------------------------------- */
   /*      1.1.x is sufficiently different we have a whole case for        */
   /*      it.  The remainder of this function is for 1.0.0.               */
@@ -1360,14 +1344,11 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
     updatesequence = "0";
 
   /* printf("Content-Type: application/vnd.ogc.se_xml%c%c",10,10); */
-  if (encoding)
-    msIO_setHeader("Content-Type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-Type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
   /* print common capability elements  */
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
+  msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
   /* start the DescribeCoverage section */
   msIO_printf("<CoverageDescription\n"
@@ -2006,7 +1987,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   if( MS_RENDERER_RAWDATA(map->outputformat) ) {
     status = msDrawRasterLayerLow( map, lp, image, NULL );
   } else {
-    MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+    status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+    if(UNLIKELY(status == MS_FAILURE)) {
+      return MS_FAILURE;
+    }
 
     /* Actually produce the "grid". */
     status = msDrawRasterLayerLow( map, lp, image, &rb );
@@ -2203,6 +2187,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
                             "request", "2.0");
     }
 
+    retVal = MS_FAILURE;
     if (operation == MS_WCS_GET_CAPABILITIES) {
       retVal = msWCSGetCapabilities(map, params, request, ows_request);
     } else if (operation == MS_WCS_DESCRIBE_COVERAGE) {

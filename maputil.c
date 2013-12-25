@@ -216,7 +216,7 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
 
     if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1) {
       label->size = 1;
-      bindDoubleAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
+      bindIntegerAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
     }
 
     if(label->bindings[MS_LABEL_BINDING_COLOR].index != -1) {
@@ -611,7 +611,7 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
   return(-1); /* no match */
 }
 
-static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
+char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
 {
   char *result=NULL;
 
@@ -656,7 +656,7 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
       status = yyparse(&p);
 
       if (status != 0) {
-        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "evalTextExpression", expr->string);
+        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "msEvalTextExpression", expr->string);
         return NULL;
       }
 
@@ -673,55 +673,29 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
   return result;
 }
 
-int msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
-{
-  int i, j;
-
-  /* RFC77 TODO: check and throw some errors here... */
-  if(!layer || !shape) return MS_FAILURE;
-
-  i = shape->classindex;
-  for(j=0; j<layer->class[i]->numlabels; j++) {
-    labelObj *lbl = layer->class[i]->labels[j]; /* shortcut */
-
-    lbl->status = MS_ON;
-    if(layer->map->scaledenom > 0) {
-      if((lbl->maxscaledenom != -1) && (layer->map->scaledenom >= lbl->maxscaledenom)) {
-        lbl->status = MS_OFF;
-        continue; /* next label */
-      }
-      if((lbl->minscaledenom != -1) && (layer->map->scaledenom < lbl->minscaledenom)) {
-        lbl->status = MS_OFF;
-        continue; /* next label */
-      }
-    }
-    if(msEvalExpression(layer, shape, &(lbl->expression), -1) != MS_TRUE) {
-      lbl->status = MS_OFF;
-      continue; /* next label */
-    }
-
-    msFree(lbl->annotext);
-    lbl->annotext = NULL;
-
-    if(lbl->text.string) {
-      lbl->annotext = evalTextExpression(&(lbl->text), shape);
-    } else if(layer->class[i]->text.string) {
-      lbl->annotext = evalTextExpression(&(layer->class[i]->text), shape);
-    } else {
-      if (shape->values && layer->labelitemindex >= 0 && shape->values[layer->labelitemindex] && strlen(shape->values[layer->labelitemindex]) )
-        lbl->annotext = msStrdup(shape->values[layer->labelitemindex]);
-      else if(shape->text)
-        lbl->annotext = msStrdup(shape->text); /* last resort but common with iniline features */
-    }
-
-    if(lbl->annotext && (lbl->encoding || lbl->wrap || lbl->maxlength)) {
-      char *newtext = msTransformLabelText(layer->map , lbl, lbl->annotext);
-      free(lbl->annotext);
-      lbl->annotext = newtext;
-    }
+char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {
+  assert(shape && lbl);
+  if(lbl->text.string) {
+    return msEvalTextExpression(&(lbl->text), shape);
+  } else if(layer->class[shape->classindex]->text.string) {
+    return msEvalTextExpression(&(layer->class[shape->classindex]->text), shape);
+  } else {
+    if (shape->values && layer->labelitemindex >= 0 && shape->values[layer->labelitemindex] && strlen(shape->values[layer->labelitemindex]) )
+      return msStrdup(shape->values[layer->labelitemindex]);
+    else if(shape->text)
+      return msStrdup(shape->text); /* last resort but common with iniline features */
   }
+  return NULL;
+}
 
-  return MS_SUCCESS;
+int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lbl) {
+  assert(layer && lbl);
+  if(!msScaleInBounds(map->scaledenom,lbl->minscaledenom,lbl->maxscaledenom))
+    return MS_OFF;
+  if(msEvalExpression(layer, shape, &(lbl->expression), layer->labelitemindex) != MS_TRUE)
+    return MS_OFF;
+  /* TODO: check for minfeaturesize here ? */
+  return MS_ON;
 }
 
 /* Check if the shape is enough big to be drawn with the
@@ -851,6 +825,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         nReturnVal = msSaveImageGDAL(map, img, filename);
     } else
 #endif
+
       if (MS_RENDERER_PLUGIN(img->format)) {
         rendererVTableObj *renderer = img->format->vtable;
         FILE *stream = NULL;
@@ -915,6 +890,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 
 unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format)
 {
+  int status = MS_SUCCESS;
   *size_ptr = 0;
   if( MS_RENDERER_PLUGIN(image->format)) {
     rasterBufferObj data;
@@ -922,7 +898,10 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
     if(renderer->supports_pixel_buffer) {
       bufferObj buffer;
       msBufferInit(&buffer);
-      renderer->getRasterBufferHandle(image,&data);
+      status = renderer->getRasterBufferHandle(image,&data);
+      if(UNLIKELY(status == MS_FAILURE)) {
+        return NULL;
+      }
       msSaveRasterBufferToBuffer(&data,&buffer,format);
       *size_ptr = buffer.size;
       return buffer.data;
@@ -1602,7 +1581,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         for( ; i > 0; )
           image->img.raw_16bit[--i] = nv;
       } else if( format->imagemode == MS_IMAGEMODE_FLOAT32 ) {
-        float nv = atoi(nullvalue);
+        float nv = atof(nullvalue);
         for( ; i > 0; )
           image->img.raw_float[--i] = nv;
       } else if( format->imagemode == MS_IMAGEMODE_BYTE ) {
@@ -1622,7 +1601,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
   }
 
   if(!image)
-    msSetError(MS_GDERR, "Unable to initialize image.", "msImageCreate()");
+    msSetError(MS_IMGERR, "Unable to initialize image.", "msImageCreate()");
   image->refpt.x = image->refpt.y = 0;
   return image;
 }
@@ -1639,10 +1618,6 @@ void  msTransformPoint(pointObj *point, rectObj *extent, double cellsize,
   /*We should probabaly have a function defined at all the renders*/
   if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
     if(image->format->renderer == MS_RENDER_WITH_KML) {
-      return;
-    } else if(image->format->renderer == MS_RENDER_WITH_GD) {
-      point->x = MS_MAP2IMAGE_X(point->x, extent->minx, cellsize);
-      point->y = MS_MAP2IMAGE_Y(point->y, extent->maxy, cellsize);
       return;
     }
   }
@@ -1845,9 +1820,9 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
 {
   int i, j;
   shapeObj *ret;
-  if(offsety == -99) { /* complex calculations */
+  if(offsety == MS_STYLE_SINGLE_SIDED_OFFSET) { /* complex calculations */
     return msOffsetCurve(p,offsetx);
-  } else if(offsety == -999) {
+  } else if(offsety == MS_STYLE_DOUBLE_SIDED_OFFSET) {
     shapeObj *tmp1;
     ret = msOffsetCurve(p,offsetx/2.0);
     tmp1 = msOffsetCurve(p, -offsetx/2.0);
@@ -1898,10 +1873,6 @@ int msSetup()
   if (msDebugInitFromEnv() != MS_SUCCESS)
     return MS_FAILURE;
 
-#ifdef USE_GD
-  msGDSetup();
-#endif
-
 #ifdef USE_GEOS
   msGEOSSetup();
 #endif
@@ -1911,6 +1882,9 @@ int msSetup()
   g_type_init();
 #endif
 #endif
+
+  msFontCacheSetup();
+
 
   return MS_SUCCESS;
 }
@@ -1950,10 +1924,6 @@ void msCleanup(int signal)
   msHTTPCleanup();
 #endif
 
-#ifdef USE_GD
-  msGDCleanup(signal);
-#endif
-
 #ifdef USE_GEOS
   msGEOSCleanup();
 #endif
@@ -1967,6 +1937,8 @@ void msCleanup(int signal)
   xmlCleanupParser();
 #endif
 #endif
+
+  msFontCacheCleanup();
 
   msTimeCleanup();
 
@@ -2182,12 +2154,6 @@ void msFreeRasterBuffer(rasterBufferObj *b)
       b->data.palette.pixels = NULL;
       b->data.palette.palette = NULL;
       break;
-#ifdef USE_GD
-    case MS_BUFFER_GD:
-      gdImageDestroy(b->data.gd_img);
-      b->data.gd_img = NULL;
-      break;
-#endif
   }
 
 }
@@ -2263,11 +2229,11 @@ void *msSmallMalloc( size_t nSize )
 {
   void        *pReturn;
 
-  if( nSize == 0 )
+  if( UNLIKELY(nSize == 0) )
     return NULL;
 
   pReturn = malloc( nSize );
-  if( pReturn == NULL ) {
+  if( UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
                  (long) nSize );
     exit(1);
@@ -2286,12 +2252,12 @@ void * msSmallRealloc( void * pData, size_t nNewSize )
 {
   void        *pReturn;
 
-  if ( nNewSize == 0 )
+  if ( UNLIKELY(nNewSize == 0) )
     return NULL;
 
   pReturn = realloc( pData, nNewSize );
 
-  if( pReturn == NULL ) {
+  if( UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallRealloc(): Out of memory allocating %ld bytes.\n",
                  (long)nNewSize );
     exit(1);
@@ -2310,11 +2276,11 @@ void *msSmallCalloc( size_t nCount, size_t nSize )
 {
   void  *pReturn;
 
-  if( nSize * nCount == 0 )
+  if( UNLIKELY(nSize * nCount == 0) )
     return NULL;
 
   pReturn = calloc( nCount, nSize );
-  if( pReturn == NULL ) {
+  if( UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallCalloc(): Out of memory allocating %ld bytes.\n",
                  (long)(nCount*nSize));
     exit(1);
@@ -2445,6 +2411,24 @@ int msMapSetLayerProjections(mapObj* map)
   }
   msFree(mapProjStr);
   return(MS_SUCCESS);
+}
+
+
+/************************************************************************
+ *                    msMapSetLanguageSpecificConnection                *
+ *                                                                      *
+ *   Override DATA and CONNECTION of each layer with their specific     *
+ *  variant for the specified language.                                 *
+ ************************************************************************/
+
+void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language)
+{
+    int i;
+    for(i=0; i<map->numlayers; i++) {
+      layerObj *layer = GET_LAYER(map, i);
+      if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, "%language%", validated_language);
+      if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, "%language%", validated_language);
+    }
 }
 
 /* Generalize a shape based of the tolerance.

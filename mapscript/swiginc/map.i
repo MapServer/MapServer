@@ -235,20 +235,7 @@
   }
 
   int drawLabelCache(imageObj *image) {
-    return msDrawLabelCache(image, self);
-  }
-
-  labelCacheMemberObj *getLabel(int i) {
-    return msGetLabelCacheMember(&(self->labelcache), i);
-  }
-
-  labelCacheMemberObj *nextLabel() {
-    static int i=0;
-
-    if(i<self->labelcache.numlabels)
-      return msGetLabelCacheMember(&(self->labelcache), i++);
-    else
-      return NULL;	
+    return msDrawLabelCache(self,image);
   }
 
   int queryByFilter(char *string) {

@@ -206,13 +206,6 @@ PHP_METHOD(imageObj, pasteImage)
     return;
   }
 
-#ifdef undef //USE_AGG
-  if( MS_RENDERER_AGG(php_imageSrc->image->format))
-    msAlphaAGG2GD(php_imageSrc->image);
-  if( MS_RENDERER_AGG(php_image->image->format))
-    msAlphaAGG2GD(php_image->image);
-#endif
-
 
   renderer = MS_IMAGE_RENDERER(php_image->image);
   memset(&rb,0,sizeof(rasterBufferObj));

@@ -163,7 +163,7 @@ PHP_METHOD(clusterObj, convertToString)
 
   php_cluster = (php_cluster_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
-  value =  classObj_convertToString(php_cluster->cluster);
+  value =  clusterObj_convertToString(php_cluster->cluster);
 
   if (value == NULL)
     RETURN_STRING("", 1);

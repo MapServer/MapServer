@@ -12,8 +12,23 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-6.4 release (2013/09/xx)
+7.0 release (TBD)
+-----------------
+
+- RFC104 Bitmap Label removal, replaced with inlined truetype font
+
+- RFC103 Layer Level Character Encoding
+
+- RFC99 GD removal
+
+- RFC98 Complex Text Rendering / Text Rendering Overhaul
+
+6.4 release (2013/09/17)
 ---------------------------
+
+- RFC 101: Support for Content Dependant Legend Rendering
+
+- Add Support for librsvg as an alternative to libsvg-cairo
 
 - RFC100: Add support for raster tile index with tiles of mixed SRS (TILESRS keyword)
 

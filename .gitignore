@@ -2,4 +2,5 @@ build
 *.swp
 nbproject
 tags
+tests/map.png
 

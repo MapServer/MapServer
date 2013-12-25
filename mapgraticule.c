@@ -1045,11 +1045,14 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   rectObj rectLabel;
   pointObj ptPoint;
   double size = -1;
+  char *labeltxt;
 
   if( pInfo == NULL || pShape == NULL ) {
     msSetError(MS_MISCERR, "Assertion failed: Null shape or layerinfo!, ", "_AdjustLabelPosition()");
     return MS_FAILURE;
   }
+
+  assert(pLayer->class[0]->numlabels >= 1);
 
   if(msCheckParentPointer(pLayer->map,"map")==MS_FAILURE)
     return MS_FAILURE;
@@ -1064,10 +1067,17 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   if(pLayer->transform) {
     msTransformShapeToPixelRound(pShape, pLayer->map->extent, pLayer->map->cellsize);
   }
-
-  size = pLayer->class[0]->labels[0]->size; /* TODO TBT: adjust minsize/maxsize/resolution. TODO RFC 77: ok to use first label? */
-  if(msGetLabelSize(pLayer->map, pLayer->class[0]->labels[0], pShape->text, size, &rectLabel, NULL) != MS_SUCCESS)
+  
+  size = pLayer->class[0]->labels[0]->size; /* TODO someday: adjust minsize/maxsize/resolution*/
+  /* We only use the first label as there's no use (yet) in defining multiple lables for GRID layers,
+   as the only label to represent is the longitude or latitude */
+  labeltxt = msShapeGetLabelAnnotation(pLayer, pShape, pLayer->class[0]->labels[0]);
+  assert(labeltxt);
+  if(msGetStringSize(pLayer->map, pLayer->class[0]->labels[0], size, labeltxt, &rectLabel) != MS_SUCCESS) {
+    free(labeltxt);
     return MS_FAILURE;  /* msSetError already called */
+  }
+  free(labeltxt);
 
   switch( ePosition ) {
     case posBottom:

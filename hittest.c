@@ -124,7 +124,7 @@ int msHitTestShape(mapObj *map, layerObj *layer, shapeObj *shape, int drawmode, 
   if(MS_DRAW_LABELS(drawmode)) {
     for(i=0;i<cp->numlabels;i++) {
       labelObj *l = cp->labels[i];
-      if(l->status == MS_ON) {
+      if(msGetLabelStatus(map,layer,shape,l) == MS_ON) {
         int s;
         hittest->labelhits[i].status = 1;
         for(s=0; s<l->numstyles;s++) {
@@ -138,6 +138,9 @@ int msHitTestShape(mapObj *map, layerObj *layer, shapeObj *shape, int drawmode, 
 
 int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
   int status;
+#ifdef USE_GEOS
+  shapeObj searchpoly;
+#endif
   if(!msLayerIsVisible(map,layer)) {
     hittest->status = 0;
     return MS_SUCCESS;
@@ -179,6 +182,10 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
       searchrect.maxx = map->width-1;
       searchrect.maxy = map->height-1;
     }
+#ifdef USE_GEOS
+    msInitShape(&searchpoly);
+    msRectToPolygon(searchrect,&searchpoly);
+#endif
 
     status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
     if(status == MS_DONE) { /* no overlap */
@@ -203,6 +210,12 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
 
     while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
       int drawmode = MS_DRAWMODE_FEATURES;
+#ifdef USE_GEOS
+      if(!msGEOSIntersects(&shape,&searchpoly)) {
+        msFreeShape(&shape);
+        continue;
+      }
+#else
       if(shape.type == MS_SHAPE_POLYGON) {
         msClipPolygonRect(&shape, map->extent);
       } else {
@@ -212,6 +225,7 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
         msFreeShape(&shape);
         continue;
       }
+#endif
       /* Check if the shape size is ok to be drawn, we need to clip */
       if((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0)) {
         msTransformShape(&shape, map->extent, map->cellsize, NULL);
@@ -237,7 +251,6 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
       featuresdrawn++;
 
       if(annotate && layer->class[shape.classindex]->numlabels > 0) {
-        msShapeGetAnnotation(layer, &shape);
         drawmode |= MS_DRAWMODE_LABELS;
       }
 
@@ -262,6 +275,11 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
 }
 int msHitTestMap(mapObj *map, map_hittest *hittest) {
   int i,status;
+  map->cellsize = msAdjustExtent(&(map->extent),map->width,map->height);
+  status = msCalculateScale(map->extent,map->units,map->width,map->height, map->resolution, &map->scaledenom);
+  if(status != MS_SUCCESS) {
+    return MS_FAILURE;
+  }
   for(i=0; i<map->numlayers; i++) {
     layerObj *lp = map->layers[i];
     status = msHitTestLayer(map,lp,&hittest->layerhits[i]);

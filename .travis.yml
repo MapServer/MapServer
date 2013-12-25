@@ -38,12 +38,24 @@ env:
 
 compiler:
   - gcc
+  - clang
 
 before_install:
+  - mkdir tmp
+  - cd tmp
+  - wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-0.9.19.tar.bz2
+  - tar xjf harfbuzz-0.9.19.tar.bz2
+  - cd harfbuzz-0.9.19
+  - ./configure --without-cairo --without-glib --without-icu
+  - make -j3
+  - sudo make install && sudo ldconfig
+  - cd ../..
   - git submodule update --init --recursive
+  - sudo mv /etc/apt/sources.list.d/pgdg-source.list* /tmp
+  - sudo apt-get -qq remove postgis
   - sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
   - sudo apt-get update -qq
-  - sudo apt-get install -qq bison flex swig cmake librsvg2-dev colordiff postgis postgresql-9.1-postgis-2.0-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev libgeos-dev libgd2-noxpm-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal1-dev libproj-dev libxml2-dev python-dev php5-dev libexempi-dev lcov lftp
+  - sudo apt-get install -qq bison flex python-lxml libfribidi-dev swig cmake librsvg2-dev colordiff postgis postgresql-9.1-postgis-2.0-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev libgeos-dev libgd2-xpm-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal1-dev libproj-dev libxml2-dev python-dev php5-dev libexempi-dev lcov lftp
   - sudo pip install git+git://github.com/tbonfort/cpp-coveralls.git@extensions
   - cd msautotest
   - ./create_postgis_test_data.sh
@@ -61,7 +73,7 @@ after_success:
   - echo "$TRAVIS_SECURE_ENV_VARS"
   - echo "$TRAVIS_BRANCH"
   - sh -c 'if test "$TRAVIS_SECURE_ENV_VARS" = "true" -a "$TRAVIS_BRANCH" = "master"; then echo "run coverage"; ./run_code_coverage_upload.sh; fi'
-  - coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptPYTHON_wrap.c --exclude shp2img.c --exclude legend.c --exclude scalebar.c --exclude msencrypt.c --exclude sortshp.c --exclude shptreevis.c --exclude shptree.c --exclude testexpr.c --exclude sym2img.c --exclude testcopy.c --exclude shptreetst.c --exclude tile4ms.c --extension .c --extension .cpp
+  - coveralls --exclude renderers --exclude mapscript --exclude apache --exclude build/mapscript/mapscriptJAVA_wrap.c --exclude build/mapscript/mapscriptPYTHON_wrap.c --exclude shp2img.c --exclude legend.c --exclude scalebar.c --exclude msencrypt.c --exclude sortshp.c --exclude shptreevis.c --exclude shptree.c --exclude testexpr.c --exclude sym2img.c --exclude testcopy.c --exclude shptreetst.c --exclude tile4ms.c --extension .c --extension .cpp
 
 notifications:
   email:

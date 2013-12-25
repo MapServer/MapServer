@@ -30,10 +30,6 @@
 #ifndef MAPSYMBOL_H
 #define MAPSYMBOL_H
 
-#ifdef USE_GD
-#include <gd.h>
-#endif
-
 #include "mapserver-api.h"
 #include <assert.h>
 
@@ -47,9 +43,6 @@ enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE=1000, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE,
 
 /* COLOR OBJECT */
 typedef struct {
-#ifdef USE_GD
-  int pen;
-#endif
   int red;
   int green;
   int blue;
@@ -57,7 +50,7 @@ typedef struct {
 } colorObj;
 
 #ifndef SWIG
-enum MS_RASTER_BUFFER_TYPE { MS_BUFFER_NONE=2000, MS_BUFFER_BYTE_RGBA, MS_BUFFER_BYTE_PALETTE, MS_BUFFER_GD };
+enum MS_RASTER_BUFFER_TYPE { MS_BUFFER_NONE=2000, MS_BUFFER_BYTE_RGBA, MS_BUFFER_BYTE_PALETTE };
 
 typedef struct {
   unsigned char *pixels;
@@ -87,9 +80,6 @@ typedef struct {
   union {
     rgbaArrayObj rgba;
     paletteArrayObj palette;
-#ifdef USE_GD
-    gdImagePtr gd_img;
-#endif
   } data;
 } rasterBufferObj;
 
@@ -196,7 +186,6 @@ struct symbolObj{
   void (*renderer_free_func)(symbolObj *self);
   rasterBufferObj *pixmap_buffer;
   void *renderer_cache;
-  char *full_font_path;
   char *full_pixmap_path;
 #endif /* SWIG */
 
@@ -215,7 +204,6 @@ struct symbolObj{
   ** MS_SYMBOL_TRUETYPE options
   */
   char *character;
-  int antialias;
   char *font;
 } ;
 

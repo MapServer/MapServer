@@ -59,6 +59,8 @@
 #include <gdal.h>
 #endif
 
+#include "fontcache.h"
+
 # include <cairo-ft.h>
 /*
 #include <pango/pangocairo.h>
@@ -70,27 +72,21 @@
 #include FT_FREETYPE_H
 */
 
-typedef struct facecacheObj faceCacheObj;
-struct facecacheObj {
+typedef struct cairoFaceCache cairoFaceCache;
+struct cairoFaceCache {
   cairo_font_face_t *face;
   FT_Face ftface;
-  char *path;
-  faceCacheObj *next;
-  cairo_user_data_key_t facekey;
+  cairo_font_options_t *options;
+  cairoFaceCache *next;
 };
 
-int freeFaceCache(faceCacheObj *fc)
-{
-  /* printf("***\nface %s has %d cairo references\n***\n",fc->path,cairo_font_face_get_reference_count(fc->face)); */
+void freeCairoFaceCache(cairoFaceCache *fc) {
   cairo_font_face_destroy(fc->face);
-  FT_Done_Face(fc->ftface);
-  free(fc->path);
-  return MS_SUCCESS;
+  cairo_font_options_destroy(fc->options);
 }
 
 typedef struct {
-  faceCacheObj *facecache;
-  FT_Library library;
+  cairoFaceCache *cairofacecache;
   /* dummy surface and context */
   unsigned char dummydata[4];
   cairo_surface_t *dummysurface;
@@ -102,8 +98,7 @@ void initializeCache(void **vcache)
   cairoCacheData *cache = (cairoCacheData*)malloc(sizeof(cairoCacheData));
   *vcache = cache;
 
-  cache->facecache = NULL;
-  FT_Init_FreeType(&(cache->library));
+  cache->cairofacecache = NULL;
   /* dummy surface and context */
   cache->dummysurface = cairo_image_surface_create_for_data(cache->dummydata, CAIRO_FORMAT_ARGB32, 1,1,4);
   cache->dummycr = cairo_create(cache->dummysurface);
@@ -119,18 +114,17 @@ int cleanupCairo(void *cache)
   if(ccache->dummysurface) {
     cairo_surface_destroy(ccache->dummysurface);
   }
-  if(ccache->facecache) {
-    faceCacheObj *next,*cur;
-    cur = ccache->facecache;
+  if(ccache->cairofacecache) {
+    cairoFaceCache *next,*cur;
+    cur = ccache->cairofacecache;
     do {
       next = cur->next;
-      freeFaceCache(cur);
+      freeCairoFaceCache(cur);
       free(cur);
       cur=next;
     } while(cur);
   }
-  if(ccache->library)
-    FT_Done_FreeType(ccache->library);
+
   free(ccache);
   return MS_SUCCESS;
 }
@@ -166,40 +160,21 @@ int freeImageCairo(imageObj *img)
   return MS_SUCCESS;
 }
 
-
-faceCacheObj *getFontFace(cairoCacheData *cache, const char *font)
-{
-  faceCacheObj *newface = NULL;
-  faceCacheObj *cur=cache->facecache;
+static cairoFaceCache* getCairoFontFace(cairoCacheData *cache, FT_Face ftface) {
+  cairoFaceCache *cur = cache->cairofacecache;
   while(cur) {
-    if(!strcmp(cur->path,font))
-      return cur;
+    if(cur->ftface == ftface) return cur;
     cur = cur->next;
   }
-  newface = malloc(sizeof(faceCacheObj));
-
-  if(FT_New_Face(cache->library, font, 0, &(newface->ftface))) {
-    msSetError(MS_RENDERERERR,"Freetype failed to open font %s","getFontFace()",font);
-    free(newface);
-    return NULL;
-  }
-
-  /* Try to select charmap */
-  if (!newface->ftface->charmap) {
-    if( FT_Select_Charmap(newface->ftface, FT_ENCODING_MS_SYMBOL) )
-       FT_Select_Charmap(newface->ftface, FT_ENCODING_APPLE_ROMAN );
-  }
-
-  newface->next = cache->facecache;
-  cache->facecache = newface;
-  newface->face = cairo_ft_font_face_create_for_ft_face(newface->ftface, 0);
-
-  cairo_font_face_set_user_data (newface->face, &newface->facekey,
-                                 &(newface->ftface), (cairo_destroy_func_t) NULL); // we call FT_Done_Face ourselves in freeFaceCache
-
-  newface->path = msStrdup(font);
-  return newface;
-}
+  cur = msSmallMalloc(sizeof(cairoFaceCache));
+  cur->next = cache->cairofacecache;
+  cache->cairofacecache = cur;
+  cur->ftface = ftface;
+  cur->face = cairo_ft_font_face_create_for_ft_face(ftface, 0);
+  cur->options = cairo_font_options_create();
+  cairo_font_options_set_hint_style(cur->options,CAIRO_HINT_STYLE_NONE);
+  return cur;
+} 
 
 #define msCairoSetSourceColor(cr, c) cairo_set_source_rgba((cr),(c)->red/255.0,(c)->green/255.0,(c)->blue/255.0,(c)->alpha/255.0);
 
@@ -418,65 +393,6 @@ int renderSVGSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
 #endif
 }
 
-int renderTruetypeSymbolCairo(imageObj *img, double x, double y, symbolObj *symbol,
-                              symbolStyleObj *s)
-{
-  int unicode;
-  cairo_glyph_t glyph;
-  cairo_text_extents_t extents;
-
-  cairo_matrix_t trans;
-  double ox,oy;
-  cairoCacheData *cache = MS_IMAGE_RENDERER_CACHE(img);
-  cairo_renderer *r = CAIRO_RENDERER(img);
-  faceCacheObj *face = getFontFace(cache,symbol->full_font_path);
-
-  if(!face) return MS_FAILURE;
-
-  cairo_save(r->cr);
-  cairo_set_font_face(r->cr,face->face);
-  cairo_set_font_size(r->cr,s->scale*96/72.0);
-
-
-  msUTF8ToUniChar(symbol->character, &unicode);
-
-  if (face->ftface->charmap &&
-    face->ftface->charmap->encoding == FT_ENCODING_MS_SYMBOL)
-    unicode |= 0xf000;
-
-  glyph.index = FT_Get_Char_Index(face->ftface, unicode);
-  glyph.x=0;
-  glyph.y=0;
-  cairo_glyph_extents(r->cr,&glyph,1,&extents);
-  ox=extents.x_bearing+extents.width/2.;
-  oy=extents.y_bearing+extents.height/2.;
-
-
-
-  cairo_matrix_init_rotate(&trans,-s->rotation);
-
-  cairo_matrix_transform_point(&trans,&ox,&oy);
-  /* cairo_translate(cr,-extents.width/2,-extents.height/2); */
-
-  cairo_translate(r->cr,x-ox,y-oy);
-  cairo_rotate(r->cr, -s->rotation);
-
-  cairo_glyph_path(r->cr,&glyph,1);
-
-  if (s->outlinewidth) {
-    msCairoSetSourceColor(r->cr, s->outlinecolor);
-    cairo_set_line_width(r->cr, s->outlinewidth + 1);
-    cairo_stroke_preserve(r->cr);
-  }
-  if(s->color) {
-    msCairoSetSourceColor(r->cr, s->color);
-    cairo_fill_preserve(r->cr);
-  }
-  cairo_new_path(r->cr);
-  cairo_restore(r->cr);
-  return MS_SUCCESS;
-}
-
 int renderTileCairo(imageObj *img, imageObj *tile, double x, double y)
 {
   cairo_renderer *r = CAIRO_RENDERER(img);
@@ -492,188 +408,48 @@ int renderTileCairo(imageObj *img, imageObj *tile, double x, double y)
   return MS_SUCCESS;
 }
 
-#define CAIROLINESPACE 1.33
-
-int getTruetypeTextBBoxCairo(rendererVTableObj *renderer, char **fonts, int numfonts, double size,
-                             char *text, rectObj *rect, double **advances, int bAdjustBaseline)
-{
-  cairoCacheData *cache = MS_RENDERER_CACHE(renderer);
-  faceCacheObj* face = getFontFace(cache,fonts[0]);
-
-  int curfontidx = 0;
-  char *utfptr=text;
-  int i,unicode;
-  unsigned long previdx=0;
-  faceCacheObj* prevface = face;
-  int numglyphs = msGetNumGlyphs(text);
-  cairo_glyph_t glyph;
-  cairo_text_extents_t extents;
-  double px=0,py=0;
-
-  if(face == NULL) {
-    return MS_FAILURE;
-  }
-
-  cairo_set_font_face(cache->dummycr,face->face);
-  cairo_set_font_size(cache->dummycr,size*96/72.0);
-
-  if(advances != NULL) {
-    *advances = (double*)malloc(numglyphs*sizeof(double));
-  }
-
-  for(i=0; i<numglyphs; i++) {
-    utfptr+=msUTF8ToUniChar(utfptr, &unicode);
-    glyph.x=px;
-    glyph.y=py;
-    if(unicode=='\n') {
-      py += ceil(size*CAIROLINESPACE);
-      px = 0;
-      previdx=0;
-      continue;
-    }
-
-    if (curfontidx != 0) {
-      face = getFontFace(cache, fonts[0]);
-      cairo_set_font_face(cache->dummycr, face->face);
-      curfontidx = 0;
-    }
-
-    if (face->ftface->charmap &&
-      face->ftface->charmap->encoding == FT_ENCODING_MS_SYMBOL)
-      unicode |= 0xf000;
-
-    glyph.index = FT_Get_Char_Index(face->ftface, unicode);
-
-    if (glyph.index == 0) {
-      int j;
-      for (j = 1; j < numfonts; j++) {
-        curfontidx = j;
-        face = getFontFace(cache, fonts[j]);
-        glyph.index = FT_Get_Char_Index(face->ftface, unicode);
-        if (glyph.index != 0) {
-          cairo_set_font_face(cache->dummycr, face->face);
-          break;
-        }
-      }
-    }
-
-    if( FT_HAS_KERNING((prevface->ftface)) && previdx ) {
-      FT_Vector delta;
-      FT_Get_Kerning( prevface->ftface, previdx, glyph.index, FT_KERNING_DEFAULT, &delta );
-      px += delta.x / 64.;
-    }
-    cairo_glyph_extents(cache->dummycr,&glyph,1,&extents);
-
-    if(i==0) {
-      rect->minx = px+extents.x_bearing;
-      rect->miny = py+extents.y_bearing;
-      rect->maxx = px+extents.x_bearing+extents.width;
-      rect->maxy = py+(bAdjustBaseline?1:(extents.y_bearing+extents.height));
-    } else {
-      rect->minx = MS_MIN(rect->minx,px+extents.x_bearing);
-      rect->miny = MS_MIN(rect->miny,py+extents.y_bearing);
-      rect->maxy = MS_MAX(rect->maxy,py+(bAdjustBaseline?1:(extents.y_bearing+extents.height)));
-      rect->maxx = MS_MAX(rect->maxx,px+extents.x_bearing+extents.width);
-    }
-    if(advances!=NULL)
-      (*advances)[i]=extents.x_advance;
-    px += extents.x_advance;
-    previdx=glyph.index;
-    prevface = face;
-  }
-  return MS_SUCCESS;
-}
-
-int renderGlyphsCairo(imageObj *img,double x, double y, labelStyleObj *style, char *text)
-{
+int renderGlyphs2Cairo(imageObj *img, textPathObj *tp, colorObj *c, colorObj *oc, int ow) {
   cairo_renderer *r = CAIRO_RENDERER(img);
   cairoCacheData *cache = MS_IMAGE_RENDERER_CACHE(img);
-  faceCacheObj* face = getFontFace(cache,style->fonts[0]);
+  cairoFaceCache *cairo_face = NULL;
+  FT_Face prevface = NULL;
+  int g;
 
-  int curfontidx = 0;
-  char *utfptr=text;
-  int i,unicode;
-  unsigned long previdx=0;
-  faceCacheObj* prevface = face;
-  int numglyphs = msGetNumGlyphs(text);
-  cairo_glyph_t glyph;
-  cairo_text_extents_t extents;
-  double px=0,py=0;
-
-  if(face == NULL) {
-    return MS_FAILURE;
-  }
-
-  cairo_set_font_face(r->cr,face->face);
-  cairo_set_font_size(r->cr,style->size*96/72.0);
-
-  cairo_save(r->cr);
-  cairo_translate(r->cr,MS_NINT(x),MS_NINT(y));
-  if(style->rotation != 0.0)
-    cairo_rotate(r->cr, -style->rotation);
-
-  for(i=0; i<numglyphs; i++) {
-    utfptr+=msUTF8ToUniChar(utfptr, &unicode);
-    glyph.x=px;
-    glyph.y=py;
-    if(unicode=='\n') {
-      py += ceil(style->size*CAIROLINESPACE);
-      px = 0;
-      previdx=0;
-      continue;
+  cairo_set_font_size(r->cr,MS_NINT(tp->glyph_size * 96.0/72.0));
+  for(g=0;g<tp->numglyphs;g++) {
+    glyphObj *gl = &tp->glyphs[g];
+    cairo_glyph_t glyph;
+    /* load the glyph's face into cairo, if not already present */
+    if(gl->face->face != prevface) {
+      cairo_face = getCairoFontFace(cache,gl->face->face);
+      cairo_set_font_face(r->cr, cairo_face->face);
+      cairo_set_font_options(r->cr,cairo_face->options);
+      prevface = gl->face->face;
+      cairo_set_font_size(r->cr,MS_NINT(tp->glyph_size * 96.0/72.0));
     }
-    if(curfontidx != 0) {
-      face = getFontFace(cache,style->fonts[0]);
-      cairo_set_font_face(r->cr,face->face);
-      curfontidx = 0;
-    }
-
-    if (face->ftface->charmap &&
-      face->ftface->charmap->encoding == FT_ENCODING_MS_SYMBOL)
-      unicode |= 0xf000;
-
-    glyph.index = FT_Get_Char_Index(face->ftface, unicode);
-    if(glyph.index == 0) {
-      int j;
-      for(j=1; j<style->numfonts; j++) {
-        curfontidx = j;
-        face = getFontFace(cache,style->fonts[j]);
-        glyph.index = FT_Get_Char_Index(face->ftface, unicode);
-        if(glyph.index != 0) {
-          cairo_set_font_face(r->cr,face->face);
-          break;
-        }
-      }
-    }
-
-    if(  FT_HAS_KERNING((prevface->ftface)) && previdx ) {
-      FT_Vector delta;
-      FT_Get_Kerning( prevface->ftface, previdx, glyph.index, FT_KERNING_DEFAULT, &delta );
-      px += delta.x / 64.;
-    }
-    cairo_glyph_extents(r->cr,&glyph,1,&extents);
-    cairo_glyph_path(r->cr,&glyph,1);
-    px += extents.x_advance;
-    previdx=glyph.index;
-    prevface=face;
-  }
-
-  if (style->outlinewidth > 0) {
     cairo_save(r->cr);
-    msCairoSetSourceColor(r->cr, style->outlinecolor);
-    cairo_set_line_width(r->cr, style->outlinewidth + 1);
+    cairo_translate(r->cr,gl->pnt.x,gl->pnt.y);
+    if(gl->rot != 0.0)
+      cairo_rotate(r->cr, -gl->rot);
+    glyph.x = glyph.y = 0;
+    glyph.index = gl->glyph->key.codepoint;
+    cairo_glyph_path(r->cr,&glyph,1);
+    cairo_restore(r->cr);
+  }
+  if (oc) {
+    cairo_save(r->cr);
+    msCairoSetSourceColor(r->cr, oc);
+    cairo_set_line_width(r->cr, ow + 1);
     cairo_stroke_preserve(r->cr);
     cairo_restore(r->cr);
   }
-  if(style->color) {
-    msCairoSetSourceColor(r->cr, style->color);
+  if(c) {
+    msCairoSetSourceColor(r->cr, c);
     cairo_fill(r->cr);
   }
   cairo_new_path(r->cr);
-  cairo_restore(r->cr);
   return MS_SUCCESS;
 }
-
 
 cairo_status_t _stream_write_fn(void *b, const unsigned char *data, unsigned int length)
 {
@@ -1163,11 +939,6 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
   symbolStyleObj pixstyle;
   symbolObj pixsymbol;
 
-  if(img->format->renderer == MS_RENDER_WITH_GD) {
-    msSetError(MS_MISCERR, "GD renderer does not support SVG symbols", "msRenderRasterizedSVGSymbol()");
-    return MS_FAILURE;
-  }
-
   if(MS_SUCCESS != msPreloadSVGSymbol(symbol))
     return MS_FAILURE;
   svg_cache = (struct svg_symbol_cache*) symbol->renderer_cache;
@@ -1269,15 +1040,13 @@ int msPopulateRendererVTableCairoRaster( rendererVTableObj *renderer )
   renderer->getRasterBufferHandle=&getRasterBufferHandleCairo;
   renderer->getRasterBufferCopy=&getRasterBufferCopyCairo;
   renderer->renderPolygon=&renderPolygonCairo;
-  renderer->renderGlyphs=&renderGlyphsCairo;
+  renderer->renderGlyphs=&renderGlyphs2Cairo;
   renderer->freeImage=&freeImageCairo;
   renderer->renderEllipseSymbol = &renderEllipseSymbolCairo;
   renderer->renderVectorSymbol = &renderVectorSymbolCairo;
-  renderer->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
   renderer->renderSVGSymbol = &renderSVGSymbolCairo;
   renderer->renderPixmapSymbol = &renderPixmapSymbolCairo;
   renderer->mergeRasterBuffer = &mergeRasterBufferCairo;
-  renderer->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
   renderer->renderTile = &renderTileCairo;
   renderer->loadImageFromFile = &msLoadMSRasterBufferFromFile;
   renderer->renderPolygonTiled = &renderPolygonTiledCairo;
@@ -1309,17 +1078,15 @@ int populateRendererVTableCairoVector( rendererVTableObj *renderer )
   renderer->saveImageBuffer = &saveImageBufferCairo;
   renderer->getRasterBufferHandle=&getRasterBufferHandleCairo;
   renderer->renderPolygon=&renderPolygonCairo;
-  renderer->renderGlyphs=&renderGlyphsCairo;
+  renderer->renderGlyphs=&renderGlyphs2Cairo;
   renderer->freeImage=&freeImageCairo;
   renderer->renderEllipseSymbol = &renderEllipseSymbolCairo;
   renderer->renderVectorSymbol = &renderVectorSymbolCairo;
-  renderer->renderTruetypeSymbol = &renderTruetypeSymbolCairo;
   renderer->renderSVGSymbol = &renderSVGSymbolCairo;
   renderer->renderPixmapSymbol = &renderPixmapSymbolCairo;
   renderer->loadImageFromFile = &msLoadMSRasterBufferFromFile;
   renderer->mergeRasterBuffer = &mergeRasterBufferCairo;
   renderer->initializeRasterBuffer = initializeRasterBufferCairo;
-  renderer->getTruetypeTextBBox = &getTruetypeTextBBoxCairo;
   renderer->renderTile = &renderTileCairo;
   renderer->renderPolygonTiled = &renderPolygonTiledCairo;
   renderer->freeSymbol = &freeSymbolCairo;
