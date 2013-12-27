@@ -44,7 +44,7 @@
 FIND_PATH(FREETYPE_INCLUDE_DIR_ft2build ft2build.h 
   HINTS
   $ENV{FREETYPE_DIR}
-  PATH_SUFFIXES include
+  PATH_SUFFIXES include include/freetype2
   PATHS
   /usr/local/X11R6/include
   /usr/local/X11/include
@@ -54,7 +54,7 @@ FIND_PATH(FREETYPE_INCLUDE_DIR_ft2build ft2build.h
   /usr/freeware/include
 )
 
-FIND_PATH(FREETYPE_INCLUDE_DIR_freetype2 freetype/config/ftheader.h 
+FIND_PATH(FREETYPE_INCLUDE_DIR_freetype2 freetype/config/ftheader.h config/ftheader.h
   HINTS
   $ENV{FREETYPE_DIR}/include/freetype2
   PATHS
@@ -64,7 +64,7 @@ FIND_PATH(FREETYPE_INCLUDE_DIR_freetype2 freetype/config/ftheader.h
   /sw/include
   /opt/local/include
   /usr/freeware/include
-  PATH_SUFFIXES freetype2
+  PATH_SUFFIXES freetype freetype2
 )
 
 set(FREETYPE_NAMES ${FREETYPE_NAMES} freetype libfreetype freetype219 freetype239 freetype241MT_D freetype2411)

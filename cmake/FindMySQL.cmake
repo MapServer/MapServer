@@ -13,9 +13,10 @@ ENDIF (MYSQL_INCLUDE_DIR)
 FIND_PATH(MYSQL_INCLUDE_DIR mysql.h
   /usr/local/include/mysql
   /usr/include/mysql
+  PATH_SUFFIXES mysql
 )
 
-SET(MYSQL_NAMES mysqlclient mysqlclient_r)
+SET(MYSQL_NAMES mysqlclient mysqlclient_r libmysqlclient)
 FIND_LIBRARY(MYSQL_LIBRARY
   NAMES ${MYSQL_NAMES}
   PATHS /usr/lib /usr/local/lib
