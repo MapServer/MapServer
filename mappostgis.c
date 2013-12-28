@@ -1701,6 +1701,44 @@ char *msPostGISBuildSQLItems(layerObj *layer)
   return strItems;
 }
 
+
+/*
+** msPostGISFindTableName()
+**
+** Returns malloc'ed char* that must be freed by caller.
+*/
+char *msPostGISFindTableName(char* fromsource)
+{
+  char *f_table_name = NULL;
+  char *pos = strstr(fromsource, " ");
+ 
+  if ( ! pos ) {
+    /* target table is one word */
+    f_table_name = msStrdup(fromsource);
+  } else {
+    /* target table is hiding in sub-select clause */
+    pos = strcasestr(fromsource, " from ");
+    if ( pos ) {
+      char *pos_paren;
+      char *pos_space;
+      pos += 6; /* should be start of table name */
+      pos_paren = strstr(pos, ")"); /* first ) after table name */
+      pos_space = strstr(pos, " "); /* first space after table name */
+      if ( pos_space < pos_paren ) {
+        /* found space first */
+        f_table_name = (char*)msSmallMalloc(pos_space - pos + 1);
+        strlcpy(f_table_name, pos, pos_space - pos+1);
+      } else {
+        /* found ) first */
+        f_table_name = (char*)msSmallMalloc(pos_paren - pos + 1);
+        strlcpy(f_table_name, pos, pos_paren - pos+1);
+      }
+    }
+  }
+  return f_table_name;
+}
+
+
 /*
 ** msPostGISBuildSQLSRID()
 **
@@ -1733,42 +1771,15 @@ char *msPostGISBuildSQLSRID(layerObj *layer)
   ** or "(select ... from thetable where ...)".
   */
   else {
-    char *f_table_name;
+    char *f_table_name = msPostGISFindTableName(layerinfo->fromsource);
     char *strSRIDTemplate = "find_srid('','%s','%s')";
-    char *pos = strstr(layerinfo->fromsource, " ");
     if( layer->debug > 1 ) {
       msDebug("msPostGISBuildSQLSRID: Building find_srid line.\n");
     }
 
-    if ( ! pos ) {
-      /* target table is one word */
-      f_table_name = msStrdup(layerinfo->fromsource);
-      if( layer->debug > 1 ) {
-        msDebug("msPostGISBuildSQLSRID: Found table (%s)\n", f_table_name);
-      }
-    } else {
-      /* target table is hiding in sub-select clause */
-      pos = strcasestr(layerinfo->fromsource, " from ");
-      if ( pos ) {
-        char *pos_paren;
-        char *pos_space;
-        pos += 6; /* should be start of table name */
-        pos_paren = strstr(pos, ")"); /* first ) after table name */
-        pos_space = strstr(pos, " "); /* first space after table name */
-        if ( pos_space < pos_paren ) {
-          /* found space first */
-          f_table_name = (char*)msSmallMalloc(pos_space - pos + 1);
-          strlcpy(f_table_name, pos, pos_space - pos+1);
-        } else {
-          /* found ) first */
-          f_table_name = (char*)msSmallMalloc(pos_paren - pos + 1);
-          strlcpy(f_table_name, pos, pos_paren - pos+1);
-        }
-      } else {
-        /* should not happen */
-        return NULL;
-      }
-    }
+    if (!f_table_name)
+      return NULL;  /* should not happen */
+
     strSRID = msSmallMalloc(strlen(strSRIDTemplate) + strlen(f_table_name) + strlen(layerinfo->geomcolumn));
     sprintf(strSRID, strSRIDTemplate, f_table_name, layerinfo->geomcolumn);
     if ( f_table_name ) free(f_table_name);
@@ -3030,6 +3041,100 @@ int msPostGISLayerGetItems(layerObj *layer)
 }
 
 /*
+** msPostGISLayerGetExtent()
+**
+** Registered vtable->LayerGetExtent function. Query the database for
+** the extent of the requested layer.
+*/
+int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
+{
+#ifdef USE_POSTGIS
+  msPostGISLayerInfo *layerinfo = NULL;
+  char *strSQL = NULL;
+  char *f_table_name;
+  static char *sqlExtentTemplate = "SELECT ST_Extent(%s) FROM %s";
+  size_t buffer_len;
+  PGresult *pgresult = NULL;
+  
+  if (layer->debug) {
+    msDebug("msPostGISLayerGetExtent called.\n");
+  }
+
+  assert( layer->layerinfo != NULL);
+
+  layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+  if ( msPostGISParseData(layer) != MS_SUCCESS) {
+    return MS_FAILURE;
+  }
+
+  /* if we have !BOX! substitution then we use just the table name */
+  if ( strstr(layerinfo->fromsource, BOXTOKEN) )
+    f_table_name = msPostGISFindTableName(layerinfo->fromsource);
+  else
+    f_table_name = msStrdup(layerinfo->fromsource);
+  
+  if ( !f_table_name ) {
+    msSetError(MS_MISCERR, "Failed to get table name.", "msPostGISLayerGetExtent()");
+    return MS_FAILURE;
+  }
+
+  buffer_len = strlen(layerinfo->geomcolumn) + strlen(f_table_name) + strlen(sqlExtentTemplate);
+  strSQL = (char*)msSmallMalloc(buffer_len+1); /* add space for terminating NULL */
+  snprintf(strSQL, buffer_len, sqlExtentTemplate, layerinfo->geomcolumn, f_table_name);  
+  msFree(f_table_name);
+
+  if (layer->debug) {
+    msDebug("msPostGISLayerGetExtent executing SQL: %s\n", strSQL);
+  }
+
+  /* executing the query */
+  pgresult = PQexecParams(layerinfo->pgconn, strSQL,0, NULL, NULL, NULL, NULL, 0);
+
+  msFree(strSQL);
+
+  if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
+    msSetError(MS_MISCERR, "Error executing SQL: %s", "msPostGISLayerGetExtent()", PQerrorMessage(layerinfo->pgconn));
+    if (pgresult)
+      PQclear(pgresult);
+
+    return MS_FAILURE;
+  }
+
+  /* process results */
+  if (PQntuples(pgresult) < 1) {
+    msSetError(MS_MISCERR, "msPostGISLayerGetExtent: No results found.", 
+        "msPostGISLayerGetExtent()");
+    PQclear(pgresult);
+    return MS_FAILURE;
+  }
+  
+  if (PQgetisnull(pgresult, 0, 0)) {
+    msSetError(MS_MISCERR, "msPostGISLayerGetExtent: Null result returned.", 
+        "msPostGISLayerGetExtent()");
+    PQclear(pgresult);
+    return MS_FAILURE;
+  }
+
+  if (sscanf(PQgetvalue(pgresult, 0, 0), "BOX(%lf %lf,%lf %lf)", 
+         &extent->minx, &extent->miny, &extent->maxx, &extent->maxy) != 4) {
+    msSetError(MS_MISCERR, "Failed to process result data.", "msPostGISLayerGetExtent()");
+    PQclear(pgresult);
+    return MS_FAILURE;
+  }
+
+  /* cleanup */
+  PQclear(pgresult);
+
+  return MS_SUCCESS;
+#else
+  msSetError( MS_MISCERR, "PostGIS support is not available.", "msPostGISLayerGetExtent()");
+  return MS_FAILURE;
+#endif
+}
+
+
+/*
  * make sure that the timestring is complete and acceptable
  * to the date_trunc function :
  * - if the resolution is year (2004) or month (2004-01),
@@ -3399,7 +3504,7 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerGetShape = msPostGISLayerGetShape;
   layer->vtable->LayerClose = msPostGISLayerClose;
   layer->vtable->LayerGetItems = msPostGISLayerGetItems;
-  /* layer->vtable->LayerGetExtent = msPostGISLayerGetExtent; */
+  layer->vtable->LayerGetExtent = msPostGISLayerGetExtent;
   layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
   /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
   /* layer->vtable->LayerCloseConnection = msPostGISLayerClose; */
