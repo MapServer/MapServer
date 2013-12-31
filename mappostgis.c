@@ -3212,6 +3212,11 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
   if (!lp || !timestring || !timefield)
     return MS_FALSE;
 
+  if( strchr(timestring,'\'') || strchr(timestring, '\\') ) {
+     msSetError(MS_MISCERR, "Invalid time filter.", "msPostGISLayerSetTimeFilter()");
+     return MS_FALSE;
+  }
+
   /* discrete time */
   if (strstr(timestring, ",") == NULL &&
       strstr(timestring, "/") == NULL) { /* discrete time */
