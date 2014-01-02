@@ -14,6 +14,11 @@ For a complete change history, please see the Git log comments.
 Current Version (future 6.0.4, GIT branch-6-0):
 -----------------------------------------------
 
+Version 6.0.4 (2014-01-02):
+---------------------------
+
+- Fix potential SQL Injection with postgis TIME filters (#4834)
+
 - Adjusted WCS 2.0 to WCS Core 2.0.1 and GMLCOV 1.0.1 corrigenda (#4003)
 
 - Adjusted mediatype to multipart/related in WCS 2.0 (#4003)
