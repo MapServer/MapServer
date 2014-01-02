@@ -12,6 +12,11 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
+Current Version
+---------------
+
+Changes are tracked trough commit comments, not this file.
+
 Version 6.2.1 (2013-04-19):
 ---------------------------
 
