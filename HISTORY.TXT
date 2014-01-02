@@ -11,6 +11,11 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
+Version 5.6.9 (2014-01-02):
+---------------------------
+
+- Fix potential SQL Injection with postgis TIME filters (#4834)
+
 Version 5.6.8 (2012-02-08):
 ---------------------------
 
