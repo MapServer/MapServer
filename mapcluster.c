@@ -558,11 +558,6 @@ static void UpdateShapeAttributes(layerObj* layer, clusterInfo* base, clusterInf
         int count = atoi(base->shape.values[i]) + 1;
         msFree(base->shape.values[i]);
         base->shape.values[i] = msIntToString(count);
-      } else if (!EQUAL(base->shape.values[i], current->shape.values[i])
-                 && !EQUAL(base->shape.values[i], "")) {
-        /* clear the value if that doesn't match */
-        msFree(base->shape.values[i]);
-        base->shape.values[i] = msStrdup("");
       }
     }
   }
