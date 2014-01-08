@@ -1670,6 +1670,16 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
               goto line_cleanup;
             }
           } else {
+            if(!ts_auto->textpath) {
+              if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts_auto))) {
+                ret = MS_FAILURE;
+                free(lar.angles);
+                free(lar.label_points);
+                freeTextSymbol(ts_auto);
+                free(ts_auto);
+                goto line_cleanup;
+              }
+            }
             ret = msDrawTextSymbol(map,image,lar.label_points[i],ts_auto);
             freeTextSymbol(ts_auto);
             free(ts_auto); /* TODO RFC98: could we not re-use the original ts instead of duplicating into ts_auto ?
@@ -1738,12 +1748,10 @@ int polygonLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer,
         } else {
           for (i = 0; i < layer->class[c]->numlabels; i++)
             if(msGetLabelStatus(map,layer,shape,layer->class[c]->labels[i]) == MS_ON) {
-              char *annotext = msShapeGetLabelAnnotation(layer,shape,layer->class[c]->labels[i]);
+              char *annotext = msShapeGetLabelAnnotation(layer,shape,layer->class[c]->labels[i]); /*ownership taken by msDrawLabel, no need to free */
               if(UNLIKELY(MS_FAILURE == msDrawLabel(map, image, annopnt, annotext, layer->class[c]->labels[i], layer->scalefactor))) {
-                free(annotext);
                 return MS_FAILURE;
               }
-              free(annotext);
             }
         }
       }
