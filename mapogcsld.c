@@ -2094,7 +2094,8 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
       (strcasecmp(pszFormat, "GIF") == 0 ||
        strcasecmp(pszFormat, "image/gif") == 0 ||
        strcasecmp(pszFormat, "PNG") == 0 ||
-       strcasecmp(pszFormat, "image/png") == 0)) {
+       strcasecmp(pszFormat, "image/png") == 0 ||
+       strcasecmp(pszFormat, "image/svg+xml") == 0)) {
 
     /* <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.vendor.com/geosym/2267.svg"/> */
     psURL = CPLGetXMLNode(psExternalGraphic, "OnlineResource");
