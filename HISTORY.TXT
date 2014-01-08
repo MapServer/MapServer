@@ -15,6 +15,10 @@ For a complete change history, please see the Git log comments.
 7.0 release (TBD)
 -----------------
 
+- Apply RFC86 scaletoken substitutions to layer->PROCESSING entries
+
+- RFC108 Heatmap / Kernel-Density Layers
+
 - RFC104 Bitmap Label removal, replaced with inlined truetype font
 
 - RFC103 Layer Level Character Encoding

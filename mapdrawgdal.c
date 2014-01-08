@@ -508,6 +508,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    */
   if( classified ) {
     int c, color_count;
+    const char* pszRangeColorspace = msLayerGetProcessingKey( layer, "RANGE_COLORSPACE" );
+    colorspace iRangeColorspace;
 
 #ifndef NDEBUG
     cmap_set = TRUE;
@@ -517,6 +519,17 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       msSetError(MS_IOERR,
                  "Attempt to classify 24bit image, this is unsupported.",
                  "drawGDAL()");
+      return -1;
+    }
+    
+    if(!pszRangeColorspace || !strcasecmp(pszRangeColorspace, "RGB")) {
+      iRangeColorspace = MS_COLORSPACE_RGB;
+    } else if(!strcasecmp(pszRangeColorspace, "HSL")) {
+      iRangeColorspace = MS_COLORSPACE_HSL;
+    } else {
+      msSetError(MS_MISCERR,
+                 "Unknown RANGE_COLORSPACE \"%s\", expecting RGB or HSL",
+                 "drawGDAL()", pszRangeColorspace);
       return -1;
     }
 
@@ -542,13 +555,25 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           /* change colour based on colour range?  Currently we
              only address the greyscale case properly. */
 
-          for(s=0; s<layer->class[c]->numstyles; s++) {
-            if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
-                && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor) )
-              msValueToRange(layer->class[c]->styles[s],
-                             sEntry.c1 );
+          if( MS_VALID_COLOR(layer->class[c]->styles[0]->mincolor) ) {
+            for(s=0; s<layer->class[c]->numstyles; s++) {
+              if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
+                 && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor)) {
+                if( layer->class[c]->numstyles == 1 || (sEntry.c1 >= layer->class[c]->styles[s]->minvalue
+                                               && sEntry.c1 <= layer->class[c]->styles[s]->maxvalue )) {
+                  msValueToRange(layer->class[c]->styles[s], sEntry.c1, iRangeColorspace);
+                  if(MS_VALID_COLOR(layer->class[c]->styles[s]->color)) {
+                    rb_cmap[0][i] = layer->class[c]->styles[s]->color.red;
+                    rb_cmap[1][i] = layer->class[c]->styles[s]->color.green;
+                    rb_cmap[2][i] = layer->class[c]->styles[s]->color.blue;
+                    rb_cmap[3][i] = (layer->class[c]->styles[s]->color.alpha != 255)?(layer->class[c]->styles[s]->color.alpha):(255*layer->class[c]->styles[0]->opacity / 100);
+                    break;
+                  }
+                }
+              }
+            }
           }
-          if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color))
+          else if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color))
             /* leave it transparent */;
 
           else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
@@ -1859,7 +1884,7 @@ msDrawRasterLayerGDAL_16BitClassification(
       for(s=0; s<layer->class[c]->numstyles; s++) {
         if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
             && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor) )
-          msValueToRange(layer->class[c]->styles[s],dfOriginalValue);
+          msValueToRange(layer->class[c]->styles[s],dfOriginalValue, MS_COLORSPACE_RGB);
       }
       if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) ) {
         /* leave it transparent */

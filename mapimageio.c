@@ -27,15 +27,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "png.h"
 #include "mapserver.h"
-#include "setjmp.h"
+#include <png.h>
+#include <setjmp.h>
 #include <assert.h>
-#include "jpeglib.h"
+#include <jpeglib.h>
 #include <stdlib.h>
 
 #ifdef USE_GIF
-#include "gif_lib.h"
+#include <gif_lib.h>
 #endif
 
 

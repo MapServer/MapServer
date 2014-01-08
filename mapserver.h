@@ -405,22 +405,24 @@ extern "C" {
 
 #define MS_RENDERER_PLUGIN(format) ((format)->renderer > MS_RENDER_WITH_PLUGIN)
 
-#define MS_CELLSIZE(min,max,d) ((max - min)/(d-1)) /* where min/max are from an MapServer pixel center-to-pixel center extent */
-#define MS_OWS_CELLSIZE(min,max,d) ((max - min)/d) /* where min/max are from an OGC pixel outside edge-to-pixel outside edge extent */
-#define MS_MAP2IMAGE_X(x,minx,cx) (MS_NINT((x - minx)/cx))
-#define MS_MAP2IMAGE_Y(y,maxy,cy) (MS_NINT((maxy - y)/cy))
-#define MS_IMAGE2MAP_X(x,minx,cx) (minx + cx*x)
-#define MS_IMAGE2MAP_Y(y,maxy,cy) (maxy - cy*y)
+#define MS_CELLSIZE(min,max,d) (((max) - (min))/((d)-1)) /* where min/max are from an MapServer pixel center-to-pixel center extent */
+#define MS_OWS_CELLSIZE(min,max,d) (((max) - (min))/(d)) /* where min/max are from an OGC pixel outside edge-to-pixel outside edge extent */
+#define MS_MAP2IMAGE_X(x,minx,cx) (MS_NINT(((x) - (minx))/(cx)))
+#define MS_MAP2IMAGE_Y(y,maxy,cy) (MS_NINT(((maxy) - (y))/(cy)))
+#define MS_IMAGE2MAP_X(x,minx,cx) ((minx) + (cx)*(x))
+#define MS_IMAGE2MAP_Y(y,maxy,cy) ((maxy) - (cy)*(y))
 
   /* these versions of MS_MAP2IMAGE takes 1/cellsize and is much faster */
-#define MS_MAP2IMAGE_X_IC(x,minx,icx) (MS_NINT((x - minx)*icx))
-#define MS_MAP2IMAGE_Y_IC(y,maxy,icy) (MS_NINT((maxy - y)*icy))
+#define MS_MAP2IMAGE_X_IC(x,minx,icx) (MS_NINT(((x) - (minx))*(icx)))
+#define MS_MAP2IMAGE_Y_IC(y,maxy,icy) (MS_NINT(((maxy) - (y))*(icy)))
+#define MS_MAP2IMAGE_XCELL_IC(x,minx,icx) ((int)(((x) - (minx))*(icx)))
+#define MS_MAP2IMAGE_YCELL_IC(y,maxy,icy) ((int)(((maxy) - (y))*(icy)))
 
-#define MS_MAP2IMAGE_X_IC_DBL(x,minx,icx) ((x - minx)*icx)
-#define MS_MAP2IMAGE_Y_IC_DBL(y,maxy,icy) ((maxy - y)*icy)
+#define MS_MAP2IMAGE_X_IC_DBL(x,minx,icx) (((x) - (minx))*(icx))
+#define MS_MAP2IMAGE_Y_IC_DBL(y,maxy,icy) (((maxy) - (y))*(icy))
 
-#define MS_MAP2IMAGE_X_IC_SNAP(x,minx,icx,res) ((MS_NINT((x - minx)*icx*res))/(res))
-#define MS_MAP2IMAGE_Y_IC_SNAP(y,maxy,icy,res) ((MS_NINT((maxy - y)*icy*res))/(res))
+#define MS_MAP2IMAGE_X_IC_SNAP(x,minx,icx,res) ((MS_NINT(((x) - (minx))*(icx)*(res)))/(res))
+#define MS_MAP2IMAGE_Y_IC_SNAP(y,maxy,icy,res) ((MS_NINT(((maxy) - (y))*(icy)*(res)))/(res))
 
   /* For CARTO symbols */
 #define MS_PI    3.14159265358979323846
@@ -489,7 +491,7 @@ extern "C" {
 #define MS_LARGE 13
 #define MS_GIANT 16
   enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-  enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR };
+  enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY };
   enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
   enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
@@ -1511,6 +1513,18 @@ extern "C" {
       int nProperties;
       sortByProperties* properties;
   } sortByClause;
+
+  typedef struct {
+    /* The following store original members if they have been modified at runtime by a rfc86 scaletoken */
+    char *data;
+    char *tileitem;
+    char *tileindex;
+    char *filteritem;
+    char *filter;
+    char **processing;
+    int *processing_idx;
+    int n_processing;
+  } originalScaleTokenStrings;
 #endif
 
   struct layerObj {
@@ -1558,13 +1572,8 @@ extern "C" {
     /* RFC86 Scale-dependent token replacements */
     scaleTokenObj *scaletokens;
     int numscaletokens;
+    originalScaleTokenStrings *orig_st;
     
-    /* The following store original members if they have been modified at runtime by a rfc86 scaletoken */
-    char *orig_data;
-    char *orig_tileitem;
-    char *orig_tileindex;
-    char *orig_filteritem;
-    char *orig_filter; 
 #endif
 
     char *data; /* filename, can be relative or full path */
@@ -2345,7 +2354,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT void msLayerClose(layerObj *layer);
   MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery);
   MS_DLL_EXPORT int msLayerGetItemIndex(layerObj *layer, char *item);
-  MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int get_all, char *metadata);
+  MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata);
   MS_DLL_EXPORT int msLayerNextShape(layerObj *layer, shapeObj *shape);
   MS_DLL_EXPORT int msLayerGetItems(layerObj *layer);
   MS_DLL_EXPORT int msLayerSetItems(layerObj *layer, char **items, int numitems);
@@ -2461,8 +2470,12 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int WARN_UNUSED msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
 
   /*Range Support*/
+  typedef enum {
+    MS_COLORSPACE_RGB,
+    MS_COLORSPACE_HSL
+  } colorspace;
   MS_DLL_EXPORT int msShapeToRange(styleObj *style, shapeObj *shape);
-  MS_DLL_EXPORT int msValueToRange(styleObj *style, double fieldVal);
+  MS_DLL_EXPORT int msValueToRange(styleObj *style, double fieldVal, colorspace cs);
 
   MS_DLL_EXPORT int WARN_UNUSED msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
   MS_DLL_EXPORT int WARN_UNUSED msDrawLineSymbol(mapObj *map, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
@@ -2528,6 +2541,10 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msGetGDALGeoTransform(void *hDS, mapObj *map, layerObj *layer, double *padfGeoTransform );
   MS_DLL_EXPORT int *msGetGDALBandList( layerObj *layer, void *hDS, int max_bands, int *band_count );
   MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pbGotNoData );
+
+  /* in interpolation.c */
+  MS_DLL_EXPORT int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *layer, void **hDSvoid, void **cleanup_ptr);
+  MS_DLL_EXPORT int msCleanupKernelDensityDataset(mapObj *map, imageObj *image, layerObj *layer, void *cleanup_ptr);
 
   /* in mapchart.c */
   MS_DLL_EXPORT int msDrawChartLayer(mapObj *map, layerObj *layer, imageObj *image);
@@ -2623,6 +2640,10 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     unsigned char blue_src, unsigned char alpha_src,
     unsigned char *red_dst, unsigned char *green_dst,
     unsigned char *blue_dst, unsigned char *alpha_dst );
+
+  MS_DLL_EXPORT void msRGBtoHSL(colorObj *rgb, double *h, double *s, double *l);
+
+  MS_DLL_EXPORT void msHSLtoRGB(double h, double s, double l, colorObj *rgb);
 
   MS_DLL_EXPORT int msCheckParentPointer(void* p, char* objname);
 
