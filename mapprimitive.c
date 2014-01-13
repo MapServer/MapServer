@@ -2025,7 +2025,7 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
           dy = t * (p->point[j+inc].y - p->point[j].y) + p->point[j].y - tp->glyphs[k-1].pnt.y;
         }
 
-        if(dx && dy) {
+        if(dx || dy || k==1) {
           theta = -atan2(dy,dx);
 
           if (maxoverlapangle > 0 && k > 1) {
