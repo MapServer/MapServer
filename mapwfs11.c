@@ -127,9 +127,14 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
 
   if (lp->name && strlen(lp->name) > 0 &&
       (msIsXMLTagValid(lp->name) == MS_FALSE || isdigit(lp->name[0])))
-    xmlAddSibling(psNode,
-                  xmlNewComment(BAD_CAST "WARNING: The layer name '%s' might contain spaces or "
-                                "invalid characters or may start with a number. This could lead to potential problems"));
+  {
+    char szTmp[512];
+    snprintf(szTmp, sizeof(szTmp),
+             "WARNING: The layer name '%s' might contain spaces or "
+             "invalid characters or may start with a number. This could lead to potential problems",
+             lp->name);
+    xmlAddSibling(psNode, xmlNewComment(BAD_CAST szTmp));
+  }
 
   value = msOWSLookupMetadataWithLanguage(&(lp->metadata), "FO", "title", validate_language);
   if (!value)
