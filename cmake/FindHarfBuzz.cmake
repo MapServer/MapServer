@@ -37,6 +37,7 @@ pkg_check_modules(PC_HARFBUZZ harfbuzz>=0.9.18)
 
 find_path(HARFBUZZ_INCLUDE_DIR NAMES hb.h
     HINTS ${PC_HARFBUZZ_INCLUDE_DIRS} ${PC_HARFBUZZ_INCLUDEDIR}
+    PATH_SUFFIXES harfbuzz
 )
 
 find_library(HARFBUZZ_LIBRARY NAMES harfbuzz

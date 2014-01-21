@@ -12,7 +12,7 @@
  #else
   #include <fribidi/fribidi.h>
  #endif
- #include <harfbuzz/hb-ft.h>
+ #include <hb-ft.h>
 #endif
 
 
