@@ -94,6 +94,9 @@ int msWFSException20(mapObj *map, const char *locator,
   else if( EQUAL(exceptionCode, MS_WFS_ERROR_OPERATION_PROCESSING_FAILED) ) {
     status = "403 Server processing failed";
   }
+  else if( EQUAL(exceptionCode, MS_OWS_ERROR_NOT_FOUND) ) {
+    status = "404 Not Found";
+  }
   else if( EQUAL(exceptionCode, MS_OWS_ERROR_NO_APPLICABLE_CODE) ) {
     status = "400 Internal Server Error";
   }
