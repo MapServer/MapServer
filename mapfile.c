@@ -553,32 +553,38 @@ static void writeCharacter(FILE *stream, int indent, const char *name, const cha
   msIO_fprintf(stream, "%s '%c'\n", name, character);
 }
 
+static void writeStringElement(FILE *stream, char *string)
+{
+    char *string_escaped;
+
+    if(strchr(string,'\\')) {
+      string_escaped = msStrdup(string);
+      string_escaped = msReplaceSubstring(string_escaped,"\\","\\\\");
+    } else {
+      string_escaped = string;
+    }
+    if ( (strchr(string_escaped, '\'') == NULL) && (strchr(string_escaped, '\"') == NULL))
+      msIO_fprintf(stream, "\"%s\"", string_escaped);
+    else if ( (strchr(string_escaped, '\"') != NULL) && (strchr(string_escaped, '\'') == NULL))
+      msIO_fprintf(stream, "'%s'", string_escaped);
+    else if ( (strchr(string_escaped, '\'') != NULL) && (strchr(string_escaped, '\"') == NULL))
+      msIO_fprintf(stream, "\"%s\"", string_escaped);
+    else {
+      char *string_tmp = msStringEscape(string_escaped);
+      msIO_fprintf(stream, "\"%s\"", string_tmp);
+      if(string_escaped!=string_tmp) free(string_tmp);
+    }
+    if(string_escaped!=string) free(string_escaped);
+}
+
 static void writeString(FILE *stream, int indent, const char *name, const char *defaultString, char *string)
 {
-  char *string_escaped;
-
   if(!string) return;
   if(defaultString && strcmp(string, defaultString) == 0) return;
   writeIndent(stream, ++indent);
   if(name) msIO_fprintf(stream, "%s ", name);
-  if(strchr(string,'\\')) {
-    string_escaped = msStrdup(string);
-    string_escaped = msReplaceSubstring(string_escaped,"\\","\\\\");
-  } else {
-    string_escaped = string;
-  }
-  if ( (strchr(string_escaped, '\'') == NULL) && (strchr(string_escaped, '\"') == NULL))
-    msIO_fprintf(stream, "\"%s\"\n", string_escaped);
-  else if ( (strchr(string_escaped, '\"') != NULL) && (strchr(string_escaped, '\'') == NULL))
-    msIO_fprintf(stream, "'%s'\n", string_escaped);
-  else if ( (strchr(string_escaped, '\'') != NULL) && (strchr(string_escaped, '\"') == NULL))
-    msIO_fprintf(stream, "\"%s\"\n", string_escaped);
-  else {
-    char *string_tmp = msStringEscape(string_escaped);
-    msIO_fprintf(stream, "\"%s\"\n", string_tmp);
-    if(string_escaped!=string_tmp) free(string_tmp);
-  }
-  if(string_escaped!=string) free(string_escaped);
+  writeStringElement(stream, string);
+  writeLineFeed(stream);
 }
 
 static void writeNumberOrString(FILE *stream, int indent, const char *name, double defaultNumber, double number, char *string)
@@ -614,33 +620,13 @@ static void writeNumberOrKeyword(FILE *stream, int indent, const char *name, dou
 
 static void writeNameValuePair(FILE *stream, int indent, const char *name, const char *value)
 {
-  char *string_tmp;
   if(!name || !value) return;
   writeIndent(stream, ++indent);
 
-  if ( (strchr(name, '\'') == NULL) && (strchr(name, '\"') == NULL))
-    msIO_fprintf(stream, "\"%s\"\t", name);
-  else if ( (strchr(name, '\"') != NULL) && (strchr(name, '\'') == NULL))
-    msIO_fprintf(stream, "'%s'\t", name);
-  else if ( (strchr(name, '\'') != NULL) && (strchr(name, '\"') == NULL))
-    msIO_fprintf(stream, "\"%s\"\t", name);
-  else {
-    string_tmp = msStringEscape(name);
-    msIO_fprintf(stream, "\"%s\"\t", string_tmp);
-    if(name!=string_tmp) free(string_tmp);
-  }
-
-  if ( (strchr(value, '\'') == NULL) && (strchr(value, '\"') == NULL))
-    msIO_fprintf(stream, "\"%s\"\n", value);
-  else if ( (strchr(value, '\"') != NULL) && (strchr(value, '\'') == NULL))
-    msIO_fprintf(stream, "'%s'\n", value);
-  else if ( (strchr(value, '\'') != NULL) && (strchr(value, '\"') == NULL))
-    msIO_fprintf(stream, "\"%s\"\n", value);
-  else {
-    string_tmp = msStringEscape(value);
-    msIO_fprintf(stream, "\"%s\"\n", string_tmp);
-    if(value!=string_tmp) free(string_tmp);
-  }
+  writeStringElement(stream, (char*)name);
+  msIO_fprintf(stream,"\t");
+  writeStringElement(stream, (char*)value);
+  writeLineFeed(stream);
 }
 
 static void writeAttributeBinding(FILE *stream, int indent, const char *name, attributeBindingObj *binding)
@@ -2300,7 +2286,6 @@ char *msGetExpressionString(expressionObj *exp)
 
 static void writeExpression(FILE *stream, int indent, const char *name, expressionObj *exp)
 {
-  char *string_tmp;
   if(!exp || !exp->string) return;
 
   writeIndent(stream, ++indent);
@@ -2312,17 +2297,8 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
       msIO_fprintf(stream, "%s /%s/", name, exp->string);
       break;
     case(MS_STRING):
-      if ( (strchr(exp->string, '\'') == NULL) && (strchr(exp->string, '\"') == NULL))
-        msIO_fprintf(stream, "%s \"%s\"", name, exp->string);
-      else if ( (strchr(exp->string, '\"') != NULL) && (strchr(exp->string, '\'') == NULL))
-        msIO_fprintf(stream, "%s \'%s\'", name, exp->string);
-      else if ( (strchr(exp->string, '\'') != NULL) && (strchr(exp->string, '\"') == NULL))
-        msIO_fprintf(stream, "%s \"%s\"", name, exp->string);
-      else {
-        string_tmp = msStringEscape(exp->string);
-        msIO_fprintf(stream, "%s \"%s\"", name, string_tmp);
-        if(exp->string!=string_tmp) free(string_tmp);
-      }
+      msIO_fprintf(stream, "%s ", name);
+      writeStringElement(stream, exp->string);
       break;
     case(MS_EXPRESSION):
       msIO_fprintf(stream, "%s (%s)", name, exp->string);
@@ -2396,7 +2372,11 @@ static void writeHashTableInline(FILE *stream, int indent, char *name, hashTable
     if (table->items[i] != NULL) {
       for (tp=table->items[i]; tp!=NULL; tp=tp->next) {
         writeIndent(stream, indent);
-        msIO_fprintf(stream, "%s \"%s\" \"%s\"\n", name, tp->key, tp->data);
+        msIO_fprintf(stream, "%s ", name);
+        writeStringElement(stream, tp->key);
+        msIO_fprintf(stream," ");
+        writeStringElement(stream, tp->data);
+        writeLineFeed(stream);
       }
     }
   }
