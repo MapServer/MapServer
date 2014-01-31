@@ -145,6 +145,23 @@ static msIOContextGroup *msIO_GetContextGroup()
   return group;
 }
 
+/* returns MS_TRUE if the msIO standard output hasn't been redirected */
+int msIO_isStdContext() {
+  msIOContextGroup *group = io_context_list;
+  int nThreadId = msGetThreadId();
+  if(!group || group->thread_id != nThreadId) {
+    group = msIO_GetContextGroup();
+    if(!group) {
+      return MS_FALSE; /* probably a bug */
+    }
+  }
+  if(group->stderr_context.cbData == (void*)stderr &&
+      group->stdin_context.cbData == (void*)stdin &&
+      group->stdout_context.cbData == (void*)stdout)
+    return MS_TRUE;
+  return MS_FALSE;
+}
+
 /************************************************************************/
 /*                          msIO_getHandler()                           */
 /************************************************************************/
