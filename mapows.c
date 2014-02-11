@@ -1357,7 +1357,7 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
         msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>download</inspire_common:SpatialDataServiceType>\n");
     else
         msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n");
-    msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_keyword", OWS_WARN, "    <inspire_common:MandatoryKeyword xsi:type='inspire_common:classificationOfSpatialDataService'>\n      <inspire_common:KeywordValue>%s</inspire_common:KeywordValue>\n    </inspire_common:MandatoryKeyword>\n", "");
+    msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_keyword", OWS_WARN, "    <inspire_common:MandatoryKeyword>\n      <inspire_common:KeywordValue>%s</inspire_common:KeywordValue>\n    </inspire_common:MandatoryKeyword>\n", "");
   } else {
     status = action_if_not_found;
     if (OWS_WARN == action_if_not_found) {
