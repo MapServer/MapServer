@@ -572,20 +572,21 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
   shapeObj tshp;
 
   char szPath[MS_MAXPATHLEN];
-  char *decrypted_path;
+  char *decrypted_path = NULL;
   int final_status = MS_SUCCESS;
 
   rectObj searchrect;
   GDALDatasetH  hDS;
   double  adfGeoTransform[6];
   const char *close_connection;
+  void *kernel_density_cleanup_ptr = NULL;
 
   msGDALInitialize();
 
   if(layer->debug > 0 || map->debug > 1)
     msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
 
-  if(!layer->data && !layer->tileindex) {
+  if(!layer->data && !layer->tileindex && !(layer->connectiontype==MS_KERNELDENSITY)) {
     if(layer->debug == MS_TRUE)
       msDebug( "msDrawRasterLayerLow(%s): layer data and tileindex NULL ... doing nothing.", layer->name );
     return(0);
@@ -627,6 +628,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     }
   }
 
+
   if(layer->tileindex) { /* we have an index file */
     msInitShape(&tshp);
     searchrect = map->extent;
@@ -665,28 +667,48 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
       done = MS_TRUE; /* only one image so we're done after this */
     }
 
-    if(strlen(filename) == 0) continue;
+    if(layer->connectiontype != MS_KERNELDENSITY) {
+      if(strlen(filename) == 0) continue;
 
-    if(layer->debug == MS_TRUE)
-      msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
+      if(layer->debug == MS_TRUE)
+        msDebug( "msDrawRasterLayerLow(%s): Filename is: %s\n", layer->name, filename);
 
-    msDrawRasterBuildRasterPath(map, layer, filename, szPath);
-    if(layer->debug == MS_TRUE)
-      msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, szPath);
+      msDrawRasterBuildRasterPath(map, layer, filename, szPath);
+      if(layer->debug == MS_TRUE)
+        msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, szPath);
 
-    /*
-    ** Note: because we do decryption after the above path expansion
-    ** which depends on actually finding a file, it essentially means that
-    ** fancy path manipulation is essentially disabled when using encrypted
-    ** components. But that is mostly ok, since stuff like sde,postgres and
-    ** oracle georaster do not use real paths.
-    */
-    decrypted_path = msDecryptStringTokens( map, szPath );
-    if( decrypted_path == NULL )
-      return MS_FAILURE;
+      /*
+       ** Note: because we do decryption after the above path expansion
+       ** which depends on actually finding a file, it essentially means that
+       ** fancy path manipulation is essentially disabled when using encrypted
+       ** components. But that is mostly ok, since stuff like sde,postgres and
+       ** oracle georaster do not use real paths.
+       */
+      decrypted_path = msDecryptStringTokens( map, szPath );
+      if( decrypted_path == NULL )
+        return MS_FAILURE;
 
-    msAcquireLock( TLOCK_GDAL );
-    hDS = GDALOpenShared( decrypted_path, GA_ReadOnly );
+      msAcquireLock( TLOCK_GDAL );
+      hDS = GDALOpenShared( decrypted_path, GA_ReadOnly );
+    } else {
+      status = msComputeKernelDensityDataset(map, image, layer, &hDS, &kernel_density_cleanup_ptr);
+      if(status != MS_SUCCESS) {
+        final_status = status;
+        goto cleanup;
+      }
+      done = MS_TRUE;
+      if(msProjectionsDiffer(&map->projection,&layer->projection)) {
+        char *mapProjStr = msGetProjectionString(&(map->projection));
+
+        /* Set the projection to the map file projection */
+        if (msLoadProjectionString(&(layer->projection), mapProjStr) != 0) {
+          msSetError(MS_CGIERR, "Unable to set projection on interpolation layer.", "msDrawRasterLayerLow()");
+          return(MS_FAILURE);
+        }
+        free(mapProjStr);
+      }
+    }
+
 
     /*
     ** If GDAL doesn't recognise it, and it wasn't successfully opened
@@ -789,6 +811,9 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
 cleanup:
   if(layer->tileindex) { /* tiling clean-up */
     msDrawRasterCleanupTileLayer(tlp, tilelayerindex);
+  }
+  if(layer->connectiontype == MS_KERNELDENSITY && kernel_density_cleanup_ptr) {
+    msCleanupKernelDensityDataset(map, image, layer, kernel_density_cleanup_ptr);
   }
 
   return final_status;

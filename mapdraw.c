@@ -3204,7 +3204,7 @@ int msShapeToRange(styleObj *style, shapeObj *shape)
   fieldVal = 0.0;
   fieldVal = atof(fieldStr); /*faith that it's ok -- */
   /*should switch to strtod*/
-  return msValueToRange(style, fieldVal);
+  return msValueToRange(style, fieldVal, MS_COLORSPACE_RGB);
 }
 
 /**
@@ -3212,7 +3212,7 @@ int msShapeToRange(styleObj *style, shapeObj *shape)
  * Ranges.  The styls passed in is updated to reflect the right color
  * based on the fieldVal
  */
-int msValueToRange(styleObj *style, double fieldVal)
+int msValueToRange(styleObj *style, double fieldVal, colorspace cs)
 {
   double range;
   double scaledVal;
@@ -3220,12 +3220,30 @@ int msValueToRange(styleObj *style, double fieldVal)
   range = style->maxvalue - style->minvalue;
   scaledVal = (fieldVal - style->minvalue)/range;
 
-  /*At this point, we know where on the range we need to be*/
-  /*However, we don't know how to map it yet, since RGB(A) can */
-  /*Go up or down*/
-  style->color.red = (int)(MS_MAX(0,(MS_MIN(255, (style->mincolor.red + ((style->maxcolor.red - style->mincolor.red) * scaledVal))))));
-  style->color.green = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.green + ((style->maxcolor.green - style->mincolor.green) * scaledVal))))));
-  style->color.blue = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.blue + ((style->maxcolor.blue - style->mincolor.blue) * scaledVal))))));
+  if(cs == MS_COLORSPACE_RGB) {
+    /*At this point, we know where on the range we need to be*/
+    /*However, we don't know how to map it yet, since RGB(A) can */
+    /*Go up or down*/
+    style->color.red = (int)(MS_MAX(0,(MS_MIN(255, (style->mincolor.red + ((style->maxcolor.red - style->mincolor.red) * scaledVal))))));
+    style->color.green = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.green + ((style->maxcolor.green - style->mincolor.green) * scaledVal))))));
+    style->color.blue = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.blue + ((style->maxcolor.blue - style->mincolor.blue) * scaledVal))))));
+    style->color.alpha = (int)(MS_MAX(0,(MS_MIN(255,(style->mincolor.alpha + ((style->maxcolor.alpha - style->mincolor.alpha) * scaledVal))))));
+  } else {
+    /* HSL */
+    assert(cs == MS_COLORSPACE_HSL);
+    if(fieldVal <= style->minvalue) style->color = style->mincolor;
+    else if(fieldVal >= style->maxvalue) style->color = style->maxcolor;
+    else {
+      double mh,ms,ml,Mh,Ms,Ml;
+      msRGBtoHSL(&style->mincolor,&mh,&ms,&ml);
+      msRGBtoHSL(&style->maxcolor,&Mh,&Ms,&Ml);
+      mh+=(Mh-mh)*scaledVal;
+      ms+=(Ms-ms)*scaledVal;
+      ml+=(Ml-ml)*scaledVal;
+      msHSLtoRGB(mh,ms,ml,&style->color);
+      style->color.alpha = style->mincolor.alpha + (style->maxcolor.alpha - style->mincolor.alpha)*scaledVal;
+    }
+  }
   /*( "msMapRange(): %i %i %i", style->color.red , style->color.green, style->color.blue);*/
 
 #if ALPHACOLOR_ENABLED

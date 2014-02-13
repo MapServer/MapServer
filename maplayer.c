@@ -70,40 +70,47 @@ void msLayerFreeItemInfo(layerObj *layer)
 
 int msLayerRestoreFromScaletokens(layerObj *layer)
 {
-  if(!layer->scaletokens) {
+  if(!layer->scaletokens || !layer->orig_st) {
     return MS_SUCCESS;
   }
-  if(layer->orig_data) {
+  if(layer->orig_st->data) {
     msFree(layer->data);
-    layer->data = layer->orig_data;
-    layer->orig_data = NULL;
+    layer->data = layer->orig_st->data;
   }
-  if(layer->orig_tileindex) {
+  if(layer->orig_st->tileindex) {
     msFree(layer->tileindex);
-    layer->tileindex = layer->orig_tileindex;
-    layer->orig_tileindex = NULL;
+    layer->tileindex = layer->orig_st->tileindex;
   }
-  if(layer->orig_tileitem) {
+  if(layer->orig_st->tileitem) {
     msFree(layer->tileitem);
-    layer->tileitem = layer->orig_tileitem;
-    layer->orig_tileitem = NULL;
+    layer->tileitem = layer->orig_st->tileitem;
   }
-  if(layer->orig_filter) {
-    msLoadExpressionString(&(layer->filter),layer->orig_filter);
-    msFree(layer->orig_filter);
-    layer->orig_filter = NULL;
+  if(layer->orig_st->filter) {
+    msLoadExpressionString(&(layer->filter),layer->orig_st->filter);
+    msFree(layer->orig_st->filter);
   }
-  if(layer->orig_filteritem) {
+  if(layer->orig_st->filteritem) {
     msFree(layer->filteritem);
-    layer->filteritem = layer->orig_filteritem;
-    layer->orig_filteritem = NULL;
+    layer->filteritem = layer->orig_st->filteritem;
   }
+  if(layer->orig_st->n_processing) {
+    int i;
+    for(i=0;i<layer->orig_st->n_processing;i++) {
+      msFree(layer->processing[layer->orig_st->processing_idx[i]]);
+      layer->processing[layer->orig_st->processing_idx[i]] = layer->orig_st->processing[i];
+    }
+    msFree(layer->orig_st->processing);
+    msFree(layer->orig_st->processing_idx);
+  }
+  msFree(layer->orig_st);
+  layer->orig_st = NULL;
   return MS_SUCCESS; 
 }
 
+#define check_st_alloc(l) if(!l->orig_st) l->orig_st=msSmallCalloc(1,sizeof(originalScaleTokenStrings));
 int msLayerApplyScaletokens(layerObj *layer, double scale)
 {
-  int i;
+  int i,p;
   if(!layer->scaletokens) {
     return MS_SUCCESS;
   }
@@ -129,7 +136,8 @@ int msLayerApplyScaletokens(layerObj *layer, double scale)
         msDebug("replacing scaletoken (%s) with (%s) in layer->data (%s) for scale=%f\n",
                 st->name,ste->value,layer->name,scale);
       }
-      layer->orig_data = layer->data;
+      check_st_alloc(layer);
+      layer->orig_st->data = layer->data;
       layer->data = msStrdup(layer->data);
       layer->data = msReplaceSubstring(layer->data,st->name,ste->value);
     }
@@ -138,7 +146,8 @@ int msLayerApplyScaletokens(layerObj *layer, double scale)
         msDebug("replacing scaletoken (%s) with (%s) in layer->tileindex (%s) for scale=%f\n",
                 st->name,ste->value,layer->name,scale);
       }
-      layer->orig_tileindex = layer->tileindex;
+      check_st_alloc(layer);
+      layer->orig_st->tileindex = layer->tileindex;
       layer->tileindex = msStrdup(layer->tileindex);
       layer->tileindex = msReplaceSubstring(layer->tileindex,st->name,ste->value);
     }
@@ -147,7 +156,8 @@ int msLayerApplyScaletokens(layerObj *layer, double scale)
         msDebug("replacing scaletoken (%s) with (%s) in layer->tileitem (%s) for scale=%f\n",
                 st->name,ste->value,layer->name,scale);
       }
-      layer->orig_tileitem = layer->tileitem;
+      check_st_alloc(layer);
+      layer->orig_st->tileitem = layer->tileitem;
       layer->tileitem = msStrdup(layer->tileitem);
       layer->tileitem = msReplaceSubstring(layer->tileitem,st->name,ste->value);
     }
@@ -156,7 +166,8 @@ int msLayerApplyScaletokens(layerObj *layer, double scale)
         msDebug("replacing scaletoken (%s) with (%s) in layer->filteritem (%s) for scale=%f\n",
                 st->name,ste->value,layer->name,scale);
       }
-      layer->orig_filteritem = layer->filteritem;
+      check_st_alloc(layer);
+      layer->orig_st->filteritem = layer->filteritem;
       layer->filteritem = msStrdup(layer->filteritem);
       layer->filteritem = msReplaceSubstring(layer->filteritem,st->name,ste->value);
     }
@@ -166,12 +177,26 @@ int msLayerApplyScaletokens(layerObj *layer, double scale)
         msDebug("replacing scaletoken (%s) with (%s) in layer->filter (%s) for scale=%f\n",
                 st->name,ste->value,layer->name,scale);
       }
-      layer->orig_filter = msStrdup(layer->filter.string);
+      check_st_alloc(layer);
+      layer->orig_st->filter = msStrdup(layer->filter.string);
       tmpval = msStrdup(layer->filter.string);
       tmpval = msReplaceSubstring(tmpval,st->name,ste->value);
       if(msLoadExpressionString(&(layer->filter),tmpval) == -1) return(MS_FAILURE); /* loadExpression() cleans up previously allocated expression */
       msFree(tmpval);
     }
+    for(p=0;p<layer->numprocessing;p++) {
+      if(strstr(layer->processing[p],st->name)) {
+        check_st_alloc(layer);
+        layer->orig_st->n_processing++;
+        layer->orig_st->processing = msSmallRealloc(layer->orig_st->processing, layer->orig_st->n_processing * sizeof(char*));
+        layer->orig_st->processing_idx = msSmallRealloc(layer->orig_st->processing_idx, layer->orig_st->n_processing * sizeof(int));
+        layer->orig_st->processing[layer->orig_st->n_processing-1] = layer->processing[p];
+        layer->orig_st->processing_idx[layer->orig_st->n_processing-1] = p;
+        layer->processing[p] = msStrdup(layer->processing[p]);
+        layer->processing[p] = msReplaceSubstring(layer->processing[p],st->name,ste->value);
+      }
+    }
+
   }
   return MS_SUCCESS;
 }
@@ -634,7 +659,7 @@ parse_error:
 ** examining the contents of the various xxxxitem parameters and expressions. That list is
 ** then used to set the iteminfo variable.
 */
-int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
+int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
 {
   int i, j, k, l, rv;
   int nt=0;

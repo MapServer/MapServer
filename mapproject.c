@@ -304,10 +304,10 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
 #define MAXEXTENT 20037508.34
 #define M_PIby360 .0087266462599716479
 #define MAXEXTENTby180 111319.4907777777777777777
-  if(in->wellknownprojection == wkp_lonlat && out->wellknownprojection == wkp_gmerc) {
-    for( i = line->numpoints-1; i >= 0; i-- ) {
 #define p_x line->point[i].x
 #define p_y line->point[i].y
+  if(in->wellknownprojection == wkp_lonlat && out->wellknownprojection == wkp_gmerc) {
+    for( i = line->numpoints-1; i >= 0; i-- ) {
       p_x *= MAXEXTENTby180;
       p_y = log(tan((90 + p_y) * M_PIby360)) * MS_RAD_TO_DEG;
       p_y *= MAXEXTENTby180;
@@ -315,11 +315,24 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
       if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
       if (p_y > MAXEXTENT) p_y = MAXEXTENT;
       if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
-#undef p_x
-#undef p_y
     }
     return MS_SUCCESS;
   }
+  if(in->wellknownprojection == wkp_gmerc && out->wellknownprojection == wkp_lonlat) {
+    for( i = line->numpoints-1; i >= 0; i-- ) {
+      if (p_x > MAXEXTENT) p_x = MAXEXTENT;
+      else if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
+      if (p_y > MAXEXTENT) p_y = MAXEXTENT;
+      else if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
+      p_x = (p_x / MAXEXTENT) * 180;
+      p_y = (p_y / MAXEXTENT) * 180;
+      p_y = MS_RAD_TO_DEG * (2 * atan(exp(p_y * MS_DEG_TO_RAD)) - MS_PI2);
+    }
+    msComputeBounds( shape ); /* fixes bug 1586 */
+    return MS_SUCCESS;
+  }
+#undef p_x
+#undef p_y
 #endif
 
 
@@ -491,25 +504,40 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 #ifdef USE_PROJ_FASTPATHS
   int j;
 
+#define p_x shape->line[i].point[j].x
+#define p_y shape->line[i].point[j].y
   if(in->wellknownprojection == wkp_lonlat && out->wellknownprojection == wkp_gmerc) {
     for( i = shape->numlines-1; i >= 0; i-- ) {
       for( j = shape->line[i].numpoints-1; j >= 0; j-- ) {
-#define p_x shape->line[i].point[j].x
-#define p_y shape->line[i].point[j].y
         p_x *= MAXEXTENTby180;
         p_y = log(tan((90 + p_y) * M_PIby360)) * MS_RAD_TO_DEG;
         p_y *= MAXEXTENTby180;
         if (p_x > MAXEXTENT) p_x = MAXEXTENT;
-        if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
+        else if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
         if (p_y > MAXEXTENT) p_y = MAXEXTENT;
-        if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
-#undef p_x
-#undef p_y
+        else if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
       }
     }
     msComputeBounds( shape ); /* fixes bug 1586 */
     return MS_SUCCESS;
   }
+  if(in->wellknownprojection == wkp_gmerc && out->wellknownprojection == wkp_lonlat) {
+    for( i = shape->numlines-1; i >= 0; i-- ) {
+      for( j = shape->line[i].numpoints-1; j >= 0; j-- ) {
+        if (p_x > MAXEXTENT) p_x = MAXEXTENT;
+        else if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
+        if (p_y > MAXEXTENT) p_y = MAXEXTENT;
+        else if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
+        p_x = (p_x / MAXEXTENT) * 180;
+        p_y = (p_y / MAXEXTENT) * 180;
+        p_y = MS_RAD_TO_DEG * (2 * atan(exp(p_y * MS_DEG_TO_RAD)) - MS_PI2);
+      }
+    }
+    msComputeBounds( shape ); /* fixes bug 1586 */
+    return MS_SUCCESS;
+  }
+#undef p_x
+#undef p_y
 #endif
 
 

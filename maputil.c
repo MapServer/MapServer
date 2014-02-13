@@ -2084,6 +2084,51 @@ void msAlphaBlendPM( unsigned char red_src, unsigned char green_src,
   }
 }
 
+void msRGBtoHSL(colorObj *rgb, double *h, double *s, double *l) {
+  double r = rgb->red/255.0, g = rgb->green/255.0, b = rgb->blue/255.0;
+  double maxv = MS_MAX(MS_MAX(r, g), b), minv = MS_MIN(MS_MIN(r, g), b);
+  double d = maxv - minv;
+  
+  *h = 0, *s = 0;
+  *l = (maxv + minv) / 2;
+  
+  if (maxv != minv)
+  {
+    *s = *l > 0.5 ? d / (2 - maxv - minv) : d / (maxv + minv);
+    if (maxv == r) { *h = (g - b) / d + (g < b ? 6 : 0); }
+    else if (maxv == g) { *h = (b - r) / d + 2; }
+    else if (maxv == b) { *h = (r - g) / d + 4; }
+    *h /= 6;
+  }
+}
+
+static double hue_to_rgb(double p, double q, double t) {
+  if(t < 0) t += 1;
+  if(t > 1) t -= 1;
+  if(t < 0.1666666666666666) return p + (q - p) * 6 * t;
+  if(t < 0.5) return q;
+  if(t < 0.6666666666666666) return p + (q - p) * (0.666666666666 - t) * 6;
+  return p;
+}
+
+void msHSLtoRGB(double h, double s, double l, colorObj *rgb) {
+  double r, g, b;
+  
+  if(s == 0){
+    r = g = b = l;
+  } else {
+    
+    double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    double p = 2 * l - q;
+    r = hue_to_rgb(p, q, h + 0.33333333333333333);
+    g = hue_to_rgb(p, q, h);
+    b = hue_to_rgb(p, q, h - 0.33333333333333333);
+  }
+  rgb->red = r * 255;
+  rgb->green = g * 255;
+  rgb->blue = b * 255;
+}
+
 /*
  RFC 24: check if the parent pointer is NULL and raise an error otherwise
 */
