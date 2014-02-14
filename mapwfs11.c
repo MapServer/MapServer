@@ -156,10 +156,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   value = msOWSLookupMetadata(&(lp->metadata), "FO", "keywordlist");
 
   if (value) {
-    if (encoding)
-      encoded = msGetEncodedString(value, encoding);
-    else
-      encoded = msGetEncodedString(value, "ISO-8859-1");
+    encoded = msGetEncodedString(value, encoding);
 
     msLibXml2GenerateList(
       xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL),

@@ -271,7 +271,6 @@ int msCopyLeader(labelLeaderObj *dst, labelLeaderObj *src)
       if( freeStyle(dst->styles[i]) == MS_SUCCESS ) msFree(dst->styles[i]);
     }
   }
-  msFree(dst->styles);
   dst->numstyles = 0;
 
   for (i = 0; i < src->numstyles; i++) {
@@ -366,7 +365,6 @@ int msCopyLabel(labelObj *dst, labelObj *src)
       if( freeStyle(dst->styles[i]) == MS_SUCCESS ) msFree(dst->styles[i]);
     }
   }
-  msFree(dst->styles);
   dst->numstyles = 0;
 
   for (i = 0; i < src->numstyles; i++) {
@@ -524,7 +522,6 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
       }
     }
   }
-  msFree(dst->styles);
   dst->numstyles = 0;
 
   for (i = 0; i < src->numstyles; i++) {

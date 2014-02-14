@@ -63,7 +63,7 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer);
 
 int msSLDParseGraphicFillOrStroke(CPLXMLNode *psGraphicFill,
                                   char *pszDashValue,
-                                  styleObj *psStyle, mapObj *map, int bPointLayer);
+                                  styleObj *psStyle, mapObj *map);
 int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle,
                               mapObj *map);
 

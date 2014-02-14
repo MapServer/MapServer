@@ -66,8 +66,7 @@ int FLTIsNumeric(char *pszValue)
       return MS_TRUE;
 #else
     char * p;
-    strtod (pszValue, &p);
-    if (*p == '\0') return MS_TRUE;
+    if (strtod(pszValue, &p) != 0  || *p == '\0') return MS_TRUE;
 #endif
   }
 
@@ -210,8 +209,8 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
           pszTmpExpression = NULL;
         }
         pszExpression = msStringConcatenate(pszExpression, ")");
-        msFreeCharArray(paszElements, numelements);
       }
+      msFreeCharArray(paszElements, numelements);
     } else {
       /*range(s)*/
       paszElements = msStringSplit (value, ',', &numelements);
@@ -286,14 +285,15 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
             msFree(pszTmpExpression);
             pszTmpExpression = NULL;
 
-            msFreeCharArray(papszRangeElements, nrangeelements);
           }
+          msFreeCharArray(papszRangeElements, nrangeelements);
         }
         pszExpression = msStringConcatenate(pszExpression, ")");
-        msFreeCharArray(paszElements, numelements);
       }
+      msFreeCharArray(paszElements, numelements);
     }
   }
+  msFree(pszTmpExpression);
   return pszExpression;
 }
 
@@ -430,11 +430,11 @@ int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
   CPLXMLNode *psCoordinates = NULL;
   char *pszTmpCoord = NULL;
   char **szCoords = NULL;
-  int nCoords = 0;
+  int nCoords = 0, status = MS_FALSE;
 
 
   if (!psNode || !psShp)
-    return MS_FALSE;
+    return status;
 
 
   if( strcasecmp(psNode->pszValue,"PointType") == 0
@@ -459,12 +459,13 @@ int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
         msAddLine(psShp, &line);
         free(line.point);
 
-        return MS_TRUE;
+        status = MS_TRUE;
       }
+      msFreeCharArray(szCoords, nCoords);
     }
   }
 
-  return MS_FALSE;
+  return status;
 }
 
 
@@ -813,8 +814,10 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
   /* -------------------------------------------------------------------- */
   /*      validate the node tree to make sure that all the nodes are valid.*/
   /* -------------------------------------------------------------------- */
-  if (!FLTValidFilterNode(psFilterNode))
+  if (!FLTValidFilterNode(psFilterNode)) {
+    FLTFreeFilterEncodingNode(psFilterNode);
     return NULL;
+  }
 
 
   return psFilterNode;
@@ -1138,6 +1141,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           ((rectObj *)psFilterNode->psRightNode->pOther)->miny = sBox.miny;
           ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = sBox.maxx;
           ((rectObj *)psFilterNode->psRightNode->pOther)->maxy =  sBox.maxy;
+        } else {
+          msFree(pszSRS);
         }
       } else if (strcasecmp(psXMLNode->pszValue, "DWithin") == 0 ||
                  strcasecmp(psXMLNode->pszValue, "Beyond") == 0)
@@ -1545,10 +1550,6 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     /* -------------------------------------------------------------------- */
     else if (FLTIsFeatureIdFilterType(psXMLNode->pszValue)) {
       psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
-      pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "fid", NULL);
-      /*for FE 1.1.0 GmlObjectId */
-      if (pszFeatureId == NULL)
-        pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "id", NULL);
       pszFeatureIdList = NULL;
 
       psFeatureIdNode = psXMLNode;
@@ -1915,11 +1916,10 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
               else if (strcasecmp(szUnit,"px") == 0)
                 *pnUnit = MS_PIXELS;
 
-              msFreeCharArray(tokens, nTokens);
             }
           }
-        }
-
+        } 
+        msFreeCharArray(tokens, nTokens);
       }
 
       return (shapeObj *)psNode->pOther;
@@ -2224,8 +2224,10 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 
     nTmp = strlen(pszBuffer);
     pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, lp);
-    if (!pszTmp)
+    if (!pszTmp) {
+      free(pszBuffer);
       return NULL;
+    }
 
     pszBuffer = (char *)realloc(pszBuffer,
                                 sizeof(char) * (strlen(pszTmp) + nTmp +3));
@@ -2333,8 +2335,10 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
     free(pszTmp);
 
     pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode, lp);
-    if (!pszTmp)
+    if (!pszTmp) {
+      msFree(pszBuffer);
       return NULL;
+    }
 
     nTmp = strlen(pszBuffer);
     pszBuffer = (char *)realloc(pszBuffer,
@@ -2615,8 +2619,10 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
   /*      Get the bounds value which are stored like boundmin;boundmax    */
   /* -------------------------------------------------------------------- */
   aszBounds = msStringSplit(psFilterNode->psRightNode->pszValue, ';', &nBounds);
-  if (nBounds != 2)
+  if (nBounds != 2) {
+    msFreeCharArray(aszBounds, nBounds);
     return NULL;
+  }
   /* -------------------------------------------------------------------- */
   /*      check if the value is a numeric value or alphanumeric. If it    */
   /*      is alphanumeric, add quotes around attribute and values.        */
@@ -2682,6 +2688,7 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
   /*closing paranthesis*/
   strlcat(szBuffer, ")", bufferSize);
 
+  msFreeCharArray(aszBounds, nBounds);
 
   return msStrdup(szBuffer);
 }
@@ -3247,11 +3254,10 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
           if (tokens && n >= 2) {
             psBbox->maxx = atof(tokens[0]);
             psBbox->maxy = atof(tokens[1]);
-            msFreeCharArray(tokens, n);
-
             bValid = 1;
           }
         }
+        msFreeCharArray(tokens, n);
       }
     }
   }
@@ -3302,8 +3308,7 @@ static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
           msFree(psFilterNode->pszValue);
           psFilterNode->pszValue = msStrdup(tokens[1]);
         }
-        if (tokens && n>0)
-          msFreeCharArray(tokens, n);
+        msFreeCharArray(tokens, n);
       }
     }
     if (psFilterNode->psLeftNode)

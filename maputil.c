@@ -875,8 +875,11 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 
         if(renderer->supports_pixel_buffer) {
           rasterBufferObj data;
-          if(renderer->getRasterBufferHandle(img,&data) != MS_SUCCESS)
+          if(renderer->getRasterBufferHandle(img,&data) != MS_SUCCESS) {
+            if( stream != stdout )
+              fclose(stream);
             return MS_FAILURE;
+          }
 
           nReturnVal = msSaveRasterBuffer(map,&data,stream,img->format );
         } else {
@@ -1331,6 +1334,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
   int         nCount = 0;
   int         i = 0, j = 0;
 
+  assert(map);
   *numTok = 0;
 
   if (!map->layerorder) {
@@ -1343,7 +1347,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
       map->layerorder[i] = i;
   }
 
-  if (map != NULL && map->numlayers > 0) {
+  if (map->numlayers > 0) {
     nCount = map->numlayers;
     papszGroups = (char **)msSmallMalloc(sizeof(char *)*nCount);
 
@@ -2121,16 +2125,10 @@ int msCheckParentPointer(void* p, char *objname)
   char* msg=NULL;
   if (p == NULL) {
     if(objname != NULL) {
-      msg=malloc( sizeof(char) * ( ( strlen(fmt)+strlen(objname) ) ) );
-      if(msg == NULL) {
-        msg="A required parent object is null";
-      } else {
-        sprintf(msg, "The %s parent object is null", objname);
-      }
+      msSetError(MS_NULLPARENTERR, "The %s parent object is null", "msCheckParentPointer()", msg);
     } else {
-      msg="A required parent object is null";
+      msSetError(MS_NULLPARENTERR, "The parent object is null", "msCheckParentPointer()");
     }
-    msSetError(MS_NULLPARENTERR, "%s", "", msg);
     return MS_FAILURE;
   }
   return MS_SUCCESS;

@@ -426,12 +426,14 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
 
           pszTmp = NULL;
           for(j=0; j<psShape->line[i].numpoints; j++) {
-            pszTmp = msStringConcatenate(pszTmp,
-                                         msDoubleToString(psShape->line[i].point[j].x, MS_TRUE));
+            char *doubleTmp = msDoubleToString(psShape->line[i].point[j].x, MS_TRUE);
+            pszTmp = msStringConcatenate(pszTmp, doubleTmp);
             pszTmp = msStringConcatenate(pszTmp, ",");
-            pszTmp = msStringConcatenate(pszTmp,
-                                         msDoubleToString(psShape->line[i].point[j].y, MS_TRUE));
-            pszTmp = msStringConcatenate(pszTmp, " ");
+            free(doubleTmp);
+            doubleTmp = msDoubleToString(psShape->line[i].point[j].y, MS_TRUE);
+            pszTmp = msStringConcatenate(pszTmp, doubleTmp);
+            pszTmp = msStringConcatenate(pszTmp, ",");
+            free(doubleTmp);
           }
           psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
           xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
@@ -486,15 +488,15 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
 
           pszTmp = NULL;
           for(j=0; j<psShape->line[i].numpoints; j++) {
-
-            pszTmp =
-              msStringConcatenate(pszTmp,
-                                  msDoubleToString(psShape->line[i].point[j].x, MS_TRUE));
+            char *doubleTmp;
+            doubleTmp = msDoubleToString(psShape->line[i].point[j].x, MS_TRUE);
+            pszTmp = msStringConcatenate(pszTmp, doubleTmp);
             pszTmp = msStringConcatenate(pszTmp, ",");
-            pszTmp =
-              msStringConcatenate(pszTmp,
-                                  msDoubleToString(psShape->line[i].point[j].y, MS_TRUE));
+            free(doubleTmp);
+            doubleTmp = msDoubleToString(psShape->line[i].point[j].y, MS_TRUE);
+            pszTmp = msStringConcatenate(pszTmp, doubleTmp);
             pszTmp = msStringConcatenate(pszTmp, " ");
+            free(doubleTmp);
           }
           psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
           xmlSetNs(psNode,xmlNewNs(psNode,
@@ -851,9 +853,8 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
       if (lp->index != lpfirst->index)
         msLayerClose(lpfirst);
     }
+    msFreeShape(&sShape);
   }
-
-  msFreeShape(&sShape);
 }
 
 /************************************************************************/
@@ -2711,8 +2712,11 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
   int returnvalue = MS_DONE;
   sosParamsObj *paramsObj = (sosParamsObj *)calloc(1, sizeof(sosParamsObj));
 
-  if (msSOSParseRequest(map, req, paramsObj) == MS_FAILURE)
+  if (msSOSParseRequest(map, req, paramsObj) == MS_FAILURE) {
+    msSOSFreeParamsObj(paramsObj);
+    free(paramsObj);
     return MS_FAILURE;
+  }
 
   /* SERVICE must be specified and be SOS */
   if (paramsObj->pszService && strcasecmp(paramsObj->pszService, "SOS") == 0) { /* this is an SOS request */
@@ -2782,8 +2786,11 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
       paramsObj = NULL;
       return msSOSException(map, "request", "InvalidParameterValue");
     }
-  } else
+  } else {
+    msSOSFreeParamsObj(paramsObj);
+    free(paramsObj);
     return MS_DONE;  /* Not an SOS request */
+  }
 #else
   msSetError(MS_SOSERR, "SOS support is not available.", "msSOSDispatch()");
   return(MS_FAILURE);
@@ -3014,7 +3021,7 @@ int msSOSParseRequest(mapObj *map, cgiRequestObj *request, sosParamsObj *sospara
     psXPathTmp = msLibXml2GetXPath(doc, context, (xmlChar *)"/sos:GetObservation/sos:result/child::*");
 
     if (psXPathTmp) {
-      sosparams->pszResult = msStrdup(msLibXml2GetXPathTree(doc, psXPathTmp));
+      sosparams->pszResult = msLibXml2GetXPathTree(doc, psXPathTmp);
       pszTmp = msStringConcatenate(pszTmp, "<ogc:Filter>");
       pszTmp = msStringConcatenate(pszTmp, sosparams->pszResult);
       pszTmp = msStringConcatenate(pszTmp, "</ogc:Filter>");

@@ -373,6 +373,8 @@ int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
                                      "proxy_password")) != NULL) {
     pszProxyPassword = msDecryptStringTokens(map, pszTmp);
     if (pszProxyPassword == NULL) {
+      msFree(pszProxyHost);
+      msFree(pszProxyUsername);
       return(MS_FAILURE);  /* An error should already have been produced */
     }
   }
@@ -405,6 +407,10 @@ int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
                                      "auth_password")) != NULL) {
     pszHttpAuthPassword = msDecryptStringTokens(map, pszTmp);
     if (pszHttpAuthPassword == NULL) {
+      msFree(pszHttpAuthUsername);
+      msFree(pszProxyHost);
+      msFree(pszProxyUsername);
+      msFree(pszProxyPassword);
       return(MS_FAILURE);  /* An error should already have been produced */
     }
   }

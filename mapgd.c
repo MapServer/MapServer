@@ -582,7 +582,7 @@ symbolObj* rotateVectorSymbolPoints(symbolObj *symbol, double angle_rad)
   /* center at 0,0 and rotate; then move back */
   for( i=0; i < symbol->numpoints; i++) {
     /* don't rotate PENUP commands (TODO: should use a constant here) */
-    if ((symbol->points[i].x == -99.0) && (symbol->points[i].x == -99.0) ) {
+    if ((symbol->points[i].x == -99.0) && (symbol->points[i].y == -99.0) ) {
       newSymbol->points[i].x = -99.0;
       newSymbol->points[i].y = -99.0;
       continue;
@@ -598,7 +598,7 @@ symbolObj* rotateVectorSymbolPoints(symbolObj *symbol, double angle_rad)
     xcor = minx*-1.0; /* symbols always start at 0,0 so get the shift vector */
     ycor = miny*-1.0;
     for( i=0; i < newSymbol->numpoints; i++) {
-      if ((newSymbol->points[i].x == -99.0) && (newSymbol->points[i].x == -99.0))
+      if ((newSymbol->points[i].x == -99.0) && (newSymbol->points[i].y == -99.0))
         continue;
       newSymbol->points[i].x = newSymbol->points[i].x + xcor;
       newSymbol->points[i].y = newSymbol->points[i].y + ycor;
@@ -651,7 +651,7 @@ int renderVectorSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, s
 
     k = 0; /* point counter */
     for(j=0; j < symbol->numpoints; j++) {
-      if((symbol->points[j].x == -99) && (symbol->points[j].x == -99)) { /* new polygon (PENUP) */
+      if((symbol->points[j].x == -99) && (symbol->points[j].y == -99)) { /* new polygon (PENUP) */
         if(k>2) {
           if(fc >= 0)
             gdImageFilledPolygon(ip, mPoints, k, fc);
@@ -681,7 +681,7 @@ int renderVectorSymbolGD(imageObj *img, double x, double y, symbolObj *symbol, s
     gdImageSetThickness(ip, style->outlinewidth);
 
     for(j=1; j < symbol->numpoints; j++) { /* step through the marker */
-      if((symbol->points[j].x != -99) || (symbol->points[j].x != -99)) {
+      if((symbol->points[j].x != -99) || (symbol->points[j].y != -99)) {
         if((symbol->points[j-1].x == -99) && (symbol->points[j-1].y == -99)) { /* Last point was PENUP, now a new beginning */
           oldpnt.x = MS_NINT(style->scale*symbol->points[j].x + x);
           oldpnt.y = MS_NINT(style->scale*symbol->points[j].y + y);
@@ -1010,7 +1010,7 @@ int renderBitmapGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style
   }
 
 
-  if(*lines != text)
+  if(lines != &text)
     msFreeCharArray(lines, numlines);
   return MS_SUCCESS;
 }

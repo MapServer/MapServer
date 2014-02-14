@@ -334,7 +334,7 @@ int msAddLabelGroup(mapObj *map, int layerindex, int classindex, shapeObj *shape
     }
   }
 
-  if (layerPtr->type == MS_LAYER_ANNOTATION && (cachePtr->numlabels > 1 || classPtr->leader.maxdistance)) {
+  if (layerPtr->type == MS_LAYER_ANNOTATION && (classPtr->numlabels > 1 || classPtr->leader.maxdistance)) {
     msSetError(MS_MISCERR, "Multiple Labels and/or LEADERs are not supported with annotation layers", "msAddLabelGroup()");
     return MS_FAILURE;
   }
@@ -1025,7 +1025,7 @@ int msGetTruetypeTextBBox(rendererVTableObj *renderer, char* fontstring, fontSet
   char *lookedUpFonts[MS_MAX_LABEL_FONTS];
   int numfonts;
   if(!renderer) {
-    outputFormatObj *format = msCreateDefaultOutputFormat(NULL,"AGG/PNG","tmp");
+    format = msCreateDefaultOutputFormat(NULL,"AGG/PNG","tmp");
     if(!format) {
       goto tt_cleanup;
     }
@@ -1157,6 +1157,11 @@ int msGetLabelSize(mapObj *map, labelObj *label, char *string, double size, rect
 
   if (map)
     renderer =MS_MAP_RENDERER(map);
+
+  if(!renderer) {
+    msSetError(MS_MISCERR, "cannot compute label size without valid map and renderer", "msGetLabelSize()");
+    return MS_FAILURE;
+  }
 
   if(label->type == MS_TRUETYPE) {
     if(!label->font) {

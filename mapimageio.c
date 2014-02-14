@@ -741,17 +741,21 @@ int readPNG(char *path, rasterBufferObj *rb)
 
   /* could pass pointers to user-defined error handlers instead of NULLs: */
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  if (!png_ptr)
+  if (!png_ptr) {
+    fclose(stream);
     return MS_FAILURE;   /* out of memory */
+  }
 
   info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     png_destroy_read_struct(&png_ptr, NULL, NULL);
+    fclose(stream);
     return MS_FAILURE;   /* out of memory */
   }
 
   if(setjmp(png_jmpbuf(png_ptr))) {
     png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
+    fclose(stream);
     return MS_FAILURE;
   }
 
@@ -1120,7 +1124,7 @@ int readGIF(char *path, rasterBufferObj *rb)
   rb->height = image->SHeight;
   rb->data.rgba.row_step = rb->width * 4;
   rb->data.rgba.pixel_step = 4;
-  rb->data.rgba.pixels = (unsigned char*)malloc(rb->width*rb->height*4*sizeof(unsigned char*));
+  rb->data.rgba.pixels = (unsigned char*)malloc(rb->width*rb->height*4*sizeof(unsigned char));
   b = rb->data.rgba.b = &rb->data.rgba.pixels[0];
   g = rb->data.rgba.g = &rb->data.rgba.pixels[1];
   r = rb->data.rgba.r = &rb->data.rgba.pixels[2];

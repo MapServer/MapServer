@@ -753,6 +753,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   i = fwrite( pabyBuf, 8, 1, disktree->fp );
   if( !i ) {
     fprintf (stderr, "unable to write to index file ... exiting \n");
+    msSHPDiskTreeClose( disktree );
     return (MS_FALSE);
   }
 

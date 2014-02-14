@@ -218,7 +218,6 @@ public:
   }
 private:
   shapeObj *s;
-  double ox,oy;
   lineObj *m_line, /*pointer to current line*/
           *m_lend; /*pointer to after last line of the shape*/
   pointObj *m_point, /*pointer to current vertex*/
@@ -562,8 +561,8 @@ int agg2RenderBitmapGlyphs(imageObj *img, double x, double y, labelStyleObj *sty
   glyph_gen glyph(0);
   mapserver::renderer_raster_htext_solid<renderer_base, glyph_gen> rt(r->m_renderer_base, glyph);
   glyph.font(rasterfonts[size]);
-  int numlines=0;
-  char **lines;
+  int numlines=1;
+  char **lines = NULL;
   /*masking out the out-of-range character codes*/
   int len;
   int cc_start = rasterfonts[size][2];
@@ -571,34 +570,31 @@ int agg2RenderBitmapGlyphs(imageObj *img, double x, double y, labelStyleObj *sty
   if(msCountChars(text,'\n')) {
     if((lines = msStringSplit((const char*)text, '\n', &(numlines))) == NULL)
       return(-1);
-  } else {
-    lines = &text;
-    numlines = 1;
   }
   y -= glyph.base_line();
   for(int n=0; n<numlines; n++) {
-    len = strlen(lines[n]);
+    if(lines) text = lines[n];
+    len = strlen(text);
     for (int i = 0; i < len; i++)
-      if (lines[n][i] < cc_start || lines[n][i] > cc_end)
-        lines[n][i] = '.';
+      if (text[i] < cc_start || text[i] > cc_end)
+        text[i] = '.';
     if(style->outlinewidth > 0) {
       rt.color(aggColor(style->outlinecolor));
       for(int i=-1; i<=1; i++) {
         for(int j=-1; j<=1; j++) {
           if(i||j) {
-            rt.render_text(x+i, y+j, lines[n], true);
+            rt.render_text(x+i, y+j, text, true);
           }
         }
       }
     }
     assert(style->color);
     rt.color(aggColor(style->color));
-    rt.render_text(x, y, lines[n], true);
+    rt.render_text(x, y, text, true);
     y += glyph.height();
   }
-  if(*lines != text)
+  if(lines)
     msFreeCharArray(lines, numlines);
-  return MS_SUCCESS;
   return MS_SUCCESS;
 }
 
@@ -820,6 +816,10 @@ int agg2RenderTruetypeSymbol(imageObj *img, double x, double y,
 
   msUTF8ToUniChar(symbol->character, &unicode);
   const mapserver::glyph_cache* glyph = cache->m_fman.glyph(unicode);
+  if(!glyph || glyph->glyph_index == 0) {
+    msSetError(MS_TTFERR, "invalid/not-found glpyh index", "agg2RenderTruetypeSymbol()");
+    return MS_FAILURE;
+  }
   double ox = (glyph->bounds.x1 + glyph->bounds.x2) / 2.;
   double oy = (glyph->bounds.y1 + glyph->bounds.y2) / 2.;
 
@@ -994,11 +994,6 @@ int agg2GetTruetypeTextBBox(rendererVTableObj *renderer, char **fonts, int numfo
   const mapserver::glyph_cache* glyph;
   string += msUTF8ToUniChar(string, &unicode);
 
-  if(curfontidx != 0) {
-    if(aggLoadFont(cache,fonts[0],size) == MS_FAILURE)
-      return MS_FAILURE;
-    curfontidx = 0;
-  }
   glyph = cache->m_fman.glyph(unicode);
   if(!glyph || glyph->glyph_index == 0) {
     int i;

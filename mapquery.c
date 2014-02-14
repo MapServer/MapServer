@@ -239,7 +239,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
     GET_LAYER(map, j)->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
     MS_CHECK_ALLOC(GET_LAYER(map, j)->resultcache, sizeof(resultCacheObj), MS_FAILURE);
 
-    if(1 != fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream)) { /* number of results */
+    if(1 != fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream) || (GET_LAYER(map, j)->resultcache->numresults < 0)) { /* number of results */
       msSetError(MS_MISCERR,"failed to read number of results from query file stream", "loadQueryResults()");
       free(GET_LAYER(map, j)->resultcache);
       GET_LAYER(map, j)->resultcache = NULL;
@@ -375,7 +375,7 @@ static int loadQueryParams(mapObj *map, FILE *stream)
 
           if(fscanf(stream, "%d\n", &numlines) != 1) goto parse_error;
           for(i=0; i<numlines; i++) {
-            if(fscanf(stream, "%d\n", &numpoints) != 1) goto parse_error;
+            if(fscanf(stream, "%d\n", &numpoints) != 1 || numpoints<0) goto parse_error;
 
             line.numpoints = numpoints;
             line.point = (pointObj *) msSmallMalloc(line.numpoints*sizeof(pointObj));
@@ -1889,7 +1889,6 @@ int msQueryByShape(mapObj *map)
     initResultCache( lp->resultcache);
 
     nclasses = 0;
-    classgroup = NULL;
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
@@ -2017,9 +2016,14 @@ int msQueryByShape(mapObj *map)
       }
     } /* next shape */
 
-    if(status != MS_DONE) return(MS_FAILURE);
+    if(status != MS_DONE) {
+      free(classgroup);
+      return(MS_FAILURE);
+    }
 
     if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+    free(classgroup);
+    classgroup = NULL;
   } /* next layer */
 
   /* was anything found? */

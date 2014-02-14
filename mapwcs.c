@@ -1641,8 +1641,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     char *map_original_srs = msGetProjectionString(&(map->projection));
     if (msLoadProjectionString(&(lp->projection), map_original_srs) != 0) {
       msSetError( MS_WCSERR, "Error when setting map projection to a layer with no projection", "msWCSGetCoverage()" );
+      free(map_original_srs);
       return msWCSException(map, NULL, NULL, params->version);
     }
+    free(map_original_srs);
   }
 
   /* we need the coverage metadata, since things like numbands may not be available otherwise */
@@ -1927,17 +1929,6 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
   free( bandlist );
 
-  /* create the image object  */
-  if(!map->outputformat) {
-    msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
-    return msWCSException(map, NULL, NULL, params->version );
-  } else if( MS_RENDERER_RAWDATA(map->outputformat) || MS_RENDERER_PLUGIN(map->outputformat) ) {
-    image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, NULL);
-  } else {
-    msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
-    return msWCSException(map, NULL, NULL, params->version );
-  }
-  
   if(lp->mask) {
     int maskLayerIdx = msGetLayerIndex(map,lp->mask);
     layerObj *maskLayer;
@@ -1945,7 +1936,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     if(maskLayerIdx == -1) {
       msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
                  lp->name,lp->mask);
-      return (MS_FAILURE);
+      return msWCSException(map, NULL, NULL, params->version );
     }
     maskLayer = GET_LAYER(map, maskLayerIdx);
     if(!maskLayer->maskimage) {
@@ -1955,11 +1946,12 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
       altFormat =  msSelectOutputFormat(map, "png24");
       msInitializeRendererVTable(altFormat);
       /* TODO: check the png24 format hasn't been tampered with, i.e. it's agg */
-      maskLayer->maskimage= msImageCreate(image->width, image->height,altFormat,
-                                          image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
+      maskLayer->maskimage= msImageCreate(map->width, map->height, altFormat,
+                                          map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, NULL);
       if (!maskLayer->maskimage) {
         msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
-        return (MS_FAILURE);
+        msFree(origImageType);
+        return msWCSException(map, NULL, NULL, params->version );
       }
 
       /*
@@ -1977,7 +1969,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
       maskLayer->status = origstatus;
       maskLayer->labelcache = origlabelcache;
       if(retcode != MS_SUCCESS) {
-        return MS_FAILURE;
+        /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
+        msFree(map->imagetype);
+        map->imagetype = origImageType;
+        return msWCSException(map, NULL, NULL, params->version );
       }
       /*
        * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain
@@ -2000,6 +1995,17 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
       
     }
   }
+  
+  /* create the image object  */
+  if(!map->outputformat) {
+    msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
+    return msWCSException(map, NULL, NULL, params->version );
+  } else if( MS_RENDERER_RAWDATA(map->outputformat) || MS_RENDERER_PLUGIN(map->outputformat) ) {
+    image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, NULL);
+  } else {
+    msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
+    return msWCSException(map, NULL, NULL, params->version );
+  }
 
   if( image == NULL )
     return msWCSException(map, NULL, NULL, params->version );
@@ -2012,6 +2018,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     status = msDrawRasterLayerLow( map, lp, image, &rb );
   }
   if( status != MS_SUCCESS ) {
+    msFreeImage(image);
     return msWCSException(map, NULL, NULL, params->version );
   }
 
@@ -2122,7 +2129,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       wcs20ParamsObjPtr params_tmp = msWCSCreateParamsObj20();
       status = msWCSParseRequest20(map, request, ows_request, params_tmp);
       if (status == MS_FAILURE) {
-        msWCSFreeParamsObj20(params);
+        msWCSFreeParamsObj20(params_tmp);
         return msWCSException(map, "InvalidParameterValue",
                               "request", "2.0.1");
       }

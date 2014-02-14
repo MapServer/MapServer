@@ -105,7 +105,6 @@ void msFreeHashItems( hashTableObj *table )
             msFree(tp->data);
           }
         }
-        if (tp) free(tp);
       }
       free(table->items);
       table->items = NULL;

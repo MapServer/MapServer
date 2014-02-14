@@ -2330,9 +2330,7 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
     if( status != MS_SUCCESS )
       return status;
   } while( status == MS_SUCCESS );
-
-  return status;
-
+  return status; //make compiler happy. this is never reached however
 #else
   /* ------------------------------------------------------------------
    * OGR Support not included...

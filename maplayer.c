@@ -684,14 +684,14 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   /* always retrieve all items in some cases */
   if(layer->connectiontype == MS_INLINE || get_all == MS_TRUE ||
       (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
-    msLayerGetItems(layer);
+    rv = msLayerGetItems(layer);
     if(nt > 0) /* need to realloc the array to accept the possible new items*/
       layer->items = (char **)msSmallRealloc(layer->items, sizeof(char *)*(layer->numitems + nt));
   } else {
     rv = layer->vtable->LayerCreateItems(layer, nt);
-    if(rv != MS_SUCCESS)
-      return rv;
   }
+  if(rv != MS_SUCCESS)
+    return rv;
 
   /*
   ** build layer item list, compute item indexes for explicity item references (e.g. classitem) or item bindings
@@ -1089,100 +1089,39 @@ makeTimeFilter(layerObj *lp,
   }
 
   atimes = msStringSplit(timestring, ',', &numtimes);
-  if (atimes == NULL || numtimes < 1)
+  if (atimes == NULL || numtimes < 1) {
+    msFreeCharArray(atimes,numtimes);
     return MS_FALSE;
+  }
 
-  if (numtimes >= 1) {
-    if (&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
-      pszBuffer = msStringConcatenate(pszBuffer, "((");
-      pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
-      pszBuffer = msStringConcatenate(pszBuffer, ") and ");
-      /*this flag is used to indicate that the buffer contains only the
-        existing filter. It is set to 0 when time filter parts are
-        added to the buffer */
-      bOnlyExistingFilter = 1;
-    } else
-      freeExpression(&lp->filter);
+  if (&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
+    pszBuffer = msStringConcatenate(pszBuffer, "((");
+    pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
+    pszBuffer = msStringConcatenate(pszBuffer, ") and ");
+    /*this flag is used to indicate that the buffer contains only the
+      existing filter. It is set to 0 when time filter parts are
+      added to the buffer */
+    bOnlyExistingFilter = 1;
+  } else
+    freeExpression(&lp->filter);
 
-    /* check to see if we have ranges by parsing the first entry */
-    tokens = msStringSplit(atimes[0],  '/', &ntmp);
-    if (ntmp == 2) { /* ranges */
-      msFreeCharArray(tokens, ntmp);
-      for (i=0; i<numtimes; i++) {
-        tokens = msStringSplit(atimes[i],  '/', &ntmp);
-        if (ntmp == 2) {
-          if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
-            pszBuffer = msStringConcatenate(pszBuffer, " OR ");
-          else
-            pszBuffer = msStringConcatenate(pszBuffer, "(");
-
-          bOnlyExistingFilter = 0;
-
-          pszBuffer = msStringConcatenate(pszBuffer, "(");
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer,  "`");
-
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer, "[");
-          pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer, "]");
-
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer,  "`");
-
-          pszBuffer = msStringConcatenate(pszBuffer, " >= ");
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer,  "`");
-          else
-            pszBuffer = msStringConcatenate(pszBuffer,  "'");
-
-          pszBuffer = msStringConcatenate(pszBuffer, tokens[0]);
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer,  "`");
-          else
-            pszBuffer = msStringConcatenate(pszBuffer,  "'");
-          pszBuffer = msStringConcatenate(pszBuffer, " AND ");
-
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer,  "`");
-
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer, "[");
-          pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer, "]");
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer,  "`");
-
-          pszBuffer = msStringConcatenate(pszBuffer, " <= ");
-
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer,  "`");
-          else
-            pszBuffer = msStringConcatenate(pszBuffer,  "'");
-          pszBuffer = msStringConcatenate(pszBuffer, tokens[1]);
-          if (addtimebacktics)
-            pszBuffer = msStringConcatenate(pszBuffer,  "`");
-          else
-            pszBuffer = msStringConcatenate(pszBuffer,  "'");
-          pszBuffer = msStringConcatenate(pszBuffer, ")");
-        }
-
-        msFreeCharArray(tokens, ntmp);
-      }
-      if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
-        pszBuffer = msStringConcatenate(pszBuffer, ")");
-    } else if (ntmp == 1) { /* multiple times */
-      msFreeCharArray(tokens, ntmp);
-      pszBuffer = msStringConcatenate(pszBuffer, "(");
-      for (i=0; i<numtimes; i++) {
-        if (i > 0)
+  /* check to see if we have ranges by parsing the first entry */
+  tokens = msStringSplit(atimes[0],  '/', &ntmp);
+  if (ntmp == 2) { /* ranges */
+    msFreeCharArray(tokens, ntmp);
+    for (i=0; i<numtimes; i++) {
+      tokens = msStringSplit(atimes[i],  '/', &ntmp);
+      if (ntmp == 2) {
+        if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
           pszBuffer = msStringConcatenate(pszBuffer, " OR ");
+        else
+          pszBuffer = msStringConcatenate(pszBuffer, "(");
+
+        bOnlyExistingFilter = 0;
 
         pszBuffer = msStringConcatenate(pszBuffer, "(");
         if (addtimebacktics)
-          pszBuffer = msStringConcatenate(pszBuffer, "`");
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
         if (addtimebacktics)
           pszBuffer = msStringConcatenate(pszBuffer, "[");
@@ -1191,50 +1130,108 @@ makeTimeFilter(layerObj *lp,
           pszBuffer = msStringConcatenate(pszBuffer, "]");
 
         if (addtimebacktics)
-          pszBuffer = msStringConcatenate(pszBuffer, "`");
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
 
-        pszBuffer = msStringConcatenate(pszBuffer, " = ");
-
+        pszBuffer = msStringConcatenate(pszBuffer, " >= ");
         if (addtimebacktics)
-          pszBuffer = msStringConcatenate(pszBuffer, "`");
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
         else
           pszBuffer = msStringConcatenate(pszBuffer,  "'");
-        pszBuffer = msStringConcatenate(pszBuffer, atimes[i]);
+
+        pszBuffer = msStringConcatenate(pszBuffer, tokens[0]);
+        if (addtimebacktics)
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
+        else
+          pszBuffer = msStringConcatenate(pszBuffer,  "'");
+        pszBuffer = msStringConcatenate(pszBuffer, " AND ");
+
+        if (addtimebacktics)
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
+
+        if (addtimebacktics)
+          pszBuffer = msStringConcatenate(pszBuffer, "[");
+        pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
+        if (addtimebacktics)
+          pszBuffer = msStringConcatenate(pszBuffer, "]");
+        if (addtimebacktics)
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
+
+        pszBuffer = msStringConcatenate(pszBuffer, " <= ");
+
+        if (addtimebacktics)
+          pszBuffer = msStringConcatenate(pszBuffer,  "`");
+        else
+          pszBuffer = msStringConcatenate(pszBuffer,  "'");
+        pszBuffer = msStringConcatenate(pszBuffer, tokens[1]);
         if (addtimebacktics)
           pszBuffer = msStringConcatenate(pszBuffer,  "`");
         else
           pszBuffer = msStringConcatenate(pszBuffer,  "'");
         pszBuffer = msStringConcatenate(pszBuffer, ")");
       }
+
+      msFreeCharArray(tokens, ntmp);
+    }
+    if (pszBuffer && strlen(pszBuffer) > 0 && bOnlyExistingFilter == 0)
       pszBuffer = msStringConcatenate(pszBuffer, ")");
-    } else {
-      msFreeCharArray(atimes, numtimes);
-      return MS_FALSE;
-    }
+  } else if (ntmp == 1) { /* multiple times */
+    msFreeCharArray(tokens, ntmp);
+    pszBuffer = msStringConcatenate(pszBuffer, "(");
+    for (i=0; i<numtimes; i++) {
+      if (i > 0)
+        pszBuffer = msStringConcatenate(pszBuffer, " OR ");
 
+      pszBuffer = msStringConcatenate(pszBuffer, "(");
+      if (addtimebacktics)
+        pszBuffer = msStringConcatenate(pszBuffer, "`");
+
+      if (addtimebacktics)
+        pszBuffer = msStringConcatenate(pszBuffer, "[");
+      pszBuffer = msStringConcatenate(pszBuffer, (char *)timefield);
+      if (addtimebacktics)
+        pszBuffer = msStringConcatenate(pszBuffer, "]");
+
+      if (addtimebacktics)
+        pszBuffer = msStringConcatenate(pszBuffer, "`");
+
+      pszBuffer = msStringConcatenate(pszBuffer, " = ");
+
+      if (addtimebacktics)
+        pszBuffer = msStringConcatenate(pszBuffer, "`");
+      else
+        pszBuffer = msStringConcatenate(pszBuffer,  "'");
+      pszBuffer = msStringConcatenate(pszBuffer, atimes[i]);
+      if (addtimebacktics)
+        pszBuffer = msStringConcatenate(pszBuffer,  "`");
+      else
+        pszBuffer = msStringConcatenate(pszBuffer,  "'");
+      pszBuffer = msStringConcatenate(pszBuffer, ")");
+    }
+    pszBuffer = msStringConcatenate(pszBuffer, ")");
+  } else {
+    msFreeCharArray(tokens, ntmp);
     msFreeCharArray(atimes, numtimes);
-
-    /* load the string to the filter */
-    if (pszBuffer && strlen(pszBuffer) > 0) {
-      if(&lp->filter && lp->filter.string && lp->filter.type == MS_STRING)
-        pszBuffer = msStringConcatenate(pszBuffer, ")");
-      /*
-      if(lp->filteritem)
-        free(lp->filteritem);
-      lp->filteritem = msStrdup(timefield);
-      */
-
-      loadExpressionString(&lp->filter, pszBuffer);
-
-      if (pszBuffer)
-        msFree(pszBuffer);
-    }
-
-    return MS_TRUE;
-
+    msFree(pszBuffer);
+    return MS_FALSE;
   }
 
-  return MS_FALSE;
+  msFreeCharArray(atimes, numtimes);
+
+  /* load the string to the filter */
+  if (pszBuffer && strlen(pszBuffer) > 0) {
+    if(&lp->filter && lp->filter.string && lp->filter.type == MS_STRING)
+      pszBuffer = msStringConcatenate(pszBuffer, ")");
+    /*
+    if(lp->filteritem)
+      free(lp->filteritem);
+    lp->filteritem = msStrdup(timefield);
+    */
+
+    loadExpressionString(&lp->filter, pszBuffer);
+
+  }
+  msFree(pszBuffer);
+  return MS_TRUE;
 }
 
 /**

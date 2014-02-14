@@ -43,7 +43,7 @@ xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, x
 
 void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elname, const char *values, char delim);
 
-const char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath);
+char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath);
 
 #endif /* defined(USE_LIBXML2) */
 

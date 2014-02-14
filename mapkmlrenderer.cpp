@@ -373,6 +373,7 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
   if (!msLayerIsOpen(layer)) {
     if (msLayerOpen(layer) != MS_SUCCESS) {
       msSetError(MS_MISCERR, "msLayerOpen failed", "KmlRenderer::startNewLayer" );
+      return MS_FAILURE;
     }
   }
 
@@ -404,7 +405,9 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
     pszLayerNameAttributeMetadata = msLookupHashTable(&layer->metadata, "kml_name_item");
 
   /*get all attributes*/
-  msLayerWhichItems(layer, MS_TRUE, NULL);
+  if(msLayerWhichItems(layer, MS_TRUE, NULL) != MS_SUCCESS) {
+    return MS_FAILURE;
+  }
 
 
   NumItems = layer->numitems;
@@ -900,14 +903,12 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
     numLineStyle = 0;
   }
 
-  if (shape) {
-    CurrentShapeIndex = shape->index;
-    if (pszLayerNameAttributeMetadata) {
-      for (int i=0; i<currentLayer->numitems; i++) {
-        if (strcasecmp(currentLayer->items[i], pszLayerNameAttributeMetadata) == 0 && shape->values[i]) {
-          CurrentShapeName = msStrdup(shape->values[i]);
-          break;
-        }
+  CurrentShapeIndex = shape->index;
+  if (pszLayerNameAttributeMetadata) {
+    for (int i=0; i<currentLayer->numitems; i++) {
+      if (strcasecmp(currentLayer->items[i], pszLayerNameAttributeMetadata) == 0 && shape->values[i]) {
+        CurrentShapeName = msStrdup(shape->values[i]);
+        break;
       }
     }
   }

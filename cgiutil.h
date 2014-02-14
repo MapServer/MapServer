@@ -87,7 +87,6 @@ MS_DLL_EXPORT char x2c(char *);
 MS_DLL_EXPORT void unescape_url(char *);
 MS_DLL_EXPORT void plustospace(char *);
 MS_DLL_EXPORT int rind(char *, char);
-MS_DLL_EXPORT int _getline(char *, int, FILE *);
 MS_DLL_EXPORT void send_fd(FILE *, FILE *);
 MS_DLL_EXPORT int ind(char *, char);
 MS_DLL_EXPORT void escape_shell_cmd(char *);

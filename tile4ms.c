@@ -243,6 +243,7 @@ int process_shapefiles(char *metaFileNameP, char *tileFileNameP,
   fclose(metaFP);
 
   free(line.point);
+  free(theFields);
 
 
   printf("Processed %i of %i files\n", tilesProcessed, tilesFound);

@@ -661,7 +661,9 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
 #endif
 
-  msLayerOpen(layer);
+ status =  msLayerOpen(layer);
+ if(status != MS_SUCCESS)
+   return NULL;
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
   if(status == MS_DONE) { /* no overlap */
@@ -783,8 +785,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
               if (psValues->pasBottom[i].x == oFirstPoint.x)
                 break;
             }
-            if (i  < psValues->nBottom)
+            if (i  < psValues->nBottom) {
+              msFree(pszLabel);
               continue;
+            }
           }
           if (psValues->pasBottom == NULL) {
             psValues->pasBottom = (pointObj *)msSmallMalloc(sizeof(pointObj));
@@ -798,9 +802,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
           psValues->pasBottom[psValues->nBottom-1].x = oFirstPoint.x;
           psValues->pasBottom[psValues->nBottom-1].y = oFirstPoint.y;
-          psValues->papszBottomLabels[psValues->nBottom-1] = msStrdup(pszLabel);
-
-          msFree(pszLabel);
+          psValues->papszBottomLabels[psValues->nBottom-1] = pszLabel;
 
         }
         /*first point should cross the TOP base where y==0*/
@@ -831,8 +833,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                   strcasecmp(pszLabel, psValues->papszTopLabels[i]) == 0)
                 break;
             }
-            if (i < psValues->nTop)
+            if (i < psValues->nTop) {
+              msFree(pszLabel);
               continue;
+            }
           }
 
 
@@ -848,9 +852,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
           psValues->pasTop[psValues->nTop-1].x = oLastPoint.x;
           psValues->pasTop[psValues->nTop-1].y = oLastPoint.y;
-          psValues->papszTopLabels[psValues->nTop-1] = msStrdup(pszLabel);
-
-          msFree(pszLabel);
+          psValues->papszTopLabels[psValues->nTop-1] = pszLabel;
         }
       } else { /*horzontal*/
         /*Normally lines are drawn from left to right but not always for some reason, so
@@ -893,8 +895,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
               if (psValues->pasLeft[i].y == oFirstPoint.y)
                 break;
             }
-            if (i < psValues->nLeft)
+            if (i < psValues->nLeft) {
+              msFree(pszLabel);
               continue;
+            }
           }
           if (psValues->pasLeft == NULL) {
             psValues->pasLeft = (pointObj *)msSmallMalloc(sizeof(pointObj));
@@ -908,8 +912,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
           psValues->pasLeft[psValues->nLeft-1].x = oFirstPoint.x;
           psValues->pasLeft[psValues->nLeft-1].y = oFirstPoint.y;
-          psValues->papszLeftLabels[psValues->nLeft-1] = msStrdup(pszLabel);
-          msFree(pszLabel);
+          psValues->papszLeftLabels[psValues->nLeft-1] = pszLabel; /* takes ownership of allocated pszLabel */
         }
         /*first point should cross the RIGHT base where x=map=>width axis*/
         if (abs((int)oLastPoint.x - map->width) <=1) {
@@ -938,8 +941,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
               if (psValues->pasRight[i].y == oLastPoint.y)
                 break;
             }
-            if (i < psValues->nRight)
+            if (i < psValues->nRight) {
+              msFree(pszLabel);
               continue;
+            }
           }
           if (psValues->pasRight == NULL) {
             psValues->pasRight = (pointObj *)msSmallMalloc(sizeof(pointObj));
@@ -953,9 +958,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
           psValues->pasRight[psValues->nRight-1].x = oLastPoint.x;
           psValues->pasRight[psValues->nRight-1].y = oLastPoint.y;
-          psValues->papszRightLabels[psValues->nRight-1] = msStrdup(pszLabel);
-
-          msFree(pszLabel);
+          psValues->papszRightLabels[psValues->nRight-1] = pszLabel;
         }
       }
       msFreeShape(&shapegrid);

@@ -341,14 +341,6 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   char   **alteredProcessing = NULL, *saved_layer_mask;
   char **savedProcessing = NULL;
 
-  /*
-  ** Allocate mapObj structure
-  */
-  map_tmp = (mapObj *)msSmallCalloc(sizeof(mapObj),1);
-  if(initMap(map_tmp) == -1) { /* initialize this map */
-    msFree(map_tmp);
-    return(MS_FAILURE);
-  }
   
   if (layer->debug)
     msDebug("Entering msUVRASTERLayerWhichShapes().\n");
@@ -367,6 +359,15 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     msSetError( MS_MISCERR, "BANDS processing option is required for UV layer. You have to specified 2 bands.",
                 "msUVRASTERLayerWhichShapes()" );
     return MS_FAILURE;
+  }
+  
+  /*
+  ** Allocate mapObj structure
+  */
+  map_tmp = (mapObj *)msSmallCalloc(sizeof(mapObj),1);
+  if(initMap(map_tmp) == -1) { /* initialize this map */
+    msFree(map_tmp);
+    return(MS_FAILURE);
   }
 
   /* -------------------------------------------------------------------- */

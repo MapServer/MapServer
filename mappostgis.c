@@ -503,7 +503,7 @@ wkbConvCompoundCurveToShape(wkbObj *w, shapeObj *shape)
 {
   int npoints = 0;
   int type, ncomponents, i, j;
-  lineObj *line;
+  lineObj line;
   shapeObj shapebuf;
 
   /*endian = */wkbReadChar(w);
@@ -533,10 +533,8 @@ wkbConvCompoundCurveToShape(wkbObj *w, shapeObj *shape)
   if ( npoints == 0 )
     return MS_FAILURE;
 
-  /* Allocate space for the new line */
-  line = msSmallMalloc(sizeof(lineObj));
-  line->numpoints = npoints;
-  line->point = msSmallMalloc(sizeof(pointObj) * npoints);
+  line.numpoints = npoints;
+  line.point = msSmallMalloc(sizeof(pointObj) * npoints);
 
   /* Copy in the points */
   npoints = 0;
@@ -544,19 +542,19 @@ wkbConvCompoundCurveToShape(wkbObj *w, shapeObj *shape)
     for ( j = 0; j < shapebuf.line[i].numpoints; j++ ) {
       /* Don't add a start point that duplicates an endpoint */
       if( j == 0 && i > 0 &&
-          memcmp(&(line->point[npoints - 1]),&(shapebuf.line[i].point[j]),sizeof(pointObj)) == 0 ) {
+          memcmp(&(line.point[npoints - 1]),&(shapebuf.line[i].point[j]),sizeof(pointObj)) == 0 ) {
         continue;
       }
-      line->point[npoints++] = shapebuf.line[i].point[j];
+      line.point[npoints++] = shapebuf.line[i].point[j];
     }
   }
-  line->numpoints = npoints;
+  line.numpoints = npoints;
 
   /* Clean up */
   msFreeShape(&shapebuf);
 
   /* Fill in the lineObj */
-  msAddLineDirectly(shape, line);
+  msAddLineDirectly(shape, &line);
 
   return MS_SUCCESS;
 }
@@ -1109,9 +1107,6 @@ msPostGISRetrievePK(layerObj *layer)
   msPostGISLayerInfo *layerinfo = 0;
   int length;
   int pgVersion;
-  char *pos_sep;
-  char *schema = NULL;
-  char *table = NULL;
 
   if (layer->debug) {
     msDebug("msPostGISRetrievePK called.\n");
@@ -1119,21 +1114,6 @@ msPostGISRetrievePK(layerObj *layer)
 
   layerinfo = (msPostGISLayerInfo *) layer->layerinfo;
 
-  /* Attempt to separate fromsource into schema.table */
-  pos_sep = strstr(layerinfo->fromsource, ".");
-  if (pos_sep) {
-    length = strlen(layerinfo->fromsource) - strlen(pos_sep) + 1;
-    schema = (char*)msSmallMalloc(length);
-    strlcpy(schema, layerinfo->fromsource, length);
-
-    length = strlen(pos_sep);
-    table = (char*)msSmallMalloc(length);
-    strlcpy(table, pos_sep + 1, length);
-
-    if (layer->debug) {
-      msDebug("msPostGISRetrievePK(): Found schema %s, table %s.\n", schema, table);
-    }
-  }
 
   if (layerinfo->pgconn == NULL) {
     msSetError(MS_QUERYERR, "Layer does not have a postgis connection.", "msPostGISRetrievePK()");
@@ -1160,9 +1140,27 @@ msPostGISRetrievePK(layerObj *layer)
     ** multicolumn primary keys.
     */
     static char *v72sql = "select b.attname from pg_class as a, pg_attribute as b, (select oid from pg_class where relname = '%s') as c, pg_index as d where d.indexrelid = a.oid and d.indrelid = c.oid and d.indisprimary and b.attrelid = a.oid and a.relnatts = 1";
-    sql = msSmallMalloc(strlen(layerinfo->fromsource) + strlen(v72sql));
+    sql = msSmallMalloc(strlen(layerinfo->fromsource) + strlen(v72sql) + 1);
     sprintf(sql, v72sql, layerinfo->fromsource);
   } else {
+    /* Attempt to separate fromsource into schema.table */
+    char *pos_sep;
+    char *schema = NULL;
+    char *table = NULL;
+    pos_sep = strstr(layerinfo->fromsource, ".");
+    if (pos_sep) {
+      length = strlen(layerinfo->fromsource) - strlen(pos_sep) + 1;
+      schema = (char*)msSmallMalloc(length);
+      strlcpy(schema, layerinfo->fromsource, length);
+
+      length = strlen(pos_sep) + 1;
+      table = (char*)msSmallMalloc(length);
+      strlcpy(table, pos_sep + 1, length);
+
+      if (layer->debug) {
+        msDebug("msPostGISRetrievePK(): Found schema %s, table %s.\n", schema, table);
+      }
+    }
     /*
     ** PostgreSQL v7.3 and later treat primary keys as constraints.
     ** We only support single column primary keys, so multicolumn
@@ -1170,15 +1168,15 @@ msPostGISRetrievePK(layerObj *layer)
     */
     if (schema && table) {
       static char *v73sql = "select attname from pg_attribute, pg_constraint, pg_class, pg_namespace where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_class.relnamespace = pg_namespace.oid and pg_namespace.nspname = '%s' and pg_constraint.conkey[2] is null";
-      sql = msSmallMalloc(strlen(schema) + strlen(table) + strlen(v73sql));
+      sql = msSmallMalloc(strlen(schema) + strlen(table) + strlen(v73sql) + 1);
       sprintf(sql, v73sql, table, schema);
-      free(table);
-      free(schema);
     } else {
       static char *v73sql = "select attname from pg_attribute, pg_constraint, pg_class where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_table_is_visible(pg_class.oid) and pg_constraint.conkey[2] is null";
-      sql = msSmallMalloc(strlen(layerinfo->fromsource) + strlen(v73sql));
+      sql = msSmallMalloc(strlen(layerinfo->fromsource) + strlen(v73sql) + 1);
       sprintf(sql, v73sql, layerinfo->fromsource);
     }
+    free(table);
+    free(schema);
   }
 
   if (layer->debug > 1) {
@@ -1664,7 +1662,7 @@ char *msPostGISBuildSQLItems(layerObj *layer)
       else
         force2d = "ST_Force_2D";
     }
-    strGeom = (char*)msSmallMalloc(strlen(strGeomTemplate) + strlen(force2d) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid));
+    strGeom = (char*)msSmallMalloc(strlen(strGeomTemplate) + strlen(force2d) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid) + 1);
     sprintf(strGeom, strGeomTemplate, force2d, layerinfo->geomcolumn, strEndian, layerinfo->uid);
   }
 
@@ -1769,9 +1767,9 @@ char *msPostGISBuildSQLSRID(layerObj *layer)
         return NULL;
       }
     }
-    strSRID = msSmallMalloc(strlen(strSRIDTemplate) + strlen(f_table_name) + strlen(layerinfo->geomcolumn));
+    strSRID = msSmallMalloc(strlen(strSRIDTemplate) + strlen(f_table_name) + strlen(layerinfo->geomcolumn) + 1);
     sprintf(strSRID, strSRIDTemplate, f_table_name, layerinfo->geomcolumn);
-    if ( f_table_name ) free(f_table_name);
+    free(f_table_name);
   }
   return strSRID;
 }
@@ -1928,6 +1926,8 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     /* We see to set the SRID on the box, but to what SRID? */
     strSRID = msPostGISBuildSQLSRID(layer);
     if ( ! strSRID ) {
+      free( strLimit );
+      free( strOffset );
       return NULL;
     }
 
@@ -1936,20 +1936,22 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
       strBoxLength = strlen(strBox);
     } else {
       msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISBuildSQLWhere()");
+      free( strLimit );
+      free( strOffset );
       return NULL;
     }
 
-    strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn));
+    strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
     sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
     strRectLength = strlen(strRect);
-    if (strBox) free(strBox);
-    if (strSRID) free(strSRID);
+    free(strBox);
+    free(strSRID);
   }
 
   /* Populate strFilter, if necessary. */
   if ( layer->filter.string ) {
     static char *strFilterTemplate = "(%s)";
-    strFilter = (char*)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.string));
+    strFilter = (char*)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.string)+1);
     sprintf(strFilter, strFilterTemplate, layer->filter.string);
     strFilterLength = strlen(strFilter);
   }
@@ -1963,7 +1965,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
   }
 
   bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength
-               + strLimitLength + strOffsetLength;
+               + strLimitLength + strOffsetLength + 1;
   strWhere = (char*)msSmallMalloc(bufferSize);
   *strWhere = '\0';
   if ( strRect ) {
@@ -2052,11 +2054,11 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
 
   strSQLTemplate = strlen(strWhere) ? strSQLTemplate0 : strSQLTemplate1;
 
-  strSQL = msSmallMalloc(strlen(strSQLTemplate) + strlen(strFrom) + strlen(strItems) + strlen(strWhere));
+  strSQL = msSmallMalloc(strlen(strSQLTemplate) + strlen(strFrom) + strlen(strItems) + strlen(strWhere) + 1);
   sprintf(strSQL, strSQLTemplate, strItems, strFrom, strWhere);
-  if (strItems) free(strItems);
-  if (strFrom) free(strFrom);
-  if (strWhere) free(strWhere);
+  free(strItems);
+  free(strFrom);
+  free(strWhere);
 
   return strSQL;
 
@@ -2273,6 +2275,7 @@ int msPostGISLayerOpen(layerObj *layer)
 
     if (!layer->connection) {
       msSetError(MS_MISCERR, "Missing CONNECTION keyword.", "msPostGISLayerOpen()");
+      free(layerinfo);
       return MS_FAILURE;
     }
 
@@ -2281,6 +2284,7 @@ int msPostGISLayerOpen(layerObj *layer)
     */
     conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
     if (conn_decrypted == NULL) {
+      free(layerinfo);
       return MS_FAILURE;  /* An error should already have been produced */
     }
     layerinfo->pgconn = PQconnectdb(conn_decrypted);
@@ -2307,6 +2311,7 @@ int msPostGISLayerOpen(layerObj *layer)
 
       msSetError(MS_QUERYERR, "Database connection failed (%s) with connect string '%s'\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn), maskeddata);
 
+      if(layerinfo->pgconn) PQfinish(layerinfo->pgconn);
       free(maskeddata);
       free(layerinfo);
       return MS_FAILURE;
@@ -2325,6 +2330,10 @@ int msPostGISLayerOpen(layerObj *layer)
       if( PQstatus(layerinfo->pgconn) != CONNECTION_OK ) {
         /* Nope, time to bail out. */
         msSetError(MS_QUERYERR, "PostgreSQL database connection gone bad (%s)", "msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn));
+        free(layerinfo);
+        /* FIXME: we should also release the connection from the pool in this case, but it is stale...
+         * for the time being we do not release it so it can never be used again. If this happens multiple
+         * times there will be a leak... */
         return MS_FAILURE;
       }
 
@@ -2333,7 +2342,11 @@ int msPostGISLayerOpen(layerObj *layer)
 
   /* Get the PostGIS version number from the database */
   layerinfo->version = msPostGISRetrieveVersion(layerinfo->pgconn);
-  if( layerinfo->version == MS_FAILURE ) return MS_FAILURE;
+  if( layerinfo->version == MS_FAILURE ) {
+    msConnPoolRelease(layer, layerinfo->pgconn);
+    free(layerinfo);
+    return MS_FAILURE;
+  }
   if (layer->debug)
     msDebug("msPostGISLayerOpen: Got PostGIS version %d.\n", layerinfo->version);
 
@@ -3241,8 +3254,10 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
 
     /* multiple times, or ranges */
     atimes = msStringSplit (timestring, ',', &numtimes);
-    if (atimes == NULL || numtimes < 1)
+    if (atimes == NULL || numtimes < 1) {
+      msFreeCharArray(atimes, numtimes);
       return MS_FALSE;
+    }
 
     strlcat(buffer, "(", buffer_size);
     for(i=0; i<numtimes; i++) {
@@ -3251,7 +3266,6 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
       }
       strlcat(buffer, "(", buffer_size);
       aranges = msStringSplit(atimes[i],  '/', &numranges);
-      if(!aranges) return MS_FALSE;
       if(numranges == 1) {
         /* we don't have range, just a simple time */
         createPostgresTimeCompareSimple(timefield, atimes[i], bufferTmp, buffer_size);
@@ -3261,6 +3275,8 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
         createPostgresTimeCompareRange(timefield, aranges[0], aranges[1], bufferTmp, buffer_size);
         strlcat(buffer, bufferTmp, buffer_size);
       } else {
+        msFreeCharArray(aranges, numranges);
+        msFreeCharArray(atimes, numtimes);
         return MS_FALSE;
       }
       msFreeCharArray(aranges, numranges);
