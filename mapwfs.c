@@ -1042,7 +1042,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
   const char *user_namespace_uri = "http://mapserver.gis.umn.edu/mapserver";
   char *user_namespace_uri_encoded = NULL;
   const char *collection_name = OWS_WFS_FEATURE_COLLECTION_NAME;
-  char *encoded_name = NULL, *encoded;
+  char *encoded;
 
   int outputformat = OWS_DEFAULT_SCHEMA; /* default output is GML 2.1 compliant schema*/
 
@@ -1242,7 +1242,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
           gmlConstantObj *constant=NULL;
 
           const char *layer_namespace_prefix;
-          char *encoded_type=NULL;
+          char *encoded_type=NULL, *encoded_name = NULL;
 
           itemList = msGMLGetItems(lp, "G"); /* GML-related metadata */
           constantList = msGMLGetConstants(lp, "G");
@@ -1277,8 +1277,14 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
                         "           substitutionGroup=\"gml:_Feature\" />\n\n",
                         encoded_name, layer_namespace_prefix, encoded_name);
 
-          if(strcmp(layer_namespace_prefix, user_namespace_prefix) != 0)
+          if(strcmp(layer_namespace_prefix, user_namespace_prefix) != 0) {
+            msFree(encoded_name);
+            msGMLFreeItems(itemList);
+            msGMLFreeConstants(constantList);
+            msGMLFreeGroups(groupList);
+            msGMLFreeGeometries(geometryList);
             continue; /* the rest is defined in an external schema */
+          }
 
           msIO_printf("  <complexType name=\"%sType\">\n", encoded_name);
           msIO_printf("    <complexContent>\n");
@@ -1318,11 +1324,12 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
           msGMLFreeConstants(constantList);
           msGMLFreeGroups(groupList);
           msGMLFreeGeometries(geometryList);
+          msFree(encoded_name);
         }
 
         msLayerClose(lp);
       } else {
-        msIO_printf("\n\n<!-- ERROR: Failed opening layer %s -->\n\n", encoded_name);
+        msIO_printf("\n\n<!-- ERROR: Failed opening layer %s -->\n\n", lp->name);
       }
 
     }
@@ -1333,7 +1340,6 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
   */
   msIO_printf("\n</schema>\n");
 
-  msFree(encoded_name);
   msFree(user_namespace_uri_encoded);
 
   if(layers)

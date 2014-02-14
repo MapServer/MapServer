@@ -387,6 +387,10 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
     src_yoff = 0;
     dst_xsize = src_xsize = MIN(map->width,src_xsize);
     dst_ysize = src_ysize = MIN(map->height,src_ysize);
+    copyRect.minx = copyRect.miny = 0;
+    copyRect.maxx = map->width;
+    copyRect.maxy = map->height;
+    dst_cellsize_y = dst_cellsize_x = 1;
   }
 
   /* -------------------------------------------------------------------- */

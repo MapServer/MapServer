@@ -273,6 +273,7 @@ int msCopyLeader(labelLeaderObj *dst, labelLeaderObj *src)
   }
   msFree(dst->styles);
   dst->numstyles = 0;
+  dst->styles = NULL;
 
   for (i = 0; i < src->numstyles; i++) {
     if (msGrowLeaderStyles(dst) == NULL)
@@ -368,6 +369,7 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   }
   msFree(dst->styles);
   dst->numstyles = 0;
+  dst->styles = NULL;
 
   for (i = 0; i < src->numstyles; i++) {
     if (msGrowLabelStyles(dst) == NULL)
@@ -526,6 +528,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
   }
   msFree(dst->styles);
   dst->numstyles = 0;
+  dst->styles = NULL;
 
   for (i = 0; i < src->numstyles; i++) {
     if (msGrowClassStyles(dst) == NULL)

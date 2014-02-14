@@ -1598,6 +1598,7 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   else
     msIO_setHeader("Content-Type","%s", contenttype);
   msIO_sendHeaders();
+  msFree(contenttype);
 
   context = msIO_getHandler(stdout);
 
@@ -3570,6 +3571,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       maskLayer->status = origstatus;
       maskLayer->labelcache = origlabelcache;
       if(retcode != MS_SUCCESS) {
+        free(origImageType);
         return MS_FAILURE;
       }
       /*

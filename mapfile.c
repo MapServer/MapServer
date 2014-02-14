@@ -4915,7 +4915,7 @@ static int loadOutputFormat(mapObj *map)
     switch(msyylex()) {
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadOutputFormat()");
-        return(-1);
+        goto load_output_error;
 
       case(END): {
         outputFormatObj *format;
@@ -4925,29 +4925,32 @@ static int loadOutputFormat(mapObj *map)
                      "OUTPUTFORMAT clause lacks DRIVER keyword near (%s):(%d)",
                      "loadOutputFormat()",
                      msyystring_buffer, msyylineno );
-          return -1;
+          goto load_output_error;
         }
 
         format = msCreateDefaultOutputFormat( map, driver, name );
-        msFree( name );
-        name = NULL;
         if( format == NULL ) {
           msSetError(MS_MISCERR,
-                     "OUTPUTFORMAT clause references driver %s, but this driver isn't configured.",
-                     "loadOutputFormat()", driver );
-          return -1;
+                     "OUTPUTFORMAT (%s) clause references driver (%s), but this driver isn't configured.",
+                     "loadOutputFormat()", name, driver );
+          goto load_output_error;
         }
+        msFree( name );
+        name = NULL;
         msFree( driver );
+        driver = NULL;
 
         if( transparent != MS_NOOVERRIDE )
           format->transparent = transparent;
         if( extension != NULL ) {
           msFree( format->extension );
           format->extension = extension;
+          extension = NULL;
         }
         if( mimetype != NULL ) {
           msFree( format->mimetype );
           format->mimetype = mimetype;
+          mimetype = NULL;
         }
         if( imagemode != MS_NOOVERRIDE ) {
 #ifndef USE_GD
@@ -4987,14 +4990,17 @@ static int loadOutputFormat(mapObj *map)
       }
       case(NAME):
         msFree( name );
-        if((name = getToken()) == NULL) return(-1);
+        if((name = getToken()) == NULL) 
+          goto load_output_error;
         break;
       case(MIMETYPE):
-        if(getString(&mimetype) == MS_FAILURE) return(-1);
+        if(getString(&mimetype) == MS_FAILURE)
+          goto load_output_error;
         break;
       case(DRIVER): {
         int s;
-        if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) return -1; /* allow the template to be quoted or not in the mapfile */
+        if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) /* allow the template to be quoted or not in the mapfile */
+          goto load_output_error;
         if(s == MS_STRING)
           driver = msStrdup(msyystring_buffer);
         else
@@ -5002,7 +5008,8 @@ static int loadOutputFormat(mapObj *map)
       }
       break;
       case(EXTENSION):
-        if(getString(&extension) == MS_FAILURE) return(-1);
+        if(getString(&extension) == MS_FAILURE)
+          goto load_output_error;
         if( extension[0] == '.' ) {
           char *temp = msStrdup(extension+1);
           free( extension );
@@ -5010,7 +5017,8 @@ static int loadOutputFormat(mapObj *map)
         }
         break;
       case(FORMATOPTION):
-        if(getString(&value) == MS_FAILURE) return(-1);
+        if(getString(&value) == MS_FAILURE)
+          goto load_output_error;
         if( numformatoptions < MAX_FORMATOPTIONS )
           formatoptions[numformatoptions++] = msStrdup(value);
         free(value);
@@ -5036,20 +5044,28 @@ static int loadOutputFormat(mapObj *map)
           msSetError(MS_IDENTERR,
                      "Parsing error near (%s):(line %d), expected PC256, RGB, RGBA, FEATURE, BYTE, INT16, or FLOAT32 for IMAGEMODE.", "loadOutputFormat()",
                      msyystring_buffer, msyylineno);
-          return -1;
+          goto load_output_error;
         }
         free(value);
         value=NULL;
         break;
       case(TRANSPARENT):
-        if((transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
+        if((transparent = getSymbol(2, MS_ON,MS_OFF)) == -1)
+          goto load_output_error;
         break;
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadOutputFormat()",
                    msyystring_buffer, msyylineno);
-        return(-1);
+        goto load_output_error;
     }
   } /* next token */
+load_output_error:
+  msFree( driver );
+  msFree( extension );
+  msFree( mimetype );
+  msFree( name );
+  msFree( value );
+  return -1;
 }
 
 /*
@@ -7080,8 +7096,12 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
     }
 
     if(tokens[numtokens] == NULL) {
+      int i;
       msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
       fclose(msyyin);
+      for(i=0; i<numtokens; i++)
+        msFree(tokens[i]);
+      msFree(tokens);
       return NULL;
     }
 

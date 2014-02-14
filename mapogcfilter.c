@@ -294,6 +294,7 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
       }
     }
   }
+  msFree(pszTmpExpression);
   return pszExpression;
 }
 
@@ -2224,8 +2225,10 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
 
     nTmp = strlen(pszBuffer);
     pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, lp);
-    if (!pszTmp)
+    if (!pszTmp) {
+      free(pszBuffer);
       return NULL;
+    }
 
     pszBuffer = (char *)realloc(pszBuffer,
                                 sizeof(char) * (strlen(pszTmp) + nTmp +3));
@@ -2333,8 +2336,10 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
     free(pszTmp);
 
     pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode, lp);
-    if (!pszTmp)
+    if (!pszTmp) {
+      msFree(pszBuffer);
       return NULL;
+    }
 
     nTmp = strlen(pszBuffer);
     pszBuffer = (char *)realloc(pszBuffer,

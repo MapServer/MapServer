@@ -2784,6 +2784,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   if ((script_url=msOWSGetOnlineResource2(map, "MO", "onlineresource", req, validated_language)) == NULL ||
       (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
     msFree(validated_language);
+    msFree(schemalocation);
+    msFree(dtd_url);
     return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
 

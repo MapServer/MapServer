@@ -1959,6 +1959,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
                                           image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
       if (!maskLayer->maskimage) {
         msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
+        msFree(origImageType);
         return (MS_FAILURE);
       }
 
@@ -2122,7 +2123,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       wcs20ParamsObjPtr params_tmp = msWCSCreateParamsObj20();
       status = msWCSParseRequest20(map, request, ows_request, params_tmp);
       if (status == MS_FAILURE) {
-        msWCSFreeParamsObj20(params);
+        msWCSFreeParamsObj20(params_tmp);
         return msWCSException(map, "InvalidParameterValue",
                               "request", "2.0.1");
       }

@@ -1696,7 +1696,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(href_format)+strlen(encoded);
+      buffer_size_tmp = strlen(href_format)+strlen(encoded)+1;
       href = (char*)malloc(buffer_size_tmp);
       snprintf(href, buffer_size_tmp, href_format, encoded);
       msFree(encoded);

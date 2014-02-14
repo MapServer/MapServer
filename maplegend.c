@@ -747,7 +747,10 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   /* render the legend. */
   image = msDrawLegend(map, MS_FALSE, NULL);
-  if( image == NULL ) return -1;
+  if( image == NULL ) {
+    msFree(imageType);
+    return -1;
+  }
 
   if (imageType) {
     map->outputformat = msSelectOutputFormat( map, imageType ); /* restore format */

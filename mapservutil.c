@@ -1758,15 +1758,15 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
     msGettimeofday(&execstarttime, NULL);
 
-  mapserv = msAllocMapServObj();
-  mapserv->request->type = MS_GET_REQUEST;
-
   if(!query_string || !*query_string) {
     msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("No query information to decode. QUERY_STRING not set.\n");
     goto end_request;
   }
+  
+  mapserv = msAllocMapServObj();
+  mapserv->request->type = MS_GET_REQUEST;
 
   /* don't modify the string */
   queryString = msStrdup(query_string);

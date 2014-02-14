@@ -2121,16 +2121,10 @@ int msCheckParentPointer(void* p, char *objname)
   char* msg=NULL;
   if (p == NULL) {
     if(objname != NULL) {
-      msg=malloc( sizeof(char) * ( ( strlen(fmt)+strlen(objname) ) ) );
-      if(msg == NULL) {
-        msg="A required parent object is null";
-      } else {
-        sprintf(msg, "The %s parent object is null", objname);
-      }
+      msSetError(MS_NULLPARENTERR, "The %s parent object is null", "msCheckParentPointer()", msg);
     } else {
-      msg="A required parent object is null";
+      msSetError(MS_NULLPARENTERR, "The parent object is null", "msCheckParentPointer()");
     }
-    msSetError(MS_NULLPARENTERR, "%s", "", msg);
     return MS_FAILURE;
   }
   return MS_SUCCESS;

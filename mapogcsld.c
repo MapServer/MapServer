@@ -1207,6 +1207,7 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
           int nDash = 0, i;
           char **aszValues = NULL;
           int nMaxDash;
+          if(pszDashValue) free(pszDashValue); /* free previous if multiple stroke-dasharray attributes were found */
           pszDashValue =
             msStrdup(psCssParam->psChild->psNext->pszValue);
           aszValues = msStringSplit(pszDashValue, ' ', &nDash);
@@ -2556,7 +2557,7 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
         psNode = psNode->psNext;
       }
 
-      if (nValues == nThresholds+1) {
+      if (nThresholds > 0 && nValues == nThresholds+1) {
         /*free existing classes*/
         for(i=0; i<psLayer->numclasses; i++) {
           if (psLayer->class[i] != NULL) {
@@ -4410,8 +4411,10 @@ char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
       }
       pszReturn[iReturn] = '\0';
     }
-  } else
+  } else {
+    msFree(pszReturn);
     return NULL;
+  }
 
   return pszReturn;
 }
@@ -4631,6 +4634,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
       pszFinalAttributeName[iAtt] = '\0';
     }
 
+    msFree(pszAttributeName);
     return pszFinalAttributeName;
   } else {
 
@@ -4638,6 +4642,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
       return NULL;
     nLength = strlen(pszAttributeValue);
     pszFinalAttributeValue = (char *)malloc(sizeof(char)*(nLength+1));
+    pszFinalAttributeValue[0] = '\0';
     bStartCopy= 0;
     iAtt = 0;
     for (i=0; i<nLength; i++) {
@@ -4688,6 +4693,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
         pszFinalAttributeValue = msReplaceSubstring(pszFinalAttributeValue, ".*", "*");
       }
     }
+    msFree(pszAttributeName);
     return pszFinalAttributeValue;
   }
 }
@@ -4853,8 +4859,10 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
     }
 
     return psNode;
-  } else
+  } else {
+    msFree(pszFinalExpression);
     return NULL;
+  }
 }
 
 char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
@@ -5014,6 +5022,7 @@ char *msSLDParseExpression(char *pszExpression)
       if (strlen(szFinalAtt) > 0 && strlen(szFinalValue) >0) {
         snprintf(szBuffer, sizeof(szBuffer), "<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>",
                  szFinalAtt, szFinalValue);
+        msFree(pszFilter); /*FIXME: we are possibly discarding a previously set pszFilter */
         pszFilter = msStrdup(szBuffer);
       }
     }

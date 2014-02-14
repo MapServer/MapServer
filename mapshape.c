@@ -487,13 +487,18 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s.shp", pszBasename );
   fpSHP = fopen(pszFullname, "wb" );
-  if( fpSHP == NULL )
+  if( fpSHP == NULL ) {
+    free( pszFullname );
     return( NULL );
+  }
 
   sprintf( pszFullname, "%s.shx", pszBasename );
   fpSHX = fopen(pszFullname, "wb" );
-  if( fpSHX == NULL )
+  if( fpSHX == NULL ) {
+    fclose(fpSHP);
+    free( pszFullname );
     return( NULL );
+  }
 
   free( pszFullname );
 
@@ -2506,12 +2511,12 @@ int msSHPLayerOpen(layerObj *layer)
 
   if(layer->layerinfo) return MS_SUCCESS; /* layer already open */
 
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+    return MS_FAILURE;
+
   /* allocate space for a shapefileObj using layer->layerinfo  */
   shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
   MS_CHECK_ALLOC(shpfile, sizeof(shapefileObj), MS_FAILURE);
-
-  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
-    return MS_FAILURE;
 
 
   layer->layerinfo = shpfile;

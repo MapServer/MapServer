@@ -1211,7 +1211,13 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
-        if(status != MS_SUCCESS) return(status);
+        if(status != MS_SUCCESS) {
+           msGMLFreeGroups(groupList);
+           msGMLFreeConstants(constantList);
+           msGMLFreeItems(itemList);
+           msGMLFreeGeometries(geometryList);
+           return(status);
+        }
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
@@ -1446,8 +1452,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, char *default_namespace_prefix
       for(j=0; j<lp->resultcache->numresults; j++) {
 
         status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
-        if(status != MS_SUCCESS)
+        if(status != MS_SUCCESS) {
+          msGMLFreeGroups(groupList);
+          msGMLFreeConstants(constantList);
+          msGMLFreeItems(itemList);
+          msGMLFreeGeometries(geometryList);
+          msFree(layerName);
           return(status);
+        }
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */

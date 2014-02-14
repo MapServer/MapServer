@@ -389,8 +389,10 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
 
 
     pszTmp = FLTGetCommonExpression(psFilterNode->psRightNode, lp);
-    if (!pszTmp)
+    if (!pszTmp) {
+      msFree(pszExpression);
       return NULL;
+    }
 
     pszExpression = msStringConcatenate(pszExpression, pszTmp);
     msFree(pszTmp);

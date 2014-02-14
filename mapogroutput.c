@@ -804,6 +804,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         if(status != MS_SUCCESS) {
           OGR_DS_Destroy( hDS );
           msOGRCleanupDS( datasource_name );
+          msGMLFreeItems(item_list);
           return status;
         }
       }
@@ -825,6 +826,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       if(status != MS_SUCCESS) {
         OGR_DS_Destroy( hDS );
         msOGRCleanupDS( datasource_name );
+        msGMLFreeItems(item_list);
+        msFreeShape(&resultshape);
         return status;
       }
 
@@ -874,6 +877,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       if(status != MS_SUCCESS) {
         OGR_DS_Destroy( hDS );
         msOGRCleanupDS( datasource_name );
+        msGMLFreeItems(item_list);
+        msFreeShape(&resultshape);
         return status;
       }
     }
