@@ -64,6 +64,7 @@
 #include "mapserver.h"
 #include "maptime.h"
 #include "mappostgis.h"
+#include "mapogcfilter.h"
 
 #define FP_EPSILON 1e-12
 #define FP_EQ(a, b) (fabs((a)-(b)) < FP_EPSILON)
@@ -2091,6 +2092,163 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
 
 }
 
+/*
+** msPostGISIsNativeFilter()
+**
+** Registered vtable->LayerSupportsNativeFilter function.
+*/
+int msPostGISSupportsNativeFilter(FilterEncodingNode *psNode)
+{
+  return TRUE;
+}
+
+/*
+** msPostGISBuildSpatialSQLForFilterNode
+**
+** Returns malloc-ed char* that must be free-d by the caller
+*/
+char *msPostGISBuildSpatialSQLForFilterNode(FilterEncodingNode *filterNode, layerObj *layer)
+{
+  /* TODO: use WKB instead of WKT ? (requires necessary GEOS functions to be exposed in ms) */
+
+  int layerAlreadyOpen = MS_FALSE;
+  msPostGISLayerInfo *layerinfo = NULL;
+  shapeObj *queryShape = NULL;
+  projectionObj tmpProj;
+  double distance = -1;
+  const int lenBuffer = 33;
+  int units = -1;
+  int lenGeom, lenConstructor, lenConstructorTemplate, lenSrsName,
+      lenConditionTemplate, lenGeomcolumn, lenOperator;
+  char *strGeom = NULL;
+  char *strConstructor = NULL;
+  char *strConstructorTemplate = "ST_GeomFromText('%s', %s)";
+  char *strSrsName = NULL;
+  char *strCondition = NULL;
+  char *strConditionTemplate = NULL;
+  char *strConditionTemplate0 = "ST_%s(%s, %s)";
+  char *strConditionTemplate1 = "(NOT (%s && %s)) OR ST_%s(%s, %s)"; /* for Disjoint, so index can be used */
+  char *strConditionTemplate2 = "ST_%s(%s, %s, %s)"; /* for DWithin */
+  char *strConditionTemplate3 = "NOT ST_%s(%s, %s, %s)"; /* for Beyond */
+  char *strOperator = NULL;
+  char buffer[lenBuffer];
+
+  if (layer->debug) {
+    msDebug("msPostGISBuildSpatialSQLForFilterNode called.\n");
+  }
+
+  assert( filterNode != NULL );
+  assert( layer      != NULL );
+
+  layerAlreadyOpen = msLayerIsOpen(layer);
+
+  if ( !((layerAlreadyOpen || msLayerOpen(layer) == MS_SUCCESS) ||
+       msLayerGetItems(layer) != MS_SUCCESS) ) /* one of the functions should have set some error message */
+    return NULL;
+
+  assert( layer->layerinfo != NULL );
+
+  if ( msPostGISParseData(layer) != MS_SUCCESS )
+    return NULL;
+
+  layerinfo = (msPostGISLayerInfo *)layer->layerinfo;
+
+  if ( filterNode->eType != FILTER_NODE_TYPE_SPATIAL ) {
+    msSetError(MS_MISCERR, "FilterEncodingNode type is not Spatial", "msPostGISBuildSpatialSQLForFilterNode()");
+    return NULL;
+  }
+
+  if ( strcasecmp(filterNode->pszValue, "DWithin") == 0 || strcasecmp(filterNode->pszValue, "Beyond") == 0 ) {
+    strOperator = msStrdup("DWithin");
+    strConditionTemplate = (strcasecmp(filterNode->pszValue, "Beyond") == 0) ? strConditionTemplate3 : strConditionTemplate2;
+  } else {
+    if ( strcasecmp(filterNode->pszValue, "Intersect") == 0 ) /* TODO: is this really necessary - the standards say Intersects */
+      strOperator = msStrdup("Intersects");
+    else
+      strOperator = msStrdup(filterNode->pszValue);
+
+    if ( strcasecmp(strOperator, "Disjoint") == 0 )
+      strConditionTemplate = strConditionTemplate1;
+    else
+      strConditionTemplate = strConditionTemplate0;
+  }
+
+  /* get shape, potentially reproject and correct units of distance */
+  queryShape = FLTGetShape(filterNode, &distance, &units);
+
+  if ( !queryShape ) {
+    msSetError(MS_MISCERR, "Geometry could not be extracted from query", "msPostGISBuildSpatialSQLForFilterNode()");
+    return NULL;
+  }
+
+  if ( filterNode->pszSRS ) {
+    msInitProjection(&tmpProj);
+
+    if ( msLoadProjectionString(&tmpProj, filterNode->pszSRS) == 0 ) {
+      if ( msProjectionsDiffer(&tmpProj, &layer->projection) )
+        msProjectShape(&tmpProj, &layer->projection, queryShape);
+      else if ( msProjectionsDiffer(&tmpProj, &layer->map->projection) )
+        msProjectShape(&tmpProj, &layer->map->projection, queryShape);
+    }
+
+    msFreeProjection(&tmpProj);
+  } else {
+    /* assume queryShape is in map projection: reproject if this differs from layer projection */
+    if ( msProjectionsDiffer(&layer->projection, &layer->map->projection) )
+      msProjectShape(&layer->map->projection, &layer->projection, queryShape);
+  }
+
+  if ( distance > 0 && (strcasecmp(strOperator, "DWithin") == 0 || strcasecmp(strOperator, "Beyond") == 0) ) {
+    if ( units > 0 && units != layer->units ) {
+      distance *= msInchesPerUnit(units, 0) / msInchesPerUnit(layer->units, 0);
+    } else if ( layer->map->units != layer->units ) {
+      distance *= msInchesPerUnit(layer->map->units, 0) / msInchesPerUnit(layer->units, 0);
+    }
+  }
+
+  strGeom = msGEOSShapeToWKT(queryShape); /* result is NULL if GEOS not available, with error msg set */
+
+  if ( strGeom && strlen(strGeom) > 0 ) {
+    strSrsName = msPostGISBuildSQLSRID(layer);
+
+    lenGeom                = strlen(strGeom);
+    lenConstructorTemplate = strlen(strConstructorTemplate);
+    lenSrsName             = strlen(strSrsName);
+    lenConditionTemplate   = strlen(strConditionTemplate);
+    lenGeomcolumn          = strlen(layerinfo->geomcolumn);
+    lenOperator            = strlen(strOperator);
+
+    strConstructor = (char *)msSmallMalloc(lenGeom + lenConstructorTemplate + lenSrsName - 3);
+    sprintf(strConstructor, strConstructorTemplate, strGeom, strSrsName);
+
+    lenConstructor = strlen(strConstructor);
+
+    if ( strcasecmp(strOperator, "DWithin") == 0 || strcasecmp(strOperator, "Beyond") == 0 ) {
+      if (snprintf(buffer, lenBuffer, "%f", distance) < lenBuffer) {
+        strCondition = (char *)msSmallMalloc(lenConditionTemplate + lenConstructor + lenGeomcolumn + (lenBuffer - 1) + lenOperator - 7);
+        sprintf(strCondition, strConditionTemplate, strOperator, layerinfo->geomcolumn, strConstructor, buffer);
+      } else {
+        msSetError(MS_MISCERR, "Distance digits truncated", "msPostGISBuildSpatialSQLForFilterNode()");
+      }
+    } else if ( strcasecmp(strOperator, "Disjoint") == 0 ) {
+      strCondition = (char *)msSmallMalloc(lenConditionTemplate + (2 * lenConstructor) + (2 * lenGeomcolumn) + lenOperator - 9);
+      sprintf(strCondition, strConditionTemplate, layerinfo->geomcolumn, strConstructor, strOperator, layerinfo->geomcolumn, strConstructor);
+    } else {
+      strCondition = (char *)msSmallMalloc(lenConditionTemplate + lenConstructor + lenGeomcolumn + lenOperator - 5);
+      sprintf(strCondition, strConditionTemplate, strOperator, layerinfo->geomcolumn, strConstructor);
+    }
+  }
+
+  if (strGeom) msGEOSFreeWKT(strGeom);
+  if (strConstructor) free(strConstructor);
+  if (strOperator) free(strOperator);
+  if (strSrsName) free(strSrsName);
+
+  if (!layerAlreadyOpen) msLayerClose(layer);
+
+  return strCondition;
+}
+
 #define wkbstaticsize 4096
 int msPostGISReadShape(layerObj *layer, shapeObj *shape)
 {
@@ -3537,6 +3695,9 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerEscapeSQLParam = msPostGISEscapeSQLParam;
   layer->vtable->LayerEnablePaging = msPostGISEnablePaging;
   layer->vtable->LayerGetPaging = msPostGISGetPaging;
+
+  layer->vtable->LayerSupportsNativeFilter = msPostGISSupportsNativeFilter;
+  layer->vtable->LayerBuildSpatialSQLForFilterNode = msPostGISBuildSpatialSQLForFilterNode;
 
   return MS_SUCCESS;
 }

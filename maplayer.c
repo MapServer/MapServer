@@ -1635,6 +1635,10 @@ char *LayerDefaultEscapePropertyName(layerObj *layer, const char* pszString)
   return pszEscapedStr;
 }
 
+char *LayerDefaultBuildSpatialSQLForFilterNode(FilterEncodingNode *filterNode, layerObj *layer)
+{
+  return NULL;
+}
 
 /*
  * msConnectLayer
@@ -1702,6 +1706,9 @@ static int populateVirtualTable(layerVTableObj *vtable)
 
   vtable->LayerEnablePaging = msLayerDefaultEnablePaging;
   vtable->LayerGetPaging = msLayerDefaultGetPaging;
+
+  vtable->LayerSupportsNativeFilter = FLTIsSimpleFilter;
+  vtable->LayerBuildSpatialSQLForFilterNode = LayerDefaultBuildSpatialSQLForFilterNode;
 
   return MS_SUCCESS;
 }

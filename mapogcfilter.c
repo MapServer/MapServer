@@ -635,8 +635,8 @@ int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
   /*      the layer.                                                      */
   /* ==================================================================== */
   layerObj* lp = GET_LAYER(map, iLayerIndex);
-  if (FLTIsSimpleFilter(psNode) &&
-      !(lp->connectiontype == MS_OGR && !FLTHasUniqueTopLevelDuringFilter(psNode)) ) {
+  if (lp->vtable->LayerSupportsNativeFilter(psNode) &&
+      (lp->connectiontype != MS_OGR || FLTHasUniqueTopLevelDuringFilter(psNode))) {
     return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
   }
 
@@ -2137,7 +2137,7 @@ char *FLTGetSQLExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
   }
 
   else if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL) {
-    /* TODO */
+    pszExpression = lp->vtable->LayerBuildSpatialSQLForFilterNode(psFilterNode, lp);
   } else if (psFilterNode->eType == FILTER_NODE_TYPE_FEATUREID) {
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
     if (psFilterNode->pszValue) {

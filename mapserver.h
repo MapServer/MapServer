@@ -1899,6 +1899,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     char* (*LayerEscapePropertyName)(layerObj *layer, const char* pszString);
     void (*LayerEnablePaging)(layerObj *layer, int value);
     int (*LayerGetPaging)(layerObj *layer);
+    int (*LayerSupportsNativeFilter)(FilterEncodingNode *psNode);
+    char* (*LayerBuildSpatialSQLForFilterNode)(FilterEncodingNode *filterNode, layerObj *layer);
   };
 #endif /*SWIG*/
 
