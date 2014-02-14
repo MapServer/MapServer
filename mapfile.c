@@ -810,11 +810,13 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *s
 {
   featureListNodeObjPtr node;
 
-  node = (featureListNodeObjPtr) malloc(sizeof(featureListNodeObj));
-  MS_CHECK_ALLOC(node, sizeof(featureListNodeObj), NULL);
+  node = (featureListNodeObjPtr) msSmallMalloc(sizeof(featureListNodeObj));
 
   msInitShape(&(node->shape));
-  if(msCopyShape(shape, &(node->shape)) == -1) return(NULL);
+  if(msCopyShape(shape, &(node->shape)) == -1) {
+    msFree(node);
+    return(NULL);
+  }
 
   /* AJS - alans@wunderground.com O(n^2) -> O(n) conversion, keep a pointer to the end */
 
@@ -903,6 +905,8 @@ static int loadFeature(layerObj *player, int type)
     switch(msyylex()) {
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadFeature()");
+        msFreeShape(shape); /* clean up */
+        msFree(shape);
         return(MS_FAILURE);
       case(END):
         if(player->features != NULL && player->features->tailifhead != NULL)
@@ -919,17 +923,29 @@ static int loadFeature(layerObj *player, int type)
       case(FEATURE):
         break; /* for string loads */
       case(POINTS):
-        if(loadFeaturePoints(&points) == MS_FAILURE) return(MS_FAILURE); /* no clean up necessary, just return */
+        if(loadFeaturePoints(&points) == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         status = msAddLine(shape, &points);
 
         msFree(points.point); /* clean up */
         points.numpoints = 0;
 
-        if(status == MS_FAILURE) return(MS_FAILURE);
+        if(status == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         break;
       case(ITEMS): {
         char *string=NULL;
-        if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
+        if(getString(&string) == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         if (string) {
           if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
           shape->values = msStringSplit(string, ';', &shape->numvalues);
@@ -938,26 +954,37 @@ static int loadFeature(layerObj *player, int type)
         break;
       }
       case(TEXT):
-        if(getString(&shape->text) == MS_FAILURE) return(MS_FAILURE);
+        if(getString(&shape->text) == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         break;
       case(WKT): {
         char *string=NULL;
 
         /* todo, what do we do with multiple WKT property occurances? */
 
-        if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
         msFreeShape(shape);
         msFree(shape);
+        if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
+        
         if((shape = msShapeFromWKT(string)) == NULL)
           status = MS_FAILURE;
 
         msFree(string); /* clean up */
 
-        if(status == MS_FAILURE) return(MS_FAILURE);
+        if(status == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         break;
       }
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()", msyystring_buffer, msyylineno);
+        msFreeShape(shape); /* clean up */
+        msFree(shape);
         return(MS_FAILURE);
     }
   } /* next token */
@@ -1369,7 +1396,8 @@ static int loadProjection(projectionObj *p)
 int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 {
 #ifdef USE_PROJ
-  if(p) msFreeProjection(p);
+  assert(p);
+  msFreeProjection(p);
 
   p->gt.need_geotransform = MS_FALSE;
 #ifdef USE_PROJ_FASTPATHS
@@ -1415,10 +1443,11 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 
 int msLoadProjectionString(projectionObj *p, const char *value)
 {
+  assert(p);
   p->gt.need_geotransform = MS_FALSE;
 
 #ifdef USE_PROJ
-  if(p) msFreeProjection(p);
+  msFreeProjection(p);
 
 
   /*

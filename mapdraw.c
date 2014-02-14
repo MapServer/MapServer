@@ -466,6 +466,13 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
     if(MS_SUCCESS != msEmbedScalebar(map, image)) {
       msFreeImage( image );
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+      /* Cleanup WMS/WFS Request stuff */
+      if (pasOWSReqInfo) {
+         msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+         msFree(pasOWSReqInfo);
+      }
+#endif
       return NULL;
     }
 
@@ -477,6 +484,13 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache) {
     if( msEmbedLegend(map, image) != MS_SUCCESS ) {
       msFreeImage( image );
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+      /* Cleanup WMS/WFS Request stuff */
+      if (pasOWSReqInfo) {
+         msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+         msFree(pasOWSReqInfo);
+      }
+#endif
       return NULL;
     }
   }
@@ -564,6 +578,13 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
     if(MS_SUCCESS != msEmbedScalebar(map, image)) {
       msFreeImage( image );
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+      /* Cleanup WMS/WFS Request stuff */
+      if (pasOWSReqInfo) {
+         msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+         msFree(pasOWSReqInfo);
+      }
+#endif
       return NULL;
     }
 
@@ -2229,7 +2250,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
       } else
         msOffsetPointRelativeTo(point, layer);
 
-      if(labeltext) {
+      if(label) {
         if(layer->labelcache) {
           if(msAddLabel(map, label, layer->index, classindex, NULL, point, NULL, -1) != MS_SUCCESS) return(MS_FAILURE);
         } else {
@@ -2256,7 +2277,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
         if(msScaleInBounds(map->scaledenom, theclass->styles[s]->minscaledenom, theclass->styles[s]->maxscaledenom))
           msDrawMarkerSymbol(&map->symbolset, image, point, theclass->styles[s], layer->scalefactor);
       }
-      if(labeltext) {
+      if(label) {
         if(layer->labelcache) {
           if(msAddLabel(map, label, layer->index, classindex, NULL, point, NULL, -1) != MS_SUCCESS) return(MS_FAILURE);
         } else

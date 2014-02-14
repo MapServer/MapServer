@@ -654,8 +654,13 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   pasReqInfo[(*numRequests)].debug = lp->debug;
 
   if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata),
-                           pasReqInfo, *numRequests, map, "FO") != MS_SUCCESS)
+                           pasReqInfo, *numRequests, map, "FO") != MS_SUCCESS) {
+    if (psParams) {
+      msWFSFreeParamsObj(psParams);
+      free(psParams);
+    }
     return MS_FAILURE;
+  }
   
   /* ------------------------------------------------------------------
    * Pre-Open the layer now, (i.e. alloc and fill msWFSLayerInfo inside
@@ -684,7 +689,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   if (psParams) {
     msWFSFreeParamsObj(psParams);
-    psParams = NULL;
+    free(psParams);
   }
   return nStatus;
 

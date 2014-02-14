@@ -938,8 +938,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
               if (psValues->pasRight[i].y == oLastPoint.y)
                 break;
             }
-            if (i < psValues->nRight)
+            if (i < psValues->nRight) {
+              msFree(pszLabel);
               continue;
+            }
           }
           if (psValues->pasRight == NULL) {
             psValues->pasRight = (pointObj *)msSmallMalloc(sizeof(pointObj));

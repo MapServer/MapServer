@@ -815,7 +815,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
       if(symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
         double sx,sy;
         double ox, oy;
-        msGetMarkerSize(symbolset, style, &sx, &sy, scalefactor);
+        if(msGetMarkerSize(symbolset, style, &sx, &sy, scalefactor) != MS_SUCCESS) return MS_FAILURE;
         ox = (0.5 - symbol->anchorpoint_x) * sx;
         oy = (0.5 - symbol->anchorpoint_y) * sy;
         if(s.rotation != 0) {

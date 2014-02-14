@@ -756,7 +756,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     if (nVersion >= OWS_1_1_0)
       pszExceptionsParam = "application/vnd.ogc.se_xml";
-    else if (nVersion > OWS_1_1_0)  /* 1.0.1 to 1.0.7 */
+    else if (nVersion > OWS_1_0_0)  /* 1.0.1 to 1.0.7 */
       pszExceptionsParam = "SE_XML";
     else
       pszExceptionsParam = "WMS_XML";

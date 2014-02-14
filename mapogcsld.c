@@ -92,11 +92,15 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
           int   nBufsize=0;
           fseek(fp, 0, SEEK_END);
           nBufsize = ftell(fp);
-          rewind(fp);
-          pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
-          fread(pszSLDbuf, 1, nBufsize, fp);
+          if(nBufsize > 0) {
+            rewind(fp);
+            pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
+            fread(pszSLDbuf, 1, nBufsize, fp);
+            pszSLDbuf[nBufsize] = '\0';
+          } else {
+            msSetError(MS_WMSERR, "Could not open SLD %s as it appears empty", "msSLDApplySLDURL", szURL);
+          }
           fclose(fp);
-          pszSLDbuf[nBufsize] = '\0';
           unlink(pszSLDTmpFile);
         }
       } else {
@@ -4673,8 +4677,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
     }
 
     /*trim  for regular expressions*/
-    if (pszFinalAttributeValue && strlen(pszFinalAttributeValue) > 2 &&
-        strcasecmp(pszComparionValue, "PropertyIsLike") == 0) {
+    if (strlen(pszFinalAttributeValue) > 2 && strcasecmp(pszComparionValue, "PropertyIsLike") == 0) {
       int len = strlen(pszFinalAttributeValue);
       msStringTrimBlanks(pszFinalAttributeValue);
       if (pszFinalAttributeValue[0] == '/' &&

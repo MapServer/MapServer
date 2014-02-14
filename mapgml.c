@@ -123,7 +123,7 @@ static void gmlEndGeometryContainer(FILE *stream, char *name, char *namespace, c
 static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList, shapeObj *shape, const char *srsname, char *namespace, char *tab)
 {
   int i, j, k;
-  int *innerlist, *outerlist, numouters;
+  int *innerlist, *outerlist=NULL, numouters;
   char *srsname_encoded = NULL;
 
   int geometry_aggregate_index, geometry_simple_index;
@@ -311,6 +311,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
           gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
         }
         free(outerlist);
+        outerlist = NULL;
       } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiPolygon */
         gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
 
@@ -362,6 +363,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s</gml:MultiPolygon>\n", tab);
 
         free(outerlist);
+        outerlist = NULL;
 
         gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
       } else {
@@ -375,6 +377,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
 
   /* clean-up */
   msFree(srsname_encoded);
+  msFree(outerlist);
 
   return(MS_SUCCESS);
 }
@@ -383,7 +386,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
 static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList, shapeObj *shape, const char *srsname, char *namespace, char *tab)
 {
   int i, j, k;
-  int *innerlist, *outerlist, numouters;
+  int *innerlist, *outerlist=NULL, numouters;
   char *srsname_encoded = NULL;
 
   int geometry_aggregate_index, geometry_simple_index;
@@ -571,6 +574,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
           gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
         }
         free(outerlist);
+        outerlist = NULL;
       } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiSurface */
         gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
 
@@ -624,6 +628,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s  </gml:MultiSurface>\n", tab);
 
         free(outerlist);
+        outerlist = NULL;
 
         gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
       } else {
@@ -636,6 +641,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
   }
 
   /* clean-up */
+  msFree(outerlist);
   msFree(srsname_encoded);
 
   return(MS_SUCCESS);

@@ -1771,7 +1771,7 @@ char *msPostGISBuildSQLSRID(layerObj *layer)
     }
     strSRID = msSmallMalloc(strlen(strSRIDTemplate) + strlen(f_table_name) + strlen(layerinfo->geomcolumn));
     sprintf(strSRID, strSRIDTemplate, f_table_name, layerinfo->geomcolumn);
-    if ( f_table_name ) free(f_table_name);
+    free(f_table_name);
   }
   return strSRID;
 }

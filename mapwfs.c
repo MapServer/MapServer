@@ -403,10 +403,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
 
     /*reproject the map extent from current projection to output projection*/
     msInitProjection(&sProjTmp);
-    if (nVersion >= OWS_1_1_0)
-      nTmp = msLoadProjectionStringEPSG(&(sProjTmp), pszOutputSRS);
-    else
-      nTmp = msLoadProjectionString(&(sProjTmp), pszOutputSRS);
+    nTmp = msLoadProjectionString(&(sProjTmp), pszOutputSRS);
 
     if (nTmp == 0)
       msProjectRect(&(map->projection), &(sProjTmp), &map->extent);
@@ -415,10 +412,7 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, const char *ver
     msFreeProjection(&map->projection);
     msInitProjection(&map->projection);
 
-    if (nVersion >= OWS_1_1_0)
-      nTmp = msLoadProjectionStringEPSG(&(map->projection), pszOutputSRS);
-    else
-      nTmp = msLoadProjectionString(&(map->projection), pszOutputSRS);
+    nTmp = msLoadProjectionString(&(map->projection), pszOutputSRS);
 
     if (nTmp != 0) {
       msSetError(MS_WFSERR, "msLoadProjectionString() failed", "msWFSGetFeature()");
@@ -659,7 +653,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
 
   if (!updatesequence)
-    updatesequence = msStrdup("0");
+    updatesequence = "0";
 
   if (wfsparams->pszUpdateSequence != NULL) {
     i = msOWSNegotiateUpdateSequence(wfsparams->pszUpdateSequence, updatesequence);
@@ -1950,7 +1944,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
     }
   }
 
-  if(strncmp(paramsObj->pszVersion,"1.0",3) == 0 ) {
+  if(paramsObj->pszVersion && strncmp(paramsObj->pszVersion,"1.0",3) == 0 ) {
     output_mime_type = "text/xml";
   }
 
@@ -2500,8 +2494,11 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
   paramsObj = msWFSCreateParamsObj();
   /* TODO : store also parameters that are inside the map object */
   /* into the paramsObj.  */
-  if (msWFSParseRequest(map, requestobj, ows_request, paramsObj, force_wfs_mode) == MS_FAILURE)
+  if (msWFSParseRequest(map, requestobj, ows_request, paramsObj, force_wfs_mode) == MS_FAILURE) {
+    msWFSFreeParamsObj(paramsObj);
+    free(paramsObj);
     return msWFSException(map, "request", "InvalidRequest", NULL);
+  }
 
   if (force_wfs_mode) {
     /*request is always required*/
@@ -3314,7 +3311,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
         if (pszValue)
           wfsparams->pszVersion = msStrdup(pszValue);
         else
-          wfsparams->pszVersion = msStrdup(msStrdup(msWFSGetDefaultVersion(map)));
+          wfsparams->pszVersion = msStrdup(msWFSGetDefaultVersion(map));
 
         pszValue =
           CPLGetXMLValue(psGetCapabilities, "service",

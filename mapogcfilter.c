@@ -814,8 +814,10 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
   /* -------------------------------------------------------------------- */
   /*      validate the node tree to make sure that all the nodes are valid.*/
   /* -------------------------------------------------------------------- */
-  if (!FLTValidFilterNode(psFilterNode))
+  if (!FLTValidFilterNode(psFilterNode)) {
+    FLTFreeFilterEncodingNode(psFilterNode);
     return NULL;
+  }
 
 
   return psFilterNode;
@@ -1139,6 +1141,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           ((rectObj *)psFilterNode->psRightNode->pOther)->miny = sBox.miny;
           ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = sBox.maxx;
           ((rectObj *)psFilterNode->psRightNode->pOther)->maxy =  sBox.maxy;
+        } else {
+          msFree(pszSRS);
         }
       } else if (strcasecmp(psXMLNode->pszValue, "DWithin") == 0 ||
                  strcasecmp(psXMLNode->pszValue, "Beyond") == 0)

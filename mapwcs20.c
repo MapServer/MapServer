@@ -1580,7 +1580,7 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   xmlChar *buffer = NULL;
   int size = 0;
   msIOContext *context = NULL;
-  const char *contenttype = NULL;
+  char *contenttype = NULL;
 
   const char *encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
