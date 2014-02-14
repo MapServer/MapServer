@@ -2488,7 +2488,7 @@ void msSHPLayerFreeItemInfo(layerObj *layer)
 
 int msSHPLayerInitItemInfo(layerObj *layer)
 {
-  shapefileObj *shpfile = shpfile = layer->layerinfo;
+  shapefileObj *shpfile = layer->layerinfo;
   if( ! shpfile) {
     msSetError(MS_SHPERR, "Shapefile layer has not been opened.", "msSHPLayerInitItemInfo()");
     return MS_FAILURE;
