@@ -206,9 +206,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
         }
       }
     }
-  }
-
-  if (pasLayers && nLayers > 0) {
     for (i=0; i<map->numlayers; i++) {
       if (iLayer >=0 && iLayer< map->numlayers) {
         i = iLayer;
@@ -235,7 +232,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
           pszSLDNotSupported = msOWSLookupMetadata(&(GET_LAYER(map, i)->metadata), "M", "SLD_NOT_SUPPORTED");
           if (pszSLDNotSupported) {
             msSetError(MS_WMSERR, "Layer %s does not support SLD", "msSLDApplySLD", pasLayers[j].name);
-            return MS_FAILURE;
+            nsStatus = MS_FAILURE;
+            goto sld_cleanup;
           }
 #endif
 
@@ -396,8 +394,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
             pasLayers[j].layerinfo=NULL;
 
-            if( nStatus != MS_SUCCESS )
-              return nStatus;
+            if( nStatus != MS_SUCCESS ) {
+              goto sld_cleanup;
+            }
           } else {
             /*in some cases it would make sense to concatenate all the class
               expressions and use it to set the filter on the layer. This
@@ -478,10 +477,15 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
       *ppszLayerNames = pszTmp;
 
     }
-    for (i=0; i<nLayers; i++)
-      freeLayer(&pasLayers[i]);
-    msFree(pasLayers);
   }
+  
+  nStatus = MS_SUCCESS;
+
+sld_cleanup:
+  for (i=0; i<nLayers; i++)
+     freeLayer(&pasLayers[i]);
+  msFree(pasLayers);
+
   if(map->debug == MS_DEBUGLEVEL_VVV) {
     tmpfilename = msTmpFile(map, map->mappath, NULL, "_sld.map");
     if (tmpfilename == NULL) {
@@ -493,7 +497,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
       msFree(tmpfilename);
     }
   }
-  return MS_SUCCESS;
+  return nStatus;
 
 
 #else
@@ -5030,6 +5034,7 @@ char *msSLDParseExpression(char *pszExpression)
       }
     }
   }
+  msFreeCharArray(aszElements, nElements);
 
   return pszFilter;
 }

@@ -497,7 +497,7 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
       rendererVTableObj *renderer = image->format->vtable;
       symbolObj *symbol;
       shapeObj *offsetLine = p;
-      int i;
+      int i,ret=MS_SUCCESS;
       double width;
       double finalscalefactor;
 
@@ -546,13 +546,15 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         else {
           /* msSetError(MS_MISCERR,"no color defined for line styling","msDrawLineSymbol()");
            * not really an error */
-          return MS_SUCCESS;
+          ret = MS_SUCCESS;
+          goto line_cleanup;
         }
         renderer->renderLine(image,offsetLine,&s);
       } else {
         symbolStyleObj s;
         if(preloadSymbol(symbolset, symbol, renderer) != MS_SUCCESS) {
-          return MS_FAILURE;
+          ret = MS_FAILURE;
+          goto line_cleanup;
         }
 
         INIT_SYMBOL_STYLE(s);
@@ -584,15 +586,17 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             renderer->renderLineTiled(image, offsetLine, tile);
           } else {
             msSetError(MS_RENDERERERR, "renderer does not support brushed lines", "msDrawLineSymbol()");
-            return MS_FAILURE;
+            ret = MS_FAILURE;
+            goto line_cleanup;
           }
         }
       }
-
+line_cleanup:
       if(offsetLine!=p) {
         msFreeShape(offsetLine);
         msFree(offsetLine);
       }
+      return ret;
     } else if( MS_RENDERER_IMAGEMAP(image->format) )
       msDrawLineSymbolIM(symbolset, image, p, style, scalefactor);
     else {
@@ -699,7 +703,8 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         int seamless = 0;
 
         if(preloadSymbol(symbolset,symbol,renderer) != MS_SUCCESS) {
-          return MS_FAILURE;
+          ret = MS_FAILURE;
+          goto cleanup;
         }
 
         INIT_SYMBOL_STYLE(s);

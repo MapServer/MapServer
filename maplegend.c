@@ -677,8 +677,16 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     if(hittest) {
       ch = &hittest->layerhits[cur->layerindex].classhits[cur->classindex];
     }
-    if(msDrawLegendIcon(map, map->layers[cur->layerindex], map->layers[cur->layerindex]->class[cur->classindex],  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y, scale_independent, ch) != MS_SUCCESS)
-      return NULL;
+    if(msDrawLegendIcon(map, map->layers[cur->layerindex], map->layers[cur->layerindex]->class[cur->classindex],  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y, scale_independent, ch) != MS_SUCCESS) {
+      while(cur) {
+        /* clean up */
+        free(cur->transformedText);
+        head = cur;
+        cur = cur->pred;
+        free(head);
+        return NULL;
+      }
+    }
 
     /*
      * adjust the baseline for multiline truetype labels. the label point is the bottom left

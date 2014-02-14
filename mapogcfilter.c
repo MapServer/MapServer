@@ -66,8 +66,7 @@ int FLTIsNumeric(char *pszValue)
       return MS_TRUE;
 #else
     char * p;
-    strtod (pszValue, &p);
-    if (*p == '\0') return MS_TRUE;
+    if (strtod(pszValue, &p) != 0  || *p == '\0') return MS_TRUE;
 #endif
   }
 
@@ -431,11 +430,11 @@ int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
   CPLXMLNode *psCoordinates = NULL;
   char *pszTmpCoord = NULL;
   char **szCoords = NULL;
-  int nCoords = 0;
+  int nCoords = 0, status = MS_FALSE;
 
 
   if (!psNode || !psShp)
-    return MS_FALSE;
+    return status;
 
 
   if( strcasecmp(psNode->pszValue,"PointType") == 0
@@ -460,12 +459,13 @@ int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
         msAddLine(psShp, &line);
         free(line.point);
 
-        return MS_TRUE;
+        status = MS_TRUE;
       }
+      msFreeCharArray(szCoords, nCoords);
     }
   }
 
-  return MS_FALSE;
+  return status;
 }
 
 
@@ -1923,8 +1923,9 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
               msFreeCharArray(tokens, nTokens);
             }
           }
+        } else {
+          msFreeCharArray(tokens, nTokens);
         }
-
       }
 
       return (shapeObj *)psNode->pOther;
@@ -2624,8 +2625,10 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
   /*      Get the bounds value which are stored like boundmin;boundmax    */
   /* -------------------------------------------------------------------- */
   aszBounds = msStringSplit(psFilterNode->psRightNode->pszValue, ';', &nBounds);
-  if (nBounds != 2)
+  if (nBounds != 2) {
+    msFreeCharArray(aszBounds, nBounds);
     return NULL;
+  }
   /* -------------------------------------------------------------------- */
   /*      check if the value is a numeric value or alphanumeric. If it    */
   /*      is alphanumeric, add quotes around attribute and values.        */
@@ -2691,6 +2694,7 @@ char *FLTGetIsBetweenComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
   /*closing paranthesis*/
   strlcat(szBuffer, ")", bufferSize);
 
+  msFreeCharArray(aszBounds, nBounds);
 
   return msStrdup(szBuffer);
 }

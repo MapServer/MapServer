@@ -1089,8 +1089,10 @@ makeTimeFilter(layerObj *lp,
   }
 
   atimes = msStringSplit(timestring, ',', &numtimes);
-  if (atimes == NULL || numtimes < 1)
+  if (atimes == NULL || numtimes < 1) {
+    msFreeCharArray(atimes,numtimes);
     return MS_FALSE;
+  }
 
   if (&lp->filter && lp->filter.string && lp->filter.type == MS_STRING) {
     pszBuffer = msStringConcatenate(pszBuffer, "((");
@@ -1207,7 +1209,9 @@ makeTimeFilter(layerObj *lp,
     }
     pszBuffer = msStringConcatenate(pszBuffer, ")");
   } else {
+    msFreeCharArray(tokens, ntmp);
     msFreeCharArray(atimes, numtimes);
+    msFree(pszBuffer);
     return MS_FALSE;
   }
 

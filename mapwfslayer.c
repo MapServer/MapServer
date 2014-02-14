@@ -416,8 +416,9 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
   /*      mutually exclusive.                                             */
   /* -------------------------------------------------------------------- */
   if (psParams->pszFilter) {
-    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL), "&FILTER=%s",
-             msEncodeUrl(psParams->pszFilter));
+    char *encoded_filter = msEncodeUrl(psParams->pszFilter);
+    snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL), "&FILTER=%s",encoded_filter);
+    free(encoded_filter);
   } else {
 	  /*
 	   * take care about the axis order for WFS 1.1

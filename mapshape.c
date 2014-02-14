@@ -299,6 +299,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     fclose( psSHP->fpSHP );
     fclose( psSHP->fpSHX );
     free( psSHP );
+    free(pabyBuf);
 
     return( NULL );
   }
@@ -313,6 +314,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     fclose( psSHP->fpSHP );
     fclose( psSHP->fpSHX );
     free( psSHP );
+    free(pabyBuf);
     return( NULL );
   }
 
@@ -489,6 +491,7 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   fpSHP = fopen(pszFullname, "wb" );
   if( fpSHP == NULL ) {
     free( pszFullname );
+    free(pszBasename);
     return( NULL );
   }
 
@@ -497,10 +500,12 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   if( fpSHX == NULL ) {
     fclose(fpSHP);
     free( pszFullname );
+    free(pszBasename);
     return( NULL );
   }
 
   free( pszFullname );
+  free(pszBasename);
 
   /* -------------------------------------------------------------------- */
   /*      Prepare header block for .shp file.                             */

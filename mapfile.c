@@ -891,7 +891,6 @@ static int loadFeature(layerObj *player, int type)
 {
   int status=MS_SUCCESS;
   featureListNodeObjPtr *list = &(player->features);
-  featureListNodeObjPtr node;
   multipointObj points= {0,NULL};
   shapeObj *shape=NULL;
 
@@ -913,7 +912,7 @@ static int loadFeature(layerObj *player, int type)
           shape->index = player->features->tailifhead->shape.index + 1;
         else
           shape->index = 0;
-        if((node = insertFeatureList(list, shape)) == NULL)
+        if(insertFeatureList(list, shape) == NULL)
           status = MS_FAILURE;
 
         msFreeShape(shape); /* clean up */
@@ -2469,8 +2468,7 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
 int loadHashTable(hashTableObj *ptable)
 {
   char *key=NULL, *data=NULL;
-
-  if (!ptable) ptable = msCreateHashTable();
+  assert(ptable);
 
   for(;;) {
     switch(msyylex()) {
@@ -5489,7 +5487,7 @@ int loadQueryMap(queryMapObj *querymap)
       case(QUERYMAP):
         break; /* for string loads */
       case(COLOR):
-        loadColor(&(querymap->color), NULL);
+        if(loadColor(&(querymap->color), NULL) != MS_SUCCESS) return MS_FAILURE;
         break;
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadQueryMap()");

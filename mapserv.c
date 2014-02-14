@@ -263,16 +263,14 @@ int main(int argc, char *argv[])
 
 
 end_request:
-    if(mapserv) {
-      if(mapserv->map && mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
-        msGettimeofday(&requestendtime, NULL);
-        msDebug("mapserv request processing time (msLoadMap not incl.): %.3fs\n",
-                (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
-                (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
-      }
-      msCGIWriteLog(mapserv,MS_FALSE);
-      msFreeMapServObj(mapserv);
+    if(mapserv->map && mapserv->map->debug >= MS_DEBUGLEVEL_TUNING) {
+      msGettimeofday(&requestendtime, NULL);
+      msDebug("mapserv request processing time (msLoadMap not incl.): %.3fs\n",
+              (requestendtime.tv_sec+requestendtime.tv_usec/1.0e6)-
+              (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
+    msCGIWriteLog(mapserv,MS_FALSE);
+    msFreeMapServObj(mapserv);
 #ifdef USE_FASTCGI
     /* FCGI_ --- return to top of loop */
     msResetErrorList();

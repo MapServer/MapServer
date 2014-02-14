@@ -773,6 +773,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_nam
           else
             geometry->occurmax = atof(occur[1]);
         }
+        msFreeCharArray(occur,numoccur);
       }
     }
 
@@ -1123,6 +1124,7 @@ static void msGMLWriteGroup(FILE *stream, gmlGroupObj *group, shapeObj *shape, g
   else
     msIO_fprintf(stream, "%s</%s>\n", tab, group->name);
 
+  free(itemtab);
   return;
 }
 #endif

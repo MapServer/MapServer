@@ -789,11 +789,9 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
   }
 
   token = (char **) msSmallMalloc(sizeof(char *)*n);
-  if(!token) return(NULL);
 
   k = 0;
   token[k] = (char *)msSmallMalloc(sizeof(char)*(length+1));
-  if(!token[k]) return(NULL);
 
   j = 0;
   last_ch='\0';
@@ -807,7 +805,6 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
 
       k++;
       token[k] = (char *)msSmallMalloc(sizeof(char)*(length+1));
-      if(!token[k]) return(NULL);
 
       j = 0;
     } else {
@@ -859,7 +856,7 @@ char ** msStringSplitComplex( const char * pszString,
   int         bStripLeadSpaces = (nFlags & MS_STRIPLEADSPACES);
   int         bStripEndSpaces = (nFlags & MS_STRIPENDSPACES);
 
-  pszToken = (char *) msSmallMalloc(sizeof(char*)*10);;
+  pszToken = (char *) msSmallMalloc(sizeof(char)*10);;
   nTokenMax = 10;
 
   while( pszString != NULL && *pszString != '\0' ) {
@@ -925,7 +922,7 @@ char ** msStringSplitComplex( const char * pszString,
        */
       if( nTokenLen >= nTokenMax-3 ) {
         nTokenMax = nTokenMax * 2 + 10;
-        pszToken = (char *) msSmallRealloc(pszToken, sizeof(char*)*nTokenMax);
+        pszToken = (char *) msSmallRealloc(pszToken, sizeof(char)*nTokenMax);
       }
 
       pszToken[nTokenLen] = *pszString;
@@ -987,7 +984,7 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
 {
   char **papszResult = NULL;
   int n = 1, iChar, nLength = strlen(pszLine), iTokenChar = 0, bInQuotes = MS_FALSE;
-  char *pszToken = (char *) msSmallMalloc(sizeof(char*)*(nLength+1));
+  char *pszToken = (char *) msSmallMalloc(sizeof(char)*(nLength+1));
   int nDelimLen = strlen(pszDelim);
 
   /* Compute the number of tokens */
@@ -1017,7 +1014,7 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
     } else if( !bInQuotes && strncmp(pszLine+iChar,pszDelim,nDelimLen) == 0 ) {
       pszToken[iTokenChar++] = '\0';
       papszResult[n] = pszToken;
-      pszToken = (char *) msSmallMalloc(sizeof(char*)*(nLength+1));
+      pszToken = (char *) msSmallMalloc(sizeof(char)*(nLength+1));
       iChar += nDelimLen - 1;
       iTokenChar = 0;
       n++;
@@ -1194,8 +1191,8 @@ void msDecodeHTMLEntities(const char *string)
     pszBuffer = (char*)string;
 
   bufferSize = strlen(pszBuffer);
-  pszReplace = (char*) msSmallMalloc(bufferSize);
-  pszEnd = (char*) msSmallMalloc(bufferSize);
+  pszReplace = (char*) msSmallMalloc(bufferSize+1);
+  pszEnd = (char*) msSmallMalloc(bufferSize+1);
 
   while((pszAmp = strchr(pszBuffer, '&')) != NULL) {
     /* Get the &...; */
@@ -1606,6 +1603,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
   const char *inp;
   char *outp, *out = NULL;
   size_t len, bufsize, bufleft, iconv_status;
+  assert(encoding);
 
 #ifdef USE_FRIBIDI
   msAcquireLock(TLOCK_FRIBIDI);
@@ -1618,7 +1616,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
 #endif
   len = strlen(string);
 
-  if (len == 0 || (encoding && strcasecmp(encoding, "UTF-8")==0))
+  if (len == 0 || strcasecmp(encoding, "UTF-8")==0)
     return msStrdup(string);    /* Nothing to do: string already in UTF-8 */
 
   cd = iconv_open("UTF-8", encoding);

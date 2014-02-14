@@ -855,7 +855,6 @@ void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
         mime_list[mime_count++] = format->mimetype;
       }
     }
-    msFreeCharArray(tokens, numtokens);
   } else
     for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ ) {
       int  j;
@@ -880,6 +879,8 @@ void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
 
   if( mime_count < max_mime )
     mime_list[mime_count] = NULL;
+  if(tokens)
+    msFreeCharArray(tokens, numtokens);
 }
 
 /************************************************************************/
@@ -905,7 +906,6 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
         mime_list[mime_count++] = format->mimetype;
       }
     }
-    msFreeCharArray(tokens, numtokens);
   } else {
     for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ ) {
       int  j;
@@ -935,6 +935,8 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
   }
   if( mime_count < max_mime )
     mime_list[mime_count] = NULL;
+  if(tokens)
+    msFreeCharArray(tokens, numtokens);
 }
 
 

@@ -1868,8 +1868,8 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
         msIO_fprintf(stream, itemFormat, keywords[kw]);
       }
       if(endTag) msIO_fprintf(stream, "%s", endTag);
-      msFreeCharArray(keywords, numkeywords);
     }
+    msFreeCharArray(keywords, numkeywords);
     return MS_TRUE;
   }
   return MS_FALSE;
@@ -1961,8 +1961,8 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
       msFree(encoded);
     }
     if(endTag) msIO_fprintf(stream, "%s", endTag);
-    msFreeCharArray(items, numitems);
   }
+  msFreeCharArray(items, numitems);
 
   return status;
 }
