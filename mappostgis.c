@@ -2185,24 +2185,29 @@ char *msPostGISBuildSpatialSQLForFilterNode(FilterEncodingNode *filterNode, laye
     msInitProjection(&tmpProj);
 
     if ( msLoadProjectionString(&tmpProj, filterNode->pszSRS) == 0 ) {
-      if ( msProjectionsDiffer(&tmpProj, &layer->projection) )
-        msProjectShape(&tmpProj, &layer->projection, queryShape);
-      else if ( msProjectionsDiffer(&tmpProj, &layer->map->projection) )
-        msProjectShape(&tmpProj, &layer->map->projection, queryShape);
+      if ( layer->projection.numargs > 0 ) {
+	if ( msProjectionsDiffer(&tmpProj, &layer->projection) )
+          msProjectShape(&tmpProj, &layer->projection, queryShape);
+      } else {
+        if ( msProjectionsDiffer(&tmpProj, &layer->map->projection) )
+          msProjectShape(&tmpProj, &layer->map->projection, queryShape);
+      }
     }
 
     msFreeProjection(&tmpProj);
   } else {
-    /* assume queryShape is in map projection: reproject if this differs from layer projection */
+    /* assume queryShape is in WFS default projection (which is now the map projection):
+       reproject if this differs from layer projection */
     if ( msProjectionsDiffer(&layer->projection, &layer->map->projection) )
       msProjectShape(&layer->map->projection, &layer->projection, queryShape);
   }
 
   if ( distance > 0 && (strcasecmp(strOperator, "DWithin") == 0 || strcasecmp(strOperator, "Beyond") == 0) ) {
-    if ( units > 0 && units != layer->units ) {
-      distance *= msInchesPerUnit(units, 0) / msInchesPerUnit(layer->units, 0);
-    } else if ( layer->map->units != layer->units ) {
-      distance *= msInchesPerUnit(layer->map->units, 0) / msInchesPerUnit(layer->units, 0);
+    if (units > 0) {
+      if ( units != layer->units )
+        distance *= msInchesPerUnit(units, 0) / msInchesPerUnit(layer->units, 0);
+      else if ( layer->map->units != layer->units )
+        distance *= msInchesPerUnit(layer->map->units, 0) / msInchesPerUnit(layer->units, 0);
     }
   }
 
