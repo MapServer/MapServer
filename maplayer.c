@@ -684,14 +684,14 @@ int msLayerWhichItems(layerObj *layer, int get_all, char *metadata)
   /* always retrieve all items in some cases */
   if(layer->connectiontype == MS_INLINE || get_all == MS_TRUE ||
       (layer->map->outputformat && layer->map->outputformat->renderer == MS_RENDER_WITH_KML)) {
-    msLayerGetItems(layer);
+    rv = msLayerGetItems(layer);
     if(nt > 0) /* need to realloc the array to accept the possible new items*/
       layer->items = (char **)msSmallRealloc(layer->items, sizeof(char *)*(layer->numitems + nt));
   } else {
     rv = layer->vtable->LayerCreateItems(layer, nt);
-    if(rv != MS_SUCCESS)
-      return rv;
   }
+  if(rv != MS_SUCCESS)
+    return rv;
 
   /*
   ** build layer item list, compute item indexes for explicity item references (e.g. classitem) or item bindings

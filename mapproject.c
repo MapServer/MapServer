@@ -133,7 +133,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   /* -------------------------------------------------------------------- */
   else {
     /* nothing to do if the other coordinate system is also lat/long */
-    if( in == NULL && out != NULL && pj_is_latlong(out->proj) )
+    if( in == NULL && (out == NULL || pj_is_latlong(out->proj) ))
       return MS_SUCCESS;
     if( out == NULL && in != NULL && pj_is_latlong(in->proj) )
       return MS_SUCCESS;

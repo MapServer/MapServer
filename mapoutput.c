@@ -473,18 +473,17 @@ int msAppendOutputFormat(mapObj *map, outputFormatObj *format)
   /* -------------------------------------------------------------------- */
   /*      Attach to map.                                                  */
   /* -------------------------------------------------------------------- */
-  if (map != NULL) {
-    map->numoutputformats++;
-    if (map->outputformatlist == NULL)
-      map->outputformatlist = (outputFormatObj **) malloc(sizeof(void*));
-    else
-      map->outputformatlist = (outputFormatObj **)
-                              realloc(map->outputformatlist,
-                                      sizeof(void*) * map->numoutputformats );
+  assert(map);
+  map->numoutputformats++;
+  if (map->outputformatlist == NULL)
+    map->outputformatlist = (outputFormatObj **) malloc(sizeof(void*));
+  else
+    map->outputformatlist = (outputFormatObj **)
+                            realloc(map->outputformatlist,
+                                    sizeof(void*) * map->numoutputformats );
 
-    map->outputformatlist[map->numoutputformats-1] = format;
-    MS_REFCNT_INCR(format);
-  }
+  map->outputformatlist[map->numoutputformats-1] = format;
+  MS_REFCNT_INCR(format);
 
   return map->numoutputformats;
 }

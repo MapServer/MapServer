@@ -1228,10 +1228,9 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
             for (i=0; i<nMaxDash; i++)
               psStyle->pattern[i] = atof(aszValues[i]);
 
-            msFreeCharArray(aszValues, nDash);
             psStyle->linecap = MS_CJC_BUTT;
           }
-
+          msFreeCharArray(aszValues, nDash);
         }
       } else if (strcasecmp(psStrkName, "stroke-opacity") == 0) {
         if(psCssParam->psChild &&  psCssParam->psChild->psNext &&
@@ -1256,10 +1255,10 @@ int msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
   /* then again the fill parameter can be used inside both elements. */
   psGraphicFill =  CPLGetXMLNode(psStroke, "GraphicFill");
   if (psGraphicFill)
-    msSLDParseGraphicFillOrStroke(psGraphicFill, pszDashValue, psStyle, map, 0);
+    msSLDParseGraphicFillOrStroke(psGraphicFill, pszDashValue, psStyle, map);
   psGraphicFill =  CPLGetXMLNode(psStroke, "GraphicStroke");
   if (psGraphicFill)
-    msSLDParseGraphicFillOrStroke(psGraphicFill, pszDashValue, psStyle, map, 0);
+    msSLDParseGraphicFillOrStroke(psGraphicFill, pszDashValue, psStyle, map);
 
   if (pszDashValue)
     free(pszDashValue);
@@ -1495,10 +1494,10 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
   /* then again the fill parameter can be used inside both elements. */
   psGraphicFill =  CPLGetXMLNode(psFill, "GraphicFill");
   if (psGraphicFill)
-    msSLDParseGraphicFillOrStroke(psGraphicFill, NULL, psStyle, map, 0);
+    msSLDParseGraphicFillOrStroke(psGraphicFill, NULL, psStyle, map);
   psGraphicFill =  CPLGetXMLNode(psFill, "GraphicStroke");
   if (psGraphicFill)
-    msSLDParseGraphicFillOrStroke(psGraphicFill, NULL, psStyle, map, 0);
+    msSLDParseGraphicFillOrStroke(psGraphicFill, NULL, psStyle, map);
 
 
   return MS_SUCCESS;
@@ -1513,8 +1512,7 @@ int msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
 /************************************************************************/
 int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                                   char *pszDashValue,
-                                  styleObj *psStyle, mapObj *map,
-                                  int bPointLayer)
+                                  styleObj *psStyle, mapObj *map)
 {
   CPLXMLNode  *psCssParam, *psGraphic, *psExternalGraphic, *psMark, *psSize;
   CPLXMLNode *psWellKnownName, *psStroke, *psFill;
@@ -1526,8 +1524,6 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
   int bFilled = 0;
   CPLXMLNode *psPropertyName=NULL;
   char szTmp[256];
-
-  bPointLayer=0;
 
   if (!psRoot || !psStyle || !map)
     return MS_FAILURE;
@@ -2068,7 +2064,7 @@ int msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 
   msSLDParseGraphicFillOrStroke(psRoot, NULL,
                                 psLayer->class[nClassId]->styles[iStyle],
-                                psLayer->map, 1);
+                                psLayer->map);
 
   return MS_SUCCESS;
 }
@@ -3613,6 +3609,7 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
              "<%s name=\"stroke-dasharray\">%s</%s>\n",
              sCssParam, pszDashArray, sCssParam);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
+    msFree(pszDashArray);
   }
 
   snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n",  sNameSpace);
@@ -3890,9 +3887,8 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
         }
         snprintf(szTmp, sizeof(szTmp), "</%sFont>\n",  sNameSpace);
         pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-        msFreeCharArray(aszFontsParts, nFontParts);
       }
+      msFreeCharArray(aszFontsParts, nFontParts);
     }
 
 
@@ -4562,7 +4558,6 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
     if (nTokens > 1) {
       pszAttributeName = msStrdup(aszValues[0]);
       pszAttributeValue =  msStrdup(aszValues[1]);
-      msFreeCharArray(aszValues, nTokens);
     } else {
       nLength = strlen(pszExpression);
       pszAttributeName = (char *)malloc(sizeof(char)*(nLength+1));
@@ -4583,9 +4578,8 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
         }
         pszAttributeName[iValue] = '\0';
       }
-
-
     }
+    msFreeCharArray(aszValues, nTokens);
   } else if (bOneCharCompare == 0) {
     nLength = strlen(pszExpression);
     pszAttributeName = (char *)malloc(sizeof(char)*(nLength+1));
@@ -4619,8 +4613,10 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
   /*      inside []                                                       */
   /* -------------------------------------------------------------------- */
   if (bReturnName) {
-    if (!pszAttributeName)
+    if (!pszAttributeName) {
+      msFree(pszAttributeValue);
       return NULL;
+    }
 
     nLength = strlen(pszAttributeName);
     pszFinalAttributeName = (char *)malloc(sizeof(char)*(nLength+1));
@@ -4643,11 +4639,14 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
     }
 
     msFree(pszAttributeName);
+    msFree(pszAttributeValue);
     return pszFinalAttributeName;
   } else {
 
-    if (!pszAttributeValue)
+    if (!pszAttributeValue) {
+      msFree(pszAttributeName);
       return NULL;
+    }
     nLength = strlen(pszAttributeValue);
     pszFinalAttributeValue = (char *)malloc(sizeof(char)*(nLength+1));
     pszFinalAttributeValue[0] = '\0';
@@ -4701,6 +4700,7 @@ char *msSLDGetAttributeNameOrValue(char *pszExpression,
       }
     }
     msFree(pszAttributeName);
+    msFree(pszAttributeValue);
     return pszFinalAttributeValue;
   }
 }

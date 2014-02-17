@@ -777,8 +777,10 @@ void *msInitProjTransformer( projectionObj *psSrc,
     psPTInfo->bSrcIsGeographic = MS_FALSE;
 
   if( !InvGeoTransform(padfSrcGeoTransform,
-                       psPTInfo->adfInvSrcGeoTransform) )
+                       psPTInfo->adfInvSrcGeoTransform) ) {
+    free(psPTInfo);
     return NULL;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Record destination image information.                           */

@@ -209,8 +209,8 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
           pszTmpExpression = NULL;
         }
         pszExpression = msStringConcatenate(pszExpression, ")");
-        msFreeCharArray(paszElements, numelements);
       }
+      msFreeCharArray(paszElements, numelements);
     } else {
       /*range(s)*/
       paszElements = msStringSplit (value, ',', &numelements);
@@ -285,12 +285,12 @@ char *FLTGetExpressionForValuesRanges(layerObj *lp, char *item, char *value,  in
             msFree(pszTmpExpression);
             pszTmpExpression = NULL;
 
-            msFreeCharArray(papszRangeElements, nrangeelements);
           }
+          msFreeCharArray(papszRangeElements, nrangeelements);
         }
         pszExpression = msStringConcatenate(pszExpression, ")");
-        msFreeCharArray(paszElements, numelements);
       }
+      msFreeCharArray(paszElements, numelements);
     }
   }
   msFree(pszTmpExpression);
@@ -1550,10 +1550,6 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
     /* -------------------------------------------------------------------- */
     else if (FLTIsFeatureIdFilterType(psXMLNode->pszValue)) {
       psFilterNode->eType = FILTER_NODE_TYPE_FEATUREID;
-      pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "fid", NULL);
-      /*for FE 1.1.0 GmlObjectId */
-      if (pszFeatureId == NULL)
-        pszFeatureId = (char *)CPLGetXMLValue(psXMLNode, "id", NULL);
       pszFeatureIdList = NULL;
 
       psFeatureIdNode = psXMLNode;
@@ -1920,12 +1916,10 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
               else if (strcasecmp(szUnit,"px") == 0)
                 *pnUnit = MS_PIXELS;
 
-              msFreeCharArray(tokens, nTokens);
             }
           }
-        } else {
-          msFreeCharArray(tokens, nTokens);
-        }
+        } 
+        msFreeCharArray(tokens, nTokens);
       }
 
       return (shapeObj *)psNode->pOther;
@@ -3260,11 +3254,10 @@ int FLTParseGMLEnvelope(CPLXMLNode *psRoot, rectObj *psBbox, char **ppszSRS)
           if (tokens && n >= 2) {
             psBbox->maxx = atof(tokens[0]);
             psBbox->maxy = atof(tokens[1]);
-            msFreeCharArray(tokens, n);
-
             bValid = 1;
           }
         }
+        msFreeCharArray(tokens, n);
       }
     }
   }
@@ -3315,8 +3308,7 @@ static void FLTStripNameSpacesFromPropertyName(FilterEncodingNode *psFilterNode)
           msFree(psFilterNode->pszValue);
           psFilterNode->pszValue = msStrdup(tokens[1]);
         }
-        if (tokens && n>0)
-          msFreeCharArray(tokens, n);
+        msFreeCharArray(tokens, n);
       }
     }
     if (psFilterNode->psLeftNode)

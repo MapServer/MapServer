@@ -2090,14 +2090,22 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       shapeObj *bufferShape=NULL;
 
       bufferShape = msGEOSBuffer(shape, buffer);
-      if(!bufferShape) return(MS_FAILURE); /* buffer failed */
+      if(!bufferShape) {
+        free(pointFormat1);
+        free(pointFormat2);
+        return(MS_FAILURE); /* buffer failed */
+      }
       msCopyShape(bufferShape, &tShape);
       msFreeShape(bufferShape);
     }
 #endif
     else {
       status = msCopyShape(shape, &tShape);
-      if(status != 0) return(MS_FAILURE); /* copy failed */
+      if(status != 0) {
+        free(pointFormat1);
+        free(pointFormat2);
+        return(MS_FAILURE); /* copy failed */
+      }
     }
 
     /* no big deal to convert from file to image coordinates, but what are the image parameters */

@@ -184,6 +184,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
     }
   }
   if( psDBF->fp == NULL ) {
+    msFree(pszDBFFilename);
     msFree(psDBF);
     return( NULL );
   }

@@ -853,7 +853,7 @@ int msCGILoadForm(mapservObj *mapserv)
     if(strncasecmp(mapserv->request->ParamNames[i],"layers", 6) == 0) { /* turn a set of layers, delimited by spaces, on */
 
       /* If layers=all then turn on all layers */
-      if (strcasecmp(mapserv->request->ParamValues[i], "all") == 0 && mapserv->map != NULL) {
+      if (strcasecmp(mapserv->request->ParamValues[i], "all") == 0) {
         int l;
 
         /* Reset NumLayers=0. If individual layers were already selected then free the previous values.  */
@@ -1616,8 +1616,14 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
   }
 
   if(mapserv->Mode == MAPLEGENDICON) {
-    if(setExtent(mapserv) != MS_SUCCESS) return MS_FAILURE;
-    if(checkWebScale(mapserv) != MS_SUCCESS) return MS_FAILURE;
+    if(setExtent(mapserv) != MS_SUCCESS) {
+      status=MS_FAILURE;
+      goto li_cleanup;
+    }
+    if(checkWebScale(mapserv) != MS_SUCCESS) {
+      status=MS_FAILURE;
+      goto li_cleanup;
+    }
     mapserv->hittest = msSmallMalloc(sizeof(map_hittest));
     initMapHitTests(mapserv->map,mapserv->hittest);
     status = msHitTestLayer(mapserv->map, GET_LAYER(mapserv->map,layerindex),&mapserv->hittest->layerhits[layerindex]);

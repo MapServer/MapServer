@@ -262,8 +262,8 @@ int msWFSLocateSRSInList(const char *pszList, const char *srs)
         break;
       }
     }
-    msFreeCharArray(tokens, nTokens);
   }
+  msFreeCharArray(tokens, nTokens);
 
   return bFound;
 }
@@ -985,8 +985,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group, gmlItem
   gmlConstantObj *constant=NULL;
 
   /* setup the element tab */
-  element_tab = (char *) malloc(sizeof(char)*strlen(tab)+5);
-  MS_CHECK_ALLOC_NO_RET(element_tab, sizeof(char)*strlen(tab)+5);
+  element_tab = (char *) msSmallMalloc(sizeof(char)*strlen(tab)+5);
   sprintf(element_tab, "%s    ", tab);
 
   if(group->type)
@@ -1017,6 +1016,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group, gmlItem
 
   msIO_fprintf(stream, "%s  </sequence>\n", tab);
   msIO_fprintf(stream, "%s</complexType>\n", tab);
+  free(element_tab);
 
   return;
 }
@@ -1758,15 +1758,13 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req, ow
                             pszTmp = msStringConcatenate(pszTmp, tokens2[1]);
                           else
                             pszTmp = msStringConcatenate(pszTmp,tokens1[l]);
-                          if (tokens2 && n2>0)
-                            msFreeCharArray(tokens2, n2);
+                          msFreeCharArray(tokens2, n2);
                         } else
                           pszTmp = msStringConcatenate(pszTmp,tokens1[l]);
                       }
                       papszPropertyName[i] = msStrdup(pszTmp);
                       msFree(pszTmp);
-                      if (tokens1 && n1>0)
-                        msFreeCharArray(tokens1, n1);
+                      msFreeCharArray(tokens1, n1);
                     } else
                       papszPropertyName[i] = msStrdup(tokens[i]);
                     /* remove trailing ) */

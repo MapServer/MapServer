@@ -906,7 +906,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   } else {
     char datasource_path[MS_MAXPATHLEN];
 
-    strcpy( datasource_path, CPLGetPath( datasource_name ) );
+    strncpy( datasource_path, CPLGetPath( datasource_name ), MS_MAXPATHLEN-1 );
     file_list = msOGRRecursiveFileList( datasource_path );
   }
 

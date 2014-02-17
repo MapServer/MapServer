@@ -227,7 +227,10 @@ shapeObj* msSmoothShapeSIA(shapeObj *shape, int ss, int si, char *preprocessing)
       for (j=0; j < newShape->numlines; ++j)
         free(newShape->line[j].point);
       newShape->numlines = 0;
-      if (newShape->line) free(newShape->line);
+      if (newShape->line) {
+        free(newShape->line);
+        newShape->line = NULL;
+      }
 
       shape = &initialShape;
     }

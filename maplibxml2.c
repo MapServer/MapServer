@@ -102,10 +102,10 @@ xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, x
  *
  */
 
-const char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath)
+char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath)
 {
   xmlBufferPtr xbuf;
-  const char *result = NULL;
+  char *result = NULL;
 
   xbuf = xmlBufferCreate();
 

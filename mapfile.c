@@ -5028,6 +5028,7 @@ static int loadOutputFormat(mapObj *map)
         int s;
         if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) /* allow the template to be quoted or not in the mapfile */
           goto load_output_error;
+        free(driver);
         if(s == MS_STRING)
           driver = msStrdup(msyystring_buffer);
         else
@@ -6544,11 +6545,11 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   }
 
   if (new_mappath)
-    map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, msStrdup(new_mappath)));
+    map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, new_mappath));
   else {
     char *path = msGetPath(filename);
     map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, path));
-    if( path ) free( path );
+    free( path );
   }
 
   msyybasepath = map->mappath; /* for INCLUDEs */

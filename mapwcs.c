@@ -1641,8 +1641,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     char *map_original_srs = msGetProjectionString(&(map->projection));
     if (msLoadProjectionString(&(lp->projection), map_original_srs) != 0) {
       msSetError( MS_WCSERR, "Error when setting map projection to a layer with no projection", "msWCSGetCoverage()" );
+      free(map_original_srs);
       return msWCSException(map, NULL, NULL, params->version);
     }
+    free(map_original_srs);
   }
 
   /* we need the coverage metadata, since things like numbands may not be available otherwise */
@@ -2016,6 +2018,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     status = msDrawRasterLayerLow( map, lp, image, &rb );
   }
   if( status != MS_SUCCESS ) {
+    msFreeImage(image);
     return msWCSException(map, NULL, NULL, params->version );
   }
 

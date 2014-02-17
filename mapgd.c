@@ -1010,7 +1010,7 @@ int renderBitmapGlyphsGD(imageObj *img, double x, double y, labelStyleObj *style
   }
 
 
-  if(*lines != text)
+  if(lines != &text)
     msFreeCharArray(lines, numlines);
   return MS_SUCCESS;
 }
