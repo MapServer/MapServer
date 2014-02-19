@@ -1261,15 +1261,12 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   // Make sure we aren't holding the lock when the callback may need it.
   RELEASE_OGR_LOCK;
   msConnPoolRelease( layer, psInfo->hDS );
-  ACQUIRE_OGR_LOCK;
 
   // Free current tile if there is one.
   if( psInfo->poCurTile != NULL )
     msOGRFileClose( layer, psInfo->poCurTile );
 
   CPLFree(psInfo);
-
-  RELEASE_OGR_LOCK;
 
   return MS_SUCCESS;
 }
