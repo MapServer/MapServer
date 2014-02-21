@@ -2437,21 +2437,62 @@ int msMapSetLayerProjections(mapObj* map)
   }
 
   for(i=0; i<map->numlayers; i++) {
+    layerObj *lp = GET_LAYER(map,i);
     /* This layer is turned on and needs a projection? */
-    if (GET_LAYER(map, i)->projection.numargs <= 0 &&
-        GET_LAYER(map, i)->status != MS_OFF &&
-        GET_LAYER(map, i)->transform == MS_TRUE) {
+    if (lp->projection.numargs <= 0 &&
+        lp->status != MS_OFF &&
+        lp->transform == MS_TRUE) {
 
       /* Fetch main map projection string only now that we need it */
       if (mapProjStr == NULL)
         mapProjStr = msGetProjectionString(&(map->projection));
 
       /* Set the projection to the map file projection */
-      if (msLoadProjectionString(&(GET_LAYER(map, i)->projection), mapProjStr) != 0) {
-        msSetError(MS_CGIERR, "Unable to set projection on layer.", "msTileSetProjectionst()");
+      if (msLoadProjectionString(&(lp->projection), mapProjStr) != 0) {
+        msSetError(MS_CGIERR, "Unable to set projection on layer.", "msMapSetLayerProjections()");
         return(MS_FAILURE);
       }
-      GET_LAYER(map, i)->project = MS_TRUE;
+      lp->project = MS_TRUE;
+      if(lp->connection && IS_THIRDPARTY_LAYER_CONNECTIONTYPE(lp->connectiontype)) {
+        char **reflayers;
+        int numreflayers,j;
+        reflayers = msStringSplit(lp->connection,',',&numreflayers);
+        for(j=0; j<numreflayers; j++) {
+          int *lidx, nlidx;
+          /* first check layers referenced by group name */
+          lidx = msGetLayersIndexByGroup(map, reflayers[i], &nlidx);
+          if(lidx) {
+            int k;
+            for(k=0; k<nlidx; k++) {
+              layerObj *glp = GET_LAYER(map,lidx[k]);
+              if (glp->projection.numargs <= 0 && glp->transform == MS_TRUE) {
+
+                /* Set the projection to the map file projection */
+                if (msLoadProjectionString(&(glp->projection), mapProjStr) != 0) {
+                  msSetError(MS_CGIERR, "Unable to set projection on layer.", "msMapSetLayerProjections()");
+                  return(MS_FAILURE);
+                }
+                glp->project = MS_TRUE;
+              }
+            }
+            free(lidx);
+          } else {
+            /* group name did not match, check by layer name */
+            int layer_idx = msGetLayerIndex(map,lp->connection);
+            layerObj *glp = GET_LAYER(map,layer_idx);
+            if (glp->projection.numargs <= 0 && glp->transform == MS_TRUE) {
+
+              /* Set the projection to the map file projection */
+              if (msLoadProjectionString(&(glp->projection), mapProjStr) != 0) {
+                msSetError(MS_CGIERR, "Unable to set projection on layer.", "msMapSetLayerProjections()");
+                return(MS_FAILURE);
+              }
+              glp->project = MS_TRUE;
+            }
+          }
+        }
+        msFreeCharArray(reflayers, numreflayers);
+      }
     }
   }
   msFree(mapProjStr);

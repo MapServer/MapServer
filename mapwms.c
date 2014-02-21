@@ -1410,30 +1410,8 @@ this request. Check wms/ows_enable_request settings.",
 
     if (nonsquare_enabled ||
         msProjectionsDiffer(&(map->projection), &newProj)) {
-      char *original_srs = NULL;
-
-      for(i=0; i<map->numlayers; i++) {
-        if (GET_LAYER(map, i)->projection.numargs <= 0 &&
-            GET_LAYER(map, i)->status != MS_OFF &&
-            GET_LAYER(map, i)->transform == MS_TRUE) {
-          /* This layer is turned on and needs a projection */
-
-          /* Fetch main map projection string only now that we need it */
-          if (original_srs == NULL)
-            original_srs = msGetProjectionString(&(map->projection));
-
-          if (msLoadProjectionString(&(GET_LAYER(map, i)->projection),
-                                     original_srs) != 0) {
-            msFreeProjection(&newProj);
-            return msWMSException(map, nVersion, NULL, wms_exception_format);
-          }
-          GET_LAYER(map, i)->project = MS_TRUE;
-        }
-      }
-
-      msFree(original_srs);
+      msMapSetLayerProjections(map);
     }
-
     msFreeProjection(&newProj);
   }
 
