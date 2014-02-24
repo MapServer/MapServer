@@ -4336,7 +4336,7 @@ YY_RULE_SETUP
                                                  msyyin = fopen(msBuildPath(path, msyybasepath, msyytext), "r");
                                                  if(!msyyin) {
                                                    msSetError(MS_IOERR, "Error opening included file \"%s\".", "msyylex()", msyytext);
-                                                   //msyyin = msyyin_tmp;
+                                                   msyyin = msyyin_tmp;
                                                    return(-1);
                                                  }
 
