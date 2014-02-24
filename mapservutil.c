@@ -363,6 +363,10 @@ int msCGILoadForm(mapservObj *mapserv)
 
     if(strcasecmp(mapserv->request->ParamNames[i],"queryfile") == 0) {
       mapserv->QueryFile = msStrdup(mapserv->request->ParamValues[i]);
+      if(msValidateParameter(mapserv->QueryFile, msLookupHashTable(&(mapserv->map->web.validation), "queryfile"), NULL, NULL, NULL) != MS_SUCCESS) {
+        msSetError(MS_WEBERR, "Parameter 'queryfile' value fails to validate.", "mapserv()");
+        return MS_FAILURE;
+      }
       continue;
     }
 

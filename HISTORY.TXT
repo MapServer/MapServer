@@ -15,6 +15,8 @@ For a complete change history, please see the Git log comments.
 7.0 release (TBD)
 -----------------
 
+- Require validation on the CGI queryfile parameter. (#4874)
+
 - Apply RFC86 scaletoken substitutions to layer->PROCESSING entries
 
 - RFC108 Heatmap / Kernel-Density Layers
