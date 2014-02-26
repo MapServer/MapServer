@@ -71,6 +71,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
 
     image_draw = msImageCreate(image->width, image->height,
                                altFormat, image->imagepath, image->imageurl, map->resolution, map->defresolution, &map->imagecolor);
+    image_draw->map = map;
     renderer = MS_IMAGE_RENDERER(image_draw);
   } else {
     renderer = MS_IMAGE_RENDERER(image_draw);
@@ -83,7 +84,8 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
                      "msDrawLegendIcon()");
           return (MS_FAILURE);
         }
-        /* set opacity to full, as the renderer should be rendering a fully opaque image */
+        image_draw->map = map;
+       /* set opacity to full, as the renderer should be rendering a fully opaque image */
         lp->opacity=100;
       }
     }
@@ -406,6 +408,7 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
     msSetError(MS_IMGERR, "Unable to initialize image.","msCreateLegendIcon()");
     return(NULL);
   }
+  image->map = map;
 
   /* Call drawLegendIcon with destination (0, 0) */
   /* Return an empty image if lp==NULL || class=NULL  */
