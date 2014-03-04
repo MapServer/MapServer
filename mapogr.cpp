@@ -1376,7 +1376,32 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
     }
     else
     {
-        pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT * FROM \"");
+        const char* pszGeometryColumn;
+        int i;
+        pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT ");
+        for(i = 0; i < layer->numitems; i++)
+        {
+            if( i > 0 )
+                pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+            pszLayerDef = msStringConcatenate(pszLayerDef, layer->items[i]);
+            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        }
+
+        pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+        pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
+        if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' )
+        {
+            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+            pszLayerDef = msStringConcatenate(pszLayerDef, pszGeometryColumn);
+            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        }
+        else
+        {
+            /* Add ", *" so that we still have an hope to get the geometry */
+            pszLayerDef = msStringConcatenate(pszLayerDef, "*");
+        }
+        pszLayerDef = msStringConcatenate(pszLayerDef, " FROM \"");
         pszLayerDef = msStringConcatenate(pszLayerDef, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
         pszLayerDef = msStringConcatenate(pszLayerDef, "\" ORDER BY ");
     }
@@ -1395,15 +1420,16 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
 
     ACQUIRE_OGR_LOCK;
     psInfo->hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszLayerDef, NULL, NULL );
-    msFree(pszLayerDef);
     RELEASE_OGR_LOCK;
     if( psInfo->hLayer == NULL ) {
       msSetError(MS_OGRERR,
                  "ExecuteSQL(%s) failed.\n%s",
                  "msOGRFileWhichShapes()",
                  pszLayerDef, CPLGetLastErrorMsg() );
+      msFree(pszLayerDef);
       return MS_FAILURE;
     }
+    msFree(pszLayerDef);
   }
 
   /* ------------------------------------------------------------------
