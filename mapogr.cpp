@@ -1358,6 +1358,12 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
                "msOGRFileWhichShapes()");
     return(MS_FAILURE);
   }
+  
+  char* pszOGRFilter = NULL;
+  char* pszMSFilter = NULL;
+  /* In case we have an odd filter combining both a OGR filter and MapServer */
+  /* filter, then separate things */
+  msOGRSplitFilter(layer, &pszOGRFilter, &pszMSFilter);
 
   /* Apply sortBy */
   if( layer->sortBy.nProperties > 0 ) {
@@ -1376,9 +1382,42 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
     }
     else
     {
-        pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT * FROM \"");
+        const char* pszGeometryColumn;
+        int i;
+        pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT ");
+        for(i = 0; i < layer->numitems; i++)
+        {
+            if( i > 0 )
+                pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+            pszLayerDef = msStringConcatenate(pszLayerDef, layer->items[i]);
+            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        }
+
+        pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+        pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
+        if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' )
+        {
+            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+            pszLayerDef = msStringConcatenate(pszLayerDef, pszGeometryColumn);
+            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        }
+        else
+        {
+            /* Add ", *" so that we still have an hope to get the geometry */
+            pszLayerDef = msStringConcatenate(pszLayerDef, "*");
+        }
+        pszLayerDef = msStringConcatenate(pszLayerDef, " FROM \"");
         pszLayerDef = msStringConcatenate(pszLayerDef, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
-        pszLayerDef = msStringConcatenate(pszLayerDef, "\" ORDER BY ");
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        if( pszOGRFilter != NULL )
+        {
+            pszLayerDef = msStringConcatenate(pszLayerDef, " WHERE ");
+            pszLayerDef = msStringConcatenate(pszLayerDef, pszOGRFilter);
+            msFree(pszOGRFilter);
+            pszOGRFilter = NULL;
+        }
+        pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
     }
 
     pszLayerDef = msStringConcatenate(pszLayerDef, strOrderBy);
@@ -1395,15 +1434,18 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
 
     ACQUIRE_OGR_LOCK;
     psInfo->hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszLayerDef, NULL, NULL );
-    msFree(pszLayerDef);
     RELEASE_OGR_LOCK;
     if( psInfo->hLayer == NULL ) {
       msSetError(MS_OGRERR,
                  "ExecuteSQL(%s) failed.\n%s",
                  "msOGRFileWhichShapes()",
                  pszLayerDef, CPLGetLastErrorMsg() );
+      msFree(pszLayerDef);
+      msFree(pszOGRFilter);
+      msFree(pszMSFilter);
       return MS_FAILURE;
     }
+    msFree(pszLayerDef);
   }
 
   /* ------------------------------------------------------------------
@@ -1466,13 +1508,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
    * keyword in the filter string.  Otherwise, ensure the attribute
    * filter is clear.
    * ------------------------------------------------------------------ */
-  
-  char* pszOGRFilter = NULL;
-  char* pszMSFilter = NULL;
-  /* In case we have an odd filter combining both a OGR filter and MapServer */
-  /* filter, then separate things */
-  msOGRSplitFilter(layer, &pszOGRFilter, &pszMSFilter);
-  if( pszOGRFilter != NULL && pszMSFilter != NULL ) {
+
+  if( pszMSFilter != NULL ) {
     msLoadExpressionString(&layer->filter, pszMSFilter);
     if(layer->filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
   }
