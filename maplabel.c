@@ -382,6 +382,11 @@ int msAddLabelGroup(mapObj *map, imageObj *image, int layerindex, int classindex
 
   cachePtr->point = *point; /* the actual label point */
 
+  cachePtr->bbox.minx = 0;
+  cachePtr->bbox.miny = 0;
+  cachePtr->bbox.maxx = 0;
+  cachePtr->bbox.maxy = 0;
+
   cachePtr->leaderline = NULL;
   cachePtr->leaderbbox = NULL;
 
@@ -560,6 +565,11 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
     cachePtr->shapetype = MS_SHAPE_POINT;
   }
 #endif
+
+  cachePtr->bbox.minx = 0;
+  cachePtr->bbox.miny = 0;
+  cachePtr->bbox.maxx = 0;
+  cachePtr->bbox.maxy = 0;
 
   cachePtr->leaderline = NULL;
   cachePtr->leaderbbox = NULL;
