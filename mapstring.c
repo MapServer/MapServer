@@ -1459,14 +1459,15 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
   size_t str_len, old_len, new_len, tmp_offset;
   char *tmp_ptr;
 
-  if(new == NULL)
-    new = "";
-
   /*
   ** If old is not found then leave str alone
   */
   if( (tmp_ptr = (char *) strcasestr(str, old)) == NULL)
     return(str);
+  
+  if(new == NULL)
+    new = "";
+
 
   /*
   ** Grab some info about incoming strings
