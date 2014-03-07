@@ -51,6 +51,7 @@ int  msyystring_return_state;
 int  msyystring_begin_state;
 int  msyystring_size_tmp;
 
+
 int msyyreturncomments = 0;
 
 #define MS_LEXER_STRING_REALLOC(string, string_size, max_size, string_ptr)   \
@@ -676,6 +677,7 @@ char path[MS_MAXPATHLEN];
                                                  msyyin = fopen(msBuildPath(path, msyybasepath, msyytext), "r");
                                                  if(!msyyin) {
                                                    msSetError(MS_IOERR, "Error opening included file \"%s\".", "msyylex()", msyytext);
+                                                   msyyin = YY_CURRENT_BUFFER->yy_input_file;
                                                    return(-1);
                                                  }
 
