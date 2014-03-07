@@ -50,7 +50,7 @@ int  msyystring_icase = MS_FALSE;
 int  msyystring_return_state;
 int  msyystring_begin_state;
 int  msyystring_size_tmp;
-FILE *msyyin_tmp;
+
 
 int msyyreturncomments = 0;
 
@@ -673,11 +673,11 @@ char path[MS_MAXPATHLEN];
                                                  include_stack[include_stack_ptr] = YY_CURRENT_BUFFER; /* save state */
                                                  include_lineno[include_stack_ptr] = msyylineno;
                                                  include_stack_ptr++;
-                                                 msyyin_tmp = msyyin;
+
                                                  msyyin = fopen(msBuildPath(path, msyybasepath, msyytext), "r");
                                                  if(!msyyin) {
                                                    msSetError(MS_IOERR, "Error opening included file \"%s\".", "msyylex()", msyytext);
-                                                   msyyin = msyyin_tmp;
+                                                   msyyin = YY_CURRENT_BUFFER->yy_input_file;
                                                    return(-1);
                                                  }
 
