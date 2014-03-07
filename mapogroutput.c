@@ -537,6 +537,12 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Determine the output datasource name to use.                    */
   /* ==================================================================== */
   storage = msGetOutputFormatOption( format, "STORAGE", "filesystem" );
+  if( EQUAL(storage,"stream") && !msIO_isStdContext() ) {
+    /* bug #4858, streaming output won't work if standard output has been
+     * redirected, we switch to memory output in this case
+     */
+    storage = "memory";
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Where are we putting stuff?                                     */

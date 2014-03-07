@@ -4405,6 +4405,7 @@ YY_RULE_SETUP
                                                  msyyin = fopen(msBuildPath(path, msyybasepath, msyytext), "r");
                                                  if(!msyyin) {
                                                    msSetError(MS_IOERR, "Error opening included file \"%s\".", "msyylex()", msyytext);
+                                                   msyyin = YY_CURRENT_BUFFER->yy_input_file;
                                                    return(-1);
                                                  }
 
@@ -4416,7 +4417,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 334:
 YY_RULE_SETUP
-#line 695 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 696 "/home/tbonfort/dev/mapserver/maplexer.l"
 {
                                                  msyystring_return_state = MS_TOKEN_LITERAL_STRING;
                                                  msyystring_begin = msyytext[0]; 
@@ -4427,7 +4428,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 335:
 YY_RULE_SETUP
-#line 703 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 704 "/home/tbonfort/dev/mapserver/maplexer.l"
 { 
                                                     MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                                                                             msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4438,11 +4439,11 @@ YY_RULE_SETUP
 case 336:
 /* rule 336 can match eol */
 YY_RULE_SETUP
-#line 710 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 711 "/home/tbonfort/dev/mapserver/maplexer.l"
 { msyylineno++; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 712 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 713 "/home/tbonfort/dev/mapserver/maplexer.l"
 {
                                                   if( --include_stack_ptr < 0 )
                                                     return(EOF); /* end of main file */
@@ -4457,14 +4458,14 @@ case YY_STATE_EOF(INITIAL):
 case 337:
 /* rule 337 can match eol */
 YY_RULE_SETUP
-#line 723 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 724 "/home/tbonfort/dev/mapserver/maplexer.l"
 {
   return(0); 
 }
 	YY_BREAK
 case 338:
 YY_RULE_SETUP
-#line 727 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 728 "/home/tbonfort/dev/mapserver/maplexer.l"
 { 
                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
                                                                           msyystring_buffer_size, msyystring_buffer_ptr);
@@ -4474,15 +4475,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case 339:
 YY_RULE_SETUP
-#line 733 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 734 "/home/tbonfort/dev/mapserver/maplexer.l"
 { return(msyytext[0]); }
 	YY_BREAK
 case 340:
 YY_RULE_SETUP
-#line 734 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 735 "/home/tbonfort/dev/mapserver/maplexer.l"
 ECHO;
 	YY_BREAK
-#line 4486 "/home/tbonfort/dev/mapserver/maplexer.c"
+#line 4487 "/home/tbonfort/dev/mapserver/maplexer.c"
 case YY_STATE_EOF(URL_VARIABLE):
 case YY_STATE_EOF(URL_STRING):
 case YY_STATE_EOF(EXPRESSION_STRING):
@@ -5484,7 +5485,7 @@ void msyyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 734 "/home/tbonfort/dev/mapserver/maplexer.l"
+#line 735 "/home/tbonfort/dev/mapserver/maplexer.l"
 
 
 

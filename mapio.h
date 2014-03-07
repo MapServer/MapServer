@@ -108,6 +108,9 @@ extern "C" {
   msIOContext *msIO_pushStdoutToBufferAndGetOldContext(void);
   void msIO_restoreOldStdoutContext(msIOContext *context_to_restore);
 
+  int MS_DLL_EXPORT msIO_isStdContext(void);
+
+
   /* this is just for setting normal stdout's to binary mode on windows */
 
   int msIO_needBinaryStdout( void );

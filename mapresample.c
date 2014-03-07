@@ -613,7 +613,7 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
           alpha = (unsigned char)
                   MAX(0,MIN(255,255*dfAlpha01+0.5));
 
-          RB_SET_PIXEL(dst_rb,nDstX,nDstY,
+          RB_MIX_PIXEL(dst_rb,nDstX,nDstY,
                        red, green, blue, alpha );
         }
       } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
