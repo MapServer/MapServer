@@ -6842,10 +6842,14 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
       if(!value) continue; /*parameter was not in url*/
       validation = msLookupHashTable(&lp->validation, key);
       if(msEvalRegex(validation, value)) {
+        int c;
         /* we've found a substitution and it validates correctly, now let's apply it */
         tag = msSmallMalloc(strlen(key)+3);
         sprintf(tag,"%%%s%%",key);
         layerSubstituteString(lp,tag,value);
+        for(c=0; c<lp->numclasses;c++) {
+          classSubstituteString(lp->class[c], tag, value);
+        }
         free(tag);
       } else {
         msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msValidateParameter()");
