@@ -6658,8 +6658,9 @@ static void hashTableSubstituteString(hashTableObj *hash, const char *from, cons
   key = msFirstKeyFromHashTable(hash);
   while(key != NULL) {
     val = msLookupHashTable(hash, key);
-    if(!strcasestr(val, from)) continue;
-    msInsertHashTable(hash, key, msCaseReplaceSubstring(msStrdup(val), from, to));
+    if(strcasestr(val, from)) {
+      msInsertHashTable(hash, key, msCaseReplaceSubstring(msStrdup(val), from, to));
+    }
     key = msNextKeyFromHashTable(hash, key);
   }
 }
