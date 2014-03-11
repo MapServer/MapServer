@@ -99,7 +99,6 @@ int msValidateParameter(char *value, char *pattern1, char *pattern2, char *patte
   if(msEvalRegex(pattern3, value) == MS_TRUE) return MS_SUCCESS;
   if(msEvalRegex(pattern4, value) == MS_TRUE) return MS_SUCCESS;
 
-  msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msValidateParameter()");
   return(MS_FAILURE);
 }
 
@@ -116,7 +115,6 @@ int msEvalRegex(const char *e, const char *s)
 
   if(ms_regexec(&re, s, 0, NULL, 0) != 0) { /* no match */
     ms_regfree(&re);
-    msSetError(MS_REGEXERR, "String failed expression test.", "msEvalRegex()");
     return(MS_FALSE);
   }
   ms_regfree(&re);
@@ -6674,7 +6672,7 @@ static void classSubstituteString(classObj *class, const char *from, const char 
 
 static void layerSubstituteString(layerObj *layer, const char *from, const char *to)
 {
-
+  int c;
   if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, from, to);
   if(layer->tileindex) layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
   if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
@@ -6683,17 +6681,15 @@ static void layerSubstituteString(layerObj *layer, const char *from, const char 
   /* The bindvalues are most useful when able to substitute values from the URL */
   hashTableSubstituteString(&layer->bindvals, from, to);
   hashTableSubstituteString(&layer->metadata, from, to);
+  for(c=0; c<layer->numclasses;c++) {
+    classSubstituteString(layer->class[c], from, to);
+  }
 }
 
 static void mapSubstituteString(mapObj *map, const char *from, const char *to) {
   int l;
   for(l=0;l<map->numlayers; l++) {
-    int c;
-    layerObj *lp = GET_LAYER(map,l);
-    for(c=0; c<lp->numclasses;c++) {
-      classSubstituteString(lp->class[c], from, to);
-    }
-    layerSubstituteString(lp, from, to);
+    layerSubstituteString(GET_LAYER(map,l), from, to);
   }
   /* output formats (#3751) */
   for(l=0; l<map->numoutputformats; l++) {
@@ -6832,7 +6828,10 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
           classSubstituteString(cp,tag,value);
           free(tag);
         } else {
-          msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msValidateParameter()");
+          msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msApplySubstitutions()");
+          if(map->debug || lp->debug) {
+            msDebug("layer (%s), class %d: failed to validate (%s=%s) for regex (%s)\n", lp->name, c, key, value, validation);
+          }
         }
 
       }
@@ -6843,17 +6842,16 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
       if(!value) continue; /*parameter was not in url*/
       validation = msLookupHashTable(&lp->validation, key);
       if(msEvalRegex(validation, value)) {
-        int c;
         /* we've found a substitution and it validates correctly, now let's apply it */
         tag = msSmallMalloc(strlen(key)+3);
         sprintf(tag,"%%%s%%",key);
         layerSubstituteString(lp,tag,value);
-        for(c=0; c<lp->numclasses;c++) {
-          classSubstituteString(lp->class[c], tag, value);
-        }
         free(tag);
       } else {
-        msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msValidateParameter()");
+        msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msApplySubstitutions()");
+        if(map->debug || lp->debug) {
+          msDebug("layer (%s): failed to validate (%s=%s) for regex (%s)\n", lp->name, key, value, validation);
+        }
       }
 
     }
@@ -6870,7 +6868,10 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
       mapSubstituteString(map,tag,value);
       free(tag);
     } else {
-      msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msValidateParameter()");
+      msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msApplySubstitutions()");
+      if(map->debug) {
+        msDebug("failed to validate (%s=%s) for regex (%s)\n", key, value, validation);
+      }
     }
 
   }
