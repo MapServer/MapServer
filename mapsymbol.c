@@ -371,20 +371,6 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
       symbol->type = MS_SYMBOL_PIXMAP;
   }
 
-#if !defined(OWS_ALLOW_REMOTE_SLD_ASSETS) || OWS_ALLOW_REMOTE_SLD_ASSETS == 0
-  /* avoid using remote symbol */
-  if (strncasecmp(filename, "http", 4) == 0) {
-    switch(symbol->type) {
-      MS_SYMBOL_SVG:
-        msFree(symbol);
-        return MS_FAILURE;
-        break;
-      MS_SYMBOL_PIXMAP:
-        break;
-    }
-  }
-#endif
-
 #ifdef USE_CURL
   if (strncasecmp(filename, "http", 4) == 0) {
     char *tmpfullfilename = NULL;

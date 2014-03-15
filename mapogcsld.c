@@ -2106,6 +2106,15 @@ int msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
       if (psTmp && psTmp->psChild) {
         pszURL = (char*)psTmp->psChild->pszValue;
 
+        /* manage ALLOW_REMOTE_ASSETS option to allow loading remote symbols */
+        if ( !msTestConfigOption( map, "ALLOW_REMOTE_ASSETS", MS_FALSE ) )
+        {
+          /* avoid using remote symbol */
+          if (strncasecmp(pszURL, "http", 4) == 0) {
+            return MS_SUCCESS;
+          }
+        }
+
         /*external symbols using http will be automaticallly downloaded. The file should be
           saved in a temporary directory (msAddImageSymbol) #2305*/
         psStyle->symbol = msGetSymbolIndex(&map->symbolset,
