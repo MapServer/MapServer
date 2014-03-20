@@ -225,21 +225,33 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
   value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href");
 
   if (value) {
-    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
+    if( nWFSVersion >= OWS_2_0_0 )
+    {
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", NULL);
+        xmlNewProp(psNode, BAD_CAST "xlink:href", BAD_CAST value);
 
-    value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_about");
+        if( value != NULL )
+            xmlNewProp(psNode, BAD_CAST "about", BAD_CAST value);
+    }
+    else
+    {
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
 
-    if (!value)
-      value = msStrdup("text/html"); /* default */
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
 
-    xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
+        if (!value)
+            value = msStrdup("text/html"); /* default */
 
-    value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_type");
+        xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
 
-    if (!value)
-      value = msStrdup("FGDC"); /* default */
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_type");
 
-    xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
+        if (!value)
+            value = msStrdup("FGDC"); /* default */
+
+        xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
+    }
   }
 
   return psRootNode;
