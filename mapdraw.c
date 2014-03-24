@@ -826,7 +826,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   int         status, retcode=MS_SUCCESS;
   int         drawmode=MS_DRAWMODE_FEATURES;
-  char        annotate=MS_TRUE;
+  char        annotate=MS_TRUE, disable_cache=MS_FALSE;
+  const char  *processing;
   shapeObj    shape;
   rectObj     searchrect;
   char        cache=MS_FALSE;
@@ -900,6 +901,35 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if(layer->minfeaturesize > 0)
     minfeaturesize = Pix2LayerGeoref(map, layer, layer->minfeaturesize);
+  
+  if(annotate) {
+    int i;
+    for(i=0; i<layer->numclasses; i++) {
+      if(layer->class[i]->numlabels) {
+        drawmode |= MS_DRAWMODE_LABELS;
+        if ((processing = msLayerGetProcessingKey(layer, "LABEL_NO_CLIP"))) {
+          if(strcasecmp(processing,"false")) {
+            /* use no_clip unless the processing is set to "false" */
+            drawmode |= MS_DRAWMODE_UNCLIPPEDLABELS;
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  if (layer->type == MS_LAYER_LINE && (processing = msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP"))) {
+    if(strcasecmp(processing,"false")) {
+      /* use no_clip unless the processing is set to "false" */
+      drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
+    }
+  }
+  if (layer->type == MS_LAYER_LINE && (processing = msLayerGetProcessingKey(layer, "POLYLINE_NO_CACHE"))) {
+    /* use disable_cache unless the processing is set to "false" */
+    if(strcasecmp(processing,"false")) {
+      disable_cache = MS_TRUE;
+    }
+  }
 
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
@@ -924,7 +954,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     featuresdrawn++;
 
     cache = MS_FALSE;
-    if(layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth > 0))) {
+    if(!disable_cache && layer->type == MS_LAYER_LINE && (layer->class[shape.classindex]->numstyles > 1 || (layer->class[shape.classindex]->numstyles == 1 && layer->class[shape.classindex]->styles[0]->outlinewidth > 0))) {
       int i;
       cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
 
@@ -954,17 +984,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       cache = MS_FALSE;
     }
 
-    /* RFC77 TODO: check return value, may need a more sophisticated if-then test. */
-    if(annotate && layer->class[shape.classindex]->numlabels > 0) {
-      drawmode |= MS_DRAWMODE_LABELS;
-      if (msLayerGetProcessingKey(layer, "LABEL_NO_CLIP")) {
-        drawmode |= MS_DRAWMODE_UNCLIPPEDLABELS;
-      }
-    }
 
-    if (layer->type == MS_LAYER_LINE && msLayerGetProcessingKey(layer, "POLYLINE_NO_CLIP")) {
-      drawmode |= MS_DRAWMODE_UNCLIPPEDLINES;
-    }
 
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
