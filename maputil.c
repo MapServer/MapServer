@@ -611,7 +611,8 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
   return(-1); /* no match */
 }
 
-char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
+static
+char *msEvalTextExpressionInternal(expressionObj *expr, shapeObj *shape, int bJSonEscape)
 {
   char *result=NULL;
 
@@ -620,6 +621,7 @@ char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
   switch(expr->type) {
     case(MS_STRING): {
       char *target=NULL;
+      char *pszEscaped;
       tokenListNodeObjPtr node=NULL;
       tokenListNodeObjPtr nextNode=NULL;
 
@@ -632,7 +634,12 @@ char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
           if(node->token == MS_TOKEN_BINDING_DOUBLE || node->token == MS_TOKEN_BINDING_INTEGER || node->token == MS_TOKEN_BINDING_STRING || node->token == MS_TOKEN_BINDING_TIME) {
             target = (char *) msSmallMalloc(strlen(node->tokenval.bindval.item) + 3);
             sprintf(target, "[%s]", node->tokenval.bindval.item);
-            result = msReplaceSubstring(result, target, shape->values[node->tokenval.bindval.index]);
+            if( bJSonEscape )
+                pszEscaped = msEscapeJSonString(shape->values[node->tokenval.bindval.index]);
+            else
+                pszEscaped = msStrdup(shape->values[node->tokenval.bindval.index]);
+            result = msReplaceSubstring(result, target, pszEscaped);
+            msFree(pszEscaped);
             msFree(target);
           }
           node = nextNode;
@@ -671,6 +678,16 @@ char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
     result = NULL;
   }
   return result;
+}
+
+char *msEvalTextExpressionJSonEscape(expressionObj *expr, shapeObj *shape)
+{
+    return msEvalTextExpressionInternal(expr, shape, TRUE);
+}
+
+char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
+{
+    return msEvalTextExpressionInternal(expr, shape, FALSE);
 }
 
 char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {

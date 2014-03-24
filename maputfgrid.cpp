@@ -267,7 +267,7 @@ band_type addToTable(UTFGridRenderer *r, shapeObj *p)
   utfvalue = encodeForRendering(utfvalue);
 
   /* Datas are added to the table */
-  r->data->table[r->data->counter].datavalues = msEvalTextExpression(&r->utflayer->utfdata, p);
+  r->data->table[r->data->counter].datavalues = msEvalTextExpressionJSonEscape(&r->utflayer->utfdata, p);
 
   /* If UTFITEM is set in the mapfiles we add its value to the table */
   if(r->useutfitem)
@@ -366,6 +366,7 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
 {
   int row, col, i, imgheight, imgwidth;
   band_type pixelid;
+  char* pszEscaped;
  
   UTFGridRenderer *renderer = UTFGRID_RENDERER(img);
 
@@ -412,7 +413,11 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
       fprintf(fp,",");
 
     if(renderer->useutfitem)
-      fprintf(fp,"\"%s\"", renderer->data->table[i].itemvalue);
+    {
+      pszEscaped = msEscapeJSonString(renderer->data->table[i].itemvalue);
+      fprintf(fp,"\"%s\"", pszEscaped);
+      msFree(pszEscaped);
+    }
     /* If no UTFITEM specified use the serial ID as the key */
     else
       fprintf(fp,"\"%i\"", renderer->data->table[i].serialid);
@@ -427,10 +432,15 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
         fprintf(fp,",");
 
       if(renderer->useutfitem)
-        fprintf(fp,"\"%s\":", renderer->data->table[i].itemvalue);
+      {
+        pszEscaped = msEscapeJSonString(renderer->data->table[i].itemvalue);
+        fprintf(fp,"\"%s\":", pszEscaped);
+        msFree(pszEscaped);
+      }
       /* If no UTFITEM specified use the serial ID as the key */
       else
         fprintf(fp,"\"%i\":", renderer->data->table[i].serialid);
+
       fprintf(fp,"%s", renderer->data->table[i].datavalues);
     }
   }

@@ -2158,6 +2158,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msEncodeChar(const char);
   MS_DLL_EXPORT char *msEncodeUrlExcept(const char*, const char);
   MS_DLL_EXPORT char *msEncodeUrl(const char*);
+  MS_DLL_EXPORT char *msEscapeJSonString(const char* pszJSonString);
   MS_DLL_EXPORT char *msEncodeHTMLEntities(const char *string);
   MS_DLL_EXPORT void msDecodeHTMLEntities(const char *string);
   MS_DLL_EXPORT int msIsXMLTagValid(const char *string);
@@ -2580,6 +2581,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lbl);
   MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
   MS_DLL_EXPORT char *msEvalTextExpression(expressionObj *expr, shapeObj *shape);
+  MS_DLL_EXPORT char *msEvalTextExpressionJSonEscape(expressionObj *expr, shapeObj *shape);
   MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
   MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);
   MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);

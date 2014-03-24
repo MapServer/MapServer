@@ -1125,7 +1125,7 @@ char *msEncodeUrl(const char *data)
 
 char *msEncodeUrlExcept(const char *data, const char except)
 {
-  char *hex = "0123456789ABCDEF";
+  static const char *hex = "0123456789ABCDEF";
   const char *i;
   char  *j, *code;
   int   inc;
@@ -1153,6 +1153,77 @@ char *msEncodeUrlExcept(const char *data, const char except)
   *j = '\0';
 
   return code;
+}
+
+/************************************************************************/
+/*                            msEscapeJSonString()                      */
+/************************************************************************/
+
+/* The input (and output) string are not supposed to start/end with double */
+/* quote characters. It is the responsibility of the caller to do that. */
+char* msEscapeJSonString(const char* pszJSonString)
+{
+    /* Worst case is one character to become \uABCD so 6 characters */
+    char* pszRet;
+    int i = 0, j = 0;
+    static const char* pszHex = "0123456789ABCDEF";
+    
+    pszRet = (char*) msSmallMalloc(strlen(pszJSonString) * 6 + 1);
+    /* From http://www.json.org/ */
+    for(i = 0; pszJSonString[i] != '\0'; i++)
+    {
+        unsigned char ch = pszJSonString[i];
+        if( ch == '\b' )
+        {
+            pszRet[j++] = '\\';
+            pszRet[j++] = 'b';
+        }
+        else if( ch == '\f' )
+        {
+            pszRet[j++] = '\\';
+            pszRet[j++] = 'f';
+        }
+        else if( ch == '\n' )
+        {
+            pszRet[j++] = '\\';
+            pszRet[j++] = 'n';
+        }
+        else if( ch == '\r' )
+        {
+            pszRet[j++] = '\\';
+            pszRet[j++] = 'r';
+        }
+        else if( ch == '\t' )
+        {
+            pszRet[j++] = '\\';
+            pszRet[j++] = 't';
+        }
+        else if( ch < 32 )
+        {
+            pszRet[j++] = '\\';
+            pszRet[j++] = 'u';
+            pszRet[j++] = '0';
+            pszRet[j++] = '0';
+            pszRet[j++] = pszHex[ch / 16];
+            pszRet[j++] = pszHex[ch % 16];
+        }
+        else if( ch == '"' )
+        {
+            pszRet[j++] = '\\';
+            pszRet[j++] = '"';
+        }
+        else if( ch == '\\' )
+        {
+            pszRet[j++] = '\\';
+            pszRet[j++] = '\\';
+        }
+        else
+        {
+            pszRet[j++] = ch;
+        }
+    }
+    pszRet[j] = '\0';
+    return pszRet;
 }
 
 /* msEncodeHTMLEntities()
