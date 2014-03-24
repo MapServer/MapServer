@@ -220,7 +220,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
           imgStyle.maxsize = imgStyle.size;
 
         imgStyle.symbol = symbolNum;
-        msDrawMarkerSymbol(&map->symbolset,image_draw,&marker,&imgStyle,lp->scalefactor * image_draw->resolutionfactor);
+        msDrawMarkerSymbol(&map->symbolset,image_draw,&marker,&imgStyle,1.0);
         /* TO DO: we may want to handle this differently depending on the relative size of the keyimage */
       } else {
         for(i=0; i<theclass->numstyles; i++) {
