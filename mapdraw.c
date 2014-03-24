@@ -902,19 +902,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(layer->minfeaturesize > 0)
     minfeaturesize = Pix2LayerGeoref(map, layer, layer->minfeaturesize);
   
-  if(annotate) {
-    int i;
-    for(i=0; i<layer->numclasses; i++) {
-      if(layer->class[i]->numlabels) {
-        drawmode |= MS_DRAWMODE_LABELS;
-        if ((processing = msLayerGetProcessingKey(layer, "LABEL_NO_CLIP"))) {
-          if(strcasecmp(processing,"false")) {
-            /* use no_clip unless the processing is set to "false" */
-            drawmode |= MS_DRAWMODE_UNCLIPPEDLABELS;
-          }
-        }
-        break;
-      }
+  if ((processing = msLayerGetProcessingKey(layer, "LABEL_NO_CLIP"))) {
+    if(strcasecmp(processing,"false")) {
+      /* use no_clip unless the processing is set to "false" */
+      drawmode |= MS_DRAWMODE_UNCLIPPEDLABELS;
     }
   }
 
@@ -932,6 +923,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
+    int feature_drawmode = drawmode;
 
     /* Check if the shape size is ok to be drawn */
     if((shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) && (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE)) {
@@ -984,6 +976,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       cache = MS_FALSE;
     }
 
+    /* RFC77 TODO: check return value, may need a more sophisticated if-then test. */
+    if(annotate && layer->class[shape.classindex]->numlabels > 0) {
+      feature_drawmode |= MS_DRAWMODE_LABELS;
+    }
 
 
     if (cache) {
@@ -1010,7 +1006,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
         pStyle->color = pStyle->outlinecolor;
         pStyle->outlinecolor = tmp;
       }
-      status = msDrawShape(map, layer, &shape, image, 0, drawmode|MS_DRAWMODE_SINGLESTYLE); /* draw a single style */
+      status = msDrawShape(map, layer, &shape, image, 0, feature_drawmode|MS_DRAWMODE_SINGLESTYLE); /* draw a single style */
       if (pStyle->outlinewidth > 0) {
         /*
          * RFC 49 implementation: switch back the styleobj to its
@@ -1032,7 +1028,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     else
-      status = msDrawShape(map, layer, &shape, image, -1, drawmode); /* all styles  */
+      status = msDrawShape(map, layer, &shape, image, -1, feature_drawmode); /* all styles  */
     if(status != MS_SUCCESS) {
       msFreeShape(&shape);
       retcode = MS_FAILURE;
