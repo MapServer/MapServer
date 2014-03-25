@@ -157,6 +157,7 @@ typedef struct {
   char *name;         /* name of the axis */
   int size;           /* pixelsize of the axis */
   double resolution;  /* resolution of the axis */
+  double scale;       /* scale of the axis */
   char *resolutionUOM; /* resolution units of measure */
   wcs20SubsetObjPtr subset;
 } wcs20AxisObj;
@@ -173,6 +174,9 @@ typedef struct {
   long width, height; /* image dimensions */
   double resolutionX; /* image resolution in X axis */
   double resolutionY; /* image resolution in Y axis */
+  double scale;       /* Overall scale */
+  double scaleX;      /* X-Axis specific scale */
+  double scaleY;      /* Y-Axis specific scale */
   char *resolutionUnits; /* Units of Measure for resolution */
   char *format;       /* requested output format */
   int multipart;      /* flag for multipart GML+image */
@@ -182,7 +186,8 @@ typedef struct {
   rectObj bbox;       /* determined Bounding Box */
   int numaxes;        /* number of axes */
   wcs20AxisObjPtr *axes; /* list of axes, NULL if none*/
-  char **range_subset;
+  char **range_subset; /* list of bands selected */
+  char **format_options; /* list of format specific options, NULL terminated */
 } wcs20ParamsObj;
 typedef wcs20ParamsObj * wcs20ParamsObjPtr;
 
@@ -229,10 +234,10 @@ typedef wcs20coverageMetadataObj * wcs20coverageMetadataObjPtr;
 #define MS_WCS_20_PROFILE_GML_MULTIPART "http://www.opengis.net/spec/GMLCOV/1.0/conf/multipart"
 #define MS_WCS_20_PROFILE_GML_SPECIAL "http://www.opengis.net/spec/GMLCOV/1.0/conf/special-format"
 #define MS_WCS_20_PROFILE_GML_GEOTIFF "http://www.opengis.net/spec/GMLCOV_geotiff-coverages/1.0/conf/geotiff-coverage"
-#define MS_WCS_20_PROFILE_GEOTIFF   "http://www.opengis.net/spec/WCS_geotiff-coverages/1.0/conf/geotiff-coverage"
-#define MS_WCS_20_PROFILE_CRS      "http://www.opengis.net/spec/WCS_service-model_crs-predefined/1.0/conf/crs-predefined"
-#define MS_WCS_20_PROFILE_SCALING   "http://www.opengis.net/spec/WCS_service-model_scaling+interpolation/1.0/conf/scaling+interpolation"
-#define MS_WCS_20_PROFILE_RANGESUBSET "http://www.opengis.net/spec/WCS_service-model_band-subsetting/1.0/conf/band-subsetting"
+#define MS_WCS_20_PROFILE_CRS       "http://www.opengis.net/spec/WCS_service-extension_crs/1.0/conf/crs"
+#define MS_WCS_20_PROFILE_SCALING   "http://www.opengis.net/spec/WCS_service-extension_scaling/1.0/conf/scaling"
+#define MS_WCS_20_PROFILE_RANGESUBSET "http://www.opengis.net/spec/WCS_service-extension_range-subsetting/1.0/conf/record-subsetting"
+#define MS_WCS_20_PROFILE_INTERPOLATION "http://www.opengis.net/spec/WCS_service-extension_interpolation/1.0/conf/interpolation"
 
 /* -------------------------------------------------------------------- */
 /*      WCS 2.0 function prototypes.                                    */
