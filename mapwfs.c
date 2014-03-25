@@ -4259,7 +4259,6 @@ int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
   if (status != MS_SUCCESS)
   {
     msWFSFreeParamsObj(paramsObj);
-    free(paramsObj);
     return status;
   }
 
