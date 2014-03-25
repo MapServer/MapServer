@@ -291,6 +291,7 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
   params->bbox.minx = params->bbox.miny = -DBL_MAX;
   params->bbox.maxx = params->bbox.maxy =  DBL_MAX;
   params->range_subset    = NULL;
+  params->format_options  = NULL;
 
   return params;
 }
@@ -842,6 +843,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
     } else if(EQUAL((char *) child->name, "OutputCRS")) {
       params->outputcrs = (char *) xmlNodeGetContent(child);
     } else if(EQUAL((char *) child->name, "rangeSubset")) {
+      /* Deprecated, use wcs:Extension/rsub:RangeSubset */
       xmlNodePtr bandNode = NULL;
       XML_FOREACH_CHILD(child, bandNode) {
         char *content = NULL;
@@ -853,7 +855,62 @@ static int msWCSParseRequest20_XMLGetCoverage(
         xmlFree(content);
       }
     } else if (EQUAL((char *)child->name, "Extension")) {
-      continue;
+      xmlNodePtr extensionNode = NULL;
+      XML_FOREACH_CHILD(child, extensionNode) {
+        XML_LOOP_IGNORE_COMMENT_OR_TEXT(extensionNode);
+        if(EQUAL((char *) extensionNode->name, "rangeSubset")) {
+          xmlNodePtr rangeItemNode = NULL;
+          xmlNodePtr intervalNode = NULL;
+          XML_FOREACH_CHILD(extensionNode, rangeItemNode) {
+            XML_LOOP_IGNORE_COMMENT_OR_TEXT(rangeItemNode);
+            XML_ASSERT_NODE_NAME(rangeItemNode, "RangeItem");
+
+            if (!rangeItemNode.children) {
+              msSetError(MS_WCSERR, "Missing RangeComponent or RangeInterval.",
+                                    "msWCSParseRequest20_XMLGetCoverage()");
+              return MS_FAILURE;
+            }
+            else if (EQUAL((char *) rangeItemNode.children->name, "RangeComponent")) {
+              char *content = (char *)xmlNodeGetContent(rangeItemNode.children);
+              params->range_subset =
+                CSLAddString(params->range_subset, content);
+              xmlFree(content);
+            }
+            else if (EQUAL((char *) rangeItemNode.children->name, "RangeInterval")) {
+              xmlNodePtr intervalNode = rangeItemNode.children;
+              char *start;
+              char *stop;
+              char *value;
+              int length;
+
+              if (!intervalNode.children || ! intervalNode.children->next
+                  || !EQUAL((char *) rangeItemNode.children->name, "startComponent"))
+                  || !EQUAL((char *) rangeItemNode.children->name, "stopComponent"))) {
+                msSetError(MS_WCSERR, "Wrong RangeInterval.",
+                                      "msWCSParseRequest20_XMLGetCoverage()");
+                return MS_FAILURE;
+              }
+
+              start = (char *)xmlNodeGetContent(intervalNode.children);
+              stop = (char *)xmlNodeGetContent(intervalNode.children->next);
+              length = strlen(start) + strlen(stop) + 2;
+              value = msSmallCalloc(length);
+              strlcat(value, start, length);
+              strlcat(value, ":", length);
+              strlcat(value, stop, length);
+
+              xmlFree(start);
+              xmlFree(stop);
+
+              params->range_subset =
+                CSLAddString(params->range_subset, value);
+              msFree(value);
+            }
+          }
+        /* TODO: geotiff, interpolation */
+        }
+      }
+
     } else {
       XML_UNKNOWN_NODE_ERROR(child);
     }
