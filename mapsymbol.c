@@ -344,6 +344,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 {
   char szPath[MS_MAXPATHLEN];
   symbolObj *symbol=NULL;
+  char *extension=NULL;
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "msAddImageSymbol()");
@@ -356,6 +357,16 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   if (msGrowSymbolSet(symbolset) == NULL)
     return -1;
   symbol = symbolset->symbol[symbolset->numsymbols];
+
+  /* check if svg checking extension otherwise assume it's a pixmap */
+  extension = strrchr(filename, '.');
+  if (extension == NULL)
+      extension = "";
+  if (strncasecmp(extension, ".svg", 4) == 0) {
+      symbol->type = MS_SYMBOL_SVG;
+  } else {
+      symbol->type = MS_SYMBOL_PIXMAP;
+  }
 
 #ifdef USE_CURL
   if (strncasecmp(filename, "http", 4) == 0) {
