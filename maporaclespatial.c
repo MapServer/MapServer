@@ -2281,14 +2281,14 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
 
     if (resultindex >= sthand->rows_count) {
       if (layer->debug >= 5)
-        msDebug("msOracleSpatialLayerGetShape problem with cursor. Trying to fetch record = %ld of %ld, falling back to GetShape\n", resultindex, sthand->rows_count);
+        msDebug("msOracleSpatialLayerGetShape problem with cursor. Trying to fetch record = %d of %d, falling back to GetShape\n", resultindex, sthand->rows_count);
 
       msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetShape record out of range","msOracleSpatialLayerGetShape()" );
       return MS_FAILURE;
     }
 
     if (layer->debug >= 5)
-      msDebug("msOracleSpatialLayerGetShape was called. Using the record = %ld of %ld. (shape: %ld should equal pkey: %ld)\n",
+      msDebug("msOracleSpatialLayerGetShape was called. Using the record = %d of %d. (shape: %ld should equal pkey: %ld)\n",
               resultindex, layer->resultcache->numresults, layer->resultcache->results[resultindex].shapeindex, shapeindex);
 
     /* NOTE: with the way the resultcache works, we should see items in increasing order, but some may have been filtered out. */
@@ -2302,7 +2302,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
       sthand->row_num += resultindex - sthand->row_num;
     } else { /* Item is not in buffer. Fetch item from Oracle */
       if (layer->debug >= 4)
-        msDebug("msOracleSpatialLayerGetShape: Fetching result from DB start: %ld end:%ld record: %ld\n", buffer_first_row_num, buffer_last_row_num, resultindex);
+        msDebug("msOracleSpatialLayerGetShape: Fetching result from DB start: %ld end:%ld record: %d\n", buffer_first_row_num, buffer_last_row_num, resultindex);
 
       success = TRY( hand, OCIStmtFetch2( sthand->stmthp, hand->errhp, (ub4)ARRAY_SIZE, (ub2)OCI_FETCH_ABSOLUTE, (sb4)resultindex+1, (ub4)OCI_DEFAULT ) )
                 && TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) );
