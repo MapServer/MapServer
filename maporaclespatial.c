@@ -622,7 +622,11 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
 
   success = TRY( hand,
                  /* allocate envhp */
-                 OCIEnvCreate( &hand->envhp, OCI_OBJECT, (dvoid *)0, 0, 0, 0, (size_t) 0, (dvoid **)0 ) )
+    #ifdef USE_THREAD
+                  OCIEnvCreate( &hand->envhp, OCI_OBJECT|OCI_THREADED, (dvoid *)0, 0, 0, 0, (size_t) 0, (dvoid **)0 ) )
+    #else
+                  OCIEnvCreate( &hand->envhp, OCI_OBJECT, (dvoid *)0, 0, 0, 0, (size_t) 0, (dvoid **)0 ) )
+    #endif
             && TRY( hand,
                     /* allocate errhp */
                     OCIHandleAlloc( (dvoid *)hand->envhp, (dvoid **)&hand->errhp, (ub4)OCI_HTYPE_ERROR, (size_t)0, (dvoid **)0 ) )
