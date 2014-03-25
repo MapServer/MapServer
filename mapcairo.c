@@ -631,9 +631,7 @@ static void msTransformToGeospatialPDF(imageObj *img, mapObj *map, cairo_rendere
         msBufferResize(r->outputStream, nFileSize);
 
         VSIFSeekL(fp, 0, SEEK_SET);
-        VSIFReadL(r->outputStream->data, 1, nFileSize, fp);
-
-        r->outputStream->size = nFileSize;
+        r->outputStream->size = VSIFReadL(r->outputStream->data, 1, nFileSize, fp);
 
         VSIFCloseL(fp);
         fp = NULL;
@@ -766,7 +764,7 @@ int getRasterBufferCopyCairo(imageObj *img, rasterBufferObj *rb)
   rb->data.rgba.pixel_step=4;
   rb->width = cairo_image_surface_get_width(r->surface);
   rb->height = cairo_image_surface_get_height(r->surface);
-  pb = (unsigned char*)malloc(rb->height * rb->data.rgba.row_step * sizeof(unsigned char*));
+  pb = (unsigned char*)malloc(rb->height * rb->data.rgba.row_step * sizeof(unsigned char));
   memcpy(pb,cairo_image_surface_get_data(r->surface),rb->height * rb->data.rgba.row_step);
   rb->data.rgba.pixels = pb;
   rb->data.rgba.r = &(pb[2]);
@@ -788,7 +786,7 @@ int mergeRasterBufferCairo(imageObj *img, rasterBufferObj *rb, double opacity,
   cairo_surface_t *src;
   cairo_renderer *r;
   /* not implemented for src,dst,width and height */
-  if(!rb->type == MS_BUFFER_BYTE_RGBA) {
+  if(rb->type != MS_BUFFER_BYTE_RGBA) {
     return MS_FAILURE;
   }
   r = CAIRO_RENDERER(img);

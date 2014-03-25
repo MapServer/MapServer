@@ -574,7 +574,10 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
 
         status = msWCSGetCapabilities11_CoverageSummary(
                    map, params, req, psDoc, psMainNode, layer );
-        if(status != MS_SUCCESS) return MS_FAILURE;
+        if(status != MS_SUCCESS) {
+          msFree(identifier_list);
+          return MS_FAILURE;
+        }
       }
     }
   }
@@ -1055,8 +1058,11 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
   /* -------------------------------------------------------------------- */
   value = rangesubset + strlen(field_id);
 
-  if( strcasecmp(rangesubset,field_id) == 0 )
+  if( strcasecmp(rangesubset,field_id) == 0 ) {
+    free(rangesubset);
+    free(field_id);
     return MS_SUCCESS; /* we only got field ... default options */
+  }
 
   if( strlen(rangesubset) <= strlen(field_id)+1
       || strncasecmp(rangesubset,field_id,strlen(field_id)) != 0
@@ -1065,6 +1071,8 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
                 "RangeSubset field name malformed, expected '%s', got RangeSubset=%s",
                 "msWCSGetCoverageBands11()",
                 field_id, rangesubset );
+    free(rangesubset);
+    free(field_id);
     return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
   }
 
@@ -1090,8 +1098,10 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
   /* -------------------------------------------------------------------- */
   /*      Parse out the axis name, and verify.                            */
   /* -------------------------------------------------------------------- */
-  if( *value != '[' )
+  if( *value != '[' ) {
+    free(rangesubset);
     return MS_SUCCESS;
+  }
 
   value++;
 
@@ -1102,6 +1112,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
                 "RangeSubset axis name malformed, expected '%s', got RangeSubset=%s",
                 "msWCSGetCoverageBands11()",
                 axis_id, rangesubset );
+    free(rangesubset);
     return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
   }
 
@@ -1119,7 +1130,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
       break;
     }
   }
-
+  free(rangesubset);
   return MS_SUCCESS;
 }
 #endif

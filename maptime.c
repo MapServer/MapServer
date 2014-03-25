@@ -243,9 +243,8 @@ void msSetLimitedPattersToUse(const char *patternstring)
           }
         }
       }
-
-      msFreeCharArray(patterns, ntmp);
     }
+    msFreeCharArray(patterns, ntmp);
   }
 
   if (numpatterns > 0) {
@@ -384,8 +383,10 @@ int _msValidateTime(const char *timestring,  const char *timeextent)
 
   numextents = 0;
   atimeextents = msStringSplit (timeextent, ',', &numextents);
-  if (atimeextents == NULL || numextents <= 0)
+  if (numextents <= 0) {
+    msFreeCharArray(atimeextents, numextents);
     return MS_FALSE;
+  }
 
   /*the time timestring should at be valid in one of the extents
     defined */
@@ -475,9 +476,9 @@ int msValidateTimeValue(const char *timestring, const char *timeextent)
         msFreeCharArray(atimes, numtimes);
         return MS_TRUE;
       }
-
+    } else {
+      msFreeCharArray(atimes,numtimes);
     }
-
   }
   return MS_FALSE;
 }

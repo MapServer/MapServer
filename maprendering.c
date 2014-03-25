@@ -561,7 +561,7 @@ int msDrawLineSymbol(mapObj *map, imageObj *image, shapeObj *p,
       rendererVTableObj *renderer = image->format->vtable;
       symbolObj *symbol;
       shapeObj *offsetLine = p;
-      int i;
+      int i,ret=MS_SUCCESS;
       double width;
       double finalscalefactor;
 
@@ -611,13 +611,14 @@ int msDrawLineSymbol(mapObj *map, imageObj *image, shapeObj *p,
           /* msSetError(MS_MISCERR,"no color defined for line styling","msDrawLineSymbol()");
            * not really an error */
           status = MS_SUCCESS;
-          goto draw_line_cleanup;
+          goto line_cleanup;
         }
         status = renderer->renderLine(image,offsetLine,&s);
       } else {
         symbolStyleObj s;
         if(preloadSymbol(&map->symbolset, symbol, renderer) != MS_SUCCESS) {
-          return MS_FAILURE;
+          status = MS_FAILURE;
+          goto line_cleanup;
         }
 
         INIT_SYMBOL_STYLE(s);
@@ -654,11 +655,12 @@ int msDrawLineSymbol(mapObj *map, imageObj *image, shapeObj *p,
         }
       }
 
-draw_line_cleanup:
+line_cleanup:
       if(offsetLine!=p) {
         msFreeShape(offsetLine);
         msFree(offsetLine);
       }
+      return status;
     } else if( MS_RENDERER_IMAGEMAP(image->format) )
       msDrawLineSymbolIM(map, image, p, style, scalefactor);
     else {
@@ -766,7 +768,8 @@ int msDrawShadeSymbol(mapObj *map, imageObj *image, shapeObj *p, styleObj *style
         int seamless = 0;
 
         if(preloadSymbol(&map->symbolset,symbol,renderer) != MS_SUCCESS) {
-          return MS_FAILURE;
+          ret = MS_FAILURE;
+          goto cleanup;
         }
 
         INIT_SYMBOL_STYLE(s);

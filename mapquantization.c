@@ -150,7 +150,7 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb,
 
   *palette_scaling_maxval = 255;
 
-  apixels=(rgbaPixel**)msSmallMalloc(rb->height*sizeof(rgbaPixel**));
+  apixels=(rgbaPixel**)msSmallMalloc(rb->height*sizeof(rgbaPixel*));
 
   for(row=0; row<rb->height; row++) {
     apixels[row]=(rgbaPixel*)(&(rb->data.rgba.pixels[row * rb->data.rgba.row_step]));
@@ -498,14 +498,18 @@ mediancut( acolorhist_vector achv, int colors, int sum, unsigned char maxval, in
       a += PAM_GETA( achv[indx + i].acolor ) * achv[indx + i].value;
       sum += achv[indx + i].value;
     }
-    r = r / sum;
-    if ( r > maxval ) r = maxval;        /* avoid math errors */
-    g = g / sum;
-    if ( g > maxval ) g = maxval;
-    b = b / sum;
-    if ( b > maxval ) b = maxval;
-    a = a / sum;
-    if ( a > maxval ) a = maxval;
+    if(sum>0) {
+      r = r / sum;
+      if ( r > maxval ) r = maxval;        /* avoid math errors */
+      g = g / sum;
+      if ( g > maxval ) g = maxval;
+      b = b / sum;
+      if ( b > maxval ) b = maxval;
+      a = a / sum;
+      if ( a > maxval ) a = maxval;
+    } else {
+      r = g = b = a = maxval;
+    }
     /* GRR 20001228:  added casts to quiet warnings; 255 DEPENDENCY */
     PAM_ASSIGN( acolormap[bi].acolor, (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a );
 #endif /*REP_AVERAGE_PIXELS*/

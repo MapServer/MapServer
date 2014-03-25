@@ -131,7 +131,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
                                  const char *namespace, const char *tab)
 {
   int i, j, k;
-  int *innerlist, *outerlist, numouters;
+  int *innerlist, *outerlist=NULL, numouters;
   char *srsname_encoded = NULL;
 
   int geometry_aggregate_index, geometry_simple_index;
@@ -319,6 +319,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
           gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
         }
         free(outerlist);
+        outerlist = NULL;
       } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiPolygon */
         gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
 
@@ -370,6 +371,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s</gml:MultiPolygon>\n", tab);
 
         free(outerlist);
+        outerlist = NULL;
 
         gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
       } else {
@@ -383,6 +385,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
 
   /* clean-up */
   msFree(srsname_encoded);
+  msFree(outerlist);
 
   return(MS_SUCCESS);
 }
@@ -407,7 +410,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
                                  const char *pszFID, OWSGMLVersion nGMLVersion )
 {
   int i, j, k, id = 1;
-  int *innerlist, *outerlist, numouters;
+  int *innerlist, *outerlist=NULL, numouters;
   char *srsname_encoded = NULL;
   char* pszGMLId;
 
@@ -612,6 +615,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
           gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
         }
         free(outerlist);
+        outerlist = NULL;
       } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiSurface */
         gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
 
@@ -671,6 +675,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
         msIO_fprintf(stream, "%s  </gml:MultiSurface>\n", tab);
 
         free(outerlist);
+        outerlist = NULL;
 
         gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
       } else {
@@ -683,6 +688,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
   }
 
   /* clean-up */
+  msFree(outerlist);
   msFree(srsname_encoded);
 
   return(MS_SUCCESS);
@@ -824,6 +830,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_nam
           else
             geometry->occurmax = atof(occur[1]);
         }
+        msFreeCharArray(occur,numoccur);
       }
     }
 
@@ -1321,7 +1328,13 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
       for(j=0; j<lp->resultcache->numresults; j++) {
         status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
-        if(status != MS_SUCCESS) return(status);
+        if(status != MS_SUCCESS) {
+           msGMLFreeGroups(groupList);
+           msGMLFreeConstants(constantList);
+           msGMLFreeItems(itemList);
+           msGMLFreeGeometries(geometryList);
+           return(status);
+        }
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */
@@ -1571,8 +1584,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, const char *default_namespace_
         char* pszFID;
 
         status = msLayerGetShape(lp, &shape, &(lp->resultcache->results[j]));
-        if(status != MS_SUCCESS)
+        if(status != MS_SUCCESS) {
+          msGMLFreeGroups(groupList);
+          msGMLFreeConstants(constantList);
+          msGMLFreeItems(itemList);
+          msGMLFreeGeometries(geometryList);
+          msFree(layerName);
           return(status);
+        }
 
 #ifdef USE_PROJ
         /* project the shape into the map projection (if necessary), note that this projects the bounds as well */

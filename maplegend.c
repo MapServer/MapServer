@@ -677,8 +677,9 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     if(hittest) {
       ch = &hittest->layerhits[cur->layerindex].classhits[cur->classindex];
     }
-    if(msDrawLegendIcon(map, map->layers[cur->layerindex], map->layers[cur->layerindex]->class[cur->classindex],  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y, scale_independent, ch) != MS_SUCCESS)
-      return NULL;
+    ret = msDrawLegendIcon(map, map->layers[cur->layerindex], map->layers[cur->layerindex]->class[cur->classindex],  map->legend.keysizex,  map->legend.keysizey, image, HMARGIN, (int) pnt.y, scale_independent, ch);
+    if(UNLIKELY(ret != MS_SUCCESS))
+      goto cleanup;
 
     pnt.y += cur->height;
 
@@ -748,7 +749,10 @@ int msEmbedLegend(mapObj *map, imageObj *img)
 
   /* render the legend. */
   image = msDrawLegend(map, MS_FALSE, NULL);
-  if( image == NULL ) return MS_FAILURE;
+  if( image == NULL ) {
+    msFree(imageType);
+    return MS_FAILURE;
+  }
 
   if (imageType) {
     map->outputformat = msSelectOutputFormat( map, imageType ); /* restore format */

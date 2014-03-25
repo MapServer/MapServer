@@ -58,7 +58,6 @@ void initClassHitTests(classObj *c, class_hittest *ch, int default_status) {
 void initLayerHitTests(layerObj *l, layer_hittest *lh) {
   int i,default_status;
   lh->classhits = msSmallCalloc(l->numclasses,sizeof(class_hittest));
-  lh->status = default_status;
 
   switch(l->type) {
     case MS_LAYER_POLYGON:
@@ -71,6 +70,7 @@ void initLayerHitTests(layerObj *l, layer_hittest *lh) {
       default_status = 1; /* no hittesting needed, use traditional mode */
       break;
   }
+  lh->status = default_status;
   for(i=0; i<l->numclasses; i++) {
     initClassHitTests(l->class[i],&lh->classhits[i], default_status);
   }

@@ -173,7 +173,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->renderer = MS_RENDER_WITH_UTFGRID;
   }
 
-  if( strcasecmp(driver,"AGG/PNG") == 0 ) {
+  else if( strcasecmp(driver,"AGG/PNG") == 0 ) {
     if(!name) name="png24";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/png");
@@ -182,7 +182,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->renderer = MS_RENDER_WITH_AGG;
   }
 
-  if( strcasecmp(driver,"AGG/PNG8") == 0 ) {
+  else if( strcasecmp(driver,"AGG/PNG8") == 0 ) {
     if(!name) name="png8";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/png; mode=8bit");
@@ -193,7 +193,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     msSetOutputFormatOption( format, "QUANTIZE_COLORS", "256");
   }
 
-  if( strcasecmp(driver,"AGG/JPEG") == 0 ) {
+  else if( strcasecmp(driver,"AGG/JPEG") == 0 ) {
     if(!name) name="jpeg";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/jpeg");
@@ -203,7 +203,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   }
 
 #if defined(USE_CAIRO)
-  if( strcasecmp(driver,"CAIRO/PNG") == 0 ) {
+  else if( strcasecmp(driver,"CAIRO/PNG") == 0 ) {
     if(!name) name="cairopng";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/png; mode=24bit");
@@ -211,7 +211,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->extension = msStrdup("png");
     format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
   }
-  if( strcasecmp(driver,"CAIRO/JPEG") == 0 ) {
+  else if( strcasecmp(driver,"CAIRO/JPEG") == 0 ) {
     if(!name) name="cairojpeg";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/jpeg");
@@ -219,7 +219,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->extension = msStrdup("jpg");
     format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
   }
-  if( strcasecmp(driver,"CAIRO/PDF") == 0 ) {
+  else if( strcasecmp(driver,"CAIRO/PDF") == 0 ) {
     if(!name) name="pdf";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("application/x-pdf");
@@ -227,7 +227,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->extension = msStrdup("pdf");
     format->renderer = MS_RENDER_WITH_CAIRO_PDF;
   }
-  if( strcasecmp(driver,"CAIRO/SVG") == 0 ) {
+  else if( strcasecmp(driver,"CAIRO/SVG") == 0 ) {
     if(!name) name="svg";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/svg+xml");
@@ -236,7 +236,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->renderer = MS_RENDER_WITH_CAIRO_SVG;
   }
 #ifdef _WIN32
-  if( strcasecmp(driver,"CAIRO/WINGDI") == 0 ) {
+  else if( strcasecmp(driver,"CAIRO/WINGDI") == 0 ) {
     if(!name) name="cairowinGDI";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("");
@@ -244,7 +244,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->extension = msStrdup("");
     format->renderer = MS_RENDER_WITH_CAIRO_RASTER;
   }
-  if( strcasecmp(driver,"CAIRO/WINGDIPRINT") == 0 ) {
+  else if( strcasecmp(driver,"CAIRO/WINGDIPRINT") == 0 ) {
     if(!name) name="cairowinGDIPrint";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("");
@@ -256,7 +256,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 #endif
 
 #if defined(USE_OGL)
-  if( strcasecmp(driver,"OGL/PNG") == 0 ) {
+  else if( strcasecmp(driver,"OGL/PNG") == 0 ) {
     if(!name) name="oglpng24";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("image/png; mode=24bit");
@@ -267,7 +267,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 #endif
 
 #if defined(USE_KML)
-  if( strcasecmp(driver,"KML") == 0 ) {
+  else if( strcasecmp(driver,"KML") == 0 ) {
     if(!name) name="kml";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("application/vnd.google-earth.kml+xml");
@@ -276,7 +276,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->renderer = MS_RENDER_WITH_KML;
     msSetOutputFormatOption( format, "ATTACHMENT", "mapserver.kml");
   }
-  if( strcasecmp(driver,"KMZ") == 0 ) {
+  else if( strcasecmp(driver,"KMZ") == 0 ) {
     if(!name) name="kmz";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = strdup("application/vnd.google-earth.kmz");
@@ -290,7 +290,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 
 
 #ifdef USE_GDAL
-  if( strncasecmp(driver,"gdal/",5) == 0 ) {
+  else if( strncasecmp(driver,"gdal/",5) == 0 ) {
     if(!name) name=driver+5;
     format = msAllocOutputFormat( map, name, driver );
     if( msInitDefaultGDALOutputFormat( format ) == MS_FAILURE ) {
@@ -305,7 +305,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   }
 #endif
 #ifdef USE_OGR
-  if( strncasecmp(driver,"ogr/",4) == 0 ) {
+  else if( strncasecmp(driver,"ogr/",4) == 0 ) {
     if(!name) name=driver+4;
     format = msAllocOutputFormat( map, name, driver );
     if( msInitDefaultOGROutputFormat( format ) == MS_FAILURE ) {
@@ -319,7 +319,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     }
   }
 #endif
-  if( strcasecmp(driver,"imagemap") == 0 ) {
+  else if( strcasecmp(driver,"imagemap") == 0 ) {
     if(!name) name="imagemap";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("text/html; driver=imagemap");
@@ -328,7 +328,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->renderer = MS_RENDER_WITH_IMAGEMAP;
   }
 
-  if( strcasecmp(driver,"template") == 0 ) {
+  else if( strcasecmp(driver,"template") == 0 ) {
     if(!name) name="template";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("text/html");
@@ -455,18 +455,17 @@ int msAppendOutputFormat(mapObj *map, outputFormatObj *format)
   /* -------------------------------------------------------------------- */
   /*      Attach to map.                                                  */
   /* -------------------------------------------------------------------- */
-  if (map != NULL) {
-    map->numoutputformats++;
-    if (map->outputformatlist == NULL)
-      map->outputformatlist = (outputFormatObj **) malloc(sizeof(void*));
-    else
-      map->outputformatlist = (outputFormatObj **)
-                              realloc(map->outputformatlist,
-                                      sizeof(void*) * map->numoutputformats );
+  assert(map);
+  map->numoutputformats++;
+  if (map->outputformatlist == NULL)
+    map->outputformatlist = (outputFormatObj **) malloc(sizeof(void*));
+  else
+    map->outputformatlist = (outputFormatObj **)
+                            realloc(map->outputformatlist,
+                                    sizeof(void*) * map->numoutputformats );
 
-    map->outputformatlist[map->numoutputformats-1] = format;
-    MS_REFCNT_INCR(format);
-  }
+  map->outputformatlist[map->numoutputformats-1] = format;
+  MS_REFCNT_INCR(format);
 
   return map->numoutputformats;
 }
@@ -837,7 +836,6 @@ void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
         mime_list[mime_count++] = format->mimetype;
       }
     }
-    msFreeCharArray(tokens, numtokens);
   } else
     for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ ) {
       int  j;
@@ -858,6 +856,8 @@ void msGetOutputFormatMimeListImg( mapObj *map, char **mime_list, int max_mime )
 
   if( mime_count < max_mime )
     mime_list[mime_count] = NULL;
+  if(tokens)
+    msFreeCharArray(tokens, numtokens);
 }
 
 /************************************************************************/
@@ -883,7 +883,6 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
         mime_list[mime_count++] = format->mimetype;
       }
     }
-    msFreeCharArray(tokens, numtokens);
   } else {
     for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ ) {
       int  j;
@@ -910,6 +909,8 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
   }
   if( mime_count < max_mime )
     mime_list[mime_count] = NULL;
+  if(tokens)
+    msFreeCharArray(tokens, numtokens);
 }
 
 

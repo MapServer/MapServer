@@ -361,14 +361,13 @@ imageObj *msDrawMap(mapObj *map, int querymap)
           return(NULL);
         }
       }
-    }
-
-    if(map->debug >= MS_DEBUGLEVEL_TUNING || lp->debug >= MS_DEBUGLEVEL_TUNING) {
-      msGettimeofday(&endtime, NULL);
-      msDebug("msDrawMap(): Layer %d (%s), %.3fs\n",
-              map->layerorder[i], lp->name?lp->name:"(null)",
-              (endtime.tv_sec+endtime.tv_usec/1.0e6)-
-              (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+      if(map->debug >= MS_DEBUGLEVEL_TUNING || lp->debug >= MS_DEBUGLEVEL_TUNING) {
+        msGettimeofday(&endtime, NULL);
+        msDebug("msDrawMap(): Layer %d (%s), %.3fs\n",
+                map->layerorder[i], lp->name?lp->name:"(null)",
+                (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+                (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+      }
     }
   }
 
@@ -382,6 +381,13 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
     if(MS_SUCCESS != msEmbedScalebar(map, image)) {
       msFreeImage( image );
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+      /* Cleanup WMS/WFS Request stuff */
+      if (pasOWSReqInfo) {
+         msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+         msFree(pasOWSReqInfo);
+      }
+#endif
       return NULL;
     }
 
@@ -393,6 +399,13 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache) {
     if( msEmbedLegend(map, image) != MS_SUCCESS ) {
       msFreeImage( image );
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+      /* Cleanup WMS/WFS Request stuff */
+      if (pasOWSReqInfo) {
+         msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+         msFree(pasOWSReqInfo);
+      }
+#endif
       return NULL;
     }
   }
@@ -483,6 +496,13 @@ imageObj *msDrawMap(mapObj *map, int querymap)
 
     if(MS_SUCCESS != msEmbedScalebar(map, image)) {
       msFreeImage( image );
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+      /* Cleanup WMS/WFS Request stuff */
+      if (pasOWSReqInfo) {
+         msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+         msFree(pasOWSReqInfo);
+      }
+#endif
       return NULL;
     }
 
@@ -1193,19 +1213,16 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   /* if MS_HILITE, alter the one style (always at least 1 style), and set a MINDISTANCE for the labelObj to avoid duplicates */
   if(map->querymap.style == MS_HILITE) {
     if (layer->numclasses > 0) {
-      colorbuffer = (colorObj*)malloc(layer->numclasses*sizeof(colorObj));
-      mindistancebuffer = (int*)malloc(layer->numclasses*sizeof(int));
-
-      if (colorbuffer == NULL || mindistancebuffer == NULL) {
-        msSetError(MS_MEMERR, "Failed to allocate memory for colorbuffer/mindistancebuffer", "msDrawQueryLayer()");
-        return MS_FAILURE;
-      }
+      colorbuffer = (colorObj*)msSmallMalloc(layer->numclasses*sizeof(colorObj));
+      mindistancebuffer = (int*)msSmallMalloc(layer->numclasses*sizeof(int));
     }
 
     for(i=0; i<layer->numclasses; i++) {
       if(layer->type == MS_LAYER_POLYGON) { /* alter BOTTOM style since that's almost always the fill */
         if (layer->class[i]->styles == NULL) {
           msSetError(MS_MISCERR, "Don't know how to draw class %s of layer %s without a style definition.", "msDrawQueryLayer()", layer->class[i]->name, layer->name);
+          msFree(colorbuffer);
+          msFree(mindistancebuffer);
           return(MS_FAILURE);
         }
         if(MS_VALID_COLOR(layer->class[i]->styles[0]->color)) {
@@ -1289,7 +1306,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     if(cache) {
-      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); /* problem adding to the cache */
+      if(insertFeatureList(&shpcache, &shape) == NULL) {
+        msFree(colorbuffer);
+        msFree(mindistancebuffer);
+        return(MS_FAILURE); /* problem adding to the cache */
+      }
     }
 
     maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex]->numstyles);

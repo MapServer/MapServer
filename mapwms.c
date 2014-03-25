@@ -217,9 +217,8 @@ int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int che
       }
 
       msFreeCharArray(patterns, numpatterns);
-      msFreeCharArray(atimes, numtimes);              
-
     }
+    msFreeCharArray(atimes, numtimes);              
   }
 
   return ret;
@@ -380,17 +379,16 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
 int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int forcecharcter)
 {
   char **extents=NULL, **ranges=NULL, **onerange=NULL;
-  int numextents;
+  int numextents, numranges, numonerange;
   char **aextentvalues = NULL;
   int nextentvalues=0;
   pointObj *aextentranges=NULL;
   int nextentranges=0;
 
   int isextentavalue = MS_FALSE, isextentarange=MS_FALSE;
-  int i,j, ntmp;
+  int i,j,status=MS_FALSE;
   char **uservalues=NULL;
   int numuservalues=0;
-  char *stmp = NULL;
   int ischaracter = MS_FALSE;
   float minval, maxval,currentval,mincurrentval,maxcurrentval, mincurrentrange, maxcurrentrange;
 
@@ -423,9 +421,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
         ischaracter= !FLTIsNumeric((char *)dimensionextent);
 
     } else {
-      ntmp = -1;
-      ranges = msStringSplit (dimensionextent, '/', &ntmp);
-      if(ranges && (ntmp == 2 || ntmp == 3)) {
+      ranges = msStringSplit (dimensionextent, '/', &numranges);
+      if(ranges && (numranges == 2 || numranges == 3)) {
         /*single range*/
         isextentarange = MS_TRUE;
         aextentranges = msSmallMalloc(sizeof(pointObj));
@@ -435,10 +432,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
         /*ranges should be numeric*/
         ischaracter = MS_FALSE;
       }
-      if (ranges && ntmp > 0) {
-        msFreeCharArray(ranges, ntmp);
-        ranges = NULL;
-      }
+      msFreeCharArray(ranges, numranges);
+      ranges = NULL;
     }
   } else if (numextents > 1) { /*check if it is muliple values or mutliple ranges*/
     if (strstr(dimensionextent, "/") == NULL) {
@@ -446,10 +441,9 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
       isextentavalue = MS_TRUE;
       aextentvalues = (char **)msSmallMalloc(sizeof(char *)*numextents);
       for (i=0; i<numextents; i++) {
-        stmp = msStrdup(extents[i]);
+        char *stmp = msStrdup(extents[i]);
         msStringTrim(stmp);
-        aextentvalues[i] = msStrdup(stmp);
-        msFree(stmp);
+        aextentvalues[i] = stmp;
       }
       nextentvalues = numextents;
       if (!forcecharcter)
@@ -463,8 +457,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
       nextentranges=0;
 
       for (i=0; i<numextents; i++) {
-        onerange = msStringSplit(extents[i], '/', &ntmp);
-        if (!onerange || (ntmp != 2 && ntmp != 3)) {
+        onerange = msStringSplit(extents[i], '/', &numonerange);
+        if (!onerange || (numonerange != 2 && numonerange != 3)) {
           isvalidextent = MS_FALSE;
           break;
         }
@@ -473,13 +467,12 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
           aextentranges[nextentranges].x = atof(onerange[0]);
           aextentranges[nextentranges++].y = atof(onerange[1]);
         }
-        if (onerange && ntmp > 0 ) {
-          msFreeCharArray(onerange, ntmp);
-          onerange = NULL;
-        }
+        msFreeCharArray(onerange, numonerange);
+        onerange = NULL;
       }
       if (!isvalidextent) {
         msFree(aextentranges);
+        aextentranges = NULL;
         nextentranges = 0;
         isextentarange = MS_FALSE;
       }
@@ -496,7 +489,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
 
   /* make sure that we got a valid extent*/
   if (!isextentavalue && !isextentarange) {
-    return MS_FALSE;
+    status = MS_FALSE;
+    goto dimension_cleanup;
   }
 
   /*for the extent of the dimesion, we support
@@ -509,8 +503,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
   if (numuservalues == 1) {
     /*user iput=single*/
     /*is it descret or range*/
-    ranges = msStringSplit(uservalues[0], '/', &ntmp);
-    if (ntmp == 1) { /*discrete*/
+    ranges = msStringSplit(uservalues[0], '/', &numranges);
+    if (numranges == 1) { /*discrete*/
       if (isextentavalue) {
         /*single user value, single/multiple values extent*/
         for (i=0; i<nextentvalues; i++) {
@@ -536,7 +530,7 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
           }
         }
       }
-    } else if (ntmp == 2 || ntmp == 3) { /*range*/
+    } else if (numranges == 2 || numranges == 3) { /*range*/
       /*user input=single range. In this case the extents must
        be of a range type.*/
       mincurrentval = atof(ranges[0]);
@@ -554,8 +548,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
         }
       }
     }
-    if (ranges && ntmp > 0)
-      msFreeCharArray(ranges, ntmp);
+    msFreeCharArray(ranges, numranges);
+    ranges = NULL;
   } else if (numuservalues > 1) { /*user input=multiple*/
     if (strstr(value, "/") == NULL) {
       /*user input=multiple value*/
@@ -602,8 +596,8 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
 
       for (i=0; i<numuservalues; i++) {
         /*each ranges should be valid*/
-        onerange = msStringSplit(uservalues[i], '/', &ntmp);
-        if (ntmp == 2 || ntmp == 3) {
+        onerange = msStringSplit(uservalues[i], '/', &numonerange);
+        if (numonerange == 2 || numonerange == 3) {
           mincurrentval = atof(onerange[0]);
           maxcurrentval = atof(onerange[1]);
 
@@ -621,36 +615,45 @@ int msWMSValidateDimensionValue(char *value, const char *dimensionextent, int fo
             }
             if (j == nextentranges) {
               valueisvalid = MS_FALSE;
-              msFreeCharArray(onerange, ntmp);
+              msFreeCharArray(onerange, numonerange);
+              onerange = NULL;
               break;
             }
           }
         } else {
           valueisvalid = MS_FALSE;
         }
-        msFreeCharArray(onerange, ntmp);
+        msFreeCharArray(onerange, numonerange);
+        onerange = NULL;
       }
       uservaluevalid = valueisvalid;
     }
 
   }
-  if(uservalues && numuservalues > 0)
+  if(uservaluevalid)
+    status = MS_TRUE;
+
+dimension_cleanup:
+  if(ranges)
+    msFreeCharArray(ranges, numranges);
+  if(onerange)
+    msFreeCharArray(onerange, numonerange);
+  if(extents)
+    msFreeCharArray(extents, numextents);
+  if(uservalues)
     msFreeCharArray(uservalues, numuservalues);
 
-  if (aextentvalues && nextentvalues > 0) {
+  if (aextentvalues) {
     for (i=0; i<nextentvalues; i++)
       msFree(aextentvalues[i]);
     msFree(aextentvalues);
   }
 
-  if(aextentranges && nextentranges > 0) {
+  if(aextentranges) {
     msFree(aextentranges);
   }
 
-  if(uservaluevalid)
-    return MS_TRUE;
-
-  return MS_FALSE;
+  return status;
 }
 
 
@@ -1375,7 +1378,7 @@ this request. Check wms/ows_enable_request settings.",
   ** have a projection. This will prevent problems when users forget to
   ** explicitly set a projection on all layers in a WMS mapfile.
   */
-  if ((srsbuffer != NULL && strlen(srsbuffer) > 1) || nonsquare_enabled) {
+  if (strlen(srsbuffer) > 1 || nonsquare_enabled) {
     projectionObj newProj;
 
     if (map->projection.numargs <= 0) {
@@ -1395,7 +1398,7 @@ this request. Check wms/ows_enable_request settings.",
     }
 
     msInitProjection(&newProj);
-    if (srsbuffer != NULL && strlen(srsbuffer) > 1) {
+    if (strlen(srsbuffer) > 1) {
       int nTmp;
 
       if (nVersion >= OWS_1_3_0)
@@ -1417,7 +1420,7 @@ this request. Check wms/ows_enable_request settings.",
 
   /* apply the srs to the map file. This is only done after validating */
   /* that the srs given as parameter is valid for all layers */
-  if (srsbuffer != NULL && strlen(srsbuffer) > 1) {
+  if (strlen(srsbuffer) > 1) {
     int nTmp;
     msFreeProjection(&map->projection);
     msInitProjection(&map->projection);
@@ -2206,8 +2209,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
         msFree(pszDimensionDefaultName);
 
       }
-      msFreeCharArray(tokens, ntokens);
     }
+    msFreeCharArray(tokens, ntokens);
   }
 
 
@@ -2719,6 +2722,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   if ((script_url=msOWSGetOnlineResource2(map, "MO", "onlineresource", req, validated_language)) == NULL ||
       (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
     msFree(validated_language);
+    msFree(schemalocation);
+    msFree(dtd_url);
     return msWMSException(map, nVersion, NULL, wms_exception_format);
   }
 
@@ -3279,7 +3284,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 
       /* We'll use this array of booleans to track which layer/group have been */
       /* processed already */
-      pabLayerProcessed = (char *)msSmallCalloc(map->numlayers, sizeof(char*));
+      pabLayerProcessed = (char *)msSmallCalloc(map->numlayers, sizeof(char));
 
       /* Mark disabled layers as processed to prevent from being displayed in nested groups (#4533)*/
       for(i=0; i<map->numlayers; i++) {
@@ -3811,7 +3816,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
   msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups, isUsedInNestedGroup);
 
-  for(i=0; map && i<numentries; i++) {
+  for(i=0; i<numentries; i++) {
     if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
       char **layers;
       int numlayers, j, k;
@@ -4104,6 +4109,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
 
   for(i=0; map && i<numentries; i++) {
     if(strcasecmp(names[i], "LAYERS") == 0) {
+      if(layers) msFreeCharArray(layers, numlayers); /* free previous occurence of layers array if more than one was provided */
       layers = msStringSplit(values[i], ',', &numlayers);
     }
     if(strcasecmp(names[i], "VERSION") == 0) {
@@ -4628,7 +4634,7 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
   isUsedInNestedGroup = (int*)msSmallCalloc(map->numlayers, sizeof(int));
   msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups, isUsedInNestedGroup);
 
-  for(i=0; map && i<numentries; i++) {
+  for(i=0; i<numentries; i++) {
     /* getMap parameters */
     if (strcasecmp(names[i], "LAYERS") == 0) {
       layers = msStringSplit(values[i], ',', &numlayers);

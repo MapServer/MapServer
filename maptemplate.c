@@ -907,6 +907,8 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
       status = msJoinConnect(layer, &(layer->joins[j]));
       if(status != MS_SUCCESS) {
         msFreeHashTable(tagArgs);
+        msFree(postTag);
+        msFree(tag);
         return status;
       }
     }
@@ -925,6 +927,8 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     status = msLayerGetShape(layer, &(mapserv->resultshape), &(layer->resultcache->results[i]));
     if(status != MS_SUCCESS) {
       msFreeHashTable(tagArgs);
+      msFree(postTag);
+      msFree(tag);
       return status;
     }
 
@@ -2088,14 +2092,22 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       shapeObj *bufferShape=NULL;
 
       bufferShape = msGEOSBuffer(shape, buffer);
-      if(!bufferShape) return(MS_FAILURE); /* buffer failed */
+      if(!bufferShape) {
+        free(pointFormat1);
+        free(pointFormat2);
+        return(MS_FAILURE); /* buffer failed */
+      }
       msCopyShape(bufferShape, &tShape);
       msFreeShape(bufferShape);
     }
 #endif
     else {
       status = msCopyShape(shape, &tShape);
-      if(status != 0) return(MS_FAILURE); /* copy failed */
+      if(status != 0) {
+        free(pointFormat1);
+        free(pointFormat2);
+        return(MS_FAILURE); /* copy failed */
+      }
     }
 
     /* no big deal to convert from file to image coordinates, but what are the image parameters */
@@ -3022,7 +3034,10 @@ char *generateLegendTemplate(mapservObj *mapserv)
   /* open template */
   if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, mapserv->map->legend.template), "r")) == NULL) {
     msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
-    return NULL;
+    if(pszResult)
+      free(pszResult);
+    pszResult=NULL;
+    goto error;
   }
 
   fseek(stream, 0, SEEK_END);
@@ -3030,12 +3045,6 @@ char *generateLegendTemplate(mapservObj *mapserv)
   rewind(stream);
 
   file = (char*)msSmallMalloc(length + 1);
-
-  if(!file) {
-    msSetError(MS_IOERR, "Error while allocating memory for template file.", "generateLegendTemplate()");
-    fclose(stream);
-    return NULL;
-  }
 
   /*
    * Read all the template file
@@ -3051,7 +3060,12 @@ char *generateLegendTemplate(mapservObj *mapserv)
   */
   file[length] = '\0';
 
-  if(msValidateContexts(mapserv->map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
+  if(msValidateContexts(mapserv->map) != MS_SUCCESS) { /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
+    if(pszResult)
+      free(pszResult);
+    pszResult=NULL;
+    goto error;
+  }
 
   /*
    * Seperate header/footer, groups, layers and class
@@ -3066,16 +3080,28 @@ char *generateLegendTemplate(mapservObj *mapserv)
    * Retrieve arguments of all three parts
    */
   if(legGroupHtml)
-    if(getTagArgs("leg_group_html", file, &groupArgs) != MS_SUCCESS)
-      return NULL;
+    if(getTagArgs("leg_group_html", file, &groupArgs) != MS_SUCCESS) {
+      if(pszResult)
+        free(pszResult);
+      pszResult=NULL;
+      goto error;
+    }
 
   if(legLayerHtml)
-    if(getTagArgs("leg_layer_html", file, &layerArgs) != MS_SUCCESS)
-      return NULL;
+    if(getTagArgs("leg_layer_html", file, &layerArgs) != MS_SUCCESS) {
+      if(pszResult)
+        free(pszResult);
+      pszResult=NULL;
+      goto error;
+    }
 
   if(legClassHtml)
-    if(getTagArgs("leg_class_html", file, &classArgs) != MS_SUCCESS)
-      return NULL;
+    if(getTagArgs("leg_class_html", file, &classArgs) != MS_SUCCESS) {
+      if(pszResult)
+        free(pszResult);
+      pszResult=NULL;
+      goto error;
+    }
 
 
   mapserv->map->cellsize = msAdjustExtent(&(mapserv->map->extent),
@@ -3083,8 +3109,12 @@ char *generateLegendTemplate(mapservObj *mapserv)
                                           mapserv->map->height);
   if(msCalculateScale(mapserv->map->extent, mapserv->map->units,
                       mapserv->map->width, mapserv->map->height,
-                      mapserv->map->resolution, &mapserv->map->scaledenom) != MS_SUCCESS)
-    return(NULL);
+                      mapserv->map->resolution, &mapserv->map->scaledenom) != MS_SUCCESS) {
+    if(pszResult)
+      free(pszResult);
+    pszResult=NULL;
+    goto error;
+  }
 
   /* start with the header if present */
   if(legHeaderHtml) pszResult = msStringConcatenate(pszResult, legHeaderHtml);
@@ -3097,8 +3127,12 @@ char *generateLegendTemplate(mapservObj *mapserv)
    */
   pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
 
-  if(sortLayerByMetadata(mapserv->map, pszOrderMetadata) != MS_SUCCESS)
+  if(sortLayerByMetadata(mapserv->map, pszOrderMetadata) != MS_SUCCESS) {
+    if(pszResult)
+      free(pszResult);
+    pszResult=NULL;
     goto error;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      if the order tag is set to ascending or descending, the         */
@@ -3107,8 +3141,12 @@ char *generateLegendTemplate(mapservObj *mapserv)
   pszOrder = msLookupHashTable(layerArgs, "order");
   if(pszOrder && ((strcasecmp(pszOrder, "ASCENDING") == 0) ||
                   (strcasecmp(pszOrder, "DESCENDING") == 0))) {
-    if(sortLayerByOrder(mapserv->map, pszOrder) != MS_SUCCESS)
+    if(sortLayerByOrder(mapserv->map, pszOrder) != MS_SUCCESS) {
+      if(pszResult)
+        free(pszResult);
+      pszResult=NULL;
       goto error;
+    }
   }
 
   if(legGroupHtml) {
@@ -3415,7 +3453,8 @@ error:
   msFree(legClassHtml);
   msFree(pszPrefix);
 
-  fclose(stream);
+  if(stream)
+    fclose(stream);
 
   /* -------------------------------------------------------------------- */
   /*      Reset the layerdrawing order.                                   */
@@ -3446,13 +3485,16 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
     /* want to do this if there are joined records. */
     if(records == MS_FALSE) {
       if(join->header != NULL) {
+        if(stream) fclose(stream);
         if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, join->header), "r")) == NULL) {
           msSetError(MS_IOERR, "Error while opening join header file %s.", "processOneToManyJoin()", join->header);
+          msFree(outbuf);
           return(NULL);
         }
 
         if(isValidTemplate(stream, join->header) != MS_TRUE) {
           fclose(stream);
+          msFree(outbuf);
           return NULL;
         }
 
@@ -3460,15 +3502,18 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
         while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = msStringConcatenate(outbuf, line);
 
         fclose(stream);
+        stream = NULL;
       }
 
       if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, join->template), "r")) == NULL) {
         msSetError(MS_IOERR, "Error while opening join template file %s.", "processOneToManyJoin()", join->template);
+        msFree(outbuf);
         return(NULL);
       }
 
       if(isValidTemplate(stream, join->template) != MS_TRUE) {
         fclose(stream);
+        msFree(outbuf);
         return NULL;
       }
 
@@ -3478,7 +3523,11 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
     while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) { /* now on to the end of the template */
       if(strchr(line, '[') != NULL) {
         tmpline = processLine(mapserv, line, NULL, QUERY); /* no multiline tags are allowed in a join */
-        if(!tmpline) return NULL;
+        if(!tmpline) {
+           msFree(outbuf);
+           fclose(stream);
+           return NULL;
+        }
         outbuf = msStringConcatenate(outbuf, tmpline);
         free(tmpline);
       } else /* no subs, just echo */
@@ -3490,12 +3539,15 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
   } /* next record */
 
   if(records==MS_TRUE && join->footer) {
+    if(stream) fclose(stream);
     if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, join->footer), "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening join footer file %s.", "processOneToManyJoin()", join->footer);
+      msFree(outbuf);
       return(NULL);
     }
 
     if(isValidTemplate(stream, join->footer) != MS_TRUE) {
+      msFree(outbuf);
       fclose(stream);
       return NULL;
     }
@@ -3873,7 +3925,10 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
   }
 
   if(mode != QUERY) {
-    if(processResultSetTag(mapserv, &outstr, stream) != MS_SUCCESS) return(NULL);
+    if(processResultSetTag(mapserv, &outstr, stream) != MS_SUCCESS) {
+      msFree(outstr);
+      return(NULL);
+    }
   }
 
   if(mode == QUERY) { /* return shape and/or values  */

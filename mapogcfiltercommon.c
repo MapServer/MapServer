@@ -158,8 +158,7 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   /* -------------------------------------------------------------------- */
   aszBounds = msStringSplit(psFilterNode->psRightNode->pszValue, ';', &nBounds);
   if (nBounds != 2) {
-    if (aszBounds)
-      msFreeCharArray(aszBounds, nBounds);
+    msFreeCharArray(aszBounds, nBounds);
     return NULL;
   }
   /* -------------------------------------------------------------------- */
@@ -254,8 +253,7 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   sprintf(szBuffer, "%s", ")");
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
-  if (aszBounds)
-    msFreeCharArray(aszBounds, nBounds);
+  msFreeCharArray(aszBounds, nBounds);
 
   return pszExpression;
 }
@@ -391,8 +389,10 @@ char *FLTGetLogicalComparisonCommonExpression(FilterEncodingNode *psFilterNode, 
 
 
     pszTmp = FLTGetCommonExpression(psFilterNode->psRightNode, lp);
-    if (!pszTmp)
+    if (!pszTmp) {
+      msFree(pszExpression);
       return NULL;
+    }
 
     pszExpression = msStringConcatenate(pszExpression, pszTmp);
     msFree(pszTmp);

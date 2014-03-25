@@ -183,8 +183,11 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
       psDBF->fp = fopen( pszDBFFilename, pszAccess );
     }
   }
-  if( psDBF->fp == NULL )
+  if( psDBF->fp == NULL ) {
+    msFree(pszDBFFilename);
+    msFree(psDBF);
     return( NULL );
+  }
 
   psDBF->bNoHeader = MS_FALSE;
   psDBF->nCurrentRecord = -1;
