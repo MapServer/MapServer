@@ -858,47 +858,49 @@ static int msWCSParseRequest20_XMLGetCoverage(
       xmlNodePtr extensionNode = NULL;
       XML_FOREACH_CHILD(child, extensionNode) {
         XML_LOOP_IGNORE_COMMENT_OR_TEXT(extensionNode);
-        if(EQUAL((char *) extensionNode->name, "rangeSubset")) {
+
+        if(EQUAL((char *) extensionNode->name, "RangeSubset")) {
           xmlNodePtr rangeItemNode = NULL;
-          xmlNodePtr intervalNode = NULL;
+
           XML_FOREACH_CHILD(extensionNode, rangeItemNode) {
+
             XML_LOOP_IGNORE_COMMENT_OR_TEXT(rangeItemNode);
+            
             XML_ASSERT_NODE_NAME(rangeItemNode, "RangeItem");
 
-            if (!rangeItemNode.children) {
+            if (!rangeItemNode->children) {
               msSetError(MS_WCSERR, "Missing RangeComponent or RangeInterval.",
                                     "msWCSParseRequest20_XMLGetCoverage()");
               return MS_FAILURE;
             }
-            else if (EQUAL((char *) rangeItemNode.children->name, "RangeComponent")) {
-              char *content = (char *)xmlNodeGetContent(rangeItemNode.children);
+            else if (EQUAL((char *) rangeItemNode->children->name, "RangeComponent")) {
+              char *content = (char *)xmlNodeGetContent(rangeItemNode->children);
               params->range_subset =
                 CSLAddString(params->range_subset, content);
               xmlFree(content);
             }
-            else if (EQUAL((char *) rangeItemNode.children->name, "RangeInterval")) {
-              xmlNodePtr intervalNode = rangeItemNode.children;
+            else if (EQUAL((char *) rangeItemNode->children->name, "RangeInterval")) {
+              xmlNodePtr intervalNode = rangeItemNode->children;
               char *start;
               char *stop;
               char *value;
               int length;
 
-              if (!intervalNode.children || ! intervalNode.children->next
-                  || !EQUAL((char *) rangeItemNode.children->name, "startComponent"))
-                  || !EQUAL((char *) rangeItemNode.children->name, "stopComponent"))) {
+              if (!intervalNode->children || !intervalNode->children->next
+                  || !EQUAL((char *) intervalNode->children->name, "startComponent")
+                  || !EQUAL((char *) intervalNode->children->next->name, "endComponent")) {
                 msSetError(MS_WCSERR, "Wrong RangeInterval.",
                                       "msWCSParseRequest20_XMLGetCoverage()");
                 return MS_FAILURE;
               }
 
-              start = (char *)xmlNodeGetContent(intervalNode.children);
-              stop = (char *)xmlNodeGetContent(intervalNode.children->next);
+              start = (char *)xmlNodeGetContent(intervalNode->children);
+              stop = (char *)xmlNodeGetContent(intervalNode->children->next);
               length = strlen(start) + strlen(stop) + 2;
-              value = msSmallCalloc(length);
-              strlcat(value, start, length);
-              strlcat(value, ":", length);
-              strlcat(value, stop, length);
+              value = msSmallCalloc(length, sizeof(char));
 
+              snprintf(value, length, "%s:%s", start, stop);
+              
               xmlFree(start);
               xmlFree(stop);
 
@@ -3098,6 +3100,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 {
   int i = 0, count, maxlen, index;
   char *tmp = NULL;
+  char *interval_stop;
   char **band_ids = NULL;
 
   /* if rangesubset parameter is not given, default to all bands */
@@ -3112,7 +3115,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   }
 
   count = CSLCount(params->range_subset);
-  maxlen = count * 4 * sizeof(char);
+  maxlen = cm->numbands * 4 * sizeof(char);
   *bandlist = msSmallCalloc(sizeof(char), maxlen);
 
   if (NULL == (tmp = msOWSGetEncodeMetadata(&layer->metadata,
@@ -3127,33 +3130,74 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   }
 
   for(i = 0; i < count; ++i) {
-    /* print ',' if not the first value */
-    if(i != 0) {
-      strlcat(*bandlist, ",", maxlen);
-    }
+    /* RangeInterval case: defined as "<start>:<stop>" */
+    if ((interval_stop = strchr(params->range_subset[i], ':')) != NULL) {
+      int start, stop, j;
+      *interval_stop = '\0';
+      ++interval_stop;
 
-    /* check if the string represents an integer */
-    if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS) {
-      tmp = msIntToString((int)index);
-      strlcat(*bandlist, tmp, maxlen);
-      msFree(tmp);
-      continue;
-    }
-
-    /* check if the string is equal to a band identifier    */
-    /* if so, what is the index of the band                 */
-    index = CSLFindString(band_ids, params->range_subset[i]);
-    if(index != -1) {
-      tmp = msIntToString((int)index + 1);
-      strlcat(*bandlist, tmp, maxlen);
-      msFree(tmp);
-      continue;
-    }
-
-    msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
+      /* get index of start clause, or raise an error if none was found */
+      if ((start = CSLFindString(band_ids, params->range_subset[i])) == -1) {
+        msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
                "msWCSGetCoverage20_GetBands()", params->range_subset[i]);
-    return MS_FAILURE;
+        return MS_FAILURE;
+      }
+
+      /* get index of stop clause, or raise an error if none was found */
+      if ((stop = CSLFindString(band_ids, interval_stop)) == -1) {
+        msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
+               "msWCSGetCoverage20_GetBands()", interval_stop);
+        return MS_FAILURE;
+      }
+
+      /* Check whether or not start and stop are different and stop is higher than start */
+      if (stop <= start) {
+        msSetError(MS_WCSERR, "Invalid range interval given.",
+               "msWCSGetCoverage20_GetBands()");
+        return MS_FAILURE;
+      }
+
+      /* expand the interval to a list of indices and push them on the list */
+      for (j = start; j <= stop; ++j) {
+        if(i != 0 || j != start) {
+          strlcat(*bandlist, ",", maxlen);
+        }
+        tmp = msIntToString(j);
+        strlcat(*bandlist, tmp, maxlen);
+        msFree(tmp);
+      }
+    }
+    /* RangeComponent case */
+    else {
+        if(i != 0) {
+        strlcat(*bandlist, ",", maxlen);
+      }
+
+      /* check if the string represents an integer */
+      /* TODO: this is not standard. Should we allow this? */
+      if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS) {
+        tmp = msIntToString((int)index);
+        strlcat(*bandlist, tmp, maxlen);
+        msFree(tmp);
+        continue;
+      }
+
+      /* check if the string is equal to a band identifier    */
+      /* if so, what is the index of the band                 */
+      index = CSLFindString(band_ids, params->range_subset[i]);
+      if(index != -1) {
+        tmp = msIntToString((int)index + 1);
+        strlcat(*bandlist, tmp, maxlen);
+        msFree(tmp);
+        continue;
+      }
+
+      msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
+                 "msWCSGetCoverage20_GetBands()", params->range_subset[i]);
+      return MS_FAILURE;
+    }
   }
+
   CSLDestroy(band_ids);
   return MS_SUCCESS;
 }
