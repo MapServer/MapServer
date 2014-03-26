@@ -351,7 +351,7 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
       pointObj pt1Geo;
 
       if( line_out->numpoints > 0 )
-        pt1Geo = line_out->point[0];
+        pt1Geo = line_out->point[i-1];
       else
         pt1Geo = wrkPoint; /* this is a cop out */
 
