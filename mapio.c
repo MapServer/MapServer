@@ -218,6 +218,7 @@ void msIO_setHeader (const char *header, const char* value, ...)
 #ifdef MOD_WMS_ENABLED
   }
 #endif
+  va_end( args );
 }
 
 void msIO_sendHeaders ()

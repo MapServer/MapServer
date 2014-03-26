@@ -344,8 +344,8 @@ int msWFSLocateSRSInList(const char *pszList, const char *srs)
         break;
       }
     }
-    msFreeCharArray(tokens, nTokens);
   }
+  msFreeCharArray(tokens, nTokens);
 
   return bFound;
 }
@@ -1074,8 +1074,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
   gmlConstantObj *constant=NULL;
 
   /* setup the element tab */
-  element_tab = (char *) malloc(sizeof(char)*strlen(tab)+5);
-  MS_CHECK_ALLOC_NO_RET(element_tab, sizeof(char)*strlen(tab)+5);
+  element_tab = (char *) msSmallMalloc(sizeof(char)*strlen(tab)+5);
   sprintf(element_tab, "%s    ", tab);
 
   if(group->type)
@@ -1106,6 +1105,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
 
   msIO_fprintf(stream, "%s  </sequence>\n", tab);
   msIO_fprintf(stream, "%s</complexType>\n", tab);
+  free(element_tab);
 
   return;
 }
@@ -1458,8 +1458,14 @@ this request. Check wfs/ows_enable_request settings.", "msWFSDescribeFeatureType
                       substitution_group);
           msFree(encoded_type);
 
-          if(strcmp(layer_namespace_prefix, user_namespace_prefix) != 0)
+          if(strcmp(layer_namespace_prefix, user_namespace_prefix) != 0) {
+            msFree(encoded_name);
+            msGMLFreeItems(itemList);
+            msGMLFreeConstants(constantList);
+            msGMLFreeGroups(groupList);
+            msGMLFreeGeometries(geometryList);
             continue; /* the rest is defined in an external schema */
+          }
 
           msIO_printf("  <complexType name=\"%sType\">\n", encoded_name);
           msIO_printf("    <complexContent>\n");

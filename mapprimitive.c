@@ -1299,7 +1299,9 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
   double len, max_len=0;
   double minx, maxx, maxy, miny;
 
+#ifdef notdef
   int method = 2;
+#endif
 
   msComputeBounds(p);
   minx = p->bounds.minx;
@@ -1313,6 +1315,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
   cp.x = (maxx+minx)/2.0;
   cp.y = (maxy+miny)/2.0;
 
+#ifdef notdef
   switch (method) {
     case 0: /* MBR */
       lp->x = cp.x;
@@ -1325,6 +1328,9 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       if(getPolygonCenterOfGravity(p, lp) != MS_SUCCESS) return(MS_FAILURE);
       break;
   }
+#else
+  if(getPolygonCenterOfGravity(p, lp) != MS_SUCCESS) return(MS_FAILURE);
+#endif
 
   if(msIntersectPointPolygon(lp, p) == MS_TRUE) {
     double dist, min_dist=-1;
@@ -1385,8 +1391,10 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       }
     }
 
-    if(min == max)
+    if(min == max) { 
+      msFree(intersect);
       return (MS_FAILURE);
+    }
     else
       y = (max + min)/2.0;
 
@@ -1459,8 +1467,10 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       }
     }
 
-    if(min == max)
+    if(min == max) {
+      msFree(intersect);
       return (MS_FAILURE);
+    }
     else
       x = (max + min)/2.0;
 

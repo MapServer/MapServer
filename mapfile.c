@@ -809,11 +809,13 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *s
 {
   featureListNodeObjPtr node;
 
-  node = (featureListNodeObjPtr) malloc(sizeof(featureListNodeObj));
-  MS_CHECK_ALLOC(node, sizeof(featureListNodeObj), NULL);
+  node = (featureListNodeObjPtr) msSmallMalloc(sizeof(featureListNodeObj));
 
   msInitShape(&(node->shape));
-  if(msCopyShape(shape, &(node->shape)) == -1) return(NULL);
+  if(msCopyShape(shape, &(node->shape)) == -1) {
+    msFree(node);
+    return(NULL);
+  }
 
   /* AJS - alans@wunderground.com O(n^2) -> O(n) conversion, keep a pointer to the end */
 
@@ -888,7 +890,6 @@ static int loadFeature(layerObj *player, int type)
 {
   int status=MS_SUCCESS;
   featureListNodeObjPtr *list = &(player->features);
-  featureListNodeObjPtr node;
   multipointObj points= {0,NULL};
   shapeObj *shape=NULL;
 
@@ -902,13 +903,15 @@ static int loadFeature(layerObj *player, int type)
     switch(msyylex()) {
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadFeature()");
+        msFreeShape(shape); /* clean up */
+        msFree(shape);
         return(MS_FAILURE);
       case(END):
         if(player->features != NULL && player->features->tailifhead != NULL)
           shape->index = player->features->tailifhead->shape.index + 1;
         else
           shape->index = 0;
-        if((node = insertFeatureList(list, shape)) == NULL)
+        if(insertFeatureList(list, shape) == NULL)
           status = MS_FAILURE;
 
         msFreeShape(shape); /* clean up */
@@ -918,17 +921,29 @@ static int loadFeature(layerObj *player, int type)
       case(FEATURE):
         break; /* for string loads */
       case(POINTS):
-        if(loadFeaturePoints(&points) == MS_FAILURE) return(MS_FAILURE); /* no clean up necessary, just return */
+        if(loadFeaturePoints(&points) == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         status = msAddLine(shape, &points);
 
         msFree(points.point); /* clean up */
         points.numpoints = 0;
 
-        if(status == MS_FAILURE) return(MS_FAILURE);
+        if(status == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         break;
       case(ITEMS): {
         char *string=NULL;
-        if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
+        if(getString(&string) == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         if (string) {
           if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
           shape->values = msStringSplit(string, ';', &shape->numvalues);
@@ -937,26 +952,37 @@ static int loadFeature(layerObj *player, int type)
         break;
       }
       case(TEXT):
-        if(getString(&shape->text) == MS_FAILURE) return(MS_FAILURE);
+        if(getString(&shape->text) == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         break;
       case(WKT): {
         char *string=NULL;
 
         /* todo, what do we do with multiple WKT property occurances? */
 
-        if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
         msFreeShape(shape);
         msFree(shape);
+        if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
+        
         if((shape = msShapeFromWKT(string)) == NULL)
           status = MS_FAILURE;
 
         msFree(string); /* clean up */
 
-        if(status == MS_FAILURE) return(MS_FAILURE);
+        if(status == MS_FAILURE) {
+          msFreeShape(shape); /* clean up */
+          msFree(shape);
+          return(MS_FAILURE);
+        }
         break;
       }
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadfeature()", msyystring_buffer, msyylineno);
+        msFreeShape(shape); /* clean up */
+        msFree(shape);
         return(MS_FAILURE);
     }
   } /* next token */
@@ -1453,6 +1479,7 @@ static int msLoadProjectionStringCRSLike(projectionObj *p, const char *value,
 int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 {
 #ifdef USE_PROJ
+  assert(p);
   msFreeProjection(p);
 
   p->gt.need_geotransform = MS_FALSE;
@@ -1482,6 +1509,7 @@ int msLoadProjectionStringEPSG(projectionObj *p, const char *value)
 
 int msLoadProjectionString(projectionObj *p, const char *value)
 {
+  assert(p);
   p->gt.need_geotransform = MS_FALSE;
 
 #ifdef USE_PROJ
@@ -2310,8 +2338,7 @@ static void writeExpression(FILE *stream, int indent, const char *name, expressi
 int loadHashTable(hashTableObj *ptable)
 {
   char *key=NULL, *data=NULL;
-
-  if (!ptable) ptable = msCreateHashTable();
+  assert(ptable);
 
   for(;;) {
     switch(msyylex()) {
@@ -4815,7 +4842,7 @@ static int loadOutputFormat(mapObj *map)
     switch(msyylex()) {
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadOutputFormat()");
-        return(-1);
+        goto load_output_error;
 
       case(END): {
         outputFormatObj *format;
@@ -4825,29 +4852,32 @@ static int loadOutputFormat(mapObj *map)
                      "OUTPUTFORMAT clause lacks DRIVER keyword near (%s):(%d)",
                      "loadOutputFormat()",
                      msyystring_buffer, msyylineno );
-          return -1;
+          goto load_output_error;
         }
 
         format = msCreateDefaultOutputFormat( map, driver, name );
-        msFree( name );
-        name = NULL;
         if( format == NULL ) {
           msSetError(MS_MISCERR,
-                     "OUTPUTFORMAT clause references driver %s, but this driver isn't configured.",
-                     "loadOutputFormat()", driver );
-          return -1;
+                     "OUTPUTFORMAT (%s) clause references driver (%s), but this driver isn't configured.",
+                     "loadOutputFormat()", name, driver );
+          goto load_output_error;
         }
+        msFree( name );
+        name = NULL;
         msFree( driver );
+        driver = NULL;
 
         if( transparent != MS_NOOVERRIDE )
           format->transparent = transparent;
         if( extension != NULL ) {
           msFree( format->extension );
           format->extension = extension;
+          extension = NULL;
         }
         if( mimetype != NULL ) {
           msFree( format->mimetype );
           format->mimetype = mimetype;
+          mimetype = NULL;
         }
         if( imagemode != MS_NOOVERRIDE ) {
           if(format->renderer != MS_RENDER_WITH_AGG || imagemode != MS_IMAGEMODE_PC256) {
@@ -4884,14 +4914,18 @@ static int loadOutputFormat(mapObj *map)
       }
       case(NAME):
         msFree( name );
-        if((name = getToken()) == NULL) return(-1);
+        if((name = getToken()) == NULL) 
+          goto load_output_error;
         break;
       case(MIMETYPE):
-        if(getString(&mimetype) == MS_FAILURE) return(-1);
+        if(getString(&mimetype) == MS_FAILURE)
+          goto load_output_error;
         break;
       case(DRIVER): {
         int s;
-        if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) return -1; /* allow the template to be quoted or not in the mapfile */
+        if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) /* allow the template to be quoted or not in the mapfile */
+          goto load_output_error;
+        free(driver);
         if(s == MS_STRING)
           driver = msStrdup(msyystring_buffer);
         else
@@ -4899,7 +4933,8 @@ static int loadOutputFormat(mapObj *map)
       }
       break;
       case(EXTENSION):
-        if(getString(&extension) == MS_FAILURE) return(-1);
+        if(getString(&extension) == MS_FAILURE)
+          goto load_output_error;
         if( extension[0] == '.' ) {
           char *temp = msStrdup(extension+1);
           free( extension );
@@ -4907,7 +4942,8 @@ static int loadOutputFormat(mapObj *map)
         }
         break;
       case(FORMATOPTION):
-        if(getString(&value) == MS_FAILURE) return(-1);
+        if(getString(&value) == MS_FAILURE)
+          goto load_output_error;
         if( numformatoptions < MAX_FORMATOPTIONS )
           formatoptions[numformatoptions++] = msStrdup(value);
         free(value);
@@ -4933,20 +4969,28 @@ static int loadOutputFormat(mapObj *map)
           msSetError(MS_IDENTERR,
                      "Parsing error near (%s):(line %d), expected PC256, RGB, RGBA, FEATURE, BYTE, INT16, or FLOAT32 for IMAGEMODE.", "loadOutputFormat()",
                      msyystring_buffer, msyylineno);
-          return -1;
+          goto load_output_error;
         }
         free(value);
         value=NULL;
         break;
       case(TRANSPARENT):
-        if((transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
+        if((transparent = getSymbol(2, MS_ON,MS_OFF)) == -1)
+          goto load_output_error;
         break;
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadOutputFormat()",
                    msyystring_buffer, msyylineno);
-        return(-1);
+        goto load_output_error;
     }
   } /* next token */
+load_output_error:
+  msFree( driver );
+  msFree( extension );
+  msFree( mimetype );
+  msFree( name );
+  msFree( value );
+  return -1;
 }
 
 /*
@@ -5341,7 +5385,7 @@ int loadQueryMap(queryMapObj *querymap)
       case(QUERYMAP):
         break; /* for string loads */
       case(COLOR):
-        loadColor(&(querymap->color), NULL);
+        if(loadColor(&(querymap->color), NULL) != MS_SUCCESS) return MS_FAILURE;
         break;
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadQueryMap()");
@@ -6394,11 +6438,11 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   }
 
   if (new_mappath)
-    map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, msStrdup(new_mappath)));
+    map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, new_mappath));
   else {
     char *path = msGetPath(filename);
     map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, path));
-    if( path ) free( path );
+    free( path );
   }
 
   msyybasepath = map->mappath; /* for INCLUDEs */
@@ -6971,8 +7015,12 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
     }
 
     if(tokens[numtokens] == NULL) {
+      int i;
       msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
       fclose(msyyin);
+      for(i=0; i<numtokens; i++)
+        msFree(tokens[i]);
+      msFree(tokens);
       return NULL;
     }
 

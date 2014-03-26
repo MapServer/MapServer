@@ -1021,7 +1021,7 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
 
   result = msRasterQueryByRect( map, layer, bufferRect );
 
-  if( rlinfo != NULL && maxresults != 0 )
+  if( maxresults != 0 )
     rlinfo->query_result_hard_max = previous_maxresults;
 
   return result;

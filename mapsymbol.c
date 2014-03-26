@@ -344,6 +344,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 {
   char szPath[MS_MAXPATHLEN];
   symbolObj *symbol=NULL;
+  char *extension=NULL;
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "msAddImageSymbol()");
@@ -356,6 +357,16 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   if (msGrowSymbolSet(symbolset) == NULL)
     return -1;
   symbol = symbolset->symbol[symbolset->numsymbols];
+
+  /* check if svg checking extension otherwise assume it's a pixmap */
+  extension = strrchr(filename, '.');
+  if (extension == NULL)
+    extension = "";
+  if (strncasecmp(extension, ".svg", 4) == 0) {
+    symbol->type = MS_SYMBOL_SVG;
+  } else {
+    symbol->type = MS_SYMBOL_PIXMAP;
+  }
 
 #ifdef USE_CURL
   if (strncasecmp(filename, "http", 4) == 0) {
@@ -397,7 +408,6 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
     symbol->imagepath = msStrdup(filename);
   }
   symbol->name = msStrdup(filename);
-  symbol->type = MS_SYMBOL_PIXMAP;
   return(symbolset->numsymbols++);
 }
 
@@ -996,7 +1006,7 @@ symbolObj *msRotateVectorSymbol(symbolObj *symbol, double angle)
   /* center at 0,0 and rotate; then move back */
   for( i=0; i < symbol->numpoints; i++) {
     /* don't rotate PENUP commands (TODO: should use a constant here) */
-    if ((symbol->points[i].x == -99.0) || (symbol->points[i].x == -99.0) ) {
+    if ((symbol->points[i].x == -99.0) && (symbol->points[i].y == -99.0) ) {
       newSymbol->points[i].x = -99.0;
       newSymbol->points[i].y = -99.0;
       continue;
@@ -1012,7 +1022,7 @@ symbolObj *msRotateVectorSymbol(symbolObj *symbol, double angle)
     xcor = minx*-1.0; /* symbols always start at 0,0 so get the shift vector */
     ycor = miny*-1.0;
     for( i=0; i < newSymbol->numpoints; i++) {
-      if ((newSymbol->points[i].x == -99.0) || (newSymbol->points[i].x == -99.0))
+      if ((newSymbol->points[i].x == -99.0) && (newSymbol->points[i].y == -99.0))
         continue;
       newSymbol->points[i].x = newSymbol->points[i].x + xcor;
       newSymbol->points[i].y = newSymbol->points[i].y + ycor;

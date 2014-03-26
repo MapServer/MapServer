@@ -57,12 +57,10 @@ void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elnam
   int n = 0;
   int i = 0;
   tokens = msStringSplit(values, delim, &n);
-  if (tokens && n > 0) {
-    for (i=0; i<n; i++) {
-      xmlNewChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
-    }
-    msFreeCharArray(tokens, n);
+  for (i=0; i<n; i++) {
+    xmlNewChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
   }
+  msFreeCharArray(tokens, n);
 }
 
 /**
@@ -104,10 +102,10 @@ xmlXPathObjectPtr msLibXml2GetXPath(xmlDocPtr doc, xmlXPathContextPtr context, x
  *
  */
 
-const char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath)
+char *msLibXml2GetXPathTree(xmlDocPtr doc, xmlXPathObjectPtr xpath)
 {
   xmlBufferPtr xbuf;
-  const char *result = NULL;
+  char *result = NULL;
 
   xbuf = xmlBufferCreate();
 

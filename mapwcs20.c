@@ -1577,7 +1577,7 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
   xmlChar *buffer = NULL;
   int size = 0;
   msIOContext *context = NULL;
-  const char *contenttype = NULL;
+  char *contenttype = NULL;
 
   if( msIO_needBinaryStdout() == MS_FAILURE ) {
     return MS_FAILURE;
@@ -1590,6 +1590,7 @@ static int msWCSWriteDocument20(mapObj* map, xmlDocPtr psDoc)
 
   msIO_setHeader("Content-Type","%s; charset=UTF-8", contenttype);
   msIO_sendHeaders();
+  msFree(contenttype);
 
   context = msIO_getHandler(stdout);
 
@@ -3526,7 +3527,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     if(maskLayerIdx == -1) {
       msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
                  layer->name,layer->mask);
-      return (MS_FAILURE);
+      msFreeImage(image);
+      msFree(bandlist);
+      msWCSClearCoverageMetadata20(&cm);
+      return msWCSException(map, NULL, NULL, params->version);
     }
     maskLayer = GET_LAYER(map, maskLayerIdx);
     if(!maskLayer->maskimage) {
@@ -3540,7 +3544,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
                                           image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
       if (!maskLayer->maskimage) {
         msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
-        return (MS_FAILURE);
+        msFreeImage(image);
+        msFree(bandlist);
+        msWCSClearCoverageMetadata20(&cm);
+        return msWCSException(map, NULL, NULL, params->version);
       }
 
       /*
@@ -3558,7 +3565,11 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       maskLayer->status = origstatus;
       maskLayer->labelcache = origlabelcache;
       if(retcode != MS_SUCCESS) {
-        return MS_FAILURE;
+        free(origImageType);
+        msFreeImage(image);
+        msFree(bandlist);
+        msWCSClearCoverageMetadata20(&cm);
+        return msWCSException(map, NULL, NULL, params->version);
       }
       /*
        * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain

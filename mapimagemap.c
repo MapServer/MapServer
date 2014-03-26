@@ -260,73 +260,69 @@ imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
   };
   DEBUG_IF printf("msImageCreateIM<BR>\n");
   if (width > 0 && height > 0) {
-    image = (imageObj *)calloc(1,sizeof(imageObj));
-    MS_CHECK_ALLOC(image, sizeof(imageObj), NULL);
-    if (image) {
-      imgStr.string = &(image->img.imagemap);
-      imgStr.alloc_size = &(image->size);
+    image = (imageObj *)msSmallCalloc(1,sizeof(imageObj));
+    imgStr.string = &(image->img.imagemap);
+    imgStr.alloc_size = &(image->size);
 
-      image->format = format;
-      format->refcount++;
+    image->format = format;
+    format->refcount++;
 
-      image->width = width;
-      image->height = height;
-      image->imagepath = NULL;
-      image->imageurl = NULL;
-      image->resolution = resolution;
-      image->resolutionfactor = resolution/defresolution;
+    image->width = width;
+    image->height = height;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
+    image->resolution = resolution;
+    image->resolutionfactor = resolution/defresolution;
 
-      if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0) {
-        dxf = 1;
-        im_iprintf(&layerStr, "  2\nLAYER\n 70\n  10\n");
-      } else
-        dxf = 0;
-
-      if( strcasecmp("ON",msGetOutputFormatOption( format, "SCRIPT", "OFF" )) == 0) {
-        dxf = 2;
-        im_iprintf(&layerStr, "");
-      }
-
-      /* get href formation string options */
-      polyHrefFmt = makeFmtSafe(msGetOutputFormatOption
-                                ( format, "POLYHREF", "javascript:Clicked('%s');"), 1);
-      polyMOverFmt = makeFmtSafe(msGetOutputFormatOption
-                                 ( format, "POLYMOUSEOVER", ""), 1);
-      polyMOutFmt = makeFmtSafe(msGetOutputFormatOption
-                                ( format, "POLYMOUSEOUT", ""), 1);
-      symbolHrefFmt = makeFmtSafe(msGetOutputFormatOption
-                                  ( format, "SYMBOLHREF", "javascript:SymbolClicked();"), 1);
-      symbolMOverFmt = makeFmtSafe(msGetOutputFormatOption
-                                   ( format, "SYMBOLMOUSEOVER", ""), 1);
-      symbolMOutFmt = makeFmtSafe(msGetOutputFormatOption
-                                  ( format, "SYMBOLMOUSEOUT", ""), 1);
-      /* get name of client-side image map */
-      mapName = msGetOutputFormatOption
-                ( format, "MAPNAME", "map1" );
-      /* should we suppress area declarations with no title? */
-      if( strcasecmp("YES",msGetOutputFormatOption( format, "SUPPRESS", "NO" )) == 0) {
-        suppressEmpty=1;
-      }
-
-      lname = msStrdup("NONE");
-      *(imgStr.string) = msStrdup("");
-      if (*(imgStr.string)) {
-        *(imgStr.alloc_size) =
-          imgStr.string_len = strlen(*(imgStr.string));
-      } else {
-        *(imgStr.alloc_size) =
-          imgStr.string_len = 0;
-      }
-      if (imagepath) {
-        image->imagepath = msStrdup(imagepath);
-      }
-      if (imageurl) {
-        image->imageurl = msStrdup(imageurl);
-      }
-
-      return image;
+    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0) {
+      dxf = 1;
+      im_iprintf(&layerStr, "  2\nLAYER\n 70\n  10\n");
     } else
-      free( image );
+      dxf = 0;
+
+    if( strcasecmp("ON",msGetOutputFormatOption( format, "SCRIPT", "OFF" )) == 0) {
+      dxf = 2;
+      im_iprintf(&layerStr, "");
+    }
+
+    /* get href formation string options */
+    polyHrefFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "POLYHREF", "javascript:Clicked('%s');"), 1);
+    polyMOverFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "POLYMOUSEOVER", ""), 1);
+    polyMOutFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "POLYMOUSEOUT", ""), 1);
+    symbolHrefFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "SYMBOLHREF", "javascript:SymbolClicked();"), 1);
+    symbolMOverFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "SYMBOLMOUSEOVER", ""), 1);
+    symbolMOutFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "SYMBOLMOUSEOUT", ""), 1);
+    /* get name of client-side image map */
+    mapName = msGetOutputFormatOption
+      ( format, "MAPNAME", "map1" );
+    /* should we suppress area declarations with no title? */
+    if( strcasecmp("YES",msGetOutputFormatOption( format, "SUPPRESS", "NO" )) == 0) {
+      suppressEmpty=1;
+    }
+
+    lname = msStrdup("NONE");
+    *(imgStr.string) = msStrdup("");
+    if (*(imgStr.string)) {
+      *(imgStr.alloc_size) =
+        imgStr.string_len = strlen(*(imgStr.string));
+    } else {
+      *(imgStr.alloc_size) =
+        imgStr.string_len = 0;
+    }
+    if (imagepath) {
+      image->imagepath = msStrdup(imagepath);
+    }
+    if (imageurl) {
+      image->imageurl = msStrdup(imageurl);
+    }
+
+    return image;
   } else {
     msSetError(MS_IMGERR,
                "Cannot create IM image of size %d x %d.",

@@ -269,14 +269,17 @@ static GEOSGeom msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *
   if(numInnerRings > 0) {
     k = 0; /* inner ring counter */
 
-    innerRings = malloc(numInnerRings*sizeof(GEOSGeom));
-    if(!innerRings) return NULL; /* todo, this will leak memory (outerRing) */
+    innerRings = msSmallMalloc(numInnerRings*sizeof(GEOSGeom));
 
     for(j=0; j<shape->numlines; j++) {
       if(innerList[j] == MS_FALSE) continue;
 
       coords = GEOSCoordSeq_create_r(handle,shape->line[j].numpoints, 2); /* todo handle z's */
-      if(!coords) return NULL; /* todo, this will leak memory (shell + allocated holes) */
+      if(!coords) {
+        free(innerRings);
+        free(innerList);
+        return NULL; /* todo, this will leak memory (shell + allocated holes) */
+      }
 
       for(i=0; i<shape->line[j].numpoints; i++) {
         GEOSCoordSeq_setX_r(handle,coords, i, shape->line[j].point[i].x);
@@ -316,8 +319,7 @@ static GEOSGeom msGEOSShape2Geometry_polygon(shapeObj *shape)
   if(numOuterRings == 1) {
     g = msGEOSShape2Geometry_simplepolygon(shape, lastOuterRing, outerList);
   } else { /* a true multipolygon */
-    polygons = malloc(numOuterRings*sizeof(GEOSGeom));
-    if(!polygons) return NULL;
+    polygons = msSmallMalloc(numOuterRings*sizeof(GEOSGeom));
 
     j = 0; /* part counter */
     for(i=0; i<shape->numlines; i++) {
