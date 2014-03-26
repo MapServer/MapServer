@@ -2729,6 +2729,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msCopyLabelLeader(labelLeaderObj *dst, labelLeaderObj *src);
   MS_DLL_EXPORT int msCopyLine(lineObj *dst, lineObj *src);
   MS_DLL_EXPORT int msCopyProjection(projectionObj *dst, projectionObj *src);
+  MS_DLL_EXPORT int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** args, int num_args);
   int msCopyExpression(expressionObj *dst, expressionObj *src);
   int msCopyProjection(projectionObj *dst, projectionObj *src);
 

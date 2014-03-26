@@ -292,7 +292,7 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
 
 {
   int i;
-  pointObj  lastPoint, thisPoint, wrkPoint, firstPoint;
+  pointObj  lastPoint, thisPoint, wrkPoint;
   lineObj *line = shape->line + line_index;
   lineObj *line_out = line;
   int valid_flag = 0; /* 1=true, -1=false, 0=unknown */
@@ -342,9 +342,6 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
 
   line->numpoints = 0;
 
-  if( numpoints_in > 0 )
-    firstPoint = line->point[0];
-
   memset( &lastPoint, 0, sizeof(lastPoint) );
 
   /* -------------------------------------------------------------------- */
@@ -364,13 +361,13 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
       pointObj pt1Geo;
 
       if( line_out->numpoints > 0 )
-        pt1Geo = line_out->point[0];
+        pt1Geo = line_out->point[line_out->numpoints-1];
       else
         pt1Geo = wrkPoint; /* this is a cop out */
 
       dist = wrkPoint.x - pt1Geo.x;
       if( fabs(dist) > 180.0
-          && msTestNeedWrap( thisPoint, firstPoint,
+          && msTestNeedWrap( thisPoint, lastPoint,
                              pt1Geo, in, out ) ) {
         if( dist > 0.0 )
           wrkPoint.x -= 360.0;
@@ -874,6 +871,14 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 
   msAddLineDirectly( &polygonObj, &ring );
 
+#ifdef notdef
+  FILE *wkt = fopen("/tmp/www-before.wkt","w");
+  char *tmp = msShapeToWKT(&polygonObj);
+  fprintf(wkt,"%s\n", tmp);
+  free(tmp);
+  fclose(wkt);
+#endif
+
   /* -------------------------------------------------------------------- */
   /*      Attempt to reproject.                                           */
   /* -------------------------------------------------------------------- */
@@ -884,6 +889,14 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     msFreeShape( &polygonObj );
     return msProjectRectGrid( in, out, rect );
   }
+
+#ifdef notdef
+  wkt = fopen("/tmp/www-after.wkt","w");
+  tmp = msShapeToWKT(&polygonObj);
+  fprintf(wkt,"%s\n", tmp);
+  free(tmp);
+  fclose(wkt);
+#endif
 
   /* -------------------------------------------------------------------- */
   /*      Collect bounds.                                                 */
@@ -930,7 +943,38 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #ifdef notdef
   return msProjectRectTraditionalEdge( in, out, rect );
 #else
-  return msProjectRectAsPolygon( in, out, rect );
+  char *over = "+over";
+  int ret;
+  projectionObj in_over,out_over,*inp,*outp;
+  /* 
+   * Issue #4892: When projecting a rectangle we do not want proj to wrap resulting
+   * coordinates around the dateline, as in practice a requested bounding box of
+   * -22.000.000, -YYY, 22.000.000, YYY should be projected as
+   * -190,-YYY,190,YYY rather than 170,-YYY,-170,YYY as would happen when wrapping (and
+   *  vice-versa when projecting from lonlat to metric).
+   *  To enforce this, we clone the input projections and add the "+over" proj 
+   *  parameter in order to disable dateline wrapping.
+   */ 
+  if(out) {
+    msInitProjection(&out_over);
+    msCopyProjectionExtended(&out_over,out,&over,1);
+    outp = &out_over;
+  } else {
+    outp = out;
+  }
+  if(in) {
+    msInitProjection(&in_over);
+    msCopyProjectionExtended(&in_over,in,&over,1);
+    inp = &in_over;
+  } else {
+    inp = in;
+  }
+  ret = msProjectRectAsPolygon(inp,outp, rect );
+  if(in)
+    msFreeProjection(&in_over);
+  if(out)
+    msFreeProjection(&out_over);
+  return ret;
 #endif
 }
 
