@@ -36,11 +36,11 @@
 
 
 #define MSUNION_NUMITEMS        3
-#define MSUNION_SOURCELAYERNAME        "Union:SourceLayerName"
+#define MSUNION_SOURCELAYERNAME        "Union_SourceLayerName"
 #define MSUNION_SOURCELAYERNAMEINDEX   -100
-#define MSUNION_SOURCELAYERGROUP        "Union:SourceLayerGroup"
+#define MSUNION_SOURCELAYERGROUP        "Union_SourceLayerGroup"
 #define MSUNION_SOURCELAYERGROUPINDEX   -101
-#define MSUNION_SOURCELAYERVISIBLE        "Union:SourceLayerVisible"
+#define MSUNION_SOURCELAYERVISIBLE        "Union_SourceLayerVisible"
 #define MSUNION_SOURCELAYERVISIBLEINDEX   -102
 
 typedef struct {

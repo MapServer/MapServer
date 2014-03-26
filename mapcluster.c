@@ -42,11 +42,11 @@
 
 /* custom attributes provided by this layer data source */
 #define MSCLUSTER_NUMITEMS        3
-#define MSCLUSTER_FEATURECOUNT    "Cluster:FeatureCount"
+#define MSCLUSTER_FEATURECOUNT    "Cluster_FeatureCount"
 #define MSCLUSTER_FEATURECOUNTINDEX   -100
-#define MSCLUSTER_GROUP    "Cluster:Group"
+#define MSCLUSTER_GROUP    "Cluster_Group"
 #define MSCLUSTER_GROUPINDEX   -101
-#define MSCLUSTER_BASEFID    "Cluster:BaseFID"
+#define MSCLUSTER_BASEFID    "Cluster_BaseFID"
 #define MSCLUSTER_BASEFIDINDEX   -102
 
 typedef struct cluster_tree_node clusterTreeNode;
