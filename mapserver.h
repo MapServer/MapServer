@@ -2585,6 +2585,7 @@ extern "C" {
   MS_DLL_EXPORT int msCopyLabel(labelObj *dst, labelObj *src);
   MS_DLL_EXPORT int msCopyLine(lineObj *dst, lineObj *src);
   MS_DLL_EXPORT int msCopyProjection(projectionObj *dst, projectionObj *src);
+  MS_DLL_EXPORT int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** args, int num_args);
   int msCopyExpression(expressionObj *dst, expressionObj *src);
   int msCopyProjection(projectionObj *dst, projectionObj *src);
 

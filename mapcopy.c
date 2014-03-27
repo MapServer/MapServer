@@ -50,12 +50,12 @@
 #include "mapcopy.h"
 
 /***********************************************************************
- * msCopyProjection()                                                  *
+ * msCopyProjectioExtended()                                           *
  *                                                                     *
- * Copy a projectionObj                                                *
+ * Copy a projectionObj while adding additional arguments              *
  **********************************************************************/
 
-int msCopyProjection(projectionObj *dst, projectionObj *src)
+int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** args, int num_args)
 {
 
 #ifdef USE_PROJ
@@ -67,14 +67,27 @@ int msCopyProjection(projectionObj *dst, projectionObj *src)
     /* Our destination consists of unallocated pointers */
     dst->args[i] = msStrdup(src->args[i]);
   }
+  for(i=0 ; i< num_args; i++) {
+    dst->args[dst->numargs++] = msStrdup(args[i]);
+  }
   if (dst->numargs != 0) {
     if (msProcessProjection(dst) != MS_SUCCESS)
       return MS_FAILURE;
-
   }
 #endif
   MS_COPYSTELEM(wellknownprojection);
   return MS_SUCCESS;
+}
+
+/***********************************************************************
+ * msCopyProjection()                                                  *
+ *                                                                     *
+ * Copy a projectionObj                                                *
+ **********************************************************************/
+
+int msCopyProjection(projectionObj *dst, projectionObj *src)
+{
+  return msCopyProjectionExtended(dst,src,NULL,0);
 }
 
 /***********************************************************************

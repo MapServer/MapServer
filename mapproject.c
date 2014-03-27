@@ -836,6 +836,14 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 
   msAddLineDirectly( &polygonObj, &ring );
 
+#ifdef notdef
+  FILE *wkt = fopen("/tmp/www-before.wkt","w");
+  char *tmp = msShapeToWKT(&polygonObj);
+  fprintf(wkt,"%s\n", tmp);
+  free(tmp);
+  fclose(wkt);
+#endif
+
   /* -------------------------------------------------------------------- */
   /*      Attempt to reproject.                                           */
   /* -------------------------------------------------------------------- */
@@ -846,11 +854,14 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     msFreeShape( &polygonObj );
     return msProjectRectGrid( in, out, rect );
   }
-  FILE *wkt = fopen("/tmp/www.wkt","w");
-  char *tmp = msShapeToWKT(&polygonObj);
+
+#ifdef notdef
+  wkt = fopen("/tmp/www-after.wkt","w");
+  tmp = msShapeToWKT(&polygonObj);
   fprintf(wkt,"%s\n", tmp);
   free(tmp);
   fclose(wkt);
+#endif
 
   /* -------------------------------------------------------------------- */
   /*      Collect bounds.                                                 */
@@ -897,7 +908,17 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #ifdef notdef
   return msProjectRectTraditionalEdge( in, out, rect );
 #else
-  return msProjectRectAsPolygon( in, out, rect );
+  char *overs = "over";
+  int ret;
+  projectionObj in_over,out_over;
+  msInitProjection(&in_over);
+  msInitProjection(&out_over);
+  msCopyProjectionExtended(&in_over,in,&overs,1);
+  msCopyProjectionExtended(&out_over,out,&overs,1);
+  ret = msProjectRectAsPolygon(&in_over, &out_over, rect );
+  msFreeProjection(&in_over);
+  msFreeProjection(&out_over);
+  return ret;
 #endif
 }
 
