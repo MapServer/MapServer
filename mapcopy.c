@@ -50,6 +50,38 @@
 #include "mapcopy.h"
 
 /***********************************************************************
+ * msCopyProjectioExtended()                                           *
+ *                                                                     *
+ * Copy a projectionObj while adding additional arguments              *
+ **********************************************************************/
+
+int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** args, int num_args)
+{
+
+#ifdef USE_PROJ
+  int i;
+
+  MS_COPYSTELEM(numargs);
+  MS_COPYSTELEM(gt);
+  MS_COPYSTELEM(automatic);
+
+  for (i = 0; i < dst->numargs; i++) {
+    /* Our destination consists of unallocated pointers */
+    dst->args[i] = msStrdup(src->args[i]);
+  }
+  for(i=0 ; i< num_args; i++) {
+    dst->args[dst->numargs++] = msStrdup(args[i]);
+  }
+  if (dst->numargs != 0) {
+    if (msProcessProjection(dst) != MS_SUCCESS)
+      return MS_FAILURE;
+  }
+#endif
+  MS_COPYSTELEM(wellknownprojection);
+  return MS_SUCCESS;
+}
+
+/***********************************************************************
  * msCopyProjection()                                                  *
  *                                                                     *
  * Copy a projectionObj                                                *
@@ -57,24 +89,7 @@
 
 int msCopyProjection(projectionObj *dst, projectionObj *src)
 {
-
-#ifdef USE_PROJ
-  int i;
-
-  MS_COPYSTELEM(numargs);
-
-  for (i = 0; i < dst->numargs; i++) {
-    /* Our destination consists of unallocated pointers */
-    dst->args[i] = msStrdup(src->args[i]);
-  }
-  if (dst->numargs != 0) {
-    if (msProcessProjection(dst) != MS_SUCCESS)
-      return MS_FAILURE;
-
-  }
-#endif
-  MS_COPYSTELEM(wellknownprojection);
-  return MS_SUCCESS;
+  return msCopyProjectionExtended(dst,src,NULL,0);
 }
 
 /***********************************************************************
