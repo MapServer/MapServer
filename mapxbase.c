@@ -301,7 +301,7 @@ void  msDBFClose(DBFHandle psDBF)
   free( psDBF->pszHeader );
   free( psDBF->pszCurrentRecord );
 
-  if(psDBF->pszStringField) free(psDBF->pszStringField);
+  free(psDBF->pszStringField);
 
   free( psDBF );
 }
