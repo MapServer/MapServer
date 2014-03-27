@@ -694,6 +694,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
       params->ids = CSLAddString(params->ids, (char *)id);
       xmlFree(id);
     } else if (EQUAL((char *) child->name, "Format")) {
+      msFree(params->format);
       params->format = (char *)xmlNodeGetContent(child);
     } else if (EQUAL((char *) child->name, "Mediatype")) {
       char *content = (char *)xmlNodeGetContent(child);
@@ -843,6 +844,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
       xmlFree(content);
     } else if(EQUAL((char *) child->name, "Interpolation")) {
       /* Deprecated, use wcs:Extension/int:Interpolation/int:globalInterpolation */
+      msFree(params->interpolation);
       params->interpolation = (char *) xmlNodeGetContent(child);
     } else if(EQUAL((char *) child->name, "OutputCRS")) {
       params->outputcrs = (char *) xmlNodeGetContent(child);
@@ -914,6 +916,16 @@ static int msWCSParseRequest20_XMLGetCoverage(
               msFree(value);
             }
           }
+        }
+
+        else if (EQUAL((char *) extensionNode->name, "subsettingCrs")) {
+          msFree(params->subsetcrs);
+          params->subsetcrs = (char *)xmlNodeGetContent(extensionNode);
+        }
+
+        else if (EQUAL((char *) extensionNode->name, "outputCrs")) {
+          msFree(params->outputcrs);
+          params->outputcrs = (char *)xmlNodeGetContent(extensionNode); 
         }
 
         else if (EQUAL((char *) extensionNode->name, "Interpolation")) {
@@ -1070,6 +1082,7 @@ int msWCSParseRequest20(mapObj *map,
       }
       msFreeCharArray(tokens, num);
     } else if (EQUAL(key, "UPDATESEQUENCE")) {
+      msFree(params->updatesequence);
       params->updatesequence = msStrdup(value);
     } else if (EQUAL(key, "ACCEPTFORMATS")) {
       /* ignore */
@@ -1084,6 +1097,7 @@ int msWCSParseRequest20(mapObj *map,
       }
       params->ids = CSLTokenizeString2(value, ",",0);
     } else if (EQUAL(key, "FORMAT")) {
+      msFree(params->format);
       params->format = msStrdup(value);
     } else if (EQUAL(key, "MEDIATYPE")) {
       if(EQUAL(value, "multipart/mixed") || EQUAL(value, "multipart/related")) {
@@ -1095,10 +1109,16 @@ int msWCSParseRequest20(mapObj *map,
          return MS_FAILURE;
       }
     } else if (EQUAL(key, "INTERPOLATION")) {
+      msFree(params->interpolation);
       params->interpolation = msStrdup(value);
     } else if (EQUAL(key, "OUTPUTCRS")) {
+      msFree(params->outputcrs);
       params->outputcrs = msStrdup(value);
+    } else if (EQUAL(key, "SUBSETCRS")) {
+      msFree(params->subsetcrs);
+      params->subsetcrs = msStrdup(value);
     } else if (EQUALN(key, "SIZE", 4)) {
+      /* Deprecated scaling */
       wcs20AxisObjPtr axis = NULL;
       char axisName[500];
       int size = 0;
@@ -2570,7 +2590,6 @@ static int msWCSGetCapabilities20_CreateProfiles(
     MS_WCS_20_PROFILE_GML_MULTIPART, NULL,
     MS_WCS_20_PROFILE_GML_SPECIAL, NULL,
     MS_WCS_20_PROFILE_GML_GEOTIFF, "image/tiff",
-    MS_WCS_20_PROFILE_GEOTIFF,  "image/tiff",
     MS_WCS_20_PROFILE_CRS,     NULL,
     MS_WCS_20_PROFILE_SCALING, NULL,
     MS_WCS_20_PROFILE_RANGESUBSET, NULL,
@@ -2677,6 +2696,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   xmlNsPtr psOwsNs = NULL,
            psXLinkNs = NULL,
            psWcsNs = NULL,
+           psCrsNs = NULL,
            psIntNs = NULL;
   char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
   int i;
@@ -2701,6 +2721,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   psWcsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_WCS_NAMESPACE_PREFIX );
   xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX );
   psXLinkNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST "xlink" );
+  psCrsNs = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/wcs/crs/1.0", BAD_CAST "crs");
   psIntNs = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/wcs/interpolation/1.0", BAD_CAST "int");
 
   xmlSetNs(psRootNode, psWcsNs);
@@ -2824,6 +2845,22 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       for (i=0; i < 3; ++i) {
         xmlNewChild(imNode, psIntNs, BAD_CAST "InterpolationSupported", 
                     BAD_CAST interpolation_methods[i]);
+      }
+    }
+
+    /* Report the supported CRSs */
+    {
+      char *crs_list;
+      xmlNodePtr crsMetadataNode = xmlNewChild(psExtensionNode, psCrsNs,
+                                               BAD_CAST "CrsMetadata", NULL);
+
+      if((crs_list = msOWSGetProjURI(&(map->projection),
+                                        &(map->web.metadata),
+                                        "CO", MS_FALSE)) != NULL ) {
+        msLibXml2GenerateList(crsMetadataNode, psCrsNs, "crsSupported", 
+                              crs_list, ' ');
+      } else {
+        /* could not determine list of CRSs */
       }
     }
   }
@@ -3142,8 +3179,22 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
 
   /* check if projections are equal */
   if(crs != NULL) {
-    params->subsetcrs = msStrdup(crs);
-  } else {
+    if (params->subsetcrs && !EQUAL(crs, params->subsetcrs)) {
+      /* already set and not equal -> raise exception */
+      msSetError(MS_WCSERR, "SubsetCRS does not match the CRS of the axes: "
+                 "'%s' != '%s'",
+                 "msWCSCreateBoundingBox20()", params->subsetcrs, crs);
+      return MS_FAILURE;
+    }
+    else if (params->subsetcrs) {
+      /* equal, and already set -> do nothing */
+    }
+    else {
+      /* not yet globally set -> set it */
+      params->subsetcrs = msStrdup(crs);
+    }
+  } else if (!params->subsetcrs) {
+    /* default to imageCRS */
     params->subsetcrs = msStrdup("imageCRS");
   }
 
