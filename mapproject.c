@@ -351,13 +351,13 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
       pointObj pt1Geo;
 
       if( line_out->numpoints > 0 )
-        pt1Geo = line_out->point[i-1];
+        pt1Geo = line_out->point[line_out->numpoints-1];
       else
         pt1Geo = wrkPoint; /* this is a cop out */
 
       dist = wrkPoint.x - pt1Geo.x;
       if( fabs(dist) > 180.0
-          && msTestNeedWrap( thisPoint, firstPoint,
+          && msTestNeedWrap( thisPoint, lastPoint,
                              pt1Geo, in, out ) ) {
         if( dist > 0.0 )
           wrkPoint.x -= 360.0;
@@ -846,6 +846,11 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     msFreeShape( &polygonObj );
     return msProjectRectGrid( in, out, rect );
   }
+  FILE *wkt = fopen("/tmp/www.wkt","w");
+  char *tmp = msShapeToWKT(&polygonObj);
+  fprintf(wkt,"%s\n", tmp);
+  free(tmp);
+  fclose(wkt);
 
   /* -------------------------------------------------------------------- */
   /*      Collect bounds.                                                 */
