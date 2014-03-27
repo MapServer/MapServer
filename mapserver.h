@@ -121,6 +121,7 @@ typedef struct face_element face_element;
 
 /* ms_bitarray is used by the bit mask in mapbit.c */
 typedef ms_uint32 *     ms_bitarray;
+typedef const ms_uint32 *ms_const_bitarray;
 
 #include "maperror.h"
 #include "mapprimitive.h"
@@ -2079,9 +2080,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT double msInchesPerUnit(int units, double center_lat);
   MS_DLL_EXPORT int msEmbedScalebar(mapObj *map, imageObj *img);
 
-  MS_DLL_EXPORT int msPointInRect(pointObj *p, rectObj *rect); /* in mapsearch.c */
+  MS_DLL_EXPORT int msPointInRect(const pointObj *p, const rectObj *rect); /* in mapsearch.c */
   MS_DLL_EXPORT int msRectOverlap(const rectObj *a, const rectObj *b);
-  MS_DLL_EXPORT int msRectContained(rectObj *a, rectObj *b);
+  MS_DLL_EXPORT int msRectContained(const rectObj *a, const rectObj *b);
   MS_DLL_EXPORT int msRectIntersect(rectObj *a, const rectObj *b);
 
   MS_DLL_EXPORT void msRectToFormattedString(rectObj *rect, char *format,
@@ -2337,11 +2338,11 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT size_t msGetBitArraySize(int numbits); /* in mapbits.c */
   MS_DLL_EXPORT ms_bitarray msAllocBitArray(int numbits);
-  MS_DLL_EXPORT int msGetBit(ms_bitarray array, int index);
+  MS_DLL_EXPORT int msGetBit(ms_const_bitarray array, int index);
   MS_DLL_EXPORT void msSetBit(ms_bitarray array, int index, int value);
   MS_DLL_EXPORT void msSetAllBits(ms_bitarray array, int index, int value);
   MS_DLL_EXPORT void msFlipBit(ms_bitarray array, int index);
-  MS_DLL_EXPORT int msGetNextBit(ms_bitarray array, int index, int size);
+  MS_DLL_EXPORT int msGetNextBit(ms_const_bitarray array, int index, int size);
 
   /* maplayer.c - layerObj  api */
 

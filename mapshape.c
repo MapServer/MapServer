@@ -78,10 +78,7 @@ static void SwapWord( int length, void * wordP )
 /************************************************************************/
 static void * SfRealloc( void * pMem, int nNewSize )
 {
-  if( pMem == NULL )
-    return( (void *) malloc(nNewSize) );
-  else
-    return( (void *) realloc(pMem,nNewSize) );
+  return realloc(pMem, nNewSize);
 }
 
 /************************************************************************/
@@ -421,8 +418,8 @@ void msSHPClose(SHPHandle psSHP )
   free( psSHP->panRecLoaded );
 
 
-  if(psSHP->pabyRec) free(psSHP->pabyRec);
-  if(psSHP->panParts) free(psSHP->panParts);
+  free(psSHP->pabyRec);
+  free(psSHP->panParts);
 
   fclose( psSHP->fpSHX );
   fclose( psSHP->fpSHP );
@@ -1696,7 +1693,7 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   return MS_SUCCESS;
 }
 
-int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename, int log_failures)
+int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filename, int log_failures)
 {
   int i;
   char *dbfFilename;
@@ -1798,7 +1795,7 @@ void msShapefileClose(shapefileObj *shpfile)
   if (shpfile && shpfile->isopen == MS_TRUE) { /* Silently return if called with NULL shpfile by freeLayer() */
     if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
     if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
-    if(shpfile->status) free(shpfile->status);
+    free(shpfile->status);
     shpfile->isopen = MS_FALSE;
   }
 }
@@ -1812,10 +1809,8 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
   char *sourcename = 0; /* shape file source string from map file */
   char *s = 0; /* pointer to start of '.shp' in source string */
 
-  if(shpfile->status) {
-    free(shpfile->status);
-    shpfile->status = NULL;
-  }
+  free(shpfile->status);
+  shpfile->status = NULL;
 
   shpfile->statusbounds = rect; /* save the search extent */
 
