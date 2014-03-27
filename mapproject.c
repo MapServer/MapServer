@@ -910,14 +910,26 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #else
   char *overs = "over";
   int ret;
-  projectionObj in_over,out_over;
-  msInitProjection(&in_over);
-  msInitProjection(&out_over);
-  msCopyProjectionExtended(&in_over,in,&overs,1);
-  msCopyProjectionExtended(&out_over,out,&overs,1);
-  ret = msProjectRectAsPolygon(&in_over, &out_over, rect );
-  msFreeProjection(&in_over);
-  msFreeProjection(&out_over);
+  projectionObj in_over,out_over,*inp,*outp;
+  if(out) {
+    msInitProjection(&out_over);
+    msCopyProjectionExtended(&out_over,out,&overs,1);
+    outp = &out_over;
+  } else {
+    outp = out;
+  }
+  if(in) {
+    msInitProjection(&in_over);
+    msCopyProjectionExtended(&in_over,in,&overs,1);
+    inp = &in_over;
+  } else {
+    inp = in;
+  }
+  ret = msProjectRectAsPolygon(inp,outp, rect );
+  if(in)
+    msFreeProjection(&in_over);
+  if(out)
+    msFreeProjection(&out_over);
   return ret;
 #endif
 }
