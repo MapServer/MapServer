@@ -497,13 +497,13 @@ int DBFIsValueNULL( const char* pszValue, char type )
 /*                                                                      */
 /*      Read one of the attribute fields of a record.                   */
 /************************************************************************/
-static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
+static const char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
 
 {
   int         i;
   unsigned int nRecordOffset;
-  uchar *pabyRec;
-  char  *pReturnField = NULL;
+  const uchar *pabyRec;
+  const char  *pReturnField = NULL;
 
   /* -------------------------------------------------------------------- */
   /*  Is the request valid?                             */
@@ -532,7 +532,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     psDBF->nCurrentRecord = hEntity;
   }
 
-  pabyRec = (uchar *) psDBF->pszCurrentRecord;
+  pabyRec = (const uchar *) psDBF->pszCurrentRecord;
   /* DEBUG */
   /* printf("CurrentRecord(%c):%s\n", psDBF->pachFieldType[iField], pabyRec); */
 
@@ -547,7 +547,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
   /* -------------------------------------------------------------------- */
   /*  Extract the requested field.              */
   /* -------------------------------------------------------------------- */
-  strncpy( psDBF->pszStringField,(char *) pabyRec+psDBF->panFieldOffset[iField], psDBF->panFieldSize[iField] );
+  strncpy( psDBF->pszStringField,(const char *) pabyRec+psDBF->panFieldOffset[iField], psDBF->panFieldSize[iField] );
   psDBF->pszStringField[psDBF->panFieldSize[iField]] = '\0';
 
   /*

@@ -1696,7 +1696,7 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   return MS_SUCCESS;
 }
 
-int msShapefileOpen(shapefileObj *shpfile, char *mode, char *filename, int log_failures)
+int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filename, int log_failures)
 {
   int i;
   char *dbfFilename;

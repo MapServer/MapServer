@@ -77,7 +77,7 @@ int msRectIntersect( rectObj *a, const rectObj *b )
 /*
 ** Returns MS_TRUE if rectangle a is contained in rectangle b
 */
-int msRectContained(rectObj *a, rectObj *b)
+int msRectContained(const rectObj *a, const rectObj *b)
 {
   if(a->minx >= b->minx && a->maxx <= b->maxx)
     if(a->miny >= b->miny && a->maxy <= b->maxy)
@@ -96,7 +96,7 @@ void msMergeRect(rectObj *a, rectObj *b)
   a->maxy = MS_MAX(a->maxy, b->maxy);
 }
 
-int msPointInRect(pointObj *p, rectObj *rect)
+int msPointInRect(const pointObj *p, const rectObj *rect)
 {
   if(p->x < rect->minx) return(MS_FALSE);
   if(p->x > rect->maxx) return(MS_FALSE);

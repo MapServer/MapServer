@@ -399,7 +399,7 @@ static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi, ms_bitarray stat
   }
 }
 
-ms_bitarray msSearchTree(treeObj *tree, rectObj aoi)
+ms_bitarray msSearchTree(const treeObj *tree, rectObj aoi)
 {
   ms_bitarray status=NULL;
 
@@ -511,7 +511,7 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
   return;
 }
 
-ms_bitarray msSearchDiskTree(char *filename, rectObj aoi, int debug)
+ms_bitarray msSearchDiskTree(const char *filename, rectObj aoi, int debug)
 {
   SHPTreeHandle disktree;
   ms_bitarray status=NULL;
