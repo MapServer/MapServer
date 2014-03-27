@@ -669,20 +669,4 @@
         self->_geomtransform.string = NULL;
       }
     }    
-    
-    char *getEncoding()
-    {
-      return self->encoding;
-    }
-    
-    void setEncoding(char *enc)
-    {
-      msFree(self->encoding);
-      if (enc && *enc) {
-        self->encoding = msStrdup(enc);
-      }
-      else {
-        self->encoding = NULL;
-      }
-    }
 }
