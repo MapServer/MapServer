@@ -1114,7 +1114,7 @@ int msWCSParseRequest20(mapObj *map,
     } else if (EQUAL(key, "OUTPUTCRS")) {
       msFree(params->outputcrs);
       params->outputcrs = msStrdup(value);
-    } else if (EQUAL(key, "SUBSETCRS")) {
+    } else if (EQUAL(key, "SUBSETTINGCRS")) {
       msFree(params->subsetcrs);
       params->subsetcrs = msStrdup(value);
     } else if (EQUALN(key, "SIZE", 4)) {
