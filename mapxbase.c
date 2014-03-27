@@ -54,10 +54,7 @@
 static void * SfRealloc( void * pMem, int nNewSize )
 
 {
-  if( pMem == NULL )
-    return( (void *) malloc(nNewSize) );
-  else
-    return( (void *) realloc(pMem,nNewSize) );
+  return( (void *) realloc(pMem,nNewSize) );
 }
 
 /************************************************************************/
