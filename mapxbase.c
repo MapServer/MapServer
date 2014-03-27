@@ -469,7 +469,7 @@ int msDBFAddField(DBFHandle psDBF, const char * pszFieldName, DBFFieldType eType
 /*      Based on DBFIsAttributeNULL of shapelib                         */
 /************************************************************************/
 
-int DBFIsValueNULL( const char* pszValue, char type )
+static int DBFIsValueNULL( const char* pszValue, char type )
 
 {
   switch(type) {
