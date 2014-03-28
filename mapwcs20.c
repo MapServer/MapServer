@@ -580,7 +580,51 @@ static int msWCSParseResolutionString20(char *string,
   return MS_SUCCESS;
 }
 
-#define msWCSParseScaleString20 msWCSParseResolutionString20
+/************************************************************************/
+/*                   msWCSParseScaleString20()                          */
+/*                                                                      */
+/*      Parses a scale string and returns the axis, the and the value.  */
+/*      Subset string: axis ( value )                                   */
+/************************************************************************/
+
+static int msWCSParseScaleString20(char *string,
+                                  char *outAxis, size_t axisStringLen, double *outScale)
+{
+  char *number = NULL;
+  char *check = NULL;
+
+  /* find brackets */
+  number = strchr(string, '(');
+
+  if(NULL == number) {
+    msSetError(MS_WCSERR, "Invalid resolution parameter value : %s.",
+               "msWCSParseScaleString20()", string);
+    return MS_FAILURE;
+  }
+
+  /* cut trailing ')' */
+  check = strchr(string, ')');
+  if(NULL == check || check < number) {
+    msSetError(MS_WCSERR, "Invalid scale parameter value.",
+               "msWCSParseScaleString20()");
+    return MS_FAILURE;
+  }
+
+  *number = '\0';
+  ++number;
+  *check = '\0';
+
+  strlcpy(outAxis, string, axisStringLen);
+
+  if(msStringParseDouble(number, outScale) != MS_SUCCESS || *outScale <= 0.0) {
+    *outScale = MS_WCS20_UNBOUNDED;
+    msSetError(MS_WCSERR, "Invalid scale parameter value : %s.",
+               "msWCSParseScaleString20()", number);
+    return MS_FAILURE;
+  }
+
+  return MS_SUCCESS;
+}
 
 /************************************************************************/
 /*                   msWCSParseResolutionString20()                     */
@@ -602,7 +646,7 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
   number = strchr(string, '(');
 
   if(NULL == number) {
-    msSetError(MS_WCSERR, "Invalid resolution parameter value : %s.",
+    msSetError(MS_WCSERR, "Invalid extent parameter value : %s.",
                "msWCSParseScaleExtentString20()", string);
     return MS_FAILURE;
   }
@@ -611,7 +655,7 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
   colon = strchr(string, ':');
 
   if(NULL == colon || colon < number) {
-    msSetError(MS_WCSERR, "Invalid resolution parameter value : %s.",
+    msSetError(MS_WCSERR, "Invalid extent parameter value : %s.",
                "msWCSParseScaleExtentString20()", string);
     return MS_FAILURE;
   }
@@ -627,7 +671,7 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
 
   *number = '\0';
   ++number;
-  *colon = '\n';
+  *colon = '\0';
   ++colon;
   *check = '\0';
 
@@ -635,7 +679,7 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
 
   if(msStringParseInteger(number, outMin) != MS_SUCCESS) {
     *outMin = 0;
-    msSetError(MS_WCSERR, "Invalid size parameter value : %s.",
+    msSetError(MS_WCSERR, "Invalid min parameter value : %s.",
                "msWCSParseScaleExtentString20()", number);
     return MS_FAILURE;
   }
@@ -1064,7 +1108,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
           XML_FOREACH_CHILD(extensionNode, scaleAxisNode) {
             XML_LOOP_IGNORE_COMMENT_OR_TEXT(scaleAxisNode);
 
-            if (!EQUAL((char *)scaleAxisNode->name, "TargetAxisSize")) {
+            if (!EQUAL((char *)scaleAxisNode->name, "targetAxisSize")) {
               msSetError(MS_WCSERR, "Invalid ScaleToSize.",
                          "msWCSParseRequest20_XMLGetCoverage()");
               return MS_FAILURE;
@@ -1452,6 +1496,10 @@ int msWCSParseRequest20(mapObj *map,
         return MS_FAILURE;
       } else if (msStringParseDouble(value, &scale) != MS_SUCCESS) {
         msSetError(MS_WCSERR, "Could not parse parameter 'SCALEFACTOR'.",
+                   "msWCSParseRequest20()");
+        return MS_FAILURE;
+      } else if (scale <= 0.0) {
+        msSetError(MS_WCSERR, "Invalid value for 'SCALEFACTOR'.",
                    "msWCSParseRequest20()");
         return MS_FAILURE;
       }
