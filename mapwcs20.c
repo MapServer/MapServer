@@ -198,6 +198,7 @@ static wcs20AxisObjPtr msWCSCreateAxisObj20()
   axis->name = NULL;
   axis->size = 0;
   axis->resolution = MS_WCS20_UNBOUNDED;
+  axis->scale = MS_WCS20_UNBOUNDED;
   axis->resolutionUOM = NULL;
   axis->subset = NULL;
 
@@ -280,6 +281,8 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
   params->height          = 0;
   params->resolutionX     = MS_WCS20_UNBOUNDED;
   params->resolutionY     = MS_WCS20_UNBOUNDED;
+  params->scaleX          = MS_WCS20_UNBOUNDED;
+  params->scaleY          = MS_WCS20_UNBOUNDED;
   params->resolutionUnits = NULL;
   params->numaxes         = 0;
   params->axes            = NULL;
@@ -291,6 +294,7 @@ wcs20ParamsObjPtr msWCSCreateParamsObj20()
   params->bbox.minx = params->bbox.miny = -DBL_MAX;
   params->bbox.maxx = params->bbox.maxy =  DBL_MAX;
   params->range_subset    = NULL;
+  params->format_options  = NULL;
 
   return params;
 }
@@ -690,6 +694,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
       params->ids = CSLAddString(params->ids, (char *)id);
       xmlFree(id);
     } else if (EQUAL((char *) child->name, "Format")) {
+      msFree(params->format);
       params->format = (char *)xmlNodeGetContent(child);
     } else if (EQUAL((char *) child->name, "Mediatype")) {
       char *content = (char *)xmlNodeGetContent(child);
@@ -838,10 +843,13 @@ static int msWCSParseRequest20_XMLGetCoverage(
       }
       xmlFree(content);
     } else if(EQUAL((char *) child->name, "Interpolation")) {
+      /* Deprecated, use wcs:Extension/int:Interpolation/int:globalInterpolation */
+      msFree(params->interpolation);
       params->interpolation = (char *) xmlNodeGetContent(child);
     } else if(EQUAL((char *) child->name, "OutputCRS")) {
       params->outputcrs = (char *) xmlNodeGetContent(child);
     } else if(EQUAL((char *) child->name, "rangeSubset")) {
+      /* Deprecated, use wcs:Extension/rsub:RangeSubset */
       xmlNodePtr bandNode = NULL;
       XML_FOREACH_CHILD(child, bandNode) {
         char *content = NULL;
@@ -853,7 +861,108 @@ static int msWCSParseRequest20_XMLGetCoverage(
         xmlFree(content);
       }
     } else if (EQUAL((char *)child->name, "Extension")) {
-      continue;
+      xmlNodePtr extensionNode = NULL;
+      XML_FOREACH_CHILD(child, extensionNode) {
+        XML_LOOP_IGNORE_COMMENT_OR_TEXT(extensionNode);
+
+        /* Range Subset */
+        if(EQUAL((char *) extensionNode->name, "RangeSubset")) {
+          xmlNodePtr rangeItemNode = NULL;
+
+          XML_FOREACH_CHILD(extensionNode, rangeItemNode) {
+
+            XML_LOOP_IGNORE_COMMENT_OR_TEXT(rangeItemNode);
+            
+            XML_ASSERT_NODE_NAME(rangeItemNode, "RangeItem");
+
+            if (!rangeItemNode->children) {
+              msSetError(MS_WCSERR, "Missing RangeComponent or RangeInterval.",
+                                    "msWCSParseRequest20_XMLGetCoverage()");
+              return MS_FAILURE;
+            }
+            else if (EQUAL((char *) rangeItemNode->children->name, "RangeComponent")) {
+              char *content = (char *)xmlNodeGetContent(rangeItemNode->children);
+              params->range_subset =
+                CSLAddString(params->range_subset, content);
+              xmlFree(content);
+            }
+            else if (EQUAL((char *) rangeItemNode->children->name, "RangeInterval")) {
+              xmlNodePtr intervalNode = rangeItemNode->children;
+              char *start;
+              char *stop;
+              char *value;
+              int length;
+
+              if (!intervalNode->children || !intervalNode->children->next
+                  || !EQUAL((char *) intervalNode->children->name, "startComponent")
+                  || !EQUAL((char *) intervalNode->children->next->name, "endComponent")) {
+                msSetError(MS_WCSERR, "Wrong RangeInterval.",
+                                      "msWCSParseRequest20_XMLGetCoverage()");
+                return MS_FAILURE;
+              }
+
+              start = (char *)xmlNodeGetContent(intervalNode->children);
+              stop = (char *)xmlNodeGetContent(intervalNode->children->next);
+              length = strlen(start) + strlen(stop) + 2;
+              value = msSmallCalloc(length, sizeof(char));
+
+              snprintf(value, length, "%s:%s", start, stop);
+              
+              xmlFree(start);
+              xmlFree(stop);
+
+              params->range_subset =
+                CSLAddString(params->range_subset, value);
+              msFree(value);
+            }
+          }
+        }
+
+        else if (EQUAL((char *) extensionNode->name, "subsettingCrs")) {
+          msFree(params->subsetcrs);
+          params->subsetcrs = (char *)xmlNodeGetContent(extensionNode);
+        }
+
+        else if (EQUAL((char *) extensionNode->name, "outputCrs")) {
+          msFree(params->outputcrs);
+          params->outputcrs = (char *)xmlNodeGetContent(extensionNode); 
+        }
+
+        else if (EQUAL((char *) extensionNode->name, "Interpolation")) {
+          xmlNodePtr globalInterpolation;
+          char *content;
+          if ((globalInterpolation = extensionNode->children) == NULL
+              || !EQUAL((char *)globalInterpolation->name, "globalInterpolation")) {
+            msSetError(MS_WCSERR, "Missing 'globalInterpolation' node.",
+                                  "msWCSParseRequest20_XMLGetCoverage()");
+            return MS_FAILURE;
+          }
+          content = (char *)xmlNodeGetContent(globalInterpolation);
+          msFree(params->interpolation);
+          /* TODO: use URIs/URLs once they are specified */
+          params->interpolation = msStrdup(content);
+          xmlFree(content);
+        }
+
+        /* TODO: geotiff */
+        else if (EQUAL((char *) extensionNode->name, "parameters") 
+                && extensionNode->ns
+                && EQUAL((char *)extensionNode->ns->href, "http://www.opengis.net/gmlcov/geotiff/1.0")) {
+
+          xmlNodePtr parameter;
+
+          XML_FOREACH_CHILD(extensionNode, parameter) {
+            char *content;
+            XML_LOOP_IGNORE_COMMENT_OR_TEXT(parameter);
+
+            content = (char *)xmlNodeGetContent(parameter);
+
+            params->format_options = 
+              CSLAddNameValue(params->format_options, (char *)parameter->name, content);
+            xmlFree(content);
+          }
+        }
+      }
     } else {
       XML_UNKNOWN_NODE_ERROR(child);
     }
@@ -973,6 +1082,7 @@ int msWCSParseRequest20(mapObj *map,
       }
       msFreeCharArray(tokens, num);
     } else if (EQUAL(key, "UPDATESEQUENCE")) {
+      msFree(params->updatesequence);
       params->updatesequence = msStrdup(value);
     } else if (EQUAL(key, "ACCEPTFORMATS")) {
       /* ignore */
@@ -987,6 +1097,7 @@ int msWCSParseRequest20(mapObj *map,
       }
       params->ids = CSLTokenizeString2(value, ",",0);
     } else if (EQUAL(key, "FORMAT")) {
+      msFree(params->format);
       params->format = msStrdup(value);
     } else if (EQUAL(key, "MEDIATYPE")) {
       if(EQUAL(value, "multipart/mixed") || EQUAL(value, "multipart/related")) {
@@ -998,10 +1109,16 @@ int msWCSParseRequest20(mapObj *map,
          return MS_FAILURE;
       }
     } else if (EQUAL(key, "INTERPOLATION")) {
+      msFree(params->interpolation);
       params->interpolation = msStrdup(value);
     } else if (EQUAL(key, "OUTPUTCRS")) {
+      msFree(params->outputcrs);
       params->outputcrs = msStrdup(value);
+    } else if (EQUAL(key, "SUBSETTINGCRS")) {
+      msFree(params->subsetcrs);
+      params->subsetcrs = msStrdup(value);
     } else if (EQUALN(key, "SIZE", 4)) {
+      /* Deprecated scaling */
       wcs20AxisObjPtr axis = NULL;
       char axisName[500];
       int size = 0;
@@ -1085,6 +1202,9 @@ int msWCSParseRequest20(mapObj *map,
           CSLAddString(params->range_subset, tokens[j]);
       }
       msFreeCharArray(tokens, num);
+    } else if (EQUALN(key, "GEOTIFF:", 8)) {
+      params->format_options = 
+        CSLAddNameValue(params->format_options, key, value);
     }
     /* Ignore all other parameters here */
   }
@@ -2470,10 +2590,10 @@ static int msWCSGetCapabilities20_CreateProfiles(
     MS_WCS_20_PROFILE_GML_MULTIPART, NULL,
     MS_WCS_20_PROFILE_GML_SPECIAL, NULL,
     MS_WCS_20_PROFILE_GML_GEOTIFF, "image/tiff",
-    MS_WCS_20_PROFILE_GEOTIFF,  "image/tiff",
     MS_WCS_20_PROFILE_CRS,     NULL,
     MS_WCS_20_PROFILE_SCALING, NULL,
     MS_WCS_20_PROFILE_RANGESUBSET, NULL,
+    MS_WCS_20_PROFILE_INTERPOLATION, NULL,
     NULL, NULL /* guardian */
   };
 
@@ -2575,7 +2695,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   const char *updatesequence = NULL;
   xmlNsPtr psOwsNs = NULL,
            psXLinkNs = NULL,
-           psWcsNs = NULL;
+           psWcsNs = NULL,
+           psCrsNs = NULL,
+           psIntNs = NULL;
   char *script_url=NULL, *script_url_encoded=NULL, *format_list=NULL;
   int i;
 
@@ -2599,6 +2721,8 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   psWcsNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_WCS_NAMESPACE_PREFIX );
   xmlSearchNs( psDoc, psRootNode, BAD_CAST MS_OWSCOMMON_GML_NAMESPACE_PREFIX );
   psXLinkNs = xmlSearchNs( psDoc, psRootNode, BAD_CAST "xlink" );
+  psCrsNs = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/wcs/crs/1.0", BAD_CAST "crs");
+  psIntNs = xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/wcs/interpolation/1.0", BAD_CAST "int");
 
   xmlSetNs(psRootNode, psWcsNs);
 
@@ -2701,12 +2825,44 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /* -------------------------------------------------------------------- */
 
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceMetadata") ) {
+    xmlNodePtr psExtensionNode = NULL;
     psNode = xmlNewChild(psRootNode, psWcsNs, BAD_CAST "ServiceMetadata", NULL);
 
     /* Add formats list */
     format_list = msWCSGetFormatsList20(map, NULL);
     msLibXml2GenerateList(psNode, psWcsNs, "formatSupported", format_list, ',');
     msFree(format_list);
+
+    psExtensionNode = xmlNewChild(psNode, psWcsNs, BAD_CAST "Extension", NULL);
+    /* interpolations supported */
+    {
+      /* TODO: use URIs/URLs once they are specified */
+      char *interpolation_methods[] = {"NEAREST", "AVERAGE", "BILINEAR"};
+      int i;
+      xmlNodePtr imNode = xmlNewChild(psExtensionNode, psIntNs, 
+                                      BAD_CAST "InterpolationMetadata", NULL);
+
+      for (i=0; i < 3; ++i) {
+        xmlNewChild(imNode, psIntNs, BAD_CAST "InterpolationSupported", 
+                    BAD_CAST interpolation_methods[i]);
+      }
+    }
+
+    /* Report the supported CRSs */
+    {
+      char *crs_list;
+      xmlNodePtr crsMetadataNode = xmlNewChild(psExtensionNode, psCrsNs,
+                                               BAD_CAST "CrsMetadata", NULL);
+
+      if((crs_list = msOWSGetProjURI(&(map->projection),
+                                        &(map->web.metadata),
+                                        "CO", MS_FALSE)) != NULL ) {
+        msLibXml2GenerateList(crsMetadataNode, psCrsNs, "crsSupported", 
+                              crs_list, ' ');
+      } else {
+        /* could not determine list of CRSs */
+      }
+    }
   }
 
   /* -------------------------------------------------------------------- */
@@ -2983,6 +3139,7 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
     }
     params->width = axes[0]->size;
     params->resolutionX = axes[0]->resolution;
+    params->scaleX = axes[0]->scale;
     if(axes[0]->resolutionUOM != NULL) {
       params->resolutionUnits = msStrdup(axes[0]->resolutionUOM);
     }
@@ -3007,6 +3164,7 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
     }
     params->height = axes[1]->size;
     params->resolutionY = axes[1]->resolution;
+    params->scaleY = axes[1]->scale;
 
     if(params->resolutionUnits == NULL && axes[1]->resolutionUOM != NULL) {
       params->resolutionUnits = msStrdup(axes[1]->resolutionUOM);
@@ -3021,8 +3179,22 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
 
   /* check if projections are equal */
   if(crs != NULL) {
-    params->subsetcrs = msStrdup(crs);
-  } else {
+    if (params->subsetcrs && !EQUAL(crs, params->subsetcrs)) {
+      /* already set and not equal -> raise exception */
+      msSetError(MS_WCSERR, "SubsetCRS does not match the CRS of the axes: "
+                 "'%s' != '%s'",
+                 "msWCSCreateBoundingBox20()", params->subsetcrs, crs);
+      return MS_FAILURE;
+    }
+    else if (params->subsetcrs) {
+      /* equal, and already set -> do nothing */
+    }
+    else {
+      /* not yet globally set -> set it */
+      params->subsetcrs = msStrdup(crs);
+    }
+  } else if (!params->subsetcrs) {
+    /* default to imageCRS */
     params->subsetcrs = msStrdup("imageCRS");
   }
 
@@ -3041,6 +3213,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 {
   int i = 0, count, maxlen, index;
   char *tmp = NULL;
+  char *interval_stop;
   char **band_ids = NULL;
 
   /* if rangesubset parameter is not given, default to all bands */
@@ -3055,7 +3228,7 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   }
 
   count = CSLCount(params->range_subset);
-  maxlen = count * 4 * sizeof(char);
+  maxlen = cm->numbands * 4 * sizeof(char);
   *bandlist = msSmallCalloc(sizeof(char), maxlen);
 
   if (NULL == (tmp = msOWSGetEncodeMetadata(&layer->metadata,
@@ -3070,34 +3243,267 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
   }
 
   for(i = 0; i < count; ++i) {
-    /* print ',' if not the first value */
-    if(i != 0) {
-      strlcat(*bandlist, ",", maxlen);
-    }
+    /* RangeInterval case: defined as "<start>:<stop>" */
+    if ((interval_stop = strchr(params->range_subset[i], ':')) != NULL) {
+      int start, stop, j;
+      *interval_stop = '\0';
+      ++interval_stop;
 
-    /* check if the string represents an integer */
-    if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS) {
-      tmp = msIntToString((int)index);
-      strlcat(*bandlist, tmp, maxlen);
-      msFree(tmp);
-      continue;
-    }
-
-    /* check if the string is equal to a band identifier    */
-    /* if so, what is the index of the band                 */
-    index = CSLFindString(band_ids, params->range_subset[i]);
-    if(index != -1) {
-      tmp = msIntToString((int)index + 1);
-      strlcat(*bandlist, tmp, maxlen);
-      msFree(tmp);
-      continue;
-    }
-
-    msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
+      /* get index of start clause, or raise an error if none was found */
+      if ((start = CSLFindString(band_ids, params->range_subset[i])) == -1) {
+        msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
                "msWCSGetCoverage20_GetBands()", params->range_subset[i]);
-    return MS_FAILURE;
+        return MS_FAILURE;
+      }
+
+      /* get index of stop clause, or raise an error if none was found */
+      if ((stop = CSLFindString(band_ids, interval_stop)) == -1) {
+        msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
+               "msWCSGetCoverage20_GetBands()", interval_stop);
+        return MS_FAILURE;
+      }
+
+      /* Check whether or not start and stop are different and stop is higher than start */
+      if (stop <= start) {
+        msSetError(MS_WCSERR, "Invalid range interval given.",
+               "msWCSGetCoverage20_GetBands()");
+        return MS_FAILURE;
+      }
+
+      /* expand the interval to a list of indices and push them on the list */
+      for (j = start; j <= stop; ++j) {
+        if(i != 0 || j != start) {
+          strlcat(*bandlist, ",", maxlen);
+        }
+        tmp = msIntToString(j);
+        strlcat(*bandlist, tmp, maxlen);
+        msFree(tmp);
+      }
+    }
+    /* RangeComponent case */
+    else {
+        if(i != 0) {
+        strlcat(*bandlist, ",", maxlen);
+      }
+
+      /* check if the string represents an integer */
+      /* TODO: this is not standard. Should we allow this? */
+      if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS) {
+        tmp = msIntToString((int)index);
+        strlcat(*bandlist, tmp, maxlen);
+        msFree(tmp);
+        continue;
+      }
+
+      /* check if the string is equal to a band identifier    */
+      /* if so, what is the index of the band                 */
+      index = CSLFindString(band_ids, params->range_subset[i]);
+      if(index != -1) {
+        tmp = msIntToString((int)index + 1);
+        strlcat(*bandlist, tmp, maxlen);
+        msFree(tmp);
+        continue;
+      }
+
+      msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
+                 "msWCSGetCoverage20_GetBands()", params->range_subset[i]);
+      return MS_FAILURE;
+    }
   }
+
   CSLDestroy(band_ids);
+  return MS_SUCCESS;
+}
+
+/* Fixes CPLParseNameValue to allow ':' characters for namespaced keys */
+
+static const char * fixedCPLParseNameValue(const char* string, char **key) {
+  const char *value;
+  size_t size;
+  value = strchr(string, '=');
+
+  if (value == NULL) {
+    *key = NULL;
+    return NULL;
+  }
+
+  size = value - string;
+  *key = msSmallMalloc(size + 1);
+  strncpy(*key, string, size + 1);
+  (*key)[size] = '\0';
+  return value + 1;
+}
+
+/************************************************************************/
+/*                   msWCSSetFormatParams20()                           */
+/*                                                                      */
+/*      Parses the given format options and sets the appropriate        */
+/*      output format values.                                           */
+/************************************************************************/
+
+static int msWCSSetFormatParams20(outputFormatObj* format, char** format_options) {
+  /* currently geotiff only */
+  char *format_option;
+  int i = 0;
+  int is_geotiff = (format->mimetype && EQUAL(format->mimetype, "image/tiff"));
+
+  if (!is_geotiff || !format_options) {
+    /* Currently only geotiff available */
+    return MS_SUCCESS;
+  }
+
+  format_option = format_options[0];
+  while (format_option) {
+    /* key, value */
+    char *key;
+    const char *value = fixedCPLParseNameValue(format_option, &key);
+
+    msDebug("%s = %s\n", key, value);
+
+    if (!key) {
+      msSetError(MS_WCSERR, "Could not deduct the option key.",
+                 "msWCSSetFormatParams20()");
+      return MS_FAILURE;
+    }
+    else if (!value) {
+      msSetError(MS_WCSERR, "Missing value for parameter '%s'.",
+                 "msWCSSetFormatParams20()", key);
+      return MS_FAILURE;
+    }
+
+    if (EQUAL(key, "geotiff:compression") && is_geotiff) {
+      /*COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/NONE]*/
+      if (EQUAL(value, "None")) {
+        msSetOutputFormatOption(format, "COMPRESS", "NONE");
+      }
+      else if (EQUAL(value, "PackBits")) {
+        msSetOutputFormatOption(format, "COMPRESS", "PACKBITS");
+      }
+      else if (EQUAL(value, "Deflate")) {
+        msSetOutputFormatOption(format, "COMPRESS", "DEFLATE");
+      }
+      else if (EQUAL(value, "Huffman")) {
+        msSetOutputFormatOption(format, "COMPRESS", "CCITTRLE");
+      }
+      else if (EQUAL(value, "LZW")) {
+        msSetOutputFormatOption(format, "COMPRESS", "LZW");
+      }
+      else if (EQUAL(value, "JPEG")) {
+        msSetOutputFormatOption(format, "COMPRESS", "JPEG");
+      }
+      /* unsupported compression methods: CCITTFAX3/CCITTFAX4 */
+      else {
+        msSetError(MS_WCSERR, "Compression method '%s' not supported.",
+                   "msWCSSetFormatParams20()", value);
+        return MS_FAILURE;
+      }
+    }
+
+    else if (EQUAL(key, "geotiff:jpeg_quality") && is_geotiff) {
+      int quality;
+      /* JPEG_QUALITY=[1-100] */
+      if (msStringParseInteger(value, &quality) != MS_SUCCESS) {
+        msSetError(MS_WCSERR, "Could not parse jpeg_quality value.",
+                 "msWCSSetFormatParams20()");
+        return MS_FAILURE;
+      }
+      else if (quality < 1 || quality > 100) {
+        msSetError(MS_WCSERR, "Invalid jpeg_quality value '%d'.",
+                   "msWCSSetFormatParams20()", quality);
+        return MS_FAILURE;
+      }
+      msSetOutputFormatOption(format, "JPEG_QUALITY", value);
+    }
+    else if (EQUAL(key, "geotiff:predictor") && is_geotiff) {
+      /* PREDICTOR=[1/2/3] */
+      int predictor;
+
+      if (msStringParseInteger(value, &predictor) != MS_SUCCESS) {
+        msSetError(MS_WCSERR, "Could not parse predictor value.",
+                 "msWCSSetFormatParams20()");
+        return MS_FAILURE;
+      }
+      else if (predictor < 1 || predictor > 3) {
+        msSetError(MS_WCSERR, "Invalid predictor value '%d'.",
+                   "msWCSSetFormatParams20()", predictor);
+        return MS_FAILURE;
+      }
+      msSetOutputFormatOption(format, "PREDICTOR", value);
+    }
+    else if (EQUAL(key, "geotiff:interleave") && is_geotiff) {
+      /* INTERLEAVE=[BAND,PIXEL] */
+      if (EQUAL(value, "Band")) {
+        msSetOutputFormatOption(format, "INTERLEAVE", "BAND");
+      }
+      else if (EQUAL(value, "Pixel")) {
+        msSetOutputFormatOption(format, "INTERLEAVE", "PIXEL");
+      }
+      else {
+        msSetError(MS_WCSERR, "Interleave method '%s' not supported.",
+                   "msWCSSetFormatParams20()", value);
+        return MS_FAILURE;
+      }
+    }
+    else if (EQUAL(key, "geotiff:tiling") && is_geotiff) {
+      /* TILED=YES */
+      if (EQUAL(value, "true")) {
+        msSetOutputFormatOption(format, "TILING", "YES");
+      }
+      else if (EQUAL(value, "false")) {
+        msSetOutputFormatOption(format, "TILING", "NO");
+      }
+      else {
+        msSetError(MS_WCSERR, "Invalid boolean value '%s'.",
+                   "msWCSSetFormatParams20()", value);
+        return MS_FAILURE;
+      }
+    }
+    else if (EQUAL(key, "geotiff:tileheight") && is_geotiff) {
+      /* BLOCKXSIZE=n */
+      int tileheight;
+
+      if (msStringParseInteger(value, &tileheight) != MS_SUCCESS) {
+        msSetError(MS_WCSERR, "Could not parse tileheight value.",
+                 "msWCSSetFormatParams20()");
+        return MS_FAILURE;
+      }
+      else if (tileheight < 1 || tileheight % 16) {
+        msSetError(MS_WCSERR, "Invalid tileheight value '%d'. "
+                   "Must be greater than 0 and dividable by 16.",
+                   "msWCSSetFormatParams20()", tileheight);
+        return MS_FAILURE;
+      }
+      msSetOutputFormatOption(format, "BLOCKXSIZE", value);
+    }
+    else if (EQUAL(key, "geotiff:tilewidth") && is_geotiff) {
+      /* BLOCKYSIZE=n */
+      int tilewidth;
+
+      if (msStringParseInteger(value, &tilewidth) != MS_SUCCESS) {
+        msSetError(MS_WCSERR, "Could not parse tilewidth value.",
+                 "msWCSSetFormatParams20()");
+        return MS_FAILURE;
+      }
+      else if (tilewidth < 1 || tilewidth % 16) {
+        msSetError(MS_WCSERR, "Invalid tilewidth value '%d'. "
+                   "Must be greater than 0 and dividable by 16.",
+                   "msWCSSetFormatParams20()", tilewidth);
+        return MS_FAILURE;
+      }
+      msSetOutputFormatOption(format, "BLOCKYSIZE", value);
+    }
+    else if (EQUALN(key, "geotiff:", 8)) {
+      msSetError(MS_WCSERR, "Unrecognized GeoTIFF parameter '%s'.",
+                 "msWCSSetFormatParams20()", key);
+      return MS_FAILURE;
+    }
+
+    CPLFree(key);
+
+    /* fetch next option */
+    format_option = format_options[++i];
+  }
+
   return MS_SUCCESS;
 }
 
@@ -3298,7 +3704,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   bbox.maxy = MIN(subsets.maxy, map->extent.maxy);
 
   /* check if we are overspecified  */
-  if((params->width != 0 &&  params->resolutionX != MS_WCS20_UNBOUNDED)
+  if ((params->width != 0 &&  params->resolutionX != MS_WCS20_UNBOUNDED)
       || (params->height != 0 && params->resolutionY != MS_WCS20_UNBOUNDED)) {
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR, "GetCoverage operation supports only one of SIZE or RESOLUTION per axis.",
@@ -3329,6 +3735,11 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     }
 
     params->resolutionX = (bbox.maxx - bbox.minx) / params->width;
+
+    if (params->scaleX != MS_WCS20_UNBOUNDED) {
+      params->resolutionX /= params->scaleX;
+      params->width = (long)(((double) params->width) * params->scaleX);
+    }
   }
 
   /* check y axis */
@@ -3346,6 +3757,11 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     }
 
     params->resolutionY = (bbox.maxy - bbox.miny) / params->height;
+
+    if (params->scaleY != MS_WCS20_UNBOUNDED) {
+      params->resolutionY /= params->scaleY;
+      params->height = (long)(((double) params->height) * params->scaleY);
+    }
   }
 
   /* WCS 2.0 is center of pixel oriented */
@@ -3452,6 +3868,14 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   format = msCloneOutputFormat(msSelectOutputFormat(map, params->format));
   msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE,
                       MS_NOOVERRIDE, MS_NOOVERRIDE);
+
+  /* set format specific parameters */
+  if (msWCSSetFormatParams20(format, params->format_options) != MS_SUCCESS) {
+    msFree(bandlist);
+    msWCSClearCoverageMetadata20(&cm);
+    return msWCSException(map, "InvalidParameterValue", "format",
+                          params->version);
+  }
 
   if(msWCSGetCoverage20_GetBands(map, layer, params, &cm, &bandlist) != MS_SUCCESS) {
     msFree(bandlist);
