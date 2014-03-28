@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+* $Id$
  *
  * Project:  MapServer
  * Purpose:  Cairo Rendering functions
@@ -812,22 +812,26 @@ int mergeRasterBufferCairo(imageObj *img, rasterBufferObj *rb, double opacity,
 void freeSVGCache(symbolObj *s) {
 #if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
       struct svg_symbol_cache *cache = s->renderer_cache;
-      assert(cache->svgc);
+      
+      if(!cache)
+        return;
+      if (cache->svgc){
 #ifdef USE_SVG_CAIRO
-      svg_cairo_destroy(cache->svgc);
+        svg_cairo_destroy(cache->svgc);
 #else
-      rsvg_handle_close(cache->svgc, NULL);
+        rsvg_handle_close(cache->svgc, NULL);
   #if LIBRSVG_CHECK_VERSION(2,35,0)
-      g_object_unref(cache->svgc);
+        g_object_unref(cache->svgc);
   #else
-      rsvg_handle_free(cache->svgc);
+        rsvg_handle_free(cache->svgc);
   #endif
 #endif
+      }
       if(cache->pixmap_buffer) {
         msFreeRasterBuffer(cache->pixmap_buffer);
         free(cache->pixmap_buffer);
       }
-      msFree(s->renderer_cache);
+      msFree(s->renderer_cache);    
 #endif
 }
 
@@ -909,6 +913,7 @@ int msPreloadSVGSymbol(symbolObj *symbol)
     cache->svgc = rsvg_handle_new_from_file(symbol->full_pixmap_path,NULL);
     if(!cache->svgc) {
       msSetError(MS_RENDERERERR,"failed to load svg file %s", "msPreloadSVGSymbol()", symbol->full_pixmap_path);
+      return MS_FAILURE;
     }
     rsvg_handle_get_dimensions_sub (cache->svgc, &dim, NULL);
     symbol->sizex = dim.width;
