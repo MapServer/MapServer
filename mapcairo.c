@@ -1133,6 +1133,7 @@ int msPreloadSVGSymbol(symbolObj *symbol)
     cache->svgc = rsvg_handle_new_from_file(symbol->full_pixmap_path,NULL);
     if(!cache->svgc) {
       msSetError(MS_RENDERERERR,"failed to load svg file %s", "msPreloadSVGSymbol()", symbol->full_pixmap_path);
+      return MS_FAILURE;
     }
     rsvg_handle_get_dimensions_sub (cache->svgc, &dim, NULL);
     symbol->sizex = dim.width;
