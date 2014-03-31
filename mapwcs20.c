@@ -3759,15 +3759,27 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
       *interval_stop = '\0';
       ++interval_stop;
 
+      /* check if the string represents an integer */
+      if (msStringParseInteger(params->range_subset[i], &start) == MS_SUCCESS) {
+      }
       /* get index of start clause, or raise an error if none was found */
-      if ((start = CSLFindString(band_ids, params->range_subset[i])) == -1) {
+      else if ((start = CSLFindString(band_ids, params->range_subset[i])) != -1) {
+        start += 1; /* adjust index, since GDAL bands start with index 1 */
+      }
+      else {
         msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
                "msWCSGetCoverage20_GetBands()", params->range_subset[i]);
         return MS_FAILURE;
       }
 
+      /* check if the string represents an integer */
+      if (msStringParseInteger(interval_stop, &stop) == MS_SUCCESS) {
+      }
       /* get index of stop clause, or raise an error if none was found */
-      if ((stop = CSLFindString(band_ids, interval_stop)) == -1) {
+      else if ((stop = CSLFindString(band_ids, interval_stop)) != -1) {
+        stop += 1; /* adjust index, since GDAL bands start with index 1 */
+      }
+      else {
         msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
                "msWCSGetCoverage20_GetBands()", interval_stop);
         return MS_FAILURE;
@@ -3777,6 +3789,10 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
       if (stop <= start) {
         msSetError(MS_WCSERR, "Invalid range interval given.",
                "msWCSGetCoverage20_GetBands()");
+        return MS_FAILURE;
+      } else if (start < 1 || stop > cm->numbands) {
+        msSetError(MS_WCSERR, "Band interval is out of the valid range: 1-%d",
+               "msWCSGetCoverage20_GetBands()", (int)cm->numbands);
         return MS_FAILURE;
       }
 
@@ -3797,8 +3813,13 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
       }
 
       /* check if the string represents an integer */
-      /* TODO: this is not standard. Should we allow this? */
       if(msStringParseInteger(params->range_subset[i], &index) == MS_SUCCESS) {
+        if (index < 1 || index > cm->numbands) {
+          msSetError(MS_WCSERR, "Band index is out of the valid range: 1-%d",
+                 "msWCSGetCoverage20_GetBands()", (int)cm->numbands);
+          return MS_FAILURE;
+        }
+
         tmp = msIntToString((int)index);
         strlcat(*bandlist, tmp, maxlen);
         msFree(tmp);
@@ -3807,17 +3828,16 @@ static int msWCSGetCoverage20_GetBands(mapObj *map, layerObj *layer,
 
       /* check if the string is equal to a band identifier    */
       /* if so, what is the index of the band                 */
-      index = CSLFindString(band_ids, params->range_subset[i]);
-      if(index != -1) {
+      if((index = CSLFindString(band_ids, params->range_subset[i])) != -1) {
         tmp = msIntToString((int)index + 1);
         strlcat(*bandlist, tmp, maxlen);
         msFree(tmp);
-        continue;
       }
-
-      msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
-                 "msWCSGetCoverage20_GetBands()", params->range_subset[i]);
-      return MS_FAILURE;
+      else {
+        msSetError(MS_WCSERR, "'%s' is not a valid band identifier.",
+                   "msWCSGetCoverage20_GetBands()", params->range_subset[i]);
+        return MS_FAILURE;
+      }
     }
   }
 
@@ -3867,8 +3887,6 @@ static int msWCSSetFormatParams20(outputFormatObj* format, char** format_options
     /* key, value */
     char *key;
     const char *value = fixedCPLParseNameValue(format_option, &key);
-
-    msDebug("%s = %s\n", key, value);
 
     if (!key) {
       msSetError(MS_WCSERR, "Could not deduct the option key.",
