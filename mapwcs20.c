@@ -3943,20 +3943,23 @@ static int msWCSSetFormatParams20(outputFormatObj* format, char** format_options
       msSetOutputFormatOption(format, "JPEG_QUALITY", value);
     }
     else if (EQUAL(key, "geotiff:predictor") && is_geotiff) {
-      /* PREDICTOR=[1/2/3] */
-      int predictor;
-
-      if (msStringParseInteger(value, &predictor) != MS_SUCCESS) {
-        msSetError(MS_WCSERR, "Could not parse predictor value.",
-                 "msWCSSetFormatParams20()");
+      /* PREDICTOR=[None/Horizontal/FloatingPoint] */
+      char *predictor;
+      if (EQUAL(value, "None") || EQUAL(value, "1")) {
+        predictor = "1";
+      }
+      else if (EQUAL(value, "Horizontal") || EQUAL(value, "2")) {
+        predictor = "2";
+      }
+      else if (EQUAL(value, "FloatingPoint") || EQUAL(value, "3")) {
+        predictor = "3";
+      }
+      else {
+        msSetError(MS_WCSERR, "Invalid predictor value '%s'.",
+                   "msWCSSetFormatParams20()", value);
         return MS_FAILURE;
       }
-      else if (predictor < 1 || predictor > 3) {
-        msSetError(MS_WCSERR, "Invalid predictor value '%d'.",
-                   "msWCSSetFormatParams20()", predictor);
-        return MS_FAILURE;
-      }
-      msSetOutputFormatOption(format, "PREDICTOR", value);
+      msSetOutputFormatOption(format, "PREDICTOR", predictor);
     }
     else if (EQUAL(key, "geotiff:interleave") && is_geotiff) {
       /* INTERLEAVE=[BAND,PIXEL] */
