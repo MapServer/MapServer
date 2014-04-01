@@ -812,6 +812,7 @@ int mergeRasterBufferCairo(imageObj *img, rasterBufferObj *rb, double opacity,
 void freeSVGCache(symbolObj *s) {
 #if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
       struct svg_symbol_cache *cache = s->renderer_cache;
+      if(!cache) return;
       assert(cache->svgc);
 #ifdef USE_SVG_CAIRO
       svg_cairo_destroy(cache->svgc);
