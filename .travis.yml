@@ -50,6 +50,7 @@ before_install:
   - make -j3
   - sudo make install && sudo ldconfig
   - cd ../..
+  - git submodule sync
   - git submodule update --init --recursive
   - sudo mv /etc/apt/sources.list.d/pgdg-source.list* /tmp
   - sudo apt-get -qq remove postgis
