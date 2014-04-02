@@ -1,4 +1,4 @@
 [submodule "msautotest"]
 	path = msautotest
-	url = git://github.com/EOX-A/msautotest.git
+	url = https://github.com/EOX-A/msautotest.git
 	branch = wcs20-extensions
