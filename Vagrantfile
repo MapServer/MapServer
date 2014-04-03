@@ -54,6 +54,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libcairo2-dev",
     "libgdal1-dev",
     "php5-dev",
+    "libfribidi-dev",
     "libexempi-dev"
   ];
 
