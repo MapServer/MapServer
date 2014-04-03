@@ -3,4 +3,5 @@ build
 nbproject
 tags
 tests/map.png
+.vagrant
 
