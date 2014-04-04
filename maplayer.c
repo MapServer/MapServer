@@ -686,6 +686,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
   layer->filteritemindex = -1;
   layer->styleitemindex = -1;
   layer->labelitemindex = -1;
+  layer->utfitemindex = -1;
 
   if(layer->classitem) nt++;
   if(layer->filteritem) nt++;
@@ -703,6 +704,7 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
     nt += msCountChars(layer->cluster.filter.string, '[');
 
   if(layer->labelitem) nt++;
+  if(layer->utfitem) nt++;
 
   if(layer->_geomtransform.type == MS_GEOMTRANSFORM_EXPRESSION)
     msTokenizeExpression(&layer->_geomtransform, layer->items, &(layer->numitems));
