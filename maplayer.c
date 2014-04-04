@@ -740,6 +740,10 @@ int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata)
   }
 
   /* utfgrid count */
+ 	
+  if(layer->utfitem)
+    nt ++;
+
   if(layer->utfdata.type == MS_EXPRESSION || (layer->utfdata.string && strchr(layer->utfdata.string,'[') != NULL && strchr(layer->utfdata.string,']') != NULL))
     nt += msCountChars(layer->utfdata.string, '[');
 
