@@ -2045,7 +2045,6 @@ int msLineLabelPath(mapObj *map, imageObj *img, lineObj *p, textSymbolObj *ts, s
             anglediff = fabs(theta - tp->glyphs[k-2].rot);
             anglediff = MS_MIN(anglediff, MS_2PI - anglediff);
             if(anglediff > maxoverlapangle ) {
-              printf("failed between %c and %c: angle: %f\n",ts->annotext[k-2],ts->annotext[k-1],anglediff);
               goto LABEL_FAILURE;
             }
           }
