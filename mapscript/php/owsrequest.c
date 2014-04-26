@@ -32,7 +32,9 @@
 #include "php_mapscript.h"
 #include "SAPI.h"
 #include "php_variables.h"
+#if PHP_VERSION_ID >= 50600
 #include "php_streams.h"
+#endif
 
 char *owsrequest_getenv(const char *name, void *thread_context);
 
@@ -194,8 +196,8 @@ PHP_METHOD(OWSRequestObj, loadParams)
         cgirequestObj_loadParams(php_owsrequest->cgirequest, owsrequest_getenv, NULL, 0, thread_context);
       }
     } else {
-      php_stream *s = php_stream_temp_new();
 #if PHP_VERSION_ID >= 50600
+      php_stream *s = php_stream_temp_new();
       php_stream *input = php_stream_open_wrapper("php://input", "r", 0, NULL);
 
       /* php://input does not support stat */
