@@ -631,6 +631,36 @@ int msCopyCluster(clusterObj *dst, clusterObj *src)
   return MS_SUCCESS;
 }
 
+/***********************************************************************
+ * msCopyGrid()                                                        *
+ **********************************************************************/
+
+int msCopyGrid(graticuleObj *dst, graticuleObj *src)
+{
+  MS_COPYSTELEM(dwhichlatitude);
+  MS_COPYSTELEM(dwhichlongitude);
+  MS_COPYSTELEM(dstartlatitude);
+  MS_COPYSTELEM(dstartlongitude);
+  MS_COPYSTELEM(dendlatitude);
+  MS_COPYSTELEM(dendlongitude);
+  MS_COPYSTELEM(dincrementlatitude);
+  MS_COPYSTELEM(dincrementlongitude);
+  MS_COPYSTELEM(minarcs);
+  MS_COPYSTELEM(maxarcs);
+  MS_COPYSTELEM(minincrement);
+  MS_COPYSTELEM(maxincrement);
+  MS_COPYSTELEM(minsubdivides);
+  MS_COPYSTELEM(maxsubdivides);
+  MS_COPYSTELEM(bvertical);
+  MS_COPYSTELEM(blabelaxes);
+  MS_COPYSTELEM(ilabelstate);
+  MS_COPYSTELEM(ilabeltype);
+  MS_COPYRECT(&(dst->extent), &(src->extent));
+  MS_COPYSTRING(dst->labelformat, src->labelformat);
+  
+  return MS_SUCCESS;
+}
+
 #ifdef why_on_earth_would_you_copy_a_labelcache
 
 /***********************************************************************
@@ -1052,6 +1082,17 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 
   MS_COPYSTRING(dst->classgroup, src->classgroup);
   MS_COPYSTRING(dst->mask, src->mask);
+
+  if (src->grid) {
+    if (dst->grid) {
+      freeGrid(dst->grid);
+      msFree(dst->grid);
+    }
+    dst->grid = (void *) malloc(sizeof(graticuleObj));
+    MS_CHECK_ALLOC(dst->grid, sizeof(graticuleObj), -1);
+    initGrid(dst->grid);
+    msCopyGrid(dst->grid, src->grid);
+  }
 
   return MS_SUCCESS;
 }
