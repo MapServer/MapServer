@@ -1697,6 +1697,7 @@ extern "C" {
 
 #ifndef SWIG
     imageObj *maskimage;
+    graticuleObj* grid;
 #endif
     char *mask;
 

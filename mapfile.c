@@ -1029,6 +1029,13 @@ void initGrid( graticuleObj *pGraticule )
   memset( pGraticule, 0, sizeof( graticuleObj ) );
 }
 
+void freeGrid( graticuleObj *pGraticule )
+{
+  msFree(pGraticule->labelformat);
+  msFree(pGraticule->pboundingpoints);
+  msFree(pGraticule->pboundinglines);
+}
+
 static int loadGrid( layerObj *pLayer )
 {
   for(;;) {
@@ -1041,35 +1048,35 @@ static int loadGrid( layerObj *pLayer )
       case(GRID):
         break; /* for string loads */
       case( LABELFORMAT ):
-        if(getString(&((graticuleObj *)pLayer->layerinfo)->labelformat) == MS_FAILURE) {
+        if(getString(&(pLayer->grid->labelformat)) == MS_FAILURE) {
           if(strcasecmp(msyystring_buffer, "DD") == 0) /* DD triggers a symbol to be returned instead of a string so check for this special case */
-            ((graticuleObj *)pLayer->layerinfo)->labelformat = msStrdup("DD");
+            pLayer->grid->labelformat = msStrdup("DD");
           else
             return(-1);
         }
         break;
       case( MINARCS ):
-        if(getDouble(&((graticuleObj *)pLayer->layerinfo)->minarcs) == -1)
+        if(getDouble(&(pLayer->grid->minarcs)) == -1)
           return(-1);
         break;
       case( MAXARCS ):
-        if(getDouble(&((graticuleObj *)pLayer->layerinfo)->maxarcs) == -1)
+        if(getDouble(&(pLayer->grid->maxarcs)) == -1)
           return(-1);
         break;
       case( MININTERVAL ):
-        if(getDouble(&((graticuleObj *)pLayer->layerinfo)->minincrement) == -1)
+        if(getDouble(&(pLayer->grid->minincrement)) == -1)
           return(-1);
         break;
       case( MAXINTERVAL ):
-        if(getDouble(&((graticuleObj *)pLayer->layerinfo)->maxincrement) == -1)
+        if(getDouble(&(pLayer->grid->maxincrement)) == -1)
           return(-1);
         break;
       case( MINSUBDIVIDE ):
-        if(getDouble(&((graticuleObj *)pLayer->layerinfo)->minsubdivides) == -1)
+        if(getDouble(&(pLayer->grid->minsubdivides)) == -1)
           return(-1);
         break;
       case( MAXSUBDIVIDE ):
-        if(getDouble(&((graticuleObj *)pLayer->layerinfo)->maxsubdivides) == -1)
+        if(getDouble(&(pLayer->grid->maxsubdivides)) == -1)
           return(-1);
         break;
       default:
@@ -3803,6 +3810,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->mask = NULL;
   layer->maskimage = NULL;
+  layer->grid = NULL;
 
   initExpression(&(layer->_geomtransform));
   layer->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
@@ -3930,6 +3938,11 @@ int freeLayer(layerObj *layer)
   msFree(layer->mask);
   if(layer->maskimage) {
     msFreeImage(layer->maskimage);
+  }
+
+  if (layer->grid) {
+    freeGrid(layer->grid);
+    msFree(layer->grid);
   }
 
   freeExpression(&(layer->utfdata));
@@ -4216,10 +4229,14 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(GRID):
         layer->connectiontype = MS_GRATICULE;
-        layer->layerinfo = (void *) malloc(sizeof(graticuleObj));
-        MS_CHECK_ALLOC(layer->layerinfo, sizeof(graticuleObj), -1);
+        if (layer->grid) {
+          freeGrid(layer->grid);
+          msFree(layer->grid);
+        }
+        layer->grid = (void *) malloc(sizeof(graticuleObj));
+        MS_CHECK_ALLOC(layer->grid, sizeof(graticuleObj), -1);
 
-        initGrid((graticuleObj *) layer->layerinfo);
+        initGrid(layer->grid);
         loadGrid(layer);
         break;
       case(GROUP):
@@ -4610,8 +4627,8 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   for(i=0; i<layer->numjoins; i++)  writeJoin(stream, indent, &(layer->joins[i]));
   for(i=0; i<layer->numclasses; i++) writeClass(stream, indent, layer->class[i]);
 
-  if( layer->layerinfo &&  layer->connectiontype == MS_GRATICULE)
-    writeGrid(stream, indent, (graticuleObj *) layer->layerinfo);
+  if( layer->grid &&  layer->connectiontype == MS_GRATICULE)
+    writeGrid(stream, indent, layer->grid);
   else {
     current = layer->features;
     while(current != NULL) {
