@@ -3504,7 +3504,7 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
   char szHexColor[7];
   int nSymbol = -1;
   int i = 0;
-  double dfSize = 1.0;
+  double dfSize = 0.0;
   char *pszDashArray = NULL;
   char *pszGraphicSLD = NULL;
   char sCssParam[30];
@@ -3582,10 +3582,10 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
   else {
     if (psStyle->size > 0)
       dfSize = psStyle->size;
-    else if (psStyle->width > 0)
+    else if (psStyle->outlinewidth >= 0 && psStyle->width == 1)
+      dfSize = psStyle->outlinewidth;
+    else if (psStyle->width > 0 && psStyle->outlinewidth == 0)
       dfSize = psStyle->width;
-    else
-      dfSize = 1;
   }
 
   snprintf(szTmp, sizeof(szTmp),
