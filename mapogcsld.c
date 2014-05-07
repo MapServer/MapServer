@@ -3738,7 +3738,9 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
 
     if (psStyle->size > 0)
       dfSize = psStyle->size;
-    else if (psStyle->width > 0)
+    else if (psStyle->outlinewidth >= 0 && psStyle->width == 1)
+      dfSize = psStyle->width;
+    else if (psStyle->width > 0 && psStyle->outlinewidth == 0)
       dfSize = psStyle->width;
 
     snprintf(szTmp, sizeof(szTmp),
