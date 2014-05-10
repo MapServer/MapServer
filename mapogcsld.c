@@ -3654,7 +3654,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion
   char *pszSLD = NULL;
   char szHexColor[7];
   char *pszGraphicSLD = NULL;
-  double dfSize = 0.0;
+  double dfSize = 1.0;
   char sCssParam[30];
   char sNameSpace[10];
 
