@@ -3054,7 +3054,7 @@ int ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
 /*           void msSLDSetColorObject(char *psHexColor, colorObj        */
 /*      *psColor)                                                       */
 /*                                                                      */
-/*      Utility function to exctract rgb values from an hexadecimal     */
+/*      Utility function to extract rgb values from an hexadecimal      */
 /*      color string (format is : #aaff08) and set it in the color      */
 /*      object.                                                         */
 /************************************************************************/
@@ -3487,9 +3487,6 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
 
 }
 
-
-
-
 /************************************************************************/
 /*                           msSLDGenerateLineSLD                       */
 /*                                                                      */
@@ -3500,74 +3497,16 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
   char *pszSLD = NULL;
-  char szTmp[100];
-  char szHexColor[7];
   int nSymbol = -1;
-  int i = 0;
-  double dfSize = 0.0;
-  char *pszDashArray = NULL;
-  char *pszGraphicSLD = NULL;
-  char sCssParam[30];
   char sNameSpace[10];
+  char *szStrokeLine = NULL;
 
   if ( msCheckParentPointer(psLayer->map,"map")==MS_FAILURE )
     return NULL;
 
-  sCssParam[0] = '\0';
-  if (nVersion > OWS_1_0_0)
-    strcpy( sCssParam, "se:SvgParameter");
-  else
-    strcpy( sCssParam, "CssParameter");
-
   sNameSpace[0] = '\0';
   if (nVersion > OWS_1_0_0)
     strcpy(sNameSpace, "se:");
-
-  snprintf(szTmp, sizeof(szTmp), "<%sLineSymbolizer>\n",  sNameSpace);
-
-  pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-  snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n",  sNameSpace);
-
-  pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-  pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0, nVersion);
-  if (pszGraphicSLD) {
-    snprintf(szTmp, sizeof(szTmp), "<%sGraphicStroke>\n",  sNameSpace);
-
-    pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-    pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
-
-    snprintf(szTmp, sizeof(szTmp), "</%sGraphicStroke>\n",  sNameSpace);
-
-    pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-    free(pszGraphicSLD);
-    pszGraphicSLD = NULL;
-  }
-
-  if (psStyle->color.red != -1 &&
-      psStyle->color.green != -1 &&
-      psStyle->color.blue != -1)
-    sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
-            psStyle->color.green,psStyle->color.blue);
-  else
-    sprintf(szHexColor,"%02x%02x%02x",psStyle->outlinecolor.red,
-            psStyle->outlinecolor.green,psStyle->outlinecolor.blue);
-
-  snprintf(szTmp,  sizeof(szTmp),
-           "<%s name=\"stroke\">#%s</%s>\n",
-           sCssParam, szHexColor, sCssParam);
-  pszSLD = msStringConcatenate(pszSLD, szTmp);
-
-  if(psStyle->color.alpha != 255 && psStyle->color.alpha!=-1) {
-    snprintf(szTmp, sizeof(szTmp),
-             "<%s name=\"stroke-opacity\">%.2f</%s>\n",
-             sCssParam, (float)psStyle->color.alpha/255.0, sCssParam);
-    pszSLD = msStringConcatenate(pszSLD, szTmp);
-  }
-
 
   nSymbol = -1;
 
@@ -3577,20 +3516,99 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
     nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
                                psStyle->symbolname, MS_FALSE);
 
-  if (nSymbol <0)
-    dfSize = 1.0;
+  if (nSymbol < 0 && &psStyle->color)
+    szStrokeLine = msSLDGenerateStrokeLineSLD(psStyle, psLayer, nVersion, sNameSpace, 1.0, &psStyle->color);
   else {
     if (psStyle->size > 0)
-      dfSize = psStyle->size;
-    else if (psStyle->outlinewidth >= 0 && psStyle->width == 1)
-      dfSize = psStyle->outlinewidth;
-    else if (psStyle->width > 0 && psStyle->outlinewidth == 0)
-      dfSize = psStyle->width;
+     szStrokeLine = msSLDGenerateStrokeLineSLD(psStyle, psLayer, nVersion, sNameSpace, (float)psStyle->size, &psStyle->color);
+    if (psStyle->width > 0 && MS_VALID_COLOR(psStyle->color)) {
+     szStrokeLine = msSLDGenerateStrokeLineSLD(psStyle, psLayer, nVersion, sNameSpace, (float)psStyle->width, &psStyle->color);
+      pszSLD = msStringConcatenate(pszSLD, szStrokeLine);
+     }
+     if (psStyle->outlinewidth > 0 && MS_VALID_COLOR(psStyle->outlinecolor)) {
+       szStrokeLine = msSLDGenerateStrokeLineSLD(psStyle, psLayer, nVersion, sNameSpace, (float)psStyle->outlinewidth + (float)psStyle->width, &psStyle->outlinecolor);
+       pszSLD = msStringConcatenate(pszSLD, szStrokeLine);
+     }
+  }
+  
+  return pszSLD;
+
+#else
+  return NULL;
+#endif
+}
+
+/************************************************************************/
+/*                      msSldGenerateStrokeLineSLD                      */
+/*       Generated Stroke SLD element for Line Layer                    */
+/************************************************************************/
+char *msSLDGenerateStrokeLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion, char *sNameSpace, float width, colorObj *psColor)
+{
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
+  char *pszSLD = NULL;
+  char szTmp[100];
+  char szHexColor[7];
+  int nSymbol = -1;
+  int i = 0;
+  char *pszDashArray = NULL;
+  char *pszGraphicSLD = NULL;
+  char sCssParam[30];
+
+  sCssParam[0] = '\0';
+  if (nVersion > OWS_1_0_0)
+    strcpy( sCssParam, "se:SvgParameter");
+  else
+    strcpy( sCssParam, "CssParameter");
+
+  snprintf(szTmp, sizeof(szTmp), "<%sLineSymbolizer>\n",  sNameSpace);
+  pszSLD = msStringConcatenate(pszSLD, szTmp);
+  snprintf(szTmp, sizeof(szTmp), "<%sStroke>\n",  sNameSpace);
+  pszSLD = msStringConcatenate(pszSLD, szTmp);
+
+  /* -------------------------------------------------------------------- */
+  /* Get graphic                                                        */
+  /* -------------------------------------------------------------------- */
+  pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0, nVersion);
+  if (pszGraphicSLD) {
+    snprintf(szTmp, sizeof(szTmp), "<%sGraphicStroke>\n",  sNameSpace);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
+
+    pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
+
+    snprintf(szTmp, sizeof(szTmp), "</%sGraphicStroke>\n",  sNameSpace);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
+
+    free(pszGraphicSLD);
+    pszGraphicSLD = NULL;
+  }
+
+  /* -------------------------------------------------------------------- */
+  /* Get color                                                            */
+  /* -------------------------------------------------------------------- */
+  if (psColor->red != -1 &&
+      psColor->green != -1 &&
+      psColor->blue != -1)
+    sprintf(szHexColor,"%02x%02x%02x",psColor->red,
+            psColor->green,psColor->blue);
+
+  /* -------------------------------------------------------------------- */
+  /* Get line style                                                       */
+  /* -------------------------------------------------------------------- */
+  snprintf(szTmp,  sizeof(szTmp),
+           "<%s name=\"stroke\">#%s</%s>\n",
+           sCssParam, szHexColor, sCssParam);
+  pszSLD = msStringConcatenate(pszSLD, szTmp);
+
+  if(psColor->alpha != 255 && psColor->alpha!=-1) {
+    snprintf(szTmp, sizeof(szTmp),
+             "<%s name=\"stroke-opacity\">%.2f</%s>\n",
+             sCssParam, psColor->alpha/255.0, sCssParam);
+    pszSLD = msStringConcatenate(pszSLD, szTmp);
   }
 
   snprintf(szTmp, sizeof(szTmp),
-           "<%s name=\"stroke-width\">%.2f</%s>\n",
-           sCssParam, dfSize, sCssParam);
+      "<%s name=\"stroke-width\">%.2f</%s>\n",
+      sCssParam, width, sCssParam);
   pszSLD = msStringConcatenate(pszSLD, szTmp);
 
   /* -------------------------------------------------------------------- */
@@ -3611,11 +3629,9 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
   }
 
   snprintf(szTmp, sizeof(szTmp), "</%sStroke>\n",  sNameSpace);
-
   pszSLD = msStringConcatenate(pszSLD, szTmp);
 
   snprintf(szTmp, sizeof(szTmp), "</%sLineSymbolizer>\n",  sNameSpace);
-
   pszSLD = msStringConcatenate(pszSLD, szTmp);
 
   return pszSLD;
@@ -3624,7 +3640,6 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
   return NULL;
 #endif
 }
-
 
 /************************************************************************/
 /*                         msSLDGeneratePolygonSLD                      */
