@@ -82,6 +82,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer, int nVersion);
 
 char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter);
 char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
+char *msSLDGenerateStrokeLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion, char *sNameSpace, float width, colorObj *psColor);
 char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
 char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer, int nVersion);
 char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion);
