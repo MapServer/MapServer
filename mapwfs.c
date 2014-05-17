@@ -2335,8 +2335,8 @@ static int msWFSRetrieveFeatures(mapObj* map,
 
 
   if (pszFeatureId != NULL) {
-    char **tokens = NULL, **tokens1=NULL ;
-    int nTokens = 0, j=0, nTokens1=0, k=0;
+    char **tokens = NULL;
+    int nTokens = 0, j=0, k=0;
     FilterEncodingNode *psNode = NULL;
     char **aFIDLayers = NULL;
     char **aFIDValues = NULL;
@@ -2359,19 +2359,25 @@ static int msWFSRetrieveFeatures(mapObj* map,
         aFIDValues[j] = NULL;
       }
       for (j=0; j<nTokens; j++) {
-        tokens1 = msStringSplit(tokens[j], '.', &nTokens1);
-        if (tokens1 && nTokens1 == 2) {
+        const char* pszLastDot = strrchr(tokens[j], '.');
+        if (pszLastDot != NULL) {
+          char* pszLayerInFID = msStrdup(tokens[j]);
+          pszLayerInFID[pszLastDot - tokens[j]] = '\0';
+          /* Find if the layer is already requested */
           for (k=0; k<iFIDLayers; k++) {
-            if (strcasecmp(aFIDLayers[k], tokens1[0]) == 0)
+            if (strcasecmp(aFIDLayers[k], pszLayerInFID) == 0)
               break;
           }
+          /* If not, add it to the list of requested layers */
           if (k == iFIDLayers) {
-            aFIDLayers[iFIDLayers] = msStrdup(tokens1[0]);
+            aFIDLayers[iFIDLayers] = msStrdup(pszLayerInFID);
             iFIDLayers++;
           }
+          /* Add the id to the list of search identifiers of the layer */
           if (aFIDValues[k] != NULL)
             aFIDValues[k] = msStringConcatenate(aFIDValues[k], ",");
-          aFIDValues[k] = msStringConcatenate( aFIDValues[k], tokens1[1]);
+          aFIDValues[k] = msStringConcatenate( aFIDValues[k], pszLastDot + 1);
+          msFree(pszLayerInFID);
         } else {
           /* In WFS 20, an unknown/invalid feature id shouldn't trigger an */
           /* exception. Tested by CITE */
@@ -2381,15 +2387,11 @@ static int msWFSRetrieveFeatures(mapObj* map,
                        "msWFSGetFeature()", tokens[j]);
             if (tokens)
               msFreeCharArray(tokens, nTokens);
-            if (tokens1)
-              msFreeCharArray(tokens1, nTokens1);
             msFreeCharArray(aFIDLayers, iFIDLayers);
             msFreeCharArray(aFIDValues, iFIDLayers);
             return msWFSException(map, "featureid", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
           }
         }
-        if (tokens1)
-          msFreeCharArray(tokens1, nTokens1);
       }
     }
     if (tokens)
