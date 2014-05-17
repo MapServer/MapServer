@@ -538,7 +538,7 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 {
   int i;
 
-  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features && !layer->layerinfo)
+  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features && !layer->grid)
     return(MS_FALSE); /* no data associated with this layer, not an error since layer may be used as a template from MapScript */
 
   if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_FALSE);

@@ -43,6 +43,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "bison",
     "flex",
     "swig",
+    "rake",
     "librsvg2-dev",
     "libpng12-dev",
     "libjpeg-dev",
@@ -72,9 +73,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	  pkg_cmd << "apt-get install -q -y " + packageList.join(" ") << " ; "
 	  config.vm.provision :shell, :inline => pkg_cmd
     scripts = [
+      "hub.sh",
       "mapserver.sh",
       "postgis.sh"
     ];
-    scripts.each { |script| config.vm.provision :shell, :path => "scripts/vagrant/" << script }
+    scripts.each { |script| config.vm.provision :shell, :path => "scripts/vagrant/" << script , :privileged => false}
   end
 end

@@ -2125,7 +2125,7 @@ LABEL_FAILURE:
       
       freeTextPath(tp);
       free(tp);
-      goto END;
+      goto NEXT_REPEAT;
 
 LABEL_END:
       {
@@ -2143,6 +2143,7 @@ LABEL_END:
         tsnew->textpath = tp;
         tsnew->textpath->absolute = 1;
       }
+NEXT_REPEAT:
       text_start_length = left_label_position;
       n++;
     } while (n<2);
