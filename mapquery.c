@@ -527,6 +527,17 @@ int msQueryByIndex(mapObj *map)
     return(MS_FAILURE);
   }
 
+  /*
+   * The resultindex is used to retrieve a specific item from the result cache.
+   * Usually, the row number will be used as resultindex. But when working with
+   * databases and querying a single result, the row number is typically 0 and
+   * thus useless as the index in the result cache. See #4926 #4076. Only shape
+   * files are considered to have consistent row numbers.
+   */
+  if ( !(lp->connectiontype == MS_SHAPEFILE || lp->connectiontype == MS_TILED_SHAPEFILE) ) {
+    shape.resultindex = -1;
+  }
+
   if (lp->minfeaturesize > 0)
     minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
