@@ -482,6 +482,17 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 #endif /* def USE_OGR */
 
 /************************************************************************/
+/*                        msOGRStdoutWriteFunction()                    */
+/************************************************************************/
+
+/* Used by /vsistdout/ */
+static size_t msOGRStdoutWriteFunction(const void* ptr, size_t size, size_t nmemb, FILE* stream)
+{
+    msIOContext *ioctx = (msIOContext*) stream;
+    return msIO_contextWrite(ioctx, ptr, size * nmemb ) / size;
+}
+
+/************************************************************************/
 /*                        msOGRWriteFromQuery()                         */
 /************************************************************************/
 
@@ -538,6 +549,12 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* ==================================================================== */
   storage = msGetOutputFormatOption( format, "STORAGE", "filesystem" );
   if( EQUAL(storage,"stream") && !msIO_isStdContext() ) {
+#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+    msIOContext *ioctx = msIO_getHandler (stdout);
+    if( ioctx != NULL )
+        VSIStdoutSetRedirection( msOGRStdoutWriteFunction, (FILE*)ioctx );
+    else
+#endif
     /* bug #4858, streaming output won't work if standard output has been
      * redirected, we switch to memory output in this case
      */
