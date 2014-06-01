@@ -549,11 +549,13 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* ==================================================================== */
   storage = msGetOutputFormatOption( format, "STORAGE", "filesystem" );
   if( EQUAL(storage,"stream") && !msIO_isStdContext() ) {
-#if defined(GDAL_COMPUTE_VERSION) && GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+#if defined(GDAL_COMPUTE_VERSION)
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
     msIOContext *ioctx = msIO_getHandler (stdout);
     if( ioctx != NULL )
         VSIStdoutSetRedirection( msOGRStdoutWriteFunction, (FILE*)ioctx );
     else
+#endif
 #endif
     /* bug #4858, streaming output won't work if standard output has been
      * redirected, we switch to memory output in this case
