@@ -989,6 +989,9 @@ static const char* msWFSMapServTypeToXMLType(const char* type)
     /* Map from MapServer types to XSD types */
     if( strcasecmp(type,"Integer") == 0 )
       element_type = "integer";
+    /* Note : xs:int and xs:integer differ */
+    else if ( EQUAL(item->type,"int") )
+      element_type = "int";
     else if( EQUAL(type,"Real") ||
              EQUAL(type,"double") /* just in case someone provided the xsd type directly */ )
       element_type = "double";
