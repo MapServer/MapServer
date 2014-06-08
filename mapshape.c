@@ -2632,7 +2632,7 @@ int msSHPLayerOpen(layerObj *layer)
         }
     }
 #else /* !(defined(USE_GDAL) || defined(USE_OGR)) */
-    if( layer->debug layer->map->debug ) {
+    if( layer->debug || layer->map->debug ) {
         msDebug( "Unable to get SRS from shapefile '%s' for layer '%s'. GDAL or OGR support needed\n", szPath, layer->name );
     }
 #endif /* defined(USE_GDAL) || defined(USE_OGR) */
