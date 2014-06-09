@@ -682,12 +682,12 @@ char *msEvalTextExpressionInternal(expressionObj *expr, shapeObj *shape, int bJS
 
 char *msEvalTextExpressionJSonEscape(expressionObj *expr, shapeObj *shape)
 {
-    return msEvalTextExpressionInternal(expr, shape, TRUE);
+    return msEvalTextExpressionInternal(expr, shape, MS_TRUE);
 }
 
 char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
 {
-    return msEvalTextExpressionInternal(expr, shape, FALSE);
+    return msEvalTextExpressionInternal(expr, shape, MS_FALSE);
 }
 
 char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {
