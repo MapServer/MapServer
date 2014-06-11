@@ -2241,7 +2241,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
             w.ptr[5] = w.ptr[1];
             w.ptr[6] = w.ptr[2];
             w.ptr[7] = w.ptr[3];
-            w.ptr[8] = w.ptr[4];
+            w.ptr[8] = w.ptr[4] & ~(0x20);
             w.ptr[4] = 1;
             w.ptr += 4;
             w.size -= 4;
