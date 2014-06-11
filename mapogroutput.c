@@ -257,40 +257,70 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                  "msOGRWriteShape()");
       return MS_FAILURE;
     }
-
-    if( shape->numlines > 1 )
-      hMP = OGR_G_CreateGeometry( wkbMultiPoint );
-
-    for( j = 0; j < shape->numlines; j++ ) {
-      if( shape->line[j].numpoints != 1 ) {
-        msSetError(MS_MISCERR,
-                   "Failed on odd point geometry.",
-                   "msOGRWriteShape()");
-        return MS_FAILURE;
-      }
-
-      hGeom = OGR_G_CreateGeometry( wkbPoint );
-      if( bWant2DOutput ) {
-        OGR_G_SetPoint_2D( hGeom, 0,
-                           shape->line[j].point[0].x,
-                           shape->line[j].point[0].y );
-      }
-      else {
-        OGR_G_SetPoint( hGeom, 0,
-                        shape->line[j].point[0].x,
-                        shape->line[j].point[0].y,
+    
+    if( shape->numlines == 1 && shape->line[0].numpoints > 1 )
+    {
+      hGeom = OGR_G_CreateGeometry( wkbMultiPoint );
+      for( j = 0; j < shape->line[0].numpoints; j++ ) {
+        OGRGeometryH hPoint = OGR_G_CreateGeometry( wkbPoint );
+        if( bWant2DOutput ) {
+            OGR_G_SetPoint_2D( hPoint, 0,
+                            shape->line[0].point[j].x,
+                            shape->line[0].point[j].y );
+        }
+        else {
+            OGR_G_SetPoint( hPoint, 0,
+                            shape->line[0].point[j].x,
+                            shape->line[0].point[j].y,
 #ifdef USE_POINT_Z_M
-                        shape->line[j].point[0].z
+                            shape->line[0].point[j].z
 #else
-                        0.0
+                            0.0
 #endif
-                        );
-      }
+                            );
+        }
 
-      if( hMP != NULL ) {
-        OGR_G_AddGeometryDirectly( hMP, hGeom );
-        hGeom = hMP;
+        OGR_G_AddGeometryDirectly( hGeom, hPoint );
       }
+    }
+    else
+    {
+      if( shape->numlines > 1 )
+        hMP = OGR_G_CreateGeometry( wkbMultiPoint );
+
+      for( j = 0; j < shape->numlines; j++ ) {
+        if( shape->line[j].numpoints != 1 ) {
+          msSetError(MS_MISCERR,
+                    "Failed on odd point geometry.",
+                    "msOGRWriteShape()");
+          return MS_FAILURE;
+        }
+
+        hGeom = OGR_G_CreateGeometry( wkbPoint );
+        if( bWant2DOutput ) {
+            OGR_G_SetPoint_2D( hGeom, 0,
+                            shape->line[j].point[0].x,
+                            shape->line[j].point[0].y );
+        }
+        else {
+            OGR_G_SetPoint( hGeom, 0,
+                            shape->line[j].point[0].x,
+                            shape->line[j].point[0].y,
+#ifdef USE_POINT_Z_M
+                            shape->line[j].point[0].z
+#else
+                            0.0
+#endif
+                            );
+        }
+
+        if( hMP != NULL ) {
+            OGR_G_AddGeometryDirectly( hMP, hGeom );
+        }
+      }
+      
+      if( hMP != NULL )
+        hGeom = hMP;
     }
   }
 
