@@ -87,6 +87,21 @@ int msInitDefaultOGROutputFormat( outputFormatObj *format )
 }
 
 /************************************************************************/
+/*                        msCSLConcatenate()                            */
+/************************************************************************/
+
+static char** msCSLConcatenate( char** papszResult, char** papszToBeAdded )
+{
+    char** papszIter = papszToBeAdded;
+    while( papszIter && *papszIter )
+    {
+        papszResult = CSLAddString(papszResult, *papszIter);
+        papszIter ++;
+    }
+    return papszResult;
+}
+
+/************************************************************************/
 /*                       msOGRRecursiveFileList()                       */
 /*                                                                      */
 /*      Collect a list of all files under the named directory,          */
@@ -139,7 +154,7 @@ char **msOGRRecursiveFileList( const char *path )
     } else if( VSI_ISDIR( sStatBuf.st_mode ) ) {
       char **subfiles = msOGRRecursiveFileList( full_filename );
 
-      result_list = CSLMerge( result_list, subfiles );
+      result_list = msCSLConcatenate( result_list, subfiles );
 
       CSLDestroy( subfiles );
     }
@@ -509,8 +524,6 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     return MS_FAILURE;
 }
 
-#endif /* def USE_OGR */
-
 /************************************************************************/
 /*                        msOGRStdoutWriteFunction()                    */
 /************************************************************************/
@@ -521,6 +534,120 @@ static size_t msOGRStdoutWriteFunction(const void* ptr, size_t size, size_t nmem
     msIOContext *ioctx = (msIOContext*) stream;
     return msIO_contextWrite(ioctx, ptr, size * nmemb ) / size;
 }
+
+/************************************************************************/
+/*                      msOGROutputGetAdditonalFiles()                  */
+/*                                                                      */
+/*  Collect additional files specified in                               */
+/*  wfs/ows_additional_files_in_output of WEB.METADATA and LAYER.METADATA */
+/************************************************************************/
+
+/* Result to be freed with CSLDestroy() */
+static char** msOGROutputGetAdditonalFiles( mapObj *map )
+{
+    int i;
+    hashTableObj* hSetAdditionalFiles;
+    char** papszFiles = NULL;
+
+    hSetAdditionalFiles = msCreateHashTable();
+
+    for( i = -1; i < map->numlayers; i++ )
+    {
+        const char* value;
+        if( i < 0 )
+        {
+            value = msOWSLookupMetadata(&(map->web.metadata), "FO", "additional_files_in_output");
+        }
+        else
+        {
+            layerObj *layer = GET_LAYER(map, i);
+            if( !layer->resultcache || layer->resultcache->numresults == 0 )
+                continue;
+            value = msOWSLookupMetadata(&(layer->metadata), "FO", "additional_files_in_output");
+        }
+
+        if( value != NULL )
+        {
+            char** papszList = CSLTokenizeString2( value, ",", CSLT_HONOURSTRINGS );
+            char** papszListIter = papszList;
+            while( papszListIter && *papszListIter )
+            {
+                const char* file = *papszListIter;
+                VSIStatBufL sStat;
+
+                if( strncmp(file, "http://", strlen("http://")) == 0 ||
+                    strncmp(file, "https://", strlen("https://")) == 0 )
+                {
+                    /* Remote file ? We will use /vsicurl_streaming/ to read it */
+                    if( msLookupHashTable(hSetAdditionalFiles, file) == NULL )
+                    {
+                        msInsertHashTable(hSetAdditionalFiles, file, "YES");
+                        papszFiles = CSLAddString(papszFiles, CPLSPrintf("/vsicurl_streaming/%s", file));
+                    }
+                }
+                else
+                {
+                    int nLen = (int)strlen(file);
+                    char filename[MS_MAXPATHLEN];
+
+                    if( CPLIsFilenameRelative(file) )
+                    {
+                        if( !map->shapepath )
+                            msTryBuildPath(filename, map->mappath, file);
+                        else
+                            msTryBuildPath3(filename, map->mappath, map->shapepath, file);
+                    }
+                    else
+                        strlcpy(filename, file, MS_MAXPATHLEN);
+
+                    if( nLen > 2 && (
+                            strcmp(file + nLen - 1, "/") == 0 ||
+                            strcmp(file + nLen - 2, "/*") == 0 ) )
+                    {
+                        *strrchr(filename, '/') = '\0';
+                    }
+                    else if( nLen > 2 && (
+                            strcmp(file + nLen - 1, "\\") == 0 ||
+                            strcmp(file + nLen - 2, "\\*") == 0 ) )
+                    {
+                        *strrchr(filename, '\\') = '\0';
+                    }
+
+                    if( msLookupHashTable(hSetAdditionalFiles, filename) == NULL )
+                    {
+                        msInsertHashTable(hSetAdditionalFiles, filename, "YES");
+                        if( VSIStatL( filename, &sStat ) == 0 )
+                        {
+                            if( VSI_ISDIR( sStat.st_mode ) )
+                            {
+                                char** papszDirContent = msOGRRecursiveFileList(filename);
+                                papszFiles = msCSLConcatenate(papszFiles, papszDirContent);
+                                CSLDestroy(papszDirContent);
+                            }
+                            else
+                            {
+                                papszFiles = CSLAddString(papszFiles, filename);
+                            }
+                        }
+                        else
+                        {
+                            msDebug("File %s does not exist.\n", filename);
+                        }
+                    }
+                }
+
+                papszListIter ++;
+            }
+            CSLDestroy(papszList);
+        }
+    }
+    
+    msFreeHashTable(hSetAdditionalFiles);
+    
+    return papszFiles;
+}
+
+#endif /* def USE_OGR */
 
 /************************************************************************/
 /*                        msOGRWriteFromQuery()                         */
@@ -1055,10 +1182,15 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Handle the case of a multi-part result.                         */
   /* -------------------------------------------------------------------- */
   else if( EQUAL(form,"multipart") ) {
+    char **papszAdditionalFiles;
     static const char *boundary = "xxOGRBoundaryxx";
     msIO_setHeader("Content-Type","multipart/mixed; boundary=%s",boundary);
     msIO_sendHeaders();
     msIO_fprintf(stdout,"--%s\r\n",boundary );
+
+    papszAdditionalFiles = msOGROutputGetAdditonalFiles(map);
+    file_list = msCSLConcatenate(file_list, papszAdditionalFiles);
+    CSLDestroy(papszAdditionalFiles);
 
     for( i = 0; file_list != NULL && file_list[i] != NULL; i++ ) {
       FILE *fp;
@@ -1109,8 +1241,13 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     void *hZip;
     int bytes_read;
     char buffer[1024];
+    char **papszAdditionalFiles;
 
     hZip = CPLCreateZip( zip_filename, NULL );
+
+    papszAdditionalFiles = msOGROutputGetAdditonalFiles(map);
+    file_list = msCSLConcatenate(file_list, papszAdditionalFiles);
+    CSLDestroy(papszAdditionalFiles);
 
     for( i = 0; file_list != NULL && file_list[i] != NULL; i++ ) {
 
