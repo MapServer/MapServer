@@ -635,7 +635,16 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   /*      Setup the full datasource name.                                 */
   /* -------------------------------------------------------------------- */
-  fo_filename = msGetOutputFormatOption( format, "FILENAME", "result.dat" );
+#if !defined(CPL_ZIP_API_OFFERED)
+  form = msGetOutputFormatOption( format, "FORM", "multipart" );
+#else
+  form = msGetOutputFormatOption( format, "FORM", "zip" );
+#endif
+
+  if( EQUAL(form,"zip") )
+    fo_filename = msGetOutputFormatOption( format, "FILENAME", "result.zip" );
+  else
+    fo_filename = msGetOutputFormatOption( format, "FILENAME", "result.dat" );
 
   /* Validate that the filename does not contain any directory */
   /* information, which might lead to removal of unwanted files. (#4086) */
@@ -649,7 +658,43 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   }
 
   if( !EQUAL(storage,"stream") )
+  {
     msBuildPath( datasource_name, request_dir, fo_filename );
+
+    if( EQUAL(form,"zip") )
+    {
+      /* if generating a zip file, remove the zip extension for the internal */
+      /* filename */
+      if( EQUAL(CPLGetExtension(datasource_name), "zip") ) {
+        *strrchr(datasource_name, '.') = '\0';
+      }
+
+      /* and add .dat extension if user didn't provide another extension */
+      if( EQUAL(CPLGetExtension(datasource_name), "") ) {
+        strcat(datasource_name, ".dat");
+      }
+      else if( EQUAL(CPLGetExtension(datasource_name), "shp") )
+      {
+          int nNonEmptyLayers = 0;
+          for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
+            layerObj *layer = GET_LAYER(map, iLayer);
+            if( !layer->resultcache || layer->resultcache->numresults == 0 )
+              continue;
+            nNonEmptyLayers ++;
+          }
+          /* The shapefile driver will be somehow confused if trying to create */
+          /* a datasource named foo.shp when there are several layers in it */
+          /* It would create the first layer as datasource_name.shp and the next ones */
+          /* with layer_name.shp */
+          /* so remove the shp extension in that case, so that all layers are */
+          /* exported with their names */
+          if( nNonEmptyLayers > 1 )
+          {
+              *strrchr(datasource_name, '.') = '\0';
+          }
+      }
+    }
+  }
   else
     strcpy( datasource_name, "/vsistdout/" );
 
@@ -956,11 +1001,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   /*      Get list of resulting files.                                    */
   /* -------------------------------------------------------------------- */
-#if !defined(CPL_ZIP_API_OFFERED)
-  form = msGetOutputFormatOption( format, "FORM", "multipart" );
-#else
-  form = msGetOutputFormatOption( format, "FORM", "zip" );
-#endif
 
   if( EQUAL(form,"simple") ) {
     file_list = CSLAddString( NULL, datasource_name );
@@ -1097,7 +1137,12 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     CPLCloseZip( hZip );
 
     if( sendheaders ) {
-      msIO_setHeader("Content-Disposition","attachment; filename=%s",fo_filename);
+      const char* zip_filename = fo_filename;
+      /* Make sure the filename is ended by .zip */
+      if( !EQUAL(CPLGetExtension(zip_filename), "zip") &&
+          !EQUAL(CPLGetExtension(zip_filename), "kmz") )
+          zip_filename = CPLFormFilename(NULL, fo_filename, "zip");
+      msIO_setHeader("Content-Disposition","attachment; filename=%s",zip_filename);
       msIO_setHeader("Content-Type","application/zip");
       msIO_sendHeaders();
     }
