@@ -31,6 +31,10 @@
 
 #ifdef USE_GEOS
 
+// To avoid accidental use of non reentrant GEOS API.
+// (check only effective in GEOS >= 3.5)
+#define GEOS_USE_ONLY_R_API
+
 #include <geos_c.h>
 
 /*
