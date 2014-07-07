@@ -37,6 +37,71 @@
        msFree($1.data);
 }
 
+
+/*
+ *  Typemap for counted arrays of doubles <- PySequence
+ */
+%typemap(in,numinputs=1) (int nListSize, double* pListValues)
+{
+  int i;
+  /* %typemap(in,numinputs=1) (int nListSize, double* pListValues)*/
+  /* check if is List */
+  if ( !PySequence_Check($input) ) {
+    PyErr_SetString(PyExc_TypeError, "not a sequence");
+    SWIG_fail;
+  }
+  $1 = PySequence_Size($input);
+  $2 = (double*) malloc($1*sizeof(double));
+  for( i = 0; i<$1; i++ ) {
+    PyObject *o = PySequence_GetItem($input,i);
+    if ( !PyArg_Parse(o,"d",&$2[i]) ) {
+      PyErr_SetString(PyExc_TypeError, "not a number");
+      Py_DECREF(o);
+      SWIG_fail;
+    }
+    Py_DECREF(o);
+  }
+}
+
+
+%fragment("CreateTupleFromDoubleArray","header") %{
+static PyObject *
+CreateTupleFromDoubleArray( double *first, unsigned int size ) {
+  unsigned int i;
+  PyObject *out = PyTuple_New( size );
+  for( i=0; i<size; i++ ) {
+    PyObject *val = PyFloat_FromDouble( *first );
+    ++first;
+    PyTuple_SetItem( out, i, val );
+  }
+  return out;
+}
+%}
+
+%typemap(freearg) (int nListSize, double* pListValues)
+{
+  /* %typemap(freearg) (int nListSize, double* pListValues) */
+  if ($2) {
+    free((void*) $2);
+  }
+}
+
+
+%typemap(in,numinputs=0) (double** argout, int* pnListSize) ( double* argout, int nListSize ) {
+  /* %typemap(python,in,numinputs=0) (double *val, int*hasval) */
+  $1 = &argout;
+  $2 = &nListSize;
+}
+
+%typemap(argout,fragment="t_output_helper,CreateTupleFromDoubleArray") (double** argout, int* pnListSize) 
+{
+   /* %typemap(argout) (double* argout, int* pnListSize)  */
+  PyObject *r;
+  r = CreateTupleFromDoubleArray(*$1, *$2);
+  free(*$1);
+  $result = t_output_helper($result,r);
+}
+
 /**************************************************************************
  * MapServer Errors and Python Exceptions
  **************************************************************************

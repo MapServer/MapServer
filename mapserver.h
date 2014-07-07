@@ -939,8 +939,16 @@ extern "C" {
     double size;
     double minsize, maxsize;
 
+#if defined(SWIG) && defined(SWIGPYTHON) /* would probably make sense to mark it immutable for other binding languages than Python */
+  %immutable;
+#endif
     int patternlength;  /*moved from symbolObj in version 6.0*/
+#if defined(SWIG) && defined(SWIGPYTHON)
+  %mutable;
+#endif
+#if !(defined(SWIG) && defined(SWIGPYTHON)) /* in Python we use a special typemap for this */
     double pattern[MS_MAXPATTERNLENGTH]; /*moved from symbolObj in version 6.0*/
+#endif
 
     double gap; /*moved from symbolObj in version 6.0*/
     double initialgap;
