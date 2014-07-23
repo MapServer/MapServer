@@ -107,6 +107,7 @@ extern "C" {
     char routine[ROUTINELENGTH];
     char message[MESSAGELENGTH];
     int isreported;
+    int errorcount; /* number of subsequent errors */
 #ifndef SWIG
     struct errorObj *next;
 #endif
