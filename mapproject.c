@@ -254,10 +254,18 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
 
     testPoint = midPoint;
 
-    if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE )
+    if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE ) {
+      if (midPoint.x == subEnd.x && midPoint.y == subEnd.y)
+        return MS_FAILURE; /* break infinite loop */
+
       subEnd = midPoint;
-    else
+    }
+    else {
+      if (midPoint.x == subStart.x && midPoint.y == subStart.y)
+        return MS_FAILURE; /* break infinite loop */
+
       subStart = midPoint;
+    }
   }
 
   /* -------------------------------------------------------------------- */
