@@ -290,14 +290,14 @@ char *msAddErrorDisplayString(char *source, errorObj *error)
   if((source = msStringConcatenate(source, error->message)) == NULL) return(NULL);
   if (error->errorcount > 0) {
     char* pszTmp;
-    if((source = msStringConcatenate(source, " (")) == NULL) return(NULL);
+    if((source = msStringConcatenate(source, " (message repeated ")) == NULL) return(NULL);
     pszTmp = msIntToString(error->errorcount);
     if((source = msStringConcatenate(source, pszTmp)) == NULL) {
       msFree(pszTmp);
       return(NULL);
     }
     msFree(pszTmp);
-    if((source = msStringConcatenate(source, ")")) == NULL) return(NULL);
+    if((source = msStringConcatenate(source, " times)")) == NULL) return(NULL);
   }
 
   return source;
