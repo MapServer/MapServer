@@ -196,6 +196,7 @@ static errorObj *msInsertErrorObj(void)
       new_error->isreported = ms_error->isreported;
       strlcpy(new_error->routine, ms_error->routine, sizeof(new_error->routine));
       strlcpy(new_error->message, ms_error->message, sizeof(new_error->message));
+      new_error->errorcount = ms_error->errorcount;
 
       ms_error->next = new_error;
       ms_error->code = MS_NOERR;
@@ -350,6 +351,7 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
       }
       strlcpy(ms_error->message, message, sizeof(ms_error->message));
       ms_error->code = code;
+      ms_error->errorcount = 0;
   }
   else
       ++ms_error->errorcount;
