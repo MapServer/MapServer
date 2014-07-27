@@ -2861,7 +2861,8 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
 
       msFree(pszFontNameEscaped);
 
-      if (!bFont) {
+      // change from "!bFont" to "bFont" to allow work correctly with TTF font otherwise with TTF fonts the size is locked
+      if (bFont) {
         c->labels[0]->size = MS_MEDIUM;
       }
     } else if (eStylePartType == OGRSTCPen) {
