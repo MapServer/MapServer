@@ -434,17 +434,6 @@ int utfgridCleanData(imageObj *img)
     if(usedChar[decodeRendered(r->data->table[i].utfvalue)-1]==1){
         updatedData[dataCounter] = r->data->table[i];
 
-        //memmove(updatedData[dataCounter].datavalues,r->data->table[i].datavalues,sizeof(r->data->table[i].datavalues));
-        //memmove(updatedData[dataCounter].itemvalue,r->data->table[i].itemvalue,sizeof(r->data->table[i].itemvalue));
-        //updatedData[dataCounter].datavalues = r->data->table[i].datavalues;
-        //updatedData[dataCounter].itemvalue = r->data->table[i].itemvalue;
-        //updatedData[dataCounter].utfvalue = r->data->table[i].utfvalue;
-
-        //updatedData[dataCounter].datavalues = (char *) msSmallMalloc(sizeof(*r->data->table[i].datavalues));
-        //updatedData[dataCounter].itemvalue = (char *) msSmallMalloc(sizeof(*r->data->table[i].itemvalue));
-
-        //memcpy(updatedData[dataCounter].datavalues,r->data->table[i].datavalues,sizeof(shapeData));
-
         updatedData[dataCounter].serialid=dataCounter+1;
 
         utfvalue=encodeForRendering(dataCounter+1);
