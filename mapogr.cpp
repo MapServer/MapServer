@@ -84,6 +84,9 @@ static void msOGRCloseConnection( void *conn_handle );
  * does not include this new point.
  **********************************************************************/
 static void ogrPointsAddPoint(lineObj *line, double dX, double dY,
+#ifdef USE_POINT_Z_M
+                              double dZ,
+#endif
                               int lineindex, rectObj *bounds)
 {
   /* Keep track of shape bounds */
@@ -100,7 +103,7 @@ static void ogrPointsAddPoint(lineObj *line, double dX, double dY,
   line->point[line->numpoints].x = dX;
   line->point[line->numpoints].y = dY;
 #ifdef USE_POINT_Z_M
-  line->point[line->numpoints].z = 0.0;
+  line->point[line->numpoints].z = dZ;
   line->point[line->numpoints].m = 0.0;
 #endif
   line->numpoints++;
@@ -208,16 +211,25 @@ static int ogrGeomPoints(OGRGeometryH hGeom, shapeObj *outshp)
    * ------------------------------------------------------------------ */
   if( eGType == wkbPoint ) {
     ogrPointsAddPoint(line, OGR_G_GetX(hGeom, 0), OGR_G_GetY(hGeom, 0),
+#ifdef USE_POINT_Z_M
+                      OGR_G_GetZ(hGeom, 0),
+#endif
                       outshp->numlines-1, &(outshp->bounds));
   } else if( eGType == wkbLineString
              || eGType == wkbLinearRing ) {
     for(i=0; i<numpoints; i++)
       ogrPointsAddPoint(line, OGR_G_GetX(hGeom, i), OGR_G_GetY(hGeom, i),
+#ifdef USE_POINT_Z_M
+                        OGR_G_GetZ(hGeom, i),
+#endif
                         outshp->numlines-1, &(outshp->bounds));
   } else if( eGType == wkbMultiPoint ) {
     for(i=0; i<numpoints; i++) {
       OGRGeometryH hPoint = OGR_G_GetGeometryRef( hGeom, i );
       ogrPointsAddPoint(line, OGR_G_GetX(hPoint, 0), OGR_G_GetY(hPoint, 0),
+#ifdef USE_POINT_Z_M
+                        OGR_G_GetZ(hPoint, 0),
+#endif
                         outshp->numlines-1, &(outshp->bounds));
     }
   }
@@ -292,7 +304,11 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
     OGR_G_GetPoints(hGeom,
                     &(line.point[0].x), sizeof(pointObj),
                     &(line.point[0].y), sizeof(pointObj),
+#ifdef USE_POINT_Z_M
+                    &(line.point[0].z), sizeof(pointObj));
+#else
                     NULL, 0);
+#endif
 #endif
 
     for(j=0; j<numpoints; j++) {
@@ -323,6 +339,9 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
           line.point[line.numpoints-1].y != line.point[0].y  ) ) {
       line.point[line.numpoints].x = line.point[0].x;
       line.point[line.numpoints].y = line.point[0].y;
+#ifdef USE_POINT_Z_M
+      line.point[line.numpoints].z = line.point[0].z;
+#endif
       line.numpoints++;
     }
 

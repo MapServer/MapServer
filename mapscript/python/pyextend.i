@@ -400,3 +400,49 @@ def fromstring(data, mappath=None):
 }
 
 
+/******************************************************************************
+ * Extensions to styleObj
+ *****************************************************************************/
+
+%extend styleObj {
+
+    void pattern_set(int nListSize, double* pListValues)
+    {
+        if( nListSize < 2 )
+        {
+            msSetError(MS_SYMERR, "Not enough pattern elements. A minimum of 2 are required", "pattern_set()");
+            return;
+        }
+        if( nListSize > MS_MAXPATTERNLENGTH )
+        {
+            msSetError(MS_MISCERR, "Too many elements", "pattern_set()");
+            return;
+        }
+        memcpy( self->pattern, pListValues, sizeof(double) * nListSize);
+        self->patternlength = nListSize;
+    }
+
+    void pattern_get(double** argout, int* pnListSize)
+    {
+        *pnListSize = self->patternlength;
+        *argout = (double*) malloc(sizeof(double) * *pnListSize);
+        memcpy( *argout, self->pattern, sizeof(double) * *pnListSize);
+    }
+
+    void patternlength_set2(int patternlength)
+    {
+        msSetError(MS_MISCERR, "pattern is read-only", "patternlength_set()");
+    }
+
+%pythoncode {
+
+    __swig_setmethods__["patternlength"] = _mapscript.styleObj_patternlength_set2
+    __swig_getmethods__["patternlength"] = _mapscript.styleObj_patternlength_get
+    if _newclass:patternlength = _swig_property(_mapscript.styleObj_patternlength_get, _mapscript.styleObj_patternlength_set2)
+
+    __swig_setmethods__["pattern"] = _mapscript.styleObj_pattern_set
+    __swig_getmethods__["pattern"] = _mapscript.styleObj_pattern_get
+    if _newclass:pattern = _swig_property(_mapscript.styleObj_pattern_get, _mapscript.styleObj_pattern_set)
+}
+
+}

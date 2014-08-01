@@ -975,6 +975,7 @@ int msDrawLabelBounds(mapObj *map, imageObj *image, label_bounds *bnds, styleObj
   shape.numlines = 1;
   if(bnds->poly) {
     shape.line = bnds->poly;
+    return msDrawShadeSymbol(map,image,&shape,style,scalefactor);
   } else {
     pointObj pnts1[5];
     lineObj l;
@@ -984,9 +985,9 @@ int msDrawLabelBounds(mapObj *map, imageObj *image, label_bounds *bnds, styleObj
     pnts1[2].x = pnts1[3].x = bnds->bbox.maxx;
     pnts1[0].y = pnts1[3].y = pnts1[4].y = bnds->bbox.miny;
     pnts1[1].y = pnts1[2].y = bnds->bbox.maxy;
-    shape.line = &l;
+    shape.line = &l; // must return from this block
+    return msDrawShadeSymbol(map,image,&shape,style,scalefactor);
   }
-  return msDrawShadeSymbol(map,image,&shape,style,scalefactor);
 }
 
 int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbolObj *ts)

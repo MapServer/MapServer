@@ -196,12 +196,14 @@ static errorObj *msInsertErrorObj(void)
       new_error->isreported = ms_error->isreported;
       strlcpy(new_error->routine, ms_error->routine, sizeof(new_error->routine));
       strlcpy(new_error->message, ms_error->message, sizeof(new_error->message));
+      new_error->errorcount = ms_error->errorcount;
 
       ms_error->next = new_error;
       ms_error->code = MS_NOERR;
       ms_error->isreported = MS_FALSE;
       ms_error->routine[0] = '\0';
       ms_error->message[0] = '\0';
+      ms_error->errorcount = 0;
     }
   }
 
@@ -230,6 +232,7 @@ void msResetErrorList()
   ms_error->code = MS_NOERR;
   ms_error->routine[0] = '\0';
   ms_error->message[0] = '\0';
+  ms_error->errorcount = 0;
 
   /* -------------------------------------------------------------------- */
   /*      Cleanup our entry in the thread list.  This is mainly           */
@@ -286,6 +289,18 @@ char *msAddErrorDisplayString(char *source, errorObj *error)
   if((source = msStringConcatenate(source, ms_errorCodes[error->code])) == NULL) return(NULL);
   if((source = msStringConcatenate(source, " ")) == NULL) return(NULL);
   if((source = msStringConcatenate(source, error->message)) == NULL) return(NULL);
+  if (error->errorcount > 0) {
+    char* pszTmp;
+    if((source = msStringConcatenate(source, " (message repeated ")) == NULL) return(NULL);
+    pszTmp = msIntToString(error->errorcount);
+    if((source = msStringConcatenate(source, pszTmp)) == NULL) {
+      msFree(pszTmp);
+      return(NULL);
+    }
+    msFree(pszTmp);
+    if((source = msStringConcatenate(source, " times)")) == NULL) return(NULL);
+  }
+
   return source;
 }
 
@@ -311,24 +326,35 @@ char *msGetErrorString(char *delimiter)
 
 void msSetError(int code, const char *message_fmt, const char *routine, ...)
 {
-  errorObj *ms_error = msInsertErrorObj();
+  errorObj *ms_error;
   va_list args;
-
-  ms_error->code = code;
-
-  if(!routine)
-    strcpy(ms_error->routine, "");
-  else {
-    strlcpy(ms_error->routine, routine, sizeof(ms_error->routine));
-  }
+  char message[MESSAGELENGTH];
 
   if(!message_fmt)
-    strcpy(ms_error->message, "");
+    strcpy(message, "");
   else {
     va_start(args, routine);
-    vsnprintf( ms_error->message, MESSAGELENGTH, message_fmt, args );
+    vsnprintf( message, MESSAGELENGTH, message_fmt, args );
     va_end(args);
   }
+
+  ms_error = msGetErrorObj();
+
+  /* Insert the error to the list if it is not the same as the previous error*/
+  if (ms_error->code != code || !EQUAL(message, ms_error->message) || 
+                     !EQUAL(routine, ms_error->routine)) {
+      ms_error = msInsertErrorObj();
+      if(!routine)
+        strcpy(ms_error->routine, "");
+      else {
+        strlcpy(ms_error->routine, routine, sizeof(ms_error->routine));
+      }
+      strlcpy(ms_error->message, message, sizeof(ms_error->message));
+      ms_error->code = code;
+      ms_error->errorcount = 0;
+  }
+  else
+      ++ms_error->errorcount;
 
   /* Log a copy of errors to MS_ERRORFILE if set (handled automatically inside msDebug()) */
   msDebug("%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);

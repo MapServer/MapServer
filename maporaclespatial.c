@@ -1625,8 +1625,11 @@ static int osGetOrdinates(msOracleSpatialDataHandler *dthand, msOracleSpatialHan
     } /* end of gtype big-if */
   } /* end of not-null-object if */
 
-  if (compound_type)
+  if (compound_type){
+    if(gtype == 2003)
+      shape->type = MS_SHAPE_POLYGON;
     msFreeShape(&newshape);
+  }
 
   return MS_SUCCESS;
 }
