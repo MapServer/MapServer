@@ -2729,7 +2729,6 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       const char *labelTextString = OGR_ST_GetParamStr(hLabelStyle,
                                     OGRSTLabelTextString,
                                     &bIsNull);
-      msLoadExpressionString(&(c->text),(char*)labelTextString);
 
       if (c->numlabels == 0) {
         /* allocate a new label object */
@@ -2738,6 +2737,9 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         c->numlabels++;
         initLabel(c->labels[0]);
       }
+      freeExpression(&c->labels[0]->text);
+      c->labels[0]->text.type = MS_STRING;
+      c->labels[0]->text.string = msStrdup(labelTextString);
 
       c->labels[0]->angle = OGR_ST_GetParamDbl(hLabelStyle,
                             OGRSTLabelAngle, &bIsNull);
