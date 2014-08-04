@@ -2737,6 +2737,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         c->numlabels++;
         initLabel(c->labels[0]);
       }
+      freeExpression(&c->labels[0]->text);
       c->labels[0]->text.type = MS_STRING;
       c->labels[0]->text.string = msStrdup(labelTextString);
 
