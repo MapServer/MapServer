@@ -3405,7 +3405,7 @@ void resetClassStyle(classObj *class)
 
   /* reset labels */
   for(i=0; i<class->numlabels; i++) {
-    if(class->styles[i] != NULL) {
+    if(class->labels[i] != NULL) {
       if(freeLabel(class->labels[i]) == MS_SUCCESS ) {
         msFree(class->labels[i]);
       }
