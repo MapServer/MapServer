@@ -548,9 +548,9 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
 
         msFree(pszGMLId);
 
-        msIO_fprintf(stream, "%s    <gml:pointMembers>\n", tab);
         for(i=0; i<shape->numlines; i++) {
           for(j=0; j<shape->line[i].numpoints; j++) {
+            msIO_fprintf(stream, "%s    <gml:pointMember>\n", tab);
             pszGMLId = gmlCreateGeomId(nGMLVersion, pszFID, &id);
             msIO_fprintf(stream, "%s      <gml:Point%s>\n", tab, pszGMLId);
 #ifdef USE_POINT_Z_M
@@ -562,9 +562,9 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
             msIO_fprintf(stream, "%s        <gml:pos>%f %f</gml:pos>\n", tab, shape->line[i].point[j].x, shape->line[i].point[j].y);
             msIO_fprintf(stream, "%s      </gml:Point>\n", tab);
             msFree(pszGMLId);
+            msIO_fprintf(stream, "%s    </gml:pointMember>\n", tab);
           }
         }
-        msIO_fprintf(stream, "%s    </gml:pointMembers>\n", tab);
 
         msIO_fprintf(stream, "%s  </gml:MultiPoint>\n", tab);
 
@@ -622,8 +622,8 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s  <gml:MultiCurve%s>\n", tab, pszGMLId);
         msFree(pszGMLId);
 
-        msIO_fprintf(stream, "%s    <gml:curveMembers>\n", tab);
         for(i=0; i<shape->numlines; i++) {
+          msIO_fprintf(stream, "%s    <gml:curveMember>\n", tab);
           pszGMLId = gmlCreateGeomId(nGMLVersion, pszFID, &id);
           msIO_fprintf(stream, "%s      <gml:LineString%s>\n", tab, pszGMLId); /* no srsname at this point */
           msFree(pszGMLId);
@@ -642,8 +642,8 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
 
           msIO_fprintf(stream, "</gml:posList>\n");
           msIO_fprintf(stream, "%s      </gml:LineString>\n", tab);
+          msIO_fprintf(stream, "%s    </gml:curveMember>\n", tab);
         }
-        msIO_fprintf(stream, "%s    </gml:curveMembers>\n", tab);
 
         msIO_fprintf(stream, "%s  </gml:MultiCurve>\n", tab);
 
@@ -747,11 +747,11 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
           msIO_fprintf(stream, "%s  <gml:MultiSurface%s srsName=\"%s\">\n", tab, pszGMLId, srsname_encoded);
         else
           msIO_fprintf(stream, "%s  <gml:MultiSurface%s>\n", tab, pszGMLId);
-        msFree(pszGMLId),
+        msFree(pszGMLId);
 
-        msIO_fprintf(stream, "%s    <gml:surfaceMembers>\n", tab);
         for(i=0; i<shape->numlines; i++) { /* step through the outer rings */
           if(outerlist[i] == MS_TRUE) {
+            msIO_fprintf(stream, "%s    <gml:surfaceMember>\n", tab);
 
             /* get a list of inner rings for this polygon */
             innerlist = msGetInnerList(shape, i, outerlist);
@@ -807,9 +807,9 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
             msIO_fprintf(stream, "%s      </gml:Polygon>\n", tab);
 
             free(innerlist);
+            msIO_fprintf(stream, "%s    </gml:surfaceMember>\n", tab);
           }
         }
-        msIO_fprintf(stream, "%s    </gml:surfaceMembers>\n", tab);
         msIO_fprintf(stream, "%s  </gml:MultiSurface>\n", tab);
 
         free(outerlist);
