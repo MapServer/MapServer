@@ -1535,7 +1535,10 @@ int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int 
  */
 int msLayerSupportsSorting(layerObj *layer)
 {
-  if (layer && ((layer->connectiontype == MS_OGR) || (layer->connectiontype == MS_POSTGIS)))
+  if (layer && (
+         (layer->connectiontype == MS_OGR) || (layer->connectiontype == MS_POSTGIS) || (layer->connectiontype == MS_ORACLESPATIAL)
+               )
+     )
     return MS_TRUE;
 
   return MS_FALSE;
@@ -1559,7 +1562,7 @@ void msLayerSetSort(layerObj *layer, const sortByClause* sortBy)
     layer->sortBy.properties[i].item = msStrdup(sortBy->properties[i].item);
     layer->sortBy.properties[i].sortOrder = sortBy->properties[i].sortOrder;
   }
-}
+ }
 
 /*
  * msLayerBuildSQLOrderBy()
