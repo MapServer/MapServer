@@ -3742,11 +3742,11 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
               sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday);
               break;
             case TIME_RESOLUTION_HOUR:
-              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d:%02d','YYYY-MM-DD hh24')";
+              strtmpl = "to_timestamp('%d-%02d-%02d %02d','YYYY-MM-DD hh24')";
               sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour);
               break;
             case TIME_RESOLUTION_MINUTE:
-              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d:%02d','YYYY-MM-DD hh24:mi')";
+              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d','YYYY-MM-DD hh24:mi')";
               sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min);
               break;
             case TIME_RESOLUTION_SECOND:
