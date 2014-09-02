@@ -677,6 +677,8 @@ int msQueryByFilter(mapObj *map)
     return(MS_FAILURE);
   }
 
+  // fprintf(stderr, "in msQueryByFilter: filter=%s, filteritem=%s\n", map->query.filter.string, map->query.filteritem);
+
   msInitShape(&shape);
 
   if(map->query.layer < 0 || map->query.layer >= map->numlayers)
@@ -749,7 +751,7 @@ int msQueryByFilter(mapObj *map)
         // something is wrong if we get here... **pointer being freed was not allocated**
         goto query_error;
       } else
-        msCopyExpression(&lp->filter, &merged_filter);
+        msCopyExpression(&lp->filter, &merged_filter);      
     } else {
       msCopyExpression(&lp->filter, &map->query.filter); /* apply new filter */
     }
@@ -790,9 +792,9 @@ int msQueryByFilter(mapObj *map)
 
     search_rect = map->query.rect;
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
       msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
-    else
+    } else
       lp->project = MS_FALSE;
 #endif
 
@@ -1002,16 +1004,25 @@ int msQueryByRect(mapObj *map)
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) {
-        msFreeShape(&searchshape);
-        return(MS_FAILURE);
+      msFreeShape(&searchshape);
+      return(MS_FAILURE);
     }
     msLayerEnablePaging(lp, paging);
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) {
-        msFreeShape(&searchshape);
-        return(MS_FAILURE);
+      msFreeShape(&searchshape);
+      return(MS_FAILURE);
+    }
+
+    /* translate filter (if necessary) */
+    if(!msLayerSupportsCommonFilters(lp)) {
+      status = msLayerTranslateFilter(lp, &lp->filter, lp->filteritem);
+      if(status != MS_SUCCESS) {
+	msFreeShape(&searchshape);
+	return(MS_FAILURE);
+      }
     }
 
 #ifdef USE_PROJ
@@ -1020,6 +1031,7 @@ int msQueryByRect(mapObj *map)
     else
       lp->project = MS_FALSE;
 #endif
+
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
