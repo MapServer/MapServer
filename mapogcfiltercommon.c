@@ -464,13 +464,17 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
       if(nLayerUnit == -1) nLayerUnit = GetMapserverUnitUsingProj(&lp->map->projection);
 
       if (nUnit >= 0 && nUnit != nLayerUnit)
-        dfDistance *= msInchesPerUnit(nUnit,0)/msInchesPerUnit(nLayerUnit,0); /* in layer units */
+        dfDistance *= msInchesPerUnit(nUnit,0)/msInchesPerUnit(nLayerUnit,0); /* target is layer units */
     }
 
     psTmpShape = psQueryShape;
   }
 
   if (psTmpShape) {
+
+    /*
+    ** target is layer projection
+    */
     if(lp->projection.numargs > 0) {
       if (psNode->pszSRS)
         msInitProjection(&sProjTmp);
@@ -679,7 +683,7 @@ int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const ch
   map->query.filter.type = MS_EXPRESSION; /* a logical expression */
   map->query.layer = iLayerIndex;
 
-  /* TODO: if there is a bbox in the node, get it and set the map extent */
+  /* TODO: if there is a bbox in the node, get it and set the map extent (projected to map->projection */
   map->query.rect = map->extent;
 
   retval = msQueryByFilter(map);
