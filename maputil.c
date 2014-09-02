@@ -2366,10 +2366,23 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
 {
   char *online_resource = NULL;
   const char *value, *hostname, *port, *script, *protocol="http", *mapparam=NULL;
-  int mapparam_len = 0;
+  char **hostname_array = NULL;
+  int mapparam_len = 0, hostname_array_len = 0;
 
-  hostname = getenv("SERVER_NAME");
-  port = getenv("SERVER_PORT");
+  hostname = getenv("HTTP_X_FORWARDED_HOST");
+  if(!hostname)
+    hostname = getenv("SERVER_NAME");
+  else {
+    if(strchr(hostname,',')) {
+      hostname_array = msStringSplit(hostname,',', &hostname_array_len);
+      hostname = hostname_array[0];
+    }
+  }
+
+  port = getenv("HTTP_X_FORWARDED_PORT");
+  if(!port)
+    port = getenv("SERVER_PORT");
+  
   script = getenv("SCRIPT_NAME");
 
   /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
@@ -2377,6 +2390,9 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
   if ( ((value=getenv("HTTPS")) && strcasecmp(value, "on") == 0) ||
        ((value=getenv("SERVER_PORT")) && atoi(value) == 443) ) {
     protocol = "https";
+  }
+  if ( (value=getenv("HTTP_X_FORWARDED_PROTO")) ) {
+    protocol = value;
   }
 
   /* If map=.. was explicitly set then we'll include it in onlineresource
@@ -2410,6 +2426,9 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
   } else {
     msSetError(MS_CGIERR, "Impossible to establish server URL.", "msBuildOnlineResource()");
     return NULL;
+  }
+  if(hostname_array) {
+    msFreeCharArray(hostname_array, hostname_array_len);
   }
 
   return online_resource;

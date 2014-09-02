@@ -3833,7 +3833,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     snprintf(szTmp, sizeof(szTmp), "<%sTextSymbolizer>\n",  sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-    snprintf(szTmp, sizeof(szTmp), "<%sLabel>%s</%sLabel>\n",  sNameSpace,
+    snprintf(szTmp, sizeof(szTmp), "<%sLabel><ogc:PropertyName>%s</ogc:PropertyName></%sLabel>\n",  sNameSpace,
              psLayer->labelitem, sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
