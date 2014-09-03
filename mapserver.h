@@ -2411,7 +2411,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   int msLayerSupportsSorting(layerObj *layer);
   void msLayerSetSort(layerObj *layer, const sortByClause* sortBy);
-  char* msLayerBuildSQLOrderBy(layerObj *layer);
+  MS_DLL_EXPORT char* msLayerBuildSQLOrderBy(layerObj *layer);
 
   /* These are special because SWF is using these */
   int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
