@@ -26,7 +26,43 @@ Join the MapServer user mailing list online at:
 
   http://www.mapserver.org/community/lists.html
 
- 
+
+-----------
+Example:
+-----------
+  layer
+    name "idw"
+    type raster
+    connectiontype idw #interpolation method
+    connection "points" #layer that contain data
+    status on
+    processing "RANGE_COLORSPACE=HSL"
+    processing "IDW_RADIUS=200"    #optional param for interpolation
+    processing "IDW_POWER=2"    #optional param for interpolation
+    processing "IDW_COMPUTE_BORDERS=OFF"    #optional param for interpolation
+    offsite 0 0 0
+    class
+      style
+        COLORRANGE  "#00ff0000"  "#00ff00ff"
+        DATARANGE 0 3
+      end
+      style
+        COLORRANGE  "#00ff00ff"  "#ff0000ff"
+        DATARANGE 3 30
+      end
+    end
+  end
+  layer
+    name "points"
+    status on
+    type POINT
+    data "points.shp" #data for interpolation
+    class
+      style
+        size [intensity] #attribute to interpolate
+      end
+     end
+  end
 
 -----------
 Credits
