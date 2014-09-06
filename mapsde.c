@@ -35,8 +35,6 @@
 #include "maptime.h"
 #include "mapthread.h"
 
-
-
 #ifdef USE_SDE
 #include <sdetype.h> /* ESRI SDE Client Includes */
 #include <sdeerno.h>
@@ -919,14 +917,12 @@ static SE_QUERYINFO getSDEQueryInfo(layerObj *layer)
   }
 
   /* set the "where" clause */
-  if(!(layer->filter.string))
+  if(!(layer->filter.native_string))
     /* set to empty string */
-    status = SE_queryinfo_set_where_clause (query_info,
-                                            (const CHAR * ) "");
+    status = SE_queryinfo_set_where_clause (query_info, (const CHAR * ) "");
   else
-    /* set to the layer's filter.string */
-    status = SE_queryinfo_set_where_clause (query_info,
-                                            (const CHAR * ) (layer->filter.string));
+    /* set to the layer's filter.native_string */
+    status = SE_queryinfo_set_where_clause (query_info, (const CHAR * ) (layer->filter.native_string));
   if(status != SE_SUCCESS) {
     sde_error(  status,
                 "getSDEQueryInfo()",
@@ -999,7 +995,7 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id)
      set our FILTER statement to reflect this. */
   if ((sde->join_table) && (id != NULL)) {
     pszId = msLongToString(*id);
-    strcat(full_filter, layer->filter.string);
+    strcat(full_filter, layer->filter.native_string);
     strcat(full_filter, " AND ");
     strcat(full_filter, sde->row_id_column);
     strcat(full_filter, "=");
@@ -1009,7 +1005,7 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id)
 
 
   } else {
-    sql->where = layer->filter.string;
+    sql->where = layer->filter.native_string;
   }
 
   msFree(full_filter);
@@ -1533,7 +1529,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
       return(MS_FAILURE);
     }
   } else {
-    if (!layer->filter.string) {
+    if (!layer->filter.native_string) {
       sde_error(  -51,
                   "msSDELayerWhichShapes()",
                   "A join table is specified, but no FILTER is"
@@ -2124,10 +2120,12 @@ void msSDELayerFreeItemInfo(layerObj *layer)
 
 #ifdef USE_SDE_PLUGIN
 MS_DLL_EXPORT  int
-PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
+PluginInitializeVirtualTable(layerVTableObj *vtable, layerObj *layer)
 {
   assert(layer != NULL);
   assert(vtable != NULL);
+
+  /* vtable->LayerTranslateFilter, use default */
 
   vtable->LayerInitItemInfo = msSDELayerInitItemInfo;
   vtable->LayerFreeItemInfo = msSDELayerFreeItemInfo;
@@ -2140,15 +2138,15 @@ PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
   vtable->LayerGetItems = msSDELayerGetItems;
   vtable->LayerGetExtent = msSDELayerGetExtent;
 
-  /* layer->vtable->LayerGetAutoStyle, use default */
-  /* layer->vtable->LayerApplyFilterToLayer, use default */
+  /* vtable->LayerGetAutoStyle, use default */
+  /* vtable->LayerApplyFilterToLayer, use default */
 
   /* SDE uses pooled connections, close from msCloseConnections */
   vtable->LayerCloseConnection = msSDELayerCloseConnection;
 
   vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
   vtable->LayerCreateItems = msSDELayerCreateItems;
-  /* layer->vtable->LayerGetNumFeatures, use default */
+  /* vtable->LayerGetNumFeatures, use default */
 
   return MS_SUCCESS;
 }

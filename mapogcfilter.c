@@ -115,7 +115,7 @@ int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression)
         pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
       pszBuffer = msStringConcatenate(pszBuffer, ") and ");
     } else if (lp->filter.string)
-      freeExpression(&lp->filter);
+      msFreeExpression(&lp->filter);
 
     pszBuffer = msStringConcatenate(pszBuffer, pszFinalExpression);
 
@@ -387,8 +387,7 @@ int FLTIsGeosNode(char *pszValue)
 /************************************************************************/
 int FLTIsSimpleFilterNoSpatial(FilterEncodingNode *psNode)
 {
-  if (FLTIsSimpleFilter(psNode) &&
-      FLTNumberOfFilterType(psNode, "BBOX") == 0)
+  if (FLTIsSimpleFilter(psNode) && FLTNumberOfFilterType(psNode, "BBOX") == 0)
     return MS_TRUE;
 
   return MS_FALSE;
@@ -398,8 +397,7 @@ int FLTIsSimpleFilterNoSpatial(FilterEncodingNode *psNode)
 /*                      FLTApplySimpleSQLFilter()                       */
 /************************************************************************/
 
-int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
-                            int iLayerIndex)
+int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex)
 {
   layerObj *lp = NULL;
   char *szExpression = NULL;
@@ -427,17 +425,14 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
     msFreeProjection(&sProjTmp);
   }
   
-  if( lp->connectiontype == MS_OGR )
-  {
+  if( lp->connectiontype == MS_OGR ) {
     pszTimeValue = FLTGetDuring(psNode, &pszTimeField);
   }
 
   /* make sure that the layer can be queried*/
-  if (!lp->template)
-    lp->template = msStrdup("ttt.html");
+  if (!lp->template) lp->template = msStrdup("ttt.html");
 
-  /* if there is no class, create at least one, so that query by rect
-     would work*/
+  /* if there is no class, create at least one, so that query by rect would work */
   if (lp->numclasses == 0) {
     if (msGrowLayerClasses(lp) == NULL)
       return MS_FAILURE;
@@ -480,9 +475,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 
   }
 
-
   if (szExpression) {
-
     if (bConcatWhere)
       pszBuffer = msStringConcatenate(pszBuffer, "WHERE ");
 
@@ -496,8 +489,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
         pszBuffer = msStringConcatenate(pszBuffer, lp->filter.string);
       pszBuffer = msStringConcatenate(pszBuffer, ") and ");
     } else if (lp->filter.string)
-      freeExpression(&lp->filter);
-
+      msFreeExpression(&lp->filter);
 
     pszBuffer = msStringConcatenate(pszBuffer, szExpression);
 
@@ -570,10 +562,6 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
   /* return MS_SUCCESS; */
 }
 
-
-
-
-
 /************************************************************************/
 /*                            FLTIsSimpleFilter                         */
 /*                                                                      */
@@ -581,6 +569,8 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map,
 /************************************************************************/
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
 {
+  return MS_FALSE;
+
   if (FLTValidForBBoxFilter(psNode)) {
     if (FLTNumberOfFilterType(psNode, "DWithin") == 0 &&
         FLTNumberOfFilterType(psNode, "Intersect") == 0 &&
@@ -599,16 +589,13 @@ int FLTIsSimpleFilter(FilterEncodingNode *psNode)
   return FALSE;
 }
 
-
-
 /************************************************************************/
 /*                          FLTApplyFilterToLayer                       */
 /*                                                                      */
 /*      Use the filter encoding node to create mapserver expressions    */
 /*      and apply it to the layer.                                      */
 /************************************************************************/
-int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-                          int iLayerIndex)
+int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex)
 {
   layerObj *layer = GET_LAYER(map, iLayerIndex);
 
@@ -618,7 +605,6 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
       return rv;
   }
   return layer->vtable->LayerApplyFilterToLayer(psNode, map,  iLayerIndex);
-
 }
 
 /************************************************************************/
@@ -626,8 +612,7 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 /*                                                                      */
 /* Helper function for layer virtual table architecture                 */
 /************************************************************************/
-int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-                                      int iLayerIndex)
+int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex)
 {
   /* ==================================================================== */
   /*      Check here to see if it is a simple filter and if that is       */
@@ -635,8 +620,7 @@ int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
   /*      the layer.                                                      */
   /* ==================================================================== */
   layerObj* lp = GET_LAYER(map, iLayerIndex);
-  if (FLTIsSimpleFilter(psNode) &&
-      !(lp->connectiontype == MS_OGR && !FLTHasUniqueTopLevelDuringFilter(psNode)) ) {
+  if (FLTIsSimpleFilter(psNode) && !(lp->connectiontype == MS_OGR && !FLTHasUniqueTopLevelDuringFilter(psNode)) ) {
     return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
   }
 

@@ -1669,8 +1669,8 @@ void initLabel(labelObj *label)
     label->bindings[i].index = -1;
   }
 
-  initExpression(&(label->expression));
-  initExpression(&(label->text));
+  msInitExpression(&(label->expression));
+  msInitExpression(&(label->text));
 
   label->leader = NULL;
 
@@ -1710,8 +1710,8 @@ int freeLabel(labelObj *label)
   for(i=0; i<MS_LABEL_BINDING_LENGTH; i++)
     msFree(label->bindings[i].item);
 
-  freeExpression(&(label->expression));
-  freeExpression(&(label->text));
+  msFreeExpression(&(label->expression));
+  msFreeExpression(&(label->text));
 
   if(label->leader) {
     freeLabelLeader(label->leader);
@@ -1804,7 +1804,7 @@ static int loadLabel(labelObj *label)
         if(loadExpression(&(label->expression)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
         if(msyysource == MS_URL_TOKENS) {
           msSetError(MS_MISCERR, "URL-based EXPRESSION configuration not supported." , "loadLabel()");
-          freeExpression(&(label->expression));
+          msFreeExpression(&(label->expression));
           return(-1);
         }
         break;
@@ -1977,7 +1977,7 @@ static int loadLabel(labelObj *label)
         if(loadExpression(&(label->text)) == -1) return(-1); /* loadExpression() cleans up previously allocated expression */
         if(msyysource == MS_URL_TOKENS) {
           msSetError(MS_MISCERR, "URL-based TEXT configuration not supported for labels." , "loadLabel()");
-          freeExpression(&(label->text));
+          msFreeExpression(&(label->text));
           return(-1);
         }
         if((label->text.type != MS_STRING) && (label->text.type != MS_EXPRESSION)) {
@@ -2145,16 +2145,17 @@ char* msWriteLabelToString(labelObj *label)
   return (char*)buffer.data;
 }
 
-void initExpression(expressionObj *exp)
+void msInitExpression(expressionObj *exp)
 {
   exp->type = MS_STRING;
   exp->string = NULL;
+  exp->native_string = NULL;
   exp->compiled = MS_FALSE;
   exp->flags = 0;
   exp->tokens = exp->curtoken = NULL;
 }
 
-void freeExpressionTokens(expressionObj *exp)
+void msFreeExpressionTokens(expressionObj *exp)
 {
   tokenListNodeObjPtr node = NULL;
   tokenListNodeObjPtr nextNode = NULL;
@@ -2165,6 +2166,8 @@ void freeExpressionTokens(expressionObj *exp)
     node = exp->tokens;
     while (node != NULL) {
       nextNode = node->next;
+
+      msFree(node->tokensrc); /* not set very often */
 
       switch(node->token) {
         case MS_TOKEN_BINDING_DOUBLE:
@@ -2192,23 +2195,26 @@ void freeExpressionTokens(expressionObj *exp)
   }
 }
 
-void freeExpression(expressionObj *exp)
+void msFreeExpression(expressionObj *exp)
 {
   if(!exp) return;
   msFree(exp->string);
+  msFree(exp->native_string);
   if((exp->type == MS_REGEX) && exp->compiled) ms_regfree(&(exp->regex));
-  freeExpressionTokens(exp);
-  initExpression(exp); /* re-initialize */
+  msFreeExpressionTokens(exp);
+  msInitExpression(exp); /* re-initialize */
 }
 
 int loadExpression(expressionObj *exp)
 {
-  /* TODO: should we fall freeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */
+  /* TODO: should we fall msFreeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */ 
 
   msyystring_icase = MS_TRUE;
   if((exp->type = getSymbol(6, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX,MS_LIST)) == -1) return(-1);
-  if (exp->string != NULL)
+  if (exp->string != NULL) {
     msFree(exp->string);
+    msFree(exp->native_string);
+  }
   exp->string = msStrdup(msyystring_buffer);
 
   if(exp->type == MS_ISTRING) {
@@ -2251,7 +2257,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   msyystring = value;
   msyylex(); /* sets things up but processes no tokens */
 
-  freeExpression(exp); /* we're totally replacing the old expression so free (which re-inits) to start over */
+  msFreeExpression(exp); /* we're totally replacing the old expression so free (which re-inits) to start over */
 
   msyystring_icase = MS_TRUE;
   if((exp->type = getSymbol2(5, MS_EXPRESSION,MS_REGEX,MS_IREGEX,MS_ISTRING,MS_LIST)) != -1) {
@@ -2424,15 +2430,15 @@ void initCluster(clusterObj *cluster)
   cluster->maxdistance = 10;
   cluster->buffer = 0;
   cluster->region = NULL;
-  initExpression(&(cluster->group));
-  initExpression(&(cluster->filter));
+  msInitExpression(&(cluster->group));
+  msInitExpression(&(cluster->filter));
 }
 
 void freeCluster(clusterObj *cluster)
 {
   msFree(cluster->region);
-  freeExpression(&(cluster->group));
-  freeExpression(&(cluster->filter));
+  msFreeExpression(&(cluster->group));
+  msFreeExpression(&(cluster->filter));
 }
 
 int loadCluster(clusterObj *cluster)
@@ -2570,7 +2576,7 @@ int initStyle(styleObj *style)
   style->autoangle= MS_FALSE;
   style->opacity = 100; /* fully opaque */
 
-  initExpression(&(style->_geomtransform));
+  msInitExpression(&(style->_geomtransform));
   style->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
 
   style->patternlength = 0; /* solid line */
@@ -2900,7 +2906,7 @@ int freeStyle(styleObj *style)
   }
 
   msFree(style->symbolname);
-  freeExpression(&style->_geomtransform);
+  msFreeExpression(&style->_geomtransform);
   msFree(style->rangeitem);
 
   for(i=0; i<MS_STYLE_BINDING_LENGTH; i++)
@@ -3059,10 +3065,10 @@ int initClass(classObj *class)
   class->debug = MS_OFF;
   MS_REFCNT_INIT(class);
 
-  initExpression(&(class->expression));
+  msInitExpression(&(class->expression));
   class->name = NULL;
   class->title = NULL;
-  initExpression(&(class->text));
+  msInitExpression(&(class->text));
 
   class->template = NULL;
 
@@ -3098,8 +3104,8 @@ int freeClass(classObj *class)
     return MS_FAILURE;
   }
 
-  freeExpression(&(class->expression));
-  freeExpression(&(class->text));
+  msFreeExpression(&(class->expression));
+  msFreeExpression(&(class->text));
   msFree(class->name);
   msFree(class->title);
   msFree(class->template);
@@ -3284,7 +3290,7 @@ void resetClassStyle(classObj *class)
 
   /* reset labels */
   for(i=0; i<class->numlabels; i++) {
-    if(class->styles[i] != NULL) {
+    if(class->labels[i] != NULL) {
       if(freeLabel(class->labels[i]) == MS_SUCCESS ) {
         msFree(class->labels[i]);
       }
@@ -3293,8 +3299,8 @@ void resetClassStyle(classObj *class)
   }
   class->numlabels = 0;
 
-  freeExpression(&(class->text));
-  initExpression(&(class->text));
+  msFreeExpression(&(class->text));
+  msInitExpression(&(class->text));
 
   /* reset styles */
   for(i=0; i<class->numstyles; i++) {
@@ -3367,7 +3373,7 @@ int loadClass(classObj *class, layerObj *layer)
         if(msyysource == MS_URL_TOKENS) {
           if(msValidateParameter(class->expression.string, msLookupHashTable(&(class->validation), "expression"), msLookupHashTable(&(layer->validation), "expression"), msLookupHashTable(&(map->web.validation), "expression"), NULL) != MS_SUCCESS) {
             msSetError(MS_MISCERR, "URL-based EXPRESSION configuration failed pattern validation." , "loadClass()");
-            freeExpression(&(class->expression));
+            msFreeExpression(&(class->expression));
             return(-1);
           }
         }
@@ -3454,7 +3460,7 @@ int loadClass(classObj *class, layerObj *layer)
         if(msyysource == MS_URL_TOKENS) {
           if(msValidateParameter(class->text.string, msLookupHashTable(&(class->validation), "text"), msLookupHashTable(&(layer->validation), "text"), msLookupHashTable(&(map->web.validation), "text"), NULL) != MS_SUCCESS) {
             msSetError(MS_MISCERR, "URL-based TEXT configuration failed pattern validation." , "loadClass()");
-            freeExpression(&(class->text));
+            msFreeExpression(&(class->text));
             return(-1);
           }
         }
@@ -3780,7 +3786,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->resultcache= NULL;
 
-  initExpression(&(layer->filter));
+  msInitExpression(&(layer->filter));
   layer->filteritem = NULL;
   layer->filteritemindex = -1;
 
@@ -3812,10 +3818,10 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->maskimage = NULL;
   layer->grid = NULL;
 
-  initExpression(&(layer->_geomtransform));
+  msInitExpression(&(layer->_geomtransform));
   layer->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
 
-  initExpression(&(layer->utfdata));
+  msInitExpression(&(layer->utfdata));
   layer->utfitem = NULL;
   layer->utfitemindex = -1;
   
@@ -3884,7 +3890,7 @@ int freeLayer(layerObj *layer)
   msFree(layer->classgroup);
 
   msFreeProjection(&(layer->projection));
-  freeExpression(&layer->_geomtransform);
+  msFreeExpression(&layer->_geomtransform);
   
   freeCluster(&layer->cluster);
 
@@ -3916,7 +3922,7 @@ int freeLayer(layerObj *layer)
   msFree(layer->styleitem);
 
   msFree(layer->filteritem);
-  freeExpression(&(layer->filter));
+  msFreeExpression(&(layer->filter));
 
   msFree(layer->requires);
   msFree(layer->labelrequires);
@@ -3945,7 +3951,7 @@ int freeLayer(layerObj *layer)
     msFree(layer->grid);
   }
 
-  freeExpression(&(layer->utfdata));
+  msFreeExpression(&(layer->utfdata));
   msFree(layer->utfitem);
   
   for(i=0;i<layer->sortBy.nProperties;i++)
@@ -4200,7 +4206,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         if(msyysource == MS_URL_TOKENS) {
           if(msValidateParameter(layer->filter.string, msLookupHashTable(&(layer->validation), "filter"), msLookupHashTable(&(map->web.validation), "filter"), NULL, NULL) != MS_SUCCESS) {
             msSetError(MS_MISCERR, "URL-based FILTER configuration failed pattern validation." , "loadLayer()");
-            freeExpression(&(layer->filter));
+            msFreeExpression(&(layer->filter));
             return(-1);
           }
         }

@@ -31,8 +31,6 @@
 
 #include "mapserver-config.h"
 
-
-
 /*
 ** Main includes. If a particular header was needed by several .c files then
 ** I just put it here. What the hell, it works and it's all right here. -SDL-
@@ -315,6 +313,8 @@ extern "C" {
 #define MS_MAX(a,b) (((a)>(b))?(a):(b))
 #define MS_ABS(a) (((a)<0) ? -(a) : (a))
 #define MS_SGN(a) (((a)<0) ? -1 : 1)
+
+#define MS_STRING_IS_NULL_OR_EMPTY(s) ((!s || s[0] == '\0') ? MS_TRUE:MS_FALSE)
 
 #define MS_NINT_GENERIC(x) ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
 
@@ -655,20 +655,19 @@ extern "C" {
   /************************************************************************/
 
   enum MS_TOKEN_LOGICAL_ENUM { MS_TOKEN_LOGICAL_AND=300, MS_TOKEN_LOGICAL_OR, MS_TOKEN_LOGICAL_NOT };
-  enum MS_TOKEN_LITERAL_ENUM { MS_TOKEN_LITERAL_NUMBER=310, MS_TOKEN_LITERAL_STRING, MS_TOKEN_LITERAL_TIME, MS_TOKEN_LITERAL_SHAPE };
+  enum MS_TOKEN_LITERAL_ENUM { MS_TOKEN_LITERAL_NUMBER=310, MS_TOKEN_LITERAL_STRING, MS_TOKEN_LITERAL_TIME, MS_TOKEN_LITERAL_SHAPE, MS_TOKEN_LITERAL_BOOLEAN };
   enum MS_TOKEN_COMPARISON_ENUM {
     MS_TOKEN_COMPARISON_EQ=320, MS_TOKEN_COMPARISON_NE, MS_TOKEN_COMPARISON_GT, MS_TOKEN_COMPARISON_LT, MS_TOKEN_COMPARISON_LE, MS_TOKEN_COMPARISON_GE, MS_TOKEN_COMPARISON_IEQ,
     MS_TOKEN_COMPARISON_RE, MS_TOKEN_COMPARISON_IRE,
     MS_TOKEN_COMPARISON_IN, MS_TOKEN_COMPARISON_LIKE,
-    MS_TOKEN_COMPARISON_INTERSECTS, MS_TOKEN_COMPARISON_DISJOINT, MS_TOKEN_COMPARISON_TOUCHES, MS_TOKEN_COMPARISON_OVERLAPS, MS_TOKEN_COMPARISON_CROSSES, MS_TOKEN_COMPARISON_WITHIN, MS_TOKEN_COMPARISON_CONTAINS,
-    MS_TOKEN_COMPARISON_BEYOND, MS_TOKEN_COMPARISON_DWITHIN
+    MS_TOKEN_COMPARISON_INTERSECTS, MS_TOKEN_COMPARISON_DISJOINT, MS_TOKEN_COMPARISON_TOUCHES, MS_TOKEN_COMPARISON_OVERLAPS, MS_TOKEN_COMPARISON_CROSSES, MS_TOKEN_COMPARISON_WITHIN, MS_TOKEN_COMPARISON_CONTAINS, MS_TOKEN_COMPARISON_EQUALS, MS_TOKEN_COMPARISON_BEYOND, MS_TOKEN_COMPARISON_DWITHIN
   };
   enum MS_TOKEN_FUNCTION_ENUM {
-    MS_TOKEN_FUNCTION_LENGTH=340, MS_TOKEN_FUNCTION_TOSTRING, MS_TOKEN_FUNCTION_COMMIFY, MS_TOKEN_FUNCTION_AREA, MS_TOKEN_FUNCTION_ROUND, MS_TOKEN_FUNCTION_FROMTEXT,
+    MS_TOKEN_FUNCTION_LENGTH=350, MS_TOKEN_FUNCTION_TOSTRING, MS_TOKEN_FUNCTION_COMMIFY, MS_TOKEN_FUNCTION_AREA, MS_TOKEN_FUNCTION_ROUND, MS_TOKEN_FUNCTION_FROMTEXT,
     MS_TOKEN_FUNCTION_BUFFER, MS_TOKEN_FUNCTION_DIFFERENCE, MS_TOKEN_FUNCTION_SIMPLIFY, MS_TOKEN_FUNCTION_SIMPLIFYPT, MS_TOKEN_FUNCTION_GENERALIZE, MS_TOKEN_FUNCTION_SMOOTHSIA, MS_TOKEN_FUNCTION_JAVASCRIPT,
     MS_TOKEN_FUNCTION_UPPER, MS_TOKEN_FUNCTION_LOWER, MS_TOKEN_FUNCTION_INITCAP, MS_TOKEN_FUNCTION_FIRSTCAP
   };
-  enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=360, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE, MS_TOKEN_BINDING_MAP_CELLSIZE, MS_TOKEN_BINDING_DATA_CELLSIZE };
+  enum MS_TOKEN_BINDING_ENUM { MS_TOKEN_BINDING_DOUBLE=370, MS_TOKEN_BINDING_INTEGER, MS_TOKEN_BINDING_STRING, MS_TOKEN_BINDING_TIME, MS_TOKEN_BINDING_SHAPE, MS_TOKEN_BINDING_MAP_CELLSIZE, MS_TOKEN_BINDING_DATA_CELLSIZE };
   enum MS_PARSE_TYPE_ENUM { MS_PARSE_TYPE_BOOLEAN, MS_PARSE_TYPE_STRING, MS_PARSE_TYPE_SHAPE };
 
 #ifndef SWIG
@@ -690,6 +689,7 @@ extern "C" {
   typedef struct tokenListNode {
     int token;
     tokenValueObj tokenval;
+    char *tokensrc; /* on occassion we may want to access to the original source string (e.g. date/time) */
     struct tokenListNode *next;
     struct tokenListNode *tailifhead; /* this is the tail node in the list if this is the head element, otherwise NULL */
   } tokenListNodeObj;
@@ -710,6 +710,8 @@ extern "C" {
     /* regular expression options */
     ms_regex_t regex; /* compiled regular expression to be matched */
     int compiled;
+
+    char *native_string; /* RFC 91 */
   } expressionObj;
 
   typedef struct {
@@ -829,10 +831,8 @@ extern "C" {
     int  startindex;
     int  only_cache_result_count; /* set to 1 sometimes by WFS 2.0 GetFeature request */
     
-    char *item; /* by attribute */
-    char *str;
-
-    expressionObj *filter; /* by filter */
+    expressionObj filter; /* by filter */
+    char *filteritem;
 
     int slayer; /* selection layer, used for msQueryByFeatures() (note this is not a query mode per se) */
   } queryObj;
@@ -939,8 +939,16 @@ extern "C" {
     double size;
     double minsize, maxsize;
 
+#if defined(SWIG) && defined(SWIGPYTHON) /* would probably make sense to mark it immutable for other binding languages than Python */
+  %immutable;
+#endif
     int patternlength;  /*moved from symbolObj in version 6.0*/
+#if defined(SWIG) && defined(SWIGPYTHON)
+  %mutable;
+#endif
+#if !(defined(SWIG) && defined(SWIGPYTHON)) /* in Python we use a special typemap for this */
     double pattern[MS_MAXPATTERNLENGTH]; /*moved from symbolObj in version 6.0*/
+#endif
 
     double gap; /*moved from symbolObj in version 6.0*/
     double initialgap;
@@ -1889,6 +1897,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /************************************************************************/
 #ifndef SWIG
   struct layerVTable {
+    int (*LayerTranslateFilter)(layerObj *layer, expressionObj *filter, char *filteritem);
     int (*LayerSupportsCommonFilters)(layerObj *layer);
     int (*LayerInitItemInfo)(layerObj *layer);
     void (*LayerFreeItemInfo)(layerObj *layer);
@@ -1976,9 +1985,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /* Use this next, thread safe wrapper, function everywhere else */
   MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, char *value);
   MS_DLL_EXPORT char *msGetExpressionString(expressionObj *exp);
-  MS_DLL_EXPORT void initExpression(expressionObj *exp);
-  MS_DLL_EXPORT void freeExpressionTokens(expressionObj *exp);
-  MS_DLL_EXPORT void freeExpression(expressionObj *exp);
+  MS_DLL_EXPORT void msInitExpression(expressionObj *exp);
+  MS_DLL_EXPORT void msFreeExpressionTokens(expressionObj *exp);
+  MS_DLL_EXPORT void msFreeExpression(expressionObj *exp);
 
   MS_DLL_EXPORT void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs);
   MS_DLL_EXPORT void msApplyDefaultSubstitutions(mapObj *map);
@@ -2368,32 +2377,24 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape);
   MS_DLL_EXPORT int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape);
   MS_DLL_EXPORT void msLayerAddProcessing( layerObj *layer, const char *directive );
-  MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key,
-      const char *value);
+  MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value);
   MS_DLL_EXPORT char *msLayerGetProcessing( layerObj *layer, int proc_index);
   MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
   MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
-  MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
+  MS_DLL_EXPORT char *msLayerGetFilterString( layerObj *layer );
   MS_DLL_EXPORT int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape);
 
+  MS_DLL_EXPORT int msLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem);
   MS_DLL_EXPORT int msLayerSupportsCommonFilters(layerObj *layer);
+  MS_DLL_EXPORT const char *msExpressionTokenToString(int token);
   MS_DLL_EXPORT int msTokenizeExpression(expressionObj *expression, char **list, int *listsize);
 
-  MS_DLL_EXPORT int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
-                                         const char *timefield);
-  /* Helper functions for layers */
-  MS_DLL_EXPORT int msLayerMakeBackticsTimeFilter(layerObj *lp, const char *timestring,
-      const char *timefield);
+  MS_DLL_EXPORT int msLayerSetTimeFilter(layerObj *lp, const char *timestring, const char *timefield);
+  MS_DLL_EXPORT int msLayerMakeBackticsTimeFilter(layerObj *lp, const char *timestring, const char *timefield);
+  MS_DLL_EXPORT int msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring, const char *timefield);
 
-  MS_DLL_EXPORT int msLayerMakePlainTimeFilter(layerObj *lp, const char *timestring,
-      const char *timefield);
-
-  MS_DLL_EXPORT int msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-      int iLayerIndex);
-
-  MS_DLL_EXPORT int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
-      int iLayerIndex);
-
+  MS_DLL_EXPORT int msLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex);
+  MS_DLL_EXPORT int msLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex);
 
   /* maplayer.c */
   MS_DLL_EXPORT int msLayerGetNumFeatures(layerObj *layer);
@@ -2410,7 +2411,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   int msLayerSupportsSorting(layerObj *layer);
   void msLayerSetSort(layerObj *layer, const sortByClause* sortBy);
-  char* msLayerBuildSQLOrderBy(layerObj *layer);
+  MS_DLL_EXPORT char* msLayerBuildSQLOrderBy(layerObj *layer);
 
   /* These are special because SWF is using these */
   int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);

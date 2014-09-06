@@ -295,14 +295,14 @@ void msUnionLayerFreeItemInfo(layerObj *layer)
 void msUnionLayerFreeExpressionTokens(layerObj *layer)
 {
   int i,j;
-  freeExpressionTokens(&(layer->filter));
-  freeExpressionTokens(&(layer->cluster.group));
-  freeExpressionTokens(&(layer->cluster.filter));
+  msFreeExpressionTokens(&(layer->filter));
+  msFreeExpressionTokens(&(layer->cluster.group));
+  msFreeExpressionTokens(&(layer->cluster.filter));
   for(i=0; i<layer->numclasses; i++) {
-    freeExpressionTokens(&(layer->class[i]->expression));
-    freeExpressionTokens(&(layer->class[i]->text));
+    msFreeExpressionTokens(&(layer->class[i]->expression));
+    msFreeExpressionTokens(&(layer->class[i]->text));
     for(j=0; j<layer->class[i]->numstyles; j++)
-      freeExpressionTokens(&(layer->class[i]->styles[j]->_geomtransform));
+      msFreeExpressionTokens(&(layer->class[i]->styles[j]->_geomtransform));
   }
 }
 

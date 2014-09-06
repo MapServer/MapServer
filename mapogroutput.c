@@ -87,6 +87,21 @@ int msInitDefaultOGROutputFormat( outputFormatObj *format )
 }
 
 /************************************************************************/
+/*                        msCSLConcatenate()                            */
+/************************************************************************/
+
+static char** msCSLConcatenate( char** papszResult, char** papszToBeAdded )
+{
+    char** papszIter = papszToBeAdded;
+    while( papszIter && *papszIter )
+    {
+        papszResult = CSLAddString(papszResult, *papszIter);
+        papszIter ++;
+    }
+    return papszResult;
+}
+
+/************************************************************************/
 /*                       msOGRRecursiveFileList()                       */
 /*                                                                      */
 /*      Collect a list of all files under the named directory,          */
@@ -139,7 +154,7 @@ char **msOGRRecursiveFileList( const char *path )
     } else if( VSI_ISDIR( sStatBuf.st_mode ) ) {
       char **subfiles = msOGRRecursiveFileList( full_filename );
 
-      result_list = CSLMerge( result_list, subfiles );
+      result_list = msCSLConcatenate( result_list, subfiles );
 
       CSLDestroy( subfiles );
     }
@@ -257,40 +272,70 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                  "msOGRWriteShape()");
       return MS_FAILURE;
     }
-
-    if( shape->numlines > 1 )
-      hMP = OGR_G_CreateGeometry( wkbMultiPoint );
-
-    for( j = 0; j < shape->numlines; j++ ) {
-      if( shape->line[j].numpoints != 1 ) {
-        msSetError(MS_MISCERR,
-                   "Failed on odd point geometry.",
-                   "msOGRWriteShape()");
-        return MS_FAILURE;
-      }
-
-      hGeom = OGR_G_CreateGeometry( wkbPoint );
-      if( bWant2DOutput ) {
-        OGR_G_SetPoint_2D( hGeom, 0,
-                           shape->line[j].point[0].x,
-                           shape->line[j].point[0].y );
-      }
-      else {
-        OGR_G_SetPoint( hGeom, 0,
-                        shape->line[j].point[0].x,
-                        shape->line[j].point[0].y,
+    
+    if( shape->numlines == 1 && shape->line[0].numpoints > 1 )
+    {
+      hGeom = OGR_G_CreateGeometry( wkbMultiPoint );
+      for( j = 0; j < shape->line[0].numpoints; j++ ) {
+        OGRGeometryH hPoint = OGR_G_CreateGeometry( wkbPoint );
+        if( bWant2DOutput ) {
+            OGR_G_SetPoint_2D( hPoint, 0,
+                            shape->line[0].point[j].x,
+                            shape->line[0].point[j].y );
+        }
+        else {
+            OGR_G_SetPoint( hPoint, 0,
+                            shape->line[0].point[j].x,
+                            shape->line[0].point[j].y,
 #ifdef USE_POINT_Z_M
-                        shape->line[j].point[0].z
+                            shape->line[0].point[j].z
 #else
-                        0.0
+                            0.0
 #endif
-                        );
-      }
+                            );
+        }
 
-      if( hMP != NULL ) {
-        OGR_G_AddGeometryDirectly( hMP, hGeom );
-        hGeom = hMP;
+        OGR_G_AddGeometryDirectly( hGeom, hPoint );
       }
+    }
+    else
+    {
+      if( shape->numlines > 1 )
+        hMP = OGR_G_CreateGeometry( wkbMultiPoint );
+
+      for( j = 0; j < shape->numlines; j++ ) {
+        if( shape->line[j].numpoints != 1 ) {
+          msSetError(MS_MISCERR,
+                    "Failed on odd point geometry.",
+                    "msOGRWriteShape()");
+          return MS_FAILURE;
+        }
+
+        hGeom = OGR_G_CreateGeometry( wkbPoint );
+        if( bWant2DOutput ) {
+            OGR_G_SetPoint_2D( hGeom, 0,
+                            shape->line[j].point[0].x,
+                            shape->line[j].point[0].y );
+        }
+        else {
+            OGR_G_SetPoint( hGeom, 0,
+                            shape->line[j].point[0].x,
+                            shape->line[j].point[0].y,
+#ifdef USE_POINT_Z_M
+                            shape->line[j].point[0].z
+#else
+                            0.0
+#endif
+                            );
+        }
+
+        if( hMP != NULL ) {
+            OGR_G_AddGeometryDirectly( hMP, hGeom );
+        }
+      }
+      
+      if( hMP != NULL )
+        hGeom = hMP;
     }
   }
 
@@ -479,6 +524,129 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     return MS_FAILURE;
 }
 
+/************************************************************************/
+/*                        msOGRStdoutWriteFunction()                    */
+/************************************************************************/
+
+/* Used by /vsistdout/ */
+static size_t msOGRStdoutWriteFunction(const void* ptr, size_t size, size_t nmemb, FILE* stream)
+{
+    msIOContext *ioctx = (msIOContext*) stream;
+    return msIO_contextWrite(ioctx, ptr, size * nmemb ) / size;
+}
+
+/************************************************************************/
+/*                      msOGROutputGetAdditonalFiles()                  */
+/*                                                                      */
+/*  Collect additional files specified in                               */
+/*  wfs/ows_additional_files_in_output of WEB.METADATA and LAYER.METADATA */
+/************************************************************************/
+
+/* Result to be freed with CSLDestroy() */
+static char** msOGROutputGetAdditonalFiles( mapObj *map )
+{
+    int i;
+    hashTableObj* hSetAdditionalFiles;
+    char** papszFiles = NULL;
+
+    hSetAdditionalFiles = msCreateHashTable();
+
+    for( i = -1; i < map->numlayers; i++ )
+    {
+        const char* value;
+        if( i < 0 )
+        {
+            value = msOWSLookupMetadata(&(map->web.metadata), "FO", "additional_files_in_output");
+        }
+        else
+        {
+            layerObj *layer = GET_LAYER(map, i);
+            if( !layer->resultcache || layer->resultcache->numresults == 0 )
+                continue;
+            value = msOWSLookupMetadata(&(layer->metadata), "FO", "additional_files_in_output");
+        }
+
+        if( value != NULL )
+        {
+            char** papszList = CSLTokenizeString2( value, ",", CSLT_HONOURSTRINGS );
+            char** papszListIter = papszList;
+            while( papszListIter && *papszListIter )
+            {
+                const char* file = *papszListIter;
+                VSIStatBufL sStat;
+
+                if( strncmp(file, "http://", strlen("http://")) == 0 ||
+                    strncmp(file, "https://", strlen("https://")) == 0 )
+                {
+                    /* Remote file ? We will use /vsicurl_streaming/ to read it */
+                    if( msLookupHashTable(hSetAdditionalFiles, file) == NULL )
+                    {
+                        msInsertHashTable(hSetAdditionalFiles, file, "YES");
+                        papszFiles = CSLAddString(papszFiles, CPLSPrintf("/vsicurl_streaming/%s", file));
+                    }
+                }
+                else
+                {
+                    int nLen = (int)strlen(file);
+                    char filename[MS_MAXPATHLEN];
+
+                    if( CPLIsFilenameRelative(file) )
+                    {
+                        if( !map->shapepath )
+                            msTryBuildPath(filename, map->mappath, file);
+                        else
+                            msTryBuildPath3(filename, map->mappath, map->shapepath, file);
+                    }
+                    else
+                        strlcpy(filename, file, MS_MAXPATHLEN);
+
+                    if( nLen > 2 && (
+                            strcmp(file + nLen - 1, "/") == 0 ||
+                            strcmp(file + nLen - 2, "/*") == 0 ) )
+                    {
+                        *strrchr(filename, '/') = '\0';
+                    }
+                    else if( nLen > 2 && (
+                            strcmp(file + nLen - 1, "\\") == 0 ||
+                            strcmp(file + nLen - 2, "\\*") == 0 ) )
+                    {
+                        *strrchr(filename, '\\') = '\0';
+                    }
+
+                    if( msLookupHashTable(hSetAdditionalFiles, filename) == NULL )
+                    {
+                        msInsertHashTable(hSetAdditionalFiles, filename, "YES");
+                        if( VSIStatL( filename, &sStat ) == 0 )
+                        {
+                            if( VSI_ISDIR( sStat.st_mode ) )
+                            {
+                                char** papszDirContent = msOGRRecursiveFileList(filename);
+                                papszFiles = msCSLConcatenate(papszFiles, papszDirContent);
+                                CSLDestroy(papszDirContent);
+                            }
+                            else
+                            {
+                                papszFiles = CSLAddString(papszFiles, filename);
+                            }
+                        }
+                        else
+                        {
+                            msDebug("File %s does not exist.\n", filename);
+                        }
+                    }
+                }
+
+                papszListIter ++;
+            }
+            CSLDestroy(papszList);
+        }
+    }
+    
+    msFreeHashTable(hSetAdditionalFiles);
+    
+    return papszFiles;
+}
+
 #endif /* def USE_OGR */
 
 /************************************************************************/
@@ -538,6 +706,14 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* ==================================================================== */
   storage = msGetOutputFormatOption( format, "STORAGE", "filesystem" );
   if( EQUAL(storage,"stream") && !msIO_isStdContext() ) {
+#if defined(GDAL_COMPUTE_VERSION)
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
+    msIOContext *ioctx = msIO_getHandler (stdout);
+    if( ioctx != NULL )
+        VSIStdoutSetRedirection( msOGRStdoutWriteFunction, (FILE*)ioctx );
+    else
+#endif
+#endif
     /* bug #4858, streaming output won't work if standard output has been
      * redirected, we switch to memory output in this case
      */
@@ -586,7 +762,16 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   /*      Setup the full datasource name.                                 */
   /* -------------------------------------------------------------------- */
-  fo_filename = msGetOutputFormatOption( format, "FILENAME", "result.dat" );
+#if !defined(CPL_ZIP_API_OFFERED)
+  form = msGetOutputFormatOption( format, "FORM", "multipart" );
+#else
+  form = msGetOutputFormatOption( format, "FORM", "zip" );
+#endif
+
+  if( EQUAL(form,"zip") )
+    fo_filename = msGetOutputFormatOption( format, "FILENAME", "result.zip" );
+  else
+    fo_filename = msGetOutputFormatOption( format, "FILENAME", "result.dat" );
 
   /* Validate that the filename does not contain any directory */
   /* information, which might lead to removal of unwanted files. (#4086) */
@@ -600,7 +785,43 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   }
 
   if( !EQUAL(storage,"stream") )
+  {
     msBuildPath( datasource_name, request_dir, fo_filename );
+
+    if( EQUAL(form,"zip") )
+    {
+      /* if generating a zip file, remove the zip extension for the internal */
+      /* filename */
+      if( EQUAL(CPLGetExtension(datasource_name), "zip") ) {
+        *strrchr(datasource_name, '.') = '\0';
+      }
+
+      /* and add .dat extension if user didn't provide another extension */
+      if( EQUAL(CPLGetExtension(datasource_name), "") ) {
+        strcat(datasource_name, ".dat");
+      }
+      else if( EQUAL(CPLGetExtension(datasource_name), "shp") )
+      {
+          int nNonEmptyLayers = 0;
+          for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
+            layerObj *layer = GET_LAYER(map, iLayer);
+            if( !layer->resultcache || layer->resultcache->numresults == 0 )
+              continue;
+            nNonEmptyLayers ++;
+          }
+          /* The shapefile driver will be somehow confused if trying to create */
+          /* a datasource named foo.shp when there are several layers in it */
+          /* It would create the first layer as datasource_name.shp and the next ones */
+          /* with layer_name.shp */
+          /* so remove the shp extension in that case, so that all layers are */
+          /* exported with their names */
+          if( nNonEmptyLayers > 1 )
+          {
+              *strrchr(datasource_name, '.') = '\0';
+          }
+      }
+    }
+  }
   else
     strcpy( datasource_name, "/vsistdout/" );
 
@@ -907,11 +1128,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   /*      Get list of resulting files.                                    */
   /* -------------------------------------------------------------------- */
-#if !defined(CPL_ZIP_API_OFFERED)
-  form = msGetOutputFormatOption( format, "FORM", "multipart" );
-#else
-  form = msGetOutputFormatOption( format, "FORM", "zip" );
-#endif
 
   if( EQUAL(form,"simple") ) {
     file_list = CSLAddString( NULL, datasource_name );
@@ -966,10 +1182,15 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /*      Handle the case of a multi-part result.                         */
   /* -------------------------------------------------------------------- */
   else if( EQUAL(form,"multipart") ) {
+    char **papszAdditionalFiles;
     static const char *boundary = "xxOGRBoundaryxx";
     msIO_setHeader("Content-Type","multipart/mixed; boundary=%s",boundary);
     msIO_sendHeaders();
     msIO_fprintf(stdout,"--%s\r\n",boundary );
+
+    papszAdditionalFiles = msOGROutputGetAdditonalFiles(map);
+    file_list = msCSLConcatenate(file_list, papszAdditionalFiles);
+    CSLDestroy(papszAdditionalFiles);
 
     for( i = 0; file_list != NULL && file_list[i] != NULL; i++ ) {
       FILE *fp;
@@ -1020,8 +1241,13 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     void *hZip;
     int bytes_read;
     char buffer[1024];
+    char **papszAdditionalFiles;
 
     hZip = CPLCreateZip( zip_filename, NULL );
+
+    papszAdditionalFiles = msOGROutputGetAdditonalFiles(map);
+    file_list = msCSLConcatenate(file_list, papszAdditionalFiles);
+    CSLDestroy(papszAdditionalFiles);
 
     for( i = 0; file_list != NULL && file_list[i] != NULL; i++ ) {
 
@@ -1048,7 +1274,12 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     CPLCloseZip( hZip );
 
     if( sendheaders ) {
-      msIO_setHeader("Content-Disposition","attachment; filename=%s",fo_filename);
+      const char* zip_filename = fo_filename;
+      /* Make sure the filename is ended by .zip */
+      if( !EQUAL(CPLGetExtension(zip_filename), "zip") &&
+          !EQUAL(CPLGetExtension(zip_filename), "kmz") )
+          zip_filename = CPLFormFilename(NULL, fo_filename, "zip");
+      msIO_setHeader("Content-Disposition","attachment; filename=%s",zip_filename);
       msIO_setHeader("Content-Type","application/zip");
       msIO_sendHeaders();
     }

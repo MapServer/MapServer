@@ -34,8 +34,6 @@
 #include "mapserver.h"
 #include "mapowscommon.h"
 
-
-
 #ifdef USE_OGR
 
 char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
@@ -118,7 +116,6 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
       szTmp[iTmp] = '\\';
       iTmp++;
       szTmp[iTmp] = '\0';
-
     } else if (pszValue[i] == pszWild[0]) {
       /* strcat(szBuffer, "[0-9,a-z,A-Z,\\s]*"); */
       /* iBuffer+=17; */
@@ -135,9 +132,7 @@ char *FLTGetIsLikeComparisonCommonExpression(FilterEncodingNode *psFilterNode)
   return msStrdup(szBuffer);
 }
 
-
-char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNode,
-    layerObj *lp)
+char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNode, layerObj *lp)
 {
   const size_t bufferSize = 1024;
   char szBuffer[1024];
@@ -430,7 +425,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
   char *pszExpression = NULL;
   shapeObj *psQueryShape = NULL;
   double dfDistance = -1;
-  int nUnit = -1;
+  int nUnit = -1, nLayerUnit = -1;
   char *pszWktText = NULL;
   char szBuffer[256];
   char *pszTmp=NULL;
@@ -445,8 +440,8 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
   if (psNode->eType != FILTER_NODE_TYPE_SPATIAL)
     return NULL;
 
-  /* get the shape*/
-  /*BBOX case: replace it with NOT DISJOINT.*/
+  /* get the shape */
+  /* BBOX case: replace it with NOT DISJOINT. */
   if(FLTIsBBoxFilter(psNode)) {
     FLTGetBBOX(psNode, &sQueryRect);
 
@@ -454,31 +449,33 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     msInitShape(psTmpShape);
     msRectToPolygon(sQueryRect, psTmpShape);
     bBBoxQuery = 1;
-
   } else {
-    /*other geos type operations*/
+    /* other geos type operations */
 
-    /*project shape to layer projection. If the proj is not part of the filter query,
-      assume that the cooredinates are in the map projection*/
+    /* project shape to layer projection. If the proj is not part of the filter query,
+      assume that the cooredinates are in the map projection */
 
     psQueryShape = FLTGetShape(psNode, &dfDistance, &nUnit);
 
-    if ((strcasecmp(psNode->pszValue, "DWithin") == 0 ||
-         strcasecmp(psNode->pszValue, "Beyond") == 0 ) &&
-        dfDistance > 0) {
-      if (nUnit >=0 && nUnit != lp->map->units)
-        dfDistance *= msInchesPerUnit(nUnit,0)/msInchesPerUnit(lp->map->units,0);
+    if ((strcasecmp(psNode->pszValue, "DWithin") == 0 || strcasecmp(psNode->pszValue, "Beyond") == 0 ) && dfDistance > 0) {
+      nLayerUnit = lp->units;
+      if(nLayerUnit == -1) nLayerUnit = GetMapserverUnitUsingProj(&lp->projection);
+      if(nLayerUnit == -1) nLayerUnit = lp->map->units;
+      if(nLayerUnit == -1) nLayerUnit = GetMapserverUnitUsingProj(&lp->map->projection);
 
-      psBufferShape = msGEOSBuffer(psQueryShape, dfDistance);
+      if (nUnit >= 0 && nUnit != nLayerUnit)
+        dfDistance *= msInchesPerUnit(nUnit,0)/msInchesPerUnit(nLayerUnit,0); /* target is layer units */
     }
-    if (psBufferShape)
-      psTmpShape = psBufferShape;
-    else
-      psTmpShape = psQueryShape;
+
+    psTmpShape = psQueryShape;
   }
 
   if (psTmpShape) {
-    if( lp->projection.numargs > 0) {
+
+    /*
+    ** target is layer projection
+    */
+    if(lp->projection.numargs > 0) {
       if (psNode->pszSRS)
         msInitProjection(&sProjTmp);
       if (psNode->pszSRS) {
@@ -491,60 +488,59 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
       if (psNode->pszSRS)
         msFreeProjection(&sProjTmp);
     }
-    /* ==================================================================== */
-    /*      use within for bbox. Not Disjoint does not work.                */
-    /* ==================================================================== */
-    if (bBBoxQuery)
-      sprintf(szBuffer, "%s", " ([shape] ");
-    /* sprintf(szBuffer, "%s", " (NOT ([shape] "); */
-    else
-      sprintf(szBuffer, "%s", " ([shape] ");
 
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
-
-
+    /* function name */
     if (bBBoxQuery) {
-      sprintf(szBuffer, " %s ", "intersects");
+      sprintf(szBuffer, "%s", "intersects");
     } else {
       if (strncasecmp(psNode->pszValue, "intersect", 9) == 0)
-        sprintf(szBuffer, " %s ", "intersects");
-      else if (strncasecmp(psNode->pszValue, "equals", 6) == 0)
-        sprintf(szBuffer, " %s ", "eq");
+        sprintf(szBuffer, "%s", "intersects");
       else {
         pszTmp = msStrdup(psNode->pszValue);
         msStringToLower(pszTmp);
-        sprintf(szBuffer, " %s ", pszTmp);
+        sprintf(szBuffer, "%s", pszTmp);
         msFree(pszTmp);
       }
     }
-
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "(");
 
+    /* geometry binding */
+    if (bBBoxQuery)
+      sprintf(szBuffer, "%s", "[shape]");
+    else
+      sprintf(szBuffer, "%s", "[shape]");
+    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, ",");
+
+    /* filter geometry */
     pszWktText = msGEOSShapeToWKT(psTmpShape);
-    sprintf(szBuffer, "%s", " fromText('");
+    sprintf(szBuffer, "%s", "fromText('");
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
     pszExpression = msStringConcatenate(pszExpression, pszWktText);
     sprintf(szBuffer, "%s", "')");
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
     msGEOSFreeWKT(pszWktText);
+
+    /* (optional) beyond/dwithin distance, always 0.0 since we apply the distance as a buffer earlier */
+    if ((strcasecmp(psNode->pszValue, "DWithin") == 0 || strcasecmp(psNode->pszValue, "Beyond") == 0)) {
+      // pszExpression = msStringConcatenate(pszExpression, ",0.0");
+      sprintf(szBuffer, ",%g", dfDistance);
+      pszExpression = msStringConcatenate(pszExpression, szBuffer);      
+    }
+
+    /* terminate the function */
+    pszExpression = msStringConcatenate(pszExpression, ") = TRUE");
   }
-  if (psBufferShape) {
-    msFreeShape(psBufferShape);
-    msFree(psBufferShape);
-  }
+
+  /*
+  ** Cleanup
+  */
   if(bBBoxQuery) {
      msFreeShape(psTmpShape);
      msFree(psTmpShape);
   }
 
-
-  sprintf(szBuffer, "%s", ")");
-  pszExpression = msStringConcatenate(pszExpression, szBuffer);
-
-  if (0) { /* bBBoxQuery */
-    sprintf(szBuffer, "%s", ")");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
-  }
   return pszExpression;
 }
 
@@ -622,14 +618,14 @@ char* FLTGetTimeExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
   if( pszTimeField && pszTimeValue )
   {
     expressionObj old_filter;
-    initExpression(&old_filter);
+    msInitExpression(&old_filter);
     msCopyExpression(&old_filter, &lp->filter); /* save existing filter */
-    freeExpression(&lp->filter);
+    msFreeExpression(&lp->filter);
     if( msLayerSetTimeFilter(lp, pszTimeValue, pszTimeField) == MS_TRUE ) {
       pszExpression = msStrdup(lp->filter.string);
     }
     msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
-    freeExpression(&old_filter);
+    msFreeExpression(&old_filter);
   }
   return pszExpression;
 }
@@ -646,28 +642,23 @@ char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
     if ( psFilterNode->psLeftNode && psFilterNode->psRightNode) {
       if (FLTIsBinaryComparisonFilterType(psFilterNode->pszValue))
         pszExpression = FLTGetBinaryComparisonCommonExpression(psFilterNode, lp);
-
       else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
         pszExpression = FLTGetIsLikeComparisonCommonExpression(psFilterNode);
-
       else if (strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0)
         pszExpression = FLTGetIsBetweenComparisonCommonExpresssion(psFilterNode, lp);
     }
-  } else if (psFilterNode->eType == FILTER_NODE_TYPE_LOGICAL)
+  } else if (psFilterNode->eType == FILTER_NODE_TYPE_LOGICAL) {
     pszExpression = FLTGetLogicalComparisonCommonExpression(psFilterNode, lp);
-
-  else if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL)
+  } else if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL) {
     pszExpression = FLTGetSpatialComparisonCommonExpression(psFilterNode, lp);
-
-  else if (psFilterNode->eType ==  FILTER_NODE_TYPE_FEATUREID)
+  } else if (psFilterNode->eType ==  FILTER_NODE_TYPE_FEATUREID) {
     pszExpression = FLTGetFeatureIdCommonExpression(psFilterNode, lp);
-
-  else if (psFilterNode->eType == FILTER_NODE_TYPE_TEMPORAL)
+  } else if (psFilterNode->eType == FILTER_NODE_TYPE_TEMPORAL) {
     pszExpression = FLTGetTimeExpression(psFilterNode, lp);
+  }
 
   return pszExpression;
 }
-
 
 int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const char *pszExpression)
 {
@@ -685,14 +676,14 @@ int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const ch
   map->query.only_cache_result_count = save_only_cache_result_count;
 
   map->query.type = MS_QUERY_BY_FILTER;
+  map->query.mode = MS_QUERY_MULTIPLE;
 
-  map->query.filter = (expressionObj *) msSmallMalloc(sizeof(expressionObj));
-  initExpression( map->query.filter);
-  map->query.filter->string = msStrdup(pszExpression);
-  map->query.filter->type = 2000;
+  msInitExpression(&map->query.filter);
+  map->query.filter.string = msStrdup(pszExpression);
+  map->query.filter.type = MS_EXPRESSION; /* a logical expression */
   map->query.layer = iLayerIndex;
 
-  /*TODO: if there is a bbox in the node, get it and set the map extent*/
+  /* TODO: if there is a bbox in the node, get it and set the map extent (projected to map->projection */
   map->query.rect = map->extent;
 
   retval = msQueryByFilter(map);

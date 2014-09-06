@@ -317,16 +317,20 @@ namespace mapserver
     {
         enum dx_limit_e { dx_limit = 16384 << poly_subpixel_shift };
 
-        int dx = x2 - x1;
-
-        if(dx >= dx_limit || dx <= -dx_limit)
+        // Checking the limit and avoid integer overflows
+        if(((x1 < x2)? ((x1 < 0)? (x1 + dx_limit <= x2) : (x1 <= x2 - dx_limit)) : 
+                      ((x2 < 0)? (x2 + dx_limit <= x1) : (x2 <= x1 - dx_limit))) ||
+           ((y1 < y2)? ((y1 < 0)? (y1 + dx_limit <= y2) : (y1 <= y2 - dx_limit)) : 
+                      ((y2 < 0)? (y2 + dx_limit <= y1) : (y2 <= y1 - dx_limit))))
         {
-            int cx = (x1 + x2) >> 1;
-            int cy = (y1 + y2) >> 1;
+            int cx = (x2&x1) + ((x2^x1)>>1);
+            int cy = (y2&y1) + ((y2^y1)>>1);
+
             line(x1, y1, cx, cy);
             line(cx, cy, x2, y2);
         }
 
+        int dx = x2 - x1;
         int dy = y2 - y1;
         int ex1 = x1 >> poly_subpixel_shift;
         int ex2 = x2 >> poly_subpixel_shift;

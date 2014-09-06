@@ -35,15 +35,17 @@ int yyerror(parseObj *, const char *);
   shapeObj *shpval;
 }
 
+%token <intval> BOOLEAN
 %token <dblval> NUMBER
 %token <strval> STRING
 %token <tmval> TIME
 %token <shpval> SHAPE
+
 %left OR
 %left AND
 %left NOT
 %left RE EQ NE LT GT LE GE IN IEQ IRE
-%left INTERSECTS DISJOINT TOUCHES OVERLAPS CROSSES WITHIN CONTAINS BEYOND DWITHIN
+%left INTERSECTS DISJOINT TOUCHES OVERLAPS CROSSES WITHIN CONTAINS EQUALS BEYOND DWITHIN
 %left AREA LENGTH COMMIFY ROUND
 %left UPPER LOWER INITCAP FIRSTCAP
 %left TOSTRING
@@ -65,45 +67,45 @@ int yyerror(parseObj *, const char *);
 
 input: /* empty string */
   | logical_exp {
-      switch(p->type) {
-      case(MS_PARSE_TYPE_BOOLEAN):
-        p->result.intval = $1; 
-        break;
-      case(MS_PARSE_TYPE_STRING):
-        if($1) 
-          p->result.strval = strdup("true");
-        else
-          p->result.strval = strdup("false");
-        break;
-      }
+    switch(p->type) {
+    case(MS_PARSE_TYPE_BOOLEAN):
+      p->result.intval = $1; 
+      break;
+    case(MS_PARSE_TYPE_STRING):
+      if($1) 
+        p->result.strval = strdup("true");
+      else
+        p->result.strval = strdup("false");
+      break;
     }
+  }
   | math_exp {
-      switch(p->type) {
-      case(MS_PARSE_TYPE_BOOLEAN):
-        if($1 != 0)
-          p->result.intval = MS_TRUE;
-        else
-          p->result.intval = MS_FALSE;			    
-        break;
-      case(MS_PARSE_TYPE_STRING):
-        p->result.strval = (char *)malloc(64); /* large enough for a double */
-        snprintf(p->result.strval, 64, "%g", $1);
-        break;
-      }
+    switch(p->type) {
+    case(MS_PARSE_TYPE_BOOLEAN):
+      if($1 != 0)
+        p->result.intval = MS_TRUE;
+      else
+        p->result.intval = MS_FALSE;			    
+      break;
+    case(MS_PARSE_TYPE_STRING):
+      p->result.strval = (char *)malloc(64); /* large enough for a double */
+      snprintf(p->result.strval, 64, "%g", $1);
+      break;
     }
+  }
   | string_exp {
-      switch(p->type) {
-      case(MS_PARSE_TYPE_BOOLEAN):
-        if($1) /* string is not NULL */
-          p->result.intval = MS_TRUE;
-        else
-          p->result.intval = MS_FALSE;
-        break;
-      case(MS_PARSE_TYPE_STRING):
-        p->result.strval = $1; // strdup($1);
-        break;
-      }
+    switch(p->type) {
+    case(MS_PARSE_TYPE_BOOLEAN):
+      if($1) /* string is not NULL */
+        p->result.intval = MS_TRUE;
+      else
+        p->result.intval = MS_FALSE;
+      break;
+    case(MS_PARSE_TYPE_STRING):
+      p->result.strval = $1; // strdup($1);
+      break;
     }
+  }
   | shape_exp {
     switch(p->type) {
     case(MS_PARSE_TYPE_SHAPE):
@@ -114,400 +116,499 @@ input: /* empty string */
   }
 ;
 
-logical_exp:
-       logical_exp OR logical_exp      {
-	                                 if($1 == MS_TRUE)
-		                           $$ = MS_TRUE;
-		                         else if($3 == MS_TRUE)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | logical_exp AND logical_exp   {
-	                                 if($1 == MS_TRUE) {
-			                   if($3 == MS_TRUE)
-			                     $$ = MS_TRUE;
-			                   else
-			                     $$ = MS_FALSE;
-			                 } else
-			                   $$ = MS_FALSE;
-		                       }
-       | logical_exp OR math_exp       {
-	                                 if($1 == MS_TRUE)
-		                           $$ = MS_TRUE;
-		                         else if($3 != 0)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | logical_exp AND math_exp      {
-	                                 if($1 == MS_TRUE) {
-			                   if($3 != 0)
-			                     $$ = MS_TRUE;
-			                   else
-			                     $$ = MS_FALSE;
-			                 } else
-			                   $$ = MS_FALSE;
-		                       }
-       | math_exp OR logical_exp       {
-	                                 if($1 != 0)
-		                           $$ = MS_TRUE;
-		                         else if($3 == MS_TRUE)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | math_exp AND logical_exp      {
-	                                 if($1 != 0) {
-			                   if($3 == MS_TRUE)
-			                     $$ = MS_TRUE;
-			                   else
-			                     $$ = MS_FALSE;
-			                 } else
-			                   $$ = MS_FALSE;
-		                       }
-       | math_exp OR math_exp       {
-	                                 if($1 != 0)
-		                           $$ = MS_TRUE;
-		                         else if($3 != 0)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | math_exp AND math_exp      {
-	                                 if($1 != 0) {
-			                   if($3 != 0)
-			                     $$ = MS_TRUE;
-			                   else
-			                     $$ = MS_FALSE;
-			                 } else
-			                   $$ = MS_FALSE;
-		                       }
-       | NOT logical_exp	       { $$ = !$2; }
-       | NOT math_exp	       	       { $$ = !$2; }
-       | string_exp RE string_exp     {
-                                         ms_regex_t re;
+logical_exp: BOOLEAN
+  | '(' logical_exp ')' { $$ = $2; }
+  | logical_exp EQ logical_exp {
+    $$ = MS_FALSE;
+    if($1 == $3) $$ = MS_TRUE;
+  }
+  | logical_exp OR logical_exp {
+    if($1 == MS_TRUE)
+      $$ = MS_TRUE;
+    else if($3 == MS_TRUE)          
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | logical_exp AND logical_exp {
+    if($1 == MS_TRUE) {
+      if($3 == MS_TRUE)
+        $$ = MS_TRUE;
+      else
+        $$ = MS_FALSE;
+    } else
+      $$ = MS_FALSE;
+  }
+  | logical_exp OR math_exp {
+    if($1 == MS_TRUE)
+      $$ = MS_TRUE;
+    else if($3 != 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | logical_exp AND math_exp {
+    if($1 == MS_TRUE) {
+      if($3 != 0)
+        $$ = MS_TRUE;
+      else
+        $$ = MS_FALSE;
+    } else
+      $$ = MS_FALSE;
+  }
+  | math_exp OR logical_exp {
+    if($1 != 0)
+      $$ = MS_TRUE;
+    else if($3 == MS_TRUE)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | math_exp AND logical_exp {
+    if($1 != 0) {
+      if($3 == MS_TRUE)
+        $$ = MS_TRUE;
+      else
+        $$ = MS_FALSE;
+    } else
+      $$ = MS_FALSE;
+  }
+  | math_exp OR math_exp {
+    if($1 != 0)
+      $$ = MS_TRUE;
+    else if($3 != 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | math_exp AND math_exp      {
+    if($1 != 0) {
+      if($3 != 0)
+        $$ = MS_TRUE;
+      else
+	$$ = MS_FALSE;
+    } else
+      $$ = MS_FALSE;
+  }
+  | NOT logical_exp { $$ = !$2; }
+  | NOT math_exp { $$ = !$2; }
+  | string_exp RE string_exp {
+    ms_regex_t re;
 
-                                         if(ms_regcomp(&re, $3, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) 
-                                           $$ = MS_FALSE;
+    if(MS_STRING_IS_NULL_OR_EMPTY($1) == MS_TRUE) {
+      $$ = MS_FALSE;
+    } else {
+      if(ms_regcomp(&re, $3, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {      
+        $$ = MS_FALSE;
+      } else {
+        if(ms_regexec(&re, $1, 0, NULL, 0) == 0)
+          $$ = MS_TRUE;
+        else
+          $$ = MS_FALSE;
+        ms_regfree(&re);
+      }
+    }
 
-                                         if(ms_regexec(&re, $1, 0, NULL, 0) == 0)
-                                  	   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | string_exp IRE string_exp {
+    ms_regex_t re;
 
-                                         ms_regfree(&re);
-                                         free($1);
-                                         free($3);
-                                       }
-       | string_exp IRE string_exp     {
-                                         ms_regex_t re;
+    if(MS_STRING_IS_NULL_OR_EMPTY($1) == MS_TRUE) {
+      $$ = MS_FALSE;
+    } else {
+      if(ms_regcomp(&re, $3, MS_REG_EXTENDED|MS_REG_NOSUB|MS_REG_ICASE) != 0) {
+        $$ = MS_FALSE;
+      } else {
+        if(ms_regexec(&re, $1, 0, NULL, 0) == 0)
+          $$ = MS_TRUE;
+        else
+          $$ = MS_FALSE;
+        ms_regfree(&re);
+      }
+    }
 
-                                         if(ms_regcomp(&re, $3, MS_REG_EXTENDED|MS_REG_NOSUB|MS_REG_ICASE) != 0) 
-                                           $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | math_exp EQ math_exp {
+    if($1 == $3)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | math_exp NE math_exp {
+    if($1 != $3)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  } 
+  | math_exp GT math_exp {    
+    if($1 > $3)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | math_exp LT math_exp {
+    if($1 < $3)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | math_exp GE math_exp {
+    if($1 >= $3)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | math_exp LE math_exp {
+    if($1 <= $3)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | string_exp EQ string_exp {
+    if(strcmp($1, $3) == 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | string_exp NE string_exp {
+    if(strcmp($1, $3) != 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | string_exp GT string_exp {
+    if(strcmp($1, $3) > 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | string_exp LT string_exp {
+    if(strcmp($1, $3) < 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | string_exp GE string_exp {
+    if(strcmp($1, $3) >= 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | string_exp LE string_exp {
+    if(strcmp($1, $3) <= 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | time_exp EQ time_exp {
+    if(msTimeCompare(&($1), &($3)) == 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | time_exp NE time_exp {
+    if(msTimeCompare(&($1), &($3)) != 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | time_exp GT time_exp {
+    if(msTimeCompare(&($1), &($3)) > 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | time_exp LT time_exp {
+    if(msTimeCompare(&($1), &($3)) < 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | time_exp GE time_exp {
+    if(msTimeCompare(&($1), &($3)) >= 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | time_exp LE time_exp {
+    if(msTimeCompare(&($1), &($3)) <= 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | string_exp IN string_exp {
+    char *delim, *bufferp;
 
-                                         if(ms_regexec(&re, $1, 0, NULL, 0) == 0)
-                                  	   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
+    $$ = MS_FALSE;
+    bufferp=$3;
 
-                                         ms_regfree(&re);
-                                         free($1);
-                                         free($3);
-                                       }
-       | math_exp EQ math_exp          {
-	                                 if($1 == $3)
-	 		                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | math_exp NE math_exp          {
-	                                 if($1 != $3)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       } 
-       | math_exp GT math_exp          {	                                 
-	                                 if($1 > $3)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | math_exp LT math_exp          {
-	                                 if($1 < $3)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | math_exp GE math_exp          {	                                 
-	                                 if($1 >= $3)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | math_exp LE math_exp          {
-	                                 if($1 <= $3)
-			                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | '(' logical_exp ')'           { $$ = $2; }
-       | string_exp EQ string_exp      {
-                                         if(strcmp($1, $3) == 0)
-					   $$ = MS_TRUE;
-					 else
-					   $$ = MS_FALSE;
-					 free($1);
-					 free($3);
-				       }
-       | string_exp NE string_exp      {
-                                         if(strcmp($1, $3) != 0)
-					   $$ = MS_TRUE;
-					 else
-					   $$ = MS_FALSE;
-					 free($1);
-					 free($3);
-				       }
-       | string_exp GT string_exp      {
-                                         if(strcmp($1, $3) > 0)
-					   $$ = MS_TRUE;
-					 else
-					   $$ = MS_FALSE;
-					 /* printf("Not freeing: %s >= %s\n",$1, $3); */
-					 free($1);
-					 free($3);
-                                       }
-       | string_exp LT string_exp      {
-                                         if(strcmp($1, $3) < 0)
-					   $$ = MS_TRUE;
-					 else
-					   $$ = MS_FALSE;
-					 free($1);
-					 free($3);
-                                       }
-       | string_exp GE string_exp      {
-                                         if(strcmp($1, $3) >= 0)
-					   $$ = MS_TRUE;
-					 else
-					   $$ = MS_FALSE;
-					 free($1);
-					 free($3);
-                                       }
-       | string_exp LE string_exp      {
-                                         if(strcmp($1, $3) <= 0)
-					   $$ = MS_TRUE;
-					 else
-					   $$ = MS_FALSE;
-					 free($1);
-					 free($3);
-                                       } 
-       | time_exp EQ time_exp      {
-                                     if(msTimeCompare(&($1), &($3)) == 0)
-				       $$ = MS_TRUE;
-				     else
-				       $$ = MS_FALSE;
-				   }
-       | time_exp NE time_exp      {
-                                     if(msTimeCompare(&($1), &($3)) != 0)
-				       $$ = MS_TRUE;
-				     else
-				       $$ = MS_FALSE;
-				   }
-       | time_exp GT time_exp      {
-                                     if(msTimeCompare(&($1), &($3)) > 0)
-				       $$ = MS_TRUE;
-				     else
-				       $$ = MS_FALSE;
-                                   }
-       | time_exp LT time_exp      {
-                                     if(msTimeCompare(&($1), &($3)) < 0)
-				       $$ = MS_TRUE;
-				     else
-				       $$ = MS_FALSE;
-                                   }
-       | time_exp GE time_exp      {
-                                     if(msTimeCompare(&($1), &($3)) >= 0)
-				       $$ = MS_TRUE;
-				     else
-				       $$ = MS_FALSE;
-                                   }
-       | time_exp LE time_exp      {
-                                     if(msTimeCompare(&($1), &($3)) <= 0)
-				       $$ = MS_TRUE;
-				     else
-				       $$ = MS_FALSE;
-                                   }
-       | string_exp IN string_exp      {
-					 char *delim,*bufferp;
+    while((delim=strchr(bufferp,',')) != NULL) {
+      *delim='\0';
+      if(strcmp($1,bufferp) == 0) {
+        $$ = MS_TRUE;
+        break;
+      } 
+      *delim=',';
+      bufferp=delim+1;
+    }
 
-					 $$ = MS_FALSE;
-					 bufferp=$3;
+    if($$ == MS_FALSE && strcmp($1,bufferp) == 0) // test for last (or only) item
+      $$ = MS_TRUE;
+    free($1);
+    free($3);
+  }
+  | math_exp IN string_exp {
+    char *delim,*bufferp;
 
-					 while((delim=strchr(bufferp,',')) != NULL) {
-					   *delim='\0';
-					   if(strcmp($1,bufferp) == 0) {
-					     $$ = MS_TRUE;
-					     break;
-					   } 
-					   *delim=',';
-					   bufferp=delim+1;
-					 }
+    $$ = MS_FALSE;
+    bufferp=$3;
 
-					 if($$==MS_FALSE && strcmp($1,bufferp) == 0) // test for last (or only) item
-					   $$ = MS_TRUE;
-					 free($1);
-					 free($3);
-				       }
-       | math_exp IN string_exp        {
-					 char *delim,*bufferp;
+    while((delim=strchr(bufferp,',')) != NULL) {
+      *delim='\0';
+      if($1 == atof(bufferp)) {
+        $$ = MS_TRUE;
+        break;
+      } 
+      *delim=',';
+      bufferp=delim+1;
+    }
 
-					 $$ = MS_FALSE;
-					 bufferp=$3;
-
-					 while((delim=strchr(bufferp,',')) != NULL) {
-					   *delim='\0';
-					   if($1 == atof(bufferp)) {
-					     $$ = MS_TRUE;
-					     break;
-					   } 
-					   *delim=',';
-					   bufferp=delim+1;
-					 }
-
-					 if($1 == atof(bufferp)) // is this test necessary?
-					   $$ = MS_TRUE;
-					   
-					 free($3);
-				       }
-       | math_exp IEQ math_exp         {
-	                                 if($1 == $3)
-	 		                   $$ = MS_TRUE;
-			                 else
-			                   $$ = MS_FALSE;
-		                       }
-       | string_exp IEQ string_exp     {
-                                         if(strcasecmp($1, $3) == 0)
-					   $$ = MS_TRUE;
-					 else
-					   $$ = MS_FALSE;
-					 free($1);
-					 free($3);
-				       }
-       | time_exp IEQ time_exp     {
-                                     if(msTimeCompare(&($1), &($3)) == 0)
-				       $$ = MS_TRUE;
-				     else
-				       $$ = MS_FALSE;
-				   }
-
+    if($1 == atof(bufferp)) // is this test necessary?
+      $$ = MS_TRUE;  
+    free($3);
+  }
+  | math_exp IEQ math_exp {
+    if($1 == $3)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | string_exp IEQ string_exp {
+    if(strcasecmp($1, $3) == 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+    free($1);
+    free($3);
+  }
+  | time_exp IEQ time_exp {
+    if(msTimeCompare(&($1), &($3)) == 0)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
   | shape_exp EQ shape_exp {
-      int rval;
-      rval = msGEOSEquals($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(rval == -1) {
-        yyerror(p, "Equals (EQ or ==) operator failed.");
-        return(-1);
-      } else
-        $$ = rval;
-    }
+    int rval;
+    rval = msGEOSEquals($1, $3);
+    if($1->scratch == MS_TRUE) msFreeShape($1);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if(rval == -1) {
+      yyerror(p, "Equals (EQ or ==) operator failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | EQUALS '(' shape_exp ',' shape_exp ')' {
+    int rval;
+    rval = msGEOSEquals($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(rval == -1) {
+      yyerror(p, "Equals function failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | INTERSECTS '(' shape_exp ',' shape_exp ')' {
+    int rval;
+    rval = msGEOSIntersects($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(rval == -1) {
+      yyerror(p, "Intersects function failed.");
+      return(-1);
+    } else
+    $$ = rval;
+  }
   | shape_exp INTERSECTS shape_exp {
-      int rval;
-      rval = msGEOSIntersects($1, $3);      
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3); 
-      if(rval == -1) {
-        yyerror(p, "Intersects operator failed.");
-        return(-1);
-      } else
-        $$ = rval;
-    }
+    int rval;
+    rval = msGEOSIntersects($1, $3);
+    if($1->scratch == MS_TRUE) msFreeShape($1);
+    if($3->scratch == MS_TRUE) msFreeShape($3); 
+    if(rval == -1) {
+      yyerror(p, "Intersects operator failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | DISJOINT '(' shape_exp ',' shape_exp ')' {
+    int rval;
+    rval = msGEOSDisjoint($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(rval == -1) {
+      yyerror(p, "Disjoint function failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
   | shape_exp DISJOINT shape_exp {
-      int rval;
-      rval = msGEOSDisjoint($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(rval == -1) {
-        yyerror(p, "Disjoint operator failed.");
-        return(-1);
-      } else
-        $$ = rval;
-    }
+    int rval;
+    rval = msGEOSDisjoint($1, $3);
+    if($1->scratch == MS_TRUE) msFreeShape($1);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if(rval == -1) {
+      yyerror(p, "Disjoint operator failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | TOUCHES '(' shape_exp ',' shape_exp ')' {
+    int rval;
+    rval = msGEOSTouches($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(rval == -1) {
+      yyerror(p, "Touches function failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
   | shape_exp TOUCHES shape_exp {
-      int rval;
-      rval = msGEOSTouches($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(rval == -1) {
-        yyerror(p, "Touches operator failed.");
-        return(-1);
-      } else
-        $$ = rval;
-    }
+    int rval;
+    rval = msGEOSTouches($1, $3);
+    if($1->scratch == MS_TRUE) msFreeShape($1);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if(rval == -1) {
+      yyerror(p, "Touches operator failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | OVERLAPS '(' shape_exp ',' shape_exp ')' {
+    int rval;
+    rval = msGEOSOverlaps($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(rval == -1) {
+      yyerror(p, "Overlaps function failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
   | shape_exp OVERLAPS shape_exp {
-      int rval;
-      rval = msGEOSOverlaps($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(rval == -1) {
-        yyerror(p, "Overlaps operator failed.");
-        return(-1);
-      } else
-        $$ = rval;
-    }
+    int rval;
+     rval = msGEOSOverlaps($1, $3);
+    if($1->scratch == MS_TRUE) msFreeShape($1);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if(rval == -1) {
+      yyerror(p, "Overlaps operator failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | CROSSES '(' shape_exp ',' shape_exp ')' {
+    int rval;
+    rval = msGEOSCrosses($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(rval == -1) {
+      yyerror(p, "Crosses function failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
   | shape_exp CROSSES shape_exp {
-      int rval;
-      rval = msGEOSCrosses($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(rval == -1) {
-        yyerror(p, "Crosses operator failed.");
-        return(-1);
-      } else
-        $$ = rval;
-    }
+    int rval;
+    rval = msGEOSCrosses($1, $3);
+    if($1->scratch == MS_TRUE) msFreeShape($1);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if(rval == -1) {
+      yyerror(p, "Crosses operator failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | WITHIN '(' shape_exp ',' shape_exp ')' {
+    int rval;
+    rval = msGEOSWithin($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(rval == -1) {
+      yyerror(p, "Within function failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
   | shape_exp WITHIN shape_exp {
-      int rval;
-      rval = msGEOSWithin($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(rval == -1) {
-        yyerror(p, "Within operator failed.");
-        return(-1);
-      } else
-        $$ = rval;
-    }
+    int rval;
+    rval = msGEOSWithin($1, $3);
+    if($1->scratch == MS_TRUE) msFreeShape($1);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if(rval == -1) {
+      yyerror(p, "Within operator failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | CONTAINS '(' shape_exp ',' shape_exp ')' {
+    int rval;
+    rval = msGEOSContains($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(rval == -1) {
+      yyerror(p, "Contains function failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
   | shape_exp CONTAINS shape_exp {
-      int rval;
-      rval = msGEOSContains($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(rval == -1) {
-        yyerror(p, "Contains operator failed.");
-        return(-1);
-      } else
-        $$ = rval;
-    }
-  | shape_exp DWITHIN shape_exp {
-      double d;
-      d = msGEOSDistance($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(d == 0.0) 
-        $$ = MS_TRUE;
-      else
-        $$ = MS_FALSE;
-    }
-  | shape_exp BEYOND shape_exp {
-      double d;
-      d = msGEOSDistance($1, $3);
-      if($1->scratch == MS_TRUE) msFreeShape($1);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
-      if(d > 0.0) 
-        $$ = MS_TRUE;
-      else
-        $$ = MS_FALSE;
-    }
+    int rval;
+    rval = msGEOSContains($1, $3);
+    if($1->scratch == MS_TRUE) msFreeShape($1);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if(rval == -1) {
+      yyerror(p, "Contains operator failed.");
+      return(-1);
+    } else
+      $$ = rval;
+  }
+  | DWITHIN '(' shape_exp ',' shape_exp ',' math_exp ')' {
+    double d;
+    d = msGEOSDistance($3, $5);    
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(d <= $7)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
+  | BEYOND '(' shape_exp ',' shape_exp ',' math_exp ')' {
+    double d;
+    d = msGEOSDistance($3, $5);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($5->scratch == MS_TRUE) msFreeShape($5);
+    if(d > $7)
+      $$ = MS_TRUE;
+    else
+      $$ = MS_FALSE;
+  }
 ;
 
 math_exp: NUMBER
@@ -517,167 +618,167 @@ math_exp: NUMBER
   | math_exp '*' math_exp { $$ = $1 * $3; }
   | math_exp '%' math_exp { $$ = (int)$1 % (int)$3; }
   | math_exp '/' math_exp {
-      if($3 == 0.0) {
-        yyerror(p, "Division by zero.");
-        return(-1);
-      } else
-        $$ = $1 / $3; 
-    }
+    if($3 == 0.0) {
+      yyerror(p, "Division by zero.");
+      return(-1);
+    } else
+      $$ = $1 / $3; 
+  }
   | '-' math_exp %prec NEG { $$ = $2; }
   | math_exp '^' math_exp { $$ = pow($1, $3); }
   | LENGTH '(' string_exp ')' { $$ = strlen($3); }
   | AREA '(' shape_exp ')' {
-      if($3->type != MS_SHAPE_POLYGON) {
-        yyerror(p, "Area can only be computed for polygon shapes.");
-        return(-1);
-      }
-      $$ = msGetPolygonArea($3);
-      if($3->scratch == MS_TRUE) msFreeShape($3);
+    if($3->type != MS_SHAPE_POLYGON) {
+      yyerror(p, "Area can only be computed for polygon shapes.");
+      return(-1);
     }
+    $$ = msGetPolygonArea($3);
+    if($3->scratch == MS_TRUE) msFreeShape($3);
+  }
   | ROUND '(' math_exp ',' math_exp ')' { $$ = (MS_NINT($3/$5))*$5; }
 ;
 
 shape_exp: SHAPE 
   | '(' shape_exp ')' { $$ = $2; }
   | YYBUFFER '(' shape_exp ',' math_exp ')' {
-      shapeObj *s;
-      s = msGEOSBuffer($3, $5);
-      if(!s) {
-        yyerror(p, "Executing buffer failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msGEOSBuffer($3, $5);
+    if(!s) {
+      yyerror(p, "Executing buffer failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | DIFFERENCE '(' shape_exp ',' shape_exp ')' {
-      shapeObj *s;
-      s = msGEOSDifference($3, $5);
-      if(!s) {
-        yyerror(p, "Executing difference failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msGEOSDifference($3, $5);
+    if(!s) {
+      yyerror(p, "Executing difference failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | SIMPLIFY '(' shape_exp ',' math_exp ')' {
-      shapeObj *s;
-      s = msGEOSSimplify($3, $5);
-      if(!s) {
-        yyerror(p, "Executing simplify failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msGEOSSimplify($3, $5);
+    if(!s) {
+      yyerror(p, "Executing simplify failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | SIMPLIFYPT '(' shape_exp ',' math_exp ')' {
-      shapeObj *s;
-      s = msGEOSTopologyPreservingSimplify($3, $5);
-      if(!s) {
-        yyerror(p, "Executing simplifypt failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msGEOSTopologyPreservingSimplify($3, $5);
+    if(!s) {
+      yyerror(p, "Executing simplifypt failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | GENERALIZE '(' shape_exp ',' math_exp ')' {
-      shapeObj *s;
-      s = msGeneralize($3, $5);
-      if(!s) {
-        yyerror(p, "Executing generalize failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msGeneralize($3, $5);
+    if(!s) {
+      yyerror(p, "Executing generalize failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | SMOOTHSIA '(' shape_exp ')' {
-      shapeObj *s;
-      s = msSmoothShapeSIA($3, 3, 1, NULL);
-      if(!s) {
-        yyerror(p, "Executing smoothsia failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msSmoothShapeSIA($3, 3, 1, NULL);
+    if(!s) {
+      yyerror(p, "Executing smoothsia failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | SMOOTHSIA '(' shape_exp ',' math_exp ')' {
-      shapeObj *s;
-      s = msSmoothShapeSIA($3, $5, 1, NULL);
-      if(!s) {
-        yyerror(p, "Executing smoothsia failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msSmoothShapeSIA($3, $5, 1, NULL);
+    if(!s) {
+      yyerror(p, "Executing smoothsia failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ')' {
-      shapeObj *s;
-      s = msSmoothShapeSIA($3, $5, $7, NULL);
-      if(!s) {
-        yyerror(p, "Executing smoothsia failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msSmoothShapeSIA($3, $5, $7, NULL);
+    if(!s) {
+      yyerror(p, "Executing smoothsia failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ',' string_exp ')' {
-      shapeObj *s;
-      s = msSmoothShapeSIA($3, $5, $7, $9);
-      free($9);
-      if(!s) {
-        yyerror(p, "Executing smoothsia failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
+    shapeObj *s;
+    s = msSmoothShapeSIA($3, $5, $7, $9);
+    free($9);
+    if(!s) {
+      yyerror(p, "Executing smoothsia failed.");
+      return(-1);
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+  }
   | JAVASCRIPT '(' shape_exp ',' string_exp ')' {
 #ifdef USE_V8_MAPSCRIPT
-      shapeObj *s;
-      s = msV8TransformShape($3, $5);
-      free($5);
-      if(!s) {
-        yyerror(p, "Executing javascript failed.");
-        return(-1);
-      }
-      s->scratch = MS_TRUE;
-      $$ = s;
-#else
-      yyerror(p, "Javascript support not compiled in");
+    shapeObj *s;
+    s = msV8TransformShape($3, $5);
+    free($5);
+    if(!s) {
+      yyerror(p, "Executing javascript failed.");
       return(-1);
-#endif
     }
+    s->scratch = MS_TRUE;
+    $$ = s;
+#else
+    yyerror(p, "Javascript support not compiled in");
+    return(-1);
+#endif
+  }
 ;
 
 string_exp: STRING
   | '(' string_exp ')' { $$ = $2; }
   | string_exp '+' string_exp { 
-      $$ = (char *)malloc(strlen($1) + strlen($3) + 1);
-      sprintf($$, "%s%s", $1, $3); free($1); free($3); 
-    }
+    $$ = (char *)malloc(strlen($1) + strlen($3) + 1);
+    sprintf($$, "%s%s", $1, $3); free($1); free($3); 
+  }
   | TOSTRING '(' math_exp ',' string_exp ')' {
-      $$ = (char *) malloc(strlen($5) + 64); /* Plenty big? Should use snprintf below... */
-      sprintf($$, $5, $3);
-    }
+    $$ = (char *) malloc(strlen($5) + 64); /* Plenty big? Should use snprintf below... */
+    sprintf($$, $5, $3);
+  }
   | COMMIFY '(' string_exp ')' {  
-      $3 = msCommifyString($3); 
-      $$ = $3; 
-    }
+    $3 = msCommifyString($3); 
+    $$ = $3; 
+  }
   | UPPER '(' string_exp ')' {  
-      msStringToUpper($3); 
-      $$ = $3; 
-    }
+    msStringToUpper($3); 
+    $$ = $3; 
+  }
   | LOWER '(' string_exp ')' {  
-      msStringToLower($3); 
-      $$ = $3; 
-    }
+    msStringToLower($3); 
+    $$ = $3; 
+  }
   | INITCAP '(' string_exp ')' {  
-      msStringInitCap($3); 
-      $$ = $3; 
-    }
+    msStringInitCap($3); 
+    $$ = $3; 
+  }
   | FIRSTCAP '(' string_exp ')' {  
-      msStringFirstCap($3); 
-      $$ = $3; 
-    }
+    msStringFirstCap($3); 
+    $$ = $3; 
+  }
 ;
 
 time_exp: TIME
@@ -693,15 +794,19 @@ time_exp: TIME
 int yylex(YYSTYPE *lvalp, parseObj *p) 
 {
   int token;
-
+  
   if(p->expr->curtoken == NULL) return(0); /* done */
 
   // fprintf(stderr, "in yylex() - curtoken=%d...\n", p->expr->curtoken->token);
 
   token = p->expr->curtoken->token; /* may override */
   switch(p->expr->curtoken->token) {
+  case MS_TOKEN_LITERAL_BOOLEAN:
+    token = BOOLEAN;
+    (*lvalp).intval = p->expr->curtoken->tokenval.dblval;
+    break;
   case MS_TOKEN_LITERAL_NUMBER:
-    token = NUMBER;    
+    token = NUMBER;
     (*lvalp).dblval = p->expr->curtoken->tokenval.dblval;
     break;
   case MS_TOKEN_LITERAL_SHAPE:
@@ -736,6 +841,7 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_COMPARISON_CROSSES: token = CROSSES; break;
   case MS_TOKEN_COMPARISON_WITHIN: token = WITHIN; break; 
   case MS_TOKEN_COMPARISON_CONTAINS: token = CONTAINS; break;
+  case MS_TOKEN_COMPARISON_EQUALS: token = EQUALS; break;
   case MS_TOKEN_COMPARISON_BEYOND: token = BEYOND; break;
   case MS_TOKEN_COMPARISON_DWITHIN: token = DWITHIN; break;
 
@@ -790,7 +896,7 @@ int yylex(YYSTYPE *lvalp, parseObj *p)
   case MS_TOKEN_FUNCTION_SIMPLIFYPT: token = SIMPLIFYPT; break;
   case MS_TOKEN_FUNCTION_GENERALIZE: token = GENERALIZE; break;
   case MS_TOKEN_FUNCTION_SMOOTHSIA: token = SMOOTHSIA; break;
-  case MS_TOKEN_FUNCTION_JAVASCRIPT: token = JAVASCRIPT; break;        
+  case MS_TOKEN_FUNCTION_JAVASCRIPT: token = JAVASCRIPT; break;
 
   default:
     break;

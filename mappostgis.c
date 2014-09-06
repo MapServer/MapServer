@@ -74,6 +74,12 @@
 #define SEGMENT_ANGLE 10.0
 #define SEGMENT_MINPOINTS 10
 
+#define WKBZOFFSET_NONISO 0x80000000
+#define WKBMOFFSET_NONISO 0x40000000
+
+#define HAS_Z   0x1
+#define HAS_M   0x2
+
 #ifdef USE_POSTGIS
 
 
@@ -106,7 +112,11 @@ msPostGISLayerInfo *msPostGISCreateLayerInfo(void)
   layerinfo->rownum = 0;
   layerinfo->version = 0;
   layerinfo->paging = MS_TRUE;
+#ifdef USE_POINT_Z_M
+  layerinfo->force2d = MS_FALSE;
+#else
   layerinfo->force2d = MS_TRUE;
+#endif
   return layerinfo;
 }
 
@@ -195,10 +205,45 @@ pointArrayAddPoint(pointArrayObj *d, const pointObj *p)
 ** Pass an input type number through the PostGIS version
 ** type map array to handle the pre-2.0 incorrect WKB types
 */
+
 static int
-wkbTypeMap(wkbObj *w, int type)
+wkbTypeMap(wkbObj *w, int type, int* pnZMFlag)
 {
-  if ( type < WKB_TYPE_COUNT )
+  *pnZMFlag = 0;
+  /* PostGIS >= 2 : ISO SQL/MM style Z types ? */
+  if( type >= 1000 && type < 2000 )
+  {
+    type -= 1000;
+    *pnZMFlag = HAS_Z;
+  }
+  /* PostGIS >= 2 : ISO SQL/MM style M types ? */
+  else if( type >= 2000 && type < 3000 )
+  {
+    type -= 2000;
+    *pnZMFlag = HAS_M;
+  }
+  /* PostGIS >= 2 : ISO SQL/MM style ZM types ? */
+  else if( type >= 3000 && type < 4000 )
+  {
+    type -= 3000;
+    *pnZMFlag = HAS_Z | HAS_M;
+  }
+  /* PostGIS 1.X EWKB : Extended WKB Z or ZM ? */
+  else if( (type & WKBZOFFSET_NONISO) != 0 )
+  {
+    if( (type & WKBMOFFSET_NONISO) != 0 )
+        *pnZMFlag = HAS_Z | HAS_M;
+    else
+        *pnZMFlag = HAS_Z;
+    type &= 0x00FFFFFF;
+  }
+  /* PostGIS 1.X EWKB: Extended WKB M ? */
+  else if( (type & WKBMOFFSET_NONISO) != 0 )
+  {
+    *pnZMFlag = HAS_M;
+    type &= 0x00FFFFFF;
+  }
+  if ( type >= 0 && type < WKB_TYPE_COUNT )
     return w->typemap[type];
   else
     return 0;
@@ -209,11 +254,11 @@ wkbTypeMap(wkbObj *w, int type)
 ** advancing the read pointer.
 */
 static int
-wkbType(wkbObj *w)
+wkbType(wkbObj *w, int* pnZMFlag)
 {
   int t;
   memcpy(&t, (w->ptr + 1), sizeof(int));
-  return wkbTypeMap(w,t);
+  return wkbTypeMap(w,t, pnZMFlag);
 }
 
 /*
@@ -221,11 +266,11 @@ wkbType(wkbObj *w)
 ** collection without advancing the read pointer.
 */
 static int
-wkbCollectionSubType(wkbObj *w)
+wkbCollectionSubType(wkbObj *w, int* pnZMFlag)
 {
   int t;
   memcpy(&t, (w->ptr + 1 + 4 + 4 + 1), sizeof(int));
-  return wkbTypeMap(w,t);
+  return wkbTypeMap(w,t, pnZMFlag);
 }
 
 /*
@@ -271,12 +316,31 @@ wkbReadDouble(wkbObj *w)
 ** We assume the endianess of the WKB is the same as this machine.
 */
 static inline void
-wkbReadPointP(wkbObj *w, pointObj *p)
+wkbReadPointP(wkbObj *w, pointObj *p, int nZMFlag)
 {
   memcpy(&(p->x), w->ptr, sizeof(double));
   w->ptr += sizeof(double);
   memcpy(&(p->y), w->ptr, sizeof(double));
   w->ptr += sizeof(double);
+  if( nZMFlag & HAS_Z )
+  {
+#ifdef USE_POINT_Z_M
+      memcpy(&(p->z), w->ptr, sizeof(double));
+      if( !(nZMFlag & HAS_M) )
+          p->m = 0.0;
+#endif
+      w->ptr += sizeof(double);
+  }
+  if( nZMFlag & HAS_M )
+  {
+#ifdef USE_POINT_Z_M
+      if( !(nZMFlag & HAS_Z) )
+          p->z = 0.0;
+      memcpy(&(p->m), w->ptr, sizeof(double));
+#endif
+      w->ptr += sizeof(double);
+  }
+
 }
 
 /*
@@ -284,10 +348,10 @@ wkbReadPointP(wkbObj *w, pointObj *p)
 ** We assume the endianess of the WKB is the same as this machine.
 */
 static inline pointObj
-wkbReadPoint(wkbObj *w)
+wkbReadPoint(wkbObj *w, int nZMFlag)
 {
   pointObj p;
-  wkbReadPointP(w, &p);
+  wkbReadPointP(w, &p, nZMFlag);
   return p;
 }
 
@@ -299,7 +363,7 @@ wkbReadPoint(wkbObj *w)
 ** form.
 */
 static void
-wkbReadLine(wkbObj *w, lineObj *line)
+wkbReadLine(wkbObj *w, lineObj *line, int nZMFlag)
 {
   int i;
   pointObj p;
@@ -308,7 +372,7 @@ wkbReadLine(wkbObj *w, lineObj *line)
   line->numpoints = npoints;
   line->point = msSmallMalloc(npoints * sizeof(pointObj));
   for ( i = 0; i < npoints; i++ ) {
-    wkbReadPointP(w, &p);
+    wkbReadPointP(w, &p, nZMFlag);
     line->point[i] = p;
   }
 }
@@ -321,22 +385,25 @@ static void
 wkbSkipGeometry(wkbObj *w)
 {
   int type, npoints, nrings, ngeoms, i;
+  int nZMFlag;
+  int nCoordDim;
   /*endian = */wkbReadChar(w);
-  type = wkbTypeMap(w,wkbReadInt(w));
+  type = wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
+  nCoordDim = 2 + (((nZMFlag & HAS_Z) != 0) ? 1 : 0) + (((nZMFlag & HAS_M) != 0) ? 1 : 0);
   switch(type) {
     case WKB_POINT:
-      w->ptr += 2 * sizeof(double);
+      w->ptr += nCoordDim * sizeof(double);
       break;
     case WKB_CIRCULARSTRING:
     case WKB_LINESTRING:
       npoints = wkbReadInt(w);
-      w->ptr += npoints * 2 * sizeof(double);
+      w->ptr += npoints * nCoordDim * sizeof(double);
       break;
     case WKB_POLYGON:
       nrings = wkbReadInt(w);
       for ( i = 0; i < nrings; i++ ) {
         npoints = wkbReadInt(w);
-        w->ptr += npoints * 2 * sizeof(double);
+        w->ptr += npoints * nCoordDim * sizeof(double);
       }
       break;
     case WKB_MULTIPOINT:
@@ -362,16 +429,17 @@ wkbConvPointToShape(wkbObj *w, shapeObj *shape)
 {
   int type;
   lineObj line;
+  int nZMFlag;
 
   /*endian = */wkbReadChar(w);
-  type = wkbTypeMap(w,wkbReadInt(w));
+  type = wkbTypeMap(w,wkbReadInt(w),&nZMFlag);
 
   if( type != WKB_POINT ) return MS_FAILURE;
 
   if( ! (shape->type == MS_SHAPE_POINT) ) return MS_FAILURE;
   line.numpoints = 1;
   line.point = msSmallMalloc(sizeof(pointObj));
-  line.point[0] = wkbReadPoint(w);
+  line.point[0] = wkbReadPoint(w, nZMFlag);
   msAddLineDirectly(shape, &line);
   return MS_SUCCESS;
 }
@@ -384,13 +452,14 @@ wkbConvLineStringToShape(wkbObj *w, shapeObj *shape)
 {
   int type;
   lineObj line;
+  int nZMFlag;
 
   /*endian = */wkbReadChar(w);
-  type = wkbTypeMap(w,wkbReadInt(w));
+  type = wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
 
   if( type != WKB_LINESTRING ) return MS_FAILURE;
 
-  wkbReadLine(w,&line);
+  wkbReadLine(w,&line, nZMFlag);
   msAddLineDirectly(shape, &line);
 
   return MS_SUCCESS;
@@ -405,9 +474,10 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
   int type;
   int i, nrings;
   lineObj line;
+  int nZMFlag;
 
   /*endian = */wkbReadChar(w);
-  type = wkbTypeMap(w,wkbReadInt(w));
+  type = wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
 
   if( type != WKB_POLYGON ) return MS_FAILURE;
 
@@ -416,7 +486,7 @@ wkbConvPolygonToShape(wkbObj *w, shapeObj *shape)
 
   /* Add each ring to the shape */
   for( i = 0; i < nrings; i++ ) {
-    wkbReadLine(w,&line);
+    wkbReadLine(w,&line, nZMFlag);
     msAddLineDirectly(shape, &line);
   }
 
@@ -434,9 +504,10 @@ wkbConvCurvePolygonToShape(wkbObj *w, shapeObj *shape)
   int type, i, ncomponents;
   int failures = 0;
   int was_poly = ( shape->type == MS_SHAPE_POLYGON );
+  int nZMFlag;
 
   /*endian = */wkbReadChar(w);
-  type = wkbTypeMap(w,wkbReadInt(w));
+  type = wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
   ncomponents = wkbReadInt(w);
 
   if( type != WKB_CURVEPOLYGON ) return MS_FAILURE;
@@ -469,15 +540,16 @@ static int
 wkbConvCircularStringToShape(wkbObj *w, shapeObj *shape)
 {
   int type;
+  int nZMFlag;
   lineObj line = {0, NULL};
 
   /*endian = */wkbReadChar(w);
-  type = wkbTypeMap(w,wkbReadInt(w));
+  type = wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
 
   if( type != WKB_CIRCULARSTRING ) return MS_FAILURE;
 
   /* Stroke the string into a point array */
-  if ( arcStrokeCircularString(w, SEGMENT_ANGLE, &line) == MS_FAILURE ) {
+  if ( arcStrokeCircularString(w, SEGMENT_ANGLE, &line, nZMFlag) == MS_FAILURE ) {
     if(line.point) free(line.point);
     return MS_FAILURE;
   }
@@ -505,9 +577,10 @@ wkbConvCompoundCurveToShape(wkbObj *w, shapeObj *shape)
   int type, ncomponents, i, j;
   lineObj line;
   shapeObj shapebuf;
+  int nZMFlag;
 
   /*endian = */wkbReadChar(w);
-  type = wkbTypeMap(w,wkbReadInt(w));
+  type = wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
 
   /* Init our shape buffer */
   msInitShape(&shapebuf);
@@ -571,9 +644,10 @@ wkbConvCollectionToShape(wkbObj *w, shapeObj *shape)
 {
   int i, ncomponents;
   int failures = 0;
+  int nZMFlag;
 
   /*endian = */wkbReadChar(w);
-  /*type = */wkbTypeMap(w,wkbReadInt(w));
+  /*type = */wkbTypeMap(w,wkbReadInt(w), &nZMFlag);
   ncomponents = wkbReadInt(w);
 
   /*
@@ -602,7 +676,8 @@ wkbConvCollectionToShape(wkbObj *w, shapeObj *shape)
 int
 wkbConvGeometryToShape(wkbObj *w, shapeObj *shape)
 {
-  int wkbtype = wkbType(w); /* Peak at the type number */
+  int nZMFlag;
+  int wkbtype = wkbType(w, &nZMFlag); /* Peak at the type number */
 
   switch(wkbtype) {
       /* Recurse into anonymous collections */
@@ -884,7 +959,7 @@ arcStrokeCircle(const pointObj *p1, const pointObj *p2, const pointObj *p3,
 ** argument.
 */
 int
-arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line)
+arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line, int nZMFlag)
 {
   pointObj p1, p2, p3;
   int npoints, nedges;
@@ -903,13 +978,13 @@ arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line)
   /* Make a large guess at how much space we'll need */
   pa = pointArrayNew(nedges * 180 / segment_angle);
 
-  wkbReadPointP(w,&p3);
+  wkbReadPointP(w,&p3,nZMFlag);
 
   /* Fill out the point array with stroked arcs */
   while( edge < nedges ) {
     p1 = p3;
-    wkbReadPointP(w,&p2);
-    wkbReadPointP(w,&p3);
+    wkbReadPointP(w,&p2,nZMFlag);
+    wkbReadPointP(w,&p3,nZMFlag);
     if ( arcStrokeCircle(&p1, &p2, &p3, segment_angle, edge ? 0 : 1, pa) == MS_FAILURE ) {
       pointArrayFree(pa);
       return MS_FAILURE;
@@ -940,13 +1015,14 @@ static int
 msPostGISFindBestType(wkbObj *w, shapeObj *shape)
 {
   int wkbtype;
+  int nZMFlag;
 
   /* What kind of geometry is this? */
-  wkbtype = wkbType(w);
+  wkbtype = wkbType(w, &nZMFlag);
 
   /* Generic collection, we need to look a little deeper. */
   if ( wkbtype == WKB_GEOMETRYCOLLECTION )
-    wkbtype = wkbCollectionSubType(w);
+    wkbtype = wkbCollectionSubType(w, &nZMFlag);
 
   switch ( wkbtype ) {
     case WKB_POLYGON:
@@ -1652,15 +1728,24 @@ char *msPostGISBuildSQLItems(layerObj *layer)
     */
     char *force2d = "";
 #if TRANSFER_ENCODING == 64
-    static char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
+    const char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
 #else
-    static char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
+    const char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
 #endif
     if( layerinfo->force2d ) {
       if( layerinfo->version >= 20100 )
         force2d = "ST_Force2D";
       else
         force2d = "ST_Force_2D";
+    }
+    else if( layerinfo->version < 20000 )
+    {
+        /* Use AsEWKB() to get 3D */
+#if TRANSFER_ENCODING == 64
+        strGeomTemplate = "encode(AsEWKB(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
+#else
+        strGeomTemplate = "encode(AsEWKB(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
+#endif
     }
     strGeom = (char*)msSmallMalloc(strlen(strGeomTemplate) + strlen(force2d) + strlen(strEndian) + strlen(layerinfo->geomcolumn) + strlen(layerinfo->uid) + 1);
     sprintf(strGeom, strGeomTemplate, force2d, layerinfo->geomcolumn, strEndian, layerinfo->uid);
@@ -1962,10 +2047,10 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
   }
 
   /* Populate strFilter, if necessary. */
-  if ( layer->filter.string ) {
+  if ( layer->filter.native_string ) { 
     static char *strFilterTemplate = "(%s)";
-    strFilter = (char*)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.string)+1);
-    sprintf(strFilter, strFilterTemplate, layer->filter.string);
+    strFilter = (char*)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.native_string)+1);
+    sprintf(strFilter, strFilterTemplate, layer->filter.native_string);
     strFilterLength = strlen(strFilter);
   }
 
@@ -2090,7 +2175,6 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
   free(strWhere);
 
   return strSQL;
-
 }
 
 #define wkbstaticsize 4096
@@ -2146,7 +2230,23 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
   if( layerinfo->version >= 20000 ) /* PostGIS 2.0+ */
     w.typemap = wkb_postgis20;
   else
+  {
     w.typemap = wkb_postgis15;
+    if( layerinfo->force2d == MS_FALSE )
+    {
+        /* Is there SRID ? Skip it */
+        if( w.size >= 9 && (w.ptr[4] & 0x20) != 0 )
+        {
+            w.ptr[5] = w.ptr[1];
+            w.ptr[6] = w.ptr[2];
+            w.ptr[7] = w.ptr[3];
+            w.ptr[8] = w.ptr[4] & ~(0x20);
+            w.ptr[4] = 1;
+            w.ptr += 4;
+            w.size -= 4;
+        }
+    }
+  }
 
   switch (layer->type) {
 
@@ -2383,6 +2483,9 @@ int msPostGISLayerOpen(layerObj *layer)
   force2d_processing = msLayerGetProcessingKey( layer, "FORCE2D" );
   if(force2d_processing && !strcasecmp(force2d_processing,"no")) {
     layerinfo->force2d = MS_FALSE;
+  }
+  else if(force2d_processing && !strcasecmp(force2d_processing,"yes")) {
+    layerinfo->force2d = MS_TRUE;
   }
   if (layer->debug)
     msDebug("msPostGISLayerOpen: Forcing 2D geometries: %s.\n", (layerinfo->force2d)?"yes":"no");
@@ -3146,7 +3249,6 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
 #endif
 }
 
-
 /*
  * make sure that the timestring is complete and acceptable
  * to the date_trunc function :
@@ -3162,7 +3264,7 @@ int postgresTimeStampForTimeString(const char *timestring, char *dest, size_t de
   int bNoDate = (*timestring == 'T');
   if (timeresolution < 0)
     return MS_FALSE;
-
+ 
   switch(timeresolution) {
     case TIME_RESOLUTION_YEAR:
       if (timestring[nlength-1] != '-') {
@@ -3219,7 +3321,6 @@ int postgresTimeStampForTimeString(const char *timestring, char *dest, size_t de
   return MS_SUCCESS;
 
 }
-
 
 /*
  * create a postgresql where clause for the given timestring, taking into account
@@ -3426,19 +3527,19 @@ int msPostGISLayerSetTimeFilter(layerObj *lp, const char *timestring, const char
     return MS_FALSE;
   }
 
-  if(lp->filteritem) free(lp->filteritem);
-  lp->filteritem = msStrdup(timefield);
-
-  /* if the filter is set and it's a string type, concatenate it with
-     the time. If not just free it */
-  if (lp->filter.type == MS_EXPRESSION) {
+  /* if the filter is set and it's a string type, concatenate it with the time. If not just free it */
+  if (lp->filter.type == MS_STRING && !lp->filteritem && lp->filter.string) {
     snprintf(bufferTmp, buffer_size, "(%s) and %s", lp->filter.string, buffer);
-    loadExpressionString(&lp->filter, bufferTmp);
+    msLoadExpressionString(&lp->filter, bufferTmp);
   } else {
-    freeExpression(&lp->filter);
-    loadExpressionString(&lp->filter, buffer);
+    msFreeExpression(&lp->filter);
+    msLoadExpressionString(&lp->filter, buffer);
   }
 
+  if(lp->filteritem) free(lp->filteritem);
+  /* lp->filteritem = msStrdup(timefield); - we're building SQL, filteritem should not be set */
+
+  lp->filter.type = MS_STRING; /* force expression to string type so it's interpreted as native SQL */ 
 
   return MS_TRUE;
 }
@@ -3524,10 +3625,242 @@ int msPostGISGetPaging(layerObj *layer)
 #endif
 }
 
+/*
+** msPostGISLayerTranslateFilter()
+**
+** Registered vtable->LayerTranslateFilter function.
+*/
+int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem)
+{
+#ifdef USE_POSTGIS
+  tokenListNodeObjPtr node = NULL;
+
+  char *snippet = NULL;
+  char *native_string = NULL;
+  char *strtmpl = NULL;
+  char *stresc = NULL;
+
+  msPostGISLayerInfo *layerinfo = layer->layerinfo;
+
+  if(!filter->string) return MS_SUCCESS; /* not an error, just nothing to do */
+
+  // fprintf(stderr, "%s, %s, %d\n", filter->string, filteritem, filter->type);
+
+  if(filter->type == MS_STRING && filter->string && !filteritem) { /* native sql */
+    filter->native_string = msStrdup(filter->string);
+    return MS_SUCCESS;
+  } else if(filter->type == MS_STRING && filter->string && filteritem) { /* item/value pair - add escaping */
+
+    stresc = msLayerEscapePropertyName(layer, filteritem);
+    if(filter->flags & MS_EXP_INSENSITIVE) {
+      native_string = msStringConcatenate(native_string, "upper(");
+      native_string = msStringConcatenate(native_string, stresc);
+      native_string = msStringConcatenate(native_string, "::text) = upper(");
+    } else {
+      native_string = msStringConcatenate(native_string, stresc);
+      native_string = msStringConcatenate(native_string, "::text = ");
+    }
+    msFree(stresc);
+
+    strtmpl = "'%s'";  /* don't have a type for the righthand literal so assume it's a string and we quote */
+    stresc = msPostGISEscapeSQLParam(layer, filter->string);    
+    snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+    sprintf(snippet, strtmpl, stresc);
+    native_string = msStringConcatenate(native_string, snippet);
+    msFree(snippet);
+    msFree(stresc);
+
+    if(filter->flags & MS_EXP_INSENSITIVE) native_string = msStringConcatenate(native_string, ")");
+  } else if(filter->type == MS_REGEX && filter->string && filteritem) { /* item/regex pair  - add escaping */
+
+    stresc = msLayerEscapePropertyName(layer, filteritem);
+    native_string = msStringConcatenate(native_string, stresc);
+    if(filter->flags & MS_EXP_INSENSITIVE) {
+      native_string = msStringConcatenate(native_string, "::text ~* ");
+    } else {
+      native_string = msStringConcatenate(native_string, "::text ~ ");
+    }
+    msFree(stresc);
+
+    strtmpl = "'%s'";
+    stresc = msPostGISEscapeSQLParam(layer, filter->string);
+    snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+    sprintf(snippet, strtmpl, stresc);
+    native_string = msStringConcatenate(native_string, snippet);
+    msFree(snippet);
+    msFree(stresc);
+  } else if(filter->type == MS_EXPRESSION) {
+    if(msPostGISParseData(layer) != MS_SUCCESS) return MS_FAILURE;
+
+    if(layer->debug >= 2) msDebug("msPostGISLayerTranslateFilter. String: %s.\n", filter->string);
+    if(!filter->tokens) return MS_SUCCESS;
+    if(layer->debug >= 2) msDebug("msPostGISLayerTranslateFilter. There are tokens to process... \n");
+
+    node = filter->tokens;
+    while (node != NULL) {      
+      switch(node->token) {
+
+        /* literal tokens */
+        case MS_TOKEN_LITERAL_BOOLEAN:
+          if(node->tokenval.dblval == MS_TRUE)
+            native_string = msStringConcatenate(native_string, "TRUE");
+          else
+            native_string = msStringConcatenate(native_string, "FALSE");
+          break;
+        case MS_TOKEN_LITERAL_NUMBER:
+	  strtmpl = "%lf";
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+          sprintf(snippet, strtmpl, node->tokenval.dblval);
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+          break;
+        case MS_TOKEN_LITERAL_STRING:
+          strtmpl = "'%s'";
+          stresc = msPostGISEscapeSQLParam(layer, node->tokenval.strval);
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+          sprintf(snippet, strtmpl, stresc);
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+          msFree(stresc);
+          break;
+        case MS_TOKEN_LITERAL_TIME:
+        {
+          int resolution = msTimeGetResolution(node->tokensrc);
+          
+          snippet = (char *) msSmallMalloc(128);
+          switch(resolution) {
+            case TIME_RESOLUTION_YEAR:
+              strtmpl = "to_date('%d','YYYY')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900));
+              break;
+            case TIME_RESOLUTION_MONTH:
+              strtmpl = "to_date('%d-%02d','YYYY-MM')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1));
+              break;
+            case TIME_RESOLUTION_DAY:
+      	      strtmpl = "to_date('%d-%02d-%02d','YYYY-MM-DD')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday);
+              break;
+            case TIME_RESOLUTION_HOUR:
+              strtmpl = "to_timestamp('%d-%02d-%02d %02d','YYYY-MM-DD hh24')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour);
+              break;
+            case TIME_RESOLUTION_MINUTE:
+              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d','YYYY-MM-DD hh24:mi')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min);
+              break;
+            case TIME_RESOLUTION_SECOND:
+              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d:%02d','YYYY-MM-DD hh24:mi:ss')";
+              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min, node->tokenval.tmval.tm_sec);
+              break;
+          }
+
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+          break;
+  	}
+        case MS_TOKEN_LITERAL_SHAPE:
+          native_string = msStringConcatenate(native_string, "ST_GeomFromText('");
+          native_string = msStringConcatenate(native_string, msShapeToWKT(node->tokenval.shpval));
+          native_string = msStringConcatenate(native_string, "'");
+          if(layerinfo->srid && strcmp(layerinfo->srid, "") != 0) {
+            native_string = msStringConcatenate(native_string, ",");
+            native_string = msStringConcatenate(native_string, layerinfo->srid);
+          }
+          native_string = msStringConcatenate(native_string, ")");
+          break;
+
+	/* data binding tokens */
+        case MS_TOKEN_BINDING_DOUBLE:
+        case MS_TOKEN_BINDING_INTEGER:
+        case MS_TOKEN_BINDING_STRING:
+        case MS_TOKEN_BINDING_TIME:        
+          if(node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
+            strtmpl = "%s::text"; /* explicit cast necessary for certain operators */
+          else
+            strtmpl = "%s";
+          stresc = msLayerEscapePropertyName(layer, node->tokenval.bindval.item);
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+          sprintf(snippet, strtmpl, stresc);
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+          msFree(stresc);
+          break;
+        case MS_TOKEN_BINDING_SHAPE:
+          native_string = msStringConcatenate(native_string, layerinfo->geomcolumn);
+          break;
+        case MS_TOKEN_BINDING_MAP_CELLSIZE:
+          strtmpl = "%lf";
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+          sprintf(snippet, strtmpl, layer->map->cellsize);
+          native_string = msStringConcatenate(native_string, snippet);
+          msFree(snippet);
+	  break;
+
+	/* spatial comparison tokens */
+        case MS_TOKEN_COMPARISON_INTERSECTS:
+        case MS_TOKEN_COMPARISON_DISJOINT:
+        case MS_TOKEN_COMPARISON_TOUCHES:
+        case MS_TOKEN_COMPARISON_OVERLAPS:
+        case MS_TOKEN_COMPARISON_CROSSES:
+        case MS_TOKEN_COMPARISON_WITHIN:
+        case MS_TOKEN_COMPARISON_CONTAINS:
+        case MS_TOKEN_COMPARISON_EQUALS:
+        case MS_TOKEN_COMPARISON_DWITHIN:
+          if(node->next->token != '(') goto cleanup;
+          native_string = msStringConcatenate(native_string, "st_");
+          native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
+          break;
+
+	/* functions */
+        case MS_TOKEN_FUNCTION_LENGTH:
+        case MS_TOKEN_FUNCTION_AREA:
+        case MS_TOKEN_FUNCTION_BUFFER:
+        case MS_TOKEN_FUNCTION_DIFFERENCE:
+          native_string = msStringConcatenate(native_string, "st_");
+          native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
+          break;
+
+	/* unsupported tokens */ 
+	case MS_TOKEN_COMPARISON_IEQ:
+        case MS_TOKEN_COMPARISON_BEYOND:
+	case MS_TOKEN_FUNCTION_TOSTRING:
+	case MS_TOKEN_FUNCTION_ROUND:
+	case MS_TOKEN_FUNCTION_SIMPLIFY:
+        case MS_TOKEN_FUNCTION_SIMPLIFYPT:        
+        case MS_TOKEN_FUNCTION_GENERALIZE:
+          goto cleanup;
+          break;
+
+        default:
+          /* by default accept the general token to string conversion */
+          native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
+        }
+      node = node->next;
+    }
+  }
+
+  filter->native_string = msStrdup(native_string);    
+  msFree(native_string);
+
+  return MS_SUCCESS;
+
+cleanup:
+  msSetError(MS_MISCERR, "Translation to native SQL failed.", "msPostGISLayerTranslateFilter()");
+  msFree(native_string);
+  return MS_FAILURE;
+#else
+  msSetError(MS_MISCERR, "PostGIS support is not available.", "msPostGISLayerTranslateFilter()");
+  return MS_FAILURE;
+#endif
+}
+
 int msPostGISLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
+
+  layer->vtable->LayerTranslateFilter = msPostGISLayerTranslateFilter;
 
   layer->vtable->LayerInitItemInfo = msPostGISLayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msPostGISLayerFreeItemInfo;
@@ -3542,7 +3875,8 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerApplyFilterToLayer = msLayerApplyCondSQLFilterToLayer;
   /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
   /* layer->vtable->LayerCloseConnection = msPostGISLayerClose; */
-  layer->vtable->LayerSetTimeFilter = msPostGISLayerSetTimeFilter;
+  // layer->vtable->LayerSetTimeFilter = msPostGISLayerSetTimeFilter;
+  layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
 

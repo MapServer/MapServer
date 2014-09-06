@@ -403,7 +403,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
   if(!context) return(MS_TRUE);
 
   /* initialize a temporary expression (e) */
-  initExpression(&e);
+  msInitExpression(&e);
 
   e.string = msStrdup(context);
   e.type = MS_EXPRESSION; /* todo */
@@ -434,7 +434,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 
   status = yyparse(&p);
 
-  freeExpression(&e);
+  msFreeExpression(&e);
 
   if (status != 0) {
     msSetError(MS_PARSEERR, "Failed to parse context", "msEvalContext");
@@ -454,7 +454,8 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
  */
 int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex)
 {
-  if(!expression->string) return MS_TRUE; /* empty expressions are ALWAYS true */
+  if(MS_STRING_IS_NULL_OR_EMPTY(expression->string)) return MS_TRUE; /* NULL or empty expressions are ALWAYS true */
+  if(expression->native_string != NULL) return MS_TRUE; /* expressions that are evaluated natively are ALWAYS true */
 
   switch(expression->type) {
     case(MS_STRING):
@@ -519,6 +520,8 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
         msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
         return MS_FALSE;
       }
+
+      if(MS_STRING_IS_NULL_OR_EMPTY(shape->values[itemindex]) == MS_TRUE) return MS_FALSE;
 
       if(!expression->compiled) {
         if(expression->flags & MS_EXP_INSENSITIVE) {
@@ -682,12 +685,12 @@ char *msEvalTextExpressionInternal(expressionObj *expr, shapeObj *shape, int bJS
 
 char *msEvalTextExpressionJSonEscape(expressionObj *expr, shapeObj *shape)
 {
-    return msEvalTextExpressionInternal(expr, shape, TRUE);
+    return msEvalTextExpressionInternal(expr, shape, MS_TRUE);
 }
 
 char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
 {
-    return msEvalTextExpressionInternal(expr, shape, FALSE);
+    return msEvalTextExpressionInternal(expr, shape, MS_FALSE);
 }
 
 char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {
@@ -2363,10 +2366,23 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
 {
   char *online_resource = NULL;
   const char *value, *hostname, *port, *script, *protocol="http", *mapparam=NULL;
-  int mapparam_len = 0;
+  char **hostname_array = NULL;
+  int mapparam_len = 0, hostname_array_len = 0;
 
-  hostname = getenv("SERVER_NAME");
-  port = getenv("SERVER_PORT");
+  hostname = getenv("HTTP_X_FORWARDED_HOST");
+  if(!hostname)
+    hostname = getenv("SERVER_NAME");
+  else {
+    if(strchr(hostname,',')) {
+      hostname_array = msStringSplit(hostname,',', &hostname_array_len);
+      hostname = hostname_array[0];
+    }
+  }
+
+  port = getenv("HTTP_X_FORWARDED_PORT");
+  if(!port)
+    port = getenv("SERVER_PORT");
+  
   script = getenv("SCRIPT_NAME");
 
   /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
@@ -2374,6 +2390,9 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
   if ( ((value=getenv("HTTPS")) && strcasecmp(value, "on") == 0) ||
        ((value=getenv("SERVER_PORT")) && atoi(value) == 443) ) {
     protocol = "https";
+  }
+  if ( (value=getenv("HTTP_X_FORWARDED_PROTO")) ) {
+    protocol = value;
   }
 
   /* If map=.. was explicitly set then we'll include it in onlineresource
@@ -2407,6 +2426,9 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
   } else {
     msSetError(MS_CGIERR, "Impossible to establish server URL.", "msBuildOnlineResource()");
     return NULL;
+  }
+  if(hostname_array) {
+    msFreeCharArray(hostname_array, hostname_array_len);
   }
 
   return online_resource;

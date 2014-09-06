@@ -45,8 +45,6 @@
 #include "mapserver.h"
 #include "mapsymbol.h"
 
-
-
 #include "mapcopy.h"
 
 /***********************************************************************
@@ -199,15 +197,16 @@ int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map)
 }
 
 /***********************************************************************
- * msCopyExpression(                                                   *
+ * msCopyExpression()                                                  *
  *                                                                     *
- * Copy an expressionObj, but only its string and type                 *
+ * Copy an expressionObj, but only its string, type and flags          *
  **********************************************************************/
 
 int msCopyExpression(expressionObj *dst, expressionObj *src)
 {
   MS_COPYSTRING(dst->string, src->string);
   MS_COPYSTELEM(type);
+  MS_COPYSTELEM(flags);
   dst->compiled = MS_FALSE;
 
   return MS_SUCCESS;

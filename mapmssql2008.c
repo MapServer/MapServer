@@ -906,17 +906,17 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   if (rect.minx <= extent.minx && rect.miny <= extent.miny && 
       rect.maxx >= extent.maxx && rect.maxy >= extent.maxy) {
       /* no spatial filter used */
-      if(!layer->filter.string) {
+      if(!layer->filter.native_string) {
         snprintf(query_string_temp, sizeof(query_string_temp),  "SELECT %s from %s", columns_wanted, data_source );
       } else {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, layer->filter.string );
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, layer->filter.native_string );
       }
   }
   else {
-      if(!layer->filter.string) {
+      if(!layer->filter.native_string) {
         snprintf(query_string_temp, sizeof(query_string_temp),  "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layerinfo->geom_column, box3d );
       } else {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layer->filter.string, layerinfo->geom_column, box3d );
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layer->filter.native_string, layerinfo->geom_column, box3d );
       }
   }
 
@@ -2193,17 +2193,17 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
   return MS_FAILURE;
 }
 
-
 /* end above's #ifdef USE_MSSQL2008 */
 #endif
 
 #ifdef USE_MSSQL2008_PLUGIN
 
-MS_DLL_EXPORT  int
-PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
+MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj *layer)
 {
   assert(layer != NULL);
   assert(vtable != NULL);
+
+  /* vtable->LayerTranslateFilter, use default */
 
   vtable->LayerInitItemInfo = msMSSQL2008LayerInitItemInfo;
   vtable->LayerFreeItemInfo = msMSSQL2008LayerFreeItemInfo;
