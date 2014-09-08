@@ -3626,6 +3626,18 @@ int msPostGISGetPaging(layerObj *layer)
 }
 
 /*
+** Look ahead to find the next node of a specific type.
+*/
+tokenListNodeObjPtr findNextTokenByType(tokenListNodeObjPtr node, int type) {
+  while (node != NULL) {
+    if(node->token == type) return node;
+    node = node->next; /* keep looking */
+  }
+
+  return NULL; /* not found */
+}
+
+/*
 ** msPostGISLayerTranslateFilter()
 **
 ** Registered vtable->LayerTranslateFilter function.
@@ -3634,6 +3646,9 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
 {
 #ifdef USE_POSTGIS
   tokenListNodeObjPtr node = NULL;
+
+  int resolution; /* date/time resolution */
+  int noDate;
 
   char *snippet = NULL;
   char *native_string = NULL;
@@ -3644,7 +3659,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
 
   if(!filter->string) return MS_SUCCESS; /* not an error, just nothing to do */
 
-  // fprintf(stderr, "%s, %s, %d\n", filter->string, filteritem, filter->type);
+  // fprintf(stderr, "input: %s, %s, %d\n", filter->string, filteritem, filter->type);
 
   if(filter->type == MS_STRING && filter->string && !filteritem) { /* native sql */
     filter->native_string = msStrdup(filter->string);
@@ -3723,10 +3738,12 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           msFree(snippet);
           msFree(stresc);
           break;
-        case MS_TOKEN_LITERAL_TIME:
-        {
-          int resolution = msTimeGetResolution(node->tokensrc);
-          
+        case MS_TOKEN_LITERAL_TIME: {
+          resolution = msTimeGetResolution(node->tokensrc);
+          noDate = MS_FALSE;
+
+          if(node->tokensrc[0] == 'T') noDate = MS_TRUE;
+
           snippet = (char *) msSmallMalloc(128);
           switch(resolution) {
             case TIME_RESOLUTION_YEAR:
@@ -3742,16 +3759,31 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
               sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday);
               break;
             case TIME_RESOLUTION_HOUR:
-              strtmpl = "to_timestamp('%d-%02d-%02d %02d','YYYY-MM-DD hh24')";
-              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour);
+              if(noDate) {
+                strtmpl = "to_timestamp('%02d','hh24')::time";
+                sprintf(snippet, strtmpl, node->tokenval.tmval.tm_hour);
+              } else {
+                strtmpl = "to_timestamp('%d-%02d-%02d %02d','YYYY-MM-DD hh24')";
+                sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour);
+              }
               break;
             case TIME_RESOLUTION_MINUTE:
-              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d','YYYY-MM-DD hh24:mi')";
-              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min);
+              if(noDate) {
+                strtmpl = "to_timestamp('%02d:%02d','hh24:mi')::time";
+                sprintf(snippet, strtmpl, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min);
+              } else {
+                strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d','YYYY-MM-DD hh24:mi')";
+                sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min);
+              }
               break;
             case TIME_RESOLUTION_SECOND:
-              strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d:%02d','YYYY-MM-DD hh24:mi:ss')";
-              sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min, node->tokenval.tmval.tm_sec);
+      	      if(noDate) {
+      	        strtmpl = "to_timestamp('%02d:%02d:%02d','hh24:mi:ss')::time";
+                sprintf(snippet, strtmpl, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min, node->tokenval.tmval.tm_sec);
+              } else {              
+                strtmpl = "to_timestamp('%d-%02d-%02d %02d:%02d:%02d','YYYY-MM-DD hh24:mi:ss')";
+                sprintf(snippet, strtmpl, (node->tokenval.tmval.tm_year+1900), (node->tokenval.tmval.tm_mon+1), node->tokenval.tmval.tm_mday, node->tokenval.tmval.tm_hour, node->tokenval.tmval.tm_min, node->tokenval.tmval.tm_sec);
+              }
               break;
           }
 
@@ -3774,7 +3806,6 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
         case MS_TOKEN_BINDING_DOUBLE:
         case MS_TOKEN_BINDING_INTEGER:
         case MS_TOKEN_BINDING_STRING:
-        case MS_TOKEN_BINDING_TIME:        
           if(node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
             strtmpl = "%s::text"; /* explicit cast necessary for certain operators */
           else
@@ -3786,6 +3817,32 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           msFree(snippet);
           msFree(stresc);
           break;
+        case MS_TOKEN_BINDING_TIME: {
+          tokenListNodeObjPtr literalTimeNode = findNextTokenByType(node->next, MS_TOKEN_LITERAL_TIME);          
+
+          if(literalTimeNode != NULL) {
+            resolution = msTimeGetResolution(literalTimeNode->tokensrc);
+	    noDate = MS_FALSE;
+
+	    if(literalTimeNode->tokensrc[0] == 'T') noDate = MS_TRUE;
+
+            if(resolution == TIME_RESOLUTION_HOUR || resolution == TIME_RESOLUTION_MINUTE || resolution == TIME_RESOLUTION_SECOND) {
+              if(noDate)
+		strtmpl = "%s::time";
+              else
+                strtmpl = "%s::timestamp";
+            } else
+              strtmpl = "%s::date";
+            stresc = msLayerEscapePropertyName(layer, node->tokenval.bindval.item);
+            snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+            sprintf(snippet, strtmpl, stresc);
+            native_string = msStringConcatenate(native_string, snippet);
+            msFree(snippet);
+            msFree(stresc);
+          } // else handle as above
+
+          break;
+	}
         case MS_TOKEN_BINDING_SHAPE:
           native_string = msStringConcatenate(native_string, layerinfo->geomcolumn);
           break;
@@ -3842,6 +3899,8 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
 
   filter->native_string = msStrdup(native_string);    
   msFree(native_string);
+
+  // fprintf(stderr, "output: %s\n", filter->native_string); 
 
   return MS_SUCCESS;
 
