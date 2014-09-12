@@ -2222,7 +2222,7 @@ static char** msWFSSplitFilters(const char* pszStr, int* pnTokens)
             bInBracket = TRUE;
             if( pszStr[1] == '/' )
                 nXMLIndent --;
-            else
+            else if( pszStr[1] != '!' )
                 nXMLIndent ++;
         }
         /* <something /> case */
