@@ -3803,6 +3803,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           break;
 
 	/* data binding tokens */
+        case MS_TOKEN_BINDING_TIME:
         case MS_TOKEN_BINDING_DOUBLE:
         case MS_TOKEN_BINDING_INTEGER:
         case MS_TOKEN_BINDING_STRING:
@@ -3817,7 +3818,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           msFree(snippet);
           msFree(stresc);
           break;
-        case MS_TOKEN_BINDING_TIME: {
+	  /*case MS_TOKEN_BINDING_TIME: {
           tokenListNodeObjPtr literalTimeNode = findNextTokenByType(node->next, MS_TOKEN_LITERAL_TIME);          
 
           if(literalTimeNode != NULL) {
@@ -3833,6 +3834,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
                 strtmpl = "%s::timestamp";
             } else
               strtmpl = "%s::date";
+            strtmpl = "%s";
             stresc = msLayerEscapePropertyName(layer, node->tokenval.bindval.item);
             snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
             sprintf(snippet, strtmpl, stresc);
@@ -3842,7 +3844,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           } // else handle as above
 
           break;
-	}
+	  }*/
         case MS_TOKEN_BINDING_SHAPE:
           native_string = msStringConcatenate(native_string, layerinfo->geomcolumn);
           break;
