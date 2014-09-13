@@ -23,7 +23,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
    end  
 
   ppaRepos = [
-    "ppa:ubuntugis/ppa",
+    "ppa:ubuntugis/ubuntugis-unstable",
   ]
 
   packageList = [
