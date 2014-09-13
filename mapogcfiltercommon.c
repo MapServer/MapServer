@@ -445,6 +445,19 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
   if(FLTIsBBoxFilter(psNode)) {
     FLTGetBBOX(psNode, &sQueryRect);
 
+    if(lp->projection.numargs > 0) {
+      if (psNode->pszSRS)
+        msInitProjection(&sProjTmp);
+      if (psNode->pszSRS) {
+        /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
+        if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
+          msProjectRect(&sProjTmp, &lp->projection, &sQueryRect);
+        }
+      } else if (lp->map->projection.numargs > 0)
+        msProjectRect(&lp->map->projection, &lp->projection, &sQueryRect);
+      if (psNode->pszSRS)
+        msFreeProjection(&sProjTmp);
+    }
     psTmpShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
     msInitShape(psTmpShape);
     msRectToPolygon(sQueryRect, psTmpShape);
@@ -475,7 +488,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     /*
     ** target is layer projection
     */
-    if(lp->projection.numargs > 0) {
+    if(!bBBoxQuery && lp->projection.numargs > 0) {
       if (psNode->pszSRS)
         msInitProjection(&sProjTmp);
       if (psNode->pszSRS) {
