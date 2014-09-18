@@ -3705,7 +3705,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
         case MS_TOKEN_BINDING_DOUBLE:
         case MS_TOKEN_BINDING_INTEGER:
         case MS_TOKEN_BINDING_STRING:
-          if(node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
+          if(node->token == MS_TOKEN_BINDING_STRING || node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
             strtmpl = "%s::text"; /* explicit cast necessary for certain operators */
           else
             strtmpl = "%s";
