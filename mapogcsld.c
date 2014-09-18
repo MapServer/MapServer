@@ -415,28 +415,14 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
                       else
                         snprintf(szTmp, sizeof(szTmp), "%s", " OR ");
 
-                      pszBuffer =msStringConcatenate(pszBuffer, szTmp);
-                      psExpressionNode = BuildExpressionTree(lp->class[k]->expression.string,NULL);
-                      if (psExpressionNode) {
-                        pszSqlExpression = FLTGetSQLExpression(psExpressionNode,lp);
-                        if (pszSqlExpression) {
-                          pszBuffer = msStringConcatenate(pszBuffer, pszSqlExpression);
-                          msFree(pszSqlExpression);
-                        } else {
-                          bFailedExpression =1;
-                          break;
-                        }
-                        FLTFreeFilterEncodingNode(psExpressionNode);
-                      } else {
-                        bFailedExpression =1;
-                        break;
-                      }
+                      pszBuffer = msStringConcatenate(pszBuffer, szTmp);
+                      pszBuffer = msStringConcatenate(pszBuffer, lp->class[k]->expression.string);
                     }
                     if (!bFailedExpression) {
                       snprintf(szTmp, sizeof(szTmp), "%s", "))");
                       pszBuffer =msStringConcatenate(pszBuffer, szTmp);
                       msLoadExpressionString(&lp->filter, pszBuffer);
-                      lp->filter.type = MS_STRING;
+                      lp->filter.type = MS_EXPRESSION;
                     }
                     msFree(pszBuffer);
                     pszBuffer = NULL;

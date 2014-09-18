@@ -439,6 +439,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
 
   if (psNode->eType != FILTER_NODE_TYPE_SPATIAL)
     return NULL;
+    
 
   /* get the shape */
   /* BBOX case: replace it with NOT DISJOINT. */
@@ -485,6 +486,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
 
   if (psTmpShape) {
 
+    pszExpression = msStringConcatenate(pszExpression, "(");
     /*
     ** target is layer projection
     */
@@ -543,7 +545,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     }
 
     /* terminate the function */
-    pszExpression = msStringConcatenate(pszExpression, ") = TRUE");
+    pszExpression = msStringConcatenate(pszExpression, ") = TRUE )");
   }
 
   /*
