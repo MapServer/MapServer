@@ -1769,29 +1769,24 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
       }
     }
 
-    // Check the expression unless it is a WHERE clause already
-    // handled by OGR.
-    if( (layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6))
-        || msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex) == MS_TRUE ) {
-      // Feature matched filter expression... process geometry
-      // shape->type will be set if geom is compatible with layer type
-      if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
-                             layer->type) == MS_SUCCESS) {
-        if (shape->type != MS_SHAPE_NULL)
-          break; // Shape is ready to be returned!
+    // Feature matched filter expression... process geometry
+    // shape->type will be set if geom is compatible with layer type
+    if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
+                           layer->type) == MS_SUCCESS) {
+      if (shape->type != MS_SHAPE_NULL)
+        break; // Shape is ready to be returned!
 
-        if (layer->debug >= MS_DEBUGLEVEL_VVV)
-          msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %ld, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
-                  OGR_F_GetFID( hFeature ), psInfo->nTileId,
-                  OGR_F_GetGeometryRef( hFeature )==NULL ? wkbFlatten(wkbUnknown):wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ),
-                  layer->type);
+      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+        msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %ld, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
+                OGR_F_GetFID( hFeature ), psInfo->nTileId,
+                OGR_F_GetGeometryRef( hFeature )==NULL ? wkbFlatten(wkbUnknown):wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ),
+                layer->type);
 
-      } else {
-        msFreeShape(shape);
-        OGR_F_Destroy( hFeature );
-        RELEASE_OGR_LOCK;
-        return MS_FAILURE; // Error message already produced.
-      }
+    } else {
+      msFreeShape(shape);
+      OGR_F_Destroy( hFeature );
+      RELEASE_OGR_LOCK;
+      return MS_FAILURE; // Error message already produced.
     }
 
     // Feature rejected... free shape to clear attributes values.
