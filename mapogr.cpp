@@ -1513,8 +1513,9 @@ static char* msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
 
       if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("msOGRTranslateMsExpressionToOGRSQL: filter can be evaluated completely on OGR side\n");
-      msFree( layer->filter.string );
-      layer->filter.string = NULL;
+
+      msFree( layer->filter.native_string );
+      layer->filter.native_string = msStrdup(msSQLExpression);
   }
   
   if( sBBOXValid )
@@ -1555,6 +1556,11 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
   /* In case we have an odd filter combining both a OGR filter and MapServer */
   /* filter, then separate things */
   msOGRSplitFilter(layer, &pszOGRFilter, &pszMSFilter);
+  if( pszOGRFilter != NULL && pszMSFilter == NULL )
+  {
+      msFree(layer->filter.native_string);
+      layer->filter.native_string = msStrdup(pszOGRFilter);
+  }
 
   /* Apply sortBy */
   if( layer->sortBy.nProperties > 0 ) {
