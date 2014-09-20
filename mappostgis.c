@@ -3690,8 +3690,11 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           break;
   	}
         case MS_TOKEN_LITERAL_SHAPE:
+        {
+          char* wkt = msShapeToWKT(node->tokenval.shpval);
           native_string = msStringConcatenate(native_string, "ST_GeomFromText('");
-          native_string = msStringConcatenate(native_string, msShapeToWKT(node->tokenval.shpval));
+          native_string = msStringConcatenate(native_string, wkt);
+          msFree(wkt);
           native_string = msStringConcatenate(native_string, "'");
           if(layerinfo->srid && strcmp(layerinfo->srid, "") != 0) {
             native_string = msStringConcatenate(native_string, ",");
@@ -3699,6 +3702,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
           }
           native_string = msStringConcatenate(native_string, ")");
           break;
+        }
 
 	/* data binding tokens */
         case MS_TOKEN_BINDING_TIME:
