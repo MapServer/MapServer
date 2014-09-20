@@ -161,7 +161,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
   layerObj *lp = NULL;
   char *pszSqlExpression=NULL;
   FilterEncodingNode *psExpressionNode =NULL;
-  int bFailedExpression=0;
 
   pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
   /* -------------------------------------------------------------------- */
@@ -408,36 +407,24 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
                       break;
                   }
                   if (k == lp->numclasses) {
-                    bFailedExpression = 0;
                     for (k=0; k<lp->numclasses; k++) {
                       if (pszBuffer == NULL)
                         snprintf(szTmp, sizeof(szTmp), "%s", "(("); /* we a building a string expression, explicitly set type below */
                       else
                         snprintf(szTmp, sizeof(szTmp), "%s", " OR ");
 
-                      pszBuffer =msStringConcatenate(pszBuffer, szTmp);
-                      psExpressionNode = BuildExpressionTree(lp->class[k]->expression.string,NULL);
-                      if (psExpressionNode) {
-                        pszSqlExpression = FLTGetSQLExpression(psExpressionNode,lp);
-                        if (pszSqlExpression) {
-                          pszBuffer = msStringConcatenate(pszBuffer, pszSqlExpression);
-                          msFree(pszSqlExpression);
-                        } else {
-                          bFailedExpression =1;
-                          break;
-                        }
-                        FLTFreeFilterEncodingNode(psExpressionNode);
-                      } else {
-                        bFailedExpression =1;
-                        break;
-                      }
+                      pszBuffer = msStringConcatenate(pszBuffer, szTmp);
+                      pszBuffer = msStringConcatenate(pszBuffer, lp->class[k]->expression.string);
                     }
-                    if (!bFailedExpression) {
-                      snprintf(szTmp, sizeof(szTmp), "%s", "))");
-                      pszBuffer =msStringConcatenate(pszBuffer, szTmp);
-                      msLoadExpressionString(&lp->filter, pszBuffer);
-                      lp->filter.type = MS_STRING;
-                    }
+
+                    snprintf(szTmp, sizeof(szTmp), "%s", "))");
+                    pszBuffer =msStringConcatenate(pszBuffer, szTmp);
+                    
+                    msFreeExpression(&lp->filter);
+                    msInitExpression(&lp->filter);
+                    lp->filter.string = msStrdup(pszBuffer);
+                    lp->filter.type = MS_EXPRESSION;
+
                     msFree(pszBuffer);
                     pszBuffer = NULL;
                   }
@@ -850,9 +837,13 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                 nNewClasses =
                   nClassAfterFilter - nClassBeforeFilter;
                 for (i=0; i<nNewClasses; i++) {
-                  msLoadExpressionString(&psLayer->
+                  expressionObj* exp = &(psLayer->
                                          class[psLayer->numclasses-1-i]->
-                                         expression, pszExpression);
+                                         expression);
+                  msFreeExpression(exp);
+                  msInitExpression(exp);
+                  exp->string = msStrdup(pszExpression);
+                  exp->type = MS_EXPRESSION;
                 }
                 msFree(pszExpression);
                 pszExpression = NULL;
