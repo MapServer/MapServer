@@ -548,7 +548,7 @@ static int msContourLayerGenerateContour(layerObj *layer)
     return MS_FAILURE;
   }
 
-  clinfo->hOGRDS = OGR_Dr_CreateDataSource(hDriver, NULL, NULL);
+  clinfo->hOGRDS = OGR_Dr_CreateDataSource(hDriver, "", NULL);
   if (clinfo->hOGRDS == NULL) {
     msSetError(MS_OGRERR,
                "Unable to create OGR DataSource.",

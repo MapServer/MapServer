@@ -1717,7 +1717,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     }
 
     /* finally set the filter */
-    freeExpression(&tlp->filter);
+    msFreeExpression(&tlp->filter);
     msLayerSetTimeFilter(tlp, params->time, value);
   }
 

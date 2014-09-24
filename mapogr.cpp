@@ -40,8 +40,6 @@
 #  include "ogr_srs_api.h"
 #endif
 
-
-
 #define ACQUIRE_OGR_LOCK       msAcquireLock( TLOCK_OGR )
 #define RELEASE_OGR_LOCK       msReleaseLock( TLOCK_OGR )
 
@@ -1361,6 +1359,181 @@ static void msOGRSplitFilter(layerObj *layer,
     }
 }
 
+/************************************************************************/
+/*                           msOGREscapeSQLParam                        */
+/************************************************************************/
+static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
+{
+#ifdef USE_OGR
+  char* pszEscapedStr =NULL;
+  if(layer && pszString && strlen(pszString) > 0) {
+    char* pszEscapedOGRStr =  CPLEscapeString(pszString, strlen(pszString),
+                              CPLES_SQL );
+    pszEscapedStr = msStrdup(pszEscapedOGRStr);
+    CPLFree(pszEscapedOGRStr);
+  }
+  return pszEscapedStr;
+#else
+  /* ------------------------------------------------------------------
+   * OGR Support not included...
+   * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.",
+             "msOGREscapeSQLParam()");
+  return NULL;
+
+#endif /* USE_OGR */
+}
+
+/**********************************************************************
+ *                     msOGRTranslateMsExpressionToOGRSQL()
+ *
+ * Tries to translate a mapserver expression to OGR SQL, and also
+ * try to extract spatial filter
+ **********************************************************************/
+static char* msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
+                                          expressionObj* psFilter,
+                                          rectObj* psRect)
+{
+    char* msSQLExpression = NULL;
+    rectObj sBBOX;
+    int sBBOXValid = MS_FALSE;
+    tokenListNodeObjPtr node = NULL;
+    char *stresc = NULL;
+    char *snippet = NULL;
+    const char* strtmpl = NULL;
+    int bIsIntersectRectangle = MS_FALSE;
+
+    node = psFilter->tokens;
+    while (node != NULL) {      
+
+      switch(node->token) {
+
+        /* literal tokens */
+
+        case MS_TOKEN_LITERAL_NUMBER:
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+          sprintf(snippet, "%lf", node->tokenval.dblval);
+          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
+          msFree(snippet);
+          break;
+        case MS_TOKEN_LITERAL_STRING:
+          stresc = msOGREscapeSQLParam(layer, node->tokenval.strval);
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+          sprintf(snippet, "'%s'", stresc);
+          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
+          msFree(snippet);
+          msFree(stresc);
+          break;
+
+        case MS_TOKEN_BINDING_DOUBLE:
+        case MS_TOKEN_BINDING_INTEGER:
+        case MS_TOKEN_BINDING_STRING:
+          if(node->token == MS_TOKEN_BINDING_STRING || node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
+            strtmpl = "CAST(%s AS CHARACTER)"; /* explicit cast necessary for certain operators */
+          else
+            strtmpl = "%s";
+          stresc = msLayerEscapePropertyName(layer, node->tokenval.bindval.item);
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+          sprintf(snippet, strtmpl, stresc);
+          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
+          msFree(snippet);
+          msFree(stresc);
+          break;
+
+    /* spatial comparison tokens */
+        case MS_TOKEN_COMPARISON_INTERSECTS:
+        {
+          shapeObj* shape;
+          if(node->next->token != '(') goto cleanup;
+          if(node->next->next->token != MS_TOKEN_BINDING_SHAPE) goto cleanup;
+          if(node->next->next->next->token != ',' ) goto cleanup;
+          if(node->next->next->next->next->token != MS_TOKEN_LITERAL_SHAPE ) goto cleanup;
+          if(node->next->next->next->next->next->token != ')' ) goto cleanup;
+          if(node->next->next->next->next->next->next->token != MS_TOKEN_COMPARISON_EQ ) goto cleanup;
+          if(node->next->next->next->next->next->next->next->token != MS_TOKEN_LITERAL_BOOLEAN ) goto cleanup;
+          if(node->next->next->next->next->next->next->next->tokenval.dblval != MS_TRUE) goto cleanup;
+
+          shape = node->next->next->next->next->tokenval.shpval;
+          memcpy(&sBBOX, &(shape->bounds), sizeof(rectObj));
+          sBBOXValid = TRUE;
+          
+          if( shape->type == MS_SHAPE_POLYGON &&
+              shape->numlines == 1 &&
+              shape->line[0].numpoints == 5 )
+          {
+              if( shape->line[0].point[0].x == shape->line[0].point[1].x &&
+                  shape->line[0].point[0].y == shape->line[0].point[3].y &&
+                  shape->line[0].point[2].x == shape->line[0].point[3].x &&
+                  shape->line[0].point[1].y == shape->line[0].point[2].y &&
+                  shape->line[0].point[0].x == shape->line[0].point[4].x &&
+                  shape->line[0].point[0].y == shape->line[0].point[4].y )
+              {
+                  bIsIntersectRectangle = MS_TRUE;
+              }
+          }
+
+          node = node->next->next->next->next->next->next->next;
+          if( node && node->next && node->next->token == MS_TOKEN_LOGICAL_AND )
+              node = node->next;
+
+          break;
+        }
+
+        case MS_TOKEN_COMPARISON_EQ:
+        case MS_TOKEN_COMPARISON_NE:
+        case MS_TOKEN_COMPARISON_GT:
+        case MS_TOKEN_COMPARISON_GE:
+        case MS_TOKEN_COMPARISON_LT:
+        case MS_TOKEN_COMPARISON_LE:
+        case MS_TOKEN_LOGICAL_AND:
+        case MS_TOKEN_LOGICAL_NOT:
+        case MS_TOKEN_LOGICAL_OR:
+        case '(':
+        case ')':
+            if( node->token == MS_TOKEN_LOGICAL_AND && node->next &&
+                node->next->token == MS_TOKEN_COMPARISON_INTERSECTS )
+                node = node->next;
+            else
+                msSQLExpression = msStringConcatenate(msSQLExpression, msExpressionTokenToString(node->token));
+            break;
+
+        default:
+          goto cleanup;
+          break;
+        }
+
+      node = node->next;
+  }
+  
+  if( !sBBOXValid || bIsIntersectRectangle )
+  {
+      /* We can translate completely the filter as a OGR expression, */
+      /* so no need for msEvalExpression() to do more work */
+
+      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("msOGRTranslateMsExpressionToOGRSQL: filter can be evaluated completely on OGR side\n");
+
+      msFree( layer->filter.native_string );
+      layer->filter.native_string = msStrdup(msSQLExpression);
+  }
+  
+  if( sBBOXValid )
+  {
+      psRect->minx = MS_MAX(psRect->minx, sBBOX.minx);
+      psRect->miny = MS_MAX(psRect->miny, sBBOX.miny);
+      psRect->maxx = MS_MIN(psRect->maxx, sBBOX.maxx);
+      psRect->maxy = MS_MAX(psRect->maxy, sBBOX.maxy);
+  }
+
+  return msSQLExpression;
+
+cleanup:
+  msFree(msSQLExpression);
+  return NULL;
+}
+
+
 /**********************************************************************
  *                     msOGRFileWhichShapes()
  *
@@ -1383,6 +1556,11 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
   /* In case we have an odd filter combining both a OGR filter and MapServer */
   /* filter, then separate things */
   msOGRSplitFilter(layer, &pszOGRFilter, &pszMSFilter);
+  if( pszOGRFilter != NULL && pszMSFilter == NULL )
+  {
+      msFree(layer->filter.native_string);
+      layer->filter.native_string = msStrdup(pszOGRFilter);
+  }
 
   /* Apply sortBy */
   if( layer->sortBy.nProperties > 0 ) {
@@ -1467,6 +1645,41 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
     msFree(pszLayerDef);
   }
 
+
+  /* ------------------------------------------------------------------
+   * If there's a mapserver filter, tries to parse it as a mapserver expression
+   * (for example if request coming from WFS), and then tries to translate
+   * the mapserver expression as OGR SQL.
+   * ------------------------------------------------------------------ */
+  if( pszMSFilter != NULL ) {
+    expressionObj filter;
+    msInitExpression(&filter);
+    filter.string = msStrdup(pszMSFilter);
+    filter.type = MS_EXPRESSION;
+    if( msTokenizeExpression(&filter, layer->items, &(layer->numitems)) == MS_SUCCESS )
+    {
+        char* pszAdditionalOGRFilter = msOGRTranslateMsExpressionToOGRSQL(layer, &filter, &rect);
+        if( pszAdditionalOGRFilter != NULL )
+        {
+            if( pszOGRFilter != NULL )
+            {
+                char* pszTmp = msStringConcatenate(NULL, "(");
+                pszTmp = msStringConcatenate(pszTmp, pszOGRFilter);
+                pszTmp = msStringConcatenate(pszTmp, ") AND (");
+                pszTmp = msStringConcatenate(pszTmp, pszAdditionalOGRFilter);
+                pszTmp = msStringConcatenate(pszTmp, ")");
+                msFree(pszTmp);
+                msFree(pszAdditionalOGRFilter);
+                pszOGRFilter = pszTmp;
+            }
+            else
+                pszOGRFilter = pszAdditionalOGRFilter;
+        }
+    }
+    msFreeExpression(&filter);
+  }
+  msFree(pszMSFilter);
+
   /* ------------------------------------------------------------------
    * Set Spatial filter... this may result in no features being returned
    * if layer does not overlap current view.
@@ -1527,14 +1740,13 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
    * keyword in the filter string.  Otherwise, ensure the attribute
    * filter is clear.
    * ------------------------------------------------------------------ */
-
-  if( pszMSFilter != NULL ) {
-    msLoadExpressionString(&layer->filter, pszMSFilter);
-    if(layer->filter.type == MS_EXPRESSION) msTokenizeExpression(&(layer->filter), layer->items, &(layer->numitems));
-  }
-  msFree(pszMSFilter);
   
   if( pszOGRFilter != NULL ) {
+
+  if (layer->debug >= MS_DEBUGLEVEL_VVV)
+    msDebug("msOGRFileWhichShapes: Setting attribute filter to %s\n",
+            pszOGRFilter );
+
     CPLErrorReset();
     if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter )
         != OGRERR_NONE ) {
@@ -1771,29 +1983,24 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
       }
     }
 
-    // Check the expression unless it is a WHERE clause already
-    // handled by OGR.
-    if( (layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6))
-        || msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex) == MS_TRUE ) {
-      // Feature matched filter expression... process geometry
-      // shape->type will be set if geom is compatible with layer type
-      if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
-                             layer->type) == MS_SUCCESS) {
-        if (shape->type != MS_SHAPE_NULL)
-          break; // Shape is ready to be returned!
+    // Feature matched filter expression... process geometry
+    // shape->type will be set if geom is compatible with layer type
+    if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
+                           layer->type) == MS_SUCCESS) {
+      if (shape->type != MS_SHAPE_NULL)
+        break; // Shape is ready to be returned!
 
-        if (layer->debug >= MS_DEBUGLEVEL_VVV)
-          msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %ld, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
-                  OGR_F_GetFID( hFeature ), psInfo->nTileId,
-                  OGR_F_GetGeometryRef( hFeature )==NULL ? wkbFlatten(wkbUnknown):wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ),
-                  layer->type);
+      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+        msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %ld, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
+                OGR_F_GetFID( hFeature ), psInfo->nTileId,
+                OGR_F_GetGeometryRef( hFeature )==NULL ? wkbFlatten(wkbUnknown):wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ),
+                layer->type);
 
-      } else {
-        msFreeShape(shape);
-        OGR_F_Destroy( hFeature );
-        RELEASE_OGR_LOCK;
-        return MS_FAILURE; // Error message already produced.
-      }
+    } else {
+      msFreeShape(shape);
+      OGR_F_Destroy( hFeature );
+      RELEASE_OGR_LOCK;
+      return MS_FAILURE; // Error message already produced.
     }
 
     // Feature rejected... free shape to clear attributes values.
@@ -2737,7 +2944,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         c->numlabels++;
         initLabel(c->labels[0]);
       }
-      freeExpression(&c->labels[0]->text);
+      msFreeExpression(&c->labels[0]->text);
       c->labels[0]->text.type = MS_STRING;
       c->labels[0]->text.string = msStrdup(labelTextString);
 
@@ -3204,33 +3411,6 @@ void msOGRCleanup( void )
 /************************************************************************/
 /*                           msOGREscapeSQLParam                        */
 /************************************************************************/
-char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
-{
-#ifdef USE_OGR
-  char* pszEscapedStr =NULL;
-  if(layer && pszString && strlen(pszString) > 0) {
-    char* pszEscapedOGRStr =  CPLEscapeString(pszString, strlen(pszString),
-                              CPLES_SQL );
-    pszEscapedStr = msStrdup(pszEscapedOGRStr);
-    CPLFree(pszEscapedOGRStr);
-  }
-  return pszEscapedStr;
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGREscapeSQLParam()");
-  return NULL;
-
-#endif /* USE_OGR */
-}
-
-
-/************************************************************************/
-/*                           msOGREscapeSQLParam                        */
-/************************************************************************/
 char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 {
 #ifdef USE_OGR
@@ -3257,15 +3437,23 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 
 #endif /* USE_OGR */
 }
+
+static int msOGRLayerSupportsCommonFilters(layerObj *layer)
+{
+  return MS_TRUE;
+}
+
 /************************************************************************/
 /*                  msOGRLayerInitializeVirtualTable()                  */
 /************************************************************************/
-int
-msOGRLayerInitializeVirtualTable(layerObj *layer)
+int msOGRLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 
+  /* layer->vtable->LayerTranslateFilter, use default */
+
+  layer->vtable->LayerSupportsCommonFilters = msOGRLayerSupportsCommonFilters;
   layer->vtable->LayerInitItemInfo = msOGRLayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msOGRLayerFreeItemInfo;
   layer->vtable->LayerOpen = msOGRLayerOpenVT;

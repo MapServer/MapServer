@@ -31,9 +31,6 @@
 
 #include "mapserver.h"
 
-
-
-
 #if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
 
 #include "maperror.h"
@@ -1919,7 +1916,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
             pszBuffer = NULL;
             if (&lp->filter) {
               if (lp->filter.string && strlen(lp->filter.string) > 0)
-                freeExpression(&lp->filter);
+                msFreeExpression(&lp->filter);
             }
 
             /*The filter should reflect the underlying db*/
@@ -1966,7 +1963,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
             if (!bSpatialDB || lp->connectiontype != MS_OGR)
               pszBuffer = msStringConcatenate(pszBuffer, ")");
 
-            loadExpressionString(&lp->filter, pszBuffer);
+            msLoadExpressionString(&lp->filter, pszBuffer);
             if (pszBuffer)
               msFree(pszBuffer);
           }

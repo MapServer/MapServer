@@ -2671,7 +2671,7 @@ int msSHPLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
 int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
 {
-  int i, filter_passed=MS_FALSE;
+  int i;
   shapefileObj *shpfile;
 
   shpfile = layer->layerinfo;
@@ -2681,29 +2681,18 @@ int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
     return MS_FAILURE;
   }
 
-  do {
-    i = msGetNextBit(shpfile->status, shpfile->lastshape + 1, shpfile->numshapes);
-    shpfile->lastshape = i;
-    if(i == -1) return(MS_DONE); /* nothing else to read */
+  i = msGetNextBit(shpfile->status, shpfile->lastshape + 1, shpfile->numshapes);
+  shpfile->lastshape = i;
+  if(i == -1) return(MS_DONE); /* nothing else to read */
 
-    msSHPReadShape(shpfile->hSHP, i, shape);
-    if(shape->type == MS_SHAPE_NULL) {
-      msFreeShape(shape);
-      continue; /* skip NULL shapes */
-    }
-    shape->numvalues = layer->numitems;
-    shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
-    if(!shape->values) {
-      shape->numvalues = 0;
-    }
-
-    filter_passed = MS_TRUE;  /* By default accept ANY shape */
-    if(layer->numitems > 0 && layer->iteminfo) {
-      filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
-    }
-
-    if(!filter_passed) msFreeShape(shape);
-  } while(!filter_passed);  /* Loop until both spatial and attribute filters match */
+  msSHPReadShape(shpfile->hSHP, i, shape);
+  if(shape->type == MS_SHAPE_NULL) {
+    msFreeShape(shape);
+    msSHPLayerNextShape(layer, shape); /* skip NULL shapes */
+  }
+  shape->numvalues = layer->numitems;
+  shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
+  if(!shape->values) shape->numvalues = 0;
 
   return MS_SUCCESS;
 }
@@ -2810,6 +2799,7 @@ int msSHPLayerInitializeVirtualTable(layerObj *layer)
   /* layer->vtable->LayerGetAutoStyle, use default */
   /* layer->vtable->LayerCloseConnection, use default */
   layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
+  /* layer->vtable->LayerTranslateFilter, use default */
   /* layer->vtable->LayerApplyFilterToLayer, use default */
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */

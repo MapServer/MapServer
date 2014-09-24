@@ -34,8 +34,6 @@
 #include "cpl_string.h"
 #endif
 
-
-
 #define SLD_LINE_SYMBOL_NAME "sld_line_symbol"
 #define SLD_LINE_SYMBOL_DASH_NAME "sld_line_symbol_dash"
 #define SLD_MARK_SYMBOL_SQUARE "sld_mark_symbol_square"
@@ -139,8 +137,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
 /*      they have the same name, copy the classes asscoaited with       */
 /*      the SLD layers onto the map layers.                             */
 /************************************************************************/
-int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
-                  char *pszStyleLayerName, char **ppszLayerNames)
+int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerName, char **ppszLayerNames)
 {
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR)
 
@@ -400,14 +397,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
               expressions and use it to set the filter on the layer. This
               could increase performace. Will do it for db types layers #2840*/
             lp = GET_LAYER(map, i);
-            if (lp->filter.string == NULL ||
-                (lp->filter.string && lp->filter.type == MS_EXPRESSION)) {
-              if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
-                  lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN) {
+            if (lp->filter.string == NULL || (lp->filter.string && lp->filter.type == MS_STRING && !lp->filteritem)) {
+              if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL || lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN) {
                 if (lp->numclasses > 0) {
-                  /*check first that all classes have an expression type. That is
+                  /* check first that all classes have an expression type. That is
                     the only way we can concatenate them and set the filter
-                    expression*/
+                    expression */
                   for (k=0; k<lp->numclasses; k++) {
                     if (lp->class[k]->expression.type != MS_EXPRESSION)
                       break;
@@ -416,7 +411,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                     bFailedExpression = 0;
                     for (k=0; k<lp->numclasses; k++) {
                       if (pszBuffer == NULL)
-                        snprintf(szTmp, sizeof(szTmp), "%s", "((");
+                        snprintf(szTmp, sizeof(szTmp), "%s", "(("); /* we a building a string expression, explicitly set type below */
                       else
                         snprintf(szTmp, sizeof(szTmp), "%s", " OR ");
 
@@ -425,8 +420,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                       if (psExpressionNode) {
                         pszSqlExpression = FLTGetSQLExpression(psExpressionNode,lp);
                         if (pszSqlExpression) {
-                          pszBuffer =
-                            msStringConcatenate(pszBuffer, pszSqlExpression);
+                          pszBuffer = msStringConcatenate(pszBuffer, pszSqlExpression);
                           msFree(pszSqlExpression);
                         } else {
                           bFailedExpression =1;
@@ -442,6 +436,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                       snprintf(szTmp, sizeof(szTmp), "%s", "))");
                       pszBuffer =msStringConcatenate(pszBuffer, szTmp);
                       msLoadExpressionString(&lp->filter, pszBuffer);
+                      lp->filter.type = MS_STRING;
                     }
                     msFree(pszBuffer);
                     pszBuffer = NULL;
@@ -790,8 +785,7 @@ int msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
           /*      NOTE : Spatial Filter is not supported.                         */
           /* -------------------------------------------------------------------- */
           psFilter = CPLGetXMLNode(psRule, "Filter");
-          if (psFilter && psFilter->psChild &&
-              psFilter->psChild->pszValue) {
+          if (psFilter && psFilter->psChild && psFilter->psChild->pszValue) {
             CPLXMLNode *psTmpNextNode = NULL;
             /* clone the tree and set the next node to null */
             /* so we only have the Filter node */
@@ -3839,7 +3833,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer, int nVersion)
     snprintf(szTmp, sizeof(szTmp), "<%sTextSymbolizer>\n",  sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
-    snprintf(szTmp, sizeof(szTmp), "<%sLabel>%s</%sLabel>\n",  sNameSpace,
+    snprintf(szTmp, sizeof(szTmp), "<%sLabel><ogc:PropertyName>%s</ogc:PropertyName></%sLabel>\n",  sNameSpace,
              psLayer->labelitem, sNameSpace);
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
@@ -5086,8 +5080,6 @@ char *msSLDConvertRegexExpToOgcIsLike(char *pszRegex)
   return msStrdup(szBuffer);
 }
 
-
-
 /************************************************************************/
 /*                              msSLDGetFilter                          */
 /*                                                                      */
@@ -5114,8 +5106,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
         pszFilter = msStrdup(szBuffer);
       }
     } else if (psClass->expression.type == MS_EXPRESSION) {
-      pszFilter = msSLDParseLogicalExpression(psClass->expression.string,
-                                              pszWfsFilter);
+      pszFilter = msSLDParseLogicalExpression(psClass->expression.string, pszWfsFilter);
     } else if (psClass->expression.type == MS_REGEX) {
       if (psClass->layer && psClass->layer->classitem && psClass->expression.string) {
         pszOgcFilter = msSLDConvertRegexExpToOgcIsLike(psClass->expression.string);

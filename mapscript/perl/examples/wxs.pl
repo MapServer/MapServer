@@ -4,7 +4,7 @@
 #
 # Project:  MapServer
 # Purpose:  MapScript WxS example
-# Author:   Tom Kralidis (tomkralidis@hotmail.com)
+# Author:   Tom Kralidis (tomkralidis@gmail.com)
 #
 ##############################################################################
 # Copyright (c) 2007, Tom Kralidis

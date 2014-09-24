@@ -85,7 +85,7 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
   rectObj searchrect;
   shapeObj shape;
   layerObj *layer;
-  float *values;
+  float *values = NULL;
   int radius = 10, im_width = image->width, im_height = image->height;
   int expand_searchrect=1;
   float normalization_scale=0.0;
@@ -187,74 +187,73 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
 #endif
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
-  if(status == MS_DONE) { /* no overlap */
-    msLayerClose(layer);
-    return MS_SUCCESS;
-  } else if(status != MS_SUCCESS) {
+    /* nothing to do */
+  if(status == MS_SUCCESS) { /* at least one sample may have overlapped */
+    
+    if(layer->classgroup && layer->numclasses > 0)
+      classgroup = msAllocateValidClassGroups(layer, &nclasses);
+    
+    msInitShape(&shape);
+    while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
+      int l,p,s,c;
+      double weight = 1.0;
+      if(!values) /* defer allocation until we effectively have a feature */
+        values = (float*) msSmallCalloc(im_width * im_height, sizeof(float));
+#ifdef USE_PROJ
+      if(layer->project)
+        msProjectShape(&layer->projection, &map->projection, &shape);
+#endif
+      
+      /* the weight for the sample is set to 1.0 by default. If the
+       * layer has some classes defined, we will read the weight from
+       * the class->style->size (which can be binded to an attribute)
+       */
+      if(layer->numclasses > 0) {
+        c = msShapeGetClass(layer, map, &shape, classgroup, nclasses);
+        if((c == -1) || (layer->class[c]->status == MS_OFF)) {
+          goto nextshape; /* no class matched, skip */
+        }
+        for (s = 0; s < layer->class[c]->numstyles; s++) {
+          if (msScaleInBounds(map->scaledenom,
+                  layer->class[c]->styles[s]->minscaledenom,
+                  layer->class[c]->styles[s]->maxscaledenom)) {
+            if(layer->class[c]->styles[s]->bindings[MS_STYLE_BINDING_SIZE].index != -1) {
+              weight = atof(shape.values[layer->class[c]->styles[s]->bindings[MS_STYLE_BINDING_SIZE].index]);
+            } else {
+              weight = layer->class[c]->styles[s]->size;
+            }
+            break;
+          }
+        }
+        if(s == layer->class[c]->numstyles) {
+          /* no style in scale bounds */
+          goto nextshape;
+        }
+      }
+      for(l=0; l<shape.numlines; l++) {
+        for(p=0; p<shape.line[l].numpoints; p++) {
+          int x = MS_MAP2IMAGE_XCELL_IC(shape.line[l].point[p].x, map->extent.minx - georadius, invcellsize);
+          int y = MS_MAP2IMAGE_YCELL_IC(shape.line[l].point[p].y, map->extent.maxy + georadius, invcellsize);
+          if(x>=0 && y>=0 && x<im_width && y<im_height) {
+            float *value = values + y * im_width + x;
+            (*value) += weight;
+            have_sample = 1;
+          }
+        }
+      }
+      
+      nextshape:
+      msFreeShape(&shape);
+    }
+  } else if(status != MS_DONE) {
     msLayerClose(layer);
     return MS_FAILURE;
   }
-  values = (float*) msSmallCalloc(im_width * im_height, sizeof(float));
   
-  if(layer->classgroup && layer->numclasses > 0)
-    classgroup = msAllocateValidClassGroups(layer, &nclasses);
-
-  msInitShape(&shape);
-  while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
-    int l,p,s,c;
-    double weight = 1.0;
-#ifdef USE_PROJ
-    if(layer->project)
-      msProjectShape(&layer->projection, &map->projection, &shape);
-#endif
-
-    /* the weight for the sample is set to 1.0 by default. If the
-     * layer has some classes defined, we will read the weight from
-     * the class->style->size (which can be binded to an attribute)
-     */
-    if(layer->numclasses > 0) {
-      c = msShapeGetClass(layer, map, &shape, classgroup, nclasses);
-      if((c == -1) || (layer->class[c]->status == MS_OFF)) {
-        goto nextshape; /* no class matched, skip */
-      }
-      for (s = 0; s < layer->class[c]->numstyles; s++) {
-        if (msScaleInBounds(map->scaledenom,
-            layer->class[c]->styles[s]->minscaledenom,
-            layer->class[c]->styles[s]->maxscaledenom)) {
-          if(layer->class[c]->styles[s]->bindings[MS_STYLE_BINDING_SIZE].index != -1) {
-            weight = atof(shape.values[layer->class[c]->styles[s]->bindings[MS_STYLE_BINDING_SIZE].index]);
-          } else {
-            weight = layer->class[c]->styles[s]->size;
-          }
-          break;
-        }
-      }
-      if(s == layer->class[c]->numstyles) {
-        /* no style in scale bounds */
-        goto nextshape;
-      }
-    }
-    for(l=0; l<shape.numlines; l++) {
-      for(p=0; p<shape.line[l].numpoints; p++) {
-        int x = MS_MAP2IMAGE_XCELL_IC(shape.line[l].point[p].x, map->extent.minx - georadius, invcellsize);
-        int y = MS_MAP2IMAGE_YCELL_IC(shape.line[l].point[p].y, map->extent.maxy + georadius, invcellsize);
-        if(x>=0 && y>=0 && x<im_width && y<im_height) {
-          float *value = values + y * im_width + x;
-          (*value) += weight;
-          have_sample = 1;
-        }
-      }
-    }
-
-nextshape:
-    msFreeShape(&shape);
-  }
+  /* status == MS_DONE */
   msLayerClose(layer);
-  if(status == MS_DONE) {
-    status = MS_SUCCESS;
-  } else {
-    status = MS_FAILURE;
-  }
+  status = MS_SUCCESS;
+
 
   if(have_sample) { /* no use applying the filtering kernel if we have no samples */
     gaussian_blur(values,im_width, im_height, radius);

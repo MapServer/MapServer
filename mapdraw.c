@@ -869,7 +869,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((layer->labelminscaledenom != -1) && (map->scaledenom < layer->labelminscaledenom)) annotate = MS_FALSE;
   }
 
-
   /* open this layer */
   status = msLayerOpen(layer);
   if(status != MS_SUCCESS) return MS_FAILURE;
@@ -879,8 +878,13 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
      (strncasecmp(layer->styleitem, "javascript://", 13) == 0)) {  
     status = msLayerWhichItems(layer, MS_TRUE, NULL);
   }
-  else 
+  else {
     status = msLayerWhichItems(layer, MS_FALSE, NULL);
+  }
+
+  /* translate filter (if necessary) */
+  if(!msLayerSupportsCommonFilters(layer))
+    status = msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
 
   if(status != MS_SUCCESS) {
     msLayerClose(layer);

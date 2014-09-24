@@ -1232,9 +1232,12 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
           if(MS_SUCCESS != setExtent(mapserv)) /* set user area of interest */
             return MS_FAILURE;
 
-        mapserv->map->query.type = MS_QUERY_BY_ATTRIBUTE;
-        if(mapserv->QueryItem) mapserv->map->query.item = msStrdup(mapserv->QueryItem);
-        if(mapserv->QueryString) mapserv->map->query.str = msStrdup(mapserv->QueryString);
+        mapserv->map->query.type = MS_QUERY_BY_FILTER;
+        if(mapserv->QueryItem) mapserv->map->query.filteritem = msStrdup(mapserv->QueryItem);
+        if(mapserv->QueryString) {
+          msInitExpression(&mapserv->map->query.filter);
+          msLoadExpressionString(&mapserv->map->query.filter, mapserv->QueryString);
+        }
 
         mapserv->map->query.rect = mapserv->map->extent;
 
@@ -1325,10 +1328,13 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
           if(MS_SUCCESS != setExtent(mapserv)) /* set user area of interest */
             return MS_FAILURE;
 
-        mapserv->map->query.type = MS_QUERY_BY_ATTRIBUTE;
+        mapserv->map->query.type = MS_QUERY_BY_FILTER;
         mapserv->map->query.layer = mapserv->QueryLayerIndex;
-        if(mapserv->QueryItem) mapserv->map->query.item = msStrdup(mapserv->QueryItem);
-        if(mapserv->QueryString) mapserv->map->query.str = msStrdup(mapserv->QueryString);
+        if(mapserv->QueryItem) mapserv->map->query.filteritem = msStrdup(mapserv->QueryItem);
+        if(mapserv->QueryString) {
+          msInitExpression(&mapserv->map->query.filter);
+          msLoadExpressionString(&mapserv->map->query.filter, mapserv->QueryString);
+	}
 
         mapserv->map->query.rect = mapserv->map->extent;
 
