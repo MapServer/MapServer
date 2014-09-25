@@ -736,6 +736,13 @@ extern "C" {
 #endif
   } clusterObj;
 
+  typedef struct {
+      float normalization_scale;
+      int expand_searchrect;
+      int radius;
+      float power;
+  } processingParams;
+
   /************************************************************************/
   /*                               joinObj                                */
   /*                                                                      */
@@ -2548,6 +2555,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pbGotNoData );
 
   /* in interpolation.c */
+  MS_DLL_EXPORT int msInterpolationDataset(mapObj *map, imageObj *image, layerObj *layer, void **hDSvoid, void **cleanup_ptr);
+  MS_DLL_EXPORT int msCleanupInterpolationDataset(mapObj *map, imageObj *image, layerObj *layer, void *cleanup_ptr);
+
   MS_DLL_EXPORT int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *layer, void **hDSvoid, void **cleanup_ptr);
   MS_DLL_EXPORT int msCleanupKernelDensityDataset(mapObj *map, imageObj *image, layerObj *layer, void *cleanup_ptr);
 

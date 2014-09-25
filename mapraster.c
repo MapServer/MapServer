@@ -586,7 +586,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
     if(layer->debug > 0 || map->debug > 1)
         msDebug( "msDrawRasterLayerLow(%s): entering.\n", layer->name );
 
-    if(!layer->data && !layer->tileindex && !(layer->connectiontype==MS_KERNELDENSITY || layer->connectiontype==MS_IDW)) {
+    if(!layer->data && !layer->tileindex &&
+            !(layer->connectiontype == MS_KERNELDENSITY || layer->connectiontype == MS_IDW)) {
         if(layer->debug == MS_TRUE)
             msDebug( "msDrawRasterLayerLow(%s): layer data and tileindex NULL ... doing nothing.", layer->name );
         return(0);
@@ -667,17 +668,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
             done = MS_TRUE; /* only one image so we're done after this */
         }
 
-        /*
-        ** Note: because we do decryption after the above path expansion
-        ** which depends on actually finding a file, it essentially means that
-        ** fancy path manipulation is essentially disabled when using encrypted
-        ** components. But that is mostly ok, since stuff like sde,postgres and
-        ** oracle georaster do not use real paths.
-        */
-        decrypted_path = msDecryptStringTokens( map, szPath );
-        if( decrypted_path == NULL )
-            return MS_FAILURE;
-
         if(layer->connectiontype != MS_KERNELDENSITY && layer->connectiontype != MS_IDW) {
             if(strlen(filename) == 0) continue;
 
@@ -688,14 +678,22 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
             if(layer->debug == MS_TRUE)
                 msDebug("msDrawRasterLayerLow(%s): Path is: %s\n", layer->name, szPath);
 
+            /*
+            ** Note: because we do decryption after the above path expansion
+            ** which depends on actually finding a file, it essentially means that
+            ** fancy path manipulation is essentially disabled when using encrypted
+            ** components. But that is mostly ok, since stuff like sde,postgres and
+            ** oracle georaster do not use real paths.
+            */
+            decrypted_path = msDecryptStringTokens( map, szPath );
+            if( decrypted_path == NULL )
+                return MS_FAILURE;
+
             msAcquireLock( TLOCK_GDAL );
             hDS = GDALOpenShared( decrypted_path, GA_ReadOnly );
         } else {
-            if(layer->connectiontype == MS_KERNELDENSITY){
-                status = msComputeKernelDensityDataset(map, image, layer, &hDS, &cleanup_ptr);
-            }
-            if(layer->connectiontype == MS_IDW){
-                status = msComputeIDWDataset(map, image, layer, &hDS, &cleanup_ptr);
+            if(layer->connectiontype == MS_KERNELDENSITY || layer->connectiontype == MS_IDW){
+                status = msInterpolationDataset(map, image, layer, &hDS, &cleanup_ptr);
             }
 
             if(status != MS_SUCCESS) {
@@ -721,7 +719,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
         */
         if(hDS == NULL) {
             int ignore_missing = msMapIgnoreMissingData(map);
-            const char *cpl_error_msg = msDrawRasterGetCPLErrorMsg(decrypted_path, szPath);
+            const char *cpl_error_msg;
+            cpl_error_msg = msDrawRasterGetCPLErrorMsg(decrypted_path, szPath);
 
             msFree( decrypted_path );
             decrypted_path = NULL;
@@ -817,11 +816,8 @@ cleanup:
     if(layer->tileindex) { /* tiling clean-up */
         msDrawRasterCleanupTileLayer(tlp, tilelayerindex);
     }
-    if(layer->connectiontype == MS_KERNELDENSITY && cleanup_ptr) {
-        msCleanupKernelDensityDataset(map, image, layer, cleanup_ptr);
-    }
-    if(layer->connectiontype == MS_IDW && cleanup_ptr) {
-        msCleanupIDWDataset(map, image, layer, cleanup_ptr);
+    if((layer->connectiontype == MS_KERNELDENSITY || layer->connectiontype == MS_IDW) && cleanup_ptr) {
+        msCleanupInterpolationDataset(map, image, layer, cleanup_ptr);
     }
     return final_status;
 
