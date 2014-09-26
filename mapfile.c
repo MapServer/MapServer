@@ -6741,7 +6741,7 @@ static void classSubstituteString(classObj *class, const char *from, const char 
 
 static void layerSubstituteString(layerObj *layer, const char *from, const char *to)
 {
-  int c;
+  int p, c;
   if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, from, to);
   if(layer->tileindex) layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
   if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
