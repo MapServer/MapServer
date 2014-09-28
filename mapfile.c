@@ -6002,6 +6002,7 @@ static void writeMap(FILE *stream, int indent, mapObj *map)
   colorObj c;
 
   writeBlockBegin(stream, indent, "MAP");
+  writeNumber(stream, indent, "ANGLE", 0, map->gt.rotation_angle);
   writeHashTableInline(stream, indent, "CONFIG", &(map->configoptions));
   writeString(stream, indent, "DATAPATTERN", NULL, map->datapattern); /* depricated */
   writeNumber(stream, indent, "DEBUG", 0, map->debug);
