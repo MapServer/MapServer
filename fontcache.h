@@ -80,6 +80,7 @@ outline_element* msGetGlyphOutline(face_element *face, glyph_element *glyph);
 glyph_element* msGetBitmapGlyph(rendererVTableObj *renderer, unsigned int size, unsigned int unicode);
 unsigned int msGetGlyphIndex(face_element *face, unsigned int unicode);
 glyph_element* msGetGlyphByIndex(face_element *face, unsigned int size, unsigned int codepoint);
+int msIsGlyphASpace(glyphObj *glyph);
 
 #ifdef __cplusplus
 }
