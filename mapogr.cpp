@@ -2887,6 +2887,17 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
 }
 #endif
 
+#ifdef USE_OGR
+
+static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
+                                      OGRStyleToolH hLabelStyle);
+static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, classObj *c,
+                                    OGRStyleToolH hPenStyle, int bIsBrush);
+static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, classObj *c,
+                                      OGRStyleToolH hBrushStyle, int* pbIsBrush);
+static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, classObj *c,
+                                       OGRStyleToolH hSymbolStyle);
+
 /**********************************************************************
  *                     msOGRUpdateStyle()
  *
@@ -2895,13 +2906,9 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
  * msOGRUpdateStyleFromString
  **********************************************************************/
 
-#ifdef USE_OGR
 static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer, classObj *c)
 {
-  GBool bIsNull, bIsBrush=MS_FALSE;
-  int r=0,g=0,b=0,t=0;
-  double dfTmp;
-  int try_addimage_if_notfound = MS_FALSE;
+  GBool bIsBrush=MS_FALSE;
   int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
 
   /* ------------------------------------------------------------------
@@ -2928,7 +2935,34 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
     OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
 
     if (eStylePartType == OGRSTCLabel) {
-      OGRStyleToolH hLabelStyle = hStylePart;
+      int ret = msOGRUpdateStyleParseLabel(map, layer, c, hStylePart);
+      if( ret != MS_SUCCESS )
+          return ret;
+    } else if (eStylePartType == OGRSTCPen) {
+      int ret = msOGRUpdateStyleParsePen(map, layer, c, hStylePart, bIsBrush);
+      if( ret != MS_SUCCESS )
+          return ret;
+    } else if (eStylePartType == OGRSTCBrush) {
+      int ret = msOGRUpdateStyleParseBrush(map, layer, c, hStylePart, &bIsBrush);
+      if( ret != MS_SUCCESS )
+          return ret;
+    } else if (eStylePartType == OGRSTCSymbol) {
+      int ret = msOGRUpdateStyleParseSymbol(map, layer, c, hStylePart);
+      if( ret != MS_SUCCESS )
+          return ret;
+    }
+
+    OGR_ST_Destroy(hStylePart);
+
+  }
+  return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
+                                      OGRStyleToolH hLabelStyle)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       // Enclose the text string inside quotes to make sure it is seen
       // as a string by the parser inside loadExpression(). (bug185)
@@ -3073,8 +3107,15 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (!bFont) {
         c->labels[0]->size = MS_MEDIUM;
       }
-    } else if (eStylePartType == OGRSTCPen) {
-      OGRStyleToolH hPenStyle = hStylePart;
+
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, classObj *c,
+                                    OGRStyleToolH hPenStyle, int bIsBrush)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       const char *pszPenName, *pszPattern, *pszCap, *pszJoin;
       colorObj oPenColor;
@@ -3201,7 +3242,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         // This is a multipart symbology, so pen defn goes in the
         // overlaysymbol params
         if (msMaybeAllocateClassStyle(c, 1)) {
-          OGR_ST_Destroy(hStylePart);
+          OGR_ST_Destroy(hPenStyle);
           return(MS_FAILURE);
         }
 
@@ -3219,7 +3260,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       } else {
         // Single part symbology
         if (msMaybeAllocateClassStyle(c, 0)) {
-          OGR_ST_Destroy(hStylePart);
+          OGR_ST_Destroy(hPenStyle);
           return(MS_FAILURE);
         }
 
@@ -3240,8 +3281,14 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
             memcpy(c->styles[0]->pattern, pattern, sizeof(double) * patternlength);
       }
 
-    } else if (eStylePartType == OGRSTCBrush) {
-      OGRStyleToolH hBrushStyle = hStylePart;
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, classObj *c,
+                                      OGRStyleToolH hBrushStyle, int* pbIsBrush)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       const char *pszBrushName = OGR_ST_GetParamStr(hBrushStyle,
                                  OGRSTBrushId,
@@ -3250,7 +3297,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
 
       /* We need 1 style */
       if (msMaybeAllocateClassStyle(c, 0)) {
-        OGR_ST_Destroy(hStylePart);
+        OGR_ST_Destroy(hBrushStyle);
         return(MS_FAILURE);
       }
 
@@ -3259,7 +3306,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL) {
         MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1, 255);
       } else {
-        bIsBrush = TRUE;
+        *pbIsBrush = TRUE;
         const char *pszColor = OGR_ST_GetParamStr(hBrushStyle,
                                OGRSTBrushFColor,
                                &bIsNull);
@@ -3312,12 +3359,19 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
             }
         }
       }
-    } else if (eStylePartType == OGRSTCSymbol) {
-      OGRStyleToolH hSymbolStyle = hStylePart;
+
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, classObj *c,
+                                       OGRStyleToolH hSymbolStyle)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       /* We need 1 style */
       if (msMaybeAllocateClassStyle(c, 0)) {
-        OGR_ST_Destroy(hStylePart);
+        OGR_ST_Destroy(hSymbolStyle);
         return(MS_FAILURE);
       }
 
@@ -3343,7 +3397,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       c->styles[0]->angle = OGR_ST_GetParamNum(hSymbolStyle,
                             OGRSTSymbolAngle,
                             &bIsNull);
-      dfTmp = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolSize, &bIsNull);
+      double dfTmp = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolSize, &bIsNull);
       if (!bIsNull)
         c->styles[0]->size = dfTmp;
 
@@ -3357,7 +3411,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (bIsNull)
         pszName = NULL;
 
-      try_addimage_if_notfound = MS_FALSE;
+      int try_addimage_if_notfound = MS_FALSE;
 #ifdef USE_CURL
       if (pszName && strncasecmp(pszName, "http", 4) == 0)
         try_addimage_if_notfound =MS_TRUE;
@@ -3366,13 +3420,10 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
                                                 pszName,
                                                 "default-marker",  try_addimage_if_notfound);
-    }
 
-    OGR_ST_Destroy(hStylePart);
-
-  }
-  return MS_SUCCESS;
+      return MS_SUCCESS;
 }
+
 #endif /* USE_OGR */
 
 
