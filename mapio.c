@@ -46,6 +46,7 @@
 
 
 static int is_msIO_initialized = MS_FALSE;
+static int is_msIO_header_enabled = MS_TRUE;
 
 typedef struct msIOContextGroup_t {
   msIOContext stdin_context;
@@ -212,9 +213,11 @@ void msIO_setHeader (const char *header, const char* value, ...)
     }
   } else {
 #endif // MOD_WMS_ENABLED
-    msIO_fprintf(stdout,"%s: ",header);
-    msIO_vfprintf(stdout,value,args);
-    msIO_fprintf(stdout,"\r\n");
+   if( is_msIO_header_enabled ) {
+      msIO_fprintf(stdout,"%s: ",header);
+      msIO_vfprintf(stdout,value,args);
+      msIO_fprintf(stdout,"\r\n");
+   }
 #ifdef MOD_WMS_ENABLED
   }
 #endif
@@ -227,8 +230,10 @@ void msIO_sendHeaders ()
   msIOContext *ioctx = msIO_getHandler (stdout);
   if(ioctx && !strcmp(ioctx->label,"apache")) return;
 #endif // !MOD_WMS_ENABLED
-  msIO_printf ("\r\n");
-  fflush (stdout);
+  if( is_msIO_header_enabled ) {
+    msIO_printf ("\r\n");
+    fflush (stdout);
+  }
 }
 
 
@@ -518,8 +523,15 @@ static int msIO_stdioWrite( void *cbData, void *data, int byteCount )
 static void msIO_Initialize( void )
 
 {
+  const char* pszStripHTTPHeader;
+
   if( is_msIO_initialized == MS_TRUE )
     return;
+
+  pszStripHTTPHeader = getenv("MS_HTTP_HEADER");
+  is_msIO_header_enabled = ( pszStripHTTPHeader == NULL ||
+                             strcasecmp(pszStripHTTPHeader, "YES") == 0 ||
+                             strcasecmp(pszStripHTTPHeader, "ON") == 0 );
 
   default_contexts.stdin_context.label = "stdio";
   default_contexts.stdin_context.write_channel = MS_FALSE;
