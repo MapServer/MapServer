@@ -130,6 +130,7 @@ int loadParams(cgiRequestObj *request,
   if(getenv2("REQUEST_METHOD", thread_context)==NULL) {
     msIO_printf("This script can only be used to decode form results and \n");
     msIO_printf("should be initiated as a CGI process via a httpd server.\n");
+    msIO_printf("For other options please try using the --help switch.\n");
     return -1;
   }
 
