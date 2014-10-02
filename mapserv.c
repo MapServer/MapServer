@@ -162,7 +162,8 @@ int main(int argc, char *argv[])
   for( iArg = 1; iArg < argc; iArg++ ) {
     /* Keep only "-v", "-nh" and "QUERY_STRING=..." enabled by default.
      * The others will require an explicit -DMS_ENABLE_CGI_CL_DEBUG_ARGS
-     * at compile time.
+     * at compile time. Do *NOT* enable them since they can cause security
+     * problems : https://github.com/mapserver/mapserver/issues/3485
      */
     if( strcmp(argv[iArg],"-v") == 0 ) {
       printf("%s\n", msGetVersion());
