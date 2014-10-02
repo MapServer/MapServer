@@ -213,6 +213,8 @@ void msIO_setHeader (const char *header, const char* value, ...)
     }
   } else {
 #endif // MOD_WMS_ENABLED
+   if( !is_msIO_initialized )
+       msIO_Initialize();
    if( is_msIO_header_enabled ) {
       msIO_fprintf(stdout,"%s: ",header);
       msIO_vfprintf(stdout,value,args);
