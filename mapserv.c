@@ -170,6 +170,7 @@ int main(int argc, char *argv[])
       exit(0);
     } else if(strcmp(argv[iArg], "-nh") == 0) {
       sendheaders = MS_FALSE;
+      msIO_setHeaderEnabled( MS_FALSE );
     } else if( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0 ) {
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );

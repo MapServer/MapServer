@@ -191,6 +191,19 @@ msIOContext *msIO_getHandler( FILE * fp )
     return NULL;
 }
 
+/************************************************************************/
+/*                      msIO_setHeaderEnabled()                         */
+/************************************************************************/
+
+void msIO_setHeaderEnabled(int bFlag)
+{
+    is_msIO_header_enabled = bFlag;
+}
+
+/************************************************************************/
+/*                           msIO_setHeader()                           */
+/************************************************************************/
+
 void msIO_setHeader (const char *header, const char* value, ...)
 {
   va_list args;
@@ -213,8 +226,6 @@ void msIO_setHeader (const char *header, const char* value, ...)
     }
   } else {
 #endif // MOD_WMS_ENABLED
-   if( !is_msIO_initialized )
-       msIO_Initialize();
    if( is_msIO_header_enabled ) {
       msIO_fprintf(stdout,"%s: ",header);
       msIO_vfprintf(stdout,value,args);
@@ -529,11 +540,6 @@ static void msIO_Initialize( void )
 
   if( is_msIO_initialized == MS_TRUE )
     return;
-
-  pszStripHTTPHeader = getenv("MS_HTTP_HEADER");
-  is_msIO_header_enabled = ( pszStripHTTPHeader == NULL ||
-                             strcasecmp(pszStripHTTPHeader, "YES") == 0 ||
-                             strcasecmp(pszStripHTTPHeader, "ON") == 0 );
 
   default_contexts.stdin_context.label = "stdio";
   default_contexts.stdin_context.write_channel = MS_FALSE;
