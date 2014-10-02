@@ -353,6 +353,10 @@ int msCopyLabel(labelObj *dst, labelObj *src)
   MS_COPYSTELEM(force);
   MS_COPYSTELEM(priority);
 
+  MS_COPYSTELEM(repeatdistance);
+  MS_COPYSTELEM(maxoverlapangle);
+
+
   MS_COPYSTRING(dst->encoding, src->encoding);
 
   MS_COPYSTELEM(outlinewidth);
