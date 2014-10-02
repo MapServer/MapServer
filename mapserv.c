@@ -175,6 +175,24 @@ int main(int argc, char *argv[])
       /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
       putenv( "REQUEST_METHOD=GET" );
       putenv( argv[iArg] );
+    } else if (strcmp(argv[iArg], "--h") == 0 || strcmp(argv[iArg], "--help") == 0) {
+      printf("Usage: mapserv [--help] [-v] [-nh] [QUERY_STRING=value]\n");
+#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
+      printf("               [-tmpbase dirname] [-t mapfilename] [MS_ERRORFILE=value] [MS_DEBUGLEVEL=value]\n");
+#endif
+      printf("\n");
+      printf("Options :\n");
+      printf("  -h, --help              Display this help message.\n");
+      printf("  -v                      Display version and exit.\n");
+      printf("  -nh                     Suppress HTTP headers in CGI mode.\n");
+      printf("  QUERY_STRING=value      Set the QUERY_STRING in GET request mode.\n");
+#ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
+      printf("  -tmpbase dirname        Define a forced temporary directory.\n");
+      printf("  -t mapfilename          Display the tokens of the mapfile after parsing.\n");
+      printf("  MS_ERRORFILE=filename   Set error file.\n");
+      printf("  MS_DEBUGLEVEL=value     Set debug level.\n");
+#endif
+      exit(0);
     }
 #ifdef MS_ENABLE_CGI_CL_DEBUG_ARGS
     else if( iArg < argc-1 && strcmp(argv[iArg], "-tmpbase") == 0) {
