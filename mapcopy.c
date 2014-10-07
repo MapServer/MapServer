@@ -400,6 +400,7 @@ int msCopyLabel(labelObj *dst, labelObj *src)
 
   if(src->leader) {
     dst->leader = msSmallMalloc(sizeof(labelLeaderObj));
+    initLeader(dst->leader);
     msCopyLabelLeader(dst->leader,src->leader);
   } else {
     if(dst->leader) {
@@ -577,6 +578,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     }
     if(!dst->leader) {
       dst->leader = msSmallMalloc(sizeof(labelLeaderObj));
+      initLeader(dst->leader);
     }
     msCopyLabelLeader(dst->leader,src->leader);
   }
