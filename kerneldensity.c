@@ -31,7 +31,7 @@
 #ifdef USE_GDAL
 
 #include "gdal.h"
-
+#include "cpl_string.h"
 
 void gaussian_blur(float *values, int width, int height, int radius) {
   float *tmp = (float*)msSmallMalloc(width*height*sizeof(float));
@@ -306,10 +306,13 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
   free(values);
   
   {
+    char pointer[64];
     char ds_string [1024];
     double adfGeoTransform[6];
-    snprintf(ds_string,1024,"MEM:::DATAPOINTER=%p,PIXELS=%u,LINES=%u,BANDS=1,DATATYPE=Byte,PIXELOFFSET=1,LINEOFFSET=%u",
-        iValues,image->width,image->height,image->width);
+    memset(pointer, 0, sizeof(pointer));
+    CPLPrintPointer(pointer, iValues, sizeof(pointer));
+    snprintf(ds_string,1024,"MEM:::DATAPOINTER=%s,PIXELS=%u,LINES=%u,BANDS=1,DATATYPE=Byte,PIXELOFFSET=1,LINEOFFSET=%u",
+        pointer,image->width,image->height,image->width);
     hDS = GDALOpenShared( ds_string, GA_ReadOnly );
     if(hDS==NULL) {
       msSetError(MS_MISCERR,"msComputeKernelDensityDataset()","failed to create in-memory gdal dataset for interpolated data");
