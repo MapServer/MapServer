@@ -1670,11 +1670,6 @@ int LayerDefaultTranslateFilter(layerObj *layer, expressionObj *filter, char *fi
 {
   if(!filter->string) return MS_SUCCESS; /* nothing to do, not an error */
 
-  if(filter->type == MS_STRING && filter->string && !filteritem) {
-    filter->native_string = msStrdup(filter->string);
-    return MS_SUCCESS;
-  }
-
   msSetError(MS_MISCERR, "This data driver does not implement filter translation support", "LayerDefaultTranslateFilter()");
   return MS_FAILURE;
 }
