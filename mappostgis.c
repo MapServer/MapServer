@@ -3599,10 +3599,10 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
 
   // fprintf(stderr, "input: %s, %s, %d\n", filter->string, filteritem, filter->type);
 
-  if(filter->type == MS_STRING && filter->string && !filteritem) { /* native sql */
-    filter->native_string = msStrdup(filter->string);
-    return MS_SUCCESS;
-  } else if(filter->type == MS_STRING && filter->string && filteritem) { /* item/value pair - add escaping */
+  /*
+  ** FILTERs use MapServer syntax *only* (#5001).
+  */
+  if(filter->type == MS_STRING && filter->string && filteritem) { /* item/value pair - add escaping */
 
     stresc = msLayerEscapePropertyName(layer, filteritem);
     if(filter->flags & MS_EXP_INSENSITIVE) {
