@@ -1969,14 +1969,14 @@ char *msPostGISBuildSQLFrom(layerObj *layer, rectObj *rect)
 char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
 {
   char *strRect = 0;
-  char *strFilter = 0;
+  char *strFilter1=0, *strFilter2=0;
   char *strUid = 0;
   char *strWhere = 0;
   char *strOrderBy = 0;
   char *strLimit = 0;
   char *strOffset = 0;
   size_t strRectLength = 0;
-  size_t strFilterLength = 0;
+  size_t strFilterLength1=0, strFilterLength2=0;
   size_t strUidLength = 0;
   size_t strOrderByLength = 0;
   size_t strLimitLength = 0;
@@ -2046,12 +2046,21 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     free(strSRID);
   }
 
-  /* Populate strFilter, if necessary. */
+  /* Handle a translated filter (RFC91). */
   if ( layer->filter.native_string ) { 
     static char *strFilterTemplate = "(%s)";
-    strFilter = (char*)msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.native_string)+1);
-    sprintf(strFilter, strFilterTemplate, layer->filter.native_string);
-    strFilterLength = strlen(strFilter);
+    strFilter1 = (char *) msSmallMalloc(strlen(strFilterTemplate) + strlen(layer->filter.native_string)+1);
+    sprintf(strFilter1, strFilterTemplate, layer->filter.native_string);
+    strFilterLength1 = strlen(strFilter1);
+  }
+
+  /* Handle a native filter set as a PROCESSING option (#5001). */
+  if( msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL ) {
+    static char *strFilterTemplate = "(%s)";
+    char *native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
+    strFilter2 = (char *) msSmallMalloc(strlen(strFilterTemplate) + strlen(native_filter)+1);
+    sprintf(strFilter2, strFilterTemplate, native_filter);
+    strFilterLength2 = strlen(strFilter2);
   }
 
   /* Populate strUid, if necessary. */
@@ -2071,7 +2080,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     strOrderByLength = strlen(strOrderBy);
   }
 
-  bufferSize = strRectLength + 5 + strFilterLength + 5 + strUidLength
+  bufferSize = strRectLength + 5 + (strFilterLength1 + 5) + (strFilterLength2 + 5) + strUidLength
                + strLimitLength + strOffsetLength + strOrderByLength + 1;
   strWhere = (char*)msSmallMalloc(bufferSize);
   *strWhere = '\0';
@@ -2080,12 +2089,20 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     insert_and++;
     free(strRect);
   }
-  if ( strFilter ) {
+  if ( strFilter1 ) {
     if ( insert_and ) {
       strlcat(strWhere, " and ", bufferSize);
     }
-    strlcat(strWhere, strFilter, bufferSize);
-    free(strFilter);
+    strlcat(strWhere, strFilter1, bufferSize);
+    free(strFilter1);
+    insert_and++;
+  }
+  if ( strFilter2 ) {
+    if ( insert_and ) {
+      strlcat(strWhere, " and ", bufferSize);
+    }
+    strlcat(strWhere, strFilter2, bufferSize);
+    free(strFilter2);
     insert_and++;
   }
   if ( strUid ) {
