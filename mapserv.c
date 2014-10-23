@@ -234,10 +234,6 @@ int main(int argc, char *argv[])
 #ifdef USE_FASTCGI
   msIO_installFastCGIRedirect();
 
-#ifdef WIN32
-  atexit( msCleanupOnExit );
-#endif
-
   /* In FastCGI case we loop accepting multiple requests.  In normal CGI */
   /* use we only accept and process one request.  */
   while( FCGI_Accept() >= 0 ) {
