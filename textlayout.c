@@ -435,7 +435,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 #endif
   struct line_desc static_line_descs[STATIC_LINES];
   int alloc_glyphs = 0;
-  struct line_desc *line_descs;
+  struct line_desc *line_descs = NULL;
   text_run *runs;
   double oldpeny=3455,peny,penx=0; /*oldpeny is set to an unreasonable default initial value */
   fontSetObj *fontset = NULL;
@@ -469,8 +469,6 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
     while(len>0) {
       iconv_status = iconv(cd, &inp, &len, &outp, &bufleft);
       if(iconv_status == -1) {
-        iconv_close(cd);
-        free(encoded_text);
         break;
       }
     }
@@ -485,6 +483,9 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
   {
     text_num_bytes = strlen(ts->annotext);
   }
+
+  if( text_num_bytes == 0 )
+      return 0;
 
   if(text_num_bytes > STATIC_GLYPHS) {
 #ifdef USE_FRIBIDI
