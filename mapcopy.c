@@ -925,6 +925,29 @@ int msCopyScaleToken(scaleTokenObj *src, scaleTokenObj *dst) {
   return MS_SUCCESS;
 }
 
+int msCopyCompositer(LayerCompositer **ldst, LayerCompositer *src) {
+  LayerCompositer *dst = NULL;
+  if(!src) {
+    *ldst = NULL;
+    return MS_SUCCESS;
+  }
+
+  while(src) {
+    if(!dst) {
+      dst = *ldst = msSmallMalloc(sizeof(LayerCompositer));
+    } else {
+      dst->next = msSmallMalloc(sizeof(LayerCompositer));
+      dst = dst->next;
+    }
+    dst->comp_op = src->comp_op;
+    dst->opacity = src->opacity;
+    dst->next = NULL;
+    /* TODO dst->filter */
+    src = src->next;
+  }
+  return MS_SUCCESS;
+}
+
 /***********************************************************************
  * msCopyLayer()                                                       *
  *                                                                     *
@@ -1064,7 +1087,6 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   }
   msCopyHashTable(&dst->validation,&src->validation);
 
-  MS_COPYSTELEM(opacity);
   MS_COPYSTELEM(dump);
   MS_COPYSTELEM(debug);
 
@@ -1097,6 +1119,10 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_CHECK_ALLOC(dst->grid, sizeof(graticuleObj), -1);
     initGrid(dst->grid);
     msCopyGrid(dst->grid, src->grid);
+  }
+
+  if(src->compositer) {
+    msCopyCompositer(&dst->compositer, src->compositer);
   }
 
   return MS_SUCCESS;
@@ -1239,6 +1265,24 @@ int msCopyMap(mapObj *dst, mapObj *src)
   if( msCopyHashTable( &(dst->configoptions), &(src->configoptions) ) != MS_SUCCESS )
     return MS_FAILURE;
 
+  return MS_SUCCESS;
+}
+
+int msCopyRasterBuffer(rasterBufferObj *dst, const rasterBufferObj *src) {
+  *dst = *src;
+  if(src->type == MS_BUFFER_BYTE_RGBA) {
+    dst->data.rgba = src->data.rgba;
+    dst->data.rgba.pixels = msSmallMalloc(src->height * src->data.rgba.row_step);
+    memcpy(dst->data.rgba.pixels, src->data.rgba.pixels, src->data.rgba.row_step*src->height);
+    dst->data.rgba.r = dst->data.rgba.pixels + (src->data.rgba.r - src->data.rgba.pixels);
+    dst->data.rgba.g = dst->data.rgba.pixels + (src->data.rgba.g - src->data.rgba.pixels);
+    dst->data.rgba.b = dst->data.rgba.pixels + (src->data.rgba.b - src->data.rgba.pixels);
+    if(src->data.rgba.a) {
+      dst->data.rgba.a = dst->data.rgba.pixels + (src->data.rgba.a - src->data.rgba.pixels);
+    } else {
+      dst->data.rgba.a = NULL;
+    }
+  }
   return MS_SUCCESS;
 }
 

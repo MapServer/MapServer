@@ -54,7 +54,6 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   char szPath[MS_MAXPATHLEN];
   styleObj outline_style;
   imageObj *image_draw = image;
-  int originalopacity = lp->opacity;
   rendererVTableObj *renderer;
   outputFormatObj *transFormat = NULL, *altFormat=NULL;
   const char *alternativeFormatString = NULL;
@@ -75,19 +74,15 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     renderer = MS_IMAGE_RENDERER(image_draw);
   } else {
     renderer = MS_IMAGE_RENDERER(image_draw);
-    if (lp->opacity > 0 && lp->opacity < 100) {
-      if (!renderer->supports_transparent_layers) {
-        image_draw = msImageCreate(image->width, image->height,
-                                   image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
-        if (!image_draw) {
-          msSetError(MS_MISCERR, "Unable to initialize temporary transparent image.",
-                     "msDrawLegendIcon()");
-          return (MS_FAILURE);
-        }
-        image_draw->map = map;
-       /* set opacity to full, as the renderer should be rendering a fully opaque image */
-        lp->opacity=100;
+    if (lp->compositer && renderer->compositeRasterBuffer) {
+      image_draw = msImageCreate(image->width, image->height,
+              image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
+      if (!image_draw) {
+        msSetError(MS_MISCERR, "Unable to initialize temporary transparent image.",
+                "msDrawLegendIcon()");
+        return (MS_FAILURE);
       }
+      image_draw->map = map;
     }
   }
 
@@ -339,7 +334,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
 
     ret = altrenderer->getRasterBufferHandle(image_draw,&rb);
     if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
-    ret = renderer->mergeRasterBuffer(image,&rb,lp->opacity*0.01,0,0,0,0,rb.width,rb.height);
+    ret = renderer->mergeRasterBuffer(image,&rb,((lp->compositer)?lp->compositer->opacity*0.01:1.0),0,0,0,0,rb.width,rb.height);
     if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
     /*
      * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain
@@ -362,11 +357,9 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
     rasterBufferObj rb;
     memset(&rb,0,sizeof(rasterBufferObj));
 
-    lp->opacity = originalopacity;
-
     ret = renderer->getRasterBufferHandle(image_draw,&rb);
     if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
-    ret = renderer->mergeRasterBuffer(image,&rb,lp->opacity*0.01,0,0,0,0,rb.width,rb.height);
+    ret = renderer->mergeRasterBuffer(image,&rb,((lp->compositer)?lp->compositer->opacity*0.01:1.0),0,0,0,0,rb.width,rb.height);
     if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
 
     /* deref and possibly free temporary transparent output format.  */

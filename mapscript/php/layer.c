@@ -309,7 +309,7 @@ PHP_METHOD(layerObj, __get)
                                                                           else IF_GET_LONG("connectiontype", php_layer->layer->connectiontype)
                                                                             else IF_GET_STRING("filteritem", php_layer->layer->filteritem)
                                                                               else IF_GET_STRING("template", php_layer->layer->template)
-                                                                                else IF_GET_LONG("opacity", php_layer->layer->opacity)
+                                                                                else IF_GET_LONG("opacity", (php_layer->layer->compositer?php_layer->layer->compositer->opacity:100))
                                                                                   else IF_GET_STRING("styleitem", php_layer->layer->styleitem)
                                                                                     else IF_GET_LONG("numitems", php_layer->layer->numitems)
                                                                                       else IF_GET_LONG("numjoins", php_layer->layer->numjoins)
@@ -350,6 +350,8 @@ PHP_METHOD(layerObj, __set)
   if(Z_TYPE_P(value)==IS_NULL && !strcmp(property,"template")) {
     msFree(php_layer->layer->template);
     php_layer->layer->template = NULL;
+  } else if(!strcmp(property,"opacity")) {
+    msSetLayerOpacity(php_layer->layer,Z_LVAL_P(value));
   } else
   IF_SET_LONG("status", php_layer->layer->status, value)
   else IF_SET_LONG("debug",  php_layer->layer->debug, value)
@@ -386,7 +388,6 @@ PHP_METHOD(layerObj, __set)
                                                                   else IF_SET_STRING("connection", php_layer->layer->connection, value)
                                                                     else IF_SET_STRING("filteritem", php_layer->layer->filteritem, value)
                                                                       else IF_SET_STRING("template", php_layer->layer->template, value)
-                                                                        else IF_SET_LONG("opacity", php_layer->layer->opacity, value)
                                                                           else IF_SET_STRING("styleitem", php_layer->layer->styleitem, value)
                                                                             else IF_SET_LONG("num_processing", php_layer->layer->numprocessing, value)
                                                                               else IF_SET_STRING("requires", php_layer->layer->requires, value)

@@ -214,8 +214,6 @@ int aggInitializeRasterBuffer(rasterBufferObj *rb, int width, int height, int mo
 int msPopulateRendererVTableKML( rendererVTableObj *renderer )
 {
 #ifdef USE_KML
-
-  renderer->supports_transparent_layers = 1;
   renderer->supports_pixel_buffer = 0;
   renderer->supports_clipping = 0;
   renderer->use_imagecache = 0;
@@ -240,6 +238,7 @@ int msPopulateRendererVTableKML( rendererVTableObj *renderer )
   renderer->freeSymbol = &msFreeSymbolKml;
   renderer->freeImage=&msFreeImageKml;
   renderer->mergeRasterBuffer = msMergeRasterBufferKml;
+  renderer->compositeRasterBuffer = NULL;
 
   renderer->startShape=&msStartShapeKml;
   renderer->endShape=&msEndShapeKml;

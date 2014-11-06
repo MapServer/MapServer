@@ -2614,3 +2614,11 @@ shapeObj* msGeneralize(shapeObj *shape, double tolerance)
    
   return newShape;
 }
+
+int msSetLayerOpacity(layerObj *layer, int opacity) {
+  if(!layer->compositer) {
+    layer->compositer = msSmallMalloc(sizeof(LayerCompositer));
+    initLayerCompositer(layer->compositer);
+  }
+  layer->compositer->opacity = opacity;
+}

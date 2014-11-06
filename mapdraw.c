@@ -178,6 +178,26 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
   
 }
 
+static int msCompositeRasterBuffer(imageObj *img, rasterBufferObj *rb, LayerCompositer *comp) {
+  int ret = MS_SUCCESS;
+  if(MS_IMAGE_RENDERER(img)->compositeRasterBuffer) {
+    while(comp && ret == MS_SUCCESS) {
+      rasterBufferObj *rb_ptr = rb;
+      if(comp->filter) {
+        rb_ptr = msApplyFilterToRasterBuffer(rb,comp->filter);
+      }
+      ret = MS_IMAGE_RENDERER(img)->compositeRasterBuffer(img,rb_ptr,comp->comp_op, comp->opacity);
+      if(rb_ptr != rb) {
+        msFreeRasterBuffer(rb_ptr);
+        msFree(rb_ptr);
+      }
+      comp = comp->next;
+    }
+  } else {
+    ret = MS_FAILURE;
+  }
+  return ret;
+}
 
 /*
  * Generic function to render the map file.
@@ -609,6 +629,9 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
   return MS_TRUE;  /* All tests passed.  Layer is visible. */
 }
+
+
+#define LAYER_NEEDS_COMPOSITING(layer) (((layer)->compositer != NULL) && ((layer)->compositer->next || (layer)->compositor->opacity < 100 || (layer)->compositor->compop != MS_COMPOP_SRC_OVER || (layer)->compositer->filter ))
 /*
  * Generic function to render a layer object.
 */
@@ -617,14 +640,14 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   imageObj *image_draw = image;
   outputFormatObj *altFormat=NULL;
   int retcode=MS_SUCCESS;
-  int originalopacity = layer->opacity;
   const char *alternativeFomatString = NULL;
   layerObj *maskLayer = NULL;
 
   if(!msLayerIsVisible(map, layer))
     return MS_SUCCESS;
 
-  if(layer->opacity == 0) return MS_SUCCESS; /* layer is completely transparent, skip it */
+  if(layer->compositer && !layer->compositer->next && layer->compositer->opacity == 0) return MS_SUCCESS; /* layer is completely transparent, skip it */
+  
 
   /* conditions may have changed since this layer last drawn, so set
      layer->project true to recheck projection needs (Bug #673) */
@@ -714,11 +737,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     renderer->startLayer(image_draw,map,layer);
   } else if (MS_RENDERER_PLUGIN(image_draw->format)) {
     rendererVTableObj *renderer = MS_IMAGE_RENDERER(image_draw);
-    if ((layer->mask && layer->connectiontype!=MS_WMS && layer->type != MS_LAYER_RASTER) || (layer->opacity > 0 && layer->opacity < 100)) {
+    if ((layer->mask && layer->connectiontype!=MS_WMS && layer->type != MS_LAYER_RASTER) || layer->compositer) {
       /* masking occurs at the pixel/layer level for raster images, so we don't need to create a temporary image
        in these cases
        */
-      if (layer->mask || !renderer->supports_transparent_layers) {
+      if (layer->mask || renderer->compositeRasterBuffer) {
         image_draw = msImageCreate(image->width, image->height,
                                    image->format, image->imagepath, image->imageurl, map->resolution, map->defresolution, NULL);
         if (!image_draw) {
@@ -726,8 +749,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
                      "msDrawLayer()");
           return (MS_FAILURE);
         }
-        /* set opacity to full, as the renderer should be rendering a fully opaque image */
-        layer->opacity=100;
         renderer->startLayer(image_draw,map,layer);
       }
     }
@@ -762,7 +783,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(UNLIKELY(retcode == MS_FAILURE)) {
       goto altformat_cleanup;
     }
-    retcode = renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);
+    retcode = renderer->mergeRasterBuffer(image,&rb,((layer->compositer)?(layer->compositer->opacity*0.01):(1.0)),0,0,0,0,rb.width,rb.height);
     if(UNLIKELY(retcode == MS_FAILURE)) {
       goto altformat_cleanup;
     }
@@ -793,7 +814,6 @@ altformat_cleanup:
     memset(&rb,0,sizeof(rasterBufferObj));
 
     renderer->endLayer(image_draw,map,layer);
-    layer->opacity = originalopacity;
 
     retcode = renderer->getRasterBufferHandle(image_draw,&rb);
     if(UNLIKELY(retcode == MS_FAILURE)) {
@@ -830,7 +850,12 @@ altformat_cleanup:
         }
       }
     }
-    retcode = renderer->mergeRasterBuffer(image,&rb,layer->opacity*0.01,0,0,0,0,rb.width,rb.height);
+    if(!layer->compositer) {
+      /*we have a mask layer with no composition configured, do a nomral blend */
+      retcode = renderer->mergeRasterBuffer(image,&rb,1.0,0,0,0,0,rb.width,rb.height);
+    } else {
+      retcode = msCompositeRasterBuffer(image,&rb,layer->compositer);
+    }
     if(UNLIKELY(retcode == MS_FAILURE)) {
       goto imagedraw_cleanup;
     }

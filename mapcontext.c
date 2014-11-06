@@ -1032,7 +1032,11 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   if (psExtension != NULL) {
     pszValue = (char*)CPLGetXMLValue(psExtension, "ol:opacity", NULL);
     if(pszValue != NULL) {
-      layer->opacity = atof(pszValue)*100;
+      if(!layer->compositer) {
+        layer->compositer = msSmallMalloc(sizeof(LayerCompositer));
+        initLayerCompositer(layer->compositer);
+      }
+      layer->compositer->opacity = atof(pszValue)*100;
     }
   }
 

@@ -253,7 +253,7 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer)
 
   renderer->use_imagecache = 0;
   renderer->supports_pixel_buffer = 0;
-  renderer->supports_transparent_layers = 0;
+  renderer->compositeRasterBuffer = NULL;
   renderer->supports_clipping = 0;
   renderer->supports_svg = 0;
   renderer->renderer_data = NULL;

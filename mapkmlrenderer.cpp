@@ -847,8 +847,8 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *ima
   xmlNodePtr groundOverlayNode = xmlNewChild(parentNode, NULL, BAD_CAST "GroundOverlay", NULL);
   char *layerName = getLayerName(layer);
   xmlNewChild(groundOverlayNode, NULL, BAD_CAST "name", BAD_CAST layerName);
-  if (layer->opacity > 0 && layer->opacity < 100) {
-    sprintf(layerHexColor, "%02xffffff", (unsigned int)MS_NINT(layer->opacity*2.55));
+  if (layer->compositer && layer->compositer->opacity > 0 && layer->compositer->opacity < 100) {
+    sprintf(layerHexColor, "%02xffffff", (unsigned int)MS_NINT(layer->compositer->opacity*2.55));
     xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST layerHexColor);
   } else
     xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST "ffffffff");
@@ -1023,9 +1023,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
     */
 
     for (int i=0; i<numLineStyle; i++) {
-      if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
+      if (currentLayer && currentLayer->compositer && currentLayer->compositer->opacity > 0 && currentLayer->compositer->opacity < 100 &&
           LineStyle[i].color->alpha == 255)
-        LineStyle[i].color->alpha = MS_NINT(currentLayer->opacity*2.55);
+        LineStyle[i].color->alpha = MS_NINT(currentLayer->compositer->opacity*2.55);
 
       sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color->alpha, LineStyle[0].color->blue,
               LineStyle[i].color->green, LineStyle[i].color->red);
@@ -1049,9 +1049,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
       </PolyStyle>
     */
 
-    if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
+    if (currentLayer && currentLayer->compositer && currentLayer->compositer->opacity > 0 && currentLayer->compositer->opacity < 100 &&
         PolygonColor.alpha == 255)
-      PolygonColor.alpha = MS_NINT(currentLayer->opacity*2.55);
+      PolygonColor.alpha = MS_NINT(currentLayer->compositer->opacity*2.55);
     sprintf(polygonHexColor,"%02x%02x%02x%02x", PolygonColor.alpha, PolygonColor.blue, PolygonColor.green, PolygonColor.red);
 
     char polygonStyleName[64];
@@ -1071,9 +1071,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
       </LabelStyle>
     */
 
-    if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
+    if (currentLayer && currentLayer->compositer && currentLayer->compositer->opacity > 0 && currentLayer->compositer->opacity < 100 &&
         LabelColor.alpha == 255)
-      LabelColor.alpha = MS_NINT(currentLayer->opacity*2.55);
+      LabelColor.alpha = MS_NINT(currentLayer->compositer->opacity*2.55);
     sprintf(labelHexColor,"%02x%02x%02x%02x", LabelColor.alpha, LabelColor.blue, LabelColor.green, LabelColor.red);
 
     // __TODO__ add label scale
