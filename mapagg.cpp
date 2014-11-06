@@ -42,9 +42,7 @@
 #include "renderers/agg/include/agg_span_pattern_rgba.h"
 #include "renderers/agg/include/agg_span_allocator.h"
 #include "renderers/agg/include/agg_span_interpolator_linear.h"
-#include "renderers/agg/include/agg_span_image_filter_rgba.h"
 #include "renderers/agg/include/agg_pattern_filters_rgba.h"
-#include "renderers/agg/include/agg_span_image_filter_rgb.h"
 #include "renderers/agg/include/agg_image_accessors.h"
 #include "renderers/agg/include/agg_conv_stroke.h"
 #include "renderers/agg/include/agg_conv_dash.h"
@@ -52,6 +50,7 @@
 #include "renderers/agg/include/agg_conv_contour.h"
 #include "renderers/agg/include/agg_ellipse.h"
 #include "renderers/agg/include/agg_gamma_functions.h"
+#include "renderers/agg/include/agg_blur.h"
 
 #include "renderers/agg/include/agg_rasterizer_outline_aa.h"
 #include "renderers/agg/include/agg_renderer_outline_aa.h"
@@ -63,6 +62,10 @@
 #include "renderers/agg/include/agg_path_storage_integer.h"
 
 #include "renderers/agg/include/agg_conv_clipper.h"
+
+#ifdef USE_PIXMAN
+#include <pixman.h>
+#endif
 
 #ifdef AGG_ALIASED_ENABLED
 #include "renderers/agg/include/agg_renderer_primitives.h"
@@ -78,10 +81,13 @@ typedef mapserver::rgba8 color_type;
 typedef mapserver::pixel32_type pixel_type;
 
 typedef mapserver::blender_rgba_pre<color_type, band_order> blender_pre;
+typedef mapserver::comp_op_adaptor_rgba_pre<color_type, band_order> compop_blender_pre;
 
 typedef mapserver::pixfmt_alpha_blend_rgba<blender_pre, mapserver::rendering_buffer, pixel_type> pixel_format;
+typedef mapserver::pixfmt_custom_blend_rgba<compop_blender_pre, mapserver::rendering_buffer> compop_pixel_format;
 typedef mapserver::rendering_buffer rendering_buffer;
 typedef mapserver::renderer_base<pixel_format> renderer_base;
+typedef mapserver::renderer_base<compop_pixel_format> compop_renderer_base;
 typedef mapserver::renderer_scanline_aa_solid<renderer_base> renderer_scanline;
 typedef mapserver::rasterizer_scanline_aa<> rasterizer_scanline;
 typedef mapserver::font_engine_freetype_int16 font_engine_type;
@@ -136,7 +142,9 @@ public:
   band_type* buffer;
   rendering_buffer m_rendering_buffer;
   pixel_format m_pixel_format;
+  compop_pixel_format m_compop_pixel_format;
   renderer_base m_renderer_base;
+  compop_renderer_base m_compop_renderer_base;
   renderer_scanline m_renderer_scanline;
 #ifdef AGG_ALIASED_ENABLED
   renderer_primitives m_renderer_primitives;
@@ -826,7 +834,9 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   }
   r->m_rendering_buffer.attach(r->buffer, width, height, width * 4);
   r->m_pixel_format.attach(r->m_rendering_buffer);
+  r->m_compop_pixel_format.attach(r->m_rendering_buffer);
   r->m_renderer_base.attach(r->m_pixel_format);
+  r->m_compop_renderer_base.attach(r->m_compop_pixel_format);
   r->m_renderer_scanline.attach(r->m_renderer_base);
   r->default_gamma = atof(msGetOutputFormatOption( format, "GAMMA", "0.75" ));
   if(r->default_gamma <= 0.0 || r->default_gamma >= 1.0) {
@@ -1119,7 +1129,7 @@ int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, 
 
 
   if(patternlength>1) {
-    //dash the hatch and render it clipped by the shape
+    //dash the color-hatch and render it clipped by the shape
     mapserver::conv_dash<mapserver::path_storage > dash(hatch);
     mapserver::conv_stroke<mapserver::conv_dash<mapserver::path_storage> > stroke(dash);
     for (int i=0; i<patternlength; i+=2) {
@@ -1146,10 +1156,194 @@ int msHatchPolygon(imageObj *img, shapeObj *poly, double spacing, double width, 
   return MS_SUCCESS;
 }
 
+#ifdef USE_PIXMAN
+static pixman_op_t ms2pixman_compop(CompositingOperation c) {
+  switch(c) {
+    case MS_COMPOP_CLEAR:
+      return PIXMAN_OP_CLEAR;
+    case MS_COMPOP_SRC:
+      return PIXMAN_OP_SRC;
+    case MS_COMPOP_DST:
+      return PIXMAN_OP_DST;
+    case MS_COMPOP_SRC_OVER:
+      return PIXMAN_OP_OVER;
+    case MS_COMPOP_DST_OVER:
+      return PIXMAN_OP_OVER_REVERSE;
+    case MS_COMPOP_SRC_IN:
+      return PIXMAN_OP_IN;
+    case MS_COMPOP_DST_IN:
+      return PIXMAN_OP_IN_REVERSE;
+    case MS_COMPOP_SRC_OUT:
+      return PIXMAN_OP_OUT;
+    case MS_COMPOP_DST_OUT:
+      return PIXMAN_OP_OUT_REVERSE;
+    case MS_COMPOP_SRC_ATOP:
+      return PIXMAN_OP_ATOP;
+    case MS_COMPOP_DST_ATOP:
+      return PIXMAN_OP_ATOP_REVERSE;
+    case MS_COMPOP_XOR:
+      return PIXMAN_OP_XOR;
+    case MS_COMPOP_PLUS:
+      return PIXMAN_OP_ADD;
+    case MS_COMPOP_MULTIPLY:
+      return PIXMAN_OP_MULTIPLY;
+    case MS_COMPOP_SCREEN:
+      return PIXMAN_OP_SCREEN;
+    case MS_COMPOP_OVERLAY:
+      return PIXMAN_OP_OVERLAY;
+    case MS_COMPOP_DARKEN:
+      return PIXMAN_OP_DARKEN;
+    case MS_COMPOP_LIGHTEN:
+      return PIXMAN_OP_LIGHTEN;
+    case MS_COMPOP_COLOR_DODGE:
+      return PIXMAN_OP_COLOR_DODGE;
+    case MS_COMPOP_COLOR_BURN:
+      return PIXMAN_OP_COLOR_DODGE;
+    case MS_COMPOP_HARD_LIGHT:
+      return PIXMAN_OP_HARD_LIGHT;
+    case MS_COMPOP_SOFT_LIGHT:
+      return PIXMAN_OP_SOFT_LIGHT;
+    case MS_COMPOP_DIFFERENCE:
+      return PIXMAN_OP_DIFFERENCE;
+    case MS_COMPOP_EXCLUSION:
+      return PIXMAN_OP_EXCLUSION;
+    case MS_COMPOP_INVERT:
+    case MS_COMPOP_INVERT_RGB:
+    case MS_COMPOP_MINUS:
+    case MS_COMPOP_CONTRAST:
+    default:
+      return PIXMAN_OP_OVER;
+  }
+}
+#else
+static mapserver::comp_op_e ms2agg_compop(CompositingOperation c) {
+  switch(c) {
+    case MS_COMPOP_CLEAR:
+      return mapserver::comp_op_clear;
+    case MS_COMPOP_SRC:
+      return mapserver::comp_op_src;
+    case MS_COMPOP_DST:
+      return mapserver::comp_op_dst;
+    case MS_COMPOP_SRC_OVER:
+      return mapserver::comp_op_src_over;
+    case MS_COMPOP_DST_OVER:
+      return mapserver::comp_op_dst_over;
+    case MS_COMPOP_SRC_IN:
+      return mapserver::comp_op_src_in;
+    case MS_COMPOP_DST_IN:
+      return mapserver::comp_op_dst_in;
+    case MS_COMPOP_SRC_OUT:
+      return mapserver::comp_op_src_out;
+    case MS_COMPOP_DST_OUT:
+      return mapserver::comp_op_dst_out;
+    case MS_COMPOP_SRC_ATOP:
+      return mapserver::comp_op_src_atop;
+    case MS_COMPOP_DST_ATOP:
+      return mapserver::comp_op_dst_atop;
+    case MS_COMPOP_XOR:
+      return mapserver::comp_op_xor;
+    case MS_COMPOP_PLUS:
+      return mapserver::comp_op_plus;
+    case MS_COMPOP_MINUS:
+      return mapserver::comp_op_minus;
+    case MS_COMPOP_MULTIPLY:
+      return mapserver::comp_op_multiply;
+    case MS_COMPOP_SCREEN:
+      return mapserver::comp_op_screen;
+    case MS_COMPOP_OVERLAY:
+      return mapserver::comp_op_overlay;
+    case MS_COMPOP_DARKEN:
+      return mapserver::comp_op_darken;
+    case MS_COMPOP_LIGHTEN:
+      return mapserver::comp_op_lighten;
+    case MS_COMPOP_COLOR_DODGE:
+      return mapserver::comp_op_color_dodge;
+    case MS_COMPOP_COLOR_BURN:
+      return mapserver::comp_op_color_burn;
+    case MS_COMPOP_HARD_LIGHT:
+      return mapserver::comp_op_hard_light;
+    case MS_COMPOP_SOFT_LIGHT:
+      return mapserver::comp_op_soft_light;
+    case MS_COMPOP_DIFFERENCE:
+      return mapserver::comp_op_difference;
+    case MS_COMPOP_EXCLUSION:
+      return mapserver::comp_op_exclusion;
+    case MS_COMPOP_CONTRAST:
+      return mapserver::comp_op_contrast;
+    case MS_COMPOP_INVERT:
+      return mapserver::comp_op_invert;
+    case MS_COMPOP_INVERT_RGB:
+      return mapserver::comp_op_invert_rgb;
+    default:
+      return mapserver::comp_op_src_over;
+  }
+}
+#endif
+
+int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay, CompositingOperation comp, int opacity) {
+  assert(overlay->type == MS_BUFFER_BYTE_RGBA);
+  AGG2Renderer *r = AGG_RENDERER(dest);
+#ifdef USE_PIXMAN
+  pixman_image_t *si = pixman_image_create_bits(PIXMAN_a8r8g8b8,overlay->width,overlay->height,
+                       (uint32_t*)overlay->data.rgba.pixels,overlay->data.rgba.row_step);
+  pixman_image_t *bi = pixman_image_create_bits(PIXMAN_a8r8g8b8,dest->width,dest->height,
+                       (uint32_t*)r->buffer,dest->width*4);
+  pixman_image_t *alpha_mask_i=NULL, *alpha_mask_i_ptr;
+  pixman_image_set_filter(si,PIXMAN_FILTER_NEAREST, NULL, 0);
+  unsigned char *alpha_mask = NULL;
+    if(opacity > 0) {
+      if(opacity == 100) {
+        alpha_mask_i_ptr = NULL;
+      } else {
+          unsigned char alpha = (unsigned char)(opacity * 2.55);
+          if(!alpha_mask_i) {
+              alpha_mask = (unsigned char*)msSmallMalloc(dest->width * dest->height);
+              alpha_mask_i = pixman_image_create_bits(PIXMAN_a8,dest->width,dest->height,
+                      (uint32_t*)alpha_mask,dest->width);
+          }
+          memset(alpha_mask,alpha,dest->width*dest->height);
+          alpha_mask_i_ptr = alpha_mask_i;
+      }
+      pixman_image_composite (ms2pixman_compop(comp), si, alpha_mask_i_ptr, bi,
+                  0, 0, 0, 0, 0, 0, dest->width,dest->height);
+    }
+  pixman_image_unref(si);
+  pixman_image_unref(bi);
+  if(alpha_mask_i) {
+    pixman_image_unref(alpha_mask_i);
+    msFree(alpha_mask);
+  }
+  return MS_SUCCESS;
+#else
+  rendering_buffer b(overlay->data.rgba.pixels, overlay->width, overlay->height, overlay->data.rgba.row_step);
+  pixel_format pf(b);
+  mapserver::comp_op_e comp_op = ms2agg_compop(comp);
+  if(comp == mapserver::comp_op_src_over) {
+    r->m_renderer_base.blend_from(pf,0,0,0,unsigned(opacity * 2.55));
+  } else {
+    compop_pixel_format pixf(r->m_rendering_buffer);
+    compop_renderer_base ren(pixf);
+    pixf.comp_op(comp_op);
+    ren.blend_from(pf,0,0,0,unsigned(opacity * 2.55));
+  }
+  return MS_SUCCESS;
+#endif
+}
+
+rasterBufferObj* msApplyFilterToRasterBuffer(const rasterBufferObj *rb, CompositingFilter *filter) {
+  rasterBufferObj *rbret = (rasterBufferObj*)msSmallCalloc(sizeof(rasterBufferObj),1);
+  msCopyRasterBuffer(rbret,rb);
+  rendering_buffer b(rbret->data.rgba.pixels, rbret->width, rbret->height, rbret->data.rgba.row_step);
+  pixel_format pf(b);
+  /* for now, we only support a blurring filter */
+  int radius = atoi(filter->filter);
+  mapserver::stack_blur_rgba32(pf,radius,radius);
+  return rbret;
+}
 
 int msPopulateRendererVTableAGG(rendererVTableObj * renderer)
 {
-  renderer->supports_transparent_layers = 0;
+  renderer->compositeRasterBuffer = &aggCompositeRasterBuffer;
   renderer->supports_pixel_buffer = 1;
   renderer->use_imagecache = 0;
   renderer->supports_clipping = 0;

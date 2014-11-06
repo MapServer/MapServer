@@ -323,8 +323,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
 
           /* opacity for sld raster */
           if (GET_LAYER(map, i)->type == MS_LAYER_RASTER &&
-              pasLayers[j].opacity != -1)
-            GET_LAYER(map, i)->opacity = pasLayers[j].opacity;
+              pasLayers[i].compositer && pasLayers[j].compositer->opacity != 100)
+            msSetLayerOpacity(GET_LAYER(map, i), pasLayers[j].compositer->opacity);
 
           /* mark as auto-generate SLD */
           if (GET_LAYER(map, i)->connectiontype == MS_WMS)
@@ -2369,14 +2369,6 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
   if (!psRoot || !psLayer)
     return MS_FAILURE;
 
-  /* ==================================================================== */
-  /*      The default opacity value is 0 : we set it here to -1           */
-  /*      so that when testing the values in msSLDApplySLD (to be         */
-  /*      applied on the layer), we can assume that a value of 0 comes    */
-  /*      from the sld.                                                   */
-  /* ==================================================================== */
-  psLayer->opacity = -1;
-
   psOpacity = CPLGetXMLNode(psRoot, "Opacity");
   if (psOpacity) {
     if (psOpacity->psChild && psOpacity->psChild->pszValue)
@@ -2384,7 +2376,7 @@ int msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 
     /* values in sld goes from 0.0 (for transparent) to 1.0 (for full opacity); */
     if (dfOpacity >=0.0 && dfOpacity <=1.0)
-      psLayer->opacity = (int)(dfOpacity * 100);
+      msSetLayerOpacity(psLayer,(int)(dfOpacity * 100));
     else {
       msSetError(MS_WMSERR, "Invalid opacity value. Values should be between 0.0 and 1.0", "msSLDParseRasterSymbolizer()");
       return MS_FAILURE;

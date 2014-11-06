@@ -3694,6 +3694,18 @@ char* msWriteClassToString(classObj *class)
   return (char*)buffer.data;
 }
 
+int initCompositingFilter(CompositingFilter *filter) {
+  filter->filter = NULL;
+  return MS_SUCCESS;
+}
+
+int initLayerCompositer(LayerCompositer *compositer) {
+  compositer->comp_op = MS_COMPOP_SRC_OVER;
+  compositer->opacity = 100;
+  compositer->next = NULL;
+  compositer->filter = NULL;
+  return MS_SUCCESS;
+}
 /*
 ** Initialize, load and free a single layer structure
 */
@@ -3806,8 +3818,6 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
 
-  layer->opacity = 100; /* fully opaque */
-
   layer->numprocessing = 0;
   layer->processing = NULL;
   layer->numjoins = 0;
@@ -3835,6 +3845,8 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->sortBy.nProperties = 0;
   layer->sortBy.properties = NULL;
   layer->orig_st = NULL;
+
+  layer->compositer = NULL;
 
   return(0);
 }
@@ -4087,6 +4099,97 @@ int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
   } /* next token*/
 }
 
+int loadLayerCompositer(LayerCompositer *compositer) {
+  for(;;) {
+    switch(msyylex()) {
+      case COMPFILTER:
+        compositer->filter = msSmallMalloc(sizeof(CompositingFilter));
+        initCompositingFilter(compositer->filter);
+        if(getString(&compositer->filter->filter) == MS_FAILURE) return(MS_FAILURE);
+        break;
+      case COMPOP: {
+        char *compop=NULL;
+        if(getString(&compop) == MS_FAILURE) return(MS_FAILURE);
+        else if(!strcmp(compop,"clear"))
+          compositer->comp_op = MS_COMPOP_CLEAR;
+        else if(!strcmp(compop,"color-burn"))
+          compositer->comp_op = MS_COMPOP_COLOR_BURN;
+        else if(!strcmp(compop,"color-dodge"))
+          compositer->comp_op = MS_COMPOP_COLOR_DODGE;
+        else if(!strcmp(compop,"contrast"))
+          compositer->comp_op = MS_COMPOP_CONTRAST;
+        else if(!strcmp(compop,"darken"))
+          compositer->comp_op = MS_COMPOP_DARKEN;
+        else if(!strcmp(compop,"difference"))
+          compositer->comp_op = MS_COMPOP_DIFFERENCE;
+        else if(!strcmp(compop,"dst"))
+          compositer->comp_op = MS_COMPOP_DST;
+        else if(!strcmp(compop,"dst-atop"))
+          compositer->comp_op = MS_COMPOP_DST_ATOP;
+        else if(!strcmp(compop,"dst-in"))
+          compositer->comp_op = MS_COMPOP_DST_IN;
+        else if(!strcmp(compop,"dst-out"))
+          compositer->comp_op = MS_COMPOP_DST_OUT;
+        else if(!strcmp(compop,"dst-over"))
+          compositer->comp_op = MS_COMPOP_DST_OVER;
+        else if(!strcmp(compop,"exclusion"))
+          compositer->comp_op = MS_COMPOP_EXCLUSION;
+        else if(!strcmp(compop,"hard-light"))
+          compositer->comp_op = MS_COMPOP_HARD_LIGHT;
+        else if(!strcmp(compop,"invert"))
+          compositer->comp_op = MS_COMPOP_INVERT;
+        else if(!strcmp(compop,"invert-rgb"))
+          compositer->comp_op = MS_COMPOP_INVERT_RGB;
+        else if(!strcmp(compop,"lighten"))
+          compositer->comp_op = MS_COMPOP_LIGHTEN;
+        else if(!strcmp(compop,"minus"))
+          compositer->comp_op = MS_COMPOP_MINUS;
+        else if(!strcmp(compop,"multiply"))
+          compositer->comp_op = MS_COMPOP_MULTIPLY;
+        else if(!strcmp(compop,"overlay"))
+          compositer->comp_op = MS_COMPOP_OVERLAY;
+        else if(!strcmp(compop,"plus"))
+          compositer->comp_op = MS_COMPOP_PLUS;
+        else if(!strcmp(compop,"screen"))
+          compositer->comp_op = MS_COMPOP_SCREEN;
+        else if(!strcmp(compop,"soft-light"))
+          compositer->comp_op = MS_COMPOP_SOFT_LIGHT;
+        else if(!strcmp(compop,"src"))
+          compositer->comp_op = MS_COMPOP_SRC;
+        else if(!strcmp(compop,"src-atop"))
+          compositer->comp_op = MS_COMPOP_SRC_ATOP;
+        else if(!strcmp(compop,"src-in"))
+          compositer->comp_op = MS_COMPOP_SRC_IN;
+        else if(!strcmp(compop,"src-out"))
+          compositer->comp_op = MS_COMPOP_SRC_OUT;
+        else if(!strcmp(compop,"src-over"))
+          compositer->comp_op = MS_COMPOP_SRC_OVER;
+        else if(!strcmp(compop,"xor"))
+          compositer->comp_op = MS_COMPOP_XOR;
+        else {
+          msSetError(MS_PARSEERR,"Unknown COMPOP \"%s\"", "loadLayerCompositer()", compop);
+          free(compop);
+          return MS_FAILURE;
+        }
+        free(compop);
+      }
+        break;
+      case END:
+        return MS_SUCCESS;
+      case OPACITY:
+        if (getInteger(&(compositer->opacity)) == -1)
+          return MS_FAILURE;
+        if(compositer->opacity<0 || compositer->opacity>100) {
+          msSetError(MS_PARSEERR,"OPACITY must be between 0 and 100 (line %d)","loadLayerCompositer()",msyylineno);
+          return MS_FAILURE;
+        }
+        break;
+      default:
+        msSetError(MS_IDENTERR, "Parsing error 2 near (%s):(line %d)", "loadLayerCompositer()",  msyystring_buffer, msyylineno );
+        return(MS_FAILURE);
+    }
+  }
+}
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int type;
@@ -4131,6 +4234,19 @@ int loadLayer(layerObj *layer, mapObj *map)
           }
         }
         break;
+      case(COMPOSITE): {
+        LayerCompositer *compositer = msSmallMalloc(sizeof(LayerCompositer));
+        initLayerCompositer(compositer);
+        if(MS_FAILURE == loadLayerCompositer(compositer)) return -1;
+        if(!layer->compositer) {
+          layer->compositer = compositer;
+        } else {
+          LayerCompositer *lctmp = layer->compositer;
+          while(lctmp->next) lctmp = lctmp->next;
+          lctmp->next = compositer;
+        }
+        break;
+      }
       case(CONNECTION):
         if(getString(&layer->connection) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
         if(msyysource == MS_URL_TOKENS) {
@@ -4367,8 +4483,19 @@ int loadLayer(layerObj *layer, mapObj *map)
         break;
       case(OPACITY):
       case(TRANSPARENCY): /* keyword supported for mapfile backwards compatability */
-        if (getInteger(&(layer->opacity)) == -1)
-          return(-1);
+      {
+        int opacity;
+        if (getInteger(&opacity) == -1) return(-1);
+        if(opacity != 100) {
+          if(layer->compositer) {
+            msSetError(MS_PARSEERR, "Cannot use OPACITY and COMPOSITER simultaneously at the LAYER level (line %d)", "loadLayer()", msyylineno );
+            return -1;
+          }
+          layer->compositer = msSmallMalloc(sizeof(LayerCompositer));
+          initLayerCompositer(layer->compositer);
+          layer->compositer->opacity = opacity;
+        }
+      }
         break;
       case(MS_PLUGIN): {
         int rv;
@@ -4628,7 +4755,6 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeNumber(stream, indent, "TOLERANCE", -1, layer->tolerance);
   writeKeyword(stream, indent, "TOLERANCEUNITS", layer->toleranceunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");
-  writeNumber(stream, indent, "OPACITY", 100, layer->opacity);
   writeKeyword(stream, indent, "TYPE", layer->type, 8, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
   writeKeyword(stream, indent, "UNITS", layer->units, 9, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD", MS_PIXELS, "PIXELS", MS_PERCENTAGES, "PERCENTATGES");
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));

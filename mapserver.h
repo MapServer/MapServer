@@ -536,6 +536,48 @@ extern "C" {
     MS_TRANSFORM_SIMPLIFY /* keep full resolution */
   };
 
+  typedef enum {
+        MS_COMPOP_CLEAR,
+        MS_COMPOP_SRC,
+        MS_COMPOP_DST,
+        MS_COMPOP_SRC_OVER,
+        MS_COMPOP_DST_OVER,
+        MS_COMPOP_SRC_IN,
+        MS_COMPOP_DST_IN,
+        MS_COMPOP_SRC_OUT,
+        MS_COMPOP_DST_OUT,
+        MS_COMPOP_SRC_ATOP,
+        MS_COMPOP_DST_ATOP,
+        MS_COMPOP_XOR,
+        MS_COMPOP_PLUS,
+        MS_COMPOP_MINUS,
+        MS_COMPOP_MULTIPLY,
+        MS_COMPOP_SCREEN,
+        MS_COMPOP_OVERLAY,
+        MS_COMPOP_DARKEN,
+        MS_COMPOP_LIGHTEN,
+        MS_COMPOP_COLOR_DODGE,
+        MS_COMPOP_COLOR_BURN,
+        MS_COMPOP_HARD_LIGHT,
+        MS_COMPOP_SOFT_LIGHT,
+        MS_COMPOP_DIFFERENCE,
+        MS_COMPOP_EXCLUSION,
+        MS_COMPOP_CONTRAST,
+        MS_COMPOP_INVERT,
+        MS_COMPOP_INVERT_RGB
+  } CompositingOperation;
+
+  typedef struct {
+    char *filter;
+  } CompositingFilter;
+  
+  typedef struct _LayerCompositer{
+    CompositingOperation comp_op;
+    int opacity;
+    CompositingFilter *filter;
+    struct _LayerCompositer *next;
+  } LayerCompositer;
+
 #ifndef SWIG
   /* Filter object */
   typedef enum {
@@ -1681,8 +1723,6 @@ extern "C" {
     %mutable;
 #endif /* SWIG */
 
-    int opacity; /* opacity (was transparency) value 0-100 */
-
     int dump;
     int debug;
 #ifndef SWIG
@@ -1723,6 +1763,8 @@ extern "C" {
 #ifndef SWIG
     sortByClause sortBy;
 #endif
+    
+    LayerCompositer *compositer;
   };
 
 
@@ -2657,6 +2699,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int *msAllocateValidClassGroups(layerObj *lp, int *nclasses);
 
   MS_DLL_EXPORT void msFreeRasterBuffer(rasterBufferObj *b);
+  MS_DLL_EXPORT int msSetLayerOpacity(layerObj *layer, int opacity);
 
   void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language);
   MS_DLL_EXPORT shapeObj* msGeneralize(shapeObj * shape, double tolerance);
@@ -2735,6 +2778,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msCopyProjectionExtended(projectionObj *dst, projectionObj *src, char ** args, int num_args);
   int msCopyExpression(expressionObj *dst, expressionObj *src);
   int msCopyProjection(projectionObj *dst, projectionObj *src);
+  MS_DLL_EXPORT int msCopyRasterBuffer(rasterBufferObj *dst, const rasterBufferObj *src);
 
   /* ==================================================================== */
   /*      end prototypes for functions in mapcopy                         */
@@ -3002,6 +3046,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   int msSaveRasterBuffer(mapObj *map, rasterBufferObj *data, FILE *stream, outputFormatObj *format);
   int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer, outputFormatObj *format);
   int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb);
+  
+  /* in mapagg.cpp */
+  rasterBufferObj* msApplyFilterToRasterBuffer(const rasterBufferObj *rb, CompositingFilter *filter);
 
   void msBufferInit(bufferObj *buffer);
   void msBufferResize(bufferObj *buffer, size_t target_size);
@@ -3013,7 +3060,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   } fontMetrics;
 
   struct rendererVTableObj {
-    int supports_transparent_layers;
     int supports_pixel_buffer;
     int supports_clipping;
     int supports_svg;
@@ -3054,6 +3100,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     int WARN_UNUSED (*initializeRasterBuffer)(rasterBufferObj *rb, int width, int height, int mode);
 
     int WARN_UNUSED (*mergeRasterBuffer)(imageObj *dest, rasterBufferObj *overlay, double opacity, int srcX, int srcY, int dstX, int dstY, int width, int height);
+    int WARN_UNUSED (*compositeRasterBuffer)(imageObj *dest, rasterBufferObj *overlay, CompositingOperation comp_op, int opacity);
 
 
     /* image i/o */

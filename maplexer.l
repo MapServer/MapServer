@@ -230,6 +230,9 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>classgroup                 { MS_LEXER_RETURN_TOKEN(CLASSGROUP); }
 <INITIAL>cluster                               { MS_LEXER_RETURN_TOKEN(CLUSTER); }
 <INITIAL,URL_STRING>color                      { MS_LEXER_RETURN_TOKEN(COLOR); }
+<INITIAL>compfilter                            { MS_LEXER_RETURN_TOKEN(COMPFILTER); }
+<INITIAL>composite                             { MS_LEXER_RETURN_TOKEN(COMPOSITE); }
+<INITIAL>compop                                { MS_LEXER_RETURN_TOKEN(COMPOP); }
 <INITIAL>config                                { MS_LEXER_RETURN_TOKEN(CONFIG); }
 <INITIAL,URL_STRING>connection                 { MS_LEXER_RETURN_TOKEN(CONNECTION); }
 <INITIAL,URL_STRING>connectiontype             { MS_LEXER_RETURN_TOKEN(CONNECTIONTYPE); }

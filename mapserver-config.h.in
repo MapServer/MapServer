@@ -4,6 +4,7 @@
 #cmakedefine USE_PROJ 1
 #cmakedefine USE_POSTGIS 1
 #cmakedefine USE_GDAL 1
+#cmakedefine USE_PIXMAN 1
 #cmakedefine USE_OGR 1
 #cmakedefine USE_WMS_SVR 1
 #cmakedefine USE_WCS_SVR 1

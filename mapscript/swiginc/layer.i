@@ -71,6 +71,16 @@
             return (map->layers[map->numlayers-1]);
         }
     }
+    
+    void setOpacity(int opacity)
+    {
+      msSetLayerOpacity(self, opacity);
+    }
+
+    int getOpacity() {
+      if(self->compositer) return (self->compositer->opacity);
+      return (100);
+    }
 
     ~layerObj() 
     {
