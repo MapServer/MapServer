@@ -590,7 +590,8 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
           }
           /* Setting up the size units according to msOGRLayerGetAutoStyle*/
           if (hStylePart && layer->map)
-            OGR_ST_SetUnit(hStylePart, OGRSTUPixel, layer->map->cellsize*72.0*39.37);
+            OGR_ST_SetUnit(hStylePart, OGRSTUPixel, 
+              layer->map->cellsize*layer->map->resolution/layer->map->defresolution*72.0*39.37);
         }
       }
       int bDefault;
@@ -2997,7 +2998,8 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
     // as long as use the same assumptions everywhere)
     // That gives scale = cellsize*72*39.37
 
-    OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
+    OGR_ST_SetUnit(hStylePart, OGRSTUPixel, 
+      map->cellsize*map->resolution/map->defresolution*72.0*39.37);
 
     if (eStylePartType == OGRSTCLabel) {
       int ret = msOGRUpdateStyleParseLabel(map, layer, c, hStylePart);
