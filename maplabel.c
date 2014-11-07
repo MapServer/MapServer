@@ -50,6 +50,9 @@
  * see http://mapserver.org/development/rfc/ms-rfc-40.html
  * for a summary of how wrap/maxlength interact on the result
  * of the text transformation
+ * 
+ * change the label encoding part accordingly
+ * handle situations where label word is longer than maxlength
  */
 char *msWrapText(labelObj *label, char *text)
 {
@@ -101,9 +104,12 @@ char *msWrapText(labelObj *label, char *text)
         } else {
           int cur_char_on_line = 0;
           char *textptr = text;
+          char *wrapptr;
           while(*textptr != 0) {
             cur_char_on_line++;
-            if(*textptr == wrap && cur_char_on_line>=maxlength) {
+            if(*textptr == wrap) wrapptr=textptr;
+            if(cur_char_on_line == maxlength) {
+              textptr = wrapptr;
               *textptr='\n'; /*replace wrap char with a \n*/
               cur_char_on_line=0; /*reset count*/
             }
