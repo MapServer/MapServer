@@ -65,7 +65,7 @@ int msTimeCompare(struct tm *time1, struct tm *time2);
 char *msStrptime(const char *s, const char *format, struct tm *tm);
 int msParseTime(const char *string, struct tm *tm);
 int msTimeMatchPattern(const char *timestring, const char *pattern);
-void msSetLimitedPattersToUse(const char *patternstring);
+void msSetLimitedPatternsToUse(const char *patternstring);
 void msUnsetLimitedPatternToUse(void);
 MS_DLL_EXPORT int msTimeGetResolution(const char *timestring);
 void msTimeCleanup();

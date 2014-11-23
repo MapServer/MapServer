@@ -51,8 +51,6 @@
 #include <process.h>
 #endif
 
-
-
 /* ==================================================================
  * WMS Server stuff.
  * ================================================================== */
@@ -187,8 +185,9 @@ int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int che
     atimes = msStringSplit(timestring, ',', &numtimes);
     
     /* get the pattern to use */
-    if (numtimes>0) {      
-      patterns = msStringSplit(timepatternstring, ',', &numpatterns);      
+    if (numtimes > 0) {
+      patterns = msStringSplit(timepatternstring, ',', &numpatterns);
+
       for (j=0; j<numtimes;++j) {
         ranges = msStringSplit(atimes[j],  '/', &numranges);
         for (k=0; k<numranges;++k) {
@@ -198,15 +197,14 @@ int msWMSSetTimePattern(const char *timepatternstring, char *timestring, int che
               msStringTrimBlanks(patterns[i]);
               tmpstr = msStringTrimLeft(patterns[i]);
               if (msTimeMatchPattern(ranges[k], tmpstr) == MS_TRUE) {
-                if (!checkonly) msSetLimitedPattersToUse(tmpstr);
+                if (!checkonly) msSetLimitedPatternsToUse(tmpstr);
                 match = MS_TRUE;
                 break;
               }
             }
           }
           if (match == MS_FALSE) {
-            msSetError(MS_WMSERR, "Time value %s given does not match the time format pattern.",
-                   "msWMSSetTimePattern", ranges[k]);            
+            msSetError(MS_WMSERR, "Time value %s given does not match the time format pattern.", "msWMSSetTimePattern", ranges[k]);
             ret = MS_FAILURE;
             break;
           }
@@ -231,24 +229,22 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
 {
   int i=0;
   layerObj *lp = NULL;
-  const char *timeextent, *timefield, *timedefault, *timpattern = NULL;
+  const char *timeextent, *timefield, *timedefault, *timepattern = NULL;
     
   if (map) {
 
-    timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",
-                                     "timeformat");
-    
+    timepattern = msOWSLookupMetadata(&(map->web.metadata), "MO", "timeformat");
+
     for (i=0; i<map->numlayers; i++) {
       lp = (GET_LAYER(map, i));
       if (lp->status != MS_ON && lp->status != MS_DEFAULT)
         continue;
+
       /* check if the layer is time aware */
-      timeextent = msOWSLookupMetadata(&(lp->metadata), "MO",
-                                       "timeextent");
-      timefield =  msOWSLookupMetadata(&(lp->metadata), "MO",
-                                       "timeitem");
-      timedefault =  msOWSLookupMetadata(&(lp->metadata), "MO",
-                                         "timedefault");
+      timeextent = msOWSLookupMetadata(&(lp->metadata), "MO", "timeextent");
+      timefield =  msOWSLookupMetadata(&(lp->metadata), "MO", "timeitem");
+      timedefault =  msOWSLookupMetadata(&(lp->metadata), "MO", "timedefault");
+
       if (timeextent && timefield) {
         /* check to see if the time value is given. If not */
         /* use default time. If default time is not available */
@@ -261,22 +257,22 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
             if (msValidateTimeValue((char *)timedefault, timeextent) == MS_FALSE) {
               msSetError(MS_WMSERR, "No Time value was given, and the default time value %s is invalid or outside the time extent defined %s", "msWMSApplyTime", timedefault, timeextent);
               /* return MS_FALSE; */
-              return msWMSException(map, version,
-                                    "InvalidDimensionValue", wms_exception_format);
+              return msWMSException(map, version, "InvalidDimensionValue", wms_exception_format);
             }
             msLayerSetTimeFilter(lp, timedefault, timefield);
           }
         } else {
-          /* check to see if there is a list of possible patterns defined */
-          /* if it is the case, use it to set the time pattern to use */
-          /* for the request.
-
-             Last argument is set to TRUE (checkonly) to not trigger the
-             patterns info setting.. to only apply the wms_timeformats on the
-             user request values, not the mapfile values. */
-          if (timpattern && time && strlen(time) > 0) 
-            if (msWMSSetTimePattern(timpattern, time, MS_TRUE) == MS_FAILURE) 
+          /* 
+	  ** Check to see if there is a list of possible patterns defined. If it is the case, use 
+          ** it to set the time pattern to use for the request.
+          **
+          ** Last argument is set to TRUE (checkonly) to not trigger the patterns info setting, rather 
+          ** to only apply the wms_timeformats on the user request values, not the mapfile values. 
+          */
+          if (timepattern && time && strlen(time) > 0) {
+            if (msWMSSetTimePattern(timepattern, time, MS_TRUE) == MS_FAILURE) 
               return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
+          }
           
           /* check if given time is in the range */
           if (msValidateTimeValue(time, timeextent) == MS_FALSE) {
@@ -306,10 +302,10 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
 
     /* last argument is MS_FALSE to trigger a method call that set the patterns
        info. some drivers use it */
-    if (timpattern && time && strlen(time) > 0)
-      if (msWMSSetTimePattern(timpattern, time, MS_FALSE) == MS_FAILURE)
-        return msWMSException(map, version,"InvalidDimensionValue", wms_exception_format);
-    
+    if (timepattern && time && strlen(time) > 0) {
+      if (msWMSSetTimePattern(timepattern, time, MS_FALSE) == MS_FAILURE)
+        return msWMSException(map, version, "InvalidDimensionValue", wms_exception_format);
+    }    
   }
 
   return MS_SUCCESS;

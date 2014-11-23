@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $id$
  *
  * Project:  MapServer
  * Purpose:  Date/Time utility functions.
@@ -46,22 +46,23 @@ typedef struct {
   MS_TIME_RESOLUTION resolution;
 } timeFormatObj;
 
-#define MS_NUMTIMEFORMATS 13
+#define MS_NUMTIMEFORMATS 14
 
 timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
-  {"^[0-9]{8}", NULL, "%Y%m%d","YYYYMMDD",TIME_RESOLUTION_DAY},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ",TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS",TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS", TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM",TIME_RESOLUTION_MINUTE},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM",TIME_RESOLUTION_MINUTE},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}", NULL, "%Y-%m-%dT%H", "YYYY-MM-DDTHH",TIME_RESOLUTION_HOUR},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}", NULL, "%Y-%m-%d %H", "YYYY-MM-DD HH",TIME_RESOLUTION_HOUR},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}", NULL, "%Y-%m-%d", "YYYY-MM-DD", TIME_RESOLUTION_DAY},
-  {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM",TIME_RESOLUTION_MONTH},
-  {"^[0-9]{4}", NULL, "%Y", "YYYY",TIME_RESOLUTION_YEAR},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ",TIME_RESOLUTION_SECOND},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}$", NULL, "%Y", "YYYY", TIME_RESOLUTION_YEAR},
+  {"^[0-9]{4}-[0-9]{2}$", NULL, "%Y-%m", "YYYY-MM", TIME_RESOLUTION_MONTH},
+  {"^[0-9]{8}$", NULL, "%Y%m%d", "YYYYMMDD", TIME_RESOLUTION_DAY},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}Z?$", NULL, "%Y-%m-%d", "YYYY-MM-DD", TIME_RESOLUTION_DAY},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", NULL, "%Y-%m-%dT%H:%M:%SZ", "YYYY-MM-DDTHH:MM:SSZ", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}Z$", NULL, "%Y-%m-%d %H:%M:%SZ", "YYYY-MM-DD HH:MM:SSZ", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM", TIME_RESOLUTION_MINUTE},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM", TIME_RESOLUTION_MINUTE},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$", NULL, "%Y-%m-%dT%H", "YYYY-MM-DDTHH", TIME_RESOLUTION_HOUR},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}$", NULL, "%Y-%m-%d %H", "YYYY-MM-DD HH", TIME_RESOLUTION_HOUR},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ", TIME_RESOLUTION_SECOND},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND}
 };
 
 int *ms_limited_pattern = NULL;
@@ -204,7 +205,7 @@ int msTimeMatchPattern(const char *timestring, const char *timeformat)
   }
 
   if (i >= 0 && i < MS_NUMTIMEFORMATS) {
-    int match = ms_regexec(ms_timeFormats[i].regex, timestring, 0,NULL, 0);
+    int match = ms_regexec(ms_timeFormats[i].regex, timestring, 0, NULL, 0);
     if(match == 0)
       return MS_TRUE;
   }
@@ -218,7 +219,7 @@ void msUnsetLimitedPatternToUse()
   ms_num_limited_pattern = 0;
 }
 
-void msSetLimitedPattersToUse(const char *patternstring)
+void msSetLimitedPatternsToUse(const char *patternstring)
 {
   int *limitedpatternindice = NULL;
   int numpatterns=0, i=0, j=0, ntmp=0;
@@ -256,8 +257,6 @@ void msSetLimitedPattersToUse(const char *patternstring)
   free (limitedpatternindice);
 }
 
-
-
 int msParseTime(const char *string, struct tm *tm)
 {
   int i, indice = 0;
@@ -269,8 +268,7 @@ int msParseTime(const char *string, struct tm *tm)
     return MS_FALSE;
   }
 
-  /* if limited patterns are set, use then. Else use all the */
-  /* patterns defined */
+  /* if limited patterns are set, use them, else use all the patterns defined */
   if (ms_num_limited_pattern > 0)
     num_patterns = ms_num_limited_pattern;
   else

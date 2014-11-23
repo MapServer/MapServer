@@ -431,8 +431,9 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
   char *pszTmp=NULL;
   projectionObj sProjTmp;
   rectObj sQueryRect;
-  shapeObj *psTmpShape=NULL, *psBufferShape=NULL;
+  shapeObj *psTmpShape=NULL;
   int bBBoxQuery = 0;
+  int bAlreadyReprojected = 0;
 
   if (psNode == NULL || lp == NULL)
     return NULL;
@@ -441,13 +442,54 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     return NULL;
 
   /* get the shape */
-  /* BBOX case: replace it with NOT DISJOINT. */
   if(FLTIsBBoxFilter(psNode)) {
+    char szPolygon[512];
     FLTGetBBOX(psNode, &sQueryRect);
 
-    psTmpShape = (shapeObj *)msSmallMalloc(sizeof(shapeObj));
-    msInitShape(psTmpShape);
-    msRectToPolygon(sQueryRect, psTmpShape);
+    snprintf(szPolygon, sizeof(szPolygon),
+             "POLYGON((%.18f %.18f,%.18f %.18f,%.18f %.18f,%.18f %.18f,%.18f %.18f))",
+             sQueryRect.minx, sQueryRect.miny,
+             sQueryRect.minx, sQueryRect.maxy,
+             sQueryRect.maxx, sQueryRect.maxy,
+             sQueryRect.maxx, sQueryRect.miny,
+             sQueryRect.minx, sQueryRect.miny);
+
+    psTmpShape = msShapeFromWKT(szPolygon);
+
+    /* This is a horrible hack to deal with world-extent requests and */
+    /* reprojection. msProjectRect() detects if reprojection from longlat to */
+    /* projected SRS, and in that case it transforms the bbox to -1e-15,-1e-15,1e15,1e15 */
+    /* to ensure that all features are returned */
+    /* Make wfs_200_cite_filter_bbox_world.xml and wfs_200_cite_postgis_bbox_world.xml pass */
+    if( fabs(sQueryRect.minx - -180.0) < 1e-5 &&
+        fabs(sQueryRect.miny - -90.0) < 1e-5 &&
+        fabs(sQueryRect.maxx - 180.0) < 1e-5 &&
+        fabs(sQueryRect.maxy - 90.0) < 1e-5 )
+    {
+        if(lp->projection.numargs > 0) {
+        if (psNode->pszSRS)
+            msInitProjection(&sProjTmp);
+        if (psNode->pszSRS) {
+            /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
+            if (msLoadProjectionString(&sProjTmp, psNode->pszSRS) == 0) {
+                msProjectRect(&sProjTmp, &lp->projection, &sQueryRect);
+            }
+        } else if (lp->map->projection.numargs > 0)
+            msProjectRect(&lp->map->projection, &lp->projection, &sQueryRect);
+            if (psNode->pszSRS)
+                msFreeProjection(&sProjTmp);
+        }
+        if( sQueryRect.minx <= -1e14 )
+        {
+            msFreeShape(psTmpShape);
+            msFree(psTmpShape);
+            psTmpShape = (shapeObj*) msSmallMalloc(sizeof(shapeObj));
+            msInitShape(psTmpShape);
+            msRectToPolygon(sQueryRect, psTmpShape);
+            bAlreadyReprojected = 1;
+        }
+    }
+
     bBBoxQuery = 1;
   } else {
     /* other geos type operations */
@@ -475,7 +517,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     /*
     ** target is layer projection
     */
-    if(lp->projection.numargs > 0) {
+    if(!bAlreadyReprojected && lp->projection.numargs > 0) {
       if (psNode->pszSRS)
         msInitProjection(&sProjTmp);
       if (psNode->pszSRS) {
@@ -506,10 +548,7 @@ char *FLTGetSpatialComparisonCommonExpression(FilterEncodingNode *psNode, layerO
     pszExpression = msStringConcatenate(pszExpression, "(");
 
     /* geometry binding */
-    if (bBBoxQuery)
-      sprintf(szBuffer, "%s", "[shape]");
-    else
-      sprintf(szBuffer, "%s", "[shape]");
+    sprintf(szBuffer, "%s", "[shape]");
     pszExpression = msStringConcatenate(pszExpression, szBuffer);
     pszExpression = msStringConcatenate(pszExpression, ",");
 

@@ -435,7 +435,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 #endif
   struct line_desc static_line_descs[STATIC_LINES];
   int alloc_glyphs = 0;
-  struct line_desc *line_descs;
+  struct line_desc *line_descs = NULL;
   text_run *runs;
   double oldpeny=3455,peny,penx=0; /*oldpeny is set to an unreasonable default initial value */
   fontSetObj *fontset = NULL;
@@ -451,10 +451,10 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
   if(ts->label->encoding && strcasecmp(ts->label->encoding,"UTF-8")) {
     iconv_t cd;
     size_t len, iconv_status,bufleft;
-    char *encoded_text,**outp;
+    char *encoded_text,*outp;
     len = strlen(ts->annotext);
-    bufleft = len*6 + 1;
-    encoded_text = msSmallMalloc(bufleft);
+    bufleft = len*6;
+    encoded_text = msSmallMalloc(bufleft+1);
     cd = iconv_open("UTF-8", ts->label->encoding);
 
     if(cd == (iconv_t)-1) {
@@ -464,19 +464,17 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
     }
 
     inp = ts->annotext;
-    outp = &encoded_text;
+    outp = encoded_text;
 
     while(len>0) {
-      iconv_status = iconv(cd, &inp, &len, outp, &bufleft);
+      iconv_status = iconv(cd, &inp, &len, &outp, &bufleft);
       if(iconv_status == -1) {
-        iconv_close(cd);
-        free(encoded_text);
         break;
       }
     }
 
-    text_num_bytes = len*6 - bufleft;
-    encoded_text[text_num_bytes+1] = 0;
+    text_num_bytes = outp - encoded_text;
+    encoded_text[text_num_bytes] = 0;
     free(ts->annotext);
     ts->annotext = encoded_text;
     iconv_close(cd);
@@ -485,6 +483,9 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
   {
     text_num_bytes = strlen(ts->annotext);
   }
+
+  if( text_num_bytes == 0 )
+      return 0;
 
   if(text_num_bytes > STATIC_GLYPHS) {
 #ifdef USE_FRIBIDI

@@ -395,9 +395,6 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       if( dfWeightSum == 0.0 )
         continue;
 
-      for( i = 0; i < bandCount; i++ )
-        padfPixelSum[i] /= dfWeightSum;
-
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
         assert(src_rb && dst_rb);
         assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
@@ -424,6 +421,9 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
         int band;
         int dst_off = nDstX + nDstY * psDstImage->width;
+
+        for( i = 0; i < bandCount; i++ )
+            padfPixelSum[i] /= dfWeightSum;
 
         MS_SET_BIT(psDstImage->img_mask,dst_off);
 

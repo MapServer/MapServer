@@ -75,6 +75,7 @@ extern "C" {
                                           msIOContext *stdout_context,
                                           msIOContext *stderr_context );
   msIOContext MS_DLL_EXPORT *msIO_getHandler( FILE * );
+  void MS_DLL_EXPORT msIO_setHeaderEnabled(int bFlag);
   void msIO_setHeader (const char *header, const char* value, ...) MS_PRINT_FUNC_FORMAT(2,3);
   void msIO_sendHeaders(void);
 
