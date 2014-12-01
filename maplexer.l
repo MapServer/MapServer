@@ -484,7 +484,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>wfs                                   { MS_LEXER_RETURN_TOKEN(MS_WFS); }
 <INITIAL>wms                                   { MS_LEXER_RETURN_TOKEN(MS_WMS); }
 
-<URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=_ ]*\]   {
+<URL_VARIABLE>\[[a-z/\.][a-z0-9/:\.\-\=_ ]*\]  {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
