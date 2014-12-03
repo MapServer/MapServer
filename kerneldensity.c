@@ -28,7 +28,6 @@
 
 #include "mapserver.h"
 #include <float.h>
-#ifdef USE_GDAL
 
 #include "gdal.h"
 #include "cpl_string.h"

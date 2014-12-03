@@ -252,7 +252,7 @@ nextshape:
 
 
 int msInterpolationDataset(mapObj *map, imageObj *image, layerObj *layer, void **hDSvoid, void **cleanup_ptr) {
-    msSetError(MS_MISCERR,"msInterpolationDataset()", "KernelDensity layers require GDAL support, however GDAL support is not compiled in this build");
+    msSetError(MS_MISCERR,"msInterpolationDataset()", "Interpolation layers require GDAL support, however GDAL support is not compiled in this build");
     return MS_FAILURE;
 }
 
