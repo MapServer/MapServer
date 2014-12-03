@@ -590,7 +590,8 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
           }
           /* Setting up the size units according to msOGRLayerGetAutoStyle*/
           if (hStylePart && layer->map)
-            OGR_ST_SetUnit(hStylePart, OGRSTUPixel, layer->map->cellsize*72.0*39.37);
+            OGR_ST_SetUnit(hStylePart, OGRSTUPixel, 
+              layer->map->cellsize*layer->map->resolution/layer->map->defresolution*72.0*39.37);
         }
       }
       int bDefault;
@@ -2887,6 +2888,55 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
 }
 #endif
 
+#ifdef USE_OGR
+
+static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
+                                      OGRStyleToolH hLabelStyle);
+static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
+                                    OGRStyleToolH hPenStyle, int bIsBrush, int* pbPriority);
+static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
+                                      OGRStyleToolH hBrushStyle, int* pbIsBrush, int* pbPriority);
+static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s,
+                                       OGRStyleToolH hSymbolStyle, int* pbPriority);
+
+static int msOGRUpdateStyleCheckPenBrushOnly(OGRStyleMgrH hStyleMgr)
+{
+  int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+  int countPen = 0, countBrush = 0;
+  int bIsNull;
+
+  for(int i=0; i<numParts; i++) {
+    OGRSTClassId eStylePartType;
+    OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
+    if (!hStylePart)
+      continue;
+
+    eStylePartType = OGR_ST_GetType(hStylePart);
+    if (eStylePartType == OGRSTCPen) {
+      countPen ++;
+      OGR_ST_GetParamNum(hStylePart, OGRSTPenPriority, &bIsNull);
+      if( !bIsNull ) {
+        OGR_ST_Destroy(hStylePart);
+        return MS_FALSE;
+      }
+    }
+    else if (eStylePartType == OGRSTCBrush) {
+      countBrush ++;
+      OGR_ST_GetParamNum(hStylePart, OGRSTBrushPriority, &bIsNull);
+      if( !bIsNull ) {
+        OGR_ST_Destroy(hStylePart);
+        return MS_FALSE;
+      }
+    }
+    else if (eStylePartType == OGRSTCSymbol) {
+      OGR_ST_Destroy(hStylePart);
+      return MS_FALSE;
+    }
+    OGR_ST_Destroy(hStylePart);
+  }
+  return (countPen == 1 && countBrush == 1);
+}
+
 /**********************************************************************
  *                     msOGRUpdateStyle()
  *
@@ -2895,25 +2945,48 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
  * msOGRUpdateStyleFromString
  **********************************************************************/
 
-#ifdef USE_OGR
+typedef struct
+{
+    int nPriority; /* the explicit priority as specified by the 'l' option of PEN, BRUSH and SYMBOL tools */
+    int nApparitionIndex; /* the index of the tool as parsed from the OGR feature style string */
+} StyleSortStruct;
+
+static int msOGRUpdateStyleSortFct(const void* pA, const void* pB)
+{
+    StyleSortStruct* sssa = (StyleSortStruct*)pA;
+    StyleSortStruct* sssb = (StyleSortStruct*)pB;
+    if( sssa->nPriority < sssb->nPriority )
+        return -1;
+    else if( sssa->nPriority > sssb->nPriority )
+        return 1;
+    else if( sssa->nApparitionIndex < sssb->nApparitionIndex )
+        return -1;
+    else
+        return 1;
+}
+
 static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer, classObj *c)
 {
-  GBool bIsNull, bIsBrush=MS_FALSE;
-  int r=0,g=0,b=0,t=0;
-  double dfTmp;
-  int try_addimage_if_notfound = MS_FALSE;
+  GBool bIsBrush=MS_FALSE;
   int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+  int nPriority;
+  int bIsPenBrushOnly = msOGRUpdateStyleCheckPenBrushOnly(hStyleMgr);
+  StyleSortStruct* pasSortStruct = (StyleSortStruct*) msSmallMalloc(sizeof(StyleSortStruct) * numParts);
+  int iSortStruct = 0;
+  int iBaseStyleIndex = c->numstyles;
+  int i;
 
   /* ------------------------------------------------------------------
    * Handle each part
    * ------------------------------------------------------------------ */
 
-  for(int i=0; i<numParts; i++) {
+  for(i=0; i<numParts; i++) {
     OGRSTClassId eStylePartType;
     OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
     if (!hStylePart)
       continue;
     eStylePartType = OGR_ST_GetType(hStylePart);
+    nPriority = INT_MIN;
 
     // We want all size values returned in pixels.
     //
@@ -2925,10 +2998,104 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
     // as long as use the same assumptions everywhere)
     // That gives scale = cellsize*72*39.37
 
-    OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
+    OGR_ST_SetUnit(hStylePart, OGRSTUPixel, 
+      map->cellsize*map->resolution/map->defresolution*72.0*39.37);
 
     if (eStylePartType == OGRSTCLabel) {
-      OGRStyleToolH hLabelStyle = hStylePart;
+      int ret = msOGRUpdateStyleParseLabel(map, layer, c, hStylePart);
+      if( ret != MS_SUCCESS ) {
+        OGR_ST_Destroy(hStylePart);
+        msFree(pasSortStruct);
+        return ret;
+      }
+    } else if (eStylePartType == OGRSTCPen) {
+      styleObj* s;
+      int nIndex;
+      if( bIsPenBrushOnly ) {
+        /* Historic behaviour when there is a PEN and BRUSH only */
+        if (bIsBrush || layer->type == MS_LAYER_POLYGON)
+            // This is a multipart symbology, so pen defn goes in the
+            // overlaysymbol params
+          nIndex = 1;
+        else
+          nIndex = 0;
+      }
+      else
+        nIndex = c->numstyles;
+
+      if (msMaybeAllocateClassStyle(c, nIndex)) {
+        OGR_ST_Destroy(hStylePart);
+        msFree(pasSortStruct);
+        return(MS_FAILURE);
+      }
+      s = c->styles[nIndex];
+
+      msOGRUpdateStyleParsePen(map, layer, s, hStylePart, bIsBrush, &nPriority);
+
+    } else if (eStylePartType == OGRSTCBrush) {
+      styleObj* s;
+      int nIndex = ( bIsPenBrushOnly ) ? 0 : c->numstyles;
+      /* We need 1 style */
+      if (msMaybeAllocateClassStyle(c, nIndex)) {
+        OGR_ST_Destroy(hStylePart);
+        msFree(pasSortStruct);
+        return(MS_FAILURE);
+      }
+      s = c->styles[nIndex];
+
+      msOGRUpdateStyleParseBrush(map, layer, s, hStylePart, &bIsBrush, &nPriority);
+
+    } else if (eStylePartType == OGRSTCSymbol) {
+      styleObj* s;
+      /* We need 1 style */
+      int nIndex = c->numstyles;
+      if (msMaybeAllocateClassStyle(c, nIndex)) {
+        OGR_ST_Destroy(hStylePart);
+        msFree(pasSortStruct);
+        return(MS_FAILURE);
+      }
+      s = c->styles[nIndex];
+
+      msOGRUpdateStyleParseSymbol(map, layer, s, hStylePart, &nPriority);
+    }
+
+    /* Memorize the explicit priority and apparition order of the parsed tool/style */
+    if( !bIsPenBrushOnly &&
+        (eStylePartType == OGRSTCPen || eStylePartType == OGRSTCBrush ||
+         eStylePartType == OGRSTCSymbol) ) {
+        pasSortStruct[iSortStruct].nPriority = nPriority;
+        pasSortStruct[iSortStruct].nApparitionIndex = iSortStruct;
+        iSortStruct++;
+    }
+
+    OGR_ST_Destroy(hStylePart);
+
+  }
+
+  if( iSortStruct > 1 && !bIsPenBrushOnly ) {
+      /* Compute style order based on their explicit priority and apparition order */
+      qsort(pasSortStruct, iSortStruct, sizeof(StyleSortStruct), msOGRUpdateStyleSortFct);
+
+      /* Now reorder styles in c->styles */
+      styleObj** ppsStyleTmp = (styleObj**)msSmallMalloc( iSortStruct * sizeof(styleObj*) );
+      memcpy( ppsStyleTmp, c->styles + iBaseStyleIndex, iSortStruct * sizeof(styleObj*) );
+      for( i = 0; i < iSortStruct; i++)
+      {
+          c->styles[iBaseStyleIndex + i] = ppsStyleTmp[pasSortStruct[i].nApparitionIndex];
+      }
+      msFree(ppsStyleTmp);
+  }
+  
+  msFree(pasSortStruct);
+  
+  return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
+                                      OGRStyleToolH hLabelStyle)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       // Enclose the text string inside quotes to make sure it is seen
       // as a string by the parser inside loadExpression(). (bug185)
@@ -3073,21 +3240,36 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (!bFont) {
         c->labels[0]->size = MS_MEDIUM;
       }
-    } else if (eStylePartType == OGRSTCPen) {
-      OGRStyleToolH hPenStyle = hStylePart;
 
-      const char *pszPenName = OGR_ST_GetParamStr(hPenStyle,
-                               OGRSTPenId,
-                               &bIsNull);
-      if (bIsNull) pszPenName = NULL;
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
+                                    OGRStyleToolH hPenStyle, int bIsBrush,
+                                    int* pbPriority)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
+
+      const char *pszPenName, *pszPattern, *pszCap, *pszJoin;
       colorObj oPenColor;
       int nPenSymbol = 0;
       int nPenSize = 1;
       t =-1;
+      double pattern[MS_MAXPATTERNLENGTH];
+      int patternlength = 0;
+      int linecap = MS_CJC_DEFAULT_CAPS;
+      int linejoin = MS_CJC_DEFAULT_JOINS;
+      double offsetx = 0.0;
+      double offsety = 0.0;
 
       // Make sure pen is always initialized
       MS_INIT_COLOR(oPenColor, -1, -1, -1,255);
 
+      pszPenName = OGR_ST_GetParamStr(hPenStyle,
+                               OGRSTPenId,
+                               &bIsNull);
+      if (bIsNull) pszPenName = NULL;
       // Check for Pen Pattern "ogr-pen-1": the invisible pen
       // If that's what we have then set pen color to -1
       if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL) {
@@ -3113,64 +3295,135 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
                                         pszPenName, NULL, MS_FALSE);
         }
       }
+
       if (layer->debug >= MS_DEBUGLEVEL_VVV)
         msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
+
+      pszPattern = OGR_ST_GetParamStr(hPenStyle, OGRSTPenPattern, &bIsNull);
+      if (bIsNull) pszPattern = NULL;
+      if( pszPattern != NULL )
+      {
+          char** papszTokens = CSLTokenizeStringComplex(pszPattern, " ", FALSE, FALSE);
+          int nTokenCount = CSLCount(papszTokens);
+          int bValidFormat = TRUE;
+          if( nTokenCount >= 2 && nTokenCount <= MS_MAXPATTERNLENGTH)
+          {
+              for(int i=0;i<nTokenCount;i++)
+              {
+                  if( strlen(papszTokens[i]) > 2 &&
+                      strcmp(papszTokens[i] + strlen(papszTokens[i]) - 2, "px") == 0 )
+                  {
+                      pattern[patternlength++] = CPLAtof(papszTokens[i]);
+                  }
+                  else
+                  {
+                      bValidFormat = FALSE;
+                      patternlength = 0;
+                      break;
+                  }
+              }
+          }
+          else
+              bValidFormat = FALSE;
+          if( !bValidFormat && layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("Invalid/unhandled pen pattern format = %s\n", pszPattern);
+          CSLDestroy(papszTokens);
+      }
+      
+      pszCap = OGR_ST_GetParamStr(hPenStyle, OGRSTPenCap, &bIsNull);
+      if (bIsNull) pszCap = NULL;
+      if( pszCap != NULL )
+      {
+          /* Note: the default in OGR Feature style is BUTT, but the MapServer */
+          /* default is ROUND. Currently use MapServer default. */
+          if( strcmp(pszCap, "b") == 0 ) /* BUTT */
+              linecap = MS_CJC_BUTT;
+          else if( strcmp(pszCap, "r") == 0 ) /* ROUND */
+              linecap = MS_CJC_ROUND;
+          else if( strcmp(pszCap, "p") == 0 ) /* PROJECTING */
+              linecap = MS_CJC_SQUARE;
+          else if( layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("Invalid/unhandled pen cap = %s\n", pszCap);
+      }
+      
+      pszJoin = OGR_ST_GetParamStr(hPenStyle, OGRSTPenJoin, &bIsNull);
+      if (bIsNull) pszJoin = NULL;
+      if( pszJoin != NULL )
+      {
+          /* Note: the default in OGR Feature style is MITER, but the MapServer */
+          /* default is NONE. Currently use MapServer default. */
+          if( strcmp(pszJoin, "m") == 0 ) /* MITTER */
+              linejoin = MS_CJC_MITER;
+          else if( strcmp(pszJoin, "r") == 0 ) /* ROUND */
+              linejoin = MS_CJC_ROUND;
+          else if( strcmp(pszJoin, "b") == 0 ) /* BEVEL */
+              linejoin = MS_CJC_BEVEL;
+          else if( layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("Invalid/unhandled pen join = %s\n", pszJoin);
+      }
+
+      offsetx = OGR_ST_GetParamDbl(hPenStyle, OGRSTPenPerOffset, &bIsNull);
+      if( bIsNull ) offsetx = 0;
+      if( offsetx != 0.0 )
+      {
+          /* OGR feature style and MapServer conventions related to offset */
+          /* sign are the same : negative values for left of line, positive for */
+          /* right of line */
+          offsety = MS_STYLE_SINGLE_SIDED_OFFSET;
+      }
+
       if (bIsBrush || layer->type == MS_LAYER_POLYGON) {
         // This is a multipart symbology, so pen defn goes in the
         // overlaysymbol params
-        if (msMaybeAllocateClassStyle(c, 1)) {
-          OGR_ST_Destroy(hStylePart);
-          return(MS_FAILURE);
-        }
-
-        c->styles[1]->outlinecolor = oPenColor;
-        c->styles[1]->size = nPenSize;
-        c->styles[1]->symbol = nPenSymbol;
-        c->styles[1]->width = nPenSize;
+        s->outlinecolor = oPenColor;
       } else {
         // Single part symbology
-        if (msMaybeAllocateClassStyle(c, 0)) {
-          OGR_ST_Destroy(hStylePart);
-          return(MS_FAILURE);
-        }
-
-        if(layer->type == MS_LAYER_POLYGON)
-          c->styles[0]->outlinecolor = c->styles[0]->color =
-                                         oPenColor;
-        else
-          c->styles[0]->color = oPenColor;
-        c->styles[0]->symbol = nPenSymbol;
-        c->styles[0]->size = nPenSize;
-        c->styles[0]->width = nPenSize;
+        s->color = oPenColor;
       }
 
-    } else if (eStylePartType == OGRSTCBrush) {
-      OGRStyleToolH hBrushStyle = hStylePart;
+      s->symbol = nPenSymbol;
+      s->size = nPenSize;
+      s->width = nPenSize;
+      s->linecap = linecap;
+      s->linejoin = linejoin;
+      s->offsetx = offsetx;
+      s->offsety = offsety;
+      s->patternlength = patternlength;
+      if( patternlength > 0 )
+          memcpy(s->pattern, pattern, sizeof(double) * patternlength);
+
+      int nPriority = OGR_ST_GetParamNum(hPenStyle, OGRSTPenPriority, &bIsNull);
+      if( !bIsNull )
+          *pbPriority = nPriority;
+
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
+                                      OGRStyleToolH hBrushStyle, int* pbIsBrush,
+                                      int* pbPriority)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       const char *pszBrushName = OGR_ST_GetParamStr(hBrushStyle,
                                  OGRSTBrushId,
                                  &bIsNull);
       if (bIsNull) pszBrushName = NULL;
 
-      /* We need 1 style */
-      if (msMaybeAllocateClassStyle(c, 0)) {
-        OGR_ST_Destroy(hStylePart);
-        return(MS_FAILURE);
-      }
-
       // Check for Brush Pattern "ogr-brush-1": the invisible fill
       // If that's what we have then set fill color to -1
       if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL) {
-        MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1, 255);
+        MS_INIT_COLOR(s->color, -1, -1, -1, 255);
       } else {
-        bIsBrush = TRUE;
+        *pbIsBrush = TRUE;
         const char *pszColor = OGR_ST_GetParamStr(hBrushStyle,
                                OGRSTBrushFColor,
                                &bIsNull);
         if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle,
                                                 pszColor,
                                                 &r, &g, &b, &t)) {
-          MS_INIT_COLOR(c->styles[0]->color, r, g, b, t);
+          MS_INIT_COLOR(s->color, r, g, b, t);
 
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
@@ -3181,7 +3434,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle,
                                                 pszColor,
                                                 &r, &g, &b, &t)) {
-          MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b, t);
+          MS_INIT_COLOR(s->backgroundcolor, r, g, b, t);
         }
 
         // Symbol name mapping:
@@ -3192,17 +3445,44 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         const char *pszName = OGR_ST_GetParamStr(hBrushStyle,
                               OGRSTBrushId,
                               &bIsNull);
-        c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
+        s->symbol = msOGRGetSymbolId(&(map->symbolset),
                                                 pszName, NULL, MS_FALSE);
-      }
-    } else if (eStylePartType == OGRSTCSymbol) {
-      OGRStyleToolH hSymbolStyle = hStylePart;
 
-      /* We need 1 style */
-      if (msMaybeAllocateClassStyle(c, 0)) {
-        OGR_ST_Destroy(hStylePart);
-        return(MS_FAILURE);
+        double angle = OGR_ST_GetParamDbl(hBrushStyle, OGRSTBrushAngle, &bIsNull);
+        if( !bIsNull )
+            s->angle = angle;
+        
+        double size = OGR_ST_GetParamDbl(hBrushStyle, OGRSTBrushSize, &bIsNull);
+        if( !bIsNull )
+            s->size = size;
+        
+        double spacingx = OGR_ST_GetParamDbl(hBrushStyle, OGRSTBrushDx, &bIsNull);
+        if( !bIsNull )
+        {
+            double spacingy = OGR_ST_GetParamDbl(hBrushStyle, OGRSTBrushDy, &bIsNull);
+            if( !bIsNull )
+            {
+                if( spacingx == spacingy )
+                    s->gap = spacingx;
+                else if( layer->debug >= MS_DEBUGLEVEL_VVV )
+                    msDebug("Ignoring brush dx and dy since they don't have the same value\n");
+            }
+        }
       }
+
+      int nPriority = OGR_ST_GetParamNum(hBrushStyle, OGRSTBrushPriority, &bIsNull);
+      if( !bIsNull )
+          *pbPriority = nPriority;
+
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s,
+                                       OGRStyleToolH hSymbolStyle,
+                                       int* pbPriority)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       const char *pszColor = OGR_ST_GetParamStr(hSymbolStyle,
                              OGRSTSymbolColor,
@@ -3210,7 +3490,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle,
                                               pszColor,
                                               &r, &g, &b, &t)) {
-        MS_INIT_COLOR(c->styles[0]->color, r, g, b, t);
+        MS_INIT_COLOR(s->color, r, g, b, t);
       }
 
 #if GDAL_VERSION_NUM >= 1600
@@ -3220,15 +3500,15 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle,
                                               pszColor,
                                               &r, &g, &b, &t)) {
-        MS_INIT_COLOR(c->styles[0]->outlinecolor, r, g, b, t);
+        MS_INIT_COLOR(s->outlinecolor, r, g, b, t);
       }
 #endif /* GDAL_VERSION_NUM >= 1600 */
-      c->styles[0]->angle = OGR_ST_GetParamNum(hSymbolStyle,
+      s->angle = OGR_ST_GetParamNum(hSymbolStyle,
                             OGRSTSymbolAngle,
                             &bIsNull);
-      dfTmp = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolSize, &bIsNull);
+      double dfTmp = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolSize, &bIsNull);
       if (!bIsNull)
-        c->styles[0]->size = dfTmp;
+        s->size = dfTmp;
 
       // Symbol name mapping:
       // First look for the native symbol name, then the ogr-...
@@ -3240,22 +3520,23 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (bIsNull)
         pszName = NULL;
 
-      try_addimage_if_notfound = MS_FALSE;
+      int try_addimage_if_notfound = MS_FALSE;
 #ifdef USE_CURL
       if (pszName && strncasecmp(pszName, "http", 4) == 0)
         try_addimage_if_notfound =MS_TRUE;
 #endif
-      if (!c->styles[0]->symbolname)
-        c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
+      if (!s->symbolname)
+        s->symbol = msOGRGetSymbolId(&(map->symbolset),
                                                 pszName,
                                                 "default-marker",  try_addimage_if_notfound);
-    }
 
-    OGR_ST_Destroy(hStylePart);
+      int nPriority = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolPriority, &bIsNull);
+      if( !bIsNull )
+          *pbPriority = nPriority;
 
-  }
-  return MS_SUCCESS;
+      return MS_SUCCESS;
 }
+
 #endif /* USE_OGR */
 
 

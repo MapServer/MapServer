@@ -28,51 +28,54 @@
 
 #include "mapserver.h"
 #include <float.h>
+#ifdef USE_GDAL
+
 #include "gdal.h"
+#include "cpl_string.h"
 
 void gaussian_blur(float *values, int width, int height, int radius) {
-    float *tmp = (float*)msSmallMalloc(width*height*sizeof(float));
-    int length = radius*2+1;
-    float *kernel = (float*)msSmallMalloc(length*sizeof(float));
-    float sigma=radius/3.0;
-    float a=1.0/ sqrt(2.0*M_PI*sigma*sigma);
-    float den=2.0*sigma*sigma;
-    int i,x,y;
+  float *tmp = (float*)msSmallMalloc(width*height*sizeof(float));
+  int length = radius*2+1;
+  float *kernel = (float*)msSmallMalloc(length*sizeof(float));
+  float sigma=radius/3.0;
+	float a=1.0/ sqrt(2.0*M_PI*sigma*sigma);
+	float den=2.0*sigma*sigma;
+	int i,x,y;
 
-    for (i=0; i<length; i++) {
-        float x = i - radius;
-        float v = a * exp(-(x*x) / den);
-        kernel[i]=v;
-    }
-    memset(tmp,0,width*height*sizeof(float));
+	for (i=0; i<length; i++) {
+	  float x=i - radius;
+	  float v=a * exp(-(x*x) / den);
+	  kernel[i]=v;
+	}
+	memset(tmp,0,width*height*sizeof(float));
 
-    for(y=0; y<height; y++) {
-        float* src_row=values + width*y;
-        float* dst_row=tmp + width*y;
+	for(y=0; y<height; y++) {
+		float* src_row=values + width*y;
+		float* dst_row=tmp + width*y;
 
-        for(x=radius; x<width-radius; x++) {
-            float accum=0;
-            for(i=0; i<length; i++) {
-                accum+=src_row[x+i-radius] * kernel[i];
-            }
-            dst_row[x]=accum;
-        }
-    }
+		for(x=radius; x<width-radius; x++) {
+			float accum=0;
+			for(i=0; i<length; i++) {
+				accum+=src_row[x+i-radius] * kernel[i];
+			}
+			dst_row[x]=accum;
+		}
+	}
 
-    for(x=0; x<width; x++) {
-        float* src_col=tmp+x;
-        float* dst_col=values+x;
+	for(x=0; x<width; x++) {
+		float* src_col=tmp+x;
+		float* dst_col=values+x;
 
-        for(y=radius; y<height-radius; y++) {
-            float accum=0;
-            for (i=0; i<length; i++) {
-                accum+=src_col[width*(y+i-radius)] * kernel[i];
-            }
-            dst_col[y*width]=accum;
-        }
-    }
-    free(tmp);
-    free(kernel);
+		for(y=radius; y<height-radius; y++) {
+			float accum=0;
+			for (i=0; i<length; i++) {
+				accum+=src_col[width*(y+i-radius)] * kernel[i];
+			}
+			dst_col[y*width]=accum;
+		}
+	}
+  free(tmp);
+  free(kernel);
 }
 
 void kernelDensityProcessing(layerObj *layer, processingParams *psz) {
