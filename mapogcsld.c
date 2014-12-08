@@ -3543,10 +3543,10 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
 
     if(nVersion >= OWS_1_1_0) {
       if(psStyle->gap > 0) {
-        snprintf(szTmp, sizeof(szTmp), "<%sGap>%f</%sGap>\n",  sNameSpace,psStyle->gap,sNameSpace);
+        snprintf(szTmp, sizeof(szTmp), "<%sGap>%.2f</%sGap>\n",  sNameSpace,psStyle->gap,sNameSpace);
       }
       if(psStyle->initialgap > 0) {
-        snprintf(szTmp, sizeof(szTmp), "<%sInitialGap>%f</%sInitialGap>\n",  sNameSpace,psStyle->initialgap,sNameSpace);
+        snprintf(szTmp, sizeof(szTmp), "<%sInitialGap>%.2f</%sInitialGap>\n",  sNameSpace,psStyle->initialgap,sNameSpace);
       }
     }
 
