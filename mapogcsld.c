@@ -1506,7 +1506,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                                   char *pszDashValue,
                                   styleObj *psStyle, mapObj *map)
 {
-  CPLXMLNode  *psCssParam, *psGraphic, *psExternalGraphic, *psMark, *psSize;
+  CPLXMLNode  *psCssParam, *psGraphic, *psExternalGraphic, *psMark, *psSize, *psGap, *psInitialGap;
   CPLXMLNode *psWellKnownName, *psStroke, *psFill;
   CPLXMLNode *psDisplacement=NULL, *psDisplacementX=NULL, *psDisplacementY=NULL;
   CPLXMLNode *psOpacity=NULL, *psRotation=NULL;
@@ -1728,6 +1728,14 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
         msSLDParseExternalGraphic(psExternalGraphic, psStyle, map);
     }
     msFree(pszSymbolName);
+  }
+  psGap =  CPLGetXMLNode(psRoot, "Gap");
+  if (psGap && psGap->psChild && psGap->psChild->pszValue) {
+    psStyle->gap = atof(psGap->psChild->pszValue);
+  }
+  psInitialGap =  CPLGetXMLNode(psRoot, "InitialGap");
+  if (psInitialGap && psInitialGap->psChild && psInitialGap->psChild->pszValue) {
+    psStyle->initialgap = atof(psInitialGap->psChild->pszValue);
   }
 
   return MS_SUCCESS;
@@ -3532,6 +3540,15 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer, int nVersion)
     pszSLD = msStringConcatenate(pszSLD, szTmp);
 
     pszSLD = msStringConcatenate(pszSLD, pszGraphicSLD);
+
+    if(nVersion >= OWS_1_1_0) {
+      if(psStyle->gap > 0) {
+        snprintf(szTmp, sizeof(szTmp), "<%sGap>%f</%sGap>\n",  sNameSpace,psStyle->gap,sNameSpace);
+      }
+      if(psStyle->initialgap > 0) {
+        snprintf(szTmp, sizeof(szTmp), "<%sInitialGap>%f</%sInitialGap>\n",  sNameSpace,psStyle->initialgap,sNameSpace);
+      }
+    }
 
     snprintf(szTmp, sizeof(szTmp), "</%sGraphicStroke>\n",  sNameSpace);
 
