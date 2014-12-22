@@ -532,6 +532,12 @@ static void writeDimension(FILE *stream, int indent, const char *name, int x, in
   else msIO_fprintf(stream, "%d\n", y);
 }
 
+static void writeDoubleRange(FILE *stream, int indent, const char *name, double x, double y)
+{
+  writeIndent(stream, ++indent);
+  msIO_fprintf(stream, "%s %f %f\n", name, x, y);
+}
+
 static void writeExtent(FILE *stream, int indent, const char *name, rectObj extent)
 {
   if(!MS_VALID_EXTENT(extent)) return;
@@ -3027,7 +3033,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   if(style->rangeitem) {
     writeString(stream, indent, "RANGEITEM", NULL, style->rangeitem);
     writeColorRange(stream, indent, "COLORRANGE", &(style->mincolor), &(style->maxcolor));
-    writeDimension(stream, indent, "DATARANGE", style->minvalue, style->maxvalue, NULL, NULL);
+    writeDoubleRange(stream, indent, "DATARANGE", style->minvalue, style->maxvalue);
   }
 
   writeBlockEnd(stream, indent, "STYLE");
