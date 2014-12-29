@@ -4029,7 +4029,7 @@ static int msWCSSetFormatParams20(outputFormatObj* format, char** format_options
       return MS_FAILURE;
     }
 
-    CPLFree(key);
+    msFree(key);
 
     /* fetch next option */
     format_option = format_options[++i];
