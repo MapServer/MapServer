@@ -99,6 +99,7 @@ extern "C" {
       double *x, double *y );
 
   MS_DLL_EXPORT void msSetPROJ_LIB( const char *, const char * );
+  MS_DLL_EXPORT void msProjLibInitFromEnv();
 
   /* Provides compatiblity with PROJ.4 4.4.2 */
 #ifndef PJ_VERSION
