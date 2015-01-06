@@ -1246,6 +1246,18 @@ static const char *msProjFinder( const char *filename)
 #endif /* def USE_PROJ */
 
 /************************************************************************/
+/*                       msProjLibInitFromEnv()                         */
+/************************************************************************/
+void msProjLibInitFromEnv()
+{
+  const char *val;
+
+  if( (val=getenv( "PROJ_LIB" )) != NULL ) {
+    msSetPROJ_LIB(val, NULL);
+  }
+}
+
+/************************************************************************/
 /*                           msSetPROJ_LIB()                            */
 /************************************************************************/
 void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
