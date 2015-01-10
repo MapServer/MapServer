@@ -1185,6 +1185,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   int         nLoadImgXSize, nLoadImgYSize;
   double      dfOversampleRatio;
   rasterBufferObj src_rb, *psrc_rb = NULL, *mask_rb = NULL;
+  int         bAddPixelMargin = MS_TRUE;
 
 
   const char *resampleMode = CSLFetchNameValue( layer->processing,
@@ -1277,15 +1278,69 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   }
 
   /* -------------------------------------------------------------------- */
+  /*      If requesting at the raster resolution, on pixel boundaries,    */
+  /*      and no reprojection is  involved, we don't need any resampling. */
+  /*      And if they match an integral subsampling factor, no need to    */
+  /*      add pixel margin.                                               */
+  /*      This optimization helps a lot when operating with mode=tile     */
+  /*      and that the underlying raster is tiled and share the same      */
+  /*      tiling scheme as the queried tile mode.                         */
+  /* -------------------------------------------------------------------- */
+#define IS_ALMOST_INTEGER(x, eps)        (fabs((x)-(int)((x)+0.5)) < (eps))
+
+  if( adfSrcGeoTransform[1] > 0.0 && adfSrcGeoTransform[2] == 0.0 &&
+      adfSrcGeoTransform[4] == 0.0 && adfSrcGeoTransform[5] < 0.0 &&
+      IS_ALMOST_INTEGER(sSrcExtent.minx, 0.1) &&
+      IS_ALMOST_INTEGER(sSrcExtent.miny, 0.1) &&
+      IS_ALMOST_INTEGER(sSrcExtent.maxx, 0.1) &&
+      IS_ALMOST_INTEGER(sSrcExtent.maxy, 0.1) &&
+      !msProjectionsDiffer( &(map->projection), &(layer->projection)) ) 
+  {
+      double dfXFactor, dfYFactor;
+
+      sSrcExtent.minx = (int)(sSrcExtent.minx + 0.5);
+      sSrcExtent.miny = (int)(sSrcExtent.miny + 0.5);
+      sSrcExtent.maxx = (int)(sSrcExtent.maxx + 0.5);
+      sSrcExtent.maxy = (int)(sSrcExtent.maxy + 0.5);
+      
+      if( (int)(sSrcExtent.maxx - sSrcExtent.minx + 0.5) == nDstXSize &&
+          (int)(sSrcExtent.maxy - sSrcExtent.miny + 0.5) == nDstYSize )
+      {
+            if( layer->debug )
+                msDebug( "msResampleGDALToMap(): Request matching raster resolution and pixel boundaries. "
+                         "No need to do resampling/reprojection.\n" );
+            return msDrawRasterLayerGDAL( map, layer, image, rb, hDS );
+      }
+
+      dfXFactor = (sSrcExtent.maxx - sSrcExtent.minx) / nDstXSize;
+      dfYFactor = (sSrcExtent.maxy - sSrcExtent.miny) / nDstYSize;
+      if( IS_ALMOST_INTEGER(dfXFactor, 1e-5) &&
+          IS_ALMOST_INTEGER(dfYFactor, 1e-5) &&
+          IS_ALMOST_INTEGER(sSrcExtent.minx/dfXFactor, 0.1) &&
+          IS_ALMOST_INTEGER(sSrcExtent.miny/dfXFactor, 0.1) &&
+          IS_ALMOST_INTEGER(sSrcExtent.maxx/dfYFactor, 0.1) &&
+          IS_ALMOST_INTEGER(sSrcExtent.maxy/dfYFactor, 0.1) )
+      {
+          bAddPixelMargin = MS_FALSE;
+          if( layer->debug )
+            msDebug( "msResampleGDALToMap(): Request matching raster resolution "
+                     "and pixel boundaries matching an integral subsampling factor\n" );
+      }
+  }
+
+  /* -------------------------------------------------------------------- */
   /*      Project desired extents out by 2 pixels, and then strip to      */
   /*      available data.                                                 */
   /* -------------------------------------------------------------------- */
   memcpy( &sOrigSrcExtent, &sSrcExtent, sizeof(sSrcExtent) );
 
-  sSrcExtent.minx = floor(sSrcExtent.minx-1.0);
-  sSrcExtent.maxx = ceil (sSrcExtent.maxx+1.0);
-  sSrcExtent.miny = floor(sSrcExtent.miny-1.0);
-  sSrcExtent.maxy = ceil (sSrcExtent.maxy+1.0);
+  if( bAddPixelMargin )
+  {
+    sSrcExtent.minx = floor(sSrcExtent.minx-1.0);
+    sSrcExtent.maxx = ceil (sSrcExtent.maxx+1.0);
+    sSrcExtent.miny = floor(sSrcExtent.miny-1.0);
+    sSrcExtent.maxy = ceil (sSrcExtent.maxy+1.0);
+  }
 
   sSrcExtent.minx = MAX(0,sSrcExtent.minx);
   sSrcExtent.maxx = MIN(sSrcExtent.maxx, nSrcXSize );

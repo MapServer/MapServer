@@ -144,18 +144,15 @@ int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression)
 
 char *FLTGetExpressionForValuesRanges(layerObj *lp, const char *item, const char *value,  int forcecharcter)
 {
-  int bIscharacter, bSqlLayer;
+  int bIscharacter, bSqlLayer=MS_FALSE;
   char *pszExpression = NULL, *pszEscapedStr=NULL, *pszTmpExpression=NULL;
   char **paszElements = NULL, **papszRangeElements=NULL;
   int numelements,i,nrangeelements;
+
+  /* TODO: remove the bSqlLayer checks since we want to write MapServer expressions only. */
+
   /* double minval, maxval; */
   if (lp && item && value) {
-    if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
-        lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN)
-      bSqlLayer = MS_TRUE;
-    else
-      bSqlLayer = MS_FALSE;
-
     if (strstr(value, "/") == NULL) {
       /*value(s)*/
       paszElements = msStringSplit (value, ',', &numelements);
