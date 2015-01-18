@@ -15,6 +15,10 @@
 #ifndef AGG_CONV_CLIPPER_INCLUDED
 #define AGG_CONV_CLIPPER_INCLUDED
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <algorithm>
+#endif
+
 #include <cmath>
 #include "agg_basics.h"
 #include "agg_array.h"
