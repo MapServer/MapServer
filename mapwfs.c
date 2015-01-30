@@ -1025,6 +1025,8 @@ static const char* msWFSMapServTypeToXMLType(const char* type)
     /* Note : xs:int and xs:integer differ */
     else if ( EQUAL(type,"int") )
       element_type = "int";
+    if( strcasecmp(type,"Long") == 0 ) /* 64bit integer */
+      element_type = "long";
     else if( EQUAL(type,"Real") ||
              EQUAL(type,"double") /* just in case someone provided the xsd type directly */ )
       element_type = "double";

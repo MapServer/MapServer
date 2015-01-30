@@ -3020,8 +3020,11 @@ msPostGISPassThroughFieldDefinitions( layerObj *layer,
       gml_type = "Integer";
       sprintf( gml_width, "%d", 5 );
 
-    } else if( oid == INT4OID || oid == INT8OID ) {
+    } else if( oid == INT4OID ) {
       gml_type = "Integer";
+
+    } else if( oid == INT8OID ) {
+      gml_type = "Long";
 
     } else if( oid == FLOAT4OID || oid == FLOAT8OID ) {
       gml_type = "Real";
