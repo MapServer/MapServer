@@ -355,6 +355,27 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
   return(0);
 }
 
+/**********************************************************************
+ *                     ogrGetLinearGeometry()
+ *
+ * Fetch geometry from OGR feature. If using GDAL 2.0 or later, the geometry
+ * might be of curve type, so linearize it.
+ **********************************************************************/
+static OGRGeometryH ogrGetLinearGeometry(OGRFeatureH hFeature)
+{
+#if GDAL_VERSION_MAJOR >= 2
+    /* Convert in place and reassign to the feature */
+    OGRGeometryH hGeom = OGR_F_StealGeometry(hFeature);
+    if( hGeom != NULL )
+    {
+        hGeom = OGR_G_ForceTo(hGeom, OGR_GT_GetLinear(OGR_G_GetGeometryType(hGeom)), NULL);
+        OGR_F_SetGeometryDirectly(hFeature, hGeom);
+    }
+    return hGeom;
+#else
+    return OGR_F_GetGeometryRef( hFeature );
+#endif
+}
 
 /**********************************************************************
  *                     ogrConvertGeometry()
@@ -1986,7 +2007,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
 
     // Feature matched filter expression... process geometry
     // shape->type will be set if geom is compatible with layer type
-    if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
+    if (ogrConvertGeometry(ogrGetLinearGeometry( hFeature ), shape,
                            layer->type) == MS_SUCCESS) {
       if (shape->type != MS_SHAPE_NULL)
         break; // Shape is ready to be returned!
@@ -2093,7 +2114,7 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
    * Handle shape geometry...
    * ------------------------------------------------------------------ */
   // shape->type will be set if geom is compatible with layer type
-  if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
+  if (ogrConvertGeometry(ogrGetLinearGeometry( hFeature ), shape,
                          layer->type) != MS_SUCCESS) {
     RELEASE_OGR_LOCK;
     return MS_FAILURE; // Error message already produced.
