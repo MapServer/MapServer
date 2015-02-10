@@ -1007,7 +1007,7 @@ static int msOCIConvertCircle( pointObj *pt )
 
 /*function that creates the correct sql for filter and filteritem*/
 static void osFilteritem(layerObj *layer, int function, char *query_str, size_t size, int mode)
-{
+{ 
   if (layer->filter.native_string != NULL) {
     if (mode == 1)
       strlcat( query_str, " WHERE ", size);
@@ -1028,6 +1028,19 @@ static void osFilteritem(layerObj *layer, int function, char *query_str, size_t 
     if (function != FUNCTION_NONE)
       strlcat( query_str, " WHERE ", size);
   }
+
+  /* Handle a native filter set as a PROCESSING option (#5001). */
+  if ( msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL ) {
+    if ((function != FUNCTION_NONE)||(layer->filter.native_string != NULL)) {
+     strlcat( query_str, " AND ", size);
+    }{
+     strlcat( query_str, " WHERE ", size);
+    }
+    char *native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
+    sprintf(query_str + strlen(query_str) , size-strlen(query_str), " %s ", native_filter);
+  }
+
+
 }
 
 static void osAggrGetExtent(layerObj *layer, char *query_str, size_t size, char *geom_column_name, char *table_name)
@@ -3474,13 +3487,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
 
   /* for backwards compatibility we continue to allow SQL snippets as a string */
   
- if(filter->type == MS_STRING && filter->string && !filteritem) {
-    filter->native_string = msStrdup(filter->string);
-
-    if (layer->debug>=2)
-      msDebug("msOracleSpatialLayerTranslateFilter. Found native sql, setting native_string \n");
-
-  } else if(filter->type == MS_STRING && filter->string && filteritem) { /* item/value pair */
+ if(filter->type == MS_STRING && filter->string && filteritem) { /* item/value pair */
     if(filter->flags & MS_EXP_INSENSITIVE) {
       native_string = msStringConcatenate(native_string, "upper(");
       native_string = msStringConcatenate(native_string, filteritem);
