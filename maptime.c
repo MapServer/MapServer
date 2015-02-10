@@ -37,7 +37,6 @@
 #include "maperror.h"
 #include "mapthread.h"
 
-
 typedef struct {
   char pattern[64];
   ms_regex_t *regex;
@@ -46,22 +45,21 @@ typedef struct {
   MS_TIME_RESOLUTION resolution;
 } timeFormatObj;
 
-#define MS_NUMTIMEFORMATS 14
+#define MS_NUMTIMEFORMATS 13
 
 timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
-  {"^[0-9]{4}$", NULL, "%Y", "YYYY", TIME_RESOLUTION_YEAR},
-  {"^[0-9]{4}-[0-9]{2}$", NULL, "%Y-%m", "YYYY-MM", TIME_RESOLUTION_MONTH},
-  {"^[0-9]{8}$", NULL, "%Y%m%d", "YYYYMMDD", TIME_RESOLUTION_DAY},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}Z?$", NULL, "%Y-%m-%d", "YYYY-MM-DD", TIME_RESOLUTION_DAY},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", NULL, "%Y-%m-%dT%H:%M:%SZ", "YYYY-MM-DDTHH:MM:SSZ", TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}Z$", NULL, "%Y-%m-%d %H:%M:%SZ", "YYYY-MM-DD HH:MM:SSZ", TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS", TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS", TIME_RESOLUTION_SECOND},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM", TIME_RESOLUTION_MINUTE},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM", TIME_RESOLUTION_MINUTE},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$", NULL, "%Y-%m-%dT%H", "YYYY-MM-DDTHH", TIME_RESOLUTION_HOUR},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}$", NULL, "%Y-%m-%d %H", "YYYY-MM-DD HH", TIME_RESOLUTION_HOUR},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{8}", NULL, "%Y%m%d","YYYYMMDD",TIME_RESOLUTION_DAY},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ",TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS",TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM",TIME_RESOLUTION_MINUTE},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM",TIME_RESOLUTION_MINUTE},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}", NULL, "%Y-%m-%dT%H", "YYYY-MM-DDTHH",TIME_RESOLUTION_HOUR},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}", NULL, "%Y-%m-%d %H", "YYYY-MM-DD HH",TIME_RESOLUTION_HOUR},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}", NULL, "%Y-%m-%d", "YYYY-MM-DD", TIME_RESOLUTION_DAY},
+  {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM",TIME_RESOLUTION_MONTH},
+  {"^[0-9]{4}", NULL, "%Y", "YYYY",TIME_RESOLUTION_YEAR},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ",TIME_RESOLUTION_SECOND},
   {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND}
 };
 
@@ -69,7 +67,8 @@ int *ms_limited_pattern = NULL;
 int ms_num_limited_pattern;
 
 int ms_time_inited = 0;
-int msTimeSetup() {
+int msTimeSetup() 
+{
   if(!ms_time_inited) {
     msAcquireLock(TLOCK_TIME);
     if(!ms_time_inited) {
@@ -79,7 +78,7 @@ int msTimeSetup() {
         if(0!=ms_regcomp(ms_timeFormats[i].regex, ms_timeFormats[i].pattern, MS_REG_EXTENDED|MS_REG_NOSUB)) {
           msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msTimeSetup()", ms_timeFormats[i].pattern);
           return MS_FAILURE;
-          /* TODO: free already inited regexes */
+          /* TODO: free already init'd regexes */
         }
       }
       ms_limited_pattern = (int *)msSmallMalloc(sizeof(int)*MS_NUMTIMEFORMATS);
@@ -91,7 +90,8 @@ int msTimeSetup() {
   return MS_SUCCESS;
 }
 
-void msTimeCleanup() {
+void msTimeCleanup() 
+{
   if(ms_time_inited) {
     int i;
     for(i=0;i<MS_NUMTIMEFORMATS;i++) {
@@ -106,10 +106,9 @@ void msTimeCleanup() {
   }
 }
 
-void msTimeInit(struct tm *time)
+void msTimeInit(struct tm *time) 
 {
-  /* set all members to zero */
-  time->tm_sec = 0;
+  time->tm_sec = 0; /* set all members to zero */
   time->tm_min = 0;
   time->tm_hour = 0;
   time->tm_mday = 0;
@@ -146,6 +145,10 @@ int msDateCompare(struct tm *time1, struct tm *time2)
 int msTimeCompare(struct tm *time1, struct tm *time2)
 {
   int result;
+
+  // fprintf(stderr, "in msTimeCompare()...\n");
+  // fprintf(stderr, "time1: %d %d %d %d %d %d\n", time1->tm_year, time1->tm_mon, time1->tm_mday, time1->tm_hour, time1->tm_min, time1->tm_sec);
+  // fprintf(stderr, "time2: %d %d %d %d %d %d\n", time2->tm_year, time2->tm_mon, time2->tm_mday, time2->tm_hour, time2->tm_min, time2->tm_sec);
 
   if((result = compareIntVals(time1->tm_year, time2->tm_year)) != 0)
     return result; /* not equal based on year */
@@ -284,7 +287,7 @@ int msParseTime(const char *string, struct tm *tm)
     match = ms_regexec(ms_timeFormats[indice].regex, string, 0,NULL, 0);
     /* test the expression against the string */
     if(match == 0) {
-      /* match    */
+      /* match    */      
       msStrptime(string, ms_timeFormats[indice].format, tm);
       return(MS_TRUE);
     }
@@ -336,10 +339,8 @@ int _msValidateTime(const char *timestring,  const char *timeextent)
   if (!timestring || !timeextent)
     return MS_FALSE;
 
-  if (strlen(timestring) <= 0 ||
-      strlen(timeextent) <= 0)
+  if (strlen(timestring) <= 0 || strlen(timeextent) <= 0)
     return MS_FALSE;
-
 
   /* we first need to parse the timesting that is passed
      so that we can determine if it is a descrete time
@@ -431,8 +432,6 @@ int _msValidateTime(const char *timestring,  const char *timeextent)
 
 }
 
-
-
 int msValidateTimeValue(const char *timestring, const char *timeextent)
 {
   char **atimes =  NULL;
@@ -444,20 +443,16 @@ int msValidateTimeValue(const char *timestring, const char *timeextent)
   if (!timestring || !timeextent)
     return MS_FALSE;
 
-
   /* parse the time string. We support descrete times (eg 2004-09-21), */
   /* multiple times (2004-09-21, 2004-09-22, ...) */
   /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
-  if (strstr(timestring, ",") == NULL &&
-      strstr(timestring, "/") == NULL) { /* discrete time */
+  if (strstr(timestring, ",") == NULL && strstr(timestring, "/") == NULL) { /* discrete time */
     return _msValidateTime(timestring,  timeextent);
-
   } else {
-    atimes = msStringSplit (timestring, ',', &numtimes);
+    atimes = msStringSplit(timestring, ',', &numtimes);
     if (numtimes >=1) { /* multiple times */
-
       if (strstr(atimes[0], "/") == NULL) { /* multiple descrete times */
-        for (i=0; i<numtimes; i++) {
+        for (i=0; i<numtimes; i++) {          
           if (_msValidateTime(atimes[i], timeextent) == MS_FALSE) {
             msFreeCharArray(atimes, numtimes);
             return MS_FALSE;
@@ -466,12 +461,11 @@ int msValidateTimeValue(const char *timestring, const char *timeextent)
         msFreeCharArray(atimes, numtimes);
         return MS_TRUE;
       } else { /* multiple ranges */
-        for (i=0; i<numtimes; i++) {
+        for (i=0; i<numtimes; i++) {          
           if (_msValidateTime(atimes[i], timeextent) == MS_FALSE) {
             msFreeCharArray(atimes, numtimes);
             return MS_FALSE;
           }
-
         }
         msFreeCharArray(atimes, numtimes);
         return MS_TRUE;
