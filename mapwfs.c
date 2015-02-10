@@ -368,9 +368,21 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
       same srs. For wfs 1.1.0 an srsName can be passed, we should validate that It is valid for all
       queries layers
   */
+
+  /* Start by applying the default service SRS to the mapObj, 
+   * make sure we reproject the map extent if a projection was 
+   * already set 
+   */
   pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
-  if(pszMapSRS && nWFSVersion >  OWS_1_0_0)
+  if(pszMapSRS && nWFSVersion >  OWS_1_0_0){
+    projectionObj proj;
+    msInitProjection(&proj);
+    if (map->projection.numargs > 0 && msLoadProjectionStringEPSG(&proj, pszMapSRS) == 0) {
+      msProjectRect(&(map->projection), &proj, &map->extent);
+    }
     msLoadProjectionStringEPSG(&(map->projection), pszMapSRS);
+    msFreeProjection(&proj);
+  }
 
   if (srs == NULL || nWFSVersion == OWS_1_0_0) {
     for (i=0; i<map->numlayers; i++) {
