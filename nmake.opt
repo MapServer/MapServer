@@ -415,24 +415,6 @@ JPEG_INC = -I$(JPEG_DIR)
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Direct connectivity to ESRI ArcSDE.
-# ----------------------------------------------------------------------
-# To turn on direct connectivity to ArcSDE uncomment the following
-# flags and set the full path name to the project directory for ArcSDE.
-# The support library for ArcSDE (the ArcSDE C API/SDK) is typically
-# only available for those with a full license of ArcSDE.  It is not
-# available for download.
-# Either set USE_SDE or USE_SDE_PLUGIN, not both.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#SDE_OPT=-DUSE_SDE
-#SDE_OPT= -DUSE_SDE_PLUGIN
-
-#SDE_VERSION = 91
-#SDE_DIR = f:\projects\sde9.1
-#SDE_INC = -I$(SDE_SDK)\include
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Direct connectivity to SQL Server
 # ----------------------------------------------------------------------
 # To turn on direct connectivity to SQL Server uncomment the following
@@ -710,18 +692,6 @@ OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/port
 OGR_LIB = $(GDAL_DIR)/gdal_i.lib
 !ENDIF
 
-# Setup ESRI SDE support.
-!IFDEF SDE_OPT
-SDE_INC=-I$(SDE_DIR)/include
-!IF "$(SDE_OPT)" != "-DUSE_SDE_PLUGIN"
-SDE_LIB = $(SDE_DIR)\lib\pe$(SDE_VERSION).lib \
-          $(SDE_DIR)\lib\sde$(SDE_VERSION).lib \
-          $(SDE_DIR)\lib\sg$(SDE_VERSION).lib
-!ELSE
-SDE_LIB =
-!ENDIF
-!ENDIF
-
 # Setup REGEX object and includes
 !IFNDEF PHP_REGEX
 REGEX_OBJ=$(REGEX_DIR)\regex.obj
@@ -850,7 +820,7 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
      $(CURL_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
-     $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
+     $(ORACLE_LIB) $(ICONV_LIB) $(FCGILIB) $(GEOS_LIB) \
      $(LIBXML_LIB) $(EXPAT_LIB) $(OGL_LIB) $(CAIRO_LIB) $(FRIBIDI_LIB) $(GIFLIB_LIB)
 !ENDIF
 
@@ -861,7 +831,7 @@ LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(PDF_INC) $(POSTGIS_INC) \
-         $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
+         $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) \
          $(ICONV_INC) $(FCGIINC) $(GEOS_INC) $(ZLIB_INC) $(LIBXML_INC) \
          $(AGG_INC) $(EXPAT_INC) $(OGL_INC) $(CAIRO_INC) $(PNG_INC) $(FRIBIDI_INC) $(GIFLIB_INC)
 !ENDIF
@@ -874,7 +844,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(USE_POINT_Z_M) $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
           $(USE_GD_ANTIALIAS) $(ORACLE) \
-          $(SDE_OPT) $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
+          $(ICONV) $(GEOS) $(ZLIB) $(SOS)  $(XML2_ENABLED) $(AGG) \
           $(OGL) $(CAIRO) $(RGBA_PNG_ENABLED) $(FRIBIDI) $(KML) $(GIF) $(CURL)
 
 !IFDEF WIN64
