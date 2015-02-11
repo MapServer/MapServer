@@ -58,7 +58,7 @@ extern "C" {
 #define MS_NOTFOUND 18 /* empty search results */
 #define MS_SHPERR 19
 #define MS_PARSEERR 20
-#define MS_SDEERR 21
+#define MS_UNUSEDERR 21
 #define MS_OGRERR 22
 #define MS_QUERYERR 23
 #define MS_WMSERR 24      /* WMS server error */
