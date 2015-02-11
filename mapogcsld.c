@@ -397,7 +397,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
               could increase performace. Will do it for db types layers #2840*/
             lp = GET_LAYER(map, i);
             if (lp->filter.string == NULL || (lp->filter.string && lp->filter.type == MS_STRING && !lp->filteritem)) {
-              if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL || lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN) {
+              if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL || lp->connectiontype == MS_PLUGIN) {
                 if (lp->numclasses > 0) {
                   /* check first that all classes have an expression type. That is
                     the only way we can concatenate them and set the filter
@@ -419,7 +419,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
 
                     snprintf(szTmp, sizeof(szTmp), "%s", "))");
                     pszBuffer =msStringConcatenate(pszBuffer, szTmp);
-                    
+
                     msFreeExpression(&lp->filter);
                     msInitExpression(&lp->filter);
                     lp->filter.string = msStrdup(pszBuffer);
@@ -458,7 +458,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
 
     }
   }
-  
+
   nStatus = MS_SUCCESS;
 
 sld_cleanup:
@@ -1577,7 +1577,7 @@ int msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 
       /* default symbol is square */
 
-      if (!pszSymbolName || !*pszSymbolName || 
+      if (!pszSymbolName || !*pszSymbolName ||
           (strcasecmp(pszSymbolName, "square") != 0 &&
            strcasecmp(pszSymbolName, "circle") != 0 &&
            strcasecmp(pszSymbolName, "triangle") != 0 &&

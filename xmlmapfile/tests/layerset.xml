@@ -87,7 +87,7 @@
       <region>region1</region>
     </Cluster>
     <connection>user=nobody password=****** dbname=dbname host=localhost port=5432</connection>
-    <connectionType>SDE</connectionType>
+    <connectionType>POSTGRESQL</connectionType>
     <data>../data</data>
     <debug>1</debug>
     <dump>FALSE</dump>

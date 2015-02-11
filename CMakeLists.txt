@@ -206,10 +206,10 @@ renderers/agg/src/clipper.cpp
 include_directories(renderers/agg/include)
 
 set(v8_SOURCES
-  mapscript/v8/v8_object_wrap.hpp  
+  mapscript/v8/v8_object_wrap.hpp
   mapscript/v8/point.cpp
   mapscript/v8/line.cpp
-  mapscript/v8/shape.cpp  
+  mapscript/v8/shape.cpp
   mapscript/v8/v8_mapscript.cpp
   mapv8.cpp
 )
@@ -228,7 +228,7 @@ else(WIN32)
   set(REGEX_SOURCES "")
 endif(WIN32)
 
-set(mapserver_SOURCES fontcache.c 
+set(mapserver_SOURCES fontcache.c
 cgiutil.c mapgeos.c maporaclespatial.c mapsearch.c mapwms.c classobject.c
 mapgml.c mapoutput.c mapwmslayer.c layerobject.c mapgraticule.c mapows.c
 mapservutil.c mapxbase.c maphash.c mapowscommon.c mapshape.c mapxml.c mapbits.c
@@ -243,7 +243,7 @@ mapraster.c mapuvraster.c mapdummyrenderer.c mapobject.c maprasterquery.c
 mapwcs.c maperror.c mapogcfilter.c mapregex.c mapwcs11.c mapfile.c
 mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c mapwfs20.c
-mapgeomtransform.c mapogroutput.c mapsde.c mapwfslayer.c mapagg.cpp mapkml.cpp
+mapgeomtransform.c mapogroutput.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
 mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c)
 
@@ -252,7 +252,7 @@ if(BUILD_DYNAMIC)
   set_target_properties( mapserver  PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 1
-) 
+)
 endif(BUILD_DYNAMIC)
 
 if(BUILD_STATIC)
@@ -260,7 +260,7 @@ if(BUILD_STATIC)
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
     SOVERSION 1
-  ) 
+  )
 endif(BUILD_STATIC)
 
 #SOVERSION is not necessarily the same as the
@@ -292,9 +292,9 @@ add_executable(shptreetst shptreetst.c)
 target_link_libraries(shptreetst ${MAPSERVER_LIBMAPSERVER})
 
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(USE_EXTENDED_DEBUG 1)
-endif (CMAKE_BUILD_TYPE STREQUAL "Debug") 
+endif (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 find_package(PNG)
 if(PNG_FOUND)
@@ -454,42 +454,6 @@ if(WITH_MSSQL2008)
     report_optional_not_found(ODBC)
   endif(ODBC_FOUND)
 endif(WITH_MSSQL2008)
-
-if(WITH_SDE_PLUGIN)
-  if(WITH_SDE)
-     MESSAGE( SEND_ERROR "WITH_SDE and WITH_SDE_PLUGIN cannot be used simultaneously")
-  endif(WITH_SDE)
-  if(SDE_INCLUDE_DIR AND SDE_LIBRARY_DIR)
-    include_directories(${SDE_INCLUDE_DIR})
-    if(SDE_VERSION STREQUAL "91")
-      add_library(msplugin_sde_91 MODULE mapsde.c mapthread.c)
-      target_link_libraries(msplugin_sde_91 ${SDE_LIBRARY_DIR}/pe91.lib ${SDE_LIBRARY_DIR}/sg91.lib ${SDE_LIBRARY_DIR}/sde91.lib ${MAPSERVER_LIBMAPSERVER})
-      set_target_properties(msplugin_sde_91 PROPERTIES COMPILE_FLAGS "-DUSE_SDE -DUSE_SDE_PLUGIN")
-    else(SDE_VERSION STREQUAL "91")
-      add_library(msplugin_sde_92 MODULE mapsde.c mapthread.c)
-      target_link_libraries(msplugin_sde_92 ${SDE_LIBRARY_DIR}/pe.lib ${SDE_LIBRARY_DIR}/sg.lib ${SDE_LIBRARY_DIR}/sde.lib ${MAPSERVER_LIBMAPSERVER})
-      set_target_properties(msplugin_sde_92 PROPERTIES COMPILE_FLAGS "-DUSE_SDE -DUSE_SDE_PLUGIN")
-    endif(SDE_VERSION STREQUAL "91")
-    set(USE_SDE_PLUGIN 1)
-  else(SDE_INCLUDE_DIR AND SDE_LIBRARY_DIR)
-     MESSAGE( SEND_ERROR "Must specify SDE_INCLUDE_DIR and SDE_LIBRARY_DIR for WITH_SDE_PLUGIN")
-  endif(SDE_INCLUDE_DIR AND SDE_LIBRARY_DIR)
-endif(WITH_SDE_PLUGIN)
-
-if(WITH_SDE)
-  find_package(SDE)
-  if(SDE_FOUND)
-    include_directories(${SDE_INCLUDE_DIRS})
-    ms_link_libraries(${SDE_LIBRARIES})
-    set (USE_SDE 1)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-      set(SDE64 1)
-    endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  else(SDE_FOUND)
-    MESSAGE(WARNING "Could not find (all?) sde files. Try setting -DSDE_DIR=/path/to/sde and/or -DSDE_VERSION=91|92|100")
-    report_optional_not_found(SDE)
-  endif(SDE_FOUND)
-endif(WITH_SDE)
 
 if(WITH_FCGI)
   find_package(FCGI)
@@ -733,7 +697,7 @@ if(WITH_XMLMAPFILE)
    if(NOT USE_LIBXML2)
     report_dependency_error(KML LIBXML2)
    endif(NOT USE_LIBXML2)
-  
+
   #check for xslt and exslt
   find_package(LibXslt)
   if(LIBXSLT_FOUND)
@@ -948,14 +912,6 @@ endif(USE_ORACLE_PLUGIN)
 if(USE_MSSQL2008)
    INSTALL(TARGETS msplugin_mssql2008 DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif(USE_MSSQL2008)
-
-if(USE_SDE91)
-   INSTALL(TARGETS msplugin_sde91 DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif(USE_SDE91)
-
-if(USE_SDE92)
-   INSTALL(TARGETS msplugin_sde92 DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif(USE_SDE92)
 
 INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv RUNTIME DESTINATION bin LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

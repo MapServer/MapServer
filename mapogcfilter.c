@@ -85,7 +85,7 @@ int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression)
 
   if (lp && pszExpression) {
     if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
-        lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN) {
+        lp->connectiontype == MS_PLUGIN) {
       pszFinalExpression = msStrdup("(");
       pszFinalExpression = msStringConcatenate(pszFinalExpression, pszExpression);
       pszFinalExpression = msStringConcatenate(pszFinalExpression, ")");
@@ -421,7 +421,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
     }
     msFreeProjection(&sProjTmp);
   }
-  
+
   if( lp->connectiontype == MS_OGR ) {
     pszTimeValue = FLTGetDuring(psNode, &pszTimeField);
   }
@@ -439,7 +439,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
   bConcatWhere = 0;
   bHasAWhere = 0;
   if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
-      lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN) {
+      lp->connectiontype == MS_PLUGIN) {
     szExpression = FLTGetSQLExpression(psNode, lp);
     if (szExpression) {
       pszTmp = msStrdup("(");
@@ -496,7 +496,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
     msLoadExpressionString(&lp->filter, pszBuffer);
     free(szExpression);
   }
-  
+
   if (pszTimeField && pszTimeValue)
       msLayerSetTimeFilter(lp, pszTimeValue, pszTimeField);
 
@@ -1275,7 +1275,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
               const char* pszMatchCase;
 
               psFilterNode->psRightNode->pszValue = msStrdup(pszLiteral);
-              
+
               pszMatchCase = CPLGetXMLValue(psXMLNode, "matchCase", NULL);
 
               /*check if the matchCase attribute is set*/
@@ -1486,7 +1486,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
       } else
         psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
     }
-    
+
     /* -------------------------------------------------------------------- */
     /*      Temporal Filter.                                                */
     /*
@@ -1921,7 +1921,7 @@ shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance,
 
             }
           }
-        } 
+        }
         msFreeCharArray(tokens, nTokens);
       }
 
@@ -2260,7 +2260,7 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     pszBuffer = (char *)malloc(sizeof(char) * (strlen(pszTmp) + 1));
     sprintf(pszBuffer, "%s", pszTmp);
   }
-  
+
   /* -------------------------------------------------------------------- */
   /*      OR and AND                                                      */
   /* -------------------------------------------------------------------- */
@@ -3518,7 +3518,7 @@ int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
                              mapObj *map, int i)
 {
     int status = MS_SUCCESS;
-    
+
     if (psFilterNode->eType ==  FILTER_NODE_TYPE_FEATUREID)
     {
         char** tokens;
@@ -3612,7 +3612,7 @@ int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
         int bFound = MS_FALSE;
 
         if ((strcmp(psFilterNode->pszValue, "PropertyIsNull") == 0 ||
-             strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0) && 
+             strcmp(psFilterNode->pszValue, "PropertyIsNil") == 0) &&
              FLTIsGMLDefaultProperty(psFilterNode->psLeftNode->pszValue) )
         {
             return MS_SUCCESS;
@@ -3620,7 +3620,7 @@ int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
 
         lp = GET_LAYER(map, i);
         layerWasOpened = msLayerIsOpen(lp);
-        if ((layerWasOpened || msLayerOpen(lp) == MS_SUCCESS) 
+        if ((layerWasOpened || msLayerOpen(lp) == MS_SUCCESS)
              && msLayerGetItems(lp) == MS_SUCCESS) {
           int i;
           gmlItemListObj* items = msGMLGetItems(lp, "G");
@@ -3739,7 +3739,7 @@ FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
             FLTFreeFilterEncodingNode(psFilterNode);
             return FLTSimplify(psOtherNode, pnEvaluation);
         }
- 
+
         psFilterNode->psRightNode = FLTSimplify(psFilterNode->psRightNode,
                                                 &nEvaluation);
         if( psFilterNode->psRightNode == NULL )

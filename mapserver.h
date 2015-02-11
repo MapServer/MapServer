@@ -474,7 +474,7 @@ extern "C" {
 #define MS_IS_VALID_ARRAY_INDEX(index, size) ((index<0 || index>=size)?MS_FALSE:MS_TRUE)
 
 #define MS_CONVERT_UNIT(src_unit, dst_unit, value) (value * msInchesPerUnit(src_unit,0) / msInchesPerUnit(dst_unit,0))
-  
+
 #endif
 
   /* General enumerated types - needed by scripts */
@@ -492,7 +492,7 @@ extern "C" {
 #define MS_LARGE 13
 #define MS_GIANT 16
   enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-  enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY };
+  enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_UNUSED_2, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY };
 #define IS_THIRDPARTY_LAYER_CONNECTIONTYPE(type) ((type) == MS_UNION || (type) == MS_KERNELDENSITY)
   enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
   enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
@@ -718,7 +718,7 @@ extern "C" {
     colorObj *pixel; /* for raster layers */
     shapeObj *shape; /* for vector layers */
     double dblval; /* for map cellsize used by simplify */
-    double dblval2; /* for data cellsize */    
+    double dblval2; /* for data cellsize */
     expressionObj *expr; /* expression to be evaluated (contains tokens) */
     int type; /* type of parse: boolean, string/text or shape/geometry */
     parseResultObj result; /* parse result */
@@ -827,10 +827,10 @@ extern "C" {
     long tileindex;
     int clear_resultcache;
 
-    int  maxfeatures; /* global maxfeatures */    
+    int  maxfeatures; /* global maxfeatures */
     int  startindex;
     int  only_cache_result_count; /* set to 1 sometimes by WFS 2.0 GetFeature request */
-    
+
     expressionObj filter; /* by filter */
     char *filteritem;
 
@@ -1086,7 +1086,7 @@ extern "C" {
     lineObj *poly;
     rectObj bbox;
   } label_bounds;
-  
+
   typedef struct {
     labelObj *label;
     char *annotext;
@@ -1109,7 +1109,7 @@ extern "C" {
   /*                                                                      */
   /*      basic symbolization and classification information              */
   /************************************************************************/
-  
+
   struct classObj {
 #ifndef SWIG
     expressionObj expression; /* the expression to be matched */
@@ -1501,7 +1501,7 @@ extern "C" {
     double maxscale;
     char *value;
   } scaleTokenEntryObj;
-  
+
   typedef struct {
      char *name;
      int n_entries;
@@ -1583,7 +1583,7 @@ extern "C" {
     scaleTokenObj *scaletokens;
     int numscaletokens;
     originalScaleTokenStrings *orig_st;
-    
+
 #endif
 
     char *data; /* filename, can be relative or full path */
@@ -1709,7 +1709,7 @@ extern "C" {
 #endif
     char *mask;
 
-#ifndef SWIG    
+#ifndef SWIG
     expressionObj _geomtransform;
 #endif
 
@@ -2432,7 +2432,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msINLINELayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msSHPLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msTiledSHPLayerInitializeVirtualTable(layerObj *layer);
-  MS_DLL_EXPORT int msSDELayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msOGRLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msPostGISLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer);
@@ -2440,7 +2439,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msGraticuleLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msRASTERLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msUVRASTERLayerInitializeVirtualTable(layerObj *layer);
-  MS_DLL_EXPORT int msContourLayerInitializeVirtualTable(layerObj *layer);  
+  MS_DLL_EXPORT int msContourLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msPluginLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msUnionLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT void msPluginFreeVirtualTableFactory(void);
@@ -2457,7 +2456,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
   MS_DLL_EXPORT int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
   MS_DLL_EXPORT int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image);
-  
+
 #define MS_DRAWMODE_FEATURES    0x00001
 #define MS_DRAW_FEATURES(mode) (MS_DRAWMODE_FEATURES&(mode))
 #define MS_DRAWMODE_LABELS      0x00002
@@ -2591,7 +2590,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format);
   MS_DLL_EXPORT shapeObj* msOffsetPolyline(shapeObj* shape, double offsetx, double offsety);
   MS_DLL_EXPORT int msMapSetLayerProjections(mapObj* map);
-  
+
   /* Functions to chnage the drawing order of the layers. */
   /* Defined in mapobject.c */
   MS_DLL_EXPORT int msMoveLayerUp(mapObj *map, int nLayerIndex);
@@ -2837,8 +2836,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT void msStyleSetGeomTransform(styleObj *s, char *transform);
   MS_DLL_EXPORT char *msStyleGetGeomTransform(styleObj *style);
 
-  MS_DLL_EXPORT int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape);  
-  
+  MS_DLL_EXPORT int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape);
+
   /* ==================================================================== */
   /*      end of prototypes for functions in mapgeomtransform.c                 */
   /* ==================================================================== */
@@ -2858,7 +2857,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   /*      prototypes for functions in mapsmoothing.c                      */
   /* ==================================================================== */
   MS_DLL_EXPORT shapeObj* msSmoothShapeSIA(shapeObj *shape, int ss, int si, char *preprocessing);
-  
+
   /* ==================================================================== */
   /*      end of prototypes for functions in mapsmoothing.c               */
   /* ==================================================================== */
@@ -2873,7 +2872,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char* msV8GetFeatureStyle(mapObj *map, const char *filename,
                                           layerObj *layer, shapeObj *shape);
   MS_DLL_EXPORT shapeObj *msV8TransformShape(shapeObj *shape,
-                                             const char* filename);  
+                                             const char* filename);
 #endif
   /* ==================================================================== */
   /*      end of prototypes for functions in mapv8.cpp                    */

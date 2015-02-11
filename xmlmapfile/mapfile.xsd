@@ -348,7 +348,7 @@
 				</xs:simpleType>
 			</xs:element>
 			<xs:element name="Style" type="ms:Style" minOccurs="0" maxOccurs="unbounded"/>
-		        <xs:element name="text" type="xs:string" minOccurs="0"/>                
+		        <xs:element name="text" type="xs:string" minOccurs="0"/>
 		        <xs:element name="wrap" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="type" use="required">
@@ -618,7 +618,6 @@
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
 						<xs:enumeration value="LOCAL"/>
-						<xs:enumeration value="SDE"/>
 						<xs:enumeration value="OGR"/>
 						<xs:enumeration value="WFS"/>
 						<xs:enumeration value="POSTGIS"/>

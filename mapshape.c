@@ -1946,7 +1946,7 @@ int msTiledSHPOpenFile(layerObj *layer)
     free(tSHP);
     return MS_FAILURE;
   }
-  
+
   tSHP->shpfile->isopen = MS_FALSE; /* in case of error: do not try to close the shpfile */
   tSHP->tileshpfile = NULL; /* may need this if not using a tile layer, look for malloc later */
   layer->layerinfo = tSHP;
@@ -1959,7 +1959,7 @@ int msTiledSHPOpenFile(layerObj *layer)
     tlp = (GET_LAYER(layer->map, tSHP->tilelayerindex));
 
     if(tlp->connectiontype != MS_SHAPEFILE) {
-      msSetError(MS_SDEERR, "Tileindex layer must be a shapefile.", "msTiledSHPOpenFile()");
+      msSetError(MS_SHPERR, "Tileindex layer must be a shapefile.", "msTiledSHPOpenFile()");
       return(MS_FAILURE);
     }
 
@@ -2588,7 +2588,7 @@ int msSHPLayerOpen(layerObj *layer)
       return MS_FAILURE;
     }
   }
-  
+
   if (layer->projection.numargs > 0 &&
       EQUAL(layer->projection.args[0], "auto"))
   {

@@ -33,8 +33,6 @@
 #cmakedefine POSTGIS_HAS_SERVER_VERSION 1
 #cmakedefine USE_SVG_CAIRO 1
 #cmakedefine USE_RSVG 1
-#cmakedefine USE_SDE 1
-#cmakedefine SDE64 1
 #cmakedefine USE_EXTENDED_DEBUG 1
 #cmakedefine USE_V8_MAPSCRIPT 1
 
@@ -59,6 +57,6 @@
 #cmakedefine HAVE_LRINTF 1
 #cmakedefine HAVE_LRINT 1
 #cmakedefine HAVE_SYNC_FETCH_AND_ADD 1
-     
+
 
 #endif
