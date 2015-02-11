@@ -281,6 +281,9 @@ int msLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteri
 */
 int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  if(!msLayerSupportsCommonFilters(layer))
+    msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
+
   if ( ! layer->vtable) {
     int rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS)

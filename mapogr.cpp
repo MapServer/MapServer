@@ -1576,8 +1576,6 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
     
   char *pszOGRFilter = NULL;
 
-  fprintf(stderr, "in msOGRFileWhichShapes()\n");
-
   /* In case we have an odd filter combining both a OGR filter and MapServer */
   /* filter, then separate things */
   // msOGRSplitFilter(layer, &pszOGRFilter, &pszMSFilter);

@@ -747,7 +747,7 @@ int msQueryByFilter(mapObj *map)
     if(msLayerSupportsCommonFilters(lp)) eval = MS_FALSE;
 
     /*
-    ** Set the lp->filter and lp->filteritem (may need to merge).
+    ** Set the lp->filter and lp->filteritem (may need to merge). Remember filters are *always* MapServer syntax.
     */
     lp->filteritem = map->query.filteritem; /* re-point lp->filteritem */
     if(old_filter.string != NULL) { /* need to merge filters to create one logical expression */
@@ -763,11 +763,6 @@ int msQueryByFilter(mapObj *map)
     /* build item list, we want *all* items, note this *also* build tokens for the layer filter */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) goto query_error;
-
-    if(eval == MS_TRUE) {
-      status = msLayerTranslateFilter(lp, &lp->filter, lp->filteritem); /* sets lp->filter.native_string */
-      if(status == MS_SUCCESS) eval = MS_FALSE; /* driver will apply the filter */
-    }
 
     search_rect = map->query.rect;
 #ifdef USE_PROJ
@@ -794,16 +789,9 @@ int msQueryByFilter(mapObj *map)
     if (lp->minfeaturesize > 0)
       minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
-    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes - if necessary the filter is applied in msLayerNextShape(...) */
 
-      if(eval == MS_TRUE) { /* we have to apply the filter here instead of within the driver */
-        if(msEvalExpression(lp, &shape, &lp->filter, -1) != MS_TRUE) { /* next shape (was using map->query.filter) */
-          msFreeShape(&shape);
-          continue;
-        }
-      }
-
-      /* Check if the shape size is ok to be drawn */
+       /* Check if the shape size is ok to be drawn */
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
@@ -992,15 +980,6 @@ int msQueryByRect(mapObj *map)
     if(status != MS_SUCCESS) {
       msFreeShape(&searchshape);
       return(MS_FAILURE);
-    }
-
-    /* translate filter (if necessary) */
-    if(!msLayerSupportsCommonFilters(lp)) {
-      status = msLayerTranslateFilter(lp, &lp->filter, lp->filteritem);
-      if(status != MS_SUCCESS) {
-	msFreeShape(&searchshape);
-	return(MS_FAILURE);
-      }
     }
 
 #ifdef USE_PROJ
