@@ -665,14 +665,13 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
                     OCILogon( hand->envhp, hand->errhp, &hand->svchp, (text *)username, strlen(username), (text *)password, strlen(password), (text *)dblink, strlen(dblink) ) );
 
   if ( !success ) {
-    msDebug( MS_ORACLESPATIALERR,
-                "Cannot create OCI Handlers. "
+    msDebug(   "Cannot create OCI Handlers. "
                 "Connection failure."
                 "Error: %s."
                 "msOracleSpatialLayerOpen()", hand->last_oci_error);
     msSetError( MS_ORACLESPATIALERR,
                 "Cannot create OCI Handlers. "
-                "Connection failure. Check your logs and the connection string. "
+                "Connection failure. Check your logs and the connection string. ",
                 "msOracleSpatialLayerOpen()");
 
     msOCICloseHandlers(hand);
@@ -1721,7 +1720,7 @@ int msOracleSpatialLayerOpen( layerObj *layer )
                 "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'."
                 "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE.");
     msSetError( MS_ORACLESPATIALERR,
-                "Error parsing OracleSpatial DATA variable. More info in server logs");
+                "Error parsing OracleSpatial DATA variable. More info in server logs", "msOracleSpatialLayerOpen()");
 
     return MS_FAILURE;
   }
@@ -1919,7 +1918,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
                 "Your data statement: (%s)"
                 "in msOracleSpatialLayerWhichShapes()", layer->data );
     msSetError( MS_ORACLESPATIALERR,
-                "Error parsing OracleSpatial DATA variable. More info in server logs"
+                "Error parsing OracleSpatial DATA variable. More info in server logs",
                 "msOracleSpatialLayerWhichShapes()" );
 
     if (geom_column_name) free(geom_column_name);
@@ -2563,7 +2562,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
                   "Check your data statement."
                   "in msOracleSpatialLayerGetShape()", hand->last_oci_error, query_str );
       msSetError( MS_ORACLESPATIALERR,
-                  "Error in Query statement in msOracleSpatialLayerGetShape(). Check your server logs");
+                  "Error in Query statement. Check your server logs","msOracleSpatialLayerGetShape()");
 
       /* clean nullind  */
       free(nullind);
@@ -2764,7 +2763,7 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
                 "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
                 "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
                 "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
-                "Your data statement: (%s)",
+                "Your data statement: (%s) "
                 "in msOracleSpatialLayerGetAutoProjection()", layer->data );
 
     msSetError( MS_ORACLESPATIALERR,
@@ -3485,7 +3484,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
                 "in msOracleSpatialLayerGetExtent()", layer->data );
     msSetError( MS_ORACLESPATIALERR,
                 "Error parsing OracleSpatial DATA variable. Check server logs. ",
-                "msOracleSpatialLayerGetExtent()", layer->data );
+                "msOracleSpatialLayerGetExtent()");
     /* clean items */
     
     if (geom_column_name) free(geom_column_name);
