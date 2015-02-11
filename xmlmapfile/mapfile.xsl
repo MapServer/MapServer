@@ -695,6 +695,14 @@
       <xsl:with-param name="quote" select="1"/>
     </xsl:call-template>
     <xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:maxScaleDenom'"/>
+    </xsl:call-template>
+    <xsl:call-template name="print">
+      <xsl:with-param name="indent" select="$indent"/>
+      <xsl:with-param name="node" select="'ms:minScaleDenom'"/>
+    </xsl:call-template>
+    <xsl:call-template name="print">
       <xsl:with-param name="text" select="'END'"/>
       <xsl:with-param name="indent" select="$indent - 1"/>
     </xsl:call-template>

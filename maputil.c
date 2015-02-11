@@ -1893,6 +1893,9 @@ int msSetup()
   msThreadInit();
 #endif
 
+  /* Use PROJ_LIB env vars if set */
+  msProjLibInitFromEnv();
+
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if (msDebugInitFromEnv() != MS_SUCCESS)
     return MS_FAILURE;
