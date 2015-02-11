@@ -973,7 +973,7 @@ static int loadFeature(layerObj *player, int type)
         msFreeShape(shape);
         msFree(shape);
         if(getString(&string) == MS_FAILURE) return(MS_FAILURE);
-        
+
         if((shape = msShapeFromWKT(string)) == NULL)
           status = MS_FAILURE;
 
@@ -2012,7 +2012,7 @@ int msUpdateLabelFromString(labelObj *label, char *string, int url_string)
   if(!label || !string) return MS_FAILURE;
 
   msAcquireLock( TLOCK_PARSER );
-  
+
   if(url_string)
     msyystate = MS_TOKENIZE_URL_STRING;
   else
@@ -2212,7 +2212,7 @@ void msFreeExpression(expressionObj *exp)
 
 int loadExpression(expressionObj *exp)
 {
-  /* TODO: should we fall msFreeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */ 
+  /* TODO: should we fall msFreeExpression if exp->string != NULL? We do some checking to avoid a leak but is it enough... */
 
   msyystring_icase = MS_TRUE;
   if((exp->type = getSymbol(6, MS_STRING,MS_EXPRESSION,MS_REGEX,MS_ISTRING,MS_IREGEX,MS_LIST)) == -1) return(-1);
@@ -3829,9 +3829,9 @@ int initLayer(layerObj *layer, mapObj *map)
   msInitExpression(&(layer->utfdata));
   layer->utfitem = NULL;
   layer->utfitemindex = -1;
-  
+
   layer->encoding = NULL;
-  
+
   layer->sortBy.nProperties = 0;
   layer->sortBy.properties = NULL;
   layer->orig_st = NULL;
@@ -3896,7 +3896,7 @@ int freeLayer(layerObj *layer)
 
   msFreeProjection(&(layer->projection));
   msFreeExpression(&layer->_geomtransform);
-  
+
   freeCluster(&layer->cluster);
 
   for(i=0; i<layer->maxclasses; i++) {
@@ -3958,7 +3958,7 @@ int freeLayer(layerObj *layer)
 
   msFreeExpression(&(layer->utfdata));
   msFree(layer->utfitem);
-  
+
   for(i=0;i<layer->sortBy.nProperties;i++)
       msFree(layer->sortBy.properties[i].item);
   msFree(layer->sortBy.properties);
@@ -4032,7 +4032,7 @@ int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
              case(EOF):
                msSetError(MS_EOFERR, NULL, "loadScaletoken()");
                return(MS_FAILURE);
-             case(END): 
+             case(END):
                stop = 1;
                if(token->n_entries == 0) {
                  msSetError(MS_PARSEERR,"Scaletoken (line:%d) has no VALUES defined","loadScaleToken()",msyylineno);
@@ -4043,7 +4043,7 @@ int loadScaletoken(scaleTokenObj *token, layerObj *layer) {
              case(MS_STRING):
                /* we have a key */
                token->tokens = msSmallRealloc(token->tokens,(token->n_entries+1)*sizeof(scaleTokenEntryObj));
-               
+
                if(1 != sscanf(msyystring_buffer,"%lf",&token->tokens[token->n_entries].minscale)) {
                  msSetError(MS_PARSEERR, "failed to parse SCALETOKEN VALUE (%s):(line %d), expecting \"minscale\"", "loadScaletoken()",
                          msyystring_buffer,msyylineno);
@@ -4143,7 +4143,7 @@ int loadLayer(layerObj *layer, mapObj *map)
         }
         break;
       case(CONNECTIONTYPE):
-        if((layer->connectiontype = getSymbol(12, MS_SDE, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY)) == -1) return(-1);
+        if((layer->connectiontype = getSymbol(12, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY)) == -1) return(-1);
         break;
       case(DATA):
         if(getString(&layer->data) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
@@ -4579,7 +4579,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
   writeCluster(stream, indent, &(layer->cluster));
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
-  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 11, MS_SDE, "SDE", MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY");
+  writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 11, MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY");
   writeString(stream, indent, "DATA", NULL, layer->data);
   writeNumber(stream, indent, "DEBUG", 0, layer->debug); /* is this right? see loadLayer() */
   writeString(stream, indent, "ENCODING", NULL, layer->encoding);
@@ -4593,7 +4593,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
     writeIndent(stream, indent + 1);
     fprintf(stream, "GEOMTRANSFORM (%s)\n", layer->_geomtransform.string);
   }
-  
+
   writeString(stream, indent, "HEADER", NULL, layer->header);
   /* join - see below */
   writeKeyword(stream, indent, "LABELCACHE", layer->labelcache, 1, MS_OFF, "OFF");
@@ -4944,7 +4944,7 @@ static int loadOutputFormat(mapObj *map)
       }
       case(NAME):
         msFree( name );
-        if((name = getToken()) == NULL) 
+        if((name = getToken()) == NULL)
           goto load_output_error;
         break;
       case(MIMETYPE):
@@ -6078,7 +6078,7 @@ int msSaveMap(mapObj *map, char *filename)
 {
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
-  
+
   if(!map) {
     msSetError(MS_MISCERR, "Map is undefined.", "msSaveMap()");
     return(-1);
@@ -6752,7 +6752,7 @@ static void layerSubstituteString(layerObj *layer, const char *from, const char 
   if(layer->tileindex) layer->tileindex = msCaseReplaceSubstring(layer->tileindex, from, to);
   if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, from, to);
   if(layer->filter.string) layer->filter.string = msCaseReplaceSubstring(layer->filter.string, from, to);
-  
+
   /* The bindvalues are most useful when able to substitute values from the URL */
   hashTableSubstituteString(&layer->bindvals, from, to);
   hashTableSubstituteString(&layer->metadata, from, to);

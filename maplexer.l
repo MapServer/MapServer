@@ -66,7 +66,7 @@ int msyyreturncomments = 0;
    MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),  \
                            msyystring_buffer_size, msyystring_buffer_ptr); \
    strcpy(msyystring_buffer, msyytext); \
-   return(token); 
+   return(token);
 
 #define MAX_INCLUDE_DEPTH 5
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
@@ -120,7 +120,7 @@ char path[MS_MAXPATHLEN];
          msyy_scan_string(msyystring);
          msyysource=MS_URL_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
-         msyyreturncomments=0; 
+         msyyreturncomments=0;
          (void) yyunput; /* just to avoid warning about it being unrefed */
          break;
        case(MS_TOKENIZE_URL_STRING):
@@ -131,7 +131,7 @@ char path[MS_MAXPATHLEN];
          msyysource=MS_URL_TOKENS;
          msyystate=MS_TOKENIZE_DEFAULT;
          msyyin=NULL;
-         msyyreturncomments=0; 
+         msyyreturncomments=0;
          return(0);
          break;
        case(MS_TOKENIZE_EXPRESSION):
@@ -148,7 +148,7 @@ char path[MS_MAXPATHLEN];
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyystate=MS_TOKENIZE_DEFAULT;
          msyystring=NULL;
-         msyyreturncomments=0; 
+         msyyreturncomments=0;
          return(0);
          break;
        default:
@@ -274,7 +274,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>index                                 { MS_LEXER_RETURN_TOKEN(INDEX); }
 <INITIAL,URL_STRING>initialgap                 { MS_LEXER_RETURN_TOKEN(INITIALGAP); }
 <INITIAL>interlace                             { MS_LEXER_RETURN_TOKEN(INTERLACE); }
-<INITIAL,URL_STRING>intervals                  { MS_LEXER_RETURN_TOKEN(INTERVALS); } 
+<INITIAL,URL_STRING>intervals                  { MS_LEXER_RETURN_TOKEN(INTERVALS); }
 <INITIAL>join                                  { MS_LEXER_RETURN_TOKEN(JOIN); }
 <INITIAL,URL_STRING>keyimage                   { MS_LEXER_RETURN_TOKEN(KEYIMAGE); }
 <INITIAL,URL_STRING>keysize                    { MS_LEXER_RETURN_TOKEN(KEYSIZE); }
@@ -320,7 +320,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>minboxsize                            { MS_LEXER_RETURN_TOKEN(MINBOXSIZE); }
 <INITIAL>mindistance                           { MS_LEXER_RETURN_TOKEN(MINDISTANCE); }
 <INITIAL>repeatdistance                        { MS_LEXER_RETURN_TOKEN(REPEATDISTANCE); }
-<INITIAL>maxoverlapangle                       { MS_LEXER_RETURN_TOKEN(MAXOVERLAPANGLE); } 
+<INITIAL>maxoverlapangle                       { MS_LEXER_RETURN_TOKEN(MAXOVERLAPANGLE); }
 <INITIAL>minfeaturesize                        { MS_LEXER_RETURN_TOKEN(MINFEATURESIZE); }
 <INITIAL>mininterval                           { MS_LEXER_RETURN_TOKEN(MININTERVAL); }
 <INITIAL>minscale                              { MS_LEXER_RETURN_TOKEN(MINSCALE); }
@@ -462,7 +462,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>raster                                { MS_LEXER_RETURN_TOKEN(MS_LAYER_RASTER); }
 <INITIAL,URL_STRING>right                      { MS_LEXER_RETURN_TOKEN(MS_ALIGN_RIGHT); }
 <INITIAL>round                                 { MS_LEXER_RETURN_TOKEN(MS_CJC_ROUND); }
-<INITIAL>sde                                   { MS_LEXER_RETURN_TOKEN(MS_SDE); }
 <INITIAL>selected                              { MS_LEXER_RETURN_TOKEN(MS_SELECTED); }
 <INITIAL>simple                                { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_SIMPLE); }
 <INITIAL>single                                { MS_LEXER_RETURN_TOKEN(MS_SINGLE); }
@@ -487,7 +486,7 @@ char path[MS_MAXPATHLEN];
 <URL_VARIABLE>\[[a-z/\.][a-z0-9/:\.\-\=_ ]*\]  {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                          msyystring_buffer_size, msyystring_buffer_ptr);
                                                  strcpy(msyystring_buffer,msyytext);
                                                  return(MS_STRING);
@@ -495,9 +494,9 @@ char path[MS_MAXPATHLEN];
 <URL_VARIABLE>\[[0-9]*\]                       {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                          msyystring_buffer_size, msyystring_buffer_ptr);
-                                                 strcpy(msyystring_buffer,msyytext);                                                 
+                                                 strcpy(msyystring_buffer,msyytext);
                                                  msyynumber = atof(msyytext);
                                                  return(MS_NUMBER);
                                                }
@@ -505,21 +504,21 @@ char path[MS_MAXPATHLEN];
 <INITIAL>\[[^\]]*\]                            {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                          msyystring_buffer_size, msyystring_buffer_ptr);
                                                  strcpy(msyystring_buffer,msyytext);
                                                  return(MS_BINDING);
                                                }
 
-<EXPRESSION_STRING>\[shape\] { 
+<EXPRESSION_STRING>\[shape\] {
   /* attribute binding - shape (fixed value) */
   return(MS_TOKEN_BINDING_SHAPE);
 }
-<EXPRESSION_STRING>\[map_cellsize\] { 
+<EXPRESSION_STRING>\[map_cellsize\] {
   /* attribute binding - map cellsize */
   return(MS_TOKEN_BINDING_MAP_CELLSIZE);
 }
-<EXPRESSION_STRING>\[data_cellsize\] { 
+<EXPRESSION_STRING>\[data_cellsize\] {
   /* attribute binding - data cellsize */
   return(MS_TOKEN_BINDING_DATA_CELLSIZE);
 }
@@ -527,7 +526,7 @@ char path[MS_MAXPATHLEN];
   /* attribute binding - numeric (no quotes) */
   msyytext++;
   msyytext[strlen(msyytext)-1] = '\0';
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                           msyystring_buffer_size, msyystring_buffer_ptr);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_DOUBLE);
@@ -536,7 +535,7 @@ char path[MS_MAXPATHLEN];
   /* attribute binding - string (single or double quotes) */
   msyytext+=2;
   msyytext[strlen(msyytext)-2] = '\0';
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                           msyystring_buffer_size, msyystring_buffer_ptr);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_BINDING_STRING);
@@ -552,15 +551,15 @@ char path[MS_MAXPATHLEN];
 }
 
 <INITIAL,URL_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                           msyystring_buffer_size, msyystring_buffer_ptr);
   strcpy(msyystring_buffer,msyytext);
   msyynumber = atof(msyytext);
-  return(MS_NUMBER); 
+  return(MS_NUMBER);
 }
 
 <EXPRESSION_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                           msyystring_buffer_size, msyystring_buffer_ptr);
   strcpy(msyystring_buffer,msyytext);
   msyynumber = atof(msyytext);
@@ -570,7 +569,7 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>\`[^\`]*\` {
   msyytext++;
   msyytext[strlen(msyytext)-1] = '\0';
-  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                           msyystring_buffer_size, msyystring_buffer_ptr);
   strcpy(msyystring_buffer, msyytext);
   return(MS_TOKEN_LITERAL_TIME);
@@ -579,7 +578,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>\/[^\/]*\/i                {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-2] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                          msyystring_buffer_size, msyystring_buffer_ptr);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_IREGEX);
@@ -588,7 +587,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>\/[^\/]*\/                 {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                          msyystring_buffer_size, msyystring_buffer_ptr);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_REGEX);
@@ -597,7 +596,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>\(.*\)                     {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                          msyystring_buffer_size, msyystring_buffer_ptr);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_EXPRESSION);
@@ -606,7 +605,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>\{.*\}                     {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
-                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                          msyystring_buffer_size, msyystring_buffer_ptr);
                                                  strcpy(msyystring_buffer, msyytext);
                                                  return(MS_LIST);
@@ -614,14 +613,14 @@ char path[MS_MAXPATHLEN];
 
 <INITIAL,URL_STRING>\'|\"                     {
                                                  msyystring_return_state = MS_STRING;
-                                                 msyystring_begin = msyytext[0]; 
+                                                 msyystring_begin = msyytext[0];
                                                  msyystring_size = 0;
                                                  msyystring_buffer_ptr = msyystring_buffer;
                                                  BEGIN(MSSTRING);
                                               }
 
 <MSSTRING>\'|\"|\"i|\'i                       {
-                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
+                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
                                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
                                                 if (msyystring_begin == msyytext[0]) {
                                                    BEGIN(msyystring_begin_state);
@@ -642,7 +641,7 @@ char path[MS_MAXPATHLEN];
                                                   ++msyystring_size;
                                                   *msyystring_buffer_ptr++ = *msyytext;
                                                   if (strlen(msyytext)==2) {
-                                                      MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
+                                                      MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
                                                                               msyystring_buffer_size, msyystring_buffer_ptr);
                                                      ++msyystring_size;
                                                      *msyystring_buffer_ptr++ = msyytext[1];
@@ -650,21 +649,21 @@ char path[MS_MAXPATHLEN];
                                                 }
                                               }
 
-<MSSTRING>\\\'|\\\"|\\\\|\\                  { 
-                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
+<MSSTRING>\\\'|\\\"|\\\\|\\                  {
+                                                MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
                                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
 
                                                 ++msyystring_size;
                                                 if (strlen(msyytext) == 2)
-                                                    *msyystring_buffer_ptr++ = msyytext[1]; 
+                                                    *msyystring_buffer_ptr++ = msyytext[1];
                                                 else
                                                     *msyystring_buffer_ptr++ = msyytext[0];
                                              }
 
 <MSSTRING>[^\\\'\\\"]+                       {
                                                  char *yptr = msyytext;
-                                                 while ( *yptr ) { 
-                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size, 
+                                                 while ( *yptr ) {
+                                                   MS_LEXER_STRING_REALLOC(msyystring_buffer, msyystring_size,
                                                                            msyystring_buffer_size, msyystring_buffer_ptr);
                                                    ++msyystring_size;
                                                    *msyystring_buffer_ptr++ = *yptr++;
@@ -699,17 +698,17 @@ char path[MS_MAXPATHLEN];
 
 <EXPRESSION_STRING>\'|\"                      {
                                                  msyystring_return_state = MS_TOKEN_LITERAL_STRING;
-                                                 msyystring_begin = msyytext[0]; 
+                                                 msyystring_begin = msyytext[0];
                                                  msyystring_size = 0;
                                                  msyystring_buffer_ptr = msyystring_buffer;
                                                  BEGIN(MSSTRING);
                                               }
 
-<INITIAL,URL_STRING>[a-z/\.][a-z0-9/\._\-\=]*   { 
-                                                    MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+<INITIAL,URL_STRING>[a-z/\.][a-z0-9/\._\-\=]*   {
+                                                    MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                             msyystring_buffer_size, msyystring_buffer_ptr);
-                                                    strcpy(msyystring_buffer, msyytext); 
-                                                    return(MS_STRING); 
+                                                    strcpy(msyystring_buffer, msyytext);
+                                                    return(MS_STRING);
                                                 }
 
 <INITIAL>\n                                     { msyylineno++; }
@@ -726,14 +725,14 @@ char path[MS_MAXPATHLEN];
                                                 }
 
 <EXPRESSION_STRING,URL_VARIABLE,URL_STRING>[\r|\n|\0] {
-  return(0); 
+  return(0);
 }
 
-<INITIAL,URL_VARIABLE,URL_STRING>.              { 
-                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+<INITIAL,URL_VARIABLE,URL_STRING>.              {
+                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext),
                                                                           msyystring_buffer_size, msyystring_buffer_ptr);
-                                                  strcpy(msyystring_buffer, msyytext); 
-                                                  return(0); 
+                                                  strcpy(msyystring_buffer, msyytext);
+                                                  return(0);
                                                 }
 <EXPRESSION_STRING>.                            { return(msyytext[0]); }
 %%

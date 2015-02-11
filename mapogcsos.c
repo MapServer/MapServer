@@ -1922,7 +1922,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
             /*The filter should reflect the underlying db*/
             /*for ogr add a where clause */
             bSpatialDB = 0;
-            if (lp->connectiontype == MS_POSTGIS ||  lp->connectiontype == MS_ORACLESPATIAL || lp->connectiontype == MS_SDE ||     lp->connectiontype == MS_OGR)
+            if (lp->connectiontype == MS_POSTGIS ||  lp->connectiontype == MS_ORACLESPATIAL || lp->connectiontype == MS_OGR)
               bSpatialDB = 1;
 
 
