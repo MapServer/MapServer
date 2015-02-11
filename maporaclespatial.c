@@ -288,7 +288,8 @@ static int ERROR( char *routine, msOracleSpatialHandler *hand, msOracleSpatialDa
 {
   if (hand->last_oci_status == MS_FAILURE) {
     /* there was an error */
-    msSetError( MS_ORACLESPATIALERR, (char *)hand->last_oci_error, routine );
+    msSetError( MS_ORACLESPATIALERR, "OracleSpatial server returned an error, check logs for more details", routine );
+    msDebug("OracleSpatial server returned an error in funtion (%s): %s.\n", routine, (char*)hand->last_oci_error );
 
     /* reset error flag */
     hand->last_oci_status = MS_SUCCESS;
@@ -664,11 +665,14 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
                     OCILogon( hand->envhp, hand->errhp, &hand->svchp, (text *)username, strlen(username), (text *)password, strlen(password), (text *)dblink, strlen(dblink) ) );
 
   if ( !success ) {
+    msDebug(   "Cannot create OCI Handlers. "
+                "Connection failure."
+                "Error: %s."
+                "msOracleSpatialLayerOpen()", hand->last_oci_error);
     msSetError( MS_ORACLESPATIALERR,
                 "Cannot create OCI Handlers. "
-                "Connection failure. Check the connection string. "
-                "Error: %s.",
-                "msOracleSpatialLayerOpen()", hand->last_oci_error);
+                "Connection failure. Check your logs and the connection string. ",
+                "msOracleSpatialLayerOpen()");
 
     msOCICloseHandlers(hand);
     return NULL;
@@ -1711,12 +1715,12 @@ int msOracleSpatialLayerOpen( layerObj *layer )
     return MS_SUCCESS;
 
   if (layer->data == NULL) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error parsing OracleSpatial DATA variable. Must be:"
+    msDebug(    "Error parsing OracleSpatial DATA variable. Must be:"
                 "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
                 "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'."
-                "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE.",
-                "msOracleSpatialLayerOpen()");
+                "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE.");
+    msSetError( MS_ORACLESPATIALERR,
+                "Error parsing OracleSpatial DATA variable. More info in server logs", "msOracleSpatialLayerOpen()");
 
     return MS_FAILURE;
   }
@@ -1907,13 +1911,15 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
   /* parse geom_column_name and table_name */
   if (!msSplitData( layer->data, &geom_column_name, &table_name, &unique, &srid, &indexfield, &function, &version)) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error parsing OracleSpatial DATA variable. Must be:"
+    msDebug( "Error parsing OracleSpatial DATA variable. Must be:"
                 "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
                 "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'."
                 "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE."
-                "Your data statement: %s",
-                "msOracleSpatialLayerWhichShapes()", layer->data );
+                "Your data statement: (%s)"
+                "in msOracleSpatialLayerWhichShapes()", layer->data );
+    msSetError( MS_ORACLESPATIALERR,
+                "Error parsing OracleSpatial DATA variable. More info in server logs",
+                "msOracleSpatialLayerWhichShapes()" );
 
     if (geom_column_name) free(geom_column_name);
     if (srid) free(srid);
@@ -2158,11 +2164,13 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   }
 
   if (!success) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error: %s . "
+    msDebug( "Error: %s . "
                 "Query statement: %s . "
-                "Check your data statement.",
+                "Check your data statement."
                 "msOracleSpatialLayerWhichShapes()", hand->last_oci_error, query_str );
+    msSetError( MS_ORACLESPATIALERR,
+                "Check your data statement and server logs",
+                "msOracleSpatialLayerWhichShapes()");
 
     /* clean items */
     free(items);
@@ -2448,13 +2456,14 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
 
     table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
     if (!msSplitData( layer->data, &geom_column_name, &table_name, &unique, &srid, &indexfield, &function, &version )) {
-      msSetError( MS_ORACLESPATIALERR,
-                  "Error parsing OracleSpatial DATA variable. Must be: "
+      msDebug( "Error parsing OracleSpatial DATA variable. Must be: "
                   "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
                   "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
                   "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
-                  "Your data statement: %s",
-                  "msOracleSpatialLayerGetShape()", layer->data );
+                  "Your data statement: (%s) msOracleSpatialLayerGetShape()", layer->data );
+      msSetError( MS_ORACLESPATIALERR,
+                  "Error parsing OracleSpatial DATA variable. Check server logs. ",
+                  "msOracleSpatialLayerGetShape()");
 
       /* clean nullind  */
       free(nullind);
@@ -2548,11 +2557,12 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
     }
 
     if(!success) {
-      msSetError( MS_ORACLESPATIALERR,
-                  "Error: %s . "
+      msDebug( "Error: %s . "
                   "Query statement: %s ."
-                  "Check your data statement.",
-                  "msOracleSpatialLayerGetShape()", hand->last_oci_error, query_str );
+                  "Check your data statement."
+                  "in msOracleSpatialLayerGetShape()", hand->last_oci_error, query_str );
+      msSetError( MS_ORACLESPATIALERR,
+                  "Error in Query statement. Check your server logs","msOracleSpatialLayerGetShape()");
 
       /* clean nullind  */
       free(nullind);
@@ -2749,13 +2759,16 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
 
   table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
   if (!msSplitData( layer->data, &geom_column_name, &table_name, &unique, &srid, &indexfield, &function, &version )) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error parsing OracleSpatial DATA variable. Must be: "
+    msDebug(  "Error parsing OracleSpatial DATA variable. Must be: "
                 "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
                 "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
                 "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
-                "Your data statement: %s",
-                "msOracleSpatialLayerGetAutoProjection()", layer->data );
+                "Your data statement: (%s) "
+                "in msOracleSpatialLayerGetAutoProjection()", layer->data );
+
+    msSetError( MS_ORACLESPATIALERR,
+                "Error parsing OracleSpatial DATA variable",
+                "msOracleSpatialLayerGetAutoProjection()");
 
     if (geom_column_name) free(geom_column_name);
     if (srid) free(srid);
@@ -2781,11 +2794,14 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
             && TRY( hand, OCIAttrGet( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&sthand->rows_fetched, (ub4 *)0, (ub4)OCI_ATTR_ROWS_FETCHED, hand->errhp ) );
 
   if(!success) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error: %s . "
+    msDebug( "Error: %s . "
                 "Query statement: %s . "
-                "Check your data statement.",
-                "msOracleSpatialLayerGetAutoProjection()", hand->last_oci_error, query_str );
+                "Check your data statement."
+                "in msOracleSpatialLayerGetAutoProjection()", hand->last_oci_error, query_str );
+    msSetError( MS_ORACLESPATIALERR,
+                "Error "
+                "Check your data statement and server logs",
+                "msOracleSpatialLayerGetAutoProjection()" );
 
     if (geom_column_name) free(geom_column_name);
     if (srid) free(srid);
@@ -2963,13 +2979,15 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
 
   table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
   if (!msSplitData(layer->data, &geom_column_name, &table_name, &unique, &srid, &indexfield, &function, &version)) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error parsing OracleSpatial DATA variable. Must be: "
+    msDebug(   "Error parsing OracleSpatial DATA variable. Must be: "
                 "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
                 "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
                 "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
-                "Your data statement: %s",
-                "msOracleSpatialLayerGetItems()", layer->data );
+                "Your data statement: (%s)"
+                "in msOracleSpatialLayerGetItems()", layer->data );
+    msSetError( MS_ORACLESPATIALERR,
+                "Error parsing OracleSpatial DATA variable. Check server logs. ",
+                "msOracleSpatialLayerGetItems()");
 
     if (geom_column_name) free(geom_column_name);
     if (srid) free(srid);
@@ -3153,13 +3171,15 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
 
   table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
   if (!msSplitData( layer->data, &geom_column_name, &table_name, &unique, &srid, &indexfield, &function, &version )) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error parsing OracleSpatial DATA variable. Must be: "
+    msDebug(   "Error parsing OracleSpatial DATA variable. Must be: "
                 "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
                 "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
                 "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
-                "Your data statement: %s",
-                "msOracleSpatialLayerGetExtent()", layer->data );
+                "Your data statement: (%s) "
+                "in msOracleSpatialLayerGetExtent()", layer->data );
+    msSetError( MS_ORACLESPATIALERR,
+                "Error parsing OracleSpatial DATA variable. Check server logs. ",
+                "msOracleSpatialLayerGetExtent()");
     /* clean items */
     free(items);
 
@@ -3196,11 +3216,14 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
   }
 
   if(!success) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error: %s . "
+    msDebug(   "Error: %s . "
                 "Query statement: %s . "
-                "Check your data statement.",
-                "msOracleSpatialLayerGetExtent()", hand->last_oci_error, query_str );
+                "Check your data statement."
+                "in msOracleSpatialLayerGetExtent()", hand->last_oci_error, query_str );
+
+    msSetError( MS_ORACLESPATIALERR,
+                "Check your data statement and server logs",
+                "msOracleSpatialLayerGetExtent()" );
 
     /* clean items */
     free(items);
@@ -3223,11 +3246,13 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
   }
 
   if(!success) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error: %s . "
+    msDebug(    "Error: %s . "
                 "Query statement: %s ."
-                "Check your data statement.",
-                "msOracleSpatialLayerGetExtent()", hand->last_oci_error, query_str );
+                "Check your data statement."
+                "in msOracleSpatialLayerGetExtent()", hand->last_oci_error, query_str );
+    msSetError( MS_ORACLESPATIALERR,
+                "Check your data statement and server logs",
+                "msOracleSpatialLayerGetExtent()" );
 
     /* clean items */
     free(items);
@@ -3451,13 +3476,15 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
 
   table_name = (char *) malloc(sizeof(char) * TABLE_NAME_SIZE);
   if (!msSplitData( layer->data, &geom_column_name, &table_name, &unique, &srid, &indexfield, &function, &version )) {
-    msSetError( MS_ORACLESPATIALERR,
-                "Error parsing OracleSpatial DATA variable. Must be: "
+    msDebug(   "Error parsing OracleSpatial DATA variable. Must be: "
                 "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
                 "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
                 "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
-                "Your data statement: %s",
-                "msOracleSpatialLayerGetExtent()", layer->data );
+                "Your data statement: (%s)"
+                "in msOracleSpatialLayerGetExtent()", layer->data );
+    msSetError( MS_ORACLESPATIALERR,
+                "Error parsing OracleSpatial DATA variable. Check server logs. ",
+                "msOracleSpatialLayerGetExtent()");
     /* clean items */
     
     if (geom_column_name) free(geom_column_name);
