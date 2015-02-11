@@ -886,10 +886,11 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(!msLayerSupportsCommonFilters(layer))
     status = msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
 
-  if(status != MS_SUCCESS) {
-    msLayerClose(layer);
-    return MS_FAILURE;
-  }
+  /* we ignore the translation status here - MapServer will fall back to its own expression evaluation */
+  // if(status != MS_SUCCESS) {
+  //  msLayerClose(layer);
+  //  return MS_FAILURE;
+  // }
 
   /* identify target shapes */
   if(layer->transform == MS_TRUE) {
