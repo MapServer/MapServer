@@ -904,21 +904,20 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   }
 
   /* test whether we should omit spatial filtering */
+  /* TODO: once this driver supports expression translation then filter->native_string will need to be considered here */
   msMSSQL2008LayerGetExtent(layer, &extent);
-  if (rect.minx <= extent.minx && rect.miny <= extent.miny && 
-      rect.maxx >= extent.maxx && rect.maxy >= extent.maxy) {
+  if (rect.minx <= extent.minx && rect.miny <= extent.miny && rect.maxx >= extent.maxx && rect.maxy >= extent.maxy) {
       /* no spatial filter used */
-      if(!layer->filter.native_string) {
-        snprintf(query_string_temp, sizeof(query_string_temp),  "SELECT %s from %s", columns_wanted, data_source );
+      if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s", columns_wanted, data_source );
       } else {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, layer->filter.native_string );
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
       }
-  }
-  else {
-      if(!layer->filter.native_string) {
-        snprintf(query_string_temp, sizeof(query_string_temp),  "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layerinfo->geom_column, box3d );
+  } else {
+      if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layerinfo->geom_column, box3d );
       } else {
-        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layer->filter.native_string, layerinfo->geom_column, box3d );
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, msLayerGetProcessingKey(layer, "NATIVE_FILTER"), layerinfo->geom_column, box3d );
       }
   }
 
@@ -2221,7 +2220,7 @@ MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj 
   assert(layer != NULL);
   assert(vtable != NULL);
 
-  /* vtable->LayerTranslateFilter, use default */
+  /* vtable->LayerTranslateFilter, use default - need to add this... */
 
   vtable->LayerInitItemInfo = msMSSQL2008LayerInitItemInfo;
   vtable->LayerFreeItemInfo = msMSSQL2008LayerFreeItemInfo;
