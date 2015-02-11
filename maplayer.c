@@ -1123,6 +1123,13 @@ msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value)
   }
 }
 
+void msLayerSubstituteProcessing( layerObj *layer, const char *from, const char *to ) {
+  int i;
+  for( i = 0; i < layer->numprocessing; i++ ) {
+    layer->processing[i] = msCaseReplaceSubstring(layer->processing[i], from, to);
+  }
+}
+
 void msLayerAddProcessing( layerObj *layer, const char *directive )
 
 {
