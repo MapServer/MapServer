@@ -103,12 +103,13 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
   } else {
     image = NULL;
   }
-  image->map = map;
-
+  
   if(!image) {
     msSetError(MS_IMGERR, "Unable to initialize image.", "msPrepareImage()");
     return(NULL);
   }
+  
+  image->map = map;
 
   /*
    * If we want to support nonsquare pixels, note that now, otherwise
@@ -877,18 +878,8 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (layer->styleitem &&
      (strncasecmp(layer->styleitem, "javascript://", 13) == 0)) {  
     status = msLayerWhichItems(layer, MS_TRUE, NULL);
-  }
-  else {
+  } else {
     status = msLayerWhichItems(layer, MS_FALSE, NULL);
-  }
-
-  /* translate filter (if necessary) */
-  if(!msLayerSupportsCommonFilters(layer))
-    status = msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
-
-  if(status != MS_SUCCESS) {
-    msLayerClose(layer);
-    return MS_FAILURE;
   }
 
   /* identify target shapes */
@@ -898,8 +889,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
       msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
 #endif
-  }
-  else {
+  } else {
     searchrect.minx = searchrect.miny = 0;
     searchrect.maxx = map->width-1;
     searchrect.maxy = map->height-1;

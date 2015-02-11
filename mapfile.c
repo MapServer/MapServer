@@ -6756,6 +6756,7 @@ static void layerSubstituteString(layerObj *layer, const char *from, const char 
   /* The bindvalues are most useful when able to substitute values from the URL */
   hashTableSubstituteString(&layer->bindvals, from, to);
   hashTableSubstituteString(&layer->metadata, from, to);
+  msLayerSubstituteProcessing( layer, from, to );
   for(c=0; c<layer->numclasses;c++) {
     classSubstituteString(layer->class[c], from, to);
   }
@@ -6856,6 +6857,7 @@ void msApplyDefaultSubstitutions(mapObj *map)
   /* output formats (#3751) */
   for(i=0; i<map->numoutputformats; i++) {
     applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "filename", &(map->web.validation));
+    applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "JSONP", &(map->web.validation));
   }
 
   for(i=0; i<map->numlayers; i++) {
@@ -6872,6 +6874,10 @@ void msApplyDefaultSubstitutions(mapObj *map)
 }
 
 char *_get_param_value(const char *key, char **names, char **values, int npairs) {
+
+  if(getenv(key)) { /* envirronment override */
+    return getenv(key);
+  }
   while(npairs) {
     npairs--;
     if(strcasecmp(key, names[npairs]) == 0) {

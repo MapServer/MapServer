@@ -2381,6 +2381,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT char *msLayerGetProcessing( layerObj *layer, int proc_index);
   MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
   MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
+  MS_DLL_EXPORT void msLayerSubstituteProcessing( layerObj *layer, const char *from, const char *to );
   MS_DLL_EXPORT char *msLayerGetFilterString( layerObj *layer );
   MS_DLL_EXPORT int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape);
 

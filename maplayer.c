@@ -281,6 +281,9 @@ int msLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteri
 */
 int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  if(!msLayerSupportsCommonFilters(layer))
+    msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
+
   if ( ! layer->vtable) {
     int rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS)
@@ -1120,6 +1123,13 @@ msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value)
   if( directive != NULL ) {
     msLayerAddProcessing( layer, directive );
     free( directive );
+  }
+}
+
+void msLayerSubstituteProcessing( layerObj *layer, const char *from, const char *to ) {
+  int i;
+  for( i = 0; i < layer->numprocessing; i++ ) {
+    layer->processing[i] = msCaseReplaceSubstring(layer->processing[i], from, to);
   }
 }
 

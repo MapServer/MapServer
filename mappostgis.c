@@ -1129,7 +1129,8 @@ msPostGISRetrieveVersion(PGconn *pgconn)
   pgresult = PQexecParams(pgconn, sql,0, NULL, NULL, NULL, NULL, 0);
 
   if ( !pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
-    msSetError(MS_QUERYERR, "Error executing SQL: %s", "msPostGISRetrieveVersion()", sql);
+    msDebug("Error executing SQL: (%s) in msPostGISRetrieveVersion()", sql);
+    msSetError(MS_QUERYERR, "Error executing SQL. check server logs.", "msPostGISRetrieveVersion()");
     return MS_FAILURE;
   }
 
@@ -2456,7 +2457,8 @@ int msPostGISLayerOpen(layerObj *layer)
         }
       }
 
-      msSetError(MS_QUERYERR, "Database connection failed (%s) with connect string '%s'\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn), maskeddata);
+      msDebug( "Database connection failed (%s) with connect string '%s'\nIs the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port? in msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn), maskeddata);
+      msSetError(MS_QUERYERR, "Database connection failed. Check server logs for more details.Is the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "msPostGISLayerOpen()");
 
       if(layerinfo->pgconn) PQfinish(layerinfo->pgconn);
       free(maskeddata);
@@ -2476,7 +2478,8 @@ int msPostGISLayerOpen(layerObj *layer)
       PQreset(layerinfo->pgconn);
       if( PQstatus(layerinfo->pgconn) != CONNECTION_OK ) {
         /* Nope, time to bail out. */
-        msSetError(MS_QUERYERR, "PostgreSQL database connection gone bad (%s)", "msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn));
+        msSetError(MS_QUERYERR, "PostgreSQL database connection. Check server logs for more details", "msPostGISLayerOpen()");
+        msDebug( "PostgreSQL database connection gone bad (%s) in msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn));
         free(layerinfo);
         /* FIXME: we should also release the connection from the pool in this case, but it is stale...
          * for the time being we do not release it so it can never be used again. If this happens multiple
@@ -2712,10 +2715,8 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   /* Something went wrong. */
   if (!pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
-    if ( layer->debug ) {
-      msDebug("msPostGISLayerWhichShapes(): Error (%s) executing query: %s\n", PQerrorMessage(layerinfo->pgconn), strSQL);
-    }
-    msSetError(MS_QUERYERR, "Error executing query: %s ", "msPostGISLayerWhichShapes()", PQerrorMessage(layerinfo->pgconn));
+    msDebug("msPostGISLayerWhichShapes(): Error (%s) executing query: %s\n", PQerrorMessage(layerinfo->pgconn), strSQL);
+    msSetError(MS_QUERYERR, "Error executing query. Check server logs","msPostGISLayerWhichShapes()");
     free(strSQL);
     if (pgresult) {
       PQclear(pgresult);
@@ -2893,10 +2894,8 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
     /* Something went wrong. */
     if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
-      if ( layer->debug ) {
-        msDebug("msPostGISLayerGetShape(): Error (%s) executing SQL: %s\n", PQerrorMessage(layerinfo->pgconn), strSQL );
-      }
-      msSetError(MS_QUERYERR, "Error executing SQL: %s", "msPostGISLayerGetShape()", PQerrorMessage(layerinfo->pgconn));
+      msDebug("msPostGISLayerGetShape(): Error (%s) executing SQL: %s\n", PQerrorMessage(layerinfo->pgconn), strSQL );
+      msSetError(MS_QUERYERR, "Error executing SQL. Check server logs.","msPostGISLayerGetShape()");
 
       if (pgresult) {
         PQclear(pgresult);
@@ -3119,10 +3118,8 @@ int msPostGISLayerGetItems(layerObj *layer)
   pgresult = PQexecParams(layerinfo->pgconn, sql,0, NULL, NULL, NULL, NULL, 0);
 
   if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
-    if ( layer->debug ) {
-      msDebug("msPostGISLayerGetItems(): Error (%s) executing SQL: %s\n", PQerrorMessage(layerinfo->pgconn), sql);
-    }
-    msSetError(MS_QUERYERR, "Error executing SQL: %s", "msPostGISLayerGetItems()", PQerrorMessage(layerinfo->pgconn));
+    msDebug("msPostGISLayerGetItems(): Error (%s) executing SQL: %s\n", PQerrorMessage(layerinfo->pgconn), sql);
+    msSetError(MS_QUERYERR, "Error executing SQL. Check server logs","msPostGISLayerGetItems()");
     if (pgresult) {
       PQclear(pgresult);
     }
@@ -3229,7 +3226,8 @@ int msPostGISLayerGetExtent(layerObj *layer, rectObj *extent)
   msFree(strSQL);
 
   if ( (!pgresult) || (PQresultStatus(pgresult) != PGRES_TUPLES_OK) ) {
-    msSetError(MS_MISCERR, "Error executing SQL: %s", "msPostGISLayerGetExtent()", PQerrorMessage(layerinfo->pgconn));
+    msDebug("Error executing SQL: (%s) in msPostGISLayerGetExtent()", PQerrorMessage(layerinfo->pgconn));
+    msSetError(MS_MISCERR, "Error executing SQL. Check server logs.","msPostGISLayerGetExtent()");
     if (pgresult)
       PQclear(pgresult);
 

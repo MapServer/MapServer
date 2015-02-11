@@ -2,12 +2,10 @@
 MapServer Revision History
 ==========================
 
-$Id$
-
 This is a human-readable revision history which will attempt to document
 required changes for users to migrate from one version of MapServer to the
 next.  Developers are strongly encouraged to document their changes and
-their impacts on the users here.  (Please add the most recent changes to 
+their impacts on the users here.  (Please add the most recent changes to
 the top of the list.)
 
 For a complete change history, please see the Git log comments.
@@ -23,15 +21,27 @@ For a complete change history, please see the Git log comments.
 
 - Apply RFC86 scaletoken substitutions to layer->PROCESSING entries
 
+- RFC113 Layer Compositing Pipeline
+
+- RFC109 Optimizing Runtime Substitutions
+
 - RFC108 Heatmap / Kernel-Density Layers
+
+- RFC106 Support of Geomtransform JavaScript Plugin
+
+- RFC105 Support for WFS 2.0 (server side)
 
 - RFC104 Bitmap Label removal, replaced with inlined truetype font
 
 - RFC103 Layer Level Character Encoding
 
+- RFC102 Support of Styleitem JavaScript Plugin
+
 - RFC99 GD removal
 
 - RFC98 Complex Text Rendering / Text Rendering Overhaul
+
+- RFC93 UTF Grid Support
 
 6.4 release (2013/09/17)
 ---------------------------
