@@ -6856,6 +6856,7 @@ void msApplyDefaultSubstitutions(mapObj *map)
   /* output formats (#3751) */
   for(i=0; i<map->numoutputformats; i++) {
     applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "filename", &(map->web.validation));
+    applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "JSONP", &(map->web.validation));
   }
 
   for(i=0; i<map->numlayers; i++) {

@@ -1153,8 +1153,11 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     char buffer[1024];
     int  bytes_read;
     FILE *fp;
+    const char *jsonp;
 
+    jsonp = msGetOutputFormatOption( format, "JSONP", NULL );
     if( sendheaders ) {
+      if( !jsonp )
       msIO_setHeader("Content-Disposition","attachment; filename=%s",
                      CPLGetFilename( file_list[0] ) );
       if( format->mimetype )
@@ -1173,9 +1176,13 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       return MS_FAILURE;
     }
 
+    if( jsonp != NULL ) msIO_fprintf( stdout, "%s(", jsonp );
+
     while( (bytes_read = VSIFReadL( buffer, 1, sizeof(buffer), fp )) > 0 )
       msIO_fwrite( buffer, 1, bytes_read, stdout );
     VSIFCloseL( fp );
+
+    if (jsonp != NULL) msIO_fprintf( stdout, ");\n" );
   }
 
   /* -------------------------------------------------------------------- */
