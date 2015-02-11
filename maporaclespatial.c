@@ -1007,7 +1007,8 @@ static int msOCIConvertCircle( pointObj *pt )
 
 /*function that creates the correct sql for filter and filteritem*/
 static void osFilteritem(layerObj *layer, int function, char *query_str, size_t size, int mode)
-{ 
+{
+  char *native_filter; 
   if (layer->filter.native_string != NULL) {
     if (mode == 1)
       strlcat( query_str, " WHERE ", size);
@@ -1031,13 +1032,18 @@ static void osFilteritem(layerObj *layer, int function, char *query_str, size_t 
 
   /* Handle a native filter set as a PROCESSING option (#5001). */
   if ( msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL ) {
-    if ((function != FUNCTION_NONE)||(layer->filter.native_string != NULL)) {
-     strlcat( query_str, " AND ", size);
-    }{
+     if ((function == FUNCTION_NONE)&&(layer->filter.native_string == NULL)) {
      strlcat( query_str, " WHERE ", size);
-    }
-    char *native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
-    sprintf(query_str + strlen(query_str) , size-strlen(query_str), " %s ", native_filter);
+     }
+     if ((function == FUNCTION_NONE)&&(layer->filter.native_string != NULL)) {
+     strlcat( query_str, " AND ", size);
+     }
+    native_filter = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
+    snprintf(query_str + strlen(query_str) , size-strlen(query_str), " %s ", native_filter);
+    if (function != FUNCTION_NONE) {
+     strlcat( query_str, " AND ", size);
+     }
+   
   }
 
 
