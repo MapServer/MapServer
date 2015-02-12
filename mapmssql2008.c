@@ -151,6 +151,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
   char        *urid_name;     /* name of user-specified unique identifier or OID */
   char        *user_srid;     /* zero length = calculate, non-zero means using this value! */
   char    *index_name;  /* hopefully this isn't necessary - but if the optimizer ain't cuttin' it... */
+  char    *sort_spec;  /* the sort by specification which should be applied to the generated select statement */
 
   msODBCconn * conn;          /* Connection to db */
   msGeometryParserInfo gpi;   /* struct for the geometry parser */
@@ -451,7 +452,7 @@ static char *strstrIgnoreCase(const char *haystack, const char *needle)
   return (char *) (match < 0 ? NULL : haystack + match);
 }
 
-static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **geom_column_type, char **table_name, char **urid_name, char **user_srid, char **index_name, int debug);
+static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **geom_column_type, char **table_name, char **urid_name, char **user_srid, char **index_name, char **sort_spec, int debug);
 
 /* Close connection and handles */
 static void msMSSQL2008CloseConnection(void *conn_handle)
@@ -626,6 +627,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
   layerinfo->urid_name = NULL;
   layerinfo->user_srid = NULL;
   layerinfo->index_name = NULL;
+  layerinfo->sort_spec = NULL;
   layerinfo->conn = NULL;
 
   layerinfo->conn = (msODBCconn *) msConnPoolRequest(layer);
@@ -688,7 +690,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
 
   setMSSQL2008LayerInfo(layer, layerinfo);
 
-  if (msMSSQL2008LayerParseData(layer, &layerinfo->geom_column, &layerinfo->geom_column_type, &layerinfo->geom_table, &layerinfo->urid_name, &layerinfo->user_srid, &layerinfo->index_name, layer->debug) != MS_SUCCESS) {
+  if (msMSSQL2008LayerParseData(layer, &layerinfo->geom_column, &layerinfo->geom_column_type, &layerinfo->geom_table, &layerinfo->urid_name, &layerinfo->user_srid, &layerinfo->index_name, &layerinfo->sort_spec, layer->debug) != MS_SUCCESS) {
     msSetError( MS_QUERYERR, "Could not parse the layer data", "msMSSQL2008LayerOpen()");
     return MS_FAILURE;
   }
@@ -920,6 +922,10 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
       }
   }
 
+  if (layerinfo->sort_spec) {
+      strcat(query_string_temp, layerinfo->sort_spec);
+  }
+
   msFree(data_source);
   msFree(f_table_name);
   msFree(columns_wanted);
@@ -1019,6 +1025,11 @@ int msMSSQL2008LayerClose(layerObj *layer)
     if(layerinfo->index_name) {
       msFree(layerinfo->index_name);
       layerinfo->index_name = NULL;
+    }
+
+    if(layerinfo->sort_spec) {
+      msFree(layerinfo->sort_spec);
+      layerinfo->sort_spec = NULL;
     }
 
     if(layerinfo->sql) {
@@ -1995,9 +2006,9 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
  * column name, table name and name of a column to serve as a
  * unique record id
  */
-static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **geom_column_type, char **table_name, char **urid_name, char **user_srid, char **index_name, int debug)
+static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, char **geom_column_type, char **table_name, char **urid_name, char **user_srid, char **index_name, char **sort_spec, int debug)
 {
-  char    *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_urid, *pos_geomtype, *pos_geomtype2, *pos_indexHint, *data;
+  char    *pos_opt, *pos_scn, *tmp, *pos_srid, *pos_urid, *pos_geomtype, *pos_geomtype2, *pos_indexHint, *data, *pos_order;
   int     slength;
 
   data = msStrdup(layer->data);
@@ -2114,6 +2125,13 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
       msFree(data);
       return MS_FAILURE;
     }
+  }
+
+  /* Find the order by */
+  pos_order = strstrIgnoreCase(pos_opt, " order by ");
+  
+  if (pos_order) {
+    *sort_spec = msStrdup(pos_order);
   }
 
   if(debug) {

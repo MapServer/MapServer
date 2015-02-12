@@ -986,6 +986,69 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #endif
 }
 
+#ifdef USE_PROJ
+static int msProjectSortString(const void* firstelt, const void* secondelt)
+{
+    char* firststr = *(char**)firstelt;
+    char* secondstr = *(char**)secondelt;
+    return strcmp(firststr, secondstr);
+}
+
+/************************************************************************/
+/*                        msGetProjectNormalized()                      */
+/************************************************************************/
+
+static projectionObj* msGetProjectNormalized( const projectionObj* p )
+{
+  int i;
+  char* pszNewProj4Def;
+  projectionObj* pnew;
+
+  pnew = (projectionObj*)msSmallMalloc(sizeof(projectionObj));
+  msInitProjection(pnew);
+  msCopyProjection(pnew, (projectionObj*)p);
+
+  if(p->proj == NULL )
+      return pnew;
+
+  /* Normalize definition so that msProjectDiffers() works better */
+  pszNewProj4Def = pj_get_def( p->proj, 0 );
+  msFreeCharArray(pnew->args, pnew->numargs);
+  pnew->args = msStringSplit(pszNewProj4Def,'+', &pnew->numargs);
+  for(i = 0; i < pnew->numargs; i++)
+  {
+      /* Remove trailing space */
+      if( strlen(pnew->args[i]) > 0 && pnew->args[i][strlen(pnew->args[i])-1] == ' ' )
+          pnew->args[i][strlen(pnew->args[i])-1] = '\0';
+      /* Remove spurious no_defs or init= */
+      if( strcmp(pnew->args[i], "no_defs") == 0 ||
+          strncmp(pnew->args[i], "init=", 5) == 0 )
+      {
+          if( i < pnew->numargs - 1 )
+          {
+              msFree(pnew->args[i]);
+              memmove(pnew->args + i, pnew->args + i + 1,
+                      sizeof(char*) * (pnew->numargs - 1 -i ));
+          }
+          pnew->numargs --;
+          i --;
+          continue;
+      }
+  }
+  /* Sort the strings so they can be compared */
+  qsort(pnew->args, pnew->numargs, sizeof(char*), msProjectSortString);
+  /*{
+      fprintf(stderr, "'%s' =\n", pszNewProj4Def);
+      for(i = 0; i < p->numargs; i++)
+          fprintf(stderr, "'%s' ", p->args[i]);
+      fprintf(stderr, "\n");
+  }*/
+  pj_dalloc(pszNewProj4Def);
+  
+  return pnew;
+}
+#endif /* USE_PROJ */
+
 /************************************************************************/
 /*                        msProjectionsDiffer()                         */
 /************************************************************************/
@@ -1001,7 +1064,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 ** has no arguments, since reprojection won't work anyways.
 */
 
-int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
+static int msProjectionsDifferInternal( projectionObj *proj1, projectionObj *proj2 )
 
 {
   int   i;
@@ -1023,6 +1086,31 @@ int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
   }
 
   return MS_FALSE;
+}
+
+int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
+{
+#ifdef USE_PROJ
+    int ret;
+
+    ret = msProjectionsDifferInternal(proj1, proj2); 
+    if( ret ) 
+    {
+        projectionObj* p1normalized;
+        projectionObj* p2normalized;
+
+        p1normalized = msGetProjectNormalized( proj1 );
+        p2normalized = msGetProjectNormalized( proj2 );
+        ret = msProjectionsDifferInternal(p1normalized, p2normalized);
+        msFreeProjection(p1normalized);
+        msFree(p1normalized);
+        msFreeProjection(p2normalized);
+        msFree(p2normalized);
+    }
+    return ret;
+#else
+    return msProjectionsDifferInternal(proj1, proj2);
+#endif
 }
 
 /************************************************************************/
@@ -1156,6 +1244,18 @@ static const char *msProjFinder( const char *filename)
   return last_filename;
 }
 #endif /* def USE_PROJ */
+
+/************************************************************************/
+/*                       msProjLibInitFromEnv()                         */
+/************************************************************************/
+void msProjLibInitFromEnv()
+{
+  const char *val;
+
+  if( (val=getenv( "PROJ_LIB" )) != NULL ) {
+    msSetPROJ_LIB(val, NULL);
+  }
+}
 
 /************************************************************************/
 /*                           msSetPROJ_LIB()                            */

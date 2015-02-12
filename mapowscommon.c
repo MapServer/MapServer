@@ -56,7 +56,7 @@
  *
  * @param map mapObj used to fetch WEB/METADATA
  * @param servicetype the OWS type
- * @param version the version of the OWS
+ * @param supported_versions the supported version(s) of the OWS
  *
  * @return psRootNode xmlNodePtr of XML construct
  *
@@ -64,7 +64,7 @@
 
 xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
                                             const char *servicetype,
-                                            const char *version,
+                                            const char *supported_versions,
                                             const char *namespaces,
                                             const char *validated_language)
 {
@@ -112,7 +112,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
 
   xmlNewProp(psNode, BAD_CAST "codeSpace", BAD_CAST MS_OWSCOMMON_OGC_CODESPACE);
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceTypeVersion", BAD_CAST version);
+  msLibXml2GenerateList(psRootNode, psNsOws, "ServiceTypeVersion", supported_versions, ',');
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "fees", validated_language);
 

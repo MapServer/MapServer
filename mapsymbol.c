@@ -805,6 +805,21 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex)
                 }
             }
         }
+        /* Update symbol references in labelcache */
+        for(c = 0; c < MS_MAX_LABEL_PRIORITY; c++) {
+            labelCacheSlotObj *cacheslot = &(symbolset->map->labelcache.slots[c]);
+            for(l = 0; l < cacheslot->numlabels; l++) {
+                labelCacheMemberObj *cachePtr = &(cacheslot->labels[l]);
+                for(lb = 0; lb < cachePtr->numtextsymbols; lb++) {
+                    label = cachePtr->textsymbols[lb]->label;
+                    for (s = 0; s < label->numstyles; s++) {
+                        style = label->styles[s];
+                        if (style->symbol >= nSymbolIndex)
+                            --style->symbol;
+                    }
+                }
+            }
+        }
     }
     return symbol;
   }

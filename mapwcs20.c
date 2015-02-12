@@ -634,8 +634,8 @@ static int msWCSParseScaleString20(char *string,
 /*      Subset string: axis ( value )                                   */
 /************************************************************************/
 
-static int msWCSParseScaleExtentString20(char *string, char *outAxis, 
-                                         size_t axisStringLen, 
+static int msWCSParseScaleExtentString20(char *string, char *outAxis,
+                                         size_t axisStringLen,
                                          int *outMin, int *outMax)
 {
   char *number = NULL;
@@ -720,7 +720,7 @@ xmlNodePtr msLibXml2GetFirstChild(xmlNodePtr parent, const char *name) {
 
 
 /*
-  Utility function to get the first child of a node with a given node name and 
+  Utility function to get the first child of a node with a given node name and
   namespace.
   */
 
@@ -736,7 +736,7 @@ xmlNodePtr msLibXml2GetFirstChildNs(xmlNodePtr parent, const char *name, xmlNsPt
       return node;
     }
   }
-  return NULL;  
+  return NULL;
 }
 
 /************************************************************************/
@@ -1243,7 +1243,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
           XML_FOREACH_CHILD(extensionNode, rangeItemNode) {
 
             XML_LOOP_IGNORE_COMMENT_OR_TEXT(rangeItemNode);
-            
+
             XML_ASSERT_NODE_NAME(rangeItemNode, "RangeItem");
 
             if (!rangeItemNode->children) {
@@ -1278,7 +1278,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
               value = msSmallCalloc(length, sizeof(char));
 
               snprintf(value, length, "%s:%s", start, stop);
-              
+
               xmlFree(start);
               xmlFree(stop);
 
@@ -1296,7 +1296,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
         else if (EQUAL((char *) extensionNode->name, "outputCrs")) {
           msFree(params->outputcrs);
-          params->outputcrs = (char *)xmlNodeGetContent(extensionNode); 
+          params->outputcrs = (char *)xmlNodeGetContent(extensionNode);
         }
 
         else if (EQUAL((char *) extensionNode->name, "Interpolation")) {
@@ -1316,7 +1316,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
         }
 
         /* GeoTIFF parameters */
-        else if (EQUAL((char *) extensionNode->name, "parameters") 
+        else if (EQUAL((char *) extensionNode->name, "parameters")
                 && extensionNode->ns
                 && EQUAL((char *)extensionNode->ns->href, "http://www.opengis.net/gmlcov/geotiff/1.0")) {
 
@@ -1328,7 +1328,7 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
             content = (char *)xmlNodeGetContent(parameter);
 
-            params->format_options = 
+            params->format_options =
               CSLAddNameValue(params->format_options, (char *)parameter->name, content);
             xmlFree(content);
           }
@@ -1574,7 +1574,7 @@ int msWCSParseRequest20(mapObj *map,
         char axisName[500];
         int min, max;
 
-        if (msWCSParseScaleExtentString20(tokens[j], axisName, sizeof(axisName), 
+        if (msWCSParseScaleExtentString20(tokens[j], axisName, sizeof(axisName),
                                           &min, &max) != MS_SUCCESS) {
           msFreeCharArray(tokens, num);
           return MS_FAILURE;
@@ -1685,7 +1685,7 @@ int msWCSParseRequest20(mapObj *map,
       }
       msFreeCharArray(tokens, num);
     } else if (EQUALN(key, "GEOTIFF:", 8)) {
-      params->format_options = 
+      params->format_options =
         CSLAddNameValue(params->format_options, key, value);
     }
     /* Ignore all other parameters here */
@@ -1711,7 +1711,7 @@ static int msWCSValidateAndFindAxes20(
   static const int numAxis = 2;
   char *validXAxisNames[] = {"x", "xaxis", "x-axis", "x_axis", "long", "long_axis", "long-axis", "lon", "lon_axis", "lon-axis", NULL};
   char *validYAxisNames[] = {"y", "yaxis", "y-axis", "y_axis", "lat", "lat_axis", "lat-axis", NULL};
-  char **validAxisNames[2]; 
+  char **validAxisNames[2];
   int iParamAxis, iAcceptedAxis, iName, i;
 
   validAxisNames[0] = validXAxisNames;
@@ -3081,7 +3081,7 @@ static int msWCSGetCapabilities20_CreateProfiles(
 
   /* navigate to node where profiles shall be inserted */
   for(psTmpNode = psServiceIdentification->children; psTmpNode->next != NULL; psTmpNode = psTmpNode->next) {
-    if(EQUAL((char *)psTmpNode->name, "ServiceTypeVersion"))
+    if(EQUAL((char *)psTmpNode->name, "ServiceTypeVersion") && !EQUAL((char *)psTmpNode->next->name, "ServiceTypeVersion"))
       break;
   }
 
@@ -3237,7 +3237,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
   /* -------------------------------------------------------------------- */
   if ( MS_WCS_20_CAPABILITIES_INCLUDE_SECTION(params, "ServiceIdentification") ) {
     psNode = xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
-                           psOwsNs, map, "OGC WCS", params->version, "CO", NULL));
+                           psOwsNs, map, "OGC WCS", "2.0.1,1.1.1,1.0.0", "CO", NULL));
     msWCSGetCapabilities20_CreateProfiles(map, psNode, psOwsNs);
   }
 
@@ -3321,11 +3321,11 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       /* TODO: use URIs/URLs once they are specified */
       char *interpolation_methods[] = {"NEAREST", "AVERAGE", "BILINEAR"};
       int i;
-      xmlNodePtr imNode = xmlNewChild(psExtensionNode, psIntNs, 
+      xmlNodePtr imNode = xmlNewChild(psExtensionNode, psIntNs,
                                       BAD_CAST "InterpolationMetadata", NULL);
 
       for (i=0; i < 3; ++i) {
-        xmlNewChild(imNode, psIntNs, BAD_CAST "InterpolationSupported", 
+        xmlNewChild(imNode, psIntNs, BAD_CAST "InterpolationSupported",
                     BAD_CAST interpolation_methods[i]);
       }
     }
@@ -3339,7 +3339,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       if((crs_list = msOWSGetProjURI(&(map->projection),
                                         &(map->web.metadata),
                                         "CO", MS_FALSE)) != NULL ) {
-        msLibXml2GenerateList(crsMetadataNode, psCrsNs, "crsSupported", 
+        msLibXml2GenerateList(crsMetadataNode, psCrsNs, "crsSupported",
                               crs_list, ' ');
       } else {
         /* could not determine list of CRSs */
@@ -3611,7 +3611,7 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
   char *crs = NULL;
   int have_scale, have_size, have_resolution;
   int have_global_scale = (params->scale != MS_WCS20_UNBOUNDED) ? 1 : 0;
-  
+
   if (axes[0] != NULL) {
     if(axes[0]->subset != NULL) {
       msDebug("Subset for X-axis found: %s\n", axes[0]->subset->axis);
@@ -4029,7 +4029,7 @@ static int msWCSSetFormatParams20(outputFormatObj* format, char** format_options
       return MS_FAILURE;
     }
 
-    CPLFree(key);
+    msFree(key);
 
     /* fetch next option */
     format_option = format_options[++i];
@@ -4544,7 +4544,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
       msFree(map->imagetype);
       map->imagetype = origImageType;
-      
+
     }
   }
 

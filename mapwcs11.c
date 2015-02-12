@@ -459,7 +459,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
       || strstr(params->section,"All") != NULL
       || strstr(params->section,"ServiceIdentification") != NULL ) {
     xmlAddChild(psRootNode, msOWSCommonServiceIdentification(
-                              psOwsNs, map, "OGC WCS", params->version, "CO", NULL));
+                              psOwsNs, map, "OGC WCS", "2.0.1,1.1.1,1.0.0", "CO", NULL));
   }
 
   /*service provider*/

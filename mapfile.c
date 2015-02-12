@@ -137,10 +137,9 @@ void msFree(void *p)
 void msFreeCharArray(char **array, int num_items)
 {
   int i;
-
+  if(!array) return;
   for(i=0; i<num_items; i++)
     msFree(array[i]);
-
   msFree(array);
 }
 
@@ -530,6 +529,12 @@ static void writeDimension(FILE *stream, int indent, const char *name, int x, in
   else msIO_fprintf(stream, "%s %d ", name, x);
   if(bind_y) msIO_fprintf(stream, "[%s]\n", bind_y);
   else msIO_fprintf(stream, "%d\n", y);
+}
+
+static void writeDoubleRange(FILE *stream, int indent, const char *name, double x, double y)
+{
+  writeIndent(stream, ++indent);
+  msIO_fprintf(stream, "%s %f %f\n", name, x, y);
 }
 
 static void writeExtent(FILE *stream, int indent, const char *name, rectObj extent)
@@ -3027,7 +3032,7 @@ void writeStyle(FILE *stream, int indent, styleObj *style)
   if(style->rangeitem) {
     writeString(stream, indent, "RANGEITEM", NULL, style->rangeitem);
     writeColorRange(stream, indent, "COLORRANGE", &(style->mincolor), &(style->maxcolor));
-    writeDimension(stream, indent, "DATARANGE", style->minvalue, style->maxvalue, NULL, NULL);
+    writeDoubleRange(stream, indent, "DATARANGE", style->minvalue, style->maxvalue);
   }
 
   writeBlockEnd(stream, indent, "STYLE");
@@ -6851,6 +6856,7 @@ void msApplyDefaultSubstitutions(mapObj *map)
   /* output formats (#3751) */
   for(i=0; i<map->numoutputformats; i++) {
     applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "filename", &(map->web.validation));
+    applyOutputFormatDefaultSubstitutions(map->outputformatlist[i], "JSONP", &(map->web.validation));
   }
 
   for(i=0; i<map->numlayers; i++) {
