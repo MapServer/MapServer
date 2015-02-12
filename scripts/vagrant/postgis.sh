@@ -1,8 +1,10 @@
-cd mapserver/msautotest
+#!/bin/sh
 
-sudo sed -i  's/md5/trust/' /etc/postgresql/9.1/main/pg_hba.conf
-sudo sed -i  's/peer/trust/' /etc/postgresql/9.1/main/pg_hba.conf
+cd /vagrant/msautotest
 
-sudo service postgresql restart
+sed -i  's/md5/trust/' /etc/postgresql/9.1/main/pg_hba.conf
+sed -i  's/peer/trust/' /etc/postgresql/9.1/main/pg_hba.conf
+
+service postgresql restart
 
 ./create_postgis_test_data.sh

@@ -1,4 +1,5 @@
 build
+build_vagrant
 *.swp
 nbproject
 tags
