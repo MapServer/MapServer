@@ -10,8 +10,10 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-7.0 release (TBD)
------------------
+7.0.0-beta1 release (2014/02/12)
+--------------------------------
+
+- RFC91 Layer Filter Normalization
 
 - Implement WCS20 Extensions (#4898)
 
