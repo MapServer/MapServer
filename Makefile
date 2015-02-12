@@ -50,7 +50,6 @@ test: autotest-install cmakebuild
 	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase mspython-testcase
 	@./print-test-results.sh
 	@$(MAKE) $(MFLAGS)	php-testcase
-	@$(MAKE) $(MFLAGS)	java-testcase
 
 
 lexer: maplexer.c
