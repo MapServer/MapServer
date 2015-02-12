@@ -369,16 +369,19 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
       queries layers
   */
 
-  /* If mapObj has no projection set, then use default projection from ows/wfs_srs 
-   * metadata and assume that the map EXTENT was indeed specified in that projection
+  /* Start by applying the default service SRS to the mapObj, 
+   * make sure we reproject the map extent if a projection was 
+   * already set 
    */
-  if (map->projection.numargs <= 0)
-  {
-    pszMapSRS = msOWSGetEPSGProj(NULL, &(map->web.metadata), "FO", MS_TRUE);
-    if(pszMapSRS && nWFSVersion >  OWS_1_0_0)
-      msLoadProjectionStringEPSG(&(map->projection), pszMapSRS);
-    else
-      msLoadProjectionString(&(map->projection), pszMapSRS);
+  pszMapSRS = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FO", MS_TRUE);
+  if(pszMapSRS && nWFSVersion >  OWS_1_0_0){
+    projectionObj proj;
+    msInitProjection(&proj);
+    if (map->projection.numargs > 0 && msLoadProjectionStringEPSG(&proj, pszMapSRS) == 0) {
+      msProjectRect(&(map->projection), &proj, &map->extent);
+    }
+    msLoadProjectionStringEPSG(&(map->projection), pszMapSRS);
+    msFreeProjection(&proj);
   }
 
   if (srs == NULL || nWFSVersion == OWS_1_0_0) {
@@ -448,7 +451,6 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
     }
   }
 
-  /* Set mapObj output projection to requested SRS and reproject map extent */
   if (pszOutputSRS) {
     projectionObj sProjTmp;
     int nTmp=0;
