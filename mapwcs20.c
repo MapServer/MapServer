@@ -3310,6 +3310,9 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
     xmlNodePtr psExtensionNode = NULL;
     psNode = xmlNewChild(psRootNode, psWcsNs, BAD_CAST "ServiceMetadata", NULL);
 
+    /* Apply default formats */
+    msApplyDefaultOutputFormats(map);
+    
     /* Add formats list */
     format_list = msWCSGetFormatsList20(map, NULL);
     msLibXml2GenerateList(psNode, psWcsNs, "formatSupported", format_list, ',');
