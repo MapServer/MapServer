@@ -44,9 +44,9 @@ compiler:
 before_install:
   - mkdir tmp
   - cd tmp
-  - wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-0.9.19.tar.bz2
-  - tar xjf harfbuzz-0.9.19.tar.bz2
-  - cd harfbuzz-0.9.19
+  - wget http://www.freedesktop.org/software/harfbuzz/release/harfbuzz-0.9.38.tar.bz2
+  - tar xjf harfbuzz-0.9.38.tar.bz2
+  - cd harfbuzz-0.9.38
   - ./configure --without-cairo --without-glib --without-icu
   - make -j3
   - sudo make install && sudo ldconfig
@@ -69,7 +69,7 @@ before_install:
 script:
   - ./run-test-suite.sh
 
-after_success: 
+after_success:
 # Only run coverage when it is safe to do so (not on pull requests), and only on master branch
   - echo "$TRAVIS_SECURE_ENV_VARS"
   - echo "$TRAVIS_BRANCH"
