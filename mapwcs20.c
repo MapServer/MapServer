@@ -2236,7 +2236,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
                   "Failed to find %s driver.",
                   "msWCSWriteFile20()",
                   image->format->driver+5 );
-      return msWCSException(map, "mapserv", "NoApplicableCode",
+      return msWCSException(map, "NoApplicableCode", "mapserv",
                             params->version);
     }
 
@@ -2260,7 +2260,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
       if( status != MS_SUCCESS ) {
         msSetError(MS_MISCERR, "msSaveImage() failed",
                    "msWCSWriteFile20()");
-        return msWCSException20(map, "mapserv", "NoApplicableCode",
+        return msWCSException20(map, "NoApplicableCode", "mapserv",
                                 params->version);
       }
     }
@@ -2310,7 +2310,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     status = msSaveImage(map, image, NULL);
     if( status != MS_SUCCESS ) {
       msSetError( MS_MISCERR, "msSaveImage() failed", "msWCSWriteFile20()");
-      return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
+      return msWCSException(map, "NoApplicableCode", "mapserv", params->version);
     }
     if(multipart)
       msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
@@ -3217,15 +3217,15 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)",
                  "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
       xmlFreeDoc(psDoc);
-      return msWCSException(map, "updatesequence",
-                            "CurrentUpdateSequence", params->version);
+      return msWCSException(map, "CurrentUpdateSequence", "updatesequence",
+                            params->version);
     }
     if (i > 0) { /* invalid */
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)",
                  "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
       xmlFreeDoc(psDoc);
-      return msWCSException(map, "updatesequence",
-                            "InvalidUpdateSequence", params->version);
+      return msWCSException(map, "InvalidUpdateSequence", "updatesequence",
+                            params->version);
     }
   }
   if(updatesequence != NULL) {
@@ -3255,7 +3255,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
       xmlFreeDoc(psDoc);
       msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities20()");
-      return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
+      return msWCSException(map, "NoApplicableCode", "mapserv", params->version);
     }
     free(script_url);
 
@@ -3312,7 +3312,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 
     /* Apply default formats */
     msApplyDefaultOutputFormats(map);
-    
+
     /* Add formats list */
     format_list = msWCSGetFormatsList20(map, NULL);
     msLibXml2GenerateList(psNode, psWcsNs, "formatSupported", format_list, ',');
@@ -3376,7 +3376,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         if(status != MS_SUCCESS) {
           xmlFreeDoc(psDoc);
           xmlCleanupParser();
-          return msWCSException(map, "mapserv", "Internal", params->version);
+          return msWCSException(map, "Internal", "mapserv", params->version);
         }
       }
     }
