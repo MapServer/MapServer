@@ -2,6 +2,8 @@
 
 sed -i 's#deb http://us.archive.ubuntu.com/ubuntu/#deb mirror://mirrors.ubuntu.com/mirrors.txt#' /etc/apt/sources.list
 
+export DEBIAN_FRONTEND=noninteractive
+
 apt-get update
 apt-get install -y python-software-properties
 add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
