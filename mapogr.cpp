@@ -1310,80 +1310,6 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   return MS_SUCCESS;
 }
 
-/**********************************************************************
- *                      msOGRSplitFilter()
- *
- * 
- **********************************************************************/
-static void msOGRSplitFilter(layerObj *layer,
-                             char** pOGRFilter,
-                             char** pMapserverFilter)
-{
-    if( pOGRFilter )
-        *pOGRFilter = NULL;
-    if( pMapserverFilter )
-        *pMapserverFilter = NULL;
-
-    /* native filter - no WHERE prefix required */
-    if( msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL ) {    
-      // TODO: throw a warning if the NATIVE_FILTER starts with "WHERE "
-      if( pOGRFilter )
-        *pOGRFilter = msStrdup(msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
-    }
-
-    /* translated filter (WHERE some_ogr_expr) AND some_ms_expr */
-    if( layer->filter.native_string && EQUALN(layer->filter.string,"(WHERE ",7) ) {
-        int nParenthesisLevel = 0;
-        const char* begin = layer->filter.string + 7;
-        const char* ptr = begin;
-        char chString = '\0';
-        char ch;
-
-        /* Find the end of the OGR expr */
-        while( (ch = *ptr) != '\0')
-        {
-            if( ch == '\\' && chString != '\0' && ptr[1] == chString )
-            {
-                /* Skip escaping of quoting character */
-                ptr ++;
-            }
-            else if( ch == chString )
-            {
-                /* End of quoted expression */
-                chString = '\0';
-            }
-            else if( (ch == '\'' || ch == '"') && chString == '\0' )
-            {
-                /* Beginning of quoted expression */
-                chString = ch;
-            }
-            else if( ch == '(' && chString == '\0' )
-                nParenthesisLevel ++;
-            else if( ch == ')' && chString == '\0' )
-            {
-                nParenthesisLevel --;
-                if( nParenthesisLevel < 0 )
-                    break;
-            }
-            ptr ++;
-        }
-        if( *ptr == ')' && strncasecmp(ptr+1, " AND ", 5) == 0 ) {
-            if( pOGRFilter )
-            {
-                *pOGRFilter = msStrdup(begin);
-                (*pOGRFilter)[ptr - begin] = '\0';
-            }
-            if( pMapserverFilter )
-                *pMapserverFilter = msStrdup(ptr+6);
-        }
-    }
-    else if( layer->filter.string )
-    {
-        if( pMapserverFilter )
-            *pMapserverFilter = msStrdup(layer->filter.string);
-    }
-}
-
 /************************************************************************/
 /*                           msOGREscapeSQLParam                        */
 /************************************************************************/
@@ -1575,10 +1501,6 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
   }
     
   char *pszOGRFilter = NULL;
-
-  /* In case we have an odd filter combining both a OGR filter and MapServer */
-  /* filter, then separate things */
-  // msOGRSplitFilter(layer, &pszOGRFilter, &pszMSFilter);
 
   /*
   ** Build the OGR filter from two potential sources:
