@@ -2018,6 +2018,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT void initWeb(webObj *web);
   MS_DLL_EXPORT void freeWeb(webObj *web);
   MS_DLL_EXPORT void initResultCache(resultCacheObj *resultcache);
+  MS_DLL_EXPORT int initLayerCompositer(LayerCompositer *compositer);
+  MS_DLL_EXPORT void initLeader(labelLeaderObj *leader);
+  MS_DLL_EXPORT void freeGrid( graticuleObj *pGraticule);
 
   MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
   MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
