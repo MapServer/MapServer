@@ -151,9 +151,9 @@ imageObj *msDrawScalebar(mapObj *map)
 {
   int status;
   char label[32];
-  double i, msx;
+  double i, msx, resolutionfactor, strokeWidth, vSlop;
   int j;
-  int isx, sx, sy, ox, oy, state, dsx;
+  int isx, sx, sy, ox, oy, state, dsx, scalebarWidth, scalebarHeight, hMargin, vMargin;
   pointObj p;
   rectObj r;
   imageObj      *image = NULL;
@@ -179,8 +179,16 @@ imageObj *msDrawScalebar(mapObj *map)
     msSetError(MS_MISCERR, "Outputformat not supported for scalebar", "msDrawScalebar()");
     return(NULL);
   }
+
+  resolutionfactor = map->resolution/map->defresolution;
+  scalebarWidth = MS_NINT(resolutionfactor * map->scalebar.width);
+  scalebarHeight = MS_NINT(resolutionfactor * map->scalebar.height);
+  hMargin = MS_NINT(resolutionfactor * HMARGIN);
+  vMargin = MS_NINT(resolutionfactor * VMARGIN);
+  strokeWidth = resolutionfactor;
+  vSlop = resolutionfactor * VSLOP;
   
-  msPopulateTextSymbolForLabelAndString(&ts,&map->scalebar.label,msStrdup("0123456789"),1.0,map->resolution/map->defresolution, 0);
+  msPopulateTextSymbolForLabelAndString(&ts,&map->scalebar.label,msStrdup("0123456789"),resolutionfactor,resolutionfactor, 0);
 
   /*
    *  A string containing the ten decimal digits is rendered to compute an average cell size
@@ -199,7 +207,8 @@ imageObj *msDrawScalebar(mapObj *map)
   if(status != MS_SUCCESS) {
     return(NULL);
   }
-  dsx = map->scalebar.width - 2*HMARGIN;
+
+  dsx = (scalebarWidth - 2*hMargin);
   do {
     msx = (map->cellsize * dsx)/(msInchesPerUnit(map->scalebar.units,0)/msInchesPerUnit(map->units,0));
     i = roundInterval(msx/map->scalebar.intervals);
@@ -207,12 +216,12 @@ imageObj *msDrawScalebar(mapObj *map)
     isx = MS_NINT((i/(msInchesPerUnit(map->units,0)/msInchesPerUnit(map->scalebar.units,0)))/map->cellsize);
     sx = (map->scalebar.intervals*isx) + MS_NINT((1.5 + strlen(label)/2.0 + strlen(unitText[map->scalebar.units]))*fontWidth);
 
-    if(sx <= (map->scalebar.width - 2*HMARGIN)) break; /* it will fit */
+    if(sx <= (scalebarWidth - 2*hMargin)) break; /* it will fit */
 
     dsx -= X_STEP_SIZE; /* change the desired size in hopes that it will fit in user supplied width */
   } while(1);
 
-  sy = (2*VMARGIN) + MS_NINT(VSPACING*fontHeight) + fontHeight + map->scalebar.height - VSLOP;
+  sy = MS_NINT((2*vMargin) + MS_NINT(VSPACING*fontHeight) + fontHeight + scalebarHeight - vSlop);
 
   /*Ensure we have an image format representing the options for the scalebar.*/
   msApplyOutputFormat( &format, map->outputformat,
@@ -224,7 +233,7 @@ imageObj *msDrawScalebar(mapObj *map)
     if(!MS_VALID_COLOR(map->scalebar.imagecolor))
       MS_INIT_COLOR(map->scalebar.imagecolor,255,255,255,255);
   }
-  image = msImageCreate(map->scalebar.width, sy, format,
+  image = msImageCreate(scalebarWidth, sy, format,
                         map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, &map->scalebar.imagecolor);
   image->map = map;
 
@@ -240,15 +249,15 @@ imageObj *msDrawScalebar(mapObj *map)
 
   switch(map->scalebar.align) {
     case(MS_ALIGN_LEFT):
-      ox = HMARGIN;
+      ox = hMargin;
       break;
     case(MS_ALIGN_RIGHT):
-      ox = MS_NINT((map->scalebar.width - sx) + fontWidth);
+      ox = MS_NINT((scalebarWidth - sx) + fontWidth);
       break;
     default:
-      ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontWidth/2.0); /* center the computed scalebar */
+      ox = MS_NINT((scalebarWidth - sx)/2.0 + fontWidth/2.0); /* center the computed scalebar */
   }
-  oy = VMARGIN;
+  oy = vMargin;
 
   switch(map->scalebar.style) {
     case(0): {
@@ -261,7 +270,7 @@ imageObj *msDrawScalebar(mapObj *map)
         INIT_STROKE_STYLE(strokeStyle);
         strokeStyle.color = &map->scalebar.outlinecolor;
         strokeStyle.color->alpha = 255;
-        strokeStyle.width = 1;
+        strokeStyle.width = strokeWidth;
       }
       map->scalebar.backgroundcolor.alpha = 255;
       map->scalebar.color.alpha = 255;
@@ -270,7 +279,7 @@ imageObj *msDrawScalebar(mapObj *map)
         points[0].x = points[4].x = points[3].x = ox + j*isx + 0.5;
         points[0].y = points[4].y = points[1].y = oy + 0.5;
         points[1].x = points[2].x = ox + (j+1)*isx + 0.5;
-        points[2].y = points[3].y = oy + map->scalebar.height + 0.5;
+        points[2].y = points[3].y = oy + scalebarHeight + 0.5;
         if(state == 1 && MS_VALID_COLOR(map->scalebar.color))
           status = renderer->renderPolygon(image,&shape,&map->scalebar.color);
         else if(MS_VALID_COLOR(map->scalebar.backgroundcolor))
@@ -291,8 +300,8 @@ imageObj *msDrawScalebar(mapObj *map)
         sprintf(label, "%g", j*i);
         map->scalebar.label.position = MS_CC;
         p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
-        p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
-        status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,1.0);
+        p.y = oy + scalebarHeight + MS_NINT(VSPACING*fontHeight);
+        status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,resolutionfactor);
         if(UNLIKELY(status == MS_FAILURE)) {
           goto scale_cleanup;
         }
@@ -303,8 +312,8 @@ imageObj *msDrawScalebar(mapObj *map)
       sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
       map->scalebar.label.position = MS_CR;
       p.x = ox; /* + MS_NINT(fontPtr->w/2); */
-      p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
-      status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,1.0);
+      p.y = oy + scalebarHeight + MS_NINT(VSPACING*fontHeight);
+      status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,resolutionfactor);
       if(UNLIKELY(status == MS_FAILURE)) {
         goto scale_cleanup;
       }
@@ -316,7 +325,7 @@ imageObj *msDrawScalebar(mapObj *map)
       shape.line = &line;
       shape.numlines = 1;
       if(MS_VALID_COLOR(map->scalebar.color)) {
-        strokeStyle.width = 1;
+        strokeStyle.width = strokeWidth;
         strokeStyle.color = &map->scalebar.color;
       }
 
@@ -329,8 +338,8 @@ imageObj *msDrawScalebar(mapObj *map)
       }
 
       points[0].y = oy;
-      points[1].y = oy + map->scalebar.height;
-      p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontHeight);
+      points[1].y = oy + scalebarHeight;
+      p.y = oy + scalebarHeight + MS_NINT(VSPACING*fontHeight);
       for(j=0; j<=map->scalebar.intervals; j++) {
         points[0].x = points[1].x = ox + j*isx;
         status = renderer->renderLine(image,&shape,&strokeStyle);
@@ -347,7 +356,7 @@ imageObj *msDrawScalebar(mapObj *map)
           map->scalebar.label.position = MS_CR;
           p.x = ox + j*isx - MS_NINT((strlen(label)*fontWidth)/2.0);
         }
-        status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,1.0);
+        status = msDrawLabel(map,image,p,msStrdup(label),&map->scalebar.label,resolutionfactor);
         if(UNLIKELY(status == MS_FAILURE)) {
           goto scale_cleanup;
         }
