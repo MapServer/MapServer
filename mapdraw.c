@@ -1007,7 +1007,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     if (cache) {
       styleObj *pStyle = layer->class[shape.classindex]->styles[0];
-      colorObj tmp;
       if (pStyle->outlinewidth > 0) {
         /*
          * RFC 49 implementation
@@ -1017,17 +1016,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
          *  - draw the shape (the outline) in the first pass of the
          *    caching mechanism
          */
-
-        /* adapt width (must take scalefactor into account) */
-        pStyle->width += (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
-        pStyle->minwidth += pStyle->outlinewidth * 2;
-        pStyle->maxwidth += pStyle->outlinewidth * 2;
-        pStyle->size += (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
-
-        /*swap color and outlinecolor*/
-        tmp = pStyle->color;
-        pStyle->color = pStyle->outlinecolor;
-        pStyle->outlinecolor = tmp;
+	msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
       }
       status = msDrawShape(map, layer, &shape, image, 0, drawmode|MS_DRAWMODE_SINGLESTYLE); /* draw a single style */
       if (pStyle->outlinewidth > 0) {
@@ -1036,17 +1025,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
          * original state, so the line fill will be drawn in the
          * second pass of the caching mechanism
          */
-
-        /* reset widths to original state */
-        pStyle->width -= (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
-        pStyle->minwidth -= pStyle->outlinewidth * 2;
-        pStyle->maxwidth -= pStyle->outlinewidth * 2;
-        pStyle->size -= (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
-
-        /*reswap colors to original state*/
-        tmp = pStyle->color;
-        pStyle->color = pStyle->outlinecolor;
-        pStyle->outlinecolor = tmp;
+	msOutlineRenderingRestoreStyle(pStyle, map, layer, image);
       }
     }
 
@@ -1107,7 +1086,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
             }
           } else if(s>0) {
             if (pStyle->outlinewidth > 0 && MS_VALID_COLOR(pStyle->outlinecolor)) {
-              colorObj tmp;
               /*
                * RFC 49 implementation
                * if an outlinewidth is used:
@@ -1116,17 +1094,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                *  - draw the shape (the outline) in the first pass of the
                *    caching mechanism
                */
-
-              /* adapt width (must take scalefactor into account) */
-              pStyle->width += (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
-              pStyle->minwidth += pStyle->outlinewidth * 2;
-              pStyle->maxwidth += pStyle->outlinewidth * 2;
-              pStyle->size += (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
-
-              /*swap color and outlinecolor*/
-              tmp = pStyle->color;
-              pStyle->color = pStyle->outlinecolor;
-              pStyle->outlinecolor = tmp;
+	      msOutlineRenderingPrepareStyle(pStyle, map, layer, image);
               if(UNLIKELY(MS_FAILURE == msDrawLineSymbol(map, image, &current->shape, pStyle, layer->scalefactor))) {
                 return MS_FAILURE;
               }
@@ -1135,17 +1103,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
                * original state, so the line fill will be drawn in the
                * second pass of the caching mechanism
                */
-
-              /* reset widths to original state */
-              pStyle->width -= (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
-              pStyle->minwidth -= pStyle->outlinewidth * 2;
-              pStyle->maxwidth -= pStyle->outlinewidth * 2;
-              pStyle->size -= (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
-
-              /*reswap colors to original state*/
-              tmp = pStyle->color;
-              pStyle->color = pStyle->outlinecolor;
-              pStyle->outlinecolor = tmp;
+	      msOutlineRenderingRestoreStyle(pStyle, map, layer, image);
             }
             /* draw a valid line, i.e. one with a color defined or of type pixmap*/
             if(MS_VALID_COLOR(pStyle->color) || 

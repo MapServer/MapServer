@@ -561,7 +561,7 @@ int msDrawLineSymbol(mapObj *map, imageObj *image, shapeObj *p,
       rendererVTableObj *renderer = image->format->vtable;
       symbolObj *symbol;
       shapeObj *offsetLine = p;
-      int i,ret=MS_SUCCESS;
+      int i;
       double width;
       double finalscalefactor;
 
@@ -1076,4 +1076,55 @@ int msDrawPieSlice(mapObj *map, imageObj *image, pointObj *p, styleObj *style, d
   msFreeShape(circle);
   msFree(circle);
   return status;
+}
+
+/*
+ * RFC 49 implementation
+ * if an outlinewidth is used:
+ *  - augment the style's width to account for the outline width
+ *  - swap the style color and outlinecolor
+ *  - draw the shape (the outline) in the first pass of the
+ *    caching mechanism
+ */
+
+void msOutlineRenderingPrepareStyle(styleObj *pStyle, mapObj *map, layerObj *layer, imageObj *image)
+{
+  colorObj tmp;
+
+  if (pStyle->outlinewidth > 0) {
+    /* adapt width (must take scalefactor into account) */
+    pStyle->width += (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
+    pStyle->minwidth += pStyle->outlinewidth * 2;
+    pStyle->maxwidth += pStyle->outlinewidth * 2;
+    pStyle->size += (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
+
+    /*swap color and outlinecolor*/
+    tmp = pStyle->color;
+    pStyle->color = pStyle->outlinecolor;
+    pStyle->outlinecolor = tmp;
+  }
+}
+
+/*
+ * RFC 49 implementation: switch back the styleobj to its
+ * original state, so the line fill will be drawn in the
+ * second pass of the caching mechanism
+ */
+
+void msOutlineRenderingRestoreStyle(styleObj *pStyle, mapObj *map, layerObj *layer, imageObj *image)
+{
+  colorObj tmp;
+
+  if (pStyle->outlinewidth > 0) {
+    /* reset widths to original state */
+    pStyle->width -= (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
+    pStyle->minwidth -= pStyle->outlinewidth * 2;
+    pStyle->maxwidth -= pStyle->outlinewidth * 2;
+    pStyle->size -= (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
+
+    /*reswap colors to original state*/
+    tmp = pStyle->color;
+    pStyle->color = pStyle->outlinecolor;
+    pStyle->outlinecolor = tmp;
+  }
 }
