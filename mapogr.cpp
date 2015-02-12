@@ -1310,77 +1310,6 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   return MS_SUCCESS;
 }
 
-/**********************************************************************
- *                      msOGRSplitFilter()
- *
- * 
- **********************************************************************/
-static void msOGRSplitFilter(layerObj *layer,
-                             char** pOGRFilter,
-                             char** pMapserverFilter)
-{
-    if( pOGRFilter )
-        *pOGRFilter = NULL;
-    if( pMapserverFilter )
-        *pMapserverFilter = NULL;
-
-    if( layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6) ) {
-        if( pOGRFilter )
-            *pOGRFilter = msStrdup(layer->filter.string + 6);
-    }
-    /* (WHERE some_ogr_expr) AND some_ms_expr */
-    else if( layer->filter.string && EQUALN(layer->filter.string,"(WHERE ",7) ) {
-        int nParenthesisLevel = 0;
-        const char* begin = layer->filter.string + 7;
-        const char* ptr = begin;
-        char chString = '\0';
-        char ch;
-
-        /* Find the end of the OGR expr */
-        while( (ch = *ptr) != '\0')
-        {
-            if( ch == '\\' && chString != '\0' && ptr[1] == chString )
-            {
-                /* Skip escaping of quoting character */
-                ptr ++;
-            }
-            else if( ch == chString )
-            {
-                /* End of quoted expression */
-                chString = '\0';
-            }
-            else if( (ch == '\'' || ch == '"') && chString == '\0' )
-            {
-                /* Beginning of quoted expression */
-                chString = ch;
-            }
-            else if( ch == '(' && chString == '\0' )
-                nParenthesisLevel ++;
-            else if( ch == ')' && chString == '\0' )
-            {
-                nParenthesisLevel --;
-                if( nParenthesisLevel < 0 )
-                    break;
-            }
-            ptr ++;
-        }
-        if( *ptr == ')' && strncasecmp(ptr+1, " AND ", 5) == 0 ) {
-            if( pOGRFilter )
-            {
-                *pOGRFilter = msStrdup(begin);
-                (*pOGRFilter)[ptr - begin] = '\0';
-            }
-            if( pMapserverFilter )
-                *pMapserverFilter = msStrdup(ptr+6);
-        }
-    }
-    else if( layer->filter.string )
-    {
-        if( pMapserverFilter )
-            *pMapserverFilter = msStrdup(layer->filter.string);
-    }
-}
-
 /************************************************************************/
 /*                           msOGREscapeSQLParam                        */
 /************************************************************************/
@@ -1564,79 +1493,80 @@ cleanup:
  * Returns MS_SUCCESS/MS_FAILURE, or MS_DONE if no shape matching the
  * layer's FILTER overlaps the selected region.
  **********************************************************************/
-static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
-                                msOGRFileInfo *psInfo )
+static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *psInfo)
 {
   if (psInfo == NULL || psInfo->hLayer == NULL) {
-    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!",
-               "msOGRFileWhichShapes()");
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", "msOGRFileWhichShapes()");
     return(MS_FAILURE);
   }
-  
-  char* pszOGRFilter = NULL;
-  char* pszMSFilter = NULL;
-  /* In case we have an odd filter combining both a OGR filter and MapServer */
-  /* filter, then separate things */
-  msOGRSplitFilter(layer, &pszOGRFilter, &pszMSFilter);
-  if( pszOGRFilter != NULL && pszMSFilter == NULL )
-  {
-      msFree(layer->filter.native_string);
-      layer->filter.native_string = msStrdup(pszOGRFilter);
+    
+  char *pszOGRFilter = NULL;
+
+  /*
+  ** Build the OGR filter from two potential sources:
+  **   1) the NATIVE_FILTER processing option
+  **   2) a translated MapServer layer->filter (stored in layer->native_string)
+  */
+  if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, "(");
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
+    if(layer->filter.native_string) {
+      pszOGRFilter = msStringConcatenate(pszOGRFilter, "AND (");
+      pszOGRFilter = msStringConcatenate(pszOGRFilter, layer->filter.native_string);
+      pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
+    }
+  } else if(layer->filter.native_string) {
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, "(");
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, layer->filter.native_string);
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
   }
 
-  /* Apply sortBy */
+  /* apply sortBy */
   if( layer->sortBy.nProperties > 0 ) {
     char* strOrderBy;
     char* pszLayerDef = NULL;
 
     strOrderBy = msLayerBuildSQLOrderBy(layer);
 
-    if( psInfo->nLayerIndex == -1 )
-    {
-        pszLayerDef = msStrdup(psInfo->pszLayerDef);
-        if( strcasestr(psInfo->pszLayerDef, " ORDER BY ") == NULL )
-            pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
-        else
-            pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
-    }
-    else
-    {
-        const char* pszGeometryColumn;
-        int i;
-        pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT ");
-        for(i = 0; i < layer->numitems; i++)
-        {
-            if( i > 0 )
-                pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
-            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-            pszLayerDef = msStringConcatenate(pszLayerDef, layer->items[i]);
-            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-        }
-
-        pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
-        pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
-        if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' )
-        {
-            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-            pszLayerDef = msStringConcatenate(pszLayerDef, pszGeometryColumn);
-            pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-        }
-        else
-        {
-            /* Add ", *" so that we still have an hope to get the geometry */
-            pszLayerDef = msStringConcatenate(pszLayerDef, "*");
-        }
-        pszLayerDef = msStringConcatenate(pszLayerDef, " FROM \"");
-        pszLayerDef = msStringConcatenate(pszLayerDef, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
-        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-        if( pszOGRFilter != NULL )
-        {
-            pszLayerDef = msStringConcatenate(pszLayerDef, " WHERE ");
-            pszLayerDef = msStringConcatenate(pszLayerDef, pszOGRFilter);
-            msFree(pszOGRFilter);
-            pszOGRFilter = NULL;
-        }
+    if( psInfo->nLayerIndex == -1 ) {
+      pszLayerDef = msStrdup(psInfo->pszLayerDef);
+      if( strcasestr(psInfo->pszLayerDef, " ORDER BY ") == NULL )
         pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
+      else
+        pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+    } else {
+      const char* pszGeometryColumn;
+      int i;
+      pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT ");
+      for(i = 0; i < layer->numitems; i++) {
+        if( i > 0 )
+          pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        pszLayerDef = msStringConcatenate(pszLayerDef, layer->items[i]);
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+      }
+
+      pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+      pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
+      if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' ) {
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        pszLayerDef = msStringConcatenate(pszLayerDef, pszGeometryColumn);
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+      } else {
+        /* Add ", *" so that we still have an hope to get the geometry */
+        pszLayerDef = msStringConcatenate(pszLayerDef, "*");
+      }
+      pszLayerDef = msStringConcatenate(pszLayerDef, " FROM \"");
+      pszLayerDef = msStringConcatenate(pszLayerDef, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+      pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+      if( pszOGRFilter != NULL ) {
+        pszLayerDef = msStringConcatenate(pszLayerDef, " WHERE ");
+        pszLayerDef = msStringConcatenate(pszLayerDef, pszOGRFilter);
+        msFree(pszOGRFilter);
+        pszOGRFilter = NULL;
+      }
+      pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
     }
 
     pszLayerDef = msStringConcatenate(pszLayerDef, strOrderBy);
@@ -1648,59 +1578,21 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
 
     /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
     if( psInfo->nLayerIndex == -1 )
-        OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
+      OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
     psInfo->nLayerIndex = -1;
 
     ACQUIRE_OGR_LOCK;
     psInfo->hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszLayerDef, NULL, NULL );
     RELEASE_OGR_LOCK;
     if( psInfo->hLayer == NULL ) {
-      msSetError(MS_OGRERR,
-                 "ExecuteSQL(%s) failed.\n%s",
-                 "msOGRFileWhichShapes()",
-                 pszLayerDef, CPLGetLastErrorMsg() );
+      msSetError(MS_OGRERR, "ExecuteSQL(%s) failed.\n%s", "msOGRFileWhichShapes()", pszLayerDef, CPLGetLastErrorMsg());
       msFree(pszLayerDef);
       msFree(pszOGRFilter);
-      msFree(pszMSFilter);
       return MS_FAILURE;
     }
     msFree(pszLayerDef);
-  }
+  } /* end sort-by */
 
-
-  /* ------------------------------------------------------------------
-   * If there's a mapserver filter, tries to parse it as a mapserver expression
-   * (for example if request coming from WFS), and then tries to translate
-   * the mapserver expression as OGR SQL.
-   * ------------------------------------------------------------------ */
-  if( pszMSFilter != NULL ) {
-    expressionObj filter;
-    msInitExpression(&filter);
-    filter.string = msStrdup(pszMSFilter);
-    filter.type = MS_EXPRESSION;
-    if( msTokenizeExpression(&filter, layer->items, &(layer->numitems)) == MS_SUCCESS )
-    {
-        char* pszAdditionalOGRFilter = msOGRTranslateMsExpressionToOGRSQL(layer, &filter, &rect);
-        if( pszAdditionalOGRFilter != NULL )
-        {
-            if( pszOGRFilter != NULL )
-            {
-                char* pszTmp = msStringConcatenate(NULL, "(");
-                pszTmp = msStringConcatenate(pszTmp, pszOGRFilter);
-                pszTmp = msStringConcatenate(pszTmp, ") AND (");
-                pszTmp = msStringConcatenate(pszTmp, pszAdditionalOGRFilter);
-                pszTmp = msStringConcatenate(pszTmp, ")");
-                msFree(pszTmp);
-                msFree(pszAdditionalOGRFilter);
-                pszOGRFilter = pszTmp;
-            }
-            else
-                pszOGRFilter = pszAdditionalOGRFilter;
-        }
-    }
-    msFreeExpression(&filter);
-  }
-  msFree(pszMSFilter);
 
   /* ------------------------------------------------------------------
    * Set Spatial filter... this may result in no features being returned
@@ -1712,50 +1604,37 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
    * ------------------------------------------------------------------ */
   ACQUIRE_OGR_LOCK;
 
-  if (rect.minx == rect.maxx && rect.miny == rect.maxy)
-  {
-      OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
+  if (rect.minx == rect.maxx && rect.miny == rect.maxy) {
+    OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
 
-      OGR_G_SetPoint_2D( hSpatialFilterPoint, 0, rect.minx, rect.miny );
-      
-      OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPoint );
+    OGR_G_SetPoint_2D( hSpatialFilterPoint, 0, rect.minx, rect.miny );    
+    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPoint );
+    OGR_G_DestroyGeometry( hSpatialFilterPoint );
+  } else if (rect.minx == rect.maxx || rect.miny == rect.maxy) {
+    OGRGeometryH hSpatialFilterLine = OGR_G_CreateGeometry( wkbLineString );
 
-      OGR_G_DestroyGeometry( hSpatialFilterPoint );
-  }
-  else if (rect.minx == rect.maxx || rect.miny == rect.maxy)
-  {
-      OGRGeometryH hSpatialFilterLine = OGR_G_CreateGeometry( wkbLineString );
+    OGR_G_AddPoint_2D( hSpatialFilterLine, rect.minx, rect.miny );
+    OGR_G_AddPoint_2D( hSpatialFilterLine, rect.maxx, rect.maxy );
+    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterLine );
+    OGR_G_DestroyGeometry( hSpatialFilterLine );
+  } else {
+    OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
+    OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
-      OGR_G_AddPoint_2D( hSpatialFilterLine, rect.minx, rect.miny );
-      OGR_G_AddPoint_2D( hSpatialFilterLine, rect.maxx, rect.maxy );
-
-      OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterLine );
-
-      OGR_G_DestroyGeometry( hSpatialFilterLine );
-  }
-  else
-  {
-      OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
-      OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
-
-      OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
-      OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
-      OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
-      OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
-      OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
-
-      OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
-
-      OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
-
-      OGR_G_DestroyGeometry( hSpatialFilterPolygon );
+    OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+    OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
+    OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
+    OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
+    OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+    OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
+    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
+    OGR_G_DestroyGeometry( hSpatialFilterPolygon );
   }
 
   psInfo->rect = rect;
 
   if (layer->debug >= MS_DEBUGLEVEL_VVV)
-    msDebug("msOGRFileWhichShapes: Setting spatial filter to %f %f %f %f\n",
-            rect.minx, rect.miny, rect.maxx, rect.maxy );
+    msDebug("msOGRFileWhichShapes: Setting spatial filter to %f %f %f %f\n", rect.minx, rect.miny, rect.maxx, rect.maxy );
 
   /* ------------------------------------------------------------------
    * Apply an attribute filter if we have one prefixed with a WHERE
@@ -1765,18 +1644,12 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
   
   if( pszOGRFilter != NULL ) {
 
-  if (layer->debug >= MS_DEBUGLEVEL_VVV)
-    msDebug("msOGRFileWhichShapes: Setting attribute filter to %s\n",
-            pszOGRFilter );
+    if (layer->debug >= MS_DEBUGLEVEL_VVV)
+      msDebug("msOGRFileWhichShapes: Setting attribute filter to %s\n", pszOGRFilter );
 
     CPLErrorReset();
-    if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter )
-        != OGRERR_NONE ) {
-      msSetError(MS_OGRERR,
-                 "SetAttributeFilter(%s) failed on layer %s.\n%s",
-                 "msOGRFileWhichShapes()",
-                 layer->filter.string+6, layer->name?layer->name:"(null)",
-                 CPLGetLastErrorMsg() );
+    if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter ) != OGRERR_NONE ) {
+      msSetError(MS_OGRERR, "SetAttributeFilter(%s) failed on layer %s.\n%s", "msOGRFileWhichShapes()", layer->filter.string+6, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
       RELEASE_OGR_LOCK;
       msFree(pszOGRFilter);
       return MS_FAILURE;
@@ -3742,7 +3615,7 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 
 static int msOGRLayerSupportsCommonFilters(layerObj *layer)
 {
-  return MS_TRUE;
+  return MS_FALSE;
 }
 
 /************************************************************************/

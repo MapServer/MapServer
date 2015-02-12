@@ -669,8 +669,6 @@ int msQueryByFilter(mapObj *map)
   char *old_filteritem=NULL;
   expressionObj old_filter;
 
-  expressionObj merged_filter;
-
   rectObj search_rect;
 
   shapeObj shape;
@@ -745,24 +743,19 @@ int msQueryByFilter(mapObj *map)
     old_filteritem = lp->filteritem; /* cache the existing filter/filteritem */
     msInitExpression(&old_filter);
     msCopyExpression(&old_filter, &lp->filter);
-    
-    lp->filteritem = map->query.filteritem; /* re-point lp->filteritem */
-    // msCopyExpression(&lp->filter, &map->query.filter); /* apply new filter */
-
+        
     if(msLayerSupportsCommonFilters(lp)) eval = MS_FALSE;
 
-    /* 
-    ** Handle merging here for divers that can handle MapServer expressions. The function mergeFilters() creates
-    ** a MapServer logical expression and we want that right away. Other drivers are handled a bit later.
+    /*
+    ** Set the lp->filter and lp->filteritem (may need to merge). Remember filters are *always* MapServer syntax.
     */
-    if(msLayerSupportsCommonFilters(lp) && old_filter.string != NULL) {
-      merged_filter = mergeFilters(&map->query.filter, map->query.filteritem, &old_filter, old_filteritem);      
-      if(!merged_filter.string) {
+    lp->filteritem = map->query.filteritem; /* re-point lp->filteritem */
+    if(old_filter.string != NULL) { /* need to merge filters to create one logical expression */
+      lp->filter = mergeFilters(&map->query.filter, map->query.filteritem, &old_filter, old_filteritem);      
+      if(!lp->filter.string) {
 	msSetError(MS_MISCERR, "Filter merge failed, able to process query.", "msQueryByFilter()");
-        // something is wrong if we get here... **pointer being freed was not allocated**
         goto query_error;
-      } else
-        msCopyExpression(&lp->filter, &merged_filter);      
+      }      
     } else {
       msCopyExpression(&lp->filter, &map->query.filter); /* apply new filter */
     }
@@ -770,36 +763,6 @@ int msQueryByFilter(mapObj *map)
     /* build item list, we want *all* items, note this *also* build tokens for the layer filter */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) goto query_error;
-
-    if(eval == MS_TRUE) {
-      status = msLayerTranslateFilter(lp, &lp->filter, lp->filteritem); /* sets lp->filter.native_string */
-      if(status == MS_SUCCESS) {
-        if(old_filter.string) { /* now we try to merge the old filter */
-          status = msTokenizeExpression(&old_filter, lp->items, &(lp->numitems));
-          if(status != MS_SUCCESS) goto query_error;
-	  status = msLayerTranslateFilter(lp, &old_filter, old_filteritem); /* sets old_filter.native_string */
-	  if(status == MS_SUCCESS) {
-            lp->filter.native_string = msStringConcatenate(lp->filter.native_string, " AND ");
-            lp->filter.native_string = msStringConcatenate(lp->filter.native_string, old_filter.native_string);
-          } else {
-            msSetError(MS_MISCERR, "Filter merge failed, able to process query.", "msQueryByFilter()");
-            goto query_error;
-          }
-        }
-        eval = MS_FALSE;
-      } else {
-	if(old_filter.string != NULL) {
-	  merged_filter = mergeFilters(&map->query.filter, map->query.filteritem, &old_filter, old_filteritem);
-	  if(!merged_filter.string) {
-	    msSetError(MS_MISCERR, "Filter merge failed, able to process query.", "msQueryByFilter()");	    
-            goto query_error;
-	  } else
-	    msCopyExpression(&lp->filter, &merged_filter);
-	} else {
-	  msCopyExpression(&lp->filter, &map->query.filter); /* apply new filter */
-	}
-      }
-    }
 
     search_rect = map->query.rect;
 #ifdef USE_PROJ
@@ -823,20 +786,12 @@ int msQueryByFilter(mapObj *map)
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
-
     if (lp->minfeaturesize > 0)
       minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
-    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes - if necessary the filter is applied in msLayerNextShape(...) */
 
-      if(eval == MS_TRUE) { /* we have to apply the filter here instead of within the driver */
-        if(msEvalExpression(lp, &shape, &lp->filter, -1) != MS_TRUE) { /* next shape (was using map->query.filter) */
-          msFreeShape(&shape);
-          continue;
-        }
-      }
-
-      /* Check if the shape size is ok to be drawn */
+       /* Check if the shape size is ok to be drawn */
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
@@ -891,7 +846,7 @@ int msQueryByFilter(mapObj *map)
 
     if(classgroup) msFree(classgroup);
 
-    lp->filteritem = old_filteritem;
+    lp->filteritem = old_filteritem; /* point back to original value */
     msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
     msFreeExpression(&old_filter);
 
@@ -910,11 +865,11 @@ int msQueryByFilter(mapObj *map)
   return MS_FAILURE;
 
 query_error:
-  //msFree(lp->filteritem);
-  //lp->filteritem = old_filteritem;
-  //msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
-  //msFreeExpression(&old_filter);
-  //msLayerClose(lp);
+  // msFree(lp->filteritem);
+  // lp->filteritem = old_filteritem;
+  // msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+  // msFreeExpression(&old_filter);
+  // msLayerClose(lp);
   return MS_FAILURE;
 }
 
@@ -1025,15 +980,6 @@ int msQueryByRect(mapObj *map)
     if(status != MS_SUCCESS) {
       msFreeShape(&searchshape);
       return(MS_FAILURE);
-    }
-
-    /* translate filter (if necessary) */
-    if(!msLayerSupportsCommonFilters(lp)) {
-      status = msLayerTranslateFilter(lp, &lp->filter, lp->filteritem);
-      if(status != MS_SUCCESS) {
-	msFreeShape(&searchshape);
-	return(MS_FAILURE);
-      }
     }
 
 #ifdef USE_PROJ

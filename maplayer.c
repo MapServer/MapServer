@@ -281,6 +281,9 @@ int msLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteri
 */
 int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
+  if(!msLayerSupportsCommonFilters(layer))
+    msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
+
   if ( ! layer->vtable) {
     int rv =  msInitializeVirtualTable(layer);
     if (rv != MS_SUCCESS)
@@ -1676,11 +1679,6 @@ int LayerDefaultSupportsCommonFilters(layerObj *layer)
 int LayerDefaultTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem) 
 {
   if(!filter->string) return MS_SUCCESS; /* nothing to do, not an error */
-
-  if(filter->type == MS_STRING && filter->string && !filteritem) {
-    filter->native_string = msStrdup(filter->string);
-    return MS_SUCCESS;
-  }
 
   msSetError(MS_MISCERR, "This data driver does not implement filter translation support", "LayerDefaultTranslateFilter()");
   return MS_FAILURE;

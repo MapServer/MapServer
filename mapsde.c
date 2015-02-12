@@ -917,12 +917,12 @@ static SE_QUERYINFO getSDEQueryInfo(layerObj *layer)
   }
 
   /* set the "where" clause */
-  if(!(layer->filter.native_string))
+  if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL)
     /* set to empty string */
     status = SE_queryinfo_set_where_clause (query_info, (const CHAR * ) "");
   else
-    /* set to the layer's filter.native_string */
-    status = SE_queryinfo_set_where_clause (query_info, (const CHAR * ) (layer->filter.native_string));
+    /* set to the layer's NATIVE_FILTER processing key */
+    status = SE_queryinfo_set_where_clause (query_info, (const CHAR * ) (msLayerGetProcessingKey(layer, "NATIVE_FILTER")));
   if(status != SE_SUCCESS) {
     sde_error(  status,
                 "getSDEQueryInfo()",
@@ -995,17 +995,15 @@ static SE_SQL_CONSTRUCT* getSDESQLConstructInfo(layerObj *layer, long* id)
      set our FILTER statement to reflect this. */
   if ((sde->join_table) && (id != NULL)) {
     pszId = msLongToString(*id);
-    strcat(full_filter, layer->filter.native_string);
+    strcat(full_filter, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
     strcat(full_filter, " AND ");
     strcat(full_filter, sde->row_id_column);
     strcat(full_filter, "=");
     strcat(full_filter, pszId);
     msFree(pszId);
     sql->where = msStrdup(full_filter);
-
-
   } else {
-    sql->where = layer->filter.native_string;
+    sql->where = msLayerGetProcessingKey(layer, "NATIVE_FILTER");
   }
 
   msFree(full_filter);
@@ -1529,7 +1527,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
       return(MS_FAILURE);
     }
   } else {
-    if (!layer->filter.native_string) {
+    if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
       sde_error(  -51,
                   "msSDELayerWhichShapes()",
                   "A join table is specified, but no FILTER is"
