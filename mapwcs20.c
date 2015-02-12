@@ -1109,7 +1109,7 @@ static int msWCSValidateAndFindAxes20(
   static const int numAxis = 2;
   char *validXAxisNames[] = {"x", "xaxis", "x-axis", "x_axis", "long", "long_axis", "long-axis", "lon", "lon_axis", "lon-axis", NULL};
   char *validYAxisNames[] = {"y", "yaxis", "y-axis", "y_axis", "lat", "lat_axis", "lat-axis", NULL};
-  char **validAxisNames[2]; 
+  char **validAxisNames[2];
   int iParamAxis, iAcceptedAxis, iName, i;
 
   validAxisNames[0] = validXAxisNames;
@@ -1642,7 +1642,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
                   "Failed to find %s driver.",
                   "msWCSWriteFile20()",
                   image->format->driver+5 );
-      return msWCSException(map, "mapserv", "NoApplicableCode",
+      return msWCSException(map, "NoApplicableCode", "mapserv",
                             params->version);
     }
 
@@ -1666,7 +1666,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
       if( status != MS_SUCCESS ) {
         msSetError(MS_MISCERR, "msSaveImage() failed",
                    "msWCSWriteFile20()");
-        return msWCSException20(map, "mapserv", "NoApplicableCode",
+        return msWCSException20(map, "NoApplicableCode", "mapserv",
                                 params->version);
       }
     }
@@ -1716,7 +1716,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
     status = msSaveImage(map, image, NULL);
     if( status != MS_SUCCESS ) {
       msSetError( MS_MISCERR, "msSaveImage() failed", "msWCSWriteFile20()");
-      return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
+      return msWCSException(map, "NoApplicableCode", "mapserv", params->version);
     }
     if(multipart)
       msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
@@ -2623,15 +2623,15 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)",
                  "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
       xmlFreeDoc(psDoc);
-      return msWCSException(map, "updatesequence",
-                            "CurrentUpdateSequence", params->version);
+      return msWCSException(map, "CurrentUpdateSequence", "updatesequence",
+                            params->version);
     }
     if (i > 0) { /* invalid */
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)",
                  "msWCSGetCapabilities20()", params->updatesequence, updatesequence);
       xmlFreeDoc(psDoc);
-      return msWCSException(map, "updatesequence",
-                            "InvalidUpdateSequence", params->version);
+      return msWCSException(map, "InvalidUpdateSequence", "updatesequence",
+                            params->version);
     }
   }
   if(updatesequence != NULL) {
@@ -2661,7 +2661,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
       xmlFreeDoc(psDoc);
       msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities20()");
-      return msWCSException(map, "mapserv", "NoApplicableCode", params->version);
+      return msWCSException(map, "NoApplicableCode", "mapserv", params->version);
     }
     free(script_url);
 
@@ -2717,7 +2717,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 
     /* Apply default formats */
     msApplyDefaultOutputFormats(map);
-    
+
     /* Add formats list */
     format_list = msWCSGetFormatsList20(map, NULL);
     msLibXml2GenerateList(psNode, psWcsNs, "formatSupported", format_list, ',');
@@ -2750,7 +2750,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
         if(status != MS_SUCCESS) {
           xmlFreeDoc(psDoc);
           xmlCleanupParser();
-          return msWCSException(map, "mapserv", "Internal", params->version);
+          return msWCSException(map, "Internal", "mapserv", params->version);
         }
       }
     }
@@ -2986,7 +2986,7 @@ int msWCSDescribeCoverage20(mapObj *map, wcs20ParamsObjPtr params, owsRequestObj
 static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20AxisObjPtr *axes)
 {
   char *crs = NULL;
-  
+
   if (axes[0] != NULL) {
     if(axes[0]->subset != NULL) {
       msDebug("Subset for X-axis found: %s\n", axes[0]->subset->axis);
@@ -3604,7 +3604,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
       msFree(map->imagetype);
       map->imagetype = origImageType;
-      
+
     }
   }
 

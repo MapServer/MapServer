@@ -57,8 +57,8 @@
 **
 */
 
-int msWCSException11(mapObj *map, const char *locator,
-                     const char *exceptionCode, const char *version)
+int msWCSException11(mapObj *map, const char *exceptionCode,
+                     const char *locator, const char *version)
 {
   int size = 0;
   char *errorString     = NULL;
@@ -399,11 +399,11 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     i = msOWSNegotiateUpdateSequence(params->updatesequence, updatesequence);
     if (i == 0) { /* current */
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWCSGetCapabilities11()", params->updatesequence, updatesequence);
-      return msWCSException11(map, "updatesequence", "CurrentUpdateSequence", params->version);
+      return msWCSException11(map, "CurrentUpdateSequence", "updatesequence", params->version);
     }
     if (i > 0) { /* invalid */
       msSetError(MS_WCSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWCSGetCapabilities11()", params->updatesequence, updatesequence);
-      return msWCSException11(map, "updatesequence", "InvalidUpdateSequence", params->version);
+      return msWCSException11(map, "InvalidUpdateSequence", "updatesequence", params->version);
     }
   }
 
@@ -490,7 +490,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
   if ((script_url=msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL
       || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
     msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities11()");
-    return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+    return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
   }
   free( script_url );
 
@@ -931,7 +931,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params, owsRequestObj *ow
         msSetError( MS_WCSERR,
                     "COVERAGE %s cannot be opened / does not exist",
                     "msWCSDescribeCoverage()", params->coverages[j]);
-        return msWCSException11(map, "coverage", "CoverageNotDefined", params->version);
+        return msWCSException11(map, "CoverageNotDefined", "coverage", params->version);
       }
     }
   }
@@ -1095,7 +1095,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
                 field_id, rangesubset );
     free(rangesubset);
     free(field_id);
-    return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+    return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
   }
 
   free( field_id );
@@ -1135,7 +1135,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
                 "msWCSGetCoverageBands11()",
                 axis_id, rangesubset );
     free(rangesubset);
-    return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+    return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
   }
 
   /* -------------------------------------------------------------------- */
@@ -1194,7 +1194,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
                   "Failed to find %s driver.",
                   "msWCSReturnCoverage11()",
                   image->format->driver+5 );
-      return msWCSException11(map, "mapserv", "NoApplicableCode",
+      return msWCSException11(map, "NoApplicableCode", "mapserv",
                               params->version);
     }
 
@@ -1219,7 +1219,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
         msFree(filename);
         msSetError(MS_MISCERR, "msSaveImage() failed",
                    "msWCSReturnCoverage11()");
-        return msWCSException11(map, "mapserv", "NoApplicableCode",
+        return msWCSException11(map, "NoApplicableCode", "mapserv",
                                 params->version);
       }
     }
@@ -1287,7 +1287,7 @@ int  msWCSReturnCoverage11( wcsParamsObj *params, mapObj *map,
     status = msSaveImage(map, image, NULL);
     if( status != MS_SUCCESS ) {
       msSetError( MS_MISCERR, "msSaveImage() failed", "msWCSReturnCoverage11()");
-      return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+      return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
     }
 
     msIO_fprintf( stdout, "\r\n--wcs--\r\n" );
@@ -1406,7 +1406,7 @@ int msWCSDescribeCoverage11(mapObj *map, wcsParamsObj *params,
   msSetError( MS_WCSERR,
               "WCS 1.1 request made, but mapserver requires libxml2 for WCS 1.1 services and this is not configured.",
               "msWCSDescribeCoverage11()", "NoApplicableCode" );
-  return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+  return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
 }
 
 /* ==================================================================== */
@@ -1418,13 +1418,13 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
               "WCS 1.1 request made, but mapserver requires libxml2 for WCS 1.1 services and this is not configured.",
               "msWCSGetCapabilities11()", "NoApplicableCode" );
 
-  return msWCSException11(map, "mapserv", "NoApplicableCode", params->version);
+  return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
 }
 
-int msWCSException11(mapObj *map, const char *locator, const char *exceptionCode, const char *version)
+int msWCSException11(mapObj *map, const char *exceptionCode, const char *locator, const char *version)
 {
   /* fallback to reporting using 1.0 style exceptions. */
-  return msWCSException( map, locator, exceptionCode, "1.0.0" );
+  return msWCSException( map, exceptionCode, locator, "1.0.0" );
 }
 
 #endif /* defined(USE_WCS_SVR) && !defined(USE_LIBXML2) */
