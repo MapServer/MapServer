@@ -223,10 +223,28 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
         if (theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE ||
             theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
             theclass->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
+	  if (theclass->styles[i]->outlinewidth > 0) {
+	    /* Swap the style contents to render the outline first,
+	     * and then restore the style to render the interior of the line
+	     */
+	    msOutlineRenderingPrepareStyle(theclass->styles[i], map, lp, image);
+	    ret = msDrawLineSymbol(map, image_draw, &zigzag, theclass->styles[i], lp->scalefactor * image_draw->resolutionfactor);
+	    msOutlineRenderingRestoreStyle(theclass->styles[i], map, lp, image);
+            if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
+	  }
           ret = msDrawLineSymbol(map, image_draw, &zigzag, theclass->styles[i], lp->scalefactor * image_draw->resolutionfactor);
           if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
         }
         else {
+	  if (theclass->styles[i]->outlinewidth > 0) {
+	    /* Swap the style contents to render the outline first,
+	     * and then restore the style to render the interior of the line
+	     */
+	    msOutlineRenderingPrepareStyle(theclass->styles[i], map, lp, image);
+	    ret = msDrawTransformedShape(map, image_draw, &zigzag, theclass->styles[i], lp->scalefactor * image_draw->resolutionfactor);
+	    msOutlineRenderingRestoreStyle(theclass->styles[i], map, lp, image);
+            if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
+	  }
           ret = msDrawTransformedShape(map, image_draw, &zigzag, theclass->styles[i], lp->scalefactor * image_draw->resolutionfactor);
           if(UNLIKELY(ret == MS_FAILURE)) goto legend_icon_cleanup;
         }
