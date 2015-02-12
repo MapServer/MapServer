@@ -103,12 +103,13 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
   } else {
     image = NULL;
   }
-  image->map = map;
-
+  
   if(!image) {
     msSetError(MS_IMGERR, "Unable to initialize image.", "msPrepareImage()");
     return(NULL);
   }
+  
+  image->map = map;
 
   /*
    * If we want to support nonsquare pixels, note that now, otherwise
