@@ -465,7 +465,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>raster                                { MS_LEXER_RETURN_TOKEN(MS_LAYER_RASTER); }
 <INITIAL,URL_STRING>right                      { MS_LEXER_RETURN_TOKEN(MS_ALIGN_RIGHT); }
 <INITIAL>round                                 { MS_LEXER_RETURN_TOKEN(MS_CJC_ROUND); }
-<INITIAL>sde                                   { MS_LEXER_RETURN_TOKEN(MS_SDE); }
 <INITIAL>selected                              { MS_LEXER_RETURN_TOKEN(MS_SELECTED); }
 <INITIAL>simple                                { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_SIMPLE); }
 <INITIAL>single                                { MS_LEXER_RETURN_TOKEN(MS_SINGLE); }

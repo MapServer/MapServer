@@ -1875,9 +1875,6 @@ int msInitializeVirtualTable(layerObj *layer)
     case(MS_TILED_SHAPEFILE):
       return(msTiledSHPLayerInitializeVirtualTable(layer));
       break;
-    case(MS_SDE):
-      return(msSDELayerInitializeVirtualTable(layer));
-      break;
     case(MS_OGR):
       return(msOGRLayerInitializeVirtualTable(layer));
       break;

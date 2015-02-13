@@ -85,7 +85,7 @@ int FLTApplyExpressionToLayer(layerObj *lp, const char *pszExpression)
 
   if (lp && pszExpression) {
     if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
-        lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN) {
+        lp->connectiontype == MS_PLUGIN) {
       pszFinalExpression = msStrdup("(");
       pszFinalExpression = msStringConcatenate(pszFinalExpression, pszExpression);
       pszFinalExpression = msStringConcatenate(pszFinalExpression, ")");
@@ -439,7 +439,7 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
   bConcatWhere = 0;
   bHasAWhere = 0;
   if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL ||
-      lp->connectiontype == MS_SDE || lp->connectiontype == MS_PLUGIN) {
+      lp->connectiontype == MS_PLUGIN) {
     szExpression = FLTGetSQLExpression(psNode, lp);
     if (szExpression) {
       pszTmp = msStrdup("(");
