@@ -61,30 +61,18 @@
         free(self);
     }
  
-    int setRGB(int red, int green, int blue) 
-    {
-        /* Check colors */
-        if (red > 255 || green > 255 || blue > 255) {
-            msSetError(MS_MISCERR, "Invalid color index.", "setRGB()");
-            return MS_FAILURE;
-        }
-    
-        MS_INIT_COLOR(*self, red, green, blue, 255);
-        return MS_SUCCESS;
-    }
- 
-    int setRGBA(int red, int green, int blue, int alpha) 
+    int setRGB(int red, int green, int blue, int alpha = 255) 
     {
         /* Check colors */
         if (red > 255 || green > 255 || blue > 255 || alpha > 255) {
-            msSetError(MS_MISCERR, "Invalid color index.", "setRGBA()");
+            msSetError(MS_MISCERR, "Invalid color index.", "setRGB()");
             return MS_FAILURE;
         }
     
         MS_INIT_COLOR(*self, red, green, blue, alpha);
         return MS_SUCCESS;
     }
-
+ 
     int setHex(char *psHexColor) 
     {
         int red, green, blue, alpha = 255;
@@ -112,7 +100,7 @@
     %newobject toHex;
     char *toHex() 
     {
-        char hexcolor[8] = "";
+        char *hexcolor;
 
         if (!self) 
         {
@@ -126,31 +114,21 @@
                        "toHex()");
             return NULL;
         }
-        snprintf(hexcolor, 8, "#%02x%02x%02x",
-                 self->red, self->green, self->blue);
-        return strdup(hexcolor);
+        if (self->alpha == 255) {
+          hexcolor = msSmallMalloc(8);
+          snprintf(hexcolor, 8, "#%02x%02x%02x",
+                   self->red, self->green, self->blue);
+        } else if (self->alpha >= 0) {
+          hexcolor = msSmallMalloc(10);
+          snprintf(hexcolor, 10, "#%02x%02x%02x%02x",
+                   self->red, self->green, self->blue, self->alpha);
+        } else {
+           msSetError(MS_MISCERR, "Can't express color with invalid alpha as hex",
+                      "toHex()");
+           return NULL;
+        }
+        return hexcolor;
     }
 
-    %newobject toHexWithAlpha;
-    char *toHexWithAlpha()
-    {
-        char hexcolor[10] = "";
-
-        if (!self)
-        {
-            msSetError(MS_MISCERR, "Can't express NULL color as hex",
-                       "toHexWithAlpha()");
-            return NULL;
-        }
-        if (self->red < 0 || self->green < 0 || self->blue < 0 || self->alpha < 0) 
-        {
-            msSetError(MS_MISCERR, "Can't express invalid color as hex",
-                       "toHexWithAlpha()");
-            return NULL;
-        }
-        snprintf(hexcolor, 10, "#%02x%02x%02x%02x",
-                 self->red, self->green, self->blue, self->alpha);
-        return strdup(hexcolor);
-    }
 }
 
