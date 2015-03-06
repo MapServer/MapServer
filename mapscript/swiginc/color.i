@@ -72,20 +72,35 @@
         MS_INIT_COLOR(*self, red, green, blue, 255);
         return MS_SUCCESS;
     }
+ 
+    int setRGBA(int red, int green, int blue, int alpha) 
+    {
+        /* Check colors */
+        if (red > 255 || green > 255 || blue > 255 || alpha > 255) {
+            msSetError(MS_MISCERR, "Invalid color index.", "setRGBA()");
+            return MS_FAILURE;
+        }
+    
+        MS_INIT_COLOR(*self, red, green, blue, alpha);
+        return MS_SUCCESS;
+    }
 
     int setHex(char *psHexColor) 
     {
-        int red, green, blue;
-        if (psHexColor && strlen(psHexColor)== 7 && psHexColor[0] == '#') {
+        int red, green, blue, alpha = 255;
+        if (psHexColor && (strlen(psHexColor) == 7 || strlen(psHexColor) == 9) && psHexColor[0] == '#') {
             red = msHexToInt(psHexColor+1);
             green = msHexToInt(psHexColor+3);
             blue= msHexToInt(psHexColor+5);
-            if (red > 255 || green > 255 || blue > 255) {
+            if (strlen(psHexColor) == 9) {
+                alpha = msHexToInt(psHexColor+7);
+            }
+            if (red > 255 || green > 255 || blue > 255 || alpha > 255) {
                 msSetError(MS_MISCERR, "Invalid color index.", "setHex()");
                 return MS_FAILURE;
             }
 
-            MS_INIT_COLOR(*self, red, green, blue, 255);
+            MS_INIT_COLOR(*self, red, green, blue, alpha);
             return MS_SUCCESS;
         }
         else {
@@ -116,5 +131,26 @@
         return strdup(hexcolor);
     }
 
+    %newobject toHexWithAlpha;
+    char *toHexWithAlpha()
+    {
+        char hexcolor[10] = "";
+
+        if (!self)
+        {
+            msSetError(MS_MISCERR, "Can't express NULL color as hex",
+                       "toHexWithAlpha()");
+            return NULL;
+        }
+        if (self->red < 0 || self->green < 0 || self->blue < 0 || self->alpha < 0) 
+        {
+            msSetError(MS_MISCERR, "Can't express invalid color as hex",
+                       "toHexWithAlpha()");
+            return NULL;
+        }
+        snprintf(hexcolor, 10, "#%02x%02x%02x%02x",
+                 self->red, self->green, self->blue, self->alpha);
+        return strdup(hexcolor);
+    }
 }
 
