@@ -318,6 +318,9 @@ void writeSymbol(symbolObj *s, FILE *stream)
 
       if(s->filled == MS_TRUE) msIO_fprintf(stream, "    FILLED TRUE\n");
       if(s->imagepath != NULL) msIO_fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
+      if(s->anchorpoint_y!=0.5 || s->anchorpoint_x!=0.5) {
+        msIO_fprintf(stream, "    ANCHORPOINT %g %g\n", s->anchorpoint_x, s->anchorpoint_y);
+      }
 
       /* POINTS */
       if(s->numpoints != 0) {
