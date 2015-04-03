@@ -792,13 +792,25 @@ void msGEOSFreeWKT(char* pszGEOSWKT)
 
 shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
 #if defined USE_GEOS && (GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 3))
-  GEOSGeom g1, g2;
+  int typeChanged = 0;
+  GEOSGeom g1, g2 = NULL;
   GEOSContextHandle_t handle = msGetGeosContextHandle();
 
   if(!p) 
     return NULL;
 
-  if(!p->geometry) /* if no geometry for the shape then build one */
+  if(p->type == MS_SHAPE_POLYGON)  {
+    /*
+     * Has msGEOSFreeGeometry(p) to be called here?
+     */
+    p->type = MS_SHAPE_LINE;
+    typeChanged = 1;
+  }
+
+  /*
+   * If no geometry or changed geoemtry type for the shape then build one.
+   */
+  if(!p->geometry || typeChanged==1)
     p->geometry = (GEOSGeom) msGEOSShape2Geometry(p);
 
   g1 = (GEOSGeom) p->geometry;
@@ -820,7 +832,19 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
   {
     g2 = GEOSOffsetCurve_r(handle,g1, offset, 4, GEOSBUF_JOIN_MITRE, fabs(offset*1.5));
   }
-  return msGEOSGeometry2Shape(g2);
+
+  if(typeChanged==1) {
+    /*
+     * Has msGEOSFreeGeometry(p) to be called here, as p->geometry
+     * was not built from type polygon, but line?
+     */
+    p->type = MS_SHAPE_POLYGON;
+  }
+
+  if (g2)
+    return msGEOSGeometry2Shape(g2);
+
+  return NULL;
 #else
   msSetError(MS_GEOSERR, "GEOS Offset Curve support is not available.", "msGEOSingleSidedBuffer()");
   return NULL;
