@@ -363,9 +363,15 @@ int msWMSApplyTime(mapObj *map, int version, char *time, char *wms_exception_for
 */
 void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, int* numNestedGroups, int* isUsedInNestedGroup)
 {
-  int i, j, k;
+  int i, k;
   const char* groups;
   char* errorMsg;
+  //Create array to hold unique groups
+  int maxgroups = 2000;
+  int maxgroupiter = 1;
+  char** uniqgroups = malloc(maxgroups * sizeof(char*));
+  int uniqgroupcount = 0;
+  
 
   for (i = 0; i < map->numlayers; i++) {
     nestedGroups[i] = NULL; /* default */
@@ -388,23 +394,41 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
         } else {
           /* split into subgroups. Start at address + 1 because the first '/' would cause an extra empty group */
           nestedGroups[i] = msStringSplit(groups + 1, '/', &numNestedGroups[i]);
-          /* */
-          for (j = 0; j < map->numlayers; j++) {
-            if (isUsedInNestedGroup[j])
-              continue;
-
-            for (k=0; k<numNestedGroups[i]; k++) {
-              if ( GET_LAYER(map, j)->name && strcasecmp(GET_LAYER(map, j)->name, nestedGroups[i][k]) == 0 ) {
-                isUsedInNestedGroup[j] = 1;
+          /* Iterate through the groups and add them to the unique groups array */
+          for (k=0; k<numNestedGroups[i]; k++) {
+            int found ,l = 0;
+            found = 0;
+            for (l=0; l<uniqgroupcount; l++) {
+              if ( strcasecmp(uniqgroups[l], nestedGroups[i][k]) == 0 ){
+                found = 1;
                 break;
               }
             }
-          }
+            if(found == 0){
+             uniqgroups[uniqgroupcount] = nestedGroups[i][k];
+             uniqgroupcount++;
+             // Does need only when maximum unique groups exceed 2000
+             if ( uniqgroupcount == (maxgroups*maxgroupiter)){
+                uniqgroups = realloc(uniqgroups, (uniqgroupcount + maxgroups) * sizeof(char*));
+                maxgroupiter++;
+             }
+            }
+         }
+       } 
+     }
+   }
+ } 
+ /* Iterate through layers to find out whether they are in any of the nested groups */
+ for (i = 0; i < map->numlayers; i++) {
+    for (k=0; k<uniqgroupcount; k++) {
+       if ( strcasecmp(GET_LAYER(map, i)->name ,uniqgroups[k]) == 0 ){
+             isUsedInNestedGroup[i] = 1;
+             break;
         }
-      }
-    }
+     }
   }
 }
+
 
 /*
 ** Validate that a given dimension is inside the extents defined
