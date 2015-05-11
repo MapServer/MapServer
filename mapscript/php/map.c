@@ -1951,7 +1951,7 @@ PHP_METHOD(mapObj, saveQuery)
   zval *zobj = getThis();
   char *filename;
   long filename_len = 0;
-  int results = MS_FALSE;
+  long results = MS_FALSE;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
