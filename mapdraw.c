@@ -389,6 +389,25 @@ imageObj *msDrawMap(mapObj *map, int querymap)
                 (endtime.tv_sec+endtime.tv_usec/1.0e6)-
                 (starttime.tv_sec+starttime.tv_usec/1.0e6) );
       }
+
+      /* Flush layer cache in-between layers if requested by PROCESSING directive*/
+      if (msLayerGetProcessingKey(lp, "FORCE_DRAW_LABEL_CACHE")) {
+	if(map->debug >= MS_DEBUGLEVEL_V)
+	  msDebug("msDrawMap(): PROCESSING FORCE_DRAW_LABEL_CACHE found.\n");
+	if(msDrawLabelCache(map, image) != MS_SUCCESS) {
+	  msFreeImage(image);
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+	  if (pasOWSReqInfo) {
+	    msHTTPFreeRequestObj(pasOWSReqInfo, numOWSRequests);
+	    msFree(pasOWSReqInfo);
+	  }
+#endif /* USE_WMS_LYR || USE_WFS_LYR */
+	  return(NULL);
+	}
+	msFreeLabelCache(&(map->labelcache));
+	msInitLabelCache(&(map->labelcache));
+      } /* PROCESSING FORCE_DRAW_LABEL_CACHE */
+
     }
   }
 
@@ -431,8 +450,6 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     }
   }
 
-  if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
-
   if(msDrawLabelCache(map, image) != MS_SUCCESS) {
     msFreeImage(image);
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
@@ -444,12 +461,6 @@ imageObj *msDrawMap(mapObj *map, int querymap)
     return(NULL);
   }
 
-  if(map->debug >= MS_DEBUGLEVEL_TUNING) {
-    msGettimeofday(&endtime, NULL);
-    msDebug("msDrawMap(): Drawing Label Cache, %.3fs\n",
-            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
-            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
-  }
 
   for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
 
@@ -2638,6 +2649,9 @@ void copyLabelBounds(label_bounds *dst, label_bounds *src) {
 int msDrawLabelCache(mapObj *map, imageObj *image)
 {
   int nReturnVal = MS_SUCCESS;
+  struct mstimeval starttime, endtime;
+
+  if(map->debug >= MS_DEBUGLEVEL_TUNING) msGettimeofday(&starttime, NULL);
 
   if(image) {
     if(MS_RENDERER_PLUGIN(image->format)) {
@@ -3097,8 +3111,15 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
       }
 #endif
 
-      return MS_SUCCESS; /* necessary? */
+      nReturnVal = MS_SUCCESS; /* necessary? */
     }
+  }
+
+  if(map->debug >= MS_DEBUGLEVEL_TUNING) {
+    msGettimeofday(&endtime, NULL);
+    msDebug("msDrawMap(): Drawing Label Cache, %.3fs\n",
+            (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+            (starttime.tv_sec+starttime.tv_usec/1.0e6) );
   }
 
   return nReturnVal;
