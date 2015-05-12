@@ -810,7 +810,7 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
     msGEOSFreeGeometry(p);
   }
 
-  if(!p->geometry || typeChanged==1)
+  if(typeChanged || !p->geometry)
     p->geometry = (GEOSGeom) msGEOSShape2Geometry(p);
 
   g1 = (GEOSGeom) p->geometry;
@@ -837,7 +837,7 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
    * Undo change of geometry type. We won't re-create the geos gemotry here,
    * it's up to each geos function to create it.
    */
-  if(typeChanged==1) {
+  if(typeChanged) {
     msGEOSFreeGeometry(p);
     p->type = MS_SHAPE_POLYGON;
   }
