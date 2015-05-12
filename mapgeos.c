@@ -799,17 +799,17 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
   if(!p) 
     return NULL;
 
-  if(p->type == MS_SHAPE_POLYGON)  {
-    /*
-     * Has msGEOSFreeGeometry(p) to be called here?
-     */
+  /*
+   * GEOSOffsetCurve_r() uses BufferBuilder.bufferLineSingleSided(), which
+   * works with lines, naturally. In order to allow offsets for a MapServer
+   * polygonObj, it has to be processed as line and afterwards reverted.
+   */
+  if(p->type == MS_SHAPE_POLYGON) {
     p->type = MS_SHAPE_LINE;
     typeChanged = 1;
+    msGEOSFreeGeometry(p);
   }
 
-  /*
-   * If no geometry or changed geoemtry type for the shape then build one.
-   */
   if(!p->geometry || typeChanged==1)
     p->geometry = (GEOSGeom) msGEOSShape2Geometry(p);
 
@@ -833,11 +833,12 @@ shapeObj *msGEOSOffsetCurve(shapeObj *p, double offset) {
     g2 = GEOSOffsetCurve_r(handle,g1, offset, 4, GEOSBUF_JOIN_MITRE, fabs(offset*1.5));
   }
 
+  /*
+   * Undo change of geometry type. We won't re-create the geos gemotry here,
+   * it's up to each geos function to create it.
+   */
   if(typeChanged==1) {
-    /*
-     * Has msGEOSFreeGeometry(p) to be called here, as p->geometry
-     * was not built from type polygon, but line?
-     */
+    msGEOSFreeGeometry(p);
     p->type = MS_SHAPE_POLYGON;
   }
 
