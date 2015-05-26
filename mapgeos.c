@@ -720,6 +720,7 @@ void msGEOSFreeGeometry(shapeObj *shape)
 
   g = (GEOSGeom) shape->geometry;
   GEOSGeom_destroy_r(handle,g);
+  shape->geometry = NULL;
 #else
   msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSFreeGEOSGeom()");
   return;
