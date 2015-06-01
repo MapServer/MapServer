@@ -258,6 +258,7 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
   char szTmp[1024];
   char *pszExpression = NULL, *pszTmpEscaped;
   int bString;
+  int bDateTime;
 
   if (psFilterNode == NULL)
     return NULL;
@@ -267,11 +268,15 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
   /*      is alphanumeric, add quotes around attribute and values.        */
   /* -------------------------------------------------------------------- */
   bString = 0;
+  bDateTime = 0;
   if (psFilterNode->psRightNode->pszValue) {
+    const char* pszType;
     snprintf(szTmp, sizeof(szTmp), "%s_type",  psFilterNode->psLeftNode->pszValue);
-    if (msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp) != NULL &&
-        (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp), "Character") == 0))
+    pszType = msOWSLookupMetadata(&(lp->metadata), "OFG", szTmp);
+    if (pszType!= NULL && (strcasecmp(pszType, "Character") == 0))
       bString = 1;
+    else if (pszType!= NULL && (strcasecmp(pszType, "Date") == 0))
+      bDateTime = 1;
     else if (FLTIsNumeric(psFilterNode->psRightNode->pszValue) == MS_FALSE)
       bString = 1;
   }
@@ -333,6 +338,10 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
     sprintf(szTmp,  "%s", "\"");
     pszExpression = msStringConcatenate(pszExpression, szTmp);
   }
+  else if (bDateTime) {
+    sprintf(szTmp,  "%s", "`");
+    pszExpression = msStringConcatenate(pszExpression, szTmp);
+  }
 
   if (psFilterNode->psRightNode->pszValue) {
     pszTmpEscaped = msStringEscape(psFilterNode->psRightNode->pszValue);
@@ -342,6 +351,10 @@ char *FLTGetBinaryComparisonCommonExpression(FilterEncodingNode *psFilterNode, l
 
   if (bString) {
     sprintf(szTmp,  "%s", "\"");
+    pszExpression = msStringConcatenate(pszExpression, szTmp);
+  }
+  else if (bDateTime) {
+    sprintf(szTmp,  "%s", "`");
     pszExpression = msStringConcatenate(pszExpression, szTmp);
   }
 
