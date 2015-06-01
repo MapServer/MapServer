@@ -20,6 +20,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
      v.name = "mapserver-vagrant"
    end
 
+  config.vm.provision "shell", path: "scripts/vagrant/virtualbox-fix.sh"
   config.vm.provision "shell", path: "scripts/vagrant/packages.sh"
   config.vm.provision "shell", path: "scripts/vagrant/postgis.sh"
   config.vm.provision "shell", path: "scripts/vagrant/mapserver.sh"

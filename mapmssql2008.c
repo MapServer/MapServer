@@ -49,7 +49,55 @@
 #include <string.h>
 #include <ctype.h> /* tolower() */
 
+/*   SqlGeometry serialization format
 
+Simple Point (SerializationProps & IsSinglePoint)
+  [SRID][0x01][SerializationProps][Point][z][m]
+
+Simple Line Segment (SerializationProps & IsSingleLineSegment)
+  [SRID][0x01][SerializationProps][Point1][Point2][z1][z2][m1][m2]
+
+Complex Geometries
+  [SRID][0x01][SerializationProps][NumPoints][Point1]..[PointN][z1]..[zN][m1]..[mN]
+  [NumFigures][Figure]..[Figure][NumShapes][Shape]..[Shape]
+
+SRID
+  Spatial Reference Id (4 bytes)
+
+SerializationProps (bitmask) 1 byte
+  0x01 = HasZValues
+  0x02 = HasMValues
+  0x04 = IsValid
+  0x08 = IsSinglePoint
+  0x10 = IsSingleLineSegment
+  0x20 = IsWholeGlobe
+
+Point (2-4)x8 bytes, size depends on SerializationProps & HasZValues & HasMValues
+  [x][y]                  - SqlGeometry
+  [latitude][longitude]   - SqlGeography
+
+Figure
+  [FigureAttribute][PointOffset]
+
+FigureAttribute (1 byte)
+  0x00 = Interior Ring
+  0x01 = Stroke
+  0x02 = Exterior Ring
+
+Shape
+  [ParentFigureOffset][FigureOffset][ShapeType]
+
+ShapeType (1 byte)
+  0x00 = Unknown
+  0x01 = Point
+  0x02 = LineString
+  0x03 = Polygon
+  0x04 = MultiPoint
+  0x05 = MultiLineString
+  0x06 = MultiPolygon
+  0x07 = GeometryCollection
+
+*/
 
 /* Native geometry parser macros */
 
@@ -118,6 +166,7 @@ typedef struct msGeometryParserInfo_t {
   int nPointSize;
   int nPointPos;
   int nNumPoints;
+  int nNumPointsRead;
   /* figure array */
   int nFigurePos;
   int nNumFigures;
@@ -170,7 +219,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
     "mapmssql2008.c - version of 2007/7/1.\n"
 
 /* Native geometry parser code */
-void ReadPoint(msGeometryParserInfo* gpi, pointObj* p, int iPoint, int iOrder)
+void ReadPoint(msGeometryParserInfo* gpi, pointObj* p, int iPoint)
 {
   if (gpi->nColType == MSSQLCOLTYPE_GEOGRAPHY) {
     p->x = ReadY(iPoint);
@@ -180,7 +229,7 @@ void ReadPoint(msGeometryParserInfo* gpi, pointObj* p, int iPoint, int iOrder)
     p->y = ReadY(iPoint);
   }
   /* calculate bounds */
-  if (iOrder == 0) {
+  if (gpi->nNumPointsRead++ == 0) {
     gpi->minx = gpi->maxx = p->x;
     gpi->miny = gpi->maxy = p->y;
   } else {
@@ -201,6 +250,8 @@ void ReadPoint(msGeometryParserInfo* gpi, pointObj* p, int iPoint, int iOrder)
 int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
 {
   msGeometryParserInfo* gpi = &layerinfo->gpi;
+
+  gpi->nNumPointsRead = 0;
 
   if (gpi->nLen < 10) {
     msDebug("ParseSqlGeometry NOT_ENOUGH_DATA\n");
@@ -239,7 +290,7 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
     shape->line[0].numpoints = 1;
     gpi->nPointPos = 6;
 
-    ReadPoint(gpi, &shape->line[0].point[0], 0, 0);
+    ReadPoint(gpi, &shape->line[0].point[0], 0);
   } else if ( gpi->chProps & SP_ISSINGLELINESEGMENT ) {
     // single line segment with 2 points
     gpi->nNumPoints = 2;
@@ -255,8 +306,8 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
     shape->line[0].numpoints = 2;
     gpi->nPointPos = 6;
 
-    ReadPoint(gpi, &shape->line[0].point[0], 0, 0);
-    ReadPoint(gpi, &shape->line[0].point[1], 1, 1);
+    ReadPoint(gpi, &shape->line[0].point[0], 0);
+    ReadPoint(gpi, &shape->line[0].point[1], 1);
   } else {
     int iShape, iFigure;
     // complex geometries
@@ -335,7 +386,7 @@ int ParseSqlGeometry(msMSSQL2008LayerInfo* layerinfo, shapeObj *shape)
 
       i = 0;
       while (iPoint < iNextPoint) {
-        ReadPoint(gpi, &shape->line[iFigure].point[i], iPoint, i);
+        ReadPoint(gpi, &shape->line[iFigure].point[i], iPoint);
         ++iPoint;
         ++i;
       }

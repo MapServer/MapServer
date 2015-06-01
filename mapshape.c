@@ -1959,7 +1959,7 @@ int msTiledSHPOpenFile(layerObj *layer)
     tlp = (GET_LAYER(layer->map, tSHP->tilelayerindex));
 
     if(tlp->connectiontype != MS_SHAPEFILE) {
-      msSetError(MS_SDEERR, "Tileindex layer must be a shapefile.", "msTiledSHPOpenFile()");
+      msSetError(MS_SHPERR, "Tileindex layer must be a shapefile.", "msTiledSHPOpenFile()");
       return(MS_FAILURE);
     }
 

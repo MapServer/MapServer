@@ -492,7 +492,7 @@ extern "C" {
 #define MS_LARGE 13
 #define MS_GIANT 16
   enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-  enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY };
+  enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_UNUSED_2, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYSQL, MS_RASTER, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY };
 #define IS_THIRDPARTY_LAYER_CONNECTIONTYPE(type) ((type) == MS_UNION || (type) == MS_KERNELDENSITY)
   enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
   enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
@@ -2018,6 +2018,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT void initWeb(webObj *web);
   MS_DLL_EXPORT void freeWeb(webObj *web);
   MS_DLL_EXPORT void initResultCache(resultCacheObj *resultcache);
+  MS_DLL_EXPORT int initLayerCompositer(LayerCompositer *compositer);
+  MS_DLL_EXPORT void initLeader(labelLeaderObj *leader);
+  MS_DLL_EXPORT void freeGrid( graticuleObj *pGraticule);
 
   MS_DLL_EXPORT featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
   MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
@@ -2475,7 +2478,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msINLINELayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msSHPLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msTiledSHPLayerInitializeVirtualTable(layerObj *layer);
-  MS_DLL_EXPORT int msSDELayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msOGRLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msPostGISLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer);
@@ -2533,7 +2535,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int WARN_UNUSED msDrawPieSlice(mapObj *map, imageObj *image, pointObj *p, styleObj *style, double radius, double start, double end);
   MS_DLL_EXPORT int WARN_UNUSED msDrawLabelBounds(mapObj *map, imageObj *image, label_bounds *bnds, styleObj *style, double scalefactor);
 
-
+  MS_DLL_EXPORT void msOutlineRenderingPrepareStyle(styleObj *pStyle, mapObj *map, layerObj *layer, imageObj *image);
+  MS_DLL_EXPORT void msOutlineRenderingRestoreStyle(styleObj *pStyle, mapObj *map, layerObj *layer, imageObj *image);
 
   MS_DLL_EXPORT int WARN_UNUSED msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, labelObj *label, double scalefactor);
   MS_DLL_EXPORT int WARN_UNUSED msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbolObj *ts);
