@@ -3707,11 +3707,8 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
       params->subsetcrs = msStrdup(crs);
     }
   } else if (!params->subsetcrs) {
-
-
-
     /* default to CRS of image */
-    /*params->subsetcrs = msStrdup("imageCRS");*/
+    /* leave params->subsetcrs to null */
   }
 
   return MS_SUCCESS;
