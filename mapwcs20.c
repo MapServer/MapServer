@@ -3707,8 +3707,11 @@ static int msWCSGetCoverage20_FinalizeParamsObj(wcs20ParamsObjPtr params, wcs20A
       params->subsetcrs = msStrdup(crs);
     }
   } else if (!params->subsetcrs) {
-    /* default to imageCRS */
-    params->subsetcrs = msStrdup("imageCRS");
+
+
+
+    /* default to CRS of image */
+    /*params->subsetcrs = msStrdup("imageCRS");*/
   }
 
   return MS_SUCCESS;
@@ -4126,7 +4129,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR,
                "Error loading CRS %s.",
-               "msWCSGetCoverage20()", params->subsetcrs);
+               "msWCSGetCoverage20()", cm.srs);
     return msWCSException(map, "InvalidParameterValue",
                           "projection", params->version);
   }
@@ -4164,6 +4167,12 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   subsets = params->bbox;
+
+  /* if no subsetCRS was specified use the coverages CRS 
+     (Requirement 27 of the WCS 2.0 specification) */
+  if (!params->subsetcrs) {
+    params->subsetcrs = msStrdup(cm.srs);
+  }
 
   if(EQUAL(params->subsetcrs, "imageCRS")) {
     /* subsets are in imageCRS; reproject them to real coordinates */
