@@ -1286,12 +1286,14 @@ int msRASTERLayerGetItems(layerObj *layer)
 #ifndef USE_GDAL
   return MS_FAILURE;
 #else
+  int maxnumitems = 0;
   rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
   if( rlinfo == NULL )
     return MS_FAILURE;
 
-  layer->items = (char **) msSmallCalloc(sizeof(char *),10);
+  maxnumitems = 8 + (rlinfo->qc_values?rlinfo->band_count:0);
+  layer->items = (char **) msSmallCalloc(sizeof(char *),maxnumitems);
 
   layer->numitems = 0;
   if( rlinfo->qc_x_reproj )
@@ -1317,6 +1319,8 @@ int msRASTERLayerGetItems(layerObj *layer)
     layer->items[layer->numitems++] = msStrdup("blue");
   if( rlinfo->qc_count )
     layer->items[layer->numitems++] = msStrdup("count");
+
+  assert(layer->numitems <= maxnumitems);
 
   return msRASTERLayerInitItemInfo(layer);
 #endif /* def USE_GDAL */
