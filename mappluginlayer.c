@@ -154,6 +154,8 @@ static void
 copyVirtualTable(layerVTableObj *dest,
                  const layerVTableObj *src)
 {
+  dest->LayerTranslateFilter = src->LayerTranslateFilter ? src->LayerTranslateFilter : dest->LayerTranslateFilter;
+  dest->LayerSupportsCommonFilters = src->LayerSupportsCommonFilters ? src->LayerSupportsCommonFilters : dest->LayerSupportsCommonFilters;
   dest->LayerInitItemInfo = src->LayerInitItemInfo ? src->LayerInitItemInfo : dest->LayerInitItemInfo;
   dest->LayerFreeItemInfo = src->LayerFreeItemInfo ? src->LayerFreeItemInfo : dest->LayerFreeItemInfo;
   dest->LayerOpen = src->LayerOpen ? src->LayerOpen : dest->LayerOpen;
@@ -172,6 +174,11 @@ copyVirtualTable(layerVTableObj *dest,
   dest->LayerCreateItems = src->LayerCreateItems ? src->LayerCreateItems : dest->LayerCreateItems;
   dest->LayerGetNumFeatures = src->LayerGetNumFeatures ? src->LayerGetNumFeatures : dest->LayerGetNumFeatures;
   dest->LayerGetAutoProjection = src->LayerGetAutoProjection ? src->LayerGetAutoProjection: dest->LayerGetAutoProjection;
+  dest->LayerEscapeSQLParam = src->LayerEscapeSQLParam ? src->LayerEscapeSQLParam: dest->LayerEscapeSQLParam;
+  dest->LayerEscapePropertyName = src->LayerEscapePropertyName ? src->LayerEscapePropertyName: dest->LayerEscapePropertyName;
+  dest->LayerEscapeSQLParam = src->LayerEscapeSQLParam ? src->LayerEscapeSQLParam: dest->LayerEscapeSQLParam;
+  dest->LayerEnablePaging = src->LayerEnablePaging ? src->LayerEnablePaging: dest->LayerEnablePaging;
+  dest->LayerGetPaging = src->LayerGetPaging ? src->LayerGetPaging: dest->LayerGetPaging;
 }
 
 int
