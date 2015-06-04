@@ -205,6 +205,7 @@ typedef struct ms_MSSQL2008_layer_info_t {
   msODBCconn * conn;          /* Connection to db */
   msGeometryParserInfo gpi;   /* struct for the geometry parser */
   int geometry_format;        /* Geometry format to be retrieved from the database */
+  tokenListNodeObjPtr current_node; /* filter expression translation */
 } msMSSQL2008LayerInfo;
 
 #define SQL_COLUMN_NAME_MAX_LENGTH 128
@@ -809,6 +810,28 @@ int msMSSQL2008LayerInitItemInfo(layerObj *layer)
   return MS_SUCCESS;
 }
 
+/* Get the layer extent as specified in the mapfile or a largest area */
+/* covering all features */
+int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
+{
+  if(layer->debug) {
+    msDebug("msMSSQL2008LayerGetExtent called\n");
+  }
+
+  if (layer->extent.minx == -1.0 && layer->extent.miny == -1.0 &&
+      layer->extent.maxx == -1.0 && layer->extent.maxy == -1.0) {
+    extent->minx = extent->miny = -1.0 * FLT_MAX;
+    extent->maxx = extent->maxy = FLT_MAX;
+  } else {
+    extent->minx = layer->extent.minx;
+    extent->miny = layer->extent.miny;
+    extent->maxx = layer->extent.maxx;
+    extent->maxy = layer->extent.maxy;
+  }
+
+  return MS_SUCCESS;
+}
+
 /* Prepare and execute the SQL statement for this layer */
 static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
 {
@@ -959,13 +982,19 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
   msMSSQL2008LayerGetExtent(layer, &extent);
   if (rect.minx <= extent.minx && rect.miny <= extent.miny && rect.maxx >= extent.maxx && rect.maxy >= extent.maxy) {
       /* no spatial filter used */
-      if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
+      if ( layer->filter.native_string ) { 
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, layer->filter.native_string );
+      }
+      else if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
         snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s", columns_wanted, data_source );
       } else {
         snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s)", columns_wanted, data_source, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
       }
   } else {
-      if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
+      if ( layer->filter.native_string ) { 
+        snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layer->filter.native_string, layerinfo->geom_column, box3d );
+      }
+      else if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") == NULL) {
         snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE %s.STIntersects(%s) = 1 ", columns_wanted, data_source, layerinfo->geom_column, box3d );
       } else {
         snprintf(query_string_temp, sizeof(query_string_temp), "SELECT %s from %s WHERE (%s) and %s.STIntersects(%s) = 1 ", columns_wanted, data_source, msLayerGetProcessingKey(layer, "NATIVE_FILTER"), layerinfo->geom_column, box3d );
@@ -1951,28 +1980,6 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
   return msMSSQL2008LayerInitItemInfo(layer);
 }
 
-/* Get the layer extent as specified in the mapfile or a largest area */
-/* covering all features */
-int msMSSQL2008LayerGetExtent(layerObj *layer, rectObj *extent)
-{
-  if(layer->debug) {
-    msDebug("msMSSQL2008LayerGetExtent called\n");
-  }
-
-  if (layer->extent.minx == -1.0 && layer->extent.miny == -1.0 &&
-      layer->extent.maxx == -1.0 && layer->extent.maxy == -1.0) {
-    extent->minx = extent->miny = -1.0 * FLT_MAX;
-    extent->maxx = extent->maxy = FLT_MAX;
-  } else {
-    extent->minx = layer->extent.minx;
-    extent->miny = layer->extent.miny;
-    extent->maxx = layer->extent.maxx;
-    extent->maxy = layer->extent.maxy;
-  }
-
-  return MS_SUCCESS;
-}
-
 /* Get primary key column of table */
 int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_name, int debug)
 {
@@ -2192,6 +2199,398 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
   return MS_SUCCESS;
 }
 
+char *msMSSQL2008LayerEscapePropertyName(layerObj *layer, const char* pszString)
+{
+  char* pszEscapedStr=NULL;
+  int i, j = 0;
+
+  if (pszString && strlen(pszString) > 0) {
+    int nLength = strlen(pszString);
+
+    pszEscapedStr = (char*) msSmallMalloc( 1 + nLength + 1 + 1);
+    pszEscapedStr[j++] = '[';
+
+    for (i=0; i<nLength; i++)
+      pszEscapedStr[j++] = pszString[i];
+
+    pszEscapedStr[j++] = ']';
+    pszEscapedStr[j++] = 0;
+  }
+  return pszEscapedStr;
+}
+
+char *msMSSQL2008LayerEscapeSQLParam(layerObj *layer, const char *pszString)
+{
+  char *pszEscapedStr=NULL;
+  if (pszString) {
+    int nSrcLen;
+    char c;
+    int i=0, j=0;
+    nSrcLen = (int)strlen(pszString);
+    pszEscapedStr = (char*) msSmallMalloc( 2 * nSrcLen + 1);
+    for(i = 0, j = 0; i < nSrcLen; i++) {
+      c = pszString[i];
+      if (c == '\'') {
+        pszEscapedStr[j++] = '\'';
+        pszEscapedStr[j++] = '\'';
+      } else
+        pszEscapedStr[j++] = c;
+    }
+    pszEscapedStr[j] = 0;
+  }
+  return pszEscapedStr;
+}
+
+int process_node(layerObj* layer, expressionObj *filter)
+{
+  char *snippet = NULL;
+  char *strtmpl = NULL;
+  char *stresc = NULL;
+  msMSSQL2008LayerInfo *layerinfo = (msMSSQL2008LayerInfo *) layer->layerinfo;
+
+  if (!layerinfo->current_node)
+  {
+    msSetError(MS_MISCERR, "Unecpected end of expression", "msMSSQL2008LayerTranslateFilter()");
+    return 0;
+  }
+
+  switch(layerinfo->current_node->token) {
+    case '(':
+       filter->native_string = msStringConcatenate(filter->native_string, "(");
+       /* process subexpression */
+       layerinfo->current_node = layerinfo->current_node->next;
+       while (layerinfo->current_node != NULL) { 
+         if (!process_node(layer, filter))
+           return 0;
+         if (!layerinfo->current_node)
+           break;
+         if (layerinfo->current_node->token == ')')
+           break;
+         layerinfo->current_node = layerinfo->current_node->next;
+       }
+       break;
+    case ')':
+       filter->native_string = msStringConcatenate(filter->native_string, ")");
+       break;   
+    /* literal tokens */
+    case MS_TOKEN_LITERAL_BOOLEAN:
+    case MS_TOKEN_LITERAL_NUMBER:
+      strtmpl = "%lf";
+      snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+      sprintf(snippet, strtmpl, layerinfo->current_node->tokenval.dblval);
+      filter->native_string = msStringConcatenate(filter->native_string, snippet);
+      msFree(snippet);
+      break;
+    case MS_TOKEN_LITERAL_STRING:
+      strtmpl = "'%s'";
+      stresc = msMSSQL2008LayerEscapeSQLParam(layer, layerinfo->current_node->tokenval.strval);
+      snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+      sprintf(snippet, strtmpl, stresc);
+      filter->native_string = msStringConcatenate(filter->native_string, snippet);
+      msFree(snippet);
+      msFree(stresc);
+      break;
+    case MS_TOKEN_LITERAL_TIME:
+      strtmpl = "'%s'";
+      stresc = msMSSQL2008LayerEscapeSQLParam(layer, layerinfo->current_node->tokenval.bindval.item);
+      snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+      sprintf(snippet, strtmpl, stresc);
+      filter->native_string = msStringConcatenate(filter->native_string, snippet);
+      msFree(snippet);
+      msFree(stresc); 
+      break;
+    case MS_TOKEN_LITERAL_SHAPE:
+      if (strcasecmp(layerinfo->geom_column_type, "geography") == 0)
+        filter->native_string = msStringConcatenate(filter->native_string, "geography::STGeomFromText('");
+      else
+        filter->native_string = msStringConcatenate(filter->native_string, "geometry::STGeomFromText('");
+      filter->native_string = msStringConcatenate(filter->native_string, msShapeToWKT(layerinfo->current_node->tokenval.shpval));
+      filter->native_string = msStringConcatenate(filter->native_string, "'");
+      if(layerinfo->user_srid && strcmp(layerinfo->user_srid, "") != 0) {
+        filter->native_string = msStringConcatenate(filter->native_string, ", ");
+        filter->native_string = msStringConcatenate(filter->native_string, layerinfo->user_srid);
+      }
+      filter->native_string = msStringConcatenate(filter->native_string, ")");
+      break;
+    case MS_TOKEN_BINDING_TIME:
+    case MS_TOKEN_BINDING_DOUBLE:
+    case MS_TOKEN_BINDING_INTEGER:
+    case MS_TOKEN_BINDING_STRING:
+      strtmpl = "%s";
+      stresc = msMSSQL2008LayerEscapePropertyName(layer, layerinfo->current_node->tokenval.bindval.item);
+      snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+      sprintf(snippet, strtmpl, stresc);
+      filter->native_string = msStringConcatenate(filter->native_string, snippet);
+      msFree(snippet);
+      msFree(stresc);
+      break;
+    case MS_TOKEN_BINDING_SHAPE:
+      filter->native_string = msStringConcatenate(filter->native_string, layerinfo->geom_column);
+      break;
+    case MS_TOKEN_BINDING_MAP_CELLSIZE:
+      strtmpl = "%lf";
+      snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+      sprintf(snippet, strtmpl, layer->map->cellsize);
+      filter->native_string = msStringConcatenate(filter->native_string, snippet);
+      msFree(snippet);
+      break;
+
+    /* comparisons */
+    case MS_TOKEN_COMPARISON_IN:
+      filter->native_string = msStringConcatenate(filter->native_string, " IN ");
+      break;
+    case MS_TOKEN_COMPARISON_LIKE:
+      filter->native_string = msStringConcatenate(filter->native_string, " LIKE ");
+      break;
+    case MS_TOKEN_COMPARISON_EQ:
+      filter->native_string = msStringConcatenate(filter->native_string, " = ");
+      break;
+    case MS_TOKEN_COMPARISON_NE: 
+      filter->native_string = msStringConcatenate(filter->native_string, " != ");
+      break;
+    case MS_TOKEN_COMPARISON_GT: 
+      filter->native_string = msStringConcatenate(filter->native_string, " > ");
+      break;
+    case MS_TOKEN_COMPARISON_GE:
+      filter->native_string = msStringConcatenate(filter->native_string, " >= ");
+      break;
+    case MS_TOKEN_COMPARISON_LT:
+      filter->native_string = msStringConcatenate(filter->native_string, " < ");
+      break;
+    case MS_TOKEN_COMPARISON_LE:
+      filter->native_string = msStringConcatenate(filter->native_string, " <= ");
+      break;
+
+    /* logical ops */
+    case MS_TOKEN_LOGICAL_AND:
+      filter->native_string = msStringConcatenate(filter->native_string, " AND ");
+      break;
+    case MS_TOKEN_LOGICAL_OR:
+      filter->native_string = msStringConcatenate(filter->native_string, " OR ");
+      break;
+    case MS_TOKEN_LOGICAL_NOT:
+      filter->native_string = msStringConcatenate(filter->native_string, " NOT ");
+      break;
+
+    /* spatial comparison tokens */
+    case MS_TOKEN_COMPARISON_INTERSECTS:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STIntersects(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      break;
+
+    case MS_TOKEN_COMPARISON_DISJOINT:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STDisjoint(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      break;
+
+    case MS_TOKEN_COMPARISON_TOUCHES:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STTouches(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      break;
+
+    case MS_TOKEN_COMPARISON_OVERLAPS:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STOverlaps(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      break;
+
+    case MS_TOKEN_COMPARISON_CROSSES:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STCrosses(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      break;
+
+    case MS_TOKEN_COMPARISON_WITHIN:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STWithin(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      break;
+
+    case MS_TOKEN_COMPARISON_CONTAINS:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STContains(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      break;
+
+    case MS_TOKEN_COMPARISON_EQUALS:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STEquals(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")=1");
+      break;
+
+    case MS_TOKEN_COMPARISON_BEYOND:
+      msSetError(MS_MISCERR, "Beyond operator is unsupported.", "msMSSQL2008LayerTranslateFilter()");
+      return 0;
+
+    case MS_TOKEN_COMPARISON_DWITHIN:
+      msSetError(MS_MISCERR, "DWithin operator is unsupported.", "msMSSQL2008LayerTranslateFilter()");
+      return 0;
+
+    /* spatial functions */
+    case MS_TOKEN_FUNCTION_AREA:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STArea(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")");
+      break;
+
+    case MS_TOKEN_FUNCTION_BUFFER:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STBuffer(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")");
+      break;
+
+    case MS_TOKEN_FUNCTION_DIFFERENCE:
+      filter->native_string = msStringConcatenate(filter->native_string, ".STDifference(");
+      layerinfo->current_node = layerinfo->current_node->next;
+      if (!process_node(layer, filter))
+        return 0;
+      filter->native_string = msStringConcatenate(filter->native_string, ")");
+      break;
+
+    case MS_TOKEN_FUNCTION_FROMTEXT:
+      if (strcasecmp(layerinfo->geom_column_type, "geography") == 0)
+        filter->native_string = msStringConcatenate(filter->native_string, "geography::STGeomFromText");
+      else
+        filter->native_string = msStringConcatenate(filter->native_string, "geometry::STGeomFromText");          
+      break;
+
+    case MS_TOKEN_FUNCTION_LENGTH:
+      filter->native_string = msStringConcatenate(filter->native_string, "len");
+      break;
+
+    case MS_TOKEN_FUNCTION_ROUND:
+      filter->native_string = msStringConcatenate(filter->native_string, "round");
+      break;
+    
+    case MS_TOKEN_FUNCTION_TOSTRING:
+      break;
+
+    case MS_TOKEN_FUNCTION_COMMIFY:
+      break;
+
+    case MS_TOKEN_FUNCTION_SIMPLIFY:
+      filter->native_string = msStringConcatenate(filter->native_string, ".Reduce"); 
+      break;
+    case MS_TOKEN_FUNCTION_SIMPLIFYPT:
+      break;
+    case MS_TOKEN_FUNCTION_GENERALIZE:
+      filter->native_string = msStringConcatenate(filter->native_string, ".Reduce"); 
+      break;
+
+    default:
+      msSetError(MS_MISCERR, "Translation to native SQL failed.","msMSSQL2008LayerTranslateFilter()");
+      if (layer->debug) {
+        msDebug("Token not caught, exiting: Token is %i\n", layerinfo->current_node->token);
+      }
+      return 0;
+  }
+  return 1;
+}
+
+/* Translate filter expression to native msssql filter */
+int msMSSQL2008LayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem)
+{
+  char *snippet = NULL;
+  char *strtmpl = NULL;
+  char *stresc = NULL;
+  msMSSQL2008LayerInfo *layerinfo = (msMSSQL2008LayerInfo *) layer->layerinfo;
+
+  if(!filter->string) return MS_SUCCESS;
+
+  msFree(filter->native_string);
+  filter->native_string = NULL;
+
+  if(filter->type == MS_STRING && filter->string && filteritem) { /* item/value pair */
+    stresc = msMSSQL2008LayerEscapePropertyName(layer, filteritem);
+    if(filter->flags & MS_EXP_INSENSITIVE) {
+      filter->native_string = msStringConcatenate(filter->native_string, "upper(");
+      filter->native_string = msStringConcatenate(filter->native_string, stresc);
+      filter->native_string = msStringConcatenate(filter->native_string, ") = upper(");
+    } else {
+      filter->native_string = msStringConcatenate(filter->native_string, stresc);
+      filter->native_string = msStringConcatenate(filter->native_string, " = ");
+    }
+    msFree(stresc);
+
+    strtmpl = "'%s'";  /* don't have a type for the righthand literal so assume it's a string and we quote */
+    snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(filter->string));
+    sprintf(snippet, strtmpl, filter->string);  // TODO: escape filter->string
+    filter->native_string = msStringConcatenate(filter->native_string, snippet);
+    free(snippet);
+
+    if(filter->flags & MS_EXP_INSENSITIVE) 
+        filter->native_string = msStringConcatenate(filter->native_string, ")");
+    
+  } else if(filter->type == MS_REGEX && filter->string && filteritem) { /* item/regex pair */
+    /* NOTE: regex is not supported by MSSQL natively. We should install it in CLR UDF 
+       according to https://msdn.microsoft.com/en-us/magazine/cc163473.aspx*/
+    filter->native_string = msStringConcatenate(filter->native_string, "dbo.RegexMatch(");
+    if(filter->flags & MS_EXP_INSENSITIVE) {
+      filter->native_string = msStringConcatenate(filter->native_string, "'(?i)");
+    }
+    filter->native_string = msStrdup(filteritem);
+    filter->native_string = msStringConcatenate(filter->native_string, ", ");
+    strtmpl = "'%s'";
+    snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(filter->string));
+    sprintf(snippet, strtmpl, filter->string); // TODO: escape filter->string
+    filter->native_string = msStringConcatenate(filter->native_string, snippet);
+
+    filter->native_string = msStringConcatenate(filter->native_string, "')");
+    free(snippet);
+  } else if(filter->type == MS_EXPRESSION) {
+    
+      if(layer->debug >= 2) 
+      msDebug("msMSSQL2008LayerTranslateFilter. String: %s.\n", filter->string);
+
+    if(!filter->tokens) {
+      if(layer->debug >= 2) 
+        msDebug("msMSSQL2008LayerTranslateFilter. There are tokens to process... \n");
+      return MS_SUCCESS;
+    }
+
+    /* start processing nodes */
+    layerinfo->current_node = filter->tokens;
+    while (layerinfo->current_node != NULL) {
+      if (!process_node(layer, filter))
+      {
+        msFree(filter->native_string);
+        filter->native_string = 0;
+        return MS_FAILURE;
+      }
+
+      if (!layerinfo->current_node)
+        break;
+
+      layerinfo->current_node = layerinfo->current_node->next;
+    }   
+  }
+
+  return MS_SUCCESS;
+}
+
 #else
 
 /* prototypes if MSSQL2008 isnt supposed to be compiled */
@@ -2261,6 +2660,24 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
   return MS_FAILURE;
 }
 
+int msMSSQL2008LayerTranslateFilter(layerObj *layer, expressionObj *filter, char *filteritem)
+{
+  msSetError(MS_QUERYERR, "msMSSQL2008LayerTranslateFilter called but unimplemented!(mapserver not compiled with MSSQL2008 support)", "msMSSQL2008LayerTranslateFilter()");
+  return MS_FAILURE;
+}
+
+char *msMSSQL2008LayerEscapeSQLParam(layerObj *layer, const char *pszString)
+{
+  msSetError(MS_QUERYERR, "msMSSQL2008EscapeSQLParam called but unimplemented!(mapserver not compiled with MSSQL2008 support)", "msMSSQL2008LayerEscapeSQLParam()");
+  return NULL;
+}
+
+char *msMSSQL2008LayerEscapePropertyName(layerObj *layer, const char *pszString)
+{
+  msSetError(MS_QUERYERR, "msMSSQL2008LayerEscapePropertyName called but unimplemented!(mapserver not compiled with MSSQL2008 support)", "msMSSQL2008LayerEscapePropertyName()");
+  return NULL;
+}
+
 /* end above's #ifdef USE_MSSQL2008 */
 #endif
 
@@ -2271,7 +2688,9 @@ MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj 
   assert(layer != NULL);
   assert(vtable != NULL);
 
-  /* vtable->LayerTranslateFilter, use default - need to add this... */
+  vtable->LayerTranslateFilter = msMSSQL2008LayerTranslateFilter;
+  vtable->LayerEscapeSQLParam = msMSSQL2008LayerEscapeSQLParam;
+  vtable->LayerEscapePropertyName = msMSSQL2008LayerEscapePropertyName;
 
   vtable->LayerInitItemInfo = msMSSQL2008LayerInitItemInfo;
   vtable->LayerFreeItemInfo = msMSSQL2008LayerFreeItemInfo;
@@ -2306,6 +2725,10 @@ msMSSQL2008LayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
+
+  layer->vtable->LayerTranslateFilter = msMSSQL2008LayerTranslateFilter;
+  layer->vtable->LayerEscapeSQLParam = msMSSQL2008LayerEscapeSQLParam;
+  layer->vtable->LayerEscapePropertyName = msMSSQL2008LayerEscapePropertyName;
 
   layer->vtable->LayerInitItemInfo = msMSSQL2008LayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msMSSQL2008LayerFreeItemInfo;
