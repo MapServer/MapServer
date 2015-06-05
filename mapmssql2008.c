@@ -2291,13 +2291,14 @@ int process_node(layerObj* layer, expressionObj *filter)
       msFree(stresc);
       break;
     case MS_TOKEN_LITERAL_TIME:
-      strtmpl = "'%s'";
-      stresc = msMSSQL2008LayerEscapeSQLParam(layer, layerinfo->current_node->tokenval.bindval.item);
-      snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
-      sprintf(snippet, strtmpl, stresc);
-      filter->native_string = msStringConcatenate(filter->native_string, snippet);
-      msFree(snippet);
-      msFree(stresc); 
+      {
+      char buffer[30];
+      if(strftime(buffer,30,"'%Y-%m-%d %H:%M:%S'",&layerinfo->current_node->tokenval.tmval) == 0) {
+        msSetError(MS_MISCERR, "Invalid time literal in expression", "msMSSQL2008LayerTranslateFilter()");
+        return 0;
+      }
+      filter->native_string = msStringConcatenate(filter->native_string, buffer);
+      }
       break;
     case MS_TOKEN_LITERAL_SHAPE:
       if (strcasecmp(layerinfo->geom_column_type, "geography") == 0)
