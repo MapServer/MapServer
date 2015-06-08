@@ -2711,7 +2711,7 @@ MS_DLL_EXPORT int PluginInitializeVirtualTable(layerVTableObj* vtable, layerObj 
   /* vtable->LayerGetAutoStyle, not supported for this layer */
   vtable->LayerCloseConnection = msMSSQL2008LayerClose;
 
-  vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+  vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* vtable->LayerCreateItems, use default */
   /* vtable->LayerGetNumFeatures, use default */
   /* layer->vtable->LayerGetAutoProjection, use defaut*/
@@ -2749,7 +2749,7 @@ msMSSQL2008LayerInitializeVirtualTable(layerObj *layer)
   /* layer->vtable->LayerGetAutoStyle, not supported for this layer */
   layer->vtable->LayerCloseConnection = msMSSQL2008LayerClose;
 
-  layer->vtable->LayerSetTimeFilter = msLayerMakePlainTimeFilter;
+  layer->vtable->LayerSetTimeFilter = msLayerMakeBackticsTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */
   /* layer->vtable->LayerGetNumFeatures, use default */
 
