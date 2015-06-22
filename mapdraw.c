@@ -328,6 +328,8 @@ imageObj *msDrawMap(mapObj *map, int querymap)
   for(i=0; i<map->numlayers; i++) {
 
     if(map->layerorder[i] != -1) {
+      char *force_draw_label_cache = NULL;
+
       lp = (GET_LAYER(map,  map->layerorder[i]));
 
       if(lp->postlabelcache) /* wait to draw */
@@ -391,9 +393,11 @@ imageObj *msDrawMap(mapObj *map, int querymap)
       }
 
       /* Flush layer cache in-between layers if requested by PROCESSING directive*/
-      if (msLayerGetProcessingKey(lp, "FORCE_DRAW_LABEL_CACHE")) {
+      force_draw_label_cache = msLayerGetProcessingKey(lp, "FORCE_DRAW_LABEL_CACHE");
+      if (force_draw_label_cache &&
+	  strncasecmp(force_draw_label_cache,"FLUSH",5)==0) {
 	if(map->debug >= MS_DEBUGLEVEL_V)
-	  msDebug("msDrawMap(): PROCESSING FORCE_DRAW_LABEL_CACHE found.\n");
+	  msDebug("msDrawMap(): PROCESSING FORCE_DRAW_LABEL_CACHE=FLUSH found.\n");
 	if(msDrawLabelCache(map, image) != MS_SUCCESS) {
 	  msFreeImage(image);
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
