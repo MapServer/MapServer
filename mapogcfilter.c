@@ -66,7 +66,8 @@ int FLTIsNumeric(const char *pszValue)
       return MS_TRUE;
 #else
     char * p;
-    if (strtod(pszValue, &p) != 0  || *p == '\0') return MS_TRUE;
+    strtod(pszValue, &p);
+    if ( p != pszValue && *p == '\0') return MS_TRUE;
 #endif
   }
 
