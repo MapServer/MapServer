@@ -330,73 +330,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
           if (GET_LAYER(map, i)->connectiontype == MS_WMS)
             msInsertHashTable(&(GET_LAYER(map, i)->metadata),
                               "wms_sld_body", "auto" );
-          /* ==================================================================== */
-          /*      if the SLD contained a spatial feature, the layerinfo           */
-          /*      parameter contains the node. Extract it and do a query on       */
-          /*      the layer. Insert also a metadata that will be used when        */
-          /*      rendering the final image.                                      */
-          /* ==================================================================== */
-          if (pasLayers[j].layerinfo &&
-              (GET_LAYER(map, i)->type ==  MS_LAYER_POINT ||
-               GET_LAYER(map, i)->type == MS_LAYER_LINE ||
-               GET_LAYER(map, i)->type == MS_LAYER_POLYGON ||
-               GET_LAYER(map, i)->type == MS_LAYER_TILEINDEX)) {
-            FilterEncodingNode *psNode = NULL;
 
-            msInsertHashTable(&(GET_LAYER(map, i)->metadata),
-                              "tmp_wms_sld_query", "true" );
-            psNode = (FilterEncodingNode *)pasLayers[j].layerinfo;
-
-            /* -------------------------------------------------------------------- */
-            /*      set the template on the classes so that the query works         */
-            /*      using classes. If there are no classes, set it at the layer level.*/
-            /* -------------------------------------------------------------------- */
-            if (GET_LAYER(map, i)->numclasses > 0) {
-              for (k=0; k<GET_LAYER(map, i)->numclasses; k++) {
-                if (!GET_LAYER(map, i)->class[k]->template)
-                  GET_LAYER(map, i)->class[k]->template = msStrdup("ttt.html");
-              }
-            } else if (!GET_LAYER(map, i)->template) {
-              bFreeTemplate = 1;
-              GET_LAYER(map, i)->template = msStrdup("ttt.html");
-            }
-
-            nLayerStatus =  GET_LAYER(map, i)->status;
-            GET_LAYER(map, i)->status = MS_ON;
-
-            nStatus =
-            FLTApplyFilterToLayer(psNode, map,
-                                  GET_LAYER(map, i)->index);
-            /* -------------------------------------------------------------------- */
-            /*      nothing found is a valid, do not exit.                          */
-            /* -------------------------------------------------------------------- */
-            if (nStatus !=  MS_SUCCESS) {
-              errorObj   *ms_error;
-              ms_error = msGetErrorObj();
-              if(ms_error->code == MS_NOTFOUND)
-                nStatus =  MS_SUCCESS;
-            }
-
-
-            GET_LAYER(map, i)->status = nLayerStatus;
-            FLTFreeFilterEncodingNode(psNode);
-
-            if ( bFreeTemplate) {
-              free(GET_LAYER(map, i)->template);
-              GET_LAYER(map, i)->template = NULL;
-            }
-
-            pasLayers[j].layerinfo=NULL;
-
-            if( nStatus != MS_SUCCESS ) {
-              goto sld_cleanup;
-            }
-          } else {
-            /*in some cases it would make sense to concatenate all the class
-              expressions and use it to set the filter on the layer. This
-              could increase performace. Will do it for db types layers #2840*/
-            lp = GET_LAYER(map, i);
-            if (lp->filter.string == NULL || (lp->filter.string && lp->filter.type == MS_STRING && !lp->filteritem)) {
+          /*in some cases it would make sense to concatenate all the class
+            expressions and use it to set the filter on the layer. This
+            could increase performace. Will do it for db types layers #2840*/
+          lp = GET_LAYER(map, i);
+          if (lp->filter.string == NULL || (lp->filter.string && lp->filter.type == MS_STRING && !lp->filteritem)) {
               if (lp->connectiontype == MS_POSTGIS || lp->connectiontype ==  MS_ORACLESPATIAL || lp->connectiontype == MS_PLUGIN) {
                 if (lp->numclasses > 0) {
                   /* check first that all classes have an expression type. That is
@@ -430,8 +369,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
                   }
                 }
               }
-            }
-
           }
           break;
         }
