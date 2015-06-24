@@ -658,7 +658,6 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                            pasReqInfo, *numRequests, map, "FO") != MS_SUCCESS) {
     if (psParams) {
       msWFSFreeParamsObj(psParams);
-      free(psParams);
     }
     return MS_FAILURE;
   }
@@ -690,7 +689,6 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
   if (psParams) {
     msWFSFreeParamsObj(psParams);
-    free(psParams);
   }
   return nStatus;
 

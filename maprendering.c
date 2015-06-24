@@ -247,8 +247,8 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
           if(UNLIKELY(!face)) { status = MS_FAILURE; break; }
           msUTF8ToUniChar(symbol->character, &unicode);
           unicode = msGetGlyphIndex(face,unicode);
-          glyphc = msGetGlyphByIndex(face, s->scale, unicode);
-          if(UNLIKELY(!face)) { status = MS_FAILURE; break; }
+          glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s->scale),1), unicode);
+          if(UNLIKELY(!glyphc)) { status = MS_FAILURE; break; }
           status = drawGlyphMarker(tileimg, face, glyphc, p_x, p_y, s->scale, s->rotation,
                 s->color, s->outlinecolor, s->outlinewidth);
         }
@@ -311,7 +311,7 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
               if(UNLIKELY(!face)) { status = MS_FAILURE; break; }
               msUTF8ToUniChar(symbol->character, &unicode);
               unicode = msGetGlyphIndex(face,unicode);
-              glyphc = msGetGlyphByIndex(face, s->scale, unicode);
+              glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s->scale),1), unicode);
               if(UNLIKELY(!glyphc)) { status = MS_FAILURE; break; }
               status = drawGlyphMarker(tileimg, face, glyphc, p_x, p_y, s->scale, s->rotation,
                     s->color, s->outlinecolor, s->outlinewidth);
@@ -384,7 +384,7 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
     face = msGetFontFace(symbol->font, &image->map->fontset);
     if(UNLIKELY(!face)) return MS_FAILURE;
     unicode = msGetGlyphIndex(face,unicode);
-    glyphc = msGetGlyphByIndex(face, style->scale, unicode);
+    glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(style->scale),1), unicode);
     if(UNLIKELY(!glyphc)) return MS_FAILURE;
     symbol_width = glyphc->metrics.maxx - glyphc->metrics.minx;
     symbol_height = glyphc->metrics.maxy - glyphc->metrics.miny;
@@ -922,7 +922,7 @@ int msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p, styleObj *styl
           if(UNLIKELY(!face)) return MS_FAILURE;
           msUTF8ToUniChar(symbol->character,&unicode);
           unicode = msGetGlyphIndex(face,unicode);
-          glyphc = msGetGlyphByIndex(face,s.scale,unicode);
+          glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s.scale),1), unicode);
           if(UNLIKELY(!glyphc)) return MS_FAILURE;
           ret = drawGlyphMarker(image, face, glyphc, p_x, p_y, s.scale, s.rotation, s.color, s.outlinecolor, s.outlinewidth);
         }
