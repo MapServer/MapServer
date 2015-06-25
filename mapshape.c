@@ -2688,7 +2688,7 @@ int msSHPLayerNextShape(layerObj *layer, shapeObj *shape)
   msSHPReadShape(shpfile->hSHP, i, shape);
   if(shape->type == MS_SHAPE_NULL) {
     msFreeShape(shape);
-    msSHPLayerNextShape(layer, shape); /* skip NULL shapes */
+    return msSHPLayerNextShape(layer, shape); /* skip NULL shapes */
   }
   shape->numvalues = layer->numitems;
   shape->values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
