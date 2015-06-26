@@ -79,6 +79,17 @@ static void msOWSClearRequestObj(owsRequestObj *ows_request)
   }
 }
 
+#if defined(USE_LIBXML2) && LIBXML_VERSION < 20900
+static int bExternalEntityAsked = FALSE;
+static xmlParserInputPtr  dummyEntityLoader(const char * URL, 
+                                           const char * ID, 
+                                           xmlParserCtxtPtr context )
+{
+    bExternalEntityAsked = TRUE;
+    return NULL;
+}
+#endif
+
 /*
 ** msOWSPreParseRequest() parses a cgiRequestObj either with GET/KVP
 ** or with POST/XML. Only SERVICE, VERSION (or WMTVER) and REQUEST are
@@ -117,6 +128,9 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
   } else if (request->type == MS_POST_REQUEST) {
 #if defined(USE_LIBXML2)
     xmlNodePtr root = NULL;
+#if LIBXML_VERSION < 20900
+    xmlExternalEntityLoader oldExternalEntityLoader;
+#endif
 #elif defined(USE_GDAL)
     CPLXMLNode *temp;
 #endif
@@ -126,9 +140,24 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
       return MS_FAILURE;
     }
 #if defined(USE_LIBXML2)
+#if LIBXML_VERSION < 20900
+    oldExternalEntityLoader = xmlGetExternalEntityLoader();
+    /* to avoid  XML External Entity vulnerability with libxml2 < 2.9 */
+    xmlSetExternalEntityLoader (dummyEntityLoader); 
+    bExternalEntityAsked = FALSE;
+#endif
     /* parse to DOM-Structure with libxml2 and get the root element */
     ows_request->document = xmlParseMemory(request->postrequest,
                                            strlen(request->postrequest));
+#if LIBXML_VERSION < 20900
+    xmlSetExternalEntityLoader (oldExternalEntityLoader); 
+    if( bExternalEntityAsked )
+    {
+        msSetError(MS_OWSERR, "XML parsing error: %s",
+                 "msOWSPreParseRequest()", "External entity fetch");
+        return MS_FAILURE;
+    }
+#endif
     if (ows_request->document == NULL
         || (root = xmlDocGetRootElement(ows_request->document)) == NULL) {
       xmlErrorPtr error = xmlGetLastError();
