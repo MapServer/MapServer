@@ -494,8 +494,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
 
 int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params, 
-                           cgiRequestObj *req)
-
+                           cgiRequestObj *req, owsRequestObj *ows_request)
 {
     msSetError( MS_WFSERR,
                 "WFS 1.1 request made, but mapserver requires libxml2 for WFS 1.1 services and this is not configured.",
