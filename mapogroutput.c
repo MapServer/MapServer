@@ -31,6 +31,7 @@
 #include "mapserver.h"
 #include "mapproject.h"
 #include "mapthread.h"
+#include "mapows.h"
 
 #if defined(USE_OGR)
 #  define __USE_LARGEFILE64 1

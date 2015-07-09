@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-
+#include "mapows.h"
 
 
 #if defined(USE_WMS_LYR) && defined(USE_OGR)

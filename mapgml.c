@@ -29,6 +29,7 @@
 
 #include "mapserver.h"
 #include "maperror.h"
+#include "mapows.h"
 #include "mapgml.h"
 #include "maptime.h"
 

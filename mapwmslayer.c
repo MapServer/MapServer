@@ -30,6 +30,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapogcsld.h"
+#include "mapows.h"
 
 #include <time.h>
 #include <ctype.h>

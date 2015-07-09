@@ -33,6 +33,7 @@
 #include "maptime.h"
 #include "mapcopy.h"
 #include "mapfile.h"
+#include "mapows.h"
 
 
 /* msPrepareImage()

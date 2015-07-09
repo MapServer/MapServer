@@ -35,6 +35,7 @@
 #include "mapgml.h"
 #include <ctype.h>
 #include "maptemplate.h"
+#include "mapows.h"
 
 #include "mapogcsld.h"
 #include "mapogcfilter.h"

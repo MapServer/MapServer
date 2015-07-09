@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include "mapows.h"
 
 #ifdef USE_GDAL
 #  include "gdal.h"

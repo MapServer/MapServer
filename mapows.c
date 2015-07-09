@@ -30,6 +30,7 @@
 #include "mapserver.h"
 #include "maptime.h"
 #include "maptemplate.h"
+#include "mapows.h"
 
 #if defined(USE_LIBXML2)
 #include "maplibxml2.h"

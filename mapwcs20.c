@@ -36,6 +36,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
+#include "mapows.h"
 #include "mapwcs.h"
 #include <float.h>
 #include "gdal.h"

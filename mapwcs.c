@@ -30,6 +30,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
+#include "mapows.h"
 #include <assert.h>
 
 

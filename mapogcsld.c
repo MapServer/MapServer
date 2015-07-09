@@ -29,6 +29,7 @@
 #include "mapogcsld.h"
 #include "mapogcfilter.h"
 #include "mapserver.h"
+#include "mapows.h"
 
 #ifdef USE_OGR
 #include "cpl_string.h"

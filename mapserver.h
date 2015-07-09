@@ -2806,12 +2806,6 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
                                   const char *pszEntryPoint);
 
   /* ==================================================================== */
-  /*      include definitions from mapows.h                               */
-  /* ==================================================================== */
-#include "mapows.h"
-
-
-  /* ==================================================================== */
   /*      prototypes for functions in mapgeos.c                         */
   /* ==================================================================== */
   MS_DLL_EXPORT void msGEOSSetup(void);
