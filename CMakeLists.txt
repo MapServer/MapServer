@@ -250,7 +250,7 @@ if(BUILD_DYNAMIC)
   add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
   set_target_properties( mapserver  PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
-    SOVERSION 1
+    SOVERSION 2
 ) 
 endif(BUILD_DYNAMIC)
 
@@ -258,7 +258,7 @@ if(BUILD_STATIC)
   add_library(mapserver_static STATIC ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
-    SOVERSION 1
+    SOVERSION 2
   ) 
 endif(BUILD_STATIC)
 
