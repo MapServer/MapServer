@@ -32,6 +32,7 @@
 
 #include "mapogcfilter.h"
 #include "mapserver.h"
+#include "mapows.h"
 #include "mapowscommon.h"
 
 #ifdef USE_OGR

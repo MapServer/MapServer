@@ -29,6 +29,7 @@
 
 #include <assert.h>
 #include "mapserver.h"
+#include "mapows.h"
 
 
 

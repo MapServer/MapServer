@@ -34,6 +34,7 @@
 /* grab mapserver declarations to wrap
  */
 #include "../../mapserver.h"
+#include "../../mapows.h"
 #include "../../maperror.h"
 #include "../../mapprimitive.h"
 #include "../../mapsymbol.h"

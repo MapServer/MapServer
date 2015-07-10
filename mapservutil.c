@@ -31,6 +31,7 @@
 #include "mapserver.h"
 #include "mapserv.h"
 #include "maptime.h"
+#include "mapows.h"
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).

@@ -64,6 +64,7 @@
 #include "mapserver.h"
 #include "maptime.h"
 #include "mappostgis.h"
+#include "mapows.h"
 
 #define FP_EPSILON 1e-12
 #define FP_EQ(a, b) (fabs((a)-(b)) < FP_EPSILON)

@@ -31,6 +31,7 @@
 #include "maphash.h"
 #include "mapserver.h"
 #include "maptile.h"
+#include "mapows.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

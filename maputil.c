@@ -37,6 +37,7 @@
 #include "maptime.h"
 #include "mapthread.h"
 #include "mapcopy.h"
+#include "mapows.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>

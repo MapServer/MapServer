@@ -37,6 +37,7 @@
 #include <limits.h>
 #include <assert.h>
 #include "mapserver.h"
+#include "mapows.h"
 
 #if defined(USE_GDAL) || defined(USE_OGR)
 #include <cpl_conv.h>
