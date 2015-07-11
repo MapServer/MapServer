@@ -2292,12 +2292,45 @@ int process_node(layerObj* layer, expressionObj *filter)
       break;
     case MS_TOKEN_LITERAL_TIME:
       {
-      char buffer[30];
-      if(strftime(buffer,30,"'%Y-%m-%d %H:%M:%S'",&layerinfo->current_node->tokenval.tmval) == 0) {
-        msSetError(MS_MISCERR, "Invalid time literal in expression", "msMSSQL2008LayerTranslateFilter()");
-        return 0;
-      }
-      filter->native_string = msStringConcatenate(filter->native_string, buffer);
+        int resolution = msTimeGetResolution(layerinfo->current_node->tokensrc);
+        snippet = (char *) msSmallMalloc(128);
+        switch(resolution) {
+          case TIME_RESOLUTION_YEAR:
+            sprintf(snippet, "'%d'", (layerinfo->current_node->tokenval.tmval.tm_year+1900));
+            break;
+          case TIME_RESOLUTION_MONTH:
+            sprintf(snippet, "'%d-%02d-01'", (layerinfo->current_node->tokenval.tmval.tm_year+1900), 
+                    (layerinfo->current_node->tokenval.tmval.tm_mon+1));
+            break;
+          case TIME_RESOLUTION_DAY:
+            sprintf(snippet, "'%d-%02d-%02d'", (layerinfo->current_node->tokenval.tmval.tm_year+1900), 
+                    (layerinfo->current_node->tokenval.tmval.tm_mon+1), 
+                    layerinfo->current_node->tokenval.tmval.tm_mday);
+            break;
+          case TIME_RESOLUTION_HOUR:
+            sprintf(snippet, "'%d-%02d-%02d %02d:00'", (layerinfo->current_node->tokenval.tmval.tm_year+1900), 
+                (layerinfo->current_node->tokenval.tmval.tm_mon+1), 
+                layerinfo->current_node->tokenval.tmval.tm_mday, 
+                layerinfo->current_node->tokenval.tmval.tm_hour);
+            break;
+          case TIME_RESOLUTION_MINUTE:
+            sprintf(snippet, "%d-%02d-%02d %02d:%02d'", (layerinfo->current_node->tokenval.tmval.tm_year+1900), 
+                (layerinfo->current_node->tokenval.tmval.tm_mon+1), 
+                layerinfo->current_node->tokenval.tmval.tm_mday, 
+                layerinfo->current_node->tokenval.tmval.tm_hour, 
+                layerinfo->current_node->tokenval.tmval.tm_min);
+            break;
+          case TIME_RESOLUTION_SECOND:
+            sprintf(snippet, "'%d-%02d-%02d %02d:%02d:%02d'", (layerinfo->current_node->tokenval.tmval.tm_year+1900),
+                (layerinfo->current_node->tokenval.tmval.tm_mon+1), 
+                layerinfo->current_node->tokenval.tmval.tm_mday, 
+                layerinfo->current_node->tokenval.tmval.tm_hour, 
+                layerinfo->current_node->tokenval.tmval.tm_min, 
+                layerinfo->current_node->tokenval.tmval.tm_sec);
+            break;
+        }    
+        filter->native_string = msStringConcatenate(filter->native_string, snippet);
+        msFree(snippet);
       }
       break;
     case MS_TOKEN_LITERAL_SHAPE:
