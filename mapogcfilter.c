@@ -3538,7 +3538,7 @@ int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
                 if( pszDot - pszId != strlen(lp->name) ||
                     strncasecmp(pszId, lp->name, strlen(lp->name)) != 0 )
                 {
-                    msSetError(MS_MISCERR, "Feature id %s not consistant with feature type name %s.",
+                    msSetError(MS_MISCERR, "Feature id %s not consistent with feature type name %s.",
                                "FLTPreParseFilterForAlias()", pszId, lp->name);
                     status = MS_FAILURE;
                     break;
