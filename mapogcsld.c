@@ -160,8 +160,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
   char *pszTmp2 = NULL;
   char *pszBuffer = NULL;
   layerObj *lp = NULL;
-  char *pszSqlExpression=NULL;
-  FilterEncodingNode *psExpressionNode =NULL;
 
   pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
   /* -------------------------------------------------------------------- */
@@ -2634,7 +2632,6 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 {
   char szFontName[100];
   double  dfFontSize = 10;
-  int bFontSet = 0;
 
   CPLXMLNode *psLabel=NULL, *psFont=NULL;
   CPLXMLNode *psCssParam = NULL;
@@ -2787,7 +2784,6 @@ int msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
         }
 
         if ((msLookupHashTable(&(psLayer->map->fontset.fonts), szFontName) !=NULL)) {
-          bFontSet = 1;
           psLabelObj->font = msStrdup(szFontName);
         }
       }

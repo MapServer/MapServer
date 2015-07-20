@@ -53,7 +53,7 @@ typedef struct msIOContextGroup_t {
   msIOContext stdout_context;
   msIOContext stderr_context;
 
-  int    thread_id;
+  void*    thread_id;
   struct msIOContextGroup_t *next;
 } msIOContextGroup;
 
@@ -95,7 +95,7 @@ void msIO_Cleanup()
 static msIOContextGroup *msIO_GetContextGroup()
 
 {
-  int nThreadId = msGetThreadId();
+  void* nThreadId = msGetThreadId();
   msIOContextGroup *prev = NULL, *group = io_context_list;
 
   if( group != NULL && group->thread_id == nThreadId )
@@ -149,7 +149,7 @@ static msIOContextGroup *msIO_GetContextGroup()
 /* returns MS_TRUE if the msIO standard output hasn't been redirected */
 int msIO_isStdContext() {
   msIOContextGroup *group = io_context_list;
-  int nThreadId = msGetThreadId();
+  void* nThreadId = msGetThreadId();
   if(!group || group->thread_id != nThreadId) {
     group = msIO_GetContextGroup();
     if(!group) {
@@ -170,7 +170,7 @@ int msIO_isStdContext() {
 msIOContext *msIO_getHandler( FILE * fp )
 
 {
-  int nThreadId = msGetThreadId();
+  void* nThreadId = msGetThreadId();
   msIOContextGroup *group = io_context_list;
 
   msIO_Initialize();
@@ -536,8 +536,6 @@ static int msIO_stdioWrite( void *cbData, void *data, int byteCount )
 static void msIO_Initialize( void )
 
 {
-  const char* pszStripHTTPHeader;
-
   if( is_msIO_initialized == MS_TRUE )
     return;
 

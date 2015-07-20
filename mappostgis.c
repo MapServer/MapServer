@@ -3581,9 +3581,6 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
 #ifdef USE_POSTGIS
   tokenListNodeObjPtr node = NULL;
 
-  int resolution; /* date/time resolution */
-  int noDate;
-
   char *snippet = NULL;
   char *native_string = NULL;
   char *strtmpl = NULL;

@@ -770,7 +770,8 @@ int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleO
   p.z = 0.0;
 #endif
 
-  msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1);
+  if(msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1) != MS_SUCCESS)
+    return MS_FAILURE;
 
   return msSaveImage(map, tmpImg, fileName);
 }

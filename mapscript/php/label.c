@@ -175,7 +175,6 @@ PHP_METHOD(labelObj, __set)
 {
   char *property;
   long property_len = 0;
-  long unused;
   zval *value;
   zval *zobj = getThis();
   php_label_object *php_label;
@@ -192,7 +191,6 @@ PHP_METHOD(labelObj, __set)
 
   IF_SET_STRING("font",  php_label->label->font, value)
   else IF_SET_STRING("encoding", php_label->label->encoding, value)
-    else IF_SET_LONG("type", unused, value)
       else IF_SET_LONG("shadowsizex",  php_label->label->shadowsizex, value)
         else IF_SET_LONG("shadowsizey",  php_label->label->shadowsizey, value)
           else IF_SET_DOUBLE("size", php_label->label->size, value)

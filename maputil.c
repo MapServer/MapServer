@@ -1924,7 +1924,7 @@ int msSetup()
 #include "maplibxml2.h"
 #endif
 #endif
-void msCleanup(int signal)
+void msCleanup()
 {
   msForceTmpFileBase( NULL );
   msConnPoolFinalCleanup();
@@ -2162,7 +2162,6 @@ void msHSLtoRGB(double h, double s, double l, colorObj *rgb) {
 */
 int msCheckParentPointer(void* p, char *objname)
 {
-  char* fmt="The %s parent object is null";
   char* msg=NULL;
   if (p == NULL) {
     if(objname != NULL) {
@@ -2616,7 +2615,7 @@ shapeObj* msGeneralize(shapeObj *shape, double tolerance)
   return newShape;
 }
 
-int msSetLayerOpacity(layerObj *layer, int opacity) {
+void msSetLayerOpacity(layerObj *layer, int opacity) {
   if(!layer->compositer) {
     layer->compositer = msSmallMalloc(sizeof(LayerCompositer));
     initLayerCompositer(layer->compositer);

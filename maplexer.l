@@ -36,6 +36,8 @@
 int msyylineno = 1;
 #endif
 
+#define YY_NO_INPUT
+
 int msyysource=MS_STRING_TOKENS;
 double msyynumber;
 int msyystate=MS_TOKENIZE_DEFAULT;

@@ -1084,7 +1084,8 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
   pixsymbol.pixmap_buffer = svg_cache->pixmap_buffer;
   pixsymbol.type = MS_SYMBOL_PIXMAP;
 
-  MS_IMAGE_RENDERER(img)->renderPixmapSymbol(img,x,y,&pixsymbol,&pixstyle);
+  if(MS_SUCCESS != MS_IMAGE_RENDERER(img)->renderPixmapSymbol(img,x,y,&pixsymbol,&pixstyle))
+    return MS_FAILURE;
   MS_IMAGE_RENDERER(img)->freeSymbol(&pixsymbol);
   return MS_SUCCESS;
 #else

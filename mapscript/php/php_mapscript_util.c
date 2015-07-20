@@ -37,7 +37,9 @@ zend_object_value mapscript_object_new(zend_object *zobj,
                                        void (*zend_objects_free_object) TSRMLS_DC)
 {
   zend_object_value retval;
+#if PHP_VERSION_ID < 50399
   zval *temp;
+#endif
 
   zobj->ce = ce;
   ALLOC_HASHTABLE(zobj->properties);
@@ -59,7 +61,9 @@ zend_object_value mapscript_object_new_ex(zend_object *zobj,
     zend_object_handlers *object_handlers TSRMLS_DC)
 {
   zend_object_value retval;
+#if PHP_VERSION_ID < 50399
   zval *temp;
+#endif
 
   zobj->ce = ce;
   ALLOC_HASHTABLE(zobj->properties);

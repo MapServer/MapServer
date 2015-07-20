@@ -56,7 +56,7 @@ lexer: maplexer.c
 parser: mapparser.c
 
 maplexer.c: maplexer.l
-	$(FLEX) --nounistd -Pmsyy -i -o$(CURDIR)/maplexer.c $(CURDIR)/maplexer.l
+	$(FLEX) --nounistd -Pmsyy -i -o$(CURDIR)/maplexer.c maplexer.l
 
 mapparser.c: mapparser.y
-	$(YACC) -d -o$(CURDIR)/mapparser.c $(CURDIR)/mapparser.y
+	$(YACC) -d -o$(CURDIR)/mapparser.c mapparser.y

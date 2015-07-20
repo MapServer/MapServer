@@ -135,8 +135,18 @@
         {
             image = msImageCreate(self->pixmap_buffer->width, self->pixmap_buffer->height, format, NULL, NULL,
                                   MS_DEFAULT_RESOLUTION, MS_DEFAULT_RESOLUTION, NULL);
-            renderer->mergeRasterBuffer(image, self->pixmap_buffer, 1.0, 0, 0, 0, 0, 
-                                        self->pixmap_buffer->width, self->pixmap_buffer->height);
+            if(!image) {
+              msSetError(MS_IMGERR, "Could not create image",
+                       "getImage()");
+              return NULL;
+            }
+            if(MS_SUCCESS != renderer->mergeRasterBuffer(image, self->pixmap_buffer, 1.0, 0, 0, 0, 0,
+                                        self->pixmap_buffer->width, self->pixmap_buffer->height)) {
+              msSetError(MS_IMGERR, "Could not merge symbol image",
+                       "getImage()");
+              msFreeImage(image);
+              return NULL;
+            }
         }
 
         return image;
@@ -159,9 +169,7 @@
             return MS_FAILURE;
         }
         self->type = MS_SYMBOL_PIXMAP;
-        renderer->getRasterBufferCopy(image, self->pixmap_buffer);
-
-        return MS_SUCCESS;
+        return renderer->getRasterBufferCopy(image, self->pixmap_buffer);
     }
 
 }

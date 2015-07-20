@@ -1554,7 +1554,9 @@ int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
     shape.text = strdup(text);
   }
   
-  msDrawShape(map, layer, &shape, img, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
+  if(MS_SUCCESS != msDrawShape(map, layer, &shape, img, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS)) {
+    /* error message has been set already */
+  }
 
   msFreeShape(&shape);
 
@@ -2017,6 +2019,7 @@ imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format)
   imageObj *image = NULL;
   outputFormatObj *format = NULL;
   rendererVTableObj *renderer = NULL;
+  int retval;
 
   if (self->type != MS_SYMBOL_PIXMAP) {
     msSetError(MS_SYMERR, "Can't return image from non-pixmap symbol",
@@ -2027,9 +2030,7 @@ imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format)
   if (input_format) {
     format = input_format;
   } else {
-    format = msCreateDefaultOutputFormat(NULL, "GD/GIF", "gdgif");
-    if (format == NULL)
-      format = msCreateDefaultOutputFormat(NULL, "GD/PNG", "gdpng");
+    format = msCreateDefaultOutputFormat(NULL, "AGG/PNG", "png");
 
     if (format)
       msInitializeRendererVTable(format);
@@ -2046,8 +2047,15 @@ imageObj *symbolObj_getImage(symbolObj *self, outputFormatObj *input_format)
   if (self->pixmap_buffer) {
     image = msImageCreate(self->pixmap_buffer->width, self->pixmap_buffer->height, format, NULL, NULL,
                           MS_DEFAULT_RESOLUTION, MS_DEFAULT_RESOLUTION, NULL);
-    renderer->mergeRasterBuffer(image, self->pixmap_buffer, 1.0, 0, 0, 0, 0,
+    if(!image) {
+      return NULL;
+    }
+    retval = renderer->mergeRasterBuffer(image, self->pixmap_buffer, 1.0, 0, 0, 0, 0,
                                 self->pixmap_buffer->width, self->pixmap_buffer->height);
+    if(retval != MS_SUCCESS) {
+      msFreeImage(image);
+      return NULL;
+    }
   }
 
   return image;
@@ -2070,7 +2078,8 @@ int symbolObj_setImage(symbolObj *self, imageObj *image)
     return MS_FAILURE;
   }
   self->type = MS_SYMBOL_PIXMAP;
-  renderer->getRasterBufferCopy(image, self->pixmap_buffer);
+  if(renderer->getRasterBufferCopy(image, self->pixmap_buffer) != MS_SUCCESS)
+    return MS_FAILURE;
 
   return MS_SUCCESS;
 }

@@ -86,6 +86,7 @@
              int classindex, char *text) 
     {
         shapeObj shape;
+        int ret;
 
         msInitShape(&shape);
         msRectToPolygon(*self, &shape);
@@ -94,11 +95,11 @@
           shape.text = strdup(text);
         }
         
-        msDrawShape(map, layer, &shape, image, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
+        ret = msDrawShape(map, layer, &shape, image, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
 
         msFreeShape(&shape);
     
-        return MS_SUCCESS;
+        return ret;
     }
     
     %newobject getCenter;

@@ -664,7 +664,7 @@ int msQueryByFilter(mapObj *map)
 
   layerObj *lp;
 
-  char status, eval;
+  char status;
 
   char *old_filteritem=NULL;
   expressionObj old_filter;
@@ -696,8 +696,6 @@ int msQueryByFilter(mapObj *map)
     start = stop = map->query.layer;
 
   for(l=start; l>=stop; l--) {
-    eval = MS_TRUE; /* evaluate the filter inside within this function */
-
     lp = (GET_LAYER(map, l));
     if (map->query.maxfeatures == 0)
       break; /* nothing else to do */
@@ -744,8 +742,6 @@ int msQueryByFilter(mapObj *map)
     msInitExpression(&old_filter);
     msCopyExpression(&old_filter, &lp->filter);
         
-    if(msLayerSupportsCommonFilters(lp)) eval = MS_FALSE;
-
     /*
     ** Set the lp->filter and lp->filteritem (may need to merge). Remember filters are *always* MapServer syntax.
     */

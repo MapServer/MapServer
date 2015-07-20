@@ -138,7 +138,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 30 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 30 "mapparser.y"
 {
   double dblval;
   int intval;  
@@ -147,7 +147,7 @@ typedef union YYSTYPE
   shapeObj *shpval;
 }
 /* Line 1529 of yacc.c.  */
-#line 151 "/Users/sdlime/mapserver/mapserver/mapparser.h"
+#line 151 "/Users/tbonfort/dev/mapserver/mapparser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

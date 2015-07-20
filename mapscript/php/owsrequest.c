@@ -130,8 +130,6 @@ PHP_METHOD(OWSRequestObj, __set)
   char *property;
   long property_len = 0;
   zval *value;
-  zval *zobj = getThis();
-  php_owsrequest_object *php_owsrequest;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -140,8 +138,6 @@ PHP_METHOD(OWSRequestObj, __set)
     return;
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-
-  php_owsrequest = (php_owsrequest_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
   if ( (STRING_EQUAL("numparams", property)) ||
        (STRING_EQUAL("type", property)) ||
@@ -383,12 +379,11 @@ char *owsrequest_getenv(const char *name, void *thread_context)
   HashTable *cookies;
   char *string_key = NULL, *cookie_tmp;
   ulong num_key;
-  int numElements, i = 0;
+  int i = 0;
   TSRMLS_FETCH_FROM_CTX(thread_context);
 
   if  (STRING_EQUAL(name, "HTTP_COOKIE")) {
     cookies = PG(http_globals)[TRACK_VARS_COOKIE]->value.ht;
-    numElements = zend_hash_num_elements(cookies);
     MAKE_STD_ZVAL(cookie_result);
     ZVAL_STRING(cookie_result, "",1);
     for(zend_hash_internal_pointer_reset(cookies);

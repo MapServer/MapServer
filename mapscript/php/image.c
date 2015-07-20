@@ -175,7 +175,6 @@ PHP_METHOD(imageObj, saveWebImage)
 PHP_METHOD(imageObj, pasteImage)
 {
   long transparent=-1, dstx=0, dsty=0, angle=0;
-  int angleSet=MS_FALSE;
   zval *zimage;
   zval *zobj = getThis();
   php_image_object *php_image, *php_imageSrc;
@@ -192,10 +191,8 @@ PHP_METHOD(imageObj, pasteImage)
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
-  if  (ZEND_NUM_ARGS() == 3) {
+  if  (ZEND_NUM_ARGS() == 3)
     mapscript_report_php_error(E_WARNING, "dstX parameter given but not dstY" TSRMLS_CC);
-  } else
-    angleSet = MS_TRUE;
 
   php_image = (php_image_object *) zend_object_store_get_object(zobj TSRMLS_CC);
   php_imageSrc = (php_image_object *) zend_object_store_get_object(zimage TSRMLS_CC);
@@ -210,8 +207,14 @@ PHP_METHOD(imageObj, pasteImage)
   renderer = MS_IMAGE_RENDERER(php_image->image);
   memset(&rb,0,sizeof(rasterBufferObj));
 
-  renderer->getRasterBufferHandle(php_imageSrc->image, &rb);
-  renderer->mergeRasterBuffer(php_image->image, &rb, 1.0, 0, 0, dstx, dsty, rb.width, rb.height);
+  if(MS_SUCCESS != renderer->getRasterBufferHandle(php_imageSrc->image, &rb)) {
+    mapscript_throw_exception("PasteImage failed to extract rasterbuffer handle" TSRMLS_CC);
+    return;
+  }
+  if(MS_SUCCESS != renderer->mergeRasterBuffer(php_image->image, &rb, 1.0, 0, 0, dstx, dsty, rb.width, rb.height)) {
+    mapscript_throw_exception("PasteImage failed to merge raster buffer" TSRMLS_CC);
+    return;
+  }
 
   /* Look for r,g,b in color table and make it transparent.
    * will return -1 if there is no exact match which will result in
