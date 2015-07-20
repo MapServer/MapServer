@@ -1,3 +1,0 @@
-[submodule "msautotest"]
-	path = msautotest
-	url = git://github.com/mapserver/msautotest.git
