@@ -86,6 +86,7 @@ void msFreeFontCache(ft_cache *c) {
       }
 #endif
       FT_Done_Face(cur_face->face);
+      free(cur_face->font);
       UT_HASH_DEL(c->face_cache,cur_face);
       free(cur_face);
   }
@@ -227,9 +228,10 @@ face_element* msGetFontFace(char *key, fontSetObj *fontset) {
         FT_Select_Charmap(fc->face, FT_ENCODING_APPLE_ROMAN);
       /* the previous calls may have failed, we ignore as there's nothing much left to do */
     }
-    fc->font = key;
+    fc->font = msStrdup(key);
     UT_HASH_ADD_KEYPTR(hh,cache->face_cache,fc->font, strlen(key), fc);
   }
+
   return fc;
 }
 

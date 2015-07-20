@@ -32,6 +32,7 @@
 
 #include "mapogcfilter.h"
 #include "mapserver.h"
+#include "mapows.h"
 #include "mapowscommon.h"
 
 #ifdef USE_OGR
@@ -127,6 +128,7 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   char **aszBounds = NULL;
   int nBounds = 0;
   int bString=0;
+  int bDateTime = 0;
   char *pszExpression=NULL, *pszTmpEscaped;
 
   if (!psFilterNode || !(strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0))
@@ -150,13 +152,17 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   /* -------------------------------------------------------------------- */
   bString = 0;
   if (aszBounds[0]) {
+    const char* pszType;
     snprintf(szBuffer,  bufferSize, "%s_type",  psFilterNode->psLeftNode->pszValue);
-    if (msOWSLookupMetadata(&(lp->metadata), "OFG", szBuffer) != NULL && (strcasecmp(msOWSLookupMetadata(&(lp->metadata), "OFG", szBuffer), "Character") == 0))
+    pszType = msOWSLookupMetadata(&(lp->metadata), "OFG", szBuffer);
+    if (pszType != NULL && (strcasecmp(pszType, "Character") == 0))
       bString = 1;
+    else if (pszType != NULL && (strcasecmp(pszType, "Date") == 0))
+      bDateTime = 1;
     else if (FLTIsNumeric(aszBounds[0]) == MS_FALSE)
       bString = 1;
   }
-  if (!bString) {
+  if (!bString && !bDateTime) {
     if (aszBounds[1]) {
       if (FLTIsNumeric(aszBounds[1]) == MS_FALSE)
         bString = 1;
@@ -185,8 +191,10 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
   if (bString) {
-    sprintf(szBuffer,"%s", "\"");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "\"");
+  }
+  else if (bDateTime) {
+    pszExpression = msStringConcatenate(pszExpression, "`");
   }
 
   pszTmpEscaped = msStringEscape(aszBounds[0]);
@@ -194,8 +202,10 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   if(pszTmpEscaped != aszBounds[0] ) msFree(pszTmpEscaped);
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
   if (bString) {
-    sprintf(szBuffer, "%s", "\"");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "\"");
+  }
+  else if (bDateTime) {
+    pszExpression = msStringConcatenate(pszExpression, "`");
   }
 
   sprintf(szBuffer, "%s", " AND ");
@@ -219,8 +229,10 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   sprintf(szBuffer, "%s", " <= ");
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
   if (bString) {
-    sprintf(szBuffer,"%s", "\"");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "\"");
+  }
+  else if (bDateTime) {
+    pszExpression = msStringConcatenate(pszExpression, "`");
   }
   pszTmpEscaped = msStringEscape(aszBounds[1]);
   snprintf(szBuffer, bufferSize, "%s", pszTmpEscaped);
@@ -228,8 +240,10 @@ char *FLTGetIsBetweenComparisonCommonExpresssion(FilterEncodingNode *psFilterNod
   pszExpression = msStringConcatenate(pszExpression, szBuffer);
 
   if (bString) {
-    sprintf(szBuffer,"\"");
-    pszExpression = msStringConcatenate(pszExpression, szBuffer);
+    pszExpression = msStringConcatenate(pszExpression, "\"");
+  }
+  else if (bDateTime) {
+    pszExpression = msStringConcatenate(pszExpression, "`");
   }
   sprintf(szBuffer, "%s", ")");
   pszExpression = msStringConcatenate(pszExpression, szBuffer);

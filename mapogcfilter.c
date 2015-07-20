@@ -39,6 +39,7 @@
 #include "mapserver.h"
 #include "mapowscommon.h"
 #include "maptime.h"
+#include "mapows.h"
 
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode);
 
@@ -66,7 +67,8 @@ int FLTIsNumeric(const char *pszValue)
       return MS_TRUE;
 #else
     char * p;
-    if (strtod(pszValue, &p) != 0  || *p == '\0') return MS_TRUE;
+    strtod(pszValue, &p);
+    if ( p != pszValue && *p == '\0') return MS_TRUE;
 #endif
   }
 
@@ -3536,7 +3538,7 @@ int FLTCheckFeatureIdFilters(FilterEncodingNode *psFilterNode,
                 if( pszDot - pszId != strlen(lp->name) ||
                     strncasecmp(pszId, lp->name, strlen(lp->name)) != 0 )
                 {
-                    msSetError(MS_MISCERR, "Feature id %s not consistant with feature type name %s.",
+                    msSetError(MS_MISCERR, "Feature id %s not consistent with feature type name %s.",
                                "FLTPreParseFilterForAlias()", pszId, lp->name);
                     status = MS_FAILURE;
                     break;

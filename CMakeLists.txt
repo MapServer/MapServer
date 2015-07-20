@@ -102,7 +102,7 @@ option(WITH_PROJ "Choose if reprojection support should be built in" ON)
 option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
 option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)
 option(WITH_WMS "Enable WMS Server support (requires proj support)" ON)
-option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (usefull for left-to-right languages) (requires HARFBUZZ)" ON)
+option(WITH_FRIBIDI "Choose if FriBidi glyph shaping support should be built in (usefull for right-to-left languages) (requires HARFBUZZ)" ON)
 option(WITH_HARFBUZZ "Choose if Harfbuzz complex text layout should be included (needed for e.g. arabic and hindi) (requires FRIBIDI)" ON)
 option(WITH_ICONV "Choose if Iconv Internationalization support should be built in" ON)
 option(WITH_CAIRO "Choose if CAIRO  rendering support should be built in (required for SVG and PDF output)" ON)
@@ -250,7 +250,7 @@ if(BUILD_DYNAMIC)
   add_library(mapserver SHARED ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
   set_target_properties( mapserver  PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
-    SOVERSION 1
+    SOVERSION 2
 ) 
 endif(BUILD_DYNAMIC)
 
@@ -258,7 +258,7 @@ if(BUILD_STATIC)
   add_library(mapserver_static STATIC ${mapserver_SOURCES} ${agg_SOURCES} ${v8_SOURCES})
   set_target_properties( mapserver_static PROPERTIES
     VERSION ${MapServer_VERSION_STRING}
-    SOVERSION 1
+    SOVERSION 2
   ) 
 endif(BUILD_STATIC)
 

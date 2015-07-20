@@ -34,6 +34,7 @@
 #include "maperror.h"
 #include "mapkmlrenderer.h"
 #include "mapio.h"
+#include "mapows.h"
 
 #if defined(USE_OGR)
 #  include "cpl_conv.h"

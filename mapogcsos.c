@@ -30,6 +30,7 @@
 #define _GNU_SOURCE
 
 #include "mapserver.h"
+#include "mapows.h"
 
 #if defined(USE_SOS_SVR) && defined(USE_LIBXML2)
 

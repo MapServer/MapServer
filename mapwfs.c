@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include "mapows.h"
 
 
 
@@ -2059,7 +2060,7 @@ static int msWFSRunFilter(mapObj* map,
     /*preparse the filter for gml aliases*/
     FLTPreParseFilterForAliasAndGroup(psNode, map, lp->index, "G");
 
-    /* Check that FeatureId filters are consistant with the active layer */
+    /* Check that FeatureId filters are consistent with the active layer */
     if( FLTCheckFeatureIdFilters(psNode, map, lp->index) == MS_FAILURE)
     {
         FLTFreeFilterEncodingNode( psNode );

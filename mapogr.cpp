@@ -32,6 +32,7 @@
 #include "mapserver.h"
 #include "mapproject.h"
 #include "mapthread.h"
+#include "mapows.h"
 
 #if defined(USE_OGR) || defined(USE_GDAL)
 #  include "gdal_version.h"

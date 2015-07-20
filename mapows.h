@@ -40,6 +40,15 @@
  */
 #define OWS_DEFAULT_SCHEMAS_LOCATION   "http://schemas.opengis.net"
 
+#if defined USE_LIBXML2 && defined USE_WFS_SVR
+#include<libxml/tree.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /*====================================================================
  *   mapows.c
  *====================================================================*/
@@ -474,7 +483,6 @@ int msWFSException11(mapObj *map, const char *locator,
 int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *wfsparams,
                            cgiRequestObj *req, owsRequestObj *ows_request);
 #ifdef USE_LIBXML2
-#include<libxml/tree.h>
 xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
                           int nWFSVersion, const char* validate_language);
 #endif
@@ -535,6 +543,9 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_req
 
 int msSOSDispatch(mapObj *map, cgiRequestObj *requestobj, owsRequestObj *ows_request); /* only 1 public function */
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* MAPOWS_H */
 

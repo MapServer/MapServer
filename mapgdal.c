@@ -243,7 +243,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     eDataType = GDT_Byte;
   } else {
     msReleaseLock( TLOCK_GDAL );
-    msSetError( MS_MEMERR, "Unkown format. This is a bug.", "msSaveImageGDAL()");
+    msSetError( MS_MEMERR, "Unknown format. This is a bug.", "msSaveImageGDAL()");
     return MS_FAILURE;
   }
 

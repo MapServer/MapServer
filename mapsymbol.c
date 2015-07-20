@@ -35,6 +35,7 @@
 #include "mapcopy.h"
 #include "mapthread.h"
 #include "fontcache.h"
+#include "mapows.h"
 
 
 
