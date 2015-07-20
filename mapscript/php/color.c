@@ -46,6 +46,14 @@ ZEND_BEGIN_ARG_INFO_EX(color_setRGB_args, 0, 0, 3)
 ZEND_ARG_INFO(0, red)
 ZEND_ARG_INFO(0, green)
 ZEND_ARG_INFO(0, blue)
+ZEND_ARG_INFO(0, alpha)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(color_setHex_args, 0, 0, 1)
+ZEND_ARG_INFO(0, rgba)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(color_toHex_args, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 /* {{{ proto void __construct()
@@ -110,17 +118,17 @@ PHP_METHOD(colorObj, __set)
 
 }
 
-/* {{{ proto int color.setRGB(int R, int G, int B)
+/* {{{ proto int color.setRGB(int R, int G, int B, int A = 255)
     Set new RGB color. */
 PHP_METHOD(colorObj, setRGB)
 {
   zval *zobj = getThis();
-  long red, green, blue;
+  long red, green, blue, alpha = 255;
   php_color_object *php_color;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lll",
-                            &red, &green, &blue) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lll|l",
+                            &red, &green, &blue, &alpha) == FAILURE) {
     PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
     return;
   }
@@ -129,9 +137,85 @@ PHP_METHOD(colorObj, setRGB)
   php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
 
-  MS_INIT_COLOR(*(php_color->color), red, green, blue,255);
+  MS_INIT_COLOR(*(php_color->color), red, green, blue, alpha);
 
   RETURN_LONG(MS_SUCCESS);
+}
+/* }}} */
+
+/* {{{ proto int color.setHex(string hex)
+    Set new RGB(A) color from hex string. */
+PHP_METHOD(colorObj, setHex)
+{
+  zval *zobj = getThis();
+  char *hex;
+  long hex_len = 0, red, green, blue, alpha = 255;
+  php_color_object *php_color;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                            &hex, &hex_len) == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  if ((hex_len == 7 || hex_len == 9) && hex[0] == '#') {
+    red = msHexToInt(hex + 1);
+    green = msHexToInt(hex + 3);
+    blue = msHexToInt(hex + 5);
+    if (hex_len == 9) {
+      alpha = msHexToInt(hex + 7);
+    }
+
+    if (red > 255 || green > 255 || blue > 255 || alpha > 255) {
+      mapscript_throw_exception("Invalid color index." TSRMLS_CC);
+      RETURN_LONG(MS_FAILURE);
+    }
+
+    php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+    MS_INIT_COLOR(*(php_color->color), red, green, blue, alpha);
+
+    RETURN_LONG(MS_SUCCESS);
+  } else {
+    mapscript_throw_exception("Invalid hex color string." TSRMLS_CC);
+    RETURN_LONG(MS_FAILURE);
+  }
+}
+/* }}} */
+ 
+/* {{{ proto string color.toHex()
+    Get hex string #rrggbb[aa]. */
+PHP_METHOD(colorObj, toHex)
+{
+  char *hex;
+  zval *zobj = getThis();
+  php_color_object *php_color;
+  colorObj *color;
+
+  php_color = (php_color_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  color = php_color->color;
+
+  if (color->red < 0 || color->green < 0 || color->blue < 0) {
+    mapscript_throw_exception("Can't express invalid color as hex." TSRMLS_CC);
+    return;
+  }
+
+  if (color->alpha == 255) {
+    hex = msSmallMalloc(8);
+    snprintf(hex, 8, "#%02x%02x%02x",
+             color->red, color->green, color->blue);
+  } else if (color->alpha >= 0) {
+    hex = msSmallMalloc(10);
+    snprintf(hex, 10, "#%02x%02x%02x%02x",
+             color->red, color->green, color->blue, color->alpha);
+  } else {
+    mapscript_throw_exception("Can't express color with invalid alpha as hex." TSRMLS_CC);
+    return;
+  }
+  
+  RETURN_STRINGL(hex, strlen(hex), 0);
 }
 /* }}} */
 
@@ -139,7 +223,9 @@ zend_function_entry color_functions[] = {
   PHP_ME(colorObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
   PHP_ME(colorObj, __get, color___get_args, ZEND_ACC_PUBLIC)
   PHP_ME(colorObj, __set, color___set_args, ZEND_ACC_PUBLIC)
-  PHP_ME(colorObj, setRGB, color_setRGB_args, ZEND_ACC_PUBLIC) {
+  PHP_ME(colorObj, setRGB, color_setRGB_args, ZEND_ACC_PUBLIC)
+  PHP_ME(colorObj, setHex, color_setHex_args, ZEND_ACC_PUBLIC)
+  PHP_ME(colorObj, toHex, color_toHex_args, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }
 };
