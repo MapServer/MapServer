@@ -3486,7 +3486,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
 
   int nodeCount = 0;
 
-  int function = 0, version = 0, dwithin = 0, regexp_like = 0, case_ins = 0;
+  int function = 0, version = 0, dwithin = 0, regexp_like = 0, case_ins = 0, ieq = 0;
   char *table_name;
   char *geom_column_name = NULL, *unique = NULL, *srid = NULL, *indexfield=NULL;
   char *snippet = NULL;
@@ -3615,7 +3615,14 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
           sprintf(snippet, strtmpl, node->tokenval.strval);  // TODO: escape strval
           snippet = msReplaceSubstring(snippet,"'","''");
           native_string = msStringConcatenate(native_string, "'");
+          if (ieq == MS_TRUE) {
+            native_string = msStringConcatenate(native_string, "^");   
+          }
           native_string = msStringConcatenate(native_string, snippet);
+          if (ieq == MS_TRUE) {
+            native_string = msStringConcatenate(native_string, "%");
+            ieq = MS_FALSE;   
+          }
           native_string = msStringConcatenate(native_string, "'");
           msFree(snippet);
            break;
@@ -3732,6 +3739,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
           msDebug("got a IEQ comparison\n");
           regexp_like = MS_TRUE;
           case_ins = MS_TRUE;
+          ieq = MS_TRUE;
           native_string = msStringConcatenate(native_string, ", ");
           break;
         case MS_TOKEN_COMPARISON_RE:
