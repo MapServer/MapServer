@@ -10,7 +10,17 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-7.0.0-beta1 release (2014/02/12)
+7.0.0 release (2015/07/24)
+--------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
+7.0.0-beta2 release (2015/06/29)
+--------------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
+7.0.0-beta1 release (2015/02/12)
 --------------------------------
 
 - RFC91 Layer Filter Normalization
