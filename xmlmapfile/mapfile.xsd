@@ -346,9 +346,9 @@
 						</xs:simpleType>
 					</xs:union>
 				</xs:simpleType>
-		    <xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
-		    <xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>
 			</xs:element>
+                        <xs:element name="maxScaleDenom" type="xs:double" minOccurs="0"/>
+                        <xs:element name="minScaleDenom" type="xs:double" minOccurs="0"/>                        
 			<xs:element name="Style" type="ms:Style" minOccurs="0" maxOccurs="unbounded"/>
 		        <xs:element name="text" type="xs:string" minOccurs="0"/>                
 		        <xs:element name="wrap" type="xs:string" minOccurs="0"/>
