@@ -536,8 +536,6 @@ static int msIO_stdioWrite( void *cbData, void *data, int byteCount )
 static void msIO_Initialize( void )
 
 {
-  const char* pszStripHTTPHeader;
-
   if( is_msIO_initialized == MS_TRUE )
     return;
 

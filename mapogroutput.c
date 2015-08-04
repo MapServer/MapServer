@@ -529,12 +529,16 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
 /*                        msOGRStdoutWriteFunction()                    */
 /************************************************************************/
 
+#if defined(GDAL_COMPUTE_VERSION)
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
 /* Used by /vsistdout/ */
 static size_t msOGRStdoutWriteFunction(const void* ptr, size_t size, size_t nmemb, FILE* stream)
 {
     msIOContext *ioctx = (msIOContext*) stream;
     return msIO_contextWrite(ioctx, ptr, size * nmemb ) / size;
 }
+#endif
+#endif
 
 /************************************************************************/
 /*                      msOGROutputGetAdditonalFiles()                  */

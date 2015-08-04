@@ -2162,7 +2162,6 @@ void msHSLtoRGB(double h, double s, double l, colorObj *rgb) {
 */
 int msCheckParentPointer(void* p, char *objname)
 {
-  char* fmt="The %s parent object is null";
   char* msg=NULL;
   if (p == NULL) {
     if(objname != NULL) {
@@ -2622,4 +2621,5 @@ int msSetLayerOpacity(layerObj *layer, int opacity) {
     initLayerCompositer(layer->compositer);
   }
   layer->compositer->opacity = opacity;
+  return MS_TRUE;
 }

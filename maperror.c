@@ -90,7 +90,7 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 
 errorObj *msGetErrorObj()
 {
-  static errorObj ms_error = {MS_NOERR, "", "", MS_FALSE, NULL};
+  static errorObj ms_error = {MS_NOERR, "", "", MS_FALSE, 0, NULL};
 
   return &ms_error;
 }
@@ -392,7 +392,6 @@ void msWriteErrorXML(FILE *stream)
 void msWriteErrorImage(mapObj *map, char *filename, int blank)
 {
   imageObj *img;
-  rendererVTableObj *renderer;
   int width=400, height=300;
   int nMargin =5;
   int nTextLength = 0;
@@ -442,7 +441,6 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
   }
 
   img = msImageCreate(width,height,format,imagepath,imageurl,MS_DEFAULT_RESOLUTION,MS_DEFAULT_RESOLUTION,imagecolorptr);
-  renderer = MS_IMAGE_RENDERER(img);
 
 
   nTextLength = strlen(errormsg);
@@ -493,6 +491,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
       if(LIKELY(MS_SUCCESS == msComputeTextPath(map,&ts))) {
         int idontcare;
         idontcare = msDrawTextSymbol(NULL,img,pnt,&ts);
+        (void)idontcare;
         freeTextSymbol(&ts);
       }
     }
