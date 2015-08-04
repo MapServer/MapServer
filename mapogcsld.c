@@ -94,7 +94,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
           if(nBufsize > 0) {
             rewind(fp);
             pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
-            fread(pszSLDbuf, 1, nBufsize, fp);
+            (void) fread(pszSLDbuf, 1, nBufsize, fp);
             pszSLDbuf[nBufsize] = '\0';
           } else {
             msSetError(MS_WMSERR, "Could not open SLD %s as it appears empty", "msSLDApplySLDURL", szURL);
