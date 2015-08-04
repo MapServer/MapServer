@@ -223,7 +223,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   psDBF->pszHeader = (char *) pabyBuf;
 
   fseek( psDBF->fp, 32, 0 );
-  if( fread( pabyBuf, nHeadLen, 1, psDBF->fp ) != 1 )
+  if( fread( pabyBuf, nHeadLen - 32, 1, psDBF->fp ) != 1 )
   {
     msFree(psDBF->pszCurrentRecord);
     msFree(psDBF);
