@@ -250,7 +250,7 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
     }
 
     if(label->bindings[MS_LABEL_BINDING_POSITION].index != -1) {
-      int tmpPosition;
+      int tmpPosition = 0;
       bindIntegerAttribute(&tmpPosition, shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]);
       if(tmpPosition != 0) { /* is this test sufficient? */
         label->position = tmpPosition;

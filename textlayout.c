@@ -785,10 +785,10 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
   if(tgret->numlines > 1) {
     int max_line_length = 0;
     int line = -1;
-    double cur_line_offset;
+    double cur_line_offset = 0;
     int prev_default_align = MS_ALIGN_LEFT; /* if we have mixed rtl status, use the alignment of the previous
                                                line. this defaults to left-alignment if the first line is mixed */
-    int cur_default_align;
+    int cur_default_align = 0;
     for(i=0; i<tgret->numlines; i++) {
       if(line_descs[i].length > max_line_length) {
         max_line_length = line_descs[i].length;

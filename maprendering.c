@@ -373,7 +373,7 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
   double original_rotation = style->rotation;
   double symbol_width,symbol_height;
   glyph_element *glyphc = NULL;
-  face_element *face;
+  face_element *face = NULL;
   int ret = MS_SUCCESS;
   if(symbol->type != MS_SYMBOL_TRUETYPE) {
     symbol_width = MS_MAX(1,symbol->sizex*style->scale);

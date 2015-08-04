@@ -994,6 +994,8 @@ void msTransformShapeToPixelSnapToGrid(shapeObj *shape, rectObj extent, double c
           snap = 0;
         }
       }
+      else
+        snap = 0;
       if(snap) {
         shape->line[i].point[0].x = x0;
         shape->line[i].point[0].y = y0;
