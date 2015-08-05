@@ -3982,10 +3982,10 @@ static int msWCSSetFormatParams20(outputFormatObj* format, char** format_options
     else if (EQUAL(key, "geotiff:tiling") && is_geotiff) {
       /* TILED=YES */
       if (EQUAL(value, "true")) {
-        msSetOutputFormatOption(format, "TILING", "YES");
+        msSetOutputFormatOption(format, "TILED", "YES");
       }
       else if (EQUAL(value, "false")) {
-        msSetOutputFormatOption(format, "TILING", "NO");
+        msSetOutputFormatOption(format, "TILED", "NO");
       }
       else {
         msSetError(MS_WCSERR, "Invalid boolean value '%s'.",
