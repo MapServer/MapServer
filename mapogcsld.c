@@ -35,6 +35,10 @@
 #include "cpl_string.h"
 #endif
 
+#if defined(USE_OGR) && defined(USE_CURL)
+static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
+#endif
+
 #define SLD_LINE_SYMBOL_NAME "sld_line_symbol"
 #define SLD_LINE_SYMBOL_DASH_NAME "sld_line_symbol_dash"
 #define SLD_MARK_SYMBOL_SQUARE "sld_mark_symbol_square"
@@ -94,7 +98,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
           if(nBufsize > 0) {
             rewind(fp);
             pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
-            (void) fread(pszSLDbuf, 1, nBufsize, fp);
+            IGUR_sizet(fread(pszSLDbuf, 1, nBufsize, fp));
             pszSLDbuf[nBufsize] = '\0';
           } else {
             msSetError(MS_WMSERR, "Could not open SLD %s as it appears empty", "msSLDApplySLDURL", szURL);

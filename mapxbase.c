@@ -45,6 +45,8 @@
 #  define safe_fseek fseek
 #endif
 
+static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
+
 /************************************************************************/
 /*                             SfRealloc()                              */
 /*                                                                      */
@@ -282,7 +284,7 @@ void  msDBFClose(DBFHandle psDBF)
     uchar   abyFileHeader[32];
 
     fseek( psDBF->fp, 0, 0 );
-    (void) fread( abyFileHeader, 32, 1, psDBF->fp );
+    IGUR_sizet(fread( abyFileHeader, 32, 1, psDBF->fp ));
 
     abyFileHeader[1] = 95;      /* YY */
     abyFileHeader[2] = 7;     /* MM */
