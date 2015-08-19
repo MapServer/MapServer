@@ -391,11 +391,13 @@ int readPalette(const char *palette, rgbaPixel *entries, unsigned int *nEntries,
       continue; /* skip comments and blank lines */
     if(!useAlpha) {
       if(3 != sscanf(buffer,"%d,%d,%d\n",&r,&g,&b)) {
+        fclose(stream);
         msSetError(MS_MISCERR,"failed to parse color %d r,g,b triplet in line \"%s\" from file %s","readPalette()",*nEntries+1,buffer,palette);
         return MS_FAILURE;
       }
     } else {
       if(4 != sscanf(buffer,"%d,%d,%d,%d\n",&r,&g,&b,&a)) {
+        fclose(stream);
         msSetError(MS_MISCERR,"failed to parse color %d r,g,b,a quadruplet in line \"%s\" from file %s","readPalette()",*nEntries+1,buffer,palette);
         return MS_FAILURE;
       }
@@ -1090,6 +1092,7 @@ int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb)
     return MS_FAILURE;
   }
   if(1 != fread(signature,8,1,stream)) {
+    fclose(stream);
     msSetError(MS_MISCERR, "Unable to read header from image file %s", "msLoadMSRasterBufferFromFile()",path);
     return MS_FAILURE;
   }
