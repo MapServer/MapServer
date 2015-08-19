@@ -822,6 +822,8 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   if( (AGG_INT64U)bufSize != bufSize64 ) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
                __FILE__, __LINE__, bufSize64);
+    free(image);
+    delete r;
     return NULL;
   }
 
@@ -830,6 +832,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
                __FILE__, __LINE__, bufSize64);
     free(image);
+    delete r;
     return NULL;
   }
   r->m_rendering_buffer.attach(r->buffer, width, height, width * 4);
