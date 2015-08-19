@@ -92,6 +92,8 @@ static Handle<Value> msV8ReadFile(V8Context *v8context, const char *path)
   for (int i = 0; i < size;) {
     int read = static_cast<int>(fread(&chars[i], 1, size - i, file));
     if (read == 0) {
+      delete [] chars;
+      fclose(file);
       msDebug("msV8ReadFile: error while reading file '%s'\n", path);
       return Undefined();
     }

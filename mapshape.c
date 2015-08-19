@@ -268,6 +268,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     psSHP->fpSHX = fopen(pszFullname, pszAccess );
   }
   if( psSHP->fpSHX == NULL ) {
+    fclose(psSHP->fpSHP);
     msFree(pszBasename);
     msFree(pszFullname);
     msFree(psSHP);
