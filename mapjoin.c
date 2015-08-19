@@ -362,6 +362,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   rewind(stream);
 
   if((joininfo->rows = (char ***) malloc(joininfo->numrows*sizeof(char **))) == NULL) {
+    fclose(stream);
     msSetError(MS_MEMERR, "Error allocating rows.", "msCSVJoinConnect()");
     return(MS_FAILURE);
   }
