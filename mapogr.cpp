@@ -901,6 +901,14 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
           msDebug(MSOGR_SYMBOLPARAMNAME " = \"%s\"\n", values[i]);
       }
       else {
+        msFreeCharArray(values,i);
+
+        OGR_SM_Destroy(hStyleMgr);
+        OGR_ST_Destroy(hLabelStyle);
+        OGR_ST_Destroy(hPenStyle);
+        OGR_ST_Destroy(hBrushStyle);
+        OGR_ST_Destroy(hSymbolStyle);
+
         msSetError(MS_OGRERR,"Invalid field index!?!","msOGRGetValues()");
         return(NULL);
       }
