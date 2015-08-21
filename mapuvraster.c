@@ -125,8 +125,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
       itemindexes[i] = MSUVRASTER_UINDEX;
     else if (EQUAL(layer->items[i], MSUVRASTER_V))
       itemindexes[i] = MSUVRASTER_VINDEX;
-
-    if(itemindexes[i] == -1) {
+    else {
       msSetError(MS_OGRERR,
                  "Invalid Field name: %s",
                  "msUVRASTERLayerInitItemInfo()",
