@@ -233,7 +233,7 @@ int msUVRASTERLayerClose(layerObj *layer)
   if( uvlinfo != NULL ) {
     uvlinfo->refcount--;
 
-    if( uvlinfo->refcount < 0 )
+    if( uvlinfo->refcount < 1 )
       msUVRasterLayerInfoFree( layer );
   }
   return MS_SUCCESS;
