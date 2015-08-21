@@ -91,6 +91,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   int   i;
   int *itemindexes;
+  int failed=0;
 
   if (layer->numitems == 0)
     return MS_SUCCESS;
@@ -126,15 +127,16 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
     else if (EQUAL(layer->items[i], MSUVRASTER_V))
       itemindexes[i] = MSUVRASTER_VINDEX;
     else {
+      itemindexes[i] = -1;
       msSetError(MS_OGRERR,
                  "Invalid Field name: %s",
                  "msUVRASTERLayerInitItemInfo()",
                  layer->items[i]);
-      return(MS_FAILURE);
+      failed=1;
     }
   }
 
-  return(MS_SUCCESS);
+  return failed ? (MS_FAILURE) : (MS_SUCCESS);
 }
 
 
@@ -277,9 +279,11 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   if(layer->numitems == 0)
     return(NULL);
 
-  if(!layer->iteminfo)  /* Should not happen... but just in case! */
+  if(!layer->iteminfo) { /* Should not happen... but just in case! */
     if (msUVRASTERLayerInitItemInfo(layer) != MS_SUCCESS)
       return NULL;
+    itemindexes = (int*)layer->iteminfo; /* reassign after malloc */
+  }
 
   if((values = (char **)malloc(sizeof(char *)*layer->numitems)) == NULL) {
     msSetError(MS_MEMERR, NULL, "msUVRASTERGetValues()");
@@ -322,7 +326,9 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
     } else if (itemindexes[i] == MSUVRASTER_VINDEX) {
       snprintf(tmp, 100, "%f",*v);
       values[i] = msStrdup(tmp);
-    }
+    } else {
+      values[i] = NULL;
+      }
   }
 
   return values;
