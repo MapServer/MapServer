@@ -461,7 +461,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
       layer->processing = savedProcessing;
       CSLDestroy(alteredProcessing);
     }
-    msFree(map_tmp);
+    msFreeMap(map_tmp);
     msFreeImage(image_tmp);
     return MS_FAILURE;
   }
