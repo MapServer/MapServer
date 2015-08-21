@@ -5060,8 +5060,9 @@ static int loadOutputFormat(mapObj *map)
             format->renderer = MS_RENDER_WITH_RAWDATA;
         }
 
-        format->numformatoptions = numformatoptions;
         if( numformatoptions > 0 ) {
+          msFreeCharArray(format->formatoptions,format->numformatoptions);
+          format->numformatoptions = numformatoptions;
           format->formatoptions = (char **)
           msSmallMalloc(sizeof(char *)*numformatoptions );
           memcpy( format->formatoptions, formatoptions,
