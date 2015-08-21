@@ -91,6 +91,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   int   i;
   int *itemindexes;
+  int failed=0;
 
   if (layer->numitems == 0)
     return MS_SUCCESS;
@@ -115,7 +116,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
     /* OGR style strings.  We use special attribute snames. */
     if (EQUAL(layer->items[i], MSUVRASTER_ANGLE))
       itemindexes[i] = MSUVRASTER_ANGLEINDEX;
-    if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
+    else if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
       itemindexes[i] = MSUVRASTER_MINUSANGLEINDEX;
     else if (EQUAL(layer->items[i], MSUVRASTER_LENGTH))
       itemindexes[i] = MSUVRASTER_LENGTHINDEX;
@@ -125,17 +126,17 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
       itemindexes[i] = MSUVRASTER_UINDEX;
     else if (EQUAL(layer->items[i], MSUVRASTER_V))
       itemindexes[i] = MSUVRASTER_VINDEX;
-
-    if(itemindexes[i] == -1) {
+    else {
+      itemindexes[i] = -1;
       msSetError(MS_OGRERR,
                  "Invalid Field name: %s",
                  "msUVRASTERLayerInitItemInfo()",
                  layer->items[i]);
-      return(MS_FAILURE);
+      failed=1;
     }
   }
 
-  return(MS_SUCCESS);
+  return failed ? (MS_FAILURE) : (MS_SUCCESS);
 }
 
 
@@ -234,7 +235,7 @@ int msUVRASTERLayerClose(layerObj *layer)
   if( uvlinfo != NULL ) {
     uvlinfo->refcount--;
 
-    if( uvlinfo->refcount < 0 )
+    if( uvlinfo->refcount < 1 )
       msUVRasterLayerInfoFree( layer );
   }
   return MS_SUCCESS;
@@ -278,9 +279,11 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   if(layer->numitems == 0)
     return(NULL);
 
-  if(!layer->iteminfo)  /* Should not happen... but just in case! */
+  if(!layer->iteminfo) { /* Should not happen... but just in case! */
     if (msUVRASTERLayerInitItemInfo(layer) != MS_SUCCESS)
       return NULL;
+    itemindexes = (int*)layer->iteminfo; /* reassign after malloc */
+  }
 
   if((values = (char **)malloc(sizeof(char *)*layer->numitems)) == NULL) {
     msSetError(MS_MEMERR, NULL, "msUVRASTERGetValues()");
@@ -323,7 +326,9 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
     } else if (itemindexes[i] == MSUVRASTER_VINDEX) {
       snprintf(tmp, 100, "%f",*v);
       values[i] = msStrdup(tmp);
-    }
+    } else {
+      values[i] = NULL;
+      }
   }
 
   return values;
@@ -456,6 +461,13 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   if (msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL ) == MS_FAILURE) {
     msSetError(MS_MISCERR, "Unable to draw raster data.", "msUVRASTERLayerWhichShapes()");
     layer->mask = saved_layer_mask;
+
+    if (alteredProcessing != NULL) {
+      layer->processing = savedProcessing;
+      CSLDestroy(alteredProcessing);
+    }
+    msFreeMap(map_tmp);
+    msFreeImage(image_tmp);
     return MS_FAILURE;
   }
 
@@ -477,7 +489,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   if (uvlinfo->v) {
-    for (i=0; i<uvlinfo->height; ++i) {
+    for (i=0; i<uvlinfo->width; ++i) {
       free(uvlinfo->v[i]);
     }
     free(uvlinfo->v);
