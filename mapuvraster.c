@@ -456,6 +456,13 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   if (msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL ) == MS_FAILURE) {
     msSetError(MS_MISCERR, "Unable to draw raster data.", "msUVRASTERLayerWhichShapes()");
     layer->mask = saved_layer_mask;
+
+    if (alteredProcessing != NULL) {
+      layer->processing = savedProcessing;
+      CSLDestroy(alteredProcessing);
+    }
+    msFree(map_tmp);
+    msFreeImage(image_tmp);
     return MS_FAILURE;
   }
 
@@ -477,7 +484,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   if (uvlinfo->v) {
-    for (i=0; i<uvlinfo->height; ++i) {
+    for (i=0; i<uvlinfo->width; ++i) {
       free(uvlinfo->v[i]);
     }
     free(uvlinfo->v);
