@@ -681,6 +681,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   char **layer_options = NULL;
   char **file_list = NULL;
   int iLayer, i;
+  const char *jsonp;
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the output format driver.                                 */
@@ -833,6 +834,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   msFree( request_dir );
   request_dir = NULL;
 
+  jsonp = msGetOutputFormatOption( format, "JSONP", NULL );
+
   /* -------------------------------------------------------------------- */
   /*      Emit content type headers for stream output now.                */
   /* -------------------------------------------------------------------- */
@@ -842,6 +845,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       msIO_sendHeaders();
     } else
       msIO_fprintf( stdout, "%c", 10 );
+    if( jsonp != NULL ) msIO_fprintf( stdout, "%s(", jsonp );
   }
 
   /* ==================================================================== */
@@ -1149,6 +1153,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   /* -------------------------------------------------------------------- */
   if( EQUAL(storage,"stream") ) {
     /* already done */
+    if( jsonp != NULL ) msIO_fprintf( stdout, ");\n" );
   }
 
   /* -------------------------------------------------------------------- */
