@@ -391,6 +391,9 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
         }
      }
   }
+
+  /* free uniqgroups */
+  free(uniqgroups);
 }
 
 
