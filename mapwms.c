@@ -333,7 +333,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
   //Create array to hold unique groups
   int maxgroups = 2000;
   int maxgroupiter = 1;
-  char** uniqgroups = malloc(maxgroups * sizeof(char*));
+  char** uniqgroups = msSmallMalloc(maxgroups * sizeof(char*));
   int uniqgroupcount = 0;
   
 
@@ -391,6 +391,9 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
         }
      }
   }
+
+  /* free uniqgroups */
+  free(uniqgroups);
 }
 
 
