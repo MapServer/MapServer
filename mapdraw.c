@@ -973,6 +973,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
 
     if(maxfeatures >=0 && featuresdrawn >= maxfeatures) {
+      msFreeShape(&shape);
       status = MS_DONE;
       break;
     }
@@ -995,12 +996,14 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       if(strcasecmp(layer->styleitem, "AUTO") == 0) {
         if(msLayerGetAutoStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
           retcode = MS_FAILURE;
+          msFreeShape(&shape);
           break;
         }
       } else {
         /* Generic feature style handling as per RFC-61 */
         if(msLayerGetFeatureStyle(map, layer, layer->class[shape.classindex], &shape) != MS_SUCCESS) {
           retcode = MS_FAILURE;
+          msFreeShape(&shape);
           break;
         }
       }
@@ -1060,6 +1063,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     if(cache) {
       if(insertFeatureList(&shpcache, &shape) == NULL) {
+        msFreeShape(&shape);
         retcode = MS_FAILURE; /* problem adding to the cache */
         break;
       }
