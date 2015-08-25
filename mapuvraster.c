@@ -116,7 +116,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
     /* OGR style strings.  We use special attribute snames. */
     if (EQUAL(layer->items[i], MSUVRASTER_ANGLE))
       itemindexes[i] = MSUVRASTER_ANGLEINDEX;
-    if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
+    else if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
       itemindexes[i] = MSUVRASTER_MINUSANGLEINDEX;
     else if (EQUAL(layer->items[i], MSUVRASTER_LENGTH))
       itemindexes[i] = MSUVRASTER_LENGTHINDEX;
