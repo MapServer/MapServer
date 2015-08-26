@@ -858,7 +858,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*                          ParseDefaultLUT()                           */
 /************************************************************************/
 
-static int ParseDefaultLUT( const char *lut_def, GByte *lut )
+static int ParseDefaultLUT( const char *lut_def, GByte *lut, int nMaxValIn )
 
 {
   const char *lut_read;
@@ -875,11 +875,11 @@ static int ParseDefaultLUT( const char *lut_def, GByte *lut )
     while( isspace(*lut_read) )
       lut_read++;
 
-    /* if we are at end, assum 255:255 */
+    /* if we are at end, assume nMaxValIn:255 */
     if( *lut_read == '\0' ) {
       all_done = TRUE;
-      if ( last_in != 255 ) {
-        this_in = 255;
+      if ( last_in != nMaxValIn ) {
+        this_in = nMaxValIn;
         this_out = 255;
       }
     }
@@ -902,7 +902,7 @@ static int ParseDefaultLUT( const char *lut_def, GByte *lut )
         lut_read++;
     }
 
-    this_in = MAX(0,MIN(255,this_in));
+    this_in = MAX(0,MIN(nMaxValIn,this_in));
     this_out = MAX(0,MIN(255,this_out));
 
     /* apply linear values from last in:out to this in:out */
@@ -968,7 +968,7 @@ static int LutFromGimpLine( char *lut_line, GByte *lut )
 
   CSLDestroy( tokens );
 
-  return ParseDefaultLUT( wrkLUTDef, lut );
+  return ParseDefaultLUT( wrkLUTDef, lut, 255 );
 }
 
 /************************************************************************/
@@ -1019,19 +1019,18 @@ static int ParseGimpLUT( const char *lut_def, GByte *lut, int iColorIndex )
 }
 
 /************************************************************************/
-/*                              ApplyLUT()                              */
+/*                              LoadLUT()                               */
 /*                                                                      */
-/*      Apply a LUT according to RFC 21.                                */
+/*      Load a LUT according to RFC 21.                                 */
 /************************************************************************/
 
-static int ApplyLUT( int iColorIndex, layerObj *layer,
-                     GByte *buffer, int buf_xsize, int buf_ysize )
+static int LoadLUT( layerObj *layer, int iColorIndex, char** ppszLutDef )
 
 {
   const char *lut_def;
   char key[20], lut_def_fromfile[2500];
-  GByte lut[256];
-  int   err, i;
+
+  *ppszLutDef = NULL;
 
   /* -------------------------------------------------------------------- */
   /*      Get lut specifier from processing directives.  Do nothing if    */
@@ -1076,25 +1075,159 @@ static int ApplyLUT( int iColorIndex, layerObj *layer,
     lut_def = lut_def_fromfile;
   }
 
+  *ppszLutDef = msStrdup(lut_def);
+
+  return 0;
+
+}
+
+/************************************************************************/
+/*                              FreeLUTs()                              */
+/************************************************************************/
+
+static void FreeLUTs(char** apszLUTs)
+{
+    int i;
+    for( i = 0; i < 4; i++ )
+        msFree(apszLUTs[i]);
+    msFree(apszLUTs);
+}
+
+/************************************************************************/
+/*                            LoadLUTs()                                */
+/*                                                                      */
+/* Return an array of 4 strings (some possibly NULL) with loaded LUTs   */
+/* or NULL in case of failure.                                          */
+/************************************************************************/
+
+static char** LoadLUTs(layerObj *layer, int band_count)
+{
+    int i;
+    char** apszLUTs;
+    
+    assert(band_count <= 4);
+
+    apszLUTs = (char**) msSmallCalloc( 4, sizeof(char*) );
+    for( i = 0; i < band_count; i++ )
+    {
+        if( LoadLUT( layer, i+1, &apszLUTs[i] ) != 0 )
+        {
+            FreeLUTs(apszLUTs);
+            return NULL;
+        }
+    }
+
+    return apszLUTs;
+}
+
+/************************************************************************/
+/*                  GetDataTypeAppropriateForLUTS()                     */
+/*                                                                      */
+/*      This does a quick examination of the LUT strings to determine   */
+/*      if they have input values > 255, in which case the raster data  */
+/*      must be queries on 16-bits.                                     */
+/************************************************************************/
+
+static GDALDataType GetDataTypeAppropriateForLUTS(char** apszLUTs)
+{
+    GDALDataType eDT = GDT_Byte;
+    int i;
+    for( i = 0; i < 4; i++ )
+    {
+        const char* pszLastTuple;
+        int nLastInValue;
+        if( apszLUTs[i] == NULL )
+            continue;
+        if( EQUALN(apszLUTs[i],"# GIMP",6) )
+            continue;
+        /* Find last in:out tuple in string */
+        pszLastTuple = strrchr( apszLUTs[i], ',' );
+        if( pszLastTuple == NULL )
+            pszLastTuple = apszLUTs[i];
+        else
+            pszLastTuple ++;
+        while( *pszLastTuple == ' ' )
+            pszLastTuple ++;
+        nLastInValue = atoi(pszLastTuple);
+        if( nLastInValue > 255 )
+        {
+            eDT = GDT_UInt16;
+            break;
+        }
+    }
+    return eDT;
+}
+
+/************************************************************************/
+/*                              ApplyLUT()                              */
+/************************************************************************/
+
+static int ApplyLUT( int iColorIndex, const char* lut_def,
+                     const void* pInBuffer, GDALDataType eDT,
+                     GByte* pabyOutBuffer,
+                     int nPixelCount )
+{
+  int i, err;
+  GByte byteLut[256];
+  GByte* uint16Lut = NULL;
+
+  assert( eDT == GDT_Byte || eDT == GDT_UInt16 );
+  
+  if( lut_def == NULL )
+  {
+      if( pInBuffer != pabyOutBuffer )
+      {
+        GDALCopyWords( (void*)pInBuffer, eDT, GDALGetDataTypeSize(eDT) / 8,
+                        pabyOutBuffer, GDT_Byte, 1,
+                        nPixelCount );
+      }
+      return 0;
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Parse the LUT description.                                      */
   /* -------------------------------------------------------------------- */
   if( EQUALN(lut_def,"# GIMP",6) ) {
-    err = ParseGimpLUT( lut_def, lut, iColorIndex );
+    if( eDT != GDT_Byte ) {
+      msSetError(MS_MISCERR,
+                 "Cannot apply a GIMP LUT on a 16-bit buffer",
+                 "ApplyLUT()");
+      return -1;
+    }
+    err = ParseGimpLUT( lut_def, byteLut, iColorIndex );
   } else {
-    err = ParseDefaultLUT( lut_def, lut );
+    if( eDT == GDT_Byte )
+        err = ParseDefaultLUT( lut_def, byteLut, 255 );
+    else
+    {
+        uint16Lut = (GByte*) malloc( 65536 );
+        if( uint16Lut == NULL )
+        {
+            msSetError(MS_MEMERR,
+                 "Cannot allocate 16-bit LUT",
+                 "ApplyLUT()" );
+            return -1;
+        }
+        err = ParseDefaultLUT( lut_def, uint16Lut, 65535 );
+    }
   }
-
-  if( err != 0 )
-    return err;
 
   /* -------------------------------------------------------------------- */
   /*      Apply LUT.                                                      */
   /* -------------------------------------------------------------------- */
-  for( i = buf_xsize * buf_ysize - 1; i >= 0; i-- )
-    buffer[i] = lut[buffer[i]];
-
-  return 0;
+  if( eDT == GDT_Byte )
+  {
+    for( i = 0; i < nPixelCount; i++ )
+        pabyOutBuffer[i] = byteLut[((GByte*)pInBuffer)[i]];
+  }
+  else
+  {
+      for( i = 0; i < nPixelCount; i++ )
+        pabyOutBuffer[i] = uint16Lut[((GUInt16*)pInBuffer)[i]];
+      free(uint16Lut);
+  }
+  
+  return err;
 }
 
 /************************************************************************/
@@ -1118,6 +1251,7 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
   int    iColorIndex, result_code=0;
   CPLErr eErr;
   float *pafWholeRawData;
+  char** papszLUTs;
 
   /* -------------------------------------------------------------------- */
   /*      If we have no alpha band, but we do have three input            */
@@ -1152,10 +1286,38 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
       && CSLFetchNameValue( layer->processing, "SCALE_2" ) == NULL
       && CSLFetchNameValue( layer->processing, "SCALE_3" ) == NULL
       && CSLFetchNameValue( layer->processing, "SCALE_4" ) == NULL ) {
+      
+    GDALDataType eDT;
+    GUInt16* panBuffer = NULL;
+    void* pBuffer;
+
+    papszLUTs = LoadLUTs(layer, band_count);
+    if( papszLUTs == NULL ) {
+        return -1;
+    }
+
+    eDT = GetDataTypeAppropriateForLUTS(papszLUTs);
+    if( eDT == GDT_UInt16 ) {
+        panBuffer =
+            (GUInt16 *) malloc(sizeof(GUInt16) * dst_xsize * dst_ysize * band_count );
+
+        if( panBuffer == NULL ) {
+            msSetError(MS_MEMERR,
+                    "Allocating work uint16 image of size %dx%dx%d failed.",
+                    "msDrawRasterLayerGDAL()",
+                    dst_xsize, dst_ysize, band_count );
+            FreeLUTs(papszLUTs);
+            return -1;
+        }
+        pBuffer = panBuffer;
+    }
+    else
+        pBuffer = pabyWholeBuffer;
+
     eErr = GDALDatasetRasterIO( hDS, GF_Read,
                                 src_xoff, src_yoff, src_xsize, src_ysize,
-                                pabyWholeBuffer,
-                                dst_xsize, dst_ysize, GDT_Byte,
+                                pBuffer,
+                                dst_xsize, dst_ysize, eDT,
                                 band_count, band_numbers,
                                 0,0,0);
 
@@ -1164,17 +1326,24 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
                   "GDALDatasetRasterIO() failed: %s",
                   "drawGDAL()",
                   CPLGetLastErrorMsg() );
+      FreeLUTs(papszLUTs);
+      msFree(panBuffer);
       return -1;
     }
 
     for( iColorIndex = 0;
          iColorIndex < band_count && result_code == 0; iColorIndex++ ) {
-      result_code = ApplyLUT( iColorIndex+1, layer,
-                              pabyWholeBuffer
-                              + dst_xsize*dst_ysize*iColorIndex,
-                              dst_xsize, dst_ysize );
+      result_code = ApplyLUT( iColorIndex+1,
+                              papszLUTs[iColorIndex],
+                              (GByte*)pBuffer
+                                + dst_xsize*dst_ysize*iColorIndex*(GDALGetDataTypeSize(eDT)/8),
+                              eDT,
+                              pabyWholeBuffer + dst_xsize*dst_ysize*iColorIndex,
+                              dst_xsize * dst_ysize );
     }
 
+    FreeLUTs(papszLUTs);
+    msFree(panBuffer);
     return result_code;
   }
 
@@ -1223,6 +1392,18 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
     return -1;
   }
 
+  papszLUTs = LoadLUTs(layer, band_count);
+  if( papszLUTs == NULL ) {
+    free( pafWholeRawData );
+    return -1;
+  }
+
+  if( GetDataTypeAppropriateForLUTS(papszLUTs) != GDT_Byte ) {
+    msDebug( "LoadGDALImage(%s): One of the LUT contains a input value > 255.\n"
+             "This is not properly supported in combination with SCALE\n",
+             layer->name );
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Fetch the scale processing option.                              */
   /* -------------------------------------------------------------------- */
@@ -1253,6 +1434,7 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
       } else if( CSLCount(papszTokens) != 2 ) {
         free( pafWholeRawData );
         CSLDestroy( papszTokens );
+        FreeLUTs( papszLUTs );
         msSetError( MS_MISCERR,
                     "SCALE PROCESSING option unparsable for layer %s.",
                     "msDrawGDAL()",
@@ -1334,15 +1516,21 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
     /* -------------------------------------------------------------------- */
     /*      Apply LUT if there is one.                                      */
     /* -------------------------------------------------------------------- */
-    result_code = ApplyLUT( iColorIndex+1, layer,
-                            pabyBuffer, dst_xsize, dst_ysize );;
+    result_code = ApplyLUT( iColorIndex+1,
+                            papszLUTs[iColorIndex],
+                            pabyBuffer,
+                            GDT_Byte,
+                            pabyBuffer,
+                            dst_xsize * dst_ysize );
     if( result_code == -1 ) {
       free( pafWholeRawData );
+      FreeLUTs( papszLUTs );
       return result_code;
     }
   }
 
   free( pafWholeRawData );
+  FreeLUTs( papszLUTs );
 
   return result_code;
 }
