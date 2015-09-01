@@ -175,8 +175,15 @@ static void msOGRCleanupDS( const char *datasource_name )
   char **file_list;
   char path[MS_MAXPATHLEN];
   int i;
+  VSIStatBufL sStatBuf;
+  
+  if( VSIStatL( datasource_name, &sStatBuf ) != 0 )
+    return;
+  if( VSI_ISDIR( sStatBuf.st_mode ) )
+    strlcpy( path, datasource_name, sizeof(path) );
+  else
+    strlcpy( path, CPLGetPath( datasource_name ), sizeof(path) );
 
-  strlcpy( path, CPLGetPath( datasource_name ), sizeof(path) );
   file_list = CPLReadDir( path );
 
   for( i = 0; file_list != NULL && file_list[i] != NULL; i++ ) {
@@ -195,11 +202,7 @@ static void msOGRCleanupDS( const char *datasource_name )
     if( VSI_ISREG( sStatBuf.st_mode ) ) {
       VSIUnlink( full_filename );
     } else if( VSI_ISDIR( sStatBuf.st_mode ) ) {
-      char fake_ds_name[MS_MAXPATHLEN];
-      strlcpy( fake_ds_name,
-               CPLFormFilename( full_filename, "abc.dat", NULL ),
-               sizeof(fake_ds_name) );
-      msOGRCleanupDS( fake_ds_name );
+      msOGRCleanupDS( full_filename );
     }
   }
 
@@ -681,6 +684,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   char **layer_options = NULL;
   char **file_list = NULL;
   int iLayer, i;
+  int bDataSourceNameIsRequestDir = FALSE;
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the output format driver.                                 */
@@ -805,26 +809,15 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       if( EQUAL(CPLGetExtension(datasource_name), "") ) {
         strcat(datasource_name, ".dat");
       }
-      else if( EQUAL(CPLGetExtension(datasource_name), "shp") )
-      {
-          int nNonEmptyLayers = 0;
-          for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
-            layerObj *layer = GET_LAYER(map, iLayer);
-            if( !layer->resultcache || layer->resultcache->numresults == 0 )
-              continue;
-            nNonEmptyLayers ++;
-          }
-          /* The shapefile driver will be somehow confused if trying to create */
-          /* a datasource named foo.shp when there are several layers in it */
-          /* It would create the first layer as datasource_name.shp and the next ones */
-          /* with layer_name.shp */
-          /* so remove the shp extension in that case, so that all layers are */
-          /* exported with their names */
-          if( nNonEmptyLayers > 1 )
-          {
-              *strrchr(datasource_name, '.') = '\0';
-          }
-      }
+    }
+
+    /* Shapefile and MapInfo driver only properly work with multiple layers */
+    /* if the output dataset name is a directory */
+    if( EQUAL(format->driver+4, "ESRI Shapefile") ||
+        EQUAL(format->driver+4, "MapInfo File") )
+    {
+        bDataSourceNameIsRequestDir = TRUE;
+        strcpy(datasource_name, request_dir);
     }
   }
   else
@@ -959,9 +952,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       OGR_DS_Destroy( hDS );
       msOGRCleanupDS( datasource_name );
       msSetError( MS_MISCERR,
-                  "OGR CreateDataSource failed for '%s' with driver '%s'.",
+                  "OGR OGR_DS_CreateLayer failed for layer '%s' with driver '%s'.",
                   "msOGRWriteFromQuery()",
-                  datasource_name,
+                  layer->name,
                   format->driver+4 );
       return MS_FAILURE;
     }
@@ -1139,8 +1132,13 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   } else {
     char datasource_path[MS_MAXPATHLEN];
 
-    strncpy( datasource_path, CPLGetPath( datasource_name ), MS_MAXPATHLEN-1 );
-    file_list = msOGRRecursiveFileList( datasource_path );
+    if( bDataSourceNameIsRequestDir )
+        file_list = msOGRRecursiveFileList( datasource_name );
+    else
+    {
+        strncpy( datasource_path, CPLGetPath( datasource_name ), MS_MAXPATHLEN-1 );
+        file_list = msOGRRecursiveFileList( datasource_path );
+    }
   }
 
   /* -------------------------------------------------------------------- */
