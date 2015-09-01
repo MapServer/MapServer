@@ -1951,12 +1951,10 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
   double scale_x, scale_y;
 
-
   char *projectionString=NULL;
 
   shapeObj tShape;
   char *coords=NULL, point[128];
-
 
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processShpxyTag()");
@@ -2059,7 +2057,6 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
       if(argValue)
         if(strcasecmp(argValue,"true") == 0) centroid = MS_TRUE;
 
-
       argValue = msLookupHashTable(tagArgs, "proj");
       if(argValue) projectionString = argValue;
     }
@@ -2121,9 +2118,7 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       switch(tShape.type) {
         case(MS_SHAPE_POINT):
-          /* at this point we only convert the first point of the first shape */
-          tShape.line[0].point[0].x = MS_MAP2IMAGE_X(tShape.line[0].point[0].x, layer->map->extent.minx, layer->map->cellsize);
-          tShape.line[0].point[0].y = MS_MAP2IMAGE_Y(tShape.line[0].point[0].y, layer->map->extent.maxy, layer->map->cellsize);
+          /* no clipping necessary */
           break;
         case(MS_SHAPE_LINE):
           msClipPolylineRect(&tShape, layer->map->extent);
