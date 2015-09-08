@@ -803,7 +803,7 @@ int selectClusterShape(layerObj* layer, long shapeindex)
 }
 
 /* update the parameters from the related shapes */
-#ifndef NDEBUG
+#ifdef ms_notused
 static void UpdateClusterParameters(msClusterLayerInfo* layerinfo, clusterTreeNode *node, clusterInfo *shape)
 {
   int i;

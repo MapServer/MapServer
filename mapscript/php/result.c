@@ -104,8 +104,6 @@ PHP_METHOD(resultObj, __set)
   char *property;
   long property_len = 0;
   zval *value;
-  zval *zobj = getThis();
-  php_result_object *php_result;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -114,8 +112,6 @@ PHP_METHOD(resultObj, __set)
     return;
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-
-  php_result = (php_result_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
   if ( (STRING_EQUAL("shapeindex", property)) ||
        (STRING_EQUAL("tileindex", property)) ||

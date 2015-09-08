@@ -722,6 +722,7 @@ void freeJoin(joinObj *join)
 
 int loadJoin(joinObj *join)
 {
+  int nTmp;
   initJoin(join);
 
   for(;;) {
@@ -730,7 +731,8 @@ int loadJoin(joinObj *join)
         if(getString(&join->connection) == MS_FAILURE) return(-1);
         break;
       case(CONNECTIONTYPE):
-        if((join->connectiontype = getSymbol(5, MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES, MS_DB_CSV)) == -1) return(-1);
+        if((nTmp = getSymbol(5, MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES, MS_DB_CSV)) == -1) return(-1);
+        join->connectiontype = nTmp;
         break;
       case(EOF):
         msSetError(MS_EOFERR, NULL, "loadJoin()");
@@ -769,7 +771,8 @@ int loadJoin(joinObj *join)
         if(getString(&join->to) == MS_FAILURE) return(-1);
         break;
       case(TYPE):
-        if((join->type = getSymbol(2, MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY)) == -1) return(-1);
+        if((nTmp = getSymbol(2, MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY)) == -1) return(-1);
+        join->type = nTmp;
         break;
       default:
         msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadJoin()", msyystring_buffer, msyylineno);
@@ -4259,7 +4262,8 @@ int loadLayer(layerObj *layer, mapObj *map)
         }
         break;
       case(CONNECTIONTYPE):
-        if((layer->connectiontype = getSymbol(11, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY)) == -1) return(-1);
+        if((type = getSymbol(11, MS_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_PLUGIN, MS_UNION, MS_UVRASTER, MS_CONTOUR, MS_KERNELDENSITY)) == -1) return(-1);
+        layer->connectiontype = type;
         break;
       case(DATA):
         if(getString(&layer->data) == MS_FAILURE) return(-1); /* getString() cleans up previously allocated string */
@@ -4627,12 +4631,13 @@ int loadLayer(layerObj *layer, mapObj *map)
         if((layer->transform = getSymbol(11, MS_TRUE,MS_FALSE, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) return(-1);
         break;
       case(TYPE):
-        if((layer->type = getSymbol(9, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE,MS_LAYER_CHART,TILEINDEX)) == -1) return(-1);
-        if(layer->type == TILEINDEX) layer->type = MS_LAYER_TILEINDEX; /* TILEINDEX is also a parameter */
-        if(layer->type == MS_LAYER_ANNOTATION) {
+        if((type = getSymbol(9, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE,MS_LAYER_CHART,TILEINDEX)) == -1) return(-1);
+        if(type == TILEINDEX) type = MS_LAYER_TILEINDEX; /* TILEINDEX is also a parameter */
+        if(type == MS_LAYER_ANNOTATION) {
           msSetError(MS_IDENTERR, "Annotation Layers have been removed. To obtain same functionality, use a layer with label->styles and no class->styles", "loadLayer()");
           return -1;
         }
+        layer->type = type;
         break;
       case(UNITS):
         if((layer->units = getSymbol(9, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_NAUTICALMILES,MS_DD,MS_PIXELS,MS_PERCENTAGES)) == -1) return(-1);

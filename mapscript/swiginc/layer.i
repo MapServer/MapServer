@@ -223,6 +223,11 @@
         shape->type = self->type; /* is this right? */
 
         retval = msLayerGetShape(self, shape, record);
+        if(retval != MS_SUCCESS) {
+          msFreeShape(shape);
+          free(shape);
+          return NULL;
+        } else
         return shape;
     }
 

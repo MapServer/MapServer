@@ -185,10 +185,10 @@ void msThreadInit()
 /*                           msGetThreadId()                            */
 /************************************************************************/
 
-int msGetThreadId()
+void* msGetThreadId()
 
 {
-  return (int) pthread_self();
+  return pthread_self();
 }
 
 /************************************************************************/
@@ -273,10 +273,10 @@ void msThreadInit()
 /*                           msGetThreadId()                            */
 /************************************************************************/
 
-int msGetThreadId()
+void* msGetThreadId()
 
 {
-  return (int) GetCurrentThreadId();
+  return GetCurrentThreadId();
 }
 
 /************************************************************************/

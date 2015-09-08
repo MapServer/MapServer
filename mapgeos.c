@@ -68,7 +68,7 @@ static inline GEOSContextHandle_t msGetGeosContextHandle()
 #include "mapthread.h"
 typedef struct geos_thread_info {
   struct geos_thread_info *next;
-  int             thread_id;
+  void*             thread_id;
   GEOSContextHandle_t        geos_handle;
 } geos_thread_info_t;
 
@@ -78,7 +78,7 @@ static GEOSContextHandle_t msGetGeosContextHandle()
 {
   geos_thread_info_t *link;
   GEOSContextHandle_t ret_obj;
-  int        thread_id;
+  void*        thread_id;
 
   msAcquireLock( TLOCK_GEOS );
 

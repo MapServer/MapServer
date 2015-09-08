@@ -528,6 +528,8 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     return MS_FAILURE;
 }
 
+#if defined(GDAL_COMPUTE_VERSION)
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,0,0)
 /************************************************************************/
 /*                        msOGRStdoutWriteFunction()                    */
 /************************************************************************/

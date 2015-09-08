@@ -1024,7 +1024,6 @@ int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbol
   if(MS_VALID_COLOR(ts->label->outlinecolor))
     oc = &ts->label->outlinecolor;
   ow = MS_NINT((double)ts->label->outlinewidth * ((double)ts->textpath->glyph_size / (double)ts->label->size));
-  msDebug("setting outlinewidth to %d (%d, %d, %d)\n",ow,ts->label->outlinewidth, ts->textpath->glyph_size, ts->label->size);
   if(!renderer->renderGlyphs) return MS_FAILURE;
   return renderer->renderGlyphs(image,ts->textpath,c,oc,ow);
   

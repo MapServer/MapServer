@@ -149,7 +149,7 @@ typedef struct {
 
   int   lifespan;
   int   ref_count;
-  int   thread_id;
+  void*   thread_id;
   int   debug;
 
   time_t last_used;

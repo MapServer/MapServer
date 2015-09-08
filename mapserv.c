@@ -53,7 +53,7 @@ void msCleanupOnSignal( int nInData )
   /* normal stdio functions. */
   msIO_installHandlers( NULL, NULL, NULL );
   msIO_fprintf( stderr, "In msCleanupOnSignal.\n" );
-  msCleanup(1);
+  msCleanup();
   exit(0);
 }
 #endif
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
   /* -------------------------------------------------------------------- */
   if( msSetup() != MS_SUCCESS ) {
     msCGIWriteError(mapserv);
-    msCleanup(0);
+    msCleanup();
     exit(0);
   }
 
@@ -301,7 +301,7 @@ end_request:
             (execendtime.tv_sec+execendtime.tv_usec/1.0e6)-
             (execstarttime.tv_sec+execstarttime.tv_usec/1.0e6) );
   }
-  msCleanup(0);
+  msCleanup();
 
 #ifdef _WIN32
   /* flush pending writes to stdout */

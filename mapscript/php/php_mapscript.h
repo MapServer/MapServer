@@ -57,6 +57,7 @@
 
 #include "../../maptemplate.h"
 #include "../../mapogcsld.h"
+#include "../../mapows.h"
 
 #define MAPSCRIPT_VERSION "($Revision$ $Date$)"
 

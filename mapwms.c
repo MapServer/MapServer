@@ -333,7 +333,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
   //Create array to hold unique groups
   int maxgroups = 2000;
   int maxgroupiter = 1;
-  char** uniqgroups = malloc(maxgroups * sizeof(char*));
+  char** uniqgroups = msSmallMalloc(maxgroups * sizeof(char*));
   int uniqgroupcount = 0;
   
 
@@ -391,6 +391,9 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
         }
      }
   }
+
+  /* free uniqgroups */
+  free(uniqgroups);
 }
 
 
@@ -778,7 +781,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           const char *wms_request, owsRequestObj *ows_request)
 {
   int i, adjust_extent = MS_FALSE, nonsquare_enabled = MS_FALSE;
-  int iUnits = -1;
   int nLayerOrder = 0;
   int transparent = MS_NOOVERRIDE;
   int bbox_pixel_is_point = MS_FALSE;
@@ -1310,7 +1312,7 @@ this request. Check wms/ows_enable_request settings.",
   ** Validate first against epsg in the map and if no matching srs is found
   ** validate all layers requested.
   */
-  if (epsgbuf != NULL && strlen(epsgbuf) > 1) {
+  if (epsgbuf[0] && epsgbuf[1]) { /*at least 2 chars*/
     epsgvalid = MS_FALSE;
     projstring = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
                                   "MO", MS_FALSE);
@@ -1453,9 +1455,10 @@ this request. Check wms/ows_enable_request settings.",
     if (nTmp != 0)
       return msWMSException(map, nVersion, NULL, wms_exception_format);
 
-    iUnits = GetMapserverUnitUsingProj(&(map->projection));
-    if (iUnits != -1)
-      map->units = iUnits;
+    nTmp = GetMapserverUnitUsingProj(&(map->projection));
+    if( nTmp != -1 ) {
+      map->units = nTmp;
+    }
   }
 
   if (sld_url || sld_body) {

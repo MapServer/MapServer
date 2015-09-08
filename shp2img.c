@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
     /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
     if ( msDebugInitFromEnv() != MS_SUCCESS ) {
       msWriteError(stderr);
-      msCleanup(0);
+      msCleanup();
       exit(1);
     }
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
         map = msLoadMap(argv[i+1], NULL);
         if(!map) {
           msWriteError(stderr);
-          msCleanup(0);
+          msCleanup();
           exit(1);
         }
         msApplyDefaultSubstitutions(map);
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 
     if(!map) {
       fprintf(stderr, "Mapfile (-m) option not specified.\n");
-      msCleanup(0);
+      msCleanup();
       exit(1);
     }
 
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
         if( argc <= i+4 ) {
           fprintf( stderr,
                    "Argument -e needs 4 space separated numbers as argument.\n" );
-          msCleanup(0);
+          msCleanup();
           exit(1);
         }
         map->extent.minx = atof(argv[i+1]);
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
           }
           if (layer_found==0) {
             fprintf(stderr, "Layer (-l) \"%s\" not found\n", layers[j]);
-            msCleanup(0);
+            msCleanup();
             exit(1);
           }
         }
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
       msWriteError(stderr);
 
       msFreeMap(map);
-      msCleanup(0);
+      msCleanup();
       exit(1);
     }
 
@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
 
-    msCleanup(0);
+    msCleanup();
 
   } /*   for(draws=0; draws<iterations; draws++) { */
   return(0);

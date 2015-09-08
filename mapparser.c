@@ -164,7 +164,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 5 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 5 "mapparser.y"
 
 /* C declarations */
 #include <stdio.h>
@@ -203,7 +203,7 @@ int yyerror(parseObj *, const char *);
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 30 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 30 "mapparser.y"
 {
   double dblval;
   int intval;  
@@ -212,7 +212,7 @@ typedef union YYSTYPE
   shapeObj *shpval;
 }
 /* Line 193 of yacc.c.  */
-#line 216 "/Users/sdlime/mapserver/mapserver/mapparser.c"
+#line 216 "/Users/tbonfort/dev/mapserver/mapparser.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -225,7 +225,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 229 "/Users/sdlime/mapserver/mapserver/mapparser.c"
+#line 229 "/Users/tbonfort/dev/mapserver/mapparser.c"
 
 #ifdef short
 # undef short
@@ -1692,7 +1692,7 @@ yyreduce:
   switch (yyn)
     {
         case 3:
-#line 69 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 69 "mapparser.y"
     {
     switch(p->type) {
     case(MS_PARSE_TYPE_BOOLEAN):
@@ -1709,7 +1709,7 @@ yyreduce:
     break;
 
   case 4:
-#line 82 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 82 "mapparser.y"
     {
     switch(p->type) {
     case(MS_PARSE_TYPE_BOOLEAN):
@@ -1727,7 +1727,7 @@ yyreduce:
     break;
 
   case 5:
-#line 96 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 96 "mapparser.y"
     {
     switch(p->type) {
     case(MS_PARSE_TYPE_BOOLEAN):
@@ -1744,7 +1744,7 @@ yyreduce:
     break;
 
   case 6:
-#line 109 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 109 "mapparser.y"
     {
     switch(p->type) {
     case(MS_PARSE_TYPE_SHAPE):
@@ -1756,12 +1756,12 @@ yyreduce:
     break;
 
   case 8:
-#line 120 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 120 "mapparser.y"
     { (yyval.intval) = (yyvsp[(2) - (3)].intval); }
     break;
 
   case 9:
-#line 121 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 121 "mapparser.y"
     {
     (yyval.intval) = MS_FALSE;
     if((yyvsp[(1) - (3)].intval) == (yyvsp[(3) - (3)].intval)) (yyval.intval) = MS_TRUE;
@@ -1769,7 +1769,7 @@ yyreduce:
     break;
 
   case 10:
-#line 125 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 125 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].intval) == MS_TRUE)
       (yyval.intval) = MS_TRUE;
@@ -1781,7 +1781,7 @@ yyreduce:
     break;
 
   case 11:
-#line 133 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 133 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].intval) == MS_TRUE) {
       if((yyvsp[(3) - (3)].intval) == MS_TRUE)
@@ -1794,7 +1794,7 @@ yyreduce:
     break;
 
   case 12:
-#line 142 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 142 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].intval) == MS_TRUE)
       (yyval.intval) = MS_TRUE;
@@ -1806,7 +1806,7 @@ yyreduce:
     break;
 
   case 13:
-#line 150 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 150 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].intval) == MS_TRUE) {
       if((yyvsp[(3) - (3)].dblval) != 0)
@@ -1819,7 +1819,7 @@ yyreduce:
     break;
 
   case 14:
-#line 159 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 159 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) != 0)
       (yyval.intval) = MS_TRUE;
@@ -1831,7 +1831,7 @@ yyreduce:
     break;
 
   case 15:
-#line 167 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 167 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) != 0) {
       if((yyvsp[(3) - (3)].intval) == MS_TRUE)
@@ -1844,7 +1844,7 @@ yyreduce:
     break;
 
   case 16:
-#line 176 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 176 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) != 0)
       (yyval.intval) = MS_TRUE;
@@ -1856,7 +1856,7 @@ yyreduce:
     break;
 
   case 17:
-#line 184 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 184 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) != 0) {
       if((yyvsp[(3) - (3)].dblval) != 0)
@@ -1869,17 +1869,17 @@ yyreduce:
     break;
 
   case 18:
-#line 193 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 193 "mapparser.y"
     { (yyval.intval) = !(yyvsp[(2) - (2)].intval); }
     break;
 
   case 19:
-#line 194 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 194 "mapparser.y"
     { (yyval.intval) = !(yyvsp[(2) - (2)].dblval); }
     break;
 
   case 20:
-#line 195 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 195 "mapparser.y"
     {
     ms_regex_t re;
 
@@ -1903,7 +1903,7 @@ yyreduce:
     break;
 
   case 21:
-#line 215 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 215 "mapparser.y"
     {
     ms_regex_t re;
 
@@ -1927,7 +1927,7 @@ yyreduce:
     break;
 
   case 22:
-#line 235 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 235 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) == (yyvsp[(3) - (3)].dblval))
       (yyval.intval) = MS_TRUE;
@@ -1937,7 +1937,7 @@ yyreduce:
     break;
 
   case 23:
-#line 241 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 241 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) != (yyvsp[(3) - (3)].dblval))
       (yyval.intval) = MS_TRUE;
@@ -1947,7 +1947,7 @@ yyreduce:
     break;
 
   case 24:
-#line 247 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 247 "mapparser.y"
     {    
     if((yyvsp[(1) - (3)].dblval) > (yyvsp[(3) - (3)].dblval))
       (yyval.intval) = MS_TRUE;
@@ -1957,7 +1957,7 @@ yyreduce:
     break;
 
   case 25:
-#line 253 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 253 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) < (yyvsp[(3) - (3)].dblval))
       (yyval.intval) = MS_TRUE;
@@ -1967,7 +1967,7 @@ yyreduce:
     break;
 
   case 26:
-#line 259 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 259 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) >= (yyvsp[(3) - (3)].dblval))
       (yyval.intval) = MS_TRUE;
@@ -1977,7 +1977,7 @@ yyreduce:
     break;
 
   case 27:
-#line 265 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 265 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) <= (yyvsp[(3) - (3)].dblval))
       (yyval.intval) = MS_TRUE;
@@ -1987,7 +1987,7 @@ yyreduce:
     break;
 
   case 28:
-#line 271 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 271 "mapparser.y"
     {
     if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) == 0)
       (yyval.intval) = MS_TRUE;
@@ -1999,7 +1999,7 @@ yyreduce:
     break;
 
   case 29:
-#line 279 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 279 "mapparser.y"
     {
     if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) != 0)
       (yyval.intval) = MS_TRUE;
@@ -2011,7 +2011,7 @@ yyreduce:
     break;
 
   case 30:
-#line 287 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 287 "mapparser.y"
     {
     if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) > 0)
       (yyval.intval) = MS_TRUE;
@@ -2023,7 +2023,7 @@ yyreduce:
     break;
 
   case 31:
-#line 295 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 295 "mapparser.y"
     {
     if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) < 0)
       (yyval.intval) = MS_TRUE;
@@ -2035,7 +2035,7 @@ yyreduce:
     break;
 
   case 32:
-#line 303 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 303 "mapparser.y"
     {
     if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) >= 0)
       (yyval.intval) = MS_TRUE;
@@ -2047,7 +2047,7 @@ yyreduce:
     break;
 
   case 33:
-#line 311 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 311 "mapparser.y"
     {
     if(strcmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) <= 0)
       (yyval.intval) = MS_TRUE;
@@ -2059,7 +2059,7 @@ yyreduce:
     break;
 
   case 34:
-#line 319 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 319 "mapparser.y"
     {
     if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) == 0)
       (yyval.intval) = MS_TRUE;
@@ -2069,7 +2069,7 @@ yyreduce:
     break;
 
   case 35:
-#line 325 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 325 "mapparser.y"
     {
     if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) != 0)
       (yyval.intval) = MS_TRUE;
@@ -2079,7 +2079,7 @@ yyreduce:
     break;
 
   case 36:
-#line 331 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 331 "mapparser.y"
     {
     if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) > 0)
       (yyval.intval) = MS_TRUE;
@@ -2089,7 +2089,7 @@ yyreduce:
     break;
 
   case 37:
-#line 337 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 337 "mapparser.y"
     {
     if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) < 0)
       (yyval.intval) = MS_TRUE;
@@ -2099,7 +2099,7 @@ yyreduce:
     break;
 
   case 38:
-#line 343 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 343 "mapparser.y"
     {
     if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) >= 0)
       (yyval.intval) = MS_TRUE;
@@ -2109,7 +2109,7 @@ yyreduce:
     break;
 
   case 39:
-#line 349 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 349 "mapparser.y"
     {
     if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) <= 0)
       (yyval.intval) = MS_TRUE;
@@ -2119,7 +2119,7 @@ yyreduce:
     break;
 
   case 40:
-#line 355 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 355 "mapparser.y"
     {
     char *delim, *bufferp;
 
@@ -2144,7 +2144,7 @@ yyreduce:
     break;
 
   case 41:
-#line 376 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 376 "mapparser.y"
     {
     char *delim,*bufferp;
 
@@ -2168,7 +2168,7 @@ yyreduce:
     break;
 
   case 42:
-#line 396 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 396 "mapparser.y"
     {
     if((yyvsp[(1) - (3)].dblval) == (yyvsp[(3) - (3)].dblval))
       (yyval.intval) = MS_TRUE;
@@ -2178,7 +2178,7 @@ yyreduce:
     break;
 
   case 43:
-#line 402 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 402 "mapparser.y"
     {
     if(strcasecmp((yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)) == 0)
       (yyval.intval) = MS_TRUE;
@@ -2190,7 +2190,7 @@ yyreduce:
     break;
 
   case 44:
-#line 410 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 410 "mapparser.y"
     {
     if(msTimeCompare(&((yyvsp[(1) - (3)].tmval)), &((yyvsp[(3) - (3)].tmval))) == 0)
       (yyval.intval) = MS_TRUE;
@@ -2200,7 +2200,7 @@ yyreduce:
     break;
 
   case 45:
-#line 416 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 416 "mapparser.y"
     {
     int rval;
     rval = msGEOSEquals((yyvsp[(1) - (3)].shpval), (yyvsp[(3) - (3)].shpval));
@@ -2215,7 +2215,7 @@ yyreduce:
     break;
 
   case 46:
-#line 427 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 427 "mapparser.y"
     {
     int rval;
     rval = msGEOSEquals((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2230,7 +2230,7 @@ yyreduce:
     break;
 
   case 47:
-#line 438 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 438 "mapparser.y"
     {
     int rval;
     rval = msGEOSIntersects((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2245,7 +2245,7 @@ yyreduce:
     break;
 
   case 48:
-#line 449 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 449 "mapparser.y"
     {
     int rval;
     rval = msGEOSIntersects((yyvsp[(1) - (3)].shpval), (yyvsp[(3) - (3)].shpval));
@@ -2260,7 +2260,7 @@ yyreduce:
     break;
 
   case 49:
-#line 460 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 460 "mapparser.y"
     {
     int rval;
     rval = msGEOSDisjoint((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2275,7 +2275,7 @@ yyreduce:
     break;
 
   case 50:
-#line 471 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 471 "mapparser.y"
     {
     int rval;
     rval = msGEOSDisjoint((yyvsp[(1) - (3)].shpval), (yyvsp[(3) - (3)].shpval));
@@ -2290,7 +2290,7 @@ yyreduce:
     break;
 
   case 51:
-#line 482 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 482 "mapparser.y"
     {
     int rval;
     rval = msGEOSTouches((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2305,7 +2305,7 @@ yyreduce:
     break;
 
   case 52:
-#line 493 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 493 "mapparser.y"
     {
     int rval;
     rval = msGEOSTouches((yyvsp[(1) - (3)].shpval), (yyvsp[(3) - (3)].shpval));
@@ -2320,7 +2320,7 @@ yyreduce:
     break;
 
   case 53:
-#line 504 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 504 "mapparser.y"
     {
     int rval;
     rval = msGEOSOverlaps((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2335,7 +2335,7 @@ yyreduce:
     break;
 
   case 54:
-#line 515 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 515 "mapparser.y"
     {
     int rval;
      rval = msGEOSOverlaps((yyvsp[(1) - (3)].shpval), (yyvsp[(3) - (3)].shpval));
@@ -2350,7 +2350,7 @@ yyreduce:
     break;
 
   case 55:
-#line 526 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 526 "mapparser.y"
     {
     int rval;
     rval = msGEOSCrosses((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2365,7 +2365,7 @@ yyreduce:
     break;
 
   case 56:
-#line 537 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 537 "mapparser.y"
     {
     int rval;
     rval = msGEOSCrosses((yyvsp[(1) - (3)].shpval), (yyvsp[(3) - (3)].shpval));
@@ -2380,7 +2380,7 @@ yyreduce:
     break;
 
   case 57:
-#line 548 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 548 "mapparser.y"
     {
     int rval;
     rval = msGEOSWithin((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2395,7 +2395,7 @@ yyreduce:
     break;
 
   case 58:
-#line 559 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 559 "mapparser.y"
     {
     int rval;
     rval = msGEOSWithin((yyvsp[(1) - (3)].shpval), (yyvsp[(3) - (3)].shpval));
@@ -2410,7 +2410,7 @@ yyreduce:
     break;
 
   case 59:
-#line 570 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 570 "mapparser.y"
     {
     int rval;
     rval = msGEOSContains((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2425,7 +2425,7 @@ yyreduce:
     break;
 
   case 60:
-#line 581 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 581 "mapparser.y"
     {
     int rval;
     rval = msGEOSContains((yyvsp[(1) - (3)].shpval), (yyvsp[(3) - (3)].shpval));
@@ -2440,7 +2440,7 @@ yyreduce:
     break;
 
   case 61:
-#line 592 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 592 "mapparser.y"
     {
     double d;
     d = msGEOSDistance((yyvsp[(3) - (8)].shpval), (yyvsp[(5) - (8)].shpval));    
@@ -2454,7 +2454,7 @@ yyreduce:
     break;
 
   case 62:
-#line 602 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 602 "mapparser.y"
     {
     double d;
     d = msGEOSDistance((yyvsp[(3) - (8)].shpval), (yyvsp[(5) - (8)].shpval));
@@ -2468,32 +2468,32 @@ yyreduce:
     break;
 
   case 64:
-#line 615 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 615 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(2) - (3)].dblval); }
     break;
 
   case 65:
-#line 616 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 616 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(1) - (3)].dblval) + (yyvsp[(3) - (3)].dblval); }
     break;
 
   case 66:
-#line 617 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 617 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(1) - (3)].dblval) - (yyvsp[(3) - (3)].dblval); }
     break;
 
   case 67:
-#line 618 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 618 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(1) - (3)].dblval) * (yyvsp[(3) - (3)].dblval); }
     break;
 
   case 68:
-#line 619 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 619 "mapparser.y"
     { (yyval.dblval) = (int)(yyvsp[(1) - (3)].dblval) % (int)(yyvsp[(3) - (3)].dblval); }
     break;
 
   case 69:
-#line 620 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 620 "mapparser.y"
     {
     if((yyvsp[(3) - (3)].dblval) == 0.0) {
       yyerror(p, "Division by zero.");
@@ -2504,22 +2504,22 @@ yyreduce:
     break;
 
   case 70:
-#line 627 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 627 "mapparser.y"
     { (yyval.dblval) = (yyvsp[(2) - (2)].dblval); }
     break;
 
   case 71:
-#line 628 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 628 "mapparser.y"
     { (yyval.dblval) = pow((yyvsp[(1) - (3)].dblval), (yyvsp[(3) - (3)].dblval)); }
     break;
 
   case 72:
-#line 629 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 629 "mapparser.y"
     { (yyval.dblval) = strlen((yyvsp[(3) - (4)].strval)); }
     break;
 
   case 73:
-#line 630 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 630 "mapparser.y"
     {
     if((yyvsp[(3) - (4)].shpval)->type != MS_SHAPE_POLYGON) {
       yyerror(p, "Area can only be computed for polygon shapes.");
@@ -2531,17 +2531,17 @@ yyreduce:
     break;
 
   case 74:
-#line 638 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 638 "mapparser.y"
     { (yyval.dblval) = (MS_NINT((yyvsp[(3) - (6)].dblval)/(yyvsp[(5) - (6)].dblval)))*(yyvsp[(5) - (6)].dblval); }
     break;
 
   case 76:
-#line 642 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 642 "mapparser.y"
     { (yyval.shpval) = (yyvsp[(2) - (3)].shpval); }
     break;
 
   case 77:
-#line 643 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 643 "mapparser.y"
     {
     shapeObj *s;
     s = msGEOSBuffer((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].dblval));
@@ -2555,7 +2555,7 @@ yyreduce:
     break;
 
   case 78:
-#line 653 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 653 "mapparser.y"
     {
     shapeObj *s;
     s = msGEOSDifference((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].shpval));
@@ -2569,7 +2569,7 @@ yyreduce:
     break;
 
   case 79:
-#line 663 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 663 "mapparser.y"
     {
     shapeObj *s;
     s = msGEOSSimplify((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].dblval));
@@ -2583,7 +2583,7 @@ yyreduce:
     break;
 
   case 80:
-#line 673 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 673 "mapparser.y"
     {
     shapeObj *s;
     s = msGEOSTopologyPreservingSimplify((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].dblval));
@@ -2597,7 +2597,7 @@ yyreduce:
     break;
 
   case 81:
-#line 683 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 683 "mapparser.y"
     {
     shapeObj *s;
     s = msGeneralize((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].dblval));
@@ -2611,7 +2611,7 @@ yyreduce:
     break;
 
   case 82:
-#line 693 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 693 "mapparser.y"
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[(3) - (4)].shpval), 3, 1, NULL);
@@ -2625,7 +2625,7 @@ yyreduce:
     break;
 
   case 83:
-#line 703 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 703 "mapparser.y"
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[(3) - (6)].shpval), (yyvsp[(5) - (6)].dblval), 1, NULL);
@@ -2639,7 +2639,7 @@ yyreduce:
     break;
 
   case 84:
-#line 713 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 713 "mapparser.y"
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[(3) - (8)].shpval), (yyvsp[(5) - (8)].dblval), (yyvsp[(7) - (8)].dblval), NULL);
@@ -2653,7 +2653,7 @@ yyreduce:
     break;
 
   case 85:
-#line 723 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 723 "mapparser.y"
     {
     shapeObj *s;
     s = msSmoothShapeSIA((yyvsp[(3) - (10)].shpval), (yyvsp[(5) - (10)].dblval), (yyvsp[(7) - (10)].dblval), (yyvsp[(9) - (10)].strval));
@@ -2668,7 +2668,7 @@ yyreduce:
     break;
 
   case 86:
-#line 734 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 734 "mapparser.y"
     {
 #ifdef USE_V8_MAPSCRIPT
     shapeObj *s;
@@ -2688,12 +2688,12 @@ yyreduce:
     break;
 
   case 88:
-#line 753 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 753 "mapparser.y"
     { (yyval.strval) = (yyvsp[(2) - (3)].strval); }
     break;
 
   case 89:
-#line 754 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 754 "mapparser.y"
     { 
     (yyval.strval) = (char *)malloc(strlen((yyvsp[(1) - (3)].strval)) + strlen((yyvsp[(3) - (3)].strval)) + 1);
     sprintf((yyval.strval), "%s%s", (yyvsp[(1) - (3)].strval), (yyvsp[(3) - (3)].strval)); free((yyvsp[(1) - (3)].strval)); free((yyvsp[(3) - (3)].strval)); 
@@ -2701,7 +2701,7 @@ yyreduce:
     break;
 
   case 90:
-#line 758 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 758 "mapparser.y"
     {
     (yyval.strval) = (char *) malloc(strlen((yyvsp[(5) - (6)].strval)) + 64); /* Plenty big? Should use snprintf below... */
     sprintf((yyval.strval), (yyvsp[(5) - (6)].strval), (yyvsp[(3) - (6)].dblval));
@@ -2709,7 +2709,7 @@ yyreduce:
     break;
 
   case 91:
-#line 762 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 762 "mapparser.y"
     {  
     (yyvsp[(3) - (4)].strval) = msCommifyString((yyvsp[(3) - (4)].strval)); 
     (yyval.strval) = (yyvsp[(3) - (4)].strval); 
@@ -2717,7 +2717,7 @@ yyreduce:
     break;
 
   case 92:
-#line 766 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 766 "mapparser.y"
     {  
     msStringToUpper((yyvsp[(3) - (4)].strval)); 
     (yyval.strval) = (yyvsp[(3) - (4)].strval); 
@@ -2725,7 +2725,7 @@ yyreduce:
     break;
 
   case 93:
-#line 770 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 770 "mapparser.y"
     {  
     msStringToLower((yyvsp[(3) - (4)].strval)); 
     (yyval.strval) = (yyvsp[(3) - (4)].strval); 
@@ -2733,7 +2733,7 @@ yyreduce:
     break;
 
   case 94:
-#line 774 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 774 "mapparser.y"
     {  
     msStringInitCap((yyvsp[(3) - (4)].strval)); 
     (yyval.strval) = (yyvsp[(3) - (4)].strval); 
@@ -2741,7 +2741,7 @@ yyreduce:
     break;
 
   case 95:
-#line 778 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 778 "mapparser.y"
     {  
     msStringFirstCap((yyvsp[(3) - (4)].strval)); 
     (yyval.strval) = (yyvsp[(3) - (4)].strval); 
@@ -2749,13 +2749,13 @@ yyreduce:
     break;
 
   case 97:
-#line 785 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 785 "mapparser.y"
     { (yyval.tmval) = (yyvsp[(2) - (3)].tmval); }
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 2759 "/Users/sdlime/mapserver/mapserver/mapparser.c"
+#line 2759 "/Users/tbonfort/dev/mapserver/mapparser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2969,7 +2969,7 @@ yyreturn:
 }
 
 
-#line 788 "/Users/sdlime/mapserver/mapserver/mapparser.y"
+#line 788 "mapparser.y"
 
 
 /*

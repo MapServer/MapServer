@@ -36,7 +36,7 @@ extern "C" {
 
 #ifdef USE_THREAD
   void msThreadInit(void);
-  int msGetThreadId(void);
+  void* msGetThreadId(void);
   void msAcquireLock(int);
   void msReleaseLock(int);
 #else

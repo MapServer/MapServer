@@ -1030,6 +1030,10 @@ static projectionObj* msGetProjectNormalized( const projectionObj* p )
               memmove(pnew->args + i, pnew->args + i + 1,
                       sizeof(char*) * (pnew->numargs - 1 -i ));
           }
+          else 
+          {
+              msFree(pnew->args[i]);
+          }
           pnew->numargs --;
           i --;
           continue;

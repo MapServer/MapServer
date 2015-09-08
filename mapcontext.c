@@ -661,6 +661,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
 
   char *pszProj=NULL;
   char *pszValue, *pszValue1, *pszValue2;
+  int nTmp;
 
   /* Projection */
   pszValue = (char*)CPLGetXMLValue(psGeneral,
@@ -678,12 +679,14 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
     map->projection.numargs++;
     msProcessProjection(&map->projection);
 
-    if( (map->units = GetMapserverUnitUsingProj(&(map->projection))) == -1) {
+    if( (nTmp = GetMapserverUnitUsingProj(&(map->projection))) == -1) {
       free(pszProj);
       msSetError( MS_MAPCONTEXTERR,
                   "Unable to set units for projection '%s'",
                   "msLoadMapContext()", pszProj );
       return MS_FAILURE;
+    } else {
+      map->units = nTmp;
     }
     free(pszProj);
   } else {

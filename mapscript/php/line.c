@@ -124,8 +124,6 @@ PHP_METHOD(lineObj, __set)
   char *property;
   long property_len = 0;
   zval *value;
-  zval *zobj = getThis();
-  php_line_object *php_line;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -134,8 +132,6 @@ PHP_METHOD(lineObj, __set)
     return;
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-
-  php_line = (php_line_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
   if (STRING_EQUAL("numpoints", property)) {
     mapscript_throw_exception("Property '%s' is read-only and cannot be set." TSRMLS_CC, property);

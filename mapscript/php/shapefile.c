@@ -134,8 +134,6 @@ PHP_METHOD(shapeFileObj, __set)
   char *property;
   long property_len = 0;
   zval *value;
-  zval *zobj = getThis();
-  php_shapefile_object *php_shapefile;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -144,8 +142,6 @@ PHP_METHOD(shapeFileObj, __set)
     return;
   }
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
-
-  php_shapefile = (php_shapefile_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
   if ( (STRING_EQUAL("numshapes", property)) ||
        (STRING_EQUAL("type", property)) ||

@@ -100,7 +100,7 @@ errorObj *msGetErrorObj()
 
 typedef struct te_info {
   struct te_info *next;
-  int             thread_id;
+  void*             thread_id;
   errorObj        ms_error;
 } te_info_t;
 
@@ -109,7 +109,7 @@ static te_info_t *error_list = NULL;
 errorObj *msGetErrorObj()
 {
   te_info_t *link;
-  int        thread_id;
+  void*        thread_id;
   errorObj   *ret_obj;
 
   msAcquireLock( TLOCK_ERROROBJ );
@@ -240,7 +240,7 @@ void msResetErrorList()
   /* -------------------------------------------------------------------- */
 #ifdef USE_THREAD
   {
-    int  thread_id = msGetThreadId();
+    void*  thread_id = msGetThreadId();
     te_info_t *link;
 
     msAcquireLock( TLOCK_ERROROBJ );
@@ -442,7 +442,6 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
 
   img = msImageCreate(width,height,format,imagepath,imageurl,MS_DEFAULT_RESOLUTION,MS_DEFAULT_RESOLUTION,imagecolorptr);
 
-
   nTextLength = strlen(errormsg);
   nWidthTxt  =  nTextLength * charWidth;
   nUsableWidth = width - (nMargin*2);
@@ -489,9 +488,9 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
       initTextSymbol(&ts);
       msPopulateTextSymbolForLabelAndString(&ts,&label,papszLines[i],1,1,0);
       if(LIKELY(MS_SUCCESS == msComputeTextPath(map,&ts))) {
-        int idontcare;
-        idontcare = msDrawTextSymbol(NULL,img,pnt,&ts);
-        (void)idontcare;
+        if(MS_SUCCESS!=msDrawTextSymbol(NULL,img,pnt,&ts)) {
+          /* an error occured, but there's nothing much we can do about it here as we are already handling an error condition */
+        }
         freeTextSymbol(&ts);
       }
     }

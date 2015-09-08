@@ -68,7 +68,7 @@ static debugInfoObj *debuginfo_list = NULL;
 debugInfoObj *msGetDebugInfoObj()
 {
   debugInfoObj *link;
-  int          thread_id;
+  void* thread_id;
   debugInfoObj *ret_obj;
 
   msAcquireLock( TLOCK_DEBUGOBJ );
@@ -285,7 +285,7 @@ void msDebugCleanup()
 
 #ifdef USE_THREAD
   {
-    int  thread_id = msGetThreadId();
+    void*  thread_id = msGetThreadId();
     debugInfoObj *link;
 
     msAcquireLock( TLOCK_DEBUGOBJ );

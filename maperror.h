@@ -30,6 +30,8 @@
 #ifndef MAPERROR_H
 #define MAPERROR_H
 
+#include "mapthread.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -162,7 +164,7 @@ extern "C" {
     char        *errorfile;
     FILE        *fp;
     /* The following 2 members are used only with USE_THREAD (but we won't #ifndef them) */
-    int         thread_id;
+    void* thread_id;
     struct debug_info_obj *next;
   } debugInfoObj;
 

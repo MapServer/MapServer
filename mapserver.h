@@ -1969,7 +1969,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
   MS_DLL_EXPORT void msFreeImage(imageObj *img);
   MS_DLL_EXPORT int msSetup(void);
-  MS_DLL_EXPORT void msCleanup(int signal);
+  MS_DLL_EXPORT void msCleanup(void);
   MS_DLL_EXPORT mapObj *msLoadMapFromString(char *buffer, char *new_mappath);
 
   /* Function prototypes, not wrapable */
@@ -2702,7 +2702,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int *msAllocateValidClassGroups(layerObj *lp, int *nclasses);
 
   MS_DLL_EXPORT void msFreeRasterBuffer(rasterBufferObj *b);
-  MS_DLL_EXPORT int msSetLayerOpacity(layerObj *layer, int opacity);
+  MS_DLL_EXPORT void msSetLayerOpacity(layerObj *layer, int opacity);
 
   void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language);
   MS_DLL_EXPORT shapeObj* msGeneralize(shapeObj * shape, double tolerance);

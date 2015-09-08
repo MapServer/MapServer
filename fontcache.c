@@ -41,7 +41,7 @@ typedef struct {
 #ifdef USE_THREAD
 typedef struct ft_thread_cache ft_thread_cache;
 struct ft_thread_cache{
-  int thread_id;
+  void* thread_id;
   ft_thread_cache *next;
   ft_cache cache;
 };
@@ -102,7 +102,7 @@ ft_cache* msGetFontCache() {
 #ifndef USE_THREAD
   return &global_ft_cache;
 #else
-  int nThreadId = msGetThreadId();
+  void* nThreadId = msGetThreadId();
   ft_thread_cache *prev = NULL, *cur = ft_caches;
 
   if( cur != NULL && cur->thread_id == nThreadId )
