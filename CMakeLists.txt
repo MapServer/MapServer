@@ -117,6 +117,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 #options suported by the cmake builder
 option(WITH_PROJ "Choose if reprojection support should be built in" ON)
+option(WITH_PROTOBUFC "Choose if protocol buffers support should be built in (required for vector tiles)" ON)
 option(WITH_KML "Enable native KML output support (requires libxml2 support)" OFF)
 option(WITH_SOS "Enable SOS Server support (requires PROJ and libxml2 support)" OFF)
 option(WITH_WMS "Enable WMS Server support (requires proj support)" ON)
@@ -232,6 +233,8 @@ set(v8_SOURCES
 )
 include_directories(mapscript/v8/)
 
+include_directories(renderers/mvt)
+
 #add_definitions(-DHASH_DEBUG=1)
 if(WIN32)
   set(REGEX_SOURCES ${REGEX_DIR}/regex.c)
@@ -262,7 +265,7 @@ mapogcfiltercommon.c maprendering.c mapwcs20.c mapogcsld.c
 mapresample.c mapwfs.c mapgdal.c mapogcsos.c mapscale.c mapwfs11.c mapwfs20.c
 mapgeomtransform.c mapogroutput.c mapwfslayer.c mapagg.cpp mapkml.cpp
 mapgeomutil.cpp mapkmlrenderer.cpp fontcache.c textlayout.c maputfgrid.cpp
-mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c)
+mapogr.cpp mapcontour.c mapsmoothing.c mapv8.cpp ${REGEX_SOURCES} kerneldensity.c renderers/mvt/vector_tile.c mapmvt.cpp)
 
 set(mapserver_HEADERS
 cgiutil.h dejavu-sans-condensed.h dxfcolor.h fontcache.h hittest.h mapagg.h
@@ -362,6 +365,17 @@ if(WITH_PROJ)
     set (USE_PROJ 1)
  endif(NOT PROJ_FOUND)
 endif (WITH_PROJ)
+
+if(WITH_PROTOBUFC)
+  find_package(ProtobufC)
+  if(NOT PROTOBUFC_FOUND)
+    report_optional_not_found(PROTOBUFC)
+ else(NOT PROTOBUFC_FOUND)
+    include_directories(${PROTOBUFC_INCLUDE_DIR})
+    ms_link_libraries( ${PROTOBUFC_LIBRARY})
+    set (USE_PBF 1)
+ endif(NOT PROTOBUFC_FOUND)
+endif (WITH_PROTOBUFC)
 
 if(WITH_PIXMAN)
   find_package(Pixman)
@@ -912,6 +926,7 @@ status_optional_component("LIBXML2" "${USE_LIBXML2}" "${LIBXML2_LIBRARY}")
 status_optional_component("POSTGIS" "${USE_POSTGIS}" "${POSTGRESQL_LIBRARY}")
 status_optional_component("GEOS" "${USE_GEOS}" "${GEOS_LIBRARY}")
 status_optional_component("FastCGI" "${USE_FASTCGI}" "${FCGI_LIBRARY}")
+status_optional_component("PROTOBUFC" "${USE_PBF}" "${PROTOBUFC_LIBRARY}")
 if(USE_ORACLESPATIAL OR USE_ORACLE_PLUGIN)
   if(USE_ORACLESPATIAL)
     status_optional_component("Oracle Spatial" "${USE_ORACLESPATIAL}" "${ORACLE_LIBRARY}")

@@ -374,6 +374,7 @@ extern "C" {
 #define MS_DRIVER_GDAL(format)  (strncasecmp((format)->driver,"gdal/",5)==0)
 #define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
 #define MS_DRIVER_AGG(format) (strncasecmp((format)->driver,"agg/",4)==0)
+#define MS_DRIVER_MVT(format) (strncasecmp((format)->driver,"mvt/",4)==0)
 #define MS_DRIVER_CAIRO(format) (strncasecmp((format)->driver,"cairo/",6)==0)
 #define MS_DRIVER_OGL(format) (strncasecmp((format)->driver,"ogl/",4)==0)
 #define MS_DRIVER_TEMPLATE(format) (strncasecmp((format)->driver,"template",8)==0)
@@ -394,6 +395,7 @@ extern "C" {
 #define MS_RENDER_WITH_AGG 105
 #define MS_RENDER_WITH_KML 106
 #define MS_RENDER_WITH_UTFGRID 107
+#define MS_RENDER_WITH_MVT 108
 
 #ifndef SWIG
 
@@ -3018,7 +3020,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msPopulateRendererVTableUTFGrid( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableKML( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
-  MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
+  MS_DLL_EXPORT int msPopulateRendererVTableMVT( rendererVTableObj *renderer );
 
 #ifdef USE_CAIRO
   MS_DLL_EXPORT void msCairoCleanup(void);

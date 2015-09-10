@@ -2,6 +2,7 @@
 #define _MAPSERVER_CONFIG_H
 
 #cmakedefine USE_PROJ 1
+#cmakedefine USE_PBF 1
 #cmakedefine USE_POSTGIS 1
 #cmakedefine USE_GDAL 1
 #cmakedefine USE_PIXMAN 1

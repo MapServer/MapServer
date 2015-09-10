@@ -102,6 +102,9 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"jpeg","AGG/JPEG","image/jpeg"},
   {"png8","AGG/PNG8","image/png; mode=8bit"},
   {"png24","AGG/PNG","image/png; mode=24bit"},
+#ifdef USE_PBF
+  {"pbf","MVT","application/x-protobuf"},
+  #endif
 #ifdef USE_CAIRO
   {"pdf","CAIRO/PDF","application/x-pdf"},
   {"svg","CAIRO/SVG","image/svg+xml"},
@@ -202,6 +205,16 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     format->extension = msStrdup("jpg");
     format->renderer = MS_RENDER_WITH_AGG;
   }
+#if defined(USE_PBF)
+  else if( strcasecmp(driver,"MVT") == 0 ) {
+    if(!name) name="mvt";
+    format = msAllocOutputFormat( map, name, driver );
+    format->mimetype = msStrdup("application/x-protobuf");
+    format->imagemode = MS_IMAGEMODE_RGB;
+    format->extension = msStrdup("pbf");
+    format->renderer = MS_RENDER_WITH_MVT;
+  }
+#endif
 
 #if defined(USE_CAIRO)
   else if( strcasecmp(driver,"CAIRO/PNG") == 0 ) {
@@ -904,6 +917,7 @@ void msGetOutputFormatMimeListWMS( mapObj *map, char **mime_list, int max_mime )
             strcasecmp(map->outputformatlist[i]->driver, "CAIRO/SVG")==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "CAIRO/PDF")==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "kml")==0 ||
+            strcasecmp(map->outputformatlist[i]->driver, "mvt")==0 ||
             strcasecmp(map->outputformatlist[i]->driver, "kmz")==0))
         mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
     }
@@ -1020,6 +1034,10 @@ int msInitializeRendererVTable(outputFormatObj *format)
       return msPopulateRendererVTableAGG(format->vtable);
     case MS_RENDER_WITH_UTFGRID:
       return msPopulateRendererVTableUTFGrid(format->vtable);
+#ifdef USE_PBF
+    case MS_RENDER_WITH_MVT:
+      return msPopulateRendererVTableMVT(format->vtable);
+#endif
 #ifdef USE_CAIRO
     case MS_RENDER_WITH_CAIRO_RASTER:
       return msPopulateRendererVTableCairoRaster(format->vtable);
