@@ -405,6 +405,7 @@ extern "C" {
 #define MS_RENDERER_TEMPLATE(format) ((format)->renderer == MS_RENDER_WITH_TEMPLATE)
 #define MS_RENDERER_KML(format) ((format)->renderer == MS_RENDER_WITH_KML)
 #define MS_RENDERER_OGR(format) ((format)->renderer == MS_RENDER_WITH_OGR)
+#define MS_RENDERER_MVT(format) ((format)->renderer == MS_RENDER_WITH_MVT)
 
 #define MS_RENDERER_PLUGIN(format) ((format)->renderer > MS_RENDER_WITH_PLUGIN)
 
@@ -3021,6 +3022,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msPopulateRendererVTableKML( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableOGR( rendererVTableObj *renderer );
   MS_DLL_EXPORT int msPopulateRendererVTableMVT( rendererVTableObj *renderer );
+  MS_DLL_EXPORT int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders );
 
 #ifdef USE_CAIRO
   MS_DLL_EXPORT void msCairoCleanup(void);

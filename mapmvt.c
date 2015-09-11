@@ -33,47 +33,12 @@
 #include "vector_tile.pb-c.h"
 #endif
 
+int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders ) {
+  return MS_SUCCESS;
+}
+
 int msPopulateRendererVTableMVT(rendererVTableObj * renderer) {
 #ifdef USE_PBF
-  renderer->compositeRasterBuffer = NULL;
-  renderer->supports_pixel_buffer = 0;
-  renderer->use_imagecache = 0;
-  renderer->supports_clipping = 0;
-  renderer->supports_svg = 0;
-  renderer->default_transform_mode = MS_TRANSFORM_SIMPLIFY;
-  renderer->cleanup = mvtCleanup;
-  renderer->renderLine = &mvtRenderLine;
-
-  renderer->renderPolygon = &mvtRenderPolygon;
-  renderer->renderPolygonTiled = &mvtRenderPolygon;
-  renderer->renderLineTiled = &mvtRenderLineTiled;
-
-  renderer->renderGlyphs = &mvtRenderGlyphsPath;
-
-  renderer->renderVectorSymbol = &mvtRenderVectorSymbol;
-
-  renderer->renderPixmapSymbol = &mvtRenderPixmapSymbol;
-
-  renderer->renderEllipseSymbol = &mvtRenderEllipseSymbol;
-
-  renderer->renderTile = &mvtRenderTile;
-
-  renderer->getRasterBufferHandle = NULL;
-  renderer->getRasterBufferCopy = NULL;
-  renderer->initializeRasterBuffer = NULL;
-
-  renderer->mergeRasterBuffer = NULL;
-  renderer->loadImageFromFile = NULL;
-  renderer->createImage = &mvtCreateImage;
-  renderer->saveImage = &mvtSaveImage;
-
-  renderer->startLayer = &mvtStartNewLayer;
-  renderer->endLayer = &mvtCloseNewLayer;
-
-  renderer->freeImage = &mvtFreeImage;
-  renderer->freeSymbol = &mvtFreeSymbol;
-  renderer->cleanup = mvtCleanup;
-
   return MS_SUCCESS;
 #else
   msSetError(MS_MISCERR, "Vector Tile Driver requested but support is not compiled in",
