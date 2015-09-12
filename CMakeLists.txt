@@ -974,17 +974,19 @@ endif(USE_MSSQL2008)
 INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shptreetst shp2img mapserv
         RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT bin
 )
-INSTALL(TARGETS mapserver
-        EXPORT mapserverTargets
-        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
-        PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
-)
 
 if(BUILD_STATIC)
-   INSTALL(TARGETS mapserver_static DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS mapserver_static
+           DESTINATION ${INSTALL_LIB_DIR} COMPONENT staticlib
+   )
 endif(BUILD_STATIC)
 if(BUILD_DYNAMIC)
-   INSTALL(TARGETS mapserver DESTINATION ${INSTALL_LIB_DIR})
+   INSTALL(TARGETS mapserver
+           EXPORT mapserverTargets
+           ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
+           LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
+           PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
+   )
 endif(BUILD_DYNAMIC)
 
 # Add all targets to the build-tree export set
