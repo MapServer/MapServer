@@ -976,6 +976,7 @@ INSTALL(TARGETS sortshp shptree shptreevis msencrypt legend scalebar tile4ms shp
 )
 INSTALL(TARGETS mapserver
         EXPORT mapserverTargets
+        ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
         LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
         PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
 )
