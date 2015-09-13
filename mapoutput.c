@@ -102,9 +102,6 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"jpeg","AGG/JPEG","image/jpeg"},
   {"png8","AGG/PNG8","image/png; mode=8bit"},
   {"png24","AGG/PNG","image/png; mode=24bit"},
-#ifdef USE_PBF
-  {"pbf","MVT","application/x-protobuf"},
-  #endif
 #ifdef USE_CAIRO
   {"pdf","CAIRO/PDF","application/x-pdf"},
   {"svg","CAIRO/SVG","image/svg+xml"},
@@ -210,7 +207,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if(!name) name="mvt";
     format = msAllocOutputFormat( map, name, driver );
     format->mimetype = msStrdup("application/x-protobuf");
-    format->imagemode = MS_IMAGEMODE_RGB;
+    format->imagemode = MS_IMAGEMODE_FEATURE;
     format->extension = msStrdup("pbf");
     format->renderer = MS_RENDER_WITH_MVT;
   }
