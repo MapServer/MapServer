@@ -202,15 +202,15 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
   mvt_feature->n_geometry = 0;
   if(layer->type == MS_LAYER_POINT) {
     for(i=0;i<shape->numlines;i++)
-      mvt_feature->n_geometry += shape->line[i].numpoints;
+      mvt_feature->n_geometry += shape->line[i].numpoints * 2;
     if(mvt_feature->n_geometry)
       mvt_feature->n_geometry++; /*command*/
   } else if(layer->type == MS_LAYER_LINE) {
     for(i=0;i<shape->numlines;i++)
-      mvt_feature->n_geometry += 2 + shape->line[i].numpoints; /*one moveto, one lineto*/
+      mvt_feature->n_geometry += 2 + shape->line[i].numpoints * 2; /*one moveto, one lineto*/
   } else {
     for(i=0;i<shape->numlines;i++)
-      mvt_feature->n_geometry += 3 + shape->line[i].numpoints; /*one moveto, one lineto, one closepolygon*/
+      mvt_feature->n_geometry += 3 + shape->line[i].numpoints * 2; /*one moveto, one lineto, one closepolygon*/
   }
   mvt_feature->geometry = msSmallMalloc(mvt_feature->n_geometry * sizeof(uint32_t));
 
