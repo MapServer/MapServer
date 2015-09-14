@@ -479,6 +479,11 @@ static int msWFSGetFeatureApplySRS(mapObj *map, const char *srs, int nWFSVersion
     } else {
       msLoadProjectionString(&(map->projection), pszOutputSRS);
     }
+
+    nTmp = GetMapserverUnitUsingProj(&(map->projection));
+    if( nTmp != -1 ) {
+      map->units = nTmp;
+    }
   }
 
   if (pszOutputSRS)
@@ -2609,6 +2614,10 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
       map->query.type = MS_QUERY_BY_RECT; /* setup the query */
       map->query.mode = MS_QUERY_MULTIPLE;
       map->query.rect = bbox;
+
+      if(map->outputformat && MS_DRIVER_MVT(map->outputformat)) {
+         msCalculateScale(bbox,map->units,map->width,map->height, map->resolution, &map->scaledenom);
+      }
 
       if(msQueryByRect(map) != MS_SUCCESS) {
         errorObj   *ms_error;
