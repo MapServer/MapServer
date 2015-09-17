@@ -51,13 +51,13 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type) {
   double scale_x,scale_y;
   int i,j,outi,outj,last_x,last_y;
 
-  scale_x = 256.0/(extent->maxx - extent->minx);
-  scale_y = 256.0/(extent->maxy - extent->miny);
+  scale_x = 4096.0/(extent->maxx - extent->minx);
+  scale_y = 4096.0/(extent->maxy - extent->miny);
 
   for(i=0,outi=0;i<shape->numlines;i++) {
     for(j=0,outj=0;j<shape->line[i].numpoints;j++) {
       shape->line[outi].point[outj].x = MS_NINT((shape->line[i].point[j].x - extent->minx)*scale_x);
-      shape->line[outi].point[outj].y = 256 - MS_NINT((shape->line[i].point[j].y - extent->miny)*scale_y);
+      shape->line[outi].point[outj].y = 4096 - MS_NINT((shape->line[i].point[j].y - extent->miny)*scale_y);
       if(!outj ||
          shape->line[outi].point[outj].x != shape->line[outi].point[outj-1].x ||
          shape->line[outi].point[outj].y != shape->line[outi].point[outj-1].y )
@@ -80,7 +80,7 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type) {
 }
 
 static int mvtClipShape(shapeObj *shape, int layer_type) {
-  rectObj tile_rect = {0,0,256,256};
+  rectObj tile_rect = {0,0,4096,4096};
   if(layer_type == MS_LAYER_POLYGON) {
     msClipPolygonRect(shape,tile_rect);
   } else if(layer_type == MS_LAYER_LINE) {
@@ -306,7 +306,7 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     vector_tile__tile__layer__init(mvt_layer);
     mvt_layer->version = 1;
     mvt_layer->name = layer->name;
-    mvt_layer->extent = 256;
+    mvt_layer->extent = 4096;
     mvt_layer->has_extent = 1;
 
     /* -------------------------------------------------------------------- */
