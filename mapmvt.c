@@ -177,13 +177,13 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
       mvt_value = mvt_layer->values[mvt_layer->n_values-1];
       vector_tile__tile__value__init(mvt_value);
 
-      if( EQUAL(item->type,"Integer")) {
+      if( item->type && EQUAL(item->type,"Integer")) {
         mvt_value->int_value = atoi(value->value);
         mvt_value->has_int_value = 1;
-      } else if( EQUAL(item->type,"Real") ) {
+      } else if( item->type && EQUAL(item->type,"Real") ) {
         mvt_value->float_value = atof(value->value);
         mvt_value->has_float_value = 1;
-      } else if( EQUAL(item->type,"Boolean") ) {
+      } else if( item->type && EQUAL(item->type,"Boolean") ) {
         if(EQUAL(value->value,"0") || EQUAL(value->value,"false"))
           mvt_value->bool_value = 0;
         else
