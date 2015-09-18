@@ -47,17 +47,17 @@ typedef struct {
 
 #define ZIGZAG(n) (((n) << 1) ^ ((n) >> 31))
 
-static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type) {
+static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type, int mvt_layer_extent) {
   double scale_x,scale_y;
-  int i,j,outi,outj,last_x,last_y;
+  int i,j,outi,outj;
 
-  scale_x = 4096.0/(extent->maxx - extent->minx);
-  scale_y = 4096.0/(extent->maxy - extent->miny);
+  scale_x = (double)mvt_layer_extent/(extent->maxx - extent->minx);
+  scale_y = (double)mvt_layer_extent/(extent->maxy - extent->miny);
 
   for(i=0,outi=0;i<shape->numlines;i++) {
     for(j=0,outj=0;j<shape->line[i].numpoints;j++) {
-      shape->line[outi].point[outj].x = MS_NINT((shape->line[i].point[j].x - extent->minx)*scale_x);
-      shape->line[outi].point[outj].y = 4096 - MS_NINT((shape->line[i].point[j].y - extent->miny)*scale_y);
+      shape->line[outi].point[outj].x = (int)((shape->line[i].point[j].x - extent->minx)*scale_x);
+      shape->line[outi].point[outj].y = mvt_layer_extent - (int)((shape->line[i].point[j].y - extent->miny)*scale_y);
       if(!outj ||
          shape->line[outi].point[outj].x != shape->line[outi].point[outj-1].x ||
          shape->line[outi].point[outj].y != shape->line[outi].point[outj-1].y )
@@ -79,8 +79,11 @@ static int mvtTransformShape(shapeObj *shape, rectObj *extent, int layer_type) {
   return (shape->numlines == 0)?MS_FAILURE:MS_SUCCESS; /*sucess if at least one line*/
 }
 
-static int mvtClipShape(shapeObj *shape, int layer_type) {
-  rectObj tile_rect = {0,0,4096,4096};
+static int mvtClipShape(shapeObj *shape, int layer_type, int buffer, int mvt_layer_extent) {
+  rectObj tile_rect;
+  tile_rect.minx = tile_rect.miny=-buffer*16;
+  tile_rect.maxx = tile_rect.maxy=mvt_layer_extent + buffer*16;
+
   if(layer_type == MS_LAYER_POLYGON) {
     msClipPolygonRect(shape,tile_rect);
   } else if(layer_type == MS_LAYER_LINE) {
@@ -130,16 +133,17 @@ static void freeMvtLayer( VectorTile__Tile__Layer *mvt_layer ) {
 }
 
 int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mvt_layer,
-                   gmlItemListObj *item_list, value_lookup_table *value_lookup_cache) {
+                   gmlItemListObj *item_list, value_lookup_table *value_lookup_cache,
+                   rectObj *unbuffered_bbox, int buffer) {
   VectorTile__Tile__Feature *mvt_feature;
   int i,j,iout;
   value_lookup *value;
 
-  if(mvtTransformShape(shape, &layer->map->query.rect, layer->type) != MS_SUCCESS) {
+  if(mvtTransformShape(shape, unbuffered_bbox, layer->type, mvt_layer->extent) != MS_SUCCESS) {
     /* degenerate shape */
     return MS_SUCCESS;
   }
-  if(mvtClipShape(shape, layer->type) != MS_SUCCESS) {
+  if(mvtClipShape(shape, layer->type, buffer, mvt_layer->extent) != MS_SUCCESS) {
     /* no features left after clipping */
     return MS_SUCCESS;
   }
@@ -215,7 +219,7 @@ int mvtWriteShape( layerObj *layer, shapeObj *shape, VectorTile__Tile__Layer *mv
   mvt_feature->geometry = msSmallMalloc(mvt_feature->n_geometry * sizeof(uint32_t));
 
   if(layer->type == MS_LAYER_POINT) {
-    int idx = 1,lastx=0,lasty=0;;
+    int idx = 1,lastx=0,lasty=0;
     mvt_feature->geometry[0] = ((mvt_feature->n_geometry - 1) << 3)/*number of geoms*/|1/*moveto*/;
     for(i=0;i<shape->numlines;i++) {
       for(j=0;j<shape->line[i].numpoints;j++) {
@@ -272,12 +276,27 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   int iLayer,retcode=MS_SUCCESS;
   unsigned len;
   void *buf;
+  const char *mvt_buffer = msGetOutputFormatOption(map->outputformat, "EDGE_BUFFER", "10");
+  int buffer = MS_ABS(atoi(mvt_buffer));
+  double res;
+  rectObj bbox;
   VectorTile__Tile mvt_tile = VECTOR_TILE__TILE__INIT;
   mvt_tile.layers = msSmallCalloc(map->numlayers,sizeof(VectorTile__Tile__Layer*));
 
+
+  bbox = map->query.rect;
+  res = (bbox.maxx - bbox.minx)/(double)map->width;
+  bbox.minx += buffer * res;
+  bbox.maxx -= buffer * res;
+  res = (bbox.maxy - bbox.miny)/(double)map->height;
+  bbox.miny += buffer * res;
+  bbox.maxy -= buffer * res;
+  map->width -= buffer;
+  map->height -= buffer;
+
   for( iLayer = 0; iLayer < map->numlayers; iLayer++ ) {
     int status=MS_SUCCESS;
-    int i,layer_type;
+    int i;
     layerObj *layer = GET_LAYER(map, iLayer);
     shapeObj resultshape;
     gmlItemListObj *item_list = NULL;
@@ -306,7 +325,8 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     vector_tile__tile__layer__init(mvt_layer);
     mvt_layer->version = 1;
     mvt_layer->name = layer->name;
-    mvt_layer->extent = 4096;
+    mvt_buffer = msGetOutputFormatOption(map->outputformat, "EXTENT", "4096");
+    mvt_layer->extent = MS_ABS(atoi(mvt_buffer));
     mvt_layer->has_extent = 1;
 
     /* -------------------------------------------------------------------- */
@@ -398,7 +418,7 @@ int msMVTWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       }
 
       if( status == MS_SUCCESS )
-        status = mvtWriteShape( layer, &resultshape, mvt_layer, item_list, &value_lookup_cache );
+        status = mvtWriteShape( layer, &resultshape, mvt_layer, item_list, &value_lookup_cache, &bbox, buffer );
 
       if(status != MS_SUCCESS) {
         retcode = status;
