@@ -870,9 +870,11 @@ configure_file (
   "${PROJECT_BINARY_DIR}/mapserver-version.h"
   )
 
-set_target_properties(mapserver PROPERTIES
-  PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
-)
+if(BUILD_DYNAMIC)
+  set_target_properties(mapserver PROPERTIES
+    PUBLIC_HEADER "${mapserver_HEADERS};${PROJECT_BINARY_DIR}/mapserver-config.h;${PROJECT_BINARY_DIR}/mapserver-version.h"
+  )
+endif(BUILD_DYNAMIC)
 
 macro(status_optional_component component enabled libpath)
   if("${enabled}" EQUAL "1")
@@ -987,43 +989,43 @@ if(BUILD_DYNAMIC)
            LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT shlib
            PUBLIC_HEADER DESTINATION ${INSTALL_INCLUDE_DIR}/mapserver COMPONENT dev
    )
+
+   # Add all targets to the build-tree export set
+   export(TARGETS mapserver
+          FILE "${PROJECT_BINARY_DIR}/mapserverTargets.cmake"
+   )
+
+   # Export the package for use from the build-tree
+   # (this registers the build-tree with a global CMake-registry)
+   export(PACKAGE mapserver)
+
+   list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR})
+   list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR}/mapserver)
+
+   list(REMOVE_DUPLICATES ALL_INCLUDE_DIRS)
+
+   # Create the mapserver-config.cmake and mapserver-config-version files
+   file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${ALL_INCLUDE_DIRS}")
+
+   # ... for the build tree
+   set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+   configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config.cmake" @ONLY)
+
+   # ... for the install tree
+   set(CONF_INCLUDE_DIRS "\${MAPSERVER_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+   configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake" @ONLY)
+
+   # ... for both
+   configure_file(mapserver-config-version.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake" @ONLY)
+
+   # Install the mapserver-config.cmake and mapserver-config-version.cmake
+   install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
+                 "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
+           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+   )
+
+   # Install the export set for use with the install-tree
+   install(EXPORT mapserverTargets
+           DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
+   )
 endif(BUILD_DYNAMIC)
-
-# Add all targets to the build-tree export set
-export(TARGETS mapserver
-       FILE "${PROJECT_BINARY_DIR}/mapserverTargets.cmake"
-)
-
-# Export the package for use from the build-tree
-# (this registers the build-tree with a global CMake-registry)
-export(PACKAGE mapserver)
-
-list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR})
-list(APPEND ALL_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR}/mapserver)
-
-list(REMOVE_DUPLICATES ALL_INCLUDE_DIRS)
-
-# Create the mapserver-config.cmake and mapserver-config-version files
-file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${ALL_INCLUDE_DIRS}")
-
-# ... for the build tree
-set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
-configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config.cmake" @ONLY)
-
-# ... for the install tree
-set(CONF_INCLUDE_DIRS "\${MAPSERVER_CMAKE_DIR}/${REL_INCLUDE_DIR}")
-configure_file(mapserver-config.cmake.in "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake" @ONLY)
-
-# ... for both
-configure_file(mapserver-config-version.cmake.in "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake" @ONLY)
-
-# Install the mapserver-config.cmake and mapserver-config-version.cmake
-install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/mapserver-config.cmake"
-              "${PROJECT_BINARY_DIR}/mapserver-config-version.cmake"
-        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
-)
-
-# Install the export set for use with the install-tree
-install(EXPORT mapserverTargets
-        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev
-)
