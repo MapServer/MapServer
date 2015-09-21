@@ -328,7 +328,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, int layerindex, int classindex
     }
     annotext = msShapeGetLabelAnnotation(layerPtr,shape,lbl);
     if(!annotext) {
-      for(s=0;s<lbl->numstyles;l++) {
+      for(s=0;s<lbl->numstyles;s++) {
         if(lbl->styles[s]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT)
           break; /* we have a "symbol only label, so we shouldn't skip this label */
       }
