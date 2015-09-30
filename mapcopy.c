@@ -925,6 +925,26 @@ int msCopyScaleToken(scaleTokenObj *src, scaleTokenObj *dst) {
   return MS_SUCCESS;
 }
 
+int msCopyCompositingFilter(CompositingFilter **pdst, CompositingFilter *src) {
+  CompositingFilter *dst = NULL;
+  if(!src) {
+    *pdst = NULL;
+    return MS_SUCCESS;
+  }
+  while(src) {
+    if(!dst) {
+      dst = *pdst = msSmallMalloc(sizeof(CompositingFilter));
+    } else {
+      dst->next = msSmallMalloc(sizeof(CompositingFilter));
+      dst = dst->next;
+    }
+    dst->filter = msStrdup(src->filter);
+    dst->next = NULL;
+    src = src->next;
+  }
+  return MS_SUCCESS;
+}
+
 int msCopyCompositer(LayerCompositer **ldst, LayerCompositer *src) {
   LayerCompositer *dst = NULL;
   if(!src) {
@@ -942,7 +962,7 @@ int msCopyCompositer(LayerCompositer **ldst, LayerCompositer *src) {
     dst->comp_op = src->comp_op;
     dst->opacity = src->opacity;
     dst->next = NULL;
-    /* TODO dst->filter */
+    msCopyCompositingFilter(&dst->filter, src->filter);
     src = src->next;
   }
   return MS_SUCCESS;
