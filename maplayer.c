@@ -65,6 +65,13 @@ void msLayerFreeItemInfo(layerObj *layer)
       return;
   }
   layer->vtable->LayerFreeItemInfo(layer);
+
+  /*
+   * Layer expressions with attribute binding hold a numeric index pointing
+   * to an iteminfo (node->tokenval.bindval.index). If iteminfo changes,
+   * an expression may be no longer valid. (#5161)
+   */
+  msLayerFreeExpressions(layer);
 }
 
 int msLayerRestoreFromScaletokens(layerObj *layer)
@@ -415,8 +422,6 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 */
 void msLayerClose(layerObj *layer)
 {
-  int i,j,k;
-
   /* no need for items once the layer is closed */
   msLayerFreeItemInfo(layer);
   if(layer->items) {
@@ -426,6 +431,21 @@ void msLayerClose(layerObj *layer)
   }
 
   /* clear out items used as part of expressions (bug #2702) -- what about the layer filter? */
+  msLayerFreeExpressions(layer);
+
+  if (layer->vtable) {
+    layer->vtable->LayerClose(layer);
+  }
+  msLayerRestoreFromScaletokens(layer);
+}
+
+/*
+** Clear out items used as part of expressions.
+*/
+void msLayerFreeExpressions(layerObj *layer)
+{
+  int i,j,k;
+
   msFreeExpressionTokens(&(layer->filter));
   msFreeExpressionTokens(&(layer->cluster.group));
   msFreeExpressionTokens(&(layer->cluster.filter));
@@ -439,11 +459,6 @@ void msLayerClose(layerObj *layer)
       msFreeExpressionTokens(&(layer->class[i]->labels[k]->text));
     }
   }
-
-  if (layer->vtable) {
-    layer->vtable->LayerClose(layer);
-  }
-  msLayerRestoreFromScaletokens(layer);
 }
 
 /*
