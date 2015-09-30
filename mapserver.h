@@ -2410,6 +2410,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msClusterLayerOpen(layerObj *layer); /* in mapcluster.c */
   MS_DLL_EXPORT int msLayerIsOpen(layerObj *layer);
   MS_DLL_EXPORT void msLayerClose(layerObj *layer);
+  MS_DLL_EXPORT void msLayerFreeExpressions(layerObj *layer);
   MS_DLL_EXPORT int msLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery);
   MS_DLL_EXPORT int msLayerGetItemIndex(layerObj *layer, char *item);
   MS_DLL_EXPORT int msLayerWhichItems(layerObj *layer, int get_all, const char *metadata);
