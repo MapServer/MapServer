@@ -946,7 +946,7 @@ static int loadFeature(layerObj *player, int type)
         }
         if (string) {
           if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
-          shape->values = msStringSplit(string, ';', &shape->numvalues);
+          shape->values = msStringSplitComplex(string, ";", &shape->numvalues,MS_ALLOWEMPTYTOKENS);
           msFree(string); /* clean up */
         }
         break;
