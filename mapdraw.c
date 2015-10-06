@@ -669,6 +669,12 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
      layer->project true to recheck projection needs (Bug #673) */
   layer->project = MS_TRUE;
 
+  /* make sure labelcache setting is set correctly if postlabelcache is set. This is done by the parser but
+     may have been altered by a mapscript. see #5142 */
+  if(layer->postlabelcache) {
+    layer->labelcache = MS_FALSE;
+  }
+
   if(layer->mask) {
     int maskLayerIdx;
     /* render the mask layer in its own imageObj */
