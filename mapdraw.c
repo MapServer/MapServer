@@ -2084,13 +2084,19 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   textSymbolObj ts;
   int needLabelPoly=MS_TRUE;
   int needLabelPoint=MS_TRUE;
+  int haveLabelText=MS_TRUE;
 
-  
-  initTextSymbol(&ts);
-  msPopulateTextSymbolForLabelAndString(&ts, label, string, scalefactor, image->resolutionfactor, 0);
-  if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,&ts))) {
-    freeTextSymbol(&ts);
-    return MS_FAILURE;
+
+  if(!string || !*string)
+    haveLabelText = MS_FALSE;
+
+  if(haveLabelText) {
+    initTextSymbol(&ts);
+    msPopulateTextSymbolForLabelAndString(&ts, label, string, scalefactor, image->resolutionfactor, 0);
+    if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,&ts))) {
+      freeTextSymbol(&ts);
+      return MS_FAILURE;
+    }
   }
 
   labelPoly.line = &labelPolyLine; /* setup the label polygon structure */
@@ -2106,12 +2112,14 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
       int i;
 
       for(i=0; i<label->numstyles; i++) {
-        if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
+        if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT
+           || label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE) {
           if(UNLIKELY(MS_FAILURE == msDrawMarkerSymbol(map, image, &labelPnt, label->styles[i], scalefactor))) {
-            freeTextSymbol(&ts);
+            if(haveLabelText)
+              freeTextSymbol(&ts);
             return MS_FAILURE;
           }
-        } else if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
+        } else if(haveLabelText && label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
           if(needLabelPoly) {
             p = get_metrics(&labelPnt, label->position, ts.textpath, label->offsetx * ts.scalefactor,
                     label->offsety * ts.scalefactor, ts.rotation, 1, &lbounds);
@@ -2135,20 +2143,23 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
           }
         } else {
           msSetError(MS_MISCERR,"Unknown label geomtransform %s", "msDrawLabel()",label->styles[i]->_geomtransform.string);
-          freeTextSymbol(&ts);
+          if(haveLabelText)
+            freeTextSymbol(&ts);
           return MS_FAILURE;
         }
       }
     }
 
-    if(needLabelPoint)
-      p = get_metrics(&labelPnt, label->position, ts.textpath, label->offsetx * ts.scalefactor,
-              label->offsety * ts.scalefactor, ts.rotation, 0, &lbounds);
+    if(haveLabelText) {
+      if(needLabelPoint)
+        p = get_metrics(&labelPnt, label->position, ts.textpath, label->offsetx * ts.scalefactor,
+                        label->offsety * ts.scalefactor, ts.rotation, 0, &lbounds);
 
-    /* draw the label text */
-    if(UNLIKELY(MS_FAILURE == msDrawTextSymbol(map,image,p,&ts))) {
-      freeTextSymbol(&ts);
-      return MS_FAILURE;
+      /* draw the label text */
+      if(UNLIKELY(MS_FAILURE == msDrawTextSymbol(map,image,p,&ts))) {
+        freeTextSymbol(&ts);
+        return MS_FAILURE;
+      }
     }
   } else {
     labelPnt.x += label->offsetx * ts.scalefactor;
@@ -2158,12 +2169,13 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
       int i;
 
       for(i=0; i<label->numstyles; i++) {
-        if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
+        if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
+           label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_NONE) {
           if(UNLIKELY(MS_FAILURE == msDrawMarkerSymbol(map, image, &labelPnt, label->styles[i], scalefactor))) {
             freeTextSymbol(&ts);
             return MS_FAILURE;
           }
-        } else if(label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
+        } else if(haveLabelText && label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
           if(needLabelPoly) {
             get_metrics(&labelPnt, label->position, ts.textpath, label->offsetx * ts.scalefactor,
                     label->offsety * ts.scalefactor, ts.rotation, 1, &lbounds);
@@ -2186,19 +2198,23 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
           }
         } else {
           msSetError(MS_MISCERR,"Unknown label geomtransform %s", "msDrawLabel()",label->styles[i]->_geomtransform.string);
-          freeTextSymbol(&ts);
+          if(haveLabelText)
+            freeTextSymbol(&ts);
           return MS_FAILURE;
         }
       }
     }
 
-    /* draw the label text */
-    if(UNLIKELY(MS_FAILURE == msDrawTextSymbol(map,image,labelPnt,&ts))) {
-      freeTextSymbol(&ts);
-      return MS_FAILURE;
+    if(haveLabelText) {
+      /* draw the label text */
+      if(UNLIKELY(MS_FAILURE == msDrawTextSymbol(map,image,labelPnt,&ts))) {
+        freeTextSymbol(&ts);
+        return MS_FAILURE;
+      }
     }
   }
-  freeTextSymbol(&ts);
+  if(haveLabelText)
+    freeTextSymbol(&ts);
 
   return MS_SUCCESS;
 }
