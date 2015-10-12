@@ -153,7 +153,7 @@ option(WITH_MSSQL2008 "include mssql 2008 database input support as plugin" OFF)
 option(WITH_EXEMPI "include xmp output metadata support" OFF)
 option(WITH_XMLMAPFILE "include native xml mapfile support (requires libxslt/libexslt)" OFF)
 option(WITH_V8 "include javacript v8 scripting" OFF)
-option(WITH_PIXMAN "use pixman for layer compositing operations" OFF)
+option(WITH_PIXMAN "use (experimental) support for pixman for layer compositing operations" OFF)
 
 option(BUILD_STATIC "Also build a static version of mapserver" OFF)
 option(LINK_STATIC_LIBMAPSERVER "Link to static version of libmapserver (also for mapscripts)" OFF)
