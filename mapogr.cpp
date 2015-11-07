@@ -1345,6 +1345,7 @@ static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 #endif /* USE_OGR */
 }
 
+#ifdef undef
 /**********************************************************************
  *                     msOGRTranslateMsExpressionToOGRSQL()
  *
@@ -1492,7 +1493,7 @@ cleanup:
   msFree(msSQLExpression);
   return NULL;
 }
-
+#endif
 
 /**********************************************************************
  *                     msOGRFileWhichShapes()
