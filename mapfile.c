@@ -6235,12 +6235,19 @@ int msSaveMap(mapObj *map, char *filename)
 static int loadMapInternal(mapObj *map)
 {
   int foundMapToken=MS_FALSE;
+  int foundBomToken = MS_FALSE;
   int token;
 
   for(;;) {
 
     token = msyylex();
 
+    if(!foundBomToken && token == BOM) {
+      foundBomToken = MS_TRUE;
+      if(!foundMapToken) {
+        continue; /*skip a leading bom*/
+      }
+    }
     if(!foundMapToken && token != MAP) {
       msSetError(MS_IDENTERR, "First token must be MAP, this doesn't look like a mapfile.", "msLoadMap()");
       return(MS_FAILURE);
