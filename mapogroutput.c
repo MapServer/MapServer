@@ -765,8 +765,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
                   request_dir );
       return MS_FAILURE;
     }
-  } else
-    /* handled later */;
+  }
+  /*  else handled later */
 
   /* -------------------------------------------------------------------- */
   /*      Setup the full datasource name.                                 */
