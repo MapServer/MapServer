@@ -224,6 +224,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>backgroundcolor            { MS_LEXER_RETURN_TOKEN(BACKGROUNDCOLOR); }
 <INITIAL>bandsitem                             { MS_LEXER_RETURN_TOKEN(BANDSITEM); }
 <INITIAL>bindvals                              { MS_LEXER_RETURN_TOKEN(BINDVALS); }
+<INITIAL>\xEF\xBB\xBF                          { MS_LEXER_RETURN_TOKEN(BOM); }
 <INITIAL>browseformat                          { MS_LEXER_RETURN_TOKEN(BROWSEFORMAT); }
 <INITIAL>buffer                                { MS_LEXER_RETURN_TOKEN(BUFFER); }
 <INITIAL>character                             { MS_LEXER_RETURN_TOKEN(CHARACTER); }
