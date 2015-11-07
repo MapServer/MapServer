@@ -443,6 +443,10 @@ int msValidateTimeValue(const char *timestring, const char *timeextent)
   if (!timestring || !timeextent)
     return MS_FALSE;
 
+  /* To avoid SQL injections */
+  if (strchr(timestring, '\''))
+    return MS_FALSE;
+
   /* parse the time string. We support descrete times (eg 2004-09-21), */
   /* multiple times (2004-09-21, 2004-09-22, ...) */
   /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
