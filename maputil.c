@@ -2621,5 +2621,4 @@ void msSetLayerOpacity(layerObj *layer, int opacity) {
     initLayerCompositer(layer->compositer);
   }
   layer->compositer->opacity = opacity;
-  return MS_TRUE;
 }
