@@ -794,7 +794,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   char epsgbuf[100];
   char srsbuffer[100];
   int epsgvalid = MS_FALSE;
-  const char *projstring;
   int timerequest = 0;
   char *stime = NULL;
   char **tokens=NULL;
@@ -1313,9 +1312,10 @@ this request. Check wms/ows_enable_request settings.",
   ** validate all layers requested.
   */
   if (epsgbuf[0] && epsgbuf[1]) { /*at least 2 chars*/
+    char *projstring;
     epsgvalid = MS_FALSE;
-    projstring = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
-                                  "MO", MS_FALSE);
+    msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
+                                  "MO", MS_FALSE, &projstring);
     if (projstring) {
       tokens = msStringSplit(projstring, ' ', &n);
       if (tokens && n > 0) {
@@ -1327,14 +1327,15 @@ this request. Check wms/ows_enable_request settings.",
         }
         msFreeCharArray(tokens, n);
       }
+      msFree(projstring);
     }
     if (epsgvalid == MS_FALSE) {
       for (i=0; i<map->numlayers; i++) {
         epsgvalid = MS_FALSE;
         if (GET_LAYER(map, i)->status == MS_ON) {
-          projstring = msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection),
+          msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection),
                                         &(GET_LAYER(map, i)->metadata),
-                                        "MO", MS_FALSE);
+                                        "MO", MS_FALSE, &projstring);
           if (projstring) {
             tokens = msStringSplit(projstring, ' ', &n);
             if (tokens && n > 0) {
@@ -1346,6 +1347,7 @@ this request. Check wms/ows_enable_request settings.",
               }
               msFreeCharArray(tokens, n);
             }
+            msFree(projstring);
           }
           if (epsgvalid == MS_FALSE) {
             if (nVersion >= OWS_1_3_0) {
@@ -2029,6 +2031,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
   char szVersionBuf[OWS_VERSION_MAXLEN];
   size_t bufferSize = 0;
   const char *pszDimensionlist=NULL;
+  char *pszMapEPSG,*pszLayerEPSG;
 
   /* if the layer status is set to MS_DEFAULT, output a warning */
   if (lp->status == MS_DEFAULT)
@@ -2066,64 +2069,62 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
   msWMSPrintKeywordlist(stdout, "        ", "keywordlist", &(lp->metadata), "MO", nVersion);
 
-  if (msOWSGetEPSGProj(&(map->projection),&(map->web.metadata),
-                       "MO", MS_FALSE) == NULL) {
+  msOWSGetEPSGProj(&(map->projection),&(map->web.metadata), "MO", MS_FALSE, &pszMapEPSG);
+  msOWSGetEPSGProj(&(lp->projection),&(lp->metadata), "MO", MS_FALSE, &pszLayerEPSG);
+  if(pszMapEPSG == NULL) {
     /* If map has no proj then every layer MUST have one or produce a warning */
     if (nVersion > OWS_1_1_0) {
       /* starting 1.1.1 SRS are given in individual tags */
-      if (nVersion >= OWS_1_3_0)
+      if (nVersion >= OWS_1_3_0) {
         msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
-                                  msOWSGetEPSGProj(&(lp->projection),
-                                      &(lp->metadata),
-                                      "MO", MS_FALSE),
+                                  pszLayerEPSG,
                                   OWS_WARN, ' ', NULL, NULL,
                                   "        <CRS>%s</CRS>\n", NULL);
-      else
+      }
+      else {
         msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
-                                  msOWSGetEPSGProj(&(lp->projection),
-                                      &(lp->metadata),
-                                      "MO", MS_FALSE),
+                                  pszLayerEPSG,
                                   OWS_WARN, ' ', NULL, NULL,
                                   "        <SRS>%s</SRS>\n", NULL);
-    } else
+      }
+    } else {
       msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, "
                             "LAYER.PROJECTION or wms_srs metadata",
-                            msOWSGetEPSGProj(&(lp->projection),
-                                             &(lp->metadata), "MO", MS_FALSE),
+                            pszLayerEPSG,
                             OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
+    }
   } else {
     /* No warning required in this case since there's at least a map proj. */
     if (nVersion > OWS_1_1_0) {
       /* starting 1.1.1 SRS are given in individual tags */
-      if (nVersion >=  OWS_1_3_0)
+      if (nVersion >=  OWS_1_3_0) {
         msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
-                                  msOWSGetEPSGProj(&(lp->projection),
-                                      &(lp->metadata),
-                                      "MO", MS_FALSE),
+                                  pszLayerEPSG,
                                   OWS_NOERR, ' ', NULL, NULL,
                                   "        <CRS>%s</CRS>\n", NULL);
-      else
+      } else {
         msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
-                                  msOWSGetEPSGProj(&(lp->projection),
-                                      &(lp->metadata),
-                                      "MO", MS_FALSE),
+                                  pszLayerEPSG,
                                   OWS_NOERR, ' ', NULL, NULL,
                                   "        <SRS>%s</SRS>\n", NULL);
-    } else
+      }
+    } else {
       msOWSPrintEncodeParam(stdout,
                             " LAYER.PROJECTION (or wms_srs metadata)",
-                            msOWSGetEPSGProj(&(lp->projection),
-                                             &(lp->metadata),"MO",MS_FALSE),
+                            pszLayerEPSG,
                             OWS_NOERR, "        <SRS>%s</SRS>\n", NULL);
+    }
   }
+  msFree(pszLayerEPSG);
+  msFree(pszMapEPSG);
 
   /* If layer has no proj set then use map->proj for bounding box. */
   if (msOWSGetLayerExtent(map, lp, "MO", &ext) == MS_SUCCESS) {
@@ -2681,6 +2682,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
   char **tokens = NULL;
   int numtokens = 0;
   char *validated_language = NULL;
+  char *pszMapEPSG;
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "MO", "updatesequence");
 
@@ -3113,33 +3115,32 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
     /* According to normative comments in the 1.0.7 DTD, the root layer's SRS tag */
     /* is REQUIRED.  It also suggests that we use an empty SRS element if there */
     /* is no common SRS. */
+    msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_FALSE, &pszMapEPSG);
     if (nVersion > OWS_1_1_0) {
       /* starting 1.1.1 SRS are given in individual tags */
-      if (nVersion >= OWS_1_3_0)
+      if (nVersion >= OWS_1_3_0) {
         msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
-                                  msOWSGetEPSGProj(&(map->projection),
-                                      &(map->web.metadata),
-                                      "MO", MS_FALSE),
+                                  pszMapEPSG,
                                   OWS_WARN, ' ', NULL, NULL,
                                   "    <CRS>%s</CRS>\n", "");
-      else
+      } else {
         msOWSPrintEncodeParamList(stdout, "(at least one of) "
                                   "MAP.PROJECTION, LAYER.PROJECTION "
                                   "or wms_srs metadata",
-                                  msOWSGetEPSGProj(&(map->projection),
-                                      &(map->web.metadata),
-                                      "MO", MS_FALSE),
+                                  pszMapEPSG,
                                   OWS_WARN, ' ', NULL, NULL,
                                   "    <SRS>%s</SRS>\n", "");
-    } else
+      }
+      msFree(pszMapEPSG);
+    } else {
       /* If map has no proj then every layer MUST have one or produce a warning */
       msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
-                            msOWSGetEPSGProj(&(map->projection),
-                                             &(map->web.metadata),
-                                             "MO", MS_FALSE),
+                            pszMapEPSG,
                             OWS_WARN, "    <SRS>%s</SRS>\n", "");
+    }
+    msFree(pszMapEPSG);
 
     if (nVersion >= OWS_1_3_0)
       msOWSPrintEX_GeographicBoundingBox(stdout, "    ", &(map->extent),
