@@ -2198,7 +2198,6 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
   char *outp, *out = NULL;
   size_t len, bufsize, bufleft, iconv_status;
   int i;
-#endif
 
   if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
     return MS_SUCCESS;
@@ -2210,7 +2209,6 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
     return MS_FAILURE;
   }
 
-#ifdef USE_ICONV
   for(i=0;i <shape->numvalues; i++) {
     if(!shape->values[i] || (len = strlen(shape->values[i]))==0) {
       continue;    /* Nothing to do */
@@ -2241,6 +2239,8 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
   return MS_SUCCESS;
 #else
+  if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
+    return MS_SUCCESS;
   msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msGetEncodedString()");
   return MS_FAILURE;
 #endif
