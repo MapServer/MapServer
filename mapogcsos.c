@@ -1386,7 +1386,7 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
           }
           msOWSGetEPSGProj(&(lp->projection),&(lp->metadata), "SO", MS_TRUE,&pszLayerEPSG);
           if (pszLayerEPSG) {
-            psNode = xmlAddChild(psOfferingNode, msGML3BoundedBy(psNsGml, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), value));
+            psNode = xmlAddChild(psOfferingNode, msGML3BoundedBy(psNsGml, atof(tokens[0]), atof(tokens[1]), atof(tokens[2]), atof(tokens[3]), pszLayerEPSG));
             msFree(pszLayerEPSG);
           }
           msFreeCharArray(tokens, n);
