@@ -1302,7 +1302,8 @@ int msSaveMapContext(mapObj *map, char *filename)
 int msWriteMapContext(mapObj *map, FILE *stream)
 {
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
-  const char * version, *value;
+  const char * version;
+  char *pszEPSG;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
   char *pszStyle, *pszCurrent, *pszStyleItem, *pszSLDBody;
   char *pszEncodedVal;
@@ -1407,18 +1408,19 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   if(tabspace)
     free(tabspace);
   tabspace = msStrdup("    ");
-  value = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_TRUE);
+  msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_TRUE, &pszEPSG);
   msIO_fprintf( stream,
                 "%s<!-- Bounding box corners and spatial reference system -->\n",
                 tabspace );
-  if(!value || (strcasecmp(value, "(null)") == 0))
+  if(!pszEPSG || (strcasecmp(pszEPSG, "(null)") == 0))
     msIO_fprintf(stream, "<!-- WARNING: Mandatory data 'projection' was missing in this context. -->\n");
 
-  pszEncodedVal = msEncodeHTMLEntities(value);
+  pszEncodedVal = msEncodeHTMLEntities(pszEPSG);
   msIO_fprintf( stream, "%s<BoundingBox SRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>\n",
                 tabspace, pszEncodedVal, map->extent.minx, map->extent.miny,
                 map->extent.maxx, map->extent.maxy );
   msFree(pszEncodedVal);
+  msFree(pszEPSG);
 
   /* Title, name */
   if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0 ) {
@@ -1625,14 +1627,15 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                      GET_LAYER(map, i)->maxscaledenom);
 
       /* Layer SRS */
-      pszValue = (char*)msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection),
+      msOWSGetEPSGProj(&(GET_LAYER(map, i)->projection),
                                          &(GET_LAYER(map, i)->metadata),
-                                         "MO", MS_FALSE);
-      if(pszValue && (strcasecmp(pszValue, "(null)") != 0)) {
-        pszEncodedVal = msEncodeHTMLEntities(pszValue);
+                                         "MO", MS_FALSE, &pszEPSG);
+      if(pszEPSG && (strcasecmp(pszEPSG, "(null)") != 0)) {
+        pszEncodedVal = msEncodeHTMLEntities(pszEPSG);
         msIO_fprintf(stream, "      <SRS>%s</SRS>\n", pszEncodedVal);
         msFree(pszEncodedVal);
       }
+      msFree(pszEPSG);
 
       /* Format */
       if(msLookupHashTable(&(GET_LAYER(map, i)->metadata),"wms_formatlist")==NULL &&

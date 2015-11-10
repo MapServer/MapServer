@@ -347,6 +347,7 @@ static int msWCSGetCapabilities11_CoverageSummary(
                            format_list, ',' );
 
   msFree( format_list );
+  msWCSFreeCoverageMetadata(&cm);
 
   /* -------------------------------------------------------------------- */
   /*      Identifier (layer name)                                         */
@@ -871,6 +872,7 @@ msWCSDescribeCoverage_CoverageDescription11(
 
     msFree( format_list );
   }
+  msWCSFreeCoverageMetadata(&cm);
 
   return MS_SUCCESS;
 }

@@ -2129,8 +2129,8 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
                            const char *namespaces,
                            int wms_version)
 {
-  const char    *value, *resx, *resy, *wms_bbox_extended, *epsg_str;
-  char *encoded, *encoded_resx, *encoded_resy;
+  const char    *value, *resx, *resy, *wms_bbox_extended;
+  char *encoded, *encoded_resx, *encoded_resy, *epsg_str;
   char **epsgs;
   int i, num_epsgs;
   projectionObj proj;
@@ -2141,18 +2141,19 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
     /* get a list of all projections from the metadata
        try the layer metadata first, otherwise use the map's */
     if( msOWSLookupMetadata(layer_meta, namespaces, "srs") ) {
-      epsg_str = msOWSGetEPSGProj(srcproj, layer_meta, namespaces, MS_FALSE);
+      msOWSGetEPSGProj(srcproj, layer_meta, namespaces, MS_FALSE, &epsg_str);
     } else {
-      epsg_str = msOWSGetEPSGProj(srcproj, map_meta, namespaces, MS_FALSE);
+      msOWSGetEPSGProj(srcproj, map_meta, namespaces, MS_FALSE, &epsg_str);
     }
     epsgs = msStringSplit(epsg_str, ' ', &num_epsgs);
+    msFree(epsg_str);
   } else {
     /* Look for EPSG code in PROJECTION block only.  "wms_srs" metadata cannot be
      * used to establish the native projection of a layer for BoundingBox purposes.
      */
     epsgs = (char **) msSmallMalloc(sizeof(char *));
     num_epsgs = 1;
-    epsgs[0] = msStrdup( msOWSGetEPSGProj(srcproj, layer_meta, namespaces, MS_TRUE) );
+    msOWSGetEPSGProj(srcproj, layer_meta, namespaces, MS_TRUE, &(epsgs[0]));
   }
 
   for( i = 0; i < num_epsgs; i++) {
@@ -2495,34 +2496,37 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
 ** then only the first one (which is assumed to be the layer's default
 ** projection) is returned.
 */
-const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne)
+void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne, char **epsgCode)
 {
-  static char epsgCode[20] ="";
-  char *value;
+  const char *value;
+  *epsgCode = NULL;
 
   /* metadata value should already be in format "EPSG:n" or "AUTO:..." */
-  if (metadata && ((value = (char *) msOWSLookupMetadata(metadata, namespaces, "srs")) != NULL)) {
+  if (metadata && ((value = msOWSLookupMetadata(metadata, namespaces, "srs")) != NULL)) {
+    const char *space_ptr;
+    if (!bReturnOnlyFirstOne || (space_ptr = strchr(value,' ')) == NULL) {
+      *epsgCode = msStrdup(value);
+      return;
+    }
+    
 
-    if (!bReturnOnlyFirstOne) return value;
-
-    /* caller requested only first projection code */
-    strlcpy(epsgCode, value, 20);
-
-    if ((value=strchr(epsgCode, ' ')) != NULL) *value = '\0';
-
-    return epsgCode;
-  } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=epsg:")) != NULL && strlen(value) < 20) {
-    snprintf(epsgCode, sizeof(epsgCode), "EPSG:%s", value+10);
-    return epsgCode;
-  } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=crs:")) != NULL && strlen(value) < 20) {
-    snprintf(epsgCode, sizeof(epsgCode), "CRS:%s", value+9);
-    return epsgCode;
+    *epsgCode = msSmallMalloc((space_ptr - value + 1)*sizeof(char));
+    /* caller requested only first projection code, copy up to the first space character*/
+    strlcpy(*epsgCode, value, space_ptr - value + 1) ;
+    return;
+  } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=epsg:")) != NULL) {
+    *epsgCode = msSmallMalloc((strlen("EPSG:")+strlen(value+10)+1)*sizeof(char));
+    sprintf(*epsgCode, "EPSG:%s", value+10);
+    return;
+  } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=crs:")) != NULL) {
+    *epsgCode = msSmallMalloc((strlen("CRS:")+strlen(value+9)+1)*sizeof(char));
+    sprintf(*epsgCode, "CRS:%s", value+9);
+    return;
   } else if (proj && proj->numargs > 0 && (strncasecmp(proj->args[0], "AUTO:", 5) == 0 ||
              strncasecmp(proj->args[0], "AUTO2:", 6) == 0)) {
-    return proj->args[0];
+    *epsgCode = msStrdup(proj->args[0]);
+    return;
   }
-
-  return NULL;
 }
 /*
 ** msOWSGetProjURN()
@@ -2538,9 +2542,10 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
   char **tokens;
   int numtokens, i;
   size_t bufferSize = 0;
-
-  const char *oldStyle = msOWSGetEPSGProj( proj, metadata, namespaces,
-                         bReturnOnlyFirstOne );
+  char *oldStyle;
+  
+  msOWSGetEPSGProj( proj, metadata, namespaces,
+                         bReturnOnlyFirstOne, &oldStyle );
 
   if( oldStyle == NULL || strncmp(oldStyle,"EPSG:",5) != 0 )
     return NULL;
@@ -2548,6 +2553,7 @@ char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *n
   result = msStrdup("");
 
   tokens = msStringSplit(oldStyle, ' ', &numtokens);
+  msFree(oldStyle);
   for(i=0; tokens != NULL && i<numtokens; i++) {
     char urn[100];
 
@@ -2596,9 +2602,10 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
   char *result;
   char **tokens;
   int numtokens, i;
-
-  const char *oldStyle = msOWSGetEPSGProj( proj, metadata, namespaces,
-                         bReturnOnlyFirstOne );
+  char *oldStyle;
+  
+  msOWSGetEPSGProj( proj, metadata, namespaces,
+                         bReturnOnlyFirstOne, &oldStyle);
 
   if( oldStyle == NULL || !EQUALN(oldStyle,"EPSG:",5) )
     return NULL;
@@ -2606,6 +2613,7 @@ char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *n
   result = msStrdup("");
 
   tokens = msStringSplit(oldStyle, ' ', &numtokens);
+  msFree(oldStyle);
   for(i=0; tokens != NULL && i<numtokens; i++) {
     char urn[100];
 

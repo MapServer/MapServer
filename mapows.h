@@ -293,7 +293,7 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
                            int nErrorCode, const char *pszFuncName);
 char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
                             const char *pszExt);
-const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
+void msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne, char **epsgProj);
 char *msOWSGetProjURN(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 char *msOWSGetProjURI(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 
