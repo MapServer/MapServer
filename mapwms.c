@@ -3133,7 +3133,6 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
                                   OWS_WARN, ' ', NULL, NULL,
                                   "    <SRS>%s</SRS>\n", "");
       }
-      msFree(pszMapEPSG);
     } else {
       /* If map has no proj then every layer MUST have one or produce a warning */
       msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
