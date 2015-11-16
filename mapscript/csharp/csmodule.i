@@ -263,7 +263,6 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 }
 
 %ignore imageObj::write;
-
 %typemap(cscode) imageObj %{
   private byte[] gdbuffer;
   private void CreateByteArray(IntPtr data, int size)
@@ -286,10 +285,13 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %}
 
 
+
 %csmethodmodifiers processTemplate "private";
 %csmethodmodifiers processLegendTemplate "private";
 %csmethodmodifiers processQueryTemplate "private";
 
+%typemap(csinterfaces) mapObj "IDisposable, System.Runtime.Serialization.ISerializable"; 
+%typemap(csattributes) mapObj  "[Serializable]"
 %typemap(cscode) mapObj %{
   public string processTemplate(int bGenerateImages, string[] names, string[] values)
   {
@@ -311,6 +313,20 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 	    throw new ArgumentException("Invalid array length specified!");
 	return processQueryTemplate(names, values, values.Length);
   }
+  
+  public mapObj(string mapFilePath) : this(0, mapFilePath) {
+  }
+  
+  public mapObj(
+      System.Runtime.Serialization.SerializationInfo info
+      , System.Runtime.Serialization.StreamingContext context) : this(1, info.GetString("mapText"))
+  {       
+  }
+  
+  public void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) 
+    {    
+        info.AddValue( "mapText", this.convertToString() );        
+    }
 %}
 
 
@@ -379,6 +395,32 @@ DllExport void SWIGSTDCALL SWIGRegisterByteArrayCallback_$module(SWIG_CSharpByte
 }
 #endif
 %}
+
+/* Typemaps for pattern array */
+%typemap(imtype) (double pattern[ANY]) "IntPtr"
+%typemap(cstype) (double pattern[ANY]) "double[]"
+%typemap(in) (double pattern[ANY]) %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) (double pattern[ANY]) "$csinput"
+%typemap(csvarout, excode=SWIGEXCODE2) (double pattern[ANY]) %{
+    get {
+      IntPtr cPtr = $imcall;
+      double[] ret = new double[patternlength];
+      if (patternlength > 0) {       
+	        System.Runtime.InteropServices.Marshal.Copy(cPtr, ret, 0, patternlength);
+      }
+      $excode
+      return ret;
+    } 
+    set {
+      IntPtr cPtr = $imcall;
+      if (value.Length > 0) {       
+	        System.Runtime.InteropServices.Marshal.Copy(value, 0, cPtr, value.Length);
+      }
+      patternlength = value.Length;
+      $excode
+    }
+    %}
+%typemap(csvarin, excode="") (double pattern[ANY]) %{$excode%}
 
 /* Typemaps for device handle */
 %typemap(imtype) (void* device)  %{IntPtr%}
