@@ -30,15 +30,31 @@
 */
 
 %extend mapObj 
-{
-
-    mapObj(char *filename="") 
-    {
-        if (filename && strlen(filename))
-            return msLoadMap(filename, NULL);
-        else { /* create an empty map, no layers etc... */
-            return msNewMapObj();
-        }      
+{        
+    // mapobj(char *filename="") 
+    // {
+        // if (filename && strlen(filename))
+            // return msloadmap(filename, null);
+        // else { /* create an empty map, no layers etc... */
+            // return msnewmapobj();
+        // }
+    // }
+    
+    mapObj(int loadFromString, char *mapText)
+    {        
+        if( loadFromString == 0 ) 
+        {           
+            if (mapText && strlen(mapText))
+                return msLoadMap(mapText, NULL);
+            else { /* create an empty map, no layers etc... */
+                return msNewMapObj();
+            }      
+    
+        }
+        else if( loadFromString == 1) 
+        {
+            return msLoadMapFromString(mapText, NULL);
+        }
     }
 
     ~mapObj() 
@@ -142,7 +158,7 @@
   void prepareQuery() {
     int status;
 
-    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scaledenom);
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->pixeladjustment, self->resolution, &self->scaledenom);
     if(status != MS_SUCCESS) self->scaledenom = -1;
   }
 
@@ -248,7 +264,10 @@
     self->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
     self->query.filter->string = strdup(string);
     self->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
-
+    self->query.filter->compiled = MS_FALSE;
+    self->query.filter->flags = 0;
+    self->query.filter->tokens = self->query.filter->curtoken = NULL;
+    
     self->query.rect = self->extent;
 
     return msQueryByFilter(self);
@@ -487,6 +506,12 @@
     int OWSDispatch( cgiRequestObj *req )
     {
 	return msOWSDispatch( self, req, MS_TRUE );
+    }
+    
+    %newobject convertToString;
+    char* convertToString()
+    {
+        return msWriteMapToString(self);
     }
 
 }
