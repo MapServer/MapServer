@@ -40,6 +40,7 @@
 #include "mapowscommon.h"
 #include "maptime.h"
 #include "mapows.h"
+#include <ctype.h>
 
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode);
 

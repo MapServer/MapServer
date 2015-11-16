@@ -1318,6 +1318,7 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
 
   return MS_SUCCESS;
 }
+#endif /* USE_OGR */
 
 /************************************************************************/
 /*                           msOGREscapeSQLParam                        */
@@ -1345,6 +1346,7 @@ static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 #endif /* USE_OGR */
 }
 
+#ifdef USE_OGR
 /**********************************************************************
  *                     msOGRTranslateMsExpressionToOGRSQL()
  *
