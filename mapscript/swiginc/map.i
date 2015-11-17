@@ -31,32 +31,38 @@
 
 %extend mapObj 
 {        
-    // mapobj(char *filename="") 
-    // {
-        // if (filename && strlen(filename))
-            // return msloadmap(filename, null);
-        // else { /* create an empty map, no layers etc... */
-            // return msnewmapobj();
-        // }
-    // }
-    
-    mapObj(int loadFromString, char *mapText)
-    {        
-        if( loadFromString == 0 ) 
-        {           
-            if (mapText && strlen(mapText))
-                return msLoadMap(mapText, NULL);
-            else { /* create an empty map, no layers etc... */
-                return msNewMapObj();
-            }      
-    
-        }
-        else if( loadFromString == 1) 
+    mapObj(char *filename_or_maptext="") 
+    {
+#ifdef SWIGCSHARP    
+        if (filename_or_maptext && strlen(filename_or_maptext)) 
         {
-            return msLoadMapFromString(mapText, NULL);
+            FILE *file;
+            if (file = fopen(filename_or_maptext, "r"))
+            {
+                //it is a valid map file, load it
+                fclose(file);
+                return msLoadMap(filename_or_maptext, NULL);
+            }
+            else {
+                //not a valid map, most likely a maptext
+                //TODO: extra check just to confirm that it is a mapText ?
+                return msLoadMapFromString(filename_or_maptext, NULL);
+            }
         }
+        else { /* create an empty map, no layers etc... */
+            return msNewMapObj();
+        }
+#else 
+        if (filename_or_maptext && strlen(filename_or_maptext)) 
+        {            
+            return msLoadMap(filename_or_maptext, NULL);            
+        }
+        else { /* create an empty map, no layers etc... */
+            return msNewMapObj();
+        }
+#endif        
     }
-
+    
     ~mapObj() 
     {
         msFreeMap(self);
@@ -78,7 +84,7 @@
         }
         return dstMap;
     }
-
+    
 #ifdef SWIGCSHARP
 %apply SWIGTYPE *SETREFERENCE {layerObj *layer};
 #endif
