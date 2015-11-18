@@ -64,11 +64,12 @@ int msDateCompare(struct tm *time1, struct tm *time2);
 int msTimeCompare(struct tm *time1, struct tm *time2);
 char *msStrptime(const char *s, const char *format, struct tm *tm);
 int msParseTime(const char *string, struct tm *tm);
-int msTimeMatchPattern(char *timestring, char *pattern);
-void msSetLimitedPattersToUse(char *patternstring);
+int msTimeMatchPattern(const char *timestring, const char *pattern);
+void msSetLimitedPatternsToUse(const char *patternstring);
 void msUnsetLimitedPatternToUse(void);
-int msTimeGetResolution(const char *timestring);
+MS_DLL_EXPORT int msTimeGetResolution(const char *timestring);
+void msTimeCleanup();
 
-int msValidateTimeValue(char *timestring, const char *timeextent);
+int msValidateTimeValue(const char *timestring, const char *timeextent);
 
 #endif /* MAPTIME_H */

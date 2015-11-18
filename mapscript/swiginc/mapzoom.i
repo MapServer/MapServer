@@ -206,7 +206,6 @@
         double      dfNewScale;
         double      dfDeltaExt;
         double dfMiddleX, dfMiddleY;
-        double dX, dY;
         int bMaxExtSet;
         
         bMaxExtSet = 0;
@@ -264,8 +263,6 @@
         
         dfDeltaX = poGeorefExt->maxx - poGeorefExt->minx;
         dfDeltaY = poGeorefExt->maxy - poGeorefExt->miny;
-        dX = dfDeltaX/((double)width);
-        dY = dfDeltaY/((double)height);
 
         oNewGeorefExt.minx = Pix2Georef((int)poPixRect->minx, 0, width, poGeorefExt->minx, poGeorefExt->maxx, 0); 
         oNewGeorefExt.maxx = Pix2Georef((int)poPixRect->maxx, 0, width, poGeorefExt->minx, poGeorefExt->maxx, 0); 

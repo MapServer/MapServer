@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
       fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
       fprintf(stdout,"  -e minx miny maxx maxy: extents to render\n");
       fprintf(stdout,"  -s sizex sizey: output image size\n");
-      fprintf(stdout,"  -l layers: layers / groups to enable - make sure they are quoted and space seperated if more than one listed\n" );
+      fprintf(stdout,"  -l layers: layers / groups to enable - make sure they are quoted and space separated if more than one listed\n" );
       fprintf(stdout,"  -all_debug n: Set debug level for map and all layers\n" );
       fprintf(stdout,"  -map_debug n: Set map debug level\n" );
       fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level\n" );
@@ -113,10 +113,13 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
+    /* Use PROJ_LIB env vars if set */
+    msProjLibInitFromEnv();
+
     /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
     if ( msDebugInitFromEnv() != MS_SUCCESS ) {
       msWriteError(stderr);
-      msCleanup(0);
+      msCleanup();
       exit(1);
     }
 
@@ -126,7 +129,7 @@ int main(int argc, char *argv[])
         map = msLoadMap(argv[i+1], NULL);
         if(!map) {
           msWriteError(stderr);
-          msCleanup(0);
+          msCleanup();
           exit(1);
         }
         msApplyDefaultSubstitutions(map);
@@ -135,7 +138,7 @@ int main(int argc, char *argv[])
 
     if(!map) {
       fprintf(stderr, "Mapfile (-m) option not specified.\n");
-      msCleanup(0);
+      msCleanup();
       exit(1);
     }
 
@@ -236,7 +239,7 @@ int main(int argc, char *argv[])
         if( argc <= i+4 ) {
           fprintf( stderr,
                    "Argument -e needs 4 space separated numbers as argument.\n" );
-          msCleanup(0);
+          msCleanup();
           exit(1);
         }
         map->extent.minx = atof(argv[i+1]);
@@ -264,7 +267,7 @@ int main(int argc, char *argv[])
           }
           if (layer_found==0) {
             fprintf(stderr, "Layer (-l) \"%s\" not found\n", layers[j]);
-            msCleanup(0);
+            msCleanup();
             exit(1);
           }
         }
@@ -296,7 +299,7 @@ int main(int argc, char *argv[])
       msWriteError(stderr);
 
       msFreeMap(map);
-      msCleanup(0);
+      msCleanup();
       exit(1);
     }
 
@@ -314,7 +317,7 @@ int main(int argc, char *argv[])
               (requeststarttime.tv_sec+requeststarttime.tv_usec/1.0e6) );
     }
 
-    msCleanup(0);
+    msCleanup();
 
   } /*   for(draws=0; draws<iterations; draws++) { */
   return(0);

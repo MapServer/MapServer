@@ -67,7 +67,7 @@ int msGraticuleLayerInitItemInfo(layerObj *layer);
  */
 int msGraticuleLayerOpen(layerObj *layer)
 {
-  graticuleObj *pInfo = (graticuleObj *) layer->layerinfo;
+  graticuleObj *pInfo = layer->grid;
 
   if( pInfo == NULL )
     return MS_FAILURE;
@@ -91,14 +91,17 @@ int msGraticuleLayerOpen(layerObj *layer)
     pInfo->ilabeltype = (int) lpDefault;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DEFAULT );
   } else if( strcmp( pInfo->labelformat, "DDMMSS" ) == 0 ) {
+    msFree(pInfo->labelformat);
     pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMMSS ) + 1 );
     pInfo->ilabeltype = (int) lpDDMMSS;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMMSS );
   } else if( strcmp( pInfo->labelformat, "DDMM" )   == 0 ) {
+    msFree(pInfo->labelformat);
     pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DDMM ) + 1 );
     pInfo->ilabeltype = (int) lpDDMM;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DDMM );
   } else if( strcmp( pInfo->labelformat, "DD" )   == 0 ) {
+    msFree(pInfo->labelformat);
     pInfo->labelformat = (char *) msSmallMalloc( strlen( MAPGRATICULE_FORMAT_STRING_DD ) + 1 );
     pInfo->ilabeltype = (int) lpDD;
     strcpy( pInfo->labelformat, MAPGRATICULE_FORMAT_STRING_DD );
@@ -112,7 +115,7 @@ int msGraticuleLayerOpen(layerObj *layer)
  */
 int msGraticuleLayerIsOpen(layerObj *layer)
 {
-  if(layer->layerinfo)
+  if(layer->grid)
     return MS_TRUE;
 
   return MS_FALSE;
@@ -124,26 +127,6 @@ int msGraticuleLayerIsOpen(layerObj *layer)
  */
 int msGraticuleLayerClose(layerObj *layer)
 {
-  graticuleObj *pInfo = (graticuleObj *) layer->layerinfo;
-
-  if( pInfo->labelformat ) {
-    free( pInfo->labelformat );
-    pInfo->labelformat = NULL;
-  }
-
-  if( pInfo->pboundingpoints ) {
-    free( pInfo->pboundingpoints );
-    pInfo->pboundingpoints = NULL;
-  }
-
-  if( pInfo->pboundinglines ) {
-    free( pInfo->pboundinglines );
-    pInfo->pboundinglines = NULL;
-  }
-
-  free(layer->layerinfo);
-  layer->layerinfo=NULL;
-
   return MS_SUCCESS;
 }
 
@@ -152,7 +135,7 @@ int msGraticuleLayerClose(layerObj *layer)
  */
 int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 {
-  graticuleObj *pInfo = (graticuleObj *) layer->layerinfo;
+  graticuleObj *pInfo = layer->grid;
   int iAxisTickCount = 0;
   rectObj rectMapCoordinates;
 
@@ -204,7 +187,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
    * These lines will be used when generating labels to get correct placement at arc/rect edge intersections.
    */
   rectMapCoordinates = layer->map->extent;
+  msFree(pInfo->pboundinglines);
   pInfo->pboundinglines   = (lineObj *)  msSmallMalloc( sizeof( lineObj )  * 4 );
+  msFree(pInfo->pboundingpoints);
   pInfo->pboundingpoints = (pointObj *) msSmallMalloc( sizeof( pointObj ) * 8 );
 
   {
@@ -286,7 +271,7 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
  */
 int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 {
-  graticuleObj *pInfo = (graticuleObj *) layer->layerinfo;
+  graticuleObj *pInfo = layer->grid;
 
   if( pInfo->minsubdivides <= 0.0 || pInfo->maxsubdivides <= 0.0 )
     pInfo->minsubdivides = pInfo->maxsubdivides = MAPGRATICULE_ARC_SUBDIVISION_DEFAULT;
@@ -532,7 +517,7 @@ int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record
  */
 int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent)
 {
-  graticuleObj *pInfo = (graticuleObj  *) layer->layerinfo;
+  graticuleObj *pInfo = layer->grid;
 
   if(pInfo) {
     *extent = pInfo->extent;
@@ -635,7 +620,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
   if (layer->connectiontype != MS_GRATICULE)
     return NULL;
 
-  pInfo  = (graticuleObj *) layer->layerinfo;
+  pInfo  = layer->grid;
 
   /*set cellsize if bnot already set*/
   if (map->cellsize == 0)
@@ -658,7 +643,9 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
 #endif
 
-  msLayerOpen(layer);
+ status =  msLayerOpen(layer);
+ if(status != MS_SUCCESS)
+   return NULL;
 
   status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
   if(status == MS_DONE) { /* no overlap */
@@ -780,8 +767,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
               if (psValues->pasBottom[i].x == oFirstPoint.x)
                 break;
             }
-            if (i  < psValues->nBottom)
+            if (i  < psValues->nBottom) {
+              msFree(pszLabel);
               continue;
+            }
           }
           if (psValues->pasBottom == NULL) {
             psValues->pasBottom = (pointObj *)msSmallMalloc(sizeof(pointObj));
@@ -795,9 +784,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
           psValues->pasBottom[psValues->nBottom-1].x = oFirstPoint.x;
           psValues->pasBottom[psValues->nBottom-1].y = oFirstPoint.y;
-          psValues->papszBottomLabels[psValues->nBottom-1] = msStrdup(pszLabel);
-
-          msFree(pszLabel);
+          psValues->papszBottomLabels[psValues->nBottom-1] = pszLabel;
 
         }
         /*first point should cross the TOP base where y==0*/
@@ -828,8 +815,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
                   strcasecmp(pszLabel, psValues->papszTopLabels[i]) == 0)
                 break;
             }
-            if (i < psValues->nTop)
+            if (i < psValues->nTop) {
+              msFree(pszLabel);
               continue;
+            }
           }
 
 
@@ -845,9 +834,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
           psValues->pasTop[psValues->nTop-1].x = oLastPoint.x;
           psValues->pasTop[psValues->nTop-1].y = oLastPoint.y;
-          psValues->papszTopLabels[psValues->nTop-1] = msStrdup(pszLabel);
-
-          msFree(pszLabel);
+          psValues->papszTopLabels[psValues->nTop-1] = pszLabel;
         }
       } else { /*horzontal*/
         /*Normally lines are drawn from left to right but not always for some reason, so
@@ -890,8 +877,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
               if (psValues->pasLeft[i].y == oFirstPoint.y)
                 break;
             }
-            if (i < psValues->nLeft)
+            if (i < psValues->nLeft) {
+              msFree(pszLabel);
               continue;
+            }
           }
           if (psValues->pasLeft == NULL) {
             psValues->pasLeft = (pointObj *)msSmallMalloc(sizeof(pointObj));
@@ -905,8 +894,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
           psValues->pasLeft[psValues->nLeft-1].x = oFirstPoint.x;
           psValues->pasLeft[psValues->nLeft-1].y = oFirstPoint.y;
-          psValues->papszLeftLabels[psValues->nLeft-1] = msStrdup(pszLabel);
-          msFree(pszLabel);
+          psValues->papszLeftLabels[psValues->nLeft-1] = pszLabel; /* takes ownership of allocated pszLabel */
         }
         /*first point should cross the RIGHT base where x=map=>width axis*/
         if (abs((int)oLastPoint.x - map->width) <=1) {
@@ -935,8 +923,10 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
               if (psValues->pasRight[i].y == oLastPoint.y)
                 break;
             }
-            if (i < psValues->nRight)
+            if (i < psValues->nRight) {
+              msFree(pszLabel);
               continue;
+            }
           }
           if (psValues->pasRight == NULL) {
             psValues->pasRight = (pointObj *)msSmallMalloc(sizeof(pointObj));
@@ -950,9 +940,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
 
           psValues->pasRight[psValues->nRight-1].x = oLastPoint.x;
           psValues->pasRight[psValues->nRight-1].y = oLastPoint.y;
-          psValues->papszRightLabels[psValues->nRight-1] = msStrdup(pszLabel);
-
-          msFree(pszLabel);
+          psValues->papszRightLabels[psValues->nRight-1] = pszLabel;
         }
       }
       msFreeShape(&shapegrid);
@@ -1003,7 +991,7 @@ int msGraticuleLayerInitializeVirtualTable(layerObj *layer)
  */
 static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToFormat )
 {
-  graticuleObj *pInfo = (graticuleObj  *) pLayer->layerinfo;
+  graticuleObj *pInfo = pLayer->grid;
   char cBuffer[32];
   int iDegrees, iMinutes;
 
@@ -1038,15 +1026,18 @@ static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToForm
  */
 static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticulePosition ePosition )
 {
-  graticuleObj *pInfo = (graticuleObj  *) pLayer->layerinfo;
+  graticuleObj *pInfo = pLayer->grid;
   rectObj rectLabel;
   pointObj ptPoint;
   double size = -1;
+  char *labeltxt;
 
   if( pInfo == NULL || pShape == NULL ) {
-    msSetError(MS_MISCERR, "Assertion failed: Null shape or layerinfo!, ", "_AdjustLabelPosition()");
+    msSetError(MS_MISCERR, "Assertion failed: Null shape or non-configured grid!, ", "_AdjustLabelPosition()");
     return MS_FAILURE;
   }
+
+  assert(pLayer->class[0]->numlabels >= 1);
 
   if(msCheckParentPointer(pLayer->map,"map")==MS_FAILURE)
     return MS_FAILURE;
@@ -1061,10 +1052,17 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   if(pLayer->transform) {
     msTransformShapeToPixelRound(pShape, pLayer->map->extent, pLayer->map->cellsize);
   }
-
-  size = pLayer->class[0]->labels[0]->size; /* TODO TBT: adjust minsize/maxsize/resolution. TODO RFC 77: ok to use first label? */
-  if(msGetLabelSize(pLayer->map, pLayer->class[0]->labels[0], pShape->text, size, &rectLabel, NULL) != MS_SUCCESS)
+  
+  size = pLayer->class[0]->labels[0]->size; /* TODO someday: adjust minsize/maxsize/resolution*/
+  /* We only use the first label as there's no use (yet) in defining multiple lables for GRID layers,
+   as the only label to represent is the longitude or latitude */
+  labeltxt = msShapeGetLabelAnnotation(pLayer, pShape, pLayer->class[0]->labels[0]);
+  assert(labeltxt);
+  if(msGetStringSize(pLayer->map, pLayer->class[0]->labels[0], size, labeltxt, &rectLabel) != MS_SUCCESS) {
+    free(labeltxt);
     return MS_FAILURE;  /* msSetError already called */
+  }
+  free(labeltxt);
 
   switch( ePosition ) {
     case posBottom:

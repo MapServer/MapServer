@@ -2,7 +2,7 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  layer query support.
+ * Purpose:  Layer query support.
  * Author:   Steve Lime and the MapServer team.
  *
  ******************************************************************************
@@ -29,10 +29,7 @@
 
 #include "mapserver.h"
 
-
-
-int msInitQuery(queryObj *query)
-{
+int msInitQuery(queryObj *query) {
   if(!query) return MS_FAILURE;
 
   msFreeQuery(query); /* clean up anything previously allocated */
@@ -44,7 +41,7 @@ int msInitQuery(queryObj *query)
 
   query->point.x = query->point.y = -1;
   query->buffer = 0.0;
-  query->maxresults = 0;
+  query->maxresults = 0; /* only used by msQueryByPoint() apparently */
 
   query->rect.minx = query->rect.miny = query->rect.maxx = query->rect.maxy = -1;
   query->shape = NULL;
@@ -52,8 +49,12 @@ int msInitQuery(queryObj *query)
   query->shapeindex = query->tileindex = -1;
   query->clear_resultcache = MS_TRUE; /* index queries allow the old results to persist */
 
-  query->item = query->str = NULL;
-  query->filter = NULL;
+  query->maxfeatures = -1;
+  query->startindex = -1;
+  query->only_cache_result_count = 0;
+  
+  query->filteritem = NULL;
+  msInitExpression(&query->filter);
 
   return MS_SUCCESS;
 }
@@ -65,12 +66,8 @@ void msFreeQuery(queryObj *query)
     free(query->shape);
   }
 
-  if(query->item) free(query->item);
-  if(query->str) free(query->str);
-  if(query->filter) {
-    freeExpression(query->filter);
-    free(query->filter);
-  }
+  if(query->filteritem) free(query->filteritem);
+  msFreeExpression(&query->filter);
 }
 
 /*
@@ -92,9 +89,6 @@ int msExecuteQuery(mapObj *map)
       break;
     case MS_QUERY_BY_RECT:
       status = msQueryByRect(map);
-      break;
-    case MS_QUERY_BY_ATTRIBUTE:
-      status = msQueryByAttributes(map);
       break;
     case MS_QUERY_BY_FILTER:
       status = msQueryByFilter(map);
@@ -162,6 +156,7 @@ static int addResult(resultCacheObj *cache, shapeObj *shape)
   cache->results[i].resultindex = shape->resultindex;
   cache->numresults++;
 
+  cache->previousBounds = cache->bounds;
   if(cache->numresults == 1)
     cache->bounds = shape->bounds;
   else
@@ -236,7 +231,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
     GET_LAYER(map, j)->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
     MS_CHECK_ALLOC(GET_LAYER(map, j)->resultcache, sizeof(resultCacheObj), MS_FAILURE);
 
-    if(1 != fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream)) { /* number of results */
+    if(1 != fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream) || (GET_LAYER(map, j)->resultcache->numresults < 0)) { /* number of results */
       msSetError(MS_MISCERR,"failed to read number of results from query file stream", "loadQueryResults()");
       free(GET_LAYER(map, j)->resultcache);
       GET_LAYER(map, j)->resultcache = NULL;
@@ -254,7 +249,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
     GET_LAYER(map, j)->resultcache->results = (resultObj *) malloc(sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);
     if (GET_LAYER(map, j)->resultcache->results == NULL) {
       msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "loadQueryResults()",
-                 __FILE__, __LINE__, sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults);
+                 __FILE__, __LINE__, (unsigned int)(sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults));
       free(GET_LAYER(map, j)->resultcache);
       GET_LAYER(map, j)->resultcache = NULL;
       return MS_FAILURE;
@@ -301,8 +296,8 @@ static int saveQueryParams(mapObj *map, char *filename)
   fprintf(stream, "%.15g %.15g %.15g %.15g\n", map->query.rect.minx, map->query.rect.miny, map->query.rect.maxx, map->query.rect.maxy); /* by rect */
   fprintf(stream, "%ld %ld %d\n", map->query.shapeindex, map->query.tileindex, map->query.clear_resultcache); /* by index */
 
-  fprintf(stream, "%s\n", (map->query.item)?map->query.item:"NULL"); /* by attribute */
-  fprintf(stream, "%s\n", (map->query.str)?map->query.str:"NULL");
+  fprintf(stream, "%s\n", (map->query.filteritem)?map->query.filteritem:"NULL"); /* by filter */
+  fprintf(stream, "%s\n", (map->query.filter.string)?map->query.filter.string:"NULL");
 
   if(map->query.shape) { /* by shape */
     int i, j;
@@ -349,15 +344,13 @@ static int loadQueryParams(mapObj *map, FILE *stream)
         break;
       case 6:
         if(strncmp(buffer, "NULL", 4) != 0) {
-          map->query.item = msStrdup(buffer);
-          msStringChop(map->query.item);
+          map->query.filteritem = msStrdup(buffer);
+          msStringChop(map->query.filteritem);
         }
         break;
       case 7:
-        if(strncmp(buffer, "NULL", 4) != 0) {
-          map->query.str = msStrdup(buffer);
-          msStringChop(map->query.str);
-        }
+        if(strncmp(buffer, "NULL", 4) != 0)
+	  msLoadExpressionString(&map->query.filter, buffer); /* chop buffer */
         break;
       case 8:
         if(sscanf(buffer, "%d\n", &shapetype) != 1) goto parse_error;
@@ -372,7 +365,7 @@ static int loadQueryParams(mapObj *map, FILE *stream)
 
           if(fscanf(stream, "%d\n", &numlines) != 1) goto parse_error;
           for(i=0; i<numlines; i++) {
-            if(fscanf(stream, "%d\n", &numpoints) != 1) goto parse_error;
+            if(fscanf(stream, "%d\n", &numpoints) != 1 || numpoints<0) goto parse_error;
 
             line.numpoints = numpoints;
             line.point = (pointObj *) msSmallMalloc(line.numpoints*sizeof(pointObj));
@@ -524,6 +517,7 @@ int msQueryByIndex(mapObj *map)
 
   msInitShape(&shape);
 
+  record.resultindex = -1;
   record.shapeindex = map->query.shapeindex;
   record.tileindex = map->query.tileindex;
 
@@ -531,6 +525,17 @@ int msQueryByIndex(mapObj *map)
   if(status != MS_SUCCESS) {
     msSetError(MS_NOTFOUND, "Not valid record request.", "msQueryByIndex()");
     return(MS_FAILURE);
+  }
+
+  /*
+   * The resultindex is used to retrieve a specific item from the result cache.
+   * Usually, the row number will be used as resultindex. But when working with
+   * databases and querying a single result, the row number is typically 0 and
+   * thus useless as the index in the result cache. See #4926 #4076. Only shape
+   * files are considered to have consistent row numbers.
+   */
+  if ( !(lp->connectiontype == MS_SHAPEFILE || lp->connectiontype == MS_TILED_SHAPEFILE) ) {
+    shape.resultindex = -1;
   }
 
   if (lp->minfeaturesize > 0)
@@ -561,7 +566,7 @@ int msQueryByIndex(mapObj *map)
     msLayerClose(lp);
     return(MS_FAILURE);
   }
-
+  
   addResult(lp->resultcache, &shape);
 
   msFreeShape(&shape);
@@ -572,7 +577,7 @@ int msQueryByIndex(mapObj *map)
 
 void msRestoreOldFilter(layerObj *lp, int old_filtertype, char *old_filteritem, char *old_filterstring)
 {
-  freeExpression(&(lp->filter));
+  msFreeExpression(&(lp->filter));
   if(lp->filteritem) {
     free(lp->filteritem);
     lp->filteritem = NULL;
@@ -589,185 +594,64 @@ void msRestoreOldFilter(layerObj *lp, int old_filtertype, char *old_filteritem, 
   }
 }
 
-int msQueryByAttributes(mapObj *map)
-{
-  layerObj *lp;
-  int status;
+static char *filterTranslateToLogical(expressionObj *filter, char *filteritem) {
+  char *string = NULL;
 
-  int old_filtertype=-1;
-  char *old_filterstring=NULL, *old_filteritem=NULL;
-
-  rectObj searchrect;
-
-  shapeObj shape;
-  int paging;
-
-  int nclasses = 0;
-  int *classgroup = NULL;
-  double minfeaturesize = -1;
-
-  if(map->query.type != MS_QUERY_BY_ATTRIBUTE) {
-    msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByAttribute()");
-    return(MS_FAILURE);
-  }
-
-  if(map->query.layer < 0 || map->query.layer >= map->numlayers) {
-    msSetError(MS_MISCERR, "No query layer defined.", "msQueryByAttributes()");
-    return(MS_FAILURE);
-  }
-
-  lp = (GET_LAYER(map, map->query.layer));
-
-  /* conditions may have changed since this layer last drawn, so set
-     layer->project true to recheck projection needs (Bug #673) */
-  lp->project = MS_TRUE;
-
-  /* free any previous search results, do now in case one of the following tests fails */
-  if(lp->resultcache) {
-    if(lp->resultcache->results) free(lp->resultcache->results);
-    free(lp->resultcache);
-    lp->resultcache = NULL;
-  }
-
-  if(!msIsLayerQueryable(lp)) {
-    msSetError(MS_QUERYERR, "Requested layer has no templates defined so is not queryable.", "msQueryByAttributes()");
-    return(MS_FAILURE);
-  }
-
-  if(!map->query.str) {
-    msSetError(MS_QUERYERR, "No query expression defined.", "msQueryByAttributes()");
-    return(MS_FAILURE);
-  }
-
-  /* save any previously defined filter */
-  if(lp->filter.string) {
-    old_filtertype = lp->filter.type;
-    old_filterstring = msStrdup(lp->filter.string);
-    if(lp->filteritem)
-      old_filteritem = msStrdup(lp->filteritem);
-  }
-
-  /* apply the passed query parameters */
-  if(map->query.item && map->query.item[0] != '\0')
-    lp->filteritem = msStrdup(map->query.item);
-  else
-    lp->filteritem = NULL;
-  msLoadExpressionString(&(lp->filter), map->query.str);
-
-  msInitShape(&shape);
-
-  /* Paging could have been disabled before */
-  paging = msLayerGetPaging(lp);
-  msLayerClose(lp); /* reset */
-  status = msLayerOpen(lp);
-  if(status != MS_SUCCESS) {
-    msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
-    return(MS_FAILURE);
-  }
-  msLayerEnablePaging(lp, paging);
-
-  /* build item list, we want *all* items */
-  status = msLayerWhichItems(lp, MS_TRUE, NULL);
-  if(status != MS_SUCCESS) {
-    msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
-    return(MS_FAILURE);
-  }
-
-  /* identify candidate shapes */
-  searchrect = map->query.rect;
-#ifdef USE_PROJ
-  if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
-    msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-  else
-    lp->project = MS_FALSE;
-#endif
-
-  status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
-  if(status == MS_DONE) { /* no overlap */
-    msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
-    msLayerClose(lp);
-    msSetError(MS_NOTFOUND, "No matching record(s) found, layer and area of interest do not overlap.", "msQueryByAttributes()");
-    return(MS_FAILURE);
-  } else if(status != MS_SUCCESS) {
-    msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
-    msLayerClose(lp);
-    return(MS_FAILURE);
-  }
-
-  lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
-  MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
-  initResultCache( lp->resultcache);
-
-  nclasses = 0;
-  classgroup = NULL;
-  if (lp->classgroup && lp->numclasses > 0)
-    classgroup = msAllocateValidClassGroups(lp, &nclasses);
-
-  if (lp->minfeaturesize > 0)
-    minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
-
-  while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
-
-    /* Check if the shape size is ok to be drawn */
-    if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
-      if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
-        if( lp->debug >= MS_DEBUGLEVEL_V )
-          msDebug("msQueryByAttributes(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
-        msFreeShape(&shape);
-        continue;
-      }
-    }
-
-    shape.classindex = msShapeGetClass(lp, map, &shape, classgroup, nclasses);
-    if(!(lp->template) && ((shape.classindex == -1) || (lp->class[shape.classindex]->status == MS_OFF))) { /* not a valid shape */
-      msFreeShape(&shape);
-      continue;
-    }
-
-    if(!(lp->template) && !(lp->class[shape.classindex]->template)) { /* no valid template */
-      msFreeShape(&shape);
-      continue;
-    }
-
-#ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
-      msProjectShape(&(lp->projection), &(map->projection), &shape);
+  if(filter->type == MS_STRING && filteritem) {
+    string = strdup("'[");
+    string = msStringConcatenate(string, filteritem);
+    string = msStringConcatenate(string, "]'");
+    if(filter->flags & MS_EXP_INSENSITIVE)
+      string = msStringConcatenate(string, " =* '");
     else
-      lp->project = MS_FALSE;
-#endif
-
-    addResult(lp->resultcache, &shape);
-    msFreeShape(&shape);
-
-    if(map->query.mode == MS_QUERY_SINGLE) { /* no need to look any further */
-      status = MS_DONE;
-      break;
-    }
-
-    /* check shape count */
-    if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
-      status = MS_DONE;
-      break;
-    }
+      string = msStringConcatenate(string, " = '");
+    string = msStringConcatenate(string, filter->string);
+    string = msStringConcatenate(string, "'");
+  } else if(filter->type == MS_REGEX && filteritem) {
+    string = strdup("'[");
+    string = msStringConcatenate(string, filteritem);
+    string = msStringConcatenate(string, "]'");
+    if(filter->flags & MS_EXP_INSENSITIVE)
+      string = msStringConcatenate(string, " ~* '");
+    else
+      string = msStringConcatenate(string, " ~ '");
+    string = msStringConcatenate(string, filter->string);
+    string = msStringConcatenate(string, "'");
+  } else if(filter->type == MS_EXPRESSION) {
+    string = msStrdup(filter->string);
+  } else {
+    /* native expression, nothing we can do - sigh */
   }
 
-  if (classgroup)
-    msFree(classgroup);
+  return string;
+}
 
-  msRestoreOldFilter(lp, old_filtertype, old_filteritem, old_filterstring); /* manually reset the filter */
+static expressionObj mergeFilters(expressionObj *filter1, char *filteritem1, expressionObj *filter2, char *filteritem2) {
+  expressionObj filter;
 
-  if(status != MS_DONE) {
-    msLayerClose(lp);
-    return(MS_FAILURE);
+  char *tmpstr1=NULL;
+  char *tmpstr2=NULL;
+
+  msInitExpression(&filter);
+  filter.type = MS_EXPRESSION; /* we're building a logical expression */
+
+  tmpstr1 = filterTranslateToLogical(filter1, filteritem1);
+  if(!tmpstr1) return filter; /* should only happen if the filter was a native filter */  
+
+  tmpstr2 = filterTranslateToLogical(filter2, filteritem2);
+  if(!tmpstr2) {
+    msFree(tmpstr1);
+    return filter; /* should only happen if the filter was a native filter */
   }
 
-  /* was anything found? (if yes, don't close the layer) */
-  if(lp->resultcache && lp->resultcache->numresults > 0)
-    return(MS_SUCCESS);
+  filter.string = strdup(tmpstr1);
+  filter.string = msStringConcatenate(filter.string, " AND ");
+  filter.string = msStringConcatenate(filter.string, tmpstr2);
 
-  msLayerClose(lp);
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByAttributes()");
-  return(MS_FAILURE);
+  msFree(tmpstr1);
+  msFree(tmpstr2);
+
+  return filter;
 }
 
 /*
@@ -782,6 +666,7 @@ int msQueryByFilter(mapObj *map)
 
   char status;
 
+  char *old_filteritem=NULL;
   expressionObj old_filter;
 
   rectObj search_rect;
@@ -796,10 +681,12 @@ int msQueryByFilter(mapObj *map)
     msSetError(MS_QUERYERR, "The query is not properly defined.", "msQueryByFilter()");
     return(MS_FAILURE);
   }
-  if(!map->query.filter) { /* TODO: check filter type too */
+  if(!map->query.filter.string) {
     msSetError(MS_QUERYERR, "Filter is not set.", "msQueryByFilter()");
     return(MS_FAILURE);
   }
+
+  // fprintf(stderr, "in msQueryByFilter: filter=%s, filteritem=%s\n", map->query.filter.string, map->query.filteritem);
 
   msInitShape(&shape);
 
@@ -810,7 +697,15 @@ int msQueryByFilter(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -836,33 +731,40 @@ int msQueryByFilter(mapObj *map)
       if((lp->mingeowidth > 0) && ((map->extent.maxx - map->extent.minx) < lp->mingeowidth)) continue;
     }
 
-    initExpression(&old_filter);
-    msCopyExpression(&old_filter, &lp->filter); /* save existing filter */
-    if(msLayerSupportsCommonFilters(lp)) {
-      msCopyExpression(&lp->filter, map->query.filter); /* apply new filter */
-    }
-
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) goto query_error;
+
     /* disable driver paging */
     msLayerEnablePaging(lp, MS_FALSE);
+        
+    old_filteritem = lp->filteritem; /* cache the existing filter/filteritem */
+    msInitExpression(&old_filter);
+    msCopyExpression(&old_filter, &lp->filter);
+        
+    /*
+    ** Set the lp->filter and lp->filteritem (may need to merge). Remember filters are *always* MapServer syntax.
+    */
+    lp->filteritem = map->query.filteritem; /* re-point lp->filteritem */
+    if(old_filter.string != NULL) { /* need to merge filters to create one logical expression */
+      lp->filter = mergeFilters(&map->query.filter, map->query.filteritem, &old_filter, old_filteritem);      
+      if(!lp->filter.string) {
+	msSetError(MS_MISCERR, "Filter merge failed, able to process query.", "msQueryByFilter()");
+        goto query_error;
+      }      
+    } else {
+      msCopyExpression(&lp->filter, &map->query.filter); /* apply new filter */
+    }
 
-    /* build item list, we want *all* items */
+    /* build item list, we want *all* items, note this *also* build tokens for the layer filter */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
     if(status != MS_SUCCESS) goto query_error;
 
-    if(!msLayerSupportsCommonFilters(lp)) {
-      freeExpression(&lp->filter); /* clear existing filter */
-      status = msTokenizeExpression(map->query.filter, lp->items, &(lp->numitems));
-      if(status != MS_SUCCESS) goto query_error;
-    }
-
     search_rect = map->query.rect;
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
       msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
-    else
+    } else
       lp->project = MS_FALSE;
 #endif
 
@@ -880,24 +782,16 @@ int msQueryByFilter(mapObj *map)
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
-
     if (lp->minfeaturesize > 0)
       minfeaturesize = Pix2LayerGeoref(map, lp, lp->minfeaturesize);
 
-    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes */
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { /* step through the shapes - if necessary the filter is applied in msLayerNextShape(...) */
 
-      if(!msLayerSupportsCommonFilters(lp)) { /* we have to apply the filter here instead of within the driver */
-        if(msEvalExpression(lp, &shape, map->query.filter, -1) != MS_TRUE) { /* next shape */
-          msFreeShape(&shape);
-          continue;
-        }
-      }
-
-      /* Check if the shape size is ok to be drawn */
+       /* Check if the shape size is ok to be drawn */
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
-            msDebug("msQueryByFilter(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msDebug("msQueryByFilter(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
           msFreeShape(&shape);
           continue;
         }
@@ -921,8 +815,23 @@ int msQueryByFilter(mapObj *map)
         lp->project = MS_FALSE;
 #endif
 
-      addResult(lp->resultcache, &shape);
+      /* Should we skip this feature? */
+      if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+        --map->query.startindex;
+        msFreeShape(&shape);
+        continue;
+      }
+    
+      if( map->query.only_cache_result_count )
+        lp->resultcache->numresults ++;
+      else
+        addResult(lp->resultcache, &shape);
       msFreeShape(&shape);
+
+      if(map->query.mode == MS_QUERY_SINGLE) { /* no need to look any further */
+	status = MS_DONE;
+	break;
+      }
 
       /* check shape count */
       if(lp->maxfeatures > 0 && lp->maxfeatures == lp->resultcache->numresults) {
@@ -933,12 +842,13 @@ int msQueryByFilter(mapObj *map)
 
     if(classgroup) msFree(classgroup);
 
+    lp->filteritem = old_filteritem; /* point back to original value */
     msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
-    freeExpression(&old_filter);
+    msFreeExpression(&old_filter);
 
     if(status != MS_DONE) goto query_error;
-    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
-
+    if(!map->query.only_cache_result_count && lp->resultcache->numresults == 0) 
+      msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
 
   /* was anything found? */
@@ -951,9 +861,11 @@ int msQueryByFilter(mapObj *map)
   return MS_FAILURE;
 
 query_error:
-  msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
-  freeExpression(&old_filter);
-  msLayerClose(lp);
+  // msFree(lp->filteritem);
+  // lp->filteritem = old_filteritem;
+  // msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+  // msFreeExpression(&old_filter);
+  // msLayerClose(lp);
   return MS_FAILURE;
 }
 
@@ -966,7 +878,7 @@ int msQueryByRect(mapObj *map)
 
   char status;
   shapeObj shape, searchshape;
-  rectObj searchrect;
+  rectObj searchrect, searchrectInMapProj;
   double layer_tolerance = 0, tolerance = 0;
 
   int paging;
@@ -989,7 +901,16 @@ int msQueryByRect(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    /* Set the global maxfeatures */
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -1028,6 +949,7 @@ int msQueryByRect(mapObj *map)
       searchrect.miny -= tolerance;
       searchrect.maxy += tolerance;
     }
+    searchrectInMapProj = searchrect;
 
     msRectToPolygon(searchrect, &searchshape);
 
@@ -1043,12 +965,18 @@ int msQueryByRect(mapObj *map)
     paging = msLayerGetPaging(lp);
     msLayerClose(lp); /* reset */
     status = msLayerOpen(lp);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS) {
+      msFreeShape(&searchshape);
+      return(MS_FAILURE);
+    }
     msLayerEnablePaging(lp, paging);
 
     /* build item list, we want *all* items */
     status = msLayerWhichItems(lp, MS_TRUE, NULL);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS) {
+      msFreeShape(&searchshape);
+      return(MS_FAILURE);
+    }
 
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
@@ -1056,12 +984,14 @@ int msQueryByRect(mapObj *map)
     else
       lp->project = MS_FALSE;
 #endif
+
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);
       continue;
     } else if(status != MS_SUCCESS) {
       msLayerClose(lp);
+      msFreeShape(&searchshape);
       return(MS_FAILURE);
     }
 
@@ -1083,7 +1013,7 @@ int msQueryByRect(mapObj *map)
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
-            msDebug("msQueryByRect(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msDebug("msQueryByRect(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
           msFreeShape(&shape);
           continue;
         }
@@ -1107,7 +1037,7 @@ int msQueryByRect(mapObj *map)
         lp->project = MS_FALSE;
 #endif
 
-      if(msRectContained(&shape.bounds, &searchrect) == MS_TRUE) { /* if the whole shape is in, don't intersect */
+      if(msRectContained(&shape.bounds, &searchrectInMapProj) == MS_TRUE) { /* if the whole shape is in, don't intersect */
         status = MS_TRUE;
       } else {
         switch(shape.type) { /* make sure shape actually intersects the qrect (ADD FUNCTIONS SPECIFIC TO RECTOBJ) */
@@ -1125,8 +1055,19 @@ int msQueryByRect(mapObj *map)
         }
       }
 
-      if(status == MS_TRUE)
-        addResult(lp->resultcache, &shape);
+      if(status == MS_TRUE) {
+        /* Should we skip this feature? */
+        if (!paging && map->query.startindex > 1) {
+          --map->query.startindex;
+          msFreeShape(&shape);
+          continue;
+        }
+        if( map->query.only_cache_result_count )
+            lp->resultcache->numresults ++;
+        else
+            addResult(lp->resultcache, &shape);
+        --map->query.maxfeatures;
+      }
       msFreeShape(&shape);
 
       /* check shape count */
@@ -1134,14 +1075,19 @@ int msQueryByRect(mapObj *map)
         status = MS_DONE;
         break;
       }
+      
     } /* next shape */
 
     if (classgroup)
       msFree(classgroup);
 
-    if(status != MS_DONE) return(MS_FAILURE);
+    if(status != MS_DONE) {
+        msFreeShape(&searchshape);
+        return(MS_FAILURE);
+    }
 
-    if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+    if( !map->query.only_cache_result_count &&
+        lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
   } /* next layer */
 
   msFreeShape(&searchshape);
@@ -1214,6 +1160,14 @@ int msQueryByFeatures(mapObj *map)
     if(l == map->query.slayer) continue; /* skip the selection layer */
 
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
+
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1337,7 +1291,7 @@ int msQueryByFeatures(mapObj *map)
         if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
           if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
             if( lp->debug >= MS_DEBUGLEVEL_V )
-              msDebug("msQueryByFeature(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+              msDebug("msQueryByFeature(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
             msFreeShape(&shape);
             continue;
           }
@@ -1429,8 +1383,15 @@ int msQueryByFeatures(mapObj *map)
             break; /* should never get here as we test for selection shape type explicitly earlier */
         }
 
-        if(status == MS_TRUE)
+        if(status == MS_TRUE) {
+          /* Should we skip this feature? */
+          if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+            --map->query.startindex;
+            msFreeShape(&shape);
+            continue;
+          }
           addResult(lp->resultcache, &shape);
+        }
         msFreeShape(&shape);
 
         /* check shape count */
@@ -1507,7 +1468,15 @@ int msQueryByPoint(mapObj *map)
 
   for(l=start; l>=stop; l--) {
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
 
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
+    
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
     lp->project = MS_TRUE;
@@ -1608,7 +1577,7 @@ int msQueryByPoint(mapObj *map)
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
-            msDebug("msQueryByPoint(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msDebug("msQueryByPoint(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
           msFreeShape(&shape);
           continue;
         }
@@ -1634,6 +1603,14 @@ int msQueryByPoint(mapObj *map)
 
       d = msDistancePointToShape(&(map->query.point), &shape);
       if( d <= t ) { /* found one */
+
+        /* Should we skip this feature? */
+        if (!paging && map->query.startindex > 1) {
+          --map->query.startindex;
+          msFreeShape(&shape);
+          continue;
+        }
+
         if(map->query.mode == MS_QUERY_SINGLE) {
           lp->resultcache->numresults = 0;
           addResult(lp->resultcache, &shape);
@@ -1717,6 +1694,14 @@ int msQueryByShape(mapObj *map)
 
   for(l=start; l>=stop; l--) { /* each layer */
     lp = (GET_LAYER(map, l));
+    if (map->query.maxfeatures == 0)
+      break; /* nothing else to do */
+    else if (map->query.maxfeatures > 0)
+      lp->maxfeatures = map->query.maxfeatures;
+
+    /* using mapscript, the map->query.startindex will be unset... */
+    if (lp->startindex > 1 && map->query.startindex < 0)
+      map->query.startindex = lp->startindex;
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
@@ -1802,7 +1787,6 @@ int msQueryByShape(mapObj *map)
     initResultCache( lp->resultcache);
 
     nclasses = 0;
-    classgroup = NULL;
     if (lp->classgroup && lp->numclasses > 0)
       classgroup = msAllocateValidClassGroups(lp, &nclasses);
 
@@ -1815,7 +1799,7 @@ int msQueryByShape(mapObj *map)
       if ( (shape.type == MS_SHAPE_LINE || shape.type == MS_SHAPE_POLYGON) && (minfeaturesize > 0) ) {
         if (msShapeCheckSize(&shape, minfeaturesize) == MS_FALSE) {
           if( lp->debug >= MS_DEBUGLEVEL_V )
-            msDebug("msQueryByShape(): Skipping shape (%d) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
+            msDebug("msQueryByShape(): Skipping shape (%ld) because LAYER::MINFEATURESIZE is bigger than shape size\n", shape.index);
           msFreeShape(&shape);
           continue;
         }
@@ -1912,8 +1896,15 @@ int msQueryByShape(mapObj *map)
           break; /* should never get here as we test for selection shape type explicitly earlier */
       }
 
-      if(status == MS_TRUE)
+      if(status == MS_TRUE) {
+        /* Should we skip this feature? */
+        if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+          --map->query.startindex;
+          msFreeShape(&shape);
+          continue;
+        }
         addResult(lp->resultcache, &shape);
+      }
       msFreeShape(&shape);
 
       /* check shape count */
@@ -1923,9 +1914,14 @@ int msQueryByShape(mapObj *map)
       }
     } /* next shape */
 
-    if(status != MS_DONE) return(MS_FAILURE);
+    if(status != MS_DONE) {
+      free(classgroup);
+      return(MS_FAILURE);
+    }
 
     if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
+    free(classgroup);
+    classgroup = NULL;
   } /* next layer */
 
   /* was anything found? */

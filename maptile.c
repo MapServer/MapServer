@@ -30,6 +30,7 @@
 #include "maptile.h"
 #include "mapproject.h"
 
+#ifdef USE_TILE_API
 static void msTileResetMetatileLevel(mapObj *map)
 {
   hashTableObj *meta = &(map->web.metadata);
@@ -46,6 +47,7 @@ static void msTileResetMetatileLevel(mapObj *map)
     msInsertHashTable(meta, "tile_metatile_level", zero);
   }
 }
+#endif
 
 /************************************************************************
  *                            msTileGetGMapCoords                       *
@@ -59,6 +61,7 @@ static int msTileGetGMapCoords(const char *coordstring, int *x, int *y, int *zoo
   if( coordstring ) {
     coords = msStringSplit(coordstring, ' ', &(num_coords));
     if( num_coords != 3 ) {
+      msFreeCharArray(coords, num_coords);
       msSetError(MS_WEBERR, "Invalid number of tile coordinates (should be three).", "msTileSetup()");
       return MS_FAILURE;
     }
@@ -73,7 +76,8 @@ static int msTileGetGMapCoords(const char *coordstring, int *x, int *y, int *zoo
     *y = strtol(coords[1], NULL, 10);
   if( zoom )
     *zoom = strtol(coords[2], NULL, 10);
-
+  
+  msFreeCharArray(coords, 3);
   return MS_SUCCESS;
 }
 
@@ -119,7 +123,7 @@ static void msTileGetParams(mapObj *map, tileParams *params)
 static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *img)
 {
 
-  int width, height, mini, minj, maxi, maxj;
+  int width, mini, minj;
   int zoom = 2;
   imageObj* imgOut = NULL;
   tileParams params;
@@ -148,12 +152,9 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
   ** Initialize values for the metatile clip area.
   */
   width = img->width - 2*params.map_edge_buffer;
-  height = img->height - 2*params.map_edge_buffer;
   mini = params.map_edge_buffer;
   minj = params.map_edge_buffer;
-  maxi = img->width - params.map_edge_buffer - 1;
-  maxj = img->height - params.map_edge_buffer - 1;
-
+  
   if( msObj->TileMode == TILE_GMAP ) {
     int x, y, zoom;
 
@@ -186,7 +187,7 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
     int i = 0;
     char j = 0;
 
-    if( strlen( msObj->TileCoords ) - params.metatile_level < 0 ) {
+    if( (int)strlen( msObj->TileCoords ) - params.metatile_level < 0 ) {
       return(NULL);
     }
 
@@ -218,7 +219,10 @@ static imageObj* msTileExtractSubTile(const mapservObj *msObj, const imageObj *i
 
 
 
-  renderer->mergeRasterBuffer(imgOut,&imgBuffer,1.0,mini, minj,0, 0,params.tile_size, params.tile_size);
+  if(UNLIKELY(MS_FAILURE == renderer->mergeRasterBuffer(imgOut,&imgBuffer,1.0,mini, minj,0, 0,params.tile_size, params.tile_size))) {
+    msFreeImage(imgOut);
+    return NULL;
+  }
 
   return imgOut;
 }

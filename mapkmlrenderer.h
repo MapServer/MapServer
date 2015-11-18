@@ -31,6 +31,7 @@
 #ifndef MAPKMLRENDERER_H
 #define MAPKMLRENDERER_H
 
+#include "mapserver-config.h"
 #if defined(USE_KML)
 
 #include "mapserver.h"
@@ -76,7 +77,7 @@ protected:
   // placemark symbology
   hashTableObj  *StyleHashTable;
 
-  labelStyleObj         LabelStyle;
+  colorObj                LabelColor;
   strokeStyleObj          *LineStyle;
   int                     numLineStyle;
   colorObj    PolygonColor;
@@ -159,7 +160,7 @@ public:
   void renderLine(imageObj *img, shapeObj *p, strokeStyleObj *style);
   void renderPolygon(imageObj *img, shapeObj *p, colorObj *color);
 
-  void renderGlyphs(imageObj *img, double x, double y, labelStyleObj *style, char *text);
+  void renderGlyphs(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth);
 
   // Symbols
   void renderPixmapSymbol(imageObj *img, double x, double y, symbolObj *symbol, symbolStyleObj *style);

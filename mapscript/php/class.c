@@ -165,7 +165,7 @@ PHP_METHOD(classObj, __construct)
 PHP_METHOD(classObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_class_object *php_class;
 
@@ -181,7 +181,6 @@ PHP_METHOD(classObj, __get)
 
   IF_GET_STRING("name", php_class->class->name)
   else IF_GET_STRING("title", php_class->class->title)
-    else IF_GET_LONG("type", php_class->class->type)
       else IF_GET_LONG("status", php_class->class->status)
         else IF_GET_DOUBLE("minscaledenom", php_class->class->minscaledenom)
           else IF_GET_DOUBLE("maxscaledenom", php_class->class->maxscaledenom)
@@ -192,7 +191,7 @@ PHP_METHOD(classObj, __get)
                     else IF_GET_STRING("group", php_class->class->group)
                       else IF_GET_LONG("numstyles", php_class->class->numstyles)
                         else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_class->metadata, &php_class->class->metadata)
-                          else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_class->leader, &php_class->class->leader)
+                          else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_class->leader, php_class->class->leader)
                             else {
                               mapscript_throw_exception("Property '%s' does not exist in this object." TSRMLS_CC, property);
                             }
@@ -201,7 +200,7 @@ PHP_METHOD(classObj, __get)
 PHP_METHOD(classObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_class_object *php_class;
@@ -216,9 +215,13 @@ PHP_METHOD(classObj, __set)
 
   php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
+  /* special case for "template" which we want to set to NULL and not an empty string */
+  if(Z_TYPE_P(value)==IS_NULL && !strcmp(property,"template")) {
+    msFree(php_class->class->template);
+    php_class->class->template = NULL;
+  } else
   IF_SET_STRING("name", php_class->class->name, value)
   else IF_SET_STRING("title", php_class->class->title, value)
-    else IF_SET_LONG("type", php_class->class->type, value)
       else IF_SET_LONG("status", php_class->class->status, value)
         else IF_SET_DOUBLE("minscaledenom", php_class->class->minscaledenom, value)
           else IF_SET_DOUBLE("maxscaledenom", php_class->class->maxscaledenom, value)
@@ -333,7 +336,7 @@ PHP_METHOD(classObj, getLabel)
 PHP_METHOD(classObj, updateFromString)
 {
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   zval *zobj = getThis();
   php_class_object *php_class;
   int status = MS_FAILURE;
@@ -360,12 +363,39 @@ PHP_METHOD(classObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the class object to string. */
+PHP_METHOD(classObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_class_object *php_class;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_class = (php_class_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  classObj_convertToString(php_class->class);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int setExpression(string exression)
    Set the expression string for a class object. */
 PHP_METHOD(classObj, setExpression)
 {
   char *expression;
-  long expression_len;
+  long expression_len = 0;
   zval *zobj = getThis();
   php_class_object *php_class;
   int status = MS_FAILURE;
@@ -424,7 +454,7 @@ PHP_METHOD(classObj, getExpressionString)
 PHP_METHOD(classObj, setText)
 {
   char *text;
-  long text_len;
+  long text_len = 0;
   zval *zobj = getThis();
   php_class_object *php_class;
   php_layer_object *php_layer;
@@ -850,6 +880,7 @@ zend_function_entry class_functions[] = {
   PHP_ME(classObj, removeLabel, class_removeLabel_args, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, getLabel, class_getLabel_args, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, updateFromString, class_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(classObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, setExpression, class_setExpression_args, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, getExpressionString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(classObj, setText, class_setText_args, ZEND_ACC_PUBLIC)

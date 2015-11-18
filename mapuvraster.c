@@ -66,8 +66,6 @@ typedef struct {
 
   int refcount;
 
-  rectObj which_rect;
-
   /* query bound in force
      shapeObj *searchshape;*/
 
@@ -93,6 +91,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   int   i;
   int *itemindexes;
+  int failed=0;
 
   if (layer->numitems == 0)
     return MS_SUCCESS;
@@ -117,7 +116,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
     /* OGR style strings.  We use special attribute snames. */
     if (EQUAL(layer->items[i], MSUVRASTER_ANGLE))
       itemindexes[i] = MSUVRASTER_ANGLEINDEX;
-    if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
+    else if (EQUAL(layer->items[i], MSUVRASTER_MINUS_ANGLE))
       itemindexes[i] = MSUVRASTER_MINUSANGLEINDEX;
     else if (EQUAL(layer->items[i], MSUVRASTER_LENGTH))
       itemindexes[i] = MSUVRASTER_LENGTHINDEX;
@@ -127,17 +126,17 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
       itemindexes[i] = MSUVRASTER_UINDEX;
     else if (EQUAL(layer->items[i], MSUVRASTER_V))
       itemindexes[i] = MSUVRASTER_VINDEX;
-
-    if(itemindexes[i] == -1) {
+    else {
+      itemindexes[i] = -1;
       msSetError(MS_OGRERR,
-                 (char*)CPLSPrintf("Invalid Field name: %s",
-                                   layer->items[i]),
-                 "msUVRASTERLayerInitItemInfo()");
-      return(MS_FAILURE);
+                 "Invalid Field name: %s",
+                 "msUVRASTERLayerInitItemInfo()",
+                 layer->items[i]);
+      failed=1;
     }
   }
 
-  return(MS_SUCCESS);
+  return failed ? (MS_FAILURE) : (MS_SUCCESS);
 }
 
 
@@ -236,7 +235,7 @@ int msUVRASTERLayerClose(layerObj *layer)
   if( uvlinfo != NULL ) {
     uvlinfo->refcount--;
 
-    if( uvlinfo->refcount < 0 )
+    if( uvlinfo->refcount < 1 )
       msUVRasterLayerInfoFree( layer );
   }
   return MS_SUCCESS;
@@ -280,9 +279,11 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
   if(layer->numitems == 0)
     return(NULL);
 
-  if(!layer->iteminfo)  /* Should not happen... but just in case! */
+  if(!layer->iteminfo) { /* Should not happen... but just in case! */
     if (msUVRASTERLayerInitItemInfo(layer) != MS_SUCCESS)
       return NULL;
+    itemindexes = (int*)layer->iteminfo; /* reassign after malloc */
+  }
 
   if((values = (char **)malloc(sizeof(char *)*layer->numitems)) == NULL) {
     msSetError(MS_MEMERR, NULL, "msUVRASTERGetValues()");
@@ -325,23 +326,27 @@ static char **msUVRASTERGetValues(layerObj *layer, float *u, float *v)
     } else if (itemindexes[i] == MSUVRASTER_VINDEX) {
       snprintf(tmp, 100, "%f",*v);
       values[i] = msStrdup(tmp);
-    }
+    } else {
+      values[i] = NULL;
+      }
   }
 
   return values;
 }
 
 int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
-
 {
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   imageObj *image_tmp;
-  mapObj   map_tmp;
+  outputFormatObj *outputformat = NULL;
+  mapObj *map_tmp;
+  double map_cellsize;
   unsigned int spacing;
   int width, height, u_src_off, v_src_off, i, x, y;
-  char   **alteredProcessing = NULL;
+  char   **alteredProcessing = NULL, *saved_layer_mask;
   char **savedProcessing = NULL;
 
+  
   if (layer->debug)
     msDebug("Entering msUVRASTERLayerWhichShapes().\n");
 
@@ -360,10 +365,20 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
                 "msUVRASTERLayerWhichShapes()" );
     return MS_FAILURE;
   }
+  
+  /*
+  ** Allocate mapObj structure
+  */
+  map_tmp = (mapObj *)msSmallCalloc(sizeof(mapObj),1);
+  if(initMap(map_tmp) == -1) { /* initialize this map */
+    msFree(map_tmp);
+    return(MS_FAILURE);
+  }
+
   /* -------------------------------------------------------------------- */
-  /*      Determine desired spacing.  Default to 30 if not otherwise set  */
+  /*      Determine desired spacing.  Default to 32 if not otherwise set  */
   /* -------------------------------------------------------------------- */
-  spacing = 30;
+  spacing = 32;
   if( CSLFetchNameValue( layer->processing, "UV_SPACING" ) != NULL ) {
     spacing =
       atoi(CSLFetchNameValue( layer->processing, "UV_SPACING" ));
@@ -371,57 +386,61 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   width = (int)ceil(layer->map->width/spacing);
   height = (int)ceil(layer->map->height/spacing);
-  map_tmp.cellsize = layer->map->cellsize*spacing;
-
+  map_cellsize = MS_MAX(MS_CELLSIZE(rect.minx, rect.maxx,layer->map->width),
+                        MS_CELLSIZE(rect.miny,rect.maxy,layer->map->height));
+  map_tmp->cellsize = map_cellsize*spacing;
+  
   if (layer->debug)
     msDebug("msUVRASTERLayerWhichShapes(): width: %d, height: %d, cellsize: %g\n",
-            width, height, map_tmp.cellsize);
+            width, height, map_tmp->cellsize);
 
   /* Initialize our dummy map */
-  MS_INIT_COLOR(map_tmp.imagecolor, 255,255,255,255);
-  map_tmp.resolution = layer->map->resolution;
-  map_tmp.defresolution = layer->map->defresolution;
-  map_tmp.outputformat = (outputFormatObj *) msSmallCalloc(1,sizeof(outputFormatObj));
-  uvlinfo->band_count = map_tmp.outputformat->bands = 2;
-  map_tmp.outputformat->name = NULL;
-  map_tmp.outputformat->driver = NULL;
-  map_tmp.outputformat->refcount = 0;
-  map_tmp.outputformat->vtable = NULL;
-  map_tmp.outputformat->device = NULL;
-  map_tmp.outputformat->renderer = MS_RENDER_WITH_RAWDATA;
-  map_tmp.outputformat->imagemode = MS_IMAGEMODE_FLOAT32;
+  MS_INIT_COLOR(map_tmp->imagecolor, 255,255,255,255);
+  map_tmp->resolution = layer->map->resolution;
+  map_tmp->defresolution = layer->map->defresolution;
 
-  map_tmp.mappath = layer->map->mappath;
-  map_tmp.shapepath = layer->map->shapepath;
-  map_tmp.extent.minx = layer->map->extent.minx-(0.5*layer->map->cellsize)+(0.5*map_tmp.cellsize);
-  map_tmp.extent.miny = layer->map->extent.miny-(0.5*layer->map->cellsize)+(0.5*map_tmp.cellsize);
-  map_tmp.extent.maxx = map_tmp.extent.minx+((width-1)*map_tmp.cellsize);
-  map_tmp.extent.maxy = map_tmp.extent.miny+((height-1)*map_tmp.cellsize);
-  map_tmp.gt.rotation_angle = 0.0;
+  outputformat = (outputFormatObj *) msSmallCalloc(1,sizeof(outputFormatObj));
+  outputformat->bands = uvlinfo->band_count = 2;
+  outputformat->name = NULL;
+  outputformat->driver = NULL;
+  outputformat->refcount = 0;
+  outputformat->vtable = NULL;
+  outputformat->device = NULL;
+  outputformat->renderer = MS_RENDER_WITH_RAWDATA;
+  outputformat->imagemode = MS_IMAGEMODE_FLOAT32;
+  msAppendOutputFormat(map_tmp, outputformat);
+  
+  msCopyHashTable(&map_tmp->configoptions, &layer->map->configoptions);
+  map_tmp->mappath = msStrdup(layer->map->mappath);
+  map_tmp->shapepath = msStrdup(layer->map->shapepath);
+  map_tmp->extent.minx = rect.minx-(0.5*map_cellsize)+(0.5*map_tmp->cellsize);
+  map_tmp->extent.miny = rect.miny-(0.5*map_cellsize)+(0.5*map_tmp->cellsize);
+  map_tmp->extent.maxx = map_tmp->extent.minx+((width-1)*map_tmp->cellsize);
+  map_tmp->extent.maxy = map_tmp->extent.miny+((height-1)*map_tmp->cellsize);
+  map_tmp->gt.rotation_angle = 0.0;
 
-  msInitProjection(&map_tmp.projection);
-  msCopyProjection(&map_tmp.projection, &layer->map->projection);
+   msCopyProjection(&map_tmp->projection, &layer->projection);
 
   if (layer->debug == 5)
-    msDebug("msUVRASTERLayerWhichShapes(): extent: %g %d %g %g\n",
-            map_tmp.extent.minx, map_tmp.extent.miny,
-            map_tmp.extent.maxx, map_tmp.extent.maxy);
+    msDebug("msUVRASTERLayerWhichShapes(): extent: %g %g %g %g\n",
+            map_tmp->extent.minx, map_tmp->extent.miny,
+            map_tmp->extent.maxx, map_tmp->extent.maxy);
 
   /* important to use that function, to compute map
      geotransform, used by the resampling*/
-  msMapSetSize(&map_tmp, width, height);
+   msMapSetSize(map_tmp, width, height);
 
   if (layer->debug == 5)
     msDebug("msUVRASTERLayerWhichShapes(): geotransform: %g %g %g %g %g %g\n",
-            map_tmp.gt.geotransform[0], map_tmp.gt.geotransform[1],
-            map_tmp.gt.geotransform[2], map_tmp.gt.geotransform[3],
-            map_tmp.gt.geotransform[4], map_tmp.gt.geotransform[5]);
+            map_tmp->gt.geotransform[0], map_tmp->gt.geotransform[1],
+            map_tmp->gt.geotransform[2], map_tmp->gt.geotransform[3],
+            map_tmp->gt.geotransform[4], map_tmp->gt.geotransform[5]);
 
-  uvlinfo->extent = map_tmp.extent;
+  uvlinfo->extent = map_tmp->extent;
 
-  image_tmp = msImageCreate(width, height, map_tmp.outputformat,
-                            NULL, NULL, map_tmp.resolution, map_tmp.defresolution,
-                            &(map_tmp.imagecolor));
+  image_tmp = msImageCreate(width, height, map_tmp->outputformatlist[0],
+                            NULL, NULL, map_tmp->resolution, map_tmp->defresolution,
+                            &(map_tmp->imagecolor));
 
   /* Default set to AVERAGE resampling */
   if( CSLFetchNameValue( layer->processing, "RESAMPLE" ) == NULL ) {
@@ -433,14 +452,33 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     layer->processing = alteredProcessing;
   }
 
-  if (msDrawRasterLayerLow(&map_tmp, layer, image_tmp, NULL ) == MS_FAILURE) {
-    msSetError(MS_MISCERR, "Unable to draw raster data.", NULL, "msUVRASTERLayerWhichShapes()" );
+  /* disable masking at this level: we don't want to apply the mask at the raster level,
+   * it will be applied with the correct cellsize and image size in the vector rendering
+   * phase.
+   */
+  saved_layer_mask = layer->mask;
+  layer->mask = NULL;
+  if (msDrawRasterLayerLow(map_tmp, layer, image_tmp, NULL ) == MS_FAILURE) {
+    msSetError(MS_MISCERR, "Unable to draw raster data.", "msUVRASTERLayerWhichShapes()");
+    layer->mask = saved_layer_mask;
+
+    if (alteredProcessing != NULL) {
+      layer->processing = savedProcessing;
+      CSLDestroy(alteredProcessing);
+    }
+    msFreeMap(map_tmp);
+    msFreeImage(image_tmp);
     return MS_FAILURE;
   }
 
+  /* restore layer mask */
+  layer->mask = saved_layer_mask;
+
   /* restore the saved processing */
-  if (alteredProcessing != NULL)
+  if (alteredProcessing != NULL) {
     layer->processing = savedProcessing;
+    CSLDestroy(alteredProcessing);
+  }
 
   /* free old query arrays */
   if (uvlinfo->u) {
@@ -451,7 +489,7 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   if (uvlinfo->v) {
-    for (i=0; i<uvlinfo->height; ++i) {
+    for (i=0; i<uvlinfo->width; ++i) {
       free(uvlinfo->v[i]);
     }
     free(uvlinfo->v);
@@ -483,8 +521,8 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   msFreeImage(image_tmp); /* we do not need the imageObj anymore */
+  msFreeMap(map_tmp);
 
-  uvlinfo->which_rect = map_tmp.extent;
   uvlinfo->next_shape = 0;
 
   return MS_SUCCESS;
@@ -495,7 +533,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   uvRasterLayerInfo *uvlinfo = (uvRasterLayerInfo *) layer->layerinfo;
   lineObj line ;
   pointObj point;
-  int i, j, k, x, y;
+  int i, j, k, x=0, y=0;
   long shapeindex = record->shapeindex;
 
   msFreeShape(shape);
@@ -503,7 +541,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 
   if( shapeindex < 0 || shapeindex >= uvlinfo->query_results ) {
     msSetError(MS_MISCERR,
-               "Out of range shape index requested.  Requested %d\n"
+               "Out of range shape index requested.  Requested %ld\n"
                "but only %d shapes available.",
                "msUVRASTERLayerGetShape()",
                shapeindex, uvlinfo->query_results );
@@ -524,7 +562,7 @@ int msUVRASTERLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   point.y = Pix2Georef(y, 0, uvlinfo->height-1,
                        uvlinfo->extent.miny, uvlinfo->extent.maxy, MS_TRUE);
   if (layer->debug == 5)
-    msDebug("msUVRASTERLayerWhichShapes(): shapeindex: %d, x: %g, y: %g\n",
+    msDebug("msUVRASTERLayerWhichShapes(): shapeindex: %ld, x: %g, y: %g\n",
             shapeindex, point.x, point.y);
 
 #ifdef USE_POINT_Z_M
@@ -727,7 +765,7 @@ msUVRASTERLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerGetExtent = msUVRASTERLayerGetExtent;
   /* layer->vtable->LayerGetAutoStyle, use default */
   /* layer->vtable->LayerApplyFilterToLayer, use default */
-  layer->vtable->LayerCloseConnection = msUVRASTERLayerClose;
+  /* layer->vtable->LayerCloseConnection = msUVRASTERLayerClose; */
   /* we use backtics for proper tileindex shapefile functioning */
   layer->vtable->LayerSetTimeFilter = msUVRASTERLayerSetTimeFilter;
   /* layer->vtable->LayerCreateItems, use default */

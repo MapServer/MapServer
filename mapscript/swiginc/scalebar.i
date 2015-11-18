@@ -34,4 +34,10 @@
   {
     return msUpdateScalebarFromString(self, snippet, MS_FALSE);
   }
+  
+  %newobject convertToString;
+  char* convertToString()
+  {
+    return msWriteScalebarToString(self);
+  }
 }

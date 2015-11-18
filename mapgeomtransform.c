@@ -35,6 +35,11 @@ extern int yyparse(parseObj *p);
 void msStyleSetGeomTransform(styleObj *s, char *transform)
 {
   msFree(s->_geomtransform.string);
+  if (!transform) {
+    s->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+    s->_geomtransform.string = NULL;
+    return;
+  }
   s->_geomtransform.string = msStrdup(transform);
   if(!strncasecmp("start",transform,5)) {
     s->_geomtransform.type = MS_GEOMTRANSFORM_START;
@@ -91,10 +96,10 @@ double calcMidAngle(pointObj *p1, pointObj *p2, pointObj *p3)
  *  - transform the original shapeobj
  *  - use the styleObj to render the transformed shapeobj
  */
-int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor)
+int msDrawTransformedShape(mapObj *map, imageObj *image, shapeObj *shape, styleObj *style, double scalefactor)
 {
   int type = style->_geomtransform.type;
-  int i,j;
+  int i,j,status = MS_SUCCESS;
   switch(type) {
     case MS_GEOMTRANSFORM_END: /*render point on last vertex only*/
       for(j=0; j<shape->numlines; j++) {
@@ -105,7 +110,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
         if(style->autoangle==MS_TRUE && line->numpoints>1) {
           style->angle = calcOrientation(&(line->point[line->numpoints-2]),p);
         }
-        msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
+        status = msDrawMarkerSymbol(map,image,p,style,scalefactor);
       }
       break;
     case MS_GEOMTRANSFORM_START: /*render point on first vertex only*/
@@ -118,7 +123,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
         if(style->autoangle==MS_TRUE && line->numpoints>1) {
           style->angle = calcOrientation(p,&(line->point[1]));
         }
-        msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
+        status = msDrawMarkerSymbol(map,image,p,style,scalefactor);
       }
       break;
     case MS_GEOMTRANSFORM_VERTICES:
@@ -132,7 +137,7 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
           if(style->autoangle==MS_TRUE) {
             style->angle = calcMidAngle(&(line->point[i-1]),&(line->point[i]),&(line->point[i+1]));
           }
-          msDrawMarkerSymbol(symbolset,image,p,style,scalefactor);
+          status = msDrawMarkerSymbol(map,image,p,style,scalefactor);
         }
       }
       break;
@@ -157,14 +162,14 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
                                           (shape->bounds.miny < -padding) ? -padding : shape->bounds.miny;
       bbox_points[1].y=bbox_points[2].y =
                          (shape->bounds.maxy > image->height+padding) ? image->height+padding : shape->bounds.maxy;
-      msDrawShadeSymbol(symbolset, image, &bbox, style, scalefactor);
+      status = msDrawShadeSymbol(map, image, &bbox, style, scalefactor);
     }
     break;
     case MS_GEOMTRANSFORM_CENTROID: {
       double unused; /*used by centroid function*/
       pointObj centroid;
       if(MS_SUCCESS == msGetPolygonCentroid(shape,&centroid,&unused,&unused)) {
-        msDrawMarkerSymbol(symbolset,image,&centroid,style,scalefactor);
+        status = msDrawMarkerSymbol(map,image,&centroid,style,scalefactor);
       }
     }
     break;
@@ -183,13 +188,20 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
         msSetError(MS_PARSEERR, "Failed to process shape expression: %s", "msDrawTransformedShape", style->_geomtransform.string);
         return MS_FAILURE;
       }
-
       tmpshp = p.result.shpval;
 
-      /* TODO: check resulting shape type and draw accordingly */
-      msDrawShadeSymbol(symbolset, image, tmpshp, style, scalefactor);
+      switch (tmpshp->type) {
+        case MS_SHAPE_POINT:
+        case MS_SHAPE_POLYGON:        
+          status = msDrawShadeSymbol(map, image, tmpshp, style, scalefactor);
+          break;
+        case MS_SHAPE_LINE:
+          status = msDrawLineSymbol(map, image, tmpshp, style, scalefactor);
+          break;
+      }
 
       msFreeShape(tmpshp);
+      msFree(tmpshp);
     }
     break;
     case MS_GEOMTRANSFORM_LABELPOINT:
@@ -199,5 +211,75 @@ int msDrawTransformedShape(mapObj *map, symbolSetObj *symbolset, imageObj *image
       msSetError(MS_MISCERR, "unknown geomtransform", "msDrawTransformedShape()");
       return MS_FAILURE;
   }
+  return status;
+}
+
+/*
+ * RFC89 implementation:
+ *  - transform directly the shapeobj
+ */
+int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
+{
+  int i;
+  expressionObj *e =  &layer->_geomtransform;  
+
+#ifdef USE_V8_MAPSCRIPT
+  if (!map->v8context) {
+    msV8CreateContext(map);
+    if (!map->v8context)
+    {
+      msSetError(MS_V8ERR, "Unable to create v8 context.", "msGeomTransformShape()");
+      return MS_FAILURE;
+    }
+  }
+
+  msV8ContextSetLayer(map, layer);
+#endif
+ 
+  switch(e->type) {
+    case MS_GEOMTRANSFORM_EXPRESSION: {
+      int status;
+      shapeObj *tmpshp;
+      parseObj p;
+
+      p.shape = shape; /* set a few parser globals (hence the lock) */
+      p.expr = e;
+      p.expr->curtoken = p.expr->tokens; /* reset */
+      p.type = MS_PARSE_TYPE_SHAPE;
+      p.dblval = map->cellsize * (msInchesPerUnit(map->units,0)/msInchesPerUnit(layer->units,0));
+      p.dblval2 = 0;
+      /* data_cellsize is only set with contour layer */
+      if (layer->connectiontype == MS_CONTOUR)
+      {
+        char *value = msLookupHashTable(&layer->metadata, "__data_cellsize__");
+        if (value)
+          p.dblval2 = atof(value);
+      }
+          
+      status = yyparse(&p);
+      if (status != 0) {
+        msSetError(MS_PARSEERR, "Failed to process shape expression: %s", "msGeomTransformShape()", e->string);
+        return MS_FAILURE;
+      }
+      
+      tmpshp = p.result.shpval;
+
+      for (i= 0; i < shape->numlines; i++)
+        free(shape->line[i].point);
+      shape->numlines = 0;
+      if (shape->line) free(shape->line);
+      
+      for(i=0; i<tmpshp->numlines; i++)
+        msAddLine(shape, &(tmpshp->line[i])); /* copy each line */
+
+      msFreeShape(tmpshp);
+      msFree(tmpshp);
+    }
+    break;
+    default:
+      msSetError(MS_MISCERR, "unknown geomtransform", "msGeomTransformShape()");
+      return MS_FAILURE;
+  }
+  
   return MS_SUCCESS;
 }

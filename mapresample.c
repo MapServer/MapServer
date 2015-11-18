@@ -38,6 +38,8 @@
 #  define MAX(a,b)      ((a>b) ? a : b)
 #endif
 
+#define SKIP_MASK(x,y) (mask_rb && !*(mask_rb->data.rgba.a+(y)*mask_rb->data.rgba.row_step+(x)*mask_rb->data.rgba.pixel_step))
+
 /************************************************************************/
 /*                          InvGeoTransform()                           */
 /*                                                                      */
@@ -86,7 +88,7 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                           imageObj *psDstImage, rasterBufferObj *dst_rb,
                           int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
-                          int debug )
+                          int debug, rasterBufferObj *mask_rb )
 
 {
   double  *x, *y;
@@ -97,9 +99,7 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   int   nSrcXSize = psSrcImage->width;
   int   nSrcYSize = psSrcImage->height;
   int   nFailedPoints = 0, nSetPoints = 0;
-#ifndef USE_GD
-  assert(!MS_RENDERER_PLUGIN(psSrcImage->format) || src_rb->type != MS_BUFFER_GD);
-#endif
+  assert(!MS_RENDERER_PLUGIN(psSrcImage->format) || src_rb->type == MS_BUFFER_BYTE_RGBA);
 
 
   x = (double *) msSmallMalloc( sizeof(double) * nDstXSize );
@@ -116,7 +116,8 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
     for( nDstX = 0; nDstX < nDstXSize; nDstX++ ) {
       int   nSrcX, nSrcY;
-      int   nValue = 0;
+      if(SKIP_MASK(nDstX,nDstY))
+        continue;
 
       if( !panSuccess[nDstX] ) {
         nFailedPoints++;
@@ -138,59 +139,47 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       }
 
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
-#ifdef USE_GD
-        if(src_rb->type == MS_BUFFER_GD) {
-          assert(!gdImageTrueColor(src_rb->data.gd_img));
-          nValue = panCMap[src_rb->data.gd_img->pixels[nSrcY][nSrcX]];
+        int src_rb_off;
+        rgbaArrayObj *src,*dst;
+        assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
+        src = &src_rb->data.rgba;
+        dst = &dst_rb->data.rgba;
+        assert( src_rb && dst_rb );
+        src_rb_off = nSrcX * src->pixel_step
+                      + nSrcY * src->row_step;
 
-          if( nValue == -1 )
-            continue;
+        if( src->a == NULL || src->a[src_rb_off] == 255 ) {
+          int dst_rb_off;
+
+          dst_rb_off = nDstX * dst->pixel_step
+                        + nDstY * dst->row_step;
 
           nSetPoints++;
-          dst_rb->data.gd_img->pixels[nDstY][nDstX] = nValue;
 
-        } else
-#endif
-          if( src_rb->type == MS_BUFFER_BYTE_RGBA ) {
-            int src_rb_off;
-            rgbaArrayObj *src = &src_rb->data.rgba, *dst = &dst_rb->data.rgba;
-            assert( src_rb && dst_rb );
-            src_rb_off = nSrcX * src->pixel_step
-                         + nSrcY * src->row_step;
+          dst->r[dst_rb_off] = src->r[src_rb_off];
+          dst->g[dst_rb_off] = src->g[src_rb_off];
+          dst->b[dst_rb_off] = src->b[src_rb_off];
+          if( dst->a )
+            dst->a[dst_rb_off] = 255;
+        } else if( src->a[src_rb_off] != 0 ) {
+          int dst_rb_off;
 
-            if( src->a == NULL || src->a[src_rb_off] == 255 ) {
-              int dst_rb_off;
+          dst_rb_off = nDstX * dst->pixel_step
+                        + nDstY * dst->row_step;
 
-              dst_rb_off = nDstX * dst->pixel_step
-                           + nDstY * dst->row_step;
+          nSetPoints++;
 
-              nSetPoints++;
+          /* actual alpha blending is required */
+          msAlphaBlendPM( src->r[src_rb_off],
+                          src->g[src_rb_off],
+                          src->b[src_rb_off],
+                          src->a[src_rb_off],
+                          dst->r + dst_rb_off,
+                          dst->g + dst_rb_off,
+                          dst->b + dst_rb_off,
+                          dst->a ? dst->a + dst_rb_off : NULL  );
 
-              dst->r[dst_rb_off] = src->r[src_rb_off];
-              dst->g[dst_rb_off] = src->g[src_rb_off];
-              dst->b[dst_rb_off] = src->b[src_rb_off];
-              if( dst->a )
-                dst->a[dst_rb_off] = 255;
-            } else if( src->a[src_rb_off] != 0 ) {
-              int dst_rb_off;
-
-              dst_rb_off = nDstX * dst->pixel_step
-                           + nDstY * dst->row_step;
-
-              nSetPoints++;
-
-              /* actual alpha blending is required */
-              msAlphaBlendPM( src->r[src_rb_off],
-                              src->g[src_rb_off],
-                              src->b[src_rb_off],
-                              src->a[src_rb_off],
-                              dst->r + dst_rb_off,
-                              dst->g + dst_rb_off,
-                              dst->b + dst_rb_off,
-                              dst->a ? dst->a + dst_rb_off : NULL  );
-
-            }
-          }
+        }
       } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
         int band, src_off, dst_off;
 
@@ -229,18 +218,15 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess );
   free( x );
   free( y );
+  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
   /* -------------------------------------------------------------------- */
   if( nFailedPoints > 0 && debug ) {
-    char  szMsg[256];
-
-    sprintf( szMsg,
-             "msNearestRasterResampler: "
+    msDebug( "msNearestRasterResampler: "
              "%d failed to transform, %d actually set.\n",
              nFailedPoints, nSetPoints );
-    msDebug( szMsg );
   }
 
   return 0;
@@ -256,35 +242,22 @@ static void msSourceSample( imageObj *psSrcImage, rasterBufferObj *rb,
 
 {
   if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
-    assert(rb);
-#ifdef USE_GD
-    if(rb->type == MS_BUFFER_GD) {
-      assert(!gdImageTrueColor(rb->data.gd_img) );
-      padfPixelSum[0] += (dfWeight * rb->data.gd_img->pixels[iSrcY][iSrcX]);
-      *pdfWeightSum += dfWeight;
-    } else
-#else
-    assert(rb->type == MS_BUFFER_BYTE_RGBA);
-#endif
-#ifdef USE_GD
-      if(rb->type == MS_BUFFER_BYTE_RGBA) {
-#endif
-        rgbaArrayObj *rgba = &(rb->data.rgba);
-        int rb_off = iSrcX * rgba->pixel_step + iSrcY * rgba->row_step;
+    rgbaArrayObj *rgba;
+    int rb_off;
+    assert(rb && rb->type == MS_BUFFER_BYTE_RGBA);
+    rgba = &(rb->data.rgba);
+    rb_off = iSrcX * rgba->pixel_step + iSrcY * rgba->row_step;
 
-        if( rgba->a == NULL || rgba->a[rb_off] > 1 ) {
-          padfPixelSum[0] += rgba->r[rb_off] * dfWeight;
-          padfPixelSum[1] += rgba->g[rb_off] * dfWeight;
-          padfPixelSum[2] += rgba->b[rb_off] * dfWeight;
+    if( rgba->a == NULL || rgba->a[rb_off] > 1 ) {
+      padfPixelSum[0] += rgba->r[rb_off] * dfWeight;
+      padfPixelSum[1] += rgba->g[rb_off] * dfWeight;
+      padfPixelSum[2] += rgba->b[rb_off] * dfWeight;
 
-          if( rgba->a == NULL )
-            *pdfWeightSum += dfWeight;
-          else
-            *pdfWeightSum += dfWeight * (rgba->a[rb_off] / 255.0);
-        }
-#ifdef USE_GD
-      }
-#endif
+      if( rgba->a == NULL )
+        *pdfWeightSum += dfWeight;
+      else
+        *pdfWeightSum += dfWeight * (rgba->a[rb_off] / 255.0);
+    }
   } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
     int band;
     int src_off;
@@ -334,7 +307,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                            imageObj *psDstImage, rasterBufferObj *dst_rb,
                            int *panCMap,
                            SimpleTransformer pfnTransform, void *pCBData,
-                           int debug )
+                           int debug, rasterBufferObj *mask_rb )
 
 {
   double  *x, *y;
@@ -367,6 +340,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     for( nDstX = 0; nDstX < nDstXSize; nDstX++ ) {
       int   nSrcX, nSrcY, nSrcX2, nSrcY2;
       double      dfRatioX2, dfRatioY2, dfWeightSum = 0.0;
+      if(SKIP_MASK(nDstX,nDstY)) continue;
 
       if( !panSuccess[nDstX] ) {
         nFailedPoints++;
@@ -421,54 +395,35 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
       if( dfWeightSum == 0.0 )
         continue;
 
-      for( i = 0; i < bandCount; i++ )
-        padfPixelSum[i] /= dfWeightSum;
-
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
         assert(src_rb && dst_rb);
-#ifdef USE_GD
-        if(src_rb->type == MS_BUFFER_GD) {
-          int nResult;
-          assert( !gdImageTrueColor(src_rb->data.gd_img) &&  !gdImageTrueColor(dst_rb->data.gd_img));
-          nResult = panCMap[(int) padfPixelSum[0]];
-          if( nResult != -1 ) {
-            nSetPoints++;
-            dst_rb->data.gd_img->pixels[nDstY][nDstX] = nResult;
-          }
-        } else
-#endif
-#ifdef USE_GD
-          if( src_rb->type == MS_BUFFER_BYTE_RGBA ) {
-#else
-          assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
-#endif
-            int dst_rb_off;
-            assert( src_rb->type == dst_rb->type );
+        assert( src_rb->type == MS_BUFFER_BYTE_RGBA );
+        assert( src_rb->type == dst_rb->type );
 
-            dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
 
-            nSetPoints++;
+        nSetPoints++;
 
-            if( dfWeightSum > 0.001 ) {
-              unsigned char red, green, blue, alpha;
+        if( dfWeightSum > 0.001 ) {
+          int dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
+          unsigned char red, green, blue, alpha;
 
-              red   = (unsigned char) MAX(0,MIN(255,padfPixelSum[0]));
-              green = (unsigned char) MAX(0,MIN(255,padfPixelSum[1]));
-              blue  = (unsigned char) MAX(0,MIN(255,padfPixelSum[2]));
-              alpha = (unsigned char)MAX(0,MIN(255,255.5*dfWeightSum));
+          red   = (unsigned char) MAX(0,MIN(255,padfPixelSum[0]));
+          green = (unsigned char) MAX(0,MIN(255,padfPixelSum[1]));
+          blue  = (unsigned char) MAX(0,MIN(255,padfPixelSum[2]));
+          alpha = (unsigned char)MAX(0,MIN(255,255.5*dfWeightSum));
 
-              msAlphaBlendPM( red, green, blue, alpha,
-                              dst_rb->data.rgba.r + dst_rb_off,
-                              dst_rb->data.rgba.g + dst_rb_off,
-                              dst_rb->data.rgba.b + dst_rb_off,
-                              (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
-            }
-#ifdef USE_GD
-          }
-#endif
+          msAlphaBlendPM( red, green, blue, alpha,
+                          dst_rb->data.rgba.r + dst_rb_off,
+                          dst_rb->data.rgba.g + dst_rb_off,
+                          dst_rb->data.rgba.b + dst_rb_off,
+                          (dst_rb->data.rgba.a == NULL) ? NULL : dst_rb->data.rgba.a + dst_rb_off );
+        }
       } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
         int band;
         int dst_off = nDstX + nDstY * psDstImage->width;
+
+        for( i = 0; i < bandCount; i++ )
+            padfPixelSum[i] /= dfWeightSum;
 
         MS_SET_BIT(psDstImage->img_mask,dst_off);
 
@@ -494,19 +449,16 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess );
   free( x );
   free( y );
+  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
   /* -------------------------------------------------------------------- */
   if( nFailedPoints > 0 && debug )
   {
-    char  szMsg[256];
-
-    sprintf( szMsg,
-             "msBilinearRasterResampler: "
+    msDebug( "msBilinearRasterResampler: "
              "%d failed to transform, %d actually set.\n",
              nFailedPoints, nSetPoints );
-    msDebug( szMsg );
   }
 
   return 0;
@@ -574,7 +526,7 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
                           imageObj *psDstImage, rasterBufferObj *dst_rb,
                           int *panCMap,
                           SimpleTransformer pfnTransform, void *pCBData,
-                          int debug )
+                          int debug, rasterBufferObj *mask_rb )
 
 {
   double  *x1, *y1, *x2, *y2;
@@ -612,6 +564,7 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     for( nDstX = 0; nDstX < nDstXSize; nDstX++ ) {
       double  dfXMin, dfYMin, dfXMax, dfYMax;
       double  dfAlpha01;
+      if(SKIP_MASK(nDstX,nDstY)) continue;
 
       /* Do not generate a pixel unless all four corners transformed */
       if( !panSuccess1[nDstX] || !panSuccess1[nDstX+1]
@@ -643,45 +596,26 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
 
       if( MS_RENDERER_PLUGIN(psSrcImage->format) ) {
         assert(dst_rb && src_rb);
-#ifdef USE_GD
-        if(dst_rb->type == MS_BUFFER_GD) {
-          int nResult = panCMap[(int) padfPixelSum[0]];
-          assert( !gdImageTrueColor(dst_rb->data.gd_img) );
-          if( nResult != -1 ) {
-            nSetPoints++;
-            dst_rb->data.gd_img->pixels[nDstY][nDstX] = nResult;
-          }
-        } else
-#endif
-#ifdef USE_GD
-          if( dst_rb->type == MS_BUFFER_BYTE_RGBA ) {
-#else
-          assert( dst_rb->type == MS_BUFFER_BYTE_RGBA );
-#endif
+        assert( dst_rb->type == MS_BUFFER_BYTE_RGBA );
+        assert( src_rb->type == dst_rb ->type );
 
+        nSetPoints++;
 
-            assert( src_rb->type == dst_rb ->type );
+        if( dfAlpha01 > 0 ) {
+          unsigned char red, green, blue, alpha;
 
-            nSetPoints++;
+          red   = (unsigned char)
+                  MAX(0,MIN(255,padfPixelSum[0]+0.5));
+          green = (unsigned char)
+                  MAX(0,MIN(255,padfPixelSum[1]+0.5));
+          blue  = (unsigned char)
+                  MAX(0,MIN(255,padfPixelSum[2]+0.5));
+          alpha = (unsigned char)
+                  MAX(0,MIN(255,255*dfAlpha01+0.5));
 
-            if( dfAlpha01 > 0 ) {
-              unsigned char red, green, blue, alpha;
-
-              red   = (unsigned char)
-                      MAX(0,MIN(255,padfPixelSum[0]+0.5));
-              green = (unsigned char)
-                      MAX(0,MIN(255,padfPixelSum[1]+0.5));
-              blue  = (unsigned char)
-                      MAX(0,MIN(255,padfPixelSum[2]+0.5));
-              alpha = (unsigned char)
-                      MAX(0,MIN(255,255*dfAlpha01+0.5));
-
-              RB_SET_PIXEL(dst_rb,nDstX,nDstY,
-                           red, green, blue, alpha );
-            }
-#ifdef USE_GD
-          }
-#endif
+          RB_MIX_PIXEL(dst_rb,nDstX,nDstY,
+                       red, green, blue, alpha );
+        }
       } else if( MS_RENDERER_RAWDATA(psSrcImage->format) ) {
         int band;
         int dst_off = nDstX + nDstY * psDstImage->width;
@@ -713,19 +647,16 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   free( panSuccess2 );
   free( x2 );
   free( y2 );
+  msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
   /*      Some debugging output.                                          */
   /* -------------------------------------------------------------------- */
   if( nFailedPoints > 0 && debug )
   {
-    char  szMsg[256];
-
-    sprintf( szMsg,
-             "msAverageRasterResampler: "
+    msDebug( "msAverageRasterResampler: "
              "%d failed to transform, %d actually set.\n",
              nFailedPoints, nSetPoints );
-    msDebug( szMsg );
   }
 
   return 0;
@@ -785,8 +716,10 @@ void *msInitProjTransformer( projectionObj *psSrc,
     psPTInfo->bSrcIsGeographic = MS_FALSE;
 
   if( !InvGeoTransform(padfSrcGeoTransform,
-                       psPTInfo->adfInvSrcGeoTransform) )
+                       psPTInfo->adfInvSrcGeoTransform) ) {
+    free(psPTInfo);
     return NULL;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Record destination image information.                           */
@@ -1251,7 +1184,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   char       **papszAlteredProcessing = NULL;
   int         nLoadImgXSize, nLoadImgYSize;
   double      dfOversampleRatio;
-  rasterBufferObj src_rb, *psrc_rb = NULL;
+  rasterBufferObj src_rb, *psrc_rb = NULL, *mask_rb = NULL;
+  int         bAddPixelMargin = MS_TRUE;
 
 
   const char *resampleMode = CSLFetchNameValue( layer->processing,
@@ -1259,6 +1193,23 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 
   if( resampleMode == NULL )
     resampleMode = "NEAREST";
+  
+  if(layer->mask) {
+    int ret, maskLayerIdx;
+    layerObj *maskLayer;
+    maskLayerIdx = msGetLayerIndex(map,layer->mask);
+    if(maskLayerIdx == -1) {
+      msSetError(MS_MISCERR, "Invalid mask layer specified", "msResampleGDALToMap()");
+      return -1;
+    }
+    maskLayer = GET_LAYER(map, maskLayerIdx);
+    mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS) {
+      free(mask_rb);
+      return -1;
+    }
+  }
 
   /* -------------------------------------------------------------------- */
   /*      We will require source and destination to have a valid          */
@@ -1327,15 +1278,69 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   }
 
   /* -------------------------------------------------------------------- */
+  /*      If requesting at the raster resolution, on pixel boundaries,    */
+  /*      and no reprojection is  involved, we don't need any resampling. */
+  /*      And if they match an integral subsampling factor, no need to    */
+  /*      add pixel margin.                                               */
+  /*      This optimization helps a lot when operating with mode=tile     */
+  /*      and that the underlying raster is tiled and share the same      */
+  /*      tiling scheme as the queried tile mode.                         */
+  /* -------------------------------------------------------------------- */
+#define IS_ALMOST_INTEGER(x, eps)        (fabs((x)-(int)((x)+0.5)) < (eps))
+
+  if( adfSrcGeoTransform[1] > 0.0 && adfSrcGeoTransform[2] == 0.0 &&
+      adfSrcGeoTransform[4] == 0.0 && adfSrcGeoTransform[5] < 0.0 &&
+      IS_ALMOST_INTEGER(sSrcExtent.minx, 0.1) &&
+      IS_ALMOST_INTEGER(sSrcExtent.miny, 0.1) &&
+      IS_ALMOST_INTEGER(sSrcExtent.maxx, 0.1) &&
+      IS_ALMOST_INTEGER(sSrcExtent.maxy, 0.1) &&
+      !msProjectionsDiffer( &(map->projection), &(layer->projection)) ) 
+  {
+      double dfXFactor, dfYFactor;
+
+      sSrcExtent.minx = (int)(sSrcExtent.minx + 0.5);
+      sSrcExtent.miny = (int)(sSrcExtent.miny + 0.5);
+      sSrcExtent.maxx = (int)(sSrcExtent.maxx + 0.5);
+      sSrcExtent.maxy = (int)(sSrcExtent.maxy + 0.5);
+      
+      if( (int)(sSrcExtent.maxx - sSrcExtent.minx + 0.5) == nDstXSize &&
+          (int)(sSrcExtent.maxy - sSrcExtent.miny + 0.5) == nDstYSize )
+      {
+            if( layer->debug )
+                msDebug( "msResampleGDALToMap(): Request matching raster resolution and pixel boundaries. "
+                         "No need to do resampling/reprojection.\n" );
+            return msDrawRasterLayerGDAL( map, layer, image, rb, hDS );
+      }
+
+      dfXFactor = (sSrcExtent.maxx - sSrcExtent.minx) / nDstXSize;
+      dfYFactor = (sSrcExtent.maxy - sSrcExtent.miny) / nDstYSize;
+      if( IS_ALMOST_INTEGER(dfXFactor, 1e-5) &&
+          IS_ALMOST_INTEGER(dfYFactor, 1e-5) &&
+          IS_ALMOST_INTEGER(sSrcExtent.minx/dfXFactor, 0.1) &&
+          IS_ALMOST_INTEGER(sSrcExtent.miny/dfXFactor, 0.1) &&
+          IS_ALMOST_INTEGER(sSrcExtent.maxx/dfYFactor, 0.1) &&
+          IS_ALMOST_INTEGER(sSrcExtent.maxy/dfYFactor, 0.1) )
+      {
+          bAddPixelMargin = MS_FALSE;
+          if( layer->debug )
+            msDebug( "msResampleGDALToMap(): Request matching raster resolution "
+                     "and pixel boundaries matching an integral subsampling factor\n" );
+      }
+  }
+
+  /* -------------------------------------------------------------------- */
   /*      Project desired extents out by 2 pixels, and then strip to      */
   /*      available data.                                                 */
   /* -------------------------------------------------------------------- */
   memcpy( &sOrigSrcExtent, &sSrcExtent, sizeof(sSrcExtent) );
 
-  sSrcExtent.minx = floor(sSrcExtent.minx-1.0);
-  sSrcExtent.maxx = ceil (sSrcExtent.maxx+1.0);
-  sSrcExtent.miny = floor(sSrcExtent.miny-1.0);
-  sSrcExtent.maxy = ceil (sSrcExtent.maxy+1.0);
+  if( bAddPixelMargin )
+  {
+    sSrcExtent.minx = floor(sSrcExtent.minx-1.0);
+    sSrcExtent.maxx = ceil (sSrcExtent.maxx+1.0);
+    sSrcExtent.miny = floor(sSrcExtent.miny-1.0);
+    sSrcExtent.maxy = ceil (sSrcExtent.maxy+1.0);
+  }
 
   sSrcExtent.minx = MAX(0,sSrcExtent.minx);
   sSrcExtent.maxx = MIN(sSrcExtent.maxx, nSrcXSize );
@@ -1444,28 +1449,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   if( MS_RENDERER_PLUGIN(sDummyMap.outputformat) ) {
     assert(rb);
     msInitializeRendererVTable(sDummyMap.outputformat);
-#ifdef USE_GD
-    if( rb->type == MS_BUFFER_GD ) {
-      assert( !gdImageTrueColor( rb->data.gd_img ) );
-      sDummyMap.outputformat->transparent = MS_TRUE;
-      sDummyMap.imagecolor.red = 117;
-      sDummyMap.imagecolor.green = 17;
-      sDummyMap.imagecolor.blue = 191;
-    }
-    /* -------------------------------------------------------------------- */
-    /*      If we are working in RGB mode ensure we produce an RGBA         */
-    /*      image so the transparency can be preserved.                     */
-    /* -------------------------------------------------------------------- */
-    else
-#endif
-    {
-      assert( sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGB
-              || sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGBA );
+    assert( sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGB
+            || sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGBA );
 
-      sDummyMap.outputformat->transparent = MS_TRUE;
-      sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
-      MS_INIT_COLOR(sDummyMap.imagecolor,-1,-1,-1,255);
-    }
+    sDummyMap.outputformat->transparent = MS_TRUE;
+    sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
+    MS_INIT_COLOR(sDummyMap.imagecolor,-1,-1,-1,255);
   }
 
   /* -------------------------------------------------------------------- */
@@ -1483,9 +1472,13 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     psrc_rb = &src_rb;
     memset( psrc_rb, 0, sizeof(rasterBufferObj) );
     if( srcImage->format->vtable->supports_pixel_buffer ) {
-      srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb );
+      if(UNLIKELY(MS_FAILURE == srcImage->format->vtable->getRasterBufferHandle( srcImage, psrc_rb ))) {
+        return -1;
+      }
     } else {
-      srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA);
+      if(UNLIKELY(MS_FAILURE == srcImage->format->vtable->initializeRasterBuffer(psrc_rb,nLoadImgXSize, nLoadImgYSize,MS_IMAGEMODE_RGBA))) {
+        return -1;
+      }
     }
   }
 
@@ -1495,13 +1488,15 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   /* -------------------------------------------------------------------- */
   {
     char **papszSavedProcessing = layer->processing;
-
+    char* origMask = layer->mask;
+    layer->mask = NULL;
     layer->processing = papszAlteredProcessing;
 
     result = msDrawRasterLayerGDAL( &sDummyMap, layer, srcImage,
                                     psrc_rb, hDS );
 
     layer->processing = papszSavedProcessing;
+    layer->mask = origMask;
     CSLDestroy( papszAlteredProcessing );
 
     if( result ) {
@@ -1513,29 +1508,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
       return result;
     }
   }
-
-#ifdef USE_GD
-  /* -------------------------------------------------------------------- */
-  /*      Do we need to generate a colormap remapping, potentially        */
-  /*      allocating new colors on the destination color map?             */
-  /* -------------------------------------------------------------------- */
-  if( psrc_rb && psrc_rb->type == MS_BUFFER_GD ) {
-    int  iColor, nColorCount;
-
-    anCMap[0] = -1; /* color zero is always transparent */
-
-    nColorCount = gdImageColorsTotal( psrc_rb->data.gd_img );
-    for( iColor = 1; iColor < nColorCount; iColor++ ) {
-      anCMap[iColor] =
-        msAddColorGD( map, rb->data.gd_img, 0,
-                      gdImageRed( psrc_rb->data.gd_img, iColor ),
-                      gdImageGreen( psrc_rb->data.gd_img, iColor ),
-                      gdImageBlue( psrc_rb->data.gd_img, iColor ) );
-    }
-    for( iColor = nColorCount; iColor < 256; iColor++ )
-      anCMap[iColor] = -1;
-  }
-#endif
 
   /* -------------------------------------------------------------------- */
   /*      Setup transformations between our source image, and the         */
@@ -1568,17 +1540,17 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     result =
       msAverageRasterResampler( srcImage, psrc_rb, image, rb,
                                 anCMap, msApproxTransformer, pACBData,
-                                layer->debug );
+                                layer->debug, mask_rb );
   else if( EQUAL(resampleMode,"BILINEAR") )
     result =
       msBilinearRasterResampler( srcImage, psrc_rb, image, rb,
                                  anCMap, msApproxTransformer, pACBData,
-                                 layer->debug );
+                                 layer->debug, mask_rb );
   else
     result =
       msNearestRasterResampler( srcImage, psrc_rb, image, rb,
                                 anCMap, msApproxTransformer, pACBData,
-                                layer->debug );
+                                layer->debug, mask_rb );
 
   /* -------------------------------------------------------------------- */
   /*      cleanup                                                         */

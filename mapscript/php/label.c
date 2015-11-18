@@ -85,6 +85,14 @@ ZEND_BEGIN_ARG_INFO_EX(label_deleteStyle_args, 0, 0, 1)
 ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(label_setExpression_args, 0, 0, 1)
+ZEND_ARG_INFO(0, expression)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(label_setText_args, 0, 0, 1)
+ZEND_ARG_INFO(0, text)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto void __construct()
    Create a new label instance. */
 PHP_METHOD(labelObj, __construct)
@@ -110,7 +118,7 @@ PHP_METHOD(labelObj, __construct)
 PHP_METHOD(labelObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_label_object *php_label;
 
@@ -126,7 +134,7 @@ PHP_METHOD(labelObj, __get)
 
   IF_GET_STRING("font",  php_label->label->font)
   else IF_GET_STRING("encoding", php_label->label->encoding)
-    else IF_GET_LONG("type", php_label->label->type)
+    else IF_GET_LONG("type", MS_TRUETYPE)
       else IF_GET_LONG("shadowsizex",  php_label->label->shadowsizex)
         else IF_GET_LONG("shadowsizey",  php_label->label->shadowsizey)
           else IF_GET_DOUBLE("size", php_label->label->size)
@@ -140,7 +148,6 @@ PHP_METHOD(labelObj, __get)
                           else IF_GET_DOUBLE("angle", php_label->label->angle)
                             else IF_GET_LONG("anglemode", php_label->label->anglemode)
                               else IF_GET_LONG("buffer", php_label->label->buffer)
-                                else IF_GET_LONG("antialias", php_label->label->antialias)
                                   else IF_GET_LONG("wrap", php_label->label->wrap)
                                     else IF_GET_LONG("minfeaturesize", php_label->label->minfeaturesize)
                                       else IF_GET_LONG("autominfeaturesize", php_label->label->autominfeaturesize)
@@ -156,7 +163,7 @@ PHP_METHOD(labelObj, __get)
                                                           else IF_GET_LONG("maxoverlapangle", php_label->label->maxoverlapangle)
                                                             else IF_GET_LONG("priority", php_label->label->priority)
                                                               else IF_GET_OBJECT("color", mapscript_ce_color, php_label->color, &php_label->label->color)
-                                                                else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_label->leader, &php_label->label->leader)
+                                                                else IF_GET_OBJECT("leader", mapscript_ce_labelleader, php_label->leader, php_label->label->leader)
                                                                   else IF_GET_OBJECT("outlinecolor", mapscript_ce_color, php_label->outlinecolor, &php_label->label->outlinecolor)
                                                                     else IF_GET_OBJECT("shadowcolor", mapscript_ce_color, php_label->shadowcolor, &php_label->label->shadowcolor)
                                                                       else {
@@ -167,7 +174,7 @@ PHP_METHOD(labelObj, __get)
 PHP_METHOD(labelObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_label_object *php_label;
@@ -184,7 +191,6 @@ PHP_METHOD(labelObj, __set)
 
   IF_SET_STRING("font",  php_label->label->font, value)
   else IF_SET_STRING("encoding", php_label->label->encoding, value)
-    else IF_SET_LONG("type", php_label->label->type, value)
       else IF_SET_LONG("shadowsizex",  php_label->label->shadowsizex, value)
         else IF_SET_LONG("shadowsizey",  php_label->label->shadowsizey, value)
           else IF_SET_DOUBLE("size", php_label->label->size, value)
@@ -196,7 +202,6 @@ PHP_METHOD(labelObj, __set)
                       else IF_SET_DOUBLE("angle", php_label->label->angle, value)
                         else IF_SET_LONG("anglemode", php_label->label->anglemode, value)
                           else IF_SET_LONG("buffer", php_label->label->buffer, value)
-                            else IF_SET_LONG("antialias", php_label->label->antialias, value)
                               else IF_SET_BYTE("wrap", php_label->label->wrap, value)
                                 else IF_SET_LONG("minfeaturesize", php_label->label->minfeaturesize, value)
                                   else IF_SET_LONG("autominfeaturesize", php_label->label->autominfeaturesize, value)
@@ -231,7 +236,7 @@ PHP_METHOD(labelObj, updateFromString)
 {
   zval *zobj = getThis();
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   int status = MS_FAILURE;
   php_label_object *php_label;
 
@@ -254,13 +259,40 @@ PHP_METHOD(labelObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the label object to string. */
+PHP_METHOD(labelObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  labelObj_convertToString(php_label->label);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int label.setbinding(const bindingid, string value)
    Set the attribute binding for a specfiled label property. Returns MS_SUCCESS on success. */
 PHP_METHOD(labelObj, setBinding)
 {
   zval *zobj = getThis();
   char *value;
-  long value_len;
+  long value_len = 0;
   long bindingId;
   php_label_object *php_label;
 
@@ -546,12 +578,133 @@ PHP_METHOD(labelObj, free)
 }
 /* }}} */
 
+/* {{{ proto int setExpression(string exression)
+   Set the expression string for a label object. */
+PHP_METHOD(labelObj, setExpression)
+{
+  char *expression;
+  long expression_len;
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  int status = MS_FAILURE;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                            &expression, &expression_len) == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  status = labelObj_setExpression(php_label->label, expression);
+
+  if (status != MS_SUCCESS) {
+    mapscript_throw_mapserver_exception("" TSRMLS_CC);
+    return;
+  }
+
+
+  RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto string getExpressionString()
+   Get the expression string for a label object. */
+PHP_METHOD(labelObj, getExpressionString)
+{
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value = labelObj_getExpressionString(php_label->label);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
+/* {{{ proto int setText(string text)
+   Set the text string for a label object. */
+PHP_METHOD(labelObj, setText)
+{
+  char *text;
+  long text_len;
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  php_layer_object *php_layer;
+  int status = MS_FAILURE;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                            &text, &text_len) == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+  php_layer = (php_layer_object *) zend_object_store_get_object(php_label->parent.val TSRMLS_CC);
+
+  status = labelObj_setText(php_label->label, php_layer->layer, text);
+
+  if (status != MS_SUCCESS) {
+    mapscript_throw_mapserver_exception("" TSRMLS_CC);
+    return;
+  }
+
+
+  RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto string getTextString()
+   Get the text string for a label object. */
+PHP_METHOD(labelObj, getTextString)
+{
+  zval *zobj = getThis();
+  php_label_object *php_label;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_label = (php_label_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  labelObj_getTextString(php_label->label);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 zend_function_entry label_functions[] = {
   PHP_ME(labelObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
   PHP_ME(labelObj, __get, label___get_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, __set, label___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(labelObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, updateFromString, label_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, setBinding, label_setBinding_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, getBinding, label_getBinding_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, removeBinding, label_removeBinding_args, ZEND_ACC_PUBLIC)
@@ -561,6 +714,10 @@ zend_function_entry label_functions[] = {
   PHP_ME(labelObj, moveStyleUp, label_moveStyleUp_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, moveStyleDown, label_moveStyleDown_args, ZEND_ACC_PUBLIC)
   PHP_ME(labelObj, deleteStyle, label_deleteStyle_args, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, setExpression, label_setExpression_args, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, getExpressionString, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, setText, label_setText_args, ZEND_ACC_PUBLIC)
+  PHP_ME(labelObj, getTextString, NULL, ZEND_ACC_PUBLIC)  
   PHP_ME(labelObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }

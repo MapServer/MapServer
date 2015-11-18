@@ -79,13 +79,15 @@ int main( int argc, char ** argv )
 {
   SHPTreeHandle qix;
 
-  int   i, j;
+  int i,j;
   rectObj rect;
 
   int   pos;
   ms_bitarray bitmap = NULL;
 
+  /*
   char  mBigEndian;
+  */
   treeNodeObj *node = NULL;
 
 
@@ -96,13 +98,14 @@ int main( int argc, char ** argv )
     printf( "shptreetst shapefile {minx miny maxx maxy}\n" );
     exit( 1 );
   }
-
+  
+  /*
   i = 1;
   if( *((unsigned char *) &i) == 1 )
     mBigEndian = 0;
   else
     mBigEndian = 1;
-
+  */
 
   qix = msSHPDiskTreeOpen (AddFileSuffix(argv[1],".qix"), 0 /* no debug*/);
   if( qix == NULL ) {

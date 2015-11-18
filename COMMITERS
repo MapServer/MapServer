@@ -7,7 +7,7 @@ sean         Sean Gillies           sgillies at frii.com                 SWIG Ma
 assefa       Assefa Yewondwossen    assefay at gmail.com             	 OGC Web Services,  PHP MapScript 
 julien       Julien-Samuel Lacroix  jlacroix at dmsolutions.ca           OGC Web Services
 warmerdam    Frank Warmerdam        warmerdam at pobox.com               Raster, outputFormatObj, 
-hobu         Howard Butler          hobu.inc at gmail.com                mapsde.c
+hobu         Howard Butler          howard at hobu.co                    docs
 pramsey      Paul Ramsey            pramsey at cleverelephant.ca         mappostgis.c, maptile.c
 jerryp       Jerry Pisk             jerry.pisk at gmail.com             
 ned          Ned Harding            nharding at extendthereach.com      
@@ -17,8 +17,8 @@ novak        John Novak             hetzerrrat gmail.com                 mapgrat
 jani         Jani Averbach          javerbach extendthereach com         External Plugin Layers
 tamas        Tamas Szekeres         szekerest at gmail.com               MapScript C#
 umberto      Umberto Nicoletti      umberto.nicoletti at gmail.com       MapScript Java
-tomkralidis  Tom Kralidis           tomkralidis at hotmail.com           OGC, Perl Mapscript
-tbonfort     Thomas Bonfort         thomas.bonfort at gmail.com          AGG, Charting
+tomkralidis  Tom Kralidis           tomkralidis at gmail.com             OGC, Perl Mapscript
+tbonfort     Thomas Bonfort         tbonfort at terriscope.fr            AGG, Charting, Core Maintenance
 jmckenna     Jeff McKenna           jmckenna at gatewaygeomatics.com     Documentation
 aboudreault  Alan Boudreault        aboudreault at mapgears.com          OGR, general bug fixes
 toby         Toby Rahilly           toby.rahilly at gmail.com            OpenGL

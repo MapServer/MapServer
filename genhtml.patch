@@ -1,0 +1,43 @@
+--- genhtml_ori	2013-07-10 19:23:55.041055126 +0200
++++ genhtml	2013-07-10 19:31:39.041172541 +0200
+@@ -2351,7 +2351,8 @@
+ 
+ 	($year, $month, $day) = (localtime())[5, 4, 3];
+ 
+-	return sprintf("%d-%02d-%02d", $year+1900, $month+1, $day);
++	#return sprintf("%d-%02d-%02d", $year+1900, $month+1, $day);
++    return "XXXX-XX-XX";
+ }
+ 
+ 
+@@ -3807,9 +3808,10 @@
+ 			} else {
+ 				$class	= "branchCov";
+ 				$text	= " + ";
+-				$title	= "Branch $br_num was taken $taken ".
+-					  "time";
+-				$title .= "s" if ($taken > 1);
++				#$title	= "Branch $br_num was taken $taken ".
++				#	  "time";
++				#$title .= "s" if ($taken > 1);
++                $title  = "Branch $br_num was taken X times";
+ 			}
+ 			$current .= "[" if ($open);
+ 			$current .= "<span class=\"$class\" title=\"$title\">";
+@@ -3892,6 +3894,8 @@
+ 		$count_format	= format_count($count, $count_field_width);
+ 	}
+ 	else {
++        # force to 1 to avoid huge diffs between runs
++        $count = 1;
+ 		$result		= $count;
+ 		$source_format	= '<span class="lineCov">';
+ 		$count_format	= format_count($count, $count_field_width);
+@@ -5127,6 +5131,7 @@
+ 			$countstyle = "coverFnLo";
+ 		} else {
+ 			$countstyle = "coverFnHi";
++            $count = "X";
+ 		}
+ 
+ 		write_html(*HTML_HANDLE, <<END_OF_HTML)

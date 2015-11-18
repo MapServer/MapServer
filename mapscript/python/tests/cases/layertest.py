@@ -49,13 +49,6 @@ class MapLayerTestCase(MapTestCase):
 # ===========================================================================
 # Test begins now
 
-class AlphaTransparencyTestCase(unittest.TestCase):
-    
-    def testMSGDALPHA(self):
-        """test to make sure that no one has hidden ALPHA"""
-        assert mapscript.MS_GD_ALPHA == 1000
-
-
 class LayerConstructorTestCase(MapLayerTestCase):
 
     def testLayerConstructorNoArg(self):

@@ -69,7 +69,7 @@ PHP_METHOD(symbolObj, __construct)
 {
   zval *zmap;
   char *symbolName;
-  long symbolName_len;
+  long symbolName_len = 0;
   int symbolId = -1;
   php_symbol_object *php_symbol;
   php_map_object *php_map;
@@ -105,7 +105,7 @@ PHP_METHOD(symbolObj, __construct)
 PHP_METHOD(symbolObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_symbol_object *php_symbol;
 
@@ -130,8 +130,6 @@ PHP_METHOD(symbolObj, __get)
                 else IF_GET_LONG("transparent", php_symbol->symbol->transparent)
                   else IF_GET_LONG("transparentcolor", php_symbol->symbol->transparentcolor)
                     else IF_GET_STRING("character", php_symbol->symbol->character)
-                      else IF_GET_STRING("svg_text", php_symbol->symbol->svg_text)
-                        else IF_GET_LONG("antialias", php_symbol->symbol->antialias)
                           else IF_GET_DOUBLE("anchorpoint_y", php_symbol->symbol->anchorpoint_y)
                             else IF_GET_DOUBLE("anchorpoint_x", php_symbol->symbol->anchorpoint_x)
                               else IF_GET_DOUBLE("maxx", php_symbol->symbol->maxx)
@@ -147,7 +145,7 @@ PHP_METHOD(symbolObj, __get)
 PHP_METHOD(symbolObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_symbol_object *php_symbol;
@@ -171,8 +169,6 @@ PHP_METHOD(symbolObj, __set)
             else IF_SET_LONG("transparent", php_symbol->symbol->transparent, value)
               else IF_SET_LONG("transparentcolor", php_symbol->symbol->transparentcolor, value)
                 else IF_SET_STRING("character", php_symbol->symbol->character, value)
-                  else IF_SET_STRING("svg_text", php_symbol->symbol->svg_text, value)
-                    else IF_SET_LONG("antialias", php_symbol->symbol->antialias, value)
                       else IF_SET_STRING("font", php_symbol->symbol->font, value)
                         else IF_SET_DOUBLE("anchorpoint_y", php_symbol->symbol->anchorpoint_y, value)
                           else IF_SET_DOUBLE("anchorpoint_x", php_symbol->symbol->anchorpoint_x, value)
@@ -280,7 +276,7 @@ PHP_METHOD(symbolObj, setImagePath)
   zval *zobj = getThis();
   php_symbol_object *php_symbol;
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   int status = MS_FAILURE;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -333,6 +329,7 @@ PHP_METHOD(symbolObj, getImage)
 {
   zval *zoutputformat;
   imageObj *image = NULL;
+  php_map_object *php_map;
   php_symbol_object *php_symbol;
   php_outputformat_object *php_outputformat;
 
@@ -345,16 +342,22 @@ PHP_METHOD(symbolObj, getImage)
   PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
 
   php_symbol = (php_symbol_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+  php_map = (php_map_object *) zend_object_store_get_object(php_symbol->parent.val TSRMLS_CC);
   php_outputformat = (php_outputformat_object *)zend_object_store_get_object(zoutputformat TSRMLS_CC);
+
   image = symbolObj_getImage(php_symbol->symbol, php_outputformat->outputformat);
   if (image == NULL) {
     mapscript_throw_exception("Unable to get the symbol image" TSRMLS_CC);
     return;
   }
 
+  /* the outputformat HAS to be added to the map, since the renderer is now used
+     by the current symbol */
+  if (msGetOutputFormatIndex(php_map->map, php_outputformat->outputformat->name) == -1)
+    msAppendOutputFormat(php_map->map, php_outputformat->outputformat);
+
   mapscript_create_image(image, return_value TSRMLS_CC);
-}
-/* }}} */
+  } /* }}} */
 
 zend_function_entry symbol_functions[] = {
   PHP_ME(symbolObj, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)

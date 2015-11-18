@@ -76,7 +76,7 @@ Updating a Driver
 -----------------
 
 The following are the steps to ensure a particular format/database supports
-connection pooling (ie. mapsde.c, mappostgis.c, maporacle.c, mapogr.cpp, etc)
+connection pooling (ie. mappostgis.c, maporacle.c, mapogr.cpp, etc)
 We will use POSTGIS names for convenience.
 
 1) in msPOSTGISLayerOpen() call msConnPoolRequest(layer) in order to get
@@ -149,7 +149,7 @@ typedef struct {
 
   int   lifespan;
   int   ref_count;
-  int   thread_id;
+  void*   thread_id;
   int   debug;
 
   time_t last_used;

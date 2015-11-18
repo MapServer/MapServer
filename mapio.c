@@ -46,13 +46,14 @@
 
 
 static int is_msIO_initialized = MS_FALSE;
+static int is_msIO_header_enabled = MS_TRUE;
 
 typedef struct msIOContextGroup_t {
   msIOContext stdin_context;
   msIOContext stdout_context;
   msIOContext stderr_context;
 
-  int    thread_id;
+  void*    thread_id;
   struct msIOContextGroup_t *next;
 } msIOContextGroup;
 
@@ -94,7 +95,7 @@ void msIO_Cleanup()
 static msIOContextGroup *msIO_GetContextGroup()
 
 {
-  int nThreadId = msGetThreadId();
+  void* nThreadId = msGetThreadId();
   msIOContextGroup *prev = NULL, *group = io_context_list;
 
   if( group != NULL && group->thread_id == nThreadId )
@@ -145,6 +146,23 @@ static msIOContextGroup *msIO_GetContextGroup()
   return group;
 }
 
+/* returns MS_TRUE if the msIO standard output hasn't been redirected */
+int msIO_isStdContext() {
+  msIOContextGroup *group = io_context_list;
+  void* nThreadId = msGetThreadId();
+  if(!group || group->thread_id != nThreadId) {
+    group = msIO_GetContextGroup();
+    if(!group) {
+      return MS_FALSE; /* probably a bug */
+    }
+  }
+  if(group->stderr_context.cbData == (void*)stderr &&
+      group->stdin_context.cbData == (void*)stdin &&
+      group->stdout_context.cbData == (void*)stdout)
+    return MS_TRUE;
+  return MS_FALSE;
+}
+
 /************************************************************************/
 /*                          msIO_getHandler()                           */
 /************************************************************************/
@@ -152,7 +170,7 @@ static msIOContextGroup *msIO_GetContextGroup()
 msIOContext *msIO_getHandler( FILE * fp )
 
 {
-  int nThreadId = msGetThreadId();
+  void* nThreadId = msGetThreadId();
   msIOContextGroup *group = io_context_list;
 
   msIO_Initialize();
@@ -173,6 +191,19 @@ msIOContext *msIO_getHandler( FILE * fp )
     return NULL;
 }
 
+/************************************************************************/
+/*                      msIO_setHeaderEnabled()                         */
+/************************************************************************/
+
+void msIO_setHeaderEnabled(int bFlag)
+{
+    is_msIO_header_enabled = bFlag;
+}
+
+/************************************************************************/
+/*                           msIO_setHeader()                           */
+/************************************************************************/
+
 void msIO_setHeader (const char *header, const char* value, ...)
 {
   va_list args;
@@ -183,7 +214,7 @@ void msIO_setHeader (const char *header, const char* value, ...)
 
     request_rec *r = (request_rec*) (ioctx->cbData);
     char *fullvalue = apr_pvsprintf(r->pool, value,args);
-    if (strcasecmp (header, "Content-type") == 0) {
+    if (strcasecmp (header, "Content-Type") == 0) {
       r->content_type = fullvalue;
     } else if (strcasecmp (header, "Status") == 0) {
       r->status = atoi (fullvalue);
@@ -195,12 +226,15 @@ void msIO_setHeader (const char *header, const char* value, ...)
     }
   } else {
 #endif // MOD_WMS_ENABLED
-    msIO_fprintf(stdout,"%s: ",header);
-    msIO_vfprintf(stdout,value,args);
-    msIO_fprintf(stdout,"\n");
+   if( is_msIO_header_enabled ) {
+      msIO_fprintf(stdout,"%s: ",header);
+      msIO_vfprintf(stdout,value,args);
+      msIO_fprintf(stdout,"\r\n");
+   }
 #ifdef MOD_WMS_ENABLED
   }
 #endif
+  va_end( args );
 }
 
 void msIO_sendHeaders ()
@@ -209,8 +243,10 @@ void msIO_sendHeaders ()
   msIOContext *ioctx = msIO_getHandler (stdout);
   if(ioctx && !strcmp(ioctx->label,"apache")) return;
 #endif // !MOD_WMS_ENABLED
-  msIO_printf ("\n");
-  fflush (stdout);
+  if( is_msIO_header_enabled ) {
+    msIO_printf ("\r\n");
+    fflush (stdout);
+  }
 }
 
 
@@ -524,79 +560,6 @@ static void msIO_Initialize( void )
   is_msIO_initialized = MS_TRUE;
 }
 
-/* ==================================================================== */
-/* ==================================================================== */
-/*      Stuff related to having a gdIOCtx operate through the msIO      */
-/*      layer.                                                          */
-/* ==================================================================== */
-/* ==================================================================== */
-
-typedef struct {
-#ifdef USE_GD
-  gdIOCtx        gd_io_ctx;
-#endif
-  msIOContext    *ms_io_ctx;
-} msIO_gdIOCtx;
-
-
-#ifdef USE_GD
-/************************************************************************/
-/*                            msIO_gd_putC()                            */
-/*                                                                      */
-/*      A GD IO context callback to put a character, redirected         */
-/*      through the msIO output context.                                */
-/************************************************************************/
-
-static void msIO_gd_putC( gdIOCtx *cbData, int out_char )
-
-{
-  msIO_gdIOCtx *merged_context = (msIO_gdIOCtx *) cbData;
-  char out_char_as_char = (char) out_char;
-
-  msIO_contextWrite( merged_context->ms_io_ctx, &out_char_as_char, 1 );
-}
-
-/************************************************************************/
-/*                           msIO_gd_putBuf()                           */
-/*                                                                      */
-/*      The GD IO context callback to put a buffer of data,             */
-/*      redirected through the msIO output context.                     */
-/************************************************************************/
-
-static int msIO_gd_putBuf( gdIOCtx *cbData, const void *data, int byteCount )
-
-{
-  msIO_gdIOCtx *merged_context = (msIO_gdIOCtx *) cbData;
-
-  return msIO_contextWrite( merged_context->ms_io_ctx, data, byteCount );
-}
-#endif
-
-/************************************************************************/
-/*                          msIO_getGDIOCtx()                           */
-/*                                                                      */
-/*      The returned context should be freed with free() when no        */
-/*      longer needed.                                                  */
-/************************************************************************/
-
-#ifdef USE_GD
-gdIOCtx *msIO_getGDIOCtx( FILE *fp )
-
-{
-  msIO_gdIOCtx *merged_context;
-  msIOContext *context = msIO_getHandler( fp );
-
-  if( context == NULL )
-    return NULL;
-
-  merged_context = (msIO_gdIOCtx *) calloc(1,sizeof(msIO_gdIOCtx));
-  merged_context->gd_io_ctx.putC = msIO_gd_putC;
-  merged_context->gd_io_ctx.putBuf = msIO_gd_putBuf;
-  merged_context->ms_io_ctx = context;
-
-  return (gdIOCtx *) merged_context;
-}
-#endif
 
 /* ==================================================================== */
 /* ==================================================================== */
@@ -723,6 +686,57 @@ void msIO_installStdoutToBuffer()
                         &group->stderr_context );
 }
 
+
+/************************************************************************/
+/*               msIO_pushStdoutToBufferAndGetOldContext()              */
+/*                                                                      */
+/* This function installs a temporary buffer I/O context and returns    */
+/* previously installed stdout handler. This previous stdout handler    */
+/* should later be restored with msIO_restoreOldStdoutContext().        */
+/* This function can be for example used when wanting to ingest into    */
+/* libxml objects XML generated by msIO_fprintf()                       */
+/************************************************************************/
+
+msIOContext* msIO_pushStdoutToBufferAndGetOldContext()
+
+{
+  msIOContextGroup *group = msIO_GetContextGroup();
+  msIOContext *old_context;
+
+  /* Backup current context */
+  old_context = (msIOContext*) msSmallMalloc(sizeof(msIOContext));
+  memcpy(old_context, &group->stdout_context, sizeof(msIOContext));
+
+  msIO_installStdoutToBuffer();
+
+  return old_context;
+}
+
+/************************************************************************/
+/*                    msIO_restoreOldStdoutContext()                    */
+/************************************************************************/
+
+void msIO_restoreOldStdoutContext(msIOContext *context_to_restore)
+{
+  msIOContextGroup *group = msIO_GetContextGroup();
+  msIOContext *prev_context = &group->stdout_context;
+  msIOBuffer* buffer;
+  
+  /* Free memory associated to our temporary context */
+  assert( strcmp(prev_context->label, "buffer") == 0 );
+
+  buffer = (msIOBuffer* )prev_context->cbData;
+  msFree(buffer->data);
+  msFree(buffer);
+
+  /* Restore old context */
+  msIO_installHandlers( &group->stdin_context,
+                        context_to_restore,
+                        &group->stderr_context );
+
+  msFree(context_to_restore);
+}
+
 /************************************************************************/
 /*                    msIO_installStdinFromBuffer()                     */
 /************************************************************************/
@@ -746,10 +760,10 @@ void msIO_installStdinFromBuffer()
 /************************************************************************/
 /*                 msIO_stripStdoutBufferContentType()                  */
 /*                                                                      */
-/*      Strip off content-type header from buffer, and return to        */
+/*      Strip off Content-Type header from buffer, and return to        */
 /*      caller.  Returned string is the callers responsibility to       */
 /*      call msFree() on to deallocate.  This function will return      */
-/*      NULL if there is no content-type header.                        */
+/*      NULL if there is no Content-Type header.                        */
 /************************************************************************/
 
 char *msIO_stripStdoutBufferContentType()
@@ -773,10 +787,10 @@ char *msIO_stripStdoutBufferContentType()
   buf = (msIOBuffer *) ctx->cbData;
 
   /* -------------------------------------------------------------------- */
-  /*      Return NULL if we don't have a content-type header.             */
+  /*      Return NULL if we don't have a Content-Type header.             */
   /* -------------------------------------------------------------------- */
   if( buf->data_offset < 14
-      || strncasecmp((const char*) buf->data,"Content-type: ",14) != 0 )
+      || strncasecmp((const char*) buf->data,"Content-Type: ",14) != 0 )
     return NULL;
 
   /* -------------------------------------------------------------------- */
@@ -784,37 +798,38 @@ char *msIO_stripStdoutBufferContentType()
   /* -------------------------------------------------------------------- */
   end_of_ct = 13;
   while( end_of_ct+1 < buf->data_offset
-         && buf->data[end_of_ct+1] != 10 )
+         && buf->data[end_of_ct+1] != '\r' )
     end_of_ct++;
 
   if( end_of_ct+1 == buf->data_offset ) {
-    msSetError( MS_MISCERR, "Corrupt Content-type header.",
+    msSetError( MS_MISCERR, "Corrupt Content-Type header.",
                 "msIO_stripStdoutBufferContentType" );
     return NULL;
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Continue on to the start of data ... skipping two newline       */
-  /*      markers.                                                        */
+  /*      Continue on to the start of data ...                            */
+  /*      Go to next line and skip if empty.                              */
   /* -------------------------------------------------------------------- */
-  start_of_data = end_of_ct+2;
-  while( start_of_data  < buf->data_offset
-         && buf->data[start_of_data] != 10 )
-    start_of_data++;
-
+  start_of_data = end_of_ct+3;
+  if( start_of_data  < buf->data_offset
+      && buf->data[start_of_data] == '\r' )
+    start_of_data +=2;
+  
   if( start_of_data == buf->data_offset ) {
-    msSetError( MS_MISCERR, "Corrupt Content-type header.",
+    msSetError( MS_MISCERR, "Corrupt Content-Type header.",
                 "msIO_stripStdoutBufferContentType" );
     return NULL;
   }
 
-  start_of_data++;
-
   /* -------------------------------------------------------------------- */
-  /*      Copy out content type.                                          */
+  /*      Copy out content type. Note we go against the coding guidelines */
+  /*      here and use strncpy() instead of strlcpy() as the source       */
+  /*      buffer may not be NULL terminated - strlcpy() requires NULL     */
+  /*      terminated sources (see issue #4672).                           */
   /* -------------------------------------------------------------------- */
   content_type = (char *) malloc(end_of_ct-14+2);
-  strlcpy( content_type, (const char *) buf->data + 14, end_of_ct - 14 + 2);
+  strncpy( content_type, (const char *) buf->data + 14, end_of_ct - 14 + 2);
   content_type[end_of_ct-14+1] = '\0';
 
   /* -------------------------------------------------------------------- */
@@ -870,7 +885,7 @@ void msIO_stripStdoutBufferContentHeaders()
     /* -------------------------------------------------------------------- */
     start_of_data +=7;
     while( start_of_data+1 < buf->data_offset
-           && buf->data[start_of_data+1] != 10 )
+           && buf->data[start_of_data+1] != '\r' )
       start_of_data++;
 
     if( start_of_data+1 == buf->data_offset ) {
@@ -878,24 +893,25 @@ void msIO_stripStdoutBufferContentHeaders()
                   "msIO_stripStdoutBufferContentHeaders" );
       return;
     }
-    start_of_data +=2;
+    /* -------------------------------------------------------------------- */
+    /*      Go to next line.                                                */
+    /* -------------------------------------------------------------------- */
+    start_of_data +=3;
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Continue on to the start of data ... skipping two newline       */
-  /*      markers.                                                        */
+  /*      Continue on to the start of data ...                            */
+  /*      Skip next line if empty.                                        */
   /* -------------------------------------------------------------------- */
-  while( start_of_data  < buf->data_offset
-         && buf->data[start_of_data] != 10 )
-    start_of_data++;
+  if( start_of_data  < buf->data_offset
+      && buf->data[start_of_data] == '\r' )
+    start_of_data +=2;
 
   if( start_of_data == buf->data_offset ) {
     msSetError( MS_MISCERR, "Corrupt Content-* header.",
                 "msIO_stripStdoutBufferContentHeaders" );
     return;
   }
-
-  start_of_data++;
 
   /* -------------------------------------------------------------------- */
   /*      Move data to front of buffer, and reset length.                 */
@@ -918,9 +934,9 @@ int msIO_bufferWrite( void *cbData, void *data, int byteCount )
   msIOBuffer *buf = (msIOBuffer *) cbData;
 
   /*
-  ** Grow buffer if needed.
+  ** Grow buffer if needed (reserve one extra byte to put nul character)
   */
-  if( buf->data_offset + byteCount > buf->data_len ) {
+  if( buf->data_offset + byteCount >= buf->data_len ) {
     buf->data_len = buf->data_len * 2 + byteCount + 100;
     if( buf->data == NULL )
       buf->data = (unsigned char *) malloc(buf->data_len);
@@ -942,6 +958,7 @@ int msIO_bufferWrite( void *cbData, void *data, int byteCount )
 
   memcpy( buf->data + buf->data_offset, data, byteCount );
   buf->data_offset += byteCount;
+  buf->data[buf->data_offset] = '\0';
 
   return byteCount;
 }

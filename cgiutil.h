@@ -32,6 +32,9 @@
 #ifndef CGIUTIL_H
 #define CGIUTIL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define MS_DLL_EXPORT     __declspec(dllexport)
@@ -84,7 +87,6 @@ MS_DLL_EXPORT char x2c(char *);
 MS_DLL_EXPORT void unescape_url(char *);
 MS_DLL_EXPORT void plustospace(char *);
 MS_DLL_EXPORT int rind(char *, char);
-MS_DLL_EXPORT int _getline(char *, int, FILE *);
 MS_DLL_EXPORT void send_fd(FILE *, FILE *);
 MS_DLL_EXPORT int ind(char *, char);
 MS_DLL_EXPORT void escape_shell_cmd(char *);
@@ -92,5 +94,9 @@ MS_DLL_EXPORT void escape_shell_cmd(char *);
 MS_DLL_EXPORT cgiRequestObj *msAllocCgiObj(void);
 MS_DLL_EXPORT void msFreeCgiObj(cgiRequestObj *request);
 #endif /*SWIG*/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CGIUTIL_H */

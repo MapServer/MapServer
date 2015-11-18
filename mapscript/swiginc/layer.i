@@ -71,6 +71,16 @@
             return (map->layers[map->numlayers-1]);
         }
     }
+    
+    void setOpacity(int opacity)
+    {
+      msSetLayerOpacity(self, opacity);
+    }
+
+    int getOpacity() {
+      if(self->compositer) return (self->compositer->opacity);
+      return (100);
+    }
 
     ~layerObj() 
     {
@@ -120,6 +130,12 @@
     int updateFromString(char *snippet)
     {
         return msUpdateLayerFromString(self, snippet, MS_FALSE);
+    }
+    
+    %newobject convertToString;
+    char* convertToString()
+    {
+        return msWriteLayerToString(self);
     }
 
 #ifdef SWIGCSHARP   
@@ -207,6 +223,11 @@
         shape->type = self->type; /* is this right? */
 
         retval = msLayerGetShape(self, shape, record);
+        if(retval != MS_SUCCESS) {
+          msFreeShape(shape);
+          free(shape);
+          return NULL;
+        } else
         return shape;
     }
 
@@ -280,19 +301,19 @@
         msInitQuery(&(map->query));
 
         map->query.type = MS_QUERY_BY_FILTER;
+        map->query.mode = MS_QUERY_MULTIPLE;
 
-        map->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
-        map->query.filter->string = strdup(string);
-	map->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
-
+        map->query.filter.string = strdup(string);
+        map->query.filter.type = MS_EXPRESSION;
+        
         map->query.layer = self->index;
-     	map->query.rect = map->extent;
+     	  map->query.rect = map->extent;
 
-	status = self->status;
-	self->status = MS_ON;
+	      status = self->status;
+	      self->status = MS_ON;
         retval = msQueryByFilter(map);
         self->status = status;
-	return retval;
+	      return retval;
     }
 
     int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) 
@@ -302,16 +323,21 @@
 
         msInitQuery(&(map->query));
         
-        map->query.type = MS_QUERY_BY_ATTRIBUTE;
+        map->query.type = MS_QUERY_BY_FILTER;
         map->query.mode = mode;
-        if(qitem) map->query.item = strdup(qitem);
-        if(qstring) map->query.str = strdup(qstring);
+
+        if(qitem) map->query.filteritem = msStrdup(qitem);
+        if(qstring) {
+          msInitExpression(&map->query.filter);
+          msLoadExpressionString(&map->query.filter, qstring);
+        }
+
         map->query.layer = self->index;
         map->query.rect = map->extent;
 
         status = self->status;
         self->status = MS_ON;
-        retval = msQueryByAttributes(map);
+        retval = msQueryByFilter(map);
         self->status = status;
 
         return retval;
@@ -423,7 +449,7 @@
     int setFilter(char *filter) 
     {
         if (!filter || strlen(filter) == 0) {
-            freeExpression(&self->filter);
+            msFreeExpression(&self->filter);
             return MS_SUCCESS;
         }
         else return msLoadExpressionString(&self->filter, filter);
@@ -643,4 +669,21 @@
         return msShapeGetClass(self, map, shape, classgroup, numclasses);
     }
 
+    char *getGeomTransform() 
+    {
+      return self->_geomtransform.string;
+    }
+    
+    void setGeomTransform(char *transform) 
+    {
+      msFree(self->_geomtransform.string);
+      if (!transform || strlen(transform) > 0) {
+        self->_geomtransform.string = msStrdup(transform);
+        self->_geomtransform.type = MS_GEOMTRANSFORM_EXPRESSION;
+      }
+      else {
+        self->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+        self->_geomtransform.string = NULL;
+      }
+    }    
 }

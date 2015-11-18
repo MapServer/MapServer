@@ -122,9 +122,9 @@ ZEND_END_ARG_INFO()
 PHP_FUNCTION(ms_newMapObj)
 {
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   char *path = NULL;
-  long path_len;
+  long path_len = 0;
   mapObj *map = NULL;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -152,9 +152,9 @@ PHP_FUNCTION(ms_newMapObj)
 PHP_FUNCTION(ms_newMapObjFromString)
 {
   char *string;
-  long string_len;
+  long string_len = 0;
   char *path = NULL;
-  long path_len;
+  long path_len = 0;
   mapObj *map = NULL;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -169,7 +169,7 @@ PHP_FUNCTION(ms_newMapObjFromString)
   map = mapObj_newFromString(string, path);
 
   if (map == NULL) {
-    mapscript_throw_mapserver_exception("Failed to open map file \"%s\", or map file error." TSRMLS_CC,  string);
+    mapscript_throw_mapserver_exception("Error while loading map file from string." TSRMLS_CC);
     return;
   }
 
@@ -224,7 +224,7 @@ PHP_FUNCTION(ms_newLayerObj)
 PHP_FUNCTION(ms_newProjectionObj)
 {
   char *projString;
-  long projString_len;
+  long projString_len = 0;
   projectionObj *projection = NULL;
   parent_object parent;
 
@@ -396,7 +396,7 @@ PHP_FUNCTION(ms_newSymbolObj)
 {
   zval *zmap;
   char *symbolName;
-  long symbolName_len;
+  long symbolName_len = 0;
   int retval = 0;
   php_map_object *php_map;
 
@@ -451,7 +451,7 @@ PHP_FUNCTION(ms_shapeObjFromWkt)
 {
   php_shape_object * php_shape;
   char *wkt;
-  long str_len;
+  long str_len = 0;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
@@ -479,7 +479,7 @@ PHP_FUNCTION(ms_shapeObjFromWkt)
 PHP_FUNCTION(ms_newShapeFileObj)
 {
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   long type;
   shapefileObj *shapefile;
 
@@ -684,7 +684,7 @@ PHP_FUNCTION(ms_ioGetStdoutBufferString)
 
   buffer = (char *) (buf->data);
 
-  RETURN_STRING(buffer, 1);
+  RETURN_STRINGL(buffer, buf->data_offset, 1);
 }
 
 
@@ -735,6 +735,11 @@ PHP_FUNCTION(ms_ioStripStdoutBufferContentType)
   } else {
     RETURN_FALSE;
   }
+}
+
+PHP_FUNCTION(ms_ioStripStdoutBufferContentHeaders)
+{
+  msIO_stripStdoutBufferContentHeaders();
 }
 
 /* ==================================================================== */
@@ -841,7 +846,7 @@ PHP_FUNCTION(ms_getScale)
 PHP_FUNCTION(ms_tokenizeMap)
 {
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   char  **tokens;
   int i, numtokens=0;
 
@@ -902,6 +907,7 @@ zend_function_entry mapscript_functions[] = {
   PHP_FE(ms_ioGetStdoutBufferString, NULL)
   PHP_FE(ms_ioResetHandlers, NULL)
   PHP_FE(ms_ioStripStdoutBufferContentType, NULL)
+  PHP_FE(ms_ioStripStdoutBufferContentHeaders, NULL)
   PHP_FE(ms_ioGetStdoutBufferBytes, NULL) {
     NULL, NULL, NULL
   }
@@ -985,7 +991,6 @@ PHP_MINIT_FUNCTION(mapscript)
   REGISTER_LONG_CONSTANT("MS_LAYER_LINE", MS_LAYER_LINE,  const_flag);
   REGISTER_LONG_CONSTANT("MS_LAYER_POLYGON",MS_LAYER_POLYGON, const_flag);
   REGISTER_LONG_CONSTANT("MS_LAYER_RASTER",MS_LAYER_RASTER, const_flag);
-  REGISTER_LONG_CONSTANT("MS_LAYER_ANNOTATION",MS_LAYER_ANNOTATION,const_flag);
   REGISTER_LONG_CONSTANT("MS_LAYER_QUERY",MS_LAYER_QUERY, const_flag);
   REGISTER_LONG_CONSTANT("MS_LAYER_CIRCLE",MS_LAYER_CIRCLE, const_flag);
   REGISTER_LONG_CONSTANT("MS_LAYER_TILEINDEX",MS_LAYER_TILEINDEX, const_flag);
@@ -996,11 +1001,6 @@ PHP_MINIT_FUNCTION(mapscript)
   REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
   REGISTER_LONG_CONSTANT("MS_EMBED",      MS_EMBED,       const_flag);
   REGISTER_LONG_CONSTANT("MS_DELETE",     MS_DELETE,       const_flag);
-
-  //For layer transparency, allows alpha transparent pixmaps to be used
-  // with RGB map images
-  //#define MS_GD_ALPHA 1000
-  REGISTER_LONG_CONSTANT("MS_GD_ALPHA",     MS_GD_ALPHA,       const_flag);
 
   /* font type constants*/
   REGISTER_LONG_CONSTANT("MS_TRUETYPE",   MS_TRUETYPE,    const_flag);
@@ -1068,7 +1068,6 @@ PHP_MINIT_FUNCTION(mapscript)
   REGISTER_LONG_CONSTANT("MS_INLINE",     MS_INLINE,      const_flag);
   REGISTER_LONG_CONSTANT("MS_SHAPEFILE",  MS_SHAPEFILE,   const_flag);
   REGISTER_LONG_CONSTANT("MS_TILED_SHAPEFILE",MS_TILED_SHAPEFILE,const_flag);
-  REGISTER_LONG_CONSTANT("MS_SDE",        MS_SDE,         const_flag);
   REGISTER_LONG_CONSTANT("MS_OGR",        MS_OGR,         const_flag);
   REGISTER_LONG_CONSTANT("MS_POSTGIS",    MS_POSTGIS,     const_flag);
   REGISTER_LONG_CONSTANT("MS_WMS",        MS_WMS,         const_flag);
@@ -1108,7 +1107,6 @@ PHP_MINIT_FUNCTION(mapscript)
   REGISTER_LONG_CONSTANT("MS_REGEXERR",   MS_REGEXERR,    const_flag);
   REGISTER_LONG_CONSTANT("MS_TTFERR",     MS_TTFERR,      const_flag);
   REGISTER_LONG_CONSTANT("MS_DBFERR",     MS_DBFERR,      const_flag);
-  REGISTER_LONG_CONSTANT("MS_GDERR",      MS_GDERR,       const_flag);
   REGISTER_LONG_CONSTANT("MS_IDENTERR",   MS_IDENTERR,    const_flag);
   REGISTER_LONG_CONSTANT("MS_EOFERR",     MS_EOFERR,      const_flag);
   REGISTER_LONG_CONSTANT("MS_PROJERR",    MS_PROJERR,     const_flag);
@@ -1121,7 +1119,6 @@ PHP_MINIT_FUNCTION(mapscript)
   REGISTER_LONG_CONSTANT("MS_NOTFOUND",   MS_NOTFOUND,    const_flag);
   REGISTER_LONG_CONSTANT("MS_SHPERR",     MS_SHPERR,      const_flag);
   REGISTER_LONG_CONSTANT("MS_PARSEERR",   MS_PARSEERR,    const_flag);
-  REGISTER_LONG_CONSTANT("MS_SDEERR",     MS_SDEERR,      const_flag);
   REGISTER_LONG_CONSTANT("MS_OGRERR",     MS_OGRERR,      const_flag);
   REGISTER_LONG_CONSTANT("MS_QUERYERR",   MS_QUERYERR,    const_flag);
   REGISTER_LONG_CONSTANT("MS_WMSERR",     MS_WMSERR,      const_flag);
@@ -1199,7 +1196,7 @@ PHP_MINIT_FUNCTION(mapscript)
   REGISTER_LONG_CONSTANT("MS_DEBUGLEVEL_VVV", MS_DEBUGLEVEL_VVV, const_flag);
   REGISTER_LONG_CONSTANT("MS_DEFAULT_CGI_PARAMS", MS_DEFAULT_CGI_PARAMS, const_flag);
   REGISTER_LONG_CONSTANT("MS_DEFAULT_LABEL_PRIORITY", MS_DEFAULT_LABEL_PRIORITY, const_flag);
-  REGISTER_LONG_CONSTANT("MS_ERROR_LANGUAGE", MS_ERROR_LANGUAGE, const_flag);
+  REGISTER_STRING_CONSTANT("MS_ERROR_LANGUAGE", MS_ERROR_LANGUAGE, const_flag);
   REGISTER_LONG_CONSTANT("MS_FILE_MAP", MS_FILE_MAP, const_flag);
   REGISTER_LONG_CONSTANT("MS_FILE_SYMBOL", MS_FILE_SYMBOL, const_flag);
   REGISTER_LONG_CONSTANT("MS_GEOS_BEYOND", MS_GEOS_BEYOND, const_flag);
@@ -1240,7 +1237,6 @@ PHP_MINIT_FUNCTION(mapscript)
   REGISTER_LONG_CONSTANT("MS_RENDER_WITH_CAIRO_PDF", MS_RENDER_WITH_CAIRO_PDF, const_flag);
   REGISTER_LONG_CONSTANT("MS_RENDER_WITH_CAIRO_RASTER", MS_RENDER_WITH_CAIRO_RASTER, const_flag);
   REGISTER_LONG_CONSTANT("MS_RENDER_WITH_CAIRO_SVG", MS_RENDER_WITH_CAIRO_SVG, const_flag);
-  REGISTER_LONG_CONSTANT("MS_RENDER_WITH_GD", MS_RENDER_WITH_GD, const_flag);
   REGISTER_LONG_CONSTANT("MS_RENDER_WITH_IMAGEMAP", MS_RENDER_WITH_IMAGEMAP, const_flag);
   REGISTER_LONG_CONSTANT("MS_RENDER_WITH_KML", MS_RENDER_WITH_KML, const_flag);
   REGISTER_LONG_CONSTANT("MS_RENDER_WITH_OGL", MS_RENDER_WITH_OGL, const_flag);
@@ -1283,8 +1279,10 @@ PHP_MINIT_FUNCTION(mapscript)
   PHP_MINIT(referencemap)(INIT_FUNC_ARGS_PASSTHRU);
   PHP_MINIT(class)(INIT_FUNC_ARGS_PASSTHRU);
   PHP_MINIT(projection)(INIT_FUNC_ARGS_PASSTHRU);
+#ifdef disabled
   PHP_MINIT(labelcachemember)(INIT_FUNC_ARGS_PASSTHRU);
   PHP_MINIT(labelcache)(INIT_FUNC_ARGS_PASSTHRU);
+#endif
   PHP_MINIT(labelleader)(INIT_FUNC_ARGS_PASSTHRU);
   PHP_MINIT(result)(INIT_FUNC_ARGS_PASSTHRU);
   PHP_MINIT(scalebar)(INIT_FUNC_ARGS_PASSTHRU);
@@ -1303,7 +1301,7 @@ PHP_MINIT_FUNCTION(mapscript)
 PHP_MSHUTDOWN_FUNCTION(mapscript)
 {
   /* Cleanup MapServer resources */
-  msCleanup(0);
+  msCleanup();
 
   return SUCCESS;
 }

@@ -30,6 +30,7 @@
 #include "mapserver.h"
 #include "maptime.h"
 #include "maptemplate.h"
+#include "mapows.h"
 
 #if defined(USE_LIBXML2)
 #include "maplibxml2.h"
@@ -37,6 +38,7 @@
 #include "cpl_minixml.h"
 #include "cpl_error.h"
 #endif
+#include "mapowscommon.h"
 
 #include <ctype.h> /* isalnum() */
 #include <stdarg.h>
@@ -79,6 +81,17 @@ static void msOWSClearRequestObj(owsRequestObj *ows_request)
   }
 }
 
+#if defined(USE_LIBXML2) && LIBXML_VERSION < 20900
+static int bExternalEntityAsked = FALSE;
+static xmlParserInputPtr  dummyEntityLoader(const char * URL, 
+                                           const char * ID, 
+                                           xmlParserCtxtPtr context )
+{
+    bExternalEntityAsked = TRUE;
+    return NULL;
+}
+#endif
+
 /*
 ** msOWSPreParseRequest() parses a cgiRequestObj either with GET/KVP
 ** or with POST/XML. Only SERVICE, VERSION (or WMTVER) and REQUEST are
@@ -95,16 +108,20 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
                                 owsRequestObj *ows_request)
 {
   /* decide if KVP or XML */
-  if (request->type == MS_GET_REQUEST) {
+  if (request->type == MS_GET_REQUEST || (request->type == MS_POST_REQUEST 
+    && request->contenttype && strncmp(request->contenttype, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded")) == 0)) {
     int i;
     /* parse KVP parameters service, version and request */
     for (i = 0; i < request->NumParams; ++i) {
-      if (EQUAL(request->ParamNames[i], "SERVICE")) {
+      if (ows_request->service == NULL &&
+          EQUAL(request->ParamNames[i], "SERVICE")) {
         ows_request->service = msStrdup(request->ParamValues[i]);
-      } else if (EQUAL(request->ParamNames[i], "VERSION")
-                 || EQUAL(request->ParamNames[i], "WMTVER")) { /* for WMS */
+      } else if (ows_request->version == NULL &&
+                 (EQUAL(request->ParamNames[i], "VERSION")
+                 || EQUAL(request->ParamNames[i], "WMTVER"))) { /* for WMS */
         ows_request->version = msStrdup(request->ParamValues[i]);
-      } else if (EQUAL(request->ParamNames[i], "REQUEST")) {
+      } else if (ows_request->request == NULL &&
+                 EQUAL(request->ParamNames[i], "REQUEST")) {
         ows_request->request = msStrdup(request->ParamValues[i]);
       }
 
@@ -116,6 +133,9 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
   } else if (request->type == MS_POST_REQUEST) {
 #if defined(USE_LIBXML2)
     xmlNodePtr root = NULL;
+#if LIBXML_VERSION < 20900
+    xmlExternalEntityLoader oldExternalEntityLoader;
+#endif
 #elif defined(USE_GDAL)
     CPLXMLNode *temp;
 #endif
@@ -125,9 +145,24 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
       return MS_FAILURE;
     }
 #if defined(USE_LIBXML2)
+#if LIBXML_VERSION < 20900
+    oldExternalEntityLoader = xmlGetExternalEntityLoader();
+    /* to avoid  XML External Entity vulnerability with libxml2 < 2.9 */
+    xmlSetExternalEntityLoader (dummyEntityLoader); 
+    bExternalEntityAsked = FALSE;
+#endif
     /* parse to DOM-Structure with libxml2 and get the root element */
     ows_request->document = xmlParseMemory(request->postrequest,
                                            strlen(request->postrequest));
+#if LIBXML_VERSION < 20900
+    xmlSetExternalEntityLoader (oldExternalEntityLoader); 
+    if( bExternalEntityAsked )
+    {
+        msSetError(MS_OWSERR, "XML parsing error: %s",
+                 "msOWSPreParseRequest()", "External entity fetch");
+        return MS_FAILURE;
+    }
+#endif
     if (ows_request->document == NULL
         || (root = xmlDocGetRootElement(ows_request->document)) == NULL) {
       xmlErrorPtr error = xmlGetLastError();
@@ -229,6 +264,14 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
   }
 
   if (ows_request.service == NULL) {
+
+#ifdef USE_WFS_SVR
+    if( msOWSLookupMetadata(&(map->web.metadata), "FO", "cite_wfs2") != NULL ) {
+      status = msWFSException(map, "service", MS_OWS_ERROR_MISSING_PARAMETER_VALUE, NULL );
+    }
+    else
+#endif
+
     /* exit if service is not set */
     if(force_ows_mode) {
       msSetError( MS_MISCERR,
@@ -282,6 +325,243 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request, int ows_mode)
 }
 
 /*
+** msOWSIpParse()
+**
+** Parse the IP address or range into a binary array.
+** Supports ipv4 and ipv6 addresses
+** Ranges can be specified using the CIDR notation (ie: 192.100.100.0/24)
+**
+** Returns the parsed of the IP (4 or 16).
+*/
+int msOWSIpParse(const char* ip, unsigned char* ip1, unsigned char* mask)
+{
+  int len = 0, masklen, seps;
+  
+  if (msCountChars((char*)ip, '.') == 3) {
+    /* ipv4 */
+    unsigned char* val = ip1;
+    len = 1;
+    masklen = 32;
+    *val = 0;
+    while (*ip) {
+      if (*ip >= '0' && *ip <= '9')
+        (*val) = 10 * (*val) + (*ip - '0');
+      else if (*ip == '.') {
+        ++val;
+        *val = 0;
+        ++len;
+      }
+      else if (*ip == '/')
+      {
+        masklen = atoi(ip+1);
+        if (masklen > 32)
+          masklen = 32;
+        break;
+      }
+      else 
+        break;
+      ++ip;
+    }
+    if (len != 4)
+      return 0;
+    /* write mask */
+    if (mask) {
+      memset(mask, 0, len);
+      val = mask;
+      while (masklen) {
+        if (masklen >= 8) {
+          *val = 0xff;
+          masklen -= 8;
+        }
+        else {
+          *val = - ((unsigned char)pow(2, 8 - masklen));
+          break;
+        }
+        ++val;
+      }
+    }
+  }
+  else if ((seps = msCountChars((char*)ip, ':')) > 1 && seps < 8) {
+    /* ipv6 */
+    unsigned short* val = (unsigned short*)ip1;
+    len = 2;
+    masklen = 128;
+    *val = 0;
+    while (*ip) {
+      if (*ip >= '0' && *ip <= '9')
+        (*val) = 16 * (*val) + (*ip - '0');
+      else if (*ip >= 'a' && *ip <= 'f')
+        (*val) = 16 * (*val) + (*ip - 'a' + 10);
+      else if (*ip >= 'A' && *ip <= 'F')
+        (*val) = 16 * (*val) + (*ip - 'A' + 10);
+      else if (*ip == ':') {
+        ++ip;
+        ++val;
+        len += 2;
+        *val = 0;
+        if (*ip == ':') {
+          /* insert 0 values */
+          while (seps <= 7) {
+            ++val;
+            len += 2;
+            *val = 0;
+            ++seps;
+          }
+        }
+        else
+          continue;
+      }
+      else if (*ip == '/')
+      {
+        masklen = atoi(ip+1);
+        if (masklen > 128)
+          masklen = 128;
+        break;
+      }
+      else
+        break;
+      ++ip;
+    }
+    if (len != 16)
+      return 0;
+    /* write mask */
+    if (mask) {
+      memset(mask, 0, len);
+      val = (unsigned short*)mask;
+      while (masklen) {
+        if (masklen >= 16) {
+          *val = 0xffff;
+          masklen -= 16;
+        }
+        else {
+          *val = - ((unsigned short)pow(2, 16 - masklen));
+          break;
+        }
+        ++val;
+      }
+    }
+  }
+
+  return len;
+}
+
+/*
+** msOWSIpInList()
+**
+** Check if an ip is in a space separated list of IP addresses/ranges.
+** Supports ipv4 and ipv6 addresses
+** Ranges can be specified using the CIDR notation (ie: 192.100.100.0/24)
+**
+** Returns MS_TRUE if the IP is found.
+*/
+int msOWSIpInList(const char *ip_list, const char* ip)
+{
+  int i, j, numips, iplen;
+  unsigned char ip1[16];
+  unsigned char ip2[16];
+  unsigned char mask[16];
+  char** ips;
+
+  /* Parse input IP */
+  iplen = msOWSIpParse(ip, (unsigned char*)&ip1, NULL);
+  if (iplen != 4 && iplen != 16) /* ipv4 or ipv6 */
+    return MS_FALSE;
+
+  ips = msStringSplit(ip_list, ' ', &numips);
+  if (ips) {
+    for (i = 0; i < numips; i++) {
+      if (msOWSIpParse(ips[i], (unsigned char*)&ip2, (unsigned char*)&mask) == iplen)
+      {
+        for (j = 0; j < iplen; j++) {
+          if ((ip1[j] & mask[j]) != (ip2[j] & mask[j]))
+            break;
+        }
+        if (j == iplen) {
+          msFreeCharArray(ips, numips);
+          return MS_TRUE; /* match found */
+        }
+      }
+    }
+    msFreeCharArray(ips, numips);
+  }
+
+  return MS_FALSE;
+}
+
+/*
+** msOWSIpDisabled()
+**
+** Check if an ip is in a list specified in the metadata section.
+**
+** Returns MS_TRUE if the IP is found.
+*/
+int msOWSIpInMetadata(const char *ip_list, const char* ip)
+{
+  FILE *stream;
+  char buffer[MS_BUFFER_LENGTH];
+  int found = MS_FALSE;
+  
+  if (strncasecmp(ip_list, "file:", 5) == 0) {
+    stream = fopen(ip_list + 5, "r");
+    if(stream) {
+      found = MS_FALSE;
+      while(fgets(buffer, MS_BUFFER_LENGTH, stream)) {
+        if(msOWSIpInList(buffer, ip)) {
+          found = MS_TRUE;
+          break;
+        }
+      }
+      fclose(stream);
+    }  
+  }
+  else {
+    if(msOWSIpInList(ip_list, ip))
+      found = MS_TRUE;
+  }  
+  return found;
+}
+
+/*
+** msOWSIpDisabled()
+**
+** Check if the layers are enabled or disabled by IP list.
+**
+** 'namespaces' is a string with a letter for each namespace to lookup
+** in the order they should be looked up. e.g. "MO" to lookup wms_ and ows_
+** If namespaces is NULL then this function just does a regular metadata
+** lookup.
+**
+** Returns the disabled flag.
+*/
+int msOWSIpDisabled(hashTableObj *metadata, const char *namespaces, const char* ip)
+{
+  const char *ip_list;
+  int disabled = MS_FALSE;
+
+  if (!ip)
+    return MS_FALSE; /* no endpoint ip */
+
+  ip_list = msOWSLookupMetadata(metadata, namespaces, "allowed_ip_list");
+  if (!ip_list)
+    ip_list = msOWSLookupMetadata(metadata, "O", "allowed_ip_list");
+
+  if (ip_list) {
+    disabled = MS_TRUE;
+    if (msOWSIpInMetadata(ip_list, ip))
+      disabled = MS_FALSE;
+  }
+
+  ip_list = msOWSLookupMetadata(metadata, namespaces, "denied_ip_list");
+  if (!ip_list)
+    ip_list = msOWSLookupMetadata(metadata, "O", "denied_ip_list");
+
+  if (ip_list && msOWSIpInMetadata(ip_list, ip))
+    disabled = MS_TRUE;
+
+  return disabled;
+}
+
+/*
 ** msOWSRequestIsEnabled()
 **
 ** Check if a layer is visible for a specific OWS request.
@@ -296,9 +576,12 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
 {
   int disabled = MS_FALSE; /* explicitly disabled flag */
   const char *enable_request;
+  const char *remote_ip;
 
   if (request == NULL)
     return MS_FALSE;
+
+  remote_ip = getenv("REMOTE_ADDR");
 
   /* First, we check in the layer metadata */
   if (layer && check_all_layers == MS_FALSE) {
@@ -311,9 +594,12 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
     if (msOWSParseRequestMetadata(enable_request, request, &disabled))
       return MS_TRUE;
     if (disabled) return MS_FALSE;
+
+    if (msOWSIpDisabled(&layer->metadata, namespaces, remote_ip))
+      return MS_FALSE;
   }
 
-  if (map && check_all_layers == MS_FALSE) {
+  if (map && (check_all_layers == MS_FALSE || map->numlayers == 0)) {
     /* then we check in the map metadata */
     enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
     if (msOWSParseRequestMetadata(enable_request, request, &disabled))
@@ -324,9 +610,12 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
     if (msOWSParseRequestMetadata(enable_request, request, &disabled))
       return MS_TRUE;
     if (disabled) return MS_FALSE;
+
+    if (msOWSIpDisabled(&map->web.metadata, namespaces, remote_ip))
+      return MS_FALSE;
   }
 
-  if (map && (map->numlayers > 0) && check_all_layers == MS_TRUE) {
+  if (map && check_all_layers == MS_TRUE) {
     int i, globally_enabled = MS_FALSE;
     enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
     globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
@@ -335,6 +624,9 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
       enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
       globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
     }
+
+    if (globally_enabled && msOWSIpDisabled(&map->web.metadata, namespaces, remote_ip))
+      globally_enabled = MS_FALSE;
 
     /* Check all layers */
     for(i=0; i<map->numlayers; i++) {
@@ -354,9 +646,15 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
         if (!result && disabled) continue;
       }
 
+      if (msOWSIpDisabled(&lp->metadata, namespaces, remote_ip))
+        continue;
+
       if (result || (!disabled && globally_enabled))
         return MS_TRUE;
     }
+
+    if (!disabled && globally_enabled)
+        return MS_TRUE;
   }
 
   return MS_FALSE;
@@ -380,6 +678,7 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
   int disabled = MS_FALSE; /* explicitly disabled flag */
   int globally_enabled = MS_FALSE;
   const char *enable_request;
+  const char *remote_ip;
 
   if (ows_request->numlayers > 0)
     msFree(ows_request->enabled_layers);
@@ -390,6 +689,8 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
   if (request == NULL || (map == NULL) || (map->numlayers <= 0))
     return;
 
+  remote_ip = getenv("REMOTE_ADDR");
+
   enable_request = msOWSLookupMetadata(&map->web.metadata, namespaces, "enable_request");
   globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
 
@@ -397,6 +698,9 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
     enable_request = msOWSLookupMetadata(&map->web.metadata, "O", "enable_request");
     globally_enabled = msOWSParseRequestMetadata(enable_request, request, &disabled);
   }
+
+  if (globally_enabled && msOWSIpDisabled(&map->web.metadata, namespaces, remote_ip))
+      globally_enabled = MS_FALSE;
 
   if (map->numlayers) {
     int i, layers_size = map->numlayers; /* for most of cases, this will be relatively small */
@@ -419,6 +723,9 @@ void msOWSRequestLayersEnabled(mapObj *map, const char *namespaces,
         result = msOWSParseRequestMetadata(enable_request, request, &disabled);
         if (!result && disabled) continue;
       }
+
+      if (msOWSIpDisabled(&lp->metadata, namespaces, remote_ip))
+          continue;
 
       if (result || (!disabled && globally_enabled)) {
         ows_request->enabled_layers[ows_request->numlayers] = lp->index;
@@ -581,21 +888,19 @@ const char *msOWSLookupMetadataWithLanguage(hashTableObj *metadata,
     const char *namespaces, const char *name, const char* validated_language)
 {
   const char *value = NULL;
-  char *name2 = NULL;
-  size_t bufferSize = 0;
 
   if ( name && validated_language ) {
-    bufferSize = strlen(name)+strlen(validated_language)+2;
-    name2 = (char *) msSmallMalloc( bufferSize );
+    size_t bufferSize = strlen(name)+strlen(validated_language)+2;
+    char *name2 = (char *) msSmallMalloc( bufferSize );
     snprintf(name2, bufferSize, "%s.%s", name, validated_language);
     value = msOWSLookupMetadata(metadata, namespaces, name2);
+    free(name2);
   }
 
-  if (value == NULL) {
+  if ( name && !value ) {
     value = msOWSLookupMetadata(metadata, namespaces, name);
   }
 
-  msFree( name2 );
 
   return value;
 }
@@ -751,7 +1056,7 @@ int msOWSMakeAllLayersUnique(mapObj *map)
 **
 */
 
-int msOWSNegotiateVersion(int requested_version, int supported_versions[], int num_supported_versions)
+int msOWSNegotiateVersion(int requested_version, const int supported_versions[], int num_supported_versions)
 {
   int i;
 
@@ -892,6 +1197,26 @@ const char *msOWSGetSchemasLocation(mapObj *map)
   return schemas_location;
 }
 
+/* msOWSGetInspireSchemasLocation()
+**
+** schemas location is the root of the web tree where all Inspire-related
+** schemas can be found on this server.  These URLs must exist in order
+** to validate xml.
+**
+** Use value of "inspire_schemas_location" metadata
+*/
+const char *msOWSGetInspireSchemasLocation(mapObj *map)
+{
+  const char *schemas_location;
+
+  schemas_location = msLookupHashTable(&(map->web.metadata),
+                                       "inspire_schemas_location");
+  if (schemas_location == NULL)
+    schemas_location = "http://inspire.ec.europa.eu/schemas";
+
+  return schemas_location;
+}
+
 /* msOWSGetLanguage()
 **
 ** returns the language via MAP/WEB/METADATA/ows_language
@@ -987,16 +1312,19 @@ char *msOWSGetLanguageFromList(mapObj *map, const char *namespaces, const char *
 ** Returns a status code; MS_NOERR if all ok, action_if_not_found otherwise
 */
 int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const char *namespaces,
-    int action_if_not_found, const char *tag_name,
-    const char *validated_language, const int service)
+    int action_if_not_found, const char *tag_name, const char* tag_ns,
+    const char *validated_language, const OWSServiceType service)
 {
 
   int metadataStatus = 0;
   int languageStatus = 0;
 
-  msIO_fprintf(stream, "  <%s>\n", tag_name);
+  if( tag_ns )
+    msIO_fprintf(stream, "  <%s %s>\n", tag_name, tag_ns);
+  else
+    msIO_fprintf(stream, "  <%s>\n", tag_name);
 
-  metadataStatus = msOWSPrintInspireCommonMetadata(stream, map, namespaces, action_if_not_found);
+  metadataStatus = msOWSPrintInspireCommonMetadata(stream, map, namespaces, action_if_not_found, service);
   languageStatus = msOWSPrintInspireCommonLanguages(stream, map, namespaces, action_if_not_found, validated_language);
 
   msIO_fprintf(stream, "  </%s>\n", tag_name);
@@ -1011,7 +1339,7 @@ int msOWSPrintInspireCommonExtendedCapabilities(FILE *stream, mapObj *map, const
 ** Returns a status code; MS_NOERR if all OK, action_if_not_found otherwise
 */
 int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *namespaces,
-                                    int action_if_not_found)
+                                    int action_if_not_found, const OWSServiceType service)
 {
 
   int status = MS_NOERR;
@@ -1019,6 +1347,12 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
 
   inspire_capabilities = msOWSLookupMetadata(&(map->web.metadata), namespaces, "inspire_capabilities");
 
+  if(!inspire_capabilities) {
+    if (OWS_WARN == action_if_not_found) {
+      msIO_fprintf(stream, "<!-- WARNING: missing metadata entry for 'inspire_capabilities', one of 'embed' and 'url' must be supplied. -->\n");
+    }
+    return action_if_not_found;
+  }
   if (strcasecmp("url",inspire_capabilities) == 0) {
     if ( msOWSLookupMetadata(&(map->web.metadata), namespaces, "inspire_metadataurl_href") != NULL ) {
       msIO_fprintf(stream, "    <inspire_common:MetadataUrl xsi:type=\"inspire_common:resourceLocatorType\">\n");
@@ -1032,7 +1366,7 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
       }
     }
   } else if (strcasecmp("embed",inspire_capabilities) == 0) {
-    msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_resourcelocator", OWS_NOERR, "    <inspire_common:ResourceLocator>\n      <inspire_common:URL>%s</inspire_common:URL>\n    </inspire_common:ResourceLocator>\n", NULL);
+    msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_resourcelocator", OWS_WARN, "    <inspire_common:ResourceLocator>\n      <inspire_common:URL>%s</inspire_common:URL>\n    </inspire_common:ResourceLocator>\n", NULL);
     msIO_fprintf(stream,"    <inspire_common:ResourceType>service</inspire_common:ResourceType>\n");
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_temporal_reference", OWS_WARN, "    <inspire_common:TemporalReference>\n      <inspire_common:DateOfLastRevision>%s</inspire_common:DateOfLastRevision>\n    </inspire_common:TemporalReference>\n", "");
     msIO_fprintf(stream, "    <inspire_common:Conformity>\n");
@@ -1047,8 +1381,11 @@ int msOWSPrintInspireCommonMetadata(FILE *stream, mapObj *map, const char *names
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_mpoc_email", OWS_WARN, "      <inspire_common:EmailAddress>%s</inspire_common:EmailAddress>\n", "");
     msIO_fprintf(stream, "    </inspire_common:MetadataPointOfContact>\n");
     msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_metadatadate", OWS_WARN, "      <inspire_common:MetadataDate>%s</inspire_common:MetadataDate>\n", "");
-    msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n");
-    msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_keyword", OWS_WARN, "    <inspire_common:MandatoryKeyword xsi:type='inspire_common:classificationOfSpatialDataService'>\n      <inspire_common:KeywordValue>%s</inspire_common:KeywordValue>\n    </inspire_common:MandatoryKeyword>\n", "");
+    if( service == OWS_WFS )
+        msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>download</inspire_common:SpatialDataServiceType>\n");
+    else
+        msIO_fprintf(stream,"    <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>\n");
+    msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "inspire_keyword", OWS_WARN, "    <inspire_common:MandatoryKeyword>\n      <inspire_common:KeywordValue>%s</inspire_common:KeywordValue>\n    </inspire_common:MandatoryKeyword>\n", "");
   } else {
     status = action_if_not_found;
     if (OWS_WARN == action_if_not_found) {
@@ -1079,9 +1416,14 @@ int msOWSPrintInspireCommonLanguages(FILE *stream, mapObj *map, const char *name
                  "</inspire_common:Language></inspire_common:DefaultLanguage>\n",
                  buffer = msEncodeHTMLEntities(default_language));
     msFree(buffer);
+    
+    /* append _exclude to our default_language*/
+    default_language = msSmallRealloc(default_language,strlen(default_language)+strlen("_exclude")+1);
+    strcat(default_language,"_exclude");
+
     msOWSPrintEncodeMetadataList(stream, &(map->web.metadata), namespaces, "languages", NULL, NULL,
                                  "      <inspire_common:SupportedLanguage><inspire_common:Language>%s"
-                                 "</inspire_common:Language></inspire_common:SupportedLanguage>\n", msStringConcatenate(default_language, "_exclude"));
+                                 "</inspire_common:Language></inspire_common:SupportedLanguage>\n", default_language);
     msIO_fprintf(stream, "    </inspire_common:SupportedLanguages>\n");
     msIO_fprintf(stream, "    <inspire_common:ResponseLanguage><inspire_common:Language>%s"
                  "</inspire_common:Language></inspire_common:ResponseLanguage>\n", validated_language);
@@ -1368,7 +1710,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(type_format)+strlen(encoded);
+      buffer_size_tmp = strlen(type_format)+strlen(encoded)+1;
       type = (char*)malloc(buffer_size_tmp);
       snprintf(type, buffer_size_tmp, type_format, encoded);
       msFree(encoded);
@@ -1381,7 +1723,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(width_format)+strlen(encoded);
+      buffer_size_tmp = strlen(width_format)+strlen(encoded)+1;
       width = (char*)malloc(buffer_size_tmp);
       snprintf(width, buffer_size_tmp, width_format, encoded);
       msFree(encoded);
@@ -1394,7 +1736,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(height_format)+strlen(encoded);
+      buffer_size_tmp = strlen(height_format)+strlen(encoded)+1;
       height = (char*)malloc(buffer_size_tmp);
       snprintf(height, buffer_size_tmp, height_format, encoded);
       msFree(encoded);
@@ -1407,7 +1749,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(urlfrmt_format)+strlen(encoded);
+      buffer_size_tmp = strlen(urlfrmt_format)+strlen(encoded)+1;
       urlfrmt = (char*)malloc(buffer_size_tmp);
       snprintf(urlfrmt, buffer_size_tmp, urlfrmt_format, encoded);
       msFree(encoded);
@@ -1420,7 +1762,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
     value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
     if(value != NULL) {
       encoded = msEncodeHTMLEntities(value);
-      buffer_size_tmp = strlen(href_format)+strlen(encoded);
+      buffer_size_tmp = strlen(href_format)+strlen(encoded)+1;
       href = (char*)malloc(buffer_size_tmp);
       snprintf(href, buffer_size_tmp, href_format, encoded);
       msFree(encoded);
@@ -1592,8 +1934,8 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
         msIO_fprintf(stream, itemFormat, keywords[kw]);
       }
       if(endTag) msIO_fprintf(stream, "%s", endTag);
-      msFreeCharArray(keywords, numkeywords);
     }
+    msFreeCharArray(keywords, numkeywords);
     return MS_TRUE;
   }
   return MS_FALSE;
@@ -1643,8 +1985,8 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
         msFree(encoded);
       }
       if(endTag) msIO_fprintf(stream, "%s", endTag);
-      msFreeCharArray(keywords, numkeywords);
     }
+    msFreeCharArray(keywords, numkeywords);
     return MS_TRUE;
   }
   return MS_FALSE;
@@ -1685,12 +2027,29 @@ int msOWSPrintEncodeParamList(FILE *stream, const char *name,
       msFree(encoded);
     }
     if(endTag) msIO_fprintf(stream, "%s", endTag);
-    msFreeCharArray(items, numitems);
   }
+  msFreeCharArray(items, numitems);
 
   return status;
 }
 
+
+/*
+** msOWSProjectToWGS84()
+**
+** Reprojects the extent to WGS84.
+**
+*/
+void msOWSProjectToWGS84(projectionObj *srcproj, rectObj *ext)
+{
+  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
+    projectionObj wgs84;
+    msInitProjection(&wgs84);
+    msLoadProjectionString(&wgs84, "+proj=longlat +ellps=WGS84 +datum=WGS84");
+    msProjectRect(srcproj, &wgs84, ext);
+    msFreeProjection(&wgs84);
+  }
+}
 
 /*
 ** msOWSPrintEX_GeographicBoundingBox()
@@ -1708,14 +2067,7 @@ void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
   ext = *extent;
 
   /* always project to lat long */
-  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
-    projectionObj wgs84;
-    msInitProjection(&wgs84);
-    msLoadProjectionString(&wgs84, "+proj=longlat +datum=WGS84");
-    msProjectRect(srcproj, &wgs84, &ext);
-    msFreeProjection(&wgs84);
-  }
-
+  msOWSProjectToWGS84(srcproj, &ext);
 
   msIO_fprintf(stream, "%s<%s>\n", tabspace, pszTag);
   msIO_fprintf(stream, "%s    <westBoundLongitude>%g</westBoundLongitude>\n", tabspace, ext.minx);
@@ -1737,7 +2089,7 @@ void msOWSPrintEX_GeographicBoundingBox(FILE *stream, const char *tabspace,
 */
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
                                  rectObj *extent, projectionObj *srcproj,
-                                 projectionObj *wfsproj, int nService)
+                                 projectionObj *wfsproj, OWSServiceType nService)
 {
   const char *pszTag = "LatLonBoundingBox";  /* The default for WMS */
   rectObj ext;
@@ -1745,16 +2097,8 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
   ext = *extent;
 
   if (nService == OWS_WMS) { /* always project to lat long */
-    if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
-      projectionObj wgs84;
-      msInitProjection(&wgs84);
-      msLoadProjectionString(&wgs84, "+proj=longlat +datum=WGS84");
-      msProjectRect(srcproj, &wgs84, &ext);
-      msFreeProjection(&wgs84);
-    }
-  }
-
-  if (nService == OWS_WFS) {
+    msOWSProjectToWGS84(srcproj, &ext);
+  } else if (nService == OWS_WFS) { /* called from wfs 1.0.0 only: project to map srs, if set */
     pszTag = "LatLongBoundingBox";
     if (wfsproj) {
       if (msProjectionsDiffer(srcproj, wfsproj) == MS_TRUE)
@@ -1813,24 +2157,24 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 
   for( i = 0; i < num_epsgs; i++) {
     value = epsgs[i];
-    memcpy(&ext, extent, sizeof(rectObj));
+    if( value && *value) {
+      memcpy(&ext, extent, sizeof(rectObj));
 
-    /* reproject the extents for each SRS's bounding box */
-    msInitProjection(&proj);
-    if (msLoadProjectionStringEPSG(&proj, (char *)value) == 0) {
-      if (msProjectionsDiffer(srcproj, &proj) == MS_TRUE) {
-        msProjectRect(srcproj, &proj, &ext);
+      /* reproject the extents for each SRS's bounding box */
+      msInitProjection(&proj);
+      if (msLoadProjectionStringEPSG(&proj, (char *)value) == 0) {
+        if (msProjectionsDiffer(srcproj, &proj) == MS_TRUE) {
+          msProjectRect(srcproj, &proj, &ext);
+        }
+        /*for wms 1.3.0 we need to make sure that we present the BBOX with
+          a reversed axes for some espg codes*/
+        if (wms_version >= OWS_1_3_0 && value && strncasecmp(value, "EPSG:", 5) == 0) {
+          msAxisNormalizePoints( &proj, 1, &(ext.minx), &(ext.miny) );
+          msAxisNormalizePoints( &proj, 1, &(ext.maxx), &(ext.maxy) );
+        }
       }
-      /*for wms 1.3.0 we need to make sure that we present the BBOX with
-        a reversed axes for some espg codes*/
-      if (wms_version >= OWS_1_3_0 && value && strncasecmp(value, "EPSG:", 5) == 0) {
-        msAxisNormalizePoints( &proj, 1, &(ext.minx), &(ext.miny) );
-        msAxisNormalizePoints( &proj, 1, &(ext.maxx), &(ext.maxy) );
-      }
-    }
-    msFreeProjection( &proj );
+      msFreeProjection( &proj );
 
-    if( value != NULL ) {
       encoded = msEncodeHTMLEntities(value);
       if (wms_version >= OWS_1_3_0)
         msIO_fprintf(stream, "%s<BoundingBox CRS=\"%s\"\n"
@@ -2037,6 +2381,11 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
 
     fseek(fp, 0, SEEK_END);
     nBufSize = ftell(fp);
+    if(nBufSize < 0) {
+      msSetError(MS_IOERR, NULL, "msOWSProcessException()");
+      fclose(fp);
+      return;
+    }
     rewind(fp);
     pszBuf = (char*)malloc((nBufSize+1)*sizeof(char));
     if (pszBuf == NULL) {
@@ -2492,10 +2841,11 @@ outputFormatObj* msOwsIsOutputFormatValid(mapObj *map, const char *format,
         if (mimetype && strcasecmp(mimetype, format) == 0)
           break;
       }
-      msFreeCharArray(tokens, n);
       if (i < n)
         psFormat = msSelectOutputFormat( map, format);
     }
+    if(tokens)
+      msFreeCharArray(tokens, n);
   }
 
   return psFormat;

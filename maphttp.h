@@ -60,6 +60,7 @@ extern "C" {
     char    *pszGetUrl;
     char    *pszOutputFile;
     int     nTimeout;
+    int     nMaxBytes;
     rectObj bbox;
     int     width;
     int     height;
@@ -106,8 +107,11 @@ extern "C" {
                              int bCheckLocalCache);
   int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
                      int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
-                     int bDebug);
+                     int bDebug, int nMaxBytes);
 
+  int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
+                           httpRequestObj *pasReqInfo, int numRequests,
+                           mapObj *map, const char* namespaces);
 #endif /*USE_CURL*/
 
 #ifdef __cplusplus

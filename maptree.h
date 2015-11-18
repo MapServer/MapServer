@@ -84,8 +84,8 @@ extern "C" {
   MS_DLL_EXPORT void msTreeTrim(treeObj *tree);
   MS_DLL_EXPORT void msDestroyTree(treeObj *tree);
 
-  MS_DLL_EXPORT ms_bitarray msSearchTree(treeObj *tree, rectObj aoi);
-  MS_DLL_EXPORT ms_bitarray msSearchDiskTree(char *filename, rectObj aoi, int debug);
+  MS_DLL_EXPORT ms_bitarray msSearchTree(const treeObj *tree, rectObj aoi);
+  MS_DLL_EXPORT ms_bitarray msSearchDiskTree(const char *filename, rectObj aoi, int debug);
 
   MS_DLL_EXPORT treeObj *msReadTree(char *filename, int debug);
   MS_DLL_EXPORT int msWriteTree(treeObj *tree, char *filename, int LSB_order);

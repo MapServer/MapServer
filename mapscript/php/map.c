@@ -322,9 +322,9 @@ PHP_METHOD(mapObj, __construct)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   char *path = NULL;
-  long path_len;
+  long path_len = 0;
   mapObj *map;
   php_map_object *php_map;
 
@@ -353,7 +353,7 @@ PHP_METHOD(mapObj, __construct)
 PHP_METHOD(mapObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_map_object *php_map;
 
@@ -398,7 +398,9 @@ PHP_METHOD(mapObj, __get)
                                                         else IF_GET_OBJECT("scalebar", mapscript_ce_scalebar, php_map->scalebar, &php_map->map->scalebar)
                                                           else IF_GET_OBJECT("legend", mapscript_ce_legend, php_map->legend, &php_map->map->legend)
                                                             else IF_GET_OBJECT("querymap", mapscript_ce_querymap, php_map->querymap, &php_map->map->querymap)
+#ifdef disabled
                                                               else IF_GET_OBJECT("labelcache", mapscript_ce_labelcache, php_map->labelcache, &php_map->map->labelcache)
+#endif
                                                                 else IF_GET_OBJECT("projection", mapscript_ce_projection, php_map->projection, &php_map->map->projection)
                                                                   else IF_GET_OBJECT("metadata", mapscript_ce_hashtable, php_map->metadata, &php_map->map->web.metadata)
                                                                     else {
@@ -409,7 +411,7 @@ PHP_METHOD(mapObj, __get)
 PHP_METHOD(mapObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_map_object *php_map;
@@ -447,7 +449,9 @@ PHP_METHOD(mapObj, __set)
                                           (STRING_EQUAL("scalebar", property)) ||
                                           (STRING_EQUAL("legend", property)) ||
                                           (STRING_EQUAL("querymap", property)) ||
+#ifdef disabled
                                           (STRING_EQUAL("labelcache", property)) ||
+#endif
                                           (STRING_EQUAL("projection", property)) ||
                                           (STRING_EQUAL("metadata", property)) ||
                                           (STRING_EQUAL("configoptions", property)) ||
@@ -471,7 +475,7 @@ PHP_METHOD(mapObj, getSymbolByName)
 {
   zval *zobj = getThis();
   char *symbolName;
-  long symbolName_len;
+  long symbolName_len = 0;
   int symbolId = -1;
   php_map_object *php_map;
 
@@ -847,7 +851,7 @@ PHP_METHOD(mapObj, getLayerByName)
 {
   zval *zobj = getThis();
   char *layerName;
-  long layerName_len;
+  long layerName_len = 0;
   layerObj *layer = NULL;
   php_map_object *php_map;
   parent_object parent;
@@ -1917,7 +1921,7 @@ PHP_METHOD(mapObj, queryByFilter)
 {
   zval *zobj = getThis();
   char *string;
-  long string_len;
+  long string_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -1946,8 +1950,8 @@ PHP_METHOD(mapObj, saveQuery)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
-  int results = MS_FALSE;
+  long filename_len = 0;
+  long results = MS_FALSE;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -1973,9 +1977,9 @@ PHP_METHOD(mapObj, saveQueryAsGML)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   char *namespace = "GOMF";
-  long namespace_len;
+  long namespace_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -2001,7 +2005,7 @@ PHP_METHOD(mapObj, loadQuery)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -2052,7 +2056,7 @@ PHP_METHOD(mapObj, save)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -2083,7 +2087,7 @@ PHP_METHOD(mapObj, setProjection)
 {
   zval *zobj = getThis();
   char *projection;
-  long projection_len;
+  long projection_len = 0;
   int status = MS_FAILURE;
   long setUnitsAndExtents = MS_FALSE;
   php_map_object *php_map;
@@ -2137,7 +2141,7 @@ PHP_METHOD(mapObj, setWKTProjection)
 {
   zval *zobj = getThis();
   char *projection;
-  long projection_len;
+  long projection_len = 0;
   int status = MS_FAILURE;
   long setUnitsAndExtents = MS_FALSE;
   php_map_object *php_map;
@@ -2242,7 +2246,7 @@ PHP_METHOD(mapObj, getLayersIndexByGroup)
 {
   zval *zobj = getThis();
   char *groupName;
-  long groupName_len;
+  long groupName_len = 0;
   int *indexes = NULL;
   int count = 0;
   int i;
@@ -2702,7 +2706,7 @@ PHP_METHOD(mapObj, setSymbolSet)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -2755,7 +2759,7 @@ PHP_METHOD(mapObj, setFontSet)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -2788,7 +2792,7 @@ PHP_METHOD(mapObj, selectOutputFormat)
 {
   zval *zobj = getThis();
   char *type;
-  long type_len;
+  long type_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
   php_outputformat_object *php_outputformat = NULL;
@@ -2852,7 +2856,7 @@ PHP_METHOD(mapObj, removeOutputFormat)
 {
   zval *zobj = getThis();
   char *name;
-  long name_len;
+  long name_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -2912,7 +2916,7 @@ PHP_METHOD(mapObj, saveMapContext)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -2944,7 +2948,7 @@ PHP_METHOD(mapObj, loadMapContext)
 {
   zval *zobj = getThis();
   char *filename;
-  long filename_len;
+  long filename_len = 0;
   long unique = MS_FALSE;
   int status = MS_FAILURE;
   php_map_object *php_map;
@@ -2978,7 +2982,7 @@ PHP_METHOD(mapObj, applySLD)
 {
   zval *zobj = getThis();
   char *sldxml;
-  long sldxml_len;
+  long sldxml_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -3005,7 +3009,7 @@ PHP_METHOD(mapObj, applySLDURL)
 {
   zval *zobj = getThis();
   char *sldurl;
-  long sldurl_len;
+  long sldurl_len = 0;
   int status = MS_FAILURE;
   php_map_object *php_map;
 
@@ -3062,7 +3066,7 @@ PHP_METHOD(mapObj, getConfigOption)
 {
   zval *zobj = getThis();
   char *key;
-  long key_len;
+  long key_len = 0;
   char *value = NULL;
   php_map_object *php_map;
 
@@ -3090,9 +3094,9 @@ PHP_METHOD(mapObj, setConfigOption)
 {
   zval *zobj = getThis();
   char *key;
-  long key_len;
+  long key_len = 0;
   char *value;
-  long value_len;
+  long value_len = 0;
   php_map_object *php_map;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -3139,7 +3143,7 @@ PHP_METHOD(mapObj, loadOwsParameters)
   zval *zobj = getThis();
   zval *zrequest;
   char *version = NULL;
-  long version_len;
+  long version_len = 0;
   int isZval = 1;
   int status = MS_FAILURE;
   php_owsrequest_object *php_request;
@@ -3263,8 +3267,9 @@ PHP_METHOD(mapObj, removeLayer)
 }
 /* }}} */
 
+#ifdef disabled
 /* {{{ proto int map.getLabel().
-   Return the next label from the map’s labelcache, allowing iteration
+   Return the next label from the map���s labelcache, allowing iteration
    over labels. Return NULL when the labelcache is empty. */
 PHP_METHOD(mapObj, getLabel)
 {
@@ -3292,6 +3297,34 @@ PHP_METHOD(mapObj, getLabel)
   /* Return labelCacheMember object */
   MAPSCRIPT_MAKE_PARENT(zobj, NULL);
   mapscript_create_labelcachemember(labelCacheMember, parent, return_value TSRMLS_CC);
+}
+/* }}} */
+#endif
+
+/* {{{ proto string convertToString()
+   Convert the map object to string. */
+PHP_METHOD(mapObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_map_object *php_map;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_map = (php_map_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  mapObj_convertToString(php_map->map);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
 }
 /* }}} */
 
@@ -3366,7 +3399,9 @@ PHP_METHOD(mapObj, free)
   MAPSCRIPT_DELREF(php_map->scalebar);
   MAPSCRIPT_DELREF(php_map->legend);
   MAPSCRIPT_DELREF(php_map->querymap);
+#ifdef disabled
   MAPSCRIPT_DELREF(php_map->labelcache);
+#endif
   MAPSCRIPT_DELREF(php_map->projection);
   MAPSCRIPT_DELREF(php_map->metadata);
 }
@@ -3447,7 +3482,10 @@ zend_function_entry map_functions[] = {
   PHP_ME(mapObj, owsDispatch, map_owsDispatch_args, ZEND_ACC_PUBLIC)
   PHP_ME(mapObj, insertLayer, map_insertLayer_args, ZEND_ACC_PUBLIC)
   PHP_ME(mapObj, removeLayer, map_removeLayer_args, ZEND_ACC_PUBLIC)
+#ifdef disabled
   PHP_ME(mapObj, getLabel, map_getLabel_args, ZEND_ACC_PUBLIC)
+#endif
+  PHP_ME(mapObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(mapObj, getLatLongExtent, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(mapObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
@@ -3550,7 +3588,9 @@ static void mapscript_map_object_destroy(void *object TSRMLS_DC)
   MAPSCRIPT_DELREF(php_map->scalebar);
   MAPSCRIPT_DELREF(php_map->legend);
   MAPSCRIPT_DELREF(php_map->querymap);
+#ifdef disabled
   MAPSCRIPT_DELREF(php_map->labelcache);
+#endif
   MAPSCRIPT_DELREF(php_map->projection);
   MAPSCRIPT_DELREF(php_map->metadata);
   MAPSCRIPT_DELREF(php_map->configoptions);
@@ -3581,7 +3621,9 @@ static zend_object_value mapscript_map_object_new_ex(zend_class_entry *ce, php_m
   php_map->scalebar = NULL;
   php_map->legend = NULL;
   php_map->querymap = NULL;
+#ifdef disabled
   php_map->labelcache = NULL;
+#endif
   php_map->projection = NULL;
   php_map->metadata = NULL;
   php_map->configoptions = NULL;

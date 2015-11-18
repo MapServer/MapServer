@@ -30,6 +30,8 @@
 #ifndef MAPERROR_H
 #define MAPERROR_H
 
+#include "mapthread.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,7 +48,6 @@ extern "C" {
 #define MS_REGEXERR 5
 #define MS_TTFERR 6
 #define MS_DBFERR 7
-#define MS_GDERR 8
 #define MS_IDENTERR 9
 #define MS_EOFERR 10
 #define MS_PROJERR 11
@@ -59,7 +60,7 @@ extern "C" {
 #define MS_NOTFOUND 18 /* empty search results */
 #define MS_SHPERR 19
 #define MS_PARSEERR 20
-#define MS_SDEERR 21
+#define MS_UNUSEDERR 21
 #define MS_OGRERR 22
 #define MS_QUERYERR 23
 #define MS_WMSERR 24      /* WMS server error */
@@ -79,8 +80,9 @@ extern "C" {
 #define MS_NULLPARENTERR 38
 #define MS_AGGERR 39
 #define MS_OWSERR 40
-#define MS_OGLERR 42
-#define MS_RENDERERERR 43
+#define MS_OGLERR 41
+#define MS_RENDERERERR 42
+#define MS_V8ERR 43  
 #define MS_NUMERRORCODES 44
 
 #define MESSAGELENGTH 2048
@@ -94,13 +96,22 @@ extern "C" {
 #define  MS_DLL_EXPORT
 #endif
 
-  typedef struct error_obj {
+#ifndef MS_PRINT_FUNC_FORMAT
+#if defined(__GNUC__) && __GNUC__ >= 3 && !defined(DOXYGEN_SKIP)
+#define MS_PRINT_FUNC_FORMAT( format_idx, arg_idx )  __attribute__((__format__ (__printf__, format_idx, arg_idx)))
+#else
+#define MS_PRINT_FUNC_FORMAT( format_idx, arg_idx )
+#endif
+#endif
+
+  typedef struct errorObj {
     int code;
     char routine[ROUTINELENGTH];
     char message[MESSAGELENGTH];
     int isreported;
+    int errorcount; /* number of subsequent errors */
 #ifndef SWIG
-    struct error_obj *next;
+    struct errorObj *next;
 #endif
   } errorObj;
 
@@ -114,14 +125,14 @@ extern "C" {
   MS_DLL_EXPORT char *msGetErrorString(char *delimiter);
 
 #ifndef SWIG
-  MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...);
+  MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...) MS_PRINT_FUNC_FORMAT(2,4) ;
   MS_DLL_EXPORT void msWriteError(FILE *stream);
   MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
   MS_DLL_EXPORT char *msGetErrorCodeString(int code);
   MS_DLL_EXPORT char *msAddErrorDisplayString(char *source, errorObj *error);
 
-  struct map_obj;
-  MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
+  struct mapObj;
+  MS_DLL_EXPORT void msWriteErrorImage(struct mapObj *map, char *filename, int blank);
 
 #endif /* SWIG */
 
@@ -134,7 +145,8 @@ extern "C" {
                  MS_DEBUGLEVEL_TUNING     = 2,  /* Reports timing info */
                  MS_DEBUGLEVEL_V          = 3,  /* Verbose */
                  MS_DEBUGLEVEL_VV         = 4,  /* Very verbose */
-                 MS_DEBUGLEVEL_VVV        = 5   /* Very very verbose */
+                 MS_DEBUGLEVEL_VVV        = 5,  /* Very very verbose */
+                 MS_DEBUGLEVEL_DEVDEBUG   = 20, /* Undocumented, will trigger debug messages only useful for developers */
                } debugLevel;
 
 #ifndef SWIG
@@ -152,12 +164,12 @@ extern "C" {
     char        *errorfile;
     FILE        *fp;
     /* The following 2 members are used only with USE_THREAD (but we won't #ifndef them) */
-    int         thread_id;
+    void* thread_id;
     struct debug_info_obj *next;
   } debugInfoObj;
 
 
-  MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
+  MS_DLL_EXPORT void msDebug( const char * pszFormat, ... ) MS_PRINT_FUNC_FORMAT(1,2) ;
   MS_DLL_EXPORT int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath);
   MS_DLL_EXPORT void msCloseErrorFile( void );
   MS_DLL_EXPORT const char *msGetErrorFile( void );

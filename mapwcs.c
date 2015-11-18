@@ -30,6 +30,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapthread.h"
+#include "mapows.h"
 #include <assert.h>
 
 
@@ -138,29 +139,25 @@ int msWCSException(mapObj *map, const char *code, const char *locator,
                    const char *version )
 {
   char *pszEncodedVal = NULL;
-  const char *encoding;
+  char version_string[OWS_VERSION_MAXLEN];
 
   if( version == NULL )
     version = "1.0.0";
 
 #if defined(USE_LIBXML2)
   if( msOWSParseVersionString(version) >= OWS_2_0_0 )
-    return msWCSException20( map, code, locator, version );
+    return msWCSException20( map, code, locator, msOWSGetVersionString(msOWSParseVersionString(version), version_string) );
 #endif
 
   if( msOWSParseVersionString(version) >= OWS_1_1_0 )
-    return msWCSException11( map, code, locator, version );
+    return msWCSException11( map, code, locator, msOWSGetVersionString(msOWSParseVersionString(version), version_string) );
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
-  if (encoding)
-    msIO_setHeader("Content-type","application/vnd.ogc.se_xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-type","application/vnd.ogc.se_xml");
+  msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=UTF-8");
   msIO_sendHeaders();
 
-  /* msIO_printf("Content-type: text/xml%c%c",10,10); */
+  /* msIO_printf("Content-Type: text/xml%c%c",10,10); */
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
+  msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
   msIO_printf("<ServiceExceptionReport version=\"1.2.0\"\n");
   msIO_printf("xmlns=\"http://www.opengis.net/ogc\" ");
@@ -250,7 +247,7 @@ void msWCSFreeParams(wcsParamsObj *params)
 int msWCSIsLayerSupported(layerObj *layer)
 {
   /* only raster layers, are elligible to be served via WCS, WMS rasters are not ok */
-  if((layer->type == MS_LAYER_RASTER) && layer->connectiontype != MS_WMS) return MS_TRUE;
+  if((layer->type == MS_LAYER_RASTER) && layer->connectiontype != MS_WMS && layer->name != NULL) return MS_TRUE;
 
   return MS_FALSE;
 }
@@ -919,9 +916,6 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   int wcsSupportedVersions[] = {OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
   int wcsNumSupportedVersions = 4;
   const char *updatesequence=NULL;
-  const char *encoding;
-
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
 
   /* check version is valid */
   tmpInt = msOWSParseVersionString(params->version);
@@ -962,7 +956,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
 
   else { /* set default updatesequence */
     if(!updatesequence)
-      updatesequence = msStrdup("0");
+      updatesequence = "0";
     params->updatesequence = msStrdup(updatesequence);
   }
 
@@ -972,10 +966,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
       strcasecmp(params->section, "/WCS_Capabilities/Capability") != 0 &&
       strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata") != 0 &&
       strcasecmp(params->section, "/") != 0) {
-    if (encoding)
-      msIO_setHeader("Content-type","application/vnd.ogc.se_xml; charset=%s", encoding);
-    else
-      msIO_setHeader("Content-type","application/vnd.ogc.se_xml");
+    msIO_setHeader("Content-Type","application/vnd.ogc.se_xml; charset=UTF-8");
     msIO_sendHeaders();
     msSetError( MS_WCSERR,
                 "Invalid SECTION parameter \"%s\"",
@@ -985,19 +976,16 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   }
 
   else {
-    if (encoding)
-      msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
-    else
-      msIO_setHeader("Content-type","text/xml");
+    msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
     msIO_sendHeaders();
 
     /* print common capability elements  */
     /* TODO: DocType? */
 
     if (!updatesequence)
-      updatesequence = msStrdup("0");
+      updatesequence = "0";
 
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n", "ISO-8859-1");
+    msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
 
     if(!params->section || (params->section && strcasecmp(params->section, "/")  == 0)) msIO_printf("<WCS_Capabilities\n"
           "   version=\"%s\" \n"
@@ -1285,6 +1273,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
         msIO_printf("      <formats>%s</formats>\n", tokens[i]);
       msFreeCharArray(tokens, numtokens);
     }
+    msFree((char*)value);
   }
   msIO_printf("    </supportedFormats>\n");
 
@@ -1311,11 +1300,9 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
   const char *updatesequence=NULL;
   char **coverages=NULL;
   int numcoverages=0;
-  const char *encoding;
 
   char *coverageName=NULL;
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "CO", "encoding");
   /* -------------------------------------------------------------------- */
   /*      1.1.x is sufficiently different we have a whole case for        */
   /*      it.  The remainder of this function is for 1.0.0.               */
@@ -1334,9 +1321,12 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params, owsRequestOb
 
         for(i=0; i<map->numlayers; i++) {
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
-          if( EQUAL(coverageName, coverages[k]) &&
-              (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) )
+          if( coverageName != NULL && EQUAL(coverageName, coverages[k]) &&
+              (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
+            msFree(coverageName);
             break;
+          }
+          msFree(coverageName);
         }
 
         /* i = msGetLayerIndex(map, coverages[k]); */
@@ -1346,22 +1336,20 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
           return msWCSException(map, "CoverageNotDefined", "coverage", params->version );
         }
       } /* next coverage */
+      msFreeCharArray(coverages,numcoverages);
     }
   }
 
   updatesequence = msOWSLookupMetadata(&(map->web.metadata), "CO", "updatesequence");
   if (!updatesequence)
-    updatesequence = msStrdup("0");
+    updatesequence = "0";
 
-  /* printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10); */
-  if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-type","text/xml");
+  /* printf("Content-Type: application/vnd.ogc.se_xml%c%c",10,10); */
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
   /* print common capability elements  */
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
+  msIO_printf("<?xml version='1.0' encoding=\"UTF-8\" ?>\n");
 
   /* start the DescribeCoverage section */
   msIO_printf("<CoverageDescription\n"
@@ -1378,10 +1366,15 @@ this request. Check wcs/ows_enable_request settings.", "msWCSDescribeCoverage()"
       for(k=0; k<numcoverages; k++) {
         for(i=0; i<map->numlayers; i++) {
           coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
-          if( EQUAL(coverageName, coverages[k]) ) break;
+          if( coverageName != NULL && EQUAL(coverageName, coverages[k]) ) {
+            msFree(coverageName);
+            break;
+          }
+          msFree(coverageName);
         }
         msWCSDescribeCoverage_CoverageOffering((GET_LAYER(map, i)), params);
       }
+      msFreeCharArray(coverages,numcoverages);
     }
   } else { /* return all layers */
     for(i=0; i<map->numlayers; i++) {
@@ -1427,14 +1420,18 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
 
       /* ok, a parameter has been passed which matches a token in wcs_rangeset_axes */
       if(msWCSValidateRangeSetParam(lp, tokens[i], value) != MS_SUCCESS) {
+        int ret;
         msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
-        return msWCSException(map, "InvalidParameterValue", tokens[i], params->version );
+        ret = msWCSException(map, "InvalidParameterValue", tokens[i], params->version );
+        msFreeCharArray(tokens, numtokens);
+        return ret;
       }
 
       /* xxxxx_rangeitem tells us how to subset */
       snprintf(tag, sizeof(tag), "%s_rangeitem", tokens[i]);
       if((rangeitem = msOWSLookupMetadata(&(lp->metadata), "CO", tag)) == NULL) {
         msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
+        msFreeCharArray(tokens, numtokens);
         return msWCSException(map, NULL, NULL, params->version);
       }
 
@@ -1443,12 +1440,15 @@ static int msWCSGetCoverageBands10( mapObj *map, cgiRequestObj *request,
 
         if(!*p_bandlist) {
           msSetError( MS_WCSERR, "Error specifying \"%s\" parameter value(s).", "msWCSGetCoverage()", tokens[i]);
+          msFreeCharArray(tokens, numtokens);
           return msWCSException(map, NULL, NULL, params->version );
         }
       } else if(strcasecmp(rangeitem, "_pixels") == 0) { /* special case, subset pixels */
+        msFreeCharArray(tokens, numtokens);
         msSetError( MS_WCSERR, "Arbitrary range sets based on pixel values are not yet supported.", "msWCSGetCoverage()" );
         return msWCSException(map, NULL, NULL, params->version);
       } else {
+        msFreeCharArray(tokens, numtokens);
         msSetError( MS_WCSERR, "Arbitrary range sets based on tile (i.e. image) attributes are not yet supported.", "msWCSGetCoverage()" );
         return msWCSException(map, NULL, NULL, params->version );
       }
@@ -1600,7 +1600,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
   lp = NULL;
   for(i=0; i<map->numlayers; i++) {
     coverageName = msOWSGetEncodeMetadata(&(GET_LAYER(map, i)->metadata), "CO", "name", GET_LAYER(map, i)->name);
-    if( EQUAL(coverageName, params->coverages[0]) &&
+    if( coverageName != NULL && EQUAL(coverageName, params->coverages[0]) &&
         (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
       lp = GET_LAYER(map, i);
       free( coverageName );
@@ -1617,6 +1617,17 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
   /* make sure the layer is on */
   lp->status = MS_ON;
+  
+  /* If the layer has no projection set, set it to the map's projection (#4079) */
+  if(lp->projection.numargs <=0) {
+    char *map_original_srs = msGetProjectionString(&(map->projection));
+    if (msLoadProjectionString(&(lp->projection), map_original_srs) != 0) {
+      msSetError( MS_WCSERR, "Error when setting map projection to a layer with no projection", "msWCSGetCoverage()" );
+      free(map_original_srs);
+      return msWCSException(map, NULL, NULL, params->version);
+    }
+    free(map_original_srs);
+  }
 
   /* we need the coverage metadata, since things like numbands may not be available otherwise */
   status = msWCSGetCoverageMetadata(lp, &cm);
@@ -1707,7 +1718,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     }
 
     /* finally set the filter */
-    freeExpression(&tlp->filter);
+    msFreeExpression(&tlp->filter);
     msLayerSetTimeFilter(tlp, params->time, value);
   }
 
@@ -1900,6 +1911,73 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
   free( bandlist );
 
+  if(lp->mask) {
+    int maskLayerIdx = msGetLayerIndex(map,lp->mask);
+    layerObj *maskLayer;
+    outputFormatObj *altFormat;
+    if(maskLayerIdx == -1) {
+      msSetError(MS_MISCERR, "Layer (%s) references unknown mask layer (%s)", "msDrawLayer()",
+                 lp->name,lp->mask);
+      return msWCSException(map, NULL, NULL, params->version );
+    }
+    maskLayer = GET_LAYER(map, maskLayerIdx);
+    if(!maskLayer->maskimage) {
+      int i,retcode;
+      int origstatus, origlabelcache;
+      char *origImageType = msStrdup(map->imagetype);
+      altFormat =  msSelectOutputFormat(map, "png24");
+      msInitializeRendererVTable(altFormat);
+      /* TODO: check the png24 format hasn't been tampered with, i.e. it's agg */
+      maskLayer->maskimage= msImageCreate(map->width, map->height, altFormat,
+                                          map->web.imagepath, map->web.imageurl, map->resolution, map->defresolution, NULL);
+      if (!maskLayer->maskimage) {
+        msSetError(MS_MISCERR, "Unable to initialize mask image.", "msDrawLayer()");
+        msFree(origImageType);
+        return msWCSException(map, NULL, NULL, params->version );
+      }
+
+      /*
+       * force the masked layer to status on, and turn off the labelcache so that
+       * eventual labels are added to the temporary image instead of being added
+       * to the labelcache
+       */
+      origstatus = maskLayer->status;
+      origlabelcache = maskLayer->labelcache;
+      maskLayer->status = MS_ON;
+      maskLayer->labelcache = MS_OFF;
+
+      /* draw the mask layer in the temporary image */
+      retcode = msDrawLayer(map, maskLayer, maskLayer->maskimage);
+      maskLayer->status = origstatus;
+      maskLayer->labelcache = origlabelcache;
+      if(retcode != MS_SUCCESS) {
+        /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
+        msFree(map->imagetype);
+        map->imagetype = origImageType;
+        return msWCSException(map, NULL, NULL, params->version );
+      }
+      /*
+       * hack to work around bug #3834: if we have use an alternate renderer, the symbolset may contain
+       * symbols that reference it. We want to remove those references before the altFormat is destroyed
+       * to avoid a segfault and/or a leak, and so the the main renderer doesn't pick the cache up thinking
+       * it's for him.
+       */
+      for(i=0; i<map->symbolset.numsymbols; i++) {
+        if (map->symbolset.symbol[i]!=NULL) {
+          symbolObj *s = map->symbolset.symbol[i];
+          if(s->renderer == MS_IMAGE_RENDERER(maskLayer->maskimage)) {
+            MS_IMAGE_RENDERER(maskLayer->maskimage)->freeSymbol(s);
+            s->renderer = NULL;
+          }
+        }
+      }
+      /* set the imagetype from the original outputformat back (it was removed by msSelectOutputFormat() */
+      msFree(map->imagetype);
+      map->imagetype = origImageType;
+      
+    }
+  }
+  
   /* create the image object  */
   if(!map->outputformat) {
     msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
@@ -1916,12 +1994,16 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   if( MS_RENDERER_RAWDATA(map->outputformat) ) {
     status = msDrawRasterLayerLow( map, lp, image, NULL );
   } else {
-    MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+    status = MS_IMAGE_RENDERER(image)->getRasterBufferHandle(image,&rb);
+    if(UNLIKELY(status == MS_FAILURE)) {
+      return MS_FAILURE;
+    }
 
     /* Actually produce the "grid". */
     status = msDrawRasterLayerLow( map, lp, image, &rb );
   }
   if( status != MS_SUCCESS ) {
+    msFreeImage(image);
     return msWCSException(map, NULL, NULL, params->version );
   }
 
@@ -1938,7 +2020,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
                      fo_filename );
 
     /* Emit back to client. */
-    msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(map->outputformat));
+    msIO_setHeader("Content-Type","%s",MS_IMAGE_MIME_TYPE(map->outputformat));
     msIO_sendHeaders();
     status = msSaveImage(map, image, NULL);
 
@@ -2025,16 +2107,16 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
     /* be determined (GetCapabilities). To determine the */
     /* version, the request has to be fully parsed to    */
     /* obtain the ACCEPTVERSIONS parameter. If this is   */
-    /* present also, set version to "2.0.0".             */
+    /* present also, set version to "2.0.1".             */
 
     if (operation == MS_WCS_GET_CAPABILITIES) {
       /* Parse it as if it was a WCS 2.0 request */
       wcs20ParamsObjPtr params_tmp = msWCSCreateParamsObj20();
       status = msWCSParseRequest20(map, request, ows_request, params_tmp);
       if (status == MS_FAILURE) {
-        msWCSFreeParamsObj20(params);
+        msWCSFreeParamsObj20(params_tmp);
         return msWCSException(map, "InvalidParameterValue",
-                              "request", "2.0.0");
+                              "request", "2.0.1");
       }
 
       /* VERSION negotiation */
@@ -2058,12 +2140,12 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
         ows_request->version = msStrdup(version_string);
       } else {
         /* set to highest acceptable */
-        params_tmp->version = msStrdup("2.0.0");
-        ows_request->version = msStrdup("2.0.0");
+        params_tmp->version = msStrdup("2.0.1");
+        ows_request->version = msStrdup("2.0.1");
       }
 
       /* check if we can keep the params object */
-      if (EQUAL(params_tmp->version, "2.0.0")) {
+      if (EQUAL(params_tmp->version, "2.0.1")) {
         params = params_tmp;
       } else {
         msWCSFreeParamsObj20(params_tmp);
@@ -2089,7 +2171,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       /* In case of GetCapabilities, make  */
       char version_string[OWS_VERSION_MAXLEN];
       int version, supported_versions[] =
-      {OWS_2_0_0, OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
+      {OWS_2_0_1, OWS_2_0_0, OWS_1_1_2, OWS_1_1_1, OWS_1_1_0, OWS_1_0_0};
       version = msOWSNegotiateVersion(requested_version,
                                       supported_versions,
                                       sizeof(supported_versions)/sizeof(int));
@@ -2110,9 +2192,10 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       msWCSFreeParams(params);
       free(params);
       return msWCSException(map, "InvalidParameterValue",
-                            "request", "2.0.0");
+                            "request", "2.0");
     }
 
+    retVal = MS_FAILURE;
     if (operation == MS_WCS_GET_CAPABILITIES) {
       retVal = msWCSGetCapabilities(map, params, request, ows_request);
     } else if (operation == MS_WCS_DESCRIBE_COVERAGE) {
@@ -2120,8 +2203,11 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
     } else if (operation == MS_WCS_GET_COVERAGE) {
       retVal = msWCSGetCoverage(map, request, params, ows_request);
     }
+    msWCSFreeParams(params);
+    free(params);
     return retVal;
-  } else if (strcmp(ows_request->version, "2.0.0") == 0) {
+  } else if (strcmp(ows_request->version, "2.0.0") == 0
+             || strcmp(ows_request->version, "2.0.1") == 0) {
 #if defined(USE_LIBXML2)
     int i;
 
@@ -2131,7 +2217,14 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       if (status == MS_FAILURE) {
         msWCSFreeParamsObj20(params);
         return msWCSException(map, "InvalidParameterValue",
-                              "request", "2.0.0");
+                              "request", "2.0.1");
+      }
+      else if (status == MS_DONE) {
+        /* MS_DONE means, that the exception has already been written to the IO 
+          buffer. 
+        */
+        msWCSFreeParamsObj20(params);
+        return MS_FAILURE;
       }
     }
 
@@ -2145,7 +2238,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
         msSetError(MS_WCSERR, "Layer name '%s' is not a valid NCName.",
                    "msWCSDispatch()", map->layers[i]->name);
         msWCSFreeParamsObj20(params);
-        return msWCSException(map, "mapserv", "Internal", "2.0.0");
+        return msWCSException(map, "mapserv", "Internal", "2.0.1");
       }
     }
 
@@ -2160,15 +2253,15 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       msSetError(MS_WCSERR, "Invalid request '%s'.",
                  "msWCSDispatch20()", ows_request->request);
       retVal = msWCSException20(map, "InvalidParameterValue",
-                                "request", "2.0.0");
+                                "request", "2.0.1");
     }
     /* clean up */
     msWCSFreeParamsObj20(params);
     return retVal;
 #else /* def USE_LIBXML2 */
-    msSetError(MS_WCSERR, "WCS 2.0.0 needs mapserver to be compiled with libxml2.",
+    msSetError(MS_WCSERR, "WCS 2.0 needs mapserver to be compiled with libxml2.",
                "msWCSDispatch()");
-    return msWCSException(map, "mapserv", "NoApplicableCode", "1.0.0");
+    return msWCSException(map, "mapserv", "NoApplicableCode", "2.0.1");
 #endif /* def USE_LIBXML2 */
   } else { /* unsupported version */
     msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.",

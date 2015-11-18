@@ -27,12 +27,14 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
+#include "mapserver-config.h"
 #ifdef USE_KML
 
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapkmlrenderer.h"
 #include "mapio.h"
+#include "mapows.h"
 
 #if defined(USE_OGR)
 #  include "cpl_conv.h"
@@ -372,6 +374,7 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
   if (!msLayerIsOpen(layer)) {
     if (msLayerOpen(layer) != MS_SUCCESS) {
       msSetError(MS_MISCERR, "msLayerOpen failed", "KmlRenderer::startNewLayer" );
+      return MS_FAILURE;
     }
   }
 
@@ -403,7 +406,9 @@ int KmlRenderer::startNewLayer(imageObj *img, layerObj *layer)
     pszLayerNameAttributeMetadata = msLookupHashTable(&layer->metadata, "kml_name_item");
 
   /*get all attributes*/
-  msLayerWhichItems(layer, MS_TRUE, NULL);
+  if(msLayerWhichItems(layer, MS_TRUE, NULL) != MS_SUCCESS) {
+    return MS_FAILURE;
+  }
 
 
   NumItems = layer->numitems;
@@ -686,7 +691,7 @@ void KmlRenderer::addCoordsNode(xmlNodePtr parentNode, pointObj *pts, int numPts
   xmlNodeAddContent(coordsNode, BAD_CAST "\t");
 }
 
-void KmlRenderer::renderGlyphs(imageObj*, double x, double y, labelStyleObj *style, char *text)
+void KmlRenderer::renderGlyphs(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth)
 {
   xmlNodePtr node;
 
@@ -696,7 +701,7 @@ void KmlRenderer::renderGlyphs(imageObj*, double x, double y, labelStyleObj *sty
   if (!PlacemarkNode)
     return;
 
-  memcpy(&LabelStyle, style, sizeof(labelStyleObj));
+  memcpy(&LabelColor, clr, sizeof(colorObj));
   SymbologyFlag[Label] = 1;
 
   /*there is alaws a default name (layer.shapeid). Replace it*/
@@ -716,8 +721,8 @@ void KmlRenderer::renderGlyphs(imageObj*, double x, double y, labelStyleObj *sty
   addAddRenderingSpecifications(geomNode);
 
   pointObj pt;
-  pt.x = x;
-  pt.y = y;
+  pt.x = labelpnt->x;
+  pt.y = labelpnt->y;
   addCoordsNode(geomNode, &pt, 1);
 }
 
@@ -749,6 +754,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
 int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleObj *symstyle)
 {
   pointObj p;
+  int status;
 
   imageObj *tmpImg = NULL;
 
@@ -765,7 +771,9 @@ int KmlRenderer::createIconImage(char *fileName, symbolObj *symbol, symbolStyleO
   p.z = 0.0;
 #endif
 
-  msDrawMarkerSymbol(&map->symbolset,tmpImg, &p, symstyle->style, 1);
+  status = msDrawMarkerSymbol(map,tmpImg, &p, symstyle->style, 1);
+  if( status != MS_SUCCESS )
+    return status;
 
   return msSaveImage(map, tmpImg, fileName);
 }
@@ -843,8 +851,8 @@ xmlNodePtr KmlRenderer::createGroundOverlayNode(xmlNodePtr parentNode, char *ima
   xmlNodePtr groundOverlayNode = xmlNewChild(parentNode, NULL, BAD_CAST "GroundOverlay", NULL);
   char *layerName = getLayerName(layer);
   xmlNewChild(groundOverlayNode, NULL, BAD_CAST "name", BAD_CAST layerName);
-  if (layer->opacity > 0 && layer->opacity < 100) {
-    sprintf(layerHexColor, "%02xffffff", (unsigned int)MS_NINT(layer->opacity*2.55));
+  if (layer->compositer && layer->compositer->opacity > 0 && layer->compositer->opacity < 100) {
+    sprintf(layerHexColor, "%02xffffff", (unsigned int)MS_NINT(layer->compositer->opacity*2.55));
     xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST layerHexColor);
   } else
     xmlNewChild(groundOverlayNode, NULL, BAD_CAST "color", BAD_CAST "ffffffff");
@@ -899,14 +907,12 @@ void KmlRenderer::startShape(imageObj *, shapeObj *shape)
     numLineStyle = 0;
   }
 
-  if (shape) {
-    CurrentShapeIndex = shape->index;
-    if (pszLayerNameAttributeMetadata) {
-      for (int i=0; i<currentLayer->numitems; i++) {
-        if (strcasecmp(currentLayer->items[i], pszLayerNameAttributeMetadata) == 0 && shape->values[i]) {
-          CurrentShapeName = msStrdup(shape->values[i]);
-          break;
-        }
+  CurrentShapeIndex = shape->index;
+  if (pszLayerNameAttributeMetadata) {
+    for (int i=0; i<currentLayer->numitems; i++) {
+      if (strcasecmp(currentLayer->items[i], pszLayerNameAttributeMetadata) == 0 && shape->values[i]) {
+        CurrentShapeName = msStrdup(shape->values[i]);
+        break;
       }
     }
   }
@@ -983,9 +989,7 @@ char* KmlRenderer::lookupSymbolUrl(imageObj *img, symbolObj *symbol, symbolStyle
     }
 
     if (createIconImage(iconFileName, symbol, symstyle) != MS_SUCCESS) {
-      char errMsg[512];
-      sprintf(errMsg, "Error creating icon file '%s'", iconFileName);
-      msSetError(MS_IOERR, errMsg, "KmlRenderer::lookupSymbolStyle()" );
+      msSetError(MS_IOERR, "Error creating icon file '%s'", "KmlRenderer::lookupSymbolStyle()", iconFileName);
       return NULL;
     }
 
@@ -1023,9 +1027,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
     */
 
     for (int i=0; i<numLineStyle; i++) {
-      if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
+      if (currentLayer && currentLayer->compositer && currentLayer->compositer->opacity > 0 && currentLayer->compositer->opacity < 100 &&
           LineStyle[i].color->alpha == 255)
-        LineStyle[i].color->alpha = MS_NINT(currentLayer->opacity*2.55);
+        LineStyle[i].color->alpha = MS_NINT(currentLayer->compositer->opacity*2.55);
 
       sprintf(lineHexColor,"%02x%02x%02x%02x", LineStyle[i].color->alpha, LineStyle[0].color->blue,
               LineStyle[i].color->green, LineStyle[i].color->red);
@@ -1049,9 +1053,9 @@ char* KmlRenderer::lookupPlacemarkStyle()
       </PolyStyle>
     */
 
-    if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
+    if (currentLayer && currentLayer->compositer && currentLayer->compositer->opacity > 0 && currentLayer->compositer->opacity < 100 &&
         PolygonColor.alpha == 255)
-      PolygonColor.alpha = MS_NINT(currentLayer->opacity*2.55);
+      PolygonColor.alpha = MS_NINT(currentLayer->compositer->opacity*2.55);
     sprintf(polygonHexColor,"%02x%02x%02x%02x", PolygonColor.alpha, PolygonColor.blue, PolygonColor.green, PolygonColor.red);
 
     char polygonStyleName[64];
@@ -1071,10 +1075,10 @@ char* KmlRenderer::lookupPlacemarkStyle()
       </LabelStyle>
     */
 
-    if (currentLayer && currentLayer->opacity > 0 && currentLayer->opacity < 100 &&
-        LabelStyle.color->alpha == 255)
-      LabelStyle.color->alpha = MS_NINT(currentLayer->opacity*2.55);
-    sprintf(labelHexColor,"%02x%02x%02x%02x", LabelStyle.color->alpha, LabelStyle.color->blue, LabelStyle.color->green, LabelStyle.color->red);
+    if (currentLayer && currentLayer->compositer && currentLayer->compositer->opacity > 0 && currentLayer->compositer->opacity < 100 &&
+        LabelColor.alpha == 255)
+      LabelColor.alpha = MS_NINT(currentLayer->compositer->opacity*2.55);
+    sprintf(labelHexColor,"%02x%02x%02x%02x", LabelColor.alpha, LabelColor.blue, LabelColor.green, LabelColor.red);
 
     // __TODO__ add label scale
 

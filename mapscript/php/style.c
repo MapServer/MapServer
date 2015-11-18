@@ -131,7 +131,7 @@ PHP_METHOD(styleObj, __construct)
 PHP_METHOD(styleObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_style_object *php_style;
 
@@ -159,7 +159,6 @@ PHP_METHOD(styleObj, __get)
                       else IF_GET_LONG("polaroffsetpixel", php_style->style->polaroffsetpixel)
                         else IF_GET_LONG("polaroffsetangle", php_style->style->polaroffsetangle)
                           else IF_GET_DOUBLE("angle", php_style->style->angle)
-                            else IF_GET_LONG("antialias", php_style->style->antialias)
                               else IF_GET_DOUBLE("minvalue", php_style->style->minvalue)
                                 else IF_GET_DOUBLE("maxvalue", php_style->style->maxvalue)
                                   else IF_GET_STRING("rangeitem", php_style->style->rangeitem)
@@ -189,14 +188,16 @@ PHP_METHOD(styleObj, __get)
 PHP_METHOD(styleObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_style_object *php_style;
   php_map_object *php_map = NULL;
   php_class_object *php_class;
   php_layer_object *php_layer;
+#ifdef disabled
   php_labelcachemember_object *php_labelcachemember;
+#endif
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz",
@@ -221,7 +222,6 @@ PHP_METHOD(styleObj, __set)
                     else IF_SET_LONG("polaroffsetpixel", php_style->style->polaroffsetpixel, value)
                       else IF_SET_LONG("polaroffsetangle", php_style->style->polaroffsetangle, value)
                         else IF_SET_DOUBLE("angle", php_style->style->angle, value)
-                          else IF_SET_LONG("antialias", php_style->style->antialias, value)
                             else IF_SET_DOUBLE("minvalue", php_style->style->minvalue, value)
                               else IF_SET_DOUBLE("maxvalue", php_style->style->maxvalue, value)
                                 else IF_SET_DOUBLE("minscaledenom", php_style->style->minscaledenom, value)
@@ -268,6 +268,7 @@ PHP_METHOD(styleObj, __set)
                                                               return;
                                                             }
                                                             php_map = (php_map_object *) zend_object_store_get_object(php_layer->parent.val TSRMLS_CC);
+#ifdef disabled
                                                           } else if (Z_OBJCE_P(php_style->parent.val) == mapscript_ce_labelcachemember) {
                                                             /* The parent is always a map */
                                                             php_labelcachemember = (php_labelcachemember_object *) zend_object_store_get_object(php_style->parent.val TSRMLS_CC);
@@ -276,6 +277,7 @@ PHP_METHOD(styleObj, __set)
                                                               return;
                                                             }
                                                             php_map = (php_map_object *) zend_object_store_get_object(php_labelcachemember->parent.val TSRMLS_CC);
+#endif
                                                           }
 
                                                           if (styleObj_setSymbolByName(php_style->style,
@@ -304,7 +306,7 @@ PHP_METHOD(styleObj, updateFromString)
 {
   zval *zobj = getThis();
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   int status = MS_FAILURE;
   zval *retval;
   zval property_name, value;
@@ -338,13 +340,40 @@ PHP_METHOD(styleObj, updateFromString)
 }
 /* }}} */
 
+/* {{{ proto string convertToString()
+   Convert the style object to string. */
+PHP_METHOD(styleObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_style_object *php_style;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_style = (php_style_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  styleObj_convertToString(php_style->style);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
+}
+/* }}} */
+
 /* {{{ proto int style.setbinding(const bindingid, string value)
    Set the attribute binding for a specfiled style property. Returns MS_SUCCESS on success. */
 PHP_METHOD(styleObj, setBinding)
 {
   zval *zobj = getThis();
   char *value;
-  long value_len;
+  long value_len = 0;
   long bindingId;
   php_style_object *php_style;
 
@@ -503,7 +532,7 @@ PHP_METHOD(styleObj, setGeomTransform)
 {
   zval *zobj = getThis();
   char *transform;
-  long transform_len;
+  long transform_len = 0;
   php_style_object *php_style;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -599,6 +628,7 @@ zend_function_entry style_functions[] = {
   PHP_ME(styleObj, __set, style___set_args, ZEND_ACC_PUBLIC)
   PHP_MALIAS(styleObj, set, __set, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(styleObj, updateFromString, style_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(styleObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(styleObj, setBinding, style_setBinding_args, ZEND_ACC_PUBLIC)
   PHP_ME(styleObj, getBinding, style_getBinding_args, ZEND_ACC_PUBLIC)
   PHP_ME(styleObj, removeBinding, style_removeBinding_args, ZEND_ACC_PUBLIC)

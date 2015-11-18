@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
 
+#ifdef what_the_fxxx_is_this_for
 #include "php_mapscript.h"
 
 zend_class_entry *mapscript_ce_labelcachemember;
@@ -53,7 +54,7 @@ PHP_METHOD(labelCacheMemberObj, __construct)
 PHP_METHOD(labelCacheMemberObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_labelcachemember_object *php_labelcachemember;
 
@@ -88,7 +89,7 @@ PHP_METHOD(labelCacheMemberObj, __get)
 PHP_METHOD(labelCacheMemberObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_labelcachemember_object *php_labelcachemember;
@@ -218,4 +219,5 @@ PHP_MINIT_FUNCTION(labelcachemember)
 
   return SUCCESS;
 }
+#endif
 

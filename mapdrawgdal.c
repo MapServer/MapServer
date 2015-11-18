@@ -39,6 +39,7 @@ extern int InvGeoTransform( double *gt_in, double *gt_out );
 
 #define MAXCOLORS 256
 #define GEO_TRANS(tr,x,y)  ((tr)[0]+(tr)[1]*(x)+(tr)[2]*(y))
+#define SKIP_MASK(x,y) (mask_rb && !*(mask_rb->data.rgba.a+(y)*mask_rb->data.rgba.row_step+(x)*mask_rb->data.rgba.pixel_step))
 
 #if defined(USE_GDAL)
 
@@ -68,31 +69,6 @@ msDrawRasterLayerGDAL_16BitClassification(
   int src_xoff, int src_yoff, int src_xsize, int src_ysize,
   int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
 
-#ifdef USE_GD
-static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
-                         GByte *pabyDithered, int xsize, int ysize,
-                         int bTransparent, colorObj transparentColor,
-                         gdImagePtr gdImg );
-/*
- * Stuff for allocating color cubes, and mapping between RGB values and
- * the corresponding color cube index.
- */
-
-static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube);
-#endif
-
-
-#define RED_LEVELS 5
-#define RED_DIV 52
-/* #define GREEN_LEVELS 7 */
-#define GREEN_LEVELS 5
-/* #define GREEN_DIV 37 */
-#define GREEN_DIV 52
-#define BLUE_LEVELS 5
-#define BLUE_DIV 52
-
-#define RGB_LEVEL_INDEX(r,g,b) ((r)*GREEN_LEVELS*BLUE_LEVELS + (g)*BLUE_LEVELS+(b))
-#define RGB_INDEX(r,g,b) RGB_LEVEL_INDEX(((r)/RED_DIV),((g)/GREEN_DIV),((b)/BLUE_DIV))
 
 /*
  * rasterBufferObj setting macros.
@@ -109,7 +85,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
 {
   int i,j, k; /* loop counters */
-  int cmap[MAXCOLORS], cmap_set = FALSE;
+  int cmap[MAXCOLORS];
+#ifndef NDEBUG
+  int cmap_set = FALSE;
+#endif
   unsigned char rb_cmap[4][MAXCOLORS];
   double adfGeoTransform[6], adfInvGeoTransform[6];
   int dst_xoff, dst_yoff, dst_xsize, dst_ysize;
@@ -122,16 +101,21 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   int red_band=0, green_band=0, blue_band=0, alpha_band=0;
   int band_count, band_numbers[4];
   GDALDatasetH hDS = hDSVoid;
-  GDALColorTableH hColorMap;
+  GDALColorTableH hColorMap=NULL;
   GDALRasterBandH hBand1=NULL, hBand2=NULL, hBand3=NULL, hBandAlpha=NULL;
   int bHaveRGBNoData = FALSE;
   int nNoData1=-1,nNoData2=-1,nNoData3=-1;
-#ifdef USE_GD
-  int   anColorCube[256];
-  int cmt=0;
-  /*make sure we don't have a truecolor gd image*/
-  assert(!rb || rb->type != MS_BUFFER_GD || !gdImageTrueColor(rb->data.gd_img));
-#endif
+  rasterBufferObj *mask_rb = NULL;
+  rasterBufferObj s_mask_rb;
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = &s_mask_rb;
+    memset(mask_rb, 0, sizeof(s_mask_rb));
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
   /*only support rawdata and pluggable renderers*/
   assert(MS_RENDERER_RAWDATA(image->format) || (MS_RENDERER_PLUGIN(image->format) && rb));
@@ -446,22 +430,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   if( alpha_band != 0 )
     hBandAlpha = GDALGetRasterBand( hDS, alpha_band );
 
-#ifdef USE_GD
-  /*
-   * Wipe pen indicators for all our layer class colors if they exist.
-   * Sometimes temporary gdImg'es are used in which case previously allocated
-   * pens won't generally apply.  See Bug 504.
-   */
-  if( rb->type == MS_BUFFER_GD ) {
-    int iClass;
-    int iStyle;
-    for( iClass = 0; iClass < layer->numclasses; iClass++ ) {
-      for (iStyle=0; iStyle<layer->class[iClass]->numstyles; iStyle++)
-        layer->class[iClass]->styles[iStyle]->color.pen = MS_PEN_UNSET;
-    }
-  }
-#endif
-
   /*
    * The logic for a classification rendering of non-8bit raster bands
    * is sufficiently different than the normal mechanism of loading
@@ -495,29 +463,16 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         pixel.red = i;
         pixel.green = i;
         pixel.blue = i;
-#ifdef USE_GD
-        pixel.pen = i;
-#endif
 
         if(MS_COMPARE_COLORS(pixel, layer->offsite)) {
           sEntry.c1 = 0;
           sEntry.c2 = 0;
           sEntry.c3 = 0;
           sEntry.c4 = 0; /* alpha set to zero */
-        } else if( rb->type != MS_BUFFER_GD ) {
+        } else {
           sEntry.c1 = i;
           sEntry.c2 = i;
           sEntry.c3 = i;
-          sEntry.c4 = 255;
-        } else {
-          /*
-          ** This special calculation is intended to use only 128
-          ** unique colors for greyscale in non-truecolor mode.
-          */
-
-          sEntry.c1 = i - i%2;
-          sEntry.c2 = i - i%2;
-          sEntry.c3 = i - i%2;
           sEntry.c4 = 255;
         }
 
@@ -555,13 +510,29 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    */
   if( classified ) {
     int c, color_count;
+    const char* pszRangeColorspace = msLayerGetProcessingKey( layer, "RANGE_COLORSPACE" );
+    colorspace iRangeColorspace;
 
+#ifndef NDEBUG
     cmap_set = TRUE;
+#endif
 
     if( hColorMap == NULL ) {
       msSetError(MS_IOERR,
                  "Attempt to classify 24bit image, this is unsupported.",
                  "drawGDAL()");
+      return -1;
+    }
+    
+    if(!pszRangeColorspace || !strcasecmp(pszRangeColorspace, "RGB")) {
+      iRangeColorspace = MS_COLORSPACE_RGB;
+    } else if(!strcasecmp(pszRangeColorspace, "HSL")) {
+      iRangeColorspace = MS_COLORSPACE_HSL;
+    } else {
+      msSetError(MS_MISCERR,
+                 "Unknown RANGE_COLORSPACE \"%s\", expecting RGB or HSL",
+                 "drawGDAL()", pszRangeColorspace);
+      GDALDestroyColorTable( hColorMap );
       return -1;
     }
 
@@ -581,86 +552,54 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {
         c = msGetClass(layer, &pixel, colormap_index);
 
-        if(c == -1) { /* doesn't belong to any class, so handle like offsite*/
-          if( rb->type == MS_BUFFER_GD )
-            cmap[i] = -1;
-        } else {
+        if(c != -1) { /* belongs to any class */
           int s;
 
           /* change colour based on colour range?  Currently we
              only address the greyscale case properly. */
 
-          for(s=0; s<layer->class[c]->numstyles; s++) {
-            if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
-                && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor) )
-              msValueToRange(layer->class[c]->styles[s],
-                             sEntry.c1 );
+          if( MS_VALID_COLOR(layer->class[c]->styles[0]->mincolor) ) {
+            for(s=0; s<layer->class[c]->numstyles; s++) {
+              if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
+                 && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor)) {
+                if( layer->class[c]->numstyles == 1 || (sEntry.c1 >= layer->class[c]->styles[s]->minvalue
+                                               && sEntry.c1 <= layer->class[c]->styles[s]->maxvalue )) {
+                  msValueToRange(layer->class[c]->styles[s], sEntry.c1, iRangeColorspace);
+                  if(MS_VALID_COLOR(layer->class[c]->styles[s]->color)) {
+                    rb_cmap[0][i] = layer->class[c]->styles[s]->color.red;
+                    rb_cmap[1][i] = layer->class[c]->styles[s]->color.green;
+                    rb_cmap[2][i] = layer->class[c]->styles[s]->color.blue;
+                    rb_cmap[3][i] = (layer->class[c]->styles[s]->color.alpha != 255)?(layer->class[c]->styles[s]->color.alpha):(255*layer->class[c]->styles[0]->opacity / 100);
+                    break;
+                  }
+                }
+              }
+            }
           }
-#ifdef USE_GD
-          if( rb->type == MS_BUFFER_GD ) {
-            RESOLVE_PEN_GD(rb->data.gd_img, layer->class[c]->styles[0]->color);
-            if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) )
-              cmap[i] = -1;
-            else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-              /* use class color */
-              cmap[i] = layer->class[c]->styles[0]->color.pen;
-            } else /* Use raster color */
-              cmap[i] = msAddColorGD(map, rb->data.gd_img, cmt,
-                                     pixel.red, pixel.green, pixel.blue);
-          } else if( rb->type == MS_BUFFER_BYTE_RGBA )
-#endif
-          {
-            if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color))
-              /* leave it transparent */;
+          else if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color))
+            /* leave it transparent */;
 
-            else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-              rb_cmap[0][i] = layer->class[c]->styles[0]->color.red;
-              rb_cmap[1][i] = layer->class[c]->styles[0]->color.green;
-              rb_cmap[2][i] = layer->class[c]->styles[0]->color.blue;
-              rb_cmap[3][i] = (255*layer->class[c]->styles[0]->opacity / 100);
-            }
+          else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
+            rb_cmap[0][i] = layer->class[c]->styles[0]->color.red;
+            rb_cmap[1][i] = layer->class[c]->styles[0]->color.green;
+            rb_cmap[2][i] = layer->class[c]->styles[0]->color.blue;
+            rb_cmap[3][i] = (255*layer->class[c]->styles[0]->opacity / 100);
+          }
 
-            else { /* Use raster color */
-              rb_cmap[0][i] = pixel.red;
-              rb_cmap[1][i] = pixel.green;
-              rb_cmap[2][i] = pixel.blue;
-              rb_cmap[3][i] = 255;
-            }
+          else { /* Use raster color */
+            rb_cmap[0][i] = pixel.red;
+            rb_cmap[1][i] = pixel.green;
+            rb_cmap[2][i] = pixel.blue;
+            rb_cmap[3][i] = 255;
           }
         }
-#ifdef USE_GD
-      } else {
-        if( rb->type == MS_BUFFER_GD )
-          cmap[i] = -1;
-#endif
       }
     }
-#ifdef USE_GD
-  } else if( hColorMap != NULL && rb->type == MS_BUFFER_GD ) {
-    int color_count;
-    cmap_set = TRUE;
-
-    color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
-
-    for(i=0; i < color_count; i++) {
-      GDALColorEntry sEntry;
-
-      GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
-
-      if( sEntry.c4 != 0
-          && (!MS_VALID_COLOR( layer->offsite )
-              || layer->offsite.red != sEntry.c1
-              || layer->offsite.green != sEntry.c2
-              || layer->offsite.blue != sEntry.c3 ) )
-        cmap[i] = msAddColorGD(map, rb->data.gd_img, cmt,
-                               sEntry.c1, sEntry.c2, sEntry.c3);
-      else
-        cmap[i] = -1;
-    }
-#endif
   } else if( hBand2 == NULL && hColorMap != NULL && rb->type == MS_BUFFER_BYTE_RGBA ) {
     int color_count;
+#ifndef NDEBUG
     cmap_set = TRUE;
+#endif
 
     color_count = MIN(256,GDALGetColorEntryCount(hColorMap));
 
@@ -681,12 +620,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       }
     }
   }
-#ifdef USE_GD
-  else if( rb->type == MS_BUFFER_GD ) {
-    allocColorCube( map, rb->data.gd_img, anColorCube );
-  }
-#endif
-
   /*
    * Allocate imagery buffers.
    */
@@ -694,6 +627,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   if( pabyRaw1 == NULL ) {
     msSetError(MS_MEMERR, "Allocating work image of size %dx%dx%d failed.",
                "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize, band_count );
+
+    if( hColorMap != NULL )     
+      GDALDestroyColorTable( hColorMap );
     return -1;
   }
 
@@ -718,6 +654,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                       &bHaveRGBNoData,
                       &nNoData1, &nNoData2, &nNoData3 ) == -1 ) {
     free( pabyRaw1 );
+    if( hColorMap != NULL )     
+      GDALDestroyColorTable( hColorMap );
     return -1;
   }
 
@@ -736,6 +674,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         (nMaskFlags & GMF_PER_DATASET) != 0 &&
         (nMaskFlags & (GMF_NODATA|GMF_ALL_VALID)) == 0 ) {
       CPLErr eErr;
+      unsigned char * pabyOrig = pabyRaw1;
+
 
       if( layer->debug )
         msDebug( "msDrawGDAL(): using GDAL mask band for alpha.\n" );
@@ -743,13 +683,16 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       band_count++;
 
       pabyRaw1 = (unsigned char *)
-                 realloc(pabyRaw1,dst_xsize * dst_ysize * band_count);
+                 realloc(pabyOrig,dst_xsize * dst_ysize * band_count);
 
       if( pabyRaw1 == NULL ) {
         msSetError(MS_MEMERR,
                    "Allocating work image of size %dx%dx%d failed.",
                    "msDrawRasterLayerGDAL()",
                    dst_xsize, dst_ysize, band_count );
+        free(pabyOrig);
+        if( hColorMap != NULL )     
+          GDALDestroyColorTable( hColorMap );
         return -1;
       }
 
@@ -771,6 +714,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
         msSetError( MS_IOERR, "GDALRasterIO() failed: %s",
                     "drawGDAL()", CPLGetLastErrorMsg() );
         free( pabyRaw1 );
+        if( hColorMap != NULL )     
+          GDALDestroyColorTable( hColorMap );
         return -1;
       }
 
@@ -784,57 +729,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
     }
   }
 
-#ifdef USE_GD
-  /* -------------------------------------------------------------------- */
-  /*      Single band plus colormap with alpha blending to 8bit.          */
-  /* -------------------------------------------------------------------- */
-  if( hBand2 == NULL && rb->type == MS_BUFFER_GD && hBandAlpha != NULL ) {
-    assert( cmap_set );
-    k = 0;
-
-    for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
-      int result, alpha;
-
-      for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
-        alpha = pabyRawAlpha[k];
-
-        result = cmap[pabyRaw1[k++]];
-
-        /*
-        ** We don't do alpha blending in non-truecolor mode, just
-        ** threshold the point on/off at alpha=128.
-        */
-
-        if( result != -1 && alpha >= 128 )
-          rb->data.gd_img->pixels[i][j] = result;
-      }
-    }
-
-    assert( k == dst_xsize * dst_ysize );
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      Single band plus colormap (no alpha) to 8bit.                   */
-  /* -------------------------------------------------------------------- */
-  else if( hBand2 == NULL  && rb->type == MS_BUFFER_GD ) {
-    assert( cmap_set );
-    k = 0;
-
-    for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
-      int result;
-
-      for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
-        result = cmap[pabyRaw1[k++]];
-        if( result != -1 ) {
-          rb->data.gd_img->pixels[i][j] = result;
-        }
-      }
-    }
-
-    assert( k == dst_xsize * dst_ysize );
-  } else
-#endif
-
     /* -------------------------------------------------------------------- */
     /*      Single band plus colormap and alpha to truecolor. (RB)          */
     /* -------------------------------------------------------------------- */
@@ -845,6 +739,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
         for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
           int src_pixel, src_alpha, cmap_alpha, merged_alpha;
+          if(SKIP_MASK(j,i)) {
+            k++;
+            continue;
+          }
 
           src_pixel = pabyRaw1[k];
           src_alpha = pabyRawAlpha[k];
@@ -882,6 +780,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
         for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
           int src_pixel = pabyRaw1[k++];
+          if(SKIP_MASK(j,i)) {
+            continue;
+          }
 
           if( rb_cmap[3][src_pixel] > 253 ) {
             RB_SET_PIXEL( rb, j, i,
@@ -909,6 +810,9 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       k = 0;
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
         for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ ) {
+          if(SKIP_MASK(j,i)) {
+            continue;
+          }
           if( MS_VALID_COLOR( layer->offsite )
               && pabyRaw1[k] == layer->offsite.red
               && pabyRaw2[k] == layer->offsite.green
@@ -938,90 +842,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       }
     }
 
-#ifdef USE_GD
-  /* -------------------------------------------------------------------- */
-  /*      Input is 3 band RGB.  Alpha blending is mixed into the loop     */
-  /*      since this case is less commonly used and has lots of other     */
-  /*      overhead. (GD)                                                  */
-  /* -------------------------------------------------------------------- */
-    else if( hBand3 != NULL && rb->type == MS_BUFFER_GD ) {
-      /* Dithered 24bit to 8bit conversion */
-      if( CSLFetchBoolean( layer->processing, "DITHER", FALSE ) ) {
-        unsigned char *pabyDithered;
-
-        pabyDithered = (unsigned char *) malloc(dst_xsize * dst_ysize);
-        if( pabyDithered == NULL ) {
-          msSetError(MS_MEMERR, "Allocating work image of size %dx%d failed.",
-                     "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize );
-          return -1;
-        }
-
-        Dither24to8( pabyRaw1, pabyRaw2, pabyRaw3, pabyDithered,
-                     dst_xsize, dst_ysize, image->format->transparent,
-                     map->imagecolor, rb->data.gd_img );
-
-        k = 0;
-        for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
-          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ ) {
-            if( MS_VALID_COLOR( layer->offsite )
-                && pabyRaw1[k] == layer->offsite.red
-                && pabyRaw2[k] == layer->offsite.green
-                && pabyRaw3[k] == layer->offsite.blue )
-              continue;
-
-            if( bHaveRGBNoData
-                && pabyRaw1[k] == nNoData1
-                && pabyRaw2[k] == nNoData2
-                && pabyRaw3[k] == nNoData3 )
-              continue;
-
-            if( pabyRawAlpha != NULL && pabyRawAlpha[k] == 0 )
-              continue;
-
-            rb->data.gd_img->pixels[i][j] = pabyDithered[k];
-          }
-        }
-
-        free( pabyDithered );
-      }
-
-      /* Color cubed 24bit to 8bit conversion. */
-      else if( rb->type == MS_BUFFER_GD ) {
-        k = 0;
-        for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
-          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ ) {
-            int cc_index;
-
-            if( MS_VALID_COLOR( layer->offsite )
-                && pabyRaw1[k] == layer->offsite.red
-                && pabyRaw2[k] == layer->offsite.green
-                && pabyRaw3[k] == layer->offsite.blue )
-              continue;
-
-            if( bHaveRGBNoData
-                && pabyRaw1[k] == nNoData1
-                && pabyRaw2[k] == nNoData2
-                && pabyRaw3[k] == nNoData3 )
-              continue;
-
-            if( pabyRawAlpha != NULL && pabyRawAlpha[k] == 0 )
-              continue;
-
-            cc_index= RGB_INDEX(pabyRaw1[k],pabyRaw2[k],pabyRaw3[k]);
-            rb->data.gd_img->pixels[i][j] = anColorCube[cc_index];
-          }
-        }
-      } else {
-        msSetError(MS_MISCERR,"Unsupported raster configuration","msDrawRasterLayerGDAL()");
-        return MS_FAILURE;
-      }
-    }
-#endif
 
   /*
   ** Cleanup
   */
-
   free( pabyRaw1 );
 
   if( hColorMap != NULL )
@@ -1034,7 +858,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*                          ParseDefaultLUT()                           */
 /************************************************************************/
 
-static int ParseDefaultLUT( const char *lut_def, GByte *lut )
+static int ParseDefaultLUT( const char *lut_def, GByte *lut, int nMaxValIn )
 
 {
   const char *lut_read;
@@ -1051,11 +875,11 @@ static int ParseDefaultLUT( const char *lut_def, GByte *lut )
     while( isspace(*lut_read) )
       lut_read++;
 
-    /* if we are at end, assum 255:255 */
+    /* if we are at end, assume nMaxValIn:255 */
     if( *lut_read == '\0' ) {
       all_done = TRUE;
-      if ( last_in != 255 ) {
-        this_in = 255;
+      if ( last_in != nMaxValIn ) {
+        this_in = nMaxValIn;
         this_out = 255;
       }
     }
@@ -1078,7 +902,7 @@ static int ParseDefaultLUT( const char *lut_def, GByte *lut )
         lut_read++;
     }
 
-    this_in = MAX(0,MIN(255,this_in));
+    this_in = MAX(0,MIN(nMaxValIn,this_in));
     this_out = MAX(0,MIN(255,this_out));
 
     /* apply linear values from last in:out to this in:out */
@@ -1144,7 +968,7 @@ static int LutFromGimpLine( char *lut_line, GByte *lut )
 
   CSLDestroy( tokens );
 
-  return ParseDefaultLUT( wrkLUTDef, lut );
+  return ParseDefaultLUT( wrkLUTDef, lut, 255 );
 }
 
 /************************************************************************/
@@ -1167,6 +991,7 @@ static int ParseGimpLUT( const char *lut_def, GByte *lut, int iColorIndex )
     msSetError(MS_MISCERR,
                "GIMP curve file appears corrupt.",
                "ParseGimpLUT()" );
+    CSLDestroy( lines );
     return -1;
   }
 
@@ -1194,19 +1019,18 @@ static int ParseGimpLUT( const char *lut_def, GByte *lut, int iColorIndex )
 }
 
 /************************************************************************/
-/*                              ApplyLUT()                              */
+/*                              LoadLUT()                               */
 /*                                                                      */
-/*      Apply a LUT according to RFC 21.                                */
+/*      Load a LUT according to RFC 21.                                 */
 /************************************************************************/
 
-static int ApplyLUT( int iColorIndex, layerObj *layer,
-                     GByte *buffer, int buf_xsize, int buf_ysize )
+static int LoadLUT( layerObj *layer, int iColorIndex, char** ppszLutDef )
 
 {
   const char *lut_def;
   char key[20], lut_def_fromfile[2500];
-  GByte lut[256];
-  int   err, i;
+
+  *ppszLutDef = NULL;
 
   /* -------------------------------------------------------------------- */
   /*      Get lut specifier from processing directives.  Do nothing if    */
@@ -1242,7 +1066,7 @@ static int ApplyLUT( int iColorIndex, layerObj *layer,
       msSetError(MS_IOERR,
                  "LUT definition from file %s longer than maximum buffer size (%d bytes).",
                  "drawGDAL()",
-                 path, sizeof(lut_def_fromfile) );
+                 path, (int)sizeof(lut_def_fromfile) );
       return -1;
     }
 
@@ -1251,25 +1075,159 @@ static int ApplyLUT( int iColorIndex, layerObj *layer,
     lut_def = lut_def_fromfile;
   }
 
+  *ppszLutDef = msStrdup(lut_def);
+
+  return 0;
+
+}
+
+/************************************************************************/
+/*                              FreeLUTs()                              */
+/************************************************************************/
+
+static void FreeLUTs(char** apszLUTs)
+{
+    int i;
+    for( i = 0; i < 4; i++ )
+        msFree(apszLUTs[i]);
+    msFree(apszLUTs);
+}
+
+/************************************************************************/
+/*                            LoadLUTs()                                */
+/*                                                                      */
+/* Return an array of 4 strings (some possibly NULL) with loaded LUTs   */
+/* or NULL in case of failure.                                          */
+/************************************************************************/
+
+static char** LoadLUTs(layerObj *layer, int band_count)
+{
+    int i;
+    char** apszLUTs;
+    
+    assert(band_count <= 4);
+
+    apszLUTs = (char**) msSmallCalloc( 4, sizeof(char*) );
+    for( i = 0; i < band_count; i++ )
+    {
+        if( LoadLUT( layer, i+1, &apszLUTs[i] ) != 0 )
+        {
+            FreeLUTs(apszLUTs);
+            return NULL;
+        }
+    }
+
+    return apszLUTs;
+}
+
+/************************************************************************/
+/*                  GetDataTypeAppropriateForLUTS()                     */
+/*                                                                      */
+/*      This does a quick examination of the LUT strings to determine   */
+/*      if they have input values > 255, in which case the raster data  */
+/*      must be queries on 16-bits.                                     */
+/************************************************************************/
+
+static GDALDataType GetDataTypeAppropriateForLUTS(char** apszLUTs)
+{
+    GDALDataType eDT = GDT_Byte;
+    int i;
+    for( i = 0; i < 4; i++ )
+    {
+        const char* pszLastTuple;
+        int nLastInValue;
+        if( apszLUTs[i] == NULL )
+            continue;
+        if( EQUALN(apszLUTs[i],"# GIMP",6) )
+            continue;
+        /* Find last in:out tuple in string */
+        pszLastTuple = strrchr( apszLUTs[i], ',' );
+        if( pszLastTuple == NULL )
+            pszLastTuple = apszLUTs[i];
+        else
+            pszLastTuple ++;
+        while( *pszLastTuple == ' ' )
+            pszLastTuple ++;
+        nLastInValue = atoi(pszLastTuple);
+        if( nLastInValue > 255 )
+        {
+            eDT = GDT_UInt16;
+            break;
+        }
+    }
+    return eDT;
+}
+
+/************************************************************************/
+/*                              ApplyLUT()                              */
+/************************************************************************/
+
+static int ApplyLUT( int iColorIndex, const char* lut_def,
+                     const void* pInBuffer, GDALDataType eDT,
+                     GByte* pabyOutBuffer,
+                     int nPixelCount )
+{
+  int i, err;
+  GByte byteLut[256];
+  GByte* uint16Lut = NULL;
+
+  assert( eDT == GDT_Byte || eDT == GDT_UInt16 );
+  
+  if( lut_def == NULL )
+  {
+      if( pInBuffer != pabyOutBuffer )
+      {
+        GDALCopyWords( (void*)pInBuffer, eDT, GDALGetDataTypeSize(eDT) / 8,
+                        pabyOutBuffer, GDT_Byte, 1,
+                        nPixelCount );
+      }
+      return 0;
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Parse the LUT description.                                      */
   /* -------------------------------------------------------------------- */
   if( EQUALN(lut_def,"# GIMP",6) ) {
-    err = ParseGimpLUT( lut_def, lut, iColorIndex );
+    if( eDT != GDT_Byte ) {
+      msSetError(MS_MISCERR,
+                 "Cannot apply a GIMP LUT on a 16-bit buffer",
+                 "ApplyLUT()");
+      return -1;
+    }
+    err = ParseGimpLUT( lut_def, byteLut, iColorIndex );
   } else {
-    err = ParseDefaultLUT( lut_def, lut );
+    if( eDT == GDT_Byte )
+        err = ParseDefaultLUT( lut_def, byteLut, 255 );
+    else
+    {
+        uint16Lut = (GByte*) malloc( 65536 );
+        if( uint16Lut == NULL )
+        {
+            msSetError(MS_MEMERR,
+                 "Cannot allocate 16-bit LUT",
+                 "ApplyLUT()" );
+            return -1;
+        }
+        err = ParseDefaultLUT( lut_def, uint16Lut, 65535 );
+    }
   }
-
-  if( err != 0 )
-    return err;
 
   /* -------------------------------------------------------------------- */
   /*      Apply LUT.                                                      */
   /* -------------------------------------------------------------------- */
-  for( i = buf_xsize * buf_ysize - 1; i >= 0; i-- )
-    buffer[i] = lut[buffer[i]];
-
-  return 0;
+  if( eDT == GDT_Byte )
+  {
+    for( i = 0; i < nPixelCount; i++ )
+        pabyOutBuffer[i] = byteLut[((GByte*)pInBuffer)[i]];
+  }
+  else
+  {
+      for( i = 0; i < nPixelCount; i++ )
+        pabyOutBuffer[i] = uint16Lut[((GUInt16*)pInBuffer)[i]];
+      free(uint16Lut);
+  }
+  
+  return err;
 }
 
 /************************************************************************/
@@ -1293,6 +1251,7 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
   int    iColorIndex, result_code=0;
   CPLErr eErr;
   float *pafWholeRawData;
+  char** papszLUTs;
 
   /* -------------------------------------------------------------------- */
   /*      If we have no alpha band, but we do have three input            */
@@ -1327,10 +1286,38 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
       && CSLFetchNameValue( layer->processing, "SCALE_2" ) == NULL
       && CSLFetchNameValue( layer->processing, "SCALE_3" ) == NULL
       && CSLFetchNameValue( layer->processing, "SCALE_4" ) == NULL ) {
+      
+    GDALDataType eDT;
+    GUInt16* panBuffer = NULL;
+    void* pBuffer;
+
+    papszLUTs = LoadLUTs(layer, band_count);
+    if( papszLUTs == NULL ) {
+        return -1;
+    }
+
+    eDT = GetDataTypeAppropriateForLUTS(papszLUTs);
+    if( eDT == GDT_UInt16 ) {
+        panBuffer =
+            (GUInt16 *) malloc(sizeof(GUInt16) * dst_xsize * dst_ysize * band_count );
+
+        if( panBuffer == NULL ) {
+            msSetError(MS_MEMERR,
+                    "Allocating work uint16 image of size %dx%dx%d failed.",
+                    "msDrawRasterLayerGDAL()",
+                    dst_xsize, dst_ysize, band_count );
+            FreeLUTs(papszLUTs);
+            return -1;
+        }
+        pBuffer = panBuffer;
+    }
+    else
+        pBuffer = pabyWholeBuffer;
+
     eErr = GDALDatasetRasterIO( hDS, GF_Read,
                                 src_xoff, src_yoff, src_xsize, src_ysize,
-                                pabyWholeBuffer,
-                                dst_xsize, dst_ysize, GDT_Byte,
+                                pBuffer,
+                                dst_xsize, dst_ysize, eDT,
                                 band_count, band_numbers,
                                 0,0,0);
 
@@ -1339,17 +1326,24 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
                   "GDALDatasetRasterIO() failed: %s",
                   "drawGDAL()",
                   CPLGetLastErrorMsg() );
+      FreeLUTs(papszLUTs);
+      msFree(panBuffer);
       return -1;
     }
 
     for( iColorIndex = 0;
          iColorIndex < band_count && result_code == 0; iColorIndex++ ) {
-      result_code = ApplyLUT( iColorIndex+1, layer,
-                              pabyWholeBuffer
-                              + dst_xsize*dst_ysize*iColorIndex,
-                              dst_xsize, dst_ysize );
+      result_code = ApplyLUT( iColorIndex+1,
+                              papszLUTs[iColorIndex],
+                              (GByte*)pBuffer
+                                + dst_xsize*dst_ysize*iColorIndex*(GDALGetDataTypeSize(eDT)/8),
+                              eDT,
+                              pabyWholeBuffer + dst_xsize*dst_ysize*iColorIndex,
+                              dst_xsize * dst_ysize );
     }
 
+    FreeLUTs(papszLUTs);
+    msFree(panBuffer);
     return result_code;
   }
 
@@ -1398,6 +1392,18 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
     return -1;
   }
 
+  papszLUTs = LoadLUTs(layer, band_count);
+  if( papszLUTs == NULL ) {
+    free( pafWholeRawData );
+    return -1;
+  }
+
+  if( GetDataTypeAppropriateForLUTS(papszLUTs) != GDT_Byte ) {
+    msDebug( "LoadGDALImage(%s): One of the LUT contains a input value > 255.\n"
+             "This is not properly supported in combination with SCALE\n",
+             layer->name );
+  }
+
   /* -------------------------------------------------------------------- */
   /*      Fetch the scale processing option.                              */
   /* -------------------------------------------------------------------- */
@@ -1427,6 +1433,8 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
         dfScaleMin = dfScaleMax = 0.0;
       } else if( CSLCount(papszTokens) != 2 ) {
         free( pafWholeRawData );
+        CSLDestroy( papszTokens );
+        FreeLUTs( papszLUTs );
         msSetError( MS_MISCERR,
                     "SCALE PROCESSING option unparsable for layer %s.",
                     "msDrawGDAL()",
@@ -1508,164 +1516,24 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
     /* -------------------------------------------------------------------- */
     /*      Apply LUT if there is one.                                      */
     /* -------------------------------------------------------------------- */
-    result_code = ApplyLUT( iColorIndex+1, layer,
-                            pabyBuffer, dst_xsize, dst_ysize );;
+    result_code = ApplyLUT( iColorIndex+1,
+                            papszLUTs[iColorIndex],
+                            pabyBuffer,
+                            GDT_Byte,
+                            pabyBuffer,
+                            dst_xsize * dst_ysize );
     if( result_code == -1 ) {
       free( pafWholeRawData );
+      FreeLUTs( papszLUTs );
       return result_code;
     }
   }
 
   free( pafWholeRawData );
+  FreeLUTs( papszLUTs );
 
   return result_code;
 }
-
-#ifdef USE_GD
-/************************************************************************/
-/*                           allocColorCube()                           */
-/*                                                                      */
-/*      Allocate color table entries as best possible for a color       */
-/*      cube.                                                           */
-/************************************************************************/
-
-static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
-
-{
-  int  r, g, b;
-  int i = 0;
-  int nGreyColors = 32;
-  int nSpaceGreyColors = 8;
-  int iColors = 0;
-  int red, green, blue;
-
-  for( r = 0; r < RED_LEVELS; r++ ) {
-    for( g = 0; g < GREEN_LEVELS; g++ ) {
-      for( b = 0; b < BLUE_LEVELS; b++ ) {
-        red = MS_MIN(255,r * (255 / (RED_LEVELS-1)));
-        green = MS_MIN(255,g * (255 / (GREEN_LEVELS-1)));
-        blue = MS_MIN(255,b * (255 / (BLUE_LEVELS-1)));
-
-        panColorCube[RGB_LEVEL_INDEX(r,g,b)] =
-          msAddColorGD(map, img, 1, red, green, blue );
-        iColors++;
-      }
-    }
-  }
-  /* -------------------------------------------------------------------- */
-  /*      Adding 32 grey colors                                           */
-  /* -------------------------------------------------------------------- */
-  for (i=0; i<nGreyColors; i++) {
-    red = i*nSpaceGreyColors;
-    green = red;
-    blue = red;
-    if(iColors < 256) {
-      panColorCube[iColors] = msAddColorGD(map,img,1,red,green,blue);
-      iColors++;
-    }
-  }
-  return MS_SUCCESS;
-}
-
-/************************************************************************/
-/*                            Dither24to8()                             */
-/*                                                                      */
-/*      Wrapper for GDAL dithering algorithm.                           */
-/************************************************************************/
-
-static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
-                         GByte *pabyDithered, int xsize, int ysize,
-                         int bTransparent, colorObj transparent,
-                         gdImagePtr gdImg )
-
-{
-  GDALDatasetH hDS;
-  GDALDriverH  hDriver;
-  char **papszBandOptions = NULL;
-  char szDataPointer[120];
-  GDALColorTableH hCT;
-  int c;
-
-  /* -------------------------------------------------------------------- */
-  /*      Create the "memory" GDAL dataset referencing our working        */
-  /*      arrays.                                                         */
-  /* -------------------------------------------------------------------- */
-  hDriver = GDALGetDriverByName( "MEM" );
-  if( hDriver == NULL )
-    return;
-
-  hDS = GDALCreate( hDriver, "TempDitherDS", xsize, ysize, 0, GDT_Byte,
-                    NULL );
-
-  /* Add Red Band */
-  memset( szDataPointer, 0, sizeof(szDataPointer) );
-  CPLPrintPointer( szDataPointer, pabyRed, sizeof(szDataPointer) );
-  papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER",
-                                      szDataPointer );
-  GDALAddBand( hDS, GDT_Byte, papszBandOptions );
-
-  /* Add Green Band */
-  memset( szDataPointer, 0, sizeof(szDataPointer) );
-  CPLPrintPointer( szDataPointer, pabyGreen, sizeof(szDataPointer) );
-  papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER",
-                                      szDataPointer );
-  GDALAddBand( hDS, GDT_Byte, papszBandOptions );
-
-  /* Add Blue Band */
-  memset( szDataPointer, 0, sizeof(szDataPointer) );
-  CPLPrintPointer( szDataPointer, pabyBlue, sizeof(szDataPointer) );
-  papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER",
-                                      szDataPointer );
-  GDALAddBand( hDS, GDT_Byte, papszBandOptions );
-
-  /* Add Dithered Band */
-  memset( szDataPointer, 0, sizeof(szDataPointer) );
-  CPLPrintPointer( szDataPointer, pabyDithered, sizeof(szDataPointer) );
-  papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER",
-                                      szDataPointer );
-  GDALAddBand( hDS, GDT_Byte, papszBandOptions );
-
-  CSLDestroy( papszBandOptions );
-
-  /* -------------------------------------------------------------------- */
-  /*      Create the color table.                                         */
-  /* -------------------------------------------------------------------- */
-  hCT = GDALCreateColorTable( GPI_RGB );
-
-  for (c = 0; c < gdImg->colorsTotal; c++) {
-    GDALColorEntry sEntry;
-
-    sEntry.c1 = gdImg->red[c];
-    sEntry.c2 = gdImg->green[c];
-    sEntry.c3 = gdImg->blue[c];
-
-    if( bTransparent
-        && transparent.red == sEntry.c1
-        && transparent.green == sEntry.c2
-        && transparent.blue == sEntry.c3 )
-      sEntry.c4 = 0;
-    else
-      sEntry.c4 = 255;
-
-    GDALSetColorEntry( hCT, c, &sEntry );
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      Perform dithering.                                              */
-  /* -------------------------------------------------------------------- */
-  GDALDitherRGB2PCT( GDALGetRasterBand( hDS, 1 ),
-                     GDALGetRasterBand( hDS, 2 ),
-                     GDALGetRasterBand( hDS, 3 ),
-                     GDALGetRasterBand( hDS, 4 ),
-                     hCT, NULL, NULL );
-
-  /* -------------------------------------------------------------------- */
-  /*      Cleanup.                                                        */
-  /* -------------------------------------------------------------------- */
-  GDALDestroyColorTable( hCT );
-  GDALClose( hDS );
-}
-#endif
 
 
 /************************************************************************/
@@ -1804,36 +1672,6 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
   }
 
   /* -------------------------------------------------------------------- */
-  /*      Try OWS extent metadata.  We only try this if we know there     */
-  /*      is metadata so that we don't end up going into the layer        */
-  /*      getextent function which will in turn reopen the file with      */
-  /*      potential performance and locking problems.                     */
-  /* -------------------------------------------------------------------- */
-#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
-  if ((value = msOWSLookupMetadata(&(layer->metadata), "MFCO", "extent"))
-      != NULL) {
-    int success;
-
-    msReleaseLock( TLOCK_GDAL );
-    success = msOWSGetLayerExtent( map, layer, "MFCO", &rect );
-    msAcquireLock( TLOCK_GDAL );
-
-    if( success == MS_SUCCESS ) {
-      padfGeoTransform[0] = rect.minx;
-      padfGeoTransform[1] = (rect.maxx - rect.minx) /
-                            (double) GDALGetRasterXSize( hDS );
-      padfGeoTransform[2] = 0;
-      padfGeoTransform[3] = rect.maxy;
-      padfGeoTransform[4] = 0;
-      padfGeoTransform[5] = (rect.miny - rect.maxy) /
-                            (double) GDALGetRasterYSize( hDS );
-
-      return MS_SUCCESS;
-    }
-  }
-#endif
-
-  /* -------------------------------------------------------------------- */
   /*      We didn't find any info ... use the default.                    */
   /*      Reset our default geotransform.  GDALGetGeoTransform() may      */
   /*      have altered it even if GDALGetGeoTransform() failed.           */
@@ -1870,6 +1708,17 @@ msDrawRasterLayerGDAL_RawMode(
   unsigned char *b_nodatas = NULL;
   GInt16 *i_nodatas = NULL;
   int got_nodata=FALSE;
+  rasterBufferObj *mask_rb = NULL;
+  rasterBufferObj s_mask_rb;
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = &s_mask_rb;
+    memset(mask_rb, 0, sizeof(s_mask_rb));
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
   if( image->format->bands > 256 ) {
     msSetError( MS_IMGERR, "Too many bands (more than 256).",
@@ -1911,7 +1760,7 @@ msDrawRasterLayerGDAL_RawMode(
   f_nodatas = (float *) calloc(sizeof(float),band_count);
   if (f_nodatas == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawRasterLayerGDAL_RawMode()",
-               __FILE__, __LINE__, sizeof(float)*band_count);
+               __FILE__, __LINE__, (unsigned int)(sizeof(float)*band_count));
     free( band_list );
     return -1;
   }
@@ -1938,7 +1787,7 @@ msDrawRasterLayerGDAL_RawMode(
   }
 
   if( !got_nodata ) {
-    msFree( f_nodatas );
+    free( f_nodatas );
     f_nodatas = NULL;
   } else if( eDataType == GDT_Byte ) {
     b_nodatas = (unsigned char *) f_nodatas;
@@ -1959,6 +1808,8 @@ msDrawRasterLayerGDAL_RawMode(
     msSetError(MS_MEMERR,
                "Allocating work image of size %dx%d failed.",
                "msDrawRasterLayerGDAL()", dst_xsize, dst_ysize );
+    free( band_list );
+    free( f_nodatas );
     return -1;
   }
 
@@ -1989,8 +1840,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( i_nodatas
-              && ((GInt16 *) pBuffer)[k] == i_nodatas[band] ) {
+          if( ( i_nodatas && ((GInt16 *) pBuffer)[k] == i_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2004,8 +1855,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( f_nodatas
-              && ((float *) pBuffer)[k] == f_nodatas[band] ) {
+          if( ( f_nodatas && ((float *) pBuffer)[k] == f_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2019,8 +1870,8 @@ msDrawRasterLayerGDAL_RawMode(
                     + band*image->width*image->height;
           int off_mask = j + i * image->width;
 
-          if( b_nodatas
-              && ((unsigned char *) pBuffer)[k] == b_nodatas[band] ) {
+          if( ( b_nodatas && ((unsigned char *) pBuffer)[k] == b_nodatas[band] )
+              || SKIP_MASK(j,i)) {
             k++;
             continue;
           }
@@ -2033,6 +1884,7 @@ msDrawRasterLayerGDAL_RawMode(
   }
 
   free( pBuffer );
+  free( f_nodatas );
 
   return 0;
 }
@@ -2064,12 +1916,22 @@ msDrawRasterLayerGDAL_16BitClassification(
   float fDataMin=0.0, fDataMax=255.0, fNoDataValue;
   const char *pszScaleInfo;
   const char *pszBuckets;
-  int  bUseIntegers = FALSE;
   int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
   unsigned char *rb_cmap[4];
   CPLErr eErr;
+  rasterBufferObj *mask_rb = NULL;
+  rasterBufferObj s_mask_rb;
+  if(layer->mask) {
+    int ret;
+    layerObj *maskLayer = GET_LAYER(map, msGetLayerIndex(map,layer->mask));
+    mask_rb = &s_mask_rb;
+    memset(mask_rb, 0, sizeof(s_mask_rb));
+    ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
+    if(ret != MS_SUCCESS)
+      return -1;
+  }
 
-  assert( rb->type == MS_BUFFER_GD || rb->type == MS_BUFFER_BYTE_RGBA );
+  assert( rb->type == MS_BUFFER_BYTE_RGBA );
 
   /* ==================================================================== */
   /*      Read the requested data in one gulp into a floating point       */
@@ -2135,6 +1997,7 @@ msDrawRasterLayerGDAL_16BitClassification(
       dfScaleMin = dfScaleMax = 0.0;
     } else if( CSLCount(papszTokens) != 2 ) {
       free( pafRawData );
+      CSLDestroy( papszTokens );
       msSetError( MS_MISCERR,
                   "SCALE PROCESSING option unparsable for layer %s.",
                   "msDrawGDAL()",
@@ -2162,7 +2025,6 @@ msDrawRasterLayerGDAL_16BitClassification(
 
     if( pszBuckets == NULL ) {
       nBucketCount = (int) floor(fDataMax - fDataMin + 1.1);
-      bUseIntegers = TRUE;
     }
   }
 
@@ -2231,30 +2093,17 @@ msDrawRasterLayerGDAL_16BitClassification(
       for(s=0; s<layer->class[c]->numstyles; s++) {
         if( MS_VALID_COLOR(layer->class[c]->styles[s]->mincolor)
             && MS_VALID_COLOR(layer->class[c]->styles[s]->maxcolor) )
-          msValueToRange(layer->class[c]->styles[s],dfOriginalValue);
+          msValueToRange(layer->class[c]->styles[s],dfOriginalValue, MS_COLORSPACE_RGB);
       }
-#ifdef USE_GD
-      if(rb->type == MS_BUFFER_GD) {
-        RESOLVE_PEN_GD(rb->data.gd_img, layer->class[c]->styles[0]->color);
-        if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) )
-          cmap[i] = -1;
-        else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-          /* use class color */
-          cmap[i] = layer->class[c]->styles[0]->color.pen;
-        }
-      } else
-#endif
-        if( rb->type == MS_BUFFER_BYTE_RGBA ) {
-          if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) ) {
-            /* leave it transparent */
-          } else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
-            /* use class color */
-            rb_cmap[0][i] = layer->class[c]->styles[0]->color.red;
-            rb_cmap[1][i] = layer->class[c]->styles[0]->color.green;
-            rb_cmap[2][i] = layer->class[c]->styles[0]->color.blue;
-            rb_cmap[3][i] = (255*layer->class[c]->styles[0]->opacity / 100);
-          }
-        }
+      if( MS_TRANSPARENT_COLOR(layer->class[c]->styles[0]->color) ) {
+        /* leave it transparent */
+      } else if( MS_VALID_COLOR(layer->class[c]->styles[0]->color)) {
+        /* use class color */
+        rb_cmap[0][i] = layer->class[c]->styles[0]->color.red;
+        rb_cmap[1][i] = layer->class[c]->styles[0]->color.green;
+        rb_cmap[2][i] = layer->class[c]->styles[0]->color.blue;
+        rb_cmap[3][i] = (255*layer->class[c]->styles[0]->opacity / 100);
+      }
     }
   }
 
@@ -2264,8 +2113,6 @@ msDrawRasterLayerGDAL_16BitClassification(
   k = 0;
 
   for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ ) {
-    int result;
-
     for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ ) {
       float fRawValue = pafRawData[k++];
       int   iMapIndex;
@@ -2277,6 +2124,9 @@ msDrawRasterLayerGDAL_16BitClassification(
         continue;
       }
 
+      if(SKIP_MASK(j,i))
+        continue;
+
       /*
        * The funny +1/-1 is to avoid odd rounding around zero.
        * We could use floor() but sometimes it is expensive.
@@ -2286,24 +2136,13 @@ msDrawRasterLayerGDAL_16BitClassification(
       if( iMapIndex >= nBucketCount || iMapIndex < 0 ) {
         continue;
       }
-#ifdef USE_GD
-      if( rb->type == MS_BUFFER_GD ) {
-        result = cmap[iMapIndex];
-        if( result == -1 )
-          continue;
-
-        rb->data.gd_img->pixels[i][j] = result;
-      } else
-#endif
-        if( rb->type == MS_BUFFER_BYTE_RGBA ) {
-          /* currently we never have partial alpha so keep simple */
-          if( rb_cmap[3][iMapIndex] > 0 )
-            RB_SET_PIXEL( rb, j, i,
-                          rb_cmap[0][iMapIndex],
-                          rb_cmap[1][iMapIndex],
-                          rb_cmap[2][iMapIndex],
-                          rb_cmap[3][iMapIndex] );
-        }
+      /* currently we never have partial alpha so keep simple */
+      if( rb_cmap[3][iMapIndex] > 0 )
+        RB_SET_PIXEL( rb, j, i,
+                      rb_cmap[0][iMapIndex],
+                      rb_cmap[1][iMapIndex],
+                      rb_cmap[2][iMapIndex],
+                      rb_cmap[3][iMapIndex] );
     }
   }
 
@@ -2392,6 +2231,8 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
       *band_count = file_bands;
 
     band_list = (int *) malloc(sizeof(int) * *band_count );
+
+    /* FIXME MS_CHECK_ALLOC leaks papszItems */
     MS_CHECK_ALLOC(band_list, sizeof(int) * *band_count, NULL);
 
     for( i = 0; i < *band_count; i++ )
@@ -2431,7 +2272,7 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
                     "msGetGDALBandList()",
                     papszItems[i], GDALGetRasterCount(hDS) );
         CSLDestroy( papszItems );
-        CPLFree( band_list );
+        free( band_list );
         return NULL;
       }
     }

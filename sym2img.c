@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
           p.line[0].point[3].x = j + (CELLSIZE-LBUF) - 1;
           p.line[0].point[3].y = i;
           p.line[0].numpoints = 4;
-          msDrawLineSymbol(&(symbolSet), img, &p, &(class));
+          msDrawLineSymbol(map, img, &p, &(class));
           break;
 
         case(MS_SHADESET):
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Unable to open output file: %s\n", argv[2]);
     exit(1);
   }
-#ifndef USE_GD_1_6
+#ifndef USE_GD_GIF
   gdImageGif(img, stream);
 #else
   gdImagePng(img, stream);

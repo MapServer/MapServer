@@ -1,21 +1,124 @@
+
 MapServer Revision History
 ==========================
-
-$Id$
 
 This is a human-readable revision history which will attempt to document
 required changes for users to migrate from one version of MapServer to the
 next.  Developers are strongly encouraged to document their changes and
-their impacts on the users here.  (Please add the most recent changes to 
+their impacts on the users here.  (Please add the most recent changes to
 the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
-Current Version (git master, 6.3-dev, future 6.4):
--------------------------------------------------
+7.2 release (FUTURE)
+--------------------
+
+- Implement chainable compositing filters (RFC113)
+
+7.0.0 release (2015/07/24)
+--------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
+7.0.0-beta2 release (2015/06/29)
+--------------------------------
+
+- No major changes, see detailed changelog for bug fixes
+
+7.0.0-beta1 release (2015/02/12)
+--------------------------------
+
+- RFC91 Layer Filter Normalization
+
+- Implement WCS20 Extensions (#4898)
+
+- Require validation of ExternalGraphic OnlineResource (#4883)
+
+- Require validation on the CGI queryfile parameter. (#4874)
+
+- Apply RFC86 scaletoken substitutions to layer->PROCESSING entries
+
+- RFC113 Layer Compositing Pipeline
+
+- RFC109 Optimizing Runtime Substitutions
+
+- RFC108 Heatmap / Kernel-Density Layers
+
+- RFC106 Support of Geomtransform JavaScript Plugin
+
+- RFC105 Support for WFS 2.0 (server side)
+
+- RFC104 Bitmap Label removal, replaced with inlined truetype font
+
+- RFC103 Layer Level Character Encoding
+
+- RFC102 Support of Styleitem JavaScript Plugin
+
+- RFC99 GD removal
+
+- RFC98 Complex Text Rendering / Text Rendering Overhaul
+
+- RFC93 UTF Grid Support
+
+6.4 release (2013/09/17)
+---------------------------
+
+- RFC 101: Support for Content Dependant Legend Rendering
+
+- Add Support for librsvg as an alternative to libsvg-cairo
+
+- RFC100: Add support for raster tile index with tiles of mixed SRS (TILESRS keyword)
+
+- RFC94: Shape Smoothing
+
+- RFC95 : add EXPRESSION {value1,value2,...} support to parser (#4648)
+
+- RFC92: Migration from autotools to cmake (#4617)
+
+- RFC88: Saving MapServer Objects to Strings (#4563)
+
+- RFC90: Enable/Disable Layers in OGC Web Services by IP Lists
+
+- RFC85,89 Added Simplify,SimplityPT and Generalize geomtransform, implementation of
+  geomtransform at the layer level
+
+- RFC86: Scale-dependant token replacements (#4538)
+
+- Fix symbol scaling for vector symbols with no height (#4497,#3511)
+
+- Implementation of layer masking for WCS coverages (#4469)
+
+- Implementation of offsets on follow labels (#4399)
+
+6.2.0 release (git branch-6-2) 2012/11/14:
+--------------------------------------------------
+
+- Fix WFS GetFeature result bounds are not written in requested projection (#4494)
+
+- Fixed wrong size in LegendURL of root layer (#4441)
+
+- Fixed wms_style_name in GetMap requests (#4439)
+
+- Fix segfault in queryByFilter function in MapScript
+
+- Adjusted WCS 2.0 to WCS Core 2.0.1 and GMLCOV 1.0.1 corrigenda (#4003)
+
+- Adjusted mediatype to multipart/related in WCS 2.0 (#4003)
+
+- Fix symbolObj.getImage seg fault in PHP/MapScript
+
+- Fix bad handling of startindex in some drivers (#4011)
+  WFSGetFeature also now uses a global maxfeatures and startindex to support
+  maxfeatures across layers rather than within layers
+
+- Fixed bugs with WCS 1.1/2.0 with VSIMEM (#4369)
 
 - Add notable changes here. Less important changes should go only in the
   commit message and not appear here.
+  
+- Fixed the OGR driver to use point or line spatial filter geometries in degenerated cases (#4420)
+
+- implement OFFSET x -99 on ANGLE FOLLOW labels (#4399)
 
 Version 6.2 (beta1: 20120629): 
 -------------------------------------------------
@@ -27,6 +130,12 @@ Version 6.2 (beta1: 20120629):
 - Added INSPIRE ExtendedCapabilities and DOCTYPE definition to WMS 1.1.1 (#3608)
 
 - Fix wms_enable_request-related errors are not properly tagged (#4187)
+
+- Fixed "msGetMarkerSize() called on unloaded pixmap symbol" in mapsymbol.c (#4225)
+
+- Fixed PHP MapScript support for PHP 5.4 (#4309)
+
+- Fix msOGREscapeSQLParam could return random data (#4335)
 
 - Fixed locations of supported and native formats in Capabilities and CoverageDescriptions for WCS 2.0 (#4003)
 

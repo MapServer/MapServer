@@ -52,7 +52,13 @@
     
   int updateFromString(char *snippet)
   {
-    return msUpdateLabelFromString(self, snippet);
+    return msUpdateLabelFromString(self, snippet,MS_FALSE);
+  }
+  
+  %newobject convertToString;
+  char* convertToString()
+  {
+    return msWriteLabelToString(self);
   }
 
   int removeBinding(int binding) 
@@ -92,6 +98,33 @@
     self->numbindings++;
 
     return MS_SUCCESS;
+  }
+  
+  int setExpression(char *expression) 
+  {
+    if (!expression || strlen(expression) == 0) {
+       msFreeExpression(&self->expression);
+       return MS_SUCCESS;
+    }
+    else return msLoadExpressionString(&self->expression, expression);
+  }
+
+  %newobject getExpressionString;
+  char *getExpressionString() {
+    return msGetExpressionString(&(self->expression));
+  }
+
+  int setText(char *text) {
+    if (!text || strlen(text) == 0) {
+      msFreeExpression(&self->text);
+      return MS_SUCCESS;
+    }	
+    else return msLoadExpressionString(&self->text, text);
+  }
+
+  %newobject getTextString;
+  char *getTextString() {
+    return msGetExpressionString(&(self->text));
   }
 
   %newobject getStyle;

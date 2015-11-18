@@ -68,7 +68,7 @@ static debugInfoObj *debuginfo_list = NULL;
 debugInfoObj *msGetDebugInfoObj()
 {
   debugInfoObj *link;
-  int          thread_id;
+  void* thread_id;
   debugInfoObj *ret_obj;
 
   msAcquireLock( TLOCK_DEBUGOBJ );
@@ -90,17 +90,13 @@ debugInfoObj *msGetDebugInfoObj()
   else if( link == NULL || link->next == NULL ) {
     debugInfoObj *new_link;
 
-    new_link = (debugInfoObj *) malloc(sizeof(debugInfoObj));
-    if (new_link != NULL) {
-      new_link->next = debuginfo_list;
-      new_link->thread_id = thread_id;
-      new_link->global_debug_level = MS_DEBUGLEVEL_ERRORSONLY;
-      new_link->debug_mode = MS_DEBUGMODE_OFF;
-      new_link->errorfile = NULL;
-      new_link->fp = NULL;
-    } else
-      msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGetDebugInfoObj()", sizeof(debugInfoObj));
-
+    new_link = (debugInfoObj *) msSmallMalloc(sizeof(debugInfoObj));
+    new_link->next = debuginfo_list;
+    new_link->thread_id = thread_id;
+    new_link->global_debug_level = MS_DEBUGLEVEL_ERRORSONLY;
+    new_link->debug_mode = MS_DEBUGMODE_OFF;
+    new_link->errorfile = NULL;
+    new_link->fp = NULL;
     debuginfo_list = new_link;
   }
 
@@ -146,7 +142,7 @@ int msSetErrorFile(const char *pszErrorFile, const char *pszRelToPath)
     pszErrorFile = extended_path;
   }
 
-  if (debuginfo && debuginfo->errorfile && pszErrorFile &&
+  if (debuginfo->errorfile && pszErrorFile &&
       strcmp(debuginfo->errorfile, pszErrorFile) == 0) {
     /* Nothing to do, already writing to the right place */
     return MS_SUCCESS;
@@ -289,7 +285,7 @@ void msDebugCleanup()
 
 #ifdef USE_THREAD
   {
-    int  thread_id = msGetThreadId();
+    void*  thread_id = msGetThreadId();
     debugInfoObj *link;
 
     msAcquireLock( TLOCK_DEBUGOBJ );
@@ -370,3 +366,12 @@ void msDebug( const char * pszFormat, ... )
 
 }
 
+
+/* msDebug2()
+**
+** Variadic function with no operation
+**
+*/
+void msDebug2( int level, ... )
+{
+}

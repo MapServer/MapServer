@@ -162,7 +162,6 @@ terms specified in this license.
 
 #define TCL_UTF_MAX 6
 
-#define Tcl_UniChar int
 
 /*
  * The following structures are used when mapping between Unicode (UCS-2)
@@ -221,18 +220,10 @@ static const unsigned char totalBytes[256] = {
  *---------------------------------------------------------------------------
  */
 
-static int
-ms_Tcl_UtfToUniChar(str, chPtr)
-register const char *str;    /* The UTF-8 string. */
-register Tcl_UniChar *chPtr; /* Filled with the Tcl_UniChar represented
-                                  * by the UTF-8 string. */
+int ms_Tcl_UtfToUniChar(register const char *str, register unsigned int *chPtr)
 {
   register int byte;
-  int entitylgth;
 
-  /*check if the string is an html entity (eg &#123; or &#x12a;)*/
-  if((entitylgth=msGetUnicodeEntity(str, chPtr))>0)
-    return entitylgth;
 
   /*
    * Unroll 1 to 3 byte UTF-8 sequences, use loop to handle longer ones.
@@ -246,7 +237,7 @@ register Tcl_UniChar *chPtr; /* Filled with the Tcl_UniChar represented
      * characters representing themselves.
      */
 
-    *chPtr = (Tcl_UniChar) byte;
+    *chPtr = byte;
     return 1;
   } else if (byte < 0xE0) {
     if ((str[1] & 0xC0) == 0x80) {
@@ -254,7 +245,7 @@ register Tcl_UniChar *chPtr; /* Filled with the Tcl_UniChar represented
        * Two-byte-character lead-byte followed by a trail-byte.
        */
 
-      *chPtr = (Tcl_UniChar) (((byte & 0x1F) << 6) | (str[1] & 0x3F));
+      *chPtr = (((byte & 0x1F) << 6) | (str[1] & 0x3F));
       return 2;
     }
     /*
@@ -262,7 +253,7 @@ register Tcl_UniChar *chPtr; /* Filled with the Tcl_UniChar represented
      * represents itself.
      */
 
-    *chPtr = (Tcl_UniChar) byte;
+    *chPtr = byte;
     return 1;
   } else if (byte < 0xF0) {
     if (((str[1] & 0xC0) == 0x80) && ((str[2] & 0xC0) == 0x80)) {
@@ -270,7 +261,7 @@ register Tcl_UniChar *chPtr; /* Filled with the Tcl_UniChar represented
        * Three-byte-character lead byte followed by two trail bytes.
        */
 
-      *chPtr = (Tcl_UniChar) (((byte & 0x0F) << 12)
+      *chPtr = (((byte & 0x0F) << 12)
                               | ((str[1] & 0x3F) << 6) | (str[2] & 0x3F));
       return 3;
     }
@@ -279,7 +270,7 @@ register Tcl_UniChar *chPtr; /* Filled with the Tcl_UniChar represented
      * represents itself.
      */
 
-    *chPtr = (Tcl_UniChar) byte;
+    *chPtr = byte;
     return 1;
   }
 #if TCL_UTF_MAX > 3
@@ -306,7 +297,7 @@ register Tcl_UniChar *chPtr; /* Filled with the Tcl_UniChar represented
   }
 #endif
 
-  *chPtr = (Tcl_UniChar) byte;
+  *chPtr = byte;
   return 1;
 }
 
@@ -328,8 +319,14 @@ register Tcl_UniChar *chPtr; /* Filled with the Tcl_UniChar represented
 **
 **/
 int msUTF8ToUniChar(const char *str, /* The UTF-8 string. */
-                    int *chPtr)      /* Filled with the Unicode Char represented
+                    unsigned int *chPtr)      /* Filled with the Unicode Char represented
                                       * by the UTF-8 string. */
 {
+  /*check if the string is an html entity (eg &#123; or &#x12a;)*/
+  int entitylgth;
+  if(*str == '&' && (entitylgth=msGetUnicodeEntity(str, chPtr))>0)
+    return entitylgth;
   return ms_Tcl_UtfToUniChar(str, chPtr);
 }
+
+

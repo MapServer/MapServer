@@ -29,39 +29,10 @@
 
 #include "mapserver.h"
 #include "mapcopy.h"
+#include "fontcache.h"
 
-int computeLabelStyle(labelStyleObj *s, labelObj *l, fontSetObj *fontset,
-                      double scalefactor)
-{
-  INIT_LABEL_STYLE(*s);
-  if(!MS_VALID_COLOR(l->color))
-    return MS_FAILURE;
-  if(l->size == -1)
-    return MS_FAILURE;
-
-  s->size = l->size;
-  if(l->type == MS_TRUETYPE) {
-    s->size *=  scalefactor;
-    s->size = MS_MAX(s->size, l->minsize);
-    s->size = MS_MIN(s->size, l->maxsize);
-    if (!fontset) {
-      msSetError(MS_TTFERR, "No fontset defined.","computeLabelStyle()");
-      return (MS_FAILURE);
-    }
-
-    if (!l->font || !(*l->font)) {
-      return (MS_FAILURE);
-    }
-
-    if(MS_FAILURE == msFontsetLookupFonts(l->font,&s->numfonts,fontset,s->fonts)) {
-      return MS_FAILURE;
-    }
-  }
-  s->rotation = l->angle * MS_DEG_TO_RAD;
-  s->antialias = l->antialias;
-  return MS_SUCCESS;
-}
-void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, double scalefactor)
+void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, double scalefactor,
+    double resolutionfactor)
 {
   double default_size;
   double target_size;
@@ -92,15 +63,15 @@ void computeSymbolStyle(symbolStyleObj *s, styleObj *src, symbolObj *symbol, dou
   }
 
   target_size = style_size * scalefactor;
-  target_size = MS_MAX(target_size, src->minsize);
-  target_size = MS_MIN(target_size, src->maxsize);
+  target_size = MS_MAX(target_size, src->minsize*resolutionfactor);
+  target_size = MS_MIN(target_size, src->maxsize*resolutionfactor);
   s->scale = target_size / default_size;
   s->gap = src->gap * target_size / style_size;
 
   if(s->outlinecolor) {
     s->outlinewidth =  src->width * scalefactor;
-    s->outlinewidth = MS_MAX(s->outlinewidth, src->minwidth);
-    s->outlinewidth = MS_MIN(s->outlinewidth, src->maxwidth);
+    s->outlinewidth = MS_MAX(s->outlinewidth, src->minwidth*resolutionfactor);
+    s->outlinewidth = MS_MIN(s->outlinewidth, src->maxwidth*resolutionfactor);
   } else {
     s->outlinewidth = 0;
   }
@@ -132,6 +103,35 @@ tileCacheObj *searchTileCache(imageObj *img, symbolObj *symbol, symbolStyleObj *
     cur = cur->next;
   }
   return NULL;
+}
+
+int preloadSymbol(symbolSetObj *symbolset, symbolObj *symbol, rendererVTableObj *renderer) {
+  switch(symbol->type) {
+  case MS_SYMBOL_VECTOR:
+  case MS_SYMBOL_ELLIPSE:
+  case MS_SYMBOL_SIMPLE:
+  case (MS_SYMBOL_TRUETYPE):
+    break;
+  case (MS_SYMBOL_SVG):
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
+    return msPreloadSVGSymbol(symbol);
+#else
+    msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "preloadSymbol()");
+    return MS_FAILURE;
+#endif
+    break;
+  case (MS_SYMBOL_PIXMAP): {
+    if(!symbol->pixmap_buffer) {
+      if(MS_SUCCESS != msPreloadImageSymbol(renderer,symbol))
+        return MS_FAILURE;
+    }
+  }
+  break;
+  default:
+    msSetError(MS_MISCERR,"unsupported symbol type %d", "preloadSymbol()", symbol->type);
+    return MS_FAILURE;
+  }
+  return MS_SUCCESS;
 }
 
 /* add a cached tile to the current image's cache */
@@ -181,60 +181,113 @@ tileCacheObj *addTileCache(imageObj *img,
   return(cachep);
 }
 
+/* helper function to center glyph on the desired point */
+int WARN_UNUSED drawGlyphMarker(imageObj *img, face_element *face, glyph_element *glyphc, double px, double py, int size, double rotation,
+    colorObj *clr, colorObj *oclr, int olwidth)
+{
+  double ox, oy;
+  textPathObj path;
+  glyphObj glyph;
+  rendererVTableObj *renderer = img->format->vtable;
+  if(!renderer->renderGlyphs) return MS_FAILURE;
+  path.numglyphs = 1;
+  glyph.glyph = glyphc;
+  glyph.face = face;
+  path.glyphs = &glyph;
+  path.glyph_size = size;
+  glyph.rot = rotation;
+  ox = (glyphc->metrics.maxx + glyphc->metrics.minx) / 2.0;
+  oy = (glyphc->metrics.maxy + glyphc->metrics.miny) / 2.0;
+  if(rotation != 0) {
+    double sina, cosa;
+    double rox,roy;
+    sina = sin(rotation);
+    cosa = cos(rotation);
+    rox = ox * cosa - oy * sina;
+    roy = ox * sina + oy * cosa;
+    px -= rox;
+    py += roy;
+    glyph.pnt.x = px;
+    glyph.pnt.y = py;
+  } else {
+    glyph.pnt.x = px - ox;
+    glyph.pnt.y = py + oy;
+  }
+  return renderer->renderGlyphs(img, &path, clr, oclr, olwidth);
+}
+
+
 imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int width, int height,
                   int seamlessmode)
 {
   tileCacheObj *tile;
+  int status = MS_SUCCESS;
   rendererVTableObj *renderer = img->format->vtable;
   if(width==-1 || height == -1) {
     width=height=MS_MAX(symbol->sizex,symbol->sizey);
   }
   tile = searchTileCache(img,symbol,s,width,height);
+
   if(tile==NULL) {
     imageObj *tileimg;
     double p_x,p_y;
     tileimg = msImageCreate(width,height,img->format,NULL,NULL,img->resolution, img->resolution, NULL);
+    if(UNLIKELY(!tileimg)) {
+      return NULL;
+    }
     if(!seamlessmode) {
       p_x = width/2.0;
       p_y = height/2.0;
       switch(symbol->type) {
         case (MS_SYMBOL_TRUETYPE):
-          renderer->renderTruetypeSymbol(tileimg, p_x, p_y, symbol, s);
+        {
+          unsigned int unicode;
+          glyph_element *glyphc;
+          face_element *face = msGetFontFace(symbol->font, &img->map->fontset);
+          if(UNLIKELY(!face)) { status = MS_FAILURE; break; }
+          msUTF8ToUniChar(symbol->character, &unicode);
+          unicode = msGetGlyphIndex(face,unicode);
+          glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s->scale),1), unicode);
+          if(UNLIKELY(!glyphc)) { status = MS_FAILURE; break; }
+          status = drawGlyphMarker(tileimg, face, glyphc, p_x, p_y, s->scale, s->rotation,
+                s->color, s->outlinecolor, s->outlinewidth);
+        }
           break;
         case (MS_SYMBOL_PIXMAP):
-          if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
-            return NULL; /* failed to load image, renderer should have set the error message */
-          }
-          renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
+          status = msPreloadImageSymbol(renderer,symbol);
+          if(UNLIKELY(status == MS_FAILURE)) { break; }
+          status = renderer->renderPixmapSymbol(tileimg, p_x, p_y, symbol, s);
           break;
         case (MS_SYMBOL_ELLIPSE):
-          renderer->renderEllipseSymbol(tileimg, p_x, p_y,symbol, s);
+          status = renderer->renderEllipseSymbol(tileimg, p_x, p_y,symbol, s);
           break;
         case (MS_SYMBOL_VECTOR):
-          renderer->renderVectorSymbol(tileimg, p_x, p_y, symbol, s);
+          status = renderer->renderVectorSymbol(tileimg, p_x, p_y, symbol, s);
           break;
 
         case (MS_SYMBOL_SVG):
-#ifdef USE_SVG_CAIRO
-          if(msPreloadSVGSymbol(symbol) != MS_SUCCESS) {
-            return NULL; //failed to load image, renderer should have set the error message
-          }
-          if (renderer->supports_svg) {
-            if(renderer->renderSVGSymbol(tileimg, p_x, p_y, symbol, s) != MS_SUCCESS) {
-              return NULL;
-            }
-          } else {
-            if (msRenderRasterizedSVGSymbol(tileimg,p_x,p_y,symbol, s) != MS_SUCCESS) {
-              return NULL;
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
+          status = msPreloadSVGSymbol(symbol);
+          if(LIKELY(status == MS_SUCCESS)) {
+            if (renderer->supports_svg) {
+              status = renderer->renderSVGSymbol(tileimg, p_x, p_y, symbol, s);
+            } else {
+              status = msRenderRasterizedSVGSymbol(tileimg,p_x,p_y,symbol, s);
             }
           }
 #else
           msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "getTile()");
-          return NULL;
+          status = MS_FAILURE;
 #endif
           break;
         default:
+          msSetError(MS_SYMERR, "Unknown symbol type %d", "getTile()", symbol->type);
+          status = MS_FAILURE;
           break;
+      }
+      if(UNLIKELY(status == MS_FAILURE)) {
+        msFreeImage(tileimg);
+        return NULL;
       }
     } else {
       /*
@@ -251,49 +304,59 @@ imageObj *getTile(imageObj *img, symbolObj *symbol,  symbolStyleObj *s, int widt
           p_y = (j+0.5) * height;
           switch(symbol->type) {
             case (MS_SYMBOL_TRUETYPE):
-              renderer->renderTruetypeSymbol(tile3img, p_x, p_y, symbol, s);
+            {
+              unsigned int unicode;
+              glyph_element *glyphc;
+              face_element *face = msGetFontFace(symbol->font, &img->map->fontset);
+              if(UNLIKELY(!face)) { status = MS_FAILURE; break; }
+              msUTF8ToUniChar(symbol->character, &unicode);
+              unicode = msGetGlyphIndex(face,unicode);
+              glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s->scale),1), unicode);
+              if(UNLIKELY(!glyphc)) { status = MS_FAILURE; break; }
+              status = drawGlyphMarker(tileimg, face, glyphc, p_x, p_y, s->scale, s->rotation,
+                    s->color, s->outlinecolor, s->outlinewidth);
+            }
               break;
             case (MS_SYMBOL_PIXMAP):
-              if(msPreloadImageSymbol(renderer,symbol) != MS_SUCCESS) {
-                return NULL; /* failed to load image, renderer should have set the error message */
-              }
-              renderer->renderPixmapSymbol(tile3img, p_x, p_y, symbol, s);
+              status = msPreloadImageSymbol(renderer,symbol);
+              if(UNLIKELY(status == MS_FAILURE)) { break; }
+              status = renderer->renderPixmapSymbol(tile3img, p_x, p_y, symbol, s);
               break;
             case (MS_SYMBOL_ELLIPSE):
-              renderer->renderEllipseSymbol(tile3img, p_x, p_y,symbol, s);
+              status = renderer->renderEllipseSymbol(tile3img, p_x, p_y,symbol, s);
               break;
             case (MS_SYMBOL_VECTOR):
-              renderer->renderVectorSymbol(tile3img, p_x, p_y, symbol, s);
-              break;
-              /*we should never get into these cases since the seamlessmode mode seems to
-                only be for vector symbols. But if that changes ...*/
-            case (MS_SYMBOL_SVG):
-#ifdef USE_SVG_CAIRO
-              if(msPreloadSVGSymbol(symbol) != MS_SUCCESS) {
-                return NULL; //failed to load image, renderer should have set the error message
-              }
-              if (renderer->supports_svg) {
-                renderer->renderSVGSymbol(tile3img, p_x, p_y, symbol, s);
-              } else {
-                msRenderRasterizedSVGSymbol(tile3img,p_x,p_y,symbol, s);
-              }
-#else
-              msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "getTile()");
-              return NULL;
-#endif
+              status = renderer->renderVectorSymbol(tile3img, p_x, p_y, symbol, s);
               break;
             default:
-              break;
+              msSetError(MS_SYMERR, "BUG: Seamless mode is only for vector symbols", "getTile()");
+              return NULL;
+          }
+          if(UNLIKELY(status == MS_FAILURE)) {
+            msFreeImage(tile3img);
+            return NULL;
           }
         }
       }
+      if(UNLIKELY(status == MS_FAILURE)) {
+        msFreeImage(tile3img);
+        return NULL;
+      }
 
-      MS_IMAGE_RENDERER(tile3img)->getRasterBufferHandle(tile3img,&tmpraster);
-      renderer->mergeRasterBuffer(tileimg,
+      status = MS_IMAGE_RENDERER(tile3img)->getRasterBufferHandle(tile3img,&tmpraster);
+      if(UNLIKELY(status == MS_FAILURE)) {
+        msFreeImage(tile3img);
+        return NULL;
+      }
+      status = renderer->mergeRasterBuffer(tileimg,
                                   &tmpraster,
                                   1.0,width,height,0,0,width,height
                                  );
       msFreeImage(tile3img);
+    }
+    if(UNLIKELY(status == MS_FAILURE)) {
+      msFreeImage(tileimg);
+      return NULL;
     }
     tile = addTileCache(img,tileimg,symbol,s,width,height);
   }
@@ -309,17 +372,22 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
   pointObj point;
   double original_rotation = style->rotation;
   double symbol_width,symbol_height;
-  int ret = MS_FAILURE;
+  glyph_element *glyphc = NULL;
+  face_element *face = NULL;
+  int ret = MS_SUCCESS;
   if(symbol->type != MS_SYMBOL_TRUETYPE) {
     symbol_width = MS_MAX(1,symbol->sizex*style->scale);
     symbol_height = MS_MAX(1,symbol->sizey*style->scale);
   } else {
-    rectObj rect;
-    if(MS_SUCCESS != renderer->getTruetypeTextBBox(renderer,&symbol->full_font_path,1,style->scale,
-        symbol->character,&rect,NULL,0))
-      return MS_FAILURE;
-    symbol_width=rect.maxx-rect.minx;
-    symbol_height=rect.maxy-rect.miny;
+    unsigned int unicode;
+    msUTF8ToUniChar(symbol->character, &unicode);
+    face = msGetFontFace(symbol->font, &image->map->fontset);
+    if(UNLIKELY(!face)) return MS_FAILURE;
+    unicode = msGetGlyphIndex(face,unicode);
+    glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(style->scale),1), unicode);
+    if(UNLIKELY(!glyphc)) return MS_FAILURE;
+    symbol_width = glyphc->metrics.maxx - glyphc->metrics.minx;
+    symbol_height = glyphc->metrics.maxy - glyphc->metrics.miny;
   }
   for(i=0; i<p->numlines; i++) {
     int line_in = 0;
@@ -367,6 +435,15 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
             point.y += oy;
           }
         }
+
+        /* if the point is not in the map extent, skip it. (POLYLINE_NO_CLIP) */
+        if ( (point.x < -(symbol_width) || point.x > (image->width+symbol_width)) ||
+             (point.y < -(symbol_height) || point.y > (image->height+symbol_height)) ) {
+          current_length += spacing;
+          line_in=1;          
+          continue;
+        }
+          
         switch (symbol->type) {
           case MS_SYMBOL_PIXMAP:
             ret = renderer->renderPixmapSymbol(image, point.x, point.y, symbol, style);
@@ -378,8 +455,21 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
             ret = renderer->renderVectorSymbol(image, point.x, point.y, symbol, style);
             break;
           case MS_SYMBOL_TRUETYPE:
-            ret = renderer->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
+            ret = drawGlyphMarker(image, face, glyphc, point.x, point.y, style->scale, style->rotation,
+                style->color, style->outlinecolor, style->outlinewidth);
             break;
+          case (MS_SYMBOL_SVG):
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
+              if (renderer->supports_svg) {
+                ret = renderer->renderSVGSymbol(image, point.x, point.y, symbol, style);
+              } else {
+                ret = msRenderRasterizedSVGSymbol(image,point.x,point.y,symbol, style);
+              }
+#else
+              msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msImagePolylineMarkers()()");
+              ret = MS_FAILURE;
+#endif
+              break;
         }
         if( ret != MS_SUCCESS)
           return ret;
@@ -436,7 +526,20 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
               ret = renderer->renderVectorSymbol(image, point.x, point.y, symbol, style);
               break;
             case MS_SYMBOL_TRUETYPE:
-              ret = renderer->renderTruetypeSymbol(image, point.x, point.y, symbol, style);
+              ret = drawGlyphMarker(image, face, glyphc, point.x, point.y, style->scale, style->rotation,
+                  style->color, style->outlinecolor, style->outlinewidth);
+              break;
+            case (MS_SYMBOL_SVG):
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
+              if (renderer->supports_svg) {
+                ret = renderer->renderSVGSymbol(image, point.x, point.y, symbol, style);
+              } else {
+                ret = msRenderRasterizedSVGSymbol(image,point.x,point.y,symbol, style);
+              }
+#else
+              msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msImagePolylineMarkers()()");
+              ret = MS_FAILURE;
+#endif
               break;
           }
           break; /* we have rendered the single marker for this line */
@@ -449,9 +552,10 @@ int msImagePolylineMarkers(imageObj *image, shapeObj *p, symbolObj *symbol,
   return ret;
 }
 
-int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
+int msDrawLineSymbol(mapObj *map, imageObj *image, shapeObj *p,
                      styleObj *style, double scalefactor)
 {
+  int status = MS_SUCCESS;
   if (image) {
     if (MS_RENDERER_PLUGIN(image->format)) {
       rendererVTableObj *renderer = image->format->vtable;
@@ -464,24 +568,26 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
       if (p->numlines == 0)
         return MS_SUCCESS;
 
-      if (style->symbol >= symbolset->numsymbols || style->symbol < 0)
+      if (style->symbol >= map->symbolset.numsymbols || style->symbol < 0)
         return MS_SUCCESS; /* no such symbol, 0 is OK   */
 
-      symbol = symbolset->symbol[style->symbol];
+      symbol = map->symbolset.symbol[style->symbol];
       /* store a reference to the renderer to be used for freeing */
       symbol->renderer = renderer;
 
       width = style->width * scalefactor;
-      width = MS_MIN(width,style->maxwidth);
-      width = MS_MAX(width,style->minwidth);
+      width = MS_MIN(width,style->maxwidth*image->resolutionfactor);
+      width = MS_MAX(width,style->minwidth*image->resolutionfactor);
       if(style->width != 0) {
         finalscalefactor = width / style->width;
       } else {
         finalscalefactor = 1.0;
       }
 
-      if(style->offsety==-99) {
-        offsetLine = msOffsetPolyline(p,style->offsetx * finalscalefactor ,-99);
+      if(style->offsety==MS_STYLE_SINGLE_SIDED_OFFSET) {
+        offsetLine = msOffsetPolyline(p,style->offsetx * finalscalefactor ,MS_STYLE_SINGLE_SIDED_OFFSET);
+      } else if(style->offsety==MS_STYLE_DOUBLE_SIDED_OFFSET) {
+        offsetLine = msOffsetPolyline(p,style->offsetx * finalscalefactor ,MS_STYLE_DOUBLE_SIDED_OFFSET);
       } else if(style->offsetx!=0 || style->offsety!=0) {
         offsetLine = msOffsetPolyline(p, style->offsetx * finalscalefactor,
                                       style->offsety * finalscalefactor);
@@ -504,48 +610,28 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         else {
           /* msSetError(MS_MISCERR,"no color defined for line styling","msDrawLineSymbol()");
            * not really an error */
-          return MS_SUCCESS;
+          status = MS_SUCCESS;
+          goto line_cleanup;
         }
-        renderer->renderLine(image,offsetLine,&s);
+        status = renderer->renderLine(image,offsetLine,&s);
       } else {
         symbolStyleObj s;
-        switch (symbol->type) {
-          case (MS_SYMBOL_TRUETYPE): {
-            if(!symbol->full_font_path)
-              symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
-                                                 symbol->font));
-            if(!symbol->full_font_path) {
-              msSetError(MS_MEMERR,"allocation error", "msDrawMArkerSymbol()");
-              return MS_FAILURE;
-            }
-          }
-          break;
-          case (MS_SYMBOL_PIXMAP): {
-            if(!symbol->pixmap_buffer) {
-              if(MS_SUCCESS != msPreloadImageSymbol(renderer,symbol))
-                return MS_FAILURE;
-            }
-          }
-          break;
+        if(preloadSymbol(&map->symbolset, symbol, renderer) != MS_SUCCESS) {
+          status = MS_FAILURE;
+          goto line_cleanup;
         }
 
         INIT_SYMBOL_STYLE(s);
-        computeSymbolStyle(&s,style,symbol,scalefactor);
+        computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
         s.style = style;
-        if(symbol->type == MS_SYMBOL_TRUETYPE) {
-          if(!symbol->full_font_path)
-            symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
-                                               symbol->font));
-          assert(symbol->full_font_path);
-        }
 
         /* compute a markerStyle and use it on the line */
         if(style->gap<0) {
           /* special function that treats any other symbol used as a marker, not a brush */
-          msImagePolylineMarkers(image,offsetLine,symbol,&s,-s.gap,
+          status = msImagePolylineMarkers(image,offsetLine,symbol,&s,-s.gap,
                                  style->initialgap * finalscalefactor, 1);
         } else if(style->gap>0) {
-          msImagePolylineMarkers(image,offsetLine,symbol,&s,s.gap,
+          status = msImagePolylineMarkers(image,offsetLine,symbol,&s,s.gap,
                                  style->initialgap * finalscalefactor,0);
         } else {
           if(renderer->renderLineTiled != NULL) {
@@ -561,40 +647,44 @@ int msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
             if(pw<1) pw=1;
             if(ph<1) ph=1;
             tile = getTile(image, symbol,&s,pw,ph,0);
-            renderer->renderLineTiled(image, offsetLine, tile);
+            status = renderer->renderLineTiled(image, offsetLine, tile);
           } else {
             msSetError(MS_RENDERERERR, "renderer does not support brushed lines", "msDrawLineSymbol()");
-            return MS_FAILURE;
+            status = MS_FAILURE;
           }
         }
       }
 
+line_cleanup:
       if(offsetLine!=p) {
         msFreeShape(offsetLine);
         msFree(offsetLine);
       }
+      return status;
     } else if( MS_RENDERER_IMAGEMAP(image->format) )
-      msDrawLineSymbolIM(symbolset, image, p, style, scalefactor);
+      msDrawLineSymbolIM(map, image, p, style, scalefactor);
     else {
       msSetError(MS_RENDERERERR, "unsupported renderer", "msDrawShadeSymbol()");
-      return MS_FAILURE;
+      status = MS_FAILURE;
     }
   } else {
-    return MS_FAILURE;
+    status = MS_FAILURE;
   }
-  return MS_SUCCESS;
+  return status;
 }
 
-int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor)
+int msDrawShadeSymbol(mapObj *map, imageObj *image, shapeObj *p, styleObj *style, double scalefactor)
 {
   int ret = MS_SUCCESS;
+  symbolObj *symbol;
   if (!p)
     return MS_SUCCESS;
   if (p->numlines <= 0)
     return MS_SUCCESS;
 
-  if (style->symbol >= symbolset->numsymbols || style->symbol < 0)
+  if (style->symbol >= map->symbolset.numsymbols || style->symbol < 0)
     return MS_SUCCESS; /* no such symbol, 0 is OK */
+  symbol = map->symbolset.symbol[style->symbol];
 
   /*
    * if only an outlinecolor was defined, and not a color,
@@ -603,10 +693,10 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
    * this behavior is kind of a mapfile hack, and must be
    * kept for backwards compatibility
    */
-  if (symbolset->symbol[style->symbol]->type != MS_SYMBOL_PIXMAP && symbolset->symbol[style->symbol]->type != MS_SYMBOL_SVG ) {
+  if (symbol->type != MS_SYMBOL_PIXMAP && symbol->type != MS_SYMBOL_SVG ) {
     if (!MS_VALID_COLOR(style->color)) {
       if(MS_VALID_COLOR(style->outlinecolor))
-        return msDrawLineSymbol(symbolset, image, p, style, scalefactor);
+        return msDrawLineSymbol(map, image, p, style, scalefactor);
       else {
         /* just do nothing if no color has been set */
         return MS_SUCCESS;
@@ -617,16 +707,18 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
     if (MS_RENDERER_PLUGIN(image->format)) {
       rendererVTableObj *renderer = image->format->vtable;
       shapeObj *offsetPolygon = NULL;
-      symbolObj *symbol = symbolset->symbol[style->symbol];
       /* store a reference to the renderer to be used for freeing */
       if(style->symbol)
         symbol->renderer = renderer;
 
       if (style->offsetx != 0 || style->offsety != 0) {
-        if(style->offsety==-99)
-          offsetPolygon = msOffsetPolyline(p, style->offsetx*scalefactor, -99);
-        else
+        if(style->offsety==MS_STYLE_SINGLE_SIDED_OFFSET) {
+          offsetPolygon = msOffsetPolyline(p, style->offsetx*scalefactor, MS_STYLE_SINGLE_SIDED_OFFSET);
+        } else if(style->offsety==MS_STYLE_DOUBLE_SIDED_OFFSET) {
+          offsetPolygon = msOffsetPolyline(p,style->offsetx * scalefactor ,MS_STYLE_DOUBLE_SIDED_OFFSET);
+        } else {
           offsetPolygon = msOffsetPolyline(p, style->offsetx*scalefactor,style->offsety*scalefactor);
+        }
       } else {
         offsetPolygon=p;
       }
@@ -656,11 +748,11 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
           if(ret != MS_SUCCESS) goto cleanup;
         }
         width = (style->width <= 0)?scalefactor:style->width*scalefactor;
-        width = MS_MIN(width, style->maxwidth);
-        width = MS_MAX(width, style->minwidth);
+        width = MS_MIN(width, style->maxwidth*image->resolutionfactor);
+        width = MS_MAX(width, style->minwidth*image->resolutionfactor);
         spacing = (style->size <= 0)?scalefactor:style->size*scalefactor;
-        spacing = MS_MIN(spacing, style->maxsize);
-        spacing = MS_MAX(spacing, style->minsize);
+        spacing = MS_MIN(spacing, style->maxsize*image->resolutionfactor);
+        spacing = MS_MAX(spacing, style->minsize*image->resolutionfactor);
 
         /* scale the pattern by the factor applied to the width */
         for(i=0; i<style->patternlength; i++) {
@@ -675,46 +767,13 @@ int msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         imageObj *tile;
         int seamless = 0;
 
-
-        switch(symbol->type) {
-          case MS_SYMBOL_PIXMAP:
-            if(MS_SUCCESS != msPreloadImageSymbol(renderer,symbol)) {
-              ret = MS_FAILURE;
-              goto cleanup;
-            }
-            break;
-          case MS_SYMBOL_TRUETYPE:
-            if(!symbol->full_font_path)
-              symbol->full_font_path =  msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
-                                                 symbol->font));
-            if(!symbol->full_font_path) {
-              msSetError(MS_MEMERR,"allocation error", "msDrawMarkerSymbol()");
-              ret = MS_FAILURE;
-              goto cleanup;
-            }
-            break;
-          case MS_SYMBOL_SVG:
-#ifdef USE_SVG_CAIRO
-            if(MS_SUCCESS != msPreloadSVGSymbol(symbol)) {
-              ret = MS_FAILURE;
-              goto cleanup;
-            }
-#else
-            msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawMarkerSymbol()");
-            return MS_FAILURE;
-#endif
-            break;
-          case MS_SYMBOL_VECTOR:
-          case MS_SYMBOL_ELLIPSE:
-            break;
-          default:
-            msSetError(MS_MISCERR,"unsupported symbol type %d", "msDrawShadeSymbol()", symbol->type);
-            ret = MS_FAILURE;
-            goto cleanup;
+        if(preloadSymbol(&map->symbolset,symbol,renderer) != MS_SUCCESS) {
+          ret = MS_FAILURE;
+          goto cleanup;
         }
 
         INIT_SYMBOL_STYLE(s);
-        computeSymbolStyle(&s,style,symbol,scalefactor);
+        computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
         s.style = style;
 
         if (!s.color && !s.outlinecolor && symbol->type != MS_SYMBOL_PIXMAP && symbol->type != MS_SYMBOL_SVG) {
@@ -767,18 +826,18 @@ cleanup:
       }
       return ret;
     } else if( MS_RENDERER_IMAGEMAP(image->format) )
-      msDrawShadeSymbolIM(symbolset, image, p, style, scalefactor);
+      msDrawShadeSymbolIM(map, image, p, style, scalefactor);
   }
   return ret;
 }
 
-int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, styleObj *style,
+int msDrawMarkerSymbol(mapObj *map, imageObj *image, pointObj *p, styleObj *style,
                        double scalefactor)
 {
   int ret = MS_SUCCESS;
   if (!p)
     return MS_SUCCESS;
-  if (style->symbol >= symbolset->numsymbols || style->symbol <= 0)
+  if (style->symbol >= map->symbolset.numsymbols || style->symbol <= 0)
     return MS_SUCCESS; /* no such symbol, 0 is OK   */
 
   if (image) {
@@ -786,48 +845,21 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
       rendererVTableObj *renderer = image->format->vtable;
       symbolStyleObj s;
       double p_x,p_y;
-      symbolObj *symbol = symbolset->symbol[style->symbol];
+      symbolObj *symbol = map->symbolset.symbol[style->symbol];
       /* store a reference to the renderer to be used for freeing */
       symbol->renderer = renderer;
-      switch (symbol->type) {
-        case (MS_SYMBOL_TRUETYPE): {
-          if (!symbol->full_font_path)
-            symbol->full_font_path = msStrdup(msLookupHashTable(&(symbolset->fontset->fonts),
-                                              symbol->font));
-          if (!symbol->full_font_path) {
-            msSetError(MS_MEMERR, "allocation error", "msDrawMarkerSymbol()");
-            return MS_FAILURE;
-          }
-        }
-        break;
-        case (MS_SYMBOL_PIXMAP): {
-          if (!symbol->pixmap_buffer) {
-            if (MS_SUCCESS != msPreloadImageSymbol(renderer, symbol))
-              return MS_FAILURE;
-          }
-        }
-        break;
-
-        case (MS_SYMBOL_SVG): {
-#ifdef USE_SVG_CAIRO
-          if (!symbol->renderer_cache) {
-            if (MS_SUCCESS != msPreloadSVGSymbol(symbol))
-              return MS_FAILURE;
-          }
-#else
-          msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawMarkerSymbol()");
-          return MS_FAILURE;
-#endif
-        }
-        break;
+      if(preloadSymbol(&map->symbolset,symbol,renderer) != MS_SUCCESS) {
+        return MS_FAILURE;
       }
 
-      s.style = style;
-      computeSymbolStyle(&s,style,symbol,scalefactor);
+      computeSymbolStyle(&s,style,symbol,scalefactor,image->resolutionfactor);
       s.style = style;
       if (!s.color && !s.outlinecolor && symbol->type != MS_SYMBOL_PIXMAP &&
           symbol->type != MS_SYMBOL_SVG) {
         return MS_SUCCESS; // nothing to do if no color, except for pixmap symbols
+      }
+      if(s.scale == 0) {
+        return MS_SUCCESS;
       }
 
 
@@ -853,7 +885,9 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
       if(symbol->anchorpoint_x != 0.5 || symbol->anchorpoint_y != 0.5) {
         double sx,sy;
         double ox, oy;
-        msGetMarkerSize(symbolset, style, &sx, &sy, scalefactor);
+        if(UNLIKELY(MS_FAILURE == msGetMarkerSize(map, style, &sx, &sy, scalefactor))) {
+          return MS_FAILURE;
+        }
         ox = (0.5 - symbol->anchorpoint_x) * sx;
         oy = (0.5 - symbol->anchorpoint_y) * sy;
         if(s.rotation != 0) {
@@ -882,9 +916,15 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
       }
       switch (symbol->type) {
         case (MS_SYMBOL_TRUETYPE): {
-          assert(symbol->full_font_path);
-          ret = renderer->renderTruetypeSymbol(image, p_x, p_y, symbol, &s);
-
+          unsigned int unicode;
+          glyph_element *glyphc;
+          face_element *face = msGetFontFace(symbol->font, &map->fontset);
+          if(UNLIKELY(!face)) return MS_FAILURE;
+          msUTF8ToUniChar(symbol->character,&unicode);
+          unicode = msGetGlyphIndex(face,unicode);
+          glyphc = msGetGlyphByIndex(face, MS_MAX(MS_NINT(s.scale),1), unicode);
+          if(UNLIKELY(!glyphc)) return MS_FAILURE;
+          ret = drawGlyphMarker(image, face, glyphc, p_x, p_y, s.scale, s.rotation, s.color, s.outlinecolor, s.outlinewidth);
         }
         break;
         case (MS_SYMBOL_PIXMAP): {
@@ -904,7 +944,7 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
           if (renderer->supports_svg) {
             ret = renderer->renderSVGSymbol(image, p_x, p_y, symbol, &s);
           } else {
-#ifdef USE_SVG_CAIRO
+#if defined(USE_SVG_CAIRO) || defined(USE_RSVG)
             ret = msRenderRasterizedSVGSymbol(image, p_x,p_y, symbol, &s);
 #else
             msSetError(MS_SYMERR, "SVG symbol support is not enabled.", "msDrawMarkerSymbol()");
@@ -918,181 +958,110 @@ int msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, sty
       }
       return ret;
     } else if( MS_RENDERER_IMAGEMAP(image->format) )
-      msDrawMarkerSymbolIM(symbolset, image, p, style, scalefactor);
+      msDrawMarkerSymbolIM(map, image, p, style, scalefactor);
 
   }
   return ret;
 }
 
 
-
-
-
-/*
-** Render the text (no background effects) for a label.
- */
-int msDrawText(imageObj *image, pointObj labelPnt, char *string,
-               labelObj *label, fontSetObj *fontset, double scalefactor)
+int msDrawLabelBounds(mapObj *map, imageObj *image, label_bounds *bnds, styleObj *style, double scalefactor)
 {
-  int nReturnVal = -1;
-  if (image) {
-    if (MS_RENDERER_PLUGIN(image->format)) {
-      labelStyleObj s;
-      rendererVTableObj *renderer = image->format->vtable;
-      double x, y;
-      if (!string || !strlen(string))
-        return (0); /* not errors, just don't want to do anything */
-
-
-      if(computeLabelStyle(&s,label,fontset,scalefactor) == MS_FAILURE) {
-        return MS_FAILURE;
-      }
-      if(s.rotation == 0 && !MS_RENDERER_KML(image->format)) {
-        x = MS_NINT(labelPnt.x);
-        y = MS_NINT(labelPnt.y);
-      } else {
-        x = labelPnt.x;
-        y = labelPnt.y;
-      }
-      if (label->type == MS_TRUETYPE) {
-        if(MS_VALID_COLOR(label->shadowcolor)) {
-          s.color = &label->shadowcolor;
-          /* FIXME labelpoint for rotated label */
-          renderer->renderGlyphs(image,
-                                 x + scalefactor * label->shadowsizex,y + scalefactor * label->shadowsizey,
-                                 &s,string);
-        }
-
-        s.color= &label->color;
-        if(MS_VALID_COLOR(label->outlinecolor)) {
-          s.outlinecolor = &label->outlinecolor;
-          s.outlinewidth = label->outlinewidth * s.size/label->size;
-        }
-        return renderer->renderGlyphs(image,x,y,&s,string);
-      } else if(label->type == MS_BITMAP) {
-        s.size = MS_NINT(s.size);
-        s.color= &label->color;
-        s.size = MS_MIN(s.size,5); /* only have 5 bitmap fonts */
-        if(!renderer->supports_bitmap_fonts || !renderer->bitmapFontMetrics[MS_NINT(s.size)]) {
-          msSetError(MS_RENDERERERR, "selected renderer does not support bitmap fonts or this particular size", "msDrawText()");
-          return MS_FAILURE;
-        }
-        return renderer->renderBitmapGlyphs(image,x,y,&s,string);
-      }
-    } else if( MS_RENDERER_IMAGEMAP(image->format) )
-      nReturnVal = msDrawTextIM(image, labelPnt, string, label, fontset, scalefactor);
+  /*
+   * helper function to draw label bounds, where we might have only a rectObj and not
+   * a lineObj/shapeObj
+   */
+  shapeObj shape;
+  shape.numlines = 1;
+  if(bnds->poly) {
+    shape.line = bnds->poly;
+    return msDrawShadeSymbol(map,image,&shape,style,scalefactor);
+  } else {
+    pointObj pnts1[5];
+    lineObj l;
+    l.point = pnts1;
+    l.numpoints = 5;
+    pnts1[0].x = pnts1[1].x = pnts1[4].x = bnds->bbox.minx;
+    pnts1[2].x = pnts1[3].x = bnds->bbox.maxx;
+    pnts1[0].y = pnts1[3].y = pnts1[4].y = bnds->bbox.miny;
+    pnts1[1].y = pnts1[2].y = bnds->bbox.maxy;
+    shape.line = &l; // must return from this block
+    return msDrawShadeSymbol(map,image,&shape,style,scalefactor);
   }
-  return nReturnVal;
 }
 
-int msDrawTextLine(imageObj *image, char *string, labelObj *label, labelPathObj *labelpath, fontSetObj *fontset, double scalefactor)
+int msDrawTextSymbol(mapObj *map, imageObj *image, pointObj labelPnt, textSymbolObj *ts)
 {
-  int nReturnVal = MS_SUCCESS;
-  if(image) {
-    if (MS_RENDERER_PLUGIN(image->format)) {
+  rendererVTableObj *renderer = image->format->vtable;
+  colorObj *c = NULL, *oc = NULL;
+  int ow;
+  assert(ts->textpath);
 
-      rendererVTableObj *renderer = image->format->vtable;
-      labelStyleObj s;
-      if (!string || !strlen(string))
-        return (MS_SUCCESS); /* not errors, just don't want to do anything */
-      if(computeLabelStyle(&s, label, fontset, scalefactor) != MS_SUCCESS) return MS_FAILURE;
-      if (label->type == MS_TRUETYPE) {
-        if(renderer->renderGlyphsLine) {
-          if(MS_VALID_COLOR(label->outlinecolor)) {
-            s.outlinecolor = &(label->outlinecolor);
-            s.outlinewidth = s.size/label->size * label->outlinewidth;
-          } else {
-            s.outlinewidth = 0;
-            s.outlinecolor = NULL;
-          }
-          s.color = &(label->color);
-          nReturnVal = renderer->renderGlyphsLine(image,labelpath,&s,string);
-        } else {
-          /*
-           * if the renderer doesn't support direct labelPath usage,
-           * decompose the string and send it down character by character
-           */
-          const char* string_ptr = string;
-          int i;
-          double x, y;
-          char glyph[11];
-
-          /*
-           * we first render all the outlines if present, so that the
-           * joining of characters stays correct
-           */
-          if(MS_VALID_COLOR(label->outlinecolor)) {
-            s.outlinecolor = &(label->outlinecolor);
-            s.outlinewidth = s.size/label->size * label->outlinewidth;
-            for (i = 0; i < labelpath->path.numpoints; i++) {
-              if (msGetNextGlyph(&string_ptr, glyph) == -1)
-                break; /* Premature end of string??? */
-              s.rotation = labelpath->angles[i];
-              x = labelpath->path.point[i].x;
-              y = labelpath->path.point[i].y;
-              nReturnVal = renderer->renderGlyphs(image, x, y, &s, glyph);
-              if(nReturnVal != MS_SUCCESS) {
-                return nReturnVal;
-              }
-            }
-            string_ptr = string; /* reset to beginning of string */
-          }
-          s.outlinecolor = NULL;
-          s.outlinewidth = 0;
-          s.color = &(label->color);
-          for (i = 0; i < labelpath->path.numpoints; i++) {
-            if (msGetNextGlyph(&string_ptr, glyph) == -1)
-              break; /* Premature end of string??? */
-
-            s.rotation = labelpath->angles[i];
-            x = labelpath->path.point[i].x;
-            y = labelpath->path.point[i].y;
-
-            nReturnVal = renderer->renderGlyphs(image, x, y, &s, glyph);
-            if(nReturnVal != MS_SUCCESS) {
-              return nReturnVal;
-            }
-          }
-        }
+  if(!ts->textpath->absolute) {
+    int g;
+    double cosa,sina;
+    double x = labelPnt.x;
+    double y = labelPnt.y;
+    if(ts->rotation != 0) {
+      cosa = cos(ts->rotation);
+      sina = sin(ts->rotation);
+      for(g=0;g<ts->textpath->numglyphs;g++) {
+        double ox = ts->textpath->glyphs[g].pnt.x;
+        double oy = ts->textpath->glyphs[g].pnt.y;
+        ts->textpath->glyphs[g].pnt.x = ox * cosa + oy * sina + x;
+        ts->textpath->glyphs[g].pnt.y = -ox * sina + oy * cosa + y;
+        ts->textpath->glyphs[g].rot = ts->rotation;
+      }
+    } else {
+      for(g=0;g<ts->textpath->numglyphs;g++) {
+        ts->textpath->glyphs[g].pnt.x += x;
+        ts->textpath->glyphs[g].pnt.y += y;
       }
     }
   }
-
-  return nReturnVal;
+  if(MS_VALID_COLOR(ts->label->color))
+    c = &ts->label->color;
+  if(MS_VALID_COLOR(ts->label->outlinecolor))
+    oc = &ts->label->outlinecolor;
+  ow = MS_NINT((double)ts->label->outlinewidth * ((double)ts->textpath->glyph_size / (double)ts->label->size));
+  if(!renderer->renderGlyphs) return MS_FAILURE;
+  return renderer->renderGlyphs(image,ts->textpath,c,oc,ow);
+  
 }
-
 
 /************************************************************************/
 /*                          msCircleDrawLineSymbol                      */
 /*                                                                      */
 /************************************************************************/
-int msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
+int msCircleDrawLineSymbol(mapObj *map, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
 {
   shapeObj *circle;
+  int status;
   if (!image) return MS_FAILURE;
   circle = msRasterizeArc(p->x, p->y, r, 0, 360, 0);
   if (!circle) return MS_FAILURE;
-  msDrawLineSymbol(symbolset, image, circle, style, scalefactor);
+  status = msDrawLineSymbol(map, image, circle, style, scalefactor);
   msFreeShape(circle);
   msFree(circle);
-  return MS_SUCCESS;
+  return status;
 }
 
-int msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
+int msCircleDrawShadeSymbol(mapObj *map, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor)
 {
   shapeObj *circle;
+  int status;
   if (!image) return MS_FAILURE;
   circle = msRasterizeArc(p->x, p->y, r, 0, 360, 0);
   if (!circle) return MS_FAILURE;
-  msDrawShadeSymbol(symbolset, image, circle, style, scalefactor);
+  status = msDrawShadeSymbol(map, image, circle, style, scalefactor);
   msFreeShape(circle);
   msFree(circle);
-  return MS_SUCCESS;
+  return status;
 }
 
-int msDrawPieSlice(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double radius, double start, double end)
+int msDrawPieSlice(mapObj *map, imageObj *image, pointObj *p, styleObj *style, double radius, double start, double end)
 {
-
+  int status;
   shapeObj *circle;
   double center_x = p->x;
   double center_y = p->y;
@@ -1103,8 +1072,59 @@ int msDrawPieSlice(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleO
   }
   circle = msRasterizeArc(center_x, center_y, radius, start, end, 1);
   if (!circle) return MS_FAILURE;
-  msDrawShadeSymbol(symbolset, image, circle, style, 1.0);
+  status = msDrawShadeSymbol(map, image, circle, style, 1.0);
   msFreeShape(circle);
   msFree(circle);
-  return MS_SUCCESS;
+  return status;
+}
+
+/*
+ * RFC 49 implementation
+ * if an outlinewidth is used:
+ *  - augment the style's width to account for the outline width
+ *  - swap the style color and outlinecolor
+ *  - draw the shape (the outline) in the first pass of the
+ *    caching mechanism
+ */
+
+void msOutlineRenderingPrepareStyle(styleObj *pStyle, mapObj *map, layerObj *layer, imageObj *image)
+{
+  colorObj tmp;
+
+  if (pStyle->outlinewidth > 0) {
+    /* adapt width (must take scalefactor into account) */
+    pStyle->width += (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
+    pStyle->minwidth += pStyle->outlinewidth * 2;
+    pStyle->maxwidth += pStyle->outlinewidth * 2;
+    pStyle->size += (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
+
+    /*swap color and outlinecolor*/
+    tmp = pStyle->color;
+    pStyle->color = pStyle->outlinecolor;
+    pStyle->outlinecolor = tmp;
+  }
+}
+
+/*
+ * RFC 49 implementation: switch back the styleobj to its
+ * original state, so the line fill will be drawn in the
+ * second pass of the caching mechanism
+ */
+
+void msOutlineRenderingRestoreStyle(styleObj *pStyle, mapObj *map, layerObj *layer, imageObj *image)
+{
+  colorObj tmp;
+
+  if (pStyle->outlinewidth > 0) {
+    /* reset widths to original state */
+    pStyle->width -= (pStyle->outlinewidth / (layer->scalefactor/image->resolutionfactor)) * 2;
+    pStyle->minwidth -= pStyle->outlinewidth * 2;
+    pStyle->maxwidth -= pStyle->outlinewidth * 2;
+    pStyle->size -= (pStyle->outlinewidth/layer->scalefactor*(map->resolution/map->defresolution));
+
+    /*reswap colors to original state*/
+    tmp = pStyle->color;
+    pStyle->color = pStyle->outlinecolor;
+    pStyle->outlinecolor = tmp;
+  }
 }

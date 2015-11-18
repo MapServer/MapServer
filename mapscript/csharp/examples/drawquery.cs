@@ -55,7 +55,7 @@ class DrawQuery
         QueryByAttribute(args[1], map, ZoomToResults);
 
         map.querymap.status = mapscript.MS_ON;
-        map.querymap.color.setRGB(0,0,255);
+        map.querymap.color.setRGB(0,0,255,255);
         map.querymap.style = (int)MS_QUERYMAP_STYLES.MS_HILITE;
 
         try 

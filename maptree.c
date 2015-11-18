@@ -126,6 +126,10 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION);
   psTree->fp = fopen(pszFullname, "rb" );
+  if( psTree->fp == NULL ) {
+      sprintf( pszFullname, "%s.QIX", pszBasename);
+      psTree->fp = fopen(pszFullname, "rb" );
+  }
 
   msFree(pszBasename); /* don't need these any more */
   msFree(pszFullname);
@@ -135,7 +139,10 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
     return( NULL );
   }
 
-  fread( pabyBuf, 8, 1, psTree->fp );
+  if( fread( pabyBuf, 8, 1, psTree->fp ) != 1 ) {
+    msFree(psTree);
+    return( NULL );
+  }
 
   memcpy( &psTree->signature, pabyBuf, 3 );
   if( strncmp(psTree->signature,"SQT",3) ) {
@@ -171,7 +178,11 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
     memcpy( &psTree->version, pabyBuf+4, 1 );
     memcpy( &psTree->flags, pabyBuf+5, 3 );
 
-    fread( pabyBuf, 8, 1, psTree->fp );
+    if( fread( pabyBuf, 8, 1, psTree->fp ) != 1 )
+    {
+      msFree(psTree);
+      return( NULL );
+    }
   }
 
   if( psTree->needswap ) SwapWord( 4, pabyBuf );
@@ -395,7 +406,7 @@ static void treeCollectShapeIds(treeNodeObj *node, rectObj aoi, ms_bitarray stat
   }
 }
 
-ms_bitarray msSearchTree(treeObj *tree, rectObj aoi)
+ms_bitarray msSearchTree(const treeObj *tree, rectObj aoi)
 {
   ms_bitarray status=NULL;
 
@@ -465,16 +476,19 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
 
   int *ids=NULL;
 
-  fread( &offset, 4, 1, disktree->fp );
+  if( fread( &offset, 4, 1, disktree->fp ) != 1 )
+    goto error;
   if ( disktree->needswap ) SwapWord ( 4, &offset );
 
-  fread( &rect, sizeof(rectObj), 1, disktree->fp );
+  if( fread( &rect, sizeof(rectObj), 1, disktree->fp ) != 1 )
+    goto error;
   if ( disktree->needswap ) SwapWord ( 8, &rect.minx );
   if ( disktree->needswap ) SwapWord ( 8, &rect.miny );
   if ( disktree->needswap ) SwapWord ( 8, &rect.maxx );
   if ( disktree->needswap ) SwapWord ( 8, &rect.maxy );
 
-  fread( &numshapes, 4, 1, disktree->fp );
+  if( fread( &numshapes, 4, 1, disktree->fp ) != 1 )
+    goto error;
   if ( disktree->needswap ) SwapWord ( 4, &numshapes );
 
   if(!msRectOverlap(&rect, &aoi)) { /* skip rest of this node and sub-nodes */
@@ -485,7 +499,8 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
   if(numshapes > 0) {
     ids = (int *)msSmallMalloc(numshapes*sizeof(ms_int32));
 
-    fread( ids, numshapes*sizeof(ms_int32), 1, disktree->fp );
+    if( fread( ids, numshapes*sizeof(ms_int32), 1, disktree->fp ) != 1 )
+      goto error;
     if (disktree->needswap ) {
       for( i=0; i<numshapes; i++ ) {
         SwapWord( 4, &ids[i] );
@@ -498,16 +513,21 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
     free(ids);
   }
 
-  fread( &numsubnodes, 4, 1, disktree->fp );
+  if( fread( &numsubnodes, 4, 1, disktree->fp ) != 1 )
+    goto error;
   if ( disktree->needswap ) SwapWord ( 4, &numsubnodes );
 
   for(i=0; i<numsubnodes; i++)
     searchDiskTreeNode(disktree, aoi, status);
 
   return;
+  
+error:
+  msSetError(MS_IOERR, NULL, "searchDiskTreeNode()");
+  return;
 }
 
-ms_bitarray msSearchDiskTree(char *filename, rectObj aoi, int debug)
+ms_bitarray msSearchDiskTree(const char *filename, rectObj aoi, int debug)
 {
   SHPTreeHandle disktree;
   ms_bitarray status=NULL;
@@ -545,26 +565,51 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
 
   res = fread( &offset, 4, 1, disktree->fp );
   if ( !res )
+  {
+    free(node);
     return NULL;
+  }
 
   if ( disktree->needswap ) SwapWord ( 4, &offset );
 
-  fread( &node->rect, sizeof(rectObj), 1, disktree->fp );
+  res = fread( &node->rect, sizeof(rectObj), 1, disktree->fp );
+  if ( !res )
+  {
+    free(node);
+    return NULL;
+  }
   if ( disktree->needswap ) SwapWord ( 8, &node->rect.minx );
   if ( disktree->needswap ) SwapWord ( 8, &node->rect.miny );
   if ( disktree->needswap ) SwapWord ( 8, &node->rect.maxx );
   if ( disktree->needswap ) SwapWord ( 8, &node->rect.maxy );
 
-  fread( &node->numshapes, 4, 1, disktree->fp );
+  res = fread( &node->numshapes, 4, 1, disktree->fp );
+  if ( !res )
+  {
+    free(node);
+    return NULL;
+  }
   if ( disktree->needswap ) SwapWord ( 4, &node->numshapes );
   if( node->numshapes > 0 )
     node->ids = (ms_int32 *)msSmallMalloc(sizeof(ms_int32)*node->numshapes);
-  fread( node->ids, node->numshapes*4, 1, disktree->fp );
+  res = fread( node->ids, node->numshapes*4, 1, disktree->fp );
+  if ( !res )
+  {
+    free(node->ids);
+    free(node);
+    return NULL;
+  }
   for( i=0; i < node->numshapes; i++ ) {
     if ( disktree->needswap ) SwapWord ( 4, &node->ids[i] );
   }
 
-  fread( &node->numsubnodes, 4, 1, disktree->fp );
+  res = fread( &node->numsubnodes, 4, 1, disktree->fp );
+  if ( !res )
+  {
+    free(node->ids);
+    free(node);
+    return NULL;
+  }
   if ( disktree->needswap ) SwapWord ( 4, &node->numsubnodes );
 
   return node;
@@ -749,6 +794,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   i = fwrite( pabyBuf, 8, 1, disktree->fp );
   if( !i ) {
     fprintf (stderr, "unable to write to index file ... exiting \n");
+    msSHPDiskTreeClose( disktree );
     return (MS_FALSE);
   }
 

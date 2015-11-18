@@ -38,8 +38,10 @@
 #endif
 
 #ifdef SWIGJAVA
-%ignore layer_obj::extent;
+%ignore layerObj::extent;
 #endif
+
+%newobject msLoadMapFromString;
 
 %{
 #include "../../mapserver.h"
@@ -231,6 +233,7 @@ typedef struct {
 */
 
 %include "../../mapserver.h"
+%include "../../mapserver-version.h"
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
 %include "../../mapproject.h"

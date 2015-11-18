@@ -36,13 +36,14 @@
 %extend colorObj 
 {
   
-    colorObj(int red=0, int green=0, int blue=0, int pen=MS_PEN_UNSET) 
+    colorObj(int red=0, int green=0, int blue=0, int alpha=255) 
     {
         colorObj *color;
         
         /* Check colors */
-        if (red > 255 || green > 255 || blue > 255) {
-            msSetError(MS_MISCERR, "Invalid color index.", "colorObj()");
+        if (red > 255 || green > 255 || blue > 255 || alpha>255 ||
+            red<0 || green<0 || blue<0 || alpha<0 ) {
+            msSetError(MS_MISCERR, "Invalid color", "colorObj()");
             return NULL;
         }
     
@@ -50,7 +51,7 @@
         if (!color)
             return(NULL);
     
-        MS_INIT_COLOR(*color, red, green, blue, 255);
+        MS_INIT_COLOR(*color, red, green, blue, alpha);
 
         return(color);    	
     }
@@ -60,31 +61,34 @@
         free(self);
     }
  
-    int setRGB(int red, int green, int blue) 
+    int setRGB(int red, int green, int blue, int alpha = 255) 
     {
         /* Check colors */
-        if (red > 255 || green > 255 || blue > 255) {
+        if (red > 255 || green > 255 || blue > 255 || alpha > 255) {
             msSetError(MS_MISCERR, "Invalid color index.", "setRGB()");
             return MS_FAILURE;
         }
     
-        MS_INIT_COLOR(*self, red, green, blue, 255);
+        MS_INIT_COLOR(*self, red, green, blue, alpha);
         return MS_SUCCESS;
     }
-
+ 
     int setHex(char *psHexColor) 
     {
-        int red, green, blue;
-        if (psHexColor && strlen(psHexColor)== 7 && psHexColor[0] == '#') {
+        int red, green, blue, alpha = 255;
+        if (psHexColor && (strlen(psHexColor) == 7 || strlen(psHexColor) == 9) && psHexColor[0] == '#') {
             red = msHexToInt(psHexColor+1);
             green = msHexToInt(psHexColor+3);
             blue= msHexToInt(psHexColor+5);
-            if (red > 255 || green > 255 || blue > 255) {
+            if (strlen(psHexColor) == 9) {
+                alpha = msHexToInt(psHexColor+7);
+            }
+            if (red > 255 || green > 255 || blue > 255 || alpha > 255) {
                 msSetError(MS_MISCERR, "Invalid color index.", "setHex()");
                 return MS_FAILURE;
             }
 
-            MS_INIT_COLOR(*self, red, green, blue, 255);
+            MS_INIT_COLOR(*self, red, green, blue, alpha);
             return MS_SUCCESS;
         }
         else {
@@ -96,7 +100,7 @@
     %newobject toHex;
     char *toHex() 
     {
-        char hexcolor[8] = "";
+        char *hexcolor;
 
         if (!self) 
         {
@@ -110,9 +114,20 @@
                        "toHex()");
             return NULL;
         }
-        snprintf(hexcolor, 8, "#%02x%02x%02x",
-                 self->red, self->green, self->blue);
-        return strdup(hexcolor);
+        if (self->alpha == 255) {
+          hexcolor = msSmallMalloc(8);
+          snprintf(hexcolor, 8, "#%02x%02x%02x",
+                   self->red, self->green, self->blue);
+        } else if (self->alpha >= 0) {
+          hexcolor = msSmallMalloc(10);
+          snprintf(hexcolor, 10, "#%02x%02x%02x%02x",
+                   self->red, self->green, self->blue, self->alpha);
+        } else {
+           msSetError(MS_MISCERR, "Can't express color with invalid alpha as hex",
+                      "toHex()");
+           return NULL;
+        }
+        return hexcolor;
     }
 
 }

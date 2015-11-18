@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include "mapows.h"
 
 #ifdef USE_GDAL
 #  include "gdal.h"
@@ -136,6 +137,11 @@ void msFreeMap(mapObj *map)
     msFree(map->outputformatlist);
 
   msFreeQuery(&(map->query));
+
+#ifdef USE_V8_MAPSCRIPT
+  if (map->v8context)
+    msV8FreeContext(map);
+#endif
 
   msFree(map);
 }

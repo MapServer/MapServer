@@ -1,0 +1,65 @@
+#ifndef _MAPSERVER_CONFIG_H
+#define _MAPSERVER_CONFIG_H
+
+#cmakedefine USE_PROJ 1
+#cmakedefine USE_POSTGIS 1
+#cmakedefine USE_GDAL 1
+#cmakedefine USE_PIXMAN 1
+#cmakedefine USE_OGR 1
+#cmakedefine USE_WMS_SVR 1
+#cmakedefine USE_WCS_SVR 1
+#cmakedefine USE_WFS_SVR 1
+#cmakedefine USE_SOS_SVR 1
+#cmakedefine USE_WFS_LYR 1
+#cmakedefine USE_WMS_LYR 1
+#cmakedefine USE_CURL 1
+#cmakedefine USE_CAIRO 1
+#cmakedefine USE_GEOS 1
+#cmakedefine USE_GIF 1
+#cmakedefine USE_JPEG 1
+#cmakedefine USE_PNG 1
+#cmakedefine USE_ICONV 1
+#cmakedefine USE_FRIBIDI 1
+#cmakedefine USE_HARFBUZZ 1
+#cmakedefine USE_LIBXML2 1
+#cmakedefine USE_FASTCGI 1
+#cmakedefine USE_MYSQL 1
+#cmakedefine USE_THREAD 1
+#cmakedefine USE_KML 1
+#cmakedefine USE_POINT_Z_M 1
+#cmakedefine USE_ORACLESPATIAL 1
+#cmakedefine USE_EXEMPI 1
+#cmakedefine USE_XMLMAPFILE 1
+#cmakedefine USE_GENERIC_MS_NINT 1
+#cmakedefine POSTGIS_HAS_SERVER_VERSION 1
+#cmakedefine USE_SVG_CAIRO 1
+#cmakedefine USE_RSVG 1
+#cmakedefine USE_SDE 1
+#cmakedefine SDE64 1
+#cmakedefine USE_EXTENDED_DEBUG 1
+#cmakedefine USE_V8_MAPSCRIPT 1
+
+/*windows specific hacks*/
+#if defined(_WIN32)
+#cmakedefine REGEX_MALLOC 1
+#cmakedefine USE_GENERIC_MS_NINT 1
+#endif
+
+
+#cmakedefine HAVE_STRRSTR 1
+#cmakedefine HAVE_STRCASECMP 1
+#cmakedefine HAVE_STRCASESTR 1
+#cmakedefine HAVE_STRDUP 1
+#cmakedefine HAVE_STRLCAT 1
+#cmakedefine HAVE_STRLCPY 1
+#cmakedefine HAVE_STRLEN 1
+#cmakedefine HAVE_STRNCASECMP 1
+#cmakedefine HAVE_VSNPRINTF 1
+#cmakedefine HAVE_DLFCN_H 1
+
+#cmakedefine HAVE_LRINTF 1
+#cmakedefine HAVE_LRINT 1
+#cmakedefine HAVE_SYNC_FETCH_AND_ADD 1
+     
+
+#endif

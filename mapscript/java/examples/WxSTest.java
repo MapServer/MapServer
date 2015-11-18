@@ -1,6 +1,7 @@
 import edu.umn.gis.mapscript.mapObj;
 import edu.umn.gis.mapscript.OWSRequest;
 import edu.umn.gis.mapscript.mapscript;
+import java.io.*;
 
 class WxSTest_thread extends Thread {
 
@@ -29,6 +30,7 @@ class WxSTest_thread extends Thread {
 //        System.out.println( mapscript.msIO_getStdoutBufferString() );
 
         resultBytes = mapscript.msIO_getStdoutBufferBytes();
+        mapscript.msIO_resetHandlers();
     }
 }
 
@@ -54,15 +56,20 @@ public class WxSTest {
                 if( i == 0 )
                 {
                     expectedLength = tt[i].resultBytes.length;
-                    System.out.println( "Document Length: " + expectedLength + ", expecting somewhere around 10000 or more." );
+                    System.out.println( "["+i+"] Document Length: " + expectedLength + ", expecting somewhere around 10000 or more." );
                 }
                 else if( expectedLength != tt[i].resultBytes.length )
                 {
-                    System.out.println( "Document Length:" + tt[i].resultBytes.length + " Expected:" + expectedLength );
+                    System.out.println( "["+i+"] Document Length:" + tt[i].resultBytes.length + " Expected:" + expectedLength );
                     failure++;
                 }
                 else
                     success++;
+		
+		// dump test results to fs for post-mortem inspection
+		FileOutputStream fos = new FileOutputStream("/tmp/wxs_test_"+i);
+		fos.write(tt[i].resultBytes);
+		fos.close();
             }
 
             System.out.println( "Successes: " + success );

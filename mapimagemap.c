@@ -260,73 +260,69 @@ imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
   };
   DEBUG_IF printf("msImageCreateIM<BR>\n");
   if (width > 0 && height > 0) {
-    image = (imageObj *)calloc(1,sizeof(imageObj));
-    MS_CHECK_ALLOC(image, sizeof(imageObj), NULL);
-    if (image) {
-      imgStr.string = &(image->img.imagemap);
-      imgStr.alloc_size = &(image->size);
+    image = (imageObj *)msSmallCalloc(1,sizeof(imageObj));
+    imgStr.string = &(image->img.imagemap);
+    imgStr.alloc_size = &(image->size);
 
-      image->format = format;
-      format->refcount++;
+    image->format = format;
+    format->refcount++;
 
-      image->width = width;
-      image->height = height;
-      image->imagepath = NULL;
-      image->imageurl = NULL;
-      image->resolution = resolution;
-      image->resolutionfactor = resolution/defresolution;
+    image->width = width;
+    image->height = height;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
+    image->resolution = resolution;
+    image->resolutionfactor = resolution/defresolution;
 
-      if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0) {
-        dxf = 1;
-        im_iprintf(&layerStr, "  2\nLAYER\n 70\n  10\n");
-      } else
-        dxf = 0;
-
-      if( strcasecmp("ON",msGetOutputFormatOption( format, "SCRIPT", "OFF" )) == 0) {
-        dxf = 2;
-        im_iprintf(&layerStr, "");
-      }
-
-      /* get href formation string options */
-      polyHrefFmt = makeFmtSafe(msGetOutputFormatOption
-                                ( format, "POLYHREF", "javascript:Clicked('%s');"), 1);
-      polyMOverFmt = makeFmtSafe(msGetOutputFormatOption
-                                 ( format, "POLYMOUSEOVER", ""), 1);
-      polyMOutFmt = makeFmtSafe(msGetOutputFormatOption
-                                ( format, "POLYMOUSEOUT", ""), 1);
-      symbolHrefFmt = makeFmtSafe(msGetOutputFormatOption
-                                  ( format, "SYMBOLHREF", "javascript:SymbolClicked();"), 1);
-      symbolMOverFmt = makeFmtSafe(msGetOutputFormatOption
-                                   ( format, "SYMBOLMOUSEOVER", ""), 1);
-      symbolMOutFmt = makeFmtSafe(msGetOutputFormatOption
-                                  ( format, "SYMBOLMOUSEOUT", ""), 1);
-      /* get name of client-side image map */
-      mapName = msGetOutputFormatOption
-                ( format, "MAPNAME", "map1" );
-      /* should we suppress area declarations with no title? */
-      if( strcasecmp("YES",msGetOutputFormatOption( format, "SUPPRESS", "NO" )) == 0) {
-        suppressEmpty=1;
-      }
-
-      lname = msStrdup("NONE");
-      *(imgStr.string) = msStrdup("");
-      if (*(imgStr.string)) {
-        *(imgStr.alloc_size) =
-          imgStr.string_len = strlen(*(imgStr.string));
-      } else {
-        *(imgStr.alloc_size) =
-          imgStr.string_len = 0;
-      }
-      if (imagepath) {
-        image->imagepath = msStrdup(imagepath);
-      }
-      if (imageurl) {
-        image->imageurl = msStrdup(imageurl);
-      }
-
-      return image;
+    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0) {
+      dxf = 1;
+      im_iprintf(&layerStr, "  2\nLAYER\n 70\n  10\n");
     } else
-      free( image );
+      dxf = 0;
+
+    if( strcasecmp("ON",msGetOutputFormatOption( format, "SCRIPT", "OFF" )) == 0) {
+      dxf = 2;
+      im_iprintf(&layerStr, "");
+    }
+
+    /* get href formation string options */
+    polyHrefFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "POLYHREF", "javascript:Clicked('%s');"), 1);
+    polyMOverFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "POLYMOUSEOVER", ""), 1);
+    polyMOutFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "POLYMOUSEOUT", ""), 1);
+    symbolHrefFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "SYMBOLHREF", "javascript:SymbolClicked();"), 1);
+    symbolMOverFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "SYMBOLMOUSEOVER", ""), 1);
+    symbolMOutFmt = makeFmtSafe(msGetOutputFormatOption
+        ( format, "SYMBOLMOUSEOUT", ""), 1);
+    /* get name of client-side image map */
+    mapName = msGetOutputFormatOption
+      ( format, "MAPNAME", "map1" );
+    /* should we suppress area declarations with no title? */
+    if( strcasecmp("YES",msGetOutputFormatOption( format, "SUPPRESS", "NO" )) == 0) {
+      suppressEmpty=1;
+    }
+
+    lname = msStrdup("NONE");
+    *(imgStr.string) = msStrdup("");
+    if (*(imgStr.string)) {
+      *(imgStr.alloc_size) =
+        imgStr.string_len = strlen(*(imgStr.string));
+    } else {
+      *(imgStr.alloc_size) =
+        imgStr.string_len = 0;
+    }
+    if (imagepath) {
+      image->imagepath = msStrdup(imagepath);
+    }
+    if (imageurl) {
+      image->imageurl = msStrdup(imageurl);
+    }
+
+    return image;
   } else {
     msSetError(MS_IMGERR,
                "Cannot create IM image of size %d x %d.",
@@ -338,7 +334,7 @@ imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
 /* ------------------------------------------------------------------------- */
 /* Draw a single marker symbol of the specified size and color               */
 /* ------------------------------------------------------------------------- */
-void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, styleObj *style, double scalefactor)
+void msDrawMarkerSymbolIM(mapObj *map, imageObj* img, pointObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
   int ox, oy;
@@ -353,7 +349,8 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
   if(!p) return;
 
 
-  symbol = symbolset->symbol[style->symbol];
+  if(style->symbol > map->symbolset.numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+  symbol = map->symbolset.symbol[style->symbol];
   ox = style->offsetx*scalefactor;
   oy = style->offsety*scalefactor;
   if(style->size == -1) {
@@ -364,7 +361,6 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
   size = MS_MAX(size, style->minsize*img->resolutionfactor);
   size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if(size < 1) return; /* size too small */
 
   /* DEBUG_IF printf(".%d.%d.%d.", symbol->type, style->symbol, fc); */
@@ -468,7 +464,7 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
 /* ------------------------------------------------------------------------- */
 /* Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------- */
-void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
+void msDrawLineSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
   int i,j,l;
@@ -480,7 +476,8 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
   if(!p) return;
   if(p->numlines <= 0) return;
 
-  symbol = symbolset->symbol[style->symbol];
+  if(style->symbol > map->symbolset.numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+  symbol = map->symbolset.symbol[style->symbol];
   if(style->size == -1) {
     size = msSymbolGetDefaultSize( symbol );
     size = MS_NINT(size*scalefactor);
@@ -489,7 +486,6 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
   size = MS_MAX(size, style->minsize*img->resolutionfactor);
   size = MS_MIN(size, style->maxsize*img->resolutionfactor);
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
   if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
   if(style->symbol == 0) { /* just draw a single width line */
     for(l=0,j=0; j<p->numlines; j++) {
@@ -550,7 +546,7 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
 /* ------------------------------------------------------------------------- */
 /* Draw a shade symbol of the specified size and color                       */
 /* ------------------------------------------------------------------------- */
-void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
+void msDrawShadeSymbolIM(mapObj *map, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
   int i,j,l;
@@ -561,7 +557,7 @@ void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, st
   if(!p) return;
   if(p->numlines <= 0) return;
 
-  symbol = symbolset->symbol[style->symbol];
+  symbol = map->symbolset.symbol[style->symbol];
   if(style->size == -1) {
     size = msSymbolGetDefaultSize( symbol );
     size = MS_NINT(size*scalefactor);
@@ -626,7 +622,7 @@ void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, st
 /*
  * Simply draws a label based on the label point and the supplied label object.
  */
-int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
+int msDrawTextIM(mapObj *map, imageObj* img, pointObj labelPnt, char *string, labelObj *label, double scalefactor)
 {
   DEBUG_IF printf("msDrawText<BR>\n");
   if(!string) return(0); /* not errors, just don't want to do anything */
@@ -698,7 +694,7 @@ int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format )
       }
       if (iIndice < size) {
         sprintf(workbuffer, "%s", img->img.imagemap+iIndice );
-        msIO_fprintf(stream, workbuffer);
+        msIO_fprintf(stream, "%s", workbuffer);
       }
     } else
       msIO_fwrite(img->img.imagemap, size, 1, stream);

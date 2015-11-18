@@ -30,6 +30,7 @@
 #include "mapserver.h"
 #include "maperror.h"
 #include "mapogcsld.h"
+#include "mapows.h"
 
 #include <time.h>
 #include <ctype.h>
@@ -220,7 +221,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
                                   wmsParamsObj *psWMSParams)
 {
   const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
-  const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
+  const char *pszFormatList, *pszStyle, /* *pszStyleList,*/ *pszTime;
   const char *pszBgColor, *pszTransparent;
   const char *pszSLD=NULL, *pszStyleSLDBody=NULL, *pszVersionKeyword=NULL;
   const char *pszSLDBody=NULL, *pszSLDURL = NULL;
@@ -237,7 +238,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
   pszFormat =         msOWSLookupMetadata(&(lp->metadata), "MO", "format");
   pszFormatList =     msOWSLookupMetadata(&(lp->metadata), "MO", "formatlist");
   pszStyle =          msOWSLookupMetadata(&(lp->metadata), "MO", "style");
-  pszStyleList =      msOWSLookupMetadata(&(lp->metadata), "MO", "stylelist");
+  /*pszStyleList =      msOWSLookupMetadata(&(lp->metadata), "MO", "stylelist");*/
   pszTime =           msOWSLookupMetadata(&(lp->metadata), "MO", "time");
   pszSLDBody =        msOWSLookupMetadata(&(lp->metadata), "MO", "sld_body");
   pszSLDURL =         msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url");
@@ -285,17 +286,13 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 
     for(i=0; pszFormat==NULL && i<n; i++) {
       if (0
-#if defined USE_GD_PNG || defined USE_PNG
+#if defined USE_PNG
           || strcasecmp(papszTok[i], "PNG")
           || strcasecmp(papszTok[i], "image/png")
 #endif
-#if defined USE_GD_JPEG || defined USE_JPEG
+#if defined USE_JPEG
           || strcasecmp(papszTok[i], "JPEG")
           || strcasecmp(papszTok[i], "image/jpeg")
-#endif
-#ifdef USE_GD_GIF
-          || strcasecmp(papszTok[i], "GIF")
-          || strcasecmp(papszTok[i], "image/gif")
 #endif
          ) {
         pszFormat = papszTok[i];
@@ -707,6 +704,11 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         bbox_width = ceil((bbox.maxx - bbox.minx) / cellsize);
         bbox_height = ceil((bbox.maxy - bbox.miny) / cellsize);
+
+        /* Force going through the resampler if we're going to receive a clipped BBOX (#4931) */
+        if(msLayerGetProcessingKey(lp, "RESAMPLE") == NULL) {
+          msLayerSetProcessingKey(lp, "RESAMPLE", "nearest");
+        }
       }
     }
   }
@@ -756,7 +758,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     if (nVersion >= OWS_1_1_0)
       pszExceptionsParam = "application/vnd.ogc.se_xml";
-    else if (nVersion > OWS_1_1_0)  /* 1.0.1 to 1.0.7 */
+    else if (nVersion > OWS_1_0_0)  /* 1.0.1 to 1.0.7 */
       pszExceptionsParam = "SE_XML";
     else
       pszExceptionsParam = "WMS_XML";
@@ -788,6 +790,14 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
 
   } else if (nRequestType == WMS_GETLEGENDGRAPHIC) {
+    if(map->extent.maxx > map->extent.minx && map->width > 0 && map->height > 0) {
+      char szBuf[20] = "";
+      double scaledenom;
+      msCalculateScale(map->extent, map->units, map->width, map->height,
+                     map->resolution, &scaledenom);
+      snprintf(szBuf, 20, "%g",scaledenom);
+      msSetWMSParamString(psWMSParams, "SCALE", szBuf, MS_FALSE);
+    }
     pszRequestParam = "GetLegendGraphic";
 
     pszExceptionsParam = msOWSLookupMetadata(&(lp->metadata),
@@ -900,14 +910,6 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   int nTimeout, bOkToMerge, bForceSeparateRequest, bCacheToDisk;
   wmsParamsObj sThisWMSParams;
 
-  char    *pszProxyHost=NULL;
-  long     nProxyPort=0;
-  char    *pszProxyUsername=NULL, *pszProxyPassword=NULL;
-  char    *pszHttpAuthUsername=NULL, *pszHttpAuthPassword=NULL;
-  enum MS_HTTP_AUTH_TYPE eHttpAuthType = MS_BASIC;
-  enum MS_HTTP_AUTH_TYPE eProxyAuthType = MS_BASIC;
-  enum MS_HTTP_PROXY_TYPE eProxyType = MS_HTTP;
-
   if (lp->connectiontype != MS_WMS)
     return MS_FAILURE;
 
@@ -998,105 +1000,9 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
    * First check the metadata in the layer object and then in the map object.
    * ------------------------------------------------------------------ */
   nTimeout = 30;  /* Default is 30 seconds  */
-  if ((pszTmp = msOWSLookupMetadata(&(lp->metadata),
+  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
                                     "MO", "connectiontimeout")) != NULL) {
     nTimeout = atoi(pszTmp);
-  } else if ((pszTmp = msOWSLookupMetadata(&(map->web.metadata),
-                       "MO", "connectiontimeout")) != NULL) {
-    nTimeout = atoi(pszTmp);
-  }
-
-  /* ------------------------------------------------------------------
-   * Check for authentication and proxying metadata. If the metadata is not found
-   * in the layer metadata, check the map-level metadata.
-   * ------------------------------------------------------------------ */
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_host")) != NULL) {
-    pszProxyHost = msStrdup(pszTmp);
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_port")) != NULL) {
-    nProxyPort = atol(pszTmp);
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_type")) != NULL) {
-
-    if (strcasecmp(pszTmp, "HTTP") == 0)
-      eProxyType = MS_HTTP;
-    else if (strcasecmp(pszTmp, "SOCKS5") == 0)
-      eProxyType = MS_SOCKS5;
-    else {
-      msSetError(MS_WMSERR, "Invalid proxy_type metadata '%s' specified",
-                 "msPrepareWMSLayerRequest()", pszTmp);
-      return MS_FAILURE;
-    }
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_auth_type")) != NULL) {
-    if (strcasecmp(pszTmp, "BASIC") == 0)
-      eProxyAuthType = MS_BASIC;
-    else if (strcasecmp(pszTmp, "DIGEST") == 0)
-      eProxyAuthType = MS_DIGEST;
-    else if (strcasecmp(pszTmp, "NTLM") == 0)
-      eProxyAuthType = MS_NTLM;
-    else if (strcasecmp(pszTmp, "ANY") == 0)
-      eProxyAuthType = MS_ANY;
-    else if (strcasecmp(pszTmp, "ANYSAFE") == 0)
-      eProxyAuthType = MS_ANYSAFE;
-    else {
-      msSetError(MS_WMSERR, "Invalid proxy_auth_type metadata '%s' specified",
-                 "msPrepareWMSLayerRequest()", pszTmp);
-      return MS_FAILURE;
-    }
-  }
-
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_username")) != NULL) {
-    pszProxyUsername = msStrdup(pszTmp);
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "proxy_password")) != NULL) {
-    pszProxyPassword = msDecryptStringTokens(map, pszTmp);
-    if (pszProxyPassword == NULL) {
-      return(MS_FAILURE);  /* An error should already have been produced */
-    }
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "auth_type")) != NULL) {
-    if (strcasecmp(pszTmp, "BASIC") == 0)
-      eHttpAuthType = MS_BASIC;
-    else if (strcasecmp(pszTmp, "DIGEST") == 0)
-      eHttpAuthType = MS_DIGEST;
-    else if (strcasecmp(pszTmp, "NTLM") == 0)
-      eHttpAuthType = MS_NTLM;
-    else if (strcasecmp(pszTmp, "ANY") == 0)
-      eHttpAuthType = MS_ANY;
-    else if (strcasecmp(pszTmp, "ANYSAFE") == 0)
-      eHttpAuthType = MS_ANYSAFE;
-    else {
-      msSetError(MS_WMSERR, "Invalid auth_type metadata '%s' specified",
-                 "msPrepareWMSLayerRequest()", pszTmp);
-      return MS_FAILURE;
-    }
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "auth_username")) != NULL) {
-    pszHttpAuthUsername = msStrdup(pszTmp);
-  }
-
-  if ((pszTmp = msOWSLookupMetadata2(&(lp->metadata), &(map->web.metadata),
-                                     "MO", "auth_password")) != NULL) {
-    pszHttpAuthPassword = msDecryptStringTokens(map, pszTmp);
-    if (pszHttpAuthPassword == NULL) {
-      return(MS_FAILURE);  /* An error should already have been produced */
-    }
   }
 
   /* ------------------------------------------------------------------
@@ -1265,15 +1171,9 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].height = bbox_height;
     pasReqInfo[(*numRequests)].debug = lp->debug;
 
-    pasReqInfo[(*numRequests)].pszProxyAddress  = pszProxyHost;
-    pasReqInfo[(*numRequests)].nProxyPort       = nProxyPort;
-    pasReqInfo[(*numRequests)].eProxyType       = eProxyType;
-    pasReqInfo[(*numRequests)].eProxyAuthType   = eProxyAuthType;
-    pasReqInfo[(*numRequests)].pszProxyUsername = pszProxyUsername;
-    pasReqInfo[(*numRequests)].pszProxyPassword = pszProxyPassword;
-    pasReqInfo[(*numRequests)].eHttpAuthType    = eHttpAuthType;
-    pasReqInfo[(*numRequests)].pszHttpUsername  = pszHttpAuthUsername;
-    pasReqInfo[(*numRequests)].pszHttpPassword  = pszHttpAuthPassword;
+    if (msHTTPAuthProxySetup(&(map->web.metadata), &(lp->metadata),
+                             pasReqInfo, *numRequests, map, "MO") != MS_SUCCESS)
+      return MS_FAILURE;
 
     (*numRequests)++;
   }
@@ -1356,7 +1256,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
   }
 
   /* ------------------------------------------------------------------
-   * Check the content-type of the response to see if we got an exception,
+   * Check the Content-Type of the response to see if we got an exception,
    * if yes then try to parse it and pass the info to msSetError().
    * We log an error but we still return SUCCESS here so that the layer
    * is only skipped intead of aborting the whole draw map.
@@ -1377,7 +1277,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
         size_t nSize;
 
         nSize = fread(szBuf, sizeof(char), MS_BUFFER_LENGTH-1, fp);
-        if (nSize >= 0 && nSize < MS_BUFFER_LENGTH)
+        if (nSize < MS_BUFFER_LENGTH)
           szBuf[nSize] = '\0';
         else {
           strlcpy(szBuf, "(!!!)", sizeof(szBuf)); /* This should never happen */
@@ -1588,7 +1488,7 @@ int msWMSLayerExecuteRequest(mapObj *map, int nOWSLayers, int nClickX, int nClic
     return MS_FAILURE;
   }
 
-  msIO_printf("Content-type: %s%c%c",pasReqInfo[0].pszContentType, 10,10);
+  msIO_printf("Content-Type: %s%c%c",pasReqInfo[0].pszContentType, 10,10);
 
   if( pasReqInfo[0].pszOutputFile ) {
     FILE *fp;

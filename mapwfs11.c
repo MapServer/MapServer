@@ -46,9 +46,7 @@ int msWFSException11(mapObj *map, const char *locator,
 {
   int size = 0;
   char *errorString     = NULL;
-  char *errorMessage    = NULL;
   char *schemasLocation = NULL;
-  const char *encoding;
 
   xmlDocPtr  psDoc      = NULL;
   xmlNodePtr psRootNode = NULL;
@@ -60,33 +58,26 @@ int msWFSException11(mapObj *map, const char *locator,
 
   psNsOws = xmlNewNs(NULL, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-
   errorString = msGetErrorString("\n");
-  errorMessage = msEncodeHTMLEntities(errorString);
   schemasLocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
 
   psDoc = xmlNewDoc(BAD_CAST "1.0");
 
-  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_0_0, schemasLocation, version, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorMessage);
+  psRootNode = msOWSCommonExceptionReport(psNsOws, OWS_1_0_0, schemasLocation, version, msOWSGetLanguage(map, "exception"), exceptionCode, locator, errorString);
 
   xmlDocSetRootElement(psDoc, psRootNode);
 
   xmlNewNs(psRootNode, BAD_CAST "http://www.opengis.net/ows", BAD_CAST "ows");
 
-  if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, ("UTF-8"), 1);
 
   msIO_printf("%s", buffer);
 
   /*free buffer and the document */
   free(errorString);
-  free(errorMessage);
   free(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
@@ -100,69 +91,71 @@ int msWFSException11(mapObj *map, const char *locator,
 
 
 /************************************************************************/
-/*                             msWFSDumpLayer11                         */
+/*                            msWFSDumpLayer11                          */
 /************************************************************************/
-static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
+xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
+                            int nWFSVersion, const char* validate_language)
 {
   rectObj ext;
 
   xmlNodePtr psRootNode, psNode;
   const char *value    = NULL;
-  const char *encoding = NULL;
-  char *encoded=NULL;
   char *valueToFree;
   char **tokens;
   int n=0,i=0;
-
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-  if (!encoding)
-    encoding = "ISO-8859-1";
 
   psRootNode = xmlNewNode(NULL, BAD_CAST "FeatureType");
 
   /* add namespace to layer name */
   value = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
-  n = strlen(value)+strlen(lp->name)+1+1;
-  valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);
-  snprintf(valueToFree, n, "%s%s%s", (value ? value : ""), (value ? ":" : ""), lp->name);
 
-  /*if there is an encoding using it on some of the items*/
-  psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Name", valueToFree, encoding);
+  /* FIXME? Should probably be applied to WFS 1.1 as well, but the addition */
+  /* of the prefix can be disruptive for clients */
+  if( value == NULL && nWFSVersion >= OWS_2_0_0 )
+      value = MS_DEFAULT_NAMESPACE_PREFIX;
 
-  msFree(valueToFree);
+  if(value) {
+    n = strlen(value)+strlen(lp->name)+1+1;
+    valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);
+    snprintf(valueToFree, n, "%s%s%s", (value ? value : ""), (value ? ":" : ""), lp->name);
+
+    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST valueToFree);
+    msFree(valueToFree);
+  } else {
+    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST lp->name);
+  }
 
   if (lp->name && strlen(lp->name) > 0 &&
       (msIsXMLTagValid(lp->name) == MS_FALSE || isdigit(lp->name[0])))
-    xmlAddSibling(psNode,
-                  xmlNewComment(BAD_CAST "WARNING: The layer name '%s' might contain spaces or "
-                                "invalid characters or may start with a number. This could lead to potential problems"));
+  {
+    char szTmp[512];
+    snprintf(szTmp, sizeof(szTmp),
+             "WARNING: The layer name '%s' might contain spaces or "
+             "invalid characters or may start with a number. This could lead to potential problems",
+             lp->name);
+    xmlAddSibling(psNode, xmlNewComment(BAD_CAST szTmp));
+  }
 
-  value = msOWSLookupMetadata(&(lp->metadata), "FO", "title");
+  value = msOWSLookupMetadataWithLanguage(&(lp->metadata), "FO", "title", validate_language);
   if (!value)
     value =(const char*)lp->name;
 
-  psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Title", value, encoding);
+  psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Title", BAD_CAST value);
 
 
-  value = msOWSLookupMetadata(&(lp->metadata), "FO", "abstract");
+  value = msOWSLookupMetadataWithLanguage(&(lp->metadata), "FO", "abstract", validate_language);
   if (value)
-    psNode = msOWSCommonxmlNewChildEncoded(psRootNode, NULL, "Abstract", value, encoding);
+    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Abstract", BAD_CAST value);
 
 
 
-  value = msOWSLookupMetadata(&(lp->metadata), "FO", "keywordlist");
+  value = msOWSLookupMetadataWithLanguage(&(lp->metadata), "FO", "keywordlist", validate_language);
 
-  if (value) {
-    if (encoding)
-      encoded = msGetEncodedString(value, encoding);
-    else
-      encoded = msGetEncodedString(value, "ISO-8859-1");
-
+  if(value)
     msLibXml2GenerateList(
-      xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL),
-      NULL, "Keyword", encoded, ',' );
-    msFree(encoded);
-  }
+        xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL),
+        NULL, "Keyword", value, ',' );
+
   /*support DefaultSRS and OtherSRS*/
   valueToFree = msOWSGetProjURN(&(map->projection),&(map->web.metadata),"FO",MS_FALSE);
   if (!valueToFree)
@@ -171,9 +164,17 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   if (valueToFree) {
     tokens = msStringSplit(valueToFree, ' ', &n);
     if (tokens && n > 0) {
-      psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
+      if( nWFSVersion == OWS_1_1_0 )
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
+      else
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultCRS", BAD_CAST tokens[0]);
       for (i=1; i<n; i++)
-        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]);
+      {
+        if( nWFSVersion == OWS_1_1_0 )
+          psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]);
+        else
+          psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherCRS", BAD_CAST tokens[i]);
+      }
 
       msFreeCharArray(tokens, n);
     }
@@ -189,7 +190,7 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   xmlAddChild(psRootNode, psNode);
 
   {
-    char *formats_list = msWFSGetOutputFormatList( map, lp, "1.1.0" );
+    char *formats_list = msWFSGetOutputFormatList( map, lp, nWFSVersion );
     int iformat, n;
     char **tokens;
 
@@ -206,11 +207,10 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   /*bbox*/
   if (msOWSGetLayerExtent(map, lp, "FO", &ext) == MS_SUCCESS) {
     /*convert to latlong*/
-    if (lp->projection.numargs > 0) {
-      if (!pj_is_latlong(&lp->projection.proj))
-        msProjectRect(&lp->projection, NULL, &ext);
-    } else if (map->projection.numargs > 0 && !pj_is_latlong(&map->projection.proj))
-      msProjectRect(&map->projection, NULL, &ext);
+    if (lp->projection.numargs > 0)
+      msOWSProjectToWGS84(&lp->projection, &ext);
+    else
+      msOWSProjectToWGS84(&map->projection, &ext);
 
     xmlAddChild(psRootNode,
                 msOWSCommonWGS84BoundingBox( psNsOws, 2,
@@ -225,21 +225,33 @@ static xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws)
   value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_href");
 
   if (value) {
-    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
+    if( nWFSVersion >= OWS_2_0_0 )
+    {
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", NULL);
+        xmlNewProp(psNode, BAD_CAST "xlink:href", BAD_CAST value);
 
-    value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_about");
+        if( value != NULL )
+            xmlNewProp(psNode, BAD_CAST "about", BAD_CAST value);
+    }
+    else
+    {
+        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
 
-    if (!value)
-      value = msStrdup("text/html"); /* default */
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
 
-    xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
+        if (!value)
+            value = msStrdup("text/html"); /* default */
 
-    value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_type");
+        xmlNewProp(psNode, BAD_CAST "format", BAD_CAST value);
 
-    if (!value)
-      value = msStrdup("FGDC"); /* default */
+        value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_type");
 
-    xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
+        if (!value)
+            value = msStrdup("FGDC"); /* default */
+
+        xmlNewProp(psNode, BAD_CAST "type", BAD_CAST value);
+    }
   }
 
   return psRootNode;
@@ -255,7 +267,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 {
   xmlDocPtr psDoc = NULL;       /* document pointer */
   xmlNodePtr psRootNode, psMainNode, psNode, psFtNode;
-  xmlNodePtr psTmpNode;
   const char *updatesequence=NULL;
   xmlNsPtr psNsOws, psNsXLink, psNsOgc;
   char *schemalocation = NULL;
@@ -264,35 +275,22 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   const char *user_namespace_uri = NULL;
   gmlNamespaceListObj *namespaceList=NULL; /* for external application schema support */
 
-  char *script_url=NULL, *script_url_encoded=NULL, *formats_list;
+  char *script_url=NULL, *formats_list;
   const char *value = NULL;
-  const char *encoding;
 
   xmlChar *buffer = NULL;
   int size = 0, i;
   msIOContext *context = NULL;
 
   int ows_version = OWS_1_0_0;
+  int ret;
 
   /* -------------------------------------------------------------------- */
   /*      Handle updatesequence                                           */
   /* -------------------------------------------------------------------- */
-
-  updatesequence = msOWSLookupMetadata(&(map->web.metadata), "FO", "updatesequence");
-
-  encoding = msOWSLookupMetadata(&(map->web.metadata), "FO", "encoding");
-
-  if (params->pszUpdateSequence != NULL) {
-    i = msOWSNegotiateUpdateSequence(params->pszUpdateSequence, updatesequence);
-    if (i == 0) { /* current */
-      msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is equal to server (%s)", "msWFSGetCapabilities11()", params->pszUpdateSequence, updatesequence);
-      return msWFSException11(map, "updatesequence", "CurrentUpdateSequence", params->pszVersion);
-    }
-    if (i > 0) { /* invalid */
-      msSetError(MS_WFSERR, "UPDATESEQUENCE parameter (%s) is higher than server (%s)", "msWFSGetCapabilities11()", params->pszUpdateSequence, updatesequence);
-      return msWFSException11(map, "updatesequence", "InvalidUpdateSequence", params->pszVersion);
-    }
-  }
+  ret = msWFSHandleUpdateSequence(map, params, "msWFSGetCapabilities11()");
+  if( ret != MS_SUCCESS )
+      return ret;
 
   /* -------------------------------------------------------------------- */
   /*      Create document.                                                */
@@ -334,6 +332,8 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
       xmlNewNs(psRootNode, BAD_CAST namespaceList->namespaces[i].uri, BAD_CAST namespaceList->namespaces[i].prefix);
     }
   }
+  msGMLFreeNamespaces(namespaceList);
+  
 
   xmlNewProp(psRootNode, BAD_CAST "version", BAD_CAST params->pszVersion );
 
@@ -354,18 +354,17 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   /*      Service metadata.                                               */
   /* -------------------------------------------------------------------- */
 
-  psTmpNode = xmlAddChild(psRootNode,
-                          msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion, "FO"));
+  xmlAddChild(psRootNode,
+                          msOWSCommonServiceIdentification(psNsOws, map, "OGC WFS", params->pszVersion, "FO", NULL));
 
   /*service provider*/
-  psTmpNode = xmlAddChild(psRootNode, msOWSCommonServiceProvider(
-                            psNsOws, psNsXLink, map, "FO"));
+  xmlAddChild(psRootNode, msOWSCommonServiceProvider(
+                            psNsOws, psNsXLink, map, "FO", NULL));
 
   /*operation metadata */
-  if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL
-      || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
+  if ((script_url=msOWSGetOnlineResource(map, "FO", "onlineresource", req)) == NULL) {
     msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities11()");
-    return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+    return msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
   }
 
   /* -------------------------------------------------------------------- */
@@ -378,7 +377,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   /* -------------------------------------------------------------------- */
   psNode = xmlAddChild(psMainNode,
                        msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetCapabilities",
-                           OWS_METHOD_GETPOST, script_url_encoded));
+                           OWS_METHOD_GETPOST, script_url));
 
   xmlAddChild(psMainNode, psNode);
   xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(
@@ -399,7 +398,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   if (msOWSRequestIsEnabled(map, NULL, "F", "DescribeFeatureType", MS_TRUE)) {
     psNode = xmlAddChild(psMainNode,
                          msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"DescribeFeatureType",
-                             OWS_METHOD_GETPOST, script_url_encoded));
+                             OWS_METHOD_GETPOST, script_url));
     xmlAddChild(psMainNode, psNode);
 
     /*output format*/
@@ -415,14 +414,14 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
     psNode = xmlAddChild(psMainNode,
                          msOWSCommonOperationsMetadataOperation(psNsOws,psNsXLink,"GetFeature",
-                             OWS_METHOD_GETPOST, script_url_encoded));
+                             OWS_METHOD_GETPOST, script_url));
     xmlAddChild(psMainNode, psNode);
 
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
                 "Parameter", "resultType",
                 "results,hits"));
 
-    formats_list = msWFSGetOutputFormatList( map, NULL, "1.1.0" );
+    formats_list = msWFSGetOutputFormatList( map, NULL, OWS_1_1_0 );
     xmlAddChild(psNode, msOWSCommonOperationsMetadataDomainType(ows_version, psNsOws,
                 "Parameter", "outputFormat",
                 formats_list));
@@ -455,7 +454,7 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 
     /* List only vector layers in which DUMP=TRUE */
     if (msWFSIsLayerSupported(lp))
-      xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws));
+      xmlAddChild(psFtNode, msWFSDumpLayer11(map, lp, psNsOws, OWS_1_1_0, NULL));
   }
 
 
@@ -475,15 +474,12 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   if( msIO_needBinaryStdout() == MS_FAILURE )
     return MS_FAILURE;
 
-  if (encoding)
-    msIO_setHeader("Content-type","text/xml; charset=%s", encoding);
-  else
-    msIO_setHeader("Content-type","text/xml");
+  msIO_setHeader("Content-Type","text/xml; charset=UTF-8");
   msIO_sendHeaders();
 
   context = msIO_getHandler(stdout);
 
-  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, (encoding ? encoding : "ISO-8859-1"), 1);
+  xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, ("UTF-8"), 1);
   msIO_contextWrite(context, buffer, size);
   xmlFree(buffer);
 
@@ -493,7 +489,6 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   xmlFreeNs(psNsOgc);
 
   free(script_url);
-  free(script_url_encoded);
   free(xsi_schemaLocation);
   free(schemalocation);
 
@@ -515,9 +510,9 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
 {
   msSetError( MS_WFSERR,
               "WFS 1.1 request made, but mapserver requires libxml2 for WFS 1.1 services and this is not configured.",
-              "msWFSGetCapabilities11()", "NoApplicableCode" );
+              "msWFSGetCapabilities11()" );
 
-  return msWFSException11(map, "mapserv", "NoApplicableCode", params->pszVersion);
+  return msWFSException11(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, params->pszVersion);
 }
 
 int msWFSException11(mapObj *map, const char *locator, const char *exceptionCode, const char *version)

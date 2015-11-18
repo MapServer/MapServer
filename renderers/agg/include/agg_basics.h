@@ -89,16 +89,20 @@ namespace mapserver
 #ifndef AGG_INT64
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define AGG_INT64 signed __int64
+#define AGG_INT64_FRMT "%I64d"
 #else
 #define AGG_INT64 signed long long
+#define AGG_INT64_FRMT "%lld"
 #endif
 #endif
 
 #ifndef AGG_INT64U
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define AGG_INT64U unsigned __int64
+#define AGG_INT64U_FRMT "%I64u"
 #else
 #define AGG_INT64U unsigned long long
+#define AGG_INT64U_FRMT "%llu"
 #endif
 #endif
 
@@ -171,7 +175,11 @@ namespace mapserver
 #else
     AGG_INLINE int iround(double v)
     {
+#ifdef HAVE_LRINT
+        return lrint(v);
+#else
         return int((v < 0.0) ? v - 0.5 : v + 0.5);
+#endif
     }
     AGG_INLINE int uround(double v)
     {

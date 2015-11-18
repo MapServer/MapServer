@@ -60,13 +60,6 @@ int renderRasterGlyphsDummy(imageObj *img, double x, double y, int fontIndex,
   return MS_FAILURE;
 }
 
-int renderGlyphsDummy(imageObj *img, double x, double y,
-                      labelStyleObj *style, char *text)
-{
-  msSetError(MS_RENDERERERR,"renderGlyphs not implemented","renderGlyphs()");
-  return MS_FAILURE;
-}
-
 int renderGlyphsLineDummy(imageObj *img,labelPathObj *labelpath,
                           labelStyleObj *style, char *text)
 {
@@ -91,48 +84,48 @@ void* createVectorSymbolTileDummy(int width, int height,
 int renderPixmapSymbolDummy(imageObj *img, double x, double y,
                             symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"renderPixmapSymbol not implemented","renderPixmapSymbol()");
   return MS_FAILURE;
 }
 
 void* createPixmapSymbolTileDummy(int width, int height,
                                   symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"createPixmapSymbolTile not implemented","createPixmapSymbolTile()");
   return NULL;
 }
 
 int renderEllipseSymbolDummy(imageObj *image, double x, double y,
                              symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"renderEllipseSymbol not implemented","renderEllipseSymbol()");
   return MS_FAILURE;
 }
 
 void* createEllipseSymbolTileDummy(int width, int height,
                                    symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"createEllipseSymbolTile not implemented","createEllipseSymbolTile()");
   return NULL;
 }
 
 int renderTruetypeSymbolDummy(imageObj *img, double x, double y,
                               symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"renderTruetypeSymbol not implemented","renderTruetypeSymbol()");
   return MS_FAILURE;
 }
 
 void* createTruetypeSymbolTileDummy(int width, int height,
                                     symbolObj *symbol, symbolStyleObj *style)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"createTruetypeSymbolTile not implemented","createTruetypeSymbolTile()");
   return NULL;
 }
 
 int renderTileDummy(imageObj *img, imageObj *tile, double x, double y)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"renderTile not implemented","renderTile()");
   return MS_FAILURE;
 }
 
@@ -145,7 +138,7 @@ rasterBufferObj* loadImageFromFileDummy(char *path)
 
 int getRasterBufferHandleDummy(imageObj *img, rasterBufferObj *rb)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"getRasterBufferHandle not implemented","getRasterBufferHandle()");
   return MS_FAILURE;
 }
 
@@ -223,7 +216,7 @@ int endShapeDummy(imageObj *img, shapeObj *shape)
 
 int setClipDummy(imageObj *img, rectObj clipRect)
 {
-  msSetError(MS_RENDERERERR,"renderLine not implemented","renderLine()");
+  msSetError(MS_RENDERERERR,"setClip not implemented","setClip()");
   return MS_FAILURE;
 }
 int resetClipDummy(imageObj *img)
@@ -260,9 +253,8 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer)
 
   renderer->use_imagecache = 0;
   renderer->supports_pixel_buffer = 0;
-  renderer->supports_transparent_layers = 0;
+  renderer->compositeRasterBuffer = NULL;
   renderer->supports_clipping = 0;
-  renderer->supports_bitmap_fonts = 0;
   renderer->supports_svg = 0;
   renderer->renderer_data = NULL;
   renderer->transform_mode = MS_TRANSFORM_SIMPLIFY;
@@ -276,22 +268,18 @@ int msInitializeDummyRenderer(rendererVTableObj *renderer)
   renderer->getRasterBufferCopy=getRasterBufferCopyDummy;
   renderer->initializeRasterBuffer=initializeRasterBufferDummy;
   renderer->renderPolygon=&renderPolygonDummy;
-  renderer->renderGlyphs=&renderGlyphsDummy;
-  renderer->renderGlyphsLine = NULL;
-  renderer->renderBitmapGlyphs = &renderGlyphsDummy;
   renderer->freeImage=&freeImageDummy;
   renderer->renderEllipseSymbol = &renderEllipseSymbolDummy;
   renderer->renderVectorSymbol = &renderVectorSymbolDummy;
-  renderer->renderTruetypeSymbol = &renderTruetypeSymbolDummy;
   renderer->renderPixmapSymbol = &renderPixmapSymbolDummy;
   renderer->mergeRasterBuffer = &mergeRasterBufferDummy;
-  renderer->getTruetypeTextBBox = &getTruetypeTextBBoxDummy;
   renderer->renderTile = &renderTileDummy;
   renderer->renderPolygonTiled = &renderPolygonTiledDummy;
   renderer->freeSymbol = &freeSymbolDummy;
   renderer->cleanup = &cleanupDummy;
   renderer->startShape = NULL;
   renderer->endShape = NULL;
+  renderer->renderGlyphs = NULL;
   return MS_SUCCESS;
 }
 

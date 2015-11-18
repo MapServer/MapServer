@@ -308,8 +308,22 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define LEADER 1260
 #define GRIDSTEP 1261
 
+/* rfc 86 scale-dependant token substitutions */
+#define SCALETOKEN 1270
+#define VALUES 1271
+
+/* rfc 93 support for utfgrid */
+#define UTFDATA 1280
+#define UTFITEM 1281
+
+/* rfc 113 layer compositing */
+#define COMPOSITE 1290
+#define COMPOP 1291
+#define COMPFILTER 1292
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 
+#define TILESRS 1272
 
 #endif /* MAPFILE_H */

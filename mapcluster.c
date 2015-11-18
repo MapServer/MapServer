@@ -41,11 +41,13 @@
 #endif
 
 /* custom attributes provided by this layer data source */
-#define MSCLUSTER_NUMITEMS        2
-#define MSCLUSTER_FEATURECOUNT    "Cluster:FeatureCount"
+#define MSCLUSTER_NUMITEMS        3
+#define MSCLUSTER_FEATURECOUNT    "Cluster_FeatureCount"
 #define MSCLUSTER_FEATURECOUNTINDEX   -100
-#define MSCLUSTER_GROUP    "Cluster:Group"
+#define MSCLUSTER_GROUP    "Cluster_Group"
 #define MSCLUSTER_GROUPINDEX   -101
+#define MSCLUSTER_BASEFID    "Cluster_BaseFID"
+#define MSCLUSTER_BASEFIDINDEX   -102
 
 typedef struct cluster_tree_node clusterTreeNode;
 typedef struct cluster_info clusterInfo;
@@ -115,6 +117,10 @@ struct cluster_layer_info {
   clusterInfo* current;
   /* check whether all shapes should be returned behind a cluster */
   int get_all_shapes;
+  /* check whether the location of the shapes should be preserved (no averaging) */
+  int keep_locations;
+  /* the maxdistance and the buffer parameters are specified in map units (scale independent clustering) */
+  int use_map_units;
   double rank;
   /* root node of the quad tree */
   clusterTreeNode* root;
@@ -496,6 +502,11 @@ static void InitShapeAttributes(layerObj* layer, clusterInfo* base)
         base->shape.values[i] = msStrdup(base->group);
       else
         base->shape.values[i] = msStrdup("");
+    } else if (itemindexes[i] == MSCLUSTER_BASEFIDINDEX) {
+      if (base->shape.values[i])
+        msFree(base->shape.values[i]);
+
+      base->shape.values[i] = msIntToString(base->shape.index);
     } else if (EQUALN(layer->items[i], "Count:", 6)) {
       if (base->shape.values[i])
         msFree(base->shape.values[i]);
@@ -522,6 +533,12 @@ static void UpdateShapeAttributes(layerObj* layer, clusterInfo* base, clusterInf
     if (current->shape.numvalues <= i)
       break;
 
+    /* setting the base feature index for each cluster member */
+    if (itemindexes[i] == MSCLUSTER_BASEFIDINDEX) {
+        msFree(current->shape.values[i]);
+        current->shape.values[i] = msIntToString(base->shape.index);
+    }
+
     if (current->shape.values[i]) {
       if (EQUALN(layer->items[i], "Min:", 4)) {
         if (strcasecmp(base->shape.values[i], current->shape.values[i]) > 0) {
@@ -541,11 +558,6 @@ static void UpdateShapeAttributes(layerObj* layer, clusterInfo* base, clusterInf
         int count = atoi(base->shape.values[i]) + 1;
         msFree(base->shape.values[i]);
         base->shape.values[i] = msIntToString(count);
-      } else if (!EQUAL(base->shape.values[i], current->shape.values[i])
-                 && !EQUAL(base->shape.values[i], "")) {
-        /* clear the value if that doesn't match */
-        msFree(base->shape.values[i]);
-        base->shape.values[i] = msStrdup("");
       }
     }
   }
@@ -566,6 +578,8 @@ static int BuildFeatureAttributes(layerObj* layer, msClusterLayerInfo* layerinfo
     if (itemindexes[i] == MSCLUSTER_FEATURECOUNTINDEX) {
       values[i] = NULL; /* not yet assigned */
     } else if (itemindexes[i] == MSCLUSTER_GROUPINDEX) {
+      values[i] = NULL; /* not yet assigned */
+    } else if (itemindexes[i] == MSCLUSTER_BASEFIDINDEX) {
       values[i] = NULL; /* not yet assigned */
     } else if (shape->values[itemindexes[i]])
       values[i] = msStrdup(shape->values[itemindexes[i]]);
@@ -779,14 +793,17 @@ int selectClusterShape(layerObj* layer, long shapeindex)
 
   current->next = current->siblings;
   layerinfo->current = current;
-  current->shape.line[0].point[0].x = current->shape.bounds.minx = current->shape.bounds.maxx = current->avgx;
-  current->shape.line[0].point[0].y = current->shape.bounds.miny = current->shape.bounds.maxy = current->avgy;
+
+  if (layerinfo->keep_locations == MS_FALSE) {
+    current->shape.line[0].point[0].x = current->shape.bounds.minx = current->shape.bounds.maxx = current->avgx;
+    current->shape.line[0].point[0].y = current->shape.bounds.miny = current->shape.bounds.maxy = current->avgy;
+  }
 
   return MS_SUCCESS;
 }
 
 /* update the parameters from the related shapes */
-#ifndef NDEBUG
+#ifdef ms_notused
 static void UpdateClusterParameters(msClusterLayerInfo* layerinfo, clusterTreeNode *node, clusterInfo *shape)
 {
   int i;
@@ -893,6 +910,19 @@ int RebuildClusters(layerObj *layer, int isQuery)
   else
     layerinfo->get_all_shapes = MS_FALSE;
 
+  /* check whether the location of the shapes should be preserved (no averaging) */
+  if(msLayerGetProcessingKey(layer, "CLUSTER_KEEP_LOCATIONS") != NULL)
+    layerinfo->keep_locations = MS_TRUE;
+  else
+    layerinfo->keep_locations = MS_FALSE;
+
+  /* check whether the maxdistance and the buffer parameters 
+  are specified in map units (scale independent clustering) */
+  if(msLayerGetProcessingKey(layer, "CLUSTER_USE_MAP_UNITS") != NULL)
+    layerinfo->use_map_units = MS_TRUE;
+  else
+    layerinfo->use_map_units = MS_FALSE;
+
   /* identify the current extent */
   if(layer->transform == MS_TRUE)
     searchrect = map->extent;
@@ -931,15 +961,24 @@ int RebuildClusters(layerObj *layer, int isQuery)
   /* trying to find a reasonable quadtree depth */
   depth = 0;
   distance = layer->cluster.maxdistance;
-  while ((distance < map->width || distance < map->height) && depth <= TREE_MAX_DEPTH) {
-    distance *= 2;
-    ++depth;
+  if (layerinfo->use_map_units == MS_TRUE) {
+    while ((distance < (searchrect.maxx - searchrect.minx) || distance < (searchrect.maxy - searchrect.miny)) && depth <= TREE_MAX_DEPTH) {
+      distance *= 2;
+      ++depth;
+    }
+    cellSizeX = 1;
+    cellSizeY = 1;
+  }
+  else {
+    while ((distance < map->width || distance < map->height) && depth <= TREE_MAX_DEPTH) {
+      distance *= 2;
+      ++depth;
+    }
+    cellSizeX = MS_CELLSIZE(searchrect.minx, searchrect.maxx, map->width);
+    cellSizeY = MS_CELLSIZE(searchrect.miny, searchrect.maxy, map->height);
   }
 
   layerinfo->depth = depth;
-
-  cellSizeX = MS_CELLSIZE(searchrect.minx, searchrect.maxx, map->width);
-  cellSizeY = MS_CELLSIZE(searchrect.miny, searchrect.maxy, map->height);
 
   maxDistanceX = layer->cluster.maxdistance * cellSizeX;
   maxDistanceY = layer->cluster.maxdistance * cellSizeY;
@@ -1213,6 +1252,8 @@ int msClusterLayerInitItemInfo(layerObj *layer)
       itemindexes[i] = MSCLUSTER_FEATURECOUNTINDEX;
     else if (EQUAL(layer->items[i], MSCLUSTER_GROUP))
       itemindexes[i] = MSCLUSTER_GROUPINDEX;
+    else if (EQUAL(layer->items[i], MSCLUSTER_BASEFID))
+      itemindexes[i] = MSCLUSTER_BASEFIDINDEX;
     else
       itemindexes[i] = numitems++;
   }
@@ -1266,8 +1307,10 @@ static int prepareShape(layerObj* layer, msClusterLayerInfo* layerinfo, clusterI
   }
 
   /* update the positions of the cluster shape */
-  shape->line[0].point[0].x = shape->bounds.minx = shape->bounds.maxx = current->avgx;
-  shape->line[0].point[0].y = shape->bounds.miny = shape->bounds.maxy = current->avgy;
+  if (layerinfo->keep_locations == MS_FALSE) {
+    shape->line[0].point[0].x = shape->bounds.minx = shape->bounds.maxx = current->avgx;
+    shape->line[0].point[0].y = shape->bounds.miny = shape->bounds.maxy = current->avgy;
+  }
 
   return MS_SUCCESS;
 }
@@ -1330,6 +1373,7 @@ int msClusterLayerGetItems(layerObj *layer)
   layer->items = msSmallMalloc(sizeof(char*) * (layer->numitems));
   layer->items[0] = msStrdup(MSCLUSTER_FEATURECOUNT);
   layer->items[1] = msStrdup(MSCLUSTER_GROUP);
+  layer->items[2] = msStrdup(MSCLUSTER_BASEFID);
 
   return msClusterLayerInitItemInfo(layer);
 }

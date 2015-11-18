@@ -48,7 +48,7 @@ MS_OBJS = mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapoglrenderer.obj mapoglcontext.obj mapogl.obj \
 		maptile.obj $(EPPL_OBJ) $(REGEX_OBJ) mapgeomtransform.obj mapunion.obj \
                 mapkmlrenderer.obj mapkml.obj mapdummyrenderer.obj mapgeomutil.obj mapquantization.obj \
-                mapogcfiltercommon.obj mapcluster.obj mapuvraster.obj mapservutil.obj $(AGG_OBJ)
+                mapogcfiltercommon.obj mapcluster.obj mapuvraster.obj mapcontour.obj mapsmoothing.obj mapservutil.obj hittest.obj $(AGG_OBJ)
 
 MS_HDRS = 	mapserver.h mapfile.h
 
@@ -148,7 +148,7 @@ mapscriptvars: makefile.vc nmake.opt
 	echo $(INCLUDES) >> mapscriptvars
 	echo $(LIBS_DLL) >> mapscriptvars
 	echo $(LIBS) >> mapscriptvars
-	findstr MS_VERSION mapserver.h | findstr define >> mapscriptvars
+	findstr MS_VERSION mapserver-version.h | findstr define >> mapscriptvars
 
 #install: $(MS_DLL) $(MS_EXE) python csharp java php
 install: $(MS_DLL) $(MS_EXE)

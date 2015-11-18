@@ -362,6 +362,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   rewind(stream);
 
   if((joininfo->rows = (char ***) malloc(joininfo->numrows*sizeof(char **))) == NULL) {
+    fclose(stream);
     msSetError(MS_MEMERR, "Error allocating rows.", "msCSVJoinConnect()");
     return(MS_FAILURE);
   }
@@ -609,8 +610,8 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
   {
     char tmp[4000];
     snprintf( tmp, sizeof(tmp), "Failed to connect to SQL server: Error: %s\nHost: %s\nUsername:%s\nPassword:%s\n", mysql_error(joininfo->conn), DB_HOST, DB_USER, DB_PASSWD);
-    msSetError(MS_QUERYERR, tmp,
-               "msMYSQLLayerOpen()");
+    msSetError(MS_QUERYERR, "%s",
+               "msMYSQLLayerOpen()", tmp);
     free(joininfo);
     return MS_FAILURE;
   }

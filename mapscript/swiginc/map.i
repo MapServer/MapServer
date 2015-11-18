@@ -32,14 +32,12 @@
 %extend mapObj 
 {         
     mapObj(char *filename="") 
-    {   
-        if (filename && strlen(filename)) 
-        {            
-            return msLoadMap(filename, NULL);            
-        }
+    {
+        if (filename && strlen(filename))
+            return msLoadMap(filename, NULL);
         else { /* create an empty map, no layers etc... */
             return msNewMapObj();
-        }
+        }      
     }
 
 #ifdef SWIGCSHARP      
@@ -150,7 +148,7 @@
   void prepareQuery() {
     int status;
 
-    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->pixeladjustment, self->resolution, &self->scaledenom);
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scaledenom);
     if(status != MS_SUCCESS) self->scaledenom = -1;
   }
 
@@ -193,6 +191,17 @@
         }
     }
         
+  %newobject getOutputFormat;
+  outputFormatObj *getOutputFormat(int i) {
+    if(i >= 0 && i < self->numoutputformats) {
+    	MS_REFCNT_INCR(self->outputformatlist[i]);
+        return (self->outputformatlist[i]); 
+    } else {
+      return NULL;
+    }
+  }
+
+        
   void setOutputFormat( outputFormatObj *format ) {
       msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
@@ -220,7 +229,7 @@
 
   %newobject drawLegend;
   imageObj *drawLegend() {
-    return msDrawLegend(self, MS_FALSE);
+    return msDrawLegend(self, MS_FALSE, NULL);
   }
 
   %newobject drawScalebar;
@@ -242,34 +251,18 @@
   }
 
   int drawLabelCache(imageObj *image) {
-    return msDrawLabelCache(image, self);
-  }
-
-  labelCacheMemberObj *getLabel(int i) {
-    return msGetLabelCacheMember(&(self->labelcache), i);
-  }
-
-  labelCacheMemberObj *nextLabel() {
-    static int i=0;
-
-    if(i<self->labelcache.numlabels)
-      return msGetLabelCacheMember(&(self->labelcache), i++);
-    else
-      return NULL;	
+    return msDrawLabelCache(self,image);
   }
 
   int queryByFilter(char *string) {
     msInitQuery(&(self->query));
 
     self->query.type = MS_QUERY_BY_FILTER;
+    self->query.mode = MS_QUERY_MULTIPLE;
 
-    self->query.filter = (expressionObj *) malloc(sizeof(expressionObj));
-    self->query.filter->string = strdup(string);
-    self->query.filter->type = 2000; /* MS_EXPRESSION: lot's of conflicts in mapfile.h */
-    self->query.filter->compiled = MS_FALSE;
-    self->query.filter->flags = 0;
-    self->query.filter->tokens = self->query.filter->curtoken = NULL;
-    
+    self->query.filter.string = strdup(string);
+    self->query.filter.type = MS_EXPRESSION;
+
     self->query.rect = self->extent;
 
     return msQueryByFilter(self);

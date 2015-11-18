@@ -49,8 +49,7 @@
         
         msInitializeRendererVTable(format);
 
-        /* Else, continue */
-        format->refcount++;
+        MS_REFCNT_INIT(format);
 	format->inmapfile = MS_TRUE;
 
         return format;
@@ -58,8 +57,7 @@
 
     ~outputFormatObj() 
     {
-        if ( --self->refcount < 1 )
-            msFreeOutputFormat( self );
+        msFreeOutputFormat( self );
     }
 
 #ifndef SWIGJAVA
@@ -89,9 +87,15 @@
     %newobject getOption;
     char *getOption(const char *key, const char *value="") 
     {
-        const char *retval;
-        retval = msGetOutputFormatOption(self, key, value);
-        return strdup(retval);
+        return strdup(msGetOutputFormatOption(self, key, value));
+    }
+
+    %newobject getOptionAt;
+    char* getOptionAt(int i) {
+       if( i >= 0 && i < self->numformatoptions ) {
+          return strdup(self->formatoptions[i]);
+       }
+       return NULL;
     }
     
     void attachDevice( void *device ) 

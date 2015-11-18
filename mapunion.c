@@ -36,11 +36,11 @@
 
 
 #define MSUNION_NUMITEMS        3
-#define MSUNION_SOURCELAYERNAME        "Union:SourceLayerName"
+#define MSUNION_SOURCELAYERNAME        "Union_SourceLayerName"
 #define MSUNION_SOURCELAYERNAMEINDEX   -100
-#define MSUNION_SOURCELAYERGROUP        "Union:SourceLayerGroup"
+#define MSUNION_SOURCELAYERGROUP        "Union_SourceLayerGroup"
 #define MSUNION_SOURCELAYERGROUPINDEX   -101
-#define MSUNION_SOURCELAYERVISIBLE        "Union:SourceLayerVisible"
+#define MSUNION_SOURCELAYERVISIBLE        "Union_SourceLayerVisible"
 #define MSUNION_SOURCELAYERVISIBLEINDEX   -102
 
 typedef struct {
@@ -295,14 +295,14 @@ void msUnionLayerFreeItemInfo(layerObj *layer)
 void msUnionLayerFreeExpressionTokens(layerObj *layer)
 {
   int i,j;
-  freeExpressionTokens(&(layer->filter));
-  freeExpressionTokens(&(layer->cluster.group));
-  freeExpressionTokens(&(layer->cluster.filter));
+  msFreeExpressionTokens(&(layer->filter));
+  msFreeExpressionTokens(&(layer->cluster.group));
+  msFreeExpressionTokens(&(layer->cluster.filter));
   for(i=0; i<layer->numclasses; i++) {
-    freeExpressionTokens(&(layer->class[i]->expression));
-    freeExpressionTokens(&(layer->class[i]->text));
+    msFreeExpressionTokens(&(layer->class[i]->expression));
+    msFreeExpressionTokens(&(layer->class[i]->text));
     for(j=0; j<layer->class[i]->numstyles; j++)
-      freeExpressionTokens(&(layer->class[i]->styles[j]->_geomtransform));
+      msFreeExpressionTokens(&(layer->class[i]->styles[j]->_geomtransform));
   }
 }
 
@@ -497,11 +497,13 @@ int msUnionLayerNextShape(layerObj *layer, shapeObj *shape)
           }
           /* set up annotation */
           msFree(layerinfo->classText);
+          layerinfo->classText = NULL;
           if(srclayer->class[layerinfo->classIndex]->numlabels > 0) {
-            msShapeGetAnnotation(srclayer, shape);
-            layerinfo->classText = msStrdup(srclayer->class[layerinfo->classIndex]->labels[0]->annotext); /* pull text from the first label only */
-          } else
-            layerinfo->classText = NULL;
+            /* pull text from the first label only */
+            if(msGetLabelStatus(layer->map,layer,shape,srclayer->class[layerinfo->classIndex]->labels[0]) == MS_ON) {
+              layerinfo->classText = msShapeGetLabelAnnotation(layer,shape,srclayer->class[layerinfo->classIndex]->labels[0]);
+            }
+          }
         }
 
 #ifdef USE_PROJ
@@ -694,8 +696,8 @@ static int msUnionLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, s
       }
       c->labels[i]->numbindings = 0;
     }
+    c->numlabels = src->numlabels;
 
-    c->type = src->type;
     c->layer = layer;
     c->text.string = layerinfo->classText;
     layerinfo->classText = NULL;

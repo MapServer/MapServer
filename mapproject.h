@@ -39,6 +39,9 @@ extern "C" {
 
 #ifdef USE_PROJ
 #  include <proj_api.h>
+#if PJ_VERSION >= 470 && PJ_VERSION < 480
+   void pj_clear_initcache();
+#endif
 #endif
 
 #define wkp_none 0
@@ -88,12 +91,15 @@ extern "C" {
   MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, const char *value);
   MS_DLL_EXPORT int msLoadProjectionStringEPSG(projectionObj *p, const char *value);
   MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
+  int msIsAxisInvertedProj( projectionObj *proj );
+  void msAxisSwapShape(shapeObj *shape);
   MS_DLL_EXPORT void msAxisNormalizePoints( projectionObj *proj, int count,
       double *x, double *y );
   MS_DLL_EXPORT void msAxisDenormalizePoints( projectionObj *proj, int count,
       double *x, double *y );
 
   MS_DLL_EXPORT void msSetPROJ_LIB( const char *, const char * );
+  MS_DLL_EXPORT void msProjLibInitFromEnv();
 
   /* Provides compatiblity with PROJ.4 4.4.2 */
 #ifndef PJ_VERSION

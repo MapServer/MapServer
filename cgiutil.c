@@ -55,21 +55,21 @@ int readPostBody( cgiRequestObj *request, char **data )
     data_max = (size_t) atoi(getenv("CONTENT_LENGTH"));
     /* Test for suspicious CONTENT_LENGTH (negative value or SIZE_MAX) */
     if( data_max >= SIZE_MAX ) {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("Suspicious Content-Length.\n");
       return MS_FAILURE;
     }
     *data = (char *) malloc(data_max+1);
     if( *data == NULL ) {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
-      msIO_printf("malloc() failed, Content-Length: %u unreasonably large?\n", data_max );
+      msIO_printf("malloc() failed, Content-Length: %u unreasonably large?\n", (unsigned int)data_max );
       return MS_FAILURE;
     }
 
     if( (int) msIO_fread(*data, 1, data_max, stdin) < data_max ) {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("POST body is short\n");
       return MS_FAILURE;
@@ -93,7 +93,7 @@ int readPostBody( cgiRequestObj *request, char **data )
     if( data_len == data_max ) {
       /* Realloc buffer, making sure we check for possible size_t overflow */
       if ( data_max > SIZE_MAX - (DATA_ALLOC_SIZE+1) ) {
-        msIO_setHeader("Content-type","text/html");
+        msIO_setHeader("Content-Type","text/html");
         msIO_sendHeaders();
         msIO_printf("Possible size_t overflow, cannot reallocate input buffer, POST body too large?\n" );
         return MS_FAILURE;
@@ -104,7 +104,7 @@ int readPostBody( cgiRequestObj *request, char **data )
     }
   }
 
-  *data[data_len] = '\0';
+  (*data)[data_len] = '\0';
   return MS_SUCCESS;
 }
 
@@ -130,6 +130,7 @@ int loadParams(cgiRequestObj *request,
   if(getenv2("REQUEST_METHOD", thread_context)==NULL) {
     msIO_printf("This script can only be used to decode form results and \n");
     msIO_printf("should be initiated as a CGI process via a httpd server.\n");
+    msIO_printf("For other options please try using the --help switch.\n");
     return -1;
   }
 
@@ -143,7 +144,7 @@ int loadParams(cgiRequestObj *request,
     s = getenv2("CONTENT_TYPE", thread_context);
     if (s != NULL)
       request->contenttype = msStrdup(s);
-    /* we've to set default content-type which is
+    /* we've to set default Content-Type which is
      * application/octet-stream according to
      * W3 RFC 2626 section 7.2.1 */
     else request->contenttype = msStrdup("application/octet-stream");
@@ -159,7 +160,7 @@ int loadParams(cgiRequestObj *request,
 
     /* if the content_type is application/x-www-form-urlencoded,
        we have to parse it like the QUERY_STRING variable */
-    if(strcmp(request->contenttype, "application/x-www-form-urlencoded") == 0) {
+    if(strncmp(request->contenttype, "application/x-www-form-urlencoded", strlen("application/x-www-form-urlencoded")) == 0) {
       while( data_len > 0 && isspace(post_data[data_len-1]) )
         post_data[--data_len] = '\0';
 
@@ -206,7 +207,7 @@ int loadParams(cgiRequestObj *request,
 
       s = getenv2("QUERY_STRING", thread_context);
       if(s == NULL) {
-        msIO_setHeader("Content-type","text/html");
+        msIO_setHeader("Content-Type","text/html");
         msIO_sendHeaders();
         msIO_printf("No query information to decode. QUERY_STRING not set.\n");
         return -1;
@@ -216,7 +217,7 @@ int loadParams(cgiRequestObj *request,
         msDebug("loadParams() QUERY_STRING: %s\n", s);
 
       if(strlen(s)==0) {
-        msIO_setHeader("Content-type","text/html");
+        msIO_setHeader("Content-Type","text/html");
         msIO_sendHeaders();
         msIO_printf("No query information to decode. QUERY_STRING is set, but empty.\n");
         return -1;
@@ -237,7 +238,7 @@ int loadParams(cgiRequestObj *request,
         m++;
       }
     } else {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("This script should be referenced with a METHOD of GET or METHOD of POST.\n");
       return -1;
@@ -386,33 +387,15 @@ int rind(char *s, char c)
   return -1;
 }
 
-int _getline(char *s, int n, FILE *f)
-{
-  register int i=0;
-
-  while(1) {
-    s[i] = (char)fgetc(f);
-
-    if(s[i] == CR)
-      s[i] = fgetc(f);
-
-    if((s[i] == 0x4) || (s[i] == LF) || (i == (n-1))) {
-      s[i] = '\0';
-      return (feof(f) ? 1 : 0);
-    }
-    ++i;
-  }
-}
-
 void send_fd(FILE *f, FILE *fd)
 {
-  char c;
+  int c;
 
   while (1) {
     c = fgetc(f);
-    if(feof(f))
+    if(c == EOF)
       return;
-    fputc(c,fd);
+    fputc((char)c,fd);
   }
 }
 

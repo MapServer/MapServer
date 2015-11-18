@@ -195,6 +195,10 @@ ZEND_BEGIN_ARG_INFO_EX(layer_getShape_args, 0, 0, 1)
 ZEND_ARG_OBJ_INFO(0, record, resultObj, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(layer_setGeomTransform_args, 0, 0, 1)
+ZEND_ARG_INFO(0, transform)
+ZEND_END_ARG_INFO()
+
 /* {{{ proto void __construct(mapObj map [, layerObj layer])
    Create a new layerObj instance. */
 PHP_METHOD(layerObj, __construct)
@@ -252,7 +256,7 @@ PHP_METHOD(layerObj, __construct)
 PHP_METHOD(layerObj, __get)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *zobj = getThis();
   php_layer_object *php_layer;
 
@@ -293,7 +297,6 @@ PHP_METHOD(layerObj, __get)
                                                 else IF_GET_LONG("minfeaturesize", php_layer->layer->minfeaturesize)
                                                   else IF_GET_LONG("maxfeatures", php_layer->layer->maxfeatures)
                                                     else IF_GET_LONG("startindex", php_layer->layer->startindex)
-                                                      else IF_GET_LONG("annotate", php_layer->layer->annotate)
                                                         else IF_GET_LONG("transform", php_layer->layer->transform)
                                                           else IF_GET_LONG("labelcache", php_layer->layer->labelcache)
                                                             else IF_GET_LONG("postlabelcache", php_layer->layer->postlabelcache)
@@ -306,7 +309,7 @@ PHP_METHOD(layerObj, __get)
                                                                           else IF_GET_LONG("connectiontype", php_layer->layer->connectiontype)
                                                                             else IF_GET_STRING("filteritem", php_layer->layer->filteritem)
                                                                               else IF_GET_STRING("template", php_layer->layer->template)
-                                                                                else IF_GET_LONG("opacity", php_layer->layer->opacity)
+                                                                                else IF_GET_LONG("opacity", (php_layer->layer->compositer?php_layer->layer->compositer->opacity:100))
                                                                                   else IF_GET_STRING("styleitem", php_layer->layer->styleitem)
                                                                                     else IF_GET_LONG("numitems", php_layer->layer->numitems)
                                                                                       else IF_GET_LONG("numjoins", php_layer->layer->numjoins)
@@ -328,7 +331,7 @@ PHP_METHOD(layerObj, __get)
 PHP_METHOD(layerObj, __set)
 {
   char *property;
-  long property_len;
+  long property_len = 0;
   zval *value;
   zval *zobj = getThis();
   php_layer_object *php_layer;
@@ -343,6 +346,13 @@ PHP_METHOD(layerObj, __set)
 
   php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
 
+  /* special case for "template" which we want to set to NULL and not an empty string */
+  if(Z_TYPE_P(value)==IS_NULL && !strcmp(property,"template")) {
+    msFree(php_layer->layer->template);
+    php_layer->layer->template = NULL;
+  } else if(!strcmp(property,"opacity")) {
+    msSetLayerOpacity(php_layer->layer,Z_LVAL_P(value));
+  } else
   IF_SET_LONG("status", php_layer->layer->status, value)
   else IF_SET_LONG("debug",  php_layer->layer->debug, value)
     else IF_SET_STRING("classitem", php_layer->layer->classitem, value)
@@ -367,7 +377,6 @@ PHP_METHOD(layerObj, __set)
                                           else IF_SET_STRING("mask", php_layer->layer->mask, value)
                                             else IF_SET_LONG("maxfeatures", php_layer->layer->maxfeatures, value)
                                               else IF_SET_LONG("startindex", php_layer->layer->startindex, value)
-                                                else IF_SET_LONG("annotate", php_layer->layer->annotate, value)
                                                   else IF_SET_LONG("transform", php_layer->layer->transform, value)
                                                     else IF_SET_LONG("labelcache", php_layer->layer->labelcache, value)
                                                       else IF_SET_LONG("postlabelcache", php_layer->layer->postlabelcache, value)
@@ -379,7 +388,6 @@ PHP_METHOD(layerObj, __set)
                                                                   else IF_SET_STRING("connection", php_layer->layer->connection, value)
                                                                     else IF_SET_STRING("filteritem", php_layer->layer->filteritem, value)
                                                                       else IF_SET_STRING("template", php_layer->layer->template, value)
-                                                                        else IF_SET_LONG("opacity", php_layer->layer->opacity, value)
                                                                           else IF_SET_STRING("styleitem", php_layer->layer->styleitem, value)
                                                                             else IF_SET_LONG("num_processing", php_layer->layer->numprocessing, value)
                                                                               else IF_SET_STRING("requires", php_layer->layer->requires, value)
@@ -628,9 +636,9 @@ PHP_METHOD(layerObj, queryByAttributes)
 {
   zval *zobj = getThis();
   char *item;
-  long item_len;
+  long item_len = 0;
   char *string;
-  long string_len;
+  long string_len = 0;
   long mode;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
@@ -669,7 +677,7 @@ PHP_METHOD(layerObj, queryByFilter)
 {
   zval *zobj = getThis();
   char *string;
-  long string_len;
+  long string_len = 0;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
   php_map_object *php_map;
@@ -741,7 +749,7 @@ PHP_METHOD(layerObj, updateFromString)
 {
   zval *zobj = getThis();
   char *snippet;
-  long snippet_len;
+  long snippet_len = 0;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
 
@@ -761,6 +769,33 @@ PHP_METHOD(layerObj, updateFromString)
   }
 
   RETURN_LONG(status);
+}
+/* }}} */
+
+/* {{{ proto string convertToString()
+   Convert the layer object to string. */
+PHP_METHOD(layerObj, convertToString)
+{
+  zval *zobj = getThis();
+  php_layer_object *php_layer;
+  char *value = NULL;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  value =  layerObj_convertToString(php_layer->layer);
+
+  if (value == NULL)
+    RETURN_STRING("", 1);
+
+  RETVAL_STRING(value, 1);
+  free(value);
 }
 /* }}} */
 
@@ -858,7 +893,7 @@ PHP_METHOD(layerObj, setFilter)
 {
   zval *zobj = getThis();
   char *expression;
-  long expression_len;
+  long expression_len = 0;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
 
@@ -914,7 +949,7 @@ PHP_METHOD(layerObj, setProjection)
 {
   zval *zobj = getThis();
   char *projection;
-  long projection_len;
+  long projection_len = 0;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
   php_projection_object *php_projection=NULL;
@@ -976,7 +1011,7 @@ PHP_METHOD(layerObj, setWKTProjection)
 {
   zval *zobj = getThis();
   char *projection;
-  long projection_len;
+  long projection_len = 0;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
   php_projection_object *php_projection=NULL;
@@ -1378,7 +1413,7 @@ PHP_METHOD(layerObj, getWMSFeatureInfoURL)
   zval *zobj = getThis();
   long clickx, clicky, featureCount;
   char *infoFormat = NULL;
-  long infoFormat_len;
+  long infoFormat_len = 0;
   char *value =  NULL;
   php_layer_object *php_layer;
   php_map_object *php_map;
@@ -1450,7 +1485,7 @@ PHP_METHOD(layerObj, setProcessing)
 {
   zval *zobj = getThis();
   char *string = NULL;
-  long string_len;
+  long string_len = 0;
   php_layer_object *php_layer;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -1482,9 +1517,9 @@ PHP_METHOD(layerObj, setProcessingKey)
 {
   zval *zobj = getThis();
   char *key = NULL;
-  long key_len;
+  long key_len = 0;
   char *value = NULL;
-  long value_len;
+  long value_len = 0;
   php_layer_object *php_layer;
 
   PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
@@ -1583,16 +1618,16 @@ PHP_METHOD(layerObj, executeWFSGetFeature)
 
 /* {{{ proto int applySLD(string sldxml, string namedlayer)
    Apply the SLD document to the layer object. The matching between the sld
-   document and the layer will be done using the layer’s name. If a
+   document and the layer will be done using the layer's name. If a
    namedlayer argument is passed (argument is optional), the NamedLayer in
    the sld that matchs it will be used to style the layer. */
 PHP_METHOD(layerObj, applySLD)
 {
   zval *zobj = getThis();
   char *sldxml;
-  long sldxml_len;
+  long sldxml_len = 0;
   char *namedLayer = NULL;
-  long namedLayer_len;
+  long namedLayer_len = 0;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
 
@@ -1616,16 +1651,16 @@ PHP_METHOD(layerObj, applySLD)
 /* {{{ proto int applySLDURL(string sldurl, string namedlayer)
    Apply the SLD document pointed by the URL to the layer object. The
    matching between the sld document and the layer will be done using the
-   layer’s name. If a namedlayer argument is passed (argument is optional),
+   layer's name. If a namedlayer argument is passed (argument is optional),
    the NamedLayer in the sld that matchs it will be used to style the
    layer. */
 PHP_METHOD(layerObj, applySLDURL)
 {
   zval *zobj = getThis();
   char *sldurl;
-  long sldurl_len;
+  long sldurl_len = 0;
   char *namedLayer = NULL;
-  long namedLayer_len;
+  long namedLayer_len = 0;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
 
@@ -1799,7 +1834,7 @@ PHP_METHOD(layerObj, setConnectionType)
   zval *zobj = getThis();
   long type;
   char *plugin = "";
-  long plugin_len;
+  long plugin_len = 0;
   int status = MS_FAILURE;
   php_layer_object *php_layer;
 
@@ -2011,6 +2046,61 @@ PHP_METHOD(layerObj, getShape)
 }
 /* }}} */
 
+/* {{{ proto int layer.getGeomTransform()
+   return the geometry transform expression */
+PHP_METHOD(layerObj, getGeomTransform)
+{
+  zval *zobj = getThis();
+  php_layer_object *php_layer;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters_none() == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  if (php_layer->layer->_geomtransform.type == MS_GEOMTRANSFORM_NONE ||
+      !php_layer->layer->_geomtransform.string)
+    RETURN_STRING("", 1);
+
+  RETURN_STRING(php_layer->layer->_geomtransform.string, 1);
+}
+/* }}} */
+
+/* {{{ proto int layer.setGeomTransform()
+   set the geometry transform expression */
+PHP_METHOD(layerObj, setGeomTransform)
+{
+  zval *zobj = getThis();
+  char *transform;
+  long transform_len = 0;
+  php_layer_object *php_layer;
+
+  PHP_MAPSCRIPT_ERROR_HANDLING(TRUE);
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+                            &transform, &transform_len) == FAILURE) {
+    PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+    return;
+  }
+  PHP_MAPSCRIPT_RESTORE_ERRORS(TRUE);
+
+  php_layer = (php_layer_object *) zend_object_store_get_object(zobj TSRMLS_CC);
+
+  msFree(php_layer->layer->_geomtransform.string);
+  if (transform_len > 0) {
+    php_layer->layer->_geomtransform.string = msStrdup(transform);
+    php_layer->layer->_geomtransform.type = MS_GEOMTRANSFORM_EXPRESSION;
+  }
+  else {
+    php_layer->layer->_geomtransform.type = MS_GEOMTRANSFORM_NONE;
+    php_layer->layer->_geomtransform.string = NULL;    
+  }
+
+  RETURN_LONG(MS_SUCCESS);  
+}
 
 /* {{{ proto void layer.free()
    Free the object */
@@ -2046,6 +2136,7 @@ zend_function_entry layer_functions[] = {
   PHP_ME(layerObj, draw, layer_draw_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, drawQuery, layer_drawQuery_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, updateFromString, layer_updateFromString_args, ZEND_ACC_PUBLIC)
+  PHP_ME(layerObj, convertToString, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, getClass, layer_getClass_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, getClassIndex, layer_getClassIndex_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, queryByPoint, layer_queryByPoint_args, ZEND_ACC_PUBLIC)
@@ -2090,6 +2181,8 @@ zend_function_entry layer_functions[] = {
   PHP_ME(layerObj, setConnectionType, layer_setConnectionType_args, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, getGridIntersectionCoordinates, NULL, ZEND_ACC_PUBLIC)
   PHP_ME(layerObj, getShape, layer_getShape_args, ZEND_ACC_PUBLIC)
+  PHP_ME(layerObj, getGeomTransform, NULL, ZEND_ACC_PUBLIC)
+  PHP_ME(layerObj, setGeomTransform, layer_setGeomTransform_args, ZEND_ACC_PUBLIC)  
   PHP_ME(layerObj, free, NULL, ZEND_ACC_PUBLIC) {
     NULL, NULL, NULL
   }

@@ -70,6 +70,7 @@ char* AddFileSuffix ( const char * Filename, const char * Suffix )
   pszFullname = (char *) msSmallMalloc(strlen(pszBasename) + 5);
   sprintf( pszFullname, "%s%s", pszBasename, Suffix);
 
+  free(pszBasename);
   return (pszFullname);
 }
 
@@ -81,7 +82,6 @@ int main( int argc, char ** argv )
   DBFHandle   hDBF;
   SHPTreeHandle qix;
 
-  int   i;
   char  *myfile = NULL;
 
   treeNodeObj *node;
@@ -95,9 +95,13 @@ int main( int argc, char ** argv )
   double  X[6], Y[6];
 #endif
   int   result;
+  
+  /*
   char  mBigEndian;
+  int   i;
+  */
 
-  int   this_rec, factor;
+  int   this_rec;
 
   /* -------------------------------------------------------------------- */
   /*      Display a usage message.                                        */
@@ -107,11 +111,13 @@ int main( int argc, char ** argv )
     exit( 1 );
   }
 
+  /*
   i = 1;
   if( *((unsigned char *) &i) == 1 )
     mBigEndian = 0;
   else
     mBigEndian = 1;
+  */
 
 
   qix = msSHPDiskTreeOpen (AddFileSuffix(argv[1],".qix"), 0 /* no debug*/);
@@ -178,7 +184,6 @@ int main( int argc, char ** argv )
       DBFWriteIntegerAttribute( hDBF, this_rec, 0, node->numshapes);
       DBFWriteIntegerAttribute( hDBF, this_rec, 1, node->numsubnodes);
 #endif
-      factor = node->numshapes + node->numsubnodes;
 
 #ifdef  MAPSERVER
       shape.numlines = 1;

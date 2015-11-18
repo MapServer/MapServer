@@ -128,7 +128,7 @@ class ImageObjTestCase(unittest.TestCase):
     
     def testConstructorUrlStream(self):
         """imageObj with a URL stream works"""
-        url = urllib.urlopen('http://mapserver.gis.umn.edu/logo.jpg')
+        url = urllib.urlopen('http://mapserver.org/_static/banner.png')
         imgobj = mapscript.imageObj(url, 'GD/JPEG')
         assert imgobj.thisown == 1
         assert imgobj.height == 68

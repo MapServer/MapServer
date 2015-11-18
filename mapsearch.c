@@ -43,7 +43,7 @@
 /*
 ** Returns MS_TRUE if rectangles a and b overlap
 */
-int msRectOverlap(rectObj *a, rectObj *b)
+int msRectOverlap(const rectObj *a, const rectObj *b)
 {
   if(a->minx > b->maxx) return(MS_FALSE);
   if(a->maxx < b->minx) return(MS_FALSE);
@@ -77,7 +77,7 @@ int msRectIntersect( rectObj *a, const rectObj *b )
 /*
 ** Returns MS_TRUE if rectangle a is contained in rectangle b
 */
-int msRectContained(rectObj *a, rectObj *b)
+int msRectContained(const rectObj *a, const rectObj *b)
 {
   if(a->minx >= b->minx && a->maxx <= b->maxx)
     if(a->miny >= b->miny && a->maxy <= b->maxy)
@@ -96,7 +96,7 @@ void msMergeRect(rectObj *a, rectObj *b)
   a->maxy = MS_MAX(a->maxy, b->maxy);
 }
 
-int msPointInRect(pointObj *p, rectObj *rect)
+int msPointInRect(const pointObj *p, const rectObj *rect)
 {
   if(p->x < rect->minx) return(MS_FALSE);
   if(p->x > rect->maxx) return(MS_FALSE);
@@ -173,7 +173,7 @@ int msPointInPolygon(pointObj *p, lineObj *c)
 ** cases. In due time... -SDL-
 */
 
-int msIntersectSegments(pointObj *a, pointObj *b, pointObj *c, pointObj *d)   /* from comp.graphics.alogorithms FAQ */
+int msIntersectSegments(const pointObj *a, const pointObj *b, const pointObj *c, const pointObj *d)   /* from comp.graphics.alogorithms FAQ */
 {
 
   double r, s;

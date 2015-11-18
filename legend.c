@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
   mapObj *map=NULL;
   imageObj *img=NULL;
 
+  msSetup();
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
     exit(0);
@@ -52,7 +53,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  img = msDrawLegend(map, MS_FALSE);
+  img = msDrawLegend(map, MS_FALSE, NULL);
   if(!img) {
     msWriteError(stderr);
     exit(0);

@@ -32,6 +32,7 @@
 #include "mapserver.h"
 #include "mapproject.h"
 #include "mapthread.h"
+#include "mapows.h"
 
 #if defined(USE_OGR) || defined(USE_GDAL)
 #  include "gdal_version.h"
@@ -39,8 +40,6 @@
 #  include "cpl_string.h"
 #  include "ogr_srs_api.h"
 #endif
-
-
 
 #define ACQUIRE_OGR_LOCK       msAcquireLock( TLOCK_OGR )
 #define RELEASE_OGR_LOCK       msReleaseLock( TLOCK_OGR )
@@ -51,6 +50,7 @@
 
 typedef struct ms_ogr_file_info_t {
   char        *pszFname;
+  char        *pszLayerDef;
   int         nLayerIndex;
   OGRDataSourceH hDS;
   OGRLayerH   hLayer;
@@ -83,6 +83,9 @@ static void msOGRCloseConnection( void *conn_handle );
  * does not include this new point.
  **********************************************************************/
 static void ogrPointsAddPoint(lineObj *line, double dX, double dY,
+#ifdef USE_POINT_Z_M
+                              double dZ,
+#endif
                               int lineindex, rectObj *bounds)
 {
   /* Keep track of shape bounds */
@@ -99,7 +102,7 @@ static void ogrPointsAddPoint(lineObj *line, double dX, double dY,
   line->point[line->numpoints].x = dX;
   line->point[line->numpoints].y = dY;
 #ifdef USE_POINT_Z_M
-  line->point[line->numpoints].z = 0.0;
+  line->point[line->numpoints].z = dZ;
   line->point[line->numpoints].m = 0.0;
 #endif
   line->numpoints++;
@@ -207,16 +210,25 @@ static int ogrGeomPoints(OGRGeometryH hGeom, shapeObj *outshp)
    * ------------------------------------------------------------------ */
   if( eGType == wkbPoint ) {
     ogrPointsAddPoint(line, OGR_G_GetX(hGeom, 0), OGR_G_GetY(hGeom, 0),
+#ifdef USE_POINT_Z_M
+                      OGR_G_GetZ(hGeom, 0),
+#endif
                       outshp->numlines-1, &(outshp->bounds));
   } else if( eGType == wkbLineString
              || eGType == wkbLinearRing ) {
     for(i=0; i<numpoints; i++)
       ogrPointsAddPoint(line, OGR_G_GetX(hGeom, i), OGR_G_GetY(hGeom, i),
+#ifdef USE_POINT_Z_M
+                        OGR_G_GetZ(hGeom, i),
+#endif
                         outshp->numlines-1, &(outshp->bounds));
   } else if( eGType == wkbMultiPoint ) {
     for(i=0; i<numpoints; i++) {
       OGRGeometryH hPoint = OGR_G_GetGeometryRef( hGeom, i );
       ogrPointsAddPoint(line, OGR_G_GetX(hPoint, 0), OGR_G_GetY(hPoint, 0),
+#ifdef USE_POINT_Z_M
+                        OGR_G_GetZ(hPoint, 0),
+#endif
                         outshp->numlines-1, &(outshp->bounds));
     }
   }
@@ -291,7 +303,11 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
     OGR_G_GetPoints(hGeom,
                     &(line.point[0].x), sizeof(pointObj),
                     &(line.point[0].y), sizeof(pointObj),
+#ifdef USE_POINT_Z_M
+                    &(line.point[0].z), sizeof(pointObj));
+#else
                     NULL, 0);
+#endif
 #endif
 
     for(j=0; j<numpoints; j++) {
@@ -322,6 +338,9 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
           line.point[line.numpoints-1].y != line.point[0].y  ) ) {
       line.point[line.numpoints].x = line.point[0].x;
       line.point[line.numpoints].y = line.point[0].y;
+#ifdef USE_POINT_Z_M
+      line.point[line.numpoints].z = line.point[0].z;
+#endif
       line.numpoints++;
     }
 
@@ -337,6 +356,27 @@ static int ogrGeomLine(OGRGeometryH hGeom, shapeObj *outshp,
   return(0);
 }
 
+/**********************************************************************
+ *                     ogrGetLinearGeometry()
+ *
+ * Fetch geometry from OGR feature. If using GDAL 2.0 or later, the geometry
+ * might be of curve type, so linearize it.
+ **********************************************************************/
+static OGRGeometryH ogrGetLinearGeometry(OGRFeatureH hFeature)
+{
+#if GDAL_VERSION_MAJOR >= 2
+    /* Convert in place and reassign to the feature */
+    OGRGeometryH hGeom = OGR_F_StealGeometry(hFeature);
+    if( hGeom != NULL )
+    {
+        hGeom = OGR_G_ForceTo(hGeom, OGR_GT_GetLinear(OGR_G_GetGeometryType(hGeom)), NULL);
+        OGR_F_SetGeometryDirectly(hFeature, hGeom);
+    }
+    return hGeom;
+#else
+    return OGR_F_GetGeometryRef( hFeature );
+#endif
+}
 
 /**********************************************************************
  *                     ogrConvertGeometry()
@@ -390,9 +430,8 @@ static int ogrConvertGeometry(OGRGeometryH hGeom, shapeObj *outshp,
         outshp->type = MS_SHAPE_NULL;  // Incompatible type for this layer
       break;
       /* ------------------------------------------------------------------
-       *      MS_ANNOTATION layer - return real feature type
+       *      Chart or Query layers - return real feature type
        * ------------------------------------------------------------------ */
-    case MS_LAYER_ANNOTATION:
     case MS_LAYER_CHART:
     case MS_LAYER_QUERY:
       switch( OGR_G_GetGeometryType( hGeom ) ) {
@@ -494,7 +533,19 @@ int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *psShape,
 #define MSOGR_LABELHCOLORINDEX     -119
 #define MSOGR_LABELOCOLORNAME      "OGR:LabelOColor"
 #define MSOGR_LABELOCOLORINDEX     -120
-
+// Special codes for the OGR style parameters
+#define MSOGR_LABELPARAMNAME       "OGR:LabelParam"
+#define MSOGR_LABELPARAMNAMELEN    14
+#define MSOGR_LABELPARAMINDEX      -500
+#define MSOGR_BRUSHPARAMNAME       "OGR:BrushParam"
+#define MSOGR_BRUSHPARAMNAMELEN    14
+#define MSOGR_BRUSHPARAMINDEX      -600
+#define MSOGR_PENPARAMNAME         "OGR:PenParam"
+#define MSOGR_PENPARAMNAMELEN      12
+#define MSOGR_PENPARAMINDEX        -700
+#define MSOGR_SYMBOLPARAMNAME      "OGR:SymbolParam"
+#define MSOGR_SYMBOLPARAMNAMELEN   15
+#define MSOGR_SYMBOLPARAMINDEX     -800
 
 /**********************************************************************
  *                     msOGRGetValues()
@@ -527,6 +578,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 
   OGRStyleMgrH  hStyleMgr = NULL;
   OGRStyleToolH hLabelStyle = NULL;
+  OGRStyleToolH hPenStyle = NULL;
+  OGRStyleToolH hBrushStyle = NULL;
+  OGRStyleToolH hSymbolStyle = NULL;
 
   int *itemindexes = (int*)layer->iteminfo;
 
@@ -539,17 +593,28 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
       if (!hStyleMgr) {
         hStyleMgr = OGR_SM_Create(NULL);
         OGR_SM_InitFromFeature(hStyleMgr, hFeature);
-        OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, 0, NULL);
-        if (hStylePart && OGR_ST_GetType(hStylePart) == OGRSTCLabel)
-          hLabelStyle = hStylePart;
-        else if (hStylePart) {
-          OGR_ST_Destroy(hStylePart);
-          hStylePart =  NULL;
+        int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+        for(int i=0; i<numParts; i++) {
+          OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
+          if (hStylePart) {
+            if (OGR_ST_GetType(hStylePart) == OGRSTCLabel && !hLabelStyle)
+              hLabelStyle = hStylePart;
+            else if (OGR_ST_GetType(hStylePart) == OGRSTCPen && !hPenStyle)
+              hPenStyle = hStylePart;
+            else if (OGR_ST_GetType(hStylePart) == OGRSTCBrush && !hBrushStyle)
+              hBrushStyle = hStylePart;
+            else if (OGR_ST_GetType(hStylePart) == OGRSTCSymbol && !hSymbolStyle)
+              hSymbolStyle = hStylePart;
+            else {
+              OGR_ST_Destroy(hStylePart);
+              hStylePart =  NULL;
+            }
+          }
+          /* Setting up the size units according to msOGRLayerGetAutoStyle*/
+          if (hStylePart && layer->map)
+            OGR_ST_SetUnit(hStylePart, OGRSTUPixel, 
+              layer->map->cellsize*layer->map->resolution/layer->map->defresolution*72.0*39.37);
         }
-
-        /* Setting up the size units according to msOGRLayerGetAutoStyle*/
-        if (hStylePart && layer->map)
-          OGR_ST_SetUnit(hStylePart, OGRSTUPixel, layer->map->cellsize*72.0*39.37);
       }
       int bDefault;
       if (itemindexes[i] == MSOGR_LABELTEXTINDEX) {
@@ -787,7 +852,63 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
           msDebug(MSOGR_LABELOCOLORNAME " = \"%s\"\n", values[i]);
       }
 #endif /* GDAL_VERSION_NUM >= 1600 */
+      else if (itemindexes[i] >= MSOGR_LABELPARAMINDEX) {
+        if (hLabelStyle == NULL
+            || ((pszValue = OGR_ST_GetParamStr(hLabelStyle,
+                                               itemindexes[i] - MSOGR_LABELPARAMINDEX,
+                                               &bDefault)) == NULL))
+          values[i] = msStrdup("");
+        else
+          values[i] = msStrdup(pszValue);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug(MSOGR_LABELPARAMNAME " = \"%s\"\n", values[i]);
+      }
+      else if (itemindexes[i] >= MSOGR_BRUSHPARAMINDEX) {
+        if (hBrushStyle == NULL
+            || ((pszValue = OGR_ST_GetParamStr(hBrushStyle,
+                                               itemindexes[i] - MSOGR_BRUSHPARAMINDEX,
+                                               &bDefault)) == NULL))
+          values[i] = msStrdup("");
+        else
+          values[i] = msStrdup(pszValue);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug(MSOGR_BRUSHPARAMNAME " = \"%s\"\n", values[i]);
+      }
+      else if (itemindexes[i] >= MSOGR_PENPARAMINDEX) {
+        if (hPenStyle == NULL
+            || ((pszValue = OGR_ST_GetParamStr(hPenStyle,
+                                               itemindexes[i] - MSOGR_PENPARAMINDEX,
+                                               &bDefault)) == NULL))
+          values[i] = msStrdup("");
+        else
+          values[i] = msStrdup(pszValue);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug(MSOGR_PENPARAMNAME " = \"%s\"\n", values[i]);
+      }
+      else if (itemindexes[i] >= MSOGR_SYMBOLPARAMINDEX) {
+        if (hSymbolStyle == NULL
+            || ((pszValue = OGR_ST_GetParamStr(hSymbolStyle,
+                                               itemindexes[i] - MSOGR_SYMBOLPARAMINDEX,
+                                               &bDefault)) == NULL))
+          values[i] = msStrdup("");
+        else
+          values[i] = msStrdup(pszValue);
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+          msDebug(MSOGR_SYMBOLPARAMNAME " = \"%s\"\n", values[i]);
+      }
       else {
+        msFreeCharArray(values,i);
+
+        OGR_SM_Destroy(hStyleMgr);
+        OGR_ST_Destroy(hLabelStyle);
+        OGR_ST_Destroy(hPenStyle);
+        OGR_ST_Destroy(hBrushStyle);
+        OGR_ST_Destroy(hSymbolStyle);
+
         msSetError(MS_OGRERR,"Invalid field index!?!","msOGRGetValues()");
         return(NULL);
       }
@@ -796,6 +917,9 @@ static char **msOGRGetValues(layerObj *layer, OGRFeatureH hFeature)
 
   OGR_SM_Destroy(hStyleMgr);
   OGR_ST_Destroy(hLabelStyle);
+  OGR_ST_Destroy(hPenStyle);
+  OGR_ST_Destroy(hBrushStyle);
+  OGR_ST_Destroy(hSymbolStyle);
 
   return(values);
 }
@@ -906,7 +1030,9 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
  * Open an OGR connection, and initialize a msOGRFileInfo.
  **********************************************************************/
 
+#ifdef USE_OGR
 static int bOGRDriversRegistered = MS_FALSE;
+#endif
 
 void msOGRInitialize(void)
 
@@ -1119,14 +1245,13 @@ msOGRFileOpen(layerObj *layer, const char *connection )
     return NULL;
   }
 
-  CPLFree( pszLayerDef );
-
   /* ------------------------------------------------------------------
    * OK... open succeded... alloc and fill msOGRFileInfo inside layer obj
    * ------------------------------------------------------------------ */
   msOGRFileInfo *psInfo =(msOGRFileInfo*)CPLCalloc(1,sizeof(msOGRFileInfo));
 
   psInfo->pszFname = CPLStrdup(OGR_DS_GetName( hDS ));
+  psInfo->pszLayerDef = pszLayerDef;
   psInfo->nLayerIndex = nLayerIndex;
   psInfo->hDS = hDS;
   psInfo->hLayer = hLayer;
@@ -1170,6 +1295,7 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
             psInfo->pszFname, psInfo->nLayerIndex);
 
   CPLFree(psInfo->pszFname);
+  CPLFree(psInfo->pszLayerDef);
 
   ACQUIRE_OGR_LOCK;
   if (psInfo->hLastFeature)
@@ -1183,7 +1309,6 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   // Make sure we aren't holding the lock when the callback may need it.
   RELEASE_OGR_LOCK;
   msConnPoolRelease( layer, psInfo->hDS );
-  ACQUIRE_OGR_LOCK;
 
   // Free current tile if there is one.
   if( psInfo->poCurTile != NULL )
@@ -1191,10 +1316,184 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
 
   CPLFree(psInfo);
 
-  RELEASE_OGR_LOCK;
-
   return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                           msOGREscapeSQLParam                        */
+/************************************************************************/
+static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
+{
+#ifdef USE_OGR
+  char* pszEscapedStr =NULL;
+  if(layer && pszString && strlen(pszString) > 0) {
+    char* pszEscapedOGRStr =  CPLEscapeString(pszString, strlen(pszString),
+                              CPLES_SQL );
+    pszEscapedStr = msStrdup(pszEscapedOGRStr);
+    CPLFree(pszEscapedOGRStr);
+  }
+  return pszEscapedStr;
+#else
+  /* ------------------------------------------------------------------
+   * OGR Support not included...
+   * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.",
+             "msOGREscapeSQLParam()");
+  return NULL;
+
+#endif /* USE_OGR */
+}
+
+#ifdef undef
+/**********************************************************************
+ *                     msOGRTranslateMsExpressionToOGRSQL()
+ *
+ * Tries to translate a mapserver expression to OGR SQL, and also
+ * try to extract spatial filter
+ **********************************************************************/
+static char* msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
+                                          expressionObj* psFilter,
+                                          rectObj* psRect)
+{
+    char* msSQLExpression = NULL;
+    rectObj sBBOX;
+    int sBBOXValid = MS_FALSE;
+    tokenListNodeObjPtr node = NULL;
+    char *stresc = NULL;
+    char *snippet = NULL;
+    const char* strtmpl = NULL;
+    int bIsIntersectRectangle = MS_FALSE;
+
+    node = psFilter->tokens;
+    while (node != NULL) {      
+
+      switch(node->token) {
+
+        /* literal tokens */
+
+        case MS_TOKEN_LITERAL_NUMBER:
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
+          sprintf(snippet, "%lf", node->tokenval.dblval);
+          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
+          msFree(snippet);
+          break;
+        case MS_TOKEN_LITERAL_STRING:
+          stresc = msOGREscapeSQLParam(layer, node->tokenval.strval);
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+          sprintf(snippet, "'%s'", stresc);
+          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
+          msFree(snippet);
+          msFree(stresc);
+          break;
+
+        case MS_TOKEN_BINDING_DOUBLE:
+        case MS_TOKEN_BINDING_INTEGER:
+        case MS_TOKEN_BINDING_STRING:
+          if(node->token == MS_TOKEN_BINDING_STRING || node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
+            strtmpl = "CAST(%s AS CHARACTER)"; /* explicit cast necessary for certain operators */
+          else
+            strtmpl = "%s";
+          stresc = msLayerEscapePropertyName(layer, node->tokenval.bindval.item);
+          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
+          sprintf(snippet, strtmpl, stresc);
+          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
+          msFree(snippet);
+          msFree(stresc);
+          break;
+
+    /* spatial comparison tokens */
+        case MS_TOKEN_COMPARISON_INTERSECTS:
+        {
+          shapeObj* shape;
+          if(node->next->token != '(') goto cleanup;
+          if(node->next->next->token != MS_TOKEN_BINDING_SHAPE) goto cleanup;
+          if(node->next->next->next->token != ',' ) goto cleanup;
+          if(node->next->next->next->next->token != MS_TOKEN_LITERAL_SHAPE ) goto cleanup;
+          if(node->next->next->next->next->next->token != ')' ) goto cleanup;
+          if(node->next->next->next->next->next->next->token != MS_TOKEN_COMPARISON_EQ ) goto cleanup;
+          if(node->next->next->next->next->next->next->next->token != MS_TOKEN_LITERAL_BOOLEAN ) goto cleanup;
+          if(node->next->next->next->next->next->next->next->tokenval.dblval != MS_TRUE) goto cleanup;
+
+          shape = node->next->next->next->next->tokenval.shpval;
+          memcpy(&sBBOX, &(shape->bounds), sizeof(rectObj));
+          sBBOXValid = TRUE;
+          
+          if( shape->type == MS_SHAPE_POLYGON &&
+              shape->numlines == 1 &&
+              shape->line[0].numpoints == 5 )
+          {
+              if( shape->line[0].point[0].x == shape->line[0].point[1].x &&
+                  shape->line[0].point[0].y == shape->line[0].point[3].y &&
+                  shape->line[0].point[2].x == shape->line[0].point[3].x &&
+                  shape->line[0].point[1].y == shape->line[0].point[2].y &&
+                  shape->line[0].point[0].x == shape->line[0].point[4].x &&
+                  shape->line[0].point[0].y == shape->line[0].point[4].y )
+              {
+                  bIsIntersectRectangle = MS_TRUE;
+              }
+          }
+
+          node = node->next->next->next->next->next->next->next;
+          if( node && node->next && node->next->token == MS_TOKEN_LOGICAL_AND )
+              node = node->next;
+
+          break;
+        }
+
+        case MS_TOKEN_COMPARISON_EQ:
+        case MS_TOKEN_COMPARISON_NE:
+        case MS_TOKEN_COMPARISON_GT:
+        case MS_TOKEN_COMPARISON_GE:
+        case MS_TOKEN_COMPARISON_LT:
+        case MS_TOKEN_COMPARISON_LE:
+        case MS_TOKEN_LOGICAL_AND:
+        case MS_TOKEN_LOGICAL_NOT:
+        case MS_TOKEN_LOGICAL_OR:
+        case '(':
+        case ')':
+            if( node->token == MS_TOKEN_LOGICAL_AND && node->next &&
+                node->next->token == MS_TOKEN_COMPARISON_INTERSECTS )
+                node = node->next;
+            else
+                msSQLExpression = msStringConcatenate(msSQLExpression, msExpressionTokenToString(node->token));
+            break;
+
+        default:
+          goto cleanup;
+          break;
+        }
+
+      node = node->next;
+  }
+  
+  if( !sBBOXValid || bIsIntersectRectangle )
+  {
+      /* We can translate completely the filter as a OGR expression, */
+      /* so no need for msEvalExpression() to do more work */
+
+      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("msOGRTranslateMsExpressionToOGRSQL: filter can be evaluated completely on OGR side\n");
+
+      msFree( layer->filter.native_string );
+      layer->filter.native_string = msStrdup(msSQLExpression);
+  }
+  
+  if( sBBOXValid )
+  {
+      psRect->minx = MS_MAX(psRect->minx, sBBOX.minx);
+      psRect->miny = MS_MAX(psRect->miny, sBBOX.miny);
+      psRect->maxx = MS_MIN(psRect->maxx, sBBOX.maxx);
+      psRect->maxy = MS_MAX(psRect->maxy, sBBOX.maxy);
+  }
+
+  return msSQLExpression;
+
+cleanup:
+  msFree(msSQLExpression);
+  return NULL;
+}
+#endif
 
 /**********************************************************************
  *                     msOGRFileWhichShapes()
@@ -1204,14 +1503,106 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
  * Returns MS_SUCCESS/MS_FAILURE, or MS_DONE if no shape matching the
  * layer's FILTER overlaps the selected region.
  **********************************************************************/
-static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
-                                msOGRFileInfo *psInfo )
+static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *psInfo)
 {
   if (psInfo == NULL || psInfo->hLayer == NULL) {
-    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!",
-               "msOGRFileWhichShapes()");
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", "msOGRFileWhichShapes()");
     return(MS_FAILURE);
   }
+    
+  char *pszOGRFilter = NULL;
+
+  /*
+  ** Build the OGR filter from two potential sources:
+  **   1) the NATIVE_FILTER processing option
+  **   2) a translated MapServer layer->filter (stored in layer->native_string)
+  */
+  if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, "(");
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
+    if(layer->filter.native_string) {
+      pszOGRFilter = msStringConcatenate(pszOGRFilter, "AND (");
+      pszOGRFilter = msStringConcatenate(pszOGRFilter, layer->filter.native_string);
+      pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
+    }
+  } else if(layer->filter.native_string) {
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, "(");
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, layer->filter.native_string);
+    pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
+  }
+
+  /* apply sortBy */
+  if( layer->sortBy.nProperties > 0 ) {
+    char* strOrderBy;
+    char* pszLayerDef = NULL;
+
+    strOrderBy = msLayerBuildSQLOrderBy(layer);
+
+    if( psInfo->nLayerIndex == -1 ) {
+      pszLayerDef = msStrdup(psInfo->pszLayerDef);
+      if( strcasestr(psInfo->pszLayerDef, " ORDER BY ") == NULL )
+        pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
+      else
+        pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+    } else {
+      const char* pszGeometryColumn;
+      int i;
+      pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT ");
+      for(i = 0; i < layer->numitems; i++) {
+        if( i > 0 )
+          pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        pszLayerDef = msStringConcatenate(pszLayerDef, layer->items[i]);
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+      }
+
+      pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
+      pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
+      if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' ) {
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+        pszLayerDef = msStringConcatenate(pszLayerDef, pszGeometryColumn);
+        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+      } else {
+        /* Add ", *" so that we still have an hope to get the geometry */
+        pszLayerDef = msStringConcatenate(pszLayerDef, "*");
+      }
+      pszLayerDef = msStringConcatenate(pszLayerDef, " FROM \"");
+      pszLayerDef = msStringConcatenate(pszLayerDef, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+      pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
+      if( pszOGRFilter != NULL ) {
+        pszLayerDef = msStringConcatenate(pszLayerDef, " WHERE ");
+        pszLayerDef = msStringConcatenate(pszLayerDef, pszOGRFilter);
+        msFree(pszOGRFilter);
+        pszOGRFilter = NULL;
+      }
+      pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
+    }
+
+    pszLayerDef = msStringConcatenate(pszLayerDef, strOrderBy);
+    msFree(strOrderBy);
+    strOrderBy = NULL;
+
+    if( layer->debug )
+      msDebug("msOGRFileWhichShapes: SQL = %s.\n", pszLayerDef);
+
+    /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
+    if( psInfo->nLayerIndex == -1 )
+      OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
+    psInfo->nLayerIndex = -1;
+
+    ACQUIRE_OGR_LOCK;
+    psInfo->hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszLayerDef, NULL, NULL );
+    RELEASE_OGR_LOCK;
+    if( psInfo->hLayer == NULL ) {
+      msSetError(MS_OGRERR, "ExecuteSQL(%s) failed.\n%s", "msOGRFileWhichShapes()", pszLayerDef, CPLGetLastErrorMsg());
+      msFree(pszLayerDef);
+      msFree(pszOGRFilter);
+      return MS_FAILURE;
+    }
+    msFree(pszLayerDef);
+  } /* end sort-by */
+
 
   /* ------------------------------------------------------------------
    * Set Spatial filter... this may result in no features being returned
@@ -1223,44 +1614,57 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
    * ------------------------------------------------------------------ */
   ACQUIRE_OGR_LOCK;
 
-  OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
-  OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
+  if (rect.minx == rect.maxx && rect.miny == rect.maxy) {
+    OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
 
-  OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
-  OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
-  OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
-  OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
-  OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+    OGR_G_SetPoint_2D( hSpatialFilterPoint, 0, rect.minx, rect.miny );    
+    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPoint );
+    OGR_G_DestroyGeometry( hSpatialFilterPoint );
+  } else if (rect.minx == rect.maxx || rect.miny == rect.maxy) {
+    OGRGeometryH hSpatialFilterLine = OGR_G_CreateGeometry( wkbLineString );
 
-  OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
+    OGR_G_AddPoint_2D( hSpatialFilterLine, rect.minx, rect.miny );
+    OGR_G_AddPoint_2D( hSpatialFilterLine, rect.maxx, rect.maxy );
+    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterLine );
+    OGR_G_DestroyGeometry( hSpatialFilterLine );
+  } else {
+    OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
+    OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
-  OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
-
-  OGR_G_DestroyGeometry( hSpatialFilterPolygon );
+    OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+    OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
+    OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
+    OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
+    OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+    OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
+    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
+    OGR_G_DestroyGeometry( hSpatialFilterPolygon );
+  }
 
   psInfo->rect = rect;
 
   if (layer->debug >= MS_DEBUGLEVEL_VVV)
-    msDebug("msOGRFileWhichShapes: Setting spatial filter to %f %f %f %f\n",
-            rect.minx, rect.miny, rect.maxx, rect.maxy );
+    msDebug("msOGRFileWhichShapes: Setting spatial filter to %f %f %f %f\n", rect.minx, rect.miny, rect.maxx, rect.maxy );
 
   /* ------------------------------------------------------------------
    * Apply an attribute filter if we have one prefixed with a WHERE
    * keyword in the filter string.  Otherwise, ensure the attribute
    * filter is clear.
    * ------------------------------------------------------------------ */
-  if( layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6) ) {
+  
+  if( pszOGRFilter != NULL ) {
+
+    if (layer->debug >= MS_DEBUGLEVEL_VVV)
+      msDebug("msOGRFileWhichShapes: Setting attribute filter to %s\n", pszOGRFilter );
+
     CPLErrorReset();
-    if( OGR_L_SetAttributeFilter( psInfo->hLayer, layer->filter.string+6 )
-        != OGRERR_NONE ) {
-      msSetError(MS_OGRERR,
-                 "SetAttributeFilter(%s) failed on layer %s.\n%s",
-                 "msOGRFileWhichShapes()",
-                 layer->filter.string+6, layer->name?layer->name:"(null)",
-                 CPLGetLastErrorMsg() );
+    if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter ) != OGRERR_NONE ) {
+      msSetError(MS_OGRERR, "SetAttributeFilter(%s) failed on layer %s.\n%s", "msOGRFileWhichShapes()", layer->filter.string+6, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
       RELEASE_OGR_LOCK;
+      msFree(pszOGRFilter);
       return MS_FAILURE;
     }
+    msFree(pszOGRFilter);
   } else
     OGR_L_SetAttributeFilter( psInfo->hLayer, NULL );
 
@@ -1484,29 +1888,24 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
       }
     }
 
-    // Check the expression unless it is a WHERE clause already
-    // handled by OGR.
-    if( (layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6))
-        || msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex) == MS_TRUE ) {
-      // Feature matched filter expression... process geometry
-      // shape->type will be set if geom is compatible with layer type
-      if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
-                             layer->type) == MS_SUCCESS) {
-        if (shape->type != MS_SHAPE_NULL)
-          break; // Shape is ready to be returned!
+    // Feature matched filter expression... process geometry
+    // shape->type will be set if geom is compatible with layer type
+    if (ogrConvertGeometry(ogrGetLinearGeometry( hFeature ), shape,
+                           layer->type) == MS_SUCCESS) {
+      if (shape->type != MS_SHAPE_NULL)
+        break; // Shape is ready to be returned!
 
-        if (layer->debug >= MS_DEBUGLEVEL_VVV)
-          msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %d, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
-                  OGR_F_GetFID( hFeature ), psInfo->nTileId,
-                  OGR_F_GetGeometryRef( hFeature )==NULL ? wkbFlatten(wkbUnknown):wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ),
-                  layer->type);
+      if (layer->debug >= MS_DEBUGLEVEL_VVV)
+        msDebug("msOGRFileNextShape: Rejecting feature (shapeid = %ld, tileid=%d) of incompatible type for this layer (feature wkbType %d, layer type %d)\n",
+                OGR_F_GetFID( hFeature ), psInfo->nTileId,
+                OGR_F_GetGeometryRef( hFeature )==NULL ? wkbFlatten(wkbUnknown):wkbFlatten( OGR_G_GetGeometryType( OGR_F_GetGeometryRef( hFeature ) ) ),
+                layer->type);
 
-      } else {
-        msFreeShape(shape);
-        OGR_F_Destroy( hFeature );
-        RELEASE_OGR_LOCK;
-        return MS_FAILURE; // Error message already produced.
-      }
+    } else {
+      msFreeShape(shape);
+      OGR_F_Destroy( hFeature );
+      RELEASE_OGR_LOCK;
+      return MS_FAILURE; // Error message already produced.
     }
 
     // Feature rejected... free shape to clear attributes values.
@@ -1519,7 +1918,7 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
   shape->tileindex = psInfo->nTileId;
 
   if (layer->debug >= MS_DEBUGLEVEL_VVV)
-    msDebug("msOGRFileNextShape: Returning shape=%d, tile=%d\n",
+    msDebug("msOGRFileNextShape: Returning shape=%ld, tile=%d\n",
             shape->index, shape->tileindex );
 
   // Keep ref. to last feature read in case we need style info.
@@ -1572,7 +1971,7 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
   /*      Support reading shape by offset within the current              */
   /*      resultset.                                                      */
   /* -------------------------------------------------------------------- */
-  else if( !record_is_fid ) {
+  else {
     ACQUIRE_OGR_LOCK;
     if( record <= psInfo->last_record_index_read
         || psInfo->last_record_index_read == -1 ) {
@@ -1598,7 +1997,7 @@ msOGRFileGetShape(layerObj *layer, shapeObj *shape, long record,
    * Handle shape geometry...
    * ------------------------------------------------------------------ */
   // shape->type will be set if geom is compatible with layer type
-  if (ogrConvertGeometry(OGR_F_GetGeometryRef( hFeature ), shape,
+  if (ogrConvertGeometry(ogrGetLinearGeometry( hFeature ), shape,
                          layer->type) != MS_SUCCESS) {
     RELEASE_OGR_LOCK;
     return MS_FAILURE; // Error message already produced.
@@ -1816,6 +2215,13 @@ int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection)
 
     if( layer->layerinfo == NULL )
       return MS_FAILURE;
+
+    if( layer->tilesrs != NULL ) {
+      msSetError(MS_OGRERR,
+                 "TILESRS not supported in vector layers.",
+                 "msOGRLayerOpen()");
+      return MS_FAILURE;
+    }
 
     // Identify TILEITEM
 
@@ -2122,13 +2528,25 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
     else if (EQUAL(layer->items[i], MSOGR_LABELOCOLORNAME))
       itemindexes[i] = MSOGR_LABELOCOLORINDEX;
 #endif /* GDAL_VERSION_NUM >= 1600 */
+    else if (EQUALN(layer->items[i], MSOGR_LABELPARAMNAME, MSOGR_LABELPARAMNAMELEN))
+        itemindexes[i] = MSOGR_LABELPARAMINDEX 
+                          + atoi(layer->items[i] + MSOGR_LABELPARAMNAMELEN);
+    else if (EQUALN(layer->items[i], MSOGR_BRUSHPARAMNAME, MSOGR_BRUSHPARAMNAMELEN))
+        itemindexes[i] = MSOGR_BRUSHPARAMINDEX 
+                          + atoi(layer->items[i] + MSOGR_BRUSHPARAMNAMELEN);
+    else if (EQUALN(layer->items[i], MSOGR_PENPARAMNAME, MSOGR_PENPARAMNAMELEN))
+        itemindexes[i] = MSOGR_PENPARAMINDEX 
+                          + atoi(layer->items[i] + MSOGR_PENPARAMNAMELEN);
+    else if (EQUALN(layer->items[i], MSOGR_SYMBOLPARAMNAME, MSOGR_SYMBOLPARAMNAMELEN))
+        itemindexes[i] = MSOGR_SYMBOLPARAMINDEX 
+                          + atoi(layer->items[i] + MSOGR_SYMBOLPARAMNAMELEN);
     else
       itemindexes[i] = OGR_FD_GetFieldIndex( hDefn, layer->items[i] );
     if(itemindexes[i] == -1) {
       msSetError(MS_OGRERR,
-                 (char*)CPLSPrintf("Invalid Field name: %s",
-                                   layer->items[i]),
-                 "msOGRLayerInitItemInfo()");
+                 "Invalid Field name: %s",
+                 "msOGRLayerInitItemInfo()",
+                 layer->items[i]);
       return(MS_FAILURE);
     }
   }
@@ -2212,9 +2630,7 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
     if( status != MS_SUCCESS )
       return status;
   } while( status == MS_SUCCESS );
-
-  return status;
-
+  return status; //make compiler happy. this is never reached however
 #else
   /* ------------------------------------------------------------------
    * OGR Support not included...
@@ -2376,6 +2792,55 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
 }
 #endif
 
+#ifdef USE_OGR
+
+static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
+                                      OGRStyleToolH hLabelStyle);
+static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
+                                    OGRStyleToolH hPenStyle, int bIsBrush, int* pbPriority);
+static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
+                                      OGRStyleToolH hBrushStyle, int* pbIsBrush, int* pbPriority);
+static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s,
+                                       OGRStyleToolH hSymbolStyle, int* pbPriority);
+
+static int msOGRUpdateStyleCheckPenBrushOnly(OGRStyleMgrH hStyleMgr)
+{
+  int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+  int countPen = 0, countBrush = 0;
+  int bIsNull;
+
+  for(int i=0; i<numParts; i++) {
+    OGRSTClassId eStylePartType;
+    OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
+    if (!hStylePart)
+      continue;
+
+    eStylePartType = OGR_ST_GetType(hStylePart);
+    if (eStylePartType == OGRSTCPen) {
+      countPen ++;
+      OGR_ST_GetParamNum(hStylePart, OGRSTPenPriority, &bIsNull);
+      if( !bIsNull ) {
+        OGR_ST_Destroy(hStylePart);
+        return MS_FALSE;
+      }
+    }
+    else if (eStylePartType == OGRSTCBrush) {
+      countBrush ++;
+      OGR_ST_GetParamNum(hStylePart, OGRSTBrushPriority, &bIsNull);
+      if( !bIsNull ) {
+        OGR_ST_Destroy(hStylePart);
+        return MS_FALSE;
+      }
+    }
+    else if (eStylePartType == OGRSTCSymbol) {
+      OGR_ST_Destroy(hStylePart);
+      return MS_FALSE;
+    }
+    OGR_ST_Destroy(hStylePart);
+  }
+  return (countPen == 1 && countBrush == 1);
+}
+
 /**********************************************************************
  *                     msOGRUpdateStyle()
  *
@@ -2384,25 +2849,48 @@ static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId,
  * msOGRUpdateStyleFromString
  **********************************************************************/
 
-#ifdef USE_OGR
+typedef struct
+{
+    int nPriority; /* the explicit priority as specified by the 'l' option of PEN, BRUSH and SYMBOL tools */
+    int nApparitionIndex; /* the index of the tool as parsed from the OGR feature style string */
+} StyleSortStruct;
+
+static int msOGRUpdateStyleSortFct(const void* pA, const void* pB)
+{
+    StyleSortStruct* sssa = (StyleSortStruct*)pA;
+    StyleSortStruct* sssb = (StyleSortStruct*)pB;
+    if( sssa->nPriority < sssb->nPriority )
+        return -1;
+    else if( sssa->nPriority > sssb->nPriority )
+        return 1;
+    else if( sssa->nApparitionIndex < sssb->nApparitionIndex )
+        return -1;
+    else
+        return 1;
+}
+
 static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer, classObj *c)
 {
-  GBool bIsNull, bIsBrush=MS_FALSE, bIsPen=MS_FALSE;
-  int r=0,g=0,b=0,t=0;
-  double dfTmp;
-  int try_addimage_if_notfound = MS_FALSE;
+  GBool bIsBrush=MS_FALSE;
   int numParts = OGR_SM_GetPartCount(hStyleMgr, NULL);
+  int nPriority;
+  int bIsPenBrushOnly = msOGRUpdateStyleCheckPenBrushOnly(hStyleMgr);
+  StyleSortStruct* pasSortStruct = (StyleSortStruct*) msSmallMalloc(sizeof(StyleSortStruct) * numParts);
+  int iSortStruct = 0;
+  int iBaseStyleIndex = c->numstyles;
+  int i;
 
   /* ------------------------------------------------------------------
    * Handle each part
    * ------------------------------------------------------------------ */
 
-  for(int i=0; i<numParts; i++) {
+  for(i=0; i<numParts; i++) {
     OGRSTClassId eStylePartType;
     OGRStyleToolH hStylePart = OGR_SM_GetPart(hStyleMgr, i, NULL);
     if (!hStylePart)
       continue;
     eStylePartType = OGR_ST_GetType(hStylePart);
+    nPriority = INT_MIN;
 
     // We want all size values returned in pixels.
     //
@@ -2414,10 +2902,104 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
     // as long as use the same assumptions everywhere)
     // That gives scale = cellsize*72*39.37
 
-    OGR_ST_SetUnit(hStylePart, OGRSTUPixel, map->cellsize*72.0*39.37);
+    OGR_ST_SetUnit(hStylePart, OGRSTUPixel, 
+      map->cellsize*map->resolution/map->defresolution*72.0*39.37);
 
-    if (eStylePartType == OGRSTCLabel && c->numlabels >= 1) {
-      OGRStyleToolH hLabelStyle = hStylePart;
+    if (eStylePartType == OGRSTCLabel) {
+      int ret = msOGRUpdateStyleParseLabel(map, layer, c, hStylePart);
+      if( ret != MS_SUCCESS ) {
+        OGR_ST_Destroy(hStylePart);
+        msFree(pasSortStruct);
+        return ret;
+      }
+    } else if (eStylePartType == OGRSTCPen) {
+      styleObj* s;
+      int nIndex;
+      if( bIsPenBrushOnly ) {
+        /* Historic behaviour when there is a PEN and BRUSH only */
+        if (bIsBrush || layer->type == MS_LAYER_POLYGON)
+            // This is a multipart symbology, so pen defn goes in the
+            // overlaysymbol params
+          nIndex = 1;
+        else
+          nIndex = 0;
+      }
+      else
+        nIndex = c->numstyles;
+
+      if (msMaybeAllocateClassStyle(c, nIndex)) {
+        OGR_ST_Destroy(hStylePart);
+        msFree(pasSortStruct);
+        return(MS_FAILURE);
+      }
+      s = c->styles[nIndex];
+
+      msOGRUpdateStyleParsePen(map, layer, s, hStylePart, bIsBrush, &nPriority);
+
+    } else if (eStylePartType == OGRSTCBrush) {
+      styleObj* s;
+      int nIndex = ( bIsPenBrushOnly ) ? 0 : c->numstyles;
+      /* We need 1 style */
+      if (msMaybeAllocateClassStyle(c, nIndex)) {
+        OGR_ST_Destroy(hStylePart);
+        msFree(pasSortStruct);
+        return(MS_FAILURE);
+      }
+      s = c->styles[nIndex];
+
+      msOGRUpdateStyleParseBrush(map, layer, s, hStylePart, &bIsBrush, &nPriority);
+
+    } else if (eStylePartType == OGRSTCSymbol) {
+      styleObj* s;
+      /* We need 1 style */
+      int nIndex = c->numstyles;
+      if (msMaybeAllocateClassStyle(c, nIndex)) {
+        OGR_ST_Destroy(hStylePart);
+        msFree(pasSortStruct);
+        return(MS_FAILURE);
+      }
+      s = c->styles[nIndex];
+
+      msOGRUpdateStyleParseSymbol(map, layer, s, hStylePart, &nPriority);
+    }
+
+    /* Memorize the explicit priority and apparition order of the parsed tool/style */
+    if( !bIsPenBrushOnly &&
+        (eStylePartType == OGRSTCPen || eStylePartType == OGRSTCBrush ||
+         eStylePartType == OGRSTCSymbol) ) {
+        pasSortStruct[iSortStruct].nPriority = nPriority;
+        pasSortStruct[iSortStruct].nApparitionIndex = iSortStruct;
+        iSortStruct++;
+    }
+
+    OGR_ST_Destroy(hStylePart);
+
+  }
+
+  if( iSortStruct > 1 && !bIsPenBrushOnly ) {
+      /* Compute style order based on their explicit priority and apparition order */
+      qsort(pasSortStruct, iSortStruct, sizeof(StyleSortStruct), msOGRUpdateStyleSortFct);
+
+      /* Now reorder styles in c->styles */
+      styleObj** ppsStyleTmp = (styleObj**)msSmallMalloc( iSortStruct * sizeof(styleObj*) );
+      memcpy( ppsStyleTmp, c->styles + iBaseStyleIndex, iSortStruct * sizeof(styleObj*) );
+      for( i = 0; i < iSortStruct; i++)
+      {
+          c->styles[iBaseStyleIndex + i] = ppsStyleTmp[pasSortStruct[i].nApparitionIndex];
+      }
+      msFree(ppsStyleTmp);
+  }
+  
+  msFree(pasSortStruct);
+  
+  return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
+                                      OGRStyleToolH hLabelStyle)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       // Enclose the text string inside quotes to make sure it is seen
       // as a string by the parser inside loadExpression(). (bug185)
@@ -2425,10 +3007,17 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       const char *labelTextString = OGR_ST_GetParamStr(hLabelStyle,
                                     OGRSTLabelTextString,
                                     &bIsNull);
-      char *escapedTextString = msStringEscape((char*)labelTextString);
-      msLoadExpressionString(&(c->text),
-                             (char*)CPLSPrintf("\"%s\"", escapedTextString));
-      free(escapedTextString);
+
+      if (c->numlabels == 0) {
+        /* allocate a new label object */
+        if(msGrowClassLabels(c) == NULL) 
+          return MS_FAILURE;
+        c->numlabels++;
+        initLabel(c->labels[0]);
+      }
+      msFreeExpression(&c->labels[0]->text);
+      c->labels[0]->text.type = MS_STRING;
+      c->labels[0]->text.string = msStrdup(labelTextString);
 
       c->labels[0]->angle = OGR_ST_GetParamDbl(hLabelStyle,
                             OGRSTLabelAngle, &bIsNull);
@@ -2522,23 +3111,27 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       const char *pszFontName = OGR_ST_GetParamStr(hLabelStyle,
                                 OGRSTLabelFontName,
                                 &bIsNull);
-      const char *pszName = CPLSPrintf("%s%s%s", pszFontName, pszBold, pszItalic);
+      /* replace spaces with hyphens to allow mapping to a valid hashtable entry*/
+      char* pszFontNameEscaped = NULL;
+      if (pszFontName != NULL) {
+          pszFontNameEscaped = strdup(pszFontName);
+          msReplaceChar(pszFontNameEscaped, ' ', '-');
+      }
+
+      const char *pszName = CPLSPrintf("%s%s%s", pszFontNameEscaped, pszBold, pszItalic);
       bool bFont = true;
 
-      if (pszFontName != NULL && !bIsNull && pszFontName[0] != '\0') {
+      if (pszFontNameEscaped != NULL && !bIsNull && pszFontNameEscaped[0] != '\0') {
         if (msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL) {
-          c->labels[0]->type = MS_TRUETYPE;
           c->labels[0]->font = msStrdup(pszName);
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** Using '%s' TTF font **\n", pszName);
-        } else if ( (strcmp(pszFontName,pszName) != 0) &&
-                    msLookupHashTable(&(map->fontset.fonts), (char*)pszFontName) != NULL) {
-          c->labels[0]->type = MS_TRUETYPE;
-          c->labels[0]->font = msStrdup(pszFontName);
+        } else if ( (strcmp(pszFontNameEscaped,pszName) != 0) &&
+                    msLookupHashTable(&(map->fontset.fonts), (char*)pszFontNameEscaped) != NULL) {
+          c->labels[0]->font = msStrdup(pszFontNameEscaped);
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
-            msDebug("** Using '%s' TTF font **\n", pszFontName);
+            msDebug("** Using '%s' TTF font **\n", pszFontNameEscaped);
         } else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL) {
-          c->labels[0]->type = MS_TRUETYPE;
           c->labels[0]->font = msStrdup("default");
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** Using 'default' TTF font **\n");
@@ -2546,28 +3139,41 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
           bFont = false;
       }
 
-      if (!bFont) {
-        c->labels[0]->type = MS_BITMAP;
-        c->labels[0]->size = MS_MEDIUM;
-        if (layer->debug >= MS_DEBUGLEVEL_VVV)
-          msDebug("** Using 'medium' BITMAP font **\n");
-      }
-    } else if (eStylePartType == OGRSTCPen) {
-      OGRStyleToolH hPenStyle = hStylePart;
-      bIsPen = TRUE;
+      msFree(pszFontNameEscaped);
 
-      const char *pszPenName = OGR_ST_GetParamStr(hPenStyle,
-                               OGRSTPenId,
-                               &bIsNull);
-      if (bIsNull) pszPenName = NULL;
+      if (!bFont) {
+        c->labels[0]->size = MS_MEDIUM;
+      }
+
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParsePen(mapObj *map, layerObj *layer, styleObj *s,
+                                    OGRStyleToolH hPenStyle, int bIsBrush,
+                                    int* pbPriority)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
+
+      const char *pszPenName, *pszPattern, *pszCap, *pszJoin;
       colorObj oPenColor;
       int nPenSymbol = 0;
       int nPenSize = 1;
       t =-1;
+      double pattern[MS_MAXPATTERNLENGTH];
+      int patternlength = 0;
+      int linecap = MS_CJC_DEFAULT_CAPS;
+      int linejoin = MS_CJC_DEFAULT_JOINS;
+      double offsetx = 0.0;
+      double offsety = 0.0;
 
       // Make sure pen is always initialized
       MS_INIT_COLOR(oPenColor, -1, -1, -1,255);
 
+      pszPenName = OGR_ST_GetParamStr(hPenStyle,
+                               OGRSTPenId,
+                               &bIsNull);
+      if (bIsNull) pszPenName = NULL;
       // Check for Pen Pattern "ogr-pen-1": the invisible pen
       // If that's what we have then set pen color to -1
       if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL) {
@@ -2593,64 +3199,135 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
                                         pszPenName, NULL, MS_FALSE);
         }
       }
+
       if (layer->debug >= MS_DEBUGLEVEL_VVV)
         msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
+
+      pszPattern = OGR_ST_GetParamStr(hPenStyle, OGRSTPenPattern, &bIsNull);
+      if (bIsNull) pszPattern = NULL;
+      if( pszPattern != NULL )
+      {
+          char** papszTokens = CSLTokenizeStringComplex(pszPattern, " ", FALSE, FALSE);
+          int nTokenCount = CSLCount(papszTokens);
+          int bValidFormat = TRUE;
+          if( nTokenCount >= 2 && nTokenCount <= MS_MAXPATTERNLENGTH)
+          {
+              for(int i=0;i<nTokenCount;i++)
+              {
+                  if( strlen(papszTokens[i]) > 2 &&
+                      strcmp(papszTokens[i] + strlen(papszTokens[i]) - 2, "px") == 0 )
+                  {
+                      pattern[patternlength++] = CPLAtof(papszTokens[i]);
+                  }
+                  else
+                  {
+                      bValidFormat = FALSE;
+                      patternlength = 0;
+                      break;
+                  }
+              }
+          }
+          else
+              bValidFormat = FALSE;
+          if( !bValidFormat && layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("Invalid/unhandled pen pattern format = %s\n", pszPattern);
+          CSLDestroy(papszTokens);
+      }
+      
+      pszCap = OGR_ST_GetParamStr(hPenStyle, OGRSTPenCap, &bIsNull);
+      if (bIsNull) pszCap = NULL;
+      if( pszCap != NULL )
+      {
+          /* Note: the default in OGR Feature style is BUTT, but the MapServer */
+          /* default is ROUND. Currently use MapServer default. */
+          if( strcmp(pszCap, "b") == 0 ) /* BUTT */
+              linecap = MS_CJC_BUTT;
+          else if( strcmp(pszCap, "r") == 0 ) /* ROUND */
+              linecap = MS_CJC_ROUND;
+          else if( strcmp(pszCap, "p") == 0 ) /* PROJECTING */
+              linecap = MS_CJC_SQUARE;
+          else if( layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("Invalid/unhandled pen cap = %s\n", pszCap);
+      }
+      
+      pszJoin = OGR_ST_GetParamStr(hPenStyle, OGRSTPenJoin, &bIsNull);
+      if (bIsNull) pszJoin = NULL;
+      if( pszJoin != NULL )
+      {
+          /* Note: the default in OGR Feature style is MITER, but the MapServer */
+          /* default is NONE. Currently use MapServer default. */
+          if( strcmp(pszJoin, "m") == 0 ) /* MITTER */
+              linejoin = MS_CJC_MITER;
+          else if( strcmp(pszJoin, "r") == 0 ) /* ROUND */
+              linejoin = MS_CJC_ROUND;
+          else if( strcmp(pszJoin, "b") == 0 ) /* BEVEL */
+              linejoin = MS_CJC_BEVEL;
+          else if( layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("Invalid/unhandled pen join = %s\n", pszJoin);
+      }
+
+      offsetx = OGR_ST_GetParamDbl(hPenStyle, OGRSTPenPerOffset, &bIsNull);
+      if( bIsNull ) offsetx = 0;
+      if( offsetx != 0.0 )
+      {
+          /* OGR feature style and MapServer conventions related to offset */
+          /* sign are the same : negative values for left of line, positive for */
+          /* right of line */
+          offsety = MS_STYLE_SINGLE_SIDED_OFFSET;
+      }
+
       if (bIsBrush || layer->type == MS_LAYER_POLYGON) {
         // This is a multipart symbology, so pen defn goes in the
         // overlaysymbol params
-        if (msMaybeAllocateClassStyle(c, 1)) {
-          OGR_ST_Destroy(hStylePart);
-          return(MS_FAILURE);
-        }
-
-        c->styles[1]->outlinecolor = oPenColor;
-        c->styles[1]->size = nPenSize;
-        c->styles[1]->symbol = nPenSymbol;
-        c->styles[1]->width = nPenSize;
+        s->outlinecolor = oPenColor;
       } else {
         // Single part symbology
-        if (msMaybeAllocateClassStyle(c, 0)) {
-          OGR_ST_Destroy(hStylePart);
-          return(MS_FAILURE);
-        }
-
-        if(layer->type == MS_LAYER_POLYGON)
-          c->styles[0]->outlinecolor = c->styles[0]->color =
-                                         oPenColor;
-        else
-          c->styles[0]->color = oPenColor;
-        c->styles[0]->symbol = nPenSymbol;
-        c->styles[0]->size = nPenSize;
-        c->styles[0]->width = nPenSize;
+        s->color = oPenColor;
       }
 
-    } else if (eStylePartType == OGRSTCBrush) {
-      OGRStyleToolH hBrushStyle = hStylePart;
+      s->symbol = nPenSymbol;
+      s->size = nPenSize;
+      s->width = nPenSize;
+      s->linecap = linecap;
+      s->linejoin = linejoin;
+      s->offsetx = offsetx;
+      s->offsety = offsety;
+      s->patternlength = patternlength;
+      if( patternlength > 0 )
+          memcpy(s->pattern, pattern, sizeof(double) * patternlength);
+
+      int nPriority = OGR_ST_GetParamNum(hPenStyle, OGRSTPenPriority, &bIsNull);
+      if( !bIsNull )
+          *pbPriority = nPriority;
+
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseBrush(mapObj *map, layerObj *layer, styleObj *s,
+                                      OGRStyleToolH hBrushStyle, int* pbIsBrush,
+                                      int* pbPriority)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       const char *pszBrushName = OGR_ST_GetParamStr(hBrushStyle,
                                  OGRSTBrushId,
                                  &bIsNull);
       if (bIsNull) pszBrushName = NULL;
 
-      /* We need 1 style */
-      if (msMaybeAllocateClassStyle(c, 0)) {
-        OGR_ST_Destroy(hStylePart);
-        return(MS_FAILURE);
-      }
-
       // Check for Brush Pattern "ogr-brush-1": the invisible fill
       // If that's what we have then set fill color to -1
       if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL) {
-        MS_INIT_COLOR(c->styles[0]->color, -1, -1, -1, 255);
+        MS_INIT_COLOR(s->color, -1, -1, -1, 255);
       } else {
-        bIsBrush = TRUE;
+        *pbIsBrush = TRUE;
         const char *pszColor = OGR_ST_GetParamStr(hBrushStyle,
                                OGRSTBrushFColor,
                                &bIsNull);
         if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle,
                                                 pszColor,
                                                 &r, &g, &b, &t)) {
-          MS_INIT_COLOR(c->styles[0]->color, r, g, b, t);
+          MS_INIT_COLOR(s->color, r, g, b, t);
 
           if (layer->debug >= MS_DEBUGLEVEL_VVV)
             msDebug("** BRUSH COLOR = %d %d %d **\n", r,g,b);
@@ -2661,7 +3338,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         if (!bIsNull && OGR_ST_GetRGBFromString(hBrushStyle,
                                                 pszColor,
                                                 &r, &g, &b, &t)) {
-          MS_INIT_COLOR(c->styles[0]->backgroundcolor, r, g, b, t);
+          MS_INIT_COLOR(s->backgroundcolor, r, g, b, t);
         }
 
         // Symbol name mapping:
@@ -2672,17 +3349,44 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
         const char *pszName = OGR_ST_GetParamStr(hBrushStyle,
                               OGRSTBrushId,
                               &bIsNull);
-        c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
+        s->symbol = msOGRGetSymbolId(&(map->symbolset),
                                                 pszName, NULL, MS_FALSE);
-      }
-    } else if (eStylePartType == OGRSTCSymbol) {
-      OGRStyleToolH hSymbolStyle = hStylePart;
 
-      /* We need 1 style */
-      if (msMaybeAllocateClassStyle(c, 0)) {
-        OGR_ST_Destroy(hStylePart);
-        return(MS_FAILURE);
+        double angle = OGR_ST_GetParamDbl(hBrushStyle, OGRSTBrushAngle, &bIsNull);
+        if( !bIsNull )
+            s->angle = angle;
+        
+        double size = OGR_ST_GetParamDbl(hBrushStyle, OGRSTBrushSize, &bIsNull);
+        if( !bIsNull )
+            s->size = size;
+        
+        double spacingx = OGR_ST_GetParamDbl(hBrushStyle, OGRSTBrushDx, &bIsNull);
+        if( !bIsNull )
+        {
+            double spacingy = OGR_ST_GetParamDbl(hBrushStyle, OGRSTBrushDy, &bIsNull);
+            if( !bIsNull )
+            {
+                if( spacingx == spacingy )
+                    s->gap = spacingx;
+                else if( layer->debug >= MS_DEBUGLEVEL_VVV )
+                    msDebug("Ignoring brush dx and dy since they don't have the same value\n");
+            }
+        }
       }
+
+      int nPriority = OGR_ST_GetParamNum(hBrushStyle, OGRSTBrushPriority, &bIsNull);
+      if( !bIsNull )
+          *pbPriority = nPriority;
+
+      return MS_SUCCESS;
+}
+
+static int msOGRUpdateStyleParseSymbol(mapObj *map, layerObj *layer, styleObj *s,
+                                       OGRStyleToolH hSymbolStyle,
+                                       int* pbPriority)
+{
+  GBool bIsNull;
+  int r=0,g=0,b=0,t=0;
 
       const char *pszColor = OGR_ST_GetParamStr(hSymbolStyle,
                              OGRSTSymbolColor,
@@ -2690,7 +3394,7 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle,
                                               pszColor,
                                               &r, &g, &b, &t)) {
-        MS_INIT_COLOR(c->styles[0]->color, r, g, b, t);
+        MS_INIT_COLOR(s->color, r, g, b, t);
       }
 
 #if GDAL_VERSION_NUM >= 1600
@@ -2700,15 +3404,15 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (!bIsNull && OGR_ST_GetRGBFromString(hSymbolStyle,
                                               pszColor,
                                               &r, &g, &b, &t)) {
-        MS_INIT_COLOR(c->styles[0]->outlinecolor, r, g, b, t);
+        MS_INIT_COLOR(s->outlinecolor, r, g, b, t);
       }
 #endif /* GDAL_VERSION_NUM >= 1600 */
-      c->styles[0]->angle = OGR_ST_GetParamNum(hSymbolStyle,
+      s->angle = OGR_ST_GetParamNum(hSymbolStyle,
                             OGRSTSymbolAngle,
                             &bIsNull);
-      dfTmp = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolSize, &bIsNull);
+      double dfTmp = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolSize, &bIsNull);
       if (!bIsNull)
-        c->styles[0]->size = dfTmp;
+        s->size = dfTmp;
 
       // Symbol name mapping:
       // First look for the native symbol name, then the ogr-...
@@ -2720,22 +3424,23 @@ static int msOGRUpdateStyle(OGRStyleMgrH hStyleMgr, mapObj *map, layerObj *layer
       if (bIsNull)
         pszName = NULL;
 
-      try_addimage_if_notfound = MS_FALSE;
+      int try_addimage_if_notfound = MS_FALSE;
 #ifdef USE_CURL
       if (pszName && strncasecmp(pszName, "http", 4) == 0)
         try_addimage_if_notfound =MS_TRUE;
 #endif
-      if (!c->styles[0]->symbolname)
-        c->styles[0]->symbol = msOGRGetSymbolId(&(map->symbolset),
+      if (!s->symbolname)
+        s->symbol = msOGRGetSymbolId(&(map->symbolset),
                                                 pszName,
                                                 "default-marker",  try_addimage_if_notfound);
-    }
 
-    OGR_ST_Destroy(hStylePart);
+      int nPriority = OGR_ST_GetParamNum(hSymbolStyle, OGRSTSymbolPriority, &bIsNull);
+      if( !bIsNull )
+          *pbPriority = nPriority;
 
-  }
-  return MS_SUCCESS;
+      return MS_SUCCESS;
 }
+
 #endif /* USE_OGR */
 
 
@@ -2891,38 +3596,11 @@ void msOGRCleanup( void )
 /************************************************************************/
 /*                           msOGREscapeSQLParam                        */
 /************************************************************************/
-char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
-{
-  char* pszEscapedStr =NULL;
-#ifdef USE_OGR
-  if(layer && pszString && strlen(pszString) > 0) {
-    char* pszEscapedOGRStr =  CPLEscapeString(pszString, strlen(pszString),
-                              CPLES_SQL );
-    pszEscapedStr = msStrdup(pszEscapedOGRStr);
-    CPLFree(pszEscapedOGRStr);
-  }
-  return pszEscapedStr;
-#else
-  /* ------------------------------------------------------------------
-   * OGR Support not included...
-   * ------------------------------------------------------------------ */
-
-  msSetError(MS_MISCERR, "OGR support is not available.",
-             "msOGREscapeSQLParam()");
-  return NULL;
-
-#endif /* USE_OGR */
-}
-
-
-/************************************************************************/
-/*                           msOGREscapeSQLParam                        */
-/************************************************************************/
 char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 {
+#ifdef USE_OGR
   char* pszEscapedStr =NULL;
   int i =0;
-#ifdef USE_OGR
   if(layer && pszString && strlen(pszString) > 0) {
     unsigned char ch;
     for(i=0; (ch = ((unsigned char*)pszString)[i]) != '\0'; i++) {
@@ -2944,15 +3622,23 @@ char *msOGREscapePropertyName(layerObj *layer, const char *pszString)
 
 #endif /* USE_OGR */
 }
+
+static int msOGRLayerSupportsCommonFilters(layerObj *layer)
+{
+  return MS_FALSE;
+}
+
 /************************************************************************/
 /*                  msOGRLayerInitializeVirtualTable()                  */
 /************************************************************************/
-int
-msOGRLayerInitializeVirtualTable(layerObj *layer)
+int msOGRLayerInitializeVirtualTable(layerObj *layer)
 {
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 
+  /* layer->vtable->LayerTranslateFilter, use default */
+
+  layer->vtable->LayerSupportsCommonFilters = msOGRLayerSupportsCommonFilters;
   layer->vtable->LayerInitItemInfo = msOGRLayerInitItemInfo;
   layer->vtable->LayerFreeItemInfo = msOGRLayerFreeItemInfo;
   layer->vtable->LayerOpen = msOGRLayerOpenVT;

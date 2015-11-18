@@ -28,14 +28,14 @@
  ****************************************************************************/
 
 #include "mapserver.h"
-#include "png.h"
-#include "setjmp.h"
+#include <png.h>
+#include <setjmp.h>
 #include <assert.h>
-#include "jpeglib.h"
+#include <jpeglib.h>
 #include <stdlib.h>
 
 #ifdef USE_GIF
-#include "gif_lib.h"
+#include <gif_lib.h>
 #endif
 
 
@@ -127,17 +127,50 @@ int jpeg_buffer_empty_output_buffer (j_compress_ptr cinfo)
   return TRUE;
 }
 
+static void msJPEGErrorExit(j_common_ptr cinfo)
+{
+    jmp_buf* pJmpBuffer = (jmp_buf* ) cinfo->client_data;
+    char buffer[JMSG_LENGTH_MAX];
 
-int saveAsJPEG(mapObj *map /*not used*/, rasterBufferObj *rb, streamInfo *info,
+    /* Create the message */
+    (*cinfo->err->format_message) (cinfo, buffer);
+
+    msSetError(MS_MISCERR,"libjpeg: %s","jpeg_ErrorExit()", buffer);
+
+    /* Return control to the setjmp point */
+    longjmp(*pJmpBuffer, 1);
+}
+
+int saveAsJPEG(mapObj *map, rasterBufferObj *rb, streamInfo *info,
                outputFormatObj *format)
 {
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
-  int quality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
+  int quality;
+  const char* pszOptimized;
+  int optimized;
+  int arithmetic;
   ms_destination_mgr *dest;
-  JSAMPLE *rowdata;
+  JSAMPLE *rowdata = NULL;
   unsigned int row;
+  jmp_buf setjmp_buffer;
+  
+  quality = atoi(msGetOutputFormatOption( format, "QUALITY", "75"));
+  pszOptimized = msGetOutputFormatOption( format, "OPTIMIZED", "YES");
+  optimized = EQUAL(pszOptimized, "YES") || EQUAL(pszOptimized, "ON") ||
+              EQUAL(pszOptimized, "TRUE");
+  arithmetic = EQUAL(pszOptimized, "ARITHMETIC");
+
+  if (setjmp(setjmp_buffer)) 
+  {
+     jpeg_destroy_compress(&cinfo);
+     free(rowdata);
+     return MS_FAILURE;
+  }
+
   cinfo.err = jpeg_std_error(&jerr);
+  jerr.error_exit = msJPEGErrorExit;
+  cinfo.client_data = (void *) &(setjmp_buffer);
   jpeg_create_compress(&cinfo);
 
   if (cinfo.dest == NULL) {
@@ -167,9 +200,23 @@ int saveAsJPEG(mapObj *map /*not used*/, rasterBufferObj *rb, streamInfo *info,
   cinfo.in_color_space = JCS_RGB;
   jpeg_set_defaults(&cinfo);
   jpeg_set_quality(&cinfo, quality, TRUE);
-  jpeg_start_compress(&cinfo, TRUE);
+  if( arithmetic )
+    cinfo.arith_code = TRUE;
+  else if( optimized )
+    cinfo.optimize_coding = TRUE;
 
+  if( arithmetic || optimized ) {
+    if (map == NULL || msGetConfigOption(map, "JPEGMEM") == NULL) {
+      /* If the user doesn't provide a value for JPEGMEM, we want to be sure */
+      /* that at least the image size will be used before creating the temporary file */
+      cinfo.mem->max_memory_to_use =
+        MAX(cinfo.mem->max_memory_to_use, cinfo.input_components * rb->width * rb->height);
+    }
+  }
+
+  jpeg_start_compress(&cinfo, TRUE);
   rowdata = (JSAMPLE*)malloc(rb->width*cinfo.input_components*sizeof(JSAMPLE));
+
   for(row=0; row<rb->height; row++) {
     JSAMPLE *pixptr = rowdata;
     int col;
@@ -344,11 +391,13 @@ int readPalette(const char *palette, rgbaPixel *entries, unsigned int *nEntries,
       continue; /* skip comments and blank lines */
     if(!useAlpha) {
       if(3 != sscanf(buffer,"%d,%d,%d\n",&r,&g,&b)) {
+        fclose(stream);
         msSetError(MS_MISCERR,"failed to parse color %d r,g,b triplet in line \"%s\" from file %s","readPalette()",*nEntries+1,buffer,palette);
         return MS_FAILURE;
       }
     } else {
       if(4 != sscanf(buffer,"%d,%d,%d,%d\n",&r,&g,&b,&a)) {
+        fclose(stream);
         msSetError(MS_MISCERR,"failed to parse color %d r,g,b,a quadruplet in line \"%s\" from file %s","readPalette()",*nEntries+1,buffer,palette);
         return MS_FAILURE;
       }
@@ -554,181 +603,9 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
 #endif /* SEEK_SET */
 
 
-
-#ifdef USE_GD
-/* #include <math.h> */
-/* #include <string.h> */
-/* #include <stdlib.h> */
-#include "gd.h"
-
-/* this is used for creating images in main memory */
-
-typedef struct fileIOCtx {
-  gdIOCtx ctx;
-  FILE *f;
-}
-fileIOCtx;
-
-static void msFreeFileCtx (gdIOCtx * ctx)
-{
-  free(ctx);
-}
-
-static int filePutbuf (gdIOCtx * ctx, const void *buf, int size)
-{
-  fileIOCtx *fctx;
-  fctx = (fileIOCtx *) ctx;
-
-  return fwrite (buf, 1, size, fctx->f);
-}
-
-static int fileGetbuf (gdIOCtx * ctx, void *buf, int size)
-{
-  fileIOCtx *fctx;
-  fctx = (fileIOCtx *) ctx;
-
-  return (msIO_fread (buf, 1, size, fctx->f));
-
-}
-
-static void filePutchar (gdIOCtx * ctx, int a)
-{
-  unsigned char b;
-  fileIOCtx *fctx;
-  fctx = (fileIOCtx *) ctx;
-
-  b = a;
-
-  putc (b, fctx->f);
-}
-
-static int fileGetchar (gdIOCtx * ctx)
-{
-  fileIOCtx *fctx;
-  fctx = (fileIOCtx *) ctx;
-
-  return getc (fctx->f);
-}
-
-
-static int fileSeek (struct gdIOCtx *ctx, const int pos)
-{
-  fileIOCtx *fctx;
-  fctx = (fileIOCtx *) ctx;
-  return (fseek (fctx->f, pos, SEEK_SET) == 0);
-}
-
-static long fileTell (struct gdIOCtx *ctx)
-{
-  fileIOCtx *fctx;
-  fctx = (fileIOCtx *) ctx;
-
-  return ftell (fctx->f);
-}
-
-/* return data as a dynamic pointer */
-gdIOCtx *msNewGDFileCtx (FILE * f)
-{
-  fileIOCtx *ctx;
-
-  ctx = (fileIOCtx *) malloc (sizeof (fileIOCtx));
-  if (ctx == NULL) {
-    return NULL;
-  }
-
-  ctx->f = f;
-
-  ctx->ctx.getC = fileGetchar;
-  ctx->ctx.putC = filePutchar;
-
-  ctx->ctx.getBuf = fileGetbuf;
-  ctx->ctx.putBuf = filePutbuf;
-
-  ctx->ctx.tell = fileTell;
-  ctx->ctx.seek = fileSeek;
-
-  ctx->ctx.gd_free = msFreeFileCtx;
-
-  return (gdIOCtx *) ctx;
-}
-
-static const unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
-
-int msLoadGDRasterBufferFromFile(char *path, rasterBufferObj *rb)
-{
-  FILE *stream;
-  char bytes[8];
-  gdImagePtr img = NULL;
-  stream = fopen(path,"rb");
-  if(!stream) {
-    msSetError(MS_MISCERR, "unable to open file %s for reading", "loadGDImg()", path);
-    return MS_FAILURE;
-  }
-  if(1 != fread(bytes,8,1,stream)) { /* read some bytes to try and identify the file */
-    msSetError(MS_MISCERR, "Unable to read header from image file %s", "msLoadGDRasterBufferFromFile()",path);
-    return MS_FAILURE;
-  }
-  rewind(stream); /* reset the image for the readers */
-  if(memcmp(bytes,"GIF8",4)==0) {
-#ifdef USE_GD_GIF
-    gdIOCtx *ctx;
-    ctx = msNewGDFileCtx(stream);
-    img = gdImageCreateFromGifCtx(ctx);
-    ctx->gd_free(ctx);
-#else
-    msSetError(MS_MISCERR, "Unable to load GIF symbol.", "msLoadGDRasterBufferFromFile()");
-    return MS_FAILURE;
-#endif
-  } else if (memcmp(bytes,PNGsig,8)==0) {
-#ifdef USE_GD_PNG
-    gdIOCtx *ctx;
-    ctx = msNewGDFileCtx(stream);
-    img = gdImageCreateFromPngCtx(ctx);
-    ctx->gd_free(ctx);
-#else
-    msSetError(MS_MISCERR, "Unable to load PNG symbol.", "msLoadGDRasterBufferFromFile()");
-    return MS_FAILURE;
-#endif
-  }
-
-  fclose(stream);
-
-  if(!img) {
-    msSetError(MS_GDERR, NULL, "loadGDImg()");
-    rb->type = MS_BUFFER_NONE;
-    return MS_FAILURE;
-  }
-  if(gdImageTrueColor(img)) {
-    int x,y;
-    gdImagePtr pimg = gdImageCreate(gdImageSX(img),gdImageSY(img));
-    gdImageColorAllocateAlpha(pimg,0,0,0,127);
-    for(y = 0 ; y < gdImageSY(img); y++) {
-      for(x = 0; x < gdImageSX(img); x++) {
-        int pix = gdImageGetTrueColorPixel(img,x,y);
-        if(gdTrueColorGetAlpha(pix) == 127) {
-          gdImageSetPixel(pimg,x,y,0);
-          pimg->transparent = 0;
-        } else {
-          gdImageSetPixel(pimg,x,y,gdImageColorResolveAlpha(pimg,gdTrueColorGetRed(pix),gdTrueColorGetGreen(pix),
-                          gdTrueColorGetBlue(pix),gdTrueColorGetAlpha(pix)));
-        }
-
-      }
-    }
-    gdImageDestroy(img);
-    img = pimg;
-  }
-  rb->type = MS_BUFFER_GD;
-  rb->width = gdImageSX(img);
-  rb->height = gdImageSY(img);
-  rb->data.gd_img = img;
-  return MS_SUCCESS;
-}
-#endif
-
 int readPNG(char *path, rasterBufferObj *rb)
 {
-  png_uint_32 width,height,row_bytes;
+  png_uint_32 width,height;
   unsigned char *a,*r,*g,*b;
   int bit_depth,color_type,i;
   unsigned char **row_pointers;
@@ -741,17 +618,21 @@ int readPNG(char *path, rasterBufferObj *rb)
 
   /* could pass pointers to user-defined error handlers instead of NULLs: */
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  if (!png_ptr)
+  if (!png_ptr) {
+    fclose(stream);
     return MS_FAILURE;   /* out of memory */
+  }
 
   info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     png_destroy_read_struct(&png_ptr, NULL, NULL);
+    fclose(stream);
     return MS_FAILURE;   /* out of memory */
   }
 
   if(setjmp(png_jmpbuf(png_ptr))) {
     png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
+    fclose(stream);
     return MS_FAILURE;
   }
 
@@ -800,8 +681,7 @@ int readPNG(char *path, rasterBufferObj *rb)
     png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
 
   png_read_update_info(png_ptr, info_ptr);
-  row_bytes = png_get_rowbytes(png_ptr, info_ptr);
-  assert(row_bytes == rb->data.rgba.row_step);
+  assert(png_get_rowbytes(png_ptr, info_ptr) == rb->data.rgba.row_step);
 
   png_read_image(png_ptr, row_pointers);
   free(row_pointers);
@@ -831,127 +711,9 @@ int readPNG(char *path, rasterBufferObj *rb)
 
 }
 
-#ifdef USE_GD
-int saveGdImage(gdImagePtr ip, FILE *fp, outputFormatObj *format)
-{
-  gdIOCtx *ctx = NULL;
-
-  if (fp && (fp == stdout))
-    ctx = msIO_getGDIOCtx( fp );
-
-  if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
-    gdImageInterlace(ip, 1);
-
-  if(format->transparent)
-    gdImageColorTransparent(ip, 0);
-
-  if(strcasestr(format->driver, "/gif")) {
-#ifdef USE_GD_GIF
-    if (ctx)
-      gdImageGifCtx(ip, ctx);
-    else
-      gdImageGif(ip, fp);
-#else
-    msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
-    return(MS_FAILURE);
-#endif
-  } else if(strcasestr(format->driver, "/png")) {
-#ifdef USE_GD_PNG
-    if (ctx)
-      gdImagePngCtx(ip, ctx);
-    else
-      gdImagePng(ip, fp);
-#else
-    msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
-    return(MS_FAILURE);
-#endif
-  } else if(strcasestr(format->driver, "/jpeg")) {
-#ifdef USE_GD_JPEG
-    if (ctx)
-      gdImageJpegCtx(ip, ctx, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
-    else
-      gdImageJpeg(ip, fp, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
-#else
-    msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageGD()");
-    return(MS_FAILURE);
-#endif
-  } else {
-    msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageGD()");
-    return(MS_FAILURE);
-  }
-  msFree(ctx);
-
-  return MS_SUCCESS;
-}
-
-int saveGdImageBuffer(gdImagePtr ip, bufferObj *buffer, outputFormatObj *format)
-{
-  gdIOCtx *ctx;
-  int tmp_size;
-
-  ctx = gdNewDynamicCtx (2048, NULL);
-
-  if( format->imagemode == MS_IMAGEMODE_RGBA )
-    gdImageSaveAlpha( ip, 1 );
-  else if( format->imagemode == MS_IMAGEMODE_RGB )
-    gdImageSaveAlpha( ip, 0 );
-
-  if(strcasecmp("ON", msGetOutputFormatOption(format, "INTERLACE", "ON")) == 0)
-    gdImageInterlace(ip, 1);
-
-  if(format->transparent)
-    gdImageColorTransparent(ip, 0);
-
-  if(strcasestr(format->driver, "/gif")) {
-#ifdef USE_GD_GIF
-    gdImageGifCtx( ip, ctx );
-#else
-    msSetError(MS_MISCERR, "GIF output is not available.", "saveImageGD()");
-    ctx->gd_free(ctx);
-    return(MS_FAILURE);
-#endif
-  } else if(strcasestr(format->driver, "/png")) {
-#ifdef USE_GD_PNG
-    gdImagePngCtx(ip, ctx);
-#else
-    msSetError(MS_MISCERR, "PNG output is not available.", "saveImageGD()");
-    ctx->gd_free(ctx);
-    return(MS_FAILURE);
-#endif
-  } else if(strcasestr(format->driver, "/jpeg")) {
-#ifdef USE_GD_JPEG
-    gdImageJpegCtx(ip, ctx, atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
-#else
-    msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageGD()");
-    ctx->gd_free(ctx);
-    return(MS_FAILURE);
-#endif
-  } else {
-    msSetError(MS_MISCERR, "Unknown or unsupported format.", "saveImageGD()");
-    ctx->gd_free(ctx);
-    return(MS_FAILURE);
-  }
-
-  /* gdDPExtractData expects a int*, but bufferObj::size is a size_t */
-  /* so use a temp variable to hold it */
-  buffer->data = gdDPExtractData (ctx, &tmp_size);
-  buffer->size = tmp_size;
-
-  ctx->gd_free(ctx);
-  return MS_SUCCESS;
-}
-#endif
-
 int msSaveRasterBuffer(mapObj *map, rasterBufferObj *rb, FILE *stream,
                        outputFormatObj *format)
 {
-#ifdef USE_GD
-  if(rb->type == MS_BUFFER_GD) {
-    return saveGdImage(rb->data.gd_img, stream, format);
-  }
-#else
-  assert(rb->type != MS_BUFFER_GD);
-#endif
   if(strcasestr(format->driver,"/png")) {
     streamInfo info;
     info.fp = stream;
@@ -962,6 +724,7 @@ int msSaveRasterBuffer(mapObj *map, rasterBufferObj *rb, FILE *stream,
     streamInfo info;
     info.fp = stream;
     info.buffer=NULL;
+    
     return saveAsJPEG(map, rb,&info,format);
   } else {
     msSetError(MS_MISCERR,"unsupported image format\n", "msSaveRasterBuffer()");
@@ -972,13 +735,6 @@ int msSaveRasterBuffer(mapObj *map, rasterBufferObj *rb, FILE *stream,
 int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer,
                                outputFormatObj *format)
 {
-#ifdef USE_GD
-  if(data->type == MS_BUFFER_GD) {
-    return saveGdImageBuffer(data->data.gd_img, buffer, format);
-  }
-#else
-  assert(data->type != MS_BUFFER_GD);
-#endif
   if(strcasestr(format->driver,"/png")) {
     streamInfo info;
     info.fp = NULL;
@@ -994,12 +750,19 @@ int msSaveRasterBufferToBuffer(rasterBufferObj *data, bufferObj *buffer,
     return MS_FAILURE;
   }
 }
+
 #ifdef USE_GIF
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+static char const *gif_error_msg(int code)
+#else
 static char const *gif_error_msg()
+#endif
 {
   static char msg[80];
 
+#if (!defined GIFLIB_MAJOR) || (GIFLIB_MAJOR < 5)
   int code = GifLastError();
+#endif
   switch (code) {
     case E_GIF_ERR_OPEN_FAILED: /* should not see this */
       return "Failed to open given file";
@@ -1091,19 +854,30 @@ int readGIF(char *path, rasterBufferObj *rb)
   ColorMapObject *cmap;
   int interlacedOffsets[] = {0,4,2,1};
   int interlacedJumps[] = {8,8,4,2};
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+  int errcode;
+#endif
 
 
   rb->type = MS_BUFFER_BYTE_RGBA;
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+  image =  DGifOpenFileName(path, &errcode);
+  if (image == NULL) {
+    msSetError(MS_MISCERR,"failed to load gif image: %s","readGIF()", gif_error_msg(errcode));
+    return MS_FAILURE;
+  }
+#else
   image =  DGifOpenFileName(path);
   if (image == NULL) {
     msSetError(MS_MISCERR,"failed to load gif image: %s","readGIF()", gif_error_msg());
     return MS_FAILURE;
   }
+#endif
   rb->width = image->SWidth;
   rb->height = image->SHeight;
   rb->data.rgba.row_step = rb->width * 4;
   rb->data.rgba.pixel_step = 4;
-  rb->data.rgba.pixels = (unsigned char*)malloc(rb->width*rb->height*4*sizeof(unsigned char*));
+  rb->data.rgba.pixels = (unsigned char*)malloc(rb->width*rb->height*4*sizeof(unsigned char));
   b = rb->data.rgba.b = &rb->data.rgba.pixels[0];
   g = rb->data.rgba.g = &rb->data.rgba.pixels[1];
   r = rb->data.rgba.r = &rb->data.rgba.pixels[2];
@@ -1123,7 +897,11 @@ int readGIF(char *path, rasterBufferObj *rb)
 
   do {
     if (DGifGetRecordType(image, &recordType) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+      msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg(image->Error));
+#else
       msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg());
+#endif
       return MS_FAILURE;
     }
 
@@ -1133,7 +911,11 @@ int readGIF(char *path, rasterBufferObj *rb)
         break;
       case IMAGE_DESC_RECORD_TYPE:
         if (DGifGetImageDesc(image) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+          msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg(image->Error));
+#else
           msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg());
+#endif
           return MS_FAILURE;
         }
         if (!firstImageRead) {
@@ -1160,7 +942,11 @@ int readGIF(char *path, rasterBufferObj *rb)
                 g = rb->data.rgba.g + offset;
                 b = rb->data.rgba.b + offset;
                 if (DGifGetLine(image, line, width) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+                  msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()",gif_error_msg(image->Error));
+#else
                   msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()",gif_error_msg());
+#endif
                   return MS_FAILURE;
                 }
 
@@ -1189,7 +975,11 @@ int readGIF(char *path, rasterBufferObj *rb)
               g = rb->data.rgba.g + offset;
               b = rb->data.rgba.b + offset;
               if (DGifGetLine(image, line, width) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+                msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()",gif_error_msg(image->Error));
+#else
                 msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()",gif_error_msg());
+#endif
                 return MS_FAILURE;
               }
               for(j=0; j<width; j++) {
@@ -1214,12 +1004,20 @@ int readGIF(char *path, rasterBufferObj *rb)
         } else {
           /* Skip all next images */
           if (DGifGetCode(image, &codeSize, &codeBlock) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+            msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg(image->Error));
+#else
             msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg());
+#endif
             return MS_FAILURE;
           }
           while (codeBlock != NULL) {
             if (DGifGetCodeNext(image, &codeBlock) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+              msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg(image->Error));
+#else
               msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg());
+#endif
               return MS_FAILURE;
             }
           }
@@ -1228,14 +1026,22 @@ int readGIF(char *path, rasterBufferObj *rb)
       case EXTENSION_RECORD_TYPE:
         /* skip all extension blocks */
         if (DGifGetExtension(image, &extCode, &extension) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+          msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg(image->Error));
+#else
           msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg());
+#endif
           return MS_FAILURE;
         }
         if(extCode == 249 && (extension[1] & 1))
           transIdx = extension[4];
         for (;;) {
           if (DGifGetExtensionNext(image, &extension) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+            msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg(image->Error));
+#else
             msSetError(MS_MISCERR,"corrupted gif image?: %s","readGIF()", gif_error_msg());
+#endif
             return MS_FAILURE;
           }
           if (extension == NULL)
@@ -1254,10 +1060,22 @@ int readGIF(char *path, rasterBufferObj *rb)
 
   } while (recordType != TERMINATE_RECORD_TYPE);
 
-  if (DGifCloseFile(image) == GIF_ERROR) {
-    msSetError(MS_MISCERR,"failed to close gif after loading: %s","readGIF()", gif_error_msg());
+
+#if defined GIFLIB_MAJOR && GIFLIB_MINOR && ((GIFLIB_MAJOR == 5 && GIFLIB_MINOR >= 1) || (GIFLIB_MAJOR > 5))
+  if (DGifCloseFile(image, &errcode) == GIF_ERROR) {
+    msSetError(MS_MISCERR,"failed to close gif after loading: %s","readGIF()", gif_error_msg(errcode));
     return MS_FAILURE;
   }
+#else
+  if (DGifCloseFile(image) == GIF_ERROR) {
+#if defined GIFLIB_MAJOR && GIFLIB_MAJOR >= 5
+    msSetError(MS_MISCERR,"failed to close gif after loading: %s","readGIF()", gif_error_msg(image->Error));
+#else
+    msSetError(MS_MISCERR,"failed to close gif after loading: %s","readGIF()", gif_error_msg());
+#endif
+    return MS_FAILURE;
+  }
+#endif
 
   return MS_SUCCESS;
 }
@@ -1274,6 +1092,7 @@ int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb)
     return MS_FAILURE;
   }
   if(1 != fread(signature,8,1,stream)) {
+    fclose(stream);
     msSetError(MS_MISCERR, "Unable to read header from image file %s", "msLoadMSRasterBufferFromFile()",path);
     return MS_FAILURE;
   }

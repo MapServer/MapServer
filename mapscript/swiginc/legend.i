@@ -34,4 +34,10 @@
   {
     return msUpdateLegendFromString(self, snippet, MS_FALSE);
   }
+  
+  %newobject convertToString;
+  char* convertToString()
+  {
+    return msWriteLegendToString(self);
+  }
 }

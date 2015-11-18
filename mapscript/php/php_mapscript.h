@@ -57,6 +57,7 @@
 
 #include "../../maptemplate.h"
 #include "../../mapogcsld.h"
+#include "../../mapows.h"
 
 #define MAPSCRIPT_VERSION "($Revision$ $Date$)"
 
@@ -259,11 +260,13 @@ typedef struct _php_shapefile_object {
   shapefileObj *shapefile;
 } php_shapefile_object;
 
+#ifdef disabled
 typedef struct _php_labelcache_object {
   zend_object std;
   parent_object parent;
   labelCacheObj *labelcache;
 } php_labelcache_object;
+#endif
 
 typedef struct _php_labelleader_object {
   zend_object std;
@@ -271,6 +274,7 @@ typedef struct _php_labelleader_object {
   labelLeaderObj *labelleader;
 } php_labelleader_object;
 
+#ifdef disabled
 typedef struct _php_labelcachemember_object {
   zend_object std;
   parent_object parent;
@@ -280,6 +284,7 @@ typedef struct _php_labelcachemember_object {
   zval *poly; /* should be immutable */
   labelCacheMemberObj *labelcachemember;
 } php_labelcachemember_object;
+#endif
 
 typedef struct _php_result_object {
   zend_object std;
@@ -327,7 +332,9 @@ typedef struct _php_map_object {
   zval *scalebar;
   zval *legend;
   zval *querymap;
+#ifdef disabled
   zval *labelcache;
+#endif
   zval *projection;
   zval *metadata;
   zval *configoptions;
@@ -363,8 +370,10 @@ PHP_MINIT_FUNCTION(error);
 PHP_MINIT_FUNCTION(referencemap);
 PHP_MINIT_FUNCTION(class);
 PHP_MINIT_FUNCTION(projection);
+#ifdef disabled
 PHP_MINIT_FUNCTION(labelcachemember);
 PHP_MINIT_FUNCTION(labelcache);
+#endif
 PHP_MINIT_FUNCTION(labelleader);
 PHP_MINIT_FUNCTION(result);
 PHP_MINIT_FUNCTION(scalebar);
@@ -393,6 +402,7 @@ PHP_FUNCTION(ms_ioInstallStdinFromBuffer);
 PHP_FUNCTION(ms_ioGetStdoutBufferString);
 PHP_FUNCTION(ms_ioResetHandlers);
 PHP_FUNCTION(ms_ioStripStdoutBufferContentType);
+PHP_FUNCTION(ms_ioStripStdoutBufferContentHeaders);
 PHP_FUNCTION(ms_ioGetStdoutBufferBytes);
 
 /* object constructors */
@@ -435,8 +445,10 @@ extern zend_class_entry *mapscript_ce_referencemap;
 extern zend_class_entry *mapscript_ce_line;
 extern zend_class_entry *mapscript_ce_shape;
 extern zend_class_entry *mapscript_ce_shapefile;
+#ifdef disabled
 extern zend_class_entry *mapscript_ce_labelcachemember;
 extern zend_class_entry *mapscript_ce_labelcache;
+#endif
 extern zend_class_entry *mapscript_ce_labelleader;
 extern zend_class_entry *mapscript_ce_result;
 extern zend_class_entry *mapscript_ce_scalebar;
@@ -460,10 +472,12 @@ extern void mapscript_create_label(labelObj *label, parent_object parent, zval *
 extern void mapscript_create_style(styleObj *style, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_symbol(symbolObj *symbol, parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_class(classObj *class, parent_object parent, zval *return_value TSRMLS_DC);
+#ifdef disabled
 extern void mapscript_create_labelcachemember(labelCacheMemberObj *labelcachemember,
     parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_labelcache(labelCacheObj *labelcache,
                                         parent_object parent, zval *return_value TSRMLS_DC);
+#endif
 extern void mapscript_create_labelleader(labelLeaderObj *labelleader,
     parent_object parent, zval *return_value TSRMLS_DC);
 extern void mapscript_create_result(resultObj *result,
@@ -520,7 +534,9 @@ imageObj        *mapObj_drawReferenceMap(mapObj* self);
 int             mapObj_embedScalebar(mapObj* self, imageObj *img);
 int             mapObj_embedLegend(mapObj* self, imageObj *img);
 int             mapObj_drawLabelCache(mapObj* self, imageObj *img);
+#ifdef disabled
 labelCacheMemberObj *mapObj_getLabel(mapObj* self, int i);
+#endif
 int             mapObj_queryByPoint(mapObj* self, pointObj *point,
                                     int mode, double buffer);
 int             mapObj_queryByRect(mapObj* self, rectObj rect);
@@ -577,10 +593,12 @@ int             mapObj_setCenter(mapObj *self, pointObj *center);
 int             mapObj_offsetExtent(mapObj *self, double x, double y);
 int             mapObj_scaleExtent(mapObj *self, double zoomfactor, double minscaledenom,
                                    double maxscaledenom);
+char           *mapObj_convertToString(mapObj *self);
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 int             layerObj_updateFromString(layerObj *self, char *snippet);
+char           *layerObj_convertToString(layerObj *self);
 int             layerObj_open(layerObj *self);
 int             layerObj_whichShapes(layerObj *self, rectObj *poRect);
 shapeObj        *layerObj_nextShape(layerObj *self);
@@ -632,27 +650,38 @@ layerObj        *layerObj_clone(layerObj *layer);
 
 labelObj        *labelObj_new();
 int             labelObj_updateFromString(labelObj *self, char *snippet);
+char           *labelObj_convertToString(labelObj *self);
 void            labelObj_destroy(labelObj *self);
 int             labelObj_moveStyleUp(labelObj *self, int index);
 int             labelObj_moveStyleDown(labelObj *self, int index);
 int             labelObj_deleteStyle(labelObj *self, int index);
 labelObj        *labelObj_clone(labelObj *label);
+int             labelObj_setExpression(labelObj *self, char *string);
+char            *labelObj_getExpressionString(labelObj *self);
+int             labelObj_setText(labelObj *self,layerObj *layer,char *string);
+char           *labelObj_getTextString(labelObj *self);
 
 int             legendObj_updateFromString(legendObj *self, char *snippet);
+char           *legendObj_convertToString(legendObj *self);
 
 int             queryMapObj_updateFromString(queryMapObj *self, char *snippet);
+char           *queryMapObj_convertToString(queryMapObj *self);
 
 int             referenceMapObj_updateFromString(referenceMapObj *self, char *snippet);
+char           *referenceMapObj_convertToString(referenceMapObj *self);
 
 int             scalebarObj_updateFromString(scalebarObj *self, char *snippet);
+char           *scalebarObj_convertToString(scalebarObj *self);
 
 int             webObj_updateFromString(webObj *self, char *snippet);
+char           *webObj_convertToString(webObj *self);
 
 classObj       *classObj_new(layerObj *layer, classObj *class);
 labelObj       *classObj_getLabel(classObj *self, int i);
 int             classObj_addLabel(classObj *self, labelObj *label);
 labelObj       *classObj_removeLabel(classObj *self, int index);
 int             classObj_updateFromString(classObj *self, char *snippet);
+char           *classObj_convertToString(classObj *self);
 void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);
 char            *classObj_getExpressionString(classObj *self);
@@ -765,7 +794,9 @@ projectionObj   *projectionObj_clone(projectionObj *projection);
 int             projectionObj_getUnits(projectionObj *self);
 void            projectionObj_destroy(projectionObj *self);
 
+#ifdef disabled
 void            labelCacheObj_freeCache(labelCacheObj *self);
+#endif
 
 char           *DBFInfo_getFieldName(DBFInfo *self, int iField);
 int             DBFInfo_getFieldWidth(DBFInfo *self, int iField);
@@ -775,6 +806,7 @@ DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 styleObj       *styleObj_new(classObj *class, styleObj *style);
 styleObj       *styleObj_label_new(labelObj *label, styleObj *style);
 int             styleObj_updateFromString(styleObj *self, char *snippet);
+char           *styleObj_convertToString(styleObj *self);
 int             styleObj_setSymbolByName(styleObj *self, mapObj *map,
     char* pszSymbolName);
 styleObj       *styleObj_clone(styleObj *style);
@@ -805,6 +837,7 @@ void cgirequestObj_destroy(cgiRequestObj *self);
 resultObj *resultObj_new();
 
 int clusterObj_updateFromString(clusterObj *self, char *snippet);
+char *clusterObj_convertToString(clusterObj *self);
 int clusterObj_setGroup(clusterObj *self, char *string);
 char *clusterObj_getGroupString(clusterObj *self);
 int clusterObj_setFilter(clusterObj *self, char *string);

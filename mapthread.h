@@ -36,7 +36,7 @@ extern "C" {
 
 #ifdef USE_THREAD
   void msThreadInit(void);
-  int msGetThreadId(void);
+  void* msGetThreadId(void);
   void msAcquireLock(int);
   void msReleaseLock(int);
 #else
@@ -65,6 +65,10 @@ extern "C" {
 #define TLOCK_TMPFILE   12
 #define TLOCK_DEBUGOBJ  13
 #define TLOCK_OGR       14
+#define TLOCK_TIME      15
+#define TLOCK_FRIBIDI   16
+#define TLOCK_WxS       17
+#define TLOCK_GEOS       18
 
 #define TLOCK_STATIC_MAX 20
 #define TLOCK_MAX       100

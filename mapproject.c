@@ -114,8 +114,10 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
     msReleaseLock( TLOCK_PROJ );
 #endif
 
-    if( error || point->x == HUGE_VAL || point->y == HUGE_VAL )
+    if( error || point->x == HUGE_VAL || point->y == HUGE_VAL ) {
+//      msSetError(MS_PROJERR,"proj says: %s","msProjectPoint()",pj_strerrno(error));
       return MS_FAILURE;
+    }
 
     if( pj_is_latlong(out->proj) ) {
       point->x *= RAD_TO_DEG;
@@ -131,7 +133,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   /* -------------------------------------------------------------------- */
   else {
     /* nothing to do if the other coordinate system is also lat/long */
-    if( in == NULL && out != NULL && pj_is_latlong(out->proj) )
+    if( in == NULL && (out == NULL || pj_is_latlong(out->proj) ))
       return MS_SUCCESS;
     if( out == NULL && in != NULL && pj_is_latlong(in->proj) )
       return MS_SUCCESS;
@@ -213,7 +215,7 @@ static void msProjectGrowRect(projectionObj *in, projectionObj *out,
 /*      Interpolate along a line segment for which one end              */
 /*      reprojects and the other end does not.  Finds the horizon.      */
 /************************************************************************/
-
+#ifdef USE_PROJ
 static int msProjectSegment( projectionObj *in, projectionObj *out,
                              pointObj *start, pointObj *end )
 
@@ -252,10 +254,18 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
 
     testPoint = midPoint;
 
-    if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE )
+    if( msProjectPoint( in, out, &testPoint ) == MS_FAILURE ) {
+      if (midPoint.x == subEnd.x && midPoint.y == subEnd.y)
+        return MS_FAILURE; /* break infinite loop */
+
       subEnd = midPoint;
-    else
+    }
+    else {
+      if (midPoint.x == subStart.x && midPoint.y == subStart.y)
+        return MS_FAILURE; /* break infinite loop */
+
       subStart = midPoint;
+    }
   }
 
   /* -------------------------------------------------------------------- */
@@ -269,6 +279,7 @@ static int msProjectSegment( projectionObj *in, projectionObj *out,
   else
     return MS_SUCCESS;
 }
+#endif
 
 /************************************************************************/
 /*                         msProjectShapeLine()                         */
@@ -289,7 +300,7 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
 
 {
   int i;
-  pointObj  lastPoint, thisPoint, wrkPoint, firstPoint;
+  pointObj  lastPoint, thisPoint, wrkPoint;
   lineObj *line = shape->line + line_index;
   lineObj *line_out = line;
   int valid_flag = 0; /* 1=true, -1=false, 0=unknown */
@@ -301,10 +312,10 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
 #define MAXEXTENT 20037508.34
 #define M_PIby360 .0087266462599716479
 #define MAXEXTENTby180 111319.4907777777777777777
-  if(in->wellknownprojection == wkp_lonlat && out->wellknownprojection == wkp_gmerc) {
-    for( i = line->numpoints-1; i >= 0; i-- ) {
 #define p_x line->point[i].x
 #define p_y line->point[i].y
+  if(in->wellknownprojection == wkp_lonlat && out->wellknownprojection == wkp_gmerc) {
+    for( i = line->numpoints-1; i >= 0; i-- ) {
       p_x *= MAXEXTENTby180;
       p_y = log(tan((90 + p_y) * M_PIby360)) * MS_RAD_TO_DEG;
       p_y *= MAXEXTENTby180;
@@ -312,11 +323,24 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
       if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
       if (p_y > MAXEXTENT) p_y = MAXEXTENT;
       if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
-#undef p_x
-#undef p_y
     }
     return MS_SUCCESS;
   }
+  if(in->wellknownprojection == wkp_gmerc && out->wellknownprojection == wkp_lonlat) {
+    for( i = line->numpoints-1; i >= 0; i-- ) {
+      if (p_x > MAXEXTENT) p_x = MAXEXTENT;
+      else if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
+      if (p_y > MAXEXTENT) p_y = MAXEXTENT;
+      else if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
+      p_x = (p_x / MAXEXTENT) * 180;
+      p_y = (p_y / MAXEXTENT) * 180;
+      p_y = MS_RAD_TO_DEG * (2 * atan(exp(p_y * MS_DEG_TO_RAD)) - MS_PI2);
+    }
+    msComputeBounds( shape ); /* fixes bug 1586 */
+    return MS_SUCCESS;
+  }
+#undef p_x
+#undef p_y
 #endif
 
 
@@ -325,9 +349,6 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
               && !pj_is_latlong(in->proj);
 
   line->numpoints = 0;
-
-  if( numpoints_in > 0 )
-    firstPoint = line->point[0];
 
   memset( &lastPoint, 0, sizeof(lastPoint) );
 
@@ -348,13 +369,13 @@ msProjectShapeLine(projectionObj *in, projectionObj *out,
       pointObj pt1Geo;
 
       if( line_out->numpoints > 0 )
-        pt1Geo = line_out->point[0];
+        pt1Geo = line_out->point[line_out->numpoints-1];
       else
         pt1Geo = wrkPoint; /* this is a cop out */
 
       dist = wrkPoint.x - pt1Geo.x;
       if( fabs(dist) > 180.0
-          && msTestNeedWrap( thisPoint, firstPoint,
+          && msTestNeedWrap( thisPoint, lastPoint,
                              pt1Geo, in, out ) ) {
         if( dist > 0.0 )
           wrkPoint.x -= 360.0;
@@ -488,24 +509,40 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 #ifdef USE_PROJ_FASTPATHS
   int j;
 
+#define p_x shape->line[i].point[j].x
+#define p_y shape->line[i].point[j].y
   if(in->wellknownprojection == wkp_lonlat && out->wellknownprojection == wkp_gmerc) {
     for( i = shape->numlines-1; i >= 0; i-- ) {
       for( j = shape->line[i].numpoints-1; j >= 0; j-- ) {
-#define p_x shape->line[i].point[j].x
-#define p_y shape->line[i].point[j].y
         p_x *= MAXEXTENTby180;
         p_y = log(tan((90 + p_y) * M_PIby360)) * MS_RAD_TO_DEG;
         p_y *= MAXEXTENTby180;
         if (p_x > MAXEXTENT) p_x = MAXEXTENT;
-        if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
+        else if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
         if (p_y > MAXEXTENT) p_y = MAXEXTENT;
-        if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
-#undef p_x
-#undef p_y
+        else if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
       }
     }
+    msComputeBounds( shape ); /* fixes bug 1586 */
     return MS_SUCCESS;
   }
+  if(in->wellknownprojection == wkp_gmerc && out->wellknownprojection == wkp_lonlat) {
+    for( i = shape->numlines-1; i >= 0; i-- ) {
+      for( j = shape->line[i].numpoints-1; j >= 0; j-- ) {
+        if (p_x > MAXEXTENT) p_x = MAXEXTENT;
+        else if (p_x < -MAXEXTENT) p_x = -MAXEXTENT;
+        if (p_y > MAXEXTENT) p_y = MAXEXTENT;
+        else if (p_y < -MAXEXTENT) p_y = -MAXEXTENT;
+        p_x = (p_x / MAXEXTENT) * 180;
+        p_y = (p_y / MAXEXTENT) * 180;
+        p_y = MS_RAD_TO_DEG * (2 * atan(exp(p_y * MS_DEG_TO_RAD)) - MS_PI2);
+      }
+    }
+    msComputeBounds( shape ); /* fixes bug 1586 */
+    return MS_SUCCESS;
+  }
+#undef p_x
+#undef p_y
 #endif
 
 
@@ -773,18 +810,40 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 
   double dx, dy;
 
-  ringPoints = (pointObj*) calloc(sizeof(pointObj),NUMBER_OF_SAMPLE_POINTS*4+4);
-  ring.point = ringPoints;
-  ring.numpoints = 0;
-
-  msInitShape( &polygonObj );
-  polygonObj.type = MS_SHAPE_POLYGON;
+  /* If projecting from longlat to projected */
+  if( out && !pj_is_latlong(out->proj) && in && pj_is_latlong(in->proj) &&
+      fabs(rect->minx - -180.0) < 1e-5 && fabs(rect->miny - -90.0) < 1e-5 &&
+      fabs(rect->maxx - 180.0) < 1e-5 && fabs(rect->maxy - 90.0) < 1e-5) {
+    rect->minx = -1e15;
+    rect->miny = -1e15;
+    rect->maxx = 1e15;
+    rect->maxy = 1e15;
+    return MS_SUCCESS;
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Build polygon as steps around the source rectangle.             */
   /* -------------------------------------------------------------------- */
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
+
+  if(dx==0 && dy==0) {
+    pointObj foo;
+    msDebug( "msProjectRect(): Warning: degenerate rect {%f,%f,%f,%f}\n",rect->minx,rect->miny,rect->minx,rect->miny );
+    foo.x = rect->minx;
+    foo.y = rect->miny;
+    msProjectPoint(in,out,&foo);
+    rect->minx=rect->maxx=foo.x;
+    rect->miny=rect->maxy=foo.y;
+    return MS_SUCCESS;
+  }
+  
+  ringPoints = (pointObj*) calloc(sizeof(pointObj),NUMBER_OF_SAMPLE_POINTS*4+4);
+  ring.point = ringPoints;
+  ring.numpoints = 0;
+
+  msInitShape( &polygonObj );
+  polygonObj.type = MS_SHAPE_POLYGON;
 
   /* sample along top */
   if(dx != 0) {
@@ -820,6 +879,14 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
 
   msAddLineDirectly( &polygonObj, &ring );
 
+#ifdef notdef
+  FILE *wkt = fopen("/tmp/www-before.wkt","w");
+  char *tmp = msShapeToWKT(&polygonObj);
+  fprintf(wkt,"%s\n", tmp);
+  free(tmp);
+  fclose(wkt);
+#endif
+
   /* -------------------------------------------------------------------- */
   /*      Attempt to reproject.                                           */
   /* -------------------------------------------------------------------- */
@@ -830,6 +897,14 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
     msFreeShape( &polygonObj );
     return msProjectRectGrid( in, out, rect );
   }
+
+#ifdef notdef
+  wkt = fopen("/tmp/www-after.wkt","w");
+  tmp = msShapeToWKT(&polygonObj);
+  fprintf(wkt,"%s\n", tmp);
+  free(tmp);
+  fclose(wkt);
+#endif
 
   /* -------------------------------------------------------------------- */
   /*      Collect bounds.                                                 */
@@ -876,9 +951,107 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #ifdef notdef
   return msProjectRectTraditionalEdge( in, out, rect );
 #else
-  return msProjectRectAsPolygon( in, out, rect );
+  char *over = "+over";
+  int ret;
+  projectionObj in_over,out_over,*inp,*outp;
+  /* 
+   * Issue #4892: When projecting a rectangle we do not want proj to wrap resulting
+   * coordinates around the dateline, as in practice a requested bounding box of
+   * -22.000.000, -YYY, 22.000.000, YYY should be projected as
+   * -190,-YYY,190,YYY rather than 170,-YYY,-170,YYY as would happen when wrapping (and
+   *  vice-versa when projecting from lonlat to metric).
+   *  To enforce this, we clone the input projections and add the "+over" proj 
+   *  parameter in order to disable dateline wrapping.
+   */ 
+  if(out) {
+    msInitProjection(&out_over);
+    msCopyProjectionExtended(&out_over,out,&over,1);
+    outp = &out_over;
+  } else {
+    outp = out;
+  }
+  if(in) {
+    msInitProjection(&in_over);
+    msCopyProjectionExtended(&in_over,in,&over,1);
+    inp = &in_over;
+  } else {
+    inp = in;
+  }
+  ret = msProjectRectAsPolygon(inp,outp, rect );
+  if(in)
+    msFreeProjection(&in_over);
+  if(out)
+    msFreeProjection(&out_over);
+  return ret;
 #endif
 }
+
+#ifdef USE_PROJ
+static int msProjectSortString(const void* firstelt, const void* secondelt)
+{
+    char* firststr = *(char**)firstelt;
+    char* secondstr = *(char**)secondelt;
+    return strcmp(firststr, secondstr);
+}
+
+/************************************************************************/
+/*                        msGetProjectNormalized()                      */
+/************************************************************************/
+
+static projectionObj* msGetProjectNormalized( const projectionObj* p )
+{
+  int i;
+  char* pszNewProj4Def;
+  projectionObj* pnew;
+
+  pnew = (projectionObj*)msSmallMalloc(sizeof(projectionObj));
+  msInitProjection(pnew);
+  msCopyProjection(pnew, (projectionObj*)p);
+
+  if(p->proj == NULL )
+      return pnew;
+
+  /* Normalize definition so that msProjectDiffers() works better */
+  pszNewProj4Def = pj_get_def( p->proj, 0 );
+  msFreeCharArray(pnew->args, pnew->numargs);
+  pnew->args = msStringSplit(pszNewProj4Def,'+', &pnew->numargs);
+  for(i = 0; i < pnew->numargs; i++)
+  {
+      /* Remove trailing space */
+      if( strlen(pnew->args[i]) > 0 && pnew->args[i][strlen(pnew->args[i])-1] == ' ' )
+          pnew->args[i][strlen(pnew->args[i])-1] = '\0';
+      /* Remove spurious no_defs or init= */
+      if( strcmp(pnew->args[i], "no_defs") == 0 ||
+          strncmp(pnew->args[i], "init=", 5) == 0 )
+      {
+          if( i < pnew->numargs - 1 )
+          {
+              msFree(pnew->args[i]);
+              memmove(pnew->args + i, pnew->args + i + 1,
+                      sizeof(char*) * (pnew->numargs - 1 -i ));
+          }
+          else 
+          {
+              msFree(pnew->args[i]);
+          }
+          pnew->numargs --;
+          i --;
+          continue;
+      }
+  }
+  /* Sort the strings so they can be compared */
+  qsort(pnew->args, pnew->numargs, sizeof(char*), msProjectSortString);
+  /*{
+      fprintf(stderr, "'%s' =\n", pszNewProj4Def);
+      for(i = 0; i < p->numargs; i++)
+          fprintf(stderr, "'%s' ", p->args[i]);
+      fprintf(stderr, "\n");
+  }*/
+  pj_dalloc(pszNewProj4Def);
+  
+  return pnew;
+}
+#endif /* USE_PROJ */
 
 /************************************************************************/
 /*                        msProjectionsDiffer()                         */
@@ -895,7 +1068,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 ** has no arguments, since reprojection won't work anyways.
 */
 
-int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
+static int msProjectionsDifferInternal( projectionObj *proj1, projectionObj *proj2 )
 
 {
   int   i;
@@ -917,6 +1090,31 @@ int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
   }
 
   return MS_FALSE;
+}
+
+int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
+{
+#ifdef USE_PROJ
+    int ret;
+
+    ret = msProjectionsDifferInternal(proj1, proj2); 
+    if( ret ) 
+    {
+        projectionObj* p1normalized;
+        projectionObj* p2normalized;
+
+        p1normalized = msGetProjectNormalized( proj1 );
+        p2normalized = msGetProjectNormalized( proj2 );
+        ret = msProjectionsDifferInternal(p1normalized, p2normalized);
+        msFreeProjection(p1normalized);
+        msFree(p1normalized);
+        msFreeProjection(p2normalized);
+        msFree(p2normalized);
+    }
+    return ret;
+#else
+    return msProjectionsDifferInternal(proj1, proj2);
+#endif
 }
 
 /************************************************************************/
@@ -1052,6 +1250,18 @@ static const char *msProjFinder( const char *filename)
 #endif /* def USE_PROJ */
 
 /************************************************************************/
+/*                       msProjLibInitFromEnv()                         */
+/************************************************************************/
+void msProjLibInitFromEnv()
+{
+  const char *val;
+
+  if( (val=getenv( "PROJ_LIB" )) != NULL ) {
+    msSetPROJ_LIB(val, NULL);
+  }
+}
+
+/************************************************************************/
 /*                           msSetPROJ_LIB()                            */
 /************************************************************************/
 void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
@@ -1157,15 +1367,12 @@ char *msGetProjectionString(projectionObj *proj)
 }
 
 /************************************************************************/
-/*                       msAxisNormalizePoints()                        */
+/*                       msIsAxisInvertedProj()                         */
 /*                                                                      */
-/*      Convert the passed points to "easting, northing" axis           */
-/*      orientation if they are not already.                            */
+/*      Return MS_TRUE is the proj object has epgsaxis=ne               */
 /************************************************************************/
 
-void msAxisNormalizePoints( projectionObj *proj, int count,
-                            double *x, double *y )
-
+int msIsAxisInvertedProj( projectionObj *proj )
 {
   int i;
   const char *axis = NULL;
@@ -1178,16 +1385,34 @@ void msAxisNormalizePoints( projectionObj *proj, int count,
   }
 
   if( axis == NULL )
-    return;
+    return MS_FALSE;
 
   if( strcasecmp(axis,"en") == 0 )
-    return;
+    return MS_FALSE;
 
   if( strcasecmp(axis,"ne") != 0 ) {
-    msDebug( "msAxisNormalizePoints(): odd +epsgaxis= value: '%s'.",
+    msDebug( "msIsAxisInvertedProj(): odd +epsgaxis= value: '%s'.",
              axis );
-    return;
+    return MS_FALSE;
   }
+  
+  return MS_TRUE;
+}
+
+/************************************************************************/
+/*                       msAxisNormalizePoints()                        */
+/*                                                                      */
+/*      Convert the passed points to "easting, northing" axis           */
+/*      orientation if they are not already.                            */
+/************************************************************************/
+
+void msAxisNormalizePoints( projectionObj *proj, int count,
+                            double *x, double *y )
+
+{
+  int i;
+  if( !msIsAxisInvertedProj(proj ) )
+      return;
 
   /* Switch axes */
   for( i = 0; i < count; i++ ) {
@@ -1196,6 +1421,39 @@ void msAxisNormalizePoints( projectionObj *proj, int count,
     tmp = x[i];
     x[i] = y[i];
     y[i] = tmp;
+  }
+}
+
+
+
+/************************************************************************/
+/*                             msAxisSwapShape                          */
+/*                                                                      */
+/*      Utility function to swap x and y coordiatesn Use for now for    */
+/*      WFS 1.1.x                                                       */
+/************************************************************************/
+void msAxisSwapShape(shapeObj *shape)
+{
+  double tmp;
+  int i,j;
+
+  if (shape) {
+    for(i=0; i<shape->numlines; i++) {
+      for( j=0; j<shape->line[i].numpoints; j++ ) {
+        tmp = shape->line[i].point[j].x;
+        shape->line[i].point[j].x = shape->line[i].point[j].y;
+        shape->line[i].point[j].y = tmp;
+      }
+    }
+
+    /*swap bounds*/
+    tmp = shape->bounds.minx;
+    shape->bounds.minx = shape->bounds.miny;
+    shape->bounds.miny = tmp;
+
+    tmp = shape->bounds.maxx;
+    shape->bounds.maxx = shape->bounds.maxy;
+    shape->bounds.maxy = tmp;
   }
 }
 

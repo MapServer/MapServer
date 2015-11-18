@@ -27,9 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <assert.h>
 #include "mapserver.h"
 #include "mapthread.h"
+#include <assert.h>
 
 
 
@@ -162,7 +162,9 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   memset(&rb,0,sizeof(rasterBufferObj));
 
 #ifdef USE_EXEMPI
-  bUseXmp = msXmpPresent(map);
+  if( map != NULL ) {
+    bUseXmp = msXmpPresent(map);
+  }
 #endif
 
 
@@ -213,7 +215,10 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   if( format->imagemode == MS_IMAGEMODE_RGB ) {
     nBands = 3;
     assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
-    format->vtable->getRasterBufferHandle(image,&rb);
+    if(UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
+      msReleaseLock( TLOCK_GDAL );
+      return MS_FAILURE;
+    }
   } else if( format->imagemode == MS_IMAGEMODE_RGBA ) {
     pabyAlphaLine = (GByte *) calloc(image->width,1);
     if (pabyAlphaLine == NULL) {
@@ -223,7 +228,10 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     }
     nBands = 4;
     assert( MS_RENDERER_PLUGIN(format) && format->vtable->supports_pixel_buffer );
-    format->vtable->getRasterBufferHandle(image,&rb);
+    if(UNLIKELY(MS_FAILURE == format->vtable->getRasterBufferHandle(image,&rb))) {
+      msReleaseLock( TLOCK_GDAL );
+      return MS_FAILURE;
+    }
   } else if( format->imagemode == MS_IMAGEMODE_INT16 ) {
     nBands = format->bands;
     eDataType = GDT_Int16;
@@ -234,17 +242,9 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     nBands = format->bands;
     eDataType = GDT_Byte;
   } else {
-#ifdef USE_GD
-    assert( format->imagemode == MS_IMAGEMODE_PC256
-            && format->renderer == MS_RENDER_WITH_GD );
-#else
-    {
-      msReleaseLock( TLOCK_GDAL );
-      msSetError( MS_MEMERR, "GD not compiled in. This is a bug.", "msSaveImageGDAL()");
-      return MS_FAILURE;
-    }
-#endif
-
+    msReleaseLock( TLOCK_GDAL );
+    msSetError( MS_MEMERR, "Unknown format. This is a bug.", "msSaveImageGDAL()");
+    return MS_FAILURE;
   }
 
   /* -------------------------------------------------------------------- */
@@ -294,16 +294,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
                       image->img.raw_byte + iLine * image->width
                       + iBand * image->width * image->height,
                       image->width, 1, GDT_Byte, 1, 0 );
-      }
-#ifdef USE_GD
-      else if(format->renderer == MS_RENDER_WITH_GD) {
-        gdImagePtr img = (gdImagePtr)image->img.plugin;
-        GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
-                      img->pixels[iLine],
-                      image->width, 1, GDT_Byte, 0, 0 );
-      }
-#endif
-      else {
+      } else {
         GByte *pabyData;
         unsigned char *pixptr = NULL;
         assert( rb.type == MS_BUFFER_BYTE_RGBA );
@@ -369,36 +360,6 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   /* -------------------------------------------------------------------- */
   /*      Attach the palette if appropriate.                              */
   /* -------------------------------------------------------------------- */
-#ifdef USE_GD
-  if( format->renderer == MS_RENDER_WITH_GD ) {
-    GDALColorEntry sEntry;
-    int  iColor;
-    GDALColorTableH hCT;
-    gdImagePtr img = (gdImagePtr)image->img.plugin;
-    hCT = GDALCreateColorTable( GPI_RGB );
-
-    for( iColor = 0; iColor < img->colorsTotal; iColor++ ) {
-      sEntry.c1 = img->red[iColor];
-      sEntry.c2 = img->green[iColor];
-      sEntry.c3 = img->blue[iColor];
-
-      if( iColor == gdImageGetTransparent( img ) )
-        sEntry.c4 = 0;
-      else if( iColor == 0
-               && gdImageGetTransparent( img ) == -1
-               && format->transparent )
-        sEntry.c4 = 0;
-      else
-        sEntry.c4 = 255;
-
-      GDALSetColorEntry( hCT, iColor, &sEntry );
-    }
-
-    GDALSetRasterColorTable( GDALGetRasterBand( hMemDS, 1 ), hCT );
-
-    GDALDestroyColorTable( hCT );
-  } else
-#endif
     if( format->imagemode == MS_IMAGEMODE_RGB ) {
       GDALSetRasterColorInterpretation(
         GDALGetRasterBand( hMemDS, 1 ), GCI_RedBand );
@@ -468,7 +429,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   if (papszOptions == NULL) {
     msReleaseLock( TLOCK_GDAL );
     msSetError( MS_MEMERR, "Out of memory allocating %u bytes.\n", "msSaveImageGDAL()",
-                sizeof(char *)*(format->numformatoptions+1));
+                (unsigned int)(sizeof(char *)*(format->numformatoptions+1)));
     return MS_FAILURE;
   }
 
@@ -504,7 +465,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   if ( bUseXmp == MS_TRUE ) {
     if( msXmpWrite(map, filename) == MS_FAILURE ) {
       /* Something bad happened. */
-      msSetError( MS_MISCERR, "XMP write to %s failed.\n%s",
+      msSetError( MS_MISCERR, "XMP write to %s failed.\n",
                   "msSaveImageGDAL()", filename);
       return MS_FAILURE;
     }
@@ -627,34 +588,43 @@ char *msProjectionObj2OGCWKT( projectionObj *projection )
 #else /* defined USE_GDAL or USE_OGR */
 
   OGRSpatialReferenceH hSRS;
-  char *pszWKT=NULL, *pszProj4;
+  char *pszWKT=NULL, *pszProj4, *pszInitEpsg=NULL;
   int  nLength = 0, i;
   OGRErr eErr;
 
   if( projection->proj == NULL )
     return NULL;
 
-  /* -------------------------------------------------------------------- */
-  /*      Form arguments into a full Proj.4 definition string.            */
-  /* -------------------------------------------------------------------- */
-  for( i = 0; i < projection->numargs; i++ )
-    nLength += strlen(projection->args[i]) + 2;
-
-  pszProj4 = (char *) CPLMalloc(nLength+2);
-  pszProj4[0] = '\0';
-
-  for( i = 0; i < projection->numargs; i++ ) {
-    strcat( pszProj4, "+" );
-    strcat( pszProj4, projection->args[i] );
-    strcat( pszProj4, " " );
-  }
-
-  /* -------------------------------------------------------------------- */
-  /*      Ingest the string into OGRSpatialReference.                     */
-  /* -------------------------------------------------------------------- */
   hSRS = OSRNewSpatialReference( NULL );
-  eErr =  OSRImportFromProj4( hSRS, pszProj4 );
-  CPLFree( pszProj4 );
+  /* -------------------------------------------------------------------- */
+  /*      Look for an EPSG-like projection argument                       */
+  /* -------------------------------------------------------------------- */
+  if( projection->numargs == 1 &&
+        (pszInitEpsg = strcasestr(projection->args[0],"init=epsg:"))) {
+     int nEpsgCode = atoi(pszInitEpsg + strlen("init=epsg:"));
+     eErr = OSRImportFromEPSG(hSRS, nEpsgCode);
+  } else {
+    /* -------------------------------------------------------------------- */
+    /*      Form arguments into a full Proj.4 definition string.            */
+    /* -------------------------------------------------------------------- */
+    for( i = 0; i < projection->numargs; i++ )
+      nLength += strlen(projection->args[i]) + 2;
+
+    pszProj4 = (char *) CPLMalloc(nLength+2);
+    pszProj4[0] = '\0';
+
+    for( i = 0; i < projection->numargs; i++ ) {
+      strcat( pszProj4, "+" );
+      strcat( pszProj4, projection->args[i] );
+      strcat( pszProj4, " " );
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Ingest the string into OGRSpatialReference.                     */
+    /* -------------------------------------------------------------------- */
+    eErr =  OSRImportFromProj4( hSRS, pszProj4 );
+    CPLFree( pszProj4 );
+  }
 
   /* -------------------------------------------------------------------- */
   /*      Export as a WKT string.                                         */

@@ -31,16 +31,16 @@
 #include "mapserver.h"
 #include "mapserv.h"
 #include "maptime.h"
-#include <sys/stat.h>
+#include "mapows.h"
 
 /*
 ** Enumerated types, keep the query modes in sequence and at the end of the enumeration (mode enumeration is in maptemplate.h).
 */
-static int numModes = 21;
-static char *modeStrings[21] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
+static int numModes = 23;
+static char *modeStrings[23] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","LEGENDICON","REFERENCE","SCALEBAR","COORDINATE",
                                 "QUERY","NQUERY","ITEMQUERY","ITEMNQUERY",
                                 "FEATUREQUERY","FEATURENQUERY","ITEMFEATUREQUERY","ITEMFEATURENQUERY",
-                                "INDEXQUERY","TILE","OWS", "WFS"
+                                "INDEXQUERY","TILE","OWS", "WFS", "MAPLEGEND", "MAPLEGENDICON"
                                };
 
 
@@ -58,7 +58,7 @@ int msCGIWriteLog(mapservObj *mapserv, int show_error)
 
   if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath,
                                  mapserv->map->web.log),"a")) == NULL) {
-    msSetError(MS_IOERR, mapserv->map->web.log, "msCGIWriteLog()");
+    msSetError(MS_IOERR, "%s", "msCGIWriteLog()", mapserv->map->web.log);
     return(MS_FAILURE);
   }
 
@@ -105,7 +105,7 @@ void msCGIWriteError(mapservObj *mapserv)
   msCGIWriteLog(mapserv,MS_TRUE);
 
   if(!mapserv || !mapserv->map) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("<HTML>\n");
     msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -119,7 +119,7 @@ void msCGIWriteError(mapservObj *mapserv)
   if((ms_error->code == MS_NOTFOUND) && (mapserv->map->web.empty)) {
     /* msRedirect(mapserv->map->web.empty); */
     if(msReturnURL(mapserv, mapserv->map->web.empty, BROWSE) != MS_SUCCESS) {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -132,7 +132,7 @@ void msCGIWriteError(mapservObj *mapserv)
     if(mapserv->map->web.error) {
       /* msRedirect(mapserv->map->web.error); */
       if(msReturnURL(mapserv, mapserv->map->web.error, BROWSE) != MS_SUCCESS) {
-        msIO_setHeader("Content-type","text/html");
+        msIO_setHeader("Content-Type","text/html");
         msIO_sendHeaders();
         msIO_printf("<HTML>\n");
         msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -142,7 +142,7 @@ void msCGIWriteError(mapservObj *mapserv)
         msIO_printf("</BODY></HTML>");
       }
     } else {
-      msIO_setHeader("Content-type","text/html");
+      msIO_setHeader("Content-Type","text/html");
       msIO_sendHeaders();
       msIO_printf("<HTML>\n");
       msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
@@ -167,6 +167,14 @@ void msCGIWriteError(mapservObj *mapserv)
   }\
 } while (0)
 
+#define GET_NUMERIC_NO_ERROR(string,dbl) dbl = strtod((string), &strtoderr);
+
+#define FREE_TOKENS_ON_ERROR(ntok) if(!strtoderr) {\
+  msSetError(MS_TYPEERR, "invalid number", "msCGILoadForm()");\
+  msFreeCharArray(tokens,(ntok));\
+  return MS_FAILURE;\
+}
+
 static void setClassGroup(layerObj *layer, char *classgroup)
 {
   int i;
@@ -190,60 +198,38 @@ mapObj *msCGILoadMap(mapservObj *mapserv)
 {
   int i, j;
   mapObj *map = NULL;
-  static mapObj *preloadedmap = NULL;
-  static time_t preloadedmap_mtime;
-  static char *ms_mapfile = NULL;
-  struct stat mapfile_stat;
 
-  /* check if we should use and/or create a pre-parsed mapfile */
-  ms_mapfile = getenv("MS_MAPFILE");
-  if(preloadedmap || ms_mapfile) {
-    if(preloadedmap) {
-      /* we already have a preloaded mapfile, check if the mapfile itself hasn't changed */
-      stat(ms_mapfile,&mapfile_stat);
-      if(mapfile_stat.st_mtime > preloadedmap_mtime) {
-        /* the mapfile has been updated on disk, discard the cached mapObj */
-        msFreeMap(preloadedmap);
-        preloadedmap = NULL;
-        msDebug("reloading mapfile %s as it has been changed on disk",ms_mapfile);
-      }
-    }
-    if(!preloadedmap) {
-      /* either the mapfile has never been loaded, or it has been destroyed because it was outdated */
-      preloadedmap = msLoadMap(ms_mapfile,NULL);
-      if(!preloadedmap) return NULL;
-      stat(ms_mapfile,&mapfile_stat);
-      preloadedmap_mtime = mapfile_stat.st_mtime;
-    }
-    map = msNewMapObj();
-    msCopyMap(map,preloadedmap);
-  } else {
-    for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
-      if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
+  for(i=0; i<mapserv->request->NumParams; i++) /* find the mapfile parameter first */
+    if(strcasecmp(mapserv->request->ParamNames[i], "map") == 0) break;
 
-    if(i == mapserv->request->NumParams) {
+  if(i == mapserv->request->NumParams) {
+    char *ms_mapfile = getenv("MS_MAPFILE");
+    if(ms_mapfile) {
+      map = msLoadMap(ms_mapfile,NULL);
+    } else {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "msCGILoadMap()"); /* no default, outta here */
       return NULL;
-    } else {
-      if(getenv(mapserv->request->ParamValues[i])) /* an environment variable references the actual file to use */
-        map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
-      else {
-        /* by here we know the request isn't for something in an environment variable */
-        if(getenv("MS_MAP_NO_PATH")) {
-          msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
-          return NULL;
-        }
-
-        if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
-          msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
-          return NULL;
-        }
-
-        /* ok to try to load now */
-        map = msLoadMap(mapserv->request->ParamValues[i], NULL);
+    }
+  } else {
+    if(getenv(mapserv->request->ParamValues[i])) /* an environment variable references the actual file to use */
+      map = msLoadMap(getenv(mapserv->request->ParamValues[i]), NULL);
+    else {
+      /* by here we know the request isn't for something in an environment variable */
+      if(getenv("MS_MAP_NO_PATH")) {
+        msSetError(MS_WEBERR, "Mapfile not found in environment variables and this server is not configured for full paths.", "msCGILoadMap()");
+        return NULL;
       }
+
+      if(getenv("MS_MAP_PATTERN") && msEvalRegex(getenv("MS_MAP_PATTERN"), mapserv->request->ParamValues[i]) != MS_TRUE) {
+        msSetError(MS_WEBERR, "Parameter 'map' value fails to validate.", "msCGILoadMap()");
+        return NULL;
+      }
+
+      /* ok to try to load now */
+      map = msLoadMap(mapserv->request->ParamValues[i], NULL);
     }
   }
+  
 
   if(!map) return NULL;
 
@@ -345,6 +331,18 @@ int msCGISetMode(mapservObj *mapserv)
     }
   }
 
+  if (mapserv->Mode >= 0)
+  {
+    int disabled = MS_FALSE;
+    const char* enable_modes = msLookupHashTable(&mapserv->map->web.metadata, "ms_enable_modes");
+
+    if (!msOWSParseRequestMetadata(enable_modes, mode, &disabled) && disabled) {
+      /* the current mode is disabled */
+      msSetError(MS_WEBERR, "The specified mode '%s' is not supported by the current map configuration", "msCGISetMode()", mode);
+      return MS_FAILURE;
+    }
+  }
+
   return MS_SUCCESS;
 }
 
@@ -374,6 +372,10 @@ int msCGILoadForm(mapservObj *mapserv)
 
     if(strcasecmp(mapserv->request->ParamNames[i],"queryfile") == 0) {
       mapserv->QueryFile = msStrdup(mapserv->request->ParamValues[i]);
+      if(msValidateParameter(mapserv->QueryFile, msLookupHashTable(&(mapserv->map->web.validation), "queryfile"), NULL, NULL, NULL) != MS_SUCCESS) {
+        msSetError(MS_WEBERR, "Parameter 'queryfile' value fails to validate.", "mapserv()");
+        return MS_FAILURE;
+      }
       continue;
     }
 
@@ -428,13 +430,18 @@ int msCGILoadForm(mapservObj *mapserv)
 
       if(n != 4) {
         msSetError(MS_WEBERR, "Not enough arguments for imgext.", "msCGILoadForm()");
+        msFreeCharArray(tokens,n);
         return MS_FAILURE;
       }
 
-      GET_NUMERIC(tokens[0],mapserv->ImgExt.minx);
-      GET_NUMERIC(tokens[1],mapserv->ImgExt.miny);
-      GET_NUMERIC(tokens[2],mapserv->ImgExt.maxx);
-      GET_NUMERIC(tokens[3],mapserv->ImgExt.maxy);
+      GET_NUMERIC_NO_ERROR(tokens[0],mapserv->ImgExt.minx);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[1],mapserv->ImgExt.miny);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[2],mapserv->ImgExt.maxx);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[3],mapserv->ImgExt.maxy);
+      FREE_TOKENS_ON_ERROR(4);
 
       msFreeCharArray(tokens, 4);
       continue;
@@ -468,13 +475,18 @@ int msCGILoadForm(mapservObj *mapserv)
 
         if(n != 4) {
           msSetError(MS_WEBERR, "Not enough arguments for mapext.", "msCGILoadForm()");
+          msFreeCharArray(tokens,n);
           return MS_FAILURE;
         }
 
-        GET_NUMERIC(tokens[0],mapserv->map->extent.minx);
-        GET_NUMERIC(tokens[1],mapserv->map->extent.miny);
-        GET_NUMERIC(tokens[2],mapserv->map->extent.maxx);
-        GET_NUMERIC(tokens[3],mapserv->map->extent.maxy);
+        GET_NUMERIC_NO_ERROR(tokens[0],mapserv->map->extent.minx);
+        FREE_TOKENS_ON_ERROR(4);
+        GET_NUMERIC_NO_ERROR(tokens[1],mapserv->map->extent.miny);
+        FREE_TOKENS_ON_ERROR(4);
+        GET_NUMERIC_NO_ERROR(tokens[2],mapserv->map->extent.maxx);
+        FREE_TOKENS_ON_ERROR(4);
+        GET_NUMERIC_NO_ERROR(tokens[3],mapserv->map->extent.maxy);
+        FREE_TOKENS_ON_ERROR(4);
 
         msFreeCharArray(tokens, 4);
 
@@ -539,11 +551,14 @@ int msCGILoadForm(mapservObj *mapserv)
 
         if(n != 2) {
           msSetError(MS_WEBERR, "Not enough arguments for mapxy.", "msCGILoadForm()");
+          msFreeCharArray(tokens,n);
           return MS_FAILURE;
         }
 
-        GET_NUMERIC(tokens[0],mapserv->mappnt.x );
-        GET_NUMERIC(tokens[1],mapserv->mappnt.y );
+        GET_NUMERIC_NO_ERROR(tokens[0],mapserv->mappnt.x );
+        FREE_TOKENS_ON_ERROR(2);
+        GET_NUMERIC_NO_ERROR(tokens[1],mapserv->mappnt.y );
+        FREE_TOKENS_ON_ERROR(2);
 
         msFreeCharArray(tokens, 2);
 
@@ -586,19 +601,14 @@ int msCGILoadForm(mapservObj *mapserv)
 
         if(n%2 != 0 || n<8) { /* n must be even and be at least 8 */
           msSetError(MS_WEBERR, "Malformed polygon geometry for mapshape/imgshape.", "msCGILoadForm()");
+          msFreeCharArray(tmp,n);
           return MS_FAILURE;
         }
 
         line.numpoints = n/2;
-        if((line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints)) == NULL) {
-          msSetError(MS_MEMERR, NULL, "msCGILoadForm()");
-          return MS_FAILURE;
-        }
+        line.point = (pointObj *)msSmallMalloc(sizeof(pointObj)*line.numpoints);
 
-        if((mapserv->map->query.shape = (shapeObj *) malloc(sizeof(shapeObj))) == NULL) {
-          msSetError(MS_MEMERR, NULL, "msCGILoadForm()");
-          return MS_FAILURE;
-        }
+        mapserv->map->query.shape = (shapeObj *) msSmallMalloc(sizeof(shapeObj));
         msInitShape(mapserv->map->query.shape);
         mapserv->map->query.shape->type = MS_SHAPE_POLYGON;
 
@@ -662,11 +672,14 @@ int msCGILoadForm(mapservObj *mapserv)
 
       if(n != 2) {
         msSetError(MS_WEBERR, "Not enough arguments for imgxy.", "msCGILoadForm()");
+        msFreeCharArray(tokens,n);
         return MS_FAILURE;
       }
 
-      GET_NUMERIC(tokens[0],mapserv->ImgPnt.x );
-      GET_NUMERIC(tokens[1],mapserv->ImgPnt.y );
+      GET_NUMERIC_NO_ERROR(tokens[0],mapserv->ImgPnt.x );
+      FREE_TOKENS_ON_ERROR(2);
+      GET_NUMERIC_NO_ERROR(tokens[1],mapserv->ImgPnt.y );
+      FREE_TOKENS_ON_ERROR(2);
 
       msFreeCharArray(tokens, 2);
 
@@ -692,13 +705,18 @@ int msCGILoadForm(mapservObj *mapserv)
 
       if(n != 4) {
         msSetError(MS_WEBERR, "Not enough arguments for imgbox.", "msCGILoadForm()");
+        msFreeCharArray(tokens,n);
         return MS_FAILURE;
       }
 
-      GET_NUMERIC(tokens[0],mapserv->ImgBox.minx);
-      GET_NUMERIC(tokens[1],mapserv->ImgBox.miny);
-      GET_NUMERIC(tokens[2],mapserv->ImgBox.maxx);
-      GET_NUMERIC(tokens[3],mapserv->ImgBox.maxy);
+      GET_NUMERIC_NO_ERROR(tokens[0],mapserv->ImgBox.minx);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[1],mapserv->ImgBox.miny);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[2],mapserv->ImgBox.maxx);
+      FREE_TOKENS_ON_ERROR(4);
+      GET_NUMERIC_NO_ERROR(tokens[3],mapserv->ImgBox.maxy);
+      FREE_TOKENS_ON_ERROR(4);
 
       msFreeCharArray(tokens, 4);
 
@@ -738,11 +756,14 @@ int msCGILoadForm(mapservObj *mapserv)
 
       if(n != 2) {
         msSetError(MS_WEBERR, "Not enough arguments for imgxy.", "msCGILoadForm()");
+        msFreeCharArray(tokens,n);
         return MS_FAILURE;
       }
 
-      GET_NUMERIC(tokens[0],mapserv->RefPnt.x);
-      GET_NUMERIC(tokens[1],mapserv->RefPnt.y);
+      GET_NUMERIC_NO_ERROR(tokens[0],mapserv->RefPnt.x);
+      FREE_TOKENS_ON_ERROR(2);
+      GET_NUMERIC_NO_ERROR(tokens[1],mapserv->RefPnt.y);
+      FREE_TOKENS_ON_ERROR(2);
 
       msFreeCharArray(tokens, 2);
 
@@ -783,12 +804,15 @@ int msCGILoadForm(mapservObj *mapserv)
 
       if(n != 2) {
         msSetError(MS_WEBERR, "Not enough arguments for imgsize.", "msCGILoadForm()");
+        msFreeCharArray(tokens,n);
         return MS_FAILURE;
       }
 
-      GET_NUMERIC(tokens[0],tmpval);
+      GET_NUMERIC_NO_ERROR(tokens[0],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
       mapserv->ImgCols = (int)tmpval;
-      GET_NUMERIC(tokens[1],tmpval);
+      GET_NUMERIC_NO_ERROR(tokens[1],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
       mapserv->ImgRows = (int)tmpval;
 
       msFreeCharArray(tokens, 2);
@@ -811,12 +835,15 @@ int msCGILoadForm(mapservObj *mapserv)
 
       if(n != 2) {
         msSetError(MS_WEBERR, "Not enough arguments for mapsize.", "msCGILoadForm()");
+        msFreeCharArray(tokens,n);
         return MS_FAILURE;
       }
 
-      GET_NUMERIC(tokens[0],tmpval);
+      GET_NUMERIC_NO_ERROR(tokens[0],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
       mapserv->map->width = (int)tmpval;
-      GET_NUMERIC(tokens[1],tmpval);
+      GET_NUMERIC_NO_ERROR(tokens[1],tmpval);
+      FREE_TOKENS_ON_ERROR(2);
       mapserv->map->height = (int)tmpval;
 
       msFreeCharArray(tokens, 2);
@@ -831,7 +858,7 @@ int msCGILoadForm(mapservObj *mapserv)
     if(strncasecmp(mapserv->request->ParamNames[i],"layers", 6) == 0) { /* turn a set of layers, delimited by spaces, on */
 
       /* If layers=all then turn on all layers */
-      if (strcasecmp(mapserv->request->ParamValues[i], "all") == 0 && mapserv->map != NULL) {
+      if (strcasecmp(mapserv->request->ParamValues[i], "all") == 0) {
         int l;
 
         /* Reset NumLayers=0. If individual layers were already selected then free the previous values.  */
@@ -855,8 +882,10 @@ int msCGILoadForm(mapservObj *mapserv)
 
         layers = msStringSplit(mapserv->request->ParamValues[i], ' ', &(num_layers));
         for(l=0; l<num_layers; l++) {
-          if(msGrowMapservLayers(mapserv) == MS_FAILURE)
+          if(msGrowMapservLayers(mapserv) == MS_FAILURE) {
+            msFreeCharArray(layers, num_layers);
             return MS_FAILURE;
+          }
           mapserv->Layers[mapserv->NumLayers++] = msStrdup(layers[l]);
         }
 
@@ -1035,13 +1064,12 @@ int msCGILoadForm(mapservObj *mapserv)
 
 int setExtentFromShapes(mapservObj *mapserv)
 {
-  int found=0;
   double dx, dy, cellsize;
 
   rectObj tmpext= {-1.0,-1.0,-1.0,-1.0};
   pointObj tmppnt= {-1.0,-1.0};
 
-  found = msGetQueryResultBounds(mapserv->map, &(tmpext));
+  msGetQueryResultBounds(mapserv->map, &(tmpext));
 
   dx = tmpext.maxx - tmpext.minx;
   dy = tmpext.maxy - tmpext.miny;
@@ -1132,7 +1160,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv)
     return MS_FAILURE;
 
   if ( (template != NULL) && (strcasecmp(template, "openlayers")==0) ) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     if (msReturnOpenLayersPage(mapserv) != MS_SUCCESS)
       return MS_FAILURE;
@@ -1142,7 +1170,7 @@ int msCGIDispatchBrowseRequest(mapservObj *mapserv)
   } else {
     if(TEMPLATE_TYPE(mapserv->map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
       if(mapserv->sendheaders) {
-        msIO_setHeader("Content-type",mapserv->map->web.browseformat); /* write MIME header */
+        msIO_setHeader("Content-Type","%s", mapserv->map->web.browseformat); /* write MIME header */
         msIO_sendHeaders();
       }
       if(msReturnPage(mapserv, mapserv->map->web.template, BROWSE, NULL) != MS_SUCCESS)
@@ -1196,7 +1224,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
         /* validate the qstring parameter */
         if(msValidateParameter(mapserv->QueryString, msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->SelectLayerIndex)->validation), "qstring"),
                                msLookupHashTable(&(mapserv->map->web.validation), "qstring"),
-                               msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->SelectLayerIndex)->metadata), "qstring_validation_pattern"), NULL) != MS_SUCCESS) {
+                               NULL, NULL) != MS_SUCCESS) {
           msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
           return MS_FAILURE;
         }
@@ -1205,9 +1233,12 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
           if(MS_SUCCESS != setExtent(mapserv)) /* set user area of interest */
             return MS_FAILURE;
 
-        mapserv->map->query.type = MS_QUERY_BY_ATTRIBUTE;
-        if(mapserv->QueryItem) mapserv->map->query.item = msStrdup(mapserv->QueryItem);
-        if(mapserv->QueryString) mapserv->map->query.str = msStrdup(mapserv->QueryString);
+        mapserv->map->query.type = MS_QUERY_BY_FILTER;
+        if(mapserv->QueryItem) mapserv->map->query.filteritem = msStrdup(mapserv->QueryItem);
+        if(mapserv->QueryString) {
+          msInitExpression(&mapserv->map->query.filter);
+          msLoadExpressionString(&mapserv->map->query.filter, mapserv->QueryString);
+        }
 
         mapserv->map->query.rect = mapserv->map->extent;
 
@@ -1260,6 +1291,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
               break;
             case FROMUSERPNT:
               mapserv->map->query.type = MS_QUERY_BY_POINT;
+              break;
             default:
               if(MS_SUCCESS != setExtent(mapserv)) {
                 return MS_FAILURE;
@@ -1288,7 +1320,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
         /* validate the qstring parameter */
         if(msValidateParameter(mapserv->QueryString, msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->QueryLayerIndex)->validation), "qstring"),
                                msLookupHashTable(&(mapserv->map->web.validation), "qstring"),
-                               msLookupHashTable(&(GET_LAYER(mapserv->map, mapserv->QueryLayerIndex)->metadata), "qstring_validation_pattern"), NULL) != MS_SUCCESS) {
+                               NULL, NULL) != MS_SUCCESS) {
           msSetError(MS_WEBERR, "Parameter 'qstring' value fails to validate.", "mapserv()");
           return MS_FAILURE;
         }
@@ -1297,10 +1329,13 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
           if(MS_SUCCESS != setExtent(mapserv)) /* set user area of interest */
             return MS_FAILURE;
 
-        mapserv->map->query.type = MS_QUERY_BY_ATTRIBUTE;
+        mapserv->map->query.type = MS_QUERY_BY_FILTER;
         mapserv->map->query.layer = mapserv->QueryLayerIndex;
-        if(mapserv->QueryItem) mapserv->map->query.item = msStrdup(mapserv->QueryItem);
-        if(mapserv->QueryString) mapserv->map->query.str = msStrdup(mapserv->QueryString);
+        if(mapserv->QueryItem) mapserv->map->query.filteritem = msStrdup(mapserv->QueryItem);
+        if(mapserv->QueryString) {
+          msInitExpression(&mapserv->map->query.filter);
+          msLoadExpressionString(&mapserv->map->query.filter, mapserv->QueryString);
+	}
 
         mapserv->map->query.rect = mapserv->map->extent;
 
@@ -1461,7 +1496,7 @@ int msCGIDispatchQueryRequest(mapservObj *mapserv)
 int msCGIDispatchImageRequest(mapservObj *mapserv)
 {
   int status;
-  imageObj *img;
+  imageObj *img = NULL;
   switch(mapserv->Mode) {
     case MAP:
       if(mapserv->QueryFile) {
@@ -1483,7 +1518,11 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
       img = msTileDraw(mapserv);
       break;
     case LEGEND:
-      img = msDrawLegend(mapserv->map, MS_FALSE);
+    case MAPLEGEND:
+      img = msDrawLegend(mapserv->map, MS_FALSE, mapserv->hittest);
+      break;
+    default:
+      msSetError(MS_CGIERR,"Invalid CGI mode", "msCGIDispatchImageRequest()");
       break;
   }
 
@@ -1500,7 +1539,12 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
     const char *attachment = msGetOutputFormatOption(mapserv->map->outputformat, "ATTACHMENT", NULL );
     if(attachment)
       msIO_setHeader("Content-disposition","attachment; filename=%s", attachment);
-    msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+
+    if(!strcmp(MS_IMAGE_MIME_TYPE(mapserv->map->outputformat), "application/json")) {
+      msIO_setHeader("Content-Type","application/json; charset=utf-8");
+    } else {
+      msIO_setHeader("Content-Type","%s", MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+    }
     msIO_sendHeaders();
   }
 
@@ -1518,12 +1562,21 @@ int msCGIDispatchImageRequest(mapservObj *mapserv)
 
 int msCGIDispatchLegendRequest(mapservObj *mapserv)
 {
+  int status;
+  if(mapserv->Mode == MAPLEGEND) {
+    if(setExtent(mapserv) != MS_SUCCESS) return MS_FAILURE;
+    if(checkWebScale(mapserv) != MS_SUCCESS) return MS_FAILURE;
+    mapserv->hittest = msSmallMalloc(sizeof(map_hittest));
+    initMapHitTests(mapserv->map,mapserv->hittest);
+    status = msHitTestMap(mapserv->map,mapserv->hittest);
+    if(status != MS_SUCCESS) return MS_FAILURE;
+  }
   if(mapserv->map->legend.template) {
     char *legendTemplate;
     legendTemplate = generateLegendTemplate(mapserv);
     if(legendTemplate) {
       if(mapserv->sendheaders) {
-        msIO_setHeader("Content-type",mapserv->map->web.legendformat);
+        msIO_setHeader("Content-Type","%s",mapserv->map->web.legendformat);
         msIO_sendHeaders();
       }
       msIO_fwrite(legendTemplate, strlen(legendTemplate), 1, stdout);
@@ -1540,11 +1593,11 @@ int msCGIDispatchLegendRequest(mapservObj *mapserv)
 
 int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
 {
-  char **tokens;
+  char **tokens = NULL;
   int numtokens=0;
-  int layerindex=-1, classindex=0;
+  int layerindex=-1, classindex=0, status;
   outputFormatObj *format = NULL;
-  imageObj *img;
+  imageObj *img = NULL;
 
   /* TODO: do we want to set scale here? */
 
@@ -1559,20 +1612,38 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
 
   if(numtokens != 1 && numtokens != 2) {
     msSetError(MS_WEBERR, "%d Malformed icon parameter, should be 'layer,class' or just 'layer' if the layer has only 1 class defined.", "mapserv()", numtokens);
-    return MS_FAILURE;
+    status = MS_FAILURE;
+    goto li_cleanup;
   }
 
   if((layerindex = msGetLayerIndex(mapserv->map, tokens[0])) == -1) {
     msSetError(MS_WEBERR, "Icon layer=%s not found in mapfile.", "mapserv()", tokens[0]);
-    return MS_FAILURE;
+    status = MS_FAILURE;
+    goto li_cleanup;
   }
 
   if(numtokens == 2) { /* check the class index */
     classindex = atoi(tokens[1]);
     if(classindex >= GET_LAYER(mapserv->map, layerindex)->numclasses) {
       msSetError(MS_WEBERR, "Icon class=%d not found in layer=%s.", "mapserv()", classindex, GET_LAYER(mapserv->map, layerindex)->name);
-      return MS_FAILURE;
+      status = MS_FAILURE;
+      goto li_cleanup;
     }
+  }
+
+  if(mapserv->Mode == MAPLEGENDICON) {
+    if(setExtent(mapserv) != MS_SUCCESS) {
+      status=MS_FAILURE;
+      goto li_cleanup;
+    }
+    if(checkWebScale(mapserv) != MS_SUCCESS) {
+      status=MS_FAILURE;
+      goto li_cleanup;
+    }
+    mapserv->hittest = msSmallMalloc(sizeof(map_hittest));
+    initMapHitTests(mapserv->map,mapserv->hittest);
+    status = msHitTestLayer(mapserv->map, GET_LAYER(mapserv->map,layerindex),&mapserv->hittest->layerhits[layerindex]);
+    if(status != MS_SUCCESS) goto li_cleanup;
   }
 
   /* ensure we have an image format representing the options for the legend. */
@@ -1581,20 +1652,28 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
   /* initialize the legend image */
   if( ! MS_RENDERER_PLUGIN(format) ) {
     msSetError(MS_RENDERERERR, "unsupported renderer for legend icon", "mapserv main()");
-    return MS_FAILURE;
+    status = MS_FAILURE;
+    goto li_cleanup;
   }
   img = msImageCreate(mapserv->map->legend.keysizex, mapserv->map->legend.keysizey, format,
                       mapserv->map->web.imagepath, mapserv->map->web.imageurl, mapserv->map->resolution, mapserv->map->defresolution,
                       &(mapserv->map->legend.imagecolor));
+  if(!img) {
+    status = MS_FAILURE;
+    goto li_cleanup;
+  }
 
   /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
-  if(msDrawLegendIcon(mapserv->map, GET_LAYER(mapserv->map, layerindex), GET_LAYER(mapserv->map, layerindex)->class[classindex], mapserv->map->legend.keysizex,  mapserv->map->legend.keysizey, img, 0, 0) != MS_SUCCESS)
-    return MS_FAILURE;
+  if(msDrawLegendIcon(mapserv->map, GET_LAYER(mapserv->map, layerindex), GET_LAYER(mapserv->map, layerindex)->class[classindex], mapserv->map->legend.keysizex,  mapserv->map->legend.keysizey, img, 0, 0, MS_TRUE,
+      ((mapserv->hittest)?(&mapserv->hittest->layerhits[layerindex].classhits[classindex]):(NULL))) != MS_SUCCESS) {
+    status = MS_FAILURE;
+    goto li_cleanup;
+  }
 
   if(mapserv->sendheaders) {
-    msIO_setHeader("Content-type",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
+    msIO_setHeader("Content-Type","%s",MS_IMAGE_MIME_TYPE(mapserv->map->outputformat));
     msIO_sendHeaders();
   }
   /*
@@ -1603,12 +1682,13 @@ int msCGIDispatchLegendIconRequest(mapservObj *mapserv)
   if( mapserv->sendheaders && msLookupHashTable(&(mapserv->map->web.metadata), "http_max_age") ) {
     msIO_printf("Cache-Control: max-age=%s%c", msLookupHashTable(&(mapserv->map->web.metadata), "http_max_age"), 10);
   }
-  if( msSaveImage(NULL, img, NULL) != MS_SUCCESS)
-    return MS_FAILURE;
+  
+  status = msSaveImage(NULL, img, NULL);
 
+li_cleanup:
   msFreeCharArray(tokens, numtokens);
   msFreeImage(img);
-  return MS_SUCCESS;
+  return status;
 }
 
 int msCGIDispatchRequest(mapservObj *mapserv)
@@ -1649,7 +1729,7 @@ int msCGIDispatchRequest(mapservObj *mapserv)
       }
       if (service && strcasecmp(service,"WMS")==0) {
         if(mapserv->sendheaders) {
-          msIO_setHeader("Content-type","text/html");
+          msIO_setHeader("Content-Type","text/html");
           msIO_sendHeaders();
         }
 
@@ -1712,9 +1792,9 @@ int msCGIDispatchRequest(mapservObj *mapserv)
     if(setExtent(mapserv) != MS_SUCCESS) return MS_FAILURE;
     if(checkWebScale(mapserv) != MS_SUCCESS) return MS_FAILURE;
     return msCGIDispatchImageRequest(mapserv);
-  } else if(mapserv->Mode == LEGEND) {
+  } else if(mapserv->Mode == LEGEND || mapserv->Mode == MAPLEGEND) {
     return msCGIDispatchLegendRequest(mapserv);
-  } else if(mapserv->Mode == LEGENDICON) {
+  } else if(mapserv->Mode == LEGENDICON || mapserv->Mode == MAPLEGENDICON) {
     return msCGIDispatchLegendIconRequest(mapserv);
   } else if(mapserv->Mode >= QUERY) {
     return msCGIDispatchQueryRequest(mapserv);
@@ -1732,12 +1812,16 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   struct mstimeval execstarttime, execendtime;
   struct mstimeval requeststarttime, requestendtime;
   mapservObj* mapserv = NULL;
-  char *queryString;
+  char *queryString = NULL;
   int maxParams = MS_DEFAULT_CGI_PARAMS;
   msIOContext *ctx;
   msIOBuffer  *buf;
 
   msIO_installStdoutToBuffer();
+
+  /* Use PROJ_LIB env vars if set */
+  msProjLibInitFromEnv();
+
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if( msDebugInitFromEnv() != MS_SUCCESS ) {
     msCGIWriteError(mapserv);
@@ -1747,15 +1831,15 @@ int msCGIHandler(const char *query_string, void **out_buffer, size_t *buffer_len
   if(msGetGlobalDebugLevel() >= MS_DEBUGLEVEL_TUNING)
     msGettimeofday(&execstarttime, NULL);
 
-  mapserv = msAllocMapServObj();
-  mapserv->request->type = MS_GET_REQUEST;
-
   if(!query_string || !*query_string) {
-    msIO_setHeader("Content-type","text/html");
+    msIO_setHeader("Content-Type","text/html");
     msIO_sendHeaders();
     msIO_printf("No query information to decode. QUERY_STRING not set.\n");
     goto end_request;
   }
+  
+  mapserv = msAllocMapServObj();
+  mapserv->request->type = MS_GET_REQUEST;
 
   /* don't modify the string */
   queryString = msStrdup(query_string);

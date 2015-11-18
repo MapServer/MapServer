@@ -7,6 +7,7 @@
 ** when maplexer.l is altered.
 */
 
+#define YY_NO_INPUT
 
 /* C declarations */
 #include <stdlib.h>
@@ -35,6 +36,8 @@
 #ifndef YY_CURRENT_BUFFER_LVALUE
 int msyylineno = 1;
 #endif
+
+#define YY_NO_INPUT
 
 int msyysource=MS_STRING_TOKENS;
 double msyynumber;
@@ -182,9 +185,18 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>tostring                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_TOSTRING); }
 <EXPRESSION_STRING>commify                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_COMMIFY); }
 <EXPRESSION_STRING>round                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_ROUND); }
+<EXPRESSION_STRING>upper                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_UPPER); }
+<EXPRESSION_STRING>lower                       { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_LOWER); }
+<EXPRESSION_STRING>initcap                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_INITCAP); }
+<EXPRESSION_STRING>firstcap                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_FIRSTCAP); }
 
 <EXPRESSION_STRING>buffer                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_BUFFER); }
 <EXPRESSION_STRING>difference                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_DIFFERENCE); }
+<EXPRESSION_STRING>simplify                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFY); }
+<EXPRESSION_STRING>simplifypt                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SIMPLIFYPT); }
+<EXPRESSION_STRING>generalize                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_GENERALIZE); }
+<EXPRESSION_STRING>smoothsia                   { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_SMOOTHSIA); }
+<EXPRESSION_STRING>javascript                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_JAVASCRIPT); }
 
 <EXPRESSION_STRING>intersects                  { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_INTERSECTS); }
 <EXPRESSION_STRING>disjoint                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_DISJOINT); }
@@ -193,10 +205,14 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>crosses                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_CROSSES); }
 <EXPRESSION_STRING>within                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_WITHIN); }
 <EXPRESSION_STRING>contains                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_CONTAINS); }
+<EXPRESSION_STRING>equals                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_EQUALS); }
 <EXPRESSION_STRING>beyond                      { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_BEYOND); }
 <EXPRESSION_STRING>dwithin                     { MS_LEXER_RETURN_TOKEN(MS_TOKEN_COMPARISON_DWITHIN); }
 
 <EXPRESSION_STRING>fromtext                    { MS_LEXER_RETURN_TOKEN(MS_TOKEN_FUNCTION_FROMTEXT); }
+
+<EXPRESSION_STRING>true                        { msyynumber=MS_TRUE; return(MS_TOKEN_LITERAL_BOOLEAN); }
+<EXPRESSION_STRING>false                       { msyynumber=MS_FALSE; return(MS_TOKEN_LITERAL_BOOLEAN); }
 
 <INITIAL>colorrange                            { MS_LEXER_RETURN_TOKEN(COLORRANGE); }
 <INITIAL>datarange                             { MS_LEXER_RETURN_TOKEN(DATARANGE); }
@@ -217,6 +233,9 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>classgroup                 { MS_LEXER_RETURN_TOKEN(CLASSGROUP); }
 <INITIAL>cluster                               { MS_LEXER_RETURN_TOKEN(CLUSTER); }
 <INITIAL,URL_STRING>color                      { MS_LEXER_RETURN_TOKEN(COLOR); }
+<INITIAL>compfilter                            { MS_LEXER_RETURN_TOKEN(COMPFILTER); }
+<INITIAL>composite                             { MS_LEXER_RETURN_TOKEN(COMPOSITE); }
+<INITIAL>compop                                { MS_LEXER_RETURN_TOKEN(COMPOP); }
 <INITIAL>config                                { MS_LEXER_RETURN_TOKEN(CONFIG); }
 <INITIAL,URL_STRING>connection                 { MS_LEXER_RETURN_TOKEN(CONNECTION); }
 <INITIAL,URL_STRING>connectiontype             { MS_LEXER_RETURN_TOKEN(CONNECTIONTYPE); }
@@ -266,7 +285,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>keyimage                   { MS_LEXER_RETURN_TOKEN(KEYIMAGE); }
 <INITIAL,URL_STRING>keysize                    { MS_LEXER_RETURN_TOKEN(KEYSIZE); }
 <INITIAL>keyspacing                            { MS_LEXER_RETURN_TOKEN(KEYSPACING); }
-<INITIAL,URL_STRING>label                      { MS_LEXER_RETURN_TOKEN(LABEL); }
+<INITIAL,URL_VARIABLE>label                      { MS_LEXER_RETURN_TOKEN(LABEL); }
 <INITIAL>labelcache                            { MS_LEXER_RETURN_TOKEN(LABELCACHE); }
 <INITIAL>labelformat                           { MS_LEXER_RETURN_TOKEN(LABELFORMAT); }
 <INITIAL,URL_STRING>labelitem                  { MS_LEXER_RETURN_TOKEN(LABELITEM); }
@@ -352,6 +371,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL>scale                                 { MS_LEXER_RETURN_TOKEN(SCALE); }
 <INITIAL>scaledenom                            { MS_LEXER_RETURN_TOKEN(SCALEDENOM); }
 <INITIAL,URL_VARIABLE>scalebar                 { MS_LEXER_RETURN_TOKEN(SCALEBAR); }
+<INITIAL>scaletoken                            { MS_LEXER_RETURN_TOKEN(SCALETOKEN); }
 <INITIAL,URL_STRING>shadowcolor                { MS_LEXER_RETURN_TOKEN(SHADOWCOLOR); }
 <INITIAL,URL_STRING>shadowsize                 { MS_LEXER_RETURN_TOKEN(SHADOWSIZE); }
 <INITIAL>shapepath                             { MS_LEXER_RETURN_TOKEN(SHAPEPATH); }
@@ -370,6 +390,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>text                       { MS_LEXER_RETURN_TOKEN(TEXT); }
 <INITIAL,URL_STRING>tileindex                  { MS_LEXER_RETURN_TOKEN(TILEINDEX); }
 <INITIAL,URL_STRING>tileitem                   { MS_LEXER_RETURN_TOKEN(TILEITEM); }
+<INITIAL,URL_STRING>tilesrs                    { MS_LEXER_RETURN_TOKEN(TILESRS); }
 <INITIAL,URL_STRING>title                      { MS_LEXER_RETURN_TOKEN(TITLE); }
 <INITIAL>to                                    { MS_LEXER_RETURN_TOKEN(TO); }
 <INITIAL,URL_STRING>tolerance                  { MS_LEXER_RETURN_TOKEN(TOLERANCE); }
@@ -379,7 +400,10 @@ char path[MS_MAXPATHLEN];
 <INITIAL>transform                             { MS_LEXER_RETURN_TOKEN(TRANSFORM); }
 <INITIAL>type                                  { MS_LEXER_RETURN_TOKEN(TYPE); }
 <INITIAL,URL_VARIABLE,URL_STRING>units         { MS_LEXER_RETURN_TOKEN(UNITS); }
+<INITIAL>utfdata                               { MS_LEXER_RETURN_TOKEN(UTFDATA); }
+<INITIAL>utfitem                               { MS_LEXER_RETURN_TOKEN(UTFITEM); }
 <INITIAL>validation                            { MS_LEXER_RETURN_TOKEN(VALIDATION); }
+<INITIAL>values                                { MS_LEXER_RETURN_TOKEN(VALUES); }
 <INITIAL,URL_VARIABLE>web                      { MS_LEXER_RETURN_TOKEN(WEB); }
 <INITIAL,URL_STRING>width                      { MS_LEXER_RETURN_TOKEN(WIDTH); }
 <INITIAL,URL_STRING>wkt                        { MS_LEXER_RETURN_TOKEN(WKT); }
@@ -409,6 +433,7 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>follow                     { MS_LEXER_RETURN_TOKEN(MS_FOLLOW); }
 <INITIAL>giant                                 { MS_LEXER_RETURN_TOKEN(MS_GIANT); }
 <INITIAL>hatch                                 { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_HATCH); }
+<INITIAL>kerneldensity                         { MS_LEXER_RETURN_TOKEN(MS_KERNELDENSITY); }
 <INITIAL>hilite                                { MS_LEXER_RETURN_TOKEN(MS_HILITE); }
 <INITIAL,URL_STRING>inches                     { MS_LEXER_RETURN_TOKEN(MS_INCHES); }
 <INITIAL,URL_STRING>kilometers                 { MS_LEXER_RETURN_TOKEN(MS_KILOMETERS); }
@@ -443,7 +468,6 @@ char path[MS_MAXPATHLEN];
 <INITIAL>raster                                { MS_LEXER_RETURN_TOKEN(MS_LAYER_RASTER); }
 <INITIAL,URL_STRING>right                      { MS_LEXER_RETURN_TOKEN(MS_ALIGN_RIGHT); }
 <INITIAL>round                                 { MS_LEXER_RETURN_TOKEN(MS_CJC_ROUND); }
-<INITIAL>sde                                   { MS_LEXER_RETURN_TOKEN(MS_SDE); }
 <INITIAL>selected                              { MS_LEXER_RETURN_TOKEN(MS_SELECTED); }
 <INITIAL>simple                                { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_SIMPLE); }
 <INITIAL>single                                { MS_LEXER_RETURN_TOKEN(MS_SINGLE); }
@@ -460,12 +484,12 @@ char path[MS_MAXPATHLEN];
 <INITIAL,URL_STRING>ur                         { MS_LEXER_RETURN_TOKEN(MS_UR); }
 <INITIAL>union                                 { MS_LEXER_RETURN_TOKEN(MS_UNION); }
 <INITIAL>uvraster                              { MS_LEXER_RETURN_TOKEN(MS_UVRASTER); }
+<INITIAL>contour                               { MS_LEXER_RETURN_TOKEN(MS_CONTOUR); }
 <INITIAL>vector                                { MS_LEXER_RETURN_TOKEN(MS_SYMBOL_VECTOR); }
 <INITIAL>wfs                                   { MS_LEXER_RETURN_TOKEN(MS_WFS); }
 <INITIAL>wms                                   { MS_LEXER_RETURN_TOKEN(MS_WMS); }
-<INITIAL>alpha                                 { MS_LEXER_RETURN_TOKEN(MS_GD_ALPHA); }
 
-<URL_VARIABLE>\[[a-z/\.][a-z0-9/\.\-\=_ ]*\]   {
+<URL_VARIABLE>\[[a-z/\.][a-z0-9/:\.\-\=_ ]*\]  {
                                                  msyytext++;
                                                  msyytext[strlen(msyytext)-1] = '\0';
                                                  MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
@@ -495,6 +519,14 @@ char path[MS_MAXPATHLEN];
 <EXPRESSION_STRING>\[shape\] { 
   /* attribute binding - shape (fixed value) */
   return(MS_TOKEN_BINDING_SHAPE);
+}
+<EXPRESSION_STRING>\[map_cellsize\] { 
+  /* attribute binding - map cellsize */
+  return(MS_TOKEN_BINDING_MAP_CELLSIZE);
+}
+<EXPRESSION_STRING>\[data_cellsize\] { 
+  /* attribute binding - data cellsize */
+  return(MS_TOKEN_BINDING_DATA_CELLSIZE);
 }
 <EXPRESSION_STRING>\[[^\]]*\] {
   /* attribute binding - numeric (no quotes) */
@@ -576,6 +608,15 @@ char path[MS_MAXPATHLEN];
                                                  return(MS_EXPRESSION);
                                                }
 
+<INITIAL,URL_STRING>\{.*\}                     {
+                                                 msyytext++;
+                                                 msyytext[strlen(msyytext)-1] = '\0';
+                                                 MS_LEXER_STRING_REALLOC(msyystring_buffer, strlen(msyytext), 
+                                                                         msyystring_buffer_size, msyystring_buffer_ptr);
+                                                 strcpy(msyystring_buffer, msyytext);
+                                                 return(MS_LIST);
+                                               }
+
 <INITIAL,URL_STRING>\'|\"                     {
                                                  msyystring_return_state = MS_STRING;
                                                  msyystring_begin = msyytext[0]; 
@@ -651,6 +692,7 @@ char path[MS_MAXPATHLEN];
                                                  msyyin = fopen(msBuildPath(path, msyybasepath, msyytext), "r");
                                                  if(!msyyin) {
                                                    msSetError(MS_IOERR, "Error opening included file \"%s\".", "msyylex()", msyytext);
+                                                   msyyin = YY_CURRENT_BUFFER->yy_input_file;
                                                    return(-1);
                                                  }
 
@@ -711,6 +753,6 @@ int msyywrap() /* override */
 }
 
 int msyyerror(char *s) {
-  msSetError(MS_PARSEERR, s, "msyyparse()");
+  msSetError(MS_PARSEERR, "%s", "msyyparse()", s);
   return(0);
 }

@@ -4,6 +4,7 @@
  * Project:  MapServer
  * Purpose:  AGG template library types.
  * Author:   John Novak (jnovak@novacell.com)
+ * Author:   Thomas Bonfort (tbonfort@terriscope.fr)
  *
  ******************************************************************************
  * Copyright (c) 1996-2007 Regents of the University of Minnesota.
@@ -27,7 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************/
 
-#include "renderers/agg/include/agg_rendering_buffer.h"
+#include "renderers/agg/include/agg_path_storage.h"
 
 /*
  * interface to a shapeObj representing lines, providing the functions
@@ -75,30 +76,13 @@ public:
 
     return vertex(x,y); /*this will return the first point of the next line*/
   }
-private:
+protected:
   shapeObj *s;
   lineObj *m_line, /*current line pointer*/
           *m_lend; /*points to after the last line*/
   pointObj *m_point, /*current point*/
            *m_pend; /*points to after last point of current line*/
 };
-
-class offset_line_adaptor: public line_adaptor
-{
-public:
-  offset_line_adaptor(shapeObj *shape, double ox, double oy):line_adaptor(shape),ox(ox),oy(oy) {
-  }
-
-  unsigned vertex(double* x, double* y) {
-    unsigned ret = line_adaptor::vertex(x,y);
-    *x+=ox;
-    *y+=oy;
-    return ret;
-  }
-private:
-  double ox,oy;
-};
-
 
 
 class polygon_adaptor
@@ -154,7 +138,7 @@ public:
      * of the shape. return the command to stop processing this shape*/
     return mapserver::path_cmd_stop;
   }
-private:
+protected:
   shapeObj *s;
   double ox,oy;
   lineObj *m_line, /*pointer to current line*/
@@ -164,23 +148,4 @@ private:
   bool m_stop; /*should next call return stop command*/
 };
 
-class offset_polygon_adaptor: public polygon_adaptor
-{
-public:
-  offset_polygon_adaptor(shapeObj *shape, double ox, double oy):polygon_adaptor(shape),ox(ox),oy(oy) {
-  }
-
-  unsigned vertex(double* x, double* y) {
-    unsigned ret = polygon_adaptor::vertex(x,y);
-    *x+=ox;
-    *y+=oy;
-    return ret;
-  }
-private:
-  double ox,oy;
-};
-
-
-
-
-
+mapserver::path_storage imageVectorSymbol(symbolObj *);

@@ -30,12 +30,14 @@
  * This should be changed to a test on the presence of libcurl which
  * is really what the real dependency is.
  */
+#include "mapserver-config.h"
 #if defined(USE_CURL)
 
 #include "mapserver.h"
 #include "maphttp.h"
 #include "maperror.h"
 #include "mapthread.h"
+#include "mapows.h"
 
 
 
@@ -128,6 +130,7 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
     pasReqInfo[i].pszOutputFile = NULL;
     pasReqInfo[i].nLayerId = 0;
     pasReqInfo[i].nTimeout = 0;
+    pasReqInfo[i].nMaxBytes = 0;
     pasReqInfo[i].nStatus = 0;
     pasReqInfo[i].pszContentType = NULL;
     pasReqInfo[i].pszErrBuf = NULL;
@@ -219,11 +222,18 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
 
   if (psReq->debug) {
     msDebug("msHTTPWriteFct(id=%d, %d bytes)\n",
-            psReq->nLayerId, size*nmemb);
+            psReq->nLayerId, (int)(size*nmemb));
   }
 
+  if(psReq->nMaxBytes > 0 && (psReq->result_size + size*nmemb) > psReq->nMaxBytes) {
+      msSetError(MS_HTTPERR, "Requested transfer larger than configured maximum %d.",
+                 "msHTTPWriteFct()",
+                 psReq->nMaxBytes );
+      return -1;
+  }
   /* Case where we are writing to a disk file. */
   if( psReq->fp != NULL ) {
+    psReq->result_size += size*nmemb;
     return fwrite(buffer, size, nmemb, psReq->fp);
   }
 
@@ -278,6 +288,144 @@ long msGetCURLAuthType(enum MS_HTTP_AUTH_TYPE authType)
     default:
       return CURLAUTH_BASIC;
   }
+}
+
+
+/**********************************************************************
+ *                          msHTTPAuthProxySetup()
+ *
+ * Common code used by msPrepareWFSLayerRequest() and
+ * msPrepareWMSLayerRequest() to handle proxy / http auth for requests
+ *
+ * Return value:
+ * MS_SUCCESS if all requests completed succesfully.
+ * MS_FAILURE if a fatal error happened
+ **********************************************************************/
+int msHTTPAuthProxySetup(hashTableObj *mapmd, hashTableObj *lyrmd,
+                         httpRequestObj *pasReqInfo, int numRequests,
+                         mapObj *map, const char* namespaces)
+{
+
+  const char *pszTmp;
+  char    *pszProxyHost=NULL;
+  long     nProxyPort=0;
+  char    *pszProxyUsername=NULL, *pszProxyPassword=NULL;
+  char    *pszHttpAuthUsername=NULL, *pszHttpAuthPassword=NULL;
+  enum MS_HTTP_AUTH_TYPE eHttpAuthType = MS_BASIC;
+  enum MS_HTTP_AUTH_TYPE eProxyAuthType = MS_BASIC;
+  enum MS_HTTP_PROXY_TYPE eProxyType = MS_HTTP;
+
+
+  /* ------------------------------------------------------------------
+   * Check for authentication and proxying metadata. If the metadata is not found
+   * in the layer metadata, check the map-level metadata.
+   * ------------------------------------------------------------------ */
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "proxy_host")) != NULL) {
+    pszProxyHost = msStrdup(pszTmp);
+  }
+
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "proxy_port")) != NULL) {
+    nProxyPort = atol(pszTmp);
+  }
+
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "proxy_type")) != NULL) {
+
+    if (strcasecmp(pszTmp, "HTTP") == 0)
+      eProxyType = MS_HTTP;
+    else if (strcasecmp(pszTmp, "SOCKS5") == 0)
+      eProxyType = MS_SOCKS5;
+    else {
+      msSetError(MS_WMSERR, "Invalid proxy_type metadata '%s' specified",
+                 "msHTTPAuthProxySetup()", pszTmp);
+      return MS_FAILURE;
+    }
+  }
+
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "proxy_auth_type")) != NULL) {
+    if (strcasecmp(pszTmp, "BASIC") == 0)
+      eProxyAuthType = MS_BASIC;
+    else if (strcasecmp(pszTmp, "DIGEST") == 0)
+      eProxyAuthType = MS_DIGEST;
+    else if (strcasecmp(pszTmp, "NTLM") == 0)
+      eProxyAuthType = MS_NTLM;
+    else if (strcasecmp(pszTmp, "ANY") == 0)
+      eProxyAuthType = MS_ANY;
+    else if (strcasecmp(pszTmp, "ANYSAFE") == 0)
+      eProxyAuthType = MS_ANYSAFE;
+    else {
+      msSetError(MS_WMSERR, "Invalid proxy_auth_type metadata '%s' specified",
+                 "msHTTPAuthProxySetup()", pszTmp);
+      return MS_FAILURE;
+    }
+  }
+
+
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "proxy_username")) != NULL) {
+    pszProxyUsername = msStrdup(pszTmp);
+  }
+
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "proxy_password")) != NULL) {
+    pszProxyPassword = msDecryptStringTokens(map, pszTmp);
+    if (pszProxyPassword == NULL) {
+      msFree(pszProxyHost);
+      msFree(pszProxyUsername);
+      return(MS_FAILURE);  /* An error should already have been produced */
+    }
+  }
+
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "auth_type")) != NULL) {
+    if (strcasecmp(pszTmp, "BASIC") == 0)
+      eHttpAuthType = MS_BASIC;
+    else if (strcasecmp(pszTmp, "DIGEST") == 0)
+      eHttpAuthType = MS_DIGEST;
+    else if (strcasecmp(pszTmp, "NTLM") == 0)
+      eHttpAuthType = MS_NTLM;
+    else if (strcasecmp(pszTmp, "ANY") == 0)
+      eHttpAuthType = MS_ANY;
+    else if (strcasecmp(pszTmp, "ANYSAFE") == 0)
+      eHttpAuthType = MS_ANYSAFE;
+    else {
+      msSetError(MS_WMSERR, "Invalid auth_type metadata '%s' specified",
+                 "msHTTPAuthProxySetup()", pszTmp);
+      return MS_FAILURE;
+    }
+  }
+
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "auth_username")) != NULL) {
+    pszHttpAuthUsername = msStrdup(pszTmp);
+  }
+
+  if ((pszTmp = msOWSLookupMetadata2(lyrmd, mapmd, namespaces,
+                                     "auth_password")) != NULL) {
+    pszHttpAuthPassword = msDecryptStringTokens(map, pszTmp);
+    if (pszHttpAuthPassword == NULL) {
+      msFree(pszHttpAuthUsername);
+      msFree(pszProxyHost);
+      msFree(pszProxyUsername);
+      msFree(pszProxyPassword);
+      return(MS_FAILURE);  /* An error should already have been produced */
+    }
+  }
+
+  pasReqInfo[numRequests].pszProxyAddress  = pszProxyHost;
+  pasReqInfo[numRequests].nProxyPort       = nProxyPort;
+  pasReqInfo[numRequests].eProxyType       = eProxyType;
+  pasReqInfo[numRequests].eProxyAuthType   = eProxyAuthType;
+  pasReqInfo[numRequests].pszProxyUsername = pszProxyUsername;
+  pasReqInfo[numRequests].pszProxyPassword = pszProxyPassword;
+  pasReqInfo[numRequests].eHttpAuthType    = eHttpAuthType;
+  pasReqInfo[numRequests].pszHttpUsername  = pszHttpAuthUsername;
+  pasReqInfo[numRequests].pszHttpPassword  = pszHttpAuthPassword;
+
+  return MS_SUCCESS;
 }
 
 /**********************************************************************
@@ -395,6 +543,8 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     /* set URL, note that curl keeps only a ref to our string buffer */
     curl_easy_setopt(http_handle, CURLOPT_URL, pasReqInfo[i].pszGetUrl );
 
+    curl_easy_setopt(http_handle, CURLOPT_PROTOCOLS, CURLPROTO_HTTP|CURLPROTO_HTTPS );
+
     /* Set User-Agent (auto-generate if not set by caller */
     if (pasReqInfo[i].pszUserAgent == NULL) {
       curl_version_info_data *psCurlVInfo;
@@ -458,7 +608,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
           && strlen(pasReqInfo[i].pszProxyUsername) > 0
           && strlen(pasReqInfo[i].pszProxyPassword) > 0) {
         char    szUsernamePasswd[128];
-#ifdef USE_CURLOPT_PROXYAUTH
+#if LIBCURL_VERSION_NUM >= 0x070a07
         long    nProxyAuthType = CURLAUTH_BASIC;
         /* CURLOPT_PROXYAUTH available only in Curl 7.10.7 and up */
         nProxyAuthType = msGetCURLAuthType(pasReqInfo[i].eProxyAuthType);
@@ -467,7 +617,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         /* We log an error but don't abort processing */
         msSetError(MS_HTTPERR, "CURLOPT_PROXYAUTH not supported. Requires Curl 7.10.7 and up. *_proxy_auth_type setting ignored.",
                    "msHTTPExecuteRequests()");
-#endif /* CURLOPT_PROXYAUTH */
+#endif /* LIBCURL_VERSION_NUM */
 
         snprintf(szUsernamePasswd, 127, "%s:%s",
                  pasReqInfo[i].pszProxyUsername,
@@ -724,13 +874,15 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
       } else {
         /* Got a curl error */
 
+        errorObj *error = msGetErrorObj();
         if (psReq->debug)
           msDebug("HTTP: request failed with curl error "
                   "code %d (%s) for %s",
                   -psReq->nStatus, psReq->pszErrBuf,
                   psReq->pszGetUrl);
 
-        msSetError(MS_HTTPERR,
+        if(!error || error->code == MS_NOERR) /* only set error if one hasn't already been set */
+          msSetError(MS_HTTPERR,
                    "HTTP: request failed with curl error "
                    "code %d (%s) for %s",
                    "msHTTPExecuteRequests()",
@@ -780,7 +932,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
  **********************************************************************/
 int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
                   int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
-                  int bDebug)
+                  int bDebug, int nMaxBytes)
 {
   httpRequestObj *pasReqInfo;
 
@@ -797,6 +949,8 @@ int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
   pasReqInfo[0].pszGetUrl = msStrdup(pszGetUrl);
   pasReqInfo[0].pszOutputFile = msStrdup(pszOutputFile);
   pasReqInfo[0].debug = (char)bDebug;
+  pasReqInfo[0].nTimeout = nTimeout;
+  pasReqInfo[0].nMaxBytes = nMaxBytes;
 
   if (msHTTPExecuteRequests(pasReqInfo, 1, bCheckLocalCache) != MS_SUCCESS) {
     *pnHTTPStatus = pasReqInfo[0].nStatus;

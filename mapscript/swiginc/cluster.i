@@ -35,10 +35,16 @@
     return msUpdateClusterFromString(self, snippet);
   }
   
+  %newobject convertToString;
+  char* convertToString()
+  {
+    return msWriteClusterToString(self);
+  }
+  
   int setGroup(char *group) 
   {
     if (!group || strlen(group) == 0) {
-       freeExpression(&self->group);
+       msFreeExpression(&self->group);
        return MS_SUCCESS;
     }
     else return msLoadExpressionString(&self->group, group);
@@ -51,7 +57,7 @@
 
   int setFilter(char *filter) {
     if (!filter || strlen(filter) == 0) {
-      freeExpression(&self->filter);
+      msFreeExpression(&self->filter);
       return MS_SUCCESS;
     }	
     else return msLoadExpressionString(&self->filter, filter);

@@ -47,11 +47,7 @@
             format = input_format;
         }
         else {
-            format = msCreateDefaultOutputFormat(NULL, "GD/GIF", "gdgif");
-            if (format == NULL)
-                format = msCreateDefaultOutputFormat(NULL, "GD/PNG", "gdpng");
-            if (format == NULL)
-
+            format = msCreateDefaultOutputFormat(NULL, "AGG/PNG", "aggpng");
             if (format)
                 msInitializeRendererVTable(format);
         }
@@ -131,91 +127,6 @@
         }
 
         return retval;
-    }
-#endif
-
-    /* -----------------------------------------------------------------------
-       saveToString is deprecated and no longer supported.  Users should use
-       the write() method instead.
-    ----------------------------------------------------------------------- */
-#if defined SWIGTCL8
-
-    Tcl_Obj *saveToString() 
-    {
-
-#ifdef FORCE_BROKEN_GD_CODE
-        unsigned char *imgbytes;
-        int size;
-        Tcl_Obj *imgstring;
-
-#if GD2_VERS > 1
-        if(self->format->imagemode == MS_IMAGEMODE_RGBA) {
-            gdImageSaveAlpha(self->img.gd, 1);
-        } else if (self->format->imagemode == MS_IMAGEMODE_RGB) {
-            gdImageSaveAlpha(self->img.gd, 0);
-        }
-#endif 
-
-        if(strcasecmp("ON", msGetOutputFormatOption(self->format, "INTERLACE", "ON" )) == 0) {
-            gdImageInterlace(self->img.gd, 1);
-        }
-
-        if(self->format->transparent) {
-            gdImageColorTransparent(self->img.gd, 0);
-        }
-
-        if(strcasecmp(self->format->driver, "gd/gif") == 0) {
-
-#ifdef USE_GD_GIF
-        imgbytes = gdImageGifPtr(self->img.gd, &size);
-#else
-        msSetError(MS_MISCERR, "GIF output is not available.", "saveToString()");
-        return(MS_FAILURE);
-#endif
-
-        } else if (strcasecmp(self->format->driver, "gd/png") == 0) {
-
-#ifdef USE_GD_PNG
-        imgbytes = gdImagePngPtr(self->img.gd, &size);
-#else
-        msSetError(MS_MISCERR, "PNG output is not available.", "saveToString()");
-        return(MS_FAILURE);
-#endif
-
-        } else if (strcasecmp(self->format->driver, "gd/jpeg") == 0) {
-
-#ifdef USE_GD_JPEG
-        imgbytes = gdImageJpegPtr(self->img.gd, &size, atoi(msGetOutputFormatOption(self->format, "QUALITY", "75" )));
-#else
-        msSetError(MS_MISCERR, "JPEG output is not available.", "saveToString()");
-        return(MS_FAILURE);
-#endif
-
-        } else if (strcasecmp(self->format->driver, "gd/wbmp") == 0) {
-
-#ifdef USE_GD_WBMP
-            imgbytes = gdImageWBMPPtr(self->img.gd, &size, 1);
-#else
-            msSetError(MS_MISCERR, "WBMP output is not available.", "saveToString()");
-            return(MS_FAILURE);
-#endif
-        
-        } else {
-            msSetError(MS_MISCERR, "Unknown output image type driver: %s.", "saveToString()", self->format->driver );
-            return(MS_FAILURE);
-        } 
-
-        /* Tcl implementation to create string */
-        imgstring = Tcl_NewByteArrayObj(imgbytes, size);    
-    
-        msFree(imgbytes);
-
-        return imgstring;
-#else /* force_gd_broken_code */
-        msSetError(MS_MISCERR, "saveToString() is long deprecated and severley broken", "saveToString()", self->format->driver );
-        return(MS_FAILURE);
-#endif
-
     }
 #endif
 

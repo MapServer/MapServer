@@ -37,6 +37,7 @@
 #include "maptime.h"
 #include "mapthread.h"
 #include "mapcopy.h"
+#include "mapows.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 # include <windows.h>
@@ -46,6 +47,12 @@
 #include <process.h>
 #endif
 
+#ifdef USE_RSVG
+#include <glib-object.h>
+#endif
+#ifdef USE_GEOS
+#include <geos_c.h>
+#endif
 
 
 extern char *msyystring_buffer;
@@ -199,7 +206,7 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
   /* check the label styleObj's (TODO: do we need to use querymapMode here? */
   for(i=0; i<label->numstyles; i++) {
     /* force MS_DRAWMODE_FEATURES for label styles */
-    bindStyle(layer, shape, label->styles[i], drawmode|MS_DRAWMODE_FEATURES); 
+    bindStyle(layer, shape, label->styles[i], drawmode|MS_DRAWMODE_FEATURES);
   }
 
   if(label->numbindings > 0) {
@@ -210,7 +217,7 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
 
     if(label->bindings[MS_LABEL_BINDING_SIZE].index != -1) {
       label->size = 1;
-      bindDoubleAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
+      bindIntegerAttribute(&label->size, shape->values[label->bindings[MS_LABEL_BINDING_SIZE].index]);
     }
 
     if(label->bindings[MS_LABEL_BINDING_COLOR].index != -1) {
@@ -243,7 +250,7 @@ static void bindLabel(layerObj *layer, shapeObj *shape, labelObj *label, int dra
     }
 
     if(label->bindings[MS_LABEL_BINDING_POSITION].index != -1) {
-      int tmpPosition;
+      int tmpPosition = 0;
       bindIntegerAttribute(&tmpPosition, shape->values[label->bindings[MS_LABEL_BINDING_POSITION].index]);
       if(tmpPosition != 0) { /* is this test sufficient? */
         label->position = tmpPosition;
@@ -397,7 +404,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
   if(!context) return(MS_TRUE);
 
   /* initialize a temporary expression (e) */
-  initExpression(&e);
+  msInitExpression(&e);
 
   e.string = msStrdup(context);
   e.type = MS_EXPRESSION; /* todo */
@@ -428,7 +435,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 
   status = yyparse(&p);
 
-  freeExpression(&e);
+  msFreeExpression(&e);
 
   if (status != 0) {
     msSetError(MS_PARSEERR, "Failed to parse context", "msEvalContext");
@@ -448,7 +455,8 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
  */
 int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression, int itemindex)
 {
-  if(!expression->string) return MS_TRUE; /* empty expressions are ALWAYS true */
+  if(MS_STRING_IS_NULL_OR_EMPTY(expression->string)) return MS_TRUE; /* NULL or empty expressions are ALWAYS true */
+  if(expression->native_string != NULL) return MS_TRUE; /* expressions that are evaluated natively are ALWAYS true */
 
   switch(expression->type) {
     case(MS_STRING):
@@ -464,6 +472,25 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
         if(strcasecmp(expression->string, shape->values[itemindex]) == 0) return MS_TRUE; /* got a match */
       } else {
         if(strcmp(expression->string, shape->values[itemindex]) == 0) return MS_TRUE; /* got a match */
+      }
+      break;
+    case(MS_LIST):
+      if(itemindex == -1) {
+        msSetError(MS_MISCERR, "Cannot evaluate expression, no item index defined.", "msEvalExpression()");
+        return MS_FALSE;
+      }
+      if(itemindex >= layer->numitems || itemindex >= shape->numvalues) {
+        msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
+        return MS_FALSE;
+      }
+      {
+        char *start,*end;
+        start = expression->string;
+        while((end = strchr(start,',')) != NULL) {
+          if(!strncmp(start,shape->values[itemindex],end-start)) return MS_TRUE;
+          start = end+1;
+        }
+        if(!strcmp(start,shape->values[itemindex])) return MS_TRUE;
       }
       break;
     case(MS_EXPRESSION): {
@@ -494,6 +521,8 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
         msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
         return MS_FALSE;
       }
+
+      if(MS_STRING_IS_NULL_OR_EMPTY(shape->values[itemindex]) == MS_TRUE) return MS_FALSE;
 
       if(!expression->compiled) {
         if(expression->flags & MS_EXP_INSENSITIVE) {
@@ -570,9 +599,6 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
           continue; /* can skip this one, next class */
       }
 
-      if (layer->connectiontype == MS_INLINE)
-        return (iclass);
-
       /* verify the minfeaturesize */
       if ((shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) && (layer->class[iclass]->minfeaturesize > 0)) {
         double minfeaturesize = Pix2LayerGeoref(map, layer,
@@ -589,7 +615,8 @@ int msShapeGetClass(layerObj *layer, mapObj *map, shapeObj *shape, int *classgro
   return(-1); /* no match */
 }
 
-static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
+static
+char *msEvalTextExpressionInternal(expressionObj *expr, shapeObj *shape, int bJSonEscape)
 {
   char *result=NULL;
 
@@ -598,6 +625,7 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
   switch(expr->type) {
     case(MS_STRING): {
       char *target=NULL;
+      char *pszEscaped;
       tokenListNodeObjPtr node=NULL;
       tokenListNodeObjPtr nextNode=NULL;
 
@@ -610,7 +638,12 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
           if(node->token == MS_TOKEN_BINDING_DOUBLE || node->token == MS_TOKEN_BINDING_INTEGER || node->token == MS_TOKEN_BINDING_STRING || node->token == MS_TOKEN_BINDING_TIME) {
             target = (char *) msSmallMalloc(strlen(node->tokenval.bindval.item) + 3);
             sprintf(target, "[%s]", node->tokenval.bindval.item);
-            result = msReplaceSubstring(result, target, shape->values[node->tokenval.bindval.index]);
+            if( bJSonEscape )
+                pszEscaped = msEscapeJSonString(shape->values[node->tokenval.bindval.index]);
+            else
+                pszEscaped = msStrdup(shape->values[node->tokenval.bindval.index]);
+            result = msReplaceSubstring(result, target, pszEscaped);
+            msFree(pszEscaped);
             msFree(target);
           }
           node = nextNode;
@@ -634,7 +667,7 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
       status = yyparse(&p);
 
       if (status != 0) {
-        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "evalTextExpression", expr->string);
+        msSetError(MS_PARSEERR, "Failed to process text expression: %s", "msEvalTextExpression", expr->string);
         return NULL;
       }
 
@@ -651,55 +684,39 @@ static char *evalTextExpression(expressionObj *expr, shapeObj *shape)
   return result;
 }
 
-int msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
+char *msEvalTextExpressionJSonEscape(expressionObj *expr, shapeObj *shape)
 {
-  int i, j;
+    return msEvalTextExpressionInternal(expr, shape, MS_TRUE);
+}
 
-  /* RFC77 TODO: check and throw some errors here... */
-  if(!layer || !shape) return MS_FAILURE;
+char *msEvalTextExpression(expressionObj *expr, shapeObj *shape)
+{
+    return msEvalTextExpressionInternal(expr, shape, MS_FALSE);
+}
 
-  i = shape->classindex;
-  for(j=0; j<layer->class[i]->numlabels; j++) {
-    labelObj *lbl = layer->class[i]->labels[j]; /* shortcut */
-
-    lbl->status = MS_ON;
-    if(layer->map->scaledenom > 0) {
-      if((lbl->maxscaledenom != -1) && (layer->map->scaledenom >= lbl->maxscaledenom)) {
-        lbl->status = MS_OFF;
-        continue; /* next label */
-      }
-      if((lbl->minscaledenom != -1) && (layer->map->scaledenom < lbl->minscaledenom)) {
-        lbl->status = MS_OFF;
-        continue; /* next label */
-      }
-    }
-    if(msEvalExpression(layer, shape, &(lbl->expression), -1) != MS_TRUE) {
-      lbl->status = MS_OFF;
-      continue; /* next label */
-    }
-
-    msFree(lbl->annotext);
-    lbl->annotext = NULL;
-
-    if(lbl->text.string) {
-      lbl->annotext = evalTextExpression(&(lbl->text), shape);
-    } else if(layer->class[i]->text.string) {
-      lbl->annotext = evalTextExpression(&(layer->class[i]->text), shape);
-    } else {
-      if (shape->values && layer->labelitemindex >= 0 && shape->values[layer->labelitemindex] && strlen(shape->values[layer->labelitemindex]) )
-        lbl->annotext = msStrdup(shape->values[layer->labelitemindex]);
-      else if(shape->text)
-        lbl->annotext = msStrdup(shape->text); /* last resort but common with iniline features */
-    }
-
-    if(lbl->annotext && (lbl->encoding || lbl->wrap || lbl->maxlength)) {
-      char *newtext = msTransformLabelText(layer->map , lbl, lbl->annotext);
-      free(lbl->annotext);
-      lbl->annotext = newtext;
-    }
+char* msShapeGetLabelAnnotation(layerObj *layer, shapeObj *shape, labelObj *lbl) {
+  assert(shape && lbl);
+  if(lbl->text.string) {
+    return msEvalTextExpression(&(lbl->text), shape);
+  } else if(layer->class[shape->classindex]->text.string) {
+    return msEvalTextExpression(&(layer->class[shape->classindex]->text), shape);
+  } else {
+    if (shape->values && layer->labelitemindex >= 0 && shape->values[layer->labelitemindex] && strlen(shape->values[layer->labelitemindex]) )
+      return msStrdup(shape->values[layer->labelitemindex]);
+    else if(shape->text)
+      return msStrdup(shape->text); /* last resort but common with iniline features */
   }
+  return NULL;
+}
 
-  return MS_SUCCESS;
+int msGetLabelStatus(mapObj *map, layerObj *layer, shapeObj *shape, labelObj *lbl) {
+  assert(layer && lbl);
+  if(!msScaleInBounds(map->scaledenom,lbl->minscaledenom,lbl->maxscaledenom))
+    return MS_OFF;
+  if(msEvalExpression(layer, shape, &(lbl->expression), layer->labelitemindex) != MS_TRUE)
+    return MS_OFF;
+  /* TODO: check for minfeaturesize here ? */
+  return MS_ON;
 }
 
 /* Check if the shape is enough big to be drawn with the
@@ -742,6 +759,9 @@ int msAdjustImage(rectObj rect, int *width, int *height)
 double msAdjustExtent(rectObj *rect, int width, int height)
 {
   double cellsize, ox, oy;
+
+  if(width == 1 || height == 1)
+    return 0;
 
   cellsize = MS_MAX(MS_CELLSIZE(rect->minx, rect->maxx, width), MS_CELLSIZE(rect->miny, rect->maxy, height));
 
@@ -826,6 +846,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         nReturnVal = msSaveImageGDAL(map, img, filename);
     } else
 #endif
+
       if (MS_RENDERER_PLUGIN(img->format)) {
         rendererVTableObj *renderer = img->format->vtable;
         FILE *stream = NULL;
@@ -850,8 +871,11 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 
         if(renderer->supports_pixel_buffer) {
           rasterBufferObj data;
-          if(renderer->getRasterBufferHandle(img,&data) != MS_SUCCESS)
+          if(renderer->getRasterBufferHandle(img,&data) != MS_SUCCESS) {
+            if( stream != stdout )
+              fclose(stream);
             return MS_FAILURE;
+          }
 
           nReturnVal = msSaveRasterBuffer(map,&data,stream,img->format );
         } else {
@@ -890,6 +914,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 
 unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj *format)
 {
+  int status = MS_SUCCESS;
   *size_ptr = 0;
   if( MS_RENDERER_PLUGIN(image->format)) {
     rasterBufferObj data;
@@ -897,7 +922,10 @@ unsigned char *msSaveImageBuffer(imageObj* image, int *size_ptr, outputFormatObj
     if(renderer->supports_pixel_buffer) {
       bufferObj buffer;
       msBufferInit(&buffer);
-      renderer->getRasterBufferHandle(image,&data);
+      status = renderer->getRasterBufferHandle(image,&data);
+      if(UNLIKELY(status == MS_FAILURE)) {
+        return NULL;
+      }
       msSaveRasterBufferToBuffer(&data,&buffer,format);
       *size_ptr = buffer.size;
       return buffer.data;
@@ -1306,6 +1334,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
   int         nCount = 0;
   int         i = 0, j = 0;
 
+  assert(map);
   *numTok = 0;
 
   if (!map->layerorder) {
@@ -1318,7 +1347,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
       map->layerorder[i] = i;
   }
 
-  if (map != NULL && map->numlayers > 0) {
+  if (map->numlayers > 0) {
     nCount = map->numlayers;
     papszGroups = (char **)msSmallMalloc(sizeof(char *)*nCount);
 
@@ -1577,7 +1606,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         for( ; i > 0; )
           image->img.raw_16bit[--i] = nv;
       } else if( format->imagemode == MS_IMAGEMODE_FLOAT32 ) {
-        float nv = atoi(nullvalue);
+        float nv = atof(nullvalue);
         for( ; i > 0; )
           image->img.raw_float[--i] = nv;
       } else if( format->imagemode == MS_IMAGEMODE_BYTE ) {
@@ -1597,7 +1626,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
   }
 
   if(!image)
-    msSetError(MS_GDERR, "Unable to initialize image.", "msImageCreate()");
+    msSetError(MS_IMGERR, "Unable to initialize image.", "msImageCreate()");
   image->refpt.x = image->refpt.y = 0;
   return image;
 }
@@ -1610,16 +1639,17 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 void  msTransformPoint(pointObj *point, rectObj *extent, double cellsize,
                        imageObj *image)
 {
+  double invcellsize;
   /*We should probabaly have a function defined at all the renders*/
-  if (image != NULL && MS_RENDERER_PLUGIN(image->format) &&
-      image->format->renderer == MS_RENDER_WITH_KML)
-    return;
-
-  point->x = MS_MAP2IMAGE_X(point->x, extent->minx, cellsize);
-  point->y = MS_MAP2IMAGE_Y(point->y, extent->maxy, cellsize);
+  if (image != NULL && MS_RENDERER_PLUGIN(image->format)) {
+    if(image->format->renderer == MS_RENDER_WITH_KML) {
+      return;
+    }
+  }
+  invcellsize = 1.0/cellsize;
+  point->x = MS_MAP2IMAGE_X_IC_DBL(point->x, extent->minx, invcellsize);
+  point->y = MS_MAP2IMAGE_Y_IC_DBL(point->y, extent->maxy, invcellsize);
 }
-
-
 
 
 /*
@@ -1717,18 +1747,119 @@ static double point_cross(const pointObj a, const pointObj b)
   return a.x*b.y-a.y*b.x;
 }
 
-/*
-** For offset corner point calculation 1/sin() is used
-** to avoid 1/0 division (and long spikes) we define a
-** limit for sin().
-*/
+shapeObj *msOffsetCurve(shapeObj *p, double offset)
+{
+  shapeObj *ret;
+  int i, j, first,idx,ok=0;
+#if defined USE_GEOS && (GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 3))
+  ret = msGEOSOffsetCurve(p,offset);
+  /* GEOS curve offsetting can fail sometimes, we continue with our own implementation
+   if that is the case.*/
+  if(ret)
+    return ret;
+#endif
+  /*
+  ** For offset corner point calculation 1/sin() is used
+  ** to avoid 1/0 division (and long spikes) we define a
+  ** limit for sin().
+  */
 #define CURVE_SIN_LIMIT 0.3
+  ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  msInitShape(ret);
+  ret->numlines = p->numlines;
+  ret->line=(lineObj*)msSmallMalloc(sizeof(lineObj)*ret->numlines);
+  for(i=0; i<ret->numlines; i++) {
+    ret->line[i].numpoints=p->line[i].numpoints;
+    ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
+  }
+  for (i = 0; i < p->numlines; i++) {
+    pointObj old_pt, old_diffdir, old_offdir;
+    if(p->line[i].numpoints<2) {
+      ret->line[i].numpoints = 0;
+      continue; /* skip degenerate points */
+    }
+    ok = 1;
+    /* initialize old_offdir and old_diffdir, as gcc isn't smart enough to see that it
+     * is not an error to do so, and prints a warning */
+    old_offdir.x=old_offdir.y=old_diffdir.x=old_diffdir.y = 0;
+
+    idx=0;
+    first = 1;
+
+    /* saved metrics of the last processed point */
+    if (p->line[i].numpoints>0)
+      old_pt=p->line[i].point[0];
+    for(j=1; j<p->line[i].numpoints; j++) {
+      const pointObj pt = p->line[i].point[j]; /* place of the point */
+      const pointObj diffdir = point_norm(point_diff(pt,old_pt)); /* direction of the line */
+      const pointObj offdir = point_rotz90(diffdir); /* direction where the distance between the line and the offset is measured */
+      pointObj offpt; /* this will be the corner point of the offset line */
+
+      /* offset line points computation */
+      if(first == 1) { /* first point */
+        first = 0;
+        offpt = point_sum(old_pt,point_mul(offdir,offset));
+      } else { /* middle points */
+        /* curve is the angle of the last and the current line's direction (supplementary angle of the shape's inner angle) */
+        double sin_curve = point_cross(diffdir,old_diffdir);
+        double cos_curve = point_cross(old_offdir,diffdir);
+        if ((-1.0)*CURVE_SIN_LIMIT < sin_curve && sin_curve < CURVE_SIN_LIMIT) {
+          /* do not calculate 1/sin, instead use a corner point approximation: average of the last and current offset direction and length */
+
+          /*
+          ** TODO: fair for obtuse inner angles, however, positive and negative
+          ** acute inner angles would need special handling - similar to LINECAP
+          ** to avoid drawing of long spikes
+          */
+          offpt = point_sum(old_pt, point_mul(point_sum(offdir, old_offdir),0.5*offset));
+        } else {
+          double base_shift = -1.0*(1.0+cos_curve)/sin_curve;
+          offpt = point_sum(old_pt, point_mul(point_sum(point_mul(diffdir,base_shift),offdir), offset));
+        }
+      }
+      ret->line[i].point[idx]=offpt;
+      idx++;
+      old_pt=pt;
+      old_diffdir=diffdir;
+      old_offdir=offdir;
+    }
+
+    /* last point */
+    if(first == 0) {
+      pointObj offpt=point_sum(old_pt,point_mul(old_offdir,offset));
+      ret->line[i].point[idx]=offpt;
+      idx++;
+    }
+
+    if(idx != p->line[i].numpoints) {
+      /* printf("shouldn't happen :(\n"); */
+      ret->line[i].numpoints=idx;
+      ret->line=msSmallRealloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
+    }
+  }
+  if(!ok) ret->numlines = 0; /* all lines where degenerate */
+  return ret;
+}
 
 shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
 {
-  int i, j, first,idx;
+  int i, j;
+  shapeObj *ret;
+  if(offsety == MS_STYLE_SINGLE_SIDED_OFFSET) { /* complex calculations */
+    return msOffsetCurve(p,offsetx);
+  } else if(offsety == MS_STYLE_DOUBLE_SIDED_OFFSET) {
+    shapeObj *tmp1;
+    ret = msOffsetCurve(p,offsetx/2.0);
+    tmp1 = msOffsetCurve(p, -offsetx/2.0);
+    for(i=0;i<tmp1->numlines; i++) {
+      msAddLineDirectly(ret,tmp1->line + i);
+    }
+    msFreeShape(tmp1);
+    free(tmp1);
+    return ret;
+  }
 
-  shapeObj *ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  ret = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
   msInitShape(ret);
   ret->numlines = p->numlines;
   ret->line=(lineObj*)msSmallMalloc(sizeof(lineObj)*ret->numlines);
@@ -1737,80 +1868,10 @@ shapeObj *msOffsetPolyline(shapeObj *p, double offsetx, double offsety)
     ret->line[i].point=(pointObj*)msSmallMalloc(sizeof(pointObj)*ret->line[i].numpoints);
   }
 
-  if(offsety == -99) { /* complex calculations */
-    int ok = 0;
-    for (i = 0; i < p->numlines; i++) {
-      if(p->line[i].numpoints<2) {
-        ret->line[i].numpoints = 0;
-        continue; /* skip degenerate lines */
-      }
-      ok =1;
-      pointObj old_pt, old_diffdir, old_offdir;
-      /* initialize old_offdir and old_diffdir, as gcc isn't smart enough to see that it
-       * is not an error to do so, and prints a warning */
-      old_offdir.x=old_offdir.y=old_diffdir.x=old_diffdir.y = 0;
-
-      idx=0;
-      first = 1;
-
-      /* saved metrics of the last processed point */
-      if (p->line[i].numpoints>0)
-        old_pt=p->line[i].point[0];
-      for(j=1; j<p->line[i].numpoints; j++) {
-        const pointObj pt = p->line[i].point[j]; /* place of the point */
-        const pointObj diffdir = point_norm(point_diff(pt,old_pt)); /* direction of the line */
-        const pointObj offdir = point_rotz90(diffdir); /* direction where the distance between the line and the offset is measured */
-        pointObj offpt; /* this will be the corner point of the offset line */
-
-        /* offset line points computation */
-        if(first == 1) { /* first point */
-          first = 0;
-          offpt = point_sum(old_pt,point_mul(offdir,offsetx));
-        } else { /* middle points */
-          /* curve is the angle of the last and the current line's direction (supplementary angle of the shape's inner angle) */
-          double sin_curve = point_cross(diffdir,old_diffdir);
-          double cos_curve = point_cross(old_offdir,diffdir);
-          if ((-1.0)*CURVE_SIN_LIMIT < sin_curve && sin_curve < CURVE_SIN_LIMIT) {
-            /* do not calculate 1/sin, instead use a corner point approximation: average of the last and current offset direction and length */
-
-            /*
-            ** TODO: fair for obtuse inner angles, however, positive and negative
-            ** acute inner angles would need special handling - similar to LINECAP
-            ** to avoid drawing of long spikes
-            */
-            offpt = point_sum(old_pt, point_mul(point_sum(offdir, old_offdir),0.5*offsetx));
-          } else {
-            double base_shift = -1.0*(1.0+cos_curve)/sin_curve;
-            offpt = point_sum(old_pt, point_mul(point_sum(point_mul(diffdir,base_shift),offdir), offsetx));
-          }
-        }
-        ret->line[i].point[idx]=offpt;
-        idx++;
-        old_pt=pt;
-        old_diffdir=diffdir;
-        old_offdir=offdir;
-      }
-
-      /* last point */
-      if(first == 0) {
-        pointObj offpt=point_sum(old_pt,point_mul(old_offdir,offsetx));
-        ret->line[i].point[idx]=offpt;
-        idx++;
-      }
-
-      if(idx != p->line[i].numpoints) {
-        /* printf("shouldn't happen :(\n"); */
-        ret->line[i].numpoints=idx;
-        ret->line=msSmallRealloc(ret->line,ret->line[i].numpoints*sizeof(pointObj));
-      }
-    }
-    if(!ok) ret->numlines = 0; /* all lines where degenerate */
-  } else { /* normal offset (eg. drop shadow) */
-    for (i = 0; i < p->numlines; i++) {
-      for(j=0; j<p->line[i].numpoints; j++) {
-        ret->line[i].point[j].x=p->line[i].point[j].x+offsetx;
-        ret->line[i].point[j].y=p->line[i].point[j].y+offsety;
-      }
+  for (i = 0; i < p->numlines; i++) {
+    for(j=0; j<p->line[i].numpoints; j++) {
+      ret->line[i].point[j].x=p->line[i].point[j].x+offsetx;
+      ret->line[i].point[j].y=p->line[i].point[j].y+offsety;
     }
   }
 
@@ -1833,24 +1894,37 @@ int msSetup()
   msThreadInit();
 #endif
 
+  /* Use PROJ_LIB env vars if set */
+  msProjLibInitFromEnv();
+
   /* Use MS_ERRORFILE and MS_DEBUGLEVEL env vars if set */
   if (msDebugInitFromEnv() != MS_SUCCESS)
     return MS_FAILURE;
 
-#ifdef USE_GD
-  msGDSetup();
-#endif
-
 #ifdef USE_GEOS
   msGEOSSetup();
 #endif
+
+#ifdef USE_RSVG
+#if !GLIB_CHECK_VERSION(2, 35, 0)
+  g_type_init();
+#endif
+#endif
+
+  msFontCacheSetup();
+
 
   return MS_SUCCESS;
 }
 
 /* This is intended to be a function to cleanup anything that "hangs around"
    when all maps are destroyed, like Registered GDAL drivers, and so forth. */
-void msCleanup(int signal)
+#ifndef NDEBUG
+#if defined(USE_LIBXML2)
+#include "maplibxml2.h"
+#endif
+#endif
+void msCleanup()
 {
   msForceTmpFileBase( NULL );
   msConnPoolFinalCleanup();
@@ -1878,13 +1952,23 @@ void msCleanup(int signal)
   msHTTPCleanup();
 #endif
 
-#ifdef USE_GD
-  msGDCleanup(signal);
-#endif
-
 #ifdef USE_GEOS
   msGEOSCleanup();
 #endif
+
+/* make valgrind happy on debug code */
+#ifndef NDEBUG
+#ifdef USE_CAIRO
+  msCairoCleanup();
+#endif
+#if defined(USE_LIBXML2)
+  xmlCleanupParser();
+#endif
+#endif
+
+  msFontCacheCleanup();
+
+  msTimeCleanup();
 
   msIO_Cleanup();
 
@@ -2012,20 +2096,65 @@ void msAlphaBlendPM( unsigned char red_src, unsigned char green_src,
   /*      Cases with actual blending.                                     */
   /* -------------------------------------------------------------------- */
   if(!alpha_dst || *alpha_dst == 255) {
-    int weight_dst = 256 - alpha_src;
+    int weight_dst = 255 - alpha_src;
 
-    *red_dst   = (256 * red_src   + *red_dst   * weight_dst) >> 8;
-    *green_dst = (256 * green_src + *green_dst * weight_dst) >> 8;
-    *blue_dst  = (256 * blue_src  + *blue_dst  * weight_dst) >> 8;
+    *red_dst   = (alpha_src * red_src   + *red_dst   * weight_dst) >> 8;
+    *green_dst = (alpha_src * green_src + *green_dst * weight_dst) >> 8;
+    *blue_dst  = (alpha_src * blue_src  + *blue_dst  * weight_dst) >> 8;
   } else {
-    int   weight_dst = (256 - alpha_src);
+    int   weight_dst = (255 - alpha_src);
 
-    *red_dst   = (256 * red_src   + *red_dst   * weight_dst) >> 8;
-    *green_dst = (256 * green_src + *green_dst * weight_dst) >> 8;
-    *blue_dst  = (256 * blue_src  + *blue_dst  * weight_dst) >> 8;
+    *red_dst   = (alpha_src * red_src   + *red_dst   * weight_dst) >> 8;
+    *green_dst = (alpha_src * green_src + *green_dst * weight_dst) >> 8;
+    *blue_dst  = (alpha_src * blue_src  + *blue_dst  * weight_dst) >> 8;
 
-    *alpha_dst = (256 * alpha_src + *alpha_dst * weight_dst) >> 8;
+    *alpha_dst = (255 * alpha_src + *alpha_dst * weight_dst) >> 8;
   }
+}
+
+void msRGBtoHSL(colorObj *rgb, double *h, double *s, double *l) {
+  double r = rgb->red/255.0, g = rgb->green/255.0, b = rgb->blue/255.0;
+  double maxv = MS_MAX(MS_MAX(r, g), b), minv = MS_MIN(MS_MIN(r, g), b);
+  double d = maxv - minv;
+  
+  *h = 0, *s = 0;
+  *l = (maxv + minv) / 2;
+  
+  if (maxv != minv)
+  {
+    *s = *l > 0.5 ? d / (2 - maxv - minv) : d / (maxv + minv);
+    if (maxv == r) { *h = (g - b) / d + (g < b ? 6 : 0); }
+    else if (maxv == g) { *h = (b - r) / d + 2; }
+    else if (maxv == b) { *h = (r - g) / d + 4; }
+    *h /= 6;
+  }
+}
+
+static double hue_to_rgb(double p, double q, double t) {
+  if(t < 0) t += 1;
+  if(t > 1) t -= 1;
+  if(t < 0.1666666666666666) return p + (q - p) * 6 * t;
+  if(t < 0.5) return q;
+  if(t < 0.6666666666666666) return p + (q - p) * (0.666666666666 - t) * 6;
+  return p;
+}
+
+void msHSLtoRGB(double h, double s, double l, colorObj *rgb) {
+  double r, g, b;
+  
+  if(s == 0){
+    r = g = b = l;
+  } else {
+    
+    double q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    double p = 2 * l - q;
+    r = hue_to_rgb(p, q, h + 0.33333333333333333);
+    g = hue_to_rgb(p, q, h);
+    b = hue_to_rgb(p, q, h - 0.33333333333333333);
+  }
+  rgb->red = r * 255;
+  rgb->green = g * 255;
+  rgb->blue = b * 255;
 }
 
 /*
@@ -2033,20 +2162,13 @@ void msAlphaBlendPM( unsigned char red_src, unsigned char green_src,
 */
 int msCheckParentPointer(void* p, char *objname)
 {
-  char* fmt="The %s parent object is null";
   char* msg=NULL;
   if (p == NULL) {
     if(objname != NULL) {
-      msg=malloc( sizeof(char) * ( ( strlen(fmt)+strlen(objname) ) ) );
-      if(msg == NULL) {
-        msg="A required parent object is null";
-      } else {
-        sprintf(msg, "The %s parent object is null", objname);
-      }
+      msSetError(MS_NULLPARENTERR, "The %s parent object is null", "msCheckParentPointer()", msg);
     } else {
-      msg="A required parent object is null";
+      msSetError(MS_NULLPARENTERR, "The parent object is null", "msCheckParentPointer()");
     }
-    msSetError(MS_NULLPARENTERR, msg, "");
     return MS_FAILURE;
   }
   return MS_SUCCESS;
@@ -2098,12 +2220,6 @@ void msFreeRasterBuffer(rasterBufferObj *b)
       b->data.palette.pixels = NULL;
       b->data.palette.palette = NULL;
       break;
-#ifdef USE_GD
-    case MS_BUFFER_GD:
-      gdImageDestroy(b->data.gd_img);
-      b->data.gd_img = NULL;
-      break;
-#endif
   }
 
 }
@@ -2120,8 +2236,10 @@ void msFreeRasterBuffer(rasterBufferObj *b)
 */
 int msExtentsOverlap(mapObj *map, layerObj *layer)
 {
+#ifdef USE_PROJ
   rectObj map_extent;
   rectObj layer_extent;
+#endif
 
   /* No extent info? Nothing we can do, return MS_UNKNOWN. */
   if( (map->extent.minx == -1) && (map->extent.miny == -1) && (map->extent.maxx == -1 ) && (map->extent.maxy == -1) ) return MS_UNKNOWN;
@@ -2177,11 +2295,11 @@ void *msSmallMalloc( size_t nSize )
 {
   void        *pReturn;
 
-  if( nSize == 0 )
+  if( UNLIKELY(nSize == 0) )
     return NULL;
 
   pReturn = malloc( nSize );
-  if( pReturn == NULL ) {
+  if( UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
                  (long) nSize );
     exit(1);
@@ -2200,12 +2318,12 @@ void * msSmallRealloc( void * pData, size_t nNewSize )
 {
   void        *pReturn;
 
-  if ( nNewSize == 0 )
+  if ( UNLIKELY(nNewSize == 0) )
     return NULL;
 
   pReturn = realloc( pData, nNewSize );
 
-  if( pReturn == NULL ) {
+  if( UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallRealloc(): Out of memory allocating %ld bytes.\n",
                  (long)nNewSize );
     exit(1);
@@ -2224,11 +2342,11 @@ void *msSmallCalloc( size_t nCount, size_t nSize )
 {
   void  *pReturn;
 
-  if( nSize * nCount == 0 )
+  if( UNLIKELY(nSize * nCount == 0) )
     return NULL;
 
   pReturn = calloc( nCount, nSize );
-  if( pReturn == NULL ) {
+  if( UNLIKELY(pReturn == NULL) ) {
     msIO_fprintf(stderr, "msSmallCalloc(): Out of memory allocating %ld bytes.\n",
                  (long)(nCount*nSize));
     exit(1);
@@ -2251,10 +2369,23 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
 {
   char *online_resource = NULL;
   const char *value, *hostname, *port, *script, *protocol="http", *mapparam=NULL;
-  int mapparam_len = 0;
+  char **hostname_array = NULL;
+  int mapparam_len = 0, hostname_array_len = 0;
 
-  hostname = getenv("SERVER_NAME");
-  port = getenv("SERVER_PORT");
+  hostname = getenv("HTTP_X_FORWARDED_HOST");
+  if(!hostname)
+    hostname = getenv("SERVER_NAME");
+  else {
+    if(strchr(hostname,',')) {
+      hostname_array = msStringSplit(hostname,',', &hostname_array_len);
+      hostname = hostname_array[0];
+    }
+  }
+
+  port = getenv("HTTP_X_FORWARDED_PORT");
+  if(!port)
+    port = getenv("SERVER_PORT");
+  
   script = getenv("SCRIPT_NAME");
 
   /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
@@ -2262,6 +2393,9 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
   if ( ((value=getenv("HTTPS")) && strcasecmp(value, "on") == 0) ||
        ((value=getenv("SERVER_PORT")) && atoi(value) == 443) ) {
     protocol = "https";
+  }
+  if ( (value=getenv("HTTP_X_FORWARDED_PROTO")) ) {
+    protocol = value;
   }
 
   /* If map=.. was explicitly set then we'll include it in onlineresource
@@ -2279,7 +2413,7 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
 
   if (hostname && port && script) {
     size_t buffer_size;
-    buffer_size = strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+10;
+    buffer_size = strlen(hostname)+strlen(port)+strlen(script)+mapparam_len+11; /* 11 comes from https://[host]:[port][scriptname]?[map]\0, i.e. "https://:?\0" */
     online_resource = (char*)msSmallMalloc(buffer_size);
     if ((atoi(port) == 80 && strcmp(protocol, "http") == 0) ||
         (atoi(port) == 443 && strcmp(protocol, "https") == 0) )
@@ -2295,6 +2429,9 @@ char *msBuildOnlineResource(mapObj *map, cgiRequestObj *req)
   } else {
     msSetError(MS_CGIERR, "Impossible to establish server URL.", "msBuildOnlineResource()");
     return NULL;
+  }
+  if(hostname_array) {
+    msFreeCharArray(hostname_array, hostname_array_len);
   }
 
   return online_resource;
@@ -2340,23 +2477,148 @@ int msMapSetLayerProjections(mapObj* map)
   }
 
   for(i=0; i<map->numlayers; i++) {
+    layerObj *lp = GET_LAYER(map,i);
     /* This layer is turned on and needs a projection? */
-    if (GET_LAYER(map, i)->projection.numargs <= 0 &&
-        GET_LAYER(map, i)->status != MS_OFF &&
-        GET_LAYER(map, i)->transform == MS_TRUE) {
+    if (lp->projection.numargs <= 0 &&
+        lp->status != MS_OFF &&
+        lp->transform == MS_TRUE) {
 
       /* Fetch main map projection string only now that we need it */
       if (mapProjStr == NULL)
         mapProjStr = msGetProjectionString(&(map->projection));
 
       /* Set the projection to the map file projection */
-      if (msLoadProjectionString(&(GET_LAYER(map, i)->projection), mapProjStr) != 0) {
-        msSetError(MS_CGIERR, "Unable to set projection on layer.", "msTileSetProjectionst()");
+      if (msLoadProjectionString(&(lp->projection), mapProjStr) != 0) {
+        msSetError(MS_CGIERR, "Unable to set projection on layer.", "msMapSetLayerProjections()");
         return(MS_FAILURE);
       }
-      GET_LAYER(map, i)->project = MS_TRUE;
+      lp->project = MS_TRUE;
+      if(lp->connection && IS_THIRDPARTY_LAYER_CONNECTIONTYPE(lp->connectiontype)) {
+        char **reflayers;
+        int numreflayers,j;
+        reflayers = msStringSplit(lp->connection,',',&numreflayers);
+        for(j=0; j<numreflayers; j++) {
+          int *lidx, nlidx;
+          /* first check layers referenced by group name */
+          lidx = msGetLayersIndexByGroup(map, reflayers[i], &nlidx);
+          if(lidx) {
+            int k;
+            for(k=0; k<nlidx; k++) {
+              layerObj *glp = GET_LAYER(map,lidx[k]);
+              if (glp->projection.numargs <= 0 && glp->transform == MS_TRUE) {
+
+                /* Set the projection to the map file projection */
+                if (msLoadProjectionString(&(glp->projection), mapProjStr) != 0) {
+                  msSetError(MS_CGIERR, "Unable to set projection on layer.", "msMapSetLayerProjections()");
+                  return(MS_FAILURE);
+                }
+                glp->project = MS_TRUE;
+              }
+            }
+            free(lidx);
+          } else {
+            /* group name did not match, check by layer name */
+            int layer_idx = msGetLayerIndex(map,lp->connection);
+            layerObj *glp = GET_LAYER(map,layer_idx);
+            if (glp->projection.numargs <= 0 && glp->transform == MS_TRUE) {
+
+              /* Set the projection to the map file projection */
+              if (msLoadProjectionString(&(glp->projection), mapProjStr) != 0) {
+                msSetError(MS_CGIERR, "Unable to set projection on layer.", "msMapSetLayerProjections()");
+                return(MS_FAILURE);
+              }
+              glp->project = MS_TRUE;
+            }
+          }
+        }
+        msFreeCharArray(reflayers, numreflayers);
+      }
     }
   }
   msFree(mapProjStr);
   return(MS_SUCCESS);
+}
+
+
+/************************************************************************
+ *                    msMapSetLanguageSpecificConnection                *
+ *                                                                      *
+ *   Override DATA and CONNECTION of each layer with their specific     *
+ *  variant for the specified language.                                 *
+ ************************************************************************/
+
+void msMapSetLanguageSpecificConnection(mapObj* map, const char* validated_language)
+{
+    int i;
+    for(i=0; i<map->numlayers; i++) {
+      layerObj *layer = GET_LAYER(map, i);
+      if(layer->data) layer->data = msCaseReplaceSubstring(layer->data, "%language%", validated_language);
+      if(layer->connection) layer->connection = msCaseReplaceSubstring(layer->connection, "%language%", validated_language);
+    }
+}
+
+/* Generalize a shape based of the tolerance.
+   Ref: http://trac.osgeo.org/gdal/ticket/966 */
+shapeObj* msGeneralize(shapeObj *shape, double tolerance)
+{
+  shapeObj *newShape;
+  lineObj newLine = {0,NULL};
+  double sqTolerance = tolerance*tolerance;
+  
+  double dX0, dY0, dX1, dY1, dX, dY, dSqDist;
+  int i;
+
+  newShape = (shapeObj*)msSmallMalloc(sizeof(shapeObj));
+  msInitShape(newShape);
+  msCopyShape(shape, newShape);
+
+  if (shape->numlines<1)
+    return newShape;
+  
+  /* Clean shape */
+  for (i=0; i < newShape->numlines; i++)
+    free(newShape->line[i].point);
+  newShape->numlines = 0;
+  if (newShape->line) free(newShape->line);
+    
+  msAddLine(newShape, &newLine);
+  
+  if (shape->line[0].numpoints>0) {
+    msAddPointToLine(&newShape->line[0],
+                     &shape->line[0].point[0]);              
+    dX0 = shape->line[0].point[0].x;
+    dY0 = shape->line[0].point[0].y;    
+  }
+  
+  for(i=1; i<shape->line[0].numpoints; i++)
+  {
+      dX1 = shape->line[0].point[i].x;
+      dY1 = shape->line[0].point[i].y;
+     
+      dX = dX1-dX0;
+      dY = dY1-dY0;
+      dSqDist = dX*dX + dY*dY;
+      if (i == shape->line[0].numpoints-1 || dSqDist >= sqTolerance)
+      {
+          pointObj p;
+          p.x = dX1;
+          p.y = dY1;
+          
+          /* Keep this point (always keep the last point) */
+          msAddPointToLine(&newShape->line[0],
+                           &p);          
+          dX0 = dX1;
+          dY0 = dY1;
+        }
+    }
+   
+  return newShape;
+}
+
+void msSetLayerOpacity(layerObj *layer, int opacity) {
+  if(!layer->compositer) {
+    layer->compositer = msSmallMalloc(sizeof(LayerCompositer));
+    initLayerCompositer(layer->compositer);
+  }
+  layer->compositer->opacity = opacity;
 }

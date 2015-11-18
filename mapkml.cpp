@@ -86,11 +86,10 @@ extern "C" {
     return MS_SUCCESS;
   }
 
-  int msRenderGlyphsKml(imageObj *img, double x, double y,
-                        labelStyleObj *style, char *text)
+  int msRenderGlyphsKml(imageObj *img, pointObj *labelpnt, char *text, double angle, colorObj *clr, colorObj *olcolor, int olwidth)
   {
     KmlRenderer* renderer = getKmlRenderer(img);
-    renderer->renderGlyphs(img, x, y, style, text);
+    renderer->renderGlyphs(img, labelpnt, text, angle, clr, olcolor, olwidth);
     return MS_SUCCESS;
   }
 
@@ -215,10 +214,7 @@ int aggInitializeRasterBuffer(rasterBufferObj *rb, int width, int height, int mo
 int msPopulateRendererVTableKML( rendererVTableObj *renderer )
 {
 #ifdef USE_KML
-
-  renderer->supports_transparent_layers = 1;
   renderer->supports_pixel_buffer = 0;
-  renderer->supports_bitmap_fonts = 0;
   renderer->supports_clipping = 0;
   renderer->use_imagecache = 0;
   renderer->default_transform_mode = MS_TRANSFORM_NONE;
@@ -229,21 +225,20 @@ int msPopulateRendererVTableKML( rendererVTableObj *renderer )
   renderer->createImage=&msCreateImageKml;
   renderer->saveImage=&msSaveImageKml;
   renderer->renderPolygon=&msRenderPolygonKml;
-  renderer->renderGlyphs=&msRenderGlyphsKml;
+  renderer->renderText=&msRenderGlyphsKml;
   renderer->renderEllipseSymbol = &msRenderEllipseSymbolKml;
   renderer->renderVectorSymbol = &msRenderVectorSymbolKml;
   renderer->renderPixmapSymbol = &msRenderPixmapSymbolKml;
-  renderer->renderTruetypeSymbol = &msRenderTruetypeSymbolKml;
   renderer->mergeRasterBuffer = &msMergeRasterBufferKml;
   renderer->loadImageFromFile = msLoadMSRasterBufferFromFile;
   renderer->initializeRasterBuffer = aggInitializeRasterBuffer;
-  renderer->getTruetypeTextBBox = &msGetTruetypeTextBBoxKml;
   renderer->renderTile = &msRenderTileKml;
   renderer->renderPolygonTiled = &msRenderPolygonTiledKml;
   renderer->renderLineTiled = NULL;
   renderer->freeSymbol = &msFreeSymbolKml;
   renderer->freeImage=&msFreeImageKml;
   renderer->mergeRasterBuffer = msMergeRasterBufferKml;
+  renderer->compositeRasterBuffer = NULL;
 
   renderer->startShape=&msStartShapeKml;
   renderer->endShape=&msEndShapeKml;

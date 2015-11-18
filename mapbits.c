@@ -55,7 +55,7 @@ ms_bitarray msAllocBitArray(int numbits)
   return(array);
 }
 
-int msGetBit(ms_bitarray array, int index)
+int msGetBit(ms_const_bitarray array, int index)
 {
   array += index / MS_ARRAY_BIT;
   return (*array & (1 << (index % MS_ARRAY_BIT))) != 0;    /* 0 or 1 */
@@ -68,7 +68,7 @@ int msGetBit(ms_bitarray array, int index)
 ** If hits end of bitmap without finding set bit, will return -1.
 **
 */
-int msGetNextBit(ms_bitarray array, int i, int size)
+int msGetNextBit(ms_const_bitarray array, int i, int size)
 {
 
   register ms_uint32 b;

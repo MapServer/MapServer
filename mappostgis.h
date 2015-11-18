@@ -64,6 +64,7 @@ typedef struct {
   int         endian;      /* Endianness of the mapserver host */
   int         version;     /* PostGIS version of the database */
   int         paging;      /* Driver handling of pagination, enabled by default */
+  int         force2d;     /* Pass geometry through ST_Force2D */
 }
 msPostGISLayerInfo;
 
@@ -162,7 +163,7 @@ void msPostGISFreeLayerInfo(layerObj *layer);
 msPostGISLayerInfo *msPostGISCreateLayerInfo(void);
 char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid);
 int msPostGISParseData(layerObj *layer);
-int arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line);
+int arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line, int pnZMFlag);
 int wkbConvGeometryToShape(wkbObj *w, shapeObj *shape);
 pointArrayObj* pointArrayNew(int maxpoints);
 void pointArrayFree(pointArrayObj *d);

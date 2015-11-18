@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id$
+ * $id$
  *
  * Project:  MapServer
  * Purpose:  Date/Time utility functions.
@@ -35,8 +35,7 @@
 #include "mapserver.h"
 #include "maptime.h"
 #include "maperror.h"
-
-
+#include "mapthread.h"
 
 typedef struct {
   char pattern[64];
@@ -61,16 +60,55 @@ timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
   {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM",TIME_RESOLUTION_MONTH},
   {"^[0-9]{4}", NULL, "%Y", "YYYY",TIME_RESOLUTION_YEAR},
   {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ",TIME_RESOLUTION_SECOND},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SS", TIME_RESOLUTION_SECOND}
 };
 
 int *ms_limited_pattern = NULL;
 int ms_num_limited_pattern;
 
-void msTimeInit(struct tm *time)
+int ms_time_inited = 0;
+int msTimeSetup() 
 {
-  /* set all members to zero */
-  time->tm_sec = 0;
+  if(!ms_time_inited) {
+    msAcquireLock(TLOCK_TIME);
+    if(!ms_time_inited) {
+      int i;
+      for(i=0;i<MS_NUMTIMEFORMATS;i++) {
+        ms_timeFormats[i].regex = msSmallMalloc(sizeof(ms_regex_t));
+        if(0!=ms_regcomp(ms_timeFormats[i].regex, ms_timeFormats[i].pattern, MS_REG_EXTENDED|MS_REG_NOSUB)) {
+          msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msTimeSetup()", ms_timeFormats[i].pattern);
+          return MS_FAILURE;
+          /* TODO: free already init'd regexes */
+        }
+      }
+      ms_limited_pattern = (int *)msSmallMalloc(sizeof(int)*MS_NUMTIMEFORMATS);
+      ms_num_limited_pattern = 0;
+      ms_time_inited = 1;
+    }
+    msReleaseLock(TLOCK_TIME);
+  }
+  return MS_SUCCESS;
+}
+
+void msTimeCleanup() 
+{
+  if(ms_time_inited) {
+    int i;
+    for(i=0;i<MS_NUMTIMEFORMATS;i++) {
+      if(ms_timeFormats[i].regex) {
+        ms_regfree(ms_timeFormats[i].regex);
+        msFree(ms_timeFormats[i].regex);
+        ms_timeFormats[i].regex = NULL;
+      }
+    }
+    msFree(ms_limited_pattern);
+    ms_time_inited = 0;
+  }
+}
+
+void msTimeInit(struct tm *time) 
+{
+  time->tm_sec = 0; /* set all members to zero */
   time->tm_min = 0;
   time->tm_hour = 0;
   time->tm_mday = 0;
@@ -108,6 +146,10 @@ int msTimeCompare(struct tm *time1, struct tm *time2)
 {
   int result;
 
+  // fprintf(stderr, "in msTimeCompare()...\n");
+  // fprintf(stderr, "time1: %d %d %d %d %d %d\n", time1->tm_year, time1->tm_mon, time1->tm_mday, time1->tm_hour, time1->tm_min, time1->tm_sec);
+  // fprintf(stderr, "time2: %d %d %d %d %d %d\n", time2->tm_year, time2->tm_mon, time2->tm_mday, time2->tm_hour, time2->tm_min, time2->tm_sec);
+
   if((result = compareIntVals(time1->tm_year, time2->tm_year)) != 0)
     return result; /* not equal based on year */
   else if((result = compareIntVals(time1->tm_mon, time2->tm_mon)) != 0)
@@ -143,6 +185,7 @@ char *strptime( const char *buf, const char *format, struct tm *timeptr );
 
 char *msStrptime(const char *s, const char *format, struct tm *tm)
 {
+  memset(tm, 0, sizeof(struct tm));
   return strptime(s, format, tm);
 }
 
@@ -150,9 +193,12 @@ char *msStrptime(const char *s, const char *format, struct tm *tm)
    return MS_TRUE if the time string matchs the timeformat.
    else return MS_FALSE.
  */
-int msTimeMatchPattern(char *timestring, char *timeformat)
+int msTimeMatchPattern(const char *timestring, const char *timeformat)
 {
   int i =-1;
+  if(msTimeSetup() != MS_SUCCESS) {
+    return MS_FALSE;
+  }
 
   /* match the pattern format first and then check if the time string  */
   /* matchs the pattern. If it is the case retrurn the MS_TRUE */
@@ -162,14 +208,9 @@ int msTimeMatchPattern(char *timestring, char *timeformat)
   }
 
   if (i >= 0 && i < MS_NUMTIMEFORMATS) {
-    if(!ms_timeFormats[i].regex) {
-      ms_timeFormats[i].regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
-      ms_regcomp(ms_timeFormats[i].regex,
-                 ms_timeFormats[i].pattern, MS_REG_EXTENDED|MS_REG_NOSUB);
-    }
-    if (ms_regexec(ms_timeFormats[i].regex, timestring, 0,NULL, 0) == 0)
+    int match = ms_regexec(ms_timeFormats[i].regex, timestring, 0, NULL, 0);
+    if(match == 0)
       return MS_TRUE;
-
   }
   return MS_FALSE;
 }
@@ -177,17 +218,16 @@ int msTimeMatchPattern(char *timestring, char *timeformat)
 
 void msUnsetLimitedPatternToUse()
 {
-  if (ms_limited_pattern &&  ms_num_limited_pattern > 0)
-    free(ms_limited_pattern);
-
+  msTimeSetup();
   ms_num_limited_pattern = 0;
 }
 
-void msSetLimitedPattersToUse(char *patternstring)
+void msSetLimitedPatternsToUse(const char *patternstring)
 {
   int *limitedpatternindice = NULL;
   int numpatterns=0, i=0, j=0, ntmp=0;
   char **patterns = NULL;
+  msTimeSetup();
 
   limitedpatternindice = (int *)msSmallMalloc(sizeof(int)*MS_NUMTIMEFORMATS);
 
@@ -207,53 +247,47 @@ void msSetLimitedPattersToUse(char *patternstring)
           }
         }
       }
-
-      msFreeCharArray(patterns, ntmp);
     }
+    msFreeCharArray(patterns, ntmp);
   }
 
   if (numpatterns > 0) {
-    ms_limited_pattern = (int *)msSmallMalloc(sizeof(int)*numpatterns);
     for (i=0; i<numpatterns; i++)
       ms_limited_pattern[i] = limitedpatternindice[i];
 
     ms_num_limited_pattern = numpatterns;
-    free (limitedpatternindice);
   }
-
+  free (limitedpatternindice);
 }
-
-
 
 int msParseTime(const char *string, struct tm *tm)
 {
   int i, indice = 0;
   int num_patterns = 0;
+  
+  if(MS_STRING_IS_NULL_OR_EMPTY(string)) return MS_FALSE; /* nothing to parse so bail */
 
-  /* if limited patterns are set, use then. Else use all the */
-  /* patterns defined */
-  if (ms_limited_pattern &&  ms_num_limited_pattern > 0)
+  if(msTimeSetup() != MS_SUCCESS) {
+    return MS_FALSE;
+  }
+
+  /* if limited patterns are set, use them, else use all the patterns defined */
+  if (ms_num_limited_pattern > 0)
     num_patterns = ms_num_limited_pattern;
   else
     num_patterns = MS_NUMTIMEFORMATS;
 
   for(i=0; i<num_patterns; i++) {
+    int match;
     if (ms_num_limited_pattern > 0)
       indice = ms_limited_pattern[i];
     else
       indice = i;
 
-    if(!ms_timeFormats[indice].regex) { /* compile the expression */
-      ms_timeFormats[indice].regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
-      if(ms_regcomp(ms_timeFormats[indice].regex, ms_timeFormats[indice].pattern, MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
-        msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[indice].pattern);
-        return(MS_FALSE);
-      }
-    }
-
+    match = ms_regexec(ms_timeFormats[indice].regex, string, 0,NULL, 0);
     /* test the expression against the string */
-    if(ms_regexec(ms_timeFormats[indice].regex, string, 0, NULL, 0) == 0) {
-      /* match    */
+    if(match == 0) {
+      /* match    */      
       msStrptime(string, ms_timeFormats[indice].format, tm);
       return(MS_TRUE);
     }
@@ -274,26 +308,29 @@ int msTimeGetResolution(const char *timestring)
     return -1;
 
   for(i=0; i<MS_NUMTIMEFORMATS; i++) {
-    if(!ms_timeFormats[i].regex) {
-      ms_timeFormats[i].regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
-      if(ms_regcomp(ms_timeFormats[i].regex, ms_timeFormats[i].pattern,
-                    MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
-        msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[i].pattern);
-        return -1;
-      }
+    ms_regex_t *regex = (ms_regex_t *) msSmallMalloc(sizeof(ms_regex_t));
+    if(ms_regcomp(regex, ms_timeFormats[i].pattern,
+                  MS_REG_EXTENDED|MS_REG_NOSUB) != 0) {
+      msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[i].pattern);
+      msFree(regex);
+      return -1;
     }
     /* test the expression against the string */
-    if(ms_regexec(ms_timeFormats[i].regex, timestring, 0, NULL, 0) == 0) {
+    if(ms_regexec(regex, timestring, 0, NULL, 0) == 0) {
       /* match    */
+      ms_regfree(regex);
+      msFree(regex);
       return ms_timeFormats[i].resolution;
     }
+    ms_regfree(regex);
+    msFree(regex);
   }
 
   return -1;
 }
 
 
-int _msValidateTime(char *timestring,  const char *timeextent)
+int _msValidateTime(const char *timestring,  const char *timeextent)
 {
   int numelements, numextents, i, numranges;
   struct tm  tmtimestart, tmtimeend, tmstart, tmend;
@@ -302,10 +339,8 @@ int _msValidateTime(char *timestring,  const char *timeextent)
   if (!timestring || !timeextent)
     return MS_FALSE;
 
-  if (strlen(timestring) <= 0 ||
-      strlen(timeextent) <= 0)
+  if (strlen(timestring) <= 0 || strlen(timeextent) <= 0)
     return MS_FALSE;
-
 
   /* we first need to parse the timesting that is passed
      so that we can determine if it is a descrete time
@@ -349,8 +384,10 @@ int _msValidateTime(char *timestring,  const char *timeextent)
 
   numextents = 0;
   atimeextents = msStringSplit (timeextent, ',', &numextents);
-  if (atimeextents == NULL || numextents <= 0)
+  if (numextents <= 0) {
+    msFreeCharArray(atimeextents, numextents);
     return MS_FALSE;
+  }
 
   /*the time timestring should at be valid in one of the extents
     defined */
@@ -395,9 +432,7 @@ int _msValidateTime(char *timestring,  const char *timeextent)
 
 }
 
-
-
-int msValidateTimeValue(char *timestring, const char *timeextent)
+int msValidateTimeValue(const char *timestring, const char *timeextent)
 {
   char **atimes =  NULL;
   int i, numtimes=0;
@@ -408,20 +443,16 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
   if (!timestring || !timeextent)
     return MS_FALSE;
 
-
   /* parse the time string. We support descrete times (eg 2004-09-21), */
   /* multiple times (2004-09-21, 2004-09-22, ...) */
   /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
-  if (strstr(timestring, ",") == NULL &&
-      strstr(timestring, "/") == NULL) { /* discrete time */
+  if (strstr(timestring, ",") == NULL && strstr(timestring, "/") == NULL) { /* discrete time */
     return _msValidateTime(timestring,  timeextent);
-
   } else {
-    atimes = msStringSplit (timestring, ',', &numtimes);
+    atimes = msStringSplit(timestring, ',', &numtimes);
     if (numtimes >=1) { /* multiple times */
-
       if (strstr(atimes[0], "/") == NULL) { /* multiple descrete times */
-        for (i=0; i<numtimes; i++) {
+        for (i=0; i<numtimes; i++) {          
           if (_msValidateTime(atimes[i], timeextent) == MS_FALSE) {
             msFreeCharArray(atimes, numtimes);
             return MS_FALSE;
@@ -430,19 +461,18 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
         msFreeCharArray(atimes, numtimes);
         return MS_TRUE;
       } else { /* multiple ranges */
-        for (i=0; i<numtimes; i++) {
+        for (i=0; i<numtimes; i++) {          
           if (_msValidateTime(atimes[i], timeextent) == MS_FALSE) {
             msFreeCharArray(atimes, numtimes);
             return MS_FALSE;
           }
-
         }
         msFreeCharArray(atimes, numtimes);
         return MS_TRUE;
       }
-
+    } else {
+      msFreeCharArray(atimes,numtimes);
     }
-
   }
   return MS_FALSE;
 }

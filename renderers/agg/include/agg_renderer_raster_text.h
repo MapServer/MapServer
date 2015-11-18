@@ -77,6 +77,34 @@ namespace mapserver
             }
         }
 
+        void render_glyph(double x, double y, unsigned glyph, bool flip=false)
+        {
+          glyph_rect r;
+          m_glyph->prepare(&r, x, y, glyph, flip);
+          if(r.x2 >= r.x1)
+          {
+            int i;
+            if(flip)
+            {
+              for(i = r.y1; i <= r.y2; i++)
+              {
+                m_ren->blend_solid_hspan(r.x1, i, (r.x2 - r.x1 + 1),
+                    m_color,
+                    m_glyph->span(r.y2 - i));
+              }
+            }
+            else
+            {
+              for(i = r.y1; i <= r.y2; i++)
+              {
+                m_ren->blend_solid_hspan(r.x1, i, (r.x2 - r.x1 + 1),
+                    m_color,
+                    m_glyph->span(i - r.y1));
+              }
+            }
+          }
+        }
+
     private:
         ren_type* m_ren;
         glyph_gen_type* m_glyph;

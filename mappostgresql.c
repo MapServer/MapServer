@@ -76,7 +76,7 @@ int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join)
 {
   char *maskeddata, *temp, *sql, *column;
   char *conn_decrypted;
-  int i, count, test;
+  int i, test;
   PGresult *query_result;
   msPOSTGRESQLJoinInfo *joininfo;
 
@@ -128,11 +128,10 @@ int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join)
     maskeddata = (char *)malloc(strlen(layer->connection) + 1);
     strcpy(maskeddata, join->connection);
     temp = strstr(maskeddata, "password=");
-    if(!temp) {
+    if(temp) {
       temp = (char *)(temp + 9);
-      count = (int)(strstr(temp, " ") - temp);
-      for(i = 0; i < count; i++) {
-        strlcpy(temp, "*", (int)1);
+      while (*temp != '\0' && *temp != ' ') {
+        *temp = '*';
         temp++;
       }
     }
@@ -366,7 +365,7 @@ int msPOSTGRESQLJoinNext(joinObj *join)
     return(MS_DONE);
   }
   if(joininfo->layer_debug) {
-    msDebug("msPOSTGRESQLJoinNext(): fetching row %d.\n",
+    msDebug("msPOSTGRESQLJoinNext(): fetching row %ld.\n",
             joininfo->row_num);
   }
 
