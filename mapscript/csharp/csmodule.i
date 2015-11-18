@@ -313,10 +313,10 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 	    throw new ArgumentException("Invalid array length specified!");
 	return processQueryTemplate(names, values, values.Length);
   }
-
+ 
   public mapObj(
       System.Runtime.Serialization.SerializationInfo info
-      , System.Runtime.Serialization.StreamingContext context) : this(info.GetString("mapText"))
+      , System.Runtime.Serialization.StreamingContext context) : this(info.GetString("mapText"), 1)
   {       
         //this constructor is needed for ISerializable interface
   }
