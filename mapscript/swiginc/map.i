@@ -30,38 +30,24 @@
 */
 
 %extend mapObj 
-{        
-    mapObj(char *filename_or_maptext="") 
-    {
-#ifdef SWIGCSHARP    
-        if (filename_or_maptext && strlen(filename_or_maptext)) 
-        {
-            FILE *file;
-            if (file = fopen(filename_or_maptext, "r"))
-            {
-                //it is a valid map file, load it
-                fclose(file);
-                return msLoadMap(filename_or_maptext, NULL);
-            }
-            else {
-                //not a valid map, most likely a maptext
-                //TODO: extra check just to confirm that it is a mapText ?
-                return msLoadMapFromString(filename_or_maptext, NULL);
-            }
-        }
-        else { /* create an empty map, no layers etc... */
-            return msNewMapObj();
-        }
-#else 
-        if (filename_or_maptext && strlen(filename_or_maptext)) 
+{         
+    mapObj(char *filename="") 
+    {   
+        if (filename && strlen(filename)) 
         {            
-            return msLoadMap(filename_or_maptext, NULL);            
+            return msLoadMap(filename, NULL);            
         }
         else { /* create an empty map, no layers etc... */
             return msNewMapObj();
         }
-#endif        
     }
+
+#ifdef SWIGCSHARP      
+    mapObj(char *mapText, int isMapText) 
+    {
+        return msLoadMapFromString(mapText, NULL);
+    }
+#endif 
     
     ~mapObj() 
     {
@@ -212,9 +198,19 @@
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 
+
   %newobject draw;
   imageObj *draw() {
+#if defined(SWIGWIN) && defined(SWIGCSHARP)
+    __try {
+        return msDrawMap(self, MS_FALSE);
+    }    
+    __except(1 /*EXCEPTION_EXECUTE_HANDLER*/) {  
+        msSetError(MS_IMGERR, "Unhandled exception in drawing map image 0x%08x", "msDrawMap()", GetExceptionCode());
+    }
+#else    
     return msDrawMap(self, MS_FALSE);
+#endif    
   }
 
   %newobject drawQuery;
