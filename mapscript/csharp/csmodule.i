@@ -291,7 +291,8 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 
 %typemap(csinterfaces) mapObj "IDisposable, System.Runtime.Serialization.ISerializable"; 
 %typemap(csattributes) mapObj  "[Serializable]"
-%typemap(cscode) mapObj, struct mapObj %{  public string processTemplate(int bGenerateImages, string[] names, string[] values)
+%typemap(cscode) mapObj, struct mapObj %{  
+  public string processTemplate(int bGenerateImages, string[] names, string[] values)
   {
 	if (names.Length != values.Length)
 	    throw new ArgumentException("Invalid array length specified!");

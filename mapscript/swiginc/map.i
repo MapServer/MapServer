@@ -214,7 +214,7 @@
     __try {
         return msDrawMap(self, MS_FALSE);
     }    
-    __except(1 /*EXCEPTION_EXECUTE_HANDLER*/) {  
+    __except(1 /*EXCEPTION_EXECUTE_HANDLER, catch every exception so it doesn't crash IIS*/) {  
         msSetError(MS_IMGERR, "Unhandled exception in drawing map image 0x%08x", "msDrawMap()", GetExceptionCode());
     }
 #else    
