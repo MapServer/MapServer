@@ -41,7 +41,7 @@
     }
 
 #ifdef SWIGCSHARP      
-    mapObj(char *mapText, int isMapText) 
+    mapObj(char *mapText, int isMapText /*used as signature only to differentiate this constructor from default constructor*/ ) 
     {
         return msLoadMapFromString(mapText, NULL);
     }
