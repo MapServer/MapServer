@@ -806,6 +806,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int heightfound = 0;
   char *request = NULL;
   int status = 0;
+  int tiled = 0;
+  int map_edge_buffer = 0;
   const char *layerlimit = NULL;
 
   const char *sldenabled=NULL;
@@ -1125,6 +1127,10 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     else if (strcasecmp(names[i], "BBOX_PIXEL_IS_POINT") == 0) {
       bbox_pixel_is_point = (strcasecmp(values[i], "TRUE") == 0);
     }
+    /* Vendor specific tiled, added by deduikertjes */
+    else if (strcasecmp(names[i], "TILED") == 0) {
+        tiled = (strcasecmp(values[i], "TRUE") == 0);
+    }
   }
 
   /*validate the exception format WMS 1.3.0 section 7.3.3.11*/
@@ -1139,7 +1145,55 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       return msWMSException(map, nVersion, "InvalidFormat", wms_exception_format);
     }
   }
-  if (bboxfound && nVersion >= OWS_1_3_0) {
+  if (tiled > 0) {
+    const char *value;
+    double buffer;
+    hashTableObj *meta = &(map->web.metadata);
+
+    if ((value = msLookupHashTable(meta, "tile_map_edge_buffer")) != NULL) {
+        map_edge_buffer = atoi(value);
+    }
+    if (map_edge_buffer > 0) {
+      /* adjust bbox and width and height to the buffer */
+      buffer = map_edge_buffer * (map->extent.maxx - map->extent.minx) / (double)map->width;
+      map->extent.minx -= buffer;
+      map->extent.maxx += buffer;
+      map->extent.miny -= buffer;
+      map->extent.maxy += buffer;
+
+      map->width += 2 * map_edge_buffer;
+      map->height += 2 * map_edge_buffer;
+
+      /*
+      ** Ensure the labelcache buffer is greater than the buffer.
+      */
+      if( map_edge_buffer > 0 ) {
+        const char *value;
+        hashTableObj *meta = &(map->web.metadata);
+        char tilebufferstr[64];
+
+        /* Write the tile buffer to a string */
+        snprintf(tilebufferstr, sizeof(tilebufferstr), "-%d", map_edge_buffer);
+
+        /* Hm, the labelcache buffer is set... */
+        if((value = msLookupHashTable(meta, "labelcache_map_edge_buffer")) != NULL) {
+          /* If it's too small, replace with a bigger one */
+          if( map_edge_buffer > abs(atoi(value)) ) {
+            msRemoveHashTable(meta, "labelcache_map_edge_buffer");
+            msInsertHashTable(meta, "labelcache_map_edge_buffer", tilebufferstr);
+          }
+        }
+        /* No labelcache buffer value? Then we use the tile buffer. */
+        else {
+          msInsertHashTable(meta, "labelcache_map_edge_buffer", tilebufferstr);
+        }
+      }
+    }
+    
+
+  }
+
+  if ((bboxfound && nVersion >= OWS_1_3_0) || (tiled > 0 && map_edge_buffer > 0 )) {
     rectObj rect;
     projectionObj proj;
 
@@ -3601,6 +3655,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   int i = 0;
   int sldrequested = MS_FALSE,  sldspatialfilter = MS_FALSE;
   const char *http_max_age;
+  int map_edge_buffer = 0;
 
   /* __TODO__ msDrawMap() will try to adjust the extent of the map */
   /* to match the width/height image ratio. */
@@ -3670,6 +3725,49 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
 
   } else
     img = msDrawMap(map, MS_FALSE);
+
+  /* see if we have tiled = true and a buffer */
+  /* if so, clip the image */
+  for (i=0; i<numentries; i++) {
+    if (strcasecmp(names[i], "TILED") == 0) {
+      if (strcasecmp(values[i], "TRUE") == 0) {
+        rendererVTableObj *renderer;
+        hashTableObj *meta = &(map->web.metadata);
+        rasterBufferObj imgBuffer;
+        imageObj *tmp;
+        const char *value;
+        int width = 0;
+        int height = 0;
+
+        if ((value = msLookupHashTable(meta, "tile_map_edge_buffer")) != NULL) {
+          map_edge_buffer = atoi(value);
+          if ( map_edge_buffer > 0 ) {
+            /* we have to clip the image */
+            
+            renderer = MS_MAP_RENDERER(map);
+            renderer->getRasterBufferHandle((imageObj*)img,&imgBuffer);
+            
+            width = map->width - map_edge_buffer - map_edge_buffer;
+            height = map->height - map_edge_buffer - map_edge_buffer;
+            tmp = msImageCreate( width, height, map->outputformat, NULL, NULL, map->resolution, map->defresolution, NULL);
+
+            width = map->width - map_edge_buffer;
+            height = map->height - map_edge_buffer;
+            if((MS_FAILURE == renderer->mergeRasterBuffer(tmp,&imgBuffer,1.0,map_edge_buffer, map_edge_buffer,0, 0, width, height ))) {
+              msFreeImage(tmp);
+              msFreeImage(img);
+              img = NULL;
+            } else {
+              msFreeImage(img);
+              img = tmp;
+            }
+          }
+        }
+      }
+      break;
+    }
+  }
+
   if (img == NULL)
     return msWMSException(map, nVersion, NULL, wms_exception_format);
 
