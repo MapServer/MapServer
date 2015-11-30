@@ -210,7 +210,7 @@
 
   %newobject draw;
   imageObj *draw() {
-#if defined(SWIGWIN) && defined(SWIGCSHARP)
+#if defined(WIN32) && defined(SWIGCSHARP)
     __try {
         return msDrawMap(self, MS_FALSE);
     }    
