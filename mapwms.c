@@ -685,6 +685,7 @@ int msWMSApplyDimensionLayer(layerObj *lp, const char *item, char *value, int fo
 {
   int result = MS_FALSE;
   char *pszExpression=NULL;
+  int tlpindex = -1;
 
   if (lp && item && value) {
     /*for the value, we support descrete values (2005) */
@@ -693,8 +694,17 @@ int msWMSApplyDimensionLayer(layerObj *lp, const char *item, char *value, int fo
     pszExpression = FLTGetExpressionForValuesRanges(lp, (char *)item, value,  forcecharcter);
 
     if (pszExpression) {
+      // If tileindex is set, the filter is applied to tileindex too.
+      if (lp->tileindex && (tlpindex = msGetLayerIndex(lp->map, lp->tileindex)) != -1) {
+          if(FLTApplyExpressionToLayer((GET_LAYER(lp->map, tlpindex)), pszExpression))
+            result = MS_TRUE;
+          else
+            result = MS_FALSE;
+      }
       if(FLTApplyExpressionToLayer(lp, pszExpression))
         result = MS_TRUE;
+      else
+        result = MS_FALSE;
       msFree(pszExpression);
     }
   }
