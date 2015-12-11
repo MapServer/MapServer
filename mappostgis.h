@@ -40,8 +40,8 @@
 #define BIG_ENDIAN 2
 #endif
 
-/* HEX = 16 or BASE64 = 64*/
-#define TRANSFER_ENCODING 16
+/* HEX = 16, BASE64 = 64, RAW = 256*/
+#define TRANSFER_ENCODING 256
 
 /* Substitution token for box hackery */
 #define BOXTOKEN "!BOX!"
