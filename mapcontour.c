@@ -632,7 +632,13 @@ int msContourLayerOpen(layerObj *layer)
     msContourLayerInfoInitialize(layer);
 
   clinfo = (contourLayerInfo *) layer->layerinfo;
-
+  if (layer->data == NULL ) {
+    msSetError(MS_MISCERR,
+               "Layer %s has no DATA defined.",
+               "msContourLayerOpen()",
+               layer->name);
+    return MS_FAILURE;
+  }
   GDALAllRegister();
 
   /* Open the original Dataset */
