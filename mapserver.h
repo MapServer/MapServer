@@ -167,7 +167,9 @@ typedef const ms_uint32 *ms_const_bitarray;
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+#if (defined(_MSC_VER) && (_MSC_VER < 1900)) || !defined(_MSC_VER)
 #define snprintf _snprintf
+#endif
 #endif
 
 #ifdef __cplusplus
