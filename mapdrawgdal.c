@@ -333,24 +333,32 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
   /*
    * Set up the band selection.  We look for a BANDS directive in the
-   * the PROCESSING options.  If not found we default to red=1 or
-   * red=1,green=2,blue=3 or red=1,green=2,blue=3,alpha=4.
+   * the PROCESSING options.  If not found we default to grey=1, grey=1,alpha=2,
+   * red=1,green=2,blue=3 or red=1,green=2,blue=3,alpha>=4.
    */
 
   if( CSLFetchNameValue( layer->processing, "BANDS" ) == NULL ) {
+    const int gdal_band_count = GDALGetRasterCount( hDS );
     red_band = 1;
 
-    if( GDALGetRasterCount( hDS ) >= 4
-        && GDALGetRasterColorInterpretation(
-          GDALGetRasterBand( hDS, 4 ) ) == GCI_AlphaBand )
-      alpha_band = 4;
+    if( gdal_band_count >= 4 )
+    {
+        /* The alpha band is not necessarily the 4th one */
+        for( i = 4; i <= gdal_band_count; i ++ ) {
+            if( GDALGetRasterColorInterpretation(
+                GDALGetRasterBand( hDS, i ) ) == GCI_AlphaBand ) {
+                alpha_band = i;
+                break;
+            }
+        }
+    }
 
-    if( GDALGetRasterCount( hDS ) >= 3 ) {
+    if( gdal_band_count >= 3 ) {
       green_band = 2;
       blue_band = 3;
     }
 
-    if( GDALGetRasterCount( hDS ) == 2
+    if( gdal_band_count == 2
         && GDALGetRasterColorInterpretation(
           GDALGetRasterBand( hDS, 2 ) ) == GCI_AlphaBand )
       alpha_band = 2;
