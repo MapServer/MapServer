@@ -651,7 +651,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
       }
 
       cur->classindex = j;
-      cur->layerindex = i;
+      cur->layerindex = map->layerorder[i];
       cur->pred = head;
       head = cur;
     }
