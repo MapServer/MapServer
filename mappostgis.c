@@ -1738,7 +1738,7 @@ char *msPostGISBuildSQLItems(layerObj *layer)
 #if TRANSFER_ENCODING == 64
     const char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
 #elif TRANSFER_ENCODING == 256
-    const char *strGeomTemplate = "ST_AsBinary(%s(\"%s\"),'%s') as geom,\"%s\"";
+    const char *strGeomTemplate = "ST_AsBinary(%s(\"%s\"),'%s') as geom,\"%s\"::text";
 #else
     const char *strGeomTemplate = "encode(ST_AsBinary(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
 #endif
@@ -1754,7 +1754,7 @@ char *msPostGISBuildSQLItems(layerObj *layer)
 #if TRANSFER_ENCODING == 64
         strGeomTemplate = "encode(AsEWKB(%s(\"%s\"),'%s'),'base64') as geom,\"%s\"";
 #elif TRANSFER_ENCODING == 256
-        strGeomTemplate = "AsEWKB(%s(\"%s\"),'%s') as geom,\"%s\"";
+        strGeomTemplate = "AsEWKB(%s(\"%s\"),'%s') as geom,\"%s\"::text";
 #else
         strGeomTemplate = "encode(AsEWKB(%s(\"%s\"),'%s'),'hex') as geom,\"%s\"";
 #endif
