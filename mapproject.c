@@ -46,7 +46,7 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 
 /************************************************************************/
 /*                           int msIsAxisInverted                       */
-/*      Check to see if we shoud invert the axis.                       */
+/*      Check to see if we should invert the axis.                       */
 /*                                                                      */
 /************************************************************************/
 int msIsAxisInverted(int epsg_code)

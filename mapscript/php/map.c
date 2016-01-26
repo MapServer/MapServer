@@ -907,7 +907,7 @@ PHP_METHOD(mapObj, getColorByIndex)
     color.green = palette.colors[index].green;
     color.blue = palette.colors[index].blue;
   } else {
-    mapscript_throw_mapserver_exception("Index shoud not be higher than %d\n" TSRMLS_CC, palette.numcolors-1);
+    mapscript_throw_mapserver_exception("Index should not be higher than %d\n" TSRMLS_CC, palette.numcolors-1);
     return;
   }
 
