@@ -95,7 +95,7 @@ int findChartPoint(mapObj *map, shapeObj *shape, int width, int height, pointObj
       return MS_FAILURE;
       break;
     case MS_SHAPE_POLYGON:
-      msPolygonLabelPoint(shape, center, -1);
+      msPolygonLabelPoint(shape, center, -1, MS_TRUE);
       center->x=MS_MAP2IMAGE_X_IC_DBL(center->x, map->extent.minx, invcellsize);
       center->y=MS_MAP2IMAGE_Y_IC_DBL(center->y, map->extent.maxy, invcellsize);
 

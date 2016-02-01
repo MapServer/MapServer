@@ -1252,6 +1252,8 @@ static int getPolygonCenterOfGravity(shapeObj *p, pointObj *lp)
       sy = s>0?tsy:-tsy;
     }
   }
+  if(largestArea == 0) /*degenerate polygon*/
+    return MS_FAILURE;
 
   lp->x = sx/(6*largestArea);
   lp->y = sy/(6*largestArea);
@@ -1289,7 +1291,7 @@ int msGetPolygonCentroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
 /*
 ** Find a label point in a polygon.
 */
-int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
+int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension, int ignore_edge_distance)
 {
   double slope;
   pointObj *point1=NULL, *point2=NULL, cp;
@@ -1335,6 +1337,8 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
 
   if(msIntersectPointPolygon(lp, p) == MS_TRUE) {
     double dist, min_dist=-1;
+
+    if(ignore_edge_distance == MS_TRUE) return(MS_SUCCESS);
 
     /* compute a distance to the polygon */
     for(j=0; j<p->numlines; j++) {
@@ -1438,7 +1442,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       if(len > max_len) {
         max_len = len;
         lp->x = (intersect[i] + intersect[i+1])/2;
-        /* lp->y = y; */
+        lp->y = y;
       }
     }
   } else { /* center vertically, fix x */
@@ -1517,7 +1521,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       if(len > max_len) {
         max_len = len;
         lp->y = (intersect[i] + intersect[i+1])/2;
-        /* lp->x = x; */
+        lp->x = x;
       }
     }
   }
