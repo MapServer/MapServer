@@ -62,7 +62,7 @@ extern char *msyystring;
 extern char *msyybasepath;
 extern int msyyreturncomments;
 extern char *msyystring_buffer;
-extern char msyystring_icase;
+extern int msyystring_icase;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); /* in mapsymbol.c */
 extern void writeSymbol(symbolObj *s, FILE *stream); /* in mapsymbol.c */
