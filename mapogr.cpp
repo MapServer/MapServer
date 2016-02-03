@@ -3646,6 +3646,7 @@ int msOGRLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msOGRLayerWhichShapes;
   layer->vtable->LayerNextShape = msOGRLayerNextShape;
   layer->vtable->LayerGetShape = msOGRLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerClose = msOGRLayerClose;
   layer->vtable->LayerGetItems = msOGRLayerGetItems;
   layer->vtable->LayerGetExtent = msOGRLayerGetExtent;

@@ -1279,6 +1279,7 @@ msWFSLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msWFSLayerWhichShapes;
   layer->vtable->LayerNextShape = msWFSLayerNextShape;
   /* layer->vtable->LayerResultsGetShape = msWFSLayerResultGetShape; */
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerGetShape = msWFSLayerGetShape;
   layer->vtable->LayerClose = msWFSLayerClose;
   layer->vtable->LayerGetItems = msWFSLayerGetItems;

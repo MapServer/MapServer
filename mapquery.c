@@ -985,6 +985,24 @@ int msQueryByRect(mapObj *map)
       lp->project = MS_FALSE;
 #endif
 
+    if( map->query.only_cache_result_count )
+    {
+      int numFeatures = msLayerGetShapeCount(lp, searchrect);
+      if( numFeatures >= 0 )
+      {
+        lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+        MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
+        initResultCache( lp->resultcache);
+        lp->resultcache->numresults = numFeatures;
+        if (!paging && map->query.startindex > 1) {
+           lp->resultcache->numresults -= (map->query.startindex-1);
+        }
+        msFreeShape(&searchshape);
+        continue;
+      }
+      // Fallback in case of error (should not happen normally)
+    }
+
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
       msLayerClose(lp);

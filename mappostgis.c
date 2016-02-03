@@ -2656,6 +2656,18 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
 
   int num_bind_values = 0;
 
+  assert(layer != NULL);
+  assert(layer->layerinfo != NULL);
+
+  if (layer->debug) {
+    msDebug("msPostGISLayerWhichShapes called.\n");
+  }
+
+  /* Fill out layerinfo with our current DATA state. */
+  if ( msPostGISParseData(layer) != MS_SUCCESS) {
+    return MS_FAILURE;
+  }
+
   /* try to get the first bind value */
   bind_value = msLookupHashTable(&layer->bindvals, "1");
   while(bind_value != NULL) {
@@ -2667,18 +2679,6 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     sprintf(bind_key, "%d", num_bind_values+1);
     /* get the bind_value */
     bind_value = msLookupHashTable(&layer->bindvals, bind_key);
-  }
-
-  assert(layer != NULL);
-  assert(layer->layerinfo != NULL);
-
-  if (layer->debug) {
-    msDebug("msPostGISLayerWhichShapes called.\n");
-  }
-
-  /* Fill out layerinfo with our current DATA state. */
-  if ( msPostGISParseData(layer) != MS_SUCCESS) {
-    return MS_FAILURE;
   }
 
   /*
@@ -2798,6 +2798,116 @@ int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape)
   return MS_FAILURE;
 #endif
 }
+
+/*
+** msPostGISLayerGetShape()
+**
+ */
+int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect)
+{
+#ifdef USE_POSTGIS
+  msPostGISLayerInfo *layerinfo = NULL;
+  char *strSQL = NULL;
+  char *strSQLCount = NULL;
+  PGresult *pgresult = NULL;
+  char** layer_bind_values = (char**)msSmallMalloc(sizeof(char*) * 1000);
+  char* bind_value;
+  char* bind_key = (char*)msSmallMalloc(3);
+  int num_bind_values = 0;
+  int nCount = 0;
+
+  assert(layer != NULL);
+  assert(layer->layerinfo != NULL);
+
+  if (layer->debug) {
+    msDebug("msPostGISLayerGetShapeCount called.\n");
+  }
+
+  /* Fill out layerinfo with our current DATA state. */
+  if ( msPostGISParseData(layer) != MS_SUCCESS) {
+    return -1;
+  }
+
+  /* try to get the first bind value */
+  bind_value = msLookupHashTable(&layer->bindvals, "1");
+  while(bind_value != NULL) {
+    /* put the bind value on the stack */
+    layer_bind_values[num_bind_values] = bind_value;
+    /* increment the counter */
+    num_bind_values++;
+    /* create a new lookup key */
+    sprintf(bind_key, "%d", num_bind_values+1);
+    /* get the bind_value */
+    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
+  }
+
+  /*
+  ** This comes *after* parsedata, because parsedata fills in
+  ** layer->layerinfo.
+  */
+  layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+  /* Build a SQL query based on our current state. */
+  strSQL = msPostGISBuildSQL(layer, &rect, NULL);
+  if ( ! strSQL ) {
+    msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerGetShapeCount()");
+    return -1;
+  }
+
+  strSQLCount = NULL;
+  strSQLCount = msStringConcatenate(strSQLCount, "SELECT COUNT(*) FROM (");
+  strSQLCount = msStringConcatenate(strSQLCount, strSQL);
+  strSQLCount = msStringConcatenate(strSQLCount, ") msQuery");
+
+  msFree(strSQL);
+
+  if (layer->debug) {
+    msDebug("msPostGISLayerGetShapeCount query: %s\n", strSQLCount);
+  }
+
+  if(num_bind_values > 0) {
+    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount, num_bind_values, NULL, (const char**)layer_bind_values, NULL, NULL, 1);
+  } else {
+    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount,0, NULL, NULL, NULL, NULL, 0);
+  }
+  
+  msFree(strSQLCount);
+
+  /* free bind values */
+  free(bind_key);
+  free(layer_bind_values);
+
+  if ( layer->debug > 1 ) {
+    msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
+  }
+
+  /* Something went wrong. */
+  if (!pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
+    msDebug("msPostGISLayerGetShapeCount(): Error (%s) executing query: %s\n", PQerrorMessage(layerinfo->pgconn), strSQL);
+    msSetError(MS_QUERYERR, "Error executing query. Check server logs","msPostGISLayerGetShapeCount()");
+    free(strSQL);
+    if (pgresult) {
+      PQclear(pgresult);
+    }
+    return MS_FAILURE;
+  }
+
+  nCount = atoi(PQgetvalue(pgresult, 0, 0 ));
+
+  if ( layer->debug ) {
+    msDebug("msPostGISLayerWhichShapes return: %d.\n", nCount);
+  }
+  PQclear(pgresult);
+
+  return nCount;
+#else
+  msSetError( MS_MISCERR,
+              "PostGIS support is not available.",
+              "msPostGISLayerGetShapeCount()");
+  return -1;
+#endif
+}
+
 
 /*
 ** msPostGISLayerGetShape()
@@ -3823,6 +3933,7 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msPostGISLayerWhichShapes;
   layer->vtable->LayerNextShape = msPostGISLayerNextShape;
   layer->vtable->LayerGetShape = msPostGISLayerGetShape;
+  layer->vtable->LayerGetShapeCount = msPostGISLayerGetShapeCount;
   layer->vtable->LayerClose = msPostGISLayerClose;
   layer->vtable->LayerGetItems = msPostGISLayerGetItems;
   layer->vtable->LayerGetExtent = msPostGISLayerGetExtent;

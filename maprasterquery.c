@@ -1486,6 +1486,7 @@ msRASTERLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msRASTERLayerWhichShapes;
   layer->vtable->LayerNextShape = msRASTERLayerNextShape;
   layer->vtable->LayerGetShape = msRASTERLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerClose = msRASTERLayerClose;
   layer->vtable->LayerGetItems = msRASTERLayerGetItems;
   layer->vtable->LayerGetExtent = msRASTERLayerGetExtent;

@@ -408,6 +408,28 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
 }
 
 /*
+** Returns the number of shapes that match the potential filter and extent.
+ * This should be equivalent to calling msLayerWhichShapes() and counting the
+ * number of shapes returned by msLayerNextShape(), honouring layer->maxfeatures
+ * limitation if layer->maxfeatures>=0, and honouring layer->startindex if
+ * layer->startindex >= 1 and paging is enabled.
+ * Returns -1 in case of failure.
+ */
+int msLayerGetShapeCount(layerObj *layer, rectObj rect)
+{
+  int rv;
+
+  if( ! layer->vtable) {
+    rv = msInitializeVirtualTable(layer);
+    if(rv != MS_SUCCESS)
+      return -1;
+  }
+
+  return layer->vtable->LayerGetShapeCount(layer, rect);
+}
+
+
+/*
 ** Closes resources used by a particular layer.
 */
 void msLayerClose(layerObj *layer)
@@ -1504,6 +1526,29 @@ int LayerDefaultGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
   return MS_FAILURE;
 }
 
+int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect)
+{
+  int status;
+  shapeObj shape;
+  int nShapeCount = 0;
+
+  status = msLayerWhichShapes(layer, rect, MS_TRUE) ;
+  if( status == MS_FAILURE )
+    return -1;
+  if( status == MS_DONE )
+    return 0;
+
+  msInitShape(&shape);
+  while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
+    nShapeCount++ ;
+    msFreeShape(&shape);
+    if(layer->maxfeatures > 0 && layer->maxfeatures == nShapeCount)
+      break;
+  }
+
+  return nShapeCount;
+}
+
 int LayerDefaultClose(layerObj *layer)
 {
   return MS_SUCCESS;
@@ -1807,6 +1852,7 @@ static int populateVirtualTable(layerVTableObj *vtable)
   vtable->LayerNextShape = LayerDefaultNextShape;
   /* vtable->LayerResultsGetShape = LayerDefaultResultsGetShape; */
   vtable->LayerGetShape = LayerDefaultGetShape;
+  vtable->LayerGetShapeCount = LayerDefaultGetShapeCount;
   vtable->LayerClose = LayerDefaultClose;
   vtable->LayerGetItems = LayerDefaultGetItems;
   vtable->LayerGetExtent = LayerDefaultGetExtent;
@@ -2113,6 +2159,7 @@ msINLINELayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerIsOpen = msINLINELayerIsOpen;
   layer->vtable->LayerWhichShapes = msINLINELayerWhichShapes;
   layer->vtable->LayerNextShape = msINLINELayerNextShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerGetShape = msINLINELayerGetShape;
   layer->vtable->LayerClose = msINLINELayerClose;
   /* layer->vtable->LayerGetItems, use default */
