@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "mapserver.h"
+#include "mapows.h"
 
 int msInitQuery(queryObj *query) {
   if(!query) return MS_FAILURE;
@@ -978,16 +979,45 @@ int msQueryByRect(mapObj *map)
       return(MS_FAILURE);
     }
 
+    /* If only result count is needed, we can use msLayerGetShapeCount() */
+    /* that has optimizations to avoid retrieving individual features */
+    if( map->query.only_cache_result_count &&
+        lp->template != NULL && /* always TRUE for WFS case */
+        lp->minfeaturesize <= 0 )
+    {
+      int bUseLayerSRS = MS_FALSE;
+      int numFeatures = -1;
+
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
-      msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-    else
-      lp->project = MS_FALSE;
+      /* Optimization to detect the case where a WFS query uses in fact the */
+      /* whole layer extent, but expressed in a map SRS different from the layer SRS */
+      /* In the case, we can directly request against the layer extent in its native SRS */
+      if( lp->project &&
+          msProjectionsDiffer(&(lp->projection), &(map->projection)) )
+      {
+        rectObj layerExtent;
+        if ( msOWSGetLayerExtent(map, lp, "FO", &layerExtent) == MS_SUCCESS)
+        {
+            rectObj ext = layerExtent;
+            ext.minx -= 1e-5;
+            ext.miny -= 1e-5;
+            ext.maxx += 1e-5;
+            ext.maxy += 1e-5;
+            msProjectRect(&(lp->projection), &(map->projection), &ext);
+            if( fabs(ext.minx - searchrect.minx) <= 2e-5 &&
+                fabs(ext.miny - searchrect.miny) <= 2e-5 &&
+                fabs(ext.maxx - searchrect.maxx) <= 2e-5 &&
+                fabs(ext.maxy - searchrect.maxy) <= 2e-5 )
+            {
+              bUseLayerSRS = MS_TRUE;
+              numFeatures = msLayerGetShapeCount(lp, layerExtent, &(lp->projection));
+            }
+        }
+      }
 #endif
 
-    if( map->query.only_cache_result_count )
-    {
-      int numFeatures = msLayerGetShapeCount(lp, searchrect);
+      if( !bUseLayerSRS )
+          numFeatures = msLayerGetShapeCount(lp, searchrect, &(map->projection));
       if( numFeatures >= 0 )
       {
         lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
@@ -1002,6 +1032,13 @@ int msQueryByRect(mapObj *map)
       }
       // Fallback in case of error (should not happen normally)
     }
+
+#ifdef USE_PROJ
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
+    else
+      lp->project = MS_FALSE;
+#endif
 
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
