@@ -38,7 +38,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     "libxml2-dev",
     "postgis",
     "postgresql-server-dev-9.1",
-    "postgresql-9.1-postgis",
+    "postgresql-9.1-postgis-2.0",
     "vim",
     "bison",
     "flex",
