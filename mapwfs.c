@@ -2856,7 +2856,7 @@ static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsOb
   if( bIsHits )
   {
     const char* ignoreMaxFeaturesForHits =
-        msOWSLookupMetadata(&(map->web.metadata), "FO", "ignore_maxfeatures_for_hits");
+        msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures_ignore_for_resulttype_hits");
 
     /* For PostGIS where we have an efficient implementation of hits, default to true */
     if( ignoreMaxFeaturesForHits == NULL )
