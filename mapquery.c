@@ -762,6 +762,65 @@ int msQueryByFilter(mapObj *map)
     if(status != MS_SUCCESS) goto query_error;
 
     search_rect = map->query.rect;
+
+    /* If only result count is needed, we can use msLayerGetShapeCount() */
+    /* that has optimizations to avoid retrieving individual features */
+    if( map->query.only_cache_result_count &&
+        lp->template != NULL && /* always TRUE for WFS case */
+        lp->minfeaturesize <= 0 )
+    {
+      int bUseLayerSRS = MS_FALSE;
+      int numFeatures = -1;
+
+#ifdef USE_PROJ
+      /* Optimization to detect the case where a WFS query uses in fact the */
+      /* whole layer extent, but expressed in a map SRS different from the layer SRS */
+      /* In the case, we can directly request against the layer extent in its native SRS */
+      if( lp->project &&
+          msProjectionsDiffer(&(lp->projection), &(map->projection)) )
+      {
+        rectObj layerExtent;
+        if ( msOWSGetLayerExtent(map, lp, "FO", &layerExtent) == MS_SUCCESS)
+        {
+            rectObj ext = layerExtent;
+            ext.minx -= 1e-5;
+            ext.miny -= 1e-5;
+            ext.maxx += 1e-5;
+            ext.maxy += 1e-5;
+            msProjectRect(&(lp->projection), &(map->projection), &ext);
+            if( fabs(ext.minx - search_rect.minx) <= 2e-5 &&
+                fabs(ext.miny - search_rect.miny) <= 2e-5 &&
+                fabs(ext.maxx - search_rect.maxx) <= 2e-5 &&
+                fabs(ext.maxy - search_rect.maxy) <= 2e-5 )
+            {
+              bUseLayerSRS = MS_TRUE;
+              numFeatures = msLayerGetShapeCount(lp, layerExtent, &(lp->projection));
+            }
+        }
+      }
+#endif
+
+      if( !bUseLayerSRS )
+          numFeatures = msLayerGetShapeCount(lp, search_rect, &(map->projection));
+      if( numFeatures >= 0 )
+      {
+        lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); /* allocate and initialize the result cache */
+        MS_CHECK_ALLOC(lp->resultcache, sizeof(resultCacheObj), MS_FAILURE);
+        initResultCache( lp->resultcache);
+        lp->resultcache->numresults = numFeatures;
+        if (!msLayerGetPaging(lp) && map->query.startindex > 1) {
+           lp->resultcache->numresults -= (map->query.startindex-1);
+        }
+
+        lp->filteritem = old_filteritem; /* point back to original value */
+        msCopyExpression(&lp->filter, &old_filter); /* restore old filter */
+        msFreeExpression(&old_filter);
+
+        continue;
+      }
+      // Fallback in case of error (should not happen normally)
+    }
+
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
       msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
