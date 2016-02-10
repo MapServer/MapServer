@@ -2079,6 +2079,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid, rectObj 
       strTmp = msStringConcatenate(strTmp, ")");
 
       msFree(strRect);
+      msFree(strRectOtherSRID);
       strRect = strTmp;
       strRectLength = strlen(strRect);
     }
@@ -2117,6 +2118,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid, rectObj 
       strTmp = msStringConcatenate(strTmp, ")");
 
       msFree(strRect);
+      msFree(strRectOtherSRID);
       strRect = strTmp;
       strRectLength = strlen(strRect);
     }
@@ -2932,6 +2934,8 @@ int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *re
     rectSRID = atoi(rectProjection->args[0] + strlen("init=epsg:"));
   }
 #endif
+
+  msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
 
   /* Fill out layerinfo with our current DATA state. */
   if ( msPostGISParseData(layer) != MS_SUCCESS) {
