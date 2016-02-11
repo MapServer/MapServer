@@ -1252,6 +1252,8 @@ static int getPolygonCenterOfGravity(shapeObj *p, pointObj *lp)
       sy = s>0?tsy:-tsy;
     }
   }
+  if(largestArea == 0) /*degenerate polygon*/
+    return MS_FAILURE;
 
   lp->x = sx/(6*largestArea);
   lp->y = sy/(6*largestArea);

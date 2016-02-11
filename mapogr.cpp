@@ -1318,6 +1318,7 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
 
   return MS_SUCCESS;
 }
+#endif /* USE_OGR */
 
 /************************************************************************/
 /*                           msOGREscapeSQLParam                        */
@@ -1495,6 +1496,7 @@ cleanup:
 }
 #endif
 
+#ifdef USE_OGR
 /**********************************************************************
  *                     msOGRFileWhichShapes()
  *

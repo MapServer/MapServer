@@ -330,6 +330,14 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     if(rv != MS_SUCCESS) return rv;
 
     filter_passed = MS_TRUE;  /* By default accept ANY shape */
+    
+    /* attributes need to be iconv'd to UTF-8 before any filter logic is applied */
+    if(layer->encoding) {
+      rv = msLayerEncodeShapeAttributes(layer,shape);
+      if(rv != MS_SUCCESS)
+        return rv;
+    }
+    
     // if(layer->numitems > 0 && layer->iteminfo) {
       filter_passed = msEvalExpression(layer, shape, &(layer->filter), layer->filteritemindex);
     // }
@@ -344,11 +352,6 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
       return rv;
   }
 
-  if(layer->encoding) {
-    rv = msLayerEncodeShapeAttributes(layer,shape);
-    if(rv != MS_SUCCESS)
-      return rv;
-  }
   
   return rv;
 }

@@ -1711,12 +1711,13 @@ static pointObj point_norm(const pointObj a)
 {
   double lenmul;
   pointObj retv;
+  int norm_vector;
 
+  norm_vector = a.x==0 && a.y==0;
 #ifdef USE_POINT_Z_M
-  if (a.x==0 && a.y==0 && a.z==0 && a.m==0)
-#else
-  if (a.x==0 && a.y==0)
+  norm_vector = norm_vector && a.z==0 && a.m==0;
 #endif
+  if (norm_vector)
     return a;
 
   lenmul=1.0/sqrt(point_abs2(a));  /* this seems to be the costly operation */

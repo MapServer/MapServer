@@ -2198,12 +2198,10 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
   char *outp, *out = NULL;
   size_t len, bufsize, bufleft, iconv_status;
   int i;
-#endif
 
   if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
     return MS_SUCCESS;
 
-#ifdef USE_ICONV
   cd = iconv_open("UTF-8", layer->encoding);
   if(cd == (iconv_t)-1) {
     msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).",
@@ -2241,6 +2239,8 @@ int msLayerEncodeShapeAttributes( layerObj *layer, shapeObj *shape) {
 
   return MS_SUCCESS;
 #else
+  if( !layer->encoding || !*layer->encoding || !strcasecmp(layer->encoding, "UTF-8"))
+    return MS_SUCCESS;
   msSetError(MS_MISCERR, "Not implemented since Iconv is not enabled.", "msGetEncodedString()");
   return MS_FAILURE;
 #endif

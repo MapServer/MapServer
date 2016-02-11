@@ -542,12 +542,13 @@ PHP_FUNCTION(ms_newGridObj)
 
   php_layer->layer->connectiontype = MS_GRATICULE;
 
-  if (php_layer->layer->layerinfo != NULL)
-    free(php_layer->layer->layerinfo);
+  if (php_layer->layer->grid != NULL) {
+    freeGrid(php_layer->layer->grid);
+    free(php_layer->layer->grid);
+  }
 
-
-  php_layer->layer->layerinfo = (graticuleObj *)malloc( sizeof( graticuleObj ) );
-  initGrid((graticuleObj *)php_layer->layer->layerinfo);
+  php_layer->layer->grid = (graticuleObj *)malloc( sizeof( graticuleObj ) );
+  initGrid(php_layer->layer->grid);
 
   if (php_layer->grid && (Z_TYPE_P(php_layer->grid) == IS_OBJECT)) {
     php_grid = (php_grid_object *) zend_object_store_get_object(php_layer->grid TSRMLS_CC);
@@ -558,7 +559,7 @@ PHP_FUNCTION(ms_newGridObj)
   MAKE_STD_ZVAL(php_layer->grid);
 
   MAPSCRIPT_MAKE_PARENT(zlayer, &php_layer->grid);
-  mapscript_create_grid((graticuleObj *)(php_layer->layer->layerinfo), parent, php_layer->grid TSRMLS_CC);
+  mapscript_create_grid((graticuleObj *)(php_layer->layer->grid), parent, php_layer->grid TSRMLS_CC);
   zend_objects_store_add_ref(php_layer->grid TSRMLS_CC);
 
   *return_value = *(php_layer->grid);
