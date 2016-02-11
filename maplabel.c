@@ -311,6 +311,9 @@ int msAddLabelGroup(mapObj *map, imageObj *image, int layerindex, int classindex
           /* label point does not intersect mask */
           return MS_SUCCESS;
         }
+      } else {
+        return MS_SUCCESS; /* label point does not intersect image extent, we cannot know if it intersects
+                             mask, so we discard it (#5237)*/
       }
     } else {
       msSetError(MS_MISCERR, "Layer (%s) references references a mask layer, but the selected renderer does not support them", "msAddLabelGroup()", layerPtr->name);
@@ -492,6 +495,9 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
             }
             return MS_SUCCESS;
           }
+        } else {
+          return MS_SUCCESS; /* label point does not intersect image extent, we cannot know if it intersects
+                                mask, so we discard it (#5237)*/
         }
       } else if (ts && ts->textpath) {
         int i = 0;
@@ -505,6 +511,11 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
               free(ts);
               return MS_SUCCESS;
             }
+          } else {
+            freeTextSymbol(ts);
+            free(ts);
+            return MS_SUCCESS; /* label point does not intersect image extent, we cannot know if it intersects
+                                  mask, so we discard it (#5237)*/
           }
         }
       }
