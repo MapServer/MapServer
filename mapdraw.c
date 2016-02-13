@@ -2056,6 +2056,11 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
             return(MS_FAILURE);
           }
         } else {
+          if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
+            freeTextSymbol(ts);
+            free(ts);
+            return MS_FAILURE;
+          }
           ret = msDrawTextSymbol(map,image,*point,ts);
           freeTextSymbol(ts);
           free(ts); 
