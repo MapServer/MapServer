@@ -2089,6 +2089,9 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   int needLabelPoint=MS_TRUE;
 
   
+  if(!string || !*string) {
+    return MS_SUCCESS;
+  }
   initTextSymbol(&ts);
   msPopulateTextSymbolForLabelAndString(&ts, label, string, scalefactor, image->resolutionfactor, 0);
   if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,&ts))) {
