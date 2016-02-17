@@ -760,6 +760,7 @@ msUVRASTERLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msUVRASTERLayerWhichShapes;
   layer->vtable->LayerNextShape = msUVRASTERLayerNextShape;
   layer->vtable->LayerGetShape = msUVRASTERLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerClose = msUVRASTERLayerClose;
   layer->vtable->LayerGetItems = msUVRASTERLayerGetItems;
   layer->vtable->LayerGetExtent = msUVRASTERLayerGetExtent;

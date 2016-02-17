@@ -2795,6 +2795,7 @@ int msSHPLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msSHPLayerWhichShapes;
   layer->vtable->LayerNextShape = msSHPLayerNextShape;
   layer->vtable->LayerGetShape = msSHPLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerClose = msSHPLayerClose;
   layer->vtable->LayerGetItems = msSHPLayerGetItems;
   layer->vtable->LayerGetExtent = msSHPLayerGetExtent;

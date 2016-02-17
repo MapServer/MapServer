@@ -161,7 +161,7 @@ static int wkb_postgis20[WKB_TYPE_COUNT] = {
 */
 void msPostGISFreeLayerInfo(layerObj *layer);
 msPostGISLayerInfo *msPostGISCreateLayerInfo(void);
-char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid);
+char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid, rectObj *rectInOtherSRID, int rectOtherSRID);
 int msPostGISParseData(layerObj *layer);
 int arcStrokeCircularString(wkbObj *w, double segment_angle, lineObj *line, int pnZMFlag);
 int wkbConvGeometryToShape(wkbObj *w, shapeObj *shape);

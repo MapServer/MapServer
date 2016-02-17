@@ -1968,7 +1968,7 @@ char *msPostGISBuildSQLFrom(layerObj *layer, rectObj *rect)
 **
 ** Returns malloc'ed char* that must be freed by caller.
 */
-char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
+char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid, rectObj *rectInOtherSRID, int otherSRID)
 {
   char *strRect = 0;
   char *strFilter1=0, *strFilter2=0;
@@ -2021,7 +2021,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     char *strBox = 0;
     char *strSRID = 0;
     size_t strBoxLength = 0;
-    static char *strRectTemplate = "%s && %s";
+    static const char *strRectTemplate = "%s && %s";
 
     /* We see to set the SRID on the box, but to what SRID? */
     strSRID = msPostGISBuildSQLSRID(layer);
@@ -2032,6 +2032,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     }
 
     strBox = msPostGISBuildSQLBox(layer, rect, strSRID);
+    msFree(strSRID);
     if ( strBox ) {
       strBoxLength = strlen(strBox);
     } else {
@@ -2045,7 +2046,82 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
     strRectLength = strlen(strRect);
     free(strBox);
-    free(strSRID);
+
+    /* Combine with other rectangle  expressed in another SRS */
+    /* (generally equivalent to the above in current code paths) */
+    if( rectInOtherSRID != NULL && otherSRID > 0 )
+    {
+      char* strRectOtherSRID;
+      static const char *strRectOtherSRIDTemplate = "NOT ST_Disjoint(ST_Transform(%s,%d),%s)";
+      char szSRID[32];
+      char* strTmp = NULL;
+
+      sprintf(szSRID, "%d", otherSRID);
+ 
+      strBox = msPostGISBuildSQLBox(layer, rectInOtherSRID, szSRID);
+      if ( strBox ) {
+        strBoxLength = strlen(strBox);
+      } else {
+        msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISBuildSQLWhere()");
+        free( strLimit );
+        free( strOffset );
+        return NULL;
+      }
+
+      strRectOtherSRID = (char*)msSmallMalloc(strlen(strRectOtherSRIDTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
+      sprintf(strRectOtherSRID, strRectOtherSRIDTemplate, layerinfo->geomcolumn, otherSRID, strBox);
+      free(strBox);
+
+      strTmp = msStringConcatenate(strTmp, "((");
+      strTmp = msStringConcatenate(strTmp, strRect);
+      strTmp = msStringConcatenate(strTmp, ") AND ");
+      strTmp = msStringConcatenate(strTmp, strRectOtherSRID);
+      strTmp = msStringConcatenate(strTmp, ")");
+
+      msFree(strRect);
+      msFree(strRectOtherSRID);
+      strRect = strTmp;
+      strRectLength = strlen(strRect);
+    }
+    else if( rectInOtherSRID != NULL && otherSRID < 0 )
+    {
+      char* strSRID;
+      char* strRectOtherSRID;
+      static const char *strRectOtherSRIDTemplate = "NOT ST_Disjoint(%s,%s)";
+      char* strTmp = NULL;
+
+      strSRID = msPostGISBuildSQLSRID(layer);
+      if ( ! strSRID ) {
+        free( strLimit );
+        free( strOffset );
+        return NULL;
+      }
+      strBox = msPostGISBuildSQLBox(layer, rectInOtherSRID, strSRID);
+      msFree(strSRID);
+      if ( strBox ) {
+        strBoxLength = strlen(strBox);
+      } else {
+        msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISBuildSQLWhere()");
+        free( strLimit );
+        free( strOffset );
+        return NULL;
+      }
+
+      strRectOtherSRID = (char*)msSmallMalloc(strlen(strRectOtherSRIDTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
+      sprintf(strRectOtherSRID, strRectOtherSRIDTemplate, layerinfo->geomcolumn, strBox);
+      free(strBox);
+
+      strTmp = msStringConcatenate(strTmp, "((");
+      strTmp = msStringConcatenate(strTmp, strRect);
+      strTmp = msStringConcatenate(strTmp, ") AND ");
+      strTmp = msStringConcatenate(strTmp, strRectOtherSRID);
+      strTmp = msStringConcatenate(strTmp, ")");
+
+      msFree(strRect);
+      msFree(strRectOtherSRID);
+      strRect = strTmp;
+      strRectLength = strlen(strRect);
+    }
   }
 
   /* Handle a translated filter (RFC91). */
@@ -2136,9 +2212,16 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
 /*
 ** msPostGISBuildSQL()
 **
+** rect is the search rectangle in layer SRS. It can be set to NULL
+** uid can be set to NULL
+** rectInOtherSRID is an additional rectangle potentially in another SRS. It can be set to NULL.
+** Only used if rect != NULL
+** otherSRID is the SRID of the additional rectangle. It can be set to -1 if
+** rectInOtherSRID is in the SRID of the layer.
+**
 ** Returns malloc'ed char* that must be freed by caller.
 */
-char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
+char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid, rectObj *rectInOtherSRID, int otherSRID)
 {
 
   msPostGISLayerInfo *layerinfo = 0;
@@ -2175,9 +2258,9 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
      the end of the query, the user is going to be responsible for making things
      work with their hackery. */
   if ( strstr(layerinfo->fromsource, BOXTOKEN) )
-    strWhere = msPostGISBuildSQLWhere(layer, NULL, uid);
+    strWhere = msPostGISBuildSQLWhere(layer, NULL, uid, rectInOtherSRID, otherSRID);
   else
-    strWhere = msPostGISBuildSQLWhere(layer, rect, uid);
+    strWhere = msPostGISBuildSQLWhere(layer, rect, uid, rectInOtherSRID, otherSRID);
 
   if ( ! strWhere ) {
     msSetError(MS_MISCERR, "Failed to build SQL 'where'.", "msPostGISBuildSQL()");
@@ -2650,24 +2733,11 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   msPostGISLayerInfo *layerinfo = NULL;
   char *strSQL = NULL;
   PGresult *pgresult = NULL;
-  char** layer_bind_values = (char**)msSmallMalloc(sizeof(char*) * 1000);
+  char** layer_bind_values = NULL;
   char* bind_value;
-  char* bind_key = (char*)msSmallMalloc(3);
+  char* bind_key = NULL;
 
   int num_bind_values = 0;
-
-  /* try to get the first bind value */
-  bind_value = msLookupHashTable(&layer->bindvals, "1");
-  while(bind_value != NULL) {
-    /* put the bind value on the stack */
-    layer_bind_values[num_bind_values] = bind_value;
-    /* increment the counter */
-    num_bind_values++;
-    /* create a new lookup key */
-    sprintf(bind_key, "%d", num_bind_values+1);
-    /* get the bind_value */
-    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
-  }
 
   assert(layer != NULL);
   assert(layer->layerinfo != NULL);
@@ -2681,6 +2751,21 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     return MS_FAILURE;
   }
 
+  /* try to get the first bind value */
+  layer_bind_values = (char**)msSmallMalloc(sizeof(char*) * 1000);
+  bind_key = (char*)msSmallMalloc(3);
+  bind_value = msLookupHashTable(&layer->bindvals, "1");
+  while(bind_value != NULL) {
+    /* put the bind value on the stack */
+    layer_bind_values[num_bind_values] = bind_value;
+    /* increment the counter */
+    num_bind_values++;
+    /* create a new lookup key */
+    sprintf(bind_key, "%d", num_bind_values+1);
+    /* get the bind_value */
+    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
+  }
+
   /*
   ** This comes *after* parsedata, because parsedata fills in
   ** layer->layerinfo.
@@ -2688,7 +2773,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
   /* Build a SQL query based on our current state. */
-  strSQL = msPostGISBuildSQL(layer, &rect, NULL);
+  strSQL = msPostGISBuildSQL(layer, &rect, NULL, NULL, -1);
   if ( ! strSQL ) {
     msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerWhichShapes()");
     return MS_FAILURE;
@@ -2802,6 +2887,149 @@ int msPostGISLayerNextShape(layerObj *layer, shapeObj *shape)
 /*
 ** msPostGISLayerGetShape()
 **
+ */
+int msPostGISLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection)
+{
+#ifdef USE_POSTGIS
+  msPostGISLayerInfo *layerinfo = NULL;
+  char *strSQL = NULL;
+  char *strSQLCount = NULL;
+  PGresult *pgresult = NULL;
+  char** layer_bind_values = NULL;
+  char* bind_value;
+  char* bind_key = NULL;
+  int num_bind_values = 0;
+  int nCount = 0;
+  int rectSRID = -1;
+  rectObj searchrectInLayerProj = rect;
+
+  assert(layer != NULL);
+  assert(layer->layerinfo != NULL);
+
+  if (layer->debug) {
+    msDebug("msPostGISLayerGetShapeCount called.\n");
+  }
+
+#ifdef USE_PROJ
+  // Special processing if the specified projection for the rect is different from the layer projection
+  // We want to issue a WHERE that includes
+  // ((the_geom && rect_reprojected_in_layer_SRID) AND NOT ST_Disjoint(ST_Transform(the_geom, rect_SRID), rect))
+  if( rectProjection != NULL && layer->project &&
+      msProjectionsDiffer(&(layer->projection), rectProjection) )
+  {
+    // If we cannot guess the EPSG code of the rectProjection, we cannot
+    // use ST_Transform, so fallback on slow implementation
+    if( rectProjection->numargs < 1 ||
+        strncasecmp(rectProjection->args[0], "init=epsg:", strlen("init=epsg:")) != 0 )
+    {
+      if (layer->debug) {
+        msDebug("msPostGISLayerGetShapeCount(): cannot find EPSG code of rectProjection. Falling back on client-side feature count.\n");
+      }
+      return LayerDefaultGetShapeCount(layer, rect, rectProjection);
+    }
+
+    // Reproject the passed rect into the layer projection and get
+    // the SRID from the rectProjection
+    msProjectRect(rectProjection, &(layer->projection), &searchrectInLayerProj); /* project the searchrect to source coords */
+    rectSRID = atoi(rectProjection->args[0] + strlen("init=epsg:"));
+  }
+#endif
+
+  msLayerTranslateFilter(layer, &layer->filter, layer->filteritem);
+
+  /* Fill out layerinfo with our current DATA state. */
+  if ( msPostGISParseData(layer) != MS_SUCCESS) {
+    return -1;
+  }
+
+  /* try to get the first bind value */
+  layer_bind_values = (char**)msSmallMalloc(sizeof(char*) * 1000);
+  bind_value = msLookupHashTable(&layer->bindvals, "1");
+  bind_key = (char*)msSmallMalloc(3);
+  while(bind_value != NULL) {
+    /* put the bind value on the stack */
+    layer_bind_values[num_bind_values] = bind_value;
+    /* increment the counter */
+    num_bind_values++;
+    /* create a new lookup key */
+    sprintf(bind_key, "%d", num_bind_values+1);
+    /* get the bind_value */
+    bind_value = msLookupHashTable(&layer->bindvals, bind_key);
+  }
+
+  /*
+  ** This comes *after* parsedata, because parsedata fills in
+  ** layer->layerinfo.
+  */
+  layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
+
+  /* Build a SQL query based on our current state. */
+  strSQL = msPostGISBuildSQL(layer, &searchrectInLayerProj, NULL,
+                             &rect, rectSRID);
+  if ( ! strSQL ) {
+    msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerGetShapeCount()");
+    return -1;
+  }
+
+  strSQLCount = NULL;
+  strSQLCount = msStringConcatenate(strSQLCount, "SELECT COUNT(*) FROM (");
+  strSQLCount = msStringConcatenate(strSQLCount, strSQL);
+  strSQLCount = msStringConcatenate(strSQLCount, ") msQuery");
+
+  msFree(strSQL);
+
+  if (layer->debug) {
+    msDebug("msPostGISLayerGetShapeCount query: %s\n", strSQLCount);
+  }
+
+  if(num_bind_values > 0) {
+    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount, num_bind_values, NULL, (const char**)layer_bind_values, NULL, NULL, 1);
+  } else {
+    pgresult = PQexecParams(layerinfo->pgconn, strSQLCount,0, NULL, NULL, NULL, NULL, 0);
+  }
+
+  /* free bind values */
+  free(bind_key);
+  free(layer_bind_values);
+
+  if ( layer->debug > 1 ) {
+    msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n",
+            PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
+  }
+
+  /* Something went wrong. */
+  if (!pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
+    msDebug("msPostGISLayerGetShapeCount(): Error (%s) executing query: %s. "
+            "Falling back to client-side evaluation\n",
+            PQerrorMessage(layerinfo->pgconn), strSQLCount);
+    msFree(strSQLCount);
+    if (pgresult) {
+      PQclear(pgresult);
+    }
+    return LayerDefaultGetShapeCount(layer, rect, rectProjection);
+  }
+
+  msFree(strSQLCount);
+  nCount = atoi(PQgetvalue(pgresult, 0, 0 ));
+
+  if ( layer->debug ) {
+    msDebug("msPostGISLayerWhichShapes return: %d.\n", nCount);
+  }
+  PQclear(pgresult);
+
+  return nCount;
+#else
+  msSetError( MS_MISCERR,
+              "PostGIS support is not available.",
+              "msPostGISLayerGetShapeCount()");
+  return -1;
+#endif
+}
+
+
+/*
+** msPostGISLayerGetShape()
+**
 ** Registered vtable->LayerGetShape function. For pulling from a prepared and
 ** undisposed result set.
 */
@@ -2881,7 +3109,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     layerinfo = (msPostGISLayerInfo*) layer->layerinfo;
 
     /* Build a SQL query based on our current state. */
-    strSQL = msPostGISBuildSQL(layer, 0, &shapeindex);
+    strSQL = msPostGISBuildSQL(layer, NULL, &shapeindex, NULL, -1);
     if ( ! strSQL ) {
       msSetError(MS_QUERYERR, "Failed to build query SQL.", "msPostGISLayerGetShape()");
       return MS_FAILURE;
@@ -3823,6 +4051,7 @@ int msPostGISLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msPostGISLayerWhichShapes;
   layer->vtable->LayerNextShape = msPostGISLayerNextShape;
   layer->vtable->LayerGetShape = msPostGISLayerGetShape;
+  layer->vtable->LayerGetShapeCount = msPostGISLayerGetShapeCount;
   layer->vtable->LayerClose = msPostGISLayerClose;
   layer->vtable->LayerGetItems = msPostGISLayerGetItems;
   layer->vtable->LayerGetExtent = msPostGISLayerGetExtent;
