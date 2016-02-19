@@ -180,6 +180,15 @@ int msDrawTransformedShape(mapObj *map, imageObj *image, shapeObj *shape, styleO
 
       p.shape = shape; /* set a few parser globals (hence the lock) */
       p.expr = &(style->_geomtransform);
+
+      if(p.expr->tokens == NULL) { /* this could happen if drawing originates from legend code (#5193) */
+        status = msTokenizeExpression(p.expr, NULL, NULL);
+        if(status != MS_SUCCESS) {
+          msSetError(MS_MISCERR, "Unable to tokenize expression.", "msDrawTransformedShape()");
+          return MS_FAILURE;
+        }
+      }
+
       p.expr->curtoken = p.expr->tokens; /* reset */
       p.type = MS_PARSE_TYPE_SHAPE;
 
