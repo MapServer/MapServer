@@ -27,6 +27,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************/
+#ifndef MAX
+#define MIN(a,b)      ((a<b) ? a : b)
+#define MAX(a,b)      ((a>b) ? a : b)
+#endif
 
 #include "mapserver.h"
 #include "mapcopy.h"
