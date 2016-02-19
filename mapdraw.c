@@ -179,15 +179,24 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
   
 }
 
-static int msCompositeRasterBuffer(imageObj *img, rasterBufferObj *rb, LayerCompositer *comp) {
+static int msCompositeRasterBuffer(mapObj *map, imageObj *img, rasterBufferObj *rb, LayerCompositer *comp) {
   int ret = MS_SUCCESS;
   if(MS_IMAGE_RENDERER(img)->compositeRasterBuffer) {
     while(comp && ret == MS_SUCCESS) {
       rasterBufferObj *rb_ptr = rb;
-      if(comp->filter) {
-        rb_ptr = msApplyFilterToRasterBuffer(rb,comp->filter);
+      CompositingFilter *filter = comp->filter;
+      if(filter && comp->next) {
+       /* if we have another compositor to apply, then we need to copy the rasterBufferObj. Otherwise
+       * we can work on it directly */
+	rb_ptr = (rasterBufferObj*)msSmallCalloc(sizeof(rasterBufferObj),1);
+	msCopyRasterBuffer(rb_ptr,rb);
       }
-      ret = MS_IMAGE_RENDERER(img)->compositeRasterBuffer(img,rb_ptr,comp->comp_op, comp->opacity);
+      while(filter && ret == MS_SUCCESS) {
+        ret = msApplyCompositingFilter(map,rb_ptr,filter);
+        filter = filter->next;
+      }
+      if(ret == MS_SUCCESS)
+      	ret = MS_IMAGE_RENDERER(img)->compositeRasterBuffer(img,rb_ptr,comp->comp_op, comp->opacity);
       if(rb_ptr != rb) {
         msFreeRasterBuffer(rb_ptr);
         msFree(rb_ptr);
@@ -870,7 +879,7 @@ altformat_cleanup:
       /*we have a mask layer with no composition configured, do a nomral blend */
       retcode = renderer->mergeRasterBuffer(image,&rb,1.0,0,0,0,0,rb.width,rb.height);
     } else {
-      retcode = msCompositeRasterBuffer(image,&rb,layer->compositer);
+      retcode = msCompositeRasterBuffer(map,image,&rb,layer->compositer);
     }
     if(UNLIKELY(retcode == MS_FAILURE)) {
       goto imagedraw_cleanup;

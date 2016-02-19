@@ -7,6 +7,7 @@
 ** when maplexer.l is altered.
 */
 
+#define YY_NO_INPUT
 
 /* C declarations */
 #include <stdlib.h>

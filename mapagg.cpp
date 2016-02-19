@@ -1333,15 +1333,10 @@ int aggCompositeRasterBuffer(imageObj *dest, rasterBufferObj *overlay, Compositi
 #endif
 }
 
-rasterBufferObj* msApplyFilterToRasterBuffer(const rasterBufferObj *rb, CompositingFilter *filter) {
-  rasterBufferObj *rbret = (rasterBufferObj*)msSmallCalloc(sizeof(rasterBufferObj),1);
-  msCopyRasterBuffer(rbret,rb);
-  rendering_buffer b(rbret->data.rgba.pixels, rbret->width, rbret->height, rbret->data.rgba.row_step);
+void msApplyBlurringCompositingFilter(rasterBufferObj *rb, unsigned int radius) {
+  rendering_buffer b(rb->data.rgba.pixels, rb->width, rb->height, rb->data.rgba.row_step);
   pixel_format pf(b);
-  /* for now, we only support a blurring filter */
-  int radius = atoi(filter->filter);
   mapserver::stack_blur_rgba32(pf,radius,radius);
-  return rbret;
 }
 
 int msPopulateRendererVTableAGG(rendererVTableObj * renderer)

@@ -167,7 +167,9 @@ typedef const ms_uint32 *ms_const_bitarray;
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
+#if (defined(_MSC_VER) && (_MSC_VER < 1900)) || !defined(_MSC_VER)
 #define snprintf _snprintf
+#endif
 #endif
 
 #ifdef __cplusplus
@@ -567,8 +569,9 @@ extern "C" {
         MS_COMPOP_INVERT_RGB
   } CompositingOperation;
 
-  typedef struct {
+  typedef struct _CompositingFilter{
     char *filter;
+    struct _CompositingFilter *next;
   } CompositingFilter;
   
   typedef struct _LayerCompositer{
@@ -3045,7 +3048,9 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   int msLoadMSRasterBufferFromFile(char *path, rasterBufferObj *rb);
   
   /* in mapagg.cpp */
-  rasterBufferObj* msApplyFilterToRasterBuffer(const rasterBufferObj *rb, CompositingFilter *filter);
+  void msApplyBlurringCompositingFilter(rasterBufferObj *rb, unsigned int radius);
+  
+  int WARN_UNUSED msApplyCompositingFilter(mapObj *map, rasterBufferObj *rb, CompositingFilter *filter);
 
   void msBufferInit(bufferObj *buffer);
   void msBufferResize(bufferObj *buffer, size_t target_size);

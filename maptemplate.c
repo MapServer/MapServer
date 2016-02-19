@@ -40,6 +40,8 @@
 #include <ctype.h>
 
 
+static inline void IGUR_sizet(size_t ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
+static inline void IGUR_voidp(void* ignored) { (void)ignored; }  /* Ignore GCC Unused Result */
 
 static char *olUrl = "http://www.mapserver.org/lib/OpenLayers-ms60.js";
 static char *olTemplate = \
@@ -3045,7 +3047,12 @@ char *generateLegendTemplate(mapservObj *mapserv)
   /*
    * Read all the template file
    */
-  fread(file, length, 1, stream);
+  IGUR_sizet(fread(file, length, 1, stream));
+  /* E. Rouault: the below issue is due to opening in "r" mode, which is a
+   * synonymous of "rt" on Windows. In that mode \r\n are turned into \n,
+   * consequently less bytes are written in the output buffer than requested.
+   * A potential fix might be to open in "rb" mode, but is the code ready
+   * to deal with Windows \r\n end of lines ? */
   /* Disabled for now due to Windows issue, see ticket #3814
      if( 1 != fread(file, length, 1, stream)) {
        msSetError(MS_IOERR, "Error while reading template file.", "generateLegendTemplate()");
@@ -3531,7 +3538,7 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
     }
 
     rewind(stream);
-    fgets(line, MS_BUFFER_LENGTH, stream); /* skip the first line since it's the magic string */
+    IGUR_voidp(fgets(line, MS_BUFFER_LENGTH, stream)); /* skip the first line since it's the magic string */
   } /* next record */
 
   if(records==MS_TRUE && join->footer) {

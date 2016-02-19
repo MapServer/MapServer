@@ -10,6 +10,13 @@ the top of the list.)
 
 For a complete change history, please see the Git log comments.
 
+7.2 release (FUTURE)
+--------------------
+
+- Reposition follow labels on maxoverlapangle colisions (RFC112)
+
+- Implement chainable compositing filters (RFC113)
+
 7.0.0 release (2015/07/24)
 --------------------------
 
