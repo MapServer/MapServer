@@ -698,7 +698,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
       else {
         double cellsize_x = (bbox.maxx-bbox.minx) / bbox_width;
         double cellsize_y = (bbox.maxy-bbox.miny) / bbox_height;
-        double cellsize = MIN(cellsize_x,cellsize_y);
+        double cellsize = MS_MIN(cellsize_x,cellsize_y);
 
         msRectIntersect( &bbox, &layer_rect );
 
