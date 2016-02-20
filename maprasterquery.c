@@ -330,11 +330,11 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
   /* -------------------------------------------------------------------- */
   else {
     if( rlinfo->band_count >= 3 ) {
-      red = (int) MAX(0,MIN(255,values[0]));
-      green = (int) MAX(0,MIN(255,values[1]));
-      blue = (int) MAX(0,MIN(255,values[2]));
+      red = (int) MS_MAX(0,MS_MIN(255,values[0]));
+      green = (int) MS_MAX(0,MS_MIN(255,values[1]));
+      blue = (int) MS_MAX(0,MS_MIN(255,values[2]));
     } else {
-      red = green = blue = (int) MAX(0,MIN(255,values[0]));
+      red = green = blue = (int) MS_MAX(0,MS_MIN(255,values[0]));
     }
   }
 
@@ -454,35 +454,35 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /* top right */
   dfX = GEO_TRANS(adfInvGeoTransform  , searchrect.maxx, searchrect.maxy);
   dfY = GEO_TRANS(adfInvGeoTransform+3, searchrect.maxx, searchrect.maxy);
-  dfXMin = MIN(dfXMin,dfX);
-  dfXMax = MAX(dfXMax,dfX);
-  dfYMin = MIN(dfYMin,dfY);
-  dfYMax = MAX(dfYMax,dfY);
+  dfXMin = MS_MIN(dfXMin,dfX);
+  dfXMax = MS_MAX(dfXMax,dfX);
+  dfYMin = MS_MIN(dfYMin,dfY);
+  dfYMax = MS_MAX(dfYMax,dfY);
 
   /* bottom left */
   dfX = GEO_TRANS(adfInvGeoTransform  , searchrect.minx, searchrect.miny);
   dfY = GEO_TRANS(adfInvGeoTransform+3, searchrect.minx, searchrect.miny);
-  dfXMin = MIN(dfXMin,dfX);
-  dfXMax = MAX(dfXMax,dfX);
-  dfYMin = MIN(dfYMin,dfY);
-  dfYMax = MAX(dfYMax,dfY);
+  dfXMin = MS_MIN(dfXMin,dfX);
+  dfXMax = MS_MAX(dfXMax,dfX);
+  dfYMin = MS_MIN(dfYMin,dfY);
+  dfYMax = MS_MAX(dfYMax,dfY);
 
   /* bottom right */
   dfX = GEO_TRANS(adfInvGeoTransform  , searchrect.maxx, searchrect.miny);
   dfY = GEO_TRANS(adfInvGeoTransform+3, searchrect.maxx, searchrect.miny);
-  dfXMin = MIN(dfXMin,dfX);
-  dfXMax = MAX(dfXMax,dfX);
-  dfYMin = MIN(dfYMin,dfY);
-  dfYMax = MAX(dfYMax,dfY);
+  dfXMin = MS_MIN(dfXMin,dfX);
+  dfXMax = MS_MAX(dfXMax,dfX);
+  dfYMin = MS_MIN(dfYMin,dfY);
+  dfYMax = MS_MAX(dfYMax,dfY);
 
   /* -------------------------------------------------------------------- */
   /*      Trim the rectangle to the area of the file itself, but out      */
   /*      to the edges of the touched edge pixels.                        */
   /* -------------------------------------------------------------------- */
-  dfXMin = MAX(0.0,MIN(nRXSize,floor(dfXMin)));
-  dfYMin = MAX(0.0,MIN(nRYSize,floor(dfYMin)));
-  dfXMax = MAX(0.0,MIN(nRXSize,ceil(dfXMax)));
-  dfYMax = MAX(0.0,MIN(nRYSize,ceil(dfYMax)));
+  dfXMin = MS_MAX(0.0,MS_MIN(nRXSize,floor(dfXMin)));
+  dfYMin = MS_MAX(0.0,MS_MIN(nRYSize,floor(dfYMin)));
+  dfXMax = MS_MAX(0.0,MS_MIN(nRXSize,ceil(dfXMax)));
+  dfYMax = MS_MAX(0.0,MS_MIN(nRYSize,ceil(dfYMax)));
 
   /* -------------------------------------------------------------------- */
   /*      Convert to integer offset/size values.                          */

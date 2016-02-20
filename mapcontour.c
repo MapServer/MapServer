@@ -345,11 +345,11 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
     ury = floor(ury / virtual_grid_step_y) * virtual_grid_step_y - (virtual_grid_step_x*5);
     lly = ceil(lly / virtual_grid_step_y) * virtual_grid_step_y + (virtual_grid_step_x*5);
     
-    src_xoff = MAX(0,(int) floor(llx+0.5));
-    src_yoff = MAX(0,(int) floor(ury+0.5));
-    src_xsize = MIN(MAX(0,(int) (urx - llx + 0.5)),
+    src_xoff = MS_MAX(0,(int) floor(llx+0.5));
+    src_yoff = MS_MAX(0,(int) floor(ury+0.5));
+    src_xsize = MS_MIN(MS_MAX(0,(int) (urx - llx + 0.5)),
                     GDALGetRasterXSize(clinfo->hOrigDS) - src_xoff);
-    src_ysize = MIN(MAX(0,(int) (lly - ury + 0.5)),
+    src_ysize = MS_MIN(MS_MAX(0,(int) (lly - ury + 0.5)),
                     GDALGetRasterYSize(clinfo->hOrigDS) - src_yoff);
 
     /* Update the geographic extent (buffer added) */
@@ -386,8 +386,8 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
   } else {
     src_xoff = 0;
     src_yoff = 0;
-    dst_xsize = src_xsize = MIN(map->width,src_xsize);
-    dst_ysize = src_ysize = MIN(map->height,src_ysize);
+    dst_xsize = src_xsize = MS_MIN(map->width,src_xsize);
+    dst_ysize = src_ysize = MS_MIN(map->height,src_ysize);
     copyRect.minx = copyRect.miny = 0;
     copyRect.maxx = map->width;
     copyRect.maxy = map->height;
@@ -436,7 +436,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
   adfGeoTransform[4] = 0;
   adfGeoTransform[5] = -dst_cellsize_y;
 
-  clinfo->cellsize = MAX(dst_cellsize_x, dst_cellsize_y);
+  clinfo->cellsize = MS_MAX(dst_cellsize_x, dst_cellsize_y);
   {
     char buf[64];
     sprintf(buf, "%lf", clinfo->cellsize);
