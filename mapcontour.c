@@ -977,6 +977,7 @@ int msContourLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msContourLayerWhichShapes;
   layer->vtable->LayerNextShape = msContourLayerNextShape;
   layer->vtable->LayerGetShape = msContourLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerClose = msContourLayerClose;
   layer->vtable->LayerGetItems = msContourLayerGetItems;
   layer->vtable->LayerGetExtent = msContourLayerGetExtent;

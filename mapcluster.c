@@ -1506,6 +1506,7 @@ void msClusterLayerCopyVirtualTable(layerVTableObj* vtable)
   vtable->LayerWhichShapes = msClusterLayerWhichShapes;
   vtable->LayerNextShape = msClusterLayerNextShape;
   vtable->LayerGetShape = msClusterLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
 
   vtable->LayerClose = msClusterLayerClose;
 

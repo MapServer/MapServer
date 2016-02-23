@@ -3998,6 +3998,7 @@ int msOracleSpatialLayerInitializeVirtualTable(layerObj *layer)
   layer->vtable->LayerWhichShapes = msOracleSpatialLayerWhichShapes;
   layer->vtable->LayerNextShape = msOracleSpatialLayerNextShape;
   layer->vtable->LayerGetShape = msOracleSpatialLayerGetShape;
+  /* layer->vtable->LayerGetShapeCount, use default */
   layer->vtable->LayerClose = msOracleSpatialLayerClose;
   layer->vtable->LayerGetItems = msOracleSpatialLayerGetItems;
   layer->vtable->LayerGetExtent = msOracleSpatialLayerGetExtent;

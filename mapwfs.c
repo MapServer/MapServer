@@ -54,6 +54,7 @@ static int msWFSAnalyzeStoredQuery(mapObj* map,
 #endif
 static void msWFSSimplifyPropertyNameAndFilter(wfsParamsObj *wfsparams);
 static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsObj *paramsObj,
+                                                  int bIsHits,
                                                   int *pmaxfeatures, int* pstartindex);
 static int msWFSRunBasicGetFeature(mapObj* map,
                                    layerObj* lp,
@@ -2498,7 +2499,7 @@ this request. Check wfs/ows_enable_request settings.", "msWFSGetFeature()",
     }
 
     if( map->query.only_cache_result_count == MS_FALSE )
-        msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, NULL, NULL);
+        msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, FALSE, NULL, NULL);
 
     if (msWFSGetFeatureApplySRS(map, paramsObj->pszSrs, nWFSVersion) == MS_FAILURE)
         return msWFSException(map, "srsname", MS_OWS_ERROR_INVALID_PARAMETER_VALUE, paramsObj->pszVersion);
@@ -2838,6 +2839,7 @@ static outputFormatObj* msWFSGetOtherOutputFormat(mapObj *map, wfsParamsObj *par
 }
 
 static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsObj *paramsObj,
+                                                  int bIsHits,
                                                   int *pmaxfeatures, int* pstartindex)
 {
   const char *tmpmaxfeatures = NULL;
@@ -2850,6 +2852,36 @@ static void msWFSAnalyzeStartIndexAndFeatureCount(mapObj *map, const wfsParamsOb
   tmpmaxfeatures = msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures");
   if (tmpmaxfeatures)
     maxfeatures = atoi(tmpmaxfeatures);
+
+  if( bIsHits )
+  {
+    const char* ignoreMaxFeaturesForHits =
+        msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures_ignore_for_resulttype_hits");
+
+    /* For PostGIS where we have an efficient implementation of hits, default to true */
+    if( ignoreMaxFeaturesForHits == NULL )
+    {
+        int bHasEfficientHits = MS_TRUE;
+        for(j=0; j<map->numlayers; j++) {
+            layerObj *lp;
+            lp = GET_LAYER(map, j);
+            if (lp->status == MS_ON) {
+                if( lp->connectiontype != MS_POSTGIS )
+                {
+                    bHasEfficientHits = MS_FALSE;
+                    break;
+                }
+            }
+        }
+
+        if (bHasEfficientHits )
+            ignoreMaxFeaturesForHits = "true";
+    }
+
+    if( ignoreMaxFeaturesForHits != NULL && strcasecmp(ignoreMaxFeaturesForHits, "true") == 0 )
+        maxfeatures = -1;
+  }
+
   if (paramsObj->nMaxFeatures >= 0) {
     if (maxfeatures < 0 || (maxfeatures > 0 && paramsObj->nMaxFeatures < maxfeatures))
       maxfeatures = paramsObj->nMaxFeatures;
@@ -3047,8 +3079,6 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
             map->query.startindex = -1;
             map->query.only_cache_result_count = MS_TRUE;
 
-            /* TODO: use a to-be-defined virtual layer method to get the feature */
-            /* count without iterating over the features */
             nMatchingFeatures = 0;
             msWFSRetrieveFeatures(map,
                                   ows_request,
@@ -3706,7 +3736,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
     outputformat = (OWSGMLVersion) status;
   }
   
-  msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj,
+  msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, iResultTypeHits,
                                         &maxfeatures, &startindex);
 
   status = msWFSAnalyzeBBOX(map, paramsObj, &bbox, &sBBoxSrs);
@@ -4213,7 +4243,7 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
     outputformat = (OWSGMLVersion) status;
   }
 
-  msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj,
+  msWFSAnalyzeStartIndexAndFeatureCount(map, paramsObj, iResultTypeHits,
                                         &maxfeatures, &startindex);
 
   status = msWFSAnalyzeBBOX(map, paramsObj, &bbox, &sBBoxSrs);

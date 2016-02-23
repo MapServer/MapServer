@@ -1951,6 +1951,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
     int (*LayerWhichShapes)(layerObj *layer, rectObj rect, int isQuery);
     int (*LayerNextShape)(layerObj *layer, shapeObj *shape);
     int (*LayerGetShape)(layerObj *layer, shapeObj *shape, resultObj *record);
+    int (*LayerGetShapeCount)(layerObj *layer, rectObj rect, projectionObj *rectProjection);
     int (*LayerClose)(layerObj *layer);
     int (*LayerGetItems)(layerObj *layer);
     int (*LayerGetExtent)(layerObj *layer, rectObj *extent);
@@ -2420,6 +2421,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msLayerGetItems(layerObj *layer);
   MS_DLL_EXPORT int msLayerSetItems(layerObj *layer, char **items, int numitems);
   MS_DLL_EXPORT int msLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record);
+  MS_DLL_EXPORT int msLayerGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection);
   MS_DLL_EXPORT int msLayerGetExtent(layerObj *layer, rectObj *extent);
   MS_DLL_EXPORT int msLayerSetExtent( layerObj *layer, double minx, double miny, double maxx, double maxy);
   MS_DLL_EXPORT int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* shape);
@@ -2492,6 +2494,8 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int msPluginLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT int msUnionLayerInitializeVirtualTable(layerObj *layer);
   MS_DLL_EXPORT void msPluginFreeVirtualTableFactory(void);
+
+  int LayerDefaultGetShapeCount(layerObj *layer, rectObj rect, projectionObj *rectProjection);
 
   /* ==================================================================== */
   /*      Prototypes for functions in mapdraw.c                           */

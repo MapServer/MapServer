@@ -123,6 +123,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
   box.numlines = 1;
   box.line[0].point = box_point;
   box.line[0].numpoints = 5;
+  box.type = MS_SHAPE_POLYGON;
 
   box.line[0].point[0].x = dstX + polygon_contraction;
   box.line[0].point[0].y = dstY + polygon_contraction;
@@ -198,6 +199,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *theclass,
       zigzag.numlines = 1;
       zigzag.line[0].point = zigzag_point;
       zigzag.line[0].numpoints = 4;
+      zigzag.type = MS_SHAPE_LINE;
 
       zigzag.line[0].point[0].x = dstX + offset;
       zigzag.line[0].point[0].y = dstY + height - offset;
