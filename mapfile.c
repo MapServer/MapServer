@@ -1654,7 +1654,7 @@ void initLabel(labelObj *label)
   label->mindistance = -1; /* no limit */
   label->repeatdistance = 0; /* no repeat */
   label->maxoverlapangle = 22.5; /* default max overlap angle */
-  label->partials = MS_TRUE;
+  label->partials = MS_FALSE;
   label->wrap = '\0';
   label->maxlength = 0;
   label->minlength = 0;
@@ -2106,7 +2106,7 @@ static void writeLabel(FILE *stream, int indent, labelObj *label)
   else  writeColor(stream, indent, "OUTLINECOLOR", NULL, &(label->outlinecolor));
 
   writeNumber(stream, indent, "OUTLINEWIDTH", 1, label->outlinewidth);
-  writeKeyword(stream, indent, "PARTIALS", label->partials, 1, MS_FALSE, "FALSE");
+  writeKeyword(stream, indent, "PARTIALS", label->partials, 1, MS_TRUE, "TRUE");
 
   if(label->numbindings > 0 && label->bindings[MS_LABEL_BINDING_POSITION].item)
     writeAttributeBinding(stream, indent, "POSITION", &(label->bindings[MS_LABEL_BINDING_POSITION]));
