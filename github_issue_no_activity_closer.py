@@ -26,7 +26,7 @@ AUTOCLOSE_LABEL = "No Recent Activity"
 
 def fetch_issues(headers):
     issues = []
-    url = ("https://api.github.com/repos/mapserver/mapserver-import/issues?"
+    url = ("https://api.github.com/repos/mapserver/mapserver/issues?"
             "per_page=100")
 
     while url:
@@ -44,7 +44,7 @@ def fetch_issues(headers):
 
 def close_issue(issue, headers):
     """Attempt to close an issue and return whether it succeeded."""
-    r = requests.post("https://api.github.com/repos/mapserver/mapserver-import/"
+    r = requests.post("https://api.github.com/repos/mapserver/mapserver/"
             "issues/%s" % issue['number'],
             data=json.dumps({'state': 'closed'}), headers=headers)
 
@@ -58,7 +58,7 @@ def close_issue(issue, headers):
 
 def post_issue_comment(issue, comment_text, headers):
     """Attempt to post an issue comment and return whether it succeeded."""
-    r = requests.post("https://api.github.com/repos/mapserver/mapserver-import/"
+    r = requests.post("https://api.github.com/repos/mapserver/mapserver/"
             "issues/%s/comments" % issue['number'],
             data=json.dumps({'body': comment_text}), headers=headers)
 
@@ -72,7 +72,7 @@ def post_issue_comment(issue, comment_text, headers):
 
 def add_issue_label(issue, label, headers):
     """Attempt to add a label to the issue and return whether it succeeded."""
-    r = requests.post("https://api.github.com/repos/mapserver/mapserver-import/"
+    r = requests.post("https://api.github.com/repos/mapserver/mapserver/"
             "issues/%s/labels" % issue['number'],
             data=json.dumps([label]), headers=headers)
 
