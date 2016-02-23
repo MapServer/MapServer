@@ -29,7 +29,7 @@
         char* msg = msGetErrorString(";");
         int ms_errorcode = ms_error->code;
         if (msg) {
-			snprintf(ms_message, MAX_ERROR_LEN, msg);
+			snprintf(ms_message, MAX_ERROR_LEN, "%s", msg);
 			free(msg);
 		}
         else sprintf(ms_message, "Unknown message");
