@@ -869,7 +869,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     int  reproject = MS_FALSE;
     int  nFirstOGRFieldIndex = -1;
 
-    if( !layer->resultcache || layer->resultcache->numresults == 0 )
+    if( !layer->resultcache )
       continue;
 
     /* -------------------------------------------------------------------- */
