@@ -700,6 +700,7 @@ static int msWCSParseScaleExtentString20(char *string, char *outAxis,
   return MS_SUCCESS;
 }
 
+#if defined(USE_LIBXML2)
 /*
   Utility function to get the first child of a node with a given node name
   */
@@ -739,6 +740,7 @@ xmlNodePtr msLibXml2GetFirstChildNs(xmlNodePtr parent, const char *name, xmlNsPt
   }
   return NULL;
 }
+#endif /* defined(USE_LIBXML2) */
 
 /************************************************************************/
 /*                   msWCSParseRequest20_XMLGetCapabilities()           */

@@ -1440,7 +1440,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       if(len > max_len) {
         max_len = len;
         lp->x = (intersect[i] + intersect[i+1])/2;
-        /* lp->y = y; */
+        lp->y = y;
       }
     }
   } else { /* center vertically, fix x */
@@ -1519,7 +1519,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
       if(len > max_len) {
         max_len = len;
         lp->y = (intersect[i] + intersect[i+1])/2;
-        /* lp->x = x; */
+        lp->x = x;
       }
     }
   }

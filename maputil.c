@@ -485,9 +485,10 @@ int msEvalExpression(layerObj *layer, shapeObj *shape, expressionObj *expression
       }
       {
         char *start,*end;
+        int value_len = strlen(shape->values[itemindex]);
         start = expression->string;
         while((end = strchr(start,',')) != NULL) {
-          if(!strncmp(start,shape->values[itemindex],end-start)) return MS_TRUE;
+          if(value_len == end-start && !strncmp(start,shape->values[itemindex],end-start)) return MS_TRUE;
           start = end+1;
         }
         if(!strcmp(start,shape->values[itemindex])) return MS_TRUE;

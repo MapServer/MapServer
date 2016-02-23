@@ -2056,7 +2056,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
             return MS_FAILURE;
           }
       }
-      if(labeltext) {
+      if(labeltext && *labeltext) {
         textSymbolObj *ts = msSmallMalloc(sizeof(textSymbolObj));
         initTextSymbol(ts);
         msPopulateTextSymbolForLabelAndString(ts, label, msStrdup(labeltext), layer->scalefactor, image->resolutionfactor, layer->labelcache);
@@ -2065,6 +2065,11 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
             return(MS_FAILURE);
           }
         } else {
+          if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
+            freeTextSymbol(ts);
+            free(ts);
+            return MS_FAILURE;
+          }
           ret = msDrawTextSymbol(map,image,*point,ts);
           freeTextSymbol(ts);
           free(ts); 
@@ -2093,6 +2098,9 @@ int msDrawLabel(mapObj *map, imageObj *image, pointObj labelPnt, char *string, l
   int needLabelPoint=MS_TRUE;
 
   
+  if(!string || !*string) {
+    return MS_SUCCESS;
+  }
   initTextSymbol(&ts);
   msPopulateTextSymbolForLabelAndString(&ts, label, string, scalefactor, image->resolutionfactor, 0);
   if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,&ts))) {
