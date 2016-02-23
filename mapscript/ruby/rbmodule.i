@@ -81,22 +81,22 @@ static void _raise_ms_exception() {
     
     switch (errcode) {
         case MS_IOERR:
-            rb_raise(rb_eIOError, errmsg);
+            rb_raise(rb_eIOError, errmsg, "%s");
             break;
         case MS_MEMERR:
-            rb_raise(rb_eNoMemError, errmsg);
+            rb_raise(rb_eNoMemError, errmsg, "%s");
             break;
         case MS_TYPEERR:
-            rb_raise(rb_eTypeError, errmsg);
+            rb_raise(rb_eTypeError, errmsg, "%s");
             break;
         case MS_EOFERR:
-            rb_raise(rb_eEOFError, errmsg);
+            rb_raise(rb_eEOFError, errmsg, "%s");
             break;
         case MS_CHILDERR:
-            rb_raise(MSExc_MapServerChildError, errmsg);
+            rb_raise(MSExc_MapServerChildError, errmsg, "%s");
             break;
         default:
-            rb_raise(MSExc_MapServerError, errmsg);
+            rb_raise(MSExc_MapServerError, errmsg, "%s");
             break;
     }
 
