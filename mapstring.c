@@ -1135,9 +1135,7 @@ char *msEncodeUrlExcept(const char *data, const char except)
   code = (char*)msSmallMalloc(strlen(data)+inc+1);
 
   for (j=code, i=data; *i!='\0'; i++, j++) {
-    if (*i == ' ')
-      *j = '+';
-    else if ( except != '\0' && *i == except ) {
+    if ( except != '\0' && *i == except ) {
       *j = except;
     } else if (msEncodeChar(*i)) {
       ch = *i;
