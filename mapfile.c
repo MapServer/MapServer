@@ -548,7 +548,7 @@ static void writeNumber(FILE *stream, int indent, const char *name, double defau
 {
   if(number == defaultNumber) return; /* don't output default */
   writeIndent(stream, ++indent);
-  msIO_fprintf(stream, "%s %g\n", name, number);
+  msIO_fprintf(stream, "%s %.15g\n", name, number);
 }
 
 static void writeCharacter(FILE *stream, int indent, const char *name, const char defaultCharacter, char character)
