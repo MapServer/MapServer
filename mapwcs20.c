@@ -4189,8 +4189,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
             + (orig_bbox.maxx+1) * cm.geotransform[1]
             + (orig_bbox.maxy+1) * cm.geotransform[2];
 
-      subsets.minx = MIN(x_1, x_2);
-      subsets.maxx = MAX(x_1, x_2);
+      subsets.minx = MS_MIN(x_1, x_2);
+      subsets.maxx = MS_MAX(x_1, x_2);
     }
     if(subsets.miny != -DBL_MAX || subsets.maxy != DBL_MAX) {
       y_1 = cm.geotransform[3]
@@ -4201,8 +4201,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
             + orig_bbox.minx * cm.geotransform[4]
             + orig_bbox.miny * cm.geotransform[5];
 
-      subsets.miny = MIN(y_1, y_2);
-      subsets.maxy = MAX(y_1, y_2);
+      subsets.miny = MS_MIN(y_1, y_2);
+      subsets.maxy = MS_MAX(y_1, y_2);
     }
   } else { /* if crs is not the 'imageCRS' */
     projectionObj subsetProj;
@@ -4241,10 +4241,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   }
 
   /* write combined bounding box */
-  bbox.minx = MAX(subsets.minx, map->extent.minx);
-  bbox.miny = MAX(subsets.miny, map->extent.miny);
-  bbox.maxx = MIN(subsets.maxx, map->extent.maxx);
-  bbox.maxy = MIN(subsets.maxy, map->extent.maxy);
+  bbox.minx = MS_MAX(subsets.minx, map->extent.minx);
+  bbox.miny = MS_MAX(subsets.miny, map->extent.miny);
+  bbox.maxx = MS_MIN(subsets.maxx, map->extent.maxx);
+  bbox.maxy = MS_MIN(subsets.maxy, map->extent.maxy);
 
   /* check if we are overspecified  */
   if ((params->width != 0 &&  params->resolutionX != MS_WCS20_UNBOUNDED)
@@ -4620,10 +4620,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     tmpCm.xresolution = map->gt.geotransform[1];
     tmpCm.yresolution = map->gt.geotransform[5];
 
-    tmpCm.extent.minx = MIN(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
-    tmpCm.extent.miny = MIN(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
-    tmpCm.extent.maxx = MAX(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
-    tmpCm.extent.maxy = MAX(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
+    tmpCm.extent.minx = MS_MIN(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
+    tmpCm.extent.miny = MS_MIN(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
+    tmpCm.extent.maxx = MS_MAX(map->gt.geotransform[0], map->gt.geotransform[0] + map->width * tmpCm.xresolution);
+    tmpCm.extent.maxy = MS_MAX(map->gt.geotransform[3], map->gt.geotransform[3] + map->height * tmpCm.yresolution);
 
     swapAxes = msWCSSwapAxes20(srs_uri);
     msFree(srs_uri);
