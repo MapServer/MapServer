@@ -1,0 +1,44 @@
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+# Same as tileindexmixedsrs.map but with tileindex as a layer
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 100 100
+EXTENT 440720.000 3745320.000 446720.000 3751320.000
+IMAGECOLOR 0 0 0
+
+PROJECTION
+  "+proj=utm +zone=11 +datum=NAD27" 
+END
+
+IMAGETYPE PNG8
+
+LAYER
+  NAME mytileindex
+  TYPE POLYGON
+  STATUS OFF
+  DUMP OFF
+  DATA "data/tile_index_mixed_srs_with_data_dir.shp"
+  PROJECTION
+    AUTO
+  END
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DUMP TRUE
+  TEMPLATE "fake.html"
+  TILEINDEX "mytileindex"
+  TILEITEM "location"
+  TILESRS "src_srs"
+  PROJECTION
+    AUTO
+  END
+END
+
+END # of map file

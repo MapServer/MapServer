@@ -1,0 +1,182 @@
+#
+# Test WFS
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WFS GEOS
+#
+#
+# wfs paging using startIndex
+# RUN_PARMS: wfs_filter_startindex.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(NAME)&maxfeatures=10&startindex=0" > [RESULT]
+# RUN_PARMS: wfs_filter_startindex2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(NAME)&maxfeatures=10&startindex=10" > [RESULT]
+#
+#wfs test valid for 2 type names
+# RUN_PARMS: wfs_getfeature_twotypenames1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=province,popplace&resulttype=hits" > [RESULT_DEVERSION]
+#
+# RUN_PARMS: wfs_getfeature_twotypenames2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace,province&resulttype=hits" > [RESULT_DEVERSION]
+
+MAP
+
+NAME WFS_FILTER
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+#UNITS METERS
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+
+OUTPUTFORMAT
+  NAME GDPNG
+  DRIVER "GD/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE RGB
+  EXTENSION "png"
+END
+
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "wfs_srs"		   "EPSG:4326 EPSG:4269"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "wfs_title"         "province"
+    "wfs_description"   "province"
+    "wfs_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
+    "gml_include_items" "all"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+LAYER
+  NAME park
+  DATA park
+  METADATA
+    "wfs_title"             "park"
+    "wfs_version"           "1.0.0"
+    "wfs_description"	    "Parks"
+    "wfs_result_fields"     "NAME_E YEAR_EST AREA_KMSQ"
+    "gml_include_items" "all"
+   END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+  CLASS
+    NAME "Parks"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+
+
+LAYER
+  NAME popplace
+  DATA popplace
+  METADATA
+    "wfs_title"         "popplace"
+    "wfs_description"   "Cities"
+    "wfs_result_fields" "NAME"
+    "gml_include_items" "all"
+   END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+  LabelItem "Name"
+  CLASSITEM "Capital" 
+
+  CLASS
+    EXPRESSION /./  
+    SYMBOL 2
+    SIZE 8
+    NAME "Cities"
+    LABEL
+      COLOR  0 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+END # Layer
+
+
+LAYER
+  NAME road
+  DATA road
+  METADATA
+    "wfs_title"       "road"
+    "wfs_description" "Roads"
+    "gml_include_items" "all"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    SYMBOL 0 
+    COLOR 220 0 0
+  END
+END # Layer
+
+END # Map File

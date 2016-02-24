@@ -1,0 +1,17 @@
+msautotest viewer
+
+The msautotest viewer is a small Web application that is provided to ease
+the test results verification.  All test results that appear in the Web
+page are also in the result directory of each test directory (gdal, misc
+and wxs), so there are all failed tests.
+
+To use the msautotest viewer,  you need to give Web access to the msautotest
+directory.  For that edit the http_msautotest.conf and copy it to your
+Apache httpd conf directory.
+
+Edit the configuration to suit your needs.  The gdal_translate tool in 
+particular, is needed to convert Geotiff image to PNG image in order to be 
+able to see it in the browser.
+
+You also need to set the path to the python executable in the 
+msautotest_viewer.py python script file.

@@ -1,0 +1,26 @@
+
+#
+# Test GIMP curve file support: single curve. 
+#
+MAP
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GDAL/PNG"
+  IMAGEMODE PC256
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA data/grey.tif
+  PROCESSING "LUT=data/munich_1.crv"
+END
+
+END # of map file

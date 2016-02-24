@@ -1,0 +1,47 @@
+
+#
+# Test classification methods on a pseudocolored input image.
+#
+# NOTE: without resampling.
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT ON
+END
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  DATA data/grid.gif
+  TEMPLATE "fake.html"
+  CLASS 
+    NAME "Text"
+    EXPRESSION ([pixel] == 0)
+    COLOR -255 -255 -255
+  END
+  CLASS 
+    NAME "TextBackground"
+    EXPRESSION ([pixel] == 2)
+    COLOR 0 255 0
+  END
+  CLASS 
+    NAME "Grid"
+    EXPRESSION ([red] == 96 and [green] == 32 and [blue] == 32)
+    COLOR 255 0 0
+  END
+END
+
+END # of map file

@@ -1,0 +1,48 @@
+# RUN_PARMS: wld_rotate.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: wld_rotate.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: wld_rotate.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: wld_rotate.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: wld_rotate.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Tests support for images with non-northup world files. 
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 200 
+EXTENT 1 1 459 459
+IMAGECOLOR 255 255 0
+SHAPEPATH "../gdal"
+PROJECTION
+  "proj=utm"
+  "zone=12"
+  "datum=WGS84"
+END
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT OFF
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA data/grey_rot.tif
+  PROJECTION
+    "proj=utm"
+    "zone=12"
+    "ellps=WGS84"
+  END
+END
+END # of map file
+

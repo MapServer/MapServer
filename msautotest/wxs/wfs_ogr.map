@@ -1,0 +1,282 @@
+#
+# Test WFS
+#
+# REQUIRES: SUPPORTS=WFS INPUT=OGR
+#
+# Some tests in this sequence will be quite sensitive to the GDAL/OGR version.
+# The tests are currently expected to run with GDAL/OGR 1.8 (prerelease)
+#
+# WFS 1.0
+#
+# Do formats show up in the Capabilities
+# RUN_PARMS: wfsogr10_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+# Generate dump to gml2
+# RUN_PARMS: wfsogr10_gml2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=GML2" > [RESULT]
+#
+# Generate dump to multi-part mime (MIDMIF)
+# RUN_PARMS: wfsogr10_midmif.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=MIDMIF" > [RESULT]
+#
+# Generate dump streamed directly to CSV
+# RUN_PARMS: wfsogr10_csvstream.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=CSVSTREAM" > [RESULT]
+#
+# Generate dump to SHAPEZIP
+# RUN_PARMS: wfsogr10_shapezip.zip [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=SHAPEZIP" > [RESULT]
+#
+# Generate dump streamed directly to OGR GML from memory.
+# RUN_PARMS: wfsogr10_ogrgml.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=road&featureid=road.1521&OUTPUTFORMAT=OGRGML" > [RESULT]
+#
+# OGR GML from OGR layer to test OGR "auto" support.  Also tests aliasing.
+# RUN_PARMS: wfsogr10_ograuto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&featureid=popplace.BACMK&OUTPUTFORMAT=OGRGML" > [RESULT]
+#
+# Test handling of multi-polygons and regular polygons
+# RUN_PARMS: wfsogr10_multi.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=multi&OUTPUTFORMAT=OGRGML" > [RESULT]
+#
+# Test non-OGR "template" output. 
+# RUN_PARMS: wfsogr10_template.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&OUTPUTFORMAT=geojson" > [RESULT]
+#
+# Test fetching from two layers with a filter.
+# RUN_PARMS: wfsogr10_twolayer.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace,road&OUTPUTFORMAT=MultiMIDMIF&FILTER=(<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>)(<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>)" > [RESULT]
+#
+# Test writing features with null numeric fields (#4633)
+# RUN_PARMS: wfsogr10_nullnumeric.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=withnullvalues&OUTPUTFORMAT=CSV" > [RESULT]
+
+# WFS 1.1
+#
+# Do formats show up in the Capabilities
+# RUN_PARMS: wfsogr11_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+# WFS 1.1 request in EPSG:3978
+# RUN_PARMS: wfsogr11_ogrgml.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace&OUTPUTFORMAT=text/xml; subtype=gml/2.1.2; driver=ogr&srsName=urn:ogc:def:crs:EPSG::3978&maxfeatures=3&startindex=2" > [RESULT]
+#
+# WFS 1.1 request in EPSG:4326
+# RUN_PARMS: wfsogr11_ogrgml_ll.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace&OUTPUTFORMAT=text/xml; subtype=gml/2.1.2; driver=ogr&srsName=urn:ogc:def:crs:EPSG::4326" > [RESULT]
+#
+# WFS 1.1 GetFeature CSV
+# RUN_PARMS: wfsogr11_ogrcsv.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace&OUTPUTFORMAT=csv&MAXFEATURES=10" > [RESULT]
+#
+# 
+# WMS 1.1 - GetFeatureInfo
+#
+# RUN_PARMS: wfsogr_wms_getfeatureinfo.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&service=WMS&request=GetFeatureInfo&srs=EPSG:3978&bbox=2250000,-71000,2620000,496000&format=image/png&layers=road&width=500&height=300&query_layers=road&info_format=text/csv&x=141&y=91&radius=100" > [RESULT]
+#
+
+
+MAP
+
+NAME WFS_OGROUT_TEST
+STATUS ON
+SIZE 400 300
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+
+OUTPUTFORMAT
+  NAME "geojson"
+  DRIVER "TEMPLATE"
+  MIMETYPE "application/json; subtype=geojson"
+  FORMATOPTION "FILE=../misc/rfc36.tmpl"
+END
+
+OUTPUTFORMAT
+  NAME "CSV"
+  DRIVER "OGR/CSV"
+  MIMETYPE "text/csv"
+  FORMATOPTION "LCO:GEOMETRY=AS_WKT"
+  FORMATOPTION "STORAGE=filesystem"
+  FORMATOPTION "FORM=simple"
+  FORMATOPTION "FILENAME=result.csv"
+END
+
+OUTPUTFORMAT
+  NAME "CSVSTREAM"
+  DRIVER "OGR/CSV"
+  MIMETYPE "text/csv; streamed"
+  FORMATOPTION "LCO:GEOMETRY=AS_WKT"
+  FORMATOPTION "STORAGE=stream"
+  FORMATOPTION "FORM=simple"
+  FORMATOPTION "FILENAME=result.csv"
+END
+
+OUTPUTFORMAT
+  NAME "OGRGML"
+  DRIVER "OGR/GML"
+  MIMETYPE "text/xml; subtype=gml/2.1.2; driver=ogr"
+  FORMATOPTION "STORAGE=memory"
+  FORMATOPTION "FORM=multipart"
+  FORMATOPTION "FILENAME=result.gml"
+END
+
+OUTPUTFORMAT
+  NAME "SHAPEZIP"
+  DRIVER "OGR/ESRI Shapefile"
+  MIMETYPE "application/shapefile"
+  FORMATOPTION "STORAGE=filesystem"
+  FORMATOPTION "FORM=zip"
+  FORMATOPTION "FILENAME=result.zip"
+END
+
+OUTPUTFORMAT
+  NAME "MIDMIF"
+  DRIVER "OGR/MapInfo File"
+  FORMATOPTION "STORAGE=filesystem"
+  FORMATOPTION "FORM=multipart"
+  FORMATOPTION "DSCO:FORMAT=MIF"
+  FORMATOPTION "FILENAME=result.mif"
+END
+
+OUTPUTFORMAT
+  NAME "MultiMIDMIF"
+  DRIVER "OGR/MapInfo File"
+  FORMATOPTION "STORAGE=filesystem"
+  FORMATOPTION "FORM=multipart"
+  FORMATOPTION "DSCO:FORMAT=MIF"
+  FORMATOPTION "FILENAME=result"
+END
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+#    "wfs_srs"		   "EPSG:4326 EPSG:4269 EPSG:3978 EPSG:27700"
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:4269 EPSG:4326 EPSG:3978"
+    "ows_abstract"    "Test WFS Abstract"
+    "ows_keywordlist" "ogc,wfs,gml,om"
+    "ows_service_onlineresource" "http://localhost"
+    "ows_fees" "none"
+    "ows_accessconstraints" "none"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+    "ows_hoursofservice" "0800h - 1600h EST"
+    "ows_contactinstructions" "during hours of service"
+    "ows_role" "staff"
+    "wms_feature_info_mime_type" "text/csv"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "+proj=latlong +datum=WGS84"
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME road
+  DATA road
+  METADATA
+    "ows_title"         "road"
+    "ows_description"   "road"
+    "wfs_featureid"     "ROAD_ID" 
+    "wfs_getfeature_formatlist" "csv,csvstream,ogrgml,ogrgmlstream,shapezip,midmif,multimidmif"
+    "gml_include_items" "all"
+    "gml_exclude_items" "ROAD_"
+    "gml_types"         "auto"
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  TEMPLATE "wfs_ogr.map"
+  DUMP TRUE
+END # Layer
+
+LAYER
+  NAME popplace
+  CONNECTIONTYPE OGR
+  CONNECTION "data/popplace.shp"
+  DATA "popplace"
+
+  METADATA
+    "wfs_title"         "popplace"
+    "wfs_description"   "populated places"
+    "wfs_featureid"     "UNIQUE_KEY"
+    "wfs_getfeature_formatlist" "csv,ogrgml,shapezip,midmif,multimidmif,geojson"
+    "gml_include_items" "NAME,UNIQUE_KEY,CAPITAL,POP_RANGE"
+    "gml_POP_RANGE_alias" "POP_CLASS"
+    "gml_types"         "auto"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+END # Layer
+
+LAYER
+  NAME multi
+  CONNECTIONTYPE OGR
+  CONNECTION "data/multi.csv" 
+  
+  METADATA
+    "wfs_title"         "multi"
+    "wfs_description"   "multi-geometry testing"
+    "wfs_featureid"     "ID"
+    "wfs_srs"           "EPSG:27700"
+    "wfs_getfeature_formatlist" "csv,ogrgml,shapezip,midmif"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_geomtype"      "Geometry"
+  END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+  DUMP TRUE
+END
+
+LAYER
+  NAME withnullvalues
+  CONNECTIONTYPE OGR
+  CONNECTION "data/withnullvalues.csv" 
+  
+  METADATA
+    "wfs_title"         "withnullvalues"
+    "wfs_description"   "withnullvalues testing"
+    "wfs_featureid"     "ID"
+    "wfs_srs"           "EPSG:27700"
+    "wfs_getfeature_formatlist" "csv,ogrgml,shapezip,midmif,geojson"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_geomtype"      "Geometry"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:27700"
+  END
+
+  DUMP TRUE
+END
+
+END # Map File

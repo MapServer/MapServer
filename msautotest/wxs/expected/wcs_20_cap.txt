@@ -1,0 +1,113 @@
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<wcs:Capabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:swe="http://www.opengis.net/swe/2.0" xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd " version="2.0.1" updateSequence="2007-10-30T14:23:38Z">
+  <ows:ServiceIdentification>
+    <ows:Title>First Test Service</ows:Title>
+    <ows:Abstract>Test Abstract</ows:Abstract>
+    <ows:Keywords>
+      <ows:Keyword>keyword</ows:Keyword>
+      <ows:Keyword>list</ows:Keyword>
+    </ows:Keywords>
+    <ows:ServiceType codeSpace="OGC">OGC WCS</ows:ServiceType>
+    <ows:ServiceTypeVersion>2.0.1</ows:ServiceTypeVersion>
+    <ows:Profile>http://www.opengis.net/spec/WCS/2.0/conf/core</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_protocol-binding_get-kvp/1.0/conf/get-kvp</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_protocol-binding_post-xml/1.0/conf/post-xml</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/gml-coverage</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/multipart</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/special-format</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/GMLCOV_geotiff-coverages/1.0/conf/geotiff-coverage</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_geotiff-coverages/1.0/conf/geotiff-coverage</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_service-model_crs-predefined/1.0/conf/crs-predefined</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_service-model_scaling+interpolation/1.0/conf/scaling+interpolation</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_service-model_band-subsetting/1.0/conf/band-subsetting</ows:Profile>
+    <ows:Fees>NONE</ows:Fees>
+    <ows:AccessConstraints>NONE</ows:AccessConstraints>
+  </ows:ServiceIdentification>
+  <ows:ServiceProvider>
+    <ows:ProviderName>OSGeo</ows:ProviderName>
+    <ows:ProviderSite xlink:type="simple" xlink:href="http://198.202.74.215/cgi-bin/wcs_demo"/>
+    <ows:ServiceContact>
+      <ows:IndividualName>Frank Warmerdam</ows:IndividualName>
+      <ows:PositionName>Software Developer</ows:PositionName>
+      <ows:ContactInfo>
+        <ows:Phone>
+          <ows:Voice>(613) 754-2041</ows:Voice>
+          <ows:Facsimile>(613) 754-2041x343</ows:Facsimile>
+        </ows:Phone>
+        <ows:Address>
+          <ows:DeliveryPoint>3594 Foymount Rd</ows:DeliveryPoint>
+          <ows:City>Eganville</ows:City>
+          <ows:AdministrativeArea>Ontario</ows:AdministrativeArea>
+          <ows:PostalCode>K0J 1T0</ows:PostalCode>
+          <ows:Country>Canada</ows:Country>
+          <ows:ElectronicMailAddress>warmerdam@pobox.com</ows:ElectronicMailAddress>
+        </ows:Address>
+        <ows:OnlineResource xlink:type="simple" xlink:href="http://198.202.74.215/cgi-bin/wcs_demo"/>
+        <ows:HoursOfService>0800h - 1600h EST</ows:HoursOfService>
+        <ows:ContactInstructions>during hours of service</ows:ContactInstructions>
+      </ows:ContactInfo>
+      <ows:Role>staff</ows:Role>
+    </ows:ServiceContact>
+  </ows:ServiceProvider>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?">
+            <ows:Constraint name="PostEncoding">
+              <ows:AllowedValues>
+                <ows:Value>XML</ows:Value>
+              </ows:AllowedValues>
+            </ows:Constraint>
+          </ows:Post>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+    <ows:Operation name="DescribeCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?">
+            <ows:Constraint name="PostEncoding">
+              <ows:AllowedValues>
+                <ows:Value>XML</ows:Value>
+              </ows:AllowedValues>
+            </ows:Constraint>
+          </ows:Post>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+    <ows:Operation name="GetCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?">
+            <ows:Constraint name="PostEncoding">
+              <ows:AllowedValues>
+                <ows:Value>XML</ows:Value>
+              </ows:AllowedValues>
+            </ows:Constraint>
+          </ows:Post>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <wcs:ServiceMetadata>
+    <wcs:formatSupported>image/tiff</wcs:formatSupported>
+    <wcs:formatSupported>image/png; mode=8bit</wcs:formatSupported>
+    <wcs:formatSupported>image/x-aaigrid</wcs:formatSupported>
+    <wcs:formatSupported>image/png</wcs:formatSupported>
+    <wcs:formatSupported>image/jpeg</wcs:formatSupported>
+    <wcs:formatSupported>image/gif</wcs:formatSupported>
+  </wcs:ServiceMetadata>
+  <wcs:Contents>
+    <wcs:CoverageSummary>
+      <wcs:CoverageId>grey</wcs:CoverageId>
+      <wcs:CoverageSubtype>RectifiedGridCoverage</wcs:CoverageSubtype>
+      <ows:Metadata xlink:type="simple" xlink:href="http://www.gdal.org/metadata_test_link.html"/>
+    </wcs:CoverageSummary>
+  </wcs:Contents>
+</wcs:Capabilities>

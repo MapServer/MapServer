@@ -1,0 +1,243 @@
+
+#
+# Test WCS.
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS
+#
+#
+# General tests
+#
+# Exception
+# RUN_PARMS: wcs_post_exception1.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="99"/>[/POST] > [RESULT_DEVERSION] [RESULT_DEMIME]
+# RUN_PARMS: wcs_post_exception2.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="99.0"/>[/POST] > [RESULT_DEVERSION] [RESULT_DEMIME]
+#
+# WCS 1.1 POST tests
+#
+# Capabilities 1.1 updatesequence (less than)
+# RUN_PARMS: wcs11_post_caps_updatesequence.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.1"><wcs:UpdateSequence>1999-10-21T12:22:33Z</wcs:UpdateSequence></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+# Capabilities 1.1 updatesequence exception (equal)
+# RUN_PARMS: wcs11_post_exception_updatesequence1.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.1"><wcs:UpdateSequence>2007-10-30T14:23:38Z</wcs:UpdateSequence></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+# Capabilities 1.1 updatesequence exception (higher)
+# RUN_PARMS: wcs11_post_exception_updatesequence2.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.1"><wcs:UpdateSequence>2008-01-13T14:23:38Z</wcs:UpdateSequence></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+#
+# Capabilities 1.1 selected section
+# RUN_PARMS: wcs11_post_caps_section1.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.1"><wcs:Sections><wcs:Section>OperationsMetadata</wcs:Section><wcs:Section>Contents</wcs:Section></wcs:Sections></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+# Capabilities 1.1 selected sections
+# RUN_PARMS: wcs11_post_caps_section2.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.1"><wcs:Sections><wcs:Section>ServiceIdentification</wcs:Section><wcs:Section>ServiceProvider</wcs:Section></wcs:Sections></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+# Capabilities 1.1 selected sections
+# RUN_PARMS: wcs11_post_caps_section3.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.1"><wcs:Sections><wcs:Section>All</wcs:Section></wcs:Sections></wcs:GetCapabilities>[/POST] > [RESULT_DEMIME]
+#
+# Capabilities 1.1
+# RUN_PARMS: wcs11_post_cap.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.1"/>[/POST] > [RESULT_DEVERSION] [RESULT_DEMIME]
+#
+# Coverage description 1.1
+# RUN_PARMS: wcs11_post_describe.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:DescribeCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.0"><wcs:Identifier>grey</wcs:Identifier></wcs:DescribeCoverage>[/POST] > [RESULT_DEMIME]
+#
+# GetCoverage to AAIGRID 1.1 (normal CRS)
+# RUN_PARMS: wcs11_post_getcov_grd.dat [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:Identifier>grey</wcs:Identifier><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:EPSG::32611"><wcs:LowerCorner>0 0</wcs:LowerCorner><wcs:UpperCorner>400 300</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output format="AAIGRID"><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>0 295</wcs:GridOrigin><wcs:GridOffsets>30 -30</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT]
+#
+# GetCoverage to AAIGRID 1.1 (imageCRS)
+# RUN_PARMS: wcs11_post_getcov_grd_imagecrs.dat [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:Identifier>grey</wcs:Identifier><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:OGC::imageCRS"><wcs:LowerCorner>0 0</wcs:LowerCorner><wcs:UpperCorner>39 29</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output format="AAIGRID"><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>0 0</wcs:GridOrigin><wcs:GridOffsets>3 3</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT]
+#
+# GetCoverage to AAIGRID 1.1 (EPSG 4326 with reversed axes)
+# RUN_PARMS: wcs11_post_getcov_grd_4326.dat [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:Identifier>grey</wcs:Identifier><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:EPSG::4326"><wcs:LowerCorner>0 -121.48874388968</wcs:LowerCorner><wcs:UpperCorner>0.0027058261133485 -121.48516027717</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output format="image/x-aaigrid"><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>0.0027058261133485 -121.48874388968</wcs:GridOrigin><wcs:GridOffsets>-0.0003 0.0003</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT]
+#
+# GetCoverage to AAIGRID 1.1 (WGS84 (non-EPSG - normal axes)
+# RUN_PARMS: wcs11_post_getcov_grd_wgs84.dat [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:Identifier>grey</wcs:Identifier><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:OGC::CRS84"><wcs:LowerCorner>-121.48874388968 0</wcs:LowerCorner><wcs:UpperCorner>-121.48516027717 0.0027058261133485</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output format="image/x-aaigrid"><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>-121.48874388968 0.0027058261133485</wcs:GridOrigin><wcs:GridOffsets>0.0003 -0.0003</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT]
+#
+# GetCoverage to GDPNG 1.1 (Test non-GDAL output)
+# RUN_PARMS: wcs11_post_getcov_gdpng8.dat [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:Identifier>grey</wcs:Identifier><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:EPSG::4326"><wcs:LowerCorner>0 -121.48874388968</wcs:LowerCorner><wcs:UpperCorner>0.0027058261133485 -121.48516027717</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output format="image/png; mode=8bit"><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>0.0027058261133485 -121.48874388968</wcs:GridOrigin><wcs:GridOffsets>-0.0003 0.0003</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT]
+#
+# InvalidParameterValue
+# RUN_PARMS: wcs11_post_exception_invalidparam_request.xml [MAPSERV] -nv [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:InvalidRequest xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="1.1.0"/>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs11_post_exception_invalidparam_coverage.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:Identifier>invalid</wcs:Identifier><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:EPSG::4326"><wcs:LowerCorner>0 -121.48874388968</wcs:LowerCorner><wcs:UpperCorner>0.0027058261133485 -121.48516027717</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output format="image/tiff"><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>0.0027058261133485 -121.48874388968</wcs:GridOrigin><wcs:GridOffsets>-0.0003 0.0003</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs11_post_exception_invalidparam_format.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:Identifier>grey</wcs:Identifier><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:EPSG::4326"><wcs:LowerCorner>0 -121.48874388968</wcs:LowerCorner><wcs:UpperCorner>0.0027058261133485 -121.48516027717</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output format="image/invalid"><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>0.0027058261133485 -121.48874388968</wcs:GridOrigin><wcs:GridOffsets>-0.0003 0.0003</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# MissingParameterValue
+# RUN_PARMS: wcs11_post_exception_missingparam_coverage.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:EPSG::4326"><wcs:LowerCorner>0 -121.48874388968</wcs:LowerCorner><wcs:UpperCorner>0.0027058261133485 -121.48516027717</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output format="image/tiff"><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>0.0027058261133485 -121.48874388968</wcs:GridOrigin><wcs:GridOffsets>-0.0003 0.0003</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs11_post_exception_missingparam_format.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/1.1" service="WCS" version="1.1.0"><wcs:Identifier>grey</wcs:Identifier><wcs:DomainSubset><wcs:BoundingBox crs="urn:ogc:def:crs:EPSG::4326"><wcs:LowerCorner>0 -121.48874388968</wcs:LowerCorner><wcs:UpperCorner>0.0027058261133485 -121.48516027717</wcs:UpperCorner></wcs:BoundingBox></wcs:DomainSubset><wcs:Output><wcs:GridCRS><wcs:GridCS>urn:ogc:def:crs:OGC::imageCRS</wcs:GridCS><wcs:GridType>urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs</wcs:GridType><wcs:GridOrigin>0.0027058261133485 -121.48874388968</wcs:GridOrigin><wcs:GridOffsets>-0.0003 0.0003</wcs:GridOffsets></wcs:GridCRS></wcs:Output></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+#
+# WCS 2.0 POST tests
+#
+# RUN_PARMS: wcs_20_post_cap.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCapabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"/>[/POST] > [RESULT_DEMIME]
+#
+# RUN_PARMS: wcs_20_post_desc.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:DescribeCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" version="2.0.1" service="WCS"><wcs:coverageid>grey</wcs:coverageid></wcs:DescribeCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Subsetting
+# RUN_PARMS: wcs_20_post_getcov_trim_x_min.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>20</wcs:TrimLow></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_trim_x_max.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimHigh>20</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_trim_x_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>20</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_trim_y_max.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>20</wcs:TrimLow></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_trim_y_min.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimHigh>20</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_trim_y_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>20</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_trim_x_y_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>20</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>20</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# (#3857):
+# RUN_PARMS: wcs_20_post_getcov_trim_x_y_both_1px.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>10.1</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>10.1</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_full_multipart.dat [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:mediaType>multipart/related</wcs:mediaType></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Subsetting in diverse CRS
+# RUN_PARMS: wcs_20_post_getcov_imageCRS.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension crs="imageCRS">x</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>10</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="imageCRS">y</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>10</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_origCRS.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/32611">x</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>50</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/32611">y</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>50</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_reproj.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/4326">lon</wcs:Dimension><wcs:TrimLow>-121.488</wcs:TrimLow><wcs:TrimHigh>-121.487</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/4326">lat</wcs:Dimension><wcs:TrimLow>0.000</wcs:TrimLow><wcs:TrimHigh>0.001</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Scaling 
+# RUN_PARMS: wcs_20_post_getcov_scaling_size_full.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">10</wcs:Size><wcs:Size dimension="y">20</wcs:Size></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_scaling_resolution_full.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Resolution dimension="x">20</wcs:Resolution><wcs:Resolution dimension="y">20</wcs:Resolution></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_scaling_size_trim_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">40</wcs:Size><wcs:Size dimension="y">40</wcs:Size><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>30</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>30</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_scaling_resolution_trim_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Resolution dimension="x">5</wcs:Resolution><wcs:Resolution dimension="y">5</wcs:Resolution><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>30</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>30</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Scaling in imageCRS
+# RUN_PARMS: wcs_20_post_getcov_imageCRS_scaling_size_trim_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">20</wcs:Size><wcs:Size dimension="y">30</wcs:Size><wcs:DimensionTrim><wcs:Dimension crs="imageCRS">x</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>20</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="imageCRS">y</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>30</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_imageCRS_scaling_resolution_trim_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Resolution dimension="x">20</wcs:Resolution><wcs:Resolution dimension="y">5</wcs:Resolution><wcs:DimensionTrim><wcs:Dimension crs="imageCRS">x</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>10</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="imageCRS">y</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>10</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Scaling in Original CRS
+# RUN_PARMS: wcs_20_post_getcov_origCRS_scaling_size_trim_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">30</wcs:Size><wcs:Size dimension="y">35</wcs:Size><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/32611">x</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>50</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/32611">y</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>50</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_origCRS_scaling_resolution_trim_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Resolution dimension="x">5</wcs:Resolution><wcs:Resolution dimension="y">2</wcs:Resolution><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/32611">x</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>50</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/32611">y</wcs:Dimension><wcs:TrimLow>0</wcs:TrimLow><wcs:TrimHigh>50</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Reprojected Scaling
+# RUN_PARMS: wcs_20_post_getcov_reproj_scaling_size_trim_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="lat">30</wcs:Size><wcs:Size dimension="lon">40</wcs:Size><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/4326">lon</wcs:Dimension><wcs:TrimLow>-121.488</wcs:TrimLow><wcs:TrimHigh>-121.487</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/4326">lat</wcs:Dimension><wcs:TrimLow>0.000</wcs:TrimLow><wcs:TrimHigh>0.001</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_reproj_scaling_resolution_trim_both.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Resolution dimension="lat">0.00002</wcs:Resolution><wcs:Resolution dimension="lon">0.00005</wcs:Resolution><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/4326">lon</wcs:Dimension><wcs:TrimLow>-121.488</wcs:TrimLow><wcs:TrimHigh>-121.487</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension crs="http://www.opengis.net/def/crs/EPSG/0/4326">lat</wcs:Dimension><wcs:TrimLow>0.000</wcs:TrimLow><wcs:TrimHigh>0.001</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Size and Resolution
+# RUN_PARMS: wcs_20_post_getcov_scaling_size_resolution.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">10</wcs:Size><wcs:Resolution dimension="y">5</wcs:Resolution></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_scaling_resolution_size.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Resolution dimension="x">5</wcs:Resolution><wcs:Size dimension="y">10</wcs:Size></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# Interpolation
+# RUN_PARMS: wcs_20_post_getcov_interpolation_nearest.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">20</wcs:Size><wcs:Size dimension="y">20</wcs:Size><wcs:Interpolation>NEAREST</wcs:Interpolation></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_interpolation_average.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">20</wcs:Size><wcs:Size dimension="y">20</wcs:Size><wcs:Interpolation>AVERAGE</wcs:Interpolation></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_getcov_interpolation_bilinear.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">20</wcs:Size><wcs:Size dimension="y">20</wcs:Size><wcs:Interpolation>BILINEAR</wcs:Interpolation></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# InvalidParameterValue
+# RUN_PARMS: wcs_20_post_exception_invalidparam_request.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:InvalidRequest xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"/>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_exception_invalidparam_coverage.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>invalid</wcs:CoverageId></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_exception_invalidparam_format.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/invalid</wcs:format><wcs:CoverageId>grey</wcs:CoverageId></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_exception_invalidparam_interpolation.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:Interpolation>INVALIDINTERPOLATION</wcs:Interpolation><wcs:CoverageId>grey</wcs:CoverageId></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# MissingParameterValue
+# RUN_PARMS: wcs_20_post_exception_missingparam_coverage.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_exception_missingparam_format_no_native.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:CoverageId>grey</wcs:CoverageId></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# TooManyParameterValues
+# RUN_PARMS: wcs_20_post_exception_toomanyparams_coverage.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:CoverageId>grey2</wcs:CoverageId></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# ExtentError
+# RUN_PARMS: wcs_20_post_exception_extent_nooverlap.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>1000</wcs:TrimLow><wcs:TrimHigh>2000</wcs:TrimHigh></wcs:DimensionTrim><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>1000</wcs:TrimLow><wcs:TrimHigh>2000</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+# ScalingError 
+# RUN_PARMS: wcs_20_post_exception_scaling.xml [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>grey</wcs:CoverageId><wcs:Size dimension="x">20</wcs:Size><wcs:Resolution dimension="x">20</wcs:Resolution></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+#
+
+
+MAP
+
+NAME TEST
+SIZE 400 300
+EXTENT 0 0 400 300
+
+IMAGETYPE PNG
+TRANSPARENT OFF
+SHAPEPATH "data"
+
+OUTPUTFORMAT
+  NAME GEOTIFF_BYTE
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE BYTE
+  EXTENSION "tif"
+END
+OUTPUTFORMAT
+  NAME GDPNG
+  DRIVER "AGG/PNG"
+  MIMETYPE "image/png"
+  IMAGEMODE RGB
+  EXTENSION "png"
+END
+OUTPUTFORMAT
+  NAME GDPNGGREY
+  DRIVER "GD/PNG"
+  MIMETYPE "image/png; mode=8bit"
+  IMAGEMODE PC256
+  EXTENSION "png"
+END
+OUTPUTFORMAT
+  NAME AAIGRID
+  DRIVER "GDAL/AAIGRID"
+  MIMETYPE "image/x-aaigrid"
+  IMAGEMODE INT16
+  EXTENSION "grd"
+END
+
+PROJECTION
+  "init=epsg:32611"
+END
+
+WEB
+  METADATA
+   # OWS stuff for server
+   "ows_updatesequence"   "2007-10-30T14:23:38Z"
+   "ows_title"            "First Test Service"
+   "ows_fees"             "NONE"
+   "ows_accessconstraints" "NONE"
+   "ows_abstract"         "Test Abstract"
+   "ows_keywordlist"      "keyword,list"
+   "ows_service_onlineresource" "http://198.202.74.215/cgi-bin/wcs_demo"
+   "ows_contactorganization" "OSGeo"
+   "ows_contactperson"    "Frank Warmerdam"
+   "ows_contactposition"  "Software Developer"
+   "ows_contactvoicetelephone" "(613) 754-2041"
+   "ows_contactfacsimiletelephone" "(613) 754-2041x343"
+   "ows_address" "3594 Foymount Rd"
+   "ows_city" "Eganville"
+   "ows_stateorprovince" "Ontario"
+   "ows_postcode" "K0J 1T0"
+   "ows_country" "Canada"
+   "ows_contactelectronicmailaddress" "warmerdam@pobox.com"
+   "ows_hoursofservice" "0800h - 1600h EST"
+   "ows_contactinstructions" "during hours of service"
+   "ows_role" "staff"
+   "ows_enable_request" "*" 
+
+   # OGC:WCS
+   "wcs_label"    "Test Label"
+   "wcs_description" "Test description"
+   "wcs_onlineresource"    "http://devgeo.cciw.ca/cgi-bin/mapserv/ecows"
+   "wcs_metadatalink_href" "http://devgeo.cciw.ca/index.html"
+  END
+END
+
+LAYER 
+  NAME grey
+  TYPE raster
+  STATUS ON
+  DUMP TRUE
+  TILEINDEX "wcs_index.shp"
+  TILEITEM "location"
+
+  PROJECTION
+    "init=epsg:32611"
+  END
+  METADATA   
+   "ows_extent" "0 0 400 300"
+   "wcs_label" "Test label"
+   "ows_srs"	"EPSG:32611 EPSG:4326"
+   "wcs_resolution" "10 10"
+   "wcs_bandcount" "1"
+   "wcs_formats" "GEOTIFF_BYTE GDPNG AAIGRID"
+   "wcs_nativeformat" "GeoTIFF"
+   "wcs_description" "Test description"
+   "wcs_metadatalink_href" "http://www.gdal.org/metadata_test_link.html"
+   "wcs_keywordlist" "test,mapserver"
+   "wcs_abstract" "Category: Image
+Product: IKONOS-2 PAN/MSI
+Acquisition: 1999-10-11 18:47"
+   "wcs_rangeset_axes" "bands"
+   "wcs_rangeset_name" "Landsat 5 TM Bands"
+   "wcs_rangeset_label" "Bands"
+   "wcs_rangeset_description" "Bands for Landsat 5 TM"
+   "wcs_rangeset_nullvalue" "-99"
+   "wcs_imagemode" "BYTE"
+  END
+END
+
+END

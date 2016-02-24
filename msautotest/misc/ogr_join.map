@@ -1,0 +1,38 @@
+#
+# Test of OGR SQL JOIN support via MapServer.  
+#
+# A joined field is used for the EXPRESSION used to classify the returned 
+# polygons.
+#   
+# REQUIRES: INPUT=OGR OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT 478300 4762880 481650 4765610
+SIZE 400 300
+
+IMAGETYPE png
+
+LAYER
+  NAME shppoly
+  TYPE polygon
+  CONNECTIONTYPE OGR
+  CONNECTION "data/shppoly"
+  DATA "SELECT eas_id, idlink.Name FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.eas_id"
+  STATUS default
+  CLASSITEM "idlink.Name"
+  CLASS
+    NAME "selected"
+    COLOR 0 0 255
+    OUTLINECOLOR 255 0 0
+    EXPRESSION "_158_"
+  END
+  CLASS
+    NAME "normal"
+    COLOR 0 255 0
+    OUTLINECOLOR 255 0 0
+  END
+END
+
+END

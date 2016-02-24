@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<wcs:Capabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:swe="http://www.opengis.net/swe/2.0" xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd " version="2.0.1" updateSequence="2007-10-30T14:23:38Z">
+  <ows:ServiceProvider>
+    <ows:ProviderName>OSGeo</ows:ProviderName>
+    <ows:ProviderSite xlink:type="simple" xlink:href="http://198.202.74.215/cgi-bin/wcs_demo"/>
+    <ows:ServiceContact>
+      <ows:IndividualName>Frank Warmerdam</ows:IndividualName>
+      <ows:PositionName>Software Developer</ows:PositionName>
+      <ows:ContactInfo>
+        <ows:Phone>
+          <ows:Voice>(613) 754-2041</ows:Voice>
+          <ows:Facsimile>(613) 754-2041x343</ows:Facsimile>
+        </ows:Phone>
+        <ows:Address>
+          <ows:DeliveryPoint>3594 Foymount Rd</ows:DeliveryPoint>
+          <ows:City>Eganville</ows:City>
+          <ows:AdministrativeArea>Ontario</ows:AdministrativeArea>
+          <ows:PostalCode>K0J 1T0</ows:PostalCode>
+          <ows:Country>Canada</ows:Country>
+          <ows:ElectronicMailAddress>warmerdam@pobox.com</ows:ElectronicMailAddress>
+        </ows:Address>
+        <ows:OnlineResource xlink:type="simple" xlink:href="http://198.202.74.215/cgi-bin/wcs_demo"/>
+        <ows:HoursOfService>0800h - 1600h EST</ows:HoursOfService>
+        <ows:ContactInstructions>during hours of service</ows:ContactInstructions>
+      </ows:ContactInfo>
+      <ows:Role>staff</ows:Role>
+    </ows:ServiceContact>
+  </ows:ServiceProvider>
+</wcs:Capabilities>

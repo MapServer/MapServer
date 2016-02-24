@@ -1,0 +1,72 @@
+# RUN_PARMS: force_pc256_rgba.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: force_pc256_rgba.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: force_pc256_rgba.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+
+#
+# Tests the quantization option allowing conversion of 
+# RGB or RGBA images to 8bit just before saving to PNG.
+#
+# See http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1690
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 150
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+SHAPEPATH "../gdal"
+IMAGETYPE png
+
+OUTPUTFORMAT
+  NAME png
+  DRIVER "AGG/PNG"
+  EXTENSION "png"
+  MIMETYPE "image/png"
+  IMAGEMODE RGBA
+  TRANSPARENT ON
+  FORMATOPTION "QUANTIZE_FORCE=ON"
+  FORMATOPTION "QUANTIZE_DITHER=OFF"
+  FORMATOPTION "QUANTIZE_COLORS=256"
+END
+OUTPUTFORMAT
+  NAME cairopng
+  DRIVER "CAIRO/PNG"
+  EXTENSION "png"
+  MIMETYPE "image/png"
+  IMAGEMODE RGBA
+  TRANSPARENT ON
+  FORMATOPTION "QUANTIZE_FORCE=ON"
+  FORMATOPTION "QUANTIZE_DITHER=OFF"
+  FORMATOPTION "QUANTIZE_COLORS=256"
+END
+
+OUTPUTFORMAT
+  NAME gif
+  DRIVER "GD/GIF"
+  EXTENSION "gif"
+  MIMETYPE "image/gif"
+  IMAGEMODE PC256
+  TRANSPARENT ON
+  FORMATOPTION "QUANTIZE_FORCE=ON"
+  FORMATOPTION "QUANTIZE_DITHER=OFF"
+  FORMATOPTION "QUANTIZE_COLORS=256"
+END
+
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA data/rgba.tif
+END
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  DATA data/grid.gif
+END
+
+END # of map file

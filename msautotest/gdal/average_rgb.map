@@ -1,0 +1,30 @@
+#
+# Test averaged resampling.  Results currently depend on the 2x oversampling
+# for mapresample.c.
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 12 9
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png24
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  PROCESSING "RESAMPLE=AVERAGE"
+#  PROCESSING "LOAD_FULL_RES_IMAGE=YES"
+  DATA data/rgb.tif
+END
+
+END # of map file

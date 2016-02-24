@@ -1,0 +1,72 @@
+# RUN_PARMS: line_anchorpoint.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_anchorpoint.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+
+MAP
+  IMAGECOLOR 255 255 255
+  IMAGETYPE "PNG"
+  NAME "mf"
+  SIZE 256 256
+  EXTENT 0 0 110 110
+  STATUS ON
+  UNITS DD
+
+  symbol
+    name "vert"
+    type vector
+    points 0 0 0 1 end
+    anchorpoint 0 0
+  end
+
+  LAYER 
+    NAME "poly"
+    TYPE POLYGON
+    STATUS DEFAULT
+    FEATURE
+      POINTS
+         30 30
+         30 80
+         80 80
+         80 30
+         30 30
+      END #POINTS
+    END #FEATURE
+    CLASS
+      STYLE
+        COLOR 200 200 200
+        OUTLINECOLOR 0 255 0
+      END
+      STYLE
+        OUTLINECOLOR 0 255 0
+        SYMBOL "vert"
+        GAP -10
+        SIZE 5
+      END
+    END #CLASS
+  END 
+  LAYER 
+    NAME "line"
+    TYPE LINE
+    STATUS DEFAULT
+    FEATURE
+      POINTS
+        0 0
+        50 50
+        80 100
+        100 100
+        100 20
+      END #POINTS
+    END #FEATURE
+    CLASS
+      STYLE
+        COLOR 0 0 0
+        WIDTH 1
+      END
+      STYLE
+        COLOR 255 0 0
+        SYMBOL "vert"
+        GAP -10
+        SIZE 5
+      END
+    END #CLASS
+  END 
+END #MAP

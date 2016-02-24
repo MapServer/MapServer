@@ -1,0 +1,45 @@
+# RUN_PARMS: line_label_follow_offsetted.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_label_follow_offsetted.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: line_label_follow_offsetted.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_label_follow_offsetted.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_label_follow_offsetted.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+
+imagetype png
+size 400 300
+extent -166.245673 -55.551347 174.019748 53.883753
+shapepath "../misc/data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+
+layer
+    type line
+    data "testlines"
+    status default
+    name "lines"
+    class
+        text "label text"
+        style
+            color 0 0 255
+            width 5
+        end
+        style
+            color 255 255 255
+            width 3
+        end
+        label
+            type truetype
+            font "default"
+            size 8
+            angle follow
+            offset 5 -99
+            color 0 0 0
+            outlinecolor 255 255 255
+            outlinewidth 3
+        end
+    end
+end
+
+end

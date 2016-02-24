@@ -1,0 +1,48 @@
+#
+# Tests label printing and GIF output (the default)
+#
+# REQUIRES: OUTPUT=GIF
+# RUN_PARMS: helloworld.gif
+
+MAP
+       NAME HELLO
+       STATUS ON
+       EXTENT 59 10 60 11
+       SIZE 400 300
+       IMAGECOLOR 200 255 255
+       DEBUG 5
+       PROJECTION
+          "init=epsg:26915"
+       END
+       WEB
+        METADATA
+            author "me!"
+        END
+       END
+
+       LAYER
+               DEBUG 5
+               DUMP TRUE
+               NAME "credits"
+
+               STATUS DEFAULT
+               TRANSFORM FALSE
+               TYPE POINT
+               PROJECTION
+                  "init=epsg:26915"
+               END
+               FEATURE
+                       POINTS
+                               20 25
+                       END
+                       TEXT 'Hello world'
+               END
+               TEMPLATE "template/dummy.tmpl"
+               CLASS
+                       LABEL
+                               TYPE BITMAP
+                               COLOR 0 0 0
+                       END
+               END
+       END
+END

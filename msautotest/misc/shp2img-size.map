@@ -1,0 +1,34 @@
+#
+# Tests shp2img binary to ensure size option is respected. 
+#
+# REQUIRES: OUTPUT=GIF
+# RUN_PARMS: shp2img-size.gif [SHP2IMG] -s 640 480 -m [MAPFILE] -o [RESULT]  
+
+MAP
+       NAME HELLO
+       STATUS ON
+       EXTENT 59 10 60 11
+       SIZE 400 300
+       IMAGECOLOR 200 255 255
+
+       IMAGETYPE gif
+
+       LAYER
+               NAME "credits"
+               STATUS DEFAULT
+               TRANSFORM FALSE
+               TYPE ANNOTATION
+               FEATURE
+                       POINTS
+                               200 250
+                       END
+                       TEXT 'Hello world'
+               END
+               CLASS
+                       LABEL
+                               TYPE BITMAP
+                               COLOR 0 0 0
+                       END
+               END
+       END
+END

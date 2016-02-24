@@ -1,0 +1,164 @@
+# RUN_PARMS: resolution_point_1.png [MAPSERV] QUERY_STRING="map.resolution=72&WIDTH=25&HEIGHT=25&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=point" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_point_2.png [MAPSERV] QUERY_STRING="map.resolution=144&WIDTH=50&HEIGHT=50&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=point" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_point_4.png [MAPSERV] QUERY_STRING="map.resolution=288&WIDTH=100&HEIGHT=100&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=point" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_line_1.png [MAPSERV] QUERY_STRING="map.resolution=72&WIDTH=25&HEIGHT=25&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=line" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_line_2.png [MAPSERV] QUERY_STRING="map.resolution=144&WIDTH=50&HEIGHT=50&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=line" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_line_4.png [MAPSERV] QUERY_STRING="map.resolution=288&WIDTH=100&HEIGHT=100&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=line" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_polygon_1.png [MAPSERV] QUERY_STRING="map.resolution=72&WIDTH=25&HEIGHT=25&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=polygon" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_polygon_2.png [MAPSERV] QUERY_STRING="map.resolution=144&WIDTH=50&HEIGHT=50&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=polygon" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_polygon_4.png [MAPSERV] QUERY_STRING="map.resolution=288&WIDTH=100&HEIGHT=100&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=polygon" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_text_1.png [MAPSERV] QUERY_STRING="map.resolution=72&WIDTH=25&HEIGHT=25&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=text" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_text_2.png [MAPSERV] QUERY_STRING="map.resolution=144&WIDTH=50&HEIGHT=50&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=text" > [RESULT_DEMIME]
+# RUN_PARMS: resolution_text_4.png [MAPSERV] QUERY_STRING="map.resolution=288&WIDTH=100&HEIGHT=100&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=text" > [RESULT_DEMIME]
+# RUN_PARMS: legend_resolution_point_1.png [MAPSERV] QUERY_STRING="map.resolution=72&map.legend=keysize+20+20&WIDTH=25&HEIGHT=25&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetLegendGraphic&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=point" > [RESULT_DEMIME]
+# RUN_PARMS: legend_resolution_point_2.png [MAPSERV] QUERY_STRING="map.resolution=144&map.legend=keysize+40+40&WIDTH=50&HEIGHT=50&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetLegendGraphic&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=point" > [RESULT_DEMIME]
+# RUN_PARMS: legend_resolution_point_4.png [MAPSERV] QUERY_STRING="map.resolution=288&map.legend=keysize+80+80&WIDTH=100&HEIGHT=100&map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetLegendGraphic&SRS=EPSG:4326&BBOX=0,0,100,100&FORMAT=image/png&STYLES=&LAYERS=point" > [RESULT_DEMIME]
+#
+# REQUIRES: OUTPUT=PNG
+#
+# map scale for these requests is 1259929152
+MAP
+
+STATUS ON
+EXTENT 0 0 99 99
+SIZE 50 50
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+DEFRESOLUTION 72
+UNITS dd
+
+LEGEND
+  LABEL
+    TYPE TRUETYPE
+    FONT "default"
+    SIZE 8
+  END
+END
+
+PROJECTION
+   "init=epsg:4326"
+END
+
+WEB
+  METADATA
+    "ows_srs" "epsg:4326"
+    "ows_enable_request" "*"
+  END
+END
+
+symbol
+  name "circle"
+  type ellipse
+  points 1 1 end
+  filled true
+end
+
+LAYER
+  NAME "point"
+  TYPE point
+  STATUS on
+  CLASS
+    MINSCALEDENOM 1259929150
+    MAXSCALEDENOM 1259929154
+    NAME "test1"
+    STYLE
+        SYMBOL "circle"
+        COLOR 0 0 255
+        SIZE 10
+        MAXSIZE 15
+    END
+  END
+  CLASS
+    NAME "bogus class to check we got the scale calculation right"
+    STYLE
+        SYMBOL "circle"
+        COLOR 255 0 0
+        SIZE 20
+        MAXSIZE 15
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+  END
+END
+
+LAYER
+  NAME "line"
+  TYPE line
+  STATUS on
+  CLASS
+    NAME "test1"
+    STYLE
+        COLOR 0 0 0
+        WIDTH 1
+    END
+    STYLE
+        SYMBOL "circle"
+        COLOR 0 0 255
+        SIZE 4
+        MAXSIZE 5
+        GAP 10
+    END
+  END
+  FEATURE
+    POINTS
+        0 0 100 100
+    END
+  END
+END
+
+LAYER
+  NAME "polygon"
+  TYPE polygon
+  STATUS on
+  CLASS
+    NAME "test1"
+    STYLE
+        COLOR 0 0 0
+        OUTLINECOLOR 255 0 0
+        WIDTH 1
+    END
+    STYLE
+        SYMBOL "circle"
+        COLOR 0 0 255
+        SIZE 4
+        MAXSIZE 5
+    END
+  END
+  FEATURE
+    POINTS
+        20 20 20 80 80 80 80 20 20 20
+    END
+  END
+END
+
+LAYER
+  NAME "text"
+  TYPE point
+  STATUS on
+  CLASS
+    NAME "test1"
+    LABEL
+      TEXT "Text"
+      TYPE TRUETYPE
+      FONT "default"
+      SIZE 8
+      POSITION lc
+      STYLE
+        SYMBOL "circle"
+        COLOR 0 0 255
+        SIZE 4
+        MAXSIZE 5
+      END
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+  END
+END
+
+END

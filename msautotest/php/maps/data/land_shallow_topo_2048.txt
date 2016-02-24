@@ -1,0 +1,8 @@
+
+DATA "http://earthobservatory.nasa.gov/Newsroom/BlueMarble/Images/land_shallow_topo_2048.tif"
+
+TITLE "Land Surface, Shallow Water, and Shaded Topography"
+
+URL "http://earthobservatory.nasa.gov/Newsroom/BlueMarble/"
+
+ABSTRACT "Much of the information contained in this image came from a single remote-sensing device-NASA’s Moderate Resolution Imaging Spectroradiometer, or MODIS. Flying over 700 km above the Earth onboard the Terra satellite, MODIS provides an integrated tool for observing a variety of terrestrial, oceanic, and atmospheric features of the Earth. The land and coastal ocean portions of these images are based on surface observations collected from June through September 2001 and combined, or composited, every eight days to compensate for clouds that might block the sensor’s view of the surface on any single day. Two different types of ocean data were used in these images: shallow water true color data, and global ocean color (or chlorophyll) data. Topographic shading is based on the GTOPO 30 elevation dataset compiled by the U.S. Geological Survey’s EROS Data Center. MODIS observations of polar sea ice were combined with observations of Antarctica made by the National Oceanic and Atmospheric Administration’s AVHRR sensor—the Advanced Very High Resolution Radiometer. The cloud image is a composite of two days of imagery collected in visible light wavelengths and a third day of thermal infra-red imagery over the poles. Global city lights, derived from 9 months of observations from the Defense Meteorological Satellite Program, are superimposed on a darkened land surface map"

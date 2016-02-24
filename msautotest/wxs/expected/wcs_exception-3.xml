@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="3.0.0" xml:lang="en-US" xsi:schemaLocation="http://www.opengis.net/ows/2.0 http://schemas.opengis.net/ows/2.0/owsExceptionReport.xsd">
+  <ows:Exception exceptionCode="InvalidParameterValue" locator="version">
+    <ows:ExceptionText>msWCSDispatch(): WCS server error. WCS Server does not support VERSION 3.0.0.</ows:ExceptionText>
+  </ows:Exception>
+</ows:ExceptionReport>

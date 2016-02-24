@@ -1,0 +1,12 @@
+  CONNECTIONTYPE POSTGIS
+  CONNECTION "dbname=msautotest user=postgres"
+  DATA "the_geom from bdry_counpy2 using unique gid"
+  STATUS OFF
+  TYPE POLYGON
+  CLASS
+    STYLE 
+      COLOR 255 100 100 
+      OUTLINECOLOR 181 181 181
+    END
+  END
+  TEMPLATE 'void'

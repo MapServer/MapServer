@@ -1,0 +1,146 @@
+Content-Type: application/vnd.ogc.wms_xml
+
+<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
+ [
+ <!ELEMENT VendorSpecificCapabilities EMPTY>
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.1.1" updateSequence="123">
+
+<Service>
+  <Name>OGC:WMS</Name>
+  <Title>Test simple wms</Title>
+  <KeywordList>
+      <Keyword>ogc</Keyword>
+      <Keyword>wms</Keyword>
+      <Keyword>mapserver</Keyword>
+  </KeywordList>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.mapserver.org/"/>
+  <ContactInformation>
+    <ContactPersonPrimary>
+      <ContactPerson>Tom Kralidis</ContactPerson>
+      <ContactOrganization>MapServer</ContactOrganization>
+    </ContactPersonPrimary>
+      <ContactPosition>self</ContactPosition>
+    <ContactAddress>
+        <AddressType>postal</AddressType>
+        <Address>123 SomeRoad Road</Address>
+        <City>Toronto</City>
+        <StateOrProvince>Ontario</StateOrProvince>
+        <PostCode>xxx-xxx</PostCode>
+        <Country>Canada</Country>
+    </ContactAddress>
+      <ContactVoiceTelephone>+xx-xxx-xxx-xxxx</ContactVoiceTelephone>
+      <ContactFacsimileTelephone>+xx-xxx-xxx-xxxx</ContactFacsimileTelephone>
+  <ContactElectronicMailAddress>tomkralidis@xxxxxxx.xxx</ContactElectronicMailAddress>
+  </ContactInformation>
+  <Fees>None</Fees>
+  <AccessConstraints>None</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>application/vnd.ogc.wms_xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/png</Format>
+      <Format>image/png; mode=24bit</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/gif</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>image/tiff</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/plain</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+    <DescribeLayer>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeLayer>
+    <GetLegendGraphic>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/gif</Format>
+      <Format>image/png; mode=8bit</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetLegendGraphic>
+    <GetStyles>
+      <Format>text/xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetStyles>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+    <Format>application/vnd.ogc.se_inimage</Format>
+    <Format>application/vnd.ogc.se_blank</Format>
+  </Exception>
+  <VendorSpecificCapabilities />
+  <UserDefinedSymbolization SupportSLD="1" UserLayer="0" UserStyle="1" RemoteWFS="0"/>
+  <Layer>
+    <Name>WMS_TEST</Name>
+    <Title>My Layers</Title>
+    <Abstract>These are my layers</Abstract>
+    <KeywordList>
+        <Keyword>layers</Keyword>
+        <Keyword>list</Keyword>
+    </KeywordList>
+    <SRS>EPSG:42304</SRS>
+    <SRS>EPSG:42101</SRS>
+    <SRS>EPSG:4269</SRS>
+    <SRS>EPSG:4326</SRS>
+    <LatLonBoundingBox minx="-67.5725" miny="42" maxx="-58.9275" maxy="48.5" />
+    <BoundingBox SRS="EPSG:4326"
+                minx="-67.5725" miny="42" maxx="-58.9275" maxy="48.5" />
+    <Layer queryable="1" opaque="0" cascaded="0">
+        <Name>road</Name>
+        <Title>road</Title>
+        <SRS>EPSG:43204</SRS>
+        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="70" height="23">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=road&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>

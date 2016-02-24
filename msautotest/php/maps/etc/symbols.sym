@@ -1,0 +1,159 @@
+SYMBOLSET
+
+Symbol
+Name 'tent'
+Type VECTOR
+Filled TRUE
+Points
+0 1
+.5 0
+1 1
+.75 1
+.5 .5
+.25 1
+0 1
+END
+END 
+
+Symbol
+Name 'star'
+Type VECTOR
+Filled TRUE
+Points
+0 .375
+.35 .375
+.5 0
+.65 .375
+1 .375
+.75 .625
+.875 1
+.5 .75
+.125 1
+.25 .625
+END
+END 
+
+Symbol
+Name 'triangle'
+Type VECTOR
+Filled TRUE
+Points
+0 1
+.5 0
+1 1
+0 1
+END
+END 
+
+Symbol
+Name 'square'
+Type VECTOR
+Filled TRUE
+Points
+0 1
+0 0
+1 0
+1 1
+0 1
+END
+END 
+
+Symbol
+Name 'plus'
+Type VECTOR
+Points
+.5 0
+.5 1
+-99 -99
+0 .5
+1 .5
+END
+END 
+
+Symbol
+Name 'cross'
+Type VECTOR
+Points
+0 0
+1 1
+-99 -99
+0 1
+1 0
+END
+END
+
+Symbol
+Name 'circle'
+Type ELLIPSE
+Filled TRUE
+Points
+1 1
+END
+END 
+
+
+Symbol
+Type VECTOR
+TRANSPARENT 0
+Points
+0 1
+1 1
+END
+END 
+
+Symbol
+Type VECTOR
+TRANSPARENT 0
+Points
+1 0
+1 1
+END
+END 
+
+Symbol
+Type VECTOR
+TRANSPARENT 0
+Points
+0 0
+1 1
+END
+END 
+
+Symbol
+Type VECTOR
+TRANSPARENT 0
+Points
+0 1
+1 0
+END
+END 
+
+Symbol
+Type VECTOR
+Points
+0 1
+1 0
+-99 -99
+0 0
+1 1
+END
+END 
+
+Symbol
+Type ELLIPSE
+Filled TRUE
+Points
+1 1
+END
+END 
+
+SYMBOL
+  NAME "natcap"
+  TYPE TRUETYPE
+  FONT fritqat-bold
+  FILLED true
+  ANTIALIAS true
+  CHARACTER "&#125;"
+END
+
+END

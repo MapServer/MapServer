@@ -1,0 +1,95 @@
+Content-Type: multipart/mixed; boundary=xxOGRBoundaryxx
+
+--xxOGRBoundaryxx
+Content-Disposition: attachment; filename=popplace.mid
+Content-Type: application/binary
+Content-Transfer-Encoding: binary
+
+"CAJOA","Digby",0,2
+
+--xxOGRBoundaryxx
+Content-Disposition: attachment; filename=popplace.mif
+Content-Type: application/binary
+Content-Transfer-Encoding: binary
+
+Version 300
+Charset "Neutral"
+Delimiter ","
+CoordSys Earth Projection 3, 74, "m", -95, 49, 49, 77, 0, 0
+Columns 4
+  UNIQUE_KEY Char(5)
+  NAME Char(50)
+  CAPITAL Integer(3)
+  POP_CLASS Integer(3)
+Data
+
+Point 2279399 39858
+    Symbol (35,0,12)
+
+--xxOGRBoundaryxx
+Content-Disposition: attachment; filename=road.mid
+Content-Type: application/binary
+Content-Transfer-Encoding: binary
+
+1030,1024,3,3,6371.089,670,68,"",""
+1034,1030,3,3,1729.789,673,68,"",""
+1030,1064,3,3,41747.066,693,68,"",""
+
+--xxOGRBoundaryxx
+Content-Disposition: attachment; filename=road.mif
+Content-Type: application/binary
+Content-Transfer-Encoding: binary
+
+Version 300
+Charset "Neutral"
+Delimiter ","
+CoordSys Earth Projection 3, 74, "m", -95, 49, 49, 77, 0, 0
+Columns 9
+  FNODE_ Integer(11)
+  TNODE_ Integer(11)
+  LPOLY_ Integer(11)
+  RPOLY_ Integer(11)
+  LENGTH Decimal(15,3)
+  ROAD_ID Integer(11)
+  F_CODE Integer(5)
+  NAME_E Char(26)
+  NAME_F Char(26)
+Data
+
+Pline 5
+2280710.5 34889.78515625
+2280279.75 36437.48046875
+2280385.5 37863.453125
+2280649.5 39078.1796875
+2281886.75 40764.59375
+    Pen (1,2,0)
+Pline 3
+2281531.25 33374.8828125
+2281204 34140.06640625
+2280710.5 34889.78515625
+    Pen (1,2,0)
+Pline 21
+2280710.5 34889.78515625
+2278700.25 34289.77734375
+2277367 34095.06640625
+2275273.5 32945.04296875
+2273560.25 32367.904296875
+2271657.5 31028.1015625
+2270706.25 30262.994140625
+2269185 28924.431640625
+2267664.25 27395.267578125
+2266717 24724.93359375
+2266150.5 22436.806640625
+2265203 19957.0703125
+2264825.25 18431.611328125
+2264069.5 15380.8896484375
+2263694.25 12712.42578125
+2263316 11377.5546875
+2262749.25 8899.0517578125
+2262562 7374.19482421875
+2262183.75 6229.76904296875
+2261995.75 5086.12451171875
+2261430.5 1845.39770507812
+    Pen (1,2,0)
+
+--xxOGRBoundaryxx--

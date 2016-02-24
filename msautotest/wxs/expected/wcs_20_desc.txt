@@ -1,0 +1,57 @@
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<wcs:CoverageDescriptions xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:swe="http://www.opengis.net/swe/2.0" xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd ">
+  <wcs:CoverageDescription gml:id="grey">
+    <gml:boundedBy>
+      <gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/32611" axisLabels="x y" uomLabels="m m" srsDimension="2">
+        <gml:lowerCorner>0 0</gml:lowerCorner>
+        <gml:upperCorner>400 300</gml:upperCorner>
+      </gml:Envelope>
+    </gml:boundedBy>
+    <wcs:CoverageId>grey</wcs:CoverageId>
+    <gml:domainSet>
+      <gml:RectifiedGrid dimension="2" gml:id="grid_grey">
+        <gml:limits>
+          <gml:GridEnvelope>
+            <gml:low>0 0</gml:low>
+            <gml:high>39 29</gml:high>
+          </gml:GridEnvelope>
+        </gml:limits>
+        <gml:axisLabels>x y</gml:axisLabels>
+        <gml:origin>
+          <gml:Point gml:id="grid_origin_grey" srsName="http://www.opengis.net/def/crs/EPSG/0/32611">
+            <gml:pos>0.000000 300.000000</gml:pos>
+          </gml:Point>
+        </gml:origin>
+        <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/32611">10.000000 0</gml:offsetVector>
+        <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/32611">0 -10.000000</gml:offsetVector>
+      </gml:RectifiedGrid>
+    </gml:domainSet>
+    <gmlcov:rangeType>
+      <swe:DataRecord>
+        <swe:field name="bands">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">-99</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+      </swe:DataRecord>
+    </gmlcov:rangeType>
+    <wcs:ServiceParameters>
+      <wcs:CoverageSubtype>RectifiedGridCoverage</wcs:CoverageSubtype>
+      <wcs:nativeFormat>image/tiff</wcs:nativeFormat>
+    </wcs:ServiceParameters>
+  </wcs:CoverageDescription>
+</wcs:CoverageDescriptions>

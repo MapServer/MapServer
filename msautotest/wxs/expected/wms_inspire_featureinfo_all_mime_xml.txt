@@ -1,0 +1,175 @@
+Content-Type: application/vnd.ogc.gml; charset=UTF-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<msGMLOutput 
+	 xmlns:gml="http://www.opengis.net/gml"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<TN.CommonTransportElements.TransportArea_layer>
+		<TN.CommonTransportElements.TransportArea_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>12.682645,53.430593 12.693456,53.433864</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<VALIDFROM>2010-09-01 00:00:00</VALIDFROM>
+			<VALIDTO></VALIDTO>
+			<TRANSPORTA>41</TRANSPORTA>
+			<NETWORKARE>41</NETWORKARE>
+			<BEGINLIFES></BEGINLIFES>
+			<ENDLIFESPA></ENDLIFESPA>
+			<INSPIREID>55da3850-1cf7-11e1-8bc2-0800700c9a67</INSPIREID>
+			<NETWORKELE>41</NETWORKELE>
+			<CROSSREFER>0</CROSSREFER>
+			<NETWORKCON>0</NETWORKCON>
+			<NETWORKREF>0</NETWORKREF>
+			<GRAMMATICA>common</GRAMMATICA>
+			<GRAMMAT_01>singular</GRAMMAT_01>
+			<LANGUAGE>german</LANGUAGE>
+			<NAMESTATUS>official</NAMESTATUS>
+			<NATIVENESS>endonym</NATIVENESS>
+			<PRONUNCIAT></PRONUNCIAT>
+			<SOURCEOFNA>DataSpec_TN</SOURCEOFNA>
+			<SPELLING>Bahnhofsgelände</SPELLING>
+			<GEOGRAPHIC>41</GEOGRAPHIC>
+			<TRANSPORTO>41</TRANSPORTO>
+		</TN.CommonTransportElements.TransportArea_feature>
+	</TN.CommonTransportElements.TransportArea_layer>
+	<TN.CommonTransportElements.TransportLink_layer>
+		<TN.CommonTransportElements.TransportLink_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>12.684322,53.431458 12.691894,53.432677</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<VALIDFROM>2010-02-01 00:00:00</VALIDFROM>
+			<VALIDTO></VALIDTO>
+			<TRANSPORTL>51</TRANSPORTL>
+			<FICTITIOUS>F</FICTITIOUS>
+			<LINKID>51</LINKID>
+			<GRADESEPAR>0</GRADESEPAR>
+			<ENDNODE>0</ENDNODE>
+			<STARTNODE>38</STARTNODE>
+			<GENERALISE>51</GENERALISE>
+			<LINKSETID>0</LINKSETID>
+			<BEGINLIFES>*</BEGINLIFES>
+			<ENDLIFESPA></ENDLIFESPA>
+			<INSPIREID> 55da3850-1cf7-11e1-8bc2-080920039a6</INSPIREID>
+			<NETWORKELE>751</NETWORKELE>
+			<CROSSREFER>0</CROSSREFER>
+			<NETWORKCON>0</NETWORKCON>
+			<NETWORKREF>0</NETWORKREF>
+			<GRAMMATICA>*common</GRAMMATICA>
+			<GRAMMAT_01> singular</GRAMMAT_01>
+			<LANGUAGE> german</LANGUAGE>
+			<NAMESTATUS> official</NAMESTATUS>
+			<NATIVENESS> endonym</NATIVENESS>
+			<PRONUNCIAT></PRONUNCIAT>
+			<SOURCEOFNA></SOURCEOFNA>
+			<SPELLING></SPELLING>
+			<GEOGRAPHIC>51</GEOGRAPHIC>
+			<TRANSPORTO>51</TRANSPORTO>
+		</TN.CommonTransportElements.TransportLink_feature>
+	</TN.CommonTransportElements.TransportLink_layer>
+	<TN.CommonTransportElements.TransportNode_layer>
+		<TN.CommonTransportElements.TransportNode_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>12.687376,53.432112 12.687376,53.432112</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<VALIDFROM></VALIDFROM>
+			<VALIDTO></VALIDTO>
+			<TRANSPORTN>29</TRANSPORTN>
+			<NODEID>29</NODEID>
+			<BEGINLIFES></BEGINLIFES>
+			<ENDLIFESPA></ENDLIFESPA>
+			<INSPIREID>1503b5bc-1fff-11e1-a415-4ae64824019b</INSPIREID>
+			<NETWORKELE>29</NETWORKELE>
+			<CROSSREFER>0</CROSSREFER>
+			<NETWORKCON>300</NETWORKCON>
+			<NETWORKREF>0</NETWORKREF>
+			<GRAMMATICA>common</GRAMMATICA>
+			<GRAMMAT_01>singular</GRAMMAT_01>
+			<LANGUAGE>german</LANGUAGE>
+			<NAMESTATUS>official</NAMESTATUS>
+			<NATIVENESS>endonym</NATIVENESS>
+			<PRONUNCIAT></PRONUNCIAT>
+			<SOURCEOFNA>DataSpec_TN</SOURCEOFNA>
+			<SPELLING>Eisenbahnbahnhof Musterstadt</SPELLING>
+			<GEOGRAPHIC>29</GEOGRAPHIC>
+			<TRANSPORTO>29</TRANSPORTO>
+		</TN.CommonTransportElements.TransportNode_feature>
+	</TN.CommonTransportElements.TransportNode_layer>
+	<TN.RailTransportNetwork.RailwayLink_layer>
+		<TN.RailTransportNetwork.RailwayLink_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>12.684322,53.431458 12.691894,53.432677</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<FICTITIOUS>?</FICTITIOUS>
+			<RAILWAYLIN>51</RAILWAYLIN>
+			<VALIDFROM>2010-02-01 00:00:00</VALIDFROM>
+			<VALIDTO></VALIDTO>
+			<TRANSPORTL>51</TRANSPORTL>
+			<GRAMMATICA>common</GRAMMATICA>
+			<GRAMMAT_01>singular</GRAMMAT_01>
+			<LANGUAGE>german</LANGUAGE>
+			<NAMESTATUS>official</NAMESTATUS>
+			<NATIVENESS>endonym</NATIVENESS>
+			<PRONUNCIAT></PRONUNCIAT>
+			<SOURCEOFNA></SOURCEOFNA>
+			<SPELLING></SPELLING>
+			<GEOGRAPHIC>51</GEOGRAPHIC>
+			<TRANSPORTO>51</TRANSPORTO>
+			<FICTITI_01>F</FICTITI_01>
+			<LINKID>51</LINKID>
+			<GRADESEPAR>0</GRADESEPAR>
+			<ENDNODE>39</ENDNODE>
+			<STARTNODE>38</STARTNODE>
+			<GENERALISE>51</GENERALISE>
+			<LINKSETID>0</LINKSETID>
+			<BEGINLIFES></BEGINLIFES>
+			<ENDLIFESPA></ENDLIFESPA>
+			<INSPIREID>55da3850-1cf7-11e1-8bc2-080920039a67</INSPIREID>
+			<NETWORKELE>51</NETWORKELE>
+			<CROSSREFER>0</CROSSREFER>
+			<NETWORKCON>0</NETWORKCON>
+			<NETWORKREF>0</NETWORKREF>
+		</TN.RailTransportNetwork.RailwayLink_feature>
+	</TN.RailTransportNetwork.RailwayLink_layer>
+	<TN.RailTransportNetwork.RailwayStationArea_layer>
+		<TN.RailTransportNetwork.RailwayStationArea_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>12.682645,53.430593 12.693456,53.433864</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<STATIONCOD></STATIONCOD>
+			<RAILWAYSTA>41</RAILWAYSTA>
+			<VALIDFROM>2010-09-01 00:00:00</VALIDFROM>
+			<VALIDTO></VALIDTO>
+			<TRANSPORTA>41</TRANSPORTA>
+			<GRAMMATICA>common</GRAMMATICA>
+			<GRAMMAT_01>singular</GRAMMAT_01>
+			<LANGUAGE>german</LANGUAGE>
+			<NAMESTATUS>official</NAMESTATUS>
+			<NATIVENESS>endonym</NATIVENESS>
+			<PRONUNCIAT></PRONUNCIAT>
+			<SOURCEOFNA>DataSpec_TN</SOURCEOFNA>
+			<SPELLING>Bahnhofsgelände</SPELLING>
+			<GEOGRAPHIC>41</GEOGRAPHIC>
+			<TRANSPORTO>41</TRANSPORTO>
+			<NETWORKARE>41</NETWORKARE>
+			<BEGINLIFES></BEGINLIFES>
+			<ENDLIFESPA></ENDLIFESPA>
+			<INSPIREID>55da3850-1cf7-11e1-8bc2-0800700c9a67</INSPIREID>
+			<NETWORKELE>41</NETWORKELE>
+			<CROSSREFER>0</CROSSREFER>
+			<NETWORKCON>0</NETWORKCON>
+			<NETWORKREF>0</NETWORKREF>
+		</TN.RailTransportNetwork.RailwayStationArea_feature>
+	</TN.RailTransportNetwork.RailwayStationArea_layer>
+</msGMLOutput>

@@ -1,0 +1,102 @@
+Content-Type: application/vnd.ogc.gml
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<msGMLOutput 
+	 xmlns:gml="http://www.opengis.net/gml"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<road_layer>
+	<gml:name>road</gml:name>
+		<road_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>-64.617027,44.558875 -64.370387,45.038703</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<gid>30</gid>
+			<fnode_>903</fnode_>
+			<tnode_>975</tnode_>
+			<lpoly_>3</lpoly_>
+			<rpoly_>3</rpoly_>
+			<length>62312.824</length>
+			<road_>629</road_>
+			<road_id>629</road_id>
+			<f_code>68</f_code>
+			<name_e></name_e>
+			<name_f></name_f>
+		</road_feature>
+		<road_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>-65.127228,44.399110 -64.552161,44.934696</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<gid>31</gid>
+			<fnode_>950</fnode_>
+			<tnode_>1007</tnode_>
+			<lpoly_>3</lpoly_>
+			<rpoly_>3</rpoly_>
+			<length>84563.578</length>
+			<road_>655</road_>
+			<road_id>655</road_id>
+			<f_code>68</f_code>
+			<name_e></name_e>
+			<name_f></name_f>
+		</road_feature>
+		<road_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>-64.577864,44.695012 -63.700184,45.045403</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<gid>39</gid>
+			<fnode_>903</fnode_>
+			<tnode_>908</tnode_>
+			<lpoly_>3</lpoly_>
+			<rpoly_>3</rpoly_>
+			<length>89280.359</length>
+			<road_>1037</road_>
+			<road_id>1037</road_id>
+			<f_code>67</f_code>
+			<name_e></name_e>
+			<name_f></name_f>
+		</road_feature>
+		<road_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>-63.714548,44.642829 -63.700184,44.695012</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<gid>40</gid>
+			<fnode_>908</fnode_>
+			<tnode_>914</tnode_>
+			<lpoly_>3</lpoly_>
+			<rpoly_>3</rpoly_>
+			<length>6193.941</length>
+			<road_>1039</road_>
+			<road_id>1039</road_id>
+			<f_code>67</f_code>
+			<name_e></name_e>
+			<name_f></name_f>
+		</road_feature>
+		<road_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>-64.370387,44.558875 -63.714548,44.679291</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<gid>42</gid>
+			<fnode_>914</fnode_>
+			<tnode_>975</tnode_>
+			<lpoly_>3</lpoly_>
+			<rpoly_>3</rpoly_>
+			<length>58066.332</length>
+			<road_>1047</road_>
+			<road_id>1047</road_id>
+			<f_code>67</f_code>
+			<name_e></name_e>
+			<name_f></name_f>
+		</road_feature>
+	</road_layer>
+</msGMLOutput>

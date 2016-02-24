@@ -1,0 +1,34 @@
+#
+# Test 1: simple mode=query, HTML template 
+# RUN_PARMS: template_test001.html [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=query&qlayer=bdry_counpy2&mapxy=467000+5259000&qformat=html' > [RESULT_DEMIME]
+# RUN_PARMS: template_test002.html [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=query&qlayer=bdry_counpy2&mapxy=467000+5259000&qformat=feature' > [RESULT_DEMIME]
+#
+MAP
+  NAME 'query'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+
+  OUTPUTFORMAT
+    NAME 'html'
+    DRIVER 'TEMPLATE'
+    MIMETYPE 'text/html'
+    FORMATOPTION "FILE=template/html.tmpl"
+  END
+
+  OUTPUTFORMAT
+    NAME 'feature'
+    DRIVER 'TEMPLATE'
+    MIMETYPE 'text/html'
+    FORMATOPTION "FILE=template/feature.tmpl"
+  END
+
+  LAYER
+    NAME 'bdry_counpy2'
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  LAYER
+    NAME 'indx_q100kpy4'
+    INCLUDE 'include/indx_q100kpy4_shapefile.map'
+  END
+END

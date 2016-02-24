@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding="ISO-8859-1"?>
+<DescribeLayerResponse xmlns="http://www.opengis.net/sld" xmlns:ows="http://www.opengis.net/ows" xmlns:se="http://www.opengis.net/se" xmlns:wfs="http://www.opengis.net/wfs" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.opengis.net/sld http://schemas.opengis.net/sld/1.1.0/DescribeLayer.xsd">
+<Version>1.1.0</Version>
+  <LayerDescription>
+    <owsType>wfs</owsType>
+    <se:OnlineResource xlink:type="simple"/>
+    <TypeName>
+      <se:FeatureTypeName>TN.AirTransportNetwork.AirLink</se:FeatureTypeName>
+    </TypeName>
+  </LayerDescription>
+</DescribeLayerResponse>

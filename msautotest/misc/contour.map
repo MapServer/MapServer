@@ -1,0 +1,33 @@
+#
+#
+# Test for Contour Rendering rfc85
+#
+#
+
+MAP
+    NAME TEST_CONTOUR
+    STATUS ON
+    SIZE 300 300
+    EXTENT 3.697829 -16.193665 57.120229 23.8731435
+
+    WEB
+        IMAGEPATH "/tmp/"
+    END
+
+    LAYER
+        NAME "contour"
+        TYPE LINE
+        STATUS DEFAULT
+        CONNECTIONTYPE CONTOUR
+        DATA data/contour_gwm.tif
+        PROCESSING "BANDS=1"
+        PROCESSING "CONTOUR_ITEM=elevation"
+        PROCESSING "CONTOUR_INTERVAL=20"
+        CLASS
+            STYLE
+                WIDTH 1
+                COLOR 255 0 0
+            END
+        END
+    END
+END

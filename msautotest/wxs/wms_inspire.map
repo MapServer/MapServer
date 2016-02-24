@@ -1,0 +1,924 @@
+#
+# Test WMS as INSPIRE View Service
+#
+# Credits to Edward Nash <E.Nash@dvz-mv.de> for preparing the test data and mapfile.
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# Tests for INSPIRE View Service using WMS 1.1.1 & 1.3.0
+# scenario 1 - reference to external inspire service metadata
+#
+# Capabilities 1.3.0 Default
+# RUN_PARMS: wms_inspire_cap.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
+# Capabilities 1.3.0 German
+# RUN_PARMS: wms_inspire_cap_ger.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities&LANGUAGE=ger" > [RESULT_DEVERSION] [RESULT_DEMIME]
+# Capabilities 1.3.0 English
+# RUN_PARMS: wms_inspire_cap_eng.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities&LANGUAGE=eng" > [RESULT_DEVERSION] [RESULT_DEMIME]
+#
+# Capabilities 1.1.1 Default
+# RUN_PARMS: wms_inspire_cap_111.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
+# Capabilities 1.1.1 German
+# RUN_PARMS: wms_inspire_cap_111_ger.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities&LANGUAGE=ger" > [RESULT_DEVERSION] [RESULT_DEMIME]
+# Capabilities 1.1.1 English
+# RUN_PARMS: wms_inspire_cap_111_eng.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities&LANGUAGE=eng" > [RESULT_DEVERSION] [RESULT_DEMIME]
+#
+#
+# GetMap all
+# RUN_PARMS: wms_inspire_map_all.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_map_all_style1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN&STYLES=default&FORMAT=image/png" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_map_all_style2.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN&STYLES=inspire_common:DEFAULT&FORMAT=image/png" > [RESULT_DEMIME]
+#
+#
+# GetMap CommonTransportElements
+#
+# GetMap CommonTransportElements all
+# RUN_PARMS: wms_inspire_map_commontransportelements.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.CommonTransportElements&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap CommonTransportElements TransportNode
+# RUN_PARMS: wms_inspire_map_transportnode.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.CommonTransportElements.TransportNode&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap CommonTransportElements TransportLink
+# RUN_PARMS: wms_inspire_map_transportlink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.CommonTransportElements.TransportLink&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap CommonTransportElements TransportArea
+# RUN_PARMS: wms_inspire_map_transportarea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.CommonTransportElements.TransportArea&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_map_transportarea_style1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.CommonTransportElements.TransportArea&STYLES=inspire_common:DEFAULT&FORMAT=image/png" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_map_transportarea_style2.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.CommonTransportElements.TransportArea&STYLES=TN.CommonTransportElements.TransportArea.Default&FORMAT=image/png" > [RESULT_DEMIME]
+#
+#
+# GetMap RoadTransportNetwork
+#
+# GetMap RoadTransportNetwork all
+# RUN_PARMS: wms_inspire_map_roadtransportnetwork.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RoadTransportNetwork&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap RoadTransportNetwork RoadArea
+# RUN_PARMS: wms_inspire_map_roadarea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RoadTransportNetwork.RoadArea&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap RoadTransportNetwork RoadServiceArea
+# RUN_PARMS: wms_inspire_map_roadservicearea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RoadTransportNetwork.RoadServiceArea&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap RoadTransportNetwork VehicleTrafficArea
+# RUN_PARMS: wms_inspire_map_vehicletrafficarea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RoadTransportNetwork.VehicleTrafficArea&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap RoadTransportNetwork RoadLink
+# RUN_PARMS: wms_inspire_map_roadlink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RoadTransportNetwork.RoadLink&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+#
+#
+# GetMap RailTransportNetwork
+#
+# GetMap RailTransportNetwork all
+# RUN_PARMS: wms_inspire_map_railtransportnetwork.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RailTransportNetwork&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap RailTransportNetwork RailwayArea
+# RUN_PARMS: wms_inspire_map_railwayarea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RailTransportNetwork.RailwayArea&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap RailTransportNetwork RailwayYardArea
+# RUN_PARMS: wms_inspire_map_railwayyardarea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RailTransportNetwork.RailwayYardArea&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap RailTransportNetwork RailwayStationArea
+# RUN_PARMS: wms_inspire_map_railwaystationarea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RailTransportNetwork.RailwayStationArea&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+# GetMap RailTransportNetwork RailwayLink
+# RUN_PARMS: wms_inspire_map_railwaylink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&LAYERS=TN.RailTransportNetwork.RailwayLink&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+#
+#
+# GetMap #4126
+# RUN_PARMS: wms_inspire_map_annotation.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&BBOX=0,0,1,0.2&WIDTH=500&HEIGHT=100&LAYERS=TN&STYLES=&FORMAT=image/png" > [RESULT_DEMIME]
+#
+# GetLegendGraphic all
+# RUN_PARMS: wms_inspire_legendgraphic_all.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN&FORMAT=image/png&STYLE=inspire_common:DEFAULT" > [RESULT_DEMIME]
+#
+# GetLegendGraphic CommonTransportElements
+#
+# GetLegendGraphic CommonTransportElements all
+# RUN_PARMS: wms_inspire_legendgraphic_commontransportelements.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.CommonTransportElements&FORMAT=image/png&STYLE=inspire_common:DEFAULT" > [RESULT_DEMIME]
+# GetLegendGraphic CommonTransportElements TransportNode
+# RUN_PARMS: wms_inspire_legendgraphic_transportnode1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.CommonTransportElements.TransportNode&FORMAT=image/png&STYLE=inspire_common:DEFAULT" > [RESULT_DEMIME]
+# GetLegendGraphic CommonTransportElements TransportNode
+# RUN_PARMS: wms_inspire_legendgraphic_transportnode2.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.CommonTransportElements.TransportNode&FORMAT=image/png&STYLE=TN.CommonTransportElements.TransportNode.Default" > [RESULT_DEMIME]
+# GetLegendGraphic CommonTransportElements TransportLink
+# RUN_PARMS: wms_inspire_legendgraphic_transportlink1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.CommonTransportElements.TransportLink&FORMAT=image/png&STYLE=inspire_common:DEFAULT" > [RESULT_DEMIME]
+# GetLegendGraphic CommonTransportElements TransportLink
+# RUN_PARMS: wms_inspire_legendgraphic_transportlink2.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.CommonTransportElements.TransportLink&FORMAT=image/png&STYLE=TN.CommonTransportElements.TransportLink.Default" > [RESULT_DEMIME]
+# GetLegendGraphic CommonTransportElements TransportArea
+# RUN_PARMS: wms_inspire_legendgraphic_transportarea1.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.CommonTransportElements.TransportArea&FORMAT=image/png&STYLE=inspire_common:DEFAULT" > [RESULT_DEMIME]
+# GetLegendGraphic CommonTransportElements TransportArea
+# RUN_PARMS: wms_inspire_legendgraphic_transportarea2.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.CommonTransportElements.TransportArea&FORMAT=image/png&STYLE=TN.CommonTransportElements.TransportArea.Default" > [RESULT_DEMIME]
+#
+# GetLegendGraphic RoadTransportNetwork all
+# RUN_PARMS: wms_inspire_legendgraphic_roadtransportnetwork.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.RoadTransportNetwork&FORMAT=image/png&STYLE=inspire_common:DEFAULT" > [RESULT_DEMIME]
+#
+# GetLegendGraphic RailTransportNetwork all
+# RUN_PARMS: wms_inspire_legendgraphic_railtransportnetwork.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&SLD_VERSION=1.1.0&LAYER=TN.RailTransportNetwork&FORMAT=image/png&STYLE=inspire_common:DEFAULT" > [RESULT_DEMIME]
+#
+#
+# GetStyles all
+# RUN_PARMS: wms_inspire_styles_all.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN" > [RESULT_DEMIME]
+# GetStyles CommonTransportElements all
+# RUN_PARMS: wms_inspire_styles_commontransportelements.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN.CommonTransportElements" > [RESULT_DEMIME]
+# GetStyles CommonTransportElements TransportNode
+# RUN_PARMS: wms_inspire_styles_transportnode.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN.CommonTransportElements.TransportNode" > [RESULT_DEMIME]
+# GetStyles RoadTransportNetwork all
+# RUN_PARMS: wms_inspire_styles_roadtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN.RoadTransportNetwork" > [RESULT_DEMIME]
+# GetStyles RailTransportNetwork all
+# RUN_PARMS: wms_inspire_styles_railtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN.RailTransportNetwork" > [RESULT_DEMIME]
+#
+#
+# GetFeatureInfo all
+# RUN_PARMS: wms_inspire_featureinfo_all.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
+# RUN_PARMS: wms_inspire_featureinfo_all_mime_xml.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT]
+# RUN_PARMS: wms_inspire_featureinfo_all_mime_plain.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN&LAYERS=TN&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=text/plain" > [RESULT]
+#
+# GetFeatureInfo CommonTransportElements all
+# RUN_PARMS: wms_inspire_featureinfo_commontransportelements.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.CommonTransportElements&LAYERS=TN.CommonTransportElements&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
+# GetFeatureInfo RoadTransportNetwork all
+# RUN_PARMS: wms_inspire_featureinfo_roadtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.RoadTransportNetwork&LAYERS=TN.RoadTransportNetwork&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
+# GetFeatureInfo RailTransportNetwork all
+# RUN_PARMS: wms_inspire_featureinfo_railtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.3.0&service=WMS&request=GetFeatureInfo&QUERY_LAYERS=TN.RailTransportNetwork&LAYERS=TN.RailTransportNetwork&CRS=EPSG:4326&BBOX=53.4177,12.6101,53.4404,12.7593&WIDTH=500&HEIGHT=76&I=260&J=25&INFO_FORMAT=application/vnd.ogc.gml" > [RESULT_DEMIME]
+#
+#
+# DescribeLayer all
+# RUN_PARMS: wms_inspire_describe_all.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+#
+# DescribeLayer CommonTransportElements all
+# RUN_PARMS: wms_inspire_describe_commontransportelements.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN.CommonTransportElements&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+# DescribeLayer CommonTransportElements TransportNode
+# RUN_PARMS: wms_inspire_describe_transportnode.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN.CommonTransportElements.TransportNode&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+# DescribeLayer RoadTransportNetwork all
+# RUN_PARMS: wms_inspire_describe_roadtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN.RoadTransportNetwork&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+# DescribeLayer RailTransportNetwork all
+# RUN_PARMS: wms_inspire_describe_railtransportnetwork.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN.RailTransportNetwork&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+#
+MAP
+
+    NAME "TN" 
+    STATUS ON
+    MAXSIZE 2048
+    SIZE 500 76
+    
+    EXTENT 341250 5921400 351100 5923600
+    UNITS METERS
+
+    IMAGECOLOR 255 255 255
+    SHAPEPATH ./data/inspire
+    FONTSET etc/fonts.txt
+    #FONTSET 'dienste.fonts'
+
+    #
+    # Start of web interface definition
+    #
+    WEB
+
+        IMAGEPATH "/tmp/ms_tmp/"
+        IMAGEURL "/ms_tmp/"
+
+        METADATA
+            "wms_inspire_capabilities" "url"                                    #enables inspire using scenario 1
+            "wms_languages" "ger,eng"                                           #first default, values according ISO 639-2/B
+            "wms_inspire_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=4d5f1402-5b2b-43ec-949f-92d125179318"
+            "wms_inspire_metadataurl_format" "application/vnd.ogc.csw.capabilities.response_xml"
+            "wms_keywordlist_ISO_items" "infoMapAccessService,WMS"                  #value according "classification of spatial data services"
+            "wms_keywordlist_vocabulary" "ISO"
+            "wms_keywordlist" "infoMapAccessService,WMS"
+
+            "wms_title.eng" "INSPIRE test service"
+            "wms_title.ger" "INSPIRE Testdienst"
+            "wms_abstract" "INSPIRE test service used during software develeopment."    #to test fallback
+            "wms_abstract.ger" "Der INSPIRE Testdienst dient der Qualitätsprüfung bei der Softwareentwicklung. Er enthält keine realen Informationen."
+
+            "wms_onlineresource" "http://www.geodaten-mv.de/dienste/inspirevs_test"
+            "wms_srs" "EPSG:25833 EPSG:4326 EPSG:4269 EPSG:3035 EPSG:4258 EPSG:3038 EPSG:3039 EPSG:3040 EPSG:3041 EPSG:3042 EPSG:3043 EPSG:3044 EPSG:3045 EPSG:3046 EPSG:3047"
+            "wms_bbox_extended" "true"
+
+            "wms_service_onlineresource" "http://www.mapserver.org/"
+            "wms_fees" "no conditions apply"                                    #value either "no conditions apply"|default "conditions unknown"|<specific conditions>
+            "wms_accessconstraints" "None"                                      #value according ISO 19115 (MD_RestrictionCode codelist) or default "None"
+
+            "wms_addresstype" "contact"
+            "wms_address" "Lübecker Straße 283"
+            "wms_city" "Schwerin"
+            "wms_stateorprovince" "Mecklenburg-Vorpommern"
+            "wms_postcode" "19059"
+            "wms_country" "Germany"
+            "wms_contactelectronicmailaddress" "geoportal.mv@dvz-mv.de"
+            "wms_contactvoicetelephone" "+49 385 4800 0"
+            "wms_contactperson" "Martin Kofahl"
+            "wms_contactorganization" "DVZ M-V GmbH"                            #responsible organisation
+            "wms_contactposition" "pointOfContact"                              #responsible organisation, value according "INSPIRE Metadata Regulation" (part D6)
+
+            "wms_rootlayer_title.eng" "Transport networks: Road and Railway"
+            "wms_rootlayer_title.ger" "Verkehrsnetze: Straße und Schiene"
+            "wms_rootlayer_abstract.eng" "Examples from the dataspecification transport networks"
+            "wms_rootlayer_abstract.ger" "Beispiele aus der Datenspezifikation Transportnetze"
+            "wms_rootlayer_keywordlist" "Verkehrsnetz"
+
+            "wms_style_name" "inspire_common:DEFAULT"                           #style name
+            "wms_style_title.eng" "INSPIRE Default Style"
+            "wms_style_title.ger" "INSPIRE Standard Stil"
+            #"wms_style_legendurl_width" "287"                                   #override style legendurl (mandatory: width, height, format, href)
+            #"wms_style_legendurl_height" "181"
+            #"wms_style_legendurl_format" "image/png"
+            #"wms_style_legendurl_href" "http://path/to/onlineresource...roadarea"
+
+            "wms_authorityurl_name" "GeoPortal.MV"
+            "wms_authorityurl_href" "http://www.geodaten-mv.de/geomis/"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=4d5f1402-5b2b-43ec-949f-92d125179318"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+
+            "wms_enable_request" "*"
+            "wms_sld_enabled" "false"
+            
+            "wms_encoding" "UTF-8"
+        END
+    END
+
+    PROJECTION
+        "init=epsg:25833"
+    END
+
+    SYMBOL
+        NAME "circle"
+        TYPE ELLIPSE
+        FILLED TRUE
+        POINTS
+            1 1
+        END
+    END
+
+    SYMBOL
+        NAME "square"
+        TYPE VECTOR
+        FILLED TRUE
+        POINTS
+            0 0
+            0 1
+            1 1
+            1 0
+            0 0
+        END
+    END
+
+    #
+    # Start of layer definitions
+    #
+
+    LAYER
+        NAME TN.CommonTransportElements
+        METADATA
+            "wms_title" "TN.CommonTransportElements"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_extent" "12.6108 53.4183 12.7584 53.44"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+        END
+        TYPE POINT
+        PROJECTION
+            "init=epsg:4326"
+        END
+        CLASS
+            GROUP "TestStyle"
+            NAME "TestStyle"
+            STYLE
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.CommonTransportElements.TransportArea
+        METADATA
+            "wms_title.ger" "Generischer Verkehrsbereich"
+            "wms_title.eng" "Common transport area"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.CommonTransportElements.TransportArea.Default_title" "Generic Area Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.CommonTransportElements"
+        END
+
+        DATA "TN.CommonTransportElements.TransportArea.shp"
+        TYPE POLYGON
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.CommonTransportElements.TransportArea.Default"
+        CLASS
+            GROUP "TN.CommonTransportElements.TransportArea.Default"
+            NAME "TN.CommonTransportElements.TransportArea"
+            STYLE
+                COLOR 169 169 169
+                WIDTH 3
+                OUTLINECOLOR 0 0 0
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.CommonTransportElements.TransportArea"
+            STYLE
+                COLOR 128 128 128
+                WIDTH 1
+                OUTLINECOLOR 0 0 0
+            END
+        END
+        CLASS
+            GROUP "TestStyle"
+            NAME "TestStyle"
+            STYLE
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.CommonTransportElements.TransportLink
+        MINSCALEDENOM 5146
+        METADATA
+            "wms_title.ger" "Generisches Verkehrssegment"
+            "wms_title.eng" "Common transport link"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.CommonTransportElements.TransportLink.Default_title" "Generic Link Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.CommonTransportElements"
+        END
+        
+        DATA "TN.CommonTransportElements.TransportLink.shp"
+        TYPE LINE
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.CommonTransportElements.TransportLink.Default"
+        CLASS
+            GROUP "TN.CommonTransportElements.TransportLink.Default"
+            NAME "TN.CommonTransportElements.TransportLink"
+            STYLE
+                COLOR 0 0 0
+                WIDTH 3
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.CommonTransportElements.TransportLink"
+            STYLE
+                COLOR 0 0 0
+                WIDTH 1
+            END
+        END
+    END
+    
+    LAYER
+        NAME TN.CommonTransportElements.TransportNode
+        METADATA
+            "wms_title.ger" "Generischer Verkehrsknotenpunkt"
+            "wms_title.eng" "Common transport node"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.CommonTransportElements.TransportNode.Default_title" "Generic Node Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.CommonTransportElements"
+        END
+
+        DATA "TN.CommonTransportElements.TransportNode.shp"
+        TYPE POINT
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.CommonTransportElements.TransportNode.Default"
+        CLASS
+            GROUP "TN.CommonTransportElements.TransportNode.Default"
+            NAME "TN.CommonTransportElements.TransportNode"
+            STYLE
+                SYMBOL "circle"
+                COLOR 255 0 0
+                SIZE 3
+                OUTLINECOLOR 0 0 0
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.CommonTransportElements.TransportNode"
+            
+            STYLE
+                SYMBOL "square"
+                COLOR 128 128 128
+                SIZE 6
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.RoadTransportNetwork
+        METADATA
+            "wms_title" "TN.RoadTransportNetwork"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_extent" "12.6108 53.4183 12.7584 53.44"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+        END
+        TYPE POINT
+        PROJECTION
+            "init=epsg:4326"
+        END
+    END
+
+    LAYER
+        NAME TN.RoadTransportNetwork.RoadLink
+        METADATA
+            "wms_title.ger" "Straßensegment"
+            "wms_title.eng" "Road link"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.RoadTransportNetwork.RoadLink.Default_title" "RoadLink Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.RoadTransportNetwork"
+        END
+
+        DATA "TN.RoadTransportNetwork.RoadLink.shp"
+        TYPE LINE
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.RoadTransportNetwork.RoadLink.Default"
+        CLASS
+            GROUP "TN.RoadTransportNetwork.RoadLink.Default"
+            NAME "TN.RoadTransportNetwork.RoadLink"
+            STYLE
+                COLOR 0 128 0
+                WIDTH 3
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.RoadTransportNetwork.RoadLink"
+            STYLE
+                COLOR 0 0 0
+                WIDTH 1
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.RoadTransportNetwork.VehicleTrafficArea
+        METADATA
+            "wms_title.ger" "Verkehrsfläche"
+            "wms_title.eng" "Traffic area"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.RoadTransportNetwork.VehicleTrafficArea.Default_title" "Vehicle Traffic Area Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.RoadTransportNetwork"
+        END
+
+        DATA "TN.RoadTransportNetwork.VehicleTrafficArea.shp"
+        TYPE POLYGON
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.RoadTransportNetwork.VehicleTrafficArea.Default"
+        CLASS
+            GROUP "TN.RoadTransportNetwork.VehicleTrafficArea.Default"
+            NAME "TN.RoadTransportNetwork.VehicleTrafficArea"
+            STYLE
+                COLOR 169 169 169
+                OUTLINECOLOR 0 0 0
+                WIDTH 1
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.RoadTransportNetwork.VehicleTrafficArea"
+            STYLE
+                COLOR 128 128 128
+                WIDTH 1
+                OUTLINECOLOR 0 0 0
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.RoadTransportNetwork.RoadServiceArea
+        METADATA
+            "wms_title.ger" "Servicebereich"
+            "wms_title.eng" "Road service area"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.RoadTransportNetwork.RoadServiceArea.Default_title" "Road Service Area Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.RoadTransportNetwork"
+        END
+
+        DATA "TN.RoadTransportNetwork.RoadServiceArea.shp"
+        TYPE POLYGON
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.RoadTransportNetwork.RoadServiceArea.Default"
+        CLASS
+            GROUP "TN.RoadTransportNetwork.RoadServiceArea.Default"
+            NAME "TN.RoadTransportNetwork.RoadServiceArea"
+            STYLE
+                COLOR 169 169 169
+                OUTLINECOLOR 0 0 0
+                WIDTH 1
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.RoadTransportNetwork.RoadServiceArea"
+            STYLE
+                COLOR 128 128 128
+                WIDTH 1
+                OUTLINECOLOR 0 0 0
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.RoadTransportNetwork.RoadArea
+        METADATA
+            "wms_title.ger" "Straßenfläche"
+            "wms_title.eng" "Road area"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.RoadTransportNetwork.RoadArea.Default_title" "Road Area Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.RoadTransportNetwork"
+        END
+
+        DATA "TN.RoadTransportNetwork.RoadArea.shp"
+        TYPE POLYGON
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.RoadTransportNetwork.RoadArea.Default"
+        CLASS
+            GROUP "TN.RoadTransportNetwork.RoadArea.Default"
+            NAME "TN.RoadTransportNetwork.RoadArea"
+            STYLE
+                COLOR 169 169 169
+                OUTLINECOLOR 0 0 0
+                WIDTH 1
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.RoadTransportNetwork.RoadArea"
+            STYLE
+                COLOR 128 128 128
+                WIDTH 1
+                OUTLINECOLOR 0 0 0
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.RailTransportNetwork
+        METADATA
+            "wms_title" "TN.RailTransportNetwork"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_extent" "12.6108 53.4183 12.7584 53.44"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+        END
+        TYPE POINT
+        PROJECTION
+            "init=epsg:4326"
+        END
+    END
+
+    LAYER
+        NAME TN.RailTransportNetwork.RailwayLink
+        METADATA
+            "wms_title.ger" "Eisenbahnverbindung"
+            "wms_title.eng" "Railway link"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.RailTransportNetwork.RailwayLink.Default_title" "Railway Link Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.RailTransportNetwork"
+        END
+
+        DATA "TN.RailTransportNetwork.RailwayLink.shp"
+        TYPE LINE
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.RailTransportNetwork.RailwayLink.Default"
+        CLASS
+            GROUP "TN.RailTransportNetwork.RailwayLink.Default"
+            NAME "TN.RailTransportNetwork.RailwayLink"
+            STYLE
+                COLOR 0 0 0
+                WIDTH 3
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.RailTransportNetwork.RailwayLink"
+            STYLE
+                COLOR 0 0 0
+                WIDTH 1
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.RailTransportNetwork.RailwayStationArea
+        METADATA
+            "wms_title.ger" "Bahnhofsgelände"
+            "wms_title.eng" "Railway station area"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.RailTransportNetwork.RailwayStationArea.Default_title" "Railway Station Area Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.RailTransportNetwork"
+        END
+
+        DATA "TN.RailTransportNetwork.RailwayStationArea.shp"
+        TYPE POLYGON
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.RailTransportNetwork.RailwayStationArea.Default"
+        CLASS
+            GROUP "TN.RailTransportNetwork.RailwayStationArea.Default"
+            NAME "TN.RailTransportNetwork.RailwayStationArea"
+            STYLE
+                COLOR 139 69 19
+                OUTLINECOLOR 0 0 0
+                WIDTH 1
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.RailTransportNetwork.RailwayStationArea"
+            STYLE
+                COLOR 128 128 128
+                WIDTH 1
+                OUTLINECOLOR 0 0 0
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.RailTransportNetwork.RailwayYardArea
+        METADATA
+            "wms_title.ger" "Rangierbahnhofsgelände"
+            "wms_title.eng" "Railway yard area"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.RailTransportNetwork.RailwayYardArea.Default_title" "Railway Yard Area Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.RailTransportNetwork"
+        END
+
+        DATA "TN.RailTransportNetwork.RailwayYardArea.shp"
+        TYPE POLYGON
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.RailTransportNetwork.RailwayYardArea.Default"
+        CLASS
+            GROUP "TN.RailTransportNetwork.RailwayYardArea.Default"
+            NAME "TN.RailTransportNetwork.RailwayYardArea"
+            STYLE
+                COLOR 139 69 19
+                OUTLINECOLOR 0 0 0
+                WIDTH 1
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.RailTransportNetwork.RailwayYardArea"
+            STYLE
+                COLOR 128 128 128
+                WIDTH 1
+                OUTLINECOLOR 0 0 0
+            END
+        END
+    END
+
+    LAYER
+        NAME TN.RailTransportNetwork.RailwayArea
+        METADATA
+            "wms_title.ger" "Bahngelände"
+            "wms_title.eng" "Railway area"
+            "wms_abstract.ger" "Nicht verfügbar"
+            "wms_keywordlist" "no-keyword here"
+            "wms_metadataurl_href" "http://www.geodaten-mv.de/soapServices/CSWStartup?service=CSW&version=2.0.2&request=GetRecordById&outputSchema=http://www.isotc211.org/2005/gmd&ElementSetName=full&Id=3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "wms_metadataurl_format" "text/xml"
+            "wms_metadataurl_type" "TC211"
+            "wms_style_TN.RailTransportNetwork.RailwayArea.Default_title" "Railway Area Default Style"
+            "wms_style_inspire_common:DEFAULT_title.eng" "INSPIRE Default Style"
+            "wms_style_inspire_common:DEFAULT_title.ger" "INSPIRE Standard Stil"
+            "wms_identifier_authority" "GeoPortal.MV"
+            "wms_identifier_value" "http://www.geodaten-mv.de/geomis/#3efef5cf-8643-4e72-92db-6ca4554c12c7"
+            "gml_include_items" "all"
+            "ows_include_items" "all"
+            "wms_layer_group" "/TN.RailTransportNetwork"
+        END
+
+        DATA "TN.RailTransportNetwork.RailwayArea.shp"
+        TYPE POLYGON
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        HEADER   ' '
+        TEMPLATE ' '
+        FOOTER   ' '
+
+        CLASSGROUP "TN.RailTransportNetwork.RailwayArea.Default"
+        CLASS
+            GROUP "TN.RailTransportNetwork.RailwayArea.Default"
+            NAME "TN.RailTransportNetwork.RailwayArea"
+            STYLE
+                COLOR 139 69 19
+                OUTLINECOLOR 0 0 0
+                WIDTH 1
+            END
+        END
+        CLASS
+            GROUP "inspire_common:DEFAULT"
+            NAME "TN.RailTransportNetwork.RailwayArea"
+            STYLE
+                COLOR 128 128 128
+                WIDTH 1
+                OUTLINECOLOR 0 0 0
+            END
+        END
+    END
+
+    LAYER
+        NAME copyright
+        METADATA
+            "wms_enable_request" "!GetCapabilities !GetFeatureInfo"
+            "wms_extent" "341000 5921000 351000 5923000"
+            "wms_srs" "EPSG:25833"
+        END     
+
+        DATA ''
+        TRANSFORM FALSE
+        TYPE ANNOTATION
+        STATUS DEFAULT
+
+        EXTENT 341000 5921000 351000 5923000
+        PROJECTION
+            "init=epsg:25833"
+        END
+
+        FEATURE
+            POINTS 10 10 END
+            TEXT "&#169;&nbsp;Copyright Logo"
+        END
+
+        CLASS
+            LABEL
+                FONT 'VeraBd'
+                COLOR 254 254 254
+                OUTLINECOLOR 30 30 30
+                BUFFER 1
+                TYPE truetype
+                SIZE 7
+                POSITION lr
+                PARTIALS TRUE
+                FORCE TRUE
+            END
+        END
+        
+        TRANSPARENCY 50
+    END
+
+END

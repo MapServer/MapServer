@@ -1,0 +1,24 @@
+
+#
+# Test LUT (RFC GIMP curve file support: 3 curve. 
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE PNG24
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA data/rgb.tif
+  PROCESSING "LUT_1=100:30,160:128,210:200"
+  PROCESSING "LUT_2=128:196"
+END
+
+END # of map file

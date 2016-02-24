@@ -1,0 +1,32 @@
+MAP
+    NAME "sample"
+    STATUS ON
+    SIZE 600 400
+    SYMBOLSET "symbolset"
+    EXTENT -180 -90 180 90
+    UNITS DD
+    SHAPEPATH "data"
+    IMAGECOLOR 255 255 255
+   #FONTSET "fonts.lst"
+    DEBUG 5
+
+    #
+    # Start of web interface definition
+    #
+    WEB
+        IMAGEPATH "/tmp/ms_tmp/"
+        IMAGEURL "/ms_tmp/"
+    END # WEB
+
+    #
+    # Start of layer definitions
+    #
+    LAYER
+        DUMP 5
+        DUMP TRUE
+        NAME 'global-raster'
+        TYPE RASTER
+        STATUS DEFAULT
+        DATA gdalicon.gif
+    END # LAYER
+END # MAP

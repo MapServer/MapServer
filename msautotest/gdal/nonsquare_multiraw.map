@@ -1,0 +1,46 @@
+#
+# Test support for resampling raw mode images with more than one band.
+#
+# See bug 1372. 
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 500 500
+EXTENT 0 0 100 300
+IMAGECOLOR 255 255 0
+
+CONFIG MS_NONSQUARE YES
+
+PROJECTION
+  "+proj=utm +zone=11 +datum=WGS84"
+END
+
+IMAGETYPE rawout
+
+OUTPUTFORMAT
+  NAME rawout
+  DRIVER "GDAL/PNG"
+  IMAGEMODE BYTE
+  FORMATOPTION "BAND_COUNT=3"
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  DATA data/rgba.tif
+
+  PROJECTION
+    "+proj=utm +zone=11 +datum=WGS84"
+  END
+END
+
+END # of map file

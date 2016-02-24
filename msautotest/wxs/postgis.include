@@ -1,0 +1,2 @@
+CONNECTIONTYPE postgis
+CONNECTION "dbname=msautotest user=postgres"

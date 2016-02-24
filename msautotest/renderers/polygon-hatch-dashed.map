@@ -1,0 +1,53 @@
+# RUN_PARMS: polygon-hatch-dashed.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: polygon-hatch-dashed.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: polygon-hatch-dashed.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: polygon-hatch-dashed.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: polygon-hatch-dashed.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT -125.549477 -69.508628 101.670954 15.840339
+SIZE 200 150
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+shapepath "../misc/data"
+
+CONFIG MS_ERRORFILE "stderr"
+
+
+
+SYMBOL
+    name "hatch"
+    type hatch
+end
+
+LAYER
+  NAME "world"
+  TYPE polygon
+  STATUS default
+  DATA "world_testpoly"
+  CLASS
+    NAME "test1"
+    STYLE
+        COLOR 180 0 0
+    END
+    STYLE
+        COLOR 180 180 180
+        symbol "hatch"
+        SIZE 20
+        WIDTH 3
+        PATTERN 5 2 2 2 END
+        ANGLE 45
+    END
+  END
+END
+
+END

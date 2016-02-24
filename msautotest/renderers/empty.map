@@ -1,0 +1,21 @@
+# RUN_PARMS: empty.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: empty.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: empty.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: empty.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: empty.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+
+imagetype png
+size 10 10
+extent 0 0 400 300
+shapepath "../misc/data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+
+layer
+    type point
+end
+
+end

@@ -1,0 +1,39 @@
+#
+# Test #3543 related improvements to use layer extents.  
+#
+# REQUIRES: SUPPORTS=WMS_CLIENT
+#
+
+MAP
+EXTENT -179.9 -90 179.9 90 
+SIZE 180 90
+IMAGECOLOR 255 255 255
+STATUS ON
+UNITS DD
+IMAGETYPE PNG24
+
+PROJECTION
+  "proj=longlat" "ellps=WGS84" "datum=WGS84" "no_defs"
+END
+
+WEB
+  IMAGEPATH "./tmp/"
+END
+
+LAYER
+  NAME "X"
+  CONNECTION "http://demo.mapserver.org/cgi-bin/mapserv?map=/osgeo/mapserver/msautotest/world/world.map&"
+  CONNECTIONTYPE WMS
+  TYPE RASTER
+  STATUS DEFAULT
+  METADATA
+    "wms_srs"             "EPSG:3857"
+    "wms_server_version"  "1.1.1"
+    "wms_format"          "image/jpeg"
+    "wms_name"            "world_merc"
+#    "wms_nonsquare_ok"    "false"
+    "wms_extent"          "-20000000 -15000000 20000000 15000000"
+  END
+END
+
+END

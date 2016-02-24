@@ -1,0 +1,65 @@
+# RUN_PARMS: poly_geomtransform_anchor.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: poly_geomtransform_anchor.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: poly_geomtransform_anchor.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: poly_geomtransform_anchor.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: poly_geomtransform_anchor.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG
+# c.f. #4409
+#
+MAP
+
+STATUS ON
+EXTENT 0 0 100 100
+SIZE 200 200
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+shapepath "../misc/data"
+imagecolor 0 0 0
+
+CONFIG MS_ERRORFILE "stderr"
+
+SYMBOL
+  NAME "icon"
+  TYPE PIXMAP
+  image "../misc/data/gdalicon.png"
+  ANCHORPOINT 0 0
+END
+
+LAYER
+  NAME "anchortest"
+  TYPE line
+  STATUS default
+  CLASS
+     STYLE
+       GEOMTRANSFORM "start"
+       SYMBOL "icon"
+       SIZE 200
+     END
+     STYLE
+       GEOMTRANSFORM "start"
+       SYMBOL "circle"
+       COLOR 255 255 255
+       SIZE 20
+     END
+     STYLE
+       GEOMTRANSFORM bbox
+       OUTLINECOLOR 255 255 255
+       WIDTH 5
+     END
+     STYLE
+       COLOR 255 255 255
+       WIDTH 4
+     END
+   END # end class
+   FEATURE
+      POINTS 10 80 80 10 END
+   END
+END
+
+END

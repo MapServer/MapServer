@@ -1,0 +1,75 @@
+{
+   _dl_init memory leaks
+   Memcheck:Leak
+   ...
+   fun:_dl_init
+}
+
+{
+   CPLCreateMutex
+   Memcheck:Leak
+   fun:malloc
+   fun:CPLCreateMutex
+   ...
+}
+
+{
+   png/zlib inflate
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+   ...
+}
+
+{
+   libcurl global init
+   Memcheck:Cond
+   ...
+   fun:curl_global_init
+   ...
+}
+
+{
+   libc_exit_invalid_free
+   Memcheck:Free
+   fun:free
+   fun:free_mem
+   fun:__libc_freeres
+   fun:_vgnU_freeres
+   fun:exit
+   fun:main
+}
+
+{
+   PQconnectdb_leak
+   Memcheck:Leak
+   fun:malloc
+   fun:nss_parse_service_list
+   fun:__nss_database_lookup
+   obj:*
+   obj:*
+   fun:getpwuid_r@@GLIBC_2.2.5
+   obj:/usr/lib/libpq.so.5.2
+   obj:/usr/lib/libpq.so.5.2
+   obj:/usr/lib/libpq.so.5.2
+   obj:/usr/lib/libpq.so.5.2
+   fun:PQconnectStart
+   fun:PQconnectdb
+}
+
+{
+   rasdaman_leak
+   Memcheck:Leak
+   fun:malloc
+   fun:_Z13initTextTablev
+   fun:_ZN6RMInitC1Ec
+   fun:_GLOBAL__I_rpcclientcomm.cc
+   obj:/home/even/gdal/svn/1.10/gdal/libgdal.so
+   obj:/home/even/gdal/svn/1.10/gdal/libgdal.so
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}

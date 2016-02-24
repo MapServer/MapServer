@@ -1,0 +1,5 @@
+Content-Type: text/plain
+
+GetFeatureInfo results:
+
+  Search returned no results.

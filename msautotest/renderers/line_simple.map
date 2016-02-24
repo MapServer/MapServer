@@ -1,0 +1,37 @@
+# RUN_PARMS: line_simple.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_simple.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: line_simple.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_simple.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_simple.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: line_simple.cairo.jpg [SHP2IMG] -m [MAPFILE] -i cairojpeg -o [RESULT]
+#
+map
+
+imagetype png
+size 400 300
+extent -166.245673 -55.551347 174.019748 53.883753
+shapepath "../misc/data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+OUTPUTFORMAT
+  NAME "cairojpeg"
+  DRIVER "cairo/jpeg"
+  FORMATOPTION "QUALITY=93"
+  IMAGEMODE RGB
+END
+
+layer
+    type line
+    data "testlines"
+    status default
+    name "lines"
+    class
+        style
+            color 0 0 255
+            width 1
+        end
+    end
+end
+
+end

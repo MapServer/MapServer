@@ -1,0 +1,89 @@
+# RUN_PARMS: chartlayer_vbar.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: chartlayer_vbar.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: chartlayer_vbar.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: chartlayer_vbar.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: chartlayer_vbar.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Start of map file
+#
+# $Id: gmap75.map,v 1.23 2003/02/25 19:46:42 daniel Exp $
+#
+MAP
+
+NAME DEMO
+STATUS ON
+SIZE 150 150
+EXTENT 2253355.750000 -76361.773438 2447648.500000 515489.031250
+UNITS METERS
+SHAPEPATH "../misc/data"
+IMAGECOLOR 255 255 255
+
+#
+# Start of web interface definition
+#
+WEB
+  MINSCALE 2000000
+  MAXSCALE 50000000
+#
+# On Windows systems, /tmp and /tmp/ms_tmp/ should be created at the root 
+# of the drive where the .MAP file resides.
+#
+  IMAGEPATH "/tmp/ms_tmp/" 
+  IMAGEURL "/ms_tmp/"
+#  LOG "/tmp/gmap.log"
+END
+
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME charts
+
+  TYPE CHART
+  STATUS DEFAULT
+  PROCESSING "CHART_TYPE=VBAR"
+  PROCESSING "CHART_SIZE=30"
+  PROCESSING "CHART_SCALE=0.01"
+  DATA chartlayer
+
+  FILTERITEM "MAINPOLY"
+  FILTER "1"
+
+  CLASS
+    NAME "var1"
+    STYLE
+      SIZE [V1]
+      COLOR 255 0 0
+    END
+  END
+  CLASS
+    NAME "var2"
+    STYLE
+      SIZE [V2]
+      COLOR 0 255 0
+    END
+  END
+  CLASS
+    NAME "var3"
+    STYLE
+      SIZE [V3]
+      COLOR 0 0 255
+    END
+  END
+  CLASS
+    NAME "var4"
+    STYLE
+      SIZE [V4]
+      COLOR 255 0 255
+    END
+  END
+ END
+
+
+
+
+END # Map File

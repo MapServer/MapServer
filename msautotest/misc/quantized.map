@@ -1,0 +1,28 @@
+#bug 3848, test quantization on image with many colors
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 400
+EXTENT 0.5 0.5 399.5 399.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png_q
+
+OUTPUTFORMAT
+  NAME png_q
+  DRIVER AGG/PNG
+  IMAGEMODE RGB
+  FORMATOPTION "QUANTIZE_FORCE=on"
+  FORMATOPTION "QUANTIZE_NEW=on"
+END
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA data/colorwheel.png
+END
+
+END # of map file

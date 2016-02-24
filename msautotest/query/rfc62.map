@@ -1,0 +1,48 @@
+#
+# Test CGI-based OGR Query Output (RFC62)
+#
+# REQUIRES: INPUT=SHAPEFILE INPUT=OGR
+#
+# Test 1: simple mode=nquery, one layer, rect-based, OGR/GML output
+# RUN_PARMS: rfc62_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&mapext=420000+5120000+582000+5200000&qlayer=bdry_counpy2'  > [RESULT_DEMIME]
+#
+# Test 2: simple mode=nquery, one layer, rect-based, OGR/GML output (with runtime substitution)
+# RUN_PARMS: rfc62_test002.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&mapext=420000+5120000+582000+5200000&qlayer=bdry_counpy2&qformat=OGRGML2&base=foo'  > [RESULT_DEMIME]
+#
+# Test 3: simple mode=nquery, one layer, rect-based, OGR/GML output (with runtime substitution -- bad value )
+# RUN_PARMS: rfc62_test003.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&mapext=420000+5120000+582000+5200000&qlayer=bdry_counpy2&qformat=OGRGML2&base=foo%0Abar'  > [RESULT_DEMIME]
+#
+MAP
+  NAME 'query'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+
+  WEB
+    QUERYFORMAT 'OGRGML1'
+    VALIDATION
+      base '^[a-z]{1,16}$'
+      default_base 'some_default_value'
+    END
+  END
+
+  OUTPUTFORMAT
+    NAME 'OGRGML1'
+    DRIVER 'OGR/GML'
+    FORMATOPTION 'STORAGE=filesystem'
+    FORMATOPTION 'FORM=multipart'
+    FORMATOPTION 'FILENAME=result.gml'
+  END
+
+  OUTPUTFORMAT
+    NAME 'OGRGML2'
+    DRIVER 'OGR/GML'
+    FORMATOPTION 'STORAGE=filesystem'
+    FORMATOPTION 'FORM=multipart'
+    FORMATOPTION 'FILENAME=%base%.gml'
+  END
+
+  LAYER
+    NAME 'bdry_counpy2'
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+END

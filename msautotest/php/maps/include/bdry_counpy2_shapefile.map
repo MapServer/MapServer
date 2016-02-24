@@ -1,0 +1,10 @@
+  DATA 'data/bdry_counpy2'
+  STATUS ON
+  TYPE POLYGON
+  CLASS
+    STYLE 
+      COLOR 255 100 100 
+      OUTLINECOLOR 181 181 181
+    END
+  END
+  TEMPLATE 'void'

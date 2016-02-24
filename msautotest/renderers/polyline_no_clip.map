@@ -1,0 +1,104 @@
+# RUN_PARMS: polyline_no_clip.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+
+MAP
+  DEBUG 5
+  IMAGECOLOR 255 255 255
+  IMAGETYPE "PNG"
+  NAME "mf"
+  SIZE 256 256
+  EXTENT -111.096824 60.728514 -106.92812 64.897218
+  STATUS ON
+  UNITS DD
+
+  PROJECTION
+    "init=epsg:4326"
+  END # PROJECTION
+
+  SYMBOL
+    NAME "barb_warm"
+    TYPE vector
+    FILLED true
+    ANCHORPOINT 0.5 1
+    POINTS
+    0.0       1.0
+    0.24      1
+    0.2485    0.9252
+    0.2734    0.8649
+    0.3132    0.8132
+    0.3649    0.7734
+    0.4252    0.7485
+    0.5       0.74
+    0.5647    0.7485
+    0.6250    0.7734
+    0.6768    0.8132
+    0.7165    0.8649
+    0.7415    0.9252
+    0.75      1
+    1.0     1.0    
+    END # POINTS
+  END
+
+  SYMBOL
+    NAME barb_cold
+    TYPE vector
+    FILLED true
+    ANCHORPOINT 0.5 1
+    POINTS
+    0 1
+    0.5 0
+    1 1
+    END
+  END
+
+  LAYER DEBUG 5
+    GROUP "default"
+    NAME "STNRY WK"
+    TYPE LINE
+    STATUS DEFAULT
+    PROCESSING "ITEMS=length"
+    PROCESSING "POLYLINE_NO_CLIP=true"                
+    FEATURE
+      ITEMS "1184.97260767"
+      POINTS
+        -101.0 61.0
+        -103.0 61.0
+        -106.0 61.0
+        -112.0 61.0
+        -115.0 61.0
+        -119.0 61.0
+        -123.0 61.0
+      END #POINTS
+    END #FEATURE
+    CLASS
+      EXPRESSION ([length] > 600)
+      MAXSCALEDENOM 8500000
+      MINSCALEDENOM 4000000
+      STYLE
+        COLOR 255 0 0
+        WIDTH 2
+        PATTERN 30 30 END
+      END
+      STYLE
+        INITIALGAP 15
+        ANGLE 180
+        COLOR 255 0 0
+        SYMBOL barb_warm
+        GAP -45
+        SIZE 8
+      END
+      STYLE
+        COLOR 0 0 255
+        WIDTH 2
+        INITIALGAP 30
+        PATTERN 30 30 END
+      END
+      STYLE
+        COLOR 0 0 255
+        SYMBOL barb_cold
+        SIZE 12
+        INITIALGAP 45
+        GAP -45
+      END
+    END #CLASS
+  END #LAYER DEBUG 5
+END #MAP
