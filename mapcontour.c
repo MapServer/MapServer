@@ -39,6 +39,7 @@
 #include "gdal_alg.h"
 
 #include "mapthread.h"
+#include "mapraster.h"
 #include "cpl_string.h"
 
 #define GEO_TRANS(tr,x,y)  ((tr)[0]+(tr)[1]*(x)+(tr)[2]*(y))
@@ -632,12 +633,71 @@ int msContourLayerOpen(layerObj *layer)
     msContourLayerInfoInitialize(layer);
 
   clinfo = (contourLayerInfo *) layer->layerinfo;
+  if (layer->data == NULL && layer->tileindex == NULL ) {
+    msSetError(MS_MISCERR,
+               "Layer %s has neither DATA nor TILEINDEX defined.",
+               "msContourLayerOpen()",
+               layer->name);
+    return MS_FAILURE;
+  }
 
+  if( layer->tileindex != NULL )
+  {
+      char szTilename[MS_MAXPATHLEN];
+      int status;
+      int tilelayerindex, tileitemindex, tilesrsindex;
+      rectObj searchrect;
+      layerObj* tlp;
+      shapeObj tshp;
+      char tilesrsname[1];
+
+      msInitShape(&tshp);
+      searchrect = layer->map->extent;
+
+      status = msDrawRasterSetupTileLayer(layer->map, layer,
+                                 &searchrect, MS_FALSE,
+                                 &tilelayerindex,
+                                 &tileitemindex,
+                                 &tilesrsindex,
+                                 &tlp);
+      if( status == MS_FAILURE )
+      {
+          return MS_FAILURE;
+      }
+
+      status = msDrawRasterIterateTileIndex(layer, tlp, &tshp,
+                                            tileitemindex, -1,
+                                            szTilename, sizeof(szTilename),
+                                            tilesrsname, sizeof(tilesrsname));
+      if( status == MS_FAILURE || status == MS_DONE ) {
+          if( status == MS_DONE )
+          {
+              if (layer->debug)
+                msDebug("No raster matching filter.\n");
+          }
+          msDrawRasterCleanupTileLayer(tlp, tilelayerindex);
+          return MS_FAILURE;
+      }
+
+      msDrawRasterCleanupTileLayer(tlp, tilelayerindex);
+
+      msDrawRasterBuildRasterPath(layer->map, layer, szTilename, szPath);
+      decrypted_path = msStrdup(szPath);
+
+      /* Cancel the time filter that might have been set on ours in case of */
+      /* a inline tileindex */
+      freeExpression(&layer->filter);
+      initExpression(&layer->filter);
+  }
+  else
+  {
+      msTryBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data);
+      decrypted_path = msDecryptStringTokens(layer->map, szPath);
+  }
+  
   GDALAllRegister();
 
   /* Open the original Dataset */
-  msTryBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data);
-  decrypted_path = msDecryptStringTokens(layer->map, szPath);
 
   msAcquireLock(TLOCK_GDAL);
   if (decrypted_path) {
@@ -846,23 +906,60 @@ int msContourLayerGetExtent(layerObj *layer, rectObj *extent)
   return MS_SUCCESS;
 }
 
+/************************************************************************/
+/*                     msContourLayerSetTimeFilter()                    */
+/*                                                                      */
+/*      This function is actually just used in the context of           */
+/*      setting a filter on the tileindex for time based queries.       */
+/*      For instance via WMS requests.                                  */
+/*                                                                      */
+/*      If a local shapefile tileindex is in use, we will set a         */
+/*      backtics filter (shapefile compatible).  If another layer is    */
+/*      being used as the tileindex then we will forward the            */
+/*      SetTimeFilter call to it.  If there is no tileindex in          */
+/*      place, we do nothing.                                           */
+/************************************************************************/
+
 int msContourLayerSetTimeFilter(layerObj *layer, const char *timestring,
                                 const char *timefield)
 {
-  contourLayerInfo *clinfo = (contourLayerInfo *) layer->layerinfo;
+  int tilelayerindex;
 
   if (layer->debug)
-    msDebug("Entering msContourLayerSetTimeFilter().\n");
+    msDebug("msContourLayerSetTimeFilter(%s,%s).\n", timestring, timefield);
 
-  if (clinfo == NULL) {
-    msSetError(MS_MISCERR, "Assertion failed: Contour layer not opened!!!",
-               "msContourLayerSetTimeFilter()");
-    return MS_FAILURE;
+  /* -------------------------------------------------------------------- */
+  /*      If we don't have a tileindex the time filter has no effect.     */
+  /* -------------------------------------------------------------------- */
+  if( layer->tileindex == NULL )
+  {
+      if (layer->debug)
+          msDebug("msContourLayerSetTimeFilter(): time filter without effect on layers without tileindex.\n");
+      return MS_SUCCESS;
   }
 
-  return msLayerSetTimeFilter(&clinfo->ogrLayer, timestring, timefield);
-}
+  /* -------------------------------------------------------------------- */
+  /*      Find the tileindex layer.                                       */
+  /* -------------------------------------------------------------------- */
+  tilelayerindex = msGetLayerIndex(layer->map, layer->tileindex);
 
+  /* -------------------------------------------------------------------- */
+  /*      If we are using a local shapefile as our tileindex (that is     */
+  /*      to say, the tileindex name is not of another layer), then we    */
+  /*      just install a backtics style filter on the current layer.      */
+  /* -------------------------------------------------------------------- */
+  if( tilelayerindex == -1 )
+    return msLayerMakeBackticsTimeFilter( layer, timestring, timefield );
+
+  /* -------------------------------------------------------------------- */
+  /*      Otherwise we invoke the tileindex layers SetTimeFilter          */
+  /*      method.                                                         */
+  /* -------------------------------------------------------------------- */
+  if ( msCheckParentPointer(layer->map,"map")==MS_FAILURE )
+    return MS_FAILURE;
+  return msLayerSetTimeFilter( layer->GET_LAYER(map,tilelayerindex),
+                               timestring, timefield );
+}
 
 /************************************************************************/
 /*                msRASTERLayerInitializeVirtualTable()                 */
