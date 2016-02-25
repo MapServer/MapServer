@@ -132,6 +132,15 @@
 # Filter using startIndex
 # RUN_PARMS: wfs_filter_postgis_startindex.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(name)&maxfeatures=10&startindex=0" > [RESULT]
 # RUN_PARMS: wfs_filter_postgis_startindex2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(name)&maxfeatures=10&startindex=10" > [RESULT]
+#
+# Filter and RESULTTYPE=hits (RFC 114)
+# RUN_PARMS: wfs_filter_postgis_property_is_equal_hits.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace&RESULTTYPE=hits&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsEqualTo></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_filter_postgis_bbox_hits.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=popplace&RESULTTYPE=hits&FILTER=<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22CRS:84%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>" > [RESULT_DEVERSION]
+#
+# Filter and FilterItem and RESULTTYPE=hits (RFC 114)
+# RUN_PARMS: wfs_filter_postgis_filter_item_hits.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=province_with_filter_item&RESULTTYPE=hits" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_filter_postgis_filter_item_hits_start_index.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=province_with_filter_item&RESULTTYPE=hits&STARTINDEX=1" > [RESULT_DEVERSION]
+
 MAP
 #CONFIG "MS_ERRORFILE" "stderr"
 NAME WFS_FILTER
@@ -182,7 +191,6 @@ LAYER
   METADATA
     "wfs_title"         "province"
     "wfs_description"   "province"
-    "wfs_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
     "gml_include_items" "all"
   END
   TYPE POLYGON
@@ -209,7 +217,6 @@ LAYER
   METADATA
     "wfs_title"         "popplace"
     "wfs_description"   "Cities"
-    "wfs_result_fields" "name"
     "gml_include_items" "all"
    END
   TYPE POINT
@@ -239,5 +246,26 @@ LAYER
     COLOR 0 0 0
   END
 END # Layer
+
+
+LAYER
+  NAME province_with_filter_item
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from province order by gid) as foo using srid=3978 using unique gid"
+  FILTER 'Cape Breton Island'
+  FILTERITEM 'island_e'
+  METADATA
+    "wfs_title"         "province_with_filter_item"
+    "wfs_description"   "province_with_filter_item"
+    "gml_include_items" "all"
+  END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+END # Layer
+
 
 END # Map File
