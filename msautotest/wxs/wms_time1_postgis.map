@@ -78,8 +78,8 @@ WEB
       "WMS_SRS"              "EPSG:4326"
       "OWS_SCHEMAS_LOCATION" "http://ogc.dmsolutions.ca"
       "WMS_ACCESSCONTRAINTS" "none"
-      "WMS_FEES"             "none"      
-      "wms_timeformat"       "YYYY-MM-DD HH,YYYY-MM-DD HH:MM:"
+      "WMS_FEES"             "none"
+      "wms_timeformat"       "YYYY-MM-DD HH,YYYY-MM-DD HH:MM:SS"
       "wms_getmap_formatlist" "image/png,image/gif,image/png; mode=24bit,image/jpeg,image/vnd.wap.wbmp,image/tiff,image/svg+xml"
       "ows_enable_request" "*" 
    END

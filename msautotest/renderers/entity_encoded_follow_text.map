@@ -1,5 +1,4 @@
 # RUN_PARMS: entity_encoded_follow_text.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: entity_encoded_follow_text.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: entity_encoded_follow_text.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: entity_encoded_follow_text.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: entity_encoded_follow_text.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
@@ -127,7 +126,7 @@ END
 
 LAYER
   NAME "legend"
-  TYPE annotation
+  TYPE point
   STATUS default
   CLASS
     NAME "test1"

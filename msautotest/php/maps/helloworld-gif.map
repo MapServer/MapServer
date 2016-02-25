@@ -1,8 +1,7 @@
 #
 # Tests label printing and GIF output (the default)
 #
-# REQUIRES: OUTPUT=GIF
-# RUN_PARMS: helloworld.gif
+# RUN_PARMS: helloworld.png
 
 MAP
        NAME HELLO

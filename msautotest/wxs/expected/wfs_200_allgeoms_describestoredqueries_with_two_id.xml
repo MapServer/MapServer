@@ -1,0 +1,43 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+<wfs:DescribeStoredQueriesResponse xmlns:wfs="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.opengis.net/wfs/2.0" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+  <StoredQueryDescription id="urn:ogc:def:query:OGC-WFS::GetFeatureById">
+    <Title>Get feature by identifier</Title>
+    <Abstract>Returns the single feature whose value is equal to the specified value of the ID argument</Abstract>
+    <Parameter xmlns:xs="http://www.w3.org/2001/XMLSchema" name="ID" type="xs:string"/>
+    <QueryExpressionText xmlns:ms="http://mapserver.gis.umn.edu/mapserver" isPrivate="true" language="urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression" returnFeatureTypes="ms:point ms:multipoint ms:linestring ms:multilinestring ms:polygon ms:multipolygon"/>
+  </StoredQueryDescription>
+  <StoredQueryDescription xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:fes="http://www.opengis.net/fes/2.0" id="myquery">
+    <Title>query title</Title>
+    <Abstract>query abstract</Abstract>
+    <Parameter name="longmin" type="xs:double"/>
+    <Parameter name="latmin" type="xs:double"/>
+    <Parameter name="longmax" type="xs:double"/>
+    <Parameter name="latmax" type="xs:double"/>
+    <QueryExpressionText xmlns:ms="http://mapserver.gis.umn.edu/mapserver" isPrivate="false" language="urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression" returnFeatureTypes="ms:point ms:multipoint">
+      <Query xmlns:fes="http://www.opengis.net/fes/2.0" typeNames="ms:point">
+        <fes:Filter>
+          <fes:BBOX>
+            <fes:ValueReference>msGeometry</fes:ValueReference>
+            <gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+              <gml:lowerCorner>${latmin} ${longmin}</gml:lowerCorner>
+              <gml:upperCorner>${latmax} ${longmax}</gml:upperCorner>
+            </gml:Envelope>
+          </fes:BBOX>
+        </fes:Filter>
+      </Query>
+      <Query xmlns:fes="http://www.opengis.net/fes/2.0" typeNames="ms:multipoint">
+        <fes:Filter>
+          <fes:BBOX>
+            <fes:ValueReference>msGeometry</fes:ValueReference>
+            <gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+              <gml:lowerCorner>${latmin} ${longmin}</gml:lowerCorner>
+              <gml:upperCorner>${latmax} ${longmax}</gml:upperCorner>
+            </gml:Envelope>
+          </fes:BBOX>
+        </fes:Filter>
+      </Query>
+    </QueryExpressionText>
+  </StoredQueryDescription>
+</wfs:DescribeStoredQueriesResponse>

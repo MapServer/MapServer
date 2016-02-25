@@ -1,5 +1,4 @@
 # RUN_PARMS: line_label_follow.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: line_label_follow.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: line_label_follow.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: line_label_follow.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: line_label_follow.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
@@ -21,6 +20,52 @@ layer
     status default
     name "lines"
     labelitem "label"
+    class
+        style
+            color 0 0 255
+            width 5
+        end
+        style
+            color 255 255 255
+            width 3
+        end
+        label
+            type truetype
+            font "default"
+            size 7
+            angle follow
+            color 0 0 0
+            outlinecolor 255 255 255
+            outlinewidth 3
+            MAXOVERLAPANGLE  150
+        end
+    end
+end
+
+layer
+    type line
+    status default
+    name "short"
+    feature
+      points -0.7 0.4 -0.5 0.3 end
+      text "2 point line"
+    end
+    feature
+      points -0.7 0.3 -0.5 0.2 end
+      text "22"
+    end
+    feature
+      points -0.7 0.2 -0.6 0.15 -0.5 0.1 end
+      text "333"
+    end
+    feature
+      points -0.7 0.1 -0.6 0.05 -0.5 0.0 end
+      text "33"
+    end
+    feature
+      points -0.7 0.0 -0.6 -0.05 -0.5 -0.1 end
+      text "3"
+    end
     class
         style
             color 0 0 255

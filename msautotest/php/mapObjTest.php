@@ -23,7 +23,7 @@ class MapObjTest extends PHPUnit_Framework_TestCase
     public function testOutputFormat()
     {
 
-        $outputFrmt = new outputFormatObj('GD/GIF', 'theName');
+        $outputFrmt = new outputFormatObj('AGG/PNG', 'theName');
         $this->assertEquals(2,$this->map->appendOutputFormat($outputFrmt));
         $this->assertEquals(2, $this->map->numoutputformats);
         $this->assertInstanceOf('OutputFormatObj', $this->map->getOutputFormat(0));

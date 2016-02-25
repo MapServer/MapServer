@@ -1,5 +1,4 @@
 # RUN_PARMS: embed_sb_rgba_tr.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: embed_sb_rgba_tr.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: embed_sb_rgba_tr.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #

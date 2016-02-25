@@ -1,5 +1,4 @@
 # RUN_PARMS: force_palette.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: force_palette.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: force_palette.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 
@@ -17,7 +16,7 @@ SIZE 200 150
 EXTENT 0.5 0.5 399.5 299.5
 IMAGECOLOR 255 255 0
 SHAPEPATH "../gdal"
-IMAGETYPE png24
+IMAGETYPE png
 
 OUTPUTFORMAT
   NAME png
@@ -39,16 +38,6 @@ OUTPUTFORMAT
   FORMATOPTION "PALETTE_FORCE=ON"
   FORMATOPTION "PALETTE=palette.txt"
 END
-
-OUTPUTFORMAT
-  NAME gif
-  DRIVER "GD/GIF"
-  EXTENSION "gif"
-  MIMETYPE "image/gif"
-  IMAGEMODE PC256
-  TRANSPARENT OFF
-END
-
 
 LAYER
   NAME grey

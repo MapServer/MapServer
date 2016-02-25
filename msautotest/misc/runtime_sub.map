@@ -1,13 +1,21 @@
 # Test Runtime Substitutions
 #
-# REQUIRES: INPUT=SHAPEFILE OUTPUT=GIF
+# REQUIRES: INPUT=SHAPEFILE
 # 
 # RUN_PARMS: runtime_sub_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer1&name1=bdry_counpy2' > [RESULT_DEVERSION] [STRIP:ShapefileOpen]
-# RUN_PARMS: runtime_sub_test002.gif [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer2&name2=bdry_counpy2' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test002.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer2&name2=bdry_counpy2' > [RESULT_DEMIME]
 # RUN_PARMS: runtime_sub_test003.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer2&name2=bad+value' > [RESULT_DEVERSION] [STRIP:ShapefileOpen]
-# RUN_PARMS: runtime_sub_test004.gif [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer3&name3=bdry_counpy2' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test004.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer3&name3=bdry_counpy2' > [RESULT_DEMIME]
 # RUN_PARMS: runtime_sub_test005.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer3&name3=bad+value' > [RESULT_DEVERSION] [STRIP:ShapefileOpen]
-# RUN_PARMS: runtime_sub_test008.gif [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer5' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test008.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer5' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test009.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer6&eppl=40' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test010.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer7&eppl=40' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test011.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer8&eppl2=40' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test012.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer9&mapext=0 0 300 300&mapsize=30 30&resample=average' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test013.png [ENV resample=nearest] [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer9&mapext=0 0 300 300&mapsize=30 30&resample=average' > [RESULT_DEMIME]
+
+#override alloed request types by url. if we do not pass "enable=capabilities" in the url, then "layer2" would not appear in the resulting xml doc
+# RUN_PARMS: runtime_sub_test_caps.xml [MAPSERV] QUERY_STRING='map=[MAPFILE]&service=wms&request=getcapabilities&enable=getcapabilities' > [RESULT_DEVERSION]
 #
 MAP
   NAME 'runtime_sub'
@@ -16,13 +24,21 @@ MAP
   SIZE 500 500
   SHAPEPATH "."
 
-  IMAGETYPE GIF
+  IMAGETYPE PNG
+  projection
+    "+init=epsg:3857"
+  end
 
   WEB
     VALIDATION 
       'name2' '.' # won't be used because of a layer validation rule
       'name3' 'bdry_counpy2|indx_q100kpy4'
+      'eppl2' '^[0-9]+$'
     END
+    metadata
+      "ows_enable_request" "getcapabilities"
+      "ows_onlineresource" "http://foo/"
+    end
   END
 
   # no validation
@@ -44,6 +60,13 @@ MAP
     TYPE POLYGON
     VALIDATION
       'name2' 'bdry_counpy2|indx_q100kpy4'
+      'enable' '^get(capabilities|map)(,get(capabilities|map))*$'
+      'default_enable' '!getcapabilities'
+    END
+    METADATA
+      "foo" "bar"
+      "ows_enable_request" "%enable%"
+      "bar" "baz"
     END
     CLASS
       STYLE OUTLINECOLOR 51 51 51 END
@@ -76,4 +99,72 @@ MAP
       STYLE OUTLINECOLOR 51 51 51 END
     END
   END
+  
+  #class sub from class validation
+  LAYER
+    NAME 'layer6'
+    STATUS OFF
+    DATA '../query/data/indx_q100kpy4'
+    TYPE POLYGON
+    CLASS
+      VALIDATION
+        'eppl' '^[0-9]+$'
+      END
+      EXPRESSION ( [EPPL_Q100_] = %eppl% )
+      STYLE COLOR 151 151 151 END
+    END
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+
+  #class sub from layer validation
+  LAYER
+    NAME 'layer7'
+    STATUS OFF
+    DATA '../query/data/indx_q100kpy4'
+    TYPE POLYGON
+    VALIDATION
+      'eppl' '^[0-9]+$'
+    END
+    CLASS
+      EXPRESSION ( [EPPL_Q100_] = %eppl% )
+      STYLE COLOR 151 151 151 END
+    END
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+  
+  #class sub from map validation
+  LAYER
+    NAME 'layer8'
+    STATUS OFF
+    DATA '../query/data/indx_q100kpy4'
+    TYPE POLYGON
+    CLASS
+      EXPRESSION ( [EPPL_Q100_] = %eppl2% )
+      STYLE COLOR 151 151 151 END
+    END
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+
+
+# PROCESSING substitution
+LAYER
+  NAME layer9
+  TYPE raster
+  STATUS on
+  PROCESSING "RESAMPLE=%resample%"
+  VALIDATION
+    "resample" ".*"
+  END
+  METADATA
+      "ows_enable_request" "!getcapabilities"
+  END
+  DATA ../gdal/data/rgb.tif
+END
+
 END

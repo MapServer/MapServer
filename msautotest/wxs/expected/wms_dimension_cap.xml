@@ -1,6 +1,6 @@
-Content-Type: application/vnd.ogc.wms_xml
+Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
 
-<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.0/capabilities_1_1_0.dtd"
  [
  <!ELEMENT VendorSpecificCapabilities EMPTY>
@@ -31,7 +31,6 @@ Content-Type: application/vnd.ogc.wms_xml
     <GetMap>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
@@ -95,7 +94,7 @@ Content-Type: application/vnd.ogc.wms_xml
         <Style>
           <Name>default</Name>
           <Title>default</Title>
-          <LegendURL width="155" height="21">
+          <LegendURL width="155" height="20">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?version=1.1.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=lakes_elev&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>
@@ -113,7 +112,7 @@ Content-Type: application/vnd.ogc.wms_xml
         <Style>
           <Name>default</Name>
           <Title>default</Title>
-          <LegendURL width="155" height="21">
+          <LegendURL width="155" height="20">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?version=1.1.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=lakes_elev_range&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>
@@ -131,7 +130,7 @@ Content-Type: application/vnd.ogc.wms_xml
         <Style>
           <Name>default</Name>
           <Title>default</Title>
-          <LegendURL width="155" height="21">
+          <LegendURL width="155" height="20">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/mswms?version=1.1.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=lakes_elev_multi_range&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>

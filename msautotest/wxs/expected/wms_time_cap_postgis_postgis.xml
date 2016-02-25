@@ -1,6 +1,6 @@
-Content-Type: application/vnd.ogc.wms_xml
+Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
 
-<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE WMT_MS_Capabilities SYSTEM "http://ogc.dmsolutions.ca/wms/1.1.0/capabilities_1_1_0.dtd"
  [
  <!ELEMENT VendorSpecificCapabilities EMPTY>
@@ -30,7 +30,6 @@ Content-Type: application/vnd.ogc.wms_xml
     </GetCapabilities>
     <GetMap>
       <Format>image/png</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=24bit</Format>
       <Format>image/jpeg</Format>
       <Format>image/tiff</Format>
@@ -83,7 +82,9 @@ Content-Type: application/vnd.ogc.wms_xml
         <Name>pattern4</Name>
         <Title>pattern4</Title>
         <SRS>EPSG:4326</SRS>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+        <LatLonBoundingBox minx="-131.02" miny="33.65" maxx="-119.85" maxy="48.39" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="-131.02" miny="33.65" maxx="-119.85" maxy="48.39" />
         <Dimension name="time" units="ISO8601"/>
         <Extent name="time" nearestValue="0">2004-01-01/2004-02-01</Extent>
     </Layer>

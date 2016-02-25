@@ -17,7 +17,7 @@ class ShapeObjTest extends PHPUnit_Framework_TestCase
         $line->addXY(0,0);
         $line->addXY(6,8);
 
-        $this->assertEquals(NAN, $this->shape->distanceToPoint($point));
+        $this->assertTrue(is_nan($this->shape->distanceToPoint($point)));
         $this->shape->add($line);
         $this->assertEquals(1.0, $this->shape->distanceToPoint($point));
     }

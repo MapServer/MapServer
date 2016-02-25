@@ -151,8 +151,9 @@ LAYER
   METADATA
     "wfs_title"         "province"
     "wfs_description"   "province"
-    "wfs_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
     "wfs_featureid"     "NAME_E"
+    "gml_include_items" "NAME_E"
+    "gml_default_items"  ""
   END
   TYPE POLYGON
   STATUS ON

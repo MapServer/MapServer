@@ -2,7 +2,7 @@ Content-Type: multipart/mixed; boundary=wcs
 
 
 --wcs
-Content-Type: text/xml
+Content-Type: text/xml; charset=UTF-8
 Content-ID: wcs.xml
 
 <?xml version="1.0" encoding="UTF-8"?>

@@ -1,5 +1,4 @@
 # RUN_PARMS: chartlayer_pie.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: chartlayer_pie.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: chartlayer_pie.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: chartlayer_pie.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: chartlayer_pie.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]

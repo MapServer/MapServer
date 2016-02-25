@@ -1,5 +1,4 @@
 # RUN_PARMS: plb_embed_legend_rgba.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: plb_embed_legend_rgba.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: plb_embed_legend_rgba.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #

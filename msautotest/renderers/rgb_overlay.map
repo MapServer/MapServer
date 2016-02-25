@@ -1,5 +1,4 @@
 # RUN_PARMS: rgb_overlay.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: rgb_overlay.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: rgb_overlay.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: rgb_overlay.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: rgb_overlay.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]

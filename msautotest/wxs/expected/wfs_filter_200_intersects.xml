@@ -1,0 +1,83 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://ogc.dmsolutions.ca/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://ogc.dmsolutions.ca/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="2" numberReturned="2">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>45.31128 -61.37997</gml:lowerCorner>
+      		<gml:upperCorner>45.65230 -61.03874</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+<!-- WARNING: No featureid defined for typename 'popplace'. Output will not validate. -->
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>45.31128 -61.03874</gml:lowerCorner>
+        		<gml:upperCorner>45.31128 -61.03874</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>45.31128 -61.03874</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0.000</ms:AREA>
+        <ms:PERIMETER>0.000</ms:PERIMETER>
+        <ms:POPPLACE_>110</ms:POPPLACE_>
+        <ms:POPPLACE_I>2</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CAGBW</ms:UNIQUE_KEY>
+        <ms:NAME>&quot;Canso&quot;</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>011F07</ms:NTS50>
+        <ms:LAT>452000</ms:LAT>
+        <ms:LONG>610000</ms:LONG>
+        <ms:SGC_CODE>1213006</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+    <wfs:member>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:lowerCorner>45.65230 -61.37997</gml:lowerCorner>
+        		<gml:upperCorner>45.65230 -61.37997</gml:upperCorner>
+        	</gml:Envelope>
+        </gml:boundedBy>
+        <ms:msGeometry>
+          <gml:Point gml:id=".1" srsName="urn:ogc:def:crs:EPSG::4326">
+            <gml:pos>45.65230 -61.37997</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:AREA>0.000</ms:AREA>
+        <ms:PERIMETER>0.000</ms:PERIMETER>
+        <ms:POPPLACE_>111</ms:POPPLACE_>
+        <ms:POPPLACE_I>2</ms:POPPLACE_I>
+        <ms:UNIQUE_KEY>CBELL</ms:UNIQUE_KEY>
+        <ms:NAME>Port Hawkesbury</ms:NAME>
+        <ms:NAME_E></ms:NAME_E>
+        <ms:NAME_F></ms:NAME_F>
+        <ms:UNIQUE_K_1></ms:UNIQUE_K_1>
+        <ms:UNIQUE_K_2></ms:UNIQUE_K_2>
+        <ms:REG_CODE>12</ms:REG_CODE>
+        <ms:NTS50>011F11</ms:NTS50>
+        <ms:LAT>453700</ms:LAT>
+        <ms:LONG>612100</ms:LONG>
+        <ms:SGC_CODE>1215002</ms:SGC_CODE>
+        <ms:CAPITAL>0</ms:CAPITAL>
+        <ms:POP_RANGE>2</ms:POP_RANGE>
+      </ms:popplace>
+    </wfs:member>
+</wfs:FeatureCollection>
+

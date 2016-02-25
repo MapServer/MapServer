@@ -1,8 +1,7 @@
 #
 # Tests shp2img binary to ensure size option is respected. 
 #
-# REQUIRES: OUTPUT=GIF
-# RUN_PARMS: shp2img-size.gif [SHP2IMG] -s 640 480 -m [MAPFILE] -o [RESULT]  
+# RUN_PARMS: shp2img-size.png [SHP2IMG] -s 640 480 -m [MAPFILE] -o [RESULT]  
 
 MAP
        NAME HELLO
@@ -11,13 +10,13 @@ MAP
        SIZE 400 300
        IMAGECOLOR 200 255 255
 
-       IMAGETYPE gif
+       IMAGETYPE png
 
        LAYER
                NAME "credits"
                STATUS DEFAULT
                TRANSFORM FALSE
-               TYPE ANNOTATION
+               TYPE POINT
                FEATURE
                        POINTS
                                200 250

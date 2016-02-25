@@ -1,0 +1,69 @@
+# RUN_PARMS: ogr_empty_geojson.json [MAPSERV] "QUERY_STRING=map=[MAPFILE]&service=WMS&request=GetFeatureInfo&version=1.3.0&CRS=EPSG:3857&width=200&height=200&layers=geojson&bbox=-20,-20,20,20&format=image/png&query_layers=geojson&i=0&j=0&&info_format=geojson" > [RESULT_DEMIME]
+# check that ogr-output with no features returns a correct format. bug #5208
+
+MAP
+
+    IMAGETYPE png
+
+
+    SIZE 100 100
+    EXTENT -20 -20 20 20
+    IMAGECOLOR '#ffffff'
+    WEB
+        METADATA
+            "ows_enable_request" "*"
+            "ows_srs" "EPSG:3857 EPSG:900913 EPSG:4326"
+            "ows_title" "GeoJSON test"
+            "wms_getfeatureinfo_formatlist" "gml,geojson"
+            "wms_onlineresource" "http://localhost/cgi-bin/mapserv?map=mymap.map"
+        END
+        IMAGEPATH '/tmp/ms_tmp/'
+        IMAGEURL '/ms_tmp/'
+    END
+    PROJECTION
+        "init=epsg:3857"
+    END
+
+    OUTPUTFORMAT
+      NAME "geojson"
+      DRIVER "OGR/GEOJSON"
+      MIMETYPE "application/json; subtype=geojson; charset=utf-8"
+      FORMATOPTION "STORAGE=stream"
+      FORMATOPTION "FORM=SIMPLE"
+      FORMATOPTION "LCO:COORDINATE_PRECISION=5"
+    END
+
+    LAYER
+        NAME "geojson"
+        TYPE POLYGON
+        STATUS DEFAULT
+        PROJECTION
+            'init=epsg:3857'
+        END
+        METADATA
+            "wms_title" "Testing layer"
+            "ows_srs" "EPSG:3857 EPSG:900913 EPSG:4326"
+        END
+        TEMPLATE 'blank.html'
+
+        FEATURE
+            POINTS
+                -10 -10
+                -10  10
+                 10  10
+                 10 -10
+                -10 -10
+            END
+            TEXT "Polygon"
+        END
+
+        CLASS
+            NAME 'class'
+
+            STYLE
+                COLOR '#ff0000'
+            END
+        END
+    END
+
+END

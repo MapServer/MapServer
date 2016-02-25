@@ -1,5 +1,4 @@
 # RUN_PARMS: wld_upsidedown.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: wld_upsidedown.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: wld_upsidedown.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: wld_upsidedown.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: wld_upsidedown.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
@@ -21,8 +20,8 @@ IMAGETYPE png8_t
 
 OUTPUTFORMAT
   NAME png8_t
-  DRIVER "GD/PNG"
-  IMAGEMODE PC256
+  DRIVER "AGG/PNG8"
+  IMAGEMODE RGB
   TRANSPARENT OFF
 END
 

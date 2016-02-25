@@ -5,5 +5,4 @@ Content-Type: text/html
 msDrawMap(): Image handling error. Failed to draw layer named &#39;layer1&#39;.
 [stripped line matching "ShapefileOpen"]
 [stripped line matching "ShapefileOpen"]
-msValidateParameter(): Regular expression error. Parameter pattern validation failed.
 </BODY></HTML>

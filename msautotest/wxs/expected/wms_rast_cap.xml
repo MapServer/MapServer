@@ -1,6 +1,6 @@
-Content-Type: application/vnd.ogc.wms_xml
+Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
 
-<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
  [
  <!ELEMENT VendorSpecificCapabilities EMPTY>
@@ -53,7 +53,6 @@ Content-Type: application/vnd.ogc.wms_xml
     <GetMap>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <DCPType>
         <HTTP>
@@ -84,7 +83,6 @@ Content-Type: application/vnd.ogc.wms_xml
     <GetLegendGraphic>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <DCPType>
         <HTTP>

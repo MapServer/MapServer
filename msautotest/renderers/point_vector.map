@@ -1,7 +1,7 @@
 # RUN_PARMS: point_vector.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: point_vector.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: point_vector.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: point_vector.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: point_vector.json [SHP2IMG] -m [MAPFILE] -i json -l symbol -o [RESULT]
 # RUN_PARMS: point_vector.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 #
@@ -22,7 +22,7 @@ symbolset "symbolset"
 LAYER
     NAME "anchors"
     TYPE POINT
-    STATUS default
+    STATUS on
     CLASS
         STYLE
             COLOR 255 0 0
@@ -38,7 +38,7 @@ END
 LAYER
   NAME "symbol"
   TYPE point
-  STATUS default
+  STATUS on
   CLASS
     NAME "test1"
     STYLE
@@ -57,7 +57,7 @@ END
 LAYER
   NAME "symbol rotated"
   TYPE point
-  STATUS default
+  STATUS on
   CLASS
     NAME "test1"
     STYLE

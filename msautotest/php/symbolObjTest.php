@@ -12,7 +12,7 @@ class SymbolObjTest extends PHPUnit_Framework_TestCase
 
     public function testSetGetImage()
     {
-        $outputFrmt = new outputFormatObj('GD/GIF', 'theName');
+        $outputFrmt = new outputFormatObj('AGG/PNG', 'theName');
         //$this->assertInstanceOf('imageObj', $image = $this->symbol->getImage($outputFrmt));
         $image = $this->symbol->getImage($outputFrmt);
         $this->symbol->setImage($image);

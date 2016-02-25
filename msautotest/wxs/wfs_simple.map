@@ -32,6 +32,9 @@
 # Generate layer info using property name and a geoemtry property.
 # RUN_PARMS: wfs_get_feature_propertyname_geometry.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&propertyname=(name_e,msGeometry)" > [RESULT]
 #
+# Invalid number of property name tuples
+# RUN_PARMS: wfs_exception_get_feature_propertyname_invalid_number.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&propertyname=()()" > [RESULT]
+#
 # Get Feature by id
 # RUN_PARMS: wfs_get_feature_id.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&featureid=province.Quebec" > [RESULT]
 #
@@ -80,6 +83,10 @@
 #
 # RUN_PARMS: wfs11_exception_invalid_srsname.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=province&srsname=urn:EPSG:geographicCRS:1234567" > [RESULT]
 #
+# 2.0.0
+#
+# Capabilities
+# RUN_PARMS: wfs20_cap.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
 
 MAP
 
@@ -150,8 +157,13 @@ LAYER
   METADATA
     "wfs_title"         "province"
     "wfs_description"   "province"
-    "wfs_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
     "wfs_featureid"     "NAME_E"
+    "wfs_metadataurl_href" "http://path/to/metadata_url"
+    "wfs_metadataurl_format" "text/xml" # WFS 1.1 only
+    "wfs_metadataurl_type" "FGDC" # WFS 1.1 only
+    "wfs_metadataurl_about" "about something" # WFS 2.0 only
+    "gml_include_items" "NAME_E"
+    "gml_default_items"  ""
   END
   TYPE POINT
   STATUS ON

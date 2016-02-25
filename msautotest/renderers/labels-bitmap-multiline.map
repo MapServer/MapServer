@@ -1,5 +1,4 @@
 # RUN_PARMS: labels-bitmap-multiline.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: labels-bitmap-multiline.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 #
 map
 

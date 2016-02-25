@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
  [
  <!ELEMENT VendorSpecificCapabilities EMPTY>
@@ -28,7 +28,6 @@
     <GetMap>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
@@ -64,7 +63,6 @@
     <GetLegendGraphic>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <DCPType>
         <HTTP>

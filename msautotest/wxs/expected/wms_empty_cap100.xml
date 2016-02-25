@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.0.0/capabilities_1_0_0.dtd"
  [
  <!ELEMENT VendorSpecificCapabilities EMPTY>
@@ -15,7 +15,7 @@
 <Capability>
   <Request>
     <Map>
-      <Format><GIF /><PNG /><JPEG /><SVG /></Format>
+      <Format><PNG /><JPEG /><SVG /></Format>
       <DCPType>
         <HTTP>
           <Get onlineResource="http://localhost/path/to/wms_empty?" />

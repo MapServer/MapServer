@@ -81,8 +81,53 @@ def bug_673():
 
     return pmstestlib.compare_and_report( 'bug673.png' )
 
+###############################################################################
+# Test https://github.com/mapserver/mapserver/issues/4943
+
+def test_pattern():
+
+    si = mapscript.styleObj()
+    if len(si.pattern) != 0:
+        pmstestlib.post_reason('fail 1')
+        return 'fail'
+    if si.patternlength != 0:
+        pmstestlib.post_reason('fail 2')
+        return 'fail'
+
+    si.pattern = [2.0,3,4]
+    if si.pattern != (2.0, 3.0, 4.0):
+        pmstestlib.post_reason('fail 3')
+        return 'fail'
+    if si.patternlength != 3:
+        pmstestlib.post_reason('fail 4')
+        return 'fail'
+
+    try:
+        si.pattern = [1.0]
+        pmstestlib.post_reason('fail 5')
+        return 'fail'
+    except mapscript.MapServerError, e:
+        pass
+
+    try:
+        si.pattern = [i for i in range(11)]
+        pmstestlib.post_reason('fail 6')
+        return 'fail'
+    except mapscript.MapServerError, e:
+        pass
+
+    try:
+        si.patternlength = 0
+        pmstestlib.post_reason('fail 7')
+        return 'fail'
+    except mapscript.MapServerError, e:
+        pass
+
+    return 'success'
+
 test_list = [
     bug_673,
+    test_pattern,
     None ]
 
 if __name__ == '__main__':
@@ -93,5 +138,5 @@ if __name__ == '__main__':
 
     pmstestlib.summarize()
 
-    mapscript.msCleanup()
+    mapscript.msCleanup(0)
 

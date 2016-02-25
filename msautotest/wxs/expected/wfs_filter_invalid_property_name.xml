@@ -1,0 +1,9 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<ServiceExceptionReport version="1.2.0" xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ogc http://ogc.dmsolutions.ca/wfs/1.0.0/OGC-exception.xsd">
+  <ServiceException code="NoApplicableCode" locator="mapserv">
+msWFSGetFeature(): WFS server error. FLTApplyFilterToLayer() failed
+msDBFGetItemIndex(): DBASE file error. Item &#39;foo&#39; not found.
+  </ServiceException>
+</ServiceExceptionReport>

@@ -1,6 +1,6 @@
-Content-Type: application/vnd.ogc.wms_xml
+Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
 
-<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE WMT_MS_Capabilities SYSTEM "http://ogc.dmsolutions.ca/wms/1.1.1/capabilities_1_1_1.dtd"
  [
  <!ELEMENT VendorSpecificCapabilities EMPTY>
@@ -30,7 +30,6 @@ Content-Type: application/vnd.ogc.wms_xml
     <GetMap>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
@@ -76,11 +75,13 @@ Content-Type: application/vnd.ogc.wms_xml
         <Name>province</Name>
         <Title>province</Title>
         <SRS>EPSG:3978</SRS>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+        <LatLonBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+        <BoundingBox SRS="EPSG:3978"
+                    minx="2.25336e+06" miny="-76361.8" maxx="2.74765e+06" maxy="515489" />
         <Style>
           <Name>default</Name>
           <Title>default</Title>
-          <LegendURL width="91" height="23">
+          <LegendURL width="85" height="20">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=province&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>
@@ -90,11 +91,13 @@ Content-Type: application/vnd.ogc.wms_xml
         <Name>popplace</Name>
         <Title>popplace</Title>
         <SRS>EPSG:3978</SRS>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+        <LatLonBoundingBox minx="-66.3286" miny="42.5631" maxx="-59.6882" maxy="47.9413" />
+        <BoundingBox SRS="EPSG:3978"
+                    minx="2.2794e+06" miny="-55344.5" maxx="2.60038e+06" maxy="461587" />
         <Style>
           <Name>default</Name>
           <Title>default</Title>
-          <LegendURL width="77" height="23">
+          <LegendURL width="68" height="20">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=popplace&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>
@@ -104,11 +107,13 @@ Content-Type: application/vnd.ogc.wms_xml
         <Name>road</Name>
         <Title>road</Title>
         <SRS>EPSG:3978</SRS>
-        <!-- WARNING: Optional LatLonBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:3978"
+                    minx="2.25898e+06" miny="-70747.9" maxx="2.61535e+06" maxy="495481" />
         <Style>
           <Name>default</Name>
           <Title>default</Title>
-          <LegendURL width="70" height="23">
+          <LegendURL width="71" height="20">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/path/to/wms_simple?version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=road&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>

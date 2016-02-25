@@ -1,5 +1,4 @@
 # RUN_PARMS: grid.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: grid.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: grid.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: grid.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: grid.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
@@ -60,7 +59,7 @@ MAP
       "init=epsg:4326"
     END
     GRID
-      LABELFORMAT DD
+      LABELFORMAT "DD"
       MAXARCS 10
       MAXINTERVAL 5
       MAXSUBDIVIDE 2

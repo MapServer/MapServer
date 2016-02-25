@@ -1,0 +1,21 @@
+# Test OGR feature style PEN parameters
+
+MAP
+EXTENT 0 -1 1 1
+SIZE 200 400
+
+LAYER
+    NAME "test"
+    CONNECTIONTYPE OGR
+    CONNECTION "data/ogrpen.csv"
+    DATA "ogrpen"
+
+    TYPE LINE
+    STATUS ON
+
+    STYLEITEM "AUTO"
+    CLASS
+    END #CLASS
+  END 
+
+END

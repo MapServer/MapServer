@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Capabilities xmlns="http://www.opengis.net/wcs/1.1" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" version="1.1.1" xsi:schemaLocation="http://www.opengis.net/wcs/1.1 http://schemas.opengis.net/wcs/1.1/wcsGetCapabilities.xsd http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsAll.xsd">
+  <ows:ServiceIdentification>
+    <ows:Title>Test simple wcs</ows:Title>
+    <ows:Abstract/>
+    <!--WARNING: Optional metadata "ows_abstract" was missing for ows:Abstract-->
+    <!--WARNING: Optional metadata "ows_keywordlist" was missing for ows:KeywordList-->
+    <ows:ServiceType codeSpace="OGC">OGC WCS</ows:ServiceType>
+    <ows:ServiceTypeVersion>2.0.1</ows:ServiceTypeVersion>
+    <ows:ServiceTypeVersion>1.1.1</ows:ServiceTypeVersion>
+    <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
+    <ows:Fees/>
+    <!--WARNING: Optional metadata "ows_fees" was missing for ows:Fees-->
+    <ows:AccessConstraints/>
+    <!--WARNING: Optional metadata "ows_accessconstraints" was missing for ows:AccessConstraints-->
+  </ows:ServiceIdentification>
+  <ows:ServiceProvider>
+    <ows:ProviderName/>
+    <!--WARNING: Mandatory metadata "ows_contactorganization" was missing for ows:ProviderName-->
+    <ows:ProviderSite xlink:type="simple" xlink:href="http://www.mapserver.org/"/>
+    <ows:ServiceContact>
+      <ows:IndividualName/>
+      <!--WARNING: Optional metadata "ows_contactperson" was missing for ows:IndividualName-->
+      <ows:PositionName/>
+      <!--WARNING: Optional metadata "ows_contactposition" was missing for ows:PositionName-->
+      <ows:ContactInfo>
+        <ows:Phone>
+          <ows:Voice/>
+          <!--WARNING: Optional metadata "ows_contactvoicetelephone" was missing for ows:Voice-->
+          <ows:Facsimile/>
+          <!--WARNING: Optional metadata "ows_contactfacsimiletelephone" was missing for ows:Facsimile-->
+        </ows:Phone>
+        <ows:Address>
+          <ows:DeliveryPoint/>
+          <!--WARNING: Optional metadata "ows_address" was missing for ows:DeliveryPoint-->
+          <ows:City/>
+          <!--WARNING: Optional metadata "ows_city" was missing for ows:City-->
+          <ows:AdministrativeArea/>
+          <!--WARNING: Optional metadata "ows_stateorprovince" was missing for ows:AdministrativeArea-->
+          <ows:PostalCode/>
+          <!--WARNING: Optional metadata "ows_postcode" was missing for ows:PostalCode-->
+          <ows:Country/>
+          <!--WARNING: Optional metadata "ows_country" was missing for ows:Country-->
+          <ows:ElectronicMailAddress/>
+          <!--WARNING: Optional metadata "ows_contactelectronicmailaddress" was missing for ows:ElectronicMailAddress-->
+        </ows:Address>
+        <ows:OnlineResource xlink:type="simple" xlink:href="http://www.mapserver.org/"/>
+        <ows:HoursOfService/>
+        <!--WARNING: Optional metadata "ows_hoursofservice" was missing for ows:HoursOfService-->
+        <ows:ContactInstructions/>
+        <!--WARNING: Optional metadata "ows_contactinstructions" was missing for ows:ContactInstructions-->
+      </ows:ContactInfo>
+      <ows:Role/>
+      <!--WARNING: Optional metadata "ows_role" was missing for ows:Role-->
+    </ows:ServiceContact>
+  </ows:ServiceProvider>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.1</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="DescribeCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.1</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="identifiers">
+        <ows:AllowedValues>
+          <ows:Value/>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="GetCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.1</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="Identifier">
+        <ows:AllowedValues>
+          <ows:Value/>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="InterpolationType">
+        <ows:AllowedValues>
+          <ows:Value>NEAREST_NEIGHBOUR</ows:Value>
+          <ows:Value>BILINEAR</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="format">
+        <ows:AllowedValues>
+          <ows:Value>image/png</ows:Value>
+          <ows:Value>image/jpeg</ows:Value>
+          <ows:Value>image/png; mode=8bit</ows:Value>
+          <ows:Value>image/tiff</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="store">
+        <ows:AllowedValues>
+          <ows:Value>false</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="GridBaseCRS">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:def:crs:epsg::4326</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <Contents>
+    <!--WARNING: No WCS layers are enabled. Check wcs/ows_enable_request settings.-->
+  </Contents>
+</Capabilities>

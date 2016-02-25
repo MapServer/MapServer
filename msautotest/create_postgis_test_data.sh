@@ -98,3 +98,34 @@ alter TABLE pattern15 RENAME COLUMN time to time_str;
 alter TABLE pattern15 ADD COLUMN time timestamp without time zone;
 update pattern15 set time = to_timestamp(time_str,'YYYY-MM-DDZ');
 "
+psql -U postgres -d msautotest -c " 
+CREATE TABLE point3d (ID SERIAL);
+SELECT AddGeometryColumn('public', 'point3d', 'the_geom', 27700, 'POINT', 3);
+INSERT INTO point3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;POINT(1 2 3)'));
+"
+psql -U postgres -d msautotest -c " 
+CREATE TABLE multipoint3d (ID SERIAL);
+SELECT AddGeometryColumn('public', 'multipoint3d', 'the_geom', 27700, 'MULTIPOINT', 3);
+INSERT INTO multipoint3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;MULTIPOINT(1 2 3,4 5 6)'));
+"
+psql -U postgres -d msautotest -c " 
+CREATE TABLE linestring3d (ID SERIAL);
+SELECT AddGeometryColumn('public', 'linestring3d', 'the_geom', 27700, 'LINESTRING', 3);
+INSERT INTO linestring3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;LINESTRING(1 2 3,4 5 6)'));
+"
+psql -U postgres -d msautotest -c " 
+CREATE TABLE multilinestring3d (ID SERIAL);
+SELECT AddGeometryColumn('public', 'multilinestring3d', 'the_geom', 27700, 'MULTILINESTRING', 3);
+INSERT INTO multilinestring3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;MULTILINESTRING((1 2 3,4 5 6),(7 8 9,10 11 12))'));
+"
+psql -U postgres -d msautotest -c " 
+CREATE TABLE polygon3d (ID SERIAL);
+SELECT AddGeometryColumn('public', 'polygon3d', 'the_geom', 27700, 'POLYGON', 3);
+INSERT INTO polygon3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;POLYGON((0 0 1,10 0 2,10 10 3,0 10 4,0 0 1))'));
+INSERT INTO polygon3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;POLYGON((0 0 1,10 0 2,10 10 3,0 10 4,0 0 1),(1 1 2,1 9 3,9 9 4,9 1 5,1 1 2))'));
+"
+psql -U postgres -d msautotest -c " 
+CREATE TABLE multipolygon3d (ID SERIAL);
+SELECT AddGeometryColumn('public', 'multipolygon3d', 'the_geom', 27700, 'MULTIPOLYGON', 3);
+INSERT INTO multipolygon3d (the_geom) VALUES (GeomFromEWKT('SRID=27700;MULTIPOLYGON(((0 0 1,10 0 2,10 10 3,0 10 4,0 0 1),(1 1 2,1 9 3,9 9 4,9 1 5,1 1 2)),((10 10 0,10 20 1,20 20 2,20 10 3,10 10 0)))'));
+"

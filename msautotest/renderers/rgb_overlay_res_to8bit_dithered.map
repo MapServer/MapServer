@@ -1,5 +1,4 @@
 # RUN_PARMS: rgb_overlay_res_to8bit_dithered.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: rgb_overlay_res_to8bit_dithered.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: rgb_overlay_res_to8bit_dithered.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: rgb_overlay_res_to8bit_dithered.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: rgb_overlay_res_to8bit_dithered.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]

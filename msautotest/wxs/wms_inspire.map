@@ -891,7 +891,7 @@ MAP
 
         DATA ''
         TRANSFORM FALSE
-        TYPE ANNOTATION
+        TYPE POINT
         STATUS DEFAULT
 
         EXTENT 341000 5921000 351000 5923000
@@ -918,7 +918,9 @@ MAP
             END
         END
         
-        TRANSPARENCY 50
+        COMPOSITE
+          OPACITY 50
+        END
     END
 
 END

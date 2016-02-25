@@ -1,6 +1,6 @@
-Content-Type: text/xml
+Content-Type: text/xml; charset=UTF-8
 
-<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <WMS_Capabilities version="1.3.0" updateSequence="123"  xmlns="http://www.opengis.net/wms"   xmlns:sld="http://www.opengis.net/sld"   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"   xsi:schemaLocation="http://www.opengis.net/wms http://ogc.dmsolutions.ca/wms/1.3.0/capabilities_1_3_0.xsd  http://www.opengis.net/sld http://ogc.dmsolutions.ca/sld/1.1.0/sld_capabilities.xsd  http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/mswms_time?service=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension">
 
 <Service>
@@ -27,7 +27,6 @@ Content-Type: text/xml
     </GetCapabilities>
     <GetMap>
       <Format>image/png</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=24bit</Format>
       <Format>image/jpeg</Format>
       <Format>image/tiff</Format>
@@ -61,7 +60,6 @@ Content-Type: text/xml
     <sld:GetLegendGraphic>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <DCPType>
         <HTTP>
@@ -106,7 +104,14 @@ Content-Type: text/xml
         <Name>pattern4</Name>
         <Title>pattern4</Title>
         <CRS>EPSG:4326</CRS>
-        <!-- WARNING: Optional Ex_GeographicBoundingBox could not be established for this layer.  Consider setting the EXTENT in the LAYER object, or wms_extent metadata. Also check that your data exists in the DATA statement -->
+        <EX_GeographicBoundingBox>
+            <westBoundLongitude>-131.02</westBoundLongitude>
+            <eastBoundLongitude>-119.85</eastBoundLongitude>
+            <southBoundLatitude>33.65</southBoundLatitude>
+            <northBoundLatitude>48.39</northBoundLatitude>
+        </EX_GeographicBoundingBox>
+        <BoundingBox CRS="EPSG:4326"
+                    minx="33.65" miny="-131.02" maxx="48.39" maxy="-119.85" />
         <Dimension name="time" units="ISO8601" nearestValue="0">2004-01-01/2004-02-01</Dimension>
     </Layer>
   </Layer>

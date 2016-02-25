@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ###############################################################################
 # $Id$
 #
@@ -32,6 +33,13 @@ import os
 import string
 import time
 from testlib import *
+try:
+    import xmlvalidate
+    xmlvalidate_ok = True
+except:
+    print('Cannot import xmlvalidate. Likely lxml missing')
+    xmlvalidate_ok = False
+    pass
 
 have_pdiff = None
 
@@ -155,9 +163,9 @@ def deversion_file( filename ):
     return
 
 ###############################################################################
-# white out timestamp
+# Strip GDAL version from file.
 
-def detimestamp_file( filename ):
+def degdalversion_file( filename ):
 
     data = open(filename,'rb').read()
 
@@ -165,22 +173,98 @@ def detimestamp_file( filename ):
     if version_info >= (3,0,0):
         data = str(data, 'iso-8859-1')
 
-    start = data.find( 'timeStamp="' )
+    # Remove GDAL version from GPX file
+    start = data.find('creator="GDAL ')
     if start == -1:
         return
 
-    start = start + 11
-    end = start
-    while data[end+1] != '"':
+    end = start + 14
+    length = len(data)
+    while end < length and data[end] != '"':
         end = end + 1
+    if data[end] != '"':
+        return
 
-    new_data = data[:start] + data[end+1:]
+    data = data[:start-1] + data[end+1:]
+
     if version_info >= (3,0,0):
-        open(filename,'wb').write(bytes(new_data, 'iso-8859-1'))
+        open(filename,'wb').write(bytes(data, 'iso-8859-1'))
     else:
-        open(filename,'wb').write(new_data)
+        open(filename,'wb').write(data)
     return
 
+###############################################################################
+# white out timestamp
+
+def detimestamp_file( filename ):
+
+    data = open(filename,'rb').read()
+    has_found_timestamp = False
+
+    from sys import version_info
+    if version_info >= (3,0,0):
+        data = str(data, 'iso-8859-1')
+
+    start_find_idx = 0
+    while True:
+        start = data[start_find_idx:].find( 'timeStamp="' )
+        if start == -1:
+            break
+        start = start + start_find_idx
+        has_found_timestamp = True
+
+        start = start + 11
+        end = start
+        while data[end+1] != '"':
+            end = end + 1
+
+        data = data[:start] + data[end+1:]
+        start_find_idx = start + 11
+
+    if not has_found_timestamp:
+        return
+
+    if version_info >= (3,0,0):
+        open(filename,'wb').write(bytes(data, 'iso-8859-1'))
+    else:
+        open(filename,'wb').write(data)
+    return
+
+###############################################################################
+# Keep version="" string
+
+def extract_service_version_file( filename ):
+
+    data = open(filename,'rb').read()
+
+    from sys import version_info
+    if version_info >= (3,0,0):
+        data = str(data, 'iso-8859-1')
+
+    # Remove GDAL version from GPX file
+    start = data.find('WFS_Capabilities')
+    if start == -1:
+        return
+    data = data[start:]
+    start = data.find('version="')
+    if start == -1:
+        return
+
+    end = start + len('version="')
+    length = len(data)
+    result = ''
+    while end < length and data[end] != '"':
+        result = result + data[end]
+        end = end + 1
+    if data[end] != '"':
+        return
+
+    if version_info >= (3,0,0):
+        open(filename,'wb').write(bytes(result, 'iso-8859-1'))
+    else:
+        open(filename,'wb').write(result)
+    return
+    
 ###############################################################################
 # Collect all the [STRIP:] directives from a command string and remove them
 # from the command string.
@@ -342,7 +426,10 @@ def run_tests( argv ):
     verbose = 0
     strict = 0
     quiet = 0
+    validate_xml = True
     skiparg = False
+    valgrind_non_empty_count = 0
+
     ###########################################################################
     # Process arguments.
     
@@ -366,6 +453,8 @@ def run_tests( argv ):
             verbose = 1
         elif argv[i] == '-q':
             quiet = 1
+        elif argv[i] == '-dontvalidatexml':
+            validate_xml = False
         elif argv[i][-4:] == '.map':
             pass
         else:
@@ -395,7 +484,16 @@ def run_tests( argv ):
             return
     except:
         pass
-    
+
+    ###########################################################################
+    # Must we and can we validate XML stuff ?
+    ogc_schemas_location = None
+    if validate_xml and xmlvalidate_ok:
+        if xmlvalidate.has_local_ogc_schemas('SCHEMAS_OPENGIS_NET'):
+            ogc_schemas_location = 'SCHEMAS_OPENGIS_NET'
+        else:
+            print('Cannot validate XML because SCHEMAS_OPENGIS_NET not found. Run "python ../pymod/xmlvalidate.py -download_ogc_schemas" from msautotest/wxs')
+
     ###########################################################################
     # Process all mapfiles.
     map_files = get_mapfile_list( argv )
@@ -431,25 +529,51 @@ def run_tests( argv ):
             if len(runparms_list) > 1 and not quiet:
                 print('   test %s' % out_file)
 
-            if command.find('[RESULT_DEMIME]') != -1:
+
+            if command.find('[RESULT_DEMIME_DEVERSION]') != -1:
                 demime = 1
-            else:
-                demime = 0
-                
-            if command.find('[RESULT_DEVERSION]') != -1:
                 deversion = 1
             else:
-                deversion = 0
+                if command.find('[RESULT_DEMIME]') != -1:
+                    demime = 1
+                else:
+                    demime = 0
+                    
+                if command.find('[RESULT_DEVERSION]') != -1:
+                    deversion = 1
+                else:
+                    deversion = 0
+
+            if command.find('[EXTRACT_SERVICE_VERSION]') != -1:
+                extractserviceversion = 1
+            else:
+                extractserviceversion = 0
 
             command = command.replace('[RESULT]', 'result/'+out_file )
             command = command.replace('[RESULT_DEMIME]', 'result/'+out_file )
             command = command.replace('[RESULT_DEVERSION]', 'result/'+out_file )
+            command = command.replace('[RESULT_DEMIME_DEVERSION]', 'result/'+out_file )
+            command = command.replace('[EXTRACT_SERVICE_VERSION]', 'result/'+out_file )
             command = command.replace('[MAPFILE]', map )
             command = command.replace('[SHP2IMG]', shp2img )
             if renderer is not None:
                 command = command.replace('[RENDERER]', '-i '+renderer )
             else:
                 command = command.replace('[RENDERER]', '' )
+
+            #support for environment variable of type [ENV foo=bar]
+            begin = command.find('[ENV')
+            envirkey = ''
+            if begin != -1:
+                end = command[begin:].find(']')
+                equal = command[begin:].find('=')
+                #print("equal is %d"%equal)
+                envirkey = command[begin+len('[ENV '):begin+equal]
+                envirval = command[equal+1:end]
+                os.environ[envirkey] = envirval
+                tmp = command
+                command = tmp[:begin] + tmp[end+1:]
+                #print('added environment variable (%s)=(%s); new command:%s' % (envirkey,envirval,command))
 
             # support for POST request method
             begin = command.find('[POST]')
@@ -468,6 +592,8 @@ def run_tests( argv ):
                 os.environ['MS_MAPFILE'] = map
                 if post[0] == '<':
                   os.environ['CONTENT_TYPE'] = 'text/xml'
+                  if ogc_schemas_location is not None:
+                      xmlvalidate.validate(post, ogc_schemas_location = ogc_schemas_location)
                 else:
                   os.environ['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
 
@@ -496,16 +622,26 @@ def run_tests( argv ):
                 del os.environ['REQUEST_METHOD']
                 del os.environ['MS_MAPFILE']
 
+            if envirkey != '':
+                del os.environ[envirkey]
+
             if demime:
                 demime_file( 'result/'+out_file )
             if deversion:
                 deversion_file( 'result/'+out_file )
+                degdalversion_file( 'result/'+out_file )
                 fixexponent_file( 'result/'+out_file )
                 truncate_one_decimal( 'result/'+out_file )
                 detimestamp_file( 'result/'+out_file )
+            if extractserviceversion:
+                extract_service_version_file( 'result/'+out_file )
             if valgrind:
                 if os.path.getsize(valgrind_log) == 0:
                    os.remove( valgrind_log )
+                else:
+                    valgrind_non_empty_count = valgrind_non_empty_count + 1
+                    if not quiet:
+                        print('     Valgrind log non empty.')
 
             apply_strip_items_file( 'result/'+out_file, strip_items )
                 
@@ -586,6 +722,8 @@ def run_tests( argv ):
     print('%d tests succeeded' % succeed_count)
     print('%d tests failed' %fail_count)
     print('%d test results initialized' % init_count)
+    if valgrind:
+        print('%d test have non-empty Valgrind log' % valgrind_non_empty_count)
 
     if noresult_count > 0:
         print('%d of failed tests produced *no* result! Serious Failure!' % noresult_count)

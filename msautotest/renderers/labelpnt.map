@@ -1,5 +1,4 @@
 # RUN_PARMS: labelpnt.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: labelpnt.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: labelpnt.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: labelpnt.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: labelpnt.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
@@ -30,7 +29,7 @@ end
 
 LAYER
  NAME Test
- TYPE annotation
+ TYPE point
  STATUS DEFAULT
  FEATURE
   POINTS -120 -33 END
@@ -39,11 +38,6 @@ LAYER
 
 
  CLASS
-  STYLE
-    symbol "CIRCLE"
-    color 0 0 0
-    size 4
-  END
   LABEL
    FONT "default"
    TYPE truetype
@@ -60,6 +54,12 @@ LAYER
     SYMBOL 'CIRCLE'
     COLOR 100 100 100
     SIZE 20
+   END
+   STYLE
+    GEOMTRANSFORM LABELPNT
+    symbol "CIRCLE"
+    color 0 0 0
+    size 4
    END
   END   
  END

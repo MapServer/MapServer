@@ -1,0 +1,77 @@
+#
+# Test WFS 2.0 : Inspire Download Services, scenario 2 (embedded Inspire extended metadata)
+#
+# REQUIRES: INPUT=OGR SUPPORTS=WFS
+#
+# Capabilities Default. Will generate invalid document due to missing Inspire metadata
+# RUN_PARMS: wfs_200_insipire_missing_md_caps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
+
+MAP
+
+NAME WFS_TEST
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    #"wfs_validate_xml" "true"
+    #"wfs_schemas_dir" "SCHEMAS_OPENGIS_NET"
+
+    "wfs_inspire_capabilities" "embed"
+
+    "wfs_maxfeatures" "1000"
+    "wfs_compute_number_matched" "true"
+    "ows_updatesequence"   "123"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?myparam=something&"
+    "wfs_srs"          "EPSG:4326 EPSG:4269"
+    "ows_enable_request" "*" 
+  END
+END
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "wfs_featureid"     "PROVINCE_I"
+    "gml_geometries"    "msGeometry"
+    "gml_msGeometry_type" "polygon"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+#    "init=epsg:42304"
+  END
+
+  DUMP TRUE
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+
+END # Map File

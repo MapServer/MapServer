@@ -1,5 +1,4 @@
 # RUN_PARMS: force_palette_rgba.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: force_palette_rgba.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: force_palette_rgba.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
 #
 
@@ -38,15 +37,6 @@ OUTPUTFORMAT
   TRANSPARENT ON
   FORMATOPTION "PALETTE_FORCE=ON"
   FORMATOPTION "PALETTE=palette_rgba.txt"
-END
-
-OUTPUTFORMAT
-  NAME gif
-  DRIVER "GD/GIF"
-  EXTENSION "gif"
-  MIMETYPE "image/gif"
-  IMAGEMODE PC256
-  TRANSPARENT ON
 END
 
 

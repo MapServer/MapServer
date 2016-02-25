@@ -49,7 +49,6 @@
     <GetMap>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
@@ -159,7 +158,7 @@
     <Style>
        <Name>inspire_common:DEFAULT</Name>
        <Title>INSPIRE Default Style</Title>
-       <LegendURL width="287" height="197">
+       <LegendURL width="309" height="221">
           <Format>image/png</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN&amp;format=image/png&amp;STYLE=inspire_common:DEFAULT"/>
        </LegendURL>
@@ -214,7 +213,7 @@
         <Style>
           <Name>TestStyle</Name>
           <Title>TestStyle</Title>
-          <LegendURL width="275" height="69">
+          <LegendURL width="309" height="77">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.CommonTransportElements&amp;format=image/png&amp;STYLE=TestStyle"/>
           </LegendURL>
@@ -270,7 +269,7 @@
         <Style>
           <Name>TN.CommonTransportElements.TransportArea.Default</Name>
           <Title>Generic Area Default Style</Title>
-          <LegendURL width="275" height="21">
+          <LegendURL width="306" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.CommonTransportElements.TransportArea&amp;format=image/png&amp;STYLE=TN.CommonTransportElements.TransportArea.Default"/>
           </LegendURL>
@@ -327,7 +326,7 @@
         <Style>
           <Name>TN.CommonTransportElements.TransportLink.Default</Name>
           <Title>Generic Link Default Style</Title>
-          <LegendURL width="275" height="21">
+          <LegendURL width="303" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.CommonTransportElements.TransportLink&amp;format=image/png&amp;STYLE=TN.CommonTransportElements.TransportLink.Default"/>
           </LegendURL>
@@ -385,7 +384,7 @@
         <Style>
           <Name>TN.CommonTransportElements.TransportNode.Default</Name>
           <Title>Generic Node Default Style</Title>
-          <LegendURL width="275" height="21">
+          <LegendURL width="309" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.CommonTransportElements.TransportNode&amp;format=image/png&amp;STYLE=TN.CommonTransportElements.TransportNode.Default"/>
           </LegendURL>
@@ -490,7 +489,7 @@
         <Style>
           <Name>TN.RoadTransportNetwork.RoadLink.Default</Name>
           <Title>RoadLink Default Style</Title>
-          <LegendURL width="227" height="21">
+          <LegendURL width="247" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.RoadTransportNetwork.RoadLink&amp;format=image/png&amp;STYLE=TN.RoadTransportNetwork.RoadLink.Default"/>
           </LegendURL>
@@ -547,7 +546,7 @@
         <Style>
           <Name>TN.RoadTransportNetwork.VehicleTrafficArea.Default</Name>
           <Title>Vehicle Traffic Area Default Style</Title>
-          <LegendURL width="287" height="21">
+          <LegendURL width="301" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.RoadTransportNetwork.VehicleTrafficArea&amp;format=image/png&amp;STYLE=TN.RoadTransportNetwork.VehicleTrafficArea.Default"/>
           </LegendURL>
@@ -604,7 +603,7 @@
         <Style>
           <Name>TN.RoadTransportNetwork.RoadServiceArea.Default</Name>
           <Title>Road Service Area Default Style</Title>
-          <LegendURL width="269" height="21">
+          <LegendURL width="294" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.RoadTransportNetwork.RoadServiceArea&amp;format=image/png&amp;STYLE=TN.RoadTransportNetwork.RoadServiceArea.Default"/>
           </LegendURL>
@@ -661,7 +660,7 @@
         <Style>
           <Name>TN.RoadTransportNetwork.RoadArea.Default</Name>
           <Title>Road Area Default Style</Title>
-          <LegendURL width="227" height="21">
+          <LegendURL width="251" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.RoadTransportNetwork.RoadArea&amp;format=image/png&amp;STYLE=TN.RoadTransportNetwork.RoadArea.Default"/>
           </LegendURL>
@@ -766,7 +765,7 @@
         <Style>
           <Name>TN.RailTransportNetwork.RailwayLink.Default</Name>
           <Title>Railway Link Default Style</Title>
-          <LegendURL width="245" height="21">
+          <LegendURL width="255" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.RailTransportNetwork.RailwayLink&amp;format=image/png&amp;STYLE=TN.RailTransportNetwork.RailwayLink.Default"/>
           </LegendURL>
@@ -823,7 +822,7 @@
         <Style>
           <Name>TN.RailTransportNetwork.RailwayStationArea.Default</Name>
           <Title>Railway Station Area Default Style</Title>
-          <LegendURL width="287" height="21">
+          <LegendURL width="300" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.RailTransportNetwork.RailwayStationArea&amp;format=image/png&amp;STYLE=TN.RailTransportNetwork.RailwayStationArea.Default"/>
           </LegendURL>
@@ -880,7 +879,7 @@
         <Style>
           <Name>TN.RailTransportNetwork.RailwayYardArea.Default</Name>
           <Title>Railway Yard Area Default Style</Title>
-          <LegendURL width="269" height="21">
+          <LegendURL width="285" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.RailTransportNetwork.RailwayYardArea&amp;format=image/png&amp;STYLE=TN.RailTransportNetwork.RailwayYardArea.Default"/>
           </LegendURL>
@@ -937,7 +936,7 @@
         <Style>
           <Name>TN.RailTransportNetwork.RailwayArea.Default</Name>
           <Title>Railway Area Default Style</Title>
-          <LegendURL width="245" height="21">
+          <LegendURL width="258" height="23">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.geodaten-mv.de/dienste/inspirevs_test?language=eng&amp;version=1.3.0&amp;service=WMS&amp;request=GetLegendGraphic&amp;sld_version=1.1.0&amp;layer=TN.RailTransportNetwork.RailwayArea&amp;format=image/png&amp;STYLE=TN.RailTransportNetwork.RailwayArea.Default"/>
           </LegendURL>

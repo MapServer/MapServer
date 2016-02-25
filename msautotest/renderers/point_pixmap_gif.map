@@ -1,5 +1,4 @@
 # RUN_PARMS: point_pixmap_gif.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: point_pixmap_gif.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: point_pixmap_gif.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: point_pixmap_gif.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: point_pixmap_gif.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]

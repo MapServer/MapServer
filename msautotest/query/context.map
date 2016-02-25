@@ -1,11 +1,11 @@
 #
 # Test Layer Context (REQUIRES/LABELREQUIRES)
 #
-# REQUIRES: INPUT=SHAPEFILE OUTPUT=GIF
+# REQUIRES: INPUT=SHAPEFILE
 #
-# RUN_PARMS: context_test001.gif [SHP2IMG] -m [MAPFILE] -l "bdry_counpy2" -o [RESULT]
-# RUN_PARMS: context_test002.gif [SHP2IMG] -m [MAPFILE] -l "bdry_counpy2 indx_q100kpy4" -o [RESULT]
-# RUN_PARMS: context_test003.gif [SHP2IMG] -m [MAPFILE] -l "indx_q100kpy4" -o [RESULT]
+# RUN_PARMS: context_test001.png [SHP2IMG] -m [MAPFILE] -l "bdry_counpy2" -o [RESULT]
+# RUN_PARMS: context_test002.png [SHP2IMG] -m [MAPFILE] -l "bdry_counpy2 indx_q100kpy4" -o [RESULT]
+# RUN_PARMS: context_test003.png [SHP2IMG] -m [MAPFILE] -l "indx_q100kpy4" -o [RESULT]
 #
 MAP
   NAME 'context'
@@ -13,7 +13,7 @@ MAP
   UNITS METERS
 
   SIZE 400 300
-  IMAGETYPE GIF
+  IMAGETYPE "png"
 
   LAYER
     NAME 'bdry_counpy2'

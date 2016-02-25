@@ -1,5 +1,4 @@
 # RUN_PARMS: label-multifont.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: label-multifont.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: label-multifont.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: label-multifont.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: label-multifont.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]

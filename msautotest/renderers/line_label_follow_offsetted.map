@@ -1,5 +1,4 @@
 # RUN_PARMS: line_label_follow_offsetted.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: line_label_follow_offsetted.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: line_label_follow_offsetted.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: line_label_follow_offsetted.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: line_label_follow_offsetted.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
@@ -38,6 +37,7 @@ layer
             color 0 0 0
             outlinecolor 255 255 255
             outlinewidth 3
+            maxoverlapangle 45
         end
     end
 end

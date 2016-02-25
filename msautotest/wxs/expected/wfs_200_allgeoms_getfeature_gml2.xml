@@ -1,0 +1,204 @@
+Content-Type: text/xml; subtype=gml/2.1.2; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=point,multipoint,linestring,multilinestring,polygon,multipolygon&amp;OUTPUTFORMAT=XMLSCHEMA http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml http://schemas.opengis.net/gml/2.1.2/feature.xsd"
+   timeStamp="" numberMatched="6" numberReturned="6">
+  <wfs:boundedBy>
+  	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+  		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+  	</gml:Box>
+  </wfs:boundedBy>
+  <wfs:member>
+   <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
+      <wfs:boundedBy>
+      	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:coordinates>49.00000,2.00000 49.00000,2.00000</gml:coordinates>
+      	</gml:Box>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:point fid="point.1">
+        <gml:boundedBy>
+        	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:coordinates>49.00000,2.00000 49.00000,2.00000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:coordinates>49.00000,2.00000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+      </ms:point>
+    </wfs:member>
+   </wfs:FeatureCollection>
+  </wfs:member>
+  <wfs:member>
+   <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
+      <wfs:boundedBy>
+      	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      	</gml:Box>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:multipoint fid="multipoint.1">
+        <gml:boundedBy>
+        	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:MultiPoint srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:pointMember>
+            <gml:Point>
+              <gml:coordinates>49.00000,2.00000</gml:coordinates>
+            </gml:Point>
+          </gml:pointMember>
+          <gml:pointMember>
+            <gml:Point>
+              <gml:coordinates>50.00000,3.00000</gml:coordinates>
+            </gml:Point>
+          </gml:pointMember>
+        </gml:MultiPoint>
+        </ms:msGeometry>
+      </ms:multipoint>
+    </wfs:member>
+   </wfs:FeatureCollection>
+  </wfs:member>
+  <wfs:member>
+   <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
+      <wfs:boundedBy>
+      	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      	</gml:Box>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:linestring fid="linestring.1">
+        <gml:boundedBy>
+        	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:LineString srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:coordinates>49.00000,2.00000 50.00000,3.00000 </gml:coordinates>
+        </gml:LineString>
+        </ms:msGeometry>
+      </ms:linestring>
+    </wfs:member>
+   </wfs:FeatureCollection>
+  </wfs:member>
+  <wfs:member>
+   <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
+      <wfs:boundedBy>
+      	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      	</gml:Box>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:multilinestring fid="multilinestring.1">
+        <gml:boundedBy>
+        	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:MultiLineString srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:lineStringMember>
+            <gml:LineString>
+              <gml:coordinates>49.00000,2.00000 50.00000,3.00000 </gml:coordinates>
+            </gml:LineString>
+          </gml:lineStringMember>
+          <gml:lineStringMember>
+            <gml:LineString>
+              <gml:coordinates>50.00000,2.00000 49.00000,3.00000 </gml:coordinates>
+            </gml:LineString>
+          </gml:lineStringMember>
+        </gml:MultiLineString>
+        </ms:msGeometry>
+      </ms:multilinestring>
+    </wfs:member>
+   </wfs:FeatureCollection>
+  </wfs:member>
+  <wfs:member>
+   <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
+      <wfs:boundedBy>
+      	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      	</gml:Box>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:polygon fid="polygon.1">
+        <gml:boundedBy>
+        	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Polygon srsName="urn:ogc:def:crs:EPSG::4326">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>49.00000,2.00000 50.00000,2.00000 50.00000,3.00000 49.00000,3.00000 49.00000,2.00000 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+          <gml:innerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>49.10000,2.10000 49.10000,2.90000 49.90000,2.90000 49.90000,2.10000 49.10000,2.10000 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:innerBoundaryIs>
+        </gml:Polygon>
+        </ms:msGeometry>
+      </ms:polygon>
+    </wfs:member>
+   </wfs:FeatureCollection>
+  </wfs:member>
+  <wfs:member>
+   <wfs:FeatureCollection timeStamp="" numberMatched="1" numberReturned="1">
+      <wfs:boundedBy>
+      	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+      	</gml:Box>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:multipolygon fid="multipolygon.1">
+        <gml:boundedBy>
+        	<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">
+        		<gml:coordinates>49.00000,2.00000 50.00000,3.00000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:MultiPolygon srsName="urn:ogc:def:crs:EPSG::4326">
+        <gml:polygonMember>
+          <gml:Polygon>
+            <gml:outerBoundaryIs>
+              <gml:LinearRing>
+                <gml:coordinates>49.00000,2.00000 50.00000,2.00000 50.00000,3.00000 49.00000,3.00000 49.00000,2.00000 </gml:coordinates>
+              </gml:LinearRing>
+            </gml:outerBoundaryIs>
+            <gml:innerBoundaryIs>
+              <gml:LinearRing>
+                <gml:coordinates>49.10000,2.10000 49.10000,2.90000 49.90000,2.90000 49.90000,2.10000 49.10000,2.10000 </gml:coordinates>
+              </gml:LinearRing>
+            </gml:innerBoundaryIs>
+          </gml:Polygon>
+        </gml:polygonMember>
+        <gml:polygonMember>
+          <gml:Polygon>
+            <gml:outerBoundaryIs>
+              <gml:LinearRing>
+                <gml:coordinates>49.20000,2.20000 49.80000,2.20000 49.80000,2.80000 49.20000,2.80000 49.20000,2.20000 </gml:coordinates>
+              </gml:LinearRing>
+            </gml:outerBoundaryIs>
+          </gml:Polygon>
+        </gml:polygonMember>
+        </gml:MultiPolygon>
+        </ms:msGeometry>
+      </ms:multipolygon>
+    </wfs:member>
+   </wfs:FeatureCollection>
+  </wfs:member>
+</wfs:FeatureCollection>
+

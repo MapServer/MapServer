@@ -1,0 +1,29 @@
+#
+# Test optimization where we request exactly at an integral factor of the
+# raster resolution and pixel boundaries (#5032)
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 150
+EXTENT 1.0 1.0 399.0 299.0
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png24
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS default
+  PROCESSING "RESAMPLE=AVERAGE"
+  DATA data/rgb.tif
+END
+
+END # of map file

@@ -21,18 +21,26 @@
 # RUN_PARMS: wcs_20_getcov_native_format.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new" > [RESULT_DEMIME]
 #
 # POST:
-# RUN_PARMS: wcs_20_post_bands_index.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:rangeSubset><wcs:band>1</wcs:band><wcs:band>5</wcs:band><wcs:band>9</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
-# RUN_PARMS: wcs_20_post_bands_name.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:rangeSubset><wcs:band>Band9</wcs:band><wcs:band>Band5</wcs:band><wcs:band>Band1</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
-# RUN_PARMS: wcs_20_post_bands_name.dat [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:mediaType>multipart/related</wcs:mediaType><wcs:rangeSubset><wcs:band>Band9</wcs:band><wcs:band>Band5</wcs:band><wcs:band>Band1</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_bands_index.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:rangeSubset><wcs:band>1</wcs:band><wcs:band>5</wcs:band><wcs:band>9</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_bands_name.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:rangeSubset><wcs:band>Band9</wcs:band><wcs:band>Band5</wcs:band><wcs:band>Band1</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_bands_name.dat [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:mediaType>multipart/related</wcs:mediaType><wcs:rangeSubset><wcs:band>Band9</wcs:band><wcs:band>Band5</wcs:band><wcs:band>Band1</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
 #
-# RUN_PARMS: wcs_20_post_bands_index_new.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:rangeSubset><wcs:band>1</wcs:band><wcs:band>5</wcs:band><wcs:band>9</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
-# RUN_PARMS: wcs_20_post_bands_name_new.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:rangeSubset><wcs:band>Band9</wcs:band><wcs:band>Band5</wcs:band><wcs:band>Band1</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
-# RUN_PARMS: wcs_20_post_bands_name_new.dat [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:mediaType>multipart/related</wcs:mediaType><wcs:rangeSubset><wcs:band>Band9</wcs:band><wcs:band>Band5</wcs:band><wcs:band>Band1</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_bands_index_new.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:rangeSubset><wcs:band>1</wcs:band><wcs:band>5</wcs:band><wcs:band>9</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_bands_name_new.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:rangeSubset><wcs:band>Band9</wcs:band><wcs:band>Band5</wcs:band><wcs:band>Band1</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_post_bands_name_new.dat [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:mediaType>multipart/related</wcs:mediaType><wcs:rangeSubset><wcs:band>Band9</wcs:band><wcs:band>Band5</wcs:band><wcs:band>Band1</wcs:band></wcs:rangeSubset></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
 #
 # Trim to 1px (#3857):
-# RUN_PARMS: wcs_20_multi_getcov_trim_y_to_1px.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>10.1</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
-# RUN_PARMS: wcs_20_multi_getcov_trim_x_to_1px.tif [MAPSERV] -nh [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>10.1</wcs:TrimHigh></wcs:DimensionTrim></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_multi_getcov_trim_y_to_1px.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:wcscrs="http://www.opengis.net/wcs/crs/1.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>y</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>10.1</wcs:TrimHigh></wcs:DimensionTrim><wcs:Extension><wcscrs:subsettingCrs>imageCRS</wcscrs:subsettingCrs></wcs:Extension></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_multi_getcov_trim_x_to_1px.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:wcscrs="http://www.opengis.net/wcs/crs/1.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi</wcs:CoverageId><wcs:DimensionTrim><wcs:Dimension>x</wcs:Dimension><wcs:TrimLow>10</wcs:TrimLow><wcs:TrimHigh>10.1</wcs:TrimHigh></wcs:DimensionTrim><wcs:Extension><wcscrs:subsettingCrs>imageCRS</wcscrs:subsettingCrs></wcs:Extension></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
 #
+#
+# Updated API
+#
+# RUN_PARMS: wcs_20_getcov_bands_interval.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=Band2:Band5" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_20_getcov_bands_intervals.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=multi_new&FORMAT=image/tiff&RANGESUBSET=Band2:Band5,Band7:Band9" > [RESULT_DEMIME]
+#
+#
+# RUN_PARMS: wcs_20_post_bands_interval_component.tif [MAPSERV] [POST]<?xml version="1.0" encoding="UTF-8"?><wcs:GetCoverage xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:rsub="http://www.opengis.net/wcs/range-subsetting/1.0" service="WCS" version="2.0.1"><wcs:format>image/tiff</wcs:format><wcs:CoverageId>multi_new</wcs:CoverageId><wcs:Extension><rsub:RangeSubset><rsub:RangeItem><rsub:RangeComponent>Band1</rsub:RangeComponent></rsub:RangeItem><rsub:RangeItem><rsub:RangeInterval><rsub:startComponent>Band3</rsub:startComponent><rsub:endComponent>Band8</rsub:endComponent></rsub:RangeInterval></rsub:RangeItem></rsub:RangeSubset></wcs:Extension></wcs:GetCoverage>[/POST] > [RESULT_DEMIME]
 MAP
 
 NAME TEST
@@ -92,9 +100,9 @@ LAYER
   TYPE raster
   STATUS ON
   DUMP TRUE
-  
+
   DATA data/multiband.tif
-  
+
   PROJECTION
     "init=epsg:4326"
   END
@@ -125,9 +133,9 @@ LAYER
   TYPE raster
   STATUS ON
   DUMP TRUE
-  
+
   DATA data/multiband.tif
-  
+
   PROJECTION
     "init=epsg:4326"
   END
@@ -154,10 +162,10 @@ LAYER
     "wcs_band_description"    "Default description"
     "wcs_interval"            "0 255"
     "wcs_significant_figures"     "3"
-    
+
     "wcs_nilvalues" "0"
     "wcs_nilvalues_reasons" "urn:ogc:def:nil:OGC:1.0:inapplicable"
-    
+
     #specific band values
     "Band1_band_interpretation" "This is some interpretation"
     "Band1_band_uom"            "SomeUOM"

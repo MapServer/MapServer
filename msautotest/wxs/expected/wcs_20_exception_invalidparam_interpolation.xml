@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0.1" xml:lang="en-US" xsi:schemaLocation="http://www.opengis.net/ows/2.0 http://schemas.opengis.net/ows/2.0/owsExceptionReport.xsd">
   <ows:Exception exceptionCode="InvalidParameterValue" locator="interpolation">
     <ows:ExceptionText>msWCSGetCoverage20(): WCS server error. 'NOVALIDINTERPOLATION' specifies an unsupported interpolation method.</ows:ExceptionText>

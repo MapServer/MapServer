@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Capabilities xmlns="http://www.opengis.net/wcs/1.1" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" version="1.1.1" updateSequence="2007-10-30T14:23:38Z" xsi:schemaLocation="http://www.opengis.net/wcs/1.1 http://schemas.opengis.net/wcs/1.1/wcsGetCapabilities.xsd http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsAll.xsd">
   <ows:OperationsMetadata>
     <ows:Operation name="GetCapabilities">
@@ -77,7 +77,6 @@
           <ows:Value>image/x-aaigrid</ows:Value>
           <ows:Value>image/png</ows:Value>
           <ows:Value>image/jpeg</ows:Value>
-          <ows:Value>image/gif</ows:Value>
         </ows:AllowedValues>
       </ows:Parameter>
       <ows:Parameter name="store">

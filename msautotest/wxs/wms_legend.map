@@ -20,7 +20,8 @@
 # RUN_PARMS: mode_maplegend_all.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=maplegend&mapext=2258982+-70747+2615354+495480&layer=layer1'  > [RESULT_DEMIME]
 # RUN_PARMS: mode_maplegend_74.png [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=maplegend&mapext=2291338+-73348+2301636+-64058&layer=layer1'  > [RESULT_DEMIME]
 # RUN_PARMS: wms_content_legend_l1_changefont.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetLegendGraphic&LAYER=layer1&FORMAT=image/png&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&EXCEPTIONS=INIMAGE&map.legend.label=font+VeraBd" > [RESULT_DEMIME]
-# RUN_PARMS: wms_keyimage_legend.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetLegendGraphic&LAYER=layer3&FORMAT=image/png&TRANSPARENT=FALSE&EXCEPTIONS=INIMAGE" > [RESULT_DEMIME]
+# RUN_PARMS: wms_legend_notext.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetLegendGraphic&LAYER=layer3&FORMAT=image/png" > [RESULT_DEMIME]
+# RUN_PARMS: wms_keyimage_legend.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetLegendGraphic&LAYER=layer4&FORMAT=image/png&TRANSPARENT=FALSE&EXCEPTIONS=INIMAGE" > [RESULT_DEMIME]
 
 MAP
 
@@ -171,6 +172,26 @@ END # Layer
 
 LAYER
   NAME "layer3"
+  DATA road
+  METADATA
+    "wms_title"       "road_styles"
+    "wms_description" "Roads of I.P.E."
+  END
+  TYPE LINE
+  STATUS ON
+
+  CLASS
+    EXPRESSION "67"
+    NAME ""  
+    STYLE
+      COLOR 255 0 0
+      WIDTH 1
+    END
+  END #Class
+END # Layer
+
+LAYER
+  NAME "layer4"
   DATA road
   METADATA
     "wms_title"       "road_styles"

@@ -1,0 +1,115 @@
+# RUN_PARMS: labelcacheoff.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labelcacheoff.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labelcacheoff.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labelcacheoff.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+
+
+MAP
+  NAME "Test"
+
+  STATUS ON
+  SIZE 400 400
+  EXTENT 0 0 400 400
+  UNITS METERS
+  IMAGECOLOR "#FFFFFF"
+  IMAGETYPE png
+
+  LAYER
+    NAME "polygon"
+    TYPE POLYGON 
+    STATUS ON
+    SIZEUNITS PIXELS
+    LABELCACHE OFF
+    FEATURE
+      POINTS
+        50 50 
+        50 350
+        350 350
+        350 50
+        50 50
+      END
+    END
+    CLASS
+      STYLE
+        COLOR 200 200 200
+      END
+      LABEL
+        TEXT "polygon text"
+        SIZE 14
+        TYPE TRUETYPE
+        COLOR 0 0 0
+      END
+    END
+  END
+  
+LAYER
+    NAME "lines"
+    TYPE LINE 
+    STATUS ON
+    SIZEUNITS PIXELS
+    LABELCACHE OFF
+    PROCESSING "ITEMS=class"
+    CLASSITEM "class"
+    LABELITEM "class"
+    FEATURE
+      POINTS
+        50 50 
+        350 350
+      END
+      ITEMS "auto"
+    END
+    FEATURE
+      POINTS
+        70 70 
+        70 330
+        330 330
+        330 70
+        70 70
+      END
+      ITEMS "follow"
+    END
+    FEATURE
+      POINTS
+        200 100
+        400 300
+      END
+      ITEMS "none"
+    END
+    CLASS
+      EXPRESSION "follow"
+      STYLE
+        COLOR 255 0 0
+      END
+      LABEL
+        TEXT "follow (not supported)"
+        SIZE 14
+        TYPE TRUETYPE
+        COLOR 255 0 0
+        ANGLE AUTO
+      END
+    END
+    CLASS
+      EXPRESSION "auto"
+      STYLE
+        COLOR 0 255 0
+      END
+      LABEL
+        SIZE 14
+        TYPE TRUETYPE
+        COLOR 0 255 0
+        ANGLE AUTO
+      END
+    END
+    CLASS
+      EXPRESSION "none"
+      STYLE
+        COLOR 0 0 255
+      END
+      LABEL
+        SIZE 14
+        TYPE TRUETYPE
+        COLOR 0 0 255
+      END
+    END
+  END
+END

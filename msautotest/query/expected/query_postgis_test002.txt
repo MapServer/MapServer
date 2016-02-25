@@ -1,2 +1,3 @@
 St. Louis:STLO Cass:CASS Aitkin:AITK Crow Wing:CROW Carlton:CARL Pine:PINE Mille Lacs:MILL 
+St. Louis:STLO Aitkin:AITK Crow Wing:CROW Carlton:CARL Mille Lacs:MILL 
 name:Pine River name:Port Wing name:Aitkin name:Duluth name:Brainerd name:Mille Lacs Lake name:Sandstone 

@@ -1,14 +1,14 @@
 Content-Type: multipart/mixed; boundary=xxOGRBoundaryxx
 
 --xxOGRBoundaryxx
-Content-Disposition: attachment; filename=result.mid
+Content-Disposition: attachment; filename=road.mid
 Content-Type: application/binary
 Content-Transfer-Encoding: binary
 
 613,1511,0,0,14862.892,1521,67,"",""
 
 --xxOGRBoundaryxx
-Content-Disposition: attachment; filename=result.mif
+Content-Disposition: attachment; filename=road.mif
 Content-Type: application/binary
 Content-Transfer-Encoding: binary
 

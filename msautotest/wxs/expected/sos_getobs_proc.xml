@@ -1,6 +1,6 @@
-Content-Type: text/xml
+Content-Type: text/xml; charset=UTF-8
 
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <om:ObservationCollection xmlns:gml="http://www.opengis.net/gml" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:swe="http://www.opengis.net/swe/1.0.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sos="http://www.opengis.net/sos/1.0" xmlns:ms="http://mapserver.gis.umn.edu/mapserver" xmlns:om="http://www.opengis.net/om/1.0" gml:id="Water" xsi:schemaLocation="http://www.opengis.net/om/1.0 http://schemas.opengis.net/om/1.0.0/om.xsd http://mapserver.gis.umn.edu/mapserver http://localhost/cgi-bin/sostest?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType&amp;typename=obs">
   <gml:description xmlns:gml="http://www.opengis.net/gml">This is for water</gml:description>
   <gml:name xmlns:gml="http://www.opengis.net/gml">Water</gml:name>

@@ -1,0 +1,283 @@
+# RUN_PARMS: label_ar-align-center.png [SHP2IMG] -l center_ar -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_ar-align-center.cairo.png [SHP2IMG] -l center_ar -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: label-align-center.png [SHP2IMG] -l center -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label-align-center.cairo.png [SHP2IMG] -l center -m [MAPFILE] -i cairopng -o [RESULT]
+
+# RUN_PARMS: label_ar-align-left.png [SHP2IMG] -l left_ar -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_ar-align-left.cairo.png [SHP2IMG] -l left_ar -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: label-align-left.png [SHP2IMG] -l left -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label-align-left.cairo.png [SHP2IMG] -l left -m [MAPFILE] -i cairopng -o [RESULT]
+
+# RUN_PARMS: label_ar-align-right.png [SHP2IMG] -l right_ar -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_ar-align-right.cairo.png [SHP2IMG] -l right_ar -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: label-align-right.png [SHP2IMG] -l right -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label-align-right.cairo.png [SHP2IMG] -l right -m [MAPFILE] -i cairopng -o [RESULT]
+
+# RUN_PARMS: label_ar-align-default.png [SHP2IMG] -l default_ar -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_ar-align-default.cairo.png [SHP2IMG] -l default_ar -m [MAPFILE] -i cairopng -o [RESULT]
+# RUN_PARMS: label-align-default.png [SHP2IMG] -l default -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label-align-default.cairo.png [SHP2IMG] -l default -m [MAPFILE] -i cairopng -o [RESULT]
+#
+# RUN_PARMS: label_latin_align_left.png    [SHP2IMG] -e -20000000 -200000000 20000000 200000000 -l latin_left -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_latin_align_right.png   [SHP2IMG] -e -20000000 -200000000 20000000 200000000 -l latin_right -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_latin_align_center.png  [SHP2IMG] -e -20000000 -200000000 20000000 200000000 -l latin_center -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_latin_align_default.png [SHP2IMG] -e -20000000 -200000000 20000000 200000000 -l latin_default -m [MAPFILE] -i png -o [RESULT]
+map
+
+imagetype png
+size 150 100
+extent -636429 4058522 -635180 4059871
+shapepath "data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+
+layer
+    type point
+    status off
+    name "default_ar"
+    data "cities.shp"
+    labelitem "name_ar"
+    class
+      label
+        font "ar:arabic,default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 3
+        buffer 4
+        partials false
+     end
+   end
+end
+layer
+    type point
+    status off
+    name "default"
+    data "cities.shp"
+    labelitem "name"
+    class
+      label
+        font "ar:arabic,default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 3
+        buffer 4
+        partials false
+     end
+   end
+end
+layer
+    type point
+    status off
+    name "right_ar"
+    data "cities.shp"
+    labelitem "name_ar"
+    class
+      label
+        font "ar:arabic,default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 3
+        align right
+        buffer 4
+        partials false
+     end
+   end
+end
+layer
+    type point
+    status off
+    name "right"
+    data "cities.shp"
+    labelitem "name"
+    class
+      label
+        font "ar:arabic,default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 3
+        align right
+        buffer 4
+        partials false
+     end
+   end
+end
+layer
+    type point
+    status off
+    name "left_ar"
+    data "cities.shp"
+    labelitem "name_ar"
+    class
+      label
+        font "ar:arabic,default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 3
+        align left
+        buffer 4
+        partials false
+     end
+   end
+end
+layer
+    type point
+    status off
+    name "left"
+    data "cities.shp"
+    labelitem "name"
+    class
+      label
+        font "ar:arabic,default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 3
+        align left
+        buffer 4
+        partials false
+     end
+   end
+end
+layer
+    type point
+    status off
+    name "center_ar"
+    data "cities.shp"
+    labelitem "name_ar"
+    class
+      label
+        font "ar:arabic,default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 3
+        align center
+        buffer 4
+        partials false
+     end
+   end
+end
+layer
+    type point
+    status off
+    name "center"
+    data "cities.shp"
+    labelitem "name"
+    class
+      label
+        font "ar:arabic,default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 3
+        align center
+        buffer 4
+        partials false
+     end
+   end
+end
+
+layer
+    type point
+    status off
+    name "latin_right"
+    class
+      label
+        font "default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 5
+        align right
+        partials false
+     end
+   end
+   feature
+     points 0 0 end
+     text "the big complex_shape"
+   end
+end
+
+layer
+    type point
+    status off
+    name "latin_left"
+    class
+      label
+        font "default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 5
+        align left
+        partials false
+     end
+   end
+   feature
+     points 0 0 end
+     text "the big complex_shape"
+   end
+end
+
+layer
+    type point
+    status off
+    name "latin_center"
+    class
+      label
+        font "default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 5
+        align center
+        partials false
+     end
+   end
+   feature
+     points 0 0 end
+     text "the big complex_shape"
+   end
+end
+
+layer
+    type point
+    status off
+    name "latin_default"
+    class
+      label
+        font "default"
+        type truetype
+        size 9
+        color 0 0 0
+        wrap " "
+        maxlength 5
+        partials false
+     end
+   end
+   feature
+     points 0 0 end
+     text "the big complex_shape"
+   end
+end
+
+
+
+end

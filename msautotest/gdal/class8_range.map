@@ -1,3 +1,6 @@
+#RUN_PARMS: class8_range.png [SHP2IMG] -m [MAPFILE] -i png8_t -o [RESULT] -l grid1
+#RUN_PARMS: double_range_rgb.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT] -l grid2
+#RUN_PARMS: double_range_hsl.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT] -l grid3
 #
 # Simple test of classification methods on a floating point input. 
 #
@@ -21,12 +24,45 @@ END
 LAYER
   NAME grid1
   TYPE raster
-  STATUS default
+  STATUS ON
   DATA data/grey.tif
   CLASS
     STYLE
       COLORRANGE 255 0 0  0 0 255
       DATARANGE 0 255
+    END
+  END
+END
+LAYER
+  NAME grid2
+  TYPE raster
+  STATUS ON
+  DATA data/grey.tif
+  CLASS
+    STYLE
+      COLORRANGE 255 0 0  0 255 0
+      DATARANGE 0 200
+    END
+    STYLE
+      COLORRANGE 0 255 0   0 0 255
+      DATARANGE 200 255
+    END
+  END
+END
+LAYER
+  NAME grid3
+  TYPE raster
+  STATUS ON
+  DATA data/grey.tif
+  PROCESSING "RANGE_COLORSPACE=HSL"
+  CLASS
+    STYLE
+      COLORRANGE 255 0 0  0 255 0
+      DATARANGE 0 200
+    END
+    STYLE
+      COLORRANGE 0 255 0   0 0 255
+      DATARANGE 200 255
     END
   END
 END

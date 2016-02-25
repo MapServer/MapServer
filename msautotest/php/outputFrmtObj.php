@@ -6,7 +6,7 @@ class OutputFormatObjTest extends PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->outputFrmt = new outputFormatObj('GD/GIF', 'theName');
+        $this->outputFrmt = new outputFormatObj('AGG/PNG', 'theName');
     }
 
     /**

@@ -19,7 +19,7 @@ LAYER
   PROCESSING "CLOSE_CONNECTION=DEFER"
   DATA "poly"
   STATUS default
-  FILTER "where eas_id = 165"
+  PROCESSING  "NATIVE_FILTER=eas_id = 165"
   CLASSITEM "AREA"
   CLASS
     NAME "test1"
@@ -36,7 +36,7 @@ LAYER
   PROCESSING "CLOSE_CONNECTION=DEFER"
   DATA "poly"
   STATUS default
-  FILTER "where eas_id != 165"
+  PROCESSING "NATIVE_FILTER=eas_id != 165"
   CLASSITEM "AREA"
   CLASS
     NAME "test1"

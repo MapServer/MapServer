@@ -1,5 +1,4 @@
 # RUN_PARMS: labels-leader.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: labels-leader.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: labels-leader.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: labels-leader.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: labels-leader.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]

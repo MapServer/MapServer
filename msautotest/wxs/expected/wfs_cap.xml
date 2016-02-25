@@ -1,6 +1,6 @@
-Content-Type: text/xml
+Content-Type: text/xml; charset=UTF-8
 
-<?xml version='1.0' encoding="ISO-8859-1" ?>
+<?xml version='1.0' encoding="UTF-8" ?>
 <WFS_Capabilities 
    version="1.0.0" 
    updateSequence="123" 
@@ -80,6 +80,7 @@ Content-Type: text/xml
         <Title>province</Title>
         <SRS>EPSG:4326</SRS>
         <LatLongBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+        <MetadataURL type="FGDC" format="text/xml">http://path/to/metadata_url</MetadataURL>
     </FeatureType>
 </FeatureTypeList>
 

@@ -1,5 +1,4 @@
 # RUN_PARMS: poly-label-pos-auto.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
-# RUN_PARMS: poly-label-pos-auto.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
 # RUN_PARMS: poly-label-pos-auto.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
 # RUN_PARMS: poly-label-pos-auto.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
 # RUN_PARMS: poly-label-pos-auto.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]

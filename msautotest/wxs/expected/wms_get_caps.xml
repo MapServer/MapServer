@@ -1,6 +1,6 @@
-Content-Type: application/vnd.ogc.wms_xml
+Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
 
-<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
  [
  <!ELEMENT VendorSpecificCapabilities EMPTY>
@@ -55,7 +55,6 @@ Content-Type: application/vnd.ogc.wms_xml
       <Format>image/png</Format>
       <Format>image/png; mode=24bit</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <Format>image/tiff</Format>
       <DCPType>
@@ -88,7 +87,6 @@ Content-Type: application/vnd.ogc.wms_xml
     <GetLegendGraphic>
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
-      <Format>image/gif</Format>
       <Format>image/png; mode=8bit</Format>
       <DCPType>
         <HTTP>
@@ -183,7 +181,7 @@ Content-Type: application/vnd.ogc.wms_xml
     <Style>
        <Name>default</Name>
        <Title>default</Title>
-       <LegendURL width="71" height="21">
+       <LegendURL width="71" height="20">
           <Format>image/png</Format>
           <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=Vectors&amp;format=image/png&amp;STYLE=default"/>
        </LegendURL>
@@ -211,7 +209,7 @@ Content-Type: application/vnd.ogc.wms_xml
         <Style>
           <Name>default</Name>
           <Title>default</Title>
-          <LegendURL width="71" height="21">
+          <LegendURL width="71" height="20">
              <Format>image/png</Format>
              <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=rivers&amp;format=image/png&amp;STYLE=default"/>
           </LegendURL>

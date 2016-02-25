@@ -13,12 +13,6 @@
 # Use bilinear resampling. 
 # RUN_PARMS: wcs_mask_bilinear.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&WIDTH=120&HEIGHT=90&FORMAT=PNG&BBOX=0.1,0.1,399.9,299.9&COVERAGE=grey&CRS=EPSG:32611&INTERPOLATION=BILINEAR" > [RESULT_DEMIME]
 #
-# Generate simple GIF.
-# RUN_PARMS: wcs_mask_simple.gif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&WIDTH=120&HEIGHT=90&FORMAT=image/gif&BBOX=0,0,400,300&COVERAGE=grey&CRS=EPSG:32611" > [RESULT_DEMIME]
-#
-# Use bilinear resampling for GIF. 
-# RUN_PARMS: wcs_mask_bilinear.gif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&WIDTH=120&HEIGHT=90&FORMAT=image/gif&BBOX=0.1,0.1,399.9,299.9&COVERAGE=grey&CRS=EPSG:32611&INTERPOLATION=BILINEAR" > [RESULT_DEMIME]
-#
 # Downsample oddly (per #2180).
 # RUN_PARMS: wcs_mask_16_ds.grd [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&WIDTH=12&HEIGHT=20&FORMAT=AAIGRID&BBOX=0.1,0.1,399.9,299.9&COVERAGE=grey&CRS=EPSG:32611" > [RESULT_DEMIME]
 #
@@ -54,9 +48,6 @@
 # GetCoverage 2.0 image/png full
 # RUN_PARMS: wcs_mask_20_getcov_full.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/png" > [RESULT_DEMIME]
 #
-# GetCoverage 2.0 image/gif full
-# RUN_PARMS: wcs_mask_20_getcov_full.gif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/gif" > [RESULT_DEMIME]
-#
 # GetCoverage 2.0 grid, full (testing FILENAME= option)
 # RUN_PARMS: wcs_mask_20_getcov_grd.dat [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/x-aaigrid" > [RESULT]
 #
@@ -64,40 +55,40 @@
 # RUN_PARMS: wcs_mask_20_getcov_grd_mp.dat [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/x-aaigrid&MEDIATYPE=multipart/mixed" > [RESULT]
 #
 # GetCoverage 2.0 image/tiff trim x min
-# RUN_PARMS: wcs_mask_20_getcov_trim_x_min.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(20,*)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_trim_x_min.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(20,*)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 image/tiff trim x max
-# RUN_PARMS: wcs_mask_20_getcov_trim_x_max.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(*,20)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_trim_x_max.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(*,20)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 image/tiff trim x both
-# RUN_PARMS: wcs_mask_20_getcov_trim_x_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,20)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_trim_x_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,20)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 image/tiff trim y min
-# RUN_PARMS: wcs_mask_20_getcov_trim_y_min.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=y(20,*)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_trim_y_min.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=y(20,*)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 image/tiff trim y max
-# RUN_PARMS: wcs_mask_20_getcov_trim_y_max.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=y(*,20)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_trim_y_max.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=y(*,20)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 image/tiff trim y both
-# RUN_PARMS: wcs_mask_20_getcov_trim_y_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=y(10,20)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_trim_y_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=y(10,20)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 image/tiff trim x y both
-# RUN_PARMS: wcs_mask_20_getcov_trim_x_y_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,20)&SUBSET=y(10,20)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_trim_x_y_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,20)&SUBSET=y(10,20)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 image/tiff trim x y both to 1x1px image (#3857)
-# RUN_PARMS: wcs_mask_20_getcov_trim_x_y_both_1px.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,10)&SUBSET=y(10,10)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_trim_x_y_both_1px.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,10)&SUBSET=y(10,10)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 gml+image/tiff full
 # RUN_PARMS: wcs_mask_20_getcov_full.dat [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&MEDIATYPE=multipart/mixed" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 imageCRS
-# RUN_PARMS: wcs_mask_20_getcov_imageCRS.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x,imageCRS(0,10)&SUBSET=y,imageCRS(0,10)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_imageCRS.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(0,10)&SUBSET=y(0,10)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 EPSG 32611
-# RUN_PARMS: wcs_mask_20_getcov_origCRS.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x,http://www.opengis.net/def/crs/EPSG/0/32611(0,50)&SUBSET=y,http://www.opengis.net/def/crs/EPSG/0/32611(0,50)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_origCRS.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(0,50)&SUBSET=y(0,50)&SUBSETTINGCRS=http://www.opengis.net/def/crs/EPSG/0/32611" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 reproject to EPSG 4326
-# RUN_PARMS: wcs_mask_20_getcov_reproj.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=long,http://www.opengis.net/def/crs/EPSG/0/4326(-121.488,-121.487)&SUBSET=lat,http://www.opengis.net/def/crs/EPSG/0/4326(0,0.001)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_reproj.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=long(-121.488,-121.487)&SUBSET=lat(0,0.001)&SUBSETTINGCRS=http://www.opengis.net/def/crs/EPSG/0/4326" > [RESULT_DEMIME]
 #
 # GetCoverage 2.0 reproject to EPSG 4326 gml+image/tiff
 # RUN_PARMS: wcs_mask_20_getcov_reproj.dat [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&MEDIATYPE=multipart/mixed&OUTPUTCRS=EPSG:4326" > [RESULT_DEMIME]
@@ -105,9 +96,9 @@
 # GetCoverage 2.0 scaling
 # RUN_PARMS: wcs_mask_20_getcov_scaling_size_full.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SIZE=x(10)&SIZE=y(20)" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_mask_20_getcov_scaling_resolution_full.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&RESOLUTION=x(20)&RESOLUTION=y(20)" > [RESULT_DEMIME]
-# RUN_PARMS: wcs_mask_20_getcov_scaling_size_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,30)&SUBSET=y(10,30)&SIZE=x(40)&SIZE=y(40)" > [RESULT_DEMIME]
-# RUN_PARMS: wcs_mask_20_getcov_scaling_resolution_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,30)&SUBSET=y(10,30)&RESOLUTION=x(5)&RESOLUTION=y(5)" > [RESULT_DEMIME]
-# RUN_PARMS: wcs_mask_20_getcov_imageCRS_scaling_size_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x,imageCRS(10, 20)&SUBSET=y,imageCRS(10, 20)&SIZE=x(20)&SIZE=y(30)" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_scaling_size_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,30)&SUBSET=y(10,30)&SIZE=x(40)&SIZE=y(40)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_scaling_resolution_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10,30)&SUBSET=y(10,30)&RESOLUTION=x(5)&RESOLUTION=y(5)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
+# RUN_PARMS: wcs_mask_20_getcov_imageCRS_scaling_size_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x(10, 20)&SUBSET=y,imageCRS(10, 20)&SIZE=x(20)&SIZE=y(30)&SUBSETTINGCRS=imageCRS" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_mask_20_getcov_imageCRS_scaling_resolution_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x,imageCRS(0,10)&SUBSET=y,imageCRS(0,10)&RESOLUTION=x(20)&RESOLUTION=y(5)" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_mask_20_getcov_origCRS_scaling_size_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x,http://www.opengis.net/def/crs/EPSG/0/32611(0,50)&SUBSET=y,http://www.opengis.net/def/crs/EPSG/0/32611(0,50)&SIZE=x(30)&SIZE=y(35)" > [RESULT_DEMIME]
 # RUN_PARMS: wcs_mask_20_getcov_origCRS_scaling_resolution_trim_both.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.0&REQUEST=GetCoverage&COVERAGEID=grey&FORMAT=image/tiff&SUBSET=x,http://www.opengis.net/def/crs/EPSG/0/32611(0,50)&SUBSET=y,http://www.opengis.net/def/crs/EPSG/0/32611(0,50)&RESOLUTION=x(5)&RESOLUTION=y(2)" > [RESULT_DEMIME]

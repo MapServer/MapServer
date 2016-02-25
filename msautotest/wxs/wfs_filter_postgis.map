@@ -8,6 +8,10 @@
 # Verify PropertyIsEqualTo
 # RUN_PARMS: wfs_filter_postgis_property_is_equal.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
 
+# Verify PropertyIsEqualTo with no matching (due to case sensitivity)
+# RUN_PARMS: wfs_filter_postgis_property_is_equal_no_matching.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>DIGBY</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_postgis_property_is_equal_case_insensitive.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo matchCase=\"false\"><PropertyName>name</PropertyName><Literal>DIGBY</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+
 # Test quotes in filter
 # RUN_PARMS: wfs_filter_postgis_property_is_equal_quote1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>\"Tignish</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
 # RUN_PARMS: wfs_filter_postgis_property_is_equal_quote2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>'Cheticamp</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
@@ -82,6 +86,7 @@
 #
 # Verify BBOX Result:  Digby
 # RUN_PARMS: wfs_filter_postgis_bbox.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_postgis_bbox_no_propertyname.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><BBOX><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>" > [RESULT]
 #
 # Verify INTERSECTS Results:  Canso, Port Hawkesbury
 # RUN_PARMS: wfs_filter_postgis_intersects.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Intersects><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-61.63,45.04 -60.78,45.04 -60.78,46.08 -61.63,46.08</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Intersects></Filter>" > [RESULT]

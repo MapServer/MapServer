@@ -1,0 +1,244 @@
+#
+# Test WFS
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WFS GEOS POSTGIS
+#
+#
+# NOTE: This test for OGR uses the same result/expected files as the shapefile testcase
+#
+# Verify PropertyIsEqualTo
+# RUN_PARMS: wfs_filter_property_is_equal.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+
+# Verify PropertyIsEqualTo with no matching (due to case sensitivity)
+# RUN_PARMS: wfs_filter_property_is_equal_no_matching.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>DIGBY</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_property_is_equal_case_insensitive.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo matchCase=\"false\"><PropertyName>name</PropertyName><Literal>DIGBY</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+
+# Test quotes in filter
+# RUN_PARMS: wfs_filter_property_is_equal_quote1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>\"Tignish</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_property_is_equal_quote2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>'Cheticamp</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_property_is_equal_quote3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>'Souris'</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_property_is_equal_quote4.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>\"Canso\"</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_property_is_equal_quote5.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>\"Wind\"sor</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_property_is_equal_quote6.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Tru\"ro</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+#
+# Verify PropertyIsNotEqualTo
+# RUN_PARMS: wfs_filter_is_not_equal.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsNotEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsNotEqualTo></Filter>" > [RESULT]
+#
+# Verify PropertyIsLessThan
+# RUN_PARMS: wfs_filter_isless_than.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsLessThan><PropertyName>pop_range</PropertyName><Literal>3</Literal></PropertyIsLessThan></Filter>" > [RESULT]
+#
+# Verify PropertyIsGreaterThan
+# RUN_PARMS: wfs_filter_isgreater_than.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsGreaterThan><PropertyName>pop_range</PropertyName><Literal>3</Literal></PropertyIsGreaterThan></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsLessThanOrEqualTo
+# RUN_PARMS: wfs_filter_isless_than_or_equalto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsLessThanOrEqualTo><PropertyName>pop_range</PropertyName><Literal>2</Literal></PropertyIsLessThanOrEqualTo></Filter>" > [RESULT]
+#
+# Verify PropertyIsGreaterThanOrEqualTo
+# RUN_PARMS: wfs_filter_greater_than_or_equalto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsGreaterThanOrEqualTo><PropertyName>pop_range</PropertyName><Literal>4</Literal></PropertyIsGreaterThanOrEqualTo></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsBetween
+# RUN_PARMS: wfs_filter_isbetween.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsBetween><PropertyName>pop_range</PropertyName><LowerBoundary>4</LowerBoundary><UpperBoundary>6</UpperBoundary></PropertyIsBetween></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsLike
+# RUN_PARMS: wfs_filter_islike.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><PropertyIsLike+wildCard='*'+singleChar='.'+escape='!'><PropertyName>name</PropertyName><Literal>Syd*</Literal></PropertyIsLike></Filter>" > [RESULT]
+#
+#
+# Verify PropertyIsLike with logical operators
+# RUN_PARMS: wfs_filter_islike_logical.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><AND><PropertyIsLike+wildCard='*'+singleChar='.'+escape='!'><PropertyName>name</PropertyName><Literal>Syd*</Literal></PropertyIsLike><PropertyIsLike+wildCard='*'+singleChar='.'+escape='!'><PropertyName>pop_range</PropertyName><Literal>3</Literal></PropertyIsLike></AND></Filter>" > [RESULT]
+#
+# Verify PropertyIsBetween OR PropertyIsEqualTo
+# RUN_PARMS: wfs_filter_isbetween_or_isequalto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><OR><PropertyIsBetween><PropertyName>pop_range</PropertyName><LowerBoundary>4</LowerBoundary><UpperBoundary>6</UpperBoundary></PropertyIsBetween><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsEqualTo></OR></Filter>" > [RESULT]
+#
+# Verify PropertyIsBetween AND PropertyIsEqualTo
+# RUN_PARMS: wfs_filter_isbetween_and_isequalto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><AND><PropertyIsBetween><PropertyName>pop_range</PropertyName><LowerBoundary>1</LowerBoundary><UpperBoundary>3</UpperBoundary></PropertyIsBetween><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsEqualTo></AND></Filter>" > [RESULT]
+#
+# Verify PropertyIsBetween AND NOT PropertyIsEqualTo
+# RUN_PARMS: wfs_filter_isbetween_and_not_isequalto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><AND><PropertyIsBetween><PropertyName>pop_range</PropertyName><LowerBoundary>4</LowerBoundary><UpperBoundary>6</UpperBoundary></PropertyIsBetween><NOT><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Sydney</Literal></PropertyIsEqualTo></NOT></AND></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsEqualTo OR PropertyIsEqualTo
+# RUN_PARMS: wfs_filter_isequalto_or_isequalto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><OR><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>4</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>5</Literal></PropertyIsEqualTo></OR></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsEqualTo OR PropertyIsEqualTo reverse
+# RUN_PARMS: wfs_filter_isequalto_or_isequalto_reverse.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><OR><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>5</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>4</Literal></PropertyIsEqualTo></OR></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsEqualTo OR PropertyIsEqualTo (sydney or digby)
+# RUN_PARMS: wfs_filter_iseq_or_iseq_str1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><OR><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Sydney</Literal></PropertyIsEqualTo></OR></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsEqualTo OR PropertyIsEqualTo ('souris' or digby)
+# RUN_PARMS: wfs_filter_iseq_or_iseq_str2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><OR><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>'Souris'</Literal></PropertyIsEqualTo></OR></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsEqualTo OR PropertyIsEqualTo ("Tignish or digby)
+# RUN_PARMS: wfs_filter_iseq_or_iseq_str3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><OR><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Digby</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>\"Tignish</Literal></PropertyIsEqualTo></OR></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsEqualTo OR PropertyIsEqualTo ('souris' or "Tignish)
+# RUN_PARMS: wfs_filter_iseq_or_iseq_str4.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><OR><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>'Souris'</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>\"Tignish</Literal></PropertyIsEqualTo></OR></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsEqualTo OR PropertyIsEqualTo ("Tignish or 'souris')
+# RUN_PARMS: wfs_filter_iseq_or_iseq_str5.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><OR><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>\"Tignish</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>'Souris'</Literal></PropertyIsEqualTo></OR></Filter>" > [RESULT_DEVERSION]
+#
+# Verify PropertyIsEqualTo AND PropertyIsEqualTo
+# RUN_PARMS: wfs_filter_isequalto_and_isequalto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><And><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>4</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>5</Literal></PropertyIsEqualTo></And></Filter>" > [RESULT]
+#
+# Verify PropertyIsEqualTo AND PropertyIsEqualTo reverse order
+# RUN_PARMS: wfs_filter_isequalto_and_isequalto_reverse.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><And><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>5</Literal></PropertyIsEqualTo><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>4</Literal></PropertyIsEqualTo></And></Filter>" > [RESULT]
+#
+# Verify Not PropertyIsEqualTo
+# RUN_PARMS: wfs_filter_not_isequalto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Not><PropertyIsEqualTo><PropertyName>pop_range</PropertyName><Literal>4</Literal></PropertyIsEqualTo></Not></Filter>" > [RESULT]
+#
+# Verify BBOX Result:  Digby
+# RUN_PARMS: wfs_filter_bbox.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>" > [RESULT]
+# RUN_PARMS: wfs_filter_bbox_no_propertyname.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><BBOX><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>" > [RESULT]
+#
+# Verify INTERSECTS Results:  Canso, Port Hawkesbury
+# RUN_PARMS: wfs_filter_intersects.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Intersects><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-61.63,45.04 -60.78,45.04 -60.78,46.08 -61.63,46.08</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Intersects></Filter>" > [RESULT]
+#
+# Verify DWITHIN Result:  Sydney
+# RUN_PARMS: wfs_filter_dwithin.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><DWithin><PropertyName>Geometry</PropertyName><gml:Point><gml:coordinates>-60.18,46.10</gml:coordinates></gml:Point><Distance units='dd'>0.05</Distance></DWithin></Filter>" > [RESULT]
+#
+
+# Verify DWITHIN with units Result:  Sydney
+# RUN_PARMS: wfs_filter_dwithin_units.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><DWithin><PropertyName>Geometry</PropertyName><gml:Point><gml:coordinates>-60.18,46.10</gml:coordinates></gml:Point><Distance units='kilometers'>10</Distance></DWithin></Filter>" > [RESULT]
+#
+# Verify BEYOND Results:  all but Sydney excluded
+# RUN_PARMS: wfs_filter_beyond.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Beyond><PropertyName>Geometry</PropertyName><gml:Point><gml:coordinates>-60.18,46.10</gml:coordinates></gml:Point><Distance units='dd'>0.05</Distance></Beyond></Filter>" > [RESULT]
+#
+# Verify EQUALS Result:  Cheticamp
+# RUN_PARMS: wfs_filter_equals.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&FILTER=<Filter><Equals><PropertyName>Geometry</PropertyName><gml:Point+srsName=%22EPSG:3978%22><gml:coordinates>2503805.5,427872.65625</gml:coordinates></gml:Point></Equals></Filter>" > [RESULT]
+#
+# Verify OVERLAPS Result:  Prince Edward Island
+# RUN_PARMS: wfs_filter_overlaps.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Overlaps><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-64.75,46.08 -63.53,46.08 -63.53,47.29 -64.75,47.29</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Overlaps></Filter>" > [RESULT]
+
+
+# Verify WITHIN Results:  Quebec, Iles de la Madeleine (3 islands)
+# RUN_PARMS: wfs_filter_within.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Within><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-62.16,47.07 -61.33,47.07 -61.33,47.75 -62.16,47.75</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Within></Filter>" > [RESULT]
+
+# Verify CONTAINS Result:  Quebec, Nova Scotia
+# RUN_PARMS: wfs_filter_contains.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Contains><PropertyName>Geometry</PropertyName><gml:Polygon srsName=%22EPSG:3978%22><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>2526937.731300645973533,506636.554792948008981 2527346.529336222913116,506491.497425485227723 2527333.342302817385644,506188.195657153904904 2526858.609100211877376,506254.130824182415381 2526924.544267240446061,506610.18072613660479 2526937.731300645973533,506636.554792948008981</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Contains></Filter>" > [RESULT]
+
+# Verify CROSSES Result:  Nova Scotia, Sable Island
+# RUN_PARMS: wfs_filter_crosses.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Crosses><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-60.25,43.79 -59.95,43.79 -59.95,44.09 -60.25,44.09</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Crosses></Filter>" > [RESULT]
+
+# Verify TOUCHES Result:  Quebec, Iles de la Madeleine (AREA:  4833029.500)
+# RUN_PARMS: wfs_filter_touches.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Touches><PropertyName>Geometry</PropertyName><gml:Point srsName=%22EPSG:3978%22><gml:coordinates>2407487.25,512212.40625</gml:coordinates></gml:Point></Touches></Filter>" > [RESULT]
+
+# Verify EQUALS Result:  Quebec, Iles de la Madeleine (AREA:  4833029.500)
+# RUN_PARMS: wfs_filter_equals_poly.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Equals><PropertyName>Geometry</PropertyName><gml:Polygon srsName=%22EPSG:3978%22><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>2407487.25,512212.40625 2406782.5,513659.375 2407398.0,515030.53125 2410186.75,515489.03125 2411133.5,513513.125 2409505.75,512788.40625 2407487.25,512212.40625</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Equals></Filter>" > [RESULT]
+
+# Verify DISJOINT Result:  Nova Scotia, Sable Island
+# RUN_PARMS: wfs_filter_disjoint.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Disjoint><PropertyName>Geometry</PropertyName><gml:Polygon><gml:outerBoundaryIs><gml:LinearRing><gml:coordinates>-66.23,42.50 -58.95,45.67 -58.97,48.52 -67.01,47.13</gml:coordinates></gml:LinearRing></gml:outerBoundaryIs></gml:Polygon></Disjoint></Filter>" > [RESULT]
+
+# Verify INTERSECTS Results:  Prince Edward Island
+# RUN_PARMS: wfs_filter_intersects_line.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=province&FILTER=<Filter><Intersects><PropertyName>Geometry</PropertyName><gml:LineString><gml:coordinates>-62.94,46.61 -62.74,45.83</gml:coordinates></gml:LineString></Intersects></Filter>" > [RESULT]
+#
+# Filter using startIndex
+# RUN_PARMS: wfs_filter_startindex.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(name)&maxfeatures=10&startindex=0" > [RESULT]
+# RUN_PARMS: wfs_filter_startindex2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&propertyname=(name)&maxfeatures=10&startindex=10" > [RESULT]
+MAP
+#CONFIG "MS_ERRORFILE" "stderr"
+NAME WFS_FILTER
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+#UNITS METERS
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?"
+    "wfs_srs"		   "EPSG:4326 EPSG:4269"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  CONNECTIONTYPE OGR
+  CONNECTION "province.shp"
+  METADATA
+    "wfs_title"         "province"
+    "wfs_description"   "province"
+    "wfs_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
+    "gml_include_items" "all"
+  END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+
+LAYER
+  NAME popplace
+  CONNECTIONTYPE OGR
+  CONNECTION "popplace.shp"
+  METADATA
+    "wfs_title"         "popplace"
+    "wfs_description"   "Cities"
+    "wfs_result_fields" "name"
+    "gml_include_items" "all"
+   END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  LabelItem "Name"
+  CLASSITEM "Capital" 
+
+  CLASS
+    EXPRESSION /./  
+    SYMBOL 2
+    SIZE 8
+    NAME "Cities"
+    LABEL
+      COLOR  0 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+END # Layer
+
+END # Map File
