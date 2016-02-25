@@ -1,0 +1,7 @@
+Content-type: text/xml
+
+<?xml version='1.0' encoding="ISO-8859-1"?>
+<!DOCTYPE WMS_DescribeLayerResponse SYSTEM "http://ogc.dmsolutions.ca/wms/1.1.1/WMS_DescribeLayerResponse.dtd">
+<WMS_DescribeLayerResponse version="1.1.0" >
+<LayerDescription name="shppoly"></LayerDescription>
+</WMS_DescribeLayerResponse>

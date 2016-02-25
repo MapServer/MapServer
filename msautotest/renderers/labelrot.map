@@ -1,0 +1,181 @@
+# RUN_PARMS: labelrot.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labelrot.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labelrot.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labelrot.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+
+#
+# Test support for rotating labels with their map.
+#
+# REQUIRES: SUPPORTS=FREETYPE OUTPUT=PNG SUPPORTS=PROJ
+#
+MAP
+  NAME test
+
+  IMAGETYPE png
+
+  TRANSPARENT OFF
+
+  SIZE 400 300 
+  EXTENT 0 0 4000 3000
+  UNITS meters
+  FONTSET "../misc/fonts.lst"
+  ANGLE 30
+
+  PROJECTION 
+    "+proj=utm +zone=11 +datum=WGS84" 
+  END
+
+  LAYER
+    NAME background
+    TYPE POLYGON
+    STATUS DEFAULT
+    FEATURE
+      POINTS 500 500 3500 500 3500 2500 500 2500 500 500 END
+      TEXT "Polygon"
+    END
+    CLASS
+      COLOR 0 255 0
+      LABEL
+        COLOR 0 0 0
+        FONT lucida
+        TYPE truetype
+        SIZE 10
+      END
+    END # CLASS
+
+    PROJECTION 
+      "+proj=utm +zone=11 +datum=WGS84" 
+    END
+    PROCESSING "LABELS_ROTATE_WITH_MAP=YES"
+  END
+
+  LAYER
+    NAME fonttest
+    TYPE POINT
+    STATUS DEFAULT
+    FEATURE
+      POINTS 2000 2500 END
+      TEXT ".  Not Rotated With Map"
+    END
+    LABELCACHE OFF
+    CLASS
+      COLOR 0 255 0
+      LABEL
+        COLOR 0 0 0
+        FONT lucida
+        TYPE truetype
+        SIZE 10
+        POSITION ur
+      END
+    END # CLASS
+
+    PROJECTION 
+      "+proj=utm +zone=11 +datum=WGS84" 
+    END
+  END
+
+  LAYER
+    NAME fonttest2
+    TYPE POINT
+    STATUS DEFAULT
+    FEATURE
+      POINTS 2000 2500 END
+      TEXT ".  Rotated With Map"
+    END
+    LABELCACHE OFF
+    CLASS
+      COLOR 0 255 0
+      LABEL
+        COLOR 0 0 0
+        FONT lucida
+        TYPE truetype
+        SIZE 10
+        POSITION ur
+      END
+    END # CLASS
+    PROCESSING "LABELS_ROTATE_WITH_MAP=YES"
+
+    PROJECTION 
+      "+proj=utm +zone=11 +datum=WGS84" 
+    END
+  END
+
+  LAYER
+    NAME fonttest3
+    TYPE POINT
+    STATUS DEFAULT
+    FEATURE
+      POINTS 500 500 END
+      TEXT "Rot-Cached"
+    END
+    CLASS
+      COLOR 0 255 0
+      LABEL
+        COLOR 0 0 0
+        FONT lucida
+        TYPE truetype
+        SIZE 10
+        POSITION lr
+      END
+    END # CLASS
+
+    PROCESSING "LABELS_ROTATE_WITH_MAP=ON"
+
+    PROJECTION 
+      "+proj=utm +zone=11 +datum=WGS84" 
+    END
+  END
+  LAYER
+    NAME fonttest3
+    TYPE POINT
+    STATUS DEFAULT
+    FEATURE
+      POINTS 3500 2500 END
+      TEXT "angle+rot"
+    END
+    CLASS
+      COLOR 0 255 0
+      LABEL
+        COLOR 0 0 0
+        FONT lucida
+        TYPE truetype
+        SIZE 10
+        POSITION lr
+        ANGLE -45
+      END
+    END # CLASS
+
+    PROCESSING "LABELS_ROTATE_WITH_MAP=ON"
+
+    PROJECTION 
+      "+proj=utm +zone=11 +datum=WGS84" 
+    END
+  END
+  LAYER
+    NAME fonttest3
+    TYPE LINE
+    STATUS DEFAULT
+    FEATURE
+      POINTS 500 1500 1500 2500 END
+      TEXT "Fixed on line"
+    END
+    CLASS
+      COLOR 255 0 0
+      LABEL
+        COLOR 255 0 0
+        FONT lucida
+        TYPE truetype
+        SIZE 10
+        ANGLE AUTO
+        POSITION uc
+      END
+    END # CLASS
+
+    PROCESSING "LABELS_ROTATE_WITH_MAP=ON"
+
+    PROJECTION 
+      "+proj=utm +zone=11 +datum=WGS84" 
+    END
+  END
+END

@@ -1,0 +1,96 @@
+# RUN_PARMS: point_ellipse.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: point_ellipse.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: point_ellipse.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: point_ellipse.json [SHP2IMG] -m [MAPFILE] -i json -l symbol -o [RESULT]
+# RUN_PARMS: point_ellipse.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+
+# RUN_PARMS: gd_fallback.png         [SHP2IMG] -m [MAPFILE] -i gdpng -o [RESULT]
+# RUN_PARMS: gd_fallback_gif.png     [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: gd_fallback_pc256.png   [SHP2IMG] -m [MAPFILE] -i gdpc256 -o [RESULT]
+# RUN_PARMS: gd_fallback_jpeg.png    [SHP2IMG] -m [MAPFILE] -i gdjpg -o [RESULT]
+#
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+outputformat
+  name "gdpng"
+  driver "gd/png"
+  imagemode rgb
+end
+outputformat
+  name "gdpc256"
+  driver "gd/png"
+  imagemode pc256
+end
+outputformat
+  name "gdjpg"
+  driver "gd/jpeg"
+  imagemode rgb
+end
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 200 150
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+
+CONFIG MS_ERRORFILE "stderr"
+
+LAYER
+  NAME "symbol"
+  TYPE point
+  STATUS on
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "ellipse"
+        COLOR 0 0 255
+        SIZE 20
+    END
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+  END
+END
+
+LAYER
+  NAME "symbol rotated"
+  TYPE point
+  STATUS on
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "ellipse"
+        SIZE 35
+        COLOR 0 0 255
+        ANGLE 45
+    END
+  END
+  FEATURE
+    POINTS
+        200 200
+    END
+  END
+END
+
+LAYER
+    NAME "anchors"
+    TYPE POINT
+    STATUS on
+    CLASS
+        STYLE
+            COLOR 255 0 0
+            SIZE 8
+            WIDTH 1
+            SYMBOL "circle"
+        END
+    END
+    FEATURE POINTS 50 50 END END
+    FEATURE POINTS 200 200 END END
+END
+
+END

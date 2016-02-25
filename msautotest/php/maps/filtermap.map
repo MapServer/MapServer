@@ -1,0 +1,17 @@
+MAP
+    NAME 'filter'
+    EXTENT 125000 4785000 789000 5489000
+    UNITS METERS
+    SIZE 300 300
+    IMAGETYPE PNG
+
+    LAYER
+        NAME 'filter1'
+        INCLUDE 'include/bdry_counpy2_shapefile.map'
+    END
+    
+    LAYER
+        NAME 'filters2'
+        INCLUDE 'include/bdry_counpy2_shapefile.map'
+    END
+END

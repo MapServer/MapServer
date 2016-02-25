@@ -82,12 +82,12 @@ static void msOWSClearRequestObj(owsRequestObj *ows_request)
 }
 
 #if defined(USE_LIBXML2) && LIBXML_VERSION < 20900
-static int bExternalEntityAsked = FALSE;
+static int bExternalEntityAsked = MS_FALSE;
 static xmlParserInputPtr  dummyEntityLoader(const char * URL, 
                                            const char * ID, 
                                            xmlParserCtxtPtr context )
 {
-    bExternalEntityAsked = TRUE;
+    bExternalEntityAsked = MS_TRUE;
     return NULL;
 }
 #endif
@@ -149,7 +149,7 @@ static int msOWSPreParseRequest(cgiRequestObj *request,
     oldExternalEntityLoader = xmlGetExternalEntityLoader();
     /* to avoid  XML External Entity vulnerability with libxml2 < 2.9 */
     xmlSetExternalEntityLoader (dummyEntityLoader); 
-    bExternalEntityAsked = FALSE;
+    bExternalEntityAsked = MS_FALSE;
 #endif
     /* parse to DOM-Structure with libxml2 and get the root element */
     ows_request->document = xmlParseMemory(request->postrequest,

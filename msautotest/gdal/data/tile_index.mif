@@ -1,0 +1,43 @@
+Version 300
+Charset "Neutral"
+Delimiter ","
+Columns 1
+  location Char(254)
+Data
+
+Region 1
+  5
+0 60
+40 60
+40 30
+0 30
+0 60
+    Pen (1,2,0)
+    Brush (1,0,16777215)
+Region 1
+  5
+0 30
+40 30
+40 0
+0 0
+0 30
+    Pen (1,2,0)
+    Brush (1,0,16777215)
+Region 1
+  5
+40 60
+80 60
+80 30
+40 30
+40 60
+    Pen (1,2,0)
+    Brush (1,0,16777215)
+Region 1
+  5
+40 30
+80 30
+80 0
+40 0
+40 30
+    Pen (1,2,0)
+    Brush (1,0,16777215)

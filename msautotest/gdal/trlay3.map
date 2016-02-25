@@ -1,0 +1,39 @@
+#
+# Test TRANSPARENCY flag with 8bit output result.
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png_8
+
+OUTPUTFORMAT
+  NAME png_8
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT ON
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME backdrop
+  TYPE raster
+  STATUS default
+  DATA data/rgba.tif
+END
+LAYER
+  NAME grid1
+  TYPE raster
+  STATUS ON
+  DATA data/grid.gif
+  TRANSPARENCY 33
+END
+
+END # of map file

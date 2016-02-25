@@ -1,0 +1,85 @@
+#
+# Test CGI Query Modes w/PostGIS Data Source (+templated output)
+#
+# REQUIRES: INPUT=POSTGIS
+#
+# Test 1: simple mode=nquery, one layer, rect-based
+# RUN_PARMS: query_postgis_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&mapext=420000+5120000+582000+5200000&qlayer=bdry_counpy2' > [RESULT_DEMIME]
+#
+# Test 2: simple mode=nquery, multiple layers, rect-based
+# RUN_PARMS: query_postgis_test002.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&mapext=420000+5120000+582000+5200000&layers=all' > [RESULT_DEMIME]
+# 
+# Test 3: simple mode=nquery, one layer, point-based
+# RUN_PARMS: query_postgis_test003.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=query&qlayer=bdry_counpy2&mapxy=467000+5259000' > [RESULT_DEMIME]
+#
+# Test 4: simple mode=nquery, multiple layers, point-based
+# RUN_PARMS: query_postgis_test004.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&mapxy=467000+5259000&layers=all' > [RESULT_DEMIME]
+#
+# Test 5: simple mode=nquery, one layer, point-based (image coords)
+# RUN_PARMS: query_postgis_test005.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&imgext=420000+5120000+582000+5200000&imgsize=300+300&imgxy=150+150&qlayer=bdry_counpy2' > [RESULT_DEMIME]
+#
+# Test 6: simple mode=nquery, multiple layers, point-based (image coords)
+# RUN_PARMS: query_postgis_test006.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&imgext=420000+5120000+582000+5200000&imgsize=300+300&imgxy=150+150&layers=all' > [RESULT_DEMIME]
+#
+# Test 7: simple mode=itemnquery (regex)
+# RUN_PARMS: query_postgis_test007.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=itemnquery&qlayer=bdry_counpy2&qstring=/^Ca/&qitem=cty_name' > [RESULT_DEMIME]
+#
+# Test 8: simple mode=itemquery (logical expression)
+# RUN_PARMS: query_postgis_test008.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=itemnquery&qlayer=bdry_counpy2&qstring=("[cty_name]"%20%3D%20"Carlton")' > [RESULT_DEMIME]
+#
+# Test 9: simple mode=featurequery
+# RUN_PARMS: query_postgis_test009.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=featurequery&slayer=bdry_counpy2&mapxy=467000+5259000&qlayer=indx_q100kpy4' > [RESULT_DEMIME]
+#
+# Test 10: simple mode=nquery w/shape, multiple layers
+# RUN_PARMS: query_postgis_test010.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&mapshape=468000+5185000+510700+5250000+520500+5111000+468000+5185000&layers=all' > [RESULT_DEMIME]
+#
+# Test 11: simple mode=nquery w/shape as WKT, multiple layers
+# RUN_PARMS: query_postgis_test011.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=nquery&mapshape=POLYGON((468000+5185000,510700+5250000,520500+5111000,468000+5185000))&layers=all' > [RESULT_DEMIME]
+#
+# Test 12: simple mode=indexquery, one layer, index query
+# RUN_PARMS: query_postgis_test012.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=indexquery&mapext=420000+5120000+582000+5200000&qlayer=bdry_counpy2&shapeindex=5' > [RESULT_DEMIME]
+#
+# Test 13: simple mode=itemnquery (regex) with native filter
+# RUN_PARMS: query_postgis_test013.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=itemnquery&qlayer=bdry_counpy2_native_filter&qstring=/^Ca/&qitem=cty_name' > [RESULT_DEMIME]
+#
+MAP
+  NAME 'query_postgis'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+
+  WEB
+    QUERYFORMAT 'tmpl'
+  END
+
+  OUTPUTFORMAT
+    NAME 'tmpl'
+    DRIVER 'TEMPLATE'
+    MIMETYPE 'text/html'
+    FORMATOPTION "FILE=template/query_postgis.tmpl"
+  END
+
+  LAYER
+    NAME 'bdry_counpy2'
+    VALIDATION
+      qstring '.'
+    END
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+  END
+
+  LAYER
+    NAME 'bdry_counpy2_native_filter'
+    VALIDATION
+      qstring '.'
+    END
+    INCLUDE 'include/bdry_counpy2_postgis.map'
+    PROCESSING 'NATIVE_FILTER=length(cty_name) > 4' 
+  END
+
+  LAYER
+    NAME 'indx_q100kpy4'
+    VALIDATION
+      qstring '.'
+    END
+    INCLUDE 'include/indx_q100kpy4_shapefile.map'
+  END
+END

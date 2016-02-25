@@ -497,7 +497,11 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
     if( shape->values[i][0] == '\0' ) {
       OGRFieldDefnH hFieldDefn = OGR_FD_GetFieldDefn(hLayerDefn, out_field);
       OGRFieldType eFieldType = OGR_Fld_GetType(hFieldDefn);
-      if( eFieldType == OFTInteger || eFieldType == OFTReal )
+      if( eFieldType == OFTInteger || eFieldType == OFTReal
+#if GDAL_VERSION_MAJOR >= 2
+          || eFieldType == OFTInteger64
+#endif
+          )
       {
         out_field++;
         continue;
@@ -987,6 +991,12 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         eType = OFTString;
       else if( EQUAL(item->type,"Integer") )
         eType = OFTInteger;
+      else if( EQUAL(item->type,"Long") )
+#if GDAL_VERSION_MAJOR >= 2
+        eType = OFTInteger64;
+#else
+        eType = OFTReal;
+#endif
       else if( EQUAL(item->type,"Real") )
         eType = OFTReal;
       else if( EQUAL(item->type,"Character") )

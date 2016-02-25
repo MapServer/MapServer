@@ -1,0 +1,58 @@
+# RUN_PARMS: baseline_text.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: baseline_text.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: baseline_text.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: baseline_text.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+MAP
+  EXTENT 0 0 100 50
+  IMAGECOLOR 255 255 255
+  IMAGETYPE png
+  FONTSET "../misc/fonts.lst"
+  SIZE 100 50
+  STATUS ON
+  NAME "text_test"
+
+  LAYER
+    NAME "text_test"
+    STATUS default
+    TYPE POINT
+    FEATURE 
+      POINTS 10 25 END
+      TEXT "bq"
+    END
+    CLASS
+      LABEL
+        FONT "default"
+        SIZE 20
+        TYPE TRUETYPE
+        COLOR 0 0 0
+        POSITION UR
+      END
+    END
+    CLASS
+    END
+  END
+
+  LAYER
+    NAME "text_test2"
+    STATUS default
+    TEMPLATE "dummy.html"
+    TYPE POINT
+    FEATURE 
+      POINTS 50 25 END
+      TEXT "aaa"
+    END
+    CLASS
+      LABEL
+        FONT "default"
+        SIZE 20
+        TYPE TRUETYPE
+        COLOR 0 0 0
+        POSITION UR
+      END
+    END
+    CLASS
+    END
+  END
+
+END

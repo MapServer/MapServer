@@ -1,4 +1,5 @@
 .gitattributes export-ignore
+msautotest export-ignore
 .gitignore export-ignore
 .gitmodules export-ignore
 release.sh export-ignore

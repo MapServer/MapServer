@@ -1,0 +1,498 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://ogc.dmsolutions.ca/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=popplace&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-65.816024,43.740118 -60.981038,47.404770</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-64.052355,46.980843 -64.052355,46.980843</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-64.052355,46.980843</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>1</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>8</ms:popplace_>
+        <ms:popplace_i>1</ms:popplace_i>
+        <ms:unique_key>BACMK</ms:unique_key>
+        <ms:name>&quot;Tignish</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>11</ms:reg_code>
+        <ms:nts50>021I16</ms:nts50>
+        <ms:lat>465700</ms:lat>
+        <ms:long>640200</ms:long>
+        <ms:sgc_code>0</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>1</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-60.981038,46.689323 -60.981038,46.689323</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-60.981038,46.689323</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>2</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>9</ms:popplace_>
+        <ms:popplace_i>1</ms:popplace_i>
+        <ms:unique_key>CAGYX</ms:unique_key>
+        <ms:name>&#39;Cheticamp</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>011K11</ms:nts50>
+        <ms:lat>463800</ms:lat>
+        <ms:long>610100</ms:long>
+        <ms:sgc_code>1215011</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-62.513078,44.911800 -62.513078,44.911800</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-62.513078,44.911800</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>3</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>10</ms:popplace_>
+        <ms:popplace_i>1</ms:popplace_i>
+        <ms:unique_key>CBIKA</ms:unique_key>
+        <ms:name>Sheet Harbour</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>011D15</ms:nts50>
+        <ms:lat>445500</ms:lat>
+        <ms:long>623200</ms:long>
+        <ms:sgc_code>1209036</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-62.272430,46.373272 -62.272430,46.373272</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-62.272430,46.373272</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>4</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>109</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>BACII</ms:unique_key>
+        <ms:name>&#39;Souris&#39;</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>11</ms:reg_code>
+        <ms:nts50>011L08</ms:nts50>
+        <ms:lat>462100</ms:lat>
+        <ms:long>621500</ms:long>
+        <ms:sgc_code>1101036</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-61.038743,45.311286 -61.038743,45.311286</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-61.038743,45.311286</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>5</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>110</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CAGBW</ms:unique_key>
+        <ms:name>&quot;Canso&quot;</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>011F07</ms:nts50>
+        <ms:lat>452000</ms:lat>
+        <ms:long>610000</ms:long>
+        <ms:sgc_code>1213006</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-61.379977,45.652307 -61.379977,45.652307</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-61.379977,45.652307</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>6</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>111</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CBELL</ms:unique_key>
+        <ms:name>Port Hawkesbury</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>011F11</ms:nts50>
+        <ms:lat>453700</ms:lat>
+        <ms:long>612100</ms:long>
+        <ms:sgc_code>1215002</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-61.997375,45.639459 -61.997375,45.639459</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-61.997375,45.639459</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>7</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>112</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CAATB</ms:unique_key>
+        <ms:name>Antigonish</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>011F12</ms:nts50>
+        <ms:lat>453700</ms:lat>
+        <ms:long>620000</ms:long>
+        <ms:sgc_code>1214002</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-64.109628,45.627963 -64.109628,45.627963</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-64.109628,45.627963</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>8</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>113</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CBKDH</ms:unique_key>
+        <ms:name>Springhill</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>021H09</ms:nts50>
+        <ms:lat>453900</ms:lat>
+        <ms:long>640300</ms:long>
+        <ms:sgc_code>1211008</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-64.190057,44.971547 -64.190057,44.971547</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-64.190057,44.971547</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>9</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>114</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CBPAK</ms:unique_key>
+        <ms:name>&quot;Wind&quot;sor</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>021A16</ms:nts50>
+        <ms:lat>445900</ms:lat>
+        <ms:long>640800</ms:long>
+        <ms:sgc_code>1208002</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-64.333577,44.375794 -64.333577,44.375794</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-64.333577,44.375794</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>10</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>115</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CAWAZ</ms:unique_key>
+        <ms:name>Lunenburg</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>021A08</ms:nts50>
+        <ms:lat>442300</ms:lat>
+        <ms:long>641900</ms:long>
+        <ms:sgc_code>1206006</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-64.732816,44.020359 -64.732816,44.020359</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-64.732816,44.020359</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>11</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>116</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CAUWZ</ms:unique_key>
+        <ms:name>Liverpool</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>021A02</ms:nts50>
+        <ms:lat>440200</ms:lat>
+        <ms:long>644300</ms:long>
+        <ms:sgc_code>1204006</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-65.114828,44.938161 -65.114828,44.938161</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-65.114828,44.938161</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>12</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>117</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CAZHC</ms:unique_key>
+        <ms:name>Middleton</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>021A14</ms:nts50>
+        <ms:lat>445700</ms:lat>
+        <ms:long>650400</ms:long>
+        <ms:sgc_code>1205016</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-65.816024,44.611049 -65.816024,44.611049</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-65.816024,44.611049</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>13</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>118</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CAJOA</ms:unique_key>
+        <ms:name>Digby</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>021A12</ms:nts50>
+        <ms:lat>443700</ms:lat>
+        <ms:long>654600</ms:long>
+        <ms:sgc_code>1203006</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-65.318371,43.740118 -65.318371,43.740118</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-65.318371,43.740118</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>14</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>119</ms:popplace_>
+        <ms:popplace_i>2</ms:popplace_i>
+        <ms:unique_key>CBIKP</ms:unique_key>
+        <ms:name>Shelburne</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>12</ms:reg_code>
+        <ms:nts50>020P14</ms:nts50>
+        <ms:lat>434600</ms:lat>
+        <ms:long>651900</ms:long>
+        <ms:sgc_code>1201008</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:popplace>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-61.903099,47.404770 -61.903099,47.404770</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:4326">
+          <gml:coordinates>-61.903099,47.404770</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:gid>26</ms:gid>
+        <ms:area>0</ms:area>
+        <ms:perimeter>0</ms:perimeter>
+        <ms:popplace_>397</ms:popplace_>
+        <ms:popplace_i>4</ms:popplace_i>
+        <ms:unique_key>EGIIG</ms:unique_key>
+        <ms:name>Fatima</ms:name>
+        <ms:name_e></ms:name_e>
+        <ms:name_f></ms:name_f>
+        <ms:unique_k_1></ms:unique_k_1>
+        <ms:unique_k_2></ms:unique_k_2>
+        <ms:reg_code>24</ms:reg_code>
+        <ms:nts50>011N05</ms:nts50>
+        <ms:lat>472400</ms:lat>
+        <ms:long>615300</ms:long>
+        <ms:sgc_code>2401025</ms:sgc_code>
+        <ms:capital>0</ms:capital>
+        <ms:pop_range>2</ms:pop_range>
+      </ms:popplace>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

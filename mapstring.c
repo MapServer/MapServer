@@ -135,7 +135,7 @@ char *strrstr(char *string, char *find)
  * Appends src to string dst of size siz (unlike strncat, siz is the
  * full size of dst, not space left).  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz <= strlen(dst)).
- * Returns strlen(src) + MIN(siz, strlen(initial dst)).
+ * Returns strlen(src) + MS_MIN(siz, strlen(initial dst)).
  * If retval >= siz, truncation occurred.
  */
 size_t strlcat(char *dst, const char *src, size_t siz)
@@ -1135,9 +1135,7 @@ char *msEncodeUrlExcept(const char *data, const char except)
   code = (char*)msSmallMalloc(strlen(data)+inc+1);
 
   for (j=code, i=data; *i!='\0'; i++, j++) {
-    if (*i == ' ')
-      *j = '+';
-    else if ( except != '\0' && *i == except ) {
+    if ( except != '\0' && *i == except ) {
       *j = except;
     } else if (msEncodeChar(*i)) {
       ch = *i;

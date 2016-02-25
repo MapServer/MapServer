@@ -1,0 +1,89 @@
+# Test WMS TIME SUPPORT
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+
+#
+# Draw a layer by using time parameter set to null and a default time 
+# specified in the map
+#
+# RUN_PARMS: wms_time_default_value.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=" > [RESULT_DEMIME]
+#
+MAP
+
+NAME WMS_TIME_DEFAULT_VALUE
+STATUS ON
+SIZE 400 300
+SYMBOLSET ./etc/symbols.sym
+EXTENT -131 5 -68 68
+UNITS DD
+SHAPEPATH "./data"
+IMAGECOLOR 255 255 255
+FONTSET ./etc/fonts.txt
+
+# Start of web interface definition
+#
+WEB
+  MINSCALE 2000000
+  MAXSCALE 50000000
+
+  IMAGEPATH "/tmp/ms_tmp/" 
+  IMAGEURL "/ms_tmp/"
+
+    METADATA
+      "WMS_TITLE"            "Test WMS time support"
+      "WMS_ONLINERESOURCE"   "http://localhost/path/to/mswms_time?"
+      "WMS_SRS"              "EPSG:4326"
+      "OWS_SCHEMAS_LOCATION" "http://ogc.dmsolutions.ca"
+      "WMS_ACCESSCONTRAINTS" "none"
+      "WMS_FEES"             "none"      
+      "wms_timeformat"       "YYYY-MM-DD HH,YYYY-MM-DD HH:MM:"
+      "ows_enable_request"   "*" 
+   END
+
+END
+
+
+
+QUERYMAP
+#  STYLE SELECTED
+#  STYLE NORMAL
+  COLOR 255 0 0
+END
+
+PROJECTION
+ "init=epsg:4326"
+END 
+
+#
+# Start of layer definitions
+#
+
+
+LAYER
+  NAME pattern4
+  METADATA
+    "DESCRIPTION" "time"
+    "wms_title" "time"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004-01-01/2004-02-01"
+    "wms_timedefault" "2004-01-01 15:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS DEFAULT
+  DATA pattern4
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+END

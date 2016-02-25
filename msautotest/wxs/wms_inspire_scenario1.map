@@ -1,0 +1,250 @@
+#
+# Test WMS
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+# Tests for INSPIRE View Service using WMS 1.3.0 (based on wms_simple.map)
+# scenario 1 - reference to external inspire service metadata
+#
+# Capabilities Default
+# RUN_PARMS: wms_inspire_scenario1_cap130.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION] [RESULT_DEMIME]
+# Capabilities German
+# RUN_PARMS: wms_inspire_scenario1_cap130_ger.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities&LANGUAGE=ger" > [RESULT_DEVERSION] [RESULT_DEMIME]
+# Capabilities English
+# RUN_PARMS: wms_inspire_scenario1_cap130_eng.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities&LANGUAGE=eng" > [RESULT_DEVERSION] [RESULT_DEMIME]
+#
+# DescribeLayer RoadArea (no leaf)
+# RUN_PARMS: wms_inspire_scenario1_describe130_roadarea.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN.RoadTransportNetwork.RoadArea&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+# DescribeLayer RoadArea/RoadLink (leaf)
+# RUN_PARMS: wms_inspire_scenario1_describe130_roadlink.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN.RoadTransportNetwork.RoadLink&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+# DescribeLayer RoadArea/TransportLink (no leaf)
+# RUN_PARMS: wms_inspire_scenario1_describe130_transportlink.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN.CommonTransportElements.TransportLink&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+# DescribeLayer RoadArea/TransportLink/AirLink (leaf)
+# RUN_PARMS: wms_inspire_scenario1_describe130_airlink.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=DescribeLayer&LAYERS=TN.AirTransportNetwork.AirLink&SLD_VERSION=1.1.0" > [RESULT_DEMIME]
+#
+# GetStyles RoadArea (no leaf)
+# RUN_PARMS: wms_inspire_scenario1_styles130_roadarea.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN.RoadTransportNetwork.RoadArea" > [RESULT_DEMIME]
+# GetStyles RoadArea/RoadLink (leaf)
+# RUN_PARMS: wms_inspire_scenario1_styles130_roadlink.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN.RoadTransportNetwork.RoadLink" > [RESULT_DEMIME]
+# GetStyles RoadArea/TransportLink (no leaf)
+# RUN_PARMS: wms_inspire_scenario1_styles130_transportlink.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN.CommonTransportElements.TransportLink" > [RESULT_DEMIME]
+# GetStyles RoadArea/TransportLink/AirLink (leaf)
+# RUN_PARMS: wms_inspire_scenario1_styles130_airlink.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetStyles&LAYERS=TN.AirTransportNetwork.AirLink" > [RESULT_DEMIME]
+#
+# GetMap RoadArea (no leaf)
+# RUN_PARMS: wms_inspire_scenario1_map130_roadarea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=200&HEIGHT=200&LAYERS=TN.RoadTransportNetwork.RoadArea&STYLES=&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+# GetMap RoadArea/RoadLink (leaf)
+# RUN_PARMS: wms_inspire_scenario1_map130_roadlink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=200&HEIGHT=200&LAYERS=TN.RoadTransportNetwork.RoadLink&STYLES=&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+# GetMap RoadArea/TransportLink (no leaf)
+# RUN_PARMS: wms_inspire_scenario1_map130_transportlink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=200&HEIGHT=200&LAYERS=TN.CommonTransportElements.TransportLink&STYLES=&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+# GetMap RoadArea/TransportLink/AirLink (leaf)
+# RUN_PARMS: wms_inspire_scenario1_map130_airlink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG%3A4326&BBOX=40,-70,50,-60&WIDTH=200&HEIGHT=200&LAYERS=TN.AirTransportNetwork.AirLink&STYLES=&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+#
+# GetLegendGraphic RoadArea (no leaf)
+# RUN_PARMS: wms_inspire_scenario1_legendgraphic_roadarea.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetLegendGraphic&LAYER=TN.RoadTransportNetwork.RoadArea&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+# GetLegendGraphic RoadArea/RoadLink (leaf)
+# RUN_PARMS: wms_inspire_scenario1_legendgraphic_roadlink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetLegendGraphic&LAYER=TN.RoadTransportNetwork.RoadLink&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+# GetLegendGraphic RoadArea/TransportLink (no leaf)
+# RUN_PARMS: wms_inspire_scenario1_legendgraphic_transportlink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetLegendGraphic&LAYER=TN.CommonTransportElements.TransportLink&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+# GetLegendGraphic RoadArea/TransportLink/AirLink (leaf)
+# RUN_PARMS: wms_inspire_scenario1_legendgraphic_airlink.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&version=1.1.1&service=WMS&request=GetLegendGraphic&LAYER=TN.AirTransportNetwork.AirLink&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+
+MAP
+
+NAME TN.RoadTransportNetwork.RoadArea
+STATUS ON
+SIZE 745 600
+EXTENT -66.6333 42.3821 -59.2921 48.2955
+UNITS meters
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+ METADATA
+  "wms_inspire_capabilities" "url"                                              #enables inspire using scenario 1
+  "wms_languages" "eng,ger"                                                     #first default, values according ISO 639-2/B
+  "wms_inspire_metadataurl_href" "http://inspire.service/metadata"
+  "wms_inspire_metadataurl_format" "application/vnd.ogc.csw.capabilities.response_xml"
+  "wms_keywordlist_ISO_items" "infoMapAccessService"                            #value according "classification of spatial data services"
+  "wms_keywordlist_vocabulary" "ISO"
+  "wms_title.eng" "myservicetitle"
+  "wms_title.ger" "myservicetitleger"
+  "wms_abstract" "myserviceabstract"                                            #to test fallback
+  "wms_abstract.ger" "myserviceabstractger"
+  "wms_onlineresource" "http://path/to/onlineresource..."
+  "wms_updatesequence" "myupdatesequence"
+  "wms_srs" "EPSG:4326 EPSG:4269 EPSG:3035"
+  "wms_bbox_extended" "true"
+  "wms_schemas_location" "http://schemas.opengis.net"
+  "wms_service_onlineresource" "http://www.mapserver.org/"
+  "wms_fees" "conditions unknown"                                               #value either "no conditions apply"|default "conditions unknown"|<specific conditions>
+  "wms_accessconstraints" "None"                                                #value according ISO 19115 (MD_RestrictionCode codelist) or default "None"
+  "wms_addresstype" "myaddresstype"
+  "wms_address" "myaddress"
+  "wms_city" "mycity"
+  "wms_stateorprovince" "mystateorprovince"
+  "wms_postcode" "xxx-xxx"
+  "wms_country" "mycountry"
+  "wms_contactelectronicmailaddress" "mycontactelectronicmailaddress@xxxxxxx.xxx"
+  "wms_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+  "wms_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+  "wms_contactperson" "mycontactperson"
+  "wms_contactorganization" "MapServer"                                         #responsible organisation
+  "wms_contactposition" "owner"                                                 #responsible organisation, value according "INSPIRE Metadata Regulation" (part D6)
+  "wms_rootlayer_title.eng" "Transport networks: Road Area"
+  "wms_rootlayer_title.ger" "Verkehrsnetze: Straﬂenfl‰che"
+  "wms_rootlayer_abstract" "myroadarealayerabstract"                            #to test fallback
+  "wms_rootlayer_abstract.ger" "myroadareaabstractger"
+  "wms_rootlayer_keywordlist" "myroadareakeyword1,myroadareakeyword2"
+  "wms_metadataurl_href" "http://inspire.service/metadata"
+  "wms_metadataurl_format" "application/vnd.ogc.csw.capabilities.response_xml"
+  "wms_metadataurl_type" "ISO19115:2003"
+  "wms_style_name" "inspire_common:DEFAULT"                                     #style name
+  "wms_style_title.eng" "myroadarealayerstyletitleeng"                          #style title
+  "wms_style_title.ger" "myroadarealayerstyletitleger"
+  "wms_style_legendurl_width" "85"                                              #override style legendurl (mandatory: width, height, format, href)
+  "wms_style_legendurl_height" "40"
+  "wms_style_legendurl_format" "image/png"
+  "wms_style_legendurl_href" "http://path/to/onlineresource...roadarea"
+  "wms_enable_request" "*"
+  "wms_sld_enabled" "false"
+ END
+END
+
+PROJECTION
+ "init=epsg:4326"
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+ NAME TN.RoadTransportNetwork.RoadLink
+ DATA "road_%language%"
+ METADATA
+  "wms_title.eng" "Transport networks: Road Link"
+  "wms_title.ger" "Verkehrsnetze: Straﬂensegment"
+  "wms_abstract" "myroadlinklayerabstract"                                      #to test fallback
+  "wms_abstract.ger" "myroadlinklayerabstractger"
+  "wms_keywordlist" "myroadlinklayerkeyword1,myroadlinklayerkeyword2"
+  "wms_style_inspire_common:DEFAULT_title.eng" "myroadlinklayerstyletitleeng"   #style title
+  "wms_style_inspire_common:DEFAULT_title.ger" "myroadlinklayerstyletitleger"   #style title
+  "wms_style_inspire_common:DEFAULT_legendurl_width" "85"                       #override style legendurl (mandatory: width, height, format, href)
+  "wms_style_inspire_common:DEFAULT_legendurl_height" "40"
+  "wms_style_inspire_common:DEFAULT_legendurl_format" "image/png"
+  "wms_style_inspire_common:DEFAULT_legendurl_href" "http://path/to/onlineresource...roadlink"
+ END
+ TYPE LINE
+ STATUS ON
+ PROJECTION
+  "+proj=lcc +lat_1=49 +lat_2=77 +lat_0=49 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+ END
+
+ CLASSGROUP "inspire_common:DEFAULT"
+ CLASSITEM "F_CODE"
+ 
+ CLASS
+  NAME "myclass1"
+  GROUP "inspire_common:DEFAULT"
+  EXPRESSION "67"
+  COLOR 255 0 0
+ END
+ 
+ CLASS
+  NAME "myclass2"
+  GROUP "inspire_common:DEFAULT"
+  EXPRESSION "68"
+  COLOR 0 255 0
+ END 
+ 
+END # Layer
+
+LAYER
+ NAME TN.RailTransportNetwork.RailwayLink
+ GROUP TN.CommonTransportElements.TransportLink
+ DATA "road"
+ METADATA
+  "wms_group_title.eng" "Transport networks: Generic Transport Link"
+  "wms_group_title.ger" "Verkehrsnetze: Generisches Verkehrssegment"
+  "wms_group_abstract" "mygenerictransportlinklayerabstract"                    #to test fallback
+  "wms_group_abstract.ger" "mygenerictransportlinklayerabstract"
+  "wms_group_style_name" "inspire_common:DEFAULT"                               #style name
+  "wms_group_style_title" "mygenerictransportlinklayerstyletitle"               #style title
+  "wms_group_style_legendurl_width" "85"                                        #override style legendurl (mandatory: width, height, format, href)
+  "wms_group_style_legendurl_height" "40"
+  "wms_group_style_legendurl_format" "image/png"
+  "wms_group_style_legendurl_href" "http://path/to/onlineresource...generictransportlink"
+  "wms_title.eng" "Transport networks: Railway Link"
+  "wms_title.ger" "Verkehrsnetze: Eisenbahnverbindung"
+  "wms_abstract" "myrailwaylinklayerabstract"                                   #to test fallback
+  "wms_abstract.ger" "myrailwaylinklayerabstractger"
+  "wms_keywordlist" "myrailwaylinklayerkeyword1,myrailwaylinklayerkeyword2"
+  #"wms_style_inspire_common:DEFAULT_title" "myrailwaylayerstyletitle"          #style title
+  #"wms_style_inspire_common:DEFAULT_legendurl_width" "85"                      #override style legendurl (mandatory: width, height, format, href)
+  #"wms_style_inspire_common:DEFAULT_legendurl_height" "40"
+  #"wms_style_inspire_common:DEFAULT_legendurl_format" "image/png"
+  #"wms_style_inspire_common:DEFAULT_legendurl_href" "http://path/to/onlineresource...railway"
+ END
+ TYPE LINE
+ STATUS ON
+ PROJECTION
+  "+proj=lcc +lat_1=49 +lat_2=77 +lat_0=49 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+ END
+
+ CLASSGROUP "inspire_common:DEFAULT"
+ CLASSITEM "F_CODE"
+ 
+ CLASS
+  NAME "myclass3"
+  GROUP "inspire_common:DEFAULT"
+  EXPRESSION "74"
+  COLOR 0 0 255
+ END
+ 
+END # Layer
+
+LAYER
+ NAME TN.AirTransportNetwork.AirLink
+ GROUP TN.CommonTransportElements.TransportLink
+ DATA "road"
+ METADATA
+  "wms_title.eng" "Transport networks: Air Link"
+  "wms_title.ger" "Verkehrsnetze: Luftverbindung"
+  "wms_abstract" "myairlinklayerabstract"                                       #to test fallback
+  "wms_abstract.ger" "myairlinklayerabstractger"
+  "wms_keywordlist" "myairlinklayerkeyword1,myairlinklayerkeyword2"
+  #"wms_style_inspire_common:DEFAULT_title" "myairlayerstyletitle"              #style title
+  #"wms_style_inspire_common:DEFAULT_legendurl_width" "85"                      #override style legendurl (mandatory: width, height, format, href)
+  #"wms_style_inspire_common:DEFAULT_legendurl_height" "40"
+  #"wms_style_inspire_common:DEFAULT_legendurl_format" "image/png"
+  #"wms_style_inspire_common:DEFAULT_legendurl_href" "http://path/to/onlineresource...airlink"
+ END
+ TYPE LINE
+ STATUS ON
+ PROJECTION
+  "+proj=lcc +lat_1=49 +lat_2=77 +lat_0=49 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
+ END
+
+ CLASSGROUP "inspire_common:DEFAULT"
+ CLASSITEM "F_CODE"
+ 
+ CLASS
+  NAME "myclass4"
+  GROUP "inspire_common:DEFAULT"
+  EXPRESSION "66"
+  COLOR 0 255 255
+ END 
+ 
+END # Layer
+
+END # Map File

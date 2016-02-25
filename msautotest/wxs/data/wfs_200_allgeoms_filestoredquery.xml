@@ -1,0 +1,13 @@
+<StoredQueryDescription
+        xmlns:xs="http://www.w3.org/2001/XMLSchema"
+        xmlns:gml="http://www.opengis.net/gml/3.2"
+        id="filestoredquery">
+    <Title>filestoredquery title</Title>
+    <Abstract>filestoredquery abstract</Abstract>
+    <QueryExpressionText isPrivate="true"
+                         language="urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression"
+                         xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+                         returnFeatureTypes="ms:point">
+        <Query xmlns:fes="http://www.opengis.net/fes/2.0" typeNames="ms:point"/>
+    </QueryExpressionText>
+</StoredQueryDescription>

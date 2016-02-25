@@ -1,0 +1,42 @@
+#
+# Tests multipoint rendering support. 
+#   
+# REQUIRES: INPUT=OGR OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT 137 34 138 35
+SIZE 200 200
+
+IMAGETYPE png
+
+SYMBOL
+  NAME "cross"
+  TYPE vector
+  POINTS
+    2 0
+    2 4
+    -99 -99
+    0 2
+    4 2
+  END 
+END
+
+LAYER
+  NAME SOUNDG
+  TYPE POINT
+  CONNECTIONTYPE OGR
+  CONNECTION "data/SOUNDG.shp"
+  DATA "SOUNDG"
+  STATUS default
+  CLASSITEM "FID"
+  CLASS
+    NAME "test1"
+    COLOR 0 255 0
+    SYMBOL 'cross'
+    SIZE 5
+  END
+END
+
+END

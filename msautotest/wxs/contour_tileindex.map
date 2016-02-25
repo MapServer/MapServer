@@ -1,0 +1,98 @@
+#
+#
+# Test Contour rendering with tile index with time indexing for WMS TIME
+#
+#
+
+# RUN_PARMS: wms_contour_inline_ti.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG%3A4326&BBOX=3.697829,-16.193665,57.120229,23.8731435&WIDTH=300&HEIGHT=300&LAYERS=contour_inline_ti&STYLES=&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+# RUN_PARMS: wms_contour_layer_ti.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG%3A4326&BBOX=3.697829,-16.193665,57.120229,23.8731435&WIDTH=300&HEIGHT=300&LAYERS=contour_layer_ti&STYLES=&FORMAT=image%2Fpng" > [RESULT_DEMIME]
+
+
+MAP
+    NAME TEST_CONTOUR
+    STATUS ON
+    SIZE 300 300
+    EXTENT 3.697829 -16.193665 57.120229 23.8731435
+    SHAPEPATH "data"
+
+    WEB
+        IMAGEPATH "/tmp/"
+
+        METADATA
+            "ows_updatesequence"         "123"
+            "WMS_TITLE"            "Test WMS time support"
+            "WMS_ONLINERESOURCE"   "http://localhost/path/to/mswms_time?"
+            "WMS_SRS"              "EPSG:4326"
+            "OWS_SCHEMAS_LOCATION" "http://ogc.dmsolutions.ca"
+            "WMS_ACCESSCONTRAINTS" "none"
+            "WMS_FEES"             "none"      
+            "wms_timeformat"       "YYYY-MM-DD HH:MM:SS"
+            "wms_getmap_formatlist" "image/png"
+            "ows_enable_request" "*" 
+        END
+
+    END
+
+    PROJECTION
+        "init=epsg:4326"
+    END 
+
+    LAYER
+        NAME "contour_inline_ti"
+        TYPE LINE
+        STATUS OFF
+        CONNECTIONTYPE CONTOUR
+        TILEINDEX "data/contour_ti.shp"
+        TILEITEM  "location"
+        PROCESSING "BANDS=1"
+        PROCESSING "CONTOUR_ITEM=elevation"
+        PROCESSING "CONTOUR_INTERVAL=20"
+        CLASS
+            STYLE
+                WIDTH 1
+                COLOR 255 0 0
+            END
+        END
+
+        METADATA
+            "DESCRIPTION" "contour_inline_ti"
+            "wms_title" "contour_inline_ti"
+            "wms_timeitem"  "TIME"
+            "wms_timeextent"  "2004-01-01/2004-02-01"
+        END
+    END
+
+    LAYER
+        NAME "contour_tileindex"
+        TYPE POLYGON
+        STATUS OFF
+        DATA "data/contour_ti.shp"
+    END
+
+    LAYER
+        NAME "contour_layer_ti"
+        TYPE LINE
+        STATUS OFF
+        CONNECTIONTYPE CONTOUR
+        TILEINDEX "contour_tileindex"
+        TILEITEM  "location"
+        PROCESSING "BANDS=1"
+        PROCESSING "CONTOUR_ITEM=elevation"
+        PROCESSING "CONTOUR_INTERVAL=20"
+        CLASS
+            STYLE
+                WIDTH 1
+                COLOR 255 0 0
+            END
+        END
+
+        METADATA
+            "DESCRIPTION" "contour_layer_ti"
+            "wms_title" "contour_layer_ti"
+            "wms_timeitem"  "TIME"
+            "wms_timeextent"  "2004-01-01/2004-02-01"
+            "wms_timedefault" "2004-02-01"
+        END
+    END
+
+END

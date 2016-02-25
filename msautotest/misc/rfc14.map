@@ -1,0 +1,182 @@
+
+#
+# Support all RFC 14 (relative positioning) features. 
+#
+# REQUIRES: SUPPORTS=FREETYPE OUTPUT=PNG
+#
+MAP
+  NAME 'test_points'
+  SIZE 475 600
+  EXTENT 0 0 50000 50000
+
+  IMAGETYPE png
+
+  LAYER
+    NAME 'test_fixed'
+    TYPE POINT
+    STATUS DEFAULT
+    FEATURE
+      POINTS 12000 15000 END
+      TEXT 'ABSOLUTE at 12000,15000'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_pct'
+    TYPE POINT
+    TRANSFORM FALSE
+    STATUS DEFAULT
+    UNITS PERCENTAGES
+    FEATURE
+      POINTS .3 .3 END
+      TEXT '30%,30% relative to UL'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+  
+  LAYER
+    NAME 'test_pct'
+    TYPE POINT
+    TRANSFORM LR
+    STATUS DEFAULT
+    UNITS PERCENTAGES
+    FEATURE
+      POINTS -.3 -.3 END
+      TEXT '30%,30% relative to LR'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_ul'
+    TYPE POINT
+    TRANSFORM FALSE
+    STATUS DEFAULT
+    FEATURE
+      POINTS 50 50 END
+      TEXT 'TRANSFORM UL'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_uc'
+    TYPE POINT
+    TRANSFORM UC
+    STATUS DEFAULT
+    FEATURE
+      POINTS 0 50 END
+      TEXT 'TRANSFORM UC'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_ur'
+    TYPE POINT
+    TRANSFORM UR
+    STATUS DEFAULT
+    FEATURE
+      POINTS -50 50 END
+      TEXT 'TRANSFORM UR'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_cl'
+    TYPE POINT
+    TRANSFORM CL
+    STATUS DEFAULT
+    FEATURE
+      POINTS 50 0 END
+      TEXT 'TRANSFORM CL'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_cc'
+    TYPE POINT
+    TRANSFORM CC
+    STATUS DEFAULT
+    FEATURE
+      POINTS 0 0 END
+      TEXT 'TRANSFORM CC'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_cr'
+    TYPE POINT
+    TRANSFORM CR
+    STATUS DEFAULT
+    FEATURE
+      POINTS -50 0 END
+      TEXT 'TRANSFORM CR'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_ll'
+    TYPE POINT
+    TRANSFORM LL
+    STATUS DEFAULT
+    FEATURE
+      POINTS 50 -50 END
+      TEXT 'TRANSFORM LL'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_lc'
+    TYPE POINT
+    TRANSFORM LC
+    STATUS DEFAULT
+    FEATURE
+      POINTS 0 -50 END
+      TEXT 'TRANSFORM LC'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+
+  LAYER
+    NAME 'test_lr'
+    TYPE POINT
+    TRANSFORM LR
+    STATUS DEFAULT
+    FEATURE
+      POINTS -50 -50 END
+      TEXT 'TRANSFORM LR'
+    END
+    CLASS
+      LABEL SIZE TINY COLOR 0 0 0 END
+    END
+  END
+END

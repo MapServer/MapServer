@@ -1,0 +1,125 @@
+#
+# Tests specific to WFS 2.0 CITE compliance (OGR input)
+# 
+# They are complementary to wfs_200.map, in that they generally trigger
+# particularly twisted aspects of the WFS 2.0 specification.
+#
+# REQUIRES: INPUT=OGR SUPPORTS=WFS
+
+# RUN_PARMS: wfs_200_cite_exception_no_service.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_describe.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=DescribeFeatureType" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_filter_bbox_world.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><BBOX><ValueReference>msGeometry</ValueReference><Envelope srsName='urn:ogc:def:crs:EPSG::4326'><lowerCorner>-90 -180</lowerCorner><upperCorner>90 180</upperCorner></Envelope></BBOX></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_bbox_world.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&BBOX=-90,-180,90,180,urn:ogc:def:crs:EPSG::4326" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_getpropertyvalue_gmlid.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetPropertyValue&typenames=province&valuereference=@gml:id" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_propertyisnull_gmlname.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><PropertyIsNull><PropertyName>gml:name</PropertyName></PropertyIsNull></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_not_propertyisnull_valid_property.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><Not><PropertyIsNull><PropertyName>NomFrancais</PropertyName></PropertyIsNull></Not></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_propertyisnil_nillable_property.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><PropertyIsNil><PropertyName>NomFrancais</PropertyName></PropertyIsNil></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_not_propertyisnil_nillable_property.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><Not><PropertyIsNil><PropertyName>NomFrancais</PropertyName></PropertyIsNil></Not></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_filter_resourceid_stringvalue.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&typenames=province&Filter=<Filter><ResourceId rid='foo'/></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_exception_inexisting_property.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><PropertyIsNull><PropertyName>inexisting</PropertyName></PropertyIsNull></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_exception_invalid_operand.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><PropertyIsEqualTo><PropertyName>gml:boundedBy</PropertyName><Literal/></PropertyIsEqualTo></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_propertyisnull_boundedBy.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><PropertyIsNull><PropertyName>gml:boundedBy</PropertyName></PropertyIsNull></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_propertyisnil_boundedBy.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><PropertyIsNil><PropertyName>gml:boundedBy</PropertyName></PropertyIsNil></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_filter_like.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&typenames=province&Filter=<Filter><PropertyIsLike escapeChar='\' singleChar='?' wildCard='*'><ValueReference>island_e</ValueReference><Literal>*</Literal></PropertyIsLike></Filter>" > [RESULT_DEVERSION]
+
+# RUN_PARMS: wfs_200_cite_flt_simplify_1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><Or><PropertyIsNull><PropertyName>gml:name</PropertyName></PropertyIsNull><Not><ResourceId rid='foo'/></Not></Or></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_flt_simplify_2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><Or><Not><ResourceId rid='foo'/></Not><PropertyIsNull><PropertyName>gml:name</PropertyName></PropertyIsNull></Or></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_flt_simplify_3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><And><PropertyIsNull><PropertyName>gml:name</PropertyName></PropertyIsNull><Not><ResourceId rid='foo'/></Not></And></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_flt_simplify_4.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><And><Not><ResourceId rid='foo'/></Not><PropertyIsNull><PropertyName>gml:name</PropertyName></PropertyIsNull></And></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_flt_simplify_5.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><And><Not><PropertyIsNull><PropertyName>gml:name</PropertyName></PropertyIsNull></Not><Not><ResourceId rid='foo'/></Not></And></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_200_cite_flt_simplify_6.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=WFS&version=2.0.0&request=GetFeature&resultType=hits&typenames=province&filter=<Filter><And><Not><ResourceId rid='foo'/></Not><Not><PropertyIsNull><PropertyName>gml:name</PropertyName></PropertyIsNull></Not></And></Filter>" > [RESULT_DEVERSION]
+
+MAP
+
+NAME WFS_TEST
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wfs_maxfeatures" "1000"
+
+    # Hack so that getCapabilities_missingServiceParam() CITE test works
+    # we tell msOWSDispatch() to handle a REQUEST=GetCapabilities request without any
+    # SERVICE the way that WFS 2.0 instructs it.
+    "wfs_cite_wfs2" "true"
+
+    "ows_updatesequence"   "123"
+    "wfs_title"        "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost:8080/mapserv.cgi?"
+    "wfs_srs"          "EPSG:4326 EPSG:4269"
+    "ows_abstract"    "Test WFS Abstract"
+    "ows_keywordlist" "ogc,wfs,gml,om"
+    "ows_service_onlineresource" "http://localhost"
+    "ows_fees" "none"
+    "ows_accessconstraints" "none"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+    "ows_hoursofservice" "0800h - 1600h EST"
+    "ows_contactinstructions" "during hours of service"
+    "ows_role" "staff"
+    "ows_enable_request" "*" 
+  END
+END
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  CONNECTIONTYPE OGR
+  CONNECTION "data/province.shp"
+  #DATA province
+  METADATA
+    "wfs_title"         "province"
+    "wfs_description"   "province"
+    "wfs_featureid"     "PROVINCE_I"
+    "gml_geometries"    "msGeometry"
+    "gml_msGeometry_type" "polygon"
+    "gml_include_items" "all"
+    "gml_exclude_items"   "REG_CODE,NAME,ISLAND_F"
+    "gml_optional_items"  "all"
+    "gml_default_items"   "NAME_E,NAME_F,PERIMETER,ISLAND_E"
+    "gml_NAME_F_alias"    "NomFrancais"
+# We need a nillable field (that will be never nilled...) for CITE
+    "gml_NAME_F_nillable" "true"
+# We need a numeric field for CITE
+    "gml_PERIMETER_type"  "Real"
+  END
+  TYPE POLYGON
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+  END
+
+END # Layer
+
+
+END # Map File

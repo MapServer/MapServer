@@ -1,0 +1,34 @@
+#
+# Test empty OWS
+#
+# REQUIRES: OUTPUT=PNG SUPPORTS=WMS SUPPORTS=WCS SUPPORTS=WFS
+#
+# Capabilities (return no/empty layers/contents element)
+#
+# Test empty WMS
+#
+# RUN_PARMS: wms_empty_cap_latestversion.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&REQUEST=GetCapabilities" > [RESULT_DEMIME] [RESULT_DEVERSION]
+# RUN_PARMS: wms_empty_cap130.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEMIME] [RESULT_DEVERSION]
+# RUN_PARMS: wms_empty_cap111.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEMIME] [RESULT_DEVERSION]
+# RUN_PARMS: wms_empty_cap100.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEMIME] [RESULT_DEVERSION]
+#
+# Test empty WCS
+#
+# RUN_PARMS: wcs_empty_cap_latestversion.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&REQUEST=GetCapabilities" > [RESULT_DEMIME] [RESULT_DEVERSION]
+# RUN_PARMS: wcs_empty_cap100.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEMIME] [RESULT_DEVERSION]
+# RUN_PARMS: wcs_empty_cap111.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEMIME] [RESULT_DEVERSION]
+# RUN_PARMS: wcs_empty_cap201.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCapabilities" > [RESULT_DEMIME] [RESULT_DEVERSION]
+#
+MAP
+  WEB
+    METADATA
+      "wms_title"                   "Test simple wms"
+      "wms_onlineresource"          "http://localhost/path/to/wms_empty?"
+      "wcs_title"                   "Test simple wcs"
+      "wcs_onlineresource"          "http://localhost/path/to/wcs_empty?"
+      "ows_service_onlineresource"  "http://www.mapserver.org/"
+      "wcs_label"                   "WCS label"
+      "ows_enable_request" "*"
+    END
+  END
+END # Map File

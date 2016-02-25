@@ -1,0 +1,7 @@
+<OGRVRTDataSource>
+ <OGRVRTLayer name='obs'>
+  <SrcDataSource relativeToVRT="1">./obs.csv</SrcDataSource>
+  <GeometryType>wkbPoint</GeometryType>
+  <GeometryField encoding='WKT' field='geom'/>
+ </OGRVRTLayer>
+</OGRVRTDataSource>

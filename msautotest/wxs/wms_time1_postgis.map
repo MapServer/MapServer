@@ -1,0 +1,131 @@
+#
+# Test WMS TIME SUPPORT
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+
+# Capabilities
+# RUN_PARMS: wms_time_cap_postgis_postgis.xml [MAPSERV] QUERY_STRING="MAP=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+# Capabilities 1.3.0
+# RUN_PARMS: wms_time_cap130_postgis_postgis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+# Draw a layer by using no time value specified
+#.
+# RUN_PARMS: wms_time_no_time_param_postgis.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4" > [RESULT_DEMIME]
+#
+# Triggered a service exception with an out of extents single time value 
+# specified
+#
+# RUN_PARMS: wms_time_out_of_extents_single_postgis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-12-12%2014:10:00" > [RESULT]
+#
+# Triggered a service exception with an out of extents multiple time values 
+# specified
+#
+# RUN_PARMS: wms_time_out_of_extents_multi_postgis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2014:10:00,2004-12-12%2014:10:00" > [RESULT]
+#
+# Triggered a service exception with an out of extents range time values 
+# specified
+#
+# RUN_PARMS: wms_time_out_of_extents_single_range_postgis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2014:10:00/2004-12-03%2017:23:00" > [RESULT]
+#
+# Triggered a service exception with an out of extents multiples ranges time 
+# values specified
+#
+# RUN_PARMS: wms_time_out_of_extents_multi_ranges_postgis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2014:10:00/2004-01-01%2015:10:00,2005-01-01%2022:40:00/2005-02-01%2018:55:00" > [RESULT]
+#
+# Draw a layer by using with multiple time values specified in reverse order
+#
+# RUN_PARMS: wms_time_multi_reverse_postgis.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2017:10:00,2004-01-01%2014:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using with multiples ranges time values specified with a 
+# smaller resolution
+#
+# RUN_PARMS: wms_time_multi_ranges_reso_hour_postgis.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2014/2004-01-01%2015,2004-01-01%2016/2004-01-01%2017" > [RESULT_DEMIME]
+#
+#
+# Draw a layer by using time parameter set to null and no default time 
+# specified in the map
+#
+# RUN_PARMS: wms_time_no_default_value_postgis.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=" > [RESULT]
+#
+MAP
+
+NAME WMS_TIME_EXTENTS_RESOLUTION_NO_DEFAULT
+STATUS ON
+SIZE 400 300
+SYMBOLSET ./etc/symbols.sym
+EXTENT -131 5 -68 68
+UNITS DD
+SHAPEPATH "./data"
+IMAGECOLOR 255 255 255
+FONTSET ./etc/fonts.txt
+
+# Start of web interface definition
+#
+WEB
+  MINSCALE 2000000
+  MAXSCALE 50000000
+
+  IMAGEPATH "/tmp/ms_tmp/" 
+  IMAGEURL "/ms_tmp/"
+
+    METADATA
+      "ows_updatesequence"         "123"
+      "WMS_TITLE"            "Test WMS time support"
+      "WMS_ONLINERESOURCE"   "http://localhost/path/to/mswms_time?"
+      "WMS_SRS"              "EPSG:4326"
+      "OWS_SCHEMAS_LOCATION" "http://ogc.dmsolutions.ca"
+      "WMS_ACCESSCONTRAINTS" "none"
+      "WMS_FEES"             "none"
+      "wms_timeformat"       "YYYY-MM-DD HH,YYYY-MM-DD HH:MM:SS"
+      "wms_getmap_formatlist" "image/png,image/gif,image/png; mode=24bit,image/jpeg,image/vnd.wap.wbmp,image/tiff,image/svg+xml"
+      "ows_enable_request" "*" 
+   END
+
+END
+
+
+
+QUERYMAP
+#  STYLE SELECTED
+#  STYLE NORMAL
+  COLOR 255 0 0
+END
+
+PROJECTION
+ "init=epsg:4326"
+END 
+
+#
+# Start of layer definitions
+#
+
+
+LAYER
+  NAME pattern4
+  METADATA
+    "DESCRIPTION" "pattern4"
+    "wms_title" "pattern4"
+    "wms_timeitem"  "time"
+    "wms_timeextent"  "2004-01-01/2004-02-01"   
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS DEFAULT
+  INCLUDE "postgis.include"
+  DATA "the_geom from (select * from pattern4 order by gid) as foo using unique gid using srid=4326"
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+END

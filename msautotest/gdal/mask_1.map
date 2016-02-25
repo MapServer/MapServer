@@ -1,0 +1,24 @@
+#
+# Test support for GDAL masks on a one band file per GDAL RFC 15 and MS #2640
+#
+MAP
+  IMAGETYPE PNG24
+  IMAGECOLOR 255 0 0
+  SIZE 200 200
+  EXTENT 0 0 19 19
+
+  LAYER
+    NAME "TEST"
+    GROUP "TEST"
+    STATUS DEFAULT
+    TYPE RASTER
+    DUMP TRUE
+
+    # A RGB image with a transparency mask
+    #DATA "test3_with_1mask_1bit.tif"
+
+    # A grey-level image with a transparency mask
+    DATA "data/test_with_mask_1bit.tif"
+  END
+
+END # end of map file

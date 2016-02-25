@@ -1,0 +1,27 @@
+#
+# Test rendering of an RGB image with nodata values that should give
+# equivelent processing to "OFFSET 0 0 0".
+#
+MAP
+  IMAGETYPE PNG24
+  IMAGECOLOR 255 255 255
+  SIZE 100 100
+  EXTENT 0 -90 180 90
+
+  PROJECTION
+  "init=epsg:4326"
+  END
+
+LAYER
+  NAME "TEST"
+  STATUS DEFAULT
+  TYPE RASTER
+  DUMP TRUE
+  DATA "data/red_square.tif"
+  PROJECTION
+    "init=epsg:4326"
+  END
+END
+
+
+END # end of map file

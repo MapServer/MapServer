@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<WCS_Capabilities
+   version="1.0.0" 
+   updateSequence="123" 
+   xmlns="http://www.opengis.net/wcs" 
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:gml="http://www.opengis.net/gml" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/wcsCapabilities.xsd">
+<Service>
+  <metadataLink metadataType="other" xlink:type="simple" xlink:href="http://localhost/ms_ogc_workshop/index.html"/>  <description>Sample OWS for MapServer OGC Web Services Workshop.  Enjoy!</description>
+  <name>MapServer WCS</name>
+  <label>Sample OWS for MapServer OGC Web Services Workshop</label>
+  <keywords>
+    <keyword>mapserver</keyword>
+    <keyword>ogc</keyword>
+    <keyword>workshop</keyword>
+  </keywords>
+<responsibleParty>
+    <individualName>Tom Kralidis</individualName>
+    <organisationName>Environment Canada</organisationName>
+    <positionName>Senior Systems Scientist</positionName>
+  <contactInfo>
+    <phone>
+    <voice>+01-905-336-4409</voice>
+    <facsimile>+01-905-336-4499</facsimile>
+    </phone>
+    <address>
+    <deliveryPoint>867 Lakeshore Road</deliveryPoint>
+    <city>Burlington</city>
+    <administrativeArea>Ontario</administrativeArea>
+    <postalCode>L7R-4A6</postalCode>
+    <country>Canada</country>
+    <electronicMailAddress>tom.kralidis@ec.gc.ca</electronicMailAddress>
+    </address>
+    <onlineResource xlink:type="simple" xlink:href="http://localhost/ms_ogc_workshop/index.html"/>
+  </contactInfo>
+</responsibleParty>
+  <fees>none</fees>
+  <accessConstraints>
+    none
+  </accessConstraints>
+</Service>
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" /></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeCoverage>
+    <GetCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCoverage>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+  </Exception>
+</Capability>
+<ContentMetadata>
+  <CoverageOfferingBrief>
+    <name>land_shallow_topo_2048</name>
+<!-- WARNING: Mandatory metadata '..._label' was missing in this context. -->
+    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+      <gml:pos>-180.351562 -89.648437</gml:pos>
+      <gml:pos>179.648437 90.351562</gml:pos>
+    </lonLatEnvelope>
+  <keywords>
+    <keyword>NASA</keyword>
+    <keyword>MODIS</keyword>
+    <keyword>AVHRR</keyword>
+    <keyword>EROS</keyword>
+  </keywords>
+  </CoverageOfferingBrief>
+  <CoverageOfferingBrief>
+  <metadataLink metadataType="other" xlink:type="simple" xlink:href="http://geogratis.cgdi.gc.ca/clf/en?action=fullMetadata&amp;entryId=4373"/>    <description>Toronto Landsat 5 TM</description>
+    <name>toronto</name>
+    <label>Landsat 5 TM - Toronto</label>
+    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+      <gml:pos>-81.545267534394 42.713551218108</gml:pos>
+      <gml:pos>-78.387425267181 44.767291525848</gml:pos>
+    </lonLatEnvelope>
+  <keywords>
+    <keyword>landsat</keyword>
+    <keyword>toronto</keyword>
+  </keywords>
+  </CoverageOfferingBrief>
+</ContentMetadata>
+</WCS_Capabilities>

@@ -1,0 +1,37 @@
+
+#
+# Test unclassified scaled raster with NODATA.  
+#
+# Currently (Jan/2011) the NODATA value is excluded from the auto 
+# scaling min/max computation, but is not shown as transparent.  Eventualy 
+# if this is fixed, a new proper result should occur and this tests results 
+# will need to be updated.
+#
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 150 
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png24_t
+
+OUTPUTFORMAT
+  NAME png24_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT OFF
+END
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA data/float.tif
+  PROCESSING "SCALE=AUTO"
+  PROCESSING "NODATA=-10"
+END
+
+END # of map file

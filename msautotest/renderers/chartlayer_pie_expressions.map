@@ -1,0 +1,119 @@
+# RUN_PARMS: chartlayer_pie_expressions.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: chartlayer_pie_expressions.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: chartlayer_pie_expressions.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: chartlayer_pie_expressions.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Test on chart creation
+#
+#
+MAP
+
+NAME DEMO
+STATUS ON
+SIZE 100 130
+EXTENT -50  -10 160 160
+UNITS METERS
+SHAPEPATH "../misc/data"
+IMAGECOLOR 255 255 255
+IMAGETYPE png
+
+
+LAYER
+  NAME charts
+  PROCESSING "ITEMS=types"
+  TYPE CHART
+  STATUS DEFAULT
+  PROCESSING "CHART_TYPE=pie"
+  PROCESSING "CHART_SIZE=20"
+  CLASSITEM "types"
+
+  CLASS
+    NAME "type1"
+    EXPRESSION /(^|,)type1($|,)/ 
+    STYLE
+      SIZE 1
+      COLOR 127 201 127
+    END
+  END
+  CLASS
+    NAME "type2"
+    EXPRESSION /(^|,)type2($|,)/ 
+    STYLE
+      SIZE 1
+      COLOR 190 174 212
+    END
+  END
+  CLASS
+    NAME "type3"
+    EXPRESSION /(^|,)type3($|,)/ 
+    STYLE
+      SIZE 1
+      COLOR 253 192 134
+    END
+  END
+  CLASS
+    NAME "type4"
+    EXPRESSION /(^|,)type4($|,)/ 
+    STYLE
+      SIZE 1
+      COLOR 255 255 153
+    END
+  END
+
+  FEATURE
+    POINTS 0 0 END
+    ITEMS "type1"
+  END
+  FEATURE
+    POINTS 0 50 END
+    ITEMS "type1,type3"
+  END
+  FEATURE
+    POINTS 0 100 END
+    ITEMS "type1,type2,type3"
+  END
+  FEATURE
+    POINTS 0 150 END
+    ITEMS "type1,type2,type3,type4"
+  END
+  FEATURE
+    POINTS 50 0 END
+    ITEMS "type2,type4"
+  END
+  FEATURE
+    POINTS 50 50 END
+    ITEMS "type2,type3,type4"
+  END
+  FEATURE
+    POINTS 50 100 END
+    ITEMS "type2,foobar"
+  END
+  FEATURE
+    POINTS 50 150 END
+    ITEMS "type2,type3,type1"
+  END
+  FEATURE
+    POINTS 100 0 END
+    ITEMS "typea2,typea4,typea1"
+  END
+  FEATURE
+    POINTS 100 50 END
+    ITEMS "type2,type1"
+  END
+  FEATURE
+    POINTS 100 100 END
+    ITEMS "type2,type3,type4"
+  END
+  FEATURE
+    POINTS 100 150 END
+    ITEMS "type4,type1"
+  END
+
+
+ END
+
+
+
+
+END # Map File

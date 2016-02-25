@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Capabilities xmlns="http://www.opengis.net/wcs/1.1" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" version="1.1.1" updateSequence="2007-10-30T14:23:38Z" xsi:schemaLocation="http://www.opengis.net/wcs/1.1 http://schemas.opengis.net/wcs/1.1/wcsGetCapabilities.xsd http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsAll.xsd">
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.1</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="DescribeCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.1</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="identifiers">
+        <ows:AllowedValues>
+          <ows:Value>grey</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="GetCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>WCS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.1.1</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="Identifier">
+        <ows:AllowedValues>
+          <ows:Value>grey</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="InterpolationType">
+        <ows:AllowedValues>
+          <ows:Value>NEAREST_NEIGHBOUR</ows:Value>
+          <ows:Value>BILINEAR</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="format">
+        <ows:AllowedValues>
+          <ows:Value>image/tiff</ows:Value>
+          <ows:Value>image/png; mode=8bit</ows:Value>
+          <ows:Value>image/x-aaigrid</ows:Value>
+          <ows:Value>image/png</ows:Value>
+          <ows:Value>image/jpeg</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="store">
+        <ows:AllowedValues>
+          <ows:Value>false</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="GridBaseCRS">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:def:crs:epsg::4326</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <Contents>
+    <CoverageSummary>
+      <ows:Title>Test description</ows:Title>
+      <ows:Abstract>Category: Image
+Product: IKONOS-2 PAN/MSI
+Acquisition: 1999-10-11 18:47</ows:Abstract>
+      <ows:Keywords>
+        <ows:Keyword>test</ows:Keyword>
+        <ows:Keyword>mapserver</ows:Keyword>
+      </ows:Keywords>
+      <ows:Metadata xlink:type="simple" xlink:href="http://www.gdal.org/metadata_test_link.html"/>
+      <ows:WGS84BoundingBox dimensions="2">
+        <ows:LowerCorner>-121.488743889689 0</ows:LowerCorner>
+        <ows:UpperCorner>-121.485160277178 0.00270582611334856</ows:UpperCorner>
+      </ows:WGS84BoundingBox>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::32611</SupportedCRS>
+      <SupportedCRS>urn:ogc:def:crs:EPSG::4326</SupportedCRS>
+      <SupportedFormat>image/tiff</SupportedFormat>
+      <SupportedFormat>image/png</SupportedFormat>
+      <SupportedFormat>image/x-aaigrid</SupportedFormat>
+      <Identifier>grey</Identifier>
+    </CoverageSummary>
+  </Contents>
+</Capabilities>

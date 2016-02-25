@@ -1,0 +1,188 @@
+#
+# Test WMS SLD
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+# RUN_PARMS: wms_get_map_symbol_no_external_graphic_validation.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>Popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><ExternalGraphic><OnlineResource xlink:type=%22simple%22 xlink:href=%22../misc/data/Road_Works.svg%22/><Format>GIF</Format></ExternalGraphic><Size>10.0</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+
+MAP
+
+NAME WMS_SLD
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+#UNITS METERS
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:3978 EPSG:42101 EPSG:4269 EPSG:4326"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*" 
+  END
+
+END
+
+PROJECTION
+   "init=epsg:4326"
+END
+
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "wms_title"         "province"
+    "wms_description"   "province"
+    "wms_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+
+LAYER
+  NAME popplace
+  DATA popplace
+  METADATA
+    "wms_title"         "popplace"
+    "wms_description"   "Cities of I.P.E."
+    "wms_result_fields" "NAME"
+    "gml_NAME_alias" "NAME_ALIAS"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  LabelItem "Name"
+  CLASSITEM "Capital" 
+
+  CLASS
+    EXPRESSION /./  
+    SYMBOL 2
+    SIZE 8
+    NAME "Cities"
+    LABEL
+      COLOR  0 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+END # Layer
+
+
+LAYER
+  NAME road
+  DATA road
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    SYMBOL 0 
+    COLOR 220 0 0
+  END
+END # Layer
+
+
+LAYER
+  NAME road_styles
+  DATA road
+  METADATA
+    "wms_title"       "road_styles"
+    "wms_description" "Roads of I.P.E."
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASSGROUP 'style_red'
+  CLASS
+    GROUP 'style_red'  
+    NAME "Roads"  
+    STYLE
+      
+      COLOR 220 0 0
+      WIDTH 16
+    END
+  END #Class
+
+  CLASS
+    GROUP 'style_green' 
+     NAME "Roads"   
+    STYLE
+     
+      COLOR 0 220 0
+      WIDTH 8
+    END
+  END #Class
+
+   CLASS
+    GROUP 'style_blue' 
+     NAME "Roads"   
+    STYLE
+     
+      COLOR 0 0 220
+      WIDTH 2
+    END
+  END #Class
+END # Layer
+
+
+END # Map File

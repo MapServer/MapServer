@@ -1,0 +1,68 @@
+# RUN_PARMS: grid.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: grid.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: grid.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: grid.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+# 
+# Test GRID (automatic graticule)
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG SUPPORTS=PROJ SUPPORTS=FREETYPE
+#
+MAP
+  NAME 'DATELINE'
+  IMAGETYPE PNG
+#  EXTENT -200 -90 200 90
+  EXTENT -10000000 -2500000 0000000 2500000
+  SIZE 400 200
+  FONTSET "../misc/fonts.lst"
+  shapepath "../misc/data" 
+  PROJECTION
+    "+proj=ortho +datum=WGS84"
+  END
+
+  LAYER
+    NAME "boxes"
+    TYPE POLYGON
+    STATUS DEFAULT
+    DATA "dateline_boxes.shp"
+    PROJECTION
+      "+proj=merc +datum=WGS84"
+    END
+    CLASS
+      OUTLINECOLOR 0 0 0 
+      COLOR 255 255 0 
+    END
+  END
+
+  LAYER
+    NAME "grid"
+    METADATA
+      "DESCRIPTION" "Grid"
+    END
+    TYPE LINE
+    STATUS ON
+    CLASS
+      NAME "Graticule"
+      COLOR 0 0 0
+      LABEL
+        COLOR  255 0 0
+        FONT lucida
+        TYPE truetype
+        SIZE 8
+        POSITION AUTO          
+        PARTIALS FALSE
+        BUFFER 5
+        OUTLINECOLOR 255 255 255           
+      END 
+    END
+    PROJECTION
+      "init=epsg:4326"
+    END
+    GRID
+      LABELFORMAT "DD"
+      MAXARCS 10
+      MAXINTERVAL 5
+      MAXSUBDIVIDE 2
+    END
+  END # Layer  
+END

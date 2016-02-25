@@ -1,0 +1,36 @@
+# RUN_PARMS: utfgrid-escaping.json [SHP2IMG] -m [MAPFILE] -i json -o [RESULT]
+#
+# Test JSon escaping of item and data values.
+#
+MAP
+
+STATUS ON
+EXTENT 1 47 3 50
+SIZE 200 200
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+
+CONFIG MS_ERRORFILE "stderr"
+
+LAYER
+  NAME "testutfgrid"
+  TYPE POINT
+  STATUS default
+  CONNECTIONTYPE OGR
+  CONNECTION "data/testutfgrid.csv"
+
+  UTFITEM   "id"
+  UTFDATA   "{\"text\":\"[text]\"}"
+  
+    CLASS
+        STYLE
+            COLOR 255 0 0
+            SIZE 8
+            WIDTH 1
+            SYMBOL "circle"
+        END
+    END
+END
+
+END

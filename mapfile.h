@@ -312,6 +312,8 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define SCALETOKEN 1270
 #define VALUES 1271
 
+#define TILESRS 1272
+
 /* rfc 93 support for utfgrid */
 #define UTFDATA 1280
 #define UTFITEM 1281
@@ -321,9 +323,11 @@ enum MS_TOKEN_SOURCES {MS_FILE_TOKENS=0, MS_STRING_TOKENS, MS_URL_TOKENS};
 #define COMPOP 1291
 #define COMPFILTER 1292
 
+
+#define BOM 1300
+
 /* rfc59 bindvals objects */
 #define BINDVALS 2000
 
-#define TILESRS 1272
 
 #endif /* MAPFILE_H */

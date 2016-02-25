@@ -1,0 +1,26 @@
+METADATA OF THE TORONTO SCENE:
+
+Product_id: Toronto
+Satellite: Landsat5
+Sensor: TM
+Path: 18
+Row: 29:30
+Ac_date_yy_mm_dd: 1985-09-20
+Spatial_resolution_meters: 25
+Datum: NAD 83
+Projection: UTM (zone 17)
+North (north value of the image): 4957100
+South (south value of the image): 4732100
+East (east value of the image): 706850
+West (west value of the image): 456850
+No_bands: 7
+Bands: 1:2:3:4:5:6:7
+No_pixels: 10000
+No_lines: 9000
+
+
+Toronto;Landsat5;TM;18;29:30;1985-09-20;25;NAD 83;UTM (zone 17);4957100
+;4732100;706850;456850;7;1:2:3:4:5:6:7;10000;9000
+
+
+url: http://geogratis.cgdi.gc.ca/clf/en?action=entrySummary&entryId=4373&entryType=productCollection&keymap=outlineCanada

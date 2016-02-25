@@ -1,0 +1,228 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="21" numberReturned="21">
+      <wfs:boundedBy>
+      	<gml:Envelope srsName="urn:ogc:def:crs:EPSG::4326">
+      		<gml:lowerCorner>43.41231 -66.43267</gml:lowerCorner>
+      		<gml:upperCorner>47.79644 -59.70969</gml:upperCorner>
+      	</gml:Envelope>
+      </wfs:boundedBy>
+    <wfs:member>
+      <ms:province gml:id="province.977">
+        <ms:AREA>9359132.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.978">
+        <ms:AREA>6087727.500</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.982">
+        <ms:AREA>328572864.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.988">
+        <ms:AREA>51936268.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.989">
+        <ms:AREA>7300281856.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1000">
+        <ms:AREA>4833029.500</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1009">
+        <ms:AREA>3233870848.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1010">
+        <ms:AREA>145393984.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1011">
+        <ms:AREA>16491724.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1015">
+        <ms:AREA>5695280640.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1016">
+        <ms:AREA>108873952.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1017">
+        <ms:AREA>4750521.500</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1018">
+        <ms:AREA>19536002.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1019">
+        <ms:AREA>46074433536.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1020">
+        <ms:AREA>7612399.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1021">
+        <ms:AREA>12217682.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1023">
+        <ms:AREA>7231245.500</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1025">
+        <ms:AREA>89508592.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1041">
+        <ms:AREA>42603812.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1043">
+        <ms:AREA>11416532.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+    <wfs:member>
+      <ms:province gml:id="province.1046">
+        <ms:AREA>29208348.000</ms:AREA>
+        <ms:namegroup>
+          <ms:NAME></ms:NAME>
+        </ms:namegroup>
+        <ms:islandgroup>
+        </ms:islandgroup>
+      </ms:province>
+    </wfs:member>
+</wfs:FeatureCollection>
+

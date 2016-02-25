@@ -1,0 +1,35 @@
+# Test OGR feature style BRUSH parameters
+
+MAP
+EXTENT 0 -1 1 1
+SIZE 200 400
+
+
+  SYMBOL
+    NAME "rectsymbol"
+    TYPE vector
+    FILLED false
+    POINTS
+      0 10
+      0 0
+      20 0
+      20 10
+      0 10
+    END # POINTS
+  END # SYMBOL
+
+LAYER
+    NAME "test"
+    CONNECTIONTYPE OGR
+    CONNECTION "data/ogrbrush.csv"
+    DATA "ogrbrush"
+
+    TYPE POLYGON
+    STATUS ON
+
+    STYLEITEM "AUTO"
+    CLASS
+    END #CLASS
+  END 
+
+END

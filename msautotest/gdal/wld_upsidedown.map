@@ -1,0 +1,30 @@
+#
+# Tests support for upside-down images (like bug 1904).
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 150
+EXTENT 1 1 399 299
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT OFF
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA data/grey_upsidedown.tif
+END
+END # of map file
+

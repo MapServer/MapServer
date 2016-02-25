@@ -1,0 +1,64 @@
+# RUN_PARMS: line_marker_svg.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_marker_svg.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_marker_svg.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_marker_svg.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+
+imagetype png
+size 400 300
+extent -166.245673 -55.551347 174.019748 53.883753
+shapepath "../misc/data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+layer
+    type line
+    data "testlines"
+    status default
+    name "lines"
+    CLASSITEM "FID"
+    class
+        EXPRESSION "1"
+        style
+            color 0 0 255
+            width 7
+        end
+        style
+            color 255 255 255
+            width 5
+        end
+        style
+            symbol "svgicon"
+            gap -20
+            size 5
+            initialgap 0
+            color 0 0 0
+        end
+        style
+            symbol "vector arrow"
+            gap -20
+            initialgap 10
+            size 5
+            color 255 0 0
+        end
+    end
+    class
+        style
+            color 0 0 255
+            width 7
+        end
+        style
+            color 255 255 255
+            width 5
+        end
+        style
+            symbol "svgicon"
+            gap -10
+            size 5
+            color 0 0 0
+        end
+    end
+end
+
+end

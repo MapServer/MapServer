@@ -1,0 +1,142 @@
+# RUN_PARMS: labels-bitmap-multiline.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+#
+map
+
+imagetype png
+size 100 300
+extent 0 0 100 300
+shapepath "../misc/data"
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            size small
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position cc
+            wrap '#'
+        end
+    end
+    feature
+        points 50 50 end
+        text "TinY#label"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            size small
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position ur
+            wrap '#'
+        end
+    end
+    feature
+        points 50 100 end
+        text "SmalL#label#multiline"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            size medium
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position uc
+            wrap '#'
+        end
+    end
+    feature
+        points 50 150 end
+        text "MediuM#label"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            size large
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position ul
+            wrap '#'
+        end
+    end
+    feature
+        points 50 200 end
+        text "LargE#label"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            size giant
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position cr
+            wrap '#'
+        end
+    end
+    feature
+        points 50 250 end
+        text "GianT#label"
+    end
+end
+end

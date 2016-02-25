@@ -1,0 +1,33 @@
+#
+# This tests the fix for bug 1526.  Bug 1526 resulted in hangs when 
+# processing very very small rectangles in msProjectRect() due to the
+# increment size rounding to zero against the base values.   The output
+# image is not intended to be interesting.  The important thing is that
+# shp2img complete, not hang. 
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG SUPPORTS=PROJ
+#
+MAP
+  NAME 'ORTH_TEST'
+  IMAGETYPE PNG
+  EXTENT 2000000 2000000 2000000.00000001 2000000.00000001
+  SIZE 400 400
+  
+  PROJECTION
+    "+proj=ortho +lon_0=0 +lat_0=0 +datum=WGS84"
+  END
+
+  LAYER
+    NAME "world"
+    TYPE POLYGON
+    STATUS DEFAULT
+    DATA "data/world_testpoly.shp"
+    PROJECTION
+      "+proj=latlong +datum=WGS84"
+    END
+    CLASS
+      OUTLINECOLOR 255 0 0 
+      COLOR 0 255 0 
+    END
+  END
+END

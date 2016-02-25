@@ -1,0 +1,74 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:ValueCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?myparam=something&amp;SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="21" numberReturned="21">
+    <wfs:member>
+        <ms:AREA>9359132.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>6087727.500</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>328572864.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>51936268.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>7300281856.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>4833029.500</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>3233870848.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>145393984.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>16491724.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>5695280640.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>108873952.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>4750521.500</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>19536002.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>46074433536.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>7612399.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>12217682.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>7231245.500</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>89508592.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>42603812.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>11416532.000</ms:AREA>
+    </wfs:member>
+    <wfs:member>
+        <ms:AREA>29208348.000</ms:AREA>
+    </wfs:member>
+</wfs:ValueCollection>

@@ -1,0 +1,91 @@
+#
+# Test WMS
+#
+# REQUIRES: POSTGIS
+#
+MAP
+
+NAME WMS_TEST
+STATUS ON
+SIZE 400 300
+EXTENT   2018000 -73300 3410396 647400
+UNITS METERS
+UNITS DD
+IMAGECOLOR 255 255 255
+IMAGETYPE png
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME road
+  CONNECTIONTYPE postgis
+  CONNECTION "dbname=msautotest user=postgres"
+  DATA "the_geom from (select * from road where \"lpoly_\"=3 order by gid) as foo using unique gid using srid=3978"
+  TYPE LINE
+  STATUS ON
+
+  CLASS
+    NAME "Roads"
+    STYLE
+      WIDTH 1
+      COLOR 220 0 0
+    END
+  END
+END # Layer
+
+LAYER
+  NAME road
+  CONNECTIONTYPE postgis
+  CONNECTION "dbname=msautotest user=postgres"
+  DATA 'the_geom from (select * from road where "name_e"=\'Trans-Canada Highway\' order by gid) as foo using unique gid using srid=3978'
+  TYPE LINE
+  STATUS ON
+
+  CLASS
+    NAME "Roads"
+    STYLE
+      WIDTH 1
+      COLOR 220 220 0
+      OFFSET 10 10
+    END
+  END
+END # Layer
+
+LAYER
+  NAME road
+  CONNECTIONTYPE postgis
+  CONNECTION "dbname=msautotest user=postgres"
+  DATA 'the_geom from (select * from road where \"lpoly_\"=0 order by gid) as foo using unique gid using srid=3978'
+  TYPE LINE
+  STATUS ON
+
+  CLASS
+    NAME "Roads"
+    STYLE
+      WIDTH 1
+      COLOR 220 0 220
+      OFFSET 10 -10
+    END
+  END
+END # Layer
+
+LAYER
+  NAME road
+  CONNECTIONTYPE postgis
+  CONNECTION "dbname=msautotest user=postgres"
+  DATA "the_geom from (select * from road where \"name_e\"<>\'Trans-Canada Highway\' or name_e is null order by gid) as foo using unique gid using srid=3978"
+  TYPE LINE
+  STATUS ON
+
+  CLASS
+    NAME "Roads"
+    STYLE
+      WIDTH 1
+      COLOR 220 220 220
+      OFFSET -10 10
+    END
+  END
+END # Layer
+END # Map File

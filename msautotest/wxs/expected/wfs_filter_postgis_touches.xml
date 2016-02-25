@@ -1,0 +1,50 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://ogc.dmsolutions.ca/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:4326">
+      		<gml:coordinates>-61.510511,47.767892 -61.457648,47.796447</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+    <gml:featureMember>
+      <ms:province>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:4326">
+        		<gml:coordinates>-61.510511,47.767892 -61.457648,47.796447</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Polygon srsName="EPSG:4326">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:coordinates>-61.510511,47.774240 -61.508947,47.788606 -61.492725,47.796447 -61.457648,47.787438 -61.459987,47.767892 -61.483502,47.769615 -61.510511,47.774240 </gml:coordinates>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+        </ms:msGeometry>
+        <ms:gid>1</ms:gid>
+        <ms:area>9359132</ms:area>
+        <ms:perimeter>12010.509</ms:perimeter>
+        <ms:province_>977</ms:province_>
+        <ms:province_i>977</ms:province_i>
+        <ms:status>Province</ms:status>
+        <ms:name></ms:name>
+        <ms:name_e>Quebec</ms:name_e>
+        <ms:name_f>Quebec</ms:name_f>
+        <ms:reg_code>24</ms:reg_code>
+        <ms:poly_featu>0</ms:poly_featu>
+        <ms:island>?les de la Madeleine</ms:island>
+        <ms:island_e></ms:island_e>
+        <ms:island_f></ms:island_f>
+      </ms:province>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+

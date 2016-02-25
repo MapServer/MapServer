@@ -1,0 +1,125 @@
+#RUN_PARMS: heatmap-r15-border-autonorm-hsl-attr.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=-79.369542201052,-39.684771100526,79.369542201052,39.684771100526&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
+#RUN_PARMS: heatmap-r20-noborder-fixednorm-rgb-fixed.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=-82.544323889094,-41.272161944547,82.544323889094,41.272161944547&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
+#RUN_PARMS: heatmap-r20-noborder-fixednorm-rgb-expression.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=-85.719105577136,-42.859552788568,85.719105577136,42.859552788568&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
+#RUN_PARMS: heatmap-reproj.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=-7760000,-600000,240000,3400000&WIDTH=200&HEIGHT=100&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A3857" > [RESULT_DEMIME]
+
+#no overlap because outside of shape extents
+#RUN_PARMS: heatmap-no-overlap.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=200,200,201,201&WIDTH=10&HEIGHT=10&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
+
+#no features intersected search rect
+#RUN_PARMS: heatmap-no-overlap.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&LAYERS=heatmap&BBOX=0,0,0.01,0.01&WIDTH=10&HEIGHT=10&VERSION=1.1.1&FORMAT=image%2Fpng&SERVICE=WMS&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A4326" > [RESULT_DEMIME]
+
+map
+
+  size 1000 500
+  extent -180 -90 180 90
+  name "test heat"
+  imagetype "png"
+  units dd
+
+  web
+    metadata
+      "ows_srs" "epsg:4326  epsg:3857 epsg:900913"
+      "ows_enable_request" "*"
+    end
+  end
+
+  projection
+    "+init=epsg:4326"
+  end
+  CONFIG "MS_ERRORFILE" "stderr"
+
+  layer
+    name "heatmap"
+    type raster
+    connectiontype kerneldensity
+    connection "points"
+    status on
+    processing "RANGE_COLORSPACE=%color%"
+    processing "KERNELDENSITY_RADIUS=%radius%"
+    processing "KERNELDENSITY_COMPUTE_BORDERS=%border%"
+    processing "KERNELDENSITY_NORMALIZATION=%norm%"
+    offsite 0 0 0
+    SCALETOKEN
+      NAME "%radius%"
+      VALUES
+        "0" "15"
+        "255000000" "20"
+      END
+    END
+    SCALETOKEN
+      NAME "%border%"
+      VALUES
+        "0" "ON"
+        "255000000" "OFF"
+      END
+    END
+    SCALETOKEN
+      NAME "%norm%"
+      VALUES
+        "0" "AUTO"
+        "255000000" "30"
+      END
+    END
+    SCALETOKEN
+      NAME "%color%"
+      VALUES
+        "0" "HSL"
+        "255000000" "RGB"
+      END
+    END
+    class
+      style
+        COLORRANGE  "#0000ff00"  "#0000ffff"
+        DATARANGE 0 32
+      end
+      style
+        COLORRANGE  "#0000ffff"  "#ff0000ff"
+        DATARANGE 32 255
+      end
+    end
+  end
+  
+symbol
+ name "circle"
+ type ellipse
+ points 1 1 end
+end
+
+layer
+    name "points"
+    status on
+    type POINT
+    data "data/pnts.shp"
+    CLASS
+     MAXSCALE 255000000
+     STYLE
+      SIZE [VAL]
+     END
+    END
+    CLASS
+     MAXSCALE 265000000
+     STYLE
+      SIZE 0.1
+     END
+    END
+    CLASS
+     MAXSCALE 275000000
+     EXPRESSION ([VAL]>1)
+     STYLE
+      SIZE 1
+     END
+    END
+    CLASS
+     MAXSCALE 275000000
+     STYLE
+      SIZE 2
+     END
+    END
+  end
+
+
+end
+ 
+    
+    

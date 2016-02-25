@@ -33,11 +33,6 @@
 
 
 
-#ifndef MAX
-#  define MIN(a,b)      ((a<b) ? a : b)
-#  define MAX(a,b)      ((a>b) ? a : b)
-#endif
-
 #define SKIP_MASK(x,y) (mask_rb && !*(mask_rb->data.rgba.a+(y)*mask_rb->data.rgba.row_step+(x)*mask_rb->data.rgba.pixel_step))
 
 /************************************************************************/
@@ -319,7 +314,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   int   nSrcYSize = psSrcImage->height;
   int   nFailedPoints = 0, nSetPoints = 0;
   double     *padfPixelSum;
-  int         bandCount = MAX(4,psSrcImage->format->bands);
+  int         bandCount = MS_MAX(4,psSrcImage->format->bands);
 
   padfPixelSum = (double *) msSmallMalloc(sizeof(double) * bandCount);
 
@@ -369,10 +364,10 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
         continue;
 
       /* Trim in stuff one pixel off the edge */
-      nSrcX = MAX(nSrcX,0);
-      nSrcY = MAX(nSrcY,0);
-      nSrcX2 = MIN(nSrcX2,nSrcXSize-1);
-      nSrcY2 = MIN(nSrcY2,nSrcYSize-1);
+      nSrcX = MS_MAX(nSrcX,0);
+      nSrcY = MS_MAX(nSrcY,0);
+      nSrcX2 = MS_MIN(nSrcX2,nSrcXSize-1);
+      nSrcY2 = MS_MIN(nSrcY2,nSrcYSize-1);
 
       memset( padfPixelSum, 0, sizeof(double) * bandCount);
 
@@ -407,10 +402,10 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
           int dst_rb_off = nDstX * dst_rb->data.rgba.pixel_step + nDstY * dst_rb->data.rgba.row_step;
           unsigned char red, green, blue, alpha;
 
-          red   = (unsigned char) MAX(0,MIN(255,padfPixelSum[0]));
-          green = (unsigned char) MAX(0,MIN(255,padfPixelSum[1]));
-          blue  = (unsigned char) MAX(0,MIN(255,padfPixelSum[2]));
-          alpha = (unsigned char)MAX(0,MIN(255,255.5*dfWeightSum));
+          red   = (unsigned char) MS_MAX(0,MS_MIN(255,padfPixelSum[0]));
+          green = (unsigned char) MS_MAX(0,MS_MIN(255,padfPixelSum[1]));
+          blue  = (unsigned char) MS_MAX(0,MS_MIN(255,padfPixelSum[2]));
+          alpha = (unsigned char)MS_MAX(0,MS_MIN(255,255.5*dfWeightSum));
 
           msAlphaBlendPM( red, green, blue, alpha,
                           dst_rb->data.rgba.r + dst_rb_off,
@@ -436,7 +431,7 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
               = (float) padfPixelSum[band];
           } else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE ) {
             psDstImage->img.raw_byte[dst_off]
-              = (unsigned char)MAX(0,MIN(255,padfPixelSum[band]));
+              = (unsigned char)MS_MAX(0,MS_MIN(255,padfPixelSum[band]));
           }
 
           dst_off += psDstImage->width*psDstImage->height;
@@ -489,14 +484,14 @@ msAverageSample( imageObj *psSrcImage, rasterBufferObj *src_rb,
   for( iY = nYMin; iY < nYMax; iY++ ) {
     double dfYCellMin, dfYCellMax;
 
-    dfYCellMin = MAX(iY,dfYMin);
-    dfYCellMax = MIN(iY+1,dfYMax);
+    dfYCellMin = MS_MAX(iY,dfYMin);
+    dfYCellMax = MS_MIN(iY+1,dfYMax);
 
     for( iX = nXMin; iX < nXMax; iX++ ) {
       double dfXCellMin, dfXCellMax, dfWeight;
 
-      dfXCellMin = MAX(iX,dfXMin);
-      dfXCellMax = MIN(iX+1,dfXMax);
+      dfXCellMin = MS_MAX(iX,dfXMin);
+      dfXCellMax = MS_MIN(iX+1,dfXMax);
 
       dfWeight = (dfXCellMax-dfXCellMin) * (dfYCellMax-dfYCellMin);
 
@@ -537,7 +532,7 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
   int   nFailedPoints = 0, nSetPoints = 0;
   double     *padfPixelSum;
 
-  int         bandCount = MAX(4,psSrcImage->format->bands);
+  int         bandCount = MS_MAX(4,psSrcImage->format->bands);
 
   padfPixelSum = (double *) msSmallMalloc(sizeof(double) * bandCount);
 
@@ -573,19 +568,19 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
         continue;
       }
 
-      dfXMin = MIN(MIN(x1[nDstX],x1[nDstX+1]),
-                   MIN(x2[nDstX],x2[nDstX+1]));
-      dfYMin = MIN(MIN(y1[nDstX],y1[nDstX+1]),
-                   MIN(y2[nDstX],y2[nDstX+1]));
-      dfXMax = MAX(MAX(x1[nDstX],x1[nDstX+1]),
-                   MAX(x2[nDstX],x2[nDstX+1]));
-      dfYMax = MAX(MAX(y1[nDstX],y1[nDstX+1]),
-                   MAX(y2[nDstX],y2[nDstX+1]));
+      dfXMin = MS_MIN(MS_MIN(x1[nDstX],x1[nDstX+1]),
+                   MS_MIN(x2[nDstX],x2[nDstX+1]));
+      dfYMin = MS_MIN(MS_MIN(y1[nDstX],y1[nDstX+1]),
+                   MS_MIN(y2[nDstX],y2[nDstX+1]));
+      dfXMax = MS_MAX(MS_MAX(x1[nDstX],x1[nDstX+1]),
+                   MS_MAX(x2[nDstX],x2[nDstX+1]));
+      dfYMax = MS_MAX(MS_MAX(y1[nDstX],y1[nDstX+1]),
+                   MS_MAX(y2[nDstX],y2[nDstX+1]));
 
-      dfXMin = MIN(MAX(dfXMin,0),psSrcImage->width+1);
-      dfYMin = MIN(MAX(dfYMin,0),psSrcImage->height+1);
-      dfXMax = MIN(MAX(-1,dfXMax),psSrcImage->width);
-      dfYMax = MIN(MAX(-1,dfYMax),psSrcImage->height);
+      dfXMin = MS_MIN(MS_MAX(dfXMin,0),psSrcImage->width+1);
+      dfYMin = MS_MIN(MS_MAX(dfYMin,0),psSrcImage->height+1);
+      dfXMax = MS_MIN(MS_MAX(-1,dfXMax),psSrcImage->width);
+      dfYMax = MS_MIN(MS_MAX(-1,dfYMax),psSrcImage->height);
 
       memset( padfPixelSum, 0, sizeof(double)*bandCount );
 
@@ -605,13 +600,13 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
           unsigned char red, green, blue, alpha;
 
           red   = (unsigned char)
-                  MAX(0,MIN(255,padfPixelSum[0]+0.5));
+                  MS_MAX(0,MS_MIN(255,padfPixelSum[0]+0.5));
           green = (unsigned char)
-                  MAX(0,MIN(255,padfPixelSum[1]+0.5));
+                  MS_MAX(0,MS_MIN(255,padfPixelSum[1]+0.5));
           blue  = (unsigned char)
-                  MAX(0,MIN(255,padfPixelSum[2]+0.5));
+                  MS_MAX(0,MS_MIN(255,padfPixelSum[2]+0.5));
           alpha = (unsigned char)
-                  MAX(0,MIN(255,255*dfAlpha01+0.5));
+                  MS_MAX(0,MS_MIN(255,255*dfAlpha01+0.5));
 
           RB_MIX_PIXEL(dst_rb,nDstX,nDstY,
                        red, green, blue, alpha );
@@ -1121,10 +1116,10 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
       psSrcExtent->miny = psSrcExtent->maxy = y_out;
       bOutInit = 1;
     } else {
-      psSrcExtent->minx = MIN(psSrcExtent->minx, x_out);
-      psSrcExtent->maxx = MAX(psSrcExtent->maxx, x_out);
-      psSrcExtent->miny = MIN(psSrcExtent->miny, y_out);
-      psSrcExtent->maxy = MAX(psSrcExtent->maxy, y_out);
+      psSrcExtent->minx = MS_MIN(psSrcExtent->minx, x_out);
+      psSrcExtent->maxx = MS_MAX(psSrcExtent->maxx, x_out);
+      psSrcExtent->miny = MS_MIN(psSrcExtent->miny, y_out);
+      psSrcExtent->maxy = MS_MAX(psSrcExtent->maxy, y_out);
     }
   }
 
@@ -1141,10 +1136,10 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     int nGrowAmountY = (int)
                        (psSrcExtent->maxy - psSrcExtent->miny)/EDGE_STEPS + 1;
 
-    psSrcExtent->minx = MAX(psSrcExtent->minx - nGrowAmountX,0);
-    psSrcExtent->miny = MAX(psSrcExtent->miny - nGrowAmountY,0);
-    psSrcExtent->maxx = MIN(psSrcExtent->maxx + nGrowAmountX,nSrcXSize);
-    psSrcExtent->maxy = MIN(psSrcExtent->maxy + nGrowAmountY,nSrcYSize);
+    psSrcExtent->minx = MS_MAX(psSrcExtent->minx - nGrowAmountX,0);
+    psSrcExtent->miny = MS_MAX(psSrcExtent->miny - nGrowAmountY,0);
+    psSrcExtent->maxx = MS_MIN(psSrcExtent->maxx + nGrowAmountX,nSrcXSize);
+    psSrcExtent->maxy = MS_MIN(psSrcExtent->maxy + nGrowAmountY,nSrcYSize);
   }
 
   return MS_TRUE;
@@ -1342,10 +1337,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     sSrcExtent.maxy = ceil (sSrcExtent.maxy+1.0);
   }
 
-  sSrcExtent.minx = MAX(0,sSrcExtent.minx);
-  sSrcExtent.maxx = MIN(sSrcExtent.maxx, nSrcXSize );
-  sSrcExtent.miny = MAX(sSrcExtent.miny, 0 );
-  sSrcExtent.maxy = MIN(sSrcExtent.maxy, nSrcYSize );
+  sSrcExtent.minx = MS_MAX(0,sSrcExtent.minx);
+  sSrcExtent.maxx = MS_MIN(sSrcExtent.maxx, nSrcXSize );
+  sSrcExtent.miny = MS_MAX(sSrcExtent.miny, 0 );
+  sSrcExtent.maxy = MS_MIN(sSrcExtent.maxy, nSrcYSize );
 
   if( sSrcExtent.maxx <= sSrcExtent.minx
       || sSrcExtent.maxy <= sSrcExtent.miny ) {
@@ -1383,9 +1378,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
   else
     sDummyMap.cellsize = dfNominalCellSize;
 
-  nLoadImgXSize = MAX(1, (int) (sSrcExtent.maxx - sSrcExtent.minx)
+  nLoadImgXSize = MS_MAX(1, (int) (sSrcExtent.maxx - sSrcExtent.minx)
                       * (dfNominalCellSize / sDummyMap.cellsize));
-  nLoadImgYSize = MAX(1, (int) (sSrcExtent.maxy - sSrcExtent.miny)
+  nLoadImgYSize = MS_MAX(1, (int) (sSrcExtent.maxy - sSrcExtent.miny)
                       * (dfNominalCellSize / sDummyMap.cellsize));
 
   /*

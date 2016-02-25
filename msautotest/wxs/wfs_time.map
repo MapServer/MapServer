@@ -1,0 +1,94 @@
+#
+# Test WFS
+#
+# REQUIRES: INPUT=OGR SUPPORTS=WFS
+#
+# RUN_PARMS: wfs_time_describe.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType" > [RESULT]
+# RUN_PARMS: wfs_time_getfeature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=time" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_during_filter_match_features.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=time&RESULTTYPE=hits&FILTER=<Filter><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_post_time_during_filter_match_features.xml [MAPSERV] [POST]<GetFeature resultType="hits" service="WFS" version="2.0.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/fes/2.0 http://schemas.opengis.net/filter/2.0/filterAll.xsd http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"><Query typeNames="time"><fes:Filter><fes:During><fes:ValueReference>time</fes:ValueReference><gml:TimePeriod gml:id="TP1"><gml:begin><gml:TimeInstant gml:id="TI1"><gml:timePosition>1970-01-01</gml:timePosition></gml:TimeInstant></gml:begin><gml:end><gml:TimeInstant gml:id="TI2"><gml:timePosition>2004-01-01</gml:timePosition></gml:TimeInstant></gml:end></gml:TimePeriod></fes:During></fes:Filter></Query></GetFeature>[/POST] > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_post_time_simpler_during_filter_match_features.xml [MAPSERV] [POST]<GetFeature resultType="hits" service="WFS" version="2.0.0" xmlns:fes="http://www.opengis.net/fes/2.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns="http://www.opengis.net/wfs/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/fes/2.0 http://schemas.opengis.net/filter/2.0/filterAll.xsd http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"><Query typeNames="time"><fes:Filter><fes:During><fes:ValueReference>time</fes:ValueReference><gml:TimePeriod gml:id="TP1"><gml:beginPosition>1970-01-01</gml:beginPosition><gml:endPosition>2004-01-01</gml:endPosition></gml:TimePeriod></fes:During></fes:Filter></Query></GetFeature>[/POST] > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_during_filter_match_no_feature.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=time&RESULTTYPE=hits&FILTER=<Filter><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></end></TimePeriod></During></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_during_filter_and_other_clause.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=time&RESULTTYPE=hits&FILTER=<Filter><And><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During><PropertyIsEqualTo><ValueReference>id</ValueReference><Literal>1</Literal></PropertyIsEqualTo></And></Filter>" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_time_or_two_during_filter.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAME=time&RESULTTYPE=hits&FILTER=<Filter><Or><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1970-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></end></TimePeriod></During><During><ValueReference>time</ValueReference><TimePeriod><begin><TimeInstant><timePosition>1980-01-01</timePosition></TimeInstant></begin><end><TimeInstant><timePosition>2004-01-01</timePosition></TimeInstant></end></TimePeriod></During></Or></Filter>" > [RESULT_DEVERSION]
+
+MAP
+
+NAME WFS_TEST
+STATUS ON
+SIZE 400 300
+SYMBOLSET ./etc/symbols.sym
+EXTENT -180 -90 180 90
+UNITS DD
+SHAPEPATH "./data"
+IMAGECOLOR 255 255 255
+FONTSET ./etc/fonts.txt
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "wfs_title"		   "Test simple wfs"
+    "wfs_onlineresource"   "http://localhost/path/to/wfs_simple?myparam=something&"
+    "wfs_srs"		   "EPSG:4326"
+    "ows_abstract"    "Test WFS Abstract"
+    "ows_keywordlist" "ogc,wfs,gml,om"
+    "ows_service_onlineresource" "http://localhost"
+    "ows_fees" "none"
+    "ows_accessconstraints" "none"
+    "ows_addresstype" "postal"
+    "ows_address"     "123 SomeRoad Road"
+    "ows_city" "Toronto"
+    "ows_stateorprovince" "Ontario"
+    "ows_postcode" "xxx-xxx"
+    "ows_country" "Canada"
+    "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+    "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+    "ows_contactperson" "Tom Kralidis"
+    "ows_contactorganization" "MapServer"
+    "ows_contactposition" "self"
+    "ows_hoursofservice" "0800h - 1600h EST"
+    "ows_contactinstructions" "during hours of service"
+    "ows_role" "staff"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME time
+  DATA pattern1
+  METADATA
+    "DESCRIPTION" "time"
+    "wfs_title" "time"
+    "wfs_featureid" "id"
+    "gml_include_items" "time,id"
+    "gml_default_items" "time"
+    "gml_time_type" "Date"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+END
+
+
+
+END # Map File

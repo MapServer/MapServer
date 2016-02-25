@@ -1,0 +1,10 @@
+WKT,OGR_STYLE,comment
+"POLYGON((0.1 0.9,0.9 0.9,0.9 0.8,0.1 0.8,0.1 0.9))","BRUSH(fc:#0000ff,bc:#ff0000,id:""rectsymbol"",s:2,dx:3,dy:3);PEN(c:#00FF00,w:2px)","particular historical case: BRUSH/PEN order doesn't matter"
+"POLYGON((0.1 0.7,0.9 0.7,0.9 0.6,0.1 0.6,0.1 0.7))","PEN(c:#00FF00,w:2px);BRUSH(fc:#0000ff,bc:#ff0000,id:""rectsymbol"",s:2,dx:3,dy:3)","particular historical case: BRUSH/PEN order doesn't matter"
+"POLYGON((0.1 0.5,0.9 0.5,0.9 0.4,0.1 0.4,0.1 0.5))","PEN(c:#FF00FF,w:10px);PEN(c:#00FF00,w:2px)","second PEN drawn above first one"
+"POLYGON((0.1 0.3,0.9 0.3,0.9 0.2,0.1 0.2,0.1 0.3))","PEN(c:#FF00FF,w:10px,l:1);PEN(c:#00FF00,w:2px,l:1)","same explicit priority: second PEN drawn above first one"
+"POLYGON((0.1 0.1,0.9 0.1,0.9 0.0,0.1 0.0,0.1 0.1))","PEN(c:#FF00FF,w:10px,l:1);PEN(c:#00FF00,w:2px,l:2)","increasing explicit priority: second PEN drawn above first one"
+"POLYGON((0.1 -0.1,0.9 -0.1,0.9 -0.2,0.1 -0.2,0.1 -0.1))","PEN(c:#FF00FF,w:10px,l:2);PEN(c:#00FF00,w:2px,l:1)","decreasing explicit priority: first PEN drawn above second one"
+
+
+

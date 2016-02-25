@@ -1,0 +1,32 @@
+Content-Type: text/xml; subtype="gml/3.2.1"; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:ValueCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://mapserver.gis.umn.edu/mapserver http://localhost:8080/mapserv.cgi?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=province&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B%20version%3D3.2 http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd"
+   timeStamp="" numberMatched="21" numberReturned="21">
+    <wfs:member>province.977</wfs:member>
+    <wfs:member>province.978</wfs:member>
+    <wfs:member>province.982</wfs:member>
+    <wfs:member>province.988</wfs:member>
+    <wfs:member>province.989</wfs:member>
+    <wfs:member>province.1000</wfs:member>
+    <wfs:member>province.1009</wfs:member>
+    <wfs:member>province.1010</wfs:member>
+    <wfs:member>province.1011</wfs:member>
+    <wfs:member>province.1015</wfs:member>
+    <wfs:member>province.1016</wfs:member>
+    <wfs:member>province.1017</wfs:member>
+    <wfs:member>province.1018</wfs:member>
+    <wfs:member>province.1019</wfs:member>
+    <wfs:member>province.1020</wfs:member>
+    <wfs:member>province.1021</wfs:member>
+    <wfs:member>province.1023</wfs:member>
+    <wfs:member>province.1025</wfs:member>
+    <wfs:member>province.1041</wfs:member>
+    <wfs:member>province.1043</wfs:member>
+    <wfs:member>province.1046</wfs:member>
+</wfs:ValueCollection>

@@ -1,0 +1,36 @@
+Content-Type: application/gpx+xml; streamed
+
+<?xml version="1.0"?>
+<gpx version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogr="http://osgeo.org/gdal" xmlns="http://www.topografix.com/GPX/1/1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+<rte>
+  <extensions>
+    <ogr:FNODE_>613</ogr:FNODE_>
+    <ogr:TNODE_>1511</ogr:TNODE_>
+    <ogr:LPOLY_>0</ogr:LPOLY_>
+    <ogr:RPOLY_>0</ogr:RPOLY_>
+    <ogr:LENGTH>14862.892</ogr:LENGTH>
+    <ogr:ROAD_ID>1521</ogr:ROAD_ID>
+    <ogr:F_CODE>67</ogr:F_CODE>
+    <ogr:NAME_E></ogr:NAME_E>
+    <ogr:NAME_F></ogr:NAME_F>
+  </extensions>
+  <rtept lat="402556.25" lon="2589745.5">
+  </rtept>
+  <rtept lat="401601.0625" lon="2588416.5">
+  </rtept>
+  <rtept lat="400455.71875" lon="2587278.5">
+  </rtept>
+  <rtept lat="399880.53125" lon="2585757.5">
+  </rtept>
+  <rtept lat="399110.65625" lon="2582523.25">
+  </rtept>
+  <rtept lat="399107.1875" lon="2581190.5">
+  </rtept>
+  <rtept lat="399102.1875" lon="2579286.75">
+  </rtept>
+  <rtept lat="399669.40625" lon="2577761.5">
+  </rtept>
+  <rtept lat="401189.875" lon="2576803.5">
+  </rtept>
+</rte>
+</gpx>

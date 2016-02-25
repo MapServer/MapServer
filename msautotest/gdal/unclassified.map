@@ -1,0 +1,34 @@
+#
+# Test use of 24bit images with a dummy class used to populate the legend.
+# The image should come through as 24bit since there is no expression in the
+# class.
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 400 300
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 0
+
+IMAGETYPE png24_t
+
+OUTPUTFORMAT
+  NAME png24_t
+  DRIVER "GDAL/PNG"
+  IMAGEMODE RGBA
+  TRANSPARENT ON
+END
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA data/rgba.tif
+  PROCESSING "BANDS=1,2,3"
+  CLASS
+    KEYIMAGE "data/grid.gif"
+  END
+END
+
+END # of map file

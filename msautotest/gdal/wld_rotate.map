@@ -1,0 +1,42 @@
+#
+# Tests support for images with non-northup world files. 
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 200 
+EXTENT 1 1 459 459
+IMAGECOLOR 255 255 0
+
+PROJECTION
+  "proj=utm"
+  "zone=12"
+  "datum=WGS84"
+END
+
+IMAGETYPE png8_t
+
+OUTPUTFORMAT
+  NAME png8_t
+  DRIVER "GD/PNG"
+  IMAGEMODE PC256
+  TRANSPARENT OFF
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  DATA data/grey_rot.tif
+  PROJECTION
+    "proj=utm"
+    "zone=12"
+    "ellps=WGS84"
+  END
+END
+END # of map file
+

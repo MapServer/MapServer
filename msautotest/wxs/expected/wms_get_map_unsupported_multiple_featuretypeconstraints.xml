@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE ServiceExceptionReport SYSTEM "http://ogc.dmsolutions.ca/wms/1.1.0/exception_1_1_0.dtd">
+<ServiceExceptionReport version="1.1.0">
+<ServiceException>
+: WMS server error. Only one single FeatureTypeConstraint element per LayerFeatureConstraints is supported
+</ServiceException>
+</ServiceExceptionReport>

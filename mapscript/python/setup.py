@@ -32,6 +32,11 @@ try:
 except ImportError:
     import popen2
 
+def update_dirs(list1, list2):
+    for v in list2:
+        if v not in list1 and os.path.isdir(v):
+            list1.append(v)
+
 # 
 # # Function needed to make unique lists.
 def unique(list):
@@ -144,8 +149,12 @@ class ms_ext(build_ext):
         return get_config(option, config =self.mapserver_config)
     
     def finalize_options(self):
+        if isinstance(self.include_dirs, str):
+            self.include_dirs = [path.strip() for path in self.include_dirs.strip().split(":")]
         if self.include_dirs is None:
             self.include_dirs = include_dirs
+
+        update_dirs(self.include_dirs, include_dirs)
         
         includes =  self.get_mapserver_config('includes')
         includes = includes.split()
@@ -154,8 +163,12 @@ class ms_ext(build_ext):
                 if item[2:] not in include_dirs:
                     self.include_dirs.append( item[2:] )
 
+        if isinstance(self.library_dirs, str):
+            self.library_dirs = [path.strip() for path in self.library_dirs.strip().split(":")]
         if self.library_dirs is None:
             self.library_dirs = library_dirs
+
+        update_dirs(self.library_dirs, library_dirs)
 
         libs =  self.get_mapserver_config('libs')
         self.library_dirs = self.library_dirs + [x[2:] for x in libs.split() if x[:2] == "-L"]

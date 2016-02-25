@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200pt" height="150pt" viewBox="0 0 200 150" version="1.1">
+<defs>
+<clipPath id="clip1">
+  <rect width="24" height="16"/>
+</clipPath>
+<g id="surface8" clip-path="url(#clip1)">
+<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 2.808594 15.714844 L 21.191406 0.285156 M 9.921875 -0.699219 L 21.191406 0.285156 L 20.207031 11.558594 "/>
+</g>
+<pattern id="pattern0" patternUnits="userSpaceOnUse" width="24" height="16">
+<use xlink:href="#surface8"/>
+</pattern>
+<clipPath id="clip2">
+  <rect width="12" height="8"/>
+</clipPath>
+<g id="surface12" clip-path="url(#clip2)">
+<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 4 L 12 4 M 8 0 L 12 4 L 8 8 "/>
+</g>
+<pattern id="pattern1" patternUnits="userSpaceOnUse" width="12" height="8">
+<use xlink:href="#surface12"/>
+</pattern>
+<clipPath id="clip3">
+  <rect width="24" height="16"/>
+</clipPath>
+<g id="surface13" clip-path="url(#clip3)">
+<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 2.808594 15.714844 L 21.191406 0.285156 M 9.921875 -0.699219 L 21.191406 0.285156 L 20.207031 11.558594 "/>
+</g>
+<pattern id="pattern2" patternUnits="userSpaceOnUse" width="24" height="16">
+<use xlink:href="#surface13"/>
+</pattern>
+<clipPath id="clip4">
+  <rect width="24" height="16"/>
+</clipPath>
+<g id="surface14" clip-path="url(#clip4)">
+<path style="fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 2.808594 15.714844 L 21.191406 0.285156 M 9.921875 -0.699219 L 21.191406 0.285156 L 20.207031 11.558594 "/>
+</g>
+<pattern id="pattern3" patternUnits="userSpaceOnUse" width="24" height="16">
+<use xlink:href="#surface14"/>
+</pattern>
+</defs>
+<g id="surface2">
+<rect x="0" y="0" width="200" height="150" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
+<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 101.480469 54.453125 L 98.015625 63.855469 L 105.441406 68.3125 L 113.359375 58.410156 Z M 101.480469 54.453125 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern0);" d="M 101.480469 54.453125 L 98.015625 63.855469 L 105.441406 68.3125 L 113.359375 58.410156 L 101.480469 54.453125 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,70.588235%);fill-opacity:1;" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 Z M 167.320312 37.125 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern1);" d="M 167.320312 37.125 L 139.597656 62.867188 L 199 61.875 L 157.417969 54.453125 L 194.050781 43.5625 L 167.320312 37.125 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 Z M 16.335938 61.382812 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern2);" d="M 16.335938 61.382812 L 29.703125 83.65625 L 89.597656 49.996094 L 16.335938 61.382812 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:rgb(70.588235%,70.588235%,39.215686%);fill-opacity:1;" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 Z M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 Z M 67.324219 90.09375 "/>
+<path style=" stroke:none;fill-rule:evenodd;fill:url(#pattern3);" d="M 76.234375 81.183594 L 0 97.519531 L 37.621094 111.875 L 114.847656 93.0625 L 76.234375 81.183594 M 67.324219 90.09375 L 71.777344 97.023438 L 22.769531 99.992188 L 67.324219 90.09375 "/>
+</g>
+</svg>
