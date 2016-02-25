@@ -1,0 +1,116 @@
+Content-Type: text/xml
+
+<?xml version='1.0' encoding="ISO-8859-1" ?>
+<WFS_Capabilities 
+   version="1.0.0" 
+   updateSequence="123" 
+   xmlns="http://www.opengis.net/wfs" 
+   xmlns:ogc="http://www.opengis.net/ogc" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd">
+
+<Service>
+  <Name>MapServer WFS</Name>
+  <Title>Sample OWS for MapServer OGC Web Services Workshop</Title>
+  <Abstract>Sample OWS for MapServer OGC Web Services Workshop.  Enjoy!</Abstract>
+  <Keywords>
+    mapserver
+    ogc
+    workshop
+  </Keywords>
+  <OnlineResource>http://localhost/ms_ogc_workshop/index.html</OnlineResource>
+  <Fees>none</Fees>
+  <AccessConstraints>none</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" />
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeFeatureType>
+      <SchemaDescriptionLanguage>
+        <XMLSCHEMA/>
+      </SchemaDescriptionLanguage>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" />
+        </HTTP>
+      </DCPType>
+    </DescribeFeatureType>
+    <GetFeature>
+      <ResultFormat>
+        <GML2/>
+      </ResultFormat>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/cgi-bin/mapserv.exe?map=/ms4w/apps/ms_ogc_workshop/service/config.map&amp;" />
+        </HTTP>
+      </DCPType>
+    </GetFeature>
+  </Request>
+</Capability>
+
+<FeatureTypeList>
+  <Operations>
+    <Query/>
+  </Operations>
+    <FeatureType>
+        <Name>rivers</Name>
+        <Title>Rivers</Title>
+        <Abstract>These are rivers</Abstract>
+        <Keywords>
+          Rivers
+          world
+        </Keywords>
+        <SRS>EPSG:4326</SRS>
+        <LatLongBoundingBox minx="-164.625" miny="-36.9044" maxx="161.066" maxy="72.2342" />
+        <MetadataURL type="FGDC" format="TXT">http://localhost/ms_ogc_workshop/index.html</MetadataURL>
+    </FeatureType>
+</FeatureTypeList>
+
+<ogc:Filter_Capabilities>
+  <ogc:Spatial_Capabilities>
+    <ogc:Spatial_Operators>
+      <ogc:Equals/>
+      <ogc:Disjoint/>
+      <ogc:Touches/>
+      <ogc:Within/>
+      <ogc:Overlaps/>
+      <ogc:Crosses/>
+      <ogc:Intersect/>
+      <ogc:Contains/>
+      <ogc:DWithin/>
+      <ogc:BBOX/>
+    </ogc:Spatial_Operators>
+  </ogc:Spatial_Capabilities>
+  <ogc:Scalar_Capabilities>
+    <ogc:Logical_Operators />
+    <ogc:Comparison_Operators>
+      <ogc:Simple_Comparisons />
+      <ogc:Like />
+      <ogc:Between />
+    </ogc:Comparison_Operators>
+  </ogc:Scalar_Capabilities>
+</ogc:Filter_Capabilities>
+
+</WFS_Capabilities>

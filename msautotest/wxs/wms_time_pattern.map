@@ -1,0 +1,681 @@
+
+# Test WMS TIME SUPPORT
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#Pattern 1 "%Y%m%d
+#
+# Note:  Pattern 1 "%Y%m%d"  : does not work (on windows at least, MS970 and MS1926) : problem with strptime (parsing of the year is done like this (line 408) ret = strtol (buf, &s, 10) (where buffer =20040101 so the return year is 20040101#)
+#
+# Draw a layer by using single time value
+#
+# wms_time_pattern1a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern1&Time=20040101" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values (See note above)
+#
+# wms_time_pattern1b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern1&Time=20040101,20040102" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values (See note above)
+#
+# wms_time_pattern1c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern1&Time=20040101/20040102" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values (See note above)
+#
+# wms_time_pattern1d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern1&Time=20040101/20040102,20040103/20040104" > [RESULT_DEMIME]
+#
+#Pattern2 : "%Y-%m-%dT%H:%M:%SZ"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern2a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern2&Time=2004-01-01T14:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern2b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern2&Time=2004-01-01T14:10:00Z,2004-01-01T15:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern2c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern2&Time=2004-01-01T14:10:00Z/2004-01-01T15:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values (See note above)
+#
+# wms_time_pattern2d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern2&Time=20040101/20040102,20040103/20040104" > [RESULT_DEMIME]
+#
+#Pattern3 : "%Y-%m-%dT%H:%M:%S"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern3a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern3&Time=2004-01-01T14:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern3b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern3&Time=2004-01-01T14:10:00,2004-01-01T15:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern3c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern3&Time=2004-01-01T14:10:00/2004-01-01T15:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern3d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern3&Time=2004-01-01T14:10:00/2004-01-01T15:10:00,2004-01-01T16:10:00/2004-01-01T17:10:00" > [RESULT_DEMIME]
+#
+#Pattern4 : "%Y-%m-%d %H:%M:%S"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern4a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2014:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern4b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2014:10:00,2004-01-01%2015:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern4c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2014:10:00/2004-01-01%2015:10:00" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern4d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern4&Time=2004-01-01%2014:10:00/2004-01-01%2015:10:00,2004-01-01%2016:10:00/2004-01-01%2017:10:00" > [RESULT_DEMIME]
+#
+#Pattern5 : "%Y-%m-%dT%H:%M"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern5a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern5&Time=2004-01-01T14:10" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern5b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern5&Time=2004-01-01T14:10,2004-01-01T15:10" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern5c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern5&Time=2004-01-01T14:10/2004-01-01T15:10" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern5d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern5&Time=2004-01-01T14:10/2004-01-01T15:10,2004-01-01T16:10/2004-01-01T17:10" > [RESULT_DEMIME]
+#
+#Pattern6 : "%Y-%m-%d %H:%M"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern6a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern6&Time=2004-01-01%2014:10" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern6b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern6&Time=2004-01-01%2014:10,2004-01-01%2015:10" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern6c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern6&Time=2004-01-01%2014:10/2004-01-01%2015:10" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple range time values
+#
+# RUN_PARMS: wms_time_pattern6d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern6&Time=2004-01-01%2014:10/2004-01-01%2015:10,2004-01-01%2016:10/2004-01-01%2017:10" > [RESULT_DEMIME]
+#
+#Pattern7 : "%Y-%m-%dT%H"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern7a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern7&Time=2004-01-01T14" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern7b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern7&Time=2004-01-01T14,2004-01-01T15" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern7c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern7&Time=2004-01-01T14/2004-01-01T15" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern7d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern7&Time=2004-01-01T14/2004-01-01T15,2004-01-01T16/2004-01-01T17" > [RESULT_DEMIME]
+#
+#Pattern8 : "%Y-%m-%d %H"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern8a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern8&Time=2004-01-01%2014" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern8b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern8&Time=2004-01-01%2014,2004-01-01%2015" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern8c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern8&Time=2004-01-01%2014/2004-01-01%2015" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern8d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern8&Time=2004-01-01%2014/2004-01-01%2015,2004-01-01%2016/2004-01-01%2017" > [RESULT_DEMIME]
+#
+#Pattern9 : "%Y-%m-%d"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern9a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern9&Time=2004-01-01" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern9b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern9&Time=2004-01-01,2004-01-02" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern9c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern9&Time=2004-01-01/2004-01-02" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern9d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern9&Time=2004-01-01/2004-01-02,2004-01-03/2004-01-04" > [RESULT_DEMIME]
+#
+#Pattern10 : "%Y-%m"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern10a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern10&Time=2004-01" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern10b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern10&Time=2004-01,2004-02" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern10c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern10&Time=2004-01/2004-02" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple range time values
+#
+# RUN_PARMS: wms_time_pattern10d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern10&Time=2004-01/2004-02,2004-03/2004-04" > [RESULT_DEMIME]
+#
+#Pattern11 : "%Y"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern11a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern11&Time=2004" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern11b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern11&Time=2004,2005" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern11c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern11&Time=2004/2005" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern11d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern11&Time=2004/2005,2006/2007" > [RESULT_DEMIME]
+#
+#Pattern14 : "%Y-%m-%d %H:%M:%SZ"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern14a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern14&&Time=2004-01-01%2014:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern14b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern14&Time=2004-01-01%2014:10:00Z,2004-01-01%2015:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern14c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern14&Time=2004-01-01%2014:10:00Z/2004-01-01%2015:10:00Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiples range time values
+#
+# RUN_PARMS: wms_time_pattern14d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern14&Time=2004-01-01%2014:10:00Z/2004-01-01%2015:10:00Z,2004-01-01%2016:10:00Z/2004-01-01%2017:10:00Z" > [RESULT_DEMIME]
+#
+#Pattern15 : "%Y-%m-%dZ"
+#
+# Draw a layer by using single time value
+#
+# RUN_PARMS: wms_time_pattern15a.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern15&&Time=2004-01-01Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple time values
+#
+# RUN_PARMS: wms_time_pattern15b.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern15&Time=2004-01-01Z,2004-01-02Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using a range time values
+#
+# RUN_PARMS: wms_time_pattern15c.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern15&Time=2004-01-01Z/2004-01-02Z" > [RESULT_DEMIME]
+#
+# Draw a layer by using multiple ranges time values
+#
+# RUN_PARMS: wms_time_pattern15d.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-132,4,-68,68&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=300&STYLES=&LAYERS=pattern15&Time=2004-01-01Z/2004-01-02Z,2004-01-03Z/2004-01-04Z" > [RESULT_DEMIME]
+#
+
+#
+#
+#
+MAP
+
+NAME WMS_TIME_VARIOUS_PATTERNS
+STATUS ON
+SIZE 400 300
+SYMBOLSET ./etc/symbols.sym
+EXTENT -131 5 -68 68
+UNITS DD
+SHAPEPATH "./data"
+IMAGECOLOR 255 255 255
+FONTSET ./etc/fonts.txt
+
+# Start of web interface definition
+#
+WEB
+  MINSCALE 2000000
+  MAXSCALE 50000000
+
+  IMAGEPATH "/tmp/ms_tmp/" 
+  IMAGEURL "/ms_tmp/"
+
+    METADATA
+      "WMS_TITLE"            "Test WMS time support"
+      "WMS_ONLINERESOURCE"   "http://localhost/path/to/mswms_time?"
+      "WMS_SRS"              "EPSG:4326"
+      "OWS_SCHEMAS_LOCATION" "http://ogc.dmsolutions.ca"
+      "WMS_ACCESSCONTRAINTS" "none"
+      "WMS_FEES"             "none"
+      "ows_enable_request"   "*"
+   END
+
+END
+
+QUERYMAP
+#  STYLE SELECTED
+#  STYLE NORMAL
+  COLOR 255 0 0
+END
+
+PROJECTION
+ "init=epsg:4326"
+END 
+
+#
+# Start of layer definitions
+#
+
+
+LAYER
+  NAME pattern1
+  METADATA
+    "DESCRIPTION" "pattern1"
+    "wms_title" "pattern1"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"  
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern1
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+LAYER
+  NAME pattern2
+  METADATA
+    "DESCRIPTION" "pattern2"
+    "wms_title" "pattern2"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern2
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+LAYER
+  NAME pattern3
+  METADATA
+    "DESCRIPTION" "pattern3"
+    "wms_title" "pattern3"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern3
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+LAYER
+  NAME pattern4
+  METADATA
+    "DESCRIPTION" "pattern4"
+    "wms_title" "pattern4"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern4
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+LAYER
+  NAME pattern5
+  METADATA
+    "DESCRIPTION" "pattern5"
+    "wms_title" "pattern5"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern5
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+LAYER
+  NAME pattern6
+  METADATA
+    "DESCRIPTION" "pattern6"
+    "wms_title" "pattern6"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern6
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+LAYER
+  NAME pattern7
+  METADATA
+    "DESCRIPTION" "pattern7"
+    "wms_title" "pattern7"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern7
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+LAYER
+  NAME pattern8
+  METADATA
+    "DESCRIPTION" "pattern8"
+    "wms_title" "pattern8"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern8
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+LAYER
+  NAME pattern9
+  METADATA
+    "DESCRIPTION" "pattern9"
+    "wms_title" "pattern9"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern9
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+
+LAYER
+  NAME pattern10
+  METADATA
+    "DESCRIPTION" "pattern10"
+    "wms_title" "pattern10"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern10
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+
+LAYER
+  NAME pattern11
+  METADATA
+    "DESCRIPTION" "pattern11"
+    "wms_title" "pattern11"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern11
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+LAYER
+  NAME pattern12
+  METADATA
+    "DESCRIPTION" "pattern12"
+    "wms_title" "pattern12"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern12
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+LAYER
+  NAME pattern13
+  METADATA
+    "DESCRIPTION" "pattern13"
+    "wms_title" "pattern13"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern13
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+LAYER
+  NAME pattern14
+  METADATA
+    "DESCRIPTION" "pattern14"
+    "wms_title" "pattern14"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern14
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+LAYER
+  NAME pattern15
+  METADATA
+    "DESCRIPTION" "pattern15"
+    "wms_title" "pattern15"
+    "wms_timeitem"  "TIME"
+    "wms_timeextent"  "2004/2010"   
+    "wms_timedefault"  "2004-01-01 14:10:00"
+  END
+
+  PROJECTION
+    "init=epsg:4326"
+  END 
+  TYPE POINT
+  STATUS ON
+  DATA pattern15
+  CLASS
+   SYMBOL 2
+    SIZE 8
+    COLOR 255 0 0        
+  END
+
+END
+
+
+
+
+END

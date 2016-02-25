@@ -1,0 +1,108 @@
+#
+# Test SOS enabling/disabling
+#
+# REQUIRES:  SUPPORTS=SOS
+#
+# The following tests exists primarily to test the ability of enabling/disabling
+# SOS service (see RFC 67).
+#
+
+# RUN_PARMS: ows_sos_capabilities.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=SOS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+# RUN_PARMS: ows_sos_getobservation.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=WaterQuality" > [RESULT_DEVERSION]
+# RUN_PARMS: ows_sos_describesensor.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeSensor&procedure=urn:ogc:def:procedure:35&outputFormat=text/xml; subtype=\"sensorML/1.0.0\"" > [RESULT_DEVERSION]
+
+# Results expected
+# getcapabilities: disabled at layer level
+# getobservation: enabled at layer level
+# describesensor: disabled at layer level 
+# other requests: disabled
+
+
+MAP
+ NAME sostest
+ IMAGETYPE PNG
+ STATUS ON
+ DEBUG ON
+ EXTENT -141.089000 36.392987 -52.089000 89.784987 # Canada
+ SIZE 500 300
+ SYMBOLSET "./etc/symbols.sym"
+ FONTSET   "./etc/fonts.txt"
+ IMAGECOLOR 125 125 125
+ PROJECTION
+  "init=epsg:4326"
+ END
+ DEBUG ON
+ TRANSPARENT ON
+ WEB
+  HEADER "templates/query_header.html"
+  FOOTER "templates/query_footer.html"
+  IMAGEPATH "./tmp"
+  IMAGEURL  "/ms_tmp"
+  METADATA
+   "ows_updatesequence" "foo"
+   "ows_title"    "Test SOS Title"
+   "ows_abstract"    "Test SOS Abstract"
+   "ows_keywordlist" "ogc,sos,sensorml,om"
+   "ows_service_onlineresource" "http://localhost"
+   "ows_onlineresource"    "http://localhost/cgi-bin/sostest"
+   "ows_fees" "none"
+   "ows_accessconstraints" "none"
+   "ows_addresstype" "postal"
+   "ows_address"     "123 SomeRoad Road"
+   "ows_city" "Toronto"
+   "ows_stateorprovince" "Ontario"
+   "ows_postcode" "xxx-xxx"
+   "ows_country" "Canada"
+   "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+   "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+   "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+   "ows_contactperson" "Tom Kralidis"
+   "ows_contactorganization" "MapServer"
+   "ows_contactposition" "self"
+   "ows_hoursofservice" "0800h - 1600h EST"
+   "ows_contactinstructions" "during hours of service"
+   "ows_role" "staff"
+   "ows_srs" "EPSG:4326"
+   "ows_maxfeatures" "90210"
+
+   END
+ END
+ LAYER
+  NAME obs
+  DEBUG ON
+  TYPE POINT
+  STATUS ON
+  DUMP TRUE
+  DATA "./data/obs.shp"
+  PROJECTION
+    "init=epsg:4326"
+  END
+  CLASS
+    NAME "obs"
+    COLOR 255 0 0
+    SIZE 10
+  END
+  METADATA
+   "sos_offering_id" "Water" # mandatory to tie layers to groups
+   "sos_offering_name" "Water"
+   "sos_offering_description" "This is for water"
+   "sos_offering_extent" "-141,42,-52,84"
+   "sos_offering_timeextent" "1990/2007"   
+   "sos_offering_intendedapplication" "for SOS demos"   
+   "sos_observedproperty_id" "WaterQuality"
+   "sos_observedproperty_name" "WaterQuality"
+   "sos_observedproperty_authority" "ACME"
+   "sos_observedproperty_version" "8"
+   "sos_value_alias" "Value"
+   "sos_value_definition" "mydef"
+   "sos_value_uom" "meters"
+   "ows_timeitem" "datetime"
+   "sos_procedure"  "35 2147 604"
+   "sos_procedure_item"  "stn_id"
+   "sos_describesensor_url" "http://trac.osgeo.org/mapserver/browser/trunk/msautotest/wxs/data/sos-%procedure%.xml?format=raw"
+   "gml_featureid" "id"
+   "gml_include_items" "all"
+   "sos_enable_request"  "!GetCapabilities GetObservation !DescribeSensor"
+  END
+ END    
+END

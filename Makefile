@@ -20,22 +20,19 @@ warning:
 	$(error "This Makefile is used to run the \"test\" target")
 
 wxs-testcase:
-	cd msautotest/wxs && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/wxs && chmod 777 tmp && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 renderers-testcase:
-	cd msautotest/renderers && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/renderers  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 misc-testcase:
-	cd msautotest/misc && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/misc  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 gdal-testcase:
-	cd msautotest/gdal && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
+	cd msautotest/gdal  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 query-testcase:
-	cd msautotest/query && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
-
-autotest-install:
-	test -d "msautotest/wxs" ||  ( git submodule init && git submodule update )
+	cd msautotest/query  && rm -f result/* && export PATH=$(BUILDPATH):$(PATH) && ./run_test.py $(AUTOTEST_OPTS)
 
 mspython-testcase:
 	test -f "$(PYTHON_MAPSCRIPT_PATH)/_mapscript.so" && (export PYTHONPATH="../../$(PYTHON_MAPSCRIPT_PATH)" && cd msautotest/mspython && python run_all_tests.py)
@@ -46,7 +43,7 @@ php-testcase:
 java-testcase:
 	test -d "$(JAVA_MAPSCRIPT_PATH)" && (export JAVA_MAPSCRIPT_SO="../../$(JAVA_MAPSCRIPT_PATH)" && cd mapscript/java && ./run_test.sh)
 
-test: autotest-install cmakebuild
+test:  cmakebuild
 	@$(MAKE) $(MFLAGS)	wxs-testcase renderers-testcase misc-testcase gdal-testcase query-testcase mspython-testcase
 	@./print-test-results.sh
 	@$(MAKE) $(MFLAGS)	php-testcase

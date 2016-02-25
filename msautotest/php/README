@@ -1,0 +1,3 @@
+To run these test you need PHPUNIT. You can find how to install it at http://www.phpunit.de/manual/3.7/en/installation.html.
+
+To run the test simply run 'phpunit --process-isolation .'

@@ -1,0 +1,268 @@
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<sos:Capabilities xmlns:gml="http://www.opengis.net/gml" xmlns:om="http://www.opengis.net/om/1.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:swe="http://www.opengis.net/swe/1.0.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ogc="http://www.opengis.net/ogc" xmlns:sos="http://www.opengis.net/sos/1.0" version="1.0.0" updateSequence="foo" xsi:schemaLocation="http://www.opengis.net/sos/1.0 http://schemas.opengis.net/sos/1.0.0/sosGetCapabilities.xsd">
+   <ows:ServiceIdentification>
+    <ows:Title>Test SOS Title</ows:Title>
+    <ows:Abstract>Test SOS Abstract</ows:Abstract>
+    <ows:Keywords>
+      <ows:Keyword>ogc</ows:Keyword>
+      <ows:Keyword>sos</ows:Keyword>
+      <ows:Keyword>sensorml</ows:Keyword>
+      <ows:Keyword>om</ows:Keyword>
+    </ows:Keywords>
+    <ows:ServiceType codeSpace="OGC">SOS</ows:ServiceType>
+    <ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
+    <ows:Fees>none</ows:Fees>
+    <ows:AccessConstraints>none</ows:AccessConstraints>
+  </ows:ServiceIdentification>
+  <ows:ServiceProvider>
+    <ows:ProviderName>MapServer</ows:ProviderName>
+    <ows:ProviderSite xlink:type="simple" xlink:href="http://localhost"/>
+    <ows:ServiceContact>
+      <ows:IndividualName>Tom Kralidis</ows:IndividualName>
+      <ows:PositionName>self</ows:PositionName>
+      <ows:ContactInfo>
+        <ows:Phone>
+          <ows:Voice>+xx-xxx-xxx-xxxx</ows:Voice>
+          <ows:Facsimile>+xx-xxx-xxx-xxxx</ows:Facsimile>
+        </ows:Phone>
+        <ows:Address>
+          <ows:DeliveryPoint>123 SomeRoad Road</ows:DeliveryPoint>
+          <ows:City>Toronto</ows:City>
+          <ows:AdministrativeArea>Ontario</ows:AdministrativeArea>
+          <ows:PostalCode>xxx-xxx</ows:PostalCode>
+          <ows:Country>Canada</ows:Country>
+          <ows:ElectronicMailAddress>tomkralidis@xxxxxxx.xxx</ows:ElectronicMailAddress>
+        </ows:Address>
+        <ows:OnlineResource xlink:type="simple" xlink:href="http://localhost"/>
+        <ows:HoursOfService>0800h - 1600h EST</ows:HoursOfService>
+        <ows:ContactInstructions>during hours of service</ows:ContactInstructions>
+      </ows:ContactInfo>
+      <ows:Role>staff</ows:Role>
+    </ows:ServiceContact>
+  </ows:ServiceProvider>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/cgi-bin/sostest?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/cgi-bin/sostest?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>SOS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.0.0</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="DescribeSensor">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/cgi-bin/sostest?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/cgi-bin/sostest?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>SOS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.0.0</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="sensorid">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:object:procedure</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="outputFormat">
+        <ows:AllowedValues>
+          <ows:Value>text/xml; subtype="sensorML/1.0.0"</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="DescribeObservationType">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/cgi-bin/sostest?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/cgi-bin/sostest?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>SOS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.0.0</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="observedproperty">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:object:observedproperty</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Operation name="GetObservation">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/cgi-bin/sostest?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/cgi-bin/sostest?"/>
+        </ows:HTTP>
+      </ows:DCP>
+      <ows:Parameter name="service">
+        <ows:AllowedValues>
+          <ows:Value>SOS</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="version">
+        <ows:AllowedValues>
+          <ows:Value>1.0.0</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="offering">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:object:offering</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="observedproperty">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:object:observedproperty</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="eventtime">
+        <ows:AllowedValues>
+          <ows:Value>sos:time</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="procedure">
+        <ows:AllowedValues>
+          <ows:Value>urn:ogc:object:sensor</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="featureofinterest">
+        <ows:AllowedValues>
+          <ows:Value>gml:location</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="result">
+        <ows:AllowedValues>
+          <ows:Value>ogc:Filter</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="responseFormat">
+        <ows:AllowedValues>
+          <ows:Value>text/xml; subtype="om/1.0.0"</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+      <ows:Parameter name="resultModel">
+        <ows:AllowedValues>
+          <ows:Value>Observation</ows:Value>
+          <ows:Value>Measurement</ows:Value>
+        </ows:AllowedValues>
+      </ows:Parameter>
+    </ows:Operation>
+    <ows:Constraint name="DefaultMaxFeatures">
+      <ows:AllowedValues>
+        <ows:Value>90210</ows:Value>
+      </ows:AllowedValues>
+    </ows:Constraint>
+  </ows:OperationsMetadata>
+  <sos:Filter_Capabilities>
+    <ogc:Spatial_Capabilities>
+      <ogc:GeometryOperands>
+        <ogc:GeometryOperand>gml:Point</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:LineString</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Polygon</ogc:GeometryOperand>
+        <ogc:GeometryOperand>gml:Envelope</ogc:GeometryOperand>
+      </ogc:GeometryOperands>
+      <ogc:SpatialOperators>
+        <ogc:SpatialOperator name="Equals"/>
+        <ogc:SpatialOperator name="Disjoint"/>
+        <ogc:SpatialOperator name="Touches"/>
+        <ogc:SpatialOperator name="Within"/>
+        <ogc:SpatialOperator name="Overlaps"/>
+        <ogc:SpatialOperator name="Crosses"/>
+        <ogc:SpatialOperator name="Intersects"/>
+        <ogc:SpatialOperator name="Contains"/>
+        <ogc:SpatialOperator name="DWithin"/>
+        <ogc:SpatialOperator name="Beyond"/>
+        <ogc:SpatialOperator name="BBOX"/>
+      </ogc:SpatialOperators>
+    </ogc:Spatial_Capabilities>
+    <ogc:Temporal_Capabilities>
+      <ogc:TemporalOperands>
+        <ogc:TemporalOperand>gml:TimePeriod</ogc:TemporalOperand>
+        <ogc:TemporalOperand>gml:TimeInstant</ogc:TemporalOperand>
+      </ogc:TemporalOperands>
+      <ogc:TemporalOperators>
+        <ogc:TemporalOperator name="TM_Equals"/>
+      </ogc:TemporalOperators>
+    </ogc:Temporal_Capabilities>
+    <ogc:Scalar_Capabilities>
+      <ogc:LogicalOperators/>
+      <ogc:ComparisonOperators>
+        <ogc:ComparisonOperator>LessThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThan</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>LessThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>GreaterThanEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>EqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>NotEqualTo</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Like</ogc:ComparisonOperator>
+        <ogc:ComparisonOperator>Between</ogc:ComparisonOperator>
+      </ogc:ComparisonOperators>
+    </ogc:Scalar_Capabilities>
+    <ogc:Id_Capabilities>
+      <ogc:EID/>
+      <ogc:FID/>
+    </ogc:Id_Capabilities>
+  </sos:Filter_Capabilities>
+  <sos:Contents>
+    <sos:ObservationOfferingList>
+      <sos:ObservationOffering gml:id="Water">
+        <gml:description>This is for water</gml:description>
+        <gml:name>Water</gml:name>
+        <gml:srsName>EPSG:4326</gml:srsName>
+        <gml:boundedBy>
+          <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
+            <gml:lowerCorner>-141.00000 42.00000</gml:lowerCorner>
+            <gml:upperCorner>-52.00000 84.00000</gml:upperCorner>
+          </gml:Envelope>
+        </gml:boundedBy>
+        <sos:intendedApplication>for SOS demos</sos:intendedApplication>
+        <sos:time>
+          <gml:TimePeriod>
+            <gml:beginPosition>1990</gml:beginPosition>
+            <gml:endPosition>2007</gml:endPosition>
+          </gml:TimePeriod>
+        </sos:time>
+        <sos:procedure xlink:href="urn:ogc:def:procedure:35"/>
+        <sos:procedure xlink:href="urn:ogc:def:procedure:2147"/>
+        <sos:procedure xlink:href="urn:ogc:def:procedure:604"/>
+        <sos:observedProperty>
+          <swe:CompositePhenomenon gml:id="WaterQuality" dimension="4">
+            <gml:name>WaterQuality</gml:name>
+            <swe:component xlink:href="urn:ogc:def:property:ACME:8:ID"/>
+            <swe:component xlink:href="urn:ogc:def:property:ACME:8:STN_ID"/>
+            <swe:component xlink:href="urn:ogc:def:property:ACME:8:DATETIME"/>
+            <swe:component xlink:href="urn:ogc:def:property:ACME:8:Value"/>
+          </swe:CompositePhenomenon>
+        </sos:observedProperty>
+        <sos:featureOfInterest xlink:href="urn:ogc:def:feature:OGC-SWE:3:transient"/>
+        <sos:responseFormat>text/xml; subtype="om/1.0.0"</sos:responseFormat>
+        <sos:resultModel>om:Observation</sos:resultModel>
+        <sos:resultModel>om:Measurement</sos:resultModel>
+        <sos:responseMode>inline</sos:responseMode>
+      </sos:ObservationOffering>
+    </sos:ObservationOfferingList>
+  </sos:Contents>
+</sos:Capabilities>

@@ -1,0 +1,66 @@
+# RUN_PARMS: rgba_overlay_res.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: rgba_overlay_res.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: rgba_overlay_res.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: rgba_overlay_res.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: rgba_overlay_res.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Tests overlaying an RGBA image with on a greyscale image
+# into an RGB output.  The RGBA image contains a blending area in the
+# top left corner, and a transparent chunk in the middle.
+#
+# NOTE: with resampling. 
+#
+# REQUIRES: SUPPORTS=PROJ
+#
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 200 150
+EXTENT 0.5 0.5 399.5 299.5
+IMAGECOLOR 255 255 255
+shapepath "../gdal"
+PROJECTION
+  "proj=utm"
+  "zone=12"
+  "datum=WGS84"
+END
+
+IMAGETYPE png24_t
+
+OUTPUTFORMAT
+  NAME png24_t
+  DRIVER "GDAL/PNG"
+  IMAGEMODE RGB
+  TRANSPARENT OFF
+END
+
+LAYER
+  NAME grey
+  TYPE raster
+  STATUS default
+  #PROCESSING "RESAMPLE=average"
+  DATA data/pct22.tif
+  PROJECTION
+    "proj=utm"
+    "zone=12"
+    "ellps=WGS84"
+    "towgs84=1,0,0"
+  END
+END
+
+LAYER
+  NAME rgb
+  TYPE raster
+  STATUS default
+  DATA data/rgba.tif
+  PROJECTION
+    "proj=utm"
+    "zone=12"
+    "ellps=WGS84"
+    "towgs84=1,0,0"
+  END
+END
+
+END # of map file

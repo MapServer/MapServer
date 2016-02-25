@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding="ISO-8859-1" ?>
+<ServiceExceptionReport version="1.2.0"
+xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ogc http://schemas.opengis.net/wcs/1.0.0/OGC-exception.xsd">
+  <ServiceException code="InvalidUpdateSequence" locator="updatesequence">msWCSGetCapabilities(): WCS server error. UPDATESEQUENCE parameter (2008-01-13T14:23:38Z) is higher than server (2007-10-30T14:23:38Z)
+  </ServiceException>
+</ServiceExceptionReport>

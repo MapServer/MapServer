@@ -1,0 +1,60 @@
+# RUN_PARMS: plb_embed_legend.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: plb_embed_legend.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: plb_embed_legend.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Simple test of embedded legend support.
+#   
+# REQUIRES: OUTPUT=PNG 
+#
+MAP
+
+STATUS ON
+EXTENT 478300 4762880 481650 4765610
+SIZE 150 60
+shapepath "../misc/data"
+IMAGETYPE png
+fontset "../misc/fonts.lst"
+imagecolor 255 200 0
+
+
+LEGEND 
+  POSITION LR
+  STATUS EMBED
+  imagecolor 255 255 255
+  label
+    type truetype
+    color 0 0 0
+    font "default"
+    size 9
+  end
+    postlabelcache true
+END
+
+LAYER
+  NAME shppoly
+  TYPE polygon
+  DATA "shppoly/poly.shp"
+  STATUS default
+  CLASSITEM "AREA"
+  CLASS 
+    NAME "Big"
+    EXPRESSION ([AREA] >= 500000)
+    COLOR 255 0 0 
+    OUTLINECOLOR 0 0 0
+  END
+  CLASS 
+    NAME "Medium"
+    EXPRESSION ([AREA] >= 100000 and [AREA] < 500000)
+    COLOR 0 255 0
+    OUTLINECOLOR 0 0 0
+  END
+  CLASS 
+    NAME "Small"
+    EXPRESSION ([AREA] < 100000)
+    COLOR 0 0 255
+    OUTLINECOLOR 0 0 0
+  END
+END
+
+END

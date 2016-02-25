@@ -1,0 +1,111 @@
+Content-Type: text/xml
+
+<?xml version='1.0' encoding="ISO-8859-1" ?>
+<WFS_Capabilities 
+   version="1.0.0" 
+   updateSequence="123" 
+   xmlns="http://www.opengis.net/wfs" 
+   xmlns:ogc="http://www.opengis.net/ogc" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd">
+
+<Service>
+  <Name>MapServer WFS</Name>
+  <Title>Test simple wfs</Title>
+  <Abstract>Test WFS Abstract</Abstract>
+  <Keywords>
+    ogc
+    wfs
+    gml
+    om
+  </Keywords>
+  <OnlineResource>http://localhost</OnlineResource>
+  <Fees>none</Fees>
+  <AccessConstraints>none</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeFeatureType>
+      <SchemaDescriptionLanguage>
+        <XMLSCHEMA/>
+      </SchemaDescriptionLanguage>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+    </DescribeFeatureType>
+    <GetFeature>
+      <ResultFormat>
+        <GML2/>
+      </ResultFormat>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post onlineResource="http://localhost/path/to/wfs_simple?" />
+        </HTTP>
+      </DCPType>
+    </GetFeature>
+  </Request>
+</Capability>
+
+<FeatureTypeList>
+  <Operations>
+    <Query/>
+  </Operations>
+    <FeatureType>
+        <Name>province</Name>
+        <Title>province</Title>
+        <SRS>EPSG:4326</SRS>
+        <LatLongBoundingBox minx="-66.7243" miny="41.7705" maxx="-57.7217" maxy="48.4773" />
+    </FeatureType>
+</FeatureTypeList>
+
+<ogc:Filter_Capabilities>
+  <ogc:Spatial_Capabilities>
+    <ogc:Spatial_Operators>
+      <ogc:Equals/>
+      <ogc:Disjoint/>
+      <ogc:Touches/>
+      <ogc:Within/>
+      <ogc:Overlaps/>
+      <ogc:Crosses/>
+      <ogc:Intersect/>
+      <ogc:Contains/>
+      <ogc:DWithin/>
+      <ogc:BBOX/>
+    </ogc:Spatial_Operators>
+  </ogc:Spatial_Capabilities>
+  <ogc:Scalar_Capabilities>
+    <ogc:Logical_Operators />
+    <ogc:Comparison_Operators>
+      <ogc:Simple_Comparisons />
+      <ogc:Like />
+      <ogc:Between />
+    </ogc:Comparison_Operators>
+  </ogc:Scalar_Capabilities>
+</ogc:Filter_Capabilities>
+
+</WFS_Capabilities>

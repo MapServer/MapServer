@@ -1,0 +1,120 @@
+MAP
+
+NAME WMS_SLD
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+#UNITS METERS
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH "../wxs/data"
+SYMBOLSET "../wxs/etc/symbols.sym"
+FONTSET "../wxs/etc/fonts.txt"
+
+PROJECTION
+   "init=epsg:4326"
+END
+
+
+#
+# Start of layer definitions
+#
+
+
+LAYER
+  NAME popplace
+  DATA popplace
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  LabelItem "Name"
+  CLASSITEM "Name" 
+
+  CLASS
+    EXPRESSION "\"Tignish"  
+    SYMBOL 2
+    SIZE 8
+    LABEL
+      FORCE true
+      COLOR  0 255 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+  CLASS
+    EXPRESSION '\'Souris\''  
+    SYMBOL 2
+    SIZE 8
+    LABEL
+      FORCE true
+      COLOR  0 0 255
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+  CLASS
+    EXPRESSION ("[NAME]" = "Tr\"uro")
+    SYMBOL 2
+    SIZE 8
+    LABEL
+      FORCE true
+      COLOR  255 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+  CLASS
+    EXPRESSION ("[NAME]" = '\'Cheticamp')
+    SYMBOL 2
+    SIZE 8
+    LABEL
+      FORCE true
+      COLOR  255 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+  CLASS
+    SYMBOL 2
+    SIZE 8
+    LABEL
+      PRIORITY 10
+      COLOR  0 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+END # Layer
+
+
+END # Map File

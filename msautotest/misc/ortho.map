@@ -1,0 +1,43 @@
+#
+# This test excercies the RFC 5 (horizon clipping during reprojection)
+# work.  Basically the lines and polygons should be clipped at the horizon
+# when converting to Ortho projection.
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG SUPPORTS=PROJ
+#
+MAP
+  NAME 'ORTH_TEST'
+  IMAGETYPE PNG
+  EXTENT -8000000 -8000000 8000000 8000000
+  SIZE 400 400
+  
+  PROJECTION
+    "+proj=ortho +lon_0=0 +lat_0=0 +datum=WGS84"
+  END
+
+  LAYER
+    NAME "world"
+    TYPE POLYGON
+    STATUS DEFAULT
+    DATA "data/world_testpoly.shp"
+    PROJECTION
+      "+proj=latlong +datum=WGS84"
+    END
+    CLASS
+      OUTLINECOLOR 255 0 0 
+      COLOR 0 255 0 
+    END
+  END
+  LAYER
+    NAME "testlines"
+    TYPE LINE
+    STATUS DEFAULT
+    DATA "data/testlines.shp"
+    PROJECTION
+      "+proj=latlong +datum=WGS84"
+    END
+    CLASS
+      COLOR 255 255 0 
+    END
+  END
+END

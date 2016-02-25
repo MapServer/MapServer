@@ -1,0 +1,57 @@
+# RUN_PARMS: labels-leader.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labels-leader.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: labels-leader.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labels-leader.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labels-leader.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Test multiple labels/symbols per feature
+#
+#
+MAP
+
+NAME DEMO
+STATUS ON
+SIZE 150 150
+EXTENT 2253355.750000 -76361.773438 2747648.500000 515489.031250
+UNITS METERS
+SHAPEPATH "../wxs/data"
+IMAGECOLOR 255 255 255
+IMAGETYPE png
+fontset  "data/fonts.lst"
+
+LAYER
+  NAME foo
+
+  TYPE POLYGON
+  STATUS DEFAULT
+  DATA province
+
+  CLASS
+    style
+      color 200 200 200
+      outlinecolor 150 150 150
+    end
+   leader
+      maxdistance 30
+      gridstep 20
+      style
+        color 200 100 100
+        width 1
+      end
+   end
+    label
+      text "[NAME_E]"
+      color 0 0 0
+      type truetype
+      size 8
+      font "default"
+      partials false
+    end
+  END
+END
+
+
+
+
+END # Map File

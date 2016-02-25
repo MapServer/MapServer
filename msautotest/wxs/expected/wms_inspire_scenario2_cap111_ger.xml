@@ -1,0 +1,227 @@
+<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd"
+ [
+<!ELEMENT VendorSpecificCapabilities (inspire_vs:ExtendedCapabilities)><!ELEMENT inspire_vs:ExtendedCapabilities ((inspire_common:MetadataUrl, inspire_common:SupportedLanguages, inspire_common:ResponseLanguage) | (inspire_common:ResourceLocator+, inspire_common:ResourceType, inspire_common:TemporalReference+, inspire_common:Conformity+, inspire_common:MetadataPointOfContact+, inspire_common:MetadataDate, inspire_common:SpatialDataServiceType, inspire_common:MandatoryKeyword+, inspire_common:Keyword*, inspire_common:SupportedLanguages, inspire_common:ResponseLanguage, inspire_common:MetadataUrl?))><!ATTLIST inspire_vs:ExtendedCapabilities xmlns:inspire_vs CDATA #FIXED "http://inspire.ec.europa.eu/schemas/inspire_vs/1.0" ><!ELEMENT inspire_common:MetadataUrl (inspire_common:URL, inspire_common:MediaType*)><!ATTLIST inspire_common:MetadataUrl xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" xmlns:xsi CDATA #FIXED "http://www.w3.org/2001/XMLSchema-instance" xsi:type CDATA #FIXED "inspire_common:resourceLocatorType" ><!ELEMENT inspire_common:URL (#PCDATA)><!ATTLIST inspire_common:URL xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:MediaType (#PCDATA)><!ATTLIST inspire_common:MediaType xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:SupportedLanguages (inspire_common:DefaultLanguage, inspire_common:SupportedLanguage*)><!ATTLIST inspire_common:SupportedLanguages xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:DefaultLanguage (inspire_common:Language)><!ATTLIST inspire_common:DefaultLanguage xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:SupportedLanguage (inspire_common:Language)><!ATTLIST inspire_common:SupportedLanguage xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:ResponseLanguage (inspire_common:Language)><!ATTLIST inspire_common:ResponseLanguage xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Language (#PCDATA)><!ATTLIST inspire_common:Language xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:ResourceLocator (inspire_common:URL, inspire_common:MediaType*)><!ATTLIST inspire_common:ResourceLocator xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:ResourceType (#PCDATA)> <!ATTLIST inspire_common:ResourceType xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:TemporalReference (inspire_common:DateOfCreation?, inspire_common:DateOfLastRevision?, inspire_common:DateOfPublication*, inspire_common:TemporalExtent*)><!ATTLIST inspire_common:TemporalReference xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:DateOfCreation (#PCDATA)> <!ATTLIST inspire_common:DateOfCreation xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:DateOfLastRevision (#PCDATA)><!ATTLIST inspire_common:DateOfLastRevision xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:DateOfPublication (#PCDATA)><!ATTLIST inspire_common:DateOfPublication xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:TemporalExtent (inspire_common:IndividualDate | inspire_common:IntervalOfDates)><!ATTLIST inspire_common:TemporalExtent xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:IndividualDate (#PCDATA)> <!ATTLIST inspire_common:IndividualDate xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0"><!ELEMENT inspire_common:IntervalOfDates (inspire_common:StartingDate, inspire_common:EndDate)><!ATTLIST inspire_common:IntervalOfDates xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:StartingDate (#PCDATA)><!ATTLIST inspire_common:StartingDate xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:EndDate (#PCDATA)><!ATTLIST inspire_common:EndDate xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Conformity (inspire_common:Specification, inspire_common:Degree)><!ATTLIST inspire_common:Conformity xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Specification (inspire_common:Title, (inspire_common:DateOfPublication | inspire_common:DateOfCreation | inspire_common:DateOfLastRevision), inspire_common:URI*, inspire_common:ResourceLocator*)><!ATTLIST inspire_common:Specification xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Title (#PCDATA)><!ATTLIST inspire_common:Title xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:URI (#PCDATA)><!ATTLIST inspire_common:URI xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Degree (#PCDATA)><!ATTLIST inspire_common:Degree xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:MetadataPointOfContact (inspire_common:OrganisationName, inspire_common:EmailAddress)><!ATTLIST inspire_common:MetadataPointOfContact xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:OrganisationName (#PCDATA)><!ATTLIST inspire_common:OrganisationName  xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:EmailAddress (#PCDATA)><!ATTLIST inspire_common:EmailAddress xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:MetadataDate (#PCDATA)><!ATTLIST inspire_common:MetadataDate xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:SpatialDataServiceType (#PCDATA)><!ATTLIST inspire_common:SpatialDataServiceType xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:MandatoryKeyword (inspire_common:KeywordValue)><!ATTLIST inspire_common:MandatoryKeyword xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:KeywordValue (#PCDATA)><!ATTLIST inspire_common:KeywordValue xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" ><!ELEMENT inspire_common:Keyword (inspire_common:OriginatingControlledVocabulary?, inspire_common:KeywordValue)><!ATTLIST inspire_common:Keyword xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0" xmlns:xsi CDATA #FIXED "http://www.w3.org/2001/XMLSchemainstance" xsi:type (inspire_common:inspireTheme_bul | inspire_common:inspireTheme_cze | inspire_common:inspireTheme_dan | inspire_common:inspireTheme_dut | inspire_common:inspireTheme_eng | inspire_common:inspireTheme_est | inspire_common:inspireTheme_fin | inspire_common:inspireTheme_fre | inspire_common:inspireTheme_ger | inspire_common:inspireTheme_gre | inspire_common:inspireTheme_hun | inspire_common:inspireTheme_gle | inspire_common:inspireTheme_ita | inspire_common:inspireTheme_lav | inspire_common:inspireTheme_lit | inspire_common:inspireTheme_mlt | inspire_common:inspireTheme_pol | inspire_common:inspireTheme_por | inspire_common:inspireTheme_rum | inspire_common:inspireTheme_slo | inspire_common:inspireTheme_slv | inspire_common:inspireTheme_spa | inspire_common:inspireTheme_swe) #IMPLIED ><!ELEMENT inspire_common:OriginatingControlledVocabulary (inspire_common:Title, (inspire_common:DateOfPublication | inspire_common:DateOfCreation | inspire_common:DateOfLastRevision), inspire_common:URI*, inspire_common:ResourceLocator*)><!ATTLIST inspire_common:OriginatingControlledVocabulary xmlns:inspire_common CDATA #FIXED "http://inspire.ec.europa.eu/schemas/common/1.0">
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.1.1" updateSequence="myupdatesequence">
+
+<Service>
+  <Name>OGC:WMS</Name>
+  <Title>myservicetitleger</Title>
+  <Abstract>myserviceabstractger</Abstract>
+  <KeywordList>
+  </KeywordList>
+  <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.mapserver.org/"/>
+  <ContactInformation>
+    <ContactPersonPrimary>
+      <ContactPerson>mycontactperson</ContactPerson>
+      <ContactOrganization>MapServer</ContactOrganization>
+    </ContactPersonPrimary>
+      <ContactPosition>owner</ContactPosition>
+    <ContactAddress>
+        <AddressType>myaddresstype</AddressType>
+        <Address>myaddress</Address>
+        <City>mycity</City>
+        <StateOrProvince>mystateorprovince</StateOrProvince>
+        <PostCode>xxx-xxx</PostCode>
+        <Country>mycountry</Country>
+    </ContactAddress>
+      <ContactVoiceTelephone>+xx-xxx-xxx-xxxx</ContactVoiceTelephone>
+      <ContactFacsimileTelephone>+xx-xxx-xxx-xxxx</ContactFacsimileTelephone>
+  <ContactElectronicMailAddress>mycontactelectronicmailaddress@xxxxxxx.xxx</ContactElectronicMailAddress>
+  </ContactInformation>
+  <Fees>conditions unknown</Fees>
+  <AccessConstraints>None</AccessConstraints>
+</Service>
+
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <Format>application/vnd.ogc.wms_xml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://path/to/onlineresource...?language=ger&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://path/to/onlineresource...?language=ger&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <GetMap>
+      <Format>image/png</Format>
+      <Format>image/jpeg</Format>
+      <Format>image/gif</Format>
+      <Format>image/png; mode=8bit</Format>
+      <Format>application/x-pdf</Format>
+      <Format>image/svg+xml</Format>
+      <Format>image/tiff</Format>
+      <Format>application/vnd.google-earth.kml+xml</Format>
+      <Format>application/vnd.google-earth.kmz</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://path/to/onlineresource...?language=ger&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://path/to/onlineresource...?language=ger&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetMap>
+    <GetFeatureInfo>
+      <Format>text/plain</Format>
+      <Format>application/vnd.ogc.gml</Format>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://path/to/onlineresource...?language=ger&amp;"/></Get>
+          <Post><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://path/to/onlineresource...?language=ger&amp;"/></Post>
+        </HTTP>
+      </DCPType>
+    </GetFeatureInfo>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+    <Format>application/vnd.ogc.se_inimage</Format>
+    <Format>application/vnd.ogc.se_blank</Format>
+  </Exception>
+  <VendorSpecificCapabilities>
+  <inspire_vs:ExtendedCapabilities>
+    <inspire_common:ResourceLocator>
+      <inspire_common:URL>http://myinspireresource</inspire_common:URL>
+    </inspire_common:ResourceLocator>
+    <inspire_common:ResourceType>service</inspire_common:ResourceType>
+    <inspire_common:TemporalReference>
+      <inspire_common:DateOfLastRevision>2011-09-19</inspire_common:DateOfLastRevision>
+    </inspire_common:TemporalReference>
+    <inspire_common:Conformity>
+      <inspire_common:Specification>
+        <inspire_common:Title>-</inspire_common:Title>
+        <inspire_common:DateOfLastRevision>2011-09-19</inspire_common:DateOfLastRevision>
+      </inspire_common:Specification>
+      <inspire_common:Degree>notEvaluated</inspire_common:Degree>
+    </inspire_common:Conformity>
+    <inspire_common:MetadataPointOfContact>
+      <inspire_common:OrganisationName>mympocname</inspire_common:OrganisationName>
+      <inspire_common:EmailAddress>mympoc@e.mail</inspire_common:EmailAddress>
+    </inspire_common:MetadataPointOfContact>
+      <inspire_common:MetadataDate>2011-09-19</inspire_common:MetadataDate>
+    <inspire_common:SpatialDataServiceType>view</inspire_common:SpatialDataServiceType>
+    <inspire_common:MandatoryKeyword>
+      <inspire_common:KeywordValue>infoMapAccessService</inspire_common:KeywordValue>
+    </inspire_common:MandatoryKeyword>
+    <inspire_common:SupportedLanguages>
+      <inspire_common:DefaultLanguage><inspire_common:Language>eng</inspire_common:Language></inspire_common:DefaultLanguage>
+      <inspire_common:SupportedLanguage><inspire_common:Language>ger</inspire_common:Language></inspire_common:SupportedLanguage>
+    </inspire_common:SupportedLanguages>
+    <inspire_common:ResponseLanguage><inspire_common:Language>ger</inspire_common:Language></inspire_common:ResponseLanguage>
+  </inspire_vs:ExtendedCapabilities>
+  </VendorSpecificCapabilities>
+  <Layer>
+    <Name>TN.RoadTransportNetwork.RoadArea</Name>
+    <Title>Verkehrsnetze: Straßenfläche</Title>
+    <Abstract>myroadareaabstractger</Abstract>
+    <KeywordList>
+        <Keyword>myroadareakeyword1</Keyword>
+        <Keyword>myroadareakeyword2</Keyword>
+    </KeywordList>
+    <SRS>EPSG:4326</SRS>
+    <SRS>EPSG:4269</SRS>
+    <SRS>EPSG:3035</SRS>
+    <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+    <BoundingBox SRS="EPSG:4326"
+                minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+    <BoundingBox SRS="EPSG:4269"
+                minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+    <BoundingBox SRS="EPSG:3035"
+                minx="-755944" miny="4.65936e+06" maxx="47805.6" maxy="5.56257e+06" />
+    <Style>
+       <Name>inspire_common:DEFAULT</Name>
+       <Title>myroadarealayerstyletitle</Title>
+       <LegendURL width="85" height="40">
+          <Format>image/png</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...roadarea"/>
+       </LegendURL>
+    </Style>
+    <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>TN.RoadTransportNetwork.RoadLink</Name>
+        <Title>Verkehrsnetze: Straßensegment</Title>
+        <Abstract>myroadlinklayerabstractger</Abstract>
+        <KeywordList>
+            <Keyword>myroadlinklayerkeyword1</Keyword>
+            <Keyword>myroadlinklayerkeyword2</Keyword>
+        </KeywordList>
+        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="83" height="37">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...?language=ger&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RoadTransportNetwork.RoadLink&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+    </Layer>
+    <Layer>
+      <Name>TN.CommonTransportElements.TransportLink</Name>
+      <Title>Verkehrsnetze: Generisches Verkehrssegment</Title>
+      <Abstract>mygenerictransportlinklayerabstract</Abstract>
+    <Style>
+       <Name>inspire_common:DEFAULT</Name>
+       <Title>mygenerictransportlinklayerstyletitle</Title>
+       <LegendURL width="85" height="40">
+          <Format>image/png</Format>
+          <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...generictransportlink"/>
+       </LegendURL>
+    </Style>
+      <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>TN.RailTransportNetwork.RailwayLink</Name>
+        <Title>Verkehrsnetze: Eisenbahnverbindung</Title>
+        <Abstract>myrailwaylinklayerabstractger</Abstract>
+        <KeywordList>
+            <Keyword>myrailwaylinklayerkeyword1</Keyword>
+            <Keyword>myrailwaylinklayerkeyword2</Keyword>
+        </KeywordList>
+        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="83" height="21">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...?language=ger&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.RailTransportNetwork.RailwayLink&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+      <Layer queryable="0" opaque="0" cascaded="0">
+        <Name>TN.AirTransportNetwork.AirLink</Name>
+        <Title>Verkehrsnetze: Luftverbindung</Title>
+        <Abstract>myairlinklayerabstractger</Abstract>
+        <KeywordList>
+            <Keyword>myairlinklayerkeyword1</Keyword>
+            <Keyword>myairlinklayerkeyword2</Keyword>
+        </KeywordList>
+        <LatLonBoundingBox minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:4326"
+                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:4269"
+                    minx="-66.6333" miny="42.3821" maxx="-59.2921" maxy="48.2955" />
+        <BoundingBox SRS="EPSG:3035"
+                    minx="-622089" miny="4.90936e+06" maxx="-91098.1" maxy="5.34642e+06" />
+        <Style>
+          <Name>default</Name>
+          <Title>default</Title>
+          <LegendURL width="83" height="21">
+             <Format>image/png</Format>
+             <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://path/to/onlineresource...?language=ger&amp;version=1.1.1&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=TN.AirTransportNetwork.AirLink&amp;format=image/png&amp;STYLE=default"/>
+          </LegendURL>
+        </Style>
+      </Layer>
+    </Layer>
+  </Layer>
+</Capability>
+</WMT_MS_Capabilities>

@@ -1,0 +1,67 @@
+Content-Type: multipart/mixed; boundary=wcs
+
+
+--wcs
+Content-Type: text/xml
+Content-ID: wcs.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Coverages
+     xmlns="http://www.opengis.net/wcs/1.1"
+     xmlns:ows="http://www.opengis.net/ows/1.1"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://www.opengis.net/ows/1.1 ../owsCoverages.xsd">
+  <Coverage>
+    <ows:Reference xlink:href="cid:coverage/result.grd"/>
+  </Coverage>
+</Coverages>
+
+--wcs
+Content-Type: image/x-aaigrid
+Content-Description: coverage data
+Content-Transfer-Encoding: binary
+Content-ID: coverage/result.grd
+Content-Disposition: INLINE
+
+ncols        14
+nrows        10
+xllcorner    -10.000000000000
+yllcorner    10.000000000000
+cellsize     30.000000000000
+NODATA_value    -99
+ -99 -99 115 123 -99 -99 -99 -99 -99 -99 -99 -99 -99 -99
+ -99 -99 115 148 -99 -99 -99 99 123 115 115 -99 -99 -99
+ -99 -99 123 132 -99 -99 99 107 99 90 107 -99 -99 -99
+ -99 -99 -99 -99 -99 -99 -99 132 123 115 99 -99 -99 -99
+ -99 -99 -99 99 115 -99 -99 -99 -99 -99 -99 -99 -99 -99
+ -99 107 115 115 99 -99 -99 -99 -99 -99 -99 -99 -99 -99
+ -99 132 123 165 148 -99 -99 -99 -99 173 156 -99 -99 -99
+ -99 197 132 123 107 -99 -99 -99 165 255 197 -99 -99 -99
+ -99 -99 -99 -99 -99 -99 -99 -99 148 173 197 -99 -99 -99
+ -99 -99 -99 -99 -99 -99 -99 -99 -99 140 -99 -99 -99 -99
+
+--wcs
+Content-Type: application/octet-stream
+Content-Description: coverage data
+Content-Transfer-Encoding: binary
+Content-ID: coverage/result.grd.aux.xml
+Content-Disposition: INLINE
+
+<PAMDataset>
+  <Metadata>
+    <MDI key="TIFFTAG_RESOLUTIONUNIT">2</MDI>
+    <MDI key="TIFFTAG_XRESOLUTION">72.000000</MDI>
+    <MDI key="TIFFTAG_YRESOLUTION">72.000000</MDI>
+  </Metadata>
+</PAMDataset>
+
+--wcs
+Content-Type: application/octet-stream
+Content-Description: coverage data
+Content-Transfer-Encoding: binary
+Content-ID: coverage/result.prj
+Content-Disposition: INLINE
+
+PROJCS["WGS_1984_UTM_Zone_11N",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]
+--wcs--

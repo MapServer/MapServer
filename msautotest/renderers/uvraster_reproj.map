@@ -1,0 +1,86 @@
+# RUN_PARMS: uvraster_reproj.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: uvraster_reproj.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: uvraster_reproj.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: uvraster_reproj.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: uvraster_reproj.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+
+MAP
+  NAME 'wind'
+  #EXTENT -180 -90 180 90
+  EXTENT -8310206.9735063 -6848155.9745209 5325501.8253187 727237.8026041 
+  SIZE 900 500
+  IMAGETYPE PNG
+  PROJECTION
+   "init=epsg:3857"
+  END
+
+
+  WEB
+    IMAGEPATH "/tmp/"
+    IMAGEURL "/tmp/"
+  END
+SYMBOL
+  NAME "horizline"
+  TYPE VECTOR
+  POINTS
+     0 0
+     1 0
+  END # points
+END # symbol
+SYMBOL
+  NAME "arrowhead"
+  TYPE vector
+  FILLED true
+  ANCHORPOINT 0 0.5
+  POINTS
+    0 2
+    4 1
+    0 0
+  END # points
+END # symbol
+SYMBOL
+  NAME "arrowtail"
+  TYPE vector
+  FILLED true
+  ANCHORPOINT 1 0.5 # to shift the arrowtail
+  POINTS
+    0 2
+    4 1
+    0 0
+    -99 -99
+    0 1
+    4 1
+  END # points
+END # symbol
+  LAYER
+  PROJECTION
+   "init=epsg:4326"
+  END
+    NAME "wind_1_2_band"
+    TYPE POINT
+    CONNECTIONTYPE UVRASTER
+    STATUS DEFAULT
+    DATA data/wind_12.tif
+    PROCESSING "BANDS=1,2"
+    PROCESSING "UV_SPACING=40"
+    PROCESSING "UV_SIZE_SCALE=0.5"
+CLASS
+    STYLE
+      SYMBOL "horizline"
+      ANGLE [uv_angle]
+      SIZE [uv_length]
+      WIDTH 2
+      COLOR 255 112 112
+    END # style
+    STYLE
+      SYMBOL "arrowhead"
+      ANGLE [uv_angle]
+      SIZE 7
+      COLOR 255 0 0
+      POLAROFFSET [uv_length_2] [uv_angle]
+    END # style
+  END #
+
+  END
+
+END

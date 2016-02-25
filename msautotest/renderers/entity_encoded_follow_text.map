@@ -1,0 +1,160 @@
+# RUN_PARMS: entity_encoded_follow_text.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: entity_encoded_follow_text.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: entity_encoded_follow_text.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: entity_encoded_follow_text.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: entity_encoded_follow_text.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 400 300
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png
+
+LAYER
+  NAME line_follow
+  TYPE line
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        COLOR 0 255 0
+        WIDTH 11
+    END
+    LABEL
+        ANGLE FOLLOW
+        FONT "default"
+        TYPE TRUETYPE
+        POSITION CC
+        SIZE 9
+        FORCE TRUE
+        mindistance 25
+        BUFFER 17
+        COLOR 0 0 0
+        MAXOVERLAPANGLE 100
+        #ENCODING utf8
+      END
+  END
+  FEATURE
+    POINTS
+        10 10
+        44 36
+        92 23
+        270 75
+    END
+    TEXT "this is my text"
+  END
+  FEATURE
+    POINTS
+        10 40
+        44 66
+        92 53
+        270 105
+    END
+    TEXT "copyright sign: &#169; (decimal entity)"
+  END
+  
+  FEATURE
+    POINTS
+        10 70
+        44 96
+        92 83
+        270 135
+    END
+    TEXT "copyright sign: &copy; (html entity)"   #potential segfault is here
+  END
+END
+
+LAYER
+  NAME line_auto
+  TYPE line
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        COLOR 255  0 255 
+        WIDTH 11
+    END
+    LABEL
+        ANGLE AUTO
+        FONT "default"
+        TYPE TRUETYPE
+        POSITION CC
+        SIZE 9
+        FORCE TRUE
+        mindistance 25
+        BUFFER 17
+        COLOR 0 0 0
+        #ENCODING utf8
+      END
+  END
+  FEATURE
+    POINTS
+        10 160
+        44 186
+        92 173
+        270 225
+    END
+    TEXT "this is my text"
+  END
+  FEATURE
+    POINTS
+        10 190
+        44 216
+        92 203
+        270 255
+    END
+    TEXT "copyright sign: &#169; (decimal entity)"
+  END
+  
+  FEATURE
+    POINTS
+        10 220
+        44 246
+        92 233
+        270 285
+    END
+    TEXT "copyright sign: &copy; (html entity)"
+  END
+END
+
+LAYER
+  NAME "legend"
+  TYPE annotation
+  STATUS default
+  CLASS
+    NAME "test1"
+    LABEL
+        FONT "default"
+        TYPE TRUETYPE
+        POSITION CR
+        SIZE 15
+        FORCE TRUE
+        COLOR 0 0 0
+        #ENCODING utf8
+      END
+  END
+  FEATURE
+    POINTS
+        10 120
+    END
+    TEXT "angle FOLLOW"
+  END
+  FEATURE
+    POINTS
+        10 290
+    END
+    TEXT "angle AUTO"
+  END
+END
+
+
+
+END

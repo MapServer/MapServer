@@ -1,0 +1,101 @@
+<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<WCS_Capabilities
+   version="1.0.0" 
+   updateSequence="2007-10-30T14:23:38Z" 
+   xmlns="http://www.opengis.net/wcs" 
+   xmlns:xlink="http://www.w3.org/1999/xlink" 
+   xmlns:gml="http://www.opengis.net/gml" 
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/wcsCapabilities.xsd">
+<Service>
+  <metadataLink metadataType="other" xlink:type="simple" xlink:href="http://devgeo.cciw.ca/index.html"/>  <description>Test description</description>
+  <name>MapServer WCS</name>
+  <label>Test Label</label>
+  <keywords>
+    <keyword>keyword</keyword>
+    <keyword>list</keyword>
+  </keywords>
+<responsibleParty>
+    <individualName>Frank Warmerdam</individualName>
+    <organisationName>OSGeo</organisationName>
+    <positionName>Software Developer</positionName>
+  <contactInfo>
+    <phone>
+    <voice>(613) 754-2041</voice>
+    <facsimile>(613) 754-2041x343</facsimile>
+    </phone>
+    <address>
+    <deliveryPoint>3594 Foymount Rd</deliveryPoint>
+    <city>Eganville</city>
+    <administrativeArea>Ontario</administrativeArea>
+    <postalCode>K0J 1T0</postalCode>
+    <country>Canada</country>
+    <electronicMailAddress>warmerdam@pobox.com</electronicMailAddress>
+    </address>
+    <onlineResource xlink:type="simple" xlink:href="http://198.202.74.215/cgi-bin/wcs_demo"/>
+  </contactInfo>
+</responsibleParty>
+  <fees>NONE</fees>
+  <accessConstraints>
+    NONE
+  </accessConstraints>
+</Service>
+<Capability>
+  <Request>
+    <GetCapabilities>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCapabilities>
+    <DescribeCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?" /></Post>
+        </HTTP>
+      </DCPType>
+    </DescribeCoverage>
+    <GetCoverage>
+      <DCPType>
+        <HTTP>
+          <Get><OnlineResource xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?" /></Get>
+        </HTTP>
+      </DCPType>
+      <DCPType>
+        <HTTP>
+          <Post><OnlineResource xlink:type="simple" xlink:href="http://devgeo.cciw.ca/cgi-bin/mapserv/ecows?" /></Post>
+        </HTTP>
+      </DCPType>
+    </GetCoverage>
+  </Request>
+  <Exception>
+    <Format>application/vnd.ogc.se_xml</Format>
+  </Exception>
+</Capability>
+<ContentMetadata>
+  <CoverageOfferingBrief>
+  <metadataLink metadataType="other" xlink:type="simple" xlink:href="http://www.gdal.org/metadata_test_link.html"/>    <description>Test description</description>
+    <name>grey</name>
+    <label>Test label</label>
+    <lonLatEnvelope srsName="urn:ogc:def:crs:OGC:1.3:CRS84">
+      <gml:pos>-121.488743889689 0</gml:pos>
+      <gml:pos>-121.485160277178 0.00270582611334856</gml:pos>
+    </lonLatEnvelope>
+  <keywords>
+    <keyword>test</keyword>
+    <keyword>mapserver</keyword>
+  </keywords>
+  </CoverageOfferingBrief>
+</ContentMetadata>
+</WCS_Capabilities>

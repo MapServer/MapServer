@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<wcs:CoverageDescriptions xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:swe="http://www.opengis.net/swe/2.0" xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd ">
+  <wcs:CoverageDescription gml:id="multi">
+    <gml:boundedBy>
+      <gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/4326" axisLabels="lat long" uomLabels="deg deg" srsDimension="2">
+        <gml:lowerCorner>47.8188382 14.4702712</gml:lowerCorner>
+        <gml:upperCorner>49.8911432 18.0111282</gml:upperCorner>
+      </gml:Envelope>
+    </gml:boundedBy>
+    <wcs:CoverageId>multi</wcs:CoverageId>
+    <gml:domainSet>
+      <gml:RectifiedGrid dimension="2" gml:id="grid_multi">
+        <gml:limits>
+          <gml:GridEnvelope>
+            <gml:low>0 0</gml:low>
+            <gml:high>104 60</gml:high>
+          </gml:GridEnvelope>
+        </gml:limits>
+        <gml:axisLabels>lat long</gml:axisLabels>
+        <gml:origin>
+          <gml:Point gml:id="grid_origin_multi" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+            <gml:pos>49.891143 14.470271</gml:pos>
+          </gml:Point>
+        </gml:origin>
+        <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/4326">0 0.033722</gml:offsetVector>
+        <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/4326">-0.033972 0</gml:offsetVector>
+      </gml:RectifiedGrid>
+    </gml:domainSet>
+    <gmlcov:rangeType>
+      <swe:DataRecord>
+        <swe:field name="Band1">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band2">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band3">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band4">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band5">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band6">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band7">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band8">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band9">
+          <swe:Quantity>
+            <swe:description>Test description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="W.m-2.Sr-1"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+      </swe:DataRecord>
+    </gmlcov:rangeType>
+    <wcs:ServiceParameters>
+      <wcs:CoverageSubtype>RectifiedGridCoverage</wcs:CoverageSubtype>
+      <wcs:nativeFormat>image/tiff</wcs:nativeFormat>
+    </wcs:ServiceParameters>
+  </wcs:CoverageDescription>
+  <wcs:CoverageDescription gml:id="multi_new">
+    <gml:boundedBy>
+      <gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/4326" axisLabels="lat long" uomLabels="deg deg" srsDimension="2">
+        <gml:lowerCorner>47.8188382 14.4702712</gml:lowerCorner>
+        <gml:upperCorner>49.8911432 18.0111282</gml:upperCorner>
+      </gml:Envelope>
+    </gml:boundedBy>
+    <wcs:CoverageId>multi_new</wcs:CoverageId>
+    <gml:domainSet>
+      <gml:RectifiedGrid dimension="2" gml:id="grid_multi_new">
+        <gml:limits>
+          <gml:GridEnvelope>
+            <gml:low>0 0</gml:low>
+            <gml:high>104 60</gml:high>
+          </gml:GridEnvelope>
+        </gml:limits>
+        <gml:axisLabels>lat long</gml:axisLabels>
+        <gml:origin>
+          <gml:Point gml:id="grid_origin_multi_new" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+            <gml:pos>49.891143 14.470271</gml:pos>
+          </gml:Point>
+        </gml:origin>
+        <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/4326">0 0.033722</gml:offsetVector>
+        <gml:offsetVector srsName="http://www.opengis.net/def/crs/EPSG/0/4326">-0.033972 0</gml:offsetVector>
+      </gml:RectifiedGrid>
+    </gml:domainSet>
+    <gmlcov:rangeType>
+      <swe:DataRecord>
+        <swe:field name="Band1">
+          <swe:Quantity definition="SomeDefinition">
+            <swe:description>This is some description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="SomeUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band2">
+          <swe:Quantity definition="DefaultDefinition">
+            <swe:description>Default description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="DefaultUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band3">
+          <swe:Quantity definition="DefaultDefinition">
+            <swe:description>Default description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="DefaultUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band4">
+          <swe:Quantity definition="DefaultDefinition">
+            <swe:description>Default description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="DefaultUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band5">
+          <swe:Quantity definition="DefaultDefinition">
+            <swe:description>Default description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="DefaultUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band6">
+          <swe:Quantity definition="DefaultDefinition">
+            <swe:description>Default description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="DefaultUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band7">
+          <swe:Quantity definition="DefaultDefinition">
+            <swe:description>Default description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="DefaultUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band8">
+          <swe:Quantity definition="DefaultDefinition">
+            <swe:description>Default description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="DefaultUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+        <swe:field name="Band9">
+          <swe:Quantity definition="DefaultDefinition">
+            <swe:description>Default description</swe:description>
+            <swe:nilValues>
+              <swe:NilValues>
+                <swe:nilValue reason="urn:ogc:def:nil:OGC:1.0:inapplicable">0</swe:nilValue>
+              </swe:NilValues>
+            </swe:nilValues>
+            <swe:uom code="DefaultUOM"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0 255</swe:interval>
+                <swe:significantFigures>3</swe:significantFigures>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+      </swe:DataRecord>
+    </gmlcov:rangeType>
+    <wcs:ServiceParameters>
+      <wcs:CoverageSubtype>RectifiedGridCoverage</wcs:CoverageSubtype>
+      <wcs:nativeFormat>image/tiff</wcs:nativeFormat>
+    </wcs:ServiceParameters>
+  </wcs:CoverageDescription>
+</wcs:CoverageDescriptions>

@@ -1,0 +1,146 @@
+#
+# Test WMS SLD
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+#
+#
+# Generate map image with a new line symbology for the road layer.
+# RUN_PARMS: wms_get_map_sld_proj.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&ERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=%3CStyledLayerDescriptor+version%3D%221.0.0%22%3E%3CNamedLayer%3E%3CName%3Eroad%3C%2FName%3E%3CUserStyle%3E%3CTitle%3Exxx%3C%2FTitle%3E%3CFeatureTypeStyle%3E%3CRule%3E%3Cogc%3AFilter+xmlns%3Aogc%3D%22http%3A%2F%2Fwww.opengis.net%2Fogc%22%3E%3Cogc%3ABBOX%3E%3Cogc%3APropertyName%3Egeometry%3C%2Fogc%3APropertyName%3E%3Cgml%3ABox+xmlns%3Agml%3D%22http%3A%2F%2Fwww.opengis.net%2Fgml%22+srsName%3D%22EPSG%3A42304%22%3E%3Cgml%3Acoordinates+decimal%3D%22.%22+cs%3D%22%2C%22+ts%3D%22+%22%3E2232483.6411927%2C-311301.67674655+2564568.0551077%2C703794.34706916%3C%2Fgml%3Acoordinates%3E%3C%2Fgml%3ABox%3E%3C%2Fogc%3ABBOX%3E%3C%2Fogc%3AFilter%3E%3CLineSymbolizer%3E%3CGeometry%3E%3CPropertyName%3Ecenter-line%3C%2FPropertyName%3E%3C%2FGeometry%3E%3CStroke%3E%3CCssParameter+name%3D%22stroke%22%3E%23000000%3C%2FCssParameter%3E%3C%2FStroke%3E%3C%2FLineSymbolizer%3E%3C%2FRule%3E%3C%2FFeatureTypeStyle%3E%3C%2FUserStyle%3E%3C%2FNamedLayer%3E%3C%2FStyledLayerDescriptor%3E" > [RESULT_DEMIME]
+
+MAP
+
+NAME WMS_SLD
+STATUS ON
+SIZE 400 300
+EXTENT   2018000 -73300 3410396 647400
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:3978 EPSG:42101 EPSG:4269 EPSG:4326"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*"
+  END
+END
+
+PROJECTION
+  "init=epsg:3978"
+
+# Note, EPSG:3978 may require a fairly new epsg dictionary.  If you don't have
+# it, enter it as follow.  This also used to be known as 42304 in data/epsg2.
+# NAD83 / Canada Atlas Lambert
+# <3978> +proj=lcc +lat_1=49 +lat_2=77 +lat_0=49 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs  <>
+
+END
+
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "wms_title"         "province"
+    "wms_description"   "province"
+    "wms_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+
+LAYER
+  NAME popplace
+  DATA popplace
+  METADATA
+    "wms_title"         "popplace"
+    "wms_description"   "Cities of I.P.E."
+    "wms_result_fields" "NAME"
+    "gml_NAME_alias" "NAME_ALIAS"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  LabelItem "Name"
+  CLASSITEM "Capital" 
+
+  CLASS
+    EXPRESSION /./  
+    SYMBOL 2
+    SIZE 8
+    NAME "Cities"
+    LABEL
+      COLOR  0 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+END # Layer
+
+
+LAYER
+  NAME road
+  DATA road
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    SYMBOL 0 
+    COLOR 220 0 0
+  END
+END # Layer
+
+
+END # Map File

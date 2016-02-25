@@ -1,0 +1,54 @@
+# Test that symbol rounding issues with vector symbols (bug 1716) is
+# (still) fixed.
+#
+# This issue is currently unresolved as the rounding that occurs when we want
+# to account for this test case breaks symbol centering in many other usages,
+# namely symbols following lines. 
+#
+# REQUIRES: INPUT=SHAPE OUTPUT=PNG
+#
+MAP
+  NAME 'bug 1716'
+  EXTENT 0 0 500 500
+  SIZE 250 250 
+  IMAGETYPE GIF
+  Symbol
+	Name 'square'
+	Type VECTOR
+	Filled TRUE
+	Points
+		0 1
+		0 0
+		1 0
+		1 1
+		0 1
+	END
+
+  END
+
+  LAYER
+    TYPE POINT
+    STATUS DEFAULT
+
+    FEATURE
+      POINTS 10 10 40 20 300 300 400 10 10 400 END
+    END
+
+    CLASS
+      NAME 'Church'
+      COLOR 0 0 0
+      SYMBOL 'square'
+      SIZE 7
+      STYLE
+        SYMBOL "square"
+        SIZE 5
+        COLOR 255 255 255
+      END
+      STYLE
+        SYMBOL "square"
+        SIZE 3
+        COLOR 0 0 0
+      END
+    END
+  END
+END

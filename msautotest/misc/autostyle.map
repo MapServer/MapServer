@@ -1,0 +1,27 @@
+#
+# OGR Rendering with autostyling.
+#   
+# REQUIRES: INPUT=OGR OUTPUT=PNG
+#
+MAP
+
+EXTENT -150 45 -40 75
+SIZE 400 300
+IMAGECOLOR 0 0 0
+
+IMAGETYPE png
+
+LAYER
+  NAME canada
+  TYPE line
+  CONNECTIONTYPE OGR
+  CONNECTION "data/canada.dgn"
+  DATA "elements"
+  STATUS default
+  STYLEITEM "AUTO"
+  CLASS 
+     NAME "work"
+  END
+END
+
+END

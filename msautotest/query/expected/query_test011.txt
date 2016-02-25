@@ -1,0 +1,2 @@
+St. Louis:STLO Itasca:ITAS Aitkin:AITK Carlton:CARL Pine:PINE 
+name:Pokegama Lake name:Hibbing name:Aitkin name:Duluth name:Mille Lacs Lake name:Sandstone 

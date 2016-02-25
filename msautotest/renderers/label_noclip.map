@@ -1,0 +1,66 @@
+# RUN_PARMS: label_noclip.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: label_noclip.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: label_noclip.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: label_noclip.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: label_noclip.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+
+imagetype png
+size 200 100
+extent 0 0 400 200
+fontset "../misc/fonts.lst"
+symbolset "symbolset"
+
+
+layer
+    type line
+    status default
+    name "lines1"
+    class
+        style
+            color 0 0 255
+            width 1
+        end
+        label
+            type truetype
+            font "default"
+            size 8
+            angle auto
+            color 0 0 0
+            outlinecolor 255 255 255
+            outlinewidth 3
+        end
+    end
+    feature
+      points 0 50 600 60 end
+      text "clipped line"
+    end
+end
+layer
+    type line
+    status default
+    name "lines2"
+    processing "LABEL_NO_CLIP=yes"
+    class
+        style
+            color 0 0 255
+            width 1
+        end
+        label
+            type truetype
+            font "default"
+            size 8
+            angle auto
+            color 0 0 0
+            outlinecolor 255 255 255
+            outlinewidth 3
+        end
+    end
+    feature
+      points 0 80 600 90 end
+      text "unclipped line"
+    end
+end
+
+end

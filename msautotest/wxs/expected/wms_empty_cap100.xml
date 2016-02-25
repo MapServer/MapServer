@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding="ISO-8859-1" standalone="no" ?>
+<!DOCTYPE WMT_MS_Capabilities SYSTEM "http://schemas.opengis.net/wms/1.0.0/capabilities_1_0_0.dtd"
+ [
+ <!ELEMENT VendorSpecificCapabilities EMPTY>
+ ]>  <!-- end of DOCTYPE declaration -->
+
+<WMT_MS_Capabilities version="1.0.0">
+
+<Service>
+  <Name>GetMap</Name>
+  <Title>Test simple wms</Title>
+  <OnlineResource>http://www.mapserver.org/</OnlineResource>
+</Service>
+
+<Capability>
+  <Request>
+    <Map>
+      <Format><GIF /><PNG /><JPEG /><SVG /></Format>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wms_empty?" />
+          <Post onlineResource="http://localhost/path/to/wms_empty?" />
+        </HTTP>
+      </DCPType>
+    </Map>
+    <Capabilities>
+      <Format><WMS_XML /></Format>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wms_empty?" />
+          <Post onlineResource="http://localhost/path/to/wms_empty?" />
+        </HTTP>
+      </DCPType>
+    </Capabilities>
+    <FeatureInfo>
+      <Format><MIME /><GML.1 /></Format>
+      <DCPType>
+        <HTTP>
+          <Get onlineResource="http://localhost/path/to/wms_empty?" />
+          <Post onlineResource="http://localhost/path/to/wms_empty?" />
+        </HTTP>
+      </DCPType>
+    </FeatureInfo>
+  </Request>
+  <Exception>
+    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>
+  </Exception>
+  <VendorSpecificCapabilities />
+  <!-- WARNING: No WMS layers are enabled. Check wms/ows_enable_request settings. -->
+</Capability>
+</WMT_MS_Capabilities>

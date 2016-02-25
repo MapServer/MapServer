@@ -1,0 +1,135 @@
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<om:ObservationCollection xmlns:gml="http://www.opengis.net/gml" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:swe="http://www.opengis.net/swe/1.0.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sos="http://www.opengis.net/sos/1.0" xmlns:ms="http://mapserver.gis.umn.edu/mapserver" xmlns:om="http://www.opengis.net/om/1.0" gml:id="Water" xsi:schemaLocation="http://www.opengis.net/om/1.0 http://schemas.opengis.net/om/1.0.0/om.xsd http://mapserver.gis.umn.edu/mapserver http://localhost/cgi-bin/sostest?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType&amp;typename=obs">
+  <gml:description xmlns:gml="http://www.opengis.net/gml">This is for water</gml:description>
+  <gml:name xmlns:gml="http://www.opengis.net/gml">Water</gml:name>
+  <gml:boundedBy>
+    <gml:Envelope srsName="urn:ogc:crs:epsg:4326" srsDimension="2">
+      <gml:lowerCorner>-141.000000 42.000000</gml:lowerCorner>
+      <gml:upperCorner>-52.000000 84.000000</gml:upperCorner>
+    </gml:Envelope>
+  </gml:boundedBy>
+  <om:member>
+    <om:Observation>
+      <om:samplingTime>
+        <gml:TimePeriod>
+          <gml:beginPosition>1990</gml:beginPosition>
+          <gml:endPosition>2007</gml:endPosition>
+        </gml:TimePeriod>
+      </om:samplingTime>
+      <om:procedure xlink:href="urn:ogc:def:procedure:35"/>
+      <om:observedProperty>
+        <swe:CompositePhenomenon gml:id="WaterQuality" dimension="4">
+          <gml:name>WaterQuality</gml:name>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:ID"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:STN_ID"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:DATETIME"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:Value"/>
+        </swe:CompositePhenomenon>
+      </om:observedProperty>
+      <om:resultDefinition>
+        <swe:DataBlockDefinition>
+          <swe:components>
+            <swe:DataRecord>
+              <swe:field name="time">
+                <swe:Time definition="urn:ogc:phenomenon:time:iso8601"/>
+              </swe:field>
+              <swe:field name="Value">
+                <swe:Quantity definition="mydef">
+                  <swe:uom code="meters"/>
+                </swe:Quantity>
+              </swe:field>
+            </swe:DataRecord>
+          </swe:components>
+          <swe:encoding>
+            <swe:TextBlock tokenSeparator="," blockSeparator="&#10;" decimalSeparator="."/>
+          </swe:encoding>
+        </swe:DataBlockDefinition>
+      </om:resultDefinition>
+      <om:result>2001-10-30T14:24:55Z,89.9
+2002-10-30T18:31:38Z,93.9</om:result>
+    </om:Observation>
+  </om:member>
+  <om:member>
+    <om:Observation>
+      <om:samplingTime>
+        <gml:TimePeriod>
+          <gml:beginPosition>1990</gml:beginPosition>
+          <gml:endPosition>2007</gml:endPosition>
+        </gml:TimePeriod>
+      </om:samplingTime>
+      <om:procedure xlink:href="urn:ogc:def:procedure:2147"/>
+      <om:observedProperty>
+        <swe:CompositePhenomenon gml:id="WaterQuality" dimension="4">
+          <gml:name>WaterQuality</gml:name>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:ID"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:STN_ID"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:DATETIME"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:Value"/>
+        </swe:CompositePhenomenon>
+      </om:observedProperty>
+      <om:resultDefinition>
+        <swe:DataBlockDefinition>
+          <swe:components>
+            <swe:DataRecord>
+              <swe:field name="time">
+                <swe:Time definition="urn:ogc:phenomenon:time:iso8601"/>
+              </swe:field>
+              <swe:field name="Value">
+                <swe:Quantity definition="mydef">
+                  <swe:uom code="meters"/>
+                </swe:Quantity>
+              </swe:field>
+            </swe:DataRecord>
+          </swe:components>
+          <swe:encoding>
+            <swe:TextBlock tokenSeparator="," blockSeparator="&#10;" decimalSeparator="."/>
+          </swe:encoding>
+        </swe:DataBlockDefinition>
+      </om:resultDefinition>
+      <om:result>2007-10-30T08:57:29Z,103.5
+2003-10-30T07:37:29Z,93.5</om:result>
+    </om:Observation>
+  </om:member>
+  <om:member>
+    <om:Observation>
+      <om:samplingTime>
+        <gml:TimePeriod>
+          <gml:beginPosition>1990</gml:beginPosition>
+          <gml:endPosition>2007</gml:endPosition>
+        </gml:TimePeriod>
+      </om:samplingTime>
+      <om:procedure xlink:href="urn:ogc:def:procedure:604"/>
+      <om:observedProperty>
+        <swe:CompositePhenomenon gml:id="WaterQuality" dimension="4">
+          <gml:name>WaterQuality</gml:name>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:ID"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:STN_ID"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:DATETIME"/>
+          <swe:component xlink:href="urn:ogc:def:property:ACME:8:Value"/>
+        </swe:CompositePhenomenon>
+      </om:observedProperty>
+      <om:resultDefinition>
+        <swe:DataBlockDefinition>
+          <swe:components>
+            <swe:DataRecord>
+              <swe:field name="time">
+                <swe:Time definition="urn:ogc:phenomenon:time:iso8601"/>
+              </swe:field>
+              <swe:field name="Value">
+                <swe:Quantity definition="mydef">
+                  <swe:uom code="meters"/>
+                </swe:Quantity>
+              </swe:field>
+            </swe:DataRecord>
+          </swe:components>
+          <swe:encoding>
+            <swe:TextBlock tokenSeparator="," blockSeparator="&#10;" decimalSeparator="."/>
+          </swe:encoding>
+        </swe:DataBlockDefinition>
+      </om:resultDefinition>
+      <om:result>2000-10-30T18:24:39Z,99.9</om:result>
+    </om:Observation>
+  </om:member>
+</om:ObservationCollection>

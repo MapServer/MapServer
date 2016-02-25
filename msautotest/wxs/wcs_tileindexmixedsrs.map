@@ -1,0 +1,82 @@
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WCS SUPPORTS=PROJ
+#
+# RUN_PARMS: wcs_get_capabilities_tileindexmixedsrs_26711.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEVERSION]
+#
+# RUN_PARMS: wcs_describe_coverage_tileindexmixedsrs_26711.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=DescribeCoverage&COVERAGE=grey_26711" > [RESULT_DEVERSION]
+#
+# RUN_PARMS: wcs_get_coverage_tileindexmixedsrs_26711.tif [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&WIDTH=100&HEIGHT=100&FORMAT=image/tiff&BBOX=440720.000,3745320.000,446720.000,3751320.000&COVERAGE=grey_26711&CRS=EPSG:26711" > [RESULT_DEMIME]
+#
+# RUN_disabled_PARMS: wcs_get_coverage_110_tileindexmixedsrs_26711.dat [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WCS&VERSION=1.1.0&REQUEST=GetCoverage&WIDTH=100&HEIGHT=100&FORMAT=AAIGRID&BOUNDINGBOX=440720.000,3745320.000,446720.000,3751320.000,urn:ogc:def:crs:EPSG::26711&IDENTIFIER=grey_26711&GridCS=urn:ogc:def:crs:OGC::imageCRS&GridType=urn:ogc:def:method:WCS:1.1:2dGridIn2dCrs" > [RESULT]
+
+
+MAP
+
+NAME TEST
+STATUS ON
+SIZE 100 100
+#EXTENT 440720.000 3745320.000 446720.000 3751320.000
+IMAGECOLOR 0 0 0
+
+PROJECTION
+    "+init=epsg:26711" 
+END
+
+OUTPUTFORMAT
+  NAME GEOTIFF_BYTE
+  DRIVER "GDAL/GTiff"
+  MIMETYPE "image/tiff"
+  IMAGEMODE BYTE
+  EXTENSION "tif"
+END
+
+OUTPUTFORMAT
+  NAME AAIGRID
+  DRIVER "GDAL/AAIGRID"
+  MIMETYPE "image/x-aaigrid"
+  IMAGEMODE INT16
+  EXTENSION "grd"
+  FORMATOPTION "FILENAME=result.grd"
+END
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wcs_onlineresource"   "http://localhost/path/to/?"
+    "wcs_srs"              "EPSG:26711 EPSG:4326"
+    "wcs_label"            "title"
+    "ows_enable_request"   "*"
+  END
+END
+
+LAYER
+  NAME grey_26711
+  TYPE raster
+  STATUS ON
+  DUMP TRUE
+  TILEINDEX "../gdal/data/tile_index_mixed_srs_26711.shp"
+  TILEITEM "location"
+  TILESRS "src_srs"
+  PROJECTION
+    # AUTO isn't supported by WCS server code
+    # and we must explicitely set a EPSG code
+    "+init=epsg:26711" 
+  END
+  METADATA   
+   "wcs_label"       "grey_26711"
+   "wcs_rangeset_name"   "Range 1"  ### required to support DescribeCoverage request
+   "wcs_rangeset_label"  "My Label" ### required to support DescribeCoverage request
+   "wcs_extent"      "440720.000 3745320.000 446720.000 3751320.000"
+   "wcs_size"        "100 100"
+   "wcs_resolution"  "60 60"
+   # "wcs_srs"         "EPSG:26711"
+  END
+END
+
+END # of map file

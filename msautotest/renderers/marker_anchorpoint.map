@@ -1,0 +1,113 @@
+# RUN_PARMS: marker_anchorpoint.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: marker_anchorpoint.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: marker_anchorpoint.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: marker_anchorpoint.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: marker_anchorpoint.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT -1.338699 -0.57001 0.309127 0.767971
+SIZE 300 300
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+shapepath "../misc/data"
+
+CONFIG MS_ERRORFILE "stderr"
+
+SYMBOL
+  NAME "1"
+  TYPE TRUETYPE
+  FONT "default"
+  CHARACTER "&#8730;"
+  ANCHORPOINT 0.067 0.73
+END
+SYMBOL
+  NAME "2"
+  TYPE TRUETYPE
+  FONT "default"
+  CHARACTER "&#8730;"
+  ANCHORPOINT 0.5 0.5
+END
+SYMBOL
+  NAME "3"
+  TYPE TRUETYPE
+  FONT "default"
+  CHARACTER "&#8730;"
+  ANCHORPOINT 0.5 1
+END
+SYMBOL
+  NAME "4"
+  TYPE TRUETYPE
+  FONT "default"
+  CHARACTER "&#8730;"
+  ANCHORPOINT 1 0
+END
+SYMBOL
+  NAME "5"
+  TYPE PIXMAP
+  image "../misc/data/gdalicon.png"
+  CHARACTER "&#8730;"
+  ANCHORPOINT 0 0
+END
+SYMBOL
+  NAME "6"
+  TYPE PIXMAP
+  image "../misc/data/gdalicon.png"
+  CHARACTER "&#8730;"
+  ANCHORPOINT 0.2 0.7
+END
+SYMBOL
+  NAME "7"
+  TYPE PIXMAP
+  image "../misc/data/gdalicon.png"
+  CHARACTER "&#8730;"
+  ANCHORPOINT 1 1
+END
+
+LAYER
+  NAME "anchortest"
+  TYPE point
+  STATUS default
+  data "rotpoints"
+  CLASS
+    EXPRESSION ( [class] < 5 )
+    NAME "test1"
+    STYLE
+        SYMBOL [class]
+        SIZE 10
+        ANGLE [rot]
+        COLOR 0 0 0
+    END
+    STYLE
+        COLOR 255 0 0
+        SIZE 2
+        WIDTH 1
+        SYMBOL "circle"
+    END
+  END
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL [class]
+        SIZE 10
+        ANGLE [rot]
+        COLOR 0 0 0
+    END
+    STYLE
+        COLOR 255 0 0
+        SIZE 2
+        WIDTH 1
+        SYMBOL "circle"
+    END
+  END
+END
+
+END

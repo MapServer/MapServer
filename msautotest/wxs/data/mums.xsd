@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xs:schema targetNamespace="http://localhost/ms_ogc_workshop"
+           xmlns:gml="http://www.opengis.net/gml"
+           xmlns:mum="http://localhost/ms_ogc_workshop"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified"
+           version="1.0.0">
+        
+        <!-- metadata type info for the schema -->
+	
+	<xs:annotation>
+		<xs:appinfo>mums.xsd 2004/10/02</xs:appinfo>
+		<xs:documentation xml:lang="en">GML schema for data for MapServer OGC Web Services Workshop</xs:documentation>
+	</xs:annotation>
+	
+	<!-- import the OGC GML schemas you need to *refer* to when defining features, etc. -->
+	
+	<xs:import namespace="http://www.opengis.net/gml" schemaLocation="http://schemas.opengeospatial.net/gml/3.0.0/base/feature.xsd"/>
+	
+	<!--
+	
+	Basic object model:
+	
+	For 'basic' GML, let's think of our basic structure as a table of records for a dataset:
+	
+	<dataset>
+		<record>
+			<property/>
+			<property/>
+			<property/>
+			<geometry>			
+		</record>
+		<record>
+			<property/>
+			<property/>
+			<property/>
+			<geometry>			
+		</record>		
+	</dataset>
+	
+	What the GML application schemas allow us to do is 'extend' the GML model with our specific info
+	
+	-->
+	
+	<!--
+	
+
+	the ROOT element.  Think of it as the dataset name.  The 'substitutionGroup' attribute means something like:
+	"I want my dataset to look and feel like a gml:_FeatureCollection object", to give us all the goodies that
+	this object defines without defining it ourselves.
+	
+
+	The 'type' attribute tells us it's a custom type, not a XML Schema native type, so we refer to it elsewhere
+	in this schema.
+	
+	This has to be an XML Schema 'global' element.
+	
+	-->
+	
+	<xs:element name="MapServerUserMeetings" type="mum:MapServerUserMeetingsType" substitutionGroup="gml:_FeatureCollection"/>
+	
+	<!--
+
+	
+	Surprise.  So here's the 'complexType' we defined in the line above.  It basically says to extend
+	gml:AbstractFeatureCollectionType, but also add our 'dateCreated' element.  You'll see in the instance document
+	that this GML definition gives us the model to define the extents of the data in the 'header' of the instance
+	document.
+	
+	-->
+	
+
+	<xs:complexType name="MapServerUserMeetingsType">
+		<xs:complexContent>
+			<xs:extension base="gml:AbstractFeatureCollectionType">
+				<xs:sequence>
+					<xs:element name="dateCreated" type="xs:dateTime"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<!--
+
+	
+	Here we define each record's structure.  Again, we use GML when we can, so we *refer* to the gml:location
+	object, which automatically tells us how a point object is structured.  We could extend this with more
+	elements in the sequence tag.
+	
+	-->
+	
+
+	<xs:element name="Meeting" substitutionGroup="gml:_Feature">
+		<xs:complexType>
+			<xs:complexContent>
+				<xs:extension base="gml:AbstractFeatureType">
+					<xs:sequence>
+						<xs:element name="year" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+						<xs:element name="venue" type="xs:string" minOccurs="1" maxOccurs="1"/>
+						<xs:element name="website" type="xs:anyURI" minOccurs="1" maxOccurs="1"/>
+					</xs:sequence>
+				</xs:extension>
+			</xs:complexContent>
+		</xs:complexType>
+	</xs:element>
+	
+	<!--
+	
+	Congratulations, this schema is now interoperable with GML parsers!
+	
+	-->
+</xs:schema>

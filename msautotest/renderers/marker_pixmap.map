@@ -1,0 +1,98 @@
+# RUN_PARMS: marker_pixmap.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: marker_pixmap.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: marker_pixmap.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: marker_pixmap.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: marker_pixmap.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 150 100
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+
+CONFIG MS_ERRORFILE "stderr"
+
+LAYER
+  NAME "symbol"
+  TYPE point
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "gdalicon"
+    END
+    LABEL
+        position lc
+        FONT "default"
+        TYPE TRUETYPE
+        SIZE 8
+        color 0 0 0
+    end
+  END
+  FEATURE
+    POINTS
+        50 50
+    END
+    TEXT "marker"
+  END
+END
+
+LAYER
+  NAME "symbol rotated"
+  TYPE point
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        SYMBOL "gdalicon"
+        SIZE 55
+        ANGLE 45
+    END
+    LABEL
+        position lc
+        FONT "default"
+        TYPE TRUETYPE
+        SIZE 8
+        color 0 0 0
+        outlinecolor 255 255 255
+        outlinewidth 3
+         style
+            color  255 0 0
+            geomtransform labelpoly
+         end
+    end
+  END
+  FEATURE
+    POINTS
+        200 200
+    END
+    TEXT "rotated marker"
+  END
+END
+
+LAYER
+    NAME "anchors"
+    TYPE POINT
+    STATUS default
+    CLASS
+        STYLE
+            COLOR 255 0 0
+            SIZE 8
+            WIDTH 1
+            SYMBOL "circle"
+        END
+    END
+    FEATURE POINTS 50 50 END END
+    FEATURE POINTS 200 200 END END
+END
+
+END

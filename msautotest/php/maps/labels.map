@@ -1,0 +1,510 @@
+map
+
+imagetype png
+size 400 300
+extent 0 0 400 300
+shapepath "data"
+fontset "fonts.lst"
+symbolset "symbolset"
+
+
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position cc
+        end
+    end
+    feature
+        points 50 50 end
+        text "label cc"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position ur
+        end
+    end
+    feature
+        points 50 100 end
+        text "label ur"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position uc
+        end
+    end
+    feature
+        points 50 150 end
+        text "label uc"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position ul
+        end
+    end
+    feature
+        points 50 200 end
+        text "label ul"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position cr
+        end
+    end
+    feature
+        points 50 250 end
+        text "label cr"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position cl
+        end
+    end
+    feature
+        points 150 50 end
+        text "label cl"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position ll
+        end
+    end
+    feature
+        points 150 50 end
+        text "label ll"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position lr
+        end
+    end
+    feature
+        points 150 100 end
+        text "label lr"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position lc
+        end
+    end
+    feature
+        points 150 150 end
+        text "label lc"
+    end
+end
+
+
+
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position cc
+            angle 45
+        end
+    end
+    feature
+        points 250 50 end
+        text "label cc"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position ur
+            angle 75
+        end
+    end
+    feature
+        points 350 200 end
+        text "label ur"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position uc
+            angle 90
+        end
+    end
+    feature
+        points 250 150 end
+        text "label uc"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position ul
+            angle 130
+        end
+    end
+    feature
+        points 250 200 end
+        text "label ul"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position cr
+            angle 150
+        end
+    end
+    feature
+        points 250 250 end
+        text "label cr"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position cl
+            angle 180
+        end
+    end
+    feature
+        points 350 50 end
+        text "label cl"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position ll
+            angle 220
+        end
+    end
+    feature
+        points 350 50 end
+        text "label ll"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position lr
+            angle 270
+        end
+    end
+    feature
+        points 350 100 end
+        text "label lr"
+    end
+end
+layer
+    type point
+    status default
+    name "p1"
+    class
+        style
+            symbol "circle"
+            size 5
+            color 255 0 0
+        end
+        label
+            type truetype
+            font "default"
+            size 9
+            style
+               color 0 255 0
+               geomtransform labelpoly
+            end
+            color 0 0 0
+            position lc
+            angle 300
+        end
+    end
+    feature
+        points 350 150 end
+        text "label lc"
+    end
+end
+
+end

@@ -1,0 +1,9 @@
+  DATA 'data/indx_q100kpy4'
+  STATUS OFF
+  TYPE POLYGON
+  CLASS
+    STYLE 
+      OUTLINECOLOR 100 255 100 
+    END
+  END
+  TEMPLATE 'void'

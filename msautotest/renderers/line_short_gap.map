@@ -1,0 +1,88 @@
+# RUN_PARMS: line_short_gap.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_short_gap.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: line_short_gap.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_short_gap.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_short_gap.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+MAP
+  SIZE 100 100
+  IMAGETYPE png
+  EXTENT 114.18435 22.3058 114.184464 22.30597
+  UNITS dd
+  IMAGECOLOR 225 225 225
+
+  SYMBOL
+    NAME "circlef"
+    TYPE ellipse
+    FILLED true
+    POINTS
+      1 1
+    END # POINTS
+  END # SYMBOL
+
+  SYMBOL
+    NAME "arrow_right_shift"
+    TYPE VECTOR
+    POINTS
+      0 6
+      22 6
+      20 0
+      30 7
+      20 14
+      22 8
+      0 8
+      0 6
+    END
+    FILLED TRUE
+  END
+
+###########################################################
+
+  LAYER  # testline - arrows
+    STATUS DEFAULT
+    TYPE LINE
+    FEATURE
+      POINTS
+        114.184397000000004 22.305821
+        114.184371999999996 22.305847
+        114.184365999999997 22.305883
+        114.184376999999998 22.305914
+        114.184404999999998 22.305927
+        114.184432999999999 22.305932
+        114.184462999999994 22.305922
+      END
+    END
+    CLASS
+      STYLE
+        COLOR 255 255 255
+        WIDTH 6
+      END # STYLE
+    END # CLASS
+  END # LAYER
+
+  LAYER  # testline - arrows
+    STATUS DEFAULT
+    TYPE LINE
+    FEATURE
+      POINTS
+        114.184397000000004 22.305821
+        114.184371999999996 22.305847
+        114.184365999999997 22.305883
+        114.184376999999998 22.305914
+        114.184404999999998 22.305927
+        114.184432999999999 22.305932
+        114.184462999999994 22.305922
+      END
+    END
+    CLASS
+      STYLE
+        ANGLE auto
+        SYMBOL "arrow_right_shift"
+        COLOR 255 0 255
+        SIZE 6
+        GAP -400
+      END # STYLE
+    END # CLASS
+  END # LAYER
+
+END # MAP

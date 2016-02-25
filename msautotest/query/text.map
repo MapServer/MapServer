@@ -1,0 +1,197 @@
+#
+# Test Text Expressions
+#
+# REQUIRES: INPUT=SHAPEFILE OUTPUT=PNG
+#
+# RUN_PARMS: text_test001.png [SHP2IMG] -m [MAPFILE] -l text_test001 -o [RESULT]
+# RUN_PARMS: text_test002.png [SHP2IMG] -m [MAPFILE] -l text_test002 -o [RESULT]
+# RUN_PARMS: text_test003.png [SHP2IMG] -m [MAPFILE] -l text_test003 -o [RESULT]
+# RUN_PARMS: text_test004.png [SHP2IMG] -m [MAPFILE] -l text_test004 -o [RESULT]
+# RUN_PARMS: text_test005.png [SHP2IMG] -m [MAPFILE] -l text_test005 -o [RESULT]
+# RUN_PARMS: text_test006.png [SHP2IMG] -m [MAPFILE] -l text_test006 -o [RESULT]
+# RUN_PARMS: text_test007.png [SHP2IMG] -m [MAPFILE] -l text_test007 -o [RESULT]
+#
+MAP
+  NAME 'text'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+  
+  SIZE 300 300
+  IMAGETYPE PNG
+
+  #
+  # static text
+  #
+  LAYER
+    NAME 'text_test001'
+    DATA 'data/bdry_counpy2'
+    STATUS OFF
+    TYPE POLYGON
+    CLASSITEM 'CTY_NAME'
+    CLASS
+      EXPRESSION 'Aitkin'
+      STYLE 
+        COLOR 255 100 100 
+        OUTLINECOLOR 181 181 181
+      END
+      LABEL
+        SIZE MEDIUM
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+      END
+      TEXT 'Static Text'
+    END
+    CLASS OUTLINECOLOR 181 181 181 END
+  END
+
+  #
+  # number run through default string conversion ("%g")
+  #
+  LAYER
+    NAME 'text_test002'
+    DATA 'data/bdry_counpy2'
+    STATUS OFF
+    TYPE POLYGON
+    CLASSITEM 'CTY_NAME'
+    CLASS
+      EXPRESSION 'Aitkin'
+      STYLE 
+        COLOR 255 100 100 
+        OUTLINECOLOR 181 181 181
+      END
+      LABEL
+        SIZE MEDIUM
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+      END
+      TEXT ([area])
+    END
+    CLASS OUTLINECOLOR 181 181 181 END
+  END
+
+  #
+  # number as string
+  #
+  LAYER
+    NAME 'text_test003'
+    DATA 'data/bdry_counpy2'
+    STATUS OFF
+    TYPE POLYGON
+    CLASSITEM 'CTY_NAME'
+    CLASS
+      EXPRESSION 'Aitkin'
+      STYLE
+        COLOR 255 100 100
+        OUTLINECOLOR 181 181 181
+      END
+      LABEL
+        SIZE MEDIUM
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+      END
+      TEXT ("[area]")
+    END
+    CLASS OUTLINECOLOR 181 181 181 END
+  END
+
+  #
+  # number converted to a string via function
+  #
+  LAYER
+    NAME 'text_test004'
+    DATA 'data/bdry_counpy2'
+    STATUS OFF
+    TYPE POLYGON
+    CLASSITEM 'CTY_NAME'
+    CLASS
+      EXPRESSION 'Aitkin'
+      STYLE
+        COLOR 255 100 100
+        OUTLINECOLOR 181 181 181
+      END
+      LABEL
+        SIZE MEDIUM
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+      END
+      TEXT (tostring([area],"%.2f"))
+    END
+    CLASS OUTLINECOLOR 181 181 181 END
+  END
+
+  #
+  # compound label, static string and a dynamic value (accessed via function)
+  #
+  LAYER
+    NAME 'text_test005'
+    DATA 'data/bdry_counpy2'
+    STATUS OFF
+    TYPE POLYGON
+    CLASSITEM 'CTY_NAME'
+    CLASS
+      EXPRESSION 'Aitkin'
+      STYLE
+        COLOR 255 100 100
+        OUTLINECOLOR 181 181 181
+      END
+      LABEL
+        SIZE MEDIUM
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+      END
+      TEXT ("Area is: " + tostring([area],"%.2f"))
+    END
+    CLASS OUTLINECOLOR 181 181 181 END
+  END
+
+  #
+  # compound label - substitution method
+  #
+  LAYER
+    NAME 'text_test006'
+    DATA 'data/bdry_counpy2'
+    STATUS OFF
+    TYPE POLYGON
+    CLASSITEM 'CTY_NAME'
+    CLASS
+      EXPRESSION 'Aitkin'
+      STYLE
+        COLOR 255 100 100
+        OUTLINECOLOR 181 181 181
+      END
+      LABEL
+        SIZE MEDIUM
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+      END
+      TEXT "Area is: [area]"
+    END
+    CLASS OUTLINECOLOR 181 181 181 END
+  END
+
+  #
+  # work around for embedding []'s in a text string
+  #
+  LAYER
+    NAME 'text_test007'
+    DATA 'data/bdry_counpy2'
+    STATUS OFF
+    TYPE POLYGON
+    CLASSITEM 'CTY_NAME'
+    CLASS
+      EXPRESSION 'Aitkin'
+      STYLE
+        COLOR 255 100 100
+        OUTLINECOLOR 181 181 181
+      END
+      LABEL
+        SIZE MEDIUM
+        COLOR 0 0 0
+        OUTLINECOLOR 255 255 255
+      END
+      TEXT ("[work" + "around]")
+    END
+    CLASS OUTLINECOLOR 181 181 181 END
+  END
+
+END

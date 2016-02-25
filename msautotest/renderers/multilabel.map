@@ -1,0 +1,88 @@
+# RUN_PARMS: multilabel.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: multilabel.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: multilabel.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: multilabel.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: multilabel.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# Test multiple labels/symbols per feature
+#
+#
+MAP
+
+NAME DEMO
+STATUS ON
+SIZE 150 150
+EXTENT 2253355.750000 -76361.773438 2447648.500000 515489.031250
+UNITS METERS
+SHAPEPATH "../misc/data"
+IMAGECOLOR 255 255 255
+IMAGETYPE png
+fontset  "data/fonts.lst"
+
+symbol
+   type ellipse
+   name "circle"
+   points 1 1 end
+   filled true
+end
+
+symbol
+   type truetype
+   font "default"
+   character "|"
+   name "arrow"
+   anchorpoint 0.5 0
+end
+
+LAYER
+  NAME foo
+
+  TYPE POLYGON
+  STATUS DEFAULT
+  DATA chartlayer
+
+  CLASS
+    label
+      #label with text+symbol
+      text "[NAME_E]"
+      color 0 0 0
+      type truetype
+      size 8
+      position lc
+      font "default"
+      force group
+      style
+         geomtransform "labelpnt"
+         symbol "circle"
+         size 6
+         color 255 0 0
+      end 
+    end
+    label
+      #label with no text
+      force group
+      style
+        symbol "arrow"
+        size 10
+        color 0 0 0
+        angle [V1]
+      end
+    end
+    label
+      #label with only text
+      text "[V2]"
+      font "default"
+      type truetype
+      size 8
+      color 0 0 0
+      offset -10 -10
+      position cl
+    end
+  END
+END
+
+
+
+
+END # Map File

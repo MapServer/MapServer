@@ -956,7 +956,7 @@ static int loadFeature(layerObj *player, int type)
         }
         if (string) {
           if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
-          shape->values = msStringSplit(string, ';', &shape->numvalues);
+          shape->values = msStringSplitComplex(string, ";", &shape->numvalues,MS_ALLOWEMPTYTOKENS);
           msFree(string); /* clean up */
         }
         break;
@@ -5059,13 +5059,16 @@ static int loadOutputFormat(mapObj *map)
               || format->imagemode == MS_IMAGEMODE_BYTE )
             format->renderer = MS_RENDER_WITH_RAWDATA;
         }
-
-        format->numformatoptions = numformatoptions;
-        if( numformatoptions > 0 ) {
-          format->formatoptions = (char **)
-          msSmallMalloc(sizeof(char *)*numformatoptions );
-          memcpy( format->formatoptions, formatoptions,
-                  sizeof(char *)*numformatoptions );
+        while(numformatoptions--) {
+          char *key = strchr(formatoptions[numformatoptions],'=');
+          if(!key || !*(key+1)) {
+            msSetError(MS_MISCERR,"Failed to parse FORMATOPTION, expecting \"KEY=VALUE\" syntax.","loadOutputFormat()");
+            goto load_output_error;
+          }
+          *key = 0;
+          key++;
+          msSetOutputFormatOption(format,formatoptions[numformatoptions],key);
+          free(formatoptions[numformatoptions]);
         }
 
         format->inmapfile = MS_TRUE;
@@ -5106,8 +5109,7 @@ static int loadOutputFormat(mapObj *map)
         if(getString(&value) == MS_FAILURE)
           goto load_output_error;
         if( numformatoptions < MAX_FORMATOPTIONS )
-          formatoptions[numformatoptions++] = msStrdup(value);
-        free(value);
+          formatoptions[numformatoptions++] = value;
         value=NULL;
         break;
       case(IMAGEMODE):

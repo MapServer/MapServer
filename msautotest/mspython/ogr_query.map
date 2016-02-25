@@ -1,0 +1,31 @@
+#
+# Simple OGR Render.
+#   
+# REQUIRES: INPUT=OGR OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT 478300 4762880 481650 4765610
+SIZE 400 300
+
+IMAGETYPE png
+
+LAYER
+  NAME shppoly
+  TYPE polygon
+  DUMP TRUE
+  TEMPLATE "junk.tmpl"
+  CONNECTIONTYPE OGR
+  CONNECTION "../misc/data/shppoly"
+  DATA "poly"
+  STATUS default
+  CLASSITEM "AREA"
+  CLASS
+    NAME "test1"
+    COLOR 0 255 0
+    OUTLINECOLOR 255 0 0
+  END
+END
+
+END

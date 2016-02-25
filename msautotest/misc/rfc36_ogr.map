@@ -1,0 +1,113 @@
+# Test RFC36 but also tests the new query support against OGR.  This should
+# produce the same result as the internal shapefile support in rfc36.map.
+#
+# http://mapserver.gis.umn.edu/development/rfc/ms-rfc-36/
+#
+# RUN_PARMS: rfc36_ogr_geojson.js [MAPSERV] QUERY_STRING="map=[MAPFILE]&mode=nquery&layer=popplace" > [RESULT]
+
+MAP
+ NAME rfc36
+ IMAGETYPE PNG
+ STATUS ON
+ EXTENT -141.089000 36.392987 -52.089000 89.784987 # Canada
+ SIZE 500 300
+ SYMBOLSET "../wxs/etc/symbols.sym"
+ FONTSET   "./fonts.lst"
+ IMAGECOLOR 125 125 125
+
+ PROJECTION
+  "init=epsg:4326"
+ END
+
+ DEBUG ON
+
+ TRANSPARENT ON
+
+ OUTPUTFORMAT
+  NAME "geojson"
+  DRIVER "TEMPLATE"
+  MIMETYPE "application/json; subtype=geojson"
+  FORMATOPTION "FILE=rfc36.tmpl"
+ END
+
+ WEB
+
+  QUERYFORMAT "geojson"
+
+  IMAGEPATH "../../tmp/"
+  IMAGEURL  "/ms_tmp"
+  METADATA
+   # OWS common metadata
+
+   "ows_schemas_location" "http://schemas.opengis.net"
+   "ows_title"    "rfc36 test"
+   "ows_abstract" "rfc36 test"
+   "ows_keywordlist" "rfc36"
+   "ows_service_onlineresource" "http://mapserver.gis.umn.edu"
+   "ows_fees" "none"
+   "ows_accessconstraints" "none"
+
+   # OGC:WMS
+
+   "wms_feature_info_mime_type"  "text/html"
+
+   "ows_addresstype" "postal"
+   "ows_address"     "867 Lakeshore Road"
+   "ows_city" "Burlington"
+   "ows_stateorprovince" "Ontario"
+   "ows_postcode" "L7R-4A6"
+   "ows_country" "Canada"
+   "ows_contactelectronicmailaddress" "tom.kralidis@ec.gc.ca"
+   "ows_contactvoicetelephone" "+01-905-336-4409"
+   "ows_contactfacsimiletelephone" "+01-905-336-4499"
+   "ows_contactperson" "Tom Kralidis"
+   "ows_contactorganization" "Environment Canada"
+   "ows_contactposition" "Senior Systems Scientist"
+
+   "wms_srs" "EPSG:4326 EPSG:2294 EPSG:2295 EPSG:4267 EPSG:4269 EPSG:26707 EPSG:26708 EPSG:26709 EPSG:26710 EPSG:26711 EPSG:26712 EPSG:26713 EPSG:26714 EPSG:26715 EPSG:26716 EPSG:26717 EPSG:26718 EPSG:26719 EPSG:26720 EPSG:26721 EPSG:26722 EPSG:26907 EPSG:26908 EPSG:26909 EPSG:26910 EPSG:26911 EPSG:26912 EPSG:26913 EPSG:26914 EPSG:26915 EPSG:26916 EPSG:26917 EPSG:26918 EPSG:26919 EPSG:26920 EPSG:26921 EPSG:26922 EPSG:42101 EPSG:42304"
+   "wms_attribution_onlineresource" "http://www.ec.gc.ca/"
+   "wms_attribution_title" "Data from Environment Canada"
+   "wms_attribution_logourl_width" "221"
+   "wms_attribution_logourl_height" "20"
+   "wms_attribution_logourl_format" "image/gif"
+   "wms_attribution_logourl_href" "http://www.ec.gc.ca/images/clf/ecfip_e.gif"
+  END
+ END
+
+ QUERYMAP
+  STATUS OFF
+  SIZE 400 300
+  STYLE HILITE
+  COLOR 255 255 0 
+ END
+
+ LEGEND
+  LABEL
+   SIZE 10
+   TYPE TRUETYPE
+   FONT Vera
+   COLOR 0 0 0
+  END
+ END
+
+ LAYER
+  NAME "popplace"
+  STATUS ON
+  DEBUG ON
+  CONNECTIONTYPE OGR
+  CONNECTION "../wxs/data/popplace.shp"
+  TYPE POINT
+  DUMP TRUE
+  TEMPLATE "dummy"
+  TOLERANCE 30 
+  PROJECTION
+   "init=../wxs/data/epsg2:42304"
+  END
+  CLASS
+   NAME " "
+   SIZE 10
+   SYMBOL 2
+   COLOR 255 0 0
+  END
+ END
+END

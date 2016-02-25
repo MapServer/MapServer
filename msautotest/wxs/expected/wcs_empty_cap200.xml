@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<wcs:Capabilities xmlns:wcs="http://www.opengis.net/wcs/2.0" xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0" xmlns:swe="http://www.opengis.net/swe/2.0" xsi:schemaLocation="http://www.opengis.net/wcs/2.0 http://schemas.opengis.net/wcs/2.0/wcsAll.xsd " version="2.0.0">
+  <ows:ServiceIdentification>
+    <ows:Title>Test simple wcs</ows:Title>
+    <ows:Abstract/>
+    <!--WARNING: Optional metadata "ows_abstract" was missing for ows:Abstract-->
+    <!--WARNING: Optional metadata "ows_keywordlist" was missing for ows:KeywordList-->
+    <ows:ServiceType codeSpace="OGC">OGC WCS</ows:ServiceType>
+    <ows:ServiceTypeVersion>2.0.0</ows:ServiceTypeVersion>
+    <ows:Profile>http://www.opengis.net/spec/WCS/2.0/conf/core</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_protocol-binding_get-kvp/1.0/conf/get-kvp</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_protocol-binding_post-xml/1.0/conf/post-xml</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/gml-coverage</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/multipart</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/GMLCOV/1.0/conf/special-format</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/GMLCOV_geotiff-coverages/1.0/conf/geotiff-coverage</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_geotiff-coverages/1.0/conf/geotiff-coverage</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_service-model_crs-predefined/1.0/conf/crs-predefined</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_service-model_scaling+interpolation/1.0/conf/scaling+interpolation</ows:Profile>
+    <ows:Profile>http://www.opengis.net/spec/WCS_service-model_band-subsetting/1.0/conf/band-subsetting</ows:Profile>
+    <ows:Fees/>
+    <!--WARNING: Optional metadata "ows_fees" was missing for ows:Fees-->
+    <ows:AccessConstraints/>
+    <!--WARNING: Optional metadata "ows_accessconstraints" was missing for ows:AccessConstraints-->
+  </ows:ServiceIdentification>
+  <ows:ServiceProvider>
+    <ows:ProviderName/>
+    <!--WARNING: Mandatory metadata "ows_contactorganization" was missing for ows:ProviderName-->
+    <ows:ProviderSite xlink:type="simple" xlink:href="http://www.mapserver.org/"/>
+    <ows:ServiceContact>
+      <ows:IndividualName/>
+      <!--WARNING: Optional metadata "ows_contactperson" was missing for ows:IndividualName-->
+      <ows:PositionName/>
+      <!--WARNING: Optional metadata "ows_contactposition" was missing for ows:PositionName-->
+      <ows:ContactInfo>
+        <ows:Phone>
+          <ows:Voice/>
+          <!--WARNING: Optional metadata "ows_contactvoicetelephone" was missing for ows:Voice-->
+          <ows:Facsimile/>
+          <!--WARNING: Optional metadata "ows_contactfacsimiletelephone" was missing for ows:Facsimile-->
+        </ows:Phone>
+        <ows:Address>
+          <ows:DeliveryPoint/>
+          <!--WARNING: Optional metadata "ows_address" was missing for ows:DeliveryPoint-->
+          <ows:City/>
+          <!--WARNING: Optional metadata "ows_city" was missing for ows:City-->
+          <ows:AdministrativeArea/>
+          <!--WARNING: Optional metadata "ows_stateorprovince" was missing for ows:AdministrativeArea-->
+          <ows:PostalCode/>
+          <!--WARNING: Optional metadata "ows_postcode" was missing for ows:PostalCode-->
+          <ows:Country/>
+          <!--WARNING: Optional metadata "ows_country" was missing for ows:Country-->
+          <ows:ElectronicMailAddress/>
+          <!--WARNING: Optional metadata "ows_contactelectronicmailaddress" was missing for ows:ElectronicMailAddress-->
+        </ows:Address>
+        <ows:OnlineResource xlink:type="simple" xlink:href="http://www.mapserver.org/"/>
+        <ows:HoursOfService/>
+        <!--WARNING: Optional metadata "ows_hoursofservice" was missing for ows:HoursOfService-->
+        <ows:ContactInstructions/>
+        <!--WARNING: Optional metadata "ows_contactinstructions" was missing for ows:ContactInstructions-->
+      </ows:ContactInfo>
+      <ows:Role/>
+      <!--WARNING: Optional metadata "ows_role" was missing for ows:Role-->
+    </ows:ServiceContact>
+  </ows:ServiceProvider>
+  <ows:OperationsMetadata>
+    <ows:Operation name="GetCapabilities">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?">
+            <ows:Constraint name="PostEncoding">
+              <ows:AllowedValues>
+                <ows:Value>XML</ows:Value>
+              </ows:AllowedValues>
+            </ows:Constraint>
+          </ows:Post>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+    <ows:Operation name="DescribeCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?">
+            <ows:Constraint name="PostEncoding">
+              <ows:AllowedValues>
+                <ows:Value>XML</ows:Value>
+              </ows:AllowedValues>
+            </ows:Constraint>
+          </ows:Post>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+    <ows:Operation name="GetCoverage">
+      <ows:DCP>
+        <ows:HTTP>
+          <ows:Get xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?"/>
+          <ows:Post xlink:type="simple" xlink:href="http://localhost/path/to/wcs_empty?">
+            <ows:Constraint name="PostEncoding">
+              <ows:AllowedValues>
+                <ows:Value>XML</ows:Value>
+              </ows:AllowedValues>
+            </ows:Constraint>
+          </ows:Post>
+        </ows:HTTP>
+      </ows:DCP>
+    </ows:Operation>
+  </ows:OperationsMetadata>
+  <wcs:ServiceMetadata>
+    <wcs:formatSupported>image/png</wcs:formatSupported>
+    <wcs:formatSupported>image/jpeg</wcs:formatSupported>
+    <wcs:formatSupported>image/gif</wcs:formatSupported>
+    <wcs:formatSupported>image/png; mode=8bit</wcs:formatSupported>
+    <wcs:formatSupported>image/tiff</wcs:formatSupported>
+  </wcs:ServiceMetadata>
+  <wcs:Contents>
+    <!--WARNING: No WCS layers are enabled. Check wcs/ows_enable_request settings.-->
+  </wcs:Contents>
+</wcs:Capabilities>

@@ -1,0 +1,112 @@
+# RUN_PARMS: line_pattern_offset.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: line_pattern_offset.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: line_pattern_offset.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: line_pattern_offset.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: line_pattern_offset.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+map
+
+imagetype png
+size 400 400
+extent 0 0 400 400
+
+layer
+    type line
+    status default
+    name "lines"
+    class
+        style
+          color 255 0 0
+          width 4
+          pattern 45 5 end
+          linecap butt
+        end
+        style
+          color 255 255 255
+          width 2
+          offset 1 -99
+          pattern 25 25 end
+          linecap butt
+        end
+    end
+    feature
+      points 20 50 380 415 end
+    end
+end
+
+layer
+    type line
+    status default
+    name "lines"
+    class
+        style
+          color 0 0 0
+          width 4
+          pattern 45 5 end
+          linecap butt
+        end
+        style
+          color 255 255 255
+          width 2
+          offset 1 -99
+          initialgap 15
+          pattern 25 25 end
+          linecap butt
+        end
+    end
+    feature
+      points 20 20 380 380 end
+    end
+end
+
+layer
+    type line
+    status default
+    name "lines"
+    class
+        style
+          color 0 0 0
+          width 4
+          pattern 45 5 end
+          linecap butt
+        end
+        style
+          color 255 255 255
+          width 2
+          offset 1 -99
+          initialgap 10
+          pattern 25 25 end
+          linecap butt
+        end
+    end
+    feature
+      points 20 5 380 365 end
+    end
+end
+
+layer
+    type line
+    status default
+    name "lines"
+    class
+        style
+          color 0 0 0
+          width 4
+          pattern 45 5 end
+          linecap butt
+        end
+        style
+          color 255 255 255
+          width 2
+          offset 1 -99
+          initialgap 5
+          pattern 25 25 end
+          linecap butt
+        end
+    end
+    feature
+      points 20 35 380 395 end
+    end
+end
+
+end

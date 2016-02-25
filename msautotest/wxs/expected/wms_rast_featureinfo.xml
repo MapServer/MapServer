@@ -1,0 +1,28 @@
+Content-Type: application/vnd.ogc.gml
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<msGMLOutput 
+	 xmlns:gml="http://www.opengis.net/gml"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<road_layer>
+	<gml:name>road</gml:name>
+		<road_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:32611">
+					<gml:coordinates>465850.00000,4952100.00000 465850.00000,4952100.00000</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<x>465850</x>
+			<y>4952100</y>
+			<value_0>111</value_0>
+			<value_1>125</value_1>
+			<value_2>84</value_2>
+			<value_list>111,125,84</value_list>
+			<red>111</red>
+			<green>125</green>
+			<blue>84</blue>
+		</road_feature>
+	</road_layer>
+</msGMLOutput>

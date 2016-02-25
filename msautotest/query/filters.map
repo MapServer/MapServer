@@ -1,0 +1,106 @@
+#
+# Test Filter Expressions
+#
+# REQUIRES: INPUT=SHAPEFILE OUTPUT=PNG SUPPORTS=GEOS
+#
+# RUN_PARMS: filters_test001.gif [SHP2IMG] -m [MAPFILE] -l filters_test001 -o [RESULT]
+# RUN_PARMS: filters_test002.gif [SHP2IMG] -m [MAPFILE] -l filters_test002 -o [RESULT]
+# RUN_PARMS: filters_test003.gif [SHP2IMG] -m [MAPFILE] -l filters_test003 -o [RESULT]
+# RUN_PARMS: filters_test004.gif [SHP2IMG] -m [MAPFILE] -l filters_test004 -o [RESULT]
+# RUN_PARMS: filters_test005.gif [SHP2IMG] -m [MAPFILE] -l filters_test005 -o [RESULT]
+# RUN_PARMS: filters_test006.gif [SHP2IMG] -m [MAPFILE] -l filters_test006 -o [RESULT]
+# RUN_PARMS: filters_test007.gif [SHP2IMG] -m [MAPFILE] -l filters_test007 -o [RESULT]
+# RUN_PARMS: filters_test008.gif [SHP2IMG] -m [MAPFILE] -l filters_test008 -o [RESULT]
+# RUN_PARMS: filters_test009.gif [SHP2IMG] -m [MAPFILE] -l filters_test009 -o [RESULT]
+# RUN_PARMS: filters_test010.gif [SHP2IMG] -m [MAPFILE] -l filters_test010 -o [RESULT]
+#
+MAP
+  NAME 'filters'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+  
+  SIZE 300 300
+  IMAGETYPE GIF
+
+  # Simple string comparison
+  LAYER
+    NAME 'filters_test001'
+    FILTER 'Aitkin'
+    FILTERITEM 'CTY_NAME'
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Simple string comparison (case insensitive)
+  LAYER
+    NAME 'filters_test002'
+    FILTER 'aitkin'i
+    FILTERITEM 'CTY_NAME'
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Simple regex comparison
+  LAYER
+    NAME 'filters_test003'
+    FILTER /^S/
+    FILTERITEM 'CTY_NAME'
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Simple regex comparison (case insensitive)
+  LAYER
+    NAME 'filters_test004'
+    FILTER /^s/i
+    FILTERITEM 'CTY_NAME'
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Logical expression, string equality
+  LAYER
+    NAME 'filters_test005'
+    FILTER ('[CTY_NAME]' = 'Itasca')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Logical expression, string equality (case insensitive)
+  LAYER
+    NAME 'filters_test006'
+    FILTER ('[CTY_NAME]' =* 'wadena')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Logical expression, regex
+  LAYER
+    NAME 'filters_test007'
+    FILTER ('[CTY_NAME]' ~ '^A')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Logical expression, regex (case insensitive)
+  LAYER
+    NAME 'filters_test008'
+    FILTER ('[CTY_NAME]' ~* '^a')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Logical expression, in operator
+  LAYER
+    NAME 'filters_test009'
+    FILTER ('[CTY_ABBR]' in 'ANOK,RAMS,CARL')
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  # Logical expression, time operands
+  LAYER
+    NAME 'filters_test010'
+    FILTER (`[LASTMOD]` > `2010-12-01`)
+    INCLUDE 'include/bdry_counpy2_shapefile.map'
+  END
+
+  LAYER
+    NAME 'bdry_counpy2'
+    TYPE LINE
+    DATA 'data/bdry_counpy2.shp'
+    STATUS DEFAULT
+    CLASS COLOR 231 231 231 END
+  END
+END

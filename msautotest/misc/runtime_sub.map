@@ -1,0 +1,79 @@
+# Test Runtime Substitutions
+#
+# REQUIRES: INPUT=SHAPEFILE OUTPUT=GIF
+# 
+# RUN_PARMS: runtime_sub_test001.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer1&name1=bdry_counpy2' > [RESULT_DEVERSION] [STRIP:ShapefileOpen]
+# RUN_PARMS: runtime_sub_test002.gif [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer2&name2=bdry_counpy2' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test003.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer2&name2=bad+value' > [RESULT_DEVERSION] [STRIP:ShapefileOpen]
+# RUN_PARMS: runtime_sub_test004.gif [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer3&name3=bdry_counpy2' > [RESULT_DEMIME]
+# RUN_PARMS: runtime_sub_test005.txt [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer3&name3=bad+value' > [RESULT_DEVERSION] [STRIP:ShapefileOpen]
+# RUN_PARMS: runtime_sub_test008.gif [MAPSERV] QUERY_STRING='map=[MAPFILE]&mode=map&layer=layer5' > [RESULT_DEMIME]
+#
+MAP
+  NAME 'runtime_sub'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+  SIZE 500 500
+  SHAPEPATH "."
+
+  IMAGETYPE GIF
+
+  WEB
+    VALIDATION 
+      'name2' '.' # won't be used because of a layer validation rule
+      'name3' 'bdry_counpy2|indx_q100kpy4'
+    END
+  END
+
+  # no validation
+  LAYER
+    NAME 'layer1'
+    STATUS OFF
+    DATA '../query/data/%name1%'
+    TYPE POLYGON
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+  
+  # layer-level validation
+  LAYER
+    NAME 'layer2'
+    STATUS OFF
+    DATA '../query/data/%name2%'
+    TYPE POLYGON
+    VALIDATION
+      'name2' 'bdry_counpy2|indx_q100kpy4'
+    END
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+
+  # web-level validation
+  LAYER
+    NAME 'layer3'
+    STATUS OFF
+    DATA '../query/data/%name3%'
+    TYPE POLYGON
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+
+
+  # default value
+  LAYER
+    NAME 'layer5'
+    STATUS OFF
+    DATA '../query/data/%name5%'
+    TYPE POLYGON
+    VALIDATION
+      'default_name5' 'indx_q100kpy4'
+      'name5' 'bdry_counpy2|indx_q100kpy4'
+    END
+    CLASS
+      STYLE OUTLINECOLOR 51 51 51 END
+    END
+  END
+END

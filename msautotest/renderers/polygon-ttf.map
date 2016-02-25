@@ -1,0 +1,58 @@
+# RUN_PARMS: polygon-ttf.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: polygon-ttf.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: polygon-ttf.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: polygon-ttf.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: polygon-ttf.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT -125.549477 -69.508628 101.670954 15.840339
+SIZE 200 150
+FONTSET "../misc/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+shapepath "../misc/data"
+
+CONFIG MS_ERRORFILE "stderr"
+
+LAYER
+  NAME "world"
+  TYPE polygon
+  STATUS default
+  DATA "world_testpoly"
+  CLASSITEM "FID"
+  CLASS
+    EXPRESSION "1"
+    NAME "test1"
+    STYLE
+        COLOR 180 180 180
+    END
+    STYLE
+        SYMBOL "ttf"
+        SIZE 8
+        GAP 3
+        COLOR 0 0 0
+    END
+  END
+  CLASS
+    NAME "test1"
+    STYLE
+        COLOR 180 180 100
+    END
+    STYLE
+        SYMBOL "ttf"
+        SIZE 5
+        ANGLE 45
+        COLOR 0 0 0
+    END
+  END
+END
+
+END

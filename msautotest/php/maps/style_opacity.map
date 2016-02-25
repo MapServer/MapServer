@@ -1,0 +1,75 @@
+
+# Test Style Opacity
+#
+# REQUIRES: INPUT=SHAPEFILE OUTPUT=PNG SUPPORTS=AGG
+#
+# RUN_PARMS: style_opacity_test001.png [SHP2IMG] -m [MAPFILE] -l style_opacity_test001 -o [RESULT]
+# RUN_PARMS: style_opacity_test002.png [SHP2IMG] -m [MAPFILE] -l style_opacity_test002 -o [RESULT]
+# RUN_PARMS: style_opacity_test003.png [SHP2IMG] -m [MAPFILE] -l style_opacity_test003 -o [RESULT]
+#
+MAP
+  NAME 'style_opacity'
+  EXTENT 125000 4785000 789000 5489000
+  UNITS METERS
+  
+  SIZE 300 300
+  IMAGETYPE PNG24
+
+  LAYER
+    NAME 'style_opacity_base'
+    DATA '../query/data/bdry_counpy2'
+    TYPE POLYGON
+    STATUS DEFAULT
+    CLASS
+      STYLE
+        OUTLINECOLOR 0 0 0
+      END
+    END
+  END
+
+  LAYER
+    NAME 'style_opacity_test001'
+    DATA '../query/data/bdry_counpy2'
+    TYPE POLYGON
+    STATUS OFF
+    FILTER ('[cty_name]' =* 'aitkin')
+    CLASS
+      STYLE
+        OPACITY 50
+        COLOR 255 0 0
+        OFFSET 10 10
+      END
+    END
+  END
+
+  LAYER
+    NAME 'style_opacity_test002'
+    DATA '../query/data/bdry_counpy2'
+    TYPE POLYGON
+    STATUS OFF
+    FILTER ('[cty_name]' =* 'aitkin')
+    CLASS
+      STYLE
+        OPACITY 500 # bad value
+        COLOR 255 0 0
+        OFFSET 10 10
+      END
+    END
+  END
+
+  LAYER
+    NAME 'style_opacity_test003'
+    DATA '../query/data/bdry_counpy2'
+    TYPE POLYGON
+    STATUS OFF
+    FILTER ('[cty_name]' =* 'aitkin')
+    CLASS
+      STYLE
+        OPACITY -500 # bad value
+        COLOR 255 0 0
+        OFFSET 10 10
+      END
+    END
+  END
+
+END

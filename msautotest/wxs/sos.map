@@ -1,0 +1,197 @@
+#
+# Test SOS
+#
+# REQUIRES: INPUT=OGR SUPPORTS=PROJ SUPPORTS=SOS_SERVER
+#
+# Capabilities
+#
+#  Exceptions
+#
+# RUN_PARMS: sos_se0.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS" > [RESULT]
+# RUN_PARMS: sos_se1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0" > [RESULT]
+# RUN_PARMS: sos_se2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=FOO" > [RESULT]
+#
+# Capabilities updatesequence (less than)
+# RUN_PARMS: sos_caps_updatesequence.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=SOS&VERSION=1.0.0&REQUEST=GetCapabilities&updatesequence=f" > [RESULT_DEVERSION]
+#
+# Capabilities updatesequence exception (equal)
+# RUN_PARMS: sos_exception_updatesequence1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=SOS&VERSION=1.0.0&REQUEST=GetCapabilities&updatesequence=foo" > [RESULT]
+#
+# Capabilities updatesequence exception (higher)
+# RUN_PARMS: sos_exception_updatesequence2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=SOS&VERSION=1.0.0&REQUEST=GetCapabilities&updatesequence=zoo" > [RESULT]
+#
+# Capabilities acceptversions exception (invalid format)
+# RUN_PARMS: sos_exception_acceptversions.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=SOS&VERSION=1.0.0&REQUEST=GetCapabilities&acceptversions=2002-10-30" > [RESULT]
+#
+#  Valid
+#
+# Capabilities acceptversions
+# RUN_PARMS: sos_cap1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=SOS&VERSION=1.0.0&REQUEST=GetCapabilities&acceptversions=0.0.31,0.1.4,1.0.0" > [RESULT_DEVERSION]
+#
+# RUN_PARMS: sos_cap0.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.3.0&request=GetCapabilities" > [RESULT_DEVERSION]
+# RUN_PARMS: sos_cap.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetCapabilities" > [RESULT_DEVERSION]
+#
+# DescribeSensor
+#
+# Exceptions
+#
+# RUN_PARMS: sos_se3.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.1.0&request=DescribeSensor" > [RESULT]
+# RUN_PARMS: sos_se4.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeSensor" > [RESULT]
+# RUN_PARMS: sos_se5.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeSensor&procedure=2147" > [RESULT]
+# RUN_PARMS: sos_se6.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeSensor&procedure=2147&outputFormat=XML" > [RESULT]
+# RUN_PARMS: sos_se7.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeSensor&procedure=20147&outputFormat=text/xml; subtype=\"sensorML/1.0.0\"" > [RESULT]
+#
+# Valid
+#
+# RUN_PARMS: sos_describe.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeSensor&procedure=urn:ogc:def:procedure:35&outputFormat=text/xml; subtype=\"sensorML/1.0.0\"" > [RESULT]
+#
+# GetObservation
+#
+# Exceptions
+#
+# GetObservation (Wrong DataBlock format)
+# RUN_PARMS: sos_se8.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=WaterQuality&resultModel=om:Notice" > [RESULT]
+#
+# GetObservation (wrong observedProperty)
+# RUN_PARMS: sos_se9.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=AirQuality" > [RESULT]
+#
+# GetObservation (invalid srsName)
+# RUN_PARMS: sos_se10.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=WaterQuality&srsName=EPSG:12345" > [RESULT]
+#
+# GetObservation (invalid procedure)
+# RUN_PARMS: sos_se11.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=WaterQuality&procedure=foo" > [RESULT]
+#
+#  Valid
+#
+# GetObservation (all observations)
+# RUN_PARMS: sos_getobs_all.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=WaterQuality" > [RESULT]
+#
+# GetObservation (with srsName)
+# RUN_PARMS: sos_getobs_epsg_4326.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=WaterQuality&srsName=EPSG:4326" > [RESULT]
+#
+# GetObservation (DataBlock format)
+# RUN_PARMS: sos_getobs_datablock.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=WaterQuality&resultModel=om:Observation" > [RESULT]
+#
+# GetObservation (filter by procedure)
+# RUN_PARMS: sos_getobs_proc.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedProperty=WaterQuality&procedure=2147" > [RESULT]
+#
+# GetObservation (filter by PropertyIsEqualTo)
+# RUN_PARMS: sos_getobs_filter.xml [MAPSERV] QUERY_STRING="map=sos.map&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedproperty=WaterQuality&result=<Filter><PropertyIsEqualTo><PropertyName>value</PropertyName><Literal>103.5</Literal></PropertyIsEqualTo></Filter>" > [RESULT]
+# 
+# GetObservation (eventTime)
+# RUN_PARMS: sos_getobs_time.xml [MAPSERV] QUERY_STRING="map=sos.map&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedproperty=WaterQuality&eventTime=<gml:TimePeriod><gml:beginPosition>1990</gml:beginPosition><gml:endPosition>2003</gml:endPosition></gml:TimePeriod>" > [RESULT]
+#
+# GetObservation (featureOfInterest)
+# RUN_PARMS: sos_getobs_foi.xml [MAPSERV] QUERY_STRING="map=sos.map&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedproperty=WaterQuality&featureOfInterest=<gml:Envelope><gml:lowerCorner srsName=\"EPSG:4326\">-76 44</gml:lowerCorner><gml:upperCorner srsName=\"EPSG:4326\">-64 47</gml:upperCorner></gml:Envelope>" > [RESULT]
+#
+# GetObservation (time and filter)
+# DISABLED, see #4456: sos_getobs_time_filter.xml [MAPSERV] QUERY_STRING="map=sos.map&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedproperty=WaterQuality&result=<Filter><PropertyIsGreaterThan><PropertyName>value</PropertyName><Literal>89.9</Literal></PropertyIsGreaterThan></Filter>&eventTime=<gml:TimePeriod><gml:beginPosition>1990</gml:beginPosition><gml:endPosition>2003</gml:endPosition></gml:TimePeriod>" > [RESULT]
+# 
+# GetObservation (time and filter and featureOfInterest)
+#
+# RUN_PARMS: sos_getobs_time_filter_foi.xml [MAPSERV] QUERY_STRING="map=sos.map&service=SOS&version=1.0.0&request=GetObservation&responseFormat=text/xml; subtype=\"om/1.0.0\"&offering=Water&observedproperty=WaterQuality&result=<Filter><PropertyIsGreaterThan><PropertyName>value</PropertyName><Literal>89.9</Literal></PropertyIsGreaterThan></Filter>&eventTime=<gml:TimePeriod><gml:beginPosition>1990</gml:beginPosition><gml:endPosition>2003</gml:endPosition></gml:TimePeriod>&featureOfInterest=<gml:Envelope><gml:lowerCorner srsName=\"EPSG:4326\">-76 44</gml:lowerCorner><gml:upperCorner srsName=\"EPSG:4326\">-64 47</gml:upperCorner></gml:Envelope>" > [RESULT]
+#
+# DescribeObservationType
+#
+# Exceptions
+#
+# DescribeObservationType (missing observedproperty)
+# RUN_PARMS: sos_descobs_ex1.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeObservationType" > [RESULT]
+#
+# DescribeObservationType (invalid observedproperty)
+# RUN_PARMS: sos_descobs_ex2.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeObservationType&observedproperty=foo" > [RESULT]
+#
+# Valid
+#
+# DescribeObservationType (invalid observedproperty)
+# RUN_PARMS: sos_descobs.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&service=SOS&version=1.0.0&request=DescribeObservationType&observedproperty=WaterQuality" > [RESULT]
+#
+
+
+MAP
+ NAME sostest
+ IMAGETYPE PNG
+ STATUS ON
+ DEBUG ON
+ EXTENT -141.089000 36.392987 -52.089000 89.784987 # Canada
+ SIZE 500 300
+ SYMBOLSET "./etc/symbols.sym"
+ FONTSET   "./etc/fonts.txt"
+ IMAGECOLOR 125 125 125
+ PROJECTION
+  "init=epsg:4326"
+ END
+ DEBUG ON
+ TRANSPARENT ON
+ WEB
+  HEADER "templates/query_header.html"
+  FOOTER "templates/query_footer.html"
+  IMAGEPATH "./tmp"
+  IMAGEURL  "/ms_tmp"
+  METADATA
+   "ows_updatesequence" "foo"
+   "ows_title"    "Test SOS Title"
+   "ows_abstract"    "Test SOS Abstract"
+   "ows_keywordlist" "ogc,sos,sensorml,om"
+   "ows_service_onlineresource" "http://localhost"
+   "ows_onlineresource"    "http://localhost/cgi-bin/sostest"
+   "ows_fees" "none"
+   "ows_accessconstraints" "none"
+   "ows_addresstype" "postal"
+   "ows_address"     "123 SomeRoad Road"
+   "ows_city" "Toronto"
+   "ows_stateorprovince" "Ontario"
+   "ows_postcode" "xxx-xxx"
+   "ows_country" "Canada"
+   "ows_contactelectronicmailaddress" "tomkralidis@xxxxxxx.xxx"
+   "ows_contactvoicetelephone" "+xx-xxx-xxx-xxxx"
+   "ows_contactfacsimiletelephone" "+xx-xxx-xxx-xxxx"
+   "ows_contactperson" "Tom Kralidis"
+   "ows_contactorganization" "MapServer"
+   "ows_contactposition" "self"
+   "ows_hoursofservice" "0800h - 1600h EST"
+   "ows_contactinstructions" "during hours of service"
+   "ows_role" "staff"
+   "ows_srs" "EPSG:4326"
+   "ows_maxfeatures" "90210"
+   "ows_enable_request" "*" 
+   END
+ END
+ LAYER
+  NAME obs
+  DEBUG ON
+  TYPE POINT
+  STATUS ON
+  DUMP TRUE
+  DATA "./data/obs.shp"
+  PROJECTION
+    "init=epsg:4326"
+  END
+  CLASS
+    NAME "obs"
+    COLOR 255 0 0
+    SIZE 10
+  END
+  METADATA
+   "sos_offering_id" "Water" # mandatory to tie layers to groups
+   "sos_offering_name" "Water"
+   "sos_offering_description" "This is for water"
+   "sos_offering_extent" "-141,42,-52,84"
+   "sos_offering_timeextent" "1990/2007"   
+   "sos_offering_intendedapplication" "for SOS demos"   
+   "sos_observedproperty_id" "WaterQuality"
+   "sos_observedproperty_name" "WaterQuality"
+   "sos_observedproperty_authority" "ACME"
+   "sos_observedproperty_version" "8"
+   "sos_value_alias" "Value"
+   "sos_value_definition" "mydef"
+   "sos_value_uom" "meters"
+   "ows_timeitem" "datetime"
+   "sos_procedure"  "35 2147 604"
+   "sos_procedure_item"  "stn_id"
+   "sos_describesensor_url" "http://trac.osgeo.org/mapserver/browser/trunk/msautotest/wxs/data/sos-%procedure%.xml?format=raw"
+   "gml_featureid" "id"
+   "gml_include_items" "all"
+  END
+ END    
+END

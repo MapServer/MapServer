@@ -1,0 +1,39 @@
+# RUN_PARMS: circle_layer.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: circle_layer.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: circle_layer.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: circle_layer.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: circle_layer.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT 0 0 400 300
+SIZE 80 60
+IMAGETYPE png
+
+LAYER
+  NAME "circles"
+  TYPE circle
+  STATUS default
+  CLASS
+    NAME "test1"
+    STYLE
+        COLOR 0 0 0
+    END
+  END
+  FEATURE
+    POINTS
+        10 10 50 50
+    END
+  END
+  FEATURE
+    POINTS
+        100 100 1000 1000
+    END
+  END
+END
+
+END

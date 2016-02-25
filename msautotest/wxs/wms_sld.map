@@ -1,0 +1,271 @@
+#
+# Test WMS SLD
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WMS
+#
+#
+#
+#
+# Generate map image with a new line symbology for the road layer.
+# RUN_PARMS: wms_get_map_line_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=%3CStyledLayerDescriptor+version%3D%221.0.0%22%3E%0D%0A%3CNamedLayer%3E%0D%0A%3CName%3Eroad%3C%2FName%3E%0D%0A%3CUserStyle%3E%0D%0A%3CTitle%3Exxx%3C%2FTitle%3E%0D%0A%3CFeatureTypeStyle%3E%0D%0A%3CRule%3E%0D%0A%3CLineSymbolizer%3E%0D%0A%3CGeometry%3E%0D%0A%3CPropertyName%3Ecenter-line%3C%2FPropertyName%3E%0D%0A%3C%2FGeometry%3E%0D%0A%3CStroke%3E%0D%0A%3CCssParameter+name%3D%22stroke%22%3E%230000ff%3C%2FCssParameter%3E%0D%0A%3C%2FStroke%3E%0D%0A%3C%2FLineSymbolizer%3E%0D%0A%3C%2FRule%3E%0D%0A%3C%2FFeatureTypeStyle%3E%0D%0A%3C%2FUserStyle%3E%0D%0A%3C%2FNamedLayer%3E%0D%0A%3C%2FStyledLayerDescriptor%3E%0D%0A" > [RESULT_DEMIME]
+#
+# Generate map image with a new line width symbology for the road layer.
+# RUN_PARMS: wms_get_map_line_width_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>5.0</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with a new line style (dash-line) symbology for the road layer.
+# RUN_PARMS: wms_get_map_line_dash_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>3.0</CssParameter><CssParameter name=%22stroke-dasharray%22>2 4</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image by using a filter to draw the corresponding roads with a new symbology.
+# RUN_PARMS: wms_get_map_line_filter_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><PropertyIsLessThan><PropertyName>ROAD_ID</PropertyName><Literal>900</Literal></PropertyIsLessThan></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image by using multiple filters to draw the corresponding roads with a new symbology.
+# RUN_PARMS: wms_get_map_line_multi_filter_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><And><PropertyIsGreaterThanOrEqualTo><PropertyName>ROAD_ID</PropertyName><Literal>0</Literal></PropertyIsGreaterThanOrEqualTo><PropertyIsLessThan><PropertyName>ROAD_ID</PropertyName><Literal>400</Literal></PropertyIsLessThan></And></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule><Rule><Filter><And><PropertyIsGreaterThanOrEqualTo><PropertyName>ROAD_ID</PropertyName><Literal>400</Literal></PropertyIsGreaterThanOrEqualTo><PropertyIsLessThan><PropertyName>ROAD_ID</PropertyName><Literal>600</Literal></PropertyIsLessThan></And></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#ff0000</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule><Rule><Filter><And><PropertyIsGreaterThanOrEqualTo><PropertyName>ROAD_ID</PropertyName><Literal>600</Literal></PropertyIsGreaterThanOrEqualTo><PropertyIsLessThan><PropertyName>ROAD_ID</PropertyName><Literal>900</Literal></PropertyIsLessThan></And></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#00ff00</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule><Rule><Filter><And><PropertyIsGreaterThanOrEqualTo><PropertyName>ROAD_ID</PropertyName><Literal>900</Literal></PropertyIsGreaterThanOrEqualTo><PropertyIsLessThan><PropertyName>ROAD_ID</PropertyName><Literal>1100</Literal></PropertyIsLessThan></And></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#ffff00</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule><Rule><Filter><And><PropertyIsGreaterThanOrEqualTo><PropertyName>ROAD_ID</PropertyName><Literal>1100</Literal></PropertyIsGreaterThanOrEqualTo><PropertyIsLessThan><PropertyName>ROAD_ID</PropertyName><Literal>1500</Literal></PropertyIsLessThan></And></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#ff00ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image by using a filter to draw the corresponding roads with a new symbology and the elsefilter to draw the 
+# other roads.
+# RUN_PARMS: wms_get_map_line_elsefilter_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><PropertyIsLessThan><PropertyName>ROAD_ID</PropertyName><Literal>900</Literal></PropertyIsLessThan></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule><Rule><ElseFilter/><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#ff0000</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with polygon drawn as a simple solid fill (province)
+# RUN_PARMS: wms_get_map_polygon_fill_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=province&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>Province</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PolygonSymbolizer><Geometry><PropertyName>the_area</PropertyName></Geometry><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter></Fill></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with polygon drawn as a solid fill with an outline (province)
+# RUN_PARMS: wms_get_map_polygon_fill_outline_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=province&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>Province</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PolygonSymbolizer><Geometry><PropertyName>the_area</PropertyName></Geometry><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter></Fill><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with polygon drawn as fill with mark symbol ((filling polygons with well known symbols like star)
+# RUN_PARMS: wms_get_map_polygon_fill_symbol_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=province&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>Province</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PolygonSymbolizer><Geometry><PropertyName>the_area</PropertyName></Geometry><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter><GraphicFill><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter></Fill></Mark><Size>8.0</Size></Graphic></GraphicFill></Fill><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with polygon drawn as fill with image symbol
+# RUN_PARMS: wms_get_map_polygon_fill_ext_symbol_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=province&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>WorldGen</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PolygonSymbolizer><Geometry><PropertyName>the_area</PropertyName></Geometry><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter><GraphicFill><Graphic><ExternalGraphic><OnlineResource xlink:type=%22simple%22 xlink:href=%22http://localhost:8000/misc/data/gdalicon.gif%22/><Format>GIF</Format></ExternalGraphic><Size>100.0</Size></Graphic></GraphicFill></Fill><Stroke><CssParameter name=%22stroke%22>#ff0000</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with symbols drawn as filled mark symbol
+# RUN_PARMS: wms_get_map_mark_symbol_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter></Fill></Mark><Size>10.0</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: wms_get_map_repeated_layer_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><CssParameter name=%22fill%22>#000000</CssParameter></Fill></Mark><Size>14.0</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter></Fill></Mark><Size>10.0</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: wms_get_map_repeated_layer_ext_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld=http://localhost:8000/wxs/etc/repeat.sld" > [RESULT_DEMIME]
+# RUN_PARMS: wms_get_map_ext_sld_404.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld=http://localhost:8000/wxs/etc/repeat.sld.notfound" > [RESULT_DEMIME]
+# RUN_PARMS: wms_get_map_ext_sld_proto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld=myproto://localhost:8000/wxs/etc/repeat.sld.notfound" > [RESULT_DEMIME]
+# RUN_PARMS: wms_get_map_ext_sld_fileproto.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld=file:///etc/passwd" > [RESULT_DEMIME]
+# RUN_PARMS: wms_get_map_ext_sld_too_large.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld=http://localhost:8000/wxs/etc/largesld.sld" > [RESULT_DEMIME]
+
+
+# Generate map image by using a filter containing quotes
+# RUN_PARMS: wms_get_map_mark_symbol_filter_quote1_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><PropertyIsEqualTo><PropertyName>NAME</PropertyName><Literal>\"Tignish</Literal></PropertyIsEqualTo></Filter><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter></Fill></Mark><Size>10.0</Size></Graphic></PointSymbolizer></Rule><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#0000ff</CssParameter></Fill></Mark><Size>10.0</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+# RUN_PARMS: wms_get_map_mark_symbol_filter_quote2_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><PropertyIsEqualTo><PropertyName>NAME</PropertyName><Literal>'Cheticamp</Literal></PropertyIsEqualTo></Filter><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter></Fill></Mark><Size>10.0</Size></Graphic></PointSymbolizer></Rule><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#0000ff</CssParameter></Fill></Mark><Size>10.0</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with symbols drawn as filled external symbol
+# RUN_PARMS: wms_get_map_symbol_ext_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>Popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><ExternalGraphic><OnlineResource xlink:type=%22simple%22 xlink:href=%22http://localhost:8000/misc/data/gdalicon.gif%22/><Format>GIF</Format></ExternalGraphic><Size>10.0</Size></Graphic></PointSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with text
+# RUN_PARMS: wms_get_map_text_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><TextSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Label>NAME</Label><Font><CssParameter name=%22font-family%22>times</CssParameter><CssParameter name=%22font-style%22>italic</CssParameter><CssParameter name=%22font-weight%22>bold</CssParameter><CssParameter name=%22font-size%22>4</CssParameter></Font><Fill><CssParameter name=%22fill%22>#FF0000</CssParameter></Fill><LabelPlacement><PointPlacement><AnchorPoint><AnchorPointX>0.1</AnchorPointX><AnchorPointY>0.1</AnchorPointY></AnchorPoint><Displacement><DisplacementX>0.1</DisplacementX><DisplacementY>0.2</DisplacementY></Displacement><Rotation>20</Rotation></PointPlacement></LabelPlacement><Halo/></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with text using an alias
+# RUN_PARMS: wms_get_map_text_alias_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><TextSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Label>NAME_ALIAS</Label><Font><CssParameter name=%22font-family%22>times</CssParameter><CssParameter name=%22font-style%22>italic</CssParameter><CssParameter name=%22font-weight%22>bold</CssParameter><CssParameter name=%22font-size%22>4</CssParameter></Font><Fill><CssParameter name=%22fill%22>#FF0000</CssParameter></Fill><LabelPlacement><PointPlacement><AnchorPoint><AnchorPointX>0.1</AnchorPointX><AnchorPointY>0.1</AnchorPointY></AnchorPoint><Displacement><DisplacementX>0.1</DisplacementX><DisplacementY>0.2</DisplacementY></Displacement><Rotation>20</Rotation></PointPlacement></LabelPlacement><Halo/></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with text and symbol
+# RUN_PARMS: wms_get_map_text_symbol_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#ff0000</CssParameter></Fill></Mark><Size>18.0</Size></Graphic></PointSymbolizer><TextSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Label>NAME</Label><Font><CssParameter name=%22font-family%22>times</CssParameter><CssParameter name=%22font-style%22>italic</CssParameter><CssParameter name=%22font-weight%22>bold</CssParameter><CssParameter name=%22font-size%22>4</CssParameter></Font><Fill><CssParameter name=%22fill%22>#FF0000</CssParameter></Fill><LabelPlacement><PointPlacement><AnchorPoint><AnchorPointX>0.1</AnchorPointX><AnchorPointY>0.1</AnchorPointY></AnchorPoint><Displacement><DisplacementX>0.1</DisplacementX><DisplacementY>0.2</DisplacementY></Displacement><Rotation>20</Rotation></PointPlacement></LabelPlacement></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with line as drawn with text and using 2 symbolizers. (It also shows how to do "case-roads" effect 
+#using 2 lines symbolizers in the same rule.)
+# RUN_PARMS: wms_get_map_line_multi_symbol_text_sld.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><PropertyIsEqualTo><PropertyName>LPOLY_</PropertyName><Literal>0</Literal></PropertyIsEqualTo></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#ff00ff</CssParameter><CssParameter name=%22stroke-width%22>4.0</CssParameter></Stroke></LineSymbolizer><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#00ffff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer><TextSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Label>NAME_E</Label><Font><CssParameter name=%22font-family%22>times</CssParameter><CssParameter name=%22font-style%22>italic</CssParameter><CssParameter name=%22font-weight%22>bold</CssParameter><CssParameter name=%22font-size%22>4</CssParameter></Font><Fill><CssParameter name=%22fill%22>#FF0000</CssParameter></Fill><LabelPlacement><PointPlacement><AnchorPoint><AnchorPointX>0.1</AnchorPointX><AnchorPointY>0.1</AnchorPointY></AnchorPoint><Displacement><DisplacementX>0.1</DisplacementX><DisplacementY>0.2</DisplacementY></Displacement><Rotation>10</Rotation></PointPlacement></LabelPlacement></TextSymbolizer></Rule><Rule><Filter><PropertyIsEqualTo><PropertyName>LPOLY_</PropertyName><Literal>3</Literal></PropertyIsEqualTo></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with multi layers request and with a single SLD applied to a layer
+# RUN_PARMS: wms_get_map_multi_layers_one_sld_on_one_layer.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=popplace,province,road&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><PropertyIsEqualTo><PropertyName>LPOLY_</PropertyName><Literal>0</Literal></PropertyIsEqualTo></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#000000</CssParameter><CssParameter name=%22stroke-width%22>4.0</CssParameter></Stroke></LineSymbolizer><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#ff0000</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer><TextSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Label>NAME_E</Label><Font><CssParameter name=%22font-family%22>times</CssParameter><CssParameter name=%22font-style%22>italic</CssParameter><CssParameter name=%22font-weight%22>bold</CssParameter><CssParameter name=%22font-size%22>4</CssParameter></Font><Fill><CssParameter name=%22fill%22>#FF0000</CssParameter></Fill><LabelPlacement><PointPlacement><AnchorPoint><AnchorPointX>0.1</AnchorPointX><AnchorPointY>0.1</AnchorPointY></AnchorPoint><Displacement><DisplacementX>0.1</DisplacementX><DisplacementY>0.2</DisplacementY></Displacement><Rotation>20</Rotation></PointPlacement></LabelPlacement></TextSymbolizer></Rule><Rule><Filter><PropertyIsEqualTo><PropertyName>LPOLY_</PropertyName><Literal>3</Literal></PropertyIsEqualTo></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+# Generate map image with multi layers and one sld for all layers
+# RUN_PARMS: wms_get_map_multi_layers_one_sld_on_all_layers.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=province,road,popplace&sld_body=<StyledLayerDescriptor version=%221.0.0%22><NamedLayer><Name>Province</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PolygonSymbolizer><Geometry><PropertyName>the_area</PropertyName></Geometry><Fill><CssParameter name=%22fill%22>#D3D3D3</CssParameter></Fill><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></PolygonSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><PropertyIsEqualTo><PropertyName>LPOLY_</PropertyName><Literal>0</Literal></PropertyIsEqualTo></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>4.0</CssParameter></Stroke></LineSymbolizer><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#ff0000</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer><TextSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Label>NAME_E</Label><Font><CssParameter name=%22font-family%22>times</CssParameter><CssParameter name=%22font-style%22>italic</CssParameter><CssParameter name=%22font-weight%22>bold</CssParameter><CssParameter name=%22font-size%22>10</CssParameter></Font><Fill><CssParameter name=%22fill%22>#FF0000</CssParameter></Fill><LabelPlacement><PointPlacement><AnchorPoint><AnchorPointX>0.1</AnchorPointX><AnchorPointY>0.1</AnchorPointY></AnchorPoint><Displacement><DisplacementX>0.1</DisplacementX><DisplacementY>0.2</DisplacementY></Displacement><Rotation>20</Rotation></PointPlacement></LabelPlacement></TextSymbolizer></Rule><Rule><Filter><PropertyIsEqualTo><PropertyName>LPOLY_</PropertyName><Literal>3</Literal></PropertyIsEqualTo></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name=%22stroke%22>#0000ff</CssParameter><CssParameter name=%22stroke-width%22>2.0</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer><NamedLayer><Name>popplace</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><PointSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Graphic><Mark><WellKnownName>star</WellKnownName><Fill><CssParameter name=%22fill%22>#F0E68C</CssParameter></Fill></Mark><Size>11.0</Size></Graphic></PointSymbolizer><TextSymbolizer><Geometry><PropertyName>locatedAt</PropertyName></Geometry><Label>NAME</Label><Font><CssParameter name=%22font-family%22>times</CssParameter><CssParameter name=%22font-style%22>italic</CssParameter><CssParameter name=%22font-weight%22>bold</CssParameter><CssParameter name=%22font-size%22>2</CssParameter></Font><Fill><CssParameter name=%22fill%22>#F0B000</CssParameter></Fill><LabelPlacement><PointPlacement><AnchorPoint><AnchorPointX>0.1</AnchorPointX><AnchorPointY>0.1</AnchorPointY></AnchorPoint><Displacement><DisplacementX>0.1</DisplacementX><DisplacementY>0.2</DisplacementY></Displacement><Rotation>10</Rotation></PointPlacement></LabelPlacement></TextSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+#
+# Generate map image using and sld with a multi-polygon filter encoding
+# RUN_PARMS: wms_get_map_multi_polygon_filter.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=%3CStyledLayerDescriptor+version%3D%221.0.0%22%3E+%3CNamedLayer%3E+%3CName%3Eroad%3C%2FName%3E+%3CUserStyle%3E+%3CTitle%3Exxx%3C%2FTitle%3E+%3CFeatureTypeStyle%3E%3CRule%3E%3Csld%3AName%3Edefault%3C%2Fsld%3AName%3E%3Cogc%3AFilter+xmlns%3Aogc%3D%22http%3A%2F%2Fwww.opengis.net%2Fogc%22%3E%3Cogc%3AIntersects%3E%3Cogc%3APropertyName%3Egeometry%3C%2Fogc%3APropertyName%3E%3Cgml%3AMultiPolygon+srsName%3D%22EPSG%3A3978%22%3E%3Cgml%3ApolygonMember%3E%3Cgml%3APolygon%3E%3Cgml%3AouterBoundaryIs%3E%3Cgml%3ALinearRing%3E%3Cgml%3Acoordinates%3E2475215%2C289715+2630749%2C289715+2630749%2C402603+2475215%2C402603+2475215%2C289715%3C%2Fgml%3Acoordinates%3E%3C%2Fgml%3ALinearRing%3E%3C%2Fgml%3AouterBoundaryIs%3E%3C%2Fgml%3APolygon%3E%3C%2Fgml%3ApolygonMember%3E%3Cgml%3ApolygonMember%3E%3Cgml%3APolygon%3E%3Cgml%3AouterBoundaryIs%3E%3Cgml%3ALinearRing%3E%3Cgml%3Acoordinates%3E2241915%2C-29714+2411664%2C-29714++2411664%2C83173+2241915%2C83173+2241915%2C-29714%3C%2Fgml%3Acoordinates%3E%3C%2Fgml%3ALinearRing%3E%3C%2Fgml%3AouterBoundaryIs%3E%3C%2Fgml%3APolygon%3E%3C%2Fgml%3ApolygonMember%3E%3C%2Fgml%3AMultiPolygon%3E%3C%2Fogc%3AIntersects%3E%3C%2Fogc%3AFilter%3E%3CLineSymbolizer%3E+%3CGeometry%3E+%3CPropertyName%3Ecenter-line%3C%2FPropertyName%3E+%3C%2FGeometry%3E%3CStroke%3E%3CCssParameter+name%3D%22stroke%22%3E%230000ff%3C%2FCssParameter%3E%3C%2FStroke%3E%3C%2FLineSymbolizer%3E%3C%2FRule%3E%3C%2FFeatureTypeStyle%3E%3C%2FUserStyle%3E%3C%2FNamedLayer%3E%3C%2FStyledLayerDescriptor%3E" > [RESULT_DEMIME]
+
+
+# Generate map image by using a properly is like filter with an or
+# RUN_PARMS: wms_get_map_line_filter_islike.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:4326&BBOX=-68.125,42,-58.375,48.5&FORMAT=image/png; mode=24bit&WIDTH=300&HEIGHT=200&STYLES=&LAYERS=road&sld_body=<StyledLayerDescriptor version='1.0.0'><NamedLayer><Name>road</Name><UserStyle><Title>xxx</Title><FeatureTypeStyle><Rule><Filter><Or><PropertyIsLike+wildCard='*'+singleChar='.'+escape='!'><PropertyName>NAME_E</PropertyName><Literal>Trans*</Literal></PropertyIsLike><PropertyIsLessThan><PropertyName>ROAD_ID</PropertyName><Literal>100</Literal></PropertyIsLessThan></Or></Filter><LineSymbolizer><Geometry><PropertyName>center-line</PropertyName></Geometry><Stroke><CssParameter name='stroke'>#0000ff</CssParameter><CssParameter name='stroke-width'>2.0</CssParameter></Stroke></LineSymbolizer></Rule></FeatureTypeStyle></UserStyle></NamedLayer></StyledLayerDescriptor>" > [RESULT_DEMIME]
+#
+
+# Generate map image by using multi styles for the same layer
+# RUN_PARMS: wms_get_map_multi_styles_same_layer.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&WIDTH=560&HEIGHT=350&LAYERS=road_styles,road_styles,road_styles&FORMAT=image/png&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&EXCEPTIONS=INIMAGE&BBOX=44.6139013125,-66.998804375,48.0904731875,-61.436289375&STYLES=style_red,style_green,style_blue" > [RESULT_DEMIME]
+
+
+
+# Generate map image by using multi styles using sld for the same layer
+# RUN_PARMS: wms_get_map_multi_styles_sld_same_layer.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&CRS=EPSG:4326&WIDTH=560&HEIGHT=350&LAYERS=road_styles,road_styles,road_styles&FORMAT=image/png&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&EXCEPTIONS=INIMAGE&BBOX=44.6139013125,-66.998804375,48.0904731875,-61.436289375&SLD_BODY=%3CStyledLayerDescriptor%20version%3D%221.0.0%22%3E%0A%3CNamedLayer%3E%0A%3CName%3Eroad_styles%3C%2FName%3E%0A%3CUserStyle%3E%0A%3CTitle%3Exxx%3C%2FTitle%3E%0A%3CFeatureTypeStyle%3E%0A%3CRule%3E%0A%3CLineSymbolizer%3E%0A%3CGeometry%3E%0A%3CPropertyName%3Ecenter-line%3C%2FPropertyName%3E%0A%3C%2FGeometry%3E%0A%3CStroke%3E%0A%3CCssParameter%20name%3D%22stroke%22%3E%23ff0000%3C%2FCssParameter%3E%0A%3CCssParameter%20name%3D%22stroke-width%22%3E16%3C%2FCssParameter%3E%0A%3C%2FStroke%3E%0A%3C%2FLineSymbolizer%3E%0A%3C%2FRule%3E%0A%3C%2FFeatureTypeStyle%3E%0A%3C%2FUserStyle%3E%0A%3C%2FNamedLayer%3E%0A%3CNamedLayer%3E%0A%3CName%3Eroad_styles%3C%2FName%3E%0A%3CUserStyle%3E%0A%3CTitle%3Exxx%3C%2FTitle%3E%0A%3CFeatureTypeStyle%3E%0A%3CRule%3E%0A%3CLineSymbolizer%3E%0A%3CGeometry%3E%0A%3CPropertyName%3Ecenter-line%3C%2FPropertyName%3E%0A%3C%2FGeometry%3E%0A%3CStroke%3E%0A%3CCssParameter%20name%3D%22stroke%22%3E%2300ff00%3C%2FCssParameter%3E%0A%3CCssParameter%20name%3D%22stroke-width%22%3E8%3C%2FCssParameter%3E%0A%3C%2FStroke%3E%0A%3C%2FLineSymbolizer%3E%0A%3C%2FRule%3E%0A%3C%2FFeatureTypeStyle%3E%0A%3C%2FUserStyle%3E%0A%3C%2FNamedLayer%3E%0A%3CNamedLayer%3E%0A%3CName%3Eroad_styles%3C%2FName%3E%0A%3CUserStyle%3E%0A%3CTitle%3Exxx%3C%2FTitle%3E%0A%3CFeatureTypeStyle%3E%0A%3CRule%3E%0A%3CLineSymbolizer%3E%0A%3CGeometry%3E%0A%3CPropertyName%3Ecenter-line%3C%2FPropertyName%3E%0A%3C%2FGeometry%3E%0A%3CStroke%3E%0A%3CCssParameter%20name%3D%22stroke%22%3E%230000ff%3C%2FCssParameter%3E%0A%3CCssParameter%20name%3D%22stroke-width%22%3E2%3C%2FCssParameter%3E%0A%3C%2FStroke%3E%0A%3C%2FLineSymbolizer%3E%0A%3C%2FRule%3E%0A%3C%2FFeatureTypeStyle%3E%0A%3C%2FUserStyle%3E%0A%3C%2FNamedLayer%3E%0A%3C%2FStyledLayerDescriptor%3E%0A" > [RESULT_DEMIME]
+
+MAP
+
+NAME WMS_SLD
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+#UNITS METERS
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS DD
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:3978 EPSG:42101 EPSG:4269 EPSG:4326"
+    "ows_schemas_location" "http://ogc.dmsolutions.ca"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+   "init=epsg:4326"
+END
+
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "wms_title"         "province"
+    "wms_description"   "province"
+    "wms_result_fields" "NAME_E YEAR_EST AREA_KMSQ"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+
+LAYER
+  NAME popplace
+  DATA popplace
+  METADATA
+    "wms_title"         "popplace"
+    "wms_description"   "Cities of I.P.E."
+    "wms_result_fields" "NAME"
+    "gml_NAME_alias" "NAME_ALIAS"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+  LabelItem "Name"
+  CLASSITEM "Capital" 
+
+  CLASS
+    EXPRESSION /./  
+    SYMBOL 2
+    SIZE 8
+    NAME "Cities"
+    LABEL
+      COLOR  0 0 0
+      FONT Vera
+      TYPE truetype
+      SIZE 8
+      POSITION AUTO			
+      PARTIALS FALSE
+      OUTLINECOLOR 255 255 255			
+    END 
+    COLOR 0 0 0
+  END
+END # Layer
+
+
+LAYER
+  NAME road
+  DATA road
+  METADATA
+    "wms_title"       "road"
+    "wms_description" "Roads of I.P.E."
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASS
+    NAME "Roads"
+    SYMBOL 0 
+    COLOR 220 0 0
+  END
+END # Layer
+
+
+LAYER
+  NAME road_styles
+  DATA road
+  METADATA
+    "wms_title"       "road_styles"
+    "wms_description" "Roads of I.P.E."
+  END
+  TYPE LINE
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
+
+  DUMP TRUE
+
+  CLASSITEM "Name_e"
+  CLASSGROUP 'style_red'
+  CLASS
+    GROUP 'style_red'  
+    NAME "Roads"  
+    STYLE
+      
+      COLOR 220 0 0
+      WIDTH 16
+    END
+  END #Class
+
+  CLASS
+    GROUP 'style_green' 
+     NAME "Roads"   
+    STYLE
+     
+      COLOR 0 220 0
+      WIDTH 8
+    END
+  END #Class
+
+   CLASS
+    GROUP 'style_blue' 
+     NAME "Roads"   
+    STYLE
+     
+      COLOR 0 0 220
+      WIDTH 2
+    END
+  END #Class
+END # Layer
+
+
+END # Map File

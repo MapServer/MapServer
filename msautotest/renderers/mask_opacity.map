@@ -1,0 +1,83 @@
+# RUN_PARMS: mask_opacity.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: mask_opacity.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: mask_opacity.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+#
+# entity-encoded text rendering test.
+# this test may potentially segfault
+#   
+# REQUIRES: OUTPUT=PNG
+#
+MAP
+
+STATUS ON
+EXTENT -180 -90 180 90
+SIZE 400 300
+FONTSET "data/fonts.lst"
+IMAGETYPE png24
+symbolset "symbolset"
+shapepath "data"
+
+CONFIG MS_ERRORFILE "stderr"
+
+
+
+LAYER
+  NAME "mask"
+  TYPE polygon
+  STATUS off
+  DATA "world_testpoly"
+  CLASS
+    STYLE
+      COLOR 0 0 0
+    END
+  END
+END
+
+LAYER
+  NAME "world"
+  TYPE RASTER
+  STATUS on
+  DATA "world.tif"
+  MASK "mask"
+  OPACITY 50
+END
+
+LAYER
+  NAME "lines"
+  TYPE LINE
+  STATUS ON
+  MASK "mask"
+  DATA "world_testlines"
+  LABELITEM "label"
+  OPACITY 50
+  CLASS
+    STYLE
+      WIDTH 0.5
+      COLOR 0 0 0
+    END
+    LABEL
+      TYPE TRUETYPE
+      FONT "default"
+      SIZE 8
+      COLOR 0 0 0
+      ANGLE FOLLOW
+    END
+  END
+END
+
+
+LAYER
+  NAME "countours"
+  TYPE polygon
+  STATUS on
+  DATA "world_testpoly"
+  CLASS
+    STYLE
+      OUTLINECOLOR 0 0 0
+      WIDTH 0.5
+    END
+  END
+END
+
+END

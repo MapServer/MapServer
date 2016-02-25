@@ -1,0 +1,124 @@
+# RUN_PARMS: labelpnt.png [SHP2IMG] -m [MAPFILE] -i png -o [RESULT]
+# RUN_PARMS: labelpnt.gif [SHP2IMG] -m [MAPFILE] -i gif -o [RESULT]
+# RUN_PARMS: labelpnt.pdf [SHP2IMG] -m [MAPFILE] -i pdf -o [RESULT]
+# RUN_PARMS: labelpnt.svg [SHP2IMG] -m [MAPFILE] -i svg -o [RESULT]
+# RUN_PARMS: labelpnt.cairo.png [SHP2IMG] -m [MAPFILE] -i cairopng -o [RESULT]
+#
+MAp
+extent -200 -200 200 200
+size 200 200
+imagetype png
+fontset "data/fonts.lst"
+
+symbol
+ type ellipse
+ points 1 1 end
+ name "CIRCLE"
+end
+
+symbol
+ type vector
+ name "CROSS1"
+ points
+  0 0.5
+  1 0.5
+  -99 -99
+  0.5 0
+  0.5 1
+ end
+end
+
+LAYER
+ NAME Test
+ TYPE annotation
+ STATUS DEFAULT
+ FEATURE
+  POINTS -120 -33 END
+  TEXT "Some label text"
+ END
+
+
+ CLASS
+  STYLE
+    symbol "CIRCLE"
+    color 0 0 0
+    size 4
+  END
+  LABEL
+   FONT "default"
+   TYPE truetype
+   ENCODING 'UTF-8'
+   SIZE 14
+   COLOR 255 255 0
+   POSITION LR
+   STYLE
+    GEOMTRANSFORM LABELPOLY
+    COLOR 200 50 50
+   END
+   STYLE
+    GEOMTRANSFORM LABELPNT
+    SYMBOL 'CIRCLE'
+    COLOR 100 100 100
+    SIZE 20
+   END
+  END   
+ END
+END
+
+
+
+
+LAYER
+   NAME Test
+   TYPE point
+   STATUS DEFAULT
+   FEATURE
+    POINTS
+      -122 33
+    END
+    TEXT "Some label text"
+   END
+   LABELCACHE OFF
+   CLASS # Mountain
+      NAME 'Mountain'
+      STYLE # ------ Green Cross ------ 
+        SYMBOL 'CROSS1'
+        SIZE 14
+        WIDTH 0.5
+        COLOR 0 255 0 
+      END
+      STYLE # ------ Yellow Circle ------ 
+        GEOMTRANSFORM (labelpoint([shape]))
+        SYMBOL 'CIRCLE'
+        SIZE 10 
+        OUTLINECOLOR 255 255 0
+      END
+      LABEL 
+        STYLE # ------ Red Box ------ 
+            GEOMTRANSFORM labelpoly
+            OUTLINECOLOR 255 0 0
+        END # 
+        STYLE #  ------ Blue Dot ------ position OK?
+            GEOMTRANSFORM labelpnt
+            SYMBOL 'CIRCLE'
+            SIZE 10
+            COLOR 0 0 255 
+        END # 
+        POSITION CC
+        ALIGN CENTER
+        WRAP ' '
+        SIZE 8
+        FONT "default"
+        TYPE truetype
+        BUFFER 1
+        COLOR 0 0 0
+        ANGLE 0
+        PARTIALS FALSE
+        ANTIALIAS TRUE
+        #MINDISTANCE 250
+        #MINFEATURESIZE 10
+      END 
+    END
+
+   END
+   END

@@ -1,0 +1,26 @@
+Content-type: application/vnd.ogc.gml
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<msGMLOutput 
+	 xmlns:gml="http://www.opengis.net/gml"
+	 xmlns:xlink="http://www.w3.org/1999/xlink"
+	 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<shppoly_layer>
+		<shppoly_feature>
+			<gml:boundedBy>
+				<gml:Box srsName="EPSG:4326">
+					<gml:coordinates>1301873.874991,474910.375002 1315079.874993,487238.062992</gml:coordinates>
+				</gml:Box>
+			</gml:boundedBy>
+			<SDE.JOINTESTLAYER.OBJECTID>6</SDE.JOINTESTLAYER.OBJECTID>
+			<SDE.JOINTESTLAYER.AQ_TAG>0004</SDE.JOINTESTLAYER.AQ_TAG>
+			<SDE.JOINTESTLAYER.FCODE>GF83090120</SDE.JOINTESTLAYER.FCODE>
+			<SDE.JOINTESTLAYER.AQNAME>name4</SDE.JOINTESTLAYER.AQNAME>
+			<SDE.JOINTESTLAYER.SHAPE>&lt;shape&gt;</SDE.JOINTESTLAYER.SHAPE>
+			<SDE.JOINTESTTABLE.OBJECTID>4</SDE.JOINTESTTABLE.OBJECTID>
+			<SDE.JOINTESTTABLE.AQ_TAG>0004</SDE.JOINTESTTABLE.AQ_TAG>
+			<SDE.JOINTESTTABLE.VAL>val4</SDE.JOINTESTTABLE.VAL>
+		</shppoly_feature>
+	</shppoly_layer>
+</msGMLOutput>

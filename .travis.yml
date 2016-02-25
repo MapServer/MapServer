@@ -57,7 +57,6 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install bison flex python-lxml libfribidi-dev swig cmake librsvg2-dev colordiff postgis postgresql-9.1 postgresql-9.1-postgis-2.1 postgresql-9.1-postgis-2.1-scripts libpq-dev libpng12-dev libjpeg-dev libgif-dev libgeos-dev libgd2-xpm-dev libfreetype6-dev libfcgi-dev libcurl4-gnutls-dev libcairo2-dev libgdal1-dev libproj-dev libxml2-dev python-dev php5-dev libexempi-dev lcov lftp
   - sudo pip install git+git://github.com/tbonfort/cpp-coveralls.git@extensions
-  - ./install-msautotest.sh
   - cd msautotest
   - ./create_postgis_test_data.sh
   - python -m SimpleHTTPServer &> /dev/null &
@@ -67,7 +66,7 @@ before_install:
 
 
 script:
-  - ./run-test-suite.sh
+  - make -j4 test
 
 after_success:
 # Only run coverage when it is safe to do so (not on pull requests), and only on master branch
