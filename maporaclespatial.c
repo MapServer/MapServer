@@ -1019,10 +1019,10 @@ static void osFilteritem(layerObj *layer, int function, char *query_str, size_t 
     else
       strlcat( query_str, " AND ", size);
 
-    if (layer->filteritem != NULL) {
-      snprintf (query_str + strlen(query_str), size-strlen(query_str), " %s = ", layer->filteritem);
+   /* if (layer->filteritem != NULL) {
+      snprintf (query_str + strlen(query_str), size-strlen(query_str), " %s = ", layer->filteritem); */
       /* snprintf (query_str + strlen(query_str), " %s = ", layer->filteritem); */
-    }
+  /*  } */
 
     snprintf (query_str + strlen(query_str), size-strlen(query_str), " %s ", layer->filter.native_string);
     /* snprintf(buffer, n, "gfdg %s %s %s", layer->filter.native_string, (layer->filteritem != NULL ? layer->filteritem : ""), ); */
@@ -2945,17 +2945,17 @@ msOracleSpatialGetFieldDefn( layerObj *layer,
   }
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", item );
-  if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+  if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == 0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", item );
   if( strlen(gml_width) > 0
-      && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+      && msOWSLookupMetadata(&(layer->metadata), "G", "width") == 0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
 
   snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",item );
   if( strlen(gml_precision) > 0
-      && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+      && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==0 )
     msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
 }
 
