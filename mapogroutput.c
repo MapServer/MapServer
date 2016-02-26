@@ -493,6 +493,7 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
       char *endptr;
       long feature_id = strtol(shape->values[i],&endptr,10);
       if(endptr && *endptr==0) {
+        /* only set the featureid if it is numeric */
         OGR_F_SetFID(hFeat, feature_id);
       }
     }
@@ -1020,17 +1021,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         eType = OFTString;
 
       hFldDefn = OGR_Fld_Create( name, eType );
-
-      if(pszFeatureid && !strcmp(item->name , pszFeatureid)) {
-        if(eType != OFTInteger
-#if GDAL_VERSION_MAJOR >= 2
-           && eType != OFTInteger64
-#endif
-           ) {
-          /* silently ignore this feature_id as it is not numeric */
-          pszFeatureid = NULL;
-        }
-      }
 
       if( item->width != 0 )
         OGR_Fld_SetWidth( hFldDefn, item->width );
