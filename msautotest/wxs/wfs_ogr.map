@@ -40,6 +40,8 @@
 #
 # Test non-OGR "template" output. 
 # RUN_PARMS: wfsogr10_template.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace&OUTPUTFORMAT=geojson" > [RESULT]
+# Test OGR geojson output. 
+# RUN_PARMS: wfsogr10_geojson.json [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace_fid&OUTPUTFORMAT=ogrgeojson" > [RESULT]
 #
 # Test fetching from two layers with a filter.
 # RUN_PARMS: wfsogr10_twolayer.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=popplace,road&OUTPUTFORMAT=MultiMIDMIF&FILTER=(<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>)(<Filter><BBOX><PropertyName>POINT</PropertyName><Box+srsName=%22EPSG:4326%22><coordinates>-65.86,44.56+-65.76,44.68</coordinates></Box></BBOX></Filter>)" > [RESULT]
@@ -116,6 +118,15 @@ OUTPUTFORMAT
   FORMATOPTION "STORAGE=filesystem"
   FORMATOPTION "FORM=simple"
   FORMATOPTION "FILENAME=result.csv"
+END
+
+OUTPUTFORMAT
+  NAME "ogrgeojson"
+  DRIVER "OGR/GEOJSON"
+  MIMETYPE "application/json; subtype=geojson; charset=utf-8"
+  FORMATOPTION "STORAGE=stream"
+  FORMATOPTION "FORM=SIMPLE"
+  FORMATOPTION "LCO:COORDINATE_PRECISION=5"
 END
 
 OUTPUTFORMAT
@@ -253,7 +264,6 @@ LAYER
   END
 
   TEMPLATE "wfs_ogr.map"
-  DUMP TRUE
 END # Layer
 
 LAYER
@@ -266,7 +276,7 @@ LAYER
     "wfs_title"         "popplace"
     "wfs_description"   "populated places"
     "wfs_featureid"     "UNIQUE_KEY"
-    "wfs_getfeature_formatlist" "csv,ogrgml,shapezip,midmif,multimidmif,geojson"
+    "wfs_getfeature_formatlist" "csv,ogrgml,shapezip,midmif,multimidmif,geojson,ogrgeojson"
     "gml_include_items" "NAME,UNIQUE_KEY,CAPITAL,POP_RANGE"
     "gml_POP_RANGE_alias" "POP_CLASS"
     "gml_types"         "auto"
@@ -277,7 +287,28 @@ LAYER
     "init=epsg:3978"
   END
 
-  DUMP TRUE
+END # Layer
+
+LAYER
+  NAME popplace_fid
+  CONNECTIONTYPE OGR
+  CONNECTION "data/popplace.shp"
+  DATA "popplace"
+
+  METADATA
+    "wfs_title"         "popplace"
+    "wfs_description"   "populated places"
+    "wfs_featureid"     "SGC_CODE"
+    "wfs_getfeature_formatlist" "csv,ogrgml,shapezip,midmif,multimidmif,geojson,ogrgeojson"
+    "gml_include_items" "NAME,UNIQUE_KEY,CAPITAL,POP_RANGE"
+    "gml_POP_RANGE_alias" "POP_CLASS"
+    "gml_types"         "auto"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:3978"
+  END
 END # Layer
 
 # To test wfs_additional_files_in_output

@@ -247,7 +247,7 @@ static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput
 
 static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                             shapeObj *shape, gmlItemListObj *item_list,
-                            int nFirstOGRFieldIndex )
+                            int nFirstOGRFieldIndex, const char *pszFeatureid )
 
 {
   OGRGeometryH hGeom = NULL;
@@ -488,6 +488,14 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   out_field = nFirstOGRFieldIndex;
   for( i = 0; i < item_list->numitems; i++ ) {
     gmlItemObj *item = item_list->items + i;
+
+    if(pszFeatureid && !strcmp(pszFeatureid, item->name)) {
+      char *endptr;
+      long feature_id = strtol(shape->values[i],&endptr,10);
+      if(endptr && *endptr==0) {
+        OGR_F_SetFID(hFeat, feature_id);
+      }
+    }
 
     if( !item->visible )
       continue;
@@ -872,6 +880,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     char *pszWKT;
     int  reproject = MS_FALSE;
     int  nFirstOGRFieldIndex = -1;
+    const char *pszFeatureid = NULL;
 
     if( !layer->resultcache )
       continue;
@@ -901,6 +910,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       else
         value = "Geometry";
     }
+
+    pszFeatureid = msOWSLookupMetadata(&(layer->metadata), "FOG", "featureid");
 
     if( strcasecmp(value,"Point") == 0 )
       eGeomType = wkbPoint;
@@ -1010,6 +1021,23 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
       hFldDefn = OGR_Fld_Create( name, eType );
 
+      if(pszFeatureid && !strcmp(item->name , pszFeatureid)) {
+        if(eType != OFTInteger
+#if GDAL_VERSION_MAJOR >= 2
+           && eType != OFTInteger64
+#endif
+           ) {
+          msSetError( MS_OGRERR,
+                      "requested featureid field (%s) is not numeric",
+                      "msOGRWriteFromQuery()",
+                      name);
+
+          OGR_DS_Destroy( hDS );
+          msOGRCleanupDS( datasource_name );
+          return MS_FAILURE;
+        }
+      }
+
       if( item->width != 0 )
         OGR_Fld_SetWidth( hFldDefn, item->width );
       if( item->precision != 0 )
@@ -1027,6 +1055,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
         OGR_DS_Destroy( hDS );
         msOGRCleanupDS( datasource_name );
+        msGMLFreeItems(item_list);
         return MS_FAILURE;
       }
 
@@ -1113,7 +1142,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
       if( status == MS_SUCCESS )
         status = msOGRWriteShape( layer, hOGRLayer, &resultshape,
-                                  item_list, nFirstOGRFieldIndex );
+                                  item_list, nFirstOGRFieldIndex, pszFeatureid );
 
       if(status != MS_SUCCESS) {
         OGR_DS_Destroy( hDS );
