@@ -1027,14 +1027,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
            && eType != OFTInteger64
 #endif
            ) {
-          msSetError( MS_OGRERR,
-                      "requested featureid field (%s) is not numeric",
-                      "msOGRWriteFromQuery()",
-                      name);
-
-          OGR_DS_Destroy( hDS );
-          msOGRCleanupDS( datasource_name );
-          return MS_FAILURE;
+          /* silently ignore this feature_id as it is not numeric */
+          pszFeatureid = NULL;
         }
       }
 
