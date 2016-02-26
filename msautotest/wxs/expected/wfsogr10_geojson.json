@@ -1,10 +1,8 @@
-Content-Disposition: attachment; filename=result.dat
 Content-Type: application/json; subtype=geojson; charset=utf-8
 
 {
 "type": "FeatureCollection",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3978" } },
-                                                                                
 "features": [
 { "type": "Feature", "id": 0, "properties": { "UNIQUE_KEY": "BACMK", "NAME": "\"Tignish", "CAPITAL": 0, "POP_CLASS": 1 }, "geometry": { "type": "Point", "coordinates": [ 2281604.25, 340848.9375 ] } },
 { "type": "Feature", "id": 1215011, "properties": { "UNIQUE_KEY": "CAGYX", "NAME": "'Cheticamp", "CAPITAL": 0, "POP_CLASS": 2 }, "geometry": { "type": "Point", "coordinates": [ 2503805.5, 427872.65625 ] } },
