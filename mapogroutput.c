@@ -698,6 +698,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   char **file_list = NULL;
   int iLayer, i;
   int bDataSourceNameIsRequestDir = FALSE;
+  int bUseFeatureId = MS_FALSE;
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the output format driver.                                 */
@@ -721,6 +722,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     if( strncasecmp(format->formatoptions[i],"DSCO:",5) == 0 )
       ds_options = CSLAddString( ds_options,
                                  format->formatoptions[i] + 5 );
+  }
+  if(!strcasecmp("true",msGetOutputFormatOption(format,"USE_FEATUREID","false"))) {
+    bUseFeatureId = MS_TRUE;
   }
 
   /* ==================================================================== */
@@ -912,7 +916,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         value = "Geometry";
     }
 
-    pszFeatureid = msOWSLookupMetadata(&(layer->metadata), "FOG", "featureid");
+    if(bUseFeatureId)
+      pszFeatureid = msOWSLookupMetadata(&(layer->metadata), "FOG", "featureid");
 
     if( strcasecmp(value,"Point") == 0 )
       eGeomType = wkbPoint;
