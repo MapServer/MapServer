@@ -762,10 +762,9 @@ int msQueryByFilter(mapObj *map)
 
     search_rect = map->query.rect;
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection))) {
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
+    if(lp->project)
       msProjectRect(&(map->projection), &(lp->projection), &search_rect); /* project the searchrect to source coords */
-    } else
-      lp->project = MS_FALSE;
 #endif
 
     status = msLayerWhichShapes(lp, search_rect, MS_TRUE);
@@ -809,10 +808,8 @@ int msQueryByFilter(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectShape(&(lp->projection), &(map->projection), &shape);
-      else
-        lp->project = MS_FALSE;
 #endif
 
       /* Should we skip this feature? */
@@ -979,10 +976,9 @@ int msQueryByRect(mapObj *map)
     }
 
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
+    if(lp->project)
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-    else
-      lp->project = MS_FALSE;
 #endif
 
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
@@ -1031,10 +1027,8 @@ int msQueryByRect(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectShape(&(lp->projection), &(map->projection), &shape);
-      else
-        lp->project = MS_FALSE;
 #endif
 
       if(msRectContained(&shape.bounds, &searchrectInMapProj) == MS_TRUE) { /* if the whole shape is in, don't intersect */
@@ -1142,7 +1136,7 @@ int msQueryByFeatures(mapObj *map)
 
   /* conditions may have changed since this layer last drawn, so set
      layer->project true to recheck projection needs (Bug #673) */
-  slp->project = MS_TRUE;
+  slp->project = msProjectionsDiffer(&(slp->projection), &(map->projection));
 
   if(map->query.layer < 0 || map->query.layer >= map->numlayers)
     start = map->numlayers-1;
@@ -1171,7 +1165,7 @@ int msQueryByFeatures(mapObj *map)
 
     /* conditions may have changed since this layer last drawn, so set
        layer->project true to recheck projection needs (Bug #673) */
-    lp->project = MS_TRUE;
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
@@ -1234,11 +1228,8 @@ int msQueryByFeatures(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(slp->project && msProjectionsDiffer(&(slp->projection), &(map->projection))) {
+      if(slp->project)
         msProjectShape(&(slp->projection), &(map->projection), &selectshape);
-        msComputeBounds(&selectshape); /* recompute the bounding box AFTER projection */
-      } else
-        slp->project = MS_FALSE;
 #endif
 
       /* identify target shapes */
@@ -1250,10 +1241,8 @@ int msQueryByFeatures(mapObj *map)
       searchrect.maxy += tolerance;
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-      else
-        lp->project = MS_FALSE;
 #endif
 
       status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
@@ -1309,10 +1298,8 @@ int msQueryByFeatures(mapObj *map)
         }
 
 #ifdef USE_PROJ
-        if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+        if(lp->project)
           msProjectShape(&(lp->projection), &(map->projection), &shape);
-        else
-          lp->project = MS_FALSE;
 #endif
 
         switch(selectshape.type) { /* may eventually support types other than polygon on line */
@@ -1545,10 +1532,9 @@ int msQueryByPoint(mapObj *map)
     /* identify target shapes */
     searchrect = rect;
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
+    if(lp->project)
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-    else
-      lp->project = MS_FALSE;
 #endif
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
     if(status == MS_DONE) { /* no overlap */
@@ -1595,10 +1581,8 @@ int msQueryByPoint(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectShape(&(lp->projection), &(map->projection), &shape);
-      else
-        lp->project = MS_FALSE;
 #endif
 
       d = msDistancePointToShape(&(map->query.point), &shape);
@@ -1767,10 +1751,9 @@ int msQueryByShape(mapObj *map)
     searchrect.maxy += tolerance;
 
 #ifdef USE_PROJ
-    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+    lp->project = msProjectionsDiffer(&(lp->projection), &(map->projection));
+    if(lp->project)
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); /* project the searchrect to source coords */
-    else
-      lp->project = MS_FALSE;
 #endif
 
     status = msLayerWhichShapes(lp, searchrect, MS_TRUE);
@@ -1817,10 +1800,8 @@ int msQueryByShape(mapObj *map)
       }
 
 #ifdef USE_PROJ
-      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
+      if(lp->project)
         msProjectShape(&(lp->projection), &(map->projection), &shape);
-      else
-        lp->project = MS_FALSE;
 #endif
 
       switch(qshape->type) { /* may eventually support types other than polygon or line */

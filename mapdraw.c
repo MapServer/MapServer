@@ -665,9 +665,9 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(layer->compositer && !layer->compositer->next && layer->compositer->opacity == 0) return MS_SUCCESS; /* layer is completely transparent, skip it */
   
 
-  /* conditions may have changed since this layer last drawn, so set
-     layer->project true to recheck projection needs (Bug #673) */
-  layer->project = MS_TRUE;
+  /* conditions may have changed since this layer last drawn, so retest
+     layer->project (Bug #673) */
+  layer->project = msProjectionsDiffer(&(layer->projection),&(map->projection));
 
   /* make sure labelcache setting is set correctly if postlabelcache is set. This is done by the parser but
      may have been altered by a mapscript. see #5142 */
@@ -1182,9 +1182,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if(!msLayerIsVisible(map, layer)) return(MS_SUCCESS); /* not an error, just nothing to do */
 
-  /* conditions may have changed since this layer last drawn, so set
-     layer->project true to recheck projection needs (Bug #673) */
-  layer->project = MS_TRUE;
+  /* conditions may have changed since this layer last drawn, so reset
+     layer->project to recheck projection needs (Bug #673) */
+  layer->project = msProjectionsDiffer(&(layer->projection),&(map->projection));
 
   /* set annotation status */
   annotate = msEvalContext(map, layer, layer->labelrequires);
@@ -1511,10 +1511,8 @@ int circleLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj
   if (layer->transform == MS_TRUE) {
 
 #ifdef USE_PROJ
-    if (layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+    if (layer->project)
       msProjectPoint(&layer->projection, &map->projection, &center);
-    else
-      layer->project = MS_FALSE;
 #endif
 
     center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
@@ -1542,10 +1540,8 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
   pointObj *point;
 
 #ifdef USE_PROJ
-  if (layer->project && layer->transform == MS_TRUE && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+  if (layer->project && layer->transform == MS_TRUE)
     msProjectShape(&layer->projection, &map->projection, shape);
-  else
-    layer->project = MS_FALSE;
 #endif
 
   for (l = 0; l < layer->class[c]->numlabels; l++)
@@ -1840,10 +1836,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   }
 
 #ifdef USE_PROJ
-  if (layer->project && layer->transform == MS_TRUE && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+  if (layer->project && layer->transform == MS_TRUE)
     msProjectShape(&layer->projection, &map->projection, shape);
-  else
-    layer->project = MS_FALSE;
 #endif
 
   /* check if we'll need the unclipped shape */
@@ -2028,10 +2022,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
   labelObj *label=NULL;
 
 #ifdef USE_PROJ
-  if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+  if(layer->transform == MS_TRUE && layer->project)
     msProjectPoint(&layer->projection, &map->projection, point);
-  else
-    layer->project = MS_FALSE;
 #endif
 
   if(labeltext && theclass->numlabels > 0) {
