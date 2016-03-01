@@ -416,7 +416,6 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   CPLErr      eErr;
   rasterLayerInfo *rlinfo;
   rectObj     searchrect;
-  int         needReproject = MS_FALSE;
 
   rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
@@ -426,12 +425,9 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /* -------------------------------------------------------------------- */
   searchrect = queryRect;
 #ifdef USE_PROJ
-  if(layer->project
-      && msProjectionsDiffer(&(layer->projection), &(map->projection))) {
+  layer->project = msProjectionsDiffer(&(layer->projection), &(map->projection));
+  if(layer->project)
     msProjectRect(&(map->projection), &(layer->projection), &searchrect);
-    needReproject = MS_TRUE;
-  } else
-    layer->project = MS_FALSE;
 #endif
 
   /* -------------------------------------------------------------------- */
@@ -582,7 +578,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
       /* in sPixelLocationInLayerSRS, so that we can return those */
       /* coordinates if we have a hit */
       sReprojectedPixelLocation = sPixelLocation;
-      if( needReproject )
+      if( layer->project )
         msProjectPoint( &(layer->projection), &(map->projection),
                         &sReprojectedPixelLocation);
 

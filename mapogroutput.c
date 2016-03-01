@@ -883,7 +883,6 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     gmlItemListObj *item_list = NULL;
     const char *value;
     char *pszWKT;
-    int  reproject = MS_FALSE;
     int  nFirstOGRFieldIndex = -1;
     const char *pszFeatureid = NULL;
 
@@ -893,11 +892,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     /* -------------------------------------------------------------------- */
     /*      Will we need to reproject?                                      */
     /* -------------------------------------------------------------------- */
-    if(layer->transform == MS_TRUE
-        && layer->project
-        && msProjectionsDiffer(&(layer->projection),
-                               &(layer->map->projection)) )
-      reproject = MS_TRUE;
+    if(layer->transform == MS_TRUE)
+        layer->project = msProjectionsDiffer(&(layer->projection),
+                               &(layer->map->projection));
 
     /* -------------------------------------------------------------------- */
     /*      Establish the geometry type to use for the created layer.       */
@@ -1119,7 +1116,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         }
       }
 
-      if( reproject ) {
+      if( layer->project ) {
         status =
           msProjectShape(&layer->projection, &layer->map->projection,
                          &resultshape);

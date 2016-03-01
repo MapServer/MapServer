@@ -205,10 +205,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     pInfo->pboundinglines[0].point[1].y = rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+    layer->project = msProjectionsDiffer(&(layer->projection), &(layer->map->projection));
+    if(layer->project)
       msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[0]);
-    else
-      layer->project = MS_FALSE;
 #endif
 
     /*
@@ -222,10 +221,8 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     pInfo->pboundinglines[1].point[1].y = rectMapCoordinates.miny;
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+    if(layer->project)
       msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[1]);
-    else
-      layer->project = MS_FALSE;
 #endif
 
     /*
@@ -239,10 +236,8 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     pInfo->pboundinglines[2].point[1].y   = rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+    if(layer->project)
       msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[2]);
-    else
-      layer->project = MS_FALSE;
 #endif
 
     /*
@@ -256,10 +251,8 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
     pInfo->pboundinglines[3].point[1].y = rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
+    if(layer->project)
       msProjectLine(&layer->map->projection, &layer->projection, &pInfo->pboundinglines[3]);
-    else
-      layer->project = MS_FALSE;
 #endif
   }
 
@@ -680,7 +673,7 @@ graticuleIntersectionObj *msGraticuleLayerGetIntersectionPoints(mapObj *map,
     msCopyShape(&shapegrid, &tmpshape);
     /* status = msDrawShape(map, layer, &tmpshape, image, -1); */
 
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+    if(layer->project)
       msProjectShape(&layer->projection, &map->projection, &shapegrid);
 
     msClipPolylineRect(&shapegrid, cliprect);
@@ -1045,7 +1038,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   ptPoint = pShape->line->point[0];
 
 #ifdef USE_PROJ
-  if(pLayer->project && msProjectionsDiffer( &pLayer->projection, &pLayer->map->projection ))
+  if(pLayer->project)
     msProjectShape( &pLayer->projection, &pLayer->map->projection, pShape );
 #endif
 
@@ -1087,7 +1080,7 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
     msTransformPixelToShape( pShape, pLayer->map->extent, pLayer->map->cellsize );
 
 #ifdef USE_PROJ
-  if(pLayer->project && msProjectionsDiffer( &pLayer->map->projection, &pLayer->projection ))
+  if(pLayer->project)
     msProjectShape( &pLayer->map->projection, &pLayer->projection, pShape );
 #endif
 
