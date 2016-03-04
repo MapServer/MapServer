@@ -981,7 +981,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     }
 
     if( srs != NULL )
-      OSRDestroySpatialReference( srs );
+      OSRRelease( srs );
 
     /* -------------------------------------------------------------------- */
     /*      Create appropriate attributes on this layer.                    */
