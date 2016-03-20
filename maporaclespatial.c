@@ -38,6 +38,7 @@
 
 #include "mapserver.h"
 #include "maptime.h" 
+#include "mapows.h"
 #include <assert.h>
 
 
