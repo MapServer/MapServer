@@ -174,7 +174,7 @@ static cairoFaceCache* getCairoFontFace(cairoCacheData *cache, FT_Face ftface) {
   cur->options = cairo_font_options_create();
   cairo_font_options_set_hint_style(cur->options,CAIRO_HINT_STYLE_NONE);
   return cur;
-} 
+}
 
 #define msCairoSetSourceColor(cr, c) cairo_set_source_rgba((cr),(c)->red/255.0,(c)->green/255.0,(c)->blue/255.0,(c)->alpha/255.0);
 
@@ -1043,8 +1043,7 @@ int msRenderRasterizedSVGSymbol(imageObj *img, double x, double y, symbolObj *sy
       height = surface_h = symbol->sizey;
     }
     if (style->rotation != 0) {
-      surface_w = MS_NINT(width * 1.415);
-      surface_h = MS_NINT(height * 1.415);
+      surface_w = surface_h = MS_NINT(MS_MAX(height, width) * 1.415);
     }
 
     surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, surface_w, surface_h);
