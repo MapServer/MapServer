@@ -285,7 +285,7 @@ band_type addToTable(UTFGridRenderer *r, shapeObj *p)
   utfvalue = encodeForRendering(utfvalue);
 
   /* Data added to the table */
-  r->data->table[r->data->counter].datavalues = msEvalTextExpressionJSonEscape(&r->utflayer->utfdata, p);
+  r->data->table[r->data->counter].datavalues = msStrdup(msEvalTextExpressionJSonEscape(&r->utflayer->utfdata, p));
 
   /* If UTFITEM is set in the mapfile we add its value to the table */
   if(r->useutfitem)
