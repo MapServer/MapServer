@@ -119,10 +119,10 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
     valueToFree = (char *) msSmallMalloc(sizeof(char*)*n);
     snprintf(valueToFree, n, "%s%s%s", (value ? value : ""), (value ? ":" : ""), lp->name);
 
-    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST valueToFree);
+    psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST valueToFree);
     msFree(valueToFree);
   } else {
-    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST lp->name);
+    psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "Name", BAD_CAST lp->name);
   }
 
   if (lp->name && strlen(lp->name) > 0 &&
@@ -140,12 +140,12 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
   if (!value)
     value =(const char*)lp->name;
 
-  psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Title", BAD_CAST value);
+  psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "Title", BAD_CAST value);
 
 
   value = msOWSLookupMetadataWithLanguage(&(lp->metadata), "FO", "abstract", validate_language);
   if (value)
-    psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "Abstract", BAD_CAST value);
+    psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "Abstract", BAD_CAST value);
 
 
 
@@ -165,15 +165,15 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
     tokens = msStringSplit(valueToFree, ' ', &n);
     if (tokens && n > 0) {
       if( nWFSVersion == OWS_1_1_0 )
-        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
+        psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "DefaultSRS", BAD_CAST tokens[0]);
       else
-        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "DefaultCRS", BAD_CAST tokens[0]);
+        psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "DefaultCRS", BAD_CAST tokens[0]);
       for (i=1; i<n; i++)
       {
         if( nWFSVersion == OWS_1_1_0 )
-          psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]);
+          psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "OtherSRS", BAD_CAST tokens[i]);
         else
-          psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "OtherCRS", BAD_CAST tokens[i]);
+          psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "OtherCRS", BAD_CAST tokens[i]);
       }
 
       msFreeCharArray(tokens, n);
@@ -198,7 +198,7 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
     tokens = msStringSplit(formats_list, ',', &n);
 
     for( iformat = 0; iformat < n; iformat++ )
-      xmlNewChild(psNode, NULL, BAD_CAST "Format",
+      xmlNewTextChild(psNode, NULL, BAD_CAST "Format",
                   BAD_CAST tokens[iformat] );
     msFree( formats_list );
     msFreeCharArray( tokens, n );
@@ -236,7 +236,7 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
     }
     else
     {
-        psNode = xmlNewChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
+        psNode = xmlNewTextChild(psRootNode, NULL, BAD_CAST "MetadataURL", BAD_CAST value);
 
         value = msOWSLookupMetadata(&(lp->metadata), "FO", "metadataurl_format");
 

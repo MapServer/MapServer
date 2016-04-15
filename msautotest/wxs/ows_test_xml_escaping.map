@@ -1,0 +1,109 @@
+#
+# Test XML escaping
+#
+# REQUIRES: INPUT=GDAL OUTPUT=PNG SUPPORTS=WFS SUPPORTS=WMS
+#
+# Capabilities
+# RUN_PARMS: wfs10_test_xml_escaping.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities" > [RESULT_DEMIME_DEVERSION]
+# RUN_PARMS: wfs11_test_xml_escaping.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.1.0&REQUEST=GetCapabilities" > [RESULT_DEMIME_DEVERSION]
+# RUN_PARMS: wfs20_test_xml_escaping.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" > [RESULT_DEMIME_DEVERSION]
+# RUN_PARMS: wms111_test_xml_escaping.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities" > [RESULT_DEMIME_DEVERSION]
+# RUN_PARMS: wms130_test_xml_escaping.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities" > [RESULT_DEMIME_DEVERSION]
+
+MAP
+
+NAME XML_ESCAPE_TEST
+STATUS ON
+SIZE 400 300
+#EXTENT   2018000 -73300 3410396 647400
+EXTENT -67.5725 42 -58.9275 48.5
+UNITS METERS
+IMAGECOLOR 255 255 255
+SHAPEPATH ./data
+SYMBOLSET etc/symbols.sym
+FONTSET etc/fonts.txt
+
+#
+# Start of web interface definition
+#
+WEB
+
+ IMAGEPATH "/tmp/ms_tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "ows_updatesequence"   "123"
+    "ows_title"		   "title & title"
+    "ows_onlineresource"   "http://localhost/path/to/ows_test_xml_escaping?myparam=something&"
+    "ows_srs"		   "EPSG:4326 EPSG:4269"
+    "ows_abstract"    "abstract&abstract"
+    "ows_keywordlist" "keyword&keyword"
+    "ows_service_onlineresource" "http://localhost"
+    "ows_fees" "fees&fees"
+    "ows_accessconstraints" "accessconstraints&accessconstraints"
+    "ows_addresstype" "addresstype&addresstype"
+    "ows_address"     "address&address"
+    "ows_city" "city&city"
+    "ows_stateorprovince" "stateorprovince&stateorprovince"
+    "ows_postcode" "postcode&postcode"
+    "ows_country" "country&country"
+    "ows_contactelectronicmailaddress" "contactelectronicmailaddress&contactelectronicmailaddress"
+    "ows_contactvoicetelephone" "contactvoicetelephone&contactvoicetelephone"
+    "ows_contactfacsimiletelephone" "contactfacsimiletelephone&contactfacsimiletelephone"
+    "ows_contactperson" "contactperson&contactperson"
+    "ows_contactorganization" "contactorganization&contactorganization"
+    "ows_contactposition" "contactposition&contactposition"
+    "ows_hoursofservice" "hoursofservice&_hoursofservice"
+    "ows_contactinstructions" "contactinstructions&contactinstructions"
+    "ows_role" "role&role"
+    "ows_enable_request" "*" 
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+#    "init=./data/epsg2:42304"
+#    "init=epsg:42304"
+END
+
+
+#
+# Start of layer definitions
+#
+
+
+
+LAYER
+  NAME province
+  DATA province
+  METADATA
+    "ows_title"         "title&title"
+    "ows_description"   "description&description"
+    "ows_abstract"   "abstract&abstract"
+    "wfs_featureid"     "NAME_E"
+    "wfs_metadataurl_href" "http://path/to/metadata_url"
+    "wfs_metadataurl_format" "text/xml" # WFS 1.1 only
+    "wfs_metadataurl_type" "FGDC" # WFS 1.1 only
+    "wfs_metadataurl_about" "about&about" # WFS 2.0 only
+    "gml_include_items" "NAME_E"
+    "gml_default_items"  ""
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=./data/epsg2:42304"
+#    "init=epsg:42304"
+  END
+
+  DUMP TRUE
+  CLASSITEM "Name_e"
+
+  CLASS
+    NAME "Province"
+    COLOR 200 255 0
+    OUTLINECOLOR 120 120 120
+  END
+END # Layer
+
+
+END # Map File

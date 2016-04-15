@@ -163,7 +163,7 @@ xmlNodePtr msWFSConstraintDefaultValue(xmlNsPtr psNs, xmlNsPtr psNsOws, const ch
   xmlNewProp(psRootNode, BAD_CAST "name", BAD_CAST name);
 
   xmlNewChild(psRootNode, psNsOws, BAD_CAST "NoValues", NULL );
-  xmlNewChild(psRootNode, psNsOws, BAD_CAST "DefaultValue", BAD_CAST value);
+  xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "DefaultValue", BAD_CAST value);
 
   return psRootNode;
 }
@@ -334,9 +334,9 @@ static void msWFSAddInspireDSID(mapObj *map,
         {
             xmlNodePtr pSDSI = xmlNewNode(psNsInspireDls, BAD_CAST "SpatialDataSetIdentifier");
             xmlAddChild(pDlsExtendedCapabilities, pSDSI);
-            xmlNewChild(pSDSI, psNsInspireCommon, BAD_CAST "Code", BAD_CAST tokensCode[i]);
+            xmlNewTextChild(pSDSI, psNsInspireCommon, BAD_CAST "Code", BAD_CAST tokensCode[i]);
             if( ntokensNS > 0 && tokensNS[i][0] != '\0' )
-                xmlNewChild(pSDSI, psNsInspireCommon, BAD_CAST "Namespace", BAD_CAST tokensNS[i]);
+                xmlNewTextChild(pSDSI, psNsInspireCommon, BAD_CAST "Namespace", BAD_CAST tokensNS[i]);
         }
         msFreeCharArray(tokensCode, ntokensCode);
         if( ntokensNS > 0 )
