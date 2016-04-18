@@ -46,6 +46,7 @@
 
 #ifdef USE_OGR
 
+// GDAL 1.x API
 #include "ogr_api.h"
 
 typedef struct ms_ogr_file_info_t {
@@ -59,7 +60,8 @@ typedef struct ms_ogr_file_info_t {
   int         nTileId;                  /* applies on the tiles themselves. */
 
   struct ms_ogr_file_info_t *poCurTile; /* exists on tile index, -> tiles */
-  rectObj     rect;                     /* set by WhichShapes */
+  bool        rect_is_defined;
+  rectObj     rect;                     /* set by TranslateMsExpression (possibly) and WhichShapes */
 
   int         last_record_index_read;
 
@@ -1258,6 +1260,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
   psInfo->nTileId = 0;
   psInfo->poCurTile = NULL;
+  psInfo->rect_is_defined = false;
   psInfo->rect.minx = psInfo->rect.maxx = 0;
   psInfo->rect.miny = psInfo->rect.maxy = 0;
   psInfo->last_record_index_read = -1;
@@ -1348,155 +1351,550 @@ static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 
 #ifdef USE_OGR
 
-#if 0 /*left over code from filter translation development */
+// http://www.sqlite.org/lang_expr.html
+// http://www.gaia-gis.it/gaia-sins/spatialite-sql-4.3.0.html
+
+char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node, const char *dialect) {
+    msOGRFileInfo *info = (msOGRFileInfo *)layer->layerinfo;
+    tokenListNodeObjPtr n = *node;
+    if (!n) return NULL;
+    char *out = NULL;
+
+    switch(n->token) {
+    case MS_TOKEN_LOGICAL_AND:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " AND ");
+        break;
+    case MS_TOKEN_LOGICAL_OR:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " OR ");
+        break;
+    case MS_TOKEN_LOGICAL_NOT:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " NOT ");
+        break;
+    case MS_TOKEN_LITERAL_NUMBER:
+        out = (char *)msSmallMalloc(80);
+        snprintf(out, 80, "%lf",  n->tokenval.dblval);
+        break;
+    case MS_TOKEN_LITERAL_STRING: {
+        char *stresc = msOGREscapeSQLParam(layer, n->tokenval.strval);
+        out = (char *)msSmallMalloc(strlen(stresc)+3);
+        snprintf(out, 80, "'%s'", stresc);
+        msFree(stresc);
+        break;
+    }
+    case MS_TOKEN_LITERAL_TIME:
+        // seems to require METADATA gml_types => auto
+        out = (char *)msSmallMalloc(80);
+        if (n->tokenval.tmval.tm_zone)
+            snprintf(out, 80, "'%d-%02d-%02dT%02d:%02d:%02d%s'",
+                     n->tokenval.tmval.tm_year+1900, n->tokenval.tmval.tm_mon+1, n->tokenval.tmval.tm_mday,
+                     n->tokenval.tmval.tm_hour, n->tokenval.tmval.tm_min, n->tokenval.tmval.tm_sec,
+                     n->tokenval.tmval.tm_zone);
+        else
+            snprintf(out, 80, "'%d-%02d-%02dT%02d:%02d:%02d'",  
+                     n->tokenval.tmval.tm_year+1900, n->tokenval.tmval.tm_mon+1, n->tokenval.tmval.tm_mday,
+                     n->tokenval.tmval.tm_hour, n->tokenval.tmval.tm_min, n->tokenval.tmval.tm_sec);
+        break;
+    case MS_TOKEN_LITERAL_SHAPE: {
+        // assumed to be in right srs after FLTGetSpatialComparisonCommonExpression
+        char *wkt = msShapeToWKT(n->tokenval.shpval);
+        const char *col = OGR_L_GetGeometryColumn(info->hLayer); // which geom field??
+        out = (char *)msSmallMalloc(strlen(wkt)+strlen(col)+35);
+        sprintf(out, "ST_GeomFromText('%s',ST_SRID(\"%s\"))", wkt, col);
+        msFree(wkt);
+        break;
+    }
+    case MS_TOKEN_LITERAL_BOOLEAN:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, n->tokenval.dblval == 0 ? "FALSE" : "TRUE");
+        break;
+    case MS_TOKEN_COMPARISON_EQ:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " = ");
+        break;
+    case MS_TOKEN_COMPARISON_NE:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " != ");
+        break;
+    case MS_TOKEN_COMPARISON_GT:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " > ");
+        break;
+    case MS_TOKEN_COMPARISON_LT:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " < ");
+        break;
+    case MS_TOKEN_COMPARISON_LE:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " <= ");
+        break;
+    case MS_TOKEN_COMPARISON_GE:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " >= ");
+        break;
+    case MS_TOKEN_COMPARISON_IEQ:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " = ");
+        break;
+    case MS_TOKEN_COMPARISON_IN:
+        out = (char *)msSmallMalloc(10);
+        sprintf(out, " IN ");
+        break;
+    // the origin may be mapfile (complex regexes, layer->map.query.filter.string == NULL, regex may have //) or 
+    // OGC Filter (simple patterns only, layer->map.query.filter.string != NULL)
+    case MS_TOKEN_COMPARISON_RE: 
+    case MS_TOKEN_COMPARISON_IRE: 
+    case MS_TOKEN_COMPARISON_LIKE: {
+        int case_sensitive = n->token == MS_TOKEN_COMPARISON_RE || n->token == MS_TOKEN_COMPARISON_LIKE;
+        // in PostgreSQL and OGR: LIKE (case sensitive) and ILIKE (case insensitive)
+        // in SQLite: LIKE (case insensitive) and GLOB (case sensitive)
+        const char *op = case_sensitive ? "LIKE" : "ILIKE";
+        char wild_any =  '%';
+        char wild_one = '_';
+
+        if (strcmp(dialect, "SQLite") == 0) {
+            if (case_sensitive) {
+                op = "GLOB";
+                wild_any = '*';
+                wild_one = '?';
+            } else {
+                op = "LIKE";
+            }
+        }
+
+        n = n->next;
+        if (n->token != MS_TOKEN_LITERAL_STRING) return NULL;
+
+        char *regex = msStrdup(n->tokenval.strval);
+        int complex_regex = *n->tokenval.strval == '/'; // could be non-complex but that is soo corner case
+
+        // PostgreqSQL has POSIX regexes, SQLite does not by default, OGR does not
+        if (complex_regex) {
+            if (strcmp(dialect, "PostgreSQL") != 0) {
+                msFree(regex);
+                return NULL;
+            }
+            // remove //
+            regex++;
+            regex[strlen(regex) - 1] = '\0';
+            if (case_sensitive)
+                op = "~";
+            else
+                op = "~*";
+        }
+
+        char *re = (char *) msSmallMalloc(strlen(regex)+3);
+        size_t i = 0, j = 0;
+        re[j++] = '\'';
+        while (i < strlen(regex)) {
+            char c = regex[i];
+            char c_next = regex[i+1];
+                
+            if (c == '.' && c_next == '*') {
+                i++;
+                c = wild_any;
+            }
+            else if (c == '.')
+                c = wild_one;
+
+            if (i == 0 && c == '^') {
+                i++;
+                continue;
+            }
+                
+            re[j++] = c;
+            i++;
+                
+        }
+        re[j++] = '\'';
+        re[j] = '\0';
+
+        out = (char *)msSmallMalloc(strlen(n->tokenval.strval)+10);
+        sprintf(out, " %s %s", op, re);
+        msFree(re);
+        msFree(regex);
+        break;
+    }
+    case MS_TOKEN_COMPARISON_INTERSECTS:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Intersects");
+        break;
+    case MS_TOKEN_COMPARISON_DISJOINT:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Disjoint");
+        break;
+    case MS_TOKEN_COMPARISON_TOUCHES:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Touches");
+        break;
+    case MS_TOKEN_COMPARISON_OVERLAPS:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Overlaps");
+        break;
+    case MS_TOKEN_COMPARISON_CROSSES:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Crosses");
+        break;
+    case MS_TOKEN_COMPARISON_WITHIN:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Within");
+        break;
+    case MS_TOKEN_COMPARISON_DWITHIN:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Distance");
+        break;
+    case MS_TOKEN_COMPARISON_BEYOND:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Distance");
+        break;
+    case MS_TOKEN_COMPARISON_CONTAINS:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Contains");
+        break;
+    case MS_TOKEN_COMPARISON_EQUALS:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Equals");
+        break;
+    case MS_TOKEN_FUNCTION_LENGTH:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Length");
+        break;
+    case MS_TOKEN_FUNCTION_AREA:
+        out = (char *)msSmallMalloc(15);
+        sprintf(out, "ST_Area");
+        break;
+    case MS_TOKEN_BINDING_DOUBLE: {
+        char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
+        out = (char *)msSmallMalloc(strlen(stresc)+30);
+        const char *type = "float(16)";
+        if (strcmp(dialect, "SQLite") == 0)
+            type = "REAL";
+        else if (strcmp(dialect, "PostgreSQL") == 0)
+            type = "double precision";
+        sprintf(out, "CAST(\"%s\" AS %s)", stresc, type);
+        msFree(stresc);
+        break;
+    }
+    case MS_TOKEN_BINDING_INTEGER: {
+        char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
+        out = (char *)msSmallMalloc(strlen(stresc)+20);
+        sprintf(out, "CAST(\"%s\" AS integer)", stresc);
+        msFree(stresc);
+        break;
+    }
+    case MS_TOKEN_BINDING_STRING: {
+        char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
+        out = (char *)msSmallMalloc(strlen(stresc)+30);
+        sprintf(out, "CAST(\"%s\" AS text)", stresc);
+        msFree(stresc);
+        break;
+    }
+    case MS_TOKEN_BINDING_TIME: {
+        // won't get here unless col is parsed as time and they are not
+        char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
+        out = (char *)msSmallMalloc(strlen(stresc)+20);
+        sprintf(out, "\"%s\"", stresc);
+        msFree(stresc);
+        break;
+    }
+    case MS_TOKEN_BINDING_SHAPE: {
+        const char *col = OGR_L_GetGeometryColumn(info->hLayer); // which geom field??
+        out = (char *)msSmallMalloc(strlen(col)+10);
+        sprintf(out, "\"%s\"", col);
+        break;
+    }
+
+    // unhandled below until default
+
+    case MS_TOKEN_FUNCTION_TOSTRING:
+    case MS_TOKEN_FUNCTION_COMMIFY:
+    case MS_TOKEN_FUNCTION_ROUND:
+    case MS_TOKEN_FUNCTION_FROMTEXT:
+    case MS_TOKEN_FUNCTION_BUFFER:
+    case MS_TOKEN_FUNCTION_DIFFERENCE:
+    case MS_TOKEN_FUNCTION_SIMPLIFY:
+    case MS_TOKEN_FUNCTION_SIMPLIFYPT:
+    case MS_TOKEN_FUNCTION_GENERALIZE:
+    case MS_TOKEN_FUNCTION_SMOOTHSIA:
+    case MS_TOKEN_FUNCTION_JAVASCRIPT:
+    case MS_TOKEN_FUNCTION_UPPER:
+    case MS_TOKEN_FUNCTION_LOWER:
+    case MS_TOKEN_FUNCTION_INITCAP:
+    case MS_TOKEN_FUNCTION_FIRSTCAP:
+    case MS_TOKEN_BINDING_MAP_CELLSIZE:
+    case MS_TOKEN_BINDING_DATA_CELLSIZE:
+    case MS_PARSE_TYPE_BOOLEAN:
+    case MS_PARSE_TYPE_STRING:
+    case MS_PARSE_TYPE_SHAPE:
+        break;
+
+    default:
+        if (n->token < 128) {
+            char c = n->token;
+            out = (char *)msSmallMalloc(2);
+            sprintf(out, "%c", c);
+        }
+        break;
+    }
+
+    n = n->next;
+    *node = n;
+    return out;
+}
+
+bool msOGRIsComparisonToken(int token) {
+    return 
+        token == MS_TOKEN_COMPARISON_EQ ||
+        token == MS_TOKEN_COMPARISON_NE ||
+        token == MS_TOKEN_COMPARISON_GT ||
+        token == MS_TOKEN_COMPARISON_LT ||
+        token == MS_TOKEN_COMPARISON_LE ||
+        token == MS_TOKEN_COMPARISON_GE ||
+        token == MS_TOKEN_COMPARISON_IEQ;
+}
+
 /**********************************************************************
  *                     msOGRTranslateMsExpressionToOGRSQL()
  *
- * Tries to translate a mapserver expression to OGR SQL, and also
- * try to extract spatial filter
+ * Tries to translate a mapserver expression to OGR or driver native SQL
  **********************************************************************/
-static char* msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
-                                          expressionObj* psFilter,
-                                          rectObj* psRect)
+static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
+                                              expressionObj* psFilter,
+                                              char *filteritem)
 {
-    char* msSQLExpression = NULL;
-    rectObj sBBOX;
-    int sBBOXValid = MS_FALSE;
-    tokenListNodeObjPtr node = NULL;
-    char *stresc = NULL;
-    char *snippet = NULL;
-    const char* strtmpl = NULL;
-    int bIsIntersectRectangle = MS_FALSE;
+    char *result = NULL;
 
-    node = psFilter->tokens;
-    while (node != NULL) {      
+    msOGRFileInfo *info = (msOGRFileInfo *)layer->layerinfo;
 
-      switch(node->token) {
+    // reasons to not produce native string: not simple layer, or an explicit deny
+    char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
+    if ((info->nLayerIndex == -1) || (do_this && strcmp(do_this, "NO") == 0)) {
+        return MS_SUCCESS;
+    }
 
-        /* literal tokens */
+    // GDAL 1.x API
+    OGRSFDriverH dr = OGR_DS_GetDriver(info->hDS);
+    const char *name = OGR_Dr_GetName(dr);
+    const char *dialect = NULL;
+    if (strcmp(name, "SQLite") == 0) {
+        bool have_spatialite = false;
 
-        case MS_TOKEN_LITERAL_NUMBER:
-          snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
-          sprintf(snippet, "%lf", node->tokenval.dblval);
-          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
-          msFree(snippet);
-          break;
-        case MS_TOKEN_LITERAL_STRING:
-          stresc = msOGREscapeSQLParam(layer, node->tokenval.strval);
-          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
-          sprintf(snippet, "'%s'", stresc);
-          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
-          msFree(snippet);
-          msFree(stresc);
-          break;
+        CPLPushErrorHandler(CPLQuietErrorHandler);
 
-        case MS_TOKEN_BINDING_DOUBLE:
-        case MS_TOKEN_BINDING_INTEGER:
-        case MS_TOKEN_BINDING_STRING:
-          if(node->token == MS_TOKEN_BINDING_STRING || node->next->token == MS_TOKEN_COMPARISON_RE || node->next->token == MS_TOKEN_COMPARISON_IRE)
-            strtmpl = "CAST(%s AS CHARACTER)"; /* explicit cast necessary for certain operators */
-          else
-            strtmpl = "%s";
-          stresc = msLayerEscapePropertyName(layer, node->tokenval.bindval.item);
-          snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(stresc));
-          sprintf(snippet, strtmpl, stresc);
-          msSQLExpression = msStringConcatenate(msSQLExpression, snippet);
-          msFree(snippet);
-          msFree(stresc);
-          break;
+        // test for Spatialite support in driver
+        const char *test_spatialite = "SELECT spatialite_version()";
+        OGRLayerH l = OGR_DS_ExecuteSQL(info->hDS, test_spatialite, NULL, NULL);
+        if (l) {
+            OGR_DS_ReleaseResultSet(info->hDS, l);
+            have_spatialite = true;
+        }
 
-    /* spatial comparison tokens */
+        // test for Spatialite enabled db
+        if (have_spatialite) {
+            have_spatialite = false;
+            const char *test_sql = "select 1 from sqlite_master where name = 'geometry_columns' and sql LIKE '%spatial_index_enabled%'";
+            OGRLayerH l = OGR_DS_ExecuteSQL(info->hDS, test_sql, NULL, NULL);
+            if (l) {
+                if (OGR_L_GetFeatureCount(l, TRUE) == 1)
+                    have_spatialite = true;
+                OGR_DS_ReleaseResultSet(info->hDS, l);
+            }
+        }
+
+        CPLPopErrorHandler();
+
+        if (have_spatialite)
+            dialect = "SQLite";
+        else
+            msDebug("msOGRTranslateMsExpressionToOGRSQL: Native SQL not available, no Spatialite support and/or not a Spatialite enabled db\n");
+    } else if (strcmp(name, "PostgreSQL") == 0) {
+        dialect = "PostgreSQL";
+        // todo: PostgreSQL not yet tested
+
+    } // todo: other dialects, for example OGR SQL
+
+    // more reasons to not produce native string: not a recognized driver
+    if (!dialect) {
+        return MS_SUCCESS;
+    }
+
+    char *sql = NULL;
+
+    tokenListNodeObjPtr node = psFilter->tokens;
+    // node may be NULL if layer->filter.string != NULL and layer->filteritem != NULL
+    // this is simple filter but string is regex
+    if (node == NULL && layer->filteritem != NULL && layer->filter.string != NULL) {
+        sql = msStringConcatenate(sql, "\"");
+        sql = msStringConcatenate(sql, layer->filteritem);
+        sql = msStringConcatenate(sql, "\"");
+        if (strcmp(dialect, "PostgreSQL") == 0) {
+            sql = msStringConcatenate(sql, " ~ ");
+        } else {
+            sql = msStringConcatenate(sql, " LIKE ");
+        }
+        sql = msStringConcatenate(sql, "'");
+        sql = msStringConcatenate(sql, layer->filter.string);
+        sql = msStringConcatenate(sql, "'");
+    }
+    // test if there is a "top" level intersects (see FLTValidForBBoxFilter) for a bounding box
+    if (node != NULL) {
+        int is_top_level_and = 0;
+        int has_bounding_box = 0;
+        tokenListNodeObjPtr bounding_box_node = NULL;
+        tokenListNodeObjPtr x = psFilter->tokens;
+        int d = 0;
+        while (x != NULL) {
+            if (x->token == '(') d++;
+            if (x->token == ')') d--;
+            if (x->token == MS_TOKEN_COMPARISON_INTERSECTS && d == 0) {
+                has_bounding_box = 1;
+                bounding_box_node = x;
+            }
+            if (d == 1) {
+                if (x->token == MS_TOKEN_COMPARISON_INTERSECTS)
+                    bounding_box_node = x;
+                else if (x->token == MS_TOKEN_LOGICAL_AND)
+                    is_top_level_and = 1;
+            }
+            if (is_top_level_and && bounding_box_node)
+                has_bounding_box = 1;
+            x = x->next;
+        }
+        if (has_bounding_box) {
+            x = bounding_box_node;
+            x = x->next; // skip fct
+            x = x->next; // skip (
+            x = x->next; // skip field name
+            x = x->next; // skip ,
+            char *a = msOGRGetToken(layer, &x, dialect);
+            // skip "ST_GeomFromText(' from a
+            char *wkt = a+17;
+            OGRGeometryH hSpatialFilter;
+            OGRErr e = OGR_G_CreateFromWkt(&wkt, NULL, &hSpatialFilter);
+            msFree(a);
+            if (e == OGRERR_NONE) {
+                OGREnvelope env;
+                OGR_G_GetEnvelope(hSpatialFilter, &env);
+                info->rect.minx = env.MinX;
+                info->rect.miny = env.MinY;
+                info->rect.maxx = env.MaxX;
+                info->rect.maxy = env.MaxY;
+                info->rect_is_defined = true;
+                OGR_G_DestroyGeometry(hSpatialFilter);
+            }
+        }
+    }
+    while (node != NULL) {
+
+        if (node->next && node->next->token == MS_TOKEN_COMPARISON_IEQ) {
+            char *left = msOGRGetToken(layer, &node, dialect);
+            node = node->next; // skip =
+            char *right = msOGRGetToken(layer, &node, dialect);
+            sql = msStringConcatenate(sql, "upper(");
+            sql = msStringConcatenate(sql, left);
+            sql = msStringConcatenate(sql, ")");
+            sql = msStringConcatenate(sql, "=");
+            sql = msStringConcatenate(sql, "upper(");
+            sql = msStringConcatenate(sql, right);
+            sql = msStringConcatenate(sql, ")");
+            int ok = left && right;
+            msFree(left);
+            msFree(right);
+            if (!ok) {
+                goto fail;
+            }
+            continue;
+        }
+
+        switch(node->token) {
         case MS_TOKEN_COMPARISON_INTERSECTS:
-        {
-          shapeObj* shape;
-          if(node->next->token != '(') goto cleanup;
-          if(node->next->next->token != MS_TOKEN_BINDING_SHAPE) goto cleanup;
-          if(node->next->next->next->token != ',' ) goto cleanup;
-          if(node->next->next->next->next->token != MS_TOKEN_LITERAL_SHAPE ) goto cleanup;
-          if(node->next->next->next->next->next->token != ')' ) goto cleanup;
-          if(node->next->next->next->next->next->next->token != MS_TOKEN_COMPARISON_EQ ) goto cleanup;
-          if(node->next->next->next->next->next->next->next->token != MS_TOKEN_LITERAL_BOOLEAN ) goto cleanup;
-          if(node->next->next->next->next->next->next->next->tokenval.dblval != MS_TRUE) goto cleanup;
-
-          shape = node->next->next->next->next->tokenval.shpval;
-          memcpy(&sBBOX, &(shape->bounds), sizeof(rectObj));
-          sBBOXValid = TRUE;
-          
-          if( shape->type == MS_SHAPE_POLYGON &&
-              shape->numlines == 1 &&
-              shape->line[0].numpoints == 5 )
-          {
-              if( shape->line[0].point[0].x == shape->line[0].point[1].x &&
-                  shape->line[0].point[0].y == shape->line[0].point[3].y &&
-                  shape->line[0].point[2].x == shape->line[0].point[3].x &&
-                  shape->line[0].point[1].y == shape->line[0].point[2].y &&
-                  shape->line[0].point[0].x == shape->line[0].point[4].x &&
-                  shape->line[0].point[0].y == shape->line[0].point[4].y )
-              {
-                  bIsIntersectRectangle = MS_TRUE;
-              }
-          }
-
-          node = node->next->next->next->next->next->next->next;
-          if( node && node->next && node->next->token == MS_TOKEN_LOGICAL_AND )
-              node = node->next;
-
-          break;
-        }
-
-        case MS_TOKEN_COMPARISON_EQ:
-        case MS_TOKEN_COMPARISON_NE:
-        case MS_TOKEN_COMPARISON_GT:
-        case MS_TOKEN_COMPARISON_GE:
-        case MS_TOKEN_COMPARISON_LT:
-        case MS_TOKEN_COMPARISON_LE:
-        case MS_TOKEN_LOGICAL_AND:
-        case MS_TOKEN_LOGICAL_NOT:
-        case MS_TOKEN_LOGICAL_OR:
-        case '(':
-        case ')':
-            if( node->token == MS_TOKEN_LOGICAL_AND && node->next &&
-                node->next->token == MS_TOKEN_COMPARISON_INTERSECTS )
-                node = node->next;
-            else
-                msSQLExpression = msStringConcatenate(msSQLExpression, msExpressionTokenToString(node->token));
+        case MS_TOKEN_COMPARISON_DISJOINT:
+        case MS_TOKEN_COMPARISON_TOUCHES:
+        case MS_TOKEN_COMPARISON_OVERLAPS:
+        case MS_TOKEN_COMPARISON_CROSSES:
+        case MS_TOKEN_COMPARISON_DWITHIN:
+        case MS_TOKEN_COMPARISON_BEYOND:
+        case MS_TOKEN_COMPARISON_WITHIN:
+        case MS_TOKEN_COMPARISON_CONTAINS:
+        case MS_TOKEN_COMPARISON_EQUALS:{
+            int token = node->token;
+            char *fct = msOGRGetToken(layer, &node, dialect);
+            node = node->next; // skip (
+            char *a1 = msOGRGetToken(layer, &node, dialect);
+            node = node->next; // skip ,
+            char *a2 = msOGRGetToken(layer, &node, dialect);
+            char *a3 = NULL;
+            if (token == MS_TOKEN_COMPARISON_DWITHIN || token == MS_TOKEN_COMPARISON_BEYOND) {
+                node = node->next; // skip ,
+                a3 = msOGRGetToken(layer, &node, dialect);
+            }
+            node = node->next; // skip )
+            char *eq = msOGRGetToken(layer, &node, dialect);
+            char *rval = msOGRGetToken(layer, &node, dialect);
+            if (strcmp(eq, " != ") == 0 || strcmp(rval, "FALSE") == 0) {
+                sql = msStringConcatenate(sql, "NOT ");
+            }
+            // FIXME: case rval is more complex
+            sql = msStringConcatenate(sql, fct);
+            sql = msStringConcatenate(sql, "(");
+            sql = msStringConcatenate(sql, a1);
+            sql = msStringConcatenate(sql, ",");
+            sql = msStringConcatenate(sql, a2);
+            if (token == MS_TOKEN_COMPARISON_DWITHIN || token == MS_TOKEN_COMPARISON_BEYOND) {
+                sql = msStringConcatenate(sql, ")");
+                if (token == MS_TOKEN_COMPARISON_DWITHIN)
+                    sql = msStringConcatenate(sql, "<=");
+                else 
+                    sql = msStringConcatenate(sql, ">");
+                sql = msStringConcatenate(sql, a3);
+            } else {
+                sql = msStringConcatenate(sql, ")");
+            }
+            int ok = fct && a1 && a2 && eq && rval;
+            if (token == MS_TOKEN_COMPARISON_DWITHIN) {
+                ok = ok && a3;
+            }
+            msFree(fct);
+            msFree(a1);
+            msFree(a2);
+            if (token == MS_TOKEN_COMPARISON_DWITHIN) {
+                msFree(a3);
+            }
+            msFree(eq);
+            msFree(rval);
+            if (!ok) {
+                goto fail;
+            }
             break;
-
-        default:
-          goto cleanup;
-          break;
         }
+        default: {
+            char *token = msOGRGetToken(layer, &node, dialect);
+            if (!token) {
+                goto fail;
+            }
+            sql = msStringConcatenate(sql, token);
+            msFree(token);
+        }
+        }
+    }
 
-      node = node->next;
-  }
-  
-  if( !sBBOXValid || bIsIntersectRectangle )
-  {
-      /* We can translate completely the filter as a OGR expression, */
-      /* so no need for msEvalExpression() to do more work */
-
-      if (layer->debug >= MS_DEBUGLEVEL_VVV)
-            msDebug("msOGRTranslateMsExpressionToOGRSQL: filter can be evaluated completely on OGR side\n");
-
-      msFree( layer->filter.native_string );
-      layer->filter.native_string = msStrdup(msSQLExpression);
-  }
-  
-  if( sBBOXValid )
-  {
-      psRect->minx = MS_MAX(psRect->minx, sBBOX.minx);
-      psRect->miny = MS_MAX(psRect->miny, sBBOX.miny);
-      psRect->maxx = MS_MIN(psRect->maxx, sBBOX.maxx);
-      psRect->maxy = MS_MAX(psRect->maxy, sBBOX.maxy);
-  }
-
-  return msSQLExpression;
-
-cleanup:
-  msFree(msSQLExpression);
-  return NULL;
+    // compose the result, it is parsed in msOGRFileWhichShapes
+    result = msStringConcatenate(result, "dialect=");
+    result = msStringConcatenate(result, dialect);
+    result = msStringConcatenate(result, ";sql=");
+    result = msStringConcatenate(result, sql);
+    msFree(sql);
+    
+    layer->filter.native_string = result;
+    return MS_SUCCESS;
+fail:
+    // error producing native string
+    fprintf(stderr, "Note: Error parsing token list, could produce only: %s\n", sql);
+    msFree(sql);
+    return MS_FAILURE;
 }
-#endif //0
 
 /**********************************************************************
  *                     msOGRFileWhichShapes()
@@ -1508,178 +1906,247 @@ cleanup:
  **********************************************************************/
 static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *psInfo)
 {
-  if (psInfo == NULL || psInfo->hLayer == NULL) {
-    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", "msOGRFileWhichShapes()");
-    return(MS_FAILURE);
-  }
+    // rect is from BBOX parameter in query (In lieu of a FEATUREID or FILTER) or mapfile somehow
+    if (psInfo == NULL || psInfo->hLayer == NULL) {
+        msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", "msOGRFileWhichShapes()");
+        return(MS_FAILURE);
+    }
+
+    // we'll go strictly two possible ways: 
+    // 1) GetLayer + SetFilter
+    // 2) ExecuteSQL (psInfo->hLayer is an SQL result OR sortBy was requested OR have native_string
+    // and start from the second
+
+    if (psInfo->nLayerIndex == -1 || layer->sortBy.nProperties > 0 || layer->filter.native_string) {
+
+        char *select = NULL;
+
+        if( psInfo->nLayerIndex == -1 ) {
+            select = msStrdup(psInfo->pszLayerDef);
+            /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
+            OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
+        } else {
+            const char* pszGeometryColumn;
+            int i;
+            select = msStringConcatenate(select, "SELECT ");
+            for(i = 0; i < layer->numitems; i++) {
+                if( i > 0 )
+                    select = msStringConcatenate(select, ", ");
+                select = msStringConcatenate(select, "\"");
+                select = msStringConcatenate(select, layer->items[i]);
+                select = msStringConcatenate(select, "\"");
+            }
+            
+            select = msStringConcatenate(select, ", ");
+            pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
+            if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' ) {
+                select = msStringConcatenate(select, "\"");
+                select = msStringConcatenate(select, pszGeometryColumn);
+                select = msStringConcatenate(select, "\"");
+            } else {
+                /* Add ", *" so that we still have an hope to get the geometry */
+                select = msStringConcatenate(select, "*");
+            }
+            select = msStringConcatenate(select, " FROM \"");
+            select = msStringConcatenate(select, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+            select = msStringConcatenate(select, "\"");
+        }
+
+        char *filter = NULL;
+
+        if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+            filter = msStringConcatenate(filter, "(");
+            filter = msStringConcatenate(filter, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
+            filter = msStringConcatenate(filter, ")");
+        }
+        
+        // native_string = dialect=*;sql=*
+        // dialect is SQLite or PostGIS
+        char *dialect = NULL;
+       
+        if (layer->filter.native_string) {
+            dialect = layer->filter.native_string + 8;
+            if (strncmp(dialect, "SQLite", 6) == 0 || strncmp(dialect, "PostgreSQL", 10) == 0) {
+                char *sql = strstr(layer->filter.native_string, ";sql=") + 5;
+                if (*sql == '\0') sql = NULL;
+                if (sql) {
+                    if (filter) filter = msStringConcatenate(filter, "AND ");
+                    filter = msStringConcatenate(filter, "(");
+                    filter = msStringConcatenate(filter, sql);
+                    filter = msStringConcatenate(filter, ")");
+                }
+            }
+        }
+
+        /* ------------------------------------------------------------------
+         * Set Spatial filter... this may result in no features being returned
+         * if layer does not overlap current view.
+         *
+         * __TODO__ We should return MS_DONE if no shape overlaps the selected
+         * region and matches the layer's FILTER expression, but there is currently
+         * no _efficient_ way to do that with OGR.
+         * ------------------------------------------------------------------ */
+        if (psInfo->rect_is_defined) {
+            rect.minx = MAX(psInfo->rect.minx, rect.minx);
+            rect.miny = MAX(psInfo->rect.miny, rect.miny);
+            rect.maxx = MIN(psInfo->rect.maxx, rect.maxx);
+            rect.maxy = MIN(psInfo->rect.maxy, rect.maxy);
+        }
+        psInfo->rect = rect;
+
+        // use spatial index
+        if (dialect) {
+            if (strncmp(dialect, "PostgreSQL", 10) == 0) {
+                if (filter) filter = msStringConcatenate(filter, " AND");
+                const char *col = OGR_L_GetGeometryColumn(psInfo->hLayer); // which geom field??
+                filter = msStringConcatenate(filter, " (");
+                filter = msStringConcatenate(filter, col);
+                filter = msStringConcatenate(filter, " && ST_MakeEnvelope(");
+                char *points = (char *)msSmallMalloc(30*2*5);
+                snprintf(points, 30*4, "%lf,%lf,%lf,%lf", rect.minx, rect.miny, rect.maxx, rect.maxy);
+                filter = msStringConcatenate(filter, points);
+                msFree(points);
+                filter = msStringConcatenate(filter, "))");
+            } else if (strncmp(dialect, "SQLite", 6) == 0) {
+                if (filter) filter = msStringConcatenate(filter, " AND");
+                filter = msStringConcatenate(filter, " ");
+                filter = msStringConcatenate(filter, psInfo->pszLayerDef); // this is table name since native_string
+                filter = msStringConcatenate(filter, ".ROWID IN (SELECT ROWID FROM SpatialIndex WHERE f_table_name = '");
+                filter = msStringConcatenate(filter, psInfo->pszLayerDef);
+                filter = msStringConcatenate(filter, "' ");
+                filter = msStringConcatenate(filter, "AND search_frame = GeomFromText('POLYGON((");
+                char *points = (char *)msSmallMalloc(30*2*5);
+                snprintf(points, 30*2*5, "%lf %lf,%lf %lf,%lf %lf,%lf %lf,%lf %lf", rect.minx, rect.miny, rect.maxx, rect.miny, rect.maxx, rect.maxy, rect.minx, rect.maxy, rect.minx, rect.miny);
+                filter = msStringConcatenate(filter, points);
+                msFree(points);
+                filter = msStringConcatenate(filter, "))'))");
+            }
+        }
+
+        /* get sortBy */
+        char *sort = NULL;
+        if( layer->sortBy.nProperties > 0) {
+
+            char *strOrderBy = msLayerBuildSQLOrderBy(layer);
+            if (strOrderBy) {
+                if( psInfo->nLayerIndex == -1 ) {
+                    if( strcasestr(psInfo->pszLayerDef, " ORDER BY ") == NULL )
+                        sort = msStringConcatenate(sort, " ORDER BY ");
+                    else
+                        sort = msStringConcatenate(sort, ", ");
+                } else {
+                    sort = msStringConcatenate(sort, " ORDER BY ");
+                }
+                sort = msStringConcatenate(sort, strOrderBy);
+                msFree(strOrderBy);
+            }
+        }
+
+        // compose SQL
+        if (filter) {
+            select = msStringConcatenate(select, " WHERE ");
+            select = msStringConcatenate(select, filter);
+            msFree(filter);
+        }
+        if (sort) {
+            select = msStringConcatenate(select, " ");
+            select = msStringConcatenate(select, sort);
+            msFree(sort);
+        }
+            
+        if( layer->debug )
+            msDebug("msOGRFileWhichShapes: SQL = %s.\n", select);
+
+        ACQUIRE_OGR_LOCK;
+        psInfo->hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, select, NULL, NULL );
+        psInfo->nLayerIndex = -1;
+        
+        if( psInfo->hLayer == NULL ) {
+            RELEASE_OGR_LOCK;
+            msSetError(MS_OGRERR, "ExecuteSQL(%s) failed.\n%s", "msOGRFileWhichShapes()", select, CPLGetLastErrorMsg());
+            msFree(select);
+            return MS_FAILURE;
+        }
+        msFree(select);
+
+    } 
+    else {
+
+        // case of 1) GetLayer + SetFilter
+
+        char *pszOGRFilter = NULL;
+        if (msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
+            pszOGRFilter = msStringConcatenate(pszOGRFilter, "(");
+            pszOGRFilter = msStringConcatenate(pszOGRFilter, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
+            pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
+        }
+
+        ACQUIRE_OGR_LOCK;
+
+        if (rect.minx == rect.maxx && rect.miny == rect.maxy) {
+            OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
+
+            OGR_G_SetPoint_2D( hSpatialFilterPoint, 0, rect.minx, rect.miny );    
+            OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPoint );
+            OGR_G_DestroyGeometry( hSpatialFilterPoint );
+        } else if (rect.minx == rect.maxx || rect.miny == rect.maxy) {
+            OGRGeometryH hSpatialFilterLine = OGR_G_CreateGeometry( wkbLineString );
+
+            OGR_G_AddPoint_2D( hSpatialFilterLine, rect.minx, rect.miny );
+            OGR_G_AddPoint_2D( hSpatialFilterLine, rect.maxx, rect.maxy );
+            OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterLine );
+            OGR_G_DestroyGeometry( hSpatialFilterLine );
+        } else {
+            OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
+            OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
+
+            OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+            OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
+            OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
+            OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
+            OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+            OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
+            OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
+            OGR_G_DestroyGeometry( hSpatialFilterPolygon );
+        }
+
+        psInfo->rect = rect;
+
+        if (layer->debug >= MS_DEBUGLEVEL_VVV)
+            msDebug("msOGRFileWhichShapes: Setting spatial filter to %f %f %f %f\n", rect.minx, rect.miny, rect.maxx, rect.maxy );
+
+        /* ------------------------------------------------------------------
+         * Apply an attribute filter if we have one prefixed with a WHERE
+         * keyword in the filter string.  Otherwise, ensure the attribute
+         * filter is clear.
+         * ------------------------------------------------------------------ */
+        if( pszOGRFilter != NULL ) {
+
+            if (layer->debug >= MS_DEBUGLEVEL_VVV)
+                msDebug("msOGRFileWhichShapes: Setting attribute filter to %s\n", pszOGRFilter );
+
+            CPLErrorReset();
+            if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter ) != OGRERR_NONE ) {
+                msSetError(MS_OGRERR, "SetAttributeFilter(%s) failed on layer %s.\n%s", "msOGRFileWhichShapes()", layer->filter.string+6, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
+                RELEASE_OGR_LOCK;
+                msFree(pszOGRFilter);
+                return MS_FAILURE;
+            }
+            msFree(pszOGRFilter);
+        } else
+            OGR_L_SetAttributeFilter( psInfo->hLayer, NULL );
+        
+    }
+
+    /* ------------------------------------------------------------------
+     * Reset current feature pointer
+     * ------------------------------------------------------------------ */
+    OGR_L_ResetReading( psInfo->hLayer );
+    psInfo->last_record_index_read = -1;
     
-  char *pszOGRFilter = NULL;
-
-  /*
-  ** Build the OGR filter from two potential sources:
-  **   1) the NATIVE_FILTER processing option
-  **   2) a translated MapServer layer->filter (stored in layer->native_string)
-  */
-  if(msLayerGetProcessingKey(layer, "NATIVE_FILTER") != NULL) {
-    pszOGRFilter = msStringConcatenate(pszOGRFilter, "(");
-    pszOGRFilter = msStringConcatenate(pszOGRFilter, msLayerGetProcessingKey(layer, "NATIVE_FILTER"));
-    pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
-    if(layer->filter.native_string) {
-      pszOGRFilter = msStringConcatenate(pszOGRFilter, "AND (");
-      pszOGRFilter = msStringConcatenate(pszOGRFilter, layer->filter.native_string);
-      pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
-    }
-  } else if(layer->filter.native_string) {
-    pszOGRFilter = msStringConcatenate(pszOGRFilter, "(");
-    pszOGRFilter = msStringConcatenate(pszOGRFilter, layer->filter.native_string);
-    pszOGRFilter = msStringConcatenate(pszOGRFilter, ")");
-  }
-
-  /* apply sortBy */
-  if( layer->sortBy.nProperties > 0 ) {
-    char* strOrderBy;
-    char* pszLayerDef = NULL;
-
-    strOrderBy = msLayerBuildSQLOrderBy(layer);
-
-    if( psInfo->nLayerIndex == -1 ) {
-      pszLayerDef = msStrdup(psInfo->pszLayerDef);
-      if( strcasestr(psInfo->pszLayerDef, " ORDER BY ") == NULL )
-        pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
-      else
-        pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
-    } else {
-      const char* pszGeometryColumn;
-      int i;
-      pszLayerDef = msStringConcatenate(pszLayerDef, "SELECT ");
-      for(i = 0; i < layer->numitems; i++) {
-        if( i > 0 )
-          pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
-        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-        pszLayerDef = msStringConcatenate(pszLayerDef, layer->items[i]);
-        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-      }
-
-      pszLayerDef = msStringConcatenate(pszLayerDef, ", ");
-      pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
-      if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' ) {
-        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-        pszLayerDef = msStringConcatenate(pszLayerDef, pszGeometryColumn);
-        pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-      } else {
-        /* Add ", *" so that we still have an hope to get the geometry */
-        pszLayerDef = msStringConcatenate(pszLayerDef, "*");
-      }
-      pszLayerDef = msStringConcatenate(pszLayerDef, " FROM \"");
-      pszLayerDef = msStringConcatenate(pszLayerDef, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
-      pszLayerDef = msStringConcatenate(pszLayerDef, "\"");
-      if( pszOGRFilter != NULL ) {
-        pszLayerDef = msStringConcatenate(pszLayerDef, " WHERE ");
-        pszLayerDef = msStringConcatenate(pszLayerDef, pszOGRFilter);
-        msFree(pszOGRFilter);
-        pszOGRFilter = NULL;
-      }
-      pszLayerDef = msStringConcatenate(pszLayerDef, " ORDER BY ");
-    }
-
-    pszLayerDef = msStringConcatenate(pszLayerDef, strOrderBy);
-    msFree(strOrderBy);
-    strOrderBy = NULL;
-
-    if( layer->debug )
-      msDebug("msOGRFileWhichShapes: SQL = %s.\n", pszLayerDef);
-
-    /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
-    if( psInfo->nLayerIndex == -1 )
-      OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
-    psInfo->nLayerIndex = -1;
-
-    ACQUIRE_OGR_LOCK;
-    psInfo->hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszLayerDef, NULL, NULL );
     RELEASE_OGR_LOCK;
-    if( psInfo->hLayer == NULL ) {
-      msSetError(MS_OGRERR, "ExecuteSQL(%s) failed.\n%s", "msOGRFileWhichShapes()", pszLayerDef, CPLGetLastErrorMsg());
-      msFree(pszLayerDef);
-      msFree(pszOGRFilter);
-      return MS_FAILURE;
-    }
-    msFree(pszLayerDef);
-  } /* end sort-by */
-
-
-  /* ------------------------------------------------------------------
-   * Set Spatial filter... this may result in no features being returned
-   * if layer does not overlap current view.
-   *
-   * __TODO__ We should return MS_DONE if no shape overlaps the selected
-   * region and matches the layer's FILTER expression, but there is currently
-   * no _efficient_ way to do that with OGR.
-   * ------------------------------------------------------------------ */
-  ACQUIRE_OGR_LOCK;
-
-  if (rect.minx == rect.maxx && rect.miny == rect.maxy) {
-    OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
-
-    OGR_G_SetPoint_2D( hSpatialFilterPoint, 0, rect.minx, rect.miny );    
-    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPoint );
-    OGR_G_DestroyGeometry( hSpatialFilterPoint );
-  } else if (rect.minx == rect.maxx || rect.miny == rect.maxy) {
-    OGRGeometryH hSpatialFilterLine = OGR_G_CreateGeometry( wkbLineString );
-
-    OGR_G_AddPoint_2D( hSpatialFilterLine, rect.minx, rect.miny );
-    OGR_G_AddPoint_2D( hSpatialFilterLine, rect.maxx, rect.maxy );
-    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterLine );
-    OGR_G_DestroyGeometry( hSpatialFilterLine );
-  } else {
-    OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
-    OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
-
-    OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
-    OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
-    OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
-    OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
-    OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
-    OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
-    OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
-    OGR_G_DestroyGeometry( hSpatialFilterPolygon );
-  }
-
-  psInfo->rect = rect;
-
-  if (layer->debug >= MS_DEBUGLEVEL_VVV)
-    msDebug("msOGRFileWhichShapes: Setting spatial filter to %f %f %f %f\n", rect.minx, rect.miny, rect.maxx, rect.maxy );
-
-  /* ------------------------------------------------------------------
-   * Apply an attribute filter if we have one prefixed with a WHERE
-   * keyword in the filter string.  Otherwise, ensure the attribute
-   * filter is clear.
-   * ------------------------------------------------------------------ */
   
-  if( pszOGRFilter != NULL ) {
-
-    if (layer->debug >= MS_DEBUGLEVEL_VVV)
-      msDebug("msOGRFileWhichShapes: Setting attribute filter to %s\n", pszOGRFilter );
-
-    CPLErrorReset();
-    if( OGR_L_SetAttributeFilter( psInfo->hLayer, pszOGRFilter ) != OGRERR_NONE ) {
-      msSetError(MS_OGRERR, "SetAttributeFilter(%s) failed on layer %s.\n%s", "msOGRFileWhichShapes()", layer->filter.string+6, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
-      RELEASE_OGR_LOCK;
-      msFree(pszOGRFilter);
-      return MS_FAILURE;
-    }
-    msFree(pszOGRFilter);
-  } else
-    OGR_L_SetAttributeFilter( psInfo->hLayer, NULL );
-
-  /* ------------------------------------------------------------------
-   * Reset current feature pointer
-   * ------------------------------------------------------------------ */
-  OGR_L_ResetReading( psInfo->hLayer );
-  psInfo->last_record_index_read = -1;
-
-  RELEASE_OGR_LOCK;
-
-  return MS_SUCCESS;
+    return MS_SUCCESS;
 }
 
 /**********************************************************************
@@ -3647,7 +4114,7 @@ int msOGRLayerInitializeVirtualTable(layerObj *layer)
   assert(layer != NULL);
   assert(layer->vtable != NULL);
 
-  /* layer->vtable->LayerTranslateFilter, use default */
+  layer->vtable->LayerTranslateFilter = msOGRTranslateMsExpressionToOGRSQL;
 
   layer->vtable->LayerSupportsCommonFilters = msOGRLayerSupportsCommonFilters;
   layer->vtable->LayerInitItemInfo = msOGRLayerInitItemInfo;
