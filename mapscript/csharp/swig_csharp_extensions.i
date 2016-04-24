@@ -33,7 +33,57 @@
 %pragma(csharp) imclasscode=%{
   static $imclassname() {
   }
+
+  public class UTF8Marshaler : ICustomMarshaler {
+    static UTF8Marshaler static_instance;
+
+    public IntPtr MarshalManagedToNative(object managedObj) {
+        if (managedObj == null)
+            return IntPtr.Zero;
+        if (!(managedObj is string))
+            throw new MarshalDirectiveException(
+                   "UTF8Marshaler must be used on a string.");
+
+        // not null terminated
+        byte[] strbuf = System.Text.Encoding.UTF8.GetBytes((string)managedObj); 
+        IntPtr buffer = Marshal.AllocHGlobal(strbuf.Length + 1);
+        Marshal.Copy(strbuf, 0, buffer, strbuf.Length);
+
+        // write the terminating null
+        Marshal.WriteByte(buffer, strbuf.Length, 0); 
+        return buffer;
+    }
+
+    public object MarshalNativeToManaged(IntPtr pNativeData) {	
+	    int len = Marshal.PtrToStringAnsi(pNativeData).Length;
+        byte[] utf8data = new byte[len];
+        Marshal.Copy(pNativeData, utf8data, 0, len);
+        return System.Text.Encoding.UTF8.GetString(utf8data);
+    }
+
+    public void CleanUpNativeData(IntPtr pNativeData) {
+        Marshal.FreeHGlobal(pNativeData);            
+    }
+
+    public void CleanUpManagedData(object managedObj) {
+    }
+
+    public int GetNativeDataSize() {
+        return -1;
+    }
+
+    public static ICustomMarshaler GetInstance(string cookie) {
+        if (static_instance == null) {
+            return static_instance = new UTF8Marshaler();
+        }
+        return static_instance;
+    }
+  }
 %}
+
+%typemap(imtype, inattributes="[MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]", 
+  outattributes="[return: MarshalAs(UnmanagedType.CustomMarshaler, MarshalTypeRef = typeof(UTF8Marshaler))]") 
+  char *, char *&, char[ANY], char[]   "string"
 
 %typemap(csout, excode=SWIGEXCODE) SWIGTYPE {
     /* %typemap(csout, excode=SWIGEXCODE) SWIGTYPE */
