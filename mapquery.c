@@ -772,7 +772,7 @@ int msQueryByFilter(mapObj *map)
       int bUseLayerSRS = MS_FALSE;
       int numFeatures = -1;
 
-#ifdef USE_PROJ
+#if defined(USE_PROJ) && (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR))
       /* Optimization to detect the case where a WFS query uses in fact the */
       /* whole layer extent, but expressed in a map SRS different from the layer SRS */
       /* In the case, we can directly request against the layer extent in its native SRS */
@@ -1047,7 +1047,7 @@ int msQueryByRect(mapObj *map)
       int bUseLayerSRS = MS_FALSE;
       int numFeatures = -1;
 
-#ifdef USE_PROJ
+#if defined(USE_PROJ) && (defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR) || defined(USE_SOS_SVR) || defined(USE_WMS_LYR) || defined(USE_WFS_LYR))
       /* Optimization to detect the case where a WFS query uses in fact the */
       /* whole layer extent, but expressed in a map SRS different from the layer SRS */
       /* In the case, we can directly request against the layer extent in its native SRS */
