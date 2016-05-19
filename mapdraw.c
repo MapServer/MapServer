@@ -1568,7 +1568,7 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
       }
       if(MS_DRAW_LABELS(drawmode)) {
         if (layer->labelcache) {
-          if (msAddLabelGroup(map, image, layer->index, c, shape, point, -1) != MS_SUCCESS) return (MS_FAILURE);
+          if (msAddLabelGroup(map, image, layer, c, shape, point, -1) != MS_SUCCESS) return (MS_FAILURE);
         } else {
           for (l = 0; l < layer->class[c]->numlabels; l++)
             if(msGetLabelStatus(map,layer,shape,layer->class[c]->labels[l]) == MS_ON) {
@@ -1765,7 +1765,7 @@ int polygonLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer,
         for (i = 0; i < layer->class[c]->numlabels; i++)
           if (layer->class[c]->labels[i]->angle != 0) layer->class[c]->labels[i]->angle -= map->gt.rotation_angle; /* TODO: is this correct ??? */
         if (layer->labelcache) {
-          if (msAddLabelGroup(map, image, layer->index, c, anno_shape, &annopnt,
+          if (msAddLabelGroup(map, image, layer, c, anno_shape, &annopnt,
                               MS_MIN(shape->bounds.maxx - shape->bounds.minx, shape->bounds.maxy - shape->bounds.miny)) != MS_SUCCESS) {
             return MS_FAILURE;
           }
