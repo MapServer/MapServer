@@ -2308,7 +2308,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT int WARN_UNUSED msGetStringSize(mapObj *map, labelObj *label, int size, char *string, rectObj *r);
 
   MS_DLL_EXPORT int WARN_UNUSED msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize, textSymbolObj *ts);
-  MS_DLL_EXPORT int WARN_UNUSED msAddLabelGroup(mapObj *map, imageObj *image, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize);
+  MS_DLL_EXPORT int WARN_UNUSED msAddLabelGroup(mapObj *map, imageObj *image, layerObj *layer, int classindex, shapeObj *shape, pointObj *point, double featuresize);
   MS_DLL_EXPORT void insertRenderedLabelMember(mapObj *map, labelCacheMemberObj *cachePtr);
   MS_DLL_EXPORT int msTestLabelCacheCollisions(mapObj *map, labelCacheMemberObj *cachePtr, label_bounds *lb, int current_priority, int current_label);
   MS_DLL_EXPORT int msTestLabelCacheLeaderCollision(mapObj *map, pointObj *lp1, pointObj *lp2);
