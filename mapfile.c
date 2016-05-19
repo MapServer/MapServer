@@ -4695,6 +4695,110 @@ int msUpdateLayerFromString(layerObj *layer, char *string, int url_string)
   return MS_SUCCESS;
 }
 
+static void writeCompositingFilter(FILE *stream, int indent, CompositingFilter *filter) {
+  if(filter) {
+    writeString(stream, indent, "COMPFILTER", "", filter->filter);
+  }
+}
+
+static void writeLayerCompositer(FILE *stream, int indent, LayerCompositer *compositor) {
+  indent++;
+  while(compositor) {
+    writeBlockBegin(stream, indent, "COMPOSITE");
+    writeCompositingFilter(stream, indent, compositor->filter);
+    if(compositor->comp_op != MS_COMPOP_SRC_OVER) {
+      switch(compositor->comp_op) {
+        case MS_COMPOP_CLEAR:
+          writeString(stream, indent, "COMPOP", NULL, "clear");
+          break;
+        case MS_COMPOP_COLOR_BURN:
+          writeString(stream, indent, "COMPOP", NULL, "color-burn");
+          break;
+        case MS_COMPOP_COLOR_DODGE:
+          writeString(stream, indent, "COMPOP", NULL, "color-dodge");
+          break;
+        case MS_COMPOP_CONTRAST:
+          writeString(stream, indent, "COMPOP", NULL, "contrast");
+          break;
+        case MS_COMPOP_DARKEN:
+          writeString(stream, indent, "COMPOP", NULL, "darken");
+          break;
+        case MS_COMPOP_DIFFERENCE:
+          writeString(stream, indent, "COMPOP", NULL, "difference");
+          break;
+        case MS_COMPOP_DST:
+          writeString(stream, indent, "COMPOP", NULL, "dst");
+          break;
+        case MS_COMPOP_DST_ATOP:
+          writeString(stream, indent, "COMPOP", NULL, "dst-atop");
+          break;
+        case MS_COMPOP_DST_IN:
+          writeString(stream, indent, "COMPOP", NULL, "dst-in");
+          break;
+        case MS_COMPOP_DST_OUT:
+          writeString(stream, indent, "COMPOP", NULL, "dst-out");
+          break;
+        case MS_COMPOP_DST_OVER:
+          writeString(stream, indent, "COMPOP", NULL, "dst-over");
+          break;
+        case MS_COMPOP_EXCLUSION:
+          writeString(stream, indent, "COMPOP", NULL, "exclusion");
+          break;
+        case MS_COMPOP_HARD_LIGHT:
+          writeString(stream, indent, "COMPOP", NULL, "hard-light");
+          break;
+        case MS_COMPOP_INVERT:
+          writeString(stream, indent, "COMPOP", NULL, "invert");
+          break;
+        case MS_COMPOP_INVERT_RGB:
+          writeString(stream, indent, "COMPOP", NULL, "invert-rgb");
+          break;
+        case MS_COMPOP_LIGHTEN:
+          writeString(stream, indent, "COMPOP", NULL, "lighten");
+          break;
+        case MS_COMPOP_MINUS:
+          writeString(stream, indent, "COMPOP", NULL, "minus");
+          break;
+        case MS_COMPOP_MULTIPLY:
+          writeString(stream, indent, "COMPOP", NULL, "multiply");
+          break;
+        case MS_COMPOP_OVERLAY:
+          writeString(stream, indent, "COMPOP", NULL, "overlay");
+          break;
+        case MS_COMPOP_PLUS:
+          writeString(stream, indent, "COMPOP", NULL, "plus");
+          break;
+        case MS_COMPOP_SCREEN:
+          writeString(stream, indent, "COMPOP", NULL, "screen");
+          break;
+        case MS_COMPOP_SOFT_LIGHT:
+          writeString(stream, indent, "COMPOP", NULL, "soft-light");
+          break;
+        case MS_COMPOP_SRC:
+          writeString(stream, indent, "COMPOP", NULL, "src");
+          break;
+        case MS_COMPOP_SRC_ATOP:
+          writeString(stream, indent, "COMPOP", NULL, "src-atop");
+          break;
+        case MS_COMPOP_SRC_IN:
+          writeString(stream, indent, "COMPOP", NULL, "src-in");
+          break;
+        case MS_COMPOP_SRC_OUT:
+          writeString(stream, indent, "COMPOP", NULL, "src-out");
+          break;
+        case MS_COMPOP_SRC_OVER:
+          writeString(stream, indent, "COMPOP", NULL, "src-over");
+          break;
+        case MS_COMPOP_XOR:
+          writeString(stream, indent, "COMPOP", NULL, "xor");
+          break;
+      }
+    }
+    writeNumber(stream,indent,"OPACITY",100,compositor->opacity);
+    writeBlockEnd(stream,indent,"COMPOSITE");
+    compositor = compositor->next;
+  }
+}
 static void writeLayer(FILE *stream, int indent, layerObj *layer)
 {
   int i;
@@ -4710,6 +4814,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeString(stream, indent, "CLASSGROUP", NULL, layer->classgroup);
   writeString(stream, indent, "CLASSITEM", NULL, layer->classitem);
   writeCluster(stream, indent, &(layer->cluster));
+  writeLayerCompositer(stream, indent, layer->compositer);
   writeString(stream, indent, "CONNECTION", NULL, layer->connection);
   writeKeyword(stream, indent, "CONNECTIONTYPE", layer->connectiontype, 10, MS_OGR, "OGR", MS_POSTGIS, "POSTGIS", MS_WMS, "WMS", MS_ORACLESPATIAL, "ORACLESPATIAL", MS_WFS, "WFS", MS_PLUGIN, "PLUGIN", MS_UNION, "UNION", MS_UVRASTER, "UVRASTER", MS_CONTOUR, "CONTOUR", MS_KERNELDENSITY, "KERNELDENSITY");
   writeString(stream, indent, "DATA", NULL, layer->data);
