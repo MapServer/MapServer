@@ -771,6 +771,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
                      "msDrawLayer()");
           return (MS_FAILURE);
         }
+        image_draw->map = map;
         renderer->startLayer(image_draw,map,layer);
       }
     }
