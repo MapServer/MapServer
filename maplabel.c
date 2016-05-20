@@ -288,7 +288,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
   // We cannot use GET_LAYER here because in drawQuery the drawing may happen
   // on a temp layer only.
   layerPtr = layer;
-  classPtr = GET_LAYER(map, layerindex)->class[classindex];
+  classPtr = layer->class[classindex];
 
   if(classPtr->numlabels == 0) return MS_SUCCESS; /* not an error just nothing to do */
   
