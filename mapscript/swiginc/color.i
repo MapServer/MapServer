@@ -42,7 +42,7 @@
         
         /* Check colors */
         if (red > 255 || green > 255 || blue > 255 || alpha>255 ||
-            red<0 || green<0 || blue<0 || alpha<0 ) {
+            red<-1 || green<-1 || blue<-1 || alpha<0 ) {
             msSetError(MS_MISCERR, "Invalid color", "colorObj()");
             return NULL;
         }
