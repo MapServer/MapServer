@@ -1389,12 +1389,15 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node, const char *dial
         // seems to require METADATA gml_types => auto
         nOutSize = 80;
         out = (char *)msSmallMalloc(nOutSize);
+#if 0
+        // FIXME? or perhaps just remove me. tm_zone is not supported on Windows, and not used anywhere else in the code base
         if (n->tokenval.tmval.tm_zone)
             snprintf(out, nOutSize, "'%d-%02d-%02dT%02d:%02d:%02d%s'",
                      n->tokenval.tmval.tm_year+1900, n->tokenval.tmval.tm_mon+1, n->tokenval.tmval.tm_mday,
                      n->tokenval.tmval.tm_hour, n->tokenval.tmval.tm_min, n->tokenval.tmval.tm_sec,
                      n->tokenval.tmval.tm_zone);
         else
+#endif
             snprintf(out, nOutSize, "'%d-%02d-%02dT%02d:%02d:%02d'",  
                      n->tokenval.tmval.tm_year+1900, n->tokenval.tmval.tm_mon+1, n->tokenval.tmval.tm_mday,
                      n->tokenval.tmval.tm_hour, n->tokenval.tmval.tm_min, n->tokenval.tmval.tm_sec);
