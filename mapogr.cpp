@@ -1839,9 +1839,7 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
             msFree(fct);
             msFree(a1);
             msFree(a2);
-            if (token == MS_TOKEN_COMPARISON_DWITHIN) {
-                msFree(a3);
-            }
+            msFree(a3);
             msFree(eq);
             msFree(rval);
             if (!ok) {
