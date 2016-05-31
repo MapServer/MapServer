@@ -1354,46 +1354,48 @@ static char *msOGREscapeSQLParam(layerObj *layer, const char *pszString)
 // http://www.sqlite.org/lang_expr.html
 // http://www.gaia-gis.it/gaia-sins/spatialite-sql-4.3.0.html
 
+static
 char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node, const char *dialect) {
     msOGRFileInfo *info = (msOGRFileInfo *)layer->layerinfo;
     tokenListNodeObjPtr n = *node;
     if (!n) return NULL;
     char *out = NULL;
+    size_t nOutSize;
 
     switch(n->token) {
     case MS_TOKEN_LOGICAL_AND:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " AND ");
+        out = msStrdup(" AND ");
         break;
     case MS_TOKEN_LOGICAL_OR:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " OR ");
+        out = msStrdup(" OR ");
         break;
     case MS_TOKEN_LOGICAL_NOT:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " NOT ");
+        out = msStrdup(" NOT ");
         break;
     case MS_TOKEN_LITERAL_NUMBER:
-        out = (char *)msSmallMalloc(80);
-        snprintf(out, 80, "%lf",  n->tokenval.dblval);
+        nOutSize = 80;
+        out = (char *)msSmallMalloc(nOutSize);
+        snprintf(out, nOutSize, "%lf",  n->tokenval.dblval);
         break;
     case MS_TOKEN_LITERAL_STRING: {
         char *stresc = msOGREscapeSQLParam(layer, n->tokenval.strval);
-        out = (char *)msSmallMalloc(strlen(stresc)+3);
-        snprintf(out, 80, "'%s'", stresc);
+        nOutSize = strlen(stresc)+3;
+        out = (char *)msSmallMalloc(nOutSize);
+        snprintf(out, nOutSize, "'%s'", stresc);
         msFree(stresc);
         break;
     }
     case MS_TOKEN_LITERAL_TIME:
         // seems to require METADATA gml_types => auto
-        out = (char *)msSmallMalloc(80);
+        nOutSize = 80;
+        out = (char *)msSmallMalloc(nOutSize);
         if (n->tokenval.tmval.tm_zone)
-            snprintf(out, 80, "'%d-%02d-%02dT%02d:%02d:%02d%s'",
+            snprintf(out, nOutSize, "'%d-%02d-%02dT%02d:%02d:%02d%s'",
                      n->tokenval.tmval.tm_year+1900, n->tokenval.tmval.tm_mon+1, n->tokenval.tmval.tm_mday,
                      n->tokenval.tmval.tm_hour, n->tokenval.tmval.tm_min, n->tokenval.tmval.tm_sec,
                      n->tokenval.tmval.tm_zone);
         else
-            snprintf(out, 80, "'%d-%02d-%02dT%02d:%02d:%02d'",  
+            snprintf(out, nOutSize, "'%d-%02d-%02dT%02d:%02d:%02d'",  
                      n->tokenval.tmval.tm_year+1900, n->tokenval.tmval.tm_mon+1, n->tokenval.tmval.tm_mday,
                      n->tokenval.tmval.tm_hour, n->tokenval.tmval.tm_min, n->tokenval.tmval.tm_sec);
         break;
@@ -1401,46 +1403,38 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node, const char *dial
         // assumed to be in right srs after FLTGetSpatialComparisonCommonExpression
         char *wkt = msShapeToWKT(n->tokenval.shpval);
         const char *col = OGR_L_GetGeometryColumn(info->hLayer); // which geom field??
-        out = (char *)msSmallMalloc(strlen(wkt)+strlen(col)+35);
-        sprintf(out, "ST_GeomFromText('%s',ST_SRID(\"%s\"))", wkt, col);
+        nOutSize = strlen(wkt)+strlen(col)+35;
+        out = (char *)msSmallMalloc(nOutSize);
+        snprintf(out, nOutSize, "ST_GeomFromText('%s',ST_SRID(\"%s\"))", wkt, col);
         msFree(wkt);
         break;
     }
     case MS_TOKEN_LITERAL_BOOLEAN:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, n->tokenval.dblval == 0 ? "FALSE" : "TRUE");
+        out = msStrdup(n->tokenval.dblval == 0 ? "FALSE" : "TRUE");
         break;
     case MS_TOKEN_COMPARISON_EQ:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " = ");
+        out = msStrdup(" = ");
         break;
     case MS_TOKEN_COMPARISON_NE:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " != ");
+        out = msStrdup(" != ");
         break;
     case MS_TOKEN_COMPARISON_GT:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " > ");
+        out = msStrdup(" > ");
         break;
     case MS_TOKEN_COMPARISON_LT:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " < ");
+        out = msStrdup(" < ");
         break;
     case MS_TOKEN_COMPARISON_LE:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " <= ");
+        out = msStrdup(" <= ");
         break;
     case MS_TOKEN_COMPARISON_GE:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " >= ");
+        out = msStrdup(" >= ");
         break;
     case MS_TOKEN_COMPARISON_IEQ:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " = ");
+        out = msStrdup(" = ");
         break;
     case MS_TOKEN_COMPARISON_IN:
-        out = (char *)msSmallMalloc(10);
-        sprintf(out, " IN ");
+        out = msStrdup(" IN ");
         break;
     // the origin may be mapfile (complex regexes, layer->map.query.filter.string == NULL, regex may have //) or 
     // OGC Filter (simple patterns only, layer->map.query.filter.string != NULL)
@@ -1511,98 +1505,92 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node, const char *dial
         re[j++] = '\'';
         re[j] = '\0';
 
-        out = (char *)msSmallMalloc(strlen(n->tokenval.strval)+10);
-        sprintf(out, " %s %s", op, re);
+        nOutSize = 1 + strlen(op)+ 1 + strlen(re) + 1;
+        out = (char *)msSmallMalloc(nOutSize);
+        snprintf(out, nOutSize, " %s %s", op, re);
         msFree(re);
         msFree(regex);
         break;
     }
     case MS_TOKEN_COMPARISON_INTERSECTS:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Intersects");
+        out = msStrdup("ST_Intersects");
         break;
     case MS_TOKEN_COMPARISON_DISJOINT:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Disjoint");
+        out = msStrdup("ST_Disjoint");
         break;
     case MS_TOKEN_COMPARISON_TOUCHES:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Touches");
+        out = msStrdup("ST_Touches");
         break;
     case MS_TOKEN_COMPARISON_OVERLAPS:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Overlaps");
+        out = msStrdup("ST_Overlaps");
         break;
     case MS_TOKEN_COMPARISON_CROSSES:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Crosses");
+        out = msStrdup("ST_Crosses");
         break;
     case MS_TOKEN_COMPARISON_WITHIN:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Within");
+        out = msStrdup("ST_Within");
         break;
     case MS_TOKEN_COMPARISON_DWITHIN:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Distance");
+        out = msStrdup("ST_Distance");
         break;
     case MS_TOKEN_COMPARISON_BEYOND:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Distance");
+        out = msStrdup("ST_Distance");
         break;
     case MS_TOKEN_COMPARISON_CONTAINS:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Contains");
+        out = msStrdup("ST_Contains");
         break;
     case MS_TOKEN_COMPARISON_EQUALS:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Equals");
+        out = msStrdup("ST_Equals");
         break;
     case MS_TOKEN_FUNCTION_LENGTH:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Length");
+        out = msStrdup("ST_Length");
         break;
     case MS_TOKEN_FUNCTION_AREA:
-        out = (char *)msSmallMalloc(15);
-        sprintf(out, "ST_Area");
+        out = msStrdup("ST_Area");
         break;
     case MS_TOKEN_BINDING_DOUBLE: {
         char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
-        out = (char *)msSmallMalloc(strlen(stresc)+30);
+        nOutSize = strlen(stresc)+30;
+        out = (char *)msSmallMalloc(nOutSize);
         const char *type = "float(16)";
         if (strcmp(dialect, "SQLite") == 0)
             type = "REAL";
         else if (strcmp(dialect, "PostgreSQL") == 0)
             type = "double precision";
-        sprintf(out, "CAST(\"%s\" AS %s)", stresc, type);
+        snprintf(out, nOutSize, "CAST(\"%s\" AS %s)", stresc, type);
         msFree(stresc);
         break;
     }
     case MS_TOKEN_BINDING_INTEGER: {
         char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
-        out = (char *)msSmallMalloc(strlen(stresc)+20);
-        sprintf(out, "CAST(\"%s\" AS integer)", stresc);
+        nOutSize = strlen(stresc)+20;
+        out = (char *)msSmallMalloc(nOutSize);
+        snprintf(out, nOutSize, "CAST(\"%s\" AS integer)", stresc);
         msFree(stresc);
         break;
     }
     case MS_TOKEN_BINDING_STRING: {
         char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
-        out = (char *)msSmallMalloc(strlen(stresc)+30);
-        sprintf(out, "CAST(\"%s\" AS text)", stresc);
+        nOutSize = strlen(stresc)+30;
+        out = (char *)msSmallMalloc(nOutSize);
+        snprintf(out, nOutSize, "CAST(\"%s\" AS text)", stresc);
         msFree(stresc);
         break;
     }
     case MS_TOKEN_BINDING_TIME: {
         // won't get here unless col is parsed as time and they are not
         char *stresc = msLayerEscapePropertyName(layer, n->tokenval.bindval.item);
-        out = (char *)msSmallMalloc(strlen(stresc)+20);
-        sprintf(out, "\"%s\"", stresc);
+        nOutSize = strlen(stresc)+10;
+        out = (char *)msSmallMalloc(nOutSize);
+        snprintf(out, nOutSize, "\"%s\"", stresc);
         msFree(stresc);
         break;
     }
     case MS_TOKEN_BINDING_SHAPE: {
         const char *col = OGR_L_GetGeometryColumn(info->hLayer); // which geom field??
-        out = (char *)msSmallMalloc(strlen(col)+10);
-        sprintf(out, "\"%s\"", col);
+        nOutSize = strlen(col)+10;
+        out = (char *)msSmallMalloc(nOutSize);
+        snprintf(out, nOutSize, "\"%s\"", col);
         break;
     }
 
@@ -1642,17 +1630,6 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node, const char *dial
     n = n->next;
     *node = n;
     return out;
-}
-
-bool msOGRIsComparisonToken(int token) {
-    return 
-        token == MS_TOKEN_COMPARISON_EQ ||
-        token == MS_TOKEN_COMPARISON_NE ||
-        token == MS_TOKEN_COMPARISON_GT ||
-        token == MS_TOKEN_COMPARISON_LT ||
-        token == MS_TOKEN_COMPARISON_LE ||
-        token == MS_TOKEN_COMPARISON_GE ||
-        token == MS_TOKEN_COMPARISON_IEQ;
 }
 
 /**********************************************************************
