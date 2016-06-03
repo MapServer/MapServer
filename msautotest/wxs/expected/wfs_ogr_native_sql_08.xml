@@ -1,0 +1,798 @@
+Content-Type: text/xml; charset=UTF-8
+
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:wfs="http://www.opengis.net/wfs"
+   xmlns:gml="http://www.opengis.net/gml"
+   xmlns:ogc="http://www.opengis.net/ogc"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd 
+                       http://mapserver.gis.umn.edu/mapserver http://localhost/path/to/wfs_simple?SERVICE=WFS&amp;VERSION=1.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=towns&amp;OUTPUTFORMAT=XMLSCHEMA">
+      <gml:boundedBy>
+      	<gml:Box srsName="EPSG:32632">
+      		<gml:coordinates>637137.640000,4865176.120000 710195.300000,4905916.470000</gml:coordinates>
+      	</gml:Box>
+      </gml:boundedBy>
+<!-- WARNING: FeatureId item 'ID' not found in typename 'towns'. -->
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>672130.720000,4902785.470000 672130.720000,4902785.470000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>672130.720000,4902785.470000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Grizzana Morandi</ms:name>
+        <ms:peoples>3694</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>660036.840000,4885407.410000 660036.840000,4885407.410000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>660036.840000,4885407.410000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Sambuca Pistoiese</ms:name>
+        <ms:peoples>1604</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>666678.760000,4876424.900000 666678.760000,4876424.900000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>666678.760000,4876424.900000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Cantagallo</ms:name>
+        <ms:peoples>2820</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>656907.120000,4886687.840000 656907.120000,4886687.840000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>656907.120000,4886687.840000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Granaglione</ms:name>
+        <ms:peoples>2116</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>663058.320000,4865176.120000 663058.320000,4865176.120000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>663058.320000,4865176.120000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Montemurlo</ms:name>
+        <ms:peoples>17502</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>672279.270000,4879402.970000 672279.270000,4879402.970000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>672279.270000,4879402.970000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Vernio</ms:name>
+        <ms:peoples>5535</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>637137.640000,4900625.560000 637137.640000,4900625.560000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>637137.640000,4900625.560000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Montecreto</ms:name>
+        <ms:peoples>929</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>655146.140000,4903917.010000 655146.140000,4903917.010000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>655146.140000,4903917.010000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Montese</ms:name>
+        <ms:peoples>3181</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>641470.510000,4898995.210000 641470.510000,4898995.210000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>641470.510000,4898995.210000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Sestola</ms:name>
+        <ms:peoples>2670</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>666989.570000,4892926.890000 666989.570000,4892926.890000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>666989.570000,4892926.890000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Camugnano</ms:name>
+        <ms:peoples>2132</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>662773.000000,4891987.410000 662773.000000,4891987.410000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>662773.000000,4891987.410000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Castel di Casio</ms:name>
+        <ms:peoples>3174</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>673068.120000,4889949.750000 673068.120000,4889949.750000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>673068.120000,4889949.750000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Castiglione dei Pepoli</ms:name>
+        <ms:peoples>6008</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>651437.840000,4891594.120000 651437.840000,4891594.120000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>651437.840000,4891594.120000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Lizzano in Belvedere</ms:name>
+        <ms:peoples>2253</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>680854.530000,4905388.460000 680854.530000,4905388.460000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>680854.530000,4905388.460000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Monzuno</ms:name>
+        <ms:peoples>5254</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>678374.680000,4898206.120000 678374.680000,4898206.120000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>678374.680000,4898206.120000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>San Benedetto Val di Sambro</ms:name>
+        <ms:peoples>4375</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>640503.540000,4884416.920000 640503.540000,4884416.920000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>640503.540000,4884416.920000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Cutigliano</ms:name>
+        <ms:peoples>1699</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>641450.940000,4876458.530000 641450.940000,4876458.530000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>641450.940000,4876458.530000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Piteglio</ms:name>
+        <ms:peoples>1877</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>690357.250000,4888070.830000 690357.250000,4888070.830000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>690357.250000,4888070.830000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Firenzuola</ms:name>
+        <ms:peoples>4812</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>710195.300000,4866937.690000 710195.300000,4866937.690000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>710195.300000,4866937.690000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>San Godenzo</ms:name>
+        <ms:peoples>1187</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>686481.160000,4870207.090000 686481.160000,4870207.090000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>686481.160000,4870207.090000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>San Piero a Sieve</ms:name>
+        <ms:peoples>3758</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>697335.810000,4867309.060000 697335.810000,4867309.060000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>697335.810000,4867309.060000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Vicchio</ms:name>
+        <ms:peoples>7145</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>670374.330000,4868394.460000 670374.330000,4868394.460000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>670374.330000,4868394.460000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Vaiano</ms:name>
+        <ms:peoples>9051</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>659557.040000,4904456.570000 659557.040000,4904456.570000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>659557.040000,4904456.570000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Castel d&#39;Aiano</ms:name>
+        <ms:peoples>1822</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>700027.210000,4898730.810000 700027.210000,4898730.810000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>700027.210000,4898730.810000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Castel del Rio</ms:name>
+        <ms:peoples>1252</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>654456.480000,4895565.290000 654456.480000,4895565.290000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>654456.480000,4895565.290000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Gaggio Montano</ms:name>
+        <ms:peoples>4771</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>685837.450000,4904282.990000 685837.450000,4904282.990000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>685837.450000,4904282.990000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Loiano</ms:name>
+        <ms:peoples>4158</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>685896.740000,4899660.120000 685896.740000,4899660.120000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>685896.740000,4899660.120000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Monghidoro</ms:name>
+        <ms:peoples>3618</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>657705.770000,4891441.560000 657705.770000,4891441.560000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>657705.770000,4891441.560000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Porretta Terme</ms:name>
+        <ms:peoples>4646</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>668148.550000,4905427.520000 668148.550000,4905427.520000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>668148.550000,4905427.520000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Vergato</ms:name>
+        <ms:peoples>6730</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>642083.400000,4866048.770000 642083.400000,4866048.770000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>642083.400000,4866048.770000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Marliana</ms:name>
+        <ms:peoples>2917</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>661896.570000,4866692.430000 661896.570000,4866692.430000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>661896.570000,4866692.430000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Montale</ms:name>
+        <ms:peoples>10143</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>643529.070000,4879703.820000 643529.070000,4879703.820000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>643529.070000,4879703.820000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>San Marcello Pistoiese</ms:name>
+        <ms:peoples>7142</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>679352.610000,4874600.650000 679352.610000,4874600.650000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>679352.610000,4874600.650000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Barberino di Mugello</ms:name>
+        <ms:peoples>9531</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>691242.090000,4869675.970000 691242.090000,4869675.970000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>691242.090000,4869675.970000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Borgo San Lorenzo</ms:name>
+        <ms:peoples>15825</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>688742.950000,4873672.850000 688742.950000,4873672.850000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>688742.950000,4873672.850000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Scarperia</ms:name>
+        <ms:peoples>6778</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>709203.270000,4883473.950000 709203.270000,4883473.950000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>709203.270000,4883473.950000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Marradi</ms:name>
+        <ms:peoples>3617</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>703892.440000,4887624.730000 703892.440000,4887624.730000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>703892.440000,4887624.730000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Palazzuolo sul Senio</ms:name>
+        <ms:peoples>1301</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>706612.320000,4905916.470000 706612.320000,4905916.470000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>706612.320000,4905916.470000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Borgo Tossignano</ms:name>
+        <ms:peoples>3023</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>709517.650000,4900008.460000 709517.650000,4900008.460000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>709517.650000,4900008.460000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Casola Valsenio</ms:name>
+        <ms:peoples>2844</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>704327.740000,4903948.540000 704327.740000,4903948.540000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>704327.740000,4903948.540000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Fontanelice</ms:name>
+        <ms:peoples>1797</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>0</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+    <gml:featureMember>
+      <ms:towns>
+        <gml:boundedBy>
+        	<gml:Box srsName="EPSG:32632">
+        		<gml:coordinates>653901.530000,4866278.050000 653901.530000,4866278.050000</gml:coordinates>
+        	</gml:Box>
+        </gml:boundedBy>
+        <ms:msGeometry>
+        <gml:Point srsName="EPSG:32632">
+          <gml:coordinates>653901.530000,4866278.050000</gml:coordinates>
+        </gml:Point>
+        </ms:msGeometry>
+        <ms:name>Pistoia</ms:name>
+        <ms:peoples>84274</ms:peoples>
+        <ms:localcounc>1</ms:localcounc>
+        <ms:county>1</ms:county>
+        <ms:region>0</ms:region>
+      </ms:towns>
+    </gml:featureMember>
+</wfs:FeatureCollection>
+
