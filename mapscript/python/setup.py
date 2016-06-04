@@ -43,7 +43,7 @@ def unique(list):
     ret_list = []
     dict = {}
     for item in list:
-        if not dict.has_key(item):
+        if not item in dict:
             dict[item] = ''
             ret_list.append( item )
     return ret_list
@@ -80,8 +80,8 @@ def read_mapscriptvars():
 
     try:
         fp = open(mapscriptvars, "r")
-    except IOError, e:
-        raise IOError, '%s. %s' % (e, "Has MapServer been made?")
+    except IOError as e:
+        raise IOError('%s. Has MapServer been made?' % e)
     
     output = {}
     install_dir = fp.readline().strip()
@@ -136,7 +136,7 @@ class ms_ext(build_ext):
     ])
 
     def initialize_options(self):
-        print "LD_RUN_PATH set"
+        print("LD_RUN_PATH set")
         os.environ["LD_RUN_PATH"] = os.getcwd()+"/../../.libs"
         build_ext.initialize_options(self)
         self.gdaldir = None
@@ -238,7 +238,8 @@ name = "MapScript"
 ext_modules = [mapserver_module,]
 py_modules = ['mapscript',]
 
-readme = file('README','rb').read()
+with open('README', 'r') as fh:
+    readme = fh.read()
 
 if not os.path.exists('mapscript_wrap.c') :
     swig_cmd = """swig -python -shadow -modern -templatereduce -fastdispatch -fvirtual -fastproxy -modernargs -castmode -dirvtable -fastinit -fastquery -noproxydel -nobuildnone %s -o mapscript_wrap.c ../mapscript.i"""
