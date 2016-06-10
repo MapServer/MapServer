@@ -241,6 +241,11 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
 %typemap(in) SWIG_CSharpByteArrayHelperCallback %{ $1 = ($1_ltype)$input; %}
 %typemap(csin) SWIG_CSharpByteArrayHelperCallback "$csinput"
 
+%typemap(imtype) (unsigned char* pixels) "IntPtr"
+%typemap(cstype) (unsigned char* pixels) "IntPtr"
+%typemap(in) (unsigned char* pixels) %{ $1 = ($1_ltype)$input; %}
+%typemap(csin) (unsigned char* pixels) "$csinput"
+
 %csmethodmodifiers getBytes "private";
 %ignore imageObj::getBytes();
 %extend imageObj 
@@ -259,7 +264,26 @@ static SWIG_CSharpByteArrayHelperCallback SWIG_csharp_bytearray_callback = NULL;
         }
         callback(buffer.data, buffer.size);
         msFree(buffer.data);
-	}
+    }
+
+    int getRawPixels(unsigned char* pixels) {
+      if (MS_RENDERER_PLUGIN(self->format)) {
+        rendererVTableObj *renderer = self->format->vtable;
+        if(renderer->supports_pixel_buffer) {
+          rasterBufferObj rb;
+          int status = MS_SUCCESS;
+          int size = self->width * self->height * 4 * sizeof(unsigned char);
+          
+          status = renderer->getRasterBufferHandle(self,&rb);
+          if(UNLIKELY(status == MS_FAILURE)) {
+            return MS_FAILURE;
+          }
+          memcpy(pixels, rb.data.rgba.pixels, size);
+          return status;
+        }
+      }
+      return MS_FAILURE;
+    }
 }
 
 %ignore imageObj::write;

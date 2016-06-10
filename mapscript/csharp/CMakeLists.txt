@@ -50,7 +50,9 @@ ADD_CUSTOM_COMMAND(TARGET csharpmapscript
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:HTMLtemplate.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\HTMLtemplate.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /out:RFC24.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\RFC24.cs
 					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirect.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirect.cs
-					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirectPrint.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirectPrint.cs	
+					  COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirectPrint.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapDirectPrint.cs
+                      COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapGDIPlus.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapGDIPlus.cs
+					  #COMMAND ${CSHARP_COMPILER} ${PLATFORM_TARGET} /lib:C:\Windows\Microsoft.NET\Framework\v4.0.30319\WPF /r:mapscript_csharp.dll /r:System.Xaml.dll /r:WindowsBase.dll /r:PresentationCore.dll /out:drawmapWPF.exe ${PROJECT_SOURCE_DIR}\\mapscript\\csharp\\examples\\drawmapWPF.cs
                       COMMENT "Compiling c# source files"
                       )
 

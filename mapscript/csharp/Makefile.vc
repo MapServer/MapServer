@@ -95,7 +95,8 @@ $(CSHARP_DLL)::
 	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:HTMLtemplate.exe examples\HTMLtemplate.cs
 	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /out:RFC24.exe examples\RFC24.cs
 	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirect.exe examples\drawmapDirect.cs
-	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirectPrint.exe examples\drawmapDirectPrint.cs	
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapDirectPrint.exe examples\drawmapDirectPrint.cs
+	$(CSC) $(CSFLAGS) /r:mapscript_csharp.dll /r:System.Drawing.dll /out:drawmapGDIPlus.exe examples\drawmapGDIPlus.cs
 
 test:
 !IFDEF MONO
