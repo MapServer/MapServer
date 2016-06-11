@@ -1635,244 +1635,6 @@ char *msOGRGetToken(layerObj* layer, tokenListNodeObjPtr *node, const char *dial
     return out;
 }
 
-/**********************************************************************
- *                     msOGRTranslateMsExpressionToOGRSQL()
- *
- * Tries to translate a mapserver expression to OGR or driver native SQL
- **********************************************************************/
-static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
-                                              expressionObj* psFilter,
-                                              char *filteritem)
-{
-    char *result = NULL;
-
-    msOGRFileInfo *info = (msOGRFileInfo *)layer->layerinfo;
-
-    // reasons to not produce native string: not simple layer, or an explicit deny
-    char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
-    if ((info->nLayerIndex == -1) || (do_this && strcmp(do_this, "NO") == 0)) {
-        return MS_SUCCESS;
-    }
-
-    // GDAL 1.x API
-    OGRSFDriverH dr = OGR_DS_GetDriver(info->hDS);
-    const char *name = OGR_Dr_GetName(dr);
-    const char *dialect = NULL;
-    if (strcmp(name, "SQLite") == 0) {
-        bool have_spatialite = false;
-
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-
-        // test for Spatialite support in driver
-        const char *test_spatialite = "SELECT spatialite_version()";
-        OGRLayerH l = OGR_DS_ExecuteSQL(info->hDS, test_spatialite, NULL, NULL);
-        if (l) {
-            OGR_DS_ReleaseResultSet(info->hDS, l);
-            have_spatialite = true;
-        }
-
-        // test for Spatialite enabled db
-        if (have_spatialite) {
-            have_spatialite = false;
-            const char *test_sql = "select 1 from sqlite_master where name = 'geometry_columns' and sql LIKE '%spatial_index_enabled%'";
-            OGRLayerH l = OGR_DS_ExecuteSQL(info->hDS, test_sql, NULL, NULL);
-            if (l) {
-                if (OGR_L_GetFeatureCount(l, TRUE) == 1)
-                    have_spatialite = true;
-                OGR_DS_ReleaseResultSet(info->hDS, l);
-            }
-        }
-
-        CPLPopErrorHandler();
-
-        if (have_spatialite)
-            dialect = "SQLite";
-        else
-            msDebug("msOGRTranslateMsExpressionToOGRSQL: Native SQL not available, no Spatialite support and/or not a Spatialite enabled db\n");
-    } else if (strcmp(name, "PostgreSQL") == 0) {
-        dialect = "PostgreSQL";
-        // todo: PostgreSQL not yet tested
-
-    } // todo: other dialects, for example OGR SQL
-
-    // more reasons to not produce native string: not a recognized driver
-    if (!dialect) {
-        return MS_SUCCESS;
-    }
-
-    char *sql = NULL;
-
-    tokenListNodeObjPtr node = psFilter->tokens;
-    // node may be NULL if layer->filter.string != NULL and layer->filteritem != NULL
-    // this is simple filter but string is regex
-    if (node == NULL && layer->filteritem != NULL && layer->filter.string != NULL) {
-        sql = msStringConcatenate(sql, "\"");
-        sql = msStringConcatenate(sql, layer->filteritem);
-        sql = msStringConcatenate(sql, "\"");
-        if (strcmp(dialect, "PostgreSQL") == 0) {
-            sql = msStringConcatenate(sql, " ~ ");
-        } else {
-            sql = msStringConcatenate(sql, " LIKE ");
-        }
-        sql = msStringConcatenate(sql, "'");
-        sql = msStringConcatenate(sql, layer->filter.string);
-        sql = msStringConcatenate(sql, "'");
-    }
-    // test if there is a "top" level intersects (see FLTValidForBBoxFilter) for a bounding box
-    if (node != NULL) {
-        int is_top_level_and = 0;
-        int has_bounding_box = 0;
-        tokenListNodeObjPtr bounding_box_node = NULL;
-        tokenListNodeObjPtr x = psFilter->tokens;
-        int d = 0;
-        while (x != NULL) {
-            if (x->token == '(') d++;
-            if (x->token == ')') d--;
-            if (x->token == MS_TOKEN_COMPARISON_INTERSECTS && d == 0) {
-                has_bounding_box = 1;
-                bounding_box_node = x;
-            }
-            if (d == 1) {
-                if (x->token == MS_TOKEN_COMPARISON_INTERSECTS)
-                    bounding_box_node = x;
-                else if (x->token == MS_TOKEN_LOGICAL_AND)
-                    is_top_level_and = 1;
-            }
-            if (is_top_level_and && bounding_box_node)
-                has_bounding_box = 1;
-            x = x->next;
-        }
-        if (has_bounding_box) {
-            x = bounding_box_node;
-            x = x->next; // skip fct
-            x = x->next; // skip (
-            x = x->next; // skip field name
-            x = x->next; // skip ,
-            char *a = msOGRGetToken(layer, &x, dialect);
-            // skip "ST_GeomFromText(' from a
-            char *wkt = a+17;
-            OGRGeometryH hSpatialFilter;
-            OGRErr e = OGR_G_CreateFromWkt(&wkt, NULL, &hSpatialFilter);
-            msFree(a);
-            if (e == OGRERR_NONE) {
-                OGREnvelope env;
-                OGR_G_GetEnvelope(hSpatialFilter, &env);
-                info->rect.minx = env.MinX;
-                info->rect.miny = env.MinY;
-                info->rect.maxx = env.MaxX;
-                info->rect.maxy = env.MaxY;
-                info->rect_is_defined = true;
-                OGR_G_DestroyGeometry(hSpatialFilter);
-            }
-        }
-    }
-    while (node != NULL) {
-
-        if (node->next && node->next->token == MS_TOKEN_COMPARISON_IEQ) {
-            char *left = msOGRGetToken(layer, &node, dialect);
-            node = node->next; // skip =
-            char *right = msOGRGetToken(layer, &node, dialect);
-            sql = msStringConcatenate(sql, "upper(");
-            sql = msStringConcatenate(sql, left);
-            sql = msStringConcatenate(sql, ")");
-            sql = msStringConcatenate(sql, "=");
-            sql = msStringConcatenate(sql, "upper(");
-            sql = msStringConcatenate(sql, right);
-            sql = msStringConcatenate(sql, ")");
-            int ok = left && right;
-            msFree(left);
-            msFree(right);
-            if (!ok) {
-                goto fail;
-            }
-            continue;
-        }
-
-        switch(node->token) {
-        case MS_TOKEN_COMPARISON_INTERSECTS:
-        case MS_TOKEN_COMPARISON_DISJOINT:
-        case MS_TOKEN_COMPARISON_TOUCHES:
-        case MS_TOKEN_COMPARISON_OVERLAPS:
-        case MS_TOKEN_COMPARISON_CROSSES:
-        case MS_TOKEN_COMPARISON_DWITHIN:
-        case MS_TOKEN_COMPARISON_BEYOND:
-        case MS_TOKEN_COMPARISON_WITHIN:
-        case MS_TOKEN_COMPARISON_CONTAINS:
-        case MS_TOKEN_COMPARISON_EQUALS:{
-            int token = node->token;
-            char *fct = msOGRGetToken(layer, &node, dialect);
-            node = node->next; // skip (
-            char *a1 = msOGRGetToken(layer, &node, dialect);
-            node = node->next; // skip ,
-            char *a2 = msOGRGetToken(layer, &node, dialect);
-            char *a3 = NULL;
-            if (token == MS_TOKEN_COMPARISON_DWITHIN || token == MS_TOKEN_COMPARISON_BEYOND) {
-                node = node->next; // skip ,
-                a3 = msOGRGetToken(layer, &node, dialect);
-            }
-            node = node->next; // skip )
-            char *eq = msOGRGetToken(layer, &node, dialect);
-            char *rval = msOGRGetToken(layer, &node, dialect);
-            if (strcmp(eq, " != ") == 0 || strcmp(rval, "FALSE") == 0) {
-                sql = msStringConcatenate(sql, "NOT ");
-            }
-            // FIXME: case rval is more complex
-            sql = msStringConcatenate(sql, fct);
-            sql = msStringConcatenate(sql, "(");
-            sql = msStringConcatenate(sql, a1);
-            sql = msStringConcatenate(sql, ",");
-            sql = msStringConcatenate(sql, a2);
-            if (token == MS_TOKEN_COMPARISON_DWITHIN || token == MS_TOKEN_COMPARISON_BEYOND) {
-                sql = msStringConcatenate(sql, ")");
-                if (token == MS_TOKEN_COMPARISON_DWITHIN)
-                    sql = msStringConcatenate(sql, "<=");
-                else 
-                    sql = msStringConcatenate(sql, ">");
-                sql = msStringConcatenate(sql, a3);
-            } else {
-                sql = msStringConcatenate(sql, ")");
-            }
-            int ok = fct && a1 && a2 && eq && rval;
-            if (token == MS_TOKEN_COMPARISON_DWITHIN) {
-                ok = ok && a3;
-            }
-            msFree(fct);
-            msFree(a1);
-            msFree(a2);
-            msFree(a3);
-            msFree(eq);
-            msFree(rval);
-            if (!ok) {
-                goto fail;
-            }
-            break;
-        }
-        default: {
-            char *token = msOGRGetToken(layer, &node, dialect);
-            if (!token) {
-                goto fail;
-            }
-            sql = msStringConcatenate(sql, token);
-            msFree(token);
-        }
-        }
-    }
-
-    // compose the result, it is parsed in msOGRFileWhichShapes
-    result = msStringConcatenate(result, "dialect=");
-    result = msStringConcatenate(result, dialect);
-    result = msStringConcatenate(result, ";sql=");
-    result = msStringConcatenate(result, sql);
-    msFree(sql);
-    
-    layer->filter.native_string = result;
-    return MS_SUCCESS;
-fail:
-    // error producing native string
-    fprintf(stderr, "Note: Error parsing token list, could produce only: %s\n", sql);
-    msFree(sql);
-    return MS_FAILURE;
-}
 
 /**********************************************************************
  *                     msOGRFileWhichShapes()
@@ -2614,6 +2376,256 @@ NextFile:
 /* ==================================================================
  * Here comes the REAL stuff... the functions below are called by maplayer.c
  * ================================================================== */
+
+/**********************************************************************
+ *                     msOGRTranslateMsExpressionToOGRSQL()
+ *
+ * Tries to translate a mapserver expression to OGR or driver native SQL
+ **********************************************************************/
+static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
+                                              expressionObj* psFilter,
+                                              char *filteritem)
+{
+#ifdef USE_OGR
+    char *result = NULL;
+
+    msOGRFileInfo *info = (msOGRFileInfo *)layer->layerinfo;
+
+    // reasons to not produce native string: not simple layer, or an explicit deny
+    char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
+    if ((info->nLayerIndex == -1) || (do_this && strcmp(do_this, "NO") == 0)) {
+        return MS_SUCCESS;
+    }
+
+    // GDAL 1.x API
+    OGRSFDriverH dr = OGR_DS_GetDriver(info->hDS);
+    const char *name = OGR_Dr_GetName(dr);
+    const char *dialect = NULL;
+    if (strcmp(name, "SQLite") == 0) {
+        bool have_spatialite = false;
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+
+        // test for Spatialite support in driver
+        const char *test_spatialite = "SELECT spatialite_version()";
+        OGRLayerH l = OGR_DS_ExecuteSQL(info->hDS, test_spatialite, NULL, NULL);
+        if (l) {
+            OGR_DS_ReleaseResultSet(info->hDS, l);
+            have_spatialite = true;
+        }
+
+        // test for Spatialite enabled db
+        if (have_spatialite) {
+            have_spatialite = false;
+            const char *test_sql = "select 1 from sqlite_master where name = 'geometry_columns' and sql LIKE '%spatial_index_enabled%'";
+            OGRLayerH l = OGR_DS_ExecuteSQL(info->hDS, test_sql, NULL, NULL);
+            if (l) {
+                if (OGR_L_GetFeatureCount(l, TRUE) == 1)
+                    have_spatialite = true;
+                OGR_DS_ReleaseResultSet(info->hDS, l);
+            }
+        }
+
+        CPLPopErrorHandler();
+
+        if (have_spatialite)
+            dialect = "SQLite";
+        else
+            msDebug("msOGRTranslateMsExpressionToOGRSQL: Native SQL not available, no Spatialite support and/or not a Spatialite enabled db\n");
+    } else if (strcmp(name, "PostgreSQL") == 0) {
+        dialect = "PostgreSQL";
+        // todo: PostgreSQL not yet tested
+
+    } // todo: other dialects, for example OGR SQL
+
+    // more reasons to not produce native string: not a recognized driver
+    if (!dialect) {
+        return MS_SUCCESS;
+    }
+
+    char *sql = NULL;
+
+    tokenListNodeObjPtr node = psFilter->tokens;
+    // node may be NULL if layer->filter.string != NULL and layer->filteritem != NULL
+    // this is simple filter but string is regex
+    if (node == NULL && layer->filteritem != NULL && layer->filter.string != NULL) {
+        sql = msStringConcatenate(sql, "\"");
+        sql = msStringConcatenate(sql, layer->filteritem);
+        sql = msStringConcatenate(sql, "\"");
+        if (strcmp(dialect, "PostgreSQL") == 0) {
+            sql = msStringConcatenate(sql, " ~ ");
+        } else {
+            sql = msStringConcatenate(sql, " LIKE ");
+        }
+        sql = msStringConcatenate(sql, "'");
+        sql = msStringConcatenate(sql, layer->filter.string);
+        sql = msStringConcatenate(sql, "'");
+    }
+    // test if there is a "top" level intersects (see FLTValidForBBoxFilter) for a bounding box
+    if (node != NULL) {
+        int is_top_level_and = 0;
+        int has_bounding_box = 0;
+        tokenListNodeObjPtr bounding_box_node = NULL;
+        tokenListNodeObjPtr x = psFilter->tokens;
+        int d = 0;
+        while (x != NULL) {
+            if (x->token == '(') d++;
+            if (x->token == ')') d--;
+            if (x->token == MS_TOKEN_COMPARISON_INTERSECTS && d == 0) {
+                has_bounding_box = 1;
+                bounding_box_node = x;
+            }
+            if (d == 1) {
+                if (x->token == MS_TOKEN_COMPARISON_INTERSECTS)
+                    bounding_box_node = x;
+                else if (x->token == MS_TOKEN_LOGICAL_AND)
+                    is_top_level_and = 1;
+            }
+            if (is_top_level_and && bounding_box_node)
+                has_bounding_box = 1;
+            x = x->next;
+        }
+        if (has_bounding_box) {
+            x = bounding_box_node;
+            x = x->next; // skip fct
+            x = x->next; // skip (
+            x = x->next; // skip field name
+            x = x->next; // skip ,
+            char *a = msOGRGetToken(layer, &x, dialect);
+            // skip "ST_GeomFromText(' from a
+            char *wkt = a+17;
+            OGRGeometryH hSpatialFilter;
+            OGRErr e = OGR_G_CreateFromWkt(&wkt, NULL, &hSpatialFilter);
+            msFree(a);
+            if (e == OGRERR_NONE) {
+                OGREnvelope env;
+                OGR_G_GetEnvelope(hSpatialFilter, &env);
+                info->rect.minx = env.MinX;
+                info->rect.miny = env.MinY;
+                info->rect.maxx = env.MaxX;
+                info->rect.maxy = env.MaxY;
+                info->rect_is_defined = true;
+                OGR_G_DestroyGeometry(hSpatialFilter);
+            }
+        }
+    }
+    while (node != NULL) {
+
+        if (node->next && node->next->token == MS_TOKEN_COMPARISON_IEQ) {
+            char *left = msOGRGetToken(layer, &node, dialect);
+            node = node->next; // skip =
+            char *right = msOGRGetToken(layer, &node, dialect);
+            sql = msStringConcatenate(sql, "upper(");
+            sql = msStringConcatenate(sql, left);
+            sql = msStringConcatenate(sql, ")");
+            sql = msStringConcatenate(sql, "=");
+            sql = msStringConcatenate(sql, "upper(");
+            sql = msStringConcatenate(sql, right);
+            sql = msStringConcatenate(sql, ")");
+            int ok = left && right;
+            msFree(left);
+            msFree(right);
+            if (!ok) {
+                goto fail;
+            }
+            continue;
+        }
+
+        switch(node->token) {
+        case MS_TOKEN_COMPARISON_INTERSECTS:
+        case MS_TOKEN_COMPARISON_DISJOINT:
+        case MS_TOKEN_COMPARISON_TOUCHES:
+        case MS_TOKEN_COMPARISON_OVERLAPS:
+        case MS_TOKEN_COMPARISON_CROSSES:
+        case MS_TOKEN_COMPARISON_DWITHIN:
+        case MS_TOKEN_COMPARISON_BEYOND:
+        case MS_TOKEN_COMPARISON_WITHIN:
+        case MS_TOKEN_COMPARISON_CONTAINS:
+        case MS_TOKEN_COMPARISON_EQUALS:{
+            int token = node->token;
+            char *fct = msOGRGetToken(layer, &node, dialect);
+            node = node->next; // skip (
+            char *a1 = msOGRGetToken(layer, &node, dialect);
+            node = node->next; // skip ,
+            char *a2 = msOGRGetToken(layer, &node, dialect);
+            char *a3 = NULL;
+            if (token == MS_TOKEN_COMPARISON_DWITHIN || token == MS_TOKEN_COMPARISON_BEYOND) {
+                node = node->next; // skip ,
+                a3 = msOGRGetToken(layer, &node, dialect);
+            }
+            node = node->next; // skip )
+            char *eq = msOGRGetToken(layer, &node, dialect);
+            char *rval = msOGRGetToken(layer, &node, dialect);
+            if (strcmp(eq, " != ") == 0 || strcmp(rval, "FALSE") == 0) {
+                sql = msStringConcatenate(sql, "NOT ");
+            }
+            // FIXME: case rval is more complex
+            sql = msStringConcatenate(sql, fct);
+            sql = msStringConcatenate(sql, "(");
+            sql = msStringConcatenate(sql, a1);
+            sql = msStringConcatenate(sql, ",");
+            sql = msStringConcatenate(sql, a2);
+            if (token == MS_TOKEN_COMPARISON_DWITHIN || token == MS_TOKEN_COMPARISON_BEYOND) {
+                sql = msStringConcatenate(sql, ")");
+                if (token == MS_TOKEN_COMPARISON_DWITHIN)
+                    sql = msStringConcatenate(sql, "<=");
+                else 
+                    sql = msStringConcatenate(sql, ">");
+                sql = msStringConcatenate(sql, a3);
+            } else {
+                sql = msStringConcatenate(sql, ")");
+            }
+            int ok = fct && a1 && a2 && eq && rval;
+            if (token == MS_TOKEN_COMPARISON_DWITHIN) {
+                ok = ok && a3;
+            }
+            msFree(fct);
+            msFree(a1);
+            msFree(a2);
+            msFree(a3);
+            msFree(eq);
+            msFree(rval);
+            if (!ok) {
+                goto fail;
+            }
+            break;
+        }
+        default: {
+            char *token = msOGRGetToken(layer, &node, dialect);
+            if (!token) {
+                goto fail;
+            }
+            sql = msStringConcatenate(sql, token);
+            msFree(token);
+        }
+        }
+    }
+
+    // compose the result, it is parsed in msOGRFileWhichShapes
+    result = msStringConcatenate(result, "dialect=");
+    result = msStringConcatenate(result, dialect);
+    result = msStringConcatenate(result, ";sql=");
+    result = msStringConcatenate(result, sql);
+    msFree(sql);
+    
+    layer->filter.native_string = result;
+    return MS_SUCCESS;
+fail:
+    // error producing native string
+    fprintf(stderr, "Note: Error parsing token list, could produce only: %s\n", sql);
+    msFree(sql);
+    return MS_FAILURE;
+#else
+  /* ------------------------------------------------------------------
+   * OGR Support not included...
+   * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.",
+             "msOGRTranslateMsExpressionToOGRSQL()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
 
 /**********************************************************************
  *                     msOGRLayerOpen()
