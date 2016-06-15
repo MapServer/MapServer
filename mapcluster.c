@@ -1509,13 +1509,13 @@ int msClusterLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
   return layerinfo->srcLayer.vtable->LayerTranslateFilter(&layerinfo->srcLayer, filter, filteritem);
 }
 
-int msClusterLayerEscapeSQLParam(layerObj *layer, const char* pszString)
+char* msClusterLayerEscapeSQLParam(layerObj *layer, const char* pszString)
 {
   msClusterLayerInfo* layerinfo = layer->layerinfo;
 
   if (!layerinfo) {
     msSetError(MS_MISCERR, "Layer is not open: %s", "msClusterLayerEscapeSQLParam()", layer->name);
-    return MS_FAILURE;
+    return msStrdup("");
   }
 
   return layerinfo->srcLayer.vtable->LayerEscapeSQLParam(&layerinfo->srcLayer, pszString);
