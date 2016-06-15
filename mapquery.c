@@ -576,25 +576,6 @@ int msQueryByIndex(mapObj *map)
   return(MS_SUCCESS);
 }
 
-void msRestoreOldFilter(layerObj *lp, int old_filtertype, char *old_filteritem, char *old_filterstring)
-{
-  msFreeExpression(&(lp->filter));
-  if(lp->filteritem) {
-    free(lp->filteritem);
-    lp->filteritem = NULL;
-    lp->filteritemindex = -1;
-  }
-
-  /* restore any previously defined filter */
-  if(old_filterstring) {
-    lp->filter.type = old_filtertype;
-    lp->filter.string = old_filterstring;
-    if(old_filteritem) {
-      lp->filteritem = old_filteritem;
-    }
-  }
-}
-
 static char *filterTranslateToLogical(expressionObj *filter, char *filteritem) {
   char *string = NULL;
 
