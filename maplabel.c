@@ -273,7 +273,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   ts->rotation = l->angle * MS_DEG_TO_RAD;
 }
 
-int msAddLabelGroup(mapObj *map, imageObj *image, int layerindex, int classindex, shapeObj *shape, pointObj *point, double featuresize)
+int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classindex, shapeObj *shape, pointObj *point, double featuresize)
 {
   int l,s, priority;
   labelCacheSlotObj *cacheslot;
@@ -283,9 +283,12 @@ int msAddLabelGroup(mapObj *map, imageObj *image, int layerindex, int classindex
   classObj *classPtr=NULL;
   int numtextsymbols = 0;
   textSymbolObj **textsymbols, *ts;
+  int layerindex = layer->index;
 
-  layerPtr = (GET_LAYER(map, layerindex)); /* set up a few pointers for clarity */
-  classPtr = GET_LAYER(map, layerindex)->class[classindex];
+  // We cannot use GET_LAYER here because in drawQuery the drawing may happen
+  // on a temp layer only.
+  layerPtr = layer;
+  classPtr = layer->class[classindex];
 
   if(classPtr->numlabels == 0) return MS_SUCCESS; /* not an error just nothing to do */
   

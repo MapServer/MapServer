@@ -481,7 +481,7 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
   imgheight = img->height/renderer->utfresolution;
   imgwidth = img->width/renderer->utfresolution;
 
-  fprintf(fp,"{\"grid\":[");
+  msIO_fprintf(fp,"{\"grid\":[");
 
   /* Print the buffer, also */
   for(row=0; row<imgheight; row++) {
@@ -491,8 +491,8 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
     stringptr = string;
     /* Needs comma between each lines but JSON must not start with a comma. */
     if(row!=0)
-      fprintf(fp,",");
-    fprintf(fp,"\"");
+      msIO_fprintf(fp,",");
+    msIO_fprintf(fp,"\"");
     for(col=0; col<img->width/renderer->utfresolution; col++) {
       /* Get the datas from buffer. */
       pixelid = renderer->buffer[(row*imgwidth)+col];
@@ -505,51 +505,51 @@ int utfgridSaveImage(imageObj *img, mapObj *map, FILE *fp, outputFormatObj *form
     *stringptr = '\0';
     char * utf8;
     utf8 = msConvertWideStringToUTF8 (string, "UCS-4LE");
-    fprintf(fp,"%s", utf8);
+    msIO_fprintf(fp,"%s", utf8);
     msFree(utf8);
     msFree(string);
-    fprintf(fp,"\"");
+    msIO_fprintf(fp,"\"");
   }
 
-  fprintf(fp,"],\"keys\":[\"\"");
+  msIO_fprintf(fp,"],\"keys\":[\"\"");
 
   /* Prints the key specified */
   for(i=0;i<renderer->data->counter;i++) {
-      fprintf(fp,",");
+      msIO_fprintf(fp,",");
 
     if(renderer->useutfitem)
     {
       pszEscaped = msEscapeJSonString(renderer->data->table[i].itemvalue);
-      fprintf(fp,"\"%s\"", pszEscaped);
+      msIO_fprintf(fp,"\"%s\"", pszEscaped);
       msFree(pszEscaped);
     }
     /* If no UTFITEM specified use the serial ID as the key */
     else
-      fprintf(fp,"\"%i\"", renderer->data->table[i].serialid);
+      msIO_fprintf(fp,"\"%i\"", renderer->data->table[i].serialid);
   }
 
-  fprintf(fp,"],\"data\":{");
+  msIO_fprintf(fp,"],\"data\":{");
 
   /* Print the datas */
   if(renderer->useutfdata) {
     for(i=0;i<renderer->data->counter;i++) {
       if(i!=0)
-        fprintf(fp,",");
+        msIO_fprintf(fp,",");
 
       if(renderer->useutfitem)
       {
         pszEscaped = msEscapeJSonString(renderer->data->table[i].itemvalue);
-        fprintf(fp,"\"%s\":", pszEscaped);
+        msIO_fprintf(fp,"\"%s\":", pszEscaped);
         msFree(pszEscaped);
       }
       /* If no UTFITEM specified use the serial ID as the key */
       else
-        fprintf(fp,"\"%i\":", renderer->data->table[i].serialid);
+        msIO_fprintf(fp,"\"%i\":", renderer->data->table[i].serialid);
 
-      fprintf(fp,"%s", renderer->data->table[i].datavalues);
+      msIO_fprintf(fp,"%s", renderer->data->table[i].datavalues);
     }
   }
-  fprintf(fp,"}}");
+  msIO_fprintf(fp,"}}");
 
   return MS_SUCCESS;
 }

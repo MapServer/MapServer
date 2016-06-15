@@ -58,7 +58,12 @@ void msLibXml2GenerateList(xmlNodePtr psParent, xmlNsPtr psNs, const char *elnam
   int i = 0;
   tokens = msStringSplit(values, delim, &n);
   for (i=0; i<n; i++) {
-    xmlNewChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
+    // Not sure we really need to distinguish empty vs non-empty case, but
+    // this does change the result of msautotest/wxs/expected/wcs_empty_cap111.xml otherwise
+    if( tokens[i] && tokens[i][0] != '\0' )
+      xmlNewTextChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
+    else
+      xmlNewChild(psParent, psNs, BAD_CAST elname, BAD_CAST tokens[i]);
   }
   msFreeCharArray(tokens, n);
 }

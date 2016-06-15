@@ -83,7 +83,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "title", validated_language);
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Title", BAD_CAST value);
+  psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "Title", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_title\" missing for ows:Title"));
@@ -91,7 +91,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "abstract", validated_language);
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Abstract", BAD_CAST value);
+  psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "Abstract", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_abstract\" was missing for ows:Abstract"));
@@ -100,7 +100,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "keywordlist", validated_language);
 
   if (value) {
-    psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL);
+    psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "Keywords", NULL);
     msLibXml2GenerateList(psNode, psNsOws, "Keyword", value, ',');
   }
 
@@ -108,7 +108,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_keywordlist\" was missing for ows:KeywordList"));
   }
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceType", BAD_CAST servicetype);
+  psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "ServiceType", BAD_CAST servicetype);
 
   xmlNewProp(psNode, BAD_CAST "codeSpace", BAD_CAST MS_OWSCOMMON_OGC_CODESPACE);
 
@@ -116,7 +116,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "fees", validated_language);
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "Fees", BAD_CAST value);
+  psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "Fees", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_fees\" was missing for ows:Fees"));
@@ -124,7 +124,7 @@ xmlNodePtr msOWSCommonServiceIdentification(xmlNsPtr psNsOws, mapObj *map,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "accessconstraints", validated_language);
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "AccessConstraints", BAD_CAST value);
+  psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "AccessConstraints", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_accessconstraints\" was missing for ows:AccessConstraints"));
@@ -169,13 +169,13 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "contactorganization", validated_language);
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ProviderName", BAD_CAST value);
+  psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "ProviderName", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Mandatory metadata \"ows_contactorganization\" was missing for ows:ProviderName"));
   }
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ProviderSite", NULL);
+  psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "ProviderSite", NULL);
 
   xmlNewNsProp(psNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
 
@@ -187,11 +187,11 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
     xmlAddSibling(psNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_service_onlineresource\" was missing for ows:ProviderSite/@xlink:href"));
   }
 
-  psNode = xmlNewChild(psRootNode, psNsOws, BAD_CAST "ServiceContact", NULL);
+  psNode = xmlNewTextChild(psRootNode, psNsOws, BAD_CAST "ServiceContact", NULL);
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "contactperson", validated_language);
 
-  psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "IndividualName", BAD_CAST  value);
+  psSubNode = xmlNewTextChild(psNode, psNsOws, BAD_CAST "IndividualName", BAD_CAST  value);
 
   if (!value) {
     xmlAddSibling(psSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactperson\" was missing for ows:IndividualName"));
@@ -199,19 +199,19 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "contactposition", validated_language);
 
-  psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "PositionName", BAD_CAST value);
+  psSubNode = xmlNewTextChild(psNode, psNsOws, BAD_CAST "PositionName", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactposition\" was missing for ows:PositionName"));
   }
 
-  psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "ContactInfo", NULL);
+  psSubNode = xmlNewTextChild(psNode, psNsOws, BAD_CAST "ContactInfo", NULL);
 
-  psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Phone", NULL);
+  psSubSubNode = xmlNewTextChild(psSubNode, psNsOws, BAD_CAST "Phone", NULL);
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "contactvoicetelephone", validated_language);
 
-  psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "Voice", BAD_CAST value);
+  psSubSubSubNode = xmlNewTextChild(psSubSubNode, psNsOws, BAD_CAST "Voice", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactvoicetelephone\" was missing for ows:Voice"));
@@ -219,17 +219,17 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "contactfacsimiletelephone", validated_language);
 
-  psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "Facsimile", BAD_CAST value);
+  psSubSubSubNode = xmlNewTextChild(psSubSubNode, psNsOws, BAD_CAST "Facsimile", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactfacsimiletelephone\" was missing for ows:Facsimile"));
   }
 
-  psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "Address", NULL);
+  psSubSubNode = xmlNewTextChild(psSubNode, psNsOws, BAD_CAST "Address", NULL);
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "address", validated_language);
 
-  psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "DeliveryPoint", BAD_CAST value);
+  psSubSubSubNode = xmlNewTextChild(psSubSubNode, psNsOws, BAD_CAST "DeliveryPoint", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_address\" was missing for ows:DeliveryPoint"));
@@ -237,7 +237,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "city", validated_language);
 
-  psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "City", BAD_CAST value);
+  psSubSubSubNode = xmlNewTextChild(psSubSubNode, psNsOws, BAD_CAST "City", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_city\" was missing for ows:City"));
@@ -245,7 +245,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "stateorprovince", validated_language);
 
-  psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "AdministrativeArea", BAD_CAST value);
+  psSubSubSubNode = xmlNewTextChild(psSubSubNode, psNsOws, BAD_CAST "AdministrativeArea", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_stateorprovince\" was missing for ows:AdministrativeArea"));
@@ -253,7 +253,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "postcode", validated_language);
 
-  psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "PostalCode", BAD_CAST value);
+  psSubSubSubNode = xmlNewTextChild(psSubSubNode, psNsOws, BAD_CAST "PostalCode", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_postcode\" was missing for ows:PostalCode"));
@@ -261,7 +261,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "country", validated_language);
 
-  psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "Country", BAD_CAST value);
+  psSubSubSubNode = xmlNewTextChild(psSubSubNode, psNsOws, BAD_CAST "Country", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_country\" was missing for ows:Country"));
@@ -269,13 +269,13 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "contactelectronicmailaddress", validated_language);
 
-  psSubSubSubNode = xmlNewChild(psSubSubNode, psNsOws, BAD_CAST "ElectronicMailAddress", BAD_CAST value);
+  psSubSubSubNode = xmlNewTextChild(psSubSubNode, psNsOws, BAD_CAST "ElectronicMailAddress", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactelectronicmailaddress\" was missing for ows:ElectronicMailAddress"));
   }
 
-  psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "OnlineResource", NULL);
+  psSubSubNode = xmlNewTextChild(psSubNode, psNsOws, BAD_CAST "OnlineResource", NULL);
 
   xmlNewNsProp(psSubSubNode, psNsXLink, BAD_CAST "type", BAD_CAST "simple");
 
@@ -289,7 +289,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "hoursofservice", validated_language);
 
-  psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "HoursOfService", BAD_CAST value);
+  psSubSubNode = xmlNewTextChild(psSubNode, psNsOws, BAD_CAST "HoursOfService", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_hoursofservice\" was missing for ows:HoursOfService"));
@@ -297,7 +297,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "contactinstructions", validated_language);
 
-  psSubSubNode = xmlNewChild(psSubNode, psNsOws, BAD_CAST "ContactInstructions", BAD_CAST value);
+  psSubSubNode = xmlNewTextChild(psSubNode, psNsOws, BAD_CAST "ContactInstructions", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_contactinstructions\" was missing for ows:ContactInstructions"));
@@ -305,7 +305,7 @@ xmlNodePtr msOWSCommonServiceProvider(xmlNsPtr psNsOws, xmlNsPtr psNsXLink,
 
   value = msOWSLookupMetadataWithLanguage(&(map->web.metadata), namespaces, "role", validated_language);
 
-  psSubNode = xmlNewChild(psNode, psNsOws, BAD_CAST "Role", BAD_CAST value);
+  psSubNode = xmlNewTextChild(psNode, psNsOws, BAD_CAST "Role", BAD_CAST value);
 
   if (!value) {
     xmlAddSibling(psSubNode, xmlNewComment(BAD_CAST "WARNING: Optional metadata \"ows_role\" was missing for ows:Role"));
@@ -489,9 +489,7 @@ xmlNodePtr msOWSCommonExceptionReport(xmlNsPtr psNsOws, int ows_version, const c
   }
 
   if (ExceptionText != NULL) {
-    char* errorMessage = msEncodeHTMLEntities(ExceptionText);
-    xmlNewChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST errorMessage);
-    msFree(errorMessage);
+    xmlNewTextChild(psMainNode, NULL, BAD_CAST "ExceptionText", BAD_CAST ExceptionText);
   }
 
   free(xsi_schemaLocation);

@@ -420,7 +420,7 @@ void setMSSQL2008LayerInfo(layerObj *layer, msMSSQL2008LayerInfo *MSSQL2008layer
 void handleSQLError(layerObj *layer)
 {
   SQLCHAR       SqlState[6], Msg[SQL_MAX_MESSAGE_LENGTH];
-  SQLINTEGER    NativeError;
+  SQLLEN     NativeError;
   SQLSMALLINT   i, MsgLen;
   SQLRETURN  rc;
   msMSSQL2008LayerInfo *layerinfo = getMSSQL2008LayerInfo(layer);
@@ -609,7 +609,7 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
   SQLCHAR columnName[SQL_COLUMN_NAME_MAX_LENGTH + 1];
   SQLSMALLINT columnNameLen;
   SQLSMALLINT dataType;
-  SQLUINTEGER columnSize;
+  SQLULEN columnSize;
   SQLSMALLINT decimalDigits;
   SQLSMALLINT nullable;
 
@@ -1578,8 +1578,8 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 {
   msMSSQL2008LayerInfo  *layerinfo;
   int                 result;
-  SQLINTEGER needLen = 0;
-  SQLINTEGER retLen = 0;
+  SQLLEN needLen = 0;
+  SQLLEN retLen = 0;
   char dummyBuffer[1];
   char *wkbBuffer;
   char *valueBuffer;
@@ -1606,7 +1606,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
   shape->type = MS_SHAPE_NULL;
 
   while(shape->type == MS_SHAPE_NULL) {
-    /* SQLRETURN rc = SQLFetchScroll(layerinfo->conn->hstmt, SQL_FETCH_ABSOLUTE, (SQLINTEGER) (*record) + 1); */
+    /* SQLRETURN rc = SQLFetchScroll(layerinfo->conn->hstmt, SQL_FETCH_ABSOLUTE, (SQLLEN) (*record) + 1); */
 
     /* We only do forward fetches. the parameter 'record' is ignored, but is incremented */
     SQLRETURN rc = SQLFetch(layerinfo->conn->hstmt);
@@ -2038,7 +2038,7 @@ int msMSSQL2008LayerRetrievePK(layerObj *layer, char **urid_name, char* table_na
 
   {
     char buff[100];
-    SQLINTEGER retLen;
+    SQLLEN retLen;
     rc = SQLGetData(layerinfo->conn->hstmt, 1, SQL_C_BINARY, buff, sizeof(buff), &retLen);
 
     rc = SQLFetch(layerinfo->conn->hstmt);

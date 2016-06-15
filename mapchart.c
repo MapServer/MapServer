@@ -250,10 +250,8 @@ int getNextShape(mapObj *map, layerObj *layer, double *values, int *nvalues, sty
   status = msLayerNextShape(layer, shape);
   if(status == MS_SUCCESS) {
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+    if(layer->project)
       msProjectShape(&layer->projection, &map->projection, shape);
-    else
-      layer->project = MS_FALSE;
 #endif
 
     if(msBindLayerToShape(layer, shape, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS) != MS_SUCCESS)
@@ -363,6 +361,9 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
       return MS_FAILURE;
     }
   }
+#ifdef USE_PROJ
+  layer->project = msProjectionsDiffer(&(layer->projection), &(map->projection));
+#endif
   /* step through the target shapes */
   msInitShape(&shape);
 

@@ -674,9 +674,9 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(layer->compositer && !layer->compositer->next && layer->compositer->opacity == 0) return MS_SUCCESS; /* layer is completely transparent, skip it */
   
 
-  /* conditions may have changed since this layer last drawn, so set
-     layer->project true to recheck projection needs (Bug #673) */
-  layer->project = MS_TRUE;
+  /* conditions may have changed since this layer last drawn, so retest
+     layer->project (Bug #673) */
+  layer->project = msProjectionsDiffer(&(layer->projection),&(map->projection));
 
   /* make sure labelcache setting is set correctly if postlabelcache is set. This is done by the parser but
      may have been altered by a mapscript. see #5142 */
@@ -780,6 +780,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
                      "msDrawLayer()");
           return (MS_FAILURE);
         }
+        image_draw->map = map;
         renderer->startLayer(image_draw,map,layer);
       }
     }
@@ -1191,9 +1192,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if(!msLayerIsVisible(map, layer)) return(MS_SUCCESS); /* not an error, just nothing to do */
 
-  /* conditions may have changed since this layer last drawn, so set
-     layer->project true to recheck projection needs (Bug #673) */
-  layer->project = MS_TRUE;
+  /* conditions may have changed since this layer last drawn, so reset
+     layer->project to recheck projection needs (Bug #673) */
+  layer->project = msProjectionsDiffer(&(layer->projection),&(map->projection));
 
   /* set annotation status */
   annotate = msEvalContext(map, layer, layer->labelrequires);
@@ -1248,7 +1249,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
           colorbuffer[i] = layer->class[i]->styles[0]->outlinecolor; /* if no color, save the outlinecolor from the BOTTOM style */
           layer->class[i]->styles[0]->outlinecolor = map->querymap.color;
         }
-      } else {
+      } else if (layer->class[i]->numstyles > 0) {
         if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1]->color)) {
           colorbuffer[i] = layer->class[i]->styles[layer->class[i]->numstyles-1]->color; /* save the color from the TOP style */
           layer->class[i]->styles[layer->class[i]->numstyles-1]->color = map->querymap.color;
@@ -1256,6 +1257,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
           colorbuffer[i] = layer->class[i]->styles[layer->class[i]->numstyles-1]->outlinecolor; /* if no color, save the outlinecolor from the TOP style */
           layer->class[i]->styles[layer->class[i]->numstyles-1]->outlinecolor = map->querymap.color;
         }
+      } else if (layer->class[i]->numlabels > 0) {
+          colorbuffer[i] = layer->class[i]->labels[0]->color;
+          layer->class[i]->labels[0]->color = map->querymap.color;
       }
 
       mindistancebuffer[i] = -1; /* RFC77 TODO: only using the first label, is that cool? */
@@ -1364,11 +1368,15 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
           layer->class[i]->styles[0]->color = colorbuffer[i];
         else if(MS_VALID_COLOR(layer->class[i]->styles[0]->outlinecolor))
           layer->class[i]->styles[0]->outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the BOTTOM style */
-      } else {
+      } else if (layer->class[i]->numstyles > 0) {
         if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1]->color))
           layer->class[i]->styles[layer->class[i]->numstyles-1]->color = colorbuffer[i];
         else if(MS_VALID_COLOR(layer->class[i]->styles[layer->class[i]->numstyles-1]->outlinecolor))
           layer->class[i]->styles[layer->class[i]->numstyles-1]->outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the TOP style */
+      }
+      else if (layer->class[i]->numlabels > 0) {
+          if(MS_VALID_COLOR(layer->class[i]->labels[0]->color))
+            layer->class[i]->labels[0]->color = colorbuffer[i];
       }
 
       if(layer->class[i]->numlabels > 0)
@@ -1520,10 +1528,8 @@ int circleLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj
   if (layer->transform == MS_TRUE) {
 
 #ifdef USE_PROJ
-    if (layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+    if (layer->project)
       msProjectPoint(&layer->projection, &map->projection, &center);
-    else
-      layer->project = MS_FALSE;
 #endif
 
     center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
@@ -1551,10 +1557,8 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
   pointObj *point;
 
 #ifdef USE_PROJ
-  if (layer->project && layer->transform == MS_TRUE && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+  if (layer->project && layer->transform == MS_TRUE)
     msProjectShape(&layer->projection, &map->projection, shape);
-  else
-    layer->project = MS_FALSE;
 #endif
 
   for (l = 0; l < layer->class[c]->numlabels; l++)
@@ -1581,7 +1585,7 @@ int pointLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj 
       }
       if(MS_DRAW_LABELS(drawmode)) {
         if (layer->labelcache) {
-          if (msAddLabelGroup(map, image, layer->index, c, shape, point, -1) != MS_SUCCESS) return (MS_FAILURE);
+          if (msAddLabelGroup(map, image, layer, c, shape, point, -1) != MS_SUCCESS) return (MS_FAILURE);
         } else {
           for (l = 0; l < layer->class[c]->numlabels; l++)
             if(msGetLabelStatus(map,layer,shape,layer->class[c]->labels[l]) == MS_ON) {
@@ -1778,7 +1782,7 @@ int polygonLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer,
         for (i = 0; i < layer->class[c]->numlabels; i++)
           if (layer->class[c]->labels[i]->angle != 0) layer->class[c]->labels[i]->angle -= map->gt.rotation_angle; /* TODO: is this correct ??? */
         if (layer->labelcache) {
-          if (msAddLabelGroup(map, image, layer->index, c, anno_shape, &annopnt,
+          if (msAddLabelGroup(map, image, layer, c, anno_shape, &annopnt,
                               MS_MIN(shape->bounds.maxx - shape->bounds.minx, shape->bounds.maxy - shape->bounds.miny)) != MS_SUCCESS) {
             return MS_FAILURE;
           }
@@ -1849,10 +1853,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   }
 
 #ifdef USE_PROJ
-  if (layer->project && layer->transform == MS_TRUE && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+  if (layer->project && layer->transform == MS_TRUE)
     msProjectShape(&layer->projection, &map->projection, shape);
-  else
-    layer->project = MS_FALSE;
 #endif
 
   /* check if we'll need the unclipped shape */
@@ -2037,10 +2039,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
   labelObj *label=NULL;
 
 #ifdef USE_PROJ
-  if(layer->transform == MS_TRUE && layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+  if(layer->transform == MS_TRUE && layer->project)
     msProjectPoint(&layer->projection, &map->projection, point);
-  else
-    layer->project = MS_FALSE;
 #endif
 
   if(labeltext && theclass->numlabels > 0) {

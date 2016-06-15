@@ -247,7 +247,7 @@ static void msOGRSetPoints( OGRGeometryH hGeom, lineObj *line, int bWant2DOutput
 
 static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
                             shapeObj *shape, gmlItemListObj *item_list,
-                            int nFirstOGRFieldIndex )
+                            int nFirstOGRFieldIndex, const char *pszFeatureid )
 
 {
   OGRGeometryH hGeom = NULL;
@@ -489,6 +489,15 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
   for( i = 0; i < item_list->numitems; i++ ) {
     gmlItemObj *item = item_list->items + i;
 
+    if(pszFeatureid && !strcmp(pszFeatureid, item->name)) {
+      char *endptr;
+      long feature_id = strtol(shape->values[i],&endptr,10);
+      if(endptr && *endptr==0) {
+        /* only set the featureid if it is numeric */
+        OGR_F_SetFID(hFeat, feature_id);
+      }
+    }
+
     if( !item->visible )
       continue;
 
@@ -689,6 +698,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
   char **file_list = NULL;
   int iLayer, i;
   int bDataSourceNameIsRequestDir = FALSE;
+  int bUseFeatureId = MS_FALSE;
 
   /* -------------------------------------------------------------------- */
   /*      Fetch the output format driver.                                 */
@@ -712,6 +722,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     if( strncasecmp(format->formatoptions[i],"DSCO:",5) == 0 )
       ds_options = CSLAddString( ds_options,
                                  format->formatoptions[i] + 5 );
+  }
+  if(!strcasecmp("true",msGetOutputFormatOption(format,"USE_FEATUREID","false"))) {
+    bUseFeatureId = MS_TRUE;
   }
 
   /* ==================================================================== */
@@ -870,8 +883,8 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     gmlItemListObj *item_list = NULL;
     const char *value;
     char *pszWKT;
-    int  reproject = MS_FALSE;
     int  nFirstOGRFieldIndex = -1;
+    const char *pszFeatureid = NULL;
 
     if( !layer->resultcache )
       continue;
@@ -879,11 +892,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     /* -------------------------------------------------------------------- */
     /*      Will we need to reproject?                                      */
     /* -------------------------------------------------------------------- */
-    if(layer->transform == MS_TRUE
-        && layer->project
-        && msProjectionsDiffer(&(layer->projection),
-                               &(layer->map->projection)) )
-      reproject = MS_TRUE;
+    if(layer->transform == MS_TRUE)
+        layer->project = msProjectionsDiffer(&(layer->projection),
+                               &(layer->map->projection));
 
     /* -------------------------------------------------------------------- */
     /*      Establish the geometry type to use for the created layer.       */
@@ -901,6 +912,9 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
       else
         value = "Geometry";
     }
+
+    if(bUseFeatureId)
+      pszFeatureid = msOWSLookupMetadata(&(layer->metadata), "FOG", "featureid");
 
     if( strcasecmp(value,"Point") == 0 )
       eGeomType = wkbPoint;
@@ -964,7 +978,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
     }
 
     if( srs != NULL )
-      OSRDestroySpatialReference( srs );
+      OSRRelease( srs );
 
     /* -------------------------------------------------------------------- */
     /*      Create appropriate attributes on this layer.                    */
@@ -1027,6 +1041,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
         OGR_DS_Destroy( hDS );
         msOGRCleanupDS( datasource_name );
+        msGMLFreeItems(item_list);
         return MS_FAILURE;
       }
 
@@ -1101,7 +1116,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
         }
       }
 
-      if( reproject ) {
+      if( layer->project ) {
         status =
           msProjectShape(&layer->projection, &layer->map->projection,
                          &resultshape);
@@ -1113,7 +1128,7 @@ int msOGRWriteFromQuery( mapObj *map, outputFormatObj *format, int sendheaders )
 
       if( status == MS_SUCCESS )
         status = msOGRWriteShape( layer, hOGRLayer, &resultshape,
-                                  item_list, nFirstOGRFieldIndex );
+                                  item_list, nFirstOGRFieldIndex, pszFeatureid );
 
       if(status != MS_SUCCESS) {
         OGR_DS_Destroy( hDS );
