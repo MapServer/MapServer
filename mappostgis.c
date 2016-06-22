@@ -4035,6 +4035,7 @@ int msPostGISLayerTranslateFilter(layerObj *layer, expressionObj *filter, char *
         default:
           /* by default accept the general token to string conversion */
 
+          if(node->token == MS_TOKEN_COMPARISON_EQ && node->next != NULL && node->next->token == MS_TOKEN_LITERAL_TIME) break; /* skip, handled with the next token */
           if(bindingToken == MS_TOKEN_BINDING_TIME && (node->token == MS_TOKEN_COMPARISON_EQ || node->token == MS_TOKEN_COMPARISON_NE)) break; /* skip, handled elsewhere */
 
           native_string = msStringConcatenate(native_string, msExpressionTokenToString(node->token));
