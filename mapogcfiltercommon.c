@@ -694,6 +694,12 @@ char *FLTGetCommonExpression(FilterEncodingNode *psFilterNode, layerObj *lp)
 
 int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const char *pszExpression)
 {
+  return FLTApplyFilterToLayerCommonExpressionWithRect(map, iLayerIndex, pszExpression, map->extent);
+}
+
+/* rect must be in map->projection */
+int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, const char *pszExpression, rectObj rect)
+{
   int retval;
   int save_startindex;
   int save_maxfeatures;
@@ -707,18 +713,25 @@ int FLTApplyFilterToLayerCommonExpression(mapObj *map, int iLayerIndex, const ch
   map->query.maxfeatures = save_maxfeatures;
   map->query.only_cache_result_count = save_only_cache_result_count;
 
-  map->query.type = MS_QUERY_BY_FILTER;
   map->query.mode = MS_QUERY_MULTIPLE;
-
-  msInitExpression(&map->query.filter);
-  map->query.filter.string = msStrdup(pszExpression);
-  map->query.filter.type = MS_EXPRESSION; /* a logical expression */
   map->query.layer = iLayerIndex;
 
-  /* TODO: if there is a bbox in the node, get it and set the map extent (projected to map->projection */
-  map->query.rect = map->extent;
+  map->query.rect = rect;
 
-  retval = msQueryByFilter(map);
+  if( pszExpression )
+  {
+    map->query.type = MS_QUERY_BY_FILTER;
+    msInitExpression(&map->query.filter);
+    map->query.filter.string = msStrdup(pszExpression);
+    map->query.filter.type = MS_EXPRESSION; /* a logical expression */
+
+    retval = msQueryByFilter(map);
+  }
+  else
+  {
+    map->query.type = MS_QUERY_BY_RECT;
+    retval = msQueryByRect(map);
+  }
 
   return retval;
 }

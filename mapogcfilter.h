@@ -148,6 +148,7 @@ int FLTCheckInvalidProperty(FilterEncodingNode *psFilterNode,
                             mapObj *map, int i);
 FilterEncodingNode* FLTSimplify(FilterEncodingNode *psFilterNode,
                                 int* pnEvaluation);
+int FLTApplyFilterToLayerCommonExpressionWithRect(mapObj *map, int iLayerIndex, const char *pszExpression, rectObj rect);
 
 #endif
 
