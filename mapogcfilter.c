@@ -42,7 +42,9 @@
 #include "mapows.h"
 #include <ctype.h>
 
+#if 0
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode);
+#endif
 
 int FLTIsNumeric(const char *pszValue)
 {
@@ -569,8 +571,6 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
 /************************************************************************/
 int FLTIsSimpleFilter(FilterEncodingNode *psNode)
 {
-  return MS_FALSE;
-
   if (FLTValidForBBoxFilter(psNode)) {
     if (FLTNumberOfFilterType(psNode, "DWithin") == 0 &&
         FLTNumberOfFilterType(psNode, "Intersect") == 0 &&
@@ -614,17 +614,43 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerInd
 /************************************************************************/
 int FLTLayerApplyCondSQLFilterToLayer(FilterEncodingNode *psNode, mapObj *map, int iLayerIndex)
 {
-  /* ==================================================================== */
-  /*      Check here to see if it is a simple filter and if that is       */
-  /*      the case, we are going to use the FILTER element on             */
-  /*      the layer.                                                      */
-  /* ==================================================================== */
-  layerObj* lp = GET_LAYER(map, iLayerIndex);
-  if (FLTIsSimpleFilter(psNode) && !(lp->connectiontype == MS_OGR && !FLTHasUniqueTopLevelDuringFilter(psNode)) ) {
-    return FLTApplySimpleSQLFilter(psNode, map, iLayerIndex);
-  }
-
   return FLTLayerApplyPlainFilterToLayer(psNode, map, iLayerIndex);
+}
+
+
+/************************************************************************/
+/*                           FLTGetTopBBOX                              */
+/*                                                                      */
+/* Return the "top" BBOX if there's a unique one.                       */
+/************************************************************************/
+static int FLTGetTopBBOXInternal(FilterEncodingNode *psNode, FilterEncodingNode** ppsTopBBOX, int *pnCount)
+{
+  if (psNode->pszValue && strcasecmp(psNode->pszValue, "BBOX") == 0) {
+    (*pnCount) ++;
+    if( *pnCount == 1 )
+    {
+      *ppsTopBBOX = psNode;
+      return TRUE;
+    }
+    *ppsTopBBOX = NULL;
+    return FALSE;
+  }
+  else if (psNode->pszValue && strcasecmp(psNode->pszValue, "AND") == 0) {
+    return FLTGetTopBBOXInternal(psNode->psLeftNode, ppsTopBBOX, pnCount) &&
+           FLTGetTopBBOXInternal(psNode->psRightNode, ppsTopBBOX, pnCount);
+  }
+  else
+  {
+    return TRUE;
+  }
+}
+
+static FilterEncodingNode* FLTGetTopBBOX(FilterEncodingNode *psNode)
+{
+  int nCount = 0;
+  FilterEncodingNode* psTopBBOX = NULL;
+  FLTGetTopBBOXInternal(psNode, &psTopBBOX, &nCount);
+  return psTopBBOX;
 }
 
 /************************************************************************/
@@ -637,12 +663,56 @@ int FLTLayerApplyPlainFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
 {
   char *pszExpression  =NULL;
   int status =MS_FALSE;
+  layerObj* lp = GET_LAYER(map, iLayerIndex);
 
-  pszExpression = FLTGetCommonExpression(psNode,  GET_LAYER(map, iLayerIndex));
-  if(map->debug == MS_DEBUGLEVEL_VVV)
-    msDebug("FLTLayerApplyPlainFilterToLayer(): %s\n", pszExpression);
+  pszExpression = FLTGetCommonExpression(psNode,  lp);
   if (pszExpression) {
-    status = FLTApplyFilterToLayerCommonExpression(map, iLayerIndex, pszExpression);
+    FilterEncodingNode* psTopBBOX;
+    rectObj rect = map->extent;
+
+    psTopBBOX = FLTGetTopBBOX(psNode);
+    if( psTopBBOX )
+    {
+      int can_remove_expression = MS_TRUE;
+      const char* pszEPSG = FLTGetBBOX(psNode, &rect);
+      if(pszEPSG && map->projection.numargs > 0) {
+        projectionObj sProjTmp;
+        msInitProjection(&sProjTmp);
+        /* Use the non EPSG variant since axis swapping is done in FLTDoAxisSwappingIfNecessary */
+        if (msLoadProjectionString(&sProjTmp, pszEPSG) == 0) {
+          rectObj oldRect = rect;
+          msProjectRect(&sProjTmp, &map->projection, &rect);
+          /* If reprojection is involved, do not remove the expression */
+          if( rect.minx != oldRect.minx ||
+              rect.miny != oldRect.miny ||
+              rect.maxx != oldRect.maxx ||
+              rect.maxy != oldRect.maxy )
+          {
+            can_remove_expression = MS_FALSE;
+          }
+        }
+        msFreeProjection(&sProjTmp);
+      }
+
+      /* Small optimization: if the query is just a BBOX, then do a */
+      /* msQueryByRect() */
+      if( psTopBBOX == psNode && can_remove_expression )
+      {
+        msFree(pszExpression);
+        pszExpression = NULL;
+      }
+    }
+
+    if(map->debug == MS_DEBUGLEVEL_VVV)
+    {
+      if( pszExpression )
+        msDebug("FLTLayerApplyPlainFilterToLayer(): %s, rect=%f,%f,%f,%f\n", pszExpression, rect.minx, rect.miny, rect.maxx, rect.maxy);
+      else
+        msDebug("FLTLayerApplyPlainFilterToLayer(): rect=%f,%f,%f,%f\n", rect.minx, rect.miny, rect.maxx, rect.maxy);
+    }
+
+    status = FLTApplyFilterToLayerCommonExpressionWithRect(map, iLayerIndex,
+                                                           pszExpression, rect);
     msFree(pszExpression);
   }
 
@@ -1784,6 +1854,7 @@ int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
   return 0;
 }
 
+#if 0
 static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode)
 {
   int nCount = 0;
@@ -1809,7 +1880,7 @@ static int FLTHasUniqueTopLevelDuringFilter(FilterEncodingNode *psFilterNode)
 
   return 0;
 }
-
+#endif
 
 int FLTIsLineFilter(FilterEncodingNode *psFilterNode)
 {
