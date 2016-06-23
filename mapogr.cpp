@@ -4260,4 +4260,3 @@ char *msOGRShapeToWKT(shapeObj *shape)
   return NULL;
 #endif
 }
-
