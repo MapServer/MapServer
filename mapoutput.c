@@ -102,8 +102,8 @@ struct defaultOutputFormatEntry defaultoutputformats[] = {
   {"jpeg","AGG/JPEG","image/jpeg"},
   {"png8","AGG/PNG8","image/png; mode=8bit"},
   {"png24","AGG/PNG","image/png; mode=24bit"},
-  {"jpegpng", "AGG/MIXED", "image/jpeg-png"},
-  {"jpegpng8", "AGG/MIXED", "image/jpeg-png8"},
+  {"jpegpng", "AGG/MIXED", "image/vnd.jpeg-png"},
+  {"jpegpng8", "AGG/MIXED", "image/vnd.jpeg-png8"},
 #ifdef USE_CAIRO
   {"pdf","CAIRO/PDF","application/x-pdf"},
   {"svg","CAIRO/SVG","image/svg+xml"},
@@ -208,7 +208,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   else if( strcasecmp(driver,"AGG/MIXED") == 0 &&
            name != NULL && strcasecmp(name,"jpegpng") == 0 ) {
     format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = msStrdup("image/jpeg-png");
+    format->mimetype = msStrdup("image/vnd.jpeg-png");
     format->imagemode = MS_IMAGEMODE_RGBA;
     format->extension = msStrdup("XXX");
     format->renderer = MS_RENDER_WITH_AGG;
@@ -219,7 +219,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
   else if( strcasecmp(driver,"AGG/MIXED") == 0 &&
            name != NULL && strcasecmp(name,"jpegpng8") == 0 ) {
     format = msAllocOutputFormat( map, name, driver );
-    format->mimetype = msStrdup("image/jpeg-png8");
+    format->mimetype = msStrdup("image/vnd.jpeg-png8");
     format->imagemode = MS_IMAGEMODE_RGBA;
     format->extension = msStrdup("XXX");
     format->renderer = MS_RENDER_WITH_AGG;
