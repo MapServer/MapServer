@@ -2060,6 +2060,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
                      fo_filename );
 
     /* Emit back to client. */
+    msOutputFormatResolveFromImage( map, image );
     msIO_setHeader("Content-Type","%s",MS_IMAGE_MIME_TYPE(map->outputformat));
     msIO_sendHeaders();
     status = msSaveImage(map, image, NULL);

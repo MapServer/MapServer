@@ -2275,6 +2275,7 @@ static int msWCSWriteFile20(mapObj* map, imageObj* image, wcs20ParamsObjPtr para
   /*      output a single "stock" filename.                               */
   /* -------------------------------------------------------------------- */
   if( filename == NULL ) {
+    msOutputFormatResolveFromImage( map, image );
     if(multipart) {
       msIO_fprintf( stdout, "\r\n--wcs\r\n" );
       msIO_fprintf(

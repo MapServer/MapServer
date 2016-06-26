@@ -3694,6 +3694,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
     if(!strcmp(MS_IMAGE_MIME_TYPE(map->outputformat), "application/json")) {
       msIO_setHeader("Content-Type","application/json; charset=utf-8");
     } else {
+      msOutputFormatResolveFromImage( map, img );
       msIO_setHeader("Content-Type", "%s", MS_IMAGE_MIME_TYPE(map->outputformat));
     }
     msIO_sendHeaders();

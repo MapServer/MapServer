@@ -2739,6 +2739,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
   MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
   MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format,
       int issue_error );
+  void  msOutputFormatResolveFromImage( mapObj *map, imageObj* img );
 
   /* ==================================================================== */
   /*      End of prototypes for functions in mapoutput.c                  */
