@@ -1475,6 +1475,9 @@ LoadGDALImages( GDALDatasetH hDS, int band_numbers[4], int band_count,
         if( bGotNoData && pafRawData[i] == fNoDataValue )
           continue;
 
+        if( CPLIsNan(pafRawData[i]) )
+          continue;
+
         if( !bMinMaxSet ) {
           dfScaleMin = dfScaleMax = pafRawData[i];
           bMinMaxSet = TRUE;
@@ -1980,6 +1983,9 @@ msDrawRasterLayerGDAL_16BitClassification(
     if( bGotNoData && pafRawData[i] == fNoDataValue )
       continue;
 
+    if( CPLIsNan(pafRawData[i]) )
+      continue;
+
     if( !bGotFirstValue ) {
       fDataMin = fDataMax = pafRawData[i];
       bGotFirstValue = TRUE;
@@ -2131,6 +2137,9 @@ msDrawRasterLayerGDAL_16BitClassification(
       if( bGotNoData && fRawValue == fNoDataValue ) {
         continue;
       }
+
+      if( CPLIsNan(fRawValue) )
+        continue;
 
       if(SKIP_MASK(j,i))
         continue;
