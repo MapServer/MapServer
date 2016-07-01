@@ -1676,8 +1676,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 select = msStringConcatenate(select, layer->items[i]);
                 select = msStringConcatenate(select, "\"");
             }
-            
-            select = msStringConcatenate(select, ", ");
+            if( layer->numitems > 0 )
+                select = msStringConcatenate(select, ", ");
             pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
             if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' ) {
                 select = msStringConcatenate(select, "\"");
