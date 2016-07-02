@@ -1,0 +1,64 @@
+#
+# Test WMS
+#
+# REQUIRES: SUPPORTS=WMS INPUT=OGR
+#
+# simple bbox
+#
+# RUN_PARMS: wms_ogr_native.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&TYPENAME=towns&FORMAT=image/png&BBOX=659159,4877386,696879,4898059&LAYERS=towns&WIDTH=100&HEIGHT=100&SRS=EPSG:32632" > [RESULT_DEMIME]
+
+MAP
+
+NAME WMS_OGR_NATIVE_SQL_TEST
+STATUS ON
+SIZE 400 300
+EXTENT 6 30 21 50
+UNITS METERS
+IMAGECOLOR 255 255 255
+
+#
+# Start of web interface definition
+#
+
+WEB
+
+ IMAGEPATH "tmp/"
+ IMAGEURL "/ms_tmp/"
+
+  METADATA
+    "wms_title"		   "Test simple wms"
+    "wms_onlineresource"   "http://localhost/path/to/wms_simple?"
+    "wms_srs"		   "EPSG:32632"
+    "wms_enable_request"   "*" 
+  END
+END
+
+PROJECTION
+  "+proj=latlong +datum=WGS84"
+END
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME towns
+  DATA towns
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/db.sqlite"
+  PROCESSING "NATIVE_SQL=YES"
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:32632"
+  END
+    CLASS
+      TEXT '[peoples]'
+      LABEL
+      END
+    END
+
+  TEMPLATE "foo"
+END # Layer
+
+END # Map File
