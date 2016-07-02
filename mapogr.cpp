@@ -1809,6 +1809,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         }
         msFree(select);
 
+        // Update itemindexes / layer->iteminfo
+        msOGRLayerInitItemInfo(layer);
     } 
     else {
 
