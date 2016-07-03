@@ -1652,20 +1652,103 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         return(MS_FAILURE);
     }
 
+    // native_string = dialect=*;sql=*
+    // dialect is SQLite or PostGIS
+    const char *dialect = NULL;
+    if (layer->filter.native_string) {
+        dialect = layer->filter.native_string + 8;
+    }
+
+    char *select = NULL;
+    char* pszTableName = NULL;
+    bool bIsOKForSQLCompose = true;
+
+    // In the case of a SQLite DB, check that we can identify the
+    // underlying table
+    if( psInfo->nLayerIndex == -1 &&
+        dialect != NULL && strncmp(dialect, "SQLite", 6) == 0 )
+    {
+      bIsOKForSQLCompose = false;
+
+      const char* from = strstr( psInfo->pszLayerDef, " from ");
+      if( from == NULL )
+        from = strstr( psInfo->pszLayerDef, " FROM ");
+      if( from )
+      {
+        const char* pszBeginningOfTable = from + strlen(" FROM ");
+        const char* pszIter = pszBeginningOfTable;
+        while( *pszIter && *pszIter != ' ' )
+          pszIter ++;
+        if( strchr(pszIter, ',') == NULL &&
+            strstr(pszIter, " where ") == NULL && strstr(pszIter, " WHERE ") == NULL &&
+            strstr(pszIter, " join ") == NULL && strstr(pszIter, " JOIN ") == NULL &&
+            strstr(pszIter, " order by ") == NULL && strstr(pszIter, " ORDER BY ") == NULL)
+        {
+          bIsOKForSQLCompose = true;
+          pszTableName = msStrdup(pszBeginningOfTable);
+          pszTableName[pszIter - pszBeginningOfTable] = '\0';
+
+          char* pszRequest = NULL;
+          pszRequest = msStringConcatenate(pszRequest,
+              "SELECT * FROM sqlite_master WHERE type = 'table' AND name = lower('");
+          pszRequest = msStringConcatenate(pszRequest, pszTableName);
+          pszRequest = msStringConcatenate(pszRequest, "')");
+          OGRLayerH hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszRequest, NULL, NULL );
+          msFree(pszRequest);
+
+          if( hLayer )
+          {
+              OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
+              bIsOKForSQLCompose = (hFeature != NULL);
+              if( hFeature )
+                OGR_F_Destroy(hFeature);
+              OGR_DS_ReleaseResultSet( psInfo->hDS, hLayer );
+          }
+          if( bIsOKForSQLCompose )
+          {
+            select = msStrdup(psInfo->pszLayerDef);
+          }
+        }
+      }
+    }
+    else if( dialect != NULL && strncmp(dialect, "SQLite", 6) == 0 )
+    {
+      bIsOKForSQLCompose = false;
+
+      char* pszRequest = NULL;
+      pszRequest = msStringConcatenate(pszRequest,
+          "SELECT * FROM sqlite_master WHERE type = 'table' AND name = lower('");
+      pszRequest = msStringConcatenate(pszRequest, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+      pszRequest = msStringConcatenate(pszRequest, "')");
+      OGRLayerH hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszRequest, NULL, NULL );
+      msFree(pszRequest);
+
+      if( hLayer )
+      {
+          OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
+          bIsOKForSQLCompose = (hFeature != NULL);
+          if( hFeature )
+            OGR_F_Destroy(hFeature);
+          OGR_DS_ReleaseResultSet( psInfo->hDS, hLayer );
+      }
+      if( bIsOKForSQLCompose )
+        pszTableName = msStrdup(OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+    }
+
     // we'll go strictly two possible ways: 
     // 1) GetLayer + SetFilter
     // 2) ExecuteSQL (psInfo->hLayer is an SQL result OR sortBy was requested OR have native_string
     // and start from the second
 
-    if (psInfo->nLayerIndex == -1 || layer->sortBy.nProperties > 0 || layer->filter.native_string) {
+    if ( bIsOKForSQLCompose && (psInfo->nLayerIndex == -1 || layer->sortBy.nProperties > 0 || layer->filter.native_string) ) {
 
-        char *select = NULL;
-
-        if( psInfo->nLayerIndex == -1 ) {
+        if( psInfo->nLayerIndex == -1 && select == NULL ) {
             select = msStrdup(psInfo->pszLayerDef);
             /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
             OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
-        } else {
+            psInfo->hLayer = NULL;
+        }
+        else if( select == NULL ) {
             const char* pszGeometryColumn;
             int i;
             select = msStringConcatenate(select, "SELECT ");
@@ -1687,9 +1770,19 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 /* Add ", *" so that we still have an hope to get the geometry */
                 select = msStringConcatenate(select, "*");
             }
-            select = msStringConcatenate(select, " FROM \"");
-            select = msStringConcatenate(select, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
-            select = msStringConcatenate(select, "\"");
+            select = msStringConcatenate(select, " FROM ");
+            if( psInfo->nLayerIndex == -1 )
+            {
+              select = msStringConcatenate(select, "(");
+              select = msStringConcatenate(select, psInfo->pszLayerDef);
+              select = msStringConcatenate(select, ") MSSUBSELECT");
+            }
+            else
+            {
+              select = msStringConcatenate(select, "\"");
+              select = msStringConcatenate(select, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+              select = msStringConcatenate(select, "\"");
+            }
         }
 
         char *filter = NULL;
@@ -1702,10 +1795,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         
         // native_string = dialect=*;sql=*
         // dialect is SQLite or PostGIS
-        char *dialect = NULL;
-       
-        if (layer->filter.native_string) {
-            dialect = layer->filter.native_string + 8;
+
+        if (dialect) {
             if (strncmp(dialect, "SQLite", 6) == 0 || strncmp(dialect, "PostgreSQL", 10) == 0) {
                 char *sql = strstr(layer->filter.native_string, ";sql=") + 5;
                 if (*sql == '\0') sql = NULL;
@@ -1750,10 +1841,16 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             } else if (strncmp(dialect, "SQLite", 6) == 0) {
                 if (filter) filter = msStringConcatenate(filter, " AND");
                 filter = msStringConcatenate(filter, " ");
-                filter = msStringConcatenate(filter, psInfo->pszLayerDef); // this is table name since native_string
+                filter = msStringConcatenate(filter, pszTableName);
                 filter = msStringConcatenate(filter, ".ROWID IN (SELECT ROWID FROM SpatialIndex WHERE f_table_name = '");
-                filter = msStringConcatenate(filter, psInfo->pszLayerDef);
+                filter = msStringConcatenate(filter, pszTableName);
                 filter = msStringConcatenate(filter, "' ");
+                const char* pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
+                if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' ) {
+                  filter = msStringConcatenate(filter, "AND f_geometry_column = '");
+                  filter = msStringConcatenate(filter, pszGeometryColumn);
+                  filter = msStringConcatenate(filter, "' ");
+                }
                 filter = msStringConcatenate(filter, "AND search_frame = GeomFromText('POLYGON((");
                 char *points = (char *)msSmallMalloc(30*2*5);
                 snprintf(points, 30*2*5, "%lf %lf,%lf %lf,%lf %lf,%lf %lf,%lf %lf", rect.minx, rect.miny, rect.maxx, rect.miny, rect.maxx, rect.maxy, rect.minx, rect.maxy, rect.minx, rect.miny);
@@ -1798,16 +1895,20 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             msDebug("msOGRFileWhichShapes: SQL = %s.\n", select);
 
         ACQUIRE_OGR_LOCK;
+        if( psInfo->nLayerIndex == -1 && psInfo->hLayer != NULL )
+        {
+          OGR_DS_ReleaseResultSet( psInfo->hDS, psInfo->hLayer );
+        }
         psInfo->hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, select, NULL, NULL );
         psInfo->nLayerIndex = -1;
-        
+
         if( psInfo->hLayer == NULL ) {
             RELEASE_OGR_LOCK;
             msSetError(MS_OGRERR, "ExecuteSQL(%s) failed.\n%s", "msOGRFileWhichShapes()", select, CPLGetLastErrorMsg());
             msFree(select);
+            msFree(pszTableName);
             return MS_FAILURE;
         }
-        msFree(select);
 
         // Update itemindexes / layer->iteminfo
         msOGRLayerInitItemInfo(layer);
@@ -1872,6 +1973,8 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 msSetError(MS_OGRERR, "SetAttributeFilter(%s) failed on layer %s.\n%s", "msOGRFileWhichShapes()", layer->filter.string+6, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
                 RELEASE_OGR_LOCK;
                 msFree(pszOGRFilter);
+                msFree(pszTableName);
+                msFree(select);
                 return MS_FAILURE;
             }
             msFree(pszOGRFilter);
@@ -1879,6 +1982,9 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             OGR_L_SetAttributeFilter( psInfo->hLayer, NULL );
         
     }
+
+    msFree(pszTableName);
+    msFree(select);
 
     /* ------------------------------------------------------------------
      * Reset current feature pointer
@@ -2395,7 +2501,7 @@ static int msOGRTranslateMsExpressionToOGRSQL(layerObj* layer,
 
     // reasons to not produce native string: not simple layer, or an explicit deny
     char *do_this = msLayerGetProcessingKey(layer, "NATIVE_SQL"); // default is YES
-    if ((info->nLayerIndex == -1) || (do_this && strcmp(do_this, "NO") == 0)) {
+    if (do_this && strcmp(do_this, "NO") == 0) {
         return MS_SUCCESS;
     }
 
