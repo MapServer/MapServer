@@ -48,6 +48,8 @@
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
       <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
       <Format>image/tiff</Format>
@@ -83,6 +85,8 @@
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
       <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/ows_test_xml_escaping?myparam=something&amp;"/></Get>
