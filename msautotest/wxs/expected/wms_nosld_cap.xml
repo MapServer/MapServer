@@ -31,6 +31,8 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
       <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
       <Format>application/x-pdf</Format>
       <Format>image/svg+xml</Format>
       <Format>image/tiff</Format>

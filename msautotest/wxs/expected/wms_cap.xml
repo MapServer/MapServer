@@ -86,6 +86,8 @@ Content-Type: application/vnd.ogc.wms_xml; charset=UTF-8
       <Format>image/png</Format>
       <Format>image/jpeg</Format>
       <Format>image/png; mode=8bit</Format>
+      <Format>image/vnd.jpeg-png</Format>
+      <Format>image/vnd.jpeg-png8</Format>
       <DCPType>
         <HTTP>
           <Get><OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://localhost/path/to/wms_simple?"/></Get>
