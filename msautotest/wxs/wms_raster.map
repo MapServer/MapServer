@@ -13,6 +13,11 @@
 # RUN_PARMS: wms_rast_featureinfo.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetFeatureInfo&SRS=EPSG%3A32611&BBOX=456800.000,4945950.000,469300.000,4957150.000&WIDTH=125&HEIGHT=112&LAYERS=road&STYLES=&FORMAT=image%2Fpng&BGCOLOR=0xFFFFFF&TRANSPARENT=FALSE&QUERY_LAYERS=road&INFO_FORMAT=application%2Fvnd.ogc.gml&I=90&J=50" > [RESULT_DEVERSION]
 # RUN_PARMS: wms_rast_empty.txt [MAPSERV] QUERY_STRING="map=[MAPFILE]&layers=road&FORMAT=image%2Fpng&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&QUERY_LAYERS=road&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&srs=epsg:4326&BBOX=-104.06,44.65,-93.93,44.7&WIDTH=1200&HEIGHT=600&x=100&y=100" > [RESULT_DEVERSION]
 
+# Test image/vnd.jpeg-png 
+# RUN_PARMS: wms_raster_jpeg_png.jpg [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:32611&BBOX=0,0,400,300&FORMAT=image/vnd.jpeg-png&TRANSPARENT=true&WIDTH=40&HEIGHT=30&STYLES=&LAYERS=grey" > [RESULT_DEMIME]
+# RUN_PARMS: wms_raster_jpeg_png.png [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&SRS=EPSG:32611&BBOX=0,0,410,310&FORMAT=image/vnd.jpeg-png&TRANSPARENT=true&WIDTH=41&HEIGHT=31&STYLES=&LAYERS=grey" > [RESULT_DEMIME]
+
+
 MAP
 
 NAME WMS_TEST
@@ -67,7 +72,7 @@ WEB
     "ows_contactorganization" "MapServer"
     "ows_contactposition" "self"
     "ows_enable_request" "*"
-    "wms_getmap_formatlist" "image/png,image/jpeg,image/gif,image/png; mode=8bit"
+    "wms_getmap_formatlist" "image/png,image/jpeg,image/gif,image/png; mode=8bit,image/vnd.jpeg-png"
   END
 END
 
