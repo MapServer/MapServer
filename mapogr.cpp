@@ -1660,7 +1660,9 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
     }
 
     char *select = NULL;
-    char* pszTableName = NULL;
+    char* pszSpatialFilterTableName = NULL;
+    char* pszMainTableName = NULL;
+    char* pszRowId = NULL;
     bool bIsOKForSQLCompose = true;
 
     // In the case of a SQLite DB, check that we can identify the
@@ -1685,13 +1687,14 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             strstr(pszIter, " order by ") == NULL && strstr(pszIter, " ORDER BY ") == NULL)
         {
           bIsOKForSQLCompose = true;
-          pszTableName = msStrdup(pszBeginningOfTable);
-          pszTableName[pszIter - pszBeginningOfTable] = '\0';
+          pszMainTableName = msStrdup(pszBeginningOfTable);
+          pszMainTableName[pszIter - pszBeginningOfTable] = '\0';
+          pszSpatialFilterTableName = msStrdup(pszMainTableName);
 
           char* pszRequest = NULL;
           pszRequest = msStringConcatenate(pszRequest,
               "SELECT * FROM sqlite_master WHERE type = 'table' AND name = lower('");
-          pszRequest = msStringConcatenate(pszRequest, pszTableName);
+          pszRequest = msStringConcatenate(pszRequest, pszMainTableName);
           pszRequest = msStringConcatenate(pszRequest, "')");
           OGRLayerH hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszRequest, NULL, NULL );
           msFree(pszRequest);
@@ -1707,6 +1710,32 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
           if( bIsOKForSQLCompose )
           {
             select = msStrdup(psInfo->pszLayerDef);
+          }
+          else
+          {
+            // Test if it is a spatial view
+            pszRequest = msStringConcatenate(NULL,
+              "SELECT f_table_name, view_rowid FROM views_geometry_columns WHERE view_name = lower('");
+            pszRequest = msStringConcatenate(pszRequest, pszMainTableName);
+            pszRequest = msStringConcatenate(pszRequest, "')");
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            OGRLayerH hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszRequest, NULL, NULL );
+            CPLPopErrorHandler();
+            msFree(pszRequest);
+
+            if( hLayer )
+            {
+                OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
+                bIsOKForSQLCompose = (hFeature != NULL);
+                if( hFeature )
+                {
+                  msFree(pszSpatialFilterTableName);
+                  pszSpatialFilterTableName = msStrdup( OGR_F_GetFieldAsString( hFeature, 0 ) );
+                  pszRowId = msStrdup( OGR_F_GetFieldAsString( hFeature, 1 ) );
+                  OGR_F_Destroy(hFeature);
+                }
+                OGR_DS_ReleaseResultSet( psInfo->hDS, hLayer );
+            }
           }
         }
       }
@@ -1732,7 +1761,46 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
           OGR_DS_ReleaseResultSet( psInfo->hDS, hLayer );
       }
       if( bIsOKForSQLCompose )
-        pszTableName = msStrdup(OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+      {
+        pszMainTableName = msStrdup(OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+        pszSpatialFilterTableName = msStrdup(pszMainTableName);
+      }
+      else
+      {
+        // Test if it is a spatial view
+        pszRequest = msStringConcatenate(NULL,
+          "SELECT f_table_name, view_rowid FROM views_geometry_columns WHERE view_name = lower('");
+        pszRequest = msStringConcatenate(pszRequest, OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+        pszRequest = msStringConcatenate(pszRequest, "')");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        OGRLayerH hLayer = OGR_DS_ExecuteSQL( psInfo->hDS, pszRequest, NULL, NULL );
+        CPLPopErrorHandler();
+        msFree(pszRequest);
+
+        if( hLayer )
+        {
+            OGRFeatureH hFeature = OGR_L_GetNextFeature(hLayer);
+            bIsOKForSQLCompose = (hFeature != NULL);
+            if( hFeature )
+            {
+              pszMainTableName = msStrdup(OGR_FD_GetName(OGR_L_GetLayerDefn(psInfo->hLayer)));
+              pszSpatialFilterTableName = msStrdup( OGR_F_GetFieldAsString( hFeature, 0 ) );
+              pszRowId = msStrdup( OGR_F_GetFieldAsString( hFeature, 1 ) );
+              OGR_F_Destroy(hFeature);
+            }
+            OGR_DS_ReleaseResultSet( psInfo->hDS, hLayer );
+        }
+      }
+    }
+
+    // in the case we cannot handle the native string, go back to the client
+    // side evaluation by unsetting it.
+    if( !bIsOKForSQLCompose && dialect != NULL && layer->filter.native_string )
+    {
+      msDebug("msOGRFileWhichShapes(): unsetting native_string\n");
+      msFree( layer->filter.native_string );
+      layer->filter.native_string = NULL;
+      dialect = NULL;
     }
 
     // we'll go strictly two possible ways: 
@@ -1841,9 +1909,17 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             } else if (strncmp(dialect, "SQLite", 6) == 0) {
                 if (filter) filter = msStringConcatenate(filter, " AND");
                 filter = msStringConcatenate(filter, " ");
-                filter = msStringConcatenate(filter, pszTableName);
-                filter = msStringConcatenate(filter, ".ROWID IN (SELECT ROWID FROM SpatialIndex WHERE f_table_name = '");
-                filter = msStringConcatenate(filter, pszTableName);
+                filter = msStringConcatenate(filter, pszMainTableName);
+                filter = msStringConcatenate(filter, ".");
+                const char* pszFIDColumn = OGR_L_GetFIDColumn(psInfo->hLayer);
+                if( pszRowId )
+                  filter = msStringConcatenate(filter, pszRowId);
+                else if( pszFIDColumn != NULL && pszFIDColumn[0] != '\0' )
+                  filter = msStringConcatenate(filter, pszFIDColumn);
+                else
+                  filter = msStringConcatenate(filter, "ROWID");
+                filter = msStringConcatenate(filter, " IN (SELECT ROWID FROM SpatialIndex WHERE f_table_name = '");
+                filter = msStringConcatenate(filter, pszSpatialFilterTableName);
                 filter = msStringConcatenate(filter, "' ");
                 const char* pszGeometryColumn = OGR_L_GetGeometryColumn(psInfo->hLayer);
                 if( pszGeometryColumn != NULL && pszGeometryColumn[0] != '\0' ) {
@@ -1906,7 +1982,9 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             RELEASE_OGR_LOCK;
             msSetError(MS_OGRERR, "ExecuteSQL(%s) failed.\n%s", "msOGRFileWhichShapes()", select, CPLGetLastErrorMsg());
             msFree(select);
-            msFree(pszTableName);
+            msFree(pszMainTableName);
+            msFree(pszSpatialFilterTableName);
+            msFree(pszRowId);
             return MS_FAILURE;
         }
 
@@ -1973,7 +2051,9 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 msSetError(MS_OGRERR, "SetAttributeFilter(%s) failed on layer %s.\n%s", "msOGRFileWhichShapes()", layer->filter.string+6, layer->name?layer->name:"(null)", CPLGetLastErrorMsg() );
                 RELEASE_OGR_LOCK;
                 msFree(pszOGRFilter);
-                msFree(pszTableName);
+                msFree(pszMainTableName);
+                msFree(pszSpatialFilterTableName);
+                msFree(pszRowId);
                 msFree(select);
                 return MS_FAILURE;
             }
@@ -1983,7 +2063,9 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         
     }
 
-    msFree(pszTableName);
+    msFree(pszMainTableName);
+    msFree(pszSpatialFilterTableName);
+    msFree(pszRowId);
     msFree(select);
 
     /* ------------------------------------------------------------------

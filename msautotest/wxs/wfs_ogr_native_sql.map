@@ -61,6 +61,9 @@
 # RUN_PARMS: wfs_ogr_native_sql_30.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><Equals><PropertyName>Geometry</PropertyName><Point srsName="EPSG:32632"><pos>662773 4891987.41</pos></Point></Equals></Filter>" > [RESULT]
 # RUN_PARMS: wfs_ogr_native_sql_31.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><Beyond><Distance unit="m">20000</Distance><PropertyName>Geometry</PropertyName><Polygon><exterior><LinearRing><posList>653627 4881103 653174 4890443 663148 4887813 663330 4879471 653627 4881103</posList></LinearRing></exterior></Polygon></Beyond></Filter>" > [RESULT]
 # RUN_PARMS: wfs_ogr_native_sql_32.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=towns&OUTPUTFORMAT=GML2&FILTER=<Filter><DWithin><Distance unit="m">1000</Distance><PropertyName>Geometry</PropertyName><Polygon><exterior><LinearRing><posList>653627 4881103 653174 4890443 663148 4887813 663330 4879471 653627 4881103</posList></LinearRing></exterior></Polygon></DWithin></Filter>" > [RESULT]
+#
+# Same as wfs_ogr_native_sql_02 on a view
+# RUN_PARMS: wfs_ogr_native_sql_33.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=myview&OUTPUTFORMAT=GML2&FILTER=<Filter><AND><BBOX><PropertyName>Geometry</PropertyName><Box srsName='EPSG:32632'><coordinates>643159,4877386 696879,4898059</coordinates></Box></BBOX><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Fanano</Literal></PropertyIsEqualTo></AND></Filter>" > [RESULT]
 
 MAP
 
@@ -104,6 +107,28 @@ LAYER
   PROCESSING "NATIVE_SQL=YES"
   METADATA
     "ows_title"         "towns"
+    "wfs_featureid"     "ID"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_getfeature_formatlist" "ogrgml"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:32632"
+  END
+
+  TEMPLATE "wfs_ogr_native_sql.map"
+END # Layer
+
+LAYER
+  NAME myview
+  DATA myview
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/db.sqlite"
+  PROCESSING "NATIVE_SQL=YES"
+  METADATA
+    "ows_title"         "myview"
     "wfs_featureid"     "ID"
     "gml_include_items" "all"
     "gml_types"         "auto"
