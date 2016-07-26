@@ -1184,7 +1184,7 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
 /*
 ** Function to process an [item ...] tag: line contains the tag, shape holds the attributes.
 */
-enum ITEM_ESCAPING {ESCAPE_HTML, ESCAPE_URL, ESCAPE_NONE};
+enum ITEM_ESCAPING {ESCAPE_HTML, ESCAPE_URL, ESCAPE_JSON, ESCAPE_NONE};
 
 static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
 {
@@ -1250,6 +1250,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
       argValue = msLookupHashTable(tagArgs, "escape");
       if(argValue && strcasecmp(argValue, "url") == 0) escape = ESCAPE_URL;
       else if(argValue && strcasecmp(argValue, "none") == 0) escape = ESCAPE_NONE;
+      else if(argValue && strcasecmp(argValue, "json") == 0) escape = ESCAPE_JSON;
 
       /* TODO: deal with sub strings */
     }
@@ -1321,6 +1322,10 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     switch(escape) {
       case ESCAPE_HTML:
         encodedTagValue = msEncodeHTMLEntities(tagValue);
+        *line = msReplaceSubstring(*line, tag, encodedTagValue);
+        break;
+      case ESCAPE_JSON:
+        encodedTagValue = msEscapeJSonString(tagValue);
         *line = msReplaceSubstring(*line, tag, encodedTagValue);
         break;
       case ESCAPE_URL:
