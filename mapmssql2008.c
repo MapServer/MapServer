@@ -38,6 +38,7 @@
 #include <assert.h>
 #include "mapserver.h"
 #include "maptime.h"
+#include "mapows.h"
 
 #ifdef USE_MSSQL2008
 
@@ -602,7 +603,7 @@ static int executeSQL(msODBCconn *conn, const char * sql)
 }
 
 /* Get columns name from query results */
-static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLength)
+static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLength, layerObj *layer, char pass_field_def)
 {
   SQLRETURN rc;
 
@@ -629,6 +630,72 @@ static int columnName(msODBCconn *conn, int index, char *buffer, int bufferLengt
       strlcpy(buffer, (const char *)columnName, bufferLength);
     else
       strlcpy(buffer, (const char *)columnName, SQL_COLUMN_NAME_MAX_LENGTH + 1);
+
+    if (pass_field_def) {
+      char md_item_name[256];
+      char gml_width[32], gml_precision[32];
+      const char *gml_type = NULL;
+
+      gml_width[0] = '\0';
+      gml_precision[0] = '\0';
+
+      switch( dataType ) {
+        case SQL_INTEGER:
+        case SQL_SMALLINT:
+        case SQL_TINYINT:
+          gml_type = "Integer";
+          break;
+
+        case SQL_BIGINT:
+          gml_type = "Long";
+          break;
+
+        case SQL_REAL:
+        case SQL_FLOAT:
+        case SQL_DOUBLE:
+        case SQL_DECIMAL:
+        case SQL_NUMERIC:
+          gml_type = "Real";
+          if( decimalDigits > 0 )
+            sprintf( gml_precision, "%d", decimalDigits );
+          break;
+
+        case SQL_TYPE_DATE:
+        case SQL_TYPE_TIME:
+        case SQL_TYPE_TIMESTAMP:
+          gml_type = "Date";
+          break;
+
+        case SQL_BIT:
+          gml_type = "Boolean";
+          break;
+
+        default:
+          gml_type = "Character";
+          break;
+      }
+
+      if( columnSize > 0 )
+            sprintf( gml_width, "%d", columnSize );
+
+      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_type", buffer );
+      if( msOWSLookupMetadata(&(layer->metadata), "G", "type") == NULL )
+        msInsertHashTable(&(layer->metadata), md_item_name, gml_type );
+
+      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_width", buffer );
+      if( strlen(gml_width) > 0
+          && msOWSLookupMetadata(&(layer->metadata), "G", "width") == NULL )
+        msInsertHashTable(&(layer->metadata), md_item_name, gml_width );
+
+      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_precision",buffer );
+      if( strlen(gml_precision) > 0
+          && msOWSLookupMetadata(&(layer->metadata), "G", "precision")==NULL )
+        msInsertHashTable(&(layer->metadata), md_item_name, gml_precision );
+
+      snprintf( md_item_name, sizeof(md_item_name), "gml_%s_nillable",buffer );
+      if( nullable > 0 )
+        msInsertHashTable(&(layer->metadata), md_item_name, "true" );
+    }
     return 1;
   } else {
     setStmntError(conn);
@@ -1914,6 +1981,13 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
   char                found_geom = 0;
   int                 item_num;
   SQLSMALLINT cols = 0;
+  const char *value;
+  /*
+  * Pass the field definitions through to the layer metadata in the
+  * "gml_[item]_{type,width,precision}" set of metadata items for
+  * defining fields.
+  */
+  char                pass_field_def = 0;
 
   if(layer->debug) {
     msDebug("in msMSSQL2008LayerGetItems  (find column names)\n");
@@ -1957,10 +2031,15 @@ int msMSSQL2008LayerGetItems(layerObj *layer)
   found_geom = 0; /* havent found the geom field */
   item_num = 0;
 
+  /* consider populating the field definitions in metadata */
+  if((value = msOWSLookupMetadata(&(layer->metadata), "G", "types")) != NULL
+      && strcasecmp(value,"auto") == 0 )
+    pass_field_def = 1;
+
   for(t = 0; t < cols; t++) {
     char colBuff[256];
 
-    columnName(layerinfo->conn, t + 1, colBuff, sizeof(colBuff));
+    columnName(layerinfo->conn, t + 1, colBuff, sizeof(colBuff), layer, pass_field_def);
 
     if(strcmp(colBuff, layerinfo->geom_column) != 0) {
       /* this isnt the geometry column */
