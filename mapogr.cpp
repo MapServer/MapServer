@@ -1729,6 +1729,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 bIsOKForSQLCompose = (hFeature != NULL);
                 if( hFeature )
                 {
+                  select = msStrdup(psInfo->pszLayerDef);
                   msFree(pszSpatialFilterTableName);
                   pszSpatialFilterTableName = msStrdup( OGR_F_GetFieldAsString( hFeature, 0 ) );
                   pszRowId = msStrdup( OGR_F_GetFieldAsString( hFeature, 1 ) );
@@ -1797,7 +1798,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
     // side evaluation by unsetting it.
     if( !bIsOKForSQLCompose && dialect != NULL && layer->filter.native_string )
     {
-      msDebug("msOGRFileWhichShapes(): unsetting native_string\n");
+      msDebug("msOGRFileWhichShapes(): unsetting native_string. Falling back to MapServer only evaluation\n");
       msFree( layer->filter.native_string );
       layer->filter.native_string = NULL;
       dialect = NULL;
