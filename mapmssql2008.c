@@ -976,7 +976,11 @@ static int prepare_database(layerObj *layer, rectObj rect, char **query_string)
     char buffer[10000] = "";
 
     for(t = 0; t < layer->numitems; t++) {
+#ifdef USE_ICONV      
+      snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(nvarchar(max), [%s]),", layer->items[t]);
+#else
       snprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), "convert(varchar(max), [%s]),", layer->items[t]);
+#endif
     }
 
     if (layerinfo->geometry_format == MSSQLGEOMETRY_NATIVE)
@@ -1699,7 +1703,7 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
 
         if (needLen > 0) {
           /* allocate the buffer - this will be a null-terminated string so alloc for the null too */
-          valueBuffer = (char*) msSmallMalloc( needLen + 1 );
+          valueBuffer = (char*) msSmallMalloc( needLen + 2 );
           if ( valueBuffer == NULL ) {
             msSetError( MS_QUERYERR, "Could not allocate value buffer.", "msMSSQL2008LayerGetShapeRandom()" );
             return MS_FAILURE;
@@ -1714,7 +1718,13 @@ int msMSSQL2008LayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *recor
           valueBuffer[retLen] = 0; /* null terminate it */
 
           /* Pop the value into the shape's value array */
+#ifdef USE_ICONV
+          valueBuffer[retLen + 1] = 0;
+          shape->values[t] = msConvertWideStringToUTF8((wchar_t*)valueBuffer, "UCS-2LE");
+          msFree(valueBuffer);
+#else
           shape->values[t] = valueBuffer;
+#endif
         } else
           /* Copy empty sting for NULL values */
           shape->values[t] = msStrdup("");
