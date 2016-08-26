@@ -355,7 +355,7 @@ int msOWSRequestIsEnabled(mapObj *map, layerObj *layer,
         if (!result && disabled) continue;
       }
 
-      if (result || (!disabled && globally_enabled))
+      if (result)
         return MS_TRUE;
     }
 
