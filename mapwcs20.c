@@ -2465,10 +2465,11 @@ static int msWCSGetCoverageMetadata20(layerObj *layer, wcs20coverageMetadataObj 
   if ( msCheckParentPointer(layer->map,"map") == MS_FAILURE )
     return MS_FAILURE;
 
-  if((cm->srs = msOWSGetEPSGProj(&(layer->projection),
-                                 &(layer->metadata), "CO", MS_TRUE)) == NULL) {
-    if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection),
-                                   &(layer->map->web.metadata), "CO", MS_TRUE)) == NULL) {
+  msOWSGetEPSGProj(&(layer->projection), &(layer->metadata), "CO", MS_TRUE, &(cm->srs_epsg));
+  if(!cm->srs_epsg) {
+    msOWSGetEPSGProj(&(layer->map->projection),
+                                   &(layer->map->web.metadata), "CO", MS_TRUE, &cm->srs_epsg);
+    if(!cm->srs_epsg) {
       msSetError(MS_WCSERR, "Unable to determine the SRS for this layer, "
                  "no projection defined and no metadata available.",
                  "msWCSGetCoverageMetadata20()");
@@ -2945,6 +2946,7 @@ static int msWCSClearCoverageMetadata20(wcs20coverageMetadataObj *cm)
     }
   }
   msFree(cm->bands);
+  msFree(cm->srs_epsg);
   return MS_SUCCESS;
 }
 
@@ -4125,11 +4127,11 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /************************************************************************/
 
   msInitProjection(&imageProj);
-  if (msLoadProjectionString(&imageProj, cm.srs) == -1) {
+  if (msLoadProjectionString(&imageProj, cm.srs_epsg) == -1) {
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR,
                "Error loading CRS %s.",
-               "msWCSGetCoverage20()", cm.srs);
+               "msWCSGetCoverage20()", cm.srs_epsg);
     return msWCSException(map, "InvalidParameterValue",
                           "projection", params->version);
   }
@@ -4171,7 +4173,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   /* if no subsetCRS was specified use the coverages CRS 
      (Requirement 27 of the WCS 2.0 specification) */
   if (!params->subsetcrs) {
-    params->subsetcrs = msStrdup(cm.srs);
+    params->subsetcrs = msStrdup(cm.srs_epsg);
   }
 
   if(EQUAL(params->subsetcrs, "imageCRS")) {

@@ -415,8 +415,8 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
                    wmsParamsObj *psWMSParams)
 {
 #ifdef USE_WMS_LYR
-  char *pszEPSG = NULL;
-  const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam,
+  char *pszEPSG = NULL, *pszTmp;
+  const char *pszVersion, *pszRequestParam, *pszExceptionsParam,
         *pszLayer=NULL, *pszQueryLayers=NULL;
   rectObj bbox;
   int bbox_width = map->width, bbox_height = map->height;
@@ -515,12 +515,12 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
    * - If map SRS is valid for this layer then use it
    * - Otherwise request layer in its default SRS and we'll reproject later
    * ------------------------------------------------------------------ */
-  if ((pszEPSG = (char*)msOWSGetEPSGProj(&(map->projection),
-                                         NULL, NULL, MS_TRUE)) != NULL &&
-      (pszEPSG = msStrdup(pszEPSG)) != NULL &&
+  msOWSGetEPSGProj(&(map->projection),NULL, NULL, MS_TRUE, &pszEPSG);
+  if ( pszEPSG &&
       (strncasecmp(pszEPSG, "EPSG:", 5) == 0 ||
        strncasecmp(pszEPSG, "AUTO:", 5) == 0) ) {
-    const char *pszLyrEPSG, *pszFound;
+    const char *pszFound;
+    char *pszLyrEPSG;
     int nLen;
     char *pszPtr = NULL;
 
@@ -533,8 +533,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     nLen = strlen(pszEPSG);
 
-    pszLyrEPSG = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
-                                  "MO", MS_FALSE);
+    msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "MO", MS_FALSE, &pszLyrEPSG);
 
     if (pszLyrEPSG == NULL ||
         (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
@@ -543,19 +542,18 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
       free(pszEPSG);
       pszEPSG = NULL;
     }
+    msFree(pszLyrEPSG);
     if (pszEPSG && pszPtr)
       *pszPtr = ',';  /* Restore full AUTO:... definition */
   }
 
-  if (pszEPSG == NULL &&
-      ((pszEPSG = (char*)msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
-                                          "MO", MS_TRUE)) == NULL ||
-       (pszEPSG = msStrdup(pszEPSG)) == NULL ||
-       (strncasecmp(pszEPSG, "EPSG:", 5) != 0 &&
-        strncasecmp(pszEPSG, "AUTO:", 5) != 0 ) ) ) {
-    msSetError(MS_WMSCONNERR, "Layer must have an EPSG or AUTO projection code (in its PROJECTION object or wms_srs metadata)", "msBuildWMSLayerURL()");
-    if (pszEPSG) free(pszEPSG);
-    return MS_FAILURE;
+  if (pszEPSG == NULL) {
+      msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),"MO", MS_TRUE, &pszEPSG);
+      if( pszEPSG == NULL || (strncasecmp(pszEPSG, "EPSG:", 5) != 0 && strncasecmp(pszEPSG, "AUTO:", 5) != 0) )  {
+        msSetError(MS_WMSCONNERR, "Layer must have an EPSG or AUTO projection code (in its PROJECTION object or wms_srs metadata)", "msBuildWMSLayerURL()");
+        msFree(pszEPSG);
+        return MS_FAILURE;
+      }
   }
 
   /* ------------------------------------------------------------------
@@ -584,21 +582,20 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
    * Set layer SRS.
    * ------------------------------------------------------------------ */
   /* No need to set lp->proj if it's already set to the right EPSG code */
-  if ((pszTmp = msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE)) == NULL ||
-      strcasecmp(pszEPSG, pszTmp) != 0) {
-    const char *ows_srs;
-
+  msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE, &pszTmp);
+  if (pszTmp == NULL || strcasecmp(pszEPSG, pszTmp) != 0) {
+    char *ows_srs;
+    msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE, &ows_srs);
+    msFree(pszTmp);
     /* no need to set lp->proj if it is already set and there is only
        one item in the _srs metadata for this layer - we will assume
        the projection block matches the _srs metadata (the search for ' '
        in ows_srs is a test to see if there are multiple EPSG: codes) */
-    if( lp->projection.numargs == 0
-        || (ows_srs = msOWSGetEPSGProj(NULL,&(lp->metadata), "MO", MS_FALSE)) == NULL
-        || (strchr(ows_srs,' ') != NULL) ) {
+    if( lp->projection.numargs == 0 || ows_srs == NULL || (strchr(ows_srs,' ') != NULL) ) {
+      msFree(ows_srs);
       if (strncasecmp(pszEPSG, "EPSG:", 5) == 0) {
         char szProj[20];
         snprintf(szProj, sizeof(szProj), "init=epsg:%s", pszEPSG+5);
-
         if (msLoadProjectionString(&(lp->projection), szProj) != 0)
           return MS_FAILURE;
       } else {
@@ -676,11 +673,10 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
   /*      consider restricting the BBOX to match the limits.              */
   /* -------------------------------------------------------------------- */
   if( bbox_width != 0 ) {
-    const char *ows_srs;
+    char *ows_srs;
     rectObj  layer_rect;
 
-    ows_srs = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
-                               "MO", MS_FALSE);
+    msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "MO", MS_FALSE, &ows_srs);
 
     if( ows_srs && strchr(ows_srs,' ') == NULL
         && msOWSGetLayerExtent( map, lp, "MO", &layer_rect) == MS_SUCCESS ) {
@@ -711,6 +707,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         }
       }
     }
+    msFree(ows_srs);
   }
 
   /* -------------------------------------------------------------------- */
