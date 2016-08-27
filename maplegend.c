@@ -697,11 +697,13 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     pnt.y += cur->height;
 
     if(cur->ts.annotext) {
-      pnt.y -= cur->ts.textpath->bounds.bbox.maxy;
-      ret = msDrawTextSymbol(map,image,pnt,&cur->ts);
+      pointObj textPnt = pnt;
+      textPnt.y -= cur->ts.textpath->bounds.bbox.maxy;
+      textPnt.y += map->legend.label.offsety;
+      textPnt.x += map->legend.label.offsetx;
+      ret = msDrawTextSymbol(map,image,textPnt,&cur->ts);
       if(UNLIKELY(ret == MS_FAILURE))
         goto cleanup;
-      pnt.y += cur->ts.textpath->bounds.bbox.maxy;
       freeTextSymbol(&cur->ts);
     }
     
