@@ -176,7 +176,7 @@ int loadParams(cgiRequestObj *request,
         request->ParamNames[m] = makeword(request->ParamValues[m],'=');
         m++;
       }
-      free( post_data );
+      msFree( post_data );
     } else
       request->postrequest = post_data;
 
@@ -265,9 +265,9 @@ int loadParams(cgiRequestObj *request,
   }
 
   if (queryString)
-    free(queryString);
+    msFree(queryString);
   if (httpCookie)
-    free(httpCookie);
+    msFree(httpCookie);
 
   return(m);
 }

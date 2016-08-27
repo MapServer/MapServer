@@ -63,7 +63,7 @@ static void initLineWindow(lineWindow *lw, lineObj *line, int size)
 
 static void freeLineWindow(lineWindow *lw)
 {  
-  free(lw->points);
+  msFree(lw->points);
 }
 
 static int nextLineWindow(lineWindow *lw)
@@ -127,9 +127,9 @@ static int processShapePathDistance(shapeObj *shape, int force)
   
   /* Clean our shape object */
   for (i= 0; i < newShape->numlines; i++)
-    free(newShape->line[i].point);
+    msFree(newShape->line[i].point);
   newShape->numlines = 0;
-  if (newShape->line) free(newShape->line);
+  if (newShape->line) msFree(newShape->line);
   
   for (i=0;i<shape->numlines;++i) {
     const int windowSize = 5;
@@ -225,10 +225,10 @@ shapeObj* msSmoothShapeSIA(shapeObj *shape, int ss, int si, char *preprocessing)
       
       /* Clean our shape object */
       for (j=0; j < newShape->numlines; ++j)
-        free(newShape->line[j].point);
+        msFree(newShape->line[j].point);
       newShape->numlines = 0;
       if (newShape->line) {
-        free(newShape->line);
+        msFree(newShape->line);
         newShape->line = NULL;
       }
 
@@ -303,8 +303,8 @@ shapeObj* msSmoothShapeSIA(shapeObj *shape, int ss, int si, char *preprocessing)
     
   }
   
-  free(p);
-  free(coeff);
+  msFree(p);
+  msFree(coeff);
   
   return newShape;
 }

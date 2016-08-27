@@ -370,7 +370,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
       if (pszSLDGenerated) {
         msSetWMSParamString(psWMSParams, "SLD_BODY",
                             pszSLDGenerated, MS_TRUE);
-        free(pszSLDGenerated);
+        msFree(pszSLDGenerated);
       }
     } else {
       msSetWMSParamString(psWMSParams, "SLD_BODY", pszSLDBody, MS_TRUE);
@@ -540,7 +540,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
         ! ((*(pszFound+nLen) == '\0') || isspace(*(pszFound+nLen))) ) {
       /* Not found in Layer's list of SRS (including projection object) */
-      free(pszEPSG);
+      msFree(pszEPSG);
       pszEPSG = NULL;
     }
     if (pszEPSG && pszPtr)
@@ -554,7 +554,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
        (strncasecmp(pszEPSG, "EPSG:", 5) != 0 &&
         strncasecmp(pszEPSG, "AUTO:", 5) != 0 ) ) ) {
     msSetError(MS_WMSCONNERR, "Layer must have an EPSG or AUTO projection code (in its PROJECTION object or wms_srs metadata)", "msBuildWMSLayerURL()");
-    if (pszEPSG) free(pszEPSG);
+    if (pszEPSG) msFree(pszEPSG);
     return MS_FAILURE;
   }
 
@@ -576,7 +576,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     snprintf(pszNewEPSG, 100, "%s,9001,%.16g,%.16g",
              pszEPSG, oPoint.x, oPoint.y);
     pszNewEPSG[100]='\0';
-    free(pszEPSG);
+    msFree(pszEPSG);
     pszEPSG=pszNewEPSG;
   }
 
@@ -844,7 +844,7 @@ msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE);
   }
 
-  free(pszEPSG);
+  msFree(pszEPSG);
 
   return MS_SUCCESS;
 
@@ -1345,7 +1345,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
       msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url"))
     lp->numclasses = 0;
 
-  if (lp->data) free(lp->data);
+  if (lp->data) msFree(lp->data);
   if( mem_filename != NULL )
     lp->data = mem_filename;
   else
@@ -1416,7 +1416,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
   /* restore previous numclasses */
   lp->numclasses = numclasses;
 
-  free(lp->data);
+  msFree(lp->data);
   lp->data = NULL;
 
   return status;

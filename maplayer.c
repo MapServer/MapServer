@@ -654,7 +654,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
         msTimeInit(&(node->tokenval.tmval));
         if(msParseTime(msyystring_buffer, &(node->tokenval.tmval)) != MS_TRUE) {
           msSetError(MS_PARSEERR, "Parsing time value failed.", "msTokenizeExpression()");
-          free(node);
+          msFree(node);
           goto parse_error;
         }
         break;
@@ -678,13 +678,13 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
       case MS_TOKEN_FUNCTION_FROMTEXT: /* we want to process a shape from WKT once and not for every feature being evaluated */
         if((token = msyylex()) != 40) { /* ( */
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
-          free(node);
+          msFree(node);
           goto parse_error;
         }
 
         if((token = msyylex()) != MS_TOKEN_LITERAL_STRING) {
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
-          free(node);
+          msFree(node);
           goto parse_error;
         }
 
@@ -693,7 +693,7 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
 
         if(!node->tokenval.shpval) {
           msSetError(MS_PARSEERR, "Parsing fromText function failed, WKT processing failed.", "msTokenizeExpression()");
-          free(node);
+          msFree(node);
           goto parse_error;
         }
 
@@ -702,8 +702,8 @@ int msTokenizeExpression(expressionObj *expression, char **list, int *listsize)
         if((token = msyylex()) != 41) { /* ) */
           msSetError(MS_PARSEERR, "Parsing fromText function failed.", "msTokenizeExpression()");
           msFreeShape(node->tokenval.shpval);
-          free(node->tokenval.shpval);
-          free(node);
+          msFree(node->tokenval.shpval);
+          msFree(node);
           goto parse_error;
         }
         break;
@@ -1043,7 +1043,7 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
     resetClassStyle(c);
     c->layer = layer;
     if (msMaybeAllocateClassStyle(c, 0)) {
-      free(stylestring);
+      msFree(stylestring);
       return(MS_FAILURE);
     }
 
@@ -1052,7 +1052,7 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
       if((c->styles[0]->symbol =  msGetSymbolIndex(&(map->symbolset), c->styles[0]->symbolname, MS_TRUE)) == -1) {
         msSetError(MS_MISCERR, "Undefined symbol \"%s\" in class of layer %s.", "msLayerGetFeatureStyle()", 
                    c->styles[0]->symbolname, layer->name);
-        free(stylestring);
+        msFree(stylestring);
         return MS_FAILURE;
       }
     }
@@ -1070,7 +1070,7 @@ int msLayerGetFeatureStyle(mapObj *map, layerObj *layer, classObj *c, shapeObj* 
     resetClassStyle(c);
   }
 
-  free(stylestring);
+  msFree(stylestring);
   return MS_SUCCESS;
 }
 
@@ -1104,7 +1104,7 @@ msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value)
   for( i = 0; i < layer->numprocessing; i++ ) {
     if( strncasecmp( key, layer->processing[i], len ) == 0
         && layer->processing[i][len] == '=' ) {
-      free( layer->processing[i] );
+      msFree( layer->processing[i] );
 
       /*
       ** Either replace the existing entry with a new one or
@@ -1125,7 +1125,7 @@ msLayerSetProcessingKey( layerObj *layer, const char *key, const char *value)
 
   if( directive != NULL ) {
     msLayerAddProcessing( layer, directive );
-    free( directive );
+    msFree( directive );
   }
 }
 
@@ -1235,7 +1235,7 @@ makeTimeFilter(layerObj *lp,
   if (strstr(timestring, ",") == NULL &&
       strstr(timestring, "/") == NULL) { /* discrete time */
     /*
-    if(lp->filteritem) free(lp->filteritem);
+    if(lp->filteritem) msFree(lp->filteritem);
     lp->filteritem = msStrdup(timefield);
     if (&lp->filter)
       msFreeExpression(&lp->filter);
@@ -1428,7 +1428,7 @@ makeTimeFilter(layerObj *lp,
       pszBuffer = msStringConcatenate(pszBuffer, ")");
     /*
     if(lp->filteritem)
-      free(lp->filteritem);
+      msFree(lp->filteritem);
     lp->filteritem = msStrdup(timefield);
     */
 
@@ -1977,7 +1977,7 @@ int msINLINELayerOpen(layerObj *layer)
 int msINLINELayerClose(layerObj *layer)
 {
   if (layer->layerinfo) {
-    free(layer->layerinfo);
+    msFree(layer->layerinfo);
     layer->layerinfo = NULL;
   }
 

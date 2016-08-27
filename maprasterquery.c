@@ -139,32 +139,32 @@ static void msRasterLayerInfoFree( layerObj *layer )
     return;
 
   if( rlinfo->qc_x != NULL ) {
-    free( rlinfo->qc_x );
-    free( rlinfo->qc_y );
-    free( rlinfo->qc_x_reproj );
-    free( rlinfo->qc_y_reproj );
+    msFree( rlinfo->qc_x );
+    msFree( rlinfo->qc_y );
+    msFree( rlinfo->qc_x_reproj );
+    msFree( rlinfo->qc_y_reproj );
   }
 
   if( rlinfo->qc_values )
-    free( rlinfo->qc_values );
+    msFree( rlinfo->qc_values );
 
   if( rlinfo->qc_class ) {
-    free( rlinfo->qc_class );
+    msFree( rlinfo->qc_class );
   }
 
   if( rlinfo->qc_red ) {
-    free( rlinfo->qc_red );
-    free( rlinfo->qc_green );
-    free( rlinfo->qc_blue );
+    msFree( rlinfo->qc_red );
+    msFree( rlinfo->qc_green );
+    msFree( rlinfo->qc_blue );
   }
 
   if( rlinfo->qc_count != NULL )
-    free( rlinfo->qc_count );
+    msFree( rlinfo->qc_count );
 
   if( rlinfo->qc_tileindex != NULL )
-    free( rlinfo->qc_tileindex );
+    msFree( rlinfo->qc_tileindex );
 
-  free( rlinfo );
+  msFree( rlinfo );
 
   layer->layerinfo = NULL;
 }
@@ -526,7 +526,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     msSetError( MS_IOERR, "GDALDatasetRasterIO() failed: %s",
                 "msRasterQueryByRectLow()", CPLGetLastErrorMsg() );
 
-    free( pafRaster );
+    msFree( pafRaster );
     return -1;
   }
 
@@ -536,7 +536,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   rlinfo->hCT = GDALGetRasterColorTable(
                   GDALGetRasterBand( hDS, panBandMap[0] ) );
 
-  free( panBandMap );
+  msFree( panBandMap );
 
   /* -------------------------------------------------------------------- */
   /*      When computing whether pixels are within range we do it         */
@@ -636,7 +636,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
   /* -------------------------------------------------------------------- */
   /*      Cleanup.                                                        */
   /* -------------------------------------------------------------------- */
-  free( pafRaster );
+  msFree( pafRaster );
 
   return MS_SUCCESS;
 }
@@ -683,8 +683,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
   /*      Clear old results cache.                                        */
   /* -------------------------------------------------------------------- */
   if(layer->resultcache) {
-    if(layer->resultcache->results) free(layer->resultcache->results);
-    free(layer->resultcache);
+    if(layer->resultcache->results) msFree(layer->resultcache->results);
+    msFree(layer->resultcache);
     layer->resultcache = NULL;
   }
 
@@ -1367,7 +1367,7 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
       *extent = tileshpfile->bounds;
       msShapefileClose(tileshpfile);
-      free(tileshpfile);
+      msFree(tileshpfile);
       return MS_SUCCESS;
     }
   }

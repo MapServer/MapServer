@@ -225,17 +225,17 @@ void msWCSFreeParams(wcsParamsObj *params)
 {
   if(params) {
     /* TODO */
-    if(params->version) free(params->version);
-    if(params->updatesequence) free(params->updatesequence);
-    if(params->request) free(params->request);
-    if(params->service) free(params->service);
-    if(params->section) free(params->section);
-    if(params->crs) free(params->crs);
-    if(params->response_crs) free(params->response_crs);
-    if(params->format) free(params->format);
-    if(params->exceptions) free(params->exceptions);
-    if(params->time) free(params->time);
-    if(params->interpolation) free(params->interpolation);
+    if(params->version) msFree(params->version);
+    if(params->updatesequence) msFree(params->updatesequence);
+    if(params->request) msFree(params->request);
+    if(params->service) msFree(params->service);
+    if(params->section) msFree(params->section);
+    if(params->crs) msFree(params->crs);
+    if(params->response_crs) msFree(params->response_crs);
+    if(params->format) msFree(params->format);
+    if(params->exceptions) msFree(params->exceptions);
+    if(params->time) msFree(params->time);
+    if(params->interpolation) msFree(params->interpolation);
     CSLDestroy( params->coverages );
   }
 }
@@ -329,7 +329,7 @@ void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
     snprintf( bandlist+strlen(bandlist), bufferSize-strlen(bandlist), ",%d", i+1 );
 
   msInsertHashTable( &(lp->metadata), "wcs_bands_values", bandlist );
-  free( bandlist );
+  msFree( bandlist );
 }
 
 /************************************************************************/
@@ -769,8 +769,8 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
 
   /* we need this server's onlineresource for the request section */
   if((script_url=msOWSGetOnlineResource(map, "CO", "onlineresource", req)) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL) {
-    free(script_url);
-    free(script_url_encoded);
+    msFree(script_url);
+    msFree(script_url_encoded);
     return msWCSException(map, NULL, NULL, params->version );
   }
 
@@ -809,8 +809,8 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params, cg
   /* done */
   msIO_printf("</Capability>\n");
 
-  free(script_url);
-  free(script_url_encoded);
+  msFree(script_url);
+  msFree(script_url_encoded);
 
   return MS_SUCCESS;
 }
@@ -928,7 +928,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params, cgiRequestObj
   tmpInt = msOWSNegotiateVersion(tmpInt, wcsSupportedVersions, wcsNumSupportedVersions);
 
   /* set result as string and carry on */
-  free(params->version);
+  msFree(params->version);
   params->version = msStrdup(msOWSGetVersionString(tmpInt, tmpString));
 
   /* -------------------------------------------------------------------- */
@@ -1483,7 +1483,7 @@ static int msWCSGetCoverage_ImageCRSSetup(
   if (msLoadProjectionString(&(map->projection), layer_proj) != 0)
     return msWCSException( map, NULL, NULL, params->version );
 
-  free( layer_proj );
+  msFree( layer_proj );
   layer_proj = NULL;
 
   /* -------------------------------------------------------------------- */
@@ -1603,10 +1603,10 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request,
     if( coverageName != NULL && EQUAL(coverageName, params->coverages[0]) &&
         (msIntegerInArray(GET_LAYER(map, i)->index, ows_request->enabled_layers, ows_request->numlayers)) ) {
       lp = GET_LAYER(map, i);
-      free( coverageName );
+      msFree( coverageName );
       break;
     }
-    free( coverageName );
+    msFree( coverageName );
   }
 
   if(lp == NULL) {
@@ -1623,10 +1623,10 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
     char *map_original_srs = msGetProjectionString(&(map->projection));
     if (msLoadProjectionString(&(lp->projection), map_original_srs) != 0) {
       msSetError( MS_WCSERR, "Error when setting map projection to a layer with no projection", "msWCSGetCoverage()" );
-      free(map_original_srs);
+      msFree(map_original_srs);
       return msWCSException(map, NULL, NULL, params->version);
     }
-    free(map_original_srs);
+    msFree(map_original_srs);
   }
 
   /* we need the coverage metadata, since things like numbands may not be available otherwise */
@@ -1713,7 +1713,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
 
     /* override filteritem if specified in metadata */
     if(value) {
-      if(tlp->filteritem) free(tlp->filteritem);
+      if(tlp->filteritem) msFree(tlp->filteritem);
       tlp->filteritem = msStrdup(value);
     }
 
@@ -1909,7 +1909,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage()", par
   msLayerSetProcessingKey(lp, "BANDS", bandlist);
   snprintf(numbands, sizeof(numbands), "%d", msCountChars(bandlist, ',')+1);
   msSetOutputFormatOption(map->outputformat, "BAND_COUNT", numbands);
-  free( bandlist );
+  msFree( bandlist );
 
   if(lp->mask) {
     int maskLayerIdx = msGetLayerIndex(map,lp->mask);
@@ -2190,7 +2190,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
     status = msWCSParseRequest(request, params, map);
     if (status == MS_FAILURE) {
       msWCSFreeParams(params);
-      free(params);
+      msFree(params);
       return msWCSException(map, "InvalidParameterValue",
                             "request", "2.0");
     }
@@ -2204,7 +2204,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_reques
       retVal = msWCSGetCoverage(map, request, params, ows_request);
     }
     msWCSFreeParams(params);
-    free(params);
+    msFree(params);
     return retVal;
   } else if (strcmp(ows_request->version, "2.0.0") == 0
              || strcmp(ows_request->version, "2.0.1") == 0) {

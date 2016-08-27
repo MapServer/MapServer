@@ -210,9 +210,9 @@ msNearestRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     }
   }
 
-  free( panSuccess );
-  free( x );
-  free( y );
+  msFree( panSuccess );
+  msFree( x );
+  msFree( y );
   msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
@@ -440,10 +440,10 @@ msBilinearRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     }
   }
 
-  free( padfPixelSum );
-  free( panSuccess );
-  free( x );
-  free( y );
+  msFree( padfPixelSum );
+  msFree( panSuccess );
+  msFree( x );
+  msFree( y );
   msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
@@ -635,13 +635,13 @@ msAverageRasterResampler( imageObj *psSrcImage, rasterBufferObj *src_rb,
     }
   }
 
-  free( padfPixelSum );
-  free( panSuccess1 );
-  free( x1 );
-  free( y1 );
-  free( panSuccess2 );
-  free( x2 );
-  free( y2 );
+  msFree( padfPixelSum );
+  msFree( panSuccess1 );
+  msFree( x1 );
+  msFree( y1 );
+  msFree( panSuccess2 );
+  msFree( x2 );
+  msFree( y2 );
   msFree(mask_rb);
 
   /* -------------------------------------------------------------------- */
@@ -712,7 +712,7 @@ void *msInitProjTransformer( projectionObj *psSrc,
 
   if( !InvGeoTransform(padfSrcGeoTransform,
                        psPTInfo->adfInvSrcGeoTransform) ) {
-    free(psPTInfo);
+    msFree(psPTInfo);
     return NULL;
   }
 
@@ -737,7 +737,7 @@ void *msInitProjTransformer( projectionObj *psSrc,
 void msFreeProjTransformer( void * pCBData )
 
 {
-  free( pCBData );
+  msFree( pCBData );
 }
 
 /************************************************************************/
@@ -792,13 +792,13 @@ int msProjTransformer( void *pCBData, int nPoints,
     msReleaseLock( TLOCK_PROJ );
 
     if( tr_result != 0 ) {
-      free( z );
+      msFree( z );
       for( i = 0; i < nPoints; i++ )
         panSuccess[i] = 0;
 
       return MS_FALSE;
     }
-    free( z );
+    msFree( z );
 
     for( i = 0; i < nPoints; i++ ) {
       if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
@@ -878,7 +878,7 @@ static void *msInitApproxTransformer( SimpleTransformer pfnBaseTransformer,
 static void msFreeApproxTransformer( void * pCBData )
 
 {
-  free( pCBData );
+  msFree( pCBData );
 }
 
 /************************************************************************/
@@ -1201,7 +1201,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     mask_rb = msSmallCalloc(1,sizeof(rasterBufferObj)); 
     ret = MS_IMAGE_RENDERER(maskLayer->maskimage)->getRasterBufferHandle(maskLayer->maskimage,mask_rb);
     if(ret != MS_SUCCESS) {
-      free(mask_rb);
+      msFree(mask_rb);
       return -1;
     }
   }

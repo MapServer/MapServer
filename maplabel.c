@@ -102,7 +102,7 @@ char *msWrapText(char *text, char wrap, int maxlength)
       /* if no wrap character was specified, but a maxlength was,
        * don't draw this label if it is longer than the specified maxlength*/
       if(msGetNumGlyphs(text)>maxlength) {
-        free(text);
+        msFree(text);
         return NULL;
       } else {
         return text;
@@ -130,7 +130,7 @@ char *msWrapText(char *text, char wrap, int maxlength)
           newtextptr++;
         }
       }
-      free(text);
+      msFree(text);
       return newtext;
     } else {
       /*no splitting needed, return the original*/
@@ -179,16 +179,16 @@ void initTextSymbol(textSymbolObj *ts) {
 }
 
 void freeTextPath(textPathObj *tp) {
-  free(tp->glyphs);
+  msFree(tp->glyphs);
   if(tp->bounds.poly) {
-    free(tp->bounds.poly->point);
-    free(tp->bounds.poly);
+    msFree(tp->bounds.poly->point);
+    msFree(tp->bounds.poly);
   }
 }
 void freeTextSymbol(textSymbolObj *ts) {
   if(ts->textpath) {
     freeTextPath(ts->textpath);
-    free(ts->textpath);
+    msFree(ts->textpath);
   }
   if(ts->label->numstyles) {
     if(ts->style_bounds) {
@@ -196,18 +196,18 @@ void freeTextSymbol(textSymbolObj *ts) {
       for(i=0;i<ts->label->numstyles; i++) {
         if(ts->style_bounds[i]) {
           if(ts->style_bounds[i]->poly) {
-            free(ts->style_bounds[i]->poly->point);
-            free(ts->style_bounds[i]->poly);
+            msFree(ts->style_bounds[i]->poly->point);
+            msFree(ts->style_bounds[i]->poly);
           }
-          free(ts->style_bounds[i]);
+          msFree(ts->style_bounds[i]);
         }
       }
-      free(ts->style_bounds);
+      msFree(ts->style_bounds);
     }
   }
-  free(ts->annotext);
+  msFree(ts->annotext);
   if(freeLabel(ts->label) == MS_SUCCESS) {
-    free(ts->label);
+    msFree(ts->label);
   }
 }
 
@@ -352,7 +352,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
       if(featuresize < (ts->textpath->bounds.bbox.maxx - ts->textpath->bounds.bbox.minx)) {
         /* feature is too big to be drawn, skip it */
         freeTextSymbol(ts);
-        free(ts);
+        msFree(ts);
         continue;
       }
     }
@@ -361,7 +361,7 @@ int msAddLabelGroup(mapObj *map, imageObj *image, layerObj* layer, int classinde
   }
   
   if(numtextsymbols == 0) {
-    free(textsymbols);
+    msFree(textsymbols);
     return MS_SUCCESS;
   }
   
@@ -459,7 +459,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
       /* label has no text or marker symbols */
       if(ts) {
         freeTextSymbol(ts);
-        free(ts);
+        msFree(ts);
       }
       return MS_SUCCESS;
     }
@@ -494,7 +494,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
             /* label point does not intersect mask */
             if(ts) {
               freeTextSymbol(ts);
-              free(ts);
+              msFree(ts);
             }
             return MS_SUCCESS;
           }
@@ -511,12 +511,12 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
             alphapixptr = rb.data.rgba.a + rb.data.rgba.row_step * y + rb.data.rgba.pixel_step*x;
             if (!*alphapixptr) {
               freeTextSymbol(ts);
-              free(ts);
+              msFree(ts);
               return MS_SUCCESS;
             }
           } else {
             freeTextSymbol(ts);
-            free(ts);
+            msFree(ts);
             return MS_SUCCESS; /* label point does not intersect image extent, we cannot know if it intersects
                                   mask, so we discard it (#5237)*/
           }
@@ -542,7 +542,7 @@ int msAddLabel(mapObj *map, imageObj *image, labelObj *label, int layerindex, in
     if(featuresize > (ts->textpath->bounds.bbox.maxx - ts->textpath->bounds.bbox.minx)) {
       /* feature is too big to be drawn, skip it */
       freeTextSymbol(ts);
-      free(ts);
+      msFree(ts);
       return MS_SUCCESS;
     }
   }
@@ -855,7 +855,7 @@ int msInitFontSet(fontSetObj *fontset)
 int msFreeFontSet(fontSetObj *fontset)
 {
   if (fontset->filename)
-    free(fontset->filename);
+    msFree(fontset->filename);
   fontset->filename = NULL;
   if (&(fontset->fonts))
     msFreeHashItems(&(fontset->fonts));
@@ -939,7 +939,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
   fontset->numfonts = i;
   fclose(stream); /* close the file */
-  free(path);
+  msFree(path);
 
   return(0);
 }

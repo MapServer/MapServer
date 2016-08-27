@@ -164,7 +164,7 @@ int saveAsJPEG(mapObj *map, rasterBufferObj *rb, streamInfo *info,
   if (setjmp(setjmp_buffer)) 
   {
      jpeg_destroy_compress(&cinfo);
-     free(rowdata);
+     msFree(rowdata);
      return MS_FAILURE;
   }
 
@@ -239,7 +239,7 @@ int saveAsJPEG(mapObj *map, rasterBufferObj *rb, streamInfo *info,
 
   jpeg_finish_compress(&cinfo);
   jpeg_destroy_compress(&cinfo);
-  free(rowdata);
+  msFree(rowdata);
   return MS_SUCCESS;
 }
 
@@ -586,7 +586,7 @@ int saveAsPNG(mapObj *map,rasterBufferObj *rb, streamInfo *info, outputFormatObj
 
     }
     png_write_end(png_ptr, info_ptr);
-    free(rowdata);
+    msFree(rowdata);
     png_destroy_write_struct(&png_ptr, &info_ptr);
     return MS_SUCCESS;
   } else {
@@ -684,7 +684,7 @@ int readPNG(char *path, rasterBufferObj *rb)
   assert(png_get_rowbytes(png_ptr, info_ptr) == rb->data.rgba.row_step);
 
   png_read_image(png_ptr, row_pointers);
-  free(row_pointers);
+  msFree(row_pointers);
   row_pointers=NULL;
   png_read_end(png_ptr,NULL);
   png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
@@ -999,7 +999,7 @@ int readGIF(char *path, rasterBufferObj *rb)
               }
             }
           }
-          free((char *) line);
+          msFree((char *) line);
           firstImageRead = MS_TRUE;
         } else {
           /* Skip all next images */

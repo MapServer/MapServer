@@ -368,7 +368,7 @@ int sortLayerByOrder(mapObj *map, char* pszOrder)
         map->layerorder[i] = panCurrentOrder[map->numlayers-1-i];
     }
 
-    free(panCurrentOrder);
+    msFree(panCurrentOrder);
   }
 
   return MS_SUCCESS;
@@ -405,14 +405,14 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
       pnLayerOrder[i] = map->layerorder[i];
 
     /* Get a new layerorder array */
-    free(map->layerorder);
+    msFree(map->layerorder);
     map->layerorder = (int*)msSmallMalloc(map->numlayers * sizeof(int));
 
     /* Reverse the layerorder array */
     for (i=0; i<map->numlayers ; i++)
       map->layerorder[i] = pnLayerOrder[map->numlayers - i - 1];
 
-    free(pnLayerOrder);
+    msFree(pnLayerOrder);
   } else {
     map->layerorder = (int*)msSmallMalloc(map->numlayers * sizeof(int));
 
@@ -487,7 +487,7 @@ char *findTag(char *pszInstr, char *pszTag)
       pszTemp += length; /* skip ahead and start over */
   }
 
-  free(pszTag1);
+  msFree(pszTag1);
 
   return pszStart;
 }
@@ -563,7 +563,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
         /* msReturnTemplateQuerycheck all argument if they have values */
         for (i=0; i<nArgs; i++) {
           if(strlen(papszArgs[i]) == 0) {
-            free(papszArgs[i]);
+            msFree(papszArgs[i]);
             continue;
           }
 
@@ -571,16 +571,16 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
             papszVarVal = msStringTokenize(papszArgs[i], "=", &nDummy, MS_FALSE);
             msInsertHashTable(*ppoHashTable, papszVarVal[0],
                               papszVarVal[1]);
-            free(papszVarVal[0]);
-            free(papszVarVal[1]);
-            free(papszVarVal);
+            msFree(papszVarVal[0]);
+            msFree(papszVarVal[1]);
+            msFree(papszVarVal);
           } else /* no value specified. set it to 1 */
             msInsertHashTable(*ppoHashTable, papszArgs[i], "1");
 
-          free(papszArgs[i]);
+          msFree(papszArgs[i]);
         }
-        free(papszArgs);
-        free(pszArgs);
+        msFree(papszArgs);
+        msFree(pszArgs);
       }
     }
   }
@@ -791,7 +791,7 @@ int processIfTag(char **pszInstr, hashTableObj *ht, int bLastPass)
       }
 
       if(pszIfTag)
-        free(pszIfTag);
+        msFree(pszIfTag);
 
       pszIfTag = NULL;
     }
@@ -891,7 +891,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   postTag = getPostTagText(*line, "[/feature]");
 
   /* start rebuilding **line */
-  free(*line);
+  msFree(*line);
   *line = preTag;
 
   /* we know the layer has query results or we wouldn't be in this code */
@@ -958,7 +958,7 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
     tagInstance = processLine(mapserv, tag, NULL, QUERY); /* do substitutions */
     *line = msStringConcatenate(*line, tagInstance); /* grow the line */
 
-    free(tagInstance);
+    msFree(tagInstance);
     msFreeShape(&(mapserv->resultshape)); /* init too */
 
     mapserv->RN++; /* increment counters */
@@ -973,8 +973,8 @@ static int processFeatureTag(mapservObj *mapserv, char **line, layerObj *layer)
   /*
   ** clean up
   */
-  free(postTag);
-  free(tag);
+  msFree(postTag);
+  msFree(tag);
   msFreeHashTable(tagArgs);
 
   return(MS_SUCCESS);
@@ -1066,7 +1066,7 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     postTag = getPostTagText(*line, "[/resultset]");
 
     /* start rebuilding **line */
-    free(*line);
+    msFree(*line);
     *line = preTag;
 
     if(lp->resultcache && lp->resultcache->numresults > 0) {
@@ -1083,8 +1083,8 @@ static int processResultSetTag(mapservObj *mapserv, char **line, FILE *stream)
     *line = msStringConcatenate(*line, postTag);
 
     /* clean up */
-    free(postTag);
-    free(tag);
+    msFree(postTag);
+    msFree(tag);
 
     tagStart = findTag(*line, "resultset");
   }
@@ -1163,12 +1163,12 @@ static int processIncludeTag(mapservObj *mapserv, char **line, FILE *stream, int
     *line = msReplaceSubstring(*line, tag, processedContent);
 
     /* clean up */
-    free(tag);
+    msFree(tag);
     tag = NULL;
     msFreeHashTable(tagArgs);
     tagArgs=NULL;
-    free(content);
-    free(processedContent);
+    msFree(content);
+    msFree(processedContent);
 
     if((*line)[tagOffset] != '\0')
       tagStart = findTag(*line+tagOffset+1, "include");
@@ -1333,7 +1333,7 @@ static int processItemTag(layerObj *layer, char **line, shapeObj *shape)
     }
 
     /* clean up */
-    free(tag);
+    msFree(tag);
     tag = NULL;
     msFreeHashTable(tagArgs);
     tagArgs=NULL;
@@ -1499,7 +1499,7 @@ static int processExtentTag(mapservObj *mapserv, char **line, char *name, rectOb
     }
 
     /* clean up */
-    free(tag);
+    msFree(tag);
     tag = NULL;
     msFreeHashTable(tagArgs);
     tagArgs=NULL;
@@ -1634,8 +1634,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
         struct label_auto_result lar;
         memset(&lar,0,sizeof(struct label_auto_result));
         if(UNLIKELY(MS_FAILURE == msPolylineLabelPoint(layer->map, shape, NULL, NULL, &lar, 0))) {
-          free(lar.angles);
-          free(lar.label_points);
+          msFree(lar.angles);
+          msFree(lar.label_points);
           return MS_FAILURE;
         }
         if(lar.num_label_points > 0) {
@@ -1644,8 +1644,8 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
           labelPos.y = lar.label_points[0].y;
           labelposvalid = MS_TRUE;
         }
-        free(lar.angles);
-        free(lar.label_points);
+        msFree(lar.angles);
+        msFree(lar.label_points);
       }
     } else if (shape->type == MS_SHAPE_POLYGON) {
       labelposvalid = MS_FALSE;
@@ -1812,7 +1812,7 @@ static int processShplabelTag(layerObj *layer, char **line, shapeObj *origshape)
 
     /* clean up */
     msFreeShape(&tShape);
-    free(tag);
+    msFree(tag);
     tag = NULL;
     msFreeHashTable(tagArgs);
     tagArgs=NULL;
@@ -2091,8 +2091,8 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
 
       bufferShape = msGEOSBuffer(shape, buffer);
       if(!bufferShape) {
-        free(pointFormat1);
-        free(pointFormat2);
+        msFree(pointFormat1);
+        msFree(pointFormat2);
         return(MS_FAILURE); /* buffer failed */
       }
       msCopyShape(bufferShape, &tShape);
@@ -2102,8 +2102,8 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     else {
       status = msCopyShape(shape, &tShape);
       if(status != 0) {
-        free(pointFormat1);
-        free(pointFormat2);
+        msFree(pointFormat1);
+        msFree(pointFormat2);
         return(MS_FAILURE); /* copy failed */
       }
     }
@@ -2205,11 +2205,11 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
               coords = msStringConcatenate(coords, irf);
             }
           }
-          free( inners );
+          msFree( inners );
           if(strlen(pf) > 0) coords = msStringConcatenate(coords, pf);
         }
       } /* end of loop over outer rings */
-      free( outers );
+      msFree( outers );
     } else { /* output without ring formatting */
 
       for(i=0; i<tShape.numlines; i++) { /* e.g. part */
@@ -2250,15 +2250,15 @@ static int processShpxyTag(layerObj *layer, char **line, shapeObj *shape)
     *line = msReplaceSubstring(*line, tag, coords);
 
     /* clean up */
-    free(tag);
+    msFree(tag);
     tag = NULL;
     msFreeHashTable(tagArgs);
     tagArgs=NULL;
-    free(pointFormat1);
+    msFree(pointFormat1);
     pointFormat1 = NULL;
-    free(pointFormat2);
+    msFree(pointFormat2);
     pointFormat2 = NULL;
-    free(coords);
+    msFree(coords);
     coords = NULL;
 
     if((*line)[tagOffset] != '\0')
@@ -2319,7 +2319,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
 
       *pszInstr = msReplaceSubstring(*pszInstr, pszMetadataTag, pszHashValue);
 
-      free(pszMetadataTag);
+      msFree(pszMetadataTag);
       pszMetadataTag=NULL;
     }
 
@@ -3014,7 +3014,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
       pszPrefix[nLen] = '\0';
     }
 
-    free(pszMapFname);
+    msFree(pszMapFname);
     pszMapFname = NULL;
   } else {
     /* -------------------------------------------------------------------- */
@@ -3031,7 +3031,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
   if((stream = fopen(msBuildPath(szPath, mapserv->map->mappath, mapserv->map->legend.template), "r")) == NULL) {
     msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
     if(pszResult)
-      free(pszResult);
+      msFree(pszResult);
     pszResult=NULL;
     goto error;
   }
@@ -3049,7 +3049,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
   /* Disabled for now due to Windows issue, see ticket #3814
      if( 1 != fread(file, length, 1, stream)) {
        msSetError(MS_IOERR, "Error while reading template file.", "generateLegendTemplate()");
-       free(file);
+       msFree(file);
        fclose(stream);
        return NULL;
      }
@@ -3058,7 +3058,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
   if(msValidateContexts(mapserv->map) != MS_SUCCESS) { /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
     if(pszResult)
-      free(pszResult);
+      msFree(pszResult);
     pszResult=NULL;
     goto error;
   }
@@ -3078,7 +3078,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
   if(legGroupHtml)
     if(getTagArgs("leg_group_html", file, &groupArgs) != MS_SUCCESS) {
       if(pszResult)
-        free(pszResult);
+        msFree(pszResult);
       pszResult=NULL;
       goto error;
     }
@@ -3086,7 +3086,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
   if(legLayerHtml)
     if(getTagArgs("leg_layer_html", file, &layerArgs) != MS_SUCCESS) {
       if(pszResult)
-        free(pszResult);
+        msFree(pszResult);
       pszResult=NULL;
       goto error;
     }
@@ -3094,7 +3094,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
   if(legClassHtml)
     if(getTagArgs("leg_class_html", file, &classArgs) != MS_SUCCESS) {
       if(pszResult)
-        free(pszResult);
+        msFree(pszResult);
       pszResult=NULL;
       goto error;
     }
@@ -3107,7 +3107,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
                       mapserv->map->width, mapserv->map->height,
                       mapserv->map->resolution, &mapserv->map->scaledenom) != MS_SUCCESS) {
     if(pszResult)
-      free(pszResult);
+      msFree(pszResult);
     pszResult=NULL;
     goto error;
   }
@@ -3125,7 +3125,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
   if(sortLayerByMetadata(mapserv->map, pszOrderMetadata) != MS_SUCCESS) {
     if(pszResult)
-      free(pszResult);
+      msFree(pszResult);
     pszResult=NULL;
     goto error;
   }
@@ -3139,7 +3139,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
                   (strcasecmp(pszOrder, "DESCENDING") == 0))) {
     if(sortLayerByOrder(mapserv->map, pszOrder) != MS_SUCCESS) {
       if(pszResult)
-        free(pszResult);
+        msFree(pszResult);
       pszResult=NULL;
       goto error;
     }
@@ -3153,7 +3153,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
       /* process group tags */
       if(generateGroupTemplate(legGroupHtml, mapserv->map, papszGroups[i], groupArgs, &legGroupHtmlCopy, pszPrefix) != MS_SUCCESS) {
         if(pszResult)
-          free(pszResult);
+          msFree(pszResult);
         pszResult=NULL;
         goto error;
       }
@@ -3165,14 +3165,14 @@ char *generateLegendTemplate(mapservObj *mapserv)
                if(!pszResult)
                {
                   if(pszResult)
-                    free(pszResult);
+                    msFree(pszResult);
                   pszResult=NULL;
                   goto error;
                }
       */
 
       if(legGroupHtmlCopy) {
-        free(legGroupHtmlCopy);
+        msFree(legGroupHtmlCopy);
         legGroupHtmlCopy = NULL;
       }
 
@@ -3200,7 +3200,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
             /* process all layer tags */
             if(generateLayerTemplate(legLayerHtml, mapserv->map, mapserv->map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS) {
               if(pszResult)
-                free(pszResult);
+                msFree(pszResult);
               pszResult=NULL;
               goto error;
             }
@@ -3210,7 +3210,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
             pszResult = msStringConcatenate(pszResult, legLayerHtmlCopy);
 
             if(legLayerHtmlCopy) {
-              free(legLayerHtmlCopy);
+              msFree(legLayerHtmlCopy);
               legLayerHtmlCopy = NULL;
             }
 
@@ -3227,7 +3227,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
                 if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS) {
                   if(pszResult)
-                    free(pszResult);
+                    msFree(pszResult);
                   pszResult=NULL;
                   goto error;
                 }
@@ -3237,7 +3237,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
                 pszResult = msStringConcatenate(pszResult, legClassHtmlCopy);
 
                 if(legClassHtmlCopy) {
-                  free(legClassHtmlCopy);
+                  msFree(legClassHtmlCopy);
                   legClassHtmlCopy = NULL;
                 }
               }
@@ -3276,7 +3276,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
                 if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS) {
                   if(pszResult)
-                    free(pszResult);
+                    msFree(pszResult);
                   pszResult=NULL;
                   goto error;
                 }
@@ -3286,7 +3286,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
                 pszResult = msStringConcatenate(pszResult, legClassHtmlCopy);
 
                 if(legClassHtmlCopy) {
-                  free(legClassHtmlCopy);
+                  msFree(legClassHtmlCopy);
                   legClassHtmlCopy = NULL;
                 }
               }
@@ -3320,7 +3320,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
         /* process a layer tags */
         if(generateLayerTemplate(legLayerHtml, mapserv->map, mapserv->map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS) {
           if(pszResult)
-            free(pszResult);
+            msFree(pszResult);
           pszResult=NULL;
           goto error;
         }
@@ -3329,7 +3329,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
         pszResult = msStringConcatenate(pszResult, legLayerHtmlCopy);
 
         if(legLayerHtmlCopy) {
-          free(legLayerHtmlCopy);
+          msFree(legLayerHtmlCopy);
           legLayerHtmlCopy = NULL;
         }
 
@@ -3345,7 +3345,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
             if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS) {
               if(pszResult)
-                free(pszResult);
+                msFree(pszResult);
               pszResult=NULL;
               goto error;
             }
@@ -3355,7 +3355,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
             pszResult = msStringConcatenate(pszResult, legClassHtmlCopy);
 
             if(legClassHtmlCopy) {
-              free(legClassHtmlCopy);
+              msFree(legClassHtmlCopy);
               legClassHtmlCopy = NULL;
             }
           }
@@ -3390,7 +3390,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
 
             if(generateClassTemplate(legClassHtml, mapserv->map, mapserv->map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS) {
               if(pszResult)
-                free(pszResult);
+                msFree(pszResult);
               pszResult=NULL;
               goto error;
             }
@@ -3399,7 +3399,7 @@ char *generateLegendTemplate(mapservObj *mapserv)
             pszResult = msStringConcatenate(pszResult, legClassHtmlCopy);
 
             if(legClassHtmlCopy) {
-              free(legClassHtmlCopy);
+              msFree(legClassHtmlCopy);
               legClassHtmlCopy = NULL;
             }
           }
@@ -3459,7 +3459,7 @@ error:
     for (i=0; i<mapserv->map->numlayers; i++)
       mapserv->map->layerorder[i] =  panCurrentDrawingOrder[i];
 
-    free(panCurrentDrawingOrder);
+    msFree(panCurrentDrawingOrder);
   }
 
   return pszResult;
@@ -3525,7 +3525,7 @@ char *processOneToManyJoin(mapservObj* mapserv, joinObj *join)
            return NULL;
         }
         outbuf = msStringConcatenate(outbuf, tmpline);
-        free(tmpline);
+        msFree(tmpline);
       } else /* no subs, just echo */
         outbuf = msStringConcatenate(outbuf, line);
     }
@@ -3593,8 +3593,8 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     outstr = msReplaceSubstring(outstr, "[errmsg]", errmsg);
     encodedstr = msEncodeUrl(errmsg);
     outstr = msReplaceSubstring(outstr, "[errmsg_esc]", encodedstr);
-    free(errmsg);
-    free(encodedstr);
+    msFree(errmsg);
+    msFree(encodedstr);
   }
 
   if(strstr(outstr, "[legend]")) {
@@ -3606,7 +3606,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       if(legendTemplate) {
         outstr = msReplaceSubstring(outstr, "[legend]", legendTemplate);
 
-        free(legendTemplate);
+        msFree(legendTemplate);
       } else /* error already generated by (generateLegendTemplate()) */
         return NULL;
     } else { /* if not display gif image with all legend icon */
@@ -3661,7 +3661,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   encodedstr = msEncodeUrl(repstr);
   outstr = msReplaceSubstring(outstr, "[layers_esc]", encodedstr);
-  free(encodedstr);
+  msFree(encodedstr);
 
   strcpy(repstr, ""); /* list of ALL layers that can be toggled */
   repstr[0] = '\0';
@@ -3676,7 +3676,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   encodedstr = msEncodeUrl(repstr);
   outstr = msReplaceSubstring(outstr, "[toggle_layers_esc]", encodedstr);
-  free(encodedstr);
+  msFree(encodedstr);
 
   for(i=0; i<mapserv->map->numlayers; i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */
     if(isOn(mapserv, GET_LAYER(mapserv->map, i)->name, GET_LAYER(mapserv->map, i)->group) == MS_TRUE) {
@@ -3752,7 +3752,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
           encodedstr = msEncodeUrl(tp->data);
           outstr = msReplaceSubstring(outstr, substr, encodedstr);
-          free(encodedstr);
+          msFree(encodedstr);
         }
       }
     }
@@ -3773,7 +3773,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
             if(GET_LAYER(mapserv->map, i)->status == MS_ON) {
               encodedstr = msEncodeUrl(tp->data);
               outstr = msReplaceSubstring(outstr, substr, encodedstr);
-              free(encodedstr);
+              msFree(encodedstr);
             } else
               outstr = msReplaceSubstring(outstr, substr, "");
           }
@@ -3875,7 +3875,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
   encodedstr = msEncodeUrl(repstr);
   outstr = msReplaceSubstring(outstr, "[mapsize_esc]", encodedstr);
-  free(encodedstr);
+  msFree(encodedstr);
 
   snprintf(repstr, sizeof(repstr), "%d", mapserv->map->width);
   outstr = msReplaceSubstring(outstr, "[mapwidth]", repstr);
@@ -3907,7 +3907,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
       itemstr = msJoinStrings(mapserv->resultlayer->items, mapserv->resultlayer->numitems, ",");
       outstr = msReplaceSubstring(outstr, "[items]", itemstr);
-      free(itemstr);
+      msFree(itemstr);
     }
 
     snprintf(repstr, sizeof(repstr), "%d", mapserv->NLR); /* total number of results within this layer */
@@ -3930,7 +3930,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
             snprintf(substr, PROCESSLINE_BUFLEN, "[metadata_%s_esc]", tp->key);
             encodedstr = msEncodeUrl(tp->data);
             outstr = msReplaceSubstring(outstr, substr, encodedstr);
-            free(encodedstr);
+            msFree(encodedstr);
           }
         }
       }
@@ -3985,7 +3985,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
 
       valuestr = msJoinStrings(mapserv->resultshape.values, mapserv->resultlayer->numitems, ",");
       outstr = msReplaceSubstring(outstr, "[values]", valuestr);
-      free(valuestr);
+      msFree(valuestr);
     }
 
     for(i=0; i<mapserv->resultlayer->numitems; i++) {
@@ -3994,7 +3994,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeHTMLEntities(mapserv->resultshape.values[i]);
         outstr = msReplaceSubstring(outstr, substr, encodedstr);
-        free(encodedstr);
+        msFree(encodedstr);
       }
 
       /* of course you might want to embed that data in URLs */
@@ -4002,7 +4002,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeUrl(mapserv->resultshape.values[i]);
         outstr = msReplaceSubstring(outstr, substr, encodedstr);
-        free(encodedstr);
+        msFree(encodedstr);
       }
 
       /* or you might want to access the attributes unaltered */
@@ -4023,7 +4023,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
           if(strstr(outstr, substr) != NULL) {
             encodedstr = msEncodeHTMLEntities(mapserv->resultlayer->joins[i].values[j]);
             outstr = msReplaceSubstring(outstr, substr, encodedstr);
-            free(encodedstr);
+            msFree(encodedstr);
           }
 
           /* of course you might want to embed that data in URLs */
@@ -4031,7 +4031,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
           if(strstr(outstr, substr) != NULL) {
             encodedstr = msEncodeUrl(mapserv->resultlayer->joins[i].values[j]);
             outstr = msReplaceSubstring(outstr, substr, encodedstr);
-            free(encodedstr);
+            msFree(encodedstr);
           }
 
           /* or you might want to access the attributes unaltered */
@@ -4047,7 +4047,7 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
           joinTemplate = processOneToManyJoin(mapserv, &(mapserv->resultlayer->joins[i]));
           if(joinTemplate) {
             outstr = msReplaceSubstring(outstr, substr, joinTemplate);
-            free(joinTemplate);
+            msFree(joinTemplate);
           } else
             return NULL;
         }
@@ -4068,12 +4068,12 @@ static char *processLine(mapservObj *mapserv, char *instr, FILE *stream, int mod
     snprintf(substr, PROCESSLINE_BUFLEN, "[%s]", mapserv->request->ParamNames[i]);
     encodedstr = msEncodeHTMLEntities(mapserv->request->ParamValues[i]);
     outstr = msCaseReplaceSubstring(outstr, substr, encodedstr);
-    free(encodedstr);
+    msFree(encodedstr);
 
     snprintf(substr, PROCESSLINE_BUFLEN, "[%s_esc]", mapserv->request->ParamNames[i]);
     encodedstr = msEncodeUrl(mapserv->request->ParamValues[i]);
     outstr = msCaseReplaceSubstring(outstr, substr, encodedstr);
-    free(encodedstr);
+    msFree(encodedstr);
   }
 
   return(outstr);
@@ -4151,7 +4151,7 @@ int msReturnPage(mapservObj *mapserv, char *html, int mode, char **papszBuffer)
       } else
         msIO_fwrite(tmpline, strlen(tmpline), 1, stdout);
 
-      free(tmpline);
+      msFree(tmpline);
     } else {
       if(papszBuffer) {
         if(nBufferSize <= (int)(nCurrentSize + strlen(line))) {
@@ -4188,7 +4188,7 @@ int msReturnURL(mapservObj* ms, char* url, int mode)
     return MS_FAILURE;
 
   msRedirect(tmpurl);
-  free(tmpurl);
+  msFree(tmpurl);
 
   return MS_SUCCESS;
 }
@@ -4405,10 +4405,10 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
         (strcasecmp(mapserv->request->ParamNames[i], "CRS") == 0) ) {
       projection = mapserv->request->ParamValues[i];
     } else if(strcasecmp(mapserv->request->ParamNames[i], "LAYERS") == 0) {
-      free(mapserv->request->ParamNames[i]);
+      msFree(mapserv->request->ParamNames[i]);
       mapserv->request->ParamNames[i] = msStrdup("LAYERS");
     } else if(strcasecmp(mapserv->request->ParamNames[i], "VERSION") == 0) {
-      free(mapserv->request->ParamNames[i]);
+      msFree(mapserv->request->ParamNames[i]);
       mapserv->request->ParamNames[i] = msStrdup("VERSION");
     }
   }
@@ -4440,8 +4440,8 @@ int msReturnOpenLayersPage(mapservObj *mapserv)
   else
     buffer = msReplaceSubstring(buffer, "[openlayers_format]", "image/jpeg");
   msIO_fwrite(buffer, strlen(buffer), 1, stdout);
-  free(layer);
-  free(buffer);
+  msFree(layer);
+  msFree(buffer);
 
   return MS_SUCCESS;
 }
@@ -4545,7 +4545,7 @@ void msFreeMapServObj(mapservObj* mapserv)
     if( mapserv->map ) {
       if(mapserv->hittest) {
         freeMapHitTests(mapserv->map,mapserv->hittest);
-        free(mapserv->hittest);
+        msFree(mapserv->hittest);
       }
       msFreeMap(mapserv->map);
       mapserv->map = NULL;

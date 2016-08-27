@@ -141,7 +141,7 @@ static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
             pszTypeNameTmp = msStrdup(pszTypeName);
             pszTypeNameTmp[i] = '\0';
             psParams->pszTypeName = msStrdup(pszTypeNameTmp);
-            free(pszTypeNameTmp);
+            msFree(pszTypeNameTmp);
           } else
             psParams->pszTypeName = msStrdup(pszTypeName);
         }
@@ -282,7 +282,7 @@ static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
              "</wfs:Query>\n"
              "</wfs:GetFeature>\n", psParams->pszTypeName, pszFilter);
   if (psParams->pszFilter == NULL)
-    free(pszFilter);
+    msFree(pszFilter);
 
 
   return pszPostReq;
@@ -418,7 +418,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
   if (psParams->pszFilter) {
     char *encoded_filter = msEncodeUrl(psParams->pszFilter);
     snprintf(pszURL + strlen(pszURL), bufferSize-strlen(pszURL), "&FILTER=%s",encoded_filter);
-    free(encoded_filter);
+    msFree(encoded_filter);
   } else {
 	  /*
 	   * take care about the axis order for WFS 1.1
@@ -506,11 +506,11 @@ static void msFreeWFSLayerInfo(msWFSLayerInfo *psInfo)
 {
   if (psInfo) {
     if (psInfo->pszGMLFilename)
-      free(psInfo->pszGMLFilename);
+      msFree(psInfo->pszGMLFilename);
     if (psInfo->pszGetUrl)
-      free(psInfo->pszGetUrl);
+      msFree(psInfo->pszGetUrl);
 
-    free(psInfo);
+    msFree(psInfo);
   }
 }
 
@@ -674,13 +674,13 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
   }
 
   if (psInfo->pszGMLFilename)
-    free(psInfo->pszGMLFilename);
+    msFree(psInfo->pszGMLFilename);
   psInfo->pszGMLFilename=msStrdup(pasReqInfo[(*numRequests)].pszOutputFile);
 
   psInfo->rect = pasReqInfo[(*numRequests)].bbox;
 
   if (psInfo->pszGetUrl)
-    free(psInfo->pszGetUrl);
+    msFree(psInfo->pszGetUrl);
   psInfo->pszGetUrl = msStrdup(pasReqInfo[(*numRequests)].pszGetUrl);
 
   psInfo->nStatus = 0;

@@ -232,7 +232,7 @@ static int dxf;
 void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image)
 {
   DEBUG_IF printf("ImageStartLayerIM\n<BR>");
-  free(lname);
+  msFree(lname);
   if (layer->name)
     lname = msStrdup(layer->name);
   else
@@ -722,6 +722,6 @@ int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format )
  */
 void msFreeImageIM(imageObj* img)
 {
-  free(img->img.imagemap);
+  msFree(img->img.imagemap);
 }
 

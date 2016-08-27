@@ -83,7 +83,7 @@ void msIO_Cleanup()
     while( io_context_list != NULL ) {
       msIOContextGroup *last = io_context_list;
       io_context_list = io_context_list->next;
-      free( last );
+      msFree( last );
     }
   }
 }
@@ -643,24 +643,24 @@ void msIO_resetHandlers()
     msIOBuffer *buf = (msIOBuffer *) group->stdin_context.cbData;
 
     if( buf->data != NULL )
-      free( buf->data );
-    free( buf );
+      msFree( buf->data );
+    msFree( buf );
   }
 
   if( strcmp(group->stdout_context.label,"buffer") == 0 ) {
     msIOBuffer *buf = (msIOBuffer *) group->stdout_context.cbData;
 
     if( buf->data != NULL )
-      free( buf->data );
-    free( buf );
+      msFree( buf->data );
+    msFree( buf );
   }
 
   if( strcmp(group->stderr_context.label,"buffer") == 0 ) {
     msIOBuffer *buf = (msIOBuffer *) group->stderr_context.cbData;
 
     if( buf->data != NULL )
-      free( buf->data );
-    free( buf );
+      msFree( buf->data );
+    msFree( buf );
   }
 
   msIO_installHandlers( NULL, NULL, NULL );

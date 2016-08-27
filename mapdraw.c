@@ -1418,7 +1418,7 @@ msDrawRasterLayerPlugin( mapObj *map, layerObj *layer, imageObj *image)
 #define RB_GET_B(rb,x,y) *((rb)->data.rgba.b + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
 #define RB_GET_A(rb,x,y) *((rb)->data.rgba.a + (x) * (rb)->data.rgba.pixel_step + (y) * (rb)->data.rgba.row_step)
 
-  free(rb);
+  msFree(rb);
 
   return ret;
 }
@@ -1653,7 +1653,7 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
             goto line_cleanup;
           }
         }
-        free(lfr.follow_labels);
+        msFree(lfr.follow_labels);
         for(i=0; i<lfr.lar.num_label_points; i++) {
           textSymbolObj *ts_auto = msSmallMalloc(sizeof(textSymbolObj));
           initTextSymbol(ts_auto);
@@ -1662,22 +1662,22 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
           if (layer->labelcache) {
             if (msAddLabel(map, image, label, layer->index, c, anno_shape, &lfr.lar.label_points[i], -1, ts_auto) != MS_SUCCESS) {
               ret = MS_FAILURE;
-              free(lfr.lar.angles);
-              free(lfr.lar.label_points);
+              msFree(lfr.lar.angles);
+              msFree(lfr.lar.label_points);
               goto line_cleanup;
             }
           } else {
             ret = msDrawTextSymbol(map,image,lfr.lar.label_points[i],ts_auto);
             freeTextSymbol(ts_auto);
-            free(ts_auto); /* TODO RFC98: could we not re-use the original ts instead of duplicating into ts_auto ?
+            msFree(ts_auto); /* TODO RFC98: could we not re-use the original ts instead of duplicating into ts_auto ?
                             * we cannot for now, as the rendering code will modify the glyph positions to apply
                             * the labelpoint and rotation offsets */
             if(UNLIKELY(MS_FAILURE == ret)) goto line_cleanup;
           }
           
         }
-        free(lfr.lar.angles);
-        free(lfr.lar.label_points);
+        msFree(lfr.lar.angles);
+        msFree(lfr.lar.label_points);
       } else {
         struct label_auto_result lar;
         memset(&lar,0,sizeof(struct label_auto_result));
@@ -1695,26 +1695,26 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
           if (layer->labelcache) {
             if (msAddLabel(map, image, label, layer->index, c, anno_shape, &lar.label_points[i], -1, ts_auto) != MS_SUCCESS) {
               ret = MS_FAILURE;
-              free(lar.angles);
-              free(lar.label_points);
+              msFree(lar.angles);
+              msFree(lar.label_points);
               freeTextSymbol(ts_auto);
-              free(ts_auto);
+              msFree(ts_auto);
               goto line_cleanup;
             }
           } else {
             if(!ts_auto->textpath) {
               if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts_auto))) {
                 ret = MS_FAILURE;
-                free(lar.angles);
-                free(lar.label_points);
+                msFree(lar.angles);
+                msFree(lar.label_points);
                 freeTextSymbol(ts_auto);
-                free(ts_auto);
+                msFree(ts_auto);
                 goto line_cleanup;
               }
             }
             ret = msDrawTextSymbol(map,image,lar.label_points[i],ts_auto);
             freeTextSymbol(ts_auto);
-            free(ts_auto); /* TODO RFC98: could we not re-use the original ts instead of duplicating into ts_auto ?
+            msFree(ts_auto); /* TODO RFC98: could we not re-use the original ts instead of duplicating into ts_auto ?
                             * we cannot for now, as the rendering code will modify the glyph positions to apply
                             * the labelpoint and rotation offsets */
             ts_auto = NULL;
@@ -1722,8 +1722,8 @@ int lineLayerDrawShape(mapObj *map, imageObj *image, layerObj *layer, shapeObj *
           }
           
         }
-        free(lar.angles);
-        free(lar.label_points);
+        msFree(lar.angles);
+        msFree(lar.label_points);
       }
 
 line_cleanup:
@@ -2064,12 +2064,12 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
         } else {
           if(UNLIKELY(MS_FAILURE == msComputeTextPath(map,ts))) {
             freeTextSymbol(ts);
-            free(ts);
+            msFree(ts);
             return MS_FAILURE;
           }
           ret = msDrawTextSymbol(map,image,*point,ts);
           freeTextSymbol(ts);
-          free(ts); 
+          msFree(ts); 
           if(UNLIKELY(ret == MS_FAILURE)) return MS_FAILURE;
         }
       }
@@ -2558,7 +2558,7 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority)
 
 offset_cleanup:
 
-  free(scratch_points);
+  msFree(scratch_points);
 
 
   return retval;

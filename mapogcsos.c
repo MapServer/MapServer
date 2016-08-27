@@ -106,8 +106,8 @@ static int msSOSException(mapObj *map, char *locator, char *exceptionCode)
   msIO_printf("%s", buffer);
 
   /*free buffer and the document */
-  free(errorString);
-  free(schemasLocation);
+  msFree(errorString);
+  msFree(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
   xmlFreeNs(psNsOws);
@@ -196,7 +196,7 @@ void msSOSAddMetadataChildNode(xmlNodePtr psParent, const char *psNodeName,
       psNode = xmlNewChild(psParent, NULL, BAD_CAST psNodeName, BAD_CAST psValue);
       if (psNs)
         xmlSetNs(psNode,  psNs);
-      free(psValue);
+      msFree(psValue);
     }
   }
 }
@@ -302,7 +302,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
 
       pszFullName = msStringConcatenate(pszFullName, pszTmpVal);
 
-      free(pszTmpVal);
+      msFree(pszTmpVal);
 
       pszFullName = msStringConcatenate(pszFullName, ":");
 
@@ -315,7 +315,7 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
 
       pszFullName = msStringConcatenate(pszFullName, pszTmpVal);
 
-      free(pszTmpVal);
+      msFree(pszTmpVal);
 
       pszFullName = msStringConcatenate(pszFullName, ":");
 
@@ -332,13 +332,13 @@ void msSOSAddPropertyNode(xmlNsPtr psNsSwe, xmlNsPtr psNsXLink, xmlNodePtr psPar
       psNode = xmlNewChild(psCompNode, psNsSwe, BAD_CAST "component", NULL);
 
       xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST pszFullName);
-      free(pszFullName);
-      free(pszTmpVal);
+      msFree(pszFullName);
+      msFree(pszTmpVal);
       j++;
     }
     pszTmpVal = msIntToString(j);
     xmlNewNsProp(psCompNode, NULL, BAD_CAST "dimension", BAD_CAST pszTmpVal);
-    free(pszTmpVal);
+    msFree(pszTmpVal);
   }
 }
 
@@ -419,15 +419,15 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
             char *doubleTmp = msDoubleToString(psShape->line[i].point[j].x, MS_TRUE);
             pszTmp = msStringConcatenate(pszTmp, doubleTmp);
             pszTmp = msStringConcatenate(pszTmp, ",");
-            free(doubleTmp);
+            msFree(doubleTmp);
             doubleTmp = msDoubleToString(psShape->line[i].point[j].y, MS_TRUE);
             pszTmp = msStringConcatenate(pszTmp, doubleTmp);
             pszTmp = msStringConcatenate(pszTmp, ",");
-            free(doubleTmp);
+            msFree(doubleTmp);
           }
           psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
           xmlSetNs(psNode,xmlNewNs(psNode, BAD_CAST "http://www.opengis.net/gml", BAD_CAST "gml"));
-          free(pszTmp);
+          msFree(pszTmp);
         }
 
         break;
@@ -482,24 +482,24 @@ void  msSOSAddGeometryNode(xmlNsPtr psNsGml, xmlNsPtr psNsMs, xmlNodePtr psParen
             doubleTmp = msDoubleToString(psShape->line[i].point[j].x, MS_TRUE);
             pszTmp = msStringConcatenate(pszTmp, doubleTmp);
             pszTmp = msStringConcatenate(pszTmp, ",");
-            free(doubleTmp);
+            msFree(doubleTmp);
             doubleTmp = msDoubleToString(psShape->line[i].point[j].y, MS_TRUE);
             pszTmp = msStringConcatenate(pszTmp, doubleTmp);
             pszTmp = msStringConcatenate(pszTmp, " ");
-            free(doubleTmp);
+            msFree(doubleTmp);
           }
           psNode = xmlNewChild(psNode, NULL, BAD_CAST "coordinates", BAD_CAST pszTmp);
           xmlSetNs(psNode,xmlNewNs(psNode,
                                    BAD_CAST "http://www.opengis.net/gml",
                                    BAD_CAST "gml"));
-          free(pszTmp);
+          msFree(pszTmp);
 
           if (panInnerList)
-            free(panInnerList);
+            msFree(panInnerList);
         }
 
         if (panOuterList)
-          free(panOuterList);
+          msFree(panOuterList);
 
         break;
 
@@ -824,16 +824,16 @@ void msSOSAddMemberNode(xmlNsPtr psNsGml, xmlNsPtr psNsOm, xmlNsPtr psNsSwe, xml
                 pszTmp = msEncodeHTMLEntities(pszValue);
                 psNode = xmlNewChild(psLayerNode, psNsMs, BAD_CAST pszValue,
                                      BAD_CAST pszValueShape);
-                free(pszTmp);
+                msFree(pszTmp);
               } else {
                 pszTmp = msEncodeHTMLEntities(lpfirst->items[i]);
                 psNode = xmlNewChild(psLayerNode, psNsMs,
                                      BAD_CAST lpfirst->items[i],
                                      BAD_CAST pszValueShape);
-                free(pszTmp);
+                msFree(pszTmp);
               }
 
-              free(pszValueShape);
+              msFree(pszValueShape);
               xmlSetNs(psNode,psNsMs);
               break;
             }
@@ -1563,8 +1563,8 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
           }
         }
         for (j=0; j<nProperties; j++)
-          free(papszProperties[j]);
-        free(papszProperties);
+          msFree(papszProperties[j]);
+        msFree(papszProperties);
 
         psNode = xmlNewChild(psOfferingNode, NULL, BAD_CAST "featureOfInterest", NULL);
         xmlNewNsProp(psNode, psNsXLink, BAD_CAST "href", BAD_CAST "urn:ogc:def:feature:OGC-SWE:3:transient");
@@ -1622,8 +1622,8 @@ int msSOSGetCapabilities(mapObj *map, sosParamsObj *sosparams, cgiRequestObj *re
   xmlFreeNs(psNsOgc);
   xmlFreeNs(psNsSwe);
 
-  free(xsi_schemaLocation);
-  free(schemalocation);
+  msFree(xsi_schemaLocation);
+  msFree(schemalocation);
   msFree(script_url);
 
   /*
@@ -2339,8 +2339,8 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
   if (sosparams->pszResultModel && strcasecmp(sosparams->pszResultModel, "om:Measurement") != 0 &&
       strcasecmp(sosparams->pszResultModel, "om:Observation") != 0) {
     msSetError(MS_SOSERR, "resultModel should be om:Measurement or om:Observation", "msSOSGetObservation()");
-    free(xsi_schemaLocation);
-    free(schemalocation);
+    msFree(xsi_schemaLocation);
+    msFree(schemalocation);
     return msSOSException(map, "resultModel", "InvalidParameterValue");
   }
 
@@ -2433,7 +2433,7 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
             if (paDiffrentProc) {
               for (k=0; k<nDiffrentProc; k++)
                 msFree(paDiffrentProc[k].pszProcedure);
-              free(paDiffrentProc);
+              msFree(paDiffrentProc);
             }
           }
         }
@@ -2448,8 +2448,8 @@ this request. Check sos/ows_enable_request settings.", "msSOSGetObservation()", 
   context = msIO_getHandler(stdout);
   xmlDocDumpFormatMemoryEnc(psDoc, &buffer, &size, ("UTF-8"), 1);
   msIO_contextWrite(context, buffer, size);
-  free(schemalocation);
-  free(xsi_schemaLocation);
+  msFree(schemalocation);
+  msFree(xsi_schemaLocation);
   xmlFreeNs(psNsSos);
   xmlFreeNs(psNsGml);
   xmlFreeNs(psNsOm);
@@ -2694,7 +2694,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
 
   if (msSOSParseRequest(map, req, paramsObj) == MS_FAILURE) {
     msSOSFreeParamsObj(paramsObj);
-    free(paramsObj);
+    msFree(paramsObj);
     return MS_FAILURE;
   }
 
@@ -2703,7 +2703,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
     if (!paramsObj->pszRequest) {
       msSetError(MS_SOSERR, "Missing REQUEST Parameter", "msSOSDispatch()");
       msSOSFreeParamsObj(paramsObj);
-      free(paramsObj);
+      msFree(paramsObj);
       paramsObj = NULL;
       return msSOSException(map, "request", "MissingParameterValue");
     }
@@ -2712,7 +2712,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
     if (ows_request->numlayers == 0) {
       msSetError(MS_SOSERR, "SOS request not enabled. Check sos/ows_enable_request settings.", "msSOSDispatch()");
       msSOSFreeParamsObj(paramsObj);
-      free(paramsObj);
+      msFree(paramsObj);
       paramsObj = NULL;
       return msSOSException(map, "request", "InvalidParameterValue");
     }
@@ -2720,7 +2720,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
     if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0) {
       returnvalue = msSOSGetCapabilities(map, paramsObj, req, ows_request);
       msSOSFreeParamsObj(paramsObj);
-      free(paramsObj);
+      msFree(paramsObj);
       paramsObj = NULL;
       return returnvalue;
     }
@@ -2733,7 +2733,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
       if (!paramsObj->pszVersion) {
         msSetError(MS_SOSERR, "Missing VERSION parameter", "msSOSDispatch()");
         msSOSFreeParamsObj(paramsObj);
-        free(paramsObj);
+        msFree(paramsObj);
         paramsObj = NULL;
         return msSOSException(map, "version", "MissingParameterValue");
       }
@@ -2741,7 +2741,7 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
       if (msOWSParseVersionString(paramsObj->pszVersion) != OWS_1_0_0) {
         msSetError(MS_SOSERR, "VERSION %s not supported.  Supported versions are: %s.", "msSOSDispatch()", paramsObj->pszVersion, pszSOSVersion);
         msSOSFreeParamsObj(paramsObj);
-        free(paramsObj);
+        msFree(paramsObj);
         paramsObj = NULL;
         return msSOSException(map, "version", "InvalidParameterValue");
       }
@@ -2756,19 +2756,19 @@ int msSOSDispatch(mapObj *map, cgiRequestObj *req, owsRequestObj *ows_request)
         returnvalue = msSOSDescribeObservationType(map, paramsObj, req, ows_request);
 
       msSOSFreeParamsObj(paramsObj);
-      free(paramsObj);
+      msFree(paramsObj);
       paramsObj = NULL;
       return returnvalue;
     } else {
       msSetError(MS_SOSERR, "Invalid REQUEST parameter: %s", "msSOSDispatch()", paramsObj->pszRequest);
       msSOSFreeParamsObj(paramsObj);
-      free(paramsObj);
+      msFree(paramsObj);
       paramsObj = NULL;
       return msSOSException(map, "request", "InvalidParameterValue");
     }
   } else {
     msSOSFreeParamsObj(paramsObj);
-    free(paramsObj);
+    msFree(paramsObj);
     return MS_DONE;  /* Not an SOS request */
   }
 #else
@@ -3040,39 +3040,39 @@ void msSOSFreeParamsObj(sosParamsObj *sosparams)
 {
   if (sosparams) {
     if (sosparams->pszService)
-      free(sosparams->pszService);
+      msFree(sosparams->pszService);
     if (sosparams->pszVersion)
-      free(sosparams->pszVersion);
+      msFree(sosparams->pszVersion);
     if (sosparams->pszAcceptVersions)
-      free(sosparams->pszAcceptVersions);
+      msFree(sosparams->pszAcceptVersions);
     if (sosparams->pszUpdateSequence)
-      free(sosparams->pszUpdateSequence);
+      msFree(sosparams->pszUpdateSequence);
     if (sosparams->pszRequest)
-      free(sosparams->pszRequest);
+      msFree(sosparams->pszRequest);
     if (sosparams->pszOutputFormat)
-      free(sosparams->pszOutputFormat);
+      msFree(sosparams->pszOutputFormat);
     if (sosparams->pszSensorId)
-      free(sosparams->pszSensorId);
+      msFree(sosparams->pszSensorId);
     if (sosparams->pszProcedure)
-      free(sosparams->pszProcedure);
+      msFree(sosparams->pszProcedure);
     if (sosparams->pszOffering)
-      free(sosparams->pszOffering);
+      msFree(sosparams->pszOffering);
     if (sosparams->pszObservedProperty)
-      free(sosparams->pszObservedProperty);
+      msFree(sosparams->pszObservedProperty);
     if (sosparams->pszEventTime)
-      free(sosparams->pszEventTime);
+      msFree(sosparams->pszEventTime);
     if (sosparams->pszResult)
-      free(sosparams->pszResult);
+      msFree(sosparams->pszResult);
     if (sosparams->pszResponseFormat)
-      free(sosparams->pszResponseFormat);
+      msFree(sosparams->pszResponseFormat);
     if (sosparams->pszResultModel)
-      free(sosparams->pszResultModel);
+      msFree(sosparams->pszResultModel);
     if (sosparams->pszResponseMode)
-      free(sosparams->pszResponseMode);
+      msFree(sosparams->pszResponseMode);
     if (sosparams->pszSrsName)
-      free(sosparams->pszSrsName);
+      msFree(sosparams->pszSrsName);
     if (sosparams->pszFeatureOfInterest)
-      free(sosparams->pszFeatureOfInterest);
+      msFree(sosparams->pszFeatureOfInterest);
   }
 }
 #endif /* defined(USE_SOS_SVR) && defined(USE_LIBXML2) */

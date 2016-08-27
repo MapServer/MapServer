@@ -74,8 +74,8 @@ void gaussian_blur(float *values, int width, int height, int radius) {
 			dst_col[y*width]=accum;
 		}
 	}
-  free(tmp);
-  free(kernel);
+  msFree(tmp);
+  msFree(kernel);
 }
 
 
@@ -142,7 +142,7 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
       if(msScaleInBounds(map->scaledenom, layer->minscaledenom, layer->maxscaledenom))
         break;
     }
-    free(aLayers);
+    msFree(aLayers);
     if(i == nLayers) {
       msSetError(MS_MISCERR, "KernelDensity layer (%s) references no layer for current scale", "msComputeKernelDensityDataset()",
                  kerneldensity_layer->name);
@@ -303,7 +303,7 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
     }
   }
 
-  free(values);
+  msFree(values);
   
   {
     char pointer[64];
@@ -317,7 +317,7 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *kernel
     if(hDS==NULL) {
       msSetError(MS_MISCERR,"msComputeKernelDensityDataset()","failed to create in-memory gdal dataset for interpolated data");
       status = MS_FAILURE;
-      free(iValues);
+      msFree(iValues);
     }
     adfGeoTransform[0] = map->extent.minx - map->cellsize * 0.5; /* top left x */
     adfGeoTransform[1] = map->cellsize;/* w-e pixel resolution */
@@ -342,6 +342,6 @@ int msComputeKernelDensityDataset(mapObj *map, imageObj *image, layerObj *layer,
 #endif
 
 int msCleanupKernelDensityDataset(mapObj *map, imageObj *image, layerObj *layer, void *cleanup_ptr) {
-  free(cleanup_ptr);
+  msFree(cleanup_ptr);
   return MS_SUCCESS;
 }

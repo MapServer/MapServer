@@ -1052,10 +1052,10 @@ static int _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticule
   labeltxt = msShapeGetLabelAnnotation(pLayer, pShape, pLayer->class[0]->labels[0]);
   assert(labeltxt);
   if(msGetStringSize(pLayer->map, pLayer->class[0]->labels[0], size, labeltxt, &rectLabel) != MS_SUCCESS) {
-    free(labeltxt);
+    msFree(labeltxt);
     return MS_FAILURE;  /* msSetError already called */
   }
-  free(labeltxt);
+  msFree(labeltxt);
 
   switch( ePosition ) {
     case posBottom:

@@ -710,7 +710,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent, map_hittest *hittest)
     /* clean up */
     head = cur;
     cur = cur->pred;
-    free(head);
+    msFree(head);
   } /* next legend */
 
 cleanup:
@@ -718,7 +718,7 @@ cleanup:
     freeTextSymbol(&cur->ts);
     head = cur;
     cur = cur->pred;
-    free(head);
+    msFree(head);
   }
   if(UNLIKELY(ret != MS_SUCCESS)) {
     if(image) msFreeImage(image);

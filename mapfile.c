@@ -127,7 +127,7 @@ int msEvalRegex(const char *e, const char *s)
 #ifdef USE_MSFREE
 void msFree(void *p)
 {
-  if(p) free(p);
+  free(p);
 }
 #endif
 
@@ -214,7 +214,7 @@ int getString(char **s)
     return(MS_FAILURE);
   } else */
   if(msyylex() == MS_STRING) {
-    if(*s) free(*s); /* avoid leak */
+    if(*s) msFree(*s); /* avoid leak */
     *s = msStrdup(msyystring_buffer);
     return(MS_SUCCESS);
   }
@@ -577,9 +577,9 @@ static void writeStringElement(FILE *stream, char *string)
     else {
       char *string_tmp = msStringEscape(string_escaped);
       msIO_fprintf(stream, "\"%s\"", string_tmp);
-      if(string_escaped!=string_tmp) free(string_tmp);
+      if(string_escaped!=string_tmp) msFree(string_tmp);
     }
-    if(string_escaped!=string) free(string_escaped);
+    if(string_escaped!=string) msFree(string_escaped);
 }
 
 static void writeString(FILE *stream, int indent, const char *name, const char *defaultString, char *string)
@@ -1372,7 +1372,7 @@ static int loadProjection(projectionObj *p)
 
           p->args[0] = NULL;
           result = msLoadProjectionString( p, one_line_def );
-          free( one_line_def );
+          msFree( one_line_def );
           return result;
         } else {
           p->numargs = i;
@@ -1551,7 +1551,7 @@ int msLoadProjectionString(projectionObj *p, const char *value)
     trimmed[i_out] = '\0';
 
     p->args = msStringSplit(trimmed,'+', &p->numargs);
-    free( trimmed );
+    msFree( trimmed );
   } else if (strncasecmp(value, "AUTO:", 5) == 0 ||
              strncasecmp(value, "AUTO2:", 6) == 0) {
     /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
@@ -2192,7 +2192,7 @@ void msFreeExpressionTokens(expressionObj *exp)
           break;
         case MS_TOKEN_LITERAL_SHAPE:
           msFreeShape(node->tokenval.shpval);
-          free(node->tokenval.shpval);
+          msFree(node->tokenval.shpval);
           break;
       }
 
@@ -2326,7 +2326,7 @@ char *msGetExpressionString(expressionObj *exp)
         return exprstring;
       default:
         /* We should never get to here really! */
-        free(exprstring);
+        msFree(exprstring);
         return NULL;
     }
   }
@@ -2375,8 +2375,8 @@ int loadHashTable(hashTableObj *ptable)
         if(getString(&data) == MS_FAILURE) return(MS_FAILURE);
         msInsertHashTable(ptable, key, data);
 
-        free(key);
-        free(data);
+        msFree(key);
+        msFree(data);
         data=NULL;
         break;
       default:
@@ -3935,7 +3935,7 @@ int freeLayer(layerObj *layer)
     freeFeatureList(layer->features);
 
   if(layer->resultcache) {
-    if(layer->resultcache->results) free(layer->resultcache->results);
+    if(layer->resultcache->results) msFree(layer->resultcache->results);
     msFree(layer->resultcache);
   }
 
@@ -4171,10 +4171,10 @@ int loadLayerCompositer(LayerCompositer *compositer) {
           compositer->comp_op = MS_COMPOP_XOR;
         else {
           msSetError(MS_PARSEERR,"Unknown COMPOP \"%s\"", "loadLayerCompositer()", compop);
-          free(compop);
+          msFree(compop);
           return MS_FAILURE;
         }
-        free(compop);
+        msFree(compop);
       }
         break;
       case END:
@@ -4519,13 +4519,13 @@ int loadLayer(layerObj *layer, mapObj *map)
         if(msyysource == MS_URL_TOKENS) {
           if(msValidateParameter(value, msLookupHashTable(&(layer->validation), "processing"), msLookupHashTable(&(map->web.validation), "processing"), NULL, NULL) != MS_SUCCESS) {
             msSetError(MS_MISCERR, "URL-based PROCESSING configuration failed pattern validation." , "loadLayer()");
-            free(value);
+            msFree(value);
             value=NULL;
             return(-1);
           }
         }
         msLayerAddProcessing( layer, value );
-        free(value);
+        msFree(value);
         value=NULL;
       }
       break;
@@ -5173,7 +5173,7 @@ static int loadOutputFormat(mapObj *map)
           *key = 0;
           key++;
           msSetOutputFormatOption(format,formatoptions[numformatoptions],key);
-          free(formatoptions[numformatoptions]);
+          msFree(formatoptions[numformatoptions]);
         }
 
         format->inmapfile = MS_TRUE;
@@ -5194,7 +5194,7 @@ static int loadOutputFormat(mapObj *map)
         int s;
         if((s = getSymbol(2, MS_STRING, TEMPLATE)) == -1) /* allow the template to be quoted or not in the mapfile */
           goto load_output_error;
-        free(driver);
+        msFree(driver);
         if(s == MS_STRING)
           driver = msStrdup(msyystring_buffer);
         else
@@ -5206,7 +5206,7 @@ static int loadOutputFormat(mapObj *map)
           goto load_output_error;
         if( extension[0] == '.' ) {
           char *temp = msStrdup(extension+1);
-          free( extension );
+          msFree( extension );
           extension = temp;
         }
         break;
@@ -5239,7 +5239,7 @@ static int loadOutputFormat(mapObj *map)
                      msyystring_buffer, msyylineno);
           goto load_output_error;
         }
-        free(value);
+        msFree(value);
         value=NULL;
         break;
       case(TRANSPARENT):
@@ -5325,7 +5325,7 @@ void initLegend(legendObj *legend)
 void freeLegend(legendObj *legend)
 {
   if (legend->template)
-    free(legend->template);
+    msFree(legend->template);
   freeLabel(&(legend->label));
 }
 
@@ -5848,7 +5848,7 @@ int loadWeb(webObj *web, mapObj *map)
   for(;;) {
     switch(msyylex()) {
       case(BROWSEFORMAT): /* change to use validation in 6.0 */
-        free(web->browseformat);
+        msFree(web->browseformat);
         web->browseformat = NULL; /* there is a default */
         if(getString(&web->browseformat) == MS_FAILURE) return(-1);
         break;
@@ -5908,7 +5908,7 @@ int loadWeb(webObj *web, mapObj *map)
         if(getString(&web->imageurl) == MS_FAILURE) return(-1);
         break;
       case(LEGENDFORMAT): /* change to use validation in 6.0 */
-        free(web->legendformat);
+        msFree(web->legendformat);
         web->legendformat = NULL; /* there is a default */
         if(getString(&web->legendformat) == MS_FAILURE) return(-1);
         break;
@@ -5933,7 +5933,7 @@ int loadWeb(webObj *web, mapObj *map)
         if(getString(&web->mintemplate) == MS_FAILURE) return(-1);
         break;
       case(QUERYFORMAT): /* change to use validation in 6.0 */
-        free(web->queryformat);
+        msFree(web->queryformat);
         web->queryformat = NULL; /* there is a default */
         if(getString(&web->queryformat) == MS_FAILURE) return(-1);
         break;
@@ -6160,7 +6160,7 @@ int msFreeLabelCacheSlot(labelCacheSlotObj *cacheslot)
 
       for(j=0; j<cacheslot->labels[i].numtextsymbols; j++) {
         freeTextSymbol(cacheslot->labels[i].textsymbols[j]);
-        free(cacheslot->labels[i].textsymbols[j]);
+        msFree(cacheslot->labels[i].textsymbols[j]);
       }
       msFree(cacheslot->labels[i].textsymbols);
 
@@ -6369,18 +6369,18 @@ static int loadMapInternal(mapObj *map)
           return MS_FAILURE;
 
         if( getString(&value) == MS_FAILURE ) {
-          free(key);
+          msFree(key);
           return MS_FAILURE;
         }
 
         if (msSetConfigOption( map, key, value ) == MS_FAILURE) {
-          free(key);
-          free(value);
+          msFree(key);
+          msFree(value);
           return MS_FAILURE;
         }
 
-        free( key );
-        free( value );
+        msFree( key );
+        msFree( value );
       }
       break;
 
@@ -6482,7 +6482,7 @@ static int loadMapInternal(mapObj *map)
         if(getInteger(&(map->maxsize)) == -1) return MS_FAILURE;
         break;
       case(NAME):
-        free(map->name);
+        msFree(map->name);
         map->name = NULL; /* erase default */
         if(getString(&map->name) == MS_FAILURE) return MS_FAILURE;
         break;
@@ -6603,11 +6603,11 @@ mapObj *msLoadMapFromString(char *buffer, char *new_mappath)
   if(loadMapInternal(map) != MS_SUCCESS) {
     msFreeMap(map);
     msReleaseLock( TLOCK_PARSER );
-    if(mappath != NULL) free(mappath);
+    if(mappath != NULL) msFree(mappath);
     return NULL;
   }
 
-  if (mappath != NULL) free(mappath);
+  if (mappath != NULL) msFree(mappath);
   msyylex_destroy();
 
   msReleaseLock( TLOCK_PARSER );
@@ -6718,7 +6718,7 @@ mapObj *msLoadMap(char *filename, char *new_mappath)
   else {
     char *path = msGetPath(filename);
     map->mappath = msStrdup(msBuildPath(szPath, szCWDPath, path));
-    free( path );
+    msFree( path );
   }
 
   msyybasepath = map->mappath; /* for INCLUDEs */
@@ -6771,9 +6771,9 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
           char *key=NULL, *value=NULL;
           if((getString(&key) != MS_FAILURE) && (getString(&value) != MS_FAILURE)) {
             msSetConfigOption( map, key, value );
-            free( key );
+            msFree( key );
             key=NULL;
-            free( value );
+            msFree( value );
             value=NULL;
           }
         }
@@ -7039,10 +7039,10 @@ static void applyOutputFormatDefaultSubstitutions(outputFormatObj *format, const
 
         new_filename = msStrdup(tmpfilename);
         new_filename = msCaseReplaceSubstring(new_filename, tag, msLookupHashTable(table, default_key));
-        free(tag);
+        msFree(tag);
 
         msSetOutputFormatOption(format, option, new_filename);
-        free(new_filename);
+        msFree(new_filename);
       }
       default_key = msNextKeyFromHashTable(table, default_key);
     }
@@ -7062,7 +7062,7 @@ static void applyClassDefaultSubstitutions(classObj *class, hashTableObj *table)
 
 
       classSubstituteString(class, tag, msLookupHashTable(table, default_key));
-      free(tag);
+      msFree(tag);
     }
     default_key = msNextKeyFromHashTable(table, default_key);
   }
@@ -7084,7 +7084,7 @@ static void applyLayerDefaultSubstitutions(layerObj *layer, hashTableObj *table)
         classSubstituteString(layer->class[i], tag, to);
       }
       layerSubstituteString(layer, tag, to);
-      free(tag);
+      msFree(tag);
     }
     default_key = msNextKeyFromHashTable(table, default_key);
   }
@@ -7152,7 +7152,7 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
           tag = msSmallMalloc(strlen(key)+3);
           sprintf(tag,"%%%s%%",key);
           classSubstituteString(cp,tag,value);
-          free(tag);
+          msFree(tag);
         } else {
           msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msApplySubstitutions()");
           if(map->debug || lp->debug) {
@@ -7172,7 +7172,7 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
         tag = msSmallMalloc(strlen(key)+3);
         sprintf(tag,"%%%s%%",key);
         layerSubstituteString(lp,tag,value);
-        free(tag);
+        msFree(tag);
       } else {
         msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msApplySubstitutions()");
         if(map->debug || lp->debug) {
@@ -7192,7 +7192,7 @@ void msApplySubstitutions(mapObj *map, char **names, char **values, int npairs)
       tag = msSmallMalloc(strlen(key)+3);
       sprintf(tag,"%%%s%%",key);
       mapSubstituteString(map,tag,value);
-      free(tag);
+      msFree(tag);
     } else {
       msSetError(MS_REGEXERR, "Parameter pattern validation failed." , "msApplySubstitutions()");
       if(map->debug) {

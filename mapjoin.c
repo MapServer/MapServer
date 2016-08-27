@@ -245,7 +245,7 @@ int msDBFJoinPrepare(joinObj *join, shapeObj *shape)
 
   joininfo->nextrecord = 0; /* starting with the first record */
 
-  if(joininfo->target) free(joininfo->target); /* clear last target */
+  if(joininfo->target) msFree(joininfo->target); /* clear last target */
   joininfo->target = msStrdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
@@ -305,8 +305,8 @@ int msDBFJoinClose(joinObj *join)
   if(!joininfo) return(MS_SUCCESS); /* already closed */
 
   if(joininfo->hDBF) msDBFClose(joininfo->hDBF);
-  if(joininfo->target) free(joininfo->target);
-  free(joininfo);
+  if(joininfo->target) msFree(joininfo->target);
+  msFree(joininfo);
   joininfo = NULL;
 
   return(MS_SUCCESS);
@@ -430,7 +430,7 @@ int msCSVJoinPrepare(joinObj *join, shapeObj *shape)
 
   joininfo->nextrow = 0; /* starting with the first record */
 
-  if(joininfo->target) free(joininfo->target); /* clear last target */
+  if(joininfo->target) msFree(joininfo->target); /* clear last target */
   joininfo->target = msStrdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
@@ -486,9 +486,9 @@ int msCSVJoinClose(joinObj *join)
 
   for(i=0; i<joininfo->numrows; i++)
     msFreeCharArray(joininfo->rows[i], join->numitems);
-  free(joininfo->rows);
-  if(joininfo->target) free(joininfo->target);
-  free(joininfo);
+  msFree(joininfo->rows);
+  if(joininfo->target) msFree(joininfo->target);
+  msFree(joininfo);
   joininfo = NULL;
 
   return(MS_SUCCESS);
@@ -593,7 +593,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
   DB_USER = msStrdup(strtok(NULL, delim));
   DB_PASSWD = msStrdup(strtok(NULL, delim));
   DB_DATABASE = msStrdup(strtok(NULL, delim));
-  free(conn_decrypted);
+  msFree(conn_decrypted);
 
   if (DB_HOST == NULL || DB_USER == NULL || DB_PASSWD == NULL || DB_DATABASE == NULL) {
     msSetError(MS_QUERYERR, "DB param error: at least one of HOST, USER, PASSWD or DATABASE is null!", "msMySQLJoinConnect()");
@@ -612,7 +612,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
     snprintf( tmp, sizeof(tmp), "Failed to connect to SQL server: Error: %s\nHost: %s\nUsername:%s\nPassword:%s\n", mysql_error(joininfo->conn), DB_HOST, DB_USER, DB_PASSWD);
     msSetError(MS_QUERYERR, "%s",
                "msMYSQLLayerOpen()", tmp);
-    free(joininfo);
+    msFree(joininfo);
     return MS_FAILURE;
   }
 
@@ -706,7 +706,7 @@ int msMySQLJoinPrepare(joinObj *join, shapeObj *shape)
 
   joininfo->nextrecord = 0; /* starting with the first record */
 
-  if(joininfo->target) free(joininfo->target); /* clear last target */
+  if(joininfo->target) msFree(joininfo->target); /* clear last target */
   joininfo->target = msStrdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
@@ -756,7 +756,7 @@ int msMySQLJoinNext(joinObj *join)
         MYDEBUG printf("%s,",row[i]);
       }
       MYDEBUG printf("<BR>\n");
-      free(join->values);
+      msFree(join->values);
       if((join->values = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
         msSetError(MS_MEMERR, NULL, "msMySQLJoinNext()");
         return(MS_FAILURE);
@@ -815,8 +815,8 @@ int msMySQLJoinClose(joinObj *join)
   if(!joininfo) return(MS_SUCCESS); /* already closed */
 
   mysql_close(joininfo->conn);
-  if(joininfo->target) free(joininfo->target);
-  free(joininfo);
+  if(joininfo->target) msFree(joininfo->target);
+  msFree(joininfo);
   joininfo = NULL;
 
   return(MS_SUCCESS);

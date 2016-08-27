@@ -883,7 +883,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   FILE *wkt = fopen("/tmp/www-before.wkt","w");
   char *tmp = msShapeToWKT(&polygonObj);
   fprintf(wkt,"%s\n", tmp);
-  free(tmp);
+  msFree(tmp);
   fclose(wkt);
 #endif
 
@@ -902,7 +902,7 @@ msProjectRectAsPolygon(projectionObj *in, projectionObj *out,
   wkt = fopen("/tmp/www-after.wkt","w");
   tmp = msShapeToWKT(&polygonObj);
   fprintf(wkt,"%s\n", tmp);
-  free(tmp);
+  msFree(tmp);
   fclose(wkt);
 #endif
 
@@ -1234,7 +1234,7 @@ static const char *msProjFinder( const char *filename)
 
 {
   if( last_filename != NULL )
-    free( last_filename );
+    msFree( last_filename );
 
   if( filename == NULL )
     return NULL;
@@ -1301,12 +1301,12 @@ void msSetPROJ_LIB( const char *proj_lib, const char *pszRelToPath )
   if (proj_lib == NULL) pj_set_finder(NULL);
 
   if( ms_proj_lib != NULL ) {
-    free( ms_proj_lib );
+    msFree( ms_proj_lib );
     ms_proj_lib = NULL;
   }
 
   if( last_filename != NULL ) {
-    free( last_filename );
+    msFree( last_filename );
     last_filename = NULL;
   }
 

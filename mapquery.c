@@ -63,10 +63,10 @@ void msFreeQuery(queryObj *query)
 {
   if(query->shape) {
     msFreeShape(query->shape);
-    free(query->shape);
+    msFree(query->shape);
   }
 
-  if(query->filteritem) free(query->filteritem);
+  if(query->filteritem) msFree(query->filteritem);
   msFreeExpression(&query->filter);
 }
 
@@ -233,7 +233,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
 
     if(1 != fread(&(GET_LAYER(map, j)->resultcache->numresults), sizeof(int), 1, stream) || (GET_LAYER(map, j)->resultcache->numresults < 0)) { /* number of results */
       msSetError(MS_MISCERR,"failed to read number of results from query file stream", "loadQueryResults()");
-      free(GET_LAYER(map, j)->resultcache);
+      msFree(GET_LAYER(map, j)->resultcache);
       GET_LAYER(map, j)->resultcache = NULL;
       return MS_FAILURE;
     }
@@ -241,7 +241,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
 
     if(1 != fread(&(GET_LAYER(map, j)->resultcache->bounds), sizeof(rectObj), 1, stream)) { /* bounding box */
       msSetError(MS_MISCERR,"failed to read bounds from query file stream", "loadQueryResults()");
-      free(GET_LAYER(map, j)->resultcache);
+      msFree(GET_LAYER(map, j)->resultcache);
       GET_LAYER(map, j)->resultcache = NULL;
       return MS_FAILURE;
     }
@@ -250,7 +250,7 @@ static int loadQueryResults(mapObj *map, FILE *stream)
     if (GET_LAYER(map, j)->resultcache->results == NULL) {
       msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "loadQueryResults()",
                  __FILE__, __LINE__, (unsigned int)(sizeof(resultObj)*GET_LAYER(map, j)->resultcache->numresults));
-      free(GET_LAYER(map, j)->resultcache);
+      msFree(GET_LAYER(map, j)->resultcache);
       GET_LAYER(map, j)->resultcache = NULL;
       return MS_FAILURE;
     }
@@ -258,8 +258,8 @@ static int loadQueryResults(mapObj *map, FILE *stream)
     for(k=0; k<GET_LAYER(map, j)->resultcache->numresults; k++) {
       if(1 != fread(&(GET_LAYER(map, j)->resultcache->results[k]), sizeof(resultObj), 1, stream)) { /* each result */
         msSetError(MS_MISCERR,"failed to read result %d from query file stream", "loadQueryResults()", k);
-        free(GET_LAYER(map, j)->resultcache->results);
-        free(GET_LAYER(map, j)->resultcache);
+        msFree(GET_LAYER(map, j)->resultcache->results);
+        msFree(GET_LAYER(map, j)->resultcache);
         GET_LAYER(map, j)->resultcache = NULL;
         return MS_FAILURE;
       }
@@ -374,7 +374,7 @@ static int loadQueryParams(mapObj *map, FILE *stream)
               if(fscanf(stream, "%lf %lf\n", &line.point[j].x, &line.point[j].y) != 2) goto parse_error;
 
             msAddLine(map->query.shape, &line);
-            free(line.point);
+            msFree(line.point);
           }
         }
         break;
@@ -493,8 +493,8 @@ int msQueryByIndex(mapObj *map)
 
   if(map->query.clear_resultcache) {
     if(lp->resultcache) {
-      if(lp->resultcache->results) free(lp->resultcache->results);
-      free(lp->resultcache);
+      if(lp->resultcache->results) msFree(lp->resultcache->results);
+      msFree(lp->resultcache);
       lp->resultcache = NULL;
     }
   }
@@ -579,7 +579,7 @@ void msRestoreOldFilter(layerObj *lp, int old_filtertype, char *old_filteritem, 
 {
   msFreeExpression(&(lp->filter));
   if(lp->filteritem) {
-    free(lp->filteritem);
+    msFree(lp->filteritem);
     lp->filteritem = NULL;
     lp->filteritemindex = -1;
   }
@@ -712,8 +712,8 @@ int msQueryByFilter(mapObj *map)
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
-      if(lp->resultcache->results) free(lp->resultcache->results);
-      free(lp->resultcache);
+      if(lp->resultcache->results) msFree(lp->resultcache->results);
+      msFree(lp->resultcache);
       lp->resultcache = NULL;
     }
 
@@ -914,8 +914,8 @@ int msQueryByRect(mapObj *map)
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
-      if(lp->resultcache->results) free(lp->resultcache->results);
-      free(lp->resultcache);
+      if(lp->resultcache->results) msFree(lp->resultcache->results);
+      msFree(lp->resultcache);
       lp->resultcache = NULL;
     }
 
@@ -1169,8 +1169,8 @@ int msQueryByFeatures(mapObj *map)
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
-      if(lp->resultcache->results) free(lp->resultcache->results);
-      free(lp->resultcache);
+      if(lp->resultcache->results) msFree(lp->resultcache->results);
+      msFree(lp->resultcache);
       lp->resultcache = NULL;
     }
 
@@ -1470,8 +1470,8 @@ int msQueryByPoint(mapObj *map)
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
-      if(lp->resultcache->results) free(lp->resultcache->results);
-      free(lp->resultcache);
+      if(lp->resultcache->results) msFree(lp->resultcache->results);
+      msFree(lp->resultcache);
       lp->resultcache = NULL;
     }
 
@@ -1693,8 +1693,8 @@ int msQueryByShape(mapObj *map)
 
     /* free any previous search results, do it now in case one of the next few tests fail */
     if(lp->resultcache) {
-      if(lp->resultcache->results) free(lp->resultcache->results);
-      free(lp->resultcache);
+      if(lp->resultcache->results) msFree(lp->resultcache->results);
+      msFree(lp->resultcache);
       lp->resultcache = NULL;
     }
 
@@ -1896,12 +1896,12 @@ int msQueryByShape(mapObj *map)
     } /* next shape */
 
     if(status != MS_DONE) {
-      free(classgroup);
+      msFree(classgroup);
       return(MS_FAILURE);
     }
 
     if(lp->resultcache->numresults == 0) msLayerClose(lp); /* no need to keep the layer open */
-    free(classgroup);
+    msFree(classgroup);
     classgroup = NULL;
   } /* next layer */
 
@@ -1969,8 +1969,8 @@ void msQueryFree(mapObj *map, int qlayer)
 
     if(lp->resultcache) {
       if(lp->resultcache->results)
-        free(lp->resultcache->results);
-      free(lp->resultcache);
+        msFree(lp->resultcache->results);
+      msFree(lp->resultcache);
       lp->resultcache = NULL;
     }
   }

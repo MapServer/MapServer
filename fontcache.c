@@ -66,35 +66,35 @@ void msFreeFontCache(ft_cache *c) {
       glyph_element *cur_glyph,*tmp_glyph;
       UT_HASH_ITER(hh, cur_face->index_cache, cur_index, tmp_index) {
         UT_HASH_DEL(cur_face->index_cache,cur_index);
-        free(cur_index);
+        msFree(cur_index);
       }
       UT_HASH_ITER(hh, cur_face->outline_cache, cur_outline, tmp_outline) {
         UT_HASH_DEL(cur_face->outline_cache,cur_outline);
         FT_Outline_Done(c->library,&cur_outline->outline);
-        free(cur_outline);
+        msFree(cur_outline);
       }
       UT_HASH_ITER(hh, cur_face->glyph_cache, cur_glyph, tmp_glyph) {
         UT_HASH_DEL(cur_face->glyph_cache,cur_glyph);
-        free(cur_glyph);
+        msFree(cur_glyph);
       }
 #ifdef USE_HARFBUZZ
       if(cur_face->hbfont) {
         hb_font_destroy(cur_face->hbfont->hbfont);
         hb_font_destroy(cur_face->hbfont->hbparentfont);
         hb_font_funcs_destroy(cur_face->hbfont->funcs);
-        free(cur_face->hbfont);
+        msFree(cur_face->hbfont);
       }
 #endif
       FT_Done_Face(cur_face->face);
-      free(cur_face->font);
+      msFree(cur_face->font);
       UT_HASH_DEL(c->face_cache,cur_face);
-      free(cur_face);
+      msFree(cur_face);
   }
   FT_Done_FreeType(c->library);
 
   UT_HASH_ITER(hh,c->bitmap_glyph_cache, cur_bitmap, tmp_bitmap) {
     UT_HASH_DEL(c->bitmap_glyph_cache, cur_bitmap);
-    free(cur_bitmap);
+    msFree(cur_bitmap);
   }
 }
 
@@ -170,7 +170,7 @@ void msFontCacheCleanup() {
   while( cur != NULL ) {
     msFreeFontCache(&cur->cache);
     next = cur->next;
-    free(cur);
+    msFree(cur);
     cur = next;
   }
   ft_caches = NULL;
@@ -210,7 +210,7 @@ face_element* msGetFontFace(char *key, fontSetObj *fontset) {
       fontfile = msLookupHashTable(&(fontset->fonts),key);
       if(!fontfile) {
         msSetError(MS_MISCERR, "Could not find font with key \"%s\" in fontset", "msGetFontFace()", key);
-        free(fc);
+        msFree(fc);
         return NULL;
       }
       error = FT_New_Face(cache->library,fontfile,0, &(fc->face));
@@ -219,7 +219,7 @@ face_element* msGetFontFace(char *key, fontSetObj *fontset) {
     }
     if(error) {
       msSetError(MS_MISCERR, "Freetype was unable to load font file \"%s\" for key \"%s\"", "msGetFontFace()", fontfile, key);
-      free(fc);
+      msFree(fc);
       return NULL;
     }
     if(!fc->face->charmap) {
@@ -251,7 +251,7 @@ glyph_element* msGetGlyphByIndex(face_element *face, unsigned int size, unsigned
     error = FT_Load_Glyph(face->face,key.codepoint,FT_LOAD_DEFAULT|FT_LOAD_NO_BITMAP|FT_LOAD_NO_HINTING|FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH);
     if(error) {
       msSetError(MS_MISCERR, "unable to load glyph %ud for font \"%s\"", "msGetGlyphByIndex()",key.codepoint, face->font);
-      free(gc);
+      msFree(gc);
       return NULL;
     }
     gc->metrics.minx = face->face->glyph->metrics.horiBearingX / 64.0;

@@ -189,8 +189,8 @@ int msQuantizeRasterBuffer(rasterBufferObj *rb,
     palette[x].a = acolormap[x].acolor.a;
   }
 
-  free(acolormap);
-  free(apixels);
+  msFree(acolormap);
+  msFree(apixels);
   return MS_SUCCESS;
 }
 
@@ -518,7 +518,7 @@ mediancut( acolorhist_vector achv, int colors, int sum, unsigned char maxval, in
   /*
    ** All done.
    */
-  free(bv);
+  msFree(bv);
   return acolormap;
 }
 
@@ -748,7 +748,7 @@ static void
 pam_freeacolorhist( achv )
 acolorhist_vector achv;
 {
-  free( (char*) achv );
+  msFree( (char*) achv );
 }
 
 
@@ -763,9 +763,9 @@ acolorhash_table acht;
   for ( i = 0; i < HASH_SIZE; ++i )
     for ( achl = acht[i]; achl != (acolorhist_list) 0; achl = achlnext ) {
       achlnext = achl->next;
-      free( (char*) achl );
+      msFree( (char*) achl );
     }
-  free( (char*) acht );
+  msFree( (char*) acht );
 }
 
 

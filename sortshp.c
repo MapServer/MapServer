@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
     msFreeShape( &shape );
   }
 
-  free(array);
+  msFree(array);
 
   msSHPClose(inSHP);
   msDBFClose(inDBF);

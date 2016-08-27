@@ -78,6 +78,6 @@ MS_API_EXPORT(int) ms_regexec(const ms_regex_t *regex, const char *string, size_
 MS_API_EXPORT(void) ms_regfree(ms_regex_t *regex)
 {
   regfree((regex_t*)(regex->sys_regex));
-  free(regex->sys_regex);
+  msFree(regex->sys_regex);
   return;
 }

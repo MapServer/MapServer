@@ -74,7 +74,7 @@ char * msGetMapContextFileText(char *filename)
   }
 
   if(fread( pszBuffer, nLength, 1, stream ) == 0 &&  !feof(stream)) {
-    free( pszBuffer );
+    msFree( pszBuffer );
     fclose( stream );
     msSetError(MS_IOERR, "(%s)", "msGetMapContextFileText()", filename);
     return NULL;
@@ -250,7 +250,7 @@ int msLoadMapContextURLELements( CPLXMLNode *psRoot, hashTableObj *metadata,
   msGetMapContextXMLHashValue( psRoot, "OnlineResource.xlink:href", metadata,
                                pszMetadataName );
 
-  free(pszMetadataName);
+  msFree(pszMetadataName);
 
   return MS_SUCCESS;
 }
@@ -287,7 +287,7 @@ int msLoadMapContextListInMetadata( CPLXMLNode *psRoot, hashTableObj *metadata,
           sprintf( pszMetadata, "%s%s%s", pszHash, pszHashDelimiter,
                    pszXMLValue );
         msInsertHashTable(metadata, pszMetadataName, pszMetadata);
-        free(pszMetadata);
+        msFree(pszMetadata);
       } else
         msInsertHashTable(metadata, pszMetadataName, pszXMLValue);
     }
@@ -378,7 +378,7 @@ int msLoadMapContextLayerFormat(CPLXMLNode *psFormat, layerObj *layer)
       sprintf(pszValue1, "%s,%s", pszHash, pszValue);
       msInsertHashTable(&(layer->metadata),
                         "wms_formatlist", pszValue1);
-      free(pszValue1);
+      msFree(pszValue1);
     } else
       msInsertHashTable(&(layer->metadata),
                         "wms_formatlist", pszValue);
@@ -468,7 +468,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
     sprintf(pszValue1, "%s,%s", pszHash, pszStyleName);
     msInsertHashTable(&(layer->metadata),
                       "wms_stylelist", pszValue1);
-    free(pszValue1);
+    msFree(pszValue1);
   } else
     msInsertHashTable(&(layer->metadata),
                       "wms_stylelist", pszStyleName);
@@ -481,7 +481,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
                                   pszStyle) == MS_FAILURE )
     msInsertHashTable(&(layer->metadata), pszStyle, layer->name);
 
-  free(pszStyle);
+  msFree(pszStyle);
 
   /* SLD */
   pszStyle = (char*)malloc(strlen(pszStyleName)+15);
@@ -489,7 +489,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
 
   msGetMapContextXMLHashValueDecode( psStyle, "SLD.OnlineResource.xlink:href",
                                      &(layer->metadata), pszStyle );
-  free(pszStyle);
+  msFree(pszStyle);
 
   /* SLDBODY */
   pszStyle = (char*)malloc(strlen(pszStyleName)+20);
@@ -516,7 +516,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
     }
   }
 
-  free(pszStyle);
+  msFree(pszStyle);
 
   /* LegendURL */
   pszStyle = (char*) malloc(strlen(pszStyleName) + 25);
@@ -526,9 +526,9 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
   msLoadMapContextURLELements( CPLGetXMLNode(psStyle, "LegendURL"),
                                &(layer->metadata), pszStyle );
 
-  free(pszStyle);
+  msFree(pszStyle);
 
-  free(pszStyleName);
+  msFree(pszStyleName);
 
   /*  */
   /* Add the stylelist to the layer connection */
@@ -548,7 +548,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
       msInsertHashTable(&(layer->metadata), "wms_stylelist",
                         pszValue1);
     }
-    free(pszValue);
+    msFree(pszValue);
   }
 
   /*  */
@@ -568,7 +568,7 @@ int msLoadMapContextLayerStyle(CPLXMLNode *psStyle, layerObj *layer,
       msInsertHashTable(&(layer->metadata), "wms_style",
                         pszValue1);
     }
-    free(pszValue);
+    msFree(pszValue);
   }
 
   return MS_SUCCESS;
@@ -602,7 +602,7 @@ int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
     sprintf(pszValue, "%s,%s", pszHash, pszDimensionName);
     msInsertHashTable(&(layer->metadata),
                       "wms_dimensionlist", pszValue);
-    free(pszValue);
+    msFree(pszValue);
   } else
     msInsertHashTable(&(layer->metadata),
                       "wms_dimensionlist", pszDimensionName);
@@ -640,9 +640,9 @@ int msLoadMapContextLayerDimension(CPLXMLNode *psDimension, layerObj *layer)
   msGetMapContextXMLHashValue(psDimension, "nearestValue", &(layer->metadata),
                               pszDimension);
 
-  free(pszDimension);
+  msFree(pszDimension);
 
-  free(pszDimensionName);
+  msFree(pszDimensionName);
 
   return MS_SUCCESS;
 }
@@ -680,7 +680,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
     msProcessProjection(&map->projection);
 
     if( (nTmp = GetMapserverUnitUsingProj(&(map->projection))) == -1) {
-      free(pszProj);
+      msFree(pszProj);
       msSetError( MS_MAPCONTEXTERR,
                   "Unable to set units for projection '%s'",
                   "msLoadMapContext()", pszProj );
@@ -688,7 +688,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
     } else {
       map->units = nTmp;
     }
-    free(pszProj);
+    msFree(pszProj);
   } else {
     msDebug("Mandatory data General.BoundingBox.SRS missing in %s.",
             filename);
@@ -848,14 +848,14 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
       pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+15));
       sprintf(pszName, "l%d:%s", layer->index, pszValue);
       layer->name = msStrdup(pszName);
-      free(pszName);
+      msFree(pszName);
     } else
       layer->name  = msStrdup(pszValue);
   } else {
     pszName = (char*)malloc(sizeof(char)*15);
     sprintf(pszName, "l%d:", layer->index);
     layer->name = msStrdup(pszName);
-    free(pszName);
+    msFree(pszName);
   }
 
   if(msGetMapContextXMLHashValue(psLayer, "Title", &(layer->metadata),
@@ -1123,7 +1123,7 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
       ( strstr( pszWholeText, "<ViewContext" ) == NULL ) )
 
   {
-    free( pszWholeText );
+    msFree( pszWholeText );
     msSetError( MS_MAPCONTEXTERR, "Not a Map Context file (%s)",
                 "msLoadMapContext()", filename );
     return MS_FAILURE;
@@ -1133,7 +1133,7 @@ int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
   /* Convert to XML parse tree. */
   /*  */
   psRoot = CPLParseXMLString( pszWholeText );
-  free( pszWholeText );
+  msFree( pszWholeText );
 
   /* We assume parser will report errors via CPL. */
   if( psRoot == NULL ) {
@@ -1405,7 +1405,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
   /* Bounding box corners and spatial reference system */
   if(tabspace)
-    free(tabspace);
+    msFree(tabspace);
   tabspace = msStrdup("    ");
   value = msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "MO", MS_TRUE);
   msIO_fprintf( stream,
@@ -1501,7 +1501,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
   /* Close General */
   msIO_fprintf( stream, "  </General>\n" );
-  free(tabspace);
+  msFree(tabspace);
 
   /* Set the layer list */
   msIO_fprintf(stream, "  <LayerList>\n");
@@ -1561,7 +1561,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                      " , but probably not what you want -->\n");
       msIO_fprintf(stream, "      </Server>\n");
       if(pszValue)
-        free(pszValue);
+        msFree(pszValue);
 
       /*  */
       /* Layer information */
@@ -1658,7 +1658,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           }
         }
         if(pszURL)
-          free(pszURL);
+          msFree(pszURL);
       } else {
         char **papszFormats;
         int numFormats, nForm;
@@ -1760,7 +1760,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               msIO_fprintf(stream,"xlink:href=\"%s\"/>",
                            pszEncodedVal);
               msIO_fprintf( stream, "          </SLD>\n" );
-              free(pszEncodedVal);
+              msFree(pszEncodedVal);
             } else if(pszSLDBody && (strcasecmp(pszSLDBody, "") != 0)) {
               msIO_fprintf( stream, "          <SLD>\n" );
               msIO_fprintf( stream, "            %s\n",pszSLDBody);
@@ -1770,12 +1770,12 @@ int msWriteMapContext(mapObj *map, FILE *stream)
             msIO_fprintf( stream, "      </StyleList>\n");
           }
           if(pszSLD2) {
-            free(pszSLD2);
+            msFree(pszSLD2);
             pszSLD2 = NULL;
           }
         }
         if(pszURL) {
-          free(pszURL);
+          msFree(pszURL);
           pszURL = NULL;
         }
       } else {
@@ -1813,7 +1813,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                      "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                      NULL);
             msIO_fprintf(stream, "          </SLD>\n");
-            free(pszStyleItem);
+            msFree(pszStyleItem);
           } else {
             /* If the URL is not there, check for SLDBody */
             sprintf(pszStyleItem, "wms_style_%s_sld_body", pszStyle);
@@ -1824,11 +1824,11 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                  NULL, pszStyleItem, OWS_NOERR,
                                  "            %s\n", NULL);
               msIO_fprintf(stream, "          </SLD>\n");
-              free(pszStyleItem);
+              msFree(pszStyleItem);
             } else {
               /* If the SLD is not specified, then write the */
               /* name, Title and LegendURL */
-              free(pszStyleItem);
+              msFree(pszStyleItem);
               /* Name */
               pszEncodedVal = msEncodeHTMLEntities(pszStyle);
               msIO_fprintf(stream, "          <Name>%s</Name>\n",
@@ -1843,7 +1843,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                        OWS_NOERR,
                                        "          <Title>%s</Title>\n",
                                        NULL);
-              free(pszStyleItem);
+              msFree(pszStyleItem);
 
               /* LegendURL */
               pszStyleItem = (char*)malloc(strlen(pszStyle)+10+20);
@@ -1859,13 +1859,13 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                 MS_FALSE, MS_FALSE, MS_FALSE,
                                 MS_FALSE, MS_TRUE, NULL, NULL,
                                 NULL, NULL, NULL, "          ");
-              free(pszStyleItem);
+              msFree(pszStyleItem);
             }
           }
 
           msIO_fprintf( stream,"        </Style>\n" );
 
-          free(pszStyle);
+          msFree(pszStyle);
           pszValue = strchr(pszValue, ',');
           if(pszValue)
             pszValue++;
@@ -1887,7 +1887,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
         if(pszChar != NULL)
           pszDimension[pszChar - pszDimension] = '\0';
         if(strcasecmp(pszDimension, "") == 0) {
-          free(pszDimension);
+          msFree(pszDimension);
           pszValue = strchr(pszValue, ',');
           if(pszValue)
             pszValue++;
@@ -1902,7 +1902,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
         if(pszDimUserValue == NULL || pszDimUnits == NULL ||
             pszDimUnitSymbol == NULL) {
-          free(pszDimension);
+          msFree(pszDimension);
           pszValue = strchr(pszValue, ',');
           if(pszValue)
             pszValue++;
@@ -1939,7 +1939,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
         msIO_fprintf( stream, "/>\n");
 
-        free(pszDimension);
+        msFree(pszDimension);
         pszValue = strchr(pszValue, ',');
         if(pszValue)
           pszValue++;

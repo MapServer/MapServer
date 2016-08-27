@@ -122,7 +122,7 @@ static void msContourLayerInfoFree(layerObj *layer)
     return;
 
   freeLayer(&clinfo->ogrLayer);
-  free(clinfo);
+  msFree(clinfo);
 
   layer->layerinfo = NULL;
 }
@@ -412,7 +412,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
   if (eErr != CE_None) {
     msSetError( MS_IOERR, "GDALRasterIO() failed: %s",
                 "msContourLayerReadRaster()", CPLGetLastErrorMsg() );
-    free(clinfo->buffer);
+    msFree(clinfo->buffer);
     return MS_FAILURE;
   }
 
@@ -425,7 +425,7 @@ static int msContourLayerReadRaster(layerObj *layer, rectObj rect)
     msSetError(MS_IMGERR,
                "Unable to open GDAL Memory dataset.",
                "msContourLayerReadRaster()");
-    free(clinfo->buffer);
+    msFree(clinfo->buffer);
     return MS_FAILURE;
   }
 
@@ -581,7 +581,7 @@ static int msContourLayerGenerateContour(layerObj *layer)
   option = msContourGetOption(layer, "CONTOUR_INTERVAL");
   if (option) {
     interval = atof(option);
-    free(option);
+    msFree(option);
   }
 
   option = msContourGetOption(layer, "CONTOUR_LEVELS");
@@ -594,7 +594,7 @@ static int msContourLayerGenerateContour(layerObj *layer)
       levels[levelCount++] = atof(levelsTmp[i]);
 
     CSLDestroy(levelsTmp);
-    free(option);
+    msFree(option);
   }
     
   eErr = GDALContourGenerate( hBand, interval, 0.0,
@@ -726,7 +726,7 @@ int msContourLayerOpen(layerObj *layer)
   if (clinfo->hDS) {
     GDALClose(clinfo->hDS);
     clinfo->hDS = NULL;  
-    free(clinfo->buffer);
+    msFree(clinfo->buffer);
   }
 
   /* Open our virtual ogr layer */
@@ -759,7 +759,7 @@ int msContourLayerClose(layerObj *layer)
     if (clinfo->hDS) {
       GDALClose(clinfo->hDS);
       clinfo->hDS = NULL;
-      free(clinfo->buffer);      
+      msFree(clinfo->buffer);      
     }
 
     if (clinfo->hOrigDS) {
@@ -832,7 +832,7 @@ int msContourLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   if (clinfo->hDS) {
     GDALClose(clinfo->hDS);
     clinfo->hDS = NULL;
-    free(clinfo->buffer);
+    msFree(clinfo->buffer);
   }
   
   if (!clinfo->hOGRDS) /* no overlap */

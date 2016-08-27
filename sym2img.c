@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
   gdImagePng(img, stream);
 #endif
   gdImageDestroy(img);
-  free(symbolSet.filename);
+  msFree(symbolSet.filename);
   fclose(stream);
 
   return(MS_TRUE);

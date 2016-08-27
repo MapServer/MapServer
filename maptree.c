@@ -191,7 +191,7 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
 void msSHPDiskTreeClose(SHPTreeHandle disktree)
 {
   fclose( disktree->fp );
-  free( disktree );
+  msFree( disktree );
 }
 
 
@@ -247,15 +247,15 @@ static void destroyTreeNode(treeNodeObj *node)
   }
 
   if(node->ids)
-    free(node->ids);
+    msFree(node->ids);
 
-  free(node);
+  msFree(node);
 }
 
 void msDestroyTree(treeObj *tree)
 {
   destroyTreeNode(tree->root);
-  free(tree);
+  msFree(tree);
 }
 
 static void treeSplitBounds( rectObj *in, rectObj *out1, rectObj *out2)
@@ -445,7 +445,7 @@ static int treeNodeTrim( treeNodeObj *node )
     node->numsubnodes = psSubNode->numsubnodes;
     for( i = 0; i < psSubNode->numsubnodes; i++ )
       node->subnode[i] = psSubNode->subnode[i];
-    free(psSubNode);
+    msFree(psSubNode);
   }
 
   /* -------------------------------------------------------------------- */
@@ -499,7 +499,7 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, ms_bitarray 
       for(i=0; i<numshapes; i++)
         msSetBit(status, ids[i], 1);
     }
-    free(ids);
+    msFree(ids);
   }
 
   fread( &numsubnodes, 4, 1, disktree->fp );

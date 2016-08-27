@@ -84,7 +84,7 @@ void initMapHitTests(mapObj *map, map_hittest *mh) {
 }
 
 void freeLabelHitTests(labelObj *l, label_hittest *lh) {
-  free(lh->stylehits);
+  msFree(lh->stylehits);
 }
 
 void freeClassHitTests(classObj *c, class_hittest *ch) {
@@ -92,22 +92,22 @@ void freeClassHitTests(classObj *c, class_hittest *ch) {
   for(i=0; i<c->numlabels; i++) {
     freeLabelHitTests(c->labels[i],&ch->labelhits[i]);
   }
-  free(ch->stylehits);
-  free(ch->labelhits);
+  msFree(ch->stylehits);
+  msFree(ch->labelhits);
 }
 void freeLayerHitTests(layerObj *l, layer_hittest *lh) {
   int i;
   for(i=0; i<l->numclasses; i++) {
     freeClassHitTests(l->class[i],&lh->classhits[i]);
   }
-  free(lh->classhits);
+  msFree(lh->classhits);
 }
 void freeMapHitTests(mapObj *map, map_hittest *mh) {
   int i;
   for(i=0; i<map->numlayers; i++) {
     freeLayerHitTests(GET_LAYER(map,i),&mh->layerhits[i]);
   }
-  free(mh->layerhits);
+  msFree(mh->layerhits);
 }
 
 int msHitTestShape(mapObj *map, layerObj *layer, shapeObj *shape, int drawmode, class_hittest *hittest) {

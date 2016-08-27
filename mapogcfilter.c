@@ -499,14 +499,14 @@ int FLTApplySimpleSQLFilter(FilterEncodingNode *psNode, mapObj *map, int iLayerI
       pszBuffer = msStringConcatenate(pszBuffer, ")");
 
     msLoadExpressionString(&lp->filter, pszBuffer);
-    free(szExpression);
+    msFree(szExpression);
   }
   
   if (pszTimeField && pszTimeValue)
       msLayerSetTimeFilter(lp, pszTimeValue, pszTimeField);
 
   if (pszBuffer)
-    free(pszBuffer);
+    msFree(pszBuffer);
 
   map->query.type = MS_QUERY_BY_RECT;
   map->query.mode = MS_QUERY_MULTIPLE;
@@ -841,31 +841,31 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
     }
 
     if (psFilterNode->pszSRS)
-      free( psFilterNode->pszSRS);
+      msFree( psFilterNode->pszSRS);
 
     if( psFilterNode->pOther ) {
       if (psFilterNode->pszValue != NULL &&
           strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0) {
         FEPropertyIsLike* propIsLike = (FEPropertyIsLike *)psFilterNode->pOther;
         if( propIsLike->pszWildCard )
-          free( propIsLike->pszWildCard );
+          msFree( propIsLike->pszWildCard );
         if( propIsLike->pszSingleChar )
-          free( propIsLike->pszSingleChar );
+          msFree( propIsLike->pszSingleChar );
         if( propIsLike->pszEscapeChar )
-          free( propIsLike->pszEscapeChar );
+          msFree( propIsLike->pszEscapeChar );
       } else if (FLTIsGeometryFilterNodeType(psFilterNode->eType)) {
         msFreeShape((shapeObj *)(psFilterNode->pOther));
       }
       /* else */
       /* TODO free pOther special fields */
-      free( psFilterNode->pOther );
+      msFree( psFilterNode->pOther );
     }
 
     /* Cannot free pszValue before, 'cause we are testing it above */
     if( psFilterNode->pszValue )
-      free( psFilterNode->pszValue );
+      msFree( psFilterNode->pszValue );
 
-    free(psFilterNode);
+    msFree(psFilterNode);
   }
 }
 
@@ -1251,7 +1251,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           }
           else
           {
-              free(psShape);
+              msFree(psShape);
               msFree(pszSRS);
               psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
           }
@@ -1302,7 +1302,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
           }
           else
           {
-              free(psShape);
+              msFree(psShape);
               msFree(pszSRS);
               psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
           }
@@ -2353,12 +2353,12 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
     strcat(pszBuffer, psFilterNode->pszValue);
     strcat(pszBuffer, " ");
 
-    free( pszTmp );
+    msFree( pszTmp );
 
     nTmp = strlen(pszBuffer);
     pszTmp = FLTGetSQLExpression(psFilterNode->psRightNode, lp);
     if (!pszTmp) {
-      free(pszBuffer);
+      msFree(pszBuffer);
       return NULL;
     }
 
@@ -2389,7 +2389,7 @@ char *FLTGetLogicalComparisonSQLExpresssion(FilterEncodingNode *psFilterNode,
   /*      Cleanup.                                                        */
   /* -------------------------------------------------------------------- */
   if( pszTmp != NULL )
-    free( pszTmp );
+    msFree( pszTmp );
   return pszBuffer;
 
 }
@@ -2442,7 +2442,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
     */
     sprintf(pszBuffer, "(%s)", pszTmp);
 
-    free(pszTmp);
+    msFree(pszTmp);
 
     return pszBuffer;
   }
@@ -2465,7 +2465,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
     strcat(pszBuffer, " ");
     strcat(pszBuffer, psFilterNode->pszValue);
     strcat(pszBuffer, " ");
-    free(pszTmp);
+    msFree(pszTmp);
 
     pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode, lp);
     if (!pszTmp) {
@@ -2479,7 +2479,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
 
     strcat(pszBuffer, pszTmp);
     strcat(pszBuffer, ") ");
-    free(pszTmp);
+    msFree(pszTmp);
   }
   /* -------------------------------------------------------------------- */
   /*      NOT                                                             */
@@ -2497,7 +2497,7 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode, layer
     strcat(pszBuffer, pszTmp);
     strcat(pszBuffer, ") ");
 
-    free(pszTmp);
+    msFree(pszTmp);
   } else
     return NULL;
 

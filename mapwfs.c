@@ -137,7 +137,7 @@ int msWFSExceptionInternal(mapObj *map, const char *locator, const char *code,
   msIO_printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
   schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
   msIO_printf("xsi:schemaLocation=\"http://www.opengis.net/ogc %s/wfs/1.0.0/OGC-exception.xsd\">\n", schemalocation);
-  free(schemalocation);
+  msFree(schemalocation);
   msIO_printf("  <ServiceException code=\"%s\" locator=\"%s\">\n", code, locator);
   /* Optional <Locator> element currently unused. */
   /* msIO_printf("    <Message>\n"); */
@@ -746,13 +746,13 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
     msSetError(MS_WFSERR, "Server URL not found", "msWFSGetCapabilities()");
     return msWFSException(map, "mapserv", MS_OWS_ERROR_NO_APPLICABLE_CODE, wmtver);
   }
-  free(script_url);
+  msFree(script_url);
   script_url = NULL;
 
   ret = msWFSHandleUpdateSequence(map, wfsparams, "msWFSGetCapabilities()");
   if( ret != MS_SUCCESS )
   {
-      free(script_url_encoded);
+      msFree(script_url_encoded);
       return ret;
   }
 
@@ -900,7 +900,7 @@ int msWFSGetCapabilities(mapObj *map, wfsParamsObj *wfsparams, cgiRequestObj *re
   */
   msIO_printf("</WFS_Capabilities>\n");
 
-  free(script_url_encoded);
+  msFree(script_url_encoded);
 
   return MS_SUCCESS;
 }
@@ -1143,7 +1143,7 @@ static void msWFSWriteGroupElementType(FILE *stream, gmlGroupObj *group,
 
   msIO_fprintf(stream, "%s  </sequence>\n", tab);
   msIO_fprintf(stream, "%s</complexType>\n", tab);
-  free(element_tab);
+  msFree(element_tab);
 
   return;
 }
@@ -1251,7 +1251,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj, owsRequestObj
       /* strip namespace if there is one :ex TYPENAME=cdf:Other */
       for (i=0; i<numlayers; i++) {
         char* pszTmp = msStrdup(msWFSStripNS(layers[i]));
-        free(layers[i]);
+        msFree(layers[i]);
         layers[i] = pszTmp;
       }
     }
@@ -2003,7 +2003,7 @@ static void msWFSBuildParamList(char** ppszStrList, const char* pszValue,
                                      strlen(pszValue)+1));
 
         sprintf(*ppszStrList,"%s%s%s",pszTmp,pszSep,pszValue);
-        free(pszTmp);
+        msFree(pszTmp);
     }
 }
 
@@ -2686,7 +2686,7 @@ static char** msWFSParsePropertyNameOrSortBy(const char* pszPropertyName,
         char* pszTmpPropertyName = msSmallMalloc(1+strlen(pszPropertyName)+1+1);
         sprintf(pszTmpPropertyName, "(%s)", pszPropertyName);
         tokens = msStringSplit(pszTmpPropertyName+1, '(', &nPropertyNames);
-        free(pszTmpPropertyName);
+        msFree(pszTmpPropertyName);
     } else
         tokens = msStringSplit(pszPropertyName+1, '(', &nPropertyNames);
 
@@ -2731,8 +2731,8 @@ static void msWFSInitGMLInfo(WFSGMLInfo* pgmlinfo)
 
 static void msWFSCleanupGMLInfo(WFSGMLInfo* pgmlinfo)
 {
-  free(pgmlinfo->script_url);
-  free(pgmlinfo->script_url_encoded);
+  msFree(pgmlinfo->script_url);
+  msFree(pgmlinfo->script_url_encoded);
   msFree(pgmlinfo->user_namespace_uri_encoded);
 }
 
@@ -3072,8 +3072,8 @@ static int msWFSComputeMatchingFeatures(mapObj *map,
             for(j=0; j<map->numlayers; j++) {
                 layerObj* lp = GET_LAYER(map, j);
                 if(lp->resultcache) {
-                    if(lp->resultcache->results) free(lp->resultcache->results);
-                    free(lp->resultcache);
+                    if(lp->resultcache->results) msFree(lp->resultcache->results);
+                    msFree(lp->resultcache);
                     lp->resultcache = NULL;
                 }
                 lp->resultcache = saveResultCache[j];
@@ -3397,7 +3397,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req,
     /* strip namespace if there is one :ex TYPENAME=cdf:Other */
     for (i=0; i<numlayers; i++) {
       char* pszTmp = msStrdup(msWFSStripNS(layers[i]));
-      free(layers[i]);
+      msFree(layers[i]);
       layers[i] = pszTmp;
     }
 
@@ -4306,8 +4306,8 @@ int msWFSGetPropertyValue(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *r
   msFree(pszGMLIncludeItems);
   msFree(pszGMLGeometries);
 
-  free(gmlinfo.script_url);
-  free(gmlinfo.script_url_encoded);
+  msFree(gmlinfo.script_url);
+  msFree(gmlinfo.script_url_encoded);
   msFree(gmlinfo.user_namespace_uri_encoded);
 
   return status;
@@ -4580,28 +4580,28 @@ wfsParamsObj *msWFSCreateParamsObj()
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
 {
   if (wfsparams) {
-    free(wfsparams->pszVersion);
-    free(wfsparams->pszUpdateSequence);
-    free(wfsparams->pszRequest);
-    free(wfsparams->pszService);
-    free(wfsparams->pszTypeName);
-    free(wfsparams->pszFilter);
-    free(wfsparams->pszFilterLanguage);
-    free(wfsparams->pszBbox);
-    free(wfsparams->pszGeometryName);
-    free(wfsparams->pszOutputFormat);
-    free(wfsparams->pszFeatureId);
-    free(wfsparams->pszSrs);
-    free(wfsparams->pszResultType);
-    free(wfsparams->pszPropertyName);
-    free(wfsparams->pszAcceptVersions);
-    free(wfsparams->pszSections);
-    free(wfsparams->pszSortBy);
-    free(wfsparams->pszLanguage);
-    free(wfsparams->pszValueReference);
-    free(wfsparams->pszStoredQueryId);
+    msFree(wfsparams->pszVersion);
+    msFree(wfsparams->pszUpdateSequence);
+    msFree(wfsparams->pszRequest);
+    msFree(wfsparams->pszService);
+    msFree(wfsparams->pszTypeName);
+    msFree(wfsparams->pszFilter);
+    msFree(wfsparams->pszFilterLanguage);
+    msFree(wfsparams->pszBbox);
+    msFree(wfsparams->pszGeometryName);
+    msFree(wfsparams->pszOutputFormat);
+    msFree(wfsparams->pszFeatureId);
+    msFree(wfsparams->pszSrs);
+    msFree(wfsparams->pszResultType);
+    msFree(wfsparams->pszPropertyName);
+    msFree(wfsparams->pszAcceptVersions);
+    msFree(wfsparams->pszSections);
+    msFree(wfsparams->pszSortBy);
+    msFree(wfsparams->pszLanguage);
+    msFree(wfsparams->pszValueReference);
+    msFree(wfsparams->pszStoredQueryId);
 
-    free(wfsparams);
+    msFree(wfsparams);
   }
 }
 
@@ -4728,7 +4728,7 @@ static void msWFSParseXMLQueryNode(CPLXMLNode* psQuery, wfsParamsObj *wfsparams)
     }
 
     msWFSBuildParamList(&(wfsparams->pszFilter), pszSerializedFilter, "");
-    free(pszSerializedFilter);
+    msFree(pszSerializedFilter);
 
     /* parse SortBy */
     psSortBy = CPLGetXMLNode(psQuery, "SortBy");
@@ -4773,7 +4773,7 @@ static void msWFSParseXMLQueryNode(CPLXMLNode* psQuery, wfsParamsObj *wfsparams)
     }
 
     msWFSBuildParamList(&(wfsparams->pszSortBy), pszSortBy, "");
-    free(pszSortBy);
+    msFree(pszSortBy);
 
     /* Special case for "urn:ogc:def:query:OGC-WFS::GetFeatureById" */
     /* Resolve the property typename */
@@ -5370,7 +5370,7 @@ int msWFSParseRequest(mapObj *map, cgiRequestObj *request, owsRequestObj *ows_re
           /* free typname and filter. There may have been */
           /* values if they were passed in the URL */
           if (wfsparams->pszTypeName)
-            free(wfsparams->pszTypeName);
+            msFree(wfsparams->pszTypeName);
           wfsparams->pszTypeName = NULL;
 
           while (psIter )

@@ -103,7 +103,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
   }
 
   if (layer->iteminfo)
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
 
   if((layer->iteminfo = (int *)malloc(sizeof(int)*layer->numitems))== NULL) {
     msSetError(MS_MEMERR, NULL, "msUVRASTERLayerInitItemInfo()");
@@ -143,7 +143,7 @@ static int msUVRASTERLayerInitItemInfo(layerObj *layer)
 void msUVRASTERLayerFreeItemInfo(layerObj *layer)
 {
   if (layer->iteminfo)
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
   layer->iteminfo = NULL;
 }
 
@@ -188,19 +188,19 @@ static void msUVRasterLayerInfoFree( layerObj *layer )
 
   if (uvlinfo->u) {
     for (i=0; i<uvlinfo->width; ++i) {
-      free(uvlinfo->u[i]);
+      msFree(uvlinfo->u[i]);
     }
-    free(uvlinfo->u);
+    msFree(uvlinfo->u);
   }
 
   if (uvlinfo->v) {
     for (i=0; i<uvlinfo->width; ++i) {
-      free(uvlinfo->v[i]);
+      msFree(uvlinfo->v[i]);
     }
-    free(uvlinfo->v);
+    msFree(uvlinfo->v);
   }
 
-  free( uvlinfo );
+  msFree( uvlinfo );
 
   layer->layerinfo = NULL;
 }
@@ -483,16 +483,16 @@ int msUVRASTERLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   /* free old query arrays */
   if (uvlinfo->u) {
     for (i=0; i<uvlinfo->width; ++i) {
-      free(uvlinfo->u[i]);
+      msFree(uvlinfo->u[i]);
     }
-    free(uvlinfo->u);
+    msFree(uvlinfo->u);
   }
 
   if (uvlinfo->v) {
     for (i=0; i<uvlinfo->width; ++i) {
-      free(uvlinfo->v[i]);
+      msFree(uvlinfo->v[i]);
     }
-    free(uvlinfo->v);
+    msFree(uvlinfo->v);
   }
 
   /* Update our uv layer structure */
@@ -645,7 +645,7 @@ int msUVRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
       *extent = tileshpfile->bounds;
       msShapefileClose(tileshpfile);
-      free(tileshpfile);
+      msFree(tileshpfile);
       return MS_SUCCESS;
     }
   }
