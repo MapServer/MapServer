@@ -76,6 +76,7 @@
 #
 # Test COUNT, STARTINDEX
 # RUN_PARMS: wfs_ogr_native_sql_37.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=towns&COUNT=1&STARTINDEX=2" > [RESULT_DEVERSION]
+# RUN_PARMS: wfs_ogr_native_sql_38.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=towns&COUNT=1&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Granaglione</Literal></PropertyIsEqualTo></Filter>" > [RESULT_DEVERSION]
 
 MAP
 
