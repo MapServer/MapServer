@@ -74,6 +74,8 @@
 # Same as wfs_ogr_native_sql_02 on a SELECT too complex to be edited, so falling back to client side evaluation
 # RUN_PARMS: wfs_ogr_native_sql_36.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=select_too_complex_for_optim&OUTPUTFORMAT=GML2&FILTER=<Filter><AND><BBOX><PropertyName>Geometry</PropertyName><Box srsName='EPSG:32632'><coordinates>643159,4877386 696879,4898059</coordinates></Box></BBOX><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Fanano</Literal></PropertyIsEqualTo></AND></Filter>" > [RESULT]
 #
+# Test COUNT, STARTINDEX
+# RUN_PARMS: wfs_ogr_native_sql_37.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=towns&COUNT=1&STARTINDEX=2" > [RESULT_DEVERSION]
 
 MAP
 
