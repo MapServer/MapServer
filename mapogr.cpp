@@ -4298,8 +4298,6 @@ static void msOGREnablePaging(layerObj *layer, int value)
   if (layer->debug) {
     msDebug("msOGREnablePaging(%d) called.\n", value);
   }
-  if( value < 0 )
-      return;
 
   if(!msOGRLayerIsOpen(layer))
     msOGRLayerOpenVT(layer);
@@ -4327,7 +4325,7 @@ static int msOGRGetPaging(layerObj *layer)
   }
 
   if(!msOGRLayerIsOpen(layer))
-    return -1;
+    msOGRLayerOpenVT(layer);
 
   assert( layer->layerinfo != NULL);
 
