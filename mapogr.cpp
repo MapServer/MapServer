@@ -72,6 +72,8 @@ typedef struct ms_ogr_file_info_t {
   char *pszRowId;
   int   bIsOKForSQLCompose;
 
+  int   bPaging;
+
 } msOGRFileInfo;
 
 static int msOGRLayerIsOpen(layerObj *layer);
@@ -1457,7 +1459,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       psInfo->dialect = NULL;
   }
 
-
+  psInfo->bPaging = (psInfo->dialect != NULL);
 
   return psInfo;
 }
@@ -1858,7 +1860,10 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
     // 2) ExecuteSQL (psInfo->hLayer is an SQL result OR sortBy was requested OR have native_string
     // and start from the second
 
-    if ( psInfo->bIsOKForSQLCompose && (psInfo->nLayerIndex == -1 || layer->sortBy.nProperties > 0 || layer->filter.native_string) ) {
+    if ( psInfo->bIsOKForSQLCompose && (psInfo->nLayerIndex == -1 ||
+                                        layer->sortBy.nProperties > 0 ||
+                                        layer->filter.native_string ||
+                                        (psInfo->bPaging && layer->maxfeatures > 0)) ) {
 
         if( psInfo->nLayerIndex == -1 && select == NULL ) {
             select = msStrdup(psInfo->pszLayerDef);
@@ -1914,8 +1919,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         if (psInfo->dialect) {
             if (EQUAL(psInfo->dialect, "Spatialite") || EQUAL(psInfo->dialect, "PostgreSQL")) {
                 const char *sql = layer->filter.native_string;
-                if (*sql == '\0') sql = NULL;
-                if (sql) {
+                if (sql && *sql != '\0') {
                     if (filter) filter = msStringConcatenate(filter, "AND ");
                     filter = msStringConcatenate(filter, "(");
                     filter = msStringConcatenate(filter, sql);
@@ -2013,7 +2017,19 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             select = msStringConcatenate(select, sort);
             msFree(sort);
         }
-            
+
+        if ( psInfo->bPaging && layer->maxfeatures >= 0 ) {
+            char szLimit[50];
+            snprintf(szLimit, sizeof(szLimit), " LIMIT %d", layer->maxfeatures);
+            select = msStringConcatenate(select, szLimit);
+        }
+
+        if ( psInfo->bPaging && layer->startindex > 0 ) {
+            char szOffset[50];
+            snprintf(szOffset, sizeof(szOffset), " OFFSET %d", layer->startindex);
+            select = msStringConcatenate(select, szOffset);
+        }
+
         if( layer->debug )
             msDebug("msOGRFileWhichShapes: SQL = %s.\n", select);
 
@@ -4274,6 +4290,57 @@ static int msOGRLayerSupportsCommonFilters(layerObj *layer)
   return MS_FALSE;
 }
 
+static void msOGREnablePaging(layerObj *layer, int value)
+{
+#ifdef USE_OGR
+  msOGRFileInfo *layerinfo = NULL;
+
+  if (layer->debug) {
+    msDebug("msOGREnablePaging(%d) called.\n", value);
+  }
+  if( value < 0 )
+      return;
+
+  if(!msOGRLayerIsOpen(layer))
+    msOGRLayerOpenVT(layer);
+
+  assert( layer->layerinfo != NULL);
+
+  layerinfo = (msOGRFileInfo *)layer->layerinfo;
+  layerinfo->bPaging = value;
+
+#else
+  msSetError( MS_MISCERR,
+              "OGR support is not available.",
+              "msOGREnablePaging()");
+#endif
+  return;
+}
+
+static int msOGRGetPaging(layerObj *layer)
+{
+#ifdef USE_POSTGIS
+  msOGRFileInfo *layerinfo = NULL;
+
+  if (layer->debug) {
+    msDebug("msOGRGetPaging called.\n");
+  }
+
+  if(!msOGRLayerIsOpen(layer))
+    return -1;
+
+  assert( layer->layerinfo != NULL);
+
+  layerinfo = (msOGRFileInfo *)layer->layerinfo;
+  return layerinfo->bPaging;
+#else
+  msSetError( MS_MISCERR,
+              "OGR support is not available.",
+              "msOGREnablePaging()");
+  return MS_FAILURE;
+#endif
+}
+
 /************************************************************************/
 /*                  msOGRLayerInitializeVirtualTable()                  */
 /************************************************************************/
@@ -4305,7 +4372,8 @@ int msOGRLayerInitializeVirtualTable(layerObj *layer)
 
   layer->vtable->LayerEscapeSQLParam = msOGREscapeSQLParam;
   layer->vtable->LayerEscapePropertyName = msOGREscapePropertyName;
-
+  layer->vtable->LayerEnablePaging = msOGREnablePaging;
+  layer->vtable->LayerGetPaging = msOGRGetPaging;
   return MS_SUCCESS;
 }
 
