@@ -4319,7 +4319,7 @@ static void msOGREnablePaging(layerObj *layer, int value)
 
 static int msOGRGetPaging(layerObj *layer)
 {
-#ifdef USE_POSTGIS
+#ifdef USE_OGR
   msOGRFileInfo *layerinfo = NULL;
 
   if (layer->debug) {
