@@ -1944,6 +1944,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
         }
         psInfo->rect = rect;
 
+        bool bOffsetAlreadyAdded = false;
         // use spatial index
         if (psInfo->dialect) {
             if (EQUAL(psInfo->dialect, "PostgreSQL")) {
@@ -1983,7 +1984,29 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
                 snprintf(points, 30*2*5, "%lf %lf,%lf %lf,%lf %lf,%lf %lf,%lf %lf", rect.minx, rect.miny, rect.maxx, rect.miny, rect.maxx, rect.maxy, rect.minx, rect.maxy, rect.minx, rect.miny);
                 filter = msStringConcatenate(filter, points);
                 msFree(points);
-                filter = msStringConcatenate(filter, "))'))");
+                filter = msStringConcatenate(filter, "))')");
+
+                // We put the limit in the sub-query, only if we don't have a
+                // order by later. We accept a startindex, provided there's no
+                // other attribute filter combined
+                if ( psInfo->bPaging && layer->maxfeatures >= 0 &&
+                    (layer->startindex <= 0 || layer->filter.native_string == NULL) &&
+                    layer->sortBy.nProperties == 0 )
+                {
+                    char szLimit[50];
+                    snprintf(szLimit, sizeof(szLimit), " LIMIT %d", layer->maxfeatures);
+                    filter = msStringConcatenate(filter, szLimit);
+
+                    if( layer->startindex > 0 && layer->filter.native_string == NULL )
+                    {
+                        bOffsetAlreadyAdded = true;
+                        char szOffset[50];
+                        snprintf(szOffset, sizeof(szOffset), " OFFSET %d", layer->startindex);
+                        filter = msStringConcatenate(filter, szOffset);
+                    }
+                }
+
+                filter = msStringConcatenate(filter, ")");
             }
         }
 
@@ -2024,7 +2047,7 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
             select = msStringConcatenate(select, szLimit);
         }
 
-        if ( psInfo->bPaging && layer->startindex > 0 ) {
+        if ( !bOffsetAlreadyAdded && psInfo->bPaging && layer->startindex > 0 ) {
             char szOffset[50];
             snprintf(szOffset, sizeof(szOffset), " OFFSET %d", layer->startindex);
             select = msStringConcatenate(select, szOffset);
