@@ -1737,7 +1737,7 @@ yyreduce:
         p->result.intval = MS_FALSE;
       break;
     case(MS_PARSE_TYPE_STRING):
-      p->result.strval = (yyvsp[0].strval); // msStrdup($1);
+      p->result.strval = (yyvsp[(1) - (1)].strval); // msStrdup($1);
       break;
     }
   }
