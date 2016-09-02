@@ -2087,31 +2087,33 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect, msOGRFileInfo *ps
 
         ACQUIRE_OGR_LOCK;
 
-        if (rect.minx == rect.maxx && rect.miny == rect.maxy) {
-            OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
+        if( OGR_L_GetGeomType( psInfo->hLayer ) != wkbNone ) {
+            if (rect.minx == rect.maxx && rect.miny == rect.maxy) {
+                OGRGeometryH hSpatialFilterPoint = OGR_G_CreateGeometry( wkbPoint );
 
-            OGR_G_SetPoint_2D( hSpatialFilterPoint, 0, rect.minx, rect.miny );    
-            OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPoint );
-            OGR_G_DestroyGeometry( hSpatialFilterPoint );
-        } else if (rect.minx == rect.maxx || rect.miny == rect.maxy) {
-            OGRGeometryH hSpatialFilterLine = OGR_G_CreateGeometry( wkbLineString );
+                OGR_G_SetPoint_2D( hSpatialFilterPoint, 0, rect.minx, rect.miny );    
+                OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPoint );
+                OGR_G_DestroyGeometry( hSpatialFilterPoint );
+            } else if (rect.minx == rect.maxx || rect.miny == rect.maxy) {
+                OGRGeometryH hSpatialFilterLine = OGR_G_CreateGeometry( wkbLineString );
 
-            OGR_G_AddPoint_2D( hSpatialFilterLine, rect.minx, rect.miny );
-            OGR_G_AddPoint_2D( hSpatialFilterLine, rect.maxx, rect.maxy );
-            OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterLine );
-            OGR_G_DestroyGeometry( hSpatialFilterLine );
-        } else {
-            OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
-            OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
+                OGR_G_AddPoint_2D( hSpatialFilterLine, rect.minx, rect.miny );
+                OGR_G_AddPoint_2D( hSpatialFilterLine, rect.maxx, rect.maxy );
+                OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterLine );
+                OGR_G_DestroyGeometry( hSpatialFilterLine );
+            } else {
+                OGRGeometryH hSpatialFilterPolygon = OGR_G_CreateGeometry( wkbPolygon );
+                OGRGeometryH hRing = OGR_G_CreateGeometry( wkbLinearRing );
 
-            OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
-            OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
-            OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
-            OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
-            OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
-            OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
-            OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
-            OGR_G_DestroyGeometry( hSpatialFilterPolygon );
+                OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+                OGR_G_AddPoint_2D( hRing, rect.maxx, rect.miny);
+                OGR_G_AddPoint_2D( hRing, rect.maxx, rect.maxy);
+                OGR_G_AddPoint_2D( hRing, rect.minx, rect.maxy);
+                OGR_G_AddPoint_2D( hRing, rect.minx, rect.miny);
+                OGR_G_AddGeometryDirectly( hSpatialFilterPolygon, hRing );
+                OGR_L_SetSpatialFilter( psInfo->hLayer, hSpatialFilterPolygon );
+                OGR_G_DestroyGeometry( hSpatialFilterPolygon );
+            }
         }
 
         psInfo->rect = rect;

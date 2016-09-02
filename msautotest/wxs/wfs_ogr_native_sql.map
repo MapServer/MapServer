@@ -77,6 +77,9 @@
 # Test COUNT, STARTINDEX
 # RUN_PARMS: wfs_ogr_native_sql_37.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=towns&COUNT=1&STARTINDEX=2" > [RESULT_DEVERSION]
 # RUN_PARMS: wfs_ogr_native_sql_38.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=towns&COUNT=1&FILTER=<Filter><PropertyIsEqualTo><PropertyName>name</PropertyName><Literal>Granaglione</Literal></PropertyIsEqualTo></Filter>" > [RESULT_DEVERSION]
+#
+# Spatial query on a layer (unoptimized case with a 'SELECT ... FROM ... WHERE' DATA statement) that returns zero features
+# RUN_PARMS: wfs_ogr_native_sql_39.xml [MAPSERV] QUERY_STRING="map=[MAPFILE]&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetFeature&TYPENAME=select_zero_feature&OUTPUTFORMAT=GML2&FILTER=<Filter><BBOX><PropertyName>Geometry</PropertyName><Box srsName='EPSG:32632'><coordinates>659159,4877386 696879,4898059</coordinates></Box></BBOX></Filter>" > [RESULT]
 
 MAP
 
@@ -208,6 +211,28 @@ LAYER
   PROCESSING "NATIVE_SQL=YES"
   METADATA
     "ows_title"         "select_too_complex_for_optim"
+    "wfs_featureid"     "ID"
+    "gml_include_items" "all"
+    "gml_types"         "auto"
+    "wfs_getfeature_formatlist" "ogrgml"
+  END
+  TYPE POINT
+  STATUS ON
+  PROJECTION
+    "init=epsg:32632"
+  END
+
+  TEMPLATE "wfs_ogr_native_sql.map"
+END # Layer
+
+LAYER
+  NAME select_zero_feature
+  DATA "SELECT * FROM towns WHERE 0"
+  CONNECTIONTYPE OGR
+  CONNECTION "./data/db.sqlite"
+  PROCESSING "NATIVE_SQL=YES"
+  METADATA
+    "ows_title"         "select_zero_feature"
     "wfs_featureid"     "ID"
     "gml_include_items" "all"
     "gml_types"         "auto"
