@@ -1593,9 +1593,9 @@ this request. Check wms/ows_enable_request settings.",
                            map->numlayers);
                   if (psTmpLayer->name)
                     msFree(psTmpLayer->name);
-                  psTmpLayer->name = strdup(tmpId);
+                  psTmpLayer->name = msStrdup(tmpId);
                   msFree(layers[l]);
-                  layers[l] = strdup(tmpId);
+                  layers[l] = msStrdup(tmpId);
                   msInsertLayer(map, psTmpLayer, -1);
                   bLayerInserted =MS_TRUE;
                   /* layer was copied, we need to decrement its refcount */

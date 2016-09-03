@@ -1478,7 +1478,7 @@ char *msTmpPath(mapObj *map, const char *mappath, const char *tmppath)
   }
 
   fullPath = msBuildPath(szPath, mappath, tmpBase);
-  return strdup(fullPath);
+  return msStrdup(fullPath);
 }
 
 /**********************************************************************
@@ -1505,7 +1505,7 @@ char *msTmpFilename(const char *ext)
   snprintf(tmpFname, tmpFnameBufsize, "%s_%x.%s", tmpId, tmpCount++, ext);
   msReleaseLock( TLOCK_TMPFILE );
 
-  fullFname = strdup(tmpFname);
+  fullFname = msStrdup(tmpFname);
   free(tmpFname);
 
   return fullFname;

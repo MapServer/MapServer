@@ -3801,7 +3801,7 @@ static int msOGRUpdateStyleParseLabel(mapObj *map, layerObj *layer, classObj *c,
       /* replace spaces with hyphens to allow mapping to a valid hashtable entry*/
       char* pszFontNameEscaped = NULL;
       if (pszFontName != NULL) {
-          pszFontNameEscaped = strdup(pszFontName);
+          pszFontNameEscaped = msStrdup(pszFontName);
           msReplaceChar(pszFontNameEscaped, ' ', '-');
       }
 
