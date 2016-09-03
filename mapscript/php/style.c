@@ -256,7 +256,7 @@ PHP_METHOD(styleObj, __set)
                                                           convert_to_string(value);
                                                           if (php_style->style->symbolname) free(php_style->style->symbolname);
                                                           if (Z_STRVAL_P(value))
-                                                            php_style->style->symbolname = strdup(Z_STRVAL_P(value));
+                                                            php_style->style->symbolname = msStrdup(Z_STRVAL_P(value));
 
                                                           /* The parent can be a classObj or a labelCacheMemberObj */
                                                           if (Z_OBJCE_P(php_style->parent.val) == mapscript_ce_class) {
@@ -403,7 +403,7 @@ PHP_METHOD(styleObj, setBinding)
     php_style->style->numbindings--;
   }
 
-  php_style->style->bindings[bindingId].item = strdup(value);
+  php_style->style->bindings[bindingId].item = msStrdup(value);
   php_style->style->numbindings++;
 
   RETURN_LONG(MS_SUCCESS);

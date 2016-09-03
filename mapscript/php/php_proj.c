@@ -353,7 +353,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
                               (void **)&pParam) != FAILURE) {
       convert_to_string((*pParam));
       if ((*pParam)->value.str.val != NULL)
-        papszBuf[i] = strdup((*pParam)->value.str.val);
+        papszBuf[i] = msStrdup((*pParam)->value.str.val);
     }
   }
   papszBuf[i] = NULL;

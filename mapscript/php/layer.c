@@ -1506,7 +1506,7 @@ PHP_METHOD(layerObj, setProcessing)
   else
     php_layer->layer->processing = (char **) realloc(php_layer->layer->processing, sizeof(char*) * (php_layer->layer->numprocessing+1));
 
-  php_layer->layer->processing[php_layer->layer->numprocessing-1] = strdup(string);
+  php_layer->layer->processing[php_layer->layer->numprocessing-1] = msStrdup(string);
   php_layer->layer->processing[php_layer->layer->numprocessing] = NULL;
 
   RETURN_LONG(MS_SUCCESS);

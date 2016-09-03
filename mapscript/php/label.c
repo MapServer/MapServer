@@ -322,7 +322,7 @@ PHP_METHOD(labelObj, setBinding)
     php_label->label->numbindings--;
   }
 
-  php_label->label->bindings[bindingId].item = strdup(value);
+  php_label->label->bindings[bindingId].item = msStrdup(value);
   php_label->label->numbindings++;
 
   RETURN_LONG(MS_SUCCESS);

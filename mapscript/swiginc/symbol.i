@@ -44,7 +44,7 @@
         symbolObj *symbol;
         symbol = (symbolObj *) malloc(sizeof(symbolObj));
         initSymbol(symbol);
-        symbol->name = strdup(symbolname);
+        symbol->name = msStrdup(symbolname);
         if (imagefile) {
             msLoadImageSymbol(symbol, imagefile);
         }
