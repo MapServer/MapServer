@@ -283,7 +283,17 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
       continue;
     }
 
-    list[i] = msPointInPolygon(&(shape->line[i].point[0]), &(shape->line[r]));
+    /* A valid inner ring may touch its outer ring at most one point. */
+    /* In the case the first point matches a vertex of an outer ring, */
+    /* msPointInPolygon() might return 0 or 1 (depending on coordinate values, */
+    /* see msGetOuterList()), so test a second point if the first test */
+    /* returned that the point is not inside the outer ring. */
+    /* Fixes #5299 */
+    /* Of course all of this assumes that the geometries are indeed valid in */
+    /* OGC terms, otherwise all logic of msIsOuterRing(), msGetOuterList(), */
+    /* and msGetInnerList() has undefined behaviour. */
+    list[i] = msPointInPolygon(&(shape->line[i].point[0]), &(shape->line[r])) ||
+              msPointInPolygon(&(shape->line[i].point[1]), &(shape->line[r]));
   }
 
   return(list);
