@@ -4865,7 +4865,7 @@ static void writeLayer(FILE *stream, int indent, layerObj *layer)
   writeNumber(stream, indent, "TOLERANCE", -1, layer->tolerance);
   writeKeyword(stream, indent, "TOLERANCEUNITS", layer->toleranceunits, 7, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD");
   writeKeyword(stream, indent, "TRANSFORM", layer->transform, 10, MS_FALSE, "FALSE", MS_UL, "UL", MS_UC, "UC", MS_UR, "UR", MS_CL, "CL", MS_CC, "CC", MS_CR, "CR", MS_LL, "LL", MS_LC, "LC", MS_LR, "LR");
-  writeKeyword(stream, indent, "TYPE", layer->type, 8, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
+  writeKeyword(stream, indent, "TYPE", layer->type, 9, MS_LAYER_POINT, "POINT", MS_LAYER_LINE, "LINE", MS_LAYER_POLYGON, "POLYGON", MS_LAYER_RASTER, "RASTER", MS_LAYER_ANNOTATION, "ANNOTATION", MS_LAYER_QUERY, "QUERY", MS_LAYER_CIRCLE, "CIRCLE", MS_LAYER_TILEINDEX, "TILEINDEX", MS_LAYER_CHART, "CHART");
   writeKeyword(stream, indent, "UNITS", layer->units, 9, MS_INCHES, "INCHES", MS_FEET ,"FEET", MS_MILES, "MILES", MS_METERS, "METERS", MS_KILOMETERS, "KILOMETERS", MS_NAUTICALMILES, "NAUTICALMILES", MS_DD, "DD", MS_PIXELS, "PIXELS", MS_PERCENTAGES, "PERCENTATGES");
   writeHashTable(stream, indent, "VALIDATION", &(layer->validation));
 
