@@ -793,7 +793,7 @@ int msMSSQL2008LayerOpen(layerObj *layer)
                  "This error occured when trying to make a connection to the specified SQL server.  \n"
                  "<br>\nMost commonly this is caused by <br>\n"
                  "(1) incorrect connection string <br>\n"
-                 "(2) you didnt specify a 'user id=...' in your connection string <br>\n"
+                 "(2) you didn't specify a 'user id=...' in your connection string <br>\n"
                  "(3) SQL server isnt running <br>\n"
                  "(4) TCPIP not enabled for SQL Client or server <br>\n\n",
                  "msMSSQL2008LayerOpen()", maskeddata, errMess);
@@ -2188,7 +2188,7 @@ static int msMSSQL2008LayerParseData(layerObj *layer, char **geom_column_name, c
   } else {
     slength = strspn(pos_srid + 12, "-0123456789");
     if(!slength) {
-      msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable: You specified 'using SRID=#' but didnt have any numbers!<br><br>\n\nMore Help:<br><br>\n\n", data);
+      msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msMSSQL2008LayerParseData()", "Error parsing MSSQL2008 data variable: You specified 'using SRID=#' but didn't have any numbers!<br><br>\n\nMore Help:<br><br>\n\n", data);
 
       msFree(data);
       return MS_FAILURE;
