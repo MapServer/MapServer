@@ -1394,7 +1394,7 @@ int msPostGISParseData(layerObj *layer)
   } else {
     slength = strspn(pos_srid + 12, "-0123456789");
     if (!slength) {
-      msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didnt have any numbers! %s", "msPostGISParseData()", data);
+      msSetError(MS_QUERYERR, "Error parsing PostGIS DATA variable. You specified 'USING SRID' but didn't have any numbers! %s", "msPostGISParseData()", data);
       return MS_FAILURE;
     } else {
       layerinfo->srid = (char*) msSmallMalloc(slength + 1);
