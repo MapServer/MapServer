@@ -77,8 +77,8 @@ int msWFSException11(mapObj *map, const char *locator,
   msIO_printf("%s", buffer);
 
   /*free buffer and the document */
-  free(errorString);
-  free(schemasLocation);
+  msFree(errorString);
+  msFree(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
   xmlFreeNs(psNsOws);
@@ -182,7 +182,7 @@ xmlNodePtr msWFSDumpLayer11(mapObj *map, layerObj *lp, xmlNsPtr psNsOws,
     xmlAddSibling(psNode,
                   xmlNewComment(BAD_CAST "WARNING: Mandatory mapfile parameter: (at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs/ows_srs metadata was missing in this context."));
 
-  free(valueToFree);
+  msFree(valueToFree);
   valueToFree = NULL;
 
   /*TODO: adevertize only gml3?*/
@@ -488,9 +488,9 @@ int msWFSGetCapabilities11(mapObj *map, wfsParamsObj *params,
   xmlFreeDoc(psDoc);
   xmlFreeNs(psNsOgc);
 
-  free(script_url);
-  free(xsi_schemaLocation);
-  free(schemalocation);
+  msFree(script_url);
+  msFree(xsi_schemaLocation);
+  msFree(schemalocation);
 
   xmlCleanupParser();
 

@@ -290,7 +290,7 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
     case 5: /*we have the attribute and the four range values*/
       break;
     default:
-      free(attrib);
+      msFree(attrib);
       msSetError(MS_MISCERR, "Chart Layer format error for processing key \"CHART_RANGE\"", "msDrawChartLayer()");
       return MS_FAILURE;
   }
@@ -298,7 +298,7 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
    * as the SIZE of its first STYLE*/
   newclass=msGrowLayerClasses(layer);
   if(newclass==NULL) {
-    free(attrib);
+    msFree(attrib);
     return MS_FAILURE;
   }
   initClass(newclass);
@@ -309,7 +309,7 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
    */
   newstyle=msGrowClassStyles(newclass);
   if(newstyle==NULL) {
-    free(attrib);
+    msFree(attrib);
     return MS_FAILURE;
   }
   initStyle(newstyle);
@@ -317,7 +317,7 @@ int pieLayerProcessDynamicDiameter(layerObj *layer)
   newclass->name=(char*)msStrdup("__MS_SIZE_ATTRIBUTE_");
   newstyle->bindings[MS_STYLE_BINDING_SIZE].item=msStrdup(attrib);
   newstyle->numbindings++;
-  free(attrib);
+  msFree(attrib);
 
   return MS_TRUE;
 
@@ -373,7 +373,7 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawPieChartLayer()",
                __FILE__, __LINE__, (unsigned int)(numvalues*sizeof(styleObj*)));
-    free(values);
+    msFree(values);
     return MS_FAILURE;
   }
 
@@ -415,8 +415,8 @@ int msDrawPieChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     msDrawEndShape(map,layer,image,&shape);
     msFreeShape(&shape);
   }
-  free(values);
-  free(styles);
+  msFree(values);
+  msFree(styles);
   return status;
 }
 
@@ -455,7 +455,7 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawVBarChartLayer()",
                __FILE__, __LINE__, (unsigned int)(numvalues*sizeof(styleObj*)));
-    free(values);
+    msFree(values);
     return MS_FAILURE;
   }
 
@@ -479,8 +479,8 @@ int msDrawVBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     msDrawEndShape(map,layer,image,&shape);
     msFreeShape(&shape);
   }
-  free(values);
-  free(styles);
+  msFree(values);
+  msFree(styles);
   return status;
 }
 
@@ -545,7 +545,7 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (styles == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msDrawBarChartLayer()",
                __FILE__, __LINE__, (unsigned int)(numvalues*sizeof(styleObj*)));
-    free(values);
+    msFree(values);
     return MS_FAILURE;
   }
 
@@ -564,8 +564,8 @@ int msDrawBarChartLayer(mapObj *map, layerObj *layer, imageObj *image)
     msDrawEndShape(map,layer,image,&shape);
     msFreeShape(&shape);
   }
-  free(values);
-  free(styles);
+  msFree(values);
+  msFree(styles);
   return status;
 }
 

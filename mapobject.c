@@ -115,13 +115,13 @@ void msFreeMap(mapObj *map)
     if(GET_LAYER(map, i) != NULL) {
       GET_LAYER(map, i)->map = NULL;
       if(freeLayer((GET_LAYER(map, i))) == MS_SUCCESS)
-        free(GET_LAYER(map, i));
+        msFree(GET_LAYER(map, i));
     }
   }
   msFree(map->layers);
 
   if(map->layerorder)
-    free(map->layerorder);
+    msFree(map->layerorder);
 
   msFree(map->templatepattern);
   msFree(map->datapattern);
@@ -539,7 +539,7 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
                   not sure if it is possible for this to be non null otherwise, but better to check since this function
                   replaces the value */
   if (map->layers[map->numlayers]!=NULL)
-    free(map->layers[map->numlayers]);
+    msFree(map->layers[map->numlayers]);
 
   /* Catch attempt to insert past end of layers array */
   if (nIndex >= map->numlayers) {

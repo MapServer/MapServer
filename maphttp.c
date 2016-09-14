@@ -162,40 +162,40 @@ void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests)
   int i;
   for(i=0; i<numRequests; i++) {
     if (pasReqInfo[i].pszGetUrl)
-      free(pasReqInfo[i].pszGetUrl);
+      msFree(pasReqInfo[i].pszGetUrl);
     pasReqInfo[i].pszGetUrl = NULL;
 
     if (pasReqInfo[i].pszPostRequest)
-      free(pasReqInfo[i].pszPostRequest);
+      msFree(pasReqInfo[i].pszPostRequest);
     pasReqInfo[i].pszPostRequest = NULL;
 
     if (pasReqInfo[i].pszPostContentType)
-      free(pasReqInfo[i].pszPostContentType);
+      msFree(pasReqInfo[i].pszPostContentType);
     pasReqInfo[i].pszPostContentType = NULL;
 
     if (pasReqInfo[i].pszOutputFile)
-      free(pasReqInfo[i].pszOutputFile);
+      msFree(pasReqInfo[i].pszOutputFile);
     pasReqInfo[i].pszOutputFile = NULL;
 
     if (pasReqInfo[i].pszContentType)
-      free(pasReqInfo[i].pszContentType);
+      msFree(pasReqInfo[i].pszContentType);
     pasReqInfo[i].pszContentType = NULL;
 
     if (pasReqInfo[i].pszErrBuf)
-      free(pasReqInfo[i].pszErrBuf);
+      msFree(pasReqInfo[i].pszErrBuf);
     pasReqInfo[i].pszErrBuf = NULL;
 
     if (pasReqInfo[i].pszUserAgent)
-      free(pasReqInfo[i].pszUserAgent);
+      msFree(pasReqInfo[i].pszUserAgent);
     pasReqInfo[i].pszUserAgent = NULL;
 
     if (pasReqInfo[i].pszHTTPCookieData)
-      free(pasReqInfo[i].pszHTTPCookieData);
+      msFree(pasReqInfo[i].pszHTTPCookieData);
     pasReqInfo[i].pszHTTPCookieData = NULL;
 
     pasReqInfo[i].curl_handle = NULL;
 
-    free( pasReqInfo[i].result_data );
+    msFree( pasReqInfo[i].result_data );
     pasReqInfo[i].result_data = NULL;
     pasReqInfo[i].result_size = 0;
     pasReqInfo[i].result_buf_size = 0;
@@ -512,7 +512,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     /* Reset some members */
     pasReqInfo[i].nStatus = 0;
     if (pasReqInfo[i].pszContentType)
-      free(pasReqInfo[i].pszContentType);
+      msFree(pasReqInfo[i].pszContentType);
     pasReqInfo[i].pszContentType = NULL;
 
     /* Check local cache if requested */
@@ -957,14 +957,14 @@ int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
     if (pasReqInfo[0].debug)
       msDebug("HTTP request failed for %s.\n", pszGetUrl);
     msHTTPFreeRequestObj(pasReqInfo, 2);
-    free(pasReqInfo);
+    msFree(pasReqInfo);
     return MS_FAILURE;
   }
 
   *pnHTTPStatus = pasReqInfo[0].nStatus;
 
   msHTTPFreeRequestObj(pasReqInfo, 2);
-  free(pasReqInfo);
+  msFree(pasReqInfo);
 
   return MS_SUCCESS;
 }

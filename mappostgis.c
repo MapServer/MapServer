@@ -128,14 +128,14 @@ void msPostGISFreeLayerInfo(layerObj *layer)
 {
   msPostGISLayerInfo *layerinfo = NULL;
   layerinfo = (msPostGISLayerInfo*)layer->layerinfo;
-  if ( layerinfo->sql ) free(layerinfo->sql);
-  if ( layerinfo->uid ) free(layerinfo->uid);
-  if ( layerinfo->srid ) free(layerinfo->srid);
-  if ( layerinfo->geomcolumn ) free(layerinfo->geomcolumn);
-  if ( layerinfo->fromsource ) free(layerinfo->fromsource);
+  if ( layerinfo->sql ) msFree(layerinfo->sql);
+  if ( layerinfo->uid ) msFree(layerinfo->uid);
+  if ( layerinfo->srid ) msFree(layerinfo->srid);
+  if ( layerinfo->geomcolumn ) msFree(layerinfo->geomcolumn);
+  if ( layerinfo->fromsource ) msFree(layerinfo->fromsource);
   if ( layerinfo->pgresult ) PQclear(layerinfo->pgresult);
   if ( layerinfo->pgconn ) msConnPoolRelease(layer, layerinfo->pgconn);
-  free(layerinfo);
+  msFree(layerinfo);
   layer->layerinfo = NULL;
 }
 
@@ -179,8 +179,8 @@ void
 pointArrayFree(pointArrayObj *d)
 {
   if ( ! d ) return;
-  if ( d->data ) free(d->data);
-  free(d);
+  if ( d->data ) msFree(d->data);
+  msFree(d);
 }
 
 /*
@@ -551,14 +551,14 @@ wkbConvCircularStringToShape(wkbObj *w, shapeObj *shape)
 
   /* Stroke the string into a point array */
   if ( arcStrokeCircularString(w, SEGMENT_ANGLE, &line, nZMFlag) == MS_FAILURE ) {
-    if(line.point) free(line.point);
+    if(line.point) msFree(line.point);
     return MS_FAILURE;
   }
 
   /* Fill in the lineObj */
   if ( line.numpoints > 0 ) {
     msAddLine(shape, &line);
-    if(line.point) free(line.point);
+    if(line.point) msFree(line.point);
   }
 
   return MS_SUCCESS;
@@ -1087,7 +1087,7 @@ msPostGISRetrievePgVersion(PGconn *pgconn)
         strParts[j] = strVersion + i + 1;
         j++;
       } else {
-        free(strVersion);
+        msFree(strVersion);
         msSetError(MS_QUERYERR, "Too many parts in version string.", "msPostGISRetrievePgVersion()");
         return MS_FAILURE;
       }
@@ -1098,7 +1098,7 @@ msPostGISRetrievePgVersion(PGconn *pgconn)
     pgVersion += factor * atoi(strParts[j]);
     factor = factor / 100;
   }
-  free(strVersion);
+  msFree(strVersion);
   return pgVersion;
 #else
   return PQserverVersion(pgconn);
@@ -1164,7 +1164,7 @@ msPostGISRetrieveVersion(PGconn *pgconn)
     version += factor * atoi(strParts[i]);
     factor = factor / 100;
   }
-  free(strVersion);
+  msFree(strVersion);
 
   return version;
 }
@@ -1253,8 +1253,8 @@ msPostGISRetrievePK(layerObj *layer)
       sql = msSmallMalloc(strlen(layerinfo->fromsource) + strlen(v73sql) + 1);
       sprintf(sql, v73sql, layerinfo->fromsource);
     }
-    free(table);
-    free(schema);
+    msFree(table);
+    msFree(schema);
   }
 
   if (layer->debug > 1) {
@@ -1265,7 +1265,7 @@ msPostGISRetrievePK(layerObj *layer)
 
   if (layerinfo->pgconn == NULL) {
     msSetError(MS_QUERYERR, "Layer does not have a postgis connection.", "msPostGISRetrievePK()");
-    free(sql);
+    msFree(sql);
     return MS_FAILURE;
   }
 
@@ -1280,8 +1280,8 @@ msPostGISRetrievePK(layerObj *layer)
     strlcpy(tmp2, tmp1, size2);
     strlcat(tmp2, sql, size2);
     msSetError(MS_QUERYERR, "%s", "msPostGISRetrievePK()", tmp2);
-    free(tmp2);
-    free(sql);
+    msFree(tmp2);
+    msFree(sql);
     return MS_FAILURE;
   }
 
@@ -1290,7 +1290,7 @@ msPostGISRetrievePK(layerObj *layer)
       msDebug("msPostGISRetrievePK: No results found.\n");
     }
     PQclear(pgresult);
-    free(sql);
+    msFree(sql);
     return MS_FAILURE;
   }
   if (PQntuples(pgresult) > 1) {
@@ -1298,7 +1298,7 @@ msPostGISRetrievePK(layerObj *layer)
       msDebug("msPostGISRetrievePK: Multiple results found.\n");
     }
     PQclear(pgresult);
-    free(sql);
+    msFree(sql);
     return MS_FAILURE;
   }
 
@@ -1307,7 +1307,7 @@ msPostGISRetrievePK(layerObj *layer)
       msDebug("msPostGISRetrievePK: Null result returned.\n");
     }
     PQclear(pgresult);
-    free(sql);
+    msFree(sql);
     return MS_FAILURE;
   }
 
@@ -1316,7 +1316,7 @@ msPostGISRetrievePK(layerObj *layer)
   strlcpy(layerinfo->uid, PQgetvalue(pgresult, 0, 0), size);
 
   PQclear(pgresult);
-  free(sql);
+  msFree(sql);
   return MS_SUCCESS;
 }
 
@@ -1352,19 +1352,19 @@ int msPostGISParseData(layerObj *layer)
   ** Clean up any existing strings first, as we will be populating these fields.
   */
   if( layerinfo->srid ) {
-    free(layerinfo->srid);
+    msFree(layerinfo->srid);
     layerinfo->srid = NULL;
   }
   if( layerinfo->uid ) {
-    free(layerinfo->uid);
+    msFree(layerinfo->uid);
     layerinfo->uid = NULL;
   }
   if( layerinfo->geomcolumn ) {
-    free(layerinfo->geomcolumn);
+    msFree(layerinfo->geomcolumn);
     layerinfo->geomcolumn = NULL;
   }
   if( layerinfo->fromsource ) {
-    free(layerinfo->fromsource);
+    msFree(layerinfo->fromsource);
     layerinfo->fromsource = NULL;
   }
 
@@ -1627,7 +1627,7 @@ int msPostGISBase64Decode(unsigned char *dest, const char *src, int srclen)
         *p++=(((b3&0x3)<<6)|b4 );
       }
     }
-    free(buf);
+    msFree(buf);
     return(p-dest);
   }
   return 0;
@@ -1782,7 +1782,7 @@ char *msPostGISBuildSQLItems(layerObj *layer)
     strlcat(strItems, strGeom, length);
   }
 
-  free(strGeom);
+  msFree(strGeom);
   return strItems;
 }
 
@@ -1867,7 +1867,7 @@ char *msPostGISBuildSQLSRID(layerObj *layer)
 
     strSRID = msSmallMalloc(strlen(strSRIDTemplate) + strlen(f_table_name) + strlen(layerinfo->geomcolumn) + 1);
     sprintf(strSRID, strSRIDTemplate, f_table_name, layerinfo->geomcolumn);
-    free(f_table_name);
+    msFree(f_table_name);
   }
   return strSRID;
 }
@@ -1898,7 +1898,7 @@ static char *msPostGISReplaceBoxToken(layerObj *layer, rectObj *rect, const char
     strBox = msPostGISBuildSQLBox(layer, rect, strSRID);
     if ( ! strBox ) {
       msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISReplaceBoxToken()");
-      if (strSRID) free(strSRID);
+      if (strSRID) msFree(strSRID);
       return NULL;
     }
 
@@ -1919,11 +1919,11 @@ static char *msPostGISReplaceBoxToken(layerObj *layer, rectObj *rect, const char
 
       fromsource = result;
       if (oldresult != NULL)
-        free(oldresult);
+        msFree(oldresult);
     }
 
-    if (strSRID) free(strSRID);
-    if (strBox) free(strBox);
+    if (strSRID) msFree(strSRID);
+    if (strBox) msFree(strBox);
   } else {
     result = msStrdup(fromsource);
   }
@@ -2026,8 +2026,8 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
     /* We see to set the SRID on the box, but to what SRID? */
     strSRID = msPostGISBuildSQLSRID(layer);
     if ( ! strSRID ) {
-      free( strLimit );
-      free( strOffset );
+      msFree( strLimit );
+      msFree( strOffset );
       return NULL;
     }
 
@@ -2036,16 +2036,16 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
       strBoxLength = strlen(strBox);
     } else {
       msSetError(MS_MISCERR, "Unable to build box SQL.", "msPostGISBuildSQLWhere()");
-      free( strLimit );
-      free( strOffset );
+      msFree( strLimit );
+      msFree( strOffset );
       return NULL;
     }
 
     strRect = (char*)msSmallMalloc(strlen(strRectTemplate) + strBoxLength + strlen(layerinfo->geomcolumn) +1 );
     sprintf(strRect, strRectTemplate, layerinfo->geomcolumn, strBox);
     strRectLength = strlen(strRect);
-    free(strBox);
-    free(strSRID);
+    msFree(strBox);
+    msFree(strSRID);
   }
 
   /* Handle a translated filter (RFC91). */
@@ -2089,14 +2089,14 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
   if ( strRect ) {
     strlcat(strWhere, strRect, bufferSize);
     insert_and++;
-    free(strRect);
+    msFree(strRect);
   }
   if ( strFilter1 ) {
     if ( insert_and ) {
       strlcat(strWhere, " and ", bufferSize);
     }
     strlcat(strWhere, strFilter1, bufferSize);
-    free(strFilter1);
+    msFree(strFilter1);
     insert_and++;
   }
   if ( strFilter2 ) {
@@ -2104,7 +2104,7 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
       strlcat(strWhere, " and ", bufferSize);
     }
     strlcat(strWhere, strFilter2, bufferSize);
-    free(strFilter2);
+    msFree(strFilter2);
     insert_and++;
   }
   if ( strUid ) {
@@ -2112,22 +2112,22 @@ char *msPostGISBuildSQLWhere(layerObj *layer, rectObj *rect, long *uid)
       strlcat(strWhere, " and ", bufferSize);
     }
     strlcat(strWhere, strUid, bufferSize);
-    free(strUid);
+    msFree(strUid);
     insert_and++;
   }
 
   if ( strOrderBy ) {
     strlcat(strWhere, strOrderBy, bufferSize);
-    free(strOrderBy);
+    msFree(strOrderBy);
   }
 
   if ( strLimit ) {
     strlcat(strWhere, strLimit, bufferSize);
-    free(strLimit);
+    msFree(strLimit);
   }
   if ( strOffset ) {
     strlcat(strWhere, strOffset, bufferSize);
-    free(strOffset);
+    msFree(strOffset);
   }
 
   return strWhere;
@@ -2189,9 +2189,9 @@ char *msPostGISBuildSQL(layerObj *layer, rectObj *rect, long *uid)
   strSQL = msSmallMalloc(strlen(strSQLTemplate) + strlen(strFrom) + strlen(strItems) + strlen(strWhere) + 1);
   sprintf(strSQL, strSQLTemplate, strItems, strFrom, strWhere);
 
-  free(strItems);
-  free(strFrom);
-  free(strWhere);
+  msFree(strItems);
+  msFree(strFrom);
+  msFree(strWhere);
 
   return strSQL;
 }
@@ -2236,7 +2236,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
 #endif
 
   if( ! result ) {
-    if(wkb!=wkbstatic) free(wkb);
+    if(wkb!=wkbstatic) msFree(wkb);
     return MS_FAILURE;
   }
 
@@ -2303,7 +2303,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
   }
 
   /* All done with WKB geometry, free it! */
-  if(wkb!=wkbstatic) free(wkb);
+  if(wkb!=wkbstatic) msFree(wkb);
 
   if (result != MS_FAILURE) {
     int t;
@@ -2360,7 +2360,7 @@ int msPostGISReadShape(layerObj *layer, shapeObj *shape)
   if( layer->debug > 2 ) {
     char *tmp = msShapeToWKT(shape);
     msDebug("msPostGISReadShape: [shape] %s\n", tmp);
-    free(tmp);
+    msFree(tmp);
   }
 
   return MS_SUCCESS;
@@ -2424,7 +2424,7 @@ int msPostGISLayerOpen(layerObj *layer)
 
     if (!layer->connection) {
       msSetError(MS_MISCERR, "Missing CONNECTION keyword.", "msPostGISLayerOpen()");
-      free(layerinfo);
+      msFree(layerinfo);
       return MS_FAILURE;
     }
 
@@ -2433,7 +2433,7 @@ int msPostGISLayerOpen(layerObj *layer)
     */
     conn_decrypted = msDecryptStringTokens(layer->map, layer->connection);
     if (conn_decrypted == NULL) {
-      free(layerinfo);
+      msFree(layerinfo);
       return MS_FAILURE;  /* An error should already have been produced */
     }
     layerinfo->pgconn = PQconnectdb(conn_decrypted);
@@ -2462,8 +2462,8 @@ int msPostGISLayerOpen(layerObj *layer)
       msSetError(MS_QUERYERR, "Database connection failed. Check server logs for more details.Is the database running? Is it allowing connections? Does the specified user exist? Is the password valid? Is the database on the standard port?", "msPostGISLayerOpen()");
 
       if(layerinfo->pgconn) PQfinish(layerinfo->pgconn);
-      free(maskeddata);
-      free(layerinfo);
+      msFree(maskeddata);
+      msFree(layerinfo);
       return MS_FAILURE;
     }
 
@@ -2481,7 +2481,7 @@ int msPostGISLayerOpen(layerObj *layer)
         /* Nope, time to bail out. */
         msSetError(MS_QUERYERR, "PostgreSQL database connection. Check server logs for more details", "msPostGISLayerOpen()");
         msDebug( "PostgreSQL database connection gone bad (%s) in msPostGISLayerOpen()", PQerrorMessage(layerinfo->pgconn));
-        free(layerinfo);
+        msFree(layerinfo);
         /* FIXME: we should also release the connection from the pool in this case, but it is stale...
          * for the time being we do not release it so it can never be used again. If this happens multiple
          * times there will be a leak... */
@@ -2495,7 +2495,7 @@ int msPostGISLayerOpen(layerObj *layer)
   layerinfo->version = msPostGISRetrieveVersion(layerinfo->pgconn);
   if( layerinfo->version == MS_FAILURE ) {
     msConnPoolRelease(layer, layerinfo->pgconn);
-    free(layerinfo);
+    msFree(layerinfo);
     return MS_FAILURE;
   }
   if (layer->debug)
@@ -2589,7 +2589,7 @@ void msPostGISLayerFreeItemInfo(layerObj *layer)
   }
 
   if (layer->iteminfo) {
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
   }
   layer->iteminfo = NULL;
 #endif
@@ -2616,7 +2616,7 @@ int msPostGISLayerInitItemInfo(layerObj *layer)
   }
 
   if (layer->iteminfo) {
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
   }
 
   layer->iteminfo = msSmallMalloc(sizeof(int) * layer->numitems);
@@ -2707,8 +2707,8 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   }
 
   /* free bind values */
-  free(bind_key);
-  free(layer_bind_values);
+  msFree(bind_key);
+  msFree(layer_bind_values);
 
   if ( layer->debug > 1 ) {
     msDebug("msPostGISLayerWhichShapes query status: %s (%d)\n", PQresStatus(PQresultStatus(pgresult)), PQresultStatus(pgresult));
@@ -2718,7 +2718,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   if (!pgresult || PQresultStatus(pgresult) != PGRES_TUPLES_OK) {
     msDebug("msPostGISLayerWhichShapes(): Error (%s) executing query: %s\n", PQerrorMessage(layerinfo->pgconn), strSQL);
     msSetError(MS_QUERYERR, "Error executing query. Check server logs","msPostGISLayerWhichShapes()");
-    free(strSQL);
+    msFree(strSQL);
     if (pgresult) {
       PQclear(pgresult);
     }
@@ -2734,7 +2734,7 @@ int msPostGISLayerWhichShapes(layerObj *layer, rectObj rect, int isQuery)
   layerinfo->pgresult = pgresult;
 
   /* Clean any existing SQL before storing current. */
-  if(layerinfo->sql) free(layerinfo->sql);
+  if(layerinfo->sql) msFree(layerinfo->sql);
   layerinfo->sql = strSQL;
 
   layerinfo->rownum = 0;
@@ -2901,7 +2901,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
       if (pgresult) {
         PQclear(pgresult);
       }
-      free(strSQL);
+      msFree(strSQL);
 
       return MS_FAILURE;
     }
@@ -2911,7 +2911,7 @@ int msPostGISLayerGetShape(layerObj *layer, shapeObj *shape, resultObj *record)
     layerinfo->pgresult = pgresult;
 
     /* Clean any existing SQL before storing current. */
-    if(layerinfo->sql) free(layerinfo->sql);
+    if(layerinfo->sql) msFree(layerinfo->sql);
     layerinfo->sql = strSQL;
 
     layerinfo->rownum = 0; /* Only return one result. */
@@ -3113,7 +3113,7 @@ int msPostGISLayerGetItems(layerObj *layer)
   */
   sql = (char*) msSmallMalloc(strlen(strSQLTemplate) + strlen(strFrom));
   sprintf(sql, strSQLTemplate, strFrom);
-  free(strFrom);
+  msFree(strFrom);
 
   if (layer->debug) {
     msDebug("msPostGISLayerGetItems executing SQL: %s\n", sql);
@@ -3127,11 +3127,11 @@ int msPostGISLayerGetItems(layerObj *layer)
     if (pgresult) {
       PQclear(pgresult);
     }
-    free(sql);
+    msFree(sql);
     return MS_FAILURE;
   }
 
-  free(sql);
+  msFree(sql);
 
   layer->numitems = PQnfields(pgresult) - 1; /* dont include the geometry column (last entry)*/
   layer->items = msSmallMalloc(sizeof(char*) * (layer->numitems + 1)); /* +1 in case there is a problem finding geometry column */
@@ -3500,7 +3500,7 @@ char *msPostGISEscapeSQLParam(layerObj *layer, const char *pszString)
     pszEscapedStr = (char*) msSmallMalloc( 2 * nSrcLen + 1);
     PQescapeStringConn (layerinfo->pgconn, pszEscapedStr, pszString, nSrcLen, &nError);
     if (nError != 0) {
-      free(pszEscapedStr);
+      msFree(pszEscapedStr);
       pszEscapedStr = NULL;
     }
   }

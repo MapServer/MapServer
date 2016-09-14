@@ -475,7 +475,7 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
 
     text_num_bytes = outp - encoded_text;
     encoded_text[text_num_bytes] = 0;
-    free(ts->annotext);
+    msFree(ts->annotext);
     ts->annotext = encoded_text;
     iconv_close(cd);
   } else
@@ -842,18 +842,18 @@ int msLayoutTextSymbol(mapObj *map, textSymbolObj *ts, textPathObj *tgret) {
    */
 
 cleanup:
-  if(line_descs != static_line_descs) free(line_descs);
+  if(line_descs != static_line_descs) msFree(line_descs);
   if(glyphs.codepoints != static_codepoints) {
 #ifdef USE_FRIBIDI
-    free(glyphs.bidi_levels);
-    free(glyphs.ctypes);
+    msFree(glyphs.bidi_levels);
+    msFree(glyphs.ctypes);
 #endif
-    free(glyphs.codepoints);
+    msFree(glyphs.codepoints);
 #ifdef USE_HARFBUZZ
-    free(glyphs.scripts);
+    msFree(glyphs.scripts);
 #endif
-    free(glyphs.unicodes);
-    free(runs);
+    msFree(glyphs.unicodes);
+    msFree(runs);
   }
   return ret;
 

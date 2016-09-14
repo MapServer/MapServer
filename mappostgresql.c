@@ -122,7 +122,7 @@ int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join)
   conn_decrypted = msDecryptStringTokens(layer->map, join->connection);
   if (conn_decrypted != NULL) {
     joininfo->conn = PQconnectdb(conn_decrypted);
-    free(conn_decrypted);
+    msFree(conn_decrypted);
   }
   if(!joininfo->conn || PQstatus(joininfo->conn) == CONNECTION_BAD) {
     maskeddata = (char *)malloc(strlen(layer->connection) + 1);
@@ -139,11 +139,11 @@ int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join)
                "Unable to connect to PostgreSQL using the string %s.\n  Error reported: %s\n",
                "msPOSTGRESQLJoinConnect()",
                maskeddata, PQerrorMessage(joininfo->conn));
-    free(maskeddata);
+    msFree(maskeddata);
     if(!joininfo->conn) {
-      free(joininfo->conn);
+      msFree(joininfo->conn);
     }
-    free(joininfo);
+    msFree(joininfo);
     join->joininfo = NULL;
     return MS_FAILURE;
   }
@@ -164,10 +164,10 @@ int msPOSTGRESQLJoinConnect(layerObj *layer, joinObj *join)
       PQclear(query_result);
       query_result = NULL;
     }
-    free(sql);
+    msFree(sql);
     return MS_FAILURE;
   }
-  free(sql);
+  msFree(sql);
   join->numitems = PQnfields(query_result);
   join->items = malloc(sizeof(char *) * (join->numitems));
 
@@ -246,7 +246,7 @@ int msPOSTGRESQLJoinPrepare(joinObj *join, shapeObj *shape)
 
   /* Free the previous join value, if any. */
   if(joininfo->from_value) {
-    free(joininfo->from_value);
+    msFree(joininfo->from_value);
   }
 
   /* Free the previous results, if any. */
@@ -340,7 +340,7 @@ int msPOSTGRESQLJoinNext(joinObj *join)
       msDebug("msPOSTGRESQLJoinNext(): executing %s.\n", sql);
     }
 
-    free(columns);
+    msFree(columns);
 
     joininfo->query_result = PQexec(joininfo->conn, sql);
 
@@ -353,10 +353,10 @@ int msPOSTGRESQLJoinNext(joinObj *join)
         PQclear(joininfo->query_result);
         joininfo->query_result = NULL;
       }
-      free(sql);
+      msFree(sql);
       return MS_FAILURE;
     }
-    free(sql);
+    msFree(sql);
   }
   row_count = PQntuples(joininfo->query_result);
 
@@ -408,13 +408,13 @@ int msPOSTGRESQLJoinClose(joinObj *join)
     joininfo->conn = NULL;
   }
 
-  /* removed free(joininfo->to_column), see bug #2936 */
+  /* removed msFree(joininfo->to_column), see bug #2936 */
 
   if(joininfo->from_value) {
-    free(joininfo->from_value);
+    msFree(joininfo->from_value);
   }
 
-  free(joininfo);
+  msFree(joininfo);
   join->joininfo = NULL;
 
   return MS_SUCCESS;

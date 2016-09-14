@@ -368,11 +368,11 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
           }
 
           msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
-          free(innerlist);
+          msFree(innerlist);
 
           gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
         }
-        free(outerlist);
+        msFree(outerlist);
         outerlist = NULL;
       } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiPolygon */
         gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
@@ -437,12 +437,12 @@ static int gmlWriteGeometry_GML2(FILE *stream, gmlGeometryListObj *geometryList,
             msIO_fprintf(stream, "%s  </gml:Polygon>\n", tab);
             msIO_fprintf(stream, "%s</gml:polygonMember>\n", tab);
 
-            free(innerlist);
+            msFree(innerlist);
           }
         }
         msIO_fprintf(stream, "%s</gml:MultiPolygon>\n", tab);
 
-        free(outerlist);
+        msFree(outerlist);
         outerlist = NULL;
 
         gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
@@ -732,11 +732,11 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
           }
 
           msIO_fprintf(stream, "%s  </gml:Polygon>\n", tab);
-          free(innerlist);
+          msFree(innerlist);
 
           gmlEndGeometryContainer(stream, geometry_simple_name, namespace, tab);
         }
-        free(outerlist);
+        msFree(outerlist);
         outerlist = NULL;
       } else if(geometry_aggregate_index != -1 || (geometryList->numgeometries == 0)) { /* write a MultiSurface */
         gmlStartGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
@@ -807,13 +807,13 @@ static int gmlWriteGeometry_GML3(FILE *stream, gmlGeometryListObj *geometryList,
 
             msIO_fprintf(stream, "%s      </gml:Polygon>\n", tab);
 
-            free(innerlist);
+            msFree(innerlist);
             msIO_fprintf(stream, "%s    </gml:surfaceMember>\n", tab);
           }
         }
         msIO_fprintf(stream, "%s  </gml:MultiSurface>\n", tab);
 
-        free(outerlist);
+        msFree(outerlist);
         outerlist = NULL;
 
         gmlEndGeometryContainer(stream, geometry_aggregate_name, namespace, tab);
@@ -940,7 +940,7 @@ gmlGeometryListObj *msGMLGetGeometries(layerObj *layer, const char *metadata_nam
     if (geometryList->geometries ==  NULL) {
       msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGMLGetGeometries()",
                  (unsigned int)(sizeof(gmlGeometryObj)*geometryList->numgeometries));
-      free(geometryList);
+      msFree(geometryList);
       return NULL;
     }
 
@@ -997,9 +997,9 @@ void msGMLFreeGeometries(gmlGeometryListObj *geometryList)
     msFree(geometryList->geometries[i].name);
     msFree(geometryList->geometries[i].type);
   }
-  free(geometryList->geometries);
+  msFree(geometryList->geometries);
 
-  free(geometryList);
+  msFree(geometryList);
 }
 
 static void msGMLWriteItem(FILE *stream, gmlItemObj *item,
@@ -1077,10 +1077,10 @@ static void msGMLWriteItem(FILE *stream, gmlItemObj *item,
     tag = msReplaceSubstring(tag, "$value", encoded_value);
     if(namespace) tag = msReplaceSubstring(tag, "$namespace", namespace);
     msIO_fprintf(stream, "%s%s\n", tab, tag);
-    free(tag);
+    msFree(tag);
   }
 
-  free( encoded_value );
+  msFree( encoded_value );
 
   return;
 }
@@ -1113,7 +1113,7 @@ gmlNamespaceListObj *msGMLGetNamespaces(webObj *web, const char *metadata_namesp
     if (namespaceList->namespaces == NULL) {
       msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGMLGetNamespaces()",
                  (unsigned int)(sizeof(gmlNamespaceObj)*namespaceList->numnamespaces));
-      free(namespaceList);
+      msFree(namespaceList);
       return NULL;
     }
 
@@ -1151,7 +1151,7 @@ void msGMLFreeNamespaces(gmlNamespaceListObj *namespaceList)
     msFree(namespaceList->namespaces[i].schemalocation);
   }
 
-  free(namespaceList);
+  msFree(namespaceList);
 }
 
 gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char *metadata_namespaces)
@@ -1182,7 +1182,7 @@ gmlConstantListObj *msGMLGetConstants(layerObj *layer, const char *metadata_name
     if (constantList->constants == NULL) {
       msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGMLGetConstants()",
                  (unsigned int)(sizeof(gmlConstantObj)*constantList->numconstants));
-      free(constantList);
+      msFree(constantList);
       return NULL;
     }
 
@@ -1221,7 +1221,7 @@ void msGMLFreeConstants(gmlConstantListObj *constantList)
     msFree(constantList->constants[i].type);
   }
 
-  free(constantList);
+  msFree(constantList);
 }
 
 static void msGMLWriteConstant(FILE *stream, gmlConstantObj *constant, const char *namespace, const char *tab)
@@ -1274,7 +1274,7 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer, const char *metadata_namespaces
     if (groupList->groups == NULL) {
       msSetError(MS_MEMERR, "Out of memory allocating %u bytes.\n", "msGMLGetGroups()",
                  (unsigned int)(sizeof(gmlGroupObj)*groupList->numgroups));
-      free(groupList);
+      msFree(groupList);
       return NULL;
     }
 
@@ -1314,7 +1314,7 @@ void msGMLFreeGroups(gmlGroupListObj *groupList)
   }
   msFree(groupList->groups);
 
-  free(groupList);
+  msFree(groupList);
 }
 
 static void msGMLWriteGroup(FILE *stream,
@@ -1910,11 +1910,11 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
     pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
     pszTmp = msStringConcatenate(pszTmp, pszEpsg);
     xmlNewProp(psSubNode, BAD_CAST "srsName", BAD_CAST pszTmp);
-    free(pszEpsg);
-    free(pszTmp);
+    msFree(pszEpsg);
+    msFree(pszTmp);
     pszTmp = msIntToString(2);
     xmlNewProp(psSubNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);
-    free(pszTmp);
+    msFree(pszTmp);
   }
 
   pszTmp = msDoubleToString(minx, MS_TRUE);
@@ -1922,16 +1922,16 @@ xmlNodePtr msGML3BoundedBy(xmlNsPtr psNs, double minx, double miny, double maxx,
   pszTmp2 = msDoubleToString(miny, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   xmlNewChild(psSubNode, NULL, BAD_CAST "lowerCorner", BAD_CAST pszTmp);
-  free(pszTmp);
-  free(pszTmp2);
+  msFree(pszTmp);
+  msFree(pszTmp2);
 
   pszTmp = msDoubleToString(maxx, MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, " ");
   pszTmp2 = msDoubleToString(maxy,MS_TRUE);
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   xmlNewChild(psSubNode, NULL, BAD_CAST "upperCorner", BAD_CAST pszTmp);
-  free(pszTmp);
-  free(pszTmp2);
+  msFree(pszTmp);
+  msFree(pszTmp2);
   return psNode;
 }
 
@@ -1974,11 +1974,11 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
     pszTmp = msStringConcatenate(pszTmp, "urn:ogc:crs:");
     pszTmp = msStringConcatenate(pszTmp, pszSrsName);
     xmlNewProp(psNode, BAD_CAST "srsName", BAD_CAST pszTmp);
-    free(pszSrsName);
-    free(pszTmp);
+    msFree(pszSrsName);
+    msFree(pszTmp);
     pszTmp = msIntToString(dimension);
     xmlNewProp(psNode, BAD_CAST "srsDimension", BAD_CAST pszTmp);
-    free(pszTmp);
+    msFree(pszTmp);
   }
 
   pszTmp = msDoubleToString(x, MS_TRUE);
@@ -1987,8 +1987,8 @@ xmlNodePtr msGML3Point(xmlNsPtr psNs, const char *psSrsName, const char *id, dou
   pszTmp = msStringConcatenate(pszTmp, pszTmp2);
   xmlNewChild(psNode, NULL, BAD_CAST "pos", BAD_CAST pszTmp);
 
-  free(pszTmp);
-  free(pszTmp2);
+  msFree(pszTmp);
+  msFree(pszTmp2);
   return psNode;
 }
 
@@ -2112,7 +2112,7 @@ gmlItemListObj *msGMLGetItems(layerObj *layer, const char *metadata_namespaces)
   itemList->items = (gmlItemObj *) malloc(sizeof(gmlItemObj)*itemList->numitems);
   if(!itemList->items) {
     msSetError(MS_MEMERR, "Error allocating a collection GML item structures.", "msGMLGetItems()");
-    free(itemList);
+    msFree(itemList);
     return NULL;
   }
 
@@ -2225,8 +2225,8 @@ void msGMLFreeItems(gmlItemListObj *itemList)
   }
 
   if( itemList->items != NULL )
-    free(itemList->items);
+    msFree(itemList->items);
 
-  free(itemList);
+  msFree(itemList);
 }
 

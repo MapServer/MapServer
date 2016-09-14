@@ -367,7 +367,7 @@ void msApplyDefaultOutputFormats( mapObj *map )
     defEntry++;
   }
   if( map->imagetype != NULL )
-    free( map->imagetype );
+    msFree( map->imagetype );
   map->imagetype = saved_imagetype;
 }
 
@@ -386,7 +386,7 @@ void msFreeOutputFormat( outputFormatObj *format )
 
   if(MS_RENDERER_PLUGIN(format) && format->vtable) {
     format->vtable->cleanup(MS_RENDERER_CACHE(format->vtable));
-    free( format->vtable );
+    msFree( format->vtable );
   }
   msFree( format->name );
   msFree( format->mimetype );
@@ -572,7 +572,7 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
 
   if (format) {
     if (map->imagetype)
-      free(map->imagetype);
+      msFree(map->imagetype);
     map->imagetype = msStrdup(format->name);
   }
 
@@ -760,7 +760,7 @@ void msSetOutputFormatOption( outputFormatObj *format,
   for( i = 0; i < format->numformatoptions; i++ ) {
     if( strncasecmp(format->formatoptions[i],key,len) == 0
         && format->formatoptions[i][len] == '=' ) {
-      free( format->formatoptions[i] );
+      msFree( format->formatoptions[i] );
       format->formatoptions[i] = newline;
       return;
     }

@@ -91,8 +91,8 @@ int msWCSException11(mapObj *map, const char *exceptionCode,
   msIO_printf("%s", buffer);
 
   /*free buffer and the document */
-  free(errorString);
-  free(schemasLocation);
+  msFree(errorString);
+  msFree(schemasLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
   xmlFreeNs(psNsOws);
@@ -480,7 +480,7 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
     msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities11()");
     return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
   }
-  free( script_url );
+  msFree( script_url );
 
   if( params->section == NULL
       || strstr(params->section,"All") != NULL
@@ -606,8 +606,8 @@ int msWCSGetCapabilities11(mapObj *map, wcsParamsObj *params,
   xmlCleanupParser();
 
   /* clean up */
-  free( script_url_encoded );
-  free( identifier_list );
+  msFree( script_url_encoded );
+  msFree( identifier_list );
 
   return(MS_SUCCESS);
 }
@@ -1060,8 +1060,8 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
   value = rangesubset + strlen(field_id);
 
   if( strcasecmp(rangesubset,field_id) == 0 ) {
-    free(rangesubset);
-    free(field_id);
+    msFree(rangesubset);
+    msFree(field_id);
     return MS_SUCCESS; /* we only got field ... default options */
   }
 
@@ -1072,12 +1072,12 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
                 "RangeSubset field name malformed, expected '%s', got RangeSubset=%s",
                 "msWCSGetCoverageBands11()",
                 field_id, rangesubset );
-    free(rangesubset);
-    free(field_id);
+    msFree(rangesubset);
+    msFree(field_id);
     return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
   }
 
-  free( field_id );
+  msFree( field_id );
   field_id = NULL;
 
   /* -------------------------------------------------------------------- */
@@ -1100,7 +1100,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
   /*      Parse out the axis name, and verify.                            */
   /* -------------------------------------------------------------------- */
   if( *value != '[' ) {
-    free(rangesubset);
+    msFree(rangesubset);
     return MS_SUCCESS;
   }
 
@@ -1113,7 +1113,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
                 "RangeSubset axis name malformed, expected '%s', got RangeSubset=%s",
                 "msWCSGetCoverageBands11()",
                 axis_id, rangesubset );
-    free(rangesubset);
+    msFree(rangesubset);
     return msWCSException11(map, "NoApplicableCode", "mapserv", params->version);
   }
 
@@ -1131,7 +1131,7 @@ int msWCSGetCoverageBands11( mapObj *map, cgiRequestObj *request,
       break;
     }
   }
-  free(rangesubset);
+  msFree(rangesubset);
   return MS_SUCCESS;
 }
 #endif

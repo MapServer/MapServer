@@ -348,14 +348,14 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 
           GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1,
                         pabyUPM, image->width, 1, GDT_Byte, 1, 0 );
-          free( pabyUPM );
+          msFree( pabyUPM );
         }
       }
     }
   }
 
   if( pabyAlphaLine != NULL )
-    free( pabyAlphaLine );
+    msFree( pabyAlphaLine );
 
   /* -------------------------------------------------------------------- */
   /*      Attach the palette if appropriate.                              */
@@ -439,7 +439,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
   hOutputDS = GDALCreateCopy( hOutputDriver, filename, hMemDS, FALSE,
                               papszOptions, NULL, NULL );
 
-  free( papszOptions );
+  msFree( papszOptions );
 
   if( hOutputDS == NULL ) {
     GDALClose( hMemDS );
@@ -503,7 +503,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     VSIUnlink( filename );
     CleanVSIDir( "/vsimem/msout" );
 
-    free( filename );
+    msFree( filename );
   }
 
   return MS_SUCCESS;

@@ -894,7 +894,7 @@ const char *msOWSLookupMetadataWithLanguage(hashTableObj *metadata,
     char *name2 = (char *) msSmallMalloc( bufferSize );
     snprintf(name2, bufferSize, "%s.%s", name, validated_language);
     value = msOWSLookupMetadata(metadata, namespaces, name2);
-    free(name2);
+    msFree(name2);
   }
 
   if ( name && !value ) {
@@ -1010,7 +1010,7 @@ static int msRenameLayer(layerObj *lp, int count)
     return MS_FAILURE;
   }
   sprintf(newname, "%s_%2.2d", lp->name, count);
-  free(lp->name);
+  msFree(lp->name);
   lp->name = newname;
 
   return MS_SUCCESS;
@@ -1510,7 +1510,7 @@ int msOWSPrintEncodeMetadata2(FILE *stream, hashTableObj *metadata,
   if((value = msOWSLookupMetadataWithLanguage(metadata, namespaces, name, validated_language))) {
     pszEncodedValue = msEncodeHTMLEntities(value);
     msIO_fprintf(stream, format, pszEncodedValue);
-    free(pszEncodedValue);
+    msFree(pszEncodedValue);
   } else {
     if (action_if_not_found == OWS_WARN) {
       msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name, (validated_language?".":""), (validated_language?validated_language:""));
@@ -1520,7 +1520,7 @@ int msOWSPrintEncodeMetadata2(FILE *stream, hashTableObj *metadata,
     if (default_value) {
       pszEncodedValue = msEncodeHTMLEntities(default_value);
       msIO_fprintf(stream, format, default_value);
-      free(pszEncodedValue);
+      msFree(pszEncodedValue);
     }
   }
 
@@ -2396,7 +2396,7 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
 
     if ((int) fread(pszBuf, 1, nBufSize, fp) != nBufSize) {
       msSetError(MS_IOERR, NULL, "msOWSProcessException()");
-      free(pszBuf);
+      msFree(pszBuf);
       fclose(fp);
       return;
     }
@@ -2420,7 +2420,7 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
                  pszFuncName, lp->name?lp->name:"(null)");
     }
 
-    free(pszBuf);
+    msFree(pszBuf);
     fclose(fp);
   }
 }
@@ -2721,7 +2721,7 @@ void msOWSGetDimensionInfo(layerObj *layer, const char *pszDimension,
       *papszDimNearValue = "0";
   }
 
-  free(pszDimensionItem);
+  msFree(pszDimensionItem);
 
   return;
 }

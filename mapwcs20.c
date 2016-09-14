@@ -3046,9 +3046,9 @@ int msWCSException20(mapObj *map, const char *exceptionCode,
   msIO_printf("%s", buffer);
 
   /* free buffer and the document */
-  free(errorString);
-  free(schemasLocation);
-  free(xsi_schemaLocation);
+  msFree(errorString);
+  msFree(schemasLocation);
+  msFree(xsi_schemaLocation);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
 
@@ -3260,7 +3260,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
       msSetError(MS_WCSERR, "Server URL not found", "msWCSGetCapabilities20()");
       return msWCSException(map, "NoApplicableCode", "mapserv", params->version);
     }
-    free(script_url);
+    msFree(script_url);
 
     psOperationsNode = xmlAddChild(psRootNode,msOWSCommonOperationsMetadata(psOwsNs));
 
@@ -4532,7 +4532,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       maskLayer->status = origstatus;
       maskLayer->labelcache = origlabelcache;
       if(retcode != MS_SUCCESS) {
-        free(origImageType);
+        msFree(origImageType);
         msFreeImage(image);
         msFree(bandlist);
         msWCSClearCoverageMetadata20(&cm);

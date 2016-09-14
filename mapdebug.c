@@ -302,11 +302,11 @@ void msDebugCleanup()
       if( debuginfo_list == link )
         debuginfo_list = link->next;
 
-      free( link );
+      msFree( link );
     } else if( link->next != NULL && link->next->thread_id == thread_id ) {
       debugInfoObj *next_link = link->next;
       link->next = link->next->next;
-      free( next_link );
+      msFree( next_link );
     }
     msReleaseLock( TLOCK_DEBUGOBJ );
   }

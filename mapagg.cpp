@@ -822,7 +822,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   if( (AGG_INT64U)bufSize != bufSize64 ) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
                __FILE__, __LINE__, bufSize64);
-    free(image);
+    msFree(image);
     delete r;
     return NULL;
   }
@@ -831,7 +831,7 @@ imageObj *agg2CreateImage(int width, int height, outputFormatObj *format, colorO
   if (r->buffer == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating " AGG_INT64U_FRMT " bytes.\n", "agg2CreateImage()",
                __FILE__, __LINE__, bufSize64);
-    free(image);
+    msFree(image);
     delete r;
     return NULL;
   }
@@ -895,7 +895,7 @@ int agg2CloseNewLayer(imageObj *img, mapObj *map, layerObj *layer)
 int agg2FreeImage(imageObj * image)
 {
   AGG2Renderer *r = AGG_RENDERER(image);
-  free(r->buffer);
+  msFree(r->buffer);
   delete r;
   image->img.plugin = NULL;
   return MS_SUCCESS;
@@ -1088,7 +1088,7 @@ template<class VertexSource> int renderPolygonHatches(imageObj *img,VertexSource
         case mapserver::path_cmd_end_poly|mapserver::path_flags_close:
           if(shape.line[0].numpoints > 2) {
             if(UNLIKELY(MS_FAILURE == MS_IMAGE_RENDERER(img)->renderPolygon(img,&shape,color))) {
-              free(shape.line[0].point);
+              msFree(shape.line[0].point);
               return MS_FAILURE;
             }
           }
@@ -1097,7 +1097,7 @@ template<class VertexSource> int renderPolygonHatches(imageObj *img,VertexSource
           assert(0); //WTF?
       }
     }
-    free(shape.line[0].point);
+    msFree(shape.line[0].point);
   }
   return MS_SUCCESS;
 }

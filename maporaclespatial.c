@@ -599,11 +599,11 @@ static void msOCIFinishStatement( msOracleSpatialStatement *sthand )
     if (sthand->stmthp != NULL)
       OCIHandleFree( (dvoid *)sthand->stmthp, (ub4)OCI_HTYPE_STMT );
     if (sthand->items != NULL)
-      free( sthand->items );
+      msFree( sthand->items );
     if (sthand->items_query != NULL)
-      free( sthand->items_query );
+      msFree( sthand->items_query );
     memset(sthand, 0, sizeof( msOracleSpatialStatement ) );
-    free(sthand);
+    msFree(sthand);
   }
 }
 
@@ -693,7 +693,7 @@ static void msOCICloseHandlers( msOracleSpatialHandler *hand )
     OCIHandleFree( (dvoid *)hand->envhp, (ub4)OCI_HTYPE_ENV );
   if (hand != NULL)
     memset( hand, 0, sizeof (msOracleSpatialHandler));
-  free(hand);
+  msFree(hand);
 }
 
 static void msOCICloseDataHandlers( msOracleSpatialDataHandler *dthand )
@@ -702,14 +702,14 @@ static void msOCICloseDataHandlers( msOracleSpatialDataHandler *dthand )
     OCIHandleFree( (dvoid *)dthand->dschp, (ub4)OCI_HTYPE_DESCRIBE );
   if (dthand != NULL)
     memset( dthand, 0, sizeof (msOracleSpatialDataHandler));
-  free(dthand);
+  msFree(dthand);
 }
 
 static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo )
 {
   if (layerinfo != NULL) {
     memset( layerinfo, 0, sizeof( msOracleSpatialLayerInfo ) );
-    free(layerinfo);
+    msFree(layerinfo);
   }
 }
 
@@ -1364,7 +1364,7 @@ static void osPointCluster(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeo
     points.numpoints = n;
     msAddLine( shape, &points );
   }
-  free( points.point );
+  msFree( points.point );
   /* } */
 }
 
@@ -1406,7 +1406,7 @@ static void osClosedPolygon(msOracleSpatialHandler *hand, shapeObj *shape, SDOGe
     points.numpoints = n;
     msAddLine( shape, &points );
   }
-  free( points.point );
+  msFree( points.point );
 }
 
 static void osRectangle(msOracleSpatialHandler *hand, shapeObj *shape, SDOGeometryObj *obj, int start, int end, lineObj points, pointObj *pnt, int data3d, int data4d)
@@ -1774,9 +1774,9 @@ int msOracleSpatialLayerOpen( layerObj *layer )
       msOCIFinishStatement( sthand2 );
       msOCIClearLayerInfo( layerinfo );
 
-      if (username) free(username);
-      if (password) free(password);
-      if (dblink) free(dblink);
+      if (username) msFree(username);
+      if (password) msFree(password);
+      if (dblink) msFree(dblink);
 
       return MS_FAILURE;
     }
@@ -1810,9 +1810,9 @@ int msOracleSpatialLayerOpen( layerObj *layer )
   layerinfo->orastmt2 = sthand2;
   layer->layerinfo = layerinfo;
 
-  if (username) free(username);
-  if (password) free(password);
-  if (dblink) free(dblink);
+  if (username) msFree(username);
+  if (password) msFree(password);
+  if (dblink) msFree(dblink);
 
   return layer->layerinfo != NULL ? MS_SUCCESS : MS_FAILURE;
 }
@@ -1940,11 +1940,11 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
                 "Error parsing OracleSpatial DATA variable. More info in server logs",
                 "msOracleSpatialLayerWhichShapes()" );
 
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
     return MS_FAILURE;
   }
 
@@ -1992,22 +1992,22 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
     sthand->items = (item_text_array *)malloc( sizeof(item_text_array) * (numitemsinselect) );
     if (sthand->items == NULL) {
       msSetError( MS_ORACLESPATIALERR,"Cannot allocate layerinfo->items buffer","msOracleSpatialLayerWhichShapes()" );
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if(indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if(indexfield) msFree(indexfield);
+      msFree(table_name);
       return MS_FAILURE;
     }
 
     items = (OCIDefine **)malloc(sizeof(OCIDefine *)*(numitemsinselect));
     if (items == NULL) {
       msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer","msOracleSpatialLayerWhichShapes()" );
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if(indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if(indexfield) msFree(indexfield);
+      msFree(table_name);
       return MS_FAILURE;
     }
     memset(items ,0,sizeof(OCIDefine *)*(numitemsinselect));
@@ -2192,12 +2192,12 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
                 "msOracleSpatialLayerWhichShapes()");
 
     /* clean items */
-    free(items);
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    msFree(items);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
 
     return MS_FAILURE;
   }
@@ -2206,12 +2206,12 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect, int isQuery)
   sthand->row_num = sthand->row = 0;
 
   /* clean items */
-  free(items);
-  if (geom_column_name) free(geom_column_name);
-  if (srid) free(srid);
-  if (unique) free(unique);
-  if (indexfield) free(indexfield);
-  free(table_name);
+  msFree(items);
+  if (geom_column_name) msFree(geom_column_name);
+  if (srid) msFree(srid);
+  if (unique) msFree(unique);
+  if (indexfield) msFree(indexfield);
+  msFree(table_name);
 
   return MS_SUCCESS;
 }
@@ -2466,7 +2466,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
         msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer","msOracleSpatialLayerWhichShapes()" );
 
         /* clean nullind  */
-        free(nullind);
+        msFree(nullind);
 
         return MS_FAILURE;
       }
@@ -2485,16 +2485,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
                   "msOracleSpatialLayerGetShape()");
 
       /* clean nullind  */
-      free(nullind);
+      msFree(nullind);
 
       /* clean items */
-      free(items);
+      msFree(items);
 
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
 
       return MS_FAILURE;
     }
@@ -2508,16 +2508,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
                   "msOracleSpatialLayerGetShape()" );
 
       /* clean nullind  */
-      free(nullind);
+      msFree(nullind);
 
       /* clean items */
-      free(items);
+      msFree(items);
 
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
 
       return MS_FAILURE;
     } else
@@ -2553,16 +2553,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
                   "msOracleSpatialLayerGetShape()\n", hand->last_oci_error, query_str );
 
       /* clean nullind  */
-      free(nullind);
+      msFree(nullind);
 
       /* clean items */
-      free(items);
+      msFree(items);
 
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
 
       return MS_FAILURE;
     }
@@ -2584,16 +2584,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
                   "Error in Query statement. Check your server logs","msOracleSpatialLayerGetShape()");
 
       /* clean nullind  */
-      free(nullind);
+      msFree(nullind);
 
       /* clean items */
-      free(items);
+      msFree(items);
 
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
 
       return MS_FAILURE;
     }
@@ -2603,16 +2603,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
     /* no rows fetched */
     if (sthand->rows_fetched == 0) {
       /* clean nullind  */
-      free(nullind);
+      msFree(nullind);
 
       /* clean items */
-      free(items);
+      msFree(items);
 
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
 
       return (MS_DONE);
     }
@@ -2627,16 +2627,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
       msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the values.", "msOracleSpatialLayerGetShape()" );
 
       /* clean nullind  */
-      free(nullind);
+      msFree(nullind);
 
       /* clean items */
-      free(items);
+      msFree(items);
 
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
 
       return MS_FAILURE;
     }
@@ -2650,16 +2650,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
         msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer.", "msOracleSpatialLayerGetShape()" );
 
         /* clean nullind  */
-        free(nullind);
+        msFree(nullind);
 
         /* clean items */
-        free(items);
+        msFree(items);
 
-        if (geom_column_name) free(geom_column_name);
-        if (srid) free(srid);
-        if (unique) free(unique);
-        if (indexfield) free(indexfield);
-        free(table_name);
+        if (geom_column_name) msFree(geom_column_name);
+        if (srid) msFree(srid);
+        if (unique) msFree(unique);
+        if (indexfield) msFree(indexfield);
+        msFree(table_name);
 
         return MS_FAILURE;
       } else {
@@ -2682,16 +2682,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
       msSetError( MS_ORACLESPATIALERR, "Cannot execute query", "msOracleSpatialLayerGetShape()" );
 
       /* clean nullind  */
-      free(nullind);
+      msFree(nullind);
 
       /* clean items */
-      free(items);
+      msFree(items);
 
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
 
       return MS_FAILURE;
     }
@@ -2699,16 +2699,16 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, resultObj *r
     sthand->row = sthand->row_num = 0;
 
     /* clean nullind  */
-    free(nullind);
+    msFree(nullind);
 
     /* clean items */
-    free(items);
+    msFree(items);
 
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
 
     return (MS_SUCCESS);
   }
@@ -2726,7 +2726,7 @@ int msOracleSpatialLayerInitItemInfo( layerObj *layer )
     return MS_SUCCESS;
 
   if (layer->iteminfo)
-    free( layer->iteminfo );
+    msFree( layer->iteminfo );
 
   if ((layer->iteminfo = (long *)malloc(sizeof(int)*layer->numitems))== NULL) {
     msSetError(MS_MEMERR, NULL, "msOracleSpatialLayerInitItemInfo()");
@@ -2789,11 +2789,11 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
                 "Error parsing OracleSpatial DATA variable",
                 "msOracleSpatialLayerGetAutoProjection()");
 
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
 
     return MS_FAILURE;
   }
@@ -2822,11 +2822,11 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
                 "Check your data statement and server logs",
                 "msOracleSpatialLayerGetAutoProjection()" );
 
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
     return MS_FAILURE;
   }
   do {
@@ -2843,11 +2843,11 @@ int msOracleSpatialLayerGetAutoProjection( layerObj *layer, projectionObj *proje
     }
   } while (sthand->rows_fetched > 0);
 
-  if (geom_column_name) free(geom_column_name);
-  if (srid) free(srid);
-  if (unique) free(unique);
-  if (indexfield) free(indexfield);
-  free(table_name);
+  if (geom_column_name) msFree(geom_column_name);
+  if (srid) msFree(srid);
+  if (unique) msFree(unique);
+  if (indexfield) msFree(indexfield);
+  msFree(table_name);
   return MS_SUCCESS;
 }
 
@@ -3008,11 +3008,11 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
                 "Error parsing OracleSpatial DATA variable. Check server logs. ",
                 "msOracleSpatialLayerGetItems()");
 
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
     return MS_FAILURE;
   }
 
@@ -3025,11 +3025,11 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
 
   if (!success) {
     msSetError( MS_QUERYERR, "Cannot retrieve column list", "msOracleSpatialLayerGetItems()" );
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
     return MS_FAILURE;
   }
 
@@ -3039,11 +3039,11 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
   layer->items = malloc (sizeof(char *) * (layer->numitems));
   if (layer->items == NULL) {
     msSetError( MS_ORACLESPATIALERR,"Cannot allocate items", "msOracleSpatialLayerGetItems()" );
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
     return MS_FAILURE;
   }
 
@@ -3053,11 +3053,11 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
 
     if (sthand->items_query == NULL) {
       msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer", "msOracleSpatialLayerGetItems()" );
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
       return MS_FAILURE;
     }
   }
@@ -3082,10 +3082,10 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     flk = (char *)malloc(sizeof(char*) * flk_len+1);
     if (flk == NULL) {
       msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerGetItems()" );
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      msFree(table_name);
       return MS_FAILURE;
     } else {
       //layer->iteminfo->dtype[i]= 1;
@@ -3098,10 +3098,10 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
         layer->items[count_item] = (char *)malloc(sizeof(char) * flk_len+1);
         if (layer->items[count_item] == NULL) {
           msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer", "msOracleSpatialLayerGetItems()" );
-          if (geom_column_name) free(geom_column_name);
-          if (srid) free(srid);
-          if (unique) free(unique);
-          free(table_name);
+          if (geom_column_name) msFree(geom_column_name);
+          if (srid) msFree(srid);
+          if (unique) msFree(unique);
+          msFree(table_name);
           return MS_FAILURE;
         }
 
@@ -3117,7 +3117,7 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
       existgeom = 1;
 
     strcpy( rzt, "" );
-    free(flk); /* Better?!*/
+    msFree(flk); /* Better?!*/
     flk_len = 0;
   }
 
@@ -3125,19 +3125,19 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
 
   if (!(existgeom)) {
     msSetError (MS_ORACLESPATIALERR, "No geometry column, check stmt", "msOracleSpatialLayerGetItems()" );
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
     return MS_FAILURE;
   }
 
-  if (geom_column_name) free(geom_column_name);
-  if (srid) free(srid);
-  if (unique) free(unique);
-  if (indexfield) free(indexfield);
-  free(table_name);
+  if (geom_column_name) msFree(geom_column_name);
+  if (srid) msFree(srid);
+  if (unique) msFree(unique);
+  if (indexfield) msFree(indexfield);
+  msFree(table_name);
   return msOracleSpatialLayerInitItemInfo( layer );
 }
 
@@ -3200,13 +3200,13 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
                 "Error parsing OracleSpatial DATA variable. Check server logs. ",
                 "msOracleSpatialLayerGetExtent()");
     /* clean items */
-    free(items);
+    msFree(items);
 
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
 
     return MS_FAILURE;
   }
@@ -3245,13 +3245,13 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
                 "msOracleSpatialLayerGetExtent()" );
 
     /* clean items */
-    free(items);
+    msFree(items);
 
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
 
     return MS_FAILURE;
   }
@@ -3274,13 +3274,13 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
                 "msOracleSpatialLayerGetExtent()" );
 
     /* clean items */
-    free(items);
+    msFree(items);
 
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
 
     return MS_FAILURE;
   }
@@ -3315,11 +3315,11 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
     shape.values = (char **) malloc(sizeof(char *) * layer->numitems);
     if (shape.values == NULL) {
       msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the values.", "msOracleSpatialLayerGetExtent()" );
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
       return MS_FAILURE;
     }
 
@@ -3332,13 +3332,13 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
         msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer.", "msOracleSpatialLayerGetExtent()" );
 
         /* clean items */
-        free(items);
+        msFree(items);
 
-        if (geom_column_name) free(geom_column_name);
-        if (srid) free(srid);
-        if (unique) free(unique);
-        if (indexfield) free(indexfield);
-        free(table_name);
+        if (geom_column_name) msFree(geom_column_name);
+        if (srid) msFree(srid);
+        if (unique) msFree(unique);
+        if (indexfield) msFree(indexfield);
+        msFree(table_name);
 
         return MS_FAILURE;
       } else {
@@ -3357,13 +3357,13 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
       msSetError( MS_ORACLESPATIALERR, "Cannot execute query", "msOracleSpatialLayerGetExtent()" );
 
       /* clean items */
-      free(items);
+      msFree(items);
 
-      if (geom_column_name) free(geom_column_name);
-      if (srid) free(srid);
-      if (unique) free(unique);
-      if (indexfield) free(indexfield);
-      free(table_name);
+      if (geom_column_name) msFree(geom_column_name);
+      if (srid) msFree(srid);
+      if (unique) msFree(unique);
+      if (indexfield) msFree(indexfield);
+      msFree(table_name);
 
       return MS_FAILURE;
     }
@@ -3383,13 +3383,13 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent)
   msFreeShape(&shape);
 
   /* clean items */
-  free(items);
+  msFree(items);
 
-  if (geom_column_name) free(geom_column_name);
-  if (srid) free(srid);
-  if (unique) free(unique);
-  if (indexfield) free(indexfield);
-  free(table_name);
+  if (geom_column_name) msFree(geom_column_name);
+  if (srid) msFree(srid);
+  if (unique) msFree(unique);
+  if (indexfield) msFree(indexfield);
+  msFree(table_name);
 
   return(MS_SUCCESS);
 }
@@ -3400,7 +3400,7 @@ void msOracleSpatialLayerFreeItemInfo( layerObj *layer )
     msDebug("msOracleSpatialLayerFreeItemInfo was called.\n");
 
   if (layer->iteminfo)
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
 
   layer->iteminfo = NULL;
   /* nothing to do */
@@ -3506,11 +3506,11 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
                 "msOracleSpatialLayerGetExtent()");
     /* clean items */
     
-    if (geom_column_name) free(geom_column_name);
-    if (srid) free(srid);
-    if (unique) free(unique);
-    if (indexfield) free(indexfield);
-    free(table_name);
+    if (geom_column_name) msFree(geom_column_name);
+    if (srid) msFree(srid);
+    if (unique) msFree(unique);
+    if (indexfield) msFree(indexfield);
+    msFree(table_name);
 
     return MS_FAILURE;
   }
@@ -3534,7 +3534,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
     snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(filter->string));
     sprintf(snippet, strtmpl, filter->string);  // TODO: escape filter->string (msPostGISEscapeSQLParam)
     native_string = msStringConcatenate(native_string, snippet);
-    free(snippet);
+    msFree(snippet);
 
     if(filter->flags & MS_EXP_INSENSITIVE) native_string = msStringConcatenate(native_string, ")");
 
@@ -3552,7 +3552,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
       native_string = msStringConcatenate(native_string, ",i ");
     } 
     native_string = msStringConcatenate(native_string, " )");
-    free(snippet);
+    msFree(snippet);
   } else if(filter->type == MS_EXPRESSION) { 
 
     tokenListNodeObjPtr node = NULL;
@@ -3606,7 +3606,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
           } else {
             native_string = msStringConcatenate(native_string, snippet);
           }  
-          free(snippet);
+          msFree(snippet);
             
           break;
         case MS_TOKEN_LITERAL_STRING:    
@@ -3692,7 +3692,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
           snippet = (char *) msSmallMalloc(strlen(strtmpl) + strlen(node->tokenval.strval));
           sprintf(snippet, strtmpl, node->tokenval.strval);  // TODO: escape strval (msPostGISEscapeSQLParam)
           native_string = msStringConcatenate(native_string, snippet);
-          free(snippet);
+          msFree(snippet);
           break;
         case MS_TOKEN_BINDING_TIME:
           native_string = msStringConcatenate(native_string, node->tokenval.bindval.item);
@@ -3705,7 +3705,7 @@ int msOracleSpatialLayerTranslateFilter(layerObj *layer, expressionObj *filter, 
           snippet = (char *) msSmallMalloc(strlen(strtmpl) + 16);
           sprintf(snippet, strtmpl, layer->map->cellsize);
           native_string = msStringConcatenate(native_string, snippet);
-          free(snippet);
+          msFree(snippet);
           break;
         case MS_TOKEN_LOGICAL_AND:
           native_string = msStringConcatenate(native_string, " AND ");

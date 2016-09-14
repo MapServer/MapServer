@@ -8,7 +8,7 @@ mapObj* umnms_new_map(char *filename) {
   } else {
     map = (mapObj *)msSmallCalloc(sizeof(mapObj),1);
     if(initMap(map) == -1) {
-      free(map);
+      msFree(map);
       return NULL;
     }
   }

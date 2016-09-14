@@ -144,7 +144,7 @@ void msGEOSCleanup()
     geos_thread_info_t *cur = link;
     link = link->next;
     finishGEOS_r(cur->geos_handle);
-    free(cur);
+    msFree(cur);
   }
   geos_list = NULL;
   msReleaseLock( TLOCK_GEOS );
@@ -191,7 +191,7 @@ static GEOSGeom msGEOSShape2Geometry_multipoint(lineObj *multipoint)
 
   g = GEOSGeom_createCollection_r(handle,GEOS_MULTIPOINT, points, multipoint->numpoints);
 
-  free(points);
+  msFree(points);
 
   return g;
 }
@@ -236,7 +236,7 @@ static GEOSGeom msGEOSShape2Geometry_multiline(shapeObj *multiline)
 
   g = GEOSGeom_createCollection_r(handle,GEOS_MULTILINESTRING, lines, multiline->numlines);
 
-  free(lines);
+  msFree(lines);
 
   return g;
 }
@@ -280,8 +280,8 @@ static GEOSGeom msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *
 
       coords = GEOSCoordSeq_create_r(handle,shape->line[j].numpoints, 2); /* todo handle z's */
       if(!coords) {
-        free(innerRings);
-        free(innerList);
+        msFree(innerRings);
+        msFree(innerList);
         return NULL; /* todo, this will leak memory (shell + allocated holes) */
       }
 
@@ -298,8 +298,8 @@ static GEOSGeom msGEOSShape2Geometry_simplepolygon(shapeObj *shape, int r, int *
 
   g = GEOSGeom_createPolygon_r(handle,outerRing, innerRings, numInnerRings);
 
-  free(innerList); /* clean up */
-  free(innerRings); /* clean up */
+  msFree(innerList); /* clean up */
+  msFree(innerRings); /* clean up */
 
   return g;
 }
@@ -333,10 +333,10 @@ static GEOSGeom msGEOSShape2Geometry_polygon(shapeObj *shape)
     }
 
     g = GEOSGeom_createCollection_r(handle,GEOS_MULTIPOLYGON, polygons, numOuterRings);
-    free(polygons);
+    msFree(polygons);
   }
 
-  free(outerList);
+  msFree(outerList);
   return g;
 }
 

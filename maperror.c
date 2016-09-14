@@ -257,11 +257,11 @@ void msResetErrorList()
       if( error_list == link )
         error_list = link->next;
 
-      free( link );
+      msFree( link );
     } else if( link->next != NULL && link->next->thread_id == thread_id ) {
       te_info_t *next_link = link->next;
       link->next = link->next->next;
-      free( next_link );
+      msFree( next_link );
     }
     msReleaseLock( TLOCK_ERROROBJ );
   }
@@ -495,7 +495,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank)
       }
     }
     if (papszLines) {
-      free(papszLines);
+      msFree(papszLines);
     }
   }
 

@@ -292,9 +292,9 @@ int msGeomTransformShape(mapObj *map, layerObj *layer, shapeObj *shape)
       tmpshp = p.result.shpval;
 
       for (i= 0; i < shape->numlines; i++)
-        free(shape->line[i].point);
+        msFree(shape->line[i].point);
       shape->numlines = 0;
-      if (shape->line) free(shape->line);
+      if (shape->line) msFree(shape->line);
       
       for(i=0; i<tmpshp->numlines; i++)
         msAddLine(shape, &(tmpshp->line[i])); /* copy each line */

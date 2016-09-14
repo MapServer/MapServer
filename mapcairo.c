@@ -120,12 +120,12 @@ int cleanupCairo(void *cache)
     do {
       next = cur->next;
       freeCairoFaceCache(cur);
-      free(cur);
+      msFree(cur);
       cur=next;
     } while(cur);
   }
 
-  free(ccache);
+  msFree(ccache);
   return MS_SUCCESS;
 }
 
@@ -153,9 +153,9 @@ int freeImageCairo(imageObj *img)
     cairo_surface_destroy(r->surface);
     if(r->outputStream) {
       msBufferFree(r->outputStream);
-      free(r->outputStream);
+      msFree(r->outputStream);
     }
-    free(r);
+    msFree(r);
   }
   return MS_SUCCESS;
 }
@@ -904,7 +904,7 @@ void freeSVGCache(symbolObj *s) {
 #endif
       if(cache->pixmap_buffer) {
         msFreeRasterBuffer(cache->pixmap_buffer);
-        free(cache->pixmap_buffer);
+        msFree(cache->pixmap_buffer);
       }
       msFree(s->renderer_cache);
 #endif

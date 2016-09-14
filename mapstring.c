@@ -1017,7 +1017,7 @@ char ** msStringSplitComplex( const char * pszString,
     papszRetList = (char **) msSmallMalloc(sizeof(char *)*1);
 
   *num_tokens = nRetLen;
-  free(pszToken);
+  msFree(pszToken);
 
   return papszRetList;
 }
@@ -1348,8 +1348,8 @@ void msDecodeHTMLEntities(const char *string)
     pszBuffer = pszAmp + 1;
   }
 
-  free(pszReplace);
-  free(pszEnd);
+  msFree(pszReplace);
+  msFree(pszEnd);
 
   return;
 }
@@ -1701,7 +1701,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
 
 #endif
 
-    free(visual);
+    msFree(visual);
     return msStrdup(outstring);
   }
 }
@@ -2125,15 +2125,17 @@ char *msStrdup( const char * pszString )
   if( pszString == NULL )
     pszString = "";
 
-  pszReturn = strdup( pszString );
+  pszReturn = msSmallMalloc(strlen(pszString)+1);
 
   if( pszReturn == NULL ) {
-    fprintf(stderr, "msSmallMsStrdup(): Out of memory allocating %ld bytes.\n",
+    /*should never be here*/
+    fprintf(stderr, "msSmallMalloc(): Out of memory allocating %ld bytes.\n",
             (long) strlen(pszString) );
     exit(1);
   }
+  strcpy( pszReturn, pszString);
 
-  return( pszReturn );
+  return pszReturn;
 }
 
 

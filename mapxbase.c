@@ -193,7 +193,7 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
   psDBF->pszStringField = NULL;
   psDBF->nStringFieldLen = 0;
 
-  free( pszDBFFilename );
+  msFree( pszDBFFilename );
 
   /* -------------------------------------------------------------------- */
   /*  Read Table Header info                                              */
@@ -292,18 +292,18 @@ void  msDBFClose(DBFHandle psDBF)
   fclose( psDBF->fp );
 
   if( psDBF->panFieldOffset != NULL ) {
-    free( psDBF->panFieldOffset );
-    free( psDBF->panFieldSize );
-    free( psDBF->panFieldDecimals );
-    free( psDBF->pachFieldType );
+    msFree( psDBF->panFieldOffset );
+    msFree( psDBF->panFieldSize );
+    msFree( psDBF->panFieldDecimals );
+    msFree( psDBF->pachFieldType );
   }
 
-  free( psDBF->pszHeader );
-  free( psDBF->pszCurrentRecord );
+  msFree( psDBF->pszHeader );
+  msFree( psDBF->pszCurrentRecord );
 
-  free(psDBF->pszStringField);
+  msFree(psDBF->pszStringField);
 
-  free( psDBF );
+  msFree( psDBF );
 }
 
 /************************************************************************/
@@ -873,7 +873,7 @@ int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems)
   for(i=0; i<numitems; i++) {
     itemindexes[i] = msDBFGetItemIndex(dbffile, items[i]);
     if(itemindexes[i] == -1) {
-      free(itemindexes);
+      msFree(itemindexes);
       return(NULL); /* item not found */
     }
   }
@@ -895,7 +895,7 @@ char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int nu
   for(i=0; i<numitems; i++) {
     value = msDBFReadStringAttribute(dbffile, record, itemindexes[i]);
     if (value == NULL) {
-      free(values);
+      msFree(values);
       return NULL; /* Error already reported by msDBFReadStringAttribute() */
     }
     values[i] = msStrdup(value);

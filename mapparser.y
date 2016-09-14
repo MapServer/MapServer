@@ -209,8 +209,8 @@ logical_exp: BOOLEAN
       }
     }
 
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | string_exp IRE string_exp {
     ms_regex_t re;
@@ -229,8 +229,8 @@ logical_exp: BOOLEAN
       }
     }
 
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | math_exp EQ math_exp {
     if($1 == $3)
@@ -273,48 +273,48 @@ logical_exp: BOOLEAN
       $$ = MS_TRUE;
     else
       $$ = MS_FALSE;
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | string_exp NE string_exp {
     if(strcmp($1, $3) != 0)
       $$ = MS_TRUE;
     else
       $$ = MS_FALSE;
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | string_exp GT string_exp {
     if(strcmp($1, $3) > 0)
       $$ = MS_TRUE;
     else
       $$ = MS_FALSE;
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | string_exp LT string_exp {
     if(strcmp($1, $3) < 0)
       $$ = MS_TRUE;
     else
       $$ = MS_FALSE;
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | string_exp GE string_exp {
     if(strcmp($1, $3) >= 0)
       $$ = MS_TRUE;
     else
       $$ = MS_FALSE;
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | string_exp LE string_exp {
     if(strcmp($1, $3) <= 0)
       $$ = MS_TRUE;
     else
       $$ = MS_FALSE;
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | time_exp EQ time_exp {
     if(msTimeCompare(&($1), &($3)) == 0)
@@ -370,8 +370,8 @@ logical_exp: BOOLEAN
 
     if($$ == MS_FALSE && strcmp($1,bufferp) == 0) // test for last (or only) item
       $$ = MS_TRUE;
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | math_exp IN string_exp {
     char *delim,*bufferp;
@@ -391,7 +391,7 @@ logical_exp: BOOLEAN
 
     if($1 == atof(bufferp)) // is this test necessary?
       $$ = MS_TRUE;  
-    free($3);
+    msFree($3);
   }
   | math_exp IEQ math_exp {
     if($1 == $3)
@@ -404,8 +404,8 @@ logical_exp: BOOLEAN
       $$ = MS_TRUE;
     else
       $$ = MS_FALSE;
-    free($1);
-    free($3);
+    msFree($1);
+    msFree($3);
   }
   | time_exp IEQ time_exp {
     if(msTimeCompare(&($1), &($3)) == 0)
@@ -723,7 +723,7 @@ shape_exp: SHAPE
   | SMOOTHSIA '(' shape_exp ',' math_exp ',' math_exp ',' string_exp ')' {
     shapeObj *s;
     s = msSmoothShapeSIA($3, $5, $7, $9);
-    free($9);
+    msFree($9);
     if(!s) {
       yyerror(p, "Executing smoothsia failed.");
       return(-1);
@@ -735,7 +735,7 @@ shape_exp: SHAPE
 #ifdef USE_V8_MAPSCRIPT
     shapeObj *s;
     s = msV8TransformShape($3, $5);
-    free($5);
+    msFree($5);
     if(!s) {
       yyerror(p, "Executing javascript failed.");
       return(-1);
@@ -753,7 +753,7 @@ string_exp: STRING
   | '(' string_exp ')' { $$ = $2; }
   | string_exp '+' string_exp { 
     $$ = (char *)malloc(strlen($1) + strlen($3) + 1);
-    sprintf($$, "%s%s", $1, $3); free($1); free($3); 
+    sprintf($$, "%s%s", $1, $3); msFree($1); msFree($3); 
   }
   | TOSTRING '(' math_exp ',' string_exp ')' {
     $$ = (char *) malloc(strlen($5) + 64); /* Plenty big? Should use snprintf below... */

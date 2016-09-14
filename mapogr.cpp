@@ -2608,7 +2608,7 @@ NextFile:
   /* -------------------------------------------------------------------- */
   psTileInfo = msOGRFileOpen( layer, connection );
 
-  free( connection );
+  msFree( connection );
 
 #ifndef IGNORE_MISSING_DATA
   if( psTileInfo == NULL && targetTile == -1 )
@@ -3161,7 +3161,7 @@ static int msOGRLayerInitItemInfo(layerObj *layer)
   }
 
   if (layer->iteminfo)
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
   if((layer->iteminfo = (int *)malloc(sizeof(int)*layer->numitems))== NULL) {
     msSetError(MS_MEMERR, NULL, "msOGRLayerInitItemInfo()");
     return(MS_FAILURE);
@@ -3261,7 +3261,7 @@ void msOGRLayerFreeItemInfo(layerObj *layer)
 #ifdef USE_OGR
 
   if (layer->iteminfo)
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
   layer->iteminfo = NULL;
 
 #else
@@ -4428,7 +4428,7 @@ shapeObj *msOGRShapeFromWKT(const char *string)
   if( msOGRGeometryToShape( hGeom, shape,
                             wkbFlatten(OGR_G_GetGeometryType(hGeom)) )
       == MS_FAILURE ) {
-    free( shape );
+    msFree( shape );
     return NULL;
   }
 

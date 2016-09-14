@@ -50,7 +50,7 @@ int msAddLabelToClass(classObj *class, labelObj *label)
   if (msGrowClassLabels(class) == NULL) return MS_FAILURE;
 
   /* msGrowClassLabels will alloc the label, free it in this case */
-  free(class->labels[class->numlabels]);
+  msFree(class->labels[class->numlabels]);
   class->labels[class->numlabels] = label;
   MS_REFCNT_INCR(label);
   class->numlabels++;

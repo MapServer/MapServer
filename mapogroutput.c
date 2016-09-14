@@ -422,12 +422,12 @@ static int msOGRWriteShape( layerObj *map_layer, OGRLayerH hOGRLayer,
         OGR_G_AddGeometryDirectly( hGeom, hRing );
       }
 
-      free(inner_flags);
+      msFree(inner_flags);
 
       OGR_G_AddGeometryDirectly( hMP, hGeom );
     }
 
-    free(outer_flags);
+    msFree(outer_flags);
 
     if( OGR_G_GetGeometryCount( hMP ) == 1 ) {
       hGeom = OGR_G_Clone( OGR_G_GetGeometryRef( hMP, 0 ) );

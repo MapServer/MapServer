@@ -76,7 +76,7 @@ void msFreeHashTable( hashTableObj *table )
 {
   if( table != NULL ) {
     msFreeHashItems(table);
-    free(table);
+    msFree(table);
     table = NULL;
   }
 }
@@ -100,13 +100,13 @@ void msFreeHashItems( hashTableObj *table )
     if(table->items) {
       for (i=0; i<MS_HASHSIZE; i++) {
         if (table->items[i] != NULL) {
-          for (tp=table->items[i]; tp!=NULL; prev_tp=tp,tp=tp->next,free(prev_tp)) {
+          for (tp=table->items[i]; tp!=NULL; prev_tp=tp,tp=tp->next,msFree(prev_tp)) {
             msFree(tp->key);
             msFree(tp->data);
           }
         }
       }
-      free(table->items);
+      msFree(table->items);
       table->items = NULL;
     } else {
       msSetError(MS_HASHERR, "No items allocated.", "msFreeHashItems()");
@@ -140,7 +140,7 @@ struct hashObj *msInsertHashTable(hashTableObj *table,
     table->items[hashval] = tp;
     table->numitems++;
   } else {
-    free(tp->data);
+    msFree(tp->data);
   }
 
   if ((tp->data = msStrdup(value)) == NULL)
@@ -187,11 +187,11 @@ int msRemoveHashTable(hashTableObj *table, const char *key)
       status = MS_SUCCESS;
       if (prev_tp) {
         prev_tp->next = tp->next;
-        free(tp);
+        msFree(tp);
         break;
       } else {
         table->items[hash(key)] = tp->next;
-        free(tp);
+        msFree(tp);
         break;
       }
     }

@@ -157,11 +157,11 @@ void msFreeShape(shapeObj *shape)
   if(!shape) return; /* for safety */
 
   for (c= 0; c < shape->numlines; c++)
-    free(shape->line[c].point);
+    msFree(shape->line[c].point);
 
-  if (shape->line) free(shape->line);
+  if (shape->line) msFree(shape->line);
   if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
-  if(shape->text) free(shape->text);
+  if(shape->text) msFree(shape->text);
 
 #ifdef USE_GEOS
   msGEOSFreeGeometry(shape);
@@ -185,7 +185,7 @@ void msShapeDeleteLine( shapeObj *shape, int line )
     return;
   }
 
-  free( shape->line[line].point );
+  msFree( shape->line[line].point );
   if( line < shape->numlines - 1 ) {
     memmove( shape->line + line,
              shape->line + line + 1,
@@ -395,7 +395,7 @@ void msRectToPolygon(rectObj rect, shapeObj *poly)
     poly->bounds = rect;
   } else
     msMergeRect(&poly->bounds, &rect);
-  free(line.point);
+  msFree(line.point);
 }
 
 /*
@@ -539,13 +539,13 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
     if(line.numpoints > 0) {
       msAddLineDirectly(&tmp, &line);
     } else {
-      free(line.point);
+      msFree(line.point);
       line.numpoints = 0; /* new line */
     }
   }
 
-  for (i=0; i<shape->numlines; i++) free(shape->line[i].point);
-  free(shape->line);
+  for (i=0; i<shape->numlines; i++) msFree(shape->line[i].point);
+  msFree(shape->line);
 
   shape->line = tmp.line;
   shape->numlines = tmp.numlines;
@@ -693,12 +693,12 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
       line.numpoints++;
       msAddLineDirectly(&tmp, &line);
     } else {
-      free(line.point);
+      msFree(line.point);
     }
   } /* next line */
 
-  for (i=0; i<shape->numlines; i++) free(shape->line[i].point);
-  free(shape->line);
+  for (i=0; i<shape->numlines; i++) msFree(shape->line[i].point);
+  msFree(shape->line);
 
   shape->line = tmp.line;
   shape->numlines = tmp.numlines;
@@ -938,7 +938,7 @@ void msTransformShapeSimplify(shapeObj *shape, rectObj extent, double cellsize)
   }
   if(!ok) {
     for(i=0; i<shape->numlines; i++) {
-      free(shape->line[i].point);
+      msFree(shape->line[i].point);
     }
     shape->numlines = 0 ;
   }
@@ -1200,8 +1200,8 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
     msAddLine(op, &inside);
     msAddLine(op, &outside);
 
-    free(inside.point);
-    free(outside.point);
+    msFree(inside.point);
+    msFree(outside.point);
   }
 
   return;
@@ -1533,7 +1533,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, double min_dimension)
     }
   }
 
-  free(intersect);
+  msFree(intersect);
 
   if(max_len > 0)
     return(MS_SUCCESS);
@@ -1635,9 +1635,9 @@ int msPolylineLabelPoint(mapObj *map, shapeObj *p, textSymbolObj *ts, labelObj *
 
   /* freeing memory: allocated by msPolylineComputeLineSegments */
   for ( i = 0; i < p->numlines; i++ ) {
-    free(pll.ll[i].segment_lengths);
+    msFree(pll.ll[i].segment_lengths);
   }
-  free(pll.ll);
+  msFree(pll.ll);
   
   return ret;
 }
@@ -1804,9 +1804,9 @@ int msPolylineLabelPath(mapObj *map, imageObj *image, shapeObj *p, textSymbolObj
 
   /* freeing memory: allocated by msPolylineComputeLineSegments */
   for ( i = 0; i < p->numlines; i++ ) {
-    free(pll.ll[i].segment_lengths);
+    msFree(pll.ll[i].segment_lengths);
   }
-  free(pll.ll);
+  msFree(pll.ll);
   
   if(IS_PERPENDICULAR_OFFSET(label->offsety) && label->offsetx != 0) {
      msFreeShape(p);
@@ -2140,7 +2140,7 @@ LABEL_FAILURE:
 
       
       freeTextPath(tp);
-      free(tp);
+      msFree(tp);
       goto NEXT_REPEAT;
 
 LABEL_END:

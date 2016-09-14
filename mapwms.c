@@ -166,7 +166,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code,
     msIO_printf("</ServiceExceptionReport>\n");
 
   }
-  free(schemalocation);
+  msFree(schemalocation);
 
   return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
@@ -393,7 +393,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
   }
 
   /* free uniqgroups */
-  free(uniqgroups);
+  msFree(uniqgroups);
 }
 
 
@@ -955,9 +955,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           msFreeCharArray(nestedGroups[k], numNestedGroups[k]);
         }
       }
-      free(nestedGroups);
-      free(numNestedGroups);
-      free(isUsedInNestedGroup);
+      msFree(nestedGroups);
+      msFree(numNestedGroups);
+      msFree(isUsedInNestedGroup);
 
       /* set all layers with status off at end of array */
       for (j=0; j<map->numlayers; j++) {
@@ -966,7 +966,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
             map->layerorder[nLayerOrder++] = j;
       }
 
-      free(layerOrder);
+      msFree(layerOrder);
       msFreeCharArray(layers, numlayers);
     } else if (strcasecmp(names[i], "STYLES") == 0) {
       styles = values[i];
@@ -1789,14 +1789,14 @@ void msWMSPrintAttribution(FILE *stream, const char *tabspace,
         pszEncodedValue = msEncodeHTMLEntities(title);
         msIO_fprintf(stream, "%s%s<Title>%s</Title>\n", tabspace,
                      tabspace, pszEncodedValue);
-        free(pszEncodedValue);
+        msFree(pszEncodedValue);
       }
 
       if (onlineres) {
         pszEncodedValue = msEncodeHTMLEntities(onlineres);
         msIO_fprintf(stream, "%s%s<OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", tabspace, tabspace,
                      pszEncodedValue);
-        free(pszEncodedValue);
+        msFree(pszEncodedValue);
       }
 
       if (logourl) {
@@ -2543,10 +2543,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                 msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
               }
             }
-            free(nestedGroups);
-            free(numNestedGroups);
-            free(isUsedInNestedGroup);
-            free(group_layers);
+            msFree(nestedGroups);
+            msFree(numNestedGroups);
+            msFree(isUsedInNestedGroup);
+            msFree(group_layers);
           }
         }
       }
@@ -2818,7 +2818,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
       char* inspireschemalocation = msEncodeHTMLEntities( msOWSGetInspireSchemasLocation(map) );
       msIO_printf(" " MS_INSPIRE_VS_NAMESPACE_URI " "
                   " %s%s", inspireschemalocation, MS_INSPIRE_VS_SCHEMA_LOCATION);
-      free(inspireschemalocation);
+      msFree(inspireschemalocation);
     }
 
     msIO_printf(" http://mapserver.gis.umn.edu/mapserver %sservice=WMS&amp;version=1.3.0&amp;request=GetSchemaExtension\"",
@@ -3491,7 +3491,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
         }
       }
 
-      free(pabLayerProcessed);
+      msFree(pabLayerProcessed);
 
       /* free the stuff used for nested layers */
       for (i = 0; i < map->numlayers; i++) {
@@ -3499,9 +3499,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
           msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
         }
       }
-      free(nestedGroups);
-      free(numNestedGroups);
-      free(isUsedInNestedGroup);
+      msFree(nestedGroups);
+      msFree(numNestedGroups);
+      msFree(isUsedInNestedGroup);
     }
 
     msIO_printf("  </Layer>\n");
@@ -3515,11 +3515,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req, owsReque
 
   msFree(validated_language);
 
-  free(script_url);
-  free(script_url_encoded);
+  msFree(script_url);
+  msFree(script_url_encoded);
 
-  free(dtd_url);
-  free(schemalocation);
+  msFree(dtd_url);
+  msFree(schemalocation);
 
   return(MS_SUCCESS);
 }
@@ -3566,7 +3566,7 @@ int msTranslateWMS2Mapserv(const char **names, const char **values, int numentri
         (*translated_numentries)++;
         layers[j] = NULL;
       }
-      free(layers);
+      msFree(layers);
     } else if (strcasecmp("QUERY_LAYERS", names[i]) == 0) {
       char **layers;
       int tok;
@@ -3581,7 +3581,7 @@ int msTranslateWMS2Mapserv(const char **names, const char **values, int numentri
         (*translated_numentries)++;
         layers[j] = NULL;
       }
-      free(layers);
+      msFree(layers);
     } else if (strcasecmp("BBOX", names[i]) == 0) {
       char *imgext;
       num_allocated++;
@@ -3927,9 +3927,9 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
     }
   }
-  free(nestedGroups);
-  free(numNestedGroups);
-  free(isUsedInNestedGroup);
+  msFree(nestedGroups);
+  msFree(numNestedGroups);
+  msFree(isUsedInNestedGroup);
 
   if(numlayers_found == 0) {
     if (query_layer) {
@@ -4180,7 +4180,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
     msIO_printf("<Version>%s</Version>\n",sld_version);
 
   }
-  free(schemalocation);
+  msFree(schemalocation);
 
   /* check if map-level metadata wfs(wcs)_onlineresource is available */
   pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata), "FO", "onlineresource");
@@ -4310,9 +4310,9 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
       msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
     }
   }
-  free(nestedGroups);
-  free(numNestedGroups);
-  free(isUsedInNestedGroup);
+  msFree(nestedGroups);
+  msFree(numNestedGroups);
+  msFree(isUsedInNestedGroup);
 
   return(MS_SUCCESS);
 }
@@ -4449,9 +4449,9 @@ int msWMSLegendGraphic(mapObj *map, int nVersion, char **names,
         msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
       }
     }
-    free(nestedGroups);
-    free(numNestedGroups);
-    free(isUsedInNestedGroup);
+    msFree(nestedGroups);
+    msFree(numNestedGroups);
+    msFree(isUsedInNestedGroup);
 
     if (nLayers == 0) {
       msSetError(MS_WMSERR, "Invalid layer given in the LAYER parameter. A layer might be disabled for \
@@ -4706,9 +4706,9 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
       msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
     }
   }
-  free(nestedGroups);
-  free(numNestedGroups);
-  free(isUsedInNestedGroup);
+  msFree(nestedGroups);
+  msFree(numNestedGroups);
+  msFree(isUsedInNestedGroup);
 
   /* validate all layers given. If an invalid layer is sent, return an exception. */
   if (validlayer == 0) {
@@ -4730,7 +4730,7 @@ this request. Check wms/ows_enable_request settings.",
   }
   if (sld) {
     msIO_printf("%s\n", sld);
-    free(sld);
+    msFree(sld);
   }
 
   return(MS_SUCCESS);
@@ -4751,7 +4751,7 @@ int msWMSGetSchemaExtension(mapObj *map)
   msIO_printf("  <element name=\"GetStyles\" type=\"wms:OperationType\" substitutionGroup=\"wms:_ExtendedOperation\"/>\n");
   msIO_printf("</schema>");
 
-  free(schemalocation);
+  msFree(schemalocation);
 
   return(MS_SUCCESS);
 }

@@ -267,14 +267,14 @@ int msDrawRasterSetupTileLayer(mapObj *map, layerObj *layer,
             (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
           sprintf(pszTmp,"(%s)",layer->filter.string);
           msLoadExpressionString(&tlp->filter, pszTmp);
-          free(pszTmp);
+          msFree(pszTmp);
         } else if (layer->filter.type == MS_REGEX ||
                    layer->filter.type == MS_IREGEX) {
           char* pszTmp =
             (char *)msSmallMalloc(sizeof(char)*(strlen(layer->filter.string)+3));
           sprintf(pszTmp,"/%s/",layer->filter.string);
           msLoadExpressionString(&tlp->filter, pszTmp);
-          free(pszTmp);
+          msFree(pszTmp);
         } else
           msLoadExpressionString(&tlp->filter, layer->filter.string);
 
@@ -364,7 +364,7 @@ void msDrawRasterCleanupTileLayer(layerObj* tlp,
     msLayerClose(tlp);
     if(tilelayerindex == -1) {
       freeLayer(tlp);
-      free(tlp);
+      msFree(tlp);
     }
 }
 
@@ -429,7 +429,7 @@ int msDrawRasterBuildRasterPath(mapObj *map, layerObj *layer,
       msTryBuildPath(tiAbsFilePath, map->mappath, layer->tileindex); /* absolute path to tileindex file */
       tiAbsDirPath = msGetPath(tiAbsFilePath); /* tileindex file's directory */
       msBuildPath(szPath, tiAbsDirPath, filename);
-      free(tiAbsDirPath);
+      msFree(tiAbsDirPath);
     } else {
       msTryBuildPath3(szPath, map->mappath, map->shapepath, filename);
     }
@@ -705,7 +705,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image,
           msSetError(MS_CGIERR, "Unable to set projection on interpolation layer.", "msDrawRasterLayerLow()");
           return(MS_FAILURE);
         }
-        free(mapProjStr);
+        msFree(mapProjStr);
       }
     }
 
@@ -851,7 +851,7 @@ imageObj *msDrawReferenceMap(mapObj *map)
 
   status = renderer->mergeRasterBuffer(image,refImage,1.0,0,0,0,0,refImage->width, refImage->height);
   msFreeRasterBuffer(refImage);
-  free(refImage);
+  msFree(refImage);
   if(UNLIKELY(status == MS_FAILURE))
     return NULL;
 

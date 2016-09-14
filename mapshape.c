@@ -182,7 +182,7 @@ static void writeHeader( SHPHandle psSHP )
 
   fwrite( panSHX, sizeof(ms_int32) * 2, psSHP->nRecords, psSHP->fpSHX );
 
-  free( panSHX );
+  msFree( panSHX );
 }
 
 /************************************************************************/
@@ -275,8 +275,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     return( NULL );
   }
 
-  free( pszFullname );
-  free( pszBasename );
+  msFree( pszFullname );
+  msFree( pszBasename );
 
   /* -------------------------------------------------------------------- */
   /*   Read the file size from the SHP file.            */
@@ -285,8 +285,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   if(1 != fread( pabyBuf, 100, 1, psSHP->fpSHP )) {
     fclose( psSHP->fpSHP );
     fclose( psSHP->fpSHX );
-    free( psSHP );
-    free(pabyBuf);
+    msFree( psSHP );
+    msFree(pabyBuf);
     return( NULL );
   }
 
@@ -302,8 +302,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     msSetError(MS_SHPERR, "Corrupted .shx file", "msSHPOpen()");
     fclose( psSHP->fpSHP );
     fclose( psSHP->fpSHX );
-    free( psSHP );
-    free(pabyBuf);
+    msFree( psSHP );
+    msFree(pabyBuf);
     return( NULL );
   }
 
@@ -311,8 +311,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
     msSetError(MS_SHPERR, "Corrupted .shp file", "msSHPOpen()");
     fclose( psSHP->fpSHP );
     fclose( psSHP->fpSHX );
-    free( psSHP );
-    free(pabyBuf);
+    msFree( psSHP );
+    msFree(pabyBuf);
 
     return( NULL );
   }
@@ -326,8 +326,8 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
                psSHP->nRecords);
     fclose( psSHP->fpSHP );
     fclose( psSHP->fpSHX );
-    free( psSHP );
-    free(pabyBuf);
+    msFree( psSHP );
+    msFree(pabyBuf);
     return( NULL );
   }
 
@@ -364,7 +364,7 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   if( bBigEndian ) SwapWord( 8, pabyBuf+92 );
   memcpy( &dValue, pabyBuf+92, 8 );
   psSHP->adBoundsMax[3] = dValue;
-  free( pabyBuf );
+  msFree( pabyBuf );
 
   /* -------------------------------------------------------------------- */
   /*  Read the .shx file to get the offsets to each record in       */
@@ -385,12 +385,12 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   if (psSHP->panRecOffset == NULL ||
       psSHP->panRecSize == NULL ||
       psSHP->panRecLoaded == NULL) {
-    free(psSHP->panRecOffset);
-    free(psSHP->panRecSize);
-    free(psSHP->panRecLoaded);
+    msFree(psSHP->panRecOffset);
+    msFree(psSHP->panRecSize);
+    msFree(psSHP->panRecLoaded);
     fclose( psSHP->fpSHP );
     fclose( psSHP->fpSHX );
-    free( psSHP );
+    msFree( psSHP );
     msSetError(MS_MEMERR, "Out of memory", "msSHPOpen()");
     return( NULL );
   }
@@ -415,18 +415,18 @@ void msSHPClose(SHPHandle psSHP )
   /* -------------------------------------------------------------------- */
   /*      Free all resources, and close files.                            */
   /* -------------------------------------------------------------------- */
-  free( psSHP->panRecOffset );
-  free( psSHP->panRecSize );
-  free( psSHP->panRecLoaded );
+  msFree( psSHP->panRecOffset );
+  msFree( psSHP->panRecSize );
+  msFree( psSHP->panRecLoaded );
 
 
-  free(psSHP->pabyRec);
-  free(psSHP->panParts);
+  msFree(psSHP->pabyRec);
+  msFree(psSHP->panParts);
 
   fclose( psSHP->fpSHX );
   fclose( psSHP->fpSHP );
 
-  free( psSHP );
+  msFree( psSHP );
 }
 
 /************************************************************************/
@@ -503,8 +503,8 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   sprintf( pszFullname, "%s.shp", pszBasename );
   fpSHP = fopen(pszFullname, "wb" );
   if( fpSHP == NULL ) {
-    free( pszFullname );
-    free(pszBasename);
+    msFree( pszFullname );
+    msFree(pszBasename);
     return( NULL );
   }
 
@@ -512,13 +512,13 @@ SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
   fpSHX = fopen(pszFullname, "wb" );
   if( fpSHX == NULL ) {
     fclose(fpSHP);
-    free( pszFullname );
-    free(pszBasename);
+    msFree( pszFullname );
+    msFree(pszBasename);
     return( NULL );
   }
 
-  free( pszFullname );
-  free(pszBasename);
+  msFree( pszFullname );
+  msFree(pszBasename);
 
   /* -------------------------------------------------------------------- */
   /*      Prepare header block for .shp file.                             */
@@ -700,7 +700,7 @@ int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
   } else {
     psSHP->nRecords -- ;
   }
-  free( pabyRec );
+  msFree( pabyRec );
   return( psSHP->nRecords - 1 );
 }
 
@@ -1010,7 +1010,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
     psSHP->nRecords --;
     /* there was an error writing the record */
   }
-  free( pabyRec );
+  msFree( pabyRec );
   return( psSHP->nRecords - 1 );
 }
 
@@ -1179,7 +1179,7 @@ int msSHXLoadAll( SHPHandle psSHP )
   pabyBuf = (uchar *) msSmallMalloc(8 * psSHP->nRecords );
   if(psSHP->nRecords != fread( pabyBuf, 8, psSHP->nRecords, psSHP->fpSHX )) {
     msSetError(MS_IOERR, "failed to read shx records", "msSHXLoadAll()");
-    free(pabyBuf);
+    msFree(pabyBuf);
     return MS_FAILURE;
   }
   for( i = 0; i < psSHP->nRecords; i++ ) {
@@ -1196,7 +1196,7 @@ int msSHXLoadAll( SHPHandle psSHP )
     psSHP->panRecOffset[i] = nOffset*2;
     psSHP->panRecSize[i] = nLength*2;
   }
-  free(pabyBuf);
+  msFree(pabyBuf);
   psSHP->panRecAllLoaded = 1;
 
   return(MS_SUCCESS);
@@ -1382,8 +1382,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, shape->line[%d].numpoints=%d", "msSHPReadShape()",
                    hEntity, i, shape->line[i].numpoints);
         while(--i >= 0)
-          free(shape->line[i].point);
-        free(shape->line);
+          msFree(shape->line[i].point);
+        msFree(shape->line);
         shape->line = NULL;
         shape->numlines = 0;
         shape->type = MS_SHAPE_NULL;
@@ -1392,8 +1392,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 
       if( (shape->line[i].point = (pointObj *)malloc(sizeof(pointObj)*shape->line[i].numpoints)) == NULL ) {
         while(--i >= 0)
-          free(shape->line[i].point);
-        free(shape->line);
+          msFree(shape->line[i].point);
+        msFree(shape->line);
         shape->numlines = 0;
         shape->type = MS_SHAPE_NULL;
         msSetError(MS_MEMERR, "Out of memory", "msSHPReadShape()");
@@ -1488,7 +1488,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     }
 
     if (nPoints < 0 || nPoints > 50 * 1000 * 1000) {
-      free(shape->line);
+      msFree(shape->line);
       shape->type = MS_SHAPE_NULL;
       msSetError(MS_SHPERR, "Corrupted .shp file : shape %d, nPoints=%d.",
                  "msSHPReadShape()", hEntity, nPoints);
@@ -1499,7 +1499,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     if (psSHP->nShapeType == SHP_MULTIPOINTZ || psSHP->nShapeType == SHP_MULTIPOINTM)
       nRequiredSize += 16 + nPoints * 8;
     if (nRequiredSize > nEntitySize) {
-      free(shape->line);
+      msFree(shape->line);
       shape->type = MS_SHAPE_NULL;
       msSetError(MS_SHPERR, "Corrupted .shp file : shape %d : nPoints = %d, nEntitySize = %d",
                  "msSHPReadShape()", hEntity, nPoints, nEntitySize);
@@ -1510,7 +1510,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     shape->line[0].numpoints = nPoints;
     shape->line[0].point = (pointObj *) malloc( nPoints * sizeof(pointObj) );
     if (shape->line[0].point == NULL) {
-      free(shape->line);
+      msFree(shape->line);
       shape->numlines = 0;
       shape->type = MS_SHAPE_NULL;
       msSetError(MS_MEMERR, "Out of memory", "msSHPReadShape()");
@@ -1750,10 +1750,10 @@ int msShapefileOpen(shapefileObj *shpfile, const char *mode, const char *filenam
   if(!shpfile->hDBF) {
     if( log_failures )
       msSetError(MS_IOERR, "(%s)", "msShapefileOpen()", dbfFilename);
-    free(dbfFilename);
+    msFree(dbfFilename);
     return(-1);
   }
-  free(dbfFilename);
+  msFree(dbfFilename);
 
   shpfile->isopen = MS_TRUE;
   return(0); /* all o.k. */
@@ -1797,7 +1797,7 @@ void msShapefileClose(shapefileObj *shpfile)
   if (shpfile && shpfile->isopen == MS_TRUE) { /* Silently return if called with NULL shpfile by freeLayer() */
     if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
     if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
-    free(shpfile->status);
+    msFree(shpfile->status);
     shpfile->isopen = MS_FALSE;
   }
 }
@@ -1811,7 +1811,7 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
   char *sourcename = 0; /* shape file source string from map file */
   char *s = 0; /* pointer to start of '.shp' in source string */
 
-  free(shpfile->status);
+  msFree(shpfile->status);
   shpfile->status = NULL;
 
   shpfile->statusbounds = rect; /* save the search extent */
@@ -1846,8 +1846,8 @@ int msShapefileWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
     sprintf(filename, "%s%s", sourcename, MS_INDEX_EXTENSION);
 
     shpfile->status = msSearchDiskTree(filename, rect, debug);
-    free(filename);
-    free(sourcename);
+    msFree(filename);
+    msFree(sourcename);
 
     if(shpfile->status) { /* index  */
       msFilterTreeSearch(shpfile, shpfile->status, rect);
@@ -1879,7 +1879,7 @@ void msTileIndexAbsoluteDir(char *tiFileAbsDir, layerObj *layer)
   msBuildPath(tiFileAbsPath, layer->map->mappath, layer->tileindex); /* absolute path to tileindex file */
   tiFileAbsDirTmp = msGetPath(tiFileAbsPath); /* tileindex file's directory */
   strlcpy(tiFileAbsDir, tiFileAbsDirTmp, MS_MAXPATHLEN);
-  free(tiFileAbsDirTmp);
+  msFree(tiFileAbsDirTmp);
 }
 
 /*
@@ -1945,7 +1945,7 @@ int msTiledSHPOpenFile(layerObj *layer)
   if (tSHP->shpfile == NULL) {
     msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msTiledSHPOpenFile()",
                __FILE__, __LINE__, (unsigned int)sizeof(shapefileObj));
-    free(tSHP);
+    msFree(tSHP);
     return MS_FAILURE;
   }
   
@@ -1981,8 +1981,8 @@ int msTiledSHPOpenFile(layerObj *layer)
     if (tSHP->tileshpfile == NULL) {
       msSetError(MS_MEMERR, "%s: %d: Out of memory allocating %u bytes.\n", "msTiledSHPOpenFile()",
                  __FILE__, __LINE__, (unsigned int)sizeof(shapefileObj));
-      free(tSHP->shpfile);
-      free(tSHP);
+      msFree(tSHP->shpfile);
+      msFree(tSHP);
       layer->layerinfo = NULL;
       return MS_FAILURE;
     }
@@ -2351,7 +2351,7 @@ void msTiledSHPClose(layerObj *layer)
   tSHP = layer->layerinfo;
   if(tSHP) {
     msShapefileClose(tSHP->shpfile);
-    free(tSHP->shpfile);
+    msFree(tSHP->shpfile);
 
     if(tSHP->tilelayerindex != -1) {
       layerObj *tlp;
@@ -2361,10 +2361,10 @@ void msTiledSHPClose(layerObj *layer)
       msLayerClose(tlp);
     } else {
       msShapefileClose(tSHP->tileshpfile);
-      free(tSHP->tileshpfile);
+      msFree(tSHP->tileshpfile);
     }
 
-    free(tSHP);
+    msFree(tSHP);
   }
   layer->layerinfo = NULL;
 }
@@ -2381,7 +2381,7 @@ int msTiledSHPCloseVT(layerObj *layer)
 void msTiledSHPLayerFreeItemInfo(layerObj *layer)
 {
   if(layer->iteminfo) {
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
     layer->iteminfo = NULL;
   }
 }
@@ -2543,7 +2543,7 @@ int msTiledSHPLayerInitializeVirtualTable(layerObj *layer)
 void msSHPLayerFreeItemInfo(layerObj *layer)
 {
   if(layer->iteminfo) {
-    free(layer->iteminfo);
+    msFree(layer->iteminfo);
     layer->iteminfo = NULL;
   }
 }
@@ -2586,7 +2586,7 @@ int msSHPLayerOpen(layerObj *layer)
   if(msShapefileOpen(shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data), MS_TRUE) == -1) {
     if(msShapefileOpen(shpfile, "rb", msBuildPath(szPath, layer->map->mappath, layer->data), MS_TRUE) == -1) {
       layer->layerinfo = NULL;
-      free(shpfile);
+      msFree(shpfile);
       return MS_FAILURE;
     }
   }
@@ -2738,7 +2738,7 @@ int msSHPLayerClose(layerObj *layer)
   if(!shpfile) return MS_SUCCESS; /* nothing to do */
 
   msShapefileClose(shpfile);
-  free(layer->layerinfo);
+  msFree(layer->layerinfo);
   layer->layerinfo = NULL;
 
   return MS_SUCCESS;

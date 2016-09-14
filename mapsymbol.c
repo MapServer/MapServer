@@ -57,7 +57,7 @@ void freeImageCache(struct imageCacheObj *ic)
   if(ic) {
     freeImageCache(ic->next); /* free any children */
     msFreeRasterBuffer(&(ic->img));
-    free(ic);
+    msFree(ic);
   }
   return;
 }
@@ -134,7 +134,7 @@ int msFreeSymbol(symbolObj *s)
     return MS_FAILURE;
   }
 
-  if(s->name) free(s->name);
+  if(s->name) msFree(s->name);
   if(s->renderer_free_func) {
     s->renderer_free_func(s);
   } else {
@@ -144,14 +144,14 @@ int msFreeSymbol(symbolObj *s)
   }
   if(s->pixmap_buffer) {
     msFreeRasterBuffer(s->pixmap_buffer);
-    free(s->pixmap_buffer);
+    msFree(s->pixmap_buffer);
   }
 
 
-  if(s->font) free(s->font);
+  if(s->font) msFree(s->font);
   msFree(s->full_pixmap_path);
-  if(s->imagepath) free(s->imagepath);
-  if(s->character) free(s->character);
+  if(s->imagepath) msFree(s->imagepath);
+  if(s->character) msFree(s->character);
 
   return MS_SUCCESS;
 }
@@ -614,7 +614,7 @@ int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 
   fclose(msyyin);
   msyyin = NULL;
-  free(pszSymbolPath);
+  msFree(pszSymbolPath);
   return(status);
 }
 
@@ -883,7 +883,7 @@ int msPreloadImageSymbol(rendererVTableObj *renderer, symbolObj *symbol)
   }
   if(MS_SUCCESS != renderer->loadImageFromFile(symbol->full_pixmap_path, symbol->pixmap_buffer)) {
     /* Free pixmap_buffer already allocated */
-    free(symbol->pixmap_buffer);
+    msFree(symbol->pixmap_buffer);
     symbol->pixmap_buffer = NULL;
     return MS_FAILURE;
   }

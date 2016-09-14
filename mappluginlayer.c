@@ -63,10 +63,10 @@ createVTFItem(const char *name)
 static void
 destroyVTFItem(VTFactoryItemObj **pVTFI)
 {
-  free((*pVTFI)->name);
+  msFree((*pVTFI)->name);
   (*pVTFI)->name = NULL;
   memset(&(*pVTFI)->vtable, 0, sizeof(layerVTableObj));
-  free(*pVTFI);
+  msFree(*pVTFI);
   *pVTFI = NULL;
 }
 
@@ -220,7 +220,7 @@ msPluginFreeVirtualTableFactory()
     if (gVirtualTableFactory.vtItems[i])
       destroyVTFItem(&(gVirtualTableFactory.vtItems[i]));
   }
-  free(gVirtualTableFactory.vtItems);
+  msFree(gVirtualTableFactory.vtItems);
   gVirtualTableFactory.vtItems = NULL;
   gVirtualTableFactory.size = 0;
   gVirtualTableFactory.first_free = 0;

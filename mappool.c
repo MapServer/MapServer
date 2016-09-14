@@ -302,13 +302,13 @@ static void msConnPoolClose( int conn_index )
     conn->close( conn->conn_handle );
 
   /* free malloced() stuff in this connection */
-  free( conn->connection );
+  msFree( conn->connection );
 
   connectionCount--;
   if( connectionCount == 0 ) {
     /* if there are no connections left we will "cleanup".  */
     connectionMax = 0;
-    free( connections );
+    msFree( connections );
     connections = NULL;
   } else {
     /* move the last connection in place of our now closed one */

@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
       if(strcmp(argv[i],"-d") == 0) { /* swap layer data */
         for(j=0; j<map->numlayers; j++) {
           if(strcmp(GET_LAYER(map, j)->name, argv[i+1]) == 0) {
-            free(GET_LAYER(map, j)->data);
+            msFree(GET_LAYER(map, j)->data);
             GET_LAYER(map, j)->data = msStrdup(argv[i+2]);
             break;
           }

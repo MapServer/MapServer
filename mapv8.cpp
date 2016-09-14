@@ -154,7 +154,7 @@ static Handle<Value> msV8ExecuteScript(const char *path, int throw_exception = M
   msBuildPath(fullpath, v8context->paths.top().c_str(), path);
   char *filepath = msGetPath((char*)fullpath);
   v8context->paths.push(filepath);
-  free(filepath);
+  msFree(filepath);
 
   Handle<Script> script;
   it = v8context->scripts.find(fullpath);

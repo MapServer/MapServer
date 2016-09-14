@@ -466,7 +466,7 @@ char *msDecryptStringTokens(mapObj *map, const char *in)
 
         out += strlen(out);
         in = pszEnd+1;
-        free(pszTmp);
+        msFree(pszTmp);
       } else {
         /* Not a valid token, just copy the '{' and keep going */
         *out++ = *in++;

@@ -110,7 +110,7 @@ int msWFSException20(mapObj *map, const char *locator,
   msIO_printf("%s", buffer);
 
   /*free buffer and the document */
-  free(errorString);
+  msFree(errorString);
   xmlFree(buffer);
   xmlFreeDoc(psDoc);
   xmlFreeNs(psNsOws);
@@ -472,7 +472,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   }
 
   xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
-  free(xsi_schemaLocation);
+  msFree(xsi_schemaLocation);
 
   /* -------------------------------------------------------------------- */
   /*      Service metadata.                                               */
@@ -753,7 +753,7 @@ int msWFSGetCapabilities20(mapObj *map, wfsParamsObj *params,
   if( pInspireTmpDoc != NULL )
       xmlFreeDoc(pInspireTmpDoc);
 
-  free(script_url);
+  msFree(script_url);
   msFree(validated_language);
 
   xmlCleanupParser();
@@ -963,7 +963,7 @@ int msWFSListStoredQueries20(mapObj *map, wfsParamsObj *params,
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION);
 
   xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
-  free(xsi_schemaLocation);
+  msFree(xsi_schemaLocation);
 
   /* -------------------------------------------------------------------- */
   /*      Add queries                                                     */
@@ -1170,7 +1170,7 @@ int msWFSDescribeStoredQueries20(mapObj *map, wfsParamsObj *params,
   xsi_schemaLocation = msStringConcatenate(xsi_schemaLocation, MS_OWSCOMMON_WFS_20_SCHEMA_LOCATION);
 
   xmlNewNsProp(psRootNode, NULL, BAD_CAST "xsi:schemaLocation", BAD_CAST xsi_schemaLocation);
-  free(xsi_schemaLocation);
+  msFree(xsi_schemaLocation);
 
   /* -------------------------------------------------------------------- */
   /*      Add queries                                                     */
