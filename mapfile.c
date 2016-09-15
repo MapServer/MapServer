@@ -3709,6 +3709,22 @@ int initLayerCompositer(LayerCompositer *compositer) {
   compositer->filter = NULL;
   return MS_SUCCESS;
 }
+
+int freeLayerCompositers(LayerCompositer * item) {
+  while(item) {
+    LayerCompositer * next = item->next;
+
+    if (item->filter) {
+      msFree(item->filter->filter);
+      msFree(item->filter);
+      }
+    msFree(item);
+
+    item=next;
+    }
+  return MS_SUCCESS;
+}
+
 /*
 ** Initialize, load and free a single layer structure
 */
@@ -3978,6 +3994,8 @@ int freeLayer(layerObj *layer)
       msFree(layer->sortBy.properties[i].item);
   msFree(layer->sortBy.properties);
 
+  freeLayerCompositers(layer->compositer);
+
   return MS_SUCCESS;
 }
 
@@ -4108,7 +4126,11 @@ int loadLayerCompositer(LayerCompositer *compositer) {
       case COMPFILTER:
         compositer->filter = msSmallMalloc(sizeof(CompositingFilter));
         initCompositingFilter(compositer->filter);
-        if(getString(&compositer->filter->filter) == MS_FAILURE) return(MS_FAILURE);
+        if(getString(&compositer->filter->filter) == MS_FAILURE) {
+          msFree(compositer->filter);
+          compositer->filter=NULL;
+          return(MS_FAILURE);
+          }
         break;
       case COMPOP: {
         char *compop=NULL;
@@ -4172,6 +4194,8 @@ int loadLayerCompositer(LayerCompositer *compositer) {
         else {
           msSetError(MS_PARSEERR,"Unknown COMPOP \"%s\"", "loadLayerCompositer()", compop);
           free(compop);
+          msFree(compositer->filter);
+          compositer->filter=NULL;
           return MS_FAILURE;
         }
         free(compop);
@@ -4180,14 +4204,21 @@ int loadLayerCompositer(LayerCompositer *compositer) {
       case END:
         return MS_SUCCESS;
       case OPACITY:
-        if (getInteger(&(compositer->opacity)) == -1)
+        if (getInteger(&(compositer->opacity)) == -1) {
+          msFree(compositer->filter);
+          compositer->filter=NULL;
           return MS_FAILURE;
+          }
         if(compositer->opacity<0 || compositer->opacity>100) {
+          msFree(compositer->filter);
+          compositer->filter=NULL;
           msSetError(MS_PARSEERR,"OPACITY must be between 0 and 100 (line %d)","loadLayerCompositer()",msyylineno);
           return MS_FAILURE;
         }
         break;
       default:
+        msFree(compositer->filter);
+        compositer->filter=NULL;
         msSetError(MS_IDENTERR, "Parsing error 2 near (%s):(line %d)", "loadLayerCompositer()",  msyystring_buffer, msyylineno );
         return(MS_FAILURE);
     }
@@ -4240,7 +4271,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       case(COMPOSITE): {
         LayerCompositer *compositer = msSmallMalloc(sizeof(LayerCompositer));
         initLayerCompositer(compositer);
-        if(MS_FAILURE == loadLayerCompositer(compositer)) return -1;
+        if(MS_FAILURE == loadLayerCompositer(compositer)) {
+          msFree(compositer);
+          return -1;
+          }
         if(!layer->compositer) {
           layer->compositer = compositer;
         } else {
