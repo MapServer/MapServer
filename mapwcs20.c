@@ -3338,7 +3338,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
 
     /* Report the supported CRSs */
     {
-      char *crs_list;
+      char *crs_list = NULL;
       xmlNodePtr crsMetadataNode = xmlNewChild(psExtensionNode, psCrsNs,
                                                BAD_CAST "CrsMetadata", NULL);
 
@@ -3347,6 +3347,7 @@ int msWCSGetCapabilities20(mapObj *map, cgiRequestObj *req,
                                         "CO", MS_FALSE)) != NULL ) {
         msLibXml2GenerateList(crsMetadataNode, psCrsNs, "crsSupported",
                               crs_list, ' ');
+        msFree(crs_list);
       } else {
         /* could not determine list of CRSs */
       }
@@ -4138,11 +4139,13 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   for(i = 0; i < params->numaxes; ++i) {
     if(params->axes[i]->subset != NULL) {
       if(params->axes[i]->subset->timeOrScalar == MS_WCS20_TIME_VALUE) {
+        msWCSClearCoverageMetadata20(&cm);
         msSetError(MS_WCSERR, "Time values for subsets are not supported. ",
                    "msWCSGetCoverage20()");
         return msWCSException(map, "InvalidSubsetting", "subset", params->version);
       }
       if(params->axes[i]->subset->operation == MS_WCS20_SLICE) {
+        msWCSClearCoverageMetadata20(&cm);
         msSetError(MS_WCSERR, "Subset operation 'slice' is not supported.",
                    "msWCSGetCoverage20()");
         return msWCSException(map, "InvalidSubsetting", "subset", params->version);
