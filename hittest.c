@@ -189,10 +189,16 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
 
     status = msLayerWhichShapes(layer, searchrect, MS_FALSE);
     if(status == MS_DONE) { /* no overlap */
+#ifdef USE_GEOS
+      msFreeShape(&searchpoly);
+#endif
       msLayerClose(layer);
       hittest->status = 0;
       return MS_SUCCESS;
     } else if(status != MS_SUCCESS) {
+#ifdef USE_GEOS
+      msFreeShape(&searchpoly);
+#endif
       msLayerClose(layer);
       return MS_FAILURE;
     }
@@ -245,6 +251,7 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
       hittest->status = 1;
 
       if(maxfeatures >=0 && featuresdrawn >= maxfeatures) {
+        msFreeShape(&shape);
         status = MS_DONE;
         break;
       }
@@ -257,6 +264,10 @@ int msHitTestLayer(mapObj *map, layerObj *layer, layer_hittest *hittest) {
       status = msHitTestShape(map, layer, &shape, drawmode, &hittest->classhits[shape.classindex]); /* all styles  */
       msFreeShape(&shape);
     }
+
+#ifdef USE_GEOS
+    msFreeShape(&searchpoly);
+#endif
 
     if (classgroup)
       msFree(classgroup);
