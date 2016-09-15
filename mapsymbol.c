@@ -300,12 +300,18 @@ void writeSymbol(symbolObj *s, FILE *stream)
     case(MS_SYMBOL_PIXMAP):
       msIO_fprintf(stream, "    TYPE PIXMAP\n");
       if(s->imagepath != NULL) msIO_fprintf(stream, "    IMAGE \"%s\"\n", s->imagepath);
+      if(s->anchorpoint_y!=0.5 || s->anchorpoint_x!=0.5) {
+        msIO_fprintf(stream, "    ANCHORPOINT %g %g\n", s->anchorpoint_x, s->anchorpoint_y);
+      }
       msIO_fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
       break;
     case(MS_SYMBOL_TRUETYPE):
       msIO_fprintf(stream, "    TYPE TRUETYPE\n");
       if (s->character != NULL) msIO_fprintf(stream, "    CHARACTER \"%s\"\n", s->character);
       if (s->font != NULL) msIO_fprintf(stream, "    FONT \"%s\"\n", s->font);
+      if(s->anchorpoint_y!=0.5 || s->anchorpoint_x!=0.5) {
+        msIO_fprintf(stream, "    ANCHORPOINT %g %g\n", s->anchorpoint_x, s->anchorpoint_y);
+      }
       break;
     default:
       if(s->type == MS_SYMBOL_ELLIPSE)
