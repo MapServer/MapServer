@@ -6972,12 +6972,14 @@ int msUpdateMapFromURL(mapObj *map, char *variable, char *string)
 }
 
 static void hashTableSubstituteString(hashTableObj *hash, const char *from, const char *to) {
-  const char *key, *val;
+  const char *key, *val, *new_val;
   key = msFirstKeyFromHashTable(hash);
   while(key != NULL) {
     val = msLookupHashTable(hash, key);
     if(strcasestr(val, from)) {
-      msInsertHashTable(hash, key, msCaseReplaceSubstring(msStrdup(val), from, to));
+      new_val = msCaseReplaceSubstring(msStrdup(val), from, to);
+      msInsertHashTable(hash, key, new_val);
+      msFree(new_val);
     }
     key = msNextKeyFromHashTable(hash, key);
   }
