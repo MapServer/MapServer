@@ -331,6 +331,7 @@ void msWCSFreeParamsObj20(wcs20ParamsObjPtr params)
   }
   msFree(params->axes);
   CSLDestroy(params->range_subset);
+  CSLDestroy(params->format_options);
   msFree(params);
 }
 
@@ -960,14 +961,17 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
       if(NULL == (axis = msWCSFindAxis20(params, axisName))) {
         if(NULL == (axis = msWCSCreateAxisObj20())) {
+          xmlFree(axisName);
           return MS_FAILURE;
         }
         axis->name = msStrdup(axisName);
         msWCSInsertAxisObj20(params, axis);
       }
+      xmlFree(axisName);
 
       content = (char *)xmlNodeGetContent(child);
       if(msStringParseInteger(content, &(axis->size)) != MS_SUCCESS) {
+        xmlFree(content);
         msSetError(MS_WCSERR, "Value of element 'Size' could not "
                    "be parsed to a valid integer.",
                    "msWCSParseRequest20_XMLGetCoverage()");
@@ -988,11 +992,13 @@ static int msWCSParseRequest20_XMLGetCoverage(
 
       if(NULL == (axis = msWCSFindAxis20(params, axisName))) {
         if(NULL == (axis = msWCSCreateAxisObj20())) {
+          xmlFree(axisName);
           return MS_FAILURE;
         }
         axis->name = msStrdup(axisName);
         msWCSInsertAxisObj20(params, axis);
       }
+      xmlFree(axisName);
 
       axis->resolutionUOM = (char *) xmlGetProp(child, BAD_CAST "uom");
 
@@ -4127,6 +4133,7 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
 
   msInitProjection(&imageProj);
   if (msLoadProjectionString(&imageProj, cm.srs) == -1) {
+    msFreeProjection(&imageProj);
     msWCSClearCoverageMetadata20(&cm);
     msSetError(MS_WCSERR,
                "Error loading CRS %s.",
@@ -4139,12 +4146,14 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
   for(i = 0; i < params->numaxes; ++i) {
     if(params->axes[i]->subset != NULL) {
       if(params->axes[i]->subset->timeOrScalar == MS_WCS20_TIME_VALUE) {
+        msFreeProjection(&imageProj);
         msWCSClearCoverageMetadata20(&cm);
         msSetError(MS_WCSERR, "Time values for subsets are not supported. ",
                    "msWCSGetCoverage20()");
         return msWCSException(map, "InvalidSubsetting", "subset", params->version);
       }
       if(params->axes[i]->subset->operation == MS_WCS20_SLICE) {
+        msFreeProjection(&imageProj);
         msWCSClearCoverageMetadata20(&cm);
         msSetError(MS_WCSERR, "Subset operation 'slice' is not supported.",
                    "msWCSGetCoverage20()");
@@ -4157,11 +4166,13 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     wcs20AxisObjPtr *axes;
     axes = msSmallMalloc(sizeof(wcs20AxisObjPtr) * 2);
     if(msWCSValidateAndFindAxes20(params, axes) == MS_FAILURE) {
+      msFreeProjection(&imageProj);
       msWCSClearCoverageMetadata20(&cm);
       msFree(axes);
       return msWCSException(map, "InvalidAxisLabel", "subset", params->version);
     }
     if(msWCSGetCoverage20_FinalizeParamsObj(params, axes) == MS_FAILURE) {
+      msFreeProjection(&imageProj);
       msWCSClearCoverageMetadata20(&cm);
       msFree(axes);
       return msWCSException(map, "InvalidParameterValue", "extent", params->version);
@@ -4213,6 +4224,8 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
     /* if the subsets have a crs given, project the image extent to it */
     msInitProjection(&subsetProj);
     if(msLoadProjectionString(&subsetProj, params->subsetcrs) != MS_SUCCESS) {
+      msFreeProjection(&subsetProj);
+      msFreeProjection(&imageProj);
       msWCSClearCoverageMetadata20(&cm);
       msSetError(MS_WCSERR,
                  "Error loading CRS %s.",
@@ -4338,6 +4351,9 @@ this request. Check wcs/ows_enable_request settings.", "msWCSGetCoverage20()", p
       /* recalculate resolutions, needed if UOM changes (e.g: deg -> m) */
       params->resolutionX = (bbox.maxx - bbox.minx) / params->width;
       params->resolutionY = (bbox.maxy - bbox.miny) / params->height;
+    }
+    else {
+      msFreeProjection(&outputProj);
     }
   }
 
