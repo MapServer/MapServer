@@ -106,6 +106,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
         unlink(pszSLDTmpFile);
         msSetError(MS_WMSERR, "Could not open SLD %s and save it in a temporary file. Please make sure that the sld url is valid and that the temporary path is set. The temporary path can be defined for example by setting TMPPATH in the map file. Please check the MapServer documentation on temporary path settings.", "msSLDApplySLDURL", szURL);
       }
+      msFree(pszSLDTmpFile);
       if (pszSLDbuf)
         nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName, ppszLayerNames);
     }
