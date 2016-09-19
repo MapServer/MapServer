@@ -201,9 +201,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, char *pszStyleLayerNa
                    map->numlayers);
           if (psTmpLayer->name)
             msFree(psTmpLayer->name);
-          psTmpLayer->name = strdup(tmpId);
+          psTmpLayer->name = msStrdup(tmpId);
           msFree(pasLayers[l].name);
-          pasLayers[l].name = strdup(tmpId);
+          pasLayers[l].name = msStrdup(tmpId);
           msInsertLayer(map, psTmpLayer, -1);
           MS_REFCNT_DECR(psTmpLayer);
         }

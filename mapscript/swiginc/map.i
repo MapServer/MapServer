@@ -168,7 +168,7 @@
       else
       {  
           msFree( self->imagetype );
-          self->imagetype = strdup(imagetype);
+          self->imagetype = msStrdup(imagetype);
           msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
                                MS_NOOVERRIDE, MS_NOOVERRIDE );
       }
@@ -185,7 +185,7 @@
         else
         {   
             msFree( self->imagetype );
-            self->imagetype = strdup(imagetype);
+            self->imagetype = msStrdup(imagetype);
             msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
                                  MS_NOOVERRIDE, MS_NOOVERRIDE );
         }
@@ -260,7 +260,7 @@
     self->query.type = MS_QUERY_BY_FILTER;
     self->query.mode = MS_QUERY_MULTIPLE;
 
-    self->query.filter.string = strdup(string);
+    self->query.filter.string = msStrdup(string);
     self->query.filter.type = MS_EXPRESSION;
 
     self->query.rect = self->extent;
@@ -375,7 +375,7 @@
     msFreeSymbolSet(&self->symbolset);
     msInitSymbolSet(&self->symbolset);
    
-    self->symbolset.filename = strdup(szFileName);
+    self->symbolset.filename = msStrdup(szFileName);
 
     /* Symbolset shares same fontset as main mapfile */
     self->symbolset.fontset = &(self->fontset);
@@ -391,7 +391,7 @@
     msFreeFontSet(&(self->fontset));
     msInitFontSet(&(self->fontset));
    
-    self->fontset.filename = strdup(filename);
+    self->fontset.filename = msStrdup(filename);
 
     return msLoadFontSet(&(self->fontset), self);
   }

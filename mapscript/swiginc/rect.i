@@ -92,7 +92,7 @@
         msRectToPolygon(*self, &shape);
         shape.classindex = classindex;
         if(text && layer->class[classindex]->numlabels > 0) {
-          shape.text = strdup(text);
+          shape.text = msStrdup(text);
         }
         
         ret = msDrawShape(map, layer, &shape, image, -1, MS_DRAWMODE_FEATURES|MS_DRAWMODE_LABELS);
@@ -156,7 +156,7 @@
         char buffer[256];
         char fmt[]="{ 'minx': %.16g , 'miny': %.16g , 'maxx': %.16g , 'maxy': %.16g }";
         msRectToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
-        return strdup(buffer);
+        return msStrdup(buffer);
     }
     
 }
