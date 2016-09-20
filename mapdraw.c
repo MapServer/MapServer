@@ -2511,7 +2511,7 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority)
             /* here's where we draw the label styles */
             for(i=0; i<ts->label->numstyles; i++) {
               if(ts->label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
-                retval = msDrawMarkerSymbol(map, image, &(cachePtr->point), ts->label->styles[i], layerPtr->scalefactor);
+                retval = msDrawMarkerSymbol(map, image, &(labelLeader.line->point[1]), ts->label->styles[i], layerPtr->scalefactor);
                 if(UNLIKELY(retval == MS_FAILURE)) {
                   goto offset_cleanup;
                 }
