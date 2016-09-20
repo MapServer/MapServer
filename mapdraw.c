@@ -2386,8 +2386,8 @@ int msDrawOffsettedLabels(imageObj *image, mapObj *map, int priority)
 
 #define otest(ox,oy) if((x0+(ox)) >= labelcache->gutter &&\
                 (y0+(oy)) >= labelcache->gutter &&\
-                (x0+(ox)) < image->width + labelcache->gutter &&\
-                (y0+(oy)) < image->height + labelcache->gutter) {\
+                (x0+(ox)) < image->width - labelcache->gutter &&\
+                (y0+(oy)) < image->height - labelcache->gutter) {\
                    scratch_line.point = scratch_points;\
                    scratch.poly = &scratch_line; \
                    offsetAndTest(map,cachePtr,(ox),(oy),priority,l,&scratch); \
@@ -2952,7 +2952,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
                                                            textSymbolPtr->rotation, textSymbolPtr->label->buffer * textSymbolPtr->scalefactor,
                                                            &metrics_bounds);
                     if(need_labelpoly) get_metrics(&(cachePtr->point), MS_CC, textSymbolPtr->textpath,
-                                                              marker_offset_x + label_offset_x, marker_offset_y + label_offset_y,
+                                                              label_offset_x, label_offset_y,
                                                               textSymbolPtr->rotation, 1, &labelpoly_bounds);
                   }
                 } else { /* explicit position */
@@ -2960,7 +2960,7 @@ int msDrawLabelCache(mapObj *map, imageObj *image)
                     metrics_bounds.poly = &metrics_line;
                     textSymbolPtr->annopoint = get_metrics(&(cachePtr->point), MS_CC, textSymbolPtr->textpath, label_offset_x, label_offset_y,
                             textSymbolPtr->rotation, textSymbolPtr->label->buffer * textSymbolPtr->scalefactor, &metrics_bounds);
-                    if(need_labelpoly) get_metrics(&(cachePtr->point), textSymbolPtr->label->position, textSymbolPtr->textpath,
+                    if(need_labelpoly) get_metrics(&(cachePtr->point), MS_CC, textSymbolPtr->textpath,
                                                               label_offset_x, label_offset_y, textSymbolPtr->rotation, 1, &labelpoly_bounds);
                   } else {
                     metrics_bounds.poly = &metrics_line;
