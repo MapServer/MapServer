@@ -2269,7 +2269,7 @@ void offsetAndTest(mapObj *map, labelCacheMemberObj *cachePtr, double ox, double
       }
     }
     for(j=0; j<ts->label->numstyles; j++) {
-      if(ts->label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
+      if(ts->label->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT) {
         scratch->poly = scratch_line;
         offset_label_bounds(ts->style_bounds[j], scratch, ox, oy);
         status = msTestLabelCacheCollisions(map, cachePtr, scratch, priority, label_idx);
@@ -2313,8 +2313,8 @@ void offsetAndTest(mapObj *map, labelCacheMemberObj *cachePtr, double ox, double
     }
     if(ts->style_bounds) {
       for(j=0; j<ts->label->numstyles; j++) {
-        if(ts->label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
-            ts->label->styles[i]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
+        if(ts->label->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOINT ||
+            ts->label->styles[j]->_geomtransform.type == MS_GEOMTRANSFORM_LABELPOLY) {
           offset_label_bounds(ts->style_bounds[j], ts->style_bounds[j], ox, oy);
         }
       }
