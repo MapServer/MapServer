@@ -29,6 +29,7 @@ symbol
    type ellipse
    points 1 1 end
    name "circle"
+   filled true
 end
    symbol
      name "v10"
@@ -221,6 +222,19 @@ layer
       end
         label
           partials false
+          force group
+          style
+            geomtransform labelpnt
+            symbol "circle"
+            opacity 30
+            color 200 200 200
+            outlinecolor 0 0 0
+            size 60
+          end
+        end
+        
+        label
+          partials false
           text "[p]"
           font "dejavu"
           size 7
@@ -258,6 +272,7 @@ layer
                symbol "v10"
                size 15
             end
+          
           force group
         end
         label
@@ -269,6 +284,7 @@ layer
                symbol "v20"
                size 15
             end
+          
           force group
         end
         label
@@ -280,6 +296,7 @@ layer
                symbol "v30"
                size 15
             end
+          
           force group
         end
         label
@@ -291,6 +308,7 @@ layer
                symbol "v40"
                size 15
             end
+          
           force group
         end
         label
@@ -302,6 +320,7 @@ layer
                symbol "v50"
                size 15
             end
+          
           force group
         end
         label
@@ -313,6 +332,7 @@ layer
                symbol "v60"
                size 15
             end
+          
           force group
         end
         label
@@ -324,6 +344,7 @@ layer
                symbol "v70"
                size 15
             end
+          
           force group
         end
         label
@@ -335,6 +356,7 @@ layer
                symbol "v80"
                size 15
             end
+          
           force group
         end
         label
@@ -346,6 +368,7 @@ layer
                symbol "v90"
                size 15
             end
+          
           force group
         end
         label
@@ -357,6 +380,7 @@ layer
                symbol "v100"
                size 15
             end
+          
           force group
         end
         label
@@ -368,6 +392,7 @@ layer
                symbol "v110"
                size 15
             end
+          
           force group
         end
         label
@@ -379,6 +404,7 @@ layer
                symbol "v120"
                size 15
             end
+          
           force group
         end
         label
@@ -390,6 +416,7 @@ layer
                symbol "v130"
                size 15
             end
+          
           force group
         end
         label
@@ -401,95 +428,116 @@ layer
                symbol "v140"
                size 15
             end
+          
           force group
         end
         label
             expression ([nebul]=0)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n0"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=1)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n1"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=2)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n2"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=3)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n3"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=4)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n4"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=5)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n5"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=6)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n6"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=7)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n7"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=8)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n8"
                size 10
+               offset -12 0
             end
           force group
         end
         label
             expression ([nebul]=9)
             style
+               geomtransform labelpnt
                color 0 0 0
                symbol "n9"
                size 10
+               offset -12 0
             end
           force group
         end
