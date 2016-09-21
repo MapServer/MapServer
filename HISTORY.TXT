@@ -8,7 +8,9 @@ next.  Developers are strongly encouraged to document their changes and
 their impacts on the users here.  (Please add the most recent changes to
 the top of the list.)
 
-For a complete change history, please see the Git log comments.
+For a complete change history, please see the Git log comments.  For more
+details about recent point releases, please see the online changelog at:
+http://mapserver.org/development/changelog/
 
 7.0.0 release (2015/07/24)
 --------------------------
